@@ -1,161 +1,94 @@
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-
-import {
-  CommonStatusEnum,
-  DICT_TYPE,
-  SystemDataScopeEnum,
-} from '@vben/constants';
-import { getDictOptions } from '@vben/hooks';
-
-import { z } from '#/adapter/form'; 
+ 
 
 /** 新增/修改的表单 */
 export function useFormSchema(): VbenFormSchema[] {
   return [
     {
       fieldName: 'id',
+      label: '停车场ID',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
+       componentProps: {
+        placeholder: '请输入角色名称停车场ID',
       },
+      rules: 'required',
     },
     {
       fieldName: 'name',
-      label: '角色名称',
+      label: '停车场名称',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入角色名称',
+        placeholder: '请输入停车场名称',
       },
       rules: 'required',
     },
     {
-      fieldName: 'code',
-      label: '角色标识',
+      fieldName: 'address',
+      label: '详细地址',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入角色标识',
+        placeholder: '请输入详细地址',
       },
       rules: 'required',
-    },
-    {
-      fieldName: 'sort',
-      label: '显示顺序',
-      component: 'InputNumber',
+    }, 
+     {
+      fieldName: 'parkTotal',
+      label: '泊位总数',
+      component: 'Input',
       componentProps: {
-        min: 0,
-        placeholder: '请输入显示顺序',
-        controlsPosition: 'right',
-        class: '!w-full',
+        placeholder: '请输入泊位总数',
       },
       rules: 'required',
-    },
+    }, 
+     {
+      fieldName: 'pricing',
+      label: '收费标准',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入收费标准',
+      },
+      rules: 'required',
+    }, 
+     {
+      fieldName: 'business',
+      label: '营业时间',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入营业时间',
+      },
+      rules: 'required',
+    }, 
+    {
+      fieldName: 'phone',
+      label: '联系电话',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入联系电话',
+      },
+      rules: 'required',
+    }, 
+    {
+      fieldName: 'division',
+      label: '所属行政区划',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入所属行政区划',
+      },
+      rules: 'required',
+    }, 
     {
       fieldName: 'status',
-      label: '角色状态',
-      component: 'RadioGroup',
+      label: '运营状态',
+      component: 'Input',
       componentProps: {
-        options: getDictOptions(DICT_TYPE.COMMON_STATUS, 'number'),
+        placeholder: '请输入运营状态',
       },
-      rules: z.number().default(CommonStatusEnum.ENABLE),
-    },
-    {
-      fieldName: 'remark',
-      label: '角色备注',
-      component: 'Textarea',
-      componentProps: {
-        placeholder: '请输入角色备注',
-      },
-    },
+      rules: 'required',
+    }
   ];
 }
-
-/** 分配数据权限的表单 */
-export function useAssignDataPermissionFormSchema(): VbenFormSchema[] {
-  return [
-    {
-      component: 'Input',
-      fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
-    },
-    {
-      fieldName: 'name',
-      label: '角色名称',
-      component: 'Input',
-      componentProps: {
-        disabled: true,
-      },
-    },
-    {
-      component: 'Input',
-      fieldName: 'code',
-      label: '角色标识',
-      componentProps: {
-        disabled: true,
-      },
-    },
-    {
-      component: 'Select',
-      fieldName: 'dataScope',
-      label: '权限范围',
-      componentProps: {
-        options: getDictOptions(DICT_TYPE.SYSTEM_DATA_SCOPE, 'number'),
-      },
-    },
-    {
-      fieldName: 'dataScopeDeptIds',
-      label: '部门范围',
-      component: 'Input',
-      formItemClass: 'items-start',
-      dependencies: {
-        triggerFields: ['dataScope'],
-        show: (values) => {
-          return values.dataScope === SystemDataScopeEnum.DEPT_CUSTOM;
-        },
-      },
-    },
-  ];
-}
-
-/** 分配菜单的表单 */
-export function useAssignMenuFormSchema(): VbenFormSchema[] {
-  return [
-    {
-      fieldName: 'id',
-      component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
-    },
-    {
-      fieldName: 'name',
-      label: '角色名称',
-      component: 'Input',
-      componentProps: {
-        disabled: true,
-      },
-    },
-    {
-      fieldName: 'code',
-      label: '角色标识',
-      component: 'Input',
-      componentProps: {
-        disabled: true,
-      },
-    },
-    {
-      fieldName: 'menuIds',
-      label: '菜单权限',
-      component: 'Input',
-      formItemClass: 'items-start',
-    },
-  ];
-}
+ 
 
 /** 列表的搜索表单 */
 export function useGridFormSchema(): VbenFormSchema[] {
