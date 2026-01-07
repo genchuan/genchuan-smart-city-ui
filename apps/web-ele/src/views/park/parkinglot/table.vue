@@ -9,6 +9,7 @@ import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 
+import { useVbenForm } from '#/adapter/form';
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteRole, deleteRoleList, exportRole } from '#/api/system/role';
 import { $t } from '#/locales';
@@ -16,10 +17,14 @@ import { $t } from '#/locales';
 import { useGridColumns, useGridFormSchema } from './data';
 import NewForm from './newForm.vue';
 
+const dataObj = reactive({
+  showSearch: false,
+});
 const [NewFormModel, newFormApi] = useVbenDrawer({
   connectedComponent: NewForm,
 });
 
+const [searchDrawer, searchDrawerApi] = useVbenDrawer();
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
@@ -244,6 +249,7 @@ const testObj = reactive({
   ],
   list: [],
 });
+const topName = ref('车辆信息管理');
 // 表格数据获取
 const getTableData = () => {
   const tabelObj = {
@@ -259,13 +265,34 @@ const getTableData = () => {
   });
   return tabelObj;
 };
-const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: {
-    schema: useGridFormSchema(),
+
+const [QueryForm] = useVbenForm({
+  // 默认展开
+  collapsed: false,
+  // 所有表单项共用，可单独在表单内覆盖
+  commonConfig: {
+    // 所有表单项
+    componentProps: {
+      class: 'grid-cols-4',
+    },
   },
+  // 提交函数
+  handleSubmit: onSubmit,
+  // 垂直布局，label和input在不同行，值为vertical
+  // 水平布局，label和input在同一行
+  layout: 'horizontal',
+  schema: useGridFormSchema(),
+  // 是否可展开
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+  wrapperClass: 'grid-cols-4',
+});
+function onSubmit() {}
+const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
-    height: 'auto',
     keepSource: true,
     proxyConfig: {
       ajax: {
@@ -280,6 +307,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       refresh: true,
       search: true,
     },
+    showOverflow: true,
   } as VxeTableGridOptions<SystemRoleApi.Role>,
   gridEvents: {
     checkboxAll: handleRowCheckboxChange,
@@ -293,12 +321,20 @@ const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用
 const handleClick = (tab, event: Event) => {
   gridApi.query();
 };
+const handleSerachShow = () => {
+  dataObj.showSearch = !dataObj.showSearch;
+};
+const searchOpen = () => {
+  searchDrawerApi.open();
+};
 </script>
 
 <template>
   <div class="park-lot-table">
     <NewFormModel @success="handleRefresh" />
-    <Grid table-title="角色列表">
+    <searchDrawer title="搜索栏设置" />
+    <QueryForm class="query-form" v-if="dataObj.showSearch" />
+    <Grid>
       <template #table-title>
         <div class="tabel-tabs">
           <el-tabs
@@ -342,6 +378,16 @@ const handleClick = (tab, event: Event) => {
             },
           ]"
         />
+        <button
+          class="vxe-button type--button size--small is--circle ml-2"
+          title="搜索"
+          type="button"
+          @click="handleSerachShow"
+        >
+          <i
+            class="vxe-button--item vxe-button--prefix-icon vxe-icon-search"
+          ></i>
+        </button>
       </template>
       <template #actions="{ row }">
         <TableAction
@@ -371,10 +417,8 @@ const handleClick = (tab, event: Event) => {
     </Grid>
   </div>
 </template>
-<style lang="scss">
+<style lang="scss" scoped>
 .park-lot-table {
-  .vxe-grid--table-container {
-    max-height: 62vh;
-  }
+  padding-top: 5px;
 }
 </style>
