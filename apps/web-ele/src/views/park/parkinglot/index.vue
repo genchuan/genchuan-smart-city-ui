@@ -12,19 +12,6 @@ const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用
   <div class="park-lot-index">
     <el-card>
       <Table />
-      <!-- <el-tabs
-        v-model="activeName"
-        type="border-card"
-        @tab-change="handleClick"
-      >
-        <el-tab-pane label="车辆信息管理" name="车辆信息管理">
-          <Table />
-        </el-tab-pane>
-        <el-tab-pane label="车辆信息报表" name="车辆信息报表">
-          <Chart ref="chartRef" />
-        </el-tab-pane>
-      </el-tabs>
-    </el-card> -->
     </el-card>
   </div>
 </template>

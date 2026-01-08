@@ -19,7 +19,13 @@ import NewForm from './newForm.vue';
 
 const dataObj = reactive({
   showSearch: false,
+  arrowShow: true,
+  arrowStatus: false,
 });
+
+const changeArrowStatus = () => {
+  dataObj.arrowStatus = !dataObj.arrowStatus;
+};
 const [NewFormModel, newFormApi] = useVbenDrawer({
   connectedComponent: NewForm,
 });
@@ -346,7 +352,23 @@ const topName = ref('车辆信息管理');
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
-          <div>
+          <div class="table-first">
+            <div v-show="dataObj.arrowShow">
+              <el-icon
+                class="tabel-tab-icon"
+                v-if="dataObj.arrowStatus"
+                @click="changeArrowStatus"
+              >
+                <ArrowDown />
+              </el-icon>
+              <el-icon
+                class="tabel-tab-icon"
+                v-if="!dataObj.arrowStatus"
+                @click="changeArrowStatus"
+              >
+                <ArrowUp />
+              </el-icon>
+            </div>
             <el-radio-group v-model="topName">
               <el-radio-button value="车辆信息管理">
                 车辆信息管理
@@ -356,7 +378,7 @@ const topName = ref('车辆信息管理');
               </el-radio-button>
             </el-radio-group>
           </div>
-          <div>
+          <div v-if="dataObj.arrowStatus">
             <el-tabs
               v-model="activeName"
               class="demo-tabs"
@@ -445,6 +467,14 @@ const topName = ref('车辆信息管理');
 .park-lot-table {
   padding-top: 5px;
   padding-bottom: 20px;
+  .table-first {
+    display: flex;
+    align-items: center;
+    .tabel-tab-icon {
+      margin-right: 5px;
+      cursor: pointer;
+    }
+  }
   .vxe-tools--wrapper {
     position: absolute;
     right: 120px;
@@ -461,6 +491,7 @@ const topName = ref('车辆信息管理');
   .bottom-title {
     position: relative;
     margin-top: -30px;
+    margin-left: 10px;
   }
 }
 </style>
