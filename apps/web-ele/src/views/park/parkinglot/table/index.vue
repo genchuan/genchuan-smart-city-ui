@@ -337,9 +337,11 @@ const handleFullShow = () => {
   </div>
 </template>
 <style lang="scss">
-.park-lot-table-new {
-  padding-top: 5px;
+.park-lot-table-new { 
   padding-bottom: 20px;
+  .vxe-buttons--wrapper {
+    padding-top: 0px;
+  }
   .table-first {
     display: flex;
     align-items: center;
@@ -350,7 +352,7 @@ const handleFullShow = () => {
   }
   .vxe-tools--wrapper {
     position: fixed;
-    right: 85px;
+    right: 77px;
     top: 90px;
   }
   .vxe-tools--operate {

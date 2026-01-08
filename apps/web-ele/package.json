@@ -56,7 +56,6 @@
     "dayjs": "^1.11.10",
     "diagram-js": "^12.8.0",
     "echarts": "catalog:",
-<<<<<<< HEAD
     "element-plus": "catalog:",
     "fast-xml-parser": "catalog:",
     "highlight.js": "catalog:",
@@ -71,22 +70,6 @@
     "vue3-print-nb": "catalog:",
     "vue3-signature": "catalog:",
     "vuedraggable": "catalog:"
-=======
-    "element-plus": "^2.7.2",
-    "fast-xml-parser": "^4.3.6",
-    "highlight.js": "^11.9.0",
-    "pinia": "^3.0.4",
-    "screenfull": "^6.0.2",
-    "steady-xml": "^0.1.0",
-    "tinymce": "^7.9.1",
-    "video.js": "^7.21.7",
-    "vue": "^3.4.27",
-    "vue-dompurify-html": "^5.1.0",
-    "vue-router": "^4.3.2",
-    "vue3-print-nb": "^0.1.4",
-    "vue3-signature": "^0.2.4",
-    "vuedraggable": "^4.1.0"
->>>>>>> 380c4bee59d1c522baeea4f24990055a9b01f102
   },
   "devDependencies": {
     "unplugin-element-plus": "^0.11.2"

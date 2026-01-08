@@ -1,57 +1,74 @@
 <script setup>
 import { ref } from 'vue';
 
-import Table from './table.vue';
+import Table from './table/index.vue'; 
 
-const handleClick = () => {};
-const topName = ref('车辆信息管理');
+const changeArrowStatus = (item) => {
+  item.secondShow = !item.secondShow;
+};
+const tabArray = ref([
+  {
+    label: '车辆信息管理',
+    components: Table,
+    showSecondary: true,
+    secondShow: true,
+  } 
+]);
 const activeName = ref('车辆信息管理');
-const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用' }]);
 </script>
 <template>
-  <div class="park-lot-index">
-    <el-card>
-      <Table />
-    </el-card>
+  <div class="common-index">
+    <el-tabs
+      v-model="activeName"
+      class="common-tabs"
+      type="card"
+      @tab-change="tabChange"
+    >
+      <el-tab-pane
+        v-for="item in tabArray"
+        :key="item.label"
+        :name="item.label"
+      >
+        <template #label>
+          <div class="table-first">
+            <div v-show="item.showSecondary">
+              <el-icon
+                class="tabel-tab-icon"
+                v-if="item.secondShow"
+                @click="changeArrowStatus(item)"
+              >
+                <ArrowDown />
+              </el-icon>
+              <el-icon
+                class="tabel-tab-icon"
+                v-if="!item.secondShow"
+                @click="changeArrowStatus(item)"
+              >
+                <ArrowUp />
+              </el-icon>
+            </div>
+            <span>{{ item.label }}</span>
+          </div>
+        </template>
+        <component :is="item.components" :second-show="item.secondShow" />
+      </el-tab-pane>
+    </el-tabs>
   </div>
 </template>
 <style lang="scss">
-.park-lot-index {
+.common-index {
   height: 100%;
   padding: 0.5rem;
   background-color: #fff;
-  .el-card__body {
-    padding: 0px;
-    .el-tabs__content {
-      padding: 0px;
-      .p-4 {
-        padding: 0px;
-        .vxe-grid {
-          padding-top: 0px;
-        }
-      }
-      .pb-8 {
-        padding-top: 5px;
-        padding-bottom: 20px;
-      }
-      .pb-4 {
-        padding-bottom: 0.5rem;
-      }
-      .vxe-grid {
-        padding-top: 0px;
-        padding-left: 0px;
-        padding-right: 0px;
-        .vxe-button--item-wrapper {
-          padding-left: 5px;
-        }
-        .vxe-buttons--wrapper {
-          padding: 0px;
-        }
-      }
-      .vxe-pager .vxe-pager--sizes {
-        margin-right: 5px;
-      }
-    }
+  .table-first {
+    display: flex;
+    align-items: center;
+  }
+  .el-tabs__header {
+    margin-bottom: 0px;
+  }
+  .common-tabs {
+    position: relative;
   }
 }
 </style>

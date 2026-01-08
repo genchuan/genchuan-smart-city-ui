@@ -8,6 +8,7 @@ import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
+import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
@@ -199,6 +200,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
       keyField: 'id',
       isHover: true,
     },
+    toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
+      refresh: true,
+      search: true,
+    },
     showOverflow: true,
   } as VxeTableGridOptions<SystemRoleApi.Role>,
   gridEvents: {
@@ -216,10 +222,13 @@ const handleClick = (tab, event: Event) => {
 const handleSerachShow = () => {
   drawerApi.open();
 };
+const handleFullShow = () => {
+  screenfull.toggle();
+};
 </script>
 
 <template>
-  <div class="park-lot-table">
+  <div class="park-lot-table-new">
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
@@ -285,6 +294,16 @@ const handleSerachShow = () => {
             class="vxe-button--item vxe-button--prefix-icon vxe-icon-search"
           ></i>
         </button>
+        <button
+          class="vxe-button type--button size--small is--circle"
+          title="全屏"
+          type="button"
+          @click="handleFullShow"
+        >
+          <i
+            class="vxe-button--item vxe-button--prefix-icon vxe-table-icon-fullscreen"
+          ></i>
+        </button>
       </template>
       <template #actions="{ row }">
         <TableAction
@@ -318,9 +337,11 @@ const handleSerachShow = () => {
   </div>
 </template>
 <style lang="scss">
-.park-lot-table {
-  padding-top: 5px;
+.park-lot-table-new { 
   padding-bottom: 20px;
+  .vxe-buttons--wrapper {
+    padding-top: 0px;
+  }
   .table-first {
     display: flex;
     align-items: center;
@@ -331,7 +352,7 @@ const handleSerachShow = () => {
   }
   .vxe-tools--wrapper {
     position: fixed;
-    right: 120px;
+    right: 77px;
     top: 90px;
   }
   .vxe-tools--operate {
@@ -346,6 +367,13 @@ const handleSerachShow = () => {
     position: relative;
     margin-top: -30px;
     margin-left: 10px;
+  }
+  .common-tool-bar-config {
+    .vxe-tools--operate {
+      .vxe-button:nth-child(2) {
+        display: none;
+      }
+    }
   }
 }
 </style>
