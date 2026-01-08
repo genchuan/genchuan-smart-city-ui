@@ -1,9 +1,10 @@
 <script setup>
 import { ref } from 'vue';
 
-import Table from './table/index.vue'; 
+import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
+
 const changeArrowStatus = (item) => {
   item.secondShow = !item.secondShow;
 };
@@ -13,7 +14,7 @@ const tabArray = ref([
     components: Table,
     showSecondary: true,
     secondShow: true,
-  }, 
+  },
 ]);
 const activeName = ref('车辆信息管理');
 </script>
@@ -55,4 +56,4 @@ const activeName = ref('车辆信息管理');
       </el-tab-pane>
     </el-tabs>
   </div>
-</template> 
+</template>
