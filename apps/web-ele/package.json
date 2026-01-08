@@ -60,6 +60,7 @@
     "fast-xml-parser": "catalog:",
     "highlight.js": "catalog:",
     "pinia": "catalog:",
+    "screenfull": "^6.0.2",
     "steady-xml": "catalog:",
     "tinymce": "catalog:",
     "video.js": "catalog:",
