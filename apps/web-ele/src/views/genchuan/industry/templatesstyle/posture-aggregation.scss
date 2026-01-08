@@ -1,0 +1,69 @@
+// ---特色态势聚合
+
+.feature-cards-1x3 {
+  display: grid;
+  flex: 1;
+  grid-template-rows: 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.8vw;
+  align-items: center;
+  height: calc(100% - 60px);
+  padding: 1vh 0.5vw;
+}
+
+.feature-card {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5vw;
+  align-items: center;
+  justify-content: center;
+  padding: 1vh 1vw;
+  cursor: pointer;
+  background: rgb(0 30 60 / 60%);
+  border: 1px solid rgb(0 204 255 / 30%);
+  border-radius: 8px;
+  transition: all 0.3s;
+
+  &:hover {
+    box-shadow: 0 5px 15px rgb(0 204 255 / 30%);
+    transform: translateY(-5px);
+  }
+
+  .feature-title {
+    margin-bottom: 0;
+    font-size: 0.9vw;
+    font-weight: 600;
+    color: #8884ff;
+    text-align: center;
+  }
+
+  .feature-value {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    font-size: 1.4vw;
+    font-weight: bold;
+    color: #13ce66;
+    text-align: center;
+  }
+
+  .feature-unit {
+    margin-left: 0.2vw;
+    font-size: 0.8vw;
+    color: #ccefff;
+  }
+}
+
+@keyframes pulse-danger {
+  0% {
+    box-shadow: 0 0 0 0 rgb(255 77 77 / 70%);
+  }
+
+  100% {
+    box-shadow: 0 0 0 15px rgb(255 77 77 / 0%);
+  }
+}
+
+.pulse-danger {
+  animation: pulse-danger 1s infinite;
+}
