@@ -23,16 +23,6 @@ const dataObj = reactive({
 const [NewFormModel, newFormApi] = useVbenDrawer({
   connectedComponent: NewForm,
 });
-const [Drawer, drawerApi] = useVbenDrawer({
-  footer: false,
-  onCancel() {
-    drawerApi.close();
-  },
-  onConfirm() {
-    console.info('onConfirm');
-  },
-  async onOpenChange(isOpen: boolean) {},
-});
 
 const [searchDrawer, searchDrawerApi] = useVbenDrawer();
 /** 刷新表格 */
@@ -275,17 +265,15 @@ const getTableData = () => {
   return tabelObj;
 };
 
-const [QueryForm, QueryFormApi] = useVbenForm({
+const [QueryForm] = useVbenForm({
   // 默认展开
   collapsed: false,
   // 所有表单项共用，可单独在表单内覆盖
   commonConfig: {
     // 所有表单项
     componentProps: {
-      class: 'w-full',
+      class: 'grid-cols-4',
     },
-    formItemClass: 'col-span-2',
-    labelWidth: 100,
   },
   // 提交函数
   handleSubmit: onSubmit,
@@ -298,11 +286,9 @@ const [QueryForm, QueryFormApi] = useVbenForm({
   submitButtonOptions: {
     content: '查询',
   },
+  wrapperClass: 'grid-cols-4',
 });
-// 搜索表单查询
-function onSubmit() {
-  drawerApi.close();
-}
+function onSubmit() {}
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
@@ -331,7 +317,10 @@ const handleClick = (tab, event: Event) => {
   gridApi.query();
 };
 const handleSerachShow = () => {
-  drawerApi.open();
+  dataObj.showSearch = !dataObj.showSearch;
+};
+const searchOpen = () => {
+  searchDrawerApi.open();
 };
 const topName = ref('车辆信息管理');
 </script>
@@ -340,14 +329,12 @@ const topName = ref('车辆信息管理');
   <div class="park-lot-table">
     <NewFormModel @success="handleRefresh" />
     <searchDrawer title="搜索栏设置" />
-    <Drawer title="搜索">
-      <QueryForm class="query-form" />
-    </Drawer>
+    <QueryForm class="query-form" v-if="dataObj.showSearch" />
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
           <div>
-            <el-radio-group v-model="topName">
+            <el-radio-group v-model="topName" style="margin-bottom: 30px">
               <el-radio-button value="车辆信息管理">
                 车辆信息管理
               </el-radio-button>
@@ -436,31 +423,10 @@ const topName = ref('车辆信息管理');
         />
       </template>
     </Grid>
-    <div class="bottom-title">
-      总计: 停车场数量10;车位总数:1211;评价车场车位73;
-    </div>
   </div>
 </template>
-<style lang="scss">
+<style lang="scss" scoped>
 .park-lot-table {
   padding-top: 5px;
-  padding-bottom: 20px;
-  .vxe-tools--wrapper {
-    position: absolute;
-    right: 120px;
-    top: 0px;
-  }
-  .vxe-tools--operate {
-    position: absolute;
-    right: 0px;
-    top: 0px;
-  }
-  .vxe-pager .vxe-pager--sizes {
-    margin-right: 10px;
-  }
-  .bottom-title {
-    position: relative;
-    margin-top: -30px;
-  }
 }
 </style>

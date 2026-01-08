@@ -3,16 +3,16 @@ import { ref } from 'vue';
 
 import Table from './table.vue';
 
-const chartRef = ref(null);
+const handleClick = () => {};
+const topName = ref('车辆信息管理');
 const activeName = ref('车辆信息管理');
-const handleClick = (tab, event) => {
-  chartRef.value.init();
-};
+const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用' }]);
 </script>
 <template>
   <div class="park-lot-index">
     <el-card>
-      <el-tabs
+      <Table />
+      <!-- <el-tabs
         v-model="activeName"
         type="border-card"
         @tab-change="handleClick"
@@ -24,6 +24,7 @@ const handleClick = (tab, event) => {
           <Chart ref="chartRef" />
         </el-tab-pane>
       </el-tabs>
+    </el-card> -->
     </el-card>
   </div>
 </template>
@@ -45,6 +46,9 @@ const handleClick = (tab, event) => {
       .pb-8 {
         padding-top: 5px;
         padding-bottom: 20px;
+      }
+      .pb-4 {
+        padding-bottom: 0.5rem;
       }
       .vxe-grid {
         padding-top: 0px;
