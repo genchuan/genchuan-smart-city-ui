@@ -1,0 +1,136 @@
+// ---核心指标看板
+
+.indicator-cards-3x3 {
+  display: grid;
+  flex: 1;
+  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5vw;
+  height: calc(100% - 60px);
+  padding: 0.5vh 0.3vw;
+}
+
+.indicator-cards-4x3 {
+  display: grid;
+  flex: 1;
+  grid-template-rows: 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5vw;
+  height: calc(100% - 60px);
+  padding: 0.5vh 0.3vw;
+}
+
+.indicator-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
+  transition: all 0.3s;
+
+  &:hover {
+    border-color: rgb(255 255 255 / 30%);
+    box-shadow: 0 6px 16px rgb(0 0 0 / 20%);
+    transform: translateY(-2px);
+  }
+
+  .indicator-title {
+    margin-bottom: 0.5vh;
+    font-size: 0.7vw;
+    font-weight: 600;
+    color: #90ffc4;
+    text-align: center;
+    text-shadow: 0 1px 2px rgb(0 0 0 / 30%);
+  }
+
+  .sub-indicator-value {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: center;
+    font-size: 0.8vw;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #f0f9ff;
+
+    .unit {
+      margin-left: 0.2vw;
+      font-size: 0.6vw;
+      color: #ccefff;
+    }
+  }
+
+  .ratio-item {
+    font-size: 0.65vw;
+    color: #f0f9ff;
+    text-align: center;
+  }
+}
+
+.indicator-card1 {
+  background: linear-gradient(135deg, rgb(255 107 107 / 30%) 30%, #8a2323 100%);
+}
+
+.indicator-card2 {
+  background: linear-gradient(135deg, rgb(255 153 0 / 30%) 30%, #8a4400 100%);
+}
+
+.indicator-card3 {
+  background: linear-gradient(135deg, rgb(255 214 10 / 30%) 30%, #8a781a 100%);
+}
+
+.indicator-card4 {
+  background: linear-gradient(135deg, rgb(0 255 213 / 30%) 30%, #008a78 100%);
+}
+
+.indicator-card5 {
+  background: linear-gradient(135deg, rgb(52 211 153 / 30%) 30%, #1a7848 100%);
+}
+
+.indicator-card6 {
+  background: linear-gradient(135deg, rgb(0 168 255 / 30%) 30%, #00528a 100%);
+}
+
+.indicator-card7 {
+  background: linear-gradient(135deg, rgb(74 222 128 / 30%) 30%, #238a46 100%);
+}
+
+.indicator-card8 {
+  background: linear-gradient(135deg, rgb(93 165 255 / 30%) 30%, #234a8a 100%);
+}
+
+.indicator-card9 {
+  background: linear-gradient(135deg, rgb(255 183 77 / 30%) 30%, #8a5623 100%);
+}
+
+.indicator-card-ratio1 {
+  background: linear-gradient(135deg, rgb(139 92 246 / 30%) 30%, #4a2394 100%);
+}
+
+.indicator-card-ratio2 {
+  background: linear-gradient(135deg, rgb(100 181 246 / 30%) 30%, #23688a 100%);
+}
+
+.indicator-card-ratio3 {
+  background: linear-gradient(135deg, rgb(167 139 250 / 30%) 30%, #6a4c93 100%);
+}
+
+@keyframes pulse-danger {
+  0% {
+    box-shadow: 0 0 0 0 rgb(255 77 77 / 70%);
+  }
+
+  100% {
+    box-shadow: 0 0 0 15px rgb(255 77 77 / 0%);
+  }
+}
+
+.pulse-danger {
+  animation: pulse-danger 1s infinite;
+}
