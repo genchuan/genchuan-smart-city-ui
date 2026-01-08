@@ -1,27 +1,20 @@
 <script setup>
 import { ref } from 'vue';
 
-import Table from './basic/index.vue';
-import Road from './road/index.vue';
+import Table from './table/index.vue'; 
 
 const changeArrowStatus = (item) => {
   item.secondShow = !item.secondShow;
 };
 const tabArray = ref([
   {
-    label: '车辆信息管理',
+    label: '路侧停车管理',
     components: Table,
     showSecondary: true,
     secondShow: true,
-  },
-  {
-    label: '开发展示用例',
-    components: Road,
-    showSecondary: false,
-    secondShow: false,
-  },
+  }, 
 ]);
-const activeName = ref('车辆信息管理');
+const activeName = ref('路侧停车管理');
 </script>
 <template>
   <div class="common-index">
@@ -38,7 +31,7 @@ const activeName = ref('车辆信息管理');
       >
         <template #label>
           <div class="table-first">
-            <div v-show="item.showSecondary" class="icon-first">
+            <div v-show="item.showSecondary">
               <el-icon
                 class="tabel-tab-icon"
                 v-if="item.secondShow"
@@ -67,9 +60,6 @@ const activeName = ref('车辆信息管理');
   height: 100%;
   padding: 0.5rem;
   background-color: #fff;
-  .icon-first {
-    margin-right: 5px;
-  }
   .table-first {
     display: flex;
     align-items: center;

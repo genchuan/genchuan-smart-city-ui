@@ -261,7 +261,7 @@ const handleFullShow = () => {
         <TableAction
           :actions="[
             {
-              label: '新增路测停车',
+              label: '新增停车场',
               type: 'primary',
               icon: ACTION_ICON.ADD,
               auth: ['system:role:create'],

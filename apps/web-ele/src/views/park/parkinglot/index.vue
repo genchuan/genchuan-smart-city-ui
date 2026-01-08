@@ -12,7 +12,7 @@ const tabArray = ref([
     components: Table,
     showSecondary: true,
     secondShow: true,
-  } 
+  }, 
 ]);
 const activeName = ref('车辆信息管理');
 </script>
@@ -31,7 +31,7 @@ const activeName = ref('车辆信息管理');
       >
         <template #label>
           <div class="table-first">
-            <div v-show="item.showSecondary">
+            <div v-show="item.showSecondary" class="icon-first">
               <el-icon
                 class="tabel-tab-icon"
                 v-if="item.secondShow"
@@ -60,6 +60,9 @@ const activeName = ref('车辆信息管理');
   height: 100%;
   padding: 0.5rem;
   background-color: #fff;
+  .icon-first {
+    margin-right: 5px;
+  }
   .table-first {
     display: flex;
     align-items: center;
