@@ -335,45 +335,4 @@ const handleFullShow = () => {
       总计: 停车场数量10;车位总数:1211;评价车场车位73;
     </div>
   </div>
-</template>
-<style lang="scss">
-.park-lot-table-new { 
-  padding-bottom: 20px;
-  .vxe-buttons--wrapper {
-    padding-top: 0px;
-  }
-  .table-first {
-    display: flex;
-    align-items: center;
-    .tabel-tab-icon {
-      margin-right: 5px;
-      cursor: pointer;
-    }
-  }
-  .vxe-tools--wrapper {
-    position: fixed;
-    right: 77px;
-    top: 90px;
-  }
-  .vxe-tools--operate {
-    position: fixed;
-    right: 0px;
-    top: 90px;
-  }
-  .vxe-pager .vxe-pager--sizes {
-    margin-right: 10px;
-  }
-  .bottom-title {
-    position: relative;
-    margin-top: -30px;
-    margin-left: 10px;
-  }
-  .common-tool-bar-config {
-    .vxe-tools--operate {
-      .vxe-button:nth-child(2) {
-        display: none;
-      }
-    }
-  }
-}
-</style>
+</template> 

@@ -4,6 +4,7 @@ import { ref } from 'vue';
 import Table from './basic/index.vue';
 import Road from './road/index.vue';
 
+import '#/components/page/index.scss';
 const changeArrowStatus = (item) => {
   item.secondShow = !item.secondShow;
 };
@@ -61,24 +62,4 @@ const activeName = ref('车辆信息管理');
       </el-tab-pane>
     </el-tabs>
   </div>
-</template>
-<style lang="scss">
-.common-index {
-  height: 100%;
-  padding: 0.5rem;
-  background-color: #fff;
-  .icon-first {
-    margin-right: 5px;
-  }
-  .table-first {
-    display: flex;
-    align-items: center;
-  }
-  .el-tabs__header {
-    margin-bottom: 0px;
-  }
-  .common-tabs {
-    position: relative;
-  }
-}
-</style>
+</template> 
