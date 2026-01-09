@@ -10,6 +10,7 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
+import { exportToExcel } from '#/utils/excel.js';
 
 import {
   dataList,
@@ -84,7 +85,9 @@ function handleRefresh() {
 }
 
 /** 导出表格 */
-async function handleExport() {}
+async function handleExport() {
+  exportToExcel(dataObj.apilist, '停车场列表', '全市停车场数据.xlsx');
+}
 
 /** 创建角色 */
 function handleCreate() {
