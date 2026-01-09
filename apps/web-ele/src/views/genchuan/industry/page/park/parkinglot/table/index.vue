@@ -1,18 +1,15 @@
-<script lang="ts" setup>
-import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { SystemRoleApi } from '#/api/system/role';
-
+<script setup>
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
+import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteRole, deleteRoleList, exportRole } from '#/api/system/role';
+import { deleteRole, deleteRoleList } from '#/api/system/role';
 import { $t } from '#/locales';
 
 import {
@@ -37,7 +34,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
     drawerApi.close();
   },
   onConfirm() {},
-  async onOpenChange(isOpen: boolean) {},
+  async onOpenChange() {},
 });
 const formData = ref();
 const [Form, formApi] = useVbenForm({
@@ -56,12 +53,10 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onCancel() {
     formDrawerApi.close();
   },
-  onConfirm() {
-    console.info('onConfirm');
-  },
-  async onOpenChange(isOpen: boolean) {
+  onConfirm() {},
+  async onOpenChange(isOpen) {
     if (isOpen) {
-      formData.value = formDrawerApi.getData<Record<string, any>>();
+      formData.value = formDrawerApi.getData();
       if (formData.value?.id) {
         await formApi.setValues(formData.value);
       } else {
@@ -77,10 +72,7 @@ function handleRefresh() {
 }
 
 /** 导出表格 */
-async function handleExport() {
-  const data = await exportRole(await gridApi.formApi.getValues());
-  downloadFileFromBlobPart({ fileName: '角色.xls', source: data });
-}
+async function handleExport() {}
 
 /** 创建角色 */
 function handleCreate() {
@@ -92,7 +84,7 @@ function handleCreate() {
 }
 
 /** 编辑角色 */
-function handleEdit(row: SystemRoleApi.Role) {
+function handleEdit(row) {
   formDrawerApi
     .setData({
       title: '编辑停车场',
@@ -100,14 +92,12 @@ function handleEdit(row: SystemRoleApi.Role) {
     })
     .open();
 }
-
-/** 删除角色 */
-async function handleDelete(row: SystemRoleApi.Role) {
+async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting', [row.name]),
   });
   try {
-    await deleteRole(row.id!);
+    await deleteRole(row.id);
     ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
     handleRefresh();
   } finally {
@@ -115,29 +105,24 @@ async function handleDelete(row: SystemRoleApi.Role) {
   }
 }
 
-/** 批量删除角色 */
 async function handleDeleteBatch() {
-  await confirm($t('ui.actionMessage.deleteBatchConfirm'));
+  await confirm($t('确定删除这些数据吗？'));
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deletingBatch'),
   });
   try {
     await deleteRoleList(checkedIds.value);
     checkedIds.value = [];
-    ElMessage.success($t('ui.actionMessage.deleteSuccess'));
+    ElMessage.success($t('删除成功'));
     handleRefresh();
   } finally {
     loadingInstance.close();
   }
 }
 
-const checkedIds = ref<number[]>([]);
-function handleRowCheckboxChange({
-  records,
-}: {
-  records: SystemRoleApi.Role[];
-}) {
-  checkedIds.value = records.map((item) => item.id!);
+const checkedIds = ref([]);
+function handleRowCheckboxChange({ records }) {
+  checkedIds.value = records.map((item) => item.id);
 }
 const dataObj = reactive({
   total: dataList().length,
@@ -172,7 +157,7 @@ const getTableData = (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm, QueryFormApi] = useVbenForm({
+const [QueryForm] = useVbenForm({
   // 默认展开
   collapsed: false,
   // 所有表单项共用，可单独在表单内覆盖
@@ -202,7 +187,6 @@ function onSubmit() {
 }
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    'max-height': '100%',
     columns: useGridColumns(),
     keepSource: true,
     proxyConfig: {
@@ -221,17 +205,17 @@ const [Grid, gridApi] = useVbenVxeGrid({
       search: true,
     },
     showOverflow: true,
-  } as VxeTableGridOptions<SystemRoleApi.Role>,
+  },
   gridEvents: {
     checkboxAll: handleRowCheckboxChange,
     checkboxChange: handleRowCheckboxChange,
   },
   showSearchForm: false,
-} as any);
+});
 
 const activeName = ref('全部');
 const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用' }]);
-const handleClick = (tab, event: Event) => {
+const handleClick = () => {
   gridApi.query();
 };
 const handleSerachShow = () => {

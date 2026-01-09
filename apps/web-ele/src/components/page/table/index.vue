@@ -1,7 +1,4 @@
-<script lang="ts" setup>
-import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { SystemRoleApi } from '#/api/system/role';
-
+<script setup>
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
@@ -37,7 +34,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
     drawerApi.close();
   },
   onConfirm() {},
-  async onOpenChange(isOpen: boolean) {},
+  async onOpenChange() {},
 });
 const formData = ref();
 const [Form, formApi] = useVbenForm({
@@ -56,12 +53,10 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onCancel() {
     formDrawerApi.close();
   },
-  onConfirm() {
-    console.info('onConfirm');
-  },
-  async onOpenChange(isOpen: boolean) {
+  onConfirm() {},
+  async onOpenChange(isOpen) {
     if (isOpen) {
-      formData.value = formDrawerApi.getData<Record<string, any>>();
+      formData.value = formDrawerApi.getData();
       if (formData.value?.id) {
         await formApi.setValues(formData.value);
       } else {
@@ -92,7 +87,7 @@ function handleCreate() {
 }
 
 /** 编辑角色 */
-function handleEdit(row: SystemRoleApi.Role) {
+function handleEdit(row) {
   formDrawerApi
     .setData({
       title: '编辑停车场',
@@ -102,12 +97,12 @@ function handleEdit(row: SystemRoleApi.Role) {
 }
 
 /** 删除角色 */
-async function handleDelete(row: SystemRoleApi.Role) {
+async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting', [row.name]),
   });
   try {
-    await deleteRole(row.id!);
+    await deleteRole(row.id);
     ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
     handleRefresh();
   } finally {
@@ -131,38 +126,46 @@ async function handleDeleteBatch() {
   }
 }
 
-const checkedIds = ref<number[]>([]);
-function handleRowCheckboxChange({
-  records,
-}: {
-  records: SystemRoleApi.Role[];
-}) {
-  checkedIds.value = records.map((item) => item.id!);
+const checkedIds = ref([]);
+function handleRowCheckboxChange({ records }) {
+  checkedIds.value = records.map((item) => item.id);
 }
 const dataObj = reactive({
-  total: 10,
+  total: dataList().length,
+  currentPage: 1,
+  pageSize: 10,
   apilist: dataList(),
   list: [],
 });
 // 表格数据获取
-const getTableData = () => {
-  const tabelObj = {
-    list: dataObj.apilist.map((v) => v),
-    total: dataObj.apilist.length,
-  };
-  tabelObj.list = tabelObj.list.filter((v) => {
-    if (activeName.value === '全部') {
-      return true;
-    }
-    return v.status === activeName.value;
-  });
-  return tabelObj;
+const getTableData = (pageObj) => {
+  const page = pageObj.page;
+  dataObj.total = dataObj.apilist
+    .map((v) => v)
+    .filter((v) => {
+      if (activeName.value === '全部') {
+        return true;
+      }
+      return v.status === activeName.value;
+    }).length;
+  dataObj.list = dataObj.apilist
+    .map((v) => v)
+    .filter((v) => {
+      if (activeName.value === '全部') {
+        return true;
+      }
+      return v.status === activeName.value;
+    })
+    .slice(
+      (page.currentPage - 1) * page.pageSize,
+      page.currentPage * page.pageSize,
+    );
+  return dataObj;
 };
 
-const [QueryForm, QueryFormApi] = useVbenForm({
+const [QueryForm] = useVbenForm({
   // 默认展开
   collapsed: false,
-  'max-height': '100%',
   // 所有表单项共用，可单独在表单内覆盖
   commonConfig: {
     // 所有表单项
@@ -190,34 +193,36 @@ function onSubmit() {
 }
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
+    'max-height': '100%',
     columns: useGridColumns(),
     keepSource: true,
     proxyConfig: {
       ajax: {
-        query: async ({ page }, formValues) => getTableData(),
+        query: async ({ page }) => getTableData({ page }),
       },
     },
     rowConfig: {
       keyField: 'id',
       isHover: true,
     },
+    pagerConfig: dataObj,
     toolbarConfig: {
       'class-name': 'common-tool-bar-config',
       refresh: true,
       search: true,
     },
     showOverflow: true,
-  } as VxeTableGridOptions<SystemRoleApi.Role>,
+  },
   gridEvents: {
     checkboxAll: handleRowCheckboxChange,
     checkboxChange: handleRowCheckboxChange,
   },
   showSearchForm: false,
-} as any);
+});
 
 const activeName = ref('全部');
 const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用' }]);
-const handleClick = (tab, event: Event) => {
+const handleClick = () => {
   gridApi.query();
 };
 const handleSerachShow = () => {
@@ -262,7 +267,7 @@ const handleFullShow = () => {
         <TableAction
           :actions="[
             {
-              label: '新增停车场',
+              label: '新增路测停车',
               type: 'primary',
               icon: ACTION_ICON.ADD,
               auth: ['system:role:create'],
@@ -331,9 +336,11 @@ const handleFullShow = () => {
           ]"
         />
       </template>
+      <template #bottom>
+        <span class="bottom-title">
+          总计: 停车场数量10;车位总数:1211;评价车场车位73;
+        </span>
+      </template>
     </Grid>
-    <div class="bottom-title">
-      总计: 停车场数量10;车位总数:1211;评价车场车位73;
-    </div>
   </div>
 </template>
