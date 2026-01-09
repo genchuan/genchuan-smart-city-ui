@@ -162,6 +162,7 @@ const getTableData = () => {
 const [QueryForm, QueryFormApi] = useVbenForm({
   // 默认展开
   collapsed: false,
+  'max-height': '100%',
   // 所有表单项共用，可单独在表单内覆盖
   commonConfig: {
     // 所有表单项
@@ -335,4 +336,4 @@ const handleFullShow = () => {
       总计: 停车场数量10;车位总数:1211;评价车场车位73;
     </div>
   </div>
-</template> 
+</template>

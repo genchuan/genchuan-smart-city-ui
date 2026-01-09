@@ -13,7 +13,7 @@ const tabArray = ref([
     label: '车辆信息管理',
     components: Table,
     showSecondary: true,
-    secondShow: true,
+    secondShow: false,
   },
 ]);
 const activeName = ref('车辆信息管理');
@@ -52,7 +52,11 @@ const activeName = ref('车辆信息管理');
             <span>{{ item.label }}</span>
           </div>
         </template>
-        <component :is="item.components" :second-show="item.secondShow" />
+        <component
+          :is="item.components"
+          :second-show="item.secondShow"
+          :key="item.label"
+        />
       </el-tab-pane>
     </el-tabs>
   </div>

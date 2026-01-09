@@ -140,23 +140,36 @@ function handleRowCheckboxChange({
   checkedIds.value = records.map((item) => item.id!);
 }
 const dataObj = reactive({
-  total: 10,
+  total: dataList().length,
+  currentPage: 1,
+  pageSize: 10,
   apilist: dataList(),
   list: [],
 });
 // 表格数据获取
-const getTableData = () => {
-  const tabelObj = {
-    list: dataObj.apilist.map((v) => v),
-    total: dataObj.apilist.length,
-  };
-  tabelObj.list = tabelObj.list.filter((v) => {
-    if (activeName.value === '全部') {
-      return true;
-    }
-    return v.status === activeName.value;
-  });
-  return tabelObj;
+const getTableData = (pageObj) => {
+  const page = pageObj.page;
+  dataObj.total = dataObj.apilist
+    .map((v) => v)
+    .filter((v) => {
+      if (activeName.value === '全部') {
+        return true;
+      }
+      return v.status === activeName.value;
+    }).length;
+  dataObj.list = dataObj.apilist
+    .map((v) => v)
+    .filter((v) => {
+      if (activeName.value === '全部') {
+        return true;
+      }
+      return v.status === activeName.value;
+    })
+    .slice(
+      (page.currentPage - 1) * page.pageSize,
+      page.currentPage * page.pageSize,
+    );
+  return dataObj;
 };
 
 const [QueryForm, QueryFormApi] = useVbenForm({
@@ -189,17 +202,19 @@ function onSubmit() {
 }
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
+    'max-height': '100%',
     columns: useGridColumns(),
     keepSource: true,
     proxyConfig: {
       ajax: {
-        query: async ({ page }, formValues) => getTableData(),
+        query: async ({ page }) => getTableData({ page }),
       },
     },
     rowConfig: {
       keyField: 'id',
       isHover: true,
     },
+    pagerConfig: dataObj,
     toolbarConfig: {
       'class-name': 'common-tool-bar-config',
       refresh: true,
@@ -330,50 +345,11 @@ const handleFullShow = () => {
           ]"
         />
       </template>
+      <template #bottom>
+        <span class="bottom-title">
+          总计: 停车场数量10;车位总数:1211;评价车场车位73;
+        </span>
+      </template>
     </Grid>
-    <div class="bottom-title">
-      总计: 停车场数量10;车位总数:1211;评价车场车位73;
-    </div>
   </div>
 </template>
-<style lang="scss">
-.park-lot-table-new { 
-  padding-bottom: 20px;
-  .vxe-buttons--wrapper {
-    padding-top: 0px;
-  }
-  .table-first {
-    display: flex;
-    align-items: center;
-    .tabel-tab-icon {
-      margin-right: 5px;
-      cursor: pointer;
-    }
-  }
-  .vxe-tools--wrapper {
-    position: fixed;
-    right: 77px;
-    top: 90px;
-  }
-  .vxe-tools--operate {
-    position: fixed;
-    right: 0px;
-    top: 90px;
-  }
-  .vxe-pager .vxe-pager--sizes {
-    margin-right: 10px;
-  }
-  .bottom-title {
-    position: relative;
-    margin-top: -30px;
-    margin-left: 10px;
-  }
-  .common-tool-bar-config {
-    .vxe-tools--operate {
-      .vxe-button:nth-child(2) {
-        display: none;
-      }
-    }
-  }
-}
-</style>
