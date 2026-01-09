@@ -1,0 +1,209 @@
+// ---核心要素运行
+
+.element-table {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: calc(100% - 2vh);
+  overflow: auto hidden !important;
+}
+
+.element-tabs {
+  width: 100%;
+  height: 100%;
+
+  ::v-deep(.el-tabs__header) {
+    margin: 0;
+    background-color: rgb(255 255 255 / 2%);
+
+    .el-tabs__item {
+      width: 4vw;
+      height: 3.4vh;
+      font-size: 0.7vw;
+      color: #fff;
+      background-color: rgb(25 186 139 / 10%);
+      border: 0.1vw solid #fff;
+
+      &.is-active {
+        color: #0cf;
+        background-color: rgb(0 204 255 / 20%);
+      }
+    }
+
+    .el-tabs__active-bar {
+      height: 0.2vh;
+      background-color: #0cf;
+    }
+  }
+
+  ::v-deep(.el-tabs__content) {
+    height: calc(100% - 3vh);
+    overflow: hidden;
+  }
+
+  ::v-deep(.el-tab-pane) {
+    height: 100%;
+    overflow: hidden;
+  }
+}
+
+::v-deep(.core-element-table) {
+  display: block !important;
+  width: 100% !important;
+  overflow-x: auto !important;
+  table-layout: fixed !important;
+  border-spacing: 0;
+  border-collapse: separate;
+  background-color: rgb(0 30 60 / 40%) !important;
+
+  th {
+    padding: 0.5vw 0;
+    font-size: 0.7vw;
+    font-weight: 500;
+    color: #e6f7ff;
+    text-align: center;
+    white-space: nowrap;
+    background-color: rgb(0 40 80 / 80%);
+    border-color: rgb(0 40 80 / 50%);
+  }
+
+  td {
+    padding: 0.4vw 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.7vw;
+    color: #b3d9ff;
+    text-align: center;
+    white-space: nowrap;
+    background-color: transparent;
+    border-bottom: 1px solid rgb(0 204 255 / 15%);
+    transition: all 0.2s;
+  }
+
+  .el-table__row {
+    background-color: rgb(0 30 60 / 50%);
+
+    &:nth-child(even) {
+      background-color: rgb(0 40 80 / 50%);
+    }
+
+    &:hover > td {
+      color: #fff;
+      background-color: rgb(0 122 255 / 30%) !important;
+    }
+  }
+
+  .el-table__row--current > td {
+    color: #fff;
+    background-color: rgb(0 122 255 / 40%) !important;
+  }
+
+  .el-table__empty-text {
+    color: #8cbfff;
+    background-color: rgb(0 30 60 / 40%);
+  }
+
+  &::before {
+    background-color: rgb(0 204 255 / 20%);
+  }
+
+  .el-table__fixed-right::before,
+  .el-table__fixed::before {
+    background-color: transparent;
+  }
+}
+
+::v-deep(.el-tag) {
+  font-size: 0.7vw;
+
+  &.el-tag--success {
+    color: #2eb861;
+    background-color: rgb(46 184 97 / 20%);
+    border-color: rgb(46 184 97 / 50%);
+  }
+
+  &.el-tag--warning {
+    color: #fad514;
+    background-color: rgb(250 173 20 / 20%);
+    border-color: rgb(250 173 20 / 50%);
+  }
+
+  &.el-tag--danger {
+    color: #eb5757;
+    background-color: rgb(235 87 87 / 20%);
+    border-color: rgb(235 87 87 / 50%);
+  }
+
+  &.el-tag--info {
+    color: #4299e1;
+    background-color: rgb(66 153 225 / 20%);
+    border-color: rgb(66 153 225 / 50%);
+  }
+}
+
+.element-dialog {
+  --el-dialog-bg-color: rgb(0 47 75 / 40%);
+  --el-dialog-border-color: rgb(0 198 255 / 30%);
+  --el-dialog-title-color: #facc15;
+  --el-dialog-text-color: #fff;
+  --el-dialog-header-border-color: rgb(0 198 255 / 30%);
+  --el-dialog-footer-border-color: rgb(0 198 255 / 30%);
+
+  border-radius: 8px;
+  box-shadow:
+    0 0 20px rgb(0 198 255 / 30%),
+    0 0 40px rgb(236 72 153 / 10%);
+
+  .el-dialog__header {
+    position: relative;
+    border-bottom: 1px solid rgb(0 198 255 / 30%);
+
+    &::after {
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      content: '';
+      background: linear-gradient(
+        90deg,
+        #00c6ff,
+        #ec4899,
+        #f7931e,
+        transparent
+      );
+    }
+  }
+
+  .element-detail {
+    .detail-section {
+      margin-bottom: 2vh;
+
+      h3 {
+        padding-bottom: 0.6vh;
+        margin-bottom: 1vh;
+        font-size: 0.9vw;
+        font-weight: 500;
+        color: rgb(0 30 60);
+        background-clip: text;
+        border-bottom: 1px solid rgb(0 40 80 / 50%);
+      }
+    }
+
+    ::v-deep(.el-descriptions) {
+      --el-descriptions-bg-color: transparent;
+      --el-descriptions-border-color: rgb(0 198 255 / 30%);
+      --el-descriptions-content-color: #fff;
+
+      .el-descriptions__label {
+        font-size: 0.8vw;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .el-dialog__footer {
+    padding-top: 15px;
+    border-top: 1px solid rgb(0 198 255 / 30%);
+  }
+}

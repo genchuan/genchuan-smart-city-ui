@@ -1,0 +1,57 @@
+.common-index {
+  height: 100%;
+  padding: 0.5rem;
+  background-color: #fff;
+  .icon-first {
+    margin-right: 5px;
+  }
+  .table-first {
+    display: flex;
+    align-items: center;
+  }
+  .el-tabs__header {
+    margin-bottom: 0px;
+  }
+  .common-tabs {
+    position: relative;
+  }
+  .park-lot-table-new { 
+  padding-bottom: 20px;
+  .vxe-buttons--wrapper {
+    padding-top: 0px;
+  }
+  .table-first {
+    display: flex;
+    align-items: center;
+    .tabel-tab-icon {
+      margin-right: 5px;
+      cursor: pointer;
+    }
+  }
+  .vxe-tools--wrapper {
+    position: fixed;
+    right: 77px;
+    top: 90px;
+  }
+  .vxe-tools--operate {
+    position: fixed;
+    right: 0px;
+    top: 90px;
+  }
+  .vxe-pager .vxe-pager--sizes {
+    margin-right: 10px;
+  }
+  .bottom-title {
+    position: relative;
+    margin-top: -30px;
+    margin-left: 10px;
+  }
+  .common-tool-bar-config {
+    .vxe-tools--operate {
+      .vxe-button:nth-child(2) {
+        display: none;
+      }
+    }
+  }
+}
+}

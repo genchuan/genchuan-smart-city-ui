@@ -214,39 +214,41 @@ const [Grid, gridApi] = useVbenVxeGrid({
       <div class="w-5/6">
         <Grid table-title="用户列表">
           <template #toolbar-tools>
-            <TableAction
-              :actions="[
-                {
-                  label: $t('ui.actionTitle.create', ['用户']),
-                  type: 'primary',
-                  icon: ACTION_ICON.ADD,
-                  auth: ['system:user:create'],
-                  onClick: handleCreate,
-                },
-                {
-                  label: $t('ui.actionTitle.export'),
-                  type: 'primary',
-                  icon: ACTION_ICON.DOWNLOAD,
-                  auth: ['system:user:export'],
-                  onClick: handleExport,
-                },
-                {
-                  label: $t('ui.actionTitle.import', ['用户']),
-                  type: 'primary',
-                  icon: ACTION_ICON.UPLOAD,
-                  auth: ['system:user:import'],
-                  onClick: handleImport,
-                },
-                {
-                  label: $t('ui.actionTitle.deleteBatch'),
-                  type: 'danger',
-                  icon: ACTION_ICON.DELETE,
-                  disabled: isEmpty(checkedIds),
-                  auth: ['system:user:delete'],
-                  onClick: handleDeleteBatch,
-                },
-              ]"
-            />
+            <div>
+              <TableAction
+                :actions="[
+                  {
+                    label: $t('ui.actionTitle.create', ['用户']),
+                    type: 'primary',
+                    icon: ACTION_ICON.ADD,
+                    auth: ['system:user:create'],
+                    onClick: handleCreate,
+                  },
+                  {
+                    label: $t('ui.actionTitle.export'),
+                    type: 'primary',
+                    icon: ACTION_ICON.DOWNLOAD,
+                    auth: ['system:user:export'],
+                    onClick: handleExport,
+                  },
+                  {
+                    label: $t('ui.actionTitle.import', ['用户']),
+                    type: 'primary',
+                    icon: ACTION_ICON.UPLOAD,
+                    auth: ['system:user:import'],
+                    onClick: handleImport,
+                  },
+                  {
+                    label: $t('ui.actionTitle.deleteBatch'),
+                    type: 'danger',
+                    icon: ACTION_ICON.DELETE,
+                    disabled: isEmpty(checkedIds),
+                    auth: ['system:user:delete'],
+                    onClick: handleDeleteBatch,
+                  },
+                ]"
+              />
+            </div>
           </template>
           <template #actions="{ row }">
             <TableAction

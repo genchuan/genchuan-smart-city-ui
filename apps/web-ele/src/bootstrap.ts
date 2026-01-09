@@ -7,7 +7,7 @@ import { preferences } from '@vben/preferences';
 import { initStores } from '@vben/stores';
 import '@vben/styles';
 import '@vben/styles/ele';
-
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { useTitle } from '@vueuse/core';
 import { ElLoading } from 'element-plus';
 
@@ -38,7 +38,9 @@ async function bootstrap(namespace: string) {
   app.use(VueDOMPurifyHTML);
   // 注册Element Plus提供的v-loading指令
   app.directive('loading', ElLoading.directive);
-
+  for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+    app.component(key, component)
+  }
   // 注册Vben提供的v-loading和v-spinning指令
   registerLoadingDirective(app, {
     loading: false, // Vben提供的v-loading指令和Element Plus提供的v-loading指令二选一即可，此处false表示不注册Vben提供的v-loading指令

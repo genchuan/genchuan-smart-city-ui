@@ -1,0 +1,119 @@
+// ---全局态势趋势
+
+.trend-cards-3x2 {
+  display: grid;
+  flex: 1;
+  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5vw;
+  height: calc(100% - 60px);
+  padding: 0.5vh 0.3vw;
+}
+
+.trend-card {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.8vw 1vw;
+  overflow: hidden;
+  cursor: pointer;
+  background: rgb(0 68 102 / 80%);
+  border: 1px solid rgb(0 198 255 / 30%);
+  border-radius: 8px;
+  box-shadow: 0 0 1vw rgb(0 198 255 / 20%);
+  transition: all 0.3s ease;
+
+  &::after {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 0;
+    width: 40%;
+    height: 100%;
+    content: '';
+    background: linear-gradient(45deg, transparent, rgb(0 198 255 / 10%));
+  }
+
+  &:hover {
+    border-color: transparent;
+    box-shadow: 0 0 20px rgb(0 198 255 / 30%);
+    transform: translateY(-3px);
+  }
+
+  .trend-title {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 0.5vh;
+    font-size: 0.7vw;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .trend-value {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    font-size: 1.2vw;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #4f46e5;
+    text-shadow: 0 0 8px rgb(0 198 255 / 20%);
+    background: linear-gradient(90deg, #4f46e5, #818cf8);
+    background-clip: text;
+  }
+
+  .trend-unit {
+    margin-left: 0.2vw;
+    font-size: 0.6vw;
+    color: #ccefff;
+  }
+
+  &.trend-card1:hover {
+    border-color: #4f46e5;
+    box-shadow: 0 0 20px rgb(79 70 229 / 30%);
+  }
+
+  &.trend-card2:hover {
+    border-color: #34d399;
+    box-shadow: 0 0 20px rgb(52 211 153 / 30%);
+  }
+
+  &.trend-card3:hover {
+    border-color: #facc15;
+    box-shadow: 0 0 20px rgb(255 214 10 / 30%);
+  }
+
+  &.trend-card4:hover {
+    border-color: #ff4d6d;
+    box-shadow: 0 0 20px rgb(255 77 109 / 30%);
+  }
+
+  &.trend-card5:hover {
+    border-color: #a78bfa;
+    box-shadow: 0 0 20px rgb(167 139 250 / 30%);
+  }
+
+  &.trend-card6:hover {
+    border-color: #ffb74d;
+    box-shadow: 0 0 20px rgb(255 183 77 / 30%);
+  }
+}
+
+@keyframes pulse-danger {
+  0% {
+    box-shadow: 0 0 0 0 rgb(255 77 77 / 70%);
+  }
+
+  100% {
+    box-shadow: 0 0 0 15px rgb(255 77 77 / 0%);
+  }
+}
+
+.pulse-danger {
+  animation: pulse-danger 1s infinite;
+}
