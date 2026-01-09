@@ -9,7 +9,6 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteRole, deleteRoleList } from '#/api/system/role';
 import { $t } from '#/locales';
 
 import {
@@ -53,7 +52,20 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onCancel() {
     formDrawerApi.close();
   },
-  onConfirm() {},
+  onConfirm() {
+    const obj = formApi.form.values;
+    if (formDrawerApi.sharedData.payload.title === '新增停车场') {
+      dataObj.apilist.push(obj);
+    } else {
+      dataObj.apilist.forEach((v, i) => {
+        if (v.id === formData.value?.id) {
+          dataObj.apilist[i] = obj;
+        }
+      });
+    }
+    handleRefresh();
+    formDrawerApi.close();
+  },
   async onOpenChange(isOpen) {
     if (isOpen) {
       formData.value = formDrawerApi.getData();
@@ -97,7 +109,7 @@ async function handleDelete(row) {
     text: $t('ui.actionMessage.deleting', [row.name]),
   });
   try {
-    await deleteRole(row.id);
+    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
     ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
     handleRefresh();
   } finally {
@@ -111,7 +123,9 @@ async function handleDeleteBatch() {
     text: $t('ui.actionMessage.deletingBatch'),
   });
   try {
-    await deleteRoleList(checkedIds.value);
+    dataObj.apilist = dataObj.apilist.filter(
+      (v) => !checkedIds.value.includes(v.id),
+    );
     checkedIds.value = [];
     ElMessage.success($t('删除成功'));
     handleRefresh();
