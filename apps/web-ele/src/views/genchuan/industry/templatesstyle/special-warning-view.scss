@@ -1,0 +1,181 @@
+// ---专项预警视图
+
+.special-warning-table {
+  ::v-deep(.el-table) {
+    // 专项预警主色调：【极光青蓝系】#00c6ff 浅湖蓝 → #0096c7 深海蓝 渐变
+    // 差异化区分：故障(红橙)、隐患(翠绿)、合规(蓝紫)、专项(青蓝)，4个视图色调完全不冲突，业务属性贴合度高
+    --el-table-bg-color: rgba(0, 198, 255, 0.08);
+    --el-table-text-color-primary: #fff;
+    --el-table-border-color: #00c6ff;
+    --el-table-row-hover-bg-color: rgba(0, 198, 255, 0.2);
+    width: 100%;
+    table-layout: fixed;
+    box-sizing: border-box;
+    font-size: 0.8vw;
+
+    // 表头渐变背景 与故障预警结构一致，仅替换专属青蓝渐变
+    .el-table__header {
+      background: linear-gradient(90deg, #00c6ff, #0096c7) !important;
+    }
+
+    .el-table__header-wrapper {
+      width: 100%;
+      th {
+        color: #fff;
+        background: linear-gradient(90deg, #00c6ff, #0096c7) !important;
+        border: 1px solid #4fc3f7;
+        font-weight: bold;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.8vw;
+        padding: 0.3vw 0.5vw;
+
+        // 表头底部渐变光效，和故障/隐患/合规预警保持一致的视觉细节，统一页面质感
+        &::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 0.2vw;
+          background: linear-gradient(90deg, transparent, #fff, transparent);
+        }
+      }
+    }
+
+    .el-table__body-wrapper {
+      width: 100%;
+      td {
+        border: 1px solid rgba(0, 198, 255, 0.2);
+        text-align: center;
+        vertical-align: middle;
+        color: #fff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.8vw;
+        padding: 0.4vw 0.5vw;
+      }
+    }
+
+    // 空表格占位样式 适配合规主色调
+    .el-table__empty-block {
+      background: rgba(10, 25, 40, 0.8);
+      color: #00c6ff;
+      border: 1px dashed #0096c7;
+      width: 100%;
+      font-size: 0.8vw;
+      padding: 1vw;
+    }
+
+    // 处置状态对应行样式 严格匹配：未处置/处置中/已办结/超时 (和预警事件概览一致)
+    // 左侧3px竖线高亮标记，和故障预警的视觉逻辑完全统一，降低用户认知成本
+    .special-row-untreated { // 未处置
+      background: rgba(255, 77, 109, 0.1);
+      td {
+        border-left: 0.3vw solid #ff4d6d;
+      }
+    }
+    .special-row-disposing { // 处置中
+      background: rgba(247, 147, 30, 0.1);
+      td {
+        border-left: 0.3vw solid #f7931e;
+      }
+    }
+    .special-row-completed { // 已办结
+      background: rgba(0, 198, 255, 0.1);
+      td {
+        border-left: 0.3vw solid #00c6ff;
+      }
+    }
+    .special-row-timeout { // 超时
+      background: rgba(114, 46, 209, 0.1);
+      td {
+        border-left: 0.3vw solid #722ed1;
+      }
+    }
+  }
+
+  // 预警场景标签样式 (匹配字段：warningScene 泊位类/设备类/收费类/安全类)
+  .special-scene-tag {
+    background: rgba(0, 198, 255, 0.2);
+    border-color: #00c6ff;
+    color: #fff;
+    border-radius: 0.4vw;
+    font-size: 0.75vw;
+    padding: 0.2vw 0.6vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 8vw;
+    margin: 0 0.1vw;
+  }
+
+  // 预警类型标签样式 (匹配字段：alertType)
+  .special-alert-type-tag {
+    background: rgba(0, 150, 199, 0.2);
+    border-color: #0096c7;
+    color: #fff;
+    border-radius: 0.4vw;
+    font-size: 0.75vw;
+    padding: 0.2vw 0.6vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 8vw;
+    margin: 0 0.1vw;
+  }
+
+  // 处置措施标签样式 (匹配字段：disposalMeasure)
+  .disposal-measure-tag {
+    background: rgba(64, 102, 255, 0.2);
+    border-color: #4066ff;
+    color: #fff;
+    border-radius: 0.4vw;
+    font-size: 0.75vw;
+    padding: 0.2vw 0.6vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 10vw;
+    margin: 0 0.1vw;
+  }
+
+  // 设备ID高亮样式 (匹配字段：deviceId)
+  .special-device-id {
+    color: #00c6ff;
+    font-weight: bold;
+    text-shadow: 0 0 0.3vw rgba(0, 198, 255, 0.5);
+    font-size: 0.8vw;
+  }
+
+  // 视频链接文字样式 (匹配字段：videoUrl)
+  .video-url-text {
+    color: #4fc3f7;
+    font-size: 0.75vw;
+    text-decoration: underline;
+    cursor: pointer;
+    &:hover {
+      color: #00c6ff;
+    }
+  }
+
+  // 处置状态标签样式 (核心样式，匹配字段：disposalStatus)
+  .disposal-status-tag {
+    border-radius: 0.4vw;
+    font-weight: bold;
+    padding: 0.2vw 0.8vw;
+    font-size: 0.75vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 8vw;
+    margin: 0 0.1vw;
+  }
+}

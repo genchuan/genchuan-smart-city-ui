@@ -1,0 +1,193 @@
+// ---隐患预警视图
+
+.hidden-danger-warning-table {
+  ::v-deep(.el-table) {
+    // 核心样式变量（隐患预警采用绿色系为主调，区分故障预警红粉/预警事件蓝色）
+    --el-table-bg-color: rgba(0, 180, 42, 0.08);
+    --el-table-text-color-primary: #fff;
+    --el-table-border-color: #00b42a;
+    --el-table-row-hover-bg-color: rgba(0, 180, 42, 0.2);
+    width: 100%;
+    table-layout: fixed;
+    box-sizing: border-box;
+    font-size: 0.8vw;
+
+    // 表头背景渐变（绿色系渐变，区分故障预警红橙/预警事件蓝青）
+    .el-table__header {
+      background: linear-gradient(90deg, #00b42a, #00e039) !important;
+    }
+
+    .el-table__header-wrapper {
+      width: 100%;
+      th {
+        color: #fff;
+        background: linear-gradient(90deg, #00b42a, #00e039) !important;
+        border: 1px solid #33e659;
+        font-weight: bold;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.8vw;
+        padding: 0.3vw 0.5vw;
+
+        // 表头下侧渐变光效（保持视觉一致性，颜色适配绿色系）
+        &::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 0.2vw;
+          background: linear-gradient(90deg, transparent, #fff, transparent);
+        }
+      }
+    }
+
+    .el-table__body-wrapper {
+      width: 100%;
+      td {
+        border: 1px solid rgba(0, 180, 42, 0.2);
+        text-align: center;
+        vertical-align: middle;
+        color: #fff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.8vw;
+        padding: 0.4vw 0.5vw;
+      }
+    }
+
+    // 空表格样式（适配绿色系主调）
+    .el-table__empty-block {
+      background: rgba(10, 25, 40, 0.8);
+      color: #00b42a;
+      border: 1px dashed #00e039;
+      width: 100%;
+      font-size: 0.8vw;
+      padding: 1vw;
+    }
+
+    // 整改进度对应的行样式（专属类名，避免冲突）
+    .hidden-danger-row-untreated { // 未整改
+      background: rgba(255, 77, 109, 0.1);
+      td {
+        border-left: 0.3vw solid #ff4d6d;
+      }
+    }
+    .hidden-danger-row-rectifying { // 整改中
+      background: rgba(247, 147, 30, 0.1);
+      td {
+        border-left: 0.3vw solid #f7931e;
+      }
+    }
+    .hidden-danger-row-completed { // 已完成
+      background: rgba(0, 180, 42, 0.1);
+      td {
+        border-left: 0.3vw solid #00b42a;
+      }
+    }
+    .hidden-danger-row-accepted { // 验收通过
+      background: rgba(0, 198, 255, 0.1);
+      td {
+        border-left: 0.3vw solid #00c6ff;
+      }
+    }
+  }
+
+  // 风险等级标签（一般/较大/重大 三级风险）
+  .hidden-danger-level-tag {
+    border-radius: 0.4vw;
+    font-size: 0.75vw;
+    padding: 0.2vw 0.6vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 8vw;
+    margin: 0 0.1vw;
+    font-weight: bold;
+
+    &.general { // 一般
+      background: rgba(0, 198, 255, 0.2);
+      border-color: #00c6ff;
+      color: #fff;
+    }
+    &.larger { // 较大
+      background: rgba(247, 147, 30, 0.2);
+      border-color: #f7931e;
+      color: #fff;
+    }
+    &.major { // 重大
+      background: rgba(255, 77, 109, 0.2);
+      border-color: #ff4d6d;
+      color: #fff;
+    }
+  }
+
+  // 隐患类型标签
+  .hidden-danger-type-tag {
+    background: rgba(0, 224, 57, 0.2);
+    border-color: #00e039;
+    color: #fff;
+    border-radius: 0.4vw;
+    font-size: 0.75vw;
+    padding: 0.2vw 0.6vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 8vw;
+    margin: 0 0.1vw;
+  }
+
+  // 责任人/责任单位样式（突出显示）
+  .responsible-person {
+    color: #00b42a;
+    font-weight: bold;
+    text-shadow: 0 0 0.3vw rgba(0, 180, 42, 0.5);
+    font-size: 0.8vw;
+  }
+
+  .responsible-unit {
+    color: #00e039;
+    font-weight: 600;
+    font-size: 0.8vw;
+  }
+
+  // 整改进度标签
+  .rectification-status-tag {
+    border-radius: 0.4vw;
+    font-weight: bold;
+    padding: 0.2vw 0.8vw;
+    font-size: 0.75vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 8vw;
+    margin: 0 0.1vw;
+
+    &.untreated { // 未整改
+      background: rgba(255, 77, 109, 0.4);
+      border-color: #ff4d6d;
+      color: #fff;
+    }
+    &.rectifying { // 整改中
+      background: rgba(247, 147, 30, 0.4);
+      border-color: #f7931e;
+      color: #fff;
+    }
+    &.completed { // 已完成
+      background: rgba(0, 180, 42, 0.4);
+      border-color: #00b42a;
+      color: #fff;
+    }
+    &.accepted { // 验收通过
+      background: rgba(0, 198, 255, 0.4);
+      border-color: #00c6ff;
+      color: #fff;
+    }
+  }
+}

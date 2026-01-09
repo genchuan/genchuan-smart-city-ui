@@ -1,0 +1,218 @@
+// --- 异常预警视图
+
+// 完全复用处置进度追踪的布局结构+视觉规范 | 紫晶赤红警示色系（适配异常预警业务属性）| 所有字段一对一精准匹配
+.abnormal-warning-monitor {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  gap: 0.6vw;
+
+  // ===== 卡片展示区样式 - 4个异常时长核心数据专用 (平均/最大/最小/累计) =====
+  .abnormal-duration-card {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    box-sizing: border-box;
+    background: rgba(139, 92, 246, 0.05);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 0.4vw;
+
+    .abnormal-duration-item {
+      flex: 1;
+      min-width: 8vw;
+      text-align: center;
+      padding: 0.3vw 0;
+      box-sizing: border-box;
+      border-right: 1px dashed rgba(139, 92, 246, 0.3);
+      &:last-child { border-right: none; }
+
+      .item-label {
+        display: block;
+        font-size: 0.7vw;
+        color: #d1d5db;
+        margin-bottom: 0.2vw;
+      }
+      .item-value {
+        display: block;
+        font-size: 0.9vw;
+        color: #9333EA; // 紫晶主色 异常核心色
+        font-weight: bold;
+        text-shadow: 0 0 0.3vw rgba(147, 51, 234, 0.6);
+      }
+    }
+    // 累计异常时长 重点高亮（业务核心数据，和你原代码的预警总耗时高亮逻辑一致）
+    .totalAbnormalDuration {
+      .item-value {
+        font-size: 1vw;
+        color: #EF4444; // 赤红警示色 重点突出
+        font-weight: bolder;
+        text-shadow: 0 0 0.5vw rgba(239, 68, 68, 0.8);
+      }
+    }
+  }
+
+  // ===== 表格展示区样式 - 异常预警核心表格 (所有业务字段一对一适配) =====
+  .abnormal-warning-table {
+    flex: 1;
+    width: 100%;
+    box-sizing: border-box;
+    ::v-deep(.el-table) {
+      // 紫晶赤红警示色系 核心变量 (替换原鎏金色系，保留变量命名规则)
+      --el-table-bg-color: rgba(139, 92, 246, 0.08);
+      --el-table-text-color-primary: #fff;
+      --el-table-border-color: #9333EA;
+      --el-table-row-hover-bg-color: rgba(139, 92, 246, 0.2);
+      width: 100%;
+      table-layout: fixed;
+      box-sizing: border-box;
+      font-size: 0.8vw;
+
+      // 表头 紫晶赤红渐变背景 + 底部光效（和你其他模块100%一致的视觉细节，无差异化）
+      .el-table__header {
+        background: linear-gradient(90deg, #9333EA, #EF4444) !important;
+      }
+      .el-table__header-wrapper {
+        width: 100%;
+        th {
+          color: #fff;
+          background: linear-gradient(90deg, #9333EA, #EF4444) !important;
+          border: 1px solid #a855f7;
+          font-weight: bold;
+          text-align: center;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          font-size: 0.8vw;
+          padding: 0.3vw 0.5vw;
+          // 表头底部渐变光效（统一你的大屏页面质感，完全复用原代码）
+          &::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0.2vw;
+            background: linear-gradient(90deg, transparent, #fff, transparent);
+          }
+        }
+      }
+
+      // 表格主体单元格样式 (统一内边距、对齐方式、文字色)
+      .el-table__body-wrapper {
+        width: 100%;
+        td {
+          border: 1px solid rgba(139, 92, 246, 0.2);
+          text-align: center;
+          vertical-align: middle;
+          color: #fff;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          font-size: 0.8vw;
+          padding: 0.4vw 0.5vw;
+        }
+      }
+
+      // 空表格占位样式 - 适配紫晶警示主色调 (复用原代码结构)
+      .el-table__empty-block {
+        background: rgba(10, 25, 40, 0.8);
+        color: #9333EA;
+        border: 1px dashed #EF4444;
+        width: 100%;
+        font-size: 0.8vw;
+        padding: 1vw;
+      }
+
+      // ===== 异常预警 行状态高亮样式 (左侧竖线标记，完全复用你原代码的核心视觉逻辑，无改动) =====
+      .abnormal-row-unrelieved { // 未解除（核心异常态）
+        background: rgba(239, 68, 68, 0.1);
+        td { border-left: 0.3vw solid #ef4444; }
+      }
+      .abnormal-row-relieving { // 解除中（处理态）
+        background: rgba(147, 51, 234, 0.1);
+        td { border-left: 0.3vw solid #9333EA; }
+      }
+      .abnormal-row-relieved { // 已解除（完成态）
+        background: rgba(16, 185, 129, 0.1);
+        td { border-left: 0.3vw solid #10b981; }
+      }
+      .abnormal-row-timeout { // 超时未解除（严重异常态）
+        background: rgba(236, 72, 153, 0.1);
+        td { border-left: 0.3vw solid #ec4899; }
+      }
+      .abnormal-row-false { // 误报（无效态）
+        background: rgba(59, 130, 246, 0.1);
+        td { border-left: 0.3vw solid #3b82f6; }
+      }
+    }
+
+    .abnormal-type-tag {
+      border-radius: 0.4vw;
+      font-weight: 500;
+      padding: 0.2vw 0.6vw;
+      font-size: 0.75vw;
+      display: inline-block;
+      max-width: 8vw;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      &.data { background: rgba(147,51,234,0.2); border:1px solid #9333EA; color: #c4b5fd; }
+      &.charge { background: rgba(239,68,68,0.2); border:1px solid #ef4444; color: #fecdd3; }
+      &.guide { background: rgba(251,133,0,0.2); border:1px solid #fb8500; color: #fed7aa; }
+      &.process { background: rgba(59,130,246,0.2); border:1px solid #3b82f6; color: #bfdbfe; }
+    }
+
+    .abnormal-reason-text {
+      color: #e5e7eb;
+      font-size: 0.75vw;
+      max-width: 14vw;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: inline-block;
+    }
+
+    .influence-range-tag {
+      background: rgba(147, 51, 234, 0.15);
+      border-color: #a855f7;
+      color: #d8b4fe;
+      border-radius: 0.4vw;
+      font-size: 0.75vw;
+      padding: 0.2vw 0.6vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: inline-block;
+      max-width: 10vw;
+    }
+
+    .time-text {
+      color: #fcd34d;
+      font-size: 0.75vw;
+      font-family: 'Consolas', monospace;
+    }
+
+    .relieve-reason-text {
+      color: #d1d5db;
+      font-size: 0.75vw;
+      max-width: 12vw;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: inline-block;
+    }
+
+    .area-code-text {
+      color: #94a3b8;
+      font-size: 0.75vw;
+      font-weight: 500;
+    }
+
+    .lot-id-text {
+      color: #94a3b8;
+      font-size: 0.75vw;
+      font-weight: 500;
+    }
+  }
+}

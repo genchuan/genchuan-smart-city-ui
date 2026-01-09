@@ -1,0 +1,162 @@
+// ---合规预警视图
+
+.compliance-warning-table {
+  ::v-deep(.el-table) {
+    // 合规预警主色调：【靛蓝紫系】 区分故障红橙、隐患绿色，贴合合规/监管/法务的业务属性，沉稳专业
+    --el-table-bg-color: rgba(64, 102, 255, 0.08);
+    --el-table-text-color-primary: #fff;
+    --el-table-border-color: #4066ff;
+    --el-table-row-hover-bg-color: rgba(64, 102, 255, 0.2);
+    width: 100%;
+    table-layout: fixed;
+    box-sizing: border-box;
+    font-size: 0.8vw;
+
+    // 表头渐变背景 蓝紫渐变 与故障红橙、隐患绿形成差异化区分
+    .el-table__header {
+      background: linear-gradient(90deg, #4066ff, #722ed1) !important;
+    }
+
+    .el-table__header-wrapper {
+      width: 100%;
+      th {
+        color: #fff;
+        background: linear-gradient(90deg, #4066ff, #722ed1) !important;
+        border: 1px solid #668cff;
+        font-weight: bold;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.8vw;
+        padding: 0.3vw 0.5vw;
+
+        // 表头下侧渐变光效，和故障/隐患预警保持一致的视觉细节
+        &::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 0.2vw;
+          background: linear-gradient(90deg, transparent, #fff, transparent);
+        }
+      }
+    }
+
+    .el-table__body-wrapper {
+      width: 100%;
+      td {
+        border: 1px solid rgba(64, 102, 255, 0.2);
+        text-align: center;
+        vertical-align: middle;
+        color: #fff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.8vw;
+        padding: 0.4vw 0.5vw;
+      }
+    }
+
+    // 空表格占位样式 适配合规主色调
+    .el-table__empty-block {
+      background: rgba(10, 25, 40, 0.8);
+      color: #4066ff;
+      border: 1px dashed #722ed1;
+      width: 100%;
+      font-size: 0.8vw;
+      padding: 1vw;
+    }
+
+    // 整改进度对应行样式 (严格匹配：未整改/整改中/已完成)
+    .compliance-row-untreated { // 未整改
+      background: rgba(255, 77, 109, 0.1);
+      td {
+        border-left: 0.3vw solid #ff4d6d;
+      }
+    }
+    .compliance-row-rectifying { // 整改中
+      background: rgba(247, 147, 30, 0.1);
+      td {
+        border-left: 0.3vw solid #f7931e;
+      }
+    }
+    .compliance-row-completed { // 已完成
+      background: rgba(64, 102, 255, 0.1);
+      td {
+        border-left: 0.3vw solid #4066ff;
+      }
+    }
+  }
+
+  // 违规详情标签样式
+  .violation-detail-tag {
+    background: rgba(114, 46, 209, 0.2);
+    border-color: #722ed1;
+    color: #fff;
+    border-radius: 0.4vw;
+    font-size: 0.75vw;
+    padding: 0.2vw 0.6vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 8vw;
+    margin: 0 0.1vw;
+  }
+
+  // 合规标准标签样式
+  .compliance-standard-tag {
+    background: rgba(64, 102, 255, 0.2);
+    border-color: #4066ff;
+    color: #fff;
+    border-radius: 0.4vw;
+    font-size: 0.75vw;
+    padding: 0.2vw 0.6vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 8vw;
+    margin: 0 0.1vw;
+  }
+
+  // 处罚建议标签样式
+  .punishment-suggestion-tag {
+    background: rgba(255, 107, 129, 0.2);
+    border-color: #ff6b81;
+    color: #fff;
+    border-radius: 0.4vw;
+    font-size: 0.75vw;
+    padding: 0.2vw 0.6vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 8vw;
+    margin: 0 0.1vw;
+  }
+
+  // 责任主体文字高亮样式 (企业/个人/部门)
+  .responsible-subject {
+    color: #4066ff;
+    font-weight: bold;
+    text-shadow: 0 0 0.3vw rgba(64, 102, 255, 0.5);
+    font-size: 0.8vw;
+  }
+
+  // 整改进度标签样式 (核心样式)
+  .rectification-status-tag {
+    border-radius: 0.4vw;
+    font-weight: bold;
+    padding: 0.2vw 0.8vw;
+    font-size: 0.75vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 8vw;
+    margin: 0 0.1vw;
+  }
+}
