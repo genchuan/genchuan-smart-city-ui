@@ -126,7 +126,7 @@ export const dataList = () => {
       name: '芗城区巷口街道停车场',
       type: '公共',
       address: '芗城区新华东路32号',
-      status: '启用',
+      status: '暂停运营',
       parkTotal: '45',
       pricing: '首小时6元，后续每小时3元，封顶26元',
       business: '06:00-23:00',
@@ -141,7 +141,7 @@ export const dataList = () => {
       name: '龙文区蓝田街道停车场',
       type: '公共',
       address: '龙文区蓝田街道梧桥中路58号',
-      status: '启用',
+      status: '暂停运营',
       parkTotal: '110',
       pricing: '首小时8元，后续每小时4元，封顶35元',
       business: '24H',
@@ -171,7 +171,7 @@ export const dataList = () => {
       name: '芗城区东铺头街道停车场',
       type: '公共',
       address: '芗城区东铺头街道新华西路128号',
-      status: '启用',
+      status: '维修中',
       parkTotal: '95',
       pricing: '首小时10元，后续每小时5元，封顶40元',
       business: '07:00-23:00',
@@ -186,7 +186,7 @@ export const dataList = () => {
       name: '芗城区西桥街道停车场',
       type: '专用',
       address: '芗城区西桥街道江滨路89号',
-      status: '启用',
+      status: '维修中',
       parkTotal: '70',
       pricing: '内部车辆免费，外部车辆首小时12元，后续每小时6元',
       business: '24H',
@@ -347,7 +347,6 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入详细地址',
       },
-      rules: 'required',
     },
     {
       fieldName: 'parkTotal',
@@ -365,7 +364,6 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入收费标准',
       },
-      rules: 'required',
     },
     {
       fieldName: 'business',
@@ -374,7 +372,6 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入营业时间',
       },
-      rules: 'required',
     },
     {
       fieldName: 'phone',
@@ -383,7 +380,6 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入联系电话',
       },
-      rules: 'required',
     },
     {
       fieldName: 'division',
@@ -392,7 +388,6 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入所属行政区划',
       },
-      rules: 'required',
     },
     {
       fieldName: 'status',
@@ -422,6 +417,7 @@ export function useGridColumns() {
       title: '停车场名称',
       minWidth: 200,
       sortable: true,
+      slots: { default: 'parkName' },
     },
     {
       field: 'address',

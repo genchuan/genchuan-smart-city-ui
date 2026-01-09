@@ -73,6 +73,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     }
   },
 });
+const [searchDrawer] = useVbenDrawer();
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
@@ -185,12 +186,7 @@ const [QueryForm] = useVbenForm({
   // 垂直布局，label和input在不同行，值为vertical
   // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
-  }),
+  schema: useFormSchema(),
   // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
@@ -230,21 +226,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const activeName = ref('全部');
-const handleOpenDetail = (row) => {};
-const tabsData = ref([
-  { label: '全部' },
-  { label: '启用' },
-  { label: '禁用' },
-  { label: '暂停运营' },
-  { label: '维修中' },
-]);
-const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
-  if (item.label === '全部') {
-    text = `(${dataObj.apilist.length})`;
-  }
-  return item.label + text;
-};
+const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用' }]);
 const handleClick = () => {
   gridApi.query();
 };
@@ -261,6 +243,8 @@ const handleFullShow = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
+    <!-- <NewFormModel @success="handleRefresh" /> -->
+    <searchDrawer title="搜索栏设置" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -277,7 +261,7 @@ const handleFullShow = () => {
               <el-tab-pane
                 v-for="item in tabsData"
                 :key="item.label"
-                :label="createLabel(item)"
+                :label="item.label"
                 :name="item.label"
               />
             </el-tabs>
@@ -288,7 +272,7 @@ const handleFullShow = () => {
         <TableAction
           :actions="[
             {
-              label: '新增',
+              label: textObj.addText,
               type: 'primary',
               icon: ACTION_ICON.ADD,
               auth: ['system:role:create'],
@@ -332,26 +316,9 @@ const handleFullShow = () => {
           ></i>
         </button>
       </template>
-      <template #parkName="{ row }">
-        <el-text
-          @click="handleOpenDetail.bind(null, row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.name }}
-        </el-text>
-      </template>
       <template #actions="{ row }">
         <TableAction
           :actions="[
-            {
-              label: '详情',
-              type: 'primary',
-              link: true,
-              icon: ACTION_ICON.MORE,
-              auth: ['system:role:update'],
-              onClick: handleOpenDetail.bind(null, row),
-            },
             {
               label: '编辑',
               type: 'primary',
@@ -375,9 +342,6 @@ const handleFullShow = () => {
         />
       </template>
       <template #bottom>
-        <span class="bottom-title">
-          {{ textObj.total }}
-        </span>
         <span class="bottom-title">
           {{ textObj.total }}
         </span>

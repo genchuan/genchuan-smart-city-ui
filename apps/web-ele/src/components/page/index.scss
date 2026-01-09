@@ -1,9 +1,8 @@
 .common-index {
   height: 100%;
   padding: 0.5rem;
-  background-color: #fff;
-  overflow: auto;
-
+  background-color:  hsl(var(--card));
+  overflow: auto; 
   .icon-first {
     margin-right: 5px;
   }
@@ -92,5 +91,8 @@
       max-height: 74vh;
       overflow: auto;
     }
+  }
+  .common-align {
+    cursor: pointer;
   }
 }
