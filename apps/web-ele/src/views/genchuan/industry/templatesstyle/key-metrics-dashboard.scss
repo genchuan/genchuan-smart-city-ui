@@ -1,0 +1,242 @@
+// ---核心指标看板
+
+// 核心指标卡片样式
+.stats-cards {
+  box-sizing: border-box;
+  display: flex;
+  gap: 1vw;
+  width: 100%;
+
+  .stat-card {
+    position: relative;
+    box-sizing: border-box;
+    flex: 1;
+    padding: 0.8vw 1vw;
+    overflow: hidden;
+    cursor: pointer;
+    background: rgb(0 68 102 / 80%);
+    border: 1px solid rgb(0 198 255 / 30%);
+    border-radius: 8px;
+    box-shadow: 0 0 1vw rgb(0 198 255 / 20%);
+    transition: all 0.3s ease;
+
+    &::after {
+      position: absolute;
+      top: 0;
+      right: 0;
+      z-index: 0;
+      width: 40%;
+      height: 100%;
+      content: '';
+      background: linear-gradient(45deg, transparent, rgb(0 198 255 / 10%));
+    }
+
+    &:hover {
+      border-color: transparent;
+      box-shadow: 0 0 20px rgb(0 198 255 / 30%);
+      transform: translateY(-3px);
+    }
+
+    &.warning-card {
+      &:hover {
+        border-color: #f7931e;
+        box-shadow: 0 0 20px rgb(247 147 30 / 30%);
+      }
+
+      &.pulse {
+        animation: pulse-red 1s infinite alternate;
+      }
+    }
+
+    &.abnormal-card {
+      &:hover {
+        border-color: #ff4d6d;
+        box-shadow: 0 0 20px rgb(255 77 109 / 30%);
+      }
+    }
+
+    &.dispose-card {
+      &:hover {
+        border-color: #14b8a6;
+        box-shadow: 0 0 20px rgb(20 184 166 / 30%);
+      }
+    }
+
+    &.rate-card {
+      &:hover {
+        border-color: #4f46e5;
+        box-shadow: 0 0 20px rgb(79 70 229 / 30%);
+      }
+    }
+
+    &.danger-rate {
+      background: rgb(255 179 186 / 20%);
+
+      .stat-value {
+        color: #ff4d6d;
+        background: linear-gradient(90deg, #ff4d6d, #f9a);
+        background-clip: text;
+      }
+
+      .stat-title,
+      .stat-desc {
+        color: #f9a;
+      }
+    }
+
+    &.normal-rate {
+      background: rgb(255 204 211 / 10%);
+
+      .stat-value {
+        color: #4f46e5;
+        background: linear-gradient(90deg, #4f46e5, #818cf8);
+        background-clip: text;
+      }
+
+      .stat-title,
+      .stat-desc {
+        color: #818cf8;
+      }
+    }
+
+    .stat-title {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5vw;
+      font-size: 1vw;
+      color: #67e8f9;
+
+      &::before {
+        display: inline-block;
+        width: 0.7vw;
+        height: 1.4vh;
+        margin-right: 0.8vw;
+        content: '';
+        border-radius: 50%;
+      }
+    }
+
+    .stat-value {
+      position: relative;
+      z-index: 1;
+      margin-bottom: 0.5vh;
+      font-size: 1.8vw;
+      font-weight: 700;
+      line-height: 1.2;
+      text-shadow: 0 0 8px rgb(0 198 255 / 20%);
+    }
+
+    .stat-desc {
+      position: relative;
+      z-index: 1;
+      font-size: 0.7vw;
+      line-height: 1.4;
+      color: #67e8f9;
+    }
+
+    &.rate-card .stat-title::before {
+      background: #4f46e5;
+    }
+
+    &.warning-card .stat-title::before {
+      background: #f7931e;
+    }
+
+    &.abnormal-card .stat-title::before {
+      background: #ff4d6d;
+    }
+
+    &.dispose-card .stat-title::before {
+      background: #14b8a6;
+    }
+
+    &.warning-card .stat-value {
+      color: #f7931e;
+      background: linear-gradient(90deg, #f7931e, #fbb866);
+      background-clip: text;
+    }
+
+    &.abnormal-card .stat-value {
+      color: #ff4d6d;
+      background: linear-gradient(90deg, #ff4d6d, #f9a);
+      background-clip: text;
+    }
+
+    &.dispose-card .stat-value {
+      color: #14b8a6;
+      background: linear-gradient(90deg, #14b8a6, #5eead4);
+      background-clip: text;
+    }
+  }
+}
+
+// 实时统计弹窗样式
+.real-time-stat-dialog {
+  --el-dialog-bg-color: rgb(0 47 75 / 40%);
+  --el-dialog-border-color: rgb(0 198 255 / 30%);
+  --el-dialog-title-color: #000;
+  --el-dialog-text-color: #fff;
+  --el-dialog-header-border-color: rgb(0 198 255 / 30%);
+  --el-dialog-footer-border-color: rgb(0 198 255 / 30%);
+
+  border-radius: 8px;
+  box-shadow:
+    0 0 20px rgb(0 198 255 / 30%),
+    0 0 40px rgb(236 72 153 / 10%);
+
+  ::v-deep(.el-dialog__header) {
+    position: relative;
+    border-bottom: 1px solid rgb(0 198 255 / 30%);
+
+    &::after {
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      content: '';
+      background: linear-gradient(
+        90deg,
+        #00c6ff,
+        #ec4899,
+        #f7931e,
+        transparent
+      );
+    }
+  }
+
+  .stat-detail {
+    .detail-section {
+      margin-bottom: 2vh;
+
+      h3 {
+        padding-bottom: 0.6vh;
+        margin-bottom: 1vh;
+        font-size: 1vw;
+        font-weight: 600;
+        color: #175b2d;
+        background: linear-gradient(90deg, #00c6ff, #67e8f9);
+        background-clip: text;
+        border-bottom: 1px solid rgb(0 198 255 / 30%);
+      }
+    }
+
+    ::v-deep(.el-descriptions) {
+      --el-descriptions-bg-color: transparent;
+      --el-descriptions-border-color: rgb(0 198 255 / 30%);
+      --el-descriptions-content-color: #fff;
+
+      .el-descriptions__label {
+        font-size: 0.8vw;
+        font-weight: 600;
+      }
+    }
+  }
+
+  ::v-deep(.el-dialog__footer) {
+    padding-top: 1vh;
+    border-top: 1px solid rgb(0 198 255 / 30%);
+  }
+}

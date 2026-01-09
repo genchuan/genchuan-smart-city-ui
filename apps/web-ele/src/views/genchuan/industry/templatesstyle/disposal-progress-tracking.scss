@@ -1,0 +1,291 @@
+// ---处置进度追踪
+
+.disposal-progress-tracking {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6vw;
+  width: 100%;
+  height: 100%;
+
+  // ===== 卡片展示区样式 - 7个耗时核心数据专用 =====
+  .progress-card-container {
+    box-sizing: border-box;
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    background: rgb(255 183 3 / 5%);
+    border: 1px solid rgb(255 183 3 / 20%);
+    border-radius: 0.4vw;
+
+    .disposal-duration-item {
+      box-sizing: border-box;
+      flex: 1;
+      min-width: 6vw;
+      padding: 0.3vw 0;
+      text-align: center;
+      border-right: 1px dashed rgb(255 183 3 / 30%);
+
+      &:last-child {
+        border-right: none;
+      }
+
+      .item-label {
+        display: block;
+        margin-bottom: 0.2vw;
+        font-size: 0.7vw;
+        color: #d1d5db;
+      }
+
+      .item-value {
+        display: block;
+        font-size: 0.9vw;
+        font-weight: bold;
+        color: #ffb703;
+        text-shadow: 0 0 0.3vw rgb(255 183 3 / 60%);
+      }
+    }
+    // 预警处置总耗时 重点高亮（业务核心数据）
+    .alertDisposalTotalDuration {
+      .item-value {
+        font-size: 1vw;
+        font-weight: bolder;
+        color: #fb8500;
+        text-shadow: 0 0 0.5vw rgb(251 133 0 / 80%);
+      }
+    }
+  }
+
+  // ===== 表格展示区样式 - 处置进度追踪核心表格 =====
+  .disposal-progress-table {
+    box-sizing: border-box;
+    flex: 1;
+    width: 100%;
+
+    ::v-deep(.el-table) {
+      // 鎏金琥珀色系 核心变量
+      --el-table-bg-color: rgb(255 183 3 / 8%);
+      --el-table-text-color-primary: #fff;
+      --el-table-border-color: #ffb703;
+      --el-table-row-hover-bg-color: rgb(255 183 3 / 20%);
+
+      box-sizing: border-box;
+      width: 100%;
+      font-size: 0.8vw;
+      table-layout: fixed;
+
+      // 表头 鎏金琥珀渐变背景 + 底部光效（和其他模块保持一致的视觉细节）
+      .el-table__header {
+        background: linear-gradient(90deg, #ffb703, #fb8500) !important;
+      }
+
+      .el-table__header-wrapper {
+        width: 100%;
+
+        th {
+          padding: 0.3vw 0.5vw;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          font-size: 0.8vw;
+          font-weight: bold;
+          color: #fff;
+          text-align: center;
+          white-space: nowrap;
+          background: linear-gradient(90deg, #ffb703, #fb8500) !important;
+          border: 1px solid #fdc530;
+          // 表头底部渐变光效（统一页面质感）
+          &::after {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0.2vw;
+            content: '';
+            background: linear-gradient(90deg, transparent, #fff, transparent);
+          }
+        }
+      }
+
+      // 表格主体单元格样式
+      .el-table__body-wrapper {
+        width: 100%;
+
+        td {
+          padding: 0.4vw 0.5vw;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          font-size: 0.8vw;
+          vertical-align: middle;
+          color: #fff;
+          text-align: center;
+          white-space: nowrap;
+          border: 1px solid rgb(255 183 3 / 20%);
+        }
+      }
+
+      // 空表格占位样式 - 适配合鎏金主色调
+      .el-table__empty-block {
+        width: 100%;
+        padding: 1vw;
+        font-size: 0.8vw;
+        color: #ffb703;
+        background: rgb(10 25 40 / 80%);
+        border: 1px dashed #fb8500;
+      }
+
+      // ===== 处置进度 行状态高亮样式 (左侧竖线标记，复用你的核心视觉逻辑) =====
+      .progress-row-unassigned {
+        // 未派单
+        background: rgb(239 68 68 / 10%);
+
+        td {
+          border-left: 0.3vw solid #ef4444;
+        }
+      }
+
+      .progress-row-dispatched {
+        // 已派单待接单
+        background: rgb(249 115 22 / 10%);
+
+        td {
+          border-left: 0.3vw solid #f97316;
+        }
+      }
+
+      .progress-row-received {
+        // 已接单待处置
+        background: rgb(255 183 3 / 10%);
+
+        td {
+          border-left: 0.3vw solid #ffb703;
+        }
+      }
+
+      .progress-row-disposing {
+        // 处置中
+        background: rgb(251 133 0 / 10%);
+
+        td {
+          border-left: 0.3vw solid #fb8500;
+        }
+      }
+
+      .progress-row-feedback {
+        // 处置完成待验收
+        background: rgb(16 185 129 / 10%);
+
+        td {
+          border-left: 0.3vw solid #10b981;
+        }
+      }
+
+      .progress-row-acceptance {
+        // 验收中
+        background: rgb(59 130 246 / 10%);
+
+        td {
+          border-left: 0.3vw solid #3b82f6;
+        }
+      }
+
+      .progress-row-closed {
+        // 已办结 ✔️核心完成态
+        background: rgb(255 183 3 / 5%);
+
+        td {
+          border-left: 0.3vw solid #ffb703;
+        }
+      }
+
+      .progress-row-timeout {
+        // 超时 ❗核心异常态
+        background: rgb(124 58 237 / 10%);
+
+        td {
+          border-left: 0.3vw solid #7c3aed;
+        }
+      }
+    }
+
+    .alert-text {
+      display: inline-block;
+      max-width: 12vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 0.75vw;
+      color: #e5e7eb;
+    }
+
+    .progress-time-text {
+      font-family: Consolas, monospace;
+      font-size: 0.75vw;
+      color: #fcd34d;
+    }
+
+    .maintain-user-id {
+      font-size: 0.75vw;
+      font-weight: 500;
+      color: #94a3b8;
+    }
+
+    .disposal-measure-tag {
+      display: inline-block;
+      max-width: 10vw;
+      padding: 0.2vw 0.6vw;
+      margin: 0 0.1vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 0.75vw;
+      color: #fff;
+      white-space: nowrap;
+      background: rgb(255 183 3 / 20%);
+      border-color: #ffb703;
+      border-radius: 0.4vw;
+    }
+
+    .disposal-result-tag {
+      display: inline-block;
+      max-width: 8vw;
+      padding: 0.2vw 0.8vw;
+      font-size: 0.75vw;
+      font-weight: bold;
+      border-radius: 0.4vw;
+
+      &.success {
+        color: #10b981;
+        background: rgb(16 185 129 / 20%);
+        border-color: #10b981;
+      }
+
+      &.fail {
+        color: #ef4444;
+        background: rgb(239 68 68 / 20%);
+        border-color: #ef4444;
+      }
+
+      &.pending {
+        color: #ffb703;
+        background: rgb(255 183 3 / 20%);
+        border-color: #ffb703;
+      }
+    }
+
+    .attachment-url-text {
+      font-size: 0.75vw;
+      color: #93c5fd;
+      text-decoration: underline;
+      cursor: pointer;
+
+      &:hover {
+        color: #3b82f6;
+        text-shadow: 0 0 0.2vw rgb(59 130 246 / 50%);
+      }
+    }
+
+    .update-time-text {
+      font-family: Consolas, monospace;
+      font-size: 0.7vw;
+      color: #6b7280;
+    }
+  }
+}

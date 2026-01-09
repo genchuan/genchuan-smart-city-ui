@@ -1,0 +1,78 @@
+// ---事件预警追踪
+
+// 预警追踪面板样式
+.warn-header-reset {
+  --el-button-bg-color: rgb(20 184 166 / 30%);
+  --el-button-border-color: #14b8a6;
+  --el-button-text-color: #fff;
+  --el-button-hover-bg-color: rgb(20 184 166 / 50%);
+}
+
+// 预警详情弹窗样式
+.warn-dialog {
+  --el-dialog-bg-color: rgb(0 47 75 / 40%);
+  --el-dialog-border-color: rgb(0 198 255 / 30%);
+  --el-dialog-title-color: #facc15;
+  --el-dialog-text-color: #fff;
+  --el-dialog-header-border-color: rgb(0 198 255 / 30%);
+  --el-dialog-footer-border-color: rgb(0 198 255 / 30%);
+
+  border-radius: 8px;
+  box-shadow:
+    0 0 20px rgb(0 198 255 / 30%),
+    0 0 40px rgb(236 72 153 / 10%);
+
+  .el-dialog__header {
+    position: relative;
+    border-bottom: 1px solid rgb(0 198 255 / 30%);
+
+    &::after {
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      content: '';
+      background: linear-gradient(
+        90deg,
+        #00c6ff,
+        #ec4899,
+        #f7931e,
+        transparent
+      );
+    }
+  }
+
+  .warn-detail {
+    .detail-section {
+      margin-bottom: 2vh;
+
+      h3 {
+        padding-bottom: 0.6vh;
+        margin-bottom: 1vh;
+        font-size: 1vw;
+        font-weight: 500;
+        color: #facc15;
+        background: linear-gradient(90deg, #facc15, #f7931e);
+        background-clip: text;
+        border-bottom: 1px solid rgb(0 198 255 / 30%);
+      }
+    }
+
+    ::v-deep(.el-descriptions) {
+      --el-descriptions-bg-color: transparent;
+      --el-descriptions-border-color: rgb(0 198 255 / 30%);
+      --el-descriptions-content-color: #fff;
+
+      .el-descriptions__label {
+        font-size: 0.8vw;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .el-dialog__footer {
+    padding-top: 15px;
+    border-top: 1px solid rgb(0 198 255 / 30%);
+  }
+}

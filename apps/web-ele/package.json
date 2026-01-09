@@ -26,9 +26,10 @@
     "#/*": "./src/*"
   },
   "dependencies": {
-    "@form-create/designer": "catalog:",
-    "@form-create/element-ui": "catalog:",
-    "@tinymce/tinymce-vue": "catalog:",
+    "@element-plus/icons-vue": "^2.3.2",
+    "@form-create/designer": "^3.4.0",
+    "@form-create/element-ui": "^3.1.1",
+    "@tinymce/tinymce-vue": "^6.3.0",
     "@vben/access": "workspace:*",
     "@vben/common-ui": "workspace:*",
     "@vben/constants": "workspace:*",
@@ -43,21 +44,23 @@
     "@vben/styles": "workspace:*",
     "@vben/types": "workspace:*",
     "@vben/utils": "workspace:*",
-    "@videojs-player/vue": "catalog:",
-    "@vueuse/core": "catalog:",
-    "@vueuse/integrations": "catalog:",
-    "benz-amr-recorder": "catalog:",
-    "bpmn-js": "catalog:",
-    "bpmn-js-properties-panel": "catalog:",
-    "bpmn-js-token-simulation": "catalog:",
-    "camunda-bpmn-moddle": "catalog:",
-    "cropperjs": "catalog:",
-    "dayjs": "catalog:",
-    "diagram-js": "catalog:",
+    "@videojs-player/vue": "^1.0.0",
+    "@vueuse/core": "^13.9.0",
+    "@vueuse/integrations": "^14.1.0",
+    "benz-amr-recorder": "^1.1.2",
+    "bpmn-js": "^17.8.0",
+    "bpmn-js-properties-panel": "^5.23.0",
+    "bpmn-js-token-simulation": "^0.36.3",
+    "camunda-bpmn-moddle": "^7.0.1",
+    "cropperjs": "^1.6.1",
+    "dayjs": "^1.11.10",
+    "diagram-js": "^12.8.0",
+    "echarts": "catalog:",
     "element-plus": "catalog:",
     "fast-xml-parser": "catalog:",
     "highlight.js": "catalog:",
     "pinia": "catalog:",
+    "screenfull": "^6.0.2",
     "steady-xml": "catalog:",
     "tinymce": "catalog:",
     "video.js": "catalog:",
@@ -66,9 +69,10 @@
     "vue-router": "catalog:",
     "vue3-print-nb": "catalog:",
     "vue3-signature": "catalog:",
-    "vuedraggable": "catalog:"
+    "vuedraggable": "catalog:",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "unplugin-element-plus": "catalog:"
+    "unplugin-element-plus": "^0.11.2"
   }
 }

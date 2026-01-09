@@ -1,0 +1,219 @@
+// ---隐患预警视图
+
+.hidden-danger-warning-table {
+  ::v-deep(.el-table) {
+    // 核心样式变量（隐患预警采用绿色系为主调，区分故障预警红粉/预警事件蓝色）
+    --el-table-bg-color: rgb(0 180 42 / 8%);
+    --el-table-text-color-primary: #fff;
+    --el-table-border-color: #00b42a;
+    --el-table-row-hover-bg-color: rgb(0 180 42 / 20%);
+
+    box-sizing: border-box;
+    width: 100%;
+    font-size: 0.8vw;
+    table-layout: fixed;
+
+    // 表头背景渐变（绿色系渐变，区分故障预警红橙/预警事件蓝青）
+    .el-table__header {
+      background: linear-gradient(90deg, #00b42a, #00e039) !important;
+    }
+
+    .el-table__header-wrapper {
+      width: 100%;
+
+      th {
+        padding: 0.3vw 0.5vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.8vw;
+        font-weight: bold;
+        color: #fff;
+        text-align: center;
+        white-space: nowrap;
+        background: linear-gradient(90deg, #00b42a, #00e039) !important;
+        border: 1px solid #33e659;
+
+        // 表头下侧渐变光效（保持视觉一致性，颜色适配绿色系）
+        &::after {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 0.2vw;
+          content: '';
+          background: linear-gradient(90deg, transparent, #fff, transparent);
+        }
+      }
+    }
+
+    .el-table__body-wrapper {
+      width: 100%;
+
+      td {
+        padding: 0.4vw 0.5vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.8vw;
+        vertical-align: middle;
+        color: #fff;
+        text-align: center;
+        white-space: nowrap;
+        border: 1px solid rgb(0 180 42 / 20%);
+      }
+    }
+
+    // 空表格样式（适配绿色系主调）
+    .el-table__empty-block {
+      width: 100%;
+      padding: 1vw;
+      font-size: 0.8vw;
+      color: #00b42a;
+      background: rgb(10 25 40 / 80%);
+      border: 1px dashed #00e039;
+    }
+
+    // 整改进度对应的行样式（专属类名，避免冲突）
+    .hidden-danger-row-untreated {
+      // 未整改
+      background: rgb(255 77 109 / 10%);
+
+      td {
+        border-left: 0.3vw solid #ff4d6d;
+      }
+    }
+
+    .hidden-danger-row-rectifying {
+      // 整改中
+      background: rgb(247 147 30 / 10%);
+
+      td {
+        border-left: 0.3vw solid #f7931e;
+      }
+    }
+
+    .hidden-danger-row-completed {
+      // 已完成
+      background: rgb(0 180 42 / 10%);
+
+      td {
+        border-left: 0.3vw solid #00b42a;
+      }
+    }
+
+    .hidden-danger-row-accepted {
+      // 验收通过
+      background: rgb(0 198 255 / 10%);
+
+      td {
+        border-left: 0.3vw solid #00c6ff;
+      }
+    }
+  }
+
+  // 风险等级标签（一般/较大/重大 三级风险）
+  .hidden-danger-level-tag {
+    display: inline-block;
+    max-width: 8vw;
+    padding: 0.2vw 0.6vw;
+    margin: 0 0.1vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.75vw;
+    font-weight: bold;
+    white-space: nowrap;
+    border-radius: 0.4vw;
+
+    &.general {
+      color: #fff;
+      // 一般
+      background: rgb(0 198 255 / 20%);
+      border-color: #00c6ff;
+    }
+
+    &.larger {
+      color: #fff;
+      // 较大
+      background: rgb(247 147 30 / 20%);
+      border-color: #f7931e;
+    }
+
+    &.major {
+      color: #fff;
+      // 重大
+      background: rgb(255 77 109 / 20%);
+      border-color: #ff4d6d;
+    }
+  }
+
+  // 隐患类型标签
+  .hidden-danger-type-tag {
+    display: inline-block;
+    max-width: 8vw;
+    padding: 0.2vw 0.6vw;
+    margin: 0 0.1vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.75vw;
+    color: #fff;
+    white-space: nowrap;
+    background: rgb(0 224 57 / 20%);
+    border-color: #00e039;
+    border-radius: 0.4vw;
+  }
+
+  // 责任人/责任单位样式（突出显示）
+  .responsible-person {
+    font-size: 0.8vw;
+    font-weight: bold;
+    color: #00b42a;
+    text-shadow: 0 0 0.3vw rgb(0 180 42 / 50%);
+  }
+
+  .responsible-unit {
+    font-size: 0.8vw;
+    font-weight: 600;
+    color: #00e039;
+  }
+
+  // 整改进度标签
+  .rectification-status-tag {
+    display: inline-block;
+    max-width: 8vw;
+    padding: 0.2vw 0.8vw;
+    margin: 0 0.1vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.75vw;
+    font-weight: bold;
+    white-space: nowrap;
+    border-radius: 0.4vw;
+
+    &.untreated {
+      color: #fff;
+      // 未整改
+      background: rgb(255 77 109 / 40%);
+      border-color: #ff4d6d;
+    }
+
+    &.rectifying {
+      color: #fff;
+      // 整改中
+      background: rgb(247 147 30 / 40%);
+      border-color: #f7931e;
+    }
+
+    &.completed {
+      color: #fff;
+      // 已完成
+      background: rgb(0 180 42 / 40%);
+      border-color: #00b42a;
+    }
+
+    &.accepted {
+      color: #fff;
+      // 验收通过
+      background: rgb(0 198 255 / 40%);
+      border-color: #00c6ff;
+    }
+  }
+}

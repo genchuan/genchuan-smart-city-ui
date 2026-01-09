@@ -34,6 +34,20 @@ export default {
         'stylelint-config-recommended-vue/scss',
       ],
       files: ['*.scss', '**/*.scss'],
+      rules: {
+        'selector-pseudo-class-no-unknown': [
+          true,
+          {
+            ignorePseudoClasses: ['global', 'deep'],
+          },
+        ],
+        'selector-pseudo-element-no-unknown': [
+          true,
+          {
+            ignorePseudoElements: ['v-deep', 'v-global', 'v-slotted'],
+          },
+        ],
+      },
     },
   ],
   plugins: [
