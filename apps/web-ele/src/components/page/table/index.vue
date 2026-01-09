@@ -2,15 +2,15 @@
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
+import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteRole, deleteRoleList, exportRole } from '#/api/system/role';
 import { $t } from '#/locales';
+import { exportToExcel } from '#/utils/excel.js';
 
 import {
   dataList,
@@ -53,7 +53,20 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onCancel() {
     formDrawerApi.close();
   },
-  onConfirm() {},
+  onConfirm() {
+    const obj = formApi.form.values;
+    if (formDrawerApi.sharedData.payload.title === '新增停车场') {
+      dataObj.apilist.push(obj);
+    } else {
+      dataObj.apilist.forEach((v, i) => {
+        if (v.id === formData.value?.id) {
+          dataObj.apilist[i] = obj;
+        }
+      });
+    }
+    handleRefresh();
+    formDrawerApi.close();
+  },
   async onOpenChange(isOpen) {
     if (isOpen) {
       formData.value = formDrawerApi.getData();
@@ -73,8 +86,7 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  const data = await exportRole(await gridApi.formApi.getValues());
-  downloadFileFromBlobPart({ fileName: '角色.xls', source: data });
+  exportToExcel(dataObj.apilist, '停车场列表', '全市停车场数据.xlsx');
 }
 
 /** 创建角色 */
@@ -95,14 +107,12 @@ function handleEdit(row) {
     })
     .open();
 }
-
-/** 删除角色 */
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting', [row.name]),
   });
   try {
-    await deleteRole(row.id);
+    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
     ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
     handleRefresh();
   } finally {
@@ -110,16 +120,17 @@ async function handleDelete(row) {
   }
 }
 
-/** 批量删除角色 */
 async function handleDeleteBatch() {
-  await confirm($t('ui.actionMessage.deleteBatchConfirm'));
+  await confirm($t('确定删除这些数据吗？'));
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deletingBatch'),
   });
   try {
-    await deleteRoleList(checkedIds.value);
+    dataObj.apilist = dataObj.apilist.filter(
+      (v) => !checkedIds.value.includes(v.id),
+    );
     checkedIds.value = [];
-    ElMessage.success($t('ui.actionMessage.deleteSuccess'));
+    ElMessage.success($t('删除成功'));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -193,7 +204,6 @@ function onSubmit() {
 }
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    'max-height': '100%',
     columns: useGridColumns(),
     keepSource: true,
     proxyConfig: {
