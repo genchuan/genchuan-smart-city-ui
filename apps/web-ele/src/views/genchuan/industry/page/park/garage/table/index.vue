@@ -152,7 +152,7 @@ const getTableData = (pageObj) => {
       if (activeName.value === '全部') {
         return true;
       }
-      return v.status === activeName.value;
+      return v.enableStatus === activeName.value;
     }).length;
   dataObj.list = dataObj.apilist
     .map((v) => v)
@@ -160,7 +160,7 @@ const getTableData = (pageObj) => {
       if (activeName.value === '全部') {
         return true;
       }
-      return v.status === activeName.value;
+      return v.enableStatus === activeName.value;
     })
     .slice(
       (page.currentPage - 1) * page.pageSize,

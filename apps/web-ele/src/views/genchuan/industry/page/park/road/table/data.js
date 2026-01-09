@@ -204,8 +204,7 @@ export function useFormSchema() {
       label: '泊位ID',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入泊位ID',
-        disabled: true // 泊位ID建议系统生成
+        placeholder: '请输入泊位ID', 
       },
       rules: 'required',
     },

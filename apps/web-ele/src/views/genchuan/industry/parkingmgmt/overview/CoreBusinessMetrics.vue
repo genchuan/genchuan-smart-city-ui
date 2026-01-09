@@ -14,7 +14,7 @@ import {
   fetchParkingResourceIndicators,
   fetchParkingRiskIndicators,
   fetchParkingServiceIndicators,
-} from '#/api/genchuan/industry/parkingmgmt/overview/CoreBusinessMetrics.js';
+} from '#/api/genchuan/industry/parkingmgmt/overview/CoreBusinessMetrics.ts';
 
 const pageContainerRef = ref<HTMLElement | null>(null);
 let timeTimer: NodeJS.Timeout | null = null;
