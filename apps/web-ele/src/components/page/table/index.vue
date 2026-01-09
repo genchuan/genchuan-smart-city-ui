@@ -12,7 +12,7 @@ import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
-import { dataList, useFormSchema, useGridColumns } from './data';
+import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
 const props = defineProps({
   secondShow: {
@@ -21,7 +21,7 @@ const props = defineProps({
   },
 });
 const getTitle = computed(() => {
-  return formData.value?.id ? '编辑停车场' : '新增停车场';
+  return formData.value?.id ? textObj.editText : textObj.addText;
 });
 const [Drawer, drawerApi] = useVbenDrawer({
   footer: false,
@@ -50,7 +50,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
   onConfirm() {
     const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === '新增停车场') {
+    if (formDrawerApi.sharedData.payload.title === textObj.addText) {
       dataObj.apilist.push(obj);
     } else {
       dataObj.apilist.forEach((v, i) => {
@@ -81,14 +81,14 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  exportToExcel(dataObj.apilist, '停车场列表', '全市停车场数据.xlsx');
+  exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
 }
 
 /** 创建角色 */
 function handleCreate() {
   formDrawerApi
     .setData({
-      title: '新增停车场',
+      title: textObj.addText,
     })
     .open();
 }
@@ -97,7 +97,7 @@ function handleCreate() {
 function handleEdit(row) {
   formDrawerApi
     .setData({
-      title: '编辑停车场',
+      title: textObj.editText,
       ...row,
     })
     .open();
@@ -272,7 +272,7 @@ const handleFullShow = () => {
         <TableAction
           :actions="[
             {
-              label: '新增路测停车',
+              label: textObj.addText,
               type: 'primary',
               icon: ACTION_ICON.ADD,
               auth: ['system:role:create'],
@@ -343,7 +343,7 @@ const handleFullShow = () => {
       </template>
       <template #bottom>
         <span class="bottom-title">
-          总计: 停车场数量10;车位总数:1211;评价车场车位73;
+          {{ textObj.total }}
         </span>
       </template>
     </Grid>
