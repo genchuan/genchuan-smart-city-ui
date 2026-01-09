@@ -1,11 +1,11 @@
-// ---故障预警视图
+// 预警事件概览
 
-.fault-warning-table {
+.alert-event-overview-table {
   ::v-deep(.el-table) {
-    --el-table-bg-color: rgb(255 77 109 / 8%);
+    --el-table-bg-color: rgb(201 42 42 / 8%);
     --el-table-text-color-primary: #fff;
-    --el-table-border-color: #ff4d6d;
-    --el-table-row-hover-bg-color: rgb(255 77 109 / 20%);
+    --el-table-border-color: #c92a2a;
+    --el-table-row-hover-bg-color: rgb(201 42 42 / 20%);
 
     box-sizing: border-box;
     width: 100%;
@@ -13,7 +13,7 @@
     table-layout: fixed;
 
     .el-table__header {
-      background: linear-gradient(90deg, #ff4d6d, #f7931e) !important;
+      background: linear-gradient(90deg, #c92a2a, #e64949) !important;
     }
 
     .el-table__header-wrapper {
@@ -28,8 +28,8 @@
         color: #fff;
         text-align: center;
         white-space: nowrap;
-        background: linear-gradient(90deg, #ff4d6d, #f7931e) !important;
-        border: 1px solid #ff6b81;
+        background: linear-gradient(90deg, #c92a2a, #e64949) !important;
+        border: 1px solid #f08080;
 
         &::after {
           position: absolute;
@@ -55,7 +55,7 @@
         color: #fff;
         text-align: center;
         white-space: nowrap;
-        border: 1px solid rgb(255 77 109 / 20%);
+        border: 1px solid rgb(201 42 42 / 20%);
       }
     }
 
@@ -63,12 +63,12 @@
       width: 100%;
       padding: 1vw;
       font-size: 0.8vw;
-      color: #ff4d6d;
+      color: #e64949;
       background: rgb(10 25 40 / 80%);
-      border: 1px dashed #f7931e;
+      border: 1px dashed #f08080;
     }
 
-    .fault-row-danger {
+    .alert-row-untreated {
       background: rgb(255 77 109 / 10%);
 
       td {
@@ -76,7 +76,7 @@
       }
     }
 
-    .fault-row-warning {
+    .alert-row-disposing {
       background: rgb(247 147 30 / 10%);
 
       td {
@@ -84,16 +84,61 @@
       }
     }
 
-    .fault-row-success {
+    .alert-row-completed {
       background: rgb(56 176 0 / 10%);
 
       td {
         border-left: 0.3vw solid #38b000;
       }
     }
+
+    .alert-row-timeout {
+      background: rgb(153 51 255 / 10%);
+
+      td {
+        border-left: 0.3vw solid #93f;
+      }
+    }
   }
 
-  .fault-type-tag {
+  .alert-level-tag {
+    display: inline-block;
+    max-width: 8vw;
+    padding: 0.2vw 0.6vw;
+    margin: 0 0.1vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.75vw;
+    font-weight: bold;
+    white-space: nowrap;
+    border-radius: 0.4vw;
+
+    &.red {
+      color: #fff;
+      background: rgb(255 77 109 / 20%);
+      border-color: #ff4d6d;
+    }
+
+    &.orange {
+      color: #fff;
+      background: rgb(247 147 30 / 20%);
+      border-color: #f7931e;
+    }
+
+    &.yellow {
+      color: #fff;
+      background: rgb(255 204 0 / 20%);
+      border-color: #fc0;
+    }
+
+    &.blue {
+      color: #fff;
+      background: rgb(0 153 255 / 20%);
+      border-color: #09f;
+    }
+  }
+
+  .alert-type-tag {
     display: inline-block;
     max-width: 8vw;
     padding: 0.2vw 0.6vw;
@@ -103,19 +148,19 @@
     font-size: 0.75vw;
     color: #fff;
     white-space: nowrap;
-    background: rgb(0 198 255 / 20%);
-    border-color: #00c6ff;
+    background: rgb(0 204 255 / 20%);
+    border-color: #0cf;
     border-radius: 0.4vw;
   }
 
-  .user-count {
+  .user-name {
     font-size: 0.8vw;
     font-weight: bold;
-    color: #ff4d6d;
-    text-shadow: 0 0 0.3vw rgb(255 77 109 / 50%);
+    color: #e64949;
+    text-shadow: 0 0 0.3vw rgb(230 73 73 / 50%);
   }
 
-  .progress-tag {
+  .disposal-status-tag {
     display: inline-block;
     max-width: 8vw;
     padding: 0.2vw 0.8vw;
@@ -126,5 +171,29 @@
     font-weight: bold;
     white-space: nowrap;
     border-radius: 0.4vw;
+
+    &.untreated {
+      color: #fff;
+      background: rgb(255 77 109 / 40%);
+      border-color: #ff4d6d;
+    }
+
+    &.disposing {
+      color: #fff;
+      background: rgb(247 147 30 / 40%);
+      border-color: #f7931e;
+    }
+
+    &.completed {
+      color: #fff;
+      background: rgb(56 176 0 / 40%);
+      border-color: #38b000;
+    }
+
+    &.timeout {
+      color: #fff;
+      background: rgb(153 51 255 / 40%);
+      border-color: #93f;
+    }
   }
 }
