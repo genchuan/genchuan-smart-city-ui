@@ -1,475 +1,441 @@
-/** 表格初始数据*/
+/** 车库表格初始数据 - 按指定字段生成 */
 export const dataList = () => {
   return [
     {
-      id: '1',
-      name: '芗城区XX社区公共停车场',
-      type: '公共',
-      address: '芗城区XX街道XX路88号',
-      status: '启用',
-      parkTotal: '90',
-      pricing: '首小时8元，后续每小时4元，封顶32元',
-      business: '06:00-24:00',
-      division: '芗城区-东铺头街道',
-      grid: '东铺头街道网格001',
-      managementMatters: '泊位占用处置',
-      phone: '13800138000',
-      reason: '',
+      id: 'G001',                // 车库ID（使用字段id）
+      assetExtendId: 'AE001',    // 资产扩展ID（关联 tb_asset_extend）
+      parkId: '1',               // 所属车场ID（关联原有停车场id）
+      garageName: '芗城区XX社区公共停车场-地下一层', // 车库名称
+      floorCount: '1',           // 楼层数
+      totalParkingSpaces: '90',  // 总车位数
+      accessControlType: '道闸', // 门禁类型
+      detailedAddress: '芗城区XX街道XX路88号地下一层', // 详细地址
+      longitude: '117.6589',     // 经度
+      latitude: '24.5123',       // 纬度
+      enableStatus: '启用',      // 启用状态
+      creator: '张三',           // 创建人
+      createTime: '2025-01-10 09:20:30' // 创建时间
     },
     {
-      id: '2',
-      name: '龙文区碧湖公园停车场',
-      type: '公共',
-      address: '龙文区碧湖路126号',
-      status: '禁用',
-      parkTotal: '120',
-      pricing: '首小时6元，后续每小时3元，封顶28元',
-      business: '07:00-22:00',
-      division: '龙文区-碧湖街道',
-      grid: '碧湖街道网格002',
-      managementMatters: '设施故障维修',
-      phone: '123456789',
-      reason: '道闸系统升级维护',
+      id: 'G002',
+      assetExtendId: 'AE002',
+      parkId: '2',
+      garageName: '龙文区碧湖公园停车场-地面层',
+      floorCount: '1',
+      totalParkingSpaces: '120',
+      accessControlType: '车牌识别',
+      detailedAddress: '龙文区碧湖路126号',
+      longitude: '117.7056',
+      latitude: '24.4987',
+      enableStatus: '禁用',
+      creator: '李四',
+      createTime: '2025-01-12 14:15:20'
     },
     {
-      id: '3',
-      name: '龙海区石码镇便民停车场',
-      type: '公共',
-      address: '龙海区石码镇解放北路59号',
-      status: '禁用',
-      parkTotal: '68',
-      pricing: '首小时4元，后续每小时2元，封顶20元',
-      business: '08:00-21:00',
-      division: '龙海区-石码街道',
-      grid: '石码街道网格001',
-      managementMatters: '设施升级改造',
-      phone: '13959678987',
-      reason: '充电桩设备更换',
+      id: 'G003',
+      assetExtendId: 'AE003',
+      parkId: '3',
+      garageName: '龙海区石码镇便民停车场-地面层',
+      floorCount: '1',
+      totalParkingSpaces: '68',
+      accessControlType: '道闸+刷卡',
+      detailedAddress: '龙海区石码镇解放北路59号',
+      longitude: '117.8901',
+      latitude: '24.4562',
+      enableStatus: '禁用',
+      creator: '王五',
+      createTime: '2025-01-15 10:05:10'
     },
     {
-      id: '4',
-      name: '龙海区闽齐社区停车场',
-      type: '公共',
-      address: '闽齐社区西门',
-      status: '启用',
-      parkTotal: '35',
-      pricing: '首小时5元，后续每小时2元，封顶24元',
-      business: '24H',
-      division: '龙海区-海澄镇',
-      grid: '海澄镇网格001',
-      managementMatters: '泊位占用处置,设施故障维修',
-      phone: '15399916161',
-      reason: '',
+      id: 'G004',
+      assetExtendId: 'AE004',
+      parkId: '4',
+      garageName: '龙海区闽齐社区停车场-地面层',
+      floorCount: '1',
+      totalParkingSpaces: '35',
+      accessControlType: '车牌识别',
+      detailedAddress: '闽齐社区西门',
+      longitude: '117.8765',
+      latitude: '24.4438',
+      enableStatus: '启用',
+      creator: '赵六',
+      createTime: '2025-01-18 08:30:45'
     },
     {
-      id: '5',
-      name: '芗城区江滨路生态停车场',
-      type: '公共',
-      address: '芗城区江滨南路189号',
-      status: '启用',
-      parkTotal: '150',
-      pricing: '首小时10元，后续每小时5元，封顶40元',
-      business: '06:00-24:00',
-      division: '芗城区-巷口街道',
-      grid: '巷口街道网格003',
-      managementMatters: '车流高峰疏导,泊位占用处置',
-      phone: '8888888',
-      reason: '',
+      id: 'G005',
+      assetExtendId: 'AE005',
+      parkId: '5',
+      garageName: '芗城区江滨路生态停车场-地面+地下一层',
+      floorCount: '2',
+      totalParkingSpaces: '150',
+      accessControlType: '智能道闸',
+      detailedAddress: '芗城区江滨南路189号',
+      longitude: '117.6789',
+      latitude: '24.5012',
+      enableStatus: '启用',
+      creator: '孙七',
+      createTime: '2025-01-20 16:40:15'
     },
     {
-      id: '6',
-      name: '龙文区万达商圈停车场',
-      type: '公共',
-      address: '龙文区建元东路2号',
-      status: '启用',
-      parkTotal: '200',
-      pricing: '首小时7元，后续每小时3元，封顶30元',
-      business: '24H',
-      division: '龙文区-蓝田街道',
-      grid: '蓝田街道网格002',
-      managementMatters: '运营状态变更,数据统计分析',
-      phone: '15860234567',
-      reason: '',
+      id: 'G006',
+      assetExtendId: 'AE006',
+      parkId: '6',
+      garageName: '龙文区万达商圈停车场-地下一/二层',
+      floorCount: '2',
+      totalParkingSpaces: '200',
+      accessControlType: '车牌识别+人脸识别',
+      detailedAddress: '龙文区建元东路2号万达广场B1-B2层',
+      longitude: '117.7234',
+      latitude: '24.4897',
+      enableStatus: '启用',
+      creator: '周八',
+      createTime: '2025-01-22 11:10:30'
     },
     {
-      id: '7',
-      name: '长泰区武安镇公共停车场',
-      type: '公共',
-      address: '长泰区武安镇人民西路77号',
-      status: '启用',
-      parkTotal: '85',
-      pricing: '首小时5元，后续每小时2元，封顶22元',
-      business: '07:00-23:00',
-      division: '长泰区-武安镇',
-      grid: '武安镇网格001',
-      managementMatters: '定期设施巡检',
-      phone: '13706987654',
-      reason: '',
+      id: 'G007',
+      assetExtendId: 'AE007',
+      parkId: '7',
+      garageName: '长泰区武安镇公共停车场-地面层',
+      floorCount: '1',
+      totalParkingSpaces: '85',
+      accessControlType: '道闸',
+      detailedAddress: '长泰区武安镇人民西路77号',
+      longitude: '117.7890',
+      latitude: '24.6123',
+      enableStatus: '启用',
+      creator: '吴九',
+      createTime: '2025-01-25 13:25:40'
     },
     {
-      id: '8',
-      name: '漳浦县绥安镇便民停车场',
-      type: '公共',
-      address: '漳浦县绥安镇金浦大道101号',
-      status: '禁用',
-      parkTotal: '72',
-      pricing: '首小时4元，后续每小时1元，封顶18元',
-      business: '08:00-20:00',
-      division: '漳浦县-绥安镇',
-      grid: '绥安镇网格001',
-      managementMatters: '应急事件处置',
-      phone: '13695901234',
-      reason: '场地积水清理',
+      id: 'G008',
+      assetExtendId: 'AE008',
+      parkId: '8',
+      garageName: '漳浦县绥安镇便民停车场-地面层',
+      floorCount: '1',
+      totalParkingSpaces: '72',
+      accessControlType: '刷卡',
+      detailedAddress: '漳浦县绥安镇金浦大道101号',
+      longitude: '117.4567',
+      latitude: '24.1234',
+      enableStatus: '禁用',
+      creator: '郑十',
+      createTime: '2025-01-28 09:50:25'
     },
     {
-      id: '9',
-      name: '芗城区巷口街道停车场',
-      type: '公共',
-      address: '芗城区新华东路32号',
-      status: '启用',
-      parkTotal: '45',
-      pricing: '首小时6元，后续每小时3元，封顶26元',
-      business: '06:00-23:00',
-      division: '芗城区-巷口街道',
-      grid: '巷口街道网格002',
-      managementMatters: '收费标准调整,泊位占用处置',
-      phone: '18960012345',
-      reason: '',
+      id: 'G009',
+      assetExtendId: 'AE009',
+      parkId: '9',
+      garageName: '芗城区巷口街道停车场-地面层',
+      floorCount: '1',
+      totalParkingSpaces: '45',
+      accessControlType: '车牌识别',
+      detailedAddress: '芗城区新华东路32号',
+      longitude: '117.6890',
+      latitude: '24.5234',
+      enableStatus: '启用',
+      creator: '张三',
+      createTime: '2025-02-01 15:15:10'
     },
     {
-      id: '10',
-      name: '龙文区蓝田街道停车场',
-      type: '公共',
-      address: '龙文区蓝田街道梧桥中路58号',
-      status: '启用',
-      parkTotal: '110',
-      pricing: '首小时8元，后续每小时4元，封顶35元',
-      business: '24H',
-      division: '龙文区-蓝田街道',
-      grid: '蓝田街道网格001',
-      managementMatters: '环境卫生管理,设施故障维修',
-      phone: '15980567890',
-      reason: '',
+      id: 'G010',
+      assetExtendId: 'AE010',
+      parkId: '10',
+      garageName: '龙文区蓝田街道停车场-地下一层',
+      floorCount: '1',
+      totalParkingSpaces: '110',
+      accessControlType: '智能道闸',
+      detailedAddress: '龙文区蓝田街道梧桥中路58号地下一层',
+      longitude: '117.7123',
+      latitude: '24.4789',
+      enableStatus: '启用',
+      creator: '李四',
+      createTime: '2025-02-05 10:30:50'
     },
     {
-      id: '11',
-      name: '龙文区步文街道停车场',
-      type: '公共',
-      address: '龙文区步文街道天亭路23号',
-      status: '启用',
-      parkTotal: '180',
-      pricing: '首小时6元，后续每小时3元，封顶30元',
-      business: '24H',
-      division: '龙文区-步文街道',
-      grid: '步文街道网格002',
-      managementMatters: '秩序维护,收费管理,设施巡检',
-      phone: '13859987654',
-      reason: '',
+      id: 'G011',
+      assetExtendId: 'AE011',
+      parkId: '11',
+      garageName: '龙文区步文街道停车场-地下一/二层',
+      floorCount: '2',
+      totalParkingSpaces: '180',
+      accessControlType: '车牌识别+道闸',
+      detailedAddress: '龙文区步文街道天亭路23号地下车库',
+      longitude: '117.7345',
+      latitude: '24.4812',
+      enableStatus: '启用',
+      creator: '王五',
+      createTime: '2025-02-08 14:20:15'
     },
     {
-      id: '12',
-      name: '芗城区东铺头街道停车场',
-      type: '公共',
-      address: '芗城区东铺头街道新华西路128号',
-      status: '启用',
-      parkTotal: '95',
-      pricing: '首小时10元，后续每小时5元，封顶40元',
-      business: '07:00-23:00',
-      division: '芗城区-东铺头街道',
-      grid: '东铺头街道网格003',
-      managementMatters: '环境卫生管理,车位引导,安全巡查',
-      phone: '18960098765',
-      reason: '',
-    },
-    {
-      id: '13',
-      name: '芗城区西桥街道停车场',
-      type: '专用',
-      address: '芗城区西桥街道江滨路89号',
-      status: '启用',
-      parkTotal: '70',
-      pricing: '内部车辆免费，外部车辆首小时12元，后续每小时6元',
-      business: '24H',
-      division: '芗城区-西桥街道',
-      grid: '西桥街道网格004',
-      managementMatters: '门禁管理,设施维修,登记管理',
-      phone: '15060543210',
-      reason: '',
-    },
-    {
-      id: '14',
-      name: '龙海区石码街道停车场',
-      type: '公共',
-      address: '龙海区石码街道紫葳路156号',
-      status: '维护中',
-      parkTotal: '150',
-      pricing: '暂不收费（维护期间）',
-      business: '暂停营业',
-      division: '龙海区-石码街道',
-      grid: '石码街道网格005',
-      managementMatters: '设施升级改造,场地清理',
-      phone: '13599567890',
-      reason: '地面翻新施工',
-    },
-    {
-      id: '15',
-      name: '长泰区武安镇停车场',
-      type: '公共',
-      address: '长泰区武安镇人民东路78号',
-      status: '启用',
-      parkTotal: '200',
-      pricing: '首小时5元，后续每小时2元，封顶25元',
-      business: '24H',
-      division: '长泰区-武安镇',
-      grid: '武安镇网格006',
-      managementMatters: '环境卫生,充电桩维护,秩序管理',
-      phone: '17759687654',
-      reason: '',
-    },
-    {
-      id: '16',
-      name: '漳浦县绥安镇停车场',
-      type: '公共',
-      address: '漳浦县绥安镇金浦大道39号',
-      status: '启用',
-      parkTotal: '120',
-      pricing: '首小时7元，后续每小时3元，封顶32元',
-      business: '08:00-22:00',
-      division: '漳浦县-绥安镇',
-      grid: '绥安镇网格007',
-      managementMatters: '收费监督,设施维修,应急处理',
-      phone: '18659678901',
-      reason: '',
-    },
-    {
-      id: '17',
-      name: '云霄县云陵镇停车场',
-      type: '专用',
-      address: '云霄县云陵镇宝城路66号',
-      status: '启用',
-      parkTotal: '85',
-      pricing: '仅限单位内部使用，不对外收费',
-      business: '08:00-18:00',
-      division: '云霄县-云陵镇',
-      grid: '云陵镇网格008',
-      managementMatters: '内部车辆管理,场地保洁,设施检查',
-      phone: '13960087654',
-      reason: '',
-    },
-    {
-      id: '18',
-      name: '诏安县南诏镇停车场',
-      type: '公共',
-      address: '诏安县南诏镇中山路102号',
-      status: '停用',
-      parkTotal: '100',
-      pricing: '无',
-      business: '暂停营业',
-      division: '诏安县-南诏镇',
-      grid: '南诏镇网格009',
-      managementMatters: '待整改,安全隐患排查',
-      phone: '15280678901',
-      reason: '消防设施不达标，需整改',
-    },
-    {
-      id: '19',
-      name: '平和县小溪镇停车场',
-      type: '公共',
-      address: '平和县小溪镇东风路88号',
-      status: '启用',
-      parkTotal: '135',
-      pricing: '首小时9元，后续每小时4元，封顶38元',
-      business: '24H',
-      division: '平和县-小溪镇',
-      grid: '小溪镇网格010',
-      managementMatters: '环境卫生,车位规划,设备维修',
-      phone: '13695987654',
-      reason: '',
-    },
-    {
-      id: '24',
-      name: '龙文区蓝田街道停车场',
-      type: '公共',
-      address: '龙文区蓝田街道梧桥中路58号',
-      status: '启用',
-      parkTotal: '110',
-      pricing: '首小时8元，后续每小时4元，封顶35元',
-      business: '24H',
-      division: '龙文区-蓝田街道',
-      grid: '蓝田街道网格001',
-      managementMatters: '环境卫生管理,设施故障维修',
-      phone: '15980567890',
-      reason: '',
-    },
-    {
-      id: '25',
-      name: '龙文区蓝田街道停车场',
-      type: '公共',
-      address: '龙文区蓝田街道梧桥中路58号',
-      status: '启用',
-      parkTotal: '110',
-      pricing: '首小时8元，后续每小时4元，封顶35元',
-      business: '24H',
-      division: '龙文区-蓝田街道',
-      grid: '蓝田街道网格001',
-      managementMatters: '环境卫生管理,设施故障维修',
-      phone: '15980567890',
-      reason: '',
-    },
+      id: 'G012',
+      assetExtendId: 'AE012',
+      parkId: '12',
+      garageName: '芗城区东铺头街道停车场-地面层',
+      floorCount: '1',
+      totalParkingSpaces: '95',
+      accessControlType: '道闸',
+      detailedAddress: '芗城区东铺头街道新华西路128号',
+      longitude: '117.6456',
+      latitude: '24.5189',
+      enableStatus: '启用',
+      creator: '赵六',
+      createTime: '2025-02-10 09:40:30'
+    }
   ];
 };
 
-/** 新增/修改的表单/列表的搜索表单 */
+/** 车库表单配置（包含所有指定字段） */
 export function useFormSchema() {
   return [
     {
       fieldName: 'id',
-      label: '停车场ID',
+      label: '车库ID',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入角色名称停车场ID',
+        placeholder: '请输入车库ID', 
       },
-      rules: 'required',
+      rules: 'required'
     },
     {
-      fieldName: 'name',
-      label: '停车场名称',
+      fieldName: 'assetExtendId',
+      label: '资产扩展ID',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入停车场名称',
+        placeholder: '请输入资产扩展ID（关联tb_asset_extend）'
       },
-      rules: 'required',
+      rules: 'required'
     },
     {
-      fieldName: 'address',
+      fieldName: 'parkId',
+      label: '所属车场ID',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择所属车场',
+        options: [
+          { label: '芗城区XX社区公共停车场', value: '1' },
+          { label: '龙文区碧湖公园停车场', value: '2' },
+          { label: '龙海区石码镇便民停车场', value: '3' },
+          { label: '龙海区闽齐社区停车场', value: '4' },
+          { label: '芗城区江滨路生态停车场', value: '5' },
+          { label: '龙文区万达商圈停车场', value: '6' },
+          { label: '长泰区武安镇公共停车场', value: '7' },
+          { label: '漳浦县绥安镇便民停车场', value: '8' },
+          { label: '芗城区巷口街道停车场', value: '9' },
+          { label: '龙文区蓝田街道停车场', value: '10' },
+          { label: '龙文区步文街道停车场', value: '11' },
+          { label: '芗城区东铺头街道停车场', value: '12' }
+        ]
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'garageName',
+      label: '车库名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入车库名称'
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'floorCount',
+      label: '楼层数',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入楼层数',
+        min: 1
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'totalParkingSpaces',
+      label: '总车位数',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入总车位数',
+        min: 1
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'accessControlType',
+      label: '门禁类型',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择门禁类型',
+        options: [
+          { label: '道闸', value: '道闸' },
+          { label: '车牌识别', value: '车牌识别' },
+          { label: '道闸+刷卡', value: '道闸+刷卡' },
+          { label: '智能道闸', value: '智能道闸' },
+          { label: '车牌识别+人脸识别', value: '车牌识别+人脸识别' },
+          { label: '刷卡', value: '刷卡' },
+          { label: '车牌识别+道闸', value: '车牌识别+道闸' }
+        ]
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'detailedAddress',
       label: '详细地址',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入详细地址',
+        placeholder: '请输入详细地址'
       },
-      rules: 'required',
+      rules: 'required'
     },
     {
-      fieldName: 'parkTotal',
-      label: '泊位总数',
+      fieldName: 'longitude',
+      label: '经度',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入泊位总数',
+        placeholder: '请输入经度（例：117.6589）'
       },
-      rules: 'required',
+      rules: 'required'
     },
     {
-      fieldName: 'pricing',
-      label: '收费标准',
+      fieldName: 'latitude',
+      label: '纬度',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入收费标准',
+        placeholder: '请输入纬度（例：24.5123）'
       },
-      rules: 'required',
+      rules: 'required'
     },
     {
-      fieldName: 'business',
-      label: '营业时间',
-      component: 'Input',
+      fieldName: 'enableStatus',
+      label: '启用状态',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入营业时间',
+        placeholder: '请选择启用状态',
+        options: [
+          { label: '启用', value: '启用' },
+          { label: '禁用', value: '禁用' }
+        ]
       },
-      rules: 'required',
+      rules: 'required'
     },
     {
-      fieldName: 'phone',
-      label: '联系电话',
+      fieldName: 'creator',
+      label: '创建人',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入联系电话',
+        placeholder: '请输入创建人'
       },
-      rules: 'required',
+      rules: 'required'
     },
     {
-      fieldName: 'division',
-      label: '所属行政区划',
-      component: 'Input',
+      fieldName: 'createTime',
+      label: '创建时间',
+      component: 'DatePicker',
       componentProps: {
-        placeholder: '请输入所属行政区划',
+        placeholder: '请选择创建时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss'
       },
-      rules: 'required',
-    },
-    {
-      fieldName: 'status',
-      label: '运营状态',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入运营状态',
-      },
-      rules: 'required',
-    },
+      rules: 'required'
+    }
   ];
 }
- 
 
-/** 表格字段 */
+/** 车库表格列配置 */
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
     {
       field: 'id',
-      title: '停车场ID',
+      title: '车库ID',
       minWidth: 100,
-      sortable: true,
+      sortable: true
     },
     {
-      field: 'name',
-      title: '停车场名称',
+      field: 'assetExtendId',
+      title: '资产扩展ID',
+      minWidth: 120,
+      sortable: true
+    },
+    {
+      field: 'parkId',
+      title: '所属车场ID',
+      minWidth: 100,
+      sortable: true
+    },
+    {
+      field: 'garageName',
+      title: '车库名称',
       minWidth: 200,
-      sortable: true,
+      sortable: true
     },
     {
-      field: 'address',
+      field: 'floorCount',
+      title: '楼层数',
+      minWidth: 80,
+      sortable: true
+    },
+    {
+      field: 'totalParkingSpaces',
+      title: '总车位数',
+      minWidth: 100,
+      sortable: true
+    },
+    {
+      field: 'accessControlType',
+      title: '门禁类型',
+      minWidth: 120,
+      sortable: true
+    },
+    {
+      field: 'detailedAddress',
       title: '详细地址',
       minWidth: 200,
-      sortable: true,
+      sortable: true
     },
     {
-      field: 'parkTotal',
-      title: '泊位总数',
-      minWidth: 200,
-      sortable: true,
+      field: 'longitude',
+      title: '经度',
+      minWidth: 120,
+      sortable: true
     },
     {
-      field: 'pricing',
-      title: '收费标准',
-      minWidth: 200,
-      sortable: true,
+      field: 'latitude',
+      title: '纬度',
+      minWidth: 120,
+      sortable: true
     },
     {
-      field: 'business',
-      title: '营业时间',
-      minWidth: 200,
-      sortable: true,
+      field: 'enableStatus',
+      title: '启用状态',
+      minWidth: 100,
+      sortable: true  
     },
     {
-      field: 'phone',
-      title: '联系电话',
-      minWidth: 200,
-      sortable: true,
+      field: 'creator',
+      title: '创建人',
+      minWidth: 100,
+      sortable: true
     },
     {
-      field: 'division',
-      title: '所属行政区划',
-      minWidth: 200,
-      sortable: true,
-    },
-    {
-      field: 'status',
-      title: '运营状态',
-      minWidth: 200,
-      sortable: true,
+      field: 'createTime',
+      title: '创建时间',
+      minWidth: 180,
+      sortable: true
     },
     {
       title: '操作',
       width: 240,
       fixed: 'right',
-      slots: { default: 'actions' },
-    },
+      slots: { default: 'actions' }
+    }
   ];
 }
+
+export const textObj = {
+  // 操作类文本（对应编辑/新增）
+  editText: '编辑车库',
+  addText: '新增车库',
+  // 导出Excel相关文本
+  excelName: '车库列表',
+  excelAllName: '全市车库数据.xlsx',
+  // 统计总计文本（结合之前生成的车库数据统计）
+  total: ' 总计: 车库数量12;车位总数:1245;评价车库车位8',
+};
