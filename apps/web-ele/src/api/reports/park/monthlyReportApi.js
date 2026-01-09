@@ -120,7 +120,7 @@ export const getMonthlyReport = async (params) => {
                 ? 2_200_000
                 : parkingType === 'roadside'
                   ? 1_200_000
-                  : 400_000),
+                  : 400_000,
             revenuePercentage: 100,
             utilizationRate:
               parkingType === 'public'
