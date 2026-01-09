@@ -332,6 +332,15 @@ const handleFullShow = () => {
           ></i>
         </button>
       </template>
+      <template #parkName="{ row }">
+        <el-text
+          @click="handleOpenDetail.bind(null, row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.name }}
+        </el-text>
+      </template>
       <template #actions="{ row }">
         <TableAction
           :actions="[
@@ -366,6 +375,9 @@ const handleFullShow = () => {
         />
       </template>
       <template #bottom>
+        <span class="bottom-title">
+          {{ textObj.total }}
+        </span>
         <span class="bottom-title">
           {{ textObj.total }}
         </span>

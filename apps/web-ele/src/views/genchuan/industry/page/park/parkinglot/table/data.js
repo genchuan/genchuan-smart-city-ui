@@ -417,6 +417,7 @@ export function useGridColumns() {
       title: '停车场名称',
       minWidth: 200,
       sortable: true,
+      slots: { default: 'parkName' },
     },
     {
       field: 'address',
