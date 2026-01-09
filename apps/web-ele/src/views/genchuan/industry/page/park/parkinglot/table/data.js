@@ -1,9 +1,6 @@
-import type { VbenFormSchema } from '#/adapter/form';
-import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-
 /** 表格初始数据*/
 export const dataList = () => {
-  return  [
+  return [
     {
       id: '1',
       name: '芗城区XX社区公共停车场',
@@ -154,17 +151,182 @@ export const dataList = () => {
       phone: '15980567890',
       reason: '',
     },
-  ]
-}
+    {
+      id: '11',
+      name: '龙文区步文街道停车场',
+      type: '公共',
+      address: '龙文区步文街道天亭路23号',
+      status: '启用',
+      parkTotal: '180',
+      pricing: '首小时6元，后续每小时3元，封顶30元',
+      business: '24H',
+      division: '龙文区-步文街道',
+      grid: '步文街道网格002',
+      managementMatters: '秩序维护,收费管理,设施巡检',
+      phone: '13859987654',
+      reason: '',
+    },
+    {
+      id: '12',
+      name: '芗城区东铺头街道停车场',
+      type: '公共',
+      address: '芗城区东铺头街道新华西路128号',
+      status: '启用',
+      parkTotal: '95',
+      pricing: '首小时10元，后续每小时5元，封顶40元',
+      business: '07:00-23:00',
+      division: '芗城区-东铺头街道',
+      grid: '东铺头街道网格003',
+      managementMatters: '环境卫生管理,车位引导,安全巡查',
+      phone: '18960098765',
+      reason: '',
+    },
+    {
+      id: '13',
+      name: '芗城区西桥街道停车场',
+      type: '专用',
+      address: '芗城区西桥街道江滨路89号',
+      status: '启用',
+      parkTotal: '70',
+      pricing: '内部车辆免费，外部车辆首小时12元，后续每小时6元',
+      business: '24H',
+      division: '芗城区-西桥街道',
+      grid: '西桥街道网格004',
+      managementMatters: '门禁管理,设施维修,登记管理',
+      phone: '15060543210',
+      reason: '',
+    },
+    {
+      id: '14',
+      name: '龙海区石码街道停车场',
+      type: '公共',
+      address: '龙海区石码街道紫葳路156号',
+      status: '维护中',
+      parkTotal: '150',
+      pricing: '暂不收费（维护期间）',
+      business: '暂停营业',
+      division: '龙海区-石码街道',
+      grid: '石码街道网格005',
+      managementMatters: '设施升级改造,场地清理',
+      phone: '13599567890',
+      reason: '地面翻新施工',
+    },
+    {
+      id: '15',
+      name: '长泰区武安镇停车场',
+      type: '公共',
+      address: '长泰区武安镇人民东路78号',
+      status: '启用',
+      parkTotal: '200',
+      pricing: '首小时5元，后续每小时2元，封顶25元',
+      business: '24H',
+      division: '长泰区-武安镇',
+      grid: '武安镇网格006',
+      managementMatters: '环境卫生,充电桩维护,秩序管理',
+      phone: '17759687654',
+      reason: '',
+    },
+    {
+      id: '16',
+      name: '漳浦县绥安镇停车场',
+      type: '公共',
+      address: '漳浦县绥安镇金浦大道39号',
+      status: '启用',
+      parkTotal: '120',
+      pricing: '首小时7元，后续每小时3元，封顶32元',
+      business: '08:00-22:00',
+      division: '漳浦县-绥安镇',
+      grid: '绥安镇网格007',
+      managementMatters: '收费监督,设施维修,应急处理',
+      phone: '18659678901',
+      reason: '',
+    },
+    {
+      id: '17',
+      name: '云霄县云陵镇停车场',
+      type: '专用',
+      address: '云霄县云陵镇宝城路66号',
+      status: '启用',
+      parkTotal: '85',
+      pricing: '仅限单位内部使用，不对外收费',
+      business: '08:00-18:00',
+      division: '云霄县-云陵镇',
+      grid: '云陵镇网格008',
+      managementMatters: '内部车辆管理,场地保洁,设施检查',
+      phone: '13960087654',
+      reason: '',
+    },
+    {
+      id: '18',
+      name: '诏安县南诏镇停车场',
+      type: '公共',
+      address: '诏安县南诏镇中山路102号',
+      status: '停用',
+      parkTotal: '100',
+      pricing: '无',
+      business: '暂停营业',
+      division: '诏安县-南诏镇',
+      grid: '南诏镇网格009',
+      managementMatters: '待整改,安全隐患排查',
+      phone: '15280678901',
+      reason: '消防设施不达标，需整改',
+    },
+    {
+      id: '19',
+      name: '平和县小溪镇停车场',
+      type: '公共',
+      address: '平和县小溪镇东风路88号',
+      status: '启用',
+      parkTotal: '135',
+      pricing: '首小时9元，后续每小时4元，封顶38元',
+      business: '24H',
+      division: '平和县-小溪镇',
+      grid: '小溪镇网格010',
+      managementMatters: '环境卫生,车位规划,设备维修',
+      phone: '13695987654',
+      reason: '',
+    },
+    {
+      id: '24',
+      name: '龙文区蓝田街道停车场',
+      type: '公共',
+      address: '龙文区蓝田街道梧桥中路58号',
+      status: '启用',
+      parkTotal: '110',
+      pricing: '首小时8元，后续每小时4元，封顶35元',
+      business: '24H',
+      division: '龙文区-蓝田街道',
+      grid: '蓝田街道网格001',
+      managementMatters: '环境卫生管理,设施故障维修',
+      phone: '15980567890',
+      reason: '',
+    },
+    {
+      id: '25',
+      name: '龙文区蓝田街道停车场',
+      type: '公共',
+      address: '龙文区蓝田街道梧桥中路58号',
+      status: '启用',
+      parkTotal: '110',
+      pricing: '首小时8元，后续每小时4元，封顶35元',
+      business: '24H',
+      division: '龙文区-蓝田街道',
+      grid: '蓝田街道网格001',
+      managementMatters: '环境卫生管理,设施故障维修',
+      phone: '15980567890',
+      reason: '',
+    },
+  ];
+};
 
-/** 新增/修改的表单 */
-export function useFormSchema(): VbenFormSchema[] {
+/** 新增/修改的表单/列表的搜索表单 */
+export function useFormSchema() {
   return [
     {
       fieldName: 'id',
       label: '停车场ID',
       component: 'Input',
-       componentProps: {
+      componentProps: {
         placeholder: '请输入角色名称停车场ID',
       },
       rules: 'required',
@@ -186,8 +348,8 @@ export function useFormSchema(): VbenFormSchema[] {
         placeholder: '请输入详细地址',
       },
       rules: 'required',
-    }, 
-     {
+    },
+    {
       fieldName: 'parkTotal',
       label: '泊位总数',
       component: 'Input',
@@ -195,8 +357,8 @@ export function useFormSchema(): VbenFormSchema[] {
         placeholder: '请输入泊位总数',
       },
       rules: 'required',
-    }, 
-     {
+    },
+    {
       fieldName: 'pricing',
       label: '收费标准',
       component: 'Input',
@@ -204,8 +366,8 @@ export function useFormSchema(): VbenFormSchema[] {
         placeholder: '请输入收费标准',
       },
       rules: 'required',
-    }, 
-     {
+    },
+    {
       fieldName: 'business',
       label: '营业时间',
       component: 'Input',
@@ -213,7 +375,7 @@ export function useFormSchema(): VbenFormSchema[] {
         placeholder: '请输入营业时间',
       },
       rules: 'required',
-    }, 
+    },
     {
       fieldName: 'phone',
       label: '联系电话',
@@ -222,7 +384,7 @@ export function useFormSchema(): VbenFormSchema[] {
         placeholder: '请输入联系电话',
       },
       rules: 'required',
-    }, 
+    },
     {
       fieldName: 'division',
       label: '所属行政区划',
@@ -231,7 +393,7 @@ export function useFormSchema(): VbenFormSchema[] {
         placeholder: '请输入所属行政区划',
       },
       rules: 'required',
-    }, 
+    },
     {
       fieldName: 'status',
       label: '运营状态',
@@ -240,154 +402,68 @@ export function useFormSchema(): VbenFormSchema[] {
         placeholder: '请输入运营状态',
       },
       rules: 'required',
-    }
+    },
   ];
 }
  
-/** 列表的搜索表单 */
-export function useGridFormSchema(): VbenFormSchema[] {
-  return [
-    {
-      fieldName: 'id',
-      label: '停车场ID',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入停车场',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'name',
-      label: '停车场名称',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入停车场名称',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'address',
-      label: '详细地址',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入详细地址',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'parkTotal',
-      label: '泊位总数',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入泊位总数',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'pricing',
-      label: '收费标准',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入收费标准',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'business',
-      label: '营业时间',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入营业时间',
-        clearable: true,
-      },
-    }, 
-    {
-      fieldName: 'phone',
-      label: '联系电话',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入联系电话',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'division',
-      label: '所属行政区划',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入所属行政区划',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'status',
-      label: '运营状态',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入运营状态',
-        clearable: true,
-      },
-    }, 
-  ];
-}
 
-/** 列表的字段 */
-export function useGridColumns(): VxeTableGridOptions['columns'] {
+/** 表格字段 */
+export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
     {
       field: 'id',
       title: '停车场ID',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'name',
       title: '停车场名称',
       minWidth: 200,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'address',
       title: '详细地址',
       minWidth: 200,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'parkTotal',
       title: '泊位总数',
       minWidth: 200,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'pricing',
       title: '收费标准',
       minWidth: 200,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'business',
       title: '营业时间',
       minWidth: 200,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'phone',
       title: '联系电话',
       minWidth: 200,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'division',
       title: '所属行政区划',
       minWidth: 200,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'status',
       title: '运营状态',
       minWidth: 200,
-      sortable: true
+      sortable: true,
     },
     {
       title: '操作',
@@ -396,4 +472,13 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       slots: { default: 'actions' },
     },
   ];
+}
+
+/** 文字描述对象 */
+export const textObj = {
+  editText: '编辑停车场',
+  addText: '新增停车场',
+  excelName: '停车场列表',
+  excelAllName: '全市停车场数据.xlsx',
+  total: ' 总计: 停车场数量10;车位总数:1211;评价车场车位7',
 }

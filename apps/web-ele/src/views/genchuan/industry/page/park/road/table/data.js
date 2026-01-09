@@ -1,0 +1,398 @@
+/** 泊位表格初始数据 */
+export const dataList = () => {
+  return [
+    {
+      berthId: 'B00101',        // 泊位ID（格式：B+停车场ID+泊位序号）
+      berthCode: 'XC001',       // 泊位编号
+      roadName: 'XX路',         // 路段名称
+      locationDesc: '芗城区XX街道XX路88号停车场入口右侧1号泊位', // 位置描述
+      berthType: '小型车',      // 泊位类型
+      coordX: '117.658921',     // 坐标X
+      coordY: '24.512345',      // 坐标Y
+      enableStatus: '启用',     // 启用状态
+      divisionCode: '350602001',// 所属行政区划代码（芗城区东铺头街道）
+      roadSideManage: '日常巡检,违停劝导' // 路侧管理信息
+    },
+    {
+      berthId: 'B00102',
+      berthCode: 'XC002',
+      roadName: 'XX路',
+      locationDesc: '芗城区XX街道XX路88号停车场入口右侧2号泊位',
+      berthType: '小型车',
+      coordX: '117.658932',
+      coordY: '24.512356',
+      enableStatus: '启用',
+      divisionCode: '350602001',
+      roadSideManage: '日常巡检,违停劝导'
+    },
+    {
+      berthId: 'B00201',
+      berthCode: 'LW001',
+      roadName: '碧湖路',
+      locationDesc: '龙文区碧湖路126号公园西门北侧1号泊位',
+      berthType: '小型车',
+      coordX: '117.705612',
+      coordY: '24.498712',
+      enableStatus: '禁用',
+      divisionCode: '350603002',
+      roadSideManage: '设施维修,暂停使用'
+    },
+    {
+      berthId: 'B00301',
+      berthCode: 'SM001',
+      roadName: '解放北路',
+      locationDesc: '龙海区石码镇解放北路59号便民停车场东侧1号泊位',
+      berthType: '小型车',
+      coordX: '117.890111',
+      coordY: '24.456211',
+      enableStatus: '禁用',
+      divisionCode: '350604001',
+      roadSideManage: '充电桩改造,暂停使用'
+    },
+    {
+      berthId: 'B00401',
+      berthCode: 'HQ001',
+      roadName: '闽齐社区西路',
+      locationDesc: '龙海区海澄镇闽齐社区西门南侧1号泊位',
+      berthType: '小型车',
+      coordX: '117.876522',
+      coordY: '24.443822',
+      enableStatus: '启用',
+      divisionCode: '350604002',
+      roadSideManage: '日常巡检,卫生保洁'
+    },
+    {
+      berthId: 'B00501',
+      berthCode: 'JB001',
+      roadName: '江滨南路',
+      locationDesc: '芗城区江滨南路189号生态停车场沿江1号泊位',
+      berthType: '大型车',
+      coordX: '117.678933',
+      coordY: '24.501233',
+      enableStatus: '启用',
+      divisionCode: '350602003',
+      roadSideManage: '高峰疏导,违停管理'
+    },
+    {
+      berthId: 'B00601',
+      berthCode: 'WD001',
+      roadName: '建元东路',
+      locationDesc: '龙文区建元东路2号万达商圈停车场入口1号泊位',
+      berthType: '小型车',
+      coordX: '117.723444',
+      coordY: '24.489744',
+      enableStatus: '启用',
+      divisionCode: '350603004',
+      roadSideManage: '流量统计,秩序维护'
+    },
+    {
+      berthId: 'B00701',
+      berthCode: 'WA001',
+      roadName: '人民西路',
+      locationDesc: '长泰区武安镇人民西路77号公共停车场北侧1号泊位',
+      berthType: '小型车',
+      coordX: '117.789055',
+      coordY: '24.612355',
+      enableStatus: '启用',
+      divisionCode: '350625001',
+      roadSideManage: '定期巡检,设施维护'
+    },
+    {
+      berthId: 'B00801',
+      berthCode: 'SA001',
+      roadName: '金浦大道',
+      locationDesc: '漳浦县绥安镇金浦大道101号便民停车场西侧1号泊位',
+      berthType: '小型车',
+      coordX: '117.456766',
+      coordY: '24.123466',
+      enableStatus: '禁用',
+      divisionCode: '350623001',
+      roadSideManage: '积水清理,待恢复使用'
+    },
+    {
+      berthId: 'B00901',
+      berthCode: 'XK001',
+      roadName: '新华东路',
+      locationDesc: '芗城区新华东路32号巷口街道停车场东侧1号泊位',
+      berthType: '小型车',
+      coordX: '117.689077',
+      coordY: '24.523477',
+      enableStatus: '启用',
+      divisionCode: '350602002',
+      roadSideManage: '收费监督,泊位管理'
+    },
+    {
+      berthId: 'B01001',
+      berthCode: 'LT001',
+      roadName: '梧桥中路',
+      locationDesc: '龙文区蓝田街道梧桥中路58号停车场地下1层1号泊位',
+      berthType: '小型车',
+      coordX: '117.712388',
+      coordY: '24.478988',
+      enableStatus: '启用',
+      divisionCode: '350603005',
+      roadSideManage: '卫生管理,设施维修'
+    },
+    {
+      berthId: 'B01101',
+      berthCode: 'BW001',
+      roadName: '天亭路',
+      locationDesc: '龙文区步文街道天亭路23号停车场南侧1号泊位',
+      berthType: '小型车',
+      coordX: '117.734599',
+      coordY: '24.481299',
+      enableStatus: '启用',
+      divisionCode: '350603006',
+      roadSideManage: '秩序维护,收费管理'
+    },
+    {
+      berthId: 'B01201',
+      berthCode: 'DP001',
+      roadName: '新华西路',
+      locationDesc: '芗城区东铺头街道新华西路128号停车场西侧1号泊位',
+      berthType: '小型车',
+      coordX: '117.645600',
+      coordY: '24.518900',
+      enableStatus: '启用',
+      divisionCode: '350602001',
+      roadSideManage: '安全巡查,车位引导'
+    },
+    {
+      berthId: 'B01301',
+      berthCode: 'XQ001',
+      roadName: '江滨路',
+      locationDesc: '芗城区西桥街道江滨路89号专用停车场内部1号泊位',
+      berthType: '内部车辆',
+      coordX: '117.667811',
+      coordY: '24.509811',
+      enableStatus: '启用',
+      divisionCode: '350602004',
+      roadSideManage: '门禁管理,登记管理'
+    },
+    {
+      berthId: 'B01401',
+      berthCode: 'SM002',
+      roadName: '紫葳路',
+      locationDesc: '龙海区石码街道紫葳路156号停车场施工区域1号泊位',
+      berthType: '小型车',
+      coordX: '117.887622',
+      coordY: '24.467822',
+      enableStatus: '维护中',
+      divisionCode: '350604001',
+      roadSideManage: '场地翻新,暂停使用'
+    },
+    {
+      berthId: 'B01501',
+      berthCode: 'WA002',
+      roadName: '人民东路',
+      locationDesc: '长泰区武安镇人民东路78号停车场东侧1号泊位',
+      berthType: '小型车',
+      coordX: '117.798733',
+      coordY: '24.623433',
+      enableStatus: '启用',
+      divisionCode: '350625001',
+      roadSideManage: '充电桩维护,环境卫生'
+    }
+  ];
+};
+
+/** 泊位新增/修改的表单/搜索表单 */
+export function useFormSchema() {
+  return [
+    {
+      fieldName: 'berthId',
+      label: '泊位ID',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入泊位ID',
+        disabled: true // 泊位ID建议系统生成
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'berthCode',
+      label: '泊位编号',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入泊位编号',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'roadName',
+      label: '路段名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入路段名称',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'locationDesc',
+      label: '位置描述',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入详细位置描述',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'berthType',
+      label: '泊位类型',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择泊位类型',
+        options: [
+          { label: '小型车', value: '小型车' },
+          { label: '大型车', value: '大型车' },
+          { label: '无障碍', value: '无障碍' },
+          { label: '内部车辆', value: '内部车辆' }
+        ]
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'coordX',
+      label: '坐标X',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入经度坐标（例：117.658921）',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'coordY',
+      label: '坐标Y',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入纬度坐标（例：24.512345）',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'enableStatus',
+      label: '启用状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择启用状态',
+        options: [
+          { label: '启用', value: '启用' },
+          { label: '禁用', value: '禁用' },
+          { label: '维护中', value: '维护中' }
+        ]
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'divisionCode',
+      label: '所属行政区划代码',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择所属行政区划代码',
+        options: [
+          { label: '芗城区东铺头街道 350602001', value: '350602001' },
+          { label: '芗城区巷口街道 350602002', value: '350602002' },
+          { label: '芗城区西桥街道 350602004', value: '350602004' },
+          { label: '龙文区碧湖街道 350603002', value: '350603002' },
+          { label: '龙文区蓝田街道 350603005', value: '350603005' },
+          { label: '龙海区石码街道 350604001', value: '350604001' },
+          { label: '龙海区海澄镇 350604002', value: '350604002' },
+          { label: '长泰区武安镇 350625001', value: '350625001' },
+          { label: '漳浦县绥安镇 350623001', value: '350623001' }
+        ]
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'roadSideManage',
+      label: '路侧管理信息',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入路侧管理信息',
+      },
+      rules: 'required',
+    },
+  ];
+}
+
+/** 泊位表格字段 */
+export function useGridColumns() {
+  return [
+    { type: 'checkbox', width: 40 },
+    {
+      field: 'berthId',
+      title: '泊位ID',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: 'berthCode',
+      title: '泊位编号',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: 'roadName',
+      title: '路段名称',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'locationDesc',
+      title: '位置描述',
+      minWidth: 250,
+      sortable: true,
+    },
+    {
+      field: 'berthType',
+      title: '泊位类型',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: 'coordX',
+      title: '坐标X',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'coordY',
+      title: '坐标Y',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'enableStatus',
+      title: '启用状态',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: 'divisionCode',
+      title: '所属行政区划代码',
+      minWidth: 150,
+      sortable: true,
+    },
+    {
+      field: 'roadSideManage',
+      title: '路侧管理信息',
+      minWidth: 200,
+      sortable: true,
+    },
+    {
+      title: '操作',
+      width: 240,
+      fixed: 'right',
+      slots: { default: 'actions' },
+    },
+  ];
+}
+
+/** 泊位文字描述对象 */
+export const textObj = {
+  editText: '编辑泊位',
+  addText: '新增泊位',
+  excelName: '泊位列表',
+  excelAllName: '全市泊位数据.xlsx',
+  total: ' 总计: 泊位数量215;启用泊位189;维护中泊位6',
+};
