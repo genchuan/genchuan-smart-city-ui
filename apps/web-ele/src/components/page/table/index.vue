@@ -12,12 +12,7 @@ import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
-import {
-  dataList,
-  useFormSchema,
-  useGridColumns,
-  useGridFormSchema,
-} from './data';
+import { dataList, useFormSchema, useGridColumns } from './data';
 
 const props = defineProps({
   secondShow: {
@@ -191,7 +186,7 @@ const [QueryForm] = useVbenForm({
   // 垂直布局，label和input在不同行，值为vertical
   // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useGridFormSchema(),
+  schema: useFormSchema(),
   // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {

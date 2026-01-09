@@ -1,26 +1,18 @@
-<script lang="ts" setup>
-import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { SystemRoleApi } from '#/api/system/role';
-
+<script setup>
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
+import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteRole, deleteRoleList, exportRole } from '#/api/system/role';
 import { $t } from '#/locales';
+import { exportToExcel } from '#/utils/excel.js';
 
-import {
-  dataList,
-  useFormSchema,
-  useGridColumns,
-  useGridFormSchema,
-} from './data';
+import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
 const props = defineProps({
   secondShow: {
@@ -29,7 +21,7 @@ const props = defineProps({
   },
 });
 const getTitle = computed(() => {
-  return formData.value?.id ? '编辑停车场' : '新增停车场';
+  return formData.value?.id ? textObj.editText : textObj.addText;
 });
 const [Drawer, drawerApi] = useVbenDrawer({
   footer: false,
@@ -37,7 +29,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
     drawerApi.close();
   },
   onConfirm() {},
-  async onOpenChange(isOpen: boolean) {},
+  async onOpenChange() {},
 });
 const formData = ref();
 const [Form, formApi] = useVbenForm({
@@ -57,11 +49,22 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     formDrawerApi.close();
   },
   onConfirm() {
-    console.info('onConfirm');
+    const obj = formApi.form.values;
+    if (formDrawerApi.sharedData.payload.title === textObj.addText) {
+      dataObj.apilist.push(obj);
+    } else {
+      dataObj.apilist.forEach((v, i) => {
+        if (v.id === formData.value?.id) {
+          dataObj.apilist[i] = obj;
+        }
+      });
+    }
+    handleRefresh();
+    formDrawerApi.close();
   },
-  async onOpenChange(isOpen: boolean) {
+  async onOpenChange(isOpen) {
     if (isOpen) {
-      formData.value = formDrawerApi.getData<Record<string, any>>();
+      formData.value = formDrawerApi.getData();
       if (formData.value?.id) {
         await formApi.setValues(formData.value);
       } else {
@@ -78,36 +81,33 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  const data = await exportRole(await gridApi.formApi.getValues());
-  downloadFileFromBlobPart({ fileName: '角色.xls', source: data });
+  exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
 }
 
 /** 创建角色 */
 function handleCreate() {
   formDrawerApi
     .setData({
-      title: '新增停车场',
+      title: textObj.addText,
     })
     .open();
 }
 
 /** 编辑角色 */
-function handleEdit(row: SystemRoleApi.Role) {
+function handleEdit(row) {
   formDrawerApi
     .setData({
-      title: '编辑停车场',
+      title: textObj.editText,
       ...row,
     })
     .open();
 }
-
-/** 删除角色 */
-async function handleDelete(row: SystemRoleApi.Role) {
+async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting', [row.name]),
   });
   try {
-    await deleteRole(row.id!);
+    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
     ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
     handleRefresh();
   } finally {
@@ -115,51 +115,61 @@ async function handleDelete(row: SystemRoleApi.Role) {
   }
 }
 
-/** 批量删除角色 */
 async function handleDeleteBatch() {
-  await confirm($t('ui.actionMessage.deleteBatchConfirm'));
+  await confirm($t('确定删除这些数据吗？'));
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deletingBatch'),
   });
   try {
-    await deleteRoleList(checkedIds.value);
+    dataObj.apilist = dataObj.apilist.filter(
+      (v) => !checkedIds.value.includes(v.id),
+    );
     checkedIds.value = [];
-    ElMessage.success($t('ui.actionMessage.deleteSuccess'));
+    ElMessage.success($t('删除成功'));
     handleRefresh();
   } finally {
     loadingInstance.close();
   }
 }
 
-const checkedIds = ref<number[]>([]);
-function handleRowCheckboxChange({
-  records,
-}: {
-  records: SystemRoleApi.Role[];
-}) {
-  checkedIds.value = records.map((item) => item.id!);
+const checkedIds = ref([]);
+function handleRowCheckboxChange({ records }) {
+  checkedIds.value = records.map((item) => item.id);
 }
 const dataObj = reactive({
-  total: 10,
+  total: dataList().length,
+  currentPage: 1,
+  pageSize: 10,
   apilist: dataList(),
   list: [],
 });
 // 表格数据获取
-const getTableData = () => {
-  const tabelObj = {
-    list: dataObj.apilist.map((v) => v),
-    total: dataObj.apilist.length,
-  };
-  tabelObj.list = tabelObj.list.filter((v) => {
-    if (activeName.value === '全部') {
-      return true;
-    }
-    return v.status === activeName.value;
-  });
-  return tabelObj;
+const getTableData = (pageObj) => {
+  const page = pageObj.page;
+  dataObj.total = dataObj.apilist
+    .map((v) => v)
+    .filter((v) => {
+      if (activeName.value === '全部') {
+        return true;
+      }
+      return v.status === activeName.value;
+    }).length;
+  dataObj.list = dataObj.apilist
+    .map((v) => v)
+    .filter((v) => {
+      if (activeName.value === '全部') {
+        return true;
+      }
+      return v.status === activeName.value;
+    })
+    .slice(
+      (page.currentPage - 1) * page.pageSize,
+      page.currentPage * page.pageSize,
+    );
+  return dataObj;
 };
 
-const [QueryForm, QueryFormApi] = useVbenForm({
+const [QueryForm] = useVbenForm({
   // 默认展开
   collapsed: false,
   // 所有表单项共用，可单独在表单内覆盖
@@ -176,7 +186,7 @@ const [QueryForm, QueryFormApi] = useVbenForm({
   // 垂直布局，label和input在不同行，值为vertical
   // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useGridFormSchema(),
+  schema: useFormSchema(),
   // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
@@ -193,30 +203,31 @@ const [Grid, gridApi] = useVbenVxeGrid({
     keepSource: true,
     proxyConfig: {
       ajax: {
-        query: async ({ page }, formValues) => getTableData(),
+        query: async ({ page }) => getTableData({ page }),
       },
     },
     rowConfig: {
       keyField: 'id',
       isHover: true,
     },
+    pagerConfig: dataObj,
     toolbarConfig: {
       'class-name': 'common-tool-bar-config',
       refresh: true,
       search: true,
     },
     showOverflow: true,
-  } as VxeTableGridOptions<SystemRoleApi.Role>,
+  },
   gridEvents: {
     checkboxAll: handleRowCheckboxChange,
     checkboxChange: handleRowCheckboxChange,
   },
   showSearchForm: false,
-} as any);
+});
 
 const activeName = ref('全部');
 const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用' }]);
-const handleClick = (tab, event: Event) => {
+const handleClick = () => {
   gridApi.query();
 };
 const handleSerachShow = () => {
@@ -261,7 +272,7 @@ const handleFullShow = () => {
         <TableAction
           :actions="[
             {
-              label: '新增停车场',
+              label: textObj.addText,
               type: 'primary',
               icon: ACTION_ICON.ADD,
               auth: ['system:role:create'],
@@ -330,50 +341,11 @@ const handleFullShow = () => {
           ]"
         />
       </template>
+      <template #bottom>
+        <span class="bottom-title">
+          {{ textObj.total }}
+        </span>
+      </template>
     </Grid>
-    <div class="bottom-title">
-      总计: 停车场数量10;车位总数:1211;评价车场车位73;
-    </div>
   </div>
 </template>
-<style lang="scss">
-.park-lot-table-new { 
-  padding-bottom: 20px;
-  .vxe-buttons--wrapper {
-    padding-top: 0px;
-  }
-  .table-first {
-    display: flex;
-    align-items: center;
-    .tabel-tab-icon {
-      margin-right: 5px;
-      cursor: pointer;
-    }
-  }
-  .vxe-tools--wrapper {
-    position: fixed;
-    right: 77px;
-    top: 90px;
-  }
-  .vxe-tools--operate {
-    position: fixed;
-    right: 0px;
-    top: 90px;
-  }
-  .vxe-pager .vxe-pager--sizes {
-    margin-right: 10px;
-  }
-  .bottom-title {
-    position: relative;
-    margin-top: -30px;
-    margin-left: 10px;
-  }
-  .common-tool-bar-config {
-    .vxe-tools--operate {
-      .vxe-button:nth-child(2) {
-        display: none;
-      }
-    }
-  }
-}
-</style>

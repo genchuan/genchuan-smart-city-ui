@@ -319,7 +319,7 @@ export const dataList = () => {
   ];
 };
 
-/** 新增/修改的表单 */
+/** 新增/修改的表单/列表的搜索表单 */
 export function useFormSchema() {
   return [
     {
@@ -405,95 +405,9 @@ export function useFormSchema() {
     },
   ];
 }
+ 
 
-/** 列表的搜索表单 */
-export function useGridFormSchema() {
-  return [
-    {
-      fieldName: 'id',
-      label: '停车场ID',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入停车场',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'name',
-      label: '停车场名称',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入停车场名称',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'address',
-      label: '详细地址',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入详细地址',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'parkTotal',
-      label: '泊位总数',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入泊位总数',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'pricing',
-      label: '收费标准',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入收费标准',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'business',
-      label: '营业时间',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入营业时间',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'phone',
-      label: '联系电话',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入联系电话',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'division',
-      label: '所属行政区划',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入所属行政区划',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'status',
-      label: '运营状态',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入运营状态',
-        clearable: true,
-      },
-    },
-  ];
-}
-
-/** 列表的字段 */
+/** 表格字段 */
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
@@ -558,4 +472,13 @@ export function useGridColumns() {
       slots: { default: 'actions' },
     },
   ];
+}
+
+/** 文字描述对象 */
+export const textObj = {
+  editText: '编辑停车场',
+  addText: '新增停车场',
+  excelName: '停车场列表',
+  excelAllName: '全市停车场数据.xlsx',
+  total: ' 总计: 停车场数量10;车位总数:1211;评价车场车位7',
 }

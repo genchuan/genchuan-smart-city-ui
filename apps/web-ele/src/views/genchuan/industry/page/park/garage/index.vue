@@ -1,20 +1,22 @@
 <script setup>
 import { ref } from 'vue';
 
-import Table from './table/index.vue'; 
+import Table from './table/index.vue';
+
+import '#/components/page/index.scss';
 
 const changeArrowStatus = (item) => {
   item.secondShow = !item.secondShow;
 };
 const tabArray = ref([
   {
-    label: '路侧停车管理',
+    label: '车辆信息管理',
     components: Table,
     showSecondary: true,
-    secondShow: true,
-  }, 
+    secondShow: false,
+  },
 ]);
-const activeName = ref('路侧停车管理');
+const activeName = ref('车辆信息管理');
 </script>
 <template>
   <div class="common-index">
@@ -31,7 +33,7 @@ const activeName = ref('路侧停车管理');
       >
         <template #label>
           <div class="table-first">
-            <div v-show="item.showSecondary">
+            <div v-show="item.showSecondary" class="icon-first">
               <el-icon
                 class="tabel-tab-icon"
                 v-if="item.secondShow"
@@ -50,25 +52,12 @@ const activeName = ref('路侧停车管理');
             <span>{{ item.label }}</span>
           </div>
         </template>
-        <component :is="item.components" :second-show="item.secondShow" />
+        <component
+          :is="item.components"
+          :second-show="item.secondShow"
+          :key="item.label"
+        />
       </el-tab-pane>
     </el-tabs>
   </div>
 </template>
-<style lang="scss">
-.common-index {
-  height: 100%;
-  padding: 0.5rem;
-  background-color: #fff;
-  .table-first {
-    display: flex;
-    align-items: center;
-  }
-  .el-tabs__header {
-    margin-bottom: 0px;
-  }
-  .common-tabs {
-    position: relative;
-  }
-}
-</style>
