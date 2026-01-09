@@ -1,0 +1,1145 @@
+<script setup>
+import { computed, reactive, ref } from 'vue';
+
+import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { isEmpty } from '@vben/utils';
+
+import { ElLoading, ElMessage } from 'element-plus';
+import screenfull from 'screenfull';
+
+import { useVbenForm } from '#/adapter/form';
+import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { $t } from '#/locales';
+import { exportToExcel } from '#/utils/excel.js';
+
+import {
+  dataList,
+  textObj,
+  useFormSchema,
+  useGridColumns,
+  useGridFormSchema,
+  useMerchantDrawerSchema,
+  useAuthDrawerSchema,
+} from './data';
+
+const props = defineProps({
+  secondShow: {
+    type: Boolean,
+    default: false,
+  },
+  userType: {
+    type: String,
+    default: '全部',
+  },
+});
+const getTitle = computed(() => {
+  return formData.value?.id ? textObj.editText : textObj.addText;
+});
+const [Drawer, drawerApi] = useVbenDrawer({
+  footer: false,
+  onCancel() {
+    drawerApi.close();
+  },
+  onConfirm() {},
+  async onOpenChange() {},
+});
+const formData = ref();
+const [Form, formApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 80,
+  },
+  layout: 'horizontal',
+  schema: useFormSchema(),
+  showDefaultActions: false,
+});
+const [FormDrawer, formDrawerApi] = useVbenDrawer({
+  onCancel() {
+    formDrawerApi.close();
+  },
+  onConfirm() {
+    const obj = formApi.form.values;
+    if (formDrawerApi.sharedData.payload.title === textObj.addText) {
+      dataObj.apilist.push(obj);
+    } else {
+      dataObj.apilist.forEach((v, i) => {
+        if (v.id === formData.value?.id) {
+          dataObj.apilist[i] = obj;
+        }
+      });
+    }
+    handleRefresh();
+    formDrawerApi.close();
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      formData.value = formDrawerApi.getData();
+      if (formData.value?.id) {
+        await formApi.setValues(formData.value);
+      } else {
+        formApi.resetForm();
+      }
+    }
+  },
+});
+const [searchDrawer] = useVbenDrawer();
+/** 刷新表格 */
+function handleRefresh() {
+  gridApi.query();
+}
+
+/** 导出表格 */
+async function handleExport() {
+  exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+}
+
+/** 创建用户 */
+function handleCreate() {
+  formDrawerApi
+    .setData({
+      title: textObj.addText,
+    })
+    .open();
+}
+
+/** 编辑用户 */
+function handleEdit(row) {
+  formDrawerApi
+    .setData({
+      title: textObj.editText,
+      ...row,
+    })
+    .open();
+}
+async function handleDelete(row) {
+  const loadingInstance = ElLoading.service({
+    text: $t('ui.actionMessage.deleting', [row.realName]),
+  });
+  try {
+    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.realName]));
+    handleRefresh();
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+async function handleDeleteBatch() {
+  await confirm($t('确定删除这些数据吗？'));
+  const loadingInstance = ElLoading.service({
+    text: $t('ui.actionMessage.deletingBatch'),
+  });
+  try {
+    dataObj.apilist = dataObj.apilist.filter(
+      (v) => !checkedIds.value.includes(v.id),
+    );
+    checkedIds.value = [];
+    ElMessage.success($t('删除成功'));
+    handleRefresh();
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+const checkedIds = ref([]);
+function handleRowCheckboxChange({ records }) {
+  checkedIds.value = records.map((item) => item.id);
+}
+const dataObj = reactive({
+  total: dataList().length,
+  currentPage: 1,
+  pageSize: 10,
+  apilist: dataList(),
+  list: [],
+});
+// 表格数据获取
+const getTableData = (pageObj) => {
+  const page = pageObj.page;
+  let filteredList = dataObj.apilist
+    .map((v) => v)
+    .filter((v) => {
+      if (props.userType === '全部') {
+        return true;
+      }
+      return v.userType === props.userType;
+    })
+    .filter((v) => {
+      if (activeAuthStatus.value === '全部') {
+        return true;
+      }
+      return v.authStatus === activeAuthStatus.value;
+    })
+    .filter((v) => {
+      // 搜索条件过滤
+      for (const key in searchParams.value) {
+        if (searchParams.value[key]) {
+          const searchValue = searchParams.value[key].toString().toLowerCase();
+          const itemValue = v[key]?.toString().toLowerCase() || '';
+          if (!itemValue.includes(searchValue)) {
+            return false;
+          }
+        }
+      }
+      return true;
+    });
+
+  const total = filteredList.length;
+  const list = filteredList.slice(
+    (page.currentPage - 1) * page.pageSize,
+    page.currentPage * page.pageSize
+  );
+
+  // 更新dataObj以保持同步
+  dataObj.total = total;
+  dataObj.list = list;
+
+  return {
+    list,
+    total,
+  };
+};
+
+const searchParams = ref({});
+
+const [QueryForm] = useVbenForm({
+  // 默认展开
+  collapsed: false,
+  // 所有表单项共用，可单独在表单内覆盖
+  commonConfig: {
+    // 所有表单项
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  // 提交函数
+  handleSubmit: onSubmit,
+  // 垂直布局，label和input在不同行，值为vertical
+  // 水平布局，label和input在同一行
+  layout: 'horizontal',
+  schema: useGridFormSchema(),
+  // 是否可展开
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+// 搜索表单查询
+function onSubmit(values) {
+  searchParams.value = values;
+  drawerApi.close();
+  gridApi.query();
+}
+const [Grid, gridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: useGridColumns(),
+    keepSource: true,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }) => getTableData({ page }),
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+      isHover: true,
+    },
+    pagerConfig: dataObj,
+    toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
+      refresh: true,
+      search: true,
+    },
+    showOverflow: true,
+  },
+  gridEvents: {
+    checkboxAll: handleRowCheckboxChange,
+    checkboxChange: handleRowCheckboxChange,
+  },
+  showSearchForm: false,
+});
+
+// 认证状态标签页
+const activeAuthStatus = ref('全部');
+const authStatusTabs = ref([
+  { label: '全部', value: '全部' },
+  { label: '未认证', value: '未认证' },
+  { label: '待审核', value: '待审核' },
+  { label: '已认证', value: '已认证' },
+  { label: '认证失败', value: '认证失败' },
+]);
+
+const handleAuthStatusChange = () => {
+  gridApi.query();
+};
+
+const handleSerachShow = () => {
+  drawerApi.open();
+};
+const handleFullShow = () => {
+  screenfull.toggle();
+};
+
+// 关联字段点击弹出抽屉
+const [MerchantDrawer, merchantDrawerApi] = useVbenDrawer({
+  width: '70%',
+  title: '商户关联用户列表',
+  onCancel() {
+    merchantDrawerApi.close();
+  },
+});
+
+const selectedMerchant = ref(null);
+const relatedUsers = ref([]);
+
+const handleMerchantClick = (row) => {
+  selectedMerchant.value = row;
+  // 查询该商户关联的所有用户
+  relatedUsers.value = dataObj.apilist.filter(user => user.merchantName === row.merchantName);
+  merchantDrawerApi.open();
+};
+
+// 认证管理抽屉
+const [AuthDrawer, authDrawerApi] = useVbenDrawer({
+  width: '50%',
+  title: '用户认证管理',
+  onCancel() {
+    authDrawerApi.close();
+    // 重置认证流程状态
+    authStep.value = 1;
+    selectedAuthType.value = null;
+    authFormData.value = {};
+  },
+});
+
+const selectedUser = ref(null);
+// 认证流程步骤
+const authStep = ref(1);
+// 选择的认证类型
+const selectedAuthType = ref(null);
+// 认证表单数据
+const authFormData = ref({
+  authType: '',
+  authMaterialUrl: '',
+  plateNumber: '',
+  idCardOrLicense: '',
+  reviewerId: '',
+  reviewResult: '',
+  rejectReason: '',
+  authStatus: '',
+  authRecordDetail: '',
+});
+
+// 认证类型选项
+const authTypeOptions = ref([
+  {
+    label: '车主认证',
+    value: '车主',
+    description: '适用于个人车主用户，需实名认证和车牌绑定',
+    required: '需上传身份证正反面照片并绑定车牌',
+    icon: 'el-icon-car',
+  },
+  {
+    label: '商户认证',
+    value: '商户',
+    description: '适用于停车场商户，需营业执照认证',
+    required: '需上传营业执照照片和法人信息',
+    icon: 'el-icon-shop',
+  },
+  {
+    label: '政府用户认证',
+    value: '政府',
+    description: '适用于政府管理部门人员',
+    required: '需提供工作证明和单位介绍信',
+    icon: 'el-icon-office-building',
+  },
+  {
+    label: '运维人员认证',
+    value: '运维',
+    description: '适用于系统运维和管理人员',
+    required: '需提供工作证和授权证明',
+    icon: 'el-icon-setting',
+  },
+]);
+
+const handleAuthManage = (row) => {
+  selectedUser.value = row;
+  // 初始化认证表单数据
+  authFormData.value = {
+    authStatus: row.authStatus,
+    authType: '',
+    authMaterialUrl: '',
+    plateNumber: '',
+    idCardOrLicense: '',
+    reviewerId: '',
+    reviewResult: '',
+    rejectReason: '',
+    authRecordDetail: '',
+  };
+  authStep.value = 1;
+  selectedAuthType.value = null;
+  authDrawerApi.open();
+};
+
+// 步骤1：选择认证类型，进入下一步
+const handleAuthTypeNext = () => {
+  if (!selectedAuthType.value) {
+    ElMessage.warning('请选择认证类型');
+    return;
+  }
+  // 设置认证类型
+  authFormData.value.authType = selectedAuthType.value;
+  authStep.value = 2;
+};
+
+// 步骤2：填写信息，进入下一步
+const handleInfoNext = () => {
+  // 简单的表单验证
+  if (!authFormData.value.authType) {
+    ElMessage.warning('请选择认证类型');
+    return;
+  }
+  if (!authFormData.value.idCardOrLicense) {
+    ElMessage.warning('请输入身份证号/营业执照号');
+    return;
+  }
+  if (authFormData.value.authType === '车主' && !authFormData.value.plateNumber) {
+    ElMessage.warning('请输入车牌号码');
+    return;
+  }
+  authStep.value = 3;
+};
+
+// 步骤2：填写信息，返回上一步
+const handleInfoBack = () => {
+  authStep.value = 1;
+};
+
+// 步骤3：提交审核，返回上一步
+const handleReviewBack = () => {
+  authStep.value = 2;
+};
+
+// 步骤3：提交审核，完成认证
+const handleAuthSubmit = () => {
+  if (!authFormData.value.reviewResult) {
+    ElMessage.warning('请选择审核结果');
+    return;
+  }
+  
+  if (selectedUser.value) {
+    const index = dataObj.apilist.findIndex(item => item.id === selectedUser.value.id);
+    if (index !== -1) {
+      // 根据审核结果更新认证状态
+      let newAuthStatus = selectedUser.value.authStatus;
+      if (authFormData.value.reviewResult === '通过') {
+        newAuthStatus = '已认证';
+      } else if (authFormData.value.reviewResult === '驳回') {
+        newAuthStatus = '认证失败';
+      }
+      
+      // 更新用户数据
+      dataObj.apilist[index] = {
+        ...dataObj.apilist[index],
+        authStatus: newAuthStatus,
+        updateTime: new Date().toLocaleString('zh-CN'),
+      };
+      
+      ElMessage.success('认证管理操作成功');
+      authDrawerApi.close();
+      handleRefresh();
+      
+      // 重置状态
+      authStep.value = 1;
+      selectedAuthType.value = null;
+      authFormData.value = {};
+    }
+  }
+};
+</script>
+
+<template>
+  <div class="park-lot-table-new">
+    <FormDrawer :title="getTitle">
+      <Form />
+    </FormDrawer>
+    <MerchantDrawer>
+      <div class="merchant-detail">
+        <h3>{{ selectedMerchant?.merchantName }} - 关联用户列表</h3>
+        <div class="related-users-list">
+          <div v-for="(user, index) in relatedUsers" :key="user.id" class="user-item">
+            <div class="user-item-header">
+              <span class="user-item-index">{{ index + 1 }}.</span>
+              <span class="user-item-name">{{ user.realName }} ({{ user.username }})</span>
+            </div>
+            <div class="user-item-details">
+              <div class="detail-row">
+                <span class="detail-label">用户ID：</span>
+                <span class="detail-value">{{ user.id }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">用户类型：</span>
+                <span class="detail-value">
+                  <el-tag
+                    :type="
+                      user.userType === '个人' ? 'primary' :
+                      user.userType === '企业' ? 'success' : 'warning'
+                    "
+                  >
+                    {{ user.userType }}
+                  </el-tag>
+                </span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">认证状态：</span>
+                <span class="detail-value">
+                  <el-tag
+                    :type="
+                      user.authStatus === '已认证' ? 'success' :
+                      user.authStatus === '待审核' ? 'warning' :
+                      user.authStatus === '认证失败' ? 'danger' : 'info'
+                    "
+                  >
+                    {{ user.authStatus }}
+                  </el-tag>
+                </span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">联系电话：</span>
+                <span class="detail-value">{{ user.phone }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">邮箱：</span>
+                <span class="detail-value">{{ user.email }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">创建时间：</span>
+                <span class="detail-value">{{ user.createTime }}</span>
+              </div>
+            </div>
+          </div>
+          <div v-if="relatedUsers.length === 0" class="empty-list">
+            暂无关联用户
+          </div>
+        </div>
+      </div>
+    </MerchantDrawer>
+
+    <!-- 认证管理抽屉 -->
+    <AuthDrawer>
+      <div class="auth-management">
+        <!-- 认证流程步骤指示器 -->
+        <div class="auth-steps">
+          <el-steps :active="authStep - 1" finish-status="success" align-center>
+            <el-step title="选择认证类型" />
+            <el-step title="填写信息" />
+            <el-step title="提交审核" />
+          </el-steps>
+        </div>
+
+        <!-- 步骤1：选择认证类型 -->
+        <div v-if="authStep === 1" class="auth-step-content mt-4">
+          <h4>请选择认证类型</h4>
+          <p class="text-muted">根据您的用户类型选择相应的认证方式</p>
+          
+          <div class="auth-type-options mt-3">
+            <div 
+              v-for="option in authTypeOptions" 
+              :key="option.value"
+              class="auth-type-option"
+              :class="{ 'selected': selectedAuthType === option.value }"
+              @click="selectedAuthType = option.value"
+            >
+              <div class="auth-type-header">
+                <el-radio v-model="selectedAuthType" :label="option.value" />
+                <i :class="option.icon" class="auth-type-icon"></i>
+                <span class="auth-type-label">{{ option.label }}</span>
+              </div>
+              <p class="auth-type-description">{{ option.description }}</p>
+              <p class="auth-type-required text-warning">{{ option.required }}</p>
+            </div>
+          </div>
+
+          <!-- 认证说明 -->
+          <div class="auth-description mt-4 p-3 bg-info-light">
+            <h5>认证说明</h5>
+            <ul class="auth-description-list">
+              <li>• 认证信息将严格保密，仅用于身份验证</li>
+              <li>• 审核通常在1个工作日内完成</li>
+              <li>• 未认证用户将无法使用预约停车、月卡办理等功能</li>
+            </ul>
+          </div>
+
+          <div class="auth-actions mt-4 flex justify-end gap-2">
+            <el-button @click="authDrawerApi.close">取消</el-button>
+            <el-button type="primary" @click="handleAuthTypeNext">下一步</el-button>
+          </div>
+        </div>
+
+        <!-- 步骤2：填写信息 -->
+        <div v-if="authStep === 2" class="auth-step-content mt-4">
+          <h4>填写认证信息</h4>
+          
+          <el-form :model="authFormData" label-width="150px" class="mt-3">
+            <el-form-item label="认证类型" required>
+              <el-select v-model="authFormData.authType" placeholder="请选择认证类型" class="w-60" disabled>
+                <el-option label="车主" value="车主" />
+                <el-option label="商户" value="商户" />
+                <el-option label="政府" value="政府" />
+                <el-option label="运维" value="运维" />
+              </el-select>
+            </el-form-item>
+            
+            <el-form-item label="认证材料URL">
+              <el-input 
+                v-model="authFormData.authMaterialUrl" 
+                placeholder="请输入认证材料URL" 
+                class="w-full"
+              />
+            </el-form-item>
+            
+            <!-- 车主认证特有字段 -->
+            <el-form-item label="车牌号码" v-if="authFormData.authType === '车主'" required>
+              <el-input 
+                v-model="authFormData.plateNumber" 
+                placeholder="请输入车牌号码" 
+                class="w-60"
+              />
+            </el-form-item>
+            
+            <el-form-item label="身份证号/营业执照号" required>
+              <el-input 
+                v-model="authFormData.idCardOrLicense" 
+                placeholder="请输入身份证号/营业执照号" 
+                class="w-full"
+              />
+            </el-form-item>
+            
+            <el-form-item label="审核人ID">
+              <el-input 
+                v-model="authFormData.reviewerId" 
+                placeholder="请输入审核人ID" 
+                class="w-60"
+              />
+            </el-form-item>
+            
+            <el-form-item label="认证记录明细">
+              <el-input 
+                v-model="authFormData.authRecordDetail" 
+                type="textarea" 
+                :rows="4" 
+                placeholder="请输入认证记录明细" 
+                class="w-full"
+              />
+            </el-form-item>
+          </el-form>
+
+          <div class="auth-actions mt-4 flex justify-end gap-2">
+            <el-button @click="handleInfoBack">上一步</el-button>
+            <el-button type="primary" @click="handleInfoNext">下一步</el-button>
+          </div>
+        </div>
+
+        <!-- 步骤3：提交审核 -->
+        <div v-if="authStep === 3" class="auth-step-content mt-4">
+          <h4>审核认证信息</h4>
+          
+          <el-form :model="authFormData" label-width="150px" class="mt-3">
+            <el-form-item label="审核结果" required>
+              <el-select v-model="authFormData.reviewResult" placeholder="请选择审核结果" class="w-60">
+                <el-option label="通过" value="通过" />
+                <el-option label="驳回" value="驳回" />
+              </el-select>
+            </el-form-item>
+            
+            <el-form-item label="驳回原因" v-if="authFormData.reviewResult === '驳回'">
+              <el-input 
+                v-model="authFormData.rejectReason" 
+                type="textarea" 
+                :rows="4" 
+                placeholder="请输入驳回原因" 
+                class="w-full"
+              />
+            </el-form-item>
+            
+            <el-form-item label="认证状态" required>
+              <el-select v-model="authFormData.authStatus" placeholder="请选择认证状态" class="w-60">
+                <el-option label="未认证" value="未认证" />
+                <el-option label="待审核" value="待审核" />
+                <el-option label="已认证" value="已认证" />
+                <el-option label="认证失败" value="认证失败" />
+              </el-select>
+            </el-form-item>
+            
+            <el-form-item label="认证记录明细">
+              <el-input 
+                v-model="authFormData.authRecordDetail" 
+                type="textarea" 
+                :rows="4" 
+                placeholder="请输入认证记录明细" 
+                class="w-full"
+                readonly
+              />
+            </el-form-item>
+          </el-form>
+
+          <div class="auth-actions mt-4 flex justify-end gap-2">
+            <el-button @click="handleReviewBack">上一步</el-button>
+            <el-button type="primary" @click="handleAuthSubmit">提交审核</el-button>
+          </div>
+        </div>
+      </div>
+    </AuthDrawer>
+    <!-- <NewFormModel @success="handleRefresh" /> -->
+    <searchDrawer title="搜索栏设置" />
+    <Drawer title="搜索">
+      <QueryForm class="query-form" />
+    </Drawer>
+    <Grid>
+      <!-- 三级状态 -->
+      <template #table-title>
+        <div class="tabel-title-container">
+          <div v-if="props.secondShow" class="tabel-tabs-container">
+            <!-- 认证状态标签页 -->
+            <el-tabs
+              v-model="activeAuthStatus"
+              class="demo-tabs auth-status-tabs"
+              @tab-change="handleAuthStatusChange"
+            >
+              <el-tab-pane
+                v-for="item in authStatusTabs"
+                :key="item.label"
+                :label="item.label"
+                :name="item.value"
+              />
+            </el-tabs>
+          </div>
+        </div>
+      </template>
+      <template #toolbar-tools>
+        <TableAction
+          :actions="[
+            {
+              label: '新增用户',
+              type: 'primary',
+              icon: ACTION_ICON.ADD,
+              auth: ['system:role:create'],
+              onClick: handleCreate,
+            },
+            {
+              label: $t('ui.actionTitle.export'),
+              type: 'primary',
+              icon: ACTION_ICON.DOWNLOAD,
+              auth: ['system:role:export'],
+              onClick: handleExport,
+            },
+            {
+              label: $t('ui.actionTitle.deleteBatch'),
+              type: 'danger',
+              icon: ACTION_ICON.DELETE,
+              disabled: isEmpty(checkedIds),
+              auth: ['system:role:delete'],
+              onClick: handleDeleteBatch,
+            },
+          ]"
+        />
+        <button
+          class="vxe-button type--button size--small is--circle ml-2"
+          title="搜索"
+          type="button"
+          @click="handleSerachShow"
+        >
+          <i
+            class="vxe-button--item vxe-button--prefix-icon vxe-icon-search"
+          ></i>
+        </button>
+        <button
+          class="vxe-button type--button size--small is--circle"
+          title="全屏"
+          type="button"
+          @click="handleFullShow"
+        >
+          <i
+            class="vxe-button--item vxe-button--prefix-icon vxe-table-icon-fullscreen"
+          ></i>
+        </button>
+      </template>
+      <template #userType="{ row }">
+        <el-tag
+          :type="
+            row.userType === '个人' ? 'primary' :
+            row.userType === '企业' ? 'success' : 'warning'
+          "
+        >
+          {{ row.userType }}
+        </el-tag>
+      </template>
+      <template #authStatus="{ row }">
+        <el-tag
+          :type="
+            row.authStatus === '已认证' ? 'success' :
+            row.authStatus === '待审核' ? 'warning' :
+            row.authStatus === '认证失败' ? 'danger' : 'info'
+          "
+        >
+          {{ row.authStatus }}
+        </el-tag>
+      </template>
+      <template #merchantName="{ row }">
+        <a href="javascript:;" @click="handleMerchantClick(row)" class="关联字段">
+          {{ row.merchantName }}
+        </a>
+      </template>
+      <template #actions="{ row }">
+        <TableAction
+          :actions="[
+            {
+              label: '编辑',
+              type: 'primary',
+              link: true,
+              icon: ACTION_ICON.EDIT,
+              auth: ['system:role:update'],
+              onClick: handleEdit.bind(null, row),
+            },
+            {
+              label: '认证管理',
+              type: 'warning',
+              link: true,
+              icon: ACTION_ICON.AUDIT,
+              onClick: handleAuthManage.bind(null, row),
+            },
+            {
+              label: '删除',
+              type: 'danger',
+              link: true,
+              icon: ACTION_ICON.DELETE,
+              auth: ['system:role:delete'],
+              popConfirm: {
+                title: $t('ui.actionMessage.deleteConfirm', [row.realName]),
+                confirm: handleDelete.bind(null, row),
+              },
+            },
+          ]"
+        />
+      </template>
+      <template #bottom>
+        <span class="bottom-title">
+          总计: 用户数量{{ dataObj.total }};
+        </span>
+      </template>
+    </Grid>
+  </div>
+</template>
+
+<style scoped>
+.tabel-title-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.tabel-tabs-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.user-type-tabs {
+  margin-bottom: 10px;
+}
+
+.auth-status-tabs {
+  margin-bottom: 10px;
+}
+
+.merchant-detail {
+  padding: 20px;
+}
+
+.merchant-detail h3 {
+  margin-bottom: 20px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #303133;
+}
+
+.related-users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.user-item {
+  background-color: #fff;
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
+  padding: 16px;
+  transition: all 0.3s ease;
+}
+
+.user-item:hover {
+  border-color: #409eff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.user-item-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.user-item-index {
+  font-weight: bold;
+  margin-right: 8px;
+  color: #409eff;
+}
+
+.user-item-name {
+  font-weight: bold;
+  color: #303133;
+  font-size: 15px;
+}
+
+.user-item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.detail-label {
+  width: 100px;
+  color: #606266;
+  font-weight: 500;
+  text-align: right;
+  margin-right: 16px;
+}
+
+.detail-value {
+  flex: 1;
+  color: #303133;
+}
+
+.empty-list {
+  text-align: center;
+  color: #909399;
+  padding: 40px 0;
+  background-color: #fafafa;
+  border: 1px dashed #dcdfe6;
+  border-radius: 6px;
+}
+
+.关联字段 {
+  color: #409eff;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.关联字段:hover {
+  color: #66b1ff;
+  text-decoration: underline;
+}
+
+.auth-management {
+  padding: 20px;
+}
+
+.auth-management h3 {
+  margin-bottom: 20px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.auth-management h4 {
+  margin-bottom: 15px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.auth-management h5 {
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.auth-steps {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.auth-step-content {
+  padding: 0;
+}
+
+.auth-type-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-type-option {
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #fff;
+}
+
+.auth-type-option:hover {
+  border-color: #409eff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.auth-type-option.selected {
+  border-color: #409eff;
+  background-color: #ecf5ff;
+}
+
+.auth-type-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.auth-type-icon {
+  font-size: 16px;
+  color: #409eff;
+  margin-right: 4px;
+}
+
+.auth-type-label {
+  font-weight: bold;
+  font-size: 15px;
+  color: #303133;
+}
+
+.auth-type-description {
+  margin-bottom: 6px;
+  color: #606266;
+  font-size: 13px;
+  margin-left: 34px;
+}
+
+.auth-type-required {
+  color: #e6a23c;
+  font-size: 12px;
+  margin: 0;
+  margin-left: 34px;
+}
+
+.auth-description {
+  background-color: #ecf5ff;
+  border: 1px solid #d9ecff;
+  border-radius: 6px;
+  margin-top: 20px;
+}
+
+.auth-description-list {
+  margin: 8px 0 0 0;
+  padding: 0;
+  color: #606266;
+  list-style-type: none;
+}
+
+.auth-description-list li {
+  margin-bottom: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.mt-4 {
+  margin-top: 16px;
+}
+
+.mt-3 {
+  margin-top: 12px;
+}
+
+.text-muted {
+  color: #909399;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.text-warning {
+  color: #e6a23c;
+}
+
+.bg-info-light {
+  background-color: #ecf5ff;
+}
+
+.flex {
+  display: flex;
+}
+
+.justify-end {
+  justify-content: flex-end;
+}
+
+.gap-2 {
+  gap: 8px;
+}
+
+.w-60 {
+  width: 240px;
+}
+
+.w-full {
+  width: 100%;
+}
+
+/* 移除步骤指示器的默认图标 */
+:deep(.el-step__icon.is-text) {
+  background-color: #e4e7ed;
+  color: #fff;
+}
+
+:deep(.el-step__icon.is-text.is-success) {
+  background-color: #67c23a;
+}
+
+:deep(.el-step__icon.is-text.is-active) {
+  background-color: #409eff;
+}
+
+/* 调整步骤标题样式 */
+:deep(.el-step__title) {
+  font-size: 14px;
+  color: #909399;
+}
+
+:deep(.el-step__title.is-success) {
+  color: #67c23a;
+}
+
+:deep(.el-step__title.is-active) {
+  color: #303133;
+  font-weight: bold;
+}
+
+/* 调整步骤线样式 */
+:deep(.el-step__line) {
+  background-color: #e4e7ed;
+}
+
+:deep(.el-step__line.is-success) {
+  background-color: #67c23a;
+}
+</style>
