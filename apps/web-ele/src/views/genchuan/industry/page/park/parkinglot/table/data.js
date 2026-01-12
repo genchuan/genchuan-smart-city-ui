@@ -476,5 +476,5 @@ export const textObj = {
   addText: '新增停车场',
   excelName: '停车场列表',
   excelAllName: '全市停车场数据.xlsx',
-  total: ' 总计: 停车场数量10;车位总数:1211;评价车场车位7',
+  total: '停车场数量10;车位总数:1211;车场车位7',
 }

@@ -136,12 +136,16 @@ function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
 const dataObj = reactive({
+  totalShow: false,
   total: dataList().length,
   currentPage: 1,
   pageSize: 10,
   apilist: dataList(),
   list: [],
 });
+const changeTotalShow = () => {
+  dataObj.totalShow = !dataObj.totalShow;
+};
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
@@ -375,12 +379,15 @@ const handleFullShow = () => {
         />
       </template>
       <template #bottom>
-        <span class="bottom-title">
-          {{ textObj.total }}
-        </span>
-        <span class="bottom-title">
-          {{ textObj.total }}
-        </span>
+        <div class="common-total" @click="changeTotalShow">
+          <el-icon class="tabel-tab-icon">
+            <ArrowDown />
+          </el-icon>
+          <span> 本页统计：停车场数量5;车位总数:266;车场车位3 </span>
+        </div>
+        <div class="common-total-bottom" v-if="dataObj.totalShow">
+          <span> 全部统计：{{ textObj.total }} </span>
+        </div>
       </template>
     </Grid>
   </div>

@@ -1,8 +1,9 @@
 .common-index {
   height: 100%;
   padding: 0.5rem;
-  background-color:  hsl(var(--card));
-  overflow: auto; 
+  background-color: hsl(var(--card));
+  overflow: auto;
+
   .icon-first {
     margin-right: 5px;
   }
@@ -62,16 +63,27 @@
       margin-right: 10px;
     }
 
-    .vxe-grid--bottom-wrapper {
-      display: inline;
-      position: relative;
+    .vxe-grid--bottom-wrapper { 
+      width: 500px;
       top: 18px;
-      z-index: 10;
+      z-index: 1; 
 
+      .common-total {
+        font-size: 16px;
+        display: inline;
+        position: relative;
+        cursor: pointer;
+      }
+      .common-total-bottom { 
+        font-size: 16px;
+        margin-left: 20px;
+      }
+ 
       .bottom-title {
         font-size: 16px;
+        cursor: pointer;
       }
-    }
+    } 
 
     .vxe-grid--pager-wrapper {
       .vxe-pager {
@@ -92,6 +104,7 @@
       overflow: auto;
     }
   }
+
   .common-align {
     cursor: pointer;
   }
