@@ -1,21 +1,6 @@
 /** 表格初始数据*/
 export const dataList = () => {
-  return [
-    {
-      id: '1',
-      name: '芗城区XX社区公共停车场',
-      type: '公共',
-      address: '芗城区XX街道XX路88号',
-      status: '启用',
-      parkTotal: '90',
-      pricing: '首小时8元，后续每小时4元，封顶32元',
-      business: '06:00-24:00',
-      division: '芗城区-东铺头街道',
-      grid: '东铺头街道网格001',
-      managementMatters: '泊位占用处置',
-      phone: '13800138000',
-      reason: '',
-    },
+  return [ 
     {
       id: '2',
       name: '龙文区碧湖公园停车场',
@@ -139,7 +124,7 @@ export const dataList = () => {
     {
       id: '10',
       name: '龙文区蓝田街道停车场',
-      type: '公共',
+      type: '路测',
       address: '龙文区蓝田街道梧桥中路58号',
       status: '暂停运营',
       parkTotal: '110',
@@ -154,7 +139,7 @@ export const dataList = () => {
     {
       id: '11',
       name: '龙文区步文街道停车场',
-      type: '公共',
+      type: '路测',
       address: '龙文区步文街道天亭路23号',
       status: '启用',
       parkTotal: '180',
@@ -340,6 +325,15 @@ export function useFormSchema() {
       },
       rules: 'required',
     },
+     {
+      fieldName: 'type',
+      label: '类型',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入类型',
+      },
+      rules: 'required',
+    },
     {
       fieldName: 'address',
       label: '详细地址',
@@ -419,6 +413,12 @@ export function useGridColumns() {
       sortable: true,
       slots: { default: 'parkName' },
     },
+      {
+      field: 'type',
+      title: '类型',
+      minWidth: 100,
+      sortable: true,
+    },
     {
       field: 'address',
       title: '详细地址',
@@ -476,5 +476,5 @@ export const textObj = {
   addText: '新增停车场',
   excelName: '停车场列表',
   excelAllName: '全市停车场数据.xlsx',
-  total: ' 总计: 停车场数量10;车位总数:1211;评价车场车位7',
+  total: '停车场数量10;车位总数:1211;车场车位7',
 }

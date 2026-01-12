@@ -1,40 +1,38 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
-
-import { Bottom, Download, Refresh, Top } from '@element-plus/icons-vue';
+import { Download, Refresh } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 
 // API (需要创建对应的API文件)
 import {
-  exportEntryFlowReport,
-  getEntryFlowReport,
-} from '#/api/reports/park/entryFlowApi';
+  exportDailyIncomeReport,
+  getDailyIncomeReport,
+} from '#/api/reports/park/dailyIncomeApi';
 import ChartContainer from '#/views/report/park/component/ChartContainer.vue';
 import CoreIndicators from '#/views/report/park/component/CoreIndicators.vue';
 import DataTable from '#/views/report/park/component/DataTable.vue';
 import LoadingOverlay from '#/views/report/park/component/LoadingOverlay.vue';
 import ReportSection from '#/views/report/park/component/ReportSection.vue';
-// 组件引入
 import ReportToolbar from '#/views/report/park/component/ReportToolbar.vue';
-// 工具函数
 import {
+  formatCurrency,
   generateIndicatorTag,
   getComparisonClass,
   getYesterdayDate,
 } from '#/views/report/park/component/ReportUtils';
 
 // 响应式数据
-const dateRange = ref([getYesterdayDate(), getYesterdayDate()]);
+const date = ref(getYesterdayDate());
 const region = ref('');
 const parkingType = ref('');
+const parkingId = ref('');
 const loading = ref(false);
 const exporting = ref(false);
-const timeChartType = ref('bar');
 const coreIndicators = ref([]);
-const timeDistributionData = ref([]);
 const regionDistributionData = ref([]);
-const vehicleTypeData = ref([]);
-const tableData = ref([]);
+const typeDistributionData = ref([]);
+const parkingDetailData = ref([]);
+const paymentTypeData = ref([]);
 
 // 处理后的核心指标数据
 const processedCoreIndicators = computed(() => {
@@ -45,31 +43,28 @@ const processedCoreIndicators = computed(() => {
   }));
 });
 
-// 表格列定义
-const tableColumns = computed(() => [
-  { prop: 'date', label: '日期', width: 120 },
+// 表格列定义 - 停车场明细
+const parkingColumns = computed(() => [
+  { prop: 'parkingName', label: '停车场名称', width: 180 },
   { prop: 'regionName', label: '行政区划', width: 120 },
   { prop: 'parkingType', label: '停车场类型', width: 150 },
-  { prop: 'totalCount', label: '总车次', width: 120 },
-  { prop: 'morningPeak', label: '早高峰(7-9点)', width: 150 },
-  { prop: 'eveningPeak', label: '晚高峰(17-19点)', width: 150 },
-  { prop: 'offPeak', label: '平峰时段', width: 150 },
-  { prop: 'smallVehicle', label: '小型车', width: 120 },
-  { prop: 'mediumVehicle', label: '中型车', width: 120 },
-  { prop: 'largeVehicle', label: '大型车', width: 120 },
-  { prop: 'newEnergy', label: '新能源汽车', width: 150 },
+  { prop: 'orderCount', label: '订单数', width: 120 },
+  { prop: 'totalAmount', label: '收费金额', width: 150, type: 'currency' },
+  { prop: 'avgOrderAmount', label: '平均客单价', width: 150, type: 'currency' },
+  { prop: 'cashAmount', label: '现金收入', width: 150, type: 'currency' },
+  { prop: 'onlineAmount', label: '线上收入', width: 150, type: 'currency' },
   {
-    prop: 'newEnergyRate',
-    label: '新能源占比',
-    width: 150,
+    prop: 'onlineRate',
+    label: '线上占比',
+    width: 120,
     type: 'percentage',
   },
 ]);
 
-// 时段分布图表配置
-const timeDistributionOptions = computed(() => ({
+// 区域收入分布图表配置
+const regionDistributionOptions = computed(() => ({
   title: {
-    text: '入场车流时段分布',
+    text: '区域收入分布',
     left: 'center',
   },
   tooltip: {
@@ -77,10 +72,6 @@ const timeDistributionOptions = computed(() => ({
     axisPointer: {
       type: 'shadow',
     },
-  },
-  legend: {
-    data: ['今日', '近7日均值'],
-    bottom: 10,
   },
   grid: {
     left: '3%',
@@ -91,20 +82,7 @@ const timeDistributionOptions = computed(() => ({
   },
   xAxis: {
     type: 'category',
-    data: [
-      '00-02',
-      '02-04',
-      '04-06',
-      '06-08',
-      '08-10',
-      '10-12',
-      '12-14',
-      '14-16',
-      '16-18',
-      '18-20',
-      '20-22',
-      '22-24',
-    ],
+    data: regionDistributionData.value.map((item) => item.regionName),
     axisLabel: {
       interval: 0,
       rotate: 45,
@@ -112,66 +90,32 @@ const timeDistributionOptions = computed(() => ({
   },
   yAxis: {
     type: 'value',
-    name: '车次',
+    name: '收入(万元)',
   },
   series: [
     {
-      name: '今日',
-      type: timeChartType.value,
-      data: timeDistributionData.value.today || [],
-      itemStyle: {
-        color: '#1890ff',
-      },
-    },
-    {
-      name: '近7日均值',
-      type: 'line',
-      data: timeDistributionData.value.average || [],
-      smooth: true,
-      lineStyle: {
-        color: '#ff4d4f',
-      },
-    },
-  ],
-}));
-
-// 区域分布图表配置
-const regionDistributionOptions = computed(() => ({
-  title: {
-    text: '区域入场车流分布',
-    left: 'center',
-  },
-  tooltip: {
-    trigger: 'item',
-  },
-  legend: {
-    orient: 'vertical',
-    left: 'left',
-    top: 'middle',
-    data: regionDistributionData.value.map((item) => item.name),
-  },
-  series: [
-    {
-      name: '入场车流',
-      type: 'pie',
-      radius: ['40%', '70%'],
-      center: ['50%', '50%'],
-      data: regionDistributionData.value,
-      emphasis: {
+      name: '收入',
+      type: 'bar',
+      data: regionDistributionData.value.map((item) => ({
+        value: item.totalAmount,
         itemStyle: {
-          shadowBlur: 10,
-          shadowOffsetX: 0,
-          shadowColor: 'rgba(0, 0, 0, 0.5)',
+          color: getRegionColor(item.totalAmount),
         },
+      })),
+      barWidth: '60%',
+      label: {
+        show: true,
+        position: 'top',
+        formatter: (params) => formatCurrency(params.value, false),
       },
     },
   ],
 }));
 
-// 车型分布图表配置
-const vehicleTypeOptions = computed(() => ({
+// 支付方式分布图表配置
+const paymentTypeOptions = computed(() => ({
   title: {
-    text: '车型分布',
+    text: '支付方式分布',
     left: 'center',
   },
   tooltip: {
@@ -185,16 +129,11 @@ const vehicleTypeOptions = computed(() => ({
   },
   series: [
     {
-      name: '车型分布',
+      name: '支付方式',
       type: 'pie',
       radius: ['40%', '70%'],
       center: ['50%', '50%'],
-      data: [
-        { value: vehicleTypeData.value.small || 0, name: '小型车' },
-        { value: vehicleTypeData.value.medium || 0, name: '中型车' },
-        { value: vehicleTypeData.value.large || 0, name: '大型车' },
-        { value: vehicleTypeData.value.newEnergy || 0, name: '新能源汽车' },
-      ],
+      data: paymentTypeData.value,
       emphasis: {
         itemStyle: {
           shadowBlur: 10,
@@ -206,8 +145,52 @@ const vehicleTypeOptions = computed(() => ({
   ],
 }));
 
+// 停车场类型分布图表配置
+const typeDistributionOptions = computed(() => ({
+  title: {
+    text: '停车场类型收入分布',
+    left: 'center',
+  },
+  tooltip: {
+    trigger: 'item',
+    formatter: '{a} <br/>{b}: {c} ({d}%)',
+  },
+  legend: {
+    orient: 'vertical',
+    left: 'left',
+    top: 'middle',
+  },
+  series: [
+    {
+      name: '停车场类型',
+      type: 'pie',
+      radius: ['40%', '70%'],
+      center: ['50%', '50%'],
+      data: typeDistributionData.value,
+      emphasis: {
+        itemStyle: {
+          shadowBlur: 10,
+          shadowOffsetX: 0,
+          shadowColor: 'rgba(0, 0, 0, 0.5)',
+        },
+      },
+    },
+  ],
+}));
+
+// 根据收入金额获取颜色
+const getRegionColor = (amount) => {
+  if (amount >= 100000) return '#52c41a'; // 绿色 - 高收入
+  if (amount >= 50000) return '#1890ff';  // 蓝色 - 中高收入
+  if (amount >= 20000) return '#fa8c16';  // 橙色 - 中等收入
+  return '#f5222d';                       // 红色 - 低收入
+};
+
 // 格式化值
 const formatValue = (value, unit) => {
+  if (unit === '元' || unit === '金额') {
+    return formatCurrency(value, false);
+  }
   return value.toLocaleString();
 };
 
@@ -217,7 +200,7 @@ onMounted(() => {
 });
 
 // 监听筛选条件变化
-watch([dateRange, region, parkingType], () => {
+watch([date, region, parkingType, parkingId], () => {
   loadData();
 });
 
@@ -227,22 +210,22 @@ const loadData = async () => {
     loading.value = true;
 
     const params = {
-      startDate: dateRange.value[0],
-      endDate: dateRange.value[1],
+      date: date.value,
       region: region.value,
       parkingType: parkingType.value,
+      parkingId: parkingId.value,
     };
 
-    const response = await getEntryFlowReport(params);
+    const response = await getDailyIncomeReport(params);
 
     // 更新数据
-    coreIndicators.value = response.coreIndicators;
-    timeDistributionData.value = response.timeDistribution;
-    regionDistributionData.value = response.regionDistribution;
-    vehicleTypeData.value = response.vehicleType;
-    tableData.value = response.tableData;
+    coreIndicators.value = response.coreIndicators || [];
+    regionDistributionData.value = response.regionDistribution || [];
+    typeDistributionData.value = response.typeDistribution || [];
+    parkingDetailData.value = response.parkingDetail || [];
+    paymentTypeData.value = response.paymentType || [];
   } catch (error) {
-    console.error('加载入场车流数据失败:', error);
+    console.error('加载日收入数据失败:', error);
     ElMessage.error('加载数据失败');
   } finally {
     loading.value = false;
@@ -260,13 +243,13 @@ const handleExport = async () => {
     exporting.value = true;
 
     const params = {
-      startDate: dateRange.value[0],
-      endDate: dateRange.value[1],
+      date: date.value,
       region: region.value,
       parkingType: parkingType.value,
+      parkingId: parkingId.value,
     };
 
-    await exportEntryFlowReport(params);
+    await exportDailyIncomeReport(params);
 
     ElMessage.success('导出成功');
   } catch (error) {
@@ -276,23 +259,30 @@ const handleExport = async () => {
     exporting.value = false;
   }
 };
+
+// 获取停车场列表（模拟）
+const parkingList = ref([
+  { value: '', label: '全部停车场' },
+  { value: 'park001', label: '漳州万达广场停车场' },
+  { value: 'park002', label: '芗城政府路侧停车场' },
+  { value: 'park003', label: '龙文区体育中心停车场' },
+  { value: 'park004', label: '龙海区商业城停车场' },
+]);
 </script>
 
 <template>
-  <div class="entry-flow-report">
+  <div class="daily-income-report">
     <!-- 工具栏 -->
     <ReportToolbar>
       <template #left>
         <el-date-picker
-          v-model="dateRange"
-          type="daterange"
-          range-separator="至"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
+          v-model="date"
+          type="date"
+          placeholder="选择日期"
           format="YYYY-MM-DD"
           value-format="YYYY-MM-DD"
           size="medium"
-          style="width: 280px"
+          style="width: 160px"
         />
         <el-select
           v-model="region"
@@ -305,6 +295,7 @@ const handleExport = async () => {
           <el-option label="芗城区" value="xiangcheng" />
           <el-option label="龙文区" value="longwen" />
           <el-option label="龙海区" value="longhai" />
+          <el-option label="漳浦县" value="zhangpu" />
         </el-select>
         <el-select
           v-model="parkingType"
@@ -317,6 +308,20 @@ const handleExport = async () => {
           <el-option label="公共停车场" value="public" />
           <el-option label="路侧停车场" value="roadside" />
           <el-option label="专用停车场" value="special" />
+        </el-select>
+        <el-select
+          v-model="parkingId"
+          placeholder="停车场"
+          size="medium"
+          clearable
+          style="width: 220px; margin-left: 12px"
+        >
+          <el-option
+            v-for="parking in parkingList"
+            :key="parking.value"
+            :label="parking.label"
+            :value="parking.value"
+          />
         </el-select>
       </template>
 
@@ -335,60 +340,51 @@ const handleExport = async () => {
 
     <!-- 核心指标 -->
     <CoreIndicators
-      title="入场车流核心指标"
+      title="日收入核心指标"
       :indicators="processedCoreIndicators"
       :format-value="formatValue"
     >
       <template #comparison="{ indicator }">
         <span :class="getComparisonClass(indicator.comparison)">
-          <el-icon v-if="indicator.comparison > 0"><Top /></el-icon>
-          <el-icon v-if="indicator.comparison < 0"><Bottom /></el-icon>
-          较近7日均值 {{ Math.abs(indicator.comparison) }}%
+          较近7日均值 {{ indicator.comparison > 0 ? '+' : '' }}{{ indicator.comparison }}%
         </span>
       </template>
     </CoreIndicators>
 
-    <!-- 时段分布 -->
-    <ReportSection title="时段分布统计">
-      <template #actions>
-        <el-radio-group v-model="timeChartType" size="small">
-          <el-radio-button label="bar">柱状图</el-radio-button>
-          <el-radio-button label="line">折线图</el-radio-button>
-        </el-radio-group>
-      </template>
-
-      <!-- 时段分布图表 -->
-      <ChartContainer :options="timeDistributionOptions" height="350px" />
+    <!-- 区域收入分布 -->
+    <ReportSection title="区域收入分布">
+      <ChartContainer :options="regionDistributionOptions" height="350px" />
     </ReportSection>
 
-    <!-- 区域与车型分布 -->
-    <div class="distribution-grid">
-      <!-- 区域分布 -->
+    <!-- 多维度分析 -->
+    <div class="multi-dimension">
+      <!-- 支付方式分布 -->
       <ReportSection
-        title="区域分布统计"
+        title="支付方式分布"
         :with-background="true"
         :with-padding="true"
       >
-        <ChartContainer :options="regionDistributionOptions" height="300px" />
+        <ChartContainer :options="paymentTypeOptions" height="300px" />
       </ReportSection>
 
-      <!-- 车型分布 -->
+      <!-- 停车场类型分布 -->
       <ReportSection
-        title="车型分布统计"
+        title="停车场类型分布"
         :with-background="true"
         :with-padding="true"
       >
-        <ChartContainer :options="vehicleTypeOptions" height="300px" />
+        <ChartContainer :options="typeDistributionOptions" height="300px" />
       </ReportSection>
     </div>
 
-    <!-- 数据表格 -->
-    <ReportSection title="详细数据">
+    <!-- 停车场收入明细 -->
+    <ReportSection title="停车场收入明细">
       <DataTable
-        :data="tableData"
-        :columns="tableColumns"
+        :data="parkingDetailData"
+        :columns="parkingColumns"
         show-pagination
-        :total="tableData.length"
+        :total="parkingDetailData.length"
+        :page-sizes="[10, 20, 50]"
       />
     </ReportSection>
 
@@ -398,13 +394,13 @@ const handleExport = async () => {
 </template>
 
 <style scoped>
-.entry-flow-report {
+.daily-income-report {
   position: relative;
   min-height: 600px;
   padding: 12px;
 }
 
-.distribution-grid {
+.multi-dimension {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
@@ -412,7 +408,7 @@ const handleExport = async () => {
 }
 
 @media (max-width: 992px) {
-  .distribution-grid {
+  .multi-dimension {
     grid-template-columns: 1fr;
   }
 }

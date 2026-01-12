@@ -40,7 +40,7 @@ defineProps({
 
 <style scoped>
 .report-section {
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .report-section.with-background {
@@ -50,14 +50,14 @@ defineProps({
 }
 
 .report-section.with-padding {
-  padding: 24px;
+  padding: 12px;
 }
 
 .section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .section-title {
@@ -72,8 +72,8 @@ defineProps({
 }
 
 .section-footer {
-  padding-top: 20px;
-  margin-top: 20px;
+  padding-top: 10px;
+  margin-top: 10px;
   border-top: 1px solid #ebeef5;
 }
 </style>

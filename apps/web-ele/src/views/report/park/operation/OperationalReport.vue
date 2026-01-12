@@ -29,12 +29,6 @@ onMounted(() => {
 
 <template>
   <div class="operational-report">
-    <!-- 页面标题 -->
-    <div class="page-header">
-      <h1 class="page-title">运营数据报表</h1>
-      <p class="page-subtitle">漳州市智慧停车运营数据分析</p>
-    </div>
-
     <!-- 标签页 -->
     <div class="report-tabs">
       <el-tabs
@@ -88,29 +82,12 @@ onMounted(() => {
 <style scoped>
 .operational-report {
   min-height: 100vh;
-  padding: 20px;
+  padding: 10px;
   background-color: #f5f7fa;
 }
 
-.page-header {
-  margin-bottom: 24px;
-}
-
-.page-title {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-  color: #303133;
-}
-
-.page-subtitle {
-  margin-top: 8px;
-  font-size: 14px;
-  color: #909399;
-}
-
 .report-tabs {
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .tab-label {
@@ -120,7 +97,7 @@ onMounted(() => {
 }
 
 .global-tips {
-  margin-top: 20px;
+  margin-top: 10px;
 }
 
 .global-tips p {

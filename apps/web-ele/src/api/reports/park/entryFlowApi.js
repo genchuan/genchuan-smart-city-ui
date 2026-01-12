@@ -1,6 +1,5 @@
 // 入场车流API - 包含模拟数据
 import { ElMessage } from 'element-plus';
-
 /**
  * 模拟入场车流报表数据
  * @param {string} startDate 开始日期，格式：YYYY-MM-DD

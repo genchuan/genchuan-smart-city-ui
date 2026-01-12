@@ -73,11 +73,11 @@ const getComparisonClass = (comparison) => {
 
 <style scoped>
 .core-indicators {
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .section-title {
-  margin: 0 0 16px;
+  margin: 0 0 8px;
   font-size: 18px;
   font-weight: 600;
   color: #303133;
@@ -86,11 +86,11 @@ const getComparisonClass = (comparison) => {
 .indicators-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
+  gap: 8px;
 }
 
 .indicator-card {
-  padding: 20px;
+  padding: 10px;
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgb(0 0 0 / 10%);
@@ -111,7 +111,7 @@ const getComparisonClass = (comparison) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 
 .indicator-name {
@@ -123,7 +123,7 @@ const getComparisonClass = (comparison) => {
 .indicator-value {
   display: flex;
   align-items: baseline;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .indicator-value .value {
