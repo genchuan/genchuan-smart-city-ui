@@ -5,21 +5,41 @@ import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
 
-const changeArrowStatus = (item) => {
-  item.secondShow = !item.secondShow;
+const changeArrowStatus = () => {
+  secondShow.value = !secondShow.value;
+  tabArray.value.forEach((v) => {
+    v.secondShow = secondShow.value;
+  });
 };
 const tabArray = ref([
   {
-    label: '车库信息管理',
+    label: '车辆信息管理',
     components: Table,
     showSecondary: true,
     secondShow: false,
   },
 ]);
-const activeName = ref('车库信息管理');
+const activeName = ref('车辆信息管理');
+const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
+    <div class="icon-change">
+      <el-icon
+        class="tabel-tab-icon"
+        v-if="secondShow"
+        @click="changeArrowStatus"
+      >
+        <ArrowDown />
+      </el-icon>
+      <el-icon
+        class="tabel-tab-icon"
+        v-if="!secondShow"
+        @click="changeArrowStatus"
+      >
+        <ArrowUp />
+      </el-icon>
+    </div>
     <el-tabs
       v-model="activeName"
       class="common-tabs"
@@ -33,22 +53,6 @@ const activeName = ref('车库信息管理');
       >
         <template #label>
           <div class="table-first">
-            <div v-show="item.showSecondary" class="icon-first">
-              <el-icon
-                class="tabel-tab-icon"
-                v-if="item.secondShow"
-                @click="changeArrowStatus(item)"
-              >
-                <ArrowDown />
-              </el-icon>
-              <el-icon
-                class="tabel-tab-icon"
-                v-if="!item.secondShow"
-                @click="changeArrowStatus(item)"
-              >
-                <ArrowUp />
-              </el-icon>
-            </div>
             <span>{{ item.label }}</span>
           </div>
         </template>

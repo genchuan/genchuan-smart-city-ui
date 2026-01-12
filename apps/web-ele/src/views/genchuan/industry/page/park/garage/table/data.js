@@ -14,12 +14,14 @@ export const dataList = () => {
       latitude: '24.5123',       // 纬度
       enableStatus: '启用',      // 启用状态
       creator: '张三',           // 创建人
+      name: '龙文区碧湖公园停车场',
       createTime: '2025-01-10 09:20:30' // 创建时间
     },
     {
       id: 'G002',
       assetExtendId: 'AE002',
       parkId: '2',
+      name: '龙海区石码镇便民停车场',
       garageName: '龙文区碧湖公园停车场-地面层',
       floorCount: '1',
       totalParkingSpaces: '120',
@@ -35,6 +37,7 @@ export const dataList = () => {
       id: 'G003',
       assetExtendId: 'AE003',
       parkId: '3',
+      name: '龙海区闽齐社区停车场',
       garageName: '龙海区石码镇便民停车场-地面层',
       floorCount: '1',
       totalParkingSpaces: '68',
@@ -50,6 +53,7 @@ export const dataList = () => {
       id: 'G004',
       assetExtendId: 'AE004',
       parkId: '4',
+      name: '龙海区闽齐社区停车场',
       garageName: '龙海区闽齐社区停车场-地面层',
       floorCount: '1',
       totalParkingSpaces: '35',
@@ -65,6 +69,7 @@ export const dataList = () => {
       id: 'G005',
       assetExtendId: 'AE005',
       parkId: '5',
+      name: '芗城区江滨路生态停车场',
       garageName: '芗城区江滨路生态停车场-地面+地下一层',
       floorCount: '2',
       totalParkingSpaces: '150',
@@ -79,6 +84,7 @@ export const dataList = () => {
     {
       id: 'G006',
       assetExtendId: 'AE006',
+      name: '龙文区万达商圈停车场',
       parkId: '6',
       garageName: '龙文区万达商圈停车场-地下一/二层',
       floorCount: '2',
@@ -95,6 +101,7 @@ export const dataList = () => {
       id: 'G007',
       assetExtendId: 'AE007',
       parkId: '7',
+      name: '长泰区武安镇公共停车场',
       garageName: '长泰区武安镇公共停车场-地面层',
       floorCount: '1',
       totalParkingSpaces: '85',
@@ -110,6 +117,7 @@ export const dataList = () => {
       id: 'G008',
       assetExtendId: 'AE008',
       parkId: '8',
+      name: '漳浦县绥安镇便民停车场',
       garageName: '漳浦县绥安镇便民停车场-地面层',
       floorCount: '1',
       totalParkingSpaces: '72',
@@ -125,6 +133,7 @@ export const dataList = () => {
       id: 'G009',
       assetExtendId: 'AE009',
       parkId: '9',
+      name: '芗城区巷口街道停车场',
       garageName: '芗城区巷口街道停车场-地面层',
       floorCount: '1',
       totalParkingSpaces: '45',
@@ -140,6 +149,7 @@ export const dataList = () => {
       id: 'G010',
       assetExtendId: 'AE010',
       parkId: '10',
+      name: '龙文区蓝田街道停车场',
       garageName: '龙文区蓝田街道停车场-地下一层',
       floorCount: '1',
       totalParkingSpaces: '110',
@@ -155,6 +165,7 @@ export const dataList = () => {
       id: 'G011',
       assetExtendId: 'AE011',
       parkId: '11',
+      name: '龙文区步文街道停车场',
       garageName: '龙文区步文街道停车场-地下一/二层',
       floorCount: '2',
       totalParkingSpaces: '180',
@@ -170,6 +181,7 @@ export const dataList = () => {
       id: 'G012',
       assetExtendId: 'AE012',
       parkId: '12',
+      name: '芗城区东铺头街道停车场',
       garageName: '芗城区东铺头街道停车场-地面层',
       floorCount: '1',
       totalParkingSpaces: '95',
@@ -195,16 +207,7 @@ export function useFormSchema() {
         placeholder: '请输入车库ID', 
       },
       rules: 'required'
-    },
-    {
-      fieldName: 'assetExtendId',
-      label: '资产扩展ID',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入资产扩展ID（关联tb_asset_extend）'
-      },
-      rules: 'required'
-    },
+    }, 
     {
       fieldName: 'parkId',
       label: '所属车场ID',
@@ -349,23 +352,18 @@ export function useGridColumns() {
       sortable: true
     },
     {
-      field: 'assetExtendId',
-      title: '资产扩展ID',
-      minWidth: 120,
-      sortable: true
-    },
-    {
-      field: 'parkId',
-      title: '所属车场ID',
-      minWidth: 100,
-      sortable: true
-    },
-    {
       field: 'garageName',
       title: '车库名称',
       minWidth: 200,
       sortable: true
     },
+    {
+      field: 'name',
+      title: '车场名称',
+      minWidth: 200,
+      sortable: true,
+      slots: { default: 'parkName' },
+    }, 
     {
       field: 'floorCount',
       title: '楼层数',

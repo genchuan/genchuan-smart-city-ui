@@ -11,6 +11,8 @@ import { useVbenForm } from '#/adapter/form';
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
+// 引入封装后的详情抽屉组件
+import ParkDetailDrawer from '#/views/genchuan/industry/page/park/components/detail.vue';
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
@@ -34,16 +36,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
-const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  onCancel() {
-    detailDrawerApi.close();
-  },
-  onConfirm() {},
-  async onOpenChange() {},
-});
+// 移除原 DetailDrawer 初始化逻辑
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -152,7 +145,7 @@ function handleRowCheckboxChange({ records }) {
 }
 const dataObj = reactive({
   totalShow: false,
-  detailObj: {},
+  detailObj: {}, // 保留详情对象用于传递给组件
   total: dataList().length,
   currentPage: 1,
   pageSize: 10,
@@ -250,9 +243,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const activeName = ref('全部');
+// 修改打开详情的方法，调用组件的open方法
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
-  detailDrawerApi.open();
+  // 通过ref调用组件的open方法
+  parkDetailDrawerRef.value.open();
   console.log(row);
 };
 const tabsData = ref([
@@ -278,6 +273,9 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
+// 定义组件ref，用于调用组件方法
+const parkDetailDrawerRef = ref(null);
 </script>
 
 <template>
@@ -285,52 +283,12 @@ const handleFullShow = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <DetailDrawer :title="`${dataObj.detailObj.name}关联表`">
-      <div class="detail-card">
-        <div class="detail-card-row">
-          <div class="detail-row-left">停车场ID:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.id }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">收费标准:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.pricing }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">详细地址:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.address }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">行政区划代码:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.grid }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">联系电话:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.phone }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">状态:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.status }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">泊位总数:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.parkTotal }}
-          </div>
-        </div>
-      </div>
-    </DetailDrawer>
+    <!-- 使用封装后的详情抽屉组件 -->
+    <ParkDetailDrawer
+      ref="parkDetailDrawerRef"
+      :detail-obj="dataObj.detailObj"
+      :title="`${dataObj.detailObj.name}关联表`"
+    />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
