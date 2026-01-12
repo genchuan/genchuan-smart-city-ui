@@ -18,12 +18,6 @@ const tabArray = ref([
     showSecondary: true,
     secondShow: false,
   },
-  {
-    label: '车辆信息管理',
-    components: Table,
-    showSecondary: true,
-    secondShow: false,
-  },
 ]);
 const activeName = ref('车辆信息管理');
 const secondShow = ref(false);
