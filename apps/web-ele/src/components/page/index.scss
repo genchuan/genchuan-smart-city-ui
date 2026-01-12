@@ -63,27 +63,28 @@
       margin-right: 10px;
     }
 
-    .vxe-grid--bottom-wrapper { 
+    .vxe-grid--bottom-wrapper {
       width: 500px;
       top: 18px;
-      z-index: 1; 
+      z-index: 1;
 
       .common-total {
-        font-size: 16px;
+        font-size: 14px;
         display: inline;
         position: relative;
         cursor: pointer;
       }
-      .common-total-bottom { 
-        font-size: 16px;
-        margin-left: 20px;
+
+      .common-total-bottom {
+        font-size: 14px;
+        margin-left: 18px;
       }
- 
+
       .bottom-title {
-        font-size: 16px;
+        font-size: 14px;
         cursor: pointer;
       }
-    } 
+    }
 
     .vxe-grid--pager-wrapper {
       .vxe-pager {
@@ -100,12 +101,39 @@
     }
 
     .vxe-grid--table-wrapper {
-      max-height: 74vh;
+      max-height: 71vh;
       overflow: auto;
     }
   }
 
   .common-align {
     cursor: pointer;
+  }
+
+  .detail-card {
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #e4e7ed;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+
+    .detail-card-row {
+      display: flex;
+      align-items: center; 
+      font-size: 14px;
+      line-height: 1.5;  
+      padding-bottom: 8px;
+      .detail-row-left {
+        width: 100px;
+        margin-right: 16px;
+        font-weight: 500;
+        color: #606266;
+        text-align: right;
+      }
+    }
+  }
+
+  .detail-card:hover {
+    border-color: #409eff;
   }
 }

@@ -23,10 +23,23 @@ const props = defineProps({
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
 });
+
 const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
   footer: false,
   onCancel() {
     drawerApi.close();
+  },
+  onConfirm() {},
+  async onOpenChange() {},
+});
+const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    detailDrawerApi.close();
   },
   onConfirm() {},
   async onOpenChange() {},
@@ -45,6 +58,8 @@ const [Form, formApi] = useVbenForm({
   showDefaultActions: false,
 });
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
   onCancel() {
     formDrawerApi.close();
   },
@@ -137,6 +152,7 @@ function handleRowCheckboxChange({ records }) {
 }
 const dataObj = reactive({
   totalShow: false,
+  detailObj: {},
   total: dataList().length,
   currentPage: 1,
   pageSize: 10,
@@ -234,7 +250,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const activeName = ref('全部');
-const handleOpenDetail = () => {};
+const handleOpenDetail = (row) => {
+  dataObj.detailObj = row;
+  detailDrawerApi.open();
+  console.log(row);
+};
 const tabsData = ref([
   { label: '全部' },
   { label: '启用' },
@@ -265,6 +285,52 @@ const handleFullShow = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
+    <DetailDrawer :title="`${dataObj.detailObj.name}关联表`">
+      <div class="detail-card">
+        <div class="detail-card-row">
+          <div class="detail-row-left">停车场ID:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.id }}
+          </div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">收费标准:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.pricing }}
+          </div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">详细地址:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.address }}
+          </div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">行政区划代码:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.grid }}
+          </div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">联系电话:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.phone }}
+          </div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">状态:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.status }}
+          </div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">泊位总数:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.parkTotal }}
+          </div>
+        </div>
+      </div>
+    </DetailDrawer>
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -338,7 +404,7 @@ const handleFullShow = () => {
       </template>
       <template #parkName="{ row }">
         <el-text
-          @click="handleOpenDetail.bind(null, row)"
+          @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
