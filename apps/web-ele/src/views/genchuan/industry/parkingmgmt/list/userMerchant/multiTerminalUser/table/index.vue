@@ -4,7 +4,7 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElLoading, ElMessage, ElStep, ElSteps } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -167,12 +167,17 @@ function handleRowCheckboxChange({ records }) {
 }
 
 const dataObj = reactive({
+  totalShow: false,
   total: dataList().length,
   currentPage: 1,
   pageSize: 10,
   apilist: dataList(),
   list: [],
 });
+const changeTotalShow = () => {
+  dataObj.totalShow = !dataObj.totalShow;
+};
+
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
@@ -328,7 +333,9 @@ const [MerchantDrawer, merchantDrawerApi] = useVbenDrawer({
   modal: false,
   position: 'right',
   appendToMain: true,
-  title: '商户关联用户列表',
+  title: computed(
+    () => selectedMerchant.value?.merchantName || '商户关联用户列表',
+  ),
   onCancel() {
     merchantDrawerApi.close();
   },
@@ -346,6 +353,22 @@ const handleMerchantClick = (row) => {
   merchantDrawerApi.open();
 };
 
+// 详情抽屉
+const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
+  width: '70%',
+  mask: false,
+  modal: false,
+  position: 'right',
+  appendToMain: true,
+  title: computed(() => selectedDetailUser.value?.realName || '用户详情'),
+  onCancel() {
+    detailDrawerApi.close();
+    selectedDetailUser.value = null;
+  },
+});
+
+const selectedDetailUser = ref(null);
+
 // 认证管理抽屉
 const [AuthDrawer, authDrawerApi] = useVbenDrawer({
   width: '50%',
@@ -353,6 +376,8 @@ const [AuthDrawer, authDrawerApi] = useVbenDrawer({
   modal: false,
   position: 'right',
   appendToMain: true,
+  showCancelButton: false,
+  showConfirmButton: false,
   title: '用户认证管理',
   onCancel() {
     authDrawerApi.close();
@@ -388,36 +413,41 @@ const authTypeOptions = ref([
     value: '车主',
     description: '适用于个人车主用户，需实名认证和车牌绑定',
     required: '需上传身份证正反面照片并绑定车牌',
-    icon: 'el-icon-car',
+    icon: 'User',
   },
   {
     label: '商户认证',
     value: '商户',
     description: '适用于停车场商户，需营业执照认证',
     required: '需上传营业执照照片和法人信息',
-    icon: 'el-icon-shop',
+    icon: 'Shop',
   },
   {
     label: '政府用户认证',
     value: '政府',
     description: '适用于政府管理部门人员',
     required: '需提供工作证明和单位介绍信',
-    icon: 'el-icon-office-building',
+    icon: 'OfficeBuilding',
   },
   {
     label: '运维人员认证',
     value: '运维',
     description: '适用于系统运维和管理人员',
     required: '需提供工作证和授权证明',
-    icon: 'el-icon-setting',
+    icon: 'Setting',
   },
 ]);
 
-const handleAuthManage = (row) => {
+const handleUserDetail = (row) => {
+  selectedDetailUser.value = row;
+  detailDrawerApi.open();
+};
+
+const handleAuthManage = (row = {}) => {
   selectedUser.value = row;
   // 初始化认证表单数据
   authFormData.value = {
-    authStatus: row.authStatus,
+    authStatus: row.authStatus || '',
     authType: '',
     authMaterialUrl: '',
     plateNumber: '',
@@ -481,7 +511,8 @@ const handleAuthSubmit = () => {
     return;
   }
 
-  if (selectedUser.value) {
+  // 如果有选中用户且有ID，更新其认证状态
+  if (selectedUser.value && selectedUser.value.id) {
     const index = dataObj.apilist.findIndex(
       (item) => item.id === selectedUser.value.id,
     );
@@ -500,17 +531,18 @@ const handleAuthSubmit = () => {
         authStatus: newAuthStatus,
         updateTime: new Date().toLocaleString('zh-CN'),
       };
-
-      ElMessage.success('认证管理操作成功');
-      authDrawerApi.close();
-      handleRefresh();
-
-      // 重置状态
-      authStep.value = 1;
-      selectedAuthType.value = null;
-      authFormData.value = {};
     }
   }
+
+  // 无论是否有选中用户，都显示成功提示并关闭抽屉
+  ElMessage.success('认证管理操作成功');
+  authDrawerApi.close();
+  handleRefresh();
+
+  // 重置状态
+  authStep.value = 1;
+  selectedAuthType.value = null;
+  authFormData.value = {};
 };
 </script>
 
@@ -521,19 +553,8 @@ const handleAuthSubmit = () => {
     </FormDrawer>
     <MerchantDrawer>
       <div class="merchant-detail">
-        <h3>{{ selectedMerchant?.merchantName }} - 关联用户列表</h3>
         <div class="related-users-list">
-          <div
-            v-for="(user, index) in relatedUsers"
-            :key="user.id"
-            class="user-item"
-          >
-            <div class="user-item-header">
-              <span class="user-item-index">{{ index + 1 }}.</span>
-              <span class="user-item-name">
-                {{ user.realName }} ({{ user.username }})
-              </span>
-            </div>
+          <div v-for="user in relatedUsers" :key="user.id" class="user-item">
             <div class="user-item-details">
               <div class="detail-row">
                 <span class="detail-label">用户ID：</span>
@@ -594,22 +615,110 @@ const handleAuthSubmit = () => {
       </div>
     </MerchantDrawer>
 
+    <!-- 用户详情抽屉 -->
+    <DetailDrawer>
+      <div class="merchant-detail">
+        <div class="related-users-list">
+          <div v-if="selectedDetailUser" class="user-item">
+            <div class="user-item-details">
+              <div class="detail-row">
+                <span class="detail-label">用户ID：</span>
+                <span class="detail-value">{{ selectedDetailUser.id }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">用户名：</span>
+                <span class="detail-value">{{
+                  selectedDetailUser.username
+                }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">真实姓名：</span>
+                <span class="detail-value">{{
+                  selectedDetailUser.realName
+                }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">用户类型：</span>
+                <span class="detail-value">
+                  <el-tag
+                    :type="
+                      selectedDetailUser.userType === '个人'
+                        ? 'primary'
+                        : selectedDetailUser.userType === '企业'
+                          ? 'success'
+                          : 'warning'
+                    "
+                  >
+                    {{ selectedDetailUser.userType }}
+                  </el-tag>
+                </span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">认证状态：</span>
+                <span class="detail-value">
+                  <el-tag
+                    :type="
+                      selectedDetailUser.authStatus === '已认证'
+                        ? 'success'
+                        : selectedDetailUser.authStatus === '待审核'
+                          ? 'warning'
+                          : selectedDetailUser.authStatus === '认证失败'
+                            ? 'danger'
+                            : 'info'
+                    "
+                  >
+                    {{ selectedDetailUser.authStatus }}
+                  </el-tag>
+                </span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">联系电话：</span>
+                <span class="detail-value">{{ selectedDetailUser.phone }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">邮箱：</span>
+                <span class="detail-value">{{ selectedDetailUser.email }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">商户名称：</span>
+                <span class="detail-value">{{
+                  selectedDetailUser.merchantName
+                }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">创建时间：</span>
+                <span class="detail-value">{{
+                  selectedDetailUser.createTime
+                }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">最后登录时间：</span>
+                <span class="detail-value">{{
+                  selectedDetailUser.lastLoginTime
+                }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </DetailDrawer>
+
     <!-- 认证管理抽屉 -->
     <AuthDrawer>
       <div class="auth-management">
         <!-- 认证流程步骤指示器 -->
         <div class="auth-steps">
-          <el-steps :active="authStep - 1" finish-status="success" align-center>
-            <el-step title="选择认证类型" />
-            <el-step title="填写信息" />
-            <el-step title="提交审核" />
-          </el-steps>
+          <ElSteps :active="authStep - 1" finish-status="success" align-center>
+            <ElStep title="选择认证类型" />
+            <ElStep title="填写信息" />
+            <ElStep title="提交审核" />
+          </ElSteps>
         </div>
 
         <!-- 步骤1：选择认证类型 -->
         <div v-if="authStep === 1" class="auth-step-content mt-4">
-          <h4>请选择认证类型</h4>
-          <p class="text-muted">根据您的用户类型选择相应的认证方式</p>
+          <!--          <h4>请选择认证类型</h4>-->
+          <!--          <p class="text-muted">根据您的用户类型选择相应的认证方式</p>-->
 
           <div class="auth-type-options mt-3">
             <div
@@ -621,7 +730,9 @@ const handleAuthSubmit = () => {
             >
               <div class="auth-type-header">
                 <el-radio v-model="selectedAuthType" :label="option.value" />
-                <i :class="option.icon" class="auth-type-icon"></i>
+                <el-icon class="auth-type-icon">
+                  <component :is="option.icon" />
+                </el-icon>
                 <span class="auth-type-label">{{ option.label }}</span>
               </div>
               <p class="auth-type-description">{{ option.description }}</p>
@@ -651,7 +762,7 @@ const handleAuthSubmit = () => {
 
         <!-- 步骤2：填写信息 -->
         <div v-if="authStep === 2" class="auth-step-content mt-4">
-          <h4>填写认证信息</h4>
+          <!--          <h4>填写认证信息</h4>-->
 
           <el-form :model="authFormData" label-width="150px" class="mt-3">
             <el-form-item label="认证类型" required>
@@ -689,14 +800,6 @@ const handleAuthSubmit = () => {
               />
             </el-form-item>
 
-            <!--            <el-form-item label="身份证号/营业执照号" required>-->
-            <!--              <el-input-->
-            <!--                v-model="authFormData.idCardOrLicense"-->
-            <!--                placeholder="请输入身份证号/营业执照号"-->
-            <!--                class="w-full"-->
-            <!--              />-->
-            <!--            </el-form-item>-->
-
             <el-form-item label="身份证号" required>
               <el-input
                 v-model="authFormData.idCardOrLicense"
@@ -732,7 +835,7 @@ const handleAuthSubmit = () => {
 
         <!-- 步骤3：提交审核 -->
         <div v-if="authStep === 3" class="auth-step-content mt-4">
-          <h4>审核认证信息</h4>
+          <!--          <h4>审核认证信息</h4>-->
 
           <el-form :model="authFormData" label-width="150px" class="mt-3">
             <el-form-item label="审核结果" required>
@@ -798,6 +901,7 @@ const handleAuthSubmit = () => {
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+
     <Grid>
       <!-- 三级状态 -->
       <template #table-title>
@@ -843,6 +947,12 @@ const handleAuthSubmit = () => {
               disabled: isEmpty(checkedIds),
               auth: ['system:role:delete'],
               onClick: handleDeleteBatch,
+            },
+            {
+              label: '认证管理',
+              type: 'warning',
+              icon: ACTION_ICON.AUDIT,
+              onClick: handleAuthManage,
             },
           ]"
         />
@@ -908,6 +1018,13 @@ const handleAuthSubmit = () => {
         <TableAction
           :actions="[
             {
+              label: '详情',
+              type: 'primary',
+              link: true,
+              icon: ACTION_ICON.VIEW,
+              onClick: handleUserDetail.bind(null, row),
+            },
+            {
               label: '编辑',
               type: 'primary',
               link: true,
@@ -915,13 +1032,7 @@ const handleAuthSubmit = () => {
               auth: ['system:role:update'],
               onClick: handleEdit.bind(null, row),
             },
-            {
-              label: '认证管理',
-              type: 'warning',
-              link: true,
-              icon: ACTION_ICON.AUDIT,
-              onClick: handleAuthManage.bind(null, row),
-            },
+
             {
               label: '删除',
               type: 'danger',
@@ -937,7 +1048,22 @@ const handleAuthSubmit = () => {
         />
       </template>
       <template #bottom>
-        <span class="bottom-title"> 总计: 用户数量{{ dataObj.total }}; </span>
+        <div class="common-total" @click="changeTotalShow">
+          <el-icon class="tabel-tab-icon">
+            <ArrowDown />
+          </el-icon>
+          <span>
+            本页统计：用户数量{{ dataObj.list.length }};认证通过:{{
+              dataObj.list.filter((item) => item.authStatus === '已认证')
+                .length
+            }};待审核:{{
+              dataObj.list.filter((item) => item.authStatus === '待审核').length
+            }}
+          </span>
+        </div>
+        <div class="common-total-bottom" v-if="dataObj.totalShow">
+          <span> 全部统计：{{ dataObj.total }} </span>
+        </div>
       </template>
     </Grid>
   </div>
@@ -963,10 +1089,6 @@ const handleAuthSubmit = () => {
 
 .auth-status-tabs {
   margin-bottom: 10px;
-}
-
-.merchant-detail {
-  padding: 20px;
 }
 
 .merchant-detail h3 {
@@ -1062,10 +1184,6 @@ const handleAuthSubmit = () => {
   text-decoration: underline;
 }
 
-.auth-management {
-  padding: 20px;
-}
-
 .auth-management h3 {
   margin-bottom: 20px;
   font-size: 18px;
@@ -1085,9 +1203,24 @@ const handleAuthSubmit = () => {
 }
 
 .auth-steps {
-  padding-bottom: 16px;
   margin-bottom: 24px;
+  padding-bottom: 16px;
   border-bottom: 1px solid #f0f2f5;
+}
+
+.main-auth-steps {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.main-auth-steps h3 {
+  margin-bottom: 16px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #303133;
 }
 
 .auth-step-content {
