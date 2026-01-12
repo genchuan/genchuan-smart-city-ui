@@ -85,6 +85,7 @@ onMounted(() => {
   padding: 10px;
   background-color: #f5f7fa;
 }
+
 .report-tabs {
   margin-bottom: 10px;
 }

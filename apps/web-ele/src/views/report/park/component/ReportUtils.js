@@ -355,17 +355,17 @@ export function calculateIncomeGrowth(current, last) {
 
 // 获取收入等级标签
 export function getIncomeLevelLabel(amount) {
-  if (amount >= 1000000) return '优';
-  if (amount >= 500000) return '良';
-  if (amount >= 200000) return '中';
+  if (amount >= 1_000_000) return '优';
+  if (amount >= 500_000) return '良';
+  if (amount >= 200_000) return '中';
   return '低';
 }
 
 // 获取收入等级颜色
 export function getIncomeLevelColor(amount) {
-  if (amount >= 1000000) return '#52C41A';
-  if (amount >= 500000) return '#1890FF';
-  if (amount >= 200000) return '#FA8C16';
+  if (amount >= 1_000_000) return '#52C41A';
+  if (amount >= 500_000) return '#1890FF';
+  if (amount >= 200_000) return '#FA8C16';
   return '#FF4D4F';
 }
 
@@ -391,5 +391,5 @@ export function generateMonthList(count = 12) {
 export function getMonthName(monthStr) {
   if (!monthStr) return '';
   const [year, month] = monthStr.split('-');
-  return `${year}年${parseInt(month)}月`;
+  return `${year}年${Number.parseInt(month)}月`;
 }
