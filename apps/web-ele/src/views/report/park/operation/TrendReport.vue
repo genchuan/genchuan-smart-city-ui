@@ -9,12 +9,12 @@ import {
   exportTrendReport,
   getTrendReport,
 } from '#/api/reports/park/trendReportApi';
-import ChartContainer from '#/views/report/park/operation/component/ChartContainer.vue';
-import DataTable from '#/views/report/park/operation/component/DataTable.vue';
-import LoadingOverlay from '#/views/report/park/operation/component/LoadingOverlay.vue';
-import ReportSection from '#/views/report/park/operation/component/ReportSection.vue';
+import ChartContainer from '#/views/report/park/component/ChartContainer.vue';
+import DataTable from '#/views/report/park/component/DataTable.vue';
+import LoadingOverlay from '#/views/report/park/component/LoadingOverlay.vue';
+import ReportSection from '#/views/report/park/component/ReportSection.vue';
 // 组件引入
-import ReportToolbar from '#/views/report/park/operation/component/ReportToolbar.vue';
+import ReportToolbar from '#/views/report/park/component/ReportToolbar.vue';
 // 工具函数
 import {
   formatCurrency,
@@ -22,7 +22,7 @@ import {
   getIndicatorName,
   getTrendText,
   getTrendType,
-} from '#/views/report/park/operation/component/ReportUtils';
+} from '#/views/report/park/component/ReportUtils';
 
 // 响应式数据
 const timeRange = ref('6');
@@ -386,14 +386,14 @@ const handleExport = async () => {
 .trend-report {
   position: relative;
   min-height: 600px;
-  padding: 24px;
+  padding: 12px;
 }
 
 /* 修改点：优化指标筛选样式 */
 .indicator-filter-group {
   display: flex;
   align-items: center;
-  margin-left: 12px;
+  margin-left: 6px;
 }
 
 .filter-label {
@@ -441,12 +441,12 @@ const handleExport = async () => {
 .analysis-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 16px;
-  margin-top: 20px;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .analysis-card {
-  padding: 20px;
+  padding: 10px;
   background: #f8f9fa;
   border-radius: 8px;
 }
@@ -455,7 +455,7 @@ const handleExport = async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 
 .analysis-name {
@@ -468,7 +468,7 @@ const handleExport = async () => {
   .analysis-value {
     display: flex;
     align-items: baseline;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
   }
 
   .value {

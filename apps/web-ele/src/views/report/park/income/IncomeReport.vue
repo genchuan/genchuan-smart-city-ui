@@ -1,26 +1,27 @@
+<!-- IncomeReport.vue -->
 <script setup>
 import { onMounted, ref } from 'vue';
 
-import { Bottom, Top, TrendCharts } from '@element-plus/icons-vue';
+import { Calendar, List, Money } from '@element-plus/icons-vue';
 
-import EntryFlowReport from './EntryFlow.vue';
-import ExitFlowReport from './ExitFlow.vue';
-import FlowDistributionReport from './FlowDist.vue';
+import DailyIncomeReport from './DailyIncome.vue';
+import IncomeDetailReport from './IncomeDetail.vue';
+import MonthlyIncomeReport from './MonthlyIncome.vue';
 
 // 当前激活的标签页
-const activeTab = ref('entry');
+const activeTab = ref('daily');
 
 // 标签页点击事件
 const handleTabClick = (tab) => {
   console.log('切换到标签页:', tab.props.name);
   // 保存用户偏好
-  localStorage.setItem('lastTrafficTab', tab.props.name);
+  localStorage.setItem('lastIncomeTab', tab.props.name);
 };
 
 // 初始化
 onMounted(() => {
   // 恢复上次查看的标签页
-  const lastTab = localStorage.getItem('lastTrafficTab');
+  const lastTab = localStorage.getItem('lastIncomeTab');
   if (lastTab) {
     activeTab.value = lastTab;
   }
@@ -28,7 +29,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="traffic-flow-report">
+  <div class="income-report">
     <!-- 标签页 -->
     <div class="report-tabs">
       <el-tabs
@@ -36,34 +37,34 @@ onMounted(() => {
         type="border-card"
         @tab-click="handleTabClick"
       >
-        <el-tab-pane label="入场车流报表" name="entry">
+        <el-tab-pane label="日收入报表" name="daily">
           <template #label>
             <span class="tab-label">
-              <el-icon><Top /></el-icon>
-              入场车流
+              <el-icon><Calendar /></el-icon>
+              日收入
             </span>
           </template>
-          <EntryFlowReport v-if="activeTab === 'entry'" />
+          <DailyIncomeReport v-if="activeTab === 'daily'" />
         </el-tab-pane>
 
-        <el-tab-pane label="出场车流报表" name="exit">
+        <el-tab-pane label="月收入报表" name="monthly">
           <template #label>
             <span class="tab-label">
-              <el-icon><Bottom /></el-icon>
-              出场车流
+              <el-icon><Money /></el-icon>
+              月收入
             </span>
           </template>
-          <ExitFlowReport v-if="activeTab === 'exit'" />
+          <MonthlyIncomeReport v-if="activeTab === 'monthly'" />
         </el-tab-pane>
 
-        <el-tab-pane label="车流分布报表" name="distribution">
+        <el-tab-pane label="收入明细报表" name="detail">
           <template #label>
             <span class="tab-label">
-              <el-icon><TrendCharts /></el-icon>
-              车流分布
+              <el-icon><List /></el-icon>
+              收入明细
             </span>
           </template>
-          <FlowDistributionReport v-if="activeTab === 'distribution'" />
+          <IncomeDetailReport v-if="activeTab === 'detail'" />
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -71,17 +72,17 @@ onMounted(() => {
     <!-- 全局提示 -->
     <div class="global-tips">
       <el-alert title="数据说明" type="info" :closable="false" show-icon>
-        <p>1. 数据统计截止时间为昨日24:00</p>
-        <p>2. 车流时段划分：早高峰(7-9点)、晚高峰(17-19点)、平峰(其他时段)</p>
-        <p>3. 车型分类：小型车、中型车、大型车、新能源汽车</p>
-        <p>4. 停留时长：1小时内、1-3小时、3-6小时、6小时以上</p>
+        <p>1. 日收入报表：统计每日收入数据，数据更新截止前一日24:00</p>
+        <p>2. 月收入报表：每月1日自动生成上月报表，支持手动生成历史月份报表</p>
+        <p>3. 收入明细报表：包含每笔订单的完整信息，支持多条件筛选</p>
+        <p>4. 异常标注：当日/当月收入与近7日/近3月均值偏差超30%时自动标注</p>
       </el-alert>
     </div>
   </div>
 </template>
 
 <style scoped>
-.traffic-flow-report {
+.income-report {
   display: flex;
   flex-direction: column;
   height: 100vh;

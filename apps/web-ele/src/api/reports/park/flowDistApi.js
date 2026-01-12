@@ -1,6 +1,5 @@
 // 车流分布API - 包含模拟数据
 import { ElMessage } from 'element-plus';
-
 /**
  * 模拟车流分布报表数据
  * @param {string} timeRange 时间范围：today/7/30/custom
