@@ -1,16 +1,16 @@
 <script setup>
-import {computed, reactive, ref} from 'vue';
+import { computed, reactive, ref } from 'vue';
 
-import {confirm, useVbenDrawer} from '@vben/common-ui';
-import {isEmpty} from '@vben/utils';
+import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { isEmpty } from '@vben/utils';
 
-import {ElLoading, ElMessage} from 'element-plus';
+import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
-import {useVbenForm} from '#/adapter/form';
-import {ACTION_ICON, TableAction, useVbenVxeGrid} from '#/adapter/vxe-table';
-import {$t} from '#/locales';
-import {exportToExcel} from '#/utils/excel.js';
+import { useVbenForm } from '#/adapter/form';
+import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { $t } from '#/locales';
+import { exportToExcel } from '#/utils/excel.js';
 
 import {
   dataList,
@@ -39,13 +39,12 @@ const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   width: '35%',
   position: 'right',
+  appendToMain: true,
   onCancel() {
     drawerApi.close();
   },
-  onConfirm() {
-  },
-  async onOpenChange() {
-  },
+  onConfirm() {},
+  async onOpenChange() {},
 });
 const formData = ref();
 const [Form, formApi] = useVbenForm({
@@ -65,6 +64,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   modal: false,
   width: '40%',
   position: 'right',
+  appendToMain: true,
   onCancel() {
     formDrawerApi.close();
   },
@@ -98,6 +98,7 @@ const [searchDrawer] = useVbenDrawer({
   modal: false,
   width: '30%',
   position: 'right',
+  appendToMain: true,
 });
 
 /** 刷新表格 */
@@ -161,7 +162,7 @@ async function handleDeleteBatch() {
 
 const checkedIds = ref([]);
 
-function handleRowCheckboxChange({records}) {
+function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
 
@@ -259,7 +260,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     keepSource: true,
     proxyConfig: {
       ajax: {
-        query: async ({page}) => getTableData({page}),
+        query: async ({ page }) => getTableData({ page }),
       },
     },
     rowConfig: {
@@ -284,11 +285,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
 // 认证状态标签页
 const activeAuthStatus = ref('全部');
 const authStatusTabs = ref([
-  {label: '全部', value: '全部'},
-  {label: '未认证', value: '未认证'},
-  {label: '待审核', value: '待审核'},
-  {label: '已认证', value: '已认证'},
-  {label: '认证失败', value: '认证失败'},
+  { label: '全部', value: '全部' },
+  { label: '未认证', value: '未认证' },
+  { label: '待审核', value: '待审核' },
+  { label: '已认证', value: '已认证' },
+  { label: '认证失败', value: '认证失败' },
 ]);
 
 const handleAuthStatusChange = () => {
@@ -326,6 +327,7 @@ const [MerchantDrawer, merchantDrawerApi] = useVbenDrawer({
   mask: false,
   modal: false,
   position: 'right',
+  appendToMain: true,
   title: '商户关联用户列表',
   onCancel() {
     merchantDrawerApi.close();
@@ -350,6 +352,7 @@ const [AuthDrawer, authDrawerApi] = useVbenDrawer({
   mask: false,
   modal: false,
   position: 'right',
+  appendToMain: true,
   title: '用户认证管理',
   onCancel() {
     authDrawerApi.close();
@@ -514,7 +517,7 @@ const handleAuthSubmit = () => {
 <template>
   <div class="park-lot-table-new">
     <FormDrawer :title="getTitle">
-      <Form/>
+      <Form />
     </FormDrawer>
     <MerchantDrawer>
       <div class="merchant-detail">
@@ -597,9 +600,9 @@ const handleAuthSubmit = () => {
         <!-- 认证流程步骤指示器 -->
         <div class="auth-steps">
           <el-steps :active="authStep - 1" finish-status="success" align-center>
-            <el-step title="选择认证类型"/>
-            <el-step title="填写信息"/>
-            <el-step title="提交审核"/>
+            <el-step title="选择认证类型" />
+            <el-step title="填写信息" />
+            <el-step title="提交审核" />
           </el-steps>
         </div>
 
@@ -617,7 +620,7 @@ const handleAuthSubmit = () => {
               @click="selectedAuthType = option.value"
             >
               <div class="auth-type-header">
-                <el-radio v-model="selectedAuthType" :label="option.value"/>
+                <el-radio v-model="selectedAuthType" :label="option.value" />
                 <i :class="option.icon" class="auth-type-icon"></i>
                 <span class="auth-type-label">{{ option.label }}</span>
               </div>
@@ -658,10 +661,10 @@ const handleAuthSubmit = () => {
                 class="w-60"
                 disabled
               >
-                <el-option label="车主" value="车主"/>
-                <el-option label="商户" value="商户"/>
-                <el-option label="政府" value="政府"/>
-                <el-option label="运维" value="运维"/>
+                <el-option label="车主" value="车主" />
+                <el-option label="商户" value="商户" />
+                <el-option label="政府" value="政府" />
+                <el-option label="运维" value="运维" />
               </el-select>
             </el-form-item>
 
@@ -738,8 +741,8 @@ const handleAuthSubmit = () => {
                 placeholder="请选择审核结果"
                 class="w-60"
               >
-                <el-option label="通过" value="通过"/>
-                <el-option label="驳回" value="驳回"/>
+                <el-option label="通过" value="通过" />
+                <el-option label="驳回" value="驳回" />
               </el-select>
             </el-form-item>
 
@@ -762,10 +765,10 @@ const handleAuthSubmit = () => {
                 placeholder="请选择认证状态"
                 class="w-60"
               >
-                <el-option label="未认证" value="未认证"/>
-                <el-option label="待审核" value="待审核"/>
-                <el-option label="已认证" value="已认证"/>
-                <el-option label="认证失败" value="认证失败"/>
+                <el-option label="未认证" value="未认证" />
+                <el-option label="待审核" value="待审核" />
+                <el-option label="已认证" value="已认证" />
+                <el-option label="认证失败" value="认证失败" />
               </el-select>
             </el-form-item>
 
@@ -791,9 +794,9 @@ const handleAuthSubmit = () => {
       </div>
     </AuthDrawer>
     <!-- <NewFormModel @success="handleRefresh" /> -->
-    <searchDrawer title="搜索栏设置"/>
+    <searchDrawer title="搜索栏设置" />
     <Drawer title="搜索">
-      <QueryForm class="query-form"/>
+      <QueryForm class="query-form" />
     </Drawer>
     <Grid>
       <!-- 三级状态 -->
