@@ -81,13 +81,18 @@ onMounted(() => {
 
 <style scoped>
 .operational-report {
-  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
   padding: 10px;
+  overflow: hidden;
   background-color: #f5f7fa;
 }
 
 .report-tabs {
+  flex: 1;
   margin-bottom: 10px;
+  overflow: hidden;
 }
 
 .tab-label {
@@ -97,7 +102,7 @@ onMounted(() => {
 }
 
 .global-tips {
-  margin-top: 10px;
+  flex-shrink: 0;
 }
 
 .global-tips p {
@@ -105,8 +110,21 @@ onMounted(() => {
   font-size: 13px;
 }
 
+:deep(.el-tabs) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 :deep(.el-tabs__content) {
-  padding: 0;
+  flex: 1;
+  padding: 0 !important;
+  overflow-y: auto;
   background: #fff;
+}
+
+:deep(.el-tab-pane) {
+  height: 100%;
+  overflow-y: auto;
 }
 </style>
