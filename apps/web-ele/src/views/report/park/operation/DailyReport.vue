@@ -15,20 +15,20 @@ import {
   exportDailyReport,
   getDailyReport,
 } from '#/api/reports/park/dailyReportApi';
-import ChartContainer from '#/views/report/park/operation/component/ChartContainer.vue';
-import CoreIndicators from '#/views/report/park/operation/component/CoreIndicators.vue';
-import DataTable from '#/views/report/park/operation/component/DataTable.vue';
-import LoadingOverlay from '#/views/report/park/operation/component/LoadingOverlay.vue';
-import ReportSection from '#/views/report/park/operation/component/ReportSection.vue';
+import ChartContainer from '#/views/report/park/component/ChartContainer.vue';
+import CoreIndicators from '#/views/report/park/component/CoreIndicators.vue';
+import DataTable from '#/views/report/park/component/DataTable.vue';
+import LoadingOverlay from '#/views/report/park/component/LoadingOverlay.vue';
+import ReportSection from '#/views/report/park/component/ReportSection.vue';
 // 组件引入
-import ReportToolbar from '#/views/report/park/operation/component/ReportToolbar.vue';
+import ReportToolbar from '#/views/report/park/component/ReportToolbar.vue';
 // 工具函数
 import {
   formatCurrency,
   generateIndicatorTag,
   getComparisonClass,
   getYesterdayDate,
-} from '#/views/report/park/operation/component/ReportUtils';
+} from '#/views/report/park/component/ReportUtils';
 
 // 响应式数据
 const selectedDate = ref(getYesterdayDate());
@@ -307,22 +307,22 @@ const handleExport = async () => {
 .daily-report {
   position: relative;
   min-height: 600px;
-  padding: 24px;
+  padding: 12px;
 }
 
 .abnormal-alert {
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .abnormal-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .abnormal-item {
   display: flex;
-  gap: 8px;
+  gap: 4px;
   align-items: center;
   font-size: 14px;
 }

@@ -30,7 +30,7 @@ defineProps({
 }
 
 .loading-icon {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   font-size: 48px;
   color: #409eff;
   animation: rotating 2s linear infinite;

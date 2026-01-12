@@ -10,13 +10,13 @@ import {
   exportMonthlyReport,
   getMonthlyReport,
 } from '#/api/reports/park/monthlyReportApi';
-import ChartContainer from '#/views/report/park/operation/component/ChartContainer.vue';
-import CoreIndicators from '#/views/report/park/operation/component/CoreIndicators.vue';
-import DataTable from '#/views/report/park/operation/component/DataTable.vue';
-import LoadingOverlay from '#/views/report/park/operation/component/LoadingOverlay.vue';
-import ReportSection from '#/views/report/park/operation/component/ReportSection.vue';
+import ChartContainer from '#/views/report/park/component/ChartContainer.vue';
+import CoreIndicators from '#/views/report/park/component/CoreIndicators.vue';
+import DataTable from '#/views/report/park/component/DataTable.vue';
+import LoadingOverlay from '#/views/report/park/component/LoadingOverlay.vue';
+import ReportSection from '#/views/report/park/component/ReportSection.vue';
 // 组件引入
-import ReportToolbar from '#/views/report/park/operation/component/ReportToolbar.vue';
+import ReportToolbar from '#/views/report/park/component/ReportToolbar.vue';
 // 工具函数
 import {
   formatCurrency,
@@ -25,7 +25,7 @@ import {
   getLastMonth,
   getParkingTypeName,
   getParkingTypeTagType,
-} from '#/views/report/park/operation/component/ReportUtils';
+} from '#/views/report/park/component/ReportUtils';
 
 // 响应式数据
 const selectedMonth = ref(getLastMonth());
@@ -379,13 +379,13 @@ const handleExport = async () => {
 .monthly-report {
   position: relative;
   min-height: 600px;
-  padding: 24px;
+  padding: 12px;
 }
 
 .type-charts {
   display: grid;
   grid-template-columns: 1fr 2fr;
-  gap: 24px;
+  gap: 12px;
 }
 
 @media (max-width: 768px) {

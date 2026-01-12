@@ -1,6 +1,5 @@
 // 月报表API - 包含模拟数据
 import { ElMessage } from 'element-plus';
-
 /**
  * 模拟月报表数据
  * @param {object} params 参数对象

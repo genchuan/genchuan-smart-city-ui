@@ -14,8 +14,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px;
-  margin-bottom: 24px;
+  padding: 8px;
+  margin-bottom: 12px;
   background: #f8f9fa;
   border-radius: 8px;
 }
@@ -23,7 +23,7 @@
 .toolbar-left {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 6px;
   align-items: center;
 }
 </style>
