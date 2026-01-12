@@ -446,8 +446,11 @@ const handleFullShow = () => {
       </template>
       <template #bottom>
         <div class="common-total" @click="changeTotalShow">
-          <el-icon class="tabel-tab-icon">
+          <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
             <ArrowDown />
+          </el-icon>
+          <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
+            <ArrowUp />
           </el-icon>
           <span> 本页统计：停车场数量5;车位总数:266;车场车位3 </span>
         </div>
