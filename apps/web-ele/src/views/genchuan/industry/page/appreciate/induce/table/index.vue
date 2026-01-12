@@ -73,6 +73,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     }
   },
 });
+const [searchDrawer] = useVbenDrawer();
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
@@ -136,16 +137,12 @@ function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
 const dataObj = reactive({
-  totalShow: false,
   total: dataList().length,
   currentPage: 1,
   pageSize: 10,
   apilist: dataList(),
   list: [],
 });
-const changeTotalShow = () => {
-  dataObj.totalShow = !dataObj.totalShow;
-};
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
@@ -189,12 +186,7 @@ const [QueryForm] = useVbenForm({
   // 垂直布局，label和input在不同行，值为vertical
   // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
-  }),
+  schema: useFormSchema(),
   // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
@@ -234,21 +226,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const activeName = ref('全部');
-const handleOpenDetail = () => {};
-const tabsData = ref([
-  { label: '全部' },
-  { label: '启用' },
-  { label: '禁用' },
-  { label: '暂停运营' },
-  { label: '维修中' },
-]);
-const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
-  if (item.label === '全部') {
-    text = `(${dataObj.apilist.length})`;
-  }
-  return item.label + text;
-};
+const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用' }]);
 const handleClick = () => {
   gridApi.query();
 };
@@ -265,6 +243,8 @@ const handleFullShow = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
+    <!-- <NewFormModel @success="handleRefresh" /> -->
+    <searchDrawer title="搜索栏设置" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -281,7 +261,7 @@ const handleFullShow = () => {
               <el-tab-pane
                 v-for="item in tabsData"
                 :key="item.label"
-                :label="createLabel(item)"
+                :label="item.label"
                 :name="item.label"
               />
             </el-tabs>
@@ -292,7 +272,7 @@ const handleFullShow = () => {
         <TableAction
           :actions="[
             {
-              label: '新增',
+              label: textObj.addText,
               type: 'primary',
               icon: ACTION_ICON.ADD,
               auth: ['system:role:create'],
@@ -336,26 +316,9 @@ const handleFullShow = () => {
           ></i>
         </button>
       </template>
-      <template #parkName="{ row }">
-        <el-text
-          @click="handleOpenDetail.bind(null, row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.name }}
-        </el-text>
-      </template>
       <template #actions="{ row }">
         <TableAction
           :actions="[
-            {
-              label: '详情',
-              type: 'primary',
-              link: true,
-              icon: ACTION_ICON.MORE,
-              auth: ['system:role:update'],
-              onClick: handleOpenDetail.bind(null, row),
-            },
             {
               label: '编辑',
               type: 'primary',
@@ -379,15 +342,9 @@ const handleFullShow = () => {
         />
       </template>
       <template #bottom>
-        <div class="common-total" @click="changeTotalShow">
-          <el-icon class="tabel-tab-icon">
-            <ArrowDown />
-          </el-icon>
-          <span> 本页统计：停车场数量5;车位总数:266;车场车位3 </span>
-        </div>
-        <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span> 全部统计：{{ textObj.total }} </span>
-        </div>
+        <span class="bottom-title">
+          {{ textObj.total }}
+        </span>
       </template>
     </Grid>
   </div>
