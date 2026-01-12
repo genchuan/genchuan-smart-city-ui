@@ -1,6 +1,5 @@
 // 日报表API - 包含模拟数据
 import { ElMessage } from 'element-plus';
-
 /**
  * 模拟日报表数据
  * @param {string} date 日期，格式：YYYY-MM-DD

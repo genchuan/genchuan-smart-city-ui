@@ -262,3 +262,134 @@ export function getPeakHours(timeDistribution) {
 
   return `${startHour}:00-${endHour}:00`;
 }
+
+// 收入报表专用工具函数
+
+// 获取支付方式名称
+export function getPaymentTypeName(type) {
+  const nameMap = {
+    wechat: '微信支付',
+    alipay: '支付宝',
+    cash: '现金支付',
+    card: '刷卡支付',
+    member: '会员支付',
+  };
+  return nameMap[type] || type;
+}
+
+// 获取支付方式颜色
+export function getPaymentTypeColor(type) {
+  const colorMap = {
+    wechat: '#07C160',
+    alipay: '#1890FF',
+    cash: '#FF4D4F',
+    card: '#722ED1',
+    member: '#13C2C2',
+  };
+  return colorMap[type] || '#8C8C8C';
+}
+
+// 获取收入指标名称
+export function getIncomeIndicatorName(indicator) {
+  const nameMap = {
+    totalAmount: '总收费金额',
+    orderCount: '订单总数',
+    avgOrderAmount: '平均客单价',
+    cashAmount: '现金收入',
+    onlineAmount: '线上支付收入',
+    arrearsAmount: '欠费金额',
+    onlineRate: '线上支付占比',
+    memberAmount: '会员消费金额',
+    couponAmount: '优惠券抵扣金额',
+  };
+  return nameMap[indicator] || indicator;
+}
+
+// 获取收入指标单位
+export function getIncomeIndicatorUnit(indicator) {
+  const unitMap = {
+    totalAmount: '元',
+    orderCount: '笔',
+    avgOrderAmount: '元',
+    cashAmount: '元',
+    onlineAmount: '元',
+    arrearsAmount: '元',
+    onlineRate: '%',
+    memberAmount: '元',
+    couponAmount: '元',
+  };
+  return unitMap[indicator] || '';
+}
+
+// 获取收入指标颜色
+export function getIncomeIndicatorColor(indicator) {
+  const colorMap = {
+    totalAmount: '#1890FF',
+    orderCount: '#52C41A',
+    avgOrderAmount: '#FA8C16',
+    cashAmount: '#FF4D4F',
+    onlineAmount: '#722ED1',
+    arrearsAmount: '#FA541C',
+    onlineRate: '#13C2C2',
+    memberAmount: '#2F54EB',
+    couponAmount: '#F759AB',
+  };
+  return colorMap[indicator] || '#8C8C8C';
+}
+
+// 格式化时间范围
+export function formatTimeRange(type, value) {
+  if (type === 'today') return '今日';
+  if (type === 'yesterday') return '昨日';
+  if (type === '7') return '近7日';
+  if (type === '30') return '近30日';
+  if (type === 'custom') return '自定义';
+  return value;
+}
+
+// 计算收入增长率
+export function calculateIncomeGrowth(current, last) {
+  if (!last || last === 0) return 100;
+  return ((current - last) / last) * 100;
+}
+
+// 获取收入等级标签
+export function getIncomeLevelLabel(amount) {
+  if (amount >= 1000000) return '优';
+  if (amount >= 500000) return '良';
+  if (amount >= 200000) return '中';
+  return '低';
+}
+
+// 获取收入等级颜色
+export function getIncomeLevelColor(amount) {
+  if (amount >= 1000000) return '#52C41A';
+  if (amount >= 500000) return '#1890FF';
+  if (amount >= 200000) return '#FA8C16';
+  return '#FF4D4F';
+}
+
+// 生成月份列表
+export function generateMonthList(count = 12) {
+  const months = [];
+  const now = new Date();
+
+  for (let i = 0; i < count; i++) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const label = `${year}年${month}月`;
+    const value = `${year}-${month}`;
+
+    months.push({ label, value });
+  }
+
+  return months;
+}
+
+// 获取月份名称
+export function getMonthName(monthStr) {
+  if (!monthStr) return '';
+  const [year, month] = monthStr.split('-');
+  return `${year}年${parseInt(month)}月`;
+}

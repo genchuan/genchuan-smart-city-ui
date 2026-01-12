@@ -7,7 +7,7 @@ import {
   formatCurrency,
   getGrowthClass,
   getUtilizationColor,
-} from '#/views/report/park/operation/component/ReportUtils';
+} from '#/views/report/park/component/ReportUtils.js';
 
 const props = defineProps({
   title: String,
@@ -265,11 +265,11 @@ const handleSortChange = ({ column, prop, order }) => {
 
 <style scoped>
 .data-table {
-  margin-top: 24px;
+  margin-top: 12px;
 }
 
 .section-title {
-  margin: 0 0 16px;
+  margin: 0 0 8px;
   font-size: 18px;
   font-weight: 600;
   color: #303133;
@@ -278,7 +278,7 @@ const handleSortChange = ({ column, prop, order }) => {
 .pagination-container {
   display: flex;
   justify-content: flex-end;
-  margin-top: 20px;
+  margin-top: 10px;
 }
 
 .growth-positive {
