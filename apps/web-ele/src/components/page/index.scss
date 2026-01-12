@@ -2,8 +2,7 @@
   height: 100%;
   padding: 0.5rem;
   background-color: hsl(var(--card));
-  overflow: auto;
-
+  overflow: auto; 
   .icon-first {
     margin-right: 5px;
   }
@@ -28,6 +27,13 @@
 
   .common-tabs {
     position: relative;
+    .el-tabs__nav {
+      margin-left: 20px;
+    }
+  }
+
+  .el-tabs__header::before {
+    width: 20px;
   }
 
   .park-lot-table-new {
@@ -119,10 +125,11 @@
 
     .detail-card-row {
       display: flex;
-      align-items: center; 
+      align-items: center;
       font-size: 14px;
-      line-height: 1.5;  
+      line-height: 1.5;
       padding-bottom: 8px;
+
       .detail-row-left {
         width: 100px;
         margin-right: 16px;
@@ -135,5 +142,12 @@
 
   .detail-card:hover {
     border-color: #409eff;
+  }
+
+  .icon-change {
+    top: 20px;
+    position: absolute;
+    cursor: pointer;
+    z-index: 1;
   }
 }
