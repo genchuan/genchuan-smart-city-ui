@@ -12,7 +12,7 @@ import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 // 引入封装后的详情抽屉组件
-import roadDetailDrawer from '#/views/genchuan/industry/page/park/road/table/detail.vue';
+import roadDetailDrawer from '#/views/genchuan/industry/page/park/road/billing/detail.vue';
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
@@ -164,7 +164,7 @@ const getTableData = (pageObj) => {
       if (activeName.value === '全部') {
         return true;
       }
-      return v.enableStatus === activeName.value;
+      return v.bindingStatus === activeName.value;
     }).length;
   dataObj.list = dataObj.apilist
     .map((v) => v)
@@ -172,7 +172,7 @@ const getTableData = (pageObj) => {
       if (activeName.value === '全部') {
         return true;
       }
-      return v.enableStatus === activeName.value;
+      return v.bindingStatus === activeName.value;
     })
     .slice(
       (page.currentPage - 1) * page.pageSize,
@@ -252,12 +252,11 @@ const handleOpenDetail = (row) => {
 };
 const tabsData = ref([
   { label: '全部' },
-  { label: '占用' },
-  { label: '空置' },
-  { label: '故障' },
+  { label: '已绑定' },
+  { label: '未绑定' },
 ]);
 const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.enableStatus === item.label).length})`;
+  let text = `(${dataObj.apilist.filter((v) => v.bindingStatus === item.label).length})`;
   if (item.label === '全部') {
     text = `(${dataObj.apilist.length})`;
   }
@@ -366,18 +365,13 @@ const roadDetailDrawerRef = ref(null);
           ></i>
         </button>
       </template>
-      <template #enableStatus="{ row }">
-        <el-text class="common-align" :type="createType(row.enableStatus)">
-          {{ row.enableStatus }}
-        </el-text>
-      </template>
-      <template #roadName="{ row }">
+      <template #chargingPileId="{ row }">
         <el-text
           class="common-align"
           type="primary"
           @click="handleOpenDetail(row)"
         >
-          {{ row.roadName }}
+          {{ row.chargingPileId }}
         </el-text>
       </template>
 

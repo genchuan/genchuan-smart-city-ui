@@ -208,6 +208,7 @@ export function useGridColumns() {
             title: '计费桩设备ID',
             minWidth: 120,
             sortable: true,
+            slots: { default: 'chargingPileId' },
         },
         {
             field: 'deviceNo',
