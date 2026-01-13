@@ -8,11 +8,11 @@ import { ElMessage } from 'element-plus';
  */
 export const getIncomeDetailReport = async (params) => {
   // 模拟API延迟
-  await new Promise((resolve) => setTimeout(resolve, 400));
+  await new Promise((resolve) => setTimeout(resolve, 300));
 
   const {
-    startDate = '2023-12-25',
-    endDate = '2023-12-25',
+    startDate = '2023-12-01',
+    endDate = '2023-12-31',
     orderNo = '',
     plateNumber = '',
     region = '',
@@ -22,66 +22,123 @@ export const getIncomeDetailReport = async (params) => {
     pageSize = 50,
   } = params;
 
-  // 模拟收入明细数据
-  const generateDetailData = (count = 50) => {
+  // 生成模拟数据
+  const generateDetailData = () => {
     const data = [];
-    const regions = ['芗城区', '龙文区', '龙海区', '漳浦县'];
-    const parkingNames = [
-      '漳州万达广场停车场',
-      '芗城政府路侧停车场',
-      '龙文区体育中心停车场',
-      '龙海区商业城停车场',
-      '漳浦县汽车站停车场',
+    const regions = [
+      { code: 'xiangcheng', name: '芗城区' },
+      { code: 'longwen', name: '龙文区' },
+      { code: 'longhai', name: '龙海区' },
+      { code: 'zhangpu', name: '漳浦县' },
     ];
+
+    const parkingList = [
+      { id: 'park001', name: '漳州万达广场停车场', region: '芗城区', type: 'public' },
+      { id: 'park002', name: '芗城政府路侧停车场', region: '芗城区', type: 'roadside' },
+      { id: 'park003', name: '龙文区体育中心停车场', region: '龙文区', type: 'public' },
+      { id: 'park004', name: '龙海区商业城停车场', region: '龙海区', type: 'public' },
+      { id: 'park005', name: '漳浦县汽车站停车场', region: '漳浦县', type: 'special' },
+    ];
+
     const paymentTypes = [
       { type: 'wechat', name: '微信支付' },
       { type: 'alipay', name: '支付宝' },
       { type: 'cash', name: '现金支付' },
+      { type: 'card', name: '刷卡支付' },
+      { type: 'member', name: '会员支付' },
     ];
 
-    for (let i = 1; i <= count; i++) {
+    const plateNumbers = [
+      '闽E12345', '闽E23456', '闽E34567', '闽E45678', '闽E56789',
+      '闽D12345', '闽D23456', '闽D34567', '闽D45678', '闽D56789',
+      '闽F12345', '闽F23456', '闽F34567', '闽F45678', '闽F56789',
+    ];
+
+    // 生成200条数据，以便分页测试
+    for (let i = 1; i <= 200; i++) {
       const orderId = `ORD${String(i).padStart(6, '0')}`;
-      const regionIndex = Math.floor(Math.random() * regions.length);
-      const parkingIndex = Math.floor(Math.random() * parkingNames.length);
-      const paymentIndex = Math.floor(Math.random() * paymentTypes.length);
-      const basicAmount = Math.floor(Math.random() * 50) + 5;
-      const discountAmount = Math.floor(Math.random() * 5);
-      const paidAmount = basicAmount - discountAmount;
-      const parkingDuration = `${Math.floor(Math.random() * 8) + 1}小时${Math.floor(Math.random() * 60)}分钟`;
+      const randomParking = parkingList[Math.floor(Math.random() * parkingList.length)];
+      const randomPayment = paymentTypes[Math.floor(Math.random() * paymentTypes.length)];
+      const randomRegion = regions[Math.floor(Math.random() * regions.length)];
+      const randomPlate = plateNumbers[Math.floor(Math.random() * plateNumbers.length)];
+
+      // 随机日期在范围内
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const timeDiff = end.getTime() - start.getTime();
+      const randomTime = start.getTime() + Math.random() * timeDiff;
+      const randomDate = new Date(randomTime);
+      const dateStr = randomDate.toISOString().split('T')[0];
+
+      // 随机时间
+      const hour = Math.floor(Math.random() * 24).toString().padStart(2, '0');
+      const minute = Math.floor(Math.random() * 60).toString().padStart(2, '0');
+      const second = Math.floor(Math.random() * 60).toString().padStart(2, '0');
+
+      // 费用计算
+      const baseHours = Math.floor(Math.random() * 10) + 1;
+      const baseAmount = baseHours * 5 + Math.floor(Math.random() * 20);
+      const discountAmount = Math.random() > 0.7 ? Math.floor(Math.random() * 5) + 1 : 0;
+      const paidAmount = baseAmount - discountAmount;
+
+      // 确保停车场区域与区域筛选匹配
+      const parkingRegion = parkingList.find(p => p.id === randomParking.id)?.region || randomRegion.name;
 
       data.push({
         id: i,
-        orderNo: orderNo || orderId,
-        plateNumber: plateNumber || `闽E${String(Math.floor(Math.random() * 99999)).padStart(5, '0')}`,
-        parkDuration: parkingDuration,
-        basicAmount,
-        discountAmount,
-        paidAmount,
-        paymentType: paymentTypes[paymentIndex].name,
-        paymentTime: `2023-12-25 ${String(Math.floor(Math.random() * 24)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}:00`,
-        parkingName: parkingNames[parkingIndex],
-        regionName: regions[regionIndex],
-        receiptUrl: paymentTypes[paymentIndex].type === 'cash' ? '' : `https://example.com/receipt/${orderId}.jpg`,
-        remark: i % 10 === 0 ? '异常订单，需核实' : '',
+        orderNo: orderId,
+        plateNumber: randomPlate,
+        parkDuration: `${baseHours}小时${Math.floor(Math.random() * 60)}分钟`,
+        basicAmount: baseAmount,
+        discountAmount: discountAmount,
+        paidAmount: paidAmount,
+        paymentType: randomPayment.name,
+        paymentTime: `${dateStr} ${hour}:${minute}:${second}`,
+        parkingName: randomParking.name,
+        regionName: parkingRegion,
+        parkingId: randomParking.id,
+        paymentCode: randomPayment.type,
+        receiptUrl: ['cash', 'card'].includes(randomPayment.type)
+          ? ''
+          : `https://example.com/receipt/${orderId}.jpg`,
+        remark: i % 10 === 0 ? '异常订单，需核实' :
+          i % 5 === 0 ? '会员首次停车' :
+            i % 7 === 0 ? '节假日优惠' : '',
+        status: Math.random() > 0.9 ? '异常' : '正常',
       });
     }
 
     return data;
   };
 
-  const allData = generateDetailData(200);
+  const allData = generateDetailData();
 
-  // 根据筛选条件过滤数据
-  let filteredData = allData;
+  // 筛选逻辑
+  let filteredData = [...allData];
 
+  // 日期筛选
+  if (startDate && endDate) {
+    filteredData = filteredData.filter(item => {
+      const itemDate = item.paymentTime.split(' ')[0];
+      return itemDate >= startDate && itemDate <= endDate;
+    });
+  }
+
+  // 订单号筛选
   if (orderNo) {
-    filteredData = filteredData.filter(item => item.orderNo.includes(orderNo));
+    filteredData = filteredData.filter(item =>
+      item.orderNo.toLowerCase().includes(orderNo.toLowerCase())
+    );
   }
 
+  // 车牌筛选
   if (plateNumber) {
-    filteredData = filteredData.filter(item => item.plateNumber.includes(plateNumber));
+    filteredData = filteredData.filter(item =>
+      item.plateNumber.toLowerCase().includes(plateNumber.toLowerCase())
+    );
   }
 
+  // 区域筛选
   if (region) {
     const regionMap = {
       'xiangcheng': '芗城区',
@@ -89,11 +146,22 @@ export const getIncomeDetailReport = async (params) => {
       'longhai': '龙海区',
       'zhangpu': '漳浦县',
     };
+    const targetRegion = regionMap[region] || region;
     filteredData = filteredData.filter(item =>
-      item.regionName === regionMap[region] || item.regionName === region
+      item.regionName === targetRegion ||
+      item.regionName.includes(targetRegion)
     );
   }
 
+  // 停车场筛选
+  if (parkingId) {
+    filteredData = filteredData.filter(item =>
+      item.parkingId === parkingId ||
+      item.parkingName.includes(parkingId)
+    );
+  }
+
+  // 支付方式筛选
   if (paymentType) {
     const paymentMap = {
       'wechat': '微信支付',
@@ -102,14 +170,19 @@ export const getIncomeDetailReport = async (params) => {
       'card': '刷卡支付',
       'member': '会员支付',
     };
+    const targetPayment = paymentMap[paymentType] || paymentType;
     filteredData = filteredData.filter(item =>
-      item.paymentType === paymentMap[paymentType] || item.paymentType === paymentType
+      item.paymentType === targetPayment ||
+      item.paymentCode === paymentType
     );
   }
 
-  // 分页处理
-  const startIndex = (page - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
+  // 分页处理 - 修复分页参数
+  const total = filteredData.length;
+  const actualPage = page || 1;
+  const actualPageSize = pageSize || 10;
+  const startIndex = (actualPage - 1) * actualPageSize;
+  const endIndex = Math.min(startIndex + actualPageSize, total);
   const paginatedData = filteredData.slice(startIndex, endIndex);
 
   // 计算总金额
@@ -117,11 +190,20 @@ export const getIncomeDetailReport = async (params) => {
 
   return {
     data: paginatedData,
-    total: filteredData.length,
-    totalAmount,
-    page,
-    pageSize,
+    total: total,
+    totalAmount: totalAmount,
+    page: actualPage,
+    pageSize: actualPageSize,
+    pageCount: Math.ceil(total / actualPageSize),
     generatedAt: new Date().toISOString(),
+    summary: {
+      totalOrders: total,
+      totalAmount: totalAmount,
+      avgAmount: total > 0 ? Math.round(totalAmount / total) : 0,
+      wechatAmount: filteredData.filter(d => d.paymentCode === 'wechat').reduce((sum, d) => sum + d.paidAmount, 0),
+      alipayAmount: filteredData.filter(d => d.paymentCode === 'alipay').reduce((sum, d) => sum + d.paidAmount, 0),
+      cashAmount: filteredData.filter(d => d.paymentCode === 'cash').reduce((sum, d) => sum + d.paidAmount, 0),
+    }
   };
 };
 
@@ -151,20 +233,22 @@ export const exportIncomeDetailReport = async (params) => {
       '停车场',
       '行政区划',
       '备注',
+      '状态',
     ];
 
     const csvRows = data.data.map((item) => [
       item.orderNo,
       item.plateNumber,
       item.parkDuration,
-      item.basicAmount,
-      item.discountAmount,
-      item.paidAmount,
+      item.basicAmount.toFixed(2),
+      item.discountAmount.toFixed(2),
+      item.paidAmount.toFixed(2),
       item.paymentType,
       item.paymentTime,
       item.parkingName,
       item.regionName,
       item.remark,
+      item.status,
     ]);
 
     const csvContent = [
@@ -179,20 +263,21 @@ export const exportIncomeDetailReport = async (params) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `收入明细报表_${params.startDate || '开始'}_${params.endDate || '结束'}.csv`;
+    link.download = `收入明细报表_${params.startDate || '开始'}_${params.endDate || '结束'}_${new Date().getTime()}.csv`;
 
     document.body.append(link);
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
 
-    ElMessage.success('导出成功（CSV格式）');
+    ElMessage.success(`导出成功，共${data.total}条记录`);
 
     return {
       success: true,
       message: '导出成功',
       filename: link.download,
-      data,
+      totalRecords: data.total,
+      totalAmount: data.totalAmount,
       exportTime: new Date().toISOString(),
     };
   } catch (error) {
@@ -200,4 +285,34 @@ export const exportIncomeDetailReport = async (params) => {
     ElMessage.error(`导出失败: ${error.message}`);
     throw error;
   }
+};
+
+// 获取统计汇总（可选）
+export const getIncomeSummary = async (params) => {
+  await new Promise((resolve) => setTimeout(resolve, 200));
+
+  const data = await getIncomeDetailReport({
+    ...params,
+    page: 1,
+    pageSize: 10000,
+  });
+
+  return data.summary;
+};
+
+// 获取最近收入明细（用于首页展示）
+export const getRecentIncomeDetails = async (limit = 10) => {
+  await new Promise((resolve) => setTimeout(resolve, 200));
+
+  const data = await getIncomeDetailReport({
+    startDate: '2023-12-20',
+    endDate: '2023-12-31',
+    page: 1,
+    pageSize: limit,
+  });
+
+  return {
+    recentDetails: data.data,
+    summary: data.summary,
+  };
 };

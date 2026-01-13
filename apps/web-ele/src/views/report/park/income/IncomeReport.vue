@@ -8,19 +8,14 @@ import DailyIncomeReport from './DailyIncome.vue';
 import IncomeDetailReport from './IncomeDetail.vue';
 import MonthlyIncomeReport from './MonthlyIncome.vue';
 
-// 当前激活的标签页
 const activeTab = ref('daily');
 
-// 标签页点击事件
 const handleTabClick = (tab) => {
   console.log('切换到标签页:', tab.props.name);
-  // 保存用户偏好
   localStorage.setItem('lastIncomeTab', tab.props.name);
 };
 
-// 初始化
 onMounted(() => {
-  // 恢复上次查看的标签页
   const lastTab = localStorage.getItem('lastIncomeTab');
   if (lastTab) {
     activeTab.value = lastTab;
@@ -85,7 +80,7 @@ onMounted(() => {
 .income-report {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: calc(100vh - 20px);
   padding: 10px;
   overflow: hidden;
   background-color: #f5f7fa;
@@ -95,6 +90,7 @@ onMounted(() => {
   flex: 1;
   margin-bottom: 10px;
   overflow: hidden;
+  min-height: 600px;
 }
 
 .tab-label {
@@ -105,6 +101,7 @@ onMounted(() => {
 
 .global-tips {
   flex-shrink: 0;
+  margin-top: 10px;
 }
 
 .global-tips p {
@@ -121,12 +118,20 @@ onMounted(() => {
 :deep(.el-tabs__content) {
   flex: 1;
   padding: 0 !important;
-  overflow-y: auto;
+  overflow: hidden;
   background: #fff;
 }
 
 :deep(.el-tab-pane) {
   height: 100%;
-  overflow-y: auto;
+  overflow: auto;
+}
+
+:deep(.el-tabs--border-card > .el-tabs__content) {
+  padding: 0 !important;
+}
+
+:deep(.el-tabs__header) {
+  margin-bottom: 0;
 }
 </style>
