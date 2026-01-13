@@ -431,10 +431,10 @@ const garageDetailRef = ref(null);
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：停车场数量5;车位总数:266;车场车位3 </span>
+          <span> 本页统计：车库数量5，车库停车数量678</span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span> 全部统计：{{ textObj.total }} </span>
+          <span> 全部统计：车库数量8，车库停车数量1041 </span>
         </div>
       </template>
     </Grid>
