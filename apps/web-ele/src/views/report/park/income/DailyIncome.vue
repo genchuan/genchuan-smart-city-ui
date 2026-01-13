@@ -3,7 +3,6 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { Download, Refresh } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 
-// API (需要创建对应的API文件)
 import {
   exportDailyIncomeReport,
   getDailyIncomeReport,
@@ -33,6 +32,10 @@ const regionDistributionData = ref([]);
 const typeDistributionData = ref([]);
 const parkingDetailData = ref([]);
 const paymentTypeData = ref([]);
+
+// 本地分页参数
+const currentPage = ref(1);
+const pageSize = ref(10);
 
 // 处理后的核心指标数据
 const processedCoreIndicators = computed(() => {
@@ -97,7 +100,7 @@ const regionDistributionOptions = computed(() => ({
       name: '收入',
       type: 'bar',
       data: regionDistributionData.value.map((item) => ({
-        value: item.totalAmount,
+        value: item.totalAmount / 10000,
         itemStyle: {
           color: getRegionColor(item.totalAmount),
         },
@@ -106,7 +109,7 @@ const regionDistributionOptions = computed(() => ({
       label: {
         show: true,
         position: 'top',
-        formatter: (params) => formatCurrency(params.value, false),
+        formatter: (params) => formatCurrency(params.value * 10000, false),
       },
     },
   ],
@@ -120,7 +123,7 @@ const paymentTypeOptions = computed(() => ({
   },
   tooltip: {
     trigger: 'item',
-    formatter: '{a} <br/>{b}: {c} ({d}%)',
+    formatter: '{a} <br/>{b}: ¥{c} ({d}%)',
   },
   legend: {
     orient: 'vertical',
@@ -148,12 +151,12 @@ const paymentTypeOptions = computed(() => ({
 // 停车场类型分布图表配置
 const typeDistributionOptions = computed(() => ({
   title: {
-    text: '停车场类型收入分布',
+    text: '停车场类型分布',
     left: 'center',
   },
   tooltip: {
     trigger: 'item',
-    formatter: '{a} <br/>{b}: {c} ({d}%)',
+    formatter: '{a} <br/>{b}: ¥{c} ({d}%)',
   },
   legend: {
     orient: 'vertical',
@@ -180,10 +183,10 @@ const typeDistributionOptions = computed(() => ({
 
 // 根据收入金额获取颜色
 const getRegionColor = (amount) => {
-  if (amount >= 100000) return '#52c41a'; // 绿色 - 高收入
-  if (amount >= 50000) return '#1890ff';  // 蓝色 - 中高收入
-  if (amount >= 20000) return '#fa8c16';  // 橙色 - 中等收入
-  return '#f5222d';                       // 红色 - 低收入
+  if (amount >= 100000) return '#52c41a';
+  if (amount >= 50000) return '#1890ff';
+  if (amount >= 20000) return '#fa8c16';
+  return '#f5222d';
 };
 
 // 格式化值
@@ -201,6 +204,7 @@ onMounted(() => {
 
 // 监听筛选条件变化
 watch([date, region, parkingType, parkingId], () => {
+  currentPage.value = 1;
   loadData();
 });
 
@@ -234,6 +238,7 @@ const loadData = async () => {
 
 // 刷新数据
 const refreshData = () => {
+  currentPage.value = 1;
   loadData();
 };
 
@@ -260,6 +265,12 @@ const handleExport = async () => {
   }
 };
 
+// 分页变化处理
+const handlePageChange = (pagination) => {
+  currentPage.value = pagination.page;
+  pageSize.value = pagination.pageSize;
+};
+
 // 获取停车场列表（模拟）
 const parkingList = ref([
   { value: '', label: '全部停车场' },
@@ -282,14 +293,14 @@ const parkingList = ref([
           format="YYYY-MM-DD"
           value-format="YYYY-MM-DD"
           size="medium"
-          style="width: 160px"
+          style="width: 140px"
         />
         <el-select
           v-model="region"
           placeholder="行政区划"
           size="medium"
           clearable
-          style="width: 120px; margin-left: 12px"
+          style="width: 120px"
         >
           <el-option label="全部区域" value="" />
           <el-option label="芗城区" value="xiangcheng" />
@@ -302,7 +313,7 @@ const parkingList = ref([
           placeholder="停车场类型"
           size="medium"
           clearable
-          style="width: 140px; margin-left: 12px"
+          style="width: 140px"
         >
           <el-option label="全部类型" value="" />
           <el-option label="公共停车场" value="public" />
@@ -314,7 +325,7 @@ const parkingList = ref([
           placeholder="停车场"
           size="medium"
           clearable
-          style="width: 220px; margin-left: 12px"
+          style="width: 220px"
         >
           <el-option
             v-for="parking in parkingList"
@@ -385,6 +396,11 @@ const parkingList = ref([
         show-pagination
         :total="parkingDetailData.length"
         :page-sizes="[10, 20, 50]"
+        :hide-on-single-page="false"
+        :current-page-prop="currentPage"
+        :page-size-prop="pageSize"
+        @page-change="handlePageChange"
+        :remote="false"
       />
     </ReportSection>
 

@@ -41,28 +41,22 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
-  // 新增 props
   remote: {
-    // 是否远程分页
     type: Boolean,
     default: false,
   },
   pageSizes: {
-    // 可选的每页条数
     type: Array,
     default: () => [10, 20, 50, 100],
   },
   paginationLayout: {
-    // 分页器布局
     type: String,
     default: 'total, sizes, prev, pager, next, jumper',
   },
   hideOnSinglePage: {
-    // 只有一页时隐藏
     type: Boolean,
     default: false,
   },
-  // 当前页和每页条数（支持受控模式）
   currentPageProp: {
     type: Number,
     default: 1,
@@ -78,11 +72,11 @@ const emit = defineEmits(['page-change', 'sort-change']);
 const currentPage = ref(props.currentPageProp || 1);
 const pageSize = ref(props.pageSizeProp || 10);
 
-// 监听 props 变化（支持受控模式）
+// 监听父组件传入的分页参数变化
 watch(
   () => props.currentPageProp,
   (val) => {
-    if (val !== undefined) {
+    if (val !== undefined && val !== currentPage.value) {
       currentPage.value = val;
     }
   },
@@ -91,13 +85,12 @@ watch(
 watch(
   () => props.pageSizeProp,
   (val) => {
-    if (val !== undefined) {
+    if (val !== undefined && val !== pageSize.value) {
       pageSize.value = val;
     }
   },
 );
 
-// 处理列定义
 const processedColumns = computed(() => {
   return props.columns.map((col) => {
     return {
@@ -108,44 +101,67 @@ const processedColumns = computed(() => {
   });
 });
 
-// 表格显示的数据
+// 修复：tableData 计算属性
 const tableData = computed(() => {
-  if (!props.showPagination || props.remote) {
-    // 远程分页时，直接使用传入的数据
+  // 如果不显示分页，直接返回数据
+  if (!props.showPagination) {
     return props.data;
   }
 
-  // 本地分页：计算分页数据
+  // 如果是远程分页，直接返回数据（由后端分页）
+  if (props.remote) {
+    return props.data;
+  }
+
+  // 本地分页，进行切片
   const start = (currentPage.value - 1) * pageSize.value;
   const end = start + pageSize.value;
   return props.data.slice(start, end);
 });
 
-// 每页条数变化
+// 修复：totalCount 计算属性
+const totalCount = computed(() => {
+  if (props.showPagination && props.remote) {
+    return props.total;
+  }
+  return props.data.length;
+});
+
 const handleSizeChange = (size) => {
   pageSize.value = size;
-  currentPage.value = 1; // 重置到第一页
+  currentPage.value = 1; // 切换每页条数时回到第一页
   emitPageChange();
 };
 
-// 当前页变化
 const handleCurrentChange = (page) => {
   currentPage.value = page;
   emitPageChange();
 };
 
-// 触发分页变化事件
 const emitPageChange = () => {
-  emit('page-change', {
-    page: currentPage.value,
-    pageSize: pageSize.value,
-    total: props.total,
-  });
+  if (props.showPagination) {
+    emit('page-change', {
+      page: currentPage.value,
+      pageSize: pageSize.value,
+      total: totalCount.value,
+    });
+  }
 };
 
-// 排序变化
 const handleSortChange = ({ column, prop, order }) => {
   emit('sort-change', { column, prop, order });
+};
+
+const renderContent = (column, row) => {
+  if (!column.render) return null;
+
+  if (typeof column.render.text === 'function') {
+    return column.render.text(row, column);
+  } else if (column.render.text !== undefined) {
+    return column.render.text;
+  }
+
+  return '';
 };
 </script>
 
@@ -164,7 +180,6 @@ const handleSortChange = ({ column, prop, order }) => {
       @sort-change="handleSortChange"
     >
       <slot>
-        <!-- 默认列定义 -->
         <template v-for="column in processedColumns" :key="column.prop">
           <el-table-column
             v-if="!column.hidden"
@@ -176,22 +191,17 @@ const handleSortChange = ({ column, prop, order }) => {
             :sortable="column.sortable"
           >
             <template #default="{ row, $index }">
-              <!-- 自定义渲染 -->
               <template v-if="column.render">
                 <component
                   :is="column.render.type || 'span'"
                   v-bind="column.render.props || {}"
                   v-on="column.render.events || {}"
                 >
-                  {{
-                    column.render.text ? column.render.text(row, column) : ''
-                  }}
+                  {{ renderContent(column, row) }}
                 </component>
               </template>
 
-              <!-- 默认格式化 -->
               <template v-else>
-                <!-- 进度条类型 -->
                 <template v-if="column.type === 'progress'">
                   <el-progress
                     :percentage="row[column.prop]"
@@ -201,7 +211,6 @@ const handleSortChange = ({ column, prop, order }) => {
                   <span style="margin-left: 8px">{{ row[column.prop] }}%</span>
                 </template>
 
-                <!-- 标签类型 -->
                 <template v-else-if="column.type === 'tag'">
                   <el-tag :type="column.tagType || 'primary'" size="small">
                     {{
@@ -212,17 +221,14 @@ const handleSortChange = ({ column, prop, order }) => {
                   </el-tag>
                 </template>
 
-                <!-- 货币类型 -->
                 <template v-else-if="column.type === 'currency'">
                   {{ formatCurrency(row[column.prop]) }}
                 </template>
 
-                <!-- 百分比类型 -->
                 <template v-else-if="column.type === 'percentage'">
                   {{ row[column.prop] }}%
                 </template>
 
-                <!-- 增长率类型 -->
                 <template v-else-if="column.type === 'growth'">
                   <span :class="getGrowthClass(row[column.prop])">
                     <el-icon v-if="row[column.prop] > 0"><Top /></el-icon>
@@ -231,7 +237,6 @@ const handleSortChange = ({ column, prop, order }) => {
                   </span>
                 </template>
 
-                <!-- 默认类型 -->
                 <template v-else>
                   {{
                     column.formatter
@@ -246,14 +251,13 @@ const handleSortChange = ({ column, prop, order }) => {
       </slot>
     </el-table>
 
-    <!-- 分页器 -->
-    <!-- 修改点：只依赖 showPagination 控制显示 -->
+    <!-- 分页器容器，确保始终可见 -->
     <div v-if="showPagination" class="pagination-container">
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
         :page-sizes="pageSizes"
-        :total="total"
+        :total="totalCount"
         :layout="paginationLayout"
         :hide-on-single-page="hideOnSinglePage"
         @size-change="handleSizeChange"
@@ -265,6 +269,8 @@ const handleSortChange = ({ column, prop, order }) => {
 
 <style scoped>
 .data-table {
+  position: relative;
+  min-height: 200px;
   margin-top: 12px;
 }
 
@@ -279,6 +285,11 @@ const handleSortChange = ({ column, prop, order }) => {
   display: flex;
   justify-content: flex-end;
   margin-top: 10px;
+  padding: 12px 0;
+  background-color: #fff;
+  border-top: 1px solid #ebeef5;
+  position: relative;
+  z-index: 10;
 }
 
 .growth-positive {
@@ -287,5 +298,29 @@ const handleSortChange = ({ column, prop, order }) => {
 
 .growth-negative {
   color: #f5222d;
+}
+
+:deep(.el-pagination) {
+  padding: 0;
+}
+
+:deep(.el-table) {
+  overflow: visible;
+}
+
+:deep(.el-table) {
+  margin-bottom: 0 !important;
+}
+
+:deep(.el-table__body-wrapper) {
+  min-height: 150px;
+}
+
+:deep(.el-pagination__total) {
+  margin-right: 20px;
+}
+
+:deep(.el-pagination__jump) {
+  margin-left: 20px;
 }
 </style>

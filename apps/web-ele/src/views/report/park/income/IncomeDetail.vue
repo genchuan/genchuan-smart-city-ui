@@ -1,9 +1,8 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
-import { Download, Refresh, ZoomIn } from '@element-plus/icons-vue';
-import { ElMessage, ElImage } from 'element-plus';
+import { Download, Refresh } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
 
-// API (需要创建对应的API文件)
 import {
   exportIncomeDetailReport,
   getIncomeDetailReport,
@@ -28,8 +27,11 @@ const loading = ref(false);
 const exporting = ref(false);
 const totalAmount = ref(0);
 const tableData = ref([]);
-const showReceiptDialog = ref(false);
-const currentReceipt = ref('');
+
+// 分页参数
+const currentPage = ref(1);
+const pageSize = ref(10);
+const totalCount = ref(0);
 
 // 表格列定义
 const tableColumns = computed(() => [
@@ -43,23 +45,6 @@ const tableColumns = computed(() => [
   { prop: 'paymentTime', label: '支付时间', width: 160 },
   { prop: 'parkingName', label: '停车场', width: 180 },
   { prop: 'regionName', label: '行政区划', width: 120 },
-  {
-    prop: 'receipt',
-    label: '支付凭证',
-    width: 120,
-    render: {
-      type: 'el-button',
-      props: {
-        type: 'primary',
-        size: 'small',
-        icon: ZoomIn,
-      },
-      events: {
-        click: (row) => showReceipt(row.receiptUrl),
-      },
-      text: '查看',
-    },
-  },
   { prop: 'remark', label: '备注', width: 200 },
 ]);
 
@@ -72,6 +57,7 @@ onMounted(() => {
 watch(
   [dateRange, orderNo, plateNumber, region, parkingId, paymentType],
   () => {
+    currentPage.value = 1;
     loadData();
   },
   { deep: true },
@@ -90,8 +76,8 @@ const loadData = async () => {
       region: region.value,
       parkingId: parkingId.value,
       paymentType: paymentType.value,
-      page: 1,
-      pageSize: 50,
+      page: currentPage.value,
+      pageSize: pageSize.value,
     };
 
     const response = await getIncomeDetailReport(params);
@@ -99,6 +85,7 @@ const loadData = async () => {
     // 更新数据
     tableData.value = response.data || [];
     totalAmount.value = response.totalAmount || 0;
+    totalCount.value = response.total || 0;
   } catch (error) {
     console.error('加载收入明细数据失败:', error);
     ElMessage.error('加载数据失败');
@@ -109,6 +96,7 @@ const loadData = async () => {
 
 // 刷新数据
 const refreshData = () => {
+  currentPage.value = 1;
   loadData();
 };
 
@@ -138,14 +126,11 @@ const handleExport = async () => {
   }
 };
 
-// 查看支付凭证
-const showReceipt = (url) => {
-  if (!url) {
-    ElMessage.warning('暂无支付凭证');
-    return;
-  }
-  currentReceipt.value = url;
-  showReceiptDialog.value = true;
+// 分页变化处理
+const handlePageChange = (pagination) => {
+  currentPage.value = pagination.page;
+  pageSize.value = pagination.pageSize;
+  loadData();
 };
 
 // 获取支付方式列表
@@ -189,21 +174,21 @@ const parkingList = ref([
           placeholder="订单号"
           size="medium"
           clearable
-          style="width: 180px; margin-left: 12px"
+          style="width: 180px"
         />
         <el-input
           v-model="plateNumber"
           placeholder="车牌号码"
           size="medium"
           clearable
-          style="width: 120px; margin-left: 12px"
+          style="width: 120px"
         />
         <el-select
           v-model="region"
           placeholder="行政区划"
           size="medium"
           clearable
-          style="width: 120px; margin-left: 12px"
+          style="width: 120px"
         >
           <el-option label="全部区域" value="" />
           <el-option label="芗城区" value="xiangcheng" />
@@ -215,7 +200,7 @@ const parkingList = ref([
           placeholder="停车场"
           size="medium"
           clearable
-          style="width: 220px; margin-left: 12px"
+          style="width: 220px"
         >
           <el-option
             v-for="parking in parkingList"
@@ -229,7 +214,7 @@ const parkingList = ref([
           placeholder="支付方式"
           size="medium"
           clearable
-          style="width: 120px; margin-left: 12px"
+          style="width: 120px"
         >
           <el-option
             v-for="type in paymentTypes"
@@ -262,7 +247,7 @@ const parkingList = ref([
         </div>
         <div class="summary-item">
           <span class="label">总记录数：</span>
-          <span class="value">{{ tableData.length }} 笔</span>
+          <span class="value">{{ totalCount }} 笔</span>
         </div>
         <div class="summary-item">
           <span class="label">总收入金额：</span>
@@ -277,37 +262,15 @@ const parkingList = ref([
         :data="tableData"
         :columns="tableColumns"
         show-pagination
-        :total="tableData.length"
+        :total="totalCount"
         :page-sizes="[10, 20, 50, 100]"
-        remote
-        @page-change="loadData"
+        :hide-on-single-page="false"
+        :current-page-prop="currentPage"
+        :page-size-prop="pageSize"
+        @page-change="handlePageChange"
+        :remote="true"
       />
     </ReportSection>
-
-    <!-- 支付凭证弹窗 -->
-    <el-dialog
-      v-model="showReceiptDialog"
-      title="支付凭证"
-      width="600px"
-      destroy-on-close
-    >
-      <el-image
-        :src="currentReceipt"
-        :preview-src-list="[currentReceipt]"
-        fit="contain"
-        style="width: 100%; height: 400px"
-      >
-        <template #error>
-          <div class="image-error">
-            <el-icon :size="50"><ZoomIn /></el-icon>
-            <div>无法加载支付凭证</div>
-          </div>
-        </template>
-      </el-image>
-      <template #footer>
-        <el-button @click="showReceiptDialog = false">关闭</el-button>
-      </template>
-    </el-dialog>
 
     <!-- 加载状态 -->
     <LoadingOverlay v-if="loading" />
@@ -349,14 +312,5 @@ const parkingList = ref([
   font-size: 18px;
   color: #f56c6c;
   font-weight: 600;
-}
-
-.image-error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: #909399;
 }
 </style>
