@@ -40,7 +40,7 @@ defineExpose({
 </script>
 
 <template>
-  <DetailDrawer :title="title || `${detailObj.name}关联表`">
+  <DetailDrawer :title="title || `${detailObj.name}`">
     <div class="detail-card">
       <div class="detail-card-row">
         <div class="detail-row-left">停车场ID:</div>

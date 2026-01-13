@@ -287,7 +287,7 @@ const parkDetailDrawerRef = ref(null);
     <ParkDetailDrawer
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
-      :title="`${dataObj.detailObj.name}关联表`"
+      :title="`${dataObj.detailObj.name}`"
     />
     <Drawer title="搜索">
       <QueryForm class="query-form" />

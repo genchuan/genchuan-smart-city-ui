@@ -13,6 +13,7 @@ import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 // 引入封装后的详情抽屉组件
 import ParkDetailDrawer from '#/views/genchuan/industry/page/park/components/detail.vue';
+import garageDetailDrawer from '#/views/genchuan/industry/page/park/garage/table/detail.vue';
 import { dataList as parkData } from '#/views/genchuan/industry/page/park/parkinglot/table/data';
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
@@ -147,6 +148,7 @@ function handleRowCheckboxChange({ records }) {
 const dataObj = reactive({
   totalShow: false,
   detailObj: {}, // 保留详情对象用于传递给组件
+  garageDetail: {},
   total: dataList().length,
   currentPage: 1,
   pageSize: 10,
@@ -251,6 +253,10 @@ const handleOpenDetail = (row) => {
   // 通过ref调用组件的open方法
   parkDetailDrawerRef.value.open();
 };
+const handleGarageOpenDetail = (row) => {
+  dataObj.garageDetail = row;
+  garageDetailRef.value.open();
+};
 const tabsData = ref([
   { label: '全部' },
   { label: '启用' },
@@ -277,6 +283,7 @@ const handleFullShow = () => {
 
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
+const garageDetailRef = ref(null);
 </script>
 
 <template>
@@ -288,7 +295,11 @@ const parkDetailDrawerRef = ref(null);
     <ParkDetailDrawer
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
-      :title="`${dataObj.detailObj.name}关联表`"
+      :title="`${dataObj.detailObj.name}`"
+    />
+    <garageDetailDrawer
+      ref="garageDetailRef"
+      :detail-obj="dataObj.garageDetail"
     />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -370,6 +381,15 @@ const parkDetailDrawerRef = ref(null);
           {{ row.name }}
         </el-text>
       </template>
+      <template #garageName="{ row }">
+        <el-text
+          @click="handleGarageOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.garageName }}
+        </el-text>
+      </template>
       <template #actions="{ row }">
         <TableAction
           :actions="[
@@ -379,7 +399,7 @@ const parkDetailDrawerRef = ref(null);
               link: true,
               icon: ACTION_ICON.MORE,
               auth: ['system:role:update'],
-              onClick: handleOpenDetail.bind(null, row),
+              onClick: handleGarageOpenDetail.bind(null, row),
             },
             {
               label: '编辑',

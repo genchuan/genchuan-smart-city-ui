@@ -364,7 +364,8 @@ export function useGridColumns() {
       field: 'garageName',
       title: '车库名称',
       minWidth: 200,
-      sortable: true
+      sortable: true, 
+      slots: { default: 'garageName' },
     },
     {
       field: 'name',
