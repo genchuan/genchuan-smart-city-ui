@@ -204,10 +204,10 @@ export function useFormSchema() {
       label: '车库ID',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入车库ID', 
+        placeholder: '请输入车库ID',
       },
       rules: 'required'
-    }, 
+    },
     {
       fieldName: 'parkId',
       label: '所属车场ID',
@@ -240,7 +240,7 @@ export function useFormSchema() {
       },
       rules: 'required'
     },
-     {
+    {
       fieldName: 'name',
       label: '车场名称',
       component: 'Input',
@@ -322,7 +322,9 @@ export function useFormSchema() {
         placeholder: '请选择启用状态',
         options: [
           { label: '启用', value: '启用' },
-          { label: '禁用', value: '禁用' }
+          { label: '禁用', value: '禁用' },
+          { label: '暂停运营', value: '暂停运营' },
+          { label: '维修中', value: '维修中' }
         ]
       },
       rules: 'required'
@@ -364,7 +366,7 @@ export function useGridColumns() {
       field: 'garageName',
       title: '车库名称',
       minWidth: 200,
-      sortable: true, 
+      sortable: true,
       slots: { default: 'garageName' },
     },
     {
@@ -373,7 +375,7 @@ export function useGridColumns() {
       minWidth: 200,
       sortable: true,
       slots: { default: 'parkName' },
-    }, 
+    },
     {
       field: 'floorCount',
       title: '楼层数',
@@ -414,7 +416,7 @@ export function useGridColumns() {
       field: 'enableStatus',
       title: '启用状态',
       minWidth: 100,
-      sortable: true  
+      sortable: true
     },
     {
       field: 'creator',

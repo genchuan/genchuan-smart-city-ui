@@ -167,7 +167,7 @@ const getTableData = (pageObj) => {
       if (activeName.value === '全部') {
         return true;
       }
-      return v.status === activeName.value;
+      return v.enableStatus === activeName.value;
     }).length;
   dataObj.list = dataObj.apilist
     .map((v) => v)
@@ -175,7 +175,7 @@ const getTableData = (pageObj) => {
       if (activeName.value === '全部') {
         return true;
       }
-      return v.status === activeName.value;
+      return v.enableStatus === activeName.value;
     })
     .slice(
       (page.currentPage - 1) * page.pageSize,
@@ -265,7 +265,7 @@ const tabsData = ref([
   { label: '维修中' },
 ]);
 const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
+  let text = `(${dataObj.apilist.filter((v) => v.enableStatus === item.label).length})`;
   if (item.label === '全部') {
     text = `(${dataObj.apilist.length})`;
   }
