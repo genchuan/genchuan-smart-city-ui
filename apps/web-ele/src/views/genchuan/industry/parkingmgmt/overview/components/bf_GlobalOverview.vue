@@ -630,7 +630,7 @@ const updateShowTime = () => {
 
   const showTimeEl = document.querySelector('.showTime');
   if (showTimeEl) {
-    showTimeEl.innerHTML = `当前时间：${y}年${mt}月${day}日 ${h}时${m}分${s}秒`;
+    showTimeEl.innerHTML = `${y}年${mt}月${day}日 ${h}时${m}分${s}秒`;
   }
 };
 
@@ -683,16 +683,6 @@ onUnmounted(() => {
 
 <template>
   <div class="page-container" ref="pageContainerRef">
-    <div class="header-box">
-      <button class="back-button" @click="handleBack">
-        <el-icon color="#00ccff" :size="`${1.2}vw`"><ArrowLeft /></el-icon>
-      </button>
-      <span class="head-name">停车管理-全局态势总览</span>
-      <div class="showTime h1-time"></div>
-      <button class="fullScreenBut" @click="clickFullscreen">
-        <el-icon color="#00ccff" :size="`${1.2}vw`"><FullScreen /></el-icon>
-      </button>
-    </div>
     <div class="mainbox">
       <div class="left">
         <div class="panel left-top" style="min-width: 3vw">
@@ -2021,13 +2011,13 @@ onUnmounted(() => {
 </template>
 
 <style lang="scss" scoped>
-@import '../../templatesstyle/common.scss';
-@import '../../templatesstyle/core-indicator-dashboard.scss';
-@import '../../templatesstyle/global-data-map.scss';
-@import '../../templatesstyle/global-posture-trend.scss';
-@import '../../templatesstyle/core-object-distribution.scss';
-@import '../../templatesstyle/posture-aggregation.scss';
-@import '../../templatesstyle/core-elements-operation.scss';
+@import '../../../templatesstyle/common';
+@import '../../../templatesstyle/core-indicator-dashboard';
+@import '../../../templatesstyle/global-data-map';
+@import '../../../templatesstyle/global-posture-trend';
+@import '../../../templatesstyle/core-object-distribution';
+@import '../../../templatesstyle/posture-aggregation';
+@import '../../../templatesstyle/core-elements-operation';
 
 .page-container {
   box-sizing: border-box;
@@ -2037,7 +2027,7 @@ onUnmounted(() => {
   overflow-x: hidden !important;
   overflow-y: hidden;
   color: #fff;
-  background: url('../images/bg.jpg') no-repeat;
+  background: url('../../images/bg.jpg') no-repeat;
   background-size: 100% 100%;
 }
 
@@ -2048,7 +2038,7 @@ onUnmounted(() => {
   font-size: 2.1vw;
   font-weight: bold;
   color: #0cf;
-  background: url('../images/head_bg.png') no-repeat;
+  background: url('../../images/head_bg.png') no-repeat;
   background-size: 100% 100%;
 
   .head-name {
@@ -2069,7 +2059,7 @@ onUnmounted(() => {
   height: 100%;
   min-height: 0;
   padding: 0.5vw;
-  background: url('../images/line(1).png') rgb(255 255 255 / 4%);
+  background: url('../../images/line(1).png') rgb(255 255 255 / 4%);
   border: 0.2vh solid rgb(25 186 139 / 17%);
 }
 

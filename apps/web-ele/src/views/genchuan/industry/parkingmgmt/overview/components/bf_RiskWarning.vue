@@ -289,7 +289,7 @@ const updateShowTime = () => {
   const s = dt.getSeconds().toString().padStart(2, '0');
   const showTimeEl = document.querySelector('.showTime');
   showTimeEl &&
-    (showTimeEl.innerHTML = `当前时间：${y}年${mt}月${day}日 ${h}时${m}分${s}秒`);
+    (showTimeEl.innerHTML = `${y}年${mt}月${day}日 ${h}时${m}分${s}秒`);
 };
 
 const fetchFaultListData = async () => {
@@ -727,16 +727,6 @@ onUnmounted(() => {
 
 <template>
   <div class="page-container" ref="pageContainerRef">
-    <div class="header-box">
-      <button class="back-button" @click="handleBack">
-        <el-icon color="#00ccff" :size="`${1.2}vw`"><ArrowLeft /></el-icon>
-      </button>
-      <span class="head-name">停车管理-事件预警追踪</span>
-      <div class="showTime h1-time"></div>
-      <button class="fullScreenBut" @click="clickFullscreen">
-        <el-icon color="#00ccff" :size="`${1.2}vw`"><FullScreen /></el-icon>
-      </button>
-    </div>
     <div class="mainbox">
       <div class="top">
         <div
@@ -2047,14 +2037,14 @@ onUnmounted(() => {
 </template>
 
 <style lang="scss" scoped>
-@import '../../templatesstyle/common.scss';
-@import '../../templatesstyle/fault-warning-view.scss';
-@import '../../templatesstyle/alert-event-overview.scss';
-@import '../../templatesstyle/hidden-danger-warning-view.scss';
-@import '../../templatesstyle/compliance-warning-view.scss';
-@import '../../templatesstyle/special-warning-view.scss';
-@import '../../templatesstyle/disposal-progress-tracking.scss';
-@import '../../templatesstyle/abnormal-warning-view.scss';
+@import '../../../templatesstyle/common';
+@import '../../../templatesstyle/fault-warning-view';
+@import '../../../templatesstyle/alert-event-overview';
+@import '../../../templatesstyle/hidden-danger-warning-view';
+@import '../../../templatesstyle/compliance-warning-view';
+@import '../../../templatesstyle/special-warning-view';
+@import '../../../templatesstyle/disposal-progress-tracking';
+@import '../../../templatesstyle/abnormal-warning-view';
 
 .page-container {
   box-sizing: border-box;
@@ -2063,7 +2053,7 @@ onUnmounted(() => {
   padding: 0 1vw;
   overflow: hidden;
   color: #fff;
-  background: url('../images/bg.jpg');
+  background: url('../../images/bg.jpg');
 }
 
 .header-box {
@@ -2073,7 +2063,7 @@ onUnmounted(() => {
   font-size: 2.1vw;
   font-weight: bold;
   color: #0cf;
-  background: url('../images/head_bg.png') no-repeat;
+  background: url('../../images/head_bg.png') no-repeat;
   background-size: 100% 100%;
 
   .head-name {
@@ -2095,7 +2085,7 @@ onUnmounted(() => {
   min-height: 0;
   padding: 0.5vw;
   overflow: hidden;
-  background: url('../images/line(1).png') rgb(255 255 255 / 4%);
+  background: url('../../images/line(1).png') rgb(255 255 255 / 4%);
   border: 0.2vh solid rgb(25 186 139 / 17%);
 }
 
@@ -2105,8 +2095,7 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 0.6vw;
   width: 100%;
-  height: 92vh;
-  padding: 0.6vw 0;
+  height: 91vh;
   margin: 0 auto;
   overflow: hidden;
 }

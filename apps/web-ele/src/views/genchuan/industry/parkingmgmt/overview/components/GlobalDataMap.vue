@@ -10,21 +10,21 @@ import {
 
 import { mapOrbitAnimation } from '#/api/genchuan/industry/mapOrbitAnimation.js';
 
-import markerFault from '../images/berth_fault.png';
-import markerForbid from '../images/berth_forbid.png';
+import markerFault from '../../images/berth_fault.png';
+import markerForbid from '../../images/berth_forbid.png';
 // 泊位状态图标
-import markerIdle from '../images/berth_idle.png';
-import markerOccupy from '../images/berth_occupy.png';
-import deviceFault from '../images/device_fault.png';
-import deviceMaintain from '../images/device_maintain.png';
-import deviceOffline from '../images/device_offline.png';
+import markerIdle from '../../images/berth_idle.png';
+import markerOccupy from '../../images/berth_occupy.png';
+import deviceFault from '../../images/device_fault.png';
+import deviceMaintain from '../../images/device_maintain.png';
+import deviceOffline from '../../images/device_offline.png';
 // 设备状态图标
-import deviceOnline from '../images/device_online.png';
-import parkMaintain from '../images/park_maintain.png';
+import deviceOnline from '../../images/device_online.png';
+import parkMaintain from '../../images/park_maintain.png';
 // 停车场状态图标
-import parkNormal from '../images/park_normal.png';
-import parkPause from '../images/park_pause.png';
-import markerUnknown from '../images/unknown.png';
+import parkNormal from '../../images/park_normal.png';
+import parkPause from '../../images/park_pause.png';
+import markerUnknown from '../../images/unknown.png';
 
 const props = defineProps({
   idName: {

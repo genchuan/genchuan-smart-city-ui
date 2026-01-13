@@ -119,14 +119,21 @@ const buildChartOption = () => {
       formatter: '{a} <br/>{b}: {c} ({d}%)',
     },
     legend: {
-      show: false,
+      orient: 'vertical', // 水平排列
+      bottom: 0,
+      right: 0,
+      textStyle: {
+        color: '#ccc',
+      },
+      itemWidth: vwToPx(0.6), // 图例图标大小自适应
+      itemHeight: vwToPx(0.6),
     },
     series: [
       {
         name: props.data.series[0]?.name || '数据统计',
         type: 'pie',
-        radius: ['40%', '70%'],
-        center: ['50%', '55%'],
+        radius: ['30%', '60%'],
+        center: ['45%', '45%'],
         avoidLabelOverlap: true,
         label: {
           show: false,

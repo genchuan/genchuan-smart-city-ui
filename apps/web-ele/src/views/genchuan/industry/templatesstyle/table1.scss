@@ -1,0 +1,130 @@
+// ---政企协同列表
+// ========== 唯一：政企协同列表 专属完整样式 (1:1照搬参考代码、仅样式命名差异化、无tabs、核心滚动防撑大逻辑完全一致) ==========
+// 表格外层容器【完全照搬参考的 .object-table 原码，只改类名，属性一个不差，核心overflow:auto hidden】
+.gov-enterprise-table-box {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  height: calc(100% - 2vh);
+  overflow: auto hidden; // ★★★ 核心：水平溢出出滚动条，垂直隐藏，面板绝不被撑大，参考原码属性，一丝不差
+}
+
+// 核心表格样式【完全1:1照搬参考的 .core-object-table 原码，只改类名，所有属性/值/层级完全一致】
+::v-deep(.gov-enterprise-coop-table) {
+  width: 100% !important;
+  height: 100% !important;
+  overflow: auto !important;  // ★★★ 核心：表格自身滚动，继承父容器尺寸，不撑大
+  table-layout: fixed !important; // ★★★ 核心中的核心：固定表格布局，列宽不随内容变化，永不撑大面板
+  border-spacing: 0;
+  border-collapse: separate;
+  background-color: transparent;
+
+  th {
+    padding: 0.3vw 0;
+    font-size: 0.7vw;
+    font-weight: 500;
+    color: #00ffd0;
+    text-align: center;
+    white-space: nowrap; // 文本不换行，保证滚动触发
+    background-color: rgb(0 82 103 / 80%);
+    border-bottom: 1px solid rgb(0 40 80 / 50%);
+    transition: all 0.2s;
+
+    &:hover {
+      background-color: rgb(0 82 103 / 100%);
+    }
+  }
+
+  td {
+    padding: 0.2vw 0;
+    font-size: 0.7vw;
+    color: #afc2ff;
+    text-align: center;
+    white-space: nowrap; // 文本不换行，保证滚动触发
+    background-color: rgb(0 54 108 / 70%) !important;
+    border-bottom: 1px solid rgb(0 204 255 / 15%);
+    transition: all 0.2s;
+  }
+
+  .el-table__row {
+    background-color: rgb(0 30 60 / 50%);
+
+    &:nth-child(even) {
+      background-color: rgb(0 40 80 / 50%);
+    }
+
+    &:hover > td {
+      color: #fff;
+      background-color: rgb(0 122 255 / 30%) !important;
+    }
+  }
+
+  &::before {
+    background-color: rgb(0 204 255 / 20%);
+  }
+
+  .el-table__cell {
+    border-right: 1px solid rgb(0 204 255 / 15%);
+
+    &:last-child {
+      border-right: none;
+    }
+  }
+
+  .el-table__sort-icon {
+    color: rgb(0 255 208 / 60%);
+
+    &:hover {
+      color: #00ffd0;
+    }
+  }
+
+  // ★★★ 参考原码的滚动条样式，1:1照搬，尺寸/颜色/hover效果完全一致
+  &::-webkit-scrollbar {
+    width: 0.5vw;
+    height: 0.5vh;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgb(0 54 108 / 50%);
+    border-radius: 0.2vw;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgb(0 204 255 / 50%);
+    border-radius: 0.2vw;
+
+    &:hover {
+      background: rgb(0 255 208 / 70%);
+    }
+  }
+}
+
+// 满意度标签样式 (1:1照搬参考代码标签样式，无任何修改，必须保留)
+::v-deep(.el-tag) {
+  font-size: 0.7vw;
+
+  &.el-tag--success {
+    color: #2eb861;
+    background-color: rgb(46 184 97 / 20%);
+    border-color: rgb(46 184 97 / 50%);
+  }
+
+  &.el-tag--warning {
+    color: #fad514;
+    background-color: rgb(250 173 20 / 20%);
+    border-color: rgb(250 173 20 / 50%);
+  }
+
+  &.el-tag--danger {
+    color: #eb5757;
+    background-color: rgb(235 87 87 / 20%);
+    border-color: rgb(235 87 87 / 50%);
+  }
+
+  &.el-tag--info {
+    color: #4299e1;
+    background-color: rgb(66 153 225 / 20%);
+    border-color: rgb(66 153 225 / 50%);
+  }
+}

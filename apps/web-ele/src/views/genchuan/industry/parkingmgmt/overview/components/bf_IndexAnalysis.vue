@@ -118,7 +118,7 @@ const updateShowTime = () => {
 
   const showTimeEl = document.querySelector('.showTime');
   if (showTimeEl) {
-    showTimeEl.innerHTML = `当前时间：${y}年${mt}月${day}日 ${h}时${m}分${s}秒`;
+    showTimeEl.innerHTML = `${y}年${mt}月${day}日 ${h}时${m}分${s}秒`;
   }
 };
 
@@ -172,20 +172,6 @@ onUnmounted(() => {
 
 <template>
   <div class="page-container" ref="pageContainerRef">
-    <div class="header-box">
-      <button class="back-button" @click="handleBack">
-        <el-icon color="#00ccff" :size="`${1.2}vw`">
-          <ArrowLeft />
-        </el-icon>
-      </button>
-      <span class="head-name">停车管理-核心业务指标</span>
-      <div class="showTime h1-time"></div>
-      <button class="fullScreenBut" @click="clickFullscreen">
-        <el-icon color="#00ccff" :size="`${1.2}vw`">
-          <FullScreen />
-        </el-icon>
-      </button>
-    </div>
     <div class="mainbox">
       <div class="top">
         <!-- 运行类指标面板 -->
@@ -667,14 +653,14 @@ onUnmounted(() => {
 </template>
 
 <style lang="scss" scoped>
-@import '../../templatesstyle/common.scss';
-@import '../../templatesstyle/operation-indicators.scss';
-@import '../../templatesstyle/resource-indicators.scss';
-@import '../../templatesstyle/service-indicators.scss';
-@import '../../templatesstyle/efficiency-indicators.scss';
-@import '../../templatesstyle/compliance-indicators.scss';
-@import '../../templatesstyle/risk-indicators.scss';
-@import '../../templatesstyle/development-indicators.scss';
+@import '../../../templatesstyle/common';
+@import '../../../templatesstyle/operation-indicators';
+@import '../../../templatesstyle/resource-indicators';
+@import '../../../templatesstyle/service-indicators';
+@import '../../../templatesstyle/efficiency-indicators';
+@import '../../../templatesstyle/compliance-indicators';
+@import '../../../templatesstyle/risk-indicators';
+@import '../../../templatesstyle/development-indicators';
 
 // 最外层容器
 .page-container {
@@ -684,7 +670,7 @@ onUnmounted(() => {
   padding: 0 1vw;
   overflow: hidden;
   color: #fff;
-  background: url('../images/bg.jpg');
+  background: url('../../images/bg.jpg');
 }
 
 .header-box {
@@ -694,7 +680,7 @@ onUnmounted(() => {
   font-size: 2.1vw;
   font-weight: bold;
   color: #0cf;
-  background: url('../images/head_bg.png') no-repeat;
+  background: url('../../images/head_bg.png') no-repeat;
   background-size: 100% 100%;
 
   .head-name {
@@ -715,7 +701,7 @@ onUnmounted(() => {
   height: 100%;
   min-height: 0;
   padding: 0.5vw;
-  background: url('../images/line(1).png') rgb(255 255 255 / 4%);
+  background: url('../../images/line(1).png') rgb(255 255 255 / 4%);
   border: 0.2vh solid rgb(25 186 139 / 17%);
 }
 
