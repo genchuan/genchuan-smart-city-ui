@@ -23,23 +23,10 @@ const props = defineProps({
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
 });
-
 const [Drawer, drawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
   footer: false,
   onCancel() {
     drawerApi.close();
-  },
-  onConfirm() {},
-  async onOpenChange() {},
-});
-const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  onCancel() {
-    detailDrawerApi.close();
   },
   onConfirm() {},
   async onOpenChange() {},
@@ -58,8 +45,6 @@ const [Form, formApi] = useVbenForm({
   showDefaultActions: false,
 });
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
-  appendToMain: true,
-  modal: false,
   onCancel() {
     formDrawerApi.close();
   },
@@ -88,6 +73,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     }
   },
 });
+const [searchDrawer] = useVbenDrawer();
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
@@ -118,11 +104,11 @@ function handleEdit(row) {
 }
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.车场名称]), // 修复：使用正确的字段名
+    text: $t('ui.actionMessage.deleting', [row.name]),
   });
   try {
     dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.车场名称])); // 修复：使用正确的字段名
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -151,37 +137,35 @@ function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
 const dataObj = reactive({
-  totalShow: false,
-  detailObj: {},
   total: dataList().length,
   currentPage: 1,
   pageSize: 10,
   apilist: dataList(),
   list: [],
 });
-const changeTotalShow = () => {
-  dataObj.totalShow = !dataObj.totalShow;
-};
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
-
-  // 根据activeName筛选数据
-  const filteredList = dataObj.apilist.filter((v) => {
-    if (activeName.value === '全部') {
-      return true;
-    } else if (activeName.value === '公共') {
-      // 修复：使用正确的字段名'车场类型'来筛选
-      return v.车场类型 === '公共';
-    }
-    return false;
-  });
-
-  dataObj.total = filteredList.length;
-  dataObj.list = filteredList.slice(
-    (page.currentPage - 1) * page.pageSize,
-    page.currentPage * page.pageSize,
-  );
+  dataObj.total = dataObj.apilist
+    .map((v) => v)
+    .filter((v) => {
+      if (activeName.value === '全部') {
+        return true;
+      }
+      return v.status === activeName.value;
+    }).length;
+  dataObj.list = dataObj.apilist
+    .map((v) => v)
+    .filter((v) => {
+      if (activeName.value === '全部') {
+        return true;
+      }
+      return v.status === activeName.value;
+    })
+    .slice(
+      (page.currentPage - 1) * page.pageSize,
+      page.currentPage * page.pageSize,
+    );
   return dataObj;
 };
 
@@ -202,12 +186,7 @@ const [QueryForm] = useVbenForm({
   // 垂直布局，label和input在不同行，值为vertical
   // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
-  }),
+  schema: useFormSchema(),
   // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
@@ -247,28 +226,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const activeName = ref('全部');
-const handleOpenDetail = (row) => {
-  dataObj.detailObj = row;
-  detailDrawerApi.open();
-};
-
-// 修改tabsData，添加对应的统计逻辑
-const tabsData = ref([{ label: '全部' }, { label: '公共' }]);
-
-// 创建标签文本，显示数量统计
-const createLabel = (item) => {
-  let count = 0;
-
-  if (item.label === '全部') {
-    count = dataObj.apilist.length;
-  } else if (item.label === '公共') {
-    // 修复：使用正确的字段名'车场类型'来统计
-    count = dataObj.apilist.filter((v) => v.车场类型 === '公共').length;
-  }
-
-  return `${item.label}(${count})`;
-};
-
+const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用' }]);
 const handleClick = () => {
   gridApi.query();
 };
@@ -285,53 +243,8 @@ const handleFullShow = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <!-- 修复：使用正确的字段名'车场名称' -->
-    <DetailDrawer :title="`${dataObj.detailObj.车场名称}关联表`">
-      <div class="detail-card">
-        <div class="detail-card-row">
-          <div class="detail-row-left">停车场ID:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.id }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">车场名称:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.车场名称 }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">查询半径:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.查询半径 }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">车场空车位数据:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.车场空车位数据 }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">推送偏好:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.用户推送偏好 }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">推送频率:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.推送频率 }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">收费标准:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.收费标准 }}
-          </div>
-        </div>
-      </div>
-    </DetailDrawer>
+    <!-- <NewFormModel @success="handleRefresh" /> -->
+    <searchDrawer title="搜索栏设置" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -348,7 +261,7 @@ const handleFullShow = () => {
               <el-tab-pane
                 v-for="item in tabsData"
                 :key="item.label"
-                :label="createLabel(item)"
+                :label="item.label"
                 :name="item.label"
               />
             </el-tabs>
@@ -359,7 +272,7 @@ const handleFullShow = () => {
         <TableAction
           :actions="[
             {
-              label: '新增',
+              label: textObj.addText,
               type: 'primary',
               icon: ACTION_ICON.ADD,
               auth: ['system:role:create'],
@@ -403,27 +316,9 @@ const handleFullShow = () => {
           ></i>
         </button>
       </template>
-      <!-- 修复：使用正确的字段名'车场名称' -->
-      <template #parkName="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.车场名称 }}
-        </el-text>
-      </template>
       <template #actions="{ row }">
         <TableAction
           :actions="[
-            {
-              label: '详情',
-              type: 'primary',
-              link: true,
-              icon: ACTION_ICON.MORE,
-              auth: ['system:role:update'],
-              onClick: handleOpenDetail.bind(null, row),
-            },
             {
               label: '编辑',
               type: 'primary',
@@ -439,7 +334,7 @@ const handleFullShow = () => {
               icon: ACTION_ICON.DELETE,
               auth: ['system:role:delete'],
               popConfirm: {
-                title: $t('ui.actionMessage.deleteConfirm', [row.车场名称]), // 修复：使用正确的字段名
+                title: $t('ui.actionMessage.deleteConfirm', [row.name]),
                 confirm: handleDelete.bind(null, row),
               },
             },
@@ -447,18 +342,9 @@ const handleFullShow = () => {
         />
       </template>
       <template #bottom>
-        <div class="common-total" @click="changeTotalShow">
-          <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
-            <ArrowDown />
-          </el-icon>
-          <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
-            <ArrowUp />
-          </el-icon>
-          <span> 本页统计：停车场数量5;车位总数:300;车场车位35 </span>
-        </div>
-        <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span> 全部统计：{{ textObj.total }} </span>
-        </div>
+        <span class="bottom-title">
+          {{ textObj.total }}
+        </span>
       </template>
     </Grid>
   </div>

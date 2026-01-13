@@ -9,15 +9,18 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
 import {
   dataList,
+  merchantList,
   textObj,
   useFormSchema,
   useGridColumns,
   useGridFormSchema,
+  userDetailFields,
 } from './data';
 
 const props = defineProps({
@@ -342,32 +345,22 @@ const [MerchantDrawer, merchantDrawerApi] = useVbenDrawer({
 });
 
 const selectedMerchant = ref(null);
-const relatedUsers = ref([]);
 
 const handleMerchantClick = (row) => {
-  selectedMerchant.value = row;
-  // 查询该商户关联的所有用户
-  relatedUsers.value = dataObj.apilist.filter(
-    (user) => user.merchantName === row.merchantName,
+  // 根据merchantId从merchantList中查找商户详情
+  selectedMerchant.value = merchantList.find(
+    (merchant) => merchant.merchant_id === row.merchantId,
   );
   merchantDrawerApi.open();
 };
 
-// 详情抽屉
-const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
-  width: '70%',
-  mask: false,
-  modal: false,
-  position: 'right',
-  appendToMain: true,
-  title: computed(() => selectedDetailUser.value?.realName || '用户详情'),
-  onCancel() {
-    detailDrawerApi.close();
-    selectedDetailUser.value = null;
-  },
-});
-
 const selectedDetailUser = ref(null);
+
+const detailDrawerRef = ref(null);
+
+const handleDetailClose = () => {
+  selectedDetailUser.value = null;
+};
 
 // 认证管理抽屉
 const [AuthDrawer, authDrawerApi] = useVbenDrawer({
@@ -378,7 +371,7 @@ const [AuthDrawer, authDrawerApi] = useVbenDrawer({
   appendToMain: true,
   showCancelButton: false,
   showConfirmButton: false,
-  title: '用户认证管理',
+  title: '用户认证',
   onCancel() {
     authDrawerApi.close();
     // 重置认证流程状态
@@ -440,7 +433,9 @@ const authTypeOptions = ref([
 
 const handleUserDetail = (row) => {
   selectedDetailUser.value = row;
-  detailDrawerApi.open();
+  if (detailDrawerRef.value) {
+    detailDrawerRef.value.open();
+  }
 };
 
 const handleAuthManage = (row = {}) => {
@@ -535,7 +530,7 @@ const handleAuthSubmit = () => {
   }
 
   // 无论是否有选中用户，都显示成功提示并关闭抽屉
-  ElMessage.success('认证管理操作成功');
+  ElMessage.success('用户认证操作成功');
   authDrawerApi.close();
   handleRefresh();
 
@@ -554,154 +549,113 @@ const handleAuthSubmit = () => {
     <MerchantDrawer>
       <div class="merchant-detail">
         <div class="related-users-list">
-          <div v-for="user in relatedUsers" :key="user.id" class="user-item">
+          <div v-if="selectedMerchant" class="user-item">
             <div class="user-item-details">
               <div class="detail-row">
-                <span class="detail-label">用户ID：</span>
-                <span class="detail-value">{{ user.id }}</span>
+                <span class="detail-label">商户ID：</span>
+                <span class="detail-value">{{
+                  selectedMerchant.merchant_id
+                }}</span>
               </div>
               <div class="detail-row">
-                <span class="detail-label">用户类型：</span>
-                <span class="detail-value">
-                  <el-tag
-                    :type="
-                      user.userType === '个人'
-                        ? 'primary'
-                        : user.userType === '企业'
-                          ? 'success'
-                          : 'warning'
-                    "
-                  >
-                    {{ user.userType }}
-                  </el-tag>
-                </span>
+                <span class="detail-label">商户名称：</span>
+                <span class="detail-value">{{
+                  selectedMerchant.merchant_name
+                }}</span>
               </div>
               <div class="detail-row">
-                <span class="detail-label">认证状态：</span>
-                <span class="detail-value">
-                  <el-tag
-                    :type="
-                      user.authStatus === '已认证'
-                        ? 'success'
-                        : user.authStatus === '待审核'
-                          ? 'warning'
-                          : user.authStatus === '认证失败'
-                            ? 'danger'
-                            : 'info'
-                    "
-                  >
-                    {{ user.authStatus }}
-                  </el-tag>
-                </span>
+                <span class="detail-label">商户编码：</span>
+                <span class="detail-value">{{
+                  selectedMerchant.merchant_code
+                }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">联系人：</span>
+                <span class="detail-value">{{
+                  selectedMerchant.contact_person
+                }}</span>
               </div>
               <div class="detail-row">
                 <span class="detail-label">联系电话：</span>
-                <span class="detail-value">{{ user.phone }}</span>
+                <span class="detail-value">{{
+                  selectedMerchant.contact_phone
+                }}</span>
               </div>
               <div class="detail-row">
-                <span class="detail-label">邮箱：</span>
-                <span class="detail-value">{{ user.email }}</span>
+                <span class="detail-label">商户地址：</span>
+                <span class="detail-value">{{ selectedMerchant.address }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">经营范围：</span>
+                <span class="detail-value">{{
+                  selectedMerchant.business_scope
+                }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">状态：</span>
+                <span class="detail-value">
+                  <el-tag
+                    :type="
+                      selectedMerchant.status === '正常'
+                        ? 'success'
+                        : selectedMerchant.status === '停业'
+                          ? 'warning'
+                          : 'danger'
+                    "
+                  >
+                    {{ selectedMerchant.status }}
+                  </el-tag>
+                </span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">默认分账比例：</span>
+                <span class="detail-value">
+                  {{ (selectedMerchant.settlement_ratio * 100).toFixed(1) }}%
+                </span>
               </div>
               <div class="detail-row">
                 <span class="detail-label">创建时间：</span>
-                <span class="detail-value">{{ user.createTime }}</span>
+                <span class="detail-value">{{
+                  selectedMerchant.create_time
+                }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">更新时间：</span>
+                <span class="detail-value">{{
+                  selectedMerchant.update_time
+                }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">创建人：</span>
+                <span class="detail-value">{{
+                  selectedMerchant.create_by
+                }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">更新人：</span>
+                <span class="detail-value">{{
+                  selectedMerchant.update_by
+                }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">备注：</span>
+                <span class="detail-value">{{ selectedMerchant.remark }}</span>
               </div>
             </div>
-          </div>
-          <div v-if="relatedUsers.length === 0" class="empty-list">
-            暂无关联用户
           </div>
         </div>
       </div>
     </MerchantDrawer>
 
     <!-- 用户详情抽屉 -->
-    <DetailDrawer>
-      <div class="merchant-detail">
-        <div class="related-users-list">
-          <div v-if="selectedDetailUser" class="user-item">
-            <div class="user-item-details">
-              <div class="detail-row">
-                <span class="detail-label">用户ID：</span>
-                <span class="detail-value">{{ selectedDetailUser.id }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">用户名：</span>
-                <span class="detail-value">{{
-                  selectedDetailUser.username
-                }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">真实姓名：</span>
-                <span class="detail-value">{{
-                  selectedDetailUser.realName
-                }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">用户类型：</span>
-                <span class="detail-value">
-                  <el-tag
-                    :type="
-                      selectedDetailUser.userType === '个人'
-                        ? 'primary'
-                        : selectedDetailUser.userType === '企业'
-                          ? 'success'
-                          : 'warning'
-                    "
-                  >
-                    {{ selectedDetailUser.userType }}
-                  </el-tag>
-                </span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">认证状态：</span>
-                <span class="detail-value">
-                  <el-tag
-                    :type="
-                      selectedDetailUser.authStatus === '已认证'
-                        ? 'success'
-                        : selectedDetailUser.authStatus === '待审核'
-                          ? 'warning'
-                          : selectedDetailUser.authStatus === '认证失败'
-                            ? 'danger'
-                            : 'info'
-                    "
-                  >
-                    {{ selectedDetailUser.authStatus }}
-                  </el-tag>
-                </span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">联系电话：</span>
-                <span class="detail-value">{{ selectedDetailUser.phone }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">邮箱：</span>
-                <span class="detail-value">{{ selectedDetailUser.email }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">商户名称：</span>
-                <span class="detail-value">{{
-                  selectedDetailUser.merchantName
-                }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">创建时间：</span>
-                <span class="detail-value">{{
-                  selectedDetailUser.createTime
-                }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">最后登录时间：</span>
-                <span class="detail-value">{{
-                  selectedDetailUser.lastLoginTime
-                }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </DetailDrawer>
+    <DetailDrawer
+      ref="detailDrawerRef"
+      :title="selectedDetailUser?.realName || '用户详情'"
+      :data="selectedDetailUser"
+      :fields="userDetailFields"
+      @close="handleDetailClose"
+      @confirm="handleDetailClose"
+    />
 
     <!-- 认证管理抽屉 -->
     <AuthDrawer>
@@ -949,7 +903,7 @@ const handleAuthSubmit = () => {
               onClick: handleDeleteBatch,
             },
             {
-              label: '认证管理',
+              label: '用户认证',
               type: 'warning',
               icon: ACTION_ICON.AUDIT,
               onClick: handleAuthManage,
@@ -1203,17 +1157,17 @@ const handleAuthSubmit = () => {
 }
 
 .auth-steps {
-  margin-bottom: 24px;
   padding-bottom: 16px;
+  margin-bottom: 24px;
   border-bottom: 1px solid #f0f2f5;
 }
 
 .main-auth-steps {
-  background-color: #fff;
   padding: 20px;
-  border-radius: 6px;
   margin-bottom: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 8%);
 }
 
 .main-auth-steps h3 {

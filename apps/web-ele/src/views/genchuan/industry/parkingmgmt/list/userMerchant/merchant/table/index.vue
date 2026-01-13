@@ -9,10 +9,17 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
-import { dataList, textObj, useFormSchema, useGridColumns } from './data';
+import {
+  merchantDetailFields,
+  merchantList,
+  textObj,
+  useFormSchema,
+  useGridColumns,
+} from './data';
 
 const props = defineProps({
   secondShow: {
@@ -21,7 +28,7 @@ const props = defineProps({
   },
 });
 const getTitle = computed(() => {
-  return formData.value?.id ? textObj.editText : textObj.addText;
+  return formData.value?.merchantId ? textObj.editText : textObj.addText;
 });
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -34,16 +41,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
-const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  onCancel() {
-    detailDrawerApi.close();
-  },
-  onConfirm() {},
-  async onOpenChange() {},
-});
+
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -69,18 +67,19 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       dataObj.apilist.push(obj);
     } else {
       dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
+        if (v.merchantId === formData.value?.merchantId) {
           dataObj.apilist[i] = obj;
         }
       });
     }
     handleRefresh();
     formDrawerApi.close();
+    ElMessage.success('操作成功');
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
       formData.value = formDrawerApi.getData();
-      if (formData.value?.id) {
+      if (formData.value?.merchantId) {
         await formApi.setValues(formData.value);
       } else {
         formApi.resetForm();
@@ -88,6 +87,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     }
   },
 });
+
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
@@ -98,7 +98,7 @@ async function handleExport() {
   exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
 }
 
-/** 创建角色 */
+/** 创建商户 */
 function handleCreate() {
   formDrawerApi
     .setData({
@@ -107,7 +107,7 @@ function handleCreate() {
     .open();
 }
 
-/** 编辑角色 */
+/** 编辑商户 */
 function handleEdit(row) {
   formDrawerApi
     .setData({
@@ -116,19 +116,24 @@ function handleEdit(row) {
     })
     .open();
 }
+
+/** 删除商户 */
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.name]),
+    text: $t('ui.actionMessage.deleting', [row.merchantName]),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
+    dataObj.apilist = dataObj.apilist.filter(
+      (v) => v.merchantId !== row.merchantId,
+    );
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.merchantName]));
     handleRefresh();
   } finally {
     loadingInstance.close();
   }
 }
 
+/** 批量删除 */
 async function handleDeleteBatch() {
   await confirm($t('确定删除这些数据吗？'));
   const loadingInstance = ElLoading.service({
@@ -136,7 +141,7 @@ async function handleDeleteBatch() {
   });
   try {
     dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
+      (v) => !checkedIds.value.includes(v.merchantId),
     );
     checkedIds.value = [];
     ElMessage.success($t('删除成功'));
@@ -146,40 +151,77 @@ async function handleDeleteBatch() {
   }
 }
 
+/** 状态切换 */
+async function handleStatusChange(row) {
+  // 获取新状态
+  const newStatus = row.status;
+  // 保存旧状态，用于用户取消时恢复
+  const oldStatus = newStatus === '正常' ? '停业' : '正常';
+  // 显示确认对话框
+  try {
+    await confirm(
+      $t(`确定将商户 ${row.merchantName} 的状态切换为 ${newStatus} 吗？`),
+    );
+    const loadingInstance = ElLoading.service({
+      text: $t('ui.actionMessage.updating', [row.merchantName]),
+    });
+    try {
+      // 更新数据源
+      const index = dataObj.apilist.findIndex(
+        (v) => v.merchantId === row.merchantId,
+      );
+      if (index !== -1) {
+        dataObj.apilist[index].status = newStatus;
+        ElMessage.success(
+          $t('ui.actionMessage.updateSuccess', [row.merchantName]),
+        );
+        handleRefresh();
+      }
+    } finally {
+      loadingInstance.close();
+    }
+  } catch {
+    // 用户取消确认，恢复旧状态
+    row.status = oldStatus;
+  }
+}
+
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map((item) => item.id);
+  checkedIds.value = records.map((item) => item.merchantId);
 }
+
 const dataObj = reactive({
   totalShow: false,
-  detailObj: {},
-  total: dataList().length,
+  total: merchantList.length,
   currentPage: 1,
   pageSize: 10,
-  apilist: dataList(),
+  apilist: [...merchantList],
   list: [],
 });
+
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
+
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
   dataObj.total = dataObj.apilist
     .map((v) => v)
     .filter((v) => {
-      if (activeName.value === '全部') {
+      if (statusActiveName.value === '全部') {
         return true;
       }
-      return v.status === activeName.value;
+      return v.status === statusActiveName.value;
     }).length;
   dataObj.list = dataObj.apilist
     .map((v) => v)
     .filter((v) => {
-      if (activeName.value === '全部') {
+      if (statusActiveName.value === '全部') {
         return true;
       }
-      return v.status === activeName.value;
+      return v.status === statusActiveName.value;
     })
     .slice(
       (page.currentPage - 1) * page.pageSize,
@@ -217,10 +259,12 @@ const [QueryForm] = useVbenForm({
     content: '查询',
   },
 });
+
 // 搜索表单查询
 function onSubmit() {
   drawerApi.close();
 }
+
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
@@ -231,7 +275,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       },
     },
     rowConfig: {
-      keyField: 'id',
+      keyField: 'merchantId',
       isHover: true,
     },
     pagerConfig: dataObj,
@@ -249,142 +293,147 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-const activeName = ref('全部');
-const handleOpenDetail = (row) => {
-  dataObj.detailObj = row;
-  detailDrawerApi.open();
-};
-const tabsData = ref([
-  { label: '全部' },
-  { label: '待核验' },
-  { label: '已确认' },
-  { label: '已使用' },
-  { label: '已取消' },
-  { label: '已过期' },
+const statusActiveName = ref('全部');
+const topTabsData = ref([
+  { label: '全部', value: '全部' },
+  { label: '正常', value: '正常' },
+  { label: '停业', value: '停业' },
+  { label: '注销', value: '注销' },
 ]);
+
 const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
-  if (item.label === '全部') {
+  let text = `(${dataObj.apilist.filter((v) => v.status === item.value).length})`;
+  if (item.value === '全部') {
     text = `(${dataObj.apilist.length})`;
   }
   return item.label + text;
 };
+
 const handleClick = () => {
   gridApi.query();
 };
+
 const handleSerachShow = () => {
   drawerApi.open();
 };
+
 const handleFullShow = () => {
   screenfull.toggle();
 };
-</script>
 
+const selectedMerchant = ref(null);
+
+const detailDrawerRef = ref(null);
+
+const handleOpenDetail = (row) => {
+  selectedMerchant.value = row;
+  if (detailDrawerRef.value) {
+    detailDrawerRef.value.open();
+  }
+};
+
+const handleDetailClose = () => {
+  selectedMerchant.value = null;
+};
+
+// 权限管理抽屉
+const [PermissionDrawer, permissionDrawerApi] = useVbenDrawer({
+  width: '50%',
+  mask: false,
+  modal: false,
+  position: 'right',
+  appendToMain: true,
+  title: computed(
+    () => `权限管理 - ${selectedMerchant.value?.merchantName || '商户'}`,
+  ),
+  onCancel() {
+    permissionDrawerApi.close();
+  },
+  async onOpenChange() {},
+});
+
+const handleOpenPermission = (row) => {
+  selectedMerchant.value = row;
+  permissionDrawerApi.open();
+};
+
+// 结算管理抽屉
+const [SettlementDrawer, settlementDrawerApi] = useVbenDrawer({
+  width: '50%',
+  mask: false,
+  modal: false,
+  position: 'right',
+  appendToMain: true,
+  title: computed(
+    () => `结算管理 - ${selectedMerchant.value?.merchantName || '商户'}`,
+  ),
+  onCancel() {
+    settlementDrawerApi.close();
+  },
+  async onOpenChange() {},
+});
+
+const handleOpenSettlement = (row) => {
+  selectedMerchant.value = row;
+  settlementDrawerApi.open();
+};
+</script>
 <template>
   <div class="park-lot-table-new">
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <DetailDrawer :title="`${dataObj.detailObj.name}关联表`">
-      <div class="detail-card">
-        <div class="detail-card-row">
-          <div class="detail-row-left">用户ID:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.user_id }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">车场ID:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.lot_id }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">车牌号:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.car_number }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">预约日期:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.reserve_date }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">开始时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.start_time }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">结束时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.end_time }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">预约状态:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.status }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">考核时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.verify_time }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">核验人:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.verify_by }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">取消时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.cancel_time }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">取消原因:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.cancel_reason }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">创建时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.create_time }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">更新时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.update_time }}
-          </div>
-        </div>
+
+    <DetailDrawer
+      ref="detailDrawerRef"
+      :title="selectedMerchant?.merchantName || '商户详情'"
+      :data="selectedMerchant"
+      :fields="merchantDetailFields"
+      @close="handleDetailClose"
+      @confirm="handleDetailClose"
+    />
+
+    <!-- 权限管理抽屉 -->
+    <PermissionDrawer>
+      <div class="permission-management">
+        <h3>权限管理 - {{ selectedMerchant?.merchantName }}</h3>
+        <p>
+          这里放置权限管理的具体内容，包括权限分配、权限查询和权限变更记录等功能。
+        </p>
+        <!-- 可以根据需要添加权限管理的表单、列表等内容 -->
       </div>
-    </DetailDrawer>
+    </PermissionDrawer>
+
+    <!-- 结算管理抽屉 -->
+    <SettlementDrawer>
+      <div class="settlement-management">
+        <h3>结算管理 - {{ selectedMerchant?.merchantName }}</h3>
+        <p>
+          这里放置结算管理的具体内容，包括结算规则配置、结算单生成和支付跟踪等功能。
+        </p>
+        <!-- 可以根据需要添加结算管理的表单、列表等内容 -->
+      </div>
+    </SettlementDrawer>
+
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
     <Grid>
       <!-- 三级状态 -->
       <template #table-title>
-        <div class="tabel-tabs">
-          <div v-if="props.secondShow">
+        <div class="tabel-title-container">
+          <div v-if="props.secondShow" class="tabel-tabs-container">
+            <!-- 商户状态标签页 -->
             <el-tabs
-              v-model="activeName"
-              class="demo-tabs"
+              v-model="statusActiveName"
+              class="demo-tabs auth-status-tabs"
               @tab-change="handleClick"
             >
               <el-tab-pane
-                v-for="item in tabsData"
+                v-for="item in topTabsData"
                 :key="item.label"
                 :label="createLabel(item)"
-                :name="item.label"
+                :name="item.value"
               />
             </el-tabs>
           </div>
@@ -397,14 +446,12 @@ const handleFullShow = () => {
               label: '新增',
               type: 'primary',
               icon: ACTION_ICON.ADD,
-              auth: ['system:role:create'],
               onClick: handleCreate,
             },
             {
               label: $t('ui.actionTitle.export'),
               type: 'primary',
               icon: ACTION_ICON.DOWNLOAD,
-              auth: ['system:role:export'],
               onClick: handleExport,
             },
             {
@@ -412,7 +459,6 @@ const handleFullShow = () => {
               type: 'danger',
               icon: ACTION_ICON.DELETE,
               disabled: isEmpty(checkedIds),
-              auth: ['system:role:delete'],
               onClick: handleDeleteBatch,
             },
           ]"
@@ -438,14 +484,33 @@ const handleFullShow = () => {
           ></i>
         </button>
       </template>
-      <template #parkName="{ row }">
+      <template #merchantName="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.name }}
+          {{ row.merchantName }}
         </el-text>
+      </template>
+      <template #settlementRatio="{ row }">
+        {{ (row.settlementRatio * 100).toFixed(2) }}%
+      </template>
+      <template #status="{ row }">
+        <div class="status-cell">
+          <el-switch
+            v-if="row.status !== '注销'"
+            v-model="row.status"
+            active-value="正常"
+            inactive-value="停业"
+            active-color="#13ce66"
+            inactive-color="#f56c6c"
+            @change="handleStatusChange(row)"
+          />
+          <el-tag v-else type="danger">
+            {{ row.status }}
+          </el-tag>
+        </div>
       </template>
       <template #actions="{ row }">
         <TableAction
@@ -454,8 +519,7 @@ const handleFullShow = () => {
               label: '详情',
               type: 'primary',
               link: true,
-              icon: ACTION_ICON.MORE,
-              auth: ['system:role:update'],
+              icon: ACTION_ICON.VIEW,
               onClick: handleOpenDetail.bind(null, row),
             },
             {
@@ -463,17 +527,29 @@ const handleFullShow = () => {
               type: 'primary',
               link: true,
               icon: ACTION_ICON.EDIT,
-              auth: ['system:role:update'],
               onClick: handleEdit.bind(null, row),
+            },
+            {
+              label: '权限管理',
+              type: 'primary',
+              link: true,
+              icon: ACTION_ICON.KEY,
+              onClick: handleOpenPermission.bind(null, row),
+            },
+            {
+              label: '结算管理',
+              type: 'primary',
+              link: true,
+              icon: ACTION_ICON.MONEY,
+              onClick: handleOpenSettlement.bind(null, row),
             },
             {
               label: '删除',
               type: 'danger',
               link: true,
               icon: ACTION_ICON.DELETE,
-              auth: ['system:role:delete'],
               popConfirm: {
-                title: $t('ui.actionMessage.deleteConfirm', [row.name]),
+                title: $t('ui.actionMessage.deleteConfirm', [row.merchantName]),
                 confirm: handleDelete.bind(null, row),
               },
             },
@@ -482,16 +558,30 @@ const handleFullShow = () => {
       </template>
       <template #bottom>
         <div class="common-total" @click="changeTotalShow">
-          <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
-            <ArrowDown />
+          <el-icon class="tabel-tab-icon">
+            <ArrowDown v-if="!dataObj.totalShow" />
+            <ArrowUp v-else />
           </el-icon>
-          <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
-            <ArrowUp />
-          </el-icon>
-          <span> 本页统计：停车场数量10;车位总数:326;车场车位117 </span>
+          <span>
+            本页统计：商户数量{{ dataObj.list.length }};正常:{{
+              dataObj.list.filter((item) => item.status === '正常').length
+            }};停业:{{
+              dataObj.list.filter((item) => item.status === '停业').length
+            }};注销:{{
+              dataObj.list.filter((item) => item.status === '注销').length
+            }}
+          </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span> 全部统计：{{ textObj.total }} </span>
+          <span>
+            全部统计：商户数量{{ dataObj.apilist.length }};正常:{{
+              dataObj.apilist.filter((item) => item.status === '正常').length
+            }};停业:{{
+              dataObj.apilist.filter((item) => item.status === '停业').length
+            }};注销:{{
+              dataObj.apilist.filter((item) => item.status === '注销').length
+            }}
+          </span>
         </div>
       </template>
     </Grid>

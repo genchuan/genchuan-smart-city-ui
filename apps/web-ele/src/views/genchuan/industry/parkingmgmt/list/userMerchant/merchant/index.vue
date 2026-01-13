@@ -13,13 +13,13 @@ const changeArrowStatus = () => {
 };
 const tabArray = ref([
   {
-    label: '停车诱导管理',
+    label: '商户基础信息',
     components: Table,
     showSecondary: true,
     secondShow: false,
   },
 ]);
-const activeName = ref('停车诱导管理');
+const activeName = ref('商户基础信息');
 const secondShow = ref(false);
 </script>
 <template>
@@ -40,12 +40,7 @@ const secondShow = ref(false);
         <ArrowUp />
       </el-icon>
     </div>
-    <el-tabs
-      v-model="activeName"
-      class="common-tabs"
-      type="card"
-      @tab-change="tabChange"
-    >
+    <el-tabs v-model="activeName" class="common-tabs" type="card">
       <el-tab-pane
         v-for="item in tabArray"
         :key="item.label"

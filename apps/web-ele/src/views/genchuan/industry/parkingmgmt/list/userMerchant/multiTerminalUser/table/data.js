@@ -1,4 +1,7 @@
 /** 表格初始数据*/
+// 从商户管理模块导入商户列表数据
+import { merchantList as baseMerchantList } from '../../merchant/table/data';
+
 export const dataList = () => {
   return [
     {
@@ -700,6 +703,24 @@ export function useAuthDrawerSchema() {
   ];
 }
 
+// 将小驼峰转换为下划线命名，以保持原有功能兼容
+export const merchantList = baseMerchantList.map((merchant) => ({
+  merchant_id: merchant.merchantId,
+  merchant_name: merchant.merchantName,
+  merchant_code: merchant.merchantCode,
+  contact_person: merchant.contactPerson,
+  contact_phone: merchant.contactPhone,
+  address: merchant.address,
+  business_scope: merchant.businessScope,
+  status: merchant.status,
+  settlement_ratio: merchant.settlementRatio,
+  create_time: merchant.createTime,
+  update_time: merchant.updateTime,
+  create_by: merchant.createBy,
+  update_by: merchant.updateBy,
+  remark: merchant.remark,
+}));
+
 /** 文本配置 */
 export const textObj = {
   editText: '编辑用户',
@@ -708,3 +729,50 @@ export const textObj = {
   excelAllName: '用户数据.xlsx',
   total: '总计: 用户数量',
 };
+
+/** 详情抽屉字段配置 */
+export const userDetailFields = [
+  { key: 'id', label: '用户ID' },
+  { key: 'username', label: '用户名' },
+  { key: 'realName', label: '真实姓名' },
+  {
+    key: 'userType',
+    label: '用户类型',
+    type: 'tag',
+    tagType: (value) => {
+      if (value === '个人') {
+        return 'primary';
+      } else if (value === '企业') {
+        return 'success';
+      } else {
+        return 'warning';
+      }
+    },
+  },
+  {
+    key: 'authStatus',
+    label: '认证状态',
+    type: 'tag',
+    tagType: (value) => {
+      switch (value) {
+        case '已认证': {
+          return 'success';
+        }
+        case '待审核': {
+          return 'warning';
+        }
+        case '认证失败': {
+          return 'danger';
+        }
+        default: {
+          return 'info';
+        }
+      }
+    },
+  },
+  { key: 'phone', label: '联系电话' },
+  { key: 'email', label: '邮箱' },
+  { key: 'merchantName', label: '商户名称' },
+  { key: 'createTime', label: '创建时间' },
+  { key: 'lastLoginTime', label: '最后登录时间' },
+];
