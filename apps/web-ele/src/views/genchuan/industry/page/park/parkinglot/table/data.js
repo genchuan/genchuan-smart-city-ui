@@ -1,6 +1,6 @@
 /** 表格初始数据*/
 export const dataList = () => {
-  return [ 
+  return [
     {
       id: '2',
       name: '龙文区碧湖公园停车场',
@@ -327,15 +327,23 @@ export function useFormSchema() {
       },
       rules: 'required',
     },
-     {
-      fieldName: 'type',
-      label: '类型',
-      component: 'Input',
+    {
+      component: 'Select',
       labelWidth: '100',
       componentProps: {
-        placeholder: '请输入类型',
+        allowClear: true,
+        filterOption: true,
+        options: [
+          { label: '公共', value: '公共' },
+          { label: '路侧', value: '路侧' },
+          { label: '专用', value: '专用' }
+        ],
+        placeholder: '请选择',
+        showSearch: true,
       },
-      rules: 'required',
+      defaultValue: '公共',
+      fieldName: 'type',
+      label: '类型',
     },
     {
       fieldName: 'address',
@@ -395,16 +403,22 @@ export function useFormSchema() {
     {
       fieldName: 'status',
       label: '运营状态',
-      component: 'Input',
+      component: 'Select',
       labelWidth: '100',
       componentProps: {
+        options: [
+          { label: '启用', value: '启用' },
+          { label: '禁用', value: '禁用' },
+          { label: '暂停运营', value: '暂停运营' },
+          { label: '维修中', value: '维修中' }
+        ],
         placeholder: '请输入运营状态',
       },
       rules: 'required',
     },
   ];
 }
- 
+
 
 /** 表格字段 */
 export function useGridColumns() {
@@ -423,7 +437,7 @@ export function useGridColumns() {
       sortable: true,
       slots: { default: 'parkName' },
     },
-      {
+    {
       field: 'type',
       title: '类型',
       minWidth: 100,
