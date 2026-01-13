@@ -1,30 +1,6 @@
 /** 泊位表格初始数据 */
 export const dataList = () => {
-  return [
-    {
-      berthId: 'B00101',        // 泊位ID（格式：B+停车场ID+泊位序号）
-      berthCode: 'XC001',       // 泊位编号
-      roadName: 'XX路',         // 路段名称
-      locationDesc: '芗城区XX街道XX路88号停车场入口右侧1号泊位', // 位置描述
-      berthType: '小型车',      // 泊位类型
-      coordX: '117.658921',     // 坐标X
-      coordY: '24.512345',      // 坐标Y
-      enableStatus: '启用',     // 启用状态
-      divisionCode: '350602001',// 所属行政区划代码（芗城区东铺头街道）
-      roadSideManage: '日常巡检,违停劝导' // 路侧管理信息
-    },
-    {
-      berthId: 'B00102',
-      berthCode: 'XC002',
-      roadName: 'XX路',
-      locationDesc: '芗城区XX街道XX路88号停车场入口右侧2号泊位',
-      berthType: '小型车',
-      coordX: '117.658932',
-      coordY: '24.512356',
-      enableStatus: '启用',
-      divisionCode: '350602001',
-      roadSideManage: '日常巡检,违停劝导'
-    },
+  return [ 
     {
       berthId: 'B00201',
       berthCode: 'LW001',
@@ -33,7 +9,7 @@ export const dataList = () => {
       berthType: '小型车',
       coordX: '117.705612',
       coordY: '24.498712',
-      enableStatus: '禁用',
+      enableStatus: '占用',
       divisionCode: '350603002',
       roadSideManage: '设施维修,暂停使用'
     },
@@ -45,7 +21,7 @@ export const dataList = () => {
       berthType: '小型车',
       coordX: '117.890111',
       coordY: '24.456211',
-      enableStatus: '禁用',
+      enableStatus: '空置',
       divisionCode: '350604001',
       roadSideManage: '充电桩改造,暂停使用'
     },
@@ -57,7 +33,7 @@ export const dataList = () => {
       berthType: '小型车',
       coordX: '117.876522',
       coordY: '24.443822',
-      enableStatus: '启用',
+      enableStatus: '空置',
       divisionCode: '350604002',
       roadSideManage: '日常巡检,卫生保洁'
     },
@@ -69,7 +45,7 @@ export const dataList = () => {
       berthType: '大型车',
       coordX: '117.678933',
       coordY: '24.501233',
-      enableStatus: '启用',
+      enableStatus: '空置',
       divisionCode: '350602003',
       roadSideManage: '高峰疏导,违停管理'
     },
@@ -81,7 +57,7 @@ export const dataList = () => {
       berthType: '小型车',
       coordX: '117.723444',
       coordY: '24.489744',
-      enableStatus: '启用',
+      enableStatus: '占用',
       divisionCode: '350603004',
       roadSideManage: '流量统计,秩序维护'
     },
@@ -93,7 +69,7 @@ export const dataList = () => {
       berthType: '小型车',
       coordX: '117.789055',
       coordY: '24.612355',
-      enableStatus: '启用',
+      enableStatus: '故障',
       divisionCode: '350625001',
       roadSideManage: '定期巡检,设施维护'
     },
@@ -105,7 +81,7 @@ export const dataList = () => {
       berthType: '小型车',
       coordX: '117.456766',
       coordY: '24.123466',
-      enableStatus: '禁用',
+      enableStatus: '故障',
       divisionCode: '350623001',
       roadSideManage: '积水清理,待恢复使用'
     },
@@ -117,7 +93,7 @@ export const dataList = () => {
       berthType: '小型车',
       coordX: '117.689077',
       coordY: '24.523477',
-      enableStatus: '启用',
+      enableStatus: '故障',
       divisionCode: '350602002',
       roadSideManage: '收费监督,泊位管理'
     },
@@ -129,7 +105,7 @@ export const dataList = () => {
       berthType: '小型车',
       coordX: '117.712388',
       coordY: '24.478988',
-      enableStatus: '启用',
+      enableStatus: '空置',
       divisionCode: '350603005',
       roadSideManage: '卫生管理,设施维修'
     },
@@ -141,7 +117,7 @@ export const dataList = () => {
       berthType: '小型车',
       coordX: '117.734599',
       coordY: '24.481299',
-      enableStatus: '启用',
+      enableStatus: '空置',
       divisionCode: '350603006',
       roadSideManage: '秩序维护,收费管理'
     },
@@ -153,7 +129,7 @@ export const dataList = () => {
       berthType: '小型车',
       coordX: '117.645600',
       coordY: '24.518900',
-      enableStatus: '启用',
+      enableStatus: '空置',
       divisionCode: '350602001',
       roadSideManage: '安全巡查,车位引导'
     },
@@ -165,7 +141,7 @@ export const dataList = () => {
       berthType: '内部车辆',
       coordX: '117.667811',
       coordY: '24.509811',
-      enableStatus: '启用',
+      enableStatus: '占用',
       divisionCode: '350602004',
       roadSideManage: '门禁管理,登记管理'
     },
@@ -177,21 +153,9 @@ export const dataList = () => {
       berthType: '小型车',
       coordX: '117.887622',
       coordY: '24.467822',
-      enableStatus: '维护中',
+      enableStatus: '占用',
       divisionCode: '350604001',
       roadSideManage: '场地翻新,暂停使用'
-    },
-    {
-      berthId: 'B01501',
-      berthCode: 'WA002',
-      roadName: '人民东路',
-      locationDesc: '长泰区武安镇人民东路78号停车场东侧1号泊位',
-      berthType: '小型车',
-      coordX: '117.798733',
-      coordY: '24.623433',
-      enableStatus: '启用',
-      divisionCode: '350625001',
-      roadSideManage: '充电桩维护,环境卫生'
     }
   ];
 };
@@ -203,6 +167,7 @@ export function useFormSchema() {
       fieldName: 'berthId',
       label: '泊位ID',
       component: 'Input',
+      labelWidth: '150',
       componentProps: {
         placeholder: '请输入泊位ID', 
       },
@@ -212,6 +177,7 @@ export function useFormSchema() {
       fieldName: 'berthCode',
       label: '泊位编号',
       component: 'Input',
+      labelWidth: '150',
       componentProps: {
         placeholder: '请输入泊位编号',
       },
@@ -221,6 +187,7 @@ export function useFormSchema() {
       fieldName: 'roadName',
       label: '路段名称',
       component: 'Input',
+      labelWidth: '150',
       componentProps: {
         placeholder: '请输入路段名称',
       },
@@ -230,6 +197,7 @@ export function useFormSchema() {
       fieldName: 'locationDesc',
       label: '位置描述',
       component: 'Input',
+      labelWidth: '150',
       componentProps: {
         placeholder: '请输入详细位置描述',
       },
@@ -239,6 +207,7 @@ export function useFormSchema() {
       fieldName: 'berthType',
       label: '泊位类型',
       component: 'Select',
+      labelWidth: '150',
       componentProps: {
         placeholder: '请选择泊位类型',
         options: [
@@ -254,6 +223,7 @@ export function useFormSchema() {
       fieldName: 'coordX',
       label: '坐标X',
       component: 'Input',
+      labelWidth: '150',
       componentProps: {
         placeholder: '请输入经度坐标（例：117.658921）',
       },
@@ -263,6 +233,7 @@ export function useFormSchema() {
       fieldName: 'coordY',
       label: '坐标Y',
       component: 'Input',
+      labelWidth: '150',
       componentProps: {
         placeholder: '请输入纬度坐标（例：24.512345）',
       },
@@ -272,6 +243,7 @@ export function useFormSchema() {
       fieldName: 'enableStatus',
       label: '启用状态',
       component: 'Select',
+      labelWidth: '150',
       componentProps: {
         placeholder: '请选择启用状态',
         options: [
@@ -286,6 +258,7 @@ export function useFormSchema() {
       fieldName: 'divisionCode',
       label: '所属行政区划代码',
       component: 'Select',
+      labelWidth: '150',
       componentProps: {
         placeholder: '请选择所属行政区划代码',
         options: [
@@ -306,6 +279,7 @@ export function useFormSchema() {
       fieldName: 'roadSideManage',
       label: '路侧管理信息',
       component: 'Input',
+      labelWidth: '150',
       componentProps: {
         placeholder: '请输入路侧管理信息',
       },
@@ -335,6 +309,7 @@ export function useGridColumns() {
       title: '路段名称',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'roadName' }
     },
     {
       field: 'locationDesc',
@@ -365,6 +340,7 @@ export function useGridColumns() {
       title: '启用状态',
       minWidth: 100,
       sortable: true,
+      slots: { default: 'enableStatus' }
     },
     {
       field: 'divisionCode',
