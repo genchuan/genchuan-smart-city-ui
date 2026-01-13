@@ -13,6 +13,7 @@ import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 // 引入封装后的详情抽屉组件
 import ParkDetailDrawer from '#/views/genchuan/industry/page/park/components/detail.vue';
+import { dataList as parkData } from '#/views/genchuan/industry/page/park/parkinglot/table/data';
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
@@ -245,10 +246,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
 const activeName = ref('全部');
 // 修改打开详情的方法，调用组件的open方法
 const handleOpenDetail = (row) => {
-  dataObj.detailObj = row;
+  const parkObj = parkData().find((v) => v.name === row.name);
+  dataObj.detailObj = parkObj;
   // 通过ref调用组件的open方法
   parkDetailDrawerRef.value.open();
-  console.log(row);
 };
 const tabsData = ref([
   { label: '全部' },

@@ -2,7 +2,8 @@
   height: 100%;
   padding: 0.5rem;
   background-color: hsl(var(--card));
-  overflow: auto; 
+  overflow: auto;
+
   .icon-first {
     margin-right: 5px;
   }
@@ -27,6 +28,7 @@
 
   .common-tabs {
     position: relative;
+
     .el-tabs__nav {
       margin-left: 20px;
     }
@@ -70,6 +72,7 @@
     }
 
     .vxe-grid--bottom-wrapper {
+      height: 40px;
       width: 500px;
       top: 18px;
       z-index: 1;
@@ -94,7 +97,9 @@
 
     .vxe-grid--pager-wrapper {
       .vxe-pager {
-        margin-top: -9px;
+        margin-top: -43px;
+        position: relative;
+        height: 61px;
       }
     }
 

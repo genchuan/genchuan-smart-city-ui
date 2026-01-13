@@ -314,12 +314,14 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入角色名称停车场ID',
       },
+      labelWidth: '100',
       rules: 'required',
     },
     {
       fieldName: 'name',
       label: '停车场名称',
       component: 'Input',
+      labelWidth: '100',
       componentProps: {
         placeholder: '请输入停车场名称',
       },
@@ -329,6 +331,7 @@ export function useFormSchema() {
       fieldName: 'type',
       label: '类型',
       component: 'Input',
+      labelWidth: '100',
       componentProps: {
         placeholder: '请输入类型',
       },
@@ -338,6 +341,7 @@ export function useFormSchema() {
       fieldName: 'address',
       label: '详细地址',
       component: 'Input',
+      labelWidth: '100',
       componentProps: {
         placeholder: '请输入详细地址',
       },
@@ -346,6 +350,7 @@ export function useFormSchema() {
       fieldName: 'parkTotal',
       label: '泊位总数',
       component: 'Input',
+      labelWidth: '100',
       componentProps: {
         placeholder: '请输入泊位总数',
       },
@@ -355,6 +360,7 @@ export function useFormSchema() {
       fieldName: 'pricing',
       label: '收费标准',
       component: 'Input',
+      labelWidth: '100',
       componentProps: {
         placeholder: '请输入收费标准',
       },
@@ -363,6 +369,7 @@ export function useFormSchema() {
       fieldName: 'business',
       label: '营业时间',
       component: 'Input',
+      labelWidth: '100',
       componentProps: {
         placeholder: '请输入营业时间',
       },
@@ -371,6 +378,7 @@ export function useFormSchema() {
       fieldName: 'phone',
       label: '联系电话',
       component: 'Input',
+      labelWidth: '100',
       componentProps: {
         placeholder: '请输入联系电话',
       },
@@ -379,6 +387,7 @@ export function useFormSchema() {
       fieldName: 'division',
       label: '所属行政区划',
       component: 'Input',
+      labelWidth: '100',
       componentProps: {
         placeholder: '请输入所属行政区划',
       },
@@ -387,6 +396,7 @@ export function useFormSchema() {
       fieldName: 'status',
       label: '运营状态',
       component: 'Input',
+      labelWidth: '100',
       componentProps: {
         placeholder: '请输入运营状态',
       },

@@ -240,6 +240,15 @@ export function useFormSchema() {
       },
       rules: 'required'
     },
+     {
+      fieldName: 'name',
+      label: '车场名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入车场名称'
+      },
+      rules: 'required'
+    },
     {
       fieldName: 'floorCount',
       label: '楼层数',
