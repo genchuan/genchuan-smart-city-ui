@@ -253,7 +253,7 @@ const activeName = ref('全部');
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
   detailDrawerApi.open();
-  console.log(row);
+  console.warn('some message');
 };
 const tabsData = ref([
   { label: '全部' },
