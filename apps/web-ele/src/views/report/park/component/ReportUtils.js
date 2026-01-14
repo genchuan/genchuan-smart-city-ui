@@ -151,18 +151,18 @@ export function isAbnormal(comparison, threshold = 30) {
 }
 
 // 生成核心指标标签
-export function generateIndicatorTag(
-  comparison,
-  comparisonLabel = '较近7日均值',
-) {
-  if (comparison === undefined || comparison === null) return null;
-
-  return {
-    type: comparison > 0 ? 'success' : comparison < 0 ? 'danger' : 'info',
-    icon: comparison > 0 ? 'top' : comparison < 0 ? 'bottom' : null,
-    text: `${Math.abs(comparison)}%`,
-  };
-}
+// export function generateIndicatorTag(
+//   comparison,
+//   comparisonLabel = '较近7日均值',
+// ) {
+//   if (comparison === undefined || comparison === null) return null;
+//
+//   return {
+//     type: comparison > 0 ? 'success' : comparison < 0 ? 'danger' : 'info',
+//     icon: comparison > 0 ? 'top' : comparison < 0 ? 'bottom' : null,
+//     text: `${Math.abs(comparison)}%`,
+//   };
+// }
 
 // 车流报表专用工具函数
 

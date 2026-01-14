@@ -60,9 +60,8 @@ const getComparisonClass = (comparison) => {
           <slot name="comparison" :indicator="indicator">
             <!-- 默认的comparison内容，可以由父组件覆盖 -->
             <span :class="getComparisonClass(indicator.comparison)">
-              <el-icon v-if="indicator.comparison > 0"><Top /></el-icon>
-              <el-icon v-if="indicator.comparison < 0"><Bottom /></el-icon>
-              较近7日均值 {{ Math.abs(indicator.comparison) }}%
+<!--              <el-icon v-if="indicator.comparison > 0"><Top /></el-icon>-->
+<!--              <el-icon v-if="indicator.comparison < 0"><Bottom /></el-icon>-->
             </span>
           </slot>
         </div>
