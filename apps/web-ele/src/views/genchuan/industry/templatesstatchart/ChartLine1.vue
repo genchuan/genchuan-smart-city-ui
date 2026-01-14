@@ -1,11 +1,6 @@
-<template>
-  <div class="chart-container">
-    <div ref="chartRef" class="chart-wrapper"></div>
-  </div>
-</template>
-
 <script setup>
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+
 import * as echarts from 'echarts';
 
 const props = defineProps({
@@ -163,11 +158,11 @@ const initChart = () => {
             colorStops: [
               {
                 offset: 0,
-                color: colors[index % colors.length] + '80',
+                color: `${colors[index % colors.length]}80`,
               },
               {
                 offset: 1,
-                color: colors[index % colors.length] + '00',
+                color: `${colors[index % colors.length]}00`,
               },
             ],
           },
@@ -231,6 +226,12 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
 });
 </script>
+
+<template>
+  <div class="chart-container">
+    <div ref="chartRef" class="chart-wrapper"></div>
+  </div>
+</template>
 
 <style scoped>
 .chart-container {

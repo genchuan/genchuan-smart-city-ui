@@ -2,7 +2,7 @@
 import { nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import { ArrowLeft, FullScreen, VideoPlay } from '@element-plus/icons-vue';
+import { VideoPlay } from '@element-plus/icons-vue';
 import {
   ElDivider,
   ElDrawer,
@@ -14,16 +14,16 @@ import {
 import screenFull from 'screenfull';
 
 import {
-  fetchEmergencySituationList,
-  fetchEmergencyResourceDistributionList,
   fetchCommandDispatchBoardList,
-  fetchEmergencyDisposalProgressList,
-  fetchResourceDispatchViewList,
-  fetchFieldSituationViewList,
-  fetchEmergencyPlanViewList,
   fetchCrossDomainCooperationCommandList,
-  fetchSpecialEmergencyViewList,
+  fetchEmergencyDisposalProgressList,
   fetchEmergencyDrillViewList,
+  fetchEmergencyPlanViewList,
+  fetchEmergencyResourceDistributionList,
+  fetchEmergencySituationList,
+  fetchFieldSituationViewList,
+  fetchResourceDispatchViewList,
+  fetchSpecialEmergencyViewList,
 } from '#/api/genchuan/industry/parkingmgmt/overview/EmergencyCommandView.ts';
 
 // 1.应急态势视图 - 严格14个字段 无多无漏
@@ -191,17 +191,17 @@ interface EmergencyDrillViewItem {
 
 // 联合详情类型
 type DetailDataType =
-  | EmergencySituationItem
-  | EmergencyResourceDistributionItem
   | CommandDispatchBoardItem
-  | EmergencyDisposalProgressItem
-  | ResourceDispatchViewItem
-  | FieldSituationViewItem
-  | EmergencyPlanViewItem
   | CrossDomainCooperationCommandItem
-  | SpecialEmergencyViewItem
+  | EmergencyDisposalProgressItem
   | EmergencyDrillViewItem
-  | null;
+  | EmergencyPlanViewItem
+  | EmergencyResourceDistributionItem
+  | EmergencySituationItem
+  | FieldSituationViewItem
+  | null
+  | ResourceDispatchViewItem
+  | SpecialEmergencyViewItem;
 
 // 响应式变量声明
 const router = useRouter();
@@ -321,39 +321,48 @@ const openAttachmentUrl = (url: string) => {
 // 标签颜色映射
 const getEmergencyLevelTagType = (level: string) => {
   switch (level) {
-    case '重大':
+    case '一般': {
+      return 'info';
+    }
+    case '特别重大': {
       return 'danger';
-    case '较大':
+    }
+    case '较大': {
       return 'warning';
-    case '一般':
-      return 'info';
-    case '特别重大':
+    }
+    case '重大': {
       return 'danger';
-    default:
+    }
+    default: {
       return 'info';
+    }
   }
 };
 const getStatusTagType = (status: string) => {
   switch (status) {
-    case '已完成':
-    case '已送达':
+    case '在途':
+    case '执行中':
+    case '抢修中':
+    case '进行中': {
+      return 'warning';
+    }
+    case '在途异常':
+    case '异常':
+    case '拒绝':
+    case '损坏':
+    case '未完成':
+    case '短缺': {
+      return 'danger';
+    }
     case '已启用':
     case '已响应':
+    case '已完成':
+    case '已送达': {
       return 'success';
-    case '执行中':
-    case '在途':
-    case '抢修中':
-    case '进行中':
-      return 'warning';
-    case '未完成':
-    case '异常':
-    case '在途异常':
-    case '损坏':
-    case '短缺':
-    case '拒绝':
-      return 'danger';
-    default:
+    }
+    default: {
       return 'info';
+    }
   }
 };
 
@@ -528,19 +537,19 @@ onMounted(() => {
   fetchSpecialEmergencyData();
   fetchEmergencyDrillData();
 
-  emergencySituationTimer = setInterval(fetchEmergencySituationData, 30000);
-  emergencyResourceTimer = setInterval(fetchEmergencyResourceData, 30000);
-  commandDispatchTimer = setInterval(fetchCommandDispatchData, 30000);
-  emergencyDisposalTimer = setInterval(fetchEmergencyDisposalData, 30000);
-  resourceDispatchTimer = setInterval(fetchResourceDispatchData, 30000);
-  fieldSituationTimer = setInterval(fetchFieldSituationData, 30000);
-  emergencyPlanTimer = setInterval(fetchEmergencyPlanData, 30000);
+  emergencySituationTimer = setInterval(fetchEmergencySituationData, 30_000);
+  emergencyResourceTimer = setInterval(fetchEmergencyResourceData, 30_000);
+  commandDispatchTimer = setInterval(fetchCommandDispatchData, 30_000);
+  emergencyDisposalTimer = setInterval(fetchEmergencyDisposalData, 30_000);
+  resourceDispatchTimer = setInterval(fetchResourceDispatchData, 30_000);
+  fieldSituationTimer = setInterval(fetchFieldSituationData, 30_000);
+  emergencyPlanTimer = setInterval(fetchEmergencyPlanData, 30_000);
   crossDomainCooperationTimer = setInterval(
     fetchCrossDomainCooperationData,
-    30000,
+    30_000,
   );
-  specialEmergencyTimer = setInterval(fetchSpecialEmergencyData, 30000);
-  emergencyDrillTimer = setInterval(fetchEmergencyDrillData, 30000);
+  specialEmergencyTimer = setInterval(fetchSpecialEmergencyData, 30_000);
+  emergencyDrillTimer = setInterval(fetchEmergencyDrillData, 30_000);
 
   initTableHeight();
   window.addEventListener('resize', initTableHeight);
@@ -584,44 +593,45 @@ onUnmounted(() => {
                 emergencySituationList.length === 0 ? '暂无应急态势数据' : ''
               "
             >
-              <el-table-column prop="emergencyId" label="事件ID" min-width="120"
-                ><template #default="scope"
-                  ><span
+              <ElTableColumn prop="emergencyId" label="事件ID" min-width="120">
+                <template #default="scope">
+                  <span
                     class="link-text"
                     @click="openDetailDrawer(scope.row)"
-                    >{{ scope.row.emergencyId }}</span
-                  ></template
-                ></el-table-column
-              >
-              <el-table-column
+                    >{{ scope.row.emergencyId }}</span>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
                 prop="emergencyLevel"
                 label="事件等级"
                 min-width="100"
-                ><template #default="scope"
-                  ><el-tag
+              >
+                <template #default="scope">
+                  <ElTag
                     :type="getEmergencyLevelTagType(scope.row.emergencyLevel)"
                     size="small"
-                    >{{ scope.row.emergencyLevel }}</el-tag
-                  ></template
-                ></el-table-column
-              >
-              <el-table-column
+                  >
+                    {{ scope.row.emergencyLevel }}
+                  </ElTag>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
                 prop="emergencyType"
                 label="事件类型"
                 min-width="120"
               />
-              <el-table-column
+              <ElTableColumn
                 prop="address"
                 label="事发地址"
                 min-width="180"
                 show-overflow-tooltip
               />
-              <el-table-column
+              <ElTableColumn
                 prop="occurTime"
                 label="发生时间"
                 min-width="125"
               />
-              <el-table-column
+              <ElTableColumn
                 prop="rescueProgress"
                 label="救援进度"
                 min-width="120"
@@ -640,39 +650,40 @@ onUnmounted(() => {
                 emergencyResourceList.length === 0 ? '暂无应急资源数据' : ''
               "
             >
-              <el-table-column prop="resourceId" label="资源ID" min-width="120"
-                ><template #default="scope"
-                  ><span
+              <ElTableColumn prop="resourceId" label="资源ID" min-width="120">
+                <template #default="scope">
+                  <span
                     class="link-text"
                     @click="openDetailDrawer(scope.row)"
-                    >{{ scope.row.resourceId }}</span
-                  ></template
-                ></el-table-column
-              >
-              <el-table-column
+                    >{{ scope.row.resourceId }}</span>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
                 prop="resourceType"
                 label="资源类型"
                 min-width="100"
               />
-              <el-table-column
+              <ElTableColumn
                 prop="resourceName"
                 label="资源名称"
                 min-width="150"
                 show-overflow-tooltip
               />
-              <el-table-column
+              <ElTableColumn
                 prop="resourceStatus"
                 label="资源状态"
                 min-width="100"
-                ><template #default="scope"
-                  ><el-tag
+              >
+                <template #default="scope">
+                  <ElTag
                     :type="getStatusTagType(scope.row.resourceStatus)"
                     size="small"
-                    >{{ scope.row.resourceStatus }}</el-tag
-                  ></template
-                ></el-table-column
-              >
-              <el-table-column prop="distance" label="距离" min-width="80" />
+                  >
+                    {{ scope.row.resourceStatus }}
+                  </ElTag>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn prop="distance" label="距离" min-width="80" />
             </ElTable>
           </el-tab-pane>
           <el-tab-pane label="指挥调度看板" name="tab3">
@@ -687,41 +698,39 @@ onUnmounted(() => {
                 commandDispatchList.length === 0 ? '暂无调度任务数据' : ''
               "
             >
-              <el-table-column
+              <ElTableColumn
                 prop="dispatchTaskId"
                 label="调度ID"
                 min-width="120"
-                ><template #default="scope"
-                  ><span
+              >
+                <template #default="scope">
+                  <span
                     class="link-text"
                     @click="openDetailDrawer(scope.row)"
-                    >{{ scope.row.dispatchTaskId }}</span
-                  ></template
-                ></el-table-column
-              >
-              <el-table-column
+                    >{{ scope.row.dispatchTaskId }}</span>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
                 prop="dispatchType"
                 label="派单类型"
                 min-width="100"
               />
-              <el-table-column
-                prop="taskStatus"
-                label="任务状态"
-                min-width="100"
-                ><template #default="scope"
-                  ><el-tag
+              <ElTableColumn prop="taskStatus" label="任务状态" min-width="100">
+                <template #default="scope">
+                  <ElTag
                     :type="getStatusTagType(scope.row.taskStatus)"
                     size="small"
-                    >{{ scope.row.taskStatus }}</el-tag
-                  ></template
-                ></el-table-column
-              >
-              <el-table-column
+                  >
+                    {{ scope.row.taskStatus }}
+                  </ElTag>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
                 prop="dispatchTime"
                 label="派单时间"
                 min-width="125"
               />
-              <el-table-column
+              <ElTableColumn
                 prop="address"
                 label="调度地址"
                 min-width="180"
@@ -741,32 +750,31 @@ onUnmounted(() => {
                 emergencyDisposalList.length === 0 ? '暂无处置进度数据' : ''
               "
             >
-              <el-table-column prop="emergencyId" label="事件ID" min-width="120"
-                ><template #default="scope"
-                  ><span
+              <ElTableColumn prop="emergencyId" label="事件ID" min-width="120">
+                <template #default="scope">
+                  <span
                     class="link-text"
                     @click="openDetailDrawer(scope.row)"
-                    >{{ scope.row.emergencyId }}</span
-                  ></template
-                ></el-table-column
-              >
-              <el-table-column
+                    >{{ scope.row.emergencyId }}</span>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
                 prop="disposalStage"
                 label="处置阶段"
                 min-width="100"
               />
-              <el-table-column
+              <ElTableColumn
                 prop="arrivalDuration"
                 label="到场时长"
                 min-width="100"
               />
-              <el-table-column
+              <ElTableColumn
                 prop="responsibleUnit"
                 label="责任单位"
                 min-width="150"
                 show-overflow-tooltip
               />
-              <el-table-column
+              <ElTableColumn
                 prop="updateTime"
                 label="更新时间"
                 min-width="125"
@@ -785,41 +793,43 @@ onUnmounted(() => {
                 resourceDispatchList.length === 0 ? '暂无资源调度数据' : ''
               "
             >
-              <el-table-column
+              <ElTableColumn
                 prop="dispatchRecordId"
                 label="调度记录ID"
                 min-width="130"
-                ><template #default="scope"
-                  ><span
+              >
+                <template #default="scope">
+                  <span
                     class="link-text"
                     @click="openDetailDrawer(scope.row)"
-                    >{{ scope.row.dispatchRecordId }}</span
-                  ></template
-                ></el-table-column
-              >
-              <el-table-column
+                    >{{ scope.row.dispatchRecordId }}</span>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
                 prop="resourceType"
                 label="资源类型"
                 min-width="100"
               />
-              <el-table-column
+              <ElTableColumn
                 prop="dispatchStatus"
                 label="调度状态"
                 min-width="100"
-                ><template #default="scope"
-                  ><el-tag
+              >
+                <template #default="scope">
+                  <ElTag
                     :type="getStatusTagType(scope.row.dispatchStatus)"
                     size="small"
-                    >{{ scope.row.dispatchStatus }}</el-tag
-                  ></template
-                ></el-table-column
-              >
-              <el-table-column
+                  >
+                    {{ scope.row.dispatchStatus }}
+                  </ElTag>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
                 prop="estimatedArrivalTime"
                 label="预计到达"
                 min-width="125"
               />
-              <el-table-column
+              <ElTableColumn
                 prop="realTimeLocation"
                 label="实时位置"
                 min-width="150"
@@ -845,31 +855,30 @@ onUnmounted(() => {
                 fieldSituationList.length === 0 ? '暂无现场态势数据' : ''
               "
             >
-              <el-table-column prop="emergencyId" label="事件ID" min-width="120"
-                ><template #default="scope"
-                  ><span
+              <ElTableColumn prop="emergencyId" label="事件ID" min-width="120">
+                <template #default="scope">
+                  <span
                     class="link-text"
                     @click="openDetailDrawer(scope.row)"
-                    >{{ scope.row.emergencyId }}</span
-                  ></template
-                ></el-table-column
-              >
-              <el-table-column
+                    >{{ scope.row.emergencyId }}</span>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
                 prop="damageDegree"
                 label="损坏程度"
                 min-width="100"
               />
-              <el-table-column
+              <ElTableColumn
                 prop="affectedBerthCount"
                 label="受影响泊位"
                 min-width="100"
               />
-              <el-table-column
+              <ElTableColumn
                 prop="evacuatedVehicleCount"
                 label="疏散车辆数"
                 min-width="100"
               />
-              <el-table-column
+              <ElTableColumn
                 prop="updateTime"
                 label="更新时间"
                 min-width="125"
@@ -888,41 +897,39 @@ onUnmounted(() => {
                 emergencyPlanList.length === 0 ? '暂无应急方案数据' : ''
               "
             >
-              <el-table-column
+              <ElTableColumn
                 prop="emergencyPlanId"
                 label="方案ID"
                 min-width="130"
-                ><template #default="scope"
-                  ><span
+              >
+                <template #default="scope">
+                  <span
                     class="link-text"
                     @click="openDetailDrawer(scope.row)"
-                    >{{ scope.row.emergencyPlanId }}</span
-                  ></template
-                ></el-table-column
-              >
-              <el-table-column
+                    >{{ scope.row.emergencyPlanId }}</span>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
                 prop="planName"
                 label="方案名称"
                 min-width="180"
                 show-overflow-tooltip
               />
-              <el-table-column
+              <ElTableColumn
                 prop="emergencyType"
                 label="适配类型"
                 min-width="120"
               />
-              <el-table-column
-                prop="planStatus"
-                label="方案状态"
-                min-width="100"
-                ><template #default="scope"
-                  ><el-tag
+              <ElTableColumn prop="planStatus" label="方案状态" min-width="100">
+                <template #default="scope">
+                  <ElTag
                     :type="getStatusTagType(scope.row.planStatus)"
                     size="small"
-                    >{{ scope.row.planStatus }}</el-tag
-                  ></template
-                ></el-table-column
-              >
+                  >
+                    {{ scope.row.planStatus }}
+                  </ElTag>
+                </template>
+              </ElTableColumn>
             </ElTable>
           </el-tab-pane>
           <el-tab-pane label="跨域协同指挥" name="tabC">
@@ -939,36 +946,38 @@ onUnmounted(() => {
                   : ''
               "
             >
-              <el-table-column
+              <ElTableColumn
                 prop="cooperationId"
                 label="协同ID"
                 min-width="120"
-                ><template #default="scope"
-                  ><span
+              >
+                <template #default="scope">
+                  <span
                     class="link-text"
                     @click="openDetailDrawer(scope.row)"
-                    >{{ scope.row.cooperationId }}</span
-                  ></template
-                ></el-table-column
-              >
-              <el-table-column
+                    >{{ scope.row.cooperationId }}</span>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
                 prop="cooperationType"
                 label="协同类型"
                 min-width="100"
               />
-              <el-table-column
+              <ElTableColumn
                 prop="responseStatus"
                 label="响应状态"
                 min-width="100"
-                ><template #default="scope"
-                  ><el-tag
+              >
+                <template #default="scope">
+                  <ElTag
                     :type="getStatusTagType(scope.row.responseStatus)"
                     size="small"
-                    >{{ scope.row.responseStatus }}</el-tag
-                  ></template
-                ></el-table-column
-              >
-              <el-table-column
+                  >
+                    {{ scope.row.responseStatus }}
+                  </ElTag>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
                 prop="startTime"
                 label="开始时间"
                 min-width="125"
@@ -987,34 +996,34 @@ onUnmounted(() => {
                 specialEmergencyList.length === 0 ? '暂无专项应急数据' : ''
               "
             >
-              <el-table-column
+              <ElTableColumn
                 prop="specialEmergencyId"
                 label="专项ID"
                 min-width="130"
-                ><template #default="scope"
-                  ><span
+              >
+                <template #default="scope">
+                  <span
                     class="link-text"
                     @click="openDetailDrawer(scope.row)"
-                    >{{ scope.row.specialEmergencyId }}</span
-                  ></template
-                ></el-table-column
-              >
-              <el-table-column
+                    >{{ scope.row.specialEmergencyId }}</span>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
                 prop="emergencyScene"
                 label="应急场景"
                 min-width="120"
               />
-              <el-table-column
+              <ElTableColumn
                 prop="evacuationProgress"
                 label="疏散进度"
                 min-width="100"
               />
-              <el-table-column
+              <ElTableColumn
                 prop="repairProgress"
                 label="抢修进度"
                 min-width="100"
               />
-              <el-table-column
+              <ElTableColumn
                 prop="address"
                 label="地址"
                 min-width="180"
@@ -1034,38 +1043,39 @@ onUnmounted(() => {
                 emergencyDrillList.length === 0 ? '暂无应急演练数据' : ''
               "
             >
-              <el-table-column prop="drillId" label="演练ID" min-width="120"
-                ><template #default="scope"
-                  ><span
+              <ElTableColumn prop="drillId" label="演练ID" min-width="120">
+                <template #default="scope">
+                  <span
                     class="link-text"
                     @click="openDetailDrawer(scope.row)"
-                    >{{ scope.row.drillId }}</span
-                  ></template
-                ></el-table-column
-              >
-              <el-table-column
+                    >{{ scope.row.drillId }}</span>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
                 prop="drillSubject"
                 label="演练科目"
                 min-width="150"
               />
-              <el-table-column
+              <ElTableColumn
                 prop="drillStatus"
                 label="演练状态"
                 min-width="100"
-                ><template #default="scope"
-                  ><el-tag
+              >
+                <template #default="scope">
+                  <ElTag
                     :type="getStatusTagType(scope.row.drillStatus)"
                     size="small"
-                    >{{ scope.row.drillStatus }}</el-tag
-                  ></template
-                ></el-table-column
-              >
-              <el-table-column
+                  >
+                    {{ scope.row.drillStatus }}
+                  </ElTag>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
                 prop="scoreResult"
                 label="演练评分"
                 min-width="80"
               />
-              <el-table-column
+              <ElTableColumn
                 prop="startTime"
                 label="开始时间"
                 min-width="125"

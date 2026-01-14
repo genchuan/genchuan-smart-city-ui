@@ -6,12 +6,12 @@ import { ArrowLeft, FullScreen } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import screenFull from 'screenfull';
 
-import GlobalOverview from './components/GlobalOverview.vue'; //全局总览
-import IndexAnalysis from './components/IndexAnalysis.vue'; //指标分析
-import RiskWarning from './components/RiskWarning.vue'; //风险预警
-import EmergencyResponse from './components/EmergencyResponse.vue'; //应急响应
-import SynergyLinkage from './components/SynergyLinkage.vue'; //协同联动
-import ResourceMonitor from './components/ResourceMonitor.vue'; //资源监控
+import EmergencyResponse from './components/EmergencyResponse.vue'; // 应急响应
+import GlobalOverview from './components/GlobalOverview.vue'; // 全局总览
+import IndexAnalysis from './components/IndexAnalysis.vue'; // 指标分析
+import ResourceMonitor from './components/ResourceMonitor.vue'; // 资源监控
+import RiskWarning from './components/RiskWarning.vue'; // 风险预警
+import SynergyLinkage from './components/SynergyLinkage.vue'; // 协同联动
 
 const pageContainerRef = ref<HTMLElement | null>(null);
 let timeTimer: NodeJS.Timeout | null = null;

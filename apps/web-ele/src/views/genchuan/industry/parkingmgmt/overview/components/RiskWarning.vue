@@ -1,10 +1,6 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-
-import { ArrowLeft, FullScreen } from '@element-plus/icons-vue';
-import { ElMessage } from 'element-plus';
-import screenFull from 'screenfull';
 
 const pageContainerRef = ref<HTMLElement | null>(null);
 const router = useRouter();
