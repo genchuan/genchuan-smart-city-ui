@@ -3,9 +3,9 @@ interface Props {
   visitor: any;
 }
 
-const props = defineProps<Props>();
+const _props = defineProps<Props>();
 
-const emit = defineEmits(['close']);
+const _emit = defineEmits(['close']);
 
 // 导出记录
 const handleExport = () => {
@@ -14,7 +14,7 @@ const handleExport = () => {
 
 // 关闭抽屉
 const handleClose = () => {
-  emit('close');
+  _emit('close');
 };
 </script>
 <template>
@@ -36,8 +36,8 @@ const handleClose = () => {
 
 .drawer-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   padding: 0 20px 16px;
   border-bottom: 1px solid #ebeef5;
 }
@@ -56,18 +56,18 @@ const handleClose = () => {
 
 .empty-content {
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   height: 100%;
   padding: 40px 0;
 }
 
 .search-area {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
   gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
 }
 
 .search-input {
@@ -76,8 +76,8 @@ const handleClose = () => {
 
 .export-btn {
   display: flex;
-  align-items: center;
   gap: 4px;
+  align-items: center;
 }
 
 .record-table {
@@ -85,9 +85,9 @@ const handleClose = () => {
 }
 
 .drawer-footer {
-  padding: 16px 20px;
-  border-top: 1px solid #ebeef5;
   display: flex;
   justify-content: flex-end;
+  padding: 16px 20px;
+  border-top: 1px solid #ebeef5;
 }
 </style>

@@ -7,9 +7,9 @@ interface Props {
   merchant: any;
 }
 
-const props = defineProps<Props>();
+const _props = defineProps<Props>();
 
-const emit = defineEmits(['close']);
+const _emit = defineEmits(['close']);
 
 // 结算周期选项
 const settlementCycles = ref([
@@ -110,7 +110,7 @@ const paymentMethods = ref([
 ]);
 
 // 记录支付信息
-const recordPayment = () => {
+const _recordPayment = () => {
   ElMessage.success('支付信息已记录');
 };
 </script>
@@ -376,33 +376,33 @@ const recordPayment = () => {
 
 <style scoped lang="scss">
 .settlement-management {
-  padding: 20px;
-  height: 100%;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  padding: 20px;
 
   .merchant-info-card {
     display: flex;
     align-items: center;
     padding: 16px;
+    margin-bottom: 20px;
     background-color: #f0f9ff;
     border: 1px solid #e0f2fe;
     border-radius: 8px;
-    margin-bottom: 20px;
 
     .merchant-icon {
       margin-right: 16px;
 
       .icon-box {
-        width: 48px;
-        height: 48px;
-        background-color: #3b82f6;
-        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
+        width: 48px;
+        height: 48px;
         font-size: 24px;
+        color: white;
+        background-color: #3b82f6;
+        border-radius: 50%;
       }
     }
 
@@ -410,9 +410,9 @@ const recordPayment = () => {
       flex: 1;
 
       .merchant-name {
+        margin-bottom: 8px;
         font-size: 18px;
         font-weight: 600;
-        margin-bottom: 8px;
         color: #1e293b;
       }
 
@@ -431,10 +431,10 @@ const recordPayment = () => {
   }
 
   .settlement-tabs {
-    margin-bottom: 20px;
-    flex: 1;
     display: flex;
+    flex: 1;
     flex-direction: column;
+    margin-bottom: 20px;
 
     .el-tabs__header {
       margin-bottom: 12px;
@@ -463,9 +463,9 @@ const recordPayment = () => {
         color: #334155;
 
         &.required::after {
-          content: '*';
-          color: #ef4444;
           margin-left: 4px;
+          color: #ef4444;
+          content: '*';
         }
       }
 
@@ -474,18 +474,18 @@ const recordPayment = () => {
 
         .el-radio-group {
           .el-radio-button__inner {
-            border-color: #93c5fd;
             color: #3b82f6;
+            border-color: #93c5fd;
 
             &:hover {
-              border-color: #60a5fa;
               color: #2563eb;
+              border-color: #60a5fa;
             }
 
             &.is-active {
+              color: white;
               background-color: #3b82f6;
               border-color: #3b82f6;
-              color: white;
             }
           }
         }
@@ -493,38 +493,38 @@ const recordPayment = () => {
 
       .ratio-input {
         display: flex;
-        align-items: center;
         gap: 8px;
+        align-items: center;
         margin-bottom: 4px;
 
         .ratio-unit {
-          color: #64748b;
           font-weight: 500;
+          color: #64748b;
         }
       }
 
       .amount-input {
         display: flex;
-        align-items: center;
         gap: 8px;
+        align-items: center;
         margin-bottom: 4px;
 
         .amount-unit,
         .amount-currency {
-          color: #64748b;
           font-weight: 500;
+          color: #64748b;
         }
       }
 
       .form-help {
+        margin-top: 4px;
         font-size: 13px;
         color: #64748b;
-        margin-top: 4px;
       }
 
       .account-info {
-        background-color: #f8fafc;
         padding: 12px;
+        background-color: #f8fafc;
         border-radius: 6px;
 
         .account-text {
@@ -551,10 +551,10 @@ const recordPayment = () => {
   .settlement-item,
   .order-card {
     padding: 16px;
-    background-color: #ffffff;
+    background-color: #fff;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 5%);
   }
 
   .order-info {
@@ -563,22 +563,22 @@ const recordPayment = () => {
     margin-bottom: 8px;
 
     .order-no {
-      font-weight: 600;
       font-size: 14px;
+      font-weight: 600;
       color: #334155;
     }
   }
 
   .order-cycle {
+    margin-bottom: 12px;
     font-size: 13px;
     color: #64748b;
-    margin-bottom: 12px;
   }
 
   .order-amount {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
 
     .amount-label {
       font-size: 13px;
@@ -586,16 +586,16 @@ const recordPayment = () => {
     }
 
     .amount-value {
-      font-weight: 600;
       font-size: 18px;
+      font-weight: 600;
       color: #ef4444;
     }
   }
 
   .action-buttons {
     display: flex;
-    justify-content: flex-end;
     gap: 12px;
+    justify-content: flex-end;
     margin-top: 20px;
 
     .el-button--primary {

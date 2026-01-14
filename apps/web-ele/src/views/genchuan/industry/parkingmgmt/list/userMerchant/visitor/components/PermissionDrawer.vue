@@ -5,19 +5,19 @@ interface Props {
   visitor: any;
 }
 
-const props = defineProps<Props>();
+const _props = defineProps<Props>();
 
-const emit = defineEmits(['close']);
+const _emit = defineEmits(['close']);
 
 // 保存权限
 const handleSave = () => {
   ElMessage.success('权限保存成功');
-  emit('close');
+  _emit('close');
 };
 
 // 关闭抽屉
 const handleClose = () => {
-  emit('close');
+  _emit('close');
 };
 </script>
 <template>
@@ -39,8 +39,8 @@ const handleClose = () => {
 
 .drawer-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   padding: 0 20px 16px;
   border-bottom: 1px solid #ebeef5;
 }
@@ -59,8 +59,8 @@ const handleClose = () => {
 
 .empty-content {
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   height: 100%;
   padding: 40px 0;
 }
@@ -71,8 +71,8 @@ const handleClose = () => {
 
 .card-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 
 .permission-item {
@@ -91,10 +91,10 @@ const handleClose = () => {
 }
 
 .drawer-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
   padding: 16px 20px;
   border-top: 1px solid #ebeef5;
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
 }
 </style>

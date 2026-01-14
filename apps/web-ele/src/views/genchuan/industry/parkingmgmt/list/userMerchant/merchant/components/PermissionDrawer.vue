@@ -11,9 +11,9 @@ interface Props {
   merchant: any;
 }
 
-const props = defineProps<Props>();
+const _props = defineProps<Props>();
 
-const emit = defineEmits(['close']);
+const _emit = defineEmits(['close']);
 
 // 权限组选项
 const permissionGroups = ref([
@@ -171,9 +171,7 @@ const exportPermissionList = () => {
         </div>
         <div class="merchant-meta">
           <span class="meta-item">商户ID: {{ merchant.merchantId }}</span>
-          <span class="meta-item"
-            >业务类型: {{ merchant.businessScope || '综合业务' }}</span
-          >
+          <span class="meta-item">业务类型: {{ merchant.businessScope || '综合业务' }}</span>
         </div>
       </div>
     </div>
@@ -243,10 +241,10 @@ const exportPermissionList = () => {
           <div
             class="search-export-container"
             style="
-              margin-bottom: 20px;
               display: flex;
-              justify-content: space-between;
               align-items: center;
+              justify-content: space-between;
+              margin-bottom: 20px;
             "
           >
             <div class="search-input-wrapper" style="width: 300px">
@@ -321,10 +319,10 @@ const exportPermissionList = () => {
           <div
             class="search-export-container"
             style="
-              margin-bottom: 20px;
               display: flex;
-              justify-content: space-between;
               align-items: center;
+              justify-content: space-between;
+              margin-bottom: 20px;
             "
           >
             <div class="search-input-wrapper" style="width: 300px">
@@ -384,33 +382,33 @@ const exportPermissionList = () => {
 
 <style scoped lang="scss">
 .permission-management {
-  padding: 20px;
-  height: 100%;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  padding: 20px;
 
   .merchant-info-card {
     display: flex;
     align-items: center;
     padding: 16px;
+    margin-bottom: 20px;
     background-color: #f0f9ff;
     border: 1px solid #e0f2fe;
     border-radius: 8px;
-    margin-bottom: 20px;
 
     .merchant-icon {
       margin-right: 16px;
 
       .icon-box {
-        width: 48px;
-        height: 48px;
-        background-color: #3b82f6;
-        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
+        width: 48px;
+        height: 48px;
         font-size: 24px;
+        color: white;
+        background-color: #3b82f6;
+        border-radius: 50%;
       }
     }
 
@@ -418,9 +416,9 @@ const exportPermissionList = () => {
       flex: 1;
 
       .merchant-name {
+        margin-bottom: 8px;
         font-size: 18px;
         font-weight: 600;
-        margin-bottom: 8px;
         color: #1e293b;
       }
 
@@ -439,10 +437,10 @@ const exportPermissionList = () => {
   }
 
   .permission-tabs {
-    margin-bottom: 20px;
-    flex: 1;
     display: flex;
+    flex: 1;
     flex-direction: column;
+    margin-bottom: 20px;
 
     .el-tabs__header {
       margin-bottom: 12px;
@@ -471,9 +469,9 @@ const exportPermissionList = () => {
         color: #334155;
 
         &.required::after {
-          content: '*';
-          color: #ef4444;
           margin-left: 4px;
+          color: #ef4444;
+          content: '*';
         }
       }
     }
@@ -484,13 +482,13 @@ const exportPermissionList = () => {
 
     .section-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
       margin-bottom: 16px;
 
       .section-title {
-        font-weight: 600;
         font-size: 16px;
+        font-weight: 600;
         color: #334155;
       }
     }
@@ -500,10 +498,10 @@ const exportPermissionList = () => {
         margin-bottom: 24px;
 
         .group-title {
-          font-weight: 600;
-          font-size: 14px;
-          color: #475569;
           margin-bottom: 12px;
+          font-size: 14px;
+          font-weight: 600;
+          color: #475569;
         }
 
         .permission-list {
@@ -516,9 +514,9 @@ const exportPermissionList = () => {
               gap: 4px;
 
               .permission-description {
+                margin-left: 22px;
                 font-size: 13px;
                 color: #64748b;
-                margin-left: 22px;
               }
             }
           }
@@ -537,16 +535,16 @@ const exportPermissionList = () => {
 
   .log-item {
     padding: 16px;
-    background-color: #ffffff;
+    background-color: #fff;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 5%);
   }
 
   .log-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     margin-bottom: 12px;
 
     .log-time {
@@ -570,10 +568,10 @@ const exportPermissionList = () => {
 
   .log-label,
   .meta-label {
+    min-width: 70px;
     font-size: 13px;
     font-weight: 500;
     color: #64748b;
-    min-width: 70px;
   }
 
   .log-value,
@@ -583,11 +581,11 @@ const exportPermissionList = () => {
   }
 
   .log-change-detail {
-    margin-top: 4px;
-    padding-top: 8px;
-    border-top: 1px solid #f1f5f9;
     flex-direction: column;
     gap: 4px;
+    padding-top: 8px;
+    margin-top: 4px;
+    border-top: 1px solid #f1f5f9;
   }
 
   /* 权限查询样式 */
@@ -600,16 +598,16 @@ const exportPermissionList = () => {
 
   .query-perm-item {
     padding: 16px;
-    background-color: #ffffff;
+    background-color: #fff;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 5%);
   }
 
   .perm-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     margin-bottom: 8px;
 
     .perm-name {
@@ -626,9 +624,9 @@ const exportPermissionList = () => {
   }
 
   .perm-desc {
+    margin-bottom: 4px;
     font-size: 13px;
     color: #64748b;
-    margin-bottom: 4px;
   }
 
   .perm-meta {
@@ -644,8 +642,8 @@ const exportPermissionList = () => {
 
   .action-buttons {
     display: flex;
-    justify-content: flex-end;
     gap: 12px;
+    justify-content: flex-end;
     margin-top: 20px;
 
     .el-button--primary {
