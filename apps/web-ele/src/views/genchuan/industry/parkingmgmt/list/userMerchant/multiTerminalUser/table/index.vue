@@ -1028,7 +1028,7 @@ const handleAuthSubmit = () => {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 0;
 }
 
 .tabel-tabs-container {
@@ -1038,11 +1038,11 @@ const handleAuthSubmit = () => {
 }
 
 .user-type-tabs {
-  margin-bottom: 10px;
+  margin-bottom: 0;
 }
 
 .auth-status-tabs {
-  margin-bottom: 10px;
+  margin-bottom: 0;
 }
 
 .merchant-detail h3 {

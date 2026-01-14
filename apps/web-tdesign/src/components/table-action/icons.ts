@@ -11,4 +11,8 @@ export const ACTION_ICON = {
   VIEW: 'lucide:eye',
   COPY: 'lucide:copy',
   CLOSE: 'lucide:x',
+  BOOK: 'lucide:book',
+  AUDIT: 'lucide:file-check',
+  KEY: 'lucide:key',
+  MONEY: 'lucide:money',
 };
