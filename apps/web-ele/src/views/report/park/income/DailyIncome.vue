@@ -15,7 +15,6 @@ import ReportSection from '#/views/report/park/component/ReportSection.vue';
 import ReportToolbar from '#/views/report/park/component/ReportToolbar.vue';
 import {
   formatCurrency,
-  generateIndicatorTag,
   getComparisonClass,
   getYesterdayDate,
 } from '#/views/report/park/component/ReportUtils';
@@ -41,8 +40,8 @@ const pageSize = ref(10);
 const processedCoreIndicators = computed(() => {
   return coreIndicators.value.map((indicator) => ({
     ...indicator,
-    tag: generateIndicatorTag(indicator.comparison),
-    abnormal: Math.abs(indicator.comparison) > 30,
+    // tag: generateIndicatorTag(indicator.comparison),
+    // abnormal: Math.abs(indicator.comparison) > 30,
   }));
 });
 
@@ -181,6 +180,22 @@ const typeDistributionOptions = computed(() => ({
   ],
 }));
 
+// 区域映射关系
+const regionMap = {
+  'xiangcheng': '芗城区',
+  'longwen': '龙文区',
+  'longhai': '龙海区',
+  'zhangpu': '漳浦县',
+  'yunxiao': '云霄县'
+};
+
+// 停车场类型映射关系
+const parkingTypeMap = {
+  'public': '公共停车场',
+  'roadside': '路侧停车场',
+  'special': '专用停车场'
+};
+
 // 根据收入金额获取颜色
 const getRegionColor = (amount) => {
   if (amount >= 100000) return '#52c41a';
@@ -228,6 +243,7 @@ const loadData = async () => {
     typeDistributionData.value = response.typeDistribution || [];
     parkingDetailData.value = response.parkingDetail || [];
     paymentTypeData.value = response.paymentType || [];
+
   } catch (error) {
     console.error('加载日收入数据失败:', error);
     ElMessage.error('加载数据失败');
@@ -278,6 +294,45 @@ const parkingList = ref([
   { value: 'park002', label: '芗城政府路侧停车场' },
   { value: 'park003', label: '龙文区体育中心停车场' },
   { value: 'park004', label: '龙海区商业城停车场' },
+  { value: 'park005', label: '漳浦县汽车站停车场' },
+  { value: 'park006', label: '云霄县中心停车场' },
+  { value: 'park007', label: '诏安县人民广场停车场' },
+  { value: 'park008', label: '东山县旅游中心停车场' },
+  { value: 'park009', label: '南靖县土楼停车场' },
+  { value: 'park010', label: '平和县商贸城停车场' },
+  { value: 'park011', label: '华安县体育馆停车场' },
+  { value: 'park012', label: '芗城区中山公园停车场' },
+  { value: 'park013', label: '龙文区行政服务中心停车场' },
+  { value: 'park014', label: '龙海区火车站停车场' },
+  { value: 'park015', label: '漳浦县医院停车场' },
+  { value: 'park016', label: '云霄县汽车站停车场' },
+  { value: 'park017', label: '诏安县中心停车场' },
+  { value: 'park018', label: '东山县海滨停车场' },
+  { value: 'park019', label: '南靖县云水谣停车场' },
+  { value: 'park020', label: '平和县琯溪蜜柚市场停车场' },
+]);
+
+// 获取区域列表
+const regionList = ref([
+  { value: '', label: '全部区域' },
+  { value: 'xiangcheng', label: '芗城区' },
+  { value: 'longwen', label: '龙文区' },
+  { value: 'longhai', label: '龙海区' },
+  { value: 'zhangpu', label: '漳浦县' },
+  { value: 'yunxiao', label: '云霄县' },
+  { value: 'zhaoan', label: '诏安县' },
+  { value: 'dongshan', label: '东山县' },
+  { value: 'nanjing', label: '南靖县' },
+  { value: 'pinghe', label: '平和县' },
+  { value: 'huaan', label: '华安县' },
+]);
+
+// 获取停车场类型列表
+const parkingTypeList = ref([
+  { value: '', label: '全部类型' },
+  { value: 'public', label: '公共停车场' },
+  { value: 'roadside', label: '路侧停车场' },
+  { value: 'special', label: '专用停车场' },
 ]);
 </script>
 
@@ -302,11 +357,12 @@ const parkingList = ref([
           clearable
           style="width: 120px"
         >
-          <el-option label="全部区域" value="" />
-          <el-option label="芗城区" value="xiangcheng" />
-          <el-option label="龙文区" value="longwen" />
-          <el-option label="龙海区" value="longhai" />
-          <el-option label="漳浦县" value="zhangpu" />
+          <el-option
+            v-for="item in regionList"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
         </el-select>
         <el-select
           v-model="parkingType"
@@ -315,10 +371,12 @@ const parkingList = ref([
           clearable
           style="width: 140px"
         >
-          <el-option label="全部类型" value="" />
-          <el-option label="公共停车场" value="public" />
-          <el-option label="路侧停车场" value="roadside" />
-          <el-option label="专用停车场" value="special" />
+          <el-option
+            v-for="item in parkingTypeList"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
         </el-select>
         <el-select
           v-model="parkingId"
@@ -355,11 +413,11 @@ const parkingList = ref([
       :indicators="processedCoreIndicators"
       :format-value="formatValue"
     >
-      <template #comparison="{ indicator }">
-        <span :class="getComparisonClass(indicator.comparison)">
-          较近7日均值 {{ indicator.comparison > 0 ? '+' : '' }}{{ indicator.comparison }}%
-        </span>
-      </template>
+<!--      <template #comparison="{ indicator }">-->
+<!--        <span :class="getComparisonClass(indicator.comparison)">-->
+<!--          较近7日均值 {{ indicator.comparison > 0 ? '+' : '' }}{{ indicator.comparison }}%-->
+<!--        </span>-->
+<!--      </template>-->
     </CoreIndicators>
 
     <!-- 区域收入分布 -->

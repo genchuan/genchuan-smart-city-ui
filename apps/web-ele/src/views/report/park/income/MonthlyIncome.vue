@@ -404,13 +404,13 @@ const monthList = ref([
           <el-option label="路侧停车场" value="roadside" />
           <el-option label="专用停车场" value="special" />
         </el-select>
-        <el-button
-          type="primary"
-          @click="generateReport"
-          :loading="generateLoading"
-        >
-          生成报表
-        </el-button>
+<!--        <el-button-->
+<!--          type="primary"-->
+<!--          @click="generateReport"-->
+<!--          :loading="generateLoading"-->
+<!--        >-->
+<!--          生成报表-->
+<!--        </el-button>-->
       </template>
 
       <template #right>
@@ -432,11 +432,11 @@ const monthList = ref([
       :indicators="processedCoreIndicators"
       :format-value="formatValue"
     >
-      <template #comparison="{ indicator }">
-        <span :class="getComparisonClass(indicator.comparison)">
-          较上月 {{ indicator.comparison > 0 ? '+' : '' }}{{ indicator.comparison }}%
-        </span>
-      </template>
+<!--      <template #comparison="{ indicator }">-->
+<!--        <span :class="getComparisonClass(indicator.comparison)">-->
+<!--          较上月 {{ indicator.comparison > 0 ? '+' : '' }}{{ indicator.comparison }}%-->
+<!--        </span>-->
+<!--      </template>-->
     </CoreIndicators>
 
     <!-- 趋势分析 -->

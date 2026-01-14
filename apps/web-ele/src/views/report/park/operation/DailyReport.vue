@@ -25,7 +25,6 @@ import ReportToolbar from '#/views/report/park/component/ReportToolbar.vue';
 // 工具函数
 import {
   formatCurrency,
-  generateIndicatorTag,
   getComparisonClass,
   getYesterdayDate,
 } from '#/views/report/park/component/ReportUtils';
@@ -44,8 +43,8 @@ const abnormalities = ref([]);
 const processedCoreIndicators = computed(() => {
   return coreIndicators.value.map((indicator) => ({
     ...indicator,
-    tag: generateIndicatorTag(indicator.comparison),
-    abnormal: Math.abs(indicator.comparison) > 30,
+    // tag: generateIndicatorTag(indicator.comparison),
+    // abnormal: Math.abs(indicator.comparison) > 30,
   }));
 });
 
@@ -257,30 +256,29 @@ const handleExport = async () => {
       :indicators="processedCoreIndicators"
       :format-value="formatValue"
     >
-      <template #comparison="{ indicator }">
-        <span :class="getComparisonClass(indicator.comparison)">
-          <el-icon v-if="indicator.comparison > 0"><Top /></el-icon>
-          <el-icon v-if="indicator.comparison < 0"><Bottom /></el-icon>
-          较近7日均值 {{ Math.abs(indicator.comparison) }}%
-        </span>
-      </template>
+<!--      <template #comparison="{ indicator }">-->
+<!--        <span :class="getComparisonClass(indicator.comparison)">-->
+<!--          <el-icon v-if="indicator.comparison > 0"><Top /></el-icon>-->
+<!--          <el-icon v-if="indicator.comparison < 0"><Bottom /></el-icon>-->
+<!--        </span>-->
+<!--      </template>-->
     </CoreIndicators>
 
     <!-- 异常提醒 -->
-    <div v-if="abnormalities.length > 0" class="abnormal-alert">
-      <el-alert title="异常提醒" type="warning" :closable="false" show-icon>
-        <div class="abnormal-list">
-          <div
-            v-for="abnormal in abnormalities"
-            :key="abnormal.id"
-            class="abnormal-item"
-          >
-            <el-icon><Warning /></el-icon>
-            <span>{{ abnormal.message }}</span>
-          </div>
-        </div>
-      </el-alert>
-    </div>
+<!--    <div v-if="abnormalities.length > 0" class="abnormal-alert">-->
+<!--      <el-alert title="异常提醒" type="warning" :closable="false" show-icon>-->
+<!--        <div class="abnormal-list">-->
+<!--          <div-->
+<!--            v-for="abnormal in abnormalities"-->
+<!--            :key="abnormal.id"-->
+<!--            class="abnormal-item"-->
+<!--          >-->
+<!--            <el-icon><Warning /></el-icon>-->
+<!--            <span>{{ abnormal.message }}</span>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </el-alert>-->
+<!--    </div>-->
 
     <!-- 分区域统计 -->
     <ReportSection title="分区域统计">

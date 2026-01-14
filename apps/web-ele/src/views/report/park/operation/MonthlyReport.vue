@@ -20,7 +20,6 @@ import ReportToolbar from '#/views/report/park/component/ReportToolbar.vue';
 // 工具函数
 import {
   formatCurrency,
-  generateIndicatorTag,
   getComparisonClass,
   getLastMonth,
   getParkingTypeName,
@@ -41,8 +40,8 @@ const monthlyData = ref([]);
 const processedMonthlyIndicators = computed(() => {
   return monthlyIndicators.value.map((indicator) => ({
     ...indicator,
-    tag: generateIndicatorTag(indicator.comparison),
-    comparisonLabel: '较上月',
+    // tag: generateIndicatorTag(indicator.comparison),
+    // comparisonLabel: '较上月',
   }));
 });
 
@@ -320,13 +319,13 @@ const handleExport = async () => {
       :indicators="processedMonthlyIndicators"
       :format-value="formatValue"
     >
-      <template #comparison="{ indicator }">
-        <span :class="getComparisonClass(indicator.comparison, 0)">
-          <el-icon v-if="indicator.comparison > 0"><Top /></el-icon>
-          <el-icon v-if="indicator.comparison < 0"><Bottom /></el-icon>
-          较上月 {{ Math.abs(indicator.comparison) }}%
-        </span>
-      </template>
+<!--      <template #comparison="{ indicator }">-->
+<!--        <span :class="getComparisonClass(indicator.comparison, 0)">-->
+<!--          <el-icon v-if="indicator.comparison > 0"><Top /></el-icon>-->
+<!--          <el-icon v-if="indicator.comparison < 0"><Bottom /></el-icon>-->
+<!--          较上月 {{ Math.abs(indicator.comparison) }}%-->
+<!--        </span>-->
+<!--      </template>-->
     </CoreIndicators>
 
     <!-- 趋势对比 -->

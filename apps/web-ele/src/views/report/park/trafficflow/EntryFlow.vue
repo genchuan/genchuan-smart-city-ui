@@ -18,7 +18,7 @@ import ReportSection from '#/views/report/park/component/ReportSection.vue';
 import ReportToolbar from '#/views/report/park/component/ReportToolbar.vue';
 // 工具函数
 import {
-  generateIndicatorTag,
+  // generateIndicatorTag,
   getComparisonClass,
   getYesterdayDate,
 } from '#/views/report/park/component/ReportUtils';
@@ -40,8 +40,8 @@ const tableData = ref([]);
 const processedCoreIndicators = computed(() => {
   return coreIndicators.value.map((indicator) => ({
     ...indicator,
-    tag: generateIndicatorTag(indicator.comparison),
-    abnormal: Math.abs(indicator.comparison) > 30,
+    // tag: generateIndicatorTag(indicator.comparison),
+    // abnormal: Math.abs(indicator.comparison) > 30,
   }));
 });
 
@@ -339,13 +339,13 @@ const handleExport = async () => {
       :indicators="processedCoreIndicators"
       :format-value="formatValue"
     >
-      <template #comparison="{ indicator }">
-        <span :class="getComparisonClass(indicator.comparison)">
-          <el-icon v-if="indicator.comparison > 0"><Top /></el-icon>
-          <el-icon v-if="indicator.comparison < 0"><Bottom /></el-icon>
-          较近7日均值 {{ Math.abs(indicator.comparison) }}%
-        </span>
-      </template>
+<!--      <template #comparison="{ indicator }">-->
+<!--        <span :class="getComparisonClass(indicator.comparison)">-->
+<!--          <el-icon v-if="indicator.comparison > 0"><Top /></el-icon>-->
+<!--          <el-icon v-if="indicator.comparison < 0"><Bottom /></el-icon>-->
+<!--          较近7日均值 {{ Math.abs(indicator.comparison) }}%-->
+<!--        </span>-->
+<!--      </template>-->
     </CoreIndicators>
 
     <!-- 时段分布 -->
