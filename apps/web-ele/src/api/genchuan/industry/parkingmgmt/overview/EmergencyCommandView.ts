@@ -45,10 +45,12 @@ export const fetchEmergencySituationList = (params = {}) => {
                 address: '漳州市芗城区万达广场地下停车场B1层',
                 longitude: '117.092536',
                 latitude: '24.658627',
-                influenceRange: '过火面积约80㎡，覆盖22个停车泊位，周边3个充电桩受损',
+                influenceRange:
+                  '过火面积约80㎡，覆盖22个停车泊位，周边3个充电桩受损',
                 developmentTrend: '火势已初步控制，无蔓延趋势，烟雾逐步消散',
                 affectedVehicleCount: 18,
-                lossSituation: '3辆车辆轻微烧毁，2台充电桩损坏，停车场通风系统受损',
+                lossSituation:
+                  '3辆车辆轻微烧毁，2台充电桩损坏，停车场通风系统受损',
                 rescueProgress: '灭火作业完成，现场清理中',
                 responsibleUnit: '漳州市消防救援支队芗城大队',
                 occurTime: '2025-01-09 08:25:00',
@@ -61,10 +63,12 @@ export const fetchEmergencySituationList = (params = {}) => {
                 address: '漳州市龙文区吾悦广场地面停车场',
                 longitude: '117.145672',
                 latitude: '24.631289',
-                influenceRange: '全场45个道闸及识别设备瘫痪，无法进出，覆盖120个泊位',
+                influenceRange:
+                  '全场45个道闸及识别设备瘫痪，无法进出，覆盖120个泊位',
                 developmentTrend: '故障范围无扩大，技术抢修团队已到场',
                 affectedVehicleCount: 96,
-                lossSituation: '暂无车辆损失，停车场计费系统暂停服务，预估经济损失5000元',
+                lossSituation:
+                  '暂无车辆损失，停车场计费系统暂停服务，预估经济损失5000元',
                 rescueProgress: '设备检修中，预计2小时内恢复部分通道',
                 responsibleUnit: '漳州智慧停车运维有限公司',
                 occurTime: '2025-01-09 09:10:00',
@@ -77,7 +81,8 @@ export const fetchEmergencySituationList = (params = {}) => {
                 address: '漳州市龙海区石码镇锦江广场停车场入口',
                 longitude: '117.021358',
                 latitude: '24.469872',
-                influenceRange: '入口通道拥堵，排队车辆约50米，影响周边市政道路通行',
+                influenceRange:
+                  '入口通道拥堵，排队车辆约50米，影响周边市政道路通行',
                 developmentTrend: '拥堵逐步缓解，疏导效率提升',
                 affectedVehicleCount: 32,
                 lossSituation: '无直接经济损失，车辆通行效率降低',
@@ -85,7 +90,7 @@ export const fetchEmergencySituationList = (params = {}) => {
                 responsibleUnit: '漳州市交警支队龙海大队',
                 occurTime: '2025-01-09 10:05:00',
                 createTime: '2025-01-09 10:07:00',
-              }
+              },
             ]);
           }, 500);
         });
@@ -128,7 +133,10 @@ export const fetchEmergencyResourceDistributionList = (params = {}) => {
         throw new Error('真实接口返回无核心数据，使用模拟数据兜底');
       })
       .catch((error) => {
-        console.log('应急资源分布展示接口调用失败-使用模拟数据兜底', error.message);
+        console.log(
+          '应急资源分布展示接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
         return new Promise((resolve) => {
           setTimeout(() => {
             resolve([
@@ -173,13 +181,15 @@ export const fetchEmergencyResourceDistributionList = (params = {}) => {
                 supplyChannel: '内部人员调配',
                 distance: '0.8km',
                 updateTime: '2025-01-09 10:10:00',
-              }
+              },
             ]);
           }, 500);
         });
       });
   } catch (error) {
-    console.error('===== fetchEmergencyResourceDistributionList 函数初始化异常 =====');
+    console.error(
+      '===== fetchEmergencyResourceDistributionList 函数初始化异常 =====',
+    );
     console.error('错误信息:', error.message);
     console.error('错误堆栈:', error.stack);
     return Promise.resolve([]);
@@ -223,7 +233,8 @@ export const fetchCommandDispatchBoardList = (params = {}) => {
             resolve([
               {
                 dispatchTaskId: 'DIS20250109001',
-                taskContent: '调配10具干粉灭火器至万达地下停车场火灾现场，协助灭火作业',
+                taskContent:
+                  '调配10具干粉灭火器至万达地下停车场火灾现场，协助灭火作业',
                 dispatchType: '指定派单',
                 resourceId: 'RES20250109001',
                 address: '漳州市芗城区万达广场地下停车场B1层',
@@ -233,12 +244,14 @@ export const fetchCommandDispatchBoardList = (params = {}) => {
                 dispatchTime: '2025-01-09 08:30:00',
                 executeTime: '2025-01-09 08:35:00',
                 completeTime: '2025-01-09 08:40:00',
-                feedbackContent: '灭火器已送达现场，灭火作业顺利完成，无物资损耗',
+                feedbackContent:
+                  '灭火器已送达现场，灭火作业顺利完成，无物资损耗',
                 createTime: '2025-01-09 08:29:00',
               },
               {
                 dispatchTaskId: 'DIS20250109002',
-                taskContent: '派遣工程抢修车及维修团队至吾悦广场停车场，抢修故障道闸设备',
+                taskContent:
+                  '派遣工程抢修车及维修团队至吾悦广场停车场，抢修故障道闸设备',
                 dispatchType: '一键派单',
                 resourceId: 'RES20250109002',
                 address: '漳州市龙文区吾悦广场地面停车场',
@@ -248,9 +261,10 @@ export const fetchCommandDispatchBoardList = (params = {}) => {
                 dispatchTime: '2025-01-09 09:13:00',
                 executeTime: '2025-01-09 09:20:00',
                 completeTime: '--',
-                feedbackContent: '维修团队已到场，正在检测设备故障原因，预计1小时内出结果',
+                feedbackContent:
+                  '维修团队已到场，正在检测设备故障原因，预计1小时内出结果',
                 createTime: '2025-01-09 09:12:00',
-              }
+              },
             ]);
           }, 500);
         });
@@ -301,13 +315,15 @@ export const fetchEmergencyDisposalProgressList = (params = {}) => {
               {
                 emergencyId: 'EM20250109001',
                 disposalStage: '处置',
-                disposalMeasure: '启用现场消防栓及干粉灭火器灭火，切断停车场电源，疏散现场人员及车辆',
+                disposalMeasure:
+                  '启用现场消防栓及干粉灭火器灭火，切断停车场电源，疏散现场人员及车辆',
                 stageStartTime: '2025-01-09 08:28:00',
                 stageEndTime: '2025-01-09 08:50:00',
                 responsibleUnit: '漳州市消防救援支队芗城大队',
                 keyNode: '火势完全扑灭，无复燃风险',
                 resourceInput: '干粉灭火器10具、消防水带2条、救援人员8名',
-                phasedAchievement: '过火区域明火已灭，烟雾消散，现场无人员伤亡，受损车辆已转移至安全区域',
+                phasedAchievement:
+                  '过火区域明火已灭，烟雾消散，现场无人员伤亡，受损车辆已转移至安全区域',
                 arrivalDuration: '3分钟',
                 disposalDuration: '22分钟',
                 controlDuration: '5分钟',
@@ -316,24 +332,28 @@ export const fetchEmergencyDisposalProgressList = (params = {}) => {
               {
                 emergencyId: 'EM20250109002',
                 disposalStage: '派单',
-                disposalMeasure: '联系设备厂家技术支持，派遣维修团队到场检测故障原因，同步开启备用通道放行车辆',
+                disposalMeasure:
+                  '联系设备厂家技术支持，派遣维修团队到场检测故障原因，同步开启备用通道放行车辆',
                 stageStartTime: '2025-01-09 09:12:00',
                 stageEndTime: '--',
                 responsibleUnit: '漳州智慧停车运维有限公司',
                 keyNode: '维修团队到场，设备故障初步定位为控制主板损坏',
                 resourceInput: '工程抢修车1辆、维修工具1套、技术人员5名',
-                phasedAchievement: '备用通道已开启，缓解车辆拥堵，故障设备正在检修中',
+                phasedAchievement:
+                  '备用通道已开启，缓解车辆拥堵，故障设备正在检修中',
                 arrivalDuration: '7分钟',
                 disposalDuration: '--',
                 controlDuration: '--',
                 updateTime: '2025-01-09 09:25:00',
-              }
+              },
             ]);
           }, 500);
         });
       });
   } catch (error) {
-    console.error('===== fetchEmergencyDisposalProgressList 函数初始化异常 =====');
+    console.error(
+      '===== fetchEmergencyDisposalProgressList 函数初始化异常 =====',
+    );
     console.error('错误信息:', error.message);
     console.error('错误堆栈:', error.stack);
     return Promise.resolve([]);
@@ -379,7 +399,8 @@ export const fetchResourceDispatchViewList = (params = {}) => {
                 dispatchRecordId: 'REC20250109001',
                 resourceId: 'RES20250109002',
                 resourceType: '抢修车辆',
-                dispatchPath: '蓝田开发区运维中心→龙江中路→水仙大街→吾悦广场停车场',
+                dispatchPath:
+                  '蓝田开发区运维中心→龙江中路→水仙大街→吾悦广场停车场',
                 estimatedArrivalTime: '2025-01-09 09:20:00',
                 dispatchQuantity: 1,
                 receiver: '漳州智慧停车运维有限公司',
@@ -404,7 +425,7 @@ export const fetchResourceDispatchViewList = (params = {}) => {
                 realTimeLocation: '锦江大道与紫光路交叉口',
                 abnormalInfo: '道路施工拥堵，预计延迟10分钟到达',
                 createTime: '2025-01-09 10:08:00',
-              }
+              },
             ]);
           }, 500);
         });
@@ -453,10 +474,13 @@ export const fetchFieldSituationViewList = (params = {}) => {
               {
                 emergencyId: 'EM20250109001',
                 address: '漳州市芗城区万达广场地下停车场B1层',
-                videoUrl: 'https://video.zhangzhou.com/emergency/fire20250109.mp4',
+                videoUrl:
+                  'https://video.zhangzhou.com/emergency/fire20250109.mp4',
                 deviceId: 'CAM350602001',
-                fieldPersonLocation: '消防人员8名，运维人员3名，现场指挥1名，均在安全区域',
-                fieldData: '设备损坏程度：中度，影响泊位数量：22个，过火面积：80㎡，受困车辆数：0辆',
+                fieldPersonLocation:
+                  '消防人员8名，运维人员3名，现场指挥1名，均在安全区域',
+                fieldData:
+                  '设备损坏程度：中度，影响泊位数量：22个，过火面积：80㎡，受困车辆数：0辆',
                 damageDegree: '中度',
                 affectedBerthCount: 22,
                 evacuatedVehicleCount: 18,
@@ -466,16 +490,19 @@ export const fetchFieldSituationViewList = (params = {}) => {
               {
                 emergencyId: 'EM20250109002',
                 address: '漳州市龙文区吾悦广场地面停车场',
-                videoUrl: 'https://video.zhangzhou.com/emergency/device20250109.mp4',
+                videoUrl:
+                  'https://video.zhangzhou.com/emergency/device20250109.mp4',
                 deviceId: 'CAM350603002',
-                fieldPersonLocation: '维修人员5名，现场疏导人员2名，均在停车场入口区域',
-                fieldData: '设备损坏程度：重度，影响泊位数量：120个，过火面积：0㎡，受困车辆数：0辆',
+                fieldPersonLocation:
+                  '维修人员5名，现场疏导人员2名，均在停车场入口区域',
+                fieldData:
+                  '设备损坏程度：重度，影响泊位数量：120个，过火面积：0㎡，受困车辆数：0辆',
                 damageDegree: '重度',
                 affectedBerthCount: 120,
                 evacuatedVehicleCount: 45,
                 repairBerthCount: 10,
                 updateTime: '2025-01-09 09:30:00',
-              }
+              },
             ]);
           }, 500);
         });
@@ -526,12 +553,18 @@ export const fetchEmergencyPlanViewList = (params = {}) => {
                 emergencyPlanId: 'PLAN20250109001',
                 planName: '停车场火灾应急处置预案V2.0',
                 emergencyType: '停车场火灾',
-                executionStep: '1.接警响应 2.切断电源 3.疏散人员车辆 4.启动灭火设备 5.现场警戒 6.善后清理',
-                responsibilityDivision: '消防支队：灭火救援；运维公司：现场断电及设备抢修；交警大队：交通疏导',
-                resourceDemand: '干粉灭火器、消防水带、救援人员、抢修工具、警戒设备',
-                mattersNeedingAttention: '灭火时注意用电安全，疏散车辆时避免二次拥堵，现场禁止无关人员进入',
-                riskPrompt: '火灾可能引发电路短路，存在触电风险；烟雾扩散可能导致人员窒息',
-                relatedLaw: '《中华人民共和国消防法》《停车场消防安全管理规范》',
+                executionStep:
+                  '1.接警响应 2.切断电源 3.疏散人员车辆 4.启动灭火设备 5.现场警戒 6.善后清理',
+                responsibilityDivision:
+                  '消防支队：灭火救援；运维公司：现场断电及设备抢修；交警大队：交通疏导',
+                resourceDemand:
+                  '干粉灭火器、消防水带、救援人员、抢修工具、警戒设备',
+                mattersNeedingAttention:
+                  '灭火时注意用电安全，疏散车辆时避免二次拥堵，现场禁止无关人员进入',
+                riskPrompt:
+                  '火灾可能引发电路短路，存在触电风险；烟雾扩散可能导致人员窒息',
+                relatedLaw:
+                  '《中华人民共和国消防法》《停车场消防安全管理规范》',
                 planStatus: '已启用',
                 launchTime: '2025-01-09 08:28:00',
                 updateTime: '2025-01-09 08:30:00',
@@ -540,16 +573,21 @@ export const fetchEmergencyPlanViewList = (params = {}) => {
                 emergencyPlanId: 'PLAN20250109002',
                 planName: '设备大规模故障应急抢修预案V1.5',
                 emergencyType: '设备大规模故障',
-                executionStep: '1.故障上报 2.派单响应 3.现场检测 4.设备抢修 5.备用通道开启 6.恢复验收',
-                responsibilityDivision: '运维公司：设备抢修；停车场管理方：现场疏导；技术厂家：远程支持',
-                resourceDemand: '抢修车辆、维修工具、备用设备、技术人员、疏导标识',
-                mattersNeedingAttention: '抢修时做好安全防护，备用通道开启后安排专人值守，避免车辆剐蹭',
-                riskPrompt: '设备故障可能导致车辆拥堵，引发口角冲突；抢修操作不当可能扩大故障范围',
+                executionStep:
+                  '1.故障上报 2.派单响应 3.现场检测 4.设备抢修 5.备用通道开启 6.恢复验收',
+                responsibilityDivision:
+                  '运维公司：设备抢修；停车场管理方：现场疏导；技术厂家：远程支持',
+                resourceDemand:
+                  '抢修车辆、维修工具、备用设备、技术人员、疏导标识',
+                mattersNeedingAttention:
+                  '抢修时做好安全防护，备用通道开启后安排专人值守，避免车辆剐蹭',
+                riskPrompt:
+                  '设备故障可能导致车辆拥堵，引发口角冲突；抢修操作不当可能扩大故障范围',
                 relatedLaw: '《城市停车设施运营管理规范》《特种设备安全法》',
                 planStatus: '已启用',
                 launchTime: '2025-01-09 09:13:00',
                 updateTime: '2025-01-09 09:15:00',
-              }
+              },
             ]);
           }, 500);
         });
@@ -598,12 +636,16 @@ export const fetchCrossDomainCooperationCommandList = (params = {}) => {
               {
                 cooperationId: 'COOP20250109001',
                 cooperationType: '跨部门',
-                taskContent: '协同消防、交警、运维三方，完成万达停车场火灾现场处置及交通疏导',
-                participantUnit: '漳州市消防救援支队芗城大队、漳州市交警支队芗城大队、漳州万达商业管理有限公司',
+                taskContent:
+                  '协同消防、交警、运维三方，完成万达停车场火灾现场处置及交通疏导',
+                participantUnit:
+                  '漳州市消防救援支队芗城大队、漳州市交警支队芗城大队、漳州万达商业管理有限公司',
                 responseStatus: '已响应',
-                cooperationEffect: '三方配合顺畅，火灾处置及时，交通疏导高效，无二次事故发生',
+                cooperationEffect:
+                  '三方配合顺畅，火灾处置及时，交通疏导高效，无二次事故发生',
                 instructionFlow: '应急指挥中心→消防支队→交警大队→运维公司',
-                communicationRecord: '累计通话12次，微信指令推送8条，现场对讲机实时沟通',
+                communicationRecord:
+                  '累计通话12次，微信指令推送8条，现场对讲机实时沟通',
                 startTime: '2025-01-09 08:28:00',
                 completeTime: '2025-01-09 08:55:00',
                 createTime: '2025-01-09 08:27:00',
@@ -611,22 +653,28 @@ export const fetchCrossDomainCooperationCommandList = (params = {}) => {
               {
                 cooperationId: 'COOP20250109002',
                 cooperationType: '跨区域',
-                taskContent: '协同龙文区运维中心、龙海区应急队伍，支援吾悦广场设备故障抢修',
-                participantUnit: '漳州智慧停车运维有限公司龙文分公司、龙海区城市管理局应急中队',
+                taskContent:
+                  '协同龙文区运维中心、龙海区应急队伍，支援吾悦广场设备故障抢修',
+                participantUnit:
+                  '漳州智慧停车运维有限公司龙文分公司、龙海区城市管理局应急中队',
                 responseStatus: '已响应',
-                cooperationEffect: '资源调配及时，维修效率提升，故障范围得到有效控制',
+                cooperationEffect:
+                  '资源调配及时，维修效率提升，故障范围得到有效控制',
                 instructionFlow: '应急指挥中心→龙文运维中心→龙海应急中队',
-                communicationRecord: '累计通话6次，技术文档传输2份，远程视频指导1次',
+                communicationRecord:
+                  '累计通话6次，技术文档传输2份，远程视频指导1次',
                 startTime: '2025-01-09 09:13:00',
                 completeTime: '--',
                 createTime: '2025-01-09 09:12:00',
-              }
+              },
             ]);
           }, 500);
         });
       });
   } catch (error) {
-    console.error('===== fetchCrossDomainCooperationCommandList 函数初始化异常 =====');
+    console.error(
+      '===== fetchCrossDomainCooperationCommandList 函数初始化异常 =====',
+    );
     console.error('错误信息:', error.message);
     console.error('错误堆栈:', error.stack);
     return Promise.resolve([]);
@@ -694,7 +742,7 @@ export const fetchSpecialEmergencyViewList = (params = {}) => {
                 dredgePath: '停车场南侧备用通道→水仙大街→龙江中路',
                 repairProgress: '30%',
                 createTime: '2025-01-09 09:12:00',
-              }
+              },
             ]);
           }, 500);
         });
@@ -744,11 +792,15 @@ export const fetchEmergencyDrillViewList = (params = {}) => {
               {
                 drillId: 'DRILL20250105001',
                 drillSubject: '火灾应急疏散演练',
-                participantUnit: '漳州万达商业管理有限公司、漳州市消防救援支队芗城大队',
-                participantPerson: '消防人员10名，运维人员8名，停车场工作人员20名',
+                participantUnit:
+                  '漳州万达商业管理有限公司、漳州市消防救援支队芗城大队',
+                participantPerson:
+                  '消防人员10名，运维人员8名，停车场工作人员20名',
                 drillStatus: '已结束',
-                executionSituation: '演练流程顺畅，人员疏散及时，灭火操作规范，整体执行效果良好',
-                problemRectification: '部分人员疏散路线不熟悉，已组织专项培训；灭火器使用不熟练，已现场指导',
+                executionSituation:
+                  '演练流程顺畅，人员疏散及时，灭火操作规范，整体执行效果良好',
+                problemRectification:
+                  '部分人员疏散路线不熟悉，已组织专项培训；灭火器使用不熟练，已现场指导',
                 scoreResult: '92分',
                 drillPlanId: 'DRILLPLAN001',
                 startTime: '2025-01-05 09:00:00',
@@ -761,14 +813,16 @@ export const fetchEmergencyDrillViewList = (params = {}) => {
                 participantUnit: '漳州智慧停车运维有限公司、龙文区城市管理局',
                 participantPerson: '维修人员12名，技术人员5名，现场指挥3名',
                 drillStatus: '已结束',
-                executionSituation: '故障定位准确，抢修操作规范，备用设备调配及时，演练目标达成',
-                problemRectification: '抢修工具携带不全，已完善工具清单；沟通效率偏低，已优化对讲机频道分配',
+                executionSituation:
+                  '故障定位准确，抢修操作规范，备用设备调配及时，演练目标达成',
+                problemRectification:
+                  '抢修工具携带不全，已完善工具清单；沟通效率偏低，已优化对讲机频道分配',
                 scoreResult: '88分',
                 drillPlanId: 'DRILLPLAN002',
                 startTime: '2025-01-06 14:00:00',
                 endTime: '2025-01-06 15:40:00',
                 createTime: '2025-01-05 16:00:00',
-              }
+              },
             ]);
           }, 500);
         });

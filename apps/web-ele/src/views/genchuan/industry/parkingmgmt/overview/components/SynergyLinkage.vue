@@ -1,11 +1,54 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
-import {Filter, ArrowLeft, FullScreen, Operation} from '@element-plus/icons-vue';
-import { ElMessage, ElTable, ElTableColumn, ElTag, ElButton, ElDialog } from 'element-plus';
+import {
+  Filter,
+  ArrowLeft,
+  FullScreen,
+  Operation,
+} from '@element-plus/icons-vue';
+import {
+  ElMessage,
+  ElTable,
+  ElTableColumn,
+  ElTag,
+  ElButton,
+  ElDialog,
+} from 'element-plus';
 import screenFull from 'screenfull';
 // 引入所有接口：原有所有 + 新增6个协同统计分析 + TOP10 + 新增6个协同效率评估 + 新增5个区域协同接口
-import { fetchGovEnterpriseCoopList, fetchGovEnterpriseCoopIndicators, fetchGovDeptCoopCount, fetchEnterpriseTypeCoopCount, fetchCoopItemTypeRatio, fetchSatisfactionLevelRatio, fetchSpecialCoopList, fetchSpecialCoopIndicators, fetchSpecialCoopSceneCount, fetchSpecialCoopDeptCount, fetchSpecialCoopSceneRatio, fetchSpecialCoopStatusRatio, fetchHighFrequencyCoopTop10, fetchCoopCoreIndicators, fetchCoopTypeCount, fetchCoopAreaCount, fetchCoopIndustryRatio, fetchCoopAreaRatio, fetchCoopTrendData, fetchCoopEfficiencyList, fetchCoopEfficiencyIndicators, fetchCoopEfficiencyTypeCount, fetchCoopEfficiencyAreaCount, fetchCoopEfficiencyRecurrenceRatio, fetchCoopEfficiencyTrendData, fetchCrossRegionCoopList, fetchCrossRegionCoopIndicators, fetchCrossRegionAreaCount, fetchCrossRegionTaskTypeCount, fetchCrossRegionRateTrendData } from '#/api/genchuan/industry/parkingmgmt/overview/SynergyLinkage.ts';
+import {
+  fetchGovEnterpriseCoopList,
+  fetchGovEnterpriseCoopIndicators,
+  fetchGovDeptCoopCount,
+  fetchEnterpriseTypeCoopCount,
+  fetchCoopItemTypeRatio,
+  fetchSatisfactionLevelRatio,
+  fetchSpecialCoopList,
+  fetchSpecialCoopIndicators,
+  fetchSpecialCoopSceneCount,
+  fetchSpecialCoopDeptCount,
+  fetchSpecialCoopSceneRatio,
+  fetchSpecialCoopStatusRatio,
+  fetchHighFrequencyCoopTop10,
+  fetchCoopCoreIndicators,
+  fetchCoopTypeCount,
+  fetchCoopAreaCount,
+  fetchCoopIndustryRatio,
+  fetchCoopAreaRatio,
+  fetchCoopTrendData,
+  fetchCoopEfficiencyList,
+  fetchCoopEfficiencyIndicators,
+  fetchCoopEfficiencyTypeCount,
+  fetchCoopEfficiencyAreaCount,
+  fetchCoopEfficiencyRecurrenceRatio,
+  fetchCoopEfficiencyTrendData,
+  fetchCrossRegionCoopList,
+  fetchCrossRegionCoopIndicators,
+  fetchCrossRegionAreaCount,
+  fetchCrossRegionTaskTypeCount,
+  fetchCrossRegionRateTrendData,
+} from '#/api/genchuan/industry/parkingmgmt/overview/SynergyLinkage.ts';
 // 导入图表组件：柱状图+饼图组件 (复用原有 无需新增)
 import HorizontalBar1 from '#/views/genchuan/industry/templatesstatchart/HorizontalBar1.vue';
 import VerticalBar1 from '#/views/genchuan/industry/templatesstatchart/VerticalBar1.vue';
@@ -22,7 +65,11 @@ const topLeftActiveTab = ref('tab1');
 const crossRegionCoopPanelRef = ref<HTMLElement | null>(null);
 const crossRegionCoopCurrentFullscreenPanel = ref<HTMLElement | null>(null);
 const crossRegionCoopList = ref<any[]>([]);
-const crossRegionCoopIndicators = ref({ totalCount: 0, completeRate: 0, avgCoopDuration: 0 });
+const crossRegionCoopIndicators = ref({
+  totalCount: 0,
+  completeRate: 0,
+  avgCoopDuration: 0,
+});
 const crossRegionCoopAreaData = ref({ xAxis: [], series: [] });
 const crossRegionCoopTaskTypeData = ref({ xAxis: [], series: [] });
 const crossRegionCoopTrendData = ref({ xAxis: [], series: [] });
@@ -36,7 +83,12 @@ const crossRegionCoopViewBtnList = ref(['卡片', '柱状图', '折线图', '列
 const coopAnalysisPanelRef = ref<HTMLElement | null>(null);
 const coopAnalysisCurrentFullscreenPanel = ref<HTMLElement | null>(null);
 const highFreqCoopTop10List = ref<any[]>([]);
-const coopAnalysisIndicators = ref({ totalCoopCount: 0, avgHandleCycle: 0, finishRate: 0, highPriorityRate: 0 });
+const coopAnalysisIndicators = ref({
+  totalCoopCount: 0,
+  avgHandleCycle: 0,
+  finishRate: 0,
+  highPriorityRate: 0,
+});
 const coopAnalysisTypeData = ref({ xAxis: [], series: [] });
 const coopAnalysisAreaData = ref({ xAxis: [], series: [] });
 const coopAnalysisIndustryRatioData = ref({ legend: [], series: [] });
@@ -46,7 +98,13 @@ const coopAnalysisBaseFontScale = ref(1);
 const coopAnalysisActiveIndices = ref([]);
 const coopAnalysisChartRefreshKey = ref(0);
 const activeCoopAnalysisView = ref('列表');
-const coopAnalysisViewBtnList = ref(['卡片', '柱状图', '饼图', '折线图', '列表']);
+const coopAnalysisViewBtnList = ref([
+  '卡片',
+  '柱状图',
+  '饼图',
+  '折线图',
+  '列表',
+]);
 
 // ========== 【政企协同视图】所有变量 - 前缀govCoop 彻底无冲突 原有保留 ==========
 const pageContainerRef = ref<HTMLElement | null>(null);
@@ -54,7 +112,11 @@ const govCoopPanelRef = ref<HTMLElement | null>(null);
 const govCoopCurrentFullscreenPanel = ref<HTMLElement | null>(null);
 const router = useRouter();
 const govCoopList = ref<any[]>([]);
-const govCoopIndicators = ref({ totalCount: 0, responseRate: 0, satisfactionRate: 0 });
+const govCoopIndicators = ref({
+  totalCount: 0,
+  responseRate: 0,
+  satisfactionRate: 0,
+});
 const govCoopDeptData = ref({ xAxis: [], series: [] });
 const govCoopEntTypeData = ref({ xAxis: [], series: [] });
 const govCoopItemRatioData = ref({ legend: [], series: [] });
@@ -71,7 +133,11 @@ const govCoopSelectedRow = ref<any>({});
 const specialCoopPanelRef = ref<HTMLElement | null>(null);
 const specialCoopCurrentFullscreenPanel = ref<HTMLElement | null>(null);
 const specialCoopList = ref<any[]>([]);
-const specialCoopIndicators = ref({ totalCount: 0, completeRate: 0, averageCycle: 0 });
+const specialCoopIndicators = ref({
+  totalCount: 0,
+  completeRate: 0,
+  averageCycle: 0,
+});
 const specialCoopSceneData = ref({ xAxis: [], series: [] });
 const specialCoopDeptData = ref({ xAxis: [], series: [] });
 const specialCoopSceneRatioData = ref({ legend: [], series: [] });
@@ -86,7 +152,11 @@ const specialCoopViewBtnList = ref(['卡片', '柱状图', '饼图', '列表']);
 const coopEfficiencyPanelRef = ref<HTMLElement | null>(null);
 const coopEfficiencyCurrentFullscreenPanel = ref<HTMLElement | null>(null);
 const coopEfficiencyList = ref<any[]>([]);
-const coopEfficiencyIndicators = ref({ avgResponseDuration: 0, avgDisposalDuration: 0, avgEffectAchievementRate: 0 });
+const coopEfficiencyIndicators = ref({
+  avgResponseDuration: 0,
+  avgDisposalDuration: 0,
+  avgEffectAchievementRate: 0,
+});
 const coopEfficiencyTypeData = ref({ xAxis: [], series: [] });
 const coopEfficiencyAreaData = ref({ xAxis: [], series: [] });
 const coopEfficiencyRecurrenceRatioData = ref({ legend: [], series: [] });
@@ -95,18 +165,24 @@ const coopEfficiencyBaseFontScale = ref(1);
 const coopEfficiencyActiveIndices = ref([]);
 const coopEfficiencyChartRefreshKey = ref(0);
 const activeCoopEfficiencyView = ref('列表');
-const coopEfficiencyViewBtnList = ref(['卡片', '柱状图', '饼图', '折线图', '列表']);
+const coopEfficiencyViewBtnList = ref([
+  '卡片',
+  '柱状图',
+  '饼图',
+  '折线图',
+  '列表',
+]);
 
 // ========== 【区域协同】新增视图切换方法 - 完全复用协同统计分析逻辑 无修改 ==========
 const changeCrossRegionCoopView = (viewName: string) => {
   activeCrossRegionCoopView.value = viewName;
-  if(viewName === '卡片'){
+  if (viewName === '卡片') {
     nextTick(() => initCrossRegionCoopNumberAnimations());
   }
-  if(viewName === '柱状图' || viewName === '折线图'){
+  if (viewName === '柱状图' || viewName === '折线图') {
     nextTick(() => {
-      crossRegionCoopChartRefreshKey.value +=1;
-      setTimeout(()=>window.dispatchEvent(new Event('resize')),100);
+      crossRegionCoopChartRefreshKey.value += 1;
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
     });
   }
 };
@@ -114,13 +190,13 @@ const changeCrossRegionCoopView = (viewName: string) => {
 // ========== 【协同统计分析】新增视图切换方法 - 完全复用政企逻辑 核心新增 ==========
 const changeCoopAnalysisView = (viewName: string) => {
   activeCoopAnalysisView.value = viewName;
-  if(viewName === '卡片'){
+  if (viewName === '卡片') {
     nextTick(() => initCoopAnalysisNumberAnimations());
   }
-  if(viewName === '柱状图' || viewName === '饼图' || viewName === '折线图'){
+  if (viewName === '柱状图' || viewName === '饼图' || viewName === '折线图') {
     nextTick(() => {
-      coopAnalysisChartRefreshKey.value +=1;
-      setTimeout(()=>window.dispatchEvent(new Event('resize')),100);
+      coopAnalysisChartRefreshKey.value += 1;
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
     });
   }
 };
@@ -128,13 +204,13 @@ const changeCoopAnalysisView = (viewName: string) => {
 // ========== 【政企协同视图】切换视图方法 ==========
 const changeGovCoopView = (viewName: string) => {
   activeGovCoopView.value = viewName;
-  if(viewName === '卡片'){
+  if (viewName === '卡片') {
     nextTick(() => initGovCoopNumberAnimations());
   }
-  if(viewName === '柱状图' || viewName === '饼图'){
+  if (viewName === '柱状图' || viewName === '饼图') {
     nextTick(() => {
-      govCoopChartRefreshKey.value +=1;
-      setTimeout(()=>window.dispatchEvent(new Event('resize')),100);
+      govCoopChartRefreshKey.value += 1;
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
     });
   }
 };
@@ -142,13 +218,13 @@ const changeGovCoopView = (viewName: string) => {
 // ========== 【专属协同视图】切换视图方法 ==========
 const changeSpecialCoopView = (viewName: string) => {
   activeSpecialCoopView.value = viewName;
-  if(viewName === '卡片'){
+  if (viewName === '卡片') {
     nextTick(() => initSpecialCoopNumberAnimations());
   }
-  if(viewName === '柱状图' || viewName === '饼图'){
+  if (viewName === '柱状图' || viewName === '饼图') {
     nextTick(() => {
-      specialCoopChartRefreshKey.value +=1;
-      setTimeout(()=>window.dispatchEvent(new Event('resize')),100);
+      specialCoopChartRefreshKey.value += 1;
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
     });
   }
 };
@@ -156,13 +232,13 @@ const changeSpecialCoopView = (viewName: string) => {
 // ========== 【协同效率评估】新增视图切换方法 - 完全复用协同统计分析逻辑 核心新增 ==========
 const changeCoopEfficiencyView = (viewName: string) => {
   activeCoopEfficiencyView.value = viewName;
-  if(viewName === '卡片'){
+  if (viewName === '卡片') {
     nextTick(() => initCoopEfficiencyNumberAnimations());
   }
-  if(viewName === '柱状图' || viewName === '饼图' || viewName === '折线图'){
+  if (viewName === '柱状图' || viewName === '饼图' || viewName === '折线图') {
     nextTick(() => {
-      coopEfficiencyChartRefreshKey.value +=1;
-      setTimeout(()=>window.dispatchEvent(new Event('resize')),100);
+      coopEfficiencyChartRefreshKey.value += 1;
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
     });
   }
 };
@@ -190,7 +266,8 @@ const toggleCrossRegionCoopPanelFullscreen = () => {
   }
   const panel = crossRegionCoopPanelRef.value;
   if (!panel) return;
-  if (crossRegionCoopCurrentFullscreenPanel.value) screenFull.off('change', handleCrossRegionCoopFullscreenChange);
+  if (crossRegionCoopCurrentFullscreenPanel.value)
+    screenFull.off('change', handleCrossRegionCoopFullscreenChange);
   crossRegionCoopCurrentFullscreenPanel.value = panel;
   if (screenFull.isFullscreen && document.fullscreenElement === panel) {
     screenFull.exit();
@@ -225,7 +302,8 @@ const toggleCoopAnalysisPanelFullscreen = () => {
   }
   const panel = coopAnalysisPanelRef.value;
   if (!panel) return;
-  if (coopAnalysisCurrentFullscreenPanel.value) screenFull.off('change', handleCoopAnalysisFullscreenChange);
+  if (coopAnalysisCurrentFullscreenPanel.value)
+    screenFull.off('change', handleCoopAnalysisFullscreenChange);
   coopAnalysisCurrentFullscreenPanel.value = panel;
   if (screenFull.isFullscreen && document.fullscreenElement === panel) {
     screenFull.exit();
@@ -260,7 +338,8 @@ const toggleCoopEfficiencyPanelFullscreen = () => {
   }
   const panel = coopEfficiencyPanelRef.value;
   if (!panel) return;
-  if (coopEfficiencyCurrentFullscreenPanel.value) screenFull.off('change', handleCoopEfficiencyFullscreenChange);
+  if (coopEfficiencyCurrentFullscreenPanel.value)
+    screenFull.off('change', handleCoopEfficiencyFullscreenChange);
   coopEfficiencyCurrentFullscreenPanel.value = panel;
   if (screenFull.isFullscreen && document.fullscreenElement === panel) {
     screenFull.exit();
@@ -289,7 +368,11 @@ const getCrossRegionCoopIndicatorData = async () => {
     nextTick(() => initCrossRegionCoopNumberAnimations());
   } catch (err) {
     console.warn('区域协同核心指标接口异常，使用兜底数据');
-    crossRegionCoopIndicators.value = { totalCount: 0, completeRate: 0, avgCoopDuration: 0 };
+    crossRegionCoopIndicators.value = {
+      totalCount: 0,
+      completeRate: 0,
+      avgCoopDuration: 0,
+    };
   }
 };
 const getCrossRegionCoopAreaCountData = async () => {
@@ -298,7 +381,10 @@ const getCrossRegionCoopAreaCountData = async () => {
     crossRegionCoopAreaData.value = res;
   } catch (err) {
     console.warn('区域协同数对比接口异常，使用兜底数据');
-    crossRegionCoopAreaData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
+    crossRegionCoopAreaData.value = {
+      xAxis: [],
+      series: [{ name: '协同事项数', data: [] }],
+    };
   }
 };
 const getCrossRegionCoopTaskTypeCountData = async () => {
@@ -307,7 +393,10 @@ const getCrossRegionCoopTaskTypeCountData = async () => {
     crossRegionCoopTaskTypeData.value = res;
   } catch (err) {
     console.warn('任务类型协同数对比接口异常，使用兜底数据');
-    crossRegionCoopTaskTypeData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
+    crossRegionCoopTaskTypeData.value = {
+      xAxis: [],
+      series: [{ name: '协同事项数', data: [] }],
+    };
   }
 };
 const getCrossRegionCoopTrendData = async () => {
@@ -316,7 +405,10 @@ const getCrossRegionCoopTrendData = async () => {
     crossRegionCoopTrendData.value = res;
   } catch (err) {
     console.warn('协同完成率趋势折线图接口异常，使用兜底数据');
-    crossRegionCoopTrendData.value = { xAxis: [], series: [{ name: '协同完成率(%)', data: [] }] };
+    crossRegionCoopTrendData.value = {
+      xAxis: [],
+      series: [{ name: '协同完成率(%)', data: [] }],
+    };
   }
 };
 
@@ -337,7 +429,12 @@ const getCoopAnalysisIndicatorData = async () => {
     nextTick(() => initCoopAnalysisNumberAnimations());
   } catch (err) {
     console.warn('协同核心统计指标接口异常，使用兜底数据');
-    coopAnalysisIndicators.value = { totalCoopCount: 0, avgHandleCycle: 0, finishRate: 0, highPriorityRate: 0 };
+    coopAnalysisIndicators.value = {
+      totalCoopCount: 0,
+      avgHandleCycle: 0,
+      finishRate: 0,
+      highPriorityRate: 0,
+    };
   }
 };
 const getCoopAnalysisTypeCountData = async () => {
@@ -346,7 +443,10 @@ const getCoopAnalysisTypeCountData = async () => {
     coopAnalysisTypeData.value = res;
   } catch (err) {
     console.warn('类型协同数对比接口异常，使用兜底数据');
-    coopAnalysisTypeData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
+    coopAnalysisTypeData.value = {
+      xAxis: [],
+      series: [{ name: '协同事项数', data: [] }],
+    };
   }
 };
 const getCoopAnalysisAreaCountData = async () => {
@@ -355,7 +455,10 @@ const getCoopAnalysisAreaCountData = async () => {
     coopAnalysisAreaData.value = res;
   } catch (err) {
     console.warn('区域协同数对比接口异常，使用兜底数据');
-    coopAnalysisAreaData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
+    coopAnalysisAreaData.value = {
+      xAxis: [],
+      series: [{ name: '协同事项数', data: [] }],
+    };
   }
 };
 const getCoopAnalysisIndustryRatioData = async () => {
@@ -364,7 +467,10 @@ const getCoopAnalysisIndustryRatioData = async () => {
     coopAnalysisIndustryRatioData.value = res;
   } catch (err) {
     console.warn('行业协同占比饼图接口异常，使用兜底数据');
-    coopAnalysisIndustryRatioData.value = { legend: [], series: [{ name: '行业协同占比', data: [] }] };
+    coopAnalysisIndustryRatioData.value = {
+      legend: [],
+      series: [{ name: '行业协同占比', data: [] }],
+    };
   }
 };
 const getCoopAnalysisAreaRatioData = async () => {
@@ -373,7 +479,10 @@ const getCoopAnalysisAreaRatioData = async () => {
     coopAnalysisAreaRatioData.value = res;
   } catch (err) {
     console.warn('区域协同占比饼图接口异常，使用兜底数据');
-    coopAnalysisAreaRatioData.value = { legend: [], series: [{ name: '区域协同占比', data: [] }] };
+    coopAnalysisAreaRatioData.value = {
+      legend: [],
+      series: [{ name: '区域协同占比', data: [] }],
+    };
   }
 };
 const getCoopAnalysisTrendData = async () => {
@@ -382,7 +491,10 @@ const getCoopAnalysisTrendData = async () => {
     coopAnalysisTrendData.value = res;
   } catch (err) {
     console.warn('协同趋势折线图接口异常，使用兜底数据');
-    coopAnalysisTrendData.value = { xAxis: [], series: [{ name: '协同事件数', data: [] }] };
+    coopAnalysisTrendData.value = {
+      xAxis: [],
+      series: [{ name: '协同事件数', data: [] }],
+    };
   }
 };
 
@@ -403,7 +515,11 @@ const getCoopEfficiencyIndicatorData = async () => {
     nextTick(() => initCoopEfficiencyNumberAnimations());
   } catch (err) {
     console.warn('协同效率评估指标接口异常，使用兜底数据');
-    coopEfficiencyIndicators.value = { avgResponseDuration: 0, avgDisposalDuration: 0, avgEffectAchievementRate: 0 };
+    coopEfficiencyIndicators.value = {
+      avgResponseDuration: 0,
+      avgDisposalDuration: 0,
+      avgEffectAchievementRate: 0,
+    };
   }
 };
 const getCoopEfficiencyTypeCountData = async () => {
@@ -412,7 +528,10 @@ const getCoopEfficiencyTypeCountData = async () => {
     coopEfficiencyTypeData.value = res;
   } catch (err) {
     console.warn('类型协同效率对比接口异常，使用兜底数据');
-    coopEfficiencyTypeData.value = { xAxis: [], series: [{ name: '平均处置时长(小时)', data: [] }] };
+    coopEfficiencyTypeData.value = {
+      xAxis: [],
+      series: [{ name: '平均处置时长(小时)', data: [] }],
+    };
   }
 };
 const getCoopEfficiencyAreaCountData = async () => {
@@ -421,7 +540,10 @@ const getCoopEfficiencyAreaCountData = async () => {
     coopEfficiencyAreaData.value = res;
   } catch (err) {
     console.warn('区域协同效率对比接口异常，使用兜底数据');
-    coopEfficiencyAreaData.value = { xAxis: [], series: [{ name: '平均响应时长(小时)', data: [] }] };
+    coopEfficiencyAreaData.value = {
+      xAxis: [],
+      series: [{ name: '平均响应时长(小时)', data: [] }],
+    };
   }
 };
 const getCoopEfficiencyRecurrenceRatioData = async () => {
@@ -430,7 +552,10 @@ const getCoopEfficiencyRecurrenceRatioData = async () => {
     coopEfficiencyRecurrenceRatioData.value = res;
   } catch (err) {
     console.warn('问题复发率占比饼图接口异常，使用兜底数据');
-    coopEfficiencyRecurrenceRatioData.value = { legend: [], series: [{ name: '问题复发率占比', data: [] }] };
+    coopEfficiencyRecurrenceRatioData.value = {
+      legend: [],
+      series: [{ name: '问题复发率占比', data: [] }],
+    };
   }
 };
 const getCoopEfficiencyTrendData = async () => {
@@ -439,25 +564,36 @@ const getCoopEfficiencyTrendData = async () => {
     coopEfficiencyTrendData.value = res;
   } catch (err) {
     console.warn('协同效率趋势折线图接口异常，使用兜底数据');
-    coopEfficiencyTrendData.value = { xAxis: [], series: [{ name: '综合效率评分', data: [] }] };
+    coopEfficiencyTrendData.value = {
+      xAxis: [],
+      series: [{ name: '综合效率评分', data: [] }],
+    };
   }
 };
 
 // ========== 原有工具方法 完整保留 + 新增区域协同完成率格式化 ==========
 const getCoopTypeTagType = (val: string) => {
-  switch(val) {
-    case 'high': return 'danger';
-    case 'medium': return 'warning';
-    case 'low': return 'success';
-    default: return '';
+  switch (val) {
+    case 'high':
+      return 'danger';
+    case 'medium':
+      return 'warning';
+    case 'low':
+      return 'success';
+    default:
+      return '';
   }
 };
 const getCoopTypeName = (val: string) => {
-  switch(val) {
-    case 'high': return '高优先级';
-    case 'medium': return '中优先级';
-    case 'low': return '低优先级';
-    default: return '未知类型';
+  switch (val) {
+    case 'high':
+      return '高优先级';
+    case 'medium':
+      return '中优先级';
+    case 'low':
+      return '低优先级';
+    default:
+      return '未知类型';
   }
 };
 const formatNumber = (num: number) => {
@@ -485,7 +621,11 @@ const getGovCoopIndicatorData = async () => {
     nextTick(() => initGovCoopNumberAnimations());
   } catch (err) {
     console.warn('政企协同指标接口异常，使用兜底数据');
-    govCoopIndicators.value = { totalCount: 0, responseRate: 0, satisfactionRate: 0 };
+    govCoopIndicators.value = {
+      totalCount: 0,
+      responseRate: 0,
+      satisfactionRate: 0,
+    };
   }
 };
 const getGovCoopDeptCountData = async () => {
@@ -494,7 +634,10 @@ const getGovCoopDeptCountData = async () => {
     govCoopDeptData.value = res;
   } catch (err) {
     console.warn('政府部门协同数接口异常，使用兜底数据');
-    govCoopDeptData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
+    govCoopDeptData.value = {
+      xAxis: [],
+      series: [{ name: '协同事项数', data: [] }],
+    };
   }
 };
 const getGovCoopEntTypeCountData = async () => {
@@ -503,7 +646,10 @@ const getGovCoopEntTypeCountData = async () => {
     govCoopEntTypeData.value = res;
   } catch (err) {
     console.warn('企业类型协同数接口异常，使用兜底数据');
-    govCoopEntTypeData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
+    govCoopEntTypeData.value = {
+      xAxis: [],
+      series: [{ name: '协同事项数', data: [] }],
+    };
   }
 };
 const getGovCoopItemRatioData = async () => {
@@ -512,7 +658,10 @@ const getGovCoopItemRatioData = async () => {
     govCoopItemRatioData.value = res;
   } catch (err) {
     console.warn('协同事项占比饼图接口异常，使用兜底数据');
-    govCoopItemRatioData.value = { legend: [], series: [{ name: '协同事项占比', data: [] }] };
+    govCoopItemRatioData.value = {
+      legend: [],
+      series: [{ name: '协同事项占比', data: [] }],
+    };
   }
 };
 const getGovCoopSatisfactionRatioData = async () => {
@@ -521,7 +670,10 @@ const getGovCoopSatisfactionRatioData = async () => {
     govCoopSatisfactionRatioData.value = res;
   } catch (err) {
     console.warn('满意度占比饼图接口异常，使用兜底数据');
-    govCoopSatisfactionRatioData.value = { legend: [], series: [{ name: '满意度占比', data: [] }] };
+    govCoopSatisfactionRatioData.value = {
+      legend: [],
+      series: [{ name: '满意度占比', data: [] }],
+    };
   }
 };
 
@@ -542,7 +694,11 @@ const getSpecialCoopIndicatorData = async () => {
     nextTick(() => initSpecialCoopNumberAnimations());
   } catch (err) {
     console.warn('专属协同指标接口异常，使用兜底数据');
-    specialCoopIndicators.value = { totalCount: 0, completeRate: 0, averageCycle: 0 };
+    specialCoopIndicators.value = {
+      totalCount: 0,
+      completeRate: 0,
+      averageCycle: 0,
+    };
   }
 };
 const getSpecialCoopSceneCountData = async () => {
@@ -551,7 +707,10 @@ const getSpecialCoopSceneCountData = async () => {
     specialCoopSceneData.value = res;
   } catch (err) {
     console.warn('场景协同数对比接口异常，使用兜底数据');
-    specialCoopSceneData.value = { xAxis: [], series: [{ name: '协同完成数', data: [] }] };
+    specialCoopSceneData.value = {
+      xAxis: [],
+      series: [{ name: '协同完成数', data: [] }],
+    };
   }
 };
 const getSpecialCoopDeptCountData = async () => {
@@ -560,7 +719,10 @@ const getSpecialCoopDeptCountData = async () => {
     specialCoopDeptData.value = res;
   } catch (err) {
     console.warn('责任单位协同数对比接口异常，使用兜底数据');
-    specialCoopDeptData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
+    specialCoopDeptData.value = {
+      xAxis: [],
+      series: [{ name: '协同事项数', data: [] }],
+    };
   }
 };
 const getSpecialCoopSceneRatioData = async () => {
@@ -569,7 +731,10 @@ const getSpecialCoopSceneRatioData = async () => {
     specialCoopSceneRatioData.value = res;
   } catch (err) {
     console.warn('协同场景占比饼图接口异常，使用兜底数据');
-    specialCoopSceneRatioData.value = { legend: [], series: [{ name: '协同场景占比', data: [] }] };
+    specialCoopSceneRatioData.value = {
+      legend: [],
+      series: [{ name: '协同场景占比', data: [] }],
+    };
   }
 };
 const getSpecialCoopStatusRatioData = async () => {
@@ -578,7 +743,10 @@ const getSpecialCoopStatusRatioData = async () => {
     specialCoopStatusRatioData.value = res;
   } catch (err) {
     console.warn('协同状态占比饼图接口异常，使用兜底数据');
-    specialCoopStatusRatioData.value = { legend: [], series: [{ name: '协同状态占比', data: [] }] };
+    specialCoopStatusRatioData.value = {
+      legend: [],
+      series: [{ name: '协同状态占比', data: [] }],
+    };
   }
 };
 
@@ -595,12 +763,17 @@ const formatGovCoopTimeStamp = (timeStamp: any) => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 const getGovCoopSatisfactionTagType = (val: string) => {
-  switch(val) {
-    case '非常满意': return 'success';
-    case '满意': return 'info';
-    case '基本满意': return 'warning';
-    case '一般': return 'danger';
-    default: return '';
+  switch (val) {
+    case '非常满意':
+      return 'success';
+    case '满意':
+      return 'info';
+    case '基本满意':
+      return 'warning';
+    case '一般':
+      return 'danger';
+    default:
+      return '';
   }
 };
 const handleGovCoopRowClick = (row: any) => {
@@ -629,7 +802,8 @@ const toggleGovCoopPanelFullscreen = () => {
   }
   const panel = govCoopPanelRef.value;
   if (!panel) return;
-  if (govCoopCurrentFullscreenPanel.value) screenFull.off('change', handleGovCoopFullscreenChange);
+  if (govCoopCurrentFullscreenPanel.value)
+    screenFull.off('change', handleGovCoopFullscreenChange);
   govCoopCurrentFullscreenPanel.value = panel;
   if (screenFull.isFullscreen && document.fullscreenElement === panel) {
     screenFull.exit();
@@ -672,7 +846,8 @@ const toggleSpecialCoopPanelFullscreen = () => {
   }
   const panel = specialCoopPanelRef.value;
   if (!panel) return;
-  if (specialCoopCurrentFullscreenPanel.value) screenFull.off('change', handleSpecialCoopFullscreenChange);
+  if (specialCoopCurrentFullscreenPanel.value)
+    screenFull.off('change', handleSpecialCoopFullscreenChange);
   specialCoopCurrentFullscreenPanel.value = panel;
   if (screenFull.isFullscreen && document.fullscreenElement === panel) {
     screenFull.exit();
@@ -692,43 +867,47 @@ const animateValue = (element, start, end, duration) => {
     if (!startTimestamp) startTimestamp = timestamp;
     const progress = Math.min((timestamp - startTimestamp) / duration, 1);
     const currentValue = progress * (end - start) + start;
-    element.textContent = isInteger ? currentValue.toFixed(0) : currentValue.toFixed(1);
+    element.textContent = isInteger
+      ? currentValue.toFixed(0)
+      : currentValue.toFixed(1);
     if (progress < 1) window.requestAnimationFrame(step);
   };
   window.requestAnimationFrame(step);
 };
 // 区域协同 数字动画初始化 新增核心
 const initCrossRegionCoopNumberAnimations = () => {
-  const elements = document.querySelectorAll('.cross-region-coop-number-animate');
-  elements.forEach(el => {
+  const elements = document.querySelectorAll(
+    '.cross-region-coop-number-animate',
+  );
+  elements.forEach((el) => {
     const value = parseFloat(el.getAttribute('data-value'));
     animateValue(el, 0, value, 1500);
   });
 };
 const initGovCoopNumberAnimations = () => {
   const elements = document.querySelectorAll('.gov-coop-number-animate');
-  elements.forEach(el => {
+  elements.forEach((el) => {
     const value = parseFloat(el.getAttribute('data-value'));
     animateValue(el, 0, value, 1500);
   });
 };
 const initSpecialCoopNumberAnimations = () => {
   const elements = document.querySelectorAll('.special-coop-number-animate');
-  elements.forEach(el => {
+  elements.forEach((el) => {
     const value = parseFloat(el.getAttribute('data-value'));
     animateValue(el, 0, value, 1500);
   });
 };
 const initCoopAnalysisNumberAnimations = () => {
   const elements = document.querySelectorAll('.coop-analysis-number-animate');
-  elements.forEach(el => {
+  elements.forEach((el) => {
     const value = parseFloat(el.getAttribute('data-value'));
     animateValue(el, 0, value, 1500);
   });
 };
 const initCoopEfficiencyNumberAnimations = () => {
   const elements = document.querySelectorAll('.coop-efficiency-number-animate');
-  elements.forEach(el => {
+  elements.forEach((el) => {
     const value = parseFloat(el.getAttribute('data-value'));
     animateValue(el, 0, value, 1500);
   });
@@ -778,11 +957,16 @@ onMounted(() => {
   getCoopEfficiencyTrendData();
 });
 onUnmounted(() => {
-  if (crossRegionCoopCurrentFullscreenPanel.value) screenFull.off('change', handleCrossRegionCoopFullscreenChange);
-  if (govCoopCurrentFullscreenPanel.value) screenFull.off('change', handleGovCoopFullscreenChange);
-  if (specialCoopCurrentFullscreenPanel.value) screenFull.off('change', handleSpecialCoopFullscreenChange);
-  if (coopAnalysisCurrentFullscreenPanel.value) screenFull.off('change', handleCoopAnalysisFullscreenChange);
-  if (coopEfficiencyCurrentFullscreenPanel.value) screenFull.off('change', handleCoopEfficiencyFullscreenChange);
+  if (crossRegionCoopCurrentFullscreenPanel.value)
+    screenFull.off('change', handleCrossRegionCoopFullscreenChange);
+  if (govCoopCurrentFullscreenPanel.value)
+    screenFull.off('change', handleGovCoopFullscreenChange);
+  if (specialCoopCurrentFullscreenPanel.value)
+    screenFull.off('change', handleSpecialCoopFullscreenChange);
+  if (coopAnalysisCurrentFullscreenPanel.value)
+    screenFull.off('change', handleCoopAnalysisFullscreenChange);
+  if (coopEfficiencyCurrentFullscreenPanel.value)
+    screenFull.off('change', handleCoopEfficiencyFullscreenChange);
 });
 </script>
 
@@ -794,14 +978,15 @@ onUnmounted(() => {
           <el-tabs v-model="topLeftActiveTab" class="custom-tabs top-left-tabs">
             <el-tab-pane label="区域协同" name="tab1">
               <div class="header-actions">
-                <div class="actions-left">
-                </div>
+                <div class="actions-left"></div>
                 <div class="actions-right">
                   <div class="view-btn-group">
                     <el-button
                       v-for="item in crossRegionCoopViewBtnList"
                       :key="item"
-                      :type="activeCrossRegionCoopView === item ? 'primary' : ''"
+                      :type="
+                        activeCrossRegionCoopView === item ? 'primary' : ''
+                      "
                       plain
                       @click="changeCrossRegionCoopView(item)"
                       class="view-btn"
@@ -810,54 +995,143 @@ onUnmounted(() => {
                     </el-button>
                   </div>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
-                  <button class="panel-fullscreen-btn" @click="toggleCrossRegionCoopPanelFullscreen">
+                  <button
+                    class="panel-fullscreen-btn"
+                    @click="toggleCrossRegionCoopPanelFullscreen"
+                  >
                     <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
                   </button>
                 </div>
               </div>
               <!-- 区域协同 - 卡片视图 (总数、完成率、平均协同时长) 样式完全同协同统计分析 -->
-              <div v-if="activeCrossRegionCoopView === '卡片'" class="view-content">
+              <div
+                v-if="activeCrossRegionCoopView === '卡片'"
+                class="view-content"
+              >
                 <div class="indicator-cards">
-                  <div class="indicator-card normal total-card" style="cursor: default;">
+                  <div
+                    class="indicator-card normal total-card"
+                    style="cursor: default"
+                  >
                     <div class="indicator-title">跨区域协同总数</div>
                     <div class="indicator-value">
-                      <span :data-value="crossRegionCoopIndicators.totalCount" class="cross-region-coop-number-animate">
+                      <span
+                        :data-value="crossRegionCoopIndicators.totalCount"
+                        class="cross-region-coop-number-animate"
+                      >
                         {{ crossRegionCoopIndicators.totalCount }}
                       </span>
                     </div>
-                    <div class="indicator-trends"><span class="trend-item">累计协同事项</span></div>
+                    <div class="indicator-trends">
+                      <span class="trend-item">累计协同事项</span>
+                    </div>
                   </div>
-                  <div class="indicator-card normal rate-card" style="cursor: default;">
+                  <div
+                    class="indicator-card normal rate-card"
+                    style="cursor: default"
+                  >
                     <div class="indicator-title">协同完成率</div>
                     <div class="indicator-value">
-                      <span :data-value="crossRegionCoopIndicators.completeRate*100" class="cross-region-coop-number-animate">
-                        {{ (crossRegionCoopIndicators.completeRate*100).toFixed(1) }}%
+                      <span
+                        :data-value="
+                          crossRegionCoopIndicators.completeRate * 100
+                        "
+                        class="cross-region-coop-number-animate"
+                      >
+                        {{
+                          (
+                            crossRegionCoopIndicators.completeRate * 100
+                          ).toFixed(1)
+                        }}%
                       </span>
                     </div>
-                    <div class="indicator-trends"><span class="trend-item up">完成率高</span></div>
+                    <div class="indicator-trends">
+                      <span class="trend-item up">完成率高</span>
+                    </div>
                   </div>
-                  <div class="indicator-card normal satisfaction-card" style="cursor: default;">
+                  <div
+                    class="indicator-card normal satisfaction-card"
+                    style="cursor: default"
+                  >
                     <div class="indicator-title">平均协同时长</div>
                     <div class="indicator-value">
-                      <span :data-value="crossRegionCoopIndicators.avgCoopDuration" class="cross-region-coop-number-animate">
+                      <span
+                        :data-value="crossRegionCoopIndicators.avgCoopDuration"
+                        class="cross-region-coop-number-animate"
+                      >
                         {{ crossRegionCoopIndicators.avgCoopDuration }}小时
                       </span>
                     </div>
-                    <div class="indicator-trends"><span class="trend-item up">效率提升</span></div>
+                    <div class="indicator-trends">
+                      <span class="trend-item up">效率提升</span>
+                    </div>
                   </div>
                 </div>
               </div>
               <!-- 区域协同 - 柱状图视图 (区域协同数对比、任务类型协同数对比) 组件完全同协同统计分析 -->
-              <div v-if="activeCrossRegionCoopView === '柱状图'" class="view-content" style="width:100%;height:100%;padding:0 0.2vw;box-sizing:border-box;">
-                <div style="width:49%;height:100%;display:inline-block;vertical-align:top;box-sizing:border-box;" :key="crossRegionCoopChartRefreshKey">
-                  <VerticalBar1 :xAxis="crossRegionCoopAreaData.xAxis" :series="crossRegionCoopAreaData.series" unit="件" title="区域协同数对比" :baseFontScale="crossRegionCoopBaseFontScale" :activeIndices="crossRegionCoopActiveIndices"/>
+              <div
+                v-if="activeCrossRegionCoopView === '柱状图'"
+                class="view-content"
+                style="
+                  box-sizing: border-box;
+                  width: 100%;
+                  height: 100%;
+                  padding: 0 0.2vw;
+                "
+              >
+                <div
+                  style="
+                    box-sizing: border-box;
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                  :key="crossRegionCoopChartRefreshKey"
+                >
+                  <VerticalBar1
+                    :xAxis="crossRegionCoopAreaData.xAxis"
+                    :series="crossRegionCoopAreaData.series"
+                    unit="件"
+                    title="区域协同数对比"
+                    :baseFontScale="crossRegionCoopBaseFontScale"
+                    :activeIndices="crossRegionCoopActiveIndices"
+                  />
                 </div>
-                <div style="width:49%;height:100%;display:inline-block;vertical-align:top;box-sizing:border-box;border-left:0.3vh solid #02a6b5;padding-left:0.3vw;" :key="crossRegionCoopChartRefreshKey">
-                  <VerticalBar2 :xAxis="crossRegionCoopTaskTypeData.xAxis" :series="crossRegionCoopTaskTypeData.series" unit="件" title="任务类型协同数对比" :baseFontScale="crossRegionCoopBaseFontScale" :activeIndices="crossRegionCoopActiveIndices"/>
+                <div
+                  style="
+                    box-sizing: border-box;
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                  :key="crossRegionCoopChartRefreshKey"
+                >
+                  <VerticalBar2
+                    :xAxis="crossRegionCoopTaskTypeData.xAxis"
+                    :series="crossRegionCoopTaskTypeData.series"
+                    unit="件"
+                    title="任务类型协同数对比"
+                    :baseFontScale="crossRegionCoopBaseFontScale"
+                    :activeIndices="crossRegionCoopActiveIndices"
+                  />
                 </div>
               </div>
               <!-- 区域协同 - 折线图视图 (协同完成率趋势) 组件完全同协同统计分析 -->
-              <div v-if="activeCrossRegionCoopView === '折线图'" class="view-content" :key="crossRegionCoopChartRefreshKey" style="width:100%;height:100%;padding:0 0.2vw;box-sizing:border-box;">
+              <div
+                v-if="activeCrossRegionCoopView === '折线图'"
+                class="view-content"
+                :key="crossRegionCoopChartRefreshKey"
+                style="
+                  box-sizing: border-box;
+                  width: 100%;
+                  height: 100%;
+                  padding: 0 0.2vw;
+                "
+              >
                 <ChartLine1
                   :data="crossRegionCoopTrendData"
                   title="协同完成率趋势"
@@ -866,15 +1140,55 @@ onUnmounted(() => {
                 />
               </div>
               <!-- 区域协同 - 列表视图 样式+结构完全同政企协同视图 -->
-              <div v-if="activeCrossRegionCoopView === '列表'" class="view-content">
+              <div
+                v-if="activeCrossRegionCoopView === '列表'"
+                class="view-content"
+              >
                 <div class="gov-enterprise-table-box">
-                  <el-table class="gov-enterprise-coop-table" :data="crossRegionCoopList" border size="small" width="100%" height="100%" table-layout="fixed" highlight-current-row>
-                    <el-table-column prop="crossRegionCoopId" label="跨区域协同ID" align="center" />
-                    <el-table-column prop="coopTask" label="协同任务" align="center" min-width="120px"/>
-                    <el-table-column prop="launchAreaCode" label="发起区域" align="center" min-width="100px"/>
-                    <el-table-column prop="cooperateAreaCode" label="配合区域" align="center" min-width="100px"/>
-                    <el-table-column prop="progressNode" label="进度节点" align="center" min-width="180px" />
-                    <el-table-column label="协同完成率" align="center" min-width="100px">
+                  <el-table
+                    class="gov-enterprise-coop-table"
+                    :data="crossRegionCoopList"
+                    border
+                    size="small"
+                    width="100%"
+                    height="100%"
+                    table-layout="fixed"
+                    highlight-current-row
+                  >
+                    <el-table-column
+                      prop="crossRegionCoopId"
+                      label="跨区域协同ID"
+                      align="center"
+                    />
+                    <el-table-column
+                      prop="coopTask"
+                      label="协同任务"
+                      align="center"
+                      min-width="120px"
+                    />
+                    <el-table-column
+                      prop="launchAreaCode"
+                      label="发起区域"
+                      align="center"
+                      min-width="100px"
+                    />
+                    <el-table-column
+                      prop="cooperateAreaCode"
+                      label="配合区域"
+                      align="center"
+                      min-width="100px"
+                    />
+                    <el-table-column
+                      prop="progressNode"
+                      label="进度节点"
+                      align="center"
+                      min-width="180px"
+                    />
+                    <el-table-column
+                      label="协同完成率"
+                      align="center"
+                      min-width="100px"
+                    >
                       <template #default="scope">
                         {{ formatCompleteRate(scope.row.coopCompleteRate) }}
                       </template>
@@ -908,7 +1222,10 @@ onUnmounted(() => {
                 </el-button>
               </div>
               <el-icon color="#409eff" size="16"><Filter /></el-icon>
-              <button class="panel-fullscreen-btn" @click="toggleCoopAnalysisPanelFullscreen">
+              <button
+                class="panel-fullscreen-btn"
+                @click="toggleCoopAnalysisPanelFullscreen"
+              >
                 <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
               </button>
             </div>
@@ -917,65 +1234,193 @@ onUnmounted(() => {
           <!-- 协同统计分析 - 卡片视图 (核心统计指标) -->
           <div v-if="activeCoopAnalysisView === '卡片'" class="view-content">
             <div class="indicator-cards">
-              <div class="indicator-card normal total-card" style="cursor: default;">
+              <div
+                class="indicator-card normal total-card"
+                style="cursor: default"
+              >
                 <div class="indicator-title">协同事项总数</div>
                 <div class="indicator-value">
-                  <span :data-value="coopAnalysisIndicators.totalCoopCount" class="coop-analysis-number-animate">
+                  <span
+                    :data-value="coopAnalysisIndicators.totalCoopCount"
+                    class="coop-analysis-number-animate"
+                  >
                     {{ coopAnalysisIndicators.totalCoopCount }}
                   </span>
                 </div>
-                <div class="indicator-trends"><span class="trend-item">累计协同事项</span></div>
+                <div class="indicator-trends">
+                  <span class="trend-item">累计协同事项</span>
+                </div>
               </div>
-              <div class="indicator-card normal rate-card" style="cursor: default;">
+              <div
+                class="indicator-card normal rate-card"
+                style="cursor: default"
+              >
                 <div class="indicator-title">平均处理周期</div>
                 <div class="indicator-value">
-                  <span :data-value="coopAnalysisIndicators.avgHandleCycle" class="coop-analysis-number-animate">
+                  <span
+                    :data-value="coopAnalysisIndicators.avgHandleCycle"
+                    class="coop-analysis-number-animate"
+                  >
                     {{ coopAnalysisIndicators.avgHandleCycle }}天
                   </span>
                 </div>
-                <div class="indicator-trends"><span class="trend-item up">效率提升</span></div>
+                <div class="indicator-trends">
+                  <span class="trend-item up">效率提升</span>
+                </div>
               </div>
-              <div class="indicator-card normal rate-card" style="cursor: default;">
+              <div
+                class="indicator-card normal rate-card"
+                style="cursor: default"
+              >
                 <div class="indicator-title">协同完成率</div>
                 <div class="indicator-value">
-                  <span :data-value="coopAnalysisIndicators.finishRate*100" class="coop-analysis-number-animate">
-                    {{ (coopAnalysisIndicators.finishRate*100).toFixed(1) }}%
+                  <span
+                    :data-value="coopAnalysisIndicators.finishRate * 100"
+                    class="coop-analysis-number-animate"
+                  >
+                    {{ (coopAnalysisIndicators.finishRate * 100).toFixed(1) }}%
                   </span>
                 </div>
-                <div class="indicator-trends"><span class="trend-item up">完成率高</span></div>
+                <div class="indicator-trends">
+                  <span class="trend-item up">完成率高</span>
+                </div>
               </div>
-              <div class="indicator-card normal satisfaction-card" style="cursor: default;">
+              <div
+                class="indicator-card normal satisfaction-card"
+                style="cursor: default"
+              >
                 <div class="indicator-title">高优协同占比</div>
                 <div class="indicator-value">
-                  <span :data-value="coopAnalysisIndicators.highPriorityRate*100" class="coop-analysis-number-animate">
-                    {{ (coopAnalysisIndicators.highPriorityRate*100).toFixed(1) }}%
+                  <span
+                    :data-value="coopAnalysisIndicators.highPriorityRate * 100"
+                    class="coop-analysis-number-animate"
+                  >
+                    {{
+                      (coopAnalysisIndicators.highPriorityRate * 100).toFixed(
+                        1,
+                      )
+                    }}%
                   </span>
                 </div>
-                <div class="indicator-trends"><span class="trend-item up">重点关注</span></div>
+                <div class="indicator-trends">
+                  <span class="trend-item up">重点关注</span>
+                </div>
               </div>
             </div>
           </div>
 
           <!-- 协同统计分析 - 柱状图视图 (类型协同数对比、区域协同数对比) -->
-          <div v-if="activeCoopAnalysisView === '柱状图'" class="view-content" style="width:100%;height:100%;padding:0 0.2vw;box-sizing:border-box;">
-            <div style="width:49%;height:100%;display:inline-block;vertical-align:top;box-sizing:border-box;" :key="coopAnalysisChartRefreshKey">
-              <VerticalBar1 :xAxis="coopAnalysisTypeData.xAxis" :series="coopAnalysisTypeData.series" unit="件" title="类型协同数对比" :baseFontScale="coopAnalysisBaseFontScale" :activeIndices="coopAnalysisActiveIndices"/>
+          <div
+            v-if="activeCoopAnalysisView === '柱状图'"
+            class="view-content"
+            style="
+              box-sizing: border-box;
+              width: 100%;
+              height: 100%;
+              padding: 0 0.2vw;
+            "
+          >
+            <div
+              style="
+                box-sizing: border-box;
+                display: inline-block;
+                width: 49%;
+                height: 100%;
+                vertical-align: top;
+              "
+              :key="coopAnalysisChartRefreshKey"
+            >
+              <VerticalBar1
+                :xAxis="coopAnalysisTypeData.xAxis"
+                :series="coopAnalysisTypeData.series"
+                unit="件"
+                title="类型协同数对比"
+                :baseFontScale="coopAnalysisBaseFontScale"
+                :activeIndices="coopAnalysisActiveIndices"
+              />
             </div>
-            <div style="width:49%;height:100%;display:inline-block;vertical-align:top;box-sizing:border-box;border-left:0.3vh solid #02a6b5;padding-left:0.3vw;" :key="coopAnalysisChartRefreshKey">
-              <VerticalBar2 :xAxis="coopAnalysisAreaData.xAxis" :series="coopAnalysisAreaData.series" unit="件" title="区域协同数对比" :baseFontScale="coopAnalysisBaseFontScale" :activeIndices="coopAnalysisActiveIndices"/>
+            <div
+              style="
+                box-sizing: border-box;
+                display: inline-block;
+                width: 49%;
+                height: 100%;
+                padding-left: 0.3vw;
+                vertical-align: top;
+                border-left: 0.3vh solid #02a6b5;
+              "
+              :key="coopAnalysisChartRefreshKey"
+            >
+              <VerticalBar2
+                :xAxis="coopAnalysisAreaData.xAxis"
+                :series="coopAnalysisAreaData.series"
+                unit="件"
+                title="区域协同数对比"
+                :baseFontScale="coopAnalysisBaseFontScale"
+                :activeIndices="coopAnalysisActiveIndices"
+              />
             </div>
           </div>
 
           <!-- 协同统计分析 - 饼图视图 (行业协同占比、区域协同占比) -->
-          <div v-if="activeCoopAnalysisView === '饼图'" class="view-content" style="width:100%;height:100%;padding:0 0.2vw;box-sizing:border-box;">
-            <div style="width:49%;height:100%;display:inline-block;vertical-align:top;box-sizing:border-box;" :key="coopAnalysisChartRefreshKey">
-              <ChartPie2 :data="coopAnalysisIndustryRatioData" title="行业协同占比" :baseFontScale="coopAnalysisBaseFontScale" :activeIndices="coopAnalysisActiveIndices"/>
+          <div
+            v-if="activeCoopAnalysisView === '饼图'"
+            class="view-content"
+            style="
+              box-sizing: border-box;
+              width: 100%;
+              height: 100%;
+              padding: 0 0.2vw;
+            "
+          >
+            <div
+              style="
+                box-sizing: border-box;
+                display: inline-block;
+                width: 49%;
+                height: 100%;
+                vertical-align: top;
+              "
+              :key="coopAnalysisChartRefreshKey"
+            >
+              <ChartPie2
+                :data="coopAnalysisIndustryRatioData"
+                title="行业协同占比"
+                :baseFontScale="coopAnalysisBaseFontScale"
+                :activeIndices="coopAnalysisActiveIndices"
+              />
             </div>
-            <div style="width:49%;height:100%;display:inline-block;vertical-align:top;box-sizing:border-box;border-left:0.3vh solid #02a6b5;padding-left:0.3vw;" :key="coopAnalysisChartRefreshKey">
-              <ChartPie4 :data="coopAnalysisAreaRatioData" title="区域协同占比" :baseFontScale="coopAnalysisBaseFontScale" :activeIndices="coopAnalysisActiveIndices"/>
+            <div
+              style="
+                box-sizing: border-box;
+                display: inline-block;
+                width: 49%;
+                height: 100%;
+                padding-left: 0.3vw;
+                vertical-align: top;
+                border-left: 0.3vh solid #02a6b5;
+              "
+              :key="coopAnalysisChartRefreshKey"
+            >
+              <ChartPie4
+                :data="coopAnalysisAreaRatioData"
+                title="区域协同占比"
+                :baseFontScale="coopAnalysisBaseFontScale"
+                :activeIndices="coopAnalysisActiveIndices"
+              />
             </div>
           </div>
-          <div v-if="activeCoopAnalysisView === '折线图'" class="view-content" :key="coopAnalysisChartRefreshKey" style="width:100%;height:100%;padding:0 0.2vw;box-sizing:border-box;">
+          <div
+            v-if="activeCoopAnalysisView === '折线图'"
+            class="view-content"
+            :key="coopAnalysisChartRefreshKey"
+            style="
+              box-sizing: border-box;
+              width: 100%;
+              height: 100%;
+              padding: 0 0.2vw;
+            "
+          >
             <ChartLine1
               :data="coopAnalysisTrendData"
               title="协同事件近周期趋势"
@@ -993,9 +1438,16 @@ onUnmounted(() => {
                 style="width: 100%; height: 100%"
                 row-class-name="highfreq-top10-row"
               >
-                <el-table-column prop="rank" label="排名" width="80" align="center">
+                <el-table-column
+                  prop="rank"
+                  label="排名"
+                  width="80"
+                  align="center"
+                >
                   <template #default="scope">
-                    <div class="highfreq-top10-rank-tag">{{ scope.row.rank }}</div>
+                    <div class="highfreq-top10-rank-tag">
+                      {{ scope.row.rank }}
+                    </div>
                   </template>
                 </el-table-column>
                 <el-table-column prop="coopStatId" label="协同统计ID" />
@@ -1011,7 +1463,11 @@ onUnmounted(() => {
                     {{ formatNumber(scope.row.coopCount) }}
                   </template>
                 </el-table-column>
-                <el-table-column prop="top10CoopItem" label="协同事项" min-width="150"/>
+                <el-table-column
+                  prop="top10CoopItem"
+                  label="协同事项"
+                  min-width="150"
+                />
               </el-table>
             </div>
           </div>
@@ -1039,69 +1495,222 @@ onUnmounted(() => {
                 </el-button>
               </div>
               <el-icon color="#409eff" size="16"><Filter /></el-icon>
-              <button class="panel-fullscreen-btn" @click="toggleGovCoopPanelFullscreen">
+              <button
+                class="panel-fullscreen-btn"
+                @click="toggleGovCoopPanelFullscreen"
+              >
                 <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
               </button>
             </div>
           </div>
           <div v-if="activeGovCoopView === '卡片'" class="view-content">
             <div class="indicator-cards">
-              <div class="indicator-card normal total-card" style="cursor: default;">
+              <div
+                class="indicator-card normal total-card"
+                style="cursor: default"
+              >
                 <div class="indicator-title">政企协同总数</div>
                 <div class="indicator-value">
-                  <span :data-value="govCoopIndicators.totalCount" class="gov-coop-number-animate">
+                  <span
+                    :data-value="govCoopIndicators.totalCount"
+                    class="gov-coop-number-animate"
+                  >
                     {{ govCoopIndicators.totalCount }}
                   </span>
                 </div>
-                <div class="indicator-trends"><span class="trend-item">累计协同事项</span></div>
+                <div class="indicator-trends">
+                  <span class="trend-item">累计协同事项</span>
+                </div>
               </div>
-              <div class="indicator-card normal rate-card" style="cursor: default;">
+              <div
+                class="indicator-card normal rate-card"
+                style="cursor: default"
+              >
                 <div class="indicator-title">政企响应率</div>
                 <div class="indicator-value">
-                  <span :data-value="govCoopIndicators.responseRate*100" class="gov-coop-number-animate">
-                    {{ (govCoopIndicators.responseRate*100).toFixed(1) }}%
+                  <span
+                    :data-value="govCoopIndicators.responseRate * 100"
+                    class="gov-coop-number-animate"
+                  >
+                    {{ (govCoopIndicators.responseRate * 100).toFixed(1) }}%
                   </span>
                 </div>
-                <div class="indicator-trends"><span class="trend-item up">响应及时</span></div>
+                <div class="indicator-trends">
+                  <span class="trend-item up">响应及时</span>
+                </div>
               </div>
-              <div class="indicator-card normal satisfaction-card" style="cursor: default;">
+              <div
+                class="indicator-card normal satisfaction-card"
+                style="cursor: default"
+              >
                 <div class="indicator-title">政企满意度</div>
                 <div class="indicator-value">
-                  <span :data-value="govCoopIndicators.satisfactionRate" class="gov-coop-number-animate">
+                  <span
+                    :data-value="govCoopIndicators.satisfactionRate"
+                    class="gov-coop-number-animate"
+                  >
                     {{ govCoopIndicators.satisfactionRate.toFixed(1) }}%
                   </span>
                 </div>
-                <div class="indicator-trends"><span class="trend-item up">综合评分</span></div>
+                <div class="indicator-trends">
+                  <span class="trend-item up">综合评分</span>
+                </div>
               </div>
             </div>
           </div>
-          <div v-if="activeGovCoopView === '柱状图'" class="view-content" style="width:100%;height:100%;padding:0 0.2vw;box-sizing:border-box;">
-            <div style="width:49%;height:100%;display:inline-block;vertical-align:top;box-sizing:border-box;" :key="govCoopChartRefreshKey">
-              <VerticalBar2 :xAxis="govCoopDeptData.xAxis" :series="govCoopDeptData.series" unit="件" title="政府部门协同数对比" :baseFontScale="govCoopBaseFontScale" :activeIndices="govCoopActiveIndices"/>
+          <div
+            v-if="activeGovCoopView === '柱状图'"
+            class="view-content"
+            style="
+              box-sizing: border-box;
+              width: 100%;
+              height: 100%;
+              padding: 0 0.2vw;
+            "
+          >
+            <div
+              style="
+                box-sizing: border-box;
+                display: inline-block;
+                width: 49%;
+                height: 100%;
+                vertical-align: top;
+              "
+              :key="govCoopChartRefreshKey"
+            >
+              <VerticalBar2
+                :xAxis="govCoopDeptData.xAxis"
+                :series="govCoopDeptData.series"
+                unit="件"
+                title="政府部门协同数对比"
+                :baseFontScale="govCoopBaseFontScale"
+                :activeIndices="govCoopActiveIndices"
+              />
             </div>
-            <div style="width:49%;height:100%;display:inline-block;vertical-align:top;box-sizing:border-box;border-left:0.3vh solid #02a6b5;padding-left:0.3vw;" :key="govCoopChartRefreshKey">
-              <VerticalBar1 :xAxis="govCoopEntTypeData.xAxis" :series="govCoopEntTypeData.series" unit="件" title="企业类型协同数对比" :baseFontScale="govCoopBaseFontScale" :activeIndices="govCoopActiveIndices"/>
+            <div
+              style="
+                box-sizing: border-box;
+                display: inline-block;
+                width: 49%;
+                height: 100%;
+                padding-left: 0.3vw;
+                vertical-align: top;
+                border-left: 0.3vh solid #02a6b5;
+              "
+              :key="govCoopChartRefreshKey"
+            >
+              <VerticalBar1
+                :xAxis="govCoopEntTypeData.xAxis"
+                :series="govCoopEntTypeData.series"
+                unit="件"
+                title="企业类型协同数对比"
+                :baseFontScale="govCoopBaseFontScale"
+                :activeIndices="govCoopActiveIndices"
+              />
             </div>
           </div>
-          <div v-if="activeGovCoopView === '饼图'" class="view-content" style="width:100%;height:100%;padding:0 0.2vw;box-sizing:border-box;">
-            <div style="width:49%;height:100%;display:inline-block;vertical-align:top;box-sizing:border-box;" :key="govCoopChartRefreshKey">
-              <ChartPie1 :data="govCoopItemRatioData" title="协同事项类型占比" :baseFontScale="govCoopBaseFontScale" :activeIndices="govCoopActiveIndices"/>
+          <div
+            v-if="activeGovCoopView === '饼图'"
+            class="view-content"
+            style="
+              box-sizing: border-box;
+              width: 100%;
+              height: 100%;
+              padding: 0 0.2vw;
+            "
+          >
+            <div
+              style="
+                box-sizing: border-box;
+                display: inline-block;
+                width: 49%;
+                height: 100%;
+                vertical-align: top;
+              "
+              :key="govCoopChartRefreshKey"
+            >
+              <ChartPie1
+                :data="govCoopItemRatioData"
+                title="协同事项类型占比"
+                :baseFontScale="govCoopBaseFontScale"
+                :activeIndices="govCoopActiveIndices"
+              />
             </div>
-            <div style="width:49%;height:100%;display:inline-block;vertical-align:top;box-sizing:border-box;border-left:0.3vh solid #02a6b5;padding-left:0.3vw;" :key="govCoopChartRefreshKey">
-              <ChartPie2 :data="govCoopSatisfactionRatioData" title="满意度评价占比" :baseFontScale="govCoopBaseFontScale" :activeIndices="govCoopActiveIndices"/>
+            <div
+              style="
+                box-sizing: border-box;
+                display: inline-block;
+                width: 49%;
+                height: 100%;
+                padding-left: 0.3vw;
+                vertical-align: top;
+                border-left: 0.3vh solid #02a6b5;
+              "
+              :key="govCoopChartRefreshKey"
+            >
+              <ChartPie2
+                :data="govCoopSatisfactionRatioData"
+                title="满意度评价占比"
+                :baseFontScale="govCoopBaseFontScale"
+                :activeIndices="govCoopActiveIndices"
+              />
             </div>
           </div>
           <div v-if="activeGovCoopView === '列表'" class="view-content">
             <div class="gov-enterprise-table-box">
-              <el-table class="gov-enterprise-coop-table" :data="govCoopList" border size="small" width="100%" height="100%" table-layout="fixed" highlight-current-row @row-click="handleGovCoopRowClick">
-                <el-table-column prop="govEnterpriseCoopId" label="政企协同ID" align="center" />
-                <el-table-column prop="coopItem" label="协同事项" align="center" min-width="120px"/>
-                <el-table-column prop="govDepartment" label="政府部门" align="center" min-width="100px"/>
-                <el-table-column prop="merchantId" label="企业ID" align="center" />
-                <el-table-column prop="progressFeedback" label="进度反馈" align="center" min-width="180px" />
-                <el-table-column label="满意度评价" align="center" min-width="100px">
+              <el-table
+                class="gov-enterprise-coop-table"
+                :data="govCoopList"
+                border
+                size="small"
+                width="100%"
+                height="100%"
+                table-layout="fixed"
+                highlight-current-row
+                @row-click="handleGovCoopRowClick"
+              >
+                <el-table-column
+                  prop="govEnterpriseCoopId"
+                  label="政企协同ID"
+                  align="center"
+                />
+                <el-table-column
+                  prop="coopItem"
+                  label="协同事项"
+                  align="center"
+                  min-width="120px"
+                />
+                <el-table-column
+                  prop="govDepartment"
+                  label="政府部门"
+                  align="center"
+                  min-width="100px"
+                />
+                <el-table-column
+                  prop="merchantId"
+                  label="企业ID"
+                  align="center"
+                />
+                <el-table-column
+                  prop="progressFeedback"
+                  label="进度反馈"
+                  align="center"
+                  min-width="180px"
+                />
+                <el-table-column
+                  label="满意度评价"
+                  align="center"
+                  min-width="100px"
+                >
                   <template #default="scope">
-                    <el-tag :type="getGovCoopSatisfactionTagType(scope.row.satisfactionEvaluation)">{{ scope.row.satisfactionEvaluation }}</el-tag>
+                    <el-tag
+                      :type="
+                        getGovCoopSatisfactionTagType(
+                          scope.row.satisfactionEvaluation,
+                        )
+                      "
+                      >{{ scope.row.satisfactionEvaluation }}</el-tag
+                    >
                   </template>
                 </el-table-column>
               </el-table>
@@ -1130,7 +1739,10 @@ onUnmounted(() => {
                 </el-button>
               </div>
               <el-icon color="#409eff" size="16"><Filter /></el-icon>
-              <button class="panel-fullscreen-btn" @click="toggleSpecialCoopPanelFullscreen">
+              <button
+                class="panel-fullscreen-btn"
+                @click="toggleSpecialCoopPanelFullscreen"
+              >
                 <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
               </button>
             </div>
@@ -1138,64 +1750,210 @@ onUnmounted(() => {
           <!-- 专属协同-卡片视图 (总数、完成率、平均协同周期) -->
           <div v-if="activeSpecialCoopView === '卡片'" class="view-content">
             <div class="indicator-cards">
-              <div class="indicator-card normal total-card" style="cursor: default;">
+              <div
+                class="indicator-card normal total-card"
+                style="cursor: default"
+              >
                 <div class="indicator-title">专属协同总数</div>
                 <div class="indicator-value">
-                  <span :data-value="specialCoopIndicators.totalCount" class="special-coop-number-animate">
+                  <span
+                    :data-value="specialCoopIndicators.totalCount"
+                    class="special-coop-number-animate"
+                  >
                     {{ specialCoopIndicators.totalCount }}
                   </span>
                 </div>
-                <div class="indicator-trends"><span class="trend-item">累计协同事项</span></div>
+                <div class="indicator-trends">
+                  <span class="trend-item">累计协同事项</span>
+                </div>
               </div>
-              <div class="indicator-card normal rate-card" style="cursor: default;">
+              <div
+                class="indicator-card normal rate-card"
+                style="cursor: default"
+              >
                 <div class="indicator-title">协同完成率</div>
                 <div class="indicator-value">
-                  <span :data-value="specialCoopIndicators.completeRate*100" class="special-coop-number-animate">
-                    {{ (specialCoopIndicators.completeRate*100).toFixed(1) }}%
+                  <span
+                    :data-value="specialCoopIndicators.completeRate * 100"
+                    class="special-coop-number-animate"
+                  >
+                    {{ (specialCoopIndicators.completeRate * 100).toFixed(1) }}%
                   </span>
                 </div>
-                <div class="indicator-trends"><span class="trend-item up">高效完成</span></div>
+                <div class="indicator-trends">
+                  <span class="trend-item up">高效完成</span>
+                </div>
               </div>
-              <div class="indicator-card normal satisfaction-card" style="cursor: default;">
+              <div
+                class="indicator-card normal satisfaction-card"
+                style="cursor: default"
+              >
                 <div class="indicator-title">平均协同周期</div>
                 <div class="indicator-value">
-                  <span :data-value="specialCoopIndicators.averageCycle" class="special-coop-number-animate">
+                  <span
+                    :data-value="specialCoopIndicators.averageCycle"
+                    class="special-coop-number-animate"
+                  >
                     {{ specialCoopIndicators.averageCycle }}天
                   </span>
                 </div>
-                <div class="indicator-trends"><span class="trend-item up">周期缩短</span></div>
+                <div class="indicator-trends">
+                  <span class="trend-item up">周期缩短</span>
+                </div>
               </div>
             </div>
           </div>
           <!-- 专属协同-柱状图视图 (场景协同数对比、责任单位协同数对比) -->
-          <div v-if="activeSpecialCoopView === '柱状图'" class="view-content" style="width:100%;height:100%;padding:0 0.2vw;box-sizing:border-box;">
-            <div style="width:49%;height:100%;display:inline-block;vertical-align:top;box-sizing:border-box;" :key="specialCoopChartRefreshKey">
-              <VerticalBar1 :xAxis="specialCoopSceneData.xAxis" :series="specialCoopSceneData.series" unit="件" title="场景协同数对比" :baseFontScale="specialCoopBaseFontScale" :activeIndices="specialCoopActiveIndices"/>
+          <div
+            v-if="activeSpecialCoopView === '柱状图'"
+            class="view-content"
+            style="
+              box-sizing: border-box;
+              width: 100%;
+              height: 100%;
+              padding: 0 0.2vw;
+            "
+          >
+            <div
+              style="
+                box-sizing: border-box;
+                display: inline-block;
+                width: 49%;
+                height: 100%;
+                vertical-align: top;
+              "
+              :key="specialCoopChartRefreshKey"
+            >
+              <VerticalBar1
+                :xAxis="specialCoopSceneData.xAxis"
+                :series="specialCoopSceneData.series"
+                unit="件"
+                title="场景协同数对比"
+                :baseFontScale="specialCoopBaseFontScale"
+                :activeIndices="specialCoopActiveIndices"
+              />
             </div>
-            <div style="width:49%;height:100%;display:inline-block;vertical-align:top;box-sizing:border-box;border-left:0.3vh solid #02a6b5;padding-left:0.3vw;" :key="specialCoopChartRefreshKey">
-              <VerticalBar2 :xAxis="specialCoopDeptData.xAxis" :series="specialCoopDeptData.series" unit="件" title="责任单位协同数对比" :baseFontScale="specialCoopBaseFontScale" :activeIndices="specialCoopActiveIndices"/>
+            <div
+              style="
+                box-sizing: border-box;
+                display: inline-block;
+                width: 49%;
+                height: 100%;
+                padding-left: 0.3vw;
+                vertical-align: top;
+                border-left: 0.3vh solid #02a6b5;
+              "
+              :key="specialCoopChartRefreshKey"
+            >
+              <VerticalBar2
+                :xAxis="specialCoopDeptData.xAxis"
+                :series="specialCoopDeptData.series"
+                unit="件"
+                title="责任单位协同数对比"
+                :baseFontScale="specialCoopBaseFontScale"
+                :activeIndices="specialCoopActiveIndices"
+              />
             </div>
           </div>
           <!-- 专属协同-饼图视图 (协同场景占比、协同状态占比) -->
-          <div v-if="activeSpecialCoopView === '饼图'" class="view-content" style="width:100%;height:100%;padding:0 0.2vw;box-sizing:border-box;">
-            <div style="width:49%;height:100%;display:inline-block;vertical-align:top;box-sizing:border-box;" :key="specialCoopChartRefreshKey">
-              <ChartPie1 :data="specialCoopSceneRatioData" title="协同场景占比" :baseFontScale="specialCoopBaseFontScale" :activeIndices="specialCoopActiveIndices"/>
+          <div
+            v-if="activeSpecialCoopView === '饼图'"
+            class="view-content"
+            style="
+              box-sizing: border-box;
+              width: 100%;
+              height: 100%;
+              padding: 0 0.2vw;
+            "
+          >
+            <div
+              style="
+                box-sizing: border-box;
+                display: inline-block;
+                width: 49%;
+                height: 100%;
+                vertical-align: top;
+              "
+              :key="specialCoopChartRefreshKey"
+            >
+              <ChartPie1
+                :data="specialCoopSceneRatioData"
+                title="协同场景占比"
+                :baseFontScale="specialCoopBaseFontScale"
+                :activeIndices="specialCoopActiveIndices"
+              />
             </div>
-            <div style="width:49%;height:100%;display:inline-block;vertical-align:top;box-sizing:border-box;border-left:0.3vh solid #02a6b5;padding-left:0.3vw;" :key="specialCoopChartRefreshKey">
-              <ChartPie2 :data="specialCoopStatusRatioData" title="协同状态占比" :baseFontScale="specialCoopBaseFontScale" :activeIndices="specialCoopActiveIndices"/>
+            <div
+              style="
+                box-sizing: border-box;
+                display: inline-block;
+                width: 49%;
+                height: 100%;
+                padding-left: 0.3vw;
+                vertical-align: top;
+                border-left: 0.3vh solid #02a6b5;
+              "
+              :key="specialCoopChartRefreshKey"
+            >
+              <ChartPie2
+                :data="specialCoopStatusRatioData"
+                title="协同状态占比"
+                :baseFontScale="specialCoopBaseFontScale"
+                :activeIndices="specialCoopActiveIndices"
+              />
             </div>
           </div>
           <!-- 专属协同-列表视图 -->
           <div v-if="activeSpecialCoopView === '列表'" class="view-content">
             <div class="gov-enterprise-table-box">
-              <el-table class="gov-enterprise-coop-table" :data="specialCoopList" border size="small" width="100%" height="100%" table-layout="fixed" highlight-current-row>
-                <el-table-column prop="specialCoopId" label="专属协同ID" align="center" />
-                <el-table-column prop="coopScene" label="协同场景" align="center" min-width="160px"/>
-                <el-table-column prop="coopRule" label="协同规则" align="center" min-width="180px"/>
-                <el-table-column prop="responsibilityDivision" label="责任分工" align="center" min-width="200px"/>
-                <el-table-column prop="coopResult" label="协同结果" align="center" min-width="180px"/>
-                <el-table-column prop="completeTime" label="完成时间" align="center" min-width="120px">
-                  <template #default="scope">{{ formatSpecialCoopTimeStamp(scope.row.completeTime) }}</template>
+              <el-table
+                class="gov-enterprise-coop-table"
+                :data="specialCoopList"
+                border
+                size="small"
+                width="100%"
+                height="100%"
+                table-layout="fixed"
+                highlight-current-row
+              >
+                <el-table-column
+                  prop="specialCoopId"
+                  label="专属协同ID"
+                  align="center"
+                />
+                <el-table-column
+                  prop="coopScene"
+                  label="协同场景"
+                  align="center"
+                  min-width="160px"
+                />
+                <el-table-column
+                  prop="coopRule"
+                  label="协同规则"
+                  align="center"
+                  min-width="180px"
+                />
+                <el-table-column
+                  prop="responsibilityDivision"
+                  label="责任分工"
+                  align="center"
+                  min-width="200px"
+                />
+                <el-table-column
+                  prop="coopResult"
+                  label="协同结果"
+                  align="center"
+                  min-width="180px"
+                />
+                <el-table-column
+                  prop="completeTime"
+                  label="完成时间"
+                  align="center"
+                  min-width="120px"
+                >
+                  <template #default="scope">{{
+                    formatSpecialCoopTimeStamp(scope.row.completeTime)
+                  }}</template>
                 </el-table-column>
               </el-table>
             </div>
@@ -1223,7 +1981,10 @@ onUnmounted(() => {
                 </el-button>
               </div>
               <el-icon color="#409eff" size="16"><Filter /></el-icon>
-              <button class="panel-fullscreen-btn" @click="toggleCoopEfficiencyPanelFullscreen">
+              <button
+                class="panel-fullscreen-btn"
+                @click="toggleCoopEfficiencyPanelFullscreen"
+              >
                 <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
               </button>
             </div>
@@ -1232,55 +1993,161 @@ onUnmounted(() => {
           <!-- 协同效率评估 - 卡片视图 (平均响应时长、平均处置时长、成效达标率) -->
           <div v-if="activeCoopEfficiencyView === '卡片'" class="view-content">
             <div class="indicator-cards">
-              <div class="indicator-card normal total-card" style="cursor: default;">
+              <div
+                class="indicator-card normal total-card"
+                style="cursor: default"
+              >
                 <div class="indicator-title">平均响应时长</div>
                 <div class="indicator-value">
-                  <span :data-value="coopEfficiencyIndicators.avgResponseDuration" class="coop-efficiency-number-animate">
+                  <span
+                    :data-value="coopEfficiencyIndicators.avgResponseDuration"
+                    class="coop-efficiency-number-animate"
+                  >
                     {{ coopEfficiencyIndicators.avgResponseDuration }}小时
                   </span>
                 </div>
-                <div class="indicator-trends"><span class="trend-item">极速响应</span></div>
+                <div class="indicator-trends">
+                  <span class="trend-item">极速响应</span>
+                </div>
               </div>
-              <div class="indicator-card normal rate-card" style="cursor: default;">
+              <div
+                class="indicator-card normal rate-card"
+                style="cursor: default"
+              >
                 <div class="indicator-title">平均处置时长</div>
                 <div class="indicator-value">
-                  <span :data-value="coopEfficiencyIndicators.avgDisposalDuration" class="coop-efficiency-number-animate">
+                  <span
+                    :data-value="coopEfficiencyIndicators.avgDisposalDuration"
+                    class="coop-efficiency-number-animate"
+                  >
                     {{ coopEfficiencyIndicators.avgDisposalDuration }}小时
                   </span>
                 </div>
-                <div class="indicator-trends"><span class="trend-item up">处置高效</span></div>
+                <div class="indicator-trends">
+                  <span class="trend-item up">处置高效</span>
+                </div>
               </div>
-              <div class="indicator-card normal satisfaction-card" style="cursor: default;">
+              <div
+                class="indicator-card normal satisfaction-card"
+                style="cursor: default"
+              >
                 <div class="indicator-title">平均成效达标率</div>
                 <div class="indicator-value">
-                  <span :data-value="coopEfficiencyIndicators.avgEffectAchievementRate*100" class="coop-efficiency-number-animate">
-                    {{ (coopEfficiencyIndicators.avgEffectAchievementRate*100).toFixed(1) }}%
+                  <span
+                    :data-value="
+                      coopEfficiencyIndicators.avgEffectAchievementRate * 100
+                    "
+                    class="coop-efficiency-number-animate"
+                  >
+                    {{
+                      (
+                        coopEfficiencyIndicators.avgEffectAchievementRate * 100
+                      ).toFixed(1)
+                    }}%
                   </span>
                 </div>
-                <div class="indicator-trends"><span class="trend-item up">达标率高</span></div>
+                <div class="indicator-trends">
+                  <span class="trend-item up">达标率高</span>
+                </div>
               </div>
             </div>
           </div>
 
           <!-- 协同效率评估 - 柱状图视图 (类型协同效率对比、区域协同效率对比) -->
-          <div v-if="activeCoopEfficiencyView === '柱状图'" class="view-content" style="width:100%;height:100%;padding:0 0.2vw;box-sizing:border-box;">
-            <div style="width:49%;height:100%;display:inline-block;vertical-align:top;box-sizing:border-box;" :key="coopEfficiencyChartRefreshKey">
-              <VerticalBar1 :xAxis="coopEfficiencyTypeData.xAxis" :series="coopEfficiencyTypeData.series" unit="小时" title="类型协同效率对比" :baseFontScale="coopEfficiencyBaseFontScale" :activeIndices="coopEfficiencyActiveIndices"/>
+          <div
+            v-if="activeCoopEfficiencyView === '柱状图'"
+            class="view-content"
+            style="
+              box-sizing: border-box;
+              width: 100%;
+              height: 100%;
+              padding: 0 0.2vw;
+            "
+          >
+            <div
+              style="
+                box-sizing: border-box;
+                display: inline-block;
+                width: 49%;
+                height: 100%;
+                vertical-align: top;
+              "
+              :key="coopEfficiencyChartRefreshKey"
+            >
+              <VerticalBar1
+                :xAxis="coopEfficiencyTypeData.xAxis"
+                :series="coopEfficiencyTypeData.series"
+                unit="小时"
+                title="类型协同效率对比"
+                :baseFontScale="coopEfficiencyBaseFontScale"
+                :activeIndices="coopEfficiencyActiveIndices"
+              />
             </div>
-            <div style="width:49%;height:100%;display:inline-block;vertical-align:top;box-sizing:border-box;border-left:0.3vh solid #02a6b5;padding-left:0.3vw;" :key="coopEfficiencyChartRefreshKey">
-              <VerticalBar2 :xAxis="coopEfficiencyAreaData.xAxis" :series="coopEfficiencyAreaData.series" unit="小时" title="区域协同效率对比" :baseFontScale="coopEfficiencyBaseFontScale" :activeIndices="coopEfficiencyActiveIndices"/>
+            <div
+              style="
+                box-sizing: border-box;
+                display: inline-block;
+                width: 49%;
+                height: 100%;
+                padding-left: 0.3vw;
+                vertical-align: top;
+                border-left: 0.3vh solid #02a6b5;
+              "
+              :key="coopEfficiencyChartRefreshKey"
+            >
+              <VerticalBar2
+                :xAxis="coopEfficiencyAreaData.xAxis"
+                :series="coopEfficiencyAreaData.series"
+                unit="小时"
+                title="区域协同效率对比"
+                :baseFontScale="coopEfficiencyBaseFontScale"
+                :activeIndices="coopEfficiencyActiveIndices"
+              />
             </div>
           </div>
 
           <!-- 协同效率评估 - 饼图视图 (问题复发率占比) -->
-          <div v-if="activeCoopEfficiencyView === '饼图'" class="view-content" style="width:100%;height:100%;padding:0 0.2vw;box-sizing:border-box;">
-            <div style="width:100%;height:100%;display:inline-block;vertical-align:top;box-sizing:border-box;" :key="coopEfficiencyChartRefreshKey">
-              <ChartPie2 :data="coopEfficiencyRecurrenceRatioData" title="问题复发率占比" :baseFontScale="coopEfficiencyBaseFontScale" :activeIndices="coopEfficiencyActiveIndices"/>
+          <div
+            v-if="activeCoopEfficiencyView === '饼图'"
+            class="view-content"
+            style="
+              box-sizing: border-box;
+              width: 100%;
+              height: 100%;
+              padding: 0 0.2vw;
+            "
+          >
+            <div
+              style="
+                box-sizing: border-box;
+                display: inline-block;
+                width: 100%;
+                height: 100%;
+                vertical-align: top;
+              "
+              :key="coopEfficiencyChartRefreshKey"
+            >
+              <ChartPie2
+                :data="coopEfficiencyRecurrenceRatioData"
+                title="问题复发率占比"
+                :baseFontScale="coopEfficiencyBaseFontScale"
+                :activeIndices="coopEfficiencyActiveIndices"
+              />
             </div>
           </div>
 
           <!-- 协同效率评估 - 折线图视图 (协同效率趋势) -->
-          <div v-if="activeCoopEfficiencyView === '折线图'" class="view-content" :key="coopEfficiencyChartRefreshKey" style="width:100%;height:100%;padding:0 0.2vw;box-sizing:border-box;">
+          <div
+            v-if="activeCoopEfficiencyView === '折线图'"
+            class="view-content"
+            :key="coopEfficiencyChartRefreshKey"
+            style="
+              box-sizing: border-box;
+              width: 100%;
+              height: 100%;
+              padding: 0 0.2vw;
+            "
+          >
             <ChartLine1
               :data="coopEfficiencyTrendData"
               title="协同效率趋势"
@@ -1292,29 +2159,85 @@ onUnmounted(() => {
           <!-- 协同效率评估 - 列表视图 (效率瓶颈及优化建议) 样式结构完全同政企协同视图 -->
           <div v-if="activeCoopEfficiencyView === '列表'" class="view-content">
             <div class="gov-enterprise-table-box">
-              <el-table class="gov-enterprise-coop-table" :data="coopEfficiencyList" border size="small" width="100%" height="100%" table-layout="fixed" highlight-current-row>
-                <el-table-column prop="coopEfficiencyId" label="协同效率评估ID" align="center" />
-                <el-table-column prop="coopType" label="协同类型" align="center">
+              <el-table
+                class="gov-enterprise-coop-table"
+                :data="coopEfficiencyList"
+                border
+                size="small"
+                width="100%"
+                height="100%"
+                table-layout="fixed"
+                highlight-current-row
+              >
+                <el-table-column
+                  prop="coopEfficiencyId"
+                  label="协同效率评估ID"
+                  align="center"
+                />
+                <el-table-column
+                  prop="coopType"
+                  label="协同类型"
+                  align="center"
+                >
                   <template #default="scope">
                     <el-tag :type="getCoopTypeTagType(scope.row.coopType)">
                       {{ getCoopTypeName(scope.row.coopType) }}
                     </el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column prop="responseDuration" label="响应时长(小时)" align="center" min-width="100px">
-                  <template #default="scope">{{ scope.row.responseDuration.toFixed(1) }}</template>
+                <el-table-column
+                  prop="responseDuration"
+                  label="响应时长(小时)"
+                  align="center"
+                  min-width="100px"
+                >
+                  <template #default="scope">{{
+                    scope.row.responseDuration.toFixed(1)
+                  }}</template>
                 </el-table-column>
-                <el-table-column prop="disposalDuration" label="处置时长(小时)" align="center" min-width="100px">
-                  <template #default="scope">{{ scope.row.disposalDuration.toFixed(1) }}</template>
+                <el-table-column
+                  prop="disposalDuration"
+                  label="处置时长(小时)"
+                  align="center"
+                  min-width="100px"
+                >
+                  <template #default="scope">{{
+                    scope.row.disposalDuration.toFixed(1)
+                  }}</template>
                 </el-table-column>
-                <el-table-column prop="collaborationCost" label="协同成本" align="center" min-width="100px">
-                  <template #default="scope">{{ formatNumber(scope.row.collaborationCost) }}</template>
+                <el-table-column
+                  prop="collaborationCost"
+                  label="协同成本"
+                  align="center"
+                  min-width="100px"
+                >
+                  <template #default="scope">{{
+                    formatNumber(scope.row.collaborationCost)
+                  }}</template>
                 </el-table-column>
-                <el-table-column prop="effectAchievementRate" label="成效达标率" align="center" min-width="100px">
-                  <template #default="scope">{{ (scope.row.effectAchievementRate*100).toFixed(1) }}%</template>
+                <el-table-column
+                  prop="effectAchievementRate"
+                  label="成效达标率"
+                  align="center"
+                  min-width="100px"
+                >
+                  <template #default="scope"
+                    >{{
+                      (scope.row.effectAchievementRate * 100).toFixed(1)
+                    }}%</template
+                  >
                 </el-table-column>
-                <el-table-column prop="problemRecurrenceRate" label="问题复发率" align="center" min-width="100px">
-                  <template #default="scope">{{ (scope.row.problemRecurrenceRate*100).toFixed(1) }}%</template>
+                <el-table-column
+                  prop="problemRecurrenceRate"
+                  label="问题复发率"
+                  align="center"
+                  min-width="100px"
+                >
+                  <template #default="scope"
+                    >{{
+                      (scope.row.problemRecurrenceRate * 100).toFixed(1)
+                    }}%</template
+                  >
                 </el-table-column>
               </el-table>
             </div>
@@ -1330,6 +2253,18 @@ onUnmounted(() => {
 @import '../../../templatesstyle/common';
 @import '../../../templatesstyle/table1';
 @import '../../../templatesstyle/table2_top10';
+
+// 动画定义
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}
 
 // 最外层容器 - 保留原有，表格零溢出核心配置已生效
 .page-container {
@@ -1352,6 +2287,7 @@ onUnmounted(() => {
   color: #0cf;
   background: url('../../images/head_bg.png') no-repeat;
   background-size: 100% 100%;
+
   .head-name {
     position: absolute;
     left: 50%;
@@ -1370,33 +2306,34 @@ onUnmounted(() => {
   height: 100%;
   min-height: 0;
   padding: 0.5vw;
+  overflow: hidden !important;
   background: url('../../images/line(1).png') rgb(255 255 255 / 4%);
   border: 0.2vh solid rgb(25 186 139 / 17%);
-  overflow: hidden !important;
 }
 
 // 新增：面板头部样式 完全照搬参考代码
 .panel-header {
-  padding: 1vh 1.2vw;
-  border-bottom: 1px solid rgba(0, 204, 255, 0.1);
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  padding: 1vh 1.2vw;
+  border-bottom: 1px solid rgb(0 204 255 / 10%);
+
   h2 {
-    margin: 0;
-    font-size: 1.1vw;
-    color: #ffb800;
-    font-weight: 600;
     display: flex;
     align-items: center;
+    margin: 0;
+    font-size: 1.1vw;
+    font-weight: 600;
+    color: #ffb800;
   }
 }
 // 新增：面板主体样式 完全照搬参考代码
 .panel-body {
   flex: 1;
+  height: calc(100% - 6vh);
   padding: 1.2vw;
   overflow: hidden;
-  height: calc(100% - 6vh);
 }
 
 .mainbox {
@@ -1415,8 +2352,14 @@ onUnmounted(() => {
   height: 50%;
   overflow: hidden !important;
 }
-.top-left { flex: 1; }
-.top-right { flex: 1; }
+
+.top-left {
+  flex: 1;
+}
+
+.top-right {
+  flex: 1;
+}
 
 .bottom {
   display: flex;
@@ -1424,173 +2367,243 @@ onUnmounted(() => {
   height: 46%;
   overflow: hidden !important;
 }
-.bottom-left { flex: 1; }
-.bottom-middle { flex: 1; }
-.bottom-right { flex: 1; }
+
+.bottom-left {
+  flex: 1;
+}
+
+.bottom-middle {
+  flex: 1;
+}
+
+.bottom-right {
+  flex: 1;
+}
 
 .header-actions {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   width: 100%;
-  margin-bottom: 0.6vw;
   padding: 0 0.2vw;
+  margin-bottom: 0.6vw;
 
   .actions-left p {
+    margin: 0;
     font-size: 0.9vw;
     font-weight: 500;
     color: #00ffd0;
-    margin: 0;
   }
 
-  .view-btn-group { display: flex; margin-right: 0.5vw; }
+  .view-btn-group {
+    display: flex;
+    margin-right: 0.5vw;
+  }
+
   :deep(.view-btn) {
-    font-size: 0.6vw;
     padding: 0 0.4vw;
+    font-size: 0.6vw;
+    color: #fff;
     background-color: transparent;
     border-color: rgb(25 186 139 / 60%);
-    color: #fff;
-    &:hover { border-color: #00ffd0; color: #00ffd0; }
+
+    &:hover {
+      color: #00ffd0;
+      border-color: #00ffd0;
+    }
+
     &.el-button--primary {
+      color: #afc2ff;
       background-color: rgb(0 204 255 / 20%);
       border-color: rgb(25 186 139 / 60%);
-      color: #afc2ff;
     }
   }
+
   .panel-fullscreen-btn {
+    margin-right: 0.5vw;
+    cursor: pointer;
     background: transparent;
     border: none;
-    cursor: pointer;
-    margin-right: 0.5vw;
   }
 }
 
 // 核心零溢出样式 - 四视图共用，表格永不撑大面板
 .view-content {
+  box-sizing: border-box !important;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
   width: 100% !important;
   max-width: 100% !important;
   height: calc(100% - 2vh) !important;
-  flex: 1;
-  box-sizing: border-box !important;
   overflow: hidden !important;
+}
+
+.content-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-.content-placeholder {
   width: 100%;
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-size: 1vw;
   color: #00ffd0;
 }
 
 // 完整卡片样式 - 四视图共用，保留所有动画和配色
 .indicator-cards {
+  box-sizing: border-box;
   display: flex;
   gap: 0.8vw;
-  box-sizing: border-box;
   align-items: center;
   justify-content: center;
   width: 100%;
   height: 100%;
 }
+
 .indicator-card {
-  flex: 0 0 8vw;
-  padding: 6vh 0;
-  background: rgba(0, 30, 60, 0.6);
-  border-radius: 8px;
-  transition: all 0.3s;
   display: flex;
+  flex: 0 0 8vw;
   flex-direction: column;
   justify-content: space-between;
+  padding: 6vh 0;
+  background: rgb(0 30 60 / 60%);
   border: 0.1vw solid transparent;
-  &:hover { transform: translateY(-5px); }
+  border-radius: 8px;
+  transition: all 0.3s;
+
+  &:hover {
+    transform: translateY(-5px);
+  }
+
   .indicator-title {
-    font-size: 1vw;
-    text-align: center;
-    font-weight: bold;
-    letter-spacing: 0.2vw;
     margin-top: 0.1vh;
-  }
-  .indicator-value {
-    font-size: 1.8vw;
-    text-align: center;
+    font-size: 1vw;
     font-weight: bold;
-    margin: 0.5vw 0;
-    transition: all 0.3s;
-    margin-bottom: 1vh;
+    text-align: center;
+    letter-spacing: 0.2vw;
   }
+
+  .indicator-value {
+    margin: 0.5vw 0;
+    margin-bottom: 1vh;
+    font-size: 1.8vw;
+    font-weight: bold;
+    text-align: center;
+    transition: all 0.3s;
+  }
+
   .indicator-trends {
     display: flex;
     justify-content: center;
-    font-size: 0.7vw;
     margin-top: 5px;
-    .trend-item { padding: 2px 5px; border-radius: 3px; }
+    font-size: 0.7vw;
+
+    .trend-item {
+      padding: 2px 5px;
+      border-radius: 3px;
+    }
   }
 }
 
 .indicator-card.total-card {
-  border-color: #00ccff;
-  box-shadow: 0 5px 15px rgba(0, 204, 255, 0.3);
-  .indicator-title { color: #66e0ff; }
-  .indicator-value { color: #00ccff; }
-  .indicator-trends .trend-item { color: #00ccff; background: rgba(0, 204, 255, 0.1); }
-  &:hover { box-shadow: 0 5px 20px rgba(0, 204, 255, 0.5); }
-}
-.indicator-card.rate-card {
-  border-color: #13ce66;
-  box-shadow: 0 5px 15px rgba(19, 206, 102, 0.3);
-  .indicator-title { color: #70f59c; }
-  .indicator-value { color: #13ce66; }
-  .indicator-trends .up { color: #13ce66; background: rgba(19, 206, 102, 0.1); }
-  &:hover { box-shadow: 0 5px 20px rgba(19, 206, 102, 0.5); }
-}
-.indicator-card.satisfaction-card {
-  border-color: #ffc107;
-  box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3);
-  .indicator-title { color: #ffe066; }
-  .indicator-value { color: #ffc107; }
-  .indicator-trends .up { color: #ffc107; background: rgba(255, 193, 7, 0.1); }
-  &:hover { box-shadow: 0 5px 20px rgba(255, 193, 7, 0.5); }
+  border-color: #0cf;
+  box-shadow: 0 5px 15px rgb(0 204 255 / 30%);
+
+  .indicator-title {
+    color: #66e0ff;
+  }
+
+  .indicator-value {
+    color: #0cf;
+  }
+
+  .indicator-trends .trend-item {
+    color: #0cf;
+    background: rgb(0 204 255 / 10%);
+  }
+
+  &:hover {
+    box-shadow: 0 5px 20px rgb(0 204 255 / 50%);
+  }
 }
 
-// 动画定义
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+.indicator-card.rate-card {
+  border-color: #13ce66;
+  box-shadow: 0 5px 15px rgb(19 206 102 / 30%);
+
+  .indicator-title {
+    color: #70f59c;
+  }
+
+  .indicator-value {
+    color: #13ce66;
+  }
+
+  .indicator-trends .up {
+    color: #13ce66;
+    background: rgb(19 206 102 / 10%);
+  }
+
+  &:hover {
+    box-shadow: 0 5px 20px rgb(19 206 102 / 50%);
+  }
 }
-.blink-animation { animation: blink 1.5s infinite; }
+
+.indicator-card.satisfaction-card {
+  border-color: #ffc107;
+  box-shadow: 0 5px 15px rgb(255 193 7 / 30%);
+
+  .indicator-title {
+    color: #ffe066;
+  }
+
+  .indicator-value {
+    color: #ffc107;
+  }
+
+  .indicator-trends .up {
+    color: #ffc107;
+    background: rgb(255 193 7 / 10%);
+  }
+
+  &:hover {
+    box-shadow: 0 5px 20px rgb(255 193 7 / 50%);
+  }
+}
+
+.blink-animation {
+  animation: blink 1.5s infinite;
+}
 
 :deep(.top-left-tabs) {
   width: 100%;
   height: 100%;
-  margin: 0 !important;
   padding: 0 !important;
+  margin: 0 !important;
   // 标签头部 无边距 紧凑
   .el-tabs__header {
-    margin: 0 !important;
     padding: 0 0.2vw !important;
-    border-bottom: 1px solid rgba(25, 186, 139, 0.3) !important;
+    margin: 0 !important;
+    border-bottom: 1px solid rgb(25 186 139 / 30%) !important;
   }
   // 标签文字-核心：默认纯白色
   .el-tabs__item {
-    color: #b6e1ad !important;
-    font-size: 0.85vw !important;
     margin: 0 0.1vw !important; // 标签之间间距缩小
+    font-size: 0.85vw !important;
+    color: #b6e1ad !important;
   }
   // 选中的标签 蓝色高亮 不变
   .el-tabs__item.is-active {
-    color: #00ccff !important;
     font-weight: 600;
+    color: #0cf !important;
   }
   // 选中的下划线 细一点 更精致
   .el-tabs__active-bar {
     height: 0.15vw !important;
-    background: #00ccff !important;
+    background: #0cf !important;
   }
+
   .el-tab-pane {
     width: 100%;
     height: 100%;

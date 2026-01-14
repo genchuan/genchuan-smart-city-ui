@@ -13,7 +13,7 @@
 ::v-deep(.gov-enterprise-coop-table) {
   width: 100% !important;
   height: 100% !important;
-  overflow: auto !important;  // ★★★ 核心：表格自身滚动，继承父容器尺寸，不撑大
+  overflow: auto !important; // ★★★ 核心：表格自身滚动，继承父容器尺寸，不撑大
   table-layout: fixed !important; // ★★★ 核心中的核心：固定表格布局，列宽不随内容变化，永不撑大面板
   border-spacing: 0;
   border-collapse: separate;

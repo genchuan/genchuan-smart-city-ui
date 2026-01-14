@@ -8,7 +8,6 @@ import screenFull from 'screenfull';
 
 const pageContainerRef = ref<HTMLElement | null>(null);
 const router = useRouter();
-
 </script>
 
 <template>

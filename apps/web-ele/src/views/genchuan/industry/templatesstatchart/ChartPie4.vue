@@ -108,7 +108,7 @@ const initChart = () => {
         color: '#FFD166',
       },
       left: 'center',
-      top: 0
+      top: 0,
     },
     legend: {
       show: false,

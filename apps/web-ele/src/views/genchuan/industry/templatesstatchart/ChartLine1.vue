@@ -12,28 +12,28 @@ const props = defineProps({
   data: {
     type: Object,
     required: true,
-    default: () => ({xAxis: [], series: []})
+    default: () => ({ xAxis: [], series: [] }),
   },
   yAxisName: {
     type: String,
-    default: ''
+    default: '',
   },
   showGrid: {
     type: Boolean,
-    default: true
+    default: true,
   },
   smooth: {
     type: Boolean,
-    default: true
+    default: true,
   },
   baseFontScale: {
     type: Number,
-    default: 1
+    default: 1,
   },
   title: {
     type: String,
-    default: '折线图'
-  }
+    default: '折线图',
+  },
 });
 
 const chartRef = ref(null);
@@ -74,18 +74,18 @@ const initChart = () => {
       borderWidth: 1,
       textStyle: {
         color: '#fff',
-        fontSize: tooltipFontSize
-      }
+        fontSize: tooltipFontSize,
+      },
     },
     legend: {
-      data: props.data.series.map(item => item.name),
+      data: props.data.series.map((item) => item.name),
       textStyle: {
         color: '#ccc',
-        fontSize: legendFontSize
+        fontSize: legendFontSize,
       },
       top: '8%',
       itemWidth: vwToPx(0.6),
-      itemHeight: vwToPx(0.6)
+      itemHeight: vwToPx(0.6),
     },
     grid: {
       left: '3%',
@@ -94,8 +94,8 @@ const initChart = () => {
       containLabel: true,
       show: props.showGrid,
       lineStyle: {
-        color: 'rgba(255, 255, 255, 0.1)'
-      }
+        color: 'rgba(255, 255, 255, 0.1)',
+      },
     },
     xAxis: {
       type: 'category',
@@ -103,36 +103,36 @@ const initChart = () => {
       data: props.data.xAxis,
       axisLine: {
         lineStyle: {
-          color: 'rgba(255, 255, 255, 0.3)'
-        }
+          color: 'rgba(255, 255, 255, 0.3)',
+        },
       },
       axisLabel: {
         color: '#ccc',
-        fontSize: axisLabelFontSize
-      }
+        fontSize: axisLabelFontSize,
+      },
     },
     yAxis: {
       type: 'value',
       name: props.yAxisName,
       nameTextStyle: {
         color: '#00ccff',
-        fontSize: yAxisNameFontSize
+        fontSize: yAxisNameFontSize,
       },
       axisLine: {
         lineStyle: {
-          color: 'rgba(255, 255, 255, 0.3)'
-        }
+          color: 'rgba(255, 255, 255, 0.3)',
+        },
       },
       axisLabel: {
         color: '#ccc',
         fontSize: axisLabelFontSize,
-        formatter: props.yAxisName.includes('%') ? '{value}%' : '{value}'
+        formatter: props.yAxisName.includes('%') ? '{value}%' : '{value}',
       },
       splitLine: {
         lineStyle: {
-          color: 'rgba(255, 255, 255, 0.1)'
-        }
-      }
+          color: 'rgba(255, 255, 255, 0.1)',
+        },
+      },
     },
     series: props.data.series.map((item, index) => {
       const colors = ['#ff4949', '#722ed1', '#fac858'];
@@ -145,13 +145,13 @@ const initChart = () => {
         symbolSize: 6,
         showSymbol: false,
         emphasis: {
-          showSymbol: true
+          showSymbol: true,
         },
         lineStyle: {
-          width: 2
+          width: 2,
         },
         itemStyle: {
-          color: colors[index % colors.length]
+          color: colors[index % colors.length],
         },
         areaStyle: {
           color: {
@@ -160,15 +160,20 @@ const initChart = () => {
             y: 0,
             x2: 0,
             y2: 1,
-            colorStops: [{
-              offset: 0, color: colors[index % colors.length] + '80'
-            }, {
-              offset: 1, color: colors[index % colors.length] + '00'
-            }]
-          }
-        }
+            colorStops: [
+              {
+                offset: 0,
+                color: colors[index % colors.length] + '80',
+              },
+              {
+                offset: 1,
+                color: colors[index % colors.length] + '00',
+              },
+            ],
+          },
+        },
       };
-    })
+    }),
   };
 
   chartInstance.setOption(option);
@@ -189,23 +194,27 @@ const handleResize = () => {
     legend: {
       textStyle: { fontSize: legendFontSize },
       itemWidth: vwToPx(0.6),
-      itemHeight: vwToPx(0.6)
+      itemHeight: vwToPx(0.6),
     },
     xAxis: { axisLabel: { fontSize: axisLabelFontSize } },
     yAxis: {
       nameTextStyle: { fontSize: yAxisNameFontSize },
-      axisLabel: { fontSize: axisLabelFontSize }
-    }
+      axisLabel: { fontSize: axisLabelFontSize },
+    },
   });
 
   chartInstance.resize();
 };
 
-watch([() => props.data, () => props.baseFontScale, () => props.title], () => {
-  nextTick(() => {
-    initChart();
-  });
-}, {deep: true});
+watch(
+  [() => props.data, () => props.baseFontScale, () => props.title],
+  () => {
+    nextTick(() => {
+      initChart();
+    });
+  },
+  { deep: true },
+);
 
 onMounted(() => {
   nextTick(() => {
@@ -225,9 +234,9 @@ onUnmounted(() => {
 
 <style scoped>
 .chart-container {
+  position: relative;
   width: 100%;
   height: 100%;
-  position: relative;
 }
 
 .chart-wrapper {

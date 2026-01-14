@@ -107,7 +107,7 @@ const initChart = () => {
         color: '#FFD166',
       },
       left: 'center',
-      top: 0
+      top: 0,
     },
     legend: {
       orient: 'vertical', // 水平排列
