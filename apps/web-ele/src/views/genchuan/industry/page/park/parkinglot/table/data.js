@@ -336,7 +336,7 @@ export function useFormSchema() {
         options: [
           { label: '公共', value: '公共' },
           { label: '路侧', value: '路侧' },
-          { label: '专用', value: '专用' }
+          { label: '专用', value: '专用' },
         ],
         placeholder: '请选择',
         showSearch: true,
@@ -410,7 +410,7 @@ export function useFormSchema() {
           { label: '启用', value: '启用' },
           { label: '禁用', value: '禁用' },
           { label: '暂停运营', value: '暂停运营' },
-          { label: '维修中', value: '维修中' }
+          { label: '维修中', value: '维修中' },
         ],
         placeholder: '请输入运营状态',
       },
@@ -418,7 +418,6 @@ export function useFormSchema() {
     },
   ];
 }
-
 
 /** 表格字段 */
 export function useGridColumns() {
@@ -501,4 +500,4 @@ export const textObj = {
   excelName: '停车场列表',
   excelAllName: '全市停车场数据.xlsx',
   total: '停车场数量10;车位总数:1211;车场车位7',
-}
+};

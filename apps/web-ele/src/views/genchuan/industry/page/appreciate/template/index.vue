@@ -10,13 +10,13 @@ const changeArrowStatus = (item) => {
 };
 const tabArray = ref([
   {
-    label: '车辆信息管理',
+    label: '短信通知服务',
     components: Table,
     showSecondary: true,
     secondShow: false,
   },
 ]);
-const activeName = ref('车辆信息管理');
+const activeName = ref('短信通知服务');
 </script>
 <template>
   <div class="common-index">

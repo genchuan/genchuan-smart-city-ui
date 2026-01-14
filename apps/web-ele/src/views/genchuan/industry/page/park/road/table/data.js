@@ -1,6 +1,6 @@
 /** 泊位表格初始数据 */
 export const dataList = () => {
-  return [ 
+  return [
     {
       berthId: 'B00201',
       berthCode: 'LW001',
@@ -11,7 +11,7 @@ export const dataList = () => {
       coordY: '24.498712',
       enableStatus: '占用',
       divisionCode: '350603002',
-      roadSideManage: '设施维修,暂停使用'
+      roadSideManage: '设施维修,暂停使用',
     },
     {
       berthId: 'B00301',
@@ -23,7 +23,7 @@ export const dataList = () => {
       coordY: '24.456211',
       enableStatus: '空置',
       divisionCode: '350604001',
-      roadSideManage: '充电桩改造,暂停使用'
+      roadSideManage: '充电桩改造,暂停使用',
     },
     {
       berthId: 'B00401',
@@ -35,7 +35,7 @@ export const dataList = () => {
       coordY: '24.443822',
       enableStatus: '空置',
       divisionCode: '350604002',
-      roadSideManage: '日常巡检,卫生保洁'
+      roadSideManage: '日常巡检,卫生保洁',
     },
     {
       berthId: 'B00501',
@@ -47,7 +47,7 @@ export const dataList = () => {
       coordY: '24.501233',
       enableStatus: '空置',
       divisionCode: '350602003',
-      roadSideManage: '高峰疏导,违停管理'
+      roadSideManage: '高峰疏导,违停管理',
     },
     {
       berthId: 'B00601',
@@ -59,7 +59,7 @@ export const dataList = () => {
       coordY: '24.489744',
       enableStatus: '占用',
       divisionCode: '350603004',
-      roadSideManage: '流量统计,秩序维护'
+      roadSideManage: '流量统计,秩序维护',
     },
     {
       berthId: 'B00701',
@@ -71,7 +71,7 @@ export const dataList = () => {
       coordY: '24.612355',
       enableStatus: '故障',
       divisionCode: '350625001',
-      roadSideManage: '定期巡检,设施维护'
+      roadSideManage: '定期巡检,设施维护',
     },
     {
       berthId: 'B00801',
@@ -83,7 +83,7 @@ export const dataList = () => {
       coordY: '24.123466',
       enableStatus: '故障',
       divisionCode: '350623001',
-      roadSideManage: '积水清理,待恢复使用'
+      roadSideManage: '积水清理,待恢复使用',
     },
     {
       berthId: 'B00901',
@@ -95,7 +95,7 @@ export const dataList = () => {
       coordY: '24.523477',
       enableStatus: '故障',
       divisionCode: '350602002',
-      roadSideManage: '收费监督,泊位管理'
+      roadSideManage: '收费监督,泊位管理',
     },
     {
       berthId: 'B01001',
@@ -107,7 +107,7 @@ export const dataList = () => {
       coordY: '24.478988',
       enableStatus: '空置',
       divisionCode: '350603005',
-      roadSideManage: '卫生管理,设施维修'
+      roadSideManage: '卫生管理,设施维修',
     },
     {
       berthId: 'B01101',
@@ -119,7 +119,7 @@ export const dataList = () => {
       coordY: '24.481299',
       enableStatus: '空置',
       divisionCode: '350603006',
-      roadSideManage: '秩序维护,收费管理'
+      roadSideManage: '秩序维护,收费管理',
     },
     {
       berthId: 'B01201',
@@ -131,7 +131,7 @@ export const dataList = () => {
       coordY: '24.518900',
       enableStatus: '空置',
       divisionCode: '350602001',
-      roadSideManage: '安全巡查,车位引导'
+      roadSideManage: '安全巡查,车位引导',
     },
     {
       berthId: 'B01301',
@@ -143,7 +143,7 @@ export const dataList = () => {
       coordY: '24.509811',
       enableStatus: '占用',
       divisionCode: '350602004',
-      roadSideManage: '门禁管理,登记管理'
+      roadSideManage: '门禁管理,登记管理',
     },
     {
       berthId: 'B01401',
@@ -155,8 +155,8 @@ export const dataList = () => {
       coordY: '24.467822',
       enableStatus: '占用',
       divisionCode: '350604001',
-      roadSideManage: '场地翻新,暂停使用'
-    }
+      roadSideManage: '场地翻新,暂停使用',
+    },
   ];
 };
 
@@ -169,7 +169,7 @@ export function useFormSchema() {
       component: 'Input',
       labelWidth: '150',
       componentProps: {
-        placeholder: '请输入泊位ID', 
+        placeholder: '请输入泊位ID',
       },
       rules: 'required',
     },
@@ -214,8 +214,8 @@ export function useFormSchema() {
           { label: '小型车', value: '小型车' },
           { label: '大型车', value: '大型车' },
           { label: '无障碍', value: '无障碍' },
-          { label: '内部车辆', value: '内部车辆' }
-        ]
+          { label: '内部车辆', value: '内部车辆' },
+        ],
       },
       rules: 'required',
     },
@@ -249,8 +249,8 @@ export function useFormSchema() {
         options: [
           { label: '启用', value: '启用' },
           { label: '禁用', value: '禁用' },
-          { label: '维护中', value: '维护中' }
-        ]
+          { label: '维护中', value: '维护中' },
+        ],
       },
       rules: 'required',
     },
@@ -270,8 +270,8 @@ export function useFormSchema() {
           { label: '龙海区石码街道 350604001', value: '350604001' },
           { label: '龙海区海澄镇 350604002', value: '350604002' },
           { label: '长泰区武安镇 350625001', value: '350625001' },
-          { label: '漳浦县绥安镇 350623001', value: '350623001' }
-        ]
+          { label: '漳浦县绥安镇 350623001', value: '350623001' },
+        ],
       },
       rules: 'required',
     },
@@ -309,7 +309,7 @@ export function useGridColumns() {
       title: '路段名称',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'roadName' }
+      slots: { default: 'roadName' },
     },
     {
       field: 'locationDesc',
@@ -340,7 +340,7 @@ export function useGridColumns() {
       title: '启用状态',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'enableStatus' }
+      slots: { default: 'enableStatus' },
     },
     {
       field: 'divisionCode',
