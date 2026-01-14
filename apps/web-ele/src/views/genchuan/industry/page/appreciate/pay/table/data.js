@@ -287,6 +287,7 @@ export function useFormSchema() {
     {
       fieldName: 'transaction_id',
       label: '第三方流水号',
+      labelWidth: '2000px',
       component: 'Input',
       componentProps: {
         placeholder: '请输入第三方支付流水号',

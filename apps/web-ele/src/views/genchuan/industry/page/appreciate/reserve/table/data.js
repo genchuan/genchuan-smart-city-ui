@@ -254,6 +254,7 @@ export function useFormSchema() {
     {
       fieldName: 'start_time',
       label: '开始时间',
+      labelWidth: '2000px',
       component: 'TimePicker',
       componentProps: {
         placeholder: '请选择开始时间',
@@ -264,6 +265,7 @@ export function useFormSchema() {
     {
       fieldName: 'end_time',
       label: '结束时间',
+      labelWidth: '2000px',
       component: 'TimePicker',
       componentProps: {
         placeholder: '请选择结束时间',

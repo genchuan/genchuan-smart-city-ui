@@ -169,9 +169,10 @@ export function useFormSchema() {
     {
       fieldName: 'content',
       label: '模板内容',
+      labelWidth: '2000px',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入模板内容（可使用占位符如{code}）',
+        placeholder: '请输入模板内容',
         type: 'textarea',
         rows: 4,
       },
@@ -199,6 +200,7 @@ export function useFormSchema() {
     {
       fieldName: 'create_time',
       label: '创建时间',
+      labelWidth: '2000px',
       component: 'DatePicker',
       componentProps: {
         placeholder: '请选择创建时间',
@@ -209,6 +211,7 @@ export function useFormSchema() {
     {
       fieldName: 'update_time',
       label: '更新时间',
+      labelWidth: '2000px',
       component: 'DatePicker',
       componentProps: {
         placeholder: '请选择更新时间',

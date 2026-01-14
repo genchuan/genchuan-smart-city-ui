@@ -268,6 +268,7 @@ export function useFormSchema() {
     {
       fieldName: 'actual_charge_time',
       label: '实际充电时长(分钟)',
+      labelWidth: '2000px',
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入实际充电时长',

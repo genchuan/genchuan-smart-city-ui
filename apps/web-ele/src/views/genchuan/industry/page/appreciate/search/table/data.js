@@ -193,6 +193,7 @@ export function useFormSchema() {
     {
       fieldName: 'location_info',
       label: '车位定位信息',
+      labelWidth: '2000px',
       component: 'Input',
       componentProps: {
         placeholder: '请输入车位定位信息(JSON格式)',
@@ -200,6 +201,7 @@ export function useFormSchema() {
     },
     {
       fieldName: 'route_info',
+      labelWidth: '2000px',
       label: '导航路径信息',
       component: 'Input',
       componentProps: {

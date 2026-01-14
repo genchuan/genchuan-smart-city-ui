@@ -257,6 +257,7 @@ export function useFormSchema() {
     {
       fieldName: 'taxpayer_id',
       label: '纳税人识别号',
+      labelWidth: '2000px',
       component: 'Input',
       componentProps: {
         placeholder: '请输入纳税人识别号（可为空）',
@@ -307,9 +308,10 @@ export function useFormSchema() {
     {
       fieldName: 'pdf_url',
       label: '发票PDF地址',
+      labelWidth: '2000px',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入发票PDF地址（MinIO）',
+        placeholder: '请输入发票PDF地址',
       },
     },
     {
