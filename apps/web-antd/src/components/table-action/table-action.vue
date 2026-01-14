@@ -229,7 +229,9 @@ watch(
                 "
               >
                 <IconifyIcon v-if="action.icon" :icon="action.icon" />
-                {{ action.label }}
+                <span :class="action.icon ? 'ml-1' : ''">
+                  {{ action.label }}
+                </span>
               </div>
             </template>
           </Menu.Item>

@@ -427,6 +427,119 @@ export const settlementList = [
   },
 ];
 
+/** 权限变更日志数据 */
+export const permissionChangeLogs = [
+  {
+    id: 'log001',
+    merchantId: 'merchant001',
+    merchantName: '张三商贸有限公司',
+    changeTime: '2024-01-01 10:00:00',
+    changeBy: 'admin',
+    changeType: '新增',
+    permName: '订单查看',
+    changeReason: '初始分配',
+    beforePerm: '',
+    afterPerm: '订单查看',
+  },
+  {
+    id: 'log002',
+    merchantId: 'merchant001',
+    merchantName: '张三商贸有限公司',
+    changeTime: '2024-01-01 10:00:00',
+    changeBy: 'admin',
+    changeType: '新增',
+    permName: '订单导出',
+    changeReason: '初始分配',
+    beforePerm: '',
+    afterPerm: '订单导出',
+  },
+  {
+    id: 'log003',
+    merchantId: 'merchant001',
+    merchantName: '张三商贸有限公司',
+    changeTime: '2024-02-15 14:30:00',
+    changeBy: 'admin',
+    changeType: '修改',
+    permName: '订单导出',
+    changeReason: '扩展权限',
+    beforePerm: '订单导出',
+    afterPerm: '订单导出,订单退款',
+  },
+  {
+    id: 'log004',
+    merchantId: 'merchant001',
+    merchantName: '张三商贸有限公司',
+    changeTime: '2024-03-20 09:15:00',
+    changeBy: 'admin',
+    changeType: '新增',
+    permName: '设备状态查看',
+    changeReason: '新增设备管理权限',
+    beforePerm: '',
+    afterPerm: '设备状态查看',
+  },
+  {
+    id: 'log005',
+    merchantId: 'merchant001',
+    merchantName: '张三商贸有限公司',
+    changeTime: '2024-04-10 16:45:00',
+    changeBy: 'admin',
+    changeType: '删除',
+    permName: '订单退款',
+    changeReason: '权限回收',
+    beforePerm: '订单退款',
+    afterPerm: '',
+  },
+];
+
+/** 权限查询结果数据 */
+export const permissionQueryList = [
+  {
+    id: 'perm001',
+    permCode: 'order:view',
+    permName: '订单查看',
+    permDesc: '查看名下停车场订单数据',
+    effectiveTime: '2024-01-01 00:00:00',
+    expireTime: '2025-01-01 00:00:00',
+    status: '有效',
+  },
+  {
+    id: 'perm002',
+    permCode: 'order:export',
+    permName: '订单导出',
+    permDesc: '导出订单数据报表',
+    effectiveTime: '2024-01-01 00:00:00',
+    expireTime: '2025-01-01 00:00:00',
+    status: '有效',
+  },
+  {
+    id: 'perm003',
+    permCode: 'device:view',
+    permName: '设备状态查看',
+    permDesc: '查看停车场设备运行状态',
+    effectiveTime: '2024-03-20 00:00:00',
+    expireTime: '2025-03-20 00:00:00',
+    status: '有效',
+  },
+  {
+    id: 'perm004',
+    permCode: 'finance:settle',
+    permName: '结算管理',
+    permDesc: '查看和管理结算数据',
+    effectiveTime: '2024-01-01 00:00:00',
+    expireTime: '2025-01-01 00:00:00',
+    status: '有效',
+  },
+  {
+    id: 'perm005',
+    permCode: 'report:view',
+    permName: '报表查看',
+    permDesc: '查看各类业务报表',
+    effectiveTime: '2024-01-01 00:00:00',
+    expireTime: '2025-01-01 00:00:00',
+    status: '有效',
+  },
+];
+
 /** 新增/修改的表单/列表的搜索表单 */
 export function useFormSchema() {
   return [

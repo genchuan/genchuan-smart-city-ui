@@ -2,7 +2,6 @@
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { IconifyIcon } from '@vben/icons';
 import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
@@ -10,19 +9,15 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+// 引入封装后的详情抽屉组件
 import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
+// 引入权限和记录抽屉组件
 import PermissionDrawer from '../components/PermissionDrawer.vue';
-import SettlementDrawer from '../components/SettlementDrawer.vue';
-import {
-  merchantDetailFields,
-  merchantList,
-  textObj,
-  useFormSchema,
-  useGridColumns,
-} from './data';
+import RecordDrawer from '../components/RecordDrawer.vue';
+import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
 const props = defineProps({
   secondShow: {
@@ -31,7 +26,7 @@ const props = defineProps({
   },
 });
 const getTitle = computed(() => {
-  return formData.value?.merchantId ? textObj.editText : textObj.addText;
+  return formData.value?.visitorId ? textObj.editText : textObj.addText;
 });
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -44,7 +39,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
-
+// 移除原 DetailDrawer 初始化逻辑
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -52,7 +47,7 @@ const [Form, formApi] = useVbenForm({
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
-    labelWidth: 100,
+    labelWidth: 80,
   },
   layout: 'horizontal',
   schema: useFormSchema(),
@@ -70,19 +65,18 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       dataObj.apilist.push(obj);
     } else {
       dataObj.apilist.forEach((v, i) => {
-        if (v.merchantId === formData.value?.merchantId) {
+        if (v.visitorId === formData.value?.visitorId) {
           dataObj.apilist[i] = obj;
         }
       });
     }
     handleRefresh();
     formDrawerApi.close();
-    ElMessage.success('操作成功');
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
       formData.value = formDrawerApi.getData();
-      if (formData.value?.merchantId) {
+      if (formData.value?.visitorId) {
         await formApi.setValues(formData.value);
       } else {
         formApi.resetForm();
@@ -91,6 +85,40 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
 });
 
+// 访客权限和记录抽屉相关
+const selectedVisitor = ref(null);
+
+// 权限管理抽屉
+const [PermissionDrawerComp, permissionDrawerApi] = useVbenDrawer({
+  width: '50%',
+  mask: false,
+  modal: false,
+  position: 'right',
+  appendToMain: true,
+  title: computed(
+    () => `权限管理 - ${selectedVisitor.value?.visitorName || '访客'}`,
+  ),
+  onCancel() {
+    permissionDrawerApi.close();
+  },
+  async onOpenChange() {},
+});
+
+// 记录管理抽屉
+const [RecordDrawerComp, recordDrawerApi] = useVbenDrawer({
+  width: '50%',
+  mask: false,
+  modal: false,
+  position: 'right',
+  appendToMain: true,
+  title: computed(
+    () => `记录管理 - ${selectedVisitor.value?.visitorName || '访客'}`,
+  ),
+  onCancel() {
+    recordDrawerApi.close();
+  },
+  async onOpenChange() {},
+});
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
@@ -101,7 +129,7 @@ async function handleExport() {
   exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
 }
 
-/** 创建商户 */
+/** 创建访客 */
 function handleCreate() {
   formDrawerApi
     .setData({
@@ -110,7 +138,7 @@ function handleCreate() {
     .open();
 }
 
-/** 编辑商户 */
+/** 编辑访客 */
 function handleEdit(row) {
   formDrawerApi
     .setData({
@@ -119,24 +147,21 @@ function handleEdit(row) {
     })
     .open();
 }
-
-/** 删除商户 */
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.merchantName]),
+    text: $t('ui.actionMessage.deleting', [row.visitorName]),
   });
   try {
     dataObj.apilist = dataObj.apilist.filter(
-      (v) => v.merchantId !== row.merchantId,
+      (v) => v.visitorId !== row.visitorId,
     );
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.merchantName]));
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.visitorName]));
     handleRefresh();
   } finally {
     loadingInstance.close();
   }
 }
 
-/** 批量删除 */
 async function handleDeleteBatch() {
   await confirm($t('确定删除这些数据吗？'));
   const loadingInstance = ElLoading.service({
@@ -144,7 +169,7 @@ async function handleDeleteBatch() {
   });
   try {
     dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.merchantId),
+      (v) => !checkedIds.value.includes(v.visitorId),
     );
     checkedIds.value = [];
     ElMessage.success($t('删除成功'));
@@ -154,77 +179,40 @@ async function handleDeleteBatch() {
   }
 }
 
-/** 状态切换 */
-async function handleStatusChange(row) {
-  // 获取新状态
-  const newStatus = row.status;
-  // 保存旧状态，用于用户取消时恢复
-  const oldStatus = newStatus === '正常' ? '停业' : '正常';
-  // 显示确认对话框
-  try {
-    await confirm(
-      $t(`确定将商户 ${row.merchantName} 的状态切换为 ${newStatus} 吗？`),
-    );
-    const loadingInstance = ElLoading.service({
-      text: $t('ui.actionMessage.updating', [row.merchantName]),
-    });
-    try {
-      // 更新数据源
-      const index = dataObj.apilist.findIndex(
-        (v) => v.merchantId === row.merchantId,
-      );
-      if (index !== -1) {
-        dataObj.apilist[index].status = newStatus;
-        ElMessage.success(
-          $t('ui.actionMessage.updateSuccess', [row.merchantName]),
-        );
-        handleRefresh();
-      }
-    } finally {
-      loadingInstance.close();
-    }
-  } catch {
-    // 用户取消确认，恢复旧状态
-    row.status = oldStatus;
-  }
-}
-
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map((item) => item.merchantId);
+  checkedIds.value = records.map((item) => item.visitorId);
 }
-
 const dataObj = reactive({
   totalShow: false,
-  total: merchantList.length,
+  detailObj: {}, // 保留详情对象用于传递给组件
+  total: dataList().length,
   currentPage: 1,
   pageSize: 10,
-  apilist: [...merchantList],
+  apilist: dataList(),
   list: [],
 });
-
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
-
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
   dataObj.total = dataObj.apilist
     .map((v) => v)
     .filter((v) => {
-      if (statusActiveName.value === '全部') {
+      if (activeName.value === '全部') {
         return true;
       }
-      return v.status === statusActiveName.value;
+      return v.status === activeName.value;
     }).length;
   dataObj.list = dataObj.apilist
     .map((v) => v)
     .filter((v) => {
-      if (statusActiveName.value === '全部') {
+      if (activeName.value === '全部') {
         return true;
       }
-      return v.status === statusActiveName.value;
+      return v.status === activeName.value;
     })
     .slice(
       (page.currentPage - 1) * page.pageSize,
@@ -262,12 +250,10 @@ const [QueryForm] = useVbenForm({
     content: '查询',
   },
 });
-
 // 搜索表单查询
 function onSubmit() {
   drawerApi.close();
 }
-
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
@@ -278,7 +264,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       },
     },
     rowConfig: {
-      keyField: 'merchantId',
+      keyField: 'visitorId',
       isHover: true,
     },
     pagerConfig: dataObj,
@@ -296,143 +282,125 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-const statusActiveName = ref('全部');
-const topTabsData = ref([
-  { label: '全部', value: '全部' },
-  { label: '正常', value: '正常' },
-  { label: '停业', value: '停业' },
-  { label: '注销', value: '注销' },
+const activeName = ref('全部');
+// 修改打开详情的方法，调用组件的open方法
+const handleOpenDetail = (row) => {
+  selectedVisitor.value = row;
+  // 通过ref调用组件的open方法
+  detailDrawerRef.value.open();
+};
+const tabsData = ref([
+  { label: '全部' },
+  { label: '待审核' },
+  { label: '已通过' },
+  { label: '已拒绝' },
+  { label: '已结束' },
 ]);
-
 const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.value).length})`;
-  if (item.value === '全部') {
+  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
+  if (item.label === '全部') {
     text = `(${dataObj.apilist.length})`;
   }
   return item.label + text;
 };
-
 const handleClick = () => {
   gridApi.query();
 };
-
 const handleSerachShow = () => {
   drawerApi.open();
 };
-
 const handleFullShow = () => {
   screenfull.toggle();
 };
-
-const selectedMerchant = ref(null);
-
-const detailDrawerRef = ref(null);
-
-const handleOpenDetail = (row) => {
-  selectedMerchant.value = row;
-  if (detailDrawerRef.value) {
-    detailDrawerRef.value.open();
-  }
-};
-
-const handleDetailClose = () => {
-  selectedMerchant.value = null;
-};
-
-// 权限管理抽屉
-const [PermissionDrawerWrapper, permissionDrawerApi] = useVbenDrawer({
-  width: '50%',
-  mask: false,
-  modal: false,
-  position: 'right',
-  appendToMain: true,
-  title: computed(
-    () => `权限管理 - ${selectedMerchant.value?.merchantName || '商户'}`,
-  ),
-  onCancel() {
-    permissionDrawerApi.close();
-  },
-  async onOpenChange() {},
-});
-
 const handleOpenPermission = (row) => {
-  selectedMerchant.value = row;
+  selectedVisitor.value = row;
   permissionDrawerApi.open();
 };
-
-// 结算管理抽屉
-const [SettlementDrawerWrapper, settlementDrawerApi] = useVbenDrawer({
-  width: '50%',
-  mask: false,
-  modal: false,
-  position: 'right',
-  appendToMain: true,
-  title: computed(
-    () => `结算管理 - ${selectedMerchant.value?.merchantName || '商户'}`,
-  ),
-  onCancel() {
-    settlementDrawerApi.close();
-  },
-  async onOpenChange() {},
-});
-
-const handleOpenSettlement = (row) => {
-  selectedMerchant.value = row;
-  settlementDrawerApi.open();
+const handleOpenRecord = (row) => {
+  selectedVisitor.value = row;
+  recordDrawerApi.open();
 };
+// 定义组件ref，用于调用组件方法
+const detailDrawerRef = ref(null);
+
+// 详情关闭处理
+const handleDetailClose = () => {
+  selectedVisitor.value = null;
+};
+
+// 定义详情抽屉的字段配置
+const detailFields = [
+  { label: '访客ID', key: 'visitorId' },
+  { label: '访客姓名', key: 'visitorName' },
+  { label: '手机号', key: 'phone' },
+  { label: '身份证号', key: 'idCard' },
+  { label: '车牌号码', key: 'plateNumber' },
+  { label: '访问资源', key: 'visitAssetId' },
+  { label: '访问事由', key: 'visitReason' },
+  { label: '拜访对象', key: 'visitObject' },
+  { label: '访问时间', key: 'visitTime' },
+  { label: '离开时间', key: 'leaveTime' },
+  { label: '预计停留时长', key: 'expectedStayTime' },
+  {
+    label: '状态',
+    key: 'status',
+    type: 'tag',
+    tagType: (status) => {
+      if (status === '待审核') return 'warning';
+      if (status === '已通过') return 'success';
+      if (status === '已拒绝') return 'danger';
+      if (status === '已结束') return 'info';
+      return 'info';
+    },
+  },
+  { label: '审核人', key: 'approveBy' },
+  { label: '审核时间', key: 'approveTime' },
+  { label: '创建时间', key: 'createTime' },
+  { label: '备注', key: 'remark' },
+];
 </script>
 <template>
   <div class="park-lot-table-new">
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-
+    <!-- 使用封装后的详情抽屉组件 -->
     <DetailDrawer
       ref="detailDrawerRef"
-      :title="selectedMerchant?.merchantName || '商户详情'"
-      :data="selectedMerchant"
-      :fields="merchantDetailFields"
+      :data="selectedVisitor"
+      :fields="detailFields"
+      :title="`${selectedVisitor?.visitorName || '访客详情'}`"
       @close="handleDetailClose"
-      @confirm="handleDetailClose"
     />
-
-    <!-- 权限管理抽屉 -->
-    <PermissionDrawerWrapper>
+    <!-- 权限抽屉 -->
+    <PermissionDrawerComp>
       <PermissionDrawer
-        v-if="selectedMerchant"
-        :merchant="selectedMerchant"
+        :visitor="selectedVisitor"
         @close="permissionDrawerApi.close"
       />
-    </PermissionDrawerWrapper>
-
-    <!-- 结算管理抽屉 -->
-    <SettlementDrawerWrapper>
-      <SettlementDrawer
-        v-if="selectedMerchant"
-        :merchant="selectedMerchant"
-        @close="settlementDrawerApi.close"
-      />
-    </SettlementDrawerWrapper>
-
+    </PermissionDrawerComp>
+    <!-- 记录抽屉 -->
+    <RecordDrawerComp>
+      <RecordDrawer :visitor="selectedVisitor" @close="recordDrawerApi.close" />
+    </RecordDrawerComp>
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
     <Grid>
       <!-- 三级状态 -->
       <template #table-title>
-        <div class="tabel-title-container">
-          <div v-if="props.secondShow" class="tabel-tabs-container">
-            <!-- 商户状态标签页 -->
+        <div class="tabel-tabs">
+          <div v-if="props.secondShow">
             <el-tabs
-              v-model="statusActiveName"
-              class="demo-tabs auth-status-tabs"
+              v-model="activeName"
+              class="demo-tabs"
               @tab-change="handleClick"
             >
               <el-tab-pane
-                v-for="item in topTabsData"
+                v-for="item in tabsData"
                 :key="item.label"
                 :label="createLabel(item)"
-                :name="item.value"
+                :name="item.label"
               />
             </el-tabs>
           </div>
@@ -483,33 +451,28 @@ const handleOpenSettlement = (row) => {
           ></i>
         </button>
       </template>
-      <template #merchantName="{ row }">
+      <template #visitorName="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.merchantName }}
+          {{ row.visitorName }}
         </el-text>
       </template>
-      <template #settlementRatio="{ row }">
-        {{ (row.settlementRatio * 100).toFixed(2) }}%
-      </template>
       <template #status="{ row }">
-        <div class="status-cell">
-          <el-switch
-            v-if="row.status !== '注销'"
-            v-model="row.status"
-            active-value="正常"
-            inactive-value="停业"
-            active-color="#13ce66"
-            inactive-color="#f56c6c"
-            @change="handleStatusChange(row)"
-          />
-          <el-tag v-else type="danger">
-            {{ row.status }}
-          </el-tag>
-        </div>
+        <el-tag v-if="row.status === '待审核'" type="warning" size="small">
+          {{ row.status }}
+        </el-tag>
+        <el-tag v-else-if="row.status === '已通过'" type="success" size="small">
+          {{ row.status }}
+        </el-tag>
+        <el-tag v-else-if="row.status === '已拒绝'" type="danger" size="small">
+          {{ row.status }}
+        </el-tag>
+        <el-tag v-else-if="row.status === '已结束'" type="info" size="small">
+          {{ row.status }}
+        </el-tag>
       </template>
       <template #actions="{ row }">
         <TableAction
@@ -534,7 +497,7 @@ const handleOpenSettlement = (row) => {
               link: true,
               icon: ACTION_ICON.DELETE,
               popConfirm: {
-                title: $t('ui.actionMessage.deleteConfirm', [row.merchantName]),
+                title: $t('ui.actionMessage.deleteConfirm', [row.visitorName]),
                 confirm: handleDelete.bind(null, row),
               },
             },
@@ -548,48 +511,27 @@ const handleOpenSettlement = (row) => {
               onClick: handleOpenPermission.bind(null, row),
             },
             {
-              label: '结算',
+              label: '记录',
               type: 'primary',
               link: true,
-              icon: ACTION_ICON.MONEY,
-              onClick: handleOpenSettlement.bind(null, row),
+              icon: ACTION_ICON.RECORD,
+              onClick: handleOpenRecord.bind(null, row),
             },
           ]"
-        >
-          <template #more>
-            <el-button type="primary" link>
-              <IconifyIcon icon="lucide:ellipsis-vertical" class="mr-1" />
-              更多
-            </el-button>
-          </template>
-        </TableAction>
+        />
       </template>
       <template #bottom>
         <div class="common-total" @click="changeTotalShow">
-          <el-icon class="tabel-tab-icon">
-            <ArrowDown v-if="!dataObj.totalShow" />
-            <ArrowUp v-else />
+          <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
+            <ArrowDown />
           </el-icon>
-          <span>
-            本页统计：商户数量{{ dataObj.list.length }};正常:{{
-              dataObj.list.filter((item) => item.status === '正常').length
-            }};停业:{{
-              dataObj.list.filter((item) => item.status === '停业').length
-            }};注销:{{
-              dataObj.list.filter((item) => item.status === '注销').length
-            }}
-          </span>
+          <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
+            <ArrowUp />
+          </el-icon>
+          <span> 本页统计：访客数量5;已通过3;待审核2 </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span>
-            全部统计：商户数量{{ dataObj.apilist.length }};正常:{{
-              dataObj.apilist.filter((item) => item.status === '正常').length
-            }};停业:{{
-              dataObj.apilist.filter((item) => item.status === '停业').length
-            }};注销:{{
-              dataObj.apilist.filter((item) => item.status === '注销').length
-            }}
-          </span>
+          <span> 全部统计：{{ textObj.total }} </span>
         </div>
       </template>
     </Grid>
