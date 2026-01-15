@@ -2,6 +2,7 @@
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { IconifyIcon } from '@vben/icons';
 import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
@@ -201,25 +202,24 @@ const changeTotalShow = () => {
 const getTableData = (pageObj) => {
   const page = pageObj.page;
   // 过滤数据
-  const filteredData = dataObj.apilist
-    .filter((v) => {
-      // 状态过滤
-      if (activeName.value !== '全部' && v.status !== activeName.value) {
+  const filteredData = dataObj.apilist.filter((v) => {
+    // 状态过滤
+    if (activeName.value !== '全部' && v.status !== activeName.value) {
+      return false;
+    }
+    // 搜索条件过滤
+    for (const [key, value] of Object.entries(searchFormData.value)) {
+      if (value && v[key] && !String(v[key]).includes(String(value))) {
         return false;
       }
-      // 搜索条件过滤
-      for (const [key, value] of Object.entries(searchFormData.value)) {
-        if (value && v[key] && !String(v[key]).includes(String(value))) {
-          return false;
-        }
-      }
-      return true;
-    });
-  
+    }
+    return true;
+  });
+
   dataObj.total = filteredData.length;
   dataObj.list = filteredData.slice(
     (page.currentPage - 1) * page.pageSize,
-    page.currentPage * page.pageSize
+    page.currentPage * page.pageSize,
   );
   return dataObj;
 };
@@ -524,7 +524,14 @@ const detailFields = [
               onClick: handleOpenRecord.bind(null, row),
             },
           ]"
-        />
+        >
+          <template #more>
+            <el-button type="primary" link>
+              <IconifyIcon icon="lucide:ellipsis-vertical" class="mr-1" />
+              更多
+            </el-button>
+          </template>
+        </TableAction>
       </template>
       <template #bottom>
         <div class="common-total" @click="changeTotalShow">
