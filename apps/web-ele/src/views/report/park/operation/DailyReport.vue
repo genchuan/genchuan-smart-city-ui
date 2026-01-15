@@ -39,12 +39,89 @@ const coreIndicators = ref([]);
 const regionData = ref([]);
 const abnormalities = ref([]);
 
-// 处理后的核心指标数据
+// 处理后的核心指标数据 - 根据筛选后的regionData动态计算
 const processedCoreIndicators = computed(() => {
+  // 如果筛选后有区域数据，则基于筛选后的数据计算核心指标
+  if (regionData.value.length > 0) {
+    const totalEnter = regionData.value.reduce((sum, item) => sum + item.enterCount, 0);
+    const totalExit = regionData.value.reduce((sum, item) => sum + item.exitCount, 0);
+    const totalRevenue = regionData.value.reduce((sum, item) => sum + item.revenue, 0);
+    const totalWarning = regionData.value.reduce((sum, item) => sum + item.warningCount, 0);
+    const totalFault = regionData.value.reduce((sum, item) => sum + item.faultCount, 0);
+    const totalMemberRevenue = regionData.value.reduce((sum, item) => sum + item.memberRevenue, 0);
+
+    // 计算平均利用率
+    const avgUtilization = regionData.value.length > 0
+      ? Math.round(regionData.value.reduce((sum, item) => sum + item.utilizationRate, 0) / regionData.value.length)
+      : 0;
+
+    // 计算总泊位数和已用泊位数
+    const totalBerths = regionData.value.reduce((sum, item) => sum + item.totalBerths, 0);
+    const usedBerths = regionData.value.reduce((sum, item) => sum + item.usedBerths, 0);
+
+    return [
+      {
+        key: 'totalEnter',
+        name: '总入场车次',
+        value: totalEnter,
+        unit: '次',
+        comparison: 0, // 这里可以计算真实差值
+        abnormal: false,
+      },
+      {
+        key: 'totalExit',
+        name: '总出场车次',
+        value: totalExit,
+        unit: '次',
+        comparison: 0,
+        abnormal: false,
+      },
+      {
+        key: 'totalRevenue',
+        name: '总收费金额',
+        value: totalRevenue,
+        unit: '元',
+        comparison: 0,
+        abnormal: false,
+      },
+      {
+        key: 'avgUtilization',
+        name: '平均泊位利用率',
+        value: avgUtilization,
+        unit: '%',
+        comparison: 0,
+        abnormal: false,
+      },
+      {
+        key: 'warningCount',
+        name: '预警总数',
+        value: totalWarning,
+        unit: '条',
+        comparison: 0,
+        abnormal: false,
+      },
+      {
+        key: 'faultCount',
+        name: '故障设备数',
+        value: totalFault,
+        unit: '台',
+        comparison: 0,
+        abnormal: false,
+      },
+      {
+        key: 'memberRevenue',
+        name: '会员收入',
+        value: totalMemberRevenue,
+        unit: '元',
+        comparison: 0,
+        abnormal: false,
+      }
+    ];
+  }
+
+  // 如果没有筛选数据，返回原始API数据
   return coreIndicators.value.map((indicator) => ({
     ...indicator,
-    // tag: generateIndicatorTag(indicator.comparison),
-    // abnormal: Math.abs(indicator.comparison) > 30,
   }));
 });
 
