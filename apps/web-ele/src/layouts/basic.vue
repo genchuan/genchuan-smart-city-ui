@@ -271,3 +271,8 @@ watch(
   </BasicLayout>
   <HelpModal />
 </template>
+<style>
+.bg-transparent {
+  display: none;
+}
+</style>

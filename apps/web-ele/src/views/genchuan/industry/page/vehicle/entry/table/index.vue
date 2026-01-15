@@ -4,18 +4,24 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElImage, ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getDriveinList } from '#/api/genchuan/industry/vehicle/entry.js';
+import {
+  createDriveObj,
+  deleteDriveObj,
+  getDriveinList,
+  updateDriveObj,
+} from '#/api/genchuan/industry/vehicle/entry.js';
 import { $t } from '#/locales';
+import { formatTimestamp } from '#/utils';
 import { exportToExcel } from '#/utils/excel.js';
 // 引入封装后的详情抽屉组件
 import ParkDetailDrawer from '#/views/genchuan/industry/page/park/components/detail.vue';
 
-import { dataList, textObj, useFormSchema, useGridColumns } from './data';
+import { textObj, useFormSchema, useGridColumns } from './data';
 
 const props = defineProps({
   secondShow: {
@@ -57,17 +63,11 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onCancel() {
     formDrawerApi.close();
   },
-  onConfirm() {
+  async onConfirm() {
     const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-      dataObj.apilist.push(obj);
-    } else {
-      dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
-        }
-      });
-    }
+    await (formDrawerApi.sharedData.payload.title === textObj.addText
+      ? createDriveObj(obj)
+      : updateDriveObj({ ...dataObj.editObj, ...obj }));
     handleRefresh();
     formDrawerApi.close();
   },
@@ -103,6 +103,7 @@ function handleCreate() {
 
 /** 编辑角色 */
 function handleEdit(row) {
+  dataObj.editObj = row;
   formDrawerApi
     .setData({
       title: textObj.editText,
@@ -112,11 +113,11 @@ function handleEdit(row) {
 }
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.name]),
+    text: $t('ui.actionMessage.deleting'),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
+    await deleteDriveObj(row.id);
+    ElMessage.success($t('ui.actionMessage.deleteSuccess'));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -124,20 +125,14 @@ async function handleDelete(row) {
 }
 
 async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
+  await confirm($t('确定删除这些数据吗？')).then(() => {
+    checkedIds.value.forEach(async (v) => {
+      await handleDelete({
+        id: v,
+      });
+    });
   });
-  try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
+  handleRefresh();
 }
 
 const checkedIds = ref([]);
@@ -147,11 +142,14 @@ function handleRowCheckboxChange({ records }) {
 const dataObj = reactive({
   totalShow: false,
   detailObj: {}, // 保留详情对象用于传递给组件
-  total: dataList().length,
+  total: 0,
   currentPage: 1,
   pageSize: 10,
-  apilist: dataList(),
+  apilist: [],
+  imgUrl: '',
+  serachObj: {},
   list: [],
+  editObj: {},
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -161,15 +159,22 @@ const getTableData = async (pageObj) => {
   const getParams = {
     pageNo: pageObj.page.currentPage,
     pageSize: pageObj.page.pageSize,
+    ...dataObj.serachObj,
   };
-  const { data } = await getDriveinList(getParams);
+  const data = await getDriveinList(getParams);
   dataObj.total = data.total;
-  dataObj.list = data.list;
-  debugger;
+  dataObj.list = data.list.map((v) => {
+    return {
+      ...v,
+      plateType: v.plateType === '1' ? '月租车' : '临时车',
+      driveInTime: formatTimestamp(v.driveInTime),
+      createTime: formatTimestamp(v.createTime),
+    };
+  });
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [QueryForm, QueryFormApi] = useVbenForm({
   // 默认展开
   collapsed: false,
   // 所有表单项共用，可单独在表单内覆盖
@@ -199,7 +204,9 @@ const [QueryForm] = useVbenForm({
   },
 });
 // 搜索表单查询
-function onSubmit() {
+async function onSubmit() {
+  dataObj.serachObj = await QueryFormApi.getValues();
+  gridApi.reload();
   drawerApi.close();
 }
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -264,10 +271,20 @@ const handleFullShow = () => {
 
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
+const dialogVisible = ref(false);
+const openImg = (url) => {
+  dataObj.imgUrl = url;
+  dialogVisible.value = true;
+};
 </script>
 
 <template>
   <div class="park-lot-table-new">
+    <el-dialog v-model="dialogVisible">
+      <div class="park-img-center">
+        <img style="width: 100%; height: 100%" :src="dataObj.imgUrl" />
+      </div>
+    </el-dialog>
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
@@ -348,15 +365,23 @@ const parkDetailDrawerRef = ref(null);
           ></i>
         </button>
       </template>
-      <template #parkName="{ row }">
+      <template #recordId="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.name }}
+          {{ row.recordId }}
         </el-text>
       </template>
+      <template #driveInPhoto="{ row }">
+        <ElImage
+          style="width: 100px; height: 100px"
+          :src="row.driveInPhoto"
+          @click="openImg(row.driveInPhoto)"
+        />
+      </template>
+
       <template #actions="{ row }">
         <TableAction
           :actions="[
@@ -407,3 +432,12 @@ const parkDetailDrawerRef = ref(null);
     </Grid>
   </div>
 </template>
+<style scoped>
+.park-img-center {
+  width: 700px;
+  height: 700px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+</style>

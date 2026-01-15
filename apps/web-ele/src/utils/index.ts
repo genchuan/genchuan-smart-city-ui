@@ -28,3 +28,27 @@ export const findIndex = <T = Recordable<any>>(
   });
   return index;
 };
+/**
+ * 毫秒时间戳转换为 YYYY-MM-DD HH:mm:ss 格式
+ * @param {number} timestamp - 毫秒级时间戳（如 1768442344000）
+ * @returns {string} 格式化后的日期字符串
+ */
+export function formatTimestamp(timestamp:string) {
+  // 1. 创建 Date 对象（处理无效时间戳）
+  const date = new Date(timestamp);
+  if (isNaN(date.getTime())) {
+    return '无效时间戳';
+  }
+
+  // 2. 提取年月日时分秒（补零处理：确保两位数）
+  const year = date.getFullYear();
+  // 月份从 0 开始，需 +1
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+
+  // 3. 拼接成目标格式
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
