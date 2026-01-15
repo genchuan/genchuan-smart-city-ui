@@ -1,6 +1,4 @@
 // --- 异常预警视图
-
-// 完全复用处置进度追踪的布局结构+视觉规范 | 紫晶赤红警示色系（适配异常预警业务属性）| 所有字段一对一精准匹配
 .abnormal-warning-monitor {
   box-sizing: border-box;
   display: flex;
@@ -9,7 +7,6 @@
   width: 100%;
   height: 100%;
 
-  // ===== 卡片展示区样式 - 4个异常时长核心数据专用 (平均/最大/最小/累计) =====
   .abnormal-duration-card {
     box-sizing: border-box;
     display: flex;
@@ -42,47 +39,43 @@
         display: block;
         font-size: 0.9vw;
         font-weight: bold;
-        color: #9333ea; // 紫晶主色 异常核心色
+        color: #9333ea;
         text-shadow: 0 0 0.3vw rgb(147 51 234 / 60%);
       }
     }
-    // 累计异常时长 重点高亮（业务核心数据，和你原代码的预警总耗时高亮逻辑一致）
+
     .totalAbnormalDuration {
       .item-value {
         font-size: 1vw;
         font-weight: bolder;
-        color: #ef4444; // 赤红警示色 重点突出
+        color: #ef4444;
         text-shadow: 0 0 0.5vw rgb(239 68 68 / 80%);
       }
     }
   }
 
-  // ===== 表格展示区样式 - 异常预警核心表格 (所有业务字段一对一适配) =====
   .abnormal-warning-table {
     box-sizing: border-box;
     flex: 1;
     width: 100%;
 
     ::v-deep(.el-table) {
-      // 紫晶赤红警示色系 核心变量 (替换原鎏金色系，保留变量命名规则)
-      --el-table-bg-color: rgb(139 92 246 / 8%);
+      --el-table-bg-color: rgb(0 30 60 / 8%);
       --el-table-text-color-primary: #fff;
-      --el-table-border-color: #9333ea;
-      --el-table-row-hover-bg-color: rgb(139 92 246 / 20%);
+      --el-table-border-color: rgb(25 80 135);
+      --el-table-row-hover-bg-color: rgb(0 30 60 / 20%);
 
       box-sizing: border-box;
       width: 100%;
       font-size: 0.8vw;
       table-layout: fixed;
 
-      // 表头 紫晶赤红渐变背景 + 底部光效（和你其他模块100%一致的视觉细节，无差异化）
       .el-table__header {
-        background: linear-gradient(90deg, #9333ea, #ef4444) !important;
+        background: linear-gradient(90deg, rgb(20 70 125), rgb(35 90 150)) !important;
       }
 
       .el-table__header-wrapper {
         width: 100%;
-
         th {
           padding: 0.3vw 0.5vw;
           overflow: hidden;
@@ -92,9 +85,8 @@
           color: #fff;
           text-align: center;
           white-space: nowrap;
-          background: linear-gradient(90deg, #9333ea, #ef4444) !important;
-          border: 1px solid #a855f7;
-          // 表头底部渐变光效（统一你的大屏页面质感，完全复用原代码）
+          background: linear-gradient(90deg, rgb(20 70 125), rgb(35 90 150)) !important;
+          border: 1px solid rgb(30 95 160);
           &::after {
             position: absolute;
             bottom: 0;
@@ -107,10 +99,8 @@
         }
       }
 
-      // 表格主体单元格样式 (统一内边距、对齐方式、文字色)
       .el-table__body-wrapper {
         width: 100%;
-
         td {
           padding: 0.4vw 0.5vw;
           overflow: hidden;
@@ -120,64 +110,42 @@
           color: #fff;
           text-align: center;
           white-space: nowrap;
-          border: 1px solid rgb(139 92 246 / 20%);
+          border: 1px solid rgb(25 80 135 / 20%);
         }
       }
 
-      // 空表格占位样式 - 适配紫晶警示主色调 (复用原代码结构)
       .el-table__empty-block {
         width: 100%;
         padding: 1vw;
         font-size: 0.8vw;
         color: #9333ea;
-        background: rgb(10 25 40 / 80%);
-        border: 1px dashed #ef4444;
+        background: rgb(0 20 45 / 80%);
+        border: 1px dashed rgb(30 95 160);
       }
 
-      // ===== 异常预警 行状态高亮样式 (左侧竖线标记，完全复用你原代码的核心视觉逻辑，无改动) =====
       .abnormal-row-unrelieved {
-        // 未解除（核心异常态）
-        background: rgb(239 68 68 / 10%);
-
-        td {
-          border-left: 0.3vw solid #ef4444;
-        }
+        background: rgb(0 25 55 / 10%);
+        td { border-left: 0.1vw solid #ef4444; }
       }
 
       .abnormal-row-relieving {
-        // 解除中（处理态）
-        background: rgb(147 51 234 / 10%);
-
-        td {
-          border-left: 0.3vw solid #9333ea;
-        }
+        background: rgb(0 30 60 / 10%);
+        td { border-left: 0.1vw solid #9333ea; }
       }
 
       .abnormal-row-relieved {
-        // 已解除（完成态）
-        background: rgb(16 185 129 / 10%);
-
-        td {
-          border-left: 0.3vw solid #10b981;
-        }
+        background: rgb(0 35 65 / 10%);
+        td { border-left: 0.1vw solid #10b981; }
       }
 
       .abnormal-row-timeout {
-        // 超时未解除（严重异常态）
-        background: rgb(236 72 153 / 10%);
-
-        td {
-          border-left: 0.3vw solid #ec4899;
-        }
+        background: rgb(0 40 70 / 10%);
+        td { border-left: 0.1vw solid #ec4899; }
       }
 
       .abnormal-row-false {
-        // 误报（无效态）
-        background: rgb(59 130 246 / 10%);
-
-        td {
-          border-left: 0.3vw solid #3b82f6;
-        }
+        background: rgb(0 45 75 / 10%);
+        td { border-left: 0.1vw solid #3b82f6; }
       }
     }
 

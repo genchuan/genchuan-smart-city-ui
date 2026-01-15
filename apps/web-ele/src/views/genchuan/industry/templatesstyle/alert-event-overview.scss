@@ -1,11 +1,9 @@
-// 预警事件概览
-
 .alert-event-overview-table {
   ::v-deep(.el-table) {
-    --el-table-bg-color: rgb(201 42 42 / 8%);
+    --el-table-bg-color: rgb(0 30 60 / 8%);
     --el-table-text-color-primary: #fff;
-    --el-table-border-color: #c92a2a;
-    --el-table-row-hover-bg-color: rgb(201 42 42 / 20%);
+    --el-table-border-color: rgb(25 80 135);
+    --el-table-row-hover-bg-color: rgb(0 30 60 / 20%);
 
     box-sizing: border-box;
     width: 100%;
@@ -13,7 +11,7 @@
     table-layout: fixed;
 
     .el-table__header {
-      background: linear-gradient(90deg, #c92a2a, #e64949) !important;
+      background: linear-gradient(90deg, rgb(20 70 125), rgb(35 90 150)) !important;
     }
 
     .el-table__header-wrapper {
@@ -28,8 +26,8 @@
         color: #fff;
         text-align: center;
         white-space: nowrap;
-        background: linear-gradient(90deg, #c92a2a, #e64949) !important;
-        border: 1px solid #f08080;
+        background: linear-gradient(90deg, rgb(20 70 125), rgb(35 90 150)) !important;
+        border: 1px solid rgb(30 95 160);
 
         &::after {
           position: absolute;
@@ -55,7 +53,7 @@
         color: #fff;
         text-align: center;
         white-space: nowrap;
-        border: 1px solid rgb(201 42 42 / 20%);
+        border: 1px solid rgb(25 80 135 / 20%);
       }
     }
 
@@ -64,39 +62,35 @@
       padding: 1vw;
       font-size: 0.8vw;
       color: #e64949;
-      background: rgb(10 25 40 / 80%);
-      border: 1px dashed #f08080;
+      background: rgb(0 20 45 / 80%);
+      border: 1px dashed rgb(30 95 160);
     }
 
     .alert-row-untreated {
-      background: rgb(255 77 109 / 10%);
-
+      background: rgb(0 25 55 / 10%);
       td {
-        border-left: 0.3vw solid #ff4d6d;
+        border-left: 0.1vw solid rgb(30 85 145);
       }
     }
 
     .alert-row-disposing {
-      background: rgb(247 147 30 / 10%);
-
+      background: rgb(0 35 65 / 10%);
       td {
-        border-left: 0.3vw solid #f7931e;
+        border-left: 0.1vw solid rgb(232, 212, 82);
       }
     }
 
     .alert-row-completed {
-      background: rgb(56 176 0 / 10%);
-
+      background: rgb(0 45 75 / 10%);
       td {
-        border-left: 0.3vw solid #38b000;
+        border-left: 0.1vw solid rgb(50, 165, 65);
       }
     }
 
     .alert-row-timeout {
-      background: rgb(153 51 255 / 10%);
-
+      background: rgb(0 50 85 / 10%);
       td {
-        border-left: 0.3vw solid #93f;
+        border-left: 0.1vw solid rgb(175, 60, 60);
       }
     }
   }

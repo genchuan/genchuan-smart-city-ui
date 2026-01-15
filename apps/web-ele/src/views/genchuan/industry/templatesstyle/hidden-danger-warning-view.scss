@@ -1,26 +1,24 @@
 // ---隐患预警视图
-
 .hidden-danger-warning-table {
   ::v-deep(.el-table) {
-    // 核心样式变量（隐患预警采用绿色系为主调，区分故障预警红粉/预警事件蓝色）
-    --el-table-bg-color: rgb(0 180 42 / 8%);
+    // 核心样式变量 - 改为低饱和不鲜艳深蓝系
+    --el-table-bg-color: rgb(10 30 60 / 8%);
     --el-table-text-color-primary: #fff;
     --el-table-border-color: #00b42a;
-    --el-table-row-hover-bg-color: rgb(0 180 42 / 20%);
+    --el-table-row-hover-bg-color: rgb(20 50 90 / 20%);
 
     box-sizing: border-box;
     width: 100%;
     font-size: 0.8vw;
     table-layout: fixed;
 
-    // 表头背景渐变（绿色系渐变，区分故障预警红橙/预警事件蓝青）
+    // 表头背景渐变-适配深蓝主调（低饱和不鲜艳）
     .el-table__header {
-      background: linear-gradient(90deg, #00b42a, #00e039) !important;
+      background: linear-gradient(90deg, #093668, #10529c) !important;
     }
 
     .el-table__header-wrapper {
       width: 100%;
-
       th {
         padding: 0.3vw 0.5vw;
         overflow: hidden;
@@ -30,10 +28,8 @@
         color: #fff;
         text-align: center;
         white-space: nowrap;
-        background: linear-gradient(90deg, #00b42a, #00e039) !important;
+        background: linear-gradient(90deg, #093668, #10529c) !important;
         border: 1px solid #33e659;
-
-        // 表头下侧渐变光效（保持视觉一致性，颜色适配绿色系）
         &::after {
           position: absolute;
           bottom: 0;
@@ -48,7 +44,6 @@
 
     .el-table__body-wrapper {
       width: 100%;
-
       td {
         padding: 0.4vw 0.5vw;
         overflow: hidden;
@@ -62,55 +57,36 @@
       }
     }
 
-    // 空表格样式（适配绿色系主调）
+    // 空表格样式-深蓝系适配
     .el-table__empty-block {
       width: 100%;
       padding: 1vw;
       font-size: 0.8vw;
       color: #00b42a;
-      background: rgb(10 25 40 / 80%);
+      background: rgb(5 20 45 / 80%);
       border: 1px dashed #00e039;
     }
 
-    // 整改进度对应的行样式（专属类名，避免冲突）
+    // 整改进度对应行样式 - 全改为不鲜艳深蓝背景，左侧标识色条不变
     .hidden-danger-row-untreated {
-      // 未整改
-      background: rgb(255 77 109 / 10%);
-
-      td {
-        border-left: 0.3vw solid #ff4d6d;
-      }
+      background: rgb(15 40 80 / 20%);
+      td { border-left: 0.1vw solid #ff4d6d; }
     }
-
     .hidden-danger-row-rectifying {
-      // 整改中
-      background: rgb(247 147 30 / 10%);
-
-      td {
-        border-left: 0.3vw solid #f7931e;
-      }
+      background: rgb(20 50 90 / 20%);
+      td { border-left: 0.1vw solid #f7931e; }
     }
-
     .hidden-danger-row-completed {
-      // 已完成
-      background: rgb(0 180 42 / 10%);
-
-      td {
-        border-left: 0.3vw solid #00b42a;
-      }
+      background: rgb(10 35 70 / 20%);
+      td { border-left: 0.1vw solid #00b42a; }
     }
-
     .hidden-danger-row-accepted {
-      // 验收通过
-      background: rgb(0 198 255 / 10%);
-
-      td {
-        border-left: 0.3vw solid #00c6ff;
-      }
+      background: rgb(8 45 95 / 20%);
+      td { border-left: 0.1vw solid #00c6ff; }
     }
   }
 
-  // 风险等级标签（一般/较大/重大 三级风险）
+  // 风险等级标签 - 样式完全不变
   .hidden-danger-level-tag {
     display: inline-block;
     max-width: 8vw;
@@ -122,30 +98,24 @@
     font-weight: bold;
     white-space: nowrap;
     border-radius: 0.4vw;
-
     &.general {
       color: #fff;
-      // 一般
       background: rgb(0 198 255 / 20%);
       border-color: #00c6ff;
     }
-
     &.larger {
       color: #fff;
-      // 较大
       background: rgb(247 147 30 / 20%);
       border-color: #f7931e;
     }
-
     &.major {
       color: #fff;
-      // 重大
       background: rgb(255 77 109 / 20%);
       border-color: #ff4d6d;
     }
   }
 
-  // 隐患类型标签
+  // 隐患类型标签 - 样式完全不变
   .hidden-danger-type-tag {
     display: inline-block;
     max-width: 8vw;
@@ -161,21 +131,20 @@
     border-radius: 0.4vw;
   }
 
-  // 责任人/责任单位样式（突出显示）
+  // 责任人/责任单位样式 - 字体颜色完全不变
   .responsible-person {
     font-size: 0.8vw;
     font-weight: bold;
     color: #00b42a;
     text-shadow: 0 0 0.3vw rgb(0 180 42 / 50%);
   }
-
   .responsible-unit {
     font-size: 0.8vw;
     font-weight: 600;
     color: #00e039;
   }
 
-  // 整改进度标签
+  // 整改进度标签 - 背景+字体颜色完全不变
   .rectification-status-tag {
     display: inline-block;
     max-width: 8vw;
@@ -187,31 +156,23 @@
     font-weight: bold;
     white-space: nowrap;
     border-radius: 0.4vw;
-
     &.untreated {
       color: #fff;
-      // 未整改
       background: rgb(255 77 109 / 40%);
       border-color: #ff4d6d;
     }
-
     &.rectifying {
       color: #fff;
-      // 整改中
       background: rgb(247 147 30 / 40%);
       border-color: #f7931e;
     }
-
     &.completed {
       color: #fff;
-      // 已完成
       background: rgb(0 180 42 / 40%);
       border-color: #00b42a;
     }
-
     &.accepted {
       color: #fff;
-      // 验收通过
       background: rgb(0 198 255 / 40%);
       border-color: #00c6ff;
     }

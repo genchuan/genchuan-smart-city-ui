@@ -423,10 +423,10 @@ const openImg = (url) => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：停车场数量5;车位总数:266;车场车位3 </span>
+          <span> 本页统计：停车记录10条 </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span> 全部统计：{{ textObj.total }} </span>
+          <span> 全部统计：停车记录15条 </span>
         </div>
       </template>
     </Grid>

@@ -75,7 +75,7 @@ export function useFormSchema() {
       component: 'DatePicker',
       labelWidth: '100',
       componentProps: {
-        placeholder: ['开始时间', '结束时间'],
+        placeholder: ['开始时间'],
         showTime: true,
         format: 'YYYY-MM-DD HH:mm:ss',
         style: { width: '100%' },
@@ -87,7 +87,7 @@ export function useFormSchema() {
       component: 'DatePicker',
       labelWidth: '100',
       componentProps: {
-        placeholder: ['开始时间', '结束时间'],
+        placeholder: ['开始时间'],
         showTime: true,
         format: 'YYYY-MM-DD HH:mm:ss',
         style: { width: '100%' },
@@ -192,9 +192,9 @@ export function useGridColumns() {
 
 /** 文字描述对象 */
 export const textObj = {
-  editText: '编辑停车场',
-  addText: '新增停车场',
-  excelName: '停车场列表',
+  editText: '',
+  addText: '',
+  excelName: '',
   excelAllName: '全市停车场数据.xlsx',
   total: '停车场数量10;车位总数:1211;车场车位7',
 };

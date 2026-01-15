@@ -1,11 +1,10 @@
 // ---故障预警视图
-
 .fault-warning-table {
   ::v-deep(.el-table) {
-    --el-table-bg-color: rgb(255 77 109 / 8%);
+    --el-table-bg-color: rgb(0 30 60 / 8%);
     --el-table-text-color-primary: #fff;
-    --el-table-border-color: #ff4d6d;
-    --el-table-row-hover-bg-color: rgb(255 77 109 / 20%);
+    --el-table-border-color: rgb(20 70 120);
+    --el-table-row-hover-bg-color: rgb(0 30 60 / 20%);
 
     box-sizing: border-box;
     width: 100%;
@@ -13,7 +12,7 @@
     table-layout: fixed;
 
     .el-table__header {
-      background: linear-gradient(90deg, #ff4d6d, #f7931e) !important;
+      background: linear-gradient(90deg, rgb(20 60 110), rgb(30 80 130)) !important;
     }
 
     .el-table__header-wrapper {
@@ -28,8 +27,8 @@
         color: #fff;
         text-align: center;
         white-space: nowrap;
-        background: linear-gradient(90deg, #ff4d6d, #f7931e) !important;
-        border: 1px solid #ff6b81;
+        background: linear-gradient(90deg, rgb(20 60 110), rgb(30 80 130)) !important;
+        border: 1px solid rgb(30 90 150);
 
         &::after {
           position: absolute;
@@ -55,7 +54,7 @@
         color: #fff;
         text-align: center;
         white-space: nowrap;
-        border: 1px solid rgb(255 77 109 / 20%);
+        border: 1px solid rgb(20 70 120 / 20%);
       }
     }
 
@@ -64,31 +63,28 @@
       padding: 1vw;
       font-size: 0.8vw;
       color: #ff4d6d;
-      background: rgb(10 25 40 / 80%);
-      border: 1px dashed #f7931e;
+      background: rgb(0 20 40 / 80%);
+      border: 1px dashed rgb(30 90 150);
     }
 
     .fault-row-danger {
-      background: rgb(255 77 109 / 10%);
-
+      background: rgb(0 25 50 / 10%);
       td {
-        border-left: 0.3vw solid #ff4d6d;
+        border-left: 0.1vw solid rgb(225, 59, 59);
       }
     }
 
     .fault-row-warning {
-      background: rgb(247 147 30 / 10%);
-
+      background: rgb(0 35 65 / 10%);
       td {
-        border-left: 0.3vw solid #f7931e;
+        border-left: 0.1vw solid rgb(231, 212, 102);
       }
     }
 
     .fault-row-success {
-      background: rgb(56 176 0 / 10%);
-
+      background: rgb(0 45 75 / 10%);
       td {
-        border-left: 0.3vw solid #38b000;
+        border-left: 0.1vw solid rgb(144, 255, 146);
       }
     }
   }

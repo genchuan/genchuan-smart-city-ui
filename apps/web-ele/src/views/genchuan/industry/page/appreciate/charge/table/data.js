@@ -334,12 +334,13 @@ export function useFormSchema() {
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
-    // {
-    //   field: 'charge_reserve_id',
-    //   title: '预约记录ID',
-    //   minWidth: 260,
-    //   sortable: true,
-    // },
+    {
+      field: 'charge_pile_id',
+      title: '充电桩ID',
+      minWidth: 140,
+      sortable: true,
+      slots: { default: 'chargePileId' }, // 添加插槽用于自定义渲染
+    },
     {
       field: 'reservation_no',
       title: '预约编号',
@@ -356,12 +357,6 @@ export function useGridColumns() {
       field: 'car_number',
       title: '车牌号码',
       minWidth: 120,
-      sortable: true,
-    },
-    {
-      field: 'charge_pile_id',
-      title: '充电桩ID',
-      minWidth: 140,
       sortable: true,
     },
     {
