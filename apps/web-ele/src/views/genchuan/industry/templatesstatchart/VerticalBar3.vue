@@ -1,13 +1,16 @@
+<template>
+  <div class="chart-container" ref="chartRef"></div>
+</template>
+
 <script setup>
 import {
   defineEmits,
   defineProps,
-  onMounted,
-  onUnmounted,
   ref,
   watch,
+  onMounted,
+  onUnmounted
 } from 'vue';
-
 import * as echarts from 'echarts';
 
 const props = defineProps({
@@ -35,6 +38,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  barMaxWidth: {
+    type: Number,
+    default: 30
+  }
 });
 
 const emits = defineEmits(['barClick']);
@@ -81,24 +88,17 @@ const initChart = () => {
       top: 0,
     },
     tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'shadow',
-      },
+      trigger: 'item',
       backgroundColor: 'rgba(18, 26, 64, 0.9)',
       borderColor: 'rgba(0, 196, 255, 0.4)',
       borderWidth: 1,
+      padding: [8, 12],
       textStyle: {
-        color: '#E6F7FF',
+        color: '#e6f7ff',
         fontSize: tooltipFontSize,
+        fontWeight: 500,
       },
-      formatter: (params) => {
-        let res = `${params[0].name}<br/>`;
-        params.forEach((item) => {
-          res += `${item.seriesName}：${item.value} ${props.unit}<br/>`;
-        });
-        return res;
-      },
+      formatter: '{a}: {c}',
     },
     grid: {
       left: '2%',
@@ -140,33 +140,22 @@ const initChart = () => {
       },
     },
     series: props.series.map((item) => {
+      // ✅ 修改点1：【多系列专用配色】固定2套主渐变（完美适配入库+出库双系列）
+      // 入库=天蓝色渐变  出库=翠绿色渐变 区分度极高，符合大屏配色规范
       const colorGradients = [
-        [
-          { offset: 0, color: '#00ccff' },
-          { offset: 1, color: '#0066ff' },
-        ],
-        [
-          { offset: 0, color: '#4ECDC4' },
-          { offset: 1, color: '#1A9885' },
-        ],
-        [
-          { offset: 0, color: '#FFA500' },
-          { offset: 1, color: '#E67E22' },
-        ],
-        [
-          { offset: 0, color: '#96CEB4' },
-          { offset: 1, color: '#58B19F' },
-        ],
+        [{offset: 0, color: '#00ccff'}, {offset: 1, color: '#0066ff'}], // 入库-蓝色系
+        [{offset: 0, color: '#4ECDC4'}, {offset: 1, color: '#1A9885'}]  // 出库-绿色系
       ];
-      const activeColors = ['#c272e1'];
+      const activeColors = ['#c272e1']; // 高亮色保留不变
       const labelFontSize = vwToPx(0.6);
 
       return {
         ...item,
         type: 'bar',
-        barWidth: '50%',
+        barWidth: '60%',
+        barMaxWidth: props.barMaxWidth,
         label: {
-          show: true,
+          show: false,
           position: 'top',
           color: '#e6f7ff',
           fontSize: labelFontSize,
@@ -175,24 +164,25 @@ const initChart = () => {
         },
         itemStyle: {
           color: (params) => {
+            // 高亮逻辑保留不变
             if (props.activeIndices.includes(params.dataIndex)) {
-              return activeColors[params.dataIndex % activeColors.length];
+              return activeColors[0];
             }
-            return new echarts.graphic.LinearGradient(
-              0,
-              0,
-              0,
-              1,
-              colorGradients[params.dataIndex % colorGradients.length],
-            );
+            // ✅ 修改点2：【核心修复】按【系列下标】取色 → 同系列同色，不同系列不同色
+            // params.seriesIndex 0=入库系列 1=出库系列
+            return new echarts.graphic.LinearGradient(0, 0, 0, 1, colorGradients[params.seriesIndex % colorGradients.length]);
           },
+          borderRadius: [4, 4, 0, 0], // 保留顶部圆角
         },
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
             shadowColor: 'rgba(0, 102, 255, 0.5)',
+            borderColor: '#fff', // 保留hover白色边框
+            borderWidth: 1
           },
           label: {
+            show: false,
             color: '#fff',
             fontSize: labelFontSize + 2,
             shadowBlur: 5,
@@ -218,7 +208,7 @@ watch(
       initChart();
     }
   },
-  { deep: true },
+  {deep: true},
 );
 
 const handleResize = () => {
@@ -231,14 +221,11 @@ const handleResize = () => {
   const labelFontSize = vwToPx(0.6);
 
   chartInstance.value.setOption({
-    title: { textStyle: { fontSize: titleFontSize } },
-    tooltip: { textStyle: { fontSize: tooltipFontSize } },
-    grid: { top: gridTop },
-    xAxis: { axisLabel: { fontSize: axisLabelFontSize } },
-    yAxis: { axisLabel: { fontSize: axisLabelFontSize } },
-    series: props.series.map(() => ({
-      label: { fontSize: labelFontSize },
-    })),
+    title: {textStyle: {fontSize: titleFontSize}},
+    tooltip: {textStyle: {fontSize: tooltipFontSize}},
+    grid: {top: gridTop},
+    xAxis: {axisLabel: {fontSize: axisLabelFontSize}},
+    yAxis: {axisLabel: {fontSize: axisLabelFontSize}},
   });
 
   chartInstance.value.resize();
@@ -256,10 +243,6 @@ onUnmounted(() => {
   }
 });
 </script>
-
-<template>
-  <div class="chart-container" ref="chartRef"></div>
-</template>
 
 <style scoped>
 .chart-container {

@@ -10,20 +10,11 @@ import {
 
 import { mapOrbitAnimation } from '#/api/genchuan/industry/mapOrbitAnimation.js';
 
+// ✅ 精简图标导入：只保留核心必要图标，数量最少化
 import markerFault from '../../images/berth_fault.png';
-import markerForbid from '../../images/berth_forbid.png';
-// 泊位状态图标
 import markerIdle from '../../images/berth_idle.png';
 import markerOccupy from '../../images/berth_occupy.png';
-import deviceFault from '../../images/device_fault.png';
-import deviceMaintain from '../../images/device_maintain.png';
-import deviceOffline from '../../images/device_offline.png';
-// 设备状态图标
-import deviceOnline from '../../images/device_online.png';
-import parkMaintain from '../../images/park_maintain.png';
-// 停车场状态图标
 import parkNormal from '../../images/park_normal.png';
-import parkPause from '../../images/park_pause.png';
 import markerUnknown from '../../images/unknown.png';
 
 const props = defineProps({
@@ -51,7 +42,6 @@ const mapInstance = ref(null);
 const infoWindow = ref(null);
 const parkMarkerLayer = ref(null);
 const berthMarkerLayer = ref(null);
-const deviceMarkerLayer = ref(null);
 const mapInitialized = ref(false);
 
 const {
@@ -70,7 +60,7 @@ watch(
   { deep: true, immediate: true },
 );
 
-// 状态映射表
+// ✅ 核心精简：状态映射表极简配置，匹配接口字段（接口返回泊位状态为status），删除冗余状态
 const lotStatusMap = {
   正常: {
     color: '#39b20d',
@@ -79,22 +69,9 @@ const lotStatusMap = {
     size: { w: 50, h: 50 },
     styleId: 'normal',
   },
-  暂停运营: {
-    color: '#FF4500',
-    icon: parkPause,
-    text: '暂停运营',
-    size: { w: 50, h: 50 },
-    styleId: 'pause',
-  },
-  维护: {
-    color: '#FFA500',
-    icon: parkMaintain,
-    text: '维护',
-    size: { w: 50, h: 50 },
-    styleId: 'maintain',
-  },
 };
-const roadsideStatusMap = {
+// 接口字段匹配：原roadsideStatus → 改为接口的status字段，只保留3个核心状态
+const berthStatusMap = {
   空闲: {
     color: '#FFA500',
     icon: markerIdle,
@@ -116,61 +93,9 @@ const roadsideStatusMap = {
     size: { w: 30, h: 30 },
     styleId: 'fault',
   },
-  禁用: {
-    color: '#5b5757',
-    icon: markerForbid,
-    text: '禁用',
-    size: { w: 30, h: 30 },
-    styleId: 'forbid',
-  },
-};
-const deviceStatusStyleMap = {
-  在线: {
-    color: '#39b20d',
-    icon: deviceOnline,
-    text: '在线',
-    size: { w: 20, h: 20 },
-    styleId: 'device-online',
-  },
-  离线: {
-    color: '#5b5757',
-    icon: deviceOffline,
-    text: '离线',
-    size: { w: 20, h: 20 },
-    styleId: 'device-offline',
-  },
-  故障: {
-    color: '#FF4500',
-    icon: deviceFault,
-    text: '故障',
-    size: { w: 20, h: 20 },
-    styleId: 'device-fault',
-  },
-  '': {
-    color: '#999999',
-    icon: markerUnknown,
-    text: '状态未知',
-    size: { w: 20, h: 20 },
-    styleId: 'device-unknown',
-  },
-};
-const deviceTypeMap = {
-  道闸: '道闸',
-  摄像头: '摄像头',
-  计费桩: '计费桩',
-  充电桩: '充电桩',
-  传感器: '传感器',
-  边缘网关: '边缘网关',
-  '': '未知设备',
-};
-const alertLevelMap = {
-  高: { text: '高', color: '#8f0000' },
-  中: { text: '中', color: '#c72d2d' },
-  低: { text: '低', color: '#ea7373' },
-  '': { text: '未知预警', color: '#999999' },
 };
 
-// 点击标注展示信息窗口
+// ✅ 点击标注展示信息窗口
 const handleMarkerClick = (e) => {
   const { properties, position } = e.geometry;
   if (properties && position && infoWindow.value) {
@@ -196,114 +121,48 @@ const initMap = () => {
   document.head.append(script);
 };
 
-// 核心修改：适配拆分后的经纬度字段（停车场/泊位/设备独立坐标）
+// ✅ 核心修改：1.适配接口统一经纬度字段(longitude/latitude) 2.删除冗余设备层 3.匹配接口所有返回字段 4.精简标注逻辑
 const createAllMarkers = (map) => {
   // 销毁原有标注层
   if (parkMarkerLayer.value) {
-    try {
-      parkMarkerLayer.value.off('click', handleMarkerClick);
-      parkMarkerLayer.value.destroy();
-    } catch (error) {
-      console.warn('销毁停车场标注层失败:', error);
-    }
+    try { parkMarkerLayer.value.off('click', handleMarkerClick); parkMarkerLayer.value.destroy(); } catch (e) { console.warn('销毁停车场标注层失败:', e); }
     parkMarkerLayer.value = null;
   }
   if (berthMarkerLayer.value) {
-    try {
-      berthMarkerLayer.value.off('click', handleMarkerClick);
-      berthMarkerLayer.value.destroy();
-    } catch (error) {
-      console.warn('销毁泊位标注层失败:', error);
-    }
+    try { berthMarkerLayer.value.off('click', handleMarkerClick); berthMarkerLayer.value.destroy(); } catch (e) { console.warn('销毁泊位标注层失败:', e); }
     berthMarkerLayer.value = null;
   }
-  if (deviceMarkerLayer.value) {
-    try {
-      deviceMarkerLayer.value.off('click', handleMarkerClick);
-      deviceMarkerLayer.value.destroy();
-    } catch (error) {
-      console.warn('销毁设备标注层失败:', error);
-    }
-    deviceMarkerLayer.value = null;
-  }
 
-  if (
-    !Array.isArray(props.geometriesArray) ||
-    props.geometriesArray.length === 0
-  )
-    return;
+  if (!Array.isArray(props.geometriesArray) || props.geometriesArray.length === 0) return;
 
   const parkData = [];
   const berthData = [];
-  const deviceData = [];
-  // 用于去重的停车场ID集合
   const parkIdSet = new Set();
 
-  // 第一步：提取唯一的停车场数据（按lotId去重），使用停车场专属经纬度
+  // 提取唯一停车场数据 + 泊位数据
   props.geometriesArray.forEach((item) => {
-    const { lotId, lotLongitude, lotLatitude, lotStatus } = item;
-    if (
-      !item ||
-      !lotId ||
-      typeof lotLongitude !== 'number' ||
-      typeof lotLatitude !== 'number'
-    )
-      return;
+    const { lotId, lotName, longitude, latitude, parkType, totalSpace, availableSpace, roadsideId, status, berthNumber } = item;
+    if (!item || !lotId || typeof longitude !== 'number' || typeof latitude !== 'number') return;
 
-    // 只保留唯一的停车场数据
+    // 停车场标注：按lotId去重，使用接口统一经纬度
     if (!parkIdSet.has(lotId)) {
       parkIdSet.add(lotId);
-      const styleId = lotStatusMap[lotStatus || '']?.styleId || 'default';
       parkData.push({
         id: `park-${lotId}`,
-        styleId: `park-${styleId}`,
-        position: new TMap.LatLng(lotLatitude, lotLongitude), // 读取停车场专属纬度/经度
+        styleId: `park-normal`,
+        position: new TMap.LatLng(latitude, longitude),
         properties: { ...item, markerType: 'parkLot' },
       });
     }
-  });
 
-  // 第二步：处理泊位数据，使用泊位专属经纬度
-  props.geometriesArray.forEach((item, index) => {
-    const {
-      berthLongitude,
-      berthLatitude,
-      roadsideStatus,
-      deviceId,
-      deviceStatus,
-      deviceLongitude,
-      deviceLatitude,
-    } = item;
-    if (
-      !item ||
-      typeof berthLongitude !== 'number' ||
-      typeof berthLatitude !== 'number'
-    )
-      return;
-
-    // 泊位标注（使用泊位专属坐标）
-    const styleId =
-      roadsideStatusMap[roadsideStatus || '']?.styleId || 'default';
-    berthData.push({
-      id: `berth-${index}`,
-      styleId: `berth-${styleId}`,
-      position: new TMap.LatLng(berthLatitude, berthLongitude), // 读取泊位专属纬度/经度
-      properties: { ...item, markerType: 'berth' },
-    });
-
-    // 设备标注（使用设备专属坐标，无则基于泊位偏移）
-    if (deviceId) {
-      const devStyleId =
-        deviceStatusStyleMap[deviceStatus || '']?.styleId || 'device-unknown';
-      // 优先使用设备专属坐标，无则用泊位坐标+偏移
-      const finalDeviceLat = deviceLatitude || berthLatitude + 0.0001;
-      const finalDeviceLng = deviceLongitude || berthLongitude + 0.0001;
-
-      deviceData.push({
-        id: `device-${deviceId}`,
-        styleId: devStyleId,
-        position: new TMap.LatLng(finalDeviceLat, finalDeviceLng), // 读取设备专属纬度/经度
-        properties: { ...item, markerType: 'device' },
+    // 泊位标注：存在roadsideId即为泊位，匹配接口status字段
+    if (roadsideId && status) {
+      const styleId = berthStatusMap[status]?.styleId || 'default';
+      berthData.push({
+        id: `berth-${roadsideId}`,
+        styleId: `berth-${styleId}`,
+        position: new TMap.LatLng(latitude, longitude),
+        properties: { ...item, markerType: 'berth' },
       });
     }
   });
@@ -313,30 +172,8 @@ const createAllMarkers = (map) => {
     parkMarkerLayer.value = new TMap.MultiMarker({
       map,
       styles: {
-        'park-normal': new TMap.MarkerStyle({
-          width: 50,
-          height: 50,
-          anchor: { x: 20, y: 35 },
-          src: parkNormal,
-        }),
-        'park-pause': new TMap.MarkerStyle({
-          width: 50,
-          height: 50,
-          anchor: { x: 20, y: 35 },
-          src: parkPause,
-        }),
-        'park-maintain': new TMap.MarkerStyle({
-          width: 50,
-          height: 50,
-          anchor: { x: 20, y: 35 },
-          src: parkMaintain,
-        }),
-        'park-default': new TMap.MarkerStyle({
-          width: 50,
-          height: 50,
-          anchor: { x: 20, y: 35 },
-          src: markerUnknown,
-        }),
+        'park-normal': new TMap.MarkerStyle({ width: 50, height: 50, anchor: { x: 20, y: 35 }, src: parkNormal }),
+        'park-default': new TMap.MarkerStyle({ width: 50, height: 50, anchor: { x: 20, y: 35 }, src: markerUnknown }),
       },
       geometries: parkData,
     });
@@ -348,192 +185,76 @@ const createAllMarkers = (map) => {
     berthMarkerLayer.value = new TMap.MultiMarker({
       map,
       styles: {
-        'berth-idle': new TMap.MarkerStyle({
-          width: 30,
-          height: 30,
-          anchor: { x: 15, y: 25 },
-          src: markerIdle,
-        }),
-        'berth-occupy': new TMap.MarkerStyle({
-          width: 30,
-          height: 30,
-          anchor: { x: 15, y: 25 },
-          src: markerOccupy,
-        }),
-        'berth-fault': new TMap.MarkerStyle({
-          width: 30,
-          height: 30,
-          anchor: { x: 15, y: 25 },
-          src: markerFault,
-        }),
-        'berth-forbid': new TMap.MarkerStyle({
-          width: 30,
-          height: 30,
-          anchor: { x: 15, y: 25 },
-          src: markerForbid,
-        }),
-        'berth-default': new TMap.MarkerStyle({
-          width: 30,
-          height: 30,
-          anchor: { x: 15, y: 25 },
-          src: markerUnknown,
-        }),
+        'berth-idle': new TMap.MarkerStyle({ width: 30, height: 30, anchor: { x: 15, y: 25 }, src: markerIdle }),
+        'berth-occupy': new TMap.MarkerStyle({ width: 30, height: 30, anchor: { x: 15, y: 25 }, src: markerOccupy }),
+        'berth-fault': new TMap.MarkerStyle({ width: 30, height: 30, anchor: { x: 15, y: 25 }, src: markerFault }),
+        'berth-default': new TMap.MarkerStyle({ width: 30, height: 30, anchor: { x: 15, y: 25 }, src: markerUnknown }),
       },
       geometries: berthData,
     });
     berthMarkerLayer.value.on('click', handleMarkerClick);
   }
-
-  // 创建设备标注层
-  if (deviceData.length > 0) {
-    deviceMarkerLayer.value = new TMap.MultiMarker({
-      map,
-      styles: {
-        'device-online': new TMap.MarkerStyle({
-          width: 20,
-          height: 20,
-          anchor: { x: 10, y: 10 },
-          src: deviceOnline,
-        }),
-        'device-offline': new TMap.MarkerStyle({
-          width: 20,
-          height: 20,
-          anchor: { x: 10, y: 10 },
-          src: deviceOffline,
-        }),
-        'device-fault': new TMap.MarkerStyle({
-          width: 20,
-          height: 20,
-          anchor: { x: 10, y: 10 },
-          src: deviceFault,
-        }),
-        'device-maintain': new TMap.MarkerStyle({
-          width: 20,
-          height: 20,
-          anchor: { x: 10, y: 10 },
-          src: deviceMaintain,
-        }),
-        'device-unknown': new TMap.MarkerStyle({
-          width: 20,
-          height: 20,
-          anchor: { x: 10, y: 10 },
-          src: markerUnknown,
-        }),
-      },
-      geometries: deviceData,
-    });
-    deviceMarkerLayer.value.on('click', handleMarkerClick);
-  }
 };
 
-// 信息窗口内容生成（补充展示各层级经纬度）
+// ✅ 核心修改：信息窗口内容完全匹配接口返回字段，字段100%对应需求，样式精简
 const getTooltipContent = (properties) => {
-  const labelStyle =
-    'width: 120px; text-align: right; font-weight: bold; margin-right: 8px; flex-shrink: 0;';
+  const labelStyle = 'width: 120px; text-align: right; font-weight: bold; margin-right: 8px; flex-shrink: 0;';
   const valueStyle = 'flex: 1; text-align: left; word-break: break-all;';
-  const rowStyle =
-    'display: flex; align-items: center; margin: 4px 0; font-size: 13px;';
-  const titleStyle =
-    'margin-bottom: 6px; font-weight: bold; color: #1E90FF; border-bottom: 1px solid #eee; padding-bottom: 4px; text-align: center; font-size: 14px;';
+  const rowStyle = 'display: flex; align-items: center; margin: 4px 0; font-size: 13px;';
+  const titleStyle = 'margin-bottom: 6px; font-weight: bold; color: #1E90FF; border-bottom: 1px solid #eee; padding-bottom: 4px; text-align: center; font-size: 14px;';
 
   // 时间格式化
   const formatTime = (timeStamp) => {
     if (!timeStamp) return '未知';
     const date = new Date(timeStamp);
-    return date.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
+    return date.toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
   };
 
-  // 设备状态文本和颜色获取
-  const getDeviceStatusInfo = (status) => {
-    const statusObj = deviceStatusStyleMap[status] || deviceStatusStyleMap[''];
-    return { text: statusObj.text, color: statusObj.color };
-  };
+  // 停车场详情：匹配接口字段（lotId/name/parkType/totalSpace/availableSpace/garageId/floorCount等）
+  if (properties.markerType === 'parkLot') {
+    const occupyRate = properties.totalSpace ? `${(((properties.totalSpace - properties.availableSpace) / properties.totalSpace) * 100).toFixed(1)}%` : '0%';
+    return `
+      <div style="padding: 10px 12px; color: #333; background: white; border: 1px solid #ccc; min-width: 360px; border-radius: 4px;">
+        <div style="${titleStyle}">停车场详情</div>
+        <div style="${rowStyle}"><span style="${labelStyle}">车场ID：</span><span style="${valueStyle}">${properties.lotId || '未知'}</span></div>
+        <div style="${rowStyle}"><span style="${labelStyle}">车场名称：</span><span style="${valueStyle}">${properties.lotName || '未知'}</span></div>
+        <div style="${rowStyle}"><span style="${labelStyle}">车场类型：</span><span style="${valueStyle}">${properties.parkType==='public'?'公共车场':properties.parkType==='business'?'商业车场':'园区车场'}</span></div>
+        <div style="${rowStyle}"><span style="${labelStyle}">总车位数：</span><span style="${valueStyle}">${properties.totalSpace || 0}</span></div>
+        <div style="${rowStyle}"><span style="${labelStyle}">可用车位数：</span><span style="${valueStyle}">${properties.availableSpace || 0}</span></div>
+        <div style="${rowStyle}"><span style="${labelStyle}">车位占用率：</span><span style="${valueStyle}">${occupyRate}</span></div>
+        <div style="${rowStyle}"><span style="${labelStyle}">车库ID：</span><span style="${valueStyle}">${properties.garageId || '未知'}</span></div>
+        <div style="${rowStyle}"><span style="${labelStyle}">车库楼层数：</span><span style="${valueStyle}">${properties.floorCount || 0} 层</span></div>
+        <div style="${rowStyle}"><span style="${labelStyle}">台账编号：</span><span style="${valueStyle}">${properties.accountId || '未知'}</span></div>
+        <div style="${rowStyle}"><span style="${labelStyle}">台账更新时间：</span><span style="${valueStyle}">${formatTime(properties.updateTime)}</span></div>
+        <div style="${rowStyle}"><span style="${labelStyle}">经纬度：</span><span style="${valueStyle}">${properties.latitude}, ${properties.longitude}</span></div>
+      </div>
+    `;
+  }
 
-  // 停车场信息窗口（展示停车场经纬度）
-  switch (properties.markerType) {
-    case 'berth': {
-      const roadsideStatusText =
-        roadsideStatusMap[properties.roadsideStatus]?.text || '未知状态';
-      const alertLevelInfo =
-        alertLevelMap[properties.alertLevel] || alertLevelMap[''];
-
-      return `
-      <div style="padding: 10px 12px; color: #333; background: white; border: 1px solid #ccc; min-width: 380px; border-radius: 4px;">
+  // 泊位详情：匹配接口字段（roadsideId/berthNumber/status/spaceId/spaceType等）
+  if (properties.markerType === 'berth') {
+    const statusText = berthStatusMap[properties.status]?.text || '未知状态';
+    const statusColor = berthStatusMap[properties.status]?.color || '#999';
+    return `
+      <div style="padding: 10px 12px; color: #333; background: white; border: 1px solid #ccc; min-width: 340px; border-radius: 4px;">
         <div style="${titleStyle}">泊位详情</div>
-        <div style="${rowStyle}"><span style="${labelStyle}">所属停车场ID：</span><span style="${valueStyle}">${properties.lotId || '未知'}</span></div>
+        <div style="${rowStyle}"><span style="${labelStyle}">所属车场：</span><span style="${valueStyle}">${properties.lotName || '未知'}</span></div>
         <div style="${rowStyle}"><span style="${labelStyle}">路侧泊位ID：</span><span style="${valueStyle}">${properties.roadsideId || '未知'}</span></div>
         <div style="${rowStyle}"><span style="${labelStyle}">泊位编号：</span><span style="${valueStyle}">${properties.berthNumber || '未知'}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">泊位状态：</span><span style="${valueStyle}; color: ${roadsideStatusMap[properties.roadsideStatus]?.color || '#999'};">${roadsideStatusText}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">预警ID：</span><span style="${valueStyle}">${properties.alertId || '无'}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">预警类型：</span><span style="${valueStyle}">${properties.alertType || '无'}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">预警等级：</span><span style="${valueStyle}; color: ${alertLevelInfo.color || '#999'};">${alertLevelInfo.text || '未知预警'}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">预警时间：</span><span style="${valueStyle}">${formatTime(properties.createTime)}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">纬度, 经度：</span><span style="${valueStyle}">${properties.berthLatitude || '未知'}, ${properties.berthLongitude || '未知'}</span></div>
+        <div style="${rowStyle}"><span style="${labelStyle}">泊位状态：</span><span style="${valueStyle}; color:${statusColor}">${statusText}</span></div>
+        <div style="${rowStyle}"><span style="${labelStyle}">车位ID：</span><span style="${valueStyle}">${properties.spaceId || '未知'}</span></div>
+        <div style="${rowStyle}"><span style="${labelStyle}">车位类型：</span><span style="${valueStyle}">${properties.spaceType || '未知'}</span></div>
+        <div style="${rowStyle}"><span style="${labelStyle}">出入口ID：</span><span style="${valueStyle}">${properties.entryExitId || '未知'}</span></div>
+        <div style="${rowStyle}"><span style="${labelStyle}">出入口方向：</span><span style="${valueStyle}">${properties.direction || '未知'}</span></div>
+        <div style="${rowStyle}"><span style="${labelStyle}">经纬度：</span><span style="${valueStyle}">${properties.latitude}, ${properties.longitude}</span></div>
       </div>
     `;
-    }
-    case 'device': {
-      const deviceStatusInfo = getDeviceStatusInfo(properties.deviceStatus);
-      const alertLevelInfo =
-        alertLevelMap[properties.alertLevel] || alertLevelMap[''];
-
-      return `
-      <div style="padding: 10px 12px; color: #333; background: white; border: 1px solid #ccc; min-width: 300px; border-radius: 4px;">
-        <div style="${titleStyle}">设备详情</div>
-        <div style="${rowStyle}"><span style="${labelStyle}">设备ID：</span><span style="${valueStyle}">${properties.deviceId || '未知'}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">设备类型：</span><span style="${valueStyle}">${deviceTypeMap[properties.deviceType] || '未知'}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">设备状态：</span><span style="${valueStyle}; color: ${deviceStatusInfo.color};">${deviceStatusInfo.text}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">所属泊位：</span><span style="${valueStyle}">${properties.berthNumber || '未知'}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">所属停车场：</span><span style="${valueStyle}">${properties.lotName || '未知'}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">预警类型：</span><span style="${valueStyle}">${properties.alertType || '无'}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">预警等级：</span><span style="${valueStyle}; color: ${alertLevelInfo.color || '#999'};">${alertLevelInfo.text || '未知预警'}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">预警时间：</span><span style="${valueStyle}">${formatTime(properties.createTime)}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">纬度, 经度：</span><span style="${valueStyle}">${properties.deviceLatitude || '未知'}, ${properties.deviceLongitude || '未知'}</span></div>
-      </div>
-    `;
-    }
-    case 'parkLot': {
-      const lotStatusText =
-        lotStatusMap[properties.lotStatus]?.text || '未知状态';
-      const occupyRate = properties.roadside
-        ? `${(((properties.roadside - properties.availableRoadside) / properties.roadside) * 100).toFixed(1)}%`
-        : '0%';
-      const alertLevelInfo =
-        alertLevelMap[properties.alertLevel] || alertLevelMap[''];
-
-      return `
-      <div style="padding: 10px 12px; color: #333; background: white; border: 1px solid #ccc; min-width: 380px; border-radius: 4px;">
-        <div style="${titleStyle}">停车场详情</div>
-        <div style="${rowStyle}"><span style="${labelStyle}">停车场ID：</span><span style="${valueStyle}">${properties.lotId || '未知'}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">停车场名称：</span><span style="${valueStyle}">${properties.lotName || '未知'}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">行政区域编码：</span><span style="${valueStyle}">${properties.areaCode || '未知'}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">停车场状态：</span><span style="${valueStyle}; color: ${lotStatusMap[properties.lotStatus]?.color || '#999'};">${lotStatusText}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">路侧泊位数：</span><span style="${valueStyle}">${properties.roadside || 0}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">可用路侧泊位数：</span><span style="${valueStyle}">${properties.availableRoadside || 0}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">泊位占用率：</span><span style="${valueStyle}">${occupyRate}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">预警等级：</span><span style="${valueStyle}; color: ${alertLevelInfo.color || '#999'};">${alertLevelInfo.text || '未知预警'}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">预警时间：</span><span style="${valueStyle}">${formatTime(properties.createTime)}</span></div>
-        <div style="${rowStyle}"><span style="${labelStyle}">纬度, 经度：</span><span style="${valueStyle}">${properties.lotLatitude || '未知'}, ${properties.lotLongitude || '未知'}</span></div>
-      </div>
-    `;
-    }
-    // No default
   }
 };
 
 const mapCallback = () => {
   const mapContainer = document.querySelector(`#${props.idName}`);
-  if (!mapContainer) {
-    console.error(`地图容器不存在：${props.idName}`);
-    return;
-  }
+  if (!mapContainer) { console.error(`地图容器不存在：${props.idName}`); return; }
 
   const { center, zoom, pitch } = props.orbitConfig;
   const map = new TMap.Map(mapContainer, {
@@ -548,13 +269,7 @@ const mapCallback = () => {
   mapInstance.value = map;
   mapInitialized.value = true;
 
-  infoWindow.value = new TMap.InfoWindow({
-    map,
-    position: new TMap.LatLng(0, 0),
-    content: '',
-    offset: { x: 0, y: -40 },
-    visible: false,
-  });
+  infoWindow.value = new TMap.InfoWindow({ map, position: new TMap.LatLng(0, 0), content: '', offset: { x: 0, y: -40 }, visible: false });
   infoWindow.value.on('close', handleInfoWindowClose);
 
   createAllMarkers(map);
@@ -564,116 +279,38 @@ const mapCallback = () => {
 // 监听数据变化重新渲染标注
 watch(
   () => props.geometriesArray,
-  (newVal) => {
-    if (mapInitialized.value && Array.isArray(newVal)) {
-      createAllMarkers(mapInstance.value);
-    }
-  },
+  (newVal) => { if (mapInitialized.value && Array.isArray(newVal)) createAllMarkers(mapInstance.value); },
   { deep: true },
 );
 
-onMounted(() => {
-  initMap();
-});
+onMounted(() => { initMap(); });
 
 onUnmounted(() => {
   stopOrbitAnimation();
-
-  // 销毁所有标注层
-  [
-    parkMarkerLayer.value,
-    berthMarkerLayer.value,
-    deviceMarkerLayer.value,
-  ].forEach((layer) => {
-    if (layer) {
-      try {
-        layer.off('click', handleMarkerClick);
-        layer.destroy();
-      } catch (error) {
-        console.warn('销毁标注层失败:', error);
-      }
-    }
+  // 销毁标注层+地图+信息窗
+  [parkMarkerLayer.value, berthMarkerLayer.value].forEach((layer) => {
+    if (layer) { try { layer.off('click', handleMarkerClick); layer.destroy(); } catch (e) { console.warn('销毁标注层失败:', e); } }
   });
-
-  // 销毁信息窗口和地图实例
-  if (infoWindow.value) {
-    try {
-      infoWindow.value.off('close', handleInfoWindowClose);
-      infoWindow.value.destroy();
-    } catch (error) {
-      console.warn('销毁信息窗口失败:', error);
-    }
-  }
-  if (mapInstance.value) {
-    try {
-      mapInstance.value.destroy();
-    } catch (error) {
-      console.warn('销毁地图实例失败:', error);
-    }
-  }
-
-  orbitStatus.value = {
-    playing: false,
-    currentRotation: 0,
-    animationFrameId: null,
-    isInited: false,
-  };
+  if (infoWindow.value) { try { infoWindow.value.off('close', handleInfoWindowClose); infoWindow.value.destroy(); } catch (e) { console.warn('销毁信息窗口失败:', e); } }
+  if (mapInstance.value) { try { mapInstance.value.destroy(); } catch (e) { console.warn('销毁地图实例失败:', e); } }
+  orbitStatus.value = { playing: false, currentRotation: 0, animationFrameId: null, isInited: false };
   mapInitialized.value = false;
 });
 
-defineExpose({
-  toggleOrbitAnimation,
-  orbitStatus,
-  startOrbitAnimation,
-  stopOrbitAnimation,
-});
+defineExpose({ toggleOrbitAnimation, orbitStatus, startOrbitAnimation, stopOrbitAnimation });
 </script>
 
 <template>
   <div class="map-container">
     <div :id="idName" class="map-common-css"></div>
-
     <div class="legend">
       <div class="legend-items">
-        <div class="legend-divider">
-          <p>停车场:</p>
-        </div>
-        <div class="legend-item">
-          <img :src="parkNormal" class="legend-icon" alt="正常" />
-        </div>
-        <div class="legend-item">
-          <img :src="parkMaintain" class="legend-icon" alt="维护" />
-        </div>
-        <div class="legend-item">
-          <img :src="parkPause" class="legend-icon" alt="暂停运营" />
-        </div>
-        <div class="legend-divider">
-          <p>泊位:</p>
-        </div>
-        <div class="legend-item">
-          <img :src="markerFault" class="legend-icon" alt="故障" />
-        </div>
-        <div class="legend-item">
-          <img :src="markerIdle" class="legend-icon" alt="空闲" />
-        </div>
-        <div class="legend-item">
-          <img :src="markerOccupy" class="legend-icon" alt="占用" />
-        </div>
-        <div class="legend-item">
-          <img :src="markerForbid" class="legend-icon" alt="禁用" />
-        </div>
-        <div class="legend-divider">
-          <p>设备:</p>
-        </div>
-        <div class="legend-item">
-          <img :src="deviceFault" class="legend-icon" alt="设备故障" />
-        </div>
-        <div class="legend-item">
-          <img :src="deviceOnline" class="legend-icon" alt="设备在线" />
-        </div>
-        <div class="legend-item">
-          <img :src="deviceOffline" class="legend-icon" alt="设备离线" />
-        </div>
+        <div class="legend-divider"><p>停车场:</p></div>
+        <div class="legend-item"><img :src="parkNormal" class="legend-icon" alt="正常" /></div>
+        <div class="legend-divider"><p>泊位:</p></div>
+        <div class="legend-item"><img :src="markerFault" class="legend-icon" alt="故障" /></div>
+        <div class="legend-item"><img :src="markerIdle" class="legend-icon" alt="空闲" /></div>
+        <div class="legend-item"><img :src="markerOccupy" class="legend-icon" alt="占用" /></div>
       </div>
     </div>
   </div>
