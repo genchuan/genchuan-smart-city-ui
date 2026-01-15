@@ -314,12 +314,13 @@ export function useFormSchema() {
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
-    // {
-    //   field: 'reservation_id',
-    //   title: '预约记录ID',
-    //   minWidth: 250,
-    //   sortable: true,
-    // },
+    {
+      field: 'reservation_id',
+      title: '预约记录ID',
+      minWidth: 250,
+      sortable: true,
+      visible: false,
+    },
     {
       field: 'user_id',
       title: '用户ID',
@@ -331,6 +332,7 @@ export function useGridColumns() {
       title: '停车场名称',
       minWidth: 180,
       sortable: true,
+      slots: { default: 'parkingLot' },
     },
     {
       field: 'reservation_no',
@@ -338,14 +340,12 @@ export function useGridColumns() {
       minWidth: 150,
       sortable: true,
     },
-
     {
       field: 'car_number',
       title: '车牌号码',
       minWidth: 120,
       sortable: true,
     },
-
     {
       field: 'space_id',
       title: '车位ID',
@@ -375,7 +375,6 @@ export function useGridColumns() {
       title: '预约状态',
       minWidth: 120,
       sortable: true,
-      // slots: { default: 'status' },
     },
     {
       field: 'verify_time',

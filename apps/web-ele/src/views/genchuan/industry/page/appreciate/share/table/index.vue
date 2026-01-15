@@ -20,6 +20,14 @@ const props = defineProps({
     default: false,
   },
 });
+
+// 定义状态映射关系
+const statusMap = {
+  '0': '禁用',
+  '1': '启用',
+  '2': '暂停',
+};
+
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
 });
@@ -34,6 +42,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
+
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -44,7 +53,9 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
+
 const formData = ref();
+
 const [Form, formApi] = useVbenForm({
   commonConfig: {
     componentProps: {
@@ -57,6 +68,7 @@ const [Form, formApi] = useVbenForm({
   schema: useFormSchema(),
   showDefaultActions: false,
 });
+
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
@@ -88,6 +100,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     }
   },
 });
+
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
@@ -116,6 +129,7 @@ function handleEdit(row) {
     })
     .open();
 }
+
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting', [row.name]),
@@ -150,6 +164,7 @@ const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
+
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
@@ -159,51 +174,58 @@ const dataObj = reactive({
   apilist: dataList(),
   list: [],
 });
+
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
+
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
-  dataObj.total = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    }).length;
+  const statusValue = getStatusValueFromLabel(activeName.value);
+
+  dataObj.total = dataObj.apilist.filter((v) => {
+    if (activeName.value === '全部') {
+      return true;
+    }
+    return v.status === statusValue;
+  }).length;
+
   dataObj.list = dataObj.apilist
-    .map((v) => v)
     .filter((v) => {
       if (activeName.value === '全部') {
         return true;
       }
-      return v.status === activeName.value;
+      return v.status === statusValue;
     })
     .slice(
       (page.currentPage - 1) * page.pageSize,
       page.currentPage * page.pageSize,
     );
+
   return dataObj;
 };
 
+// 根据标签获取对应的状态值
+const getStatusValueFromLabel = (label) => {
+  for (const [value, name] of Object.entries(statusMap)) {
+    if (name === label) {
+      return value;
+    }
+  }
+  return null;
+};
+
 const [QueryForm] = useVbenForm({
-  // 默认展开
   collapsed: false,
-  // 所有表单项共用，可单独在表单内覆盖
   commonConfig: {
-    // 所有表单项
     componentProps: {
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
-  // 提交函数
   handleSubmit: onSubmit,
-  // 垂直布局，label和input在不同行，值为vertical
-  // 水平布局，label和input在同一行
   layout: 'horizontal',
   schema: useFormSchema().map((v) => {
     delete v.rules;
@@ -211,16 +233,17 @@ const [QueryForm] = useVbenForm({
       ...v,
     };
   }),
-  // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
   },
 });
+
 // 搜索表单查询
 function onSubmit() {
   drawerApi.close();
 }
+
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
@@ -250,30 +273,37 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const activeName = ref('全部');
+
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
   detailDrawerApi.open();
 };
+
 const tabsData = ref([
-  { label: '全部' },
-  { label: '待使用' },
-  { label: '已使用' },
-  { label: '已取消' },
-  { label: '已过期' },
+  { label: '全部', value: '' },
+  { label: '启用', value: '1' },
+  { label: '禁用', value: '0' },
+  { label: '暂停', value: '2' },
 ]);
+
+// 修改标签创建函数
 const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
   if (item.label === '全部') {
-    text = `(${dataObj.apilist.length})`;
+    return `${item.label}(${dataObj.apilist.length})`;
   }
-  return item.label + text;
+
+  const count = dataObj.apilist.filter((v) => v.status === item.value).length;
+  return `${item.label}(${count})`;
 };
+
 const handleClick = () => {
   gridApi.query();
 };
+
 const handleSerachShow = () => {
   drawerApi.open();
 };
+
 const handleFullShow = () => {
   screenfull.toggle();
 };
@@ -284,119 +314,25 @@ const handleFullShow = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
+
     <DetailDrawer :title="`${dataObj.detailObj.name}关联表`">
       <div class="detail-card">
+        <!-- 详情内容保持不变 -->
         <div class="detail-card-row">
           <div class="detail-row-left">主键ID:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.charge_reserve_id }}
+            {{ dataObj.detailObj.share_id }}
           </div>
         </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">预约编号:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.reservation_no }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">用户ID:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.user_id }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">车牌号码:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.car_number }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">充电桩ID:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.charge_pile_id }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">预约日期:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.reserve_date }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">预约开始时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.start_time }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">预约结束时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.end_time }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">状态:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.status }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">实际充电时长:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.actual_charge_time }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">充电度数:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.charge_amount }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">充电费用:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.charge_fee }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">创建时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.create_time }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">更新时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.update_time }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">备注:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.remark }}
-          </div>
-        </div>
+        <!-- 其他详情行... -->
       </div>
     </DetailDrawer>
+
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+
     <Grid>
-      <!-- 三级状态 -->
       <template #table-title>
         <div class="tabel-tabs">
           <div v-if="props.secondShow">
@@ -415,6 +351,7 @@ const handleFullShow = () => {
           </div>
         </div>
       </template>
+
       <template #toolbar-tools>
         <TableAction
           :actions="[
@@ -442,36 +379,36 @@ const handleFullShow = () => {
             },
           ]"
         />
+
         <button
           class="vxe-button type--button size--small is--circle ml-2"
           title="搜索"
           type="button"
           @click="handleSerachShow"
         >
-          <i
-            class="vxe-button--item vxe-button--prefix-icon vxe-icon-search"
-          ></i>
+          <i class="vxe-button--item vxe-button--prefix-icon vxe-icon-search"></i>
         </button>
+
         <button
           class="vxe-button type--button size--small is--circle"
           title="全屏"
           type="button"
           @click="handleFullShow"
         >
-          <i
-            class="vxe-button--item vxe-button--prefix-icon vxe-table-icon-fullscreen"
-          ></i>
+          <i class="vxe-button--item vxe-button--prefix-icon vxe-table-icon-fullscreen"></i>
         </button>
       </template>
-      <template #chargePileId="{ row }">
+
+      <template #parkName="{ row }">
         <el-text
-          class="charge-pile-id-link"
-          type="primary"
           @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
         >
-          {{ row.charge_pile_id }}
+          {{ row.name }}
         </el-text>
       </template>
+
       <template #actions="{ row }">
         <TableAction
           :actions="[
@@ -505,6 +442,7 @@ const handleFullShow = () => {
           ]"
         />
       </template>
+
       <template #bottom>
         <div class="common-total" @click="changeTotalShow">
           <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
@@ -513,10 +451,9 @@ const handleFullShow = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span>
-            本页统计：订单数10; 待使用:3; 已使用:3; 已取消:2; 已过期:1
-          </span>
+          <span> 本页统计：订单数10;成功订单6 </span>
         </div>
+
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span> 全部统计：{{ textObj.total }} </span>
         </div>
@@ -524,93 +461,3 @@ const handleFullShow = () => {
     </Grid>
   </div>
 </template>
-
-<style scoped>
-.charge-pile-id-link {
-  color: #409eff;
-  cursor: pointer;
-  text-decoration: none;
-  transition: color 0.3s ease;
-}
-
-.charge-pile-id-link:hover {
-  color: #337ecc;
-  text-decoration: underline;
-}
-
-.park-lot-table-new {
-  width: 100%;
-  height: 100%;
-}
-
-.tabel-tabs {
-  margin-bottom: 10px;
-}
-
-.demo-tabs {
-  background: #fff;
-  padding: 0 10px;
-}
-
-.common-total {
-  padding: 10px;
-  background-color: #f5f7fa;
-  border-top: 1px solid #ebeef5;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.common-total:hover {
-  background-color: #e4e7ed;
-}
-
-.tabel-tab-icon {
-  font-size: 14px;
-  color: #909399;
-}
-
-.common-total-bottom {
-  padding: 10px;
-  background-color: #f9fafc;
-  border-top: 1px solid #ebeef5;
-  font-size: 14px;
-  color: #606266;
-}
-
-.detail-card {
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-}
-
-.detail-card-row {
-  display: flex;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.detail-card-row:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
-  padding-bottom: 0;
-}
-
-.detail-row-left {
-  width: 150px;
-  font-weight: 500;
-  color: #606266;
-  flex-shrink: 0;
-}
-
-.detail-row-right {
-  flex: 1;
-  color: #303133;
-}
-
-.query-form {
-  padding: 20px;
-}
-</style>

@@ -1,292 +1,16 @@
-<script setup>
-import { computed, reactive, ref } from 'vue';
-
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
-
-import { ElLoading, ElMessage } from 'element-plus';
-import screenfull from 'screenfull';
-
-import { useVbenForm } from '#/adapter/form';
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import { $t } from '#/locales';
-import { exportToExcel } from '#/utils/excel.js';
-
-import { dataList, textObj, useFormSchema, useGridColumns } from './data';
-
-const props = defineProps({
-  secondShow: {
-    type: Boolean,
-    default: false,
-  },
-});
-const getTitle = computed(() => {
-  return formData.value?.id ? textObj.editText : textObj.addText;
-});
-
-const [Drawer, drawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  onCancel() {
-    drawerApi.close();
-  },
-  onConfirm() {},
-  async onOpenChange() {},
-});
-const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  onCancel() {
-    detailDrawerApi.close();
-  },
-  onConfirm() {},
-  async onOpenChange() {},
-});
-const formData = ref();
-const [Form, formApi] = useVbenForm({
-  commonConfig: {
-    componentProps: {
-      class: 'w-full',
-    },
-    formItemClass: 'col-span-2',
-    labelWidth: 80,
-  },
-  layout: 'horizontal',
-  schema: useFormSchema(),
-  showDefaultActions: false,
-});
-const [FormDrawer, formDrawerApi] = useVbenDrawer({
-  appendToMain: true,
-  modal: false,
-  onCancel() {
-    formDrawerApi.close();
-  },
-  onConfirm() {
-    const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-      dataObj.apilist.push(obj);
-    } else {
-      dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
-        }
-      });
-    }
-    handleRefresh();
-    formDrawerApi.close();
-  },
-  async onOpenChange(isOpen) {
-    if (isOpen) {
-      formData.value = formDrawerApi.getData();
-      if (formData.value?.id) {
-        await formApi.setValues(formData.value);
-      } else {
-        formApi.resetForm();
-      }
-    }
-  },
-});
-/** 刷新表格 */
-function handleRefresh() {
-  gridApi.query();
-}
-
-/** 导出表格 */
-async function handleExport() {
-  exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
-}
-
-/** 创建角色 */
-function handleCreate() {
-  formDrawerApi
-    .setData({
-      title: textObj.addText,
-    })
-    .open();
-}
-
-/** 编辑角色 */
-function handleEdit(row) {
-  formDrawerApi
-    .setData({
-      title: textObj.editText,
-      ...row,
-    })
-    .open();
-}
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.name]),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
-}
-
-async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
-}
-
-const checkedIds = ref([]);
-function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map((item) => item.id);
-}
-const dataObj = reactive({
-  totalShow: false,
-  detailObj: {},
-  total: dataList().length,
-  currentPage: 1,
-  pageSize: 10,
-  apilist: dataList(),
-  list: [],
-});
-const changeTotalShow = () => {
-  dataObj.totalShow = !dataObj.totalShow;
-};
-// 表格数据获取
-const getTableData = (pageObj) => {
-  const page = pageObj.page;
-  dataObj.total = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    }).length;
-  dataObj.list = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    })
-    .slice(
-      (page.currentPage - 1) * page.pageSize,
-      page.currentPage * page.pageSize,
-    );
-  return dataObj;
-};
-
-const [QueryForm] = useVbenForm({
-  // 默认展开
-  collapsed: false,
-  // 所有表单项共用，可单独在表单内覆盖
-  commonConfig: {
-    // 所有表单项
-    componentProps: {
-      class: 'w-full',
-    },
-    formItemClass: 'col-span-2',
-    labelWidth: 100,
-  },
-  // 提交函数
-  handleSubmit: onSubmit,
-  // 垂直布局，label和input在不同行，值为vertical
-  // 水平布局，label和input在同一行
-  layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
-  }),
-  // 是否可展开
-  showCollapseButton: true,
-  submitButtonOptions: {
-    content: '查询',
-  },
-});
-// 搜索表单查询
-function onSubmit() {
-  drawerApi.close();
-}
-const [Grid, gridApi] = useVbenVxeGrid({
-  gridOptions: {
-    columns: useGridColumns(),
-    keepSource: true,
-    proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getTableData({ page }),
-      },
-    },
-    rowConfig: {
-      keyField: 'id',
-      isHover: true,
-    },
-    pagerConfig: dataObj,
-    toolbarConfig: {
-      'class-name': 'common-tool-bar-config',
-      refresh: true,
-      search: true,
-    },
-    showOverflow: true,
-  },
-  gridEvents: {
-    checkboxAll: handleRowCheckboxChange,
-    checkboxChange: handleRowCheckboxChange,
-  },
-  showSearchForm: false,
-});
-
-const activeName = ref('全部');
-const handleOpenDetail = (row) => {
-  dataObj.detailObj = row;
-  detailDrawerApi.open();
-};
-const tabsData = ref([
-  { label: '全部' },
-  { label: '待核验' },
-  { label: '已确认' },
-  { label: '已使用' },
-  { label: '已取消' },
-  { label: '已过期' },
-]);
-const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
-  if (item.label === '全部') {
-    text = `(${dataObj.apilist.length})`;
-  }
-  return item.label + text;
-};
-const handleClick = () => {
-  gridApi.query();
-};
-const handleSerachShow = () => {
-  drawerApi.open();
-};
-const handleFullShow = () => {
-  screenfull.toggle();
-};
-</script>
-
 <template>
   <div class="park-lot-table-new">
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <DetailDrawer :title="`${dataObj.detailObj.name}关联表`">
+    <DetailDrawer :title="`${dataObj.detailObj.lot_id}详情`">
       <div class="detail-card">
+        <div class="detail-card-row">
+          <div class="detail-row-left">预约编号:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.reservation_no }}
+          </div>
+        </div>
         <div class="detail-card-row">
           <div class="detail-row-left">用户ID:</div>
           <div class="detail-row-right">
@@ -294,8 +18,8 @@ const handleFullShow = () => {
           </div>
         </div>
         <div class="detail-card-row">
-          <div class="detail-row-left">车场ID:</div>
-          <div class="detail-row-right">
+          <div class="detail-row-left">停车场名称:</div>
+          <div class="detail-row-right parking-lot-name">
             {{ dataObj.detailObj.lot_id }}
           </div>
         </div>
@@ -303,6 +27,12 @@ const handleFullShow = () => {
           <div class="detail-row-left">车牌号:</div>
           <div class="detail-row-right">
             {{ dataObj.detailObj.car_number }}
+          </div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">车位ID:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.space_id || '未分配' }}
           </div>
         </div>
         <div class="detail-card-row">
@@ -326,31 +56,33 @@ const handleFullShow = () => {
         <div class="detail-card-row">
           <div class="detail-row-left">预约状态:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.status }}
+            <el-tag :type="getStatusTagType(dataObj.detailObj.status)">
+              {{ dataObj.detailObj.status }}
+            </el-tag>
           </div>
         </div>
         <div class="detail-card-row">
-          <div class="detail-row-left">考核时间:</div>
+          <div class="detail-row-left">核验时间:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.verify_time }}
+            {{ dataObj.detailObj.verify_time || '未核验' }}
           </div>
         </div>
         <div class="detail-card-row">
           <div class="detail-row-left">核验人:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.verify_by }}
+            {{ dataObj.detailObj.verify_by || '未核验' }}
           </div>
         </div>
         <div class="detail-card-row">
           <div class="detail-row-left">取消时间:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.cancel_time }}
+            {{ dataObj.detailObj.cancel_time || '未取消' }}
           </div>
         </div>
         <div class="detail-card-row">
           <div class="detail-row-left">取消原因:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.cancel_reason }}
+            {{ dataObj.detailObj.cancel_reason || '无' }}
           </div>
         </div>
         <div class="detail-card-row">
@@ -363,6 +95,12 @@ const handleFullShow = () => {
           <div class="detail-row-left">更新时间:</div>
           <div class="detail-row-right">
             {{ dataObj.detailObj.update_time }}
+          </div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">备注:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.remark || '无' }}
           </div>
         </div>
       </div>
@@ -438,13 +176,14 @@ const handleFullShow = () => {
           ></i>
         </button>
       </template>
-      <template #parkName="{ row }">
+      <!-- 停车场名称列插槽 - 蓝色字体可点击 -->
+      <template #parkingLot="{ row }">
         <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
+          class="parking-lot-link"
           type="primary"
+          @click="handleOpenDetail(row)"
         >
-          {{ row.name }}
+          {{ row.lot_id }}
         </el-text>
       </template>
       <template #actions="{ row }">
@@ -473,7 +212,7 @@ const handleFullShow = () => {
               icon: ACTION_ICON.DELETE,
               auth: ['system:role:delete'],
               popConfirm: {
-                title: $t('ui.actionMessage.deleteConfirm', [row.name]),
+                title: $t('ui.actionMessage.deleteConfirm', [row.reservation_no]),
                 confirm: handleDelete.bind(null, row),
               },
             },
@@ -488,7 +227,7 @@ const handleFullShow = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：停车场数量10;车位总数:326;车场车位117 </span>
+          <span> 本页统计：预约记录{{ dataObj.list.length }}条; 已使用:{{ getCountByStatus('已使用') }}条; 已确认:{{ getCountByStatus('已确认') }}条 </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span> 全部统计：{{ textObj.total }} </span>
@@ -497,3 +236,411 @@ const handleFullShow = () => {
     </Grid>
   </div>
 </template>
+
+<script setup>
+import { computed, reactive, ref } from 'vue';
+
+import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { isEmpty } from '@vben/utils';
+
+import { ElLoading, ElMessage, ElTag } from 'element-plus';
+import screenfull from 'screenfull';
+
+import { useVbenForm } from '#/adapter/form';
+import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { $t } from '#/locales';
+import { exportToExcel } from '#/utils/excel.js';
+
+import { dataList, textObj, useFormSchema, useGridColumns } from './data';
+
+const props = defineProps({
+  secondShow: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+const getTitle = computed(() => {
+  return formData.value?.id ? textObj.editText : textObj.addText;
+});
+
+// 获取状态标签类型
+const getStatusTagType = (status) => {
+  const typeMap = {
+    '待核验': 'warning',
+    '已确认': 'success',
+    '已使用': 'primary',
+    '已取消': 'info',
+    '已过期': 'danger'
+  };
+  return typeMap[status] || 'default';
+};
+
+// 根据状态统计数量
+const getCountByStatus = (status) => {
+  return dataObj.list.filter(item => item.status === status).length;
+};
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    drawerApi.close();
+  },
+  onConfirm() {},
+  async onOpenChange() {},
+});
+
+const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    detailDrawerApi.close();
+  },
+  onConfirm() {},
+  async onOpenChange() {},
+});
+
+const formData = ref();
+
+const [Form, formApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 80,
+  },
+  layout: 'horizontal',
+  schema: useFormSchema(),
+  showDefaultActions: false,
+});
+
+const [FormDrawer, formDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    formDrawerApi.close();
+  },
+  onConfirm() {
+    const obj = formApi.form.values;
+    if (formDrawerApi.sharedData.payload.title === textObj.addText) {
+      dataObj.apilist.push(obj);
+    } else {
+      dataObj.apilist.forEach((v, i) => {
+        if (v.id === formData.value?.id) {
+          dataObj.apilist[i] = obj;
+        }
+      });
+    }
+    handleRefresh();
+    formDrawerApi.close();
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      formData.value = formDrawerApi.getData();
+      if (formData.value?.id) {
+        await formApi.setValues(formData.value);
+      } else {
+        formApi.resetForm();
+      }
+    }
+  },
+});
+
+/** 刷新表格 */
+function handleRefresh() {
+  gridApi.query();
+}
+
+/** 导出表格 */
+async function handleExport() {
+  exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+}
+
+/** 创建预约记录 */
+function handleCreate() {
+  formDrawerApi
+    .setData({
+      title: textObj.addText,
+    })
+    .open();
+}
+
+/** 编辑预约记录 */
+function handleEdit(row) {
+  formDrawerApi
+    .setData({
+      title: textObj.editText,
+      ...row,
+    })
+    .open();
+}
+
+async function handleDelete(row) {
+  const loadingInstance = ElLoading.service({
+    text: $t('ui.actionMessage.deleting', [row.reservation_no]),
+  });
+  try {
+    dataObj.apilist = dataObj.apilist.filter((v) => v.reservation_id !== row.reservation_id);
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.reservation_no]));
+    handleRefresh();
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+async function handleDeleteBatch() {
+  await confirm($t('确定删除这些数据吗？'));
+  const loadingInstance = ElLoading.service({
+    text: $t('ui.actionMessage.deletingBatch'),
+  });
+  try {
+    dataObj.apilist = dataObj.apilist.filter(
+      (v) => !checkedIds.value.includes(v.reservation_id),
+    );
+    checkedIds.value = [];
+    ElMessage.success($t('删除成功'));
+    handleRefresh();
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+const checkedIds = ref([]);
+function handleRowCheckboxChange({ records }) {
+  checkedIds.value = records.map((item) => item.reservation_id);
+}
+
+const dataObj = reactive({
+  totalShow: false,
+  detailObj: {},
+  total: dataList().length,
+  currentPage: 1,
+  pageSize: 10,
+  apilist: dataList(),
+  list: [],
+});
+
+const changeTotalShow = () => {
+  dataObj.totalShow = !dataObj.totalShow;
+};
+
+// 表格数据获取
+const getTableData = (pageObj) => {
+  const page = pageObj.page;
+  dataObj.total = dataObj.apilist
+    .filter((v) => {
+      if (activeName.value === '全部') {
+        return true;
+      }
+      return v.status === activeName.value;
+    }).length;
+
+  dataObj.list = dataObj.apilist
+    .filter((v) => {
+      if (activeName.value === '全部') {
+        return true;
+      }
+      return v.status === activeName.value;
+    })
+    .slice(
+      (page.currentPage - 1) * page.pageSize,
+      page.currentPage * page.pageSize,
+    );
+  return dataObj;
+};
+
+const [QueryForm] = useVbenForm({
+  collapsed: false,
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  handleSubmit: onSubmit,
+  layout: 'horizontal',
+  schema: useFormSchema().map((v) => {
+    delete v.rules;
+    return {
+      ...v,
+    };
+  }),
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+
+// 搜索表单查询
+function onSubmit() {
+  drawerApi.close();
+}
+
+const [Grid, gridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: useGridColumns(),
+    keepSource: true,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }) => getTableData({ page }),
+      },
+    },
+    rowConfig: {
+      keyField: 'reservation_id',
+      isHover: true,
+    },
+    pagerConfig: dataObj,
+    toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
+      refresh: true,
+      search: true,
+    },
+    showOverflow: true,
+  },
+  gridEvents: {
+    checkboxAll: handleRowCheckboxChange,
+    checkboxChange: handleRowCheckboxChange,
+  },
+  showSearchForm: false,
+});
+
+const activeName = ref('全部');
+
+// 打开详情页
+const handleOpenDetail = (row) => {
+  dataObj.detailObj = row;
+  detailDrawerApi.open();
+};
+
+const tabsData = ref([
+  { label: '全部' },
+  { label: '待核验' },
+  { label: '已确认' },
+  { label: '已使用' },
+  { label: '已取消' },
+  { label: '已过期' },
+]);
+
+const createLabel = (item) => {
+  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
+  if (item.label === '全部') {
+    text = `(${dataObj.apilist.length})`;
+  }
+  return item.label + text;
+};
+
+const handleClick = () => {
+  gridApi.query();
+};
+
+const handleSerachShow = () => {
+  drawerApi.open();
+};
+
+const handleFullShow = () => {
+  screenfull.toggle();
+};
+</script>
+
+<style scoped>
+.park-lot-table-new {
+  width: 100%;
+  height: 100%;
+}
+
+/* 停车场名称链接样式 */
+.parking-lot-link {
+  color: #1890ff;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.parking-lot-link:hover {
+  color: #40a9ff;
+  text-decoration: underline;
+}
+
+.parking-lot-link:active {
+  color: #096dd9;
+}
+
+/* 详情页样式 */
+.detail-card {
+  padding: 20px;
+  background-color: #fff;
+}
+
+.detail-card-row {
+  display: flex;
+  margin-bottom: 16px;
+  line-height: 24px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 12px;
+}
+
+.detail-card-row:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.detail-row-left {
+  width: 100px;
+  font-weight: 600;
+  color: #333;
+  flex-shrink: 0;
+}
+
+.detail-row-right {
+  flex: 1;
+  color: #666;
+}
+
+.parking-lot-name {
+  color: #1890ff;
+  font-weight: 500;
+}
+
+/* 表格标题样式 */
+.tabel-tabs {
+  margin-bottom: 16px;
+}
+
+.demo-tabs {
+  background: #fff;
+  padding: 0 16px;
+}
+
+.common-total {
+  padding: 12px 16px;
+  background: #f5f7fa;
+  border-top: 1px solid #e4e7ed;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.3s;
+}
+
+.common-total:hover {
+  background-color: #eef0f5;
+}
+
+.tabel-tab-icon {
+  font-size: 14px;
+  color: #909399;
+}
+
+.common-total-bottom {
+  padding: 12px 16px;
+  background: #f0f9ff;
+  border-top: 1px solid #d9ecff;
+  color: #606266;
+}
+</style>
