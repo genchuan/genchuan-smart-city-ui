@@ -1,22 +1,629 @@
 // 月收入报表API - 包含模拟数据
 import { ElMessage } from 'element-plus';
 
-/**
- * 模拟生成月度报表
- * @param {string} month 月份，格式：YYYY-MM
- * @returns {Promise} 模拟数据
- */
-export const generateMonthlyReport = async (month) => {
-  await new Promise((resolve) => setTimeout(resolve, 1500));
+// 区域映射关系
+const regionMap = {
+  'xiangcheng': '芗城区',
+  'longwen': '龙文区',
+  'longhai': '龙海区',
+  'zhangpu': '漳浦县',
+  'yunxiao': '云霄县',
+  'zhaoan': '诏安县',
+  'dongshan': '东山县',
+  'nanjing': '南靖县',
+  'pinghe': '平和县',
+  'huaan': '华安县',
+  'other': '其他区域'
+};
+
+// 停车场类型映射关系
+const parkingTypeMap = {
+  'public': '公共停车场',
+  'roadside': '路侧停车场',
+  'special': '专用停车场'
+};
+
+// 辅助函数：根据筛选条件计算核心指标
+function calculateCoreIndicators(filteredData, month) {
+  if (filteredData.length === 0) {
+    return [
+      {
+        key: 'totalAmount',
+        name: '总收费金额',
+        value: 0,
+        unit: '元',
+        comparison: 0,
+      },
+      {
+        key: 'orderCount',
+        name: '订单总数',
+        value: 0,
+        unit: '笔',
+        comparison: 0,
+      },
+      {
+        key: 'avgOrderAmount',
+        name: '月均客单价',
+        value: 0,
+        unit: '元',
+        comparison: 0,
+      },
+      {
+        key: 'arrearsAmount',
+        name: '欠费金额',
+        value: 0,
+        unit: '元',
+        comparison: 0,
+      },
+      {
+        key: 'onlineRate',
+        name: '线上支付占比',
+        value: 0,
+        unit: '%',
+        comparison: 0,
+      },
+    ];
+  }
+
+  const totalAmount = filteredData.reduce((sum, item) => sum + item.totalAmount, 0);
+  const totalOrders = filteredData.reduce((sum, item) => sum + item.orderCount, 0);
+  const arrearsAmount = filteredData.reduce((sum, item) => sum + item.arrearsAmount, 0);
+  const onlineAmount = filteredData.reduce((sum, item) => sum + item.onlineAmount, 0);
+  const onlineRate = totalAmount > 0 ? Math.round((onlineAmount / totalAmount) * 100 * 10) / 10 : 0;
+  const avgOrderAmount = totalOrders > 0 ? Math.round(totalAmount / totalOrders * 100) / 100 : 0;
+
+  // 模拟比较值，实际应该从历史数据计算
+  const comparisonValues = {
+    '2023-12': [18, 12, 5.4, -8.2, 3.8],
+    '2023-11': [15, 10, 4.2, -6.5, 2.5],
+    '2023-10': [10, 8, 3.1, -5.0, 1.8],
+  };
+
+  const comparisons = comparisonValues[month] || [0, 0, 0, 0, 0];
+
+  return [
+    {
+      key: 'totalAmount',
+      name: '总收费金额',
+      value: totalAmount,
+      unit: '元',
+      comparison: comparisons[0],
+    },
+    {
+      key: 'orderCount',
+      name: '订单总数',
+      value: totalOrders,
+      unit: '笔',
+      comparison: comparisons[1],
+    },
+    {
+      key: 'avgOrderAmount',
+      name: '月均客单价',
+      value: avgOrderAmount,
+      unit: '元',
+      comparison: comparisons[2],
+    },
+    {
+      key: 'arrearsAmount',
+      name: '欠费金额',
+      value: arrearsAmount,
+      unit: '元',
+      comparison: comparisons[3],
+    },
+    {
+      key: 'onlineRate',
+      name: '线上支付占比',
+      value: onlineRate,
+      unit: '%',
+      comparison: comparisons[4],
+    },
+  ];
+}
+
+// 辅助函数：计算区域分布
+function calculateRegionDistribution(data) {
+  const regionDistribution = {};
+
+  data.forEach(item => {
+    if (!regionDistribution[item.regionName]) {
+      regionDistribution[item.regionName] = {
+        value: 0,
+        name: item.regionName
+      };
+    }
+    regionDistribution[item.regionName].value += item.totalAmount;
+  });
+
+  return Object.values(regionDistribution).sort((a, b) => b.value - a.value);
+}
+
+// 辅助函数：计算类型分布
+function calculateTypeDistribution(data) {
+  const typeDistribution = {};
+
+  data.forEach(item => {
+    if (!typeDistribution[item.parkingType]) {
+      typeDistribution[item.parkingType] = {
+        value: 0,
+        name: item.parkingType
+      };
+    }
+    typeDistribution[item.parkingType].value += item.totalAmount;
+  });
+
+  return Object.values(typeDistribution).sort((a, b) => b.value - a.value);
+}
+
+// 辅助函数：计算月度对比数据
+function calculateMonthlyComparison(filteredData, month) {
+  const totalAmount = filteredData.reduce((sum, item) => sum + item.totalAmount, 0);
+  const totalOrders = filteredData.reduce((sum, item) => sum + item.orderCount, 0);
+  const onlineAmount = filteredData.reduce((sum, item) => sum + item.onlineAmount, 0);
+  const cashAmount = filteredData.reduce((sum, item) => sum + item.cashAmount, 0);
+
+  // 如果有筛选条件，重新计算比例
+  const lastMonthFactor = 0.85; // 假设上月数据是当月的85%
 
   return {
-    success: true,
-    message: `已成功生成${month}月收入报表`,
-    month: month,
-    generatedAt: new Date().toISOString(),
-    reportUrl: `https://example.com/reports/monthly/${month}.pdf`,
+    current: [totalAmount, totalOrders, onlineAmount, cashAmount],
+    last: [
+      Math.round(totalAmount * lastMonthFactor),
+      Math.round(totalOrders * lastMonthFactor),
+      Math.round(onlineAmount * lastMonthFactor),
+      Math.round(cashAmount * lastMonthFactor)
+    ],
+    growthRate: Math.round((totalAmount - (totalAmount * lastMonthFactor)) / (totalAmount * lastMonthFactor) * 1000) / 10,
   };
-};
+}
+
+// 辅助函数：计算趋势数据
+function calculateTrendData(filteredData) {
+  // 简单模拟趋势数据，按周分组
+  const totalAmount = filteredData.reduce((sum, item) => sum + item.totalAmount, 0);
+  const avgWeekly = totalAmount / 4; // 假设平均分配到4周
+
+  const base = [0.85, 1.2, 1.5, 1.35, 1.0]; // 周权重分布
+
+  return {
+    current: base.map(value => Math.round(avgWeekly * value / 10000)), // 转换为万元
+    last: base.map(value => Math.round(avgWeekly * value * 0.85 / 10000)), // 上月数据
+  };
+}
+
+// 生成完整表格数据
+function generateMonthlyTableData() {
+  return [
+    {
+      regionName: '芗城区',
+      parkingType: '公共停车场',
+      parkingCount: 15,
+      orderCount: 32000,
+      totalAmount: 1440000,
+      avgOrderAmount: 45,
+      cashAmount: 144000,
+      onlineAmount: 1296000,
+      arrearsAmount: 25000,
+      onlineRate: 90,
+      growthRate: 15.2,
+    },
+    {
+      regionName: '芗城区',
+      parkingType: '路侧停车场',
+      parkingCount: 8,
+      orderCount: 18000,
+      totalAmount: 240000,
+      avgOrderAmount: 13.33,
+      cashAmount: 48000,
+      onlineAmount: 192000,
+      arrearsAmount: 8000,
+      onlineRate: 80,
+      growthRate: 25.6,
+    },
+    {
+      regionName: '龙文区',
+      parkingType: '公共停车场',
+      parkingCount: 12,
+      orderCount: 28000,
+      totalAmount: 1120000,
+      avgOrderAmount: 40,
+      cashAmount: 112000,
+      onlineAmount: 1008000,
+      arrearsAmount: 32000,
+      onlineRate: 90,
+      growthRate: 12.8,
+    },
+    {
+      regionName: '龙文区',
+      parkingType: '专用停车场',
+      parkingCount: 5,
+      orderCount: 8000,
+      totalAmount: 320000,
+      avgOrderAmount: 40,
+      cashAmount: 64000,
+      onlineAmount: 256000,
+      arrearsAmount: 12000,
+      onlineRate: 80,
+      growthRate: 8.5,
+    },
+    {
+      regionName: '龙海区',
+      parkingType: '公共停车场',
+      parkingCount: 10,
+      orderCount: 24000,
+      totalAmount: 960000,
+      avgOrderAmount: 40,
+      cashAmount: 96000,
+      onlineAmount: 864000,
+      arrearsAmount: 28000,
+      onlineRate: 90,
+      growthRate: 18.3,
+    },
+    {
+      regionName: '漳浦县',
+      parkingType: '公共停车场',
+      parkingCount: 6,
+      orderCount: 12000,
+      totalAmount: 480000,
+      avgOrderAmount: 40,
+      cashAmount: 96000,
+      onlineAmount: 384000,
+      arrearsAmount: 20000,
+      onlineRate: 80,
+      growthRate: 10.5,
+    },
+    {
+      regionName: '云霄县',
+      parkingType: '公共停车场',
+      parkingCount: 5,
+      orderCount: 9500,
+      totalAmount: 380000,
+      avgOrderAmount: 40,
+      cashAmount: 76000,
+      onlineAmount: 304000,
+      arrearsAmount: 18000,
+      onlineRate: 80,
+      growthRate: 9.2,
+    },
+    {
+      regionName: '诏安县',
+      parkingType: '公共停车场',
+      parkingCount: 4,
+      orderCount: 8000,
+      totalAmount: 320000,
+      avgOrderAmount: 40,
+      cashAmount: 64000,
+      onlineAmount: 256000,
+      arrearsAmount: 15000,
+      onlineRate: 80,
+      growthRate: 8.7,
+    },
+    {
+      regionName: '东山县',
+      parkingType: '专用停车场',
+      parkingCount: 3,
+      orderCount: 6500,
+      totalAmount: 260000,
+      avgOrderAmount: 40,
+      cashAmount: 52000,
+      onlineAmount: 208000,
+      arrearsAmount: 13000,
+      onlineRate: 80,
+      growthRate: 7.8,
+    },
+    {
+      regionName: '南靖县',
+      parkingType: '路侧停车场',
+      parkingCount: 4,
+      orderCount: 9000,
+      totalAmount: 135000,
+      avgOrderAmount: 15,
+      cashAmount: 27000,
+      onlineAmount: 108000,
+      arrearsAmount: 7000,
+      onlineRate: 80,
+      growthRate: 12.3,
+    },
+    {
+      regionName: '平和县',
+      parkingType: '公共停车场',
+      parkingCount: 3,
+      orderCount: 7000,
+      totalAmount: 280000,
+      avgOrderAmount: 40,
+      cashAmount: 56000,
+      onlineAmount: 224000,
+      arrearsAmount: 11000,
+      onlineRate: 80,
+      growthRate: 8.1,
+    },
+    {
+      regionName: '华安县',
+      parkingType: '专用停车场',
+      parkingCount: 2,
+      orderCount: 4500,
+      totalAmount: 180000,
+      avgOrderAmount: 40,
+      cashAmount: 36000,
+      onlineAmount: 144000,
+      arrearsAmount: 9000,
+      onlineRate: 80,
+      growthRate: 6.5,
+    },
+    {
+      regionName: '芗城区',
+      parkingType: '公共停车场',
+      parkingCount: 3,
+      orderCount: 6500,
+      totalAmount: 312000,
+      avgOrderAmount: 48,
+      cashAmount: 31200,
+      onlineAmount: 280800,
+      arrearsAmount: 5000,
+      onlineRate: 90,
+      growthRate: 14.7,
+    },
+    {
+      regionName: '龙文区',
+      parkingType: '路侧停车场',
+      parkingCount: 6,
+      orderCount: 14000,
+      totalAmount: 210000,
+      avgOrderAmount: 15,
+      cashAmount: 42000,
+      onlineAmount: 168000,
+      arrearsAmount: 6000,
+      onlineRate: 80,
+      growthRate: 22.4,
+    },
+    {
+      regionName: '龙海区',
+      parkingType: '路侧停车场',
+      parkingCount: 7,
+      orderCount: 16500,
+      totalAmount: 247500,
+      avgOrderAmount: 15,
+      cashAmount: 49500,
+      onlineAmount: 198000,
+      arrearsAmount: 7500,
+      onlineRate: 80,
+      growthRate: 19.8,
+    },
+    {
+      regionName: '漳浦县',
+      parkingType: '路侧停车场',
+      parkingCount: 4,
+      orderCount: 9000,
+      totalAmount: 135000,
+      avgOrderAmount: 15,
+      cashAmount: 27000,
+      onlineAmount: 108000,
+      arrearsAmount: 4000,
+      onlineRate: 80,
+      growthRate: 11.2,
+    },
+    {
+      regionName: '其他区域',
+      parkingType: '公共停车场',
+      parkingCount: 8,
+      orderCount: 19200,
+      totalAmount: 768000,
+      avgOrderAmount: 40,
+      cashAmount: 76800,
+      onlineAmount: 691200,
+      arrearsAmount: 24000,
+      onlineRate: 90,
+      growthRate: 9.3,
+    },
+    {
+      regionName: '其他区域',
+      parkingType: '专用停车场',
+      parkingCount: 3,
+      orderCount: 5500,
+      totalAmount: 220000,
+      avgOrderAmount: 40,
+      cashAmount: 44000,
+      onlineAmount: 176000,
+      arrearsAmount: 8500,
+      onlineRate: 80,
+      growthRate: 7.8,
+    },
+    {
+      regionName: '芗城区',
+      parkingType: '公共停车场',
+      parkingCount: 4,
+      orderCount: 8500,
+      totalAmount: 425000,
+      avgOrderAmount: 50,
+      cashAmount: 42500,
+      onlineAmount: 382500,
+      arrearsAmount: 6500,
+      onlineRate: 90,
+      growthRate: 12.3,
+    },
+    {
+      regionName: '龙文区',
+      parkingType: '公共停车场',
+      parkingCount: 7,
+      orderCount: 16000,
+      totalAmount: 720000,
+      avgOrderAmount: 45,
+      cashAmount: 72000,
+      onlineAmount: 648000,
+      arrearsAmount: 18000,
+      onlineRate: 90,
+      growthRate: 14.5,
+    },
+    {
+      regionName: '龙海区',
+      parkingType: '专用停车场',
+      parkingCount: 3,
+      orderCount: 6000,
+      totalAmount: 270000,
+      avgOrderAmount: 45,
+      cashAmount: 54000,
+      onlineAmount: 216000,
+      arrearsAmount: 11500,
+      onlineRate: 80,
+      growthRate: 8.7,
+    },
+    {
+      regionName: '漳浦县',
+      parkingType: '专用停车场',
+      parkingCount: 2,
+      orderCount: 4500,
+      totalAmount: 202500,
+      avgOrderAmount: 45,
+      cashAmount: 40500,
+      onlineAmount: 162000,
+      arrearsAmount: 7500,
+      onlineRate: 80,
+      growthRate: 6.9,
+    },
+    {
+      regionName: '芗城区',
+      parkingType: '路侧停车场',
+      parkingCount: 9,
+      orderCount: 20000,
+      totalAmount: 300000,
+      avgOrderAmount: 15,
+      cashAmount: 60000,
+      onlineAmount: 240000,
+      arrearsAmount: 9500,
+      onlineRate: 80,
+      growthRate: 28.3,
+    },
+    {
+      regionName: '龙文区',
+      parkingType: '路侧停车场',
+      parkingCount: 8,
+      orderCount: 18500,
+      totalAmount: 277500,
+      avgOrderAmount: 15,
+      cashAmount: 55500,
+      onlineAmount: 222000,
+      arrearsAmount: 8200,
+      onlineRate: 80,
+      growthRate: 24.1,
+    },
+    {
+      regionName: '龙海区',
+      parkingType: '路侧停车场',
+      parkingCount: 9,
+      orderCount: 20000,
+      totalAmount: 300000,
+      avgOrderAmount: 15,
+      cashAmount: 60000,
+      onlineAmount: 240000,
+      arrearsAmount: 11000,
+      onlineRate: 80,
+      growthRate: 21.5,
+    },
+    {
+      regionName: '漳浦县',
+      parkingType: '路侧停车场',
+      parkingCount: 5,
+      orderCount: 11000,
+      totalAmount: 165000,
+      avgOrderAmount: 15,
+      cashAmount: 33000,
+      onlineAmount: 132000,
+      arrearsAmount: 6000,
+      onlineRate: 80,
+      growthRate: 13.8,
+    },
+    {
+      regionName: '其他区域',
+      parkingType: '路侧停车场',
+      parkingCount: 6,
+      orderCount: 13500,
+      totalAmount: 202500,
+      avgOrderAmount: 15,
+      cashAmount: 40500,
+      onlineAmount: 162000,
+      arrearsAmount: 8800,
+      onlineRate: 80,
+      growthRate: 10.2,
+    },
+    {
+      regionName: '芗城区',
+      parkingType: '专用停车场',
+      parkingCount: 2,
+      orderCount: 4000,
+      totalAmount: 180000,
+      avgOrderAmount: 45,
+      cashAmount: 36000,
+      onlineAmount: 144000,
+      arrearsAmount: 5500,
+      onlineRate: 80,
+      growthRate: 7.2,
+    },
+    {
+      regionName: '龙文区',
+      parkingType: '专用停车场',
+      parkingCount: 3,
+      orderCount: 7000,
+      totalAmount: 315000,
+      avgOrderAmount: 45,
+      cashAmount: 63000,
+      onlineAmount: 252000,
+      arrearsAmount: 9500,
+      onlineRate: 80,
+      growthRate: 9.8,
+    },
+    {
+      regionName: '龙海区',
+      parkingType: '公共停车场',
+      parkingCount: 11,
+      orderCount: 26000,
+      totalAmount: 1040000,
+      avgOrderAmount: 40,
+      cashAmount: 104000,
+      onlineAmount: 936000,
+      arrearsAmount: 30000,
+      onlineRate: 90,
+      growthRate: 19.2,
+    },
+    {
+      regionName: '漳浦县',
+      parkingType: '公共停车场',
+      parkingCount: 7,
+      orderCount: 14000,
+      totalAmount: 560000,
+      avgOrderAmount: 40,
+      cashAmount: 112000,
+      onlineAmount: 448000,
+      arrearsAmount: 22000,
+      onlineRate: 80,
+      growthRate: 12.4,
+    },
+    {
+      regionName: '其他区域',
+      parkingType: '公共停车场',
+      parkingCount: 9,
+      orderCount: 21600,
+      totalAmount: 864000,
+      avgOrderAmount: 40,
+      cashAmount: 86400,
+      onlineAmount: 777600,
+      arrearsAmount: 28000,
+      onlineRate: 90,
+      growthRate: 10.5,
+    },
+    {
+      regionName: '其他区域',
+      parkingType: '专用停车场',
+      parkingCount: 4,
+      orderCount: 7000,
+      totalAmount: 280000,
+      avgOrderAmount: 40,
+      cashAmount: 56000,
+      onlineAmount: 224000,
+      arrearsAmount: 9800,
+      onlineRate: 80,
+      growthRate: 8.6,
+    },
+  ];
+}
 
 /**
  * 模拟月收入报表数据
@@ -39,514 +646,44 @@ export const getMonthlyIncomeReport = async (params) => {
     pageSize = 10
   } = params;
 
-  // 模拟核心指标数据
-  const coreIndicators = [
-    {
-      key: 'totalAmount',
-      name: '总收费金额',
-      value: 4_800_000,
-      unit: '元',
-      comparison: 18,
-      abnormal: true,
-    },
-    {
-      key: 'orderCount',
-      name: '订单总数',
-      value: 98_000,
-      unit: '笔',
-      comparison: 12,
-      abnormal: false,
-    },
-    {
-      key: 'avgOrderAmount',
-      name: '月均客单价',
-      value: 49,
-      unit: '元',
-      comparison: 5.4,
-      abnormal: false,
-    },
-    {
-      key: 'arrearsAmount',
-      name: '欠费金额',
-      value: 125_600,
-      unit: '元',
-      comparison: -8.2,
-      abnormal: false,
-    },
-    {
-      key: 'onlineRate',
-      name: '线上支付占比',
-      value: 87.5,
-      unit: '%',
-      comparison: 3.8,
-      abnormal: false,
-    },
-  ];
-
-  // 模拟趋势数据
-  const trendData = {
-    current: [85, 120, 150, 135, 100],
-    last: [70, 105, 125, 120, 90],
-  };
-
-  // 模拟月度对比数据
-  const monthlyComparison = {
-    current: [4_800_000, 98_000, 4_200_000, 600_000],
-    last: [4_067_796, 87_500, 3_550_000, 517_796],
-    growthRate: 18,
-  };
-
-  // 模拟区域分布数据
-  const regionDistribution = [
-    { value: 1_680_000, name: '芗城区' },
-    { value: 1_440_000, name: '龙文区' },
-    { value: 960_000, name: '龙海区' },
-    { value: 480_000, name: '漳浦县' },
-    { value: 240_000, name: '其他区域' },
-  ];
-
-  // 模拟类型分布数据
-  const typeDistribution = [
-    { value: 2_640_000, name: '公共停车场' },
-    { value: 1_680_000, name: '路侧停车场' },
-    { value: 480_000, name: '专用停车场' },
-  ];
-
-  // 模拟完整表格数据 - 增加数据量到30条，便于分页测试
-  const allTableData = [
-    {
-      regionName: '芗城区',
-      parkingType: '公共停车场',
-      parkingCount: 15,
-      orderCount: 32_000,
-      totalAmount: 1_440_000,
-      avgOrderAmount: 45,
-      cashAmount: 144_000,
-      onlineAmount: 1_296_000,
-      arrearsAmount: 25_000,
-      onlineRate: 90,
-      growthRate: 15.2,
-    },
-    {
-      regionName: '芗城区',
-      parkingType: '路侧停车场',
-      parkingCount: 8,
-      orderCount: 18_000,
-      totalAmount: 240_000,
-      avgOrderAmount: 13.33,
-      cashAmount: 48_000,
-      onlineAmount: 192_000,
-      arrearsAmount: 8_000,
-      onlineRate: 80,
-      growthRate: 25.6,
-    },
-    {
-      regionName: '龙文区',
-      parkingType: '公共停车场',
-      parkingCount: 12,
-      orderCount: 28_000,
-      totalAmount: 1_120_000,
-      avgOrderAmount: 40,
-      cashAmount: 112_000,
-      onlineAmount: 1_008_000,
-      arrearsAmount: 32_000,
-      onlineRate: 90,
-      growthRate: 12.8,
-    },
-    {
-      regionName: '龙文区',
-      parkingType: '专用停车场',
-      parkingCount: 5,
-      orderCount: 8_000,
-      totalAmount: 320_000,
-      avgOrderAmount: 40,
-      cashAmount: 64_000,
-      onlineAmount: 256_000,
-      arrearsAmount: 12_000,
-      onlineRate: 80,
-      growthRate: 8.5,
-    },
-    {
-      regionName: '龙海区',
-      parkingType: '公共停车场',
-      parkingCount: 10,
-      orderCount: 24_000,
-      totalAmount: 960_000,
-      avgOrderAmount: 40,
-      cashAmount: 96_000,
-      onlineAmount: 864_000,
-      arrearsAmount: 28_000,
-      onlineRate: 90,
-      growthRate: 18.3,
-    },
-    {
-      regionName: '漳浦县',
-      parkingType: '公共停车场',
-      parkingCount: 6,
-      orderCount: 12_000,
-      totalAmount: 480_000,
-      avgOrderAmount: 40,
-      cashAmount: 96_000,
-      onlineAmount: 384_000,
-      arrearsAmount: 20_000,
-      onlineRate: 80,
-      growthRate: 10.5,
-    },
-    {
-      regionName: '芗城区',
-      parkingType: '公共停车场',
-      parkingCount: 3,
-      orderCount: 6_500,
-      totalAmount: 312_000,
-      avgOrderAmount: 48,
-      cashAmount: 31_200,
-      onlineAmount: 280_800,
-      arrearsAmount: 5_000,
-      onlineRate: 90,
-      growthRate: 14.7,
-    },
-    {
-      regionName: '龙文区',
-      parkingType: '路侧停车场',
-      parkingCount: 6,
-      orderCount: 14_000,
-      totalAmount: 210_000,
-      avgOrderAmount: 15,
-      cashAmount: 42_000,
-      onlineAmount: 168_000,
-      arrearsAmount: 6_000,
-      onlineRate: 80,
-      growthRate: 22.4,
-    },
-    {
-      regionName: '龙海区',
-      parkingType: '路侧停车场',
-      parkingCount: 7,
-      orderCount: 16_500,
-      totalAmount: 247_500,
-      avgOrderAmount: 15,
-      cashAmount: 49_500,
-      onlineAmount: 198_000,
-      arrearsAmount: 7_500,
-      onlineRate: 80,
-      growthRate: 19.8,
-    },
-    {
-      regionName: '漳浦县',
-      parkingType: '路侧停车场',
-      parkingCount: 4,
-      orderCount: 9_000,
-      totalAmount: 135_000,
-      avgOrderAmount: 15,
-      cashAmount: 27_000,
-      onlineAmount: 108_000,
-      arrearsAmount: 4_000,
-      onlineRate: 80,
-      growthRate: 11.2,
-    },
-    {
-      regionName: '其他区域',
-      parkingType: '公共停车场',
-      parkingCount: 8,
-      orderCount: 19_200,
-      totalAmount: 768_000,
-      avgOrderAmount: 40,
-      cashAmount: 76_800,
-      onlineAmount: 691_200,
-      arrearsAmount: 24_000,
-      onlineRate: 90,
-      growthRate: 9.3,
-    },
-    {
-      regionName: '其他区域',
-      parkingType: '专用停车场',
-      parkingCount: 3,
-      orderCount: 5_500,
-      totalAmount: 220_000,
-      avgOrderAmount: 40,
-      cashAmount: 44_000,
-      onlineAmount: 176_000,
-      arrearsAmount: 8_500,
-      onlineRate: 80,
-      growthRate: 7.8,
-    },
-    // 额外数据用于分页测试
-    {
-      regionName: '芗城区',
-      parkingType: '公共停车场',
-      parkingCount: 4,
-      orderCount: 8_500,
-      totalAmount: 425_000,
-      avgOrderAmount: 50,
-      cashAmount: 42_500,
-      onlineAmount: 382_500,
-      arrearsAmount: 6_500,
-      onlineRate: 90,
-      growthRate: 12.3,
-    },
-    {
-      regionName: '龙文区',
-      parkingType: '公共停车场',
-      parkingCount: 7,
-      orderCount: 16_000,
-      totalAmount: 720_000,
-      avgOrderAmount: 45,
-      cashAmount: 72_000,
-      onlineAmount: 648_000,
-      arrearsAmount: 18_000,
-      onlineRate: 90,
-      growthRate: 14.5,
-    },
-    {
-      regionName: '龙海区',
-      parkingType: '专用停车场',
-      parkingCount: 3,
-      orderCount: 6_000,
-      totalAmount: 270_000,
-      avgOrderAmount: 45,
-      cashAmount: 54_000,
-      onlineAmount: 216_000,
-      arrearsAmount: 9_000,
-      onlineRate: 80,
-      growthRate: 8.7,
-    },
-    {
-      regionName: '漳浦县',
-      parkingType: '专用停车场',
-      parkingCount: 2,
-      orderCount: 4_500,
-      totalAmount: 202_500,
-      avgOrderAmount: 45,
-      cashAmount: 40_500,
-      onlineAmount: 162_000,
-      arrearsAmount: 7_500,
-      onlineRate: 80,
-      growthRate: 6.9,
-    },
-    {
-      regionName: '芗城区',
-      parkingType: '路侧停车场',
-      parkingCount: 9,
-      orderCount: 20_000,
-      totalAmount: 300_000,
-      avgOrderAmount: 15,
-      cashAmount: 60_000,
-      onlineAmount: 240_000,
-      arrearsAmount: 9_500,
-      onlineRate: 80,
-      growthRate: 28.3,
-    },
-    {
-      regionName: '龙文区',
-      parkingType: '路侧停车场',
-      parkingCount: 8,
-      orderCount: 18_500,
-      totalAmount: 277_500,
-      avgOrderAmount: 15,
-      cashAmount: 55_500,
-      onlineAmount: 222_000,
-      arrearsAmount: 8_200,
-      onlineRate: 80,
-      growthRate: 24.1,
-    },
-    {
-      regionName: '龙海区',
-      parkingType: '路侧停车场',
-      parkingCount: 9,
-      orderCount: 20_000,
-      totalAmount: 300_000,
-      avgOrderAmount: 15,
-      cashAmount: 60_000,
-      onlineAmount: 240_000,
-      arrearsAmount: 11_000,
-      onlineRate: 80,
-      growthRate: 21.5,
-    },
-    {
-      regionName: '漳浦县',
-      parkingType: '路侧停车场',
-      parkingCount: 5,
-      orderCount: 11_000,
-      totalAmount: 165_000,
-      avgOrderAmount: 15,
-      cashAmount: 33_000,
-      onlineAmount: 132_000,
-      arrearsAmount: 6_000,
-      onlineRate: 80,
-      growthRate: 13.8,
-    },
-    {
-      regionName: '其他区域',
-      parkingType: '路侧停车场',
-      parkingCount: 6,
-      orderCount: 13_500,
-      totalAmount: 202_500,
-      avgOrderAmount: 15,
-      cashAmount: 40_500,
-      onlineAmount: 162_000,
-      arrearsAmount: 8_800,
-      onlineRate: 80,
-      growthRate: 10.2,
-    },
-    {
-      regionName: '芗城区',
-      parkingType: '专用停车场',
-      parkingCount: 2,
-      orderCount: 4_000,
-      totalAmount: 180_000,
-      avgOrderAmount: 45,
-      cashAmount: 36_000,
-      onlineAmount: 144_000,
-      arrearsAmount: 5_500,
-      onlineRate: 80,
-      growthRate: 7.2,
-    },
-    {
-      regionName: '龙文区',
-      parkingType: '专用停车场',
-      parkingCount: 3,
-      orderCount: 7_000,
-      totalAmount: 315_000,
-      avgOrderAmount: 45,
-      cashAmount: 63_000,
-      onlineAmount: 252_000,
-      arrearsAmount: 9_500,
-      onlineRate: 80,
-      growthRate: 9.8,
-    },
-    {
-      regionName: '龙海区',
-      parkingType: '公共停车场',
-      parkingCount: 11,
-      orderCount: 26_000,
-      totalAmount: 1_040_000,
-      avgOrderAmount: 40,
-      cashAmount: 104_000,
-      onlineAmount: 936_000,
-      arrearsAmount: 30_000,
-      onlineRate: 90,
-      growthRate: 19.2,
-    },
-    {
-      regionName: '漳浦县',
-      parkingType: '公共停车场',
-      parkingCount: 7,
-      orderCount: 14_000,
-      totalAmount: 560_000,
-      avgOrderAmount: 40,
-      cashAmount: 112_000,
-      onlineAmount: 448_000,
-      arrearsAmount: 22_000,
-      onlineRate: 80,
-      growthRate: 12.4,
-    },
-    {
-      regionName: '其他区域',
-      parkingType: '公共停车场',
-      parkingCount: 9,
-      orderCount: 21_600,
-      totalAmount: 864_000,
-      avgOrderAmount: 40,
-      cashAmount: 86_400,
-      onlineAmount: 777_600,
-      arrearsAmount: 28_000,
-      onlineRate: 90,
-      growthRate: 10.5,
-    },
-    {
-      regionName: '其他区域',
-      parkingType: '专用停车场',
-      parkingCount: 4,
-      orderCount: 7_000,
-      totalAmount: 280_000,
-      avgOrderAmount: 40,
-      cashAmount: 56_000,
-      onlineAmount: 224_000,
-      arrearsAmount: 9_800,
-      onlineRate: 80,
-      growthRate: 8.6,
-    },
-    {
-      regionName: '芗城区',
-      parkingType: '公共停车场',
-      parkingCount: 6,
-      orderCount: 14_000,
-      totalAmount: 630_000,
-      avgOrderAmount: 45,
-      cashAmount: 63_000,
-      onlineAmount: 567_000,
-      arrearsAmount: 12_000,
-      onlineRate: 90,
-      growthRate: 13.8,
-    },
-    {
-      regionName: '龙文区',
-      parkingType: '公共停车场',
-      parkingCount: 8,
-      orderCount: 18_000,
-      totalAmount: 810_000,
-      avgOrderAmount: 45,
-      cashAmount: 81_000,
-      onlineAmount: 729_000,
-      arrearsAmount: 20_000,
-      onlineRate: 90,
-      growthRate: 15.6,
-    },
-    {
-      regionName: '龙海区',
-      parkingType: '专用停车场',
-      parkingCount: 4,
-      orderCount: 8_000,
-      totalAmount: 360_000,
-      avgOrderAmount: 45,
-      cashAmount: 72_000,
-      onlineAmount: 288_000,
-      arrearsAmount: 11_500,
-      onlineRate: 80,
-      growthRate: 9.3,
-    },
-    {
-      regionName: '漳浦县',
-      parkingType: '专用停车场',
-      parkingCount: 3,
-      orderCount: 6_500,
-      totalAmount: 292_500,
-      avgOrderAmount: 45,
-      cashAmount: 58_500,
-      onlineAmount: 234_000,
-      arrearsAmount: 8_800,
-      onlineRate: 80,
-      growthRate: 7.5,
-    },
-  ];
+  // 获取所有模拟数据
+  const allTableData = generateMonthlyTableData();
 
   // 根据筛选条件过滤数据
-  let filteredData = [...allTableData];
+  let filteredData = allTableData.filter(item => {
+    // 1. 行政区划筛选
+    if (region && regionMap[region]) {
+      if (item.regionName !== regionMap[region]) {
+        return false;
+      }
+    }
 
-  // 区域筛选
-  if (region) {
-    const regionMap = {
-      'xiangcheng': '芗城区',
-      'longwen': '龙文区',
-      'longhai': '龙海区',
-      'zhangpu': '漳浦县',
-    };
-    const targetRegion = regionMap[region] || region;
-    filteredData = filteredData.filter(item => item.regionName === targetRegion);
-  }
+    // 2. 停车场类型筛选
+    if (parkingType && parkingTypeMap[parkingType]) {
+      if (item.parkingType !== parkingTypeMap[parkingType]) {
+        return false;
+      }
+    }
 
-  // 停车场类型筛选
-  if (parkingType) {
-    const typeMap = {
-      'public': '公共停车场',
-      'roadside': '路侧停车场',
-      'special': '专用停车场',
-    };
-    const targetType = typeMap[parkingType] || parkingType;
-    filteredData = filteredData.filter(item => item.parkingType === targetType);
-  }
+    return true;
+  });
 
-  // 分页处理 - 修复分页参数
+  // 计算核心指标
+  const coreIndicators = calculateCoreIndicators(filteredData, month);
+
+  // 计算趋势数据
+  const trendData = calculateTrendData(filteredData);
+
+  // 计算月度对比数据
+  const monthlyComparison = calculateMonthlyComparison(filteredData, month);
+
+  // 计算区域分布数据
+  const regionDistribution = calculateRegionDistribution(filteredData);
+
+  // 计算类型分布数据
+  const typeDistribution = calculateTypeDistribution(filteredData);
+
+  // 分页处理
   const total = filteredData.length;
   const actualPage = page || 1;
   const actualPageSize = pageSize || 10;
@@ -688,6 +825,12 @@ export const getRegionList = async () => {
     { value: 'longwen', label: '龙文区' },
     { value: 'longhai', label: '龙海区' },
     { value: 'zhangpu', label: '漳浦县' },
+    { value: 'yunxiao', label: '云霄县' },
+    { value: 'zhaoan', label: '诏安县' },
+    { value: 'dongshan', label: '东山县' },
+    { value: 'nanjing', label: '南靖县' },
+    { value: 'pinghe', label: '平和县' },
+    { value: 'huaan', label: '华安县' },
     { value: 'other', label: '其他区域' },
   ];
 
