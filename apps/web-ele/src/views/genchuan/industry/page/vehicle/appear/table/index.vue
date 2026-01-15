@@ -4,17 +4,25 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElImage, ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import {
+  createOutDriveObj,
+  deleteOutDriveObj,
+  getOutDriveinList,
+  refreshSync,
+  updateOutDriveObj,
+} from '#/api/genchuan/industry/vehicle/entry.js';
 import { $t } from '#/locales';
+import { formatTimestamp } from '#/utils';
 import { exportToExcel } from '#/utils/excel.js';
 // 引入封装后的详情抽屉组件
-import ParkDetailDrawer from '#/views/genchuan/industry/page/park/components/detail.vue';
+import ParkDetailDrawer from '#/views/genchuan/industry/page/vehicle/appear/table/detail.vue';
 
-import { dataList, textObj, useFormSchema, useGridColumns } from './data';
+import { textObj, useFormSchema, useGridColumns } from './data';
 
 const props = defineProps({
   secondShow: {
@@ -56,17 +64,11 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onCancel() {
     formDrawerApi.close();
   },
-  onConfirm() {
+  async onConfirm() {
     const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-      dataObj.apilist.push(obj);
-    } else {
-      dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
-        }
-      });
-    }
+    await (formDrawerApi.sharedData.payload.title === textObj.addText
+      ? createOutDriveObj(obj)
+      : updateOutDriveObj({ ...dataObj.editObj, ...obj }));
     handleRefresh();
     formDrawerApi.close();
   },
@@ -102,6 +104,7 @@ function handleCreate() {
 
 /** 编辑角色 */
 function handleEdit(row) {
+  dataObj.editObj = row;
   formDrawerApi
     .setData({
       title: textObj.editText,
@@ -111,11 +114,11 @@ function handleEdit(row) {
 }
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.name]),
+    text: $t('ui.actionMessage.deleting'),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
+    await deleteOutDriveObj(row.id);
+    ElMessage.success($t('ui.actionMessage.deleteSuccess'));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -123,20 +126,14 @@ async function handleDelete(row) {
 }
 
 async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
+  await confirm($t('确定删除这些数据吗？')).then(() => {
+    checkedIds.value.forEach(async (v) => {
+      await handleDelete({
+        id: v,
+      });
+    });
   });
-  try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
+  handleRefresh();
 }
 
 const checkedIds = ref([]);
@@ -146,42 +143,40 @@ function handleRowCheckboxChange({ records }) {
 const dataObj = reactive({
   totalShow: false,
   detailObj: {}, // 保留详情对象用于传递给组件
-  total: dataList().length,
+  total: 0,
   currentPage: 1,
   pageSize: 10,
-  apilist: dataList(),
+  apilist: [],
+  imgUrl: '',
+  serachObj: {},
   list: [],
+  editObj: {},
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
 // 表格数据获取
-const getTableData = (pageObj) => {
-  const page = pageObj.page;
-  dataObj.total = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    }).length;
-  dataObj.list = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    })
-    .slice(
-      (page.currentPage - 1) * page.pageSize,
-      page.currentPage * page.pageSize,
-    );
+const getTableData = async (pageObj) => {
+  const getParams = {
+    pageNo: pageObj.page.currentPage,
+    pageSize: pageObj.page.pageSize,
+    ...dataObj.serachObj,
+  };
+  const data = await getOutDriveinList(getParams);
+  dataObj.total = data.total;
+  dataObj.list = data.list.map((v) => {
+    return {
+      ...v,
+      plateType: v.plateType === '1' ? '月租车' : '临时车',
+      driveInTime: formatTimestamp(v.driveInTime),
+      createTime: formatTimestamp(v.createTime),
+      driveOutTime: formatTimestamp(v.driveOutTime),
+    };
+  });
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [QueryForm, QueryFormApi] = useVbenForm({
   // 默认展开
   collapsed: false,
   // 所有表单项共用，可单独在表单内覆盖
@@ -211,7 +206,9 @@ const [QueryForm] = useVbenForm({
   },
 });
 // 搜索表单查询
-function onSubmit() {
+async function onSubmit() {
+  dataObj.serachObj = await QueryFormApi.getValues();
+  gridApi.reload();
   drawerApi.close();
 }
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -252,15 +249,13 @@ const handleOpenDetail = (row) => {
 };
 const tabsData = ref([
   { label: '全部' },
-  { label: '启用' },
-  { label: '禁用' },
-  { label: '暂停运营' },
-  { label: '维修中' },
+  { label: '临时车' },
+  { label: '月租车' },
 ]);
 const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
+  let text = ``;
   if (item.label === '全部') {
-    text = `(${dataObj.apilist.length})`;
+    text = `(${dataObj.total})`;
   }
   return item.label + text;
 };
@@ -276,10 +271,28 @@ const handleFullShow = () => {
 
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
+const dialogVisible = ref(false);
+const openImg = (url) => {
+  dataObj.imgUrl = url;
+  dialogVisible.value = true;
+};
+const handleF5 = async () => {
+  const loadingInstance = ElLoading.service();
+  await refreshSync();
+  setTimeout(() => {
+    loadingInstance.close();
+    handleRefresh();
+  }, 3000);
+};
 </script>
 
 <template>
   <div class="park-lot-table-new">
+    <el-dialog v-model="dialogVisible">
+      <div class="park-img-center">
+        <img style="width: 100%; height: 100%" :src="dataObj.imgUrl" />
+      </div>
+    </el-dialog>
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
@@ -287,7 +300,7 @@ const parkDetailDrawerRef = ref(null);
     <ParkDetailDrawer
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
-      :title="`${dataObj.detailObj.name}`"
+      title="详情"
     />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -315,6 +328,12 @@ const parkDetailDrawerRef = ref(null);
       <template #toolbar-tools>
         <TableAction
           :actions="[
+            {
+              label: '同步数据',
+              type: 'primary',
+              auth: ['system:role:create'],
+              onClick: handleF5,
+            },
             {
               label: '新增',
               type: 'primary',
@@ -360,15 +379,30 @@ const parkDetailDrawerRef = ref(null);
           ></i>
         </button>
       </template>
-      <template #parkName="{ row }">
+      <template #recordId="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.name }}
+          {{ row.recordId }}
         </el-text>
       </template>
+      <template #driveInPhoto="{ row }">
+        <ElImage
+          style="width: 100px; height: 100px"
+          :src="row.driveInPhoto"
+          @click="openImg(row.driveInPhoto)"
+        />
+      </template>
+      <template #driveOutPhoto="{ row }">
+        <ElImage
+          style="width: 100px; height: 100px"
+          :src="row.driveOutPhoto"
+          @click="openImg(row.driveOutPhoto)"
+        />
+      </template>
+
       <template #actions="{ row }">
         <TableAction
           :actions="[
@@ -410,12 +444,21 @@ const parkDetailDrawerRef = ref(null);
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：停车场数量5;车位总数:266;车场车位3 </span>
+          <span> 本页统计：停车记录10条 </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span> 全部统计：{{ textObj.total }} </span>
+          <span> 全部统计：停车记录15条 </span>
         </div>
       </template>
     </Grid>
   </div>
 </template>
+<style scoped>
+.park-img-center {
+  width: 700px;
+  height: 700px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+</style>

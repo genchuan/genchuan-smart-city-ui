@@ -13,13 +13,14 @@ import {
   createDriveObj,
   deleteDriveObj,
   getDriveinList,
+  refreshSync,
   updateDriveObj,
 } from '#/api/genchuan/industry/vehicle/entry.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
 import { exportToExcel } from '#/utils/excel.js';
 // 引入封装后的详情抽屉组件
-import ParkDetailDrawer from '#/views/genchuan/industry/page/park/components/detail.vue';
+import ParkDetailDrawer from '#/views/genchuan/industry/page/vehicle/entry/table/detail.vue';
 
 import { textObj, useFormSchema, useGridColumns } from './data';
 
@@ -247,15 +248,13 @@ const handleOpenDetail = (row) => {
 };
 const tabsData = ref([
   { label: '全部' },
-  { label: '启用' },
-  { label: '禁用' },
-  { label: '暂停运营' },
-  { label: '维修中' },
+  { label: '临时车' },
+  { label: '月租车' },
 ]);
 const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
+  let text = ``;
   if (item.label === '全部') {
-    text = `(${dataObj.apilist.length})`;
+    text = `(${dataObj.total})`;
   }
   return item.label + text;
 };
@@ -276,6 +275,14 @@ const openImg = (url) => {
   dataObj.imgUrl = url;
   dialogVisible.value = true;
 };
+const handleF5 = async () => {
+  const loadingInstance = ElLoading.service();
+  await refreshSync();
+  setTimeout(() => {
+    loadingInstance.close();
+    handleRefresh();
+  }, 3000);
+};
 </script>
 
 <template>
@@ -292,7 +299,7 @@ const openImg = (url) => {
     <ParkDetailDrawer
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
-      :title="`${dataObj.detailObj.name}`"
+      title="详情"
     />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -320,6 +327,12 @@ const openImg = (url) => {
       <template #toolbar-tools>
         <TableAction
           :actions="[
+            {
+              label: '同步数据',
+              type: 'primary',
+              auth: ['system:role:create'],
+              onClick: handleF5,
+            },
             {
               label: '新增',
               type: 'primary',
