@@ -155,6 +155,20 @@ const dataObj = reactive({
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
+const outTypeObj = {
+  0: '收费放行',
+  1: '免费放行',
+  2: '异常放行',
+  3: '系统放行',
+};
+const payObj = {
+  1: '微信',
+  2: '支付宝',
+  3: '银联',
+  4: '余额',
+  5: '现金',
+  25: 'ETC支付',
+};
 // 表格数据获取
 const getTableData = async (pageObj) => {
   const getParams = {
@@ -171,6 +185,8 @@ const getTableData = async (pageObj) => {
       driveInTime: formatTimestamp(v.driveInTime),
       createTime: formatTimestamp(v.createTime),
       driveOutTime: formatTimestamp(v.driveOutTime),
+      outType: outTypeObj[v.outType] || v.outType,
+      payMethod: payObj[v.payMethod] || v.payMethod,
     };
   });
   return dataObj;
@@ -447,7 +463,7 @@ const handleF5 = async () => {
           <span> 本页统计：停车记录10条 </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span> 全部统计：停车记录15条 </span>
+          <span> 全部统计：停车记录55条 </span>
         </div>
       </template>
     </Grid>
