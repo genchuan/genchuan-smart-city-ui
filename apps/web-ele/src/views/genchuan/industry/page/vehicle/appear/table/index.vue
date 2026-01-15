@@ -11,6 +11,8 @@ import { useVbenForm } from '#/adapter/form';
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
+// 引入封装后的详情抽屉组件
+import ParkDetailDrawer from '#/views/genchuan/industry/page/park/components/detail.vue';
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
@@ -34,16 +36,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
-const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  onCancel() {
-    detailDrawerApi.close();
-  },
-  onConfirm() {},
-  async onOpenChange() {},
-});
+// 移除原 DetailDrawer 初始化逻辑
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -88,7 +81,6 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     }
   },
 });
-
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
@@ -119,13 +111,11 @@ function handleEdit(row) {
 }
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.induction_name]), // 修复：使用正确的字段名
+    text: $t('ui.actionMessage.deleting', [row.name]),
   });
   try {
     dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success(
-      $t('ui.actionMessage.deleteSuccess', [row.induction_name]),
-    ); // 修复：使用正确的字段名
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -155,7 +145,7 @@ function handleRowCheckboxChange({ records }) {
 }
 const dataObj = reactive({
   totalShow: false,
-  detailObj: {},
+  detailObj: {}, // 保留详情对象用于传递给组件
   total: dataList().length,
   currentPage: 1,
   pageSize: 10,
@@ -165,33 +155,29 @@ const dataObj = reactive({
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
-
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
-
-  // 根据activeName筛选数据
-  const filteredList = dataObj.apilist.filter((v) => {
-    switch (activeName.value) {
-      case '全部': {
+  dataObj.total = dataObj.apilist
+    .map((v) => v)
+    .filter((v) => {
+      if (activeName.value === '全部') {
         return true;
       }
-      case '启用': {
-        return v.status === '1';
+      return v.status === activeName.value;
+    }).length;
+  dataObj.list = dataObj.apilist
+    .map((v) => v)
+    .filter((v) => {
+      if (activeName.value === '全部') {
+        return true;
       }
-      case '禁用': {
-        return v.status === '0';
-      }
-      // No default
-    }
-    return false;
-  });
-
-  dataObj.total = filteredList.length;
-  dataObj.list = filteredList.slice(
-    (page.currentPage - 1) * page.pageSize,
-    page.currentPage * page.pageSize,
-  );
+      return v.status === activeName.value;
+    })
+    .slice(
+      (page.currentPage - 1) * page.pageSize,
+      page.currentPage * page.pageSize,
+    );
   return dataObj;
 };
 
@@ -224,12 +210,10 @@ const [QueryForm] = useVbenForm({
     content: '查询',
   },
 });
-
 // 搜索表单查询
 function onSubmit() {
   drawerApi.close();
 }
-
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
@@ -259,43 +243,27 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const activeName = ref('全部');
-
+// 修改打开详情的方法，调用组件的open方法
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
-  detailDrawerApi.open();
+  // 通过ref调用组件的open方法
+  parkDetailDrawerRef.value.open();
+  console.log(row);
 };
-
-// 修改tabsData为三个标签：全部、启用、禁用
-const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用' }]);
-
-// 创建标签文本，显示数量统计
+const tabsData = ref([
+  { label: '全部' },
+  { label: '启用' },
+  { label: '禁用' },
+  { label: '暂停运营' },
+  { label: '维修中' },
+]);
 const createLabel = (item) => {
-  let count = 0;
-
-  switch (item.label) {
-    case '全部': {
-      count = dataObj.apilist.length;
-
-      break;
-    }
-    case '启用': {
-      // 统计status为'1'的数据
-      count = dataObj.apilist.filter((v) => v.status === '1').length;
-
-      break;
-    }
-    case '禁用': {
-      // 统计status为'0'的数据
-      count = dataObj.apilist.filter((v) => v.status === '0').length;
-
-      break;
-    }
-    // No default
+  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
+  if (item.label === '全部') {
+    text = `(${dataObj.apilist.length})`;
   }
-
-  return `${item.label}(${count})`;
+  return item.label + text;
 };
-
 const handleClick = () => {
   gridApi.query();
 };
@@ -305,6 +273,9 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
+// 定义组件ref，用于调用组件方法
+const parkDetailDrawerRef = ref(null);
 </script>
 
 <template>
@@ -312,72 +283,12 @@ const handleFullShow = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <DetailDrawer :title="`${dataObj.detailObj.induction_name}详情`">
-      <div class="detail-card">
-        <div class="detail-card-row">
-          <div class="detail-row-left">诱导屏ID:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.induction_id }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">诱导屏名称:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.induction_name }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">覆盖区域:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.region }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">关联车场:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.related_lot_ids }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">推送策略:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.push_strategy }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">状态:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.status === '1' ? '启用' : '禁用' }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">创建时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.create_time }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">更新时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.update_time }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">备注:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.remark }}
-          </div>
-        </div>
-      </div>
-    </DetailDrawer>
+    <!-- 使用封装后的详情抽屉组件 -->
+    <ParkDetailDrawer
+      ref="parkDetailDrawerRef"
+      :detail-obj="dataObj.detailObj"
+      :title="`${dataObj.detailObj.name}`"
+    />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -449,14 +360,13 @@ const handleFullShow = () => {
           ></i>
         </button>
       </template>
-      <!-- 修复：使用正确的字段名'induction_name' -->
-      <template #induction_name="{ row }">
+      <template #parkName="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.induction_name }}
+          {{ row.name }}
         </el-text>
       </template>
       <template #actions="{ row }">
@@ -485,9 +395,7 @@ const handleFullShow = () => {
               icon: ACTION_ICON.DELETE,
               auth: ['system:role:delete'],
               popConfirm: {
-                title: $t('ui.actionMessage.deleteConfirm', [
-                  row.induction_name,
-                ]),
+                title: $t('ui.actionMessage.deleteConfirm', [row.name]),
                 confirm: handleDelete.bind(null, row),
               },
             },
@@ -502,7 +410,7 @@ const handleFullShow = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：诱导屏数量: 10; 启用: 8; 禁用: 2 </span>
+          <span> 本页统计：停车场数量5;车位总数:266;车场车位3 </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span> 全部统计：{{ textObj.total }} </span>
