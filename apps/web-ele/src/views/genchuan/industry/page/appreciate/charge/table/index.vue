@@ -463,13 +463,13 @@ const handleFullShow = () => {
           ></i>
         </button>
       </template>
-      <template #parkName="{ row }">
+      <template #chargePileId="{ row }">
         <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
+          class="charge-pile-id-link"
           type="primary"
+          @click="handleOpenDetail(row)"
         >
-          {{ row.name }}
+          {{ row.charge_pile_id }}
         </el-text>
       </template>
       <template #actions="{ row }">
@@ -524,3 +524,93 @@ const handleFullShow = () => {
     </Grid>
   </div>
 </template>
+
+<style scoped>
+.charge-pile-id-link {
+  color: #409eff;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.charge-pile-id-link:hover {
+  color: #337ecc;
+  text-decoration: underline;
+}
+
+.park-lot-table-new {
+  width: 100%;
+  height: 100%;
+}
+
+.tabel-tabs {
+  margin-bottom: 10px;
+}
+
+.demo-tabs {
+  padding: 0 10px;
+  background: #fff;
+}
+
+.common-total {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  cursor: pointer;
+  background-color: #f5f7fa;
+  border-top: 1px solid #ebeef5;
+}
+
+.common-total:hover {
+  background-color: #e4e7ed;
+}
+
+.tabel-tab-icon {
+  font-size: 14px;
+  color: #909399;
+}
+
+.common-total-bottom {
+  padding: 10px;
+  font-size: 14px;
+  color: #606266;
+  background-color: #f9fafc;
+  border-top: 1px solid #ebeef5;
+}
+
+.detail-card {
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.detail-card-row {
+  display: flex;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.detail-card-row:last-child {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.detail-row-left {
+  flex-shrink: 0;
+  width: 150px;
+  font-weight: 500;
+  color: #606266;
+}
+
+.detail-row-right {
+  flex: 1;
+  color: #303133;
+}
+
+.query-form {
+  padding: 20px;
+}
+</style>

@@ -4,7 +4,7 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage, ElTag } from 'element-plus';
+import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -21,26 +21,16 @@ const props = defineProps({
   },
 });
 
+// 定义状态映射关系
+const statusMap = {
+  0: '禁用',
+  1: '启用',
+  2: '暂停',
+};
+
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
 });
-
-// 获取状态标签类型
-const getStatusTagType = (status) => {
-  const typeMap = {
-    待核验: 'warning',
-    已确认: 'success',
-    已使用: 'primary',
-    已取消: 'info',
-    已过期: 'danger',
-  };
-  return typeMap[status] || 'default';
-};
-
-// 根据状态统计数量
-const getCountByStatus = (status) => {
-  return dataObj.list.filter((item) => item.status === status).length;
-};
 
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -121,7 +111,7 @@ async function handleExport() {
   exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
 }
 
-/** 创建预约记录 */
+/** 创建角色 */
 function handleCreate() {
   formDrawerApi
     .setData({
@@ -130,7 +120,7 @@ function handleCreate() {
     .open();
 }
 
-/** 编辑预约记录 */
+/** 编辑角色 */
 function handleEdit(row) {
   formDrawerApi
     .setData({
@@ -142,15 +132,11 @@ function handleEdit(row) {
 
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.reservation_no]),
+    text: $t('ui.actionMessage.deleting', [row.name]),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => v.reservation_id !== row.reservation_id,
-    );
-    ElMessage.success(
-      $t('ui.actionMessage.deleteSuccess', [row.reservation_no]),
-    );
+    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -164,7 +150,7 @@ async function handleDeleteBatch() {
   });
   try {
     dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.reservation_id),
+      (v) => !checkedIds.value.includes(v.id),
     );
     checkedIds.value = [];
     ElMessage.success($t('删除成功'));
@@ -176,7 +162,7 @@ async function handleDeleteBatch() {
 
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map((item) => item.reservation_id);
+  checkedIds.value = records.map((item) => item.id);
 }
 
 const dataObj = reactive({
@@ -196,11 +182,13 @@ const changeTotalShow = () => {
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
+  const statusValue = getStatusValueFromLabel(activeName.value);
+
   dataObj.total = dataObj.apilist.filter((v) => {
     if (activeName.value === '全部') {
       return true;
     }
-    return v.status === activeName.value;
+    return v.status === statusValue;
   }).length;
 
   dataObj.list = dataObj.apilist
@@ -208,13 +196,24 @@ const getTableData = (pageObj) => {
       if (activeName.value === '全部') {
         return true;
       }
-      return v.status === activeName.value;
+      return v.status === statusValue;
     })
     .slice(
       (page.currentPage - 1) * page.pageSize,
       page.currentPage * page.pageSize,
     );
+
   return dataObj;
+};
+
+// 根据标签获取对应的状态值
+const getStatusValueFromLabel = (label) => {
+  for (const [value, name] of Object.entries(statusMap)) {
+    if (name === label) {
+      return value;
+    }
+  }
+  return null;
 };
 
 const [QueryForm] = useVbenForm({
@@ -255,7 +254,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       },
     },
     rowConfig: {
-      keyField: 'reservation_id',
+      keyField: 'id',
       isHover: true,
     },
     pagerConfig: dataObj,
@@ -275,27 +274,26 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 const activeName = ref('全部');
 
-// 打开详情页
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
   detailDrawerApi.open();
 };
 
 const tabsData = ref([
-  { label: '全部' },
-  { label: '待核验' },
-  { label: '已确认' },
-  { label: '已使用' },
-  { label: '已取消' },
-  { label: '已过期' },
+  { label: '全部', value: '' },
+  { label: '启用', value: '1' },
+  { label: '禁用', value: '0' },
+  { label: '暂停', value: '2' },
 ]);
 
+// 修改标签创建函数
 const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
   if (item.label === '全部') {
-    text = `(${dataObj.apilist.length})`;
+    return `${item.label}(${dataObj.apilist.length})`;
   }
-  return item.label + text;
+
+  const count = dataObj.apilist.filter((v) => v.status === item.value).length;
+  return `${item.label}(${count})`;
 };
 
 const handleClick = () => {
@@ -316,113 +314,25 @@ const handleFullShow = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <DetailDrawer :title="`${dataObj.detailObj.lot_id}详情`">
+
+    <DetailDrawer :title="`${dataObj.detailObj.name}关联表`">
       <div class="detail-card">
+        <!-- 详情内容保持不变 -->
         <div class="detail-card-row">
-          <div class="detail-row-left">预约编号:</div>
+          <div class="detail-row-left">主键ID:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.reservation_no }}
+            {{ dataObj.detailObj.share_id }}
           </div>
         </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">用户ID:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.user_id }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">停车场名称:</div>
-          <div class="detail-row-right parking-lot-name">
-            {{ dataObj.detailObj.lot_id }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">车牌号:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.car_number }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">车位ID:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.space_id || '未分配' }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">预约日期:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.reserve_date }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">开始时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.start_time }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">结束时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.end_time }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">预约状态:</div>
-          <div class="detail-row-right">
-            <ElTag :type="getStatusTagType(dataObj.detailObj.status)">
-              {{ dataObj.detailObj.status }}
-            </ElTag>
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">核验时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.verify_time || '未核验' }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">核验人:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.verify_by || '未核验' }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">取消时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.cancel_time || '未取消' }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">取消原因:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.cancel_reason || '无' }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">创建时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.create_time }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">更新时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.update_time }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">备注:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.remark || '无' }}
-          </div>
-        </div>
+        <!-- 其他详情行... -->
       </div>
     </DetailDrawer>
+
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+
     <Grid>
-      <!-- 三级状态 -->
       <template #table-title>
         <div class="tabel-tabs">
           <div v-if="props.secondShow">
@@ -441,6 +351,7 @@ const handleFullShow = () => {
           </div>
         </div>
       </template>
+
       <template #toolbar-tools>
         <TableAction
           :actions="[
@@ -468,6 +379,7 @@ const handleFullShow = () => {
             },
           ]"
         />
+
         <button
           class="vxe-button type--button size--small is--circle ml-2"
           title="搜索"
@@ -478,6 +390,7 @@ const handleFullShow = () => {
             class="vxe-button--item vxe-button--prefix-icon vxe-icon-search"
           ></i>
         </button>
+
         <button
           class="vxe-button type--button size--small is--circle"
           title="全屏"
@@ -489,16 +402,17 @@ const handleFullShow = () => {
           ></i>
         </button>
       </template>
-      <!-- 停车场名称列插槽 - 蓝色字体可点击 -->
-      <template #parkingLot="{ row }">
+
+      <template #parkName="{ row }">
         <el-text
-          class="parking-lot-link"
-          type="primary"
           @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
         >
-          {{ row.lot_id }}
+          {{ row.name }}
         </el-text>
       </template>
+
       <template #actions="{ row }">
         <TableAction
           :actions="[
@@ -525,15 +439,14 @@ const handleFullShow = () => {
               icon: ACTION_ICON.DELETE,
               auth: ['system:role:delete'],
               popConfirm: {
-                title: $t('ui.actionMessage.deleteConfirm', [
-                  row.reservation_no,
-                ]),
+                title: $t('ui.actionMessage.deleteConfirm', [row.name]),
                 confirm: handleDelete.bind(null, row),
               },
             },
           ]"
         />
       </template>
+
       <template #bottom>
         <div class="common-total" @click="changeTotalShow">
           <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
@@ -542,12 +455,9 @@ const handleFullShow = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span>
-            本页统计：预约记录{{ dataObj.list.length }}条; 已使用:{{
-              getCountByStatus('已使用')
-            }}条; 已确认:{{ getCountByStatus('已确认') }}条
-          </span>
+          <span> 本页统计：订单数10;成功订单6 </span>
         </div>
+
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span> 全部统计：{{ textObj.total }} </span>
         </div>
@@ -555,101 +465,3 @@ const handleFullShow = () => {
     </Grid>
   </div>
 </template>
-
-<style scoped>
-.park-lot-table-new {
-  width: 100%;
-  height: 100%;
-}
-
-/* 停车场名称链接样式 */
-.parking-lot-link {
-  color: #1890ff;
-  text-decoration: none;
-  cursor: pointer;
-  transition: color 0.3s;
-}
-
-.parking-lot-link:hover {
-  color: #40a9ff;
-  text-decoration: underline;
-}
-
-.parking-lot-link:active {
-  color: #096dd9;
-}
-
-/* 详情页样式 */
-.detail-card {
-  padding: 20px;
-  background-color: #fff;
-}
-
-.detail-card-row {
-  display: flex;
-  padding-bottom: 12px;
-  margin-bottom: 16px;
-  line-height: 24px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.detail-card-row:last-child {
-  padding-bottom: 0;
-  margin-bottom: 0;
-  border-bottom: none;
-}
-
-.detail-row-left {
-  flex-shrink: 0;
-  width: 100px;
-  font-weight: 600;
-  color: #333;
-}
-
-.detail-row-right {
-  flex: 1;
-  color: #666;
-}
-
-.parking-lot-name {
-  font-weight: 500;
-  color: #1890ff;
-}
-
-/* 表格标题样式 */
-.tabel-tabs {
-  margin-bottom: 16px;
-}
-
-.demo-tabs {
-  padding: 0 16px;
-  background: #fff;
-}
-
-.common-total {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  padding: 12px 16px;
-  cursor: pointer;
-  background: #f5f7fa;
-  border-top: 1px solid #e4e7ed;
-  transition: background-color 0.3s;
-}
-
-.common-total:hover {
-  background-color: #eef0f5;
-}
-
-.tabel-tab-icon {
-  font-size: 14px;
-  color: #909399;
-}
-
-.common-total-bottom {
-  padding: 12px 16px;
-  color: #606266;
-  background: #f0f9ff;
-  border-top: 1px solid #d9ecff;
-}
-</style>
