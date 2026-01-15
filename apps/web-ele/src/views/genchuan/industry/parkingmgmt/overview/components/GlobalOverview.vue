@@ -23,7 +23,7 @@ import {
   fetchParkingStatisticsDistribution,
   fetchRoadsideBerthCoreElements,
 } from '#/api/genchuan/industry/parkingmgmt/overview/GlobalSituationOverview.ts';
-import ChartPie1 from '#/views/genchuan/industry/templatesstatchart/ChartPie1.vue';
+import ChartPie from '#/views/genchuan/industry/templatesstatchart/ChartPie.vue';
 import HorizontalBar1 from '#/views/genchuan/industry/templatesstatchart/HorizontalBar1.vue';
 import VerticalBar1 from '#/views/genchuan/industry/templatesstatchart/VerticalBar1.vue';
 
@@ -1482,7 +1482,7 @@ onUnmounted(() => {
               />
             </div>
             <div class="chart-item" style="flex: 2; height: 100%">
-              <ChartPie1
+              <ChartPie
                 :data="{
                   legend: statisticsData.chargeAbnormal.labels || [],
                   series: [

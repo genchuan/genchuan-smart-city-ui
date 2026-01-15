@@ -1,58 +1,26 @@
 <script setup lang="ts">
-import {nextTick, onMounted, onUnmounted, ref} from 'vue';
-import {useRouter} from 'vue-router';
-import {
-  ElButton,
-  ElDialog,
-  ElForm,
-  ElFormItem,
-  ElInput,
-  ElMessage,
-  ElSwitch,
-  ElTable,
-  ElTableColumn,
-  ElTabPane,
-  ElTabs,
-  ElTag
-} from 'element-plus';
-import {Filter, FullScreen, Setting, VideoPause, VideoPlay} from '@element-plus/icons-vue';
+import { nextTick, onMounted, onUnmounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+
+import { Filter, FullScreen, Setting, VideoPause, VideoPlay } from '@element-plus/icons-vue';
+import { ElButton, ElDialog, ElForm, ElFormItem, ElInput, ElMessage, ElSwitch, ElTable, ElTableColumn, ElTabPane, ElTabs, ElTag } from 'element-plus';
 import screenFull from 'screenfull';
+
+import {
+  fetchCarTrackGeometries, fetchCarTrackIndicators, fetchCarTrackSingleTrend, fetchMaintainDeptOnDutyCompare,
+  fetchMaintainStaffGeometries, fetchMaintainStaffIndicators, fetchParkingResourceGeometries, fetchParkPanoramaIndicators,
+  fetchParkPanoramaResourceTypeRatio, fetchParkPanoramaSpaceTypeRatio, fetchParkResourceAreaCompare, fetchParkResourceAreaRatio,
+  fetchParkResourceIndicators, fetchParkResourceList, fetchParkResourceTrend, fetchParkResourceTypeCompare, fetchSparePartIndicators,
+  fetchSparePartInOutTrend, fetchSparePartList, fetchSparePartTypeRatio, fetchTerminalDeviceIndicators, fetchTerminalDeviceList,
+  fetchTerminalDeviceOnlineRateTrend, fetchTerminalDeviceStatusRatio, fetchTerminalDeviceTypeRatio
+} from '#/api/genchuan/industry/parkingmgmt/overview/ResourceMonitor.ts';
 import ChartLine1 from '#/views/genchuan/industry/templatesstatchart/ChartLine1.vue';
+import ChartLine2 from '#/views/genchuan/industry/templatesstatchart/ChartLine2.vue';
 import ChartPie1 from '#/views/genchuan/industry/templatesstatchart/ChartPie1.vue';
 import ChartPie2 from '#/views/genchuan/industry/templatesstatchart/ChartPie2.vue';
+import VerticalBar2 from '#/views/genchuan/industry/templatesstatchart/VerticalBar2.vue';
 import VerticalBar3 from '#/views/genchuan/industry/templatesstatchart/VerticalBar3.vue';
 
-import {
-  fetchParkResourceAreaCompare,
-  fetchParkResourceAreaRatio,
-  fetchParkResourceIndicators,
-  fetchParkResourceList,
-  fetchParkResourceTrend,
-  fetchParkResourceTypeCompare,
-  fetchSparePartIndicators,
-  fetchSparePartInOutTrend,
-  fetchSparePartList,
-  fetchSparePartTypeRatio,
-  fetchTerminalDeviceIndicators,
-  fetchTerminalDeviceList,
-  fetchTerminalDeviceOnlineRateTrend,
-  fetchTerminalDeviceStatusRatio,
-  fetchTerminalDeviceTypeRatio,
-  fetchCarTrackIndicators,
-  fetchCarTrackList,
-  fetchCarTrackSingleTrend,
-  fetchMaintainStaffList,
-  fetchMaintainStaffIndicators,
-  fetchMaintainDeptOnDutyCompare,
-  fetchParkingLotGeometries3,
-  fetchParkPanoramaIndicators,
-  fetchParkPanoramaResourceTypeRatio,
-  fetchParkPanoramaSpaceTypeRatio
-} from '#/api/genchuan/industry/parkingmgmt/overview/ResourceMonitor.ts';
-
-import {
-  fetchParkingLotGeometries
-} from '#/api/genchuan/industry/parkingmgmt/overview/GlobalSituationOverview.ts';
 import MapCommon2 from './GlobalDataMap2.vue';
 import MapCommon3 from './GlobalDataMap3.vue';
 import MapCommon4 from './GlobalDataMap4.vue';
@@ -60,12 +28,25 @@ import MapCommon4 from './GlobalDataMap4.vue';
 const mapCommon2Ref = ref<InstanceType<typeof MapCommon2> | null>(null);
 const mapCommon3Ref = ref<InstanceType<typeof MapCommon3> | null>(null);
 const mapCommon4Ref = ref<InstanceType<typeof MapCommon4> | null>(null);
-// ========== 核心修改1: 新增3个独立的地图数据变量 分别对应三个接口 ==========
-const geometriesArray = ref<any[]>([]); // 保留原变量 不删除 防止影响其他逻辑
-const maintainStaffGeometries = ref<any[]>([]); // 运维人员地图数据 ← 对应 fetchMaintainStaffList
-const parkResourceGeometries = ref<any[]>([]); // 资源全景地图数据 ← 对应 fetchParkingLotGeometries3
-const carTrackGeometries = ref<any[]>([]); // 车辆轨迹地图数据 ← 对应 fetchCarTrackList
+const mapCommon3Ref_Top = ref<InstanceType<typeof MapCommon3> | null>(null);
+const mapCommon4Ref_Top = ref<InstanceType<typeof MapCommon4> | null>(null);
+
+const maintainStaffGeometries = ref<any[]>([]);
+const parkResourceGeometries = ref<any[]>([]);
+const carTrackGeometries = ref<any[]>([]);
 const map = ref<any>(null);
+
+const maintainStaffIndicatorData = ref({ totalStaffCount: 0, onDutyCount: 0, taskCount: 0 });
+const parkPanoramaIndicatorData = ref({ totalResourceCount: 0, availableResourceCount: 0, normalOperateCount: 0, normalOperateRate: 0 });
+const carTrackIndicatorData = ref({ todayPassCarCount: 0, abnormalCarCount: 0 });
+const maintainDeptCompareData = ref({ xAxis: [], series: [] });
+const carTrackSingleTrendData = ref({ xAxis: [], series: [] });
+const parkResourceTypeRatioData = ref({ legend: [], series: [] });
+const parkSpaceTypeRatioData = ref({ legend: [], series: [] });
+
+const map2Loading = ref(true);
+const map3Loading = ref(true);
+const map4Loading = ref(true);
 
 const getStoredOrbitConfig = () => {
   const stored = localStorage.getItem('parkingMapOrbitConfig');
@@ -78,7 +59,10 @@ const getStoredOrbitConfig = () => {
 
 const saveOrbitConfigToLocal = (config: any) => {
   try { localStorage.setItem('parkingMapOrbitConfig', JSON.stringify(config)); }
-  catch (error) { console.error('保存地图配置失败:', error); ElMessage.warning('配置暂无法持久化，刷新后恢复默认值'); }
+  catch (error) {
+    console.error('保存地图配置失败:', error);
+    ElMessage.warning('配置暂无法持久化，刷新后恢复默认值');
+  }
 };
 
 const orbitConfigDialogVisible = ref(false);
@@ -103,47 +87,46 @@ const orbitConfigRules = ref({
 const orbitConfigData = ref(getStoredOrbitConfig());
 
 const handleOrbitAnimation2 = () => {
-  if (mapCommon2Ref.value && typeof mapCommon2Ref.value.toggleOrbitAnimation === 'function') {
-    mapCommon2Ref.value.toggleOrbitAnimation();
-  } else {
-    ElMessage.warning('上中地图环绕功能暂未初始化完成');
-  }
+  if (mapCommon2Ref.value && typeof mapCommon2Ref.value.toggleOrbitAnimation === 'function') mapCommon2Ref.value.toggleOrbitAnimation();
+  else ElMessage.warning('运维人员地图环绕功能暂未初始化完成');
 };
 
 const handleOrbitAnimation3 = () => {
-  if (mapCommon3Ref.value && typeof mapCommon3Ref.value.toggleOrbitAnimation === 'function') {
-    mapCommon3Ref.value.toggleOrbitAnimation();
-  } else {
-    ElMessage.warning('左下地图环绕功能暂未初始化完成');
-  }
+  const targetRef = mapCommon3Ref_Top.value || mapCommon3Ref.value;
+  if (targetRef && typeof targetRef.toggleOrbitAnimation === 'function') targetRef.toggleOrbitAnimation();
+  else ElMessage.warning('资源全景地图环绕功能暂未初始化完成');
 };
 
 const handleOrbitAnimation4 = () => {
-  if (mapCommon4Ref.value && typeof mapCommon4Ref.value.toggleOrbitAnimation === 'function') {
-    mapCommon4Ref.value.toggleOrbitAnimation();
-  } else {
-    ElMessage.warning('右下地图环绕功能暂未初始化完成');
-  }
+  const targetRef = mapCommon4Ref_Top.value || mapCommon4Ref.value;
+  if (targetRef && typeof targetRef.toggleOrbitAnimation === 'function') targetRef.toggleOrbitAnimation();
+  else ElMessage.warning('车辆轨迹地图环绕功能暂未初始化完成');
 };
 
 const resetOrbitConfigForm = () => {
   orbitConfigFormRef.value?.resetFields();
   const currentConfig = getStoredOrbitConfig();
-  orbitConfigForm.value = { centerLat: currentConfig.center.lat, centerLng: currentConfig.center.lng, rotateSpeed: currentConfig.rotateSpeed, pitch: currentConfig.pitch, zoom: currentConfig.zoom, loop: currentConfig.loop };
+  orbitConfigForm.value = {
+    centerLat: currentConfig.center.lat, centerLng: currentConfig.center.lng,
+    rotateSpeed: currentConfig.rotateSpeed, pitch: currentConfig.pitch, zoom: currentConfig.zoom, loop: currentConfig.loop
+  };
 };
 
 const submitOrbitConfig = async () => {
   try {
     await orbitConfigFormRef.value.validate();
-    const newConfig = { center: { lat: orbitConfigForm.value.centerLat, lng: orbitConfigForm.value.centerLng }, rotateSpeed: orbitConfigForm.value.rotateSpeed, pitch: orbitConfigForm.value.pitch, zoom: orbitConfigForm.value.zoom, loop: orbitConfigForm.value.loop };
+    const newConfig = {
+      center: { lat: orbitConfigForm.value.centerLat, lng: orbitConfigForm.value.centerLng },
+      rotateSpeed: orbitConfigForm.value.rotateSpeed, pitch: orbitConfigForm.value.pitch, zoom: orbitConfigForm.value.zoom, loop: orbitConfigForm.value.loop
+    };
     orbitConfigData.value = newConfig;
     saveOrbitConfigToLocal(newConfig);
-    mapCommon2Ref.value && (mapCommon2Ref.value.stopOrbitAnimation(), mapCommon2Ref.value.startOrbitAnimation());
-    mapCommon3Ref.value && (mapCommon3Ref.value.stopOrbitAnimation(), mapCommon3Ref.value.startOrbitAnimation());
-    mapCommon4Ref.value && (mapCommon4Ref.value.stopOrbitAnimation(), mapCommon4Ref.value.startOrbitAnimation());
+    [mapCommon2Ref.value, mapCommon3Ref.value, mapCommon4Ref.value, mapCommon3Ref_Top.value, mapCommon4Ref_Top.value].forEach(ref => {
+      ref && (ref.stopOrbitAnimation(), ref.startOrbitAnimation());
+    });
     orbitConfigDialogVisible.value = false;
     ElMessage.success('地图环绕配置已生效（已持久化，刷新不丢失）');
-  } catch (error) { ElMessage.error('配置校验失败，请检查输入'); }
+  } catch { ElMessage.error('配置校验失败，请检查输入'); }
 };
 
 const resetToDefaultConfig = () => {
@@ -151,29 +134,43 @@ const resetToDefaultConfig = () => {
   orbitConfigData.value = defaultConfig;
   orbitConfigForm.value = { centerLat: defaultConfig.center.lat, centerLng: defaultConfig.center.lng, rotateSpeed: defaultConfig.rotateSpeed, pitch: defaultConfig.pitch, zoom: defaultConfig.zoom, loop: defaultConfig.loop };
   localStorage.removeItem('parkingMapOrbitConfig');
-  mapCommon2Ref.value && (mapCommon2Ref.value.stopOrbitAnimation(), mapCommon2Ref.value.startOrbitAnimation());
-  mapCommon3Ref.value && (mapCommon3Ref.value.stopOrbitAnimation(), mapCommon3Ref.value.startOrbitAnimation());
-  mapCommon4Ref.value && (mapCommon4Ref.value.stopOrbitAnimation(), mapCommon4Ref.value.startOrbitAnimation());
+  [mapCommon2Ref.value, mapCommon3Ref.value, mapCommon4Ref.value, mapCommon3Ref_Top.value, mapCommon4Ref_Top.value].forEach(ref => {
+    ref && (ref.stopOrbitAnimation(), ref.startOrbitAnimation());
+  });
   ElMessage.success('已恢复默认配置');
 };
 
-// ========== 核心修改2: 重构地图初始化方法，分别调用三个独立的地图接口 ==========
 const initAllMapData = async () => {
   try {
-    // 1. 上中地图：运维人员动态 → 调用运维人员接口
-    maintainStaffGeometries.value = await fetchMaintainStaffList({});
-    // 2. 左下地图：资源全景监控 → 调用资源全景接口
-    parkResourceGeometries.value = await fetchParkingLotGeometries3({});
-    // 3. 右下地图：车辆轨迹监控 → 调用车辆轨迹接口
-    carTrackGeometries.value = await fetchCarTrackList({});
+    const maintainData = await fetchMaintainStaffGeometries({});
+    maintainStaffGeometries.value = maintainData.map((item) => ({ ...item, latitude: item.maintainLatitude, longitude: item.maintainLongitude }));
+    map2Loading.value = false;
+
+    parkResourceGeometries.value = await fetchParkingResourceGeometries({});
+    map3Loading.value = false;
+
+    const carTrackData = await fetchCarTrackGeometries({});
+    carTrackGeometries.value = carTrackData.map((item) => ({ ...item, latitude: item.carLatitude, longitude: item.carLongitude }));
+    map4Loading.value = false;
   } catch (error) {
     console.error('地图数据加载失败：', error);
     ElMessage.error('地图数据加载失败，请刷新重试');
     maintainStaffGeometries.value = [];
     parkResourceGeometries.value = [];
     carTrackGeometries.value = [];
+    map2Loading.value = false;
+    map3Loading.value = false;
+    map4Loading.value = false;
   }
 };
+
+const getMaintainStaffIndicatorData = async () => { try { maintainStaffIndicatorData.value = await fetchMaintainStaffIndicators({}); } catch { maintainStaffIndicatorData.value = { totalStaffCount: 0, onDutyCount: 0, taskCount: 0 }; } };
+const getMaintainDeptCompareData = async () => { try { maintainDeptCompareData.value = await fetchMaintainDeptOnDutyCompare({}); } catch { maintainDeptCompareData.value = { xAxis: [], series: [] }; } };
+const getParkPanoramaIndicatorData = async () => { try { parkPanoramaIndicatorData.value = await fetchParkPanoramaIndicators({}); } catch { parkPanoramaIndicatorData.value = { totalResourceCount: 0, availableResourceCount: 0, normalOperateCount: 0, normalOperateRate: 0 }; } };
+const getParkResourceTypeRatioData = async () => { try { parkResourceTypeRatioData.value = await fetchParkPanoramaResourceTypeRatio({}); } catch { parkResourceTypeRatioData.value = { legend: [], series: [] }; } };
+const getParkSpaceTypeRatioData = async () => { try { parkSpaceTypeRatioData.value = await fetchParkPanoramaSpaceTypeRatio({}); } catch { parkSpaceTypeRatioData.value = { legend: [], series: [] }; } };
+const getCarTrackIndicatorData = async () => { try { carTrackIndicatorData.value = await fetchCarTrackIndicators({}); } catch { carTrackIndicatorData.value = { todayPassCarCount: 0, abnormalCarCount: 0 }; } };
+const getCarTrackSingleTrendData = async () => { try { carTrackSingleTrendData.value = await fetchCarTrackSingleTrend({}); } catch { carTrackSingleTrendData.value = { xAxis: [], series: [] }; } };
 
 const pageContainerRef = ref<HTMLElement | null>(null);
 const router = useRouter();
@@ -192,7 +189,7 @@ const terminalDeviceBaseFontScale = ref(1);
 const terminalDeviceActiveIndices = ref([]);
 const terminalDeviceChartRefreshKey = ref(0);
 const activeTerminalDeviceView = ref('卡片');
-const terminalDeviceViewBtnList = ref(['卡片', '饼图', '折线图', '列表']);
+const terminalDeviceViewBtnList = ref(['卡片', '饼图', '列表', '折线图']);
 
 const sparePartPanelRef = ref<HTMLElement | null>(null);
 const sparePartList = ref<any[]>([]);
@@ -206,7 +203,10 @@ const activeSparePartView = ref('卡片');
 const sparePartViewBtnList = ref(['卡片', '柱状图', '饼图', '列表']);
 
 const parkResourcePanelRef = ref<HTMLElement | null>(null);
-const parkMapPanelRef = ref<HTMLElement | null>(null);
+const parkMap2Ref = ref<HTMLElement | null>(null);
+const parkMap3Ref = ref<HTMLElement | null>(null);
+const parkMap4Ref = ref<HTMLElement | null>(null);
+
 const parkResourceList = ref<any[]>([]);
 const parkResourceIndicators = ref({ avgTurnoverRate: 0, avgUtilizationRate: 0 });
 const parkResourceTrendData = ref({ xAxis: [], series: [] });
@@ -217,20 +217,30 @@ const parkResourceBaseFontScale = ref(1);
 const parkResourceActiveIndices = ref([]);
 const parkResourceChartRefreshKey = ref(0);
 const activeParkResourceView = ref('柱状图');
-const parkResourceViewBtnList = ref(['卡片', '柱状图', '折线图', '饼图', '列表']);
+const parkResourceViewBtnList = ref(['卡片', '柱状图', '列表', '折线图', '饼图']);
+
+const topMainChartRefreshKey = ref(0);
+const handleTabChange = () => {
+  nextTick(() => {
+    setTimeout(() => {
+      topMainChartRefreshKey.value += 1;
+      terminalDeviceChartRefreshKey.value += 1;
+      sparePartChartRefreshKey.value += 1;
+      parkResourceChartRefreshKey.value += 1;
+    }, 100);
+  });
+};
 
 const changeTerminalDeviceView = (viewName: string) => {
   activeTerminalDeviceView.value = viewName;
   viewName === '卡片' && nextTick(() => initTerminalDeviceNumberAnimations());
   (viewName === '饼图' || viewName === '折线图') && nextTick(() => terminalDeviceChartRefreshKey.value += 1);
 };
-
 const changeSparePartView = (viewName: string) => {
   activeSparePartView.value = viewName;
   viewName === '卡片' && nextTick(() => initSparePartNumberAnimations());
   (viewName === '柱状图' || viewName === '饼图') && nextTick(() => sparePartChartRefreshKey.value += 1);
 };
-
 const changeParkResourceView = (viewName: string) => {
   activeParkResourceView.value = viewName;
   viewName === '卡片' && nextTick(() => initParkResourceNumberAnimations());
@@ -238,28 +248,17 @@ const changeParkResourceView = (viewName: string) => {
 };
 
 const currentFullscreenPanel = ref<HTMLElement | null>(null);
-const panelMap = {
-  terminal: terminalDevicePanelRef,
-  spare: sparePartPanelRef,
-  map2: ref<HTMLElement | null>(null),
-  parkMap: parkMapPanelRef,
-  parkMap4: ref<HTMLElement | null>(null),
-  parkResource: parkResourcePanelRef
-};
+const panelMap = { terminal: terminalDevicePanelRef, spare: sparePartPanelRef, parkMap2: parkMap2Ref, parkMap3: parkMap3Ref, parkMap4: parkMap4Ref, parkResource: parkResourcePanelRef };
 
 const handleFullscreenChange = () => {
   if (!screenFull.isFullscreen && currentFullscreenPanel.value) {
     currentFullscreenPanel.value.style.width = '';
     currentFullscreenPanel.value.style.height = '';
     currentFullscreenPanel.value.style.overflow = 'hidden';
-    if(currentFullscreenPanel.value === terminalDevicePanelRef.value) {
-      terminalDeviceChartRefreshKey.value += 1;
-    } else if(currentFullscreenPanel.value === sparePartPanelRef.value) {
-      sparePartChartRefreshKey.value += 1;
-    } else if(currentFullscreenPanel.value === parkMapPanelRef.value || currentFullscreenPanel.value === panelMap.map2.value || currentFullscreenPanel.value === panelMap.parkMap4.value) {
-      parkResourceChartRefreshKey.value += 1;
-    } else if(currentFullscreenPanel.value === parkResourcePanelRef.value) {
-      parkResourceChartRefreshKey.value += 1;
+    switch (currentFullscreenPanel.value) {
+      case parkResourcePanelRef.value: parkResourceChartRefreshKey.value += 1; break;
+      case sparePartPanelRef.value: sparePartChartRefreshKey.value += 1; break;
+      case terminalDevicePanelRef.value: terminalDeviceChartRefreshKey.value += 1; break;
     }
     screenFull.off('change', handleFullscreenChange);
     currentFullscreenPanel.value = null;
@@ -267,22 +266,14 @@ const handleFullscreenChange = () => {
 };
 
 const togglePanelFullscreen = (panelKey) => {
-  if (!screenFull.isEnabled) {
-    ElMessage.warning('您的浏览器不支持全屏功能');
-    return;
-  }
+  if (!screenFull.isEnabled) { ElMessage.warning('您的浏览器不支持全屏功能'); return; }
   const panelRefObj = panelMap[panelKey];
   const panel = panelRefObj?.value;
-  if (!panel) {
-    ElMessage.error('未找到面板元素');
-    return;
-  }
-  if (currentFullscreenPanel.value) {
-    screenFull.off('change', handleFullscreenChange);
-  }
+  if (!panel) { ElMessage.error('未找到面板元素'); return; }
+  if (currentFullscreenPanel.value) screenFull.off('change', handleFullscreenChange);
   currentFullscreenPanel.value = panel;
   if (screenFull.isFullscreen && document.fullscreenElement === panel) {
-    screenFull.exit().catch(err => ElMessage.error(`退出全屏失败: ${err.message}`));
+    screenFull.exit().catch((error) => ElMessage.error(`退出全屏失败: ${error.message}`));
   } else {
     screenFull.on('change', handleFullscreenChange);
     screenFull.request(panel).catch((error) => {
@@ -301,29 +292,42 @@ const getTerminalDeviceStatusRatioData = async () => { try { terminalDeviceStatu
 
 const getSparePartListData = async () => { try { sparePartList.value = await fetchSparePartList(); } catch { ElMessage.error('备品备件库存数据加载失败'); sparePartList.value = []; } };
 const getSparePartIndicatorData = async () => { try { sparePartIndicators.value = await fetchSparePartIndicators(); nextTick(() => initSparePartNumberAnimations()); } catch { sparePartIndicators.value = { totalPartTypeCount: 0, enoughStockCount: 0, lackStockCount: 0 }; } };
-const getSparePartInOutTrendData = async () => { try { sparePartInOutTrendData.value = await fetchSparePartInOutTrend(); } catch { sparePartInOutTrendData.value = { xAxis: [], series: [{ name: '入库数量(件)', data: [] },{ name: '出库数量(件)', data: [] }] }; } };
+const getSparePartInOutTrendData = async () => { try { sparePartInOutTrendData.value = await fetchSparePartInOutTrend(); } catch { sparePartInOutTrendData.value = { xAxis: [], series: [{ name: '入库数量(件)', data: [] }, { name: '出库数量(件)', data: [] }] }; } };
 const getSparePartTypeRatioData = async () => { try { sparePartTypeRatioData.value = await fetchSparePartTypeRatio(); } catch { sparePartTypeRatioData.value = { legend: [], series: [{ name: '备件类型占比', data: [] }] }; } };
 
 const getParkResourceListData = async () => { try { parkResourceList.value = await fetchParkResourceList(); } catch { ElMessage.error('停车资源效能数据加载失败'); parkResourceList.value = []; } };
 const getParkResourceIndicatorData = async () => { try { parkResourceIndicators.value = await fetchParkResourceIndicators(); nextTick(() => initParkResourceNumberAnimations()); } catch { parkResourceIndicators.value = { avgTurnoverRate: 0, avgUtilizationRate: 0 }; } };
-const getParkResourceTrendData = async () => { try { parkResourceTrendData.value = await fetchParkResourceTrend(); } catch { parkResourceTrendData.value = { xAxis: [], series: [{ name: '泊位周转率(次/日)', data: [] },{ name: '资源利用率(%)', data: [] }] }; } };
+const getParkResourceTrendData = async () => { try { parkResourceTrendData.value = await fetchParkResourceTrend(); } catch { parkResourceTrendData.value = { xAxis: [], series: [{ name: '泊位周转率(次/日)', data: [] }, { name: '资源利用率(%)', data: [] }] }; } };
 const getParkResourceAreaRatioData = async () => { try { parkResourceAreaRatioData.value = await fetchParkResourceAreaRatio(); } catch { parkResourceAreaRatioData.value = { legend: [], series: [{ name: '区域资源效能占比', data: [] }] }; } };
 const getParkResourceAreaCompareData = async () => { try { parkResourceAreaCompareData.value = await fetchParkResourceAreaCompare(); } catch { parkResourceAreaCompareData.value = { xAxis: [], series: [{ name: '区域平均利用率(%)', data: [] }] }; } };
 const getParkResourceTypeCompareData = async () => { try { parkResourceTypeCompareData.value = await fetchParkResourceTypeCompare(); } catch { parkResourceTypeCompareData.value = { xAxis: [], series: [{ name: '类型平均利用率(%)', data: [] }] }; } };
 
-const getDeviceStatusTagType = (val: string) => { switch(val) { case 'online': return 'success'; case 'fault': return 'danger'; case 'offline': return 'warning'; case 'abnormal': return 'info'; default: return ''; } };
-const getDeviceStatusName = (val: string) => { switch(val) { case 'online': return '在线运行'; case 'fault': return '故障告警'; case 'offline': return '设备离线'; case 'abnormal': return '通讯异常'; default: return '未知状态'; } };
-const getDeviceTypeName = (val: string) => { switch(val) { case 'charging': return '充电桩'; case 'barrier': return '道闸设备'; case 'camera': return '监控摄像头'; case 'sensor': return '地磁传感器'; case 'screen': return '车位引导屏'; default: return '未知类型'; } };
-const formatDeviceTimeStamp = (timeStamp: any) => { if(!timeStamp) return '-'; const d = new Date(Number(timeStamp)); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
+const getDeviceStatusTagType = (val: string) => { switch (val) { case 'abnormal': return 'info'; case 'fault': return 'danger'; case 'offline': return 'warning'; case 'online': return 'success'; default: return ''; } };
+const getDeviceStatusName = (val: string) => { switch (val) { case 'abnormal': return '通讯异常'; case 'fault': return '故障告警'; case 'offline': return '设备离线'; case 'online': return '在线运行'; default: return '未知状态'; } };
+const getDeviceTypeName = (val: string) => { switch (val) { case 'barrier': return '道闸设备'; case 'camera': return '监控摄像头'; case 'charging': return '充电桩'; case 'screen': return '车位引导屏'; case 'sensor': return '地磁传感器'; default: return '未知类型'; } };
+const formatDeviceTimeStamp = (timeStamp: any) => {
+  if (!timeStamp) return '-';
+  const d = new Date(Number(timeStamp));
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+};
 const formatMonitorData = (data: any) => data ? `电压:${data.voltage}V | 信号:${data.signalStrength}dBm` : '-';
 
-const getSparePartStockStatusTag = (current: number, min: number) => { if(current >= min) return 'success'; if(current >0) return 'warning'; return 'danger'; };
-const getSparePartStockStatusName = (current: number, min: number) => { if(current >= min) return '库存充足'; if(current >0) return '库存预警'; return '库存缺货'; };
+const getSparePartStockStatusTag = (current: number, min: number) => { if (current >= min) return 'success'; if (current > 0) return 'warning'; return 'danger'; };
+const getSparePartStockStatusName = (current: number, min: number) => { if (current >= min) return '库存充足'; if (current > 0) return '库存预警'; return '库存缺货'; };
 const formatSparePartTimeStamp = (timeStamp: any) => formatDeviceTimeStamp(timeStamp);
 
-const getAreaName = (val: string) => { switch(val) { case 'main': return '主城区'; case 'highTech': return '高新区'; case 'economic': return '经开区'; case 'culture': return '文旅区'; case 'suburb': return '周边区县'; default: return '未知区域'; } };
-const getParkTypeTag = (val: string) => { switch(val) { case 'public': return { name: '公共车场', type: 'primary' }; case 'business': return { name: '商业车场', type: 'success' }; case 'park': return { name: '园区车场', type: 'warning' }; case 'tourism': return { name: '文旅车场', type: 'info' }; case 'community': return { name: '小区车场', type: 'danger' }; default: return { name: '未知类型', type: '' }; } };
-const formatPercent = (val: number) => val ? `${val.toFixed(1)}%` : '0.0%';
+const getAreaName = (val: string) => { switch (val) { case 'culture': return '文旅区'; case 'economic': return '经开区'; case 'highTech': return '高新区'; case 'main': return '主城区'; case 'suburb': return '周边区县'; default: return '未知区域'; } };
+const getParkTypeTag = (val: string) => {
+  switch (val) {
+    case 'business': return { name: '商业车场', type: 'success' };
+    case 'community': return { name: '小区车场', type: 'danger' };
+    case 'park': return { name: '园区车场', type: 'warning' };
+    case 'public': return { name: '公共车场', type: 'primary' };
+    case 'tourism': return { name: '文旅车场', type: 'info' };
+    default: return { name: '未知类型', type: '' };
+  }
+};
+const formatPercent = (val: number) => (val ? `${val.toFixed(1)}%` : '0.0%');
 const formatTurnover = (val: number) => val ? `${val.toFixed(1)}次/日` : '0.0次/日';
 const formatParkTimeStamp = (timeStamp: any) => formatDeviceTimeStamp(timeStamp);
 
@@ -340,30 +344,29 @@ const animateValue = (element: any, start: number, end: number, duration: number
   window.requestAnimationFrame(step);
 };
 
-const initTerminalDeviceNumberAnimations = () => { document.querySelectorAll('.terminal-device-number-animate').forEach(el => animateValue(el,0,Number.parseFloat(el.dataset.value),1500)); };
-const initSparePartNumberAnimations = () => { document.querySelectorAll('.spare-part-number-animate').forEach(el => animateValue(el,0,Number.parseFloat(el.dataset.value),1500)); };
-const initParkResourceNumberAnimations = () => { document.querySelectorAll('.park-resource-number-animate').forEach(el => animateValue(el,0,Number.parseFloat(el.dataset.value),1500)); };
+const initTerminalDeviceNumberAnimations = () => { document.querySelectorAll('.terminal-device-number-animate').forEach((el) => animateValue(el, 0, Number.parseFloat(el.dataset.value || 0), 1500)); };
+const initSparePartNumberAnimations = () => { document.querySelectorAll('.spare-part-number-animate').forEach((el) => animateValue(el, 0, Number.parseFloat(el.dataset.value || 0), 1500)); };
+const initParkResourceNumberAnimations = () => { document.querySelectorAll('.park-resource-number-animate').forEach((el) => animateValue(el, 0, Number.parseFloat(el.dataset.value || 0), 1500)); };
 
-// ========== 核心修改3: 生命周期里调用新的地图初始化方法 ==========
 onMounted(async () => {
-  await initAllMapData(); // 替换原 initMapData()
+  await initAllMapData();
   resetOrbitConfigForm();
   await Promise.all([
-    getTerminalDeviceListData(),getTerminalDeviceIndicatorData(),getTerminalDeviceOnlineRateTrendData(),getTerminalDeviceTypeRatioData(),getTerminalDeviceStatusRatioData(),
-    getSparePartListData(),getSparePartIndicatorData(),getSparePartInOutTrendData(),getSparePartTypeRatioData(),
-    getParkResourceListData(),getParkResourceIndicatorData(),getParkResourceTrendData(),getParkResourceAreaRatioData(),getParkResourceAreaCompareData(),getParkResourceTypeCompareData()
+    getTerminalDeviceListData(), getTerminalDeviceIndicatorData(), getTerminalDeviceOnlineRateTrendData(), getTerminalDeviceTypeRatioData(), getTerminalDeviceStatusRatioData(),
+    getSparePartListData(), getSparePartIndicatorData(), getSparePartInOutTrendData(), getSparePartTypeRatioData(),
+    getParkResourceListData(), getParkResourceIndicatorData(), getParkResourceTrendData(), getParkResourceAreaRatioData(), getParkResourceAreaCompareData(), getParkResourceTypeCompareData(),
+    getMaintainStaffIndicatorData(), getMaintainDeptCompareData(), getParkPanoramaIndicatorData(), getParkResourceTypeRatioData(), getParkSpaceTypeRatioData(),
+    getCarTrackIndicatorData(), getCarTrackSingleTrendData()
   ]);
   setTimeout(() => {
-    terminalDeviceChartRefreshKey.value +=1;
-    sparePartChartRefreshKey.value +=1;
-    parkResourceChartRefreshKey.value +=1;
-  },200);
+    terminalDeviceChartRefreshKey.value += 1;
+    sparePartChartRefreshKey.value += 1;
+    parkResourceChartRefreshKey.value += 1;
+  }, 200);
 });
 
 onUnmounted(() => {
-  mapCommon2Ref.value && mapCommon2Ref.value.stopOrbitAnimation();
-  mapCommon3Ref.value && mapCommon3Ref.value.stopOrbitAnimation();
-  mapCommon4Ref.value && mapCommon4Ref.value.stopOrbitAnimation();
+  [mapCommon2Ref.value, mapCommon3Ref.value, mapCommon4Ref.value, mapCommon3Ref_Top.value, mapCommon4Ref_Top.value].forEach(ref => ref && ref.stopOrbitAnimation());
   screenFull.off('change', handleFullscreenChange);
   currentFullscreenPanel.value = null;
 });
@@ -373,9 +376,180 @@ onUnmounted(() => {
   <div class="page-container" ref="pageContainerRef">
     <div class="mainbox">
       <div class="top">
-        <div class="panel top-left" ref="terminalDevicePanelRef">
-          <el-tabs v-model="topLeftActiveTab" class="custom-tabs top-left-tabs">
-            <el-tab-pane label="终端设备状态" name="tab1">
+        <div class="panel top-middle" ref="parkMap2Ref">
+          <ElTabs v-model="topMiddleActiveTab" class="custom-tabs top-left-tabs" @tab-change="handleTabChange">
+            <ElTabPane label="资源全景监控" name="tab1">
+              <div class="header-actions">
+                <div class="actions-left"><p>资源全景监控</p></div>
+                <div class="actions-right">
+                  <button class="control-btn" @click="handleOrbitAnimation3">
+                    <el-icon color="#409eff" size="16">
+                      <VideoPause v-if="mapCommon3Ref_Top?.orbitStatus?.playing" />
+                      <VideoPlay v-else />
+                    </el-icon>
+                  </button>
+                  <button class="control-btn" @click="orbitConfigDialogVisible = true">
+                    <el-icon color="#409eff" size="16"><Setting /></el-icon>
+                  </button>
+                  <el-icon color="#409eff" size="16"><Filter /></el-icon>
+                  <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('parkMap3')">
+                    <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
+                  </button>
+                </div>
+              </div>
+              <div style="flex: 1; width: 100%; height: calc(100% - 2vh);position: relative;">
+                <div class="force-stats-overlay1">
+                  <div class="force-stats-cards">
+                    <div class="force-stat-card">
+                      <div class="stat-content">
+                        <div class="stat-title">总资源数</div>
+                        <div class="stat-value">{{ parkPanoramaIndicatorData.totalResourceCount || 0 }} 个</div>
+                      </div>
+                    </div>
+                    <div class="force-stat-card">
+                      <div class="stat-content">
+                        <div class="stat-title">可用资源数</div>
+                        <div class="stat-value">{{ parkPanoramaIndicatorData.availableResourceCount || 0 }} 个</div>
+                      </div>
+                    </div>
+                    <div class="force-stat-card">
+                      <div class="stat-content">
+                        <div class="stat-title">正常运营率</div>
+                        <div class="stat-value">{{ parkPanoramaIndicatorData.normalOperateRate || 0 }} %</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <MapCommon3 v-if="!map3Loading && topMiddleActiveTab === 'tab1'" ref="mapCommon3Ref_Top" id-name="parkingMap3_top" :geometries-array="parkResourceGeometries" :orbit-config="orbitConfigData" />
+                <div class="force-stats-overlay2">
+                  <div class="force-stats-cards">
+                    <div class="force-stat-card2 chart-card">
+                      <ChartPie1 :key="topMainChartRefreshKey" :data="parkResourceTypeRatioData" title="资源类型占比" :base-font-scale="parkResourceBaseFontScale" :active-indices="parkResourceActiveIndices" style="width:100%;height:100%"/>
+                    </div>
+                    <div class="force-stat-card2 chart-card">
+                      <ChartPie2 :key="topMainChartRefreshKey" :data="parkSpaceTypeRatioData" title="车位类型占比" :base-font-scale="parkResourceBaseFontScale" :active-indices="parkResourceActiveIndices" style="width:100%;height:100%"/>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ElTabPane>
+            <ElTabPane label="车辆轨迹监控" name="tab2">
+              <div class="header-actions">
+                <div class="actions-left"><p>车辆轨迹监控</p></div>
+                <div class="actions-right">
+                  <button class="control-btn" @click="handleOrbitAnimation4">
+                    <el-icon color="#409eff" size="16">
+                      <VideoPause v-if="mapCommon4Ref_Top?.orbitStatus?.playing" />
+                      <VideoPlay v-else />
+                    </el-icon>
+                  </button>
+                  <button class="control-btn" @click="orbitConfigDialogVisible = true">
+                    <el-icon color="#409eff" size="16"><Setting /></el-icon>
+                  </button>
+                  <el-icon color="#409eff" size="16"><Filter /></el-icon>
+                  <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('parkMap4')">
+                    <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
+                  </button>
+                </div>
+              </div>
+              <div style="flex: 1; width: 100%; height: calc(100% - 2vh);position: relative;">
+                <div class="force-stats-overlay1">
+                  <div class="force-stats-cards">
+                    <div class="force-stat-card">
+                      <div class="stat-content">
+                        <div class="stat-title">当日通行车辆数</div>
+                        <div class="stat-value">{{ carTrackIndicatorData.todayPassCarCount || 0 }} 辆</div>
+                      </div>
+                    </div>
+                    <div class="force-stat-card">
+                      <div class="stat-content">
+                        <div class="stat-title">异常通行车辆数</div>
+                        <div class="stat-value">{{ carTrackIndicatorData.abnormalCarCount || 0 }} 辆</div>
+                      </div>
+                    </div>
+                    <div class="force-stat-card">
+                      <div class="stat-content">
+                        <div class="stat-title">正常通行率</div>
+                        <div class="stat-value">{{ carTrackIndicatorData.todayPassCarCount > 0 ? (((carTrackIndicatorData.todayPassCarCount - carTrackIndicatorData.abnormalCarCount)/carTrackIndicatorData.todayPassCarCount)*100).toFixed(1) : 100 }} %</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <MapCommon4 v-if="!map4Loading && topMiddleActiveTab === 'tab2'" ref="mapCommon4Ref_Top" id-name="parkingMap4_top" :geometries-array="carTrackGeometries" :orbit-config="orbitConfigData" />
+                <div class="force-stats-overlay2">
+                  <div class="force-stats-cards">
+                    <div class="force-stat-card2 chart-card">
+                      <ChartLine2 :key="topMainChartRefreshKey" :data="carTrackSingleTrendData" title="单车辆通行时段趋势" y-axis-name="(辆)" :base-font-scale="parkResourceBaseFontScale" style="width:100%;height:100%"/>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ElTabPane>
+            <ElTabPane label="运维人员动态" name="tab3">
+              <div class="header-actions">
+                <div class="actions-left"><p>运维人员动态</p></div>
+                <div class="actions-right">
+                  <button class="control-btn" @click="handleOrbitAnimation2">
+                    <el-icon color="#409eff" size="16">
+                      <VideoPause v-if="mapCommon2Ref?.orbitStatus?.playing" />
+                      <VideoPlay v-else />
+                    </el-icon>
+                  </button>
+                  <button class="control-btn" @click="orbitConfigDialogVisible = true">
+                    <el-icon color="#409eff" size="16"><Setting /></el-icon>
+                  </button>
+                  <el-icon color="#409eff" size="16"><Filter /></el-icon>
+                  <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('parkMap2')">
+                    <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
+                  </button>
+                </div>
+              </div>
+              <div style="flex: 1; width: 100%; height: calc(100% - 2vh);position: relative;">
+                <div class="force-stats-overlay1">
+                  <div class="force-stats-cards">
+                    <div class="force-stat-card">
+                      <div class="stat-content">
+                        <div class="stat-title">总运维人数</div>
+                        <div class="stat-value">{{ maintainStaffIndicatorData.totalStaffCount || 0 }} 人</div>
+                      </div>
+                    </div>
+                    <div class="force-stat-card">
+                      <div class="stat-content">
+                        <div class="stat-title">在岗人数</div>
+                        <div class="stat-value">{{ maintainStaffIndicatorData.onDutyCount || 0 }} 人</div>
+                      </div>
+                    </div>
+                    <div class="force-stat-card">
+                      <div class="stat-content">
+                        <div class="stat-title">当前任务数</div>
+                        <div class="stat-value">{{ maintainStaffIndicatorData.taskCount || 0 }} 个</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <MapCommon2 v-if="!map2Loading && topMiddleActiveTab === 'tab3'" ref="mapCommon2Ref" id-name="parkingMap2" :geometries-array="maintainStaffGeometries" :orbit-config="orbitConfigData" />
+                <div class="force-stats-overlay2">
+                  <div class="force-stats-cards">
+                    <div class="force-stat-card2 chart-card">
+                      <VerticalBar2 :key="topMainChartRefreshKey" :x-axis="maintainDeptCompareData.xAxis" :series="maintainDeptCompareData.series" unit="人" title="各部门在岗人数对比" :base-font-scale="parkResourceBaseFontScale" :active-indices="parkResourceActiveIndices" style="width:100%;height:100%"/>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ElTabPane>
+            <ElTabPane label="关键岗位人员" name="tab4">
+              <div class="view-content">
+                <div class="content-placeholder">关键岗位人员</div>
+              </div>
+            </ElTabPane>
+          </ElTabs>
+          <div class="panel-footer"></div>
+        </div>
+      </div>
+      <div class="bottom">
+        <div class="panel bottom-left" ref="parkMap3Ref">
+          <ElTabs v-model="topLeftActiveTab" class="custom-tabs top-left-tabs" @tab-change="handleTabChange">
+            <ElTabPane label="终端设备状态" name="tab1">
               <div class="header-actions">
                 <div class="actions-left"></div>
                 <div class="actions-right">
@@ -407,12 +581,13 @@ onUnmounted(() => {
                   </div>
                 </div>
               </div>
-              <div v-if="activeTerminalDeviceView === '饼图'" class="view-content" style="box-sizing: border-box;width: 49%;height: 100%;vertical-align: top;" :key="terminalDeviceChartRefreshKey">
-                <div style="box-sizing: border-box;display: inline-block;width: 49%;height: 100%;vertical-align: top;"><ChartPie1 :data="terminalDeviceTypeRatioData" title="设备类型占比" :base-font-scale="terminalDeviceBaseFontScale" :active-indices="terminalDeviceActiveIndices" style="width:100%;height:100%;"/></div>
-                <div style="box-sizing: border-box;display: inline-block;width: 49%;height:100%;padding-left:0.3vw;vertical-align:top;border-left:0.3vh solid #02a6b5;"><ChartPie2 :data="terminalDeviceStatusRatioData" title="设备运行状态占比" :base-font-scale="terminalDeviceBaseFontScale" :active-indices="terminalDeviceActiveIndices" style="width:100%;height:100%;"/></div>
-              </div>
-              <div v-if="activeTerminalDeviceView === '折线图'" class="view-content" style="box-sizing: border-box;width:100%;height:100%;padding:0.3vw;" :key="terminalDeviceChartRefreshKey">
-                <ChartLine1 :data="terminalDeviceOnlineRateData" title="近24小时设备在线率趋势" y-axis-name="设备在线率(%)" :base-font-scale="terminalDeviceBaseFontScale" style="width:100%;height:100%;"/>
+              <div v-if="activeTerminalDeviceView === '饼图'" class="view-content" style="box-sizing: border-box; width: 100%; height: 100%;" :key="terminalDeviceChartRefreshKey">
+                <div style="box-sizing: border-box; display: inline-block; width: 49%; height: 100%; vertical-align: top">
+                  <ChartPie1 :data="terminalDeviceTypeRatioData" title="设备类型占比" :base-font-scale="terminalDeviceBaseFontScale" :active-indices="terminalDeviceActiveIndices" style="width:100%;height:100%"/>
+                </div>
+                <div style="box-sizing: border-box; display: inline-block; width: 49%; height: 100%; padding-left: 0.3vw; vertical-align: top; border-left: 0.3vh solid #02a6b5">
+                  <ChartPie2 :data="terminalDeviceStatusRatioData" title="设备运行状态占比" :base-font-scale="terminalDeviceBaseFontScale" :active-indices="terminalDeviceActiveIndices" style="width:100%;height:100%"/>
+                </div>
               </div>
               <div v-if="activeTerminalDeviceView === '列表'" class="view-content">
                 <div class="gov-enterprise-table-box">
@@ -430,46 +605,79 @@ onUnmounted(() => {
                   </ElTable>
                 </div>
               </div>
-            </el-tab-pane>
-            <el-tab-pane label="充电桩状态视图" name="tab2"><div class="view-content"><div class="content-placeholder">充电桩状态视图</div></div></el-tab-pane>
-          </el-tabs>
+              <div v-if="activeTerminalDeviceView === '折线图'" class="view-content" style="box-sizing: border-box; width: 100%; height: 100%; padding: 0.3vw" :key="terminalDeviceChartRefreshKey">
+                <ChartLine1 :data="terminalDeviceOnlineRateData" title="近24小时设备在线率趋势" y-axis-name="设备在线率(%)" :base-font-scale="terminalDeviceBaseFontScale" style="width:100%;height:100%"/>
+              </div>
+            </ElTabPane>
+            <ElTabPane label="充电桩状态视图" name="tab2">
+              <div class="view-content"><div class="content-placeholder">充电桩状态视图</div></div>
+            </ElTabPane>
+          </ElTabs>
           <div class="panel-footer"></div>
         </div>
-        <div class="panel top-middle" ref="map2">
-          <el-tabs v-model="topMiddleActiveTab" class="custom-tabs top-left-tabs">
-            <el-tab-pane label="运维人员动态" name="tab1">
+        <div class="panel bottom-middle" ref="parkResourcePanelRef">
+          <ElTabs v-model="bottomMiddleActiveTab" class="custom-tabs top-left-tabs" @tab-change="handleTabChange">
+            <ElTabPane label="停车资源效能" name="tab1">
               <div class="header-actions">
-                <div class="actions-left"><p></p></div>
+                <div class="actions-left"></div>
                 <div class="actions-right">
-                  <button class="control-btn" @click="handleOrbitAnimation2">
-                    <el-icon color="#409eff" size="16">
-                      <VideoPause v-if="mapCommon2Ref?.orbitStatus?.playing" />
-                      <VideoPlay v-else />
-                    </el-icon>
-                  </button>
-                  <button class="control-btn" @click="orbitConfigDialogVisible = true">
-                    <el-icon color="#409eff" size="16"><Setting /></el-icon>
-                  </button>
+                  <div class="view-btn-group">
+                    <ElButton v-for="item in parkResourceViewBtnList" :key="item" :type="activeParkResourceView === item ? 'primary' : ''" plain @click="changeParkResourceView(item)" class="view-btn">{{ item }}</ElButton>
+                  </div>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
-                  <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('map2')">
+                  <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('parkResource')">
                     <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
                   </button>
                 </div>
               </div>
-              <div class="view-content">
-                <div class="content-placeholder">
-                  <!-- ========== 核心修改4: 运维人员地图 → 传运维人员接口数据 ========== -->
-                  <MapCommon2 ref="mapCommon2Ref" id-name="parkingMap2" :geometries-array="maintainStaffGeometries" :orbit-config="orbitConfigData" />
+              <div v-if="activeParkResourceView === '卡片'" class="view-content">
+                <div class="indicator-cards">
+                  <div class="indicator-card normal total-card" style="cursor: default">
+                    <div class="indicator-title">平均泊位周转率</div>
+                    <div class="indicator-value"><span :data-value="parkResourceIndicators.avgTurnoverRate" class="park-resource-number-animate">{{ parkResourceIndicators.avgTurnoverRate }}</span></div>
+                    <div class="indicator-unit">次/日</div>
+                  </div>
+                  <div class="indicator-card normal rate-card" style="cursor: default">
+                    <div class="indicator-title">平均资源利用率</div>
+                    <div class="indicator-value"><span :data-value="parkResourceIndicators.avgUtilizationRate" class="park-resource-number-animate">{{ parkResourceIndicators.avgUtilizationRate }}</span></div>
+                    <div class="indicator-unit">%</div>
+                  </div>
                 </div>
               </div>
-            </el-tab-pane>
-            <el-tab-pane label="关键岗位人员" name="tab2"><div class="view-content"><div class="content-placeholder">关键岗位人员</div></div></el-tab-pane>
-          </el-tabs>
+              <div v-if="activeParkResourceView === '柱状图'" class="view-content" style="box-sizing: border-box; display: flex; flex-direction: column; width: 100%; height: 100%; padding: 0.3vw 0.2vw" :key="parkResourceChartRefreshKey">
+                <div style="box-sizing: border-box; width: 100%; height: calc(50% - 4px)"><VerticalBar3 :x-axis="parkResourceAreaCompareData.xAxis" :series="parkResourceAreaCompareData.series" unit="%" title="区域资源利用率对比" :base-font-scale="parkResourceBaseFontScale" :active-indices="parkResourceActiveIndices" style="width:100%;height:100%"/></div>
+                <div style="box-sizing: border-box; width: 100%; height: calc(50% - 4px); marginTop: 8px"><VerticalBar3 :x-axis="parkResourceTypeCompareData.xAxis" :series="parkResourceTypeCompareData.series" unit="%" title="车场类型利用率对比" :base-font-scale="parkResourceBaseFontScale" :active-indices="parkResourceActiveIndices" style="width:100%;height:100%"/></div>
+              </div>
+              <div v-if="activeParkResourceView === '列表'" class="view-content">
+                <div class="gov-enterprise-table-box">
+                  <ElTable class="gov-enterprise-coop-table" :data="parkResourceList" border size="small" width="100%" height="100%" table-layout="fixed" highlight-current-row>
+                    <ElTableColumn prop="lotId" label="车场ID" align="center" />
+                    <ElTableColumn prop="lotName" label="车场名称" align="center" min-width="140px" />
+                    <ElTableColumn prop="parkingSpaceTurnoverRate" label="泊位周转率" align="center" min-width="120px"><template #default="scope">{{ formatTurnover(scope.row.parkingSpaceTurnoverRate) }}</template></ElTableColumn>
+                    <ElTableColumn prop="resourceUtilizationRate" label="资源利用率" align="center" min-width="120px"><template #default="scope">{{ formatPercent(scope.row.resourceUtilizationRate) }}</template></ElTableColumn>
+                    <ElTableColumn prop="peakTimePeriodUtilizationRate" label="高峰时段使用率" align="center" min-width="140px"><template #default="scope">{{ formatPercent(scope.row.peakTimePeriodUtilizationRate) }}</template></ElTableColumn>
+                    <ElTableColumn prop="areaCode" label="所属区域" align="center" min-width="100%"><template #default="scope">{{ getAreaName(scope.row.areaCode) }}</template></ElTableColumn>
+                    <ElTableColumn prop="parkType" label="车场类型" align="center" min-width="120px"><template #default="scope"><ElTag :type="getParkTypeTag(scope.row.parkType).type">{{ getParkTypeTag(scope.row.parkType).name }}</ElTag></template></ElTableColumn>
+                    <ElTableColumn prop="statTime" label="统计时间" align="center" min-width="120px"><template #default="scope">{{ formatParkTimeStamp(scope.row.statTime) }}</template></ElTableColumn>
+                  </ElTable>
+                </div>
+              </div>
+              <div v-if="activeParkResourceView === '折线图'" class="view-content" style="box-sizing: border-box; width:100%;height:100%;padding:0.3vw" :key="parkResourceChartRefreshKey">
+                <ChartLine1 :data="parkResourceTrendData" title="近周期资源效能趋势" y-axis-name="数值" :base-font-scale="parkResourceBaseFontScale" style="width:100%;height:100%"/>
+              </div>
+              <div v-if="activeParkResourceView === '饼图'" class="view-content" style="box-sizing: border-box; width:100%;height:100%;padding:0.3vw" :key="parkResourceChartRefreshKey">
+                <ChartPie1 :data="parkResourceAreaRatioData" title="各区域资源效能占比" :base-font-scale="parkResourceBaseFontScale" :active-indices="parkResourceActiveIndices" style="width:100%;height:100%"/>
+              </div>
+            </ElTabPane>
+            <ElTabPane label="设备资源效能" name="tab2">
+              <div class="view-content"><div class="content-placeholder">设备资源效能</div></div>
+            </ElTabPane>
+          </ElTabs>
           <div class="panel-footer"></div>
         </div>
-        <div class="panel top-right" ref="sparePartPanelRef">
-          <el-tabs v-model="topRightActiveTab" class="custom-tabs top-left-tabs">
-            <el-tab-pane label="备品备件仓储" name="tab1">
+        <div class="panel bottom-right" ref="parkMap4Ref">
+          <ElTabs v-model="topRightActiveTab" class="custom-tabs top-left-tabs" @tab-change="handleTabChange">
+            <ElTabPane label="备品备件仓储" name="tab1">
               <div class="header-actions">
                 <div class="actions-left"></div>
                 <div class="actions-right">
@@ -501,11 +709,11 @@ onUnmounted(() => {
                   </div>
                 </div>
               </div>
-              <div v-if="activeSparePartView === '柱状图'" class="view-content" style="box-sizing: border-box;width:100%;height:100%;padding:0.3vw;" :key="sparePartChartRefreshKey">
-                <VerticalBar3 :x-axis="sparePartInOutTrendData.xAxis" :series="sparePartInOutTrendData.series" unit="件" title="近30日备件出入库数量趋势" :base-font-scale="sparePartBaseFontScale" :active-indices="sparePartActiveIndices" style="width:100%;height:100%;"/>
+              <div v-if="activeSparePartView === '柱状图'" class="view-content" style="box-sizing: border-box; width:100%;height:100%;padding:0.3vw" :key="sparePartChartRefreshKey">
+                <VerticalBar3 :x-axis="sparePartInOutTrendData.xAxis" :series="sparePartInOutTrendData.series" unit="件" title="近30日备件出入库数量趋势" :base-font-scale="sparePartBaseFontScale" :active-indices="sparePartActiveIndices" style="width:100%;height:100%"/>
               </div>
-              <div v-if="activeSparePartView === '饼图'" class="view-content" style="box-sizing: border-box;width:100%;height:100%;padding:0.3vw;" :key="sparePartChartRefreshKey">
-                <ChartPie1 :data="sparePartTypeRatioData" title="备件类型占比" :base-font-scale="sparePartBaseFontScale" :active-indices="sparePartActiveIndices" style="width:100%;height:100%;"/>
+              <div v-if="activeSparePartView === '饼图'" class="view-content" style="box-sizing: border-box; width:100%;height:100%;padding:0.3vw" :key="sparePartChartRefreshKey">
+                <ChartPie1 :data="sparePartTypeRatioData" title="备件类型占比" :base-font-scale="sparePartBaseFontScale" :active-indices="sparePartActiveIndices" style="width:100%;height:100%"/>
               </div>
               <div v-if="activeSparePartView === '列表'" class="view-content">
                 <div class="gov-enterprise-table-box">
@@ -526,138 +734,30 @@ onUnmounted(() => {
                   </ElTable>
                 </div>
               </div>
-            </el-tab-pane>
-            <el-tab-pane label="物资调配跟踪" name="tab2"><div class="view-content"><div class="content-placeholder">物资调配跟踪</div></div></el-tab-pane>
-          </el-tabs>
-          <div class="panel-footer"></div>
-        </div>
-      </div>
-      <div class="bottom">
-        <div class="panel bottom-left" ref="parkMapPanelRef">
-          <div class="header-actions">
-            <div class="actions-left"><p>资源全景监控</p></div>
-            <div class="actions-right">
-              <button class="control-btn" @click="handleOrbitAnimation3">
-                <el-icon color="#409eff" size="16">
-                  <VideoPause v-if="mapCommon3Ref?.orbitStatus?.playing" />
-                  <VideoPlay v-else />
-                </el-icon>
-              </button>
-              <button class="control-btn" @click="orbitConfigDialogVisible = true">
-                <el-icon color="#409eff" size="16"><Setting /></el-icon>
-              </button>
-              <el-icon color="#409eff" size="16"><Filter /></el-icon>
-              <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('parkMap')">
-                <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
-              </button>
-            </div>
-          </div>
-          <div style="flex: 1; width: 100%; height: calc(100% - 2vh)">
-            <!-- ========== 核心修改5: 资源全景地图 → 传资源全景接口数据 ========== -->
-            <MapCommon3 ref="mapCommon3Ref" id-name="parkingMap3" :geometries-array="parkResourceGeometries" :orbit-config="orbitConfigData" />
-          </div>
-          <div class="panel-footer"></div>
-        </div>
-        <div class="panel bottom-middle" ref="parkResourcePanelRef">
-          <el-tabs v-model="bottomMiddleActiveTab" class="custom-tabs top-left-tabs">
-            <el-tab-pane label="停车资源效能" name="tab1">
-              <div class="header-actions">
-                <div class="actions-left"></div>
-                <div class="actions-right">
-                  <div class="view-btn-group">
-                    <ElButton v-for="item in parkResourceViewBtnList" :key="item" :type="activeParkResourceView === item ? 'primary' : ''" plain @click="changeParkResourceView(item)" class="view-btn">{{ item }}</ElButton>
-                  </div>
-                  <el-icon color="#409eff" size="16"><Filter /></el-icon>
-                  <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('parkResource')">
-                    <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
-                  </button>
-                </div>
-              </div>
-              <div v-if="activeParkResourceView === '卡片'" class="view-content">
-                <div class="indicator-cards">
-                  <div class="indicator-card normal total-card" style="cursor: default">
-                    <div class="indicator-title">平均泊位周转率</div>
-                    <div class="indicator-value"><span :data-value="parkResourceIndicators.avgTurnoverRate" class="park-resource-number-animate">{{ parkResourceIndicators.avgTurnoverRate }}</span></div>
-                    <div class="indicator-unit">次/日</div>
-                  </div>
-                  <div class="indicator-card normal rate-card" style="cursor: default">
-                    <div class="indicator-title">平均资源利用率</div>
-                    <div class="indicator-value"><span :data-value="parkResourceIndicators.avgUtilizationRate" class="park-resource-number-animate">{{ parkResourceIndicators.avgUtilizationRate }}</span></div>
-                    <div class="indicator-unit">%</div>
-                  </div>
-                </div>
-              </div>
-              <div v-if="activeParkResourceView === '柱状图'" class="view-content" style="box-sizing: border-box;width: 100%;height: 100%;padding: 0.3vw 0.2vw 0.3vw 0.2vw;display:flex !important; flex-direction:column !important; align-items:flex-start !important; justify-content:flex-start !important;" :key="parkResourceChartRefreshKey">
-                <div style="box-sizing: border-box; width: 100%; height: calc(50% - 4px);"><VerticalBar3 :x-axis="parkResourceAreaCompareData.xAxis" :series="parkResourceAreaCompareData.series" unit="%" title="区域资源利用率对比" :base-font-scale="parkResourceBaseFontScale" :active-indices="parkResourceActiveIndices" style="width:100%;height:100%;"/></div>
-                <div style="box-sizing: border-box; width: 100%; height: calc(50% - 4px); margin-top: 8px;"><VerticalBar3 :x-axis="parkResourceTypeCompareData.xAxis" :series="parkResourceTypeCompareData.series" unit="%" title="车场类型利用率对比" :base-font-scale="parkResourceBaseFontScale" :active-indices="parkResourceActiveIndices" style="width:100%;height:100%;"/></div>
-              </div>
-              <div v-if="activeParkResourceView === '折线图'" class="view-content" style="box-sizing: border-box;width:100%;height:100%;padding:0.3vw;" :key="parkResourceChartRefreshKey">
-                <ChartLine1 :data="parkResourceTrendData" title="近周期资源效能趋势" y-axis-name="数值" :base-font-scale="parkResourceBaseFontScale" style="width:100%;height:100%;"/>
-              </div>
-              <div v-if="activeParkResourceView === '饼图'" class="view-content" style="box-sizing: border-box;width:100%;height:100%;padding:0.3vw;" :key="parkResourceChartRefreshKey">
-                <ChartPie1 :data="parkResourceAreaRatioData" title="各区域资源效能占比" :base-font-scale="parkResourceBaseFontScale" :active-indices="parkResourceActiveIndices" style="width:100%;height:100%;"/>
-              </div>
-              <div v-if="activeParkResourceView === '列表'" class="view-content">
-                <div class="gov-enterprise-table-box">
-                  <ElTable class="gov-enterprise-coop-table" :data="parkResourceList" border size="small" width="100%" height="100%" table-layout="fixed" highlight-current-row>
-                    <ElTableColumn prop="lotId" label="车场ID" align="center" />
-                    <ElTableColumn prop="lotName" label="车场名称" align="center" min-width="140px" />
-                    <ElTableColumn prop="parkingSpaceTurnoverRate" label="泊位周转率" align="center" min-width="120px"><template #default="scope">{{ formatTurnover(scope.row.parkingSpaceTurnoverRate) }}</template></ElTableColumn>
-                    <ElTableColumn prop="resourceUtilizationRate" label="资源利用率" align="center" min-width="120px"><template #default="scope">{{ formatPercent(scope.row.resourceUtilizationRate) }}</template></ElTableColumn>
-                    <ElTableColumn prop="peakTimePeriodUtilizationRate" label="高峰时段使用率" align="center" min-width="140px"><template #default="scope">{{ formatPercent(scope.row.peakTimePeriodUtilizationRate) }}</template></ElTableColumn>
-                    <ElTableColumn prop="areaCode" label="所属区域" align="center" min-width="100px"><template #default="scope">{{ getAreaName(scope.row.areaCode) }}</template></ElTableColumn>
-                    <ElTableColumn prop="parkType" label="车场类型" align="center" min-width="120px"><template #default="scope"><ElTag :type="getParkTypeTag(scope.row.parkType).type">{{ getParkTypeTag(scope.row.parkType).name }}</ElTag></template></ElTableColumn>
-                    <ElTableColumn prop="statTime" label="统计时间" align="center" min-width="120px"><template #default="scope">{{ formatParkTimeStamp(scope.row.statTime) }}</template></ElTableColumn>
-                  </ElTable>
-                </div>
-              </div>
-            </el-tab-pane>
-            <el-tab-pane label="设备资源效能" name="tab2"><div class="view-content"><div class="content-placeholder">设备资源效能</div></div></el-tab-pane>
-          </el-tabs>
-          <div class="panel-footer"></div>
-        </div>
-        <div class="panel bottom-right" ref="parkMap4">
-          <div class="header-actions">
-            <div class="actions-left"><p>车辆轨迹监控</p></div>
-            <div class="actions-right">
-              <button class="control-btn" @click="handleOrbitAnimation4">
-                <el-icon color="#409eff" size="16">
-                  <VideoPause v-if="mapCommon4Ref?.orbitStatus?.playing" />
-                  <VideoPlay v-else />
-                </el-icon>
-              </button>
-              <button class="control-btn" @click="orbitConfigDialogVisible = true">
-                <el-icon color="#409eff" size="16"><Setting /></el-icon>
-              </button>
-              <el-icon color="#409eff" size="16"><Filter /></el-icon>
-              <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('parkMap4')">
-                <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
-              </button>
-            </div>
-          </div>
-          <div style="flex: 1; width: 100%; height: calc(100% - 2vh)">
-            <!-- ========== 核心修改6: 车辆轨迹地图 → 传车辆轨迹接口数据 ========== -->
-            <MapCommon4 ref="mapCommon4Ref" id-name="parkingMap4" :geometries-array="carTrackGeometries" :orbit-config="orbitConfigData" />
-          </div>
+            </ElTabPane>
+            <ElTabPane label="物资调配跟踪" name="tab2">
+              <div class="view-content"><div class="content-placeholder">物资调配跟踪</div></div>
+            </ElTabPane>
+          </ElTabs>
           <div class="panel-footer"></div>
         </div>
       </div>
     </div>
-    <el-dialog v-model="orbitConfigDialogVisible" title="地图环绕配置" width="40%" @close="resetOrbitConfigForm">
-      <el-form :model="orbitConfigForm" label-width="150px" :rules="orbitConfigRules" ref="orbitConfigFormRef">
-        <el-form-item label="旋转中心点纬度" prop="centerLat"><el-input v-model.number="orbitConfigForm.centerLat" step="0.01" precision="6" /></el-form-item>
-        <el-form-item label="旋转中心点经度" prop="centerLng"><el-input v-model.number="orbitConfigForm.centerLng" step="0.01" precision="6" /></el-form-item>
-        <el-form-item label="旋转速度(度/帧)" prop="rotateSpeed"><el-input v-model.number="orbitConfigForm.rotateSpeed" min="0.01" max="1" step="0.01" /></el-form-item>
-        <el-form-item label="地图俯仰角" prop="pitch"><el-input v-model.number="orbitConfigForm.pitch" min="0" max="80" step="1" /></el-form-item>
-        <el-form-item label="地图缩放级别" prop="zoom"><el-input v-model.number="orbitConfigForm.zoom" min="1" max="20" step="1" /></el-form-item>
-        <el-form-item label="是否循环旋转" prop="loop"><el-switch v-model="orbitConfigForm.loop" active-text="是" inactive-text="否" /></el-form-item>
-        <el-form-item><el-button type="text" @click="resetToDefaultConfig">恢复默认配置</el-button></el-form-item>
-      </el-form>
+    <ElDialog v-model="orbitConfigDialogVisible" title="地图环绕配置" width="40%" @close="resetOrbitConfigForm">
+      <ElForm :model="orbitConfigForm" label-width="150px" :rules="orbitConfigRules" ref="orbitConfigFormRef">
+        <ElFormItem label="旋转中心点纬度" prop="centerLat"><ElInput v-model.number="orbitConfigForm.centerLat" step="0.01" precision="6"/></ElFormItem>
+        <ElFormItem label="旋转中心点经度" prop="centerLng"><ElInput v-model.number="orbitConfigForm.centerLng" step="0.01" precision="6"/></ElFormItem>
+        <ElFormItem label="旋转速度(度/帧)" prop="rotateSpeed"><ElInput v-model.number="orbitConfigForm.rotateSpeed" min="0.01" max="1" step="0.01"/></ElFormItem>
+        <ElFormItem label="地图俯仰角" prop="pitch"><ElInput v-model.number="orbitConfigForm.pitch" min="0" max="80" step="1"/></ElFormItem>
+        <ElFormItem label="地图缩放级别" prop="zoom"><ElInput v-model.number="orbitConfigForm.zoom" min="1" max="20" step="1"/></ElFormItem>
+        <ElFormItem label="是否循环旋转" prop="loop"><ElSwitch v-model="orbitConfigForm.loop" active-text="是" inactive-text="否"/></ElFormItem>
+        <ElFormItem><ElButton type="text" @click="resetToDefaultConfig">恢复默认配置</ElButton></ElFormItem>
+      </ElForm>
       <template #footer>
-        <el-button @click="orbitConfigDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitOrbitConfig">确认配置</el-button>
+        <ElButton @click="orbitConfigDialogVisible = false">取消</ElButton>
+        <ElButton type="primary" @click="submitOrbitConfig">确认配置</ElButton>
       </template>
-    </el-dialog>
+    </ElDialog>
   </div>
 </template>
 
@@ -684,7 +784,7 @@ onUnmounted(() => {
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  padding: 0.5vw;
+  padding: 0.3vw;
   overflow: hidden !important;
   background: url('../../images/line(1).png') rgb(255 255 255 / 4%);
   border: 0.2vh solid rgb(25 186 139 / 17%);
@@ -694,20 +794,27 @@ onUnmounted(() => {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 0.6vw;
+  gap: 0.4vw;
   height: 91vh;
   margin: 0 auto;
   overflow: hidden !important;
 }
 
-.top { display: flex; gap: 0.6vw; height: 50%; overflow: hidden !important; }
-.top-left { flex: 3; }
-.top-middle { flex: 4; }
-.top-right { flex: 3; }
-.bottom { display: flex; gap: 0.6vw; height: 46%; overflow: hidden !important; }
-.bottom-left { flex: 3; }
-.bottom-middle { flex: 2; }
-.bottom-right { flex: 3; }
+.top {
+  display: flex;
+  gap: 0.4vw;
+  height: 60%;
+  overflow: hidden !important;
+}
+.top-middle { flex: 1; }
+
+.bottom {
+  display: flex;
+  gap: 0.4vw;
+  height: 38%;
+  overflow: hidden !important;
+}
+.bottom-left, .bottom-middle, .bottom-right { flex: 1; }
 
 :deep(.top-left-tabs) {
   width: 100%;
@@ -717,17 +824,14 @@ onUnmounted(() => {
   .el-tabs__item { margin: 0 0.1vw !important; font-size: 0.85vw !important; color: #b6e1ad !important; }
   .el-tabs__item.is-active { font-weight: 600; color: #0cf !important; }
   .el-tabs__active-bar { height: 0.15vw !important; background: #0cf !important; }
-  .el-tab-pane { width: 100%; height: 100%; padding: 0 !important; }
+  .el-tab-pane { width: 100%; height: calc(100% - 30px) !important; padding: 0 !important; }
 }
 
 :deep(.panel) {
   .el-tab-pane { display: flex; flex-direction: column; width: 100% !important; height: 100% !important; }
-  .view-content { flex: 1; width: 100% !important; height: 100% !important; min-height: 300px !important; }
+  .view-content { flex: 1; width: 100% !important; height: 100% !important; min-height: 0 !important; }
   .view-content > div { width: 100% !important; height: 100% !important; }
 }
-
-:deep(.top-left .el-tab-pane) { height: 95% !important; padding-bottom: 2vh !important; }
-:deep(.top-left .view-content) { padding: 0.2vw !important; box-sizing: border-box !important; }
 
 .view-content {
   box-sizing: border-box !important;
@@ -741,12 +845,20 @@ onUnmounted(() => {
   overflow: hidden !important;
 }
 
-.content-placeholder { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; font-size: 1vw; color: #00ffd0; }
+.content-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 1vw;
+  color: #00ffd0;
+}
 
 .indicator-cards {
   box-sizing: border-box;
   display: flex;
-  gap: 0.8vw;
+  gap: 0.6vw;
   align-items: center;
   justify-content: center;
   width: 100%;
@@ -755,40 +867,23 @@ onUnmounted(() => {
 
 .indicator-card {
   display: flex;
-  flex: 0 0 7.4vw;
+  flex: 0 0 7vw;
   flex-direction: column;
   justify-content: center;
-  padding: 4vh 0;
+  padding: 5vh 0;
   background: rgb(0 30 60 / 60%);
   border: 0.1vw solid transparent;
   border-radius: 8px;
   transition: all 0.3s;
   &:hover { transform: translateY(-5px); }
-  .indicator-title {
-    margin-top: 0.1vh;
-    font-size: 1vw;
-    font-weight: bold;
-    text-align: center;
-    letter-spacing: 0.1vw;
-  }
-  .indicator-value {
-    margin: 0.5vw 0;
-    font-size: 1.8vw;
-    font-weight: bold;
-    text-align: center;
-    transition: all 0.3s;
-  }
-  .indicator-unit {
-    font-size: 0.7vw;
-    text-align: center;
-    letter-spacing: 0.05vw;
-    opacity: 0.9;
-  }
+  .indicator-title { margin-top: 0.1vh; font-size: 1vw; font-weight: bold; text-align: center; letter-spacing: 0.1vw; }
+  .indicator-value { margin: 0.3vw 0; font-size: 1.6vw; font-weight: bold; text-align: center; transition: all 0.3s; }
+  .indicator-unit { font-size: 0.7vw; text-align: center; letter-spacing: 0.05vw; opacity: 0.9; }
 }
 
-.indicator-card.total-card { border-color: #0cf; box-shadow: 0 5px 15px rgb(0 204 255 / 30%); .indicator-title { color: #66e0ff; } .indicator-value { color: #0cf; } .indicator-unit { color: #66e0ff; } &:hover { box-shadow: 0 5px 20px rgb(0 204 255 / 50%); } }
-.indicator-card.rate-card { border-color: #13ce66; box-shadow: 0 5px 15px rgb(19 206 102 / 30%); .indicator-title { color: #70f59c; } .indicator-value { color: #13ce66; } .indicator-unit { color: #70f59c; } &:hover { box-shadow: 0 5px 20px rgb(19 206 102 / 50%); } }
-.indicator-card.satisfaction-card { border-color: #ffc107; box-shadow: 0 5px 15px rgb(255 193 7 / 30%); .indicator-title { color: #ffe066; } .indicator-value { color: #ffc107; } .indicator-unit { color: #ffe066; } &:hover { box-shadow: 0 5px 20px rgb(255 193 7 / 50%); } }
+.indicator-card.total-card { border-color: #0cf; box-shadow: 0 5px 15px rgb(0 204 255 / 30%); &:hover { box-shadow: 0 5px 20px rgb(0 204 255 / 50%); } }
+.indicator-card.rate-card { border-color: #13ce66; box-shadow: 0 5px 15px rgb(19 206 102 / 30%); &:hover { box-shadow: 0 5px 20px rgb(19 206 102 / 50%); } }
+.indicator-card.satisfaction-card { border-color: #ffc107; box-shadow: 0 5px 15px rgb(255 193 7 / 30%); &:hover { box-shadow: 0 5px 20px rgb(255 193 7 / 50%); } }
 
 .header-actions {
   display: flex;
@@ -798,27 +893,88 @@ onUnmounted(() => {
   padding: 0 0.2vw;
   .actions-left p { margin: 0; font-size: 0.9vw; font-weight: 500; color: #00ffd0; }
   .view-btn-group { display: flex; margin-right: 0.5vw; }
-  :deep(.view-btn) {
-    padding: 0 0.4vw;
-    font-size: 0.6vw;
-    color: #fff;
-    background-color: transparent;
-    border-color: rgb(25 186 139 / 60%);
-    &:hover { color: #00ffd0; border-color: #00ffd0; }
-    &.el-button--primary { color: #afc2ff; background-color: rgb(0 204 255 / 20%); border-color: rgb(25 186 139 / 60%); }
-  }
+  :deep(.view-btn) { padding: 0 0.4vw; font-size: 0.6vw; color: #fff; background-color: transparent; border-color: rgb(25 186 139 / 60%); &:hover { color: #00ffd0; border-color: #00ffd0; } &.el-button--primary { color: #afc2ff; background-color: rgb(0 204 255 / 20%); border-color: rgb(25 186 139 / 60%); } }
   .panel-fullscreen-btn { margin-right: 0.5vw; cursor: pointer; background: transparent; border: none; }
 }
 
-.gov-enterprise-table-box { width: 100%; height: 100%; }
-:deep(.gov-enterprise-coop-table) {
+.gov-enterprise-table-box {
   width: 100%;
   height: 100%;
+  overflow: auto !important;
+}
+:deep(.gov-enterprise-coop-table) {
   --el-table-text-color: #fff;
   --el-table-header-text-color: #00ffd0;
   --el-table-border-color: rgb(25 186 139 / 30%);
   --el-table-row-hover-bg-color: rgb(0 204 255 / 10%);
+  width: 100%;
+  height: 100%;
   font-size: 0.7vw;
-  th,td { border-color: rgb(25 186 139 / 30%) !important; white-space: nowrap; }
+  table-layout: fixed;
+  th, td { white-space: nowrap; border-color: rgb(25 186 139 / 30%) !important; }
 }
+
+.force-stats-overlay1 {
+  position: absolute;
+  top: 2vh;
+  left: 0.5vw;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  width: 120px;
+}
+.force-stats-overlay1 .force-stats-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5vw;
+  width: 100%;
+}
+
+.force-stats-overlay2 {
+  position: absolute;
+  bottom: 3.6vh;
+  right: 0.5vw;
+  z-index: 999;
+  display: flex;
+  flex-direction: row;
+  gap: 0.8vw;
+}
+.force-stats-overlay2 .force-stats-cards {
+  display: flex;
+  gap: 0.8vw;
+  width: 100%;
+}
+
+.force-stat-card {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.5vw;
+  cursor: pointer;
+  background: rgb(0 30 60 / 70%);
+  border: 1px solid rgb(0 204 255 / 30%);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  height: 60px;
+}
+
+.force-stat-card2 {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 0.5vw;
+  cursor: pointer;
+  background: rgb(0 30 60 / 80%);
+  border: 1px solid rgb(0 204 255 / 30%);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  width: 260px;
+  height: 200px;
+}
+
+.chart-card { padding: 0.3vw !important; }
+.stat-content { flex: 1; overflow: hidden; }
+.stat-title { padding-bottom: 0.5vh; font-size: 0.7vw; color: rgb(255 255 255 / 70%); }
+.stat-value { font-size: 0.8vw; color: rgb(0 204 255 / 80%); }
 </style>
