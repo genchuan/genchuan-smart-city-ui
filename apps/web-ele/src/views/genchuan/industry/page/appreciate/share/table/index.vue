@@ -23,9 +23,9 @@ const props = defineProps({
 
 // 定义状态映射关系
 const statusMap = {
-  '0': '禁用',
-  '1': '启用',
-  '2': '暂停',
+  0: '禁用',
+  1: '启用',
+  2: '暂停',
 };
 
 const getTitle = computed(() => {
@@ -386,7 +386,9 @@ const handleFullShow = () => {
           type="button"
           @click="handleSerachShow"
         >
-          <i class="vxe-button--item vxe-button--prefix-icon vxe-icon-search"></i>
+          <i
+            class="vxe-button--item vxe-button--prefix-icon vxe-icon-search"
+          ></i>
         </button>
 
         <button
@@ -395,7 +397,9 @@ const handleFullShow = () => {
           type="button"
           @click="handleFullShow"
         >
-          <i class="vxe-button--item vxe-button--prefix-icon vxe-table-icon-fullscreen"></i>
+          <i
+            class="vxe-button--item vxe-button--prefix-icon vxe-table-icon-fullscreen"
+          ></i>
         </button>
       </template>
 
