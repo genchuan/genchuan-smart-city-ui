@@ -61,11 +61,23 @@ const tableColumns = computed(() => [
 
 // 图表配置
 const chartOptions = computed(() => {
+  // 确保指标数据存在
+  if (!trendData.value || trendData.value.length === 0) {
+    return {
+      title: { text: '暂无数据', left: 'center' },
+      xAxis: { type: 'category', data: [] },
+      yAxis: { type: 'value' },
+      series: []
+    };
+  }
+
   const series = selectedIndicators.value.map((indicator) => {
+    const data = trendData.value.map((item) => item[indicator] || 0);
+
     return {
       name: getIndicatorName(indicator),
       type: chartType.value,
-      data: trendData.value.map((item) => item[indicator]),
+      data: data,
       yAxisIndex: getYAxisIndex(indicator),
       itemStyle: {
         color: getIndicatorColor(indicator),
@@ -73,7 +85,7 @@ const chartOptions = computed(() => {
     };
   });
 
-  const option = {
+  return {
     title: {
       text: '运营趋势分析',
       left: 'center',
@@ -123,8 +135,95 @@ const chartOptions = computed(() => {
     ],
     series,
   };
+});
 
-  return option;
+// 趋势分析数据 - 根据当前指标动态更新
+const processedTrendAnalysis = computed(() => {
+  return selectedIndicators.value.map((indicator) => {
+    // 从API返回的trendAnalysis中查找对应指标
+    const analysis = trendAnalysis.value.find(item => item.indicator === indicator);
+    if (analysis) {
+      return analysis;
+    }
+
+    // 如果没有找到，动态计算
+    if (trendData.value.length > 0) {
+      const firstValue = trendData.value[0][indicator] || 0;
+      const lastValue = trendData.value[trendData.value.length - 1][indicator] || 0;
+      const growthRate = firstValue ? Math.round(((lastValue - firstValue) / firstValue) * 100) : 0;
+
+      let trend = 'stable';
+      let description = '';
+
+      // 根据指标类型生成描述
+      switch (indicator) {
+        case 'enterCount':
+          if (growthRate > 5) {
+            trend = 'up';
+            description = `入场车次稳步增长，累计增长${growthRate}%，表明停车需求持续增加。`;
+          } else if (growthRate < -5) {
+            trend = 'down';
+            description = `入场车次有所下降，需要分析原因并采取措施。`;
+          } else {
+            description = `入场车次保持稳定，运营状况良好。`;
+          }
+          break;
+
+        case 'memberRevenue':
+          if (growthRate > 15) {
+            trend = 'up';
+            description = `会员消费金额大幅增长${growthRate}%，会员体系运营效果显著。`;
+          } else {
+            description = `会员消费金额保持稳定增长。`;
+          }
+          break;
+
+        case 'revenue':
+          if (growthRate > 10) {
+            trend = 'up';
+            description = `收费金额从${formatCurrency(firstValue)}增长至${formatCurrency(lastValue)}，整体呈上升趋势，累计增长${growthRate}%。`;
+          } else if (growthRate < -10) {
+            trend = 'down';
+            description = `收费金额呈下降趋势，需要关注市场变化和运营策略。`;
+          } else {
+            description = `收费金额保持稳定，建议继续优化运营效率。`;
+          }
+          break;
+
+        case 'utilizationRate':
+          if (growthRate > 3) {
+            trend = 'up';
+            description = `泊位利用率提升${growthRate}%，资源利用效率持续优化。`;
+          } else if (growthRate < -3) {
+            trend = 'down';
+            description = `泊位利用率下降，需要调整资源配置。`;
+          } else {
+            description = `泊位利用率保持稳定，处于合理区间。`;
+          }
+          break;
+
+        default:
+          description = `${getIndicatorName(indicator)}保持${growthRate > 0 ? '增长' : '下降'}趋势。`;
+      }
+
+      return {
+        indicator,
+        currentValue: lastValue,
+        growthRate,
+        trend,
+        description,
+      };
+    }
+
+    // 默认返回
+    return {
+      indicator,
+      currentValue: 0,
+      growthRate: 0,
+      trend: 'stable',
+      description: '暂无数据',
+    };
+  });
 });
 
 // 获取Y轴索引
@@ -172,7 +271,7 @@ watch(timeRange, () => {
 // 监听指标变化
 watch(selectedIndicators, () => {
   loadData();
-});
+}, { deep: true });
 
 // 监听自定义日期范围变化
 watch(customDateRange, () => {
@@ -332,14 +431,14 @@ const handleExport = async () => {
     <ReportSection title="趋势分析">
       <div class="analysis-cards">
         <div
-          v-for="analysis in trendAnalysis"
+          v-for="analysis in processedTrendAnalysis"
           :key="analysis.indicator"
           class="analysis-card"
         >
           <div class="analysis-header">
             <span class="analysis-name">{{
-              getIndicatorName(analysis.indicator)
-            }}</span>
+                getIndicatorName(analysis.indicator)
+              }}</span>
             <el-tag :type="getTrendType(analysis.trend)" size="small">
               {{ getTrendText(analysis.trend) }}
             </el-tag>
@@ -347,8 +446,8 @@ const handleExport = async () => {
           <div class="analysis-content">
             <div class="analysis-value">
               <span class="value">{{
-                formatValue(analysis.currentValue, analysis.indicator)
-              }}</span>
+                  formatValue(analysis.currentValue, analysis.indicator)
+                }}</span>
               <span
                 v-if="analysis.growthRate"
                 class="growth-rate"

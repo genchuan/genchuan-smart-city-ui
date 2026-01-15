@@ -234,6 +234,7 @@ export function useGridColumns() {
       title: '诱导屏名称',
       minWidth: 150,
       sortable: true,
+      slots: { default: 'induction_name' },
     },
     {
       field: 'region',

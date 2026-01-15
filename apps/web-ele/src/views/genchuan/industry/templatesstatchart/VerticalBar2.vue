@@ -118,7 +118,7 @@ const initChart = () => {
       axisLabel: {
         color: '#ccc',
         fontSize: axisLabelFontSize,
-        rotate: props.xAxis.length > 4 ? 30 : 0,
+        rotate: props.xAxis.length > 3 ? 30 : 0,
       },
     },
     yAxis: {

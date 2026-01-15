@@ -1,493 +1,380 @@
 // 车流分布API - 包含模拟数据
 import { ElMessage } from 'element-plus';
-/**
- * 模拟车流分布报表数据
- * @param {string} timeRange 时间范围：today/7/30/custom
- * @param {string} region 区域代码：空字符串表示全部
- * @param {string} parkingType 停车场类型：空字符串表示全部
- * @param {string} flowType 车流类型：entry/exit/total
- * @param {string} startDate 开始日期（仅custom时使用）
- * @param {string} endDate 结束日期（仅custom时使用）
- * @returns {Promise} 模拟数据
- */
-export const getFlowDistributionReport = async (params) => {
-  // 模拟API延迟
-  await new Promise((resolve) => setTimeout(resolve, 600));
 
-  const {
-    timeRange = '7',
-    region = '',
-    parkingType = '',
-    flowType = 'total',
-    startDate = '',
-    endDate = '',
-  } = params;
+// 区域映射
+const regionMap = {
+  '': '全部区域',
+  'xiangcheng': '芗城区',
+  'longwen': '龙文区',
+  'longhai': '龙海区',
+  'zhangpu': '漳浦县',
+  'yunxiao': '云霄县'
+};
 
-  // 根据车流类型生成核心指标数据
-  let coreIndicators;
-  if (flowType === 'entry') {
-    coreIndicators = [
+// 停车场类型映射
+const parkingTypeMap = {
+  '': '全部类型',
+  'public': '公共停车场',
+  'roadside': '路侧停车场',
+  'special': '专用停车场'
+};
+
+// 生成模拟的核心指标数据
+function generateCoreIndicators(flowType, region, parkingType) {
+  const hasFilter = region !== '' || parkingType !== '';
+
+  if (hasFilter) {
+    const factor = 0.4 + Math.random() * 0.6;
+    const baseValue = flowType === 'total' ? 30000 : 15000;
+
+    return [
       {
         key: 'totalFlow',
-        name: '总入场车流量',
-        value: 15_800,
+        name: flowType === 'total' ? '总车流量' : flowType === 'entry' ? '入场车流' : '出场车流',
+        value: Math.round(baseValue * factor),
         unit: '车次',
-        comparison: 8.5,
-        abnormal: false,
-      },
-      {
-        key: 'peakFlow',
-        name: '入场高峰车流',
-        value: 2100,
-        unit: '车次',
-        comparison: 12.3,
-        abnormal: true,
-      },
-      {
-        key: 'flowDensity',
-        name: '平均车流密度',
-        value: 156,
-        unit: '车次/停车场',
-        comparison: 5.7,
-        abnormal: false,
-      },
-      {
-        key: 'utilizationRate',
-        name: '平均利用率',
-        value: 78.5,
-        unit: '%',
-        comparison: 3.2,
-        abnormal: false,
-      },
-      {
-        key: 'hotspotCount',
-        name: '热点区域数',
-        value: 8,
-        unit: '个',
-        comparison: 14.3,
-        abnormal: false,
-      },
-    ];
-  } else if (flowType === 'exit') {
-    coreIndicators = [
-      {
-        key: 'totalFlow',
-        name: '总出场车流量',
-        value: 15_200,
-        unit: '车次',
-        comparison: 10.8,
-        abnormal: false,
-      },
-      {
-        key: 'peakFlow',
-        name: '出场高峰车流',
-        value: 2000,
-        unit: '车次',
-        comparison: 12.5,
-        abnormal: true,
-      },
-      {
-        key: 'flowDensity',
-        name: '平均车流密度',
-        value: 152,
-        unit: '车次/停车场',
-        comparison: 4.8,
-        abnormal: false,
-      },
-      {
-        key: 'utilizationRate',
-        name: '平均利用率',
-        value: 76.2,
-        unit: '%',
-        comparison: 2.5,
-        abnormal: false,
-      },
-      {
-        key: 'hotspotCount',
-        name: '热点区域数',
-        value: 7,
-        unit: '个',
-        comparison: 12.1,
-        abnormal: false,
-      },
-    ];
-  } else {
-    // total 总车流
-    coreIndicators = [
-      {
-        key: 'totalFlow',
-        name: '总车流量',
-        value: 31_000,
-        unit: '车次',
-        comparison: 8.5,
-        abnormal: false,
+        comparison: Math.floor(Math.random() * 25) - 5,
+        abnormal: Math.random() > 0.8,
       },
       {
         key: 'peakFlow',
         name: '高峰车流量',
-        value: 4400,
+        value: Math.round(baseValue * factor * 0.18),
         unit: '车次',
-        comparison: 12.3,
-        abnormal: true,
+        comparison: Math.floor(Math.random() * 20) - 4,
+        abnormal: false,
       },
       {
         key: 'flowDensity',
         name: '平均车流密度',
-        value: 156,
-        unit: '车次/停车场',
-        comparison: 5.7,
+        value: Number.parseFloat((Math.random() * 200 + 800).toFixed(1)),
+        unit: '车次/小时',
+        comparison: Math.floor(Math.random() * 15) - 3,
         abnormal: false,
       },
       {
         key: 'utilizationRate',
-        name: '平均利用率',
-        value: 78.5,
+        name: '泊位利用率',
+        value: Number.parseFloat((Math.random() * 20 + 70).toFixed(1)),
         unit: '%',
-        comparison: 3.2,
+        comparison: Math.floor(Math.random() * 10) - 2,
         abnormal: false,
       },
       {
-        key: 'hotspotCount',
-        name: '热点区域数',
-        value: 8,
-        unit: '个',
-        comparison: 14.3,
+        key: 'peakRatio',
+        name: '高峰时段占比',
+        value: Number.parseFloat((Math.random() * 15 + 30).toFixed(1)),
+        unit: '%',
+        comparison: Math.floor(Math.random() * 8) - 2,
         abnormal: false,
       },
     ];
   }
 
-  // 根据车流类型生成区域车流密度数据
-  let heatmapData;
-  if (flowType === 'entry') {
-    heatmapData = {
-      芗城区: 2250,
-      龙文区: 1900,
-      龙海区: 1400,
-      漳浦县: 1050,
-      云霄县: 900,
-      诏安县: 600,
-      平和县: 475,
-      南靖县: 550,
-      华安县: 425,
-      东山县: 360,
-      长泰区: 675,
-    };
-  } else if (flowType === 'exit') {
-    heatmapData = {
-      芗城区: 2200,
-      龙文区: 1850,
-      龙海区: 1350,
-      漳浦县: 1025,
-      云霄县: 875,
-      诏安县: 590,
-      平和县: 465,
-      南靖县: 540,
-      华安县: 415,
-      东山县: 355,
-      长泰区: 665,
-    };
-  } else {
-    heatmapData = {
-      芗城区: 4500,
-      龙文区: 3800,
-      龙海区: 2800,
-      漳浦县: 2100,
-      云霄县: 1800,
-      诏安县: 1200,
-      平和县: 950,
-      南靖县: 1100,
-      华安县: 850,
-      东山县: 720,
-      长泰区: 1350,
-    };
+  const baseValue = flowType === 'total' ? 32000 : 16000;
+
+  return [
+    {
+      key: 'totalFlow',
+      name: flowType === 'total' ? '总车流量' : flowType === 'entry' ? '入场车流' : '出场车流',
+      value: baseValue,
+      unit: '车次',
+      comparison: Math.floor(Math.random() * 20) - 2,
+      abnormal: false,
+    },
+    {
+      key: 'peakFlow',
+      name: '高峰车流量',
+      value: Math.round(baseValue * 0.2),
+      unit: '车次',
+      comparison: Math.floor(Math.random() * 15) - 2,
+      abnormal: false,
+    },
+    {
+      key: 'flowDensity',
+      name: '平均车流密度',
+      value: Number.parseFloat((Math.random() * 100 + 900).toFixed(1)),
+      unit: '车次/小时',
+      comparison: Math.floor(Math.random() * 12) - 2,
+      abnormal: false,
+    },
+    {
+      key: 'utilizationRate',
+      name: '泊位利用率',
+      value: Number.parseFloat((Math.random() * 10 + 75).toFixed(1)),
+      unit: '%',
+      comparison: Math.floor(Math.random() * 8) - 1,
+      abnormal: false,
+    },
+    {
+      key: 'peakRatio',
+      name: '高峰时段占比',
+      value: Number.parseFloat((Math.random() * 10 + 32).toFixed(1)),
+      unit: '%',
+      comparison: Math.floor(Math.random() * 6) - 1,
+      abnormal: false,
+    },
+  ];
+}
+
+// 根据筛选条件生成热力图数据
+function generateHeatmapData(flowType, region, parkingType) {
+  const baseData = {
+    '芗城区': 4500,
+    '龙文区': 3800,
+    '龙海区': 2800,
+    '漳浦县': 2100,
+    '云霄县': 1800,
+    '诏安县': 1500,
+    '东山县': 1200,
+    '南靖县': 900,
+    '平和县': 800,
+    '华安县': 600
+  };
+
+  if (region && region !== '') {
+    const regionName = regionMap[region];
+    // 只返回选中的区域
+    const result = {};
+    result[regionName] = baseData[regionName] || 1000;
+    return result;
   }
 
-  // 根据车流类型生成时段分布数据
-  let timeDistribution;
-  if (flowType === 'entry') {
-    timeDistribution = {
-      total: [120, 80, 150, 300, 900, 850, 600, 450, 300, 250, 200, 150],
-      entry: [120, 80, 150, 300, 900, 850, 600, 450, 300, 250, 200, 150],
-      exit: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    };
-  } else if (flowType === 'exit') {
-    timeDistribution = {
-      total: [90, 60, 120, 250, 780, 850, 920, 600, 480, 520, 380, 220],
-      entry: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      exit: [90, 60, 120, 250, 780, 850, 920, 600, 480, 520, 380, 220],
-    };
-  } else {
-    timeDistribution = {
-      total: [240, 160, 290, 550, 1680, 1670, 1520, 1050, 790, 770, 580, 370],
-      entry: [120, 80, 150, 300, 900, 850, 600, 450, 300, 250, 200, 150],
-      exit: [120, 80, 140, 250, 780, 820, 920, 600, 490, 520, 380, 220],
-    };
+  if (parkingType !== '') {
+    // 根据停车场类型调整数据
+    const factor = parkingType === 'public' ? 1.2 :
+      parkingType === 'roadside' ? 0.8 : 0.6;
+    const adjustedData = {};
+    Object.keys(baseData).forEach(key => {
+      adjustedData[key] = Math.round(baseData[key] * factor);
+    });
+    return adjustedData;
   }
 
-  // 根据车流类型生成类型分布数据
-  let typeDistribution;
+  // 根据车流类型调整数据
+  const factor = flowType === 'entry' ? 0.9 : flowType === 'exit' ? 0.85 : 1;
+  const adjustedData = {};
+  Object.keys(baseData).forEach(key => {
+    adjustedData[key] = Math.round(baseData[key] * factor);
+  });
+  return adjustedData;
+}
+
+// 根据筛选条件生成时段分布数据
+function generateTimeDistribution(flowType, region, parkingType) {
+  const totalBase = [200, 150, 250, 500, 1200, 1100, 800, 600, 400, 350, 280, 200];
+  const entryBase = [100, 70, 140, 300, 850, 820, 580, 430, 290, 240, 190, 140];
+  const exitBase = [90, 60, 120, 250, 780, 850, 920, 600, 480, 520, 380, 220];
+
+  let seriesData;
   if (flowType === 'entry') {
-    typeDistribution = [
-      { value: 7900, name: '公共停车场' },
-      { value: 4250, name: '路侧停车场' },
-      { value: 1820, name: '专用停车场' },
-    ];
+    seriesData = [...entryBase];
   } else if (flowType === 'exit') {
-    typeDistribution = [
-      { value: 7600, name: '公共停车场' },
-      { value: 4100, name: '路侧停车场' },
-      { value: 1760, name: '专用停车场' },
-    ];
+    seriesData = [...exitBase];
   } else {
-    typeDistribution = [
-      { value: 18_600, name: '公共停车场' },
-      { value: 8680, name: '路侧停车场' },
-      { value: 3720, name: '专用停车场' },
-    ];
+    seriesData = [...totalBase];
   }
 
-  // 根据车流类型生成热点区域数据
-  let hotspotData;
-  if (flowType === 'entry') {
-    hotspotData = [
-      {
-        rank: 1,
-        regionName: '芗城区',
-        parkingCount: 42,
-        totalFlow: 2250,
-        entryFlow: 2250,
-        exitFlow: 0,
-        flowDensity: 53.6,
-        peakHour: '08:00-10:00',
-        growthRate: 12.5,
-      },
-      {
-        rank: 2,
-        regionName: '龙文区',
-        parkingCount: 35,
-        totalFlow: 1900,
-        entryFlow: 1900,
-        exitFlow: 0,
-        flowDensity: 54.3,
-        peakHour: '07:00-09:00',
-        growthRate: 8.3,
-      },
-      {
-        rank: 3,
-        regionName: '龙海区',
-        parkingCount: 28,
-        totalFlow: 1400,
-        entryFlow: 1400,
-        exitFlow: 0,
-        flowDensity: 50,
-        peakHour: '17:00-19:00',
-        growthRate: 15.7,
-      },
-      {
-        rank: 4,
-        regionName: '漳浦县',
-        parkingCount: 22,
-        totalFlow: 1050,
-        entryFlow: 1050,
-        exitFlow: 0,
-        flowDensity: 47.7,
-        peakHour: '09:00-11:00',
-        growthRate: 6.2,
-      },
-      {
-        rank: 5,
-        regionName: '云霄县',
-        parkingCount: 18,
-        totalFlow: 900,
-        entryFlow: 900,
-        exitFlow: 0,
-        flowDensity: 50,
-        peakHour: '10:00-12:00',
-        growthRate: 10.4,
-      },
-    ];
-  } else if (flowType === 'exit') {
-    hotspotData = [
-      {
-        rank: 1,
-        regionName: '芗城区',
-        parkingCount: 42,
-        totalFlow: 2200,
-        entryFlow: 0,
-        exitFlow: 2200,
-        flowDensity: 52.4,
-        peakHour: '18:00-20:00',
-        growthRate: 10.8,
-      },
-      {
-        rank: 2,
-        regionName: '龙文区',
-        parkingCount: 35,
-        totalFlow: 1850,
-        entryFlow: 0,
-        exitFlow: 1850,
-        flowDensity: 52.9,
-        peakHour: '17:00-19:00',
-        growthRate: 7.5,
-      },
-      {
-        rank: 3,
-        regionName: '龙海区',
-        parkingCount: 28,
-        totalFlow: 1350,
-        entryFlow: 0,
-        exitFlow: 1350,
-        flowDensity: 48.2,
-        peakHour: '19:00-21:00',
-        growthRate: 12.3,
-      },
-      {
-        rank: 4,
-        regionName: '漳浦县',
-        parkingCount: 22,
-        totalFlow: 1025,
-        entryFlow: 0,
-        exitFlow: 1025,
-        flowDensity: 46.6,
-        peakHour: '20:00-22:00',
-        growthRate: 5.8,
-      },
-      {
-        rank: 5,
-        regionName: '云霄县',
-        parkingCount: 18,
-        totalFlow: 875,
-        entryFlow: 0,
-        exitFlow: 875,
-        flowDensity: 48.6,
-        peakHour: '21:00-23:00',
-        growthRate: 9.2,
-      },
-    ];
-  } else {
-    hotspotData = [
-      {
-        rank: 1,
-        regionName: '芗城区',
-        parkingCount: 42,
-        totalFlow: 4500,
-        entryFlow: 2250,
-        exitFlow: 2250,
-        flowDensity: 107.1,
-        peakHour: '08:00-10:00',
-        growthRate: 12.5,
-      },
-      {
-        rank: 2,
-        regionName: '龙文区',
-        parkingCount: 35,
-        totalFlow: 3800,
-        entryFlow: 1900,
-        exitFlow: 1900,
-        flowDensity: 108.6,
-        peakHour: '07:00-09:00',
-        growthRate: 8.3,
-      },
-      {
-        rank: 3,
-        regionName: '龙海区',
-        parkingCount: 28,
-        totalFlow: 2800,
-        entryFlow: 1400,
-        exitFlow: 1400,
-        flowDensity: 100,
-        peakHour: '17:00-19:00',
-        growthRate: 15.7,
-      },
-      {
-        rank: 4,
-        regionName: '漳浦县',
-        parkingCount: 22,
-        totalFlow: 2100,
-        entryFlow: 1050,
-        exitFlow: 1050,
-        flowDensity: 95.5,
-        peakHour: '09:00-11:00',
-        growthRate: 6.2,
-      },
-      {
-        rank: 5,
-        regionName: '云霄县',
-        parkingCount: 18,
-        totalFlow: 1800,
-        entryFlow: 900,
-        exitFlow: 900,
-        flowDensity: 100,
-        peakHour: '10:00-12:00',
-        growthRate: 10.4,
-      },
-    ];
+  // 根据筛选条件调整数据
+  if (region !== '' || parkingType !== '') {
+    const factor = 0.3 + Math.random() * 0.7;
+    seriesData = seriesData.map(value => Math.round(value * factor));
   }
 
-  // 生成表格数据
+  return {
+    total: totalBase,
+    entry: entryBase,
+    exit: exitBase,
+    [flowType]: seriesData
+  };
+}
+
+// 根据筛选条件生成类型分布数据
+function generateTypeDistribution(parkingType) {
+  const baseData = [
+    { value: 18500, name: '公共停车场' },
+    { value: 9500, name: '路侧停车场' },
+    { value: 4000, name: '专用停车场' },
+  ];
+
+  if (parkingType && parkingType !== '') {
+    const selectedType = parkingTypeMap[parkingType];
+    // 只返回选中的类型
+    return baseData.filter(item => item.name === selectedType);
+  }
+
+  return baseData;
+}
+
+// 根据筛选条件生成热点区域数据
+function generateHotspotData(flowType, region, parkingType) {
+  const baseData = [
+    {
+      rank: 1,
+      regionName: '芗城区',
+      parkingCount: 28,
+      totalFlow: 4500,
+      entryFlow: 2450,
+      exitFlow: 2050,
+      flowDensity: 160,
+      peakHour: '17:00-19:00',
+      growthRate: 12.5
+    },
+    {
+      rank: 2,
+      regionName: '龙文区',
+      parkingCount: 22,
+      totalFlow: 3800,
+      entryFlow: 2000,
+      exitFlow: 1800,
+      flowDensity: 145,
+      peakHour: '17:30-19:30',
+      growthRate: 8.3
+    },
+    {
+      rank: 3,
+      regionName: '龙海区',
+      parkingCount: 18,
+      totalFlow: 2800,
+      entryFlow: 1500,
+      exitFlow: 1300,
+      flowDensity: 125,
+      peakHour: '18:00-20:00',
+      growthRate: 15.7
+    },
+    {
+      rank: 4,
+      regionName: '漳浦县',
+      parkingCount: 15,
+      totalFlow: 2100,
+      entryFlow: 1100,
+      exitFlow: 1000,
+      flowDensity: 105,
+      peakHour: '16:30-18:30',
+      growthRate: 5.2
+    },
+    {
+      rank: 5,
+      regionName: '云霄县',
+      parkingCount: 12,
+      totalFlow: 1800,
+      entryFlow: 950,
+      exitFlow: 850,
+      flowDensity: 95,
+      peakHour: '17:00-19:00',
+      growthRate: 9.8
+    },
+  ];
+
+  let filteredData = [...baseData];
+
+  // 区域筛选
+  if (region && region !== '') {
+    const regionName = regionMap[region];
+    filteredData = filteredData.filter(item => item.regionName === regionName);
+  }
+
+  // 根据车流类型调整数据
+  if (flowType !== 'total') {
+    filteredData = filteredData.map(item => {
+      const flowValue = flowType === 'entry' ? item.entryFlow : item.exitFlow;
+      return {
+        ...item,
+        totalFlow: flowValue,
+        flowDensity: Math.round(item.flowDensity * 0.9)
+      };
+    });
+  }
+
+  // 根据停车场类型调整数据
+  if (parkingType !== '') {
+    const factor = parkingType === 'public' ? 1.1 :
+      parkingType === 'roadside' ? 0.9 : 0.7;
+    filteredData = filteredData.map(item => ({
+      ...item,
+      totalFlow: Math.round(item.totalFlow * factor),
+      entryFlow: Math.round(item.entryFlow * factor),
+      exitFlow: Math.round(item.exitFlow * factor),
+      flowDensity: Math.round(item.flowDensity * factor)
+    }));
+  }
+
+  // 重新排序
+  return filteredData
+    .sort((a, b) => b.totalFlow - a.totalFlow)
+    .map((item, index) => ({ ...item, rank: index + 1 }));
+}
+
+// 生成表格数据
+function generateTableData(params) {
+  const { timeRange, region, parkingType, flowType, startDate, endDate } = params;
   const tableData = [];
-  const days =
-    timeRange === 'today'
-      ? 1
-      : timeRange === '7'
-        ? 7
-        : timeRange === '30'
-          ? 30
-          : 15;
+
+  const days = timeRange === 'today' ? 1 :
+    timeRange === '7' ? 7 :
+      timeRange === '30' ? 30 :
+        timeRange === 'custom' && startDate && endDate ?
+          Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1 : 7;
+
+  const regionName = regionMap[region] || '芗城区';
+  const parkingTypeName = parkingTypeMap[parkingType] || '公共停车场';
+
+  const hasFilter = region !== '' || parkingType !== '';
+  const baseFlow = hasFilter ? 800 : 1500;
 
   for (let i = 0; i < Math.min(days, 30); i++) {
     const date = new Date();
     date.setDate(date.getDate() - i);
     const dateStr = date.toISOString().split('T')[0];
 
-    let entryFlow, exitFlow, totalFlow;
-
-    if (flowType === 'entry') {
-      entryFlow = Math.floor(Math.random() * 2000) + 1000;
-      exitFlow = 0;
-      totalFlow = entryFlow;
-    } else if (flowType === 'exit') {
-      entryFlow = 0;
-      exitFlow = Math.floor(Math.random() * 2000) + 950;
-      totalFlow = exitFlow;
-    } else {
-      entryFlow = Math.floor(Math.random() * 1000) + 500;
-      exitFlow = Math.floor(Math.random() * 1000) + 475;
-      totalFlow = entryFlow + exitFlow;
-    }
-
-    const morningPeak =
-      flowType === 'exit'
-        ? 0
-        : Math.floor(entryFlow * 0.2) + Math.floor(Math.random() * 100);
-    const eveningPeak =
-      flowType === 'entry'
-        ? 0
-        : Math.floor(exitFlow * 0.25) + Math.floor(Math.random() * 100);
-    const peakRatio =
-      totalFlow > 0
-        ? Number.parseFloat(
-            (((morningPeak + eveningPeak) / totalFlow) * 100).toFixed(1),
-          )
-        : 0;
+    const totalFlow = Math.floor(Math.random() * baseFlow) + baseFlow;
+    const entryFlow = Math.floor(totalFlow * 0.55);
+    const exitFlow = Math.floor(totalFlow * 0.45);
+    const morningPeak = Math.floor(totalFlow * 0.18);
+    const eveningPeak = Math.floor(totalFlow * 0.22);
+    const peakRatio = Number.parseFloat(((morningPeak + eveningPeak) / totalFlow * 100).toFixed(1));
+    const utilizationRate = Number.parseFloat((Math.random() * 20 + 70).toFixed(1));
 
     tableData.push({
       date: dateStr,
-      regionName: region || '芗城区',
-      parkingType: parkingType || '公共停车场',
-      totalFlow,
-      entryFlow,
-      exitFlow,
-      morningPeak,
-      eveningPeak,
-      peakRatio,
-      utilizationRate: Number.parseFloat((Math.random() * 30 + 65).toFixed(1)),
+      regionName: regionName,
+      parkingType: parkingTypeName,
+      totalFlow: flowType === 'total' ? totalFlow : flowType === 'entry' ? entryFlow : exitFlow,
+      entryFlow: entryFlow,
+      exitFlow: exitFlow,
+      morningPeak: morningPeak,
+      eveningPeak: eveningPeak,
+      peakRatio: peakRatio,
+      utilizationRate: utilizationRate,
     });
   }
 
-  // 按日期倒序排列
-  tableData.sort((a, b) => new Date(b.date) - new Date(a.date));
+  return tableData;
+}
+
+/**
+ * 获取车流分布报表数据（支持筛选）
+ */
+export const getFlowDistributionReport = async (params) => {
+  // 模拟API延迟
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  const {
+    timeRange = '7',
+    region = '',
+    parkingType = '',
+    flowType = 'total',
+    startDate,
+    endDate,
+  } = params;
+
+  // 根据筛选条件生成相应数据
+  const coreIndicators = generateCoreIndicators(flowType, region, parkingType);
+  const heatmapData = generateHeatmapData(flowType, region, parkingType);
+  const timeDistribution = generateTimeDistribution(flowType, region, parkingType);
+  const typeDistribution = generateTypeDistribution(parkingType);
+  const hotspotData = generateHotspotData(flowType, region, parkingType);
+  const tableData = generateTableData(params);
 
   return {
     timeRange,
@@ -505,9 +392,7 @@ export const getFlowDistributionReport = async (params) => {
 };
 
 /**
- * 生成车流分布报表CSV文件
- * @param {object} params 导出参数
- * @returns {Promise} 模拟导出
+ * 导出车流分布报表
  */
 export const exportFlowDistributionReport = async (params) => {
   try {
@@ -518,13 +403,13 @@ export const exportFlowDistributionReport = async (params) => {
       '日期',
       '行政区划',
       '停车场类型',
-      '总车流量',
+      '总车流',
       '入场车流',
       '出场车流',
       '早高峰车流',
       '晚高峰车流',
       '高峰占比(%)',
-      '利用率(%)',
+      '泊位利用率(%)',
     ];
 
     const csvRows = data.tableData.map((item) => [
@@ -532,8 +417,8 @@ export const exportFlowDistributionReport = async (params) => {
       item.regionName,
       item.parkingType,
       item.totalFlow,
-      item.entryFlow,
-      item.exitFlow,
+      item.entryFlow || '',
+      item.exitFlow || '',
       item.morningPeak,
       item.eveningPeak,
       item.peakRatio,
@@ -552,14 +437,14 @@ export const exportFlowDistributionReport = async (params) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `车流分布报表_${data.flowType}_${Date.now()}.csv`;
+    link.download = `车流分布报表_${params.timeRange || '近7日'}_${new Date().getTime()}.csv`;
 
     document.body.append(link);
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
 
-    ElMessage.success('导出成功（CSV格式）');
+    ElMessage.success(`导出成功，共${data.tableData.length}条记录`);
 
     return {
       success: true,

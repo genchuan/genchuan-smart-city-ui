@@ -76,6 +76,15 @@ const trendOptions = computed(() => ({
     axisPointer: {
       type: 'shadow',
     },
+    formatter: (params) => {
+      const current = params[0];
+      const last = params[1];
+      return `
+        <div>${current.name}</div>
+        <div>${current.seriesName}: ${formatCurrency(current.value * 10000, false)}</div>
+        <div>${last.seriesName}: ${formatCurrency(last.value * 10000, false)}</div>
+      `;
+    },
   },
   legend: {
     data: ['本月', '上月'],
@@ -239,7 +248,7 @@ const typeDistributionOptions = computed(() => ({
       center: ['50%', '50%'],
       data: typeDistributionData.value.map(item => ({
         ...item,
-        value: item.value / 10000,
+        value: item.value / 10000, // 转换为万元
         name: item.name
       })),
       emphasis: {
@@ -355,6 +364,29 @@ const handlePageChange = (pagination) => {
   loadData();
 };
 
+// 获取区域列表（与日收入保持一致）
+const regionList = ref([
+  { value: '', label: '全部区域' },
+  { value: 'xiangcheng', label: '芗城区' },
+  { value: 'longwen', label: '龙文区' },
+  { value: 'longhai', label: '龙海区' },
+  { value: 'zhangpu', label: '漳浦县' },
+  { value: 'yunxiao', label: '云霄县' },
+  { value: 'zhaoan', label: '诏安县' },
+  { value: 'dongshan', label: '东山县' },
+  { value: 'nanjing', label: '南靖县' },
+  { value: 'pinghe', label: '平和县' },
+  { value: 'huaan', label: '华安县' },
+]);
+
+// 获取停车场类型列表（与日收入保持一致）
+const parkingTypeList = ref([
+  { value: '', label: '全部类型' },
+  { value: 'public', label: '公共停车场' },
+  { value: 'roadside', label: '路侧停车场' },
+  { value: 'special', label: '专用停车场' },
+]);
+
 // 获取月份列表
 const monthList = ref([
   { value: '2023-12', label: '2023年12月' },
@@ -386,11 +418,12 @@ const monthList = ref([
           clearable
           style="width: 120px"
         >
-          <el-option label="全部区域" value="" />
-          <el-option label="芗城区" value="xiangcheng" />
-          <el-option label="龙文区" value="longwen" />
-          <el-option label="龙海区" value="longhai" />
-          <el-option label="漳浦县" value="zhangpu" />
+          <el-option
+            v-for="item in regionList"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
         </el-select>
         <el-select
           v-model="parkingType"
@@ -399,18 +432,13 @@ const monthList = ref([
           clearable
           style="width: 140px"
         >
-          <el-option label="全部类型" value="" />
-          <el-option label="公共停车场" value="public" />
-          <el-option label="路侧停车场" value="roadside" />
-          <el-option label="专用停车场" value="special" />
+          <el-option
+            v-for="item in parkingTypeList"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
         </el-select>
-<!--        <el-button-->
-<!--          type="primary"-->
-<!--          @click="generateReport"-->
-<!--          :loading="generateLoading"-->
-<!--        >-->
-<!--          生成报表-->
-<!--        </el-button>-->
       </template>
 
       <template #right>
@@ -432,11 +460,6 @@ const monthList = ref([
       :indicators="processedCoreIndicators"
       :format-value="formatValue"
     >
-<!--      <template #comparison="{ indicator }">-->
-<!--        <span :class="getComparisonClass(indicator.comparison)">-->
-<!--          较上月 {{ indicator.comparison > 0 ? '+' : '' }}{{ indicator.comparison }}%-->
-<!--        </span>-->
-<!--      </template>-->
     </CoreIndicators>
 
     <!-- 趋势分析 -->

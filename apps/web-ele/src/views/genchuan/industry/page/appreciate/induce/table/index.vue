@@ -450,7 +450,7 @@ const handleFullShow = () => {
         </button>
       </template>
       <!-- 修复：使用正确的字段名'induction_name' -->
-      <template #parkName="{ row }">
+      <template #induction_name="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"

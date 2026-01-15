@@ -31,7 +31,7 @@ import {
 
 // 响应式数据
 const selectedDate = ref(getYesterdayDate());
-const regionType = ref('area');
+const region = ref(''); // 行政区划筛选
 const loading = ref(false);
 const exporting = ref(false);
 const chartType = ref('bar');
@@ -39,18 +39,96 @@ const coreIndicators = ref([]);
 const regionData = ref([]);
 const abnormalities = ref([]);
 
-// 处理后的核心指标数据
+// 处理后的核心指标数据 - 根据筛选后的regionData动态计算
 const processedCoreIndicators = computed(() => {
+  // 如果筛选后有区域数据，则基于筛选后的数据计算核心指标
+  if (regionData.value.length > 0) {
+    const totalEnter = regionData.value.reduce((sum, item) => sum + item.enterCount, 0);
+    const totalExit = regionData.value.reduce((sum, item) => sum + item.exitCount, 0);
+    const totalRevenue = regionData.value.reduce((sum, item) => sum + item.revenue, 0);
+    const totalWarning = regionData.value.reduce((sum, item) => sum + item.warningCount, 0);
+    const totalFault = regionData.value.reduce((sum, item) => sum + item.faultCount, 0);
+    const totalMemberRevenue = regionData.value.reduce((sum, item) => sum + item.memberRevenue, 0);
+
+    // 计算平均利用率
+    const avgUtilization = regionData.value.length > 0
+      ? Math.round(regionData.value.reduce((sum, item) => sum + item.utilizationRate, 0) / regionData.value.length)
+      : 0;
+
+    // 计算总泊位数和已用泊位数
+    const totalBerths = regionData.value.reduce((sum, item) => sum + item.totalBerths, 0);
+    const usedBerths = regionData.value.reduce((sum, item) => sum + item.usedBerths, 0);
+
+    return [
+      {
+        key: 'totalEnter',
+        name: '总入场车次',
+        value: totalEnter,
+        unit: '次',
+        comparison: 0, // 这里可以计算真实差值
+        abnormal: false,
+      },
+      {
+        key: 'totalExit',
+        name: '总出场车次',
+        value: totalExit,
+        unit: '次',
+        comparison: 0,
+        abnormal: false,
+      },
+      {
+        key: 'totalRevenue',
+        name: '总收费金额',
+        value: totalRevenue,
+        unit: '元',
+        comparison: 0,
+        abnormal: false,
+      },
+      {
+        key: 'avgUtilization',
+        name: '平均泊位利用率',
+        value: avgUtilization,
+        unit: '%',
+        comparison: 0,
+        abnormal: false,
+      },
+      {
+        key: 'warningCount',
+        name: '预警总数',
+        value: totalWarning,
+        unit: '条',
+        comparison: 0,
+        abnormal: false,
+      },
+      {
+        key: 'faultCount',
+        name: '故障设备数',
+        value: totalFault,
+        unit: '台',
+        comparison: 0,
+        abnormal: false,
+      },
+      {
+        key: 'memberRevenue',
+        name: '会员收入',
+        value: totalMemberRevenue,
+        unit: '元',
+        comparison: 0,
+        abnormal: false,
+      }
+    ];
+  }
+
+  // 如果没有筛选数据，返回原始API数据
   return coreIndicators.value.map((indicator) => ({
     ...indicator,
-    // tag: generateIndicatorTag(indicator.comparison),
-    // abnormal: Math.abs(indicator.comparison) > 30,
   }));
 });
 
 // 表格列定义
 const tableColumns = computed(() => [
-  { prop: 'areaName', label: '区域', width: 120 },
+  { prop: 'areaName', label: '区域名称', width: 120 },
+  { prop: 'district', label: '行政区', width: 100 },
   { prop: 'enterCount', label: '入场车次', width: 120 },
   { prop: 'exitCount', label: '出场车次', width: 120 },
   { prop: 'revenue', label: '收费金额', width: 150, type: 'currency' },
@@ -62,6 +140,7 @@ const tableColumns = computed(() => [
   },
   { prop: 'warningCount', label: '预警数', width: 100 },
   { prop: 'faultCount', label: '故障设备', width: 100 },
+  { prop: 'memberRevenue', label: '会员收入', width: 150, type: 'currency' },
 ]);
 
 // 图表配置
@@ -152,15 +231,10 @@ onMounted(() => {
   loadData();
 });
 
-// 监听日期变化
-watch(selectedDate, () => {
+// 监听筛选条件变化
+watch([selectedDate, region], () => {
   loadData();
-});
-
-// 监听区域类型变化
-watch(regionType, () => {
-  loadData();
-});
+}, { immediate: false });
 
 // 加载数据
 const loadData = async () => {
@@ -169,15 +243,27 @@ const loadData = async () => {
 
     const params = {
       date: selectedDate.value,
-      regionType: regionType.value,
+      regionType: 'area', // 固定按行政区划统计
     };
 
     const response = await getDailyReport(params);
 
-    // 更新数据
+    // 更新核心指标和异常数据
     coreIndicators.value = response.coreIndicators;
-    regionData.value = response.regionData;
     abnormalities.value = response.abnormalities;
+
+    // 应用行政区划筛选
+    let filteredData = response.regionData;
+
+    // 行政区划筛选
+    if (region.value) {
+      filteredData = filteredData.filter(item =>
+        item.district === region.value ||
+        (region.value === '其他' && !['芗城', '龙文', '龙海', '长泰', '漳浦'].includes(item.district))
+      );
+    }
+
+    regionData.value = filteredData;
   } catch (error) {
     console.error('加载日报表数据失败:', error);
     ElMessage.error('加载数据失败');
@@ -198,7 +284,7 @@ const handleExport = async () => {
 
     const params = {
       date: selectedDate.value,
-      regionType: regionType.value,
+      regionType: 'area', // 固定按行政区划导出
     };
 
     await exportDailyReport(params);
@@ -210,6 +296,21 @@ const handleExport = async () => {
   } finally {
     exporting.value = false;
   }
+};
+
+// 行政区划列表
+const regionList = ref([
+  { value: '', label: '全部行政区' },
+  { value: '芗城', label: '芗城区' },
+  { value: '龙文', label: '龙文区' },
+  { value: '龙海', label: '龙海区' },
+  { value: '长泰', label: '长泰区' },
+  { value: '漳浦', label: '漳浦县' },
+]);
+
+// 清除行政区筛选
+const clearRegion = () => {
+  region.value = '';
 };
 </script>
 
@@ -227,13 +328,19 @@ const handleExport = async () => {
           size="medium"
         />
         <el-select
-          v-model="regionType"
-          placeholder="统计维度"
+          v-model="region"
+          placeholder="选择行政区划"
           size="medium"
-          style="width: 120px; margin-left: 12px"
+          clearable
+          style="width: 140px; margin-left: 12px"
+          @clear="clearRegion"
         >
-          <el-option label="行政区划" value="area" />
-          <el-option label="商圈" value="business" />
+          <el-option
+            v-for="item in regionList"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
         </el-select>
       </template>
 
@@ -256,29 +363,32 @@ const handleExport = async () => {
       :indicators="processedCoreIndicators"
       :format-value="formatValue"
     >
-<!--      <template #comparison="{ indicator }">-->
-<!--        <span :class="getComparisonClass(indicator.comparison)">-->
-<!--          <el-icon v-if="indicator.comparison > 0"><Top /></el-icon>-->
-<!--          <el-icon v-if="indicator.comparison < 0"><Bottom /></el-icon>-->
-<!--        </span>-->
-<!--      </template>-->
+      <!-- 暂时移除比较图标 -->
     </CoreIndicators>
 
     <!-- 异常提醒 -->
-<!--    <div v-if="abnormalities.length > 0" class="abnormal-alert">-->
-<!--      <el-alert title="异常提醒" type="warning" :closable="false" show-icon>-->
-<!--        <div class="abnormal-list">-->
-<!--          <div-->
-<!--            v-for="abnormal in abnormalities"-->
-<!--            :key="abnormal.id"-->
-<!--            class="abnormal-item"-->
-<!--          >-->
-<!--            <el-icon><Warning /></el-icon>-->
-<!--            <span>{{ abnormal.message }}</span>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </el-alert>-->
-<!--    </div>-->
+    <div v-if="abnormalities && abnormalities.length > 0" class="abnormal-alert">
+      <el-alert title="异常提醒" type="warning" :closable="false" show-icon>
+        <div class="abnormal-list">
+          <div
+            v-for="abnormal in abnormalities"
+            :key="abnormal.id"
+            class="abnormal-item"
+          >
+            <el-icon><Warning /></el-icon>
+            <span>{{ abnormal.message }}</span>
+          </div>
+        </div>
+      </el-alert>
+    </div>
+
+    <!-- 筛选信息提示 -->
+    <div v-if="region" class="filter-info">
+      <el-alert :title="`当前筛选：行政区划=${regionList.find(r => r.value === region)?.label}`"
+                type="info"
+                :closable="false"
+                show-icon />
+    </div>
 
     <!-- 分区域统计 -->
     <ReportSection title="分区域统计">
@@ -309,6 +419,10 @@ const handleExport = async () => {
 }
 
 .abnormal-alert {
+  margin-bottom: 12px;
+}
+
+.filter-info {
   margin-bottom: 12px;
 }
 

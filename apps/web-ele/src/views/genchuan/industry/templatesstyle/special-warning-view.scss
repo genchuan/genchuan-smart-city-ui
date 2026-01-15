@@ -1,27 +1,22 @@
 // ---专项预警视图
-
 .special-warning-table {
   ::v-deep(.el-table) {
-    // 专项预警主色调：【极光青蓝系】#00c6ff 浅湖蓝 → #0096c7 深海蓝 渐变
-    // 差异化区分：故障(红橙)、隐患(翠绿)、合规(蓝紫)、专项(青蓝)，4个视图色调完全不冲突，业务属性贴合度高
-    --el-table-bg-color: rgb(0 198 255 / 8%);
+    --el-table-bg-color: rgb(10 30 65 / 8%);
     --el-table-text-color-primary: #fff;
     --el-table-border-color: #00c6ff;
-    --el-table-row-hover-bg-color: rgb(0 198 255 / 20%);
+    --el-table-row-hover-bg-color: rgb(20 50 95 / 20%);
 
     box-sizing: border-box;
     width: 100%;
     font-size: 0.8vw;
     table-layout: fixed;
 
-    // 表头渐变背景 与故障预警结构一致，仅替换专属青蓝渐变
     .el-table__header {
-      background: linear-gradient(90deg, #00c6ff, #0096c7) !important;
+      background: linear-gradient(90deg, #093870, #1055a0) !important;
     }
 
     .el-table__header-wrapper {
       width: 100%;
-
       th {
         padding: 0.3vw 0.5vw;
         overflow: hidden;
@@ -31,10 +26,8 @@
         color: #fff;
         text-align: center;
         white-space: nowrap;
-        background: linear-gradient(90deg, #00c6ff, #0096c7) !important;
+        background: linear-gradient(90deg, #093870, #1055a0) !important;
         border: 1px solid #4fc3f7;
-
-        // 表头底部渐变光效，和故障/隐患/合规预警保持一致的视觉细节，统一页面质感
         &::after {
           position: absolute;
           bottom: 0;
@@ -49,7 +42,6 @@
 
     .el-table__body-wrapper {
       width: 100%;
-
       td {
         padding: 0.4vw 0.5vw;
         overflow: hidden;
@@ -63,56 +55,36 @@
       }
     }
 
-    // 空表格占位样式 适配合规主色调
     .el-table__empty-block {
       width: 100%;
       padding: 1vw;
       font-size: 0.8vw;
       color: #00c6ff;
-      background: rgb(10 25 40 / 80%);
+      background: rgb(5 20 48 / 80%);
       border: 1px dashed #0096c7;
     }
 
-    // 处置状态对应行样式 严格匹配：未处置/处置中/已办结/超时 (和预警事件概览一致)
-    // 左侧3px竖线高亮标记，和故障预警的视觉逻辑完全统一，降低用户认知成本
     .special-row-untreated {
-      // 未处置
-      background: rgb(255 77 109 / 10%);
-
-      td {
-        border-left: 0.3vw solid #ff4d6d;
-      }
+      background: rgb(15 40 85 / 20%);
+      td { border-left: 0.1vw solid #ff4d6d; }
     }
 
     .special-row-disposing {
-      // 处置中
-      background: rgb(247 147 30 / 10%);
-
-      td {
-        border-left: 0.3vw solid #f7931e;
-      }
+      background: rgb(20 50 95 / 20%);
+      td { border-left: 0.1vw solid #f7931e; }
     }
 
     .special-row-completed {
-      // 已办结
-      background: rgb(0 198 255 / 10%);
-
-      td {
-        border-left: 0.3vw solid #00c6ff;
-      }
+      background: rgb(10 35 75 / 20%);
+      td { border-left: 0.1vw solid #00c6ff; }
     }
 
     .special-row-timeout {
-      // 超时
-      background: rgb(114 46 209 / 10%);
-
-      td {
-        border-left: 0.3vw solid #722ed1;
-      }
+      background: rgb(18 45 90 / 20%);
+      td { border-left: 0.1vw solid #722ed1; }
     }
   }
 
-  // 预警场景标签样式 (匹配字段：warningScene 泊位类/设备类/收费类/安全类)
   .special-scene-tag {
     display: inline-block;
     max-width: 8vw;
@@ -128,7 +100,6 @@
     border-radius: 0.4vw;
   }
 
-  // 预警类型标签样式 (匹配字段：alertType)
   .special-alert-type-tag {
     display: inline-block;
     max-width: 8vw;
@@ -144,7 +115,6 @@
     border-radius: 0.4vw;
   }
 
-  // 处置措施标签样式 (匹配字段：disposalMeasure)
   .disposal-measure-tag {
     display: inline-block;
     max-width: 10vw;
@@ -160,7 +130,6 @@
     border-radius: 0.4vw;
   }
 
-  // 设备ID高亮样式 (匹配字段：deviceId)
   .special-device-id {
     font-size: 0.8vw;
     font-weight: bold;
@@ -168,19 +137,14 @@
     text-shadow: 0 0 0.3vw rgb(0 198 255 / 50%);
   }
 
-  // 视频链接文字样式 (匹配字段：videoUrl)
   .video-url-text {
     font-size: 0.75vw;
     color: #4fc3f7;
     text-decoration: underline;
     cursor: pointer;
-
-    &:hover {
-      color: #00c6ff;
-    }
+    &:hover { color: #00c6ff; }
   }
 
-  // 处置状态标签样式 (核心样式，匹配字段：disposalStatus)
   .disposal-status-tag {
     display: inline-block;
     max-width: 8vw;

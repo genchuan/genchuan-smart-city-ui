@@ -1,23 +1,24 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-
 import { ArrowLeft, FullScreen } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import screenFull from 'screenfull';
 
-import EmergencyResponse from './components/EmergencyResponse.vue'; // 应急响应
-import GlobalOverview from './components/GlobalOverview.vue'; // 全局总览
-import IndexAnalysis from './components/IndexAnalysis.vue'; // 指标分析
-import ResourceMonitor from './components/ResourceMonitor.vue'; // 资源监控
-import RiskWarning from './components/RiskWarning.vue'; // 风险预警
-import SynergyLinkage from './components/SynergyLinkage.vue'; // 协同联动
+import EmergencyResponse from './components/EmergencyResponse.vue';
+import GlobalOverview from './components/GlobalOverview.vue';
+import IndexAnalysis from './components/IndexAnalysis.vue';
+import ResourceMonitor from './components/ResourceMonitor.vue';
+import RiskWarning from './components/RiskWarning.vue';
+import SynergyLinkage from './components/SynergyLinkage.vue';
 
 const pageContainerRef = ref<HTMLElement | null>(null);
 let timeTimer: NodeJS.Timeout | null = null;
 const router = useRouter();
 
 const timeText = ref('');
+const name = ref('智慧停车-全局总览');
+const currentTag = ref('home');
 
 const handleBack = () => {
   router.push('/');
@@ -29,7 +30,11 @@ const clickFullscreen = () => {
     return;
   }
   const targetEl = pageContainerRef.value;
-  screenFull.isFullscreen ? screenFull.exit() : screenFull.request(targetEl);
+  if (screenFull.isFullscreen && document.fullscreenElement === targetEl) {
+    screenFull.exit();
+  } else if (!screenFull.isFullscreen) {
+    screenFull.request(targetEl);
+  }
 };
 
 const updateShowTime = () => {
@@ -46,15 +51,15 @@ const updateShowTime = () => {
 const routerClick = (item: { name: string; path: string; tag: string }) => {
   name.value = `智慧停车-${item.name}`;
   currentTag.value = item.tag;
+  pageContainerRef.value?.dispatchEvent(new Event('resize'));
 };
 
-const name = ref('智慧停车-全局总览');
-const currentTag = ref('home');
 const leftNavList = ref([
   { name: '全局总览', path: '', tag: 'home' },
   { name: '指标分析', path: '', tag: '0202' },
   { name: '风险预警', path: '', tag: '0203' },
 ]);
+
 const rightNavList = ref([
   { name: '应急响应', path: '', tag: '0204' },
   { name: '协同联动', path: '', tag: '0205' },
@@ -65,6 +70,7 @@ onMounted(() => {
   updateShowTime();
   timeTimer = setInterval(updateShowTime, 1000);
 });
+
 onUnmounted(() => {
   if (timeTimer) clearInterval(timeTimer);
 });
@@ -79,11 +85,7 @@ onUnmounted(() => {
         </el-icon>
       </button>
       <ul class="left-but nav-lise">
-        <li
-          v-for="(item, key) in leftNavList"
-          :key="key"
-          @click="routerClick(item)"
-        >
+        <li v-for="(item, key) in leftNavList" :key="key" @click="routerClick(item)">
           <div class="border-box-8">
             <span>{{ item.name }}</span>
           </div>
@@ -91,11 +93,7 @@ onUnmounted(() => {
       </ul>
       <span class="head-name">{{ name }}</span>
       <ul class="right-but nav-lise">
-        <li
-          v-for="(item, key) in rightNavList"
-          :key="key"
-          @click="routerClick(item)"
-        >
+        <li v-for="(item, key) in rightNavList" :key="key" @click="routerClick(item)">
           <div class="border-box-8 border-reverse">
             <span>{{ item.name }}</span>
           </div>
@@ -111,12 +109,12 @@ onUnmounted(() => {
     <div class="showTime h1-time">{{ timeText }}</div>
 
     <div class="mainbox">
-      <GlobalOverview v-show="currentTag === 'home'" />
-      <IndexAnalysis v-show="currentTag === '0202'" />
-      <RiskWarning v-show="currentTag === '0203'" />
-      <EmergencyResponse v-show="currentTag === '0204'" />
-      <SynergyLinkage v-show="currentTag === '0205'" />
-      <ResourceMonitor v-show="currentTag === '0206'" />
+      <GlobalOverview v-if="currentTag === 'home'" />
+      <IndexAnalysis v-if="currentTag === '0202'" />
+      <RiskWarning v-if="currentTag === '0203'" />
+      <EmergencyResponse v-if="currentTag === '0204'" />
+      <SynergyLinkage v-if="currentTag === '0205'" />
+      <ResourceMonitor v-if="currentTag === '0206'" />
     </div>
   </div>
 </template>
@@ -144,6 +142,7 @@ onUnmounted(() => {
   color: #0cf;
   background: url('../images/head_bg.png') no-repeat;
   background-size: 100% 100%;
+  z-index: 9;
 
   .head-name {
     position: absolute;
@@ -178,7 +177,7 @@ onUnmounted(() => {
 
       div {
         padding: 0.2vw 0.5vw;
-        margin: 0.2vw;
+        margin: 0.3vw 0.8vw;
         white-space: nowrap;
       }
     }
@@ -242,6 +241,8 @@ onUnmounted(() => {
   font-size: 0.7vw;
   line-height: 1;
   color: rgb(255 255 255 / 70%);
+  z-index: 8;
+  pointer-events: none;
 }
 
 .mainbox {
