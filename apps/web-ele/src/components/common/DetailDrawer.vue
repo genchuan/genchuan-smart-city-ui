@@ -103,7 +103,6 @@ defineExpose({
 .detail-container {
   box-sizing: border-box;
   height: 100%;
-  padding: 20px;
 }
 
 .detail-card {
