@@ -12,7 +12,7 @@ import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 // 引入封装后的详情抽屉组件
-import ParkDetailDrawer from '#/views/genchuan/industry/page/park/components/detail.vue';
+import ParkDetailDrawer from '#/views/genchuan/industry/page/park/gate/table/detail.vue';
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
@@ -287,7 +287,6 @@ const parkDetailDrawerRef = ref(null);
     <ParkDetailDrawer
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
-      :title="`${dataObj.detailObj.name}`"
     />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -360,13 +359,13 @@ const parkDetailDrawerRef = ref(null);
           ></i>
         </button>
       </template>
-      <template #parkName="{ row }">
+      <template #entranceName="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.name }}
+          {{ row.entranceName }}
         </el-text>
       </template>
       <template #actions="{ row }">
