@@ -6,7 +6,8 @@ export const dataList = () => {
       share_no: 'SHARE202310120001',
       space_id: 'SPACE001',
       user_id: 'USER001',
-      share_rule: '{"weekdays": ["周一","周二","周三","周四","周五"], "time_range": ["09:00-18:00"], "hourly_rate": "5.00", "max_hours": 8, "advance_booking": 24}',
+      share_rule:
+        '{"weekdays": ["周一","周二","周三","周四","周五"], "time_range": ["09:00-18:00"], "hourly_rate": "5.00", "max_hours": 8, "advance_booking": 24}',
       start_time: '2023-10-01 00:00:00',
       end_time: '2023-12-31 23:59:59',
       status: '1',
@@ -21,7 +22,8 @@ export const dataList = () => {
       share_no: 'SHARE202310120002',
       space_id: 'SPACE002',
       user_id: 'USER002',
-      share_rule: '{"weekdays": ["周一","周二","周三","周四","周五","周六","周日"], "time_range": ["00:00-23:59"], "hourly_rate": "6.00", "max_hours": 12, "advance_booking": 12}',
+      share_rule:
+        '{"weekdays": ["周一","周二","周三","周四","周五","周六","周日"], "time_range": ["00:00-23:59"], "hourly_rate": "6.00", "max_hours": 12, "advance_booking": 12}',
       start_time: '2023-10-10 00:00:00',
       end_time: '2023-12-10 23:59:59',
       status: '1',
@@ -36,7 +38,8 @@ export const dataList = () => {
       share_no: 'SHARE202310120003',
       space_id: 'SPACE003',
       user_id: 'USER003',
-      share_rule: '{"weekdays": ["周六","周日"], "time_range": ["08:00-22:00"], "hourly_rate": "4.50", "max_hours": 10, "advance_booking": 48}',
+      share_rule:
+        '{"weekdays": ["周六","周日"], "time_range": ["08:00-22:00"], "hourly_rate": "4.50", "max_hours": 10, "advance_booking": 48}',
       start_time: '2023-09-15 00:00:00',
       end_time: '2024-01-15 23:59:59',
       status: '1',
@@ -51,7 +54,8 @@ export const dataList = () => {
       share_no: 'SHARE202310130001',
       space_id: 'SPACE004',
       user_id: 'USER004',
-      share_rule: '{"weekdays": ["周一","周三","周五"], "time_range": ["19:00-07:00"], "hourly_rate": "3.00", "max_hours": 12, "advance_booking": 6}',
+      share_rule:
+        '{"weekdays": ["周一","周三","周五"], "time_range": ["19:00-07:00"], "hourly_rate": "3.00", "max_hours": 12, "advance_booking": 6}',
       start_time: '2023-10-01 00:00:00',
       end_time: '2023-11-30 23:59:59',
       status: '2',
@@ -66,7 +70,8 @@ export const dataList = () => {
       share_no: 'SHARE202310130002',
       space_id: 'SPACE005',
       user_id: 'USER005',
-      share_rule: '{"weekdays": ["周二","周四"], "time_range": ["12:00-20:00"], "hourly_rate": "7.00", "max_hours": 6, "advance_booking": 36}',
+      share_rule:
+        '{"weekdays": ["周二","周四"], "time_range": ["12:00-20:00"], "hourly_rate": "7.00", "max_hours": 6, "advance_booking": 36}',
       start_time: '2023-10-05 00:00:00',
       end_time: '2023-12-05 23:59:59',
       status: '0',
@@ -81,7 +86,8 @@ export const dataList = () => {
       share_no: 'SHARE202310140001',
       space_id: 'SPACE006',
       user_id: 'USER006',
-      share_rule: '{"weekdays": ["周一","周二","周三","周四","周五"], "time_range": ["07:00-09:00", "17:00-19:00"], "hourly_rate": "8.00", "max_hours": 2, "advance_booking": 2}',
+      share_rule:
+        '{"weekdays": ["周一","周二","周三","周四","周五"], "time_range": ["07:00-09:00", "17:00-19:00"], "hourly_rate": "8.00", "max_hours": 2, "advance_booking": 2}',
       start_time: '2023-10-01 00:00:00',
       end_time: '2023-12-31 23:59:59',
       status: '1',
@@ -96,7 +102,8 @@ export const dataList = () => {
       share_no: 'SHARE202310140002',
       space_id: 'SPACE007',
       user_id: 'USER007',
-      share_rule: '{"weekdays": ["周一","周二","周三","周四","周五","周六","周日"], "time_range": ["10:00-16:00"], "hourly_rate": "5.50", "max_hours": 6, "advance_booking": 24}',
+      share_rule:
+        '{"weekdays": ["周一","周二","周三","周四","周五","周六","周日"], "time_range": ["10:00-16:00"], "hourly_rate": "5.50", "max_hours": 6, "advance_booking": 24}',
       start_time: '2023-09-20 00:00:00',
       end_time: '2023-11-20 23:59:59',
       status: '1',
@@ -111,7 +118,8 @@ export const dataList = () => {
       share_no: 'SHARE202310150001',
       space_id: 'SPACE008',
       user_id: 'USER008',
-      share_rule: '{"weekdays": ["周五","周六","周日"], "time_range": ["18:00-24:00"], "hourly_rate": "6.50", "max_hours": 6, "advance_booking": 12}',
+      share_rule:
+        '{"weekdays": ["周五","周六","周日"], "time_range": ["18:00-24:00"], "hourly_rate": "6.50", "max_hours": 6, "advance_booking": 12}',
       start_time: '2023-10-01 00:00:00',
       end_time: '2023-10-31 23:59:59',
       status: '2',
@@ -126,7 +134,8 @@ export const dataList = () => {
       share_no: 'SHARE202310150002',
       space_id: 'SPACE009',
       user_id: 'USER009',
-      share_rule: '{"weekdays": ["周一","周三","周五"], "time_range": ["08:30-17:30"], "hourly_rate": "4.00", "max_hours": 9, "advance_booking": 72}',
+      share_rule:
+        '{"weekdays": ["周一","周三","周五"], "time_range": ["08:30-17:30"], "hourly_rate": "4.00", "max_hours": 9, "advance_booking": 72}',
       start_time: '2023-10-15 00:00:00',
       end_time: '2023-12-15 23:59:59',
       status: '1',
@@ -141,7 +150,8 @@ export const dataList = () => {
       share_no: 'SHARE202310160001',
       space_id: 'SPACE010',
       user_id: 'USER010',
-      share_rule: '{"weekdays": ["周六","周日"], "time_range": ["07:00-23:00"], "hourly_rate": "5.00", "max_hours": 16, "advance_booking": 24}',
+      share_rule:
+        '{"weekdays": ["周六","周日"], "time_range": ["07:00-23:00"], "hourly_rate": "5.00", "max_hours": 16, "advance_booking": 24}',
       start_time: '2023-09-01 00:00:00',
       end_time: '2023-11-30 23:59:59',
       status: '0',
@@ -340,9 +350,9 @@ export function useGridColumns() {
       sortable: true,
       formatter: ({ cellValue }) => {
         const statusMap = {
-          '0': '禁用',
-          '1': '启用',
-          '2': '暂停',
+          0: '禁用',
+          1: '启用',
+          2: '暂停',
         };
         return statusMap[cellValue] || cellValue;
       },

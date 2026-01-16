@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue';
+import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
 
 import Table from './table/index.vue';
 
@@ -13,13 +14,28 @@ const changeArrowStatus = () => {
 };
 const tabArray = ref([
   {
-    label: '访客基础信息',
+    label: '代付规则',
     components: Table,
     showSecondary: true,
     secondShow: false,
+    tabName: 'proxyRule',
+  },
+  {
+    label: '代付订单',
+    components: Table,
+    showSecondary: true,
+    secondShow: false,
+    tabName: 'proxyOrder',
+  },
+  {
+    label: '代付记录',
+    components: Table,
+    showSecondary: true,
+    secondShow: false,
+    tabName: 'proxyRecord',
   },
 ]);
-const activeName = ref('访客基础信息');
+const activeName = ref('代付规则');
 const secondShow = ref(false);
 </script>
 <template>
@@ -59,6 +75,7 @@ const secondShow = ref(false);
         <component
           :is="item.components"
           :second-show="item.secondShow"
+          :tab-name="item.tabName"
           :key="item.label"
         />
       </el-tab-pane>

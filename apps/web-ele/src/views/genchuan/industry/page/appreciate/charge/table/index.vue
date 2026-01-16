@@ -528,8 +528,8 @@ const handleFullShow = () => {
 <style scoped>
 .charge-pile-id-link {
   color: #409eff;
-  cursor: pointer;
   text-decoration: none;
+  cursor: pointer;
   transition: color 0.3s ease;
 }
 
@@ -548,18 +548,18 @@ const handleFullShow = () => {
 }
 
 .demo-tabs {
-  background: #fff;
   padding: 0 10px;
+  background: #fff;
 }
 
 .common-total {
+  display: flex;
+  gap: 8px;
+  align-items: center;
   padding: 10px;
+  cursor: pointer;
   background-color: #f5f7fa;
   border-top: 1px solid #ebeef5;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .common-total:hover {
@@ -573,36 +573,36 @@ const handleFullShow = () => {
 
 .common-total-bottom {
   padding: 10px;
-  background-color: #f9fafc;
-  border-top: 1px solid #ebeef5;
   font-size: 14px;
   color: #606266;
+  background-color: #f9fafc;
+  border-top: 1px solid #ebeef5;
 }
 
 .detail-card {
-  background: #fff;
   padding: 20px;
+  background: #fff;
   border-radius: 8px;
 }
 
 .detail-card-row {
   display: flex;
-  margin-bottom: 16px;
   padding-bottom: 12px;
+  margin-bottom: 16px;
   border-bottom: 1px solid #f0f0f0;
 }
 
 .detail-card-row:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
   padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
 }
 
 .detail-row-left {
+  flex-shrink: 0;
   width: 150px;
   font-weight: 500;
   color: #606266;
-  flex-shrink: 0;
 }
 
 .detail-row-right {

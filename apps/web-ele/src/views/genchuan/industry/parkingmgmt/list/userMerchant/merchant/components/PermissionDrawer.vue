@@ -171,7 +171,9 @@ const exportPermissionList = () => {
         </div>
         <div class="merchant-meta">
           <span class="meta-item">商户ID: {{ merchant.merchantId }}</span>
-          <span class="meta-item">业务类型: {{ merchant.businessScope || '综合业务' }}</span>
+          <span class="meta-item"
+            >业务类型: {{ merchant.businessScope || '综合业务' }}</span
+          >
         </div>
       </div>
     </div>

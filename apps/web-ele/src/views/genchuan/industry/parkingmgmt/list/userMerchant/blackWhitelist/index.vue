@@ -13,13 +13,13 @@ const changeArrowStatus = () => {
 };
 const tabArray = ref([
   {
-    label: '访客基础信息',
+    label: '黑白名单信息',
     components: Table,
     showSecondary: true,
     secondShow: false,
   },
 ]);
-const activeName = ref('访客基础信息');
+const activeName = ref('黑白名单信息');
 const secondShow = ref(false);
 </script>
 <template>

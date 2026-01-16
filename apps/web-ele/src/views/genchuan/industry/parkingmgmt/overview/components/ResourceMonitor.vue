@@ -21,9 +21,9 @@ import ChartPie2 from '#/views/genchuan/industry/templatesstatchart/ChartPie2.vu
 import VerticalBar2 from '#/views/genchuan/industry/templatesstatchart/VerticalBar2.vue';
 import VerticalBar3 from '#/views/genchuan/industry/templatesstatchart/VerticalBar3.vue';
 
-import MapCommon2 from './GlobalDataMap2.vue';
-import MapCommon3 from './GlobalDataMap3.vue';
-import MapCommon4 from './GlobalDataMap4.vue';
+import MapCommon2 from './ResourceMonitorMap2.vue';
+import MapCommon3 from './ResourceMonitorMap3.vue';
+import MapCommon4 from './ResourceMonitorMap4.vue';
 
 const mapCommon2Ref = ref<InstanceType<typeof MapCommon2> | null>(null);
 const mapCommon3Ref = ref<InstanceType<typeof MapCommon3> | null>(null);
@@ -380,7 +380,7 @@ onUnmounted(() => {
           <ElTabs v-model="topMiddleActiveTab" class="custom-tabs top-left-tabs" @tab-change="handleTabChange">
             <ElTabPane label="资源全景监控" name="tab1">
               <div class="header-actions">
-                <div class="actions-left"><p>资源全景监控</p></div>
+                <div class="actions-left"><p></p></div>
                 <div class="actions-right">
                   <button class="control-btn" @click="handleOrbitAnimation3">
                     <el-icon color="#409eff" size="16">
@@ -435,7 +435,7 @@ onUnmounted(() => {
             </ElTabPane>
             <ElTabPane label="车辆轨迹监控" name="tab2">
               <div class="header-actions">
-                <div class="actions-left"><p>车辆轨迹监控</p></div>
+                <div class="actions-left"><p></p></div>
                 <div class="actions-right">
                   <button class="control-btn" @click="handleOrbitAnimation4">
                     <el-icon color="#409eff" size="16">
@@ -487,7 +487,7 @@ onUnmounted(() => {
             </ElTabPane>
             <ElTabPane label="运维人员动态" name="tab3">
               <div class="header-actions">
-                <div class="actions-left"><p>运维人员动态</p></div>
+                <div class="actions-left"><p></p></div>
                 <div class="actions-right">
                   <button class="control-btn" @click="handleOrbitAnimation2">
                     <el-icon color="#409eff" size="16">
