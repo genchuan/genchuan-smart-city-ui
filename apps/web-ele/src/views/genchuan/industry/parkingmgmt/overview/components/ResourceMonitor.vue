@@ -398,21 +398,21 @@ onUnmounted(() => {
                 </div>
               </div>
               <div style="flex: 1; width: 100%; height: calc(100% - 2vh);position: relative;">
-                <div class="force-stats-overlay1">
-                  <div class="force-stats-cards">
-                    <div class="force-stat-card">
+                <div class="stats-overlay1">
+                  <div class="stats-cards1">
+                    <div class="stat-card">
                       <div class="stat-content">
                         <div class="stat-title">总资源数</div>
                         <div class="stat-value">{{ parkPanoramaIndicatorData.totalResourceCount || 0 }} 个</div>
                       </div>
                     </div>
-                    <div class="force-stat-card">
+                    <div class="stat-card">
                       <div class="stat-content">
                         <div class="stat-title">可用资源数</div>
                         <div class="stat-value">{{ parkPanoramaIndicatorData.availableResourceCount || 0 }} 个</div>
                       </div>
                     </div>
-                    <div class="force-stat-card">
+                    <div class="stat-card">
                       <div class="stat-content">
                         <div class="stat-title">正常运营率</div>
                         <div class="stat-value">{{ parkPanoramaIndicatorData.normalOperateRate || 0 }} %</div>
@@ -421,12 +421,12 @@ onUnmounted(() => {
                   </div>
                 </div>
                 <MapCommon3 v-if="!map3Loading && topMiddleActiveTab === 'tab1'" ref="mapCommon3Ref_Top" id-name="parkingMap3_top" :geometries-array="parkResourceGeometries" :orbit-config="orbitConfigData" />
-                <div class="force-stats-overlay2">
-                  <div class="force-stats-cards">
-                    <div class="force-stat-card2 chart-card">
+                <div class="chart-overlay2">
+                  <div class="chart-cards2">
+                    <div class="chart-card">
                       <ChartPie1 :key="topMainChartRefreshKey" :data="parkResourceTypeRatioData" title="资源类型占比" :base-font-scale="parkResourceBaseFontScale" :active-indices="parkResourceActiveIndices" style="width:100%;height:100%"/>
                     </div>
-                    <div class="force-stat-card2 chart-card">
+                    <div class="chart-card">
                       <ChartPie2 :key="topMainChartRefreshKey" :data="parkSpaceTypeRatioData" title="车位类型占比" :base-font-scale="parkResourceBaseFontScale" :active-indices="parkResourceActiveIndices" style="width:100%;height:100%"/>
                     </div>
                   </div>
@@ -453,21 +453,21 @@ onUnmounted(() => {
                 </div>
               </div>
               <div style="flex: 1; width: 100%; height: calc(100% - 2vh);position: relative;">
-                <div class="force-stats-overlay1">
-                  <div class="force-stats-cards">
-                    <div class="force-stat-card">
+                <div class="stats-overlay1">
+                  <div class="stats-cards1">
+                    <div class="stat-card">
                       <div class="stat-content">
                         <div class="stat-title">当日通行车辆数</div>
                         <div class="stat-value">{{ carTrackIndicatorData.todayPassCarCount || 0 }} 辆</div>
                       </div>
                     </div>
-                    <div class="force-stat-card">
+                    <div class="stat-card">
                       <div class="stat-content">
                         <div class="stat-title">异常通行车辆数</div>
                         <div class="stat-value">{{ carTrackIndicatorData.abnormalCarCount || 0 }} 辆</div>
                       </div>
                     </div>
-                    <div class="force-stat-card">
+                    <div class="stat-card">
                       <div class="stat-content">
                         <div class="stat-title">正常通行率</div>
                         <div class="stat-value">{{ carTrackIndicatorData.todayPassCarCount > 0 ? (((carTrackIndicatorData.todayPassCarCount - carTrackIndicatorData.abnormalCarCount)/carTrackIndicatorData.todayPassCarCount)*100).toFixed(1) : 100 }} %</div>
@@ -476,9 +476,9 @@ onUnmounted(() => {
                   </div>
                 </div>
                 <MapCommon4 v-if="!map4Loading && topMiddleActiveTab === 'tab2'" ref="mapCommon4Ref_Top" id-name="parkingMap4_top" :geometries-array="carTrackGeometries" :orbit-config="orbitConfigData" />
-                <div class="force-stats-overlay2">
-                  <div class="force-stats-cards">
-                    <div class="force-stat-card2 chart-card">
+                <div class="chart-overlay2">
+                  <div class="chart-cards2">
+                    <div class="chart-card">
                       <ChartLine2 :key="topMainChartRefreshKey" :data="carTrackSingleTrendData" title="单车辆通行时段趋势" y-axis-name="(辆)" :base-font-scale="parkResourceBaseFontScale" style="width:100%;height:100%"/>
                     </div>
                   </div>
@@ -505,21 +505,21 @@ onUnmounted(() => {
                 </div>
               </div>
               <div style="flex: 1; width: 100%; height: calc(100% - 2vh);position: relative;">
-                <div class="force-stats-overlay1">
-                  <div class="force-stats-cards">
-                    <div class="force-stat-card">
+                <div class="stats-overlay1">
+                  <div class="stats-cards1">
+                    <div class="stat-card">
                       <div class="stat-content">
                         <div class="stat-title">总运维人数</div>
                         <div class="stat-value">{{ maintainStaffIndicatorData.totalStaffCount || 0 }} 人</div>
                       </div>
                     </div>
-                    <div class="force-stat-card">
+                    <div class="stat-card">
                       <div class="stat-content">
                         <div class="stat-title">在岗人数</div>
                         <div class="stat-value">{{ maintainStaffIndicatorData.onDutyCount || 0 }} 人</div>
                       </div>
                     </div>
-                    <div class="force-stat-card">
+                    <div class="stat-card">
                       <div class="stat-content">
                         <div class="stat-title">当前任务数</div>
                         <div class="stat-value">{{ maintainStaffIndicatorData.taskCount || 0 }} 个</div>
@@ -528,9 +528,9 @@ onUnmounted(() => {
                   </div>
                 </div>
                 <MapCommon2 v-if="!map2Loading && topMiddleActiveTab === 'tab3'" ref="mapCommon2Ref" id-name="parkingMap2" :geometries-array="maintainStaffGeometries" :orbit-config="orbitConfigData" />
-                <div class="force-stats-overlay2">
-                  <div class="force-stats-cards">
-                    <div class="force-stat-card2 chart-card">
+                <div class="chart-overlay2">
+                  <div class="chart-cards2">
+                    <div class="chart-card">
                       <VerticalBar2 :key="topMainChartRefreshKey" :x-axis="maintainDeptCompareData.xAxis" :series="maintainDeptCompareData.series" unit="人" title="各部门在岗人数对比" :base-font-scale="parkResourceBaseFontScale" :active-indices="parkResourceActiveIndices" style="width:100%;height:100%"/>
                     </div>
                   </div>
@@ -563,18 +563,18 @@ onUnmounted(() => {
                 </div>
               </div>
               <div v-if="activeTerminalDeviceView === '卡片'" class="view-content">
-                <div class="indicator-cards">
-                  <div class="indicator-card normal total-card" style="cursor: default">
+                <div class="indicator-cards1">
+                  <div class="indicator-card1 card1" style="cursor: default">
                     <div class="indicator-title">总设备数</div>
                     <div class="indicator-value"><span :data-value="terminalDeviceIndicators.totalDeviceCount" class="terminal-device-number-animate">{{ terminalDeviceIndicators.totalDeviceCount }}</span></div>
                     <div class="indicator-unit">台</div>
                   </div>
-                  <div class="indicator-card normal rate-card" style="cursor: default">
+                  <div class="indicator-card1 card2" style="cursor: default">
                     <div class="indicator-title">在线设备数</div>
                     <div class="indicator-value"><span :data-value="terminalDeviceIndicators.onlineDeviceCount" class="terminal-device-number-animate">{{ terminalDeviceIndicators.onlineDeviceCount }}</span></div>
                     <div class="indicator-unit">台</div>
                   </div>
-                  <div class="indicator-card normal satisfaction-card" style="cursor: default">
+                  <div class="indicator-card1 card3" style="cursor: default">
                     <div class="indicator-title">故障设备数</div>
                     <div class="indicator-value"><span :data-value="terminalDeviceIndicators.faultDeviceCount" class="terminal-device-number-animate">{{ terminalDeviceIndicators.faultDeviceCount }}</span></div>
                     <div class="indicator-unit">台</div>
@@ -590,8 +590,8 @@ onUnmounted(() => {
                 </div>
               </div>
               <div v-if="activeTerminalDeviceView === '列表'" class="view-content">
-                <div class="gov-enterprise-table-box">
-                  <ElTable class="gov-enterprise-coop-table" :data="terminalDeviceList" border size="small" width="100%" height="100%" table-layout="fixed" highlight-current-row>
+                <div class="table-box3">
+                  <ElTable class="table3" :data="terminalDeviceList" border size="small" width="100%" height="100%" table-layout="fixed" highlight-current-row>
                     <ElTableColumn prop="deviceExtendId" label="设备ID" align="center" />
                     <ElTableColumn prop="deviceCode" label="设备编码" align="center" min-width="120px" />
                     <ElTableColumn prop="deviceType" label="设备类型" align="center" min-width="100px"><template #default="scope">{{ getDeviceTypeName(scope.row.deviceType) }}</template></ElTableColumn>
@@ -631,13 +631,13 @@ onUnmounted(() => {
                 </div>
               </div>
               <div v-if="activeParkResourceView === '卡片'" class="view-content">
-                <div class="indicator-cards">
-                  <div class="indicator-card normal total-card" style="cursor: default">
+                <div class="indicator-cards1">
+                  <div class="indicator-card1 card1" style="cursor: default">
                     <div class="indicator-title">平均泊位周转率</div>
                     <div class="indicator-value"><span :data-value="parkResourceIndicators.avgTurnoverRate" class="park-resource-number-animate">{{ parkResourceIndicators.avgTurnoverRate }}</span></div>
                     <div class="indicator-unit">次/日</div>
                   </div>
-                  <div class="indicator-card normal rate-card" style="cursor: default">
+                  <div class="indicator-card1 card2" style="cursor: default">
                     <div class="indicator-title">平均资源利用率</div>
                     <div class="indicator-value"><span :data-value="parkResourceIndicators.avgUtilizationRate" class="park-resource-number-animate">{{ parkResourceIndicators.avgUtilizationRate }}</span></div>
                     <div class="indicator-unit">%</div>
@@ -649,8 +649,8 @@ onUnmounted(() => {
                 <div style="box-sizing: border-box; width: 100%; height: calc(50% - 4px); marginTop: 8px"><VerticalBar3 :x-axis="parkResourceTypeCompareData.xAxis" :series="parkResourceTypeCompareData.series" unit="%" title="车场类型利用率对比" :base-font-scale="parkResourceBaseFontScale" :active-indices="parkResourceActiveIndices" style="width:100%;height:100%"/></div>
               </div>
               <div v-if="activeParkResourceView === '列表'" class="view-content">
-                <div class="gov-enterprise-table-box">
-                  <ElTable class="gov-enterprise-coop-table" :data="parkResourceList" border size="small" width="100%" height="100%" table-layout="fixed" highlight-current-row>
+                <div class="table-box1">
+                  <ElTable class="table1" :data="parkResourceList" border size="small" width="100%" height="100%" table-layout="fixed" highlight-current-row>
                     <ElTableColumn prop="lotId" label="车场ID" align="center" />
                     <ElTableColumn prop="lotName" label="车场名称" align="center" min-width="140px" />
                     <ElTableColumn prop="parkingSpaceTurnoverRate" label="泊位周转率" align="center" min-width="120px"><template #default="scope">{{ formatTurnover(scope.row.parkingSpaceTurnoverRate) }}</template></ElTableColumn>
@@ -691,18 +691,18 @@ onUnmounted(() => {
                 </div>
               </div>
               <div v-if="activeSparePartView === '卡片'" class="view-content">
-                <div class="indicator-cards">
-                  <div class="indicator-card normal total-card" style="cursor: default">
+                <div class="indicator-cards1">
+                  <div class="indicator-card1 card1" style="cursor: default">
                     <div class="indicator-title">总备件种类数</div>
                     <div class="indicator-value"><span :data-value="sparePartIndicators.totalPartTypeCount" class="spare-part-number-animate">{{ sparePartIndicators.totalPartTypeCount }}</span></div>
                     <div class="indicator-unit">种</div>
                   </div>
-                  <div class="indicator-card normal rate-card" style="cursor: default">
+                  <div class="indicator-card1 card2" style="cursor: default">
                     <div class="indicator-title">库存充足数</div>
                     <div class="indicator-value"><span :data-value="sparePartIndicators.enoughStockCount" class="spare-part-number-animate">{{ sparePartIndicators.enoughStockCount }}</span></div>
                     <div class="indicator-unit">种</div>
                   </div>
-                  <div class="indicator-card normal satisfaction-card" style="cursor: default">
+                  <div class="indicator-card1 card3" style="cursor: default">
                     <div class="indicator-title">缺货备件数</div>
                     <div class="indicator-value"><span :data-value="sparePartIndicators.lackStockCount" class="spare-part-number-animate">{{ sparePartIndicators.lackStockCount }}</span></div>
                     <div class="indicator-unit">种</div>
@@ -716,8 +716,8 @@ onUnmounted(() => {
                 <ChartPie1 :data="sparePartTypeRatioData" title="备件类型占比" :base-font-scale="sparePartBaseFontScale" :active-indices="sparePartActiveIndices" style="width:100%;height:100%"/>
               </div>
               <div v-if="activeSparePartView === '列表'" class="view-content">
-                <div class="gov-enterprise-table-box">
-                  <ElTable class="gov-enterprise-coop-table" :data="sparePartList" border size="small" width="100%" height="100%" table-layout="fixed" highlight-current-row>
+                <div class="table-box3">
+                  <ElTable class="table3" :data="sparePartList" border size="small" width="100%" height="100%" table-layout="fixed" highlight-current-row>
                     <ElTableColumn prop="sparePartId" label="备件ID" align="center" />
                     <ElTableColumn prop="partName" label="备件名称" align="center" min-width="120px" />
                     <ElTableColumn prop="model" label="型号" align="center" min-width="100px" />
@@ -765,6 +765,10 @@ onUnmounted(() => {
 @import '../../../templatesstyle/common';
 @import '../../../templatesstyle/table1';
 @import '../../../templatesstyle/global-data-map';
+@import '../../../templatesstyle/table3';
+@import '../../../templatesstyle/indicator-cards1';
+@import '../../../templatesstyle/stat-cards1';
+@import '../../../templatesstyle/chart-cards2';
 
 .page-container {
   box-sizing: border-box;
@@ -855,36 +859,6 @@ onUnmounted(() => {
   color: #00ffd0;
 }
 
-.indicator-cards {
-  box-sizing: border-box;
-  display: flex;
-  gap: 0.6vw;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-}
-
-.indicator-card {
-  display: flex;
-  flex: 0 0 7vw;
-  flex-direction: column;
-  justify-content: center;
-  padding: 5vh 0;
-  background: rgb(0 30 60 / 60%);
-  border: 0.1vw solid transparent;
-  border-radius: 8px;
-  transition: all 0.3s;
-  &:hover { transform: translateY(-5px); }
-  .indicator-title { margin-top: 0.1vh; font-size: 1vw; font-weight: bold; text-align: center; letter-spacing: 0.1vw; }
-  .indicator-value { margin: 0.3vw 0; font-size: 1.6vw; font-weight: bold; text-align: center; transition: all 0.3s; }
-  .indicator-unit { font-size: 0.7vw; text-align: center; letter-spacing: 0.05vw; opacity: 0.9; }
-}
-
-.indicator-card.total-card { border-color: #0cf; box-shadow: 0 5px 15px rgb(0 204 255 / 30%); &:hover { box-shadow: 0 5px 20px rgb(0 204 255 / 50%); } }
-.indicator-card.rate-card { border-color: #13ce66; box-shadow: 0 5px 15px rgb(19 206 102 / 30%); &:hover { box-shadow: 0 5px 20px rgb(19 206 102 / 50%); } }
-.indicator-card.satisfaction-card { border-color: #ffc107; box-shadow: 0 5px 15px rgb(255 193 7 / 30%); &:hover { box-shadow: 0 5px 20px rgb(255 193 7 / 50%); } }
-
 .header-actions {
   display: flex;
   align-items: center;
@@ -897,84 +871,4 @@ onUnmounted(() => {
   .panel-fullscreen-btn { margin-right: 0.5vw; cursor: pointer; background: transparent; border: none; }
 }
 
-.gov-enterprise-table-box {
-  width: 100%;
-  height: 100%;
-  overflow: auto !important;
-}
-:deep(.gov-enterprise-coop-table) {
-  --el-table-text-color: #fff;
-  --el-table-header-text-color: #00ffd0;
-  --el-table-border-color: rgb(25 186 139 / 30%);
-  --el-table-row-hover-bg-color: rgb(0 204 255 / 10%);
-  width: 100%;
-  height: 100%;
-  font-size: 0.7vw;
-  table-layout: fixed;
-  th, td { white-space: nowrap; border-color: rgb(25 186 139 / 30%) !important; }
-}
-
-.force-stats-overlay1 {
-  position: absolute;
-  top: 2vh;
-  left: 0.5vw;
-  z-index: 999;
-  display: flex;
-  flex-direction: column;
-  width: 120px;
-}
-.force-stats-overlay1 .force-stats-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5vw;
-  width: 100%;
-}
-
-.force-stats-overlay2 {
-  position: absolute;
-  bottom: 3.6vh;
-  right: 0.5vw;
-  z-index: 999;
-  display: flex;
-  flex-direction: row;
-  gap: 0.8vw;
-}
-.force-stats-overlay2 .force-stats-cards {
-  display: flex;
-  gap: 0.8vw;
-  width: 100%;
-}
-
-.force-stat-card {
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  padding: 0.5vw;
-  cursor: pointer;
-  background: rgb(0 30 60 / 70%);
-  border: 1px solid rgb(0 204 255 / 30%);
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  height: 60px;
-}
-
-.force-stat-card2 {
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  padding: 0.5vw;
-  cursor: pointer;
-  background: rgb(0 30 60 / 80%);
-  border: 1px solid rgb(0 204 255 / 30%);
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  width: 260px;
-  height: 200px;
-}
-
-.chart-card { padding: 0.3vw !important; }
-.stat-content { flex: 1; overflow: hidden; }
-.stat-title { padding-bottom: 0.5vh; font-size: 0.7vw; color: rgb(255 255 255 / 70%); }
-.stat-value { font-size: 0.8vw; color: rgb(0 204 255 / 80%); }
 </style>

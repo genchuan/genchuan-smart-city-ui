@@ -33,7 +33,7 @@ const props = defineProps({
       center: { lat: 24.58, lng: 117.65 },
       rotateSpeed: 0.2,
       pitch: 40,
-      zoom: 18,
+      zoom: 16,
       loop: true,
     }),
   },
