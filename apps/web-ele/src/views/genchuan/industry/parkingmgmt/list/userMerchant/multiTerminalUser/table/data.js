@@ -776,3 +776,164 @@ export const userDetailFields = [
   { key: 'createTime', label: '创建时间' },
   { key: 'lastLoginTime', label: '最后登录时间' },
 ];
+
+// 统计数据配置
+export const statsData = {
+  // 卡片数据
+  cards: [
+    {
+      title: '总用户数',
+      value: 5,
+      desc: '较上月增长12%',
+      color: '#13ce66'
+    },
+    {
+      title: '认证用户数',
+      value: 2,
+      desc: '认证率40%',
+      color: '#4ECDC4'
+    },
+    {
+      title: '活跃用户数',
+      value: 5,
+      desc: '近7日活跃',
+      color: '#FF6B6B'
+    }
+  ],
+  // 图表数据
+  charts: [
+    {
+      title: '认证状态占比',
+      type: 'pie',
+      data: [
+        { value: 44.49, name: '已认证' },
+        { value: 40, name: '待认证' },
+        { value: 20, name: '已拒绝' }
+      ]
+    },
+    {
+      title: '账号状态占比',
+      type: 'pie',
+      data: [
+        { value: 80, name: '正常' },
+        { value: 20, name: '已禁用' }
+      ]
+    },
+    {
+      title: '近30日注册趋势',
+      type: 'line',
+      xAxis: ['01-10', '01-12', '01-14', '01-16', '01-18', '01-20'],
+      series: [4, 8, 6, 12, 10, 16, 14, 8]
+    }
+  ]
+};
+
+// 企业用户管理统计数据
+export const enterpriseStatsData = {
+  cards: [
+    {
+      title: '总企业用户数',
+      value: 120,
+      desc: '较上月增长8%',
+      color: '#13ce66'
+    },
+    {
+      title: '认证企业数',
+      value: 96,
+      desc: '认证率80%',
+      color: '#4ECDC4'
+    },
+    {
+      title: '活跃企业数',
+      value: 88,
+      desc: '近7日活跃',
+      color: '#FF6B6B'
+    }
+  ],
+  charts: [
+    {
+      title: '认证状态占比',
+      type: 'pie',
+      data: [
+        { value: 80, name: '已认证' },
+        { value: 15, name: '待认证' },
+        { value: 5, name: '已拒绝' }
+      ]
+    },
+    {
+      title: '账号状态占比',
+      type: 'pie',
+      data: [
+        { value: 90, name: '正常' },
+        { value: 10, name: '已禁用' }
+      ]
+    },
+    {
+      title: '不同行业企业分布',
+      type: 'bar',
+      xAxis: ['制造业', '服务业', '金融业', '科技业', '教育业'],
+      series: [30, 25, 20, 15, 10]
+    }
+  ]
+};
+
+// 政府用户管理统计数据
+export const governmentStatsData = {
+  cards: [
+    {
+      title: '总政府用户数',
+      value: 50,
+      desc: '较上月增长5%',
+      color: '#13ce66'
+    },
+    {
+      title: '活跃用户数',
+      value: 45,
+      desc: '近7日活跃',
+      color: '#4ECDC4'
+    },
+    {
+      title: '不同部门用户数',
+      value: 12,
+      desc: '覆盖12个部门',
+      color: '#FF6B6B'
+    }
+  ],
+  charts: [
+    {
+      title: '账号状态占比',
+      type: 'pie',
+      data: [
+        { value: 95, name: '正常' },
+        { value: 5, name: '已禁用' }
+      ]
+    },
+    {
+      title: '用户角色占比',
+      type: 'pie',
+      data: [
+        { value: 60, name: '管理员' },
+        { value: 40, name: '普通用户' }
+      ]
+    },
+    {
+      title: '不同区域用户分布',
+      type: 'bar',
+      xAxis: ['区域1', '区域2', '区域3', '区域4', '区域5'],
+      series: [15, 12, 10, 8, 5]
+    }
+  ]
+};
+
+// 根据用户类型获取对应统计数据
+export const getStatsDataByUserType = (userType) => {
+  switch (userType) {
+    case '企业':
+      return enterpriseStatsData;
+    case '政府':
+      return governmentStatsData;
+    case '个人':
+    default:
+      return statsData;
+  }
+};

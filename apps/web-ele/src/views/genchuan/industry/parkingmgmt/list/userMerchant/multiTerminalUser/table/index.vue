@@ -972,14 +972,12 @@ const handleAuthSubmit = () => {
         <TableAction
           :actions="[
             {
-              label: '详情',
               type: 'primary',
               link: true,
               icon: ACTION_ICON.VIEW,
               onClick: handleUserDetail.bind(null, row),
             },
             {
-              label: '编辑',
               type: 'primary',
               link: true,
               icon: ACTION_ICON.EDIT,
@@ -988,7 +986,6 @@ const handleAuthSubmit = () => {
             },
 
             {
-              label: '删除',
               type: 'danger',
               link: true,
               icon: ACTION_ICON.DELETE,

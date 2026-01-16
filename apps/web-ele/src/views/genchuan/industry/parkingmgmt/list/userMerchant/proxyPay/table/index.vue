@@ -1247,21 +1247,18 @@ const detailFields = computed(() => {
         <TableAction
           :actions="[
             {
-              label: '详情',
               type: 'primary',
               link: true,
               icon: ACTION_ICON.VIEW,
               onClick: handleOpenDetail.bind(null, row),
             },
             {
-              label: '编辑',
               type: 'primary',
               link: true,
               icon: ACTION_ICON.EDIT,
               onClick: handleEdit.bind(null, row),
             },
             {
-              label: '删除',
               type: 'danger',
               link: true,
               icon: ACTION_ICON.DELETE,

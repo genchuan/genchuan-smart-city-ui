@@ -9,11 +9,10 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import { $t } from '#/locales';
-import { exportToExcel } from '#/utils/excel.js';
-
 // 引入封装后的详情抽屉组件
 import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import { $t } from '#/locales';
+import { exportToExcel } from '#/utils/excel.js';
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
@@ -192,12 +191,12 @@ const getTableData = (pageObj) => {
       // 搜索条件过滤
       for (const [key, value] of Object.entries(searchFormData.value)) {
         if (value && v[key] && !String(v[key]).includes(String(value))) {
-          return false;
+        return false;
         }
       }
       return true;
     });
-  
+
   dataObj.total = filteredData.length;
   dataObj.list = filteredData.slice(
     (page.currentPage - 1) * page.pageSize,
@@ -450,21 +449,18 @@ const detailFields = [
         <TableAction
           :actions="[
             {
-              label: '详情',
               type: 'primary',
               link: true,
               icon: ACTION_ICON.VIEW,
               onClick: handleOpenDetail.bind(null, row),
             },
             {
-              label: '编辑',
               type: 'primary',
               link: true,
               icon: ACTION_ICON.EDIT,
               onClick: handleEdit.bind(null, row),
             },
             {
-              label: '删除',
               type: 'danger',
               link: true,
               icon: ACTION_ICON.DELETE,
