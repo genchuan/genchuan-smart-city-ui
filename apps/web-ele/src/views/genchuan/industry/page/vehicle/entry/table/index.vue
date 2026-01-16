@@ -238,7 +238,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-const activeName = ref('全部');
+const activeName = ref('');
 // 修改打开详情的方法，调用组件的open方法
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
@@ -247,18 +247,16 @@ const handleOpenDetail = (row) => {
   console.log(row);
 };
 const tabsData = ref([
-  { label: '全部' },
-  { label: '临时车' },
-  { label: '月租车' },
+  { label: '全部', value: '' },
+  { label: '月租车', value: '1' },
+  { label: '临时车', value: '0' },
 ]);
 const createLabel = (item) => {
-  let text = ``;
-  if (item.label === '全部') {
-    text = `(${dataObj.total})`;
-  }
-  return item.label + text;
+  return item.label;
 };
 const handleClick = () => {
+  dataObj.serachObj.plateType = activeName.value;
+
   gridApi.query();
 };
 const handleSerachShow = () => {
@@ -318,7 +316,7 @@ const handleF5 = async () => {
                 v-for="item in tabsData"
                 :key="item.label"
                 :label="createLabel(item)"
-                :name="item.label"
+                :name="item.value"
               />
             </el-tabs>
           </div>
