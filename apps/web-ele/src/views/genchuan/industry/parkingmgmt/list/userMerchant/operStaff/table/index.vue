@@ -14,7 +14,13 @@ import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
-import { dataList, textObj, useFormSchema, useGridColumns, detailFields } from './data';
+import {
+  dataList,
+  detailFields,
+  textObj,
+  useFormSchema,
+  useGridColumns,
+} from './data';
 
 const props = defineProps({
   secondShow: {
@@ -71,7 +77,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
         createTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
         updateTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
         // 根据teamId和postCode设置显示名称
-        teamName: obj.teamId === 'team_001' ? '芗城区运维队' : 
+        teamName: obj.teamId === 'team_001' ? '芗城区运维队' :
                  obj.teamId === 'team_002' ? '龙文区运维队' :
                  obj.teamId === 'team_003' ? '龙海区运维队' :
                  obj.teamId === 'team_004' ? '漳浦县运维队' : '云霄县运维队',
@@ -96,10 +102,12 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
             createTime: v.createTime,
             updateTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
             // 根据teamId和postCode设置显示名称
-            teamName: obj.teamId === 'team_001' ? '芗城区运维队' : 
-                     obj.teamId === 'team_002' ? '龙文区运维队' :
-                     obj.teamId === 'team_003' ? '龙海区运维队' :
-                     obj.teamId === 'team_004' ? '漳浦县运维队' : '云霄县运维队',
+            teamName:
+              obj.teamId === 'team_001'
+                ? '芗城区运维队'
+                : obj.teamId === 'team_002' ? '龙文区运维队' :
+                  obj.teamId === 'team_003' ? '龙海区运维队' :
+                  obj.teamId === 'team_004' ? '漳浦县运维队' : '云霄县运维队',
             postName: obj.postCode === 'dev_maintain' ? '设备维修员' :
                      obj.postCode === 'fault_check' ? '故障排查员' : '工单处置员',
             areaName: obj.areaCode === '350602' ? '芗城区' :
@@ -424,7 +432,7 @@ const handleFullShow = () => {
       </template>
       <template #onDutyStatus="{ row }">
         <el-tag
-          :type="row.onDutyStatus === '在岗' ? 'success' : 
+          :type="row.onDutyStatus === '在岗' ? 'success' :
                 row.onDutyStatus === '休假' ? 'warning' : 'info'"
           size="small"
         >
@@ -443,21 +451,18 @@ const handleFullShow = () => {
         <TableAction
           :actions="[
             {
-              label: '详情',
               type: 'primary',
               link: true,
               icon: ACTION_ICON.VIEW,
               onClick: handleOpenDetail.bind(null, row),
             },
             {
-              label: '编辑',
               type: 'primary',
               link: true,
               icon: ACTION_ICON.EDIT,
               onClick: handleEdit.bind(null, row),
             },
             {
-              label: '删除',
               type: 'danger',
               link: true,
               icon: ACTION_ICON.DELETE,

@@ -484,21 +484,18 @@ const detailFields = [
         <TableAction
           :actions="[
             {
-              label: '详情',
               type: 'primary',
               link: true,
               icon: ACTION_ICON.VIEW,
               onClick: handleOpenDetail.bind(null, row),
             },
             {
-              label: '编辑',
               type: 'primary',
               link: true,
               icon: ACTION_ICON.EDIT,
               onClick: handleEdit.bind(null, row),
             },
             {
-              label: '删除',
               type: 'danger',
               link: true,
               icon: ACTION_ICON.DELETE,
@@ -507,31 +504,20 @@ const detailFields = [
                 confirm: handleDelete.bind(null, row),
               },
             },
-          ]"
-          :drop-down-actions="[
             {
-              label: '权限',
               type: 'primary',
               link: true,
               icon: ACTION_ICON.KEY,
               onClick: handleOpenPermission.bind(null, row),
             },
             {
-              label: '记录',
               type: 'primary',
               link: true,
               icon: ACTION_ICON.RECORD,
               onClick: handleOpenRecord.bind(null, row),
             },
           ]"
-        >
-          <template #more>
-            <el-button type="primary" link>
-              <IconifyIcon icon="lucide:ellipsis-vertical" class="mr-1" />
-              更多
-            </el-button>
-          </template>
-        </TableAction>
+        />
       </template>
       <template #bottom>
         <div class="common-total" @click="changeTotalShow">
