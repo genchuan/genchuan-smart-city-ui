@@ -11,23 +11,24 @@ const router = useRouter();
     <div class="mainbox">
       <div class="top">
         <div class="panel top-left">
+          <p>事件处置跟踪</p>
           <div class="panel-footer"></div>
         </div>
         <div class="panel top-middle">
           <div class="panel-footer"></div>
         </div>
         <div class="panel top-right">
+          <p>异常预警视图</p>
           <div class="panel-footer"></div>
         </div>
       </div>
       <div class="bottom">
         <div class="panel bottom-left">
-          <div class="panel-footer"></div>
-        </div>
-        <div class="panel bottom-middle">
+          <p>预警事件概览</p>
           <div class="panel-footer"></div>
         </div>
         <div class="panel bottom-right">
+          <p>合规预警视图</p>
           <div class="panel-footer"></div>
         </div>
       </div>
@@ -93,7 +94,7 @@ const router = useRouter();
 .top {
   display: flex;
   gap: 0.6vw;
-  height: 50%;
+  height: 60%;
 }
 
 .top-left {
@@ -101,7 +102,7 @@ const router = useRouter();
 }
 
 .top-middle {
-  flex: 1;
+  flex: 3;
 }
 
 .top-right {
@@ -111,14 +112,10 @@ const router = useRouter();
 .bottom {
   display: flex;
   gap: 0.6vw;
-  height: 46%;
+  height: 36%;
 }
 
 .bottom-left {
-  flex: 1;
-}
-
-.bottom-middle {
   flex: 1;
 }
 

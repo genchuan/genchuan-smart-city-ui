@@ -791,8 +791,8 @@ onUnmounted(() => {
                 </div>
               </div>
               <div v-if="activeCrossRegionCoopView === '卡片'" class="view-content">
-                <div class="indicator-cards">
-                  <div class="indicator-card normal total-card" style="cursor: default">
+                <div class="indicator-cards1">
+                  <div class="indicator-card1 card1" style="cursor: default">
                     <div class="indicator-title">跨区域协同总数</div>
                     <div class="indicator-value">
                       <span :data-value="crossRegionCoopIndicators.totalCount" class="cross-region-coop-number-animate">
@@ -801,7 +801,7 @@ onUnmounted(() => {
                     </div>
                     <div class="indicator-unit">件</div>
                   </div>
-                  <div class="indicator-card normal rate-card" style="cursor: default">
+                  <div class="indicator-card1 card2" style="cursor: default">
                     <div class="indicator-title">协同完成率</div>
                     <div class="indicator-value">
                       <span :data-value="crossRegionCoopIndicators.completeRate * 100" class="cross-region-coop-number-animate">
@@ -810,7 +810,7 @@ onUnmounted(() => {
                     </div>
                     <div class="indicator-unit">%</div>
                   </div>
-                  <div class="indicator-card normal satisfaction-card" style="cursor: default">
+                  <div class="indicator-card1 card3" style="cursor: default">
                     <div class="indicator-title">平均协同时长</div>
                     <div class="indicator-value">
                       <span :data-value="crossRegionCoopIndicators.avgCoopDuration" class="cross-region-coop-number-animate">
@@ -855,9 +855,9 @@ onUnmounted(() => {
                 />
               </div>
               <div v-if="activeCrossRegionCoopView === '列表'" class="view-content">
-                <div class="gov-enterprise-table-box">
+                <div class="table-box3">
                   <ElTable
-                    class="gov-enterprise-coop-table"
+                    class="table3"
                     :data="crossRegionCoopList"
                     border
                     size="small"
@@ -905,8 +905,8 @@ onUnmounted(() => {
             </div>
           </div>
           <div v-if="activeCoopAnalysisView === '卡片'" class="view-content">
-            <div class="indicator-cards">
-              <div class="indicator-card normal total-card" style="cursor: default">
+            <div class="indicator-cards1">
+              <div class="indicator-card1 card1" style="cursor: default">
                 <div class="indicator-title">协同事项总数</div>
                 <div class="indicator-value">
                   <span :data-value="coopAnalysisIndicators.totalCoopCount" class="coop-analysis-number-animate">
@@ -915,7 +915,7 @@ onUnmounted(() => {
                 </div>
                 <div class="indicator-unit">件</div>
               </div>
-              <div class="indicator-card normal rate-card" style="cursor: default">
+              <div class="indicator-card1 card2" style="cursor: default">
                 <div class="indicator-title">平均处理周期</div>
                 <div class="indicator-value">
                   <span :data-value="coopAnalysisIndicators.avgHandleCycle" class="coop-analysis-number-animate">
@@ -924,7 +924,7 @@ onUnmounted(() => {
                 </div>
                 <div class="indicator-unit">天</div>
               </div>
-              <div class="indicator-card normal rate-card" style="cursor: default">
+              <div class="indicator-card1 card3" style="cursor: default">
                 <div class="indicator-title">协同完成率</div>
                 <div class="indicator-value">
                   <span :data-value="coopAnalysisIndicators.finishRate * 100" class="coop-analysis-number-animate">
@@ -933,7 +933,7 @@ onUnmounted(() => {
                 </div>
                 <div class="indicator-unit">%</div>
               </div>
-              <div class="indicator-card normal satisfaction-card" style="cursor: default">
+              <div class="indicator-card1 card4" style="cursor: default">
                 <div class="indicator-title">高优协同占比</div>
                 <div class="indicator-value">
                   <span :data-value="coopAnalysisIndicators.highPriorityRate * 100" class="coop-analysis-number-animate">
@@ -998,16 +998,16 @@ onUnmounted(() => {
             />
           </div>
           <div v-if="activeCoopAnalysisView === '列表'" class="view-content">
-            <div class="high-frequency-coop-top10-box">
+            <div class="rank-box">
               <ElTable
                 :data="highFreqCoopTop10List"
                 border
                 size="small"
                 style="width: 100%; height: 100%"
-                row-class-name="highfreq-top10-row"
+                row-class-name="rank-row"
               >
                 <ElTableColumn prop="rank" label="排名" width="80" align="center">
-                  <template #default="scope"><div class="highfreq-top10-rank-tag">{{ scope.row.rank }}</div></template>
+                  <template #default="scope"><div class="rank-tag">{{ scope.row.rank }}</div></template>
                 </ElTableColumn>
                 <ElTableColumn prop="coopStatId" label="协同统计ID" />
                 <ElTableColumn prop="coopType" label="协同类型">
@@ -1044,8 +1044,8 @@ onUnmounted(() => {
             </div>
           </div>
           <div v-if="activeGovCoopView === '卡片'" class="view-content">
-            <div class="indicator-cards">
-              <div class="indicator-card normal total-card" style="cursor: default">
+            <div class="indicator-cards1">
+              <div class="indicator-card1 card1" style="cursor: default">
                 <div class="indicator-title">政企协同总数</div>
                 <div class="indicator-value">
                   <span :data-value="govCoopIndicators.totalCount" class="gov-coop-number-animate">
@@ -1054,7 +1054,7 @@ onUnmounted(() => {
                 </div>
                 <div class="indicator-unit">件</div>
               </div>
-              <div class="indicator-card normal rate-card" style="cursor: default">
+              <div class="indicator-card1 card2" style="cursor: default">
                 <div class="indicator-title">政企响应率</div>
                 <div class="indicator-value">
                   <span :data-value="govCoopIndicators.responseRate * 100" class="gov-coop-number-animate">
@@ -1063,7 +1063,7 @@ onUnmounted(() => {
                 </div>
                 <div class="indicator-unit">%</div>
               </div>
-              <div class="indicator-card normal satisfaction-card" style="cursor: default">
+              <div class="indicator-card1 card3" style="cursor: default">
                 <div class="indicator-title">政企满意度</div>
                 <div class="indicator-value">
                   <span :data-value="govCoopIndicators.satisfactionRate" class="gov-coop-number-animate">
@@ -1119,9 +1119,9 @@ onUnmounted(() => {
             </div>
           </div>
           <div v-if="activeGovCoopView === '列表'" class="view-content">
-            <div class="gov-enterprise-table-box">
+            <div class="table-box1">
               <ElTable
-                class="gov-enterprise-coop-table"
+                class="table1"
                 :data="govCoopList"
                 border
                 size="small"
@@ -1165,8 +1165,8 @@ onUnmounted(() => {
             </div>
           </div>
           <div v-if="activeSpecialCoopView === '卡片'" class="view-content">
-            <div class="indicator-cards">
-              <div class="indicator-card normal total-card" style="cursor: default">
+            <div class="indicator-cards1">
+              <div class="indicator-card1 card1" style="cursor: default">
                 <div class="indicator-title">专属协同总数</div>
                 <div class="indicator-value">
                   <span :data-value="specialCoopIndicators.totalCount" class="special-coop-number-animate">
@@ -1175,7 +1175,7 @@ onUnmounted(() => {
                 </div>
                 <div class="indicator-unit">件</div>
               </div>
-              <div class="indicator-card normal rate-card" style="cursor: default">
+              <div class="indicator-card1 card2" style="cursor: default">
                 <div class="indicator-title">协同完成率</div>
                 <div class="indicator-value">
                   <span :data-value="specialCoopIndicators.completeRate * 100" class="special-coop-number-animate">
@@ -1184,7 +1184,7 @@ onUnmounted(() => {
                 </div>
                 <div class="indicator-unit">%</div>
               </div>
-              <div class="indicator-card normal satisfaction-card" style="cursor: default">
+              <div class="indicator-card1 card3" style="cursor: default">
                 <div class="indicator-title">平均协同周期</div>
                 <div class="indicator-value">
                   <span :data-value="specialCoopIndicators.averageCycle" class="special-coop-number-animate">
@@ -1240,9 +1240,9 @@ onUnmounted(() => {
             </div>
           </div>
           <div v-if="activeSpecialCoopView === '列表'" class="view-content">
-            <div class="gov-enterprise-table-box">
+            <div class="table-box1">
               <ElTable
-                class="gov-enterprise-coop-table"
+                class="table1"
                 :data="specialCoopList"
                 border
                 size="small"
@@ -1285,8 +1285,8 @@ onUnmounted(() => {
             </div>
           </div>
           <div v-if="activeCoopEfficiencyView === '卡片'" class="view-content">
-            <div class="indicator-cards">
-              <div class="indicator-card normal total-card" style="cursor: default">
+            <div class="indicator-cards1">
+              <div class="indicator-card1 card1" style="cursor: default">
                 <div class="indicator-title">平均响应时长</div>
                 <div class="indicator-value">
                   <span :data-value="coopEfficiencyIndicators.avgResponseDuration" class="coop-efficiency-number-animate">
@@ -1295,7 +1295,7 @@ onUnmounted(() => {
                 </div>
                 <div class="indicator-unit">小时</div>
               </div>
-              <div class="indicator-card normal rate-card" style="cursor: default">
+              <div class="indicator-card1 card2" style="cursor: default">
                 <div class="indicator-title">平均处置时长</div>
                 <div class="indicator-value">
                   <span :data-value="coopEfficiencyIndicators.avgDisposalDuration" class="coop-efficiency-number-animate">
@@ -1304,7 +1304,7 @@ onUnmounted(() => {
                 </div>
                 <div class="indicator-unit">小时</div>
               </div>
-              <div class="indicator-card normal satisfaction-card" style="cursor: default">
+              <div class="indicator-card1 card3" style="cursor: default">
                 <div class="indicator-title">平均成效达标率</div>
                 <div class="indicator-value">
                   <span :data-value="coopEfficiencyIndicators.avgEffectAchievementRate * 100" class="coop-efficiency-number-animate">
@@ -1360,9 +1360,9 @@ onUnmounted(() => {
             />
           </div>
           <div v-if="activeCoopEfficiencyView === '列表'" class="view-content">
-            <div class="gov-enterprise-table-box">
+            <div class="table-box1">
               <ElTable
-                class="gov-enterprise-coop-table"
+                class="table1"
                 :data="coopEfficiencyList"
                 border
                 size="small"
@@ -1403,7 +1403,9 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 @import '../../../templatesstyle/common';
 @import '../../../templatesstyle/table1';
-@import '../../../templatesstyle/table2_top10';
+@import '../../../templatesstyle/table2-rank';
+@import '../../../templatesstyle/table3';
+@import '../../../templatesstyle/indicator-cards1';
 
 @keyframes blink {
   0%,100% { opacity: 1; }
@@ -1543,80 +1545,6 @@ onUnmounted(() => {
   height: 100%;
   font-size: 1vw;
   color: #00ffd0;
-}
-
-.indicator-cards {
-  box-sizing: border-box;
-  display: flex;
-  gap: 0.8vw;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-}
-
-.indicator-card {
-  display: flex;
-  flex: 0 0 8.4vw;
-  flex-direction: column;
-  justify-content: center;
-  padding: 4vh 0;
-  background: rgb(0 30 60 / 60%);
-  border: 0.1vw solid transparent;
-  border-radius: 8px;
-  transition: all 0.3s;
-  &:hover { transform: translateY(-5px); }
-  .indicator-title {
-    margin-top: 0.1vh;
-    font-size: 1vw;
-    font-weight: bold;
-    text-align: center;
-    letter-spacing: 0.1vw;
-  }
-  .indicator-value {
-    margin: 0.5vw 0;
-    font-size: 1.8vw;
-    font-weight: bold;
-    text-align: center;
-    transition: all 0.3s;
-  }
-  // 核心：新增单位样式 - 全局统一
-  .indicator-unit {
-    font-size: 0.7vw;
-    text-align: center;
-    letter-spacing: 0.05vw;
-    opacity: 0.9;
-  }
-}
-
-// 总数卡片-单位样式
-.indicator-card.total-card {
-  border-color: #0cf;
-  box-shadow: 0 5px 15px rgb(0 204 255 / 30%);
-  .indicator-title { color: #66e0ff; }
-  .indicator-value { color: #0cf; }
-  .indicator-unit { color: #66e0ff; }
-  &:hover { box-shadow: 0 5px 20px rgb(0 204 255 / 50%); }
-}
-
-// 比率卡片-单位样式
-.indicator-card.rate-card {
-  border-color: #13ce66;
-  box-shadow: 0 5px 15px rgb(19 206 102 / 30%);
-  .indicator-title { color: #70f59c; }
-  .indicator-value { color: #13ce66; }
-  .indicator-unit { color: #70f59c; }
-  &:hover { box-shadow: 0 5px 20px rgb(19 206 102 / 50%); }
-}
-
-// 满意度/时效卡片-单位样式
-.indicator-card.satisfaction-card {
-  border-color: #ffc107;
-  box-shadow: 0 5px 15px rgb(255 193 7 / 30%);
-  .indicator-title { color: #ffe066; }
-  .indicator-value { color: #ffc107; }
-  .indicator-unit { color: #ffe066; }
-  &:hover { box-shadow: 0 5px 20px rgb(255 193 7 / 50%); }
 }
 
 .blink-animation { animation: blink 1.5s infinite; }

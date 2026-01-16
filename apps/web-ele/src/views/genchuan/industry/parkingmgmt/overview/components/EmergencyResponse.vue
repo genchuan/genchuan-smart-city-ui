@@ -64,7 +64,7 @@ const getStoredOrbitConfig = () => {
     try { return JSON.parse(stored); }
     catch (error) { console.warn('读取本地存储的地图配置失败，使用默认值:', error); }
   }
-  return { center: { lat: 24.58, lng: 117.65 }, rotateSpeed: 0.1, pitch: 40, zoom: 18, loop: true };
+  return { center: { lat: 24.58, lng: 117.65 }, rotateSpeed: 0.1, pitch: 40, zoom: 16, loop: true };
 };
 
 const saveOrbitConfigToLocal = (config: any) => {
@@ -140,7 +140,7 @@ const submitOrbitConfig = async () => {
 };
 
 const resetToDefaultConfig = () => {
-  const defaultConfig = { center: { lat: 24.58, lng: 117.65 }, rotateSpeed: 0.1, pitch: 40, zoom: 18, loop: true };
+  const defaultConfig = { center: { lat: 24.58, lng: 117.65 }, rotateSpeed: 0.1, pitch: 40, zoom: 16, loop: true };
   orbitConfigData.value = defaultConfig;
   orbitConfigForm.value = { centerLat: defaultConfig.center.lat, centerLng: defaultConfig.center.lng, rotateSpeed: defaultConfig.rotateSpeed, pitch: defaultConfig.pitch, zoom: defaultConfig.zoom, loop: defaultConfig.loop };
   localStorage.removeItem('parkingMapOrbitConfig');
@@ -384,21 +384,21 @@ onUnmounted(() => {
                 </div>
               </div>
               <div style="flex: 1; width: 100%; height: calc(100% - 2vh);position: relative;">
-                <div class="force-stats-overlay1">
-                  <div class="force-stats-cards">
-                    <div class="force-stat-card">
+                <div class="stats-overlay1">
+                  <div class="stats-cards1">
+                    <div class="stat-card">
                       <div class="stat-content">
                         <div class="stat-title">应急事件总数</div>
                         <div class="stat-value">{{ emergencySituationIndicatorData.totalEmergencyCount }} 起</div>
                       </div>
                     </div>
-                    <div class="force-stat-card">
+                    <div class="stat-card">
                       <div class="stat-content">
                         <div class="stat-title">各等级应急数</div>
                         <div class="stat-value">一{{ emergencySituationIndicatorData.levelEmergencyCount.level1 }}/二{{ emergencySituationIndicatorData.levelEmergencyCount.level2 }}/三{{ emergencySituationIndicatorData.levelEmergencyCount.level3 }}/四{{ emergencySituationIndicatorData.levelEmergencyCount.level4 }}</div>
                       </div>
                     </div>
-                    <div class="force-stat-card">
+                    <div class="stat-card">
                       <div class="stat-content">
                         <div class="stat-title">受影响车辆数</div>
                         <div class="stat-value">{{ emergencySituationIndicatorData.affectedVehicleTotal }} 辆</div>
@@ -407,12 +407,12 @@ onUnmounted(() => {
                   </div>
                 </div>
                 <EmergencyResponseMap1 v-if="!map1Loading && topMiddleActiveTab === 'tab1'" ref="emergencyMap1Ref" id-name="parkingMap3_top" :geometries-array="emergencySituationData" :orbit-config="orbitConfigData" />
-                <div class="force-stats-overlay2">
-                  <div class="force-stats-cards">
-                    <div class="force-stat-card2 chart-card">
+                <div class="chart-overlay2">
+                  <div class="chart-cards2">
+                    <div class="chart-card">
                       <ChartPie1 :key="topMainChartRefreshKey" :data="emergencyTypeRatioData" title="应急类型占比" :base-font-scale="disposalProgressBaseFontScale" :active-indices="disposalProgressActiveIndices" style="width:100%;height:100%"/>
                     </div>
-                    <div class="force-stat-card2 chart-card">
+                    <div class="chart-card">
                       <ChartPie2 :key="topMainChartRefreshKey" :data="emergencyLevelRatioData" title="应急等级占比" :base-font-scale="disposalProgressBaseFontScale" :active-indices="disposalProgressActiveIndices" style="width:100%;height:100%"/>
                     </div>
                   </div>
@@ -440,15 +440,15 @@ onUnmounted(() => {
               </div>
               <div style="flex: 1; width: 100%; height: calc(100% - 2vh);position: relative;">
                 <EmergencyResponseMap2 v-if="!map2Loading && topMiddleActiveTab === 'tab2'" ref="emergencyMap2Ref" id-name="parkingMap4_top" :geometries-array="emergencyResourceData" :orbit-config="orbitConfigData" />
-                <div class="force-stats-overlay2">
-                  <div class="force-stats-cards">
-                    <div class="force-stat-card2 chart-card" style="width:240px;height:190px;">
+                <div class="chart-overlay2">
+                  <div class="chart-cards2">
+                    <div class="chart-card" style="width:240px;height:190px;">
                       <VerticalBar3 :key="topMainChartRefreshKey" :x-axis="resourceTypeCompareData.xAxis" :series="resourceTypeCompareData.series" unit="个/支/套" title="不同类型资源数量对比" :base-font-scale="disposalProgressBaseFontScale" :active-indices="disposalProgressActiveIndices" style="width:100%;height:100%"/>
                     </div>
-                    <div class="force-stat-card2 chart-card" style="width:240px;height:190px;">
+                    <div class="chart-card" style="width:240px;height:190px;">
                       <VerticalBar3 :key="topMainChartRefreshKey" :x-axis="resourceDeptCompareData.xAxis" :series="resourceDeptCompareData.series" unit="个/支/套" title="不同部门资源数量对比" :base-font-scale="disposalProgressBaseFontScale" :active-indices="disposalProgressActiveIndices" style="width:100%;height:100%"/>
                     </div>
-                    <div class="force-stat-card2 chart-card" style="width:240px;height:190px;">
+                    <div class="chart-card" style="width:240px;height:190px;">
                       <ChartPie1 :key="topMainChartRefreshKey" :data="resourceStatusRatioData" title="资源状态占比" :base-font-scale="disposalProgressBaseFontScale" :active-indices="disposalProgressActiveIndices" style="width:100%;height:100%"/>
                     </div>
                   </div>
@@ -475,21 +475,21 @@ onUnmounted(() => {
                 </div>
               </div>
               <div style="flex: 1; width: 100%; height: calc(100% - 2vh);position: relative;">
-                <div class="force-stats-overlay1">
-                  <div class="force-stats-cards">
-                    <div class="force-stat-card">
+                <div class="stats-overlay1">
+                  <div class="stats-cards1">
+                    <div class="stat-card">
                       <div class="stat-content">
                         <div class="stat-title">受困车辆数</div>
                         <div class="stat-value">{{ specialEmergencyIndicatorData.trappedVehicleTotal }} 辆</div>
                       </div>
                     </div>
-                    <div class="force-stat-card">
+                    <div class="stat-card">
                       <div class="stat-content">
                         <div class="stat-title">已疏散车辆数</div>
                         <div class="stat-value">{{ specialEmergencyIndicatorData.evacuatedVehicleCount }} 辆</div>
                       </div>
                     </div>
-                    <div class="force-stat-card">
+                    <div class="stat-card">
                       <div class="stat-content">
                         <div class="stat-title">已修复设备数</div>
                         <div class="stat-value">{{ specialEmergencyIndicatorData.repairedDeviceCount }} 台</div>
@@ -498,9 +498,9 @@ onUnmounted(() => {
                   </div>
                 </div>
                 <EmergencyResponseMap3 v-if="!map3Loading && topMiddleActiveTab === 'tab3'" ref="emergencyMap3Ref" id-name="parkingMap2" :geometries-array="specialEmergencyData" :orbit-config="orbitConfigData" />
-                <div class="force-stats-overlay2">
-                  <div class="force-stats-cards">
-                    <div class="force-stat-card2 chart-card" style="width:520px;">
+                <div class="chart-overlay2">
+                  <div class="chart-cards2">
+                    <div class="chart-card" style="width:520px;">
                       <ChartLine2 :key="topMainChartRefreshKey" :data="specialEmergencyTrendData" title="处置进度时间趋势" y-axis-name="辆/台" :base-font-scale="disposalProgressBaseFontScale" style="width:100%;height:100%"/>
                     </div>
                   </div>
@@ -528,18 +528,18 @@ onUnmounted(() => {
                 </div>
               </div>
               <div v-if="activeDispatchTaskView === '卡片'" class="view-content">
-                <div class="indicator-cards">
-                  <div class="indicator-card normal total-card" style="cursor: default">
+                <div class="indicator-cards1">
+                  <div class="indicator-card1 card1" style="cursor: default">
                     <div class="indicator-title">待执行任务数</div>
                     <div class="indicator-value"><span :data-value="dispatchTaskIndicators.pendingCount" class="dispatch-task-number-animate">{{ dispatchTaskIndicators.pendingCount }}</span></div>
                     <div class="indicator-unit">个</div>
                   </div>
-                  <div class="indicator-card normal rate-card" style="cursor: default">
+                  <div class="indicator-card1 card2" style="cursor: default">
                     <div class="indicator-title">执行中任务数</div>
                     <div class="indicator-value"><span :data-value="dispatchTaskIndicators.executingCount" class="dispatch-task-number-animate">{{ dispatchTaskIndicators.executingCount }}</span></div>
                     <div class="indicator-unit">个</div>
                   </div>
-                  <div class="indicator-card normal satisfaction-card" style="cursor: default">
+                  <div class="indicator-card1 card3" style="cursor: default">
                     <div class="indicator-title">已完成任务数</div>
                     <div class="indicator-value"><span :data-value="dispatchTaskIndicators.completedCount" class="dispatch-task-number-animate">{{ dispatchTaskIndicators.completedCount }}</span></div>
                     <div class="indicator-unit">个</div>
@@ -550,8 +550,8 @@ onUnmounted(() => {
                 <VerticalBar3 :x-axis="dispatchTaskReceiverCompareData.xAxis" :series="dispatchTaskReceiverCompareData.series" unit="个" title="不同接收人任务完成情况对比" :base-font-scale="dispatchTaskBaseFontScale" :active-indices="dispatchTaskActiveIndices" style="width:100%;height:100%"/>
               </div>
               <div v-if="activeDispatchTaskView === '列表'" class="view-content">
-                <div class="gov-enterprise-table-box">
-                  <ElTable class="gov-enterprise-coop-table" :data="dispatchTaskList" border size="small" width="100%" height="100%" table-layout="fixed" highlight-current-row>
+                <div class="table-box3">
+                  <ElTable class="table3" :data="dispatchTaskList" border size="small" width="100%" height="100%" table-layout="fixed" highlight-current-row>
                     <ElTableColumn prop="dispatchTaskId" label="调度任务ID" align="center" />
                     <ElTableColumn prop="taskContent" label="任务内容" align="center" min-width="200px" />
                     <ElTableColumn prop="dispatchType" label="调度类型" align="center"><template #default="scope">{{ getDispatchTypeName(scope.row.dispatchType) }}</template></ElTableColumn>
@@ -588,13 +588,13 @@ onUnmounted(() => {
                 </div>
               </div>
               <div v-if="activeDisposalProgressView === '卡片'" class="view-content">
-                <div class="indicator-cards">
-                  <div class="indicator-card normal total-card" style="cursor: default">
+                <div class="indicator-cards1">
+                  <div class="indicator-card1 card1" style="cursor: default">
                     <div class="indicator-title">各阶段平均耗时</div>
                     <div class="indicator-value"><span :data-value="(disposalProgressIndicators.avgAlarmDuration+disposalProgressIndicators.avgReceiveDuration+disposalProgressIndicators.avgArriveDuration+disposalProgressIndicators.avgDisposeDuration+disposalProgressIndicators.avgCloseDuration)/5" class="disposal-progress-number-animate">{{ ((disposalProgressIndicators.avgAlarmDuration+disposalProgressIndicators.avgReceiveDuration+disposalProgressIndicators.avgArriveDuration+disposalProgressIndicators.avgDisposeDuration+disposalProgressIndicators.avgCloseDuration)/5).toFixed(1) }}</span></div>
                     <div class="indicator-unit">分钟</div>
                   </div>
-                  <div class="indicator-card normal rate-card" style="cursor: default">
+                  <div class="indicator-card1 card2" style="cursor: default">
                     <div class="indicator-title">超时处置数</div>
                     <div class="indicator-value"><span :data-value="disposalProgressIndicators.timeoutDisposalCount" class="disposal-progress-number-animate">{{ disposalProgressIndicators.timeoutDisposalCount }}</span></div>
                     <div class="indicator-unit">个</div>
@@ -605,8 +605,8 @@ onUnmounted(() => {
                 <ChartLine1 :data="disposalProgressTrendData" title="处置进度时间趋势" y-axis-name="分钟" :base-font-scale="disposalProgressBaseFontScale" style="width:100%;height:100%"/>
               </div>
               <div v-if="activeDisposalProgressView === '列表'" class="view-content">
-                <div class="gov-enterprise-table-box">
-                  <ElTable class="gov-enterprise-coop-table" :data="disposalProgressList" border size="small" width="100%" height="100%" table-layout="fixed" highlight-current-row>
+                <div class="table-box1">
+                  <ElTable class="table1" :data="disposalProgressList" border size="small" width="100%" height="100%" table-layout="fixed" highlight-current-row>
                     <ElTableColumn prop="emergencyId" label="应急事件ID" align="center" />
                     <ElTableColumn prop="disposalStage" label="处置阶段" align="center"><template #default="scope">{{ getDisposalStageName(scope.row.disposalStage) }}</template></ElTableColumn>
                     <ElTableColumn prop="stageStartTime" label="阶段开始时间" align="center"><template #default="scope">{{ formatTimeStamp(scope.row.stageStartTime) }}</template></ElTableColumn>
@@ -641,13 +641,13 @@ onUnmounted(() => {
                 </div>
               </div>
               <div v-if="activeEmergencyPlanView === '卡片'" class="view-content">
-                <div class="indicator-cards">
-                  <div class="indicator-card normal total-card" style="cursor: default">
+                <div class="indicator-cards1">
+                  <div class="indicator-card1 card1" style="cursor: default">
                     <div class="indicator-title">已启动方案数</div>
                     <div class="indicator-value"><span :data-value="emergencyPlanIndicators.launchedCount" class="emergency-plan-number-animate">{{ emergencyPlanIndicators.launchedCount }}</span></div>
                     <div class="indicator-unit">个</div>
                   </div>
-                  <div class="indicator-card normal rate-card" style="cursor: default">
+                  <div class="indicator-card1 card2" style="cursor: default">
                     <div class="indicator-title">执行中方案数</div>
                     <div class="indicator-value"><span :data-value="emergencyPlanIndicators.executingCount" class="emergency-plan-number-animate">{{ emergencyPlanIndicators.executingCount }}</span></div>
                     <div class="indicator-unit">个</div>
@@ -658,8 +658,8 @@ onUnmounted(() => {
                 <ChartPie1 :data="emergencyPlanTypeRatioData" title="方案适配应急类型占比" :base-font-scale="emergencyPlanBaseFontScale" :active-indices="emergencyPlanActiveIndices" style="width:100%;height:100%"/>
               </div>
               <div v-if="activeEmergencyPlanView === '列表'" class="view-content">
-                <div class="gov-enterprise-table-box">
-                  <ElTable class="gov-enterprise-coop-table" :data="emergencyPlanList" border size="small" width="100%" height="100%" table-layout="fixed" highlight-current-row>
+                <div class="table-box3">
+                  <ElTable class="table3" :data="emergencyPlanList" border size="small" width="100%" height="100%" table-layout="fixed" highlight-current-row>
                     <ElTableColumn prop="emergency_plan_id" label="应急方案ID" align="center" />
                     <ElTableColumn prop="plan_name" label="方案名称" align="center" min-width="180px" />
                     <ElTableColumn prop="emergency_type" label="适配应急类型" align="center"><template #default="scope">{{ getEmergencyTypeName(scope.row.emergency_type) }}</template></ElTableColumn>
@@ -702,6 +702,10 @@ onUnmounted(() => {
 @import '../../../templatesstyle/common';
 @import '../../../templatesstyle/table1';
 @import '../../../templatesstyle/global-data-map';
+@import '../../../templatesstyle/table3';
+@import '../../../templatesstyle/indicator-cards1';
+@import '../../../templatesstyle/stat-cards1';
+@import '../../../templatesstyle/chart-cards2';
 
 .page-container {
   box-sizing: border-box;
@@ -792,36 +796,6 @@ onUnmounted(() => {
   color: #00ffd0;
 }
 
-.indicator-cards {
-  box-sizing: border-box;
-  display: flex;
-  gap: 0.6vw;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-}
-
-.indicator-card {
-  display: flex;
-  flex: 0 0 8.4vw;
-  flex-direction: column;
-  justify-content: center;
-  padding: 5vh 0;
-  background: rgb(0 30 60 / 60%);
-  border: 0.1vw solid transparent;
-  border-radius: 8px;
-  transition: all 0.3s;
-  &:hover { transform: translateY(-5px); }
-  .indicator-title { margin-top: 0.1vh; font-size: 1vw; font-weight: bold; text-align: center; letter-spacing: 0.1vw; }
-  .indicator-value { margin: 0.3vw 0; font-size: 1.6vw; font-weight: bold; text-align: center; transition: all 0.3s; }
-  .indicator-unit { font-size: 0.7vw; text-align: center; letter-spacing: 0.05vw; opacity: 0.9; }
-}
-
-.indicator-card.total-card { border-color: #0cf; box-shadow: 0 5px 15px rgb(0 204 255 / 30%); &:hover { box-shadow: 0 5px 20px rgb(0 204 255 / 50%); } }
-.indicator-card.rate-card { border-color: #13ce66; box-shadow: 0 5px 15px rgb(19 206 102 / 30%); &:hover { box-shadow: 0 5px 20px rgb(19 206 102 / 50%); } }
-.indicator-card.satisfaction-card { border-color: #ffc107; box-shadow: 0 5px 15px rgb(255 193 7 / 30%); &:hover { box-shadow: 0 5px 20px rgb(255 193 7 / 50%); } }
-
 .header-actions {
   display: flex;
   align-items: center;
@@ -834,84 +808,4 @@ onUnmounted(() => {
   .panel-fullscreen-btn { margin-right: 0.5vw; cursor: pointer; background: transparent; border: none; }
 }
 
-.gov-enterprise-table-box {
-  width: 100%;
-  height: 100%;
-  overflow: auto !important;
-}
-:deep(.gov-enterprise-coop-table) {
-  --el-table-text-color: #fff;
-  --el-table-header-text-color: #00ffd0;
-  --el-table-border-color: rgb(25 186 139 / 30%);
-  --el-table-row-hover-bg-color: rgb(0 204 255 / 10%);
-  width: 100%;
-  height: 100%;
-  font-size: 0.7vw;
-  table-layout: fixed;
-  th, td { white-space: nowrap; border-color: rgb(25 186 139 / 30%) !important; }
-}
-
-.force-stats-overlay1 {
-  position: absolute;
-  top: 2vh;
-  left: 0.5vw;
-  z-index: 999;
-  display: flex;
-  flex-direction: column;
-  width: 120px;
-}
-.force-stats-overlay1 .force-stats-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5vw;
-  width: 100%;
-}
-
-.force-stats-overlay2 {
-  position: absolute;
-  bottom: 3.6vh;
-  right: 0.5vw;
-  z-index: 999;
-  display: flex;
-  flex-direction: row;
-  gap: 0.8vw;
-}
-.force-stats-overlay2 .force-stats-cards {
-  display: flex;
-  gap: 0.8vw;
-  width: 100%;
-}
-
-.force-stat-card {
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  padding: 0.5vw;
-  cursor: pointer;
-  background: rgb(0 30 60 / 70%);
-  border: 1px solid rgb(0 204 255 / 30%);
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  height: 60px;
-}
-
-.force-stat-card2 {
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  padding: 0.5vw;
-  cursor: pointer;
-  background: rgb(0 30 60 / 80%);
-  border: 1px solid rgb(0 204 255 / 30%);
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  width: 280px;
-  height: 200px;
-}
-
-.chart-card { padding: 0.3vw !important; }
-.stat-content { flex: 1; overflow: hidden; }
-.stat-title { padding-bottom: 0.5vh; font-size: 0.7vw; color: rgb(255 255 255 / 70%); }
-.stat-value { font-size: 0.8vw; color: rgb(0 204 255 / 80%); }
 </style>
