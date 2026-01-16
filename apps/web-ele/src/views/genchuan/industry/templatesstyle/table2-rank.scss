@@ -1,0 +1,125 @@
+
+.rank-box {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 0.5vw;
+
+  :deep(.el-table) {
+    --el-table-bg-color: transparent;
+    --el-table-text-color: #999;
+    --el-table-border-color: rgb(0 204 255 / 10%);
+    --el-table-header-text-color: #ffb800;
+    --el-table-header-bg-color: rgb(16 32 64 / 80%);
+    --el-table-row-hover-bg-color: rgb(255 125 0 / 10%);
+    --el-table-row-stripes-bg-color: rgb(16 32 64 / 30%);
+
+    height: 100%;
+    overflow: hidden;
+    border-radius: 4px;
+
+    .el-table__header {
+      border-bottom: 1px solid rgb(0 204 255 / 30%);
+    }
+
+    .el-table__cell {
+      padding: 1vh 0.8vw !important;
+      border-bottom: 1px solid rgb(0 204 255 / 10%);
+    }
+
+    .el-tag {
+      padding: 0.2vh 0.6vw;
+      font-size: 0.75vw;
+      border-radius: 12px;
+    }
+
+    th {
+      padding: 0.5vw 0;
+      font-size: 0.8vw;
+      font-weight: 500;
+      color: #ffb800;
+      text-align: center;
+      background-color: rgb(0 40 80 / 80%);
+      border-color: rgb(0 204 255 / 30%);
+    }
+
+    td {
+      padding: 0.4vw 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 0.7vw;
+      color: #b3d9ff;
+      text-align: center;
+      white-space: nowrap;
+      background-color: transparent;
+      border-bottom: 1px solid rgb(0 204 255 / 15%);
+      transition: all 0.2s;
+    }
+
+    .el-table__row {
+      background-color: rgb(0 30 60 / 50%);
+
+      &:nth-child(even) {
+        background-color: rgb(0 40 80 / 50%);
+      }
+
+      &:hover > td {
+        color: #fff;
+        background-color: rgb(255 125 0 / 30%) !important;
+      }
+    }
+
+    .el-table__row--current > td {
+      color: #fff;
+      background-color: rgb(255 125 0 / 40%) !important;
+    }
+
+    .el-table__empty-text {
+      color: #ffb800;
+      background-color: rgb(0 30 60 / 40%);
+    }
+
+    &::before {
+      background-color: rgb(0 204 255 / 20%);
+    }
+  }
+}
+
+.rank-row {
+  &:nth-child(1) .rank-tag {
+    background: #ffd100;
+  } // 第一名金色
+  &:nth-child(2) .rank-tag {
+    background: #c0c0c0;
+  } // 第二名银色
+  &:nth-child(3) .rank-tag {
+    background: #cd7f32;
+  } // 第三名铜色
+  &:nth-child(n + 4):nth-child(-n + 10) .rank-tag {
+    background: #68bce0;
+  }
+}
+
+.rank-tag {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  font-weight: bold;
+  line-height: 24px;
+  color: #fff;
+  text-align: center;
+  background: #ff7d00;
+  border-radius: 50%;
+}
+
+.rank-text-danger {
+  color: #ff4949;
+}
+
+.rank-text-warning {
+  color: #ff7d00;
+}
+
+.rank-text-success {
+  color: #13ce66;
+}

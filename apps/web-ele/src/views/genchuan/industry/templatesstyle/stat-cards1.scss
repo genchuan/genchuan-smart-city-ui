@@ -1,0 +1,35 @@
+
+.force-stats-overlay1 {
+  position: absolute;
+  top: 2vh;
+  left: 0.5vw;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  width: 120px;
+}
+
+.force-stats-overlay1 .force-stats-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5vw;
+  width: 100%;
+}
+
+.force-stat-card {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.5vw;
+  cursor: pointer;
+  background: rgb(0 30 60 / 70%);
+  border: 1px solid rgb(0 204 255 / 30%);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  height: 60px;
+}
+
+.stat-content { flex: 1; overflow: hidden; }
+.stat-title { padding-bottom: 0.5vh; font-size: 0.7vw; color: rgb(255 255 255 / 70%); }
+.stat-value { font-size: 0.8vw; color: rgb(0 204 255 / 80%); }
