@@ -5,13 +5,13 @@ import { useVbenDrawer } from '@vben/common-ui';
 
 // 定义组件接收的属性
 const props = defineProps({
-  // 详情数据对象（车库数据）
+  // 详情数据对象（车位数据）
   detailObj: {
     type: Object,
     required: true,
     default: () => ({}),
   },
-  // 抽屉标题（可选，默认使用详情对象的garageName/name）
+  // 抽屉标题（可选，默认使用车位编号）
   title: {
     type: String,
     default: '',
@@ -20,11 +20,10 @@ const props = defineProps({
 
 const { detailObj, title } = toRefs(props);
 
-// 计算属性处理标题，优先使用车库名称，兜底显示默认值
+// 计算属性处理标题，优先使用车位编号，兜底显示默认值
 const drawerTitle = computed(() => {
-  const garageName =
-    detailObj.value?.garageName || detailObj.value?.name || '车库';
-  return title.value || `${garageName}详情`;
+  const parkingSpaceNo = detailObj.value?.parkingSpaceNo || '车位';
+  return title.value || `${parkingSpaceNo}详情`;
 });
 
 // 初始化抽屉实例
@@ -32,7 +31,7 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 700, // 加宽抽屉适配更多字段
+  width: 800, // 加宽抽屉适配更多车位字段
   onCancel() {
     detailDrawerApi.close();
   },
@@ -50,68 +49,68 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 基础信息 -->
+      <!-- 车位详情信息 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">车库ID:</div>
-        <div class="detail-row-right">{{ detailObj.id || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">资产扩展ID:</div>
-        <div class="detail-row-right">{{ detailObj.assetExtendId || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">所属车场ID:</div>
-        <div class="detail-row-right">{{ detailObj.parkId || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">车库名称:</div>
-        <div class="detail-row-right">{{ detailObj.garageName || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">楼层数:</div>
-        <div class="detail-row-right">{{ detailObj.floorCount || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">总车位数:</div>
+        <div class="detail-row-left">车位编号:</div>
         <div class="detail-row-right">
-          {{ detailObj.totalParkingSpaces || '-' }}
+          {{ detailObj.parkingSpaceNo || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">门禁类型:</div>
+        <div class="detail-row-left">车位类型:</div>
         <div class="detail-row-right">
-          {{ detailObj.accessControlType || '-' }}
+          {{ detailObj.parkingSpaceType || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">详细地址:</div>
+        <div class="detail-row-left">所属车场/车库:</div>
         <div class="detail-row-right">
-          {{ detailObj.detailedAddress || '-' }}
+          {{ detailObj.belongParkGarage || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">经度:</div>
-        <div class="detail-row-right">{{ detailObj.longitude || '-' }}</div>
+        <div class="detail-row-left">位置描述:</div>
+        <div class="detail-row-right">{{ detailObj.locationDesc || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">纬度:</div>
-        <div class="detail-row-right">{{ detailObj.latitude || '-' }}</div>
+        <div class="detail-row-left">是否可预约:</div>
+        <div class="detail-row-right">{{ detailObj.bookable || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">绑定车牌数量上限:</div>
+        <div class="detail-row-right">
+          {{ detailObj.bindPlateLimit || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">启用状态:</div>
         <div class="detail-row-right">{{ detailObj.enableStatus || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">创建人:</div>
-        <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>
+        <div class="detail-row-left">联系人:</div>
+        <div class="detail-row-right">{{ detailObj.contactPerson || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">车场名称:</div>
-        <div class="detail-row-right">{{ detailObj.name || '-' }}</div>
+        <div class="detail-row-left">联系电话:</div>
+        <div class="detail-row-right">{{ detailObj.contactPhone || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">创建时间:</div>
-        <div class="detail-row-right">{{ detailObj.createTime || '-' }}</div>
+        <div class="detail-row-left">绑定车牌数:</div>
+        <div class="detail-row-right">
+          {{ detailObj.bindPlateCount || '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">台账更新时间:</div>
+        <div class="detail-row-right">
+          {{ detailObj.ledgerUpdateTime || '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">可用状态:</div>
+        <div class="detail-row-right">
+          {{ detailObj.availableStatus || '-' }}
+        </div>
       </div>
     </div>
   </DetailDrawer>
@@ -154,7 +153,7 @@ defineExpose({
 
 // 左侧标签样式
 .detail-row-left {
-  width: 120px; // 固定宽度，保证所有标签对齐
+  width: 140px; // 加宽适配长标签（绑定车牌数量上限/台账更新时间）
   flex-shrink: 0; // 不收缩
   font-weight: 500; // 加粗突出标签
   color: #606266; // 灰色调，区分内容
@@ -168,14 +167,14 @@ defineExpose({
   color: #303133; // 主文本色
   font-size: 14px;
   line-height: 18px;
-  word-break: break-all; // 处理长文本换行（如详细地址）
+  word-break: break-all; // 处理长文本换行（如所属车场/车库、位置描述）
   padding-right: 10px;
 }
 
 // 响应式适配
 @media (max-width: 768px) {
   .detail-row-left {
-    width: 100px;
+    width: 120px;
   }
   .detail-card {
     padding: 15px;

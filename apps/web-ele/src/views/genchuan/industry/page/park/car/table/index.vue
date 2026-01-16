@@ -12,9 +12,7 @@ import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 // 引入封装后的详情抽屉组件
-import ParkDetailDrawer from '#/views/genchuan/industry/page/park/components/detail.vue';
-import garageDetailDrawer from '#/views/genchuan/industry/page/park/garage/table/detail.vue';
-import { dataList as parkData } from '#/views/genchuan/industry/page/park/parkinglot/table/data';
+import garageDetailDrawer from '#/views/genchuan/industry/page/park/car/table/detail.vue';
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
@@ -246,13 +244,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const activeName = ref('全部');
-// 修改打开详情的方法，调用组件的open方法
-const handleOpenDetail = (row) => {
-  const parkObj = parkData().find((v) => v.name === row.name);
-  dataObj.detailObj = parkObj;
-  // 通过ref调用组件的open方法
-  parkDetailDrawerRef.value.open();
-};
 const handleGarageOpenDetail = (row) => {
   dataObj.garageDetail = row;
   garageDetailRef.value.open();
@@ -281,8 +272,6 @@ const handleFullShow = () => {
   screenfull.toggle();
 };
 
-// 定义组件ref，用于调用组件方法
-const parkDetailDrawerRef = ref(null);
 const garageDetailRef = ref(null);
 </script>
 
@@ -291,12 +280,6 @@ const garageDetailRef = ref(null);
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <!-- 使用封装后的详情抽屉组件 -->
-    <ParkDetailDrawer
-      ref="parkDetailDrawerRef"
-      :detail-obj="dataObj.detailObj"
-      :title="`${dataObj.detailObj.name}`"
-    />
     <garageDetailDrawer
       ref="garageDetailRef"
       :detail-obj="dataObj.garageDetail"
@@ -372,22 +355,13 @@ const garageDetailRef = ref(null);
           ></i>
         </button>
       </template>
-      <template #parkName="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.name }}
-        </el-text>
-      </template>
-      <template #garageName="{ row }">
+      <template #parkingSpaceNo="{ row }">
         <el-text
           @click="handleGarageOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.garageName }}
+          {{ row.parkingSpaceNo }}
         </el-text>
       </template>
       <template #actions="{ row }">
