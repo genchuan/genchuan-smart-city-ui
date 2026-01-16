@@ -2,6 +2,74 @@ import { requestClient } from '#/api/request';
 
 const BASE_URL = '/industry/parking';
 
+// ============ 预警事件处置跟踪甘特图接口 (结构完全不变，仅新增模拟数据到15条) ============
+export const fetchEventHandleGanttData = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/park/event/gantt/list`, // 接口地址不变
+        params,
+      })
+      .then((response) => {
+        if (response && response.event && response.eventCate) {
+          return {
+            event: {
+              dimensions: ['分类索引', '开始处置时间', '处置完成时间', '预警类型', '处置状态'],
+              data: response.event.data || []
+            },
+            eventCate: {
+              dimensions: ['关联工单号'],
+              data: response.eventCate.data || []
+            }
+          };
+        }
+        throw new Error('真实接口返回无预警处置甘特图数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('预警处置跟踪甘特图接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              event: {
+                dimensions: ['分类索引', '开始处置时间', '处置完成时间', '预警类型', '处置状态'],
+                data: [
+                  [0, 1720339200000, 1720512000000, '客流超限预警', true],
+                  [1, 1720684800000, 1720857600000, '道闸超时未关预警', true],
+                  [2, 1720857600000, 1721030400000, '车位占用预警', false],
+                  [3, 1720512000000, 1720684800000, '监控离线预警', false],
+                  [4,1721376000000, 1721548800000, '车辆滞留预警', true],
+                  [5,1721548800000, 1721721600000, '充电桩过载预警', false],
+                  [6,1721894400000, 1722067200000, '设备离线预警', false],
+                  [7, 1720684800000, 1720857600000, '道闸超时未关预警', true],
+                  [8, 1720857600000, 1721030400000, '车位占用预警', false],
+                  [9, 1720512000000, 1720684800000, '监控离线预警', false],
+                  [10, 1719648000000, 1719820800000, '车辆违停预警', true],
+                  [11, 1719820800000, 1719993600000, '充电桩断电预警', false],
+                  [12, 1719475200000, 1719648000000, '道闸故障预警', true],
+                  [13, 1721030400000, 1721203200000, '消防栓异常预警', true],
+                  [14,1721721600000, 1721894400000, '出入口拥堵预警', true]
+                ]
+              },
+              eventCate: {
+                dimensions: ['关联工单号'],
+                data: [
+                  ['W20260116001'],['W20260116002'],['W20260116003'],['W20260116004'],['W20260116005'],
+                  ['W20260116006'],['W20260116007'],['W20260116008'],['W20260116009'],['W20260116010'],
+                  ['W20260116011'],['W20260116012'],['W20260116013'],['W20260116014'],['W20260116015']
+                ]
+              }
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchEventHandleGanttData 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({ event: { data: [] }, eventCate: { data: [] } });
+  }
+};
+
 // ======================== 预警事件概览 所有接口 ========================
 // 预警事件概览-预警事件核心详情列表
 export const fetchAlarmEventList = (params = {}) => {
