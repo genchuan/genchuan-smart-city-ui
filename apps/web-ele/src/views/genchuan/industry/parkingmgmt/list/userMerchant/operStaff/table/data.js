@@ -21,7 +21,7 @@ export const dataList = () => {
       deptName: '运维部',
       teamName: '芗城区运维队',
       postName: '设备维修员',
-      areaName: '芗城区'
+      areaName: '芗城区',
     },
     {
       maintainUserId: '2',
@@ -43,7 +43,7 @@ export const dataList = () => {
       deptName: '运维部',
       teamName: '龙文区运维队',
       postName: '故障排查员',
-      areaName: '龙文区'
+      areaName: '龙文区',
     },
     {
       maintainUserId: '3',
@@ -65,7 +65,7 @@ export const dataList = () => {
       deptName: '运维部',
       teamName: '芗城区运维队',
       postName: '工单处置员',
-      areaName: '芗城区'
+      areaName: '芗城区',
     },
     {
       maintainUserId: '4',
@@ -87,7 +87,7 @@ export const dataList = () => {
       deptName: '运维部',
       teamName: '龙海区运维队',
       postName: '设备维修员',
-      areaName: '龙海区'
+      areaName: '龙海区',
     },
     {
       maintainUserId: '5',
@@ -109,7 +109,7 @@ export const dataList = () => {
       deptName: '运维部',
       teamName: '龙文区运维队',
       postName: '故障排查员',
-      areaName: '龙文区'
+      areaName: '龙文区',
     },
     {
       maintainUserId: '6',
@@ -131,7 +131,7 @@ export const dataList = () => {
       deptName: '运维部',
       teamName: '龙海区运维队',
       postName: '工单处置员',
-      areaName: '龙海区'
+      areaName: '龙海区',
     },
     {
       maintainUserId: '7',
@@ -153,7 +153,7 @@ export const dataList = () => {
       deptName: '运维部',
       teamName: '漳浦县运维队',
       postName: '设备维修员',
-      areaName: '漳浦县'
+      areaName: '漳浦县',
     },
     {
       maintainUserId: '8',
@@ -175,8 +175,8 @@ export const dataList = () => {
       deptName: '运维部',
       teamName: '云霄县运维队',
       postName: '故障排查员',
-      areaName: '云霄县'
-    }
+      areaName: '云霄县',
+    },
   ];
 };
 
@@ -405,10 +405,10 @@ export const detailFields = [
   { label: '部门ID', key: 'deptId' },
   { label: '部门名称', key: 'deptName' },
   { label: '岗位类型', key: 'jobType' },
-  { 
-    label: '技能标签', 
+  {
+    label: '技能标签',
     key: 'skillTags',
-    formatter: (value) => Array.isArray(value) ? value.join(', ') : value
+    formatter: (value) => (Array.isArray(value) ? value.join(', ') : value),
   },
   { label: '值班状态', key: 'onDutyStatus' },
   { label: '联系电话', key: 'phone' },
@@ -418,13 +418,13 @@ export const detailFields = [
   { label: '岗位名称', key: 'postName' },
   { label: '负责区域代码', key: 'areaCode' },
   { label: '负责区域', key: 'areaName' },
-  { 
-    label: '人员状态', 
+  {
+    label: '人员状态',
     key: 'status',
     type: 'tag',
     tagType: (status) => {
       return status === '启用' ? 'success' : 'danger';
-    }
+    },
   },
   { label: '创建人', key: 'createBy' },
   { label: '创建时间', key: 'createTime' },

@@ -27,7 +27,7 @@ package-lock.json
 .env.local
 .env.*.local
 .eslintcache
-
+.eslintignore
 logs
 *.log
 npm-debug.log*

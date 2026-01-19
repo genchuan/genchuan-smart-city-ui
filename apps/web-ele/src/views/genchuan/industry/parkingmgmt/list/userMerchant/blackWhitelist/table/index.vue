@@ -129,9 +129,7 @@ async function handleDelete(row) {
     text: $t('ui.actionMessage.deleting', [row.targetId]),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => v.listId !== row.listId,
-    );
+    dataObj.apilist = dataObj.apilist.filter((v) => v.listId !== row.listId);
     ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.targetId]));
     handleRefresh();
   } finally {
@@ -182,25 +180,24 @@ const searchFormData = ref({});
 const getTableData = (pageObj) => {
   const page = pageObj.page;
   // 过滤数据
-  const filteredData = dataObj.apilist
-    .filter((v) => {
-      // 状态过滤
-      if (activeName.value !== '全部' && v.status !== activeName.value) {
+  const filteredData = dataObj.apilist.filter((v) => {
+    // 状态过滤
+    if (activeName.value !== '全部' && v.status !== activeName.value) {
+      return false;
+    }
+    // 搜索条件过滤
+    for (const [key, value] of Object.entries(searchFormData.value)) {
+      if (value && v[key] && !String(v[key]).includes(String(value))) {
         return false;
       }
-      // 搜索条件过滤
-      for (const [key, value] of Object.entries(searchFormData.value)) {
-        if (value && v[key] && !String(v[key]).includes(String(value))) {
-        return false;
-        }
-      }
-      return true;
-    });
+    }
+    return true;
+  });
 
   dataObj.total = filteredData.length;
   dataObj.list = filteredData.slice(
     (page.currentPage - 1) * page.pageSize,
-    page.currentPage * page.pageSize
+    page.currentPage * page.pageSize,
   );
   return dataObj;
 };
@@ -279,11 +276,7 @@ const handleOpenDetail = (row) => {
   detailDrawerRef.value.open();
 };
 
-const tabsData = ref([
-  { label: '全部' },
-  { label: '生效' },
-  { label: '失效' },
-]);
+const tabsData = ref([{ label: '全部' }, { label: '生效' }, { label: '失效' }]);
 
 const createLabel = (item) => {
   let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;

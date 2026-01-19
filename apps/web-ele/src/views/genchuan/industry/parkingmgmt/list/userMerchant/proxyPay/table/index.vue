@@ -17,19 +17,19 @@ import { exportToExcel } from '#/utils/excel.js';
 
 // 引入数据配置
 import {
-  proxyRuleList,
+  parkLotList,
+  parkOrderList,
+  payerList,
   proxyOrderList,
   proxyRecordList,
-  parkOrderList,
-  parkLotList,
-  payerList,
+  proxyRuleList,
   textObj,
-  useProxyRuleFormSchema,
   useProxyOrderFormSchema,
-  useProxyRecordFormSchema,
-  useProxyRuleGridColumns,
   useProxyOrderGridColumns,
+  useProxyRecordFormSchema,
   useProxyRecordGridColumns,
+  useProxyRuleFormSchema,
+  useProxyRuleGridColumns,
 } from './data';
 
 const props = defineProps({
@@ -63,7 +63,11 @@ const payerDetailFields = computed(() => {
         return 'info';
       },
     },
-    { label: '结算比例', key: 'settlementRatio', formatter: (value) => `${value}%` },
+    {
+      label: '结算比例',
+      key: 'settlementRatio',
+      formatter: (value) => `${value}%`,
+    },
     { label: '创建时间', key: 'createTime' },
     { label: '更新时间', key: 'updateTime' },
     { label: '创建人', key: 'createBy' },
@@ -122,7 +126,11 @@ const parkOrderDetailFields = computed(() => {
     { label: '车牌号码', key: 'plate_no' },
     { label: '入场时间', key: 'enter_time' },
     { label: '离场时间', key: 'exit_time' },
-    { label: '停车时长', key: 'park_duration', formatter: (value) => `${value}分钟` },
+    {
+      label: '停车时长',
+      key: 'park_duration',
+      formatter: (value) => `${value}分钟`,
+    },
     {
       label: '总费用',
       key: 'total_amount',
@@ -604,35 +612,41 @@ const getTableData = (pageObj) => {
       const newRow = { ...v };
 
       // 为所有行添加付款方名称
-      const payer = payerList().find(m => m.merchantId === v.payerId);
+      const payer = payerList().find((m) => m.merchantId === v.payerId);
       newRow.payerName = payer?.merchantName || v.payerId;
 
       // 根据不同标签页添加不同的关联字段
       if (activeTab.value === 'proxyOrder') {
         // 代付订单页
         // 添加代付规则名称
-        const proxyRule = allProxyRules.find(r => r.proxyId === v.proxyId);
+        const proxyRule = allProxyRules.find((r) => r.proxyId === v.proxyId);
         newRow.proxyName = proxyRule?.proxyName || v.proxyId;
 
         // 添加停车订单编号
-        const parkOrder = allParkOrders.find(o => o.park_order_id === v.parkOrderId);
+        const parkOrder = allParkOrders.find(
+          (o) => o.park_order_id === v.parkOrderId,
+        );
         newRow.parkOrderNo = parkOrder?.park_order_no || v.parkOrderId;
       } else if (activeTab.value === 'proxyRecord') {
         // 代付记录页
         // 添加代付规则名称
-        const proxyRule = allProxyRules.find(r => r.proxyId === v.proxyId);
+        const proxyRule = allProxyRules.find((r) => r.proxyId === v.proxyId);
         newRow.proxyName = proxyRule?.proxyName || v.proxyId;
 
         // 添加代付订单编号
-        const proxyOrder = allProxyOrders.find(o => o.orderId === v.proxyOrderId);
+        const proxyOrder = allProxyOrders.find(
+          (o) => o.orderId === v.proxyOrderId,
+        );
         newRow.proxyOrderNo = proxyOrder?.proxyOrderNo || v.proxyOrderId;
 
         // 添加停车订单编号
-        const parkOrder = allParkOrders.find(o => o.park_order_id === v.parkOrderId);
+        const parkOrder = allParkOrders.find(
+          (o) => o.park_order_id === v.parkOrderId,
+        );
         newRow.parkOrderNo = parkOrder?.park_order_no || v.parkOrderId;
 
         // 添加停车场名称
-        const parkLot = allParkLots.find(p => p.park_id === v.parkId);
+        const parkLot = allParkLots.find((p) => p.park_id === v.parkId);
         newRow.parkName = parkLot?.park_name || v.parkId;
       }
 
@@ -772,7 +786,8 @@ const handleOpenDetail = (row) => {
 const handleOpenPayerDetail = (row) => {
   // 从payerList中获取付款方数据
   const allPayer = payerList();
-  selectedPayer.value = allPayer.find(m => m.merchantId === row.payerId) || {};
+  selectedPayer.value =
+    allPayer.find((m) => m.merchantId === row.payerId) || {};
   payerDetailDrawerRef.value.open();
 };
 
@@ -780,7 +795,8 @@ const handleOpenPayerDetail = (row) => {
 const handleOpenProxyRuleDetail = (row) => {
   // 从proxyRuleList中获取代付规则数据
   const allProxyRules = proxyRuleList();
-  selectedProxyRule.value = allProxyRules.find(r => r.proxyId === row.proxyId) || {};
+  selectedProxyRule.value =
+    allProxyRules.find((r) => r.proxyId === row.proxyId) || {};
   proxyRuleDetailDrawerRef.value.open();
 };
 
@@ -788,7 +804,8 @@ const handleOpenProxyRuleDetail = (row) => {
 const handleOpenParkOrderDetail = (row) => {
   // 从parkOrderList中获取停车订单数据
   const allParkOrders = parkOrderList();
-  selectedParkOrder.value = allParkOrders.find(o => o.park_order_id === row.parkOrderId) || {};
+  selectedParkOrder.value =
+    allParkOrders.find((o) => o.park_order_id === row.parkOrderId) || {};
   parkOrderDetailDrawerRef.value.open();
 };
 
@@ -796,7 +813,8 @@ const handleOpenParkOrderDetail = (row) => {
 const handleOpenParkLotDetail = (row) => {
   // 从parkLotList中获取停车场数据
   const allParkLots = parkLotList();
-  selectedParkLot.value = allParkLots.find(p => p.park_id === row.parkId) || {};
+  selectedParkLot.value =
+    allParkLots.find((p) => p.park_id === row.parkId) || {};
   parkLotDetailDrawerRef.value.open();
 };
 
@@ -804,7 +822,8 @@ const handleOpenParkLotDetail = (row) => {
 const handleOpenProxyOrderDetail = (row) => {
   // 从proxyOrderList中获取代付订单数据
   const allProxyOrders = proxyOrderList();
-  selectedProxyOrder.value = allProxyOrders.find(o => o.orderId === row.proxyOrderId) || {};
+  selectedProxyOrder.value =
+    allProxyOrders.find((o) => o.orderId === row.proxyOrderId) || {};
   proxyOrderDetailDrawerRef.value.open();
 };
 
@@ -982,7 +1001,15 @@ const detailFields = computed(() => {
       ref="detailDrawerRef"
       :data="selectedItem"
       :fields="detailFields"
-      :title="selectedItem ? (activeTab === 'proxyRule' ? selectedItem.proxyName : (activeTab === 'proxyOrder' ? selectedItem.proxyOrderNo : selectedItem.recordNo)) : '详情'"
+      :title="
+        selectedItem
+          ? activeTab === 'proxyRule'
+            ? selectedItem.proxyName
+            : activeTab === 'proxyOrder'
+              ? selectedItem.proxyOrderNo
+              : selectedItem.recordNo
+          : '详情'
+      "
       @close="handleDetailClose"
     />
 
@@ -1134,10 +1161,18 @@ const detailFields = computed(() => {
       </template>
 
       <template #status="{ row }">
-        <el-tag v-if="activeTab === 'proxyRule' && row.status === '启用'" type="success" size="small">
+        <el-tag
+          v-if="activeTab === 'proxyRule' && row.status === '启用'"
+          type="success"
+          size="small"
+        >
           {{ row.status }}
         </el-tag>
-        <el-tag v-else-if="activeTab === 'proxyRule' && row.status === '禁用'" type="danger" size="small">
+        <el-tag
+          v-else-if="activeTab === 'proxyRule' && row.status === '禁用'"
+          type="danger"
+          size="small"
+        >
           {{ row.status }}
         </el-tag>
       </template>
@@ -1237,7 +1272,11 @@ const detailFields = computed(() => {
         >
           {{ row.proxyStatus }}
         </el-tag>
-        <el-tag v-else-if="row.proxyStatus === '代付失败'" type="danger" size="small">
+        <el-tag
+          v-else-if="row.proxyStatus === '代付失败'"
+          type="danger"
+          size="small"
+        >
           {{ row.proxyStatus }}
         </el-tag>
       </template>

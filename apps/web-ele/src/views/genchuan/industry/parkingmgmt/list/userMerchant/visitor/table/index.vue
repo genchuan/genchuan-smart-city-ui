@@ -2,7 +2,6 @@
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { IconifyIcon } from '@vben/icons';
 import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';

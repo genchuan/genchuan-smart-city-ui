@@ -189,7 +189,7 @@ onUnmounted(() => {
   padding: 20px;
   background-color: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 12px 0 rgb(0 0 0 / 10%);
 }
 
 .cards-container {
@@ -203,21 +203,21 @@ onUnmounted(() => {
   position: relative;
   padding: 20px;
   background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.08);
   border-left: 4px solid #13ce66;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgb(0 0 0 / 8%);
   transition: all 0.3s ease;
 }
 
 .stat-card:hover {
+  box-shadow: 0 4px 16px 0 rgb(0 0 0 / 12%);
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.12);
 }
 
 .card-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 12px;
 }
 
@@ -258,11 +258,11 @@ onUnmounted(() => {
 }
 
 .chart-card {
+  height: 300px;
   padding: 20px;
   background-color: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.08);
-  height: 300px;
+  box-shadow: 0 2px 12px 0 rgb(0 0 0 / 8%);
 }
 
 .chart-container {

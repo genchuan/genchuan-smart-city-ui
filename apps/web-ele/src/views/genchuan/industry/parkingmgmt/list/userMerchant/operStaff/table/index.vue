@@ -77,16 +77,32 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
         createTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
         updateTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
         // 根据teamId和postCode设置显示名称
-        teamName: obj.teamId === 'team_001' ? '芗城区运维队' :
-                 obj.teamId === 'team_002' ? '龙文区运维队' :
-                 obj.teamId === 'team_003' ? '龙海区运维队' :
-                 obj.teamId === 'team_004' ? '漳浦县运维队' : '云霄县运维队',
-        postName: obj.postCode === 'dev_maintain' ? '设备维修员' :
-                 obj.postCode === 'fault_check' ? '故障排查员' : '工单处置员',
-        areaName: obj.areaCode === '350602' ? '芗城区' :
-                 obj.areaCode === '350603' ? '龙文区' :
-                 obj.areaCode === '350681' ? '龙海区' :
-                 obj.areaCode === '350623' ? '漳浦县' : '云霄县',
+        teamName:
+          obj.teamId === 'team_001'
+            ? '芗城区运维队'
+            : obj.teamId === 'team_002'
+              ? '龙文区运维队'
+              : obj.teamId === 'team_003'
+                ? '龙海区运维队'
+                : obj.teamId === 'team_004'
+                  ? '漳浦县运维队'
+                  : '云霄县运维队',
+        postName:
+          obj.postCode === 'dev_maintain'
+            ? '设备维修员'
+            : obj.postCode === 'fault_check'
+              ? '故障排查员'
+              : '工单处置员',
+        areaName:
+          obj.areaCode === '350602'
+            ? '芗城区'
+            : obj.areaCode === '350603'
+              ? '龙文区'
+              : obj.areaCode === '350681'
+                ? '龙海区'
+                : obj.areaCode === '350623'
+                  ? '漳浦县'
+                  : '云霄县',
       });
     } else {
       dataObj.apilist.forEach((v, i) => {
@@ -105,15 +121,29 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
             teamName:
               obj.teamId === 'team_001'
                 ? '芗城区运维队'
-                : obj.teamId === 'team_002' ? '龙文区运维队' :
-                  obj.teamId === 'team_003' ? '龙海区运维队' :
-                  obj.teamId === 'team_004' ? '漳浦县运维队' : '云霄县运维队',
-            postName: obj.postCode === 'dev_maintain' ? '设备维修员' :
-                     obj.postCode === 'fault_check' ? '故障排查员' : '工单处置员',
-            areaName: obj.areaCode === '350602' ? '芗城区' :
-                     obj.areaCode === '350603' ? '龙文区' :
-                     obj.areaCode === '350681' ? '龙海区' :
-                     obj.areaCode === '350623' ? '漳浦县' : '云霄县',
+                : obj.teamId === 'team_002'
+                  ? '龙文区运维队'
+                  : obj.teamId === 'team_003'
+                    ? '龙海区运维队'
+                    : obj.teamId === 'team_004'
+                      ? '漳浦县运维队'
+                      : '云霄县运维队',
+            postName:
+              obj.postCode === 'dev_maintain'
+                ? '设备维修员'
+                : obj.postCode === 'fault_check'
+                  ? '故障排查员'
+                  : '工单处置员',
+            areaName:
+              obj.areaCode === '350602'
+                ? '芗城区'
+                : obj.areaCode === '350603'
+                  ? '龙文区'
+                  : obj.areaCode === '350681'
+                    ? '龙海区'
+                    : obj.areaCode === '350623'
+                      ? '漳浦县'
+                      : '云霄县',
           };
         }
       });
@@ -168,7 +198,9 @@ async function handleDelete(row) {
     text: $t('ui.actionMessage.deleting', [row.name]),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.maintainUserId !== row.maintainUserId);
+    dataObj.apilist = dataObj.apilist.filter(
+      (v) => v.maintainUserId !== row.maintainUserId,
+    );
     ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
     handleRefresh();
   } finally {
@@ -432,8 +464,13 @@ const handleFullShow = () => {
       </template>
       <template #onDutyStatus="{ row }">
         <el-tag
-          :type="row.onDutyStatus === '在岗' ? 'success' :
-                row.onDutyStatus === '休假' ? 'warning' : 'info'"
+          :type="
+            row.onDutyStatus === '在岗'
+              ? 'success'
+              : row.onDutyStatus === '休假'
+                ? 'warning'
+                : 'info'
+          "
           size="small"
         >
           {{ row.onDutyStatus }}
@@ -482,11 +519,13 @@ const handleFullShow = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：运维人员数量{{ dataObj.list.length }};启用:{{
-            dataObj.list.filter((item) => item.status === '启用').length
-          }};禁用:{{
-            dataObj.list.filter((item) => item.status === '禁用').length
-          }}</span>
+          <span>
+            本页统计：运维人员数量{{ dataObj.list.length }};启用:{{
+              dataObj.list.filter((item) => item.status === '启用').length
+            }};禁用:{{
+              dataObj.list.filter((item) => item.status === '禁用').length
+            }}</span
+          >
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span> 全部统计：{{ textObj.total }}</span>

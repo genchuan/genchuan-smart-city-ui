@@ -3,11 +3,12 @@ import { computed, ref } from 'vue';
 
 import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
 
+import StatsVisualization from '#/components/stats/StatsVisualization.vue';
+
 import { getStatsDataByUserType } from './table/data.js';
 import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
-import StatsVisualization from "#/components/stats/StatsVisualization.vue";
 
 const changeArrowStatus = () => {
   secondShow.value = !secondShow.value;
@@ -61,17 +62,15 @@ const tabChange = (tabName) => {
   // 根据标签页名称更新当前用户类型
   const tab = tabArray.value.find((item) => item.label === tabName);
   if (tab) {
-
     currentUserType.value = tab.userType;
   }
 };
 </script>
 <template>
   <div class="multi-termina-user">
-  <!-- 统计可视化组件 -->
-  <StatsVisualization :data="statsData" />
+    <!-- 统计可视化组件 -->
+    <StatsVisualization :data="statsData" />
     <div class="common-index">
-
       <div class="icon-change">
         <el-icon
           class="tabel-tab-icon"
@@ -116,28 +115,30 @@ const tabChange = (tabName) => {
   </div>
 </template>
 
-
 <style scope lang="scss">
 .multi-termina-user {
-  overflow: auto;
   height: 89vh;
-  .common-index{
+  overflow: auto;
+
+  .common-index {
     height: auto;
   }
+
   .common-index .icon-change {
     position: relative;
     top: 30px;
   }
+
   .common-index .park-lot-table-new .vxe-tools--wrapper {
     position: relative;
-    right: 0px;
-    top: 0px;
+    top: 0;
+    right: 0;
   }
-  .common-index .park-lot-table-new .vxe-tools--operate{
+
+  .common-index .park-lot-table-new .vxe-tools--operate {
     position: relative;
-    right: 0px;
-    top: 0px;
+    top: 0;
+    right: 0;
   }
 }
-
 </style>
