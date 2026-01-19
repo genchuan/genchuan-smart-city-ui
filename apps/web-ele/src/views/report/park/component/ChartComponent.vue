@@ -1,3 +1,4 @@
+<!-- ChartComponent.vue -->
 <script setup>
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 

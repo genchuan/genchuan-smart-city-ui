@@ -1,133 +1,250 @@
+<!-- 文件: DataTable.vue -->
+<template>
+  <div class="data-table-container">
+    <!-- 表格 -->
+    <el-table
+      :data="tableData"
+      :border="true"
+      :stripe="true"
+      :highlight-current-row="true"
+      style="width: 100%"
+      :size="size"
+      @sort-change="handleSortChange"
+      :default-sort="defaultSort"
+    >
+      <!-- 序号列 -->
+      <el-table-column
+        v-if="showIndex"
+        type="index"
+        label="序号"
+        width="70"
+        align="center"
+        :index="indexMethod"
+      />
+
+      <!-- 动态列 -->
+      <template v-for="column in processedColumns" :key="column.prop">
+        <!-- 自定义渲染列 -->
+        <el-table-column
+          v-if="column.render"
+          :prop="column.prop"
+          :label="column.label"
+          :width="column.width"
+          :min-width="column.minWidth"
+          :align="column.align || 'left'"
+          :sortable="column.sortable"
+          :fixed="column.fixed"
+        >
+          <template #default="{ row, $index }">
+            <!-- 渲染不同类型的内容 -->
+            <template v-if="typeof column.render === 'function'">
+              <!-- 函数渲染 -->
+              <template v-if="column.render(row, $index)">
+                <span
+                  v-if="column.render(row, $index).text !== undefined"
+                  @click="column.render(row, $index).events?.click?.(row, $index)"
+                  :style="column.render(row, $index).props?.style"
+                  :class="column.render(row, $index).props?.class"
+                >
+                  {{ column.render(row, $index).text }}
+                </span>
+
+                <!-- 复杂渲染（按钮组等） -->
+                <div v-else-if="column.render(row, $index).children">
+                  <component
+                    v-for="(child, idx) in column.render(row, $index).children"
+                    :key="idx"
+                    :is="child.type || 'span'"
+                    v-bind="child.props || {}"
+                    @click="child.props?.onClick?.(row, $index)"
+                  >
+                    {{ child.text || '' }}
+                  </component>
+                </div>
+              </template>
+            </template>
+          </template>
+        </el-table-column>
+
+        <!-- 类型列（货币、日期等） -->
+        <el-table-column
+          v-else-if="column.type"
+          :prop="column.prop"
+          :label="column.label"
+          :width="column.width"
+          :min-width="column.minWidth"
+          :align="column.align || 'left'"
+          :sortable="column.sortable"
+          :fixed="column.fixed"
+        >
+          <template #default="{ row }">
+            <!-- 货币类型 -->
+            <span v-if="column.type === 'currency'">
+              {{ formatCurrency(row[column.prop]) }}
+            </span>
+
+            <!-- 日期时间类型 -->
+            <span v-else-if="column.type === 'datetime'">
+              {{ formatDateTime(row[column.prop]) }}
+            </span>
+
+            <!-- 标签类型 -->
+            <el-tag
+              v-else-if="column.type === 'tag'"
+              :type="getTagType(row[column.prop])"
+              size="small"
+            >
+              {{ row[column.prop] }}
+            </el-tag>
+
+            <!-- 状态类型 -->
+            <span
+              v-else-if="column.type === 'status'"
+              :style="{ color: getStatusColor(row[column.prop]) }"
+            >
+              {{ row[column.prop] }}
+            </span>
+          </template>
+        </el-table-column>
+
+        <!-- 普通文本列 -->
+        <el-table-column
+          v-else
+          :prop="column.prop"
+          :label="column.label"
+          :width="column.width"
+          :min-width="column.minWidth"
+          :align="column.align || 'left'"
+          :sortable="column.sortable"
+          :fixed="column.fixed"
+        />
+      </template>
+    </el-table>
+
+    <!-- 分页 -->
+    <div v-if="showPagination" class="pagination-container">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="pageSizes"
+        :layout="paginationLayout"
+        :total="total"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
+    </div>
+  </div>
+</template>
+
 <script setup>
 import { computed, ref, watch } from 'vue';
-import { Bottom, Top } from '@element-plus/icons-vue';
-import {
-  formatCurrency,
-  getGrowthClass,
-  getUtilizationColor,
-} from '#/views/report/park/component/ReportUtils.js';
+import { formatCurrency, formatDateTime } from './ReportUtils';
 
 const props = defineProps({
-  title: String,
+  // 表格数据
   data: {
     type: Array,
-    default: () => [],
+    default: () => []
   },
+
+  // 列定义
   columns: {
     type: Array,
-    default: () => [],
+    required: true
   },
-  border: {
+
+  // 是否显示序号列
+  showIndex: {
     type: Boolean,
-    default: true,
+    default: false
   },
-  stripe: {
-    type: Boolean,
-    default: true,
-  },
-  height: [String, Number],
-  maxHeight: [String, Number],
-  loading: {
-    type: Boolean,
-    default: false,
-  },
+
+  // 分页相关
   showPagination: {
     type: Boolean,
-    default: false,
+    default: true
   },
   total: {
     type: Number,
-    default: 0,
-  },
-  remote: {
-    type: Boolean,
-    default: false,
-  },
-  pageSizes: {
-    type: Array,
-    default: () => [10, 20, 50, 100],
-  },
-  paginationLayout: {
-    type: String,
-    default: 'total, sizes, prev, pager, next, jumper',
-  },
-  hideOnSinglePage: {
-    type: Boolean,
-    default: false,
+    default: 0
   },
   currentPageProp: {
     type: Number,
-    default: 1,
+    default: 1
   },
   pageSizeProp: {
     type: Number,
-    default: 10,
+    default: 10
   },
+  pageSizes: {
+    type: Array,
+    default: () => [10, 20, 50, 100]
+  },
+  paginationLayout: {
+    type: String,
+    default: 'total, sizes, prev, pager, next, jumper'
+  },
+  hideOnSinglePage: {
+    type: Boolean,
+    default: false
+  },
+
+  // 远程分页
+  remote: {
+    type: Boolean,
+    default: false
+  },
+
+  // 表格大小
+  size: {
+    type: String,
+    default: 'default',
+    validator: (value) => ['default', 'large', 'small'].includes(value)
+  },
+
+  // 默认排序
+  defaultSort: {
+    type: Object,
+    default: () => ({})
+  }
 });
 
-const emit = defineEmits(['page-change', 'sort-change']);
+const emit = defineEmits([
+  'page-change',
+  'sort-change',
+  'row-click'
+]);
 
-const currentPage = ref(props.currentPageProp || 1);
-const pageSize = ref(props.pageSizeProp || 10);
+// 响应式数据
+const currentPage = ref(props.currentPageProp);
+const pageSize = ref(props.pageSizeProp);
 
-// 监听父组件传入的分页参数变化
-watch(
-  () => props.currentPageProp,
-  (val) => {
-    if (val !== undefined && val !== currentPage.value) {
-      currentPage.value = val;
-    }
-  },
-);
-
-watch(
-  () => props.pageSizeProp,
-  (val) => {
-    if (val !== undefined && val !== pageSize.value) {
-      pageSize.value = val;
-    }
-  },
-);
+// 计算属性
+const tableData = computed(() => {
+  if (!props.remote && props.showPagination) {
+    const start = (currentPage.value - 1) * pageSize.value;
+    const end = start + pageSize.value;
+    return props.data.slice(start, end);
+  }
+  return props.data;
+});
 
 const processedColumns = computed(() => {
-  return props.columns.map((col) => {
-    return {
-      align: 'center',
-      sortable: false,
-      ...col,
-    };
-  });
+  return props.columns.filter(col => !col.hidden);
 });
 
-// 修复：tableData 计算属性
-const tableData = computed(() => {
-  // 如果不显示分页，直接返回数据
-  if (!props.showPagination) {
-    return props.data;
+// 序号计算方法
+const indexMethod = (index) => {
+  if (props.showPagination) {
+    return (currentPage.value - 1) * pageSize.value + index + 1;
   }
+  return index + 1;
+};
 
-  // 如果是远程分页，直接返回数据（由后端分页）
-  if (props.remote) {
-    return props.data;
-  }
-
-  // 本地分页，进行切片
-  const start = (currentPage.value - 1) * pageSize.value;
-  const end = start + pageSize.value;
-  return props.data.slice(start, end);
-});
-
-// 修复：totalCount 计算属性
-const totalCount = computed(() => {
-  if (props.showPagination && props.remote) {
-    return props.total;
-  }
-  return props.data.length;
-});
-
+// 分页处理
 const handleSizeChange = (size) => {
   pageSize.value = size;
-  currentPage.value = 1; // 切换每页条数时回到第一页
+  currentPage.value = 1;
   emitPageChange();
 };
 
@@ -137,188 +254,89 @@ const handleCurrentChange = (page) => {
 };
 
 const emitPageChange = () => {
-  if (props.showPagination) {
-    emit('page-change', {
-      page: currentPage.value,
-      pageSize: pageSize.value,
-      total: totalCount.value,
-    });
-  }
+  emit('page-change', {
+    page: currentPage.value,
+    pageSize: pageSize.value,
+    total: props.total
+  });
 };
 
+// 排序处理
 const handleSortChange = ({ column, prop, order }) => {
   emit('sort-change', { column, prop, order });
 };
 
-const renderContent = (column, row) => {
-  if (!column.render) return null;
-
-  if (typeof column.render.text === 'function') {
-    return column.render.text(row, column);
-  } else if (column.render.text !== undefined) {
-    return column.render.text;
-  }
-
-  return '';
+// 状态颜色映射
+const getStatusColor = (status) => {
+  const colorMap = {
+    '待处理': '#f5222d',
+    '处理中': '#fa8c16',
+    '已处理': '#52c41a',
+    '已关闭': '#8c8c8c',
+    '待追缴': '#f5222d',
+    '追缴中': '#fa8c16',
+    '已追缴': '#52c41a',
+    '已豁免': '#722ed1',
+    '待处置': '#f5222d',
+    '处置中': '#fa8c16',
+    '已处理': '#52c41a',
+    '处置失败': '#8c8c8c'
+  };
+  return colorMap[status] || '#8c8c8c';
 };
+
+// 标签类型映射
+const getTagType = (value) => {
+  const typeMap = {
+    '紧急': 'danger',
+    '高': 'warning',
+    '中': 'primary',
+    '低': 'success',
+    '一级逃费': 'danger',
+    '二级逃费': 'warning',
+    '三级逃费': 'primary',
+    '四级逃费': 'success'
+  };
+  return typeMap[value] || 'info';
+};
+
+// 监听props变化
+watch(() => props.currentPageProp, (val) => {
+  currentPage.value = val;
+});
+
+watch(() => props.pageSizeProp, (val) => {
+  pageSize.value = val;
+});
 </script>
 
-<template>
-  <div class="data-table">
-    <h3 v-if="title" class="section-title">{{ title }}</h3>
-
-    <el-table
-      v-loading="loading"
-      :data="tableData"
-      :border="border"
-      :stripe="stripe"
-      :height="height"
-      :max-height="maxHeight"
-      style="width: 100%"
-      @sort-change="handleSortChange"
-    >
-      <slot>
-        <template v-for="column in processedColumns" :key="column.prop">
-          <el-table-column
-            v-if="!column.hidden"
-            :prop="column.prop"
-            :label="column.label"
-            :width="column.width"
-            :min-width="column.minWidth"
-            :align="column.align || 'center'"
-            :sortable="column.sortable"
-          >
-            <template #default="{ row, $index }">
-              <template v-if="column.render">
-                <component
-                  :is="column.render.type || 'span'"
-                  v-bind="column.render.props || {}"
-                  v-on="column.render.events || {}"
-                >
-                  {{ renderContent(column, row) }}
-                </component>
-              </template>
-
-              <template v-else>
-                <template v-if="column.type === 'progress'">
-                  <el-progress
-                    :percentage="row[column.prop]"
-                    :color="getUtilizationColor(row[column.prop])"
-                    :show-text="false"
-                  />
-                  <span style="margin-left: 8px">{{ row[column.prop] }}%</span>
-                </template>
-
-                <template v-else-if="column.type === 'tag'">
-                  <el-tag :type="column.tagType || 'primary'" size="small">
-                    {{
-                      column.formatter
-                        ? column.formatter(row[column.prop], row, column)
-                        : row[column.prop]
-                    }}
-                  </el-tag>
-                </template>
-
-                <template v-else-if="column.type === 'currency'">
-                  {{ formatCurrency(row[column.prop]) }}
-                </template>
-
-                <template v-else-if="column.type === 'percentage'">
-                  {{ row[column.prop] }}%
-                </template>
-
-                <template v-else-if="column.type === 'growth'">
-                  <span :class="getGrowthClass(row[column.prop])">
-                    <el-icon v-if="row[column.prop] > 0"><Top /></el-icon>
-                    <el-icon v-if="row[column.prop] < 0"><Bottom /></el-icon>
-                    {{ Math.abs(row[column.prop]) }}%
-                  </span>
-                </template>
-
-                <template v-else>
-                  {{
-                    column.formatter
-                      ? column.formatter(row[column.prop], row, column)
-                      : row[column.prop]
-                  }}
-                </template>
-              </template>
-            </template>
-          </el-table-column>
-        </template>
-      </slot>
-    </el-table>
-
-    <!-- 分页器容器，确保始终可见 -->
-    <div v-if="showPagination" class="pagination-container">
-      <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :page-sizes="pageSizes"
-        :total="totalCount"
-        :layout="paginationLayout"
-        :hide-on-single-page="hideOnSinglePage"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
-    </div>
-  </div>
-</template>
-
 <style scoped>
-.data-table {
-  position: relative;
-  min-height: 200px;
-  margin-top: 12px;
-}
-
-.section-title {
-  margin: 0 0 8px;
-  font-size: 18px;
-  font-weight: 600;
-  color: #303133;
+.data-table-container {
+  width: 100%;
 }
 
 .pagination-container {
   display: flex;
   justify-content: flex-end;
-  margin-top: 10px;
+  margin-top: 16px;
   padding: 12px 0;
-  background-color: #fff;
-  border-top: 1px solid #ebeef5;
-  position: relative;
-  z-index: 10;
-}
-
-.growth-positive {
-  color: #52c41a;
-}
-
-.growth-negative {
-  color: #f5222d;
-}
-
-:deep(.el-pagination) {
-  padding: 0;
 }
 
 :deep(.el-table) {
-  overflow: visible;
+  font-size: 14px;
 }
 
-:deep(.el-table) {
-  margin-bottom: 0 !important;
+:deep(.el-table th) {
+  background-color: #fafafa;
+  color: #333;
+  font-weight: 600;
 }
 
-:deep(.el-table__body-wrapper) {
-  min-height: 150px;
+:deep(.el-table--striped .el-table__body tr.el-table__row--striped td) {
+  background-color: #fafafa;
 }
 
-:deep(.el-pagination__total) {
-  margin-right: 20px;
-}
-
-:deep(.el-pagination__jump) {
-  margin-left: 20px;
+:deep(.el-table__row:hover) {
+  background-color: #f5f7fa;
 }
 </style>
