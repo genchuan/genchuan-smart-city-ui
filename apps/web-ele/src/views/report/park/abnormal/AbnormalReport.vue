@@ -1,4 +1,3 @@
-<!-- 文件: AbnormalReport.vue -->
 <template>
   <div class="abnormal-report">
     <!-- 标签页 -->
@@ -38,16 +37,6 @@
           <ChargeAbnormal v-if="activeTab === 'charge'" />
         </el-tab-pane>
       </el-tabs>
-    </div>
-
-    <!-- 全局提示 -->
-    <div class="global-tips">
-      <el-alert title="数据说明" type="info" :closable="false" show-icon>
-        <p>1. 逃费数据报表：统计停车场逃费行为，支持多维度筛选与追缴管理</p>
-        <p>2. 设备异常报表：监控停车场设备故障情况，跟踪处置进度</p>
-        <p>3. 收费异常报表：监控收费系统异常情况，保障收费合规性</p>
-        <p>4. 数据说明：红色标识为紧急异常，黄色标识为一般异常，绿色标识为已处理</p>
-      </el-alert>
     </div>
   </div>
 </template>
@@ -95,16 +84,6 @@ onMounted(() => {
   display: inline-flex;
   gap: 6px;
   align-items: center;
-}
-
-.global-tips {
-  flex-shrink: 0;
-  margin-top: 10px;
-}
-
-.global-tips p {
-  margin: 4px 0;
-  font-size: 13px;
 }
 
 :deep(.el-tabs) {

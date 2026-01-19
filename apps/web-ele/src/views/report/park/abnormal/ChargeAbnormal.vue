@@ -1,96 +1,127 @@
-<!-- 文件: ChargeAbnormal.vue -->
 <template>
   <div class="charge-abnormal-report">
     <!-- 工具栏 -->
     <ReportToolbar>
       <template #left>
-        <!-- 筛选条件 - 直接显示在工具栏 -->
-        <div class="filter-row">
-          <div class="filter-group">
-            <span class="filter-label">时间范围：</span>
-            <el-date-picker
-              v-model="filterForm.dateRange"
-              type="daterange"
-              range-separator="至"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-              style="width: 240px"
-              size="small"
-            />
-          </div>
-
-          <div class="filter-group">
-            <span class="filter-label">区域：</span>
-            <el-select
-              v-model="filterForm.region"
-              placeholder="全部区域"
-              style="width: 120px"
-              size="small"
-              clearable
-              @change="handleRegionChange"
-            >
-              <el-option
-                v-for="item in regionOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
+        <div class="filter-container">
+          <div class="filter-row">
+            <div class="filter-group">
+              <el-date-picker
+                v-model="filterForm.dateRange"
+                type="daterange"
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+                style="width: 240px"
+                size="medium"
               />
-            </el-select>
-          </div>
+            </div>
 
-          <div class="filter-group">
-            <span class="filter-label">类型：</span>
-            <el-select
-              v-model="filterForm.abnormalType"
-              placeholder="全部类型"
-              style="width: 120px"
-              size="small"
-              clearable
-              @change="handleAbnormalTypeChange"
-            >
-              <el-option
-                v-for="item in abnormalTypeOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
+            <div class="filter-group">
+              <el-select
+                v-model="filterForm.region"
+                placeholder="全部区域"
+                style="width: 120px"
+                size="medium"
+                clearable
+              >
+                <el-option
+                  v-for="item in regionOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </div>
+
+            <div class="filter-group">
+              <el-select
+                v-model="filterForm.abnormalType"
+                placeholder="全部类型"
+                style="width: 140px"
+                size="medium"
+                clearable
+              >
+                <el-option
+                  v-for="item in abnormalTypeOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </div>
+
+            <div class="filter-group">
+              <el-select
+                v-model="filterForm.disposalStatus"
+                placeholder="全部状态"
+                style="width: 120px"
+                size="medium"
+                clearable
+              >
+                <el-option
+                  v-for="item in disposalStatusOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </div>
+
+            <div class="filter-group">
+              <el-input
+                v-model="orderNo"
+                placeholder="订单编号"
+                size="medium"
+                clearable
+                style="width: 140px"
+                @keyup.enter="handleSearch"
               />
-            </el-select>
-          </div>
+            </div>
 
-          <div class="filter-group">
-            <span class="filter-label">订单号：</span>
-            <el-input
-              v-model="orderNo"
-              placeholder="订单编号"
-              size="small"
-              clearable
-              style="width: 140px"
-              @clear="handleSearch"
-              @keyup.enter="handleSearch"
-            />
-          </div>
+            <div class="filter-group">
+              <el-input
+                v-model="carNumber"
+                placeholder="车牌号码"
+                size="medium"
+                clearable
+                style="width: 140px"
+                @keyup.enter="handleSearch"
+              />
+            </div>
 
-          <div class="filter-group">
-            <span class="filter-label">车牌号：</span>
-            <el-input
-              v-model="carNumber"
-              placeholder="车牌号码"
-              size="small"
-              clearable
-              style="width: 140px"
-              @clear="handleSearch"
-              @keyup.enter="handleSearch"
-            />
-          </div>
+            <div class="filter-group">
+              <el-select
+                v-model="filterForm.severityLevel"
+                placeholder="严重程度"
+                style="width: 120px"
+                size="medium"
+                clearable
+              >
+                <el-option label="高" value="high" />
+                <el-option label="中" value="medium" />
+                <el-option label="低" value="low" />
+              </el-select>
+            </div>
 
-          <el-button type="primary" size="small" @click="handleSearch">
-            查询
-          </el-button>
-          <el-button size="small" @click="resetFilter">
-            重置
-          </el-button>
+            <div class="filter-group amount-range">
+              <el-input
+                v-model="filterForm.minAmount"
+                placeholder="最小金额"
+                size="medium"
+                style="width: 100px"
+              />
+              <span class="range-separator">-</span>
+              <el-input
+                v-model="filterForm.maxAmount"
+                placeholder="最大金额"
+                size="medium"
+                style="width: 100px"
+              />
+            </div>
+          </div>
         </div>
       </template>
 
@@ -100,12 +131,60 @@
           :icon="Download"
           @click="handleExport"
           :loading="exporting"
-          size="small"
+          size="medium"
         >
           导出Excel
         </el-button>
+        <el-button
+          type="info"
+          :icon="Refresh"
+          @click="refreshData"
+          size="medium"
+        >
+          刷新
+        </el-button>
       </template>
     </ReportToolbar>
+
+    <!-- 统计卡片 -->
+    <div v-if="toggleStats" class="statistics-cards">
+      <div class="stat-card">
+        <div class="stat-icon" style="color: #f5222d;">
+          <el-icon><Money /></el-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ formatCurrency(summaryData.totalAbnormalAmount || 0) }}</div>
+          <div class="stat-label">异常总金额</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="color: #1890ff;">
+          <el-icon><Document /></el-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ summaryData.totalCount || 0 }}笔</div>
+          <div class="stat-label">异常订单数</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="color: #52c41a;">
+          <el-icon><SuccessFilled /></el-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ summaryData.completionRate || 0 }}%</div>
+          <div class="stat-label">处置完成率</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="color: #fa8c16;">
+          <el-icon><Clock /></el-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ summaryData.correctionSuccessRate || 0 }}%</div>
+          <div class="stat-label">纠错成功率</div>
+        </div>
+      </div>
+    </div>
 
     <!-- 图表分析 -->
     <div class="chart-section">
@@ -136,7 +215,7 @@
         </ReportSection>
       </div>
 
-      <!-- 区域对比与统计数据卡片 -->
+      <!-- 区域对比 -->
       <div class="chart-row">
         <ReportSection
           title="各区域收费异常数对比"
@@ -145,20 +224,20 @@
         >
           <ChartContainer :options="regionChart" height="350px" />
         </ReportSection>
-
         <ReportSection
-          title="异常处置统计"
+          title="原因分类统计"
           :with-background="true"
           :with-padding="true"
         >
-          <div class="statistics-cards">
-            <div class="stat-card">
-              <div class="stat-label">异常处置完成率</div>
-              <div class="stat-value">{{ completionRate }}%</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">纠错成功率</div>
-              <div class="stat-value">{{ correctionSuccessRate }}%</div>
+          <div class="reason-stats">
+            <div class="reason-item" v-for="reason in reasonStats" :key="reason.name">
+              <div class="reason-name">{{ reason.name }}</div>
+              <div class="reason-count">{{ reason.count }}笔</div>
+              <el-progress
+                :percentage="reason.percentage"
+                :stroke-width="8"
+                :color="getReasonColor(reason.name)"
+              />
             </div>
           </div>
         </ReportSection>
@@ -166,7 +245,7 @@
     </div>
 
     <!-- 收费异常列表 -->
-    <ReportSection title="收费异常明细">
+    <ReportSection title="收费异常明细" :with-background="true" :with-padding="true">
       <DataTable
         :data="tableData"
         :columns="tableColumns"
@@ -194,8 +273,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
-import { Download } from '@element-plus/icons-vue';
+import { computed, onMounted, ref } from 'vue';
+import { Download, Refresh, Money, Document, SuccessFilled, Clock } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 
 import {
@@ -209,20 +288,26 @@ import ReportSection from '#/views/report/park/component/ReportSection.vue';
 import ReportToolbar from '#/views/report/park/component/ReportToolbar.vue';
 import ChargeDetail from './ChargeDetail.vue';
 import {
-  getYesterdayDate
+  formatCurrency,
+  getYesterdayDate,
+  getLastMonth
 } from '#/views/report/park/component/ReportUtils';
 
 // 响应式数据
-const showFilterPanel = ref(false);
 const filterForm = ref({
-  dateRange: [getYesterdayDate(), getYesterdayDate()],
+  dateRange: [getLastMonth() + '-01', getYesterdayDate()],
   region: '',
-  abnormalType: ''
+  abnormalType: '',
+  disposalStatus: '',
+  severityLevel: '',
+  minAmount: '',
+  maxAmount: ''
 });
 const orderNo = ref('');
 const carNumber = ref('');
 const loading = ref(false);
 const exporting = ref(false);
+const toggleStats = ref(true);
 const tableData = ref([]);
 const filterOptions = ref({});
 const showDetailDrawer = ref(false);
@@ -239,44 +324,33 @@ const abnormalTypeDistribution = ref([]);
 const statusDistribution = ref([]);
 const regionComparison = ref([]);
 const summaryData = ref({});
+const reasonStats = ref([]);
 
 // 选项数据
 const regionOptions = computed(() => filterOptions.value.regions || []);
 const abnormalTypeOptions = computed(() => filterOptions.value.abnormalTypes || []);
+const disposalStatusOptions = computed(() => filterOptions.value.disposalStatuses || []);
 
-// 计算属性
-const completionRate = computed(() => summaryData.value.completionRate || 0);
-const correctionSuccessRate = computed(() => summaryData.value.correctionSuccessRate || 0);
-
-// 表格列定义 - 完全匹配需求文档14.4.3(3)
+// 表格列定义
 const tableColumns = computed(() => [
   {
     prop: 'abnormalId',
     label: '异常ID',
     width: 140,
-    render: {
-      text: (row) => row.abnormalId,
+    render: (row) => ({
+      text: row.abnormalId,
       events: {
-        click: (row) => handleDetailClick(row)
+        click: () => handleDetailClick(row)
       },
-      props: (row) => ({
+      props: {
         style: { color: '#1890ff', cursor: 'pointer', textDecoration: 'underline' }
-      })
-    }
+      }
+    })
   },
   {
     prop: 'orderNo',
     label: '订单编号',
-    width: 140,
-    render: {
-      text: (row) => row.orderNo,
-      events: {
-        click: (row) => handleOrderClick(row.orderNo)
-      },
-      props: (row) => ({
-        style: { color: '#1890ff', cursor: 'pointer' }
-      })
-    }
+    width: 140
   },
   {
     prop: 'carNumber',
@@ -297,18 +371,14 @@ const tableColumns = computed(() => [
     prop: 'abnormalType',
     label: '异常类型',
     width: 120,
-    render: {
-      text: (row) => row.abnormalType,
-      events: {
-        click: (row) => handleAbnormalTypeClick(row.abnormalType)
-      },
-      props: (row) => ({
+    render: (row) => ({
+      text: row.abnormalType,
+      props: {
         style: {
-          cursor: 'pointer',
           color: getAbnormalTypeColor(row.abnormalType)
         }
-      })
-    }
+      }
+    })
   },
   {
     prop: 'abnormalReason',
@@ -316,21 +386,37 @@ const tableColumns = computed(() => [
     width: 200
   },
   {
+    prop: 'abnormalAmount',
+    label: '异常金额',
+    width: 120,
+    type: 'currency'
+  },
+  {
+    prop: 'severityLevel',
+    label: '严重程度',
+    width: 100,
+    render: (row) => ({
+      text: row.severityLevel,
+      props: {
+        style: {
+          color: getSeverityLevelColor(row.severityLevel),
+          fontWeight: row.severityLevel === '高' ? 'bold' : 'normal'
+        }
+      }
+    })
+  },
+  {
     prop: 'disposalStatus',
     label: '处置状态',
     width: 100,
-    render: {
-      text: (row) => row.disposalStatus,
-      events: {
-        click: (row) => handleStatusClick(row.disposalStatus)
-      },
-      props: (row) => ({
+    render: (row) => ({
+      text: row.disposalStatus,
+      props: {
         style: {
-          cursor: 'pointer',
           color: getDisposalStatusColor(row.disposalStatus)
         }
-      })
-    }
+      }
+    })
   },
   {
     prop: 'disposalResult',
@@ -340,32 +426,22 @@ const tableColumns = computed(() => [
   {
     prop: 'actions',
     label: '操作',
-    width: 180,
-    render: {
+    width: 120,
+    render: (row) => ({
       type: 'div',
-      props: (row) => ({ class: 'action-buttons' }),
-      text: (row) => '',
+      props: { class: 'action-buttons' },
       children: [
         {
           type: 'el-button',
-          props: (row) => ({
+          props: {
             type: 'primary',
-            size: 'small',
+            size: 'medium',
             onClick: () => handleDetailClick(row)
-          }),
+          },
           text: '详情'
-        },
-        {
-          type: 'el-button',
-          props: (row) => ({
-            type: 'info',
-            size: 'small',
-            onClick: () => handleOrderClick(row.orderNo)
-          }),
-          text: '查看'
         }
       ]
-    }
+    })
   }
 ]);
 
@@ -408,6 +484,16 @@ const trendOptions = computed(() => ({
       smooth: true,
       itemStyle: {
         color: '#f5222d'
+      }
+    },
+    {
+      name: '异常金额',
+      type: 'line',
+      yAxisIndex: 1,
+      data: trendData.value.map(item => item.amount || 0),
+      smooth: true,
+      itemStyle: {
+        color: '#1890ff'
       }
     }
   ]
@@ -538,8 +624,6 @@ const loadFilterOptions = async () => {
   try {
     const options = await getChargeAbnormalFilterOptions();
     filterOptions.value = options;
-    // 设置默认日期范围
-    filterForm.value.dateRange = [getYesterdayDate(), getYesterdayDate()];
   } catch (error) {
     console.error('加载筛选选项失败:', error);
     ElMessage.error('加载筛选选项失败');
@@ -558,6 +642,7 @@ const loadData = async () => {
       carNumber: carNumber.value,
       region: filterForm.value.region,
       abnormalType: filterForm.value.abnormalType,
+      disposalStatus: filterForm.value.disposalStatus,
       page: currentPage.value,
       pageSize: pageSize.value
     };
@@ -572,6 +657,9 @@ const loadData = async () => {
     statusDistribution.value = response.disposalStatusDistribution || [];
     regionComparison.value = response.regionAbnormalComparison || [];
     summaryData.value = response.summary || {};
+
+    // 计算原因分类统计
+    calculateReasonStats();
   } catch (error) {
     console.error('加载收费异常数据失败:', error);
     ElMessage.error('加载数据失败');
@@ -580,28 +668,48 @@ const loadData = async () => {
   }
 };
 
+// 计算原因分类统计
+const calculateReasonStats = () => {
+  const reasonMap = {};
+  tableData.value.forEach(item => {
+    if (!reasonMap[item.abnormalReason]) {
+      reasonMap[item.abnormalReason] = 0;
+    }
+    reasonMap[item.abnormalReason]++;
+  });
+
+  const total = tableData.value.length;
+  reasonStats.value = Object.entries(reasonMap).map(([name, count]) => ({
+    name,
+    count,
+    percentage: total > 0 ? Math.round((count / total) * 100) : 0
+  })).slice(0, 6); // 显示前6个原因
+};
+
 // 查询处理
 const handleSearch = () => {
   currentPage.value = 1;
   loadData();
 };
 
-// 重置筛选条件
-const resetFilter = () => {
-  filterForm.value = {
-    dateRange: [getYesterdayDate(), getYesterdayDate()],
-    region: '',
-    abnormalType: ''
-  };
-  orderNo.value = '';
-  carNumber.value = '';
-  currentPage.value = 1;
+// 刷新数据
+const refreshData = () => {
   loadData();
 };
 
-// 应用筛选
-const applyFilter = () => {
-  showFilterPanel.value = false;
+// 重置筛选条件
+const resetFilter = () => {
+  filterForm.value = {
+    dateRange: [getLastMonth() + '-01', getYesterdayDate()],
+    region: '',
+    abnormalType: '',
+    disposalStatus: '',
+    severityLevel: '',
+    minAmount: '',
+    maxAmount: ''
+  };
+  orderNo.value = '';
+  carNumber.value = '';
   currentPage.value = 1;
   loadData();
 };
@@ -617,12 +725,11 @@ const handleExport = async () => {
       orderNo: orderNo.value,
       carNumber: carNumber.value,
       region: filterForm.value.region,
-      abnormalType: filterForm.value.abnormalType
+      abnormalType: filterForm.value.abnormalType,
+      disposalStatus: filterForm.value.disposalStatus
     };
 
     await exportChargeAbnormalReport(params);
-
-    ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
@@ -642,38 +749,6 @@ const handlePageChange = (pagination) => {
 const handleDetailClick = (row) => {
   currentAbnormalId.value = row.abnormalId;
   showDetailDrawer.value = true;
-};
-
-// 查看关联订单
-const handleOrderClick = (orderNo) => {
-  ElMessage.info(`查看订单: ${orderNo}`);
-};
-
-// 钻取筛选 - 行政区域
-const handleRegionChange = (region) => {
-  filterForm.value.region = region;
-  if (region) {
-    currentPage.value = 1;
-    loadData();
-  }
-};
-
-// 钻取筛选 - 异常类型
-const handleAbnormalTypeChange = (abnormalType) => {
-  filterForm.value.abnormalType = abnormalType;
-  if (abnormalType) {
-    currentPage.value = 1;
-    loadData();
-  }
-};
-
-// 表格内钻取点击事件
-const handleAbnormalTypeClick = (abnormalType) => {
-  ElMessage.info(`筛选异常类型: ${abnormalType}`);
-};
-
-const handleStatusClick = (status) => {
-  ElMessage.info(`筛选处置状态: ${status}`);
 };
 
 // 工具函数
@@ -699,6 +774,29 @@ const getDisposalStatusColor = (status) => {
   };
   return colors[status] || '#8c8c8c';
 };
+
+const getSeverityLevelColor = (level) => {
+  const colors = {
+    '高': '#f5222d',
+    '中': '#fa8c16',
+    '低': '#1890ff'
+  };
+  return colors[level] || '#8c8c8c';
+};
+
+const getReasonColor = (reason) => {
+  const colorMap = {
+    '系统计费规则错误': '#f5222d',
+    '人工录入信息错误': '#fa8c16',
+    '设备识别错误导致时间计算错误': '#1890ff',
+    '网络延迟导致重复计费': '#52c41a',
+    '优惠券使用异常未生效': '#722ed1',
+    '支付系统接口异常': '#13c2c2',
+    '车牌识别错误导致匹配错误': '#eb2f96',
+    '节假日收费标准未正确应用': '#fa8c16'
+  };
+  return colorMap[reason] || '#8c8c8c';
+};
 </script>
 
 <style scoped>
@@ -708,13 +806,18 @@ const getDisposalStatusColor = (status) => {
   padding: 12px;
 }
 
-/* 筛选行样式 */
+/* 筛选容器 */
+.filter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .filter-row {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
-  padding: 4px 0;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .filter-group {
@@ -723,12 +826,63 @@ const getDisposalStatusColor = (status) => {
   gap: 6px;
 }
 
-.filter-label {
-  font-size: 13px;
-  color: #606266;
-  white-space: nowrap;
+.range-separator {
+  padding: 0 4px;
+  color: #909399;
 }
 
+/* 金额范围组样式 */
+.amount-range {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 统计卡片 */
+.statistics-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 10%);
+  transition: transform 0.3s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.stat-icon {
+  font-size: 32px;
+  margin-right: 16px;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #303133;
+  line-height: 1;
+}
+
+.stat-label {
+  margin-top: 6px;
+  font-size: 14px;
+  color: #909399;
+}
+
+/* 图表区域 */
 .chart-section {
   margin-bottom: 12px;
 }
@@ -740,51 +894,89 @@ const getDisposalStatusColor = (status) => {
   margin-bottom: 12px;
 }
 
+/* 原因统计 */
+.reason-stats {
+  padding: 16px;
+}
+
+.reason-item {
+  margin-bottom: 16px;
+}
+
+.reason-item:last-child {
+  margin-bottom: 0;
+}
+
+.reason-name {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: #303133;
+}
+
+.reason-count {
+  font-weight: 500;
+  color: #1890ff;
+}
+
+@media (max-width: 1200px) {
+  .filter-row {
+    gap: 6px;
+  }
+
+  .filter-group :deep(.el-date-editor) {
+    width: 200px !important;
+  }
+
+  .filter-group :deep(.el-select),
+  .filter-group :deep(.el-input) {
+    width: 120px !important;
+  }
+}
+
 @media (max-width: 992px) {
   .chart-row {
     grid-template-columns: 1fr;
   }
 
   .filter-row {
+    gap: 8px;
+  }
+
+  .filter-group {
+    flex: 1 1 calc(50% - 8px);
+  }
+
+  .statistics-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .filter-row {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
   }
 
   .filter-group {
     width: 100%;
   }
-}
 
-.statistics-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 20px;
-}
+  .filter-group :deep(.el-date-editor),
+  .filter-group :deep(.el-select),
+  .filter-group :deep(.el-input) {
+    width: 100% !important;
+  }
 
-.stat-card {
-  padding: 24px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  text-align: center;
-  border-left: 4px solid #1890ff;
-}
+  .amount-range {
+    display: flex;
+    gap: 8px;
+  }
 
-.stat-card:nth-child(2) {
-  border-left-color: #52c41a;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: #909399;
-  margin-bottom: 8px;
-}
-
-.stat-value {
-  font-size: 28px;
-  font-weight: 600;
-  color: #303133;
+  .statistics-cards {
+    grid-template-columns: 1fr;
+  }
 }
 
 .action-buttons {
