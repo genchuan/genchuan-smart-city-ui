@@ -540,10 +540,6 @@ const handleFullShow = () => {
   height: 100%;
 }
 
-.tabel-tabs {
-  margin-bottom: 10px;
-}
-
 .demo-tabs {
   padding: 0 10px;
   background: #fff;

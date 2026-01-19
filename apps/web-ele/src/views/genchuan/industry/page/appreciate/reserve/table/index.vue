@@ -506,21 +506,21 @@ const handleFullShow = () => {
               label: '详情',
               type: 'primary',
               link: true,
-              icon: ACTION_ICON.MORE, 
+              icon: ACTION_ICON.MORE,
               onClick: handleOpenDetail.bind(null, row),
             },
             {
               label: '编辑',
               type: 'primary',
               link: true,
-              icon: ACTION_ICON.EDIT, 
+              icon: ACTION_ICON.EDIT,
               onClick: handleEdit.bind(null, row),
             },
             {
               label: '删除',
               type: 'danger',
               link: true,
-              icon: ACTION_ICON.DELETE, 
+              icon: ACTION_ICON.DELETE,
               popConfirm: {
                 title: $t('ui.actionMessage.deleteConfirm', [
                   row.reservation_no,
@@ -611,11 +611,6 @@ const handleFullShow = () => {
 .parking-lot-name {
   font-weight: 500;
   color: #1890ff;
-}
-
-/* 表格标题样式 */
-.tabel-tabs {
-  margin-bottom: 16px;
 }
 
 .demo-tabs {
