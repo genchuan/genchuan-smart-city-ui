@@ -8,7 +8,7 @@ import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 // 引入封装后的详情抽屉组件
@@ -312,52 +312,30 @@ const parkDetailDrawerRef = ref(null);
         </div>
       </template>
       <template #toolbar-tools>
-        <TableAction
-          :actions="[
-            {
-              label: '新增',
-              type: 'primary',
-              icon: ACTION_ICON.ADD,
-              auth: ['system:role:create'],
-              onClick: handleCreate,
-            },
-            {
-              label: $t('ui.actionTitle.export'),
-              type: 'primary',
-              icon: ACTION_ICON.DOWNLOAD,
-              auth: ['system:role:export'],
-              onClick: handleExport,
-            },
-            {
-              label: $t('ui.actionTitle.deleteBatch'),
-              type: 'danger',
-              icon: ACTION_ICON.DELETE,
-              disabled: isEmpty(checkedIds),
-              auth: ['system:role:delete'],
-              onClick: handleDeleteBatch,
-            },
-          ]"
-        />
-        <button
-          class="vxe-button type--button size--small is--circle ml-2"
-          title="搜索"
-          type="button"
-          @click="handleSerachShow"
-        >
-          <i
-            class="vxe-button--item vxe-button--prefix-icon vxe-icon-search"
-          ></i>
-        </button>
-        <button
-          class="vxe-button type--button size--small is--circle"
-          title="全屏"
-          type="button"
-          @click="handleFullShow"
-        >
-          <i
-            class="vxe-button--item vxe-button--prefix-icon vxe-table-icon-fullscreen"
-          ></i>
-        </button>
+        <div class="common-toolbar-tools">
+          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="批量删除"
+            icon-name="delete"
+            :disabled="isEmpty(checkedIds)"
+            @click="handleDeleteBatch"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="handleFullShow"
+          />
+        </div>
       </template>
       <template #ledgerName="{ row }">
         <el-text
@@ -369,37 +347,23 @@ const parkDetailDrawerRef = ref(null);
         </el-text>
       </template>
       <template #actions="{ row }">
-        <TableAction
-          :actions="[
-            {
-              label: '详情',
-              type: 'primary',
-              link: true,
-              icon: ACTION_ICON.MORE,
-              auth: ['system:role:update'],
-              onClick: handleOpenDetail.bind(null, row),
-            },
-            {
-              label: '编辑',
-              type: 'primary',
-              link: true,
-              icon: ACTION_ICON.EDIT,
-              auth: ['system:role:update'],
-              onClick: handleEdit.bind(null, row),
-            },
-            {
-              label: '删除',
-              type: 'danger',
-              link: true,
-              icon: ACTION_ICON.DELETE,
-              auth: ['system:role:delete'],
-              popConfirm: {
-                title: $t('ui.actionMessage.deleteConfirm', [row.name]),
-                confirm: handleDelete.bind(null, row),
-              },
-            },
-          ]"
-        />
+        <div class="table-toolbar-tools">
+          <IconButton
+            content="详情"
+            icon-name="Document"
+            @click="handleOpenDetail(row)"
+          />
+          <IconButton
+            content="编辑"
+            icon-name="edit"
+            @click="handleEdit(row)"
+          />
+          <IconButton
+            content="删除"
+            icon-name="delete"
+            @click="handleDelete(row)"
+          />
+        </div>
       </template>
       <template #bottom>
         <div class="common-total" @click="changeTotalShow">

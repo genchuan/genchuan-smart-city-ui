@@ -18,13 +18,6 @@ const changeArrowStatus = () => {
 };
 const tabArray = ref([
   {
-    label: '全部',
-    components: Table,
-    showSecondary: true,
-    secondShow: false,
-    userType: '全部',
-  },
-  {
     label: '个人用户管理',
     components: Table,
     showSecondary: true,
@@ -46,11 +39,11 @@ const tabArray = ref([
     userType: '政府',
   },
 ]);
-const activeName = ref('全部');
+const activeName = ref('个人用户管理');
 const secondShow = ref(false);
 
 // 当前选中的用户类型
-const currentUserType = ref('全部');
+const currentUserType = ref('个人');
 // 获取当前用户类型的统计数据
 const statsData = computed(() => {
   return getStatsDataByUserType(currentUserType.value);

@@ -20,7 +20,7 @@ import {
   useFormSchema,
   useGridColumns,
   useGridFormSchema,
-  userDetailFields,
+  getUserDetailFields,
 } from './data';
 
 const props = defineProps({
@@ -56,10 +56,10 @@ const [Form, formApi] = useVbenForm({
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
-    labelWidth: 80,
+    labelWidth: '140',
   },
   layout: 'horizontal',
-  schema: useFormSchema(),
+  schema: useFormSchema(props.userType),
   showDefaultActions: false,
 });
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
@@ -74,11 +74,25 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onConfirm() {
     const obj = formApi.form.values;
     if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-      dataObj.apilist.push(obj);
+      // 新增用户
+      dataObj.apilist.push({
+        ...obj,
+        create_time: new Date().toLocaleString('zh-CN'),
+        update_time: new Date().toLocaleString('zh-CN'),
+      });
     } else {
+      // 编辑用户
       dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
+        if (
+          (props.userType === '个人' && v.user_id === formData.value?.user_id) ||
+          (props.userType === '企业' && v.enterprise_id === formData.value?.enterprise_id) ||
+          (props.userType === '政府' && v.gov_user_id === formData.value?.gov_user_id)
+        ) {
+          dataObj.apilist[i] = {
+            ...v,
+            ...obj,
+            update_time: new Date().toLocaleString('zh-CN'),
+          };
         }
       });
     }
@@ -87,8 +101,10 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
+      // 当抽屉打开时，根据用户类型重新加载表单schema
+      formApi.setSchema(useFormSchema(props.userType));
       formData.value = formDrawerApi.getData();
-      if (formData.value?.id) {
+      if (formData.value?.user_id || formData.value?.enterprise_id || formData.value?.gov_user_id) {
         await formApi.setValues(formData.value);
       } else {
         formApi.resetForm();
@@ -111,7 +127,9 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+  const excelName = props.userType === '个人' ? '个人用户列表' : props.userType === '企业' ? '企业用户列表' : '政府用户列表';
+  const excelAllName = `${excelName}.xlsx`;
+  exportToExcel(dataObj.apilist, excelName, excelAllName);
 }
 
 /** 创建用户 */
@@ -133,14 +151,22 @@ function handleEdit(row) {
     .open();
 }
 
-async function handleDelete(row) {
+async function handleDisable(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.realName]),
+    text: $t('ui.actionMessage.disabling', [row.user_name || row.enterprise_name]),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.realName]));
-    handleRefresh();
+    const index = dataObj.apilist.findIndex(
+      (v) =>
+        (props.userType === '个人' && v.user_id === row.user_id) ||
+        (props.userType === '企业' && v.enterprise_id === row.enterprise_id) ||
+        (props.userType === '政府' && v.gov_user_id === row.gov_user_id)
+    );
+    if (index !== -1) {
+      dataObj.apilist[index].account_status = '禁用';
+      ElMessage.success($t('ui.actionMessage.disableSuccess', [row.user_name || row.enterprise_name]));
+      handleRefresh();
+    }
   } finally {
     loadingInstance.close();
   }
@@ -153,7 +179,12 @@ async function handleDeleteBatch() {
   });
   try {
     dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
+      (v) =>
+        !checkedIds.value.includes(
+          props.userType === '个人' ? v.user_id :
+          props.userType === '企业' ? v.enterprise_id :
+          v.gov_user_id
+        )
     );
     checkedIds.value = [];
     ElMessage.success($t('删除成功'));
@@ -166,15 +197,19 @@ async function handleDeleteBatch() {
 const checkedIds = ref([]);
 
 function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map((item) => item.id);
+  checkedIds.value = records.map((item) =>
+    props.userType === '个人' ? item.user_id :
+    props.userType === '企业' ? item.enterprise_id :
+    item.gov_user_id
+  );
 }
 
 const dataObj = reactive({
   totalShow: false,
-  total: dataList().length,
+  total: dataList(props.userType).length,
   currentPage: 1,
   pageSize: 10,
-  apilist: dataList(),
+  apilist: dataList(props.userType),
   list: [],
 });
 const changeTotalShow = () => {
@@ -182,21 +217,20 @@ const changeTotalShow = () => {
 };
 
 // 表格数据获取
-const getTableData = (pageObj) => {
+const getTableData = async (pageObj) => {
   const page = pageObj.page;
   const filteredList = dataObj.apilist
     .map((v) => v)
     .filter((v) => {
-      if (props.userType === '全部') {
+      if (activeStatus.value === '全部') {
         return true;
       }
-      return v.userType === props.userType;
-    })
-    .filter((v) => {
-      if (activeAuthStatus.value === '全部') {
-        return true;
+      // 根据用户类型选择不同的状态字段进行过滤
+      if (props.userType === '政府') {
+        return v.online_status === activeStatus.value;
+      } else {
+        return v.cert_status === activeStatus.value;
       }
-      return v.authStatus === activeAuthStatus.value;
     })
     .filter((v) => {
       // 搜索条件过滤
@@ -247,7 +281,7 @@ const [QueryForm] = useVbenForm({
   // 垂直布局，label和input在不同行，值为vertical
   // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useGridFormSchema(),
+  schema: useGridFormSchema(props.userType),
   // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
@@ -264,7 +298,7 @@ function onSubmit(values) {
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    columns: useGridColumns(),
+    columns: useGridColumns(props.userType),
     keepSource: true,
     proxyConfig: {
       ajax: {
@@ -272,7 +306,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       },
     },
     rowConfig: {
-      keyField: 'id',
+      keyField: props.userType === '个人' ? 'user_id' : props.userType === '企业' ? 'enterprise_id' : 'gov_user_id',
       isHover: true,
     },
     pagerConfig: dataObj,
@@ -290,35 +324,55 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-// 认证状态标签页
-const activeAuthStatus = ref('全部');
-const authStatusTabs = ref([
-  { label: '全部', value: '全部' },
-  { label: '未认证', value: '未认证' },
-  { label: '待审核', value: '待审核' },
-  { label: '已认证', value: '已认证' },
-  { label: '认证失败', value: '认证失败' },
-]);
+// 根据用户类型获取状态标签
+const getStatusTabs = () => {
+  switch (props.userType) {
+    case '个人':
+      return [
+        { label: '全部', value: '全部' },
+        { label: '未认证', value: '未认证' },
+        { label: '待审核', value: '待审核' },
+        { label: '已认证', value: '已认证' },
+        { label: '认证失败', value: '认证失败' },
+      ];
+    case '企业':
+      return [
+        { label: '全部', value: '全部' },
+        { label: '未认证', value: '未认证' },
+        { label: '待审核', value: '待审核' },
+        { label: '已认证', value: '已认证' },
+        { label: '认证失败', value: '认证失败' },
+      ];
+    case '政府':
+      return [
+        { label: '全部', value: '全部' },
+        { label: '在线', value: '在线' },
+        { label: '离线', value: '离线' },
+      ];
+    default:
+      return [];
+  }
+};
 
-const handleAuthStatusChange = () => {
+// 状态标签页
+const activeStatus = ref('全部');
+const statusTabs = computed(() => getStatusTabs());
+
+const handleStatusChange = () => {
   gridApi.query();
 };
 
 // 生成带数字角标的标签
 const createLabel = (item) => {
   let count = 0;
-  // 先根据用户类型过滤数据
-  const filteredByUserType = dataObj.apilist.filter((v) => {
-    if (props.userType === '全部') {
-      return true;
-    }
-    return v.userType === props.userType;
-  });
 
-  count =
-    item.value === '全部'
-      ? filteredByUserType.length
-      : filteredByUserType.filter((v) => v.authStatus === item.value).length;
+  // 根据用户类型选择不同的状态字段
+  const statusField = props.userType === '政府' ? 'online_status' : 'cert_status';
+
+  count = item.value === '全部'
+    ? dataObj.apilist.length
+    : dataObj.apilist.filter((v) => v[statusField] === item.value).length;
+
   return `${item.label}(${count})`;
 };
 
@@ -355,6 +409,7 @@ const handleMerchantClick = (row) => {
 };
 
 const selectedDetailUser = ref(null);
+const detailFields = computed(() => getUserDetailFields(props.userType));
 
 const detailDrawerRef = ref(null);
 
@@ -442,7 +497,7 @@ const handleAuthManage = (row = {}) => {
   selectedUser.value = row;
   // 初始化认证表单数据
   authFormData.value = {
-    authStatus: row.authStatus || '',
+    authStatus: row.cert_status || '',
     authType: '',
     authMaterialUrl: '',
     plateNumber: '',
@@ -506,25 +561,28 @@ const handleAuthSubmit = () => {
     return;
   }
 
-  // 如果有选中用户且有ID，更新其认证状态
-  if (selectedUser.value && selectedUser.value.id) {
+  // 如果有选中用户，更新其认证状态
+  if (selectedUser.value) {
     const index = dataObj.apilist.findIndex(
-      (item) => item.id === selectedUser.value.id,
+      (item) =>
+        (props.userType === '个人' && item.user_id === selectedUser.value.user_id) ||
+        (props.userType === '企业' && item.enterprise_id === selectedUser.value.enterprise_id) ||
+        (props.userType === '政府' && item.gov_user_id === selectedUser.value.gov_user_id)
     );
     if (index !== -1) {
       // 根据审核结果更新认证状态
-      let newAuthStatus = selectedUser.value.authStatus;
+      let newCertStatus = selectedUser.value.cert_status;
       if (authFormData.value.reviewResult === '通过') {
-        newAuthStatus = '已认证';
+        newCertStatus = '已认证';
       } else if (authFormData.value.reviewResult === '驳回') {
-        newAuthStatus = '认证失败';
+        newCertStatus = '认证失败';
       }
 
       // 更新用户数据
       dataObj.apilist[index] = {
         ...dataObj.apilist[index],
-        authStatus: newAuthStatus,
-        updateTime: new Date().toLocaleString('zh-CN'),
+        cert_status: newCertStatus,
+        update_time: new Date().toLocaleString('zh-CN'),
       };
     }
   }
@@ -650,9 +708,9 @@ const handleAuthSubmit = () => {
     <!-- 用户详情抽屉 -->
     <DetailDrawer
       ref="detailDrawerRef"
-      :title="selectedDetailUser?.realName || '用户详情'"
+      :title="selectedDetailUser?.user_name || selectedDetailUser?.enterprise_name || '用户详情'"
       :data="selectedDetailUser"
-      :fields="userDetailFields"
+      :fields="detailFields"
       @close="handleDetailClose"
       @confirm="handleDetailClose"
     />
@@ -861,14 +919,14 @@ const handleAuthSubmit = () => {
       <template #table-title>
         <div class="tabel-title-container">
           <div v-if="props.secondShow" class="tabel-tabs-container">
-            <!-- 认证状态标签页 -->
+            <!-- 状态标签页 -->
             <el-tabs
-              v-model="activeAuthStatus"
+              v-model="activeStatus"
               class="demo-tabs auth-status-tabs"
-              @tab-change="handleAuthStatusChange"
+              @tab-change="handleStatusChange"
             >
               <el-tab-pane
-                v-for="item in authStatusTabs"
+                v-for="item in statusTabs"
                 :key="item.label"
                 :label="createLabel(item)"
                 :name="item.value"
@@ -931,42 +989,63 @@ const handleAuthSubmit = () => {
           ></i>
         </button>
       </template>
-      <template #userType="{ row }">
+      <!-- 认证状态插槽 -->
+      <template #certStatus="{ row }">
         <el-tag
           :type="
-            row.userType === '个人'
-              ? 'primary'
-              : row.userType === '企业'
-                ? 'success'
-                : 'warning'
-          "
-        >
-          {{ row.userType }}
-        </el-tag>
-      </template>
-      <template #authStatus="{ row }">
-        <el-tag
-          :type="
-            row.authStatus === '已认证'
+            row.cert_status === '已认证'
               ? 'success'
-              : row.authStatus === '待审核'
+              : row.cert_status === '待审核'
                 ? 'warning'
-                : row.authStatus === '认证失败'
+                : row.cert_status === '认证失败'
                   ? 'danger'
                   : 'info'
           "
         >
-          {{ row.authStatus }}
+          {{ row.cert_status }}
         </el-tag>
       </template>
-      <template #merchantName="{ row }">
-        <a
-          href="javascript:;"
-          @click="handleMerchantClick(row)"
-          class="relateField"
+      <!-- 账号状态插槽 -->
+      <template #accountStatus="{ row }">
+        <el-tag
+          :type="
+            row.account_status === '正常'
+              ? 'success'
+              : row.account_status === '禁用'
+                ? 'danger'
+                : row.account_status === '冻结'
+                  ? 'warning'
+                  : 'info'
+          "
         >
-          {{ row.merchantName }}
-        </a>
+          {{ row.account_status }}
+        </el-tag>
+      </template>
+      <!-- 代付规则状态插槽 -->
+      <template #proxyStatus="{ row }">
+        <el-tag
+          :type="
+            row.proxy_status === '启用'
+              ? 'success'
+              : row.proxy_status === '禁用'
+                ? 'danger'
+                : 'info'
+          "
+        >
+          {{ row.proxy_status }}
+        </el-tag>
+      </template>
+      <!-- 在线状态插槽 -->
+      <template #onlineStatus="{ row }">
+        <el-tag
+          :type="
+            row.online_status === '在线'
+              ? 'success'
+              : 'info'
+          "
+        >
+          {{ row.online_status }}
+        </el-tag>
       </template>
       <template #actions="{ row }">
         <TableAction
@@ -981,18 +1060,15 @@ const handleAuthSubmit = () => {
               type: 'primary',
               link: true,
               icon: ACTION_ICON.EDIT,
-              auth: ['system:role:update'],
               onClick: handleEdit.bind(null, row),
             },
-
             {
               type: 'danger',
               link: true,
-              icon: ACTION_ICON.DELETE,
-              auth: ['system:role:delete'],
+              icon: ACTION_ICON.BAN,
               popConfirm: {
-                title: $t('ui.actionMessage.deleteConfirm', [row.realName]),
-                confirm: handleDelete.bind(null, row),
+                title: $t('ui.actionMessage.disableConfirm', [row.user_name || row.enterprise_name]),
+                confirm: handleDisable.bind(null, row),
               },
             },
           ]"
@@ -1004,12 +1080,36 @@ const handleAuthSubmit = () => {
             <ArrowDown />
           </el-icon>
           <span>
-            本页统计：用户数量{{ dataObj.list.length }};认证通过:{{
-              dataObj.list.filter((item) => item.authStatus === '已认证')
-                .length
-            }};待审核:{{
-              dataObj.list.filter((item) => item.authStatus === '待审核').length
-            }}
+            <template v-if="props.userType === '个人'">
+              本页统计：用户数量{{ dataObj.list.length }};认证通过:{{
+                dataObj.list.filter((item) => item.cert_status === '已认证')
+                  .length
+              }};待审核:{{
+                dataObj.list.filter((item) => item.cert_status === '待审核').length
+              }};正常账号:{{
+                dataObj.list.filter((item) => item.account_status === '正常').length
+              }}
+            </template>
+            <template v-else-if="props.userType === '企业'">
+              本页统计：企业数量{{ dataObj.list.length }};认证通过:{{
+                dataObj.list.filter((item) => item.cert_status === '已认证')
+                  .length
+              }};待审核:{{
+                dataObj.list.filter((item) => item.cert_status === '待审核').length
+              }};正常账号:{{
+                dataObj.list.filter((item) => item.account_status === '正常').length
+              }}
+            </template>
+            <template v-else-if="props.userType === '政府'">
+              本页统计：用户数量{{ dataObj.list.length }};在线:{{
+                dataObj.list.filter((item) => item.online_status === '在线')
+                  .length
+              }};离线:{{
+                dataObj.list.filter((item) => item.online_status === '离线').length
+              }};正常账号:{{
+                dataObj.list.filter((item) => item.account_status === '正常').length
+              }}
+            </template>
           </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">

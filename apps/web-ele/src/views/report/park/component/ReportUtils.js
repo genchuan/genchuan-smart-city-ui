@@ -393,3 +393,287 @@ export function getMonthName(monthStr) {
   const [year, month] = monthStr.split('-');
   return `${year}年${Number.parseInt(month)}月`;
 }
+
+/**
+ * 获取过去N天的日期
+ */
+export const getLastNDays = (days = 30) => {
+  const dates = [];
+  const today = new Date();
+
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    dates.push(`${year}-${month}-${day}`);
+  }
+
+  return dates;
+};
+
+/**
+ * 格式化日期时间
+ */
+export const formatDateTime = (datetime) => {
+  if (!datetime) return '';
+  // 如果已经是空格分隔的格式，直接返回
+  if (datetime.includes(' ')) return datetime;
+  // 如果是ISO格式，转换为可读格式
+  return datetime.replace('T', ' ').substr(0, 19);
+};
+
+/**
+ * 生成随机车牌
+ */
+export const generateRandomPlate = () => {
+  const provinces = ['闽A', '闽B', '闽C', '闽D', '闽E', '闽F', '闽G', '闽H', '闽J'];
+  const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const numbers = '0123456789';
+
+  const province = provinces[Math.floor(Math.random() * provinces.length)];
+  const letter = letters[Math.floor(Math.random() * letters.length)];
+  const num1 = numbers[Math.floor(Math.random() * numbers.length)];
+  const num2 = numbers[Math.floor(Math.random() * numbers.length)];
+  const num3 = numbers[Math.floor(Math.random() * numbers.length)];
+  const num4 = numbers[Math.floor(Math.random() * numbers.length)];
+
+  return `${province}${letter}${num1}${num2}${num3}${num4}`;
+};
+
+/**
+ * 生成随机时间
+ */
+export const generateRandomTime = (baseDate = new Date(), offsetDays = 30) => {
+  const date = new Date(baseDate);
+  date.setDate(date.getDate() - Math.floor(Math.random() * offsetDays));
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(Math.floor(Math.random() * 24)).padStart(2, '0');
+  const minutes = String(Math.floor(Math.random() * 60)).padStart(2, '0');
+  const seconds = String(Math.floor(Math.random() * 60)).padStart(2, '0');
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
+
+/**
+ * 生成随机数
+ */
+export const getRandomInt = (min, max) => {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+/**
+ * 深拷贝
+ */
+export const deepClone = (obj) => {
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (obj instanceof Date) return new Date(obj.getTime());
+  if (obj instanceof Array) return obj.map(item => deepClone(item));
+  if (typeof obj === 'object') {
+    const clonedObj = {};
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        clonedObj[key] = deepClone(obj[key]);
+      }
+    }
+    return clonedObj;
+  }
+  return obj;
+};
+
+/**
+ * 防抖函数
+ */
+export const debounce = (func, wait) => {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
+
+/**
+ * 节流函数
+ */
+export const throttle = (func, limit) => {
+  let inThrottle;
+  return function executedFunction(...args) {
+    if (!inThrottle) {
+      func(...args);
+      inThrottle = true;
+      setTimeout(() => (inThrottle = false), limit);
+    }
+  };
+};
+
+/**
+ * 生成颜色
+ */
+export const generateColors = (count) => {
+  const colors = [
+    '#f5222d', '#fa8c16', '#1890ff', '#52c41a', '#722ed1',
+    '#13c2c2', '#eb2f96', '#faad14', '#a0d911', '#d4380d'
+  ];
+
+  if (count <= colors.length) {
+    return colors.slice(0, count);
+  }
+
+  // 如果需要更多颜色，生成随机颜色
+  const result = [...colors];
+  for (let i = colors.length; i < count; i++) {
+    const r = Math.floor(Math.random() * 200);
+    const g = Math.floor(Math.random() * 200);
+    const b = Math.floor(Math.random() * 200);
+    result.push(`rgb(${r}, ${g}, ${b})`);
+  }
+
+  return result;
+};
+
+/**
+ * 下载文件
+ */
+export const downloadFile = (content, filename, type = 'text/csv;charset=utf-8;') => {
+  const blob = new Blob([`\uFEFF${content}`], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
+
+/**
+ * 验证表单
+ */
+export const validateForm = (formData, rules) => {
+  const errors = {};
+
+  Object.keys(rules).forEach(field => {
+    const value = formData[field];
+    const fieldRules = rules[field];
+
+    if (fieldRules.required && (!value || value.toString().trim() === '')) {
+      errors[field] = fieldRules.message || '该字段为必填项';
+    }
+
+    if (fieldRules.pattern && value && !fieldRules.pattern.test(value)) {
+      errors[field] = fieldRules.message || '格式不正确';
+    }
+
+    if (fieldRules.minLength && value && value.length < fieldRules.minLength) {
+      errors[field] = fieldRules.message || `长度不能少于${fieldRules.minLength}个字符`;
+    }
+
+    if (fieldRules.maxLength && value && value.length > fieldRules.maxLength) {
+      errors[field] = fieldRules.message || `长度不能超过${fieldRules.maxLength}个字符`;
+    }
+  });
+
+  return errors;
+};
+
+/**
+ * 生成唯一ID
+ */
+export const generateId = (prefix = '') => {
+  const timestamp = Date.now().toString(36);
+  const randomStr = Math.random().toString(36).substr(2, 5);
+  return `${prefix}${timestamp}${randomStr}`.toUpperCase();
+};
+
+/**
+ * 数组去重
+ */
+export const uniqueArray = (arr, key) => {
+  if (!key) return [...new Set(arr)];
+
+  const seen = new Set();
+  return arr.filter(item => {
+    const value = item[key];
+    if (seen.has(value)) return false;
+    seen.add(value);
+    return true;
+  });
+};
+
+/**
+ * 排序数组
+ */
+export const sortArray = (arr, key, order = 'asc') => {
+  return [...arr].sort((a, b) => {
+    const aValue = a[key];
+    const bValue = b[key];
+
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      return order === 'asc'
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    }
+
+    return order === 'asc'
+      ? aValue - bValue
+      : bValue - aValue;
+  });
+};
+
+/**
+ * 分页数组
+ */
+export const paginateArray = (arr, page = 1, pageSize = 10) => {
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, arr.length);
+  return {
+    data: arr.slice(startIndex, endIndex),
+    total: arr.length,
+    page,
+    pageSize,
+    pageCount: Math.ceil(arr.length / pageSize)
+  };
+};
+
+/**
+ * 获取文件大小
+ */
+export const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+/**
+ * 获取文件扩展名
+ */
+export const getFileExtension = (filename) => {
+  return filename.slice((filename.lastIndexOf('.') - 1 >>> 0) + 2).toLowerCase();
+};
+
+/**
+ * 判断文件类型
+ */
+export const getFileType = (filename) => {
+  const ext = getFileExtension(filename);
+  const imageTypes = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+  const documentTypes = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt'];
+  const videoTypes = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv'];
+  const audioTypes = ['mp3', 'wav', 'ogg', 'aac', 'flac'];
+
+  if (imageTypes.includes(ext)) return 'image';
+  if (documentTypes.includes(ext)) return 'document';
+  if (videoTypes.includes(ext)) return 'video';
+  if (audioTypes.includes(ext)) return 'audio';
+  return 'other';
+};
