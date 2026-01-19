@@ -348,7 +348,7 @@ const parkDetailDrawerRef = ref(null);
         </el-text>
       </template>
       <template #actions="{ row }">
-        <div class="common-toolbar-tools">
+        <div class="table-toolbar-tools">
           <IconButton
             content="详情"
             icon-name="Document"
