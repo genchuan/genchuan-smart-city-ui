@@ -114,31 +114,3 @@ const tabChange = (tabName) => {
     </div>
   </div>
 </template>
-
-<style scope lang="scss">
-.multi-termina-user {
-  height: 89vh;
-  overflow: auto;
-
-  .common-index {
-    height: auto;
-  }
-
-  .common-index .icon-change {
-    position: relative;
-    top: 30px;
-  }
-
-  .common-index .park-lot-table-new .vxe-tools--wrapper {
-    position: relative;
-    top: 0;
-    right: 0;
-  }
-
-  .common-index .park-lot-table-new .vxe-tools--operate {
-    position: relative;
-    top: 0;
-    right: 0;
-  }
-}
-</style>

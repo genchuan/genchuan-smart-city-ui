@@ -20,6 +20,7 @@
 
   .el-tabs__header {
     margin-bottom: 0px;
+    position: absolute;
   }
 
   .el-tabs__item {
@@ -38,11 +39,17 @@
     width: 20px;
   }
 
+  .el-tabs__nav-wrap {}
+
   .park-lot-table-new {
     height: 84vh;
 
-    .vxe-buttons--wrapper {
-      padding-top: 0px;
+    .vxe-buttons--wrapper { 
+      padding-top: 5px;
+
+      .el-tabs__header {
+        position: static;
+      }
     }
 
     .table-first {
@@ -55,17 +62,21 @@
       }
     }
 
-    .vxe-tools--wrapper {
-      position: fixed;
-      right: 77px;
-      top: 90px;
+    .vxe-grid--toolbar-wrapper {
+      margin-top: 30px;
+      .vxe-tools--wrapper {
+        position: absolute;
+        right: 77px;
+        top: -30px;
+      }
+
+      .vxe-tools--operate {
+         position: absolute;
+         right: 0px;
+        top: -30px;
+      }
     }
 
-    .vxe-tools--operate {
-      position: fixed;
-      right: 0px;
-      top: 90px;
-    }
 
     .vxe-pager .vxe-pager--sizes {
       margin-right: 10px;
@@ -105,6 +116,7 @@
     }
 
     .common-tool-bar-config {
+      position: relative;
       .vxe-tools--operate {
         .vxe-button:nth-child(2) {
           display: none;
@@ -151,7 +163,7 @@
   }
 
   .icon-change {
-    top: 20px;
+    margin-top: 10px;
     position: absolute;
     cursor: pointer;
     z-index: 1;
