@@ -1,101 +1,131 @@
-<!-- 文件: EscapeData.vue -->
 <template>
   <div class="escape-data-report">
     <!-- 工具栏 -->
     <ReportToolbar>
       <template #left>
-        <!-- 筛选条件 - 直接显示在工具栏 -->
-        <div class="filter-row">
-          <div class="filter-group">
-            <span class="filter-label">时间范围：</span>
-            <el-date-picker
-              v-model="filterForm.dateRange"
-              type="daterange"
-              range-separator="至"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-              style="width: 240px"
-              size="small"
-            />
-          </div>
-
-          <div class="filter-group">
-            <span class="filter-label">区域：</span>
-            <el-select
-              v-model="filterForm.region"
-              placeholder="全部区域"
-              style="width: 120px"
-              size="small"
-              clearable
-              @change="handleRegionChange"
-            >
-              <el-option
-                v-for="item in regionOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
+        <!-- 筛选条件 - 同一行布局 -->
+        <div class="filter-container">
+          <div class="filter-row">
+            <div class="filter-group">
+              <el-date-picker
+                v-model="filterForm.dateRange"
+                type="daterange"
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+                style="width: 240px"
+                size medium
               />
-            </el-select>
-          </div>
+            </div>
 
-          <div class="filter-group">
-            <span class="filter-label">停车场：</span>
-            <el-select
-              v-model="filterForm.parkingId"
-              placeholder="全部车场"
-              style="width: 150px"
-              size="small"
-              clearable
-            >
-              <el-option
-                v-for="item in parkingOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
+            <div class="filter-group">
+              <el-select
+                v-model="filterForm.region"
+                placeholder="区域"
+                style="width: 120px"
+                size medium
+                clearable
+              >
+                <el-option
+                  v-for="item in regionOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </div>
+
+            <div class="filter-group">
+              <el-select
+                v-model="filterForm.parkingId"
+                placeholder="车场"
+                style="width: 150px"
+                size medium
+                clearable
+              >
+                <el-option
+                  v-for="item in parkingOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </div>
+
+            <div class="filter-group">
+              <el-select
+                v-model="filterForm.escapeLevel"
+                placeholder="逃费等级"
+                style="width: 120px"
+                size medium
+                clearable
+              >
+                <el-option
+                  v-for="item in levelOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </div>
+
+            <div class="filter-group">
+              <el-input
+                v-model="carNumber"
+                placeholder="车牌号码"
+                size medium
+                clearable
+                style="width: 140px"
+                @keyup.enter="handleSearch"
               />
-            </el-select>
-          </div>
+            </div>
 
-          <div class="filter-group">
-            <span class="filter-label">逃费等级：</span>
-            <el-select
-              v-model="filterForm.escapeLevel"
-              placeholder="全部等级"
-              style="width: 120px"
-              size="small"
-              clearable
-              @change="handleLevelChange"
-            >
-              <el-option
-                v-for="item in levelOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
+            <div class="filter-group">
+              <el-select
+                v-model="filterForm.traceStatus"
+                placeholder="追缴状态"
+                style="width: 120px"
+                size medium
+                clearable
+              >
+                <el-option
+                  v-for="item in traceStatusOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </div>
+
+            <div class="filter-group amount-range">
+              <el-input
+                v-model="filterForm.minAmount"
+                placeholder="最小金额"
+                size medium
+                style="width: 100px"
               />
-            </el-select>
+              <span class="range-separator">-</span>
+              <el-input
+                v-model="filterForm.maxAmount"
+                placeholder="最大金额"
+                size medium
+                style="width: 100px"
+              />
+            </div>
+<!--            <div class="filter-group">-->
+<!--              <el-button type="primary" size medium" @click="handleSearch">-->
+<!--                查询-->
+<!--              </el-button>-->
+<!--              <el-button size medium" @click="resetFilter">-->
+<!--                重置-->
+<!--              </el-button>-->
+<!--              <el-button type="text" size medium" @click="toggleStats = !toggleStats">-->
+<!--                {{ toggleStats ? '隐藏统计' : '显示统计' }}-->
+<!--              </el-button>-->
+<!--            </div>-->
           </div>
-
-          <div class="filter-group">
-            <span class="filter-label">车牌号：</span>
-            <el-input
-              v-model="carNumber"
-              placeholder="车牌号码"
-              size="small"
-              clearable
-              style="width: 140px"
-              @clear="handleSearch"
-              @keyup.enter="handleSearch"
-            />
-          </div>
-
-          <el-button type="primary" size="small" @click="handleSearch">
-            查询
-          </el-button>
-          <el-button size="small" @click="resetFilter">
-            重置
-          </el-button>
         </div>
       </template>
 
@@ -105,12 +135,60 @@
           :icon="Download"
           @click="handleExport"
           :loading="exporting"
-          size="small"
+          size medium
         >
           导出Excel
         </el-button>
+        <el-button
+          type="info"
+          :icon="Refresh"
+          @click="refreshData"
+          size medium
+        >
+          刷新
+        </el-button>
       </template>
     </ReportToolbar>
+
+    <!-- 统计卡片 -->
+    <div v-if="toggleStats" class="statistics-cards">
+      <div class="stat-card">
+        <div class="stat-icon" style="color: #f5222d;">
+          <el-icon><Money /></el-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ formatCurrency(summaryData.totalEscapeAmount || 0) }}</div>
+          <div class="stat-label">逃费总金额</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="color: #1890ff;">
+          <el-icon><Document /></el-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ summaryData.totalCount || 0 }}笔</div>
+          <div class="stat-label">逃费订单数</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="color: #52c41a;">
+          <el-icon><SuccessFilled /></el-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ summaryData.recoveryRate || 0 }}%</div>
+          <div class="stat-label">追缴成功率</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="color: #fa8c16;">
+          <el-icon><Clock /></el-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ summaryData.pendingCount || 0 }}笔</div>
+          <div class="stat-label">待追缴数</div>
+        </div>
+      </div>
+    </div>
 
     <!-- 图表分析 -->
     <div class="chart-section">
@@ -152,7 +230,7 @@
     </div>
 
     <!-- 逃费数据列表 -->
-    <ReportSection title="逃费数据明细">
+    <ReportSection title="逃费数据明细" :with-background="true" :with-padding="true">
       <DataTable
         :data="tableData"
         :columns="tableColumns"
@@ -225,15 +303,16 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
-import { Download } from '@element-plus/icons-vue';
+import { computed, onMounted, ref } from 'vue';
+import { Download, Refresh, Money, Document, SuccessFilled, Clock } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 
 import {
   exportEscapeDataReport,
   getEscapeDataReport,
+  getEscapeFilterOptions,
   submitTraceAction,
-  getEscapeFilterOptions
+  getEscapeStatistics
 } from '#/api/reports/park/escapeDataApi';
 import ChartContainer from '#/views/report/park/component/ChartContainer.vue';
 import DataTable from '#/views/report/park/component/DataTable.vue';
@@ -242,20 +321,24 @@ import ReportToolbar from '#/views/report/park/component/ReportToolbar.vue';
 import EscapeDetail from './EscapeDetail.vue';
 import {
   formatCurrency,
-  getYesterdayDate
+  getYesterdayDate,
+  getLastMonth
 } from '#/views/report/park/component/ReportUtils';
 
 // 响应式数据
-const showFilterPanel = ref(false);
 const filterForm = ref({
-  dateRange: [getYesterdayDate(), getYesterdayDate()],
+  dateRange: [getLastMonth() + '-01', getYesterdayDate()],
   region: '',
   parkingId: '',
-  escapeLevel: ''
+  escapeLevel: '',
+  traceStatus: '',
+  minAmount: '',
+  maxAmount: ''
 });
 const carNumber = ref('');
 const loading = ref(false);
 const exporting = ref(false);
+const toggleStats = ref(true);
 const tableData = ref([]);
 const filterOptions = ref({});
 const showDetailDrawer = ref(false);
@@ -275,14 +358,16 @@ const trendData = ref([]);
 const levelDistribution = ref([]);
 const statusDistribution = ref([]);
 const regionAmountComparison = ref([]);
+const summaryData = ref({});
 
 // 选项数据
 const regionOptions = computed(() => filterOptions.value.regions || []);
 const parkingOptions = computed(() => filterOptions.value.parkingList || []);
 const levelOptions = computed(() => filterOptions.value.escapeLevels || []);
+const traceStatusOptions = computed(() => filterOptions.value.traceStatuses || []);
 const traceMethodOptions = computed(() => filterOptions.value.traceMethods || []);
 
-// 表格列定义 - 修复render函数参数传递问题
+// 表格列定义
 const tableColumns = computed(() => [
   {
     prop: 'escapeId',
@@ -325,12 +410,8 @@ const tableColumns = computed(() => [
     width: 120,
     render: (row) => ({
       text: row.escapeLevel,
-      events: {
-        click: () => handleLevelClick(row.escapeLevel)
-      },
       props: {
         style: {
-          cursor: 'pointer',
           color: getEscapeLevelColor(row.escapeLevel),
           fontWeight: 'bold'
         }
@@ -343,12 +424,8 @@ const tableColumns = computed(() => [
     width: 120,
     render: (row) => ({
       text: row.traceStatus,
-      events: {
-        click: () => handleStatusClick(row.traceStatus)
-      },
       props: {
         style: {
-          cursor: 'pointer',
           color: getTraceStatusColor(row.traceStatus)
         }
       }
@@ -362,7 +439,7 @@ const tableColumns = computed(() => [
   {
     prop: 'actions',
     label: '操作',
-    width: 180,
+    width: 150,
     render: (row) => ({
       type: 'div',
       props: { class: 'action-buttons' },
@@ -371,7 +448,7 @@ const tableColumns = computed(() => [
           type: 'el-button',
           props: {
             type: 'primary',
-            size: 'small',
+            size: medium,
             onClick: () => handleDetailClick(row)
           },
           text: '详情'
@@ -380,7 +457,7 @@ const tableColumns = computed(() => [
           type: 'el-button',
           props: {
             type: 'warning',
-            size: 'small',
+            size: medium,
             onClick: () => handleTraceClick(row),
             disabled: row.traceStatus === '已追缴' || row.traceStatus === '已豁免'
           },
@@ -430,6 +507,16 @@ const trendOptions = computed(() => ({
       smooth: true,
       itemStyle: {
         color: '#f5222d'
+      }
+    },
+    {
+      name: '逃费金额',
+      type: 'line',
+      yAxisIndex: 1,
+      data: trendData.value.map(item => item.amount),
+      smooth: true,
+      itemStyle: {
+        color: '#1890ff'
       }
     }
   ]
@@ -560,8 +647,6 @@ const loadFilterOptions = async () => {
   try {
     const options = await getEscapeFilterOptions();
     filterOptions.value = options;
-    // 设置默认日期范围
-    filterForm.value.dateRange = [getYesterdayDate(), getYesterdayDate()];
   } catch (error) {
     console.error('加载筛选选项失败:', error);
     ElMessage.error('加载筛选选项失败');
@@ -580,11 +665,16 @@ const loadData = async () => {
       region: filterForm.value.region,
       parkingId: filterForm.value.parkingId,
       escapeLevel: filterForm.value.escapeLevel,
+      traceStatus: filterForm.value.traceStatus,
       page: currentPage.value,
       pageSize: pageSize.value
     };
 
     const response = await getEscapeDataReport(params);
+    const stats = await getEscapeStatistics({
+      startDate: filterForm.value.dateRange[0],
+      endDate: filterForm.value.dateRange[1]
+    });
 
     // 更新数据
     tableData.value = response.data || [];
@@ -593,6 +683,7 @@ const loadData = async () => {
     levelDistribution.value = response.escapeLevelDistribution || [];
     statusDistribution.value = response.traceStatusDistribution || [];
     regionAmountComparison.value = response.regionAmountComparison || [];
+    summaryData.value = stats.summary || {};
   } catch (error) {
     console.error('加载逃费数据失败:', error);
     ElMessage.error('加载数据失败');
@@ -607,22 +698,23 @@ const handleSearch = () => {
   loadData();
 };
 
-// 重置筛选条件
-const resetFilter = () => {
-  filterForm.value = {
-    dateRange: [getYesterdayDate(), getYesterdayDate()],
-    region: '',
-    parkingId: '',
-    escapeLevel: ''
-  };
-  carNumber.value = '';
-  currentPage.value = 1;
+// 刷新数据
+const refreshData = () => {
   loadData();
 };
 
-// 应用筛选
-const applyFilter = () => {
-  showFilterPanel.value = false;
+// 重置筛选条件
+const resetFilter = () => {
+  filterForm.value = {
+    dateRange: [getLastMonth() + '-01', getYesterdayDate()],
+    region: '',
+    parkingId: '',
+    escapeLevel: '',
+    traceStatus: '',
+    minAmount: '',
+    maxAmount: ''
+  };
+  carNumber.value = '';
   currentPage.value = 1;
   loadData();
 };
@@ -642,8 +734,6 @@ const handleExport = async () => {
     };
 
     await exportEscapeDataReport(params);
-
-    ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
@@ -688,42 +778,11 @@ const handleTraceSubmit = async () => {
 
     ElMessage.success(result.message);
     showTraceDialog.value = false;
-    loadData(); // 刷新数据
+    loadData();
   } catch (error) {
     console.error('追缴操作失败:', error);
     ElMessage.error(error.message || '追缴操作失败');
   }
-};
-
-// 钻取筛选 - 行政区域
-const handleRegionChange = (region) => {
-  filterForm.value.region = region;
-  if (region) {
-    currentPage.value = 1;
-    loadData();
-  }
-};
-
-// 钻取筛选 - 逃费等级
-const handleLevelChange = (level) => {
-  filterForm.value.escapeLevel = level;
-  if (level) {
-    currentPage.value = 1;
-    loadData();
-  }
-};
-
-// 表格内点击事件
-const handleLevelClick = (level) => {
-  filterForm.value.escapeLevel = level;
-  currentPage.value = 1;
-  loadData();
-  ElMessage.info(`已筛选逃费等级: ${level}`);
-};
-
-const handleStatusClick = (status) => {
-  // 这里可以添加根据状态筛选的逻辑
-  ElMessage.info(`筛选追缴状态: ${status}`);
 };
 
 // 工具函数
@@ -756,13 +815,18 @@ const getTraceStatusColor = (status) => {
   padding: 12px;
 }
 
-/* 筛选行样式 */
+/* 筛选容器 */
+.filter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .filter-row {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
-  padding: 4px 0;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .filter-group {
@@ -771,12 +835,63 @@ const getTraceStatusColor = (status) => {
   gap: 6px;
 }
 
-.filter-label {
-  font-size: 13px;
-  color: #606266;
-  white-space: nowrap;
+.range-separator {
+  padding: 0 4px;
+  color: #909399;
 }
 
+/* 金额范围组样式 */
+.amount-range {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 统计卡片 */
+.statistics-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 10%);
+  transition: transform 0.3s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.stat-icon {
+  font-size: 32px;
+  margin-right: 16px;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #303133;
+  line-height: 1;
+}
+
+.stat-label {
+  margin-top: 6px;
+  font-size: 14px;
+  color: #909399;
+}
+
+/* 图表区域 */
 .chart-section {
   margin-bottom: 12px;
 }
@@ -788,20 +903,72 @@ const getTraceStatusColor = (status) => {
   margin-bottom: 12px;
 }
 
+@media (max-width: 1200px) {
+  .filter-row {
+    gap: 6px;
+  }
+
+  .filter-group :deep(.el-date-editor) {
+    width: 200px !important;
+  }
+
+  .filter-group :deep(.el-select),
+  .filter-group :deep(.el-input) {
+    width: 120px !important;
+  }
+
+  .amount-range :deep(.el-input) {
+    width: 80px !important;
+  }
+}
+
 @media (max-width: 992px) {
   .chart-row {
     grid-template-columns: 1fr;
   }
 
   .filter-row {
+    gap: 8px;
+  }
+
+  .filter-group {
+    flex: 1 1 calc(50% - 8px);
+  }
+
+  .statistics-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .filter-row {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
   }
 
   .filter-group {
     width: 100%;
   }
+
+  .filter-group :deep(.el-date-editor),
+  .filter-group :deep(.el-select),
+  .filter-group :deep(.el-input) {
+    width: 100% !important;
+  }
+
+  .amount-range {
+    display: flex;
+    gap: 8px;
+  }
+
+  .statistics-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
 }
 
 .trace-dialog {
@@ -811,10 +978,5 @@ const getTraceStatusColor = (status) => {
 .trace-info {
   font-weight: 500;
   color: #303133;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 8px;
 }
 </style>

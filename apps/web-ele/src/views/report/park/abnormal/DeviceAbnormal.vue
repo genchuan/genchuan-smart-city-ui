@@ -1,102 +1,118 @@
-<!-- 文件: DeviceAbnormal.vue -->
 <template>
   <div class="device-abnormal-report">
     <!-- 工具栏 -->
     <ReportToolbar>
       <template #left>
-        <!-- 筛选条件 - 直接显示在工具栏 -->
-        <div class="filter-row">
-          <div class="filter-group">
-            <span class="filter-label">时间范围：</span>
-            <el-date-picker
-              v-model="filterForm.dateRange"
-              type="daterange"
-              range-separator="至"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-              style="width: 240px"
-              size="small"
-            />
-          </div>
-
-          <div class="filter-group">
-            <span class="filter-label">设备类型：</span>
-            <el-select
-              v-model="filterForm.deviceType"
-              placeholder="全部类型"
-              style="width: 120px"
-              size="small"
-              clearable
-              @change="handleDeviceTypeChange"
-            >
-              <el-option
-                v-for="item in deviceTypeOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
+        <!-- 筛选条件 - 同一行布局 -->
+        <div class="filter-container">
+          <div class="filter-row">
+            <div class="filter-group">
+              <el-date-picker
+                v-model="filterForm.dateRange"
+                type="daterange"
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+                style="width: 240px"
+                size=medium
               />
-            </el-select>
-          </div>
+            </div>
 
-          <div class="filter-group">
-            <span class="filter-label">区域：</span>
-            <el-select
-              v-model="filterForm.region"
-              placeholder="全部区域"
-              style="width: 120px"
-              size="small"
-              clearable
-              @change="handleRegionChange"
-            >
-              <el-option
-                v-for="item in regionOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
+            <div class="filter-group">
+              <el-select
+                v-model="filterForm.deviceType"
+                placeholder="设备类型"
+                style="width: 140px"
+                size=medium
+                clearable
+              >
+                <el-option
+                  v-for="item in deviceTypeOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </div>
+
+            <div class="filter-group">
+              <el-select
+                v-model="filterForm.region"
+                placeholder="区域"
+                style="width: 120px"
+                size=medium
+                clearable
+              >
+                <el-option
+                  v-for="item in regionOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </div>
+
+            <div class="filter-group">
+              <el-select
+                v-model="filterForm.faultType"
+                placeholder="故障类型"
+                style="width: 120px"
+                size=medium
+                clearable
+              >
+                <el-option
+                  v-for="item in faultTypeOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </div>
+
+            <div class="filter-group">
+              <el-input
+                v-model="deviceCode"
+                placeholder="设备编码"
+                size=medium
+                clearable
+                style="width: 140px"
+                @keyup.enter="handleSearch"
               />
-            </el-select>
-          </div>
+            </div>
 
-          <div class="filter-group">
-            <span class="filter-label">故障类型：</span>
-            <el-select
-              v-model="filterForm.faultType"
-              placeholder="全部类型"
-              style="width: 120px"
-              size="small"
-              clearable
-              @change="handleFaultTypeChange"
-            >
-              <el-option
-                v-for="item in faultTypeOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </div>
+            <div class="filter-group">
+              <el-select
+                v-model="filterForm.disposalStatus"
+                placeholder="处置状态"
+                style="width: 120px"
+                size=medium
+                clearable
+              >
+                <el-option
+                  v-for="item in disposalStatusOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </div>
 
-          <div class="filter-group">
-            <span class="filter-label">设备编码：</span>
-            <el-input
-              v-model="deviceCode"
-              placeholder="设备编码"
-              size="small"
-              clearable
-              style="width: 140px"
-              @clear="handleSearch"
-              @keyup.enter="handleSearch"
-            />
+            <div class="filter-group">
+              <el-select
+                v-model="filterForm.impactLevel"
+                placeholder="影响等级"
+                style="width: 120px"
+                size=medium
+                clearable
+              >
+                <el-option label="高" value="high" />
+                <el-option label="中" value="medium" />
+                <el-option label="低" value="low" />
+              </el-select>
+            </div>
           </div>
-
-          <el-button type="primary" size="small" @click="handleSearch">
-            查询
-          </el-button>
-          <el-button size="small" @click="resetFilter">
-            重置
-          </el-button>
         </div>
       </template>
 
@@ -106,12 +122,60 @@
           :icon="Download"
           @click="handleExport"
           :loading="exporting"
-          size="small"
+          size=medium
         >
           导出Excel
         </el-button>
+        <el-button
+          type="info"
+          :icon="Refresh"
+          @click="refreshData"
+          size=medium
+        >
+          刷新
+        </el-button>
       </template>
     </ReportToolbar>
+
+    <!-- 统计卡片 -->
+    <div v-if="toggleStats" class="statistics-cards">
+      <div class="stat-card">
+        <div class="stat-icon" style="color: #f5222d;">
+          <el-icon><Warning /></el-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ summaryData.totalCount || 0 }}次</div>
+          <div class="stat-label">故障总数</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="color: #1890ff;">
+          <el-icon><Tools /></el-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ summaryData.resolveRate || 0 }}%</div>
+          <div class="stat-label">解决率</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="color: #52c41a;">
+          <el-icon><SuccessFilled /></el-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ summaryData.avgResolveTime || 0 }}小时</div>
+          <div class="stat-label">平均解决时间</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="color: #fa8c16;">
+          <el-icon><Clock /></el-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ formatCurrency(summaryData.totalEstimatedCost || 0) }}</div>
+          <div class="stat-label">预估维修成本</div>
+        </div>
+      </div>
+    </div>
 
     <!-- 图表分析 -->
     <div class="chart-section">
@@ -162,7 +226,7 @@
     </div>
 
     <!-- 设备异常列表 -->
-    <ReportSection title="设备异常明细">
+    <ReportSection title="设备异常明细" :with-background="true" :with-padding="true">
       <DataTable
         :data="tableData"
         :columns="tableColumns"
@@ -190,8 +254,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
-import { Download } from '@element-plus/icons-vue';
+import { computed, onMounted, ref } from 'vue';
+import { Download, Refresh, Warning, Tools, SuccessFilled, Clock } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 
 import {
@@ -205,20 +269,24 @@ import ReportSection from '#/views/report/park/component/ReportSection.vue';
 import ReportToolbar from '#/views/report/park/component/ReportToolbar.vue';
 import DeviceDetail from './DeviceDetail.vue';
 import {
-  getYesterdayDate
+  formatCurrency,
+  getYesterdayDate,
+  getLastMonth
 } from '#/views/report/park/component/ReportUtils';
 
 // 响应式数据
-const showFilterPanel = ref(false);
 const filterForm = ref({
-  dateRange: [getYesterdayDate(), getYesterdayDate()],
+  dateRange: [getLastMonth() + '-01', getYesterdayDate()],
   deviceType: '',
   region: '',
-  faultType: ''
+  faultType: '',
+  disposalStatus: '',
+  impactLevel: ''
 });
 const deviceCode = ref('');
 const loading = ref(false);
 const exporting = ref(false);
+const toggleStats = ref(true);
 const tableData = ref([]);
 const filterOptions = ref({});
 const showDetailDrawer = ref(false);
@@ -235,13 +303,15 @@ const faultTypeDistribution = ref([]);
 const statusDistribution = ref([]);
 const regionFaultComparison = ref([]);
 const deviceTypeFaultComparison = ref([]);
+const summaryData = ref({});
 
 // 选项数据
 const deviceTypeOptions = computed(() => filterOptions.value.deviceTypes || []);
 const regionOptions = computed(() => filterOptions.value.regions || []);
 const faultTypeOptions = computed(() => filterOptions.value.faultTypes || []);
+const disposalStatusOptions = computed(() => filterOptions.value.disposalStatuses || []);
 
-// 表格列定义 - 修复render函数参数传递问题
+// 表格列定义
 const tableColumns = computed(() => [
   {
     prop: 'faultId',
@@ -265,30 +335,12 @@ const tableColumns = computed(() => [
   {
     prop: 'deviceType',
     label: '设备类型',
-    width: 120,
-    render: (row) => ({
-      text: row.deviceType,
-      events: {
-        click: () => handleDeviceTypeClick(row.deviceType)
-      },
-      props: {
-        style: { cursor: 'pointer' }
-      }
-    })
+    width: 120
   },
   {
     prop: 'regionName',
     label: '区域名称',
-    width: 120,
-    render: (row) => ({
-      text: row.regionName,
-      events: {
-        click: () => handleRegionClick(row.regionName)
-      },
-      props: {
-        style: { cursor: 'pointer' }
-      }
-    })
+    width: 120
   },
   {
     prop: 'faultTime',
@@ -301,11 +353,8 @@ const tableColumns = computed(() => [
     width: 120,
     render: (row) => ({
       text: row.faultType,
-      events: {
-        click: () => handleFaultTypeClick(row.faultType)
-      },
       props: {
-        style: { cursor: 'pointer', color: getFaultTypeColor(row.faultType) }
+        style: { color: getFaultTypeColor(row.faultType) }
       }
     })
   },
@@ -315,17 +364,27 @@ const tableColumns = computed(() => [
     width: 200
   },
   {
+    prop: 'impactLevel',
+    label: '影响等级',
+    width: 100,
+    render: (row) => ({
+      text: row.impactLevel,
+      props: {
+        style: {
+          color: getImpactLevelColor(row.impactLevel),
+          fontWeight: row.impactLevel === '高' ? 'bold' : 'normal'
+        }
+      }
+    })
+  },
+  {
     prop: 'disposalStatus',
     label: '处置状态',
     width: 100,
     render: (row) => ({
       text: row.disposalStatus,
-      events: {
-        click: () => handleStatusClick(row.disposalStatus)
-      },
       props: {
         style: {
-          cursor: 'pointer',
           color: getDisposalStatusColor(row.disposalStatus)
         }
       }
@@ -344,7 +403,7 @@ const tableColumns = computed(() => [
   {
     prop: 'actions',
     label: '操作',
-    width: 180,
+    width: 120,
     render: (row) => ({
       type: 'div',
       props: { class: 'action-buttons' },
@@ -353,20 +412,10 @@ const tableColumns = computed(() => [
           type: 'el-button',
           props: {
             type: 'primary',
-            size: 'small',
+            size: medium,
             onClick: () => handleDetailClick(row)
           },
           text: '详情'
-        },
-        {
-          type: 'el-button',
-          props: {
-            type: 'info',
-            size: 'small',
-            onClick: () => handleWorkOrderClick(row),
-            disabled: !row.workOrderId || row.disposalStatus === '待处置'
-          },
-          text: '查看'
         }
       ]
     })
@@ -412,6 +461,15 @@ const trendOptions = computed(() => ({
       smooth: true,
       itemStyle: {
         color: '#f5222d'
+      }
+    },
+    {
+      name: '已解决',
+      type: 'line',
+      data: trendData.value.map(item => item.resolved),
+      smooth: true,
+      itemStyle: {
+        color: '#52c41a'
       }
     }
   ]
@@ -592,8 +650,6 @@ const loadFilterOptions = async () => {
   try {
     const options = await getDeviceAbnormalFilterOptions();
     filterOptions.value = options;
-    // 设置默认日期范围
-    filterForm.value.dateRange = [getYesterdayDate(), getYesterdayDate()];
   } catch (error) {
     console.error('加载筛选选项失败:', error);
     ElMessage.error('加载筛选选项失败');
@@ -612,6 +668,7 @@ const loadData = async () => {
       deviceType: filterForm.value.deviceType,
       region: filterForm.value.region,
       faultType: filterForm.value.faultType,
+      disposalStatus: filterForm.value.disposalStatus,
       page: currentPage.value,
       pageSize: pageSize.value
     };
@@ -626,6 +683,7 @@ const loadData = async () => {
     statusDistribution.value = response.disposalStatusDistribution || [];
     regionFaultComparison.value = response.regionFaultComparison || [];
     deviceTypeFaultComparison.value = response.deviceTypeFaultComparison || [];
+    summaryData.value = response.summary || {};
   } catch (error) {
     console.error('加载设备异常数据失败:', error);
     ElMessage.error('加载数据失败');
@@ -640,22 +698,22 @@ const handleSearch = () => {
   loadData();
 };
 
-// 重置筛选条件
-const resetFilter = () => {
-  filterForm.value = {
-    dateRange: [getYesterdayDate(), getYesterdayDate()],
-    deviceType: '',
-    region: '',
-    faultType: ''
-  };
-  deviceCode.value = '';
-  currentPage.value = 1;
+// 刷新数据
+const refreshData = () => {
   loadData();
 };
 
-// 应用筛选
-const applyFilter = () => {
-  showFilterPanel.value = false;
+// 重置筛选条件
+const resetFilter = () => {
+  filterForm.value = {
+    dateRange: [getLastMonth() + '-01', getYesterdayDate()],
+    deviceType: '',
+    region: '',
+    faultType: '',
+    disposalStatus: '',
+    impactLevel: ''
+  };
+  deviceCode.value = '';
   currentPage.value = 1;
   loadData();
 };
@@ -671,12 +729,11 @@ const handleExport = async () => {
       deviceCode: deviceCode.value,
       deviceType: filterForm.value.deviceType,
       region: filterForm.value.region,
-      faultType: filterForm.value.faultType
+      faultType: filterForm.value.faultType,
+      disposalStatus: filterForm.value.disposalStatus
     };
 
     await exportDeviceAbnormalReport(params);
-
-    ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
@@ -696,56 +753,6 @@ const handlePageChange = (pagination) => {
 const handleDetailClick = (row) => {
   currentFaultId.value = row.faultId;
   showDetailDrawer.value = true;
-};
-
-// 查看关联工单
-const handleWorkOrderClick = (row) => {
-  // 这里可以跳转到工单详情页
-  ElMessage.info(`查看工单: ${row.workOrderId}`);
-};
-
-// 钻取筛选 - 设备类型
-const handleDeviceTypeChange = (deviceType) => {
-  filterForm.value.deviceType = deviceType;
-  if (deviceType) {
-    currentPage.value = 1;
-    loadData();
-  }
-};
-
-// 钻取筛选 - 行政区域
-const handleRegionChange = (region) => {
-  filterForm.value.region = region;
-  if (region) {
-    currentPage.value = 1;
-    loadData();
-  }
-};
-
-// 钻取筛选 - 故障类型
-const handleFaultTypeChange = (faultType) => {
-  filterForm.value.faultType = faultType;
-  if (faultType) {
-    currentPage.value = 1;
-    loadData();
-  }
-};
-
-// 表格内钻取点击事件
-const handleDeviceTypeClick = (deviceType) => {
-  ElMessage.info(`筛选设备类型: ${deviceType}`);
-};
-
-const handleRegionClick = (regionName) => {
-  ElMessage.info(`筛选区域: ${regionName}`);
-};
-
-const handleFaultTypeClick = (faultType) => {
-  ElMessage.info(`筛选故障类型: ${faultType}`);
-};
-
-const handleStatusClick = (status) => {
-  ElMessage.info(`筛选处置状态: ${status}`);
 };
 
 // 工具函数
@@ -771,6 +778,15 @@ const getDisposalStatusColor = (status) => {
   };
   return colors[status] || '#8c8c8c';
 };
+
+const getImpactLevelColor = (level) => {
+  const colors = {
+    '高': '#f5222d',
+    '中': '#fa8c16',
+    '低': '#1890ff'
+  };
+  return colors[level] || '#8c8c8c';
+};
 </script>
 
 <style scoped>
@@ -780,13 +796,18 @@ const getDisposalStatusColor = (status) => {
   padding: 12px;
 }
 
-/* 筛选行样式 */
+/* 筛选容器 */
+.filter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .filter-row {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
-  padding: 4px 0;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .filter-group {
@@ -795,12 +816,51 @@ const getDisposalStatusColor = (status) => {
   gap: 6px;
 }
 
-.filter-label {
-  font-size: 13px;
-  color: #606266;
-  white-space: nowrap;
+/* 统计卡片 */
+.statistics-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 12px 0;
 }
 
+.stat-card {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 10%);
+  transition: transform 0.3s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.stat-icon {
+  font-size: 32px;
+  margin-right: 16px;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #303133;
+  line-height: 1;
+}
+
+.stat-label {
+  margin-top: 6px;
+  font-size: 14px;
+  color: #909399;
+}
+
+/* 图表区域 */
 .chart-section {
   margin-bottom: 12px;
 }
@@ -812,19 +872,57 @@ const getDisposalStatusColor = (status) => {
   margin-bottom: 12px;
 }
 
+@media (max-width: 1200px) {
+  .filter-row {
+    gap: 6px;
+  }
+
+  .filter-group :deep(.el-date-editor) {
+    width: 200px !important;
+  }
+
+  .filter-group :deep(.el-select),
+  .filter-group :deep(.el-input) {
+    width: 120px !important;
+  }
+}
+
 @media (max-width: 992px) {
   .chart-row {
     grid-template-columns: 1fr;
   }
 
   .filter-row {
-    flex-direction: column;
-    align-items: flex-start;
     gap: 8px;
   }
 
   .filter-group {
+    flex: 1 1 calc(50% - 8px);
+  }
+
+  .statistics-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .filter-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filter-group {
     width: 100%;
+  }
+
+  .filter-group :deep(.el-date-editor),
+  .filter-group :deep(.el-select),
+  .filter-group :deep(.el-input) {
+    width: 100% !important;
+  }
+
+  .statistics-cards {
+    grid-template-columns: 1fr;
   }
 }
 
