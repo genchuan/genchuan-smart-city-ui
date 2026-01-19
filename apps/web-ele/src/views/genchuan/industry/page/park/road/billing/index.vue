@@ -381,7 +381,6 @@ const roadDetailDrawerRef = ref(null);
               type: 'primary',
               link: true,
               icon: ACTION_ICON.MORE,
-              auth: ['system:role:update'],
               onClick: handleOpenDetail.bind(null, row),
             },
             {
@@ -389,7 +388,6 @@ const roadDetailDrawerRef = ref(null);
               type: 'primary',
               link: true,
               icon: ACTION_ICON.EDIT,
-              auth: ['system:role:update'],
               onClick: handleEdit.bind(null, row),
             },
             {
@@ -397,7 +395,6 @@ const roadDetailDrawerRef = ref(null);
               type: 'danger',
               link: true,
               icon: ACTION_ICON.DELETE,
-              auth: ['system:role:delete'],
               popConfirm: {
                 title: $t('ui.actionMessage.deleteConfirm', [row.name]),
                 confirm: handleDelete.bind(null, row),

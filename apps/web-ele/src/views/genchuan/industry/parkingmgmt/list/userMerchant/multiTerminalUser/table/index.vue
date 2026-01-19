@@ -980,16 +980,14 @@ const handleAuthSubmit = () => {
             {
               type: 'primary',
               link: true,
-              icon: ACTION_ICON.EDIT,
-              auth: ['system:role:update'],
+              icon: ACTION_ICON.EDIT, 
               onClick: handleEdit.bind(null, row),
             },
 
             {
               type: 'danger',
               link: true,
-              icon: ACTION_ICON.DELETE,
-              auth: ['system:role:delete'],
+              icon: ACTION_ICON.DELETE, 
               popConfirm: {
                 title: $t('ui.actionMessage.deleteConfirm', [row.realName]),
                 confirm: handleDelete.bind(null, row),
