@@ -9,7 +9,7 @@ import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 // 引入封装后的详情抽屉组件
 import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
@@ -428,9 +428,9 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
         const key =
           activeTab.value === 'proxyRule'
             ? 'proxyId'
-            : (activeTab.value === 'proxyOrder'
+            : activeTab.value === 'proxyOrder'
               ? 'orderId'
-              : 'recordId');
+              : 'recordId';
         if (v[key] === formData.value?.[key]) {
           currentApiList[i] = {
             ...obj,
@@ -503,9 +503,9 @@ async function handleDelete(row) {
   const key =
     activeTab.value === 'proxyRule'
       ? 'proxyId'
-      : (activeTab.value === 'proxyOrder'
+      : activeTab.value === 'proxyOrder'
         ? 'orderId'
-        : 'recordId');
+        : 'recordId';
 
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting', [row[key]]),
@@ -530,9 +530,9 @@ async function handleDeleteBatch() {
   const key =
     activeTab.value === 'proxyRule'
       ? 'proxyId'
-      : (activeTab.value === 'proxyOrder'
+      : activeTab.value === 'proxyOrder'
         ? 'orderId'
-        : 'recordId');
+        : 'recordId';
 
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deletingBatch'),
@@ -558,9 +558,9 @@ function handleRowCheckboxChange({ records }) {
   const key =
     activeTab.value === 'proxyRule'
       ? 'proxyId'
-      : (activeTab.value === 'proxyOrder'
+      : activeTab.value === 'proxyOrder'
         ? 'orderId'
-        : 'recordId');
+        : 'recordId';
   checkedIds.value = records.map((item) => item[key]);
 }
 
@@ -707,9 +707,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
       keyField:
         activeTab.value === 'proxyRule'
           ? 'proxyId'
-          : (activeTab.value === 'proxyOrder'
+          : activeTab.value === 'proxyOrder'
             ? 'orderId'
-            : 'recordId'),
+            : 'recordId',
       isHover: true,
     },
     pagerConfig: computed(() => dataObj[activeTab.value]),
@@ -1084,49 +1084,30 @@ const detailFields = computed(() => {
       </template>
 
       <template #toolbar-tools>
-        <TableAction
-          :actions="[
-            {
-              label: '新增',
-              type: 'primary',
-              icon: ACTION_ICON.ADD,
-              onClick: handleCreate,
-            },
-            {
-              label: $t('ui.actionTitle.export'),
-              type: 'primary',
-              icon: ACTION_ICON.DOWNLOAD,
-              onClick: handleExport,
-            },
-            {
-              label: $t('ui.actionTitle.deleteBatch'),
-              type: 'danger',
-              icon: ACTION_ICON.DELETE,
-              disabled: isEmpty(checkedIds),
-              onClick: handleDeleteBatch,
-            },
-          ]"
-        />
-        <button
-          class="vxe-button type--button size--small is--circle ml-2"
-          title="搜索"
-          type="button"
-          @click="handleSerachShow"
-        >
-          <i
-            class="vxe-button--item vxe-button--prefix-icon vxe-icon-search"
-          ></i>
-        </button>
-        <button
-          class="vxe-button type--button size--small is--circle"
-          title="全屏"
-          type="button"
-          @click="handleFullShow"
-        >
-          <i
-            class="vxe-button--item vxe-button--prefix-icon vxe-table-icon-fullscreen"
-          ></i>
-        </button>
+        <div class="common-toolbar-tools">
+          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="批量删除"
+            icon-name="delete"
+            :disabled="isEmpty(checkedIds)"
+            @click="handleDeleteBatch"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="handleFullShow"
+          />
+        </div>
       </template>
 
       <!-- 代付规则模板 -->
@@ -1281,37 +1262,25 @@ const detailFields = computed(() => {
         </el-tag>
       </template>
 
-      <!-- 操作按钮 -->
       <template #actions="{ row }">
-        <TableAction
-          :actions="[
-            {
-              type: 'primary',
-              link: true,
-              icon: ACTION_ICON.VIEW,
-              onClick: handleOpenDetail.bind(null, row),
-            },
-            {
-              type: 'primary',
-              link: true,
-              icon: ACTION_ICON.EDIT,
-              onClick: handleEdit.bind(null, row),
-            },
-            {
-              type: 'danger',
-              link: true,
-              icon: ACTION_ICON.DELETE,
-              popConfirm: {
-                title: $t('ui.actionMessage.deleteConfirm', [
-                  row.proxyName || row.proxyOrderNo || row.recordNo,
-                ]),
-                confirm: handleDelete.bind(null, row),
-              },
-            },
-          ]"
-        />
+        <div class="table-toolbar-tools">
+          <IconButton
+            content="详情"
+            icon-name="Document"
+            @click="handleOpenDetail(row)"
+          />
+          <IconButton
+            content="编辑"
+            icon-name="edit"
+            @click="handleEdit(row)"
+          />
+          <IconButton
+            content="删除"
+            icon-name="delete"
+            @click="handleDelete(row)"
+          />
+        </div>
       </template>
-
       <template #bottom>
         <div class="common-total" @click="changeTotalShow">
           <el-icon class="tabel-tab-icon" v-if="!currentDataObj.totalShow">
