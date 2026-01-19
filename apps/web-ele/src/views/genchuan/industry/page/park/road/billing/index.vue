@@ -324,14 +324,12 @@ const roadDetailDrawerRef = ref(null);
               label: '新增',
               type: 'primary',
               icon: ACTION_ICON.ADD,
-              auth: ['system:role:create'],
               onClick: handleCreate,
             },
             {
               label: $t('ui.actionTitle.export'),
               type: 'primary',
               icon: ACTION_ICON.DOWNLOAD,
-              auth: ['system:role:export'],
               onClick: handleExport,
             },
             {
@@ -339,7 +337,6 @@ const roadDetailDrawerRef = ref(null);
               type: 'danger',
               icon: ACTION_ICON.DELETE,
               disabled: isEmpty(checkedIds),
-              auth: ['system:role:delete'],
               onClick: handleDeleteBatch,
             },
           ]"

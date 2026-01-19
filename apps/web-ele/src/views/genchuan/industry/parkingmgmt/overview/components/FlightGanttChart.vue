@@ -8,7 +8,7 @@ import {
   nextTick
 } from 'vue';
 import * as echarts from 'echarts';
-import {fetchFlightGanttData} from '#/api/genchuan/industry/parkingmgmt/overview/RiskWarning.ts';
+// import {fetchFlightGanttData} from '#/api/genchuan/industry/parkingmgmt/overview/RiskWarning.ts';
 
 const props = defineProps({
   title: {
@@ -256,8 +256,8 @@ const handleResize = () => {
 // 异步请求数据
 const getChartData = async () => {
   try {
-    const res = await fetchFlightGanttData({});
-    chartData.value = res;
+  //  const res = await fetchFlightGanttData({});
+ //   chartData.value = res;
     console.log('✅ 航班数据请求成功：', res);
   } catch (err) {
     console.error('航班甘特图数据请求失败:', err);
