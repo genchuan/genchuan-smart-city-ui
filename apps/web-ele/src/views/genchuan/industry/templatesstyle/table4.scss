@@ -1,0 +1,125 @@
+
+.table4-box {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  height: calc(100% - 2vh);
+  overflow: auto hidden;
+}
+
+::v-deep(.table4) {
+  width: 100% !important;
+  height: 100% !important;
+  overflow: auto !important;
+  table-layout: fixed !important;
+  border-spacing: 0;
+  border-collapse: separate;
+  background-color: transparent;
+
+  th {
+    padding: 0.3vw 0;
+    font-size: 0.7vw;
+    font-weight: 500;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    background-color: rgb(147, 182, 220) !important;
+    border-bottom: 1px solid rgb(0 40 80 / 50%);
+    transition: all 0.2s;
+
+    &:hover {
+      background-color: rgb(0 82 103 / 100%);
+    }
+  }
+
+  td {
+    padding: 0.2vw 0;
+    font-size: 0.7vw;
+    color: #afc2ff;
+    text-align: center;
+    white-space: nowrap;
+    background-color: rgb(0 54 108) !important;
+    border-bottom: 1px solid rgb(0 204 255 / 15%);
+    transition: all 0.2s;
+  }
+
+  .el-table__row {
+    background-color: rgb(0 30 60);
+
+    &:nth-child(even) {
+      background-color: rgb(0 40 80);
+    }
+
+    &:hover > td {
+      color: #fff;
+      background-color: rgb(75, 121, 169) !important;
+    }
+  }
+
+  &::before {
+    background-color: rgb(0 204 255 / 20%);
+  }
+
+  .el-table__cell {
+    border-right: 1px solid rgb(0 204 255 / 15%);
+
+    &:last-child {
+      border-right: none;
+    }
+  }
+
+  .el-table__sort-icon {
+    color: rgb(0 255 208 / 60%);
+
+    &:hover {
+      color: #00ffd0;
+    }
+  }
+
+  &::-webkit-scrollbar {
+    width: 0.5vw;
+    height: 0.5vh;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgb(0 54 108 / 50%);
+    border-radius: 0.2vw;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgb(0 204 255 / 50%);
+    border-radius: 0.2vw;
+
+    &:hover {
+      background: rgb(0 255 208 / 70%);
+    }
+  }
+}
+
+::v-deep(.el-tag) {
+  font-size: 0.7vw;
+
+  &.el-tag--success {
+    color: #2eb861;
+    background-color: rgb(46 184 97 / 20%);
+    border-color: rgb(46 184 97 / 50%);
+  }
+
+  &.el-tag--warning {
+    color: #fad514;
+    background-color: rgb(250 173 20 / 20%);
+    border-color: rgb(250 173 20 / 50%);
+  }
+
+  &.el-tag--danger {
+    color: #eb5757;
+    background-color: rgb(235 87 87 / 20%);
+    border-color: rgb(235 87 87 / 50%);
+  }
+
+  &.el-tag--info {
+    color: #4299e1;
+    background-color: rgb(66 153 225 / 20%);
+    border-color: rgb(66 153 225 / 50%);
+  }
+}
