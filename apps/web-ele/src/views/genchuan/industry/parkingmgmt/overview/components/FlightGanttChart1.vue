@@ -1,24 +1,30 @@
 <script setup>
-import { defineProps, ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { defineProps, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+
 import * as echarts from 'echarts';
+
 import { fetchEventHandleGanttData } from '#/api/genchuan/industry/parkingmgmt/overview/RiskWarning.ts';
 
 const props = defineProps({
   title: {
     type: String,
-    default: '预警事件处置全流程时间轴'
+    default: '预警事件处置全流程时间轴',
   },
   baseFontScale: {
     type: Number,
-    default: 1
-  }
+    default: 1,
+  },
+  refreshKey: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const chartRef = ref(null);
 const myChart = ref(null);
 const chartData = ref({
   event: { dimensions: [], data: [] },
-  eventCate: { dimensions: [], data: [] }
+  eventCate: { dimensions: [], data: [] },
 });
 const _rawData = ref(null);
 const HEIGHT_RATIO = 0.6;
@@ -33,15 +39,15 @@ const DATA_ZOOM_Y_INSIDE_INDEX = 3;
 const DATA_ZOOM_AUTO_MOVE_SPEED = 0.2;
 const DATA_ZOOM_AUTO_MOVE_DETECT_AREA_WIDTH = 30;
 
-let _draggable = true;
+const _draggable = true;
 let _draggingEl = null;
 let _dropShadow = null;
 let _draggingCursorOffset = [0, 0];
 let _draggingTimeLength = 0;
 let _draggingRecord = null;
 let _dropRecord = null;
-let _cartesianXBounds = [];
-let _cartesianYBounds = [];
+const _cartesianXBounds = [];
+const _cartesianYBounds = [];
 let _autoDataZoomAnimator = null;
 
 const vwToPx = (vw) => {
@@ -52,17 +58,20 @@ const makeOption = () => {
   return {
     tooltip: {
       formatter: (params) => {
-        const [cateIndex, startTime, endTime, alarmInfo, disposeStatus] = params.data;
-        const workorderNo = chartData.value.eventCate.data[params.dataIndex]?.[0] || '暂无工单号';
-        const formatTime = (time) => time ? new Date(time).toLocaleString() : '暂无数据';
+        const [cateIndex, startTime, endTime, alarmInfo, disposeStatus] =
+          params.data;
+        const workorderNo =
+          chartData.value.eventCate.data[params.dataIndex]?.[0] || '暂无工单号';
+        const formatTime = (time) =>
+          time ? new Date(time).toLocaleString() : '暂无数据';
         return `预警信息：${alarmInfo}<br/>关联工单号：${workorderNo}<br/>开始处置：${formatTime(startTime)}<br/>处置完成：${formatTime(endTime)}<br/>处置状态：${disposeStatus ? '处置中' : '已完成'}`;
-      }
+      },
     },
     animation: false,
     title: {
       text: props.title,
       left: 'center',
-      textStyle: { fontSize: vwToPx(0.7), color: '#929ABA' }
+      textStyle: { fontSize: vwToPx(0.7), color: '#929ABA' },
     },
     dataZoom: [
       {
@@ -72,10 +81,11 @@ const makeOption = () => {
         height: 20,
         bottom: 0,
         start: 0,
-        end: 26,
-        handleIcon: 'path://M10.7,11.9H9.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4h1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+        end: 20,
+        handleIcon:
+          'path://M10.7,11.9H9.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4h1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
         handleSize: '80%',
-        showDetail: false
+        showDetail: false,
       },
       {
         type: 'inside',
@@ -83,9 +93,9 @@ const makeOption = () => {
         xAxisIndex: 0,
         filterMode: 'weakFilter',
         start: 0,
-        end: 26,
+        end: 20,
         zoomOnMouseWheel: false,
-        moveOnMouseMove: true
+        moveOnMouseMove: true,
       },
       {
         type: 'slider',
@@ -98,7 +108,7 @@ const makeOption = () => {
         start: 70,
         end: 100,
         handleSize: 0,
-        showDetail: false
+        showDetail: false,
       },
       {
         type: 'inside',
@@ -107,8 +117,8 @@ const makeOption = () => {
         start: 70,
         end: 100,
         zoomOnMouseWheel: false,
-        moveOnMouseMove: true
-      }
+        moveOnMouseMove: true,
+      },
     ],
     grid: {
       show: true,
@@ -117,7 +127,7 @@ const makeOption = () => {
       left: 100,
       right: 20,
       backgroundColor: 'transparent',
-      borderWidth: 0
+      borderWidth: 0,
     },
     xAxis: {
       type: 'time',
@@ -125,7 +135,7 @@ const makeOption = () => {
       splitLine: { lineStyle: { color: ['#E9EDFF'] } },
       axisLine: { show: false },
       axisTick: { lineStyle: { color: '#929ABA' } },
-      axisLabel: { color: '#929ABA', fontSize: vwToPx(0.7) - 2 }
+      axisLabel: { color: '#929ABA', fontSize: vwToPx(0.7) - 2 },
     },
     yAxis: {
       axisTick: { show: false },
@@ -133,7 +143,7 @@ const makeOption = () => {
       axisLine: { show: false },
       axisLabel: { show: false },
       min: 0,
-      max: chartData.value.eventCate.data.length
+      max: chartData.value.eventCate.data.length,
     },
     series: [
       {
@@ -144,18 +154,20 @@ const makeOption = () => {
         encode: {
           x: [DIM_TIME_START, DIM_TIME_END],
           y: DIM_CATEGORY_INDEX,
-          tooltip: [0,1,2,3,4]
+          tooltip: [0, 1, 2, 3, 4],
         },
-        data: chartData.value.event.data
+        data: chartData.value.event.data,
       },
       {
         type: 'custom',
         renderItem: renderAxisLabelItem,
         dimensions: chartData.value.eventCate.dimensions,
         encode: { x: -1, y: 0 },
-        data: chartData.value.eventCate.data.map((item, index) => [index].concat(item))
-      }
-    ]
+        data: chartData.value.eventCate.data.map((item, index) =>
+          [index].concat(item),
+        ),
+      },
+    ],
   };
 };
 
@@ -174,20 +186,49 @@ function renderGanttItem(params, api) {
   const barHeight = api.size([0, 1])[1] * HEIGHT_RATIO;
   const x = timeStart[0];
   const y = timeStart[1] - barHeight;
-  const alarmInfo = api.value(DIM_ALARM_INFO) + '';
+  const alarmInfo = `${api.value(DIM_ALARM_INFO)}`;
   const disposeStatus = api.value(DIM_DISPOSE_STATUS);
-  const text = barLength > echarts.format.getTextRect(alarmInfo).width + 40 ? alarmInfo : '';
+  const text =
+    barLength > echarts.format.getTextRect(alarmInfo).width + 40
+      ? alarmInfo
+      : '';
   const blockColor = disposeStatus ? '#c0950f' : '#196a87';
 
-  const rectNormal = clipRectByRect(params, { x, y, width: barLength, height: barHeight });
-  const rectText = clipRectByRect(params, { x, y, width: barLength, height: barHeight });
+  const rectNormal = clipRectByRect(params, {
+    x,
+    y,
+    width: barLength,
+    height: barHeight,
+  });
+  const rectText = clipRectByRect(params, {
+    x,
+    y,
+    width: barLength,
+    height: barHeight,
+  });
 
   return {
     type: 'group',
     children: [
-      { type: 'rect', ignore: !rectNormal, shape: rectNormal, style: { fill: blockColor, opacity: 1 } },
-      { type: 'rect', ignore: !rectText, shape: rectText, style: { fill: 'transparent', text, textFill: '#fff', fontSize: 12, fontWeight: 'bold' } }
-    ]
+      {
+        type: 'rect',
+        ignore: !rectNormal,
+        shape: rectNormal,
+        style: { fill: blockColor, opacity: 1 },
+      },
+      {
+        type: 'rect',
+        ignore: !rectText,
+        shape: rectText,
+        style: {
+          fill: 'transparent',
+          text,
+          textFill: '#fff',
+          fontSize: 12,
+          fontWeight: 'bold',
+        },
+      },
+    ],
   };
 }
 
@@ -204,46 +245,87 @@ function renderAxisLabelItem(params, api) {
   return {
     type: 'group',
     position: [30, y],
-    clipShape: { type: 'rect', x: 0, y: viewTop, width: 100, height: viewBottom - viewTop },
+    clipShape: {
+      type: 'rect',
+      x: 0,
+      y: viewTop,
+      width: 100,
+      height: viewBottom - viewTop,
+    },
     children: [
-      { type: 'path', shape: { d: 'M0,0 L0,-20 L30,-20 C42,-20 38,-1 50,-1 L70,-1 L70,0 Z', layout: 'cover' }, style: { fill: '#20c997' } },
-      { type: 'text', style: { x: 12, y: -1, text: api.value(1), textFill: '#fff', textAlign: 'center' } }
-    ]
+      {
+        type: 'path',
+        shape: {
+          d: 'M0,0 L0,-20 L30,-20 C42,-20 38,-1 50,-1 L70,-1 L70,0 Z',
+          layout: 'cover',
+        },
+        style: { fill: '#20c997' },
+      },
+      {
+        type: 'text',
+        style: {
+          x: 12,
+          y: -1,
+          text: api.value(1),
+          textFill: '#fff',
+          textAlign: 'center',
+        },
+      },
+    ],
   };
 }
 
 function clipRectByRect(params, rect) {
-  return echarts.graphic.clipRectByRect(rect, { x: params.coordSys.x, y: params.coordSys.y, width: params.coordSys.width, height: params.coordSys.height });
+  return echarts.graphic.clipRectByRect(rect, {
+    x: params.coordSys.x,
+    y: params.coordSys.y,
+    width: params.coordSys.width,
+    height: params.coordSys.height,
+  });
 }
 
 function initDrag() {
   _autoDataZoomAnimator = makeAnimator(dispatchDataZoom);
-  myChart.value.on('mousedown', function (param) {
+  myChart.value.on('mousedown', (param) => {
     if (!_draggable || !param || param.seriesIndex == null) return;
     _draggingRecord = {
       dataIndex: param.dataIndex,
       categoryIndex: param.value[DIM_CATEGORY_INDEX],
       timeStart: param.value[DIM_TIME_START],
-      timeEnd: param.value[DIM_TIME_END]
+      timeEnd: param.value[DIM_TIME_END],
     };
-    const style = { lineWidth: 2, fill: 'rgba(255,0,0,0.1)', stroke: 'rgba(255,0,0,0.8)', lineDash: [6, 3] };
+    const style = {
+      lineWidth: 2,
+      fill: 'rgba(255,0,0,0.1)',
+      stroke: 'rgba(255,0,0,0.8)',
+      lineDash: [6, 3],
+    };
     _draggingEl = addOrUpdateBar(_draggingEl, _draggingRecord, style, 100);
-    _draggingCursorOffset = [_draggingEl.position[0] - param.event.offsetX, _draggingEl.position[1] - param.event.offsetY];
+    _draggingCursorOffset = [
+      _draggingEl.position[0] - param.event.offsetX,
+      _draggingEl.position[1] - param.event.offsetY,
+    ];
     _draggingTimeLength = _draggingRecord.timeEnd - _draggingRecord.timeStart;
   });
 
-  myChart.value.getZr().on('mousemove', function (event) {
+  myChart.value.getZr().on('mousemove', (event) => {
     if (!_draggingEl) return;
     const cursorX = event.offsetX;
     const cursorY = event.offsetY;
-    _draggingEl.attr('position', [_draggingCursorOffset[0] + cursorX, _draggingCursorOffset[1] + cursorY]);
+    _draggingEl.attr('position', [
+      _draggingCursorOffset[0] + cursorX,
+      _draggingCursorOffset[1] + cursorY,
+    ]);
     prepareDrop();
     autoDataZoomWhenDraggingOutside(cursorX, cursorY);
   });
 
-  myChart.value.getZr().on('mouseup', function () {
+  myChart.value.getZr().on('mouseup', () => {
     if (_draggingEl && _dropRecord) {
-      updateRawData() && myChart.value.setOption({ series: { id: 'flightData', data: chartData.value.event.data } });
+      updateRawData() &&
+        myChart.value.setOption({
+          series: { id: 'flightData', data: chartData.value.event.data },
+        });
     }
     dragRelease();
   });
@@ -257,15 +339,32 @@ function initDrag() {
   }
 
   function addOrUpdateBar(el, itemData, style, z) {
-    const pointStart = myChart.value.convertToPixel('grid', [itemData.timeStart, itemData.categoryIndex]);
-    const pointEnd = myChart.value.convertToPixel('grid', [itemData.timeEnd, itemData.categoryIndex]);
+    const pointStart = myChart.value.convertToPixel('grid', [
+      itemData.timeStart,
+      itemData.categoryIndex,
+    ]);
+    const pointEnd = myChart.value.convertToPixel('grid', [
+      itemData.timeEnd,
+      itemData.categoryIndex,
+    ]);
     const barLength = pointEnd[0] - pointStart[0];
-    const barHeight = Math.abs(myChart.value.convertToPixel('grid', [0,0])[1] - myChart.value.convertToPixel('grid', [0,1])[1]) * HEIGHT_RATIO;
+    const barHeight =
+      Math.abs(
+        myChart.value.convertToPixel('grid', [0, 0])[1] -
+          myChart.value.convertToPixel('grid', [0, 1])[1],
+      ) * HEIGHT_RATIO;
     if (!el) {
-      el = new echarts.graphic.Rect({ shape: { x:0, y:0, width:0, height:0 }, style, z });
+      el = new echarts.graphic.Rect({
+        shape: { x: 0, y: 0, width: 0, height: 0 },
+        style,
+        z,
+      });
       myChart.value.getZr().add(el);
     }
-    el.attr({ shape: { width: barLength, height: barHeight }, position: [pointStart[0], pointStart[1] - barHeight] });
+    el.attr({
+      shape: { width: barLength, height: barHeight },
+      position: [pointStart[0], pointStart[1] - barHeight],
+    });
     return el;
   }
 
@@ -277,7 +376,7 @@ function initDrag() {
       _dropRecord = {
         categoryIndex: Math.floor(cursorData[1]),
         timeStart: cursorData[0],
-        timeEnd: cursorData[0] + _draggingTimeLength
+        timeEnd: cursorData[0] + _draggingTimeLength,
       };
       const style = { fill: 'rgba(0,0,0,0.4)' };
       _dropShadow = addOrUpdateBar(_dropShadow, _dropRecord, style, 99);
@@ -296,7 +395,9 @@ function initDrag() {
   function autoDataZoomWhenDraggingOutside(cursorX, cursorY) {
     const cursorDistX = getCursorCartesianDist(cursorX, _cartesianXBounds);
     const cursorDistY = getCursorCartesianDist(cursorY, _cartesianYBounds);
-    cursorDistX !== 0 || cursorDistY !== 0 ? _autoDataZoomAnimator.start({ cursorDistX, cursorDistY }) : _autoDataZoomAnimator.stop();
+    cursorDistX !== 0 || cursorDistY !== 0
+      ? _autoDataZoomAnimator.start({ cursorDistX, cursorDistY })
+      : _autoDataZoomAnimator.stop();
   }
 
   function dispatchDataZoom(params) {
@@ -304,35 +405,66 @@ function initDrag() {
     const optionInsideX = option.dataZoom[DATA_ZOOM_X_INSIDE_INDEX];
     const optionInsideY = option.dataZoom[DATA_ZOOM_Y_INSIDE_INDEX];
     const batch = [];
-    prepareBatch(batch, 'insideX', optionInsideX.start, optionInsideX.end, params.cursorDistX);
-    prepareBatch(batch, 'insideY', optionInsideY.start, optionInsideY.end, -params.cursorDistY);
+    prepareBatch(
+      batch,
+      'insideX',
+      optionInsideX.start,
+      optionInsideX.end,
+      params.cursorDistX,
+    );
+    prepareBatch(
+      batch,
+      'insideY',
+      optionInsideY.start,
+      optionInsideY.end,
+      -params.cursorDistY,
+    );
     batch.length && myChart.value.dispatchAction({ type: 'dataZoom', batch });
 
     function prepareBatch(batch, id, start, end, cursorDist) {
       if (cursorDist === 0) return;
       const sign = cursorDist / Math.abs(cursorDist);
       const size = end - start;
-      let delta = DATA_ZOOM_AUTO_MOVE_SPEED * sign;
-      start += delta; end += delta;
-      if (end > 100) { end = 100; start = end - size; }
-      if (start < 0) { start = 0; end = start + size; }
+      const delta = DATA_ZOOM_AUTO_MOVE_SPEED * sign;
+      start += delta;
+      end += delta;
+      if (end > 100) {
+        end = 100;
+        start = end - size;
+      }
+      if (start < 0) {
+        start = 0;
+        end = start + size;
+      }
       batch.push({ dataZoomId: id, start, end });
     }
   }
 
   function getCursorCartesianDist(cursorXY, bounds) {
-    const dist0 = cursorXY - (bounds[0] + DATA_ZOOM_AUTO_MOVE_DETECT_AREA_WIDTH);
-    const dist1 = cursorXY - (bounds[1] - DATA_ZOOM_AUTO_MOVE_DETECT_AREA_WIDTH);
-    return dist0 * dist1 <=0 ? 0 : dist0 <0 ? dist0 : dist1;
+    const dist0 =
+      cursorXY - (bounds[0] + DATA_ZOOM_AUTO_MOVE_DETECT_AREA_WIDTH);
+    const dist1 =
+      cursorXY - (bounds[1] - DATA_ZOOM_AUTO_MOVE_DETECT_AREA_WIDTH);
+    return dist0 * dist1 <= 0 ? 0 : dist0 < 0 ? dist0 : dist1;
   }
 
   function makeAnimator(callback) {
-    let requestId; let callbackParams;
+    let requestId;
+    let callbackParams;
     callback = echarts.throttle(callback, DATA_ZOOM_AUTO_MOVE_THROTTLE);
-    function onFrame() { callback(callbackParams); requestId = requestAnimationFrame(onFrame); }
+    function onFrame() {
+      callback(callbackParams);
+      requestId = requestAnimationFrame(onFrame);
+    }
     return {
-      start: (params) => { callbackParams = params; !requestId && onFrame(); },
-      stop: () => { requestId && cancelAnimationFrame(requestId); requestId = callbackParams = null; }
+      start: (params) => {
+        callbackParams = params;
+        !requestId && onFrame();
+      },
+      stop: () => {
+        requestId && cancelAnimationFrame(requestId);
+        requestId = callbackParams = null;
+      },
     };
   }
 }
@@ -348,20 +480,30 @@ const getChartData = async () => {
     myChart.value.on('datazoom', () => {
       myChart.value.setOption({ series: myChart.value.getOption().series });
     });
-  } catch (err) {
-    console.error('预警处置甘特图数据请求失败:', err);
+  } catch (error) {
+    console.error('预警处置甘特图数据请求失败:', error);
   }
 };
 
 const handleResize = () => {
-  nextTick(() => { myChart.value && myChart.value.resize(); });
+  nextTick(() => {
+    myChart.value && myChart.value.resize();
+  });
 };
 
-watch([() => chartData.value, () => props.title], () => {
-  if (chartData.value.event.data.length && chartData.value.eventCate.data.length && myChart.value) {
-    myChart.value.setOption(makeOption());
-  }
-}, { deep: true });
+watch(
+  [() => chartData.value, () => props.title, () => props.refreshKey],
+  () => {
+    if (
+      chartData.value.event.data.length > 0 &&
+      chartData.value.eventCate.data.length > 0 &&
+      myChart.value
+    ) {
+      myChart.value.setOption(makeOption());
+    }
+  },
+  { deep: true },
+);
 
 onMounted(() => {
   getChartData();
@@ -375,7 +517,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="chart-container" ref="chartRef" style="width:100%;height:100%;"></div>
+  <div
+    class="chart-container"
+    ref="chartRef"
+    style="width: 100%; height: 100%"
+  ></div>
 </template>
 
 <style scoped>
