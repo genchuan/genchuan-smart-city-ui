@@ -4,6 +4,7 @@
   background-color: hsl(var(--card));
   overflow: auto;
   position: relative;
+
   .icon-first {
     margin-right: 5px;
   }
@@ -18,9 +19,11 @@
     padding-bottom: 0px;
   }
 
-  .el-tabs__header {
-    margin-bottom: 0px;
-    position: absolute;
+  .common-tabs {
+    .el-tabs__header {
+      margin-bottom: 0px;
+      position: absolute;
+    }
   }
 
   .el-tabs__item {
@@ -35,6 +38,15 @@
     }
   }
 
+  .vxe-toolbar.size--small {
+    min-height: auto;
+  }
+
+  .vxe-toolbar {
+
+    height: auto;
+  }
+
   .el-tabs__header::before {
     width: 20px;
   }
@@ -44,7 +56,7 @@
   .park-lot-table-new {
     height: 84vh;
 
-    .vxe-buttons--wrapper { 
+    .vxe-buttons--wrapper {
       padding-top: 5px;
 
       .el-tabs__header {
@@ -64,6 +76,7 @@
 
     .vxe-grid--toolbar-wrapper {
       margin-top: 30px;
+
       .vxe-tools--wrapper {
         position: absolute;
         right: 77px;
@@ -71,8 +84,8 @@
       }
 
       .vxe-tools--operate {
-         position: absolute;
-         right: 0px;
+        position: absolute;
+        right: 0px;
         top: -30px;
       }
     }
@@ -117,6 +130,7 @@
 
     .common-tool-bar-config {
       position: relative;
+
       .vxe-tools--operate {
         .vxe-button:nth-child(2) {
           display: none;
