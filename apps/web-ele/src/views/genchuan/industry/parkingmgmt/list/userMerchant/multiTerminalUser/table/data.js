@@ -2018,8 +2018,6 @@ export function useAuthDrawerSchema() {
   ];
 }
 
-
-
 /** 文本配置 */
 export const textObj = {
   editText: '编辑用户',
@@ -2418,16 +2416,270 @@ export const governmentStatsData = {
 
 // 根据用户类型获取对应统计数据
 export const getStatsDataByUserType = (userType) => {
+  // 获取对应用户类型的实际数据
+  const userData = dataList(userType);
+
+  // 根据不同用户类型生成统计数据
   switch (userType) {
     case '企业': {
-      return enterpriseStatsData;
+      // 企业用户统计
+      const totalCount = userData.length;
+      const certifiedCount = userData.filter(
+        (item) => item.cert_status === '已认证',
+      ).length;
+      const normalCount = userData.filter(
+        (item) => item.account_status === '正常',
+      ).length;
+
+      // 统计不同认证状态的数量
+      const certStatusStats = {
+        已认证: userData.filter((item) => item.cert_status === '已认证').length,
+        待审核: userData.filter((item) => item.cert_status === '待审核').length,
+        未认证: userData.filter((item) => item.cert_status === '未认证').length,
+        认证失败: userData.filter((item) => item.cert_status === '认证失败')
+          .length,
+      };
+
+      // 统计不同账号状态的数量
+      const accountStatusStats = {
+        正常: userData.filter((item) => item.account_status === '正常').length,
+        禁用: userData.filter((item) => item.account_status === '禁用').length,
+        冻结: userData.filter((item) => item.account_status === '冻结').length,
+      };
+
+      // 统计不同行业的数量
+      const industryStats = {};
+      userData.forEach((item) => {
+        industryStats[item.industry_name] =
+          (industryStats[item.industry_name] || 0) + 1;
+      });
+
+      return {
+        cards: [
+          {
+            title: '总企业用户数',
+            value: totalCount,
+            desc: `较上月增长${Math.floor(Math.random() * 10) + 5}%`,
+            color: '#13ce66',
+          },
+          {
+            title: '认证企业数',
+            value: certifiedCount,
+            desc: `认证率${Math.round((certifiedCount / totalCount) * 100)}%`,
+            color: '#4ECDC4',
+          },
+          {
+            title: '活跃企业数',
+            value: normalCount,
+            desc: '近7日活跃',
+            color: '#FF6B6B',
+          },
+        ],
+        charts: [
+          {
+            title: '认证状态占比',
+            type: 'pie',
+            data: Object.entries(certStatusStats)
+              .filter(([_, value]) => value > 0)
+              .map(([name, value]) => ({
+                value: Math.round((value / totalCount) * 100),
+                name,
+              })),
+          },
+          {
+            title: '账号状态占比',
+            type: 'pie',
+            data: Object.entries(accountStatusStats)
+              .filter(([_, value]) => value > 0)
+              .map(([name, value]) => ({
+                value: Math.round((value / totalCount) * 100),
+                name,
+              })),
+          },
+          {
+            title: '不同行业企业分布',
+            type: 'bar',
+            xAxis: Object.keys(industryStats),
+            series: Object.values(industryStats),
+            showXAxisLabel: false,
+          },
+        ],
+      };
     }
     case '政府': {
-      return governmentStatsData;
+      // 政府用户统计
+      const totalCount = userData.length;
+      const onlineCount = userData.filter(
+        (item) => item.online_status === '在线',
+      ).length;
+
+      // 统计不同部门的数量
+      const deptStats = {};
+      userData.forEach((item) => {
+        deptStats[item.dept_name] = (deptStats[item.dept_name] || 0) + 1;
+      });
+
+      // 统计不同账号状态的数量
+      const accountStatusStats = {
+        正常: userData.filter((item) => item.account_status === '正常').length,
+        禁用: userData.filter((item) => item.account_status === '禁用').length,
+        冻结: userData.filter((item) => item.account_status === '冻结').length,
+      };
+
+      // 统计不同角色的数量
+      const roleStats = {};
+      userData.forEach((item) => {
+        roleStats[item.role_name] = (roleStats[item.role_name] || 0) + 1;
+      });
+
+      // 统计不同区域的数量
+      const regionStats = {};
+      userData.forEach((item) => {
+        regionStats[item.region_name] =
+          (regionStats[item.region_name] || 0) + 1;
+      });
+
+      return {
+        cards: [
+          {
+            title: '总政府用户数',
+            value: totalCount,
+            desc: `较上月增长${Math.floor(Math.random() * 5) + 3}%`,
+            color: '#13ce66',
+          },
+          {
+            title: '活跃用户数',
+            value: onlineCount,
+            desc: '近7日活跃',
+            color: '#4ECDC4',
+          },
+          {
+            title: '不同部门用户数',
+            value: Object.keys(deptStats).length,
+            desc: `覆盖${Object.keys(deptStats).length}个部门`,
+            color: '#FF6B6B',
+          },
+        ],
+        charts: [
+          {
+            title: '账号状态占比',
+            type: 'pie',
+            data: Object.entries(accountStatusStats)
+              .filter(([_, value]) => value > 0)
+              .map(([name, value]) => ({
+                value: Math.round((value / totalCount) * 100),
+                name,
+              })),
+          },
+          {
+            title: '用户角色占比',
+            type: 'pie',
+            data: Object.entries(roleStats)
+              .filter(([_, value]) => value > 0)
+              .map(([name, value]) => ({
+                value: Math.round((value / totalCount) * 100),
+                name,
+              })),
+          },
+          {
+            title: '不同区域用户分布',
+            type: 'bar',
+            xAxis: Object.keys(regionStats),
+            series: Object.values(regionStats),
+          },
+        ],
+      };
     }
     case '个人':
     default: {
-      return statsData;
+      // 个人用户统计
+      const totalCount = userData.length;
+      const certifiedCount = userData.filter(
+        (item) => item.cert_status === '已认证',
+      ).length;
+      const normalCount = userData.filter(
+        (item) => item.account_status === '正常',
+      ).length;
+
+      // 统计不同认证状态的数量
+      const certStatusStats = {
+        已认证: userData.filter((item) => item.cert_status === '已认证').length,
+        待审核: userData.filter((item) => item.cert_status === '待审核').length,
+        未认证: userData.filter((item) => item.cert_status === '未认证').length,
+        认证失败: userData.filter((item) => item.cert_status === '认证失败')
+          .length,
+      };
+
+      // 统计不同账号状态的数量
+      const accountStatusStats = {
+        正常: userData.filter((item) => item.account_status === '正常').length,
+        禁用: userData.filter((item) => item.account_status === '禁用').length,
+        冻结: userData.filter((item) => item.account_status === '冻结').length,
+      };
+
+      // 统计注册时间分布（最近30天）
+      const registerDateStats = {};
+      userData.forEach((item) => {
+        const date = item.register_time.split(' ')[0];
+        registerDateStats[date] = (registerDateStats[date] || 0) + 1;
+      });
+
+      // 获取最近的6个日期
+      const recentDates = Object.keys(registerDateStats).sort().slice(-6);
+      const recentData = recentDates.map(
+        (date) => registerDateStats[date] || 0,
+      );
+
+      return {
+        cards: [
+          {
+            title: '总用户数',
+            value: totalCount,
+            desc: `较上月增长${Math.floor(Math.random() * 10) + 8}%`,
+            color: '#13ce66',
+          },
+          {
+            title: '认证用户数',
+            value: certifiedCount,
+            desc: `认证率${Math.round((certifiedCount / totalCount) * 100)}%`,
+            color: '#4ECDC4',
+          },
+          {
+            title: '活跃用户数',
+            value: normalCount,
+            desc: '近7日活跃',
+            color: '#FF6B6B',
+          },
+        ],
+        charts: [
+          {
+            title: '认证状态占比',
+            type: 'pie',
+            data: Object.entries(certStatusStats)
+              .filter(([_, value]) => value > 0)
+              .map(([name, value]) => ({
+                value: Math.round((value / totalCount) * 100),
+                name,
+              })),
+          },
+          {
+            title: '账号状态占比',
+            type: 'pie',
+            data: Object.entries(accountStatusStats)
+              .filter(([_, value]) => value > 0)
+              .map(([name, value]) => ({
+                value: Math.round((value / totalCount) * 100),
+                name,
+              })),
+          },
+          {
+            title: '近30日注册趋势',
+            type: 'line',
+            xAxis: recentDates,
+            series: recentData,
+          },
+        ],
+      };
     }
   }
 };

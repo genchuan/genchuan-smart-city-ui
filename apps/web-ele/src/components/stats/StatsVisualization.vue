@@ -96,6 +96,9 @@ const getChartOption = (chart) => {
       type: 'category',
       boundaryGap: chart.type === 'bar',
       data: chart.xAxis,
+      axisLabel: {
+        show: chart.showXAxisLabel !== false,
+      },
     };
     option.yAxis = {
       type: 'value',

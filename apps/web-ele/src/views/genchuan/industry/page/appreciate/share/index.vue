@@ -10,13 +10,13 @@ const changeArrowStatus = (item) => {
 };
 const tabArray = ref([
   {
-    label: '停车缴费服务',
+    label: '车位共享服务',
     components: Table,
     showSecondary: true,
     secondShow: false,
   },
 ]);
-const activeName = ref('停车缴费服务');
+const activeName = ref('车位共享服务');
 </script>
 <template>
   <div class="common-index">

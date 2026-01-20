@@ -36,6 +36,14 @@ const props = defineProps({
     type: String,
     default: '全部',
   },
+  showStats: {
+    type: Boolean,
+    default: false,
+  },
+  toggleStats: {
+    type: Function,
+    default: () => {},
+  },
 });
 const formData = ref();
 const getTitle = computed(() => {
@@ -162,9 +170,9 @@ async function handleExport() {
   const excelName =
     props.userType === '个人'
       ? '个人用户列表'
-      : (props.userType === '企业'
+      : props.userType === '企业'
         ? '企业用户列表'
-        : '政府用户列表');
+        : '政府用户列表';
   const excelAllName = `${excelName}.xlsx`;
   exportToExcel(dataObj.apilist, excelName, excelAllName);
 }
@@ -240,9 +248,9 @@ async function handleDeleteBatch() {
         !checkedIds.value.includes(
           props.userType === '个人'
             ? v.user_id
-            : (props.userType === '企业'
+            : props.userType === '企业'
               ? v.enterprise_id
-              : v.gov_user_id),
+              : v.gov_user_id,
         ),
     );
     checkedIds.value = [];
@@ -259,9 +267,9 @@ function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) =>
     props.userType === '个人'
       ? item.user_id
-      : (props.userType === '企业'
+      : props.userType === '企业'
         ? item.enterprise_id
-        : item.gov_user_id),
+        : item.gov_user_id,
   );
 }
 
@@ -368,9 +376,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
       keyField:
         props.userType === '个人'
           ? 'user_id'
-          : (props.userType === '企业'
+          : props.userType === '企业'
             ? 'enterprise_id'
-            : 'gov_user_id'),
+            : 'gov_user_id',
       isHover: true,
     },
     pagerConfig: dataObj,
@@ -607,6 +615,11 @@ const handleAuthDrawerClose = () => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
+          />
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="导出"

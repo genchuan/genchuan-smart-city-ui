@@ -115,8 +115,8 @@ defineExpose({
 }
 
 .detail-card {
-  margin-bottom: 16px;
   padding: 20px;
+  margin-bottom: 16px;
   background-color: #fff;
   border: 1px solid #ebeef5;
   border-radius: 4px;
@@ -156,8 +156,8 @@ defineExpose({
 }
 
 .detail-separator {
-  margin-top: 20px;
   padding-top: 20px;
+  margin-top: 20px;
   border-top: 1px dashed #ebeef5;
 }
 
