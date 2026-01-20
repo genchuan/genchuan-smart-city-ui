@@ -1549,6 +1549,14 @@ onUnmounted(() => {
 
 .blink-animation { animation: blink 1.5s infinite; }
 
+:deep(.panel) {
+  .el-tab-pane { display: flex; flex-direction: column; width: 100% !important; height: 100% !important; }
+  .view-content { flex: 1; width: 100% !important; height: 100% !important; min-height: 300px !important; }
+  .view-content > div { width: 100% !important; height: 100% !important; }
+}
+
+:deep(.top-left .view-content) { padding: 0.2vw !important; box-sizing: border-box !important; }
+
 :deep(.top-left-tabs) {
   width: 100%;
   height: 100%;
@@ -1562,20 +1570,22 @@ onUnmounted(() => {
   .el-tabs__item.is-active { font-weight: 600; color: #0cf !important; }
   .el-tabs__active-bar { height: 0.15vw !important; background: #0cf !important; }
   .el-tab-pane { width: 100%; height: 100%; padding: 0 !important; }
-}
 
-:deep(.panel) {
-  .el-tab-pane { display: flex; flex-direction: column; width: 100% !important; height: 100% !important; }
-  .view-content { flex: 1; width: 100% !important; height: 100% !important; min-height: 300px !important; }
-  .view-content > div { width: 100% !important; height: 100% !important; }
-}
+  /* 调整 Tabs 与内容的间距 */
+  .el-tabs__nav-wrap::after {
+    content: none !important;
+  }
 
-:deep(.top-left .el-tab-pane) { height: 95% !important; padding-bottom: 2vh !important; }
-:deep(.top-left .view-content) { padding: 0.2vw !important; box-sizing: border-box !important; }
-:deep(.top-left) {
-  &>>>.echarts {
-    height: 100% !important;
-    .ec-grid { bottom: 25px !important; left: 10px !important; right: 10px !important; top: 30px !important; }
+  .el-tabs__nav-wrap.is-scrollable::after {
+    content: none !important;
+  }
+
+  .el-tabs__header {
+    margin-bottom: 0 !important;
+  }
+
+  .el-tabs__content {
+    padding-top: 0 !important;
   }
 }
 </style>
