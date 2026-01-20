@@ -109,7 +109,7 @@ const tabChange = (tabName) => {
 </template>
 <style scoped lang="scss">
 .multi-termina-user {
-  overflow: auto;
   height: 88vh;
+  overflow: auto;
 }
 </style>

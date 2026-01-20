@@ -9,7 +9,7 @@ const props = defineProps({
     default: '详情',
   },
   data: {
-    type: Object,
+    type: [Object, Array],
     default: null,
   },
   fields: {
@@ -78,22 +78,30 @@ defineExpose({
 <template>
   <DetailDrawer>
     <div class="detail-container">
-      <div class="detail-card">
-        <div v-if="data" class="detail-content">
+      <div
+        class="detail-card"
+        v-for="(item, index) in Array.isArray(data) ? data : [data]"
+        :key="index"
+      >
+        <div class="detail-content">
           <div class="detail-item" v-for="field in fields" :key="field.key">
             <span class="detail-label">{{ field.label }}:</span>
             <span class="detail-value">
               <template v-if="field.type === 'tag'">
-                <el-tag :type="field.tagType?.(data[field.key]) || 'info'">
-                  {{ data[field.key] }}
+                <el-tag :type="field.tagType?.(item[field.key]) || 'info'">
+                  {{ item[field.key] }}
                 </el-tag>
               </template>
               <template v-else>
-                {{ formatValue(field, data[field.key]) }}
+                {{ formatValue(field, item[field.key]) }}
               </template>
             </span>
           </div>
         </div>
+        <div
+          v-if="index < (Array.isArray(data) ? data.length - 1 : 0)"
+          class="detail-separator"
+        ></div>
       </div>
     </div>
   </DetailDrawer>
@@ -103,14 +111,20 @@ defineExpose({
 .detail-container {
   box-sizing: border-box;
   height: 100%;
+  overflow-y: auto;
 }
 
 .detail-card {
+  margin-bottom: 16px;
   padding: 20px;
   background-color: #fff;
   border: 1px solid #ebeef5;
   border-radius: 4px;
   box-shadow: 0 2px 12px 0 rgb(0 0 0 / 10%);
+}
+
+.detail-card:last-child {
+  margin-bottom: 0;
 }
 
 .detail-content {
@@ -139,6 +153,12 @@ defineExpose({
   font-size: 14px;
   color: #303133;
   text-align: left;
+}
+
+.detail-separator {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px dashed #ebeef5;
 }
 
 .detail-footer {
