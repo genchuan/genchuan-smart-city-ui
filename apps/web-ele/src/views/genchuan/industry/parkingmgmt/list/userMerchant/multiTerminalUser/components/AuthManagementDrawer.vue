@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+
 import { ElMessage } from 'element-plus';
 
 const props = defineProps({
@@ -102,7 +103,7 @@ watch(
       authDrawerApi.close();
       resetAuthState();
     }
-  }
+  },
 );
 
 // 初始化认证表单数据

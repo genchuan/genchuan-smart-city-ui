@@ -16,6 +16,15 @@ const changeArrowStatus = () => {
     v.secondShow = secondShow.value;
   });
 };
+
+// 控制统计组件显示/隐藏的状态
+const showStats = ref(false);
+
+// 切换统计组件显示/隐藏状态
+const toggleStats = () => {
+  showStats.value = !showStats.value;
+};
+
 const tabArray = ref([
   {
     label: '个人用户管理',
@@ -61,8 +70,8 @@ const tabChange = (tabName) => {
 </script>
 <template>
   <div class="multi-termina-user">
-    <!-- 统计可视化组件 -->
-    <StatsVisualization :data="statsData" />
+    <!-- 统计可视化组件，根据showStats状态显示/隐藏 -->
+    <StatsVisualization v-if="showStats" :data="statsData" />
     <div class="common-index">
       <div class="icon-change">
         <el-icon
@@ -100,6 +109,8 @@ const tabChange = (tabName) => {
             :is="item.components"
             :second-show="item.secondShow"
             :user-type="item.userType"
+            :show-stats="showStats"
+            :toggle-stats="toggleStats"
             :key="item.label"
           />
         </el-tab-pane>
