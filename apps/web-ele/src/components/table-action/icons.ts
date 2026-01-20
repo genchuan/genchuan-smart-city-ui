@@ -16,5 +16,5 @@ export const ACTION_ICON = {
   KEY: 'lucide:key',
   MONEY: 'lucide:badge-dollar-sign',
   RECORD: 'lucide:file-badge',
-  BAN:'lucide:circle-off'
+  BAN: 'lucide:circle-off',
 };

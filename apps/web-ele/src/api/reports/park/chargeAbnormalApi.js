@@ -1,7 +1,7 @@
 // 文件: chargeAbnormalApi.js
 import { ElMessage } from 'element-plus';
 
-// 区域映射关系 - 对应sys_area.area_code
+// 区域映射关系
 const regionMap = {
   'xiangcheng': '芗城区',
   'longwen': '龙文区',
@@ -15,7 +15,7 @@ const regionMap = {
   'huaan': '华安县'
 };
 
-// 停车场映射关系 - 对应park_lot.lot_id
+// 停车场映射关系
 const parkingMap = {
   'park001': '漳州万达广场停车场',
   'park002': '芗城政府路侧停车场',
@@ -29,7 +29,7 @@ const parkingMap = {
   'park010': '平和县商贸城停车场'
 };
 
-// 异常类型映射关系 - 对应park_charge_abnormal.abnormal_type
+// 异常类型映射关系
 const abnormalTypeMap = {
   'overcharge': '多收费',
   'undercharge': '少收费',
@@ -41,7 +41,7 @@ const abnormalTypeMap = {
   'payment': '支付异常'
 };
 
-// 处置状态映射关系 - 对应park_charge_abnormal.disposal_status
+// 处置状态映射关系
 const disposalStatusMap = {
   'pending': '待处理',
   'processing': '处理中',
@@ -51,7 +51,7 @@ const disposalStatusMap = {
   'reviewing': '复核中'
 };
 
-// 处理结果映射关系 - 对应park_charge_abnormal.disposal_result
+// 处理结果映射关系
 const disposalResultMap = {
   'refund': '已退款',
   'compensate': '已补偿',
@@ -63,7 +63,7 @@ const disposalResultMap = {
 };
 
 // 辅助函数：生成收费异常模拟数据
-function generateChargeAbnormalData() {
+function generateChargeAbnormalData(startDate, endDate) {
   const data = [];
   const plateNumbers = [
     '闽E12345', '闽E23456', '闽E34567', '闽E45678', '闽E56789',
@@ -78,51 +78,66 @@ function generateChargeAbnormalData() {
   const disposalResultCodes = Object.keys(disposalResultMap);
   const paymentTypes = ['微信支付', '支付宝', '现金支付', '刷卡支付', '会员支付'];
 
-  for (let i = 1; i <= 60; i++) {
-    const randomDate = new Date(2023, 11, Math.floor(Math.random() * 30) + 1);
-    const randomTime = `${String(Math.floor(Math.random() * 24)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`;
+  // 生成30天范围内的数据
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
 
-    const regionCode = regionCodes[Math.floor(Math.random() * regionCodes.length)];
-    const parkingId = parkingIds[Math.floor(Math.random() * parkingIds.length)];
-    const abnormalTypeCode = abnormalTypeCodes[Math.floor(Math.random() * abnormalTypeCodes.length)];
-    const disposalStatusCode = disposalStatusCodes[Math.floor(Math.random() * disposalStatusCodes.length)];
+  for (let day = 0; day <= daysDiff; day++) {
+    const currentDate = new Date(start);
+    currentDate.setDate(start.getDate() + day);
 
-    const hasDisposal = disposalStatusCode === 'resolved' || disposalStatusCode === 'closed';
-    const abnormalAmount = Math.floor(Math.random() * 50) + 1;
-    const actualAmount = Math.floor(Math.random() * 100) + 20;
+    // 每天生成1-5条数据
+    const dayCount = Math.floor(Math.random() * 5) + 1;
 
-    data.push({
-      abnormalId: `ABN${String(i).padStart(6, '0')}`,
-      orderNo: `ORDER${String(10000 + i)}`,
-      carNumber: plateNumbers[Math.floor(Math.random() * plateNumbers.length)],
-      regionCode: regionCode,
-      regionName: regionMap[regionCode],
-      parkingId: parkingId,
-      parkingName: parkingMap[parkingId],
-      abnormalTime: `${randomDate.toISOString().split('T')[0]} ${randomTime}`,
-      abnormalTypeCode: abnormalTypeCode,
-      abnormalType: abnormalTypeMap[abnormalTypeCode],
-      abnormalReason: getAbnormalReason(Math.floor(Math.random() * 8)),
-      abnormalAmount: abnormalAmount,
-      actualAmount: actualAmount,
-      shouldAmount: actualAmount + (Math.random() > 0.5 ? -abnormalAmount : abnormalAmount),
-      disposalStatusCode: disposalStatusCode,
-      disposalStatus: disposalStatusMap[disposalStatusCode],
-      disposalResultCode: hasDisposal ?
-        disposalResultCodes[Math.floor(Math.random() * disposalResultCodes.length)] :
-        null,
-      disposalResult: hasDisposal ?
-        disposalResultMap[disposalResultCodes[Math.floor(Math.random() * disposalResultCodes.length)]] :
-        null,
-      severityLevel: ['高', '中', '低'][Math.floor(Math.random() * 3)],
-      paymentType: paymentTypes[Math.floor(Math.random() * paymentTypes.length)],
-      customerComplaint: Math.random() > 0.7,
-      complaintTime: Math.random() > 0.7 ?
-        new Date(randomDate.getTime() + Math.random() * 86400000).toISOString().replace('T', ' ').substr(0, 19) :
-        null,
-      operator: hasDisposal ? ['张三', '李四', '王五'][Math.floor(Math.random() * 3)] : null,
-      workOrderId: hasDisposal ? `WO${String(20000 + i)}` : null
-    });
+    for (let i = 0; i < dayCount; i++) {
+      const id = data.length + 1;
+      const randomHour = Math.floor(Math.random() * 24);
+      const randomMinute = Math.floor(Math.random() * 60);
+      const randomSecond = Math.floor(Math.random() * 60);
+
+      const regionCode = regionCodes[Math.floor(Math.random() * regionCodes.length)];
+      const parkingId = parkingIds[Math.floor(Math.random() * parkingIds.length)];
+      const abnormalTypeCode = abnormalTypeCodes[Math.floor(Math.random() * abnormalTypeCodes.length)];
+      const disposalStatusCode = disposalStatusCodes[Math.floor(Math.random() * disposalStatusCodes.length)];
+
+      const hasDisposal = disposalStatusCode === 'resolved' || disposalStatusCode === 'closed';
+      const abnormalAmount = Math.floor(Math.random() * 50) + 1;
+      const actualAmount = Math.floor(Math.random() * 100) + 20;
+
+      data.push({
+        abnormalId: `ABN${String(id).padStart(6, '0')}`,
+        orderNo: `ORDER${String(10000 + id)}`,
+        carNumber: plateNumbers[Math.floor(Math.random() * plateNumbers.length)],
+        regionCode: regionCode,
+        regionName: regionMap[regionCode],
+        parkingId: parkingId,
+        parkingName: parkingMap[parkingId],
+        abnormalTime: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')} ${String(randomHour).padStart(2, '0')}:${String(randomMinute).padStart(2, '0')}:${String(randomSecond).padStart(2, '0')}`,
+        abnormalTypeCode: abnormalTypeCode,
+        abnormalType: abnormalTypeMap[abnormalTypeCode],
+        abnormalReason: getAbnormalReason(Math.floor(Math.random() * 8)),
+        abnormalAmount: abnormalAmount,
+        actualAmount: actualAmount,
+        shouldAmount: actualAmount + (Math.random() > 0.5 ? -abnormalAmount : abnormalAmount),
+        disposalStatusCode: disposalStatusCode,
+        disposalStatus: disposalStatusMap[disposalStatusCode],
+        disposalResultCode: hasDisposal ?
+          disposalResultCodes[Math.floor(Math.random() * disposalResultCodes.length)] :
+          null,
+        disposalResult: hasDisposal ?
+          disposalResultMap[disposalResultCodes[Math.floor(Math.random() * disposalResultCodes.length)]] :
+          null,
+        severityLevel: ['高', '中', '低'][Math.floor(Math.random() * 3)],
+        paymentType: paymentTypes[Math.floor(Math.random() * paymentTypes.length)],
+        customerComplaint: Math.random() > 0.7,
+        complaintTime: Math.random() > 0.7 ?
+          new Date(currentDate.getTime() + Math.random() * 86400000).toISOString().replace('T', ' ').substr(0, 19) :
+          null,
+        operator: hasDisposal ? ['张三', '李四', '王五'][Math.floor(Math.random() * 3)] : null,
+        workOrderId: hasDisposal ? `WO${String(20000 + id)}` : null
+      });
+    }
   }
 
   return data;
@@ -143,97 +158,6 @@ function getAbnormalReason(type) {
   return reasons[type] || '未知原因';
 }
 
-// 辅助函数：计算异常趋势数据
-function calculateAbnormalTrend(data) {
-  const trend = [];
-  const today = new Date();
-
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split('T')[0];
-
-    const dayData = data.filter(item => {
-      const itemDate = item.abnormalTime.split(' ')[0];
-      return itemDate === dateStr;
-    });
-
-    trend.push({
-      date: dateStr,
-      count: dayData.length,
-      resolved: dayData.filter(item => item.disposalStatus === '已处理' || item.disposalStatus === '已关闭').length,
-      amount: dayData.reduce((sum, item) => sum + item.abnormalAmount, 0)
-    });
-  }
-
-  return trend;
-}
-
-// 辅助函数：计算异常类型分布
-function calculateAbnormalTypeDistribution(data) {
-  const distribution = {};
-
-  data.forEach(item => {
-    if (!distribution[item.abnormalType]) {
-      distribution[item.abnormalType] = 0;
-    }
-    distribution[item.abnormalType]++;
-  });
-
-  return Object.entries(distribution).map(([name, value]) => ({
-    name,
-    value
-  }));
-}
-
-// 辅助函数：计算处置状态分布
-function calculateDisposalStatusDistribution(data) {
-  const distribution = {};
-
-  data.forEach(item => {
-    if (!distribution[item.disposalStatus]) {
-      distribution[item.disposalStatus] = 0;
-    }
-    distribution[item.disposalStatus]++;
-  });
-
-  return Object.entries(distribution).map(([name, value]) => ({
-    name,
-    value
-  }));
-}
-
-// 辅助函数：计算区域异常数对比
-function calculateRegionAbnormalComparison(data) {
-  const comparison = {};
-
-  data.forEach(item => {
-    if (!comparison[item.regionName]) {
-      comparison[item.regionName] = 0;
-    }
-    comparison[item.regionName]++;
-  });
-
-  return Object.entries(comparison)
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value);
-}
-
-// 辅助函数：计算异常金额统计
-function calculateAmountStatistics(data) {
-  const totalAbnormalAmount = data.reduce((sum, item) => sum + item.abnormalAmount, 0);
-  const totalActualAmount = data.reduce((sum, item) => sum + item.actualAmount, 0);
-  const totalShouldAmount = data.reduce((sum, item) => sum + item.shouldAmount, 0);
-  const avgAbnormalAmount = data.length > 0 ? totalAbnormalAmount / data.length : 0;
-
-  return {
-    totalAbnormalAmount,
-    totalActualAmount,
-    totalShouldAmount,
-    avgAbnormalAmount: Math.round(avgAbnormalAmount * 100) / 100
-  };
-}
-
 /**
  * 获取收费异常报表
  */
@@ -241,8 +165,8 @@ export const getChargeAbnormalReport = async (params) => {
   await new Promise((resolve) => setTimeout(resolve, 500));
 
   const {
-    startDate = '2023-12-01',
-    endDate = '2023-12-31',
+    startDate = getDefaultStartDate(),
+    endDate = getDefaultEndDate(),
     orderNo = '',
     carNumber = '',
     region = '',
@@ -252,7 +176,7 @@ export const getChargeAbnormalReport = async (params) => {
     pageSize = 10
   } = params;
 
-  const allData = generateChargeAbnormalData();
+  const allData = generateChargeAbnormalData(startDate, endDate);
 
   let filteredData = allData.filter(item => {
     const itemDate = item.abnormalTime.split(' ')[0];
@@ -271,17 +195,56 @@ export const getChargeAbnormalReport = async (params) => {
   const endIndex = Math.min(startIndex + pageSize, total);
   const paginatedData = filteredData.slice(startIndex, endIndex);
 
-  const trendData = calculateAbnormalTrend(filteredData);
-  const abnormalTypeDistribution = calculateAbnormalTypeDistribution(filteredData);
-  const disposalStatusDistribution = calculateDisposalStatusDistribution(filteredData);
-  const regionAbnormalComparison = calculateRegionAbnormalComparison(filteredData);
-  const amountStats = calculateAmountStatistics(filteredData);
-
+  // 计算统计数据
+  const totalAbnormalAmount = filteredData.reduce((sum, item) => sum + item.abnormalAmount, 0);
   const totalCount = filteredData.length;
-  const pendingCount = filteredData.filter(item => item.disposalStatus === '待处理').length;
-  const resolvedCount = filteredData.filter(item => item.disposalStatus === '已处理').length;
-  const completionRate = totalCount > 0 ? Math.round((resolvedCount / totalCount) * 100) : 0;
-  const correctionSuccessRate = resolvedCount > 0 ? Math.round((resolvedCount * 0.8) / totalCount * 100) : 0;
+  const completedCount = filteredData.filter(item => item.disposalStatus === '已处理' || item.disposalStatus === '已关闭').length;
+  const completionRate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  const correctionSuccessRate = completedCount > 0 ? Math.round((completedCount * 0.8) / totalCount * 100) : 0;
+
+  // 生成趋势数据（近30天）
+  const trendData = [];
+  const today = new Date();
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    const dateStr = date.toISOString().split('T')[0];
+
+    const dayData = filteredData.filter(item => {
+      const itemDate = item.abnormalTime.split(' ')[0];
+      return itemDate === dateStr;
+    });
+
+    trendData.push({
+      date: dateStr,
+      count: dayData.length,
+      amount: dayData.reduce((sum, item) => sum + item.abnormalAmount, 0)
+    });
+  }
+
+  // 生成异常类型分布
+  const abnormalTypeDistribution = Object.entries(
+    filteredData.reduce((acc, item) => {
+      acc[item.abnormalType] = (acc[item.abnormalType] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([name, value]) => ({ name, value }));
+
+  // 生成状态分布
+  const statusDistribution = Object.entries(
+    filteredData.reduce((acc, item) => {
+      acc[item.disposalStatus] = (acc[item.disposalStatus] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([name, value]) => ({ name, value }));
+
+  // 生成区域对比
+  const regionAbnormalComparison = Object.entries(
+    filteredData.reduce((acc, item) => {
+      acc[item.regionName] = (acc[item.regionName] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([name, value]) => ({ name, value }));
 
   return {
     data: paginatedData,
@@ -291,18 +254,14 @@ export const getChargeAbnormalReport = async (params) => {
     pageCount: Math.ceil(total / pageSize),
     summary: {
       totalCount,
-      pendingCount,
-      resolvedCount,
-      totalAbnormalAmount: amountStats.totalAbnormalAmount,
-      totalActualAmount: amountStats.totalActualAmount,
+      totalAbnormalAmount,
       completionRate,
       correctionSuccessRate
     },
     trendData,
     abnormalTypeDistribution,
-    disposalStatusDistribution,
+    disposalStatusDistribution: statusDistribution,
     regionAbnormalComparison,
-    amountStats,
     generatedAt: new Date().toISOString()
   };
 };
@@ -321,7 +280,7 @@ export const exportChargeAbnormalReport = async (params) => {
     const headers = [
       '异常ID', '订单编号', '车牌号码', '车场名称', '行政区域', '异常时间',
       '异常类型', '异常原因', '异常金额(元)', '实际金额(元)', '应缴金额(元)',
-      '支付方式', '严重程度', '处置状态', '处理结果', '客户投诉', '投诉时间', '处理人', '关联工单'
+      '支付方式', '处置状态', '处理结果', '客户投诉', '投诉时间', '处理人', '关联工单'
     ];
 
     const csvRows = data.data.map((item) => [
@@ -386,64 +345,54 @@ export const exportChargeAbnormalReport = async (params) => {
 export const getChargeAbnormalDetail = async (abnormalId) => {
   await new Promise((resolve) => setTimeout(resolve, 300));
 
-  const allData = generateChargeAbnormalData();
-  const detail = allData.find(item => item.abnormalId === abnormalId);
-
-  if (!detail) {
-    throw new Error('异常记录不存在');
-  }
+  // 生成一些测试数据
+  const detail = {
+    abnormalId: abnormalId,
+    orderNo: `ORDER${Math.floor(Math.random() * 10000) + 10000}`,
+    carNumber: `闽E${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
+    parkingName: '漳州万达广场停车场',
+    regionName: '芗城区',
+    abnormalTime: new Date().toISOString().replace('T', ' ').substr(0, 19),
+    abnormalType: ['多收费', '少收费', '重复收费'][Math.floor(Math.random() * 3)],
+    abnormalReason: getAbnormalReason(Math.floor(Math.random() * 8)),
+    abnormalAmount: Math.floor(Math.random() * 50) + 1,
+    actualAmount: Math.floor(Math.random() * 100) + 20,
+    disposalStatus: ['待处理', '处理中', '已处理'][Math.floor(Math.random() * 3)],
+    disposalResult: Math.random() > 0.5 ? ['已退款', '已补偿', '已纠正'][Math.floor(Math.random() * 3)] : null
+  };
 
   const orderDetail = {
     orderNo: detail.orderNo,
-    plateNumber: detail.carNumber,
-    parkingName: detail.parkingName,
-    regionName: detail.regionName,
     enterTime: new Date(Date.now() - 7200000).toISOString().replace('T', ' ').substr(0, 19),
     exitTime: new Date(Date.now() - 3600000).toISOString().replace('T', ' ').substr(0, 19),
     duration: '2小时',
     basicAmount: detail.shouldAmount || detail.actualAmount + detail.abnormalAmount,
     discountAmount: 0,
     paidAmount: detail.actualAmount,
-    paymentType: detail.paymentType,
-    paymentTime: detail.abnormalTime,
-    paymentStatus: '已支付',
-    paymentChannel: detail.paymentType === '微信支付' ? '微信小程序' :
-      detail.paymentType === '支付宝' ? '支付宝APP' : '现场支付',
-    paymentTransactionNo: `TX${detail.orderNo}${Math.floor(Math.random() * 1000)}`,
-    receiptNo: `RC${detail.orderNo}`
+    paymentType: '微信支付',
+    paymentTime: detail.abnormalTime
   };
 
   const correctionRecords = detail.disposalResult ? [
     {
-      id: 1,
       time: new Date(detail.abnormalTime).getTime() + 1800000,
-      operator: '系统自动',
       action: '异常检测',
+      operator: '系统自动',
       description: `检测到${detail.abnormalType}异常`,
       result: '已创建纠错任务'
     },
     {
-      id: 2,
       time: new Date(detail.abnormalTime).getTime() + 3600000,
-      operator: '复核员',
       action: '手动复核',
+      operator: '复核员',
       description: '确认异常属实',
       result: '复核通过'
-    },
-    {
-      id: 3,
-      time: new Date(detail.abnormalTime).getTime() + 5400000,
-      operator: detail.operator || '财务员',
-      action: '处理异常',
-      description: detail.disposalResult,
-      result: '处理完成'
     }
   ] : [
     {
-      id: 1,
-      time: new Date(detail.abnormalTime).getTime() + 1800000,
-      operator: '系统自动',
+      time: new Date(detail.abnormalTime).getTime(),
       action: '异常检测',
+      operator: '系统自动',
       description: `检测到${detail.abnormalType}异常`,
       result: '已创建纠错任务'
     }
@@ -513,3 +462,14 @@ export const getChargeAbnormalFilterOptions = async () => {
     ]
   };
 };
+
+// 默认日期函数
+function getDefaultStartDate() {
+  const date = new Date();
+  date.setDate(date.getDate() - 30);
+  return date.toISOString().split('T')[0];
+}
+
+function getDefaultEndDate() {
+  return new Date().toISOString().split('T')[0];
+}

@@ -1,6 +1,4 @@
 /** 表格初始数据*/
-// 从商户管理模块导入商户列表数据
-import { merchantList as baseMerchantList } from '../../merchant/table/data';
 
 // 个人用户数据列表
 export const personalUserList = () => {
@@ -15,7 +13,7 @@ export const personalUserList = () => {
       car_numbers: ['京A12345', '京B67890'],
       cert_status: '已认证',
       wallet_id: 'wallet001',
-      balance: 1000.50,
+      balance: 1000.5,
       account_status: '正常',
       register_time: '2024-01-01 10:00:00',
       last_login_time: '2024-01-10 09:15:00',
@@ -78,7 +76,7 @@ export const personalUserList = () => {
       car_numbers: ['京D78901'],
       cert_status: '认证失败',
       wallet_id: 'wallet003',
-      balance: 2000.00,
+      balance: 2000,
       account_status: '冻结',
       register_time: '2024-01-04 09:15:00',
       last_login_time: '2024-01-07 11:45:00',
@@ -120,7 +118,7 @@ export const personalUserList = () => {
       car_numbers: ['京G34567'],
       cert_status: '待审核',
       wallet_id: 'wallet005',
-      balance: 800.00,
+      balance: 800,
       account_status: '正常',
       register_time: '2024-01-06 10:30:00',
       last_login_time: '2024-01-09 14:50:00',
@@ -183,7 +181,7 @@ export const personalUserList = () => {
       car_numbers: ['京J56789'],
       cert_status: '认证失败',
       wallet_id: 'wallet007',
-      balance: 1200.00,
+      balance: 1200,
       account_status: '正常',
       register_time: '2024-01-09 13:10:00',
       last_login_time: '2024-01-10 14:50:00',
@@ -204,7 +202,7 @@ export const personalUserList = () => {
       car_numbers: [],
       cert_status: '待审核',
       wallet_id: 'wallet008',
-      balance: 600.50,
+      balance: 600.5,
       account_status: '正常',
       register_time: '2024-01-10 11:20:00',
       last_login_time: '2024-01-10 15:20:00',
@@ -225,7 +223,7 @@ export const personalUserList = () => {
       car_numbers: ['京K67890'],
       cert_status: '已认证',
       wallet_id: 'wallet009',
-      balance: 2500.00,
+      balance: 2500,
       account_status: '正常',
       register_time: '2024-01-11 15:45:00',
       last_login_time: '2024-01-10 09:30:00',
@@ -267,7 +265,7 @@ export const personalUserList = () => {
       car_numbers: ['京N89012'],
       cert_status: '已认证',
       wallet_id: 'wallet011',
-      balance: 1800.00,
+      balance: 1800,
       account_status: '正常',
       register_time: '2024-01-13 14:20:00',
       last_login_time: '2024-01-10 11:45:00',
@@ -309,7 +307,7 @@ export const personalUserList = () => {
       car_numbers: ['京O90123'],
       cert_status: '认证失败',
       wallet_id: 'wallet012',
-      balance: 1300.50,
+      balance: 1300.5,
       account_status: '正常',
       register_time: '2024-01-15 13:10:00',
       last_login_time: '2024-01-10 14:50:00',
@@ -998,14 +996,18 @@ export const governmentUserList = () => {
 // 根据用户类型获取对应的数据列表
 export const dataList = (userType) => {
   switch (userType) {
-    case '个人':
+    case '个人': {
       return personalUserList();
-    case '企业':
+    }
+    case '企业': {
       return enterpriseUserList();
-    case '政府':
+    }
+    case '政府': {
       return governmentUserList();
-    default:
+    }
+    default: {
       return [];
+    }
   }
 };
 
@@ -1273,14 +1275,18 @@ export function governmentFormSchema() {
 /** 新增/修改的表单，根据用户类型返回不同的schema */
 export function useFormSchema(userType) {
   switch (userType) {
-    case '个人':
+    case '个人': {
       return personalFormSchema();
-    case '企业':
+    }
+    case '企业': {
       return enterpriseFormSchema();
-    case '政府':
+    }
+    case '政府': {
       return governmentFormSchema();
-    default:
+    }
+    default: {
       return [];
+    }
   }
 }
 
@@ -1531,14 +1537,18 @@ export function governmentGridFormSchema() {
 /** 列表的搜索表单，根据用户类型返回不同的schema */
 export function useGridFormSchema(userType) {
   switch (userType) {
-    case '个人':
+    case '个人': {
       return personalGridFormSchema();
-    case '企业':
+    }
+    case '企业': {
       return enterpriseGridFormSchema();
-    case '政府':
+    }
+    case '政府': {
       return governmentGridFormSchema();
-    default:
+    }
+    default: {
       return [];
+    }
   }
 }
 
@@ -1557,12 +1567,22 @@ export function personalGridColumns() {
       title: '用户名',
       minWidth: 150,
       sortable: true,
+      slots: {
+        default: 'userName',
+      },
     },
     {
       field: 'user_phone',
       title: '手机号',
       minWidth: 150,
       sortable: true,
+      formatter: ({ cellValue }) => {
+        // 脱敏处理，只显示前3位和后4位
+        if (!cellValue) return '';
+        // 确保cellValue是字符串类型
+        const strValue = String(cellValue);
+        return strValue.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+      },
     },
     {
       field: 'id_card',
@@ -1588,11 +1608,8 @@ export function personalGridColumns() {
       title: '绑定车牌',
       minWidth: 200,
       sortable: true,
-      formatter: ({ cellValue }) => {
-        if (!cellValue) return '';
-        // 确保cellValue是数组类型
-        const arrValue = Array.isArray(cellValue) ? cellValue : [cellValue];
-        return arrValue.join(', ');
+      slots: {
+        default: 'carNumbers',
       },
     },
     {
@@ -1611,7 +1628,7 @@ export function personalGridColumns() {
       sortable: true,
       formatter: ({ cellValue }) => {
         // 确保cellValue是数字类型
-        const numValue = parseFloat(cellValue) || 0;
+        const numValue = Number.parseFloat(cellValue) || 0;
         return `¥${numValue.toFixed(2)}`;
       },
     },
@@ -1650,7 +1667,7 @@ export function personalGridColumns() {
     },
     {
       title: '操作',
-      width: 240,
+      width: 150,
       fixed: 'right',
       slots: { default: 'actions' },
     },
@@ -1672,6 +1689,9 @@ export function enterpriseGridColumns() {
       title: '企业名称',
       minWidth: 200,
       sortable: true,
+      slots: {
+        default: 'enterpriseName',
+      },
     },
     {
       field: 'credit_code',
@@ -1690,6 +1710,13 @@ export function enterpriseGridColumns() {
       title: '联系电话',
       minWidth: 150,
       sortable: true,
+      formatter: ({ cellValue }) => {
+        // 脱敏处理，只显示前3位和后4位
+        if (!cellValue) return '';
+        // 确保cellValue是字符串类型
+        const strValue = String(cellValue);
+        return strValue.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+      },
     },
     {
       field: 'register_address',
@@ -1756,7 +1783,7 @@ export function enterpriseGridColumns() {
     },
     {
       title: '操作',
-      width: 240,
+      width: 150,
       fixed: 'right',
       slots: { default: 'actions' },
     },
@@ -1778,6 +1805,9 @@ export function governmentGridColumns() {
       title: '用户名',
       minWidth: 150,
       sortable: true,
+      slots: {
+        default: 'userName',
+      },
     },
     {
       field: 'dept_name',
@@ -1790,6 +1820,13 @@ export function governmentGridColumns() {
       title: '联系电话',
       minWidth: 150,
       sortable: true,
+      formatter: ({ cellValue }) => {
+        // 脱敏处理，只显示前3位和后4位
+        if (!cellValue) return '';
+        // 确保cellValue是字符串类型
+        const strValue = String(cellValue);
+        return strValue.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+      },
     },
     {
       field: 'region_name',
@@ -1839,7 +1876,7 @@ export function governmentGridColumns() {
         if (!cellValue) return '';
         // 确保cellValue是字符串类型
         const strValue = String(cellValue);
-        return strValue.length > 50 ? `${strValue.substring(0, 50)}...` : strValue;
+        return strValue.length > 50 ? `${strValue.slice(0, 50)}...` : strValue;
       },
     },
     {
@@ -1853,7 +1890,7 @@ export function governmentGridColumns() {
     },
     {
       title: '操作',
-      width: 240,
+      width: 150,
       fixed: 'right',
       slots: { default: 'actions' },
     },
@@ -1863,48 +1900,19 @@ export function governmentGridColumns() {
 /** 列表的字段，根据用户类型返回不同的列配置 */
 export function useGridColumns(userType) {
   switch (userType) {
-    case '个人':
+    case '个人': {
       return personalGridColumns();
-    case '企业':
+    }
+    case '企业': {
       return enterpriseGridColumns();
-    case '政府':
+    }
+    case '政府': {
       return governmentGridColumns();
-    default:
+    }
+    default: {
       return [];
+    }
   }
-}
-
-/** 关联字段抽屉的表单字段设置 */
-export function useMerchantDrawerSchema() {
-  return [
-    {
-      fieldName: 'merchantName',
-      label: '商户名称',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入商户名称',
-        readonly: true,
-      },
-    },
-    {
-      fieldName: 'merchantId',
-      label: '商户ID',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入商户ID',
-        readonly: true,
-      },
-    },
-    {
-      fieldName: 'userCount',
-      label: '关联用户数量',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入关联用户数量',
-        readonly: true,
-      },
-    },
-  ];
 }
 
 /** 认证管理抽屉的表单字段设置 */
@@ -2010,23 +2018,7 @@ export function useAuthDrawerSchema() {
   ];
 }
 
-// 将小驼峰转换为下划线命名，以保持原有功能兼容
-export const merchantList = baseMerchantList.map((merchant) => ({
-  merchant_id: merchant.merchantId,
-  merchant_name: merchant.merchantName,
-  merchant_code: merchant.merchantCode,
-  contact_person: merchant.contactPerson,
-  contact_phone: merchant.contactPhone,
-  address: merchant.address,
-  business_scope: merchant.businessScope,
-  status: merchant.status,
-  settlement_ratio: merchant.settlementRatio,
-  create_time: merchant.createTime,
-  update_time: merchant.updateTime,
-  create_by: merchant.createBy,
-  update_by: merchant.updateBy,
-  remark: merchant.remark,
-}));
+
 
 /** 文本配置 */
 export const textObj = {
@@ -2093,14 +2085,14 @@ export const personalDetailFields = [
     type: 'tag',
     tagType: (value) => {
       switch (value) {
+        case '冻结': {
+          return 'warning';
+        }
         case '正常': {
           return 'success';
         }
         case '禁用': {
           return 'danger';
-        }
-        case '冻结': {
-          return 'warning';
         }
         default: {
           return 'info';
@@ -2154,14 +2146,14 @@ export const enterpriseDetailFields = [
     type: 'tag',
     tagType: (value) => {
       switch (value) {
+        case '冻结': {
+          return 'warning';
+        }
         case '正常': {
           return 'success';
         }
         case '禁用': {
           return 'danger';
-        }
-        case '冻结': {
-          return 'warning';
         }
         default: {
           return 'info';
@@ -2210,14 +2202,14 @@ export const governmentDetailFields = [
     type: 'tag',
     tagType: (value) => {
       switch (value) {
+        case '冻结': {
+          return 'warning';
+        }
         case '正常': {
           return 'success';
         }
         case '禁用': {
           return 'danger';
-        }
-        case '冻结': {
-          return 'warning';
         }
         default: {
           return 'info';
@@ -2232,7 +2224,7 @@ export const governmentDetailFields = [
     label: '操作日志摘要',
     formatter: (value) => {
       if (!value) return '';
-      return value.length > 50 ? `${value.substring(0, 50)}...` : value;
+      return value.length > 50 ? `${value.slice(0, 50)}...` : value;
     },
   },
   {
@@ -2261,14 +2253,18 @@ export const governmentDetailFields = [
 /** 根据用户类型获取详情字段配置 */
 export const getUserDetailFields = (userType) => {
   switch (userType) {
-    case '个人':
+    case '个人': {
       return personalDetailFields;
-    case '企业':
+    }
+    case '企业': {
       return enterpriseDetailFields;
-    case '政府':
+    }
+    case '政府': {
       return governmentDetailFields;
-    default:
+    }
+    default: {
       return [];
+    }
   }
 };
 
@@ -2435,3 +2431,210 @@ export const getStatsDataByUserType = (userType) => {
     }
   }
 };
+
+/** 车辆信息静态数据 */
+export const carInfoData = [
+  // 用户1: 张三
+  {
+    car_id: 'car001',
+    car_number: '京A12345',
+    car_type: '小型轿车',
+    user_id: '1',
+    brand: '奔驰',
+    color: '黑色',
+    bind_status: '已绑定',
+    create_time: '2024-01-01 10:00:00',
+    update_time: '2024-01-01 10:00:00',
+    remark: '主驾驶车辆',
+  },
+  {
+    car_id: 'car002',
+    car_number: '京B67890',
+    car_type: 'SUV',
+    user_id: '1',
+    brand: '宝马',
+    color: '白色',
+    bind_status: '已绑定',
+    create_time: '2024-02-01 14:30:00',
+    update_time: '2024-02-01 14:30:00',
+    remark: '家庭用车',
+  },
+  // 用户2: 李四
+  {
+    car_id: 'car003',
+    car_number: '京C34567',
+    car_type: '小型轿车',
+    user_id: '2',
+    brand: '奥迪',
+    color: '银色',
+    bind_status: '已绑定',
+    create_time: '2024-03-01 09:15:00',
+    update_time: '2024-03-01 09:15:00',
+    remark: '代步车',
+  },
+  // 用户4: 赵六
+  {
+    car_id: 'car004',
+    car_number: '京D78901',
+    car_type: '新能源汽车',
+    user_id: '4',
+    brand: '特斯拉',
+    color: '红色',
+    bind_status: '已绑定',
+    create_time: '2024-04-01 16:45:00',
+    update_time: '2024-04-01 16:45:00',
+    remark: '电动轿车',
+  },
+  // 用户5: 孙七
+  {
+    car_id: 'car005',
+    car_number: '京E23456',
+    car_type: '小型轿车',
+    user_id: '5',
+    brand: '大众',
+    color: '蓝色',
+    bind_status: '已绑定',
+    create_time: '2024-05-01 11:20:00',
+    update_time: '2024-05-01 11:20:00',
+    remark: '公司用车',
+  },
+  {
+    car_id: 'car006',
+    car_number: '京F78901',
+    car_type: 'SUV',
+    user_id: '5',
+    brand: '丰田',
+    color: '灰色',
+    bind_status: '已绑定',
+    create_time: '2024-06-01 15:30:00',
+    update_time: '2024-06-01 15:30:00',
+    remark: '越野车辆',
+  },
+  // 用户6: 周八
+  {
+    car_id: 'car007',
+    car_number: '京G34567',
+    car_type: '小型轿车',
+    user_id: '6',
+    brand: '本田',
+    color: '白色',
+    bind_status: '已绑定',
+    create_time: '2024-07-01 10:30:00',
+    update_time: '2024-07-01 10:30:00',
+    remark: '通勤车辆',
+  },
+  // 用户8: 郑十
+  {
+    car_id: 'car008',
+    car_number: '京H45678',
+    car_type: '中型轿车',
+    user_id: '8',
+    brand: '别克',
+    color: '黑色',
+    bind_status: '已绑定',
+    create_time: '2024-08-01 14:20:00',
+    update_time: '2024-08-01 14:20:00',
+    remark: '商务用车',
+  },
+  {
+    car_id: 'car009',
+    car_number: '京I89012',
+    car_type: 'SUV',
+    user_id: '8',
+    brand: '现代',
+    color: '银色',
+    bind_status: '已绑定',
+    create_time: '2024-09-01 09:15:00',
+    update_time: '2024-09-01 09:15:00',
+    remark: '家庭用车',
+  },
+  // 用户9: 冯十一
+  {
+    car_id: 'car010',
+    car_number: '京J56789',
+    car_type: '小型轿车',
+    user_id: '9',
+    brand: '福特',
+    color: '红色',
+    bind_status: '已绑定',
+    create_time: '2024-10-01 16:45:00',
+    update_time: '2024-10-01 16:45:00',
+    remark: '代步车辆',
+  },
+  // 用户11: 褚十三
+  {
+    car_id: 'car011',
+    car_number: '京K67890',
+    car_type: '新能源汽车',
+    user_id: '11',
+    brand: '比亚迪',
+    color: '蓝色',
+    bind_status: '已绑定',
+    create_time: '2024-11-01 11:20:00',
+    update_time: '2024-11-01 11:20:00',
+    remark: '电动轿车',
+  },
+  // 用户12: 卫十四
+  {
+    car_id: 'car012',
+    car_number: '京L78901',
+    car_type: 'SUV',
+    user_id: '12',
+    brand: '马自达',
+    color: '灰色',
+    bind_status: '已绑定',
+    create_time: '2024-12-01 15:30:00',
+    update_time: '2024-12-01 15:30:00',
+    remark: '越野车辆',
+  },
+  {
+    car_id: 'car013',
+    car_number: '京M23456',
+    car_type: '小型轿车',
+    user_id: '12',
+    brand: '雪佛兰',
+    color: '白色',
+    bind_status: '已绑定',
+    create_time: '2025-01-01 10:00:00',
+    update_time: '2025-01-01 10:00:00',
+    remark: '通勤车辆',
+  },
+  // 用户13: 蒋十五
+  {
+    car_id: 'car014',
+    car_number: '京N89012',
+    car_type: '中型轿车',
+    user_id: '13',
+    brand: '大众',
+    color: '黑色',
+    bind_status: '已绑定',
+    create_time: '2025-02-01 14:30:00',
+    update_time: '2025-02-01 14:30:00',
+    remark: '商务用车',
+  },
+  // 用户15: 韩十七
+  {
+    car_id: 'car015',
+    car_number: '京O90123',
+    car_type: '新能源汽车',
+    user_id: '15',
+    brand: '蔚来',
+    color: '灰色',
+    bind_status: '已绑定',
+    create_time: '2025-03-01 09:15:00',
+    update_time: '2025-03-01 09:15:00',
+    remark: '电动SUV',
+  },
+];
+
+/** 车辆详情字段配置 */
+export const carDetailFields = [
+  { key: 'car_number', label: '车牌号码' },
+  { key: 'car_type', label: '车辆类型' },
+  { key: 'brand', label: '车辆品牌' },
+  { key: 'color', label: '车辆颜色' },
+  { key: 'bind_status', label: '绑定状态' },
+  { key: 'create_time', label: '创建时间' },
+  { key: 'update_time', label: '更新时间' },
+  { key: 'remark', label: '备注' },
+];
