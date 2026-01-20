@@ -21,7 +21,16 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  arrowShow: {
+    type: Boolean,
+    default: false,
+  },
+  arrowState: {
+    type: Boolean,
+    default: false,
+  },
 });
+const emit = defineEmits(['arrow-change']);
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
 });
@@ -273,7 +282,9 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
-
+const arrowChange = () => {
+  emit('arrow-change');
+};
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
 </script>
@@ -314,6 +325,11 @@ const parkDetailDrawerRef = ref(null);
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="导出"

@@ -11,12 +11,19 @@ const changeArrowStatus = () => {
     v.secondShow = secondShow.value;
   });
 };
+const arrowChange = () => {
+  tabArray.value.forEach((v) => {
+    v.arrowShow = !v.arrowShow;
+  });
+};
 const tabArray = ref([
   {
     label: '车库信息管理',
     components: Table,
     showSecondary: true,
     secondShow: false,
+    arrowShow: true,
+    arrowState: false,
   },
 ]);
 const activeName = ref('车库信息管理');
@@ -60,6 +67,8 @@ const secondShow = ref(false);
           :is="item.components"
           :second-show="item.secondShow"
           :key="item.label"
+          :arrow-show="item.arrowShow"
+          @arrow-change="arrowChange"
         />
       </el-tab-pane>
     </el-tabs>
