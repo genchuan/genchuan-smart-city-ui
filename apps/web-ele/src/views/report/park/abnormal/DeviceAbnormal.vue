@@ -16,7 +16,7 @@
                 format="YYYY-MM-DD"
                 value-format="YYYY-MM-DD"
                 style="width: 240px"
-                size=medium
+                size="medium"
               />
             </div>
 
@@ -25,7 +25,7 @@
                 v-model="filterForm.deviceType"
                 placeholder="设备类型"
                 style="width: 140px"
-                size=medium
+                size="medium"
                 clearable
               >
                 <el-option
@@ -42,7 +42,7 @@
                 v-model="filterForm.region"
                 placeholder="区域"
                 style="width: 120px"
-                size=medium
+                size="medium"
                 clearable
               >
                 <el-option
@@ -59,7 +59,7 @@
                 v-model="filterForm.faultType"
                 placeholder="故障类型"
                 style="width: 120px"
-                size=medium
+                size="medium"
                 clearable
               >
                 <el-option
@@ -75,7 +75,7 @@
               <el-input
                 v-model="deviceCode"
                 placeholder="设备编码"
-                size=medium
+                size="medium"
                 clearable
                 style="width: 140px"
                 @keyup.enter="handleSearch"
@@ -87,7 +87,7 @@
                 v-model="filterForm.disposalStatus"
                 placeholder="处置状态"
                 style="width: 120px"
-                size=medium
+                size="medium"
                 clearable
               >
                 <el-option
@@ -104,7 +104,7 @@
                 v-model="filterForm.impactLevel"
                 placeholder="影响等级"
                 style="width: 120px"
-                size=medium
+                size="medium"
                 clearable
               >
                 <el-option label="高" value="high" />
@@ -122,7 +122,7 @@
           :icon="Download"
           @click="handleExport"
           :loading="exporting"
-          size=medium
+          size="medium"
         >
           导出Excel
         </el-button>
@@ -130,7 +130,7 @@
           type="info"
           :icon="Refresh"
           @click="refreshData"
-          size=medium
+          size="medium"
         >
           刷新
         </el-button>
@@ -144,8 +144,8 @@
           <el-icon><Warning /></el-icon>
         </div>
         <div class="stat-content">
-          <div class="stat-value">{{ summaryData.totalCount || 0 }}次</div>
           <div class="stat-label">故障总数</div>
+          <div class="stat-value">{{ summaryData.totalCount || 0 }}次</div>
         </div>
       </div>
       <div class="stat-card">
@@ -153,8 +153,8 @@
           <el-icon><Tools /></el-icon>
         </div>
         <div class="stat-content">
-          <div class="stat-value">{{ summaryData.resolveRate || 0 }}%</div>
           <div class="stat-label">解决率</div>
+          <div class="stat-value">{{ summaryData.resolveRate || 0 }}%</div>
         </div>
       </div>
       <div class="stat-card">
@@ -162,8 +162,8 @@
           <el-icon><SuccessFilled /></el-icon>
         </div>
         <div class="stat-content">
-          <div class="stat-value">{{ summaryData.avgResolveTime || 0 }}小时</div>
           <div class="stat-label">平均解决时间</div>
+          <div class="stat-value">{{ summaryData.avgResolveTime || 0 }}小时</div>
         </div>
       </div>
       <div class="stat-card">
@@ -171,8 +171,8 @@
           <el-icon><Clock /></el-icon>
         </div>
         <div class="stat-content">
-          <div class="stat-value">{{ formatCurrency(summaryData.totalEstimatedCost || 0) }}</div>
           <div class="stat-label">预估维修成本</div>
+          <div class="stat-value">{{ formatCurrency(summaryData.totalEstimatedCost || 0) }}</div>
         </div>
       </div>
     </div>
@@ -288,7 +288,12 @@ const loading = ref(false);
 const exporting = ref(false);
 const toggleStats = ref(true);
 const tableData = ref([]);
-const filterOptions = ref({});
+const filterOptions = ref({
+  deviceTypes: [],
+  regions: [],
+  faultTypes: [],
+  disposalStatuses: []
+});
 const showDetailDrawer = ref(false);
 const currentFaultId = ref('');
 
@@ -305,11 +310,73 @@ const regionFaultComparison = ref([]);
 const deviceTypeFaultComparison = ref([]);
 const summaryData = ref({});
 
-// 选项数据
-const deviceTypeOptions = computed(() => filterOptions.value.deviceTypes || []);
-const regionOptions = computed(() => filterOptions.value.regions || []);
-const faultTypeOptions = computed(() => filterOptions.value.faultTypes || []);
-const disposalStatusOptions = computed(() => filterOptions.value.disposalStatuses || []);
+// 选项数据 - 添加默认值处理
+const deviceTypeOptions = computed(() => {
+  if (filterOptions.value && filterOptions.value.deviceTypes) {
+    return filterOptions.value.deviceTypes;
+  }
+  return [
+    { value: '', label: '全部类型' },
+    { value: 'camera', label: '监控摄像头' },
+    { value: 'gate', label: '道闸' },
+    { value: 'payment', label: '缴费机' },
+    { value: 'lighting', label: '照明设备' },
+    { value: 'network', label: '网络设备' },
+    { value: 'power', label: '电源设备' },
+    { value: 'display', label: '显示屏' },
+    { value: 'sensor', label: '传感器' }
+  ];
+});
+
+const regionOptions = computed(() => {
+  if (filterOptions.value && filterOptions.value.regions) {
+    return filterOptions.value.regions;
+  }
+  return [
+    { value: '', label: '全部区域' },
+    { value: 'xiangcheng', label: '芗城区' },
+    { value: 'longwen', label: '龙文区' },
+    { value: 'longhai', label: '龙海区' },
+    { value: 'zhangpu', label: '漳浦县' },
+    { value: 'yunxiao', label: '云霄县' },
+    { value: 'zhaoan', label: '诏安县' },
+    { value: 'dongshan', label: '东山县' },
+    { value: 'nanjing', label: '南靖县' },
+    { value: 'pinghe', label: '平和县' },
+    { value: 'huaan', label: '华安县' }
+  ];
+});
+
+const faultTypeOptions = computed(() => {
+  if (filterOptions.value && filterOptions.value.faultTypes) {
+    return filterOptions.value.faultTypes;
+  }
+  return [
+    { value: '', label: '全部类型' },
+    { value: 'hardware', label: '硬件故障' },
+    { value: 'software', label: '软件故障' },
+    { value: 'network', label: '网络故障' },
+    { value: 'power', label: '电源故障' },
+    { value: 'environment', label: '环境故障' },
+    { value: 'maintenance', label: '维护故障' },
+    { value: 'configuration', label: '配置错误' }
+  ];
+});
+
+const disposalStatusOptions = computed(() => {
+  if (filterOptions.value && filterOptions.value.disposalStatuses) {
+    return filterOptions.value.disposalStatuses;
+  }
+  return [
+    { value: '', label: '全部状态' },
+    { value: 'pending', label: '待处置' },
+    { value: 'processing', label: '处置中' },
+    { value: 'completed', label: '已处理' },
+    { value: 'failed', label: '处置失败' },
+    { value: 'closed', label: '已关闭' },
+    { value: 'reviewing', label: '复核中' }
+  ];
+});
 
 // 表格列定义
 const tableColumns = computed(() => [
@@ -412,7 +479,7 @@ const tableColumns = computed(() => [
           type: 'el-button',
           props: {
             type: 'primary',
-            size: medium,
+            size: 'medium',
             onClick: () => handleDetailClick(row)
           },
           text: '详情'
@@ -422,58 +489,72 @@ const tableColumns = computed(() => [
   }
 ]);
 
-// 图表配置
-const trendOptions = computed(() => ({
-  title: {
-    text: '近30天故障发生趋势',
-    left: 'center'
-  },
-  tooltip: {
-    trigger: 'axis',
-    axisPointer: {
-      type: 'shadow'
-    }
-  },
-  grid: {
-    left: '3%',
-    right: '4%',
-    bottom: '15%',
-    top: '15%',
-    containLabel: true
-  },
-  xAxis: {
-    type: 'category',
-    data: trendData.value.map(item => item.date.substr(5)),
-    axisLabel: {
-      interval: 0,
-      rotate: 45
-    }
-  },
-  yAxis: {
-    type: 'value',
-    name: '故障数量'
-  },
-  series: [
-    {
-      name: '故障总数',
-      type: 'line',
-      data: trendData.value.map(item => item.count),
-      smooth: true,
-      itemStyle: {
-        color: '#f5222d'
+// 图表配置 - 添加容错处理
+const trendOptions = computed(() => {
+  const dates = trendData.value && trendData.value.length > 0
+    ? trendData.value.map(item => item.date ? item.date.substr(5) : '')
+    : [];
+
+  const counts = trendData.value && trendData.value.length > 0
+    ? trendData.value.map(item => item.count || 0)
+    : [];
+
+  const resolved = trendData.value && trendData.value.length > 0
+    ? trendData.value.map(item => item.resolved || 0)
+    : [];
+
+  return {
+    title: {
+      text: '近30天故障发生趋势',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
       }
     },
-    {
-      name: '已解决',
-      type: 'line',
-      data: trendData.value.map(item => item.resolved),
-      smooth: true,
-      itemStyle: {
-        color: '#52c41a'
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '15%',
+      top: '15%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: dates,
+      axisLabel: {
+        interval: 0,
+        rotate: 45
       }
-    }
-  ]
-}));
+    },
+    yAxis: {
+      type: 'value',
+      name: '故障数量'
+    },
+    series: [
+      {
+        name: '故障总数',
+        type: 'line',
+        data: counts,
+        smooth: true,
+        itemStyle: {
+          color: '#f5222d'
+        }
+      },
+      {
+        name: '已解决',
+        type: 'line',
+        data: resolved,
+        smooth: true,
+        itemStyle: {
+          color: '#52c41a'
+        }
+      }
+    ]
+  };
+});
 
 const faultTypeChart = computed(() => ({
   title: {
@@ -495,7 +576,9 @@ const faultTypeChart = computed(() => ({
       type: 'pie',
       radius: ['50%', '70%'],
       center: ['50%', '50%'],
-      data: faultTypeDistribution.value,
+      data: faultTypeDistribution.value.length > 0
+        ? faultTypeDistribution.value
+        : [{ name: '暂无数据', value: 1 }],
       emphasis: {
         itemStyle: {
           shadowBlur: 10,
@@ -527,7 +610,9 @@ const statusChart = computed(() => ({
       type: 'pie',
       radius: ['50%', '70%'],
       center: ['50%', '50%'],
-      data: statusDistribution.value,
+      data: statusDistribution.value.length > 0
+        ? statusDistribution.value
+        : [{ name: '暂无数据', value: 1 }],
       emphasis: {
         itemStyle: {
           shadowBlur: 10,
@@ -539,105 +624,117 @@ const statusChart = computed(() => ({
   ]
 }));
 
-const regionChart = computed(() => ({
-  title: {
-    text: '各区域故障设备数对比',
-    left: 'center'
-  },
-  tooltip: {
-    trigger: 'axis',
-    axisPointer: {
-      type: 'shadow'
-    }
-  },
-  grid: {
-    left: '3%',
-    right: '4%',
-    bottom: '15%',
-    top: '15%',
-    containLabel: true
-  },
-  xAxis: {
-    type: 'category',
-    data: regionFaultComparison.value.map(item => item.name),
-    axisLabel: {
-      interval: 0,
-      rotate: 45
-    }
-  },
-  yAxis: {
-    type: 'value',
-    name: '故障数量'
-  },
-  series: [
-    {
-      name: '故障数量',
-      type: 'bar',
-      data: regionFaultComparison.value.map(item => item.value),
-      barWidth: '60%',
-      label: {
-        show: true,
-        position: 'top'
-      },
-      itemStyle: {
-        color: function(params) {
-          const colorList = ['#f5222d', '#fa8c16', '#1890ff', '#52c41a', '#722ed1'];
-          return colorList[params.dataIndex % colorList.length];
-        }
-      }
-    }
-  ]
-}));
+const regionChart = computed(() => {
+  const data = regionFaultComparison.value && regionFaultComparison.value.length > 0
+    ? regionFaultComparison.value
+    : [{ name: '暂无数据', value: 0 }];
 
-const deviceTypeChart = computed(() => ({
-  title: {
-    text: '各设备类型故障次数对比',
-    left: 'center'
-  },
-  tooltip: {
-    trigger: 'axis',
-    axisPointer: {
-      type: 'shadow'
-    }
-  },
-  grid: {
-    left: '3%',
-    right: '4%',
-    bottom: '15%',
-    top: '15%',
-    containLabel: true
-  },
-  xAxis: {
-    type: 'category',
-    data: deviceTypeFaultComparison.value.map(item => item.name),
-    axisLabel: {
-      interval: 0,
-      rotate: 45
-    }
-  },
-  yAxis: {
-    type: 'value',
-    name: '故障次数'
-  },
-  series: [
-    {
-      name: '故障次数',
-      type: 'bar',
-      data: deviceTypeFaultComparison.value.map(item => item.value),
-      barWidth: '60%',
-      label: {
-        show: true,
-        position: 'top'
-      },
-      itemStyle: {
-        color: function(params) {
-          const colorList = ['#f5222d', '#fa8c16', '#1890ff', '#52c41a', '#722ed1'];
-          return colorList[params.dataIndex % colorList.length];
+  return {
+    title: {
+      text: '各区域故障设备数对比',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '15%',
+      top: '15%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: data.map(item => item.name),
+      axisLabel: {
+        interval: 0,
+        rotate: 45
+      }
+    },
+    yAxis: {
+      type: 'value',
+      name: '故障数量'
+    },
+    series: [
+      {
+        name: '故障数量',
+        type: 'bar',
+        data: data.map(item => item.value),
+        barWidth: '60%',
+        label: {
+          show: true,
+          position: 'top'
+        },
+        itemStyle: {
+          color: function(params) {
+            const colorList = ['#f5222d', '#fa8c16', '#1890ff', '#52c41a', '#722ed1'];
+            return colorList[params.dataIndex % colorList.length];
+          }
         }
       }
-    }
-  ]
-}));
+    ]
+  };
+});
+
+const deviceTypeChart = computed(() => {
+  const data = deviceTypeFaultComparison.value && deviceTypeFaultComparison.value.length > 0
+    ? deviceTypeFaultComparison.value
+    : [{ name: '暂无数据', value: 0 }];
+
+  return {
+    title: {
+      text: '各设备类型故障次数对比',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '15%',
+      top: '15%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: data.map(item => item.name),
+      axisLabel: {
+        interval: 0,
+        rotate: 45
+      }
+    },
+    yAxis: {
+      type: 'value',
+      name: '故障次数'
+    },
+    series: [
+      {
+        name: '故障次数',
+        type: 'bar',
+        data: data.map(item => item.value),
+        barWidth: '60%',
+        label: {
+          show: true,
+          position: 'top'
+        },
+        itemStyle: {
+          color: function(params) {
+            const colorList = ['#f5222d', '#fa8c16', '#1890ff', '#52c41a', '#722ed1'];
+            return colorList[params.dataIndex % colorList.length];
+          }
+        }
+      }
+    ]
+  };
+});
 
 // 初始化
 onMounted(async () => {
@@ -649,10 +746,17 @@ onMounted(async () => {
 const loadFilterOptions = async () => {
   try {
     const options = await getDeviceAbnormalFilterOptions();
-    filterOptions.value = options;
+    filterOptions.value = options || {};
   } catch (error) {
     console.error('加载筛选选项失败:', error);
-    ElMessage.error('加载筛选选项失败');
+    // 设置默认选项
+    filterOptions.value = {
+      deviceTypes: deviceTypeOptions.value,
+      regions: regionOptions.value,
+      faultTypes: faultTypeOptions.value,
+      disposalStatuses: disposalStatusOptions.value
+    };
+    ElMessage.warning('使用默认筛选选项');
   }
 };
 
@@ -662,8 +766,8 @@ const loadData = async () => {
     loading.value = true;
 
     const params = {
-      startDate: filterForm.value.dateRange[0],
-      endDate: filterForm.value.dateRange[1],
+      startDate: filterForm.value.dateRange?.[0] || getLastMonth() + '-01',
+      endDate: filterForm.value.dateRange?.[1] || getYesterdayDate(),
       deviceCode: deviceCode.value,
       deviceType: filterForm.value.deviceType,
       region: filterForm.value.region,
@@ -684,6 +788,11 @@ const loadData = async () => {
     regionFaultComparison.value = response.regionFaultComparison || [];
     deviceTypeFaultComparison.value = response.deviceTypeFaultComparison || [];
     summaryData.value = response.summary || {};
+
+    // 如果没有数据，显示提示
+    if (tableData.value.length === 0) {
+      ElMessage.info('暂无设备异常数据');
+    }
   } catch (error) {
     console.error('加载设备异常数据失败:', error);
     ElMessage.error('加载数据失败');
@@ -734,6 +843,7 @@ const handleExport = async () => {
     };
 
     await exportDeviceAbnormalReport(params);
+    ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');

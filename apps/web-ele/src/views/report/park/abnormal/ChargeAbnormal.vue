@@ -92,20 +92,6 @@
               />
             </div>
 
-            <div class="filter-group">
-              <el-select
-                v-model="filterForm.severityLevel"
-                placeholder="严重程度"
-                style="width: 120px"
-                size="medium"
-                clearable
-              >
-                <el-option label="高" value="high" />
-                <el-option label="中" value="medium" />
-                <el-option label="低" value="low" />
-              </el-select>
-            </div>
-
             <div class="filter-group amount-range">
               <el-input
                 v-model="filterForm.minAmount"
@@ -153,8 +139,8 @@
           <el-icon><Money /></el-icon>
         </div>
         <div class="stat-content">
-          <div class="stat-value">{{ formatCurrency(summaryData.totalAbnormalAmount || 0) }}</div>
           <div class="stat-label">异常总金额</div>
+          <div class="stat-value">{{ formatCurrency(summaryData.totalAbnormalAmount || 0) }}</div>
         </div>
       </div>
       <div class="stat-card">
@@ -162,8 +148,8 @@
           <el-icon><Document /></el-icon>
         </div>
         <div class="stat-content">
-          <div class="stat-value">{{ summaryData.totalCount || 0 }}笔</div>
           <div class="stat-label">异常订单数</div>
+          <div class="stat-value">{{ summaryData.totalCount || 0 }}笔</div>
         </div>
       </div>
       <div class="stat-card">
@@ -171,8 +157,8 @@
           <el-icon><SuccessFilled /></el-icon>
         </div>
         <div class="stat-content">
-          <div class="stat-value">{{ summaryData.completionRate || 0 }}%</div>
           <div class="stat-label">处置完成率</div>
+          <div class="stat-value">{{ summaryData.completionRate || 0 }}%</div>
         </div>
       </div>
       <div class="stat-card">
@@ -180,8 +166,8 @@
           <el-icon><Clock /></el-icon>
         </div>
         <div class="stat-content">
-          <div class="stat-value">{{ summaryData.correctionSuccessRate || 0 }}%</div>
           <div class="stat-label">纠错成功率</div>
+          <div class="stat-value">{{ summaryData.correctionSuccessRate || 0 }}%</div>
         </div>
       </div>
     </div>
@@ -309,7 +295,11 @@ const loading = ref(false);
 const exporting = ref(false);
 const toggleStats = ref(true);
 const tableData = ref([]);
-const filterOptions = ref({});
+const filterOptions = ref({
+  regions: [],
+  abnormalTypes: [],
+  disposalStatuses: []
+});
 const showDetailDrawer = ref(false);
 const currentAbnormalId = ref('');
 
@@ -326,10 +316,55 @@ const regionComparison = ref([]);
 const summaryData = ref({});
 const reasonStats = ref([]);
 
-// 选项数据
-const regionOptions = computed(() => filterOptions.value.regions || []);
-const abnormalTypeOptions = computed(() => filterOptions.value.abnormalTypes || []);
-const disposalStatusOptions = computed(() => filterOptions.value.disposalStatuses || []);
+// 选项数据 - 添加默认值处理
+const regionOptions = computed(() => {
+  if (filterOptions.value && filterOptions.value.regions) {
+    return filterOptions.value.regions;
+  }
+  // 返回默认选项，当API没有返回时
+  return [
+    { value: '', label: '全部区域' },
+    { value: 'xiangcheng', label: '芗城区' },
+    { value: 'longwen', label: '龙文区' },
+    { value: 'longhai', label: '龙海区' },
+    { value: 'zhangpu', label: '漳浦县' },
+    { value: 'yunxiao', label: '云霄县' },
+    { value: 'zhaoan', label: '诏安县' },
+    { value: 'dongshan', label: '东山县' },
+    { value: 'nanjing', label: '南靖县' },
+    { value: 'pinghe', label: '平和县' },
+    { value: 'huaan', label: '华安县' }
+  ];
+});
+
+const abnormalTypeOptions = computed(() => {
+  if (filterOptions.value && filterOptions.value.abnormalTypes) {
+    return filterOptions.value.abnormalTypes;
+  }
+  return [
+    { value: '', label: '全部类型' },
+    { value: 'overcharge', label: '多收费' },
+    { value: 'undercharge', label: '少收费' },
+    { value: 'duplicate', label: '重复收费' },
+    { value: 'system', label: '系统错误' },
+    { value: 'manual', label: '人工操作错误' },
+    { value: 'timeout', label: '超时计费' }
+  ];
+});
+
+const disposalStatusOptions = computed(() => {
+  if (filterOptions.value && filterOptions.value.disposalStatuses) {
+    return filterOptions.value.disposalStatuses;
+  }
+  return [
+    { value: '', label: '全部状态' },
+    { value: 'pending', label: '待处理' },
+    { value: 'processing', label: '处理中' },
+    { value: 'resolved', label: '已处理' },
+    { value: 'closed', label: '已关闭' },
+    { value: 'rejected', label: '已驳回' }
+  ];
+});
 
 // 表格列定义
 const tableColumns = computed(() => [
@@ -392,20 +427,6 @@ const tableColumns = computed(() => [
     type: 'currency'
   },
   {
-    prop: 'severityLevel',
-    label: '严重程度',
-    width: 100,
-    render: (row) => ({
-      text: row.severityLevel,
-      props: {
-        style: {
-          color: getSeverityLevelColor(row.severityLevel),
-          fontWeight: row.severityLevel === '高' ? 'bold' : 'normal'
-        }
-      }
-    })
-  },
-  {
     prop: 'disposalStatus',
     label: '处置状态',
     width: 100,
@@ -446,58 +467,82 @@ const tableColumns = computed(() => [
 ]);
 
 // 图表配置
-const trendOptions = computed(() => ({
-  title: {
-    text: '近30天收费异常趋势',
-    left: 'center'
-  },
-  tooltip: {
-    trigger: 'axis',
-    axisPointer: {
-      type: 'shadow'
-    }
-  },
-  grid: {
-    left: '3%',
-    right: '4%',
-    bottom: '15%',
-    top: '15%',
-    containLabel: true
-  },
-  xAxis: {
-    type: 'category',
-    data: trendData.value.map(item => item.date.substr(5)),
-    axisLabel: {
-      interval: 0,
-      rotate: 45
-    }
-  },
-  yAxis: {
-    type: 'value',
-    name: '异常数量'
-  },
-  series: [
-    {
-      name: '异常总数',
-      type: 'line',
-      data: trendData.value.map(item => item.count),
-      smooth: true,
-      itemStyle: {
-        color: '#f5222d'
+const trendOptions = computed(() => {
+  // 确保trendData有数据
+  const dates = trendData.value && trendData.value.length > 0
+    ? trendData.value.map(item => item.date ? item.date.substr(5) : '')
+    : [];
+
+  const counts = trendData.value && trendData.value.length > 0
+    ? trendData.value.map(item => item.count || 0)
+    : [];
+
+  const amounts = trendData.value && trendData.value.length > 0
+    ? trendData.value.map(item => item.amount || 0)
+    : [];
+
+  return {
+    title: {
+      text: '近30天收费异常趋势',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
       }
     },
-    {
-      name: '异常金额',
-      type: 'line',
-      yAxisIndex: 1,
-      data: trendData.value.map(item => item.amount || 0),
-      smooth: true,
-      itemStyle: {
-        color: '#1890ff'
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '15%',
+      top: '15%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: dates,
+      axisLabel: {
+        interval: 0,
+        rotate: 45
       }
-    }
-  ]
-}));
+    },
+    yAxis: [
+      {
+        type: 'value',
+        name: '异常数量'
+      },
+      {
+        type: 'value',
+        name: '异常金额(元)',
+        axisLabel: {
+          formatter: '{value}'
+        }
+      }
+    ],
+    series: [
+      {
+        name: '异常总数',
+        type: 'line',
+        data: counts,
+        smooth: true,
+        itemStyle: {
+          color: '#f5222d'
+        }
+      },
+      {
+        name: '异常金额',
+        type: 'line',
+        yAxisIndex: 1,
+        data: amounts,
+        smooth: true,
+        itemStyle: {
+          color: '#1890ff'
+        }
+      }
+    ]
+  };
+});
 
 const abnormalTypeChart = computed(() => ({
   title: {
@@ -519,7 +564,9 @@ const abnormalTypeChart = computed(() => ({
       type: 'pie',
       radius: ['50%', '70%'],
       center: ['50%', '50%'],
-      data: abnormalTypeDistribution.value,
+      data: abnormalTypeDistribution.value.length > 0
+        ? abnormalTypeDistribution.value
+        : [{ name: '暂无数据', value: 1 }],
       emphasis: {
         itemStyle: {
           shadowBlur: 10,
@@ -551,7 +598,9 @@ const statusChart = computed(() => ({
       type: 'pie',
       radius: ['50%', '70%'],
       center: ['50%', '50%'],
-      data: statusDistribution.value,
+      data: statusDistribution.value.length > 0
+        ? statusDistribution.value
+        : [{ name: '暂无数据', value: 1 }],
       emphasis: {
         itemStyle: {
           shadowBlur: 10,
@@ -623,10 +672,16 @@ onMounted(async () => {
 const loadFilterOptions = async () => {
   try {
     const options = await getChargeAbnormalFilterOptions();
-    filterOptions.value = options;
+    filterOptions.value = options || {};
   } catch (error) {
     console.error('加载筛选选项失败:', error);
-    ElMessage.error('加载筛选选项失败');
+    // 设置默认选项
+    filterOptions.value = {
+      regions: regionOptions.value,
+      abnormalTypes: abnormalTypeOptions.value,
+      disposalStatuses: disposalStatusOptions.value
+    };
+    ElMessage.warning('使用默认筛选选项');
   }
 };
 
@@ -636,8 +691,8 @@ const loadData = async () => {
     loading.value = true;
 
     const params = {
-      startDate: filterForm.value.dateRange[0],
-      endDate: filterForm.value.dateRange[1],
+      startDate: filterForm.value.dateRange?.[0] || getLastMonth() + '-01',
+      endDate: filterForm.value.dateRange?.[1] || getYesterdayDate(),
       orderNo: orderNo.value,
       carNumber: carNumber.value,
       region: filterForm.value.region,
@@ -660,6 +715,11 @@ const loadData = async () => {
 
     // 计算原因分类统计
     calculateReasonStats();
+
+    // 如果没有数据，显示提示
+    if (tableData.value.length === 0) {
+      ElMessage.info('暂无收费异常数据');
+    }
   } catch (error) {
     console.error('加载收费异常数据失败:', error);
     ElMessage.error('加载数据失败');
@@ -670,12 +730,19 @@ const loadData = async () => {
 
 // 计算原因分类统计
 const calculateReasonStats = () => {
+  if (!tableData.value || tableData.value.length === 0) {
+    reasonStats.value = [];
+    return;
+  }
+
   const reasonMap = {};
   tableData.value.forEach(item => {
-    if (!reasonMap[item.abnormalReason]) {
-      reasonMap[item.abnormalReason] = 0;
+    if (item.abnormalReason) {
+      if (!reasonMap[item.abnormalReason]) {
+        reasonMap[item.abnormalReason] = 0;
+      }
+      reasonMap[item.abnormalReason]++;
     }
-    reasonMap[item.abnormalReason]++;
   });
 
   const total = tableData.value.length;
@@ -730,6 +797,7 @@ const handleExport = async () => {
     };
 
     await exportChargeAbnormalReport(params);
+    ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');

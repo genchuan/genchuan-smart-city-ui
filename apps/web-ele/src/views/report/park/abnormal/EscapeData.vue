@@ -16,7 +16,7 @@
                 format="YYYY-MM-DD"
                 value-format="YYYY-MM-DD"
                 style="width: 240px"
-                size medium
+                size="medium"
               />
             </div>
 
@@ -25,7 +25,7 @@
                 v-model="filterForm.region"
                 placeholder="区域"
                 style="width: 120px"
-                size medium
+                size="medium"
                 clearable
               >
                 <el-option
@@ -42,7 +42,7 @@
                 v-model="filterForm.parkingId"
                 placeholder="车场"
                 style="width: 150px"
-                size medium
+                size="medium"
                 clearable
               >
                 <el-option
@@ -59,7 +59,7 @@
                 v-model="filterForm.escapeLevel"
                 placeholder="逃费等级"
                 style="width: 120px"
-                size medium
+                size="medium"
                 clearable
               >
                 <el-option
@@ -75,7 +75,7 @@
               <el-input
                 v-model="carNumber"
                 placeholder="车牌号码"
-                size medium
+                size="medium"
                 clearable
                 style="width: 140px"
                 @keyup.enter="handleSearch"
@@ -87,7 +87,7 @@
                 v-model="filterForm.traceStatus"
                 placeholder="追缴状态"
                 style="width: 120px"
-                size medium
+                size="medium"
                 clearable
               >
                 <el-option
@@ -103,28 +103,17 @@
               <el-input
                 v-model="filterForm.minAmount"
                 placeholder="最小金额"
-                size medium
+                size="medium"
                 style="width: 100px"
               />
               <span class="range-separator">-</span>
               <el-input
                 v-model="filterForm.maxAmount"
                 placeholder="最大金额"
-                size medium
+                size="medium"
                 style="width: 100px"
               />
             </div>
-<!--            <div class="filter-group">-->
-<!--              <el-button type="primary" size medium" @click="handleSearch">-->
-<!--                查询-->
-<!--              </el-button>-->
-<!--              <el-button size medium" @click="resetFilter">-->
-<!--                重置-->
-<!--              </el-button>-->
-<!--              <el-button type="text" size medium" @click="toggleStats = !toggleStats">-->
-<!--                {{ toggleStats ? '隐藏统计' : '显示统计' }}-->
-<!--              </el-button>-->
-<!--            </div>-->
           </div>
         </div>
       </template>
@@ -135,7 +124,7 @@
           :icon="Download"
           @click="handleExport"
           :loading="exporting"
-          size medium
+          size="medium"
         >
           导出Excel
         </el-button>
@@ -143,7 +132,7 @@
           type="info"
           :icon="Refresh"
           @click="refreshData"
-          size medium
+          size="medium"
         >
           刷新
         </el-button>
@@ -157,8 +146,8 @@
           <el-icon><Money /></el-icon>
         </div>
         <div class="stat-content">
-          <div class="stat-value">{{ formatCurrency(summaryData.totalEscapeAmount || 0) }}</div>
           <div class="stat-label">逃费总金额</div>
+          <div class="stat-value">{{ formatCurrency(summaryData.totalEscapeAmount || 0) }}</div>
         </div>
       </div>
       <div class="stat-card">
@@ -166,8 +155,8 @@
           <el-icon><Document /></el-icon>
         </div>
         <div class="stat-content">
-          <div class="stat-value">{{ summaryData.totalCount || 0 }}笔</div>
           <div class="stat-label">逃费订单数</div>
+          <div class="stat-value">{{ summaryData.totalCount || 0 }}笔</div>
         </div>
       </div>
       <div class="stat-card">
@@ -175,8 +164,8 @@
           <el-icon><SuccessFilled /></el-icon>
         </div>
         <div class="stat-content">
-          <div class="stat-value">{{ summaryData.recoveryRate || 0 }}%</div>
           <div class="stat-label">追缴成功率</div>
+          <div class="stat-value">{{ summaryData.recoveryRate || 0 }}%</div>
         </div>
       </div>
       <div class="stat-card">
@@ -184,8 +173,8 @@
           <el-icon><Clock /></el-icon>
         </div>
         <div class="stat-content">
-          <div class="stat-value">{{ summaryData.pendingCount || 0 }}笔</div>
           <div class="stat-label">待追缴数</div>
+          <div class="stat-value">{{ summaryData.pendingCount || 0 }}笔</div>
         </div>
       </div>
     </div>
@@ -208,14 +197,14 @@
           :with-background="true"
           :with-padding="true"
         >
-          <ChartContainer :options="levelOptionsChart" height="300px" />
+          <ChartContainer :options="levelChart" height="300px" />
         </ReportSection>
         <ReportSection
           title="追缴状态占比"
           :with-background="true"
           :with-padding="true"
         >
-          <ChartContainer :options="statusOptionsChart" height="300px" />
+          <ChartContainer :options="statusChart" height="300px" />
         </ReportSection>
       </div>
 
@@ -225,7 +214,7 @@
         :with-background="true"
         :with-padding="true"
       >
-        <ChartContainer :options="regionOptionsChart" height="350px" />
+        <ChartContainer :options="regionChart" height="350px" />
       </ReportSection>
     </div>
 
@@ -340,7 +329,13 @@ const loading = ref(false);
 const exporting = ref(false);
 const toggleStats = ref(true);
 const tableData = ref([]);
-const filterOptions = ref({});
+const filterOptions = ref({
+  regions: [],
+  parkingList: [],
+  escapeLevels: [],
+  traceStatuses: [],
+  traceMethods: []
+});
 const showDetailDrawer = ref(false);
 const showTraceDialog = ref(false);
 const currentEscape = ref(null);
@@ -360,12 +355,84 @@ const statusDistribution = ref([]);
 const regionAmountComparison = ref([]);
 const summaryData = ref({});
 
-// 选项数据
-const regionOptions = computed(() => filterOptions.value.regions || []);
-const parkingOptions = computed(() => filterOptions.value.parkingList || []);
-const levelOptions = computed(() => filterOptions.value.escapeLevels || []);
-const traceStatusOptions = computed(() => filterOptions.value.traceStatuses || []);
-const traceMethodOptions = computed(() => filterOptions.value.traceMethods || []);
+// 选项数据 - 添加默认值处理
+const regionOptions = computed(() => {
+  if (filterOptions.value && filterOptions.value.regions) {
+    return filterOptions.value.regions;
+  }
+  return [
+    { value: '', label: '全部区域' },
+    { value: 'xiangcheng', label: '芗城区' },
+    { value: 'longwen', label: '龙文区' },
+    { value: 'longhai', label: '龙海区' },
+    { value: 'zhangpu', label: '漳浦县' },
+    { value: 'yunxiao', label: '云霄县' },
+    { value: 'zhaoan', label: '诏安县' },
+    { value: 'dongshan', label: '东山县' },
+    { value: 'nanjing', label: '南靖县' },
+    { value: 'pinghe', label: '平和县' },
+    { value: 'huaan', label: '华安县' }
+  ];
+});
+
+const parkingOptions = computed(() => {
+  if (filterOptions.value && filterOptions.value.parkingList) {
+    return filterOptions.value.parkingList;
+  }
+  return [
+    { value: '', label: '全部停车场' },
+    { value: 'park001', label: '漳州万达广场停车场' },
+    { value: 'park002', label: '芗城政府路侧停车场' },
+    { value: 'park003', label: '龙文区体育中心停车场' },
+    { value: 'park004', label: '龙海区商业城停车场' },
+    { value: 'park005', label: '漳浦县汽车站停车场' },
+    { value: 'park006', label: '云霄县中心停车场' },
+    { value: 'park007', label: '诏安县人民广场停车场' },
+    { value: 'park008', label: '东山县旅游中心停车场' },
+    { value: 'park009', label: '南靖县土楼停车场' },
+    { value: 'park010', label: '平和县商贸城停车场' }
+  ];
+});
+
+const levelOptions = computed(() => {
+  if (filterOptions.value && filterOptions.value.escapeLevels) {
+    return filterOptions.value.escapeLevels;
+  }
+  return [
+    { value: '', label: '全部等级' },
+    { value: 'level1', label: '一级逃费' },
+    { value: 'level2', label: '二级逃费' },
+    { value: 'level3', label: '三级逃费' },
+    { value: 'level4', label: '四级逃费' }
+  ];
+});
+
+const traceStatusOptions = computed(() => {
+  if (filterOptions.value && filterOptions.value.traceStatuses) {
+    return filterOptions.value.traceStatuses;
+  }
+  return [
+    { value: '', label: '全部状态' },
+    { value: 'pending', label: '待追缴' },
+    { value: 'processing', label: '追缴中' },
+    { value: 'completed', label: '已追缴' },
+    { value: 'failed', label: '追缴失败' },
+    { value: 'exempted', label: '已豁免' }
+  ];
+});
+
+const traceMethodOptions = computed(() => {
+  if (filterOptions.value && filterOptions.value.traceMethods) {
+    return filterOptions.value.traceMethods;
+  }
+  return [
+    { value: 'sms', label: '短信通知' },
+    { value: 'phone', label: '电话追缴' },
+    { value: 'letter', label: '书面通知' },
+    { value: 'legal', label: '法律途径' },
+    { value: 'system', label: '系统自动' }
+  ];
+});
 
 // 表格列定义
 const tableColumns = computed(() => [
@@ -448,7 +515,7 @@ const tableColumns = computed(() => [
           type: 'el-button',
           props: {
             type: 'primary',
-            size: medium,
+            size: 'medium',
             onClick: () => handleDetailClick(row)
           },
           text: '详情'
@@ -457,7 +524,7 @@ const tableColumns = computed(() => [
           type: 'el-button',
           props: {
             type: 'warning',
-            size: medium,
+            size: 'medium',
             onClick: () => handleTraceClick(row),
             disabled: row.traceStatus === '已追缴' || row.traceStatus === '已豁免'
           },
@@ -468,61 +535,84 @@ const tableColumns = computed(() => [
   }
 ]);
 
-// 图表配置
-const trendOptions = computed(() => ({
-  title: {
-    text: '近30天逃费订单趋势',
-    left: 'center'
-  },
-  tooltip: {
-    trigger: 'axis',
-    axisPointer: {
-      type: 'shadow'
-    }
-  },
-  grid: {
-    left: '3%',
-    right: '4%',
-    bottom: '15%',
-    top: '15%',
-    containLabel: true
-  },
-  xAxis: {
-    type: 'category',
-    data: trendData.value.map(item => item.date.substr(5)),
-    axisLabel: {
-      interval: 0,
-      rotate: 45
-    }
-  },
-  yAxis: {
-    type: 'value',
-    name: '逃费订单数'
-  },
-  series: [
-    {
-      name: '逃费订单数',
-      type: 'line',
-      data: trendData.value.map(item => item.count),
-      smooth: true,
-      itemStyle: {
-        color: '#f5222d'
+// 图表配置 - 添加容错处理
+const trendOptions = computed(() => {
+  const dates = trendData.value && trendData.value.length > 0
+    ? trendData.value.map(item => item.date ? item.date.substr(5) : '')
+    : [];
+
+  const counts = trendData.value && trendData.value.length > 0
+    ? trendData.value.map(item => item.count || 0)
+    : [];
+
+  const amounts = trendData.value && trendData.value.length > 0
+    ? trendData.value.map(item => item.amount || 0)
+    : [];
+
+  return {
+    title: {
+      text: '近30天逃费订单趋势',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
       }
     },
-    {
-      name: '逃费金额',
-      type: 'line',
-      yAxisIndex: 1,
-      data: trendData.value.map(item => item.amount),
-      smooth: true,
-      itemStyle: {
-        color: '#1890ff'
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '15%',
+      top: '15%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: dates,
+      axisLabel: {
+        interval: 0,
+        rotate: 45
       }
-    }
-  ]
-}));
+    },
+    yAxis: [
+      {
+        type: 'value',
+        name: '逃费订单数'
+      },
+      {
+        type: 'value',
+        name: '逃费金额(元)',
+        axisLabel: {
+          formatter: '{value}'
+        }
+      }
+    ],
+    series: [
+      {
+        name: '逃费订单数',
+        type: 'line',
+        data: counts,
+        smooth: true,
+        itemStyle: {
+          color: '#f5222d'
+        }
+      },
+      {
+        name: '逃费金额',
+        type: 'line',
+        yAxisIndex: 1,
+        data: amounts,
+        smooth: true,
+        itemStyle: {
+          color: '#1890ff'
+        }
+      }
+    ]
+  };
+});
 
-const levelOptionsChart = computed(() => ({
+const levelChart = computed(() => ({
   title: {
     text: '逃费等级占比',
     left: 'center'
@@ -542,7 +632,9 @@ const levelOptionsChart = computed(() => ({
       type: 'pie',
       radius: ['50%', '70%'],
       center: ['50%', '50%'],
-      data: levelDistribution.value,
+      data: levelDistribution.value.length > 0
+        ? levelDistribution.value
+        : [{ name: '暂无数据', value: 1 }],
       emphasis: {
         itemStyle: {
           shadowBlur: 10,
@@ -554,7 +646,7 @@ const levelOptionsChart = computed(() => ({
   ]
 }));
 
-const statusOptionsChart = computed(() => ({
+const statusChart = computed(() => ({
   title: {
     text: '追缴状态占比',
     left: 'center'
@@ -574,7 +666,9 @@ const statusOptionsChart = computed(() => ({
       type: 'pie',
       radius: ['50%', '70%'],
       center: ['50%', '50%'],
-      data: statusDistribution.value,
+      data: statusDistribution.value.length > 0
+        ? statusDistribution.value
+        : [{ name: '暂无数据', value: 1 }],
       emphasis: {
         itemStyle: {
           shadowBlur: 10,
@@ -586,55 +680,61 @@ const statusOptionsChart = computed(() => ({
   ]
 }));
 
-const regionOptionsChart = computed(() => ({
-  title: {
-    text: '各区域逃费金额对比',
-    left: 'center'
-  },
-  tooltip: {
-    trigger: 'axis',
-    axisPointer: {
-      type: 'shadow'
-    }
-  },
-  grid: {
-    left: '3%',
-    right: '4%',
-    bottom: '15%',
-    top: '15%',
-    containLabel: true
-  },
-  xAxis: {
-    type: 'category',
-    data: regionAmountComparison.value.map(item => item.name),
-    axisLabel: {
-      interval: 0,
-      rotate: 45
-    }
-  },
-  yAxis: {
-    type: 'value',
-    name: '逃费金额(元)'
-  },
-  series: [
-    {
-      name: '逃费金额',
-      type: 'bar',
-      data: regionAmountComparison.value.map(item => item.value),
-      barWidth: '60%',
-      label: {
-        show: true,
-        position: 'top'
-      },
-      itemStyle: {
-        color: function(params) {
-          const colorList = ['#f5222d', '#fa8c16', '#1890ff', '#52c41a', '#722ed1'];
-          return colorList[params.dataIndex % colorList.length];
+const regionChart = computed(() => {
+  const data = regionAmountComparison.value && regionAmountComparison.value.length > 0
+    ? regionAmountComparison.value
+    : [{ name: '暂无数据', value: 0 }];
+
+  return {
+    title: {
+      text: '各区域逃费金额对比',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '15%',
+      top: '15%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: data.map(item => item.name),
+      axisLabel: {
+        interval: 0,
+        rotate: 45
+      }
+    },
+    yAxis: {
+      type: 'value',
+      name: '逃费金额(元)'
+    },
+    series: [
+      {
+        name: '逃费金额',
+        type: 'bar',
+        data: data.map(item => item.value),
+        barWidth: '60%',
+        label: {
+          show: true,
+          position: 'top'
+        },
+        itemStyle: {
+          color: function(params) {
+            const colorList = ['#f5222d', '#fa8c16', '#1890ff', '#52c41a', '#722ed1'];
+            return colorList[params.dataIndex % colorList.length];
+          }
         }
       }
-    }
-  ]
-}));
+    ]
+  };
+});
 
 // 初始化
 onMounted(async () => {
@@ -646,10 +746,18 @@ onMounted(async () => {
 const loadFilterOptions = async () => {
   try {
     const options = await getEscapeFilterOptions();
-    filterOptions.value = options;
+    filterOptions.value = options || {};
   } catch (error) {
     console.error('加载筛选选项失败:', error);
-    ElMessage.error('加载筛选选项失败');
+    // 设置默认选项
+    filterOptions.value = {
+      regions: regionOptions.value,
+      parkingList: parkingOptions.value,
+      escapeLevels: levelOptions.value,
+      traceStatuses: traceStatusOptions.value,
+      traceMethods: traceMethodOptions.value
+    };
+    ElMessage.warning('使用默认筛选选项');
   }
 };
 
@@ -659,8 +767,8 @@ const loadData = async () => {
     loading.value = true;
 
     const params = {
-      startDate: filterForm.value.dateRange[0],
-      endDate: filterForm.value.dateRange[1],
+      startDate: filterForm.value.dateRange?.[0] || getLastMonth() + '-01',
+      endDate: filterForm.value.dateRange?.[1] || getYesterdayDate(),
       carNumber: carNumber.value,
       region: filterForm.value.region,
       parkingId: filterForm.value.parkingId,
@@ -672,8 +780,8 @@ const loadData = async () => {
 
     const response = await getEscapeDataReport(params);
     const stats = await getEscapeStatistics({
-      startDate: filterForm.value.dateRange[0],
-      endDate: filterForm.value.dateRange[1]
+      startDate: filterForm.value.dateRange?.[0] || getLastMonth() + '-01',
+      endDate: filterForm.value.dateRange?.[1] || getYesterdayDate()
     });
 
     // 更新数据
@@ -684,6 +792,11 @@ const loadData = async () => {
     statusDistribution.value = response.traceStatusDistribution || [];
     regionAmountComparison.value = response.regionAmountComparison || [];
     summaryData.value = stats.summary || {};
+
+    // 如果没有数据，显示提示
+    if (tableData.value.length === 0) {
+      ElMessage.info('暂无逃费数据');
+    }
   } catch (error) {
     console.error('加载逃费数据失败:', error);
     ElMessage.error('加载数据失败');
@@ -734,6 +847,7 @@ const handleExport = async () => {
     };
 
     await exportEscapeDataReport(params);
+    ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');

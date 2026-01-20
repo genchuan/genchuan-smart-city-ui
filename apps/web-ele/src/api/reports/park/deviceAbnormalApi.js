@@ -1,7 +1,7 @@
 // 文件: deviceAbnormalApi.js
 import { ElMessage } from 'element-plus';
 
-// 区域映射关系 - 对应sys_area.area_code
+// 区域映射关系
 const regionMap = {
   'xiangcheng': '芗城区',
   'longwen': '龙文区',
@@ -15,7 +15,7 @@ const regionMap = {
   'huaan': '华安县'
 };
 
-// 设备类型映射关系 - 对应tb_device_extend.device_type
+// 设备类型映射关系
 const deviceTypeMap = {
   'camera': '监控摄像头',
   'gate': '道闸',
@@ -27,7 +27,7 @@ const deviceTypeMap = {
   'sensor': '传感器'
 };
 
-// 故障类型映射关系 - 对应park_fault.fault_type
+// 故障类型映射关系
 const faultTypeMap = {
   'hardware': '硬件故障',
   'software': '软件故障',
@@ -38,7 +38,7 @@ const faultTypeMap = {
   'configuration': '配置错误'
 };
 
-// 处置状态映射关系 - 对应park_fault.disposal_status
+// 处置状态映射关系
 const disposalStatusMap = {
   'pending': '待处置',
   'processing': '处置中',
@@ -49,7 +49,7 @@ const disposalStatusMap = {
 };
 
 // 辅助函数：生成设备异常模拟数据
-function generateDeviceAbnormalData() {
+function generateDeviceAbnormalData(startDate, endDate) {
   const data = [];
   const deviceCodes = [
     'CAM001', 'CAM002', 'CAM003', 'CAM004', 'CAM005',
@@ -67,43 +67,58 @@ function generateDeviceAbnormalData() {
   const operators = ['张三', '李四', '王五', '赵六', '钱七', '孙八', '周九'];
   const manufacturers = ['海康威视', '大华', '宇视', '华为', '中兴', 'TP-LINK'];
 
-  for (let i = 1; i <= 80; i++) {
-    const randomDate = new Date(2023, 11, Math.floor(Math.random() * 30) + 1);
-    const randomTime = `${String(Math.floor(Math.random() * 24)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`;
+  // 生成日期范围内的数据
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
 
-    const regionCode = regionCodes[Math.floor(Math.random() * regionCodes.length)];
-    const deviceTypeCode = deviceTypeCodes[Math.floor(Math.random() * deviceTypeCodes.length)];
-    const faultTypeCode = faultTypeCodes[Math.floor(Math.random() * faultTypeCodes.length)];
-    const disposalStatusCode = disposalStatusCodes[Math.floor(Math.random() * disposalStatusCodes.length)];
+  for (let day = 0; day <= daysDiff; day++) {
+    const currentDate = new Date(start);
+    currentDate.setDate(start.getDate() + day);
 
-    const hasDisposal = disposalStatusCode === 'completed' || disposalStatusCode === 'closed';
-    const hasOperator = Math.random() > 0.4;
+    // 每天生成1-6条数据
+    const dayCount = Math.floor(Math.random() * 6) + 1;
 
-    data.push({
-      faultId: `FAULT${String(i).padStart(6, '0')}`,
-      deviceCode: deviceCodes[Math.floor(Math.random() * deviceCodes.length)],
-      deviceName: `${deviceCodes[Math.floor(Math.random() * deviceCodes.length)]}-${String(Math.floor(Math.random() * 100)).padStart(3, '0')}`,
-      deviceTypeCode: deviceTypeCode,
-      deviceType: deviceTypeMap[deviceTypeCode],
-      manufacturer: manufacturers[Math.floor(Math.random() * manufacturers.length)],
-      regionCode: regionCode,
-      regionName: regionMap[regionCode],
-      faultTime: `${randomDate.toISOString().split('T')[0]} ${randomTime}`,
-      faultTypeCode: faultTypeCode,
-      faultType: faultTypeMap[faultTypeCode],
-      faultDescription: getFaultDescription(Math.floor(Math.random() * 5)),
-      impactLevel: ['高', '中', '低'][Math.floor(Math.random() * 3)],
-      disposalStatusCode: disposalStatusCode,
-      disposalStatus: disposalStatusMap[disposalStatusCode],
-      disposalTime: hasDisposal ?
-        new Date(randomDate.getTime() + Math.random() * 86400000 * 3).toISOString().replace('T', ' ').substr(0, 19) :
-        null,
-      operator: hasOperator ? operators[Math.floor(Math.random() * operators.length)] : null,
-      installationDate: new Date(2022, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0],
-      warrantyStatus: Math.random() > 0.5 ? '在保' : '过保',
-      estimatedCost: Math.floor(Math.random() * 5000) + 100,
-      workOrderId: hasDisposal ? `WO${String(10000 + i)}` : null
-    });
+    for (let i = 0; i < dayCount; i++) {
+      const id = data.length + 1;
+      const randomHour = Math.floor(Math.random() * 24);
+      const randomMinute = Math.floor(Math.random() * 60);
+      const randomSecond = Math.floor(Math.random() * 60);
+
+      const regionCode = regionCodes[Math.floor(Math.random() * regionCodes.length)];
+      const deviceTypeCode = deviceTypeCodes[Math.floor(Math.random() * deviceTypeCodes.length)];
+      const faultTypeCode = faultTypeCodes[Math.floor(Math.random() * faultTypeCodes.length)];
+      const disposalStatusCode = disposalStatusCodes[Math.floor(Math.random() * disposalStatusCodes.length)];
+
+      const hasDisposal = disposalStatusCode === 'completed' || disposalStatusCode === 'closed';
+      const hasOperator = Math.random() > 0.4;
+
+      data.push({
+        faultId: `FAULT${String(id).padStart(6, '0')}`,
+        deviceCode: deviceCodes[Math.floor(Math.random() * deviceCodes.length)],
+        deviceName: `${deviceCodes[Math.floor(Math.random() * deviceCodes.length)]}-${String(Math.floor(Math.random() * 100)).padStart(3, '0')}`,
+        deviceTypeCode: deviceTypeCode,
+        deviceType: deviceTypeMap[deviceTypeCode],
+        manufacturer: manufacturers[Math.floor(Math.random() * manufacturers.length)],
+        regionCode: regionCode,
+        regionName: regionMap[regionCode],
+        faultTime: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')} ${String(randomHour).padStart(2, '0')}:${String(randomMinute).padStart(2, '0')}:${String(randomSecond).padStart(2, '0')}`,
+        faultTypeCode: faultTypeCode,
+        faultType: faultTypeMap[faultTypeCode],
+        faultDescription: getFaultDescription(Math.floor(Math.random() * 5)),
+        impactLevel: ['高', '中', '低'][Math.floor(Math.random() * 3)],
+        disposalStatusCode: disposalStatusCode,
+        disposalStatus: disposalStatusMap[disposalStatusCode],
+        disposalTime: hasDisposal ?
+          `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')} ${String((randomHour + 2) % 24).padStart(2, '0')}:${String(randomMinute).padStart(2, '0')}:${String(randomSecond).padStart(2, '0')}` :
+          null,
+        operator: hasOperator ? operators[Math.floor(Math.random() * operators.length)] : null,
+        installationDate: new Date(2022, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0],
+        warrantyStatus: Math.random() > 0.5 ? '在保' : '过保',
+        estimatedCost: Math.floor(Math.random() * 5000) + 100,
+        workOrderId: hasDisposal ? `WO${String(10000 + id)}` : null
+      });
+    }
   }
 
   return data;
@@ -124,116 +139,6 @@ function getFaultDescription(type) {
   return descriptions[type] || '设备出现异常';
 }
 
-// 辅助函数：计算故障趋势数据
-function calculateFaultTrend(data) {
-  const trend = [];
-  const today = new Date();
-
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split('T')[0];
-
-    const dayData = data.filter(item => {
-      const itemDate = item.faultTime.split(' ')[0];
-      return itemDate === dateStr;
-    });
-
-    trend.push({
-      date: dateStr,
-      count: dayData.length,
-      resolved: dayData.filter(item => item.disposalStatus === '已处理' || item.disposalStatus === '已关闭').length
-    });
-  }
-
-  return trend;
-}
-
-// 辅助函数：计算故障类型分布
-function calculateFaultTypeDistribution(data) {
-  const distribution = {};
-
-  data.forEach(item => {
-    if (!distribution[item.faultType]) {
-      distribution[item.faultType] = 0;
-    }
-    distribution[item.faultType]++;
-  });
-
-  return Object.entries(distribution).map(([name, value]) => ({
-    name,
-    value
-  }));
-}
-
-// 辅助函数：计算处置状态分布
-function calculateDisposalStatusDistribution(data) {
-  const distribution = {};
-
-  data.forEach(item => {
-    if (!distribution[item.disposalStatus]) {
-      distribution[item.disposalStatus] = 0;
-    }
-    distribution[item.disposalStatus]++;
-  });
-
-  return Object.entries(distribution).map(([name, value]) => ({
-    name,
-    value
-  }));
-}
-
-// 辅助函数：计算区域故障数对比
-function calculateRegionFaultComparison(data) {
-  const comparison = {};
-
-  data.forEach(item => {
-    if (!comparison[item.regionName]) {
-      comparison[item.regionName] = 0;
-    }
-    comparison[item.regionName]++;
-  });
-
-  return Object.entries(comparison)
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value);
-}
-
-// 辅助函数：计算设备类型故障数对比
-function calculateDeviceTypeFaultComparison(data) {
-  const comparison = {};
-
-  data.forEach(item => {
-    if (!comparison[item.deviceType]) {
-      comparison[item.deviceType] = 0;
-    }
-    comparison[item.deviceType]++;
-  });
-
-  return Object.entries(comparison)
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value);
-}
-
-// 辅助函数：计算平均解决时间
-function calculateAverageResolveTime(data) {
-  const resolvedData = data.filter(item =>
-    item.disposalStatus === '已处理' && item.disposalTime
-  );
-
-  if (resolvedData.length === 0) return 0;
-
-  let totalHours = 0;
-  resolvedData.forEach(item => {
-    const faultTime = new Date(item.faultTime);
-    const disposalTime = new Date(item.disposalTime);
-    const hours = (disposalTime - faultTime) / (1000 * 60 * 60);
-    totalHours += hours;
-  });
-
-  return Math.round(totalHours / resolvedData.length * 10) / 10;
-}
-
 /**
  * 获取设备异常报表
  */
@@ -241,8 +146,8 @@ export const getDeviceAbnormalReport = async (params) => {
   await new Promise((resolve) => setTimeout(resolve, 500));
 
   const {
-    startDate = '2023-12-01',
-    endDate = '2023-12-31',
+    startDate = getDefaultStartDate(),
+    endDate = getDefaultEndDate(),
     deviceCode = '',
     deviceType = '',
     region = '',
@@ -252,7 +157,7 @@ export const getDeviceAbnormalReport = async (params) => {
     pageSize = 10
   } = params;
 
-  const allData = generateDeviceAbnormalData();
+  const allData = generateDeviceAbnormalData(startDate, endDate);
 
   let filteredData = allData.filter(item => {
     const itemDate = item.faultTime.split(' ')[0];
@@ -271,18 +176,68 @@ export const getDeviceAbnormalReport = async (params) => {
   const endIndex = Math.min(startIndex + pageSize, total);
   const paginatedData = filteredData.slice(startIndex, endIndex);
 
-  const trendData = calculateFaultTrend(filteredData);
-  const faultTypeDistribution = calculateFaultTypeDistribution(filteredData);
-  const disposalStatusDistribution = calculateDisposalStatusDistribution(filteredData);
-  const regionFaultComparison = calculateRegionFaultComparison(filteredData);
-  const deviceTypeFaultComparison = calculateDeviceTypeFaultComparison(filteredData);
-
+  // 计算统计数据
   const totalCount = filteredData.length;
   const pendingCount = filteredData.filter(item => item.disposalStatus === '待处置').length;
   const processingCount = filteredData.filter(item => item.disposalStatus === '处置中').length;
   const completedCount = filteredData.filter(item => item.disposalStatus === '已处理').length;
-  const avgResolveTime = calculateAverageResolveTime(filteredData);
+  const resolveRate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  const avgResolveTime = filteredData.filter(item => item.disposalTime).length > 0
+    ? Math.floor(Math.random() * 24) + 1
+    : 0;
   const totalEstimatedCost = filteredData.reduce((sum, item) => sum + item.estimatedCost, 0);
+
+  // 生成趋势数据
+  const trendData = [];
+  const today = new Date();
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    const dateStr = date.toISOString().split('T')[0];
+
+    const dayData = filteredData.filter(item => {
+      const itemDate = item.faultTime.split(' ')[0];
+      return itemDate === dateStr;
+    });
+
+    trendData.push({
+      date: dateStr,
+      count: dayData.length,
+      resolved: dayData.filter(item => item.disposalStatus === '已处理' || item.disposalStatus === '已关闭').length
+    });
+  }
+
+  // 生成故障类型分布
+  const faultTypeDistribution = Object.entries(
+    filteredData.reduce((acc, item) => {
+      acc[item.faultType] = (acc[item.faultType] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([name, value]) => ({ name, value }));
+
+  // 生成状态分布
+  const statusDistribution = Object.entries(
+    filteredData.reduce((acc, item) => {
+      acc[item.disposalStatus] = (acc[item.disposalStatus] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([name, value]) => ({ name, value }));
+
+  // 生成区域对比
+  const regionFaultComparison = Object.entries(
+    filteredData.reduce((acc, item) => {
+      acc[item.regionName] = (acc[item.regionName] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([name, value]) => ({ name, value }));
+
+  // 生成设备类型对比
+  const deviceTypeFaultComparison = Object.entries(
+    filteredData.reduce((acc, item) => {
+      acc[item.deviceType] = (acc[item.deviceType] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([name, value]) => ({ name, value }));
 
   return {
     data: paginatedData,
@@ -295,13 +250,13 @@ export const getDeviceAbnormalReport = async (params) => {
       pendingCount,
       processingCount,
       completedCount,
-      resolveRate: totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0,
+      resolveRate,
       avgResolveTime,
       totalEstimatedCost
     },
     trendData,
     faultTypeDistribution,
-    disposalStatusDistribution,
+    disposalStatusDistribution: statusDistribution,
     regionFaultComparison,
     deviceTypeFaultComparison,
     generatedAt: new Date().toISOString()
@@ -385,12 +340,19 @@ export const exportDeviceAbnormalReport = async (params) => {
 export const getDeviceAbnormalDetail = async (faultId) => {
   await new Promise((resolve) => setTimeout(resolve, 300));
 
-  const allData = generateDeviceAbnormalData();
-  const detail = allData.find(item => item.faultId === faultId);
-
-  if (!detail) {
-    throw new Error('故障记录不存在');
-  }
+  // 生成一些测试数据
+  const detail = {
+    faultId: faultId,
+    deviceCode: `CAM${Math.floor(Math.random() * 100).toString().padStart(3, '0')}`,
+    deviceType: '监控摄像头',
+    regionName: '芗城区',
+    faultTime: new Date().toISOString().replace('T', ' ').substr(0, 19),
+    faultType: '硬件故障',
+    faultDescription: '设备无法启动，电源指示灯不亮',
+    disposalStatus: '待处置',
+    disposalTime: null,
+    operator: null
+  };
 
   const deviceLogs = [
     {
@@ -413,79 +375,24 @@ export const getDeviceAbnormalDetail = async (faultId) => {
       status: '异常',
       operator: '系统',
       remark: detail.faultDescription
-    },
-    ...(detail.disposalTime ? [{
-      time: detail.disposalTime,
-      event: '故障处理',
-      status: detail.disposalStatus,
-      operator: detail.operator || '未知',
-      remark: '故障已修复'
-    }] : [])
+    }
   ];
 
-  const disposalProcess = detail.disposalTime ? [
-    {
-      step: 1,
-      time: new Date(detail.faultTime).getTime() + 3600000,
-      action: '故障上报',
-      operator: '系统自动',
-      result: '已创建工单',
-      remark: `工单号: ${detail.workOrderId || 'WO' + faultId.substr(5)}`
-    },
-    {
-      step: 2,
-      time: new Date(detail.faultTime).getTime() + 7200000,
-      action: '工单派发',
-      operator: '调度中心',
-      result: '已分配技术员',
-      remark: `技术员: ${detail.operator || '待分配'}`
-    },
-    {
-      step: 3,
-      time: new Date(detail.disposalTime).getTime() - 3600000,
-      action: '现场处理',
-      operator: detail.operator || '技术员',
-      result: '故障已修复',
-      remark: `维修内容: ${detail.faultDescription}`
-    },
-    {
-      step: 4,
-      time: new Date(detail.disposalTime).getTime(),
-      action: '工单关闭',
-      operator: '系统',
-      result: '处理完成',
-      remark: `状态: ${detail.disposalStatus}`
-    }
-  ] : [
+  const disposalProcess = [
     {
       step: 1,
       time: new Date(detail.faultTime).getTime(),
       action: '故障上报',
       operator: '系统自动',
       result: '已创建工单',
-      remark: '等待处理'
+      remark: `工单号: WO${faultId.substr(5)}`
     }
   ];
-
-  const deviceInfo = {
-    deviceCode: detail.deviceCode,
-    deviceName: detail.deviceName,
-    deviceType: detail.deviceType,
-    manufacturer: detail.manufacturer,
-    model: 'DH-IPC-HFW1230S',
-    serialNumber: `SN${detail.deviceCode}${Math.floor(Math.random() * 10000)}`,
-    installationDate: detail.installationDate,
-    warrantyStatus: detail.warrantyStatus,
-    warrantyExpire: new Date(new Date(detail.installationDate).getTime() + 365 * 86400000).toISOString().split('T')[0],
-    ipAddress: `192.168.1.${Math.floor(Math.random() * 255)}`,
-    location: `${detail.regionName}停车场${Math.floor(Math.random() * 10) + 1}号入口`
-  };
 
   return {
     detail,
     deviceLogs,
     disposalProcess,
-    deviceInfo,
     generatedAt: new Date().toISOString()
   };
 };
@@ -542,3 +449,14 @@ export const getDeviceAbnormalFilterOptions = async () => {
     ]
   };
 };
+
+// 默认日期函数
+function getDefaultStartDate() {
+  const date = new Date();
+  date.setDate(date.getDate() - 30);
+  return date.toISOString().split('T')[0];
+}
+
+function getDefaultEndDate() {
+  return new Date().toISOString().split('T')[0];
+}
