@@ -19,7 +19,7 @@ const props = defineProps({
   },
   color: {
     type: String,
-    default: '',
+    default: 'rgb(0, 107, 230)',
   },
   type: {
     type: String,
@@ -52,7 +52,7 @@ const handleManualClick = (obj) => {
         class="genchuan-common-button"
         @click="handleManualClick"
       >
-        <el-icon class="common-icon">
+        <el-icon class="common-icon" :color="props.color">
           <component :is="props.iconName" :color="props.color" />
         </el-icon>
       </el-button>
@@ -62,7 +62,18 @@ const handleManualClick = (obj) => {
 <style lang="scss">
 .genchuan-common-button {
   padding: 5px;
-  border-radius: 50%;
+  border: none;
+}
+.genchuan-common-button:hover {
+  border: none;
+}
+.vxe-tools--operate {
+  .vxe-button.size--small.type--button.is--circle {
+    border: none;
+    .vxe-button--item:last-child {
+      color: rgb(0, 107, 230);
+    }
+  }
 }
 .common-icon {
   width: 20px;

@@ -338,6 +338,7 @@ const handleF5 = async () => {
           <IconButton
             content="批量删除"
             icon-name="delete"
+            color="#F56C6C"
             :disabled="isEmpty(checkedIds)"
             @click="handleDeleteBatch"
           />
@@ -374,7 +375,7 @@ const handleF5 = async () => {
         <div class="table-toolbar-tools">
           <IconButton
             content="详情"
-            icon-name="Document"
+            icon-name="View"
             @click="handleOpenDetail(row)"
           />
           <IconButton
@@ -385,6 +386,7 @@ const handleF5 = async () => {
           <IconButton
             content="删除"
             icon-name="delete"
+            color="#F56C6C"
             @click="handleDelete(row)"
           />
         </div>
