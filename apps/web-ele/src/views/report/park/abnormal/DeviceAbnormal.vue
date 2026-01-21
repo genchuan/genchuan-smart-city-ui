@@ -230,6 +230,7 @@
       <DataTable
         :data="tableData"
         :columns="tableColumns"
+        :mobile-columns="mobileColumns"
         show-pagination
         :total="totalCount"
         :page-sizes="[10, 20, 50, 100]"
@@ -238,6 +239,9 @@
         :page-size-prop="pageSize"
         @page-change="handlePageChange"
         :remote="true"
+        responsive
+        column-mode="responsive"
+        :empty-text="tableData.length === 0 ? '暂无设备异常数据' : ''"
       />
     </ReportSection>
 
@@ -254,7 +258,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, onUnmounted } from 'vue';
 import { Download, Refresh, Warning, Tools, SuccessFilled, Clock } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 
@@ -296,6 +300,10 @@ const filterOptions = ref({
 });
 const showDetailDrawer = ref(false);
 const currentFaultId = ref('');
+
+// 响应式布局变量
+const mobileLayout = ref(false);
+const screenWidth = ref(window.innerWidth);
 
 // 分页参数
 const currentPage = ref(1);
@@ -378,116 +386,158 @@ const disposalStatusOptions = computed(() => {
   ];
 });
 
-// 表格列定义
-const tableColumns = computed(() => [
-  {
-    prop: 'faultId',
-    label: '故障ID',
-    width: 140,
-    render: (row) => ({
-      text: row.faultId,
-      events: {
-        click: () => handleDetailClick(row)
-      },
-      props: {
-        style: { color: '#1890ff', cursor: 'pointer', textDecoration: 'underline' }
-      }
-    })
-  },
-  {
-    prop: 'deviceCode',
-    label: '设备编码',
-    width: 120
-  },
-  {
-    prop: 'deviceType',
-    label: '设备类型',
-    width: 120
-  },
-  {
-    prop: 'regionName',
-    label: '区域名称',
-    width: 120
-  },
-  {
-    prop: 'faultTime',
-    label: '故障时间',
-    width: 160
-  },
-  {
-    prop: 'faultType',
-    label: '故障类型',
-    width: 120,
-    render: (row) => ({
-      text: row.faultType,
-      props: {
-        style: { color: getFaultTypeColor(row.faultType) }
-      }
-    })
-  },
-  {
-    prop: 'faultDescription',
-    label: '故障描述',
-    width: 200
-  },
-  {
-    prop: 'impactLevel',
-    label: '影响等级',
-    width: 100,
-    render: (row) => ({
-      text: row.impactLevel,
-      props: {
-        style: {
-          color: getImpactLevelColor(row.impactLevel),
-          fontWeight: row.impactLevel === '高' ? 'bold' : 'normal'
+// 移动端列规则
+const mobileColumns = computed(() => {
+  return ['faultId', 'deviceCode', 'faultType', 'disposalStatus', 'actions'];
+});
+
+// 表格列定义 - 响应式
+const tableColumns = computed(() => {
+  const columns = [
+    {
+      prop: 'faultId',
+      label: '故障ID',
+      width: mobileLayout.value ? '100px' : '140px',
+      minWidth: '100px',
+      render: (row) => ({
+        text: row.faultId,
+        events: {
+          click: () => handleDetailClick(row)
+        },
+        props: {
+          style: { color: '#1890ff', cursor: 'pointer' },
+          class: 'ellipsis-text'
         }
-      }
-    })
-  },
-  {
-    prop: 'disposalStatus',
-    label: '处置状态',
-    width: 100,
-    render: (row) => ({
-      text: row.disposalStatus,
-      props: {
-        style: {
-          color: getDisposalStatusColor(row.disposalStatus)
+      }),
+      showTooltip: true,
+      hideOnMobile: false,
+      alwaysShow: true
+    },
+    {
+      prop: 'deviceCode',
+      label: '设备编码',
+      width: mobileLayout.value ? '100px' : '120px',
+      minWidth: '100px',
+      showTooltip: true,
+      hideOnMobile: false
+    },
+    {
+      prop: 'deviceType',
+      label: '设备类型',
+      width: mobileLayout.value ? '100px' : '120px',
+      minWidth: '100px',
+      hideOnMobile: screenWidth.value < 640
+    },
+    {
+      prop: 'regionName',
+      label: '区域',
+      width: mobileLayout.value ? '90px' : '120px',
+      minWidth: '90px',
+      hideOnMobile: screenWidth.value < 576
+    },
+    {
+      prop: 'faultTime',
+      label: '故障时间',
+      width: mobileLayout.value ? '120px' : '160px',
+      minWidth: '120px',
+      type: 'datetime',
+      hideOnMobile: screenWidth.value < 768
+    },
+    {
+      prop: 'faultType',
+      label: '故障类型',
+      width: mobileLayout.value ? '100px' : '120px',
+      minWidth: '100px',
+      render: (row) => ({
+        text: row.faultType,
+        props: {
+          style: { color: getFaultTypeColor(row.faultType) }
         }
-      }
-    })
-  },
-  {
-    prop: 'disposalTime',
-    label: '处置时间',
-    width: 160
-  },
-  {
-    prop: 'operator',
-    label: '处理人',
-    width: 100
-  },
-  {
-    prop: 'actions',
-    label: '操作',
-    width: 120,
-    render: (row) => ({
-      type: 'div',
-      props: { class: 'action-buttons' },
-      children: [
-        {
-          type: 'el-button',
-          props: {
-            type: 'primary',
-            size: 'medium',
-            onClick: () => handleDetailClick(row)
-          },
-          text: '详情'
+      }),
+      hideOnMobile: false
+    },
+    {
+      prop: 'faultDescription',
+      label: '故障描述',
+      width: mobileLayout.value ? '120px' : '200px',
+      minWidth: '120px',
+      showTooltip: true,
+      hideOnMobile: screenWidth.value < 768
+    },
+    {
+      prop: 'impactLevel',
+      label: '影响等级',
+      width: mobileLayout.value ? '80px' : '100px',
+      minWidth: '80px',
+      render: (row) => ({
+        text: row.impactLevel,
+        props: {
+          style: {
+            color: getImpactLevelColor(row.impactLevel),
+            fontWeight: row.impactLevel === '高' ? 'bold' : 'normal'
+          }
         }
-      ]
-    })
-  }
-]);
+      }),
+      hideOnMobile: screenWidth.value < 640
+    },
+    {
+      prop: 'disposalStatus',
+      label: '处置状态',
+      width: mobileLayout.value ? '90px' : '100px',
+      minWidth: '90px',
+      render: (row) => ({
+        text: row.disposalStatus,
+        props: {
+          style: {
+            color: getDisposalStatusColor(row.disposalStatus)
+          }
+        }
+      }),
+      hideOnMobile: false
+    },
+    {
+      prop: 'disposalTime',
+      label: '处置时间',
+      width: mobileLayout.value ? '120px' : '160px',
+      minWidth: '120px',
+      type: 'datetime',
+      hideOnMobile: screenWidth.value < 768
+    },
+    {
+      prop: 'operator',
+      label: '处理人',
+      width: mobileLayout.value ? '80px' : '100px',
+      minWidth: '80px',
+      hideOnMobile: screenWidth.value < 576
+    },
+    {
+      prop: 'actions',
+      label: '操作',
+      width: mobileLayout.value ? '100px' : '120px',
+      minWidth: '100px',
+      fixed: mobileLayout.value ? 'right' : false,
+      render: (row) => ({
+        type: 'div',
+        props: { class: 'action-buttons' },
+        children: [
+          {
+            type: 'el-button',
+            props: {
+              type: 'primary',
+              size: mobileLayout.value ? 'small' : 'default',
+              onClick: () => handleDetailClick(row)
+            },
+            text: '详情'
+          }
+        ]
+      }),
+      hideOnMobile: false,
+      alwaysShow: true
+    }
+  ];
+
+  return columns;
+});
 
 // 图表配置 - 添加容错处理
 const trendOptions = computed(() => {
@@ -736,10 +786,23 @@ const deviceTypeChart = computed(() => {
   };
 });
 
+// 监听屏幕宽度变化
+const handleResize = () => {
+  screenWidth.value = window.innerWidth;
+  mobileLayout.value = screenWidth.value < 768;
+};
+
 // 初始化
 onMounted(async () => {
+  handleResize();
+  window.addEventListener('resize', handleResize);
+
   await loadFilterOptions();
   loadData();
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
 });
 
 // 加载筛选选项
@@ -982,24 +1045,64 @@ const getImpactLevelColor = (level) => {
   margin-bottom: 12px;
 }
 
-@media (max-width: 1200px) {
+/* 响应式调整 */
+@media (max-width: 767px) {
   .filter-row {
-    gap: 6px;
+    flex-direction: column;
+    gap: 8px;
   }
 
-  .filter-group :deep(.el-date-editor) {
-    width: 200px !important;
+  .filter-group {
+    width: 100%;
   }
 
+  .filter-group :deep(.el-date-editor),
   .filter-group :deep(.el-select),
   .filter-group :deep(.el-input) {
-    width: 120px !important;
+    width: 100% !important;
+  }
+
+  .statistics-cards {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 12px;
+  }
+
+  .stat-icon {
+    font-size: 24px;
+    margin-right: 12px;
+  }
+
+  .stat-value {
+    font-size: 20px;
+  }
+
+  .chart-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .chart-section {
+    margin-bottom: 8px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .action-buttons :deep(.el-button) {
+    width: 100%;
   }
 }
 
-@media (max-width: 992px) {
+@media (min-width: 768px) and (max-width: 1023px) {
   .chart-row {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .filter-row {
@@ -1015,29 +1118,41 @@ const getImpactLevelColor = (level) => {
   }
 }
 
-@media (max-width: 768px) {
-  .filter-row {
-    flex-direction: column;
-    align-items: flex-start;
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .filter-group :deep(.el-date-editor) {
+    width: 200px !important;
   }
 
-  .filter-group {
-    width: 100%;
-  }
-
-  .filter-group :deep(.el-date-editor),
   .filter-group :deep(.el-select),
   .filter-group :deep(.el-input) {
-    width: 100% !important;
-  }
-
-  .statistics-cards {
-    grid-template-columns: 1fr;
+    width: 140px !important;
   }
 }
 
+/* 文字省略 */
+.ellipsis-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* 操作按钮容器 */
 .action-buttons {
   display: flex;
   gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 移动端隐藏类 */
+.mobile-hidden {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .mobile-hidden {
+    display: table-cell;
+  }
 }
 </style>
