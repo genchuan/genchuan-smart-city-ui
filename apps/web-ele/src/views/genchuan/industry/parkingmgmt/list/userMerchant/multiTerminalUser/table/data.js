@@ -2433,18 +2433,18 @@ export const getStatsDataByUserType = (userType) => {
 
       // 统计不同认证状态的数量
       const certStatusStats = {
-        已认证: userData.filter((item) => item.cert_status === '已认证').length,
-        待审核: userData.filter((item) => item.cert_status === '待审核').length,
-        未认证: userData.filter((item) => item.cert_status === '未认证').length,
-        认证失败: userData.filter((item) => item.cert_status === '认证失败')
+        '已认证': userData.filter((item) => item.cert_status === '已认证').length,
+        '待审核': userData.filter((item) => item.cert_status === '待审核').length,
+        '未认证': userData.filter((item) => item.cert_status === '未认证').length,
+        '认证失败': userData.filter((item) => item.cert_status === '认证失败')
           .length,
       };
 
       // 统计不同账号状态的数量
       const accountStatusStats = {
-        正常: userData.filter((item) => item.account_status === '正常').length,
-        禁用: userData.filter((item) => item.account_status === '禁用').length,
-        冻结: userData.filter((item) => item.account_status === '冻结').length,
+        '正常': userData.filter((item) => item.account_status === '正常').length,
+        '禁用': userData.filter((item) => item.account_status === '禁用').length,
+        '冻结': userData.filter((item) => item.account_status === '冻结').length,
       };
 
       // 统计不同行业的数量
@@ -2521,9 +2521,9 @@ export const getStatsDataByUserType = (userType) => {
 
       // 统计不同账号状态的数量
       const accountStatusStats = {
-        正常: userData.filter((item) => item.account_status === '正常').length,
-        禁用: userData.filter((item) => item.account_status === '禁用').length,
-        冻结: userData.filter((item) => item.account_status === '冻结').length,
+        '正常': userData.filter((item) => item.account_status === '正常').length,
+        '禁用': userData.filter((item) => item.account_status === '禁用').length,
+        '冻结': userData.filter((item) => item.account_status === '冻结').length,
       };
 
       // 统计不同角色的数量
@@ -2603,18 +2603,18 @@ export const getStatsDataByUserType = (userType) => {
 
       // 统计不同认证状态的数量
       const certStatusStats = {
-        已认证: userData.filter((item) => item.cert_status === '已认证').length,
-        待审核: userData.filter((item) => item.cert_status === '待审核').length,
-        未认证: userData.filter((item) => item.cert_status === '未认证').length,
-        认证失败: userData.filter((item) => item.cert_status === '认证失败')
+        '已认证': userData.filter((item) => item.cert_status === '已认证').length,
+        '待审核': userData.filter((item) => item.cert_status === '待审核').length,
+        '未认证': userData.filter((item) => item.cert_status === '未认证').length,
+        '认证失败': userData.filter((item) => item.cert_status === '认证失败')
           .length,
       };
 
       // 统计不同账号状态的数量
       const accountStatusStats = {
-        正常: userData.filter((item) => item.account_status === '正常').length,
-        禁用: userData.filter((item) => item.account_status === '禁用').length,
-        冻结: userData.filter((item) => item.account_status === '冻结').length,
+        '正常': userData.filter((item) => item.account_status === '正常').length,
+        '禁用': userData.filter((item) => item.account_status === '禁用').length,
+        '冻结': userData.filter((item) => item.account_status === '冻结').length,
       };
 
       // 统计注册时间分布（最近30天）
