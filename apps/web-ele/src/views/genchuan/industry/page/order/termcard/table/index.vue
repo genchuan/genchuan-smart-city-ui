@@ -12,7 +12,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 // 引入封装后的详情抽屉组件
-import ParkDetailDrawer from '#/views/genchuan/industry/page/vehicle/stop/table/detail.vue';
+import ParkDetailDrawer from '#/views/genchuan/industry/page/order/termcard/table/detail.vue';
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
@@ -354,13 +354,13 @@ const parkDetailDrawerRef = ref(null);
           />
         </div>
       </template>
-      <template #parkName="{ row }">
+      <template #applicablePark="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.parkName }}
+          {{ row.applicablePark }}
         </el-text>
       </template>
       <template #actions="{ row }">
