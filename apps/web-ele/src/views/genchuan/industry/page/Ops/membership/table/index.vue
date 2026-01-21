@@ -283,49 +283,70 @@ const handleFullShow = () => {
         <div class="detail-card-row">
           <div class="detail-row-left">主键ID:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.points_id }}
+            {{ dataObj.detailObj.level_id }}
           </div>
         </div>
 
         <div class="detail-card-row">
-          <div class="detail-row-left">用户ID:</div>
+          <div class="detail-row-left">等级名称:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.user_id }}
+            {{ dataObj.detailObj.level_name }}
           </div>
         </div>
 
         <div class="detail-card-row">
-          <div class="detail-row-left">当前总积分:</div>
+          <div class="detail-row-left">等级编码:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.total_points }}
+            {{ dataObj.detailObj.level_code }}
           </div>
         </div>
 
         <div class="detail-card-row">
-          <div class="detail-row-left">可用积分:</div>
+          <div class="detail-row-left">所需成长值:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.available_points }}
+            {{ dataObj.detailObj.growth_value }}
           </div>
         </div>
 
         <div class="detail-card-row">
-          <div class="detail-row-left">已使用积分:</div>
+          <div class="detail-row-left">等级图标:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.used_points }}
+            {{ dataObj.detailObj.icon }}
           </div>
         </div>
 
         <div class="detail-card-row">
-          <div class="detail-row-left">已过期积分:</div>
+          <div class="detail-row-left">等级ID:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.expired_points }}
+            {{ dataObj.detailObj.level_id }}
           </div>
         </div>
 
         <div class="detail-card-row">
-          <div class="detail-row-left">上次更新时间:</div>
+          <div class="detail-row-left">权益名称:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.last_update_time }}
+            {{ dataObj.detailObj.rights_name }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">权益类型:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.rights_type }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">权益内容:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.rights_content }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">状态:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.status }}
           </div>
         </div>
 
@@ -333,6 +354,13 @@ const handleFullShow = () => {
           <div class="detail-row-left">创建时间:</div>
           <div class="detail-row-right">
             {{ dataObj.detailObj.create_time }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">更新时间:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.update_time }}
           </div>
         </div>
 
@@ -430,7 +458,7 @@ const handleFullShow = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：订单数10;成功订单6 </span>
+          <span> 本页统计：会员等级数量:10 </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span> 全部统计：{{ textObj.total }} </span>
