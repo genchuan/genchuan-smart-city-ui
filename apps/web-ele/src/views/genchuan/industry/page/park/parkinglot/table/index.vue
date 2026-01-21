@@ -325,11 +325,6 @@ const parkDetailDrawerRef = ref(null);
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton
-            :content="props.arrowShow ? '展开' : '收缩'"
-            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
-            @click="arrowChange"
-          />
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="导出"
@@ -347,6 +342,11 @@ const parkDetailDrawerRef = ref(null);
             content="搜索"
             icon-name="search"
             @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
           />
           <IconButton
             content="全屏"
