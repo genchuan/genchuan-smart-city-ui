@@ -280,52 +280,88 @@ const handleFullShow = () => {
     </FormDrawer>
     <DetailDrawer :title="`${dataObj.detailObj.name}关联表`">
       <div class="detail-card">
+        <!-- 活动表字段 -->
         <div class="detail-card-row">
-          <div class="detail-row-left">主键ID:</div>
+          <div class="detail-row-left">活动ID:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.points_id }}
+            {{ dataObj.detailObj.promotion_id }}
           </div>
         </div>
 
         <div class="detail-card-row">
-          <div class="detail-row-left">用户ID:</div>
+          <div class="detail-row-left">活动名称:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.user_id }}
+            {{ dataObj.detailObj.activity_name }}
           </div>
         </div>
 
         <div class="detail-card-row">
-          <div class="detail-row-left">当前总积分:</div>
+          <div class="detail-row-left">活动类型:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.total_points }}
+            {{ dataObj.detailObj.activity_type }}
           </div>
         </div>
 
         <div class="detail-card-row">
-          <div class="detail-row-left">可用积分:</div>
+          <div class="detail-row-left">适用范围:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.available_points }}
+            {{ dataObj.detailObj.apply_scope }}
           </div>
         </div>
 
         <div class="detail-card-row">
-          <div class="detail-row-left">已使用积分:</div>
+          <div class="detail-row-left">开始时间:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.used_points }}
+            {{ dataObj.detailObj.start_time }}
           </div>
         </div>
 
         <div class="detail-card-row">
-          <div class="detail-row-left">已过期积分:</div>
+          <div class="detail-row-left">结束时间:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.expired_points }}
+            {{ dataObj.detailObj.end_time }}
           </div>
         </div>
 
         <div class="detail-card-row">
-          <div class="detail-row-left">上次更新时间:</div>
+          <div class="detail-row-left">总名额:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.last_update_time }}
+            {{ dataObj.detailObj.quota }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">已使用名额:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.used_quota }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">状态:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.status }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">规则配置:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.rule_config }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">数据统计:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.data_statistics }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">创建人:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.create_by }}
           </div>
         </div>
 
@@ -333,6 +369,147 @@ const handleFullShow = () => {
           <div class="detail-row-left">创建时间:</div>
           <div class="detail-row-right">
             {{ dataObj.detailObj.create_time }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">更新时间:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.update_time }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">备注:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.remark }}
+          </div>
+        </div>
+
+        <!-- 优惠券表字段 -->
+        <div class="detail-card-row">
+          <div class="detail-row-left">优惠券ID:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.coupon_id }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">优惠券码:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.coupon_code }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">优惠券名称:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.coupon_name }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">优惠券类型:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.coupon_type }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">面值/折扣:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.face_value }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">最低消费:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.min_consume }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">免费时长:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.free_time }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">适用范围:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.apply_scope }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">生效时间:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.start_time }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">失效时间:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.end_time }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">状态:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.status }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">关联用户ID:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.user_id }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">所属活动ID:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.promotion_id }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">领取时间:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.get_time }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">使用时间:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.use_time }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">关联订单ID:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.use_order_id }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">创建时间:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.create_time }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">更新时间:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.update_time }}
           </div>
         </div>
 
@@ -430,7 +607,7 @@ const handleFullShow = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：订单数10;成功订单6 </span>
+          <span> 本页统计：优惠券数量:10 </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span> 全部统计：{{ textObj.total }} </span>
