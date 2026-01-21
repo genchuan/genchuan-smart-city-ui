@@ -1,5 +1,7 @@
 /** 表格初始数据*/
 
+import { maskIdCard, maskPhone } from '#/utils/dataMask';
+
 // 个人用户数据列表
 export const personalUserList = () => {
   return [
@@ -1577,11 +1579,7 @@ export function personalGridColumns() {
       minWidth: 150,
       sortable: true,
       formatter: ({ cellValue }) => {
-        // 脱敏处理，只显示前3位和后4位
-        if (!cellValue) return '';
-        // 确保cellValue是字符串类型
-        const strValue = String(cellValue);
-        return strValue.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+        return maskPhone(cellValue);
       },
     },
     {
@@ -1590,11 +1588,7 @@ export function personalGridColumns() {
       minWidth: 200,
       sortable: true,
       formatter: ({ cellValue }) => {
-        // 脱敏处理，只显示前6位和后4位
-        if (!cellValue) return '';
-        // 确保cellValue是字符串类型
-        const strValue = String(cellValue);
-        return strValue.replace(/(\d{6})\d{8}(\d{4})/, '$1********$2');
+        return maskIdCard(cellValue);
       },
     },
     {
@@ -1711,11 +1705,7 @@ export function enterpriseGridColumns() {
       minWidth: 150,
       sortable: true,
       formatter: ({ cellValue }) => {
-        // 脱敏处理，只显示前3位和后4位
-        if (!cellValue) return '';
-        // 确保cellValue是字符串类型
-        const strValue = String(cellValue);
-        return strValue.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+        return maskPhone(cellValue);
       },
     },
     {
@@ -1821,11 +1811,7 @@ export function governmentGridColumns() {
       minWidth: 150,
       sortable: true,
       formatter: ({ cellValue }) => {
-        // 脱敏处理，只显示前3位和后4位
-        if (!cellValue) return '';
-        // 确保cellValue是字符串类型
-        const strValue = String(cellValue);
-        return strValue.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+        return maskPhone(cellValue);
       },
     },
     {
@@ -2433,18 +2419,18 @@ export const getStatsDataByUserType = (userType) => {
 
       // 统计不同认证状态的数量
       const certStatusStats = {
-        '已认证': userData.filter((item) => item.cert_status === '已认证').length,
-        '待审核': userData.filter((item) => item.cert_status === '待审核').length,
-        '未认证': userData.filter((item) => item.cert_status === '未认证').length,
-        '认证失败': userData.filter((item) => item.cert_status === '认证失败')
+        已认证: userData.filter((item) => item.cert_status === '已认证').length,
+        待审核: userData.filter((item) => item.cert_status === '待审核').length,
+        未认证: userData.filter((item) => item.cert_status === '未认证').length,
+        认证失败: userData.filter((item) => item.cert_status === '认证失败')
           .length,
       };
 
       // 统计不同账号状态的数量
       const accountStatusStats = {
-        '正常': userData.filter((item) => item.account_status === '正常').length,
-        '禁用': userData.filter((item) => item.account_status === '禁用').length,
-        '冻结': userData.filter((item) => item.account_status === '冻结').length,
+        正常: userData.filter((item) => item.account_status === '正常').length,
+        禁用: userData.filter((item) => item.account_status === '禁用').length,
+        冻结: userData.filter((item) => item.account_status === '冻结').length,
       };
 
       // 统计不同行业的数量
@@ -2521,9 +2507,9 @@ export const getStatsDataByUserType = (userType) => {
 
       // 统计不同账号状态的数量
       const accountStatusStats = {
-        '正常': userData.filter((item) => item.account_status === '正常').length,
-        '禁用': userData.filter((item) => item.account_status === '禁用').length,
-        '冻结': userData.filter((item) => item.account_status === '冻结').length,
+        正常: userData.filter((item) => item.account_status === '正常').length,
+        禁用: userData.filter((item) => item.account_status === '禁用').length,
+        冻结: userData.filter((item) => item.account_status === '冻结').length,
       };
 
       // 统计不同角色的数量
@@ -2603,18 +2589,18 @@ export const getStatsDataByUserType = (userType) => {
 
       // 统计不同认证状态的数量
       const certStatusStats = {
-        '已认证': userData.filter((item) => item.cert_status === '已认证').length,
-        '待审核': userData.filter((item) => item.cert_status === '待审核').length,
-        '未认证': userData.filter((item) => item.cert_status === '未认证').length,
-        '认证失败': userData.filter((item) => item.cert_status === '认证失败')
+        已认证: userData.filter((item) => item.cert_status === '已认证').length,
+        待审核: userData.filter((item) => item.cert_status === '待审核').length,
+        未认证: userData.filter((item) => item.cert_status === '未认证').length,
+        认证失败: userData.filter((item) => item.cert_status === '认证失败')
           .length,
       };
 
       // 统计不同账号状态的数量
       const accountStatusStats = {
-        '正常': userData.filter((item) => item.account_status === '正常').length,
-        '禁用': userData.filter((item) => item.account_status === '禁用').length,
-        '冻结': userData.filter((item) => item.account_status === '冻结').length,
+        正常: userData.filter((item) => item.account_status === '正常').length,
+        禁用: userData.filter((item) => item.account_status === '禁用').length,
+        冻结: userData.filter((item) => item.account_status === '冻结').length,
       };
 
       // 统计注册时间分布（最近30天）
