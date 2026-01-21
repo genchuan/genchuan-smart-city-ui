@@ -279,7 +279,6 @@ const getStatusColor = (status) => {
     '已豁免': '#722ed1',
     '待处置': '#f5222d',
     '处置中': '#fa8c16',
-    '已处理': '#52c41a',
     '处置失败': '#8c8c8c'
   };
   return colorMap[status] || '#8c8c8c';
