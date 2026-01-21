@@ -12,7 +12,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 // 引入封装后的详情抽屉组件
-import ParkDetailDrawer from '#/views/genchuan/industry/page/vehicle/stop/table/detail.vue';
+import ParkDetailDrawer from '#/views/genchuan/industry/page/order/arrears/table/detail.vue';
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
