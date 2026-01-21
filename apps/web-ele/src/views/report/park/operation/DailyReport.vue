@@ -1,3 +1,4 @@
+<!-- [file name]: DailyReport.vue -->
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 
@@ -38,6 +39,10 @@ const chartType = ref('bar');
 const coreIndicators = ref([]);
 const regionData = ref([]);
 const abnormalities = ref([]);
+
+// 分页相关
+const currentPage = ref(1);
+const pageSize = ref(10);
 
 // 处理后的核心指标数据 - 根据筛选后的regionData动态计算
 const processedCoreIndicators = computed(() => {
@@ -125,7 +130,7 @@ const processedCoreIndicators = computed(() => {
   }));
 });
 
-// 表格列定义
+// 表格列定义 - 修正类型映射
 const tableColumns = computed(() => [
   { prop: 'areaName', label: '区域名称', width: 120 },
   { prop: 'district', label: '行政区', width: 100 },
@@ -136,7 +141,7 @@ const tableColumns = computed(() => [
     prop: 'utilizationRate',
     label: '泊位利用率',
     width: 150,
-    type: 'progress',
+    type: 'progress', // 使用progress类型
   },
   { prop: 'warningCount', label: '预警数', width: 100 },
   { prop: 'faultCount', label: '故障设备', width: 100 },
@@ -226,6 +231,12 @@ const formatValue = (value, unit) => {
   return value.toLocaleString();
 };
 
+// 分页处理
+const handlePageChange = (pagination) => {
+  currentPage.value = pagination.page;
+  pageSize.value = pagination.pageSize;
+};
+
 // 初始化
 onMounted(() => {
   loadData();
@@ -233,6 +244,7 @@ onMounted(() => {
 
 // 监听筛选条件变化
 watch([selectedDate, region], () => {
+  currentPage.value = 1; // 重置页码
   loadData();
 }, { immediate: false });
 
@@ -274,6 +286,7 @@ const loadData = async () => {
 
 // 刷新数据
 const refreshData = () => {
+  currentPage.value = 1;
   loadData();
 };
 
@@ -403,7 +416,15 @@ const clearRegion = () => {
       <ChartContainer :options="chartOptions" height="400px" />
 
       <!-- 数据表格 -->
-      <DataTable :data="regionData" :columns="tableColumns" />
+      <DataTable
+        :data="regionData"
+        :columns="tableColumns"
+        show-pagination
+        :total="regionData.length"
+        :current-page-prop="currentPage"
+        :page-size-prop="pageSize"
+        @page-change="handlePageChange"
+      />
     </ReportSection>
 
     <!-- 加载状态 -->

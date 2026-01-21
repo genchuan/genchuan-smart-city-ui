@@ -1,4 +1,4 @@
-<!-- 文件: DataTable.vue -->
+<!-- [file name]: DataTable.vue -->
 <template>
   <div class="data-table-container">
     <!-- 表格 -->
@@ -119,6 +119,28 @@
               {{ row[column.prop] }}
             </span>
 
+            <!-- 百分比类型 -->
+            <span v-else-if="column.type === 'percentage'" class="cell-content">
+              {{ row[column.prop] }}%
+            </span>
+
+            <!-- 进度条类型 -->
+            <div v-else-if="column.type === 'progress'" class="cell-content">
+              <el-progress
+                :percentage="row[column.prop]"
+                :stroke-width="6"
+                :show-text="false"
+              />
+              <span class="progress-text">{{ row[column.prop] }}%</span>
+            </div>
+
+            <!-- 增长率类型 -->
+            <span v-else-if="column.type === 'growth'" class="cell-content">
+              <span :class="getGrowthClass(row[column.prop])">
+                {{ row[column.prop] > 0 ? '+' : '' }}{{ row[column.prop] }}%
+              </span>
+            </span>
+
             <!-- 默认文本 -->
             <span v-else class="cell-content">
               {{ row[column.prop] }}
@@ -170,8 +192,8 @@
           />
         </el-select>
         <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
+          :current-page="currentPage"
+          :page-size="pageSize"
           :page-sizes="pageSizes"
           :layout="getPaginationLayout()"
           :total="total"
@@ -180,6 +202,7 @@
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
           class="responsive-pagination"
+          :background="true"
         />
       </div>
     </div>
@@ -507,6 +530,11 @@ const getTagType = (value) => {
   return typeMap[value] || 'info';
 };
 
+// 增长率颜色
+const getGrowthClass = (growth) => {
+  return growth > 0 ? 'growth-positive' : growth < 0 ? 'growth-negative' : '';
+};
+
 // 行样式
 const tableRowClassName = ({ rowIndex }) => {
   if (rowIndex % 2 === 1) {
@@ -689,6 +717,23 @@ defineExpose({
   border-radius: 4px;
 }
 
+.progress-text {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 12px;
+  color: #909399;
+}
+
+.growth-positive {
+  color: #52c41a;
+  font-weight: 500;
+}
+
+.growth-negative {
+  color: #f5222d;
+  font-weight: 500;
+}
+
 /* 移动端样式 */
 @media (max-width: 767px) {
   :deep(.el-table) {
@@ -743,6 +788,15 @@ defineExpose({
     border-radius: 4px;
   }
 
+  :deep(.el-pager li:hover) {
+    color: #409eff;
+    cursor: pointer;
+  }
+
+  :deep(.el-pager li.active:hover) {
+    background-color: #ecf5ff;
+  }
+
   .pagination-info {
     font-size: 12px;
   }
@@ -784,6 +838,11 @@ defineExpose({
     font-size: 13px;
   }
 
+  :deep(.el-pager li:hover) {
+    color: #409eff;
+    cursor: pointer;
+  }
+
   .pagination-info {
     font-size: 13px;
   }
@@ -806,6 +865,11 @@ defineExpose({
     height: 32px;
     line-height: 30px;
     font-size: 14px;
+  }
+
+  :deep(.el-pager li:hover) {
+    color: #409eff;
+    cursor: pointer;
   }
 }
 
@@ -902,6 +966,11 @@ defineExpose({
     font-size: 11px !important;
     margin: 0 1px !important;
   }
+
+  :deep(.el-pager li:hover) {
+    color: #409eff;
+    cursor: pointer;
+  }
 }
 
 /* 滚动条样式优化 */
@@ -984,5 +1053,46 @@ defineExpose({
 
 .pagination-container:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* 修复页码按钮无法点击的问题 */
+:deep(.el-pager li) {
+  cursor: pointer !important;
+  user-select: none;
+}
+
+:deep(.el-pager li:not(.active):not(.disabled):hover) {
+  color: #409eff !important;
+}
+
+:deep(.el-pagination .btn-prev),
+:deep(.el-pagination .btn-next) {
+  cursor: pointer !important;
+}
+
+:deep(.el-pagination .btn-prev:not(.disabled):hover),
+:deep(.el-pagination .btn-next:not(.disabled):hover) {
+  color: #409eff !important;
+}
+
+/* 确保页码按钮有足够的点击区域 */
+:deep(.el-pagination .el-pager) {
+  margin: 0;
+  padding: 0;
+}
+
+:deep(.el-pagination .el-pager li) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 修复移动端页码按钮过小的问题 */
+@media (max-width: 767px) {
+  :deep(.el-pagination .el-pager li) {
+    min-width: 30px !important;
+    height: 30px !important;
+    line-height: 28px !important;
+  }
 }
 </style>
