@@ -11,8 +11,6 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
-// 引入封装后的详情抽屉组件
-import ParkDetailDrawer from '#/views/genchuan/industry/page/order/termcard/table/detail.vue';
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
@@ -21,16 +19,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  arrowShow: {
-    type: Boolean,
-    default: false,
-  },
-  arrowState: {
-    type: Boolean,
-    default: false,
-  },
 });
-const emit = defineEmits(['arrow-change']);
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
 });
@@ -45,7 +34,16 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
-// 移除原 DetailDrawer 初始化逻辑
+const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    detailDrawerApi.close();
+  },
+  onConfirm() {},
+  async onOpenChange() {},
+});
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -154,7 +152,7 @@ function handleRowCheckboxChange({ records }) {
 }
 const dataObj = reactive({
   totalShow: false,
-  detailObj: {}, // 保留详情对象用于传递给组件
+  detailObj: {},
   total: dataList().length,
   currentPage: 1,
   pageSize: 10,
@@ -181,7 +179,7 @@ const getTableData = (pageObj) => {
       if (activeName.value === '全部') {
         return true;
       }
-      return v.status === activeName.value;
+      return v.location_info === activeName.value;
     })
     .slice(
       (page.currentPage - 1) * page.pageSize,
@@ -252,22 +250,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const activeName = ref('全部');
-// 修改打开详情的方法，调用组件的open方法
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
-  // 通过ref调用组件的open方法
-  parkDetailDrawerRef.value.open();
-  console.log(row);
+  detailDrawerApi.open();
 };
-const tabsData = ref([
-  { label: '全部' },
-  { label: '启用' },
-  { label: '禁用' },
-  { label: '暂停运营' },
-  { label: '维修中' },
-]);
+const tabsData = ref([{ label: '全部' }]);
 const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
+  let text = `(${dataObj.apilist.filter((v) => v.location_info === item.label).length})`;
   if (item.label === '全部') {
     text = `(${dataObj.apilist.length})`;
   }
@@ -282,11 +271,6 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
-const arrowChange = () => {
-  emit('arrow-change');
-};
-// 定义组件ref，用于调用组件方法
-const parkDetailDrawerRef = ref(null);
 </script>
 
 <template>
@@ -294,11 +278,72 @@ const parkDetailDrawerRef = ref(null);
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <!-- 使用封装后的详情抽屉组件 -->
-    <ParkDetailDrawer
-      ref="parkDetailDrawerRef"
-      :detail-obj="dataObj.detailObj"
-    />
+    <DetailDrawer :title="`${dataObj.detailObj.name}关联表`">
+      <div class="detail-card">
+        <div class="detail-card-row">
+          <div class="detail-row-left">主键ID:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.points_id }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">用户ID:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.user_id }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">当前总积分:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.total_points }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">可用积分:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.available_points }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">已使用积分:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.used_points }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">已过期积分:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.expired_points }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">上次更新时间:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.last_update_time }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">创建时间:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.create_time }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">备注:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.remark }}
+          </div>
+        </div>
+      </div>
+    </DetailDrawer>
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -324,11 +369,6 @@ const parkDetailDrawerRef = ref(null);
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton
-            :content="props.arrowShow ? '展开' : '收缩'"
-            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
-            @click="arrowChange"
-          />
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="导出"
@@ -338,7 +378,6 @@ const parkDetailDrawerRef = ref(null);
           <IconButton
             content="批量删除"
             icon-name="delete"
-            color="#F56C6C"
             :disabled="isEmpty(checkedIds)"
             @click="handleDeleteBatch"
           />
@@ -354,13 +393,13 @@ const parkDetailDrawerRef = ref(null);
           />
         </div>
       </template>
-      <template #applicablePark="{ row }">
+      <template #parkName="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.applicablePark }}
+          {{ row.name }}
         </el-text>
       </template>
       <template #actions="{ row }">
@@ -391,7 +430,7 @@ const parkDetailDrawerRef = ref(null);
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：停车场数量5;车位总数:266;车场车位3 </span>
+          <span> 本页统计：订单数10;成功订单6 </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span> 全部统计：{{ textObj.total }} </span>

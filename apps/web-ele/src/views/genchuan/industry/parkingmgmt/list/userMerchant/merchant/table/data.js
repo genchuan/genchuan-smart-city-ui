@@ -1,3 +1,21 @@
+import {maskPhone} from "#/utils/dataMask/index.js";
+
+/** 区域数据映射 */
+export const regionMap = {
+  'BJ': '北京市',
+  'SH': '上海市',
+  'GZ': '广州市',
+  'SZ': '深圳市',
+  'CD': '成都市',
+  'WH': '武汉市',
+  'NJ': '南京市',
+  'HZ': '杭州市',
+  'CQ': '重庆市',
+  'TJ': '天津市',
+  'XA': '西安市',
+  'KM': '昆明市',
+};
+
 /** 商户表静态数据 */
 export const merchantList = [
   {
@@ -10,6 +28,7 @@ export const merchantList = [
     businessScope: '销售日用品、电子产品、服装鞋帽、办公用品',
     status: '正常',
     settlementRatio: 0.1,
+    regionCode: 'BJ',
     createTime: '2024-01-01 10:00:00',
     updateTime: '2024-01-02 14:30:00',
     createBy: 'admin',
@@ -26,6 +45,7 @@ export const merchantList = [
     businessScope: '技术开发、技术转让、技术咨询、技术服务',
     status: '正常',
     settlementRatio: 0.15,
+    regionCode: 'SH',
     createTime: '2024-01-02 11:30:00',
     updateTime: '2024-01-03 09:45:00',
     createBy: 'admin',
@@ -42,6 +62,7 @@ export const merchantList = [
     businessScope: '货物进出口、技术进出口、代理进出口',
     status: '停业',
     settlementRatio: 0.12,
+    regionCode: 'GZ',
     createTime: '2024-01-03 14:20:00',
     updateTime: '2024-01-04 10:15:00',
     createBy: 'admin',
@@ -58,6 +79,7 @@ export const merchantList = [
     businessScope: '兴办实业、国内商业、物资供销业',
     status: '注销',
     settlementRatio: 0.08,
+    regionCode: 'SZ',
     createTime: '2024-01-04 09:15:00',
     updateTime: '2024-01-05 15:20:00',
     createBy: 'admin',
@@ -74,6 +96,7 @@ export const merchantList = [
     businessScope: '政务服务、公共管理',
     status: '正常',
     settlementRatio: 0,
+    regionCode: 'BJ',
     createTime: '2024-01-05 16:45:00',
     updateTime: '2024-01-06 13:10:00',
     createBy: 'admin',
@@ -90,6 +113,7 @@ export const merchantList = [
     businessScope: '零售、餐饮、娱乐',
     status: '正常',
     settlementRatio: 0.09,
+    regionCode: 'CD',
     createTime: '2024-01-06 10:30:00',
     updateTime: '2024-01-07 14:50:00',
     createBy: 'admin',
@@ -106,6 +130,7 @@ export const merchantList = [
     businessScope: '机械设备制造、加工、销售',
     status: '正常',
     settlementRatio: 0.11,
+    regionCode: 'WH',
     createTime: '2024-01-07 14:20:00',
     updateTime: '2024-01-08 09:15:00',
     createBy: 'admin',
@@ -122,6 +147,7 @@ export const merchantList = [
     businessScope: '城市管理、公共服务',
     status: '正常',
     settlementRatio: 0,
+    regionCode: 'NJ',
     createTime: '2024-01-08 09:45:00',
     updateTime: '2024-01-09 15:20:00',
     createBy: 'admin',
@@ -138,6 +164,7 @@ export const merchantList = [
     businessScope: '餐饮服务、食品销售',
     status: '正常',
     settlementRatio: 0.13,
+    regionCode: 'HZ',
     createTime: '2024-01-09 13:10:00',
     updateTime: '2024-01-10 10:30:00',
     createBy: 'admin',
@@ -154,6 +181,7 @@ export const merchantList = [
     businessScope: '物流运输、仓储服务',
     status: '正常',
     settlementRatio: 0.07,
+    regionCode: 'CQ',
     createTime: '2024-01-10 11:20:00',
     updateTime: '2024-01-11 09:15:00',
     createBy: 'admin',
@@ -170,6 +198,7 @@ export const merchantList = [
     businessScope: '交通管理、公共安全',
     status: '正常',
     settlementRatio: 0,
+    regionCode: 'TJ',
     createTime: '2024-01-11 15:45:00',
     updateTime: '2024-01-12 13:10:00',
     createBy: 'admin',
@@ -186,6 +215,7 @@ export const merchantList = [
     businessScope: '教育咨询、培训服务',
     status: '正常',
     settlementRatio: 0.14,
+    regionCode: 'SZ',
     createTime: '2024-01-12 10:30:00',
     updateTime: '2024-01-13 14:50:00',
     createBy: 'admin',
@@ -202,6 +232,7 @@ export const merchantList = [
     businessScope: '建筑工程、装修装饰',
     status: '正常',
     settlementRatio: 0.1,
+    regionCode: 'XA',
     createTime: '2024-01-13 14:20:00',
     updateTime: '2024-01-14 09:15:00',
     createBy: 'admin',
@@ -218,6 +249,7 @@ export const merchantList = [
     businessScope: '环境保护、污染治理',
     status: '正常',
     settlementRatio: 0,
+    regionCode: 'GZ',
     createTime: '2024-01-14 09:45:00',
     updateTime: '2024-01-15 15:20:00',
     createBy: 'admin',
@@ -234,6 +266,7 @@ export const merchantList = [
     businessScope: '医疗技术、医疗器械',
     status: '正常',
     settlementRatio: 0.16,
+    regionCode: 'BJ',
     createTime: '2024-01-15 13:10:00',
     updateTime: '2024-01-16 10:30:00',
     createBy: 'admin',
@@ -250,6 +283,7 @@ export const merchantList = [
     businessScope: '文化传媒、广告策划',
     status: '正常',
     settlementRatio: 0.12,
+    regionCode: 'SH',
     createTime: '2024-01-16 11:20:00',
     updateTime: '2024-01-17 09:15:00',
     createBy: 'admin',
@@ -266,6 +300,7 @@ export const merchantList = [
     businessScope: '市场监管、质量监督',
     status: '正常',
     settlementRatio: 0,
+    regionCode: 'SZ',
     createTime: '2024-01-17 15:45:00',
     updateTime: '2024-01-18 13:10:00',
     createBy: 'admin',
@@ -282,6 +317,7 @@ export const merchantList = [
     businessScope: '旅游咨询、旅行社服务',
     status: '正常',
     settlementRatio: 0.09,
+    regionCode: 'KM',
     createTime: '2024-01-18 10:30:00',
     updateTime: '2024-01-19 14:50:00',
     createBy: 'admin',
@@ -298,6 +334,7 @@ export const merchantList = [
     businessScope: '电子商务、网络销售',
     status: '正常',
     settlementRatio: 0.11,
+    regionCode: 'HZ',
     createTime: '2024-01-19 14:20:00',
     updateTime: '2024-01-20 09:15:00',
     createBy: 'admin',
@@ -314,6 +351,7 @@ export const merchantList = [
     businessScope: '自然资源管理、规划',
     status: '正常',
     settlementRatio: 0,
+    regionCode: 'BJ',
     createTime: '2024-01-20 09:45:00',
     updateTime: '2024-01-21 15:20:00',
     createBy: 'admin',
@@ -542,6 +580,12 @@ export const permissionQueryList = [
 
 /** 新增/修改的表单/列表的搜索表单 */
 export function useFormSchema() {
+  // 生成区域选项
+  const regionOptions = Object.entries(regionMap).map(([value, label]) => ({
+    label,
+    value,
+  }));
+
   return [
     {
       fieldName: 'merchantId',
@@ -594,6 +638,16 @@ export function useFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入商户地址',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'regionCode',
+      label: '所属区域',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择所属区域',
+        options: regionOptions,
       },
       rules: 'required',
     },
@@ -681,12 +735,24 @@ export function useGridColumns() {
       title: '联系电话',
       minWidth: 150,
       sortable: true,
+      formatter: ({ cellValue }) => {
+        return maskPhone(cellValue);
+      },
     },
     {
       field: 'address',
       title: '商户地址',
       minWidth: 200,
       sortable: true,
+    },
+    {
+      field: 'regionCode',
+      title: '所属区域',
+      minWidth: 150,
+      sortable: true,
+      formatter: ({ cellValue }) => {
+        return regionMap[cellValue] || '';
+      },
     },
     {
       field: 'businessScope',
@@ -740,6 +806,11 @@ export const merchantDetailFields = [
   { key: 'contactPerson', label: '联系人' },
   { key: 'contactPhone', label: '联系电话' },
   { key: 'address', label: '商户地址' },
+  {
+    key: 'regionCode',
+    label: '所属区域',
+    formatter: (value) => regionMap[value] || '',
+  },
   { key: 'businessScope', label: '经营范围' },
   {
     key: 'status',

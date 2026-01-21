@@ -235,6 +235,7 @@
       <DataTable
         :data="tableData"
         :columns="tableColumns"
+        :mobile-columns="mobileColumns"
         show-pagination
         :total="totalCount"
         :page-sizes="[10, 20, 50, 100]"
@@ -243,6 +244,9 @@
         :page-size-prop="pageSize"
         @page-change="handlePageChange"
         :remote="true"
+        responsive
+        column-mode="responsive"
+        :empty-text="tableData.length === 0 ? '暂无收费异常数据' : ''"
       />
     </ReportSection>
 
@@ -259,7 +263,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, onUnmounted } from 'vue';
 import { Download, Refresh, Money, Document, SuccessFilled, Clock } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 
@@ -302,6 +306,10 @@ const filterOptions = ref({
 });
 const showDetailDrawer = ref(false);
 const currentAbnormalId = ref('');
+
+// 响应式布局变量
+const mobileLayout = ref(false);
+const screenWidth = ref(window.innerWidth);
 
 // 分页参数
 const currentPage = ref(1);
@@ -366,105 +374,147 @@ const disposalStatusOptions = computed(() => {
   ];
 });
 
-// 表格列定义
-const tableColumns = computed(() => [
-  {
-    prop: 'abnormalId',
-    label: '异常ID',
-    width: 140,
-    render: (row) => ({
-      text: row.abnormalId,
-      events: {
-        click: () => handleDetailClick(row)
-      },
-      props: {
-        style: { color: '#1890ff', cursor: 'pointer', textDecoration: 'underline' }
-      }
-    })
-  },
-  {
-    prop: 'orderNo',
-    label: '订单编号',
-    width: 140
-  },
-  {
-    prop: 'carNumber',
-    label: '车牌号码',
-    width: 120
-  },
-  {
-    prop: 'parkingName',
-    label: '车场名称',
-    width: 180
-  },
-  {
-    prop: 'abnormalTime',
-    label: '异常时间',
-    width: 160
-  },
-  {
-    prop: 'abnormalType',
-    label: '异常类型',
-    width: 120,
-    render: (row) => ({
-      text: row.abnormalType,
-      props: {
-        style: {
-          color: getAbnormalTypeColor(row.abnormalType)
+// 移动端列规则
+const mobileColumns = computed(() => {
+  return ['abnormalId', 'carNumber', 'parkingName', 'abnormalType', 'abnormalAmount', 'disposalStatus', 'actions'];
+});
+
+// 表格列定义 - 响应式
+const tableColumns = computed(() => {
+  const columns = [
+    {
+      prop: 'abnormalId',
+      label: '异常ID',
+      width: mobileLayout.value ? '100px' : '140px',
+      minWidth: '100px',
+      render: (row) => ({
+        text: row.abnormalId,
+        events: {
+          click: () => handleDetailClick(row)
+        },
+        props: {
+          style: { color: '#1890ff', cursor: 'pointer' },
+          class: 'ellipsis-text'
         }
-      }
-    })
-  },
-  {
-    prop: 'abnormalReason',
-    label: '异常原因',
-    width: 200
-  },
-  {
-    prop: 'abnormalAmount',
-    label: '异常金额',
-    width: 120,
-    type: 'currency'
-  },
-  {
-    prop: 'disposalStatus',
-    label: '处置状态',
-    width: 100,
-    render: (row) => ({
-      text: row.disposalStatus,
-      props: {
-        style: {
-          color: getDisposalStatusColor(row.disposalStatus)
+      }),
+      showTooltip: true,
+      hideOnMobile: false,
+      alwaysShow: true
+    },
+    {
+      prop: 'orderNo',
+      label: '订单编号',
+      width: mobileLayout.value ? '120px' : '140px',
+      minWidth: '120px',
+      showTooltip: true,
+      hideOnMobile: screenWidth.value < 640
+    },
+    {
+      prop: 'carNumber',
+      label: '车牌',
+      width: mobileLayout.value ? '90px' : '120px',
+      minWidth: '90px',
+      hideOnMobile: false,
+      alwaysShow: true
+    },
+    {
+      prop: 'parkingName',
+      label: '车场名称',
+      width: mobileLayout.value ? '120px' : '180px',
+      minWidth: '120px',
+      showTooltip: true,
+      hideOnMobile: false
+    },
+    {
+      prop: 'abnormalTime',
+      label: '异常时间',
+      width: mobileLayout.value ? '120px' : '160px',
+      minWidth: '120px',
+      type: 'datetime',
+      hideOnMobile: screenWidth.value < 768
+    },
+    {
+      prop: 'abnormalType',
+      label: '异常类型',
+      width: mobileLayout.value ? '100px' : '120px',
+      minWidth: '100px',
+      render: (row) => ({
+        text: row.abnormalType,
+        props: {
+          style: {
+            color: getAbnormalTypeColor(row.abnormalType)
+          }
         }
-      }
-    })
-  },
-  {
-    prop: 'disposalResult',
-    label: '处理结果',
-    width: 120
-  },
-  {
-    prop: 'actions',
-    label: '操作',
-    width: 120,
-    render: (row) => ({
-      type: 'div',
-      props: { class: 'action-buttons' },
-      children: [
-        {
-          type: 'el-button',
-          props: {
-            type: 'primary',
-            size: 'medium',
-            onClick: () => handleDetailClick(row)
-          },
-          text: '详情'
+      }),
+      hideOnMobile: false
+    },
+    {
+      prop: 'abnormalReason',
+      label: '异常原因',
+      width: mobileLayout.value ? '120px' : '200px',
+      minWidth: '120px',
+      showTooltip: true,
+      hideOnMobile: screenWidth.value < 768
+    },
+    {
+      prop: 'abnormalAmount',
+      label: '异常金额',
+      width: mobileLayout.value ? '100px' : '120px',
+      minWidth: '100px',
+      type: 'currency',
+      align: 'right',
+      hideOnMobile: false
+    },
+    {
+      prop: 'disposalStatus',
+      label: '处置状态',
+      width: mobileLayout.value ? '90px' : '100px',
+      minWidth: '90px',
+      render: (row) => ({
+        text: row.disposalStatus,
+        props: {
+          style: {
+            color: getDisposalStatusColor(row.disposalStatus)
+          }
         }
-      ]
-    })
-  }
-]);
+      }),
+      hideOnMobile: false
+    },
+    {
+      prop: 'disposalResult',
+      label: '处理结果',
+      width: mobileLayout.value ? '100px' : '120px',
+      minWidth: '100px',
+      hideOnMobile: screenWidth.value < 576
+    },
+    {
+      prop: 'actions',
+      label: '操作',
+      width: mobileLayout.value ? '100px' : '120px',
+      minWidth: '100px',
+      fixed: mobileLayout.value ? 'right' : false,
+      render: (row) => ({
+        type: 'div',
+        props: { class: 'action-buttons' },
+        children: [
+          {
+            type: 'el-button',
+            props: {
+              type: 'primary',
+              size: mobileLayout.value ? 'small' : 'default',
+              onClick: () => handleDetailClick(row)
+            },
+            text: '详情'
+          }
+        ]
+      }),
+      hideOnMobile: false,
+      alwaysShow: true
+    }
+  ];
+
+  return columns;
+});
 
 // 图表配置
 const trendOptions = computed(() => {
@@ -662,10 +712,23 @@ const regionChart = computed(() => ({
   ]
 }));
 
+// 监听屏幕宽度变化
+const handleResize = () => {
+  screenWidth.value = window.innerWidth;
+  mobileLayout.value = screenWidth.value < 768;
+};
+
 // 初始化
 onMounted(async () => {
+  handleResize();
+  window.addEventListener('resize', handleResize);
+
   await loadFilterOptions();
   loadData();
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
 });
 
 // 加载筛选选项
@@ -988,24 +1051,85 @@ const getReasonColor = (reason) => {
   color: #1890ff;
 }
 
-@media (max-width: 1200px) {
+/* 响应式调整 */
+@media (max-width: 767px) {
   .filter-row {
-    gap: 6px;
+    flex-direction: column;
+    gap: 8px;
   }
 
-  .filter-group :deep(.el-date-editor) {
-    width: 200px !important;
+  .filter-group {
+    width: 100%;
   }
 
+  .filter-group :deep(.el-date-editor),
   .filter-group :deep(.el-select),
   .filter-group :deep(.el-input) {
-    width: 120px !important;
+    width: 100% !important;
+  }
+
+  .amount-range {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .amount-range :deep(.el-input) {
+    width: 100% !important;
+  }
+
+  .range-separator {
+    display: none;
+  }
+
+  .statistics-cards {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 12px;
+  }
+
+  .stat-icon {
+    font-size: 24px;
+    margin-right: 12px;
+  }
+
+  .stat-value {
+    font-size: 20px;
+  }
+
+  .chart-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .chart-section {
+    margin-bottom: 8px;
+  }
+
+  .reason-stats {
+    padding: 12px;
+  }
+
+  .reason-item {
+    margin-bottom: 12px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .action-buttons :deep(.el-button) {
+    width: 100%;
   }
 }
 
-@media (max-width: 992px) {
+@media (min-width: 768px) and (max-width: 1023px) {
   .chart-row {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .filter-row {
@@ -1021,34 +1145,41 @@ const getReasonColor = (reason) => {
   }
 }
 
-@media (max-width: 768px) {
-  .filter-row {
-    flex-direction: column;
-    align-items: flex-start;
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .filter-group :deep(.el-date-editor) {
+    width: 200px !important;
   }
 
-  .filter-group {
-    width: 100%;
-  }
-
-  .filter-group :deep(.el-date-editor),
   .filter-group :deep(.el-select),
   .filter-group :deep(.el-input) {
-    width: 100% !important;
-  }
-
-  .amount-range {
-    display: flex;
-    gap: 8px;
-  }
-
-  .statistics-cards {
-    grid-template-columns: 1fr;
+    width: 140px !important;
   }
 }
 
+/* 文字省略 */
+.ellipsis-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* 操作按钮容器 */
 .action-buttons {
   display: flex;
   gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 移动端隐藏类 */
+.mobile-hidden {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .mobile-hidden {
+    display: table-cell;
+  }
 }
 </style>

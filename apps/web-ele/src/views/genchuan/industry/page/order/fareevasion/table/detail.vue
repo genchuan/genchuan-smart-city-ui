@@ -5,13 +5,13 @@ import { useVbenDrawer } from '@vben/common-ui';
 
 // 定义组件接收的属性
 const props = defineProps({
-  // 详情数据对象（车辆在停数据）
+  // 详情数据对象（停车逃费订单数据）
   detailObj: {
     type: Object,
     required: true,
     default: () => ({}),
   },
-  // 抽屉标题（可选，默认使用车牌号码）
+  // 抽屉标题（可选，默认使用逃费单号+车牌）
   title: {
     type: String,
     default: '',
@@ -20,10 +20,14 @@ const props = defineProps({
 
 const { detailObj, title } = toRefs(props);
 
-// 计算属性处理标题，优先使用车牌号码，兜底显示默认值
+// 计算属性处理标题，优先使用逃费单号+车牌，兜底显示默认值
 const drawerTitle = computed(() => {
-  const plateNum = detailObj.value?.plateNumber || '车辆在停记录';
-  return title.value || `${plateNum}详情`;
+  const evasionNum = detailObj.value?.evasionNumber || '停车逃费订单';
+  const plateNum = detailObj.value?.plateNumber || '';
+  const defaultTitle = plateNum
+    ? `${evasionNum}-${plateNum}详情`
+    : `${evasionNum}详情`;
+  return title.value || defaultTitle;
 });
 
 // 初始化抽屉实例
@@ -49,7 +53,17 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 车辆在停基础信息 -->
+      <!-- 停车逃费订单基础信息 -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">逃费单号:</div>
+        <div class="detail-row-right">{{ detailObj.evasionNumber || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">原订单编号:</div>
+        <div class="detail-row-right">
+          {{ detailObj.originalOrderNumber || '-' }}
+        </div>
+      </div>
       <div class="detail-card-row">
         <div class="detail-row-left">车牌号码:</div>
         <div class="detail-row-right">{{ detailObj.plateNumber || '-' }}</div>
@@ -59,49 +73,39 @@ defineExpose({
         <div class="detail-row-right">{{ detailObj.parkName || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">所属车位:</div>
-        <div class="detail-row-right">{{ detailObj.parkingSpace || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">入场时间:</div>
-        <div class="detail-row-right">{{ detailObj.entryTime || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">在停时长:</div>
+        <div class="detail-row-left">逃费金额:</div>
         <div class="detail-row-right">
-          {{ detailObj.parkingDuration || '-' }}
+          <span class="amount-tag">{{ detailObj.evasionAmount || '-' }}</span>
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">在停状态:</div>
+        <div class="detail-row-left">逃费时间:</div>
+        <div class="detail-row-right">{{ detailObj.evasionTime || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">逃费类型:</div>
         <div class="detail-row-right">
-          <!-- 状态文字加样式区分 -->
-          <span :class="`status-tag ${detailObj.parkingStatus}`">
-            {{ detailObj.parkingStatus || '-' }}
+          <span class="type-tag">{{ detailObj.evasionType || '-' }}</span>
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">识别方式:</div>
+        <div class="detail-row-right">
+          {{ detailObj.recognitionMethod || '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">黑名单状态:</div>
+        <div class="detail-row-right">
+          <span :class="`status-tag ${detailObj.blacklistStatus}`">
+            {{ detailObj.blacklistStatus || '-' }}
           </span>
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">传感器状态:</div>
+        <div class="detail-row-left">识别时间:</div>
         <div class="detail-row-right">
-          <span :class="`status-tag ${detailObj.sensorStatus}`">
-            {{ detailObj.sensorStatus || '-' }}
-          </span>
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">超时长提醒阈值:</div>
-        <div class="detail-row-right">
-          {{ detailObj.overtimeReminderThreshold || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">异常标识:</div>
-        <div class="detail-row-right">
-          <span v-if="detailObj.exceptionFlag !== '无'" class="exception-tag">
-            {{ detailObj.exceptionFlag || '-' }}
-          </span>
-          <span v-else>{{ detailObj.exceptionFlag || '-' }}</span>
+          {{ detailObj.recognitionTime || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
@@ -111,25 +115,6 @@ defineExpose({
             {{ detailObj.processingStatus || '-' }}
           </span>
         </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">最后更新时间:</div>
-        <div class="detail-row-right">
-          {{ detailObj.lastUpdateTime || '-' }}
-        </div>
-      </div>
-      <!-- 扩展字段：关联车场信息（可选） -->
-      <div class="detail-card-row">
-        <div class="detail-row-left">车场泊位总数:</div>
-        <div class="detail-row-right">{{ detailObj.parkTotal || '-' }} 个</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">车场收费标准:</div>
-        <div class="detail-row-right">{{ detailObj.pricing || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">车场联系电话:</div>
-        <div class="detail-row-right">{{ detailObj.phone || '-' }}</div>
       </div>
     </div>
   </DetailDrawer>
@@ -188,64 +173,62 @@ defineExpose({
   padding-right: 10px;
 }
 
+// 金额标签样式
+.amount-tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  background-color: #fff1f0;
+  color: #ff4d4f;
+  font-weight: 500;
+}
+
+// 逃费类型标签样式
+.type-tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  background-color: #f0f9ff;
+  color: #409eff;
+}
+
 // 状态标签样式
 .status-tag {
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 12px;
 
-  // 不同状态的颜色区分
-  &.正常在停 {
-    background-color: #e8f4f8;
-    color: #409eff;
-  }
-  &.即将超时 {
-    background-color: #fdf2e9;
-    color: #e6a23c;
-  }
-  &.已超时,
-  &.异常停留 {
-    background-color: #fef0f0;
-    color: #f56c6c;
-  }
-  &.正常 {
-    background-color: #f0f9ff;
-    color: #52c41a;
-  }
-  &.离线,
-  &.信号弱 {
-    background-color: #f9f0ff;
-    color: #9254de;
-  }
-  &.故障 {
-    background-color: #fff1f0;
-    color: #ff4d4f;
-  }
-  &.未处理 {
-    background-color: #fff7e6;
-    color: #fa8c16;
-  }
-  &.处理中 {
-    background-color: #e6f7ff;
-    color: #1890ff;
-  }
-  &.已处理 {
-    background-color: #f6ffed;
-    color: #52c41a;
-  }
-  &.无需处理 {
+  // 黑名单状态颜色区分
+  &.待审核 {
     background-color: #f5f5f5;
     color: #8c8c8c;
   }
-}
+  &.已加入 {
+    background-color: #fff1f0;
+    color: #ff4d4f;
+  }
+  &.已移除 {
+    background-color: #f6ffed;
+    color: #52c41a;
+  }
 
-// 异常标识标签
-.exception-tag {
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  background-color: #fff1f0;
-  color: #ff4d4f;
+  // 处理状态颜色区分
+  &.待追缴 {
+    background-color: #fff7e6;
+    color: #fa8c16;
+  }
+  &.追缴中 {
+    background-color: #e6f7ff;
+    color: #1890ff;
+  }
+  &.已追缴 {
+    background-color: #f6ffed;
+    color: #52c41a;
+  }
+  &.追缴失败 {
+    background-color: #fff1f0;
+    color: #ff4d4f;
+  }
 }
 
 // 响应式适配

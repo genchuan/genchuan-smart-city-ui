@@ -615,11 +615,6 @@ const handleAuthDrawerClose = () => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton
-            :content="props.showStats ? '隐藏统计' : '显示统计'"
-            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
-            @click="props.toggleStats"
-          />
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="导出"
@@ -641,6 +636,11 @@ const handleAuthDrawerClose = () => {
             content="搜索"
             icon-name="search"
             @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
           />
           <IconButton
             content="全屏"
@@ -756,7 +756,8 @@ const handleAuthDrawerClose = () => {
           />
           <IconButton
             content="禁用"
-            icon-name="Remove"
+            icon-name="Lock"
+            color="#F56C6C"
             :disabled="row.account_status !== '正常'"
             @click="confirmDisable(row)"
           />

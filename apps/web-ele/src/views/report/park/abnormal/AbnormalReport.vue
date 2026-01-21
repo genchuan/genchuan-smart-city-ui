@@ -46,7 +46,7 @@ import { ref, onMounted } from 'vue';
 import { Money, Tools, Warning } from '@element-plus/icons-vue';
 import EscapeData from './EscapeData.vue';
 import DeviceAbnormal from './DeviceAbnormal.vue';
-// import ChargeAbnormal from './ChargeAbnormal.vue';
+import ChargeAbnormal from './ChargeAbnormal.vue';
 
 const activeTab = ref('escape');
 

@@ -11,8 +11,6 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
-// 引入封装后的详情抽屉组件
-import ParkDetailDrawer from '#/views/genchuan/industry/page/order/termcard/table/detail.vue';
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
@@ -21,16 +19,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  arrowShow: {
-    type: Boolean,
-    default: false,
-  },
-  arrowState: {
-    type: Boolean,
-    default: false,
-  },
 });
-const emit = defineEmits(['arrow-change']);
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
 });
@@ -45,7 +34,16 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
-// 移除原 DetailDrawer 初始化逻辑
+const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    detailDrawerApi.close();
+  },
+  onConfirm() {},
+  async onOpenChange() {},
+});
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -154,7 +152,7 @@ function handleRowCheckboxChange({ records }) {
 }
 const dataObj = reactive({
   totalShow: false,
-  detailObj: {}, // 保留详情对象用于传递给组件
+  detailObj: {},
   total: dataList().length,
   currentPage: 1,
   pageSize: 10,
@@ -252,19 +250,16 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const activeName = ref('全部');
-// 修改打开详情的方法，调用组件的open方法
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
-  // 通过ref调用组件的open方法
-  parkDetailDrawerRef.value.open();
-  console.log(row);
+  detailDrawerApi.open();
 };
 const tabsData = ref([
   { label: '全部' },
-  { label: '启用' },
-  { label: '禁用' },
-  { label: '暂停运营' },
-  { label: '维修中' },
+  { label: '未激活' },
+  { label: '已激活' },
+  { label: '已过期' },
+  { label: '已注销' },
 ]);
 const createLabel = (item) => {
   let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
@@ -282,11 +277,6 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
-const arrowChange = () => {
-  emit('arrow-change');
-};
-// 定义组件ref，用于调用组件方法
-const parkDetailDrawerRef = ref(null);
 </script>
 
 <template>
@@ -294,11 +284,114 @@ const parkDetailDrawerRef = ref(null);
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <!-- 使用封装后的详情抽屉组件 -->
-    <ParkDetailDrawer
-      ref="parkDetailDrawerRef"
-      :detail-obj="dataObj.detailObj"
-    />
+    <DetailDrawer :title="`${dataObj.detailObj.name}关联表`">
+      <div class="detail-card">
+        <div class="detail-card-row">
+          <div class="detail-row-left">主键ID:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.card_id }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">唯一卡码:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.card_code }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">卡种类型:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.card_type }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">卡名称:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.card_name }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">适用范围:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.apply_scope }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">有效天数:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.valid_days }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">原价:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.original_price }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">售价:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.sale_price }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">状态:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.status }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">持卡人:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.user_id }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">激活时间:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.activate_time }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">过期时间:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.expire_time }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">创建时间:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.create_time }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">更新时间:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.update_time }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">备注:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.remark }}
+          </div>
+        </div>
+      </div>
+    </DetailDrawer>
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -324,11 +417,6 @@ const parkDetailDrawerRef = ref(null);
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton
-            :content="props.arrowShow ? '展开' : '收缩'"
-            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
-            @click="arrowChange"
-          />
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="导出"
@@ -354,13 +442,13 @@ const parkDetailDrawerRef = ref(null);
           />
         </div>
       </template>
-      <template #applicablePark="{ row }">
+      <template #parkName="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.applicablePark }}
+          {{ row.name }}
         </el-text>
       </template>
       <template #actions="{ row }">
@@ -391,7 +479,9 @@ const parkDetailDrawerRef = ref(null);
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：停车场数量5;车位总数:266;车场车位3 </span>
+          <span>
+            本页统计：发票数量: 10; 总金额: ¥1,730.00; 已开具: 7; 待开具: 2
+          </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span> 全部统计：{{ textObj.total }} </span>

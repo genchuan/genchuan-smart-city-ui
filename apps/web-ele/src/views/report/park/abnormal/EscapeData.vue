@@ -71,7 +71,7 @@
               </el-select>
             </div>
 
-            <div class="filter-group">
+            <div class="filter-group ">
               <el-input
                 v-model="carNumber"
                 placeholder="车牌号码"
@@ -223,6 +223,7 @@
       <DataTable
         :data="tableData"
         :columns="tableColumns"
+        :mobile-columns="mobileColumns"
         show-pagination
         :total="totalCount"
         :page-sizes="[10, 20, 50, 100]"
@@ -231,6 +232,9 @@
         :page-size-prop="pageSize"
         @page-change="handlePageChange"
         :remote="true"
+        responsive
+        column-mode="responsive"
+        :empty-text="tableData.length === 0 ? '暂无逃费数据' : ''"
       />
     </ReportSection>
 
@@ -292,7 +296,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, onUnmounted } from 'vue';
 import { Download, Refresh, Money, Document, SuccessFilled, Clock } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 
@@ -342,6 +346,10 @@ const currentEscape = ref(null);
 const currentEscapeId = ref('');
 const traceMethod = ref('sms');
 const traceRemark = ref('');
+
+// 响应式布局变量
+const mobileLayout = ref(false);
+const screenWidth = ref(window.innerWidth);
 
 // 分页参数
 const currentPage = ref(1);
@@ -434,106 +442,147 @@ const traceMethodOptions = computed(() => {
   ];
 });
 
-// 表格列定义
-const tableColumns = computed(() => [
-  {
-    prop: 'escapeId',
-    label: '逃费ID',
-    width: 140,
-    render: (row) => ({
-      text: row.escapeId,
-      events: {
-        click: () => handleDetailClick(row)
-      },
-      props: {
-        style: { color: '#1890ff', cursor: 'pointer', textDecoration: 'underline' }
-      }
-    })
-  },
-  {
-    prop: 'carNumber',
-    label: '车牌号码',
-    width: 120
-  },
-  {
-    prop: 'parkingName',
-    label: '车场名称',
-    width: 180
-  },
-  {
-    prop: 'escapeTime',
-    label: '逃费时间',
-    width: 160
-  },
-  {
-    prop: 'escapeAmount',
-    label: '逃费金额',
-    width: 120,
-    type: 'currency'
-  },
-  {
-    prop: 'escapeLevel',
-    label: '逃费等级',
-    width: 120,
-    render: (row) => ({
-      text: row.escapeLevel,
-      props: {
-        style: {
-          color: getEscapeLevelColor(row.escapeLevel),
-          fontWeight: 'bold'
-        }
-      }
-    })
-  },
-  {
-    prop: 'traceStatus',
-    label: '追缴状态',
-    width: 120,
-    render: (row) => ({
-      text: row.traceStatus,
-      props: {
-        style: {
-          color: getTraceStatusColor(row.traceStatus)
-        }
-      }
-    })
-  },
-  {
-    prop: 'lastTraceTime',
-    label: '上次追缴时间',
-    width: 160
-  },
-  {
-    prop: 'actions',
-    label: '操作',
-    width: 150,
-    render: (row) => ({
-      type: 'div',
-      props: { class: 'action-buttons' },
-      children: [
-        {
-          type: 'el-button',
-          props: {
-            type: 'primary',
-            size: 'medium',
-            onClick: () => handleDetailClick(row)
-          },
-          text: '详情'
+// 移动端列规则
+const mobileColumns = computed(() => {
+  return ['escapeId', 'carNumber', 'escapeAmount', 'traceStatus', 'actions'];
+});
+
+// 表格列定义 - 响应式
+const tableColumns = computed(() => {
+  const columns = [
+    {
+      prop: 'escapeId',
+      label: '逃费ID',
+      width: mobileLayout.value ? '100px' : '140px',
+      minWidth: '100px',
+      render: (row) => ({
+        text: row.escapeId,
+        events: {
+          click: () => handleDetailClick(row)
         },
-        {
-          type: 'el-button',
-          props: {
-            type: 'warning',
-            size: 'medium',
-            onClick: () => handleTraceClick(row),
-            disabled: row.traceStatus === '已追缴' || row.traceStatus === '已豁免'
-          },
-          text: '追缴'
+        props: {
+          style: { color: '#1890ff', cursor: 'pointer' },
+          class: 'ellipsis-text'
         }
-      ]
-    })
-  }
-]);
+      }),
+      showTooltip: true,
+      hideOnMobile: false,
+      alwaysShow: true
+    },
+    {
+      prop: 'carNumber',
+      label: '车牌',
+      width: mobileLayout.value ? '90px' : '120px',
+      minWidth: '90px',
+      showTooltip: true,
+      hideOnMobile: false,
+      alwaysShow: true
+    },
+    {
+      prop: 'parkingName',
+      label: '车场名称',
+      width: mobileLayout.value ? '120px' : '180px',
+      minWidth: '120px',
+      showTooltip: true,
+      hideOnMobile: false
+    },
+    {
+      prop: 'escapeTime',
+      label: '逃费时间',
+      width: mobileLayout.value ? '120px' : '160px',
+      minWidth: '120px',
+      type: 'datetime',
+      hideOnMobile: screenWidth.value < 640
+    },
+    {
+      prop: 'escapeAmount',
+      label: '逃费金额',
+      width: mobileLayout.value ? '100px' : '120px',
+      minWidth: '100px',
+      type: 'currency',
+      hideOnMobile: false,
+      align: 'right'
+    },
+    {
+      prop: 'escapeLevel',
+      label: '逃费等级',
+      width: mobileLayout.value ? '90px' : '120px',
+      minWidth: '90px',
+      render: (row) => ({
+        text: row.escapeLevel,
+        props: {
+          style: {
+            color: getEscapeLevelColor(row.escapeLevel),
+            fontWeight: '500'
+          }
+        }
+      }),
+      hideOnMobile: screenWidth.value < 576
+    },
+    {
+      prop: 'traceStatus',
+      label: '追缴状态',
+      width: mobileLayout.value ? '100px' : '120px',
+      minWidth: '100px',
+      render: (row) => ({
+        text: row.traceStatus,
+        props: {
+          style: {
+            color: getTraceStatusColor(row.traceStatus),
+            fontWeight: '500'
+          }
+        }
+      }),
+      hideOnMobile: false
+    },
+    {
+      prop: 'lastTraceTime',
+      label: '上次追缴',
+      width: mobileLayout.value ? '120px' : '160px',
+      minWidth: '120px',
+      type: 'datetime',
+      hideOnMobile: screenWidth.value < 768
+    },
+    {
+      prop: 'actions',
+      label: '操作',
+      width: mobileLayout.value ? '140px' : '180px',
+      minWidth: '140px',
+      fixed: mobileLayout.value ? 'right' : false,
+      render: (row) => ({
+        type: 'div',
+        props: { class: 'action-buttons' },
+        children: [
+          {
+            type: 'el-button',
+            props: {
+              type: 'primary',
+              size: mobileLayout.value ? 'small' : 'default',
+              onClick: () => handleDetailClick(row),
+              class: 'detail-btn'
+            },
+            text: '详情'
+          },
+          {
+            type: 'el-button',
+            props: {
+              type: 'warning',
+              size: mobileLayout.value ? 'small' : 'default',
+              onClick: () => handleTraceClick(row),
+              disabled: row.traceStatus === '已追缴' || row.traceStatus === '已豁免',
+              class: 'trace-btn'
+            },
+            text: '追缴'
+          }
+        ]
+      }),
+      hideOnMobile: false,
+      alwaysShow: true
+    }
+  ];
+
+  return columns;
+});
 
 // 图表配置 - 添加容错处理
 const trendOptions = computed(() => {
@@ -736,10 +785,23 @@ const regionChart = computed(() => {
   };
 });
 
+// 监听屏幕宽度变化
+const handleResize = () => {
+  screenWidth.value = window.innerWidth;
+  mobileLayout.value = screenWidth.value < 768;
+};
+
 // 初始化
 onMounted(async () => {
+  handleResize();
+  window.addEventListener('resize', handleResize);
+
   await loadFilterOptions();
   loadData();
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
 });
 
 // 加载筛选选项
@@ -1017,47 +1079,11 @@ const getTraceStatusColor = (status) => {
   margin-bottom: 12px;
 }
 
-@media (max-width: 1200px) {
-  .filter-row {
-    gap: 6px;
-  }
-
-  .filter-group :deep(.el-date-editor) {
-    width: 200px !important;
-  }
-
-  .filter-group :deep(.el-select),
-  .filter-group :deep(.el-input) {
-    width: 120px !important;
-  }
-
-  .amount-range :deep(.el-input) {
-    width: 80px !important;
-  }
-}
-
-@media (max-width: 992px) {
-  .chart-row {
-    grid-template-columns: 1fr;
-  }
-
-  .filter-row {
-    gap: 8px;
-  }
-
-  .filter-group {
-    flex: 1 1 calc(50% - 8px);
-  }
-
-  .statistics-cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
+/* 响应式调整 */
+@media (max-width: 767px) {
   .filter-row {
     flex-direction: column;
-    align-items: flex-start;
+    gap: 8px;
   }
 
   .filter-group {
@@ -1071,18 +1097,108 @@ const getTraceStatusColor = (status) => {
   }
 
   .amount-range {
-    display: flex;
+    flex-direction: column;
     gap: 8px;
+  }
+
+  .amount-range :deep(.el-input) {
+    width: 100% !important;
+  }
+
+  .range-separator {
+    display: none;
   }
 
   .statistics-cards {
     grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 12px;
+  }
+
+  .stat-icon {
+    font-size: 24px;
+    margin-right: 12px;
+  }
+
+  .stat-value {
+    font-size: 20px;
+  }
+
+  .chart-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .chart-section {
+    margin-bottom: 8px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .detail-btn,
+  .trace-btn {
+    width: 100%;
   }
 }
 
+@media (min-width: 768px) and (max-width: 1023px) {
+  .chart-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .filter-row {
+    gap: 8px;
+  }
+
+  .filter-group {
+    flex: 1 1 calc(50% - 8px);
+  }
+
+  .statistics-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .action-buttons {
+    gap: 6px;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .filter-group :deep(.el-date-editor) {
+    width: 200px !important;
+  }
+
+  .filter-group :deep(.el-select),
+  .filter-group :deep(.el-input) {
+    width: 140px !important;
+  }
+
+  .amount-range :deep(.el-input) {
+    width: 80px !important;
+  }
+}
+
+/* 文字省略 */
+.ellipsis-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* 操作按钮容器 */
 .action-buttons {
   display: flex;
   gap: 8px;
+  justify-content: center;
+  align-items: center;
 }
 
 .trace-dialog {
@@ -1092,5 +1208,16 @@ const getTraceStatusColor = (status) => {
 .trace-info {
   font-weight: 500;
   color: #303133;
+}
+
+/* 移动端隐藏类 */
+.mobile-hidden {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .mobile-hidden {
+    display: table-cell;
+  }
 }
 </style>

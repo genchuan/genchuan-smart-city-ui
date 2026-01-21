@@ -1023,7 +1023,5 @@ onUnmounted(() => {
   min-height: 400px;
 }
 
-
-
 /* 主容器，设置固定高度和滚动条 */
 </style>

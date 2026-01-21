@@ -1,5 +1,7 @@
 /** 表格初始数据*/
 
+import { maskIdCard, maskPhone } from '#/utils/dataMask';
+
 // 个人用户数据列表
 export const personalUserList = () => {
   return [
@@ -1577,11 +1579,7 @@ export function personalGridColumns() {
       minWidth: 150,
       sortable: true,
       formatter: ({ cellValue }) => {
-        // 脱敏处理，只显示前3位和后4位
-        if (!cellValue) return '';
-        // 确保cellValue是字符串类型
-        const strValue = String(cellValue);
-        return strValue.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+        return maskPhone(cellValue);
       },
     },
     {
@@ -1590,11 +1588,7 @@ export function personalGridColumns() {
       minWidth: 200,
       sortable: true,
       formatter: ({ cellValue }) => {
-        // 脱敏处理，只显示前6位和后4位
-        if (!cellValue) return '';
-        // 确保cellValue是字符串类型
-        const strValue = String(cellValue);
-        return strValue.replace(/(\d{6})\d{8}(\d{4})/, '$1********$2');
+        return maskIdCard(cellValue);
       },
     },
     {
@@ -1711,11 +1705,7 @@ export function enterpriseGridColumns() {
       minWidth: 150,
       sortable: true,
       formatter: ({ cellValue }) => {
-        // 脱敏处理，只显示前3位和后4位
-        if (!cellValue) return '';
-        // 确保cellValue是字符串类型
-        const strValue = String(cellValue);
-        return strValue.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+        return maskPhone(cellValue);
       },
     },
     {
@@ -1821,11 +1811,7 @@ export function governmentGridColumns() {
       minWidth: 150,
       sortable: true,
       formatter: ({ cellValue }) => {
-        // 脱敏处理，只显示前3位和后4位
-        if (!cellValue) return '';
-        // 确保cellValue是字符串类型
-        const strValue = String(cellValue);
-        return strValue.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+        return maskPhone(cellValue);
       },
     },
     {
