@@ -1859,6 +1859,77 @@ const submitComplianceInspectForm = async () => {
   });
 };
 
+// 数据刷新
+const refreshParkAlarmData = async () => {
+  await Promise.all([
+    getParkAlarmListData(),
+    getParkAlarmIndicatorData(),
+    getParkAlarmLevelRatioData(),
+    getParkAlarmTypeRatioData(),
+    getParkAlarmStatusRatioData(),
+    getParkAlarmAreaData(),
+    getParkAlarmTypeData(),
+  ]);
+  parkAlarmChartRefreshKey.value++;
+  ElMessage.success('预警事件概览数据刷新成功');
+};
+const refreshParkHiddenDangerData = async () => {
+  await Promise.all([
+    getParkHiddenDangerListData(),
+    getParkHiddenDangerIndicatorData(),
+    getParkHiddenDangerLevelRatioData(),
+    getParkHiddenDangerTypeRatioData(),
+    getParkHiddenDangerAreaData(),
+    getParkHiddenDangerTypeData(),
+  ]);
+  parkHiddenDangerChartRefreshKey.value++;
+  ElMessage.success('隐患预警视图数据刷新成功');
+};
+const refreshDisposeTrackData = async () => {
+  await Promise.all([
+    getDisposeTrackListData(),
+    getDisposeTrackIndicatorData(),
+    getDisposeUserEfficiencyData(),
+  ]);
+  disposeTrackChartRefreshKey.value++;
+  ElMessage.success('事件处置跟踪数据刷新成功');
+};
+const refreshParkAbnormalData = async () => {
+  await Promise.all([
+    getParkAbnormalListData(),
+    getParkAbnormalIndicatorData(),
+    getParkAbnormalTrendData(),
+    getParkAbnormalAreaData(),
+    getParkAbnormalTypeData(),
+  ]);
+  parkAbnormalChartRefreshKey.value++;
+  ElMessage.success('异常预警视图数据刷新成功');
+};
+const refreshParkFaultData = async () => {
+  await Promise.all([
+    getParkFaultListData(),
+    getParkFaultIndicatorData(),
+    getParkFaultTypeRatioData(),
+    getParkFaultEquipmentRatioData(),
+    getParkFaultAreaData(),
+    getParkFaultEquipmentData(),
+  ]);
+  parkFaultChartRefreshKey.value++;
+  ElMessage.success('故障预警视图数据刷新成功');
+};
+const refreshParkComplianceWarningData = async () => {
+  await Promise.all([
+    getParkComplianceWarningListData(),
+    getParkComplianceWarningIndicatorData(),
+    getParkComplianceWarningViolationRatioData(),
+    getParkComplianceWarningSubjectRatioData(),
+    getParkComplianceWarningAreaData(),
+    getParkComplianceWarningTypeData(),
+  ]);
+  parkComplianceWarningChartRefreshKey.value++;
+  ElMessage.success('合规预警视图数据刷新成功');
+};
+
 // 生命周期
 onMounted(async () => {
   await Promise.all([
@@ -1899,8 +1970,8 @@ onMounted(async () => {
   setTimeout(() => {
     parkAlarmChartRefreshKey.value++;
     parkHiddenDangerChartRefreshKey.value++;
-    parkAbnormalChartRefreshKey.value++;
     disposeTrackChartRefreshKey.value++;
+    parkAbnormalChartRefreshKey.value++;
     parkFaultChartRefreshKey.value++;
     parkComplianceWarningChartRefreshKey.value++;
   }, 200);
@@ -1931,8 +2002,10 @@ onUnmounted(() => {
                   {{ item }}
                 </ElButton>
               </div>
+              <button class="control-btn" @click="refreshParkAlarmData">
+                <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+              </button>
               <el-icon color="#409eff" size="16"><Filter /></el-icon>
-              <el-icon color="#409eff" size="16"><Refresh /></el-icon>
               <button
                 class="panel-fullscreen-btn"
                 @click="togglePanelFullscreen('parkAlarmPanelRef')"
@@ -2167,6 +2240,7 @@ onUnmounted(() => {
               </ElTable>
             </div>
           </div>
+          <div class="panel-footer"></div>
         </div>
 
         <div class="panel top-middle" ref="parkHiddenDangerPanelRef">
@@ -2185,8 +2259,10 @@ onUnmounted(() => {
                   {{ item }}
                 </ElButton>
               </div>
+              <button class="control-btn" @click="refreshParkHiddenDangerData">
+                <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+              </button>
               <el-icon color="#409eff" size="16"><Filter /></el-icon>
-              <el-icon color="#409eff" size="16"><Refresh /></el-icon>
               <button
                 class="panel-fullscreen-btn"
                 @click="togglePanelFullscreen('parkHiddenDangerPanelRef')"
@@ -2434,6 +2510,7 @@ onUnmounted(() => {
               </ElTable>
             </div>
           </div>
+          <div class="panel-footer"></div>
         </div>
 
         <div class="panel top-right" ref="parkAbnormalPanelRef">
@@ -2452,8 +2529,10 @@ onUnmounted(() => {
                   {{ item }}
                 </ElButton>
               </div>
+              <button class="control-btn" @click="refreshParkAbnormalData">
+                <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+              </button>
               <el-icon color="#409eff" size="16"><Filter /></el-icon>
-              <el-icon color="#409eff" size="16"><Refresh /></el-icon>
               <button
                 class="panel-fullscreen-btn"
                 @click="togglePanelFullscreen('parkAbnormalPanelRef')"
@@ -2653,6 +2732,7 @@ onUnmounted(() => {
               </ElTable>
             </div>
           </div>
+          <div class="panel-footer"></div>
         </div>
       </div>
       <div class="bottom">
@@ -2672,8 +2752,10 @@ onUnmounted(() => {
                   {{ item }}
                 </ElButton>
               </div>
+              <button class="control-btn" @click="refreshDisposeTrackData">
+                <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+              </button>
               <el-icon color="#409eff" size="16"><Filter /></el-icon>
-              <el-icon color="#409eff" size="16"><Refresh /></el-icon>
               <button
                 class="panel-fullscreen-btn"
                 @click="togglePanelFullscreen('eventDisposalTrackingRef')"
@@ -2826,6 +2908,7 @@ onUnmounted(() => {
               </ElTable>
             </div>
           </div>
+          <div class="panel-footer"></div>
         </div>
         <div class="panel bottom-middle" ref="parkFaultPanelRef">
           <div class="header-actions">
@@ -2843,8 +2926,10 @@ onUnmounted(() => {
                   {{ item }}
                 </ElButton>
               </div>
+              <button class="control-btn" @click="refreshParkFaultData">
+                <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+              </button>
               <el-icon color="#409eff" size="16"><Filter /></el-icon>
-              <el-icon color="#409eff" size="16"><Refresh /></el-icon>
               <button
                 class="panel-fullscreen-btn"
                 @click="togglePanelFullscreen('parkFaultPanelRef')"
@@ -3060,6 +3145,7 @@ onUnmounted(() => {
               </ElTable>
             </div>
           </div>
+          <div class="panel-footer"></div>
         </div>
         <div class="panel bottom-right" ref="parkComplianceWarningPanelRef">
           <div class="header-actions">
@@ -3079,8 +3165,10 @@ onUnmounted(() => {
                   {{ item }}
                 </ElButton>
               </div>
+              <button class="control-btn" @click="refreshParkComplianceWarningData">
+                <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+              </button>
               <el-icon color="#409eff" size="16"><Filter /></el-icon>
-              <el-icon color="#409eff" size="16"><Refresh /></el-icon>
               <button
                 class="panel-fullscreen-btn"
                 @click="togglePanelFullscreen('parkComplianceWarningPanelRef')"
@@ -3307,6 +3395,7 @@ onUnmounted(() => {
               </ElTable>
             </div>
           </div>
+          <div class="panel-footer"></div>
         </div>
       </div>
     </div>
@@ -4604,69 +4693,6 @@ onUnmounted(() => {
   overflow: hidden;
   background: url('../../images/line(1).png') rgb(255 255 255 / 4%);
   border: 0.2vh solid rgb(25 186 139 / 17%);
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0 0.2vw;
-  margin-bottom: 0.5vw;
-
-  .actions-left p {
-    margin: 0;
-    font-size: 0.9vw;
-    font-weight: 500;
-    color: #00ffd0;
-  }
-
-  .actions-right {
-    display: flex;
-    gap: 0.8vw;
-    align-items: center;
-  }
-
-  .panel-fullscreen-btn {
-    padding: 0;
-    margin-right: 0.5vw;
-    color: #0cf;
-    cursor: pointer;
-    background: transparent;
-    border: none;
-  }
-}
-
-.view-content {
-  box-sizing: border-box;
-  flex: 1;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-
-  > div {
-    width: 100%;
-    height: 100%;
-  }
-}
-
-:deep(.view-btn) {
-  padding: 0 0.4vw;
-  font-size: 0.6vw;
-  color: #fff;
-  background-color: transparent;
-  border-color: rgb(25 186 139 / 60%);
-
-  &:hover {
-    color: #00ffd0;
-    border-color: #00ffd0;
-  }
-
-  &.el-button--primary {
-    color: #afc2ff;
-    background-color: rgb(0 204 255 / 20%);
-    border-color: rgb(25 186 139 / 60%);
-  }
 }
 
 :deep(.el-table) {

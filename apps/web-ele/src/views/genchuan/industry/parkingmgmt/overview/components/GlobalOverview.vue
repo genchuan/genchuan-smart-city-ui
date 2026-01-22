@@ -1,58 +1,48 @@
-<script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref, nextTick } from 'vue';
 
 import {
-  ArrowLeft,
   Filter,
-  FullScreen,
-  Operation,
+  FullScreen, Refresh,
   Setting,
   VideoPause,
   VideoPlay,
 } from '@element-plus/icons-vue';
-import { ElMessage } from 'element-plus';
+import {ElButton, ElMessage, ElTable, ElTableColumn, ElTag} from 'element-plus';
 import screenFull from 'screenfull';
 
 import {
-  fetchParkingCoreIndicators,
-  fetchParkingCoreObjectList,
-  fetchParkingFeatureSituation,
-  fetchParkingGlobalTrendIndicators,
   fetchParkingLotGeometries,
-  fetchParkingStatisticsDistribution,
-  fetchRoadsideBerthCoreElements,
 } from '#/api/genchuan/industry/parkingmgmt/overview/GlobalSituationOverview.ts';
-import ChartPie from '#/views/genchuan/industry/templatesstatchart/ChartPie.vue';
-import HorizontalBar1 from '#/views/genchuan/industry/templatesstatchart/HorizontalBar1.vue';
-import VerticalBar1 from '#/views/genchuan/industry/templatesstatchart/VerticalBar1.vue';
-
+import {
+  fetchParkDeviceIndicators,
+  fetchParkDeviceTypeRatio,
+  fetchParkDeviceStatusRatio,
+  fetchParkDeviceOnlineRateTrend7d
+} from '#/api/genchuan/industry/parkingmgmt/overview/GlobalOverview.ts';
 import MapCommon from './GlobalDataMap.vue';
 
+import { useRouter } from 'vue-router';
+import ChartPie2 from "#/views/genchuan/industry/templatesstatchart/ChartPie2.vue";
+import ChartLine1 from "#/views/genchuan/industry/templatesstatchart/ChartLine1.vue";
+import ChartPie1 from "#/views/genchuan/industry/templatesstatchart/ChartPie1.vue";
+import ChartLine2 from "#/views/genchuan/industry/templatesstatchart/ChartLine2.vue";
 const router = useRouter();
+
 const pageContainerRef = ref(null);
 const mapCommonRef = ref(null);
 const geometriesArray = ref([]);
 const currentFullscreenPanel = ref(null);
-const coreIndicatorData = ref({});
-const trendIndicatorData = ref({});
-const parkingCoreObjectList = ref([]);
-const roadsideBerthList = ref([]);
-const featureSituationData = ref({
-  lotUtilizationRate: 0,
-  revenueProportion: 0,
-  maintenanceTimelinessRate: 0,
-});
-const statisticsData = ref({
-  faultDevice: { labels: [], data: [] },
-  chargeAbnormal: { labels: [], data: [] },
-  feeEvasionRegion: { labels: [], data: [] },
-});
-const objectDetailVisible = ref(false);
-const selectedParkingRow = ref({});
-const elementDetailVisible = ref(false);
-const selectedRoadsideRow = ref({});
 
+// 标签页激活状态
+const topLeftActiveTab = ref('tab1');
+const topMiddleActiveTab = ref('tab1');
+const topRightActiveTab = ref('tab1');
+const bottomLeftActiveTab = ref('tab1');
+const bottomMiddleActiveTab = ref('tab1');
+const bottomRightActiveTab = ref('tab1');
+
+// 筛选相关
 const filterDrawerVisible = ref(false);
 const filterForm = ref({
   timeRange: 'all',
@@ -63,6 +53,100 @@ const filterForm = ref({
   alertLevels: [],
 });
 
+// 地图环绕配置相关
+const getStoredOrbitConfig = () => {
+  const stored = localStorage.getItem('parkingMapOrbitConfig');
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch (error) {
+      console.warn('读取本地存储的地图配置失败，使用默认值:', error);
+    }
+  }
+  return {
+    center: { lat: 24.58, lng: 117.65 },
+    rotateSpeed: 0.1,
+    pitch: 40,
+    zoom: 12,
+    loop: true,
+  };
+};
+
+const saveOrbitConfigToLocal = (config) => {
+  try {
+    localStorage.setItem('parkingMapOrbitConfig', JSON.stringify(config));
+  } catch (error) {
+    console.error('保存地图配置到本地存储失败:', error);
+    ElMessage.warning('配置暂无法持久化，刷新后会恢复默认值');
+  }
+};
+
+const orbitConfigDialogVisible = ref(false);
+const orbitConfigFormRef = ref(null);
+const orbitConfigForm = ref({
+  centerLat: getStoredOrbitConfig().center.lat,
+  centerLng: getStoredOrbitConfig().center.lng,
+  rotateSpeed: getStoredOrbitConfig().rotateSpeed,
+  pitch: getStoredOrbitConfig().pitch,
+  zoom: getStoredOrbitConfig().zoom,
+  loop: getStoredOrbitConfig().loop,
+});
+
+const orbitConfigRules = ref({
+  centerLat: [
+    {
+      required: true,
+      type: 'number',
+      min: -90,
+      max: 90,
+      message: '请输入有效的纬度（-90~90）',
+      trigger: 'blur',
+    },
+  ],
+  centerLng: [
+    {
+      required: true,
+      type: 'number',
+      min: -180,
+      max: 180,
+      message: '请输入有效的经度（-180~180）',
+      trigger: 'blur',
+    },
+  ],
+  rotateSpeed: [
+    {
+      required: true,
+      type: 'number',
+      min: 0.01,
+      message: '旋转速度不能小于0.01',
+      trigger: 'blur',
+    },
+  ],
+  pitch: [
+    {
+      required: true,
+      type: 'number',
+      min: 0,
+      max: 80,
+      message: '俯仰角范围0~80',
+      trigger: 'blur',
+    },
+  ],
+  zoom: [
+    {
+      required: true,
+      type: 'number',
+      min: 1,
+      max: 20,
+      message: '缩放级别范围1~20',
+      trigger: 'blur',
+    },
+  ],
+});
+
+const orbitConfigData = ref(getStoredOrbitConfig());
+
+// 地图数据筛选逻辑
 const filterMapDataByConditions = (data, params = {}) => {
   let filteredData = [...data];
 
@@ -160,108 +244,7 @@ const filterMapDataByConditions = (data, params = {}) => {
   return filteredData;
 };
 
-const getStoredOrbitConfig = () => {
-  const stored = localStorage.getItem('parkingMapOrbitConfig');
-  if (stored) {
-    try {
-      return JSON.parse(stored);
-    } catch (error) {
-      console.warn('读取本地存储的地图配置失败，使用默认值:', error);
-    }
-  }
-  return {
-    center: { lat: 24.58, lng: 117.65 },
-    rotateSpeed: 0.1,
-    pitch: 40,
-    zoom: 12,
-    loop: true,
-  };
-};
-
-const saveOrbitConfigToLocal = (config) => {
-  try {
-    localStorage.setItem('parkingMapOrbitConfig', JSON.stringify(config));
-  } catch (error) {
-    console.error('保存地图配置到本地存储失败:', error);
-    ElMessage.warning('配置暂无法持久化，刷新后会恢复默认值');
-  }
-};
-
-const orbitConfigDialogVisible = ref(false);
-const orbitConfigFormRef = ref(null);
-const orbitConfigForm = ref({
-  centerLat: getStoredOrbitConfig().center.lat,
-  centerLng: getStoredOrbitConfig().center.lng,
-  rotateSpeed: getStoredOrbitConfig().rotateSpeed,
-  pitch: getStoredOrbitConfig().pitch,
-  zoom: getStoredOrbitConfig().zoom,
-  loop: getStoredOrbitConfig().loop,
-});
-
-const orbitConfigRules = ref({
-  centerLat: [
-    {
-      required: true,
-      type: 'number',
-      min: -90,
-      max: 90,
-      message: '请输入有效的纬度（-90~90）',
-      trigger: 'blur',
-    },
-  ],
-  centerLng: [
-    {
-      required: true,
-      type: 'number',
-      min: -180,
-      max: 180,
-      message: '请输入有效的经度（-180~180）',
-      trigger: 'blur',
-    },
-  ],
-  rotateSpeed: [
-    {
-      required: true,
-      type: 'number',
-      min: 0.01,
-      message: '旋转速度不能小于0.01',
-      trigger: 'blur',
-    },
-  ],
-  pitch: [
-    {
-      required: true,
-      type: 'number',
-      min: 0,
-      max: 80,
-      message: '俯仰角范围0~80',
-      trigger: 'blur',
-    },
-  ],
-  zoom: [
-    {
-      required: true,
-      type: 'number',
-      min: 1,
-      max: 20,
-      message: '缩放级别范围1~20',
-      trigger: 'blur',
-    },
-  ],
-});
-
-const orbitConfigData = ref(getStoredOrbitConfig());
-
-const isWarnDataAbnormal = computed(() => {
-  const warnCount = coreIndicatorData.value.earlyWarningEvent || 0;
-  return warnCount > 0;
-});
-
-const isFaultDataAbnormal = computed(() => {
-  const faultRate = trendIndicatorData.value.deviceFaultRate || 0;
-  return faultRate > 0.05;
-});
-
+// 筛选方法
 const openMapFilterDrawer = () => {
   filterDrawerVisible.value = true;
 };
@@ -300,10 +283,7 @@ const resetMapFilter = () => {
   ElMessage.info('筛选条件已重置为默认值');
 };
 
-const handleBack = () => {
-  router.push('/');
-};
-
+// 全屏相关
 const clickFullscreen = () => {
   if (!screenFull.isEnabled) {
     ElMessage.warning('您的浏览器不支持全屏功能');
@@ -324,9 +304,7 @@ const handleFullscreenChange = () => {
   }
 };
 
-const object = ref(null);
 const map = ref(null);
-const element = ref(null);
 
 const togglePanelFullscreen = (panelRef) => {
   if (!screenFull.isEnabled) {
@@ -334,9 +312,7 @@ const togglePanelFullscreen = (panelRef) => {
     return;
   }
   const panel = {
-    object: object.value,
     map: map.value,
-    element: element.value,
   }[panelRef];
 
   if (!panel) {
@@ -359,6 +335,7 @@ const togglePanelFullscreen = (panelRef) => {
   }
 };
 
+// 地图环绕动画
 const handleOrbitAnimation = () => {
   if (
     mapCommonRef.value &&
@@ -370,99 +347,7 @@ const handleOrbitAnimation = () => {
   }
 };
 
-const formatTimeStamp = (timeStamp) => {
-  if (!timeStamp) return '';
-  const date = new Date(Number(timeStamp));
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-};
-
-const formatParkingTime = (minutes) => {
-  if (!minutes || minutes === 0) return '0分钟';
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return h > 0 ? `${h}小时${m}分钟` : `${m}分钟`;
-};
-
-const formatOfflineTime = (minutes) => {
-  if (!minutes || minutes === 0) return '0分钟';
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return h > 0 ? `${h}小时${m}分钟` : `${m}分钟`;
-};
-
-const getRoadsideStatusTagType = (status) => {
-  switch (status) {
-    case '占用': {
-      return 'info';
-    }
-    case '故障': {
-      return 'danger';
-    }
-    case '正常':
-    case '空闲': {
-      return 'success';
-    }
-    case '禁用': {
-      return 'warning';
-    }
-    default: {
-      return 'info';
-    }
-  }
-};
-
-const getLotStatusTagType = (status) => {
-  switch (status) {
-    case '暂停运营': {
-      return 'warning';
-    }
-    case '正常': {
-      return 'success';
-    }
-    case '维护': {
-      return 'danger';
-    }
-    default: {
-      return 'info';
-    }
-  }
-};
-
-const getDeviceStatusTagType = (status) => {
-  switch (status) {
-    case '在线': {
-      return 'success';
-    }
-    case '故障': {
-      return 'danger';
-    }
-    case '维护': {
-      return 'warning';
-    }
-    default: {
-      return 'info';
-    }
-  }
-};
-
-const handleObjectRowClick = (row) => {
-  // eslint-disable-next-line unicorn/prefer-structured-clone
-  selectedParkingRow.value = JSON.parse(JSON.stringify(row));
-  objectDetailVisible.value = true;
-};
-
-const handleElementRowClick = (row) => {
-  // eslint-disable-next-line unicorn/prefer-structured-clone
-  selectedRoadsideRow.value = JSON.parse(JSON.stringify(row));
-  elementDetailVisible.value = true;
-};
-
+// 初始化地图数据
 const initMapData = async () => {
   try {
     const defaultParams = {
@@ -477,74 +362,7 @@ const initMapData = async () => {
   }
 };
 
-const activeObjectTab = ref('parkingLot');
-const activeElementTab = ref('berth');
-
-const loadParkingCoreObjectData = async () => {
-  try {
-    parkingCoreObjectList.value = await fetchParkingCoreObjectList({});
-  } catch (error) {
-    console.error('核心对象分布数据加载失败：', error);
-    ElMessage.error('核心对象分布数据加载失败，请刷新页面重试');
-    parkingCoreObjectList.value = [];
-  }
-};
-
-const loadRoadsideBerthData = async () => {
-  try {
-    roadsideBerthList.value = await fetchRoadsideBerthCoreElements({});
-  } catch (error) {
-    console.error('路侧泊位核心要素数据加载失败：', error);
-    ElMessage.error('路侧泊位核心要素数据加载失败，请刷新页面重试');
-    roadsideBerthList.value = [];
-  }
-};
-
-const fetchCoreIndicatorData = async () => {
-  try {
-    coreIndicatorData.value = await fetchParkingCoreIndicators({});
-  } catch (error) {
-    console.error('核心指标数据加载失败：', error);
-    ElMessage.error('核心指标数据加载失败，请刷新页面重试');
-    coreIndicatorData.value = {};
-  }
-};
-
-const fetchTrendIndicatorData = async () => {
-  try {
-    trendIndicatorData.value = await fetchParkingGlobalTrendIndicators({});
-  } catch (error) {
-    console.error('全局态势趋势数据加载失败：', error);
-    ElMessage.error('全局态势趋势数据加载失败，请刷新页面重试');
-    trendIndicatorData.value = {};
-  }
-};
-
-const loadParkingFeatureSituation = async () => {
-  try {
-    featureSituationData.value = await fetchParkingFeatureSituation({});
-  } catch (error) {
-    console.error('特色态势聚合数据加载失败：', error);
-    ElMessage.error('特色态势聚合数据加载失败，请刷新页面重试');
-  }
-};
-
-const loadParkingStatisticsData = async () => {
-  try {
-    statisticsData.value = await fetchParkingStatisticsDistribution({
-      time_range: 'today',
-    });
-  } catch (error) {
-    console.error('停车统计分布数据加载失败：', error);
-    ElMessage.error('停车统计分布数据加载失败，请刷新页面重试');
-    statisticsData.value = {
-      faultDevice: { labels: [], data: [] },
-      chargeAbnormal: { labels: [], data: [] },
-      feeEvasionRegion: { labels: [], data: [] },
-    };
-  }
-};
-
+// 环绕配置相关方法
 const resetOrbitConfigForm = () => {
   orbitConfigFormRef.value?.resetFields();
   const currentConfig = getStoredOrbitConfig();
@@ -611,70 +429,179 @@ const resetToDefaultConfig = () => {
   ElMessage.success('已恢复默认配置，刷新后生效');
 };
 
-let timeTimer = null;
-let indicatorRefreshTimer = null;
-let trendRefreshTimer = null;
-let coreObjectRefreshTimer = null;
-let roadsideBerthRefreshTimer = null;
-let featureSituationRefreshTimer = null;
-let statisticsRefreshTimer = null;
+// ========== 资源设备相关 ==========
+// TS类型定义
+interface ParkDeviceIndicators {
+  tbDeviceTotalCount: number; // 设备总数
+  tbDeviceOnlineCount: number; // 在线设备数
+  tbDeviceNormalCount: number; // 正常运行数
+  tbDeviceFaultCount: number; // 故障设备数
+  tbDeviceIntactRate: number; // 设备完好率
+  tbDeviceNewCount7d?: number; // 近7日新增设备数
+  tbDeviceRepairCount7d?: number; // 近7日故障修复数
+  sysFaultTypeName?: string; // 热门故障类型
+  tbDeviceCoverageRate?: number; // 设备覆盖度
+}
 
-const updateShowTime = () => {
-  const dt = new Date();
-  const y = dt.getFullYear();
-  const mt = dt.getMonth() + 1;
-  const day = dt.getDate();
-  const h = dt.getHours().toString().padStart(2, '0');
-  const m = dt.getMinutes().toString().padStart(2, '0');
-  const s = dt.getSeconds().toString().padStart(2, '0');
+interface ChartRatioData {
+  legend: string[];
+  series: { data: number[]; name: string }[];
+}
 
-  const showTimeEl = document.querySelector('.showTime');
-  if (showTimeEl) {
-    showTimeEl.innerHTML = `${y}年${mt}月${day}日 ${h}时${m}分${s}秒`;
+interface ChartLineData {
+  xAxis: string[];
+  series: { data: number[]; name: string }[];
+}
+
+// 响应式数据
+const parkDeviceIndicators = ref<ParkDeviceIndicators>({
+  tbDeviceTotalCount: 0,
+  tbDeviceOnlineCount: 0,
+  tbDeviceNormalCount: 0,
+  tbDeviceFaultCount: 0,
+  tbDeviceIntactRate: 0,
+});
+const parkDeviceTypeRatio = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '设备类型占比(%)', data: [] }],
+});
+const parkDeviceStatusRatio = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '设备运行状态占比(%)', data: [] }],
+});
+const parkDeviceOnlineRateTrend7d = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '设备在线率(%)', data: [] }],
+});
+
+// 视图切换相关
+const deviceChartRefreshKey = ref(0);
+const activeDeviceView = ref('卡片');
+const deviceViewBtnList = ref(['卡片', '饼图', '折线图']);
+
+// 格式化方法
+const formatNumber = (num: number) =>
+  num.toString().replaceAll(/\B(?=(\d{3})+(?!\d))/g, ',');
+const formatDecimal = (num: number) => num.toFixed(1);
+
+// 数字动画方法
+const animateValue = (
+  element: HTMLElement,
+  start: number,
+  end: number,
+  duration: number,
+) => {
+  if (!element) return;
+  let startTimestamp: null | number = null;
+  const step = (timestamp: number) => {
+    if (!startTimestamp) startTimestamp = timestamp;
+
+    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+    const currentValue = progress * (end - start) + start;
+
+    element.textContent = Number.isInteger(end)
+      ? formatNumber(Math.floor(currentValue))
+      : formatDecimal(currentValue);
+
+    if (progress < 1) window.requestAnimationFrame(step);
+  };
+  window.requestAnimationFrame(step);
+};
+
+const initNumberAnimations = () => {
+  document
+    .querySelectorAll('.number-animate')
+    .forEach((el) => {
+      const targetEl = el as HTMLElement;
+      const rawText = (targetEl.textContent || '0').replace(/[^\d.-]/g, '');
+      const endValue = Number(rawText) || 0;
+      animateValue(
+        targetEl,
+        0,
+        endValue,
+        1500,
+      );
+    });
+};
+
+// 接口请求方法
+const getParkDeviceIndicatorsData = async () => {
+  try {
+    parkDeviceIndicators.value =
+      (await fetchParkDeviceIndicators()) as ParkDeviceIndicators;
+  } catch (error: any) {
+    ElMessage.error(`设备核心指标加载失败：${error.message}`);
   }
+};
+
+const getParkDeviceTypeRatioData = async () => {
+  try {
+    parkDeviceTypeRatio.value =
+      (await fetchParkDeviceTypeRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`设备类型占比加载失败：${error.message}`);
+  }
+};
+
+const getParkDeviceStatusRatioData = async () => {
+  try {
+    parkDeviceStatusRatio.value =
+      (await fetchParkDeviceStatusRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`设备运行状态占比加载失败：${error.message}`);
+  }
+};
+
+const getParkDeviceOnlineRateTrend7dData = async () => {
+  try {
+    parkDeviceOnlineRateTrend7d.value =
+      (await fetchParkDeviceOnlineRateTrend7d()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`设备在线率趋势加载失败：${error.message}`);
+  }
+};
+
+// 视图切换方法
+const changeDeviceView = (viewName: string) => {
+  activeDeviceView.value = viewName;
+  viewName === '卡片' &&
+  nextTick(() => setTimeout(initNumberAnimations, 300));
+  (viewName === '饼图' || viewName === '折线图') &&
+  nextTick(() => deviceChartRefreshKey.value++);
+};
+
+// 数据刷新方法
+const refreshDeviceData = async () => {
+  await Promise.all([
+    getParkDeviceIndicatorsData(),
+    getParkDeviceTypeRatioData(),
+    getParkDeviceStatusRatioData(),
+    getParkDeviceOnlineRateTrend7dData(),
+  ]);
+  deviceChartRefreshKey.value++;
+  ElMessage.success('资源设备数据刷新成功');
+};
+
+// 初始化资源设备数据
+const initDeviceData = async () => {
+  await Promise.all([
+    getParkDeviceIndicatorsData(),
+    getParkDeviceTypeRatioData(),
+    getParkDeviceStatusRatioData(),
+    getParkDeviceOnlineRateTrend7dData(),
+  ]);
+  setTimeout(() => {
+    deviceChartRefreshKey.value++;
+  }, 200);
 };
 
 onMounted(async () => {
   await initMapData();
-  await fetchCoreIndicatorData();
-  await fetchTrendIndicatorData();
-  await loadParkingCoreObjectData();
-  await loadRoadsideBerthData();
-  await loadParkingFeatureSituation();
-  await loadParkingStatisticsData();
-
+  await initDeviceData();
   resetOrbitConfigForm();
-
-  updateShowTime();
-  timeTimer = setInterval(updateShowTime, 1000);
-  indicatorRefreshTimer = setInterval(() => fetchCoreIndicatorData(), 30_000);
-  trendRefreshTimer = setInterval(() => fetchTrendIndicatorData(), 30_000);
-  coreObjectRefreshTimer = setInterval(
-    () => loadParkingCoreObjectData(),
-    60_000,
-  );
-  roadsideBerthRefreshTimer = setInterval(
-    () => loadRoadsideBerthData(),
-    60_000,
-  );
-  featureSituationRefreshTimer = setInterval(
-    () => loadParkingFeatureSituation(),
-    30_000,
-  );
-  statisticsRefreshTimer = setInterval(
-    () => loadParkingStatisticsData(),
-    30_000,
-  );
 });
 
 onUnmounted(() => {
-  if (timeTimer) clearInterval(timeTimer);
-  if (indicatorRefreshTimer) clearInterval(indicatorRefreshTimer);
-  if (trendRefreshTimer) clearInterval(trendRefreshTimer);
-  if (coreObjectRefreshTimer) clearInterval(coreObjectRefreshTimer);
-  if (roadsideBerthRefreshTimer) clearInterval(roadsideBerthRefreshTimer);
-  if (featureSituationRefreshTimer) clearInterval(featureSituationRefreshTimer);
-  if (statisticsRefreshTimer) clearInterval(statisticsRefreshTimer);
   if (currentFullscreenPanel.value) {
     screenFull.off('change', handleFullscreenChange);
   }
@@ -684,1326 +611,397 @@ onUnmounted(() => {
 <template>
   <div class="page-container" ref="pageContainerRef">
     <div class="mainbox">
-      <div class="left">
-        <div class="panel left-top" style="min-width: 3vw">
-          <div class="header-actions">
-            <div class="actions-left"><p>核心指标看板</p></div>
-            <div class="actions-right">
-              <el-icon style="font-size: 1vw; color: #409eff">
-                <Operation />
-              </el-icon>
-            </div>
-          </div>
-          <div class="indicator-cards-4x3">
-            <div class="indicator-card indicator-card1">
-              <div class="indicator-title">全市停车场数</div>
-              <div class="sub-indicators">
-                <div class="sub-indicator-item">
-                  <div class="sub-indicator-value">
-                    {{ coreIndicatorData.citywideLot || 0 }}
-                    <div class="unit">个</div>
+      <div class="top">
+        <div class="panel top-left">
+          <el-tabs v-model="topLeftActiveTab" class="common-tabs">
+            <el-tab-pane label="资源设备" name="tab1">
+              <div class="header-actions">
+                <div class="actions-left"><p></p></div>
+                <div class="actions-right">
+                  <div class="view-btn-group">
+                    <ElButton
+                      v-for="item in deviceViewBtnList"
+                      :key="item"
+                      :type="activeDeviceView === item ? 'primary' : ''"
+                      plain
+                      @click="changeDeviceView(item)"
+                      class="view-btn"
+                    >
+                      {{ item }}
+                    </ElButton>
+                  </div>
+                  <button class="control-btn" @click="refreshDeviceData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
+                  <el-icon color="#409eff" size="16"><Filter /></el-icon>
+                  <button
+                    class="panel-fullscreen-btn"
+                    @click="togglePanelFullscreen('map')"
+                  >
+                    <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 卡片视图 -->
+              <div v-if="activeDeviceView === '卡片'" class="view-content">
+                <div class="indicator-cards4">
+                  <div class="indicator-card4 card1">
+                    <div class="indicator-title">设备总数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ parkDeviceIndicators.tbDeviceTotalCount }}</span>
+                    </div>
+                    <div class="indicator-unit">台</div>
+                  </div>
+                  <div class="indicator-card4 card2">
+                    <div class="indicator-title">在线设备数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ parkDeviceIndicators.tbDeviceOnlineCount }}</span>
+                    </div>
+                    <div class="indicator-unit">台</div>
+                  </div>
+                  <div class="indicator-card4 card3">
+                    <div class="indicator-title">正常运行数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ parkDeviceIndicators.tbDeviceNormalCount }}</span>
+                    </div>
+                    <div class="indicator-unit">台</div>
+                  </div>
+                  <div class="indicator-card4 card4">
+                    <div class="indicator-title">设备完好率</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(parkDeviceIndicators.tbDeviceIntactRate) }}</span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                  <div class="indicator-card4 card5">
+                    <div class="indicator-title">故障设备数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ parkDeviceIndicators.tbDeviceFaultCount }}</span>
+                    </div>
+                    <div class="indicator-unit">台</div>
                   </div>
                 </div>
               </div>
-            </div>
-            <div class="indicator-card indicator-card2">
-              <div class="indicator-title">当日入场车次</div>
-              <div class="sub-indicators">
-                <div class="sub-indicator-item">
-                  <div class="sub-indicator-value">
-                    {{ coreIndicatorData.dailyEntryVehicle || 0 }}
-                    <div class="unit">辆</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="indicator-card indicator-card3">
-              <div class="indicator-title">当日收费总额</div>
-              <div class="sub-indicators">
-                <div class="sub-indicator-item">
-                  <div class="sub-indicator-value">
-                    {{ coreIndicatorData.dailyTotalChargeAmount || 0 }}
-                    <div class="unit">元</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="indicator-card indicator-card4">
-              <div class="indicator-title">总路侧泊位数</div>
-              <div class="sub-indicators">
-                <div class="sub-indicator-item">
-                  <div class="sub-indicator-value">
-                    {{ coreIndicatorData.totalRoadside || 0 }}
-                    <div class="unit">个</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="indicator-card indicator-card5">
-              <div class="indicator-title">设备在线率</div>
-              <div class="sub-indicators">
-                <div class="sub-indicator-item">
-                  <div class="sub-indicator-value">
-                    {{
-                      (coreIndicatorData.deviceOnlineRate * 100 || 0).toFixed(2)
-                    }}
-                    <div class="unit">%</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="indicator-card indicator-card6">
-              <div class="indicator-title">停车场开放率</div>
-              <div class="sub-indicators">
-                <div class="sub-indicator-item">
-                  <div class="sub-indicator-value">
-                    {{
-                      (coreIndicatorData.lotOpeningRate * 100 || 0).toFixed(2)
-                    }}
-                    <div class="unit">%</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="indicator-card indicator-card7">
-              <div class="indicator-title">故障设备数</div>
-              <div class="sub-indicators">
-                <div class="sub-indicator-item">
-                  <div class="sub-indicator-value">
-                    {{ coreIndicatorData.faultDevice || 0 }}
-                    <div class="unit">台</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div
-              class="indicator-card indicator-card8"
-              :class="{ 'pulse-danger': isWarnDataAbnormal }"
-            >
-              <div class="indicator-title">预警事件数</div>
-              <div class="sub-indicators">
-                <div class="sub-indicator-item">
-                  <div class="sub-indicator-value">
-                    {{ coreIndicatorData.earlyWarningEvent || 0 }}
-                    <div class="unit">起</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="indicator-card indicator-card9">
-              <div class="indicator-title">逃费订单数</div>
-              <div class="sub-indicators">
-                <div class="sub-indicator-item">
-                  <div class="sub-indicator-value">
-                    {{ coreIndicatorData.feeEvasionOrder || 0 }}
-                    <div class="unit">单</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="indicator-card indicator-card-ratio1">
-              <div class="indicator-title">全市停车场数</div>
-              <div class="sub-indicators">
+
+              <!-- 饼图视图 -->
+              <div v-if="activeDeviceView === '饼图'" class="view-content">
                 <div
-                  class="sub-indicator-item"
-                  style="display: flex; flex-direction: column; gap: 0.5vh"
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
                 >
-                  <div class="ratio-item">
-                    同比：{{
-                      (
-                        coreIndicatorData.yearOnYear?.citywideLot * 100 || 0
-                      ).toFixed(2)
-                    }}%
-                  </div>
-                  <div class="ratio-item">
-                    环比：{{
-                      (
-                        coreIndicatorData.monthOnMonth?.citywideLot * 100 || 0
-                      ).toFixed(2)
-                    }}%
-                  </div>
+                  <ChartPie1
+                    :data="parkDeviceTypeRatio"
+                    title="设备类型占比"
+                    :key="deviceChartRefreshKey"
+                  />
                 </div>
-              </div>
-            </div>
-            <div class="indicator-card indicator-card-ratio2">
-              <div class="indicator-title">当日入场车次</div>
-              <div class="sub-indicators">
                 <div
-                  class="sub-indicator-item"
-                  style="display: flex; flex-direction: column; gap: 0.5vh"
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
                 >
-                  <div class="ratio-item">
-                    同比：{{
-                      (
-                        coreIndicatorData.yearOnYear?.dailyEntryVehicle * 100 ||
-                        0
-                      ).toFixed(2)
-                    }}%
-                  </div>
-                  <div class="ratio-item">
-                    环比：{{
-                      (
-                        coreIndicatorData.monthOnMonth?.dailyEntryVehicle *
-                        100 || 0
-                      ).toFixed(2)
-                    }}%
-                  </div>
+                  <ChartPie2
+                    :data="parkDeviceStatusRatio"
+                    title="设备运行状态占比"
+                    :key="deviceChartRefreshKey"
+                  />
                 </div>
               </div>
-            </div>
-            <div class="indicator-card indicator-card-ratio3">
-              <div class="indicator-title">当日收费总额</div>
-              <div class="sub-indicators">
+
+              <!-- 折线图视图 -->
+              <div v-if="activeDeviceView === '折线图'" class="view-content">
                 <div
-                  class="sub-indicator-item"
-                  style="display: flex; flex-direction: column; gap: 0.5vh"
+                  style="
+                    display: inline-block;
+                    width: 100%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
                 >
-                  <div class="ratio-item">
-                    同比：{{
-                      (
-                        coreIndicatorData.yearOnYear?.dailyTotalChargeAmount *
-                        100 || 0
-                      ).toFixed(2)
-                    }}%
-                  </div>
-                  <div class="ratio-item">
-                    环比：{{
-                      (
-                        coreIndicatorData.monthOnMonth?.dailyTotalChargeAmount *
-                        100 || 0
-                      ).toFixed(2)
-                    }}%
-                  </div>
+                  <ChartLine1
+                    :data="parkDeviceOnlineRateTrend7d"
+                    title="近7日设备在线率变化趋势"
+                    :key="deviceChartRefreshKey"
+                  />
                 </div>
               </div>
-            </div>
-          </div>
+            </el-tab-pane>
+            <el-tab-pane label="通行交易" name="tab2">
+              <div class="content-placeholder"><p>通行交易</p></div>
+            </el-tab-pane>
+            <el-tab-pane label="运维服务" name="tab3">
+              <div class="content-placeholder"><p>运维服务</p></div>
+            </el-tab-pane>
+          </el-tabs>
           <div class="panel-footer"></div>
         </div>
-        <div
-          class="panel left-bottom"
-          style="min-width: 3vw; overflow: hidden"
-          ref="object"
-        >
-          <div class="header-actions">
-            <div class="actions-left"><p>核心对象分布</p></div>
-            <div class="actions-right">
-              <el-icon style="font-size: 1vw; color: #409eff">
-                <Operation />
-              </el-icon>
-              <button
-                class="panel-fullscreen-btn"
-                @click="togglePanelFullscreen('object')"
-              >
-                <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
-              </button>
-            </div>
-          </div>
-          <div class="object-table">
-            <el-tabs v-model="activeObjectTab" type="card" class="object-tabs">
-              <el-tab-pane label="停车场" name="parkingLot">
-                <el-table
-                  :data="parkingCoreObjectList"
-                  border
-                  size="small"
-                  width="100%"
-                  height="100%"
-                  class="core-object-table"
-                  @row-click="handleObjectRowClick"
-                >
-                  <el-table-column prop="lotId" label="停车场ID" />
-                  <el-table-column
-                    prop="lotName"
-                    label="停车场名称"
-                    min-width="100px"
-                  />
-                  <el-table-column
-                    prop="parkType"
-                    label="停车场类型"
-                    min-width="100px"
-                  />
-                  <el-table-column
-                    prop="areaCode"
-                    label="所属区域编码"
-                    min-width="100px"
-                  />
-                  <el-table-column
-                    prop="roadside"
-                    label="路侧泊位数"
-                    min-width="100px"
-                  />
-                  <el-table-column
-                    prop="availableRoadside"
-                    label="可用泊位数"
-                    min-width="100px"
-                  />
-                  <el-table-column
-                    prop="lotStatus"
-                    label="停车场状态"
-                    min-width="100px"
+        <div class="panel top-middle">
+          <el-tabs v-model="topMiddleActiveTab" class="common-tabs">
+            <el-tab-pane label="停车资源分布" name="tab1">
+              <div class="header-actions">
+                <div class="actions-left"><p></p></div>
+                <div class="actions-right">
+                  <button class="control-btn" @click="handleOrbitAnimation">
+                    <el-icon color="#409eff" size="16">
+                      <VideoPause v-if="mapCommonRef?.orbitStatus?.playing" />
+                      <VideoPlay v-else />
+                    </el-icon>
+                  </button>
+                  <button
+                    class="control-btn"
+                    @click="orbitConfigDialogVisible = true"
                   >
-                    <template #default="scope">
-                      <el-tag :type="getLotStatusTagType(scope.row.lotStatus)">
-                        {{ scope.row.lotStatus }}
-                      </el-tag>
-                    </template>
-                  </el-table-column>
-                  <el-table-column
-                    prop="createTime"
-                    label="创建时间"
-                    min-width="100px"
+                    <el-icon color="#409eff" size="16"><Setting /></el-icon>
+                  </button>
+                  <button class="control-btn" @click="openMapFilterDrawer">
+                    <el-icon color="#409eff" size="16"><Filter /></el-icon>
+                  </button>
+                  <button
+                    class="panel-fullscreen-btn"
+                    @click="togglePanelFullscreen('map')"
                   >
-                    <template #default="scope">
-                      {{ formatTimeStamp(scope.row.createTime) }}
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </el-tab-pane>
-              <el-tab-pane label="泊位" name="berth">
-                <el-table
-                  :data="parkingCoreObjectList"
-                  border
-                  size="small"
-                  width="100%"
-                  height="100%"
-                  class="core-object-table"
-                  @row-click="handleObjectRowClick"
-                >
-                  <el-table-column
-                    prop="roadsideId"
-                    label="路侧泊位ID"
-                    min-width="100px"
-                  />
-                  <el-table-column
-                    prop="lotId"
-                    label="所属停车场ID"
-                    min-width="100px"
-                  />
-                  <el-table-column prop="roadsideType" label="泊位类型" />
-                  <el-table-column prop="roadside" label="总泊位数" />
-                  <el-table-column
-                    prop="availableRoadside"
-                    label="可用泊位数"
-                    min-width="100px"
-                  />
-                  <el-table-column prop="roadsideStatus" label="泊位状态">
-                    <template #default="scope">
-                      <el-tag
-                        :type="
-                          getRoadsideStatusTagType(scope.row.roadsideStatus)
-                        "
+                    <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
+                  </button>
+                </div>
+              </div>
+              <!-- 筛选抽屉 -->
+              <div
+                v-if="filterDrawerVisible"
+                class="top-drawer-mask"
+                @click="filterDrawerVisible = false"
+              ></div>
+              <transition name="top-drawer">
+                <div v-if="filterDrawerVisible" class="top-drawer-container">
+                  <div class="filter-form-container">
+                    <el-form :model="filterForm" inline class="filter-form">
+                      <el-form-item
+                        label="时间范围："
+                        prop="timeRange"
+                        style="background-color: aliceblue"
                       >
-                        {{ scope.row.roadsideStatus }}
-                      </el-tag>
-                    </template>
-                  </el-table-column>
-                  <el-table-column
-                    prop="areaCode"
-                    label="所属区域编码"
-                    min-width="100px"
-                  />
-                  <el-table-column
-                    prop="createTime"
-                    label="创建时间"
-                    min-width="100px"
-                  >
-                    <template #default="scope">
-                      {{ formatTimeStamp(scope.row.createTime) }}
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </el-tab-pane>
-              <el-tab-pane label="设备" name="device">
-                <el-table
-                  :data="parkingCoreObjectList"
-                  border
-                  size="small"
-                  width="100%"
-                  height="100%"
-                  class="core-object-table"
-                  @row-click="handleObjectRowClick"
-                >
-                  <el-table-column prop="deviceId" label="设备ID" />
-                  <el-table-column prop="deviceCode" label="设备编码" />
-                  <el-table-column prop="deviceType" label="设备类型" />
-                  <el-table-column
-                    prop="lotId"
-                    label="所属停车场ID"
-                    min-width="100px"
-                  />
-                  <el-table-column
-                    prop="roadsideId"
-                    label="关联泊位ID"
-                    min-width="100px"
-                  />
-                  <el-table-column prop="deviceStatus" label="设备状态">
-                    <template #default="scope">
-                      <el-tag
-                        :type="getDeviceStatusTagType(scope.row.deviceStatus)"
+                        <el-radio-group v-model="filterForm.timeRange">
+                          <el-radio label="all">所有时间</el-radio>
+                          <el-radio label="today">今日</el-radio>
+                          <el-radio label="yesterday">昨日</el-radio>
+                          <el-radio label="7days">近7日</el-radio>
+                        </el-radio-group>
+                      </el-form-item>
+                      <el-form-item
+                        label="停车场类型："
+                        prop="parkTypes"
+                        style="background-color: aliceblue"
                       >
-                        {{ scope.row.deviceStatus }}
-                      </el-tag>
-                    </template>
-                  </el-table-column>
-                  <el-table-column
-                    prop="areaCode"
-                    label="所属区域编码"
-                    min-width="100px"
-                  />
-                  <el-table-column
-                    prop="createTime"
-                    label="创建时间"
-                    min-width="100px"
-                  >
-                    <template #default="scope">
-                      {{ formatTimeStamp(scope.row.createTime) }}
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </el-tab-pane>
-            </el-tabs>
-          </div>
-          <div class="panel-footer"></div>
-          <el-dialog
-            v-model="objectDetailVisible"
-            width="50%"
-            class="object-dialog"
-          >
-            <div class="object-detail">
-              <div class="detail-section">
-                <div class="custom-detail-panel">
-                  <div class="detail-panel-header">核心对象信息</div>
-                  <div class="detail-panel-body">
-                    <div class="detail-row">
-                      <div class="detail-item">
-                        <span class="detail-label">停车场ID：</span
-                        ><span class="detail-value">{{
-                          selectedParkingRow.lotId || '-'
-                        }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">停车场名称：</span
-                        ><span class="detail-value">{{
-                          selectedParkingRow.lotName || '-'
-                        }}</span>
-                      </div>
-                    </div>
-                    <div class="detail-row">
-                      <div class="detail-item">
-                        <span class="detail-label">停车场类型：</span
-                        ><span class="detail-value">{{
-                          selectedParkingRow.parkType || '-'
-                        }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">区域编码：</span
-                        ><span class="detail-value">{{
-                          selectedParkingRow.areaCode || '-'
-                        }}</span>
-                      </div>
-                    </div>
-                    <div class="detail-row">
-                      <div class="detail-item">
-                        <span class="detail-label">路侧泊位数：</span
-                        ><span class="detail-value">{{
-                          selectedParkingRow.roadside || 0
-                        }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">可用泊位数：</span
-                        ><span class="detail-value">{{
-                          selectedParkingRow.availableRoadside || 0
-                        }}</span>
-                      </div>
-                    </div>
-                    <div class="detail-row">
-                      <div class="detail-item">
-                        <span class="detail-label">停车场状态：</span
-                        ><span class="detail-value"
-                      ><el-tag
-                        :type="
-                              getLotStatusTagType(selectedParkingRow.lotStatus)
-                            "
-                      >{{ selectedParkingRow.lotStatus || '-' }}</el-tag
-                      ></span
+                        <el-checkbox-group v-model="filterForm.parkTypes">
+                          <el-checkbox label="路侧" />
+                          <el-checkbox label="公共" />
+                          <el-checkbox label="专用" />
+                        </el-checkbox-group>
+                      </el-form-item>
+                      <el-form-item
+                        label="泊位状态："
+                        prop="berthStatuses"
+                        style="background-color: aliceblue"
                       >
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">泊位ID：</span
-                        ><span class="detail-value">{{
-                          selectedParkingRow.roadsideId || '-'
-                        }}</span>
-                      </div>
-                    </div>
-                    <div class="detail-row">
-                      <div class="detail-item">
-                        <span class="detail-label">泊位类型：</span
-                        ><span class="detail-value">{{
-                          selectedParkingRow.roadsideType || '-'
-                        }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">泊位状态：</span
-                        ><span class="detail-value"
-                      ><el-tag
-                        :type="
-                              getRoadsideStatusTagType(
-                                selectedParkingRow.roadsideStatus,
-                              )
-                            "
-                      >{{
-                          selectedParkingRow.roadsideStatus || '-'
-                        }}</el-tag
-                      ></span
+                        <el-checkbox-group v-model="filterForm.berthStatuses">
+                          <el-checkbox label="故障" />
+                          <el-checkbox label="空闲" />
+                          <el-checkbox label="占用" />
+                          <el-checkbox label="禁用" />
+                        </el-checkbox-group>
+                      </el-form-item>
+                      <el-form-item
+                        label="设备类型："
+                        prop="deviceTypes"
+                        style="background-color: aliceblue"
                       >
-                      </div>
-                    </div>
-                    <div class="detail-row">
-                      <div class="detail-item">
-                        <span class="detail-label">设备ID：</span
-                        ><span class="detail-value">{{
-                          selectedParkingRow.deviceId || '-'
-                        }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">设备编码：</span
-                        ><span class="detail-value">{{
-                          selectedParkingRow.deviceCode || '-'
-                        }}</span>
-                      </div>
-                    </div>
-                    <div class="detail-row">
-                      <div class="detail-item">
-                        <span class="detail-label">设备类型：</span
-                        ><span class="detail-value">{{
-                          selectedParkingRow.deviceType || '-'
-                        }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">设备状态：</span
-                        ><span class="detail-value"
-                      ><el-tag
-                        :type="
-                              getDeviceStatusTagType(
-                                selectedParkingRow.deviceStatus,
-                              )
-                            "
-                      >{{
-                          selectedParkingRow.deviceStatus || '-'
-                        }}</el-tag
-                      ></span
+                        <el-checkbox-group v-model="filterForm.deviceTypes">
+                          <el-checkbox label="道闸" />
+                          <el-checkbox label="摄像头" />
+                          <el-checkbox label="计费桩" />
+                          <el-checkbox label="充电桩" />
+                          <el-checkbox label="传感器" />
+                          <el-checkbox label="边缘网关" />
+                        </el-checkbox-group>
+                      </el-form-item>
+                      <el-form-item
+                        label="设备状态："
+                        prop="deviceStatuses"
+                        style="background-color: aliceblue"
                       >
-                      </div>
-                    </div>
-                    <div class="detail-row">
-                      <div class="detail-item">
-                        <span class="detail-label">创建时间：</span
-                        ><span class="detail-value">{{
-                          formatTimeStamp(selectedParkingRow.createTime) || '-'
-                        }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">-</span
-                        ><span class="detail-value">-</span>
-                      </div>
+                        <el-checkbox-group v-model="filterForm.deviceStatuses">
+                          <el-checkbox label="故障" />
+                          <el-checkbox label="在线" />
+                          <el-checkbox label="离线" />
+                        </el-checkbox-group>
+                      </el-form-item>
+                      <el-form-item
+                        label="预警等级："
+                        prop="alertLevels"
+                        style="background-color: aliceblue"
+                      >
+                        <el-checkbox-group v-model="filterForm.alertLevels">
+                          <el-checkbox label="高" />
+                          <el-checkbox label="中" />
+                          <el-checkbox label="低" />
+                        </el-checkbox-group>
+                      </el-form-item>
+                      <el-button @click="resetMapFilter">重置</el-button>
+                    </el-form>
+                    <div class="filter-btn-group">
+                      <el-button type="primary" @click="submitMapFilter">
+                        确定
+                      </el-button>
+                      <el-button @click="filterDrawerVisible = false">
+                        取消
+                      </el-button>
                     </div>
                   </div>
                 </div>
+              </transition>
+              <!-- 地图组件 -->
+              <div style="flex: 1; width: 100%; height: calc(100% - 2vh)">
+                <MapCommon
+                  ref="mapCommonRef"
+                  id-name="parkingMap"
+                  :geometries-array="geometriesArray"
+                  :orbit-config="orbitConfigData"
+                />
               </div>
-            </div>
-            <template #footer>
-              <el-button @click="objectDetailVisible = false"> 关闭 </el-button>
-            </template>
-          </el-dialog>
-        </div>
-      </div>
-      <div class="middle">
-        <div class="panel middle-top" style="min-width: 3vw" ref="map">
-          <div class="header-actions">
-            <div class="actions-left"><p>全域数据地图</p></div>
-            <div class="actions-right">
-              <button class="control-btn" @click="handleOrbitAnimation">
-                <el-icon color="#409eff" size="16">
-                  <VideoPause
-                    v-if="mapCommonRef?.orbitStatus?.playing"
-                  /><VideoPlay v-else />
-                </el-icon>
-              </button>
-              <button
-                class="control-btn"
-                @click="orbitConfigDialogVisible = true"
+              <!-- 地图环绕配置弹窗 -->
+              <el-dialog
+                v-model="orbitConfigDialogVisible"
+                title="地图环绕配置"
+                width="40%"
+                @close="resetOrbitConfigForm"
               >
-                <el-icon color="#409eff" size="16"><Setting /></el-icon>
-              </button>
-              <button class="control-btn" @click="openMapFilterDrawer">
-                <el-icon color="#409eff" size="16"><Filter /></el-icon>
-              </button>
-              <button
-                class="panel-fullscreen-btn"
-                @click="togglePanelFullscreen('map')"
-              >
-                <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
-              </button>
-            </div>
-          </div>
-          <div
-            v-if="filterDrawerVisible"
-            class="top-drawer-mask"
-            @click="filterDrawerVisible = false"
-          ></div>
-          <transition name="top-drawer">
-            <div v-if="filterDrawerVisible" class="top-drawer-container">
-              <div class="filter-form-container">
-                <el-form :model="filterForm" inline class="filter-form">
-                  <el-form-item
-                    label="时间范围："
-                    prop="timeRange"
-                    style="background-color: aliceblue"
-                  >
-                    <el-radio-group v-model="filterForm.timeRange">
-                      <el-radio label="all">所有时间</el-radio>
-                      <el-radio label="today">今日</el-radio>
-                      <el-radio label="yesterday">昨日</el-radio>
-                      <el-radio label="7days">近7日</el-radio>
-                    </el-radio-group>
+                <el-form
+                  :model="orbitConfigForm"
+                  label-width="150px"
+                  :rules="orbitConfigRules"
+                  ref="orbitConfigFormRef"
+                >
+                  <el-form-item label="旋转中心点纬度" prop="centerLat">
+                    <el-input
+                      v-model.number="orbitConfigForm.centerLat"
+                      step="0.01"
+                      precision="6"
+                    />
                   </el-form-item>
-                  <el-form-item
-                    label="停车场类型："
-                    prop="parkTypes"
-                    style="background-color: aliceblue"
-                  >
-                    <el-checkbox-group v-model="filterForm.parkTypes">
-                      <el-checkbox label="路侧" />
-                      <el-checkbox label="公共" />
-                      <el-checkbox label="专用" />
-                    </el-checkbox-group>
+                  <el-form-item label="旋转中心点经度" prop="centerLng">
+                    <el-input
+                      v-model.number="orbitConfigForm.centerLng"
+                      step="0.01"
+                      precision="6"
+                    />
                   </el-form-item>
-                  <el-form-item
-                    label="泊位状态："
-                    prop="berthStatuses"
-                    style="background-color: aliceblue"
-                  >
-                    <el-checkbox-group v-model="filterForm.berthStatuses">
-                      <el-checkbox label="故障" />
-                      <el-checkbox label="空闲" />
-                      <el-checkbox label="占用" />
-                      <el-checkbox label="禁用" />
-                    </el-checkbox-group>
+                  <el-form-item label="旋转速度(度/帧)" prop="rotateSpeed">
+                    <el-input
+                      v-model.number="orbitConfigForm.rotateSpeed"
+                      min="0.01"
+                      max="1"
+                      step="0.01"
+                    />
                   </el-form-item>
-                  <el-form-item
-                    label="设备类型："
-                    prop="deviceTypes"
-                    style="background-color: aliceblue"
-                  >
-                    <el-checkbox-group v-model="filterForm.deviceTypes">
-                      <el-checkbox label="道闸" />
-                      <el-checkbox label="摄像头" />
-                      <el-checkbox label="计费桩" />
-                      <el-checkbox label="充电桩" />
-                      <el-checkbox label="传感器" />
-                      <el-checkbox label="边缘网关" />
-                    </el-checkbox-group>
+                  <el-form-item label="地图俯仰角" prop="pitch">
+                    <el-input
+                      v-model.number="orbitConfigForm.pitch"
+                      min="0"
+                      max="80"
+                      step="1"
+                    />
                   </el-form-item>
-                  <el-form-item
-                    label="设备状态："
-                    prop="deviceStatuses"
-                    style="background-color: aliceblue"
-                  >
-                    <el-checkbox-group v-model="filterForm.deviceStatuses">
-                      <el-checkbox label="故障" />
-                      <el-checkbox label="在线" />
-                      <el-checkbox label="离线" />
-                    </el-checkbox-group>
+                  <el-form-item label="地图缩放级别" prop="zoom">
+                    <el-input
+                      v-model.number="orbitConfigForm.zoom"
+                      min="1"
+                      max="20"
+                      step="1"
+                    />
                   </el-form-item>
-                  <el-form-item
-                    label="预警等级："
-                    prop="alertLevels"
-                    style="background-color: aliceblue"
-                  >
-                    <el-checkbox-group v-model="filterForm.alertLevels">
-                      <el-checkbox label="高" />
-                      <el-checkbox label="中" />
-                      <el-checkbox label="低" />
-                    </el-checkbox-group>
+                  <el-form-item label="是否循环旋转" prop="loop">
+                    <el-switch
+                      v-model="orbitConfigForm.loop"
+                      active-text="是"
+                      inactive-text="否"
+                    />
                   </el-form-item>
-                  <el-button @click="resetMapFilter">重置</el-button>
+                  <el-form-item>
+                    <el-button type="text" @click="resetToDefaultConfig">
+                      恢复默认配置
+                    </el-button>
+                  </el-form-item>
                 </el-form>
-                <div class="filter-btn-group">
-                  <el-button type="primary" @click="submitMapFilter">
-                    确定
-                  </el-button>
-                  <el-button @click="filterDrawerVisible = false">
+                <template #footer>
+                  <el-button @click="orbitConfigDialogVisible = false">
                     取消
                   </el-button>
-                </div>
-              </div>
-            </div>
-          </transition>
-          <div style="flex: 1; width: 100%; height: calc(100% - 2vh)">
-            <MapCommon
-              ref="mapCommonRef"
-              id-name="parkingMap"
-              :geometries-array="geometriesArray"
-              :orbit-config="orbitConfigData"
-            />
-          </div>
+                  <el-button type="primary" @click="submitOrbitConfig">
+                    确认配置
+                  </el-button>
+                </template>
+              </el-dialog>
+            </el-tab-pane>
+            <el-tab-pane label="在停车辆实时监控" name="tab2">
+              <div class="content-placeholder"><p>在停车辆实时监控</p></div>
+            </el-tab-pane>
+          </el-tabs>
           <div class="panel-footer"></div>
-          <el-dialog
-            v-model="orbitConfigDialogVisible"
-            title="地图环绕配置"
-            width="40%"
-            @close="resetOrbitConfigForm"
-          >
-            <el-form
-              :model="orbitConfigForm"
-              label-width="150px"
-              :rules="orbitConfigRules"
-              ref="orbitConfigFormRef"
-            >
-              <el-form-item label="旋转中心点纬度" prop="centerLat">
-                <el-input
-                  v-model.number="orbitConfigForm.centerLat"
-                  step="0.01"
-                  precision="6"
-                />
-              </el-form-item>
-              <el-form-item label="旋转中心点经度" prop="centerLng">
-                <el-input
-                  v-model.number="orbitConfigForm.centerLng"
-                  step="0.01"
-                  precision="6"
-                />
-              </el-form-item>
-              <el-form-item label="旋转速度(度/帧)" prop="rotateSpeed">
-                <el-input
-                  v-model.number="orbitConfigForm.rotateSpeed"
-                  min="0.01"
-                  max="1"
-                  step="0.01"
-                />
-              </el-form-item>
-              <el-form-item label="地图俯仰角" prop="pitch">
-                <el-input
-                  v-model.number="orbitConfigForm.pitch"
-                  min="0"
-                  max="80"
-                  step="1"
-                />
-              </el-form-item>
-              <el-form-item label="地图缩放级别" prop="zoom">
-                <el-input
-                  v-model.number="orbitConfigForm.zoom"
-                  min="1"
-                  max="20"
-                  step="1"
-                />
-              </el-form-item>
-              <el-form-item label="是否循环旋转" prop="loop">
-                <el-switch
-                  v-model="orbitConfigForm.loop"
-                  active-text="是"
-                  inactive-text="否"
-                />
-              </el-form-item>
-              <el-form-item>
-                <el-button type="text" @click="resetToDefaultConfig">
-                  恢复默认配置
-                </el-button>
-              </el-form-item>
-            </el-form>
-            <template #footer>
-              <el-button @click="orbitConfigDialogVisible = false">
-                取消
-              </el-button>
-              <el-button type="primary" @click="submitOrbitConfig">
-                确认配置
-              </el-button>
-            </template>
-          </el-dialog>
         </div>
-        <div class="panel middle-bottom" style="min-width: 3vw">
-          <div class="middle-bottom-top">
-            <div class="feature-cards-1x3">
-              <div
-                class="feature-card"
-                :class="{
-                  'pulse-danger': featureSituationData.lotUtilizationRate > 90,
-                }"
-              >
-                <div class="feature-title">停车场使用率</div>
-                <div class="feature-value">
-                  {{ featureSituationData.lotUtilizationRate || 0
-                  }}<span class="feature-unit">%</span>
-                </div>
-              </div>
-              <div
-                class="feature-card"
-                :class="{
-                  'pulse-danger': featureSituationData.revenueProportion > 80,
-                }"
-              >
-                <div class="feature-title">收入贡献占比</div>
-                <div class="feature-value">
-                  {{ featureSituationData.revenueProportion || 0
-                  }}<span class="feature-unit">%</span>
-                </div>
-              </div>
-              <div
-                class="feature-card"
-                :class="{
-                  'pulse-danger':
-                    featureSituationData.maintenanceTimelinessRate < 85,
-                }"
-              >
-                <div class="feature-title">维保及时率</div>
-                <div class="feature-value">
-                  {{ featureSituationData.maintenanceTimelinessRate || 0
-                  }}<span class="feature-unit">%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div
-            class="middle-bottom-bottom"
-            style="display: flex; height: 70%; padding-top: 1vh"
-          >
-            <div class="chart-item" style="flex: 3; height: 100%">
-              <VerticalBar1
-                :x-axis="statisticsData.faultDevice.labels || []"
-                :series="[
-                  {
-                    name: '故障数量',
-                    data: statisticsData.faultDevice.data || [],
-                  },
-                ]"
-                title="故障设备分布"
-                unit="台"
-                :base-font-scale="1"
-              />
-            </div>
-            <div class="chart-item" style="flex: 2; height: 100%">
-              <ChartPie
-                :data="{
-                  legend: statisticsData.chargeAbnormal.labels || [],
-                  series: [
-                    {
-                      name: '异常订单数',
-                      data: statisticsData.chargeAbnormal.data || [],
-                    },
-                  ],
-                }"
-                title="收费异常订单分布"
-                :base-font-scale="1"
-              />
-            </div>
-            <div class="chart-item" style="flex: 3; height: 100%">
-              <HorizontalBar1
-                :x-axis="statisticsData.feeEvasionRegion.labels || []"
-                :series="[
-                  {
-                    name: '逃费订单数',
-                    data: statisticsData.feeEvasionRegion.data || [],
-                  },
-                ]"
-                title="逃费高发区域"
-                unit="单"
-                :base-font-scale="1"
-              />
-            </div>
-          </div>
+        <div class="panel top-right">
+          <el-tabs v-model="topRightActiveTab" class="common-tabs">
+            <el-tab-pane label="泊位车位" name="tab1">
+              <div class="content-placeholder"><p>泊位车位</p></div>
+            </el-tab-pane>
+            <el-tab-pane label="终端设备" name="tab2">
+              <div class="content-placeholder"><p>终端设备</p></div>
+            </el-tab-pane>
+          </el-tabs>
           <div class="panel-footer"></div>
         </div>
       </div>
-      <div
-        class="right"
-        style="box-sizing: border-box; flex: 1; width: 100%; overflow: hidden"
-      >
-        <div class="panel right-top" style="min-width: 3vw">
-          <div class="header-actions">
-            <div class="actions-left"><p>全局态势趋势</p></div>
-            <div class="actions-right">
-              <el-icon style="font-size: 1vw; color: #409eff">
-                <Operation />
-              </el-icon>
-            </div>
-          </div>
-          <div class="trend-cards-3x2">
-            <div class="trend-card trend-card1">
-              <div class="trend-title">入场车次</div>
-              <div class="trend-value">
-                {{ trendIndicatorData.entryVehicleCount || 0
-                }}<span class="trend-unit">辆</span>
-              </div>
-            </div>
-            <div class="trend-card trend-card2">
-              <div class="trend-title">收费总额</div>
-              <div class="trend-value">
-                {{ trendIndicatorData.totalChargeAmount || 0
-                }}<span class="trend-unit">元</span>
-              </div>
-            </div>
-            <div class="trend-card trend-card3">
-              <div class="trend-title">路侧泊位使用率</div>
-              <div class="trend-value">
-                {{
-                  (
-                    trendIndicatorData.roadsideUtilizationRate * 100 || 0
-                  ).toFixed(2)
-                }}<span class="trend-unit">%</span>
-              </div>
-            </div>
-            <div
-              class="trend-card trend-card4"
-              :class="{ 'pulse-danger': isFaultDataAbnormal }"
-            >
-              <div class="trend-title">设备故障率</div>
-              <div class="trend-value">
-                {{ (trendIndicatorData.deviceFaultRate * 100 || 0).toFixed(2)
-                }}<span class="trend-unit">%</span>
-              </div>
-            </div>
-            <div class="trend-card trend-card5">
-              <div class="trend-title">订单完成率</div>
-              <div class="trend-value">
-                {{
-                  (trendIndicatorData.orderCompletionRate * 100 || 0).toFixed(
-                    2,
-                  )
-                }}<span class="trend-unit">%</span>
-              </div>
-            </div>
-            <div class="trend-card trend-card6">
-              <div class="trend-title">逃费发生率</div>
-              <div class="trend-value">
-                {{ (trendIndicatorData.feeEvasionRate * 100 || 0).toFixed(2)
-                }}<span class="trend-unit">%</span>
-              </div>
-            </div>
-          </div>
+      <div class="bottom">
+        <div class="panel bottom-left">
+          <el-tabs v-model="bottomLeftActiveTab" class="common-tabs">
+            <el-tab-pane label="通行交易" name="tab1">
+              <div class="content-placeholder"><p>通行交易</p></div>
+            </el-tab-pane>
+            <el-tab-pane label="设备运维" name="tab2">
+              <div class="content-placeholder"><p>设备运维</p></div>
+            </el-tab-pane>
+          </el-tabs>
           <div class="panel-footer"></div>
         </div>
-        <div
-          class="panel right-bottom"
-          style="
-            box-sizing: border-box !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            overflow: hidden !important;
-          "
-          ref="element"
-        >
-          <div class="header-actions">
-            <div class="actions-left"><p>核心要素运行</p></div>
-            <div class="actions-right">
-              <el-icon style="font-size: 1vw; color: #409eff">
-                <Operation />
-              </el-icon>
-              <button
-                class="panel-fullscreen-btn"
-                @click="togglePanelFullscreen('element')"
-              >
-                <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
-              </button>
-            </div>
-          </div>
-          <div class="element-table">
-            <el-tabs
-              v-model="activeElementTab"
-              type="card"
-              class="element-tabs"
-            >
-              <el-tab-pane label="泊位" name="berth">
-                <el-table
-                  :data="roadsideBerthList"
-                  border
-                  size="small"
-                  width="100%"
-                  height="100%"
-                  class="core-element-table"
-                  @row-click="handleElementRowClick"
-                >
-                  <el-table-column prop="roadsideId" label="路侧泊位ID" />
-                  <el-table-column prop="berthNumber" label="路侧泊位编号" />
-                  <el-table-column prop="lotId" label="所属停车场ID" />
-                  <el-table-column prop="roadsideStatus" label="实时状态">
-                    <template #default="scope">
-                      <el-tag
-                        :type="
-                          getRoadsideStatusTagType(scope.row.roadsideStatus)
-                        "
-                      >
-                        {{ scope.row.roadsideStatus }}
-                      </el-tag>
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="parkingTime" label="占用时长">
-                    <template #default="scope">
-                      {{ formatParkingTime(scope.row.parkingTime) }}
-                    </template>
-                  </el-table-column>
-                  <el-table-column
-                    prop="overtimeOccupationWarnId"
-                    label="超时长占用预警"
-                    min-width="90px"
-                  >
-                    <template #default="scope">
-                      <el-tag
-                        :type="
-                          scope.row.overtimeOccupationWarnId === '是'
-                            ? 'warning'
-                            : 'success'
-                        "
-                      >
-                        {{ scope.row.overtimeOccupationWarnId }}
-                      </el-tag>
-                    </template>
-                  </el-table-column>
-                  <el-table-column
-                    prop="nMVOccupationWarnId"
-                    label="非机动车辆占用告警"
-                    min-width="90px"
-                  >
-                    <template #default="scope">
-                      <el-tag
-                        :type="
-                          scope.row.nMVOccupationWarnId === '是'
-                            ? 'warning'
-                            : 'success'
-                        "
-                      >
-                        {{ scope.row.nMVOccupationWarnId }}
-                      </el-tag>
-                    </template>
-                  </el-table-column>
-                  <el-table-column
-                    prop="updateTime"
-                    label="更新时间"
-                    min-width="100px"
-                  >
-                    <template #default="scope">
-                      {{ formatTimeStamp(scope.row.updateTime) }}
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </el-tab-pane>
-              <el-tab-pane label="收费终端" name="paymentTerminal">
-                <el-table
-                  :data="roadsideBerthList"
-                  border
-                  size="small"
-                  width="100%"
-                  height="100%"
-                  class="core-element-table"
-                  @row-click="handleElementRowClick"
-                >
-                  <el-table-column prop="deviceId" label="设备ID" />
-                  <el-table-column prop="deviceType" label="设备类型" />
-                  <el-table-column prop="lotId" label="所属停车场ID" />
-                  <el-table-column prop="roadsideId" label="关联泊位ID" />
-                  <el-table-column prop="deviceStatus" label="设备状态">
-                    <template #default="scope">
-                      <el-tag
-                        :type="getDeviceStatusTagType(scope.row.deviceStatus)"
-                      >
-                        {{ scope.row.deviceStatus }}
-                      </el-tag>
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="faultType" label="故障类型" />
-                  <el-table-column prop="offlineDuration" label="离线时长">
-                    <template #default="scope">
-                      {{ formatOfflineTime(scope.row.offlineDuration) }}
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="paymentSuccessRate" label="支付成功率">
-                    <template #default="scope">
-                      {{ scope.row.paymentSuccessRate }}%
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="chargeAbnormal" label="收费异常次数" />
-                  <el-table-column
-                    prop="updateTime"
-                    label="更新时间"
-                    min-width="100px"
-                  >
-                    <template #default="scope">
-                      {{ formatTimeStamp(scope.row.updateTime) }}
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </el-tab-pane>
-              <el-tab-pane label="充电桩" name="chargingPile">
-                <el-table
-                  :data="roadsideBerthList"
-                  border
-                  size="small"
-                  width="100%"
-                  height="100%"
-                  class="core-element-table"
-                  @row-click="handleElementRowClick"
-                >
-                  <el-table-column prop="chargePileId" label="充电桩ID" />
-                  <el-table-column prop="lotId" label="所属停车场ID" />
-                  <el-table-column prop="roadsideId" label="关联泊位ID" />
-                  <el-table-column
-                    prop="chargePileStatus"
-                    label="充电桩运行状态"
-                  >
-                    <template #default="scope">
-                      <el-tag
-                        v-if="scope.row.chargePileStatus"
-                        :type="
-                          scope.row.chargePileStatus === '充电中'
-                            ? 'info'
-                            : 'success'
-                        "
-                      >
-                        {{ scope.row.chargePileStatus }}
-                      </el-tag>
-                      <span v-else>-</span>
-                    </template>
-                  </el-table-column>
-                  <el-table-column
-                    prop="chargePilePower"
-                    label="充电桩充电功率"
-                  />
-                  <el-table-column
-                    prop="chargePileRemainingPower"
-                    label="充电桩剩余电量"
-                  />
-                  <el-table-column prop="deviceId" label="关联设备ID" />
-                  <el-table-column prop="deviceStatus" label="设备状态">
-                    <template #default="scope">
-                      <el-tag
-                        :type="getDeviceStatusTagType(scope.row.deviceStatus)"
-                      >
-                        {{ scope.row.deviceStatus }}
-                      </el-tag>
-                    </template>
-                  </el-table-column>
-                  <el-table-column
-                    prop="updateTime"
-                    label="更新时间"
-                    min-width="100px"
-                  >
-                    <template #default="scope">
-                      {{ formatTimeStamp(scope.row.updateTime) }}
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </el-tab-pane>
-            </el-tabs>
-          </div>
+        <div class="panel bottom-middle">
+          <el-tabs v-model="bottomMiddleActiveTab" class="common-tabs">
+            <el-tab-pane label="停车资源分布明细" name="tab1">
+              <div class="content-placeholder"><p>停车资源分布明细</p></div>
+            </el-tab-pane>
+            <el-tab-pane label="终端设备分布明细" name="tab2">
+              <div class="content-placeholder"><p>终端设备分布明细</p></div>
+            </el-tab-pane>
+          </el-tabs>
           <div class="panel-footer"></div>
-          <el-dialog
-            v-model="elementDetailVisible"
-            width="50%"
-            class="element-dialog"
-          >
-            <div class="element-detail">
-              <div class="detail-section">
-                <div class="custom-detail-panel">
-                  <div class="detail-panel-header">核心要素信息</div>
-                  <div class="detail-panel-body">
-                    <div class="detail-row">
-                      <div class="detail-item">
-                        <span class="detail-label">路侧泊位ID：</span
-                        ><span class="detail-value">{{
-                          selectedRoadsideRow.roadsideId || '-'
-                        }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">路侧泊位编号：</span
-                        ><span class="detail-value">{{
-                          selectedRoadsideRow.berthNumber || '-'
-                        }}</span>
-                      </div>
-                    </div>
-                    <div class="detail-row">
-                      <div class="detail-item">
-                        <span class="detail-label">所属停车场ID：</span
-                        ><span class="detail-value">{{
-                          selectedRoadsideRow.lotId || '-'
-                        }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">实时状态：</span
-                        ><span class="detail-value"
-                      ><el-tag
-                        :type="
-                              getRoadsideStatusTagType(
-                                selectedRoadsideRow.roadsideStatus,
-                              )
-                            "
-                      >{{
-                          selectedRoadsideRow.roadsideStatus || '-'
-                        }}</el-tag
-                      ></span
-                      >
-                      </div>
-                    </div>
-                    <div class="detail-row">
-                      <div class="detail-item">
-                        <span class="detail-label">占用时长：</span
-                        ><span class="detail-value">{{
-                          formatParkingTime(selectedRoadsideRow.parkingTime) ||
-                          '0分钟'
-                        }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">超时长占用预警：</span
-                        ><span class="detail-value"
-                      ><el-tag
-                        :type="
-                              selectedRoadsideRow.overtimeOccupationWarnId ===
-                              '是'
-                                ? 'warning'
-                                : 'success'
-                            "
-                      >{{
-                          selectedRoadsideRow.overtimeOccupationWarnId ||
-                          '-'
-                        }}</el-tag
-                      ></span
-                      >
-                      </div>
-                    </div>
-                    <div class="detail-row">
-                      <div class="detail-item">
-                        <span class="detail-label">非机动车辆占用告警：</span
-                        ><span class="detail-value"
-                      ><el-tag
-                        :type="
-                              selectedRoadsideRow.nMVOccupationWarnId === '是'
-                                ? 'warning'
-                                : 'success'
-                            "
-                      >{{
-                          selectedRoadsideRow.nMVOccupationWarnId || '-'
-                        }}</el-tag
-                      ></span
-                      >
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">设备ID：</span
-                        ><span class="detail-value">{{
-                          selectedRoadsideRow.deviceId || '-'
-                        }}</span>
-                      </div>
-                    </div>
-                    <div class="detail-row">
-                      <div class="detail-item">
-                        <span class="detail-label">设备类型：</span
-                        ><span class="detail-value">{{
-                          selectedRoadsideRow.deviceType || '-'
-                        }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">设备状态：</span
-                        ><span class="detail-value"
-                      ><el-tag
-                        :type="
-                              getDeviceStatusTagType(
-                                selectedRoadsideRow.deviceStatus,
-                              )
-                            "
-                      >{{
-                          selectedRoadsideRow.deviceStatus || '-'
-                        }}</el-tag
-                      ></span
-                      >
-                      </div>
-                    </div>
-                    <div class="detail-row">
-                      <div class="detail-item">
-                        <span class="detail-label">故障类型：</span
-                        ><span class="detail-value">{{
-                          selectedRoadsideRow.faultType || '-'
-                        }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">离线时长：</span
-                        ><span class="detail-value">{{
-                          formatOfflineTime(
-                            selectedRoadsideRow.offlineDuration,
-                          ) || '0分钟'
-                        }}</span>
-                      </div>
-                    </div>
-                    <div class="detail-row">
-                      <div class="detail-item">
-                        <span class="detail-label">支付成功率：</span
-                        ><span class="detail-value"
-                      >{{
-                          selectedRoadsideRow.paymentSuccessRate || 0
-                        }}%</span
-                      >
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">收费异常次数：</span
-                        ><span class="detail-value">{{
-                          selectedRoadsideRow.chargeAbnormal || 0
-                        }}</span>
-                      </div>
-                    </div>
-                    <div class="detail-row">
-                      <div class="detail-item">
-                        <span class="detail-label">充电桩ID：</span
-                        ><span class="detail-value">{{
-                          selectedRoadsideRow.chargePileId || '-'
-                        }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">充电桩运行状态：</span
-                        ><span class="detail-value"
-                      ><el-tag
-                        v-if="selectedRoadsideRow.chargePileStatus"
-                        :type="
-                              selectedRoadsideRow.chargePileStatus === '充电中'
-                                ? 'info'
-                                : 'success'
-                            "
-                      >{{ selectedRoadsideRow.chargePileStatus }}</el-tag
-                      ><span v-else>-</span></span
-                      >
-                      </div>
-                    </div>
-                    <div class="detail-row">
-                      <div class="detail-item">
-                        <span class="detail-label">充电桩充电功率：</span
-                        ><span class="detail-value">{{
-                          selectedRoadsideRow.chargePilePower || '-'
-                        }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">充电桩剩余电量：</span
-                        ><span class="detail-value">{{
-                          selectedRoadsideRow.chargePileRemainingPower || '-'
-                        }}</span>
-                      </div>
-                    </div>
-                    <div class="detail-row">
-                      <div class="detail-item">
-                        <span class="detail-label">更新时间：</span
-                        ><span class="detail-value">{{
-                          formatTimeStamp(selectedRoadsideRow.updateTime) || '-'
-                        }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">-</span
-                        ><span class="detail-value">-</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <template #footer>
-              <el-button @click="elementDetailVisible = false">
-                关闭
-              </el-button>
-            </template>
-          </el-dialog>
+        </div>
+        <div class="panel bottom-right">
+          <el-tabs v-model="bottomRightActiveTab" class="common-tabs">
+            <el-tab-pane label="供需运营态势" name="tab1">
+              <div class="content-placeholder"><p>供需运营态势</p></div>
+            </el-tab-pane>
+            <el-tab-pane label="运维收费合规" name="tab2">
+              <div class="content-placeholder"><p>运维收费合规</p></div>
+            </el-tab-pane>
+          </el-tabs>
+          <div class="panel-footer"></div>
         </div>
       </div>
     </div>
@@ -2012,23 +1010,19 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 @import '../../../templatesstyle/common';
-@import '../../../templatesstyle/core-indicator-dashboard';
 @import '../../../templatesstyle/global-data-map';
-@import '../../../templatesstyle/global-posture-trend';
-@import '../../../templatesstyle/core-object-distribution';
-@import '../../../templatesstyle/posture-aggregation';
-@import '../../../templatesstyle/core-elements-operation';
+@import '../../../templatesstyle/indicator-cards3';
+@import '../../../templatesstyle/indicator-cards4';
 
+// 最外层容器
 .page-container {
   box-sizing: border-box;
   width: 100%;
   height: 100vh;
-  padding: 0 1vw;
-  overflow-x: hidden !important;
-  overflow-y: hidden;
+  padding: 0 20px;
+  overflow: hidden;
   color: #fff;
-  background: url('../../images/bg.jpg') no-repeat;
-  background-size: 100% 100%;
+  background: url('../../images/bg.jpg');
 }
 
 .header-box {
@@ -2066,73 +1060,56 @@ onUnmounted(() => {
 .mainbox {
   box-sizing: border-box;
   display: flex;
+  flex-direction: column;
   gap: 0.6vw;
-  width: 100%;
-  height: 88vh;
+  height: 91vh;
   margin: 0 auto;
-  overflow: hidden !important;
 }
 
-.left {
+.top {
   display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 1.5%;
-  overflow: hidden;
+  gap: 0.6vw;
+  height: 60%;
 }
 
-.left-top {
-  height: 44%;
-}
-
-.left-bottom {
-  height: 54.5%;
-}
-
-.middle {
-  box-sizing: border-box;
-  display: flex;
+.top-left {
   flex: 2;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
 }
 
-.middle-top {
-  position: relative;
-  flex: 1;
-  height: 66%;
-  padding: 0.2vw !important;
-  margin-bottom: 1%;
-  overflow: visible !important;
+.top-middle {
+  flex: 5;
 }
 
-.middle-bottom {
-  height: 33%;
+.top-right {
+  flex: 2;
 }
 
-.middle-bottom-top {
-  height: 30%;
-}
-
-.middle-bottom-bottom {
-  height: 70%;
-}
-
-.right {
+.bottom {
   display: flex;
+  gap: 0.6vw;
+  height: 36%;
+}
+
+.bottom-left {
   flex: 1;
-  flex-direction: column;
-  gap: 1.5%;
 }
 
-.right-top {
-  height: 44%;
+.bottom-middle {
+  flex: 1;
 }
 
-.right-bottom {
-  height: 54.5%;
+.bottom-right {
+  flex: 1;
+}
+
+.content-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 1vw;
+  color: #00ffd0;
 }
 
 ::v-deep(.el-button--text.el-button--small) {

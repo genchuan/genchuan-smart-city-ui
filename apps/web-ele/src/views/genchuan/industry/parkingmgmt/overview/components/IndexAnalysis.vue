@@ -10118,71 +10118,7 @@ onUnmounted(() => {
 .bottom-middle { flex: 1; }
 .bottom-right { flex: 1; }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0 0.2vw;
-  .actions-left p {
-    margin: 0;
-    font-size: 0.9vw;
-    font-weight: 500;
-    color: #00ffd0;
-  }
-  .view-btn-group { display: flex; margin-right: 0.5vw; }
-  :deep(.view-btn) {
-    padding: 0 0.4vw;
-    font-size: 0.6vw;
-    color: #fff;
-    background-color: transparent;
-    border-color: rgb(25 186 139 / 60%);
-    &:hover { color: #00ffd0; border-color: #00ffd0; }
-    &.el-button--primary {
-      color: #afc2ff;
-      background-color: rgb(0 204 255 / 20%);
-      border-color: rgb(25 186 139 / 60%);
-    }
-  }
-  .panel-fullscreen-btn {
-    margin-right: 0.5vw;
-    cursor: pointer;
-    background: transparent;
-    border: none;
-    padding: 0;
-  }
-}
-
-.view-content {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-  width: 100% !important;
-  max-width: 100% !important;
-  height: 100% !important;
-  overflow: hidden !important;
-  padding: 0.2vw !important;
-  box-sizing: border-box !important;
-}
-
-.content-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  font-size: 1vw;
-  color: #00ffd0;
-}
-
 .blink-animation { animation: blink 1.5s infinite; }
-
-:deep(.panel) {
-  .el-tab-pane { display: flex; flex-direction: column; width: 100% !important; height: 100% !important; }
-  .view-content { flex: 1; width: 100% !important; height: 100% !important; min-height: 300px !important; }
-  .view-content > div { width: 100% !important; height: 100% !important; }
-}
 
 // 弹窗样式
 :deep(.park-dialog) {
