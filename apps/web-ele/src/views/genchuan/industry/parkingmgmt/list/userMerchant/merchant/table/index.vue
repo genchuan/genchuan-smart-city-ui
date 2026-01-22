@@ -4,7 +4,7 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -27,6 +27,14 @@ const props = defineProps({
   secondShow: {
     type: Boolean,
     default: false,
+  },
+  showStats: {
+    type: Boolean,
+    default: false,
+  },
+  toggleStats: {
+    type: Function,
+    default: () => {},
   },
 });
 const getTitle = computed(() => {
@@ -119,21 +127,57 @@ function handleEdit(row) {
     .open();
 }
 
-/** 删除商户 */
-async function handleDelete(row) {
+/** 确认禁用用户 */
+async function confirmDisable(row) {
+  try {
+    await ElMessageBox.confirm(
+      `确定要禁用商户"${row.merchantName}"吗？`,
+      '确认操作',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      },
+    );
+    // 用户确认后执行禁用操作
+    await handleDisable(row);
+  } catch {
+    // 用户取消操作，不执行任何操作
+  }
+}
+async function handleDisable(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.merchantName]),
+    text: `正在禁用商户"${row.merchantName}"...`,
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => v.merchantId !== row.merchantId,
-    );
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.merchantName]));
-    handleRefresh();
+    // 更新数据源中的对应数据
+    const index = dataObj.apilist.findIndex(v => v.merchantId === row.merchantId);
+    if (index !== -1) {
+      dataObj.apilist[index].status = '禁用';
+      // 同时更新当前行的状态，确保UI实时更新
+      row.status = '禁用';
+      ElMessage.success(`商户"${row.merchantName}"禁用成功`);
+      handleRefresh();
+    }
   } finally {
     loadingInstance.close();
   }
 }
+/** 删除商户 */
+// async function handleDelete(row) {
+//   const loadingInstance = ElLoading.service({
+//     text: $t('ui.actionMessage.deleting', [row.merchantName]),
+//   });
+//   try {
+//     dataObj.apilist = dataObj.apilist.filter(
+//       (v) => v.merchantId !== row.merchantId,
+//     );
+//     ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.merchantName]));
+//     handleRefresh();
+//   } finally {
+//     loadingInstance.close();
+//   }
+// }
 
 /** 批量删除 */
 async function handleDeleteBatch() {
@@ -154,44 +198,47 @@ async function handleDeleteBatch() {
 }
 
 /** 状态切换 */
-async function handleStatusChange(row) {
-  // 获取新状态
-  const newStatus = row.status;
-  // 保存旧状态，用于用户取消时恢复
-  const oldStatus = newStatus === '正常' ? '停业' : '正常';
-  // 显示确认对话框
-  try {
-    await confirm(
-      $t(`确定将商户 ${row.merchantName} 的状态切换为 ${newStatus} 吗？`),
-    );
-    const loadingInstance = ElLoading.service({
-      text: $t('ui.actionMessage.updating', [row.merchantName]),
-    });
-    try {
-      // 更新数据源
-      const index = dataObj.apilist.findIndex(
-        (v) => v.merchantId === row.merchantId,
-      );
-      if (index !== -1) {
-        dataObj.apilist[index].status = newStatus;
-        ElMessage.success(
-          $t('ui.actionMessage.updateSuccess', [row.merchantName]),
-        );
-        handleRefresh();
-      }
-    } finally {
-      loadingInstance.close();
-    }
-  } catch {
-    // 用户取消确认，恢复旧状态
-    row.status = oldStatus;
-  }
-}
+// async function handleStatusChange(row) {
+//   // 获取新状态
+//   const newStatus = row.status;
+//   // 保存旧状态，用于用户取消时恢复
+//   const oldStatus = newStatus === '正常' ? '停业' : '正常';
+//   // 显示确认对话框
+//   try {
+//     await confirm(
+//       $t(`确定将商户 ${row.merchantName} 的状态切换为 ${newStatus} 吗？`),
+//     );
+//     const loadingInstance = ElLoading.service({
+//       text: $t('ui.actionMessage.updating', [row.merchantName]),
+//     });
+//     try {
+//       // 更新数据源
+//       const index = dataObj.apilist.findIndex(
+//         (v) => v.merchantId === row.merchantId,
+//       );
+//       if (index !== -1) {
+//         dataObj.apilist[index].status = newStatus;
+//         ElMessage.success(
+//           $t('ui.actionMessage.updateSuccess', [row.merchantName]),
+//         );
+//         handleRefresh();
+//       }
+//     } finally {
+//       loadingInstance.close();
+//     }
+//   } catch {
+//     // 用户取消确认，恢复旧状态
+//     row.status = oldStatus;
+//   }
+// }
 
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.merchantId);
 }
+
+// 保存搜索条件
+const searchFormData = ref({});
 
 const dataObj = reactive({
   totalShow: false,
@@ -209,30 +256,59 @@ const changeTotalShow = () => {
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
-  dataObj.total = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (statusActiveName.value === '全部') {
-        return true;
+  
+  // 根据状态和搜索条件过滤数据
+  const filteredData = dataObj.apilist.filter((v) => {
+    // 状态过滤
+    if (statusActiveName.value !== '全部' && v.status !== statusActiveName.value) {
+      return false;
+    }
+    
+    // 搜索条件过滤
+    for (const [key, value] of Object.entries(searchFormData.value)) {
+      if (value) {
+        const fieldValue = v[key];
+        if (fieldValue) {
+          if (key === 'businessScope') {
+            // 处理经营范围字段，它是数组类型
+            if (Array.isArray(fieldValue)) {
+              // 检查数组中是否有任何一个元素包含搜索值
+              if (!fieldValue.some(scope => scope.includes(value))) {
+                return false;
+              }
+            } else if (typeof fieldValue === 'string') {
+              // 兼容字符串类型
+              if (!fieldValue.includes(value)) {
+                return false;
+              }
+            } else {
+              return false;
+            }
+          } else if (typeof fieldValue === 'string') {
+            if (!fieldValue.includes(value)) {
+              return false;
+            }
+          } else if (fieldValue !== value) {
+            return false;
+          }
+        } else {
+          return false;
+        }
       }
-      return v.status === statusActiveName.value;
-    }).length;
-  dataObj.list = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (statusActiveName.value === '全部') {
-        return true;
-      }
-      return v.status === statusActiveName.value;
-    })
-    .slice(
-      (page.currentPage - 1) * page.pageSize,
-      page.currentPage * page.pageSize,
-    );
+    }
+    
+    return true;
+  });
+  
+  dataObj.total = filteredData.length;
+  dataObj.list = filteredData.slice(
+    (page.currentPage - 1) * page.pageSize,
+    page.currentPage * page.pageSize,
+  );
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [QueryForm, queryFormApi] = useVbenForm({
   // 默认展开
   collapsed: false,
   // 所有表单项共用，可单独在表单内覆盖
@@ -264,7 +340,12 @@ const [QueryForm] = useVbenForm({
 
 // 搜索表单查询
 function onSubmit() {
+  // 获取表单值并保存到搜索条件
+  searchFormData.value = queryFormApi.form.values;
+  // 关闭抽屉
   drawerApi.close();
+  // 刷新表格数据
+  handleRefresh();
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -299,7 +380,7 @@ const statusActiveName = ref('全部');
 const topTabsData = ref([
   { label: '全部', value: '全部' },
   { label: '正常', value: '正常' },
-  { label: '停业', value: '停业' },
+  { label: '禁用', value: '禁用' },
   { label: '注销', value: '注销' },
 ]);
 
@@ -458,6 +539,11 @@ const handleOpenSettlement = (row) => {
             @click="handleSerachShow"
           />
           <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
+          />
+          <IconButton
             content="全屏"
             icon-name="FullScreen"
             @click="handleFullShow"
@@ -476,22 +562,38 @@ const handleOpenSettlement = (row) => {
       <template #settlementRatio="{ row }">
         {{ (row.settlementRatio * 100).toFixed(2) }}%
       </template>
+      <!-- 账号状态插槽 -->
       <template #status="{ row }">
-        <div class="status-cell">
-          <el-switch
-            v-if="row.status !== '注销'"
-            v-model="row.status"
-            active-value="正常"
-            inactive-value="停业"
-            active-color="#13ce66"
-            inactive-color="#f56c6c"
-            @change="handleStatusChange(row)"
-          />
-          <el-tag v-else type="danger">
-            {{ row.status }}
-          </el-tag>
-        </div>
+        <el-tag
+          :type="
+            row.status === '正常'
+              ? 'success'
+              : row.status === '禁用'
+                ? 'danger'
+                : row.status === '注销'
+                  ? 'warning'
+                  : 'info'
+          "
+        >
+          {{ row.status }}
+        </el-tag>
       </template>
+      <!--      <template #status="{ row }">-->
+      <!--        <div class="status-cell">-->
+      <!--          <el-switch-->
+      <!--            v-if="row.status !== '注销'"-->
+      <!--            v-model="row.status"-->
+      <!--            active-value="正常"-->
+      <!--            inactive-value="停业"-->
+      <!--            active-color="#13ce66"-->
+      <!--            inactive-color="#f56c6c"-->
+      <!--            @change="handleStatusChange(row)"-->
+      <!--          />-->
+      <!--          <el-tag v-else type="danger">-->
+      <!--            {{ row.status }}-->
+      <!--          </el-tag>-->
+      <!--        </div>-->
+      <!--      </template>-->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
@@ -504,11 +606,18 @@ const handleOpenSettlement = (row) => {
             icon-name="edit"
             @click="handleEdit(row)"
           />
+          <!--          <IconButton-->
+          <!--            content="删除"-->
+          <!--            icon-name="delete"-->
+          <!--            color="#F56C6C"-->
+          <!--            @click="handleDelete(row)"-->
+          <!--          />-->
           <IconButton
-            content="删除"
-            icon-name="delete"
+            content="禁用"
+            icon-name="Lock"
             color="#F56C6C"
-            @click="handleDelete(row)"
+            :disabled="row.status !== '正常'"
+            @click="confirmDisable(row)"
           />
           <IconButton
             content="权限"
@@ -531,8 +640,8 @@ const handleOpenSettlement = (row) => {
           <span>
             本页统计：商户数量{{ dataObj.list.length }};正常:{{
               dataObj.list.filter((item) => item.status === '正常').length
-            }};停业:{{
-              dataObj.list.filter((item) => item.status === '停业').length
+            }};禁用:{{
+              dataObj.list.filter((item) => item.status === '禁用').length
             }};注销:{{
               dataObj.list.filter((item) => item.status === '注销').length
             }}
@@ -542,8 +651,8 @@ const handleOpenSettlement = (row) => {
           <span>
             全部统计：商户数量{{ dataObj.apilist.length }};正常:{{
               dataObj.apilist.filter((item) => item.status === '正常').length
-            }};停业:{{
-              dataObj.apilist.filter((item) => item.status === '停业').length
+            }};禁用:{{
+              dataObj.apilist.filter((item) => item.status === '禁用').length
             }};注销:{{
               dataObj.apilist.filter((item) => item.status === '注销').length
             }}

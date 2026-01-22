@@ -35,22 +35,22 @@ const [DetailDrawer, drawerApi] = useVbenDrawer({
   position: 'right',
   appendToMain: true,
   title: computed(() => props.title),
-  showCancelButton: true,
-  showConfirmButton: true,
-  cancelButtonOptions: {
-    content: '取消',
-  },
-  confirmButtonOptions: {
-    content: '确定',
-  },
-  onCancel() {
-    drawerApi.close();
-    emit('close');
-  },
-  onConfirm() {
-    drawerApi.close();
-    emit('confirm');
-  },
+  showCancelButton: false,
+  showConfirmButton: false,
+  // cancelButtonOptions: {
+  //   content: '取消',
+  // },
+  // confirmButtonOptions: {
+  //   content: '确定',
+  // },
+  // onCancel() {
+  //   drawerApi.close();
+  //   emit('close');
+  // },
+  // onConfirm() {
+  //   drawerApi.close();
+  //   emit('confirm');
+  // },
 });
 
 const open = () => {

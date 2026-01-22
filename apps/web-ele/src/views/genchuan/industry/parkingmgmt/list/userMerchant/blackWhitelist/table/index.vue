@@ -21,6 +21,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  showStats: {
+    type: Boolean,
+    default: false,
+  },
+  toggleStats: {
+    type: Function,
+    default: () => {},
+  },
 });
 
 const getTitle = computed(() => {
@@ -392,6 +400,11 @@ const detailFields = [
             content="搜索"
             icon-name="search"
             @click="handleSerachShow"
+          />
+          <IconButton 
+            :content="showStats ? '隐藏统计' : '显示统计'" 
+            :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'" 
+            @click="toggleStats" 
           />
           <IconButton
             content="全屏"

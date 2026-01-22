@@ -65,10 +65,17 @@ const getChartOption = (chart) => {
       orient: 'horizontal',
       bottom: 0,
       // right: 0,
+      type: 'scroll', // 启用滚动模式
       left: 'center', // 水平居中
       textStyle: {
         color: '#6E7E91',
         fontSize: 12,
+      },
+      // 图例项换行适配
+      itemWidth: 10, // 每个图例项宽度，避免挤在一起
+      formatter(name) {
+        // 名称过长时截断
+        return name.length > 6 ? `${name.slice(0, 6)}...` : name;
       },
     };
     option.series = [

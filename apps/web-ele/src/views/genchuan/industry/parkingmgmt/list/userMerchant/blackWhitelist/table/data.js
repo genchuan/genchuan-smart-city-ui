@@ -323,7 +323,7 @@ export function useGridColumns() {
     },
     {
       title: '操作',
-      width: 200,
+      width: 100,
       fixed: 'right',
       slots: { default: 'actions' },
     },
@@ -337,4 +337,82 @@ export const textObj = {
   excelName: '黑白名单列表',
   excelAllName: '黑白名单数据.xlsx',
   total: '黑白名单数量10;白名单6;黑名单4;生效9;失效1',
+};
+
+// 获取黑白名单统计数据
+export const getStatsDataByUserType = () => {
+  // 获取黑白名单数据
+  const blackWhiteData = dataList();
+
+  // 统计卡片数据
+  const blacklistCount = blackWhiteData.filter(item => item.listType === '黑名单').length;
+  const whitelistCount = blackWhiteData.filter(item => item.listType === '白名单').length;
+  const effectiveCount = blackWhiteData.filter(item => item.status === '生效').length;
+
+  // 统计名单类型占比
+  const listTypeStats = {
+    黑名单: blacklistCount,
+    白名单: whitelistCount
+  };
+
+  // 统计目标类型占比
+  const targetTypeStats = {};
+  blackWhiteData.forEach(item => {
+    targetTypeStats[item.targetType] = (targetTypeStats[item.targetType] || 0) + 1;
+  });
+
+  // 统计不同列入原因名单分布
+  const reasonStats = {};
+  blackWhiteData.forEach(item => {
+    reasonStats[item.reason] = (reasonStats[item.reason] || 0) + 1;
+  });
+
+  return {
+    cards: [
+      {
+        title: '黑名单数',
+        value: blacklistCount,
+        desc: `占比${Math.round((blacklistCount / blackWhiteData.length) * 100)}%`,
+        color: '#FF6B6B',
+      },
+      {
+        title: '白名单数',
+        value: whitelistCount,
+        desc: `占比${Math.round((whitelistCount / blackWhiteData.length) * 100)}%`,
+        color: '#13ce66',
+      },
+      {
+        title: '生效名单数',
+        value: effectiveCount,
+        desc: `占比${Math.round((effectiveCount / blackWhiteData.length) * 100)}%`,
+        color: '#4ECDC4',
+      },
+    ],
+    charts: [
+      {
+        title: '名单类型占比',
+        type: 'pie',
+        data: Object.entries(listTypeStats)
+          .map(([name, value]) => ({
+            value: Math.round((value / blackWhiteData.length) * 100),
+            name,
+          })),
+      },
+      {
+        title: '目标类型占比',
+        type: 'pie',
+        data: Object.entries(targetTypeStats)
+          .map(([name, value]) => ({
+            value: Math.round((value / blackWhiteData.length) * 100),
+            name,
+          })),
+      },
+      {
+        title: '不同列入原因名单分布',
+        type: 'bar',
+        xAxis: Object.keys(reasonStats),
+        series: Object.values(reasonStats),
+      },
+    ],
+  };
 };

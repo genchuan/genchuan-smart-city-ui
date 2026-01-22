@@ -1014,7 +1014,7 @@ export function useProxyRuleGridColumns() {
     },
     {
       title: '操作',
-      width: 200,
+      width: 100,
       fixed: 'right',
       slots: { default: 'actions' },
     },

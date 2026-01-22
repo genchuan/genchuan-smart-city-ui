@@ -1,3 +1,5 @@
+import {maskIdCard, maskPhone} from "#/utils/dataMask/index.js";
+
 /** 表格初始数据*/
 export const dataList = () => {
   return [
@@ -364,6 +366,347 @@ export const dataList = () => {
   ];
 };
 
+/** 车辆信息静态数据 */
+export const carInfoData = [
+  // 访客1: 张三
+  {
+    car_id: 'car-visitor-001',
+    car_number: '闽E·A1234',
+    car_type: '小型轿车',
+    visitor_id: '1',
+    brand: '奔驰',
+    color: '黑色',
+    bind_status: '已绑定',
+    create_time: '2026-01-10 09:15:00',
+    update_time: '2026-01-10 09:15:00',
+    remark: '访客车辆',
+  },
+  // 访客2: 李四
+  {
+    car_id: 'car-visitor-002',
+    car_number: '闽E·B5678',
+    car_type: 'SUV',
+    visitor_id: '2',
+    brand: '宝马',
+    color: '白色',
+    bind_status: '已绑定',
+    create_time: '2026-01-11 13:20:00',
+    update_time: '2026-01-11 13:20:00',
+    remark: '访客车辆',
+  },
+  // 访客3: 王五
+  {
+    car_id: 'car-visitor-003',
+    car_number: '闽E·C9012',
+    car_type: '小型轿车',
+    visitor_id: '3',
+    brand: '奥迪',
+    color: '银色',
+    bind_status: '已绑定',
+    create_time: '2026-01-12 09:15:00',
+    update_time: '2026-01-12 09:15:00',
+    remark: '访客车辆',
+  },
+  // 访客4: 赵六
+  {
+    car_id: 'car-visitor-004',
+    car_number: '闽E·D3456',
+    car_type: '新能源汽车',
+    visitor_id: '4',
+    brand: '特斯拉',
+    color: '红色',
+    bind_status: '已绑定',
+    create_time: '2026-01-13 14:30:00',
+    update_time: '2026-01-13 14:30:00',
+    remark: '访客车辆',
+  },
+  // 访客5: 孙七
+  {
+    car_id: 'car-visitor-005',
+    car_number: '闽E·E7890',
+    car_type: '小型轿车',
+    visitor_id: '5',
+    brand: '大众',
+    color: '蓝色',
+    bind_status: '已绑定',
+    create_time: '2026-01-14 08:15:00',
+    update_time: '2026-01-14 08:15:00',
+    remark: '访客车辆',
+  },
+  // 访客6: 周八
+  {
+    car_id: 'car-visitor-006',
+    car_number: '闽E·F2345',
+    car_type: 'SUV',
+    visitor_id: '6',
+    brand: '丰田',
+    color: '灰色',
+    bind_status: '已绑定',
+    create_time: '2026-01-15 13:30:00',
+    update_time: '2026-01-15 13:30:00',
+    remark: '访客车辆',
+  },
+  // 访客7: 吴九
+  {
+    car_id: 'car-visitor-007',
+    car_number: '闽E·G6789',
+    car_type: '小型轿车',
+    visitor_id: '7',
+    brand: '本田',
+    color: '白色',
+    bind_status: '已绑定',
+    create_time: '2026-01-16 09:30:00',
+    update_time: '2026-01-16 09:30:00',
+    remark: '访客车辆',
+  },
+  // 访客8: 郑十
+  {
+    car_id: 'car-visitor-008',
+    car_number: '闽E·H1234',
+    car_type: '中型轿车',
+    visitor_id: '8',
+    brand: '别克',
+    color: '黑色',
+    bind_status: '已绑定',
+    create_time: '2026-01-17 14:30:00',
+    update_time: '2026-01-17 14:30:00',
+    remark: '访客车辆',
+  },
+  // 访客9: 钱一
+  {
+    car_id: 'car-visitor-009',
+    car_number: '闽E·I5678',
+    car_type: '小型轿车',
+    visitor_id: '9',
+    brand: '福特',
+    color: '红色',
+    bind_status: '已绑定',
+    create_time: '2026-01-18 07:30:00',
+    update_time: '2026-01-18 07:30:00',
+    remark: '访客车辆',
+  },
+  // 访客10: 孙二
+  {
+    car_id: 'car-visitor-010',
+    car_number: '闽E·J9012',
+    car_type: 'SUV',
+    visitor_id: '10',
+    brand: '现代',
+    color: '银色',
+    bind_status: '已绑定',
+    create_time: '2026-01-19 13:00:00',
+    update_time: '2026-01-19 13:00:00',
+    remark: '访客车辆',
+  },
+  // 访客11: 周三
+  {
+    car_id: 'car-visitor-011',
+    car_number: '闽E·K3456',
+    car_type: '小型轿车',
+    visitor_id: '11',
+    brand: '雪佛兰',
+    color: '白色',
+    bind_status: '已绑定',
+    create_time: '2026-01-20 08:00:00',
+    update_time: '2026-01-20 08:00:00',
+    remark: '访客车辆',
+  },
+  // 访客12: 吴四
+  {
+    car_id: 'car-visitor-012',
+    car_number: '闽E·L7890',
+    car_type: '新能源汽车',
+    visitor_id: '12',
+    brand: '比亚迪',
+    color: '蓝色',
+    bind_status: '已绑定',
+    create_time: '2026-01-21 09:30:00',
+    update_time: '2026-01-21 09:30:00',
+    remark: '访客车辆',
+  },
+  // 访客13: 郑五
+  {
+    car_id: 'car-visitor-013',
+    car_number: '闽E·M2345',
+    car_type: '中型轿车',
+    visitor_id: '13',
+    brand: '大众',
+    color: '黑色',
+    bind_status: '已绑定',
+    create_time: '2026-01-22 13:00:00',
+    update_time: '2026-01-22 13:00:00',
+    remark: '访客车辆',
+  },
+  // 访客14: 王六
+  {
+    car_id: 'car-visitor-014',
+    car_number: '闽E·N6789',
+    car_type: 'SUV',
+    visitor_id: '14',
+    brand: '马自达',
+    color: '灰色',
+    bind_status: '已绑定',
+    create_time: '2026-01-23 14:00:00',
+    update_time: '2026-01-23 14:00:00',
+    remark: '访客车辆',
+  },
+  // 访客15: 赵七
+  {
+    car_id: 'car-visitor-015',
+    car_number: '闽E·O1234',
+    car_type: '小型轿车',
+    visitor_id: '15',
+    brand: '蔚来',
+    color: '灰色',
+    bind_status: '已绑定',
+    create_time: '2026-01-24 08:30:00',
+    update_time: '2026-01-24 08:30:00',
+    remark: '访客车辆',
+  },
+  // 访客16: 孙八
+  {
+    car_id: 'car-visitor-016',
+    car_number: '闽E·P5678',
+    car_type: '小型轿车',
+    visitor_id: '16',
+    brand: '福特',
+    color: '红色',
+    bind_status: '已绑定',
+    create_time: '2026-01-25 10:00:00',
+    update_time: '2026-01-25 10:00:00',
+    remark: '访客车辆',
+  },
+  // 访客17: 周九
+  {
+    car_id: 'car-visitor-017',
+    car_number: '闽E·Q9012',
+    car_type: 'SUV',
+    visitor_id: '17',
+    brand: '现代',
+    color: '银色',
+    bind_status: '已绑定',
+    create_time: '2026-01-26 13:30:00',
+    update_time: '2026-01-26 13:30:00',
+    remark: '访客车辆',
+  },
+  // 访客18: 吴十
+  {
+    car_id: 'car-visitor-018',
+    car_number: '闽E·R3456',
+    car_type: '中型轿车',
+    visitor_id: '18',
+    brand: '别克',
+    color: '黑色',
+    bind_status: '已绑定',
+    create_time: '2026-01-27 14:30:00',
+    update_time: '2026-01-27 14:30:00',
+    remark: '访客车辆',
+  },
+  // 访客19: 郑一
+  {
+    car_id: 'car-visitor-019',
+    car_number: '闽E·S7890',
+    car_type: '新能源汽车',
+    visitor_id: '19',
+    brand: '比亚迪',
+    color: '蓝色',
+    bind_status: '已绑定',
+    create_time: '2026-01-28 10:00:00',
+    update_time: '2026-01-28 10:00:00',
+    remark: '访客车辆',
+  },
+  // 访客20: 钱二
+  {
+    car_id: 'car-visitor-020',
+    car_number: '闽E·T2345',
+    car_type: '小型轿车',
+    visitor_id: '20',
+    brand: '雪佛兰',
+    color: '白色',
+    bind_status: '已绑定',
+    create_time: '2026-01-29 07:30:00',
+    update_time: '2026-01-29 07:30:00',
+    remark: '访客车辆',
+  },
+];
+
+/** 车辆详情字段配置 */
+export const carDetailFields = [
+  { key: 'car_number', label: '车牌号码' },
+  { key: 'car_type', label: '车辆类型' },
+  { key: 'brand', label: '车辆品牌' },
+  { key: 'color', label: '车辆颜色' },
+  { key: 'bind_status', label: '绑定状态' },
+  { key: 'create_time', label: '创建时间' },
+  { key: 'update_time', label: '更新时间' },
+  { key: 'remark', label: '备注' },
+];
+
+/** 资产信息静态数据 */
+export const assetList = [
+  // 资产1: asset-001
+  {
+    asset_extend_id: 'asset-001',
+    asset_type: '车场',
+    name: '一号停车场',
+    code: 'PARK-001',
+    status: '正常',
+    region_code: 'REGION-001',
+    address: '福建省厦门市思明区湖滨南路1号',
+    longitude: 118.08942,
+    latitude: 24.47983,
+    create_time: '2026-01-01 09:00:00',
+    update_time: '2026-01-01 09:00:00',
+    remark: '主停车场',
+  },
+  // 资产2: asset-002
+  {
+    asset_extend_id: 'asset-002',
+    asset_type: '车库',
+    name: '二号车库',
+    code: 'GARAGE-002',
+    status: '正常',
+    region_code: 'REGION-002',
+    address: '福建省厦门市湖里区湖里大道2号',
+    longitude: 118.07597,
+    latitude: 24.47042,
+    create_time: '2026-01-02 10:00:00',
+    update_time: '2026-01-02 10:00:00',
+    remark: '地下车库',
+  },
+  // 资产3: asset-003
+  {
+    asset_extend_id: 'asset-003',
+    asset_type: '路侧泊位',
+    name: '三号路侧泊位',
+    code: 'ROAD-003',
+    status: '正常',
+    region_code: 'REGION-003',
+    address: '福建省厦门市集美区集美大道3号',
+    longitude: 118.09213,
+    latitude: 24.50248,
+    create_time: '2026-01-03 11:00:00',
+    update_time: '2026-01-03 11:00:00',
+    remark: '路边停车位',
+  },
+];
+
+/** 资产详情字段配置 */
+export const assetDetailFields = [
+  { key: 'asset_extend_id', label: '资产ID' },
+  { key: 'asset_type', label: '资产类型' },
+  { key: 'name', label: '资产名称' },
+  { key: 'code', label: '资产编码' },
+  { key: 'status', label: '状态' },
+  { key: 'region_code', label: '所属区域编码' },
+  { key: 'address', label: '详细地址' },
+  { key: 'longitude', label: '经度' },
+  { key: 'latitude', label: '纬度' },
+  { key: 'create_time', label: '创建时间' },
+  { key: 'update_time', label: '更新时间' },
+  { key: 'remark', label: '备注' },
+];
+
 /** 新增/修改的表单/列表的搜索表单 */
 export function useFormSchema() {
   return [
@@ -527,24 +870,36 @@ export function useGridColumns() {
       title: '手机号',
       minWidth: 150,
       sortable: true,
+      formatter: ({ cellValue }) => {
+        return maskPhone(cellValue);
+      },
     },
     {
       field: 'idCard',
       title: '身份证号',
       minWidth: 200,
       sortable: true,
+      formatter: ({ cellValue }) => {
+        return maskIdCard(cellValue);
+      },
     },
     {
       field: 'plateNumber',
       title: '车牌号码',
       minWidth: 120,
       sortable: true,
+      slots: {
+        default: 'plateNumber',
+      },
     },
     {
       field: 'visitAssetId',
       title: '访问资源',
       minWidth: 120,
       sortable: true,
+      slots: {
+        default: 'visitAssetId',
+      },
     },
     {
       field: 'visitReason',
@@ -609,7 +964,7 @@ export function useGridColumns() {
     },
     {
       title: '操作',
-      width: 240,
+      width: 100,
       fixed: 'right',
       slots: { default: 'actions' },
     },
@@ -623,4 +978,100 @@ export const textObj = {
   excelName: '访客列表',
   excelAllName: '访客数据.xlsx',
   total: '访客数量20;已通过8;待审核6;已拒绝2;已结束4',
+};
+
+// 获取访客统计数据
+export const getStatsDataByUserType = () => {
+  // 获取访客数据
+  const visitorData = dataList();
+
+  // 统计总访客数
+  const totalCount = visitorData.length;
+  // 统计待审核访客数
+  const pendingCount = visitorData.filter(item => item.status === '待审核').length;
+  // 统计已通过访客数
+  const approvedCount = visitorData.filter(item => item.status === '已通过').length;
+
+  // 统计访问事由占比
+  const reasonStats = {};
+  visitorData.forEach(item => {
+    reasonStats[item.visitReason] = (reasonStats[item.visitReason] || 0) + 1;
+  });
+
+  // 统计访问资源类型占比
+  const assetStats = {};
+  visitorData.forEach(item => {
+    assetStats[item.visitAssetId] = (assetStats[item.visitAssetId] || 0) + 1;
+  });
+
+  // 统计近7日访客数量趋势
+  const last7Days = [];
+  const today = new Date();
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(today.getDate() - i);
+    const dateStr = date.toISOString().split('T')[0];
+    last7Days.push(dateStr);
+  }
+
+  const dailyStats = {};
+  last7Days.forEach(date => {
+    dailyStats[date] = 0;
+  });
+
+  visitorData.forEach(item => {
+    const visitDate = item.createTime.split(' ')[0];
+    if (last7Days.includes(visitDate)) {
+      dailyStats[visitDate]++;
+    }
+  });
+
+  return {
+    cards: [
+      {
+        title: '总访客数',
+        value: totalCount,
+        desc: `较上月增长${Math.floor(Math.random() * 10) + 5}%`,
+        color: '#13ce66',
+      },
+      {
+        title: '待审核访客数',
+        value: pendingCount,
+        desc: `占比${Math.round((pendingCount / totalCount) * 100)}%`,
+        color: '#4ECDC4',
+      },
+      {
+        title: '已通过访客数',
+        value: approvedCount,
+        desc: `占比${Math.round((approvedCount / totalCount) * 100)}%`,
+        color: '#FF6B6B',
+      },
+    ],
+    charts: [
+      {
+        title: '访问事由占比',
+        type: 'pie',
+        data: Object.entries(reasonStats)
+          .map(([name, value]) => ({
+            value: Math.round((value / totalCount) * 100),
+            name,
+          })),
+      },
+      {
+        title: '访问资源类型占比',
+        type: 'pie',
+        data: Object.entries(assetStats)
+          .map(([name, value]) => ({
+            value: Math.round((value / totalCount) * 100),
+            name,
+          })),
+      },
+      {
+        title: '近7日访客数量趋势',
+        type: 'bar',
+        xAxis: last7Days,
+        series: last7Days.map(date => dailyStats[date]),
+      },
+    ],
+  };
 };
