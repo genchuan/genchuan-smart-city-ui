@@ -1121,14 +1121,14 @@ export const fetchParkServiceQualityEvaluationDetail = (serviceQualityId, params
               tbServiceQualityPeriod: '2026-01',
               evaluationList: [
                 {
-                  time: Date.now() - 1 * 24 * 60 * 60 * 1000,
+                  time: Date.now() - 24 * 60 * 60 * 1000,
                   userName: '用户A',
                   score: 5, // 评分(1-5)
                   content: '入场很快，缴费也方便，体验很好',
                   handleStatus: '未处理'
                 },
                 {
-                  time: Date.now() - 1 * 24 * 60 * 60 * 1000,
+                  time: Date.now() - 24 * 60 * 60 * 1000,
                   userName: '用户B',
                   score: 2,
                   content: '道闸识别太慢了，等了好久才进去',
@@ -1171,7 +1171,6 @@ export const fetchParkServiceQualityEvaluationDetail = (serviceQualityId, params
     });
   }
 };
-
 
 
 // ========== 业务流转效率 ==========
@@ -1766,7 +1765,7 @@ export const fetchBusinessQualityBillingAccuracyTrend = (params = {}) => {
         return new Promise((resolve) => {
           setTimeout(() => {
             const xAxis = Array.from({length: 12}, (_, i) => `2026-0${i+1}`);
-            const data = xAxis.map(() => 98.5 + Math.random() * 1.0);
+            const data = xAxis.map(() => 98.5 + Math.random());
             resolve({
               xAxis,
               series: [{ name: '计费准确率(%)', data }],
@@ -2114,7 +2113,7 @@ export const fetchResourceDevelopmentList = (params = {}) => {
             resolve([
               {
                 sysResourceTypeName: '公共停车场',
-                tbResourceDevelopmentPeriod: '2024-01',
+                tbResourceDevelopmentPeriod: '2026-01',
                 tbResourceDevelopmentNewCount: 5,
                 tbResourceDevelopmentExpansionCount: 8,
                 tbResourceDevelopmentOptimizationCount: 12,
@@ -2123,7 +2122,7 @@ export const fetchResourceDevelopmentList = (params = {}) => {
               },
               {
                 sysResourceTypeName: '商业停车场',
-                tbResourceDevelopmentPeriod: '2024-01',
+                tbResourceDevelopmentPeriod: '2026-01',
                 tbResourceDevelopmentNewCount: 3,
                 tbResourceDevelopmentExpansionCount: 5,
                 tbResourceDevelopmentOptimizationCount: 10,
@@ -2132,7 +2131,7 @@ export const fetchResourceDevelopmentList = (params = {}) => {
               },
               {
                 sysResourceTypeName: '路侧停车场',
-                tbResourceDevelopmentPeriod: '2024-01',
+                tbResourceDevelopmentPeriod: '2026-01',
                 tbResourceDevelopmentNewCount: 8,
                 tbResourceDevelopmentExpansionCount: 6,
                 tbResourceDevelopmentOptimizationCount: 15,
@@ -2141,7 +2140,7 @@ export const fetchResourceDevelopmentList = (params = {}) => {
               },
               {
                 sysResourceTypeName: '景区停车场',
-                tbResourceDevelopmentPeriod: '2024-01',
+                tbResourceDevelopmentPeriod: '2026-01',
                 tbResourceDevelopmentNewCount: 2,
                 tbResourceDevelopmentExpansionCount: 3,
                 tbResourceDevelopmentOptimizationCount: 8,
@@ -2150,7 +2149,7 @@ export const fetchResourceDevelopmentList = (params = {}) => {
               },
               {
                 sysResourceTypeName: '住宅停车场',
-                tbResourceDevelopmentPeriod: '2024-01',
+                tbResourceDevelopmentPeriod: '2026-01',
                 tbResourceDevelopmentNewCount: 6,
                 tbResourceDevelopmentExpansionCount: 4,
                 tbResourceDevelopmentOptimizationCount: 9,
@@ -2248,7 +2247,7 @@ export const fetchResourceDevelopmentNewTrend = (params = {}) => {
         return new Promise((resolve) => {
           setTimeout(() => {
             const xAxis = Array.from({length: 12}, (_, i) => {
-              return `${2023}-${String(i+1).padStart(2, '0')}`;
+              return `${2026}-${String(i+1).padStart(2, '0')}`;
             });
             const data = xAxis.map(() => 2 + Math.random() * 6);
             resolve({
@@ -2297,7 +2296,7 @@ export const fetchResourceDevelopmentPlanCompletionTrend = (params = {}) => {
         return new Promise((resolve) => {
           setTimeout(() => {
             const xAxis = Array.from({length: 12}, (_, i) => {
-              return `${2023}-${String(i+1).padStart(2, '0')}`;
+              return `${2026}-${String(i+1).padStart(2, '0')}`;
             });
             const data = xAxis.map(() => 70 + Math.random() * 20);
             resolve({
@@ -2565,7 +2564,7 @@ export const fetchResourceDevelopmentDetail = (developmentId, params = {}) => {
             resolve({
               developmentId,
               sysResourceTypeName: developmentId === 'DEV20260119001' ? '公共停车场' : '商业停车场',
-              tbResourceDevelopmentPeriod: '2024-01',
+              tbResourceDevelopmentPeriod: '2026-01',
               tbResourceDevelopmentYearOnYearGrowth: developmentId === 'DEV20260119001' ? 12.5 : 8.3,
               tbResourceDevelopmentTotalAccumulated: developmentId === 'DEV20260119001' ? 125 : 98,
               tbRegionName: developmentId === 'DEV20260119001' ? '高新区,主城区' : '经开区,文旅区',
@@ -2584,9 +2583,9 @@ export const fetchResourceDevelopmentDetail = (developmentId, params = {}) => {
               },
               // 规划明细
               planDetails: [
-                { period: '2024-01', planCount: 10, actualCount: 8, completionRate: 80.0 },
-                { period: '2024-02', planCount: 12, actualCount: 10, completionRate: 83.3 },
-                { period: '2024-03', planCount: 15, actualCount: 13, completionRate: 86.7 }
+                { period: '2026-01', planCount: 10, actualCount: 8, completionRate: 80.0 },
+                { period: '2026-02', planCount: 12, actualCount: 10, completionRate: 83.3 },
+                { period: '2026-03', planCount: 15, actualCount: 13, completionRate: 86.7 }
               ]
             });
           }, 500);
@@ -2993,7 +2992,7 @@ export const fetchDeviceRunDetail = (deviceId, params = {}) => {
               sysDeviceTypeName: deviceId === 'DEV20260119001' ? '道闸设备' : '道闸设备',
               tbParkingName: deviceId === 'DEV20260119001' ? '北区停车场' : '北区停车场',
               tbDeviceOperationMonthlyFaultCount: deviceId === 'DEV20260119001' ? 2 : 5,
-              tbDeviceMaintainNextTime: deviceId === 'DEV20260119001' ? '2024-02-15' : '2024-02-10',
+              tbDeviceMaintainNextTime: deviceId === 'DEV20260119001' ? '2026-02-15' : '2026-02-10',
               sysEfficiencyLevelName: deviceId === 'DEV20260119001' ? '高效' : '良好',
               // 运行明细
               runDetail: {
@@ -3035,12 +3034,12 @@ export const fetchDeviceRunDetail = (deviceId, params = {}) => {
               // 维护历史
               maintenanceHistory: [
                 {
-                  time: '2024-01-15',
+                  time: '2026-01-15',
                   content: '定期维护，清洁设备并检查线路',
                   maintainer: '张三'
                 },
                 {
-                  time: '2023-12-20',
+                  time: '2026-12-20',
                   content: '更换磨损部件，调整运行参数',
                   maintainer: '李四'
                 }
@@ -3450,7 +3449,7 @@ export const fetchSupportResourceDetail = (resourceId, params = {}) => {
                 { name: '设备型号', value: 'DG-2000' },
                 { name: '安装位置', value: '出入口1-4号' },
                 { name: '生产厂家', value: '海康威视' },
-                { name: '安装时间', value: '2024-01-15' },
+                { name: '安装时间', value: '2026-01-15' },
               ],
               // 维护记录
               maintainRecords: [
@@ -3530,4 +3529,1636 @@ export const submitSupportMaintainRequest = (resourceId, maintainPlan) => {
     });
   }
 };
+
+
+// ========== 投诉处理 ==========
+// 投诉处理列表
+export const fetchComplaintList = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/complaint/list`,
+        params,
+      })
+      .then((response) => {
+        console.log('投诉处理列表-接口请求成功');
+        if (response && Array.isArray(response)) {
+          console.log('投诉处理列表-响应符合实际格式');
+          return response.map((item) => ({
+            tbComplaintComplaintNo: item.tbComplaintComplaintNo,
+            sysComplaintTypeName: item.sysComplaintTypeName,
+            tbComplaintSubmitTime: item.tbComplaintSubmitTime,
+            tbComplaintProcessDuration: item.tbComplaintProcessDuration,
+            sysComplaintResultName: item.sysComplaintResultName,
+            tbComplaintUserSatisfaction: item.tbComplaintUserSatisfaction,
+            tbComplaintId: item.tbComplaintId, // 用于详情查询的主键
+          }));
+        }
+        throw new Error('真实接口返回无投诉处理列表数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('投诉处理列表接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve([
+              {
+                tbComplaintComplaintNo: 'COMP20260120001',
+                sysComplaintTypeName: '服务质量',
+                tbComplaintSubmitTime: Date.now() - 5 * 24 * 60 * 60 * 1000,
+                tbComplaintProcessDuration: 12,
+                sysComplaintResultName: '已处理',
+                tbComplaintUserSatisfaction: 4.5,
+                tbComplaintId: 'CPL20260120001',
+              },
+              {
+                tbComplaintComplaintNo: 'COMP20260120002',
+                sysComplaintTypeName: '计费争议',
+                tbComplaintSubmitTime: Date.now() - 3 * 24 * 60 * 60 * 1000,
+                tbComplaintProcessDuration: 8,
+                sysComplaintResultName: '处理中',
+                tbComplaintUserSatisfaction: null,
+                tbComplaintId: 'CPL20260120002',
+              },
+              {
+                tbComplaintComplaintNo: 'COMP20260120003',
+                sysComplaintTypeName: '设备故障',
+                tbComplaintSubmitTime: Date.now() - 2 * 24 * 60 * 60 * 1000,
+                tbComplaintProcessDuration: 24,
+                sysComplaintResultName: '已处理',
+                tbComplaintUserSatisfaction: 3.0,
+                tbComplaintId: 'CPL20260120003',
+              },
+              {
+                tbComplaintComplaintNo: 'COMP20260120004',
+                sysComplaintTypeName: '环境卫生',
+                tbComplaintSubmitTime: Date.now() - 24 * 60 * 60 * 1000,
+                tbComplaintProcessDuration: 6,
+                sysComplaintResultName: '已处理',
+                tbComplaintUserSatisfaction: 4.8,
+                tbComplaintId: 'CPL20260120004',
+              },
+              {
+                tbComplaintComplaintNo: 'COMP20260120005',
+                sysComplaintTypeName: '停车秩序',
+                tbComplaintSubmitTime: Date.now(),
+                tbComplaintProcessDuration: null,
+                sysComplaintResultName: '待处理',
+                tbComplaintUserSatisfaction: null,
+                tbComplaintId: 'CPL20260120005',
+              },
+            ]);
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchComplaintList 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve([]);
+  }
+};
+
+// 投诉处理核心指标（卡片展示）
+export const fetchComplaintIndicators = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/complaint/indicators/get`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.totalComplaintCount &&
+          response.processedCount &&
+          response.processCompletionRate &&
+          response.averageProcessDuration &&
+          response.overallSatisfaction
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无投诉处理核心数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '投诉处理指标接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              totalComplaintCount: 156, // 投诉总数
+              processedCount: 142, // 已处理数
+              processCompletionRate: 91.0, // 处理完成率
+              averageProcessDuration: 15.2, // 平均处理时长(小时)
+              overallSatisfaction: 4.1, // 整体满意度(分)
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 投诉处理指标函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      totalComplaintCount: 0,
+      processedCount: 0,
+      processCompletionRate: 0,
+      averageProcessDuration: 0,
+      overallSatisfaction: 0,
+    });
+  }
+};
+
+// 投诉类型占比（饼图）
+export const fetchComplaintTypeRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/complaint/stat/type/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无投诉类型占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '投诉类型占比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['服务质量', '计费争议', '设备故障', '环境卫生', '停车秩序'],
+              series: [{ name: '投诉类型占比(%)', data: [35.2, 28.5, 18.3, 12.7, 5.3] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 投诉类型占比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '投诉类型占比(%)', data: [] }],
+    });
+  }
+};
+
+// 处理结果占比（饼图）
+export const fetchComplaintResultRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/complaint/stat/result/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无处理结果占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '处理结果占比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['已处理', '处理中', '待处理'],
+              series: [{ name: '处理结果占比(%)', data: [75.6, 15.4, 9.0] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 处理结果占比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '处理结果占比(%)', data: [] }],
+    });
+  }
+};
+
+// 投诉来源占比（饼图）
+export const fetchComplaintSourceRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/complaint/stat/source/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无投诉来源占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '投诉来源占比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['电话投诉', 'APP投诉', '现场投诉', '微信投诉'],
+              series: [{ name: '投诉来源占比(%)', data: [45.2, 35.8, 12.5, 6.5] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 投诉来源占比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '投诉来源占比(%)', data: [] }],
+    });
+  }
+};
+
+// 近30天投诉新增趋势（折线图）
+export const fetchComplaintNewTrend = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/complaint/stat/new/trend`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无投诉新增趋势数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '投诉新增趋势接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const xAxis = Array.from({length: 30}, (_, i) => {
+              const date = new Date();
+              date.setDate(date.getDate() - 29 + i);
+              return `${date.getMonth() + 1}-${date.getDate()}`;
+            });
+            const data = xAxis.map(() => Math.floor(Math.random() * 10) + 1);
+            resolve({
+              xAxis,
+              series: [{ name: '投诉新增数', data }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 投诉新增趋势函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '投诉新增数', data: [] }],
+    });
+  }
+};
+
+// 处理完成趋势（折线图）
+export const fetchComplaintProcessTrend = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/complaint/stat/process/trend`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无处理完成趋势数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '处理完成趋势接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const xAxis = Array.from({length: 30}, (_, i) => {
+              const date = new Date();
+              date.setDate(date.getDate() - 29 + i);
+              return `${date.getMonth() + 1}-${date.getDate()}`;
+            });
+            const data = xAxis.map(() => 80 + Math.random() * 15);
+            resolve({
+              xAxis,
+              series: [{ name: '处理完成率(%)', data }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 处理完成趋势函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '处理完成率(%)', data: [] }],
+    });
+  }
+};
+
+// 投诉处理详情查询 - 详情弹窗专用
+export const fetchComplaintDetail = (complaintId, params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/complaint/detail/${complaintId}`,
+        params,
+      })
+      .then((response) => {
+        if (response && response.tbComplaintId === complaintId) {
+          return response;
+        }
+        throw new Error('真实接口返回无投诉处理详情数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('投诉处理详情接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              tbComplaintId: complaintId,
+              tbComplaintComplaintNo: 'COMP20260120001',
+              sysComplaintTypeName: '服务质量',
+              tbComplaintSubmitTime: Date.now() - 5 * 24 * 60 * 60 * 1000,
+              tbComplaintProcessDuration: 12,
+              sysComplaintResultName: '已处理',
+              tbComplaintUserSatisfaction: 4.5,
+              tbComplaintSource: 'APP投诉', // 投诉来源
+              sysUserUserName: '张三', // 处理责任人
+              sysReviewStatusName: '已复盘', // 复盘状态
+              // 投诉内容
+              complaintContent: {
+                title: '出入口道闸响应缓慢',
+                content: '北区停车场出入口道闸在车辆驶近时响应时间超过10秒，导致车辆排队拥堵，影响通行效率。',
+                attachments: ['图片1.jpg', '视频1.mp4']
+              },
+              // 处理过程
+              processRecords: [
+                {
+                  time: Date.now() - 5 * 24 * 60 * 60 * 1000,
+                  operator: '客服专员',
+                  action: '接收投诉，初步登记',
+                  content: '已记录投诉信息，转交技术部门处理'
+                },
+                {
+                  time: Date.now() - 5 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000,
+                  operator: '技术员',
+                  action: '现场检查',
+                  content: '经检查发现道闸传感器灵敏度下降，已进行校准'
+                },
+                {
+                  time: Date.now() - 4 * 24 * 60 * 60 * 1000,
+                  operator: '客服专员',
+                  action: '回访用户',
+                  content: '电话回访用户，反馈问题已解决，用户表示满意'
+                }
+              ],
+              // 用户反馈
+              userFeedback: {
+                satisfaction: 4.5,
+                comment: '处理速度很快，问题得到解决，但希望加强日常维护',
+                feedbackTime: Date.now() - 4 * 24 * 60 * 60 * 1000
+              }
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchComplaintDetail 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({});
+  }
+};
+
+// 提交处理方案 - 处理弹窗专用
+export const submitComplaintProcess = (complaintId, processPlan) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/complaint/process/submit`,
+        data: {
+          complaintId,
+          processPlan,
+        },
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return response;
+        }
+        throw new Error('真实接口返回无提交结果，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('提交处理方案接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              success: true,
+              processDuration: 8,
+              message: '处理方案已提交，预计处理时长8小时',
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== submitComplaintProcess 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      success: false,
+      processDuration: 0,
+      message: '提交失败',
+    });
+  }
+};
+
+// 提交复盘意见 - 复盘弹窗专用
+export const submitComplaintReview = (complaintId, reviewOpinion) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/complaint/review/submit`,
+        data: {
+          complaintId,
+          reviewOpinion,
+        },
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return response;
+        }
+        throw new Error('真实接口返回无提交结果，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('提交复盘意见接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              success: true,
+              message: '复盘意见已保存',
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== submitComplaintReview 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      success: false,
+      message: '提交失败',
+    });
+  }
+};
+
+
+// ========== 运维处置效率 ==========
+// 运维处置效率列表
+export const fetchMaintainEfficiencyList = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/maintain/efficiency/list`,
+        params,
+      })
+      .then((response) => {
+        console.log('运维处置效率列表-接口请求成功');
+        if (response && Array.isArray(response)) {
+          console.log('运维处置效率列表-响应符合实际格式');
+          return response.map((item) => ({
+            sysWorkorderTypeName: item.sysWorkorderTypeName,
+            tbMaintainEfficiencyPeriod: item.tbMaintainEfficiencyPeriod,
+            tbMaintainEfficiencyAverageHandleDuration: item.tbMaintainEfficiencyAverageHandleDuration,
+            tbMaintainEfficiencyCompletionRate: item.tbMaintainEfficiencyCompletionRate,
+            tbMaintainEfficiencyReworkRate: item.tbMaintainEfficiencyReworkRate,
+            tbMaintainEfficiencyOneTimeSolveRate: item.tbMaintainEfficiencyOneTimeSolveRate,
+            tbMaintainEfficiencyId: item.tbMaintainEfficiencyId, // 主键
+          }));
+        }
+        throw new Error('真实接口返回无运维处置效率列表数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('运维处置效率列表接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve([
+              {
+                sysWorkorderTypeName: '设备故障',
+                tbMaintainEfficiencyPeriod: '2026-01',
+                tbMaintainEfficiencyAverageHandleDuration: 2.5,
+                tbMaintainEfficiencyCompletionRate: 95.8,
+                tbMaintainEfficiencyReworkRate: 3.2,
+                tbMaintainEfficiencyOneTimeSolveRate: 92.6,
+                tbMaintainEfficiencyId: 'MT20260119001',
+              },
+              {
+                sysWorkorderTypeName: '系统异常',
+                tbMaintainEfficiencyPeriod: '2026-01',
+                tbMaintainEfficiencyAverageHandleDuration: 1.8,
+                tbMaintainEfficiencyCompletionRate: 98.2,
+                tbMaintainEfficiencyReworkRate: 1.5,
+                tbMaintainEfficiencyOneTimeSolveRate: 96.8,
+                tbMaintainEfficiencyId: 'MT20260119002',
+              },
+              {
+                sysWorkorderTypeName: '用户投诉',
+                tbMaintainEfficiencyPeriod: '2026-01',
+                tbMaintainEfficiencyAverageHandleDuration: 4.2,
+                tbMaintainEfficiencyCompletionRate: 90.5,
+                tbMaintainEfficiencyReworkRate: 5.8,
+                tbMaintainEfficiencyOneTimeSolveRate: 88.2,
+                tbMaintainEfficiencyId: 'MT20260119003',
+              },
+              {
+                sysWorkorderTypeName: '日常巡检',
+                tbMaintainEfficiencyPeriod: '2026-01',
+                tbMaintainEfficiencyAverageHandleDuration: 0.8,
+                tbMaintainEfficiencyCompletionRate: 99.0,
+                tbMaintainEfficiencyReworkRate: 0.5,
+                tbMaintainEfficiencyOneTimeSolveRate: 99.5,
+                tbMaintainEfficiencyId: 'MT20260119004',
+              },
+            ]);
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchMaintainEfficiencyList 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve([]);
+  }
+};
+
+// 运维处置效率核心指标（卡片展示）
+export const fetchMaintainEfficiencyIndicators = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/maintain/efficiency/indicators/get`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.averageHandleDuration &&
+          response.completionRate &&
+          response.oneTimeSolveRate &&
+          response.reworkRate
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无运维处置效率核心数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '运维处置效率指标接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              averageHandleDuration: 2.3, // 平均处置时长(小时)
+              completionRate: 95.6, // 处置完成率(%)
+              oneTimeSolveRate: 93.8, // 一次性解决率(%)
+              reworkRate: 3.2, // 返工率(%)
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 运维处置效率指标函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      averageHandleDuration: 0,
+      completionRate: 0,
+      oneTimeSolveRate: 0,
+      reworkRate: 0,
+    });
+  }
+};
+
+// 处置时长趋势（折线图）
+export const fetchMaintainEfficiencyHandleDurationTrend = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/maintain/efficiency/stat/handle/duration/trend`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无处置时长趋势数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '处置时长趋势接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const xAxis = Array.from({length: 30}, (_, i) => {
+              const date = new Date();
+              date.setDate(date.getDate() - 29 + i);
+              return `${date.getMonth() + 1}-${date.getDate()}`;
+            });
+            const data = xAxis.map(() => 1.5 + Math.random() * 1.5);
+            resolve({
+              xAxis,
+              series: [{ name: '处置时长(小时)', data }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 处置时长趋势函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '处置时长(小时)', data: [] }],
+    });
+  }
+};
+
+// 完成率趋势（折线图）
+export const fetchMaintainEfficiencyCompletionRateTrend = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/maintain/efficiency/stat/completion/rate/trend`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无完成率趋势数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '完成率趋势接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const xAxis = Array.from({length: 30}, (_, i) => {
+              const date = new Date();
+              date.setDate(date.getDate() - 29 + i);
+              return `${date.getMonth() + 1}-${date.getDate()}`;
+            });
+            const data = xAxis.map(() => 90 + Math.random() * 10);
+            resolve({
+              xAxis,
+              series: [{ name: '完成率(%)', data }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 完成率趋势函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '完成率(%)', data: [] }],
+    });
+  }
+};
+
+// 工单类型占比（饼图）
+export const fetchMaintainEfficiencyWorkorderTypeRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/maintain/efficiency/stat/workorder/type/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无工单类型占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '工单类型占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['设备故障', '系统异常', '用户投诉', '日常巡检'],
+              series: [{ name: '工单类型占比(%)', data: [45, 25, 20, 10] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 工单类型占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '工单类型占比(%)', data: [] }],
+    });
+  }
+};
+
+// 处置效率等级占比（饼图）
+export const fetchMaintainEfficiencyLevelRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/maintain/efficiency/stat/efficiency/level/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无处置效率等级占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '处置效率等级占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['优秀', '良好', '一般', '待改进'],
+              series: [{ name: '处置效率等级占比(%)', data: [60, 25, 10, 5] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 处置效率等级占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '处置效率等级占比(%)', data: [] }],
+    });
+  }
+};
+
+// 返工原因占比（饼图）
+export const fetchMaintainEfficiencyReworkReasonRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/maintain/efficiency/stat/rework/reason/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无返工原因占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '返工原因占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['技术不足', '配件缺失', '判断失误', '用户需求变更'],
+              series: [{ name: '返工原因占比(%)', data: [40, 30, 20, 10] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 返工原因占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '返工原因占比(%)', data: [] }],
+    });
+  }
+};
+
+// 运维处置效率详情查询 - 详情弹窗专用
+export const fetchMaintainEfficiencyDetail = (maintainId, params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/maintain/efficiency/detail/${maintainId}`,
+        params,
+      })
+      .then((response) => {
+        if (response && response.tbMaintainEfficiencyId === maintainId) {
+          return response;
+        }
+        throw new Error('真实接口返回无运维处置效率详情数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('运维处置效率详情接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              tbMaintainEfficiencyId: maintainId,
+              tbMaintainEfficiencyChainDurationChange: maintainId === 'MT20260119001' ? -0.5 : 0.2, // 环比处置时长变化
+              sysWorkorderTypeName: maintainId === 'MT20260119001' ? '设备故障' : '系统异常', // 高频工单类型
+              sysEfficiencyLevelName: maintainId === 'MT20260119001' ? '良好' : '优秀', // 处置效率等级
+              tbMaintainEfficiencyOvertimeCount: maintainId === 'MT20260119001' ? 8 : 2, // 超时工单数
+              // 明细数据
+              detail: {
+                tbMaintainEfficiencyAverageHandleDuration: maintainId === 'MT20260119001' ? 2.5 : 1.8,
+                tbMaintainEfficiencyCompletionRate: maintainId === 'MT20260119001' ? 95.8 : 98.2,
+                tbMaintainEfficiencyReworkRate: maintainId === 'MT20260119001' ? 3.2 : 1.5,
+                tbMaintainEfficiencyOneTimeSolveRate: maintainId === 'MT20260119001' ? 92.6 : 96.8,
+              }
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchMaintainEfficiencyDetail 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({});
+  }
+};
+
+// 高频工单列表跟踪 - 跟踪弹窗专用
+export const fetchMaintainEfficiencyWorkorderTrackList = (maintainId, params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/maintain/efficiency/stat/workorder/track/list/${maintainId}`,
+        params,
+      })
+      .then((response) => {
+        if (response && response.tbMaintainEfficiencyId === maintainId) {
+          return response;
+        }
+        throw new Error('真实接口返回无高频工单跟踪数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('高频工单跟踪接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              tbMaintainEfficiencyId: maintainId,
+              sysWorkorderTypeName: maintainId === 'MT20260119001' ? '设备故障' : '系统异常',
+              workorderList: [
+                {
+                  workorderNo: 'WO20260101001',
+                  createTime: Date.now() - 2 * 24 * 60 * 60 * 1000,
+                  handlePerson: '张三',
+                  handleStatus: '已完成',
+                  handleDuration: 2.8,
+                  isOvertime: false
+                },
+                {
+                  workorderNo: 'WO20260101002',
+                  createTime: Date.now() - 1 * 24 * 60 * 60 * 1000,
+                  handlePerson: '李四',
+                  handleStatus: '处理中',
+                  handleDuration: 1.2,
+                  isOvertime: false
+                },
+                {
+                  workorderNo: 'WO20260101003',
+                  createTime: Date.now() - 3 * 24 * 60 * 60 * 1000,
+                  handlePerson: '王五',
+                  handleStatus: '已完成',
+                  handleDuration: 4.5,
+                  isOvertime: true
+                }
+              ]
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchMaintainEfficiencyWorkorderTrackList 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      tbMaintainEfficiencyId: '',
+      sysWorkorderTypeName: '',
+      workorderList: []
+    });
+  }
+};
+
+// 提交运维效率复盘意见
+export const submitMaintainEfficiencyReview = (maintainId, reviewOpinion = '', params = {}) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/maintain/efficiency/review/submit/${maintainId}`,
+        data: {
+          reviewOpinion,
+          ...params
+        }
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return response;
+        }
+        throw new Error('复盘意见提交失败');
+      })
+      .catch((error) => {
+        console.warn('复盘意见提交接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              success: true,
+              message: '复盘意见提交成功'
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== submitMaintainEfficiencyReview 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+
+// ========== 服务发展 ==========
+// 服务发展列表
+export const fetchServiceDevelopmentList = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/service/development/list`,
+        params,
+      })
+      .then((response) => {
+        console.log('服务发展列表-接口请求成功');
+        if (response && Array.isArray(response)) {
+          console.log('服务发展列表-响应符合实际格式');
+          return response.map((item) => ({
+            sysServiceTypeName: item.sysServiceTypeName,
+            tbServiceDevelopmentPeriod: item.tbServiceDevelopmentPeriod,
+            tbServiceDevelopmentNewServiceCount: item.tbServiceDevelopmentNewServiceCount,
+            tbServiceDevelopmentCoverageRegionCount: item.tbServiceDevelopmentCoverageRegionCount,
+            tbServiceDevelopmentUserGrowthRate: item.tbServiceDevelopmentUserGrowthRate,
+            tbServiceDevelopmentServiceUtilizationRate: item.tbServiceDevelopmentServiceUtilizationRate,
+            tbServiceDevelopmentId: item.tbServiceDevelopmentId,
+          }));
+        }
+        throw new Error('真实接口返回无服务发展列表数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('服务发展列表接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve([
+              {
+                sysServiceTypeName: '智能停车服务',
+                tbServiceDevelopmentPeriod: '2024-01',
+                tbServiceDevelopmentNewServiceCount: 15,
+                tbServiceDevelopmentCoverageRegionCount: 8,
+                tbServiceDevelopmentUserGrowthRate: 12.5,
+                tbServiceDevelopmentServiceUtilizationRate: 78.3,
+                tbServiceDevelopmentId: 'SD20260119001',
+              },
+              {
+                sysServiceTypeName: '车位预订服务',
+                tbServiceDevelopmentPeriod: '2024-01',
+                tbServiceDevelopmentNewServiceCount: 8,
+                tbServiceDevelopmentCoverageRegionCount: 5,
+                tbServiceDevelopmentUserGrowthRate: 18.2,
+                tbServiceDevelopmentServiceUtilizationRate: 65.7,
+                tbServiceDevelopmentId: 'SD20260119002',
+              },
+              {
+                sysServiceTypeName: '缴费服务',
+                tbServiceDevelopmentPeriod: '2024-01',
+                tbServiceDevelopmentNewServiceCount: 12,
+                tbServiceDevelopmentCoverageRegionCount: 10,
+                tbServiceDevelopmentUserGrowthRate: 8.7,
+                tbServiceDevelopmentServiceUtilizationRate: 92.5,
+                tbServiceDevelopmentId: 'SD20260119003',
+              },
+              {
+                sysServiceTypeName: '会员服务',
+                tbServiceDevelopmentPeriod: '2024-01',
+                tbServiceDevelopmentNewServiceCount: 6,
+                tbServiceDevelopmentCoverageRegionCount: 3,
+                tbServiceDevelopmentUserGrowthRate: 25.3,
+                tbServiceDevelopmentServiceUtilizationRate: 58.9,
+                tbServiceDevelopmentId: 'SD20260119004',
+              },
+              {
+                sysServiceTypeName: '信息服务',
+                tbServiceDevelopmentPeriod: '2024-01',
+                tbServiceDevelopmentNewServiceCount: 10,
+                tbServiceDevelopmentCoverageRegionCount: 7,
+                tbServiceDevelopmentUserGrowthRate: 15.8,
+                tbServiceDevelopmentServiceUtilizationRate: 82.4,
+                tbServiceDevelopmentId: 'SD20260119005',
+              },
+            ]);
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchServiceDevelopmentList 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve([]);
+  }
+};
+
+// 服务发展核心指标（卡片展示）
+export const fetchServiceDevelopmentIndicators = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/service/development/indicators/get`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.newServiceCount &&
+          response.coverageRegionCount &&
+          response.userGrowthRate &&
+          response.serviceUtilizationRate
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无服务发展核心数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '服务发展指标接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              newServiceCount: 51, // 新增服务数
+              coverageRegionCount: 33, // 覆盖区域数
+              userGrowthRate: 16.1, // 用户增长率
+              serviceUtilizationRate: 75.6, // 服务使用率
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 服务发展指标函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      newServiceCount: 0,
+      coverageRegionCount: 0,
+      userGrowthRate: 0,
+      serviceUtilizationRate: 0,
+    });
+  }
+};
+
+// 用户增长趋势（折线图）
+export const fetchServiceDevelopmentUserGrowthTrend = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/service/development/stat/user/growth/trend`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无用户增长趋势数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '用户增长趋势接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const xAxis = Array.from({length: 12}, (_, i) => {
+              return `${i+1}月`;
+            });
+            const data = xAxis.map(() => 5 + Math.random() * 20);
+            resolve({
+              xAxis,
+              series: [{ name: '用户增长率(%)', data }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 用户增长趋势函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '用户增长率(%)', data: [] }],
+    });
+  }
+};
+
+// 服务使用率趋势（折线图）
+export const fetchServiceDevelopmentServiceUtilizationTrend = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/service/development/stat/service/utilization/trend`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无服务使用率趋势数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '服务使用率趋势接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const xAxis = Array.from({length: 12}, (_, i) => {
+              return `${i+1}月`;
+            });
+            const data = xAxis.map(() => 60 + Math.random() * 30);
+            resolve({
+              xAxis,
+              series: [{ name: '服务使用率(%)', data }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 服务使用率趋势函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '服务使用率(%)', data: [] }],
+    });
+  }
+};
+
+// 各类型服务发展数量对比（柱状图）
+export const fetchServiceDevelopmentTypeCompare = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/service/development/stat/type/compare`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无类型服务发展数量数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '类型服务发展数量对比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['智能停车', '车位预订', '缴费服务', '会员服务', '信息服务'],
+              series: [{ name: '服务数量', data: [15, 8, 12, 6, 10] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 类型服务发展数量对比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '服务数量', data: [] }],
+    });
+  }
+};
+
+// 各区域服务覆盖对比（柱状图）
+export const fetchServiceDevelopmentRegionCoverageCompare = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/service/development/stat/region/coverage/compare`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无区域服务覆盖数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '区域服务覆盖对比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['高新区', '主城区', '经开区', '文旅区', '龙文区'],
+              series: [{ name: '覆盖区域数', data: [8, 10, 6, 5, 4] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 区域服务覆盖对比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '覆盖区域数', data: [] }],
+    });
+  }
+};
+
+// 服务类型占比（饼图）
+export const fetchServiceDevelopmentTypeRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/service/development/stat/type/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无服务类型占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '服务类型占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['智能停车', '车位预订', '缴费服务', '会员服务', '信息服务'],
+              series: [{ name: '服务类型占比(%)', data: [29.4, 15.7, 23.5, 11.8, 19.6] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 服务类型占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '服务类型占比(%)', data: [] }],
+    });
+  }
+};
+
+// 高使用率服务占比（饼图）
+export const fetchServiceDevelopmentHighUtilizationRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/service/development/stat/high/utilization/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无高使用率服务占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '高使用率服务占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['缴费服务', '智能停车', '信息服务', '车位预订', '会员服务'],
+              series: [{ name: '高使用率服务占比(%)', data: [35.2, 28.5, 19.8, 10.5, 6.0] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 高使用率服务占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '高使用率服务占比(%)', data: [] }],
+    });
+  }
+};
+
+// 服务发展详情查询 - 详情弹窗专用
+export const fetchServiceDevelopmentDetail = (serviceDevelopmentId, params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/service/development/detail/${serviceDevelopmentId}`,
+        params,
+      })
+      .then((response) => {
+        if (response && response.tbServiceDevelopmentId === serviceDevelopmentId) {
+          return response;
+        }
+        throw new Error('真实接口返回无服务发展详情数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('服务发展详情接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              tbServiceDevelopmentId: serviceDevelopmentId,
+              sysServiceTypeName: serviceDevelopmentId === 'SD20260119001' ? '智能停车服务' : '车位预订服务',
+              tbServiceDevelopmentPeriod: '2024-01',
+              tbServiceDevelopmentYearOnYearGrowth: serviceDevelopmentId === 'SD20260119001' ? 25.3 : 18.7, // 同比增长率
+              tbServiceDevelopmentTotalUserCount: serviceDevelopmentId === 'SD20260119001' ? 12500 : 8500, // 累计服务用户数
+              tbServiceDevelopmentOptimizationDemandCount: serviceDevelopmentId === 'SD20260119001' ? 8 : 5, // 服务优化需求数
+              // 详情字段
+              detail: {
+                tbServiceDevelopmentNewServiceCount: serviceDevelopmentId === 'SD20260119001' ? 15 : 8,
+                tbServiceDevelopmentCoverageRegionCount: serviceDevelopmentId === 'SD20260119001' ? 8 : 5,
+                tbServiceDevelopmentUserGrowthRate: serviceDevelopmentId === 'SD20260119001' ? 12.5 : 18.2,
+                tbServiceDevelopmentServiceUtilizationRate: serviceDevelopmentId === 'SD20260119001' ? 78.3 : 65.7,
+              },
+              // 用户反馈
+              userFeedback: [
+                {
+                  time: Date.now() - 3 * 24 * 60 * 60 * 1000,
+                  userName: '张先生',
+                  content: '服务响应速度快，使用体验很好',
+                  score: 5
+                },
+                {
+                  time: Date.now() - 7 * 24 * 60 * 60 * 1000,
+                  userName: '李女士',
+                  content: '希望增加更多支付方式',
+                  score: 4
+                }
+              ],
+              // 覆盖区域详情
+              coverageRegionDetail: [
+                {
+                  regionName: '高新区',
+                  coverageRate: 100,
+                  userCount: serviceDevelopmentId === 'SD20260119001' ? 3200 : 2100
+                },
+                {
+                  regionName: '主城区',
+                  coverageRate: 100,
+                  userCount: serviceDevelopmentId === 'SD20260119001' ? 4500 : 2800
+                }
+              ]
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchServiceDevelopmentDetail 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({});
+  }
+};
+
+// 用户增长趋势钻取 - 月度趋势弹窗专用
+export const fetchServiceDevelopmentUserGrowthTrendDetail = (serviceDevelopmentId, params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/service/development/stat/user/growth/trend/detail/${serviceDevelopmentId}`,
+        params,
+      })
+      .then((response) => {
+        if (response && response.tbServiceDevelopmentId === serviceDevelopmentId) {
+          return response;
+        }
+        throw new Error('真实接口返回无用户增长趋势详情数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('用户增长趋势详情接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const xAxis = Array.from({length: 12}, (_, i) => {
+              return `${i+1}月`;
+            });
+            const data = xAxis.map(() => 5 + Math.random() * 20);
+            resolve({
+              tbServiceDevelopmentId: serviceDevelopmentId,
+              sysServiceTypeName: serviceDevelopmentId === 'SD20260119001' ? '智能停车服务' : '车位预订服务',
+              xAxis,
+              series: [{ name: '月度用户增长率(%)', data }]
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchServiceDevelopmentUserGrowthTrendDetail 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      tbServiceDevelopmentId: '',
+      sysServiceTypeName: '',
+      xAxis: [],
+      series: [{ name: '月度用户增长率(%)', data: [] }]
+    });
+  }
+};
+
+// 提交服务优化建议
+export const submitServiceDevelopmentOptimization = (serviceDevelopmentId, optimizationPlan) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/service/development/optimization/submit/${serviceDevelopmentId}`,
+        data: { optimizationPlan },
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return response;
+        }
+        throw new Error('真实接口返回无提交结果，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('提交服务优化建议接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              success: true,
+              message: '优化建议提交成功'
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== submitServiceDevelopmentOptimization 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      success: false,
+      message: '提交失败'
+    });
+  }
+};
+
+
 
