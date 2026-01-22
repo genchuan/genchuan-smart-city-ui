@@ -21,25 +21,6 @@ const props = defineProps({
 const chartRef = ref(null);
 let chartInstance = null;
 
-// 定义丰富的配色数组（数量建议多于X轴数据项）
-const chartColors = [
-  '#1890FF',
-  '#722ED1',
-  '#F5222D',
-  '#FA8C16',
-  '#52C41A',
-  '#13C2C2',
-  '#F7BA1E',
-  '#A0AEC0',
-  '#73D13D',
-  '#FF4D4F',
-  '#FF7A45',
-  '#00C48C',
-  '#9254DE',
-  '#FFC53D',
-  '#4E5BA6',
-];
-
 // 初始化图表
 const initChart = () => {
   if (!chartRef.value) return;
@@ -56,24 +37,73 @@ const initChart = () => {
     tooltip: { trigger: 'axis' },
     legend: { bottom: 10, left: 'center' },
     grid: {
-      left: '5%',
-      right: '5%',
-      bottom: '15%',
-      top: '10%',
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
       containLabel: true,
+      backgroundColor: 'transparent',
     },
-    xAxis: { type: 'category', data: props.xData },
-    yAxis: { type: 'value', name: props.yName },
+    xAxis: {
+      type: 'category',
+      boundaryGap: true,
+      data: props.xData,
+      axisLabel: {
+        color: '#9AA8B7',
+        fontSize: 11,
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#E8F4FD',
+        },
+      },
+      axisTick: {
+        lineStyle: {
+          color: '#E8F4FD',
+        },
+      },
+      splitLine: {
+        show: false,
+      },
+    },
+    yAxis: {
+      type: 'value',
+      name: props.yName,
+      axisLabel: {
+        color: '#9AA8B7',
+        fontSize: 11,
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#E8F4FD',
+        },
+      },
+      axisTick: {
+        lineStyle: {
+          color: '#E8F4FD',
+        },
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#F0F6FC',
+          type: 'dashed',
+        },
+      },
+    },
+    color: ['#4a90e2'],
     series: props.seriesData.map((seriesItem) => ({
       name: seriesItem.name,
       type: 'bar',
       // 关键修改：为每个数据项单独配置颜色
       data: seriesItem.data.map((value, idx) => ({
         value, // 数据值
-        itemStyle: {
-          color: chartColors[idx % chartColors.length], // 每个柱子取不同颜色
-        },
       })),
+      emphasis: {
+        itemStyle: {
+          shadowBlur: 10,
+          shadowColor: 'rgba(74, 144, 226, 0.3)',
+        },
+      },
+      barWidth: 30,
     })),
   };
 

@@ -71,8 +71,7 @@ const formatValue = (value) => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
-
+    margin-bottom: 8px;
     .card-title {
       font-size: 14px;
       font-weight: 500;
@@ -81,17 +80,17 @@ const formatValue = (value) => {
     }
 
     .card-indicator {
-      width: 8px;
-      height: 8px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
     }
   }
 
   .card-body {
     .card-value {
-      font-size: 24px;
-      font-weight: 600;
-      color: #303133;
+      font-size: 28px;
+      font-weight: bold;
+      color: #4a90e2;
       line-height: 1.2;
       margin-bottom: 4px;
     }

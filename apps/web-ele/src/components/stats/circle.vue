@@ -94,12 +94,10 @@ const initChart = () => {
     legend: {
       orient: 'horizontal', // 水平排列
       left: 'center', // 水平居中
-      bottom: 10, // 距离底部10px
-      top: 'auto', // 取消顶部定位
-      right: 'auto', // 取消右侧定位
+      bottom: 0, // 距离底部10px
       textStyle: {
         fontSize: 12,
-        color: '#606266',
+        color: '#6E7E91',
       },
       // 图例项换行适配
       itemWidth: 10, // 每个图例项宽度，避免挤在一起
@@ -112,14 +110,16 @@ const initChart = () => {
     series: [
       {
         type: 'pie',
-        radius: ['50%', '65%'], // 优化圆环比例
+        radius: ['30%', '60%'], // 优化圆环比例
         center: ['50%', '50%'], // 上移圆环，给底部图例预留空间
         avoidLabelOverlap: false,
         label: {
           show: false,
+          position: 'center',
         },
         labelLine: {
           show: false,
+          position: 'center',
         },
         data: props.data,
         itemStyle: {
@@ -130,36 +130,13 @@ const initChart = () => {
           borderWidth: 2,
         },
         emphasis: {
-          itemStyle: {
-            shadowBlur: 15,
-            shadowOffsetX: 0,
-            shadowColor: 'rgba(0, 0, 0, 0.3)',
+          label: {
+            show: true,
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: '#6E7E91',
           },
         },
-        // 中心文本展示总计
-        graphic: [
-          {
-            type: 'text',
-            left: '50%',
-            top: '35%',
-            style: {
-              text: total,
-              fontSize: 24,
-              fontWeight: 300,
-              fill: '#303133',
-            },
-          },
-          {
-            type: 'text',
-            left: '50%',
-            top: '50%',
-            style: {
-              text: '总计车场',
-              fontSize: 14,
-              fill: '#909399',
-            },
-          },
-        ],
       },
     ],
   };
