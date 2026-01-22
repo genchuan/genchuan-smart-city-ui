@@ -422,6 +422,11 @@ const handleFullShow = () => {
             @click="handleSerachShow"
           />
           <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
+          <IconButton
             content="全屏"
             icon-name="FullScreen"
             @click="handleFullShow"
