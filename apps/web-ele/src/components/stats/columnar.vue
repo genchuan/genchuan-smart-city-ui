@@ -21,7 +21,26 @@ const props = defineProps({
 const chartRef = ref(null);
 let chartInstance = null;
 
-// 初始化图表（极简配置）
+// 定义丰富的配色数组（数量建议多于X轴数据项）
+const chartColors = [
+  '#1890FF',
+  '#722ED1',
+  '#F5222D',
+  '#FA8C16',
+  '#52C41A',
+  '#13C2C2',
+  '#F7BA1E',
+  '#A0AEC0',
+  '#73D13D',
+  '#FF4D4F',
+  '#FF7A45',
+  '#00C48C',
+  '#9254DE',
+  '#FFC53D',
+  '#4E5BA6',
+];
+
+// 初始化图表
 const initChart = () => {
   if (!chartRef.value) return;
 
@@ -31,11 +50,11 @@ const initChart = () => {
   // 创建实例
   chartInstance = echarts.init(chartRef.value);
 
-  // 核心配置（只保留必要项）
+  // 核心配置
   const option = {
     title: { text: props.title, left: 'center' },
-    tooltip: { trigger: 'axis' }, // 仅保留基础提示框
-    legend: { bottom: 10, left: 'center' }, // 图例固定在底部居中
+    tooltip: { trigger: 'axis' },
+    legend: { bottom: 10, left: 'center' },
     grid: {
       left: '5%',
       right: '5%',
@@ -45,12 +64,16 @@ const initChart = () => {
     },
     xAxis: { type: 'category', data: props.xData },
     yAxis: { type: 'value', name: props.yName },
-    series: props.seriesData.map((item, idx) => ({
-      name: item.name,
+    series: props.seriesData.map((seriesItem) => ({
+      name: seriesItem.name,
       type: 'bar',
-      data: item.data,
-      // 固定配色（简洁易区分）
-      itemStyle: { color: ['#409EFF', '#67C23A', '#E6A23C'][idx % 3] },
+      // 关键修改：为每个数据项单独配置颜色
+      data: seriesItem.data.map((value, idx) => ({
+        value, // 数据值
+        itemStyle: {
+          color: chartColors[idx % chartColors.length], // 每个柱子取不同颜色
+        },
+      })),
     })),
   };
 

@@ -37,7 +37,6 @@ const state = reactive({
         ]"
       />
       <Circle
-        height="350px"
         class="chart-box-circle"
         title-text="运营状态占比"
         :data="[
@@ -49,11 +48,10 @@ const state = reactive({
         :colors="['#67C23A', '#E6A23C', '#F56C6C', '#909399']"
       />
       <Columnar
+        height="350px"
         title="车场类型占比"
         :x-data="['商业', '公共', '小区', '文旅']"
         :series-data="[{ name: '数量', data: [58, 42, 35, 15] }]"
-        width="500px"
-        height="350px"
       />
     </div>
   </div>
@@ -61,22 +59,28 @@ const state = reactive({
 
 <style scoped lang="scss">
 .park-chart-box {
+  min-height: 360px;
   display: flex;
   .chart-box-left {
-    flex: 2;
+    display: flex;
+    flex-direction: column;
     .left-card {
-      margin-bottom: 15px;
+      margin-top: 15px;
+      width: 300px;
     }
   }
   .chart-box-right {
     margin-left: 20px;
-    flex: 7;
     display: flex;
+    flex-wrap: wrap;
     .chart-box-circle {
-      flex: 2;
+      flex: 1;
+      margin-left: 15px;
+      width: 300px;
     }
     .chart-box-Columnar {
-      flex: 3;
+      margin-left: 15px;
+      flex: 1;
     }
   }
 }
