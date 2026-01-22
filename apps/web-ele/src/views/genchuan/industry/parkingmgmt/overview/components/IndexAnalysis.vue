@@ -127,6 +127,35 @@ import {
   fetchServiceDevelopmentDetail,
   fetchServiceDevelopmentUserGrowthTrendDetail,
   submitServiceDevelopmentOptimization,
+  fetchComplianceRectificationList,
+  fetchComplianceRectificationIndicators,
+  fetchComplianceCheckTypeRatio,
+  fetchComplianceRectificationStatusRatio,
+  fetchComplianceCheckItemComplianceRate,
+  fetchComplianceRectificationStageCount,
+  fetchComplianceRectificationDetail,
+  submitComplianceRectificationTrack,
+  submitComplianceAcceptance,
+  fetchDeviceSafetyList,
+  fetchDeviceSafetyIndicators,
+  fetchDeviceSafetyTypeHazardRatio,
+  fetchDeviceSafetyLevelRatio,
+  fetchDeviceSafetyHazardTypeRatio,
+  fetchDeviceSafetyHazardTrend,
+  fetchDeviceSafetyRectifiedTrend,
+  fetchDeviceSafetyDetail,
+  submitDeviceSafetyRectification,
+  submitDeviceSafetyCheck,
+  fetchOperationRiskList,
+  fetchOperationRiskIndicators,
+  fetchOperationRiskTypeRatio,
+  fetchOperationRiskLevelRatio,
+  fetchOperationRiskResolutionStatusRatio,
+  fetchOperationRiskNewTrend,
+  fetchOperationRiskResolutionTrend,
+  fetchOperationRiskDetail,
+  submitOperationRiskWarning,
+  submitOperationRiskResolution,
 } from '#/api/genchuan/industry/parkingmgmt/overview/IndexAnalysis.ts';
 
 const pageContainerRef = ref<HTMLElement | null>(null);
@@ -217,11 +246,35 @@ const handleFullscreenChange = () => {
   if (screenFull.isFullscreen && currentFullscreenPanel.value) {
     setTimeout(() => {
       resourceRunChartRefreshKey.value++;
+      parkResourceChartRefreshKey.value++;
+      serviceQualityChartRefreshKey.value++;
+      businessFlowChartRefreshKey.value++;
+      businessQualityChartRefreshKey.value++;
+      resourceDevelopmentChartRefreshKey.value++;
+      deviceRunChartRefreshKey.value++;
+      supportResourceChartRefreshKey.value++;
+      complaintChartRefreshKey.value++;
+      maintainEfficiencyChartRefreshKey.value++;
+      complianceRectificationChartRefreshKey.value++;
+      deviceSafetyChartRefreshKey.value++;
+      operationRiskChartRefreshKey.value++;
     }, 300);
   } else if (currentFullscreenPanel.value) {
     currentFullscreenPanel.value.style = '';
     nextTick(() => {
       resourceRunChartRefreshKey.value++;
+      parkResourceChartRefreshKey.value++;
+      serviceQualityChartRefreshKey.value++;
+      businessFlowChartRefreshKey.value++;
+      businessQualityChartRefreshKey.value++;
+      resourceDevelopmentChartRefreshKey.value++;
+      deviceRunChartRefreshKey.value++;
+      supportResourceChartRefreshKey.value++;
+      complaintChartRefreshKey.value++;
+      maintainEfficiencyChartRefreshKey.value++;
+      complianceRectificationChartRefreshKey.value++;
+      deviceSafetyChartRefreshKey.value++;
+      operationRiskChartRefreshKey.value++;
     });
     currentFullscreenPanel.value = null;
   }
@@ -237,24 +290,20 @@ interface ParkResourceRunRow {
   tbParkingOperationPeakUtilizationRate: number;
   tbParkingParkingId: string;
 }
-
 interface ParkResourceRunIndicators {
   totalSpaceCount: number;
   averageUtilizationRate: number;
   averageTurnoverRate: number;
   peakAverageUtilizationRate: number;
 }
-
 interface ChartRatioData {
   legend: string[];
   series: { data: number[]; name: string }[];
 }
-
 interface ChartLineData {
   xAxis: string[];
   series: { data: number[]; name: string }[];
 }
-
 interface ParkResourceRunDetail {
   tbParkingParkingId: string;
   tbParkingName: string;
@@ -275,7 +324,6 @@ interface ParkResourceRunDetail {
     handleStatus: string;
   }[];
 }
-
 interface ParkResourceRunTurnoverTimeTrend {
   tbParkingParkingId: string;
   tbParkingName: string;
@@ -293,14 +341,12 @@ interface ParkResourceRow {
   sysOperationStatusName: string;
   tbParkingId: string;
 }
-
 interface ParkResourceIndicators {
   totalParkCount: number; // 停车场总数
   totalSpaceCount: number; // 总泊位数
   availableSpaceCount: number; // 可用泊位数
   runningParkCount: number; // 运营中停车场数
 }
-
 interface ParkResourceDetail {
   tbParkingId: string;
   tbParkingName: string;
@@ -331,14 +377,12 @@ interface ParkServiceQualityRow {
   tbServiceQualitySatisfactionRate: number;
   tbServiceQualityId: string;
 }
-
 interface ParkServiceQualityIndicators {
   averageEntryTime: number; // 平均入场时长(秒)
   paySuccessRate: number; // 缴费成功率(%)
   satisfactionRate: number; // 用户满意度(%)
   complaintRate: number; // 投诉率(%)
 }
-
 interface ParkServiceQualityDetail {
   tbServiceQualityId: string;
   tbServiceQualityPeriod: string;
@@ -365,7 +409,6 @@ interface ParkServiceQualityDetail {
     keyWords: string[];
   };
 }
-
 interface ParkServiceQualityEvaluationDetail {
   tbServiceQualityId: string;
   tbServiceQualityPeriod: string;
@@ -388,14 +431,12 @@ interface BusinessFlowEfficiencyRow {
   tbBusinessFlowOvertimeRate: number;
   tbBusinessFlowId: string;
 }
-
 interface BusinessFlowEfficiencyIndicators {
   averageFlowDuration: number; // 平均流转时长(小时)
   averageCompletionRate: number; // 平均完成率(%)
   averageOvertimeRate: number; // 平均超时率(%)
   coreBottleneckRatio: number; // 核心瓶颈环节占比(%)
 }
-
 interface BusinessFlowEfficiencyDetail {
   tbBusinessFlowId: string;
   sysBusinessTypeName: string;
@@ -424,7 +465,6 @@ interface BusinessFlowEfficiencyDetail {
   }[];
   trendData: ChartLineData;
 }
-
 interface BusinessFlowBottleneckLinkTrend {
   tbBusinessFlowId: string;
   sysBusinessTypeName: string;
@@ -442,14 +482,12 @@ interface BusinessQualityRow {
   tbBusinessQualityComplianceRate: number;
   tbBusinessQualityId: string;
 }
-
 interface BusinessQualityIndicators {
   billingAccuracy: number; // 计费准确率(%)
   orderSuccessRate: number; // 订单成功率(%)
   complianceRate: number; // 合规率(%)
   abnormalOrderCount: number; // 异常订单数
 }
-
 interface BusinessQualityDetail {
   tbBusinessQualityId: string;
   sysBusinessTypeName: string;
@@ -478,7 +516,6 @@ interface BusinessQualityDetail {
     checkPerson: string;
   }[];
 }
-
 interface BusinessQualityAbnormalOrderList {
   tbBusinessQualityId: string;
   sysBusinessTypeName: string;
@@ -491,7 +528,6 @@ interface BusinessQualityAbnormalOrderList {
     handlePerson: string;
   }[];
 }
-
 interface RectificationForm {
   rectificationPlan: string;
 }
@@ -506,14 +542,12 @@ interface ResourceDevelopmentRow {
   tbResourceDevelopmentPlanCompletionRate: number;
   developmentId: string;
 }
-
 interface ResourceDevelopmentIndicators {
   totalNewCount: number; // 新增资源总数
   totalExpansionCount: number; // 扩容总数
   totalOptimizationCount: number; // 优化总数
   averagePlanCompletionRate: number; // 规划达成率
 }
-
 interface ResourceDevelopmentDetail {
   developmentId: string;
   sysResourceTypeName: string;
@@ -536,14 +570,12 @@ interface ResourceDevelopmentDetail {
     completionRate: number;
   }[];
 }
-
 interface ResourceDevelopmentMonthlyNewTrend {
   developmentId: string;
   sysResourceTypeName: string;
   xAxis: string[];
   series: { data: number[]; name: string }[];
 }
-
 interface PlanAdjustmentForm {
   planContent: string;
 }
@@ -558,14 +590,12 @@ interface DeviceRunRow {
   tbDeviceOperationFaultRate: number;
   tbDeviceDeviceId: string;
 }
-
 interface DeviceRunIndicators {
   totalDeviceCount: number; // 设备总数
   averageOnlineRate: number; // 平均在线率
   averageRunningHours: number; // 平均运行时长
   averageFaultRate: number; // 整体故障率
 }
-
 interface DeviceRunDetail {
   tbDeviceDeviceId: string;
   tbDeviceName: string;
@@ -595,7 +625,6 @@ interface DeviceRunDetail {
     maintainer: string;
   }[];
 }
-
 interface MaintenanceForm {
   maintenanceType: string;
   description: string;
@@ -611,14 +640,12 @@ interface SupportResourceRow {
   tbSupportResourceIntactRate: number;
   tbSupportResourceId: string;
 }
-
 interface SupportResourceIndicators {
   totalResourceCount: number; // 支撑资源总数
   averageIntactRate: number; // 平均完好率
   coreTypeResourceCount: number; // 核心类型资源数
   maintainingResourceCount: number; // 维护中资源数
 }
-
 interface SupportResourceDetail {
   tbSupportResourceId: string;
   tbSupportResourceName: string;
@@ -639,7 +666,6 @@ interface SupportResourceDetail {
   }[]; // 维护记录
   usageStatistics: ChartLineData; // 使用统计
 }
-
 interface MaintainForm {
   maintainPlan: string;
 }
@@ -654,7 +680,6 @@ interface ComplaintRow {
   tbComplaintUserSatisfaction: number | null;
   tbComplaintId: string;
 }
-
 interface ComplaintIndicators {
   totalComplaintCount: number; // 投诉总数
   processedCount: number; // 已处理数
@@ -662,7 +687,6 @@ interface ComplaintIndicators {
   averageProcessDuration: number; // 平均处理时长(小时)
   overallSatisfaction: number; // 整体满意度(分)
 }
-
 interface ComplaintDetail {
   tbComplaintId: string;
   tbComplaintComplaintNo: string;
@@ -691,11 +715,9 @@ interface ComplaintDetail {
     feedbackTime: number | string;
   }; // 用户反馈
 }
-
 interface ComplaintProcessForm {
   processPlan: string;
 }
-
 interface ComplaintReviewForm {
   reviewOpinion: string;
 }
@@ -710,14 +732,12 @@ interface MaintainEfficiencyRow {
   tbMaintainEfficiencyOneTimeSolveRate: number;
   tbMaintainEfficiencyId: string;
 }
-
 interface MaintainEfficiencyIndicators {
   averageHandleDuration: number; // 平均处置时长(小时)
   completionRate: number; // 处置完成率(%)
   oneTimeSolveRate: number; // 一次性解决率(%)
   reworkRate: number; // 返工率(%)
 }
-
 interface MaintainEfficiencyDetail {
   tbMaintainEfficiencyId: string;
   tbMaintainEfficiencyChainDurationChange: number; // 环比处置时长变化
@@ -731,7 +751,6 @@ interface MaintainEfficiencyDetail {
     tbMaintainEfficiencyOneTimeSolveRate: number;
   };
 }
-
 interface MaintainEfficiencyWorkorderTrack {
   tbMaintainEfficiencyId: string;
   sysWorkorderTypeName: string;
@@ -744,7 +763,6 @@ interface MaintainEfficiencyWorkorderTrack {
     isOvertime: boolean;
   }[];
 }
-
 interface ReviewForm {
   reviewOpinion: string;
 }
@@ -759,14 +777,12 @@ interface ServiceDevelopmentRow {
   tbServiceDevelopmentServiceUtilizationRate: number;
   tbServiceDevelopmentId: string;
 }
-
 interface ServiceDevelopmentIndicators {
   newServiceCount: number; // 新增服务数
   coverageRegionCount: number; // 覆盖区域数
   userGrowthRate: number; // 用户增长率
   serviceUtilizationRate: number; // 服务使用率
 }
-
 interface ServiceDevelopmentDetail {
   tbServiceDevelopmentId: string;
   sysServiceTypeName: string;
@@ -792,16 +808,165 @@ interface ServiceDevelopmentDetail {
     userCount: number;
   }[];
 }
-
 interface ServiceDevelopmentUserGrowthTrendDetail {
   tbServiceDevelopmentId: string;
   sysServiceTypeName: string;
   xAxis: string[];
   series: { data: number[]; name: string }[];
 }
-
 interface ServiceOptimizationForm {
   optimizationPlan: string;
+}
+
+// 合规整改TS类型定义
+interface ComplianceRectificationRow {
+  tbComplianceCheckItem: string;
+  tbComplianceCheckCheckTime: number | string;
+  tbComplianceCheckComplianceRate: number;
+  tbComplianceRectificationCompletedCount: number;
+  tbComplianceRectificationUnfinishedCount: number;
+  tbComplianceRectificationCompletionRate: number;
+  tbComplianceCheckId: string;
+}
+interface ComplianceRectificationIndicators {
+  checkItemTotalCount: number; // 检查项目总数
+  complianceRate: number; // 合规率
+  rectificationCompletionRate: number; // 整改完成率
+  acceptanceRate: number; // 验收通过率
+  overdueRectificationCount: number; // 逾期整改数
+}
+interface ComplianceRectificationDetail {
+  tbComplianceCheckId: string;
+  tbComplianceCheckItem: string;
+  tbComplianceCheckCheckTime: number | string;
+  tbComplianceCheckComplianceRate: number;
+  tbComplianceRectificationDeadline: string; // 整改期限
+  tbComplianceRectificationOverdueCount: number; // 逾期整改数
+  tbComplianceAcceptAcceptanceRate: number; // 验收通过率
+  checkStandard: {
+    standardItem: string;
+    isCompliant: boolean;
+  }[]; // 检查标准
+  rectificationDetails: {
+    rectificationItem: string;
+    rectificationStatus: string;
+    rectificationTime: number | string;
+    rectificationPerson: string;
+  }[]; // 整改明细
+  acceptanceRecords: {
+    acceptanceTime: number | string;
+    acceptanceOpinion: string;
+    acceptancePerson: string;
+    acceptanceResult: string;
+  }[]; // 验收记录
+}
+interface TrackForm {
+  trackContent: string;
+}
+interface AcceptanceForm {
+  acceptanceOpinion: string;
+}
+
+// 设备安全TS类型定义
+interface DeviceSafetyRow {
+  tbDeviceName: string;
+  sysDeviceTypeName: string;
+  tbDeviceSafetyHazardCount: number;
+  tbDeviceSafetyRectifiedCount: number;
+  tbDeviceSafetyRectificationRate: number;
+  sysSafetyLevelName: string;
+  tbDeviceDeviceId: string;
+}
+interface DeviceSafetyIndicators {
+  totalHazardCount: number; // 设备安全隐患总数
+  rectificationCompletionRate: number; // 整改完成率(%)
+  highRiskHazardCount: number; // 高风险隐患数
+  safetyDeviceCount: number; // 安全设备数
+}
+interface DeviceSafetyDetail {
+  tbDeviceDeviceId: string;
+  tbDeviceName: string;
+  sysDeviceTypeName: string;
+  tbDeviceSafetyHighRiskCount: number;
+  tbDeviceSafetyLastCheckTime: number | string;
+  tbDeviceSafetyNextCheckTime: number | string;
+  hazardDetails: {
+    hazardType: string;
+    hazardLevel: string;
+    discoverTime: number | string;
+    handleStatus: string;
+    description: string;
+  }[];
+  rectificationRecords: {
+    rectificationNo: string;
+    hazardType: string;
+    rectificationPlan: string;
+    submitTime: number | string;
+    completeTime: number | string;
+    handlePerson: string;
+  }[];
+  checkReports: {
+    checkTime: number | string;
+    checkResult: string;
+    checkPerson: string;
+    suggestion: string;
+  }[];
+}
+interface DeviceRectificationForm {
+  hazardType: string;
+  rectificationPlan: string;
+}
+interface DeviceCheckForm {
+  checkResult: string;
+}
+
+// 运营风险TS类型定义
+interface OperationRiskRow {
+  sysRiskTypeName: string;
+  tbRegionName: string;
+  sysRiskLevelName: string;
+  tbOperationRiskResourceCount: number;
+  tbOperationRiskImpactScope: string;
+  tbOperationRiskWarningCount: number;
+  tbOperationRiskId: string;
+}
+interface OperationRiskIndicators {
+  totalRiskCount: number; // 运营风险总数
+  highRiskCount: number; // 高等级风险数
+  riskResolutionRate: number; // 风险化解率(%)
+  warningCount: number; // 预警次数
+}
+interface OperationRiskDetail {
+  tbOperationRiskId: string;
+  sysRiskTypeName: string;
+  tbRegionName: string;
+  sysRiskLevelName: string;
+  tbOperationRiskResolutionRate: number; // 风险化解率(%)
+  tbOperationRiskResolutionDeadline: string; // 化解期限
+  tbOperationRiskMainCause: string; // 主要诱因
+  detail: {
+    tbOperationRiskResourceCount: number;
+    tbOperationRiskImpactScope: string;
+    tbOperationRiskWarningCount: number;
+  };
+  impactAnalysis: {
+    affectedParkings: string[];
+    potentialLoss: string;
+    impactDuration: string;
+    riskDescription: string;
+  };
+  resolutionRecords: {
+    time: number | string;
+    content: string;
+    person: string;
+    status: string;
+  }[];
+}
+interface OperationRiskWarningForm {
+  warningObjects: string[];
+}
+interface OperationRiskResolutionForm {
+  resolutionMeasures: string;
 }
 
 
@@ -1510,6 +1675,221 @@ const optimizationFormRules = {
 };
 const optimizationFormRef = ref<FormInstance>();
 
+// 合规整改响应式数据
+const complianceRectificationList = ref<ComplianceRectificationRow[]>([]);
+const complianceRectificationIndicators = ref<ComplianceRectificationIndicators>({
+  checkItemTotalCount: 0,
+  complianceRate: 0,
+  rectificationCompletionRate: 0,
+  acceptanceRate: 0,
+  overdueRectificationCount: 0,
+});
+const complianceCheckTypeRatio = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '检查项目类型占比(%)', data: [] }],
+});
+const complianceRectificationStatusRatio = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '整改完成状态占比(%)', data: [] }],
+});
+const complianceCheckItemComplianceRateData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '合规率(%)', data: [] }],
+});
+const complianceRectificationStageCountData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '整改完成数', data: [] }],
+});
+// 合规整改视图切换相关
+const complianceRectificationChartRefreshKey = ref(0);
+const activeComplianceRectificationView = ref('卡片');
+const complianceRectificationViewBtnList = ref(['卡片', '饼图', '柱状图', '列表']);
+// 合规整改弹窗相关
+const complianceRectificationDetailDialogVisible = ref(false);
+const complianceTrackDialogVisible = ref(false);
+const complianceAcceptanceDialogVisible = ref(false);
+const activeComplianceRectificationDetailView = ref('检查标准');
+const complianceRectificationDetailViewBtnList = ref(['检查标准', '整改明细', '验收记录']);
+const complianceRectificationDetailSelectedRow = ref<ComplianceRectificationDetail>({
+  tbComplianceCheckId: '',
+  tbComplianceCheckItem: '',
+  tbComplianceCheckCheckTime: '',
+  tbComplianceCheckComplianceRate: 0,
+  tbComplianceRectificationDeadline: '',
+  tbComplianceRectificationOverdueCount: 0,
+  tbComplianceAcceptAcceptanceRate: 0,
+  checkStandard: [],
+  rectificationDetails: [],
+  acceptanceRecords: [],
+});
+// 跟踪/验收表单
+const trackForm = ref<TrackForm>({
+  trackContent: '',
+});
+const acceptanceForm = ref<AcceptanceForm>({
+  acceptanceOpinion: '',
+});
+const trackFormRules = {
+  trackContent: [{ required: true, message: '整改进度跟踪内容不能为空', trigger: 'blur' }],
+};
+const acceptanceFormRules = {
+  acceptanceOpinion: [{ required: true, message: '验收意见不能为空', trigger: 'blur' }],
+};
+const trackFormRef = ref<FormInstance>();
+const acceptanceFormRef = ref<FormInstance>();
+// 当前操作的检查ID
+const currentCheckId = ref('');
+
+// 设备安全响应式数据
+const deviceSafetyList = ref<DeviceSafetyRow[]>([]);
+const deviceSafetyIndicators = ref<DeviceSafetyIndicators>({
+  totalHazardCount: 0,
+  rectificationCompletionRate: 0,
+  highRiskHazardCount: 0,
+  safetyDeviceCount: 0,
+});
+const deviceSafetyTypeHazardRatio = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '设备类型安全隐患占比(%)', data: [] }],
+});
+const deviceSafetyLevelRatio = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '安全等级分布占比(%)', data: [] }],
+});
+const deviceSafetyHazardTypeRatio = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '隐患类型占比(%)', data: [] }],
+});
+const deviceSafetyHazardTrend = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '隐患新增数', data: [] }],
+});
+const deviceSafetyRectifiedTrend = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '整改完成数', data: [] }],
+});
+// 设备安全视图切换相关
+const deviceSafetyChartRefreshKey = ref(0);
+const activeDeviceSafetyView = ref('卡片');
+const deviceSafetyViewBtnList = ref(['卡片', '饼图', '折线图', '列表']);
+// 设备安全弹窗相关
+const deviceSafetyDetailDialogVisible = ref(false);
+const deviceSafetyRectificationDialogVisible = ref(false);
+const deviceSafetyCheckDialogVisible = ref(false);
+const activeDeviceSafetyDetailView = ref('隐患明细');
+const deviceSafetyDetailViewBtnList = ref(['隐患明细', '整改记录', '检查报告']);
+const deviceSafetyDetailSelectedRow = ref<DeviceSafetyDetail>({
+  tbDeviceDeviceId: '',
+  tbDeviceName: '',
+  sysDeviceTypeName: '',
+  tbDeviceSafetyHighRiskCount: 0,
+  tbDeviceSafetyLastCheckTime: '',
+  tbDeviceSafetyNextCheckTime: '',
+  hazardDetails: [],
+  rectificationRecords: [],
+  checkReports: []
+});
+// 整改表单
+const deviceRectificationForm = ref<DeviceRectificationForm>({
+  hazardType: '',
+  rectificationPlan: ''
+});
+const deviceRectificationFormRules = {
+  hazardType: [{ required: true, message: '隐患类型不能为空', trigger: 'change' }],
+  rectificationPlan: [{ required: true, message: '整改方案不能为空', trigger: 'blur' }]
+};
+const deviceRectificationFormRef = ref<FormInstance>();
+// 检查表单
+const deviceCheckForm = ref<DeviceCheckForm>({
+  checkResult: ''
+});
+const deviceCheckFormRules = {
+  checkResult: [{ required: true, message: '安全检查结果不能为空', trigger: 'blur' }]
+};
+const deviceCheckFormRef = ref<FormInstance>();
+
+// 运营风险响应式数据
+const operationRiskList = ref<OperationRiskRow[]>([]);
+const operationRiskIndicators = ref<OperationRiskIndicators>({
+  totalRiskCount: 0,
+  highRiskCount: 0,
+  riskResolutionRate: 0,
+  warningCount: 0,
+});
+const operationRiskTypeRatio = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '风险类型占比(%)', data: [] }],
+});
+const operationRiskLevelRatio = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '风险等级占比(%)', data: [] }],
+});
+const operationRiskResolutionStatusRatio = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '化解状态占比(%)', data: [] }],
+});
+const operationRiskNewTrend = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '风险新增数', data: [] }],
+});
+const operationRiskResolutionTrend = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '化解完成数', data: [] }],
+});
+// 运营风险视图切换相关
+const operationRiskChartRefreshKey = ref(0);
+const activeOperationRiskView = ref('卡片');
+const operationRiskViewBtnList = ref(['卡片', '饼图', '折线图', '列表']);
+// 运营风险弹窗相关
+const operationRiskDetailDialogVisible = ref(false);
+const operationRiskWarningDialogVisible = ref(false);
+const operationRiskResolutionDialogVisible = ref(false);
+const activeOperationRiskDetailView = ref('明细');
+const operationRiskDetailViewBtnList = ref(['明细', '影响分析', '化解记录']);
+const operationRiskDetailSelectedRow = ref<OperationRiskDetail>({
+  tbOperationRiskId: '',
+  sysRiskTypeName: '',
+  tbRegionName: '',
+  sysRiskLevelName: '',
+  tbOperationRiskResolutionRate: 0,
+  tbOperationRiskResolutionDeadline: '',
+  tbOperationRiskMainCause: '',
+  detail: {
+    tbOperationRiskResourceCount: 0,
+    tbOperationRiskImpactScope: '',
+    tbOperationRiskWarningCount: 0,
+  },
+  impactAnalysis: {
+    affectedParkings: [],
+    potentialLoss: '',
+    impactDuration: '',
+    riskDescription: '',
+  },
+  resolutionRecords: []
+});
+// 预警表单
+const operationRiskWarningForm = ref<OperationRiskWarningForm>({
+  warningObjects: []
+});
+const operationRiskWarningOptions = [
+  { label: '运营部负责人', value: '运营部负责人' },
+  { label: '安全管理员', value: '安全管理员' },
+  { label: '设备维护员', value: '设备维护员' },
+  { label: '区域负责人', value: '区域负责人' },
+];
+const operationRiskWarningFormRules = {
+  warningObjects: [{ required: true, message: '请选择预警对象', trigger: 'blur' }]
+};
+const operationRiskWarningFormRef = ref<FormInstance>();
+// 化解表单
+const operationRiskResolutionForm = ref<OperationRiskResolutionForm>({
+  resolutionMeasures: ''
+});
+const operationRiskResolutionFormRules = {
+  resolutionMeasures: [{ required: true, message: '化解措施不能为空', trigger: 'blur' }]
+};
+const operationRiskResolutionFormRef = ref<FormInstance>();
+
 
 // 资源运行接口请求方法
 const getParkResourceRunListData = async () => {
@@ -1520,7 +1900,6 @@ const getParkResourceRunListData = async () => {
     parkResourceRunList.value = [];
   }
 };
-
 const getParkResourceRunIndicatorsData = async () => {
   try {
     parkResourceRunIndicators.value =
@@ -1529,7 +1908,6 @@ const getParkResourceRunIndicatorsData = async () => {
     ElMessage.error(`核心指标加载失败：${error.message}`);
   }
 };
-
 const getParkResourceRunUtilizationTrendData = async () => {
   try {
     parkResourceRunUtilizationTrend.value =
@@ -1538,7 +1916,6 @@ const getParkResourceRunUtilizationTrendData = async () => {
     ElMessage.error(`使用率趋势加载失败：${error.message}`);
   }
 };
-
 const getParkResourceRunTurnoverTrendData = async () => {
   try {
     parkResourceRunTurnoverTrend.value =
@@ -1547,7 +1924,6 @@ const getParkResourceRunTurnoverTrendData = async () => {
     ElMessage.error(`周转率趋势加载失败：${error.message}`);
   }
 };
-
 const getParkResourceRunRegionRatioData = async () => {
   try {
     parkResourceRunRegionRatio.value =
@@ -1556,7 +1932,6 @@ const getParkResourceRunRegionRatioData = async () => {
     ElMessage.error(`区域使用率占比加载失败：${error.message}`);
   }
 };
-
 const getParkResourceRunTimeRatioData = async () => {
   try {
     parkResourceRunTimeRatio.value =
@@ -1565,7 +1940,6 @@ const getParkResourceRunTimeRatioData = async () => {
     ElMessage.error(`时段使用率分布加载失败：${error.message}`);
   }
 };
-
 const getParkResourceRunDetailData = async (parkingId: string) => {
   try {
     parkResourceRunDetailSelectedRow.value = {
@@ -1576,7 +1950,6 @@ const getParkResourceRunDetailData = async (parkingId: string) => {
     ElMessage.warning(`资源运行详情加载失败：${error.message}`);
   }
 };
-
 const getParkResourceRunTurnoverTimeTrendData = async (parkingId: string) => {
   try {
     parkResourceRunTurnoverSelectedRow.value = {
@@ -1597,7 +1970,6 @@ const getParkResourceListData = async () => {
     parkResourceList.value = [];
   }
 };
-
 const getParkResourceIndicatorsData = async () => {
   try {
     parkResourceIndicators.value =
@@ -1606,7 +1978,6 @@ const getParkResourceIndicatorsData = async () => {
     ElMessage.error(`停车资源核心指标加载失败：${error.message}`);
   }
 };
-
 const getParkResourceAreaCountData = async () => {
   try {
     parkResourceAreaCountData.value =
@@ -1615,7 +1986,6 @@ const getParkResourceAreaCountData = async () => {
     ElMessage.error(`各区域停车场数量加载失败：${error.message}`);
   }
 };
-
 const getParkResourceTypeSpaceCountData = async () => {
   try {
     parkResourceTypeSpaceCountData.value =
@@ -1624,7 +1994,6 @@ const getParkResourceTypeSpaceCountData = async () => {
     ElMessage.error(`各类型泊位数加载失败：${error.message}`);
   }
 };
-
 const getParkResourceDetailData = async (parkingId: string) => {
   try {
     parkResourceDetailSelectedRow.value = {
@@ -1645,7 +2014,6 @@ const getParkServiceQualityListData = async () => {
     parkServiceQualityList.value = [];
   }
 };
-
 const getParkServiceQualityIndicatorsData = async () => {
   try {
     parkServiceQualityIndicators.value =
@@ -1654,7 +2022,6 @@ const getParkServiceQualityIndicatorsData = async () => {
     ElMessage.error(`服务质量核心指标加载失败：${error.message}`);
   }
 };
-
 const getParkServiceQualityPaySuccessRateTrendData = async () => {
   try {
     parkServiceQualityPaySuccessRateTrend.value =
@@ -1663,7 +2030,6 @@ const getParkServiceQualityPaySuccessRateTrendData = async () => {
     ElMessage.error(`缴费成功率趋势加载失败：${error.message}`);
   }
 };
-
 const getParkServiceQualitySatisfactionTrendData = async () => {
   try {
     parkServiceQualitySatisfactionTrend.value =
@@ -1672,7 +2038,6 @@ const getParkServiceQualitySatisfactionTrendData = async () => {
     ElMessage.error(`用户满意度趋势加载失败：${error.message}`);
   }
 };
-
 const getParkServiceQualityRegionCompareData = async () => {
   try {
     parkServiceQualityRegionCompare.value =
@@ -1681,7 +2046,6 @@ const getParkServiceQualityRegionCompareData = async () => {
     ElMessage.error(`各区域服务质量指标对比加载失败：${error.message}`);
   }
 };
-
 const getParkServiceQualityTimeEntryCompareData = async () => {
   try {
     parkServiceQualityTimeEntryCompare.value =
@@ -1690,7 +2054,6 @@ const getParkServiceQualityTimeEntryCompareData = async () => {
     ElMessage.error(`各时段平均入场时长对比加载失败：${error.message}`);
   }
 };
-
 const getParkServiceQualityDetailData = async (serviceQualityId: string) => {
   try {
     parkServiceQualityDetailSelectedRow.value = {
@@ -1701,7 +2064,6 @@ const getParkServiceQualityDetailData = async (serviceQualityId: string) => {
     ElMessage.warning(`服务质量详情加载失败：${error.message}`);
   }
 };
-
 const getParkServiceQualityEvaluationDetailData = async (serviceQualityId: string) => {
   try {
     parkServiceQualityEvaluationSelectedRow.value = {
@@ -1722,7 +2084,6 @@ const getBusinessFlowEfficiencyListData = async () => {
     businessFlowEfficiencyList.value = [];
   }
 };
-
 const getBusinessFlowEfficiencyIndicatorsData = async () => {
   try {
     businessFlowEfficiencyIndicators.value =
@@ -1731,7 +2092,6 @@ const getBusinessFlowEfficiencyIndicatorsData = async () => {
     ElMessage.error(`业务流转效率核心指标加载失败：${error.message}`);
   }
 };
-
 const getBusinessFlowDurationTrendData = async () => {
   try {
     businessFlowDurationTrend.value =
@@ -1740,7 +2100,6 @@ const getBusinessFlowDurationTrendData = async () => {
     ElMessage.error(`流转时长趋势加载失败：${error.message}`);
   }
 };
-
 const getBusinessFlowCompletionRateTrendData = async () => {
   try {
     businessFlowCompletionRateTrend.value =
@@ -1749,7 +2108,6 @@ const getBusinessFlowCompletionRateTrendData = async () => {
     ElMessage.error(`完成率趋势加载失败：${error.message}`);
   }
 };
-
 const getBusinessFlowTypeDurationData = async () => {
   try {
     businessFlowTypeDurationData.value =
@@ -1758,7 +2116,6 @@ const getBusinessFlowTypeDurationData = async () => {
     ElMessage.error(`各业务类型流转时长加载失败：${error.message}`);
   }
 };
-
 const getBusinessFlowLinkDurationData = async () => {
   try {
     businessFlowLinkDurationData.value =
@@ -1767,7 +2124,6 @@ const getBusinessFlowLinkDurationData = async () => {
     ElMessage.error(`各环节流转时长加载失败：${error.message}`);
   }
 };
-
 const getBusinessFlowEfficiencyDetailData = async (flowId: string) => {
   try {
     businessFlowDetailSelectedRow.value = {
@@ -1778,7 +2134,6 @@ const getBusinessFlowEfficiencyDetailData = async (flowId: string) => {
     ElMessage.warning(`业务流转效率详情加载失败：${error.message}`);
   }
 };
-
 const getBusinessFlowBottleneckLinkTrendData = async (flowId: string) => {
   try {
     businessFlowBottleneckSelectedRow.value = {
@@ -1799,7 +2154,6 @@ const getBusinessQualityListData = async () => {
     businessQualityList.value = [];
   }
 };
-
 const getBusinessQualityIndicatorsData = async () => {
   try {
     businessQualityIndicators.value =
@@ -1808,7 +2162,6 @@ const getBusinessQualityIndicatorsData = async () => {
     ElMessage.error(`业务质量核心指标加载失败：${error.message}`);
   }
 };
-
 const getBusinessQualityBillingAccuracyTrendData = async () => {
   try {
     businessQualityBillingAccuracyTrend.value =
@@ -1817,7 +2170,6 @@ const getBusinessQualityBillingAccuracyTrendData = async () => {
     ElMessage.error(`计费准确率趋势加载失败：${error.message}`);
   }
 };
-
 const getBusinessQualityComplianceRateTrendData = async () => {
   try {
     businessQualityComplianceRateTrend.value =
@@ -1826,7 +2178,6 @@ const getBusinessQualityComplianceRateTrendData = async () => {
     ElMessage.error(`合规率趋势加载失败：${error.message}`);
   }
 };
-
 const getBusinessQualityAbnormalTypeRatioData = async () => {
   try {
     businessQualityAbnormalTypeRatio.value =
@@ -1835,7 +2186,6 @@ const getBusinessQualityAbnormalTypeRatioData = async () => {
     ElMessage.error(`异常类型占比加载失败：${error.message}`);
   }
 };
-
 const getBusinessQualityTypeDistributionRatioData = async () => {
   try {
     businessQualityTypeDistributionRatio.value =
@@ -1844,7 +2194,6 @@ const getBusinessQualityTypeDistributionRatioData = async () => {
     ElMessage.error(`业务类型质量分布加载失败：${error.message}`);
   }
 };
-
 const getBusinessQualityDetailData = async (qualityId: string) => {
   try {
     businessQualityDetailSelectedRow.value = {
@@ -1855,7 +2204,6 @@ const getBusinessQualityDetailData = async (qualityId: string) => {
     ElMessage.warning(`业务质量详情加载失败：${error.message}`);
   }
 };
-
 const getBusinessQualityAbnormalOrderListData = async (qualityId: string) => {
   try {
     businessQualityAbnormalOrderSelectedRow.value = {
@@ -1866,7 +2214,6 @@ const getBusinessQualityAbnormalOrderListData = async (qualityId: string) => {
     ElMessage.warning(`异常订单详情加载失败：${error.message}`);
   }
 };
-
 const submitRectificationData = async (qualityId: string) => {
   try {
     await rectificationFormRef.value?.validate();
@@ -1898,7 +2245,6 @@ const getResourceDevelopmentListData = async () => {
     resourceDevelopmentList.value = [];
   }
 };
-
 const getResourceDevelopmentIndicatorsData = async () => {
   try {
     resourceDevelopmentIndicators.value =
@@ -1907,7 +2253,6 @@ const getResourceDevelopmentIndicatorsData = async () => {
     ElMessage.error(`资源发展核心指标加载失败：${error.message}`);
   }
 };
-
 const getResourceDevelopmentNewTrendData = async () => {
   try {
     resourceDevelopmentNewTrendData.value =
@@ -1916,7 +2261,6 @@ const getResourceDevelopmentNewTrendData = async () => {
     ElMessage.error(`资源新增趋势加载失败：${error.message}`);
   }
 };
-
 const getResourceDevelopmentPlanCompletionTrendData = async () => {
   try {
     resourceDevelopmentPlanCompletionTrendData.value =
@@ -1925,7 +2269,6 @@ const getResourceDevelopmentPlanCompletionTrendData = async () => {
     ElMessage.error(`规划达成率趋势加载失败：${error.message}`);
   }
 };
-
 const getResourceDevelopmentTypeCountData = async () => {
   try {
     resourceDevelopmentTypeCountData.value =
@@ -1934,7 +2277,6 @@ const getResourceDevelopmentTypeCountData = async () => {
     ElMessage.error(`各类型资源发展数量加载失败：${error.message}`);
   }
 };
-
 const getResourceDevelopmentRegionCountData = async () => {
   try {
     resourceDevelopmentRegionCountData.value =
@@ -1943,7 +2285,6 @@ const getResourceDevelopmentRegionCountData = async () => {
     ElMessage.error(`各区域资源发展数量加载失败：${error.message}`);
   }
 };
-
 const getResourceDevelopmentTypeRatioData = async () => {
   try {
     resourceDevelopmentTypeRatioData.value =
@@ -1952,7 +2293,6 @@ const getResourceDevelopmentTypeRatioData = async () => {
     ElMessage.error(`资源发展类型占比加载失败：${error.message}`);
   }
 };
-
 const getResourceDevelopmentFocusRegionRatioData = async () => {
   try {
     resourceDevelopmentFocusRegionRatioData.value =
@@ -1961,7 +2301,6 @@ const getResourceDevelopmentFocusRegionRatioData = async () => {
     ElMessage.error(`重点发展区域占比加载失败：${error.message}`);
   }
 };
-
 const getResourceDevelopmentDetailData = async (developmentId: string) => {
   try {
     resourceDevelopmentDetailSelectedRow.value = {
@@ -1972,7 +2311,6 @@ const getResourceDevelopmentDetailData = async (developmentId: string) => {
     ElMessage.warning(`资源发展详情加载失败：${error.message}`);
   }
 };
-
 const getResourceDevelopmentMonthlyNewTrendData = async (developmentId: string) => {
   try {
     resourceDevelopmentMonthlySelectedRow.value = {
@@ -1983,7 +2321,6 @@ const getResourceDevelopmentMonthlyNewTrendData = async (developmentId: string) 
     ElMessage.warning(`月度新增趋势加载失败：${error.message}`);
   }
 };
-
 const submitPlanAdjustmentData = async (developmentId: string) => {
   try {
     await planAdjustmentFormRef.value?.validate();
@@ -2013,7 +2350,6 @@ const getDeviceRunListData = async () => {
     deviceRunList.value = [];
   }
 };
-
 const getDeviceRunIndicatorsData = async () => {
   try {
     deviceRunIndicators.value =
@@ -2022,7 +2358,6 @@ const getDeviceRunIndicatorsData = async () => {
     ElMessage.error(`设备运行核心指标加载失败：${error.message}`);
   }
 };
-
 const getDeviceRunOnlineRateTrendData = async () => {
   try {
     deviceRunOnlineRateTrendData.value =
@@ -2031,7 +2366,6 @@ const getDeviceRunOnlineRateTrendData = async () => {
     ElMessage.error(`设备在线率趋势加载失败：${error.message}`);
   }
 };
-
 const getDeviceRunFaultTrendData = async () => {
   try {
     deviceRunFaultTrendData.value =
@@ -2040,7 +2374,6 @@ const getDeviceRunFaultTrendData = async () => {
     ElMessage.error(`故障发生趋势加载失败：${error.message}`);
   }
 };
-
 const getDeviceRunTypeRatioData = async () => {
   try {
     deviceRunTypeRatioData.value =
@@ -2049,7 +2382,6 @@ const getDeviceRunTypeRatioData = async () => {
     ElMessage.error(`设备类型分布占比加载失败：${error.message}`);
   }
 };
-
 const getDeviceRunEfficiencyRatioData = async () => {
   try {
     deviceRunEfficiencyRatioData.value =
@@ -2058,7 +2390,6 @@ const getDeviceRunEfficiencyRatioData = async () => {
     ElMessage.error(`运行效能等级占比加载失败：${error.message}`);
   }
 };
-
 const getDeviceRunDetailData = async (deviceId: string) => {
   try {
     deviceRunDetailSelectedRow.value = {
@@ -2069,7 +2400,6 @@ const getDeviceRunDetailData = async (deviceId: string) => {
     ElMessage.warning(`设备运行详情加载失败：${error.message}`);
   }
 };
-
 const submitMaintenanceOrderData = async (deviceId: string) => {
   try {
     await maintenanceFormRef.value?.validate();
@@ -2104,7 +2434,6 @@ const getSupportResourceListData = async () => {
     supportResourceList.value = [];
   }
 };
-
 const getSupportResourceIndicatorsData = async () => {
   try {
     supportResourceIndicators.value =
@@ -2113,7 +2442,6 @@ const getSupportResourceIndicatorsData = async () => {
     ElMessage.error(`支撑资源核心指标加载失败：${error.message}`);
   }
 };
-
 const getSupportResourceTypeRatioData = async () => {
   try {
     supportResourceTypeRatio.value =
@@ -2122,7 +2450,6 @@ const getSupportResourceTypeRatioData = async () => {
     ElMessage.error(`支撑资源类型占比加载失败：${error.message}`);
   }
 };
-
 const getSupportResourceRegionRatioData = async () => {
   try {
     supportResourceRegionRatio.value =
@@ -2131,7 +2458,6 @@ const getSupportResourceRegionRatioData = async () => {
     ElMessage.error(`各区域支撑资源分布加载失败：${error.message}`);
   }
 };
-
 const getSupportResourceTypeCountData = async () => {
   try {
     supportResourceTypeCountData.value =
@@ -2140,7 +2466,6 @@ const getSupportResourceTypeCountData = async () => {
     ElMessage.error(`各类型支撑资源数量加载失败：${error.message}`);
   }
 };
-
 const getSupportResourceParkingCountData = async () => {
   try {
     supportResourceParkingCountData.value =
@@ -2149,7 +2474,6 @@ const getSupportResourceParkingCountData = async () => {
     ElMessage.error(`各停车场支撑资源配置加载失败：${error.message}`);
   }
 };
-
 const getSupportResourceDetailData = async (resourceId: string) => {
   try {
     supportResourceDetailSelectedRow.value = {
@@ -2160,7 +2484,6 @@ const getSupportResourceDetailData = async (resourceId: string) => {
     ElMessage.warning(`支撑资源详情加载失败：${error.message}`);
   }
 };
-
 const submitMaintainData = async (resourceId: string) => {
   try {
     await maintainFormRef.value?.validate();
@@ -2190,7 +2513,6 @@ const getComplaintListData = async () => {
     complaintList.value = [];
   }
 };
-
 const getComplaintIndicatorsData = async () => {
   try {
     complaintIndicators.value =
@@ -2199,7 +2521,6 @@ const getComplaintIndicatorsData = async () => {
     ElMessage.error(`投诉处理核心指标加载失败：${error.message}`);
   }
 };
-
 const getComplaintTypeRatioData = async () => {
   try {
     complaintTypeRatio.value =
@@ -2208,7 +2529,6 @@ const getComplaintTypeRatioData = async () => {
     ElMessage.error(`投诉类型占比加载失败：${error.message}`);
   }
 };
-
 const getComplaintResultRatioData = async () => {
   try {
     complaintResultRatio.value =
@@ -2217,7 +2537,6 @@ const getComplaintResultRatioData = async () => {
     ElMessage.error(`处理结果占比加载失败：${error.message}`);
   }
 };
-
 const getComplaintSourceRatioData = async () => {
   try {
     complaintSourceRatio.value =
@@ -2226,7 +2545,6 @@ const getComplaintSourceRatioData = async () => {
     ElMessage.error(`投诉来源占比加载失败：${error.message}`);
   }
 };
-
 const getComplaintNewTrendData = async () => {
   try {
     complaintNewTrendData.value =
@@ -2235,7 +2553,6 @@ const getComplaintNewTrendData = async () => {
     ElMessage.error(`投诉新增趋势加载失败：${error.message}`);
   }
 };
-
 const getComplaintProcessTrendData = async () => {
   try {
     complaintProcessTrendData.value =
@@ -2244,7 +2561,6 @@ const getComplaintProcessTrendData = async () => {
     ElMessage.error(`处理完成趋势加载失败：${error.message}`);
   }
 };
-
 const getComplaintDetailData = async (complaintId: string) => {
   try {
     complaintDetailSelectedRow.value = {
@@ -2255,7 +2571,6 @@ const getComplaintDetailData = async (complaintId: string) => {
     ElMessage.warning(`投诉处理详情加载失败：${error.message}`);
   }
 };
-
 const submitComplaintProcessData = async (complaintId: string) => {
   try {
     await complaintProcessFormRef.value?.validate();
@@ -2277,7 +2592,6 @@ const submitComplaintProcessData = async (complaintId: string) => {
     tipDialogVisible.value = true;
   }
 };
-
 const submitComplaintReviewData = async (complaintId: string) => {
   try {
     const res = await submitComplaintReview(complaintId, complaintReviewForm.value.reviewOpinion);
@@ -2306,7 +2620,6 @@ const getMaintainEfficiencyListData = async () => {
     maintainEfficiencyList.value = [];
   }
 };
-
 const getMaintainEfficiencyIndicatorsData = async () => {
   try {
     maintainEfficiencyIndicators.value =
@@ -2315,7 +2628,6 @@ const getMaintainEfficiencyIndicatorsData = async () => {
     ElMessage.error(`运维处置效率核心指标加载失败：${error.message}`);
   }
 };
-
 const getMaintainEfficiencyHandleDurationTrendData = async () => {
   try {
     maintainEfficiencyHandleDurationTrend.value =
@@ -2324,7 +2636,6 @@ const getMaintainEfficiencyHandleDurationTrendData = async () => {
     ElMessage.error(`处置时长趋势加载失败：${error.message}`);
   }
 };
-
 const getMaintainEfficiencyCompletionRateTrendData = async () => {
   try {
     maintainEfficiencyCompletionRateTrend.value =
@@ -2333,7 +2644,6 @@ const getMaintainEfficiencyCompletionRateTrendData = async () => {
     ElMessage.error(`完成率趋势加载失败：${error.message}`);
   }
 };
-
 const getMaintainEfficiencyWorkorderTypeRatioData = async () => {
   try {
     maintainEfficiencyWorkorderTypeRatio.value =
@@ -2342,7 +2652,6 @@ const getMaintainEfficiencyWorkorderTypeRatioData = async () => {
     ElMessage.error(`工单类型占比加载失败：${error.message}`);
   }
 };
-
 const getMaintainEfficiencyLevelRatioData = async () => {
   try {
     maintainEfficiencyLevelRatio.value =
@@ -2351,7 +2660,6 @@ const getMaintainEfficiencyLevelRatioData = async () => {
     ElMessage.error(`处置效率等级占比加载失败：${error.message}`);
   }
 };
-
 const getMaintainEfficiencyReworkReasonRatioData = async () => {
   try {
     maintainEfficiencyReworkReasonRatio.value =
@@ -2360,7 +2668,6 @@ const getMaintainEfficiencyReworkReasonRatioData = async () => {
     ElMessage.error(`返工原因占比加载失败：${error.message}`);
   }
 };
-
 const getMaintainEfficiencyDetailData = async (maintainId: string) => {
   try {
     maintainEfficiencyDetailSelectedRow.value = {
@@ -2371,7 +2678,6 @@ const getMaintainEfficiencyDetailData = async (maintainId: string) => {
     ElMessage.warning(`运维处置效率详情加载失败：${error.message}`);
   }
 };
-
 const getMaintainEfficiencyWorkorderTrackListData = async (maintainId: string) => {
   try {
     maintainEfficiencyTrackSelectedRow.value = {
@@ -2382,7 +2688,6 @@ const getMaintainEfficiencyWorkorderTrackListData = async (maintainId: string) =
     ElMessage.warning(`高频工单跟踪列表加载失败：${error.message}`);
   }
 };
-
 const submitMaintainEfficiencyReviewData = async (maintainId: string) => {
   try {
     await reviewFormRef.value?.validate();
@@ -2412,7 +2717,6 @@ const getServiceDevelopmentListData = async () => {
     serviceDevelopmentList.value = [];
   }
 };
-
 const getServiceDevelopmentIndicatorsData = async () => {
   try {
     serviceDevelopmentIndicators.value =
@@ -2421,7 +2725,6 @@ const getServiceDevelopmentIndicatorsData = async () => {
     ElMessage.error(`服务发展核心指标加载失败：${error.message}`);
   }
 };
-
 const getServiceDevelopmentUserGrowthTrendData = async () => {
   try {
     serviceDevelopmentUserGrowthTrend.value =
@@ -2430,7 +2733,6 @@ const getServiceDevelopmentUserGrowthTrendData = async () => {
     ElMessage.error(`用户增长趋势加载失败：${error.message}`);
   }
 };
-
 const getServiceDevelopmentServiceUtilizationTrendData = async () => {
   try {
     serviceDevelopmentServiceUtilizationTrend.value =
@@ -2439,7 +2741,6 @@ const getServiceDevelopmentServiceUtilizationTrendData = async () => {
     ElMessage.error(`服务使用率趋势加载失败：${error.message}`);
   }
 };
-
 const getServiceDevelopmentTypeCompareData = async () => {
   try {
     serviceDevelopmentTypeCompareData.value =
@@ -2448,7 +2749,6 @@ const getServiceDevelopmentTypeCompareData = async () => {
     ElMessage.error(`各类型服务发展数量对比加载失败：${error.message}`);
   }
 };
-
 const getServiceDevelopmentRegionCoverageCompareData = async () => {
   try {
     serviceDevelopmentRegionCoverageCompareData.value =
@@ -2457,7 +2757,6 @@ const getServiceDevelopmentRegionCoverageCompareData = async () => {
     ElMessage.error(`各区域服务覆盖对比加载失败：${error.message}`);
   }
 };
-
 const getServiceDevelopmentTypeRatioData = async () => {
   try {
     serviceDevelopmentTypeRatio.value =
@@ -2466,7 +2765,6 @@ const getServiceDevelopmentTypeRatioData = async () => {
     ElMessage.error(`服务类型占比加载失败：${error.message}`);
   }
 };
-
 const getServiceDevelopmentHighUtilizationRatioData = async () => {
   try {
     serviceDevelopmentHighUtilizationRatio.value =
@@ -2475,7 +2773,6 @@ const getServiceDevelopmentHighUtilizationRatioData = async () => {
     ElMessage.error(`高使用率服务占比加载失败：${error.message}`);
   }
 };
-
 const getServiceDevelopmentDetailData = async (serviceDevelopmentId: string) => {
   try {
     serviceDevelopmentDetailSelectedRow.value = {
@@ -2486,7 +2783,6 @@ const getServiceDevelopmentDetailData = async (serviceDevelopmentId: string) => 
     ElMessage.warning(`服务发展详情加载失败：${error.message}`);
   }
 };
-
 const getServiceDevelopmentUserGrowthTrendDetailData = async (serviceDevelopmentId: string) => {
   try {
     serviceDevelopmentUserGrowthSelectedRow.value = {
@@ -2497,7 +2793,6 @@ const getServiceDevelopmentUserGrowthTrendDetailData = async (serviceDevelopment
     ElMessage.warning(`用户增长趋势详情加载失败：${error.message}`);
   }
 };
-
 const submitOptimizationData = async (serviceDevelopmentId: string) => {
   try {
     await optimizationFormRef.value?.validate();
@@ -2514,6 +2809,338 @@ const submitOptimizationData = async (serviceDevelopmentId: string) => {
     }
   } catch (error: any) {
     tipDialogContent.value = `优化建议提交失败：${error.message}`;
+    tipDialogVisible.value = true;
+  }
+};
+
+// 合规整改接口请求方法
+const getComplianceRectificationListData = async () => {
+  try {
+    complianceRectificationList.value = (await fetchComplianceRectificationList()) as ComplianceRectificationRow[];
+  } catch (error: any) {
+    ElMessage.error(`合规整改列表加载失败：${error.message}`);
+    complianceRectificationList.value = [];
+  }
+};
+const getComplianceRectificationIndicatorsData = async () => {
+  try {
+    complianceRectificationIndicators.value =
+      (await fetchComplianceRectificationIndicators()) as ComplianceRectificationIndicators;
+  } catch (error: any) {
+    ElMessage.error(`合规整改核心指标加载失败：${error.message}`);
+  }
+};
+const getComplianceCheckTypeRatioData = async () => {
+  try {
+    complianceCheckTypeRatio.value =
+      (await fetchComplianceCheckTypeRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`检查项目类型占比加载失败：${error.message}`);
+  }
+};
+const getComplianceRectificationStatusRatioData = async () => {
+  try {
+    complianceRectificationStatusRatio.value =
+      (await fetchComplianceRectificationStatusRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`整改完成状态占比加载失败：${error.message}`);
+  }
+};
+const getComplianceCheckItemComplianceRateData = async () => {
+  try {
+    complianceCheckItemComplianceRateData.value =
+      (await fetchComplianceCheckItemComplianceRate()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`各检查项目合规率加载失败：${error.message}`);
+  }
+};
+const getComplianceRectificationStageCountData = async () => {
+  try {
+    complianceRectificationStageCountData.value =
+      (await fetchComplianceRectificationStageCount()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`各阶段整改完成数加载失败：${error.message}`);
+  }
+};
+const getComplianceRectificationDetailData = async (checkId: string) => {
+  try {
+    complianceRectificationDetailSelectedRow.value = {
+      ...complianceRectificationDetailSelectedRow.value,
+      ...(await fetchComplianceRectificationDetail(checkId)),
+    };
+    currentCheckId.value = checkId;
+  } catch (error: any) {
+    ElMessage.warning(`合规整改详情加载失败：${error.message}`);
+  }
+};
+const submitTrackData = async () => {
+  try {
+    await trackFormRef.value?.validate();
+    const res = await submitComplianceRectificationTrack(currentCheckId.value, trackForm.value.trackContent);
+    if (res.success) {
+      tipDialogContent.value = '整改进度跟踪提交成功';
+      tipDialogVisible.value = true;
+      complianceTrackDialogVisible.value = false;
+      trackForm.value.trackContent = '';
+      trackFormRef.value?.resetFields();
+      // 刷新数据
+      await refreshComplianceRectificationData();
+    } else {
+      tipDialogContent.value = '整改进度跟踪提交失败';
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    tipDialogContent.value = `整改进度跟踪提交失败：${error.message}`;
+    tipDialogVisible.value = true;
+  }
+};
+const submitAcceptanceData = async () => {
+  try {
+    await acceptanceFormRef.value?.validate();
+    const res = await submitComplianceAcceptance(currentCheckId.value, acceptanceForm.value.acceptanceOpinion);
+    if (res.success) {
+      // 更新验收通过率
+      complianceRectificationDetailSelectedRow.value.tbComplianceAcceptAcceptanceRate = res.acceptanceRate;
+      tipDialogContent.value = '验收意见提交成功';
+      tipDialogVisible.value = true;
+      complianceAcceptanceDialogVisible.value = false;
+      acceptanceForm.value.acceptanceOpinion = '';
+      acceptanceFormRef.value?.resetFields();
+      // 刷新数据
+      await refreshComplianceRectificationData();
+    } else {
+      tipDialogContent.value = '验收意见提交失败';
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    tipDialogContent.value = `验收意见提交失败：${error.message}`;
+    tipDialogVisible.value = true;
+  }
+};
+
+// 设备安全接口请求方法
+const getDeviceSafetyListData = async () => {
+  try {
+    deviceSafetyList.value = (await fetchDeviceSafetyList()) as DeviceSafetyRow[];
+  } catch (error: any) {
+    ElMessage.error(`设备安全列表加载失败：${error.message}`);
+    deviceSafetyList.value = [];
+  }
+};
+const getDeviceSafetyIndicatorsData = async () => {
+  try {
+    deviceSafetyIndicators.value =
+      (await fetchDeviceSafetyIndicators()) as DeviceSafetyIndicators;
+  } catch (error: any) {
+    ElMessage.error(`设备安全核心指标加载失败：${error.message}`);
+  }
+};
+const getDeviceSafetyTypeHazardRatioData = async () => {
+  try {
+    deviceSafetyTypeHazardRatio.value =
+      (await fetchDeviceSafetyTypeHazardRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`设备类型安全隐患占比加载失败：${error.message}`);
+  }
+};
+const getDeviceSafetyLevelRatioData = async () => {
+  try {
+    deviceSafetyLevelRatio.value =
+      (await fetchDeviceSafetyLevelRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`安全等级分布占比加载失败：${error.message}`);
+  }
+};
+const getDeviceSafetyHazardTypeRatioData = async () => {
+  try {
+    deviceSafetyHazardTypeRatio.value =
+      (await fetchDeviceSafetyHazardTypeRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`隐患类型占比加载失败：${error.message}`);
+  }
+};
+const getDeviceSafetyHazardTrendData = async () => {
+  try {
+    deviceSafetyHazardTrend.value =
+      (await fetchDeviceSafetyHazardTrend()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`隐患新增趋势加载失败：${error.message}`);
+  }
+};
+const getDeviceSafetyRectifiedTrendData = async () => {
+  try {
+    deviceSafetyRectifiedTrend.value =
+      (await fetchDeviceSafetyRectifiedTrend()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`整改完成趋势加载失败：${error.message}`);
+  }
+};
+const getDeviceSafetyDetailData = async (deviceId: string) => {
+  try {
+    deviceSafetyDetailSelectedRow.value = {
+      ...deviceSafetyDetailSelectedRow.value,
+      ...(await fetchDeviceSafetyDetail(deviceId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`设备安全详情加载失败：${error.message}`);
+  }
+};
+const submitDeviceRectificationData = async (deviceId: string) => {
+  try {
+    await deviceRectificationFormRef.value?.validate();
+    const res = await submitDeviceSafetyRectification(
+      deviceId,
+      deviceRectificationForm.value.hazardType,
+      deviceRectificationForm.value.rectificationPlan
+    );
+    if (res.success) {
+      tipDialogContent.value = '整改工单提交成功';
+      tipDialogVisible.value = true;
+      deviceSafetyRectificationDialogVisible.value = false;
+      // 重置表单
+      deviceRectificationForm.value.hazardType = '';
+      deviceRectificationForm.value.rectificationPlan = '';
+      deviceRectificationFormRef.value?.resetFields();
+      // 刷新列表数据
+      await getDeviceSafetyListData();
+    } else {
+      tipDialogContent.value = `整改工单提交失败：${res.message}`;
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    tipDialogContent.value = `整改工单提交失败：${error.message}`;
+    tipDialogVisible.value = true;
+  }
+};
+const submitDeviceCheckData = async (deviceId: string) => {
+  try {
+    await deviceCheckFormRef.value?.validate();
+    const res = await submitDeviceSafetyCheck(
+      deviceId,
+      deviceCheckForm.value.checkResult
+    );
+    if (res.success) {
+      // 更新检查时间
+      deviceSafetyDetailSelectedRow.value.tbDeviceSafetyLastCheckTime = res.lastCheckTime;
+      deviceSafetyDetailSelectedRow.value.tbDeviceSafetyNextCheckTime = res.nextCheckTime;
+      tipDialogContent.value = '检查结果提交成功';
+      tipDialogVisible.value = true;
+      deviceSafetyCheckDialogVisible.value = false;
+      // 重置表单
+      deviceCheckForm.value.checkResult = '';
+      deviceCheckFormRef.value?.resetFields();
+    } else {
+      tipDialogContent.value = `检查结果提交失败：${res.message}`;
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    tipDialogContent.value = `检查结果提交失败：${error.message}`;
+    tipDialogVisible.value = true;
+  }
+};
+
+// 运营风险接口请求方法
+const getOperationRiskListData = async () => {
+  try {
+    operationRiskList.value = (await fetchOperationRiskList()) as OperationRiskRow[];
+  } catch (error: any) {
+    ElMessage.error(`运营风险列表加载失败：${error.message}`);
+    operationRiskList.value = [];
+  }
+};
+const getOperationRiskIndicatorsData = async () => {
+  try {
+    operationRiskIndicators.value =
+      (await fetchOperationRiskIndicators()) as OperationRiskIndicators;
+  } catch (error: any) {
+    ElMessage.error(`运营风险核心指标加载失败：${error.message}`);
+  }
+};
+const getOperationRiskTypeRatioData = async () => {
+  try {
+    operationRiskTypeRatio.value =
+      (await fetchOperationRiskTypeRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`风险类型占比加载失败：${error.message}`);
+  }
+};
+const getOperationRiskLevelRatioData = async () => {
+  try {
+    operationRiskLevelRatio.value =
+      (await fetchOperationRiskLevelRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`风险等级占比加载失败：${error.message}`);
+  }
+};
+const getOperationRiskResolutionStatusRatioData = async () => {
+  try {
+    operationRiskResolutionStatusRatio.value =
+      (await fetchOperationRiskResolutionStatusRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`化解状态占比加载失败：${error.message}`);
+  }
+};
+const getOperationRiskNewTrendData = async () => {
+  try {
+    operationRiskNewTrend.value =
+      (await fetchOperationRiskNewTrend()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`风险新增趋势加载失败：${error.message}`);
+  }
+};
+const getOperationRiskResolutionTrendData = async () => {
+  try {
+    operationRiskResolutionTrend.value =
+      (await fetchOperationRiskResolutionTrend()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`化解完成趋势加载失败：${error.message}`);
+  }
+};
+const getOperationRiskDetailData = async (riskId: string) => {
+  try {
+    operationRiskDetailSelectedRow.value = {
+      ...operationRiskDetailSelectedRow.value,
+      ...(await fetchOperationRiskDetail(riskId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`运营风险详情加载失败：${error.message}`);
+  }
+};
+const submitWarningData = async (riskId: string) => {
+  try {
+    await operationRiskWarningFormRef.value?.validate();
+    const res = await submitOperationRiskWarning(riskId, operationRiskWarningForm.value.warningObjects);
+    if (res.success) {
+      tipDialogContent.value = '风险预警发送成功';
+      tipDialogVisible.value = true;
+      operationRiskWarningDialogVisible.value = false;
+      operationRiskWarningForm.value.warningObjects = [];
+      operationRiskWarningFormRef.value?.resetFields();
+    } else {
+      tipDialogContent.value = '风险预警发送失败';
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    tipDialogContent.value = `风险预警发送失败：${error.message}`;
+    tipDialogVisible.value = true;
+  }
+};
+const submitResolutionData = async (riskId: string) => {
+  try {
+    await operationRiskResolutionFormRef.value?.validate();
+    const res = await submitOperationRiskResolution(riskId, operationRiskResolutionForm.value.resolutionMeasures);
+    if (res.success) {
+      tipDialogContent.value = '化解任务提交成功';
+      tipDialogVisible.value = true;
+      operationRiskResolutionDialogVisible.value = false;
+      operationRiskResolutionForm.value.resolutionMeasures = '';
+      operationRiskResolutionFormRef.value?.resetFields();
+    } else {
+      tipDialogContent.value = '化解任务提交失败';
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    tipDialogContent.value = `化解任务提交失败：${error.message}`;
     tipDialogVisible.value = true;
   }
 };
@@ -2582,7 +3209,7 @@ const refreshResourceRunData = async () => {
     getParkResourceRunTimeRatioData(),
   ]);
   resourceRunChartRefreshKey.value++;
-  ElMessage.success('数据刷新成功');
+  ElMessage.success('资源运行数据刷新成功');
 };
 
 // 停车资源视图切换
@@ -3260,6 +3887,206 @@ const refreshServiceDevelopmentData = async () => {
   ElMessage.success('服务发展数据刷新成功');
 };
 
+// 合规整改视图切换
+const changeComplianceRectificationView = (viewName: string) => {
+  activeComplianceRectificationView.value = viewName;
+  viewName === '卡片' &&
+  nextTick(() => setTimeout(initNumberAnimations, 300));
+  (viewName === '饼图' || viewName === '柱状图') &&
+  nextTick(() => complianceRectificationChartRefreshKey.value++);
+};
+const changeComplianceRectificationDetailView = (viewName: string) => {
+  activeComplianceRectificationDetailView.value = viewName;
+};
+// 合规整改弹窗方法
+const openComplianceRectificationDetailDialog = async (row: ComplianceRectificationRow) => {
+  await getComplianceRectificationDetailData(row.tbComplianceCheckId);
+  complianceRectificationDetailDialogVisible.value = true;
+};
+const closeComplianceRectificationDetailDialog = () => {
+  complianceRectificationDetailDialogVisible.value = false;
+  complianceRectificationDetailSelectedRow.value = {
+    tbComplianceCheckId: '',
+    tbComplianceCheckItem: '',
+    tbComplianceCheckCheckTime: '',
+    tbComplianceCheckComplianceRate: 0,
+    tbComplianceRectificationDeadline: '',
+    tbComplianceRectificationOverdueCount: 0,
+    tbComplianceAcceptAcceptanceRate: 0,
+    checkStandard: [],
+    rectificationDetails: [],
+    acceptanceRecords: [],
+  };
+  activeComplianceRectificationDetailView.value = '检查标准';
+  currentCheckId.value = '';
+};
+const openTrackDialog = (row: ComplianceRectificationRow) => {
+  currentCheckId.value = row.tbComplianceCheckId;
+  complianceTrackDialogVisible.value = true;
+};
+const closeTrackDialog = () => {
+  complianceTrackDialogVisible.value = false;
+  trackForm.value.trackContent = '';
+  trackFormRef.value?.resetFields();
+};
+const openAcceptanceDialog = (row: ComplianceRectificationRow) => {
+  currentCheckId.value = row.tbComplianceCheckId;
+  complianceAcceptanceDialogVisible.value = true;
+};
+const closeAcceptanceDialog = () => {
+  complianceAcceptanceDialogVisible.value = false;
+  acceptanceForm.value.acceptanceOpinion = '';
+  acceptanceFormRef.value?.resetFields();
+};
+// 合规整改数据刷新
+const refreshComplianceRectificationData = async () => {
+  await Promise.all([
+    getComplianceRectificationListData(),
+    getComplianceRectificationIndicatorsData(),
+    getComplianceCheckTypeRatioData(),
+    getComplianceRectificationStatusRatioData(),
+    getComplianceCheckItemComplianceRateData(),
+    getComplianceRectificationStageCountData(),
+  ]);
+  complianceRectificationChartRefreshKey.value++;
+  ElMessage.success('合规整改数据刷新成功');
+};
+
+// 设备安全视图切换
+const changeDeviceSafetyView = (viewName: string) => {
+  activeDeviceSafetyView.value = viewName;
+  viewName === '卡片' &&
+  nextTick(() => setTimeout(initNumberAnimations, 300));
+  (viewName === '饼图' || viewName === '折线图') &&
+  nextTick(() => deviceSafetyChartRefreshKey.value++);
+};
+const changeDeviceSafetyDetailView = (viewName: string) => {
+  activeDeviceSafetyDetailView.value = viewName;
+};
+// 设备安全弹窗方法
+const openDeviceSafetyDetailDialog = async (row: DeviceSafetyRow) => {
+  await getDeviceSafetyDetailData(row.tbDeviceDeviceId);
+  deviceSafetyDetailDialogVisible.value = true;
+};
+const closeDeviceSafetyDetailDialog = () => {
+  deviceSafetyDetailDialogVisible.value = false;
+  deviceSafetyDetailSelectedRow.value = {
+    tbDeviceDeviceId: '',
+    tbDeviceName: '',
+    sysDeviceTypeName: '',
+    tbDeviceSafetyHighRiskCount: 0,
+    tbDeviceSafetyLastCheckTime: '',
+    tbDeviceSafetyNextCheckTime: '',
+    hazardDetails: [],
+    rectificationRecords: [],
+    checkReports: []
+  };
+  activeDeviceSafetyDetailView.value = '隐患明细';
+};
+const openDeviceSafetyRectificationDialog = () => {
+  deviceSafetyRectificationDialogVisible.value = true;
+};
+const closeDeviceSafetyRectificationDialog = () => {
+  deviceSafetyRectificationDialogVisible.value = false;
+  deviceRectificationForm.value.hazardType = '';
+  deviceRectificationForm.value.rectificationPlan = '';
+  deviceRectificationFormRef.value?.resetFields();
+};
+const openDeviceSafetyCheckDialog = () => {
+  deviceSafetyCheckDialogVisible.value = true;
+};
+const closeDeviceSafetyCheckDialog = () => {
+  deviceSafetyCheckDialogVisible.value = false;
+  deviceCheckForm.value.checkResult = '';
+  deviceCheckFormRef.value?.resetFields();
+};
+// 设备安全数据刷新
+const refreshDeviceSafetyData = async () => {
+  await Promise.all([
+    getDeviceSafetyListData(),
+    getDeviceSafetyIndicatorsData(),
+    getDeviceSafetyTypeHazardRatioData(),
+    getDeviceSafetyLevelRatioData(),
+    getDeviceSafetyHazardTypeRatioData(),
+    getDeviceSafetyHazardTrendData(),
+    getDeviceSafetyRectifiedTrendData(),
+  ]);
+  deviceSafetyChartRefreshKey.value++;
+  ElMessage.success('设备安全数据刷新成功');
+};
+
+// 运营风险视图切换
+const changeOperationRiskView = (viewName: string) => {
+  activeOperationRiskView.value = viewName;
+  viewName === '卡片' &&
+  nextTick(() => setTimeout(initNumberAnimations, 300));
+  (viewName === '饼图' || viewName === '折线图') &&
+  nextTick(() => operationRiskChartRefreshKey.value++);
+};
+const changeOperationRiskDetailView = (viewName: string) => {
+  activeOperationRiskDetailView.value = viewName;
+};
+// 运营风险弹窗方法
+const openOperationRiskDetailDialog = async (row: OperationRiskRow) => {
+  await getOperationRiskDetailData(row.tbOperationRiskId);
+  operationRiskDetailDialogVisible.value = true;
+};
+const closeOperationRiskDetailDialog = () => {
+  operationRiskDetailDialogVisible.value = false;
+  operationRiskDetailSelectedRow.value = {
+    tbOperationRiskId: '',
+    sysRiskTypeName: '',
+    tbRegionName: '',
+    sysRiskLevelName: '',
+    tbOperationRiskResolutionRate: 0,
+    tbOperationRiskResolutionDeadline: '',
+    tbOperationRiskMainCause: '',
+    detail: {
+      tbOperationRiskResourceCount: 0,
+      tbOperationRiskImpactScope: '',
+      tbOperationRiskWarningCount: 0,
+    },
+    impactAnalysis: {
+      affectedParkings: [],
+      potentialLoss: '',
+      impactDuration: '',
+      riskDescription: '',
+    },
+    resolutionRecords: []
+  };
+  activeOperationRiskDetailView.value = '明细';
+};
+const openOperationRiskWarningDialog = () => {
+  operationRiskWarningDialogVisible.value = true;
+};
+const closeOperationRiskWarningDialog = () => {
+  operationRiskWarningDialogVisible.value = false;
+  operationRiskWarningForm.value.warningObjects = [];
+  operationRiskWarningFormRef.value?.resetFields();
+};
+const openOperationRiskResolutionDialog = () => {
+  operationRiskResolutionDialogVisible.value = true;
+};
+const closeOperationRiskResolutionDialog = () => {
+  operationRiskResolutionDialogVisible.value = false;
+  operationRiskResolutionForm.value.resolutionMeasures = '';
+  operationRiskResolutionFormRef.value?.resetFields();
+};
+// 运营风险数据刷新
+const refreshOperationRiskData = async () => {
+  await Promise.all([
+    getOperationRiskListData(),
+    getOperationRiskIndicatorsData(),
+    getOperationRiskTypeRatioData(),
+    getOperationRiskLevelRatioData(),
+    getOperationRiskResolutionStatusRatioData(),
+    getOperationRiskNewTrendData(),
+    getOperationRiskResolutionTrendData(),
+  ]);
+  operationRiskChartRefreshKey.value++;
+  ElMessage.success('运营风险数据刷新成功');
+};
+
 
 // 生命周期
 onMounted(async () => {
@@ -3334,6 +4161,26 @@ onMounted(async () => {
     getServiceDevelopmentRegionCoverageCompareData(),
     getServiceDevelopmentTypeRatioData(),
     getServiceDevelopmentHighUtilizationRatioData(),
+    getComplianceRectificationListData(),
+    getComplianceRectificationIndicatorsData(),
+    getComplianceCheckTypeRatioData(),
+    getComplianceRectificationStatusRatioData(),
+    getComplianceCheckItemComplianceRateData(),
+    getComplianceRectificationStageCountData(),
+    getDeviceSafetyListData(),
+    getDeviceSafetyIndicatorsData(),
+    getDeviceSafetyTypeHazardRatioData(),
+    getDeviceSafetyLevelRatioData(),
+    getDeviceSafetyHazardTypeRatioData(),
+    getDeviceSafetyHazardTrendData(),
+    getDeviceSafetyRectifiedTrendData(),
+    getOperationRiskListData(),
+    getOperationRiskIndicatorsData(),
+    getOperationRiskTypeRatioData(),
+    getOperationRiskLevelRatioData(),
+    getOperationRiskResolutionStatusRatioData(),
+    getOperationRiskNewTrendData(),
+    getOperationRiskResolutionTrendData(),
   ]);
   setTimeout(() => {
     resourceRunChartRefreshKey.value++;
@@ -3346,6 +4193,9 @@ onMounted(async () => {
     supportResourceChartRefreshKey.value++;
     complaintChartRefreshKey.value++;
     maintainEfficiencyChartRefreshKey.value++;
+    complianceRectificationChartRefreshKey.value++;
+    deviceSafetyChartRefreshKey.value++;
+    operationRiskChartRefreshKey.value++;
   }, 200);
   screenFull.on('change', handleFullscreenChange);
 });
@@ -3377,7 +4227,9 @@ onUnmounted(() => {
                       {{ item }}
                     </ElButton>
                   </div>
-                  <el-icon color="#409eff" size="16" @click="refreshResourceRunData"><Refresh /></el-icon>
+                  <button class="control-btn" @click="refreshResourceRunData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button
                     class="panel-fullscreen-btn"
@@ -3571,7 +4423,9 @@ onUnmounted(() => {
                       {{ item }}
                     </ElButton>
                   </div>
-                  <el-icon color="#409eff" size="16" @click="refreshDeviceRunData"><Refresh /></el-icon>
+                  <button class="control-btn" @click="refreshDeviceRunData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button
                     class="panel-fullscreen-btn"
@@ -3780,7 +4634,9 @@ onUnmounted(() => {
                       {{ item }}
                     </ElButton>
                   </div>
-                  <el-icon color="#409eff" size="16" @click="refreshParkResourceData"><Refresh /></el-icon>
+                  <button class="control-btn" @click="refreshParkResourceData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button
                     class="panel-fullscreen-btn"
@@ -3936,7 +4792,9 @@ onUnmounted(() => {
                       {{ item }}
                     </ElButton>
                   </div>
-                  <el-icon color="#409eff" size="16" @click="refreshSupportResourceData"><Refresh /></el-icon>
+                  <button class="control-btn" @click="refreshSupportResourceData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button
                     class="panel-fullscreen-btn"
@@ -4141,7 +4999,9 @@ onUnmounted(() => {
                       {{ item }}
                     </ElButton>
                   </div>
-                  <el-icon color="#409eff" size="16" @click="refreshServiceQualityData"><Refresh /></el-icon>
+                  <button class="control-btn" @click="refreshServiceQualityData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button
                     class="panel-fullscreen-btn"
@@ -4346,7 +5206,9 @@ onUnmounted(() => {
                       {{ item }}
                     </ElButton>
                   </div>
-                  <el-icon color="#409eff" size="16" @click="refreshComplaintData"><Refresh /></el-icon>
+                  <button class="control-btn" @click="refreshComplaintData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button
                     class="panel-fullscreen-btn"
@@ -4588,7 +5450,9 @@ onUnmounted(() => {
                         {{ item }}
                       </ElButton>
                     </div>
-                    <el-icon color="#409eff" size="16" @click="refreshBusinessFlowData"><Refresh /></el-icon>
+                    <button class="control-btn" @click="refreshBusinessFlowData">
+                      <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                    </button>
                     <el-icon color="#409eff" size="16"><Filter /></el-icon>
                     <button
                       class="panel-fullscreen-btn"
@@ -4790,7 +5654,9 @@ onUnmounted(() => {
                       {{ item }}
                     </ElButton>
                   </div>
-                  <el-icon color="#409eff" size="16" @click="refreshMaintainEfficiencyData"><Refresh /></el-icon>
+                  <button class="control-btn" @click="refreshMaintainEfficiencyData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button
                     class="panel-fullscreen-btn"
@@ -5025,7 +5891,9 @@ onUnmounted(() => {
                       {{ item }}
                     </ElButton>
                   </div>
-                  <el-icon color="#409eff" size="16" @click="refreshBusinessQualityData"><Refresh /></el-icon>
+                  <button class="control-btn" @click="refreshBusinessQualityData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button
                     class="panel-fullscreen-btn"
@@ -5220,13 +6088,683 @@ onUnmounted(() => {
               </div>
             </el-tab-pane>
             <el-tab-pane label="合规整改" name="tab2">
-              <div class="view-content"><div class="content-placeholder">合规整改</div></div>
+              <div class="header-actions">
+                <div class="actions-left"><p></p></div>
+                <div class="actions-right">
+                  <div class="view-btn-group">
+                    <ElButton
+                      v-for="item in complianceRectificationViewBtnList"
+                      :key="item"
+                      :type="activeComplianceRectificationView === item ? 'primary' : ''"
+                      plain
+                      @click="changeComplianceRectificationView(item)"
+                      class="view-btn"
+                    >
+                      {{ item }}
+                    </ElButton>
+                  </div>
+                  <button class="control-btn" @click="refreshComplianceRectificationData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
+                  <el-icon color="#409eff" size="16"><Filter /></el-icon>
+                  <button
+                    class="panel-fullscreen-btn"
+                    @click="togglePanelFullscreen('businessQualityPanelRef')"
+                  >
+                    <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 卡片视图 -->
+              <div v-if="activeComplianceRectificationView === '卡片'" class="view-content">
+                <div class="indicator-cards4">
+                  <div class="indicator-card4 card1">
+                    <div class="indicator-title">检查项目总数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ complianceRectificationIndicators.checkItemTotalCount }}</span>
+                    </div>
+                    <div class="indicator-unit">个</div>
+                  </div>
+                  <div class="indicator-card4 card2">
+                    <div class="indicator-title">合规率</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(complianceRectificationIndicators.complianceRate) }}</span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                  <div class="indicator-card4 card3">
+                    <div class="indicator-title">整改完成率</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(complianceRectificationIndicators.rectificationCompletionRate) }}</span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                  <div class="indicator-card4 card4">
+                    <div class="indicator-title">验收通过率</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(complianceRectificationIndicators.acceptanceRate) }}</span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                  <div class="indicator-card4 card5">
+                    <div class="indicator-title">逾期整改数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ complianceRectificationIndicators.overdueRectificationCount }}</span>
+                    </div>
+                    <div class="indicator-unit">个</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 饼图视图 -->
+              <div v-if="activeComplianceRectificationView === '饼图'" class="view-content">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                >
+                  <ChartPie1
+                    :data="complianceCheckTypeRatio"
+                    title="检查项目类型占比"
+                    :key="complianceRectificationChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <ChartPie2
+                    :data="complianceRectificationStatusRatio"
+                    title="整改完成状态占比"
+                    :key="complianceRectificationChartRefreshKey"
+                  />
+                </div>
+              </div>
+
+              <!-- 柱状图视图 -->
+              <div v-if="activeComplianceRectificationView === '柱状图'" class="view-content">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                >
+                  <VerticalBar2
+                    :x-axis="complianceCheckItemComplianceRateData.xAxis"
+                    :series="complianceCheckItemComplianceRateData.series"
+                    unit="%"
+                    title="各检查项目合规率对比"
+                    :key="complianceRectificationChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <VerticalBar1
+                    :x-axis="complianceRectificationStageCountData.xAxis"
+                    :series="complianceRectificationStageCountData.series"
+                    unit="个"
+                    title="各阶段整改完成数对比"
+                    :key="complianceRectificationChartRefreshKey"
+                  />
+                </div>
+              </div>
+
+              <!-- 列表视图 -->
+              <div v-if="activeComplianceRectificationView === '列表'" class="view-content">
+                <div class="table-box4">
+                  <ElTable
+                    class="table4"
+                    :data="complianceRectificationList"
+                    border
+                    size="small"
+                    width="100%"
+                    height="100%"
+                    table-layout="fixed"
+                    highlight-current-row
+                    @row-click="(row) => openComplianceRectificationDetailDialog(row)"
+                  >
+                    <ElTableColumn
+                      prop="tbComplianceCheckItem"
+                      label="检查项目"
+                      align="center"
+                      min-width="120"
+                    />
+                    <ElTableColumn
+                      prop="tbComplianceCheckCheckTime"
+                      label="检查时间"
+                      align="center"
+                      width="180"
+                    >
+                      <template #default="scope">
+                        {{ formatTimeStamp(scope.row.tbComplianceCheckCheckTime) }}
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="tbComplianceCheckComplianceRate"
+                      label="合规率(%)"
+                      align="center"
+                      width="100"
+                    >
+                      <template #default="scope">
+                        {{ formatDecimal(scope.row.tbComplianceCheckComplianceRate) }}
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="tbComplianceRectificationCompletedCount"
+                      label="整改完成数"
+                      align="center"
+                      width="100"
+                    />
+                    <ElTableColumn
+                      prop="tbComplianceRectificationUnfinishedCount"
+                      label="未整改数"
+                      align="center"
+                      width="100"
+                    />
+                    <ElTableColumn
+                      prop="tbComplianceRectificationCompletionRate"
+                      label="整改完成率(%)"
+                      align="center"
+                      width="120"
+                    >
+                      <template #default="scope">
+                        {{ formatDecimal(scope.row.tbComplianceRectificationCompletionRate) }}
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      label="操作"
+                      align="center"
+                      width="150"
+                      fixed="right"
+                    >
+                      <template #default="scope">
+                        <ElButton
+                          type="warning"
+                          size="small"
+                          plain
+                          @click.stop="openTrackDialog(scope.row)"
+                          :disabled="scope.row.tbComplianceRectificationUnfinishedCount === 0"
+                        >
+                          跟踪
+                        </ElButton>
+                        <ElButton
+                          type="success"
+                          size="small"
+                          plain
+                          @click.stop="openAcceptanceDialog(scope.row)"
+                          :disabled="scope.row.tbComplianceRectificationCompletedCount === 0"
+                          style="margin-left: 4px;"
+                        >
+                          验收
+                        </ElButton>
+                      </template>
+                    </ElTableColumn>
+                  </ElTable>
+                </div>
+              </div>
             </el-tab-pane>
             <el-tab-pane label="设备安全" name="tab3">
-              <div class="view-content"><div class="content-placeholder">设备安全</div></div>
+              <div class="header-actions">
+                <div class="actions-left"><p></p></div>
+                <div class="actions-right">
+                  <div class="view-btn-group">
+                    <ElButton
+                      v-for="item in deviceSafetyViewBtnList"
+                      :key="item"
+                      :type="activeDeviceSafetyView === item ? 'primary' : ''"
+                      plain
+                      @click="changeDeviceSafetyView(item)"
+                      class="view-btn"
+                    >
+                      {{ item }}
+                    </ElButton>
+                  </div>
+                  <button class="control-btn" @click="refreshDeviceSafetyData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
+                  <el-icon color="#409eff" size="16"><Filter /></el-icon>
+                  <button
+                    class="panel-fullscreen-btn"
+                    @click="togglePanelFullscreen('businessQualityPanelRef')"
+                  >
+                    <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 卡片视图 -->
+              <div v-if="activeDeviceSafetyView === '卡片'" class="view-content">
+                <div class="indicator-cards3">
+                  <div class="indicator-card3 card1">
+                    <div class="indicator-title">设备安全隐患总数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ deviceSafetyIndicators.totalHazardCount }}</span>
+                    </div>
+                    <div class="indicator-unit">个</div>
+                  </div>
+                  <div class="indicator-card3 card2">
+                    <div class="indicator-title">整改完成率</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(deviceSafetyIndicators.rectificationCompletionRate) }}</span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                  <div class="indicator-card3 card3">
+                    <div class="indicator-title">高风险隐患数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ deviceSafetyIndicators.highRiskHazardCount }}</span>
+                    </div>
+                    <div class="indicator-unit">个</div>
+                  </div>
+                  <div class="indicator-card3 card4">
+                    <div class="indicator-title">安全设备数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ deviceSafetyIndicators.safetyDeviceCount }}</span>
+                    </div>
+                    <div class="indicator-unit">个</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 饼图视图 -->
+              <div v-if="activeDeviceSafetyView === '饼图'" class="view-content">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 32%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                >
+                  <ChartPie1
+                    :data="deviceSafetyTypeHazardRatio"
+                    title="设备类型安全隐患占比"
+                    :key="deviceSafetyChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 32%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <ChartPie2
+                    :data="deviceSafetyLevelRatio"
+                    title="安全等级分布占比"
+                    :key="deviceSafetyChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 32%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <ChartPie3
+                    :data="deviceSafetyHazardTypeRatio"
+                    title="隐患类型占比"
+                    :key="deviceSafetyChartRefreshKey"
+                  />
+                </div>
+              </div>
+
+              <!-- 折线图视图 -->
+              <div v-if="activeDeviceSafetyView === '折线图'" class="view-content">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                >
+                  <ChartLine1
+                    :data="deviceSafetyHazardTrend"
+                    title="近30天隐患新增趋势"
+                    :key="deviceSafetyChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <ChartLine2
+                    :data="deviceSafetyRectifiedTrend"
+                    title="整改完成趋势"
+                    :key="deviceSafetyChartRefreshKey"
+                  />
+                </div>
+              </div>
+
+              <!-- 列表视图 -->
+              <div v-if="activeDeviceSafetyView === '列表'" class="view-content">
+                <div class="table-box4">
+                  <ElTable
+                    class="table4"
+                    :data="deviceSafetyList"
+                    border
+                    size="small"
+                    width="100%"
+                    height="100%"
+                    table-layout="fixed"
+                    highlight-current-row
+                    @row-click="(row) => openDeviceSafetyDetailDialog(row)"
+                  >
+                    <ElTableColumn
+                      prop="tbDeviceName"
+                      label="设备名称"
+                      align="center"
+                      min-width="120"
+                    />
+                    <ElTableColumn
+                      prop="sysDeviceTypeName"
+                      label="设备类型"
+                      align="center"
+                      min-width="100"
+                    />
+                    <ElTableColumn
+                      prop="tbDeviceSafetyHazardCount"
+                      label="安全隐患数"
+                      align="center"
+                    />
+                    <ElTableColumn
+                      prop="tbDeviceSafetyRectifiedCount"
+                      label="整改完成数"
+                      align="center"
+                    />
+                    <ElTableColumn
+                      prop="tbDeviceSafetyRectificationRate"
+                      label="隐患整改率(%)"
+                      align="center"
+                    >
+                      <template #default="scope">
+                        {{ formatDecimal(scope.row.tbDeviceSafetyRectificationRate) }}
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="sysSafetyLevelName"
+                      label="安全等级"
+                      align="center"
+                    >
+                      <template #default="scope">
+                        <ElTag
+                          :type="scope.row.sysSafetyLevelName === '高风险' ? 'danger' : scope.row.sysSafetyLevelName === '中风险' ? 'warning' : 'success'"
+                        >
+                          {{ scope.row.sysSafetyLevelName || '-' }}
+                        </ElTag>
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      label="操作"
+                      align="center"
+                      width="120"
+                      fixed="right"
+                    >
+                      <template #default="scope">
+                        <ElButton type="warning" size="small" plain @click.stop="openDeviceSafetyRectificationDialog()">
+                          整改
+                        </ElButton>
+                        <ElButton type="info" size="small" plain @click.stop="openDeviceSafetyCheckDialog()" style="margin-left:5px;">
+                          检查
+                        </ElButton>
+                      </template>
+                    </ElTableColumn>
+                  </ElTable>
+                </div>
+              </div>
             </el-tab-pane>
             <el-tab-pane label="运营风险" name="tab4">
-              <div class="view-content"><div class="content-placeholder">运营风险</div></div>
+              <div class="header-actions">
+                <div class="actions-left"><p></p></div>
+                <div class="actions-right">
+                  <div class="view-btn-group">
+                    <ElButton
+                      v-for="item in operationRiskViewBtnList"
+                      :key="item"
+                      :type="activeOperationRiskView === item ? 'primary' : ''"
+                      plain
+                      @click="changeOperationRiskView(item)"
+                      class="view-btn"
+                    >
+                      {{ item }}
+                    </ElButton>
+                  </div>
+                  <button class="control-btn" @click="refreshOperationRiskData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
+                  <el-icon color="#409eff" size="16"><Filter /></el-icon>
+                  <button
+                    class="panel-fullscreen-btn"
+                    @click="togglePanelFullscreen('businessQualityPanelRef')"
+                  >
+                    <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 卡片视图 -->
+              <div v-if="activeOperationRiskView === '卡片'" class="view-content">
+                <div class="indicator-cards3">
+                  <div class="indicator-card3 card1">
+                    <div class="indicator-title">运营风险总数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ operationRiskIndicators.totalRiskCount }}</span>
+                    </div>
+                    <div class="indicator-unit">个</div>
+                  </div>
+                  <div class="indicator-card3 card2">
+                    <div class="indicator-title">高等级风险数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ operationRiskIndicators.highRiskCount }}</span>
+                    </div>
+                    <div class="indicator-unit">个</div>
+                  </div>
+                  <div class="indicator-card3 card3">
+                    <div class="indicator-title">风险化解率</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(operationRiskIndicators.riskResolutionRate) }}</span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                  <div class="indicator-card3 card4">
+                    <div class="indicator-title">预警次数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ operationRiskIndicators.warningCount }}</span>
+                    </div>
+                    <div class="indicator-unit">次</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 饼图视图 -->
+              <div v-if="activeOperationRiskView === '饼图'" class="view-content">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                >
+                  <ChartPie1
+                    :data="operationRiskTypeRatio"
+                    title="风险类型占比"
+                    :key="operationRiskChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <ChartPie2
+                    :data="operationRiskLevelRatio"
+                    title="风险等级占比"
+                    :key="operationRiskChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <ChartPie3
+                    :data="operationRiskResolutionStatusRatio"
+                    title="化解状态占比"
+                    :key="operationRiskChartRefreshKey"
+                  />
+                </div>
+              </div>
+
+              <!-- 折线图视图 -->
+              <div v-if="activeOperationRiskView === '折线图'" class="view-content">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                >
+                  <ChartLine1
+                    :data="operationRiskNewTrend"
+                    title="近30天风险新增趋势"
+                    :key="operationRiskChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <ChartLine2
+                    :data="operationRiskResolutionTrend"
+                    title="化解完成趋势"
+                    :key="operationRiskChartRefreshKey"
+                  />
+                </div>
+              </div>
+
+              <!-- 列表视图 -->
+              <div v-if="activeOperationRiskView === '列表'" class="view-content">
+                <div class="table-box4">
+                  <ElTable
+                    class="table4"
+                    :data="operationRiskList"
+                    border
+                    size="small"
+                    width="100%"
+                    height="100%"
+                    table-layout="fixed"
+                    highlight-current-row
+                    @row-click="(row) => openOperationRiskDetailDialog(row)"
+                  >
+                    <ElTableColumn
+                      prop="sysRiskTypeName"
+                      label="风险类型"
+                      align="center"
+                      min-width="120"
+                    />
+                    <ElTableColumn
+                      prop="tbRegionName"
+                      label="涉及区域"
+                      align="center"
+                      min-width="100"
+                    />
+                    <ElTableColumn
+                      prop="sysRiskLevelName"
+                      label="风险等级"
+                      align="center"
+                    >
+                      <template #default="scope">
+                        <ElTag :type="scope.row.sysRiskLevelName === '高' ? 'danger' : scope.row.sysRiskLevelName === '中' ? 'warning' : 'success'">
+                          {{ scope.row.sysRiskLevelName || '-' }}
+                        </ElTag>
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="tbOperationRiskResourceCount"
+                      label="涉及资源数"
+                      align="center"
+                    />
+                    <ElTableColumn
+                      prop="tbOperationRiskImpactScope"
+                      label="影响范围"
+                      align="center"
+                      min-width="120"
+                    />
+                    <ElTableColumn
+                      prop="tbOperationRiskWarningCount"
+                      label="预警次数"
+                      align="center"
+                    />
+                    <ElTableColumn
+                      label="操作"
+                      align="center"
+                      width="150"
+                      fixed="right"
+                    >
+                      <template #default="scope">
+                        <ElButton type="warning" size="small" plain @click.stop="openOperationRiskWarningDialog()">
+                          预警
+                        </ElButton>
+                        <ElButton type="success" size="small" plain @click.stop="openOperationRiskResolutionDialog()">
+                          化解
+                        </ElButton>
+                      </template>
+                    </ElTableColumn>
+                  </ElTable>
+                </div>
+              </div>
             </el-tab-pane>
           </el-tabs>
           <div class="panel-footer"></div>
@@ -5249,7 +6787,9 @@ onUnmounted(() => {
                       {{ item }}
                     </ElButton>
                   </div>
-                  <el-icon color="#409eff" size="16" @click="refreshResourceDevelopmentData"><Refresh /></el-icon>
+                  <button class="control-btn" @click="refreshResourceDevelopmentData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button
                     class="panel-fullscreen-btn"
@@ -5489,11 +7029,13 @@ onUnmounted(() => {
                       {{ item }}
                     </ElButton>
                   </div>
-                  <el-icon color="#409eff" size="16" @click="refreshServiceDevelopmentData"><Refresh /></el-icon>
+                  <button class="control-btn" @click="refreshServiceDevelopmentData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button
                     class="panel-fullscreen-btn"
-                    @click="togglePanelFullscreen('serviceDevelopmentPanelRef')"
+                    @click="togglePanelFullscreen('resourceDevelopmentPanelRef')"
                   >
                     <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
                   </button>
@@ -5538,11 +7080,11 @@ onUnmounted(() => {
               <div v-if="activeServiceDevelopmentView === '折线图'" class="view-content">
                 <div
                   style="
-        display: inline-block;
-        width: 49%;
-        height: 100%;
-        vertical-align: top;
-      "
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
                 >
                   <ChartLine1
                     :data="serviceDevelopmentUserGrowthTrend"
@@ -5552,13 +7094,13 @@ onUnmounted(() => {
                 </div>
                 <div
                   style="
-        display: inline-block;
-        width: 49%;
-        height: 100%;
-        padding-left: 0.3vw;
-        vertical-align: top;
-        border-left: 0.3vh solid #02a6b5;
-      "
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
                 >
                   <ChartLine2
                     :data="serviceDevelopmentServiceUtilizationTrend"
@@ -5572,11 +7114,11 @@ onUnmounted(() => {
               <div v-if="activeServiceDevelopmentView === '柱状图'" class="view-content">
                 <div
                   style="
-        display: inline-block;
-        width: 49%;
-        height: 100%;
-        vertical-align: top;
-      "
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
                 >
                   <VerticalBar2
                     :x-axis="serviceDevelopmentTypeCompareData.xAxis"
@@ -5588,13 +7130,13 @@ onUnmounted(() => {
                 </div>
                 <div
                   style="
-        display: inline-block;
-        width: 49%;
-        height: 100%;
-        padding-left: 0.3vw;
-        vertical-align: top;
-        border-left: 0.3vh solid #02a6b5;
-      "
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
                 >
                   <VerticalBar1
                     :x-axis="serviceDevelopmentRegionCoverageCompareData.xAxis"
@@ -5610,11 +7152,11 @@ onUnmounted(() => {
               <div v-if="activeServiceDevelopmentView === '饼图'" class="view-content">
                 <div
                   style="
-        display: inline-block;
-        width: 49%;
-        height: 100%;
-        vertical-align: top;
-      "
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
                 >
                   <ChartPie1
                     :data="serviceDevelopmentTypeRatio"
@@ -5624,13 +7166,13 @@ onUnmounted(() => {
                 </div>
                 <div
                   style="
-        display: inline-block;
-        width: 49%;
-        height: 100%;
-        padding-left: 0.3vw;
-        vertical-align: top;
-        border-left: 0.3vh solid #02a6b5;
-      "
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
                 >
                   <ChartPie2
                     :data="serviceDevelopmentHighUtilizationRatio"
@@ -5670,32 +7212,28 @@ onUnmounted(() => {
                       prop="tbServiceDevelopmentNewServiceCount"
                       label="新增服务数量"
                       align="center"
-                      width="120"
                     />
                     <ElTableColumn
                       prop="tbServiceDevelopmentCoverageRegionCount"
                       label="服务覆盖区域数"
                       align="center"
-                      width="140"
                     />
                     <ElTableColumn
                       prop="tbServiceDevelopmentUserGrowthRate"
                       label="用户增长率(%)"
                       align="center"
-                      width="120"
                     >
                       <template #default="scope">
-            <span @click.stop="openServiceDevelopmentUserGrowthDialog(scope.row)" style="color:#409eff;cursor:pointer;">
-              {{ formatDecimal(scope.row.tbServiceDevelopmentUserGrowthRate) }}
-              <i class="el-icon-arrow-right" style="font-size:12px;"></i>
-            </span>
+                        <span @click.stop="openServiceDevelopmentUserGrowthDialog(scope.row)" style="color:#409eff;cursor:pointer;">
+                          {{ formatDecimal(scope.row.tbServiceDevelopmentUserGrowthRate) }}
+                          <i class="el-icon-arrow-right" style="font-size:12px;"></i>
+                        </span>
                       </template>
                     </ElTableColumn>
                     <ElTableColumn
                       prop="tbServiceDevelopmentServiceUtilizationRate"
                       label="服务使用率(%)"
                       align="center"
-                      width="120"
                     >
                       <template #default="scope">
                         {{ formatDecimal(scope.row.tbServiceDevelopmentServiceUtilizationRate) }}
@@ -7708,6 +9246,752 @@ onUnmounted(() => {
       <template #footer>
         <ElButton plain @click="closeServiceDevelopmentOptimizationDialog">取消</ElButton>
         <ElButton type="primary" @click="submitOptimizationData(serviceDevelopmentDetailSelectedRow.tbServiceDevelopmentId)">保存</ElButton>
+      </template>
+    </ElDialog>
+
+    <!-- 合规整改详情弹窗 -->
+    <ElDialog
+      v-model="complianceRectificationDetailDialogVisible"
+      width="60%"
+      :close-on-click-modal="true"
+      :close-on-press-escape="true"
+      class="park-dialog"
+      center
+      destroy-on-close
+      title="合规整改详情"
+    >
+      <div class="header-actions" style="margin-bottom:10px;">
+        <div class="actions-right">
+          <div class="view-btn-group">
+            <ElButton
+              v-for="item in complianceRectificationDetailViewBtnList"
+              :key="item"
+              :type="activeComplianceRectificationDetailView === item ? 'primary' : ''"
+              plain
+              @click="changeComplianceRectificationDetailView(item)"
+              class="view-btn"
+            >
+              {{ item }}
+            </ElButton>
+          </div>
+        </div>
+      </div>
+      <!-- 检查标准视图 -->
+      <div v-if="activeComplianceRectificationDetailView === '检查标准'" class="view-content" style="padding:0;">
+        <div style="display: flex; gap: 1vw;">
+          <div style="flex: 1;">
+            <ElDescriptions bordered :column="2" class="desc-detail">
+              <ElDescriptionsItem label="检查ID" span="2">
+                {{ complianceRectificationDetailSelectedRow.tbComplianceCheckId || '-' }}
+              </ElDescriptionsItem>
+              <ElDescriptionsItem label="检查项目">
+                {{ complianceRectificationDetailSelectedRow.tbComplianceCheckItem || '-' }}
+              </ElDescriptionsItem>
+              <ElDescriptionsItem label="检查时间">
+                {{ formatTimeStamp(complianceRectificationDetailSelectedRow.tbComplianceCheckCheckTime) }}
+              </ElDescriptionsItem>
+              <ElDescriptionsItem label="合规率(%)">
+                {{ formatDecimal(complianceRectificationDetailSelectedRow.tbComplianceCheckComplianceRate) }}
+              </ElDescriptionsItem>
+              <ElDescriptionsItem label="整改期限">
+                {{ complianceRectificationDetailSelectedRow.tbComplianceRectificationDeadline || '-' }}
+              </ElDescriptionsItem>
+              <ElDescriptionsItem label="逾期整改数">
+                {{ complianceRectificationDetailSelectedRow.tbComplianceRectificationOverdueCount || 0 }}
+              </ElDescriptionsItem>
+              <ElDescriptionsItem label="验收通过率(%)" span="2">
+                {{ formatDecimal(complianceRectificationDetailSelectedRow.tbComplianceAcceptAcceptanceRate) }}
+              </ElDescriptionsItem>
+            </ElDescriptions>
+          </div>
+          <div style="flex: 2; height: 400px; margin-top: 10px;">
+            <ElTable
+              :data="complianceRectificationDetailSelectedRow.checkStandard"
+              border
+              size="small"
+              width="100%"
+              height="100%"
+              table-layout="fixed"
+            >
+              <ElTableColumn
+                prop="standardItem"
+                label="检查标准项"
+                align="center"
+                min-width="300"
+              />
+              <ElTableColumn
+                label="是否合规"
+                align="center"
+                width="100"
+              >
+                <template #default="scope">
+                  <ElTag :type="scope.row.isCompliant ? 'success' : 'danger'">
+                    {{ scope.row.isCompliant ? '合规' : '不合规' }}
+                  </ElTag>
+                </template>
+              </ElTableColumn>
+            </ElTable>
+          </div>
+        </div>
+      </div>
+      <!-- 整改明细视图 -->
+      <div v-if="activeComplianceRectificationDetailView === '整改明细'" class="view-content" style="padding:0;">
+        <div style="height:400px;">
+          <ElTable
+            :data="complianceRectificationDetailSelectedRow.rectificationDetails"
+            border
+            size="small"
+            width="100%"
+            height="100%"
+            table-layout="fixed"
+          >
+            <ElTableColumn
+              prop="rectificationItem"
+              label="整改项"
+              align="center"
+              min-width="200"
+            />
+            <ElTableColumn
+              prop="rectificationStatus"
+              label="整改状态"
+              align="center"
+              width="120"
+            >
+              <template #default="scope">
+                <ElTag
+                  :type="scope.row.rectificationStatus === '已完成' ? 'success' : scope.row.rectificationStatus === '处理中' ? 'warning' : 'danger'"
+                >
+                  {{ scope.row.rectificationStatus || '-' }}
+                </ElTag>
+              </template>
+            </ElTableColumn>
+            <ElTableColumn
+              prop="rectificationTime"
+              label="整改完成时间"
+              align="center"
+              width="180"
+            >
+              <template #default="scope">
+                {{ formatTimeStamp(scope.row.rectificationTime) }}
+              </template>
+            </ElTableColumn>
+            <ElTableColumn
+              prop="rectificationPerson"
+              label="整改人"
+              align="center"
+              width="100"
+            />
+          </ElTable>
+        </div>
+      </div>
+      <!-- 验收记录视图 -->
+      <div v-if="activeComplianceRectificationDetailView === '验收记录'" class="view-content" style="padding:0;">
+        <div style="height:400px;">
+          <ElTable
+            :data="complianceRectificationDetailSelectedRow.acceptanceRecords"
+            border
+            size="small"
+            width="100%"
+            height="100%"
+            table-layout="fixed"
+          >
+            <ElTableColumn
+              prop="acceptanceTime"
+              label="验收时间"
+              align="center"
+              width="180"
+            >
+              <template #default="scope">
+                {{ formatTimeStamp(scope.row.acceptanceTime) }}
+              </template>
+            </ElTableColumn>
+            <ElTableColumn
+              prop="acceptanceOpinion"
+              label="验收意见"
+              align="center"
+              min-width="200"
+            />
+            <ElTableColumn
+              prop="acceptancePerson"
+              label="验收人"
+              align="center"
+              width="100"
+            />
+            <ElTableColumn
+              prop="acceptanceResult"
+              label="验收结果"
+              align="center"
+              width="100"
+            >
+              <template #default="scope">
+                <ElTag :type="scope.row.acceptanceResult === '通过' ? 'success' : 'danger'">
+                  {{ scope.row.acceptanceResult || '-' }}
+                </ElTag>
+              </template>
+            </ElTableColumn>
+          </ElTable>
+        </div>
+      </div>
+      <template #footer>
+        <ElButton plain @click="closeComplianceRectificationDetailDialog">关闭</ElButton>
+      </template>
+    </ElDialog>
+    <!-- 整改进度跟踪弹窗 -->
+    <ElDialog
+      v-model="complianceTrackDialogVisible"
+      width="40%"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      class="park-dialog"
+      center
+      destroy-on-close
+      title="整改进度跟踪"
+    >
+      <el-form
+        ref="trackFormRef"
+        :model="trackForm"
+        :rules="trackFormRules"
+        label-width="80px"
+        style="width: 100%;"
+      >
+        <el-form-item label="跟踪内容" prop="trackContent">
+          <el-input
+            v-model="trackForm.trackContent"
+            type="textarea"
+            :rows="6"
+            placeholder="请输入整改进度跟踪内容"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <ElButton plain @click="closeTrackDialog">取消</ElButton>
+        <ElButton type="primary" @click="submitTrackData()">确认</ElButton>
+      </template>
+    </ElDialog>
+    <!-- 验收意见弹窗 -->
+    <ElDialog
+      v-model="complianceAcceptanceDialogVisible"
+      width="40%"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      class="park-dialog"
+      center
+      destroy-on-close
+      title="验收意见"
+    >
+      <el-form
+        ref="acceptanceFormRef"
+        :model="acceptanceForm"
+        :rules="acceptanceFormRules"
+        label-width="80px"
+        style="width: 100%;"
+      >
+        <el-form-item label="验收意见" prop="acceptanceOpinion">
+          <el-input
+            v-model="acceptanceForm.acceptanceOpinion"
+            type="textarea"
+            :rows="6"
+            placeholder="请输入验收意见（必填）"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <ElButton plain @click="closeAcceptanceDialog">取消</ElButton>
+        <ElButton type="primary" @click="submitAcceptanceData()">确认</ElButton>
+      </template>
+    </ElDialog>
+
+    <!-- 设备安全详情弹窗 -->
+    <ElDialog
+      v-model="deviceSafetyDetailDialogVisible"
+      width="60%"
+      :close-on-click-modal="true"
+      :close-on-press-escape="true"
+      class="park-dialog"
+      center
+      destroy-on-close
+      title="设备安全详情"
+    >
+      <div class="header-actions" style="margin-bottom:10px;">
+        <div class="actions-right">
+          <div class="view-btn-group">
+            <ElButton
+              v-for="item in deviceSafetyDetailViewBtnList"
+              :key="item"
+              :type="activeDeviceSafetyDetailView === item ? 'primary' : ''"
+              plain
+              @click="changeDeviceSafetyDetailView(item)"
+              class="view-btn"
+            >
+              {{ item }}
+            </ElButton>
+          </div>
+        </div>
+      </div>
+      <!-- 隐患明细视图 -->
+      <div v-if="activeDeviceSafetyDetailView === '隐患明细'" class="view-content" style="padding:0;">
+        <div style="margin-bottom:10px;">
+          <ElDescriptions bordered :column="2" class="desc-detail">
+            <ElDescriptionsItem label="设备ID" span="2">
+              {{ deviceSafetyDetailSelectedRow.tbDeviceDeviceId || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="设备名称">
+              {{ deviceSafetyDetailSelectedRow.tbDeviceName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="设备类型">
+              {{ deviceSafetyDetailSelectedRow.sysDeviceTypeName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="高风险隐患数">
+              {{ deviceSafetyDetailSelectedRow.tbDeviceSafetyHighRiskCount || 0 }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="上次安全检查时间">
+              {{ formatTimeStamp(deviceSafetyDetailSelectedRow.tbDeviceSafetyLastCheckTime) }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="下次检查时间">
+              {{ formatTimeStamp(deviceSafetyDetailSelectedRow.tbDeviceSafetyNextCheckTime) }}
+            </ElDescriptionsItem>
+          </ElDescriptions>
+        </div>
+        <div style="height:400px;">
+          <ElTable
+            :data="deviceSafetyDetailSelectedRow.hazardDetails"
+            border
+            size="small"
+            width="100%"
+            height="100%"
+            table-layout="fixed"
+          >
+            <ElTableColumn
+              prop="hazardType"
+              label="隐患类型"
+              align="center"
+              width="120"
+            />
+            <ElTableColumn
+              prop="hazardLevel"
+              label="隐患等级"
+              align="center"
+              width="100"
+            >
+              <template #default="scope">
+                <ElTag
+                  :type="scope.row.hazardLevel === '高风险' ? 'danger' : scope.row.hazardLevel === '中风险' ? 'warning' : 'success'"
+                >
+                  {{ scope.row.hazardLevel || '-' }}
+                </ElTag>
+              </template>
+            </ElTableColumn>
+            <ElTableColumn
+              prop="discoverTime"
+              label="发现时间"
+              align="center"
+              width="180"
+            >
+              <template #default="scope">
+                {{ formatTimeStamp(scope.row.discoverTime) }}
+              </template>
+            </ElTableColumn>
+            <ElTableColumn
+              prop="handleStatus"
+              label="处理状态"
+              align="center"
+              width="120"
+            >
+              <template #default="scope">
+                <ElTag :type="scope.row.handleStatus === '已整改' ? 'success' : 'warning'">
+                  {{ scope.row.handleStatus || '-' }}
+                </ElTag>
+              </template>
+            </ElTableColumn>
+            <ElTableColumn
+              prop="description"
+              label="隐患描述"
+              align="center"
+              min-width="200"
+            />
+          </ElTable>
+        </div>
+      </div>
+      <!-- 整改记录视图 -->
+      <div v-if="activeDeviceSafetyDetailView === '整改记录'" class="view-content" style="padding:0;">
+        <div style="height:480px;">
+          <ElTable
+            :data="deviceSafetyDetailSelectedRow.rectificationRecords"
+            border
+            size="small"
+            width="100%"
+            height="100%"
+            table-layout="fixed"
+          >
+            <ElTableColumn
+              prop="rectificationNo"
+              label="整改工单编号"
+              align="center"
+              width="180"
+            />
+            <ElTableColumn
+              prop="hazardType"
+              label="整改隐患类型"
+              align="center"
+              width="120"
+            />
+            <ElTableColumn
+              prop="rectificationPlan"
+              label="整改方案"
+              align="center"
+              min-width="200"
+            />
+            <ElTableColumn
+              prop="submitTime"
+              label="提交时间"
+              align="center"
+              width="180"
+            >
+              <template #default="scope">
+                {{ formatTimeStamp(scope.row.submitTime) }}
+              </template>
+            </ElTableColumn>
+            <ElTableColumn
+              prop="completeTime"
+              label="完成时间"
+              align="center"
+              width="180"
+            >
+              <template #default="scope">
+                {{ formatTimeStamp(scope.row.completeTime) || '-' }}
+              </template>
+            </ElTableColumn>
+            <ElTableColumn
+              prop="handlePerson"
+              label="处理人"
+              align="center"
+              width="100"
+            />
+          </ElTable>
+        </div>
+      </div>
+      <!-- 检查报告视图 -->
+      <div v-if="activeDeviceSafetyDetailView === '检查报告'" class="view-content" style="padding:0;">
+        <div style="height:480px;">
+          <ElTable
+            :data="deviceSafetyDetailSelectedRow.checkReports"
+            border
+            size="small"
+            width="100%"
+            height="100%"
+            table-layout="fixed"
+          >
+            <ElTableColumn
+              prop="checkTime"
+              label="检查时间"
+              align="center"
+              width="180"
+            >
+              <template #default="scope">
+                {{ formatTimeStamp(scope.row.checkTime) }}
+              </template>
+            </ElTableColumn>
+            <ElTableColumn
+              prop="checkResult"
+              label="检查结果"
+              align="center"
+              min-width="200"
+            />
+            <ElTableColumn
+              prop="checkPerson"
+              label="检查人"
+              align="center"
+              width="100"
+            />
+            <ElTableColumn
+              prop="suggestion"
+              label="整改建议"
+              align="center"
+              min-width="200"
+            />
+          </ElTable>
+        </div>
+      </div>
+      <template #footer>
+        <ElButton plain @click="closeDeviceSafetyDetailDialog">关闭</ElButton>
+      </template>
+    </ElDialog>
+    <!-- 设备安全整改弹窗 -->
+    <ElDialog
+      v-model="deviceSafetyRectificationDialogVisible"
+      width="40%"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      class="park-dialog"
+      center
+      destroy-on-close
+      title="设备安全整改"
+    >
+      <el-form
+        ref="deviceRectificationFormRef"
+        :model="deviceRectificationForm"
+        :rules="deviceRectificationFormRules"
+        label-width="80px"
+        style="width: 100%;"
+      >
+        <el-form-item label="隐患类型" prop="hazardType">
+          <el-radio-group v-model="deviceRectificationForm.hazardType" placeholder="请选择隐患类型">
+            <el-radio label="硬件故障" value="硬件故障"></el-radio>
+            <el-radio label="软件异常" value="软件异常"></el-radio>
+            <el-radio label="线路老化" value="线路老化"></el-radio>
+            <el-radio label="操作不当" value="操作不当"></el-radio>
+            <el-radio label="环境影响" value="环境影响"></el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="整改方案" prop="rectificationPlan">
+          <el-input
+            v-model="deviceRectificationForm.rectificationPlan"
+            type="textarea"
+            :rows="6"
+            placeholder="请输入整改方案"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <ElButton plain @click="closeDeviceSafetyRectificationDialog">取消</ElButton>
+        <ElButton type="primary" @click="submitDeviceRectificationData(deviceSafetyDetailSelectedRow.tbDeviceDeviceId)">确认</ElButton>
+      </template>
+    </ElDialog>
+    <!-- 设备安全检查弹窗 -->
+    <ElDialog
+      v-model="deviceSafetyCheckDialogVisible"
+      width="40%"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      class="park-dialog"
+      center
+      destroy-on-close
+      title="设备安全检查"
+    >
+      <el-form
+        ref="deviceCheckFormRef"
+        :model="deviceCheckForm"
+        :rules="deviceCheckFormRules"
+        label-width="80px"
+        style="width: 100%;"
+      >
+        <el-form-item label="检查结果" prop="checkResult">
+          <el-input
+            v-model="deviceCheckForm.checkResult"
+            type="textarea"
+            :rows="6"
+            placeholder="请输入安全检查结果"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <ElButton plain @click="closeDeviceSafetyCheckDialog">取消</ElButton>
+        <ElButton type="primary" @click="submitDeviceCheckData(deviceSafetyDetailSelectedRow.tbDeviceDeviceId)">确认</ElButton>
+      </template>
+    </ElDialog>
+
+    <!-- 运营风险详情弹窗 -->
+    <ElDialog
+      v-model="operationRiskDetailDialogVisible"
+      width="40%"
+      :close-on-click-modal="true"
+      :close-on-press-escape="true"
+      class="park-dialog"
+      center
+      destroy-on-close
+      title="运营风险详情"
+    >
+      <div class="header-actions" style="margin-bottom:10px;">
+        <div class="actions-right">
+          <div class="view-btn-group">
+            <ElButton
+              v-for="item in operationRiskDetailViewBtnList"
+              :key="item"
+              :type="activeOperationRiskDetailView === item ? 'primary' : ''"
+              plain
+              @click="changeOperationRiskDetailView(item)"
+              class="view-btn"
+            >
+              {{ item }}
+            </ElButton>
+          </div>
+        </div>
+      </div>
+      <!-- 明细视图 -->
+      <div v-if="activeOperationRiskDetailView === '明细'" class="view-content" style="padding:0;">
+        <ElDescriptions bordered :column="2" class="desc-detail">
+          <ElDescriptionsItem label="风险ID" span="2">
+            {{ operationRiskDetailSelectedRow.tbOperationRiskId || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="风险类型">
+            {{ operationRiskDetailSelectedRow.sysRiskTypeName || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="涉及区域">
+            {{ operationRiskDetailSelectedRow.tbRegionName || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="风险等级">
+            <ElTag :type="operationRiskDetailSelectedRow.sysRiskLevelName === '高' ? 'danger' : operationRiskDetailSelectedRow.sysRiskLevelName === '中' ? 'warning' : 'success'">
+              {{ operationRiskDetailSelectedRow.sysRiskLevelName || '-' }}
+            </ElTag>
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="风险化解率(%)">
+            {{ formatDecimal(operationRiskDetailSelectedRow.tbOperationRiskResolutionRate) }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="化解期限">
+            {{ operationRiskDetailSelectedRow.tbOperationRiskResolutionDeadline || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="主要诱因" span="2">
+            {{ operationRiskDetailSelectedRow.tbOperationRiskMainCause || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="涉及资源数" span="2">
+            {{ operationRiskDetailSelectedRow.detail.tbOperationRiskResourceCount || 0 }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="影响范围" span="2">
+            {{ operationRiskDetailSelectedRow.detail.tbOperationRiskImpactScope || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="预警次数" span="2">
+            {{ operationRiskDetailSelectedRow.detail.tbOperationRiskWarningCount || 0 }}
+          </ElDescriptionsItem>
+        </ElDescriptions>
+      </div>
+      <!-- 影响分析视图 -->
+      <div v-if="activeOperationRiskDetailView === '影响分析'" class="view-content" style="padding:0;">
+        <ElDescriptions bordered :column="1" class="desc-detail">
+          <ElDescriptionsItem label="受影响停车场">
+            {{ operationRiskDetailSelectedRow.impactAnalysis.affectedParkings.join('、') || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="潜在损失">
+            {{ operationRiskDetailSelectedRow.impactAnalysis.potentialLoss || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="影响时长">
+            {{ operationRiskDetailSelectedRow.impactAnalysis.impactDuration || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="风险描述">
+            {{ operationRiskDetailSelectedRow.impactAnalysis.riskDescription || '-' }}
+          </ElDescriptionsItem>
+        </ElDescriptions>
+      </div>
+      <!-- 化解记录视图 -->
+      <div v-if="activeOperationRiskDetailView === '化解记录'" class="view-content" style="padding:0;">
+        <div style="height:400px;">
+          <ElTable
+            :data="operationRiskDetailSelectedRow.resolutionRecords"
+            border
+            size="small"
+            width="100%"
+            height="100%"
+            table-layout="fixed"
+          >
+            <ElTableColumn
+              prop="time"
+              label="记录时间"
+              align="center"
+              width="180"
+            >
+              <template #default="scope">
+                {{ formatTimeStamp(scope.row.time) }}
+              </template>
+            </ElTableColumn>
+            <ElTableColumn
+              prop="content"
+              label="化解内容"
+              align="center"
+              min-width="200"
+            />
+            <ElTableColumn
+              prop="person"
+              label="负责人"
+              align="center"
+              width="120"
+            />
+            <ElTableColumn
+              prop="status"
+              label="状态"
+              align="center"
+              width="120"
+            >
+              <template #default="scope">
+                <ElTag :type="scope.row.status === '已完成' ? 'success' : scope.row.status === '进行中' ? 'info' : 'warning'">
+                  {{ scope.row.status || '-' }}
+                </ElTag>
+              </template>
+            </ElTableColumn>
+          </ElTable>
+        </div>
+      </div>
+      <template #footer>
+        <ElButton plain @click="closeOperationRiskDetailDialog">关闭</ElButton>
+      </template>
+    </ElDialog>
+    <!-- 风险预警弹窗 -->
+    <ElDialog
+      v-model="operationRiskWarningDialogVisible"
+      width="40%"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      class="park-dialog"
+      center
+      destroy-on-close
+      title="风险预警"
+    >
+      <el-form
+        ref="operationRiskWarningFormRef"
+        :model="operationRiskWarningForm"
+        :rules="operationRiskWarningFormRules"
+        label-width="80px"
+        style="width: 100%;"
+      >
+        <el-form-item label="预警对象" prop="warningObjects">
+          <el-radio-group
+            v-model="operationRiskWarningForm.warningObjects"
+            multiple
+            placeholder="请选择预警对象"
+            style="width: 100%;"
+          >
+            <el-radio
+              v-for="item in operationRiskWarningOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-radio-group>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <ElButton plain @click="closeOperationRiskWarningDialog">取消</ElButton>
+        <ElButton type="primary" @click="submitWarningData(operationRiskDetailSelectedRow.tbOperationRiskId)">确认</ElButton>
+      </template>
+    </ElDialog>
+    <!-- 化解措施弹窗 -->
+    <ElDialog
+      v-model="operationRiskResolutionDialogVisible"
+      width="40%"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      class="park-dialog"
+      center
+      destroy-on-close
+      title="化解措施"
+    >
+      <el-form
+        ref="operationRiskResolutionFormRef"
+        :model="operationRiskResolutionForm"
+        :rules="operationRiskResolutionFormRules"
+        label-width="80px"
+        style="width: 100%;"
+      >
+        <el-form-item label="化解措施" prop="resolutionMeasures">
+          <el-input
+            v-model="operationRiskResolutionForm.resolutionMeasures"
+            type="textarea"
+            :rows="6"
+            placeholder="请输入化解措施"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <ElButton plain @click="closeOperationRiskResolutionDialog">取消</ElButton>
+        <ElButton type="primary" @click="submitResolutionData(operationRiskDetailSelectedRow.tbOperationRiskId)">确认</ElButton>
       </template>
     </ElDialog>
 
