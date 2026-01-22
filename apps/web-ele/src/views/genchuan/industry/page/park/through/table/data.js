@@ -574,8 +574,8 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      title: ' 操作 ',
-      width: 150,
+      title: '操作',
+      width: 80,
       fixed: 'right',
       slots: { default: 'actions' },
     },

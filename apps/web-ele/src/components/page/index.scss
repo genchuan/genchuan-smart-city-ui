@@ -147,7 +147,13 @@
   .common-align {
     cursor: pointer;
   }
-
+  .table-toolbar-tools {
+    .genchuan-common-button {
+      height: 20px;
+      padding: 0px;
+      margin-left: 3px;
+    }
+  }
   .detail-card {
     padding: 10px;
     background-color: #fff;

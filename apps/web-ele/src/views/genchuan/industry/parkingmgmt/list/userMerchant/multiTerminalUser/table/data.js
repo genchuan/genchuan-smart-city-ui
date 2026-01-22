@@ -1661,7 +1661,7 @@ export function personalGridColumns() {
     },
     {
       title: '操作',
-      width: 150,
+      width: 80,
       fixed: 'right',
       slots: { default: 'actions' },
     },
@@ -1773,7 +1773,7 @@ export function enterpriseGridColumns() {
     },
     {
       title: '操作',
-      width: 150,
+      width: 80,
       fixed: 'right',
       slots: { default: 'actions' },
     },
@@ -1876,7 +1876,7 @@ export function governmentGridColumns() {
     },
     {
       title: '操作',
-      width: 150,
+      width: 80,
       fixed: 'right',
       slots: { default: 'actions' },
     },
