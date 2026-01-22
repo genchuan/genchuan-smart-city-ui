@@ -51,11 +51,7 @@ const state = reactive({
         class="chart-box-Columnar"
         height="330px"
         title="不同车场车库数量对比"
-        :x-data="[
-          '空闲车位总数',
-          '周边车场总数',
-          '可预约车场数',
-        ]"
+        :x-data="['空闲车位总数', '周边车场总数', '可预约车场数']"
         :series-data="[{ name: '', data: [58, 42, 33] }]"
       />
     </div>
@@ -64,8 +60,9 @@ const state = reactive({
 
 <style scoped lang="scss">
 .park-chart-box {
-  min-height: 360px;
   display: flex;
+  min-height: 360px;
+
   .chart-box-left {
     display: flex;
     flex: 0 0 max(280px, min(25vw, 320px));
@@ -75,18 +72,21 @@ const state = reactive({
     max-width: 320px;
     margin-left: 30px;
   }
+
   .chart-box-right {
     display: flex;
     flex-wrap: wrap;
+
     .chart-box-circle {
-      margin-left: 5px;
-      width: 300px;
       display: flex;
       justify-content: center;
+      width: 300px;
+      margin-left: 5px;
     }
+
     .chart-box-Columnar {
-      margin-left: 15px;
       min-width: 560px;
+      margin-left: 15px;
     }
   }
 }
