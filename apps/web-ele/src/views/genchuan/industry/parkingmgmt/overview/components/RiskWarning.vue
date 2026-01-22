@@ -95,6 +95,125 @@ const router = useRouter();
 const instance = getCurrentInstance();
 const currentFullscreenPanel = ref<HTMLElement | null>(null);
 
+// 公共工具方法
+const formatNumber = (num: number) =>
+  num.toString().replaceAll(/\B(?=(\d{3})+(?!\d))/g, ',');
+const formatDecimal = (num: number) => num.toFixed(1);
+const formatTimeStamp = (timeStamp?: number | string) => {
+  if (!timeStamp) return '-';
+  const date = new Date(Number(timeStamp));
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+};
+
+const animateValue = (
+  element: HTMLElement,
+  start: number,
+  end: number,
+  duration: number,
+) => {
+  if (!element) return;
+  let startTimestamp: null | number = null;
+  const step = (timestamp: number) => {
+    if (!startTimestamp) startTimestamp = timestamp;
+    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+    element.textContent = formatNumber(
+      Math.floor(progress * (end - start) + start),
+    );
+    if (progress < 1) window.requestAnimationFrame(step);
+  };
+  window.requestAnimationFrame(step);
+};
+const initParkAlarmNumberAnimations = () => {
+  document
+    .querySelectorAll('.park-alarm-number-animate')
+    .forEach((el) =>
+      animateValue(
+        el as HTMLElement,
+        0,
+        Number((el as HTMLElement).textContent || 0),
+        1500,
+      ),
+    );
+};
+const initParkHiddenDangerNumberAnimations = () => {
+  document
+    .querySelectorAll('.park-hidden-danger-number-animate')
+    .forEach((el) =>
+      animateValue(
+        el as HTMLElement,
+        0,
+        Number((el as HTMLElement).textContent || 0),
+        1500,
+      ),
+    );
+};
+const initDisposeTrackNumberAnimations = () => {
+  document
+    .querySelectorAll('.dispose-track-number-animate')
+    .forEach((el) =>
+      animateValue(
+        el as HTMLElement,
+        0,
+        Number((el as HTMLElement).textContent || 0),
+        1500,
+      ),
+    );
+};
+const initParkAbnormalNumberAnimations = () => {
+  document
+    .querySelectorAll('.park-abnormal-number-animate')
+    .forEach((el) =>
+      animateValue(
+        el as HTMLElement,
+        0,
+        Number((el as HTMLElement).textContent || 0),
+        1500,
+      ),
+    );
+};
+
+const togglePanelFullscreen = (panelRefName: string) => {
+  if (!screenFull.isEnabled) {
+    ElMessage.warning('您的浏览器不支持全屏功能');
+    return;
+  }
+  const panel = instance?.refs[panelRefName];
+  if (!panel) {
+    ElMessage.error('未找到面板元素');
+    return;
+  }
+  if (screenFull.isFullscreen && document.fullscreenElement === panel) {
+    screenFull.exit();
+  } else {
+    screenFull.request(panel);
+  }
+  currentFullscreenPanel.value = panel as HTMLElement;
+};
+
+const handleFullscreenChange = () => {
+  if (screenFull.isFullscreen && currentFullscreenPanel.value) {
+    setTimeout(() => {
+      parkAlarmChartRefreshKey.value++;
+      parkHiddenDangerChartRefreshKey.value++;
+      parkAbnormalChartRefreshKey.value++;
+      disposeTrackChartRefreshKey.value++;
+      parkFaultChartRefreshKey.value++;
+      parkComplianceWarningChartRefreshKey.value++;
+    }, 300);
+  } else if (currentFullscreenPanel.value) {
+    currentFullscreenPanel.value.style = '';
+    nextTick(() => {
+      parkAlarmChartRefreshKey.value++;
+      parkHiddenDangerChartRefreshKey.value++;
+      parkAbnormalChartRefreshKey.value++;
+      disposeTrackChartRefreshKey.value++;
+      parkFaultChartRefreshKey.value++;
+      parkComplianceWarningChartRefreshKey.value++;
+    });
+    currentFullscreenPanel.value = null;
+  }
+};
+
 // TS类型定义
 interface ParkAlarmDisposalLog {
   time: number | string;
@@ -707,283 +826,6 @@ const tipDialogVisible = ref(false);
 const tipDialogContent = ref('');
 const confirmRelieveDialogVisible = ref(false);
 
-// 公共工具方法
-const formatNumber = (num: number) =>
-  num.toString().replaceAll(/\B(?=(\d{3})+(?!\d))/g, ',');
-const formatDecimal = (num: number) => num.toFixed(1);
-const formatTimeStamp = (timeStamp?: number | string) => {
-  if (!timeStamp) return '-';
-  const date = new Date(Number(timeStamp));
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-};
-
-const animateValue = (
-  element: HTMLElement,
-  start: number,
-  end: number,
-  duration: number,
-) => {
-  if (!element) return;
-  let startTimestamp: null | number = null;
-  const step = (timestamp: number) => {
-    if (!startTimestamp) startTimestamp = timestamp;
-    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-    element.textContent = formatNumber(
-      Math.floor(progress * (end - start) + start),
-    );
-    if (progress < 1) window.requestAnimationFrame(step);
-  };
-  window.requestAnimationFrame(step);
-};
-const initParkAlarmNumberAnimations = () => {
-  document
-    .querySelectorAll('.park-alarm-number-animate')
-    .forEach((el) =>
-      animateValue(
-        el as HTMLElement,
-        0,
-        Number((el as HTMLElement).textContent || 0),
-        1500,
-      ),
-    );
-};
-const initParkHiddenDangerNumberAnimations = () => {
-  document
-    .querySelectorAll('.park-hidden-danger-number-animate')
-    .forEach((el) =>
-      animateValue(
-        el as HTMLElement,
-        0,
-        Number((el as HTMLElement).textContent || 0),
-        1500,
-      ),
-    );
-};
-const initDisposeTrackNumberAnimations = () => {
-  document
-    .querySelectorAll('.dispose-track-number-animate')
-    .forEach((el) =>
-      animateValue(
-        el as HTMLElement,
-        0,
-        Number((el as HTMLElement).textContent || 0),
-        1500,
-      ),
-    );
-};
-const initParkAbnormalNumberAnimations = () => {
-  document
-    .querySelectorAll('.park-abnormal-number-animate')
-    .forEach((el) =>
-      animateValue(
-        el as HTMLElement,
-        0,
-        Number((el as HTMLElement).textContent || 0),
-        1500,
-      ),
-    );
-};
-
-// 标签样式方法
-const getAlarmLevelTagType = (val?: string) => {
-  const map = {
-    '紧急': 'danger',
-    '高危': 'warning',
-    '中危': 'info',
-    '低危': 'success',
-  };
-  return map[val as keyof typeof map] || '';
-};
-const getDisposeStatusTagType = (val?: string) => {
-  const map = {
-    '未处置': 'danger',
-    '处理中': 'warning',
-    '已完成': 'success',
-    '已驳回': 'info',
-  };
-  return map[val as keyof typeof map] || '';
-};
-const getRiskLevelTagType = (val?: string) => {
-  const map = {
-    '重大': 'danger',
-    '较大': 'warning',
-    '一般': 'info',
-    '低危': 'success',
-  };
-  return map[val as keyof typeof map] || '';
-};
-const getRectifyProgressTagType = (val?: string) => {
-  const map = { '未整改': 'danger', '整改中': 'warning', '已整改': 'success' };
-  return map[val as keyof typeof map] || '';
-};
-const getAcceptStatusTagType = (val?: string) => {
-  const map = { '待验收': 'warning', '已验收': 'success', '验收未通过': 'danger' };
-  return map[val as keyof typeof map] || '';
-};
-const getDisposeProgressTagType = (val?: string) => {
-  const map = {
-    '待派单': 'info',
-    '处理中': 'warning',
-    '已完成': 'success',
-    '已驳回': 'info',
-    '超时处置': 'danger',
-  };
-  return map[val as keyof typeof map] || '';
-};
-const getAbnormalStatusTagType = (val?: string) => {
-  const map = { '未解除': 'danger', '已解除': 'success' };
-  return map[val as keyof typeof map] || '';
-};
-const getAbnormalTypeTagType = (val?: string) => {
-  const map = {
-    '设备异常': 'warning',
-    '数据异常': 'info',
-    '通讯异常': 'danger',
-    '环境异常': 'success',
-    '其他异常': 'primary',
-  };
-  return map[val as keyof typeof map] || '';
-};
-const getFaultLevelTagType = (val?: string) => {
-  const map = {
-    '紧急': 'danger',
-    '严重': 'warning',
-    '一般': 'info',
-    '轻微': 'success',
-  };
-  return map[val as keyof typeof map] || '';
-};
-const getMaintenanceProgressTagType = (val?: string) => {
-  const map = {
-    '未处理': 'danger',
-    '待处理': 'warning',
-    '处理中': 'warning',
-    '已完成': 'success',
-    '已驳回': 'info',
-  };
-  return map[val as keyof typeof map] || '';
-};
-const getComplianceRectifyStatusTagType = (val?: string) => {
-  const map = { '未整改': 'danger', '整改中': 'warning', '已整改': 'success' };
-  return map[val as keyof typeof map] || '';
-};
-const getComplianceInspectResultTagType = (val?: string) => {
-  const map = { '未核查': 'info', '通过': 'success', '未通过': 'danger' };
-  return map[val as keyof typeof map] || '';
-};
-
-const togglePanelFullscreen = (panelRefName: string) => {
-  if (!screenFull.isEnabled) {
-    ElMessage.warning('您的浏览器不支持全屏功能');
-    return;
-  }
-  const panel = instance?.refs[panelRefName];
-  if (!panel) {
-    ElMessage.error('未找到面板元素');
-    return;
-  }
-  if (screenFull.isFullscreen && document.fullscreenElement === panel) {
-    screenFull.exit();
-  } else {
-    screenFull.request(panel);
-  }
-  currentFullscreenPanel.value = panel as HTMLElement;
-};
-
-const handleFullscreenChange = () => {
-  if (screenFull.isFullscreen && currentFullscreenPanel.value) {
-    setTimeout(() => {
-      parkAlarmChartRefreshKey.value++;
-      parkHiddenDangerChartRefreshKey.value++;
-      parkAbnormalChartRefreshKey.value++;
-      disposeTrackChartRefreshKey.value++;
-      parkFaultChartRefreshKey.value++;
-      parkComplianceWarningChartRefreshKey.value++;
-    }, 300);
-  } else if (currentFullscreenPanel.value) {
-    currentFullscreenPanel.value.style = '';
-    nextTick(() => {
-      parkAlarmChartRefreshKey.value++;
-      parkHiddenDangerChartRefreshKey.value++;
-      parkAbnormalChartRefreshKey.value++;
-      disposeTrackChartRefreshKey.value++;
-      parkFaultChartRefreshKey.value++;
-      parkComplianceWarningChartRefreshKey.value++;
-    });
-    currentFullscreenPanel.value = null;
-  }
-};
-
-// 视图切换
-const changeParkAlarmView = (viewName: string) => {
-  activeParkAlarmView.value = viewName;
-  viewName === '卡片' &&
-    nextTick(() => setTimeout(initParkAlarmNumberAnimations, 300));
-  (viewName === '柱状图' || viewName === '饼图') &&
-    nextTick(() => parkAlarmChartRefreshKey.value++);
-};
-const changeParkHiddenDangerView = (viewName: string) => {
-  activeParkHiddenDangerView.value = viewName;
-  viewName === '卡片' &&
-    nextTick(() => setTimeout(initParkHiddenDangerNumberAnimations, 300));
-  (viewName === '柱状图' || viewName === '饼图') &&
-    nextTick(() => parkHiddenDangerChartRefreshKey.value++);
-};
-const changeDisposeTrackView = (viewName: string) => {
-  activeDisposeTrackView.value = viewName;
-  viewName === '卡片' &&
-    nextTick(() => setTimeout(initDisposeTrackNumberAnimations, 300));
-  (viewName === '甘特图' || viewName === '柱状图') &&
-    nextTick(() => disposeTrackChartRefreshKey.value++);
-};
-const changeParkAbnormalView = (viewName: string) => {
-  activeParkAbnormalView.value = viewName;
-  viewName === '卡片' &&
-    nextTick(() => setTimeout(initParkAbnormalNumberAnimations, 300));
-  (viewName === '柱状图' || viewName === '折线图') &&
-    nextTick(() => parkAbnormalChartRefreshKey.value++);
-};
-const changeParkFaultView = (viewName: string) => {
-  activeParkFaultView.value = viewName;
-  viewName === '卡片' &&
-    nextTick(() =>
-      setTimeout(() => {
-        document
-          .querySelectorAll('.park-fault-number-animate')
-          .forEach((el) =>
-            animateValue(
-              el as HTMLElement,
-              0,
-              Number((el as HTMLElement).textContent || 0),
-              1500,
-            ),
-          );
-      }, 300),
-    );
-  (viewName === '柱状图' || viewName === '饼图') &&
-    nextTick(() => parkFaultChartRefreshKey.value++);
-};
-const changeParkComplianceWarningView = (viewName: string) => {
-  activeParkComplianceWarningView.value = viewName;
-  viewName === '卡片' &&
-    nextTick(() =>
-      setTimeout(() => {
-        document
-          .querySelectorAll('.park-compliance-warning-number-animate')
-          .forEach((el) =>
-            animateValue(
-              el as HTMLElement,
-              0,
-              Number((el as HTMLElement).textContent || 0),
-              1500,
-            ),
-          );
-      }, 300),
-    );
-  (viewName === '柱状图' || viewName === '饼图') &&
-    nextTick(() => parkComplianceWarningChartRefreshKey.value++);
-};
-
 // 接口请求方法
 const getParkAlarmListData = async () => {
   try {
@@ -1334,6 +1176,165 @@ const getParkComplianceWarningDetailData = async (warningId: string) => {
   } catch (error: any) {
     ElMessage.warning(`合规预警详情加载失败：${error.message}`);
   }
+};
+
+
+// 标签样式方法
+const getAlarmLevelTagType = (val?: string) => {
+  const map = {
+    '紧急': 'danger',
+    '高危': 'warning',
+    '中危': 'info',
+    '低危': 'success',
+  };
+  return map[val as keyof typeof map] || '';
+};
+const getDisposeStatusTagType = (val?: string) => {
+  const map = {
+    '未处置': 'danger',
+    '处理中': 'warning',
+    '已完成': 'success',
+    '已驳回': 'info',
+  };
+  return map[val as keyof typeof map] || '';
+};
+const getRiskLevelTagType = (val?: string) => {
+  const map = {
+    '重大': 'danger',
+    '较大': 'warning',
+    '一般': 'info',
+    '低危': 'success',
+  };
+  return map[val as keyof typeof map] || '';
+};
+const getRectifyProgressTagType = (val?: string) => {
+  const map = { '未整改': 'danger', '整改中': 'warning', '已整改': 'success' };
+  return map[val as keyof typeof map] || '';
+};
+const getAcceptStatusTagType = (val?: string) => {
+  const map = { '待验收': 'warning', '已验收': 'success', '验收未通过': 'danger' };
+  return map[val as keyof typeof map] || '';
+};
+const getDisposeProgressTagType = (val?: string) => {
+  const map = {
+    '待派单': 'info',
+    '处理中': 'warning',
+    '已完成': 'success',
+    '已驳回': 'info',
+    '超时处置': 'danger',
+  };
+  return map[val as keyof typeof map] || '';
+};
+const getAbnormalStatusTagType = (val?: string) => {
+  const map = { '未解除': 'danger', '已解除': 'success' };
+  return map[val as keyof typeof map] || '';
+};
+const getAbnormalTypeTagType = (val?: string) => {
+  const map = {
+    '设备异常': 'warning',
+    '数据异常': 'info',
+    '通讯异常': 'danger',
+    '环境异常': 'success',
+    '其他异常': 'primary',
+  };
+  return map[val as keyof typeof map] || '';
+};
+const getFaultLevelTagType = (val?: string) => {
+  const map = {
+    '紧急': 'danger',
+    '严重': 'warning',
+    '一般': 'info',
+    '轻微': 'success',
+  };
+  return map[val as keyof typeof map] || '';
+};
+const getMaintenanceProgressTagType = (val?: string) => {
+  const map = {
+    '未处理': 'danger',
+    '待处理': 'warning',
+    '处理中': 'warning',
+    '已完成': 'success',
+    '已驳回': 'info',
+  };
+  return map[val as keyof typeof map] || '';
+};
+const getComplianceRectifyStatusTagType = (val?: string) => {
+  const map = { '未整改': 'danger', '整改中': 'warning', '已整改': 'success' };
+  return map[val as keyof typeof map] || '';
+};
+const getComplianceInspectResultTagType = (val?: string) => {
+  const map = { '未核查': 'info', '通过': 'success', '未通过': 'danger' };
+  return map[val as keyof typeof map] || '';
+};
+
+// 视图切换
+const changeParkAlarmView = (viewName: string) => {
+  activeParkAlarmView.value = viewName;
+  viewName === '卡片' &&
+  nextTick(() => setTimeout(initParkAlarmNumberAnimations, 300));
+  (viewName === '柱状图' || viewName === '饼图') &&
+  nextTick(() => parkAlarmChartRefreshKey.value++);
+};
+const changeParkHiddenDangerView = (viewName: string) => {
+  activeParkHiddenDangerView.value = viewName;
+  viewName === '卡片' &&
+  nextTick(() => setTimeout(initParkHiddenDangerNumberAnimations, 300));
+  (viewName === '柱状图' || viewName === '饼图') &&
+  nextTick(() => parkHiddenDangerChartRefreshKey.value++);
+};
+const changeDisposeTrackView = (viewName: string) => {
+  activeDisposeTrackView.value = viewName;
+  viewName === '卡片' &&
+  nextTick(() => setTimeout(initDisposeTrackNumberAnimations, 300));
+  (viewName === '甘特图' || viewName === '柱状图') &&
+  nextTick(() => disposeTrackChartRefreshKey.value++);
+};
+const changeParkAbnormalView = (viewName: string) => {
+  activeParkAbnormalView.value = viewName;
+  viewName === '卡片' &&
+  nextTick(() => setTimeout(initParkAbnormalNumberAnimations, 300));
+  (viewName === '柱状图' || viewName === '折线图') &&
+  nextTick(() => parkAbnormalChartRefreshKey.value++);
+};
+const changeParkFaultView = (viewName: string) => {
+  activeParkFaultView.value = viewName;
+  viewName === '卡片' &&
+  nextTick(() =>
+    setTimeout(() => {
+      document
+        .querySelectorAll('.park-fault-number-animate')
+        .forEach((el) =>
+          animateValue(
+            el as HTMLElement,
+            0,
+            Number((el as HTMLElement).textContent || 0),
+            1500,
+          ),
+        );
+    }, 300),
+  );
+  (viewName === '柱状图' || viewName === '饼图') &&
+  nextTick(() => parkFaultChartRefreshKey.value++);
+};
+const changeParkComplianceWarningView = (viewName: string) => {
+  activeParkComplianceWarningView.value = viewName;
+  viewName === '卡片' &&
+  nextTick(() =>
+    setTimeout(() => {
+      document
+        .querySelectorAll('.park-compliance-warning-number-animate')
+        .forEach((el) =>
+          animateValue(
+            el as HTMLElement,
+            0,
+            Number((el as HTMLElement).textContent || 0),
+            1500,
+          ),
+        );
+    }, 300),
+  );
+  (viewName === '柱状图' || viewName === '饼图') &&
+  nextTick(() => parkComplianceWarningChartRefreshKey.value++);
 };
 
 // 弹窗方法

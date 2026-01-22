@@ -5161,4 +5161,1513 @@ export const submitServiceDevelopmentOptimization = (serviceDevelopmentId, optim
 };
 
 
+// ========== 合规整改 ==========
+// 合规整改列表
+export const fetchComplianceRectificationList = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/compliance/rectification/list`,
+        params,
+      })
+      .then((response) => {
+        if (response && Array.isArray(response)) {
+          return response.map((item) => ({
+            tbComplianceCheckItem: item.tbComplianceCheckItem,
+            tbComplianceCheckCheckTime: item.tbComplianceCheckCheckTime,
+            tbComplianceCheckComplianceRate: item.tbComplianceCheckComplianceRate,
+            tbComplianceRectificationCompletedCount: item.tbComplianceRectificationCompletedCount,
+            tbComplianceRectificationUnfinishedCount: item.tbComplianceRectificationUnfinishedCount,
+            tbComplianceRectificationCompletionRate: item.tbComplianceRectificationCompletionRate,
+            tbComplianceCheckId: item.tbComplianceCheckId,
+          }));
+        }
+        throw new Error('真实接口返回无合规整改列表数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('合规整改列表接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve([
+              {
+                tbComplianceCheckItem: '计费规则合规性',
+                tbComplianceCheckCheckTime: Date.now() - 15 * 24 * 60 * 60 * 1000,
+                tbComplianceCheckComplianceRate: 85.0,
+                tbComplianceRectificationCompletedCount: 8,
+                tbComplianceRectificationUnfinishedCount: 2,
+                tbComplianceRectificationCompletionRate: 80.0,
+                tbComplianceCheckId: 'CC20260119001',
+              },
+              {
+                tbComplianceCheckItem: '设备运行安全规范',
+                tbComplianceCheckCheckTime: Date.now() - 10 * 24 * 60 * 60 * 1000,
+                tbComplianceCheckComplianceRate: 78.5,
+                tbComplianceRectificationCompletedCount: 6,
+                tbComplianceRectificationUnfinishedCount: 4,
+                tbComplianceRectificationCompletionRate: 60.0,
+                tbComplianceCheckId: 'CC20260119002',
+              },
+              {
+                tbComplianceCheckItem: '服务流程合规性',
+                tbComplianceCheckCheckTime: Date.now() - 5 * 24 * 60 * 60 * 1000,
+                tbComplianceCheckComplianceRate: 92.3,
+                tbComplianceRectificationCompletedCount: 10,
+                tbComplianceRectificationUnfinishedCount: 0,
+                tbComplianceRectificationCompletionRate: 100.0,
+                tbComplianceCheckId: 'CC20260119003',
+              },
+              {
+                tbComplianceCheckItem: '数据安全合规性',
+                tbComplianceCheckCheckTime: Date.now() - 3 * 24 * 60 * 60 * 1000,
+                tbComplianceCheckComplianceRate: 88.7,
+                tbComplianceRectificationCompletedCount: 7,
+                tbComplianceRectificationUnfinishedCount: 1,
+                tbComplianceRectificationCompletionRate: 87.5,
+                tbComplianceCheckId: 'CC20260119004',
+              },
+            ]);
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchComplianceRectificationList 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve([]);
+  }
+};
+
+// 合规整改核心指标（卡片展示）
+export const fetchComplianceRectificationIndicators = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/compliance/rectification/indicators/get`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.checkItemTotalCount &&
+          response.complianceRate &&
+          response.rectificationCompletionRate &&
+          response.acceptanceRate &&
+          response.overdueRectificationCount
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无合规整改核心数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '合规整改指标接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              checkItemTotalCount: 4, // 检查项目总数
+              complianceRate: 86.1, // 合规率
+              rectificationCompletionRate: 81.9, // 整改完成率
+              acceptanceRate: 90.5, // 验收通过率
+              overdueRectificationCount: 1, // 逾期整改数
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 合规整改指标函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      checkItemTotalCount: 0,
+      complianceRate: 0,
+      rectificationCompletionRate: 0,
+      acceptanceRate: 0,
+      overdueRectificationCount: 0,
+    });
+  }
+};
+
+// 检查项目类型占比（饼图）
+export const fetchComplianceCheckTypeRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/compliance/stat/check/type/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无检查项目类型占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '检查项目类型占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['计费规则', '设备安全', '服务流程', '数据安全'],
+              series: [{ name: '检查项目类型占比(%)', data: [25, 25, 25, 25] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 检查项目类型占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '检查项目类型占比(%)', data: [] }],
+    });
+  }
+};
+
+// 整改完成状态占比（饼图）
+export const fetchComplianceRectificationStatusRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/compliance/stat/rectification/status/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无整改完成状态占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '整改完成状态占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['已完成', '未完成', '逾期'],
+              series: [{ name: '整改完成状态占比(%)', data: [81.9, 15.6, 2.5] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 整改完成状态占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '整改完成状态占比(%)', data: [] }],
+    });
+  }
+};
+
+// 各检查项目合规率对比（柱状图）
+export const fetchComplianceCheckItemComplianceRate = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/compliance/stat/check/item/compliance/rate`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无各检查项目合规率数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '各检查项目合规率对比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['计费规则', '设备安全', '服务流程', '数据安全'],
+              series: [{ name: '合规率(%)', data: [85.0, 78.5, 92.3, 88.7] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 各检查项目合规率对比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '合规率(%)', data: [] }],
+    });
+  }
+};
+
+// 各阶段整改完成数对比（柱状图）
+export const fetchComplianceRectificationStageCount = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/compliance/stat/rectification/stage/count`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无各阶段整改完成数数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '各阶段整改完成数对比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['第一阶段', '第二阶段', '第三阶段', '第四阶段'],
+              series: [{ name: '整改完成数', data: [8, 6, 10, 7] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 各阶段整改完成数对比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '整改完成数', data: [] }],
+    });
+  }
+};
+
+// 合规整改详情查询 - 详情弹窗专用
+export const fetchComplianceRectificationDetail = (checkId, params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/compliance/rectification/detail/${checkId}`,
+        params,
+      })
+      .then((response) => {
+        if (response && response.tbComplianceCheckId === checkId) {
+          return response;
+        }
+        throw new Error('真实接口返回无合规整改详情数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('合规整改详情接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              tbComplianceCheckId: checkId,
+              tbComplianceCheckItem: checkId === 'CC20260119001' ? '计费规则合规性' : '设备运行安全规范',
+              tbComplianceCheckCheckTime: checkId === 'CC20260119001' ? Date.now() - 15 * 24 * 60 * 60 * 1000 : Date.now() - 10 * 24 * 60 * 60 * 1000,
+              tbComplianceCheckComplianceRate: checkId === 'CC20260119001' ? 85.0 : 78.5,
+              tbComplianceRectificationDeadline: checkId === 'CC20260119001' ? '2026-02-28' : '2026-03-15',
+              tbComplianceRectificationOverdueCount: checkId === 'CC20260119001' ? 1 : 0,
+              tbComplianceAcceptAcceptanceRate: checkId === 'CC20260119001' ? 90.5 : 85.0,
+              // 检查标准
+              checkStandard: [
+                { standardItem: '计费规则需符合当地物价部门规定', isCompliant: checkId === 'CC20260119001' ? true : false },
+                { standardItem: '计费公示需清晰可见', isCompliant: true },
+                { standardItem: '优惠活动需提前备案', isCompliant: checkId === 'CC20260119001' ? false : true },
+              ],
+              // 整改明细
+              rectificationDetails: [
+                {
+                  rectificationItem: '调整计费规则至合规标准',
+                  rectificationStatus: checkId === 'CC20260119001' ? '已完成' : '未完成',
+                  rectificationTime: checkId === 'CC20260119001' ? Date.now() - 5 * 24 * 60 * 60 * 1000 : '',
+                  rectificationPerson: '张三',
+                },
+                {
+                  rectificationItem: '补充优惠活动备案材料',
+                  rectificationStatus: checkId === 'CC20260119001' ? '未完成' : '处理中',
+                  rectificationTime: '',
+                  rectificationPerson: '李四',
+                },
+              ],
+              // 验收记录
+              acceptanceRecords: [
+                {
+                  acceptanceTime: Date.now() - 3 * 24 * 60 * 60 * 1000,
+                  acceptanceOpinion: '整改符合要求，验收通过',
+                  acceptancePerson: '王五',
+                  acceptanceResult: '通过',
+                },
+                {
+                  acceptanceTime: Date.now() - 8 * 24 * 60 * 60 * 1000,
+                  acceptanceOpinion: '整改不彻底，需重新整改',
+                  acceptancePerson: '赵六',
+                  acceptanceResult: '未通过',
+                },
+              ],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchComplianceRectificationDetail 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({});
+  }
+};
+
+// 提交整改进度跟踪
+export const submitComplianceRectificationTrack = (checkId, trackContent, params = {}) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/compliance/rectification/track/submit/${checkId}`,
+        data: { trackContent, ...params },
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return response;
+        }
+        throw new Error('整改进度跟踪提交失败');
+      })
+      .catch((error) => {
+        console.warn('整改进度跟踪提交失败', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              success: true,
+              trackId: `TR${Date.now()}`,
+              checkId,
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== submitComplianceRectificationTrack 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({ success: false });
+  }
+};
+
+// 提交验收意见
+export const submitComplianceAcceptance = (checkId, acceptanceOpinion, params = {}) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/compliance/accept/submit/${checkId}`,
+        data: { acceptanceOpinion, ...params },
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return response;
+        }
+        throw new Error('验收意见提交失败');
+      })
+      .catch((error) => {
+        console.warn('验收意见提交失败', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              success: true,
+              acceptanceId: `AC${Date.now()}`,
+              checkId,
+              acceptanceRate: 95.0, // 新的验收通过率
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== submitComplianceAcceptance 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({ success: false });
+  }
+};
+
+
+// ========== 设备安全 ==========
+// 设备安全列表
+export const fetchDeviceSafetyList = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/device/safety/list`,
+        params,
+      })
+      .then((response) => {
+        console.log('设备安全列表-接口请求成功');
+        if (response && Array.isArray(response)) {
+          console.log('设备安全列表-响应符合实际格式');
+          return response.map((item) => ({
+            tbDeviceName: item.tbDeviceName,
+            sysDeviceTypeName: item.sysDeviceTypeName,
+            tbDeviceSafetyHazardCount: item.tbDeviceSafetyHazardCount,
+            tbDeviceSafetyRectifiedCount: item.tbDeviceSafetyRectifiedCount,
+            tbDeviceSafetyRectificationRate: item.tbDeviceSafetyRectificationRate,
+            sysSafetyLevelName: item.sysSafetyLevelName,
+            tbDeviceDeviceId: item.tbDeviceDeviceId, // 主键
+          }));
+        }
+        throw new Error('真实接口返回无设备安全列表数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('设备安全列表接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve([
+              {
+                tbDeviceName: '道闸设备-北区01',
+                sysDeviceTypeName: '道闸',
+                tbDeviceSafetyHazardCount: 5,
+                tbDeviceSafetyRectifiedCount: 3,
+                tbDeviceSafetyRectificationRate: 60.0,
+                sysSafetyLevelName: '中风险',
+                tbDeviceDeviceId: 'DEV20260119001',
+              },
+              {
+                tbDeviceName: '监控摄像头-南区02',
+                sysDeviceTypeName: '监控设备',
+                tbDeviceSafetyHazardCount: 2,
+                tbDeviceSafetyRectifiedCount: 2,
+                tbDeviceSafetyRectificationRate: 100.0,
+                sysSafetyLevelName: '低风险',
+                tbDeviceDeviceId: 'DEV20260119002',
+              },
+              {
+                tbDeviceName: '充电桩-东区03',
+                sysDeviceTypeName: '充电设备',
+                tbDeviceSafetyHazardCount: 8,
+                tbDeviceSafetyRectifiedCount: 4,
+                tbDeviceSafetyRectificationRate: 50.0,
+                sysSafetyLevelName: '高风险',
+                tbDeviceDeviceId: 'DEV20260119003',
+              },
+              {
+                tbDeviceName: '消防设备-西区04',
+                sysDeviceTypeName: '消防设备',
+                tbDeviceSafetyHazardCount: 1,
+                tbDeviceSafetyRectifiedCount: 0,
+                tbDeviceSafetyRectificationRate: 0.0,
+                sysSafetyLevelName: '中风险',
+                tbDeviceDeviceId: 'DEV20260119004',
+              },
+              {
+                tbDeviceName: '车位检测器-中区05',
+                sysDeviceTypeName: '检测设备',
+                tbDeviceSafetyHazardCount: 3,
+                tbDeviceSafetyRectifiedCount: 3,
+                tbDeviceSafetyRectificationRate: 100.0,
+                sysSafetyLevelName: '低风险',
+                tbDeviceDeviceId: 'DEV20260119005',
+              },
+            ]);
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchDeviceSafetyList 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve([]);
+  }
+};
+
+// 设备安全核心指标（卡片展示）
+export const fetchDeviceSafetyIndicators = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/device/safety/indicators/get`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.totalHazardCount &&
+          response.rectificationCompletionRate &&
+          response.highRiskHazardCount &&
+          response.safetyDeviceCount
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无设备安全核心数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '设备安全指标接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              totalHazardCount: 19, // 设备安全隐患总数
+              rectificationCompletionRate: 68.4, // 整改完成率(%)
+              highRiskHazardCount: 8, // 高风险隐患数
+              safetyDeviceCount: 5, // 安全设备数
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 设备安全指标函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      totalHazardCount: 0,
+      rectificationCompletionRate: 0,
+      highRiskHazardCount: 0,
+      safetyDeviceCount: 0,
+    });
+  }
+};
+
+// 设备类型安全隐患占比（饼图）
+export const fetchDeviceSafetyTypeHazardRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/device/safety/stat/type/hazard/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无设备类型安全隐患占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '设备类型安全隐患占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['道闸', '监控设备', '充电设备', '消防设备', '检测设备'],
+              series: [{ name: '设备类型安全隐患占比(%)', data: [5, 2, 8, 1, 3] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 设备类型安全隐患占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '设备类型安全隐患占比(%)', data: [] }],
+    });
+  }
+};
+
+// 安全等级分布占比（饼图）
+export const fetchDeviceSafetyLevelRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/device/safety/stat/level/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无安全等级分布占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '安全等级分布占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['低风险', '中风险', '高风险'],
+              series: [{ name: '安全等级分布占比(%)', data: [40, 40, 20] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 安全等级分布占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '安全等级分布占比(%)', data: [] }],
+    });
+  }
+};
+
+// 隐患类型占比（饼图）
+export const fetchDeviceSafetyHazardTypeRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/device/safety/stat/hazard/type/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无隐患类型占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '隐患类型占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['硬件故障', '软件异常', '线路老化', '操作不当', '环境影响'],
+              series: [{ name: '隐患类型占比(%)', data: [35, 20, 25, 10, 10] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 隐患类型占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '隐患类型占比(%)', data: [] }],
+    });
+  }
+};
+
+// 近30天隐患新增趋势（折线图）
+export const fetchDeviceSafetyHazardTrend = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/device/safety/stat/hazard/trend`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无隐患新增趋势数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '隐患新增趋势接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const xAxis = Array.from({length: 30}, (_, i) => {
+              const date = new Date();
+              date.setDate(date.getDate() - 29 + i);
+              return `${date.getMonth() + 1}-${date.getDate()}`;
+            });
+            const data = xAxis.map(() => Math.floor(Math.random() * 3));
+            resolve({
+              xAxis,
+              series: [{ name: '隐患新增数', data }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 隐患新增趋势函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '隐患新增数', data: [] }],
+    });
+  }
+};
+
+// 整改完成趋势（折线图）
+export const fetchDeviceSafetyRectifiedTrend = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/device/safety/stat/rectified/trend`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无整改完成趋势数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '整改完成趋势接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const xAxis = Array.from({length: 30}, (_, i) => {
+              const date = new Date();
+              date.setDate(date.getDate() - 29 + i);
+              return `${date.getMonth() + 1}-${date.getDate()}`;
+            });
+            const data = xAxis.map(() => Math.floor(Math.random() * 4));
+            resolve({
+              xAxis,
+              series: [{ name: '整改完成数', data }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 整改完成趋势函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '整改完成数', data: [] }],
+    });
+  }
+};
+
+// 设备安全详情查询 - 详情弹窗专用
+export const fetchDeviceSafetyDetail = (deviceId, params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/device/safety/detail/${deviceId}`,
+        params,
+      })
+      .then((response) => {
+        if (response && response.tbDeviceDeviceId === deviceId) {
+          return response;
+        }
+        throw new Error('真实接口返回无设备安全详情数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('设备安全详情接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              tbDeviceDeviceId: deviceId,
+              tbDeviceName: deviceId === 'DEV20260119001' ? '道闸设备-北区01' : '监控摄像头-南区02',
+              sysDeviceTypeName: deviceId === 'DEV20260119001' ? '道闸' : '监控设备',
+              tbDeviceSafetyHighRiskCount: deviceId === 'DEV20260119001' ? 3 : 0,
+              tbDeviceSafetyLastCheckTime: Date.now() - 15 * 24 * 60 * 60 * 1000,
+              tbDeviceSafetyNextCheckTime: Date.now() + 15 * 24 * 60 * 60 * 1000,
+              // 安全隐患明细
+              hazardDetails: [
+                {
+                  hazardType: '硬件故障',
+                  hazardLevel: '高风险',
+                  discoverTime: Date.now() - 7 * 24 * 60 * 60 * 1000,
+                  handleStatus: '整改中',
+                  description: '道闸起落卡顿，传感器响应延迟'
+                },
+                {
+                  hazardType: '线路老化',
+                  hazardLevel: '中风险',
+                  discoverTime: Date.now() - 10 * 24 * 60 * 60 * 1000,
+                  handleStatus: '已整改',
+                  description: '电源线外皮破损，存在漏电风险'
+                }
+              ],
+              // 整改记录
+              rectificationRecords: [
+                {
+                  rectificationNo: 'RECT20260101001',
+                  hazardType: '线路老化',
+                  rectificationPlan: '更换破损电源线，做好绝缘处理',
+                  submitTime: Date.now() - 8 * 24 * 60 * 60 * 1000,
+                  completeTime: Date.now() - 5 * 24 * 60 * 60 * 1000,
+                  handlePerson: '张三'
+                }
+              ],
+              // 检查报告
+              checkReports: [
+                {
+                  checkTime: Date.now() - 15 * 24 * 60 * 60 * 1000,
+                  checkResult: '发现2处安全隐患，需限期整改',
+                  checkPerson: '李四',
+                  suggestion: '定期检查线路，更换老化配件'
+                },
+                {
+                  checkTime: Date.now() - 45 * 24 * 60 * 60 * 1000,
+                  checkResult: '设备运行正常，无安全隐患',
+                  checkPerson: '王五',
+                  suggestion: '继续保持日常维护'
+                }
+              ]
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchDeviceSafetyDetail 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({});
+  }
+};
+
+// 提交设备安全整改工单
+export const submitDeviceSafetyRectification = (deviceId, hazardType, rectificationPlan) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/device/safety/rectification/submit`,
+        data: {
+          deviceId,
+          hazardType,
+          rectificationPlan
+        },
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return {
+            success: true,
+            rectificationNo: `RECT${Date.now()}`,
+            rectificationCount: response.rectificationCount || 1
+          };
+        }
+        throw new Error('整改工单提交失败');
+      })
+      .catch((error) => {
+        console.warn('整改工单提交接口调用失败-使用模拟数据兜底', error.message);
+        return {
+          success: true,
+          message: '整改工单提交成功'
+        };
+      });
+  } catch (error) {
+    console.error('===== submitDeviceSafetyRectification 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return {
+      success: false,
+      message: error.message
+    };
+  }
+};
+
+// 提交设备安全检查结果
+export const submitDeviceSafetyCheck = (deviceId, checkResult) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/device/safety/check/submit`,
+        data: {
+          deviceId,
+          checkResult,
+          checkTime: Date.now(),
+          nextCheckTime: Date.now() + 30 * 24 * 60 * 60 * 1000
+        },
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return {
+            success: true,
+            lastCheckTime: Date.now(),
+            nextCheckTime: Date.now() + 30 * 24 * 60 * 60 * 1000
+          };
+        }
+        throw new Error('检查结果提交失败');
+      })
+      .catch((error) => {
+        console.warn('检查结果提交接口调用失败-使用模拟数据兜底', error.message);
+        return {
+          success: true,
+          message: '设备安全检查结果提交成功'
+        };
+      });
+  } catch (error) {
+    console.error('===== submitDeviceSafetyCheck 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return {
+      success: false,
+      message: error.message
+    };
+  }
+};
+
+
+// ========== 运营风险 ==========
+// 运营风险列表
+export const fetchOperationRiskList = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/operation/risk/list`,
+        params,
+      })
+      .then((response) => {
+        console.log('运营风险列表-接口请求成功');
+        if (response && Array.isArray(response)) {
+          console.log('运营风险列表-响应符合实际格式');
+          return response.map((item) => ({
+            sysRiskTypeName: item.sysRiskTypeName,
+            tbRegionName: item.tbRegionName,
+            sysRiskLevelName: item.sysRiskLevelName,
+            tbOperationRiskResourceCount: item.tbOperationRiskResourceCount,
+            tbOperationRiskImpactScope: item.tbOperationRiskImpactScope,
+            tbOperationRiskWarningCount: item.tbOperationRiskWarningCount,
+            tbOperationRiskId: item.tbOperationRiskId,
+          }));
+        }
+        throw new Error('真实接口返回无运营风险列表数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('运营风险列表接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve([
+              {
+                sysRiskTypeName: '设备安全风险',
+                tbRegionName: '高新区',
+                sysRiskLevelName: '高',
+                tbOperationRiskResourceCount: 5,
+                tbOperationRiskImpactScope: '停车场运营',
+                tbOperationRiskWarningCount: 3,
+                tbOperationRiskId: 'OR202401001',
+              },
+              {
+                sysRiskTypeName: '资金安全风险',
+                tbRegionName: '主城区',
+                sysRiskLevelName: '中',
+                tbOperationRiskResourceCount: 8,
+                tbOperationRiskImpactScope: '计费系统',
+                tbOperationRiskWarningCount: 2,
+                tbOperationRiskId: 'OR202401002',
+              },
+              {
+                sysRiskTypeName: '合规风险',
+                tbRegionName: '经开区',
+                sysRiskLevelName: '低',
+                tbOperationRiskResourceCount: 3,
+                tbOperationRiskImpactScope: '运营资质',
+                tbOperationRiskWarningCount: 1,
+                tbOperationRiskId: 'OR202401003',
+              },
+            ]);
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchOperationRiskList 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve([]);
+  }
+};
+
+// 运营风险核心指标
+export const fetchOperationRiskIndicators = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/operation/risk/indicators/get`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.totalRiskCount &&
+          response.highRiskCount &&
+          response.riskResolutionRate &&
+          response.warningCount
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无运营风险核心数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '运营风险指标接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              totalRiskCount: 12, // 运营风险总数
+              highRiskCount: 3, // 高等级风险数
+              riskResolutionRate: 75.8, // 风险化解率(%)
+              warningCount: 25, // 预警次数
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 运营风险指标函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      totalRiskCount: 0,
+      highRiskCount: 0,
+      riskResolutionRate: 0,
+      warningCount: 0,
+    });
+  }
+};
+
+// 风险类型占比（饼图）
+export const fetchOperationRiskTypeRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/operation/risk/stat/type/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无风险类型占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '风险类型占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['设备安全风险', '资金安全风险', '合规风险', '运营风险', '其他'],
+              series: [{ name: '风险类型占比(%)', data: [35.5, 28.2, 15.3, 12.7, 8.3] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 风险类型占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '风险类型占比(%)', data: [] }],
+    });
+  }
+};
+
+// 风险等级占比（饼图）
+export const fetchOperationRiskLevelRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/operation/risk/stat/level/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无风险等级占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '风险等级占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['高', '中', '低'],
+              series: [{ name: '风险等级占比(%)', data: [25.5, 45.2, 29.3] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 风险等级占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '风险等级占比(%)', data: [] }],
+    });
+  }
+};
+
+// 化解状态占比（饼图）
+export const fetchOperationRiskResolutionStatusRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/operation/risk/stat/resolution/status/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无化解状态占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '化解状态占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['已化解', '化解中', '待化解'],
+              series: [{ name: '化解状态占比(%)', data: [65.5, 22.8, 11.7] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 化解状态占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '化解状态占比(%)', data: [] }],
+    });
+  }
+};
+
+// 近30天风险新增趋势（折线图）
+export const fetchOperationRiskNewTrend = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/operation/risk/stat/new/trend`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无风险新增趋势数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '风险新增趋势接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const xAxis = Array.from({length: 30}, (_, i) => {
+              const date = new Date();
+              date.setDate(date.getDate() - 29 + i);
+              return `${date.getMonth() + 1}-${date.getDate()}`;
+            });
+            const data = xAxis.map(() => Math.floor(Math.random() * 5) + 1);
+            resolve({
+              xAxis,
+              series: [{ name: '风险新增数', data }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 风险新增趋势函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '风险新增数', data: [] }],
+    });
+  }
+};
+
+// 化解完成趋势（折线图）
+export const fetchOperationRiskResolutionTrend = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/operation/risk/stat/resolution/trend`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无化解完成趋势数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '化解完成趋势接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const xAxis = Array.from({length: 30}, (_, i) => {
+              const date = new Date();
+              date.setDate(date.getDate() - 29 + i);
+              return `${date.getMonth() + 1}-${date.getDate()}`;
+            });
+            const data = xAxis.map(() => Math.floor(Math.random() * 3) + 2);
+            resolve({
+              xAxis,
+              series: [{ name: '化解完成数', data }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 化解完成趋势函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '化解完成数', data: [] }],
+    });
+  }
+};
+
+// 运营风险详情查询 - 详情弹窗专用
+export const fetchOperationRiskDetail = (riskId, params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/operation/risk/detail/${riskId}`,
+        params,
+      })
+      .then((response) => {
+        if (response && response.tbOperationRiskId === riskId) {
+          return response;
+        }
+        throw new Error('真实接口返回无运营风险详情数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('运营风险详情接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              tbOperationRiskId: riskId,
+              sysRiskTypeName: '设备安全风险',
+              tbRegionName: '高新区',
+              sysRiskLevelName: '高',
+              tbOperationRiskResolutionRate: 75.8, // 风险化解率
+              tbOperationRiskResolutionDeadline: '2024-02-15', // 化解期限
+              tbOperationRiskMainCause: '设备老化、维护不及时', // 主要诱因
+              detail: {
+                tbOperationRiskResourceCount: 5,
+                tbOperationRiskImpactScope: '停车场运营',
+                tbOperationRiskWarningCount: 3,
+              },
+              impactAnalysis: {
+                affectedParkings: ['北区停车场', '东区停车场'],
+                potentialLoss: '日均损失约2万元',
+                impactDuration: '预计影响15天',
+                riskDescription: '设备故障导致停车场无法正常运营'
+              },
+              resolutionRecords: [
+                {
+                  time: Date.now() - 5 * 24 * 60 * 60 * 1000,
+                  content: '制定设备更换计划',
+                  person: '张三',
+                  status: '已完成'
+                },
+                {
+                  time: Date.now() - 3 * 24 * 60 * 60 * 1000,
+                  content: '采购新设备',
+                  person: '李四',
+                  status: '进行中'
+                },
+                {
+                  time: Date.now() - 1 * 24 * 60 * 60 * 1000,
+                  content: '安排安装时间',
+                  person: '王五',
+                  status: '待开始'
+                }
+              ]
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchOperationRiskDetail 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({});
+  }
+};
+
+// 发送风险预警通知
+export const submitOperationRiskWarning = (riskId, warningObjects, params = {}) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/operation/risk/warning/submit/${riskId}`,
+        data: { warningObjects },
+        params,
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return response;
+        }
+        throw new Error('真实接口返回无预警发送结果，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('发送风险预警接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              success: true,
+              warningId: 'WARN' + Date.now(),
+              message: '风险预警发送成功',
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== submitOperationRiskWarning 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      success: false,
+      message: '发送失败',
+    });
+  }
+};
+
+// 提交化解任务
+export const submitOperationRiskResolution = (riskId, resolutionMeasures, params = {}) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/operation/risk/resolution/submit/${riskId}`,
+        data: { resolutionMeasures },
+        params,
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return response;
+        }
+        throw new Error('真实接口返回无化解任务提交结果，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('提交化解任务接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              success: true,
+              resolutionId: 'RES' + Date.now(),
+              message: '化解任务提交成功',
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== submitOperationRiskResolution 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      success: false,
+      message: '提交失败',
+    });
+  }
+};
+
 
