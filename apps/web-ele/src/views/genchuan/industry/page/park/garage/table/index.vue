@@ -23,6 +23,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  arrowShow: {
+    type: Boolean,
+    default: false,
+  },
+  arrowState: {
+    type: Boolean,
+    default: false,
+  },
 });
 const emit = defineEmits(['arrow-change']);
 
