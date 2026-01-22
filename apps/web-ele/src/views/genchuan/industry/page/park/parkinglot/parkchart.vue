@@ -26,7 +26,7 @@ const state = reactive({
     </div>
     <div class="chart-box-right">
       <Circle
-        width="300px"
+        width="340px"
         height="330px"
         class="chart-box-circle"
         title-text="2026年漳州车场类型占比"
@@ -38,7 +38,7 @@ const state = reactive({
         ]"
       />
       <Circle
-        width="300px"
+        width="340px"
         height="330px"
         class="chart-box-circle"
         title-text="运营状态占比"
@@ -75,18 +75,17 @@ const state = reactive({
     margin-left: 30px;
   }
   .chart-box-right {
-    margin-left: 20px;
     display: flex;
     flex-wrap: wrap;
     .chart-box-circle {
-      margin-left: 15px;
+      margin-left: 5px;
       width: 300px;
       display: flex;
       justify-content: center;
     }
     .chart-box-Columnar {
       margin-left: 15px;
-      min-width: 630px;
+      min-width: 560px;
     }
   }
 }
