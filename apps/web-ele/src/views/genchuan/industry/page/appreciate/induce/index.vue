@@ -3,6 +3,8 @@ import { ref } from 'vue';
 
 import Table from './table/index.vue';
 
+
+import garagechart from './garagechart.vue';
 import '#/components/page/index.scss';
 
 const changeArrowStatus = () => {
@@ -24,6 +26,7 @@ const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
+    <garagechart></garagechart>
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
