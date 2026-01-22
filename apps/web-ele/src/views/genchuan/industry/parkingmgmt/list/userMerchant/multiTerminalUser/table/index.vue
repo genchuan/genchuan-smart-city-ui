@@ -756,7 +756,8 @@ const handleAuthDrawerClose = () => {
           />
           <IconButton
             content="禁用"
-            icon-name="Remove"
+            icon-name="Lock"
+            color="#F56C6C"
             :disabled="row.account_status !== '正常'"
             @click="confirmDisable(row)"
           />
