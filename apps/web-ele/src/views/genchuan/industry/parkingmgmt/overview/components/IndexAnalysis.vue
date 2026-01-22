@@ -26,6 +26,7 @@ import ChartLine3 from '#/views/genchuan/industry/templatesstatchart/ChartLine3-
 import VerticalBar2 from '#/views/genchuan/industry/templatesstatchart/VerticalBar2.vue';
 import ChartPie1 from '#/views/genchuan/industry/templatesstatchart/ChartPie1.vue';
 import ChartPie2 from '#/views/genchuan/industry/templatesstatchart/ChartPie2.vue';
+import ChartPie3 from '#/views/genchuan/industry/templatesstatchart/ChartPie3.vue';
 import ChartPie5 from '#/views/genchuan/industry/templatesstatchart/ChartPie5-desc.vue';
 
 // 导入资源运行API
@@ -95,6 +96,37 @@ import {
   fetchSupportResourceParkingCount,
   fetchSupportResourceDetail,
   submitSupportMaintainRequest,
+  fetchComplaintList,
+  fetchComplaintIndicators,
+  fetchComplaintTypeRatio,
+  fetchComplaintResultRatio,
+  fetchComplaintSourceRatio,
+  fetchComplaintNewTrend,
+  fetchComplaintProcessTrend,
+  fetchComplaintDetail,
+  submitComplaintProcess,
+  submitComplaintReview,
+  fetchMaintainEfficiencyList,
+  fetchMaintainEfficiencyIndicators,
+  fetchMaintainEfficiencyHandleDurationTrend,
+  fetchMaintainEfficiencyCompletionRateTrend,
+  fetchMaintainEfficiencyWorkorderTypeRatio,
+  fetchMaintainEfficiencyLevelRatio,
+  fetchMaintainEfficiencyReworkReasonRatio,
+  fetchMaintainEfficiencyDetail,
+  fetchMaintainEfficiencyWorkorderTrackList,
+  submitMaintainEfficiencyReview,
+  fetchServiceDevelopmentList,
+  fetchServiceDevelopmentIndicators,
+  fetchServiceDevelopmentUserGrowthTrend,
+  fetchServiceDevelopmentServiceUtilizationTrend,
+  fetchServiceDevelopmentTypeCompare,
+  fetchServiceDevelopmentRegionCoverageCompare,
+  fetchServiceDevelopmentTypeRatio,
+  fetchServiceDevelopmentHighUtilizationRatio,
+  fetchServiceDevelopmentDetail,
+  fetchServiceDevelopmentUserGrowthTrendDetail,
+  submitServiceDevelopmentOptimization,
 } from '#/api/genchuan/industry/parkingmgmt/overview/IndexAnalysis.ts';
 
 const pageContainerRef = ref<HTMLElement | null>(null);
@@ -612,6 +644,167 @@ interface MaintainForm {
   maintainPlan: string;
 }
 
+// 投诉处理TS类型定义
+interface ComplaintRow {
+  tbComplaintComplaintNo: string;
+  sysComplaintTypeName: string;
+  tbComplaintSubmitTime: number | string;
+  tbComplaintProcessDuration: number | null;
+  sysComplaintResultName: string;
+  tbComplaintUserSatisfaction: number | null;
+  tbComplaintId: string;
+}
+
+interface ComplaintIndicators {
+  totalComplaintCount: number; // 投诉总数
+  processedCount: number; // 已处理数
+  processCompletionRate: number; // 处理完成率
+  averageProcessDuration: number; // 平均处理时长(小时)
+  overallSatisfaction: number; // 整体满意度(分)
+}
+
+interface ComplaintDetail {
+  tbComplaintId: string;
+  tbComplaintComplaintNo: string;
+  sysComplaintTypeName: string;
+  tbComplaintSubmitTime: number | string;
+  tbComplaintProcessDuration: number | null;
+  sysComplaintResultName: string;
+  tbComplaintUserSatisfaction: number | null;
+  tbComplaintSource: string; // 投诉来源
+  sysUserUserName: string; // 处理责任人
+  sysReviewStatusName: string; // 复盘状态
+  complaintContent: {
+    title: string;
+    content: string;
+    attachments: string[];
+  }; // 投诉内容
+  processRecords: {
+    time: number | string;
+    operator: string;
+    action: string;
+    content: string;
+  }[]; // 处理过程
+  userFeedback: {
+    satisfaction: number;
+    comment: string;
+    feedbackTime: number | string;
+  }; // 用户反馈
+}
+
+interface ComplaintProcessForm {
+  processPlan: string;
+}
+
+interface ComplaintReviewForm {
+  reviewOpinion: string;
+}
+
+// 运维处置效率TS类型定义
+interface MaintainEfficiencyRow {
+  sysWorkorderTypeName: string;
+  tbMaintainEfficiencyPeriod: string;
+  tbMaintainEfficiencyAverageHandleDuration: number;
+  tbMaintainEfficiencyCompletionRate: number;
+  tbMaintainEfficiencyReworkRate: number;
+  tbMaintainEfficiencyOneTimeSolveRate: number;
+  tbMaintainEfficiencyId: string;
+}
+
+interface MaintainEfficiencyIndicators {
+  averageHandleDuration: number; // 平均处置时长(小时)
+  completionRate: number; // 处置完成率(%)
+  oneTimeSolveRate: number; // 一次性解决率(%)
+  reworkRate: number; // 返工率(%)
+}
+
+interface MaintainEfficiencyDetail {
+  tbMaintainEfficiencyId: string;
+  tbMaintainEfficiencyChainDurationChange: number; // 环比处置时长变化
+  sysWorkorderTypeName: string; // 高频工单类型
+  sysEfficiencyLevelName: string; // 处置效率等级
+  tbMaintainEfficiencyOvertimeCount: number; // 超时工单数
+  detail: {
+    tbMaintainEfficiencyAverageHandleDuration: number;
+    tbMaintainEfficiencyCompletionRate: number;
+    tbMaintainEfficiencyReworkRate: number;
+    tbMaintainEfficiencyOneTimeSolveRate: number;
+  };
+}
+
+interface MaintainEfficiencyWorkorderTrack {
+  tbMaintainEfficiencyId: string;
+  sysWorkorderTypeName: string;
+  workorderList: {
+    workorderNo: string;
+    createTime: number | string;
+    handlePerson: string;
+    handleStatus: string;
+    handleDuration: number;
+    isOvertime: boolean;
+  }[];
+}
+
+interface ReviewForm {
+  reviewOpinion: string;
+}
+
+// 服务发展TS类型定义
+interface ServiceDevelopmentRow {
+  sysServiceTypeName: string;
+  tbServiceDevelopmentPeriod: string;
+  tbServiceDevelopmentNewServiceCount: number;
+  tbServiceDevelopmentCoverageRegionCount: number;
+  tbServiceDevelopmentUserGrowthRate: number;
+  tbServiceDevelopmentServiceUtilizationRate: number;
+  tbServiceDevelopmentId: string;
+}
+
+interface ServiceDevelopmentIndicators {
+  newServiceCount: number; // 新增服务数
+  coverageRegionCount: number; // 覆盖区域数
+  userGrowthRate: number; // 用户增长率
+  serviceUtilizationRate: number; // 服务使用率
+}
+
+interface ServiceDevelopmentDetail {
+  tbServiceDevelopmentId: string;
+  sysServiceTypeName: string;
+  tbServiceDevelopmentPeriod: string;
+  tbServiceDevelopmentYearOnYearGrowth: number; // 同比增长率
+  tbServiceDevelopmentTotalUserCount: number; // 累计服务用户数
+  tbServiceDevelopmentOptimizationDemandCount: number; // 服务优化需求数
+  detail: {
+    tbServiceDevelopmentNewServiceCount: number;
+    tbServiceDevelopmentCoverageRegionCount: number;
+    tbServiceDevelopmentUserGrowthRate: number;
+    tbServiceDevelopmentServiceUtilizationRate: number;
+  };
+  userFeedback: {
+    time: number | string;
+    userName: string;
+    content: string;
+    score: number;
+  }[];
+  coverageRegionDetail: {
+    regionName: string;
+    coverageRate: number;
+    userCount: number;
+  }[];
+}
+
+interface ServiceDevelopmentUserGrowthTrendDetail {
+  tbServiceDevelopmentId: string;
+  sysServiceTypeName: string;
+  xAxis: string[];
+  series: { data: number[]; name: string }[];
+}
+
+interface ServiceOptimizationForm {
+  optimizationPlan: string;
+}
+
+
 // 资源运行响应式数据
 const parkResourceRunList = ref<ParkResourceRunRow[]>([]);
 const parkResourceRunIndicators = ref<ParkResourceRunIndicators>({
@@ -1104,6 +1297,218 @@ const maintainFormRules = {
   maintainPlan: [{ required: true, message: '维护需求不能为空', trigger: 'blur' }]
 };
 const maintainFormRef = ref<FormInstance>();
+
+// 投诉处理响应式数据
+const complaintList = ref<ComplaintRow[]>([]);
+const complaintIndicators = ref<ComplaintIndicators>({
+  totalComplaintCount: 0,
+  processedCount: 0,
+  processCompletionRate: 0,
+  averageProcessDuration: 0,
+  overallSatisfaction: 0,
+});
+const complaintTypeRatio = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '投诉类型占比(%)', data: [] }],
+});
+const complaintResultRatio = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '处理结果占比(%)', data: [] }],
+});
+const complaintSourceRatio = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '投诉来源占比(%)', data: [] }],
+});
+const complaintNewTrendData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '投诉新增数', data: [] }],
+});
+const complaintProcessTrendData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '处理完成率(%)', data: [] }],
+});
+// 投诉处理视图切换相关
+const complaintChartRefreshKey = ref(0);
+const activeComplaintView = ref('卡片');
+const complaintViewBtnList = ref(['卡片', '饼图', '折线图', '列表']);
+// 投诉处理弹窗相关
+const complaintDetailDialogVisible = ref(false);
+const complaintProcessDialogVisible = ref(false);
+const complaintReviewDialogVisible = ref(false);
+const activeComplaintDetailView = ref('投诉内容');
+const complaintDetailViewBtnList = ref(['投诉内容', '处理过程', '用户反馈']);
+const complaintDetailSelectedRow = ref<ComplaintDetail>({
+  tbComplaintId: '',
+  tbComplaintComplaintNo: '',
+  sysComplaintTypeName: '',
+  tbComplaintSubmitTime: '',
+  tbComplaintProcessDuration: null,
+  sysComplaintResultName: '',
+  tbComplaintUserSatisfaction: null,
+  tbComplaintSource: '',
+  sysUserUserName: '',
+  sysReviewStatusName: '',
+  complaintContent: {
+    title: '',
+    content: '',
+    attachments: []
+  },
+  processRecords: [],
+  userFeedback: {
+    satisfaction: 0,
+    comment: '',
+    feedbackTime: ''
+  }
+});
+// 处理表单
+const complaintProcessForm = ref<ComplaintProcessForm>({
+  processPlan: ''
+});
+const complaintProcessFormRules = {
+  processPlan: [{ required: true, message: '处理方案不能为空', trigger: 'blur' }]
+};
+const complaintProcessFormRef = ref<FormInstance>();
+// 复盘表单
+const complaintReviewForm = ref<ComplaintReviewForm>({
+  reviewOpinion: ''
+});
+const complaintReviewFormRef = ref<FormInstance>();
+
+// 运维处置效率响应式数据
+const maintainEfficiencyList = ref<MaintainEfficiencyRow[]>([]);
+const maintainEfficiencyIndicators = ref<MaintainEfficiencyIndicators>({
+  averageHandleDuration: 0,
+  completionRate: 0,
+  oneTimeSolveRate: 0,
+  reworkRate: 0,
+});
+const maintainEfficiencyHandleDurationTrend = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '处置时长(小时)', data: [] }],
+});
+const maintainEfficiencyCompletionRateTrend = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '完成率(%)', data: [] }],
+});
+const maintainEfficiencyWorkorderTypeRatio = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '工单类型占比(%)', data: [] }],
+});
+const maintainEfficiencyLevelRatio = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '处置效率等级占比(%)', data: [] }],
+});
+const maintainEfficiencyReworkReasonRatio = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '返工原因占比(%)', data: [] }],
+});
+// 运维处置效率视图切换相关
+const maintainEfficiencyChartRefreshKey = ref(0);
+const activeMaintainEfficiencyView = ref('卡片');
+const maintainEfficiencyViewBtnList = ref(['卡片', '折线图', '饼图', '列表']);
+// 运维处置效率弹窗相关
+const maintainEfficiencyDetailDialogVisible = ref(false);
+const maintainEfficiencyTrackDialogVisible = ref(false);
+const maintainEfficiencyReviewDialogVisible = ref(false);
+const maintainEfficiencyDetailSelectedRow = ref<MaintainEfficiencyDetail>({
+  tbMaintainEfficiencyId: '',
+  tbMaintainEfficiencyChainDurationChange: 0,
+  sysWorkorderTypeName: '',
+  sysEfficiencyLevelName: '',
+  tbMaintainEfficiencyOvertimeCount: 0,
+  detail: {
+    tbMaintainEfficiencyAverageHandleDuration: 0,
+    tbMaintainEfficiencyCompletionRate: 0,
+    tbMaintainEfficiencyReworkRate: 0,
+    tbMaintainEfficiencyOneTimeSolveRate: 0,
+  }
+});
+const maintainEfficiencyTrackSelectedRow = ref<MaintainEfficiencyWorkorderTrack>({
+  tbMaintainEfficiencyId: '',
+  sysWorkorderTypeName: '',
+  workorderList: []
+});
+// 复盘表单
+const reviewForm = ref<ReviewForm>({
+  reviewOpinion: ''
+});
+const reviewFormRules = {
+  reviewOpinion: [{ required: false, message: '请输入效率优化意见', trigger: 'blur' }]
+};
+const reviewFormRef = ref<FormInstance>();
+
+// 服务发展响应式数据
+const serviceDevelopmentList = ref<ServiceDevelopmentRow[]>([]);
+const serviceDevelopmentIndicators = ref<ServiceDevelopmentIndicators>({
+  newServiceCount: 0,
+  coverageRegionCount: 0,
+  userGrowthRate: 0,
+  serviceUtilizationRate: 0,
+});
+const serviceDevelopmentUserGrowthTrend = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '用户增长率(%)', data: [] }],
+});
+const serviceDevelopmentServiceUtilizationTrend = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '服务使用率(%)', data: [] }],
+});
+const serviceDevelopmentTypeCompareData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '服务数量', data: [] }],
+});
+const serviceDevelopmentRegionCoverageCompareData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '覆盖区域数', data: [] }],
+});
+const serviceDevelopmentTypeRatio = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '服务类型占比(%)', data: [] }],
+});
+const serviceDevelopmentHighUtilizationRatio = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '高使用率服务占比(%)', data: [] }],
+});
+// 服务发展视图切换相关
+const serviceDevelopmentChartRefreshKey = ref(0);
+const activeServiceDevelopmentView = ref('卡片');
+const serviceDevelopmentViewBtnList = ref(['卡片', '折线图', '柱状图', '饼图', '列表']);
+// 服务发展弹窗相关
+const serviceDevelopmentDetailDialogVisible = ref(false);
+const serviceDevelopmentUserGrowthDialogVisible = ref(false);
+const serviceDevelopmentOptimizationDialogVisible = ref(false);
+const activeServiceDevelopmentDetailView = ref('明细');
+const serviceDevelopmentDetailViewBtnList = ref(['明细', '用户反馈', '覆盖区域']);
+const serviceDevelopmentDetailSelectedRow = ref<ServiceDevelopmentDetail>({
+  tbServiceDevelopmentId: '',
+  sysServiceTypeName: '',
+  tbServiceDevelopmentPeriod: '',
+  tbServiceDevelopmentYearOnYearGrowth: 0,
+  tbServiceDevelopmentTotalUserCount: 0,
+  tbServiceDevelopmentOptimizationDemandCount: 0,
+  detail: {
+    tbServiceDevelopmentNewServiceCount: 0,
+    tbServiceDevelopmentCoverageRegionCount: 0,
+    tbServiceDevelopmentUserGrowthRate: 0,
+    tbServiceDevelopmentServiceUtilizationRate: 0,
+  },
+  userFeedback: [],
+  coverageRegionDetail: []
+});
+const serviceDevelopmentUserGrowthSelectedRow = ref<ServiceDevelopmentUserGrowthTrendDetail>({
+  tbServiceDevelopmentId: '',
+  sysServiceTypeName: '',
+  xAxis: [],
+  series: [{ name: '月度用户增长率(%)', data: [] }]
+});
+// 优化表单
+const optimizationForm = ref<ServiceOptimizationForm>({
+  optimizationPlan: ''
+});
+const optimizationFormRules = {
+  optimizationPlan: [{ required: true, message: '优化建议不能为空', trigger: 'blur' }]
+};
+const optimizationFormRef = ref<FormInstance>();
 
 
 // 资源运行接口请求方法
@@ -1776,6 +2181,343 @@ const submitMaintainData = async (resourceId: string) => {
   }
 };
 
+// 投诉处理接口请求方法
+const getComplaintListData = async () => {
+  try {
+    complaintList.value = (await fetchComplaintList()) as ComplaintRow[];
+  } catch (error: any) {
+    ElMessage.error(`投诉处理列表加载失败：${error.message}`);
+    complaintList.value = [];
+  }
+};
+
+const getComplaintIndicatorsData = async () => {
+  try {
+    complaintIndicators.value =
+      (await fetchComplaintIndicators()) as ComplaintIndicators;
+  } catch (error: any) {
+    ElMessage.error(`投诉处理核心指标加载失败：${error.message}`);
+  }
+};
+
+const getComplaintTypeRatioData = async () => {
+  try {
+    complaintTypeRatio.value =
+      (await fetchComplaintTypeRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`投诉类型占比加载失败：${error.message}`);
+  }
+};
+
+const getComplaintResultRatioData = async () => {
+  try {
+    complaintResultRatio.value =
+      (await fetchComplaintResultRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`处理结果占比加载失败：${error.message}`);
+  }
+};
+
+const getComplaintSourceRatioData = async () => {
+  try {
+    complaintSourceRatio.value =
+      (await fetchComplaintSourceRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`投诉来源占比加载失败：${error.message}`);
+  }
+};
+
+const getComplaintNewTrendData = async () => {
+  try {
+    complaintNewTrendData.value =
+      (await fetchComplaintNewTrend()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`投诉新增趋势加载失败：${error.message}`);
+  }
+};
+
+const getComplaintProcessTrendData = async () => {
+  try {
+    complaintProcessTrendData.value =
+      (await fetchComplaintProcessTrend()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`处理完成趋势加载失败：${error.message}`);
+  }
+};
+
+const getComplaintDetailData = async (complaintId: string) => {
+  try {
+    complaintDetailSelectedRow.value = {
+      ...complaintDetailSelectedRow.value,
+      ...(await fetchComplaintDetail(complaintId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`投诉处理详情加载失败：${error.message}`);
+  }
+};
+
+const submitComplaintProcessData = async (complaintId: string) => {
+  try {
+    await complaintProcessFormRef.value?.validate();
+    const res = await submitComplaintProcess(complaintId, complaintProcessForm.value.processPlan);
+    if (res.success) {
+      tipDialogContent.value = `处理方案已提交，预计处理时长${res.processDuration}小时`;
+      tipDialogVisible.value = true;
+      complaintProcessDialogVisible.value = false;
+      complaintProcessForm.value.processPlan = '';
+      complaintProcessFormRef.value?.resetFields();
+      // 刷新列表数据
+      await getComplaintListData();
+    } else {
+      tipDialogContent.value = '处理方案提交失败';
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    tipDialogContent.value = `处理方案提交失败：${error.message}`;
+    tipDialogVisible.value = true;
+  }
+};
+
+const submitComplaintReviewData = async (complaintId: string) => {
+  try {
+    const res = await submitComplaintReview(complaintId, complaintReviewForm.value.reviewOpinion);
+    if (res.success) {
+      tipDialogContent.value = '复盘意见已保存';
+      tipDialogVisible.value = true;
+      complaintReviewDialogVisible.value = false;
+      complaintReviewForm.value.reviewOpinion = '';
+      complaintReviewFormRef.value?.resetFields();
+    } else {
+      tipDialogContent.value = '复盘意见保存失败';
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    tipDialogContent.value = `复盘意见保存失败：${error.message}`;
+    tipDialogVisible.value = true;
+  }
+};
+
+// 运维处置效率接口请求方法
+const getMaintainEfficiencyListData = async () => {
+  try {
+    maintainEfficiencyList.value = (await fetchMaintainEfficiencyList()) as MaintainEfficiencyRow[];
+  } catch (error: any) {
+    ElMessage.error(`运维处置效率列表加载失败：${error.message}`);
+    maintainEfficiencyList.value = [];
+  }
+};
+
+const getMaintainEfficiencyIndicatorsData = async () => {
+  try {
+    maintainEfficiencyIndicators.value =
+      (await fetchMaintainEfficiencyIndicators()) as MaintainEfficiencyIndicators;
+  } catch (error: any) {
+    ElMessage.error(`运维处置效率核心指标加载失败：${error.message}`);
+  }
+};
+
+const getMaintainEfficiencyHandleDurationTrendData = async () => {
+  try {
+    maintainEfficiencyHandleDurationTrend.value =
+      (await fetchMaintainEfficiencyHandleDurationTrend()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`处置时长趋势加载失败：${error.message}`);
+  }
+};
+
+const getMaintainEfficiencyCompletionRateTrendData = async () => {
+  try {
+    maintainEfficiencyCompletionRateTrend.value =
+      (await fetchMaintainEfficiencyCompletionRateTrend()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`完成率趋势加载失败：${error.message}`);
+  }
+};
+
+const getMaintainEfficiencyWorkorderTypeRatioData = async () => {
+  try {
+    maintainEfficiencyWorkorderTypeRatio.value =
+      (await fetchMaintainEfficiencyWorkorderTypeRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`工单类型占比加载失败：${error.message}`);
+  }
+};
+
+const getMaintainEfficiencyLevelRatioData = async () => {
+  try {
+    maintainEfficiencyLevelRatio.value =
+      (await fetchMaintainEfficiencyLevelRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`处置效率等级占比加载失败：${error.message}`);
+  }
+};
+
+const getMaintainEfficiencyReworkReasonRatioData = async () => {
+  try {
+    maintainEfficiencyReworkReasonRatio.value =
+      (await fetchMaintainEfficiencyReworkReasonRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`返工原因占比加载失败：${error.message}`);
+  }
+};
+
+const getMaintainEfficiencyDetailData = async (maintainId: string) => {
+  try {
+    maintainEfficiencyDetailSelectedRow.value = {
+      ...maintainEfficiencyDetailSelectedRow.value,
+      ...(await fetchMaintainEfficiencyDetail(maintainId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`运维处置效率详情加载失败：${error.message}`);
+  }
+};
+
+const getMaintainEfficiencyWorkorderTrackListData = async (maintainId: string) => {
+  try {
+    maintainEfficiencyTrackSelectedRow.value = {
+      ...maintainEfficiencyTrackSelectedRow.value,
+      ...(await fetchMaintainEfficiencyWorkorderTrackList(maintainId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`高频工单跟踪列表加载失败：${error.message}`);
+  }
+};
+
+const submitMaintainEfficiencyReviewData = async (maintainId: string) => {
+  try {
+    await reviewFormRef.value?.validate();
+    const res = await submitMaintainEfficiencyReview(maintainId, reviewForm.value.reviewOpinion);
+    if (res.success) {
+      tipDialogContent.value = '效率优化意见提交成功';
+      tipDialogVisible.value = true;
+      maintainEfficiencyReviewDialogVisible.value = false;
+      reviewForm.value.reviewOpinion = '';
+      reviewFormRef.value?.resetFields();
+    } else {
+      tipDialogContent.value = '效率优化意见提交失败';
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    tipDialogContent.value = `效率优化意见提交失败：${error.message}`;
+    tipDialogVisible.value = true;
+  }
+};
+
+// 服务发展接口请求方法
+const getServiceDevelopmentListData = async () => {
+  try {
+    serviceDevelopmentList.value = (await fetchServiceDevelopmentList()) as ServiceDevelopmentRow[];
+  } catch (error: any) {
+    ElMessage.error(`服务发展列表加载失败：${error.message}`);
+    serviceDevelopmentList.value = [];
+  }
+};
+
+const getServiceDevelopmentIndicatorsData = async () => {
+  try {
+    serviceDevelopmentIndicators.value =
+      (await fetchServiceDevelopmentIndicators()) as ServiceDevelopmentIndicators;
+  } catch (error: any) {
+    ElMessage.error(`服务发展核心指标加载失败：${error.message}`);
+  }
+};
+
+const getServiceDevelopmentUserGrowthTrendData = async () => {
+  try {
+    serviceDevelopmentUserGrowthTrend.value =
+      (await fetchServiceDevelopmentUserGrowthTrend()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`用户增长趋势加载失败：${error.message}`);
+  }
+};
+
+const getServiceDevelopmentServiceUtilizationTrendData = async () => {
+  try {
+    serviceDevelopmentServiceUtilizationTrend.value =
+      (await fetchServiceDevelopmentServiceUtilizationTrend()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`服务使用率趋势加载失败：${error.message}`);
+  }
+};
+
+const getServiceDevelopmentTypeCompareData = async () => {
+  try {
+    serviceDevelopmentTypeCompareData.value =
+      (await fetchServiceDevelopmentTypeCompare()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`各类型服务发展数量对比加载失败：${error.message}`);
+  }
+};
+
+const getServiceDevelopmentRegionCoverageCompareData = async () => {
+  try {
+    serviceDevelopmentRegionCoverageCompareData.value =
+      (await fetchServiceDevelopmentRegionCoverageCompare()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`各区域服务覆盖对比加载失败：${error.message}`);
+  }
+};
+
+const getServiceDevelopmentTypeRatioData = async () => {
+  try {
+    serviceDevelopmentTypeRatio.value =
+      (await fetchServiceDevelopmentTypeRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`服务类型占比加载失败：${error.message}`);
+  }
+};
+
+const getServiceDevelopmentHighUtilizationRatioData = async () => {
+  try {
+    serviceDevelopmentHighUtilizationRatio.value =
+      (await fetchServiceDevelopmentHighUtilizationRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`高使用率服务占比加载失败：${error.message}`);
+  }
+};
+
+const getServiceDevelopmentDetailData = async (serviceDevelopmentId: string) => {
+  try {
+    serviceDevelopmentDetailSelectedRow.value = {
+      ...serviceDevelopmentDetailSelectedRow.value,
+      ...(await fetchServiceDevelopmentDetail(serviceDevelopmentId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`服务发展详情加载失败：${error.message}`);
+  }
+};
+
+const getServiceDevelopmentUserGrowthTrendDetailData = async (serviceDevelopmentId: string) => {
+  try {
+    serviceDevelopmentUserGrowthSelectedRow.value = {
+      ...serviceDevelopmentUserGrowthSelectedRow.value,
+      ...(await fetchServiceDevelopmentUserGrowthTrendDetail(serviceDevelopmentId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`用户增长趋势详情加载失败：${error.message}`);
+  }
+};
+
+const submitOptimizationData = async (serviceDevelopmentId: string) => {
+  try {
+    await optimizationFormRef.value?.validate();
+    const res = await submitServiceDevelopmentOptimization(serviceDevelopmentId, optimizationForm.value.optimizationPlan);
+    if (res.success) {
+      tipDialogContent.value = '优化建议提交成功';
+      tipDialogVisible.value = true;
+      serviceDevelopmentOptimizationDialogVisible.value = false;
+      optimizationForm.value.optimizationPlan = '';
+      optimizationFormRef.value?.resetFields();
+    } else {
+      tipDialogContent.value = '优化建议提交失败';
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    tipDialogContent.value = `优化建议提交失败：${error.message}`;
+    tipDialogVisible.value = true;
+  }
+};
+
 
 // 资源运行视图切换
 const changeResourceRunView = (viewName: string) => {
@@ -2297,6 +3039,227 @@ const refreshSupportResourceData = async () => {
   ElMessage.success('支撑资源数据刷新成功');
 };
 
+// 投诉处理视图切换
+const changeComplaintView = (viewName: string) => {
+  activeComplaintView.value = viewName;
+  viewName === '卡片' &&
+  nextTick(() => setTimeout(initNumberAnimations, 300));
+  (viewName === '饼图' || viewName === '折线图') &&
+  nextTick(() => complaintChartRefreshKey.value++);
+};
+const changeComplaintDetailView = (viewName: string) => {
+  activeComplaintDetailView.value = viewName;
+};
+// 投诉处理弹窗方法
+const openComplaintDetailDialog = async (row: ComplaintRow) => {
+  await getComplaintDetailData(row.tbComplaintId);
+  complaintDetailDialogVisible.value = true;
+};
+const closeComplaintDetailDialog = () => {
+  complaintDetailDialogVisible.value = false;
+  complaintDetailSelectedRow.value = {
+    tbComplaintId: '',
+    tbComplaintComplaintNo: '',
+    sysComplaintTypeName: '',
+    tbComplaintSubmitTime: '',
+    tbComplaintProcessDuration: null,
+    sysComplaintResultName: '',
+    tbComplaintUserSatisfaction: null,
+    tbComplaintSource: '',
+    sysUserUserName: '',
+    sysReviewStatusName: '',
+    complaintContent: {
+      title: '',
+      content: '',
+      attachments: []
+    },
+    processRecords: [],
+    userFeedback: {
+      satisfaction: 0,
+      comment: '',
+      feedbackTime: ''
+    }
+  };
+  activeComplaintDetailView.value = '投诉内容';
+};
+const openComplaintProcessDialog = (row: ComplaintRow) => {
+  if (row.sysComplaintResultName === '待处理' || row.sysComplaintResultName === '处理中') {
+    complaintProcessDialogVisible.value = true;
+  } else {
+    tipDialogContent.value = '该投诉已处理完成，无法再次处理';
+    tipDialogVisible.value = true;
+  }
+};
+const closeComplaintProcessDialog = () => {
+  complaintProcessDialogVisible.value = false;
+  complaintProcessForm.value.processPlan = '';
+  complaintProcessFormRef.value?.resetFields();
+};
+const openComplaintReviewDialog = (row: ComplaintRow) => {
+  if (row.sysComplaintResultName === '已处理') {
+    complaintReviewDialogVisible.value = true;
+  } else {
+    tipDialogContent.value = '该投诉尚未处理完成，无法进行复盘';
+    tipDialogVisible.value = true;
+  }
+};
+const closeComplaintReviewDialog = () => {
+  complaintReviewDialogVisible.value = false;
+  complaintReviewForm.value.reviewOpinion = '';
+  complaintReviewFormRef.value?.resetFields();
+};
+// 投诉处理数据刷新
+const refreshComplaintData = async () => {
+  await Promise.all([
+    getComplaintListData(),
+    getComplaintIndicatorsData(),
+    getComplaintTypeRatioData(),
+    getComplaintResultRatioData(),
+    getComplaintSourceRatioData(),
+    getComplaintNewTrendData(),
+    getComplaintProcessTrendData(),
+  ]);
+  complaintChartRefreshKey.value++;
+  ElMessage.success('投诉处理数据刷新成功');
+};
+
+// 运维处置效率视图切换
+const changeMaintainEfficiencyView = (viewName: string) => {
+  activeMaintainEfficiencyView.value = viewName;
+  viewName === '卡片' &&
+  nextTick(() => setTimeout(initNumberAnimations, 300));
+  (viewName === '折线图' || viewName === '饼图') &&
+  nextTick(() => maintainEfficiencyChartRefreshKey.value++);
+};
+// 运维处置效率弹窗方法
+const openMaintainEfficiencyDetailDialog = async (row: MaintainEfficiencyRow) => {
+  await getMaintainEfficiencyDetailData(row.tbMaintainEfficiencyId);
+  maintainEfficiencyDetailDialogVisible.value = true;
+};
+const closeMaintainEfficiencyDetailDialog = () => {
+  maintainEfficiencyDetailDialogVisible.value = false;
+  maintainEfficiencyDetailSelectedRow.value = {
+    tbMaintainEfficiencyId: '',
+    tbMaintainEfficiencyChainDurationChange: 0,
+    sysWorkorderTypeName: '',
+    sysEfficiencyLevelName: '',
+    tbMaintainEfficiencyOvertimeCount: 0,
+    detail: {
+      tbMaintainEfficiencyAverageHandleDuration: 0,
+      tbMaintainEfficiencyCompletionRate: 0,
+      tbMaintainEfficiencyReworkRate: 0,
+      tbMaintainEfficiencyOneTimeSolveRate: 0,
+    }
+  };
+};
+const openMaintainEfficiencyTrackDialog = async (row: MaintainEfficiencyRow) => {
+  await getMaintainEfficiencyWorkorderTrackListData(row.tbMaintainEfficiencyId);
+  maintainEfficiencyTrackDialogVisible.value = true;
+};
+const closeMaintainEfficiencyTrackDialog = () => {
+  maintainEfficiencyTrackDialogVisible.value = false;
+  maintainEfficiencyTrackSelectedRow.value = {
+    tbMaintainEfficiencyId: '',
+    sysWorkorderTypeName: '',
+    workorderList: []
+  };
+};
+const openMaintainEfficiencyReviewDialog = (row: MaintainEfficiencyRow) => {
+  maintainEfficiencyReviewDialogVisible.value = true;
+};
+const closeMaintainEfficiencyReviewDialog = () => {
+  maintainEfficiencyReviewDialogVisible.value = false;
+  reviewForm.value.reviewOpinion = '';
+  reviewFormRef.value?.resetFields();
+};
+// 运维处置效率数据刷新
+const refreshMaintainEfficiencyData = async () => {
+  await Promise.all([
+    getMaintainEfficiencyListData(),
+    getMaintainEfficiencyIndicatorsData(),
+    getMaintainEfficiencyHandleDurationTrendData(),
+    getMaintainEfficiencyCompletionRateTrendData(),
+    getMaintainEfficiencyWorkorderTypeRatioData(),
+    getMaintainEfficiencyLevelRatioData(),
+    getMaintainEfficiencyReworkReasonRatioData(),
+  ]);
+  maintainEfficiencyChartRefreshKey.value++;
+  ElMessage.success('运维处置效率数据刷新成功');
+};
+
+// 服务发展视图切换
+const changeServiceDevelopmentView = (viewName: string) => {
+  activeServiceDevelopmentView.value = viewName;
+  viewName === '卡片' &&
+  nextTick(() => setTimeout(initNumberAnimations, 300));
+  (viewName === '折线图' || viewName === '柱状图' || viewName === '饼图') &&
+  nextTick(() => serviceDevelopmentChartRefreshKey.value++);
+};
+const changeServiceDevelopmentDetailView = (viewName: string) => {
+  activeServiceDevelopmentDetailView.value = viewName;
+};
+// 服务发展弹窗方法
+const openServiceDevelopmentDetailDialog = async (row: ServiceDevelopmentRow) => {
+  await getServiceDevelopmentDetailData(row.tbServiceDevelopmentId);
+  serviceDevelopmentDetailDialogVisible.value = true;
+};
+const closeServiceDevelopmentDetailDialog = () => {
+  serviceDevelopmentDetailDialogVisible.value = false;
+  serviceDevelopmentDetailSelectedRow.value = {
+    tbServiceDevelopmentId: '',
+    sysServiceTypeName: '',
+    tbServiceDevelopmentPeriod: '',
+    tbServiceDevelopmentYearOnYearGrowth: 0,
+    tbServiceDevelopmentTotalUserCount: 0,
+    tbServiceDevelopmentOptimizationDemandCount: 0,
+    detail: {
+      tbServiceDevelopmentNewServiceCount: 0,
+      tbServiceDevelopmentCoverageRegionCount: 0,
+      tbServiceDevelopmentUserGrowthRate: 0,
+      tbServiceDevelopmentServiceUtilizationRate: 0,
+    },
+    userFeedback: [],
+    coverageRegionDetail: []
+  };
+  activeServiceDevelopmentDetailView.value = '明细';
+};
+const openServiceDevelopmentUserGrowthDialog = async (row: ServiceDevelopmentRow) => {
+  await getServiceDevelopmentUserGrowthTrendDetailData(row.tbServiceDevelopmentId);
+  serviceDevelopmentUserGrowthDialogVisible.value = true;
+};
+const closeServiceDevelopmentUserGrowthDialog = () => {
+  serviceDevelopmentUserGrowthDialogVisible.value = false;
+  serviceDevelopmentUserGrowthSelectedRow.value = {
+    tbServiceDevelopmentId: '',
+    sysServiceTypeName: '',
+    xAxis: [],
+    series: [{ name: '月度用户增长率(%)', data: [] }]
+  };
+};
+const openServiceDevelopmentOptimizationDialog = () => {
+  serviceDevelopmentOptimizationDialogVisible.value = true;
+};
+const closeServiceDevelopmentOptimizationDialog = () => {
+  serviceDevelopmentOptimizationDialogVisible.value = false;
+  optimizationForm.value.optimizationPlan = '';
+  optimizationFormRef.value?.resetFields();
+};
+// 服务发展数据刷新
+const refreshServiceDevelopmentData = async () => {
+  await Promise.all([
+    getServiceDevelopmentListData(),
+    getServiceDevelopmentIndicatorsData(),
+    getServiceDevelopmentUserGrowthTrendData(),
+    getServiceDevelopmentServiceUtilizationTrendData(),
+    getServiceDevelopmentTypeCompareData(),
+    getServiceDevelopmentRegionCoverageCompareData(),
+    getServiceDevelopmentTypeRatioData(),
+    getServiceDevelopmentHighUtilizationRatioData(),
+  ]);
+  serviceDevelopmentChartRefreshKey.value++;
+  ElMessage.success('服务发展数据刷新成功');
+};
+
 
 // 生命周期
 onMounted(async () => {
@@ -2349,6 +3312,28 @@ onMounted(async () => {
     getSupportResourceRegionRatioData(),
     getSupportResourceTypeCountData(),
     getSupportResourceParkingCountData(),
+    getComplaintListData(),
+    getComplaintIndicatorsData(),
+    getComplaintTypeRatioData(),
+    getComplaintResultRatioData(),
+    getComplaintSourceRatioData(),
+    getComplaintNewTrendData(),
+    getComplaintProcessTrendData(),
+    getMaintainEfficiencyListData(),
+    getMaintainEfficiencyIndicatorsData(),
+    getMaintainEfficiencyHandleDurationTrendData(),
+    getMaintainEfficiencyCompletionRateTrendData(),
+    getMaintainEfficiencyWorkorderTypeRatioData(),
+    getMaintainEfficiencyLevelRatioData(),
+    getMaintainEfficiencyReworkReasonRatioData(),
+    getServiceDevelopmentListData(),
+    getServiceDevelopmentIndicatorsData(),
+    getServiceDevelopmentUserGrowthTrendData(),
+    getServiceDevelopmentServiceUtilizationTrendData(),
+    getServiceDevelopmentTypeCompareData(),
+    getServiceDevelopmentRegionCoverageCompareData(),
+    getServiceDevelopmentTypeRatioData(),
+    getServiceDevelopmentHighUtilizationRatioData(),
   ]);
   setTimeout(() => {
     resourceRunChartRefreshKey.value++;
@@ -2359,6 +3344,8 @@ onMounted(async () => {
     resourceDevelopmentChartRefreshKey.value++;
     deviceRunChartRefreshKey.value++;
     supportResourceChartRefreshKey.value++;
+    complaintChartRefreshKey.value++;
+    maintainEfficiencyChartRefreshKey.value++;
   }, 200);
   screenFull.on('change', handleFullscreenChange);
 });
@@ -3344,7 +4331,239 @@ onUnmounted(() => {
               </div>
             </el-tab-pane>
             <el-tab-pane label="投诉处理" name="tab2">
-              <div class="view-content"><div class="content-placeholder">投诉处理</div></div>
+              <div class="header-actions">
+                <div class="actions-left"><p></p></div>
+                <div class="actions-right">
+                  <div class="view-btn-group">
+                    <ElButton
+                      v-for="item in complaintViewBtnList"
+                      :key="item"
+                      :type="activeComplaintView === item ? 'primary' : ''"
+                      plain
+                      @click="changeComplaintView(item)"
+                      class="view-btn"
+                    >
+                      {{ item }}
+                    </ElButton>
+                  </div>
+                  <el-icon color="#409eff" size="16" @click="refreshComplaintData"><Refresh /></el-icon>
+                  <el-icon color="#409eff" size="16"><Filter /></el-icon>
+                  <button
+                    class="panel-fullscreen-btn"
+                    @click="togglePanelFullscreen('serviceQualityPanelRef')"
+                  >
+                    <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 卡片视图 -->
+              <div v-if="activeComplaintView === '卡片'" class="view-content">
+                <div class="indicator-cards4">
+                  <div class="indicator-card4 card1">
+                    <div class="indicator-title">投诉总数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ complaintIndicators.totalComplaintCount }}</span>
+                    </div>
+                    <div class="indicator-unit">个</div>
+                  </div>
+                  <div class="indicator-card4 card2">
+                    <div class="indicator-title">已处理数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ complaintIndicators.processedCount }}</span>
+                    </div>
+                    <div class="indicator-unit">个</div>
+                  </div>
+                  <div class="indicator-card4 card3">
+                    <div class="indicator-title">处理完成率</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(complaintIndicators.processCompletionRate) }}</span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                  <div class="indicator-card4 card4">
+                    <div class="indicator-title">平均处理时长</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(complaintIndicators.averageProcessDuration) }}</span>
+                    </div>
+                    <div class="indicator-unit">小时</div>
+                  </div>
+                  <div class="indicator-card4 card5">
+                    <div class="indicator-title">整体满意度</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(complaintIndicators.overallSatisfaction) }}</span>
+                    </div>
+                    <div class="indicator-unit">分</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 饼图视图 -->
+              <div v-if="activeComplaintView === '饼图'" class="view-content">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 32%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                >
+                  <ChartPie1
+                    :data="complaintTypeRatio"
+                    title="投诉类型占比"
+                    :key="complaintChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 32%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <ChartPie2
+                    :data="complaintResultRatio"
+                    title="处理结果占比"
+                    :key="complaintChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 32%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <ChartPie3
+                    :data="complaintSourceRatio"
+                    title="投诉来源占比"
+                    :key="complaintChartRefreshKey"
+                  />
+                </div>
+              </div>
+
+              <!-- 折线图视图 -->
+              <div v-if="activeComplaintView === '折线图'" class="view-content">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                >
+                  <ChartLine1
+                    :data="complaintNewTrendData"
+                    title="近30天投诉新增趋势"
+                    :key="complaintChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <ChartLine2
+                    :data="complaintProcessTrendData"
+                    title="处理完成趋势"
+                    :key="complaintChartRefreshKey"
+                  />
+                </div>
+              </div>
+
+              <!-- 列表视图 -->
+              <div v-if="activeComplaintView === '列表'" class="view-content">
+                <div class="table-box4">
+                  <ElTable
+                    class="table4"
+                    :data="complaintList"
+                    border
+                    size="small"
+                    width="100%"
+                    height="100%"
+                    table-layout="fixed"
+                    highlight-current-row
+                    @row-click="(row) => openComplaintDetailDialog(row)"
+                  >
+                    <ElTableColumn
+                      prop="tbComplaintComplaintNo"
+                      label="投诉编号"
+                      align="center"
+                      min-width="140"
+                    />
+                    <ElTableColumn
+                      prop="sysComplaintTypeName"
+                      label="投诉类型"
+                      align="center"
+                      min-width="100"
+                    />
+                    <ElTableColumn
+                      prop="tbComplaintSubmitTime"
+                      label="提交时间"
+                      align="center"
+                    >
+                      <template #default="scope">
+                        {{ formatTimeStamp(scope.row.tbComplaintSubmitTime) }}
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="tbComplaintProcessDuration"
+                      label="处理时长(小时)"
+                      align="center"
+                    >
+                      <template #default="scope">
+                        {{ scope.row.tbComplaintProcessDuration ? formatDecimal(scope.row.tbComplaintProcessDuration) : '-' }}
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="sysComplaintResultName"
+                      label="处理结果"
+                      align="center"
+                    >
+                      <template #default="scope">
+                        <ElTag :type="scope.row.sysComplaintResultName === '已处理' ? 'success' : scope.row.sysComplaintResultName === '处理中' ? 'warning' : 'danger'">
+                          {{ scope.row.sysComplaintResultName || '-' }}
+                        </ElTag>
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="tbComplaintUserSatisfaction"
+                      label="用户满意度(分)"
+                      align="center"
+                    >
+                      <template #default="scope">
+                        {{ scope.row.tbComplaintUserSatisfaction ? formatDecimal(scope.row.tbComplaintUserSatisfaction) : '-' }}
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      label="操作"
+                      align="center"
+                      width="150"
+                      fixed="right"
+                    >
+                      <template #default="scope">
+                        <ElButton type="primary" size="small" plain @click.stop="openComplaintProcessDialog(scope.row)">
+                          处理
+                        </ElButton>
+                        <ElButton type="warning" size="small" plain @click.stop="openComplaintReviewDialog(scope.row)">
+                          复盘
+                        </ElButton>
+                      </template>
+                    </ElTableColumn>
+                  </ElTable>
+                </div>
+              </div>
             </el-tab-pane>
           </el-tabs>
           <div class="panel-footer"></div>
@@ -3556,7 +4775,234 @@ onUnmounted(() => {
                 </div>
               </el-tab-pane>
             <el-tab-pane label="运维处置效率" name="tab2">
-              <div class="view-content"><div class="content-placeholder">运维处置效率</div></div>
+              <div class="header-actions">
+                <div class="actions-left"><p></p></div>
+                <div class="actions-right">
+                  <div class="view-btn-group">
+                    <ElButton
+                      v-for="item in maintainEfficiencyViewBtnList"
+                      :key="item"
+                      :type="activeMaintainEfficiencyView === item ? 'primary' : ''"
+                      plain
+                      @click="changeMaintainEfficiencyView(item)"
+                      class="view-btn"
+                    >
+                      {{ item }}
+                    </ElButton>
+                  </div>
+                  <el-icon color="#409eff" size="16" @click="refreshMaintainEfficiencyData"><Refresh /></el-icon>
+                  <el-icon color="#409eff" size="16"><Filter /></el-icon>
+                  <button
+                    class="panel-fullscreen-btn"
+                    @click="togglePanelFullscreen('businessFlowPanelRef')"
+                  >
+                    <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 卡片视图 -->
+              <div v-if="activeMaintainEfficiencyView === '卡片'" class="view-content">
+                <div class="indicator-cards3">
+                  <div class="indicator-card3 card1">
+                    <div class="indicator-title">平均处置时长</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(maintainEfficiencyIndicators.averageHandleDuration) }}</span>
+                    </div>
+                    <div class="indicator-unit">小时</div>
+                  </div>
+                  <div class="indicator-card3 card2">
+                    <div class="indicator-title">处置完成率</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(maintainEfficiencyIndicators.completionRate) }}</span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                  <div class="indicator-card3 card3">
+                    <div class="indicator-title">一次性解决率</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(maintainEfficiencyIndicators.oneTimeSolveRate) }}</span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                  <div class="indicator-card3 card4">
+                    <div class="indicator-title">返工率</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(maintainEfficiencyIndicators.reworkRate) }}</span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 折线图视图 -->
+              <div v-if="activeMaintainEfficiencyView === '折线图'" class="view-content">
+                <div
+                  style="
+        display: inline-block;
+        width: 49%;
+        height: 100%;
+        vertical-align: top;
+      "
+                >
+                  <ChartLine1
+                    :data="maintainEfficiencyHandleDurationTrend"
+                    title="处置时长趋势"
+                    :key="maintainEfficiencyChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+        display: inline-block;
+        width: 49%;
+        height: 100%;
+        padding-left: 0.3vw;
+        vertical-align: top;
+        border-left: 0.3vh solid #02a6b5;
+      "
+                >
+                  <ChartLine2
+                    :data="maintainEfficiencyCompletionRateTrend"
+                    title="完成率趋势"
+                    :key="maintainEfficiencyChartRefreshKey"
+                  />
+                </div>
+              </div>
+
+              <!-- 饼图视图 -->
+              <div v-if="activeMaintainEfficiencyView === '饼图'" class="view-content">
+                <div
+                  style="
+        display: inline-block;
+        width: 32%;
+        height: 100%;
+        vertical-align: top;
+      "
+                >
+                  <ChartPie1
+                    :data="maintainEfficiencyWorkorderTypeRatio"
+                    title="工单类型占比"
+                    :key="maintainEfficiencyChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+        display: inline-block;
+        width: 32%;
+        height: 100%;
+        padding-left: 0.3vw;
+        vertical-align: top;
+        border-left: 0.3vh solid #02a6b5;
+      "
+                >
+                  <ChartPie2
+                    :data="maintainEfficiencyLevelRatio"
+                    title="处置效率等级占比"
+                    :key="maintainEfficiencyChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+        display: inline-block;
+        width: 32%;
+        height: 100%;
+        padding-left: 0.3vw;
+        vertical-align: top;
+        border-left: 0.3vh solid #02a6b5;
+      "
+                >
+                  <ChartPie3
+                    :data="maintainEfficiencyReworkReasonRatio"
+                    title="返工原因占比"
+                    :key="maintainEfficiencyChartRefreshKey"
+                  />
+                </div>
+              </div>
+
+              <!-- 列表视图 -->
+              <div v-if="activeMaintainEfficiencyView === '列表'" class="view-content">
+                <div class="table-box4">
+                  <ElTable
+                    class="table4"
+                    :data="maintainEfficiencyList"
+                    border
+                    size="small"
+                    width="100%"
+                    height="100%"
+                    table-layout="fixed"
+                    highlight-current-row
+                    @row-click="(row) => openMaintainEfficiencyDetailDialog(row)"
+                  >
+                    <ElTableColumn
+                      prop="sysWorkorderTypeName"
+                      label="工单类型"
+                      align="center"
+                      min-width="120"
+                    />
+                    <ElTableColumn
+                      prop="tbMaintainEfficiencyPeriod"
+                      label="统计周期"
+                      align="center"
+                      min-width="100"
+                    />
+                    <ElTableColumn
+                      prop="tbMaintainEfficiencyAverageHandleDuration"
+                      label="平均处置时长(小时)"
+                      align="center"
+                      width="140"
+                    >
+                      <template #default="scope">
+                        {{ formatDecimal(scope.row.tbMaintainEfficiencyAverageHandleDuration) }}
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="tbMaintainEfficiencyCompletionRate"
+                      label="处置完成率(%)"
+                      align="center"
+                      width="120"
+                    >
+                      <template #default="scope">
+                        {{ formatDecimal(scope.row.tbMaintainEfficiencyCompletionRate) }}
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="tbMaintainEfficiencyReworkRate"
+                      label="返工率(%)"
+                      align="center"
+                      width="100"
+                    >
+                      <template #default="scope">
+                        {{ formatDecimal(scope.row.tbMaintainEfficiencyReworkRate) }}
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="tbMaintainEfficiencyOneTimeSolveRate"
+                      label="一次性解决率(%)"
+                      align="center"
+                      width="120"
+                    >
+                      <template #default="scope">
+            <span @click.stop="openMaintainEfficiencyTrackDialog(scope.row)" style="color:#409eff;cursor:pointer;">
+              {{ formatDecimal(scope.row.tbMaintainEfficiencyOneTimeSolveRate) }}
+              <i class="el-icon-arrow-right" style="font-size:12px;"></i>
+            </span>
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      label="操作"
+                      align="center"
+                      width="100"
+                      fixed="right"
+                    >
+                      <template #default="scope">
+                        <ElButton type="primary" size="small" plain @click.stop="openMaintainEfficiencyReviewDialog(scope.row)">
+                          复盘
+                        </ElButton>
+                      </template>
+                    </ElTableColumn>
+                  </ElTable>
+                </div>
+              </div>
             </el-tab-pane>
           </el-tabs>
           <div class="panel-footer"></div>
@@ -4028,7 +5474,248 @@ onUnmounted(() => {
               </div>
             </el-tab-pane>
             <el-tab-pane label="服务发展" name="tab2">
-              <div class="view-content"><div class="content-placeholder">服务发展</div></div>
+              <div class="header-actions">
+                <div class="actions-left"><p></p></div>
+                <div class="actions-right">
+                  <div class="view-btn-group">
+                    <ElButton
+                      v-for="item in serviceDevelopmentViewBtnList"
+                      :key="item"
+                      :type="activeServiceDevelopmentView === item ? 'primary' : ''"
+                      plain
+                      @click="changeServiceDevelopmentView(item)"
+                      class="view-btn"
+                    >
+                      {{ item }}
+                    </ElButton>
+                  </div>
+                  <el-icon color="#409eff" size="16" @click="refreshServiceDevelopmentData"><Refresh /></el-icon>
+                  <el-icon color="#409eff" size="16"><Filter /></el-icon>
+                  <button
+                    class="panel-fullscreen-btn"
+                    @click="togglePanelFullscreen('serviceDevelopmentPanelRef')"
+                  >
+                    <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 卡片视图 -->
+              <div v-if="activeServiceDevelopmentView === '卡片'" class="view-content">
+                <div class="indicator-cards3">
+                  <div class="indicator-card3 card1">
+                    <div class="indicator-title">新增服务数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ serviceDevelopmentIndicators.newServiceCount }}</span>
+                    </div>
+                    <div class="indicator-unit">个</div>
+                  </div>
+                  <div class="indicator-card3 card2">
+                    <div class="indicator-title">覆盖区域数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ serviceDevelopmentIndicators.coverageRegionCount }}</span>
+                    </div>
+                    <div class="indicator-unit">个</div>
+                  </div>
+                  <div class="indicator-card3 card3">
+                    <div class="indicator-title">用户增长率</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(serviceDevelopmentIndicators.userGrowthRate) }}</span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                  <div class="indicator-card3 card4">
+                    <div class="indicator-title">服务使用率</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(serviceDevelopmentIndicators.serviceUtilizationRate) }}</span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 折线图视图 -->
+              <div v-if="activeServiceDevelopmentView === '折线图'" class="view-content">
+                <div
+                  style="
+        display: inline-block;
+        width: 49%;
+        height: 100%;
+        vertical-align: top;
+      "
+                >
+                  <ChartLine1
+                    :data="serviceDevelopmentUserGrowthTrend"
+                    title="用户增长趋势"
+                    :key="serviceDevelopmentChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+        display: inline-block;
+        width: 49%;
+        height: 100%;
+        padding-left: 0.3vw;
+        vertical-align: top;
+        border-left: 0.3vh solid #02a6b5;
+      "
+                >
+                  <ChartLine2
+                    :data="serviceDevelopmentServiceUtilizationTrend"
+                    title="服务使用率趋势"
+                    :key="serviceDevelopmentChartRefreshKey"
+                  />
+                </div>
+              </div>
+
+              <!-- 柱状图视图 -->
+              <div v-if="activeServiceDevelopmentView === '柱状图'" class="view-content">
+                <div
+                  style="
+        display: inline-block;
+        width: 49%;
+        height: 100%;
+        vertical-align: top;
+      "
+                >
+                  <VerticalBar2
+                    :x-axis="serviceDevelopmentTypeCompareData.xAxis"
+                    :series="serviceDevelopmentTypeCompareData.series"
+                    unit="个"
+                    title="各类型服务发展数量对比"
+                    :key="serviceDevelopmentChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+        display: inline-block;
+        width: 49%;
+        height: 100%;
+        padding-left: 0.3vw;
+        vertical-align: top;
+        border-left: 0.3vh solid #02a6b5;
+      "
+                >
+                  <VerticalBar1
+                    :x-axis="serviceDevelopmentRegionCoverageCompareData.xAxis"
+                    :series="serviceDevelopmentRegionCoverageCompareData.series"
+                    unit="个"
+                    title="各区域服务覆盖对比"
+                    :key="serviceDevelopmentChartRefreshKey"
+                  />
+                </div>
+              </div>
+
+              <!-- 饼图视图 -->
+              <div v-if="activeServiceDevelopmentView === '饼图'" class="view-content">
+                <div
+                  style="
+        display: inline-block;
+        width: 49%;
+        height: 100%;
+        vertical-align: top;
+      "
+                >
+                  <ChartPie1
+                    :data="serviceDevelopmentTypeRatio"
+                    title="服务类型占比"
+                    :key="serviceDevelopmentChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+        display: inline-block;
+        width: 49%;
+        height: 100%;
+        padding-left: 0.3vw;
+        vertical-align: top;
+        border-left: 0.3vh solid #02a6b5;
+      "
+                >
+                  <ChartPie2
+                    :data="serviceDevelopmentHighUtilizationRatio"
+                    title="高使用率服务占比"
+                    :key="serviceDevelopmentChartRefreshKey"
+                  />
+                </div>
+              </div>
+
+              <!-- 列表视图 -->
+              <div v-if="activeServiceDevelopmentView === '列表'" class="view-content">
+                <div class="table-box4">
+                  <ElTable
+                    class="table4"
+                    :data="serviceDevelopmentList"
+                    border
+                    size="small"
+                    width="100%"
+                    height="100%"
+                    table-layout="fixed"
+                    highlight-current-row
+                    @row-click="(row) => openServiceDevelopmentDetailDialog(row)"
+                  >
+                    <ElTableColumn
+                      prop="sysServiceTypeName"
+                      label="服务类型"
+                      align="center"
+                      min-width="120"
+                    />
+                    <ElTableColumn
+                      prop="tbServiceDevelopmentPeriod"
+                      label="统计周期"
+                      align="center"
+                      min-width="100"
+                    />
+                    <ElTableColumn
+                      prop="tbServiceDevelopmentNewServiceCount"
+                      label="新增服务数量"
+                      align="center"
+                      width="120"
+                    />
+                    <ElTableColumn
+                      prop="tbServiceDevelopmentCoverageRegionCount"
+                      label="服务覆盖区域数"
+                      align="center"
+                      width="140"
+                    />
+                    <ElTableColumn
+                      prop="tbServiceDevelopmentUserGrowthRate"
+                      label="用户增长率(%)"
+                      align="center"
+                      width="120"
+                    >
+                      <template #default="scope">
+            <span @click.stop="openServiceDevelopmentUserGrowthDialog(scope.row)" style="color:#409eff;cursor:pointer;">
+              {{ formatDecimal(scope.row.tbServiceDevelopmentUserGrowthRate) }}
+              <i class="el-icon-arrow-right" style="font-size:12px;"></i>
+            </span>
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="tbServiceDevelopmentServiceUtilizationRate"
+                      label="服务使用率(%)"
+                      align="center"
+                      width="120"
+                    >
+                      <template #default="scope">
+                        {{ formatDecimal(scope.row.tbServiceDevelopmentServiceUtilizationRate) }}
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      label="操作"
+                      align="center"
+                      width="100"
+                      fixed="right"
+                    >
+                      <template #default="scope">
+                        <ElButton type="primary" size="small" plain @click.stop="openServiceDevelopmentOptimizationDialog()">
+                          优化
+                        </ElButton>
+                      </template>
+                    </ElTableColumn>
+                  </ElTable>
+                </div>
+              </div>
             </el-tab-pane>
           </el-tabs>
           <div class="panel-footer"></div>
@@ -5453,6 +7140,577 @@ onUnmounted(() => {
       </template>
     </ElDialog>
 
+    <!-- 投诉处理详情弹窗 -->
+    <ElDialog
+      v-model="complaintDetailDialogVisible"
+      width="50%"
+      :close-on-click-modal="true"
+      :close-on-press-escape="true"
+      class="park-dialog"
+      center
+      destroy-on-close
+      title="投诉处理详情"
+    >
+      <div class="header-actions" style="margin-bottom:10px;">
+        <div class="actions-right">
+          <div class="view-btn-group">
+            <ElButton
+              v-for="item in complaintDetailViewBtnList"
+              :key="item"
+              :type="activeComplaintDetailView === item ? 'primary' : ''"
+              plain
+              @click="changeComplaintDetailView(item)"
+              class="view-btn"
+            >
+              {{ item }}
+            </ElButton>
+          </div>
+        </div>
+      </div>
+      <!-- 投诉内容视图 -->
+      <div v-if="activeComplaintDetailView === '投诉内容'" class="view-content" style="padding:0;">
+        <ElDescriptions bordered :column="2" class="desc-detail">
+          <ElDescriptionsItem label="投诉ID" span="2">
+            {{ complaintDetailSelectedRow.tbComplaintId || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="投诉编号">
+            {{ complaintDetailSelectedRow.tbComplaintComplaintNo || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="投诉类型">
+            {{ complaintDetailSelectedRow.sysComplaintTypeName || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="投诉来源">
+            {{ complaintDetailSelectedRow.tbComplaintSource || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="处理责任人">
+            {{ complaintDetailSelectedRow.sysUserUserName || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="复盘状态">
+            <ElTag :type="complaintDetailSelectedRow.sysReviewStatusName === '已复盘' ? 'success' : 'warning'">
+              {{ complaintDetailSelectedRow.sysReviewStatusName || '-' }}
+            </ElTag>
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="提交时间" span="2">
+            {{ formatTimeStamp(complaintDetailSelectedRow.tbComplaintSubmitTime) }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="处理时长(小时)" span="2">
+            {{ complaintDetailSelectedRow.tbComplaintProcessDuration ? formatDecimal(complaintDetailSelectedRow.tbComplaintProcessDuration) : '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="处理结果" span="2">
+            <ElTag :type="complaintDetailSelectedRow.sysComplaintResultName === '已处理' ? 'success' : 'warning'">
+              {{ complaintDetailSelectedRow.sysComplaintResultName || '-' }}
+            </ElTag>
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="用户满意度(分)" span="2">
+            {{ complaintDetailSelectedRow.tbComplaintUserSatisfaction ? formatDecimal(complaintDetailSelectedRow.tbComplaintUserSatisfaction) : '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="投诉标题" span="2">
+            {{ complaintDetailSelectedRow.complaintContent.title || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="投诉内容" span="2">
+            {{ complaintDetailSelectedRow.complaintContent.content || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="附件" span="2">
+            <div v-if="complaintDetailSelectedRow.complaintContent.attachments && complaintDetailSelectedRow.complaintContent.attachments.length > 0">
+          <span v-for="(item, index) in complaintDetailSelectedRow.complaintContent.attachments" :key="index" style="margin-right: 8px;">
+            {{ item }}
+          </span>
+            </div>
+            <span v-else>-</span>
+          </ElDescriptionsItem>
+        </ElDescriptions>
+      </div>
+      <!-- 处理过程视图 -->
+      <div v-if="activeComplaintDetailView === '处理过程'" class="view-content" style="padding:0;">
+        <div style="height:400px;">
+          <ElTable
+            :data="complaintDetailSelectedRow.processRecords"
+            border
+            size="small"
+            width="100%"
+            height="100%"
+            table-layout="fixed"
+          >
+            <ElTableColumn
+              prop="time"
+              label="处理时间"
+              align="center"
+              width="180"
+            >
+              <template #default="scope">
+                {{ formatTimeStamp(scope.row.time) }}
+              </template>
+            </ElTableColumn>
+            <ElTableColumn
+              prop="operator"
+              label="处理人"
+              align="center"
+              width="120"
+            />
+            <ElTableColumn
+              prop="action"
+              label="处理动作"
+              align="center"
+              width="120"
+            />
+            <ElTableColumn
+              prop="content"
+              label="处理内容"
+              align="center"
+              min-width="300"
+            />
+          </ElTable>
+        </div>
+      </div>
+      <!-- 用户反馈视图 -->
+      <div v-if="activeComplaintDetailView === '用户反馈'" class="view-content" style="padding:0;">
+        <ElDescriptions bordered :column="1" class="desc-detail">
+          <ElDescriptionsItem label="满意度评分(分)">
+            {{ complaintDetailSelectedRow.userFeedback.satisfaction ? formatDecimal(complaintDetailSelectedRow.userFeedback.satisfaction) : '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="用户评价">
+            {{ complaintDetailSelectedRow.userFeedback.comment || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="反馈时间">
+            {{ formatTimeStamp(complaintDetailSelectedRow.userFeedback.feedbackTime) }}
+          </ElDescriptionsItem>
+        </ElDescriptions>
+      </div>
+      <template #footer>
+        <ElButton plain @click="closeComplaintDetailDialog">关闭</ElButton>
+      </template>
+    </ElDialog>
+    <!-- 处理方案弹窗 -->
+    <ElDialog
+      v-model="complaintProcessDialogVisible"
+      width="40%"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      class="park-dialog"
+      center
+      destroy-on-close
+      title="处理方案"
+    >
+      <el-form
+        ref="complaintProcessFormRef"
+        :model="complaintProcessForm"
+        :rules="complaintProcessFormRules"
+        label-width="80px"
+        style="width: 100%;"
+      >
+        <el-form-item label="处理方案" prop="processPlan">
+          <el-input
+            v-model="complaintProcessForm.processPlan"
+            type="textarea"
+            :rows="6"
+            placeholder="请输入处理方案"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <ElButton plain @click="closeComplaintProcessDialog">取消</ElButton>
+        <ElButton type="primary" @click="submitComplaintProcessData(complaintList[0]?.tbComplaintId)">确认</ElButton>
+      </template>
+    </ElDialog>
+    <!-- 复盘意见弹窗 -->
+    <ElDialog
+      v-model="complaintReviewDialogVisible"
+      width="40%"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      class="park-dialog"
+      center
+      destroy-on-close
+      title="复盘意见"
+    >
+      <el-form
+        ref="complaintReviewFormRef"
+        :model="complaintReviewForm"
+        label-width="80px"
+        style="width: 100%;"
+      >
+        <el-form-item label="复盘意见">
+          <el-input
+            v-model="complaintReviewForm.reviewOpinion"
+            type="textarea"
+            :rows="6"
+            placeholder="请输入复盘意见（可选）"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <ElButton plain @click="closeComplaintReviewDialog">取消</ElButton>
+        <ElButton type="primary" @click="submitComplaintReviewData(complaintList[0]?.tbComplaintId)">保存</ElButton>
+      </template>
+    </ElDialog>
+
+    <!-- 运维处置效率详情弹窗 -->
+    <ElDialog
+      v-model="maintainEfficiencyDetailDialogVisible"
+      width="40%"
+      :close-on-click-modal="true"
+      :close-on-press-escape="true"
+      class="park-dialog"
+      center
+      destroy-on-close
+      title="运维处置效率详情"
+    >
+      <div class="view-content" style="padding:0;">
+        <ElDescriptions bordered :column="2" class="desc-detail">
+          <ElDescriptionsItem label="环比处置时长变化(小时)" span="2">
+            {{ formatDecimal(maintainEfficiencyDetailSelectedRow.tbMaintainEfficiencyChainDurationChange) }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="高频工单类型">
+            {{ maintainEfficiencyDetailSelectedRow.sysWorkorderTypeName || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="处置效率等级">
+            {{ maintainEfficiencyDetailSelectedRow.sysEfficiencyLevelName || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="超时工单数" span="2">
+            {{ maintainEfficiencyDetailSelectedRow.tbMaintainEfficiencyOvertimeCount || 0 }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="平均处置时长(小时)" span="2">
+            {{ formatDecimal(maintainEfficiencyDetailSelectedRow.detail.tbMaintainEfficiencyAverageHandleDuration) }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="处置完成率(%)" span="2">
+            {{ formatDecimal(maintainEfficiencyDetailSelectedRow.detail.tbMaintainEfficiencyCompletionRate) }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="返工率(%)" span="2">
+            {{ formatDecimal(maintainEfficiencyDetailSelectedRow.detail.tbMaintainEfficiencyReworkRate) }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="一次性解决率(%)" span="2">
+            {{ formatDecimal(maintainEfficiencyDetailSelectedRow.detail.tbMaintainEfficiencyOneTimeSolveRate) }}
+          </ElDescriptionsItem>
+        </ElDescriptions>
+      </div>
+      <template #footer>
+        <ElButton plain @click="closeMaintainEfficiencyDetailDialog">关闭</ElButton>
+      </template>
+    </ElDialog>
+    <!-- 高频工单跟踪弹窗 -->
+    <ElDialog
+      v-model="maintainEfficiencyTrackDialogVisible"
+      width="45%"
+      :close-on-click-modal="true"
+      :close-on-press-escape="true"
+      class="park-dialog"
+      center
+      destroy-on-close
+    >
+      <template #title>
+        <span>{{ maintainEfficiencyTrackSelectedRow.sysWorkorderTypeName }} - 工单跟踪处置情况</span>
+      </template>
+      <div class="view-content" style="padding:0;height:400px;">
+        <ElTable
+          :data="maintainEfficiencyTrackSelectedRow.workorderList"
+          border
+          size="small"
+          width="100%"
+          height="100%"
+          table-layout="fixed"
+        >
+          <ElTableColumn
+            prop="workorderNo"
+            label="工单编号"
+            align="center"
+            width="180"
+          />
+          <ElTableColumn
+            prop="createTime"
+            label="创建时间"
+            align="center"
+            width="180"
+          >
+            <template #default="scope">
+              {{ formatTimeStamp(scope.row.createTime) }}
+            </template>
+          </ElTableColumn>
+          <ElTableColumn
+            prop="handlePerson"
+            label="处置人"
+            align="center"
+            width="100"
+          />
+          <ElTableColumn
+            prop="handleDuration"
+            label="处置时长(小时)"
+            align="center"
+            width="120"
+          >
+            <template #default="scope">
+              {{ formatDecimal(scope.row.handleDuration) }}
+            </template>
+          </ElTableColumn>
+          <ElTableColumn
+            prop="isOvertime"
+            label="是否超时"
+            align="center"
+            width="100"
+          >
+            <template #default="scope">
+              <ElTag :type="scope.row.isOvertime ? 'danger' : 'success'">
+                {{ scope.row.isOvertime ? '是' : '否' }}
+              </ElTag>
+            </template>
+          </ElTableColumn>
+          <ElTableColumn
+            prop="handleStatus"
+            label="处置状态"
+            align="center"
+            width="120"
+          >
+            <template #default="scope">
+              <ElTag :type="scope.row.handleStatus === '已完成' ? 'success' : 'warning'">
+                {{ scope.row.handleStatus || '-' }}
+              </ElTag>
+            </template>
+          </ElTableColumn>
+        </ElTable>
+      </div>
+      <template #footer>
+        <ElButton plain @click="closeMaintainEfficiencyTrackDialog">关闭</ElButton>
+      </template>
+    </ElDialog>
+    <!-- 效率优化意见复盘弹窗 -->
+    <ElDialog
+      v-model="maintainEfficiencyReviewDialogVisible"
+      width="40%"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      class="park-dialog"
+      center
+      destroy-on-close
+      title="效率优化意见"
+    >
+      <el-form
+        ref="reviewFormRef"
+        :model="reviewForm"
+        :rules="reviewFormRules"
+        label-width="80px"
+        style="width: 100%;"
+      >
+        <el-form-item label="优化意见" prop="reviewOpinion">
+          <el-input
+            v-model="reviewForm.reviewOpinion"
+            type="textarea"
+            :rows="6"
+            placeholder="请输入效率优化意见（可选）"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <ElButton plain @click="closeMaintainEfficiencyReviewDialog">取消</ElButton>
+        <ElButton type="primary" @click="submitMaintainEfficiencyReviewData(maintainEfficiencyDetailSelectedRow.tbMaintainEfficiencyId)">保存</ElButton>
+      </template>
+    </ElDialog>
+
+    <!-- 服务发展详情弹窗 -->
+    <ElDialog
+      v-model="serviceDevelopmentDetailDialogVisible"
+      width="40%"
+      :close-on-click-modal="true"
+      :close-on-press-escape="true"
+      class="park-dialog"
+      center
+      destroy-on-close
+      title="服务发展详情"
+    >
+      <div class="header-actions" style="margin-bottom:10px;">
+        <div class="actions-right">
+          <div class="view-btn-group">
+            <ElButton
+              v-for="item in serviceDevelopmentDetailViewBtnList"
+              :key="item"
+              :type="activeServiceDevelopmentDetailView === item ? 'primary' : ''"
+              plain
+              @click="changeServiceDevelopmentDetailView(item)"
+              class="view-btn"
+            >
+              {{ item }}
+            </ElButton>
+          </div>
+        </div>
+      </div>
+      <!-- 明细视图 -->
+      <div v-if="activeServiceDevelopmentDetailView === '明细'" class="view-content" style="padding:0;">
+        <ElDescriptions bordered :column="2" class="desc-detail">
+          <ElDescriptionsItem label="服务ID" span="2">
+            {{ serviceDevelopmentDetailSelectedRow.tbServiceDevelopmentId || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="服务类型">
+            {{ serviceDevelopmentDetailSelectedRow.sysServiceTypeName || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="统计周期">
+            {{ serviceDevelopmentDetailSelectedRow.tbServiceDevelopmentPeriod || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="同比增长率(%)">
+            {{ formatDecimal(serviceDevelopmentDetailSelectedRow.tbServiceDevelopmentYearOnYearGrowth) }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="累计服务用户数">
+            {{ formatNumber(serviceDevelopmentDetailSelectedRow.tbServiceDevelopmentTotalUserCount) }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="服务优化需求数">
+            {{ serviceDevelopmentDetailSelectedRow.tbServiceDevelopmentOptimizationDemandCount || 0 }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="新增服务数量" span="2">
+            {{ serviceDevelopmentDetailSelectedRow.detail.tbServiceDevelopmentNewServiceCount || 0 }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="覆盖区域数" span="2">
+            {{ serviceDevelopmentDetailSelectedRow.detail.tbServiceDevelopmentCoverageRegionCount || 0 }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="用户增长率(%)" span="2">
+            {{ formatDecimal(serviceDevelopmentDetailSelectedRow.detail.tbServiceDevelopmentUserGrowthRate) }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="服务使用率(%)" span="2">
+            {{ formatDecimal(serviceDevelopmentDetailSelectedRow.detail.tbServiceDevelopmentServiceUtilizationRate) }}
+          </ElDescriptionsItem>
+        </ElDescriptions>
+      </div>
+      <!-- 用户反馈视图 -->
+      <div v-if="activeServiceDevelopmentDetailView === '用户反馈'" class="view-content" style="padding:0;">
+        <div style="height:400px;">
+          <ElTable
+            :data="serviceDevelopmentDetailSelectedRow.userFeedback"
+            border
+            size="small"
+            width="100%"
+            height="100%"
+            table-layout="fixed"
+          >
+            <ElTableColumn
+              prop="time"
+              label="反馈时间"
+              align="center"
+              width="180"
+            >
+              <template #default="scope">
+                {{ formatTimeStamp(scope.row.time) }}
+              </template>
+            </ElTableColumn>
+            <ElTableColumn
+              prop="userName"
+              label="用户名称"
+              align="center"
+              width="100"
+            />
+            <ElTableColumn
+              prop="content"
+              label="反馈内容"
+              align="center"
+              min-width="300"
+            />
+            <ElTableColumn
+              prop="score"
+              label="评分"
+              align="center"
+              width="80"
+            >
+              <template #default="scope">
+                <ElTag :type="scope.row.score >= 4 ? 'success' : scope.row.score <= 2 ? 'danger' : 'warning'">
+                  {{ scope.row.score }}分
+                </ElTag>
+              </template>
+            </ElTableColumn>
+          </ElTable>
+        </div>
+      </div>
+      <!-- 覆盖区域视图 -->
+      <div v-if="activeServiceDevelopmentDetailView === '覆盖区域'" class="view-content" style="padding:0;">
+        <div style="height:400px;">
+          <ElTable
+            :data="serviceDevelopmentDetailSelectedRow.coverageRegionDetail"
+            border
+            size="small"
+            width="100%"
+            height="100%"
+            table-layout="fixed"
+          >
+            <ElTableColumn
+              prop="regionName"
+              label="区域名称"
+              align="center"
+              width="120"
+            />
+            <ElTableColumn
+              prop="coverageRate"
+              label="覆盖率(%)"
+              align="center"
+              width="120"
+            >
+              <template #default="scope">
+                {{ formatDecimal(scope.row.coverageRate) }}
+              </template>
+            </ElTableColumn>
+            <ElTableColumn
+              prop="userCount"
+              label="用户数"
+              align="center"
+              width="120"
+            />
+          </ElTable>
+        </div>
+      </div>
+      <template #footer>
+        <ElButton plain @click="closeServiceDevelopmentDetailDialog">关闭</ElButton>
+      </template>
+    </ElDialog>
+    <!-- 用户增长趋势弹窗 -->
+    <ElDialog
+      v-model="serviceDevelopmentUserGrowthDialogVisible"
+      width="40%"
+      :close-on-click-modal="true"
+      :close-on-press-escape="true"
+      class="park-dialog"
+      center
+      destroy-on-close
+    >
+      <template #title>
+        <span>{{ serviceDevelopmentUserGrowthSelectedRow.sysServiceTypeName }} - 月度用户增长趋势</span>
+      </template>
+      <div class="view-content" style="padding:0;height:400px;">
+        <ChartLine3
+          :data="serviceDevelopmentUserGrowthSelectedRow"
+          title="月度用户增长趋势"
+          :key="serviceDevelopmentChartRefreshKey"
+        />
+      </div>
+      <template #footer>
+        <ElButton plain @click="closeServiceDevelopmentUserGrowthDialog">关闭</ElButton>
+      </template>
+    </ElDialog>
+    <!-- 服务优化建议弹窗 -->
+    <ElDialog
+      v-model="serviceDevelopmentOptimizationDialogVisible"
+      width="40%"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      class="park-dialog"
+      center
+      destroy-on-close
+      title="服务优化建议"
+    >
+      <el-form
+        ref="optimizationFormRef"
+        :model="optimizationForm"
+        :rules="optimizationFormRules"
+        label-width="80px"
+        style="width: 100%;"
+      >
+        <el-form-item label="优化建议" prop="optimizationPlan">
+          <el-input
+            v-model="optimizationForm.optimizationPlan"
+            type="textarea"
+            :rows="6"
+            placeholder="请输入服务优化建议"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <ElButton plain @click="closeServiceDevelopmentOptimizationDialog">取消</ElButton>
+        <ElButton type="primary" @click="submitOptimizationData(serviceDevelopmentDetailSelectedRow.tbServiceDevelopmentId)">保存</ElButton>
+      </template>
+    </ElDialog>
+
     <ElDialog
       v-model="tipDialogVisible"
       width="460px"
@@ -5484,6 +7742,7 @@ onUnmounted(() => {
 @import '../../../templatesstyle/table3';
 @import '../../../templatesstyle/table4';
 @import '../../../templatesstyle/indicator-cards3';
+@import '../../../templatesstyle/indicator-cards4';
 
 @keyframes blink {
   0%,100% { opacity: 1; }
