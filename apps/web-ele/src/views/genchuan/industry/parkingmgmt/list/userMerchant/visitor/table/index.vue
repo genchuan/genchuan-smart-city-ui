@@ -12,17 +12,35 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 // 引入封装后的详情抽屉组件
 import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
+import { maskIdCard, maskPhone } from '#/utils/dataMask/index.js';
 import { exportToExcel } from '#/utils/excel.js';
 
 // 引入权限和记录抽屉组件
 import PermissionDrawer from '../components/PermissionDrawer.vue';
 import RecordDrawer from '../components/RecordDrawer.vue';
-import { dataList, textObj, useFormSchema, useGridColumns } from './data';
+import {
+  assetDetailFields,
+  assetList,
+  carDetailFields,
+  carInfoData,
+  dataList,
+  textObj,
+  useFormSchema,
+  useGridColumns,
+} from './data';
 
 const props = defineProps({
   secondShow: {
     type: Boolean,
     default: false,
+  },
+  showStats: {
+    type: Boolean,
+    default: false,
+  },
+  toggleStats: {
+    type: Function,
+    default: () => {},
   },
 });
 const getTitle = computed(() => {
@@ -149,20 +167,20 @@ function handleEdit(row) {
     })
     .open();
 }
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.visitorName]),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => v.visitorId !== row.visitorId,
-    );
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.visitorName]));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
-}
+// async function handleDelete(row) {
+//   const loadingInstance = ElLoading.service({
+//     text: $t('ui.actionMessage.deleting', [row.visitorName]),
+//   });
+//   try {
+//     dataObj.apilist = dataObj.apilist.filter(
+//       (v) => v.visitorId !== row.visitorId,
+//     );
+//     ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.visitorName]));
+//     handleRefresh();
+//   } finally {
+//     loadingInstance.close();
+//   }
+// }
 
 async function handleDeleteBatch() {
   await confirm($t('确定删除这些数据吗？'));
@@ -333,12 +351,60 @@ const handleDetailClose = () => {
   selectedVisitor.value = null;
 };
 
+// 车辆详情相关
+const selectedCar = ref(null);
+const carDetailDrawerRef = ref(null);
+
+// 打开车辆详情
+const handleOpenCarInfo = (row) => {
+  // 根据plateNumber获取车辆信息
+  const carInfo = carInfoData.find((car) => car.car_number === row.plateNumber);
+  if (carInfo) {
+    selectedCar.value = carInfo;
+    carDetailDrawerRef.value.open();
+  }
+};
+
+// 车辆详情关闭处理
+const handleCarDetailClose = () => {
+  selectedCar.value = null;
+};
+
+// 资产详情相关
+const selectedAsset = ref(null);
+const assetDetailDrawerRef = ref(null);
+
+// 打开资产详情
+const handleOpenAssetInfo = (row) => {
+  // 根据visitAssetId获取资产信息
+  const assetInfo = assetList.find(
+    (asset) => asset.asset_extend_id === row.visitAssetId,
+  );
+  if (assetInfo) {
+    selectedAsset.value = assetInfo;
+    assetDetailDrawerRef.value.open();
+  }
+};
+
+// 资产详情关闭处理
+const handleAssetDetailClose = () => {
+  selectedAsset.value = null;
+};
+
 // 定义详情抽屉的字段配置
 const detailFields = [
   { label: '访客ID', key: 'visitorId' },
   { label: '访客姓名', key: 'visitorName' },
-  { label: '手机号', key: 'phone' },
-  { label: '身份证号', key: 'idCard' },
+  {
+    label: '手机号',
+    key: 'phone',
+    formatter: maskPhone,
+  },
+  {
+    label: '身份证号',
+    key: 'idCard',
+    formatter: maskIdCard,
+  },
   { label: '车牌号码', key: 'plateNumber' },
   { label: '访问资源', key: 'visitAssetId' },
   { label: '访问事由', key: 'visitReason' },
@@ -377,6 +443,8 @@ const detailFields = [
       :title="`${selectedVisitor?.visitorName || '访客详情'}`"
       @close="handleDetailClose"
     />
+    <!-- todo 车辆详情抽屉 -->
+
     <!-- 权限抽屉 -->
     <PermissionDrawerComp>
       <PermissionDrawer
@@ -388,6 +456,22 @@ const detailFields = [
     <RecordDrawerComp>
       <RecordDrawer :visitor="selectedVisitor" @close="recordDrawerApi.close" />
     </RecordDrawerComp>
+    <!-- 车辆详情抽屉 -->
+    <DetailDrawer
+      ref="carDetailDrawerRef"
+      :data="selectedCar"
+      :fields="carDetailFields"
+      :title="`车辆详情 - ${selectedCar?.car_number || ''}`"
+      @close="handleCarDetailClose"
+    />
+    <!-- 资产详情抽屉 -->
+    <DetailDrawer
+      ref="assetDetailDrawerRef"
+      :data="selectedAsset"
+      :fields="assetDetailFields"
+      :title="`资产详情 - ${selectedAsset?.name || ''}`"
+      @close="handleAssetDetailClose"
+    />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -432,6 +516,11 @@ const detailFields = [
             @click="handleSerachShow"
           />
           <IconButton
+            :content="showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="toggleStats"
+          />
+          <IconButton
             content="全屏"
             icon-name="FullScreen"
             @click="handleFullShow"
@@ -445,6 +534,24 @@ const detailFields = [
           type="primary"
         >
           {{ row.visitorName }}
+        </el-text>
+      </template>
+      <template #plateNumber="{ row }">
+        <el-text
+          @click="handleOpenCarInfo(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.plateNumber }}
+        </el-text>
+      </template>
+      <template #visitAssetId="{ row }">
+        <el-text
+          @click="handleOpenAssetInfo(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.visitAssetId }}
         </el-text>
       </template>
       <template #status="{ row }">
@@ -474,12 +581,12 @@ const detailFields = [
             icon-name="edit"
             @click="handleEdit(row)"
           />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
-          />
+          <!--          <IconButton-->
+          <!--            content="删除"-->
+          <!--            icon-name="delete"-->
+          <!--            color="#F56C6C"-->
+          <!--            @click="handleDelete(row)"-->
+          <!--          />-->
           <IconButton
             content="权限"
             icon-name="key"

@@ -2016,15 +2016,19 @@ export const textObj = {
 /** 个人用户详情字段配置 */
 export const personalDetailFields = [
   { key: 'user_id', label: '用户ID' },
-  { key: 'user_name', label: '用户名' },
-  { key: 'user_phone', label: '手机号' },
+  {
+    key: 'user_name',
+    label: '用户名',
+  },
+  {
+    key: 'user_phone',
+    label: '手机号',
+    formatter: maskPhone,
+  },
   {
     key: 'id_card',
     label: '身份证号',
-    formatter: (value) => {
-      if (!value) return '';
-      return value.replace(/(\d{6})\d{8}(\d{4})/, '$1********$2');
-    },
+    formatter: maskIdCard,
   },
   { key: 'gender', label: '性别' },
   {
@@ -2099,7 +2103,11 @@ export const enterpriseDetailFields = [
   { key: 'enterprise_name', label: '企业名称' },
   { key: 'credit_code', label: '统一社会信用代码' },
   { key: 'contact_person', label: '联系人' },
-  { key: 'contact_phone', label: '联系电话' },
+  {
+    key: 'contact_phone',
+    label: '联系电话',
+    formatter: maskPhone,
+  },
   { key: 'register_address', label: '注册地址' },
   { key: 'industry_name', label: '所属行业' },
   { key: 'admin_name', label: '管理员账号' },
@@ -2176,7 +2184,11 @@ export const governmentDetailFields = [
   { key: 'gov_user_id', label: '用户ID' },
   { key: 'user_name', label: '用户名' },
   { key: 'dept_name', label: '所属政府部门' },
-  { key: 'contact_phone', label: '联系电话' },
+  {
+    key: 'contact_phone',
+    label: '联系电话',
+    formatter: maskPhone,
+  },
   { key: 'region_name', label: '负责区域' },
   { key: 'role_name', label: '用户角色' },
   { key: 'permission_scope', label: '权限范围' },

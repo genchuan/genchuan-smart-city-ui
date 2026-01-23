@@ -1,19 +1,19 @@
-import {maskPhone} from "#/utils/dataMask/index.js";
+import { maskPhone } from '#/utils/dataMask/index.js';
 
 /** 区域数据映射 */
 export const regionMap = {
-  'BJ': '北京市',
-  'SH': '上海市',
-  'GZ': '广州市',
-  'SZ': '深圳市',
-  'CD': '成都市',
-  'WH': '武汉市',
-  'NJ': '南京市',
-  'HZ': '杭州市',
-  'CQ': '重庆市',
-  'TJ': '天津市',
-  'XA': '西安市',
-  'KM': '昆明市',
+  BJ: '北京市',
+  SH: '上海市',
+  GZ: '广州市',
+  SZ: '深圳市',
+  CD: '成都市',
+  WH: '武汉市',
+  NJ: '南京市',
+  HZ: '杭州市',
+  CQ: '重庆市',
+  TJ: '天津市',
+  XA: '西安市',
+  KM: '昆明市',
 };
 
 /** 商户表静态数据 */
@@ -25,7 +25,7 @@ export const merchantList = [
     contactPerson: '张三',
     contactPhone: '13800138001',
     address: '北京市朝阳区建国路88号',
-    businessScope: '销售日用品、电子产品、服装鞋帽、办公用品',
+    businessScope: ['零售贸易'],
     status: '正常',
     settlementRatio: 0.1,
     regionCode: 'BJ',
@@ -42,7 +42,7 @@ export const merchantList = [
     contactPerson: '李四',
     contactPhone: '13800138002',
     address: '上海市浦东新区张江高科技园区',
-    businessScope: '技术开发、技术转让、技术咨询、技术服务',
+    businessScope: ['科技服务'],
     status: '正常',
     settlementRatio: 0.15,
     regionCode: 'SH',
@@ -59,8 +59,8 @@ export const merchantList = [
     contactPerson: '王五',
     contactPhone: '13800138003',
     address: '广州市天河区天河路385号',
-    businessScope: '货物进出口、技术进出口、代理进出口',
-    status: '停业',
+    businessScope: ['进出口'],
+    status: '禁用',
     settlementRatio: 0.12,
     regionCode: 'GZ',
     createTime: '2024-01-03 14:20:00',
@@ -76,7 +76,7 @@ export const merchantList = [
     contactPerson: '赵六',
     contactPhone: '13800138004',
     address: '深圳市南山区科技园南区',
-    businessScope: '兴办实业、国内商业、物资供销业',
+    businessScope: ['实业制造'],
     status: '注销',
     settlementRatio: 0.08,
     regionCode: 'SZ',
@@ -93,7 +93,7 @@ export const merchantList = [
     contactPerson: '孙七',
     contactPhone: '13800138005',
     address: '北京市西城区政务服务中心',
-    businessScope: '政务服务、公共管理',
+    businessScope: ['政务服务'],
     status: '正常',
     settlementRatio: 0,
     regionCode: 'BJ',
@@ -110,7 +110,7 @@ export const merchantList = [
     contactPerson: '周八',
     contactPhone: '13800138006',
     address: '成都市锦江区春熙路',
-    businessScope: '零售、餐饮、娱乐',
+    businessScope: ['零售贸易', '餐饮娱乐'],
     status: '正常',
     settlementRatio: 0.09,
     regionCode: 'CD',
@@ -127,7 +127,7 @@ export const merchantList = [
     contactPerson: '吴九',
     contactPhone: '13800138007',
     address: '武汉市洪山区光谷制造园',
-    businessScope: '机械设备制造、加工、销售',
+    businessScope: ['实业制造'],
     status: '正常',
     settlementRatio: 0.11,
     regionCode: 'WH',
@@ -144,7 +144,7 @@ export const merchantList = [
     contactPerson: '郑十',
     contactPhone: '13800138008',
     address: '南京市鼓楼区城市管理局',
-    businessScope: '城市管理、公共服务',
+    businessScope: ['公共管理'],
     status: '正常',
     settlementRatio: 0,
     regionCode: 'NJ',
@@ -161,7 +161,7 @@ export const merchantList = [
     contactPerson: '冯十一',
     contactPhone: '13800138009',
     address: '杭州市西湖区餐饮街',
-    businessScope: '餐饮服务、食品销售',
+    businessScope: ['餐饮娱乐'],
     status: '正常',
     settlementRatio: 0.13,
     regionCode: 'HZ',
@@ -178,7 +178,7 @@ export const merchantList = [
     contactPerson: '陈十二',
     contactPhone: '13800138010',
     address: '重庆市渝北区物流园',
-    businessScope: '物流运输、仓储服务',
+    businessScope: ['物流运输'],
     status: '正常',
     settlementRatio: 0.07,
     regionCode: 'CQ',
@@ -195,7 +195,7 @@ export const merchantList = [
     contactPerson: '褚十三',
     contactPhone: '13800138011',
     address: '天津市河东区交通管理局',
-    businessScope: '交通管理、公共安全',
+    businessScope: ['公共管理'],
     status: '正常',
     settlementRatio: 0,
     regionCode: 'TJ',
@@ -212,7 +212,7 @@ export const merchantList = [
     contactPerson: '卫十四',
     contactPhone: '13800138012',
     address: '深圳市南山区教育科技园',
-    businessScope: '教育咨询、培训服务',
+    businessScope: ['教育培训'],
     status: '正常',
     settlementRatio: 0.14,
     regionCode: 'SZ',
@@ -229,7 +229,7 @@ export const merchantList = [
     contactPerson: '蒋十五',
     contactPhone: '13800138013',
     address: '西安市雁塔区建筑产业园',
-    businessScope: '建筑工程、装修装饰',
+    businessScope: ['建筑工程'],
     status: '正常',
     settlementRatio: 0.1,
     regionCode: 'XA',
@@ -246,7 +246,7 @@ export const merchantList = [
     contactPerson: '沈十六',
     contactPhone: '13800138014',
     address: '广州市天河区环保局',
-    businessScope: '环境保护、污染治理',
+    businessScope: ['公共管理'],
     status: '正常',
     settlementRatio: 0,
     regionCode: 'GZ',
@@ -263,7 +263,7 @@ export const merchantList = [
     contactPerson: '韩十七',
     contactPhone: '13800138015',
     address: '北京市海淀区医疗科技园',
-    businessScope: '医疗技术、医疗器械',
+    businessScope: ['医疗健康'],
     status: '正常',
     settlementRatio: 0.16,
     regionCode: 'BJ',
@@ -280,7 +280,7 @@ export const merchantList = [
     contactPerson: '杨十八',
     contactPhone: '13800138016',
     address: '上海市静安区文化传媒园',
-    businessScope: '文化传媒、广告策划',
+    businessScope: ['文化传媒'],
     status: '正常',
     settlementRatio: 0.12,
     regionCode: 'SH',
@@ -297,7 +297,7 @@ export const merchantList = [
     contactPerson: '朱十九',
     contactPhone: '13800138017',
     address: '深圳市市场监督管理局',
-    businessScope: '市场监管、质量监督',
+    businessScope: ['公共管理'],
     status: '正常',
     settlementRatio: 0,
     regionCode: 'SZ',
@@ -314,7 +314,7 @@ export const merchantList = [
     contactPerson: '秦二十',
     contactPhone: '13800138018',
     address: '昆明市官渡区旅游产业园',
-    businessScope: '旅游咨询、旅行社服务',
+    businessScope: ['旅游服务'],
     status: '正常',
     settlementRatio: 0.09,
     regionCode: 'KM',
@@ -331,7 +331,7 @@ export const merchantList = [
     contactPerson: '尤二十一',
     contactPhone: '13800138019',
     address: '杭州市余杭区电商产业园',
-    businessScope: '电子商务、网络销售',
+    businessScope: ['电子商务'],
     status: '正常',
     settlementRatio: 0.11,
     regionCode: 'HZ',
@@ -348,7 +348,7 @@ export const merchantList = [
     contactPerson: '许二十二',
     contactPhone: '13800138020',
     address: '北京市海淀区自然资源局',
-    businessScope: '自然资源管理、规划',
+    businessScope: ['公共管理'],
     status: '正常',
     settlementRatio: 0,
     regionCode: 'BJ',
@@ -669,7 +669,7 @@ export function useFormSchema() {
         placeholder: '请选择状态',
         options: [
           { label: '正常', value: '正常' },
-          { label: '停业', value: '停业' },
+          { label: '禁用', value: '禁用' },
           { label: '注销', value: '注销' },
         ],
       },
@@ -759,6 +759,9 @@ export function useGridColumns() {
       title: '经营范围',
       minWidth: 200,
       sortable: true,
+      formatter: ({ cellValue }) => {
+        return Array.isArray(cellValue) ? cellValue.join('、') : cellValue;
+      },
     },
     {
       field: 'status',
@@ -782,7 +785,7 @@ export function useGridColumns() {
     },
     {
       title: '操作',
-      width: 240,
+      width: 130,
       fixed: 'right',
       slots: { default: 'actions' },
     },
@@ -804,14 +807,24 @@ export const merchantDetailFields = [
   { key: 'merchantName', label: '商户名称' },
   { key: 'merchantCode', label: '商户编码' },
   { key: 'contactPerson', label: '联系人' },
-  { key: 'contactPhone', label: '联系电话' },
+  {
+    key: 'contactPhone',
+    label: '联系电话',
+    formatter: maskPhone,
+  },
   { key: 'address', label: '商户地址' },
   {
     key: 'regionCode',
     label: '所属区域',
     formatter: (value) => regionMap[value] || '',
   },
-  { key: 'businessScope', label: '经营范围' },
+  {
+    key: 'businessScope',
+    label: '经营范围',
+    formatter: (value) => {
+      return Array.isArray(value) ? value.join('、') : value;
+    },
+  },
   {
     key: 'status',
     label: '状态',
@@ -837,3 +850,101 @@ export const merchantDetailFields = [
   { key: 'updateBy', label: '更新人' },
   { key: 'remark', label: '备注' },
 ];
+
+/** 获取商户统计数据 */
+export const getMerchantStatsData = () => {
+  // 获取所有商户数据
+  const merchantData = merchantList;
+
+  // 计算卡片数据
+  const totalCount = merchantData.length;
+  const normalCount = merchantData.filter(
+    (item) => item.status === '正常',
+  ).length;
+  const disabledCount = merchantData.filter(
+    (item) => item.status === '禁用' || item.status === '注销',
+  ).length;
+
+  // 计算商户状态占比数据
+  const statusStats = {
+    正常: normalCount,
+    禁用: merchantData.filter((item) => item.status === '禁用').length,
+    注销: merchantData.filter((item) => item.status === '注销').length,
+  };
+
+  // 计算经营范围占比数据
+  const businessScopeStats = {};
+  merchantData.forEach((merchant) => {
+    if (Array.isArray(merchant.businessScope)) {
+      merchant.businessScope.forEach((scope) => {
+        businessScopeStats[scope] = (businessScopeStats[scope] || 0) + 1;
+      });
+    }
+  });
+
+  // 计算不同区域商户分布数据
+  const regionStats = {};
+  merchantData.forEach((merchant) => {
+    const regionName = regionMap[merchant.regionCode] || '未知区域';
+    regionStats[regionName] = (regionStats[regionName] || 0) + 1;
+  });
+
+  // 转换为echarts所需的数据格式
+  const statusChartData = Object.entries(statusStats).map(([name, value]) => ({
+    name,
+    value,
+  }));
+
+  const businessScopeChartData = Object.entries(businessScopeStats).map(
+    ([name, value]) => ({
+      name,
+      value,
+    }),
+  );
+
+  const regionChartData = {
+    xAxis: Object.keys(regionStats),
+    series: Object.values(regionStats),
+  };
+
+  return {
+    cards: [
+      {
+        title: '总商户数',
+        value: totalCount,
+        desc: `共${totalCount}家商户`,
+        color: '#4A90E2',
+      },
+      {
+        title: '正常商户数',
+        value: normalCount,
+        desc: `正常运营商户${normalCount}家`,
+        color: '#13ce66',
+      },
+      {
+        title: '禁用商户数',
+        value: disabledCount,
+        desc: `停业/注销商户${disabledCount}家`,
+        color: '#FF6B8B',
+      },
+    ],
+    charts: [
+      {
+        type: 'pie',
+        title: '商户状态占比',
+        data: statusChartData,
+      },
+      {
+        type: 'pie',
+        title: '商户经营范围占比',
+        data: businessScopeChartData,
+      },
+      {
+        type: 'bar',
+        title: '不同区域商户分布',
+        xAxis: regionChartData.xAxis,
+        series: regionChartData.series,
+      },
+    ],
+  };
+};

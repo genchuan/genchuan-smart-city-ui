@@ -20,6 +20,14 @@ const props = defineProps({
     default: false,
   },
 });
+
+// 关键修改1：统一事件名（这里选择声明为toggleChart，和触发时保持一致）
+// 原错误：声明的是'toggle-chart'，触发的是'toggleChart'
+const emit = defineEmits(['toggleChart']);
+
+// 新增：子组件内部控制按钮显示的状态（独立于图表）
+const arrowShow = ref(false);
+
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
 });
@@ -119,13 +127,13 @@ function handleEdit(row) {
 }
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.induction_name]), // 修复：使用正确的字段名
+    text: $t('ui.actionMessage.deleting', [row.induction_name]),
   });
   try {
     dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
     ElMessage.success(
       $t('ui.actionMessage.deleteSuccess', [row.induction_name]),
-    ); // 修复：使用正确的字段名
+    );
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -209,8 +217,6 @@ const [QueryForm] = useVbenForm({
   },
   // 提交函数
   handleSubmit: onSubmit,
-  // 垂直布局，label和input在不同行，值为vertical
-  // 水平布局，label和input在同一行
   layout: 'horizontal',
   schema: useFormSchema().map((v) => {
     delete v.rules;
@@ -275,19 +281,16 @@ const createLabel = (item) => {
   switch (item.label) {
     case '全部': {
       count = dataObj.apilist.length;
-
       break;
     }
     case '启用': {
       // 统计status为'1'的数据
       count = dataObj.apilist.filter((v) => v.status === '1').length;
-
       break;
     }
     case '禁用': {
       // 统计status为'0'的数据
       count = dataObj.apilist.filter((v) => v.status === '0').length;
-
       break;
     }
     // No default
@@ -305,6 +308,15 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
+// 核心修改：子组件的展开/收缩按钮点击事件
+const arrowChange = () => {
+  // 切换自身按钮状态
+  arrowShow.value = !arrowShow.value;
+  // 关键修改2：触发的事件名和defineEmits中声明的保持一致（这里是toggleChart）
+  // 原代码这里触发的是'toggle-chart'，和声明的toggleChart不匹配（也可以选择把defineEmits改成['toggle-chart']，这里统一为驼峰更符合Vue习惯）
+  emit('toggleChart');
+};
 </script>
 
 <template>
@@ -320,56 +332,48 @@ const handleFullShow = () => {
             {{ dataObj.detailObj.induction_id }}
           </div>
         </div>
-
         <div class="detail-card-row">
           <div class="detail-row-left">诱导屏名称:</div>
           <div class="detail-row-right">
             {{ dataObj.detailObj.induction_name }}
           </div>
         </div>
-
         <div class="detail-card-row">
           <div class="detail-row-left">覆盖区域:</div>
           <div class="detail-row-right">
             {{ dataObj.detailObj.region }}
           </div>
         </div>
-
         <div class="detail-card-row">
           <div class="detail-row-left">关联车场:</div>
           <div class="detail-row-right">
             {{ dataObj.detailObj.related_lot_ids }}
           </div>
         </div>
-
         <div class="detail-card-row">
           <div class="detail-row-left">推送策略:</div>
           <div class="detail-row-right">
             {{ dataObj.detailObj.push_strategy }}
           </div>
         </div>
-
         <div class="detail-card-row">
           <div class="detail-row-left">状态:</div>
           <div class="detail-row-right">
             {{ dataObj.detailObj.status === '1' ? '启用' : '禁用' }}
           </div>
         </div>
-
         <div class="detail-card-row">
           <div class="detail-row-left">创建时间:</div>
           <div class="detail-row-right">
             {{ dataObj.detailObj.create_time }}
           </div>
         </div>
-
         <div class="detail-card-row">
           <div class="detail-row-left">更新时间:</div>
           <div class="detail-row-right">
             {{ dataObj.detailObj.update_time }}
           </div>
         </div>
-
         <div class="detail-card-row">
           <div class="detail-row-left">备注:</div>
           <div class="detail-row-right">
@@ -421,9 +425,10 @@ const handleFullShow = () => {
             icon-name="search"
             @click="handleSerachShow"
           />
+          <!-- 核心修改：子组件的展开/收缩按钮，使用自身的arrowShow状态 -->
           <IconButton
-            :content="props.arrowShow ? '展开' : '收缩'"
-            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            :content="arrowShow ? '收缩' : '展开'"
+            :icon-name="arrowShow ? 'ArrowUp' : 'ArrowDown'"
             @click="arrowChange"
           />
           <IconButton
@@ -433,7 +438,6 @@ const handleFullShow = () => {
           />
         </div>
       </template>
-      <!-- 修复：使用正确的字段名'induction_name' -->
       <template #induction_name="{ row }">
         <el-text
           @click="handleOpenDetail(row)"

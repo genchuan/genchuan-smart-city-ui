@@ -150,7 +150,7 @@ const initChart = () => {
           borderWidth: 2,
         },
         label: {
-          show: true,
+          show: false,
           fontSize: labelFontSize, // 标签文字自适应（预留）
           color: '#e6f7ff',
           formatter: '{b}: {c}',
