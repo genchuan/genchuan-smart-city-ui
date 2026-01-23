@@ -4,41 +4,24 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
-import {
-  dataList,
-  detailFields,
-  textObj,
-  useFormSchema,
-  useGridColumns,
-} from './data';
+import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
 const props = defineProps({
   secondShow: {
     type: Boolean,
     default: false,
   },
-  showStats: {
-    type: Boolean,
-    default: false,
-  },
-  toggleStats: {
-    type: Function,
-    default: () => {},
-  },
 });
-
 const getTitle = computed(() => {
-  return formData.value?.maintainUserId ? textObj.editText : textObj.addText;
+  return formData.value?.id ? textObj.editText : textObj.addText;
 });
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -51,7 +34,16 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
-
+const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    detailDrawerApi.close();
+  },
+  onConfirm() {},
+  async onOpenChange() {},
+});
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -59,7 +51,7 @@ const [Form, formApi] = useVbenForm({
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
-    labelWidth: 120,
+    labelWidth: 80,
   },
   layout: 'horizontal',
   schema: useFormSchema(),
@@ -74,96 +66,21 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onConfirm() {
     const obj = formApi.form.values;
     if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-      dataObj.apilist.push({
-        ...obj,
-        maintainUserId: `user_${Date.now()}`,
-        userId: `user_${Date.now()}`,
-        deptId: 'dept_001',
-        deptName: '运维部',
-        skillTags: [],
-        createBy: 'admin',
-        createTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
-        updateTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
-        // 根据teamId和postCode设置显示名称
-        teamName:
-          obj.teamId === 'team_001'
-            ? '芗城区运维队'
-            : obj.teamId === 'team_002'
-              ? '龙文区运维队'
-              : obj.teamId === 'team_003'
-                ? '龙海区运维队'
-                : obj.teamId === 'team_004'
-                  ? '漳浦县运维队'
-                  : '云霄县运维队',
-        postName:
-          obj.postCode === 'dev_maintain'
-            ? '设备维修员'
-            : obj.postCode === 'fault_check'
-              ? '故障排查员'
-              : '工单处置员',
-        areaName:
-          obj.areaCode === '350602'
-            ? '芗城区'
-            : obj.areaCode === '350603'
-              ? '龙文区'
-              : obj.areaCode === '350681'
-                ? '龙海区'
-                : obj.areaCode === '350623'
-                  ? '漳浦县'
-                  : '云霄县',
-      });
+      dataObj.apilist.push(obj);
     } else {
       dataObj.apilist.forEach((v, i) => {
-        if (v.maintainUserId === formData.value?.maintainUserId) {
-          dataObj.apilist[i] = {
-            ...obj,
-            maintainUserId: v.maintainUserId,
-            userId: v.userId,
-            deptId: v.deptId,
-            deptName: v.deptName,
-            skillTags: v.skillTags,
-            createBy: v.createBy,
-            createTime: v.createTime,
-            updateTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
-            // 根据teamId和postCode设置显示名称
-            teamName:
-              obj.teamId === 'team_001'
-                ? '芗城区运维队'
-                : obj.teamId === 'team_002'
-                  ? '龙文区运维队'
-                  : obj.teamId === 'team_003'
-                    ? '龙海区运维队'
-                    : obj.teamId === 'team_004'
-                      ? '漳浦县运维队'
-                      : '云霄县运维队',
-            postName:
-              obj.postCode === 'dev_maintain'
-                ? '设备维修员'
-                : obj.postCode === 'fault_check'
-                  ? '故障排查员'
-                  : '工单处置员',
-            areaName:
-              obj.areaCode === '350602'
-                ? '芗城区'
-                : obj.areaCode === '350603'
-                  ? '龙文区'
-                  : obj.areaCode === '350681'
-                    ? '龙海区'
-                    : obj.areaCode === '350623'
-                      ? '漳浦县'
-                      : '云霄县',
-          };
+        if (v.id === formData.value?.id) {
+          dataObj.apilist[i] = obj;
         }
       });
     }
     handleRefresh();
     formDrawerApi.close();
-    ElMessage.success($t('ui.actionMessage.saveSuccess'));
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
       formData.value = formDrawerApi.getData();
-      if (formData.value?.maintainUserId) {
+      if (formData.value?.id) {
         await formApi.setValues(formData.value);
       } else {
         formApi.resetForm();
@@ -182,7 +99,7 @@ async function handleExport() {
   exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
 }
 
-/** 创建运维人员 */
+/** 创建角色 */
 function handleCreate() {
   formDrawerApi
     .setData({
@@ -191,7 +108,7 @@ function handleCreate() {
     .open();
 }
 
-/** 编辑运维人员 */
+/** 编辑角色 */
 function handleEdit(row) {
   formDrawerApi
     .setData({
@@ -200,16 +117,15 @@ function handleEdit(row) {
     })
     .open();
 }
-
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.name]),
+    text: $t('ui.actionMessage.deleting', [row.induction_name]), // 修复：使用正确的字段名
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => v.maintainUserId !== row.maintainUserId,
-    );
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
+    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
+    ElMessage.success(
+      $t('ui.actionMessage.deleteSuccess', [row.induction_name]),
+    ); // 修复：使用正确的字段名
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -223,7 +139,7 @@ async function handleDeleteBatch() {
   });
   try {
     dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.maintainUserId),
+      (v) => !checkedIds.value.includes(v.id),
     );
     checkedIds.value = [];
     ElMessage.success($t('删除成功'));
@@ -235,18 +151,17 @@ async function handleDeleteBatch() {
 
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map((item) => item.maintainUserId);
+  checkedIds.value = records.map((item) => item.id);
 }
-
 const dataObj = reactive({
   totalShow: false,
+  detailObj: {},
   total: dataList().length,
   currentPage: 1,
   pageSize: 10,
   apilist: dataList(),
   list: [],
 });
-
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
@@ -254,39 +169,48 @@ const changeTotalShow = () => {
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
-  dataObj.total = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
+
+  // 根据activeName筛选数据
+  const filteredList = dataObj.apilist.filter((v) => {
+    switch (activeName.value) {
+      case '全部': {
         return true;
       }
-      return v.status === activeName.value;
-    }).length;
-  dataObj.list = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
+      case '启用': {
+        return v.status === '1';
       }
-      return v.status === activeName.value;
-    })
-    .slice(
-      (page.currentPage - 1) * page.pageSize,
-      page.currentPage * page.pageSize,
-    );
+      case '禁用': {
+        return v.status === '0';
+      }
+      // No default
+    }
+    return false;
+  });
+
+  dataObj.total = filteredList.length;
+  dataObj.list = filteredList.slice(
+    (page.currentPage - 1) * page.pageSize,
+    page.currentPage * page.pageSize,
+  );
   return dataObj;
 };
 
 const [QueryForm] = useVbenForm({
+  // 默认展开
   collapsed: false,
+  // 所有表单项共用，可单独在表单内覆盖
   commonConfig: {
+    // 所有表单项
     componentProps: {
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
-    labelWidth: 120,
+    labelWidth: 100,
   },
+  // 提交函数
   handleSubmit: onSubmit,
+  // 垂直布局，label和input在不同行，值为vertical
+  // 水平布局，label和input在同一行
   layout: 'horizontal',
   schema: useFormSchema().map((v) => {
     delete v.rules;
@@ -294,6 +218,7 @@ const [QueryForm] = useVbenForm({
       ...v,
     };
   }),
+  // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -315,7 +240,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       },
     },
     rowConfig: {
-      keyField: 'maintainUserId',
+      keyField: 'id',
       isHover: true,
     },
     pagerConfig: dataObj,
@@ -335,44 +260,48 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 const activeName = ref('全部');
 
-// 详情相关
-const selectedItem = ref(null);
-const detailDrawerRef = ref(null);
-
-// 修改打开详情的方法
 const handleOpenDetail = (row) => {
-  selectedItem.value = row;
-  if (detailDrawerRef.value) {
-    detailDrawerRef.value.open();
-  }
+  dataObj.detailObj = row;
+  detailDrawerApi.open();
 };
 
-const handleDetailClose = () => {
-  selectedItem.value = null;
-};
+// 修改tabsData为三个标签：全部、启用、禁用
+const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用' }]);
 
-const tabsData = ref([
-  { label: '全部', value: '全部' },
-  { label: '启用', value: '启用' },
-  { label: '禁用', value: '禁用' },
-]);
-
+// 创建标签文本，显示数量统计
 const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.value).length})`;
-  if (item.value === '全部') {
-    text = `(${dataObj.apilist.length})`;
+  let count = 0;
+
+  switch (item.label) {
+    case '全部': {
+      count = dataObj.apilist.length;
+
+      break;
+    }
+    case '启用': {
+      // 统计status为'1'的数据
+      count = dataObj.apilist.filter((v) => v.status === '1').length;
+
+      break;
+    }
+    case '禁用': {
+      // 统计status为'0'的数据
+      count = dataObj.apilist.filter((v) => v.status === '0').length;
+
+      break;
+    }
+    // No default
   }
-  return item.label + text;
+
+  return `${item.label}(${count})`;
 };
 
 const handleClick = () => {
   gridApi.query();
 };
-
 const handleSerachShow = () => {
   drawerApi.open();
 };
-
 const handleFullShow = () => {
   screenfull.toggle();
 };
@@ -383,16 +312,72 @@ const handleFullShow = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
+    <DetailDrawer :title="`${dataObj.detailObj.induction_name}详情`">
+      <div class="detail-card">
+        <div class="detail-card-row">
+          <div class="detail-row-left">诱导屏ID:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.induction_id }}
+          </div>
+        </div>
 
-    <!-- 使用封装后的详情抽屉组件 -->
-    <DetailDrawer
-      ref="detailDrawerRef"
-      :data="selectedItem"
-      :fields="detailFields"
-      :title="selectedItem?.name || '运维人员详情'"
-      @close="handleDetailClose"
-    />
+        <div class="detail-card-row">
+          <div class="detail-row-left">诱导屏名称:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.induction_name }}
+          </div>
+        </div>
 
+        <div class="detail-card-row">
+          <div class="detail-row-left">覆盖区域:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.region }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">关联车场:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.related_lot_ids }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">推送策略:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.push_strategy }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">状态:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.status === '1' ? '启用' : '禁用' }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">创建时间:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.create_time }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">更新时间:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.update_time }}
+          </div>
+        </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">备注:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.remark }}
+          </div>
+        </div>
+      </div>
+    </DetailDrawer>
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -410,7 +395,7 @@ const handleFullShow = () => {
                 v-for="item in tabsData"
                 :key="item.label"
                 :label="createLabel(item)"
-                :name="item.value"
+                :name="item.label"
               />
             </el-tabs>
           </div>
@@ -436,11 +421,6 @@ const handleFullShow = () => {
             icon-name="search"
             @click="handleSerachShow"
           />
-          <IconButton 
-            :content="props.showStats ? '隐藏统计' : '显示统计'" 
-            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
-            @click="props.toggleStats"
-          />
           <IconButton
             content="全屏"
             icon-name="FullScreen"
@@ -448,42 +428,21 @@ const handleFullShow = () => {
           />
         </div>
       </template>
-      <template #name="{ row }">
+      <!-- 修复：使用正确的字段名'induction_name' -->
+      <template #induction_name="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.name }}
+          {{ row.induction_name }}
         </el-text>
-      </template>
-      <template #onDutyStatus="{ row }">
-        <el-tag
-          :type="
-            row.onDutyStatus === '在岗'
-              ? 'success'
-              : row.onDutyStatus === '休假'
-                ? 'warning'
-                : 'info'
-          "
-          size="small"
-        >
-          {{ row.onDutyStatus }}
-        </el-tag>
-      </template>
-      <template #status="{ row }">
-        <el-tag
-          :type="row.status === '启用' ? 'success' : 'danger'"
-          size="small"
-        >
-          {{ row.status }}
-        </el-tag>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
             content="详情"
-            icon-name="View"
+            icon-name="Document"
             @click="handleOpenDetail(row)"
           />
           <IconButton
@@ -507,16 +466,10 @@ const handleFullShow = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span>
-            本页统计：运维人员数量{{ dataObj.list.length }};启用:{{
-              dataObj.list.filter((item) => item.status === '启用').length
-            }};禁用:{{
-              dataObj.list.filter((item) => item.status === '禁用').length
-            }}</span
-          >
+          <span> 本页统计：诱导屏数量: 10; 启用: 8; 禁用: 2 </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span> 全部统计：{{ textObj.total }}</span>
+          <span> 全部统计：{{ textObj.total }} </span>
         </div>
       </template>
     </Grid>

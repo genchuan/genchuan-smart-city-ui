@@ -47,57 +47,49 @@ const statsData = computed(() => {
 });
 </script>
 <template>
-  <div class="black-whitelist-index">
-    <div class="common-index">
-      <!-- 统计可视化组件，根据showStats状态显示/隐藏 -->
-      <StatsVisualization v-if="showStats" :data="statsData" />
-      <div class="icon-change">
-        <el-icon
-          class="tabel-tab-icon"
-          v-if="secondShow"
-          @click="changeArrowStatus"
-        >
-          <ArrowDown />
-        </el-icon>
-        <el-icon
-          class="tabel-tab-icon"
-          v-if="!secondShow"
-          @click="changeArrowStatus"
-        >
-          <ArrowUp />
-        </el-icon>
-      </div>
-      <el-tabs
-        v-model="activeName"
-        class="common-tabs"
-        type="card"
-        @tab-change="tabChange"
+  <div class="common-index">
+    <!-- 统计可视化组件，根据showStats状态显示/隐藏 -->
+    <StatsVisualization v-if="showStats" :data="statsData" />
+    <div class="icon-change">
+      <el-icon
+        class="tabel-tab-icon"
+        v-if="secondShow"
+        @click="changeArrowStatus"
       >
-        <el-tab-pane
-          v-for="item in tabArray"
-          :key="item.label"
-          :name="item.label"
-        >
-          <template #label>
-            <div class="table-first">
-              <span>{{ item.label }}</span>
-            </div>
-          </template>
-          <component
-            :is="item.components"
-            :second-show="item.secondShow"
-            :show-stats="showStats"
-            :toggle-stats="toggleStats"
-            :key="item.label"
-          />
-        </el-tab-pane>
-      </el-tabs>
+        <ArrowDown />
+      </el-icon>
+      <el-icon
+        class="tabel-tab-icon"
+        v-if="!secondShow"
+        @click="changeArrowStatus"
+      >
+        <ArrowUp />
+      </el-icon>
     </div>
+    <el-tabs
+      v-model="activeName"
+      class="common-tabs"
+      type="card"
+      @tab-change="tabChange"
+    >
+      <el-tab-pane
+        v-for="item in tabArray"
+        :key="item.label"
+        :name="item.label"
+      >
+        <template #label>
+          <div class="table-first">
+            <span>{{ item.label }}</span>
+          </div>
+        </template>
+        <component
+          :is="item.components"
+          :second-show="item.secondShow"
+          :show-stats="showStats"
+          :toggle-stats="toggleStats"
+          :key="item.label"
+        />
+      </el-tab-pane>
+    </el-tabs>
   </div>
 </template>
-<style scoped lang="scss">
-.black-whitelist-index {
-  height: 88vh;
-  overflow: auto;
-}
-</style>
