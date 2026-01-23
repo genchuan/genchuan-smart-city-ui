@@ -12,13 +12,22 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 // 引入封装后的详情抽屉组件
 import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
+import { maskIdCard, maskPhone } from '#/utils/dataMask/index.js';
 import { exportToExcel } from '#/utils/excel.js';
 
 // 引入权限和记录抽屉组件
 import PermissionDrawer from '../components/PermissionDrawer.vue';
 import RecordDrawer from '../components/RecordDrawer.vue';
-import { dataList, textObj, useFormSchema, useGridColumns, carInfoData, carDetailFields, assetList, assetDetailFields } from './data';
-import {maskIdCard, maskPhone} from "#/utils/dataMask/index.js";
+import {
+  assetDetailFields,
+  assetList,
+  carDetailFields,
+  carInfoData,
+  dataList,
+  textObj,
+  useFormSchema,
+  useGridColumns,
+} from './data';
 
 const props = defineProps({
   secondShow: {
@@ -349,7 +358,7 @@ const carDetailDrawerRef = ref(null);
 // 打开车辆详情
 const handleOpenCarInfo = (row) => {
   // 根据plateNumber获取车辆信息
-  const carInfo = carInfoData.find(car => car.car_number === row.plateNumber);
+  const carInfo = carInfoData.find((car) => car.car_number === row.plateNumber);
   if (carInfo) {
     selectedCar.value = carInfo;
     carDetailDrawerRef.value.open();
@@ -368,7 +377,9 @@ const assetDetailDrawerRef = ref(null);
 // 打开资产详情
 const handleOpenAssetInfo = (row) => {
   // 根据visitAssetId获取资产信息
-  const assetInfo = assetList.find(asset => asset.asset_extend_id === row.visitAssetId);
+  const assetInfo = assetList.find(
+    (asset) => asset.asset_extend_id === row.visitAssetId,
+  );
   if (assetInfo) {
     selectedAsset.value = assetInfo;
     assetDetailDrawerRef.value.open();
@@ -570,12 +581,12 @@ const detailFields = [
             icon-name="edit"
             @click="handleEdit(row)"
           />
-<!--          <IconButton-->
-<!--            content="删除"-->
-<!--            icon-name="delete"-->
-<!--            color="#F56C6C"-->
-<!--            @click="handleDelete(row)"-->
-<!--          />-->
+          <!--          <IconButton-->
+          <!--            content="删除"-->
+          <!--            icon-name="delete"-->
+          <!--            color="#F56C6C"-->
+          <!--            @click="handleDelete(row)"-->
+          <!--          />-->
           <IconButton
             content="权限"
             icon-name="key"

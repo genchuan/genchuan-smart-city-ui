@@ -401,10 +401,10 @@ const detailFields = [
             icon-name="search"
             @click="handleSerachShow"
           />
-          <IconButton 
-            :content="showStats ? '隐藏统计' : '显示统计'" 
-            :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'" 
-            @click="toggleStats" 
+          <IconButton
+            :content="showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="toggleStats"
           />
           <IconButton
             content="全屏"

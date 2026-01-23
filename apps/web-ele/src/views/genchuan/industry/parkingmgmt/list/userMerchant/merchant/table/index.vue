@@ -151,7 +151,9 @@ async function handleDisable(row) {
   });
   try {
     // 更新数据源中的对应数据
-    const index = dataObj.apilist.findIndex(v => v.merchantId === row.merchantId);
+    const index = dataObj.apilist.findIndex(
+      (v) => v.merchantId === row.merchantId,
+    );
     if (index !== -1) {
       dataObj.apilist[index].status = '禁用';
       // 同时更新当前行的状态，确保UI实时更新
@@ -256,14 +258,17 @@ const changeTotalShow = () => {
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
-  
+
   // 根据状态和搜索条件过滤数据
   const filteredData = dataObj.apilist.filter((v) => {
     // 状态过滤
-    if (statusActiveName.value !== '全部' && v.status !== statusActiveName.value) {
+    if (
+      statusActiveName.value !== '全部' &&
+      v.status !== statusActiveName.value
+    ) {
       return false;
     }
-    
+
     // 搜索条件过滤
     for (const [key, value] of Object.entries(searchFormData.value)) {
       if (value) {
@@ -273,7 +278,7 @@ const getTableData = (pageObj) => {
             // 处理经营范围字段，它是数组类型
             if (Array.isArray(fieldValue)) {
               // 检查数组中是否有任何一个元素包含搜索值
-              if (!fieldValue.some(scope => scope.includes(value))) {
+              if (!fieldValue.some((scope) => scope.includes(value))) {
                 return false;
               }
             } else if (typeof fieldValue === 'string') {
@@ -296,10 +301,10 @@ const getTableData = (pageObj) => {
         }
       }
     }
-    
+
     return true;
   });
-  
+
   dataObj.total = filteredData.length;
   dataObj.list = filteredData.slice(
     (page.currentPage - 1) * page.pageSize,

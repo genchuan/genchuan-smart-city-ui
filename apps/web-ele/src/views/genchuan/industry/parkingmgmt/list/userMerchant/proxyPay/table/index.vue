@@ -41,6 +41,14 @@ const props = defineProps({
     type: String,
     default: 'proxyRule',
   },
+  showStats: {
+    type: Boolean,
+    default: false,
+  },
+  toggleStats: {
+    type: Function,
+    default: () => {},
+  },
 });
 
 // 付款方详情字段配置
@@ -231,15 +239,43 @@ const proxyOrderDetailFields = computed(() => {
 // 当前激活的标签页
 const activeTab = ref(props.tabName);
 
+// 创建一个稳定的pagerConfig对象，用于vxe-table
+const pagerConfig = reactive({
+  totalShow: false,
+  total: 0,
+  currentPage: 1,
+  pageSize: 10,
+});
+
 // 监听tabName变化，更新activeTab
 watch(
   () => props.tabName,
   (newVal) => {
     activeTab.value = newVal;
     activeName.value = '全部';
+    updatePagerConfig();
     handleRefresh();
   },
 );
+
+// 监听activeTab变化，更新pagerConfig
+watch(
+  () => activeTab.value,
+  () => {
+    updatePagerConfig();
+    handleRefresh();
+  },
+);
+
+// 更新pagerConfig函数
+function updatePagerConfig() {
+  const currentData = dataObj[activeTab.value];
+  // 更新pagerConfig的属性，保持对象引用稳定
+  pagerConfig.total = currentData.total;
+  pagerConfig.currentPage = currentData.currentPage;
+  pagerConfig.pageSize = currentData.pageSize;
+  pagerConfig.totalShow = currentData.totalShow;
+}
 
 // 数据对象
 const dataObj = reactive({
@@ -249,6 +285,7 @@ const dataObj = reactive({
     total: proxyRuleList().length,
     currentPage: 1,
     pageSize: 10,
+    pageSizes: [10, 20, 50, 100],
     apilist: proxyRuleList(),
     list: [],
   },
@@ -258,6 +295,7 @@ const dataObj = reactive({
     total: proxyOrderList().length,
     currentPage: 1,
     pageSize: 10,
+    pageSizes: [10, 20, 50, 100],
     apilist: proxyOrderList(),
     list: [],
   },
@@ -267,10 +305,14 @@ const dataObj = reactive({
     total: proxyRecordList().length,
     currentPage: 1,
     pageSize: 10,
+    pageSizes: [10, 20, 50, 100],
     apilist: proxyRecordList(),
     list: [],
   },
 });
+
+// 初始化pagerConfig
+updatePagerConfig();
 
 // 搜索表单数据
 const searchFormData = reactive({
@@ -566,13 +608,15 @@ function handleRowCheckboxChange({ records }) {
 
 // 统计显示切换
 const changeTotalShow = () => {
-  dataObj[activeTab.value].totalShow = !dataObj[activeTab.value].totalShow;
+  const currentData = dataObj[activeTab.value];
+  currentData.totalShow = !currentData.totalShow;
+  pagerConfig.totalShow = currentData.totalShow;
 };
 
 // 表格数据获取
 const getTableData = (pageObj) => {
-  const page = pageObj.page;
   const currentData = dataObj[activeTab.value];
+  const page = pageObj.page;
 
   // 获取所有相关数据列表
   const allProxyRules = proxyRuleList();
@@ -653,13 +697,25 @@ const getTableData = (pageObj) => {
       return newRow;
     });
 
-  currentData.total = filteredData.length;
-  currentData.list = filteredData.slice(
+  const total = filteredData.length;
+  const list = filteredData.slice(
     (page.currentPage - 1) * page.pageSize,
     page.currentPage * page.pageSize,
   );
 
-  return currentData;
+  // 更新currentData用于其他目的
+  currentData.total = total;
+  currentData.list = list;
+  currentData.currentPage = page.currentPage;
+  currentData.pageSize = page.pageSize;
+
+  // 更新pagerConfig，保持与vxe-table状态同步
+  pagerConfig.total = total;
+  pagerConfig.currentPage = page.currentPage;
+  pagerConfig.pageSize = page.pageSize;
+
+  // 只返回vxe-table需要的list和total属性
+  return { list, total };
 };
 
 // 搜索表单
@@ -712,7 +768,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
             : 'recordId',
       isHover: true,
     },
-    pagerConfig: computed(() => dataObj[activeTab.value]),
+    pagerConfig: pagerConfig,
     toolbarConfig: {
       'class-name': 'common-tool-bar-config',
       refresh: true,
@@ -1102,6 +1158,11 @@ const detailFields = computed(() => {
             content="搜索"
             icon-name="search"
             @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
           />
           <IconButton
             content="全屏"

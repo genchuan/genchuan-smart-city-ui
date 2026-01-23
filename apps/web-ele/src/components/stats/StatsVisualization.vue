@@ -328,7 +328,7 @@ onUnmounted(() => {
 
   /* 限制最大高度，避免过高 */
   max-height: 600px;
-  padding: 1vw 2vw; /* 减少垂直padding（上下1vw，左右保持2vw） */
+  padding: 0 2vw; /* 减少垂直padding（上下1vw，左右保持2vw） */
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 12px 0 rgb(0 0 0 / 10%);

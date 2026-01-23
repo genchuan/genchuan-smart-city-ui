@@ -345,25 +345,32 @@ export const getStatsDataByUserType = () => {
   const blackWhiteData = dataList();
 
   // 统计卡片数据
-  const blacklistCount = blackWhiteData.filter(item => item.listType === '黑名单').length;
-  const whitelistCount = blackWhiteData.filter(item => item.listType === '白名单').length;
-  const effectiveCount = blackWhiteData.filter(item => item.status === '生效').length;
+  const blacklistCount = blackWhiteData.filter(
+    (item) => item.listType === '黑名单',
+  ).length;
+  const whitelistCount = blackWhiteData.filter(
+    (item) => item.listType === '白名单',
+  ).length;
+  const effectiveCount = blackWhiteData.filter(
+    (item) => item.status === '生效',
+  ).length;
 
   // 统计名单类型占比
   const listTypeStats = {
     黑名单: blacklistCount,
-    白名单: whitelistCount
+    白名单: whitelistCount,
   };
 
   // 统计目标类型占比
   const targetTypeStats = {};
-  blackWhiteData.forEach(item => {
-    targetTypeStats[item.targetType] = (targetTypeStats[item.targetType] || 0) + 1;
+  blackWhiteData.forEach((item) => {
+    targetTypeStats[item.targetType] =
+      (targetTypeStats[item.targetType] || 0) + 1;
   });
 
   // 统计不同列入原因名单分布
   const reasonStats = {};
-  blackWhiteData.forEach(item => {
+  blackWhiteData.forEach((item) => {
     reasonStats[item.reason] = (reasonStats[item.reason] || 0) + 1;
   });
 
@@ -392,20 +399,18 @@ export const getStatsDataByUserType = () => {
       {
         title: '名单类型占比',
         type: 'pie',
-        data: Object.entries(listTypeStats)
-          .map(([name, value]) => ({
-            value: Math.round((value / blackWhiteData.length) * 100),
-            name,
-          })),
+        data: Object.entries(listTypeStats).map(([name, value]) => ({
+          value: Math.round((value / blackWhiteData.length) * 100),
+          name,
+        })),
       },
       {
         title: '目标类型占比',
         type: 'pie',
-        data: Object.entries(targetTypeStats)
-          .map(([name, value]) => ({
-            value: Math.round((value / blackWhiteData.length) * 100),
-            name,
-          })),
+        data: Object.entries(targetTypeStats).map(([name, value]) => ({
+          value: Math.round((value / blackWhiteData.length) * 100),
+          name,
+        })),
       },
       {
         title: '不同列入原因名单分布',

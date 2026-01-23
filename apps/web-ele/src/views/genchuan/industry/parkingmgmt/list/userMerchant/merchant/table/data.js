@@ -858,21 +858,25 @@ export const getMerchantStatsData = () => {
 
   // 计算卡片数据
   const totalCount = merchantData.length;
-  const normalCount = merchantData.filter(item => item.status === '正常').length;
-  const disabledCount = merchantData.filter(item => item.status === '禁用' || item.status === '注销').length;
+  const normalCount = merchantData.filter(
+    (item) => item.status === '正常',
+  ).length;
+  const disabledCount = merchantData.filter(
+    (item) => item.status === '禁用' || item.status === '注销',
+  ).length;
 
   // 计算商户状态占比数据
   const statusStats = {
     正常: normalCount,
-    禁用: merchantData.filter(item => item.status === '禁用').length,
-    注销: merchantData.filter(item => item.status === '注销').length
+    禁用: merchantData.filter((item) => item.status === '禁用').length,
+    注销: merchantData.filter((item) => item.status === '注销').length,
   };
 
   // 计算经营范围占比数据
   const businessScopeStats = {};
-  merchantData.forEach(merchant => {
+  merchantData.forEach((merchant) => {
     if (Array.isArray(merchant.businessScope)) {
-      merchant.businessScope.forEach(scope => {
+      merchant.businessScope.forEach((scope) => {
         businessScopeStats[scope] = (businessScopeStats[scope] || 0) + 1;
       });
     }
@@ -880,7 +884,7 @@ export const getMerchantStatsData = () => {
 
   // 计算不同区域商户分布数据
   const regionStats = {};
-  merchantData.forEach(merchant => {
+  merchantData.forEach((merchant) => {
     const regionName = regionMap[merchant.regionCode] || '未知区域';
     regionStats[regionName] = (regionStats[regionName] || 0) + 1;
   });
@@ -888,17 +892,19 @@ export const getMerchantStatsData = () => {
   // 转换为echarts所需的数据格式
   const statusChartData = Object.entries(statusStats).map(([name, value]) => ({
     name,
-    value
+    value,
   }));
 
-  const businessScopeChartData = Object.entries(businessScopeStats).map(([name, value]) => ({
-    name,
-    value
-  }));
+  const businessScopeChartData = Object.entries(businessScopeStats).map(
+    ([name, value]) => ({
+      name,
+      value,
+    }),
+  );
 
   const regionChartData = {
     xAxis: Object.keys(regionStats),
-    series: Object.values(regionStats)
+    series: Object.values(regionStats),
   };
 
   return {

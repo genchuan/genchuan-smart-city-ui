@@ -1,4 +1,4 @@
-import {maskIdCard, maskPhone} from "#/utils/dataMask/index.js";
+import { maskIdCard, maskPhone } from '#/utils/dataMask/index.js';
 
 /** 表格初始数据*/
 export const dataList = () => {
@@ -653,8 +653,8 @@ export const assetList = [
     status: '正常',
     region_code: 'REGION-001',
     address: '福建省厦门市思明区湖滨南路1号',
-    longitude: 118.08942,
-    latitude: 24.47983,
+    longitude: 118.089_42,
+    latitude: 24.479_83,
     create_time: '2026-01-01 09:00:00',
     update_time: '2026-01-01 09:00:00',
     remark: '主停车场',
@@ -668,8 +668,8 @@ export const assetList = [
     status: '正常',
     region_code: 'REGION-002',
     address: '福建省厦门市湖里区湖里大道2号',
-    longitude: 118.07597,
-    latitude: 24.47042,
+    longitude: 118.075_97,
+    latitude: 24.470_42,
     create_time: '2026-01-02 10:00:00',
     update_time: '2026-01-02 10:00:00',
     remark: '地下车库',
@@ -683,8 +683,8 @@ export const assetList = [
     status: '正常',
     region_code: 'REGION-003',
     address: '福建省厦门市集美区集美大道3号',
-    longitude: 118.09213,
-    latitude: 24.50248,
+    longitude: 118.092_13,
+    latitude: 24.502_48,
     create_time: '2026-01-03 11:00:00',
     update_time: '2026-01-03 11:00:00',
     remark: '路边停车位',
@@ -988,19 +988,23 @@ export const getStatsDataByUserType = () => {
   // 统计总访客数
   const totalCount = visitorData.length;
   // 统计待审核访客数
-  const pendingCount = visitorData.filter(item => item.status === '待审核').length;
+  const pendingCount = visitorData.filter(
+    (item) => item.status === '待审核',
+  ).length;
   // 统计已通过访客数
-  const approvedCount = visitorData.filter(item => item.status === '已通过').length;
+  const approvedCount = visitorData.filter(
+    (item) => item.status === '已通过',
+  ).length;
 
   // 统计访问事由占比
   const reasonStats = {};
-  visitorData.forEach(item => {
+  visitorData.forEach((item) => {
     reasonStats[item.visitReason] = (reasonStats[item.visitReason] || 0) + 1;
   });
 
   // 统计访问资源类型占比
   const assetStats = {};
-  visitorData.forEach(item => {
+  visitorData.forEach((item) => {
     assetStats[item.visitAssetId] = (assetStats[item.visitAssetId] || 0) + 1;
   });
 
@@ -1015,11 +1019,11 @@ export const getStatsDataByUserType = () => {
   }
 
   const dailyStats = {};
-  last7Days.forEach(date => {
+  last7Days.forEach((date) => {
     dailyStats[date] = 0;
   });
 
-  visitorData.forEach(item => {
+  visitorData.forEach((item) => {
     const visitDate = item.createTime.split(' ')[0];
     if (last7Days.includes(visitDate)) {
       dailyStats[visitDate]++;
@@ -1051,26 +1055,24 @@ export const getStatsDataByUserType = () => {
       {
         title: '访问事由占比',
         type: 'pie',
-        data: Object.entries(reasonStats)
-          .map(([name, value]) => ({
-            value: Math.round((value / totalCount) * 100),
-            name,
-          })),
+        data: Object.entries(reasonStats).map(([name, value]) => ({
+          value: Math.round((value / totalCount) * 100),
+          name,
+        })),
       },
       {
         title: '访问资源类型占比',
         type: 'pie',
-        data: Object.entries(assetStats)
-          .map(([name, value]) => ({
-            value: Math.round((value / totalCount) * 100),
-            name,
-          })),
+        data: Object.entries(assetStats).map(([name, value]) => ({
+          value: Math.round((value / totalCount) * 100),
+          name,
+        })),
       },
       {
         title: '近7日访客数量趋势',
         type: 'bar',
         xAxis: last7Days,
-        series: last7Days.map(date => dailyStats[date]),
+        series: last7Days.map((date) => dailyStats[date]),
       },
     ],
   };
