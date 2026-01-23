@@ -57,37 +57,3 @@ const state = reactive({
     </div>
   </div>
 </template>
-
-<style scoped lang="scss">
-.park-chart-box {
-  display: flex;
-  min-height: 360px;
-
-  .chart-box-left {
-    display: flex;
-    flex: 0 0 max(280px, min(25vw, 320px));
-    flex-direction: column;
-    gap: 12px;
-    min-width: 280px;
-    max-width: 320px;
-    margin-left: 30px;
-  }
-
-  .chart-box-right {
-    display: flex;
-    flex-wrap: wrap;
-
-    .chart-box-circle {
-      display: flex;
-      justify-content: center;
-      width: 300px;
-      margin-left: 5px;
-    }
-
-    .chart-box-Columnar {
-      min-width: 560px;
-      margin-left: 15px;
-    }
-  }
-}
-</style>
