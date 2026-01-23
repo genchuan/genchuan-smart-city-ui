@@ -10044,25 +10044,6 @@ onUnmounted(() => {
   background-size: 100% 100%;
 }
 
-.header-box {
-  position: relative;
-  width: 100%;
-  height: 10vh;
-  font-size: 2.1vw;
-  font-weight: bold;
-  color: #0cf;
-  background: url('../../images/head_bg.png') no-repeat;
-  background-size: 100% 100%;
-  .head-name {
-    position: absolute;
-    left: 50%;
-    display: inline-block;
-    line-height: 9vh;
-    white-space: nowrap;
-    transform: translateX(-50%);
-  }
-}
-
 .panel {
   position: relative;
   box-sizing: border-box;
@@ -10074,29 +10055,6 @@ onUnmounted(() => {
   overflow: hidden !important;
   background: url('../../images/line(1).png') rgb(255 255 255 / 4%);
   border: 0.2vh solid rgb(25 186 139 / 17%);
-}
-
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1vh 1.2vw;
-  border-bottom: 1px solid rgb(0 204 255 / 10%);
-  h2 {
-    display: flex;
-    align-items: center;
-    margin: 0;
-    font-size: 1.1vw;
-    font-weight: 600;
-    color: #ffb800;
-  }
-}
-
-.panel-body {
-  flex: 1;
-  height: calc(100% - 6vh);
-  padding: 1.2vw;
-  overflow: hidden;
 }
 
 .mainbox {
@@ -10118,86 +10076,4 @@ onUnmounted(() => {
 .bottom-middle { flex: 1; }
 .bottom-right { flex: 1; }
 
-.blink-animation { animation: blink 1.5s infinite; }
-
-// 弹窗样式
-:deep(.park-dialog) {
-  --el-dialog-bg-color: #fff !important;
-  --el-text-color-primary: #000 !important;
-  --el-text-color-regular: #000 !important;
-  --el-text-color-secondary: #000 !important;
-  --el-button-text-color: #000 !important;
-
-  color: #000 !important;
-  background: var(--el-dialog-bg-color) !important;
-  border-radius: 8px !important;
-  box-shadow: 0 5px 20px rgb(0 0 0 / 10%) !important;
-
-  .el-dialog__header {
-    padding: 12px 20px;
-    border-bottom: 1px solid rgb(0 198 255 / 30%);
-  }
-
-  .el-dialog__title {
-    font-size: 0.9vw;
-    font-weight: 500;
-    color: #000 !important;
-  }
-
-  .el-dialog__headerbtn {
-    top: 12px;
-    right: 20px;
-  }
-
-  .el-dialog__close {
-    font-size: 18px;
-    color: #000 !important;
-
-    &:hover {
-      color: rgb(0 122 255 / 70%) !important;
-    }
-  }
-
-  .el-dialog__body {
-    max-height: 70vh;
-    padding: 20px;
-    overflow-y: auto;
-  }
-
-  .el-descriptions {
-    width: 100%;
-    font-size: 0.7vw;
-
-    .el-descriptions__label {
-      width: 4vw;
-      font-weight: 500;
-      color: #000 !important;
-    }
-  }
-
-  // 新增：覆盖按钮文字颜色（包括默认/hover/active状态）
-  .el-button {
-    --el-button-text-color: #000 !important;
-    --el-button-hover-text-color: #000 !important;
-    --el-button-active-text-color: #000 !important;
-    color: #000 !important;
-  }
-
-  // 新增：覆盖输入框、下拉框等表单元素文字颜色
-  .el-input, .el-select, .el-input__inner, .el-select__input {
-    color: #000 !important;
-  }
-}
-
-:deep(.el-descriptions) {
-  .el-descriptions__cell {
-    border: 1px solid rgba(246, 177, 177, 0.5) !important;
-    padding-left: 1vw;
-    padding-top: 1.2vh;
-  }
-}
-
-:deep(.el-table__row) {
-  cursor: pointer;
-}
 </style>
