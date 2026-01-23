@@ -491,6 +491,250 @@ export const proxyOrderList = () => {
   ];
 };
 
+/** 车辆信息数据 */
+export const carInfoData = [
+  {
+    car_id: 'car-001',
+    car_number: '闽E·A1234',
+    car_type: '小型轿车',
+    user_id: 'user-001',
+    brand: '大众',
+    color: '黑色',
+    bind_status: '已绑定',
+    create_time: '2025-01-10 10:00:00',
+    update_time: '2025-01-10 10:00:00',
+    remark: '企业员工车辆',
+  },
+  {
+    car_id: 'car-002',
+    car_number: '闽E·B5678',
+    car_type: 'SUV',
+    user_id: 'user-002',
+    brand: '丰田',
+    color: '白色',
+    bind_status: '已绑定',
+    create_time: '2025-02-15 14:30:00',
+    update_time: '2025-02-15 14:30:00',
+    remark: '政府公务车辆',
+  },
+  {
+    car_id: 'car-003',
+    car_number: '闽E·C9012',
+    car_type: '小型轿车',
+    user_id: 'user-003',
+    brand: '本田',
+    color: '银色',
+    bind_status: '已绑定',
+    create_time: '2025-03-20 09:15:00',
+    update_time: '2025-03-20 09:15:00',
+    remark: '企业员工车辆',
+  },
+  {
+    car_id: 'car-004',
+    car_number: '闽E·D3456',
+    car_type: '新能源汽车',
+    user_id: 'user-004',
+    brand: '特斯拉',
+    color: '红色',
+    bind_status: '已绑定',
+    create_time: '2025-04-25 16:45:00',
+    update_time: '2025-04-25 16:45:00',
+    remark: 'VIP客户车辆',
+  },
+  {
+    car_id: 'car-005',
+    car_number: '闽E·E7890',
+    car_type: '小型轿车',
+    user_id: 'user-005',
+    brand: '奥迪',
+    color: '黑色',
+    bind_status: '已绑定',
+    create_time: '2025-05-30 11:20:00',
+    update_time: '2025-05-30 11:20:00',
+    remark: '医院员工车辆',
+  },
+  {
+    car_id: 'car-006',
+    car_number: '闽E·F1234',
+    car_type: 'SUV',
+    user_id: 'user-006',
+    brand: '宝马',
+    color: '蓝色',
+    bind_status: '已绑定',
+    create_time: '2025-06-05 13:50:00',
+    update_time: '2025-06-05 13:50:00',
+    remark: '企业员工车辆',
+  },
+  {
+    car_id: 'car-007',
+    car_number: '闽E·G5678',
+    car_type: '小型轿车',
+    user_id: 'user-007',
+    brand: '奔驰',
+    color: '白色',
+    bind_status: '已绑定',
+    create_time: '2025-07-10 08:30:00',
+    update_time: '2025-07-10 08:30:00',
+    remark: '政府公务车辆',
+  },
+  {
+    car_id: 'car-008',
+    car_number: '闽E·H9012',
+    car_type: '新能源汽车',
+    user_id: 'user-008',
+    brand: '比亚迪',
+    color: '绿色',
+    bind_status: '已绑定',
+    create_time: '2025-08-15 15:20:00',
+    update_time: '2025-08-15 15:20:00',
+    remark: '医院员工车辆',
+  },
+  {
+    car_id: 'car-009',
+    car_number: '闽E·I3456',
+    car_type: '小型轿车',
+    user_id: 'user-009',
+    brand: '别克',
+    color: '灰色',
+    bind_status: '已绑定',
+    create_time: '2025-09-20 10:45:00',
+    update_time: '2025-09-20 10:45:00',
+    remark: '学校教职工车辆',
+  },
+  {
+    car_id: 'car-010',
+    car_number: '闽E·J7890',
+    car_type: 'SUV',
+    user_id: 'user-010',
+    brand: '福特',
+    color: '棕色',
+    bind_status: '已绑定',
+    create_time: '2025-10-25 14:15:00',
+    update_time: '2025-10-25 14:15:00',
+    remark: '企业员工车辆',
+  },
+  {
+    car_id: 'car-011',
+    car_number: '闽E·K1234',
+    car_type: '小型轿车',
+    user_id: 'user-011',
+    brand: '雪佛兰',
+    color: '红色',
+    bind_status: '已绑定',
+    create_time: '2025-11-30 09:00:00',
+    update_time: '2025-11-30 09:00:00',
+    remark: '企业员工车辆',
+  },
+  {
+    car_id: 'car-012',
+    car_number: '闽E·L5678',
+    car_type: 'SUV',
+    user_id: 'user-012',
+    brand: '日产',
+    color: '黑色',
+    bind_status: '已绑定',
+    create_time: '2025-12-05 16:30:00',
+    update_time: '2025-12-05 16:30:00',
+    remark: '政府公务车辆',
+  },
+  {
+    car_id: 'car-013',
+    car_number: '闽E·M9012',
+    car_type: '小型轿车',
+    user_id: 'user-013',
+    brand: '现代',
+    color: '白色',
+    bind_status: '已绑定',
+    create_time: '2026-01-10 11:15:00',
+    update_time: '2026-01-10 11:15:00',
+    remark: 'VIP客户车辆',
+  },
+  {
+    car_id: 'car-014',
+    car_number: '闽E·N3456',
+    car_type: '新能源汽车',
+    user_id: 'user-014',
+    brand: '小鹏',
+    color: '蓝色',
+    bind_status: '已绑定',
+    create_time: '2026-01-15 13:20:00',
+    update_time: '2026-01-15 13:20:00',
+    remark: '医院员工车辆',
+  },
+  {
+    car_id: 'car-015',
+    car_number: '闽E·O7890',
+    car_type: '小型轿车',
+    user_id: 'user-015',
+    brand: '马自达',
+    color: '灰色',
+    bind_status: '已绑定',
+    create_time: '2026-01-20 08:45:00',
+    update_time: '2026-01-20 08:45:00',
+    remark: '学校教职工车辆',
+  },
+  {
+    car_id: 'car-016',
+    car_number: '闽E·P1234',
+    car_type: 'SUV',
+    user_id: 'user-016',
+    brand: '本田',
+    color: '黑色',
+    bind_status: '已绑定',
+    create_time: '2026-01-25 15:50:00',
+    update_time: '2026-01-25 15:50:00',
+    remark: '学校教职工车辆',
+  },
+  {
+    car_id: 'car-017',
+    car_number: '闽E·Q5678',
+    car_type: '小型轿车',
+    user_id: 'user-017',
+    brand: '大众',
+    color: '白色',
+    bind_status: '已绑定',
+    create_time: '2026-02-01 10:15:00',
+    update_time: '2026-02-01 10:15:00',
+    remark: '政府公务车辆',
+  },
+  {
+    car_id: 'car-018',
+    car_number: '闽E·R9012',
+    car_type: '新能源汽车',
+    user_id: 'user-018',
+    brand: '理想',
+    color: '银色',
+    bind_status: '已绑定',
+    create_time: '2026-02-05 14:30:00',
+    update_time: '2026-02-05 14:30:00',
+    remark: '企业员工车辆',
+  },
+  {
+    car_id: 'car-019',
+    car_number: '闽E·S3456',
+    car_type: '小型轿车',
+    user_id: 'user-019',
+    brand: '奥迪',
+    color: '黑色',
+    bind_status: '已绑定',
+    create_time: '2026-02-10 09:00:00',
+    update_time: '2026-02-10 09:00:00',
+    remark: '医院员工车辆',
+  },
+  {
+    car_id: 'car-020',
+    car_number: '闽E·T7890',
+    car_type: 'SUV',
+    user_id: 'user-020',
+    brand: '宝马',
+    color: '红色',
+    bind_status: '已绑定',
+    create_time: '2026-02-15 16:20:00',
+    update_time: '2026-02-15 16:20:00',
+    remark: '政府公务车辆',
+  },
+];
+
 /** 代付记录表初始数据 */
 export const proxyRecordList = () => {
   return [
@@ -1683,20 +1927,28 @@ export const getStatsDataByTabName = (tabName) => {
       // 代付订单统计
       const proxyOrders = proxyOrderList();
       const totalCount = proxyOrders.length;
-      const paidCount = proxyOrders.filter(item => item.orderStatus === '已代付').length;
-      const pendingCount = proxyOrders.filter(item => item.orderStatus === '待代付').length;
+      const paidCount = proxyOrders.filter(
+        (item) => item.orderStatus === '已代付',
+      ).length;
+      const pendingCount = proxyOrders.filter(
+        (item) => item.orderStatus === '待代付',
+      ).length;
 
       // 订单状态占比
       const orderStatusStats = {};
-      proxyOrders.forEach(item => {
-        orderStatusStats[item.orderStatus] = (orderStatusStats[item.orderStatus] || 0) + 1;
+      proxyOrders.forEach((item) => {
+        orderStatusStats[item.orderStatus] =
+          (orderStatusStats[item.orderStatus] || 0) + 1;
       });
 
       // 代付失败原因占比
       const failReasonStats = {};
-      proxyOrders.filter(item => item.orderStatus === '代付失败').forEach(item => {
-        failReasonStats[item.failReason] = (failReasonStats[item.failReason] || 0) + 1;
-      });
+      proxyOrders
+        .filter((item) => item.orderStatus === '代付失败')
+        .forEach((item) => {
+          failReasonStats[item.failReason] =
+            (failReasonStats[item.failReason] || 0) + 1;
+        });
 
       // 近7天代付订单金额趋势（模拟数据）
       const amountTrend = [
@@ -1734,18 +1986,24 @@ export const getStatsDataByTabName = (tabName) => {
           {
             type: 'pie',
             title: '订单状态占比',
-            data: Object.entries(orderStatusStats).map(([name, value]) => ({ name, value })),
+            data: Object.entries(orderStatusStats).map(([name, value]) => ({
+              name,
+              value,
+            })),
           },
           {
             type: 'pie',
             title: '代付失败原因占比',
-            data: Object.entries(failReasonStats).map(([name, value]) => ({ name, value })),
+            data: Object.entries(failReasonStats).map(([name, value]) => ({
+              name,
+              value,
+            })),
           },
           {
             type: 'line',
             title: '近7天代付订单金额趋势',
-            xAxis: amountTrend.map(item => item.date),
-            series: amountTrend.map(item => item.amount),
+            xAxis: amountTrend.map((item) => item.date),
+            series: amountTrend.map((item) => item.amount),
           },
         ],
       };
@@ -1754,18 +2012,23 @@ export const getStatsDataByTabName = (tabName) => {
       // 代付记录统计
       const proxyRecords = proxyRecordList();
       const totalCount = proxyRecords.length;
-      const totalAmount = proxyRecords.reduce((sum, item) => sum + item.proxyAmount, 0);
-      const avgAmount = totalCount > 0 ? (totalAmount / totalCount).toFixed(2) : 0;
+      const totalAmount = proxyRecords.reduce(
+        (sum, item) => sum + item.proxyAmount,
+        0,
+      );
+      const avgAmount =
+        totalCount > 0 ? (totalAmount / totalCount).toFixed(2) : 0;
 
       // 代付状态占比
       const proxyStatusStats = {};
-      proxyRecords.forEach(item => {
-        proxyStatusStats[item.proxyStatus] = (proxyStatusStats[item.proxyStatus] || 0) + 1;
+      proxyRecords.forEach((item) => {
+        proxyStatusStats[item.proxyStatus] =
+          (proxyStatusStats[item.proxyStatus] || 0) + 1;
       });
 
       // 停车场占比
       const parkStats = {};
-      proxyRecords.forEach(item => {
+      proxyRecords.forEach((item) => {
         parkStats[item.parkId] = (parkStats[item.parkId] || 0) + 1;
       });
 
@@ -1774,23 +2037,27 @@ export const getStatsDataByTabName = (tabName) => {
         map[item.park_id] = item.park_name;
         return map;
       }, {});
-      const parkStatsWithNames = Object.entries(parkStats).map(([parkId, value]) => ({
-        name: parkNames[parkId] || parkId,
-        value,
-      }));
+      const parkStatsWithNames = Object.entries(parkStats).map(
+        ([parkId, value]) => ({
+          name: parkNames[parkId] || parkId,
+          value,
+        }),
+      );
 
       // 不同停车场停车总费用对比
       const parkAmountStats = {};
-      proxyRecords.forEach(item => {
+      proxyRecords.forEach((item) => {
         if (!parkAmountStats[item.parkId]) {
           parkAmountStats[item.parkId] = 0;
         }
         parkAmountStats[item.parkId] += item.parkTotalAmount;
       });
-      const parkAmountStatsWithNames = Object.entries(parkAmountStats).map(([parkId, value]) => ({
-        name: parkNames[parkId] || parkId,
-        value,
-      }));
+      const parkAmountStatsWithNames = Object.entries(parkAmountStats).map(
+        ([parkId, value]) => ({
+          name: parkNames[parkId] || parkId,
+          value,
+        }),
+      );
 
       return {
         cards: [
@@ -1817,7 +2084,10 @@ export const getStatsDataByTabName = (tabName) => {
           {
             type: 'pie',
             title: '代付状态占比',
-            data: Object.entries(proxyStatusStats).map(([name, value]) => ({ name, value })),
+            data: Object.entries(proxyStatusStats).map(([name, value]) => ({
+              name,
+              value,
+            })),
           },
           {
             type: 'pie',
@@ -1827,8 +2097,8 @@ export const getStatsDataByTabName = (tabName) => {
           {
             type: 'bar',
             title: '不同停车场停车总费用对比',
-            xAxis: parkAmountStatsWithNames.map(item => item.name),
-            series: parkAmountStatsWithNames.map(item => item.value),
+            xAxis: parkAmountStatsWithNames.map((item) => item.name),
+            series: parkAmountStatsWithNames.map((item) => item.value),
           },
         ],
       };
@@ -1837,19 +2107,25 @@ export const getStatsDataByTabName = (tabName) => {
       // 代付规则统计
       const proxyRules = proxyRuleList();
       const totalCount = proxyRules.length;
-      const enabledCount = proxyRules.filter(item => item.status === '启用').length;
-      const disabledCount = proxyRules.filter(item => item.status === '禁用').length;
+      const enabledCount = proxyRules.filter(
+        (item) => item.status === '启用',
+      ).length;
+      const disabledCount = proxyRules.filter(
+        (item) => item.status === '禁用',
+      ).length;
 
       // 代付类型占比
       const proxyTypeStats = {};
-      proxyRules.forEach(item => {
-        proxyTypeStats[item.proxyType] = (proxyTypeStats[item.proxyType] || 0) + 1;
+      proxyRules.forEach((item) => {
+        proxyTypeStats[item.proxyType] =
+          (proxyTypeStats[item.proxyType] || 0) + 1;
       });
 
       // 收款方类型占比
       const payeeTypeStats = {};
-      proxyRules.forEach(item => {
-        payeeTypeStats[item.payeeType] = (payeeTypeStats[item.payeeType] || 0) + 1;
+      proxyRules.forEach((item) => {
+        payeeTypeStats[item.payeeType] =
+          (payeeTypeStats[item.payeeType] || 0) + 1;
       });
 
       // 规则数量随时间增加趋势（模拟数据）
@@ -1886,18 +2162,24 @@ export const getStatsDataByTabName = (tabName) => {
           {
             type: 'pie',
             title: '代付类型占比',
-            data: Object.entries(proxyTypeStats).map(([name, value]) => ({ name, value })),
+            data: Object.entries(proxyTypeStats).map(([name, value]) => ({
+              name,
+              value,
+            })),
           },
           {
             type: 'pie',
             title: '收款方类型占比',
-            data: Object.entries(payeeTypeStats).map(([name, value]) => ({ name, value })),
+            data: Object.entries(payeeTypeStats).map(([name, value]) => ({
+              name,
+              value,
+            })),
           },
           {
             type: 'line',
             title: '规则数量随时间增加趋势',
-            xAxis: timeTrend.map(item => item.date),
-            series: timeTrend.map(item => item.count),
+            xAxis: timeTrend.map((item) => item.date),
+            series: timeTrend.map((item) => item.count),
           },
         ],
       };
@@ -2073,16 +2355,16 @@ export function useProxyRuleGridColumns() {
       title: '单笔额度',
       minWidth: 100,
       sortable: true,
-    //   formatter: (value) =>
-    //     `¥${typeof value === 'number' ? value.toFixed(2) : '0.00'}`,
+      //   formatter: (value) =>
+      //     `¥${typeof value === 'number' ? value.toFixed(2) : '0.00'}`,
     },
     {
       field: 'monthlyAmount',
       title: '月度额度',
       minWidth: 100,
       sortable: true,
-    //   formatter: (value) =>
-    //     `¥${typeof value === 'number' ? value.toFixed(2) : '0.00'}`,
+      //   formatter: (value) =>
+      //     `¥${typeof value === 'number' ? value.toFixed(2) : '0.00'}`,
     },
     {
       field: 'objectType',
@@ -2168,8 +2450,8 @@ export function useProxyOrderGridColumns() {
       title: '代付金额',
       minWidth: 100,
       sortable: true,
-    //   formatter: (value) =>
-    //     `¥${typeof value === 'number' ? value.toFixed(2) : '0.00'}`,
+      //   formatter: (value) =>
+      //     `¥${typeof value === 'number' ? value.toFixed(2) : '0.00'}`,
     },
     {
       field: 'orderStatus',
@@ -2200,7 +2482,7 @@ export function useProxyOrderGridColumns() {
     },
     {
       title: '操作',
-      width: 200,
+      width: 100,
       fixed: 'right',
       slots: { default: 'actions' },
     },
@@ -2257,6 +2539,7 @@ export function useProxyRecordGridColumns() {
       title: '车牌号码',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'plateNo' },
     },
     {
       field: 'parkId',
@@ -2277,16 +2560,16 @@ export function useProxyRecordGridColumns() {
       title: '代付金额',
       minWidth: 100,
       sortable: true,
-    //   formatter: (value) =>
-    //     `¥${typeof value === 'number' ? value.toFixed(2) : '0.00'}`,
+      //   formatter: (value) =>
+      //     `¥${typeof value === 'number' ? value.toFixed(2) : '0.00'}`,
     },
     {
       field: 'parkTotalAmount',
       title: '停车总费用',
       minWidth: 100,
       sortable: true,
-    //   formatter: (value) =>
-    //     `¥${typeof value === 'number' ? value.toFixed(2) : '0.00'}`,
+      //   formatter: (value) =>
+      //     `¥${typeof value === 'number' ? value.toFixed(2) : '0.00'}`,
     },
     {
       field: 'proxyStatus',

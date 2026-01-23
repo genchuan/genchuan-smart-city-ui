@@ -17,6 +17,7 @@ import { exportToExcel } from '#/utils/excel.js';
 
 // 引入数据配置
 import {
+  carInfoData,
   parkLotList,
   parkOrderList,
   payerList,
@@ -236,6 +237,29 @@ const proxyOrderDetailFields = computed(() => {
   ];
 });
 
+// 车辆详情字段配置
+const carDetailFields = computed(() => {
+  return [
+    { label: '车辆ID', key: 'car_id' },
+    { label: '车牌号码', key: 'car_number' },
+    { label: '车辆类型', key: 'car_type' },
+    { label: '用户ID', key: 'user_id' },
+    { label: '品牌', key: 'brand' },
+    { label: '颜色', key: 'color' },
+    {
+      label: '绑定状态',
+      key: 'bind_status',
+      type: 'tag',
+      tagType: (status) => {
+        return status === '已绑定' ? 'success' : 'danger';
+      },
+    },
+    { label: '创建时间', key: 'create_time' },
+    { label: '更新时间', key: 'update_time' },
+    { label: '备注', key: 'remark' },
+  ];
+});
+
 // 当前激活的标签页
 const activeTab = ref(props.tabName);
 
@@ -350,6 +374,10 @@ const parkLotDetailDrawerRef = ref(null);
 // 代付订单详情（记录页）
 const selectedProxyOrder = ref(null);
 const proxyOrderDetailDrawerRef = ref(null);
+
+// 车辆详情
+const selectedCar = ref(null);
+const carDetailDrawerRef = ref(null);
 
 // 获取当前标签页的数据对象
 const currentDataObj = computed(() => dataObj[activeTab.value]);
@@ -470,9 +498,9 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
         const key =
           activeTab.value === 'proxyRule'
             ? 'proxyId'
-            : activeTab.value === 'proxyOrder'
+            : (activeTab.value === 'proxyOrder'
               ? 'orderId'
-              : 'recordId';
+              : 'recordId');
         if (v[key] === formData.value?.[key]) {
           currentApiList[i] = {
             ...obj,
@@ -545,9 +573,9 @@ async function handleDelete(row) {
   const key =
     activeTab.value === 'proxyRule'
       ? 'proxyId'
-      : activeTab.value === 'proxyOrder'
+      : (activeTab.value === 'proxyOrder'
         ? 'orderId'
-        : 'recordId';
+        : 'recordId');
 
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting', [row[key]]),
@@ -572,9 +600,9 @@ async function handleDeleteBatch() {
   const key =
     activeTab.value === 'proxyRule'
       ? 'proxyId'
-      : activeTab.value === 'proxyOrder'
+      : (activeTab.value === 'proxyOrder'
         ? 'orderId'
-        : 'recordId';
+        : 'recordId');
 
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deletingBatch'),
@@ -600,9 +628,9 @@ function handleRowCheckboxChange({ records }) {
   const key =
     activeTab.value === 'proxyRule'
       ? 'proxyId'
-      : activeTab.value === 'proxyOrder'
+      : (activeTab.value === 'proxyOrder'
         ? 'orderId'
-        : 'recordId';
+        : 'recordId');
   checkedIds.value = records.map((item) => item[key]);
 }
 
@@ -763,12 +791,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
       keyField:
         activeTab.value === 'proxyRule'
           ? 'proxyId'
-          : activeTab.value === 'proxyOrder'
+          : (activeTab.value === 'proxyOrder'
             ? 'orderId'
-            : 'recordId',
+            : 'recordId'),
       isHover: true,
     },
-    pagerConfig: pagerConfig,
+    pagerConfig,
     toolbarConfig: {
       'class-name': 'common-tool-bar-config',
       refresh: true,
@@ -911,6 +939,18 @@ const handleParkLotDetailClose = () => {
 // 代付订单详情关闭处理
 const handleProxyOrderDetailClose = () => {
   selectedProxyOrder.value = null;
+};
+
+// 打开车辆详情
+const handleOpenCarInfo = (row) => {
+  // 从carInfoData中获取车辆数据
+  selectedCar.value = carInfoData.find((car) => car.car_number === row.plateNo) || {};
+  carDetailDrawerRef.value.open();
+};
+
+// 车辆详情关闭处理
+const handleCarDetailClose = () => {
+  selectedCar.value = null;
 };
 
 // 详情字段配置
@@ -1094,6 +1134,14 @@ const detailFields = computed(() => {
       :fields="parkOrderDetailFields"
       :title="selectedParkOrder?.park_order_no || '停车订单详情'"
       @close="handleParkOrderDetailClose"
+    />
+    <!-- 车辆详情抽屉 -->
+    <DetailDrawer
+      ref="carDetailDrawerRef"
+      :data="selectedCar"
+      :fields="carDetailFields"
+      :title="selectedCar?.car_number || '车辆详情'"
+      @close="handleCarDetailClose"
     />
 
     <!-- 停车场详情抽屉 -->
@@ -1290,6 +1338,17 @@ const detailFields = computed(() => {
           type="primary"
         >
           {{ row.parkOrderNo || row.parkOrderId }}
+        </el-text>
+      </template>
+
+      <!-- 车牌号模板 -->
+      <template #plateNo="{ row }">
+        <el-text
+          @click="handleOpenCarInfo(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.plateNo }}
         </el-text>
       </template>
 

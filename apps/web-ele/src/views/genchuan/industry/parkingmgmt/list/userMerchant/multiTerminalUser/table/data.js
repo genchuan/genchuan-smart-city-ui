@@ -2499,7 +2499,7 @@ export const getStatsDataByUserType = (userType) => {
             type: 'bar',
             xAxis: Object.keys(industryStats),
             series: Object.values(industryStats),
-            showXAxisLabel: false,
+            // showXAxisLabel: false,
           },
         ],
       };
