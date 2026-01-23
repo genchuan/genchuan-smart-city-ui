@@ -15,7 +15,7 @@ export const dataList = () => {
       sort: '距离优先',
       available: 50,
       area: '黄浦区',
-      type: '商业停车场'
+      type: '商业停车场',
     },
     {
       induction_id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
@@ -31,7 +31,7 @@ export const dataList = () => {
       sort: '综合评分',
       available: 100,
       area: '静安区',
-      type: '交通枢纽停车场'
+      type: '交通枢纽停车场',
     },
     {
       induction_id: '6ba7b811-9dad-11d1-80b4-00c04fd430c8',
@@ -47,7 +47,7 @@ export const dataList = () => {
       sort: '距离优先',
       available: 30,
       area: '徐汇区',
-      type: '医院停车场'
+      type: '医院停车场',
     },
     {
       induction_id: '6ba7b812-9dad-11d1-80b4-00c04fd430c8',
@@ -63,7 +63,7 @@ export const dataList = () => {
       sort: '价格优先',
       available: 20,
       area: '长宁区',
-      type: '学校停车场'
+      type: '学校停车场',
     },
     {
       induction_id: '6ba7b813-9dad-11d1-80b4-00c04fd430c8',
@@ -79,7 +79,7 @@ export const dataList = () => {
       sort: '距离优先',
       available: 80,
       area: '浦东新区',
-      type: '体育场馆停车场'
+      type: '体育场馆停车场',
     },
     {
       induction_id: '6ba7b814-9dad-11d1-80b4-00c04fd430c8',
@@ -95,7 +95,7 @@ export const dataList = () => {
       sort: '综合评分',
       available: 150,
       area: '黄浦区',
-      type: '地铁停车场'
+      type: '地铁停车场',
     },
     {
       induction_id: '6ba7b815-9dad-11d1-80b4-00c04fd430c8',
@@ -111,7 +111,7 @@ export const dataList = () => {
       sort: '距离优先',
       available: 60,
       area: '玄武区',
-      type: '景区停车场'
+      type: '景区停车场',
     },
     {
       induction_id: '6ba7b816-9dad-11d1-80b4-00c04fd430c8',
@@ -127,7 +127,7 @@ export const dataList = () => {
       sort: '距离优先',
       available: 500,
       area: '浦东新区',
-      type: '机场停车场'
+      type: '机场停车场',
     },
     {
       induction_id: '6ba7b817-9dad-11d1-80b4-00c04fd430c8',
@@ -143,7 +143,7 @@ export const dataList = () => {
       sort: '综合评分',
       available: 200,
       area: '青浦区',
-      type: '会展停车场'
+      type: '会展停车场',
     },
     {
       induction_id: '6ba7b818-9dad-11d1-80b4-00c04fd430c8',
@@ -159,8 +159,8 @@ export const dataList = () => {
       sort: '价格优先',
       available: 40,
       area: '闵行区',
-      type: '小区停车场'
-    }
+      type: '小区停车场',
+    },
   ];
 };
 
