@@ -1,5 +1,4 @@
-// 引入axios（假设项目中已配置axios）
-import axios from 'axios';
+import { requestClient } from '#/api/request';
 
 // 基础URL，可根据实际项目配置
 const BASE_URL = '/api/urban';
@@ -7,7 +6,7 @@ const BASE_URL = '/api/urban';
 // 获取城管全域数据地图数据
 export const fetchUrbanDataMap = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/urbanDataMap`);
+    const response = await requestClient.get(`${BASE_URL}/urbanDataMap`);
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data;
     }
@@ -51,7 +50,7 @@ export const fetchUrbanDataMap = async () => {
 // 部件列表接口
 export const fetchPartsList = () => {
   try {
-    return axios.get(`${BASE_URL}/urbanParts`).then(response => {
+    return requestClient.get(`${BASE_URL}/urbanParts`).then(response => {
       if (Array.isArray(response.data) && response.data.length > 0) {
         return response.data;
       }
@@ -145,7 +144,7 @@ export const fetchPartsList = () => {
 export const fetchUrbanFacilityDistribution = async () => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.get(`${BASE_URL}/facilityDistribution`);
+    const response = await requestClient.get(`${BASE_URL}/facilityDistribution`);
     // 验证接口返回数据有效性
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data; // 返回真实数据
@@ -297,7 +296,7 @@ export const fetchUrbanFacilityDistribution = async () => {
 export const fetchUrbanCoreIndicators = async (timeRange = 'day') => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.get(`${BASE_URL}/coreIndicators`, {
+    const response = await requestClient.get(`${BASE_URL}/coreIndicators`, {
       params: { timeRange }
     });
     // 验证接口返回数据有效性
@@ -428,7 +427,7 @@ export const fetchUrbanCoreIndicators = async (timeRange = 'day') => {
 export const fetchIndicatorTrend = async (indexId) => {
   try {
     // 优先调用真实接口
-    const response = await axios.get(`${BASE_URL}/indicatorTrend`, {
+    const response = await requestClient.get(`${BASE_URL}/indicatorTrend`, {
       params: { indexId, days: 7 } // 明确传入7天参数
     });
     if (response.data && response.data.xAxis && response.data.series) {
@@ -497,7 +496,7 @@ export const fetchIndicatorTrend = async (indexId) => {
 export const fetchEventDisposalStatus = async () => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.get(`${BASE_URL}/eventDisposalStatus`);
+    const response = await requestClient.get(`${BASE_URL}/eventDisposalStatus`);
     // 验证接口返回数据有效性
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data; // 返回真实数据
@@ -677,7 +676,7 @@ export const fetchEventDisposalStatus = async () => {
 export const fetchWarningData = async () => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.get(`${BASE_URL}/warningData`);
+    const response = await requestClient.get(`${BASE_URL}/warningData`);
     // 验证接口返回数据有效性
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data; // 返回真实数据
@@ -702,7 +701,7 @@ export const fetchWarningData = async () => {
 export const dispatchEvent = async (params) => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.post(`${BASE_URL}/dispatchEvent`, params);
+    const response = await requestClient.post(`${BASE_URL}/dispatchEvent`, params);
     // 验证接口返回数据有效性
     if (response.data && response.data.success) {
       return response.data; // 返回真实结果
@@ -726,7 +725,7 @@ export const dispatchEvent = async (params) => {
 export const handleEvent = async (params) => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.post(`${BASE_URL}/handleEvent`, params);
+    const response = await requestClient.post(`${BASE_URL}/handleEvent`, params);
     // 验证接口返回数据有效性
     if (response.data && response.data.success) {
       return response.data; // 返回真实结果
@@ -749,7 +748,7 @@ export const handleEvent = async (params) => {
 export const createSuperviseOrder = async (params) => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.post(`${BASE_URL}/createSuperviseOrder`, params);
+    const response = await requestClient.post(`${BASE_URL}/createSuperviseOrder`, params);
     // 验证接口返回数据有效性
     if (response.data && response.data.success) {
       return response.data; // 返回真实结果
@@ -773,7 +772,7 @@ export const createSuperviseOrder = async (params) => {
 export const createRepairOrder = async (params) => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.post(`${BASE_URL}/createRepairOrder`, params);
+    const response = await requestClient.post(`${BASE_URL}/createRepairOrder`, params);
     // 验证接口返回数据有效性
     if (response.data && response.data.success) {
       return response.data; // 返回真实结果

@@ -1,5 +1,4 @@
-// 引入axios（假设项目中已配置axios）
-import axios from 'axios';
+import { requestClient } from '#/api/request';
 
 // 基础URL，可根据实际项目配置
 const BASE_URL = '/api/transportation';
@@ -8,7 +7,7 @@ const BASE_URL = '/api/transportation';
 export const fetchTransportEquipmentGeometries = async () => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.get(`${BASE_URL}/equipmentGeometries`);
+    const response = await requestClient.get(`${BASE_URL}/equipmentGeometries`);
     // 验证接口返回数据有效性（确保是数组）
     if (Array.isArray(response.data)) {
       return response.data; // 返回真实数据
@@ -96,7 +95,7 @@ export const fetchTransportEquipmentGeometries = async () => {
 export const fetchResourceDistribution = async () => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.get(`${BASE_URL}/resourceDistribution`);
+    const response = await requestClient.get(`${BASE_URL}/resourceDistribution`);
     // 验证接口返回数据有效性
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data; // 返回真实数据
@@ -254,7 +253,7 @@ export const fetchResourceDistribution = async () => {
 export const fetchCoreIndicators = async (timeRange = 'today') => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.get(`${BASE_URL}/coreIndicators`, {
+    const response = await requestClient.get(`${BASE_URL}/coreIndicators`, {
       params: { timeRange }
     });
     // 验证接口返回数据有效性
@@ -361,7 +360,7 @@ export const fetchCoreIndicators = async (timeRange = 'today') => {
 export const fetchTrafficFlowOverview = async () => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.get(`${BASE_URL}/trafficFlowOverview`);
+    const response = await requestClient.get(`${BASE_URL}/trafficFlowOverview`);
     // 验证接口返回数据有效性
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data; // 返回真实数据
@@ -574,7 +573,7 @@ export const fetchTrafficFlowOverview = async () => {
 export const fetchWarningScrollData = async () => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.get(`${BASE_URL}/warningScrollData`);
+    const response = await requestClient.get(`${BASE_URL}/warningScrollData`);
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data; // 返回真实数据
     }
@@ -597,7 +596,7 @@ export const fetchWarningScrollData = async () => {
 export const handleAbnormal = async (params) => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.post(`${BASE_URL}/handleAbnormal`, params);
+    const response = await requestClient.post(`${BASE_URL}/handleAbnormal`, params);
     // 验证接口返回数据有效性
     if (response.data && response.data.success) {
       return response.data; // 返回真实结果
@@ -620,7 +619,7 @@ export const handleAbnormal = async (params) => {
 export const configureIndicatorTarget = async (params) => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.post(`${BASE_URL}/configureIndicator`, params);
+    const response = await requestClient.post(`${BASE_URL}/configureIndicator`, params);
     // 验证接口返回数据有效性
     if (response.data && response.data.success) {
       return response.data; // 返回真实结果
@@ -643,7 +642,7 @@ export const configureIndicatorTarget = async (params) => {
 export const fetchIndicatorHistory = async (subCode, targetValue) => {
   try {
     // 模拟真实接口调用
-    const response = await axios.get(`${BASE_URL}/indicatorHistory`, {
+    const response = await requestClient.get(`${BASE_URL}/indicatorHistory`, {
       params: { subCode }
     });
     if (response.data && response.data.xAxis && response.data.series) {
@@ -696,7 +695,7 @@ export const fetchIndicatorHistory = async (subCode, targetValue) => {
 export const fetchIndicatorTrend = async (indicators) => {
   try {
     const subCodes = indicators.map(sub => sub.code).join(','); // 收集子指标code，传给接口
-    const response = await axios.get(`${BASE_URL}/indicatorTrend`, {
+    const response = await requestClient.get(`${BASE_URL}/indicatorTrend`, {
       params: { subCodes } // 真实接口需接收子指标codes，按需调整参数名（如接口要求不同可修改）
     });
 
@@ -740,7 +739,7 @@ export const fetchIndicatorTrend = async (indicators) => {
 export const fetchFlowTrend = async (flowId) => {
   try {
     // 模拟真实接口调用
-    const response = await axios.get(`${BASE_URL}/flowTrend`, {
+    const response = await requestClient.get(`${BASE_URL}/flowTrend`, {
       params: { flowId }
     });
     if (response.data && response.data.xAxis && response.data.series) {

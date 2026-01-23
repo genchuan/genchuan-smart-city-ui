@@ -1,12 +1,11 @@
-// import request from '@/config/axios';
-import request from 'axios';
+import { requestClient } from '#/api/request';
 const BASE_URL = '/industry';
 
 // 旅游景区接口
 // 旅游景区概览数据（核心指标）
 export const fetchScenicSpotOverview = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/overview`);
+    const response = await requestClient.get(`${BASE_URL}/overview`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -33,7 +32,7 @@ export const fetchScenicSpotOverview = async () => {
 // 景区客流趋势数据（30分钟粒度，近24小时）
 export const fetchScenicSpotFlowTrend = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/flowTrend`);
+    const response = await requestClient.get(`${BASE_URL}/flowTrend`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -65,7 +64,7 @@ export const fetchScenicSpotFlowTrend = async () => {
 // 安全事件列表数据
 export const fetchSafetyEventList = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/safetyEventList`);
+    const response = await requestClient.get(`${BASE_URL}/safetyEventList`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -86,7 +85,7 @@ export const fetchSafetyEventList = async () => {
 // 投诉列表数据
 export const fetchComplaintList = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/complaintList`);
+    const response = await requestClient.get(`${BASE_URL}/complaintList`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -108,7 +107,7 @@ export const fetchComplaintList = async () => {
 // TOP5景区数据（客流TOP5）
 export const fetchTop5ScenicSpot = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/top5ScenicSpot`);
+    const response = await requestClient.get(`${BASE_URL}/top5ScenicSpot`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -130,7 +129,7 @@ export const fetchTop5ScenicSpot = async () => {
 // 文旅活动概览数据（核心指标）
 export const fetchCulturalTourismOverview = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/overview`);
+    const response = await requestClient.get(`${BASE_URL}/overview`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -156,7 +155,7 @@ export const fetchCulturalTourismOverview = async () => {
 // 文旅活动趋势数据（近14天：活动数+参与人数）
 export const fetchCulturalTourismTrend = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/trend`);
+    const response = await requestClient.get(`${BASE_URL}/trend`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -190,7 +189,7 @@ export const fetchCulturalTourismTrend = async () => {
 // 活动类型分布数据（展览/演出/赛事）
 export const fetchActivityTypeDistribution = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/typeDistribution`);
+    const response = await requestClient.get(`${BASE_URL}/typeDistribution`);
     if (response.data && response.data.legend && response.data.series) {
       return response.data;
     }
@@ -210,7 +209,7 @@ export const fetchActivityTypeDistribution = async () => {
 // 安全事件分布数据（饼图）
 export const fetchSafetyEventDistribution = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/safetyEventDistribution`);
+    const response = await requestClient.get(`${BASE_URL}/safetyEventDistribution`);
     if (response.data && Array.isArray(response.data)) {
       return response.data;
     }
@@ -230,7 +229,7 @@ export const fetchSafetyEventDistribution = async () => {
 // 文旅活动列表数据（基础信息）
 export const fetchActivityList = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/activityList`);
+    const response = await requestClient.get(`${BASE_URL}/activityList`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -281,7 +280,7 @@ export const fetchActivityList = async () => {
 // 文旅活动详细监测数据（表格用）
 export const fetchActivityDetailData = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/activityDetailData`);
+    const response = await requestClient.get(`${BASE_URL}/activityDetailData`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -311,7 +310,7 @@ export const fetchActivityDetailData = async () => {
 // 单条活动趋势数据（详情弹窗用）
 export const fetchActivityDetailTrend = async (sceneId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/activityDetailTrend/${sceneId}`);
+    const response = await requestClient.get(`${BASE_URL}/activityDetailTrend/${sceneId}`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -333,7 +332,7 @@ export const fetchActivityDetailTrend = async (sceneId) => {
 // 文体场馆概览数据（核心指标）
 export const fetchVenueOverview = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/overview`);
+    const response = await requestClient.get(`${BASE_URL}/overview`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -359,7 +358,7 @@ export const fetchVenueReserveTrend = async (venueName = '') => {
     const url = venueName
       ? `${BASE_URL}/reserveTrend?venueName=${encodeURIComponent(venueName)}`
       : `${BASE_URL}/reserveTrend`;
-    const response = await axios.get(url);
+    const response = await requestClient.get(url);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -384,7 +383,7 @@ export const fetchVenueReserveTrend = async (venueName = '') => {
 // 场馆运营率TOP5数据
 export const fetchVenueOperationTop5 = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/operationTop5`);
+    const response = await requestClient.get(`${BASE_URL}/operationTop5`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -404,7 +403,7 @@ export const fetchVenueOperationTop5 = async () => {
 // 设施故障列表数据
 export const fetchVenueFaultList = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/faultList`);
+    const response = await requestClient.get(`${BASE_URL}/faultList`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -474,7 +473,7 @@ export const fetchVenueFaultList = async () => {
 // 投诉列表数据
 export const fetchVenueComplaintList = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/complaintList`);
+    const response = await requestClient.get(`${BASE_URL}/complaintList`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -544,7 +543,7 @@ export const fetchVenueComplaintList = async () => {
 // 场馆列表数据（用于筛选趋势图）
 export const fetchVenueList = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/list`);
+    const response = await requestClient.get(`${BASE_URL}/list`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -570,7 +569,7 @@ export const fetchVenueList = async () => {
  */
 export const fetchTourismResourceOverview = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/overview`);
+    const response = await requestClient.get(`${BASE_URL}/overview`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -593,7 +592,7 @@ export const fetchTourismResourceOverview = async () => {
  */
 export const fetchResourceTypeDistribution = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/type-distribution`);
+    const response = await requestClient.get(`${BASE_URL}/type-distribution`);
     if (response.data && response.data.legend && response.data.series) {
       return response.data;
     }
@@ -617,7 +616,7 @@ export const fetchResourceTypeDistribution = async () => {
  */
 export const fetchResourceStatusDistribution = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/status-distribution`);
+    const response = await requestClient.get(`${BASE_URL}/status-distribution`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -642,7 +641,7 @@ export const fetchResourceStatusDistribution = async () => {
  */
 export const fetchIdleResourceList = async (params = {}) => {
   try {
-    const response = await axios.get(`${BASE_URL}/idle-resources`, { params });
+    const response = await requestClient.get(`${BASE_URL}/idle-resources`, { params });
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -679,7 +678,7 @@ export const fetchIdleResourceList = async (params = {}) => {
  */
 export const fetchResourceOperationRecord = async (sceneId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/operation-record/${sceneId}`);
+    const response = await requestClient.get(`${BASE_URL}/operation-record/${sceneId}`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -711,7 +710,7 @@ export const fetchResourceOperationRecord = async (sceneId) => {
  */
 export const updateResourceStatus = async (sceneId, status) => {
   try {
-    const response = await axios.put(`${BASE_URL}/update-status/${sceneId}`, { status });
+    const response = await requestClient.put(`${BASE_URL}/update-status/${sceneId}`, { status });
     if (response.data.code === 200) {
       ElMessage.success('资源状态更新成功');
       return response.data;

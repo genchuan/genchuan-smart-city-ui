@@ -1,5 +1,4 @@
-// 引入axios（假设项目中已配置axios）
-import axios from 'axios';
+import { requestClient } from '#/api/request';
 
 // 基础URL，可根据实际项目配置
 const BASE_URL = '/api/transportation';
@@ -8,7 +7,7 @@ const BASE_URL = '/api/transportation';
 // 通行效率概览数据（核心指标）
 export const fetchTrafficEfficiencyOverview = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/trafficEfficiency/overview`);
+    const response = await requestClient.get(`${BASE_URL}/trafficEfficiency/overview`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -34,7 +33,7 @@ export const fetchTrafficEfficiencyOverview = async () => {
 // 通行效率趋势数据（近6个月）
 export const fetchTrafficEfficiencyTrend = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/trafficEfficiency/trend`);
+    const response = await requestClient.get(`${BASE_URL}/trafficEfficiency/trend`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -55,7 +54,7 @@ export const fetchTrafficEfficiencyTrend = async () => {
 // 拥堵区域分布数据
 export const fetchTrafficCongestionDistribution = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/trafficEfficiency/congestionDistribution`);
+    const response = await requestClient.get(`${BASE_URL}/trafficEfficiency/congestionDistribution`);
     if (response.data && response.data.legend && response.data.series) {
       return response.data;
     }
@@ -75,7 +74,7 @@ export const fetchTrafficCongestionDistribution = async () => {
 // 道路列表数据（基础信息）
 export const fetchRoadList = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/trafficEfficiency/roadList`);
+    const response = await requestClient.get(`${BASE_URL}/trafficEfficiency/roadList`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -114,7 +113,7 @@ export const fetchRoadList = async () => {
 // 道路详细监测数据（表格用）
 export const fetchRoadDetailData = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/trafficEfficiency/roadDetailData`);
+    const response = await requestClient.get(`${BASE_URL}/trafficEfficiency/roadDetailData`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -149,7 +148,7 @@ export const fetchRoadDetailData = async () => {
 // 单条道路通行趋势数据（详情弹窗用）
 export const fetchRoadDetailTrend = async (roadId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/trafficEfficiency/roadDetailTrend/${roadId}`);
+    const response = await requestClient.get(`${BASE_URL}/trafficEfficiency/roadDetailTrend/${roadId}`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -170,7 +169,7 @@ export const fetchRoadDetailTrend = async (roadId) => {
 // 事故预警概览数据（核心指标）
 export const fetchAccidentWarningOverview = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/overview`);
+    const response = await requestClient.get(`${BASE_URL}/overview`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -195,7 +194,7 @@ export const fetchAccidentWarningOverview = async () => {
 // 事故预警趋势数据（近6个月）
 export const fetchAccidentWarningTrend = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/trend`);
+    const response = await requestClient.get(`${BASE_URL}/trend`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -216,7 +215,7 @@ export const fetchAccidentWarningTrend = async () => {
 // 风险区域分布数据
 export const fetchRiskAreaDistribution = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/riskAreaDistribution`);
+    const response = await requestClient.get(`${BASE_URL}/riskAreaDistribution`);
     if (response.data && response.data.legend && response.data.series) {
       return response.data;
     }
@@ -236,7 +235,7 @@ export const fetchRiskAreaDistribution = async () => {
 // 预警列表数据（基础信息）
 export const fetchWarningList = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/warningList`);
+    const response = await requestClient.get(`${BASE_URL}/warningList`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -275,7 +274,7 @@ export const fetchWarningList = async () => {
 // 预警详细监测数据（表格用）
 export const fetchWarningDetailData = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/warningDetailData`);
+    const response = await requestClient.get(`${BASE_URL}/warningDetailData`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -301,7 +300,7 @@ export const fetchWarningDetailData = async () => {
 // 单条预警趋势数据（详情弹窗用）
 export const fetchWarningDetailTrend = async (warningId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/warningDetailTrend/${warningId}`);
+    const response = await requestClient.get(`${BASE_URL}/warningDetailTrend/${warningId}`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -322,7 +321,7 @@ export const fetchWarningDetailTrend = async (warningId) => {
 // 服务质量概览数据（核心指标）
 export const fetchServiceQualityOverview = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/overview`);
+    const response = await requestClient.get(`${BASE_URL}/overview`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -350,7 +349,7 @@ export const fetchServiceQualityOverview = async () => {
 // 服务质量趋势数据（近6个月）
 export const fetchServiceQualityTrend = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/trend`);
+    const response = await requestClient.get(`${BASE_URL}/trend`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -371,7 +370,7 @@ export const fetchServiceQualityTrend = async () => {
 // 评价等级分布数据
 export const fetchEvaluationLevelDistribution = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/evaluationLevelDistribution`);
+    const response = await requestClient.get(`${BASE_URL}/evaluationLevelDistribution`);
     if (response.data && response.data.legend && response.data.series) {
       return response.data;
     }
@@ -391,7 +390,7 @@ export const fetchEvaluationLevelDistribution = async () => {
 // 评价列表数据（基础信息）
 export const fetchEvaluationList = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/evaluationList`);
+    const response = await requestClient.get(`${BASE_URL}/evaluationList`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -433,7 +432,7 @@ export const fetchEvaluationList = async () => {
 // 评价详细数据（表格用）
 export const fetchEvaluationDetailData = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/evaluationDetailData`);
+    const response = await requestClient.get(`${BASE_URL}/evaluationDetailData`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -474,7 +473,7 @@ export const fetchEvaluationDetailData = async () => {
 // 单条评价趋势数据（详情弹窗用）
 export const fetchEvaluationDetailTrend = async (evalId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/evaluationDetailTrend/${evalId}`);
+    const response = await requestClient.get(`${BASE_URL}/evaluationDetailTrend/${evalId}`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -495,7 +494,7 @@ export const fetchEvaluationDetailTrend = async (evalId) => {
 // 应急处置概览数据（核心指标）
 export const fetchDisposalOverview = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/overview`);
+    const response = await requestClient.get(`${BASE_URL}/overview`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -522,7 +521,7 @@ export const fetchDisposalOverview = async () => {
 // 处置效率趋势数据（近6个月）
 export const fetchDisposalTrend = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/trend`);
+    const response = await requestClient.get(`${BASE_URL}/trend`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -543,7 +542,7 @@ export const fetchDisposalTrend = async () => {
 // 处置类型分布数据
 export const fetchDisposalTypeDistribution = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/typeDistribution`);
+    const response = await requestClient.get(`${BASE_URL}/typeDistribution`);
     if (response.data && response.data.legend && response.data.series) {
       return response.data;
     }
@@ -563,7 +562,7 @@ export const fetchDisposalTypeDistribution = async () => {
 // 处置事件列表数据（基础信息）
 export const fetchDisposalEventList = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/eventList`);
+    const response = await requestClient.get(`${BASE_URL}/eventList`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -608,7 +607,7 @@ export const fetchDisposalEventList = async () => {
 // 处置事件详细数据（表格用）
 export const fetchDisposalEventDetailData = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/eventDetailData`);
+    const response = await requestClient.get(`${BASE_URL}/eventDetailData`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -653,7 +652,7 @@ export const fetchDisposalEventDetailData = async () => {
 // 单事件处置趋势数据（详情弹窗用）
 export const fetchEventDisposalTrend = async (eventId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/eventDisposalTrend/${eventId}`);
+    const response = await requestClient.get(`${BASE_URL}/eventDisposalTrend/${eventId}`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }

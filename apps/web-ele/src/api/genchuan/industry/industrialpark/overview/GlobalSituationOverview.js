@@ -1,5 +1,4 @@
-// 引入axios（假设项目中已配置axios）
-import axios from 'axios';
+import { requestClient } from '#/api/request';
 
 // 基础URL，可根据实际项目配置
 const BASE_URL = '/api/industrialpark';
@@ -7,7 +6,7 @@ const BASE_URL = '/api/industrialpark';
 // 获取园区全域数据概览
 export const fetchParkOverview = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/overallStat`);
+    const response = await requestClient.get(`${BASE_URL}/overallStat`);
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data;
     }
@@ -220,7 +219,7 @@ export const fetchParkOverview = async () => {
 // 获取园区核心指标
 export const fetchParkCoreIndicators = async (statPeriod = 'day') => {
   try {
-    const response = await axios.get(`${BASE_URL}/coreIndex`, {
+    const response = await requestClient.get(`${BASE_URL}/coreIndex`, {
       params: { statPeriod }
     });
     if (Array.isArray(response.data) && response.data.length > 0) {
@@ -272,7 +271,7 @@ export const fetchParkCoreIndicators = async (statPeriod = 'day') => {
 // 获取园区空间几何数据
 export const fetchGeometriesData = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/geometriesData`);
+    const response = await requestClient.get(`${BASE_URL}/geometriesData`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -511,7 +510,7 @@ export const fetchGeometriesData = async () => {
 // 获取企业分布数据
 export const fetchEnterpriseDistribution = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/enterpriseDist`);
+    const response = await requestClient.get(`${BASE_URL}/enterpriseDist`);
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data;
     }
@@ -577,7 +576,7 @@ export const fetchEnterpriseDistribution = async () => {
 // 获取园区基础信息列表
 export const fetchParkBaseInfoList = async (parentParkId = '') => {
   try {
-    const response = await axios.get(`${BASE_URL}/parkBaseInfoList`, {
+    const response = await requestClient.get(`${BASE_URL}/parkBaseInfoList`, {
       params: { parentParkId }
     });
     if (Array.isArray(response.data) && response.data.length > 0) {
@@ -646,7 +645,7 @@ export const fetchParkBaseInfoList = async (parentParkId = '') => {
 // 获取行业分布统计数据
 export const fetchIndustryDistribution = async (parkId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/industryDistribution`, {
+    const response = await requestClient.get(`${BASE_URL}/industryDistribution`, {
       params: { parkId }
     });
     if (response.data && response.data.legend && response.data.series) {
@@ -665,7 +664,7 @@ export const fetchIndustryDistribution = async (parkId) => {
 // 获取指标趋势数据（7天核心指标趋势 + 30天开工率趋势）
 export const fetchIndicatorTrend = async (params) => {
   try {
-    const response = await axios.get(`${BASE_URL}/indicatorTrend`, { params });
+    const response = await requestClient.get(`${BASE_URL}/indicatorTrend`, { params });
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -726,7 +725,7 @@ export const fetchIndicatorTrend = async (params) => {
 // 获取空间位置数据（分区位置/大小 + 企业位置）
 export const fetchSpatialPositions = async (type, parkId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/spatialPositions`, {
+    const response = await requestClient.get(`${BASE_URL}/spatialPositions`, {
       params: { type, parkId }
     });
     if (typeof response.data === 'object' && Object.keys(response.data).length > 0) {
@@ -764,7 +763,7 @@ export const fetchSpatialPositions = async (type, parkId) => {
 // 手动刷新园区统计数据
 export const refreshParkStats = async (parkId) => {
   try {
-    const response = await axios.post(`${BASE_URL}/refreshStats`, { parkId });
+    const response = await requestClient.post(`${BASE_URL}/refreshStats`, { parkId });
     if (response.data && response.data.success) {
       return response.data;
     }
@@ -784,7 +783,7 @@ export const refreshParkStats = async (parkId) => {
 // 更新企业坐标
 export const updateEnterpriseCoord = async (params) => {
   try {
-    const response = await axios.post(`${BASE_URL}/updateEnterpriseCoord`, params);
+    const response = await requestClient.post(`${BASE_URL}/updateEnterpriseCoord`, params);
     if (response.data && response.data.success) {
       return response.data;
     }

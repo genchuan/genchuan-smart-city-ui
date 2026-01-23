@@ -1,10 +1,10 @@
-import axios from 'axios';
+import { requestClient } from '#/api/request';
 const BASE_URL = '/api/municipal/facility';
 
 // 市政设施概览数据（核心指标）
 export const fetchFacilityOverview = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/overview`);
+    const response = await requestClient.get(`${BASE_URL}/overview`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -25,7 +25,7 @@ export const fetchFacilityOverview = async () => {
 // 故障设施空间数据（地图标注用）
 export const fetchFaultFacilitySpatial = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/faultSpatial`);
+    const response = await requestClient.get(`${BASE_URL}/faultSpatial`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -183,7 +183,7 @@ export const fetchFaultFacilitySpatial = async () => {
 // 设施类型字典
 export const fetchFacilityTypeDict = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/typeDict`);
+    const response = await requestClient.get(`${BASE_URL}/typeDict`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -203,7 +203,7 @@ export const fetchFacilityTypeDict = async () => {
 // 生成抢修工单（派单接口）
 export const createRepairWorkOrder = async (orderData) => {
   try {
-    const response = await axios.post(`${BASE_URL}/createWorkOrder`, orderData);
+    const response = await requestClient.post(`${BASE_URL}/createWorkOrder`, orderData);
     if (response.data && response.data.code === 200) {
       return response.data;
     }
@@ -221,7 +221,7 @@ export const createRepairWorkOrder = async (orderData) => {
 // 标记故障处置完成
 export const markFaultHandled = async (mngCompId) => {
   try {
-    const response = await axios.post(`${BASE_URL}/markHandled`, { mng_comp_id: mngCompId });
+    const response = await requestClient.post(`${BASE_URL}/markHandled`, { mng_comp_id: mngCompId });
     if (response.data && response.data.code === 200) {
       return response.data;
     }
@@ -235,7 +235,7 @@ export const markFaultHandled = async (mngCompId) => {
 // 故障趋势数据（近7天）
 export const fetchFaultTrend = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/faultTrend`);
+    const response = await requestClient.get(`${BASE_URL}/faultTrend`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -256,7 +256,7 @@ export const fetchFaultTrend = async () => {
 // 故障类型分布饼图数据
 export const fetchFaultTypeDistribution = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/faultTypeDistribution`);
+    const response = await requestClient.get(`${BASE_URL}/faultTypeDistribution`);
     if (response.data && response.data.legend && response.data.series) {
       return response.data;
     }
@@ -280,7 +280,7 @@ export const fetchFaultTypeDistribution = async () => {
  */
 export const fetchOrderOverview = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/overview`);
+    const response = await requestClient.get(`${BASE_URL}/overview`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -324,7 +324,7 @@ export const fetchOrderOverview = async () => {
  */
 export const fetchOrderSpatial = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/orderSpatial`);
+    const response = await requestClient.get(`${BASE_URL}/orderSpatial`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -514,7 +514,7 @@ export const fetchOrderSpatial = async () => {
  */
 export const fetchOrderTypeDict = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/typeDict`);
+    const response = await requestClient.get(`${BASE_URL}/typeDict`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -534,7 +534,7 @@ export const fetchOrderTypeDict = async () => {
  */
 export const fetchAreaDict = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/areaDict`);
+    const response = await requestClient.get(`${BASE_URL}/areaDict`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -566,7 +566,7 @@ export const fetchAreaDict = async () => {
  */
 export const createEnforcementWorkOrder = async (orderData) => {
   try {
-    const response = await axios.post(`${BASE_URL}/createEnforcementOrder`, orderData);
+    const response = await requestClient.post(`${BASE_URL}/createEnforcementOrder`, orderData);
     if (response.data && response.data.code === 200) {
       return response.data;
     }
@@ -586,7 +586,7 @@ export const createEnforcementWorkOrder = async (orderData) => {
  */
 export const markOrderCompleted = async (mngMatterId) => {
   try {
-    const response = await axios.post(`${BASE_URL}/markCompleted`, { mng_matter_id: mngMatterId });
+    const response = await requestClient.post(`${BASE_URL}/markCompleted`, { mng_matter_id: mngMatterId });
     if (response.data && response.data.code === 200) {
       return response.data;
     }
@@ -602,7 +602,7 @@ export const markOrderCompleted = async (mngMatterId) => {
  */
 export const fetchCompleteRateTrend = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/completeRateTrend`);
+    const response = await requestClient.get(`${BASE_URL}/completeRateTrend`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -625,7 +625,7 @@ export const fetchCompleteRateTrend = async () => {
  */
 export const fetchHighIncidenceAnalysis = async (areaName) => {
   try {
-    const response = await axios.get(`${BASE_URL}/highIncidenceAnalysis`, { params: { area_name: areaName } });
+    const response = await requestClient.get(`${BASE_URL}/highIncidenceAnalysis`, { params: { area_name: areaName } });
     if (response.data && response.data.reason) {
       return response.data;
     }
@@ -658,7 +658,7 @@ export const fetchHighIncidenceAnalysis = async (areaName) => {
 // 环境卫生概览数据（核心指标）
 export const fetchEnvironOverview = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/overview`);
+    const response = await requestClient.get(`${BASE_URL}/overview`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -683,7 +683,7 @@ export const fetchEnvironOverview = async () => {
 // 清运点空间数据（地图标注用）
 export const fetchClearPointSpatial = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/clearPointSpatial`);
+    const response = await requestClient.get(`${BASE_URL}/clearPointSpatial`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -821,7 +821,7 @@ export const fetchClearPointSpatial = async () => {
 // 保洁区域空间数据（地图面数据）
 export const fetchCleanAreaSpatial = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/cleanAreaSpatial`);
+    const response = await requestClient.get(`${BASE_URL}/cleanAreaSpatial`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -935,7 +935,7 @@ export const fetchCleanAreaSpatial = async () => {
 // 垃圾满溢事件数据
 export const fetchOverflowEvent = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/overflowEvent`);
+    const response = await requestClient.get(`${BASE_URL}/overflowEvent`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -998,7 +998,7 @@ export const fetchOverflowEvent = async () => {
 // 区域字典（街道/社区，筛选用）
 export const fetchEnvironRegionDict = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/regionDict`);
+    const response = await requestClient.get(`${BASE_URL}/regionDict`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -1029,7 +1029,7 @@ export const fetchEnvironRegionDict = async () => {
 // 导出作业计划
 export const exportWorkPlan = async (planParams) => {
   try {
-    const response = await axios.post(`${BASE_URL}/exportWorkPlan`, planParams, {
+    const response = await requestClient.post(`${BASE_URL}/exportWorkPlan`, planParams, {
       responseType: 'blob' // 导出文件需指定blob类型
     });
     if (response.data) {
@@ -1053,7 +1053,7 @@ export const exportWorkPlan = async (planParams) => {
 // 标记清运点完成清运
 export const markClearPointCompleted = async (clearPointId) => {
   try {
-    const response = await axios.post(`${BASE_URL}/markClearCompleted`, { clear_point_id: clearPointId });
+    const response = await requestClient.post(`${BASE_URL}/markClearCompleted`, { clear_point_id: clearPointId });
     if (response.data && response.data.code === 200) {
       return response.data;
     }
@@ -1071,7 +1071,7 @@ export const markClearPointCompleted = async (clearPointId) => {
 // 标记保洁区域完成保洁
 export const markCleanAreaCompleted = async (cleanAreaId) => {
   try {
-    const response = await axios.post(`${BASE_URL}/markCleanCompleted`, { clean_area_id: cleanAreaId });
+    const response = await requestClient.post(`${BASE_URL}/markCleanCompleted`, { clean_area_id: cleanAreaId });
     if (response.data && response.data.code === 200) {
       return response.data;
     }
@@ -1092,7 +1092,7 @@ export const markCleanAreaCompleted = async (cleanAreaId) => {
 // 处置垃圾满溢事件
 export const handleOverflowEvent = async (eventId, handleData) => {
   try {
-    const response = await axios.post(`${BASE_URL}/handleOverflowEvent`, {
+    const response = await requestClient.post(`${BASE_URL}/handleOverflowEvent`, {
       overflow_event_id: eventId,
       ...handleData
     });
@@ -1116,7 +1116,7 @@ export const handleOverflowEvent = async (eventId, handleData) => {
 // 清运趋势数据（近7天）
 export const fetchClearTrend = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/clearTrend`);
+    const response = await requestClient.get(`${BASE_URL}/clearTrend`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -1137,7 +1137,7 @@ export const fetchClearTrend = async () => {
 // 保洁覆盖率分布（按街道）
 export const fetchCleanCoverageDistribution = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/cleanCoverageDistribution`);
+    const response = await requestClient.get(`${BASE_URL}/cleanCoverageDistribution`);
     if (response.data && response.data.legend && response.data.series) {
       return response.data;
     }
@@ -1158,7 +1158,7 @@ export const fetchCleanCoverageDistribution = async () => {
 // 园林绿化概览数据（核心指标）
 export const fetchGardenOverview = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/overview`);
+    const response = await requestClient.get(`${BASE_URL}/overview`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -1180,7 +1180,7 @@ export const fetchGardenOverview = async () => {
 // 绿化空间分布数据（地图标注用）
 export const fetchGardenSpatial = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/spatial`);
+    const response = await requestClient.get(`${BASE_URL}/spatial`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -1412,7 +1412,7 @@ export const fetchGardenSpatial = async () => {
 // 绿化类型字典
 export const fetchGardenTypeDict = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/typeDict`);
+    const response = await requestClient.get(`${BASE_URL}/typeDict`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -1430,7 +1430,7 @@ export const fetchGardenTypeDict = async () => {
 // 区域字典
 export const fetchGardenAreaDict = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/areaDict`);
+    const response = await requestClient.get(`${BASE_URL}/areaDict`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -1453,7 +1453,7 @@ export const fetchGardenAreaDict = async () => {
 // 生成养护工单（派单接口）
 export const createGardenWorkOrder = async (orderData) => {
   try {
-    const response = await axios.post(`${BASE_URL}/createWorkOrder`, orderData);
+    const response = await requestClient.post(`${BASE_URL}/createWorkOrder`, orderData);
     if (response.data && response.data.code === 200) {
       return response.data;
     }
@@ -1471,7 +1471,7 @@ export const createGardenWorkOrder = async (orderData) => {
 // 标记养护/病害处置完成
 export const markGardenHandled = async (mngCompId) => {
   try {
-    const response = await axios.post(`${BASE_URL}/markHandled`, { mng_comp_id: mngCompId });
+    const response = await requestClient.post(`${BASE_URL}/markHandled`, { mng_comp_id: mngCompId });
     if (response.data && response.data.code === 200) {
       return response.data;
     }
@@ -1485,7 +1485,7 @@ export const markGardenHandled = async (mngCompId) => {
 // 病害上报接口
 export const reportGardenDisease = async (diseaseData) => {
   try {
-    const response = await axios.post(`${BASE_URL}/reportDisease`, diseaseData);
+    const response = await requestClient.post(`${BASE_URL}/reportDisease`, diseaseData);
     if (response.data && response.data.code === 200) {
       return response.data;
     }
@@ -1503,7 +1503,7 @@ export const reportGardenDisease = async (diseaseData) => {
 // 养护趋势数据（近7天）
 export const fetchGardenTrend = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/maintainTrend`);
+    const response = await requestClient.get(`${BASE_URL}/maintainTrend`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -1524,7 +1524,7 @@ export const fetchGardenTrend = async () => {
 // 病害类型分布饼图数据
 export const fetchGardenDiseaseDistribution = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/diseaseDistribution`);
+    const response = await requestClient.get(`${BASE_URL}/diseaseDistribution`);
     if (response.data && response.data.legend && response.data.series) {
       return response.data;
     }

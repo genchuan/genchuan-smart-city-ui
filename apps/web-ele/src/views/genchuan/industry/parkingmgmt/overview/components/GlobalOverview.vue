@@ -1045,7 +1045,7 @@ onUnmounted(() => {
       <div class="top">
         <div class="panel top-left">
           <el-tabs v-model="topLeftActiveTab" class="common-tabs">
-            <el-tab-pane label="资源设备" name="tab1">
+            <el-tab-pane label="资源设备指标" name="tab1">
               <div class="header-actions">
                 <div class="actions-left"><p></p></div>
                 <div class="actions-right">
@@ -1161,10 +1161,10 @@ onUnmounted(() => {
                 </div>
               </div>
             </el-tab-pane>
-            <el-tab-pane label="通行交易" name="tab2">
+            <el-tab-pane label="通行交易指标" name="tab2">
               <div class="content-placeholder"><p>通行交易</p></div>
             </el-tab-pane>
-            <el-tab-pane label="运维服务" name="tab3">
+            <el-tab-pane label="运维服务指标" name="tab3">
               <div class="content-placeholder"><p>运维服务</p></div>
             </el-tab-pane>
           </el-tabs>
@@ -1591,11 +1591,11 @@ onUnmounted(() => {
       <div class="bottom">
         <div class="panel bottom-left">
           <el-tabs v-model="bottomLeftActiveTab" class="common-tabs">
-            <el-tab-pane label="通行交易" name="tab1">
-              <div class="content-placeholder"><p>通行交易</p></div>
+            <el-tab-pane label="通行交易趋势" name="tab1">
+              <div class="content-placeholder"><p>通行交易趋势</p></div>
             </el-tab-pane>
-            <el-tab-pane label="设备运维" name="tab2">
-              <div class="content-placeholder"><p>设备运维</p></div>
+            <el-tab-pane label="设备运维趋势" name="tab2">
+              <div class="content-placeholder"><p>设备运维趋势</p></div>
             </el-tab-pane>
           </el-tabs>
           <div class="panel-footer"></div>

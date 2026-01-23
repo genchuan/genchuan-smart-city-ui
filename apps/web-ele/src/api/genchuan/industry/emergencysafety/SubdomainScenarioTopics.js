@@ -1,11 +1,11 @@
-import axios from 'axios';
+import { requestClient } from '#/api/request';
 const BASE_URL = '/industry';
 
 // 事件处置追踪视图
 // 事件追踪概览指标（核心追踪数据）
 export const fetchTrackingOverview = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/overview`);
+    const response = await requestClient.get(`${BASE_URL}/overview`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -30,7 +30,7 @@ export const fetchTrackingOverview = async () => {
 // 处置进度分布（核心图表：看事件卡在哪个环节）
 export const fetchDisposalProgressDistribution = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/progress/distribution`);
+    const response = await requestClient.get(`${BASE_URL}/progress/distribution`);
     if (response.data && response.data.labels && response.data.data) {
       return response.data;
     }
@@ -48,7 +48,7 @@ export const fetchDisposalProgressDistribution = async () => {
 // 区域追踪效率（核心图表：看哪个区域效率低）
 export const fetchAreaTrackingEfficiency = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/area/efficiency`);
+    const response = await requestClient.get(`${BASE_URL}/area/efficiency`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -68,7 +68,7 @@ export const fetchAreaTrackingEfficiency = async () => {
 // 追踪事件列表（核心数据：带进度、跟进信息）
 export const fetchTrackingEventList = async (params = {}) => {
   try {
-    const response = await axios.get(`${BASE_URL}/event/list`, { params });
+    const response = await requestClient.get(`${BASE_URL}/event/list`, { params });
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -111,7 +111,7 @@ export const fetchTrackingEventList = async (params = {}) => {
 // 事件处置时间线（详情核心：追溯事件流程）
 export const fetchEventTimeline = async (eventId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/event/timeline/${eventId}`);
+    const response = await requestClient.get(`${BASE_URL}/event/timeline/${eventId}`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -161,7 +161,7 @@ export const fetchEventTimeline = async (eventId) => {
 // 事件跟进记录（核心功能：记录跟进过程）
 export const fetchFollowUpRecords = async (eventId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/event/followup/${eventId}`);
+    const response = await requestClient.get(`${BASE_URL}/event/followup/${eventId}`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -194,7 +194,7 @@ export const fetchFollowUpRecords = async (eventId) => {
 // 保存跟进记录（核心操作：提交跟进信息）
 export const saveFollowUpRecord = async (params) => {
   try {
-    const response = await axios.post(`${BASE_URL}/event/followup/save`, params);
+    const response = await requestClient.post(`${BASE_URL}/event/followup/save`, params);
     if (response.data && response.data.success) {
       return response.data;
     }
@@ -212,7 +212,7 @@ export const saveFollowUpRecord = async (params) => {
 // 更新事件处置进度（核心操作：更新事件状态）
 export const updateEventProgress = async (eventId, progress, status) => {
   try {
-    const response = await axios.put(`${BASE_URL}/event/progress/${eventId}`, {
+    const response = await requestClient.put(`${BASE_URL}/event/progress/${eventId}`, {
       progress,
       status
     });
@@ -243,7 +243,7 @@ export const updateEventProgress = async (eventId, progress, status) => {
 // 应急处置进度核心指标
 export const fetchDisposalProgressOverview = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/overview`);
+    const response = await requestClient.get(`${BASE_URL}/overview`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -276,7 +276,7 @@ export const fetchDisposalProgressOverview = async () => {
 // 处置阶段分布（核心图表：看事件卡在哪个处置阶段）
 export const fetchDisposalStageDistribution = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/stage/distribution`);
+    const response = await requestClient.get(`${BASE_URL}/stage/distribution`);
     if (response.data && response.data.labels && response.data.data) {
       return response.data;
     }
@@ -294,7 +294,7 @@ export const fetchDisposalStageDistribution = async () => {
 // 各阶段耗时分析（核心图表：看哪个阶段耗时最长）
 export const fetchStageDurationAnalysis = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/stage/duration`);
+    const response = await requestClient.get(`${BASE_URL}/stage/duration`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -314,7 +314,7 @@ export const fetchStageDurationAnalysis = async () => {
 // 近7天处置进度趋势（核心图表：看处置效率变化）
 export const fetchDisposalTrend7Days = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/trend/7days`);
+    const response = await requestClient.get(`${BASE_URL}/trend/7days`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -335,7 +335,7 @@ export const fetchDisposalTrend7Days = async () => {
 // 应急处置事件列表（核心数据：带进度、阶段、耗时信息）
 export const fetchDisposalEventList = async (params = {}) => {
   try {
-    const response = await axios.get(`${BASE_URL}/event/list`, { params });
+    const response = await requestClient.get(`${BASE_URL}/event/list`, { params });
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -380,7 +380,7 @@ export const fetchDisposalEventList = async (params = {}) => {
 // 处置进度时间线（详情核心：各阶段耗时+操作记录）
 export const fetchDisposalTimeline = async (disposalId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/event/timeline/${disposalId}`);
+    const response = await requestClient.get(`${BASE_URL}/event/timeline/${disposalId}`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -427,7 +427,7 @@ export const fetchDisposalTimeline = async (disposalId) => {
 // 处置进度更新（核心操作：更新阶段+进度）
 export const updateDisposalProgress = async (disposalId, stage, progress) => {
   try {
-    const response = await axios.put(`${BASE_URL}/event/progress/${disposalId}`, {
+    const response = await requestClient.put(`${BASE_URL}/event/progress/${disposalId}`, {
       stage,
       progress
     });
@@ -457,7 +457,7 @@ export const updateDisposalProgress = async (disposalId, stage, progress) => {
 // 处置记录提交（核心操作：添加处置记录）
 export const submitDisposalRecord = async (params) => {
   try {
-    const response = await axios.post(`${BASE_URL}/event/record/save`, params);
+    const response = await requestClient.post(`${BASE_URL}/event/record/save`, params);
     if (response.data && response.data.success) {
       return response.data;
     }
@@ -476,7 +476,7 @@ export const submitDisposalRecord = async (params) => {
 // 应急资源分布核心指标
 export const fetchResourceDistributionOverview = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/resource/overview`);
+    const response = await requestClient.get(`${BASE_URL}/resource/overview`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -509,7 +509,7 @@ export const fetchResourceDistributionOverview = async () => {
 // 资源状态分布（核心图表：看资源卡在哪个状态）
 export const fetchResourceStatusDistribution = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/resource/status/distribution`);
+    const response = await requestClient.get(`${BASE_URL}/resource/status/distribution`);
     if (response.data && response.data.labels && response.data.data) {
       return response.data;
     }
@@ -527,7 +527,7 @@ export const fetchResourceStatusDistribution = async () => {
 // 各类型资源维护耗时分析（核心图表：看哪类资源维护耗时最长）
 export const fetchResourceTypeDurationAnalysis = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/resource/type/duration`);
+    const response = await requestClient.get(`${BASE_URL}/resource/type/duration`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -547,7 +547,7 @@ export const fetchResourceTypeDurationAnalysis = async () => {
 // 近7天资源状态趋势（核心图表：看资源可用率变化）
 export const fetchResourceTrend7Days = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/resource/trend/7days`);
+    const response = await requestClient.get(`${BASE_URL}/resource/trend/7days`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -568,7 +568,7 @@ export const fetchResourceTrend7Days = async () => {
 // 应急资源列表（核心数据：带状态、类型、可用率信息）
 export const eResourceList = async (params = {}) => {
   try {
-    const response = await axios.get(`${BASE_URL}/resource/list`, { params });
+    const response = await requestClient.get(`${BASE_URL}/resource/list`, { params });
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -610,7 +610,7 @@ export const eResourceList = async (params = {}) => {
 // 资源状态时间线（详情核心：各状态变更记录+维护耗时）
 export const fetchResourceTimeline = async (resourceId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/resource/timeline/${resourceId}`);
+    const response = await requestClient.get(`${BASE_URL}/resource/timeline/${resourceId}`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -657,7 +657,7 @@ export const fetchResourceTimeline = async (resourceId) => {
 // 资源状态更新（核心操作：更新状态+可用率）
 export const updateResourceStatus = async (resourceId, status, availabilityRate) => {
   try {
-    const response = await axios.put(`${BASE_URL}/resource/status/${resourceId}`, {
+    const response = await requestClient.put(`${BASE_URL}/resource/status/${resourceId}`, {
       status,
       availability_rate: availabilityRate
     });
@@ -687,7 +687,7 @@ export const updateResourceStatus = async (resourceId, status, availabilityRate)
 // 资源维护记录提交（核心操作：添加维护记录）
 export const submitResourceRecord = async (params) => {
   try {
-    const response = await axios.post(`${BASE_URL}/resource/record/save`, params);
+    const response = await requestClient.post(`${BASE_URL}/resource/record/save`, params);
     if (response.data && response.data.success) {
       return response.data;
     }
@@ -706,7 +706,7 @@ export const submitResourceRecord = async (params) => {
 // 事故隐患预警核心指标
 export const fetchHazardWarningOverview = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/overview`);
+    const response = await requestClient.get(`${BASE_URL}/overview`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -739,7 +739,7 @@ export const fetchHazardWarningOverview = async () => {
 // 预警级别分布（核心图表：看各级别隐患占比）
 export const fetchHazardLevelDistribution = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/level/distribution`);
+    const response = await requestClient.get(`${BASE_URL}/level/distribution`);
     if (response.data && response.data.labels && response.data.data) {
       return response.data;
     }
@@ -757,7 +757,7 @@ export const fetchHazardLevelDistribution = async () => {
 // 各环节处理时长分析（核心图表：看哪个环节耗时最长）
 export const fetchHazardHandleDurationAnalysis = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/stage/duration`);
+    const response = await requestClient.get(`${BASE_URL}/stage/duration`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -777,7 +777,7 @@ export const fetchHazardHandleDurationAnalysis = async () => {
 // 近7天隐患预警趋势（核心图表：看预警数量变化）
 export const fetchHazardWarningTrend7Days = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/trend/7days`);
+    const response = await requestClient.get(`${BASE_URL}/trend/7days`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -798,7 +798,7 @@ export const fetchHazardWarningTrend7Days = async () => {
 // 事故隐患预警列表（核心数据：带进度、状态、耗时信息）
 export const fetchHazardWarningList = async (params = {}) => {
   try {
-    const response = await axios.get(`${BASE_URL}/list`, { params });
+    const response = await requestClient.get(`${BASE_URL}/list`, { params });
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -843,7 +843,7 @@ export const fetchHazardWarningList = async (params = {}) => {
 // 隐患处理时间线（详情核心：各环节耗时+操作记录）
 export const fetchHazardHandleTimeline = async (hazardId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/timeline/${hazardId}`);
+    const response = await requestClient.get(`${BASE_URL}/timeline/${hazardId}`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -890,7 +890,7 @@ export const fetchHazardHandleTimeline = async (hazardId) => {
 // 隐患处理进度更新（核心操作：更新状态+进度）
 export const updateHazardHandleProgress = async (hazardId, status, progress) => {
   try {
-    const response = await axios.put(`${BASE_URL}/progress/${hazardId}`, {
+    const response = await requestClient.put(`${BASE_URL}/progress/${hazardId}`, {
       status,
       progress
     });
@@ -920,7 +920,7 @@ export const updateHazardHandleProgress = async (hazardId, status, progress) => 
 // 隐患处理记录提交（核心操作：添加处理记录）
 export const submitHazardHandleRecord = async (params) => {
   try {
-    const response = await axios.post(`${BASE_URL}/record/save`, params);
+    const response = await requestClient.post(`${BASE_URL}/record/save`, params);
     if (response.data && response.data.success) {
       return response.data;
     }

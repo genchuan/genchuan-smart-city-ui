@@ -1,5 +1,4 @@
-// 引入axios（假设项目中已配置axios）
-import axios from 'axios';
+import { requestClient } from '#/api/request';
 
 // 基础URL，可根据实际项目配置
 const BASE_URL = '/api/eco';
@@ -7,7 +6,7 @@ const BASE_URL = '/api/eco';
 // 空气质量专题视图相关接口
 export const fetchAirQualityTrend = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/airQualityTrend`);
+    const response = await requestClient.get(`${BASE_URL}/airQualityTrend`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -35,7 +34,7 @@ export const fetchAirQualityTrend = async () => {
 
 export const fetchAirQualityStations = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/airQualityStations`);
+    const response = await requestClient.get(`${BASE_URL}/airQualityStations`);
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data;
     }
@@ -115,7 +114,7 @@ export const fetchAirQualityStations = async () => {
 
 export const fetchAirQualityCoreIndicators = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/airQualityCoreIndicators`);
+    const response = await requestClient.get(`${BASE_URL}/airQualityCoreIndicators`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -137,7 +136,7 @@ export const fetchAirQualityCoreIndicators = async () => {
 
 export const fetchAirQualityStationTrend = async (stationId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/airQualityStationTrend/${stationId}`);
+    const response = await requestClient.get(`${BASE_URL}/airQualityStationTrend/${stationId}`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -157,7 +156,7 @@ export const fetchAirQualityStationTrend = async (stationId) => {
 
 export const fetchAirQualityDetails = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/airQualityDetails`);
+    const response = await requestClient.get(`${BASE_URL}/airQualityDetails`);
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data;
     }
@@ -198,7 +197,7 @@ export const fetchAirQualityDetails = async () => {
 // 饮用水水源地专题视图相关接口
 export const fetchWaterSourceOverview = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/waterSourceOverview`);
+    const response = await requestClient.get(`${BASE_URL}/waterSourceOverview`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -221,7 +220,7 @@ export const fetchWaterSourceOverview = async () => {
 
 export const fetchWaterSourceTrend = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/waterSourceTrend`);
+    const response = await requestClient.get(`${BASE_URL}/waterSourceTrend`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -241,7 +240,7 @@ export const fetchWaterSourceTrend = async () => {
 
 export const fetchWaterSourceDistribution = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/waterSourceDistribution`);
+    const response = await requestClient.get(`${BASE_URL}/waterSourceDistribution`);
     if (response.data && response.data.legend && response.data.series) {
       return response.data;
     }
@@ -260,7 +259,7 @@ export const fetchWaterSourceDistribution = async () => {
 
 export const fetchWaterSources = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/waterSources`);
+    const response = await requestClient.get(`${BASE_URL}/waterSources`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -304,7 +303,7 @@ export const fetchWaterSources = async () => {
 
 export const fetchWaterSourceData = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/waterSourceData`);
+    const response = await requestClient.get(`${BASE_URL}/waterSourceData`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -338,7 +337,7 @@ export const fetchWaterSourceData = async () => {
 
 export const fetchWaterSourceDetailTrend = async (sourceId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/waterSourceDetailTrend/${sourceId}`);
+    const response = await requestClient.get(`${BASE_URL}/waterSourceDetailTrend/${sourceId}`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -358,7 +357,7 @@ export const fetchWaterSourceDetailTrend = async (sourceId) => {
 // 重点污染源专题视图相关接口
 export const fetchPollutantStatistics = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/pollutantStatistics`);
+    const response = await requestClient.get(`${BASE_URL}/pollutantStatistics`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -381,7 +380,7 @@ export const fetchPollutantStatistics = async () => {
 
 export const fetchPollutantDetailTrend = async (pollutantId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/pollutantDetailTrend/${pollutantId}`);
+    const response = await requestClient.get(`${BASE_URL}/pollutantDetailTrend/${pollutantId}`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -410,7 +409,7 @@ export const fetchPollutantDetailTrend = async (pollutantId) => {
 
 export const fetchPollutantTypeDistribution = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/pollutantTypeDistribution`);
+    const response = await requestClient.get(`${BASE_URL}/pollutantTypeDistribution`);
     if (response.data && response.data.legend && response.data.series) {
       return response.data;
     }
@@ -429,7 +428,7 @@ export const fetchPollutantTypeDistribution = async () => {
 
 export const fetchPollutantEmissionTrend = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/pollutantEmissionTrend`);
+    const response = await requestClient.get(`${BASE_URL}/pollutantEmissionTrend`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -465,7 +464,7 @@ export const fetchPollutantEmissionTrend = async () => {
 
 export const fetchPollutantList = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/pollutantList`);
+    const response = await requestClient.get(`${BASE_URL}/pollutantList`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -523,7 +522,7 @@ export const fetchPollutantList = async () => {
 
 export const fetchPollutantTableData = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/pollutantTableData`);
+    const response = await requestClient.get(`${BASE_URL}/pollutantTableData`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -575,7 +574,7 @@ export const fetchPollutantTableData = async () => {
 // 固废处置专题视图相关接口
 export const fetchSolidWasteStats = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/solidWasteStats`);
+    const response = await requestClient.get(`${BASE_URL}/solidWasteStats`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -597,7 +596,7 @@ export const fetchSolidWasteStats = async () => {
 
 export const fetchSolidWasteTypeDistribution = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/solidWasteTypeDistribution`);
+    const response = await requestClient.get(`${BASE_URL}/solidWasteTypeDistribution`);
     if (response.data && response.data.series) {
       return response.data;
     }
@@ -621,7 +620,7 @@ export const fetchSolidWasteTypeDistribution = async () => {
 
 export const fetchSolidWasteTrend = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/solidWasteTrend`);
+    const response = await requestClient.get(`${BASE_URL}/solidWasteTrend`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -647,7 +646,7 @@ export const fetchSolidWasteTrend = async () => {
 
 export const fetchSolidWasteFacilityTrend = async (facilityId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/solidWasteFacilityTrend/${facilityId}`);
+    const response = await requestClient.get(`${BASE_URL}/solidWasteFacilityTrend/${facilityId}`);
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data;
     }
@@ -680,7 +679,7 @@ export const fetchSolidWasteFacilityTrend = async (facilityId) => {
 
 export const fetchSolidWasteFacilities = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/solidWasteFacilities`);
+    const response = await requestClient.get(`${BASE_URL}/solidWasteFacilities`);
     if (Array.isArray(response.data)) {
       return response.data;
     }
@@ -762,7 +761,7 @@ export const fetchSolidWasteFacilities = async () => {
 
 export const fetchSolidWasteDetailData = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/solidWasteDetailData`);
+    const response = await requestClient.get(`${BASE_URL}/solidWasteDetailData`);
     if (Array.isArray(response.data)) {
       return response.data;
     }

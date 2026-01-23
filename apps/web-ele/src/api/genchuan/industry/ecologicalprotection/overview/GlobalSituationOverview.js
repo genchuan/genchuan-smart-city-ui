@@ -1,5 +1,4 @@
-// 引入axios（假设项目中已配置axios）
-import axios from 'axios';
+import { requestClient } from '#/api/request';
 
 // 基础URL，可根据实际项目配置
 const BASE_URL = '/api/eco';
@@ -8,7 +7,7 @@ const BASE_URL = '/api/eco';
 export const fetchEcoGlobalOverview = async () => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.get(`${BASE_URL}/globalOverview`);
+    const response = await requestClient.get(`${BASE_URL}/globalOverview`);
     // 验证接口返回数据有效性
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data; // 返回真实数据
@@ -66,7 +65,7 @@ export const fetchEcoGlobalOverview = async () => {
 export const fetchEcoGeometries = async () => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.get(`${BASE_URL}/geometries`);
+    const response = await requestClient.get(`${BASE_URL}/geometries`);
     // 验证接口返回数据有效性（需为数组）
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data; // 返回真实数据
@@ -206,7 +205,7 @@ export const fetchEcoGeometries = async () => {
 export const exportEcoGlobalOverview = async (params) => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.post(`${BASE_URL}/exportGlobalOverview`, params);
+    const response = await requestClient.post(`${BASE_URL}/exportGlobalOverview`, params);
     // 验证接口返回数据有效性
     if (response.data && response.data.success) {
       return response.data; // 返回真实结果
@@ -227,7 +226,7 @@ export const exportEcoGlobalOverview = async (params) => {
 export const viewEcoAnalysisReport = async (reportId) => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.get(`${BASE_URL}/analysisReport/${reportId}`);
+    const response = await requestClient.get(`${BASE_URL}/analysisReport/${reportId}`);
     // 验证接口返回数据有效性
     if (response.data && response.data.report_id) {
       return response.data; // 返回真实结果
@@ -253,7 +252,7 @@ export const viewEcoAnalysisReport = async (reportId) => {
 // 环保核心指标相关接口
 export const fetchEcoCoreIndicators = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/coreIndicators`);
+    const response = await requestClient.get(`${BASE_URL}/coreIndicators`);
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data;
     }
@@ -398,7 +397,7 @@ export const fetchEcoCoreIndicators = async () => {
 export const updateIndicatorReason = async (params) => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.post(`${BASE_URL}/updateIndicatorReason`, params);
+    const response = await requestClient.post(`${BASE_URL}/updateIndicatorReason`, params);
     // 验证接口返回数据有效性
     if (response.data && response.data.success) {
       return response.data; // 返回真实结果
@@ -419,7 +418,7 @@ export const updateIndicatorReason = async (params) => {
 export const updateIndicatorThreshold = async (params) => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.post(`${BASE_URL}/updateIndicatorThreshold`, params);
+    const response = await requestClient.post(`${BASE_URL}/updateIndicatorThreshold`, params);
     // 验证接口返回数据有效性
     if (response.data && response.data.success) {
       return response.data; // 返回真实结果
@@ -440,7 +439,7 @@ export const updateIndicatorThreshold = async (params) => {
 export const fetchEcoRegionPatterns = async () => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.get(`${BASE_URL}/regionPatterns`);
+    const response = await requestClient.get(`${BASE_URL}/regionPatterns`);
     // 验证接口返回数据有效性
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data; // 返回真实数据
@@ -546,7 +545,7 @@ export const fetchEcoRegionPatterns = async () => {
 export const handleRegionWarning = async (params) => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.post(`${BASE_URL}/handleRegionWarning`, params);
+    const response = await requestClient.post(`${BASE_URL}/handleRegionWarning`, params);
     // 验证接口返回数据有效性
     if (response.data && response.data.success) {
       return response.data; // 返回真实结果
@@ -567,7 +566,7 @@ export const handleRegionWarning = async (params) => {
 export const fetchPollutantDistributions = async () => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.get(`${BASE_URL}/pollutantDistributions`);
+    const response = await requestClient.get(`${BASE_URL}/pollutantDistributions`);
     // 验证接口返回数据有效性
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data; // 返回真实数据
@@ -758,7 +757,7 @@ export const fetchPollutantDistributions = async () => {
 // 获取预警信息滚动数据
 export const fetchWarningScrollData = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/warningScrollData`);
+    const response = await requestClient.get(`${BASE_URL}/warningScrollData`);
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data;
     }
@@ -778,7 +777,7 @@ export const fetchWarningScrollData = async () => {
 // 获取预警类型数据
 export const fetchWarningTypes = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/warningTypes`);
+    const response = await requestClient.get(`${BASE_URL}/warningTypes`);
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data;
     }
@@ -806,7 +805,7 @@ export const fetchWarningTypes = async () => {
 export const submitPollutantSupervise = async (params) => {
   try {
     // 1. 优先调用真实接口
-    const response = await axios.post(`${BASE_URL}/submitPollutantSupervise`, params);
+    const response = await requestClient.post(`${BASE_URL}/submitPollutantSupervise`, params);
     // 验证接口返回数据有效性
     if (response.data && response.data.success) {
       return response.data; // 返回真实结果

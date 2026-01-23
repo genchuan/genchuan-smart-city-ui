@@ -1,5 +1,4 @@
-// 引入axios（假设项目中已配置axios）
-import axios from 'axios';
+import { requestClient } from '#/api/request';
 
 // 基础URL，可根据实际项目配置
 const BASE_URL = '/api/business';
@@ -7,7 +6,7 @@ const BASE_URL = '/api/business';
 // 营商全域数据概览相关接口
 export const fetchBusinessGlobalOverview = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/globalOverview`);
+    const response = await requestClient.get(`${BASE_URL}/globalOverview`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -50,7 +49,7 @@ export const fetchBusinessGlobalOverview = async () => {
 // 营商核心指标相关接口
 export const fetchBusinessCoreIndicators = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/coreIndicators`);
+    const response = await requestClient.get(`${BASE_URL}/coreIndicators`);
     if (response.data && Array.isArray(response.data)) {
       return response.data;
     }
@@ -134,7 +133,7 @@ export const fetchBusinessCoreIndicators = async () => {
 export const fetchEnterpriseGeometries = async () => {
   try {
     // 调用真实接口（假设接口路径为/enterpriseGeometries）
-    const response = await axios.get(`${BASE_URL}/enterpriseGeometries`);
+    const response = await requestClient.get(`${BASE_URL}/enterpriseGeometries`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -209,7 +208,7 @@ export const fetchEnterpriseGeometries = async () => {
 // 企业资源分布视图相关接口
 export const fetchEnterpriseResourceDistribution = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/enterpriseDistribution`);
+    const response = await requestClient.get(`${BASE_URL}/enterpriseDistribution`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -335,7 +334,7 @@ export const fetchEnterpriseResourceDistribution = async () => {
 // 服务事项总览相关接口
 export const fetchServiceItemsOverview = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/serviceItems`);
+    const response = await requestClient.get(`${BASE_URL}/serviceItems`);
     if (response.data && typeof response.data === 'object') {
       return response.data;
     }
@@ -392,7 +391,7 @@ export const fetchServiceItemsOverview = async () => {
 // 预警数据相关接口
 export const fetchWarningScrollData = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/warningScrollData`);
+    const response = await requestClient.get(`${BASE_URL}/warningScrollData`);
     if (response.data && Array.isArray(response.data)) {
       return response.data;
     }
@@ -411,7 +410,7 @@ export const fetchWarningScrollData = async () => {
 
 export const fetchWarningTypes = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/warningTypes`);
+    const response = await requestClient.get(`${BASE_URL}/warningTypes`);
     if (response.data && Array.isArray(response.data)) {
       return response.data;
     }
@@ -460,7 +459,7 @@ export const submitServiceHandle = async (params) => {
 
 export const viewReport = async (reportId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/report/${reportId}`);
+    const response = await requestClient.get(`${BASE_URL}/report/${reportId}`);
     return response.data;
   } catch (error) {
     console.warn('查看报告失败，使用模拟数据:', error.message);

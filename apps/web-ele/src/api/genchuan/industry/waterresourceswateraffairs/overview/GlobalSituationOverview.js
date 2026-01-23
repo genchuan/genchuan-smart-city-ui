@@ -1,11 +1,11 @@
-import axios from 'axios';
+import { requestClient } from '#/api/request';
 
 const BASE_URL = '/api/water';
 
 // 水务全域数据地图数据
 export const fetchGlobalDataMap = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/globalDataMap`);
+    const response = await requestClient.get(`${BASE_URL}/globalDataMap`);
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data; // 优先返回真实接口数据
     }
@@ -85,7 +85,7 @@ export const fetchGlobalDataMap = async () => {
 // 水务核心资源分布数据
 export const fetchCoreResources = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/coreResources`);
+    const response = await requestClient.get(`${BASE_URL}/coreResources`);
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data;
     }
@@ -124,7 +124,7 @@ export const fetchCoreResources = async () => {
 // 企业分布数据
 export const fetchEnterpriseDistribution = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/enterpriseDistribution`);
+    const response = await requestClient.get(`${BASE_URL}/enterpriseDistribution`);
     if (response.data && (Array.isArray(response.data) || typeof response.data === 'object')) {
       return response.data;
     }
@@ -144,7 +144,7 @@ export const fetchEnterpriseDistribution = async () => {
 // 水务核心指标数据
 export const fetchCoreIndicators = async (timeRange = 'today') => {
   try {
-    const response = await axios.get(`${BASE_URL}/coreIndicators`, { params: { timeRange } });
+    const response = await requestClient.get(`${BASE_URL}/coreIndicators`, { params: { timeRange } });
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data;
     }
@@ -233,7 +233,7 @@ export const fetchCoreIndicators = async (timeRange = 'today') => {
 // 水务核心指标近7天趋势数据
 export const fetchIndicatorTrend = async (indicatorId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/indicatorTrend`, {
+    const response = await requestClient.get(`${BASE_URL}/indicatorTrend`, {
       params: { indicatorId, days: 7 }
     });
     if (response.data && response.data.xAxis && response.data.series) {
@@ -291,7 +291,7 @@ export const fetchIndicatorTrend = async (indicatorId) => {
 // 水务设施运行状态数据
 export const fetchFacilityRunStatus = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/facilityRunStatus`);
+    const response = await requestClient.get(`${BASE_URL}/facilityRunStatus`);
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data;
     }
@@ -452,7 +452,7 @@ export const fetchFacilityRunStatus = async () => {
 export const fetchResourceTrend = async (resourceId) => {
   try {
     // 模拟真实接口调用（实际项目中替换为真实接口）
-    const response = await axios.get(`${BASE_URL}/resourceTrend`, {
+    const response = await requestClient.get(`${BASE_URL}/resourceTrend`, {
       params: { resourceId }
     });
     // 验证接口返回格式
@@ -496,7 +496,7 @@ export const fetchResourceTrend = async (resourceId) => {
 // 近期预警滚动数据
 export const fetchWarningScrollData = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/warningScrollData`);
+    const response = await requestClient.get(`${BASE_URL}/warningScrollData`);
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data;
     }
@@ -517,7 +517,7 @@ export const fetchWarningScrollData = async () => {
 // 确认预警信息
 export const confirmWarning = async (params) => {
   try {
-    const response = await axios.post(`${BASE_URL}/confirmWarning`, params);
+    const response = await requestClient.post(`${BASE_URL}/confirmWarning`, params);
     if (response.data && response.data.success) {
       return response.data;
     }
@@ -537,7 +537,7 @@ export const confirmWarning = async (params) => {
 // 提交运维反馈
 export const submitFeedback = async (params) => {
   try {
-    const response = await axios.post(`${BASE_URL}/submitFeedback`, params);
+    const response = await requestClient.post(`${BASE_URL}/submitFeedback`, params);
     if (response.data && response.data.success) {
       return response.data;
     }
