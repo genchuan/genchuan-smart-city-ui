@@ -11,9 +11,6 @@ const props = defineProps({
   xData: { type: Array, required: true },
   // 数据系列（[{name: '名称', data: [数值]}]）
   seriesData: { type: Array, required: true },
-  // 宽高（默认适配常用尺寸）
-  width: { type: String, default: '600px' },
-  height: { type: String, default: '400px' },
   // Y轴名称
   yName: { type: String, default: '数量' },
 });
@@ -130,15 +127,5 @@ onUnmounted(() => {
 
 <template>
   <!-- 简单柱状图容器 -->
-  <div ref="chartRef" class="simple-bar-chart" :style="{ width, height }"></div>
+  <div ref="chartRef" class="simple-bar-chart"></div>
 </template>
-
-<style scoped>
-.simple-bar-chart {
-  display: inline-block;
-  background: #fff;
-  border-radius: 8px;
-  padding: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-</style>

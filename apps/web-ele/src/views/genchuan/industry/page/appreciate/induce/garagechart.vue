@@ -28,7 +28,6 @@ const state = reactive({
       <Circle
         width="340px"
         height="330px"
-        class="chart-box-circle"
         title-text="门禁类型占比"
         :data="[
           { name: '空闲车位总数', value: 4 },
@@ -39,7 +38,6 @@ const state = reactive({
       <Circle
         width="340px"
         height="330px"
-        class="chart-box-circle"
         title-text="车库状态占比"
         :data="[
           { name: '启用', value: 4 },
@@ -48,7 +46,6 @@ const state = reactive({
         :colors="['#67C23A', '#E6A23C', '#F56C6C', '#909399']"
       />
       <Columnar
-        class="chart-box-Columnar"
         height="330px"
         title="不同车场车库数量对比"
         :x-data="['空闲车位总数', '周边车场总数', '可预约车场数']"

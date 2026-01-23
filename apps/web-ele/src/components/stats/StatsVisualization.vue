@@ -215,9 +215,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="stats-visualization">
+  <div class="park-chart-box">
     <!-- 卡片区域 -->
-    <div class="cards-container">
+    <div class="chart-box-left">
       <div
         v-for="(card, index) in data.cards"
         :key="`card-${index}`"
@@ -241,216 +241,16 @@ onUnmounted(() => {
     </div>
 
     <!-- 图表区域：给chart-card添加动态类名区分图表类型 -->
-    <div class="charts-container">
+    <div class="chart-box-right">
       <div
         v-for="(chart, index) in data.charts"
         :key="`chart-${index}`"
-        class="chart-card"
         :class="{
-          'chart-card-non-ring': chart.type !== 'pie', // 非圆环图（pie）添加类名
-          'chart-card-ring': chart.type === 'pie', // 圆环图添加类名
+          'simple-bar-chart': chart.type !== 'pie', // 非圆环图（pie）添加类名
+          'park-type-chart': chart.type === 'pie', // 圆环图添加类名
         }"
-      >
-        <div
-          class="chart-container"
-          :ref="(el) => (chartRefs[`chart-${index}`] = el)"
-        ></div>
-      </div>
+        :ref="(el) => (chartRefs[`chart-${index}`] = el)"
+      ></div>
     </div>
   </div>
 </template>
-
-<style scoped>
-/* 媒体查询：极小屏（< 768px）适配 */
-@media (max-width: 767px) {
-  .stats-visualization {
-    flex-flow: column wrap;
-    gap: 12px; /* 原20px → 12px */
-    max-height: none; /* 小屏取消最大高度限制 */
-    padding: 1vw;
-  }
-
-  .cards-container {
-    flex: 0 0 100%;
-    min-width: 100%;
-    max-width: 100%;
-  }
-
-  .charts-container {
-    flex: 0 0 100%;
-    grid-template-columns: 1fr;
-    min-width: 100%;
-    max-height: none;
-  }
-
-  /* 小屏下所有图表宽度一致 */
-  .chart-card-non-ring,
-  .chart-card-ring {
-    min-width: 100%;
-  }
-
-  .chart-container {
-    height: 280px; /* 小屏适当加高，保证清晰 */
-  }
-}
-
-/* 大屏适配（> 1200px） */
-@media (min-width: 1200px) {
-  .stats-visualization {
-    gap: 20px;
-    max-height: 580px;
-    padding: 12px 20px; /* 原20px → 12px（垂直），降低高度 */
-  }
-
-  .cards-container {
-    flex: 0 0 320px;
-    min-width: 320px;
-    max-width: 320px;
-  }
-
-  /* 大屏下非圆环图宽度更大 */
-  .chart-card-non-ring {
-    min-width: 420px;
-  }
-
-  .chart-card-ring {
-    min-width: 320px;
-  }
-}
-
-.stats-visualization {
-  display: flex;
-  flex-flow: row nowrap;
-  gap: 2vw;
-  align-items: stretch;
-  width: 100%;
-  min-width: 0;
-
-  /* 限制最大高度，避免过高 */
-  max-height: 600px;
-  /* 减少垂直padding（上下1vw，左右保持2vw） */
-  /*padding: 0 2vw;  */
-  padding: 0.5vw 2vw 0;
-  background-color: #fff;
-  /* border-radius: 8px;*/
-  box-shadow: 0 2px 12px 0 rgb(0 0 0 / 10%);
-}
-
-/* 卡片容器：缩小内部垂直间距，降低整体高度 */
-.cards-container {
-  display: flex;
-  flex: 0 0 clamp(280px, 25vw, 320px);
-  flex-direction: column;
-  gap: 12px; /* 原20px → 12px，缩小卡片间垂直间距 */
-  min-width: 280px;
-  max-width: 320px;
-}
-
-/* 卡片样式：减少垂直内边距，缩小单张卡片高度 */
-.stat-card {
-  position: relative;
-  min-width: 0;
-  padding: 12px 20px; /* 原20px → 12px，减少垂直padding */
-  border-left: 4px solid #4a90e2;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgb(74 144 226 / 10%);
-  transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-  box-shadow: 0 4px 16px 0 rgb(74 144 226 / 15%);
-  transform: translateY(-2px);
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px; /* 原12px → 8px，缩小标题与内容间距 */
-}
-
-.card-title {
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 14px;
-  font-weight: 500;
-  color: #6e7e91;
-  white-space: nowrap;
-}
-
-.card-indicator {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-
-.card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 4px; /* 原8px → 4px，缩小数值与描述间距 */
-}
-
-.card-value {
-  font-size: 28px;
-  font-weight: bold;
-  color: #4a90e2;
-}
-
-.card-desc {
-  font-size: 12px;
-  color: #9aa8b7;
-}
-
-/* 图表容器：调整grid布局，区分不同类型图表宽度；缩小垂直间距 */
-.charts-container {
-  display: grid;
-  flex: 1 0 auto;
-
-  /* 基础列宽：适配圆环图，非圆环图通过类名调整 */
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  grid-auto-flow: dense; /* 优化网格布局，填补空白 */
-  gap: 12px; /* 原20px → 12px，缩小图表卡片间垂直间距 */
-  min-width: 300px;
-
-  /* 限制图表区域最大高度，降低整体高度 */
-  max-height: 560px;
-  overflow-y: auto; /* 极端情况出现滚动，保证展示清晰 */
-}
-
-/* 圆环图表（pie）：保持默认宽度 */
-.chart-card-ring {
-  grid-column: span 1;
-}
-
-/* 图表卡片样式：减少垂直内边距，缩小卡片高度 */
-.chart-card {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 0;
-  padding: 12px 20px; /* 原20px → 12px，减少垂直padding */
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgb(74 144 226 / 10%);
-}
-
-/* 非圆环图（line/bar）：宽度稍大 */
-.chart-card-non-ring {
-  grid-column: span 2; /* 占1列（基础列宽更大） */
-  min-width: 380px; /* 比圆环图最小宽度大 */
-}
-
-/* 圆环图（pie）：宽度统一 */
-.chart-card-ring {
-  grid-column: span 1;
-  min-width: 320px; /* 基础宽度 */
-}
-
-/* 图表容器：固定高度，缩小整体高度，保证展示清晰 */
-.chart-container {
-  width: 100%;
-  height: 260px; /* 固定高度（原100%无具体值，现设260px缩小高度） */
-}
-
-/* 核心布局：缩小整体垂直内边距、间距，降低整体高度 */
-</style>

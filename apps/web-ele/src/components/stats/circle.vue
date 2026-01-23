@@ -17,15 +17,6 @@ const props = defineProps({
       { name: '医疗停车场', value: 8 },
     ],
   },
-  // 图表宽高（适配数据看板）
-  width: {
-    type: String,
-    default: '350px',
-  },
-  height: {
-    type: String,
-    default: '350px',
-  },
   // 是否显示标题
   showTitle: {
     type: Boolean,
@@ -171,23 +162,5 @@ onUnmounted(() => {
 
 <template>
   <!-- 车场类型占比圆环图 -->
-  <div
-    ref="chartRef"
-    class="park-type-chart"
-    :style="{
-      width: width || '350px',
-      height: height || '350px',
-    }"
-  ></div>
+  <div ref="chartRef" class="park-type-chart"></div>
 </template>
-
-<style scoped>
-.park-type-chart {
-  display: inline-block;
-  box-sizing: border-box;
-  background: #fff;
-  border-radius: 8px;
-  padding: 10px;
-  box-shadow: 0 2px 12px 0 rgb(74 144 226 / 10%);
-}
-</style>

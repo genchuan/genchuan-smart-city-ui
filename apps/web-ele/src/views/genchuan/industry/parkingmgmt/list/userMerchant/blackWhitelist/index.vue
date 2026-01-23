@@ -48,9 +48,9 @@ const statsData = computed(() => {
 </script>
 <template>
   <div class="black-whitelist-index">
-    <!-- 统计可视化组件，根据showStats状态显示/隐藏 -->
-    <StatsVisualization v-if="showStats" :data="statsData" />
     <div class="common-index">
+      <!-- 统计可视化组件，根据showStats状态显示/隐藏 -->
+      <StatsVisualization v-if="showStats" :data="statsData" />
       <div class="icon-change">
         <el-icon
           class="tabel-tab-icon"
