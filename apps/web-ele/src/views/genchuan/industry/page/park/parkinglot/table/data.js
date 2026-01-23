@@ -146,7 +146,7 @@ export const dataList = () => {
 
 /** 新增/修改的表单/列表的搜索表单 */
 export function useFormSchema() {
-  return [ 
+  return [
     {
       fieldName: 'name',
       label: '停车场名称',
@@ -288,7 +288,7 @@ export function useFormSchema() {
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
-   
+
     {
       field: 'name',
       title: '停车场名称',
@@ -316,13 +316,13 @@ export function useGridColumns() {
     },
     {
       field: 'useTotal',
-      title: '可用车位数', 
+      title: '可用车位数',
       minWidth: 100,
       sortable: true,
     },
     {
       field: 'status',
-      title: '状态', 
+      title: '状态',
       minWidth: 100,
       sortable: true,
     },
@@ -340,7 +340,7 @@ export function useGridColumns() {
     },
     {
       field: 'businessname',
-      title: '运营商户', 
+      title: '运营商户',
       minWidth: 200,
       sortable: true,
     },
