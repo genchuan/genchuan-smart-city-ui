@@ -27,6 +27,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  showStats: {
+    type: Boolean,
+    default: false,
+  },
+  toggleStats: {
+    type: Function,
+    default: () => {},
+  },
 });
 
 const getTitle = computed(() => {
@@ -427,6 +435,11 @@ const handleFullShow = () => {
             content="搜索"
             icon-name="search"
             @click="handleSerachShow"
+          />
+          <IconButton 
+            :content="props.showStats ? '隐藏统计' : '显示统计'" 
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
           />
           <IconButton
             content="全屏"

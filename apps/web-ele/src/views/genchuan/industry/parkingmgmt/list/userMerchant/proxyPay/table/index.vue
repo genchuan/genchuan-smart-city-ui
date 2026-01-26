@@ -498,9 +498,9 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
         const key =
           activeTab.value === 'proxyRule'
             ? 'proxyId'
-            : (activeTab.value === 'proxyOrder'
+            : activeTab.value === 'proxyOrder'
               ? 'orderId'
-              : 'recordId');
+              : 'recordId';
         if (v[key] === formData.value?.[key]) {
           currentApiList[i] = {
             ...obj,
@@ -573,9 +573,9 @@ async function handleDelete(row) {
   const key =
     activeTab.value === 'proxyRule'
       ? 'proxyId'
-      : (activeTab.value === 'proxyOrder'
+      : activeTab.value === 'proxyOrder'
         ? 'orderId'
-        : 'recordId');
+        : 'recordId';
 
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting', [row[key]]),
@@ -791,9 +791,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
       keyField:
         activeTab.value === 'proxyRule'
           ? 'proxyId'
-          : (activeTab.value === 'proxyOrder'
+          : activeTab.value === 'proxyOrder'
             ? 'orderId'
-            : 'recordId'),
+            : 'recordId',
       isHover: true,
     },
     pagerConfig,
@@ -944,7 +944,8 @@ const handleProxyOrderDetailClose = () => {
 // 打开车辆详情
 const handleOpenCarInfo = (row) => {
   // 从carInfoData中获取车辆数据
-  selectedCar.value = carInfoData.find((car) => car.car_number === row.plateNo) || {};
+  selectedCar.value =
+    carInfoData.find((car) => car.car_number === row.plateNo) || {};
   carDetailDrawerRef.value.open();
 };
 

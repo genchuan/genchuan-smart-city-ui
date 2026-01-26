@@ -1,3 +1,5 @@
+import { maskPhone } from '#/utils/dataMask/index.js';
+
 /** 表格初始数据*/
 export const dataList = () => {
   return [
@@ -328,7 +330,7 @@ export function useGridColumns() {
     {
       field: 'maintainUserId',
       title: '运维人员ID',
-      minWidth: 180,
+      minWidth: 80,
       sortable: true,
     },
     {
@@ -349,6 +351,9 @@ export function useGridColumns() {
       title: '联系电话',
       minWidth: 150,
       sortable: true,
+      formatter: ({ cellValue }) => {
+        return maskPhone(cellValue);
+      },
     },
     {
       field: 'teamName',
@@ -390,7 +395,7 @@ export function useGridColumns() {
     },
     {
       title: '操作',
-      width: 200,
+      width: 100,
       fixed: 'right',
       slots: { default: 'actions' },
     },
@@ -411,7 +416,11 @@ export const detailFields = [
     formatter: (value) => (Array.isArray(value) ? value.join(', ') : value),
   },
   { label: '值班状态', key: 'onDutyStatus' },
-  { label: '联系电话', key: 'phone' },
+  {
+    label: '联系电话',
+    key: 'phone',
+    formatter: maskPhone,
+  },
   { label: '所属团队ID', key: 'teamId' },
   { label: '所属团队', key: 'teamName' },
   { label: '岗位编码', key: 'postCode' },
@@ -431,6 +440,85 @@ export const detailFields = [
   { label: '更新时间', key: 'updateTime' },
   { label: '备注', key: 'remark' },
 ];
+
+/** 获取运维人员统计数据 */
+export const getOperStaffStatsData = () => {
+  const data = dataList();
+
+  // 卡片数据
+  const totalCount = data.length;
+  const onDutyCount = data.filter(item => item.onDutyStatus === '在岗').length;
+  const enabledCount = data.filter(item => item.status === '启用').length;
+
+  // 岗位类型占比数据
+  const jobTypeStats = {};
+  data.forEach(item => {
+    jobTypeStats[item.jobType] = (jobTypeStats[item.jobType] || 0) + 1;
+  });
+  const jobTypeChartData = Object.entries(jobTypeStats).map(([name, value]) => ({
+    name,
+    value
+  }));
+
+  // 值班状态占比数据
+  const dutyStatusStats = {};
+  data.forEach(item => {
+    dutyStatusStats[item.onDutyStatus] = (dutyStatusStats[item.onDutyStatus] || 0) + 1;
+  });
+  const dutyStatusChartData = Object.entries(dutyStatusStats).map(([name, value]) => ({
+    name,
+    value
+  }));
+
+  // 各运维团队人员数量对比
+  const teamStats = {};
+  data.forEach(item => {
+    teamStats[item.teamName] = (teamStats[item.teamName] || 0) + 1;
+  });
+  const teamChartXAxis = Object.keys(teamStats);
+  const teamChartSeries = Object.values(teamStats);
+
+  return {
+    cards: [
+      {
+        title: '总运维人员数',
+        value: totalCount,
+        desc: `共${totalCount}位运维人员`,
+        color: '#4A90E2'
+      },
+      {
+        title: '在岗人员数',
+        value: onDutyCount,
+        desc: `较上月增长${Math.floor(Math.random() * 10) + 5}%`,
+        color: '#50E3C2'
+      },
+      {
+        title: '启用人员数',
+        value: enabledCount,
+        desc: `较上月增长${Math.floor(Math.random() * 10) + 5}%`,
+        color: '#FF9F40'
+      }
+    ],
+    charts: [
+      {
+        title: '岗位类型占比',
+        type: 'pie',
+        data: jobTypeChartData
+      },
+      {
+        title: '值班状态占比',
+        type: 'pie',
+        data: dutyStatusChartData
+      },
+      {
+        title: '各运维团队人员数量对比',
+        type: 'bar',
+        xAxis: teamChartXAxis,
+        series: teamChartSeries
+      }
+    ]
+  };
+};
 
 /** 文字描述对象 */
 export const textObj = {

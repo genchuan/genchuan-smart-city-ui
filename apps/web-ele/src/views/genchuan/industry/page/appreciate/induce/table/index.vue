@@ -332,6 +332,25 @@ const arrowChange = () => {
             {{ dataObj.detailObj.induction_id }}
           </div>
         </div>
+
+        <div class="detail-card-row">
+          <div class="detail-row-left">行政区域:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.area }}
+          </div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">车场类型:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.type }}
+          </div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">距离范围:</div>
+          <div class="detail-row-right">
+            {{ dataObj.detailObj.asset }}
+          </div>
+        </div>
         <div class="detail-card-row">
           <div class="detail-row-left">诱导屏名称:</div>
           <div class="detail-row-right">
@@ -445,6 +464,26 @@ const arrowChange = () => {
           type="primary"
         >
           {{ row.induction_name }}
+        </el-text>
+      </template>
+
+      <template #area="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.area }}
+        </el-text>
+      </template>
+
+      <template #type="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.type }}
         </el-text>
       </template>
       <template #actions="{ row }">
