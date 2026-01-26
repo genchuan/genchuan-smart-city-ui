@@ -137,7 +137,9 @@ async function handleDelete(row) {
   });
   try {
     dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.induction_name]));
+    ElMessage.success(
+      $t('ui.actionMessage.deleteSuccess', [row.induction_name]),
+    );
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -151,7 +153,9 @@ async function handleDeleteBatch() {
     text: $t('ui.actionMessage.deletingBatch'),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => !checkedIds.value.includes(v.id));
+    dataObj.apilist = dataObj.apilist.filter(
+      (v) => !checkedIds.value.includes(v.id),
+    );
     checkedIds.value = [];
     ElMessage.success($t('删除成功'));
     handleRefresh();
@@ -185,8 +189,8 @@ const changeTotalShow = () => {
 
 // 筛选状态核心变量
 const activeName = ref('全部'); // 状态筛选：全部/启用/禁用
-const filterArea = ref('');     // 区域筛选：空=未筛选，有值=当前筛选区域
-const filterType = ref('');     // 类型筛选：空=未筛选，有值=当前筛选车场类型
+const filterArea = ref(''); // 区域筛选：空=未筛选，有值=当前筛选区域
+const filterType = ref(''); // 类型筛选：空=未筛选，有值=当前筛选车场类型
 
 /** 行政区域筛选：点击筛选，再次点击取消 */
 const handleFilterByArea = (area) => {
@@ -218,19 +222,27 @@ const getTableData = (pageObj) => {
   // 第一步：状态筛选（全部/启用/禁用）
   let filteredList = dataObj.apilist.filter((v) => {
     switch (activeName.value) {
-      case '全部': return true;
-      case '启用': return v.status === '1';
-      case '禁用': return v.status === '0';
-      default: return false;
+      case '全部': {
+        return true;
+      }
+      case '启用': {
+        return v.status === '1';
+      }
+      case '禁用': {
+        return v.status === '0';
+      }
+      default: {
+        return false;
+      }
     }
   });
   // 第二步：叠加行政区域筛选
   if (filterArea.value) {
-    filteredList = filteredList.filter(v => v.area === filterArea.value);
+    filteredList = filteredList.filter((v) => v.area === filterArea.value);
   }
   // 第三步：叠加车场类型筛选
   if (filterType.value) {
-    filteredList = filteredList.filter(v => v.type === filterType.value);
+    filteredList = filteredList.filter((v) => v.type === filterType.value);
   }
   // 分页处理
   dataObj.total = filteredList.length;
@@ -274,7 +286,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     rowConfig: { keyField: 'id', isHover: true },
     pagerConfig: dataObj,
-    toolbarConfig: { 'class-name': 'common-tool-bar-config', refresh: true, search: true },
+    toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
+      refresh: true,
+      search: true,
+    },
     showOverflow: true,
   },
   gridEvents: {
@@ -291,10 +307,21 @@ const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用
 const createLabel = (item) => {
   let count = 0;
   switch (item.label) {
-    case '全部': count = dataObj.apilist.length; break;
-    case '启用': count = dataObj.apilist.filter((v) => v.status === '1').length; break;
-    case '禁用': count = dataObj.apilist.filter((v) => v.status === '0').length; break;
-    default: count = 0;
+    case '全部': {
+      count = dataObj.apilist.length;
+      break;
+    }
+    case '启用': {
+      count = dataObj.apilist.filter((v) => v.status === '1').length;
+      break;
+    }
+    case '禁用': {
+      count = dataObj.apilist.filter((v) => v.status === '0').length;
+      break;
+    }
+    default: {
+      count = 0;
+    }
   }
   return `${item.label}(${count})`;
 };
@@ -337,20 +364,39 @@ const arrowChange = () => {
     <!-- 数据详情抽屉 -->
     <DetailDrawer :title="`${dataObj.detailObj.induction_name}详情`">
       <div class="detail-card">
-        <div class="detail-card-row" v-for="(value, key) in dataObj.detailObj" :key="key">
+        <div
+          class="detail-card-row"
+          v-for="(value, key) in dataObj.detailObj"
+          :key="key"
+        >
           <div class="detail-row-left">
-            {{ key === 'induction_id' ? '诱导屏ID' :
-            key === 'area' ? '行政区域' :
-              key === 'type' ? '车场类型' :
-                key === 'asset' ? '距离范围' :
-                  key === 'induction_name' ? '诱导屏名称' :
-                    key === 'region' ? '覆盖区域' :
-                      key === 'related_lot_ids' ? '关联车场' :
-                        key === 'push_strategy' ? '推送策略' :
-                          key === 'status' ? '状态' :
-                            key === 'create_time' ? '创建时间' :
-                              key === 'update_time' ? '更新时间' :
-                                key === 'remark' ? '备注' : key }}:
+            {{
+              key === 'induction_id'
+                ? '诱导屏ID'
+                : key === 'area'
+                  ? '行政区域'
+                  : key === 'type'
+                    ? '车场类型'
+                    : key === 'asset'
+                      ? '距离范围'
+                      : key === 'induction_name'
+                        ? '诱导屏名称'
+                        : key === 'region'
+                          ? '覆盖区域'
+                          : key === 'related_lot_ids'
+                            ? '关联车场'
+                            : key === 'push_strategy'
+                              ? '推送策略'
+                              : key === 'status'
+                                ? '状态'
+                                : key === 'create_time'
+                                  ? '创建时间'
+                                  : key === 'update_time'
+                                    ? '更新时间'
+                                    : key === 'remark'
+                                      ? '备注'
+                                      : key
+            }}:
           </div>
           <div class="detail-row-right">
             {{ key === 'status' ? (value === '1' ? '启用' : '禁用') : value }}
@@ -368,9 +414,16 @@ const arrowChange = () => {
     <Grid>
       <!-- 表格标题栏：状态Tabs + 双维度筛选标签 -->
       <template #table-title>
-        <div class="tabel-tabs" style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
+        >
           <div v-if="props.secondShow">
-            <el-tabs v-model="activeName" class="demo-tabs" @tab-change="handleClick">
+            <el-tabs
+              v-model="activeName"
+              class="demo-tabs"
+              @tab-change="handleClick"
+            >
               <el-tab-pane
                 v-for="item in tabsData"
                 :key="item.label"
@@ -380,25 +433,25 @@ const arrowChange = () => {
             </el-tabs>
           </div>
           <!-- 行政区域筛选标签：蓝色primary，仅筛选时显示 -->
-          <el-tag
+          <ElTag
             v-if="filterArea"
             type="primary"
             closable
             @close="handleCancelAreaFilter"
-            style="height: 32px; line-height: 32px; margin: 4px 0;"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
           >
             区域：{{ filterArea }}
-          </el-tag>
+          </ElTag>
           <!-- 车场类型筛选标签：绿色success，仅筛选时显示 -->
-          <el-tag
+          <ElTag
             v-if="filterType"
             type="success"
             closable
             @close="handleCancelTypeFilter"
-            style="height: 32px; line-height: 32px; margin: 4px 0;"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
           >
             类型：{{ filterType }}
-          </el-tag>
+          </ElTag>
         </div>
       </template>
 
@@ -406,7 +459,11 @@ const arrowChange = () => {
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
           <IconButton
             content="批量删除"
             icon-name="delete"
@@ -414,13 +471,21 @@ const arrowChange = () => {
             :disabled="isEmpty(checkedIds)"
             @click="handleDeleteBatch"
           />
-          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
           <IconButton
             :content="arrowShow ? '收缩' : '展开'"
             :icon-name="arrowShow ? 'ArrowUp' : 'ArrowDown'"
             @click="arrowChange"
           />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="handleFullShow"
+          />
         </div>
       </template>
 
@@ -430,7 +495,7 @@ const arrowChange = () => {
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.induction_name }}
         </el-text>
@@ -442,7 +507,7 @@ const arrowChange = () => {
           @click="handleFilterByArea(row.area)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.area }}
         </el-text>
@@ -454,7 +519,7 @@ const arrowChange = () => {
           @click="handleFilterByType(row.type)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.type }}
         </el-text>
@@ -463,8 +528,16 @@ const arrowChange = () => {
       <!-- 表格列：操作栏 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton content="编辑" icon-name="edit" @click="handleEdit(row)" />
+          <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleOpenDetail(row)"
+          />
+          <IconButton
+            content="编辑"
+            icon-name="edit"
+            @click="handleEdit(row)"
+          />
           <IconButton
             content="删除"
             icon-name="delete"
@@ -477,8 +550,12 @@ const arrowChange = () => {
       <!-- 表格底部：统计信息展开/收缩 -->
       <template #bottom>
         <div class="common-total" @click="changeTotalShow">
-          <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow"><ArrowDown /></el-icon>
-          <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow"><ArrowUp /></el-icon>
+          <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
+            <ArrowDown />
+          </el-icon>
+          <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
+            <ArrowUp />
+          </el-icon>
           <span> 本页统计：诱导屏数量: 10; 启用: 8; 禁用: 2 </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
@@ -500,7 +577,6 @@ const arrowChange = () => {
   opacity: 0.9;
 }
 
-
 /* 表格标题栏：宽度100%，内边距优化 */
 .tabel-tabs {
   width: 100%;
@@ -511,18 +587,21 @@ const arrowChange = () => {
 .detail-card {
   padding: 24px;
 }
+
 .detail-card-row {
   display: flex;
-  margin-bottom: 16px;
-  align-items: center;
   flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 16px;
 }
+
 .detail-row-left {
   min-width: 120px;
+  margin-right: 16px;
   font-weight: 500;
   color: #606266;
-  margin-right: 16px;
 }
+
 .detail-row-right {
   flex: 1;
   color: #303133;
@@ -531,8 +610,8 @@ const arrowChange = () => {
 /* 表格工具栏：按钮间距、自动换行 */
 :deep(.common-toolbar-tools) {
   display: flex;
-  gap: 8px;
   flex-wrap: wrap;
+  gap: 8px;
   padding: 4px 0;
 }
 
@@ -545,9 +624,10 @@ const arrowChange = () => {
 
 /* 底部统计栏：鼠标指针，提示可点击 */
 .common-total {
-  cursor: pointer;
   padding: 8px 0;
+  cursor: pointer;
 }
+
 .common-total-bottom {
   padding: 8px 0;
   color: #606266;

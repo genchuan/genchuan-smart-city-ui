@@ -21,7 +21,7 @@ export const dataList = () => {
       induction_id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
       induction_name: '交通枢纽诱导屏',
       region: '上海火车站',
-      related_lot_ids: '火车站北广场停车场',
+      related_lot_ids: '商业停车场',
       push_strategy: '定时推送',
       status: '1',
       create_time: '2023-10-12 10:15:00',
@@ -31,7 +31,7 @@ export const dataList = () => {
       sort: '综合评分',
       available: 100,
       area: '静安区',
-      type: '交通枢纽停车场',
+      type: '商业停车场',
     },
     {
       induction_id: '6ba7b811-9dad-11d1-80b4-00c04fd430c8',
