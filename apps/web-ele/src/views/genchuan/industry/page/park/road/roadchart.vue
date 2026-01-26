@@ -24,41 +24,39 @@ const state = reactive({
         v-bind="item"
       />
     </div>
-    <div class="chart-box-right">
-      <Circle
-        width="340px"
-        height="330px"
-        title-text="门禁类型占比"
-        :data="[
-          { name: '道闸', value: 4 },
-          { name: '车牌识别', value: 5 },
-          { name: '道闸+刷卡', value: 2 },
-          { name: '车牌识别+人脸识别', value: 5 },
-        ]"
-      />
-      <Circle
-        width="340px"
-        height="330px"
-        title-text="车库状态占比"
-        :data="[
-          { name: '启用', value: 4 },
-          { name: '禁用', value: 5 },
-        ]"
-        :colors="['#67C23A', '#E6A23C', '#F56C6C', '#909399']"
-      />
-      <Columnar
-        height="330px"
-        title="不同车场车库数量对比"
-        :x-data="[
-          '龙文区碧湖公园停车场',
-          '龙海区石码镇便民停车场',
-          '龙海区闽齐社区停车场',
-          '龙海区闽齐社区停车场',
-          '长泰区武安镇公共停车场',
-          '漳浦县绥安镇便民停车场',
-        ]"
-        :series-data="[{ name: '', data: [58, 42, 35, 15, 13, 33] }]"
-      />
-    </div>
+    <Circle
+      width="340px"
+      height="330px"
+      title-text="门禁类型占比"
+      :data="[
+        { name: '道闸', value: 4 },
+        { name: '车牌识别', value: 5 },
+        { name: '道闸+刷卡', value: 2 },
+        { name: '车牌识别+人脸识别', value: 5 },
+      ]"
+    />
+    <Circle
+      width="340px"
+      height="330px"
+      title-text="车库状态占比"
+      :data="[
+        { name: '启用', value: 4 },
+        { name: '禁用', value: 5 },
+      ]"
+      :colors="['#67C23A', '#E6A23C', '#F56C6C', '#909399']"
+    />
+    <Columnar
+      height="330px"
+      title="不同车场车库数量对比"
+      :x-data="[
+        '龙文区碧湖公园停车场',
+        '龙海区石码镇便民停车场',
+        '龙海区闽齐社区停车场',
+        '龙海区闽齐社区停车场',
+        '长泰区武安镇公共停车场',
+        '漳浦县绥安镇便民停车场',
+      ]"
+      :series-data="[{ name: '', data: [58, 42, 35, 15, 13, 33] }]"
+    />
   </div>
 </template>
