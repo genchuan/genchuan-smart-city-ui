@@ -1,6 +1,8 @@
 <script setup>
 import { ref } from 'vue';
 
+import Correlation from './correlation/index.vue';
+import Districtchart from './districtchart.vue';
 import Parkchart from './parkchart.vue';
 import Table from './table/index.vue';
 
@@ -12,10 +14,8 @@ const changeArrowStatus = () => {
     v.secondShow = secondShow.value;
   });
 };
-const arrowChange = () => {
-  tabArray.value.forEach((v) => {
-    v.arrowShow = !v.arrowShow;
-  });
+const arrowChange = (index) => {
+  tabArray.value[index].arrowShow = !tabArray.value[index].arrowShow;
 };
 const tabArray = ref([
   {
@@ -28,19 +28,25 @@ const tabArray = ref([
   },
   {
     label: '片区关联维护',
-    components: Table,
+    components: Correlation,
     showSecondary: true,
     secondShow: false,
     arrowShow: false,
     arrowState: false,
   },
 ]);
+const tabChange = () => {
+  tabArray.value.forEach((v) => {
+    v.arrowShow = false;
+  });
+};
 const activeName = ref('片区基础管理');
 const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
     <Parkchart v-if="tabArray[0].arrowShow" />
+    <Districtchart v-if="tabArray[1].arrowShow" />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -64,7 +70,7 @@ const secondShow = ref(false);
       @tab-change="tabChange"
     >
       <el-tab-pane
-        v-for="item in tabArray"
+        v-for="(item, index) in tabArray"
         :key="item.label"
         :name="item.label"
       >
@@ -78,7 +84,7 @@ const secondShow = ref(false);
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"
-          @arrow-change="arrowChange"
+          @arrow-change="arrowChange(index)"
         />
       </el-tab-pane>
     </el-tabs>
