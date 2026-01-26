@@ -443,8 +443,6 @@ const detailFields = [
       :title="`${selectedVisitor?.visitorName || '访客详情'}`"
       @close="handleDetailClose"
     />
-    <!-- todo 车辆详情抽屉 -->
-
     <!-- 权限抽屉 -->
     <PermissionDrawerComp>
       <PermissionDrawer
