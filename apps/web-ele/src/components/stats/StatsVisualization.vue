@@ -241,16 +241,14 @@ onUnmounted(() => {
     </div>
 
     <!-- 图表区域：给chart-card添加动态类名区分图表类型 -->
-    <div class="chart-box-right">
-      <div
-        v-for="(chart, index) in data.charts"
-        :key="`chart-${index}`"
-        :class="{
-          'simple-bar-chart': chart.type !== 'pie', // 非圆环图（pie）添加类名
-          'park-type-chart': chart.type === 'pie', // 圆环图添加类名
-        }"
-        :ref="(el) => (chartRefs[`chart-${index}`] = el)"
-      ></div>
-    </div>
+    <div
+      v-for="(chart, index) in data.charts"
+      :key="`chart-${index}`"
+      :class="{
+        'simple-bar-chart': chart.type !== 'pie', // 非圆环图（pie）添加类名
+        'park-type-chart': chart.type === 'pie', // 圆环图添加类名
+      }"
+      :ref="(el) => (chartRefs[`chart-${index}`] = el)"
+    ></div>
   </div>
 </template>

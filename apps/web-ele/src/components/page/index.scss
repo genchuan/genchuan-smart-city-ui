@@ -202,6 +202,16 @@
     padding-bottom: 0.5rem;
     display: flex;
     flex-wrap: wrap;
+    gap: 20px; // 统一子元素间距，替代零散的margin
+    padding-left: 15px;
+    padding-right: 15px;
+
+    // 大屏样式（≥1200px）：恢复原有间距逻辑
+    @media (min-width: 1200px) {
+      padding-left: 0;
+      padding-right: 0;
+      gap: 0;
+    }
 
     .chart-box-left {
       display: flex;
@@ -210,7 +220,51 @@
       gap: 12px;
       min-width: 280px;
       max-width: 320px;
-      margin-left: 30px;
+      margin: 0; // 移除原有margin，改用外层gap控制
+
+      // 大屏样式：恢复原有左侧间距
+      @media (min-width: 1200px) {
+        margin-left: 15px;
+      }
+
+      // 平板/小屏适配：统计卡片占满宽度，横向滚动
+      @media (max-width: 1199px) {
+        flex: 0 0 100%;
+        max-width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 10px;
+
+        // 优化横向滚动条样式
+        &::-webkit-scrollbar {
+          height: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 3px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          background: #dcdfe6;
+          border-radius: 3px;
+        }
+
+        .stat-card {
+          flex: 0 0 280px; // 卡片固定宽度
+          margin-right: 12px;
+
+          // 小屏优化卡片高度和内边距
+          @media (max-width: 768px) {
+            height: auto;
+            padding: 16px 12px;
+
+            .card-body .card-value {
+              font-size: 24px; // 缩小数值字体，适配小屏
+            }
+          }
+        }
+      }
 
       .stat-card {
         height: 102px;
@@ -219,7 +273,6 @@
         border-radius: 8px;
         padding: 20px 16px;
         border-left: 4px solid #13ce66;
-        /* 默认左侧边框色 */
         box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
         transition: all 0.3s ease;
         cursor: default;
@@ -265,12 +318,12 @@
           }
         }
       }
-
     }
 
     .park-type-chart {
-      flex: 0.52;
-      min-width: 330px;
+      flex: 1; // 改为自适应宽度，替代固定0.52
+      min-width: 280px; // 降低最小宽度，适配手机
+      max-width: 100%; // 防止溢出
       height: 330px;
       display: inline-block;
       box-sizing: border-box;
@@ -278,53 +331,49 @@
       border-radius: 8px;
       padding: 10px;
       box-shadow: 0 2px 12px 0 rgb(74 144 226 / 10%);
-      margin-left: 5px;
+      margin: 0; // 移除margin，改用外层gap控制
       display: flex;
       justify-content: center;
+
+      // 小屏适配：降低图表高度
+      @media (max-width: 768px) {
+        height: 280px;
+      }
+
+      // 大屏样式：恢复原有宽度和间距
+      @media (min-width: 1200px) {
+        flex: 0.52;
+        min-width: 330px;
+        margin-left: 5px;
+      }
     }
 
     .simple-bar-chart {
       flex: 1;
+      min-width: 280px; // 降低最小宽度，适配手机
+      max-width: 100%; // 防止溢出
       height: 330px;
-      min-width: 620px;
-      margin-left: 15px;
+      margin: 0; // 移除margin，改用外层gap控制
       display: inline-block;
       background: #fff;
       border-radius: 8px;
       padding: 10px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
 
-    .chart-box-right {
-      display: flex;
-      flex-wrap: wrap;
-      flex: 1;
-
-      .park-type-chart {
-        flex: 0.52;
-        min-width: 330px;
-        height: 330px;
-        display: inline-block;
-        box-sizing: border-box;
-        background: #fff;
-        border-radius: 8px;
-        padding: 10px;
-        box-shadow: 0 2px 12px 0 rgb(74 144 226 / 10%);
-        margin-left: 5px;
-        display: flex;
-        justify-content: center;
+      // 小屏适配：降低图表高度
+      @media (max-width: 768px) {
+        height: 280px;
       }
 
-      .simple-bar-chart {
-        flex: 1;
-        height: 330px;
+      // 大屏样式：恢复原有最小宽度和间距
+      @media (min-width: 1200px) {
         min-width: 620px;
         margin-left: 15px;
-        display: inline-block;
-        background: #fff;
-        border-radius: 8px;
-        padding: 10px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+
+      // 平板适配：调整最小宽度
+      @media (min-width: 768px) and (max-width: 1199px) {
+        min-width: 330px;
       }
     }
   }
