@@ -349,6 +349,10 @@ const parkDetailDrawerRef = ref(null);
           </el-select>
         </div>
       </div>
+      <div class="park-bind-row">
+        <div class="bind-left"><el-button>取消</el-button></div>
+        <div class="bind-right"><el-button type="primary">保存</el-button></div>
+      </div>
     </bindDrawer>
     <FormDrawer :title="getTitle">
       <Form />

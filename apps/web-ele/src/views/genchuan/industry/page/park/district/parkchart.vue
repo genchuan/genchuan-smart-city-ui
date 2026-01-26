@@ -7,9 +7,10 @@ import Columnar from '#/components/stats/columnar.vue';
 
 const state = reactive({
   cardList: [
-    { title: '总停车场数', value: 10, color: '#13ce66' },
-    { title: '正常运营车场数', value: 8, color: '#4ECDC4' },
-    { title: '可用车场数', value: 8, color: '#FF6B6B' },
+    { title: '总片区数', value: 10, color: '#13ce66' },
+    { title: '正常运营片区数', value: 8, color: '#4ECDC4' },
+    { title: '关联车场总数', value: 16, color: '#FF6B6B' },
+    { title: '关联道路总数', value: 28, color: '#FF6B6B' },
   ],
 });
 </script>
@@ -25,28 +26,30 @@ const state = reactive({
       />
     </div>
     <Circle
-      title-text="2026年漳州车场类型占比"
+      class="park-type-chart-new"
+      title-text="片区状态占比"
       :data="[
-        { name: '商业停车场', value: 65 },
-        { name: '公共停车场', value: 48 },
-        { name: '小区停车场', value: 40 },
-        { name: '文旅停车场', value: 20 },
+        { name: '开启', value: 65 },
+        { name: '禁用', value: 18 },
       ]"
-    />
-    <Circle
-      title-text="运营状态占比"
-      :data="[
-        { name: '运营中', value: 158 },
-        { name: '维护中', value: 12 },
-        { name: '暂停运营', value: 5 },
-        { name: '待启用', value: 5 },
-      ]"
-      :colors="['#67C23A', '#E6A23C', '#F56C6C', '#909399']"
     />
     <Columnar
-      title="车场类型占比"
-      :x-data="['商业', '公共', '小区', '文旅']"
-      :series-data="[{ name: '数量', data: [58, 42, 35, 15] }]"
+      class="park-type-chart-new"
+      title="不同区域片区数量对比"
+      :x-data="['芗城区', '龙海区', '龙文区', '台商投资区', '高新区', '东山县']"
+      :series-data="[{ name: '数量', data: [58, 42, 35, 15, 33, 21] }]"
+    />
+    <Columnar
+      class="park-type-chart-new"
+      title="各片区关联车场数对比"
+      :x-data="['芗城区', '龙海区', '龙文区', '台商投资区', '高新区', '东山县']"
+      :series-data="[{ name: '数量', data: [31, 21, 35, 56, 22, 5] }]"
     />
   </div>
 </template>
+<style scoped>
+.park-type-chart-new {
+  min-width: 280px !important;
+  height: 440px !important;
+}
+</style>

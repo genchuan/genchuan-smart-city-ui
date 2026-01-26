@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 
 import * as echarts from 'echarts';
 
@@ -32,6 +32,8 @@ const props = defineProps({
 // 图表实例引用
 const chartRef = ref(null);
 let chartInstance = null;
+// 防抖计时器（用于resize）
+let resizeTimer = null;
 
 // 漳州车场类型专属配色（贴合业务视觉）
 const parkTypeColors = [
@@ -43,124 +45,169 @@ const parkTypeColors = [
   '#F56C6C', // 医疗停车场-红色
 ];
 
-// 初始化车场类型占比图表
-const initChart = () => {
-  if (!chartRef.value) return;
+// 防抖函数：避免频繁resize触发
+const debounce = (fn, delay = 300) => {
+  return (...args) => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => fn.apply(this, args), delay);
+  };
+};
 
-  // 销毁旧实例
-  if (chartInstance) {
-    chartInstance.dispose();
+// 检查容器尺寸是否有效
+const checkContainerSize = (container) => {
+  if (!container) return false;
+  const rect = container.getBoundingClientRect();
+  // 宽高都大于0才视为有效
+  return rect.width > 0 && rect.height > 0;
+};
+
+// 初始化车场类型占比图表（重构核心逻辑）
+const initChart = async () => {
+  // 等待DOM渲染完成（关键：解决重新进入时DOM未加载的问题）
+  await nextTick();
+
+  const container = chartRef.value;
+  // 1. 校验容器是否存在+尺寸是否有效
+  if (!container || !checkContainerSize(container)) {
+    console.warn('ECharts容器不存在或尺寸为0，跳过初始化');
+    // 尺寸无效时延迟重试（适配父容器异步渲染）
+    setTimeout(initChart, 200);
+    return;
   }
 
-  // 创建新实例
-  chartInstance = echarts.init(chartRef.value);
+  // 2. 销毁旧实例（避免实例冲突）
+  if (chartInstance) {
+    chartInstance.dispose();
+    chartInstance = null;
+  }
 
-  // 计算总计
-  const total = props.data.reduce((sum, item) => sum + item.value, 0);
+  try {
+    // 3. 创建新实例（包裹try-catch，避免初始化失败）
+    chartInstance = echarts.init(container);
 
-  // 组装图表配置（专属车场类型样式，图例调整到底部）
-  const option = {
-    // 标题（适配车场类型场景）
-    title: props.showTitle
-      ? {
-          text: props.titleText,
-          left: 'center',
-          top: 10,
-          textStyle: {
-            fontSize: 14,
-            fontWeight: 300,
-            color: '#303133',
-          },
-        }
-      : null,
-    // 提示框（优化车场数据展示格式）
-    tooltip: {
-      trigger: 'item',
-      formatter: '{b}<br/>数量：{c} 个<br/>占比：{d}%',
-      textStyle: {
-        fontSize: 12,
-      },
-    },
-    // 图例调整到底部水平排列（核心修改）
-    legend: {
-      orient: 'horizontal', // 水平排列
-      left: 'center', // 水平居中
-      bottom: 0, // 距离底部10px
-      textStyle: {
-        fontSize: 12,
-        color: '#6E7E91',
-      },
-      // 图例项换行适配
-      itemWidth: 10, // 每个图例项宽度，避免挤在一起
-      formatter: (name) => {
-        // 图例名称过长时省略
-        return name.length > 6 ? `${name.slice(0, 6)}...` : name;
-      },
-    },
-    // 系列配置（调整圆环位置，适配底部图例）
-    series: [
-      {
-        type: 'pie',
-        radius: ['30%', '60%'], // 优化圆环比例
-        center: ['50%', '50%'], // 上移圆环，给底部图例预留空间
-        avoidLabelOverlap: false,
-        label: {
-          show: false,
-          position: 'center',
+    // 计算总计
+    const total = props.data.reduce((sum, item) => sum + item.value, 0);
+
+    // 组装图表配置
+    const option = {
+      title: props.showTitle
+        ? {
+            text: props.titleText,
+            left: 'center',
+            top: 10,
+            textStyle: {
+              fontSize: 14,
+              fontWeight: 300,
+              color: '#303133',
+            },
+          }
+        : null,
+      tooltip: {
+        trigger: 'item',
+        formatter: '{b}<br/>数量：{c} 个<br/>占比：{d}%',
+        textStyle: {
+          fontSize: 12,
         },
-        labelLine: {
-          show: false,
-          position: 'center',
+      },
+      legend: {
+        orient: 'horizontal',
+        left: 'center',
+        bottom: 0,
+        textStyle: {
+          fontSize: 12,
+          color: '#6E7E91',
         },
-        data: props.data,
-        itemStyle: {
-          color: (params) =>
-            parkTypeColors[params.dataIndex % parkTypeColors.length],
-          borderRadius: 6, // 圆角更圆润
-          borderColor: '#fff',
-          borderWidth: 2,
+        itemWidth: 10,
+        formatter: (name) => {
+          return name.length > 6 ? `${name.slice(0, 6)}...` : name;
         },
-        emphasis: {
+      },
+      series: [
+        {
+          type: 'pie',
+          radius: ['30%', '60%'],
+          center: ['50%', '50%'],
+          avoidLabelOverlap: false,
           label: {
-            show: true,
-            fontSize: 18,
-            fontWeight: 'bold',
-            color: '#6E7E91',
+            show: false,
+            position: 'center',
+          },
+          labelLine: {
+            show: false,
+            position: 'center',
+          },
+          data: props.data,
+          itemStyle: {
+            color: (params) =>
+              parkTypeColors[params.dataIndex % parkTypeColors.length],
+            borderRadius: 6,
+            borderColor: '#fff',
+            borderWidth: 2,
+          },
+          emphasis: {
+            label: {
+              show: true,
+              fontSize: 18,
+              fontWeight: 'bold',
+              color: '#6E7E91',
+            },
           },
         },
-      },
-    ],
-  };
+      ],
+    };
 
-  chartInstance.setOption(option);
+    // 4. 设置配置（强制覆盖，避免配置残留）
+    chartInstance.setOption(option, {
+      notMerge: false,
+      lazyUpdate: false,
+    });
+  } catch (error) {
+    console.error('ECharts初始化失败：', error);
+    chartInstance = null;
+  }
 };
 
-// 监听数据变化，重新渲染
+// 监听数据变化，重新渲染（增加守卫）
 watch(
   () => props.data,
-  () => initChart(),
-  { deep: true },
+  () => {
+    // 确保组件未卸载且DOM已渲染
+    if (chartRef.value) {
+      initChart();
+    }
+  },
+  { deep: true, immediate: false }, // 关闭immediate，避免挂载前触发
 );
 
-// 窗口自适应
-const resizeHandler = () => {
-  chartInstance && chartInstance.resize();
-};
+// 窗口自适应（防抖+实例有效性校验）
+const resizeHandler = debounce(() => {
+  // 实例存在+容器有效才执行resize
+  if (chartInstance && checkContainerSize(chartRef.value)) {
+    chartInstance.resize();
+  }
+});
 
-// 生命周期
+// 生命周期（优化）
 onMounted(() => {
-  initChart();
-  window.addEventListener('resize', resizeHandler);
+  // 挂载后异步初始化，确保DOM就绪
+  nextTick(() => {
+    initChart();
+    window.addEventListener('resize', resizeHandler);
+  });
 });
 
 onUnmounted(() => {
+  // 清理所有监听和实例
+  clearTimeout(resizeTimer);
   window.removeEventListener('resize', resizeHandler);
-  chartInstance && chartInstance.dispose();
-  chartInstance = null;
+  if (chartInstance) {
+    chartInstance.dispose();
+    chartInstance = null;
+  }
 });
 </script>
 
 <template>
-  <!-- 车场类型占比圆环图 -->
+  <!-- 车场类型占比圆环图：确保容器有明确宽高 -->
   <div ref="chartRef" class="park-type-chart"></div>
 </template>

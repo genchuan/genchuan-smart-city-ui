@@ -23,7 +23,7 @@ const tabArray = ref([
     components: Table,
     showSecondary: true,
     secondShow: false,
-    arrowShow: true,
+    arrowShow: false,
     arrowState: false,
   },
   {
@@ -31,7 +31,7 @@ const tabArray = ref([
     components: Table,
     showSecondary: true,
     secondShow: false,
-    arrowShow: true,
+    arrowShow: false,
     arrowState: false,
   },
 ]);
