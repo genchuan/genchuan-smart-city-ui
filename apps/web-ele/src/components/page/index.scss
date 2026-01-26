@@ -158,7 +158,7 @@
 
   .detail-card {
     padding: 10px;
-    background-color: #fff;
+    background-color: hsl(var(--card));
     border: 1px solid #e4e7ed;
     border-radius: 6px;
     transition: all 0.3s ease;
@@ -269,7 +269,7 @@
       .stat-card {
         height: 102px;
         position: relative;
-        background: #ffffff;
+        background-color: hsl(var(--card));
         border-radius: 8px;
         padding: 20px 16px;
         border-left: 4px solid #13ce66;
@@ -327,7 +327,7 @@
       height: 330px;
       display: inline-block;
       box-sizing: border-box;
-      background: #fff;
+      background-color: hsl(var(--card));
       border-radius: 8px;
       padding: 10px;
       box-shadow: 0 2px 12px 0 rgb(74 144 226 / 10%);
@@ -355,7 +355,7 @@
       height: 330px;
       margin: 0; // 移除margin，改用外层gap控制
       display: inline-block;
-      background: #fff;
+      background-color: hsl(var(--card));
       border-radius: 8px;
       padding: 10px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
