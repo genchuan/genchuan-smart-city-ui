@@ -263,10 +263,10 @@
     .chart-box-right {
       display: flex;
       flex-wrap: wrap;
-
-
+      flex: 1;
       .park-type-chart {
-        width: 330px;
+        flex: 0.52;
+        min-width: 330px;
         height: 330px;
         display: inline-block;
         box-sizing: border-box;
@@ -280,8 +280,9 @@
       }
 
       .simple-bar-chart {
+        flex: 1;
         height: 330px;
-        width: 620px;
+        min-width: 620px;
         margin-left: 15px;
         display: inline-block;
         background: #fff;
