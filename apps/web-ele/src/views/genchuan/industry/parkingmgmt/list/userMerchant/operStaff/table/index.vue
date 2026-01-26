@@ -436,8 +436,8 @@ const handleFullShow = () => {
             icon-name="search"
             @click="handleSerachShow"
           />
-          <IconButton 
-            :content="props.showStats ? '隐藏统计' : '显示统计'" 
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
             :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
             @click="props.toggleStats"
           />
