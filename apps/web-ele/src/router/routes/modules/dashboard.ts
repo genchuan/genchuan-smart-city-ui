@@ -31,6 +31,24 @@ const routes: RouteRecordRaw[] = [
           title: $t('page.dashboard.analytics'),
         },
       },
+      // {
+      //   name: 'todo',
+      //   path: '/todo',
+      //   component: () => import('#/views/dashboard/todo/index.vue'),
+      //   meta: {
+      //     icon: 'carbon:workspace',
+      //     title: '我的任务',
+      //   },
+      // },
+      // {
+      //   name: 'approve',
+      //   path: '/approve',
+      //   component: () => import('#/views/dashboard/approve/index.vue'),
+      //   meta: {
+      //     icon: 'carbon:workspace',
+      //     title: '我的审批',
+      //   },
+      // },
     ],
   },
   {

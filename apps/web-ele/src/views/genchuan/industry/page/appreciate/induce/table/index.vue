@@ -4,7 +4,7 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -14,6 +14,7 @@ import { exportToExcel } from '#/utils/excel.js';
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
+// 接收父组件属性
 const props = defineProps({
   secondShow: {
     type: Boolean,
@@ -21,17 +22,18 @@ const props = defineProps({
   },
 });
 
-// 关键修改1：统一事件名（这里选择声明为toggleChart，和触发时保持一致）
-// 原错误：声明的是'toggle-chart'，触发的是'toggleChart'
+// 向父组件派发事件
 const emit = defineEmits(['toggleChart']);
 
-// 新增：子组件内部控制按钮显示的状态（独立于图表）
+// 展开/收缩按钮自身状态
 const arrowShow = ref(false);
 
+// 表单抽屉标题（新增/编辑区分）
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
 });
 
+// 抽屉配置 - 搜索抽屉
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -42,6 +44,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
+
+// 抽屉配置 - 详情抽屉
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -52,7 +56,11 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
+
+// 新增/编辑表单数据绑定
 const formData = ref();
+
+// 表单配置 - 新增/编辑核心表单
 const [Form, formApi] = useVbenForm({
   commonConfig: {
     componentProps: {
@@ -65,6 +73,8 @@ const [Form, formApi] = useVbenForm({
   schema: useFormSchema(),
   showDefaultActions: false,
 });
+
+// 抽屉配置 - 新增/编辑表单抽屉
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
@@ -73,9 +83,11 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
   onConfirm() {
     const obj = formApi.form.values;
+    // 新增逻辑
     if (formDrawerApi.sharedData.payload.title === textObj.addText) {
       dataObj.apilist.push(obj);
     } else {
+      // 编辑逻辑
       dataObj.apilist.forEach((v, i) => {
         if (v.id === formData.value?.id) {
           dataObj.apilist[i] = obj;
@@ -88,6 +100,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   async onOpenChange(isOpen) {
     if (isOpen) {
       formData.value = formDrawerApi.getData();
+      // 编辑时回显数据，新增时重置表单
       if (formData.value?.id) {
         await formApi.setValues(formData.value);
       } else {
@@ -97,34 +110,27 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
 });
 
-/** 刷新表格 */
+/** 刷新表格数据 */
 function handleRefresh() {
   gridApi.query();
 }
 
-/** 导出表格 */
+/** 导出表格数据到Excel */
 async function handleExport() {
   exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
 }
 
-/** 创建角色 */
+/** 打开新增抽屉 */
 function handleCreate() {
-  formDrawerApi
-    .setData({
-      title: textObj.addText,
-    })
-    .open();
+  formDrawerApi.setData({ title: textObj.addText }).open();
 }
 
-/** 编辑角色 */
+/** 打开编辑抽屉并回显数据 */
 function handleEdit(row) {
-  formDrawerApi
-    .setData({
-      title: textObj.editText,
-      ...row,
-    })
-    .open();
+  formDrawerApi.setData({ title: textObj.editText, ...row }).open();
 }
+
+/** 单行删除操作 */
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting', [row.induction_name]),
@@ -140,6 +146,7 @@ async function handleDelete(row) {
   }
 }
 
+/** 批量删除操作 */
 async function handleDeleteBatch() {
   await confirm($t('确定删除这些数据吗？'));
   const loadingInstance = ElLoading.service({
@@ -157,10 +164,14 @@ async function handleDeleteBatch() {
   }
 }
 
+// 表格勾选的ID集合
 const checkedIds = ref([]);
+/** 表格行勾选事件 */
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
+
+// 全局响应式数据（表格、分页、筛选、详情相关）
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
@@ -170,16 +181,46 @@ const dataObj = reactive({
   apilist: dataList(),
   list: [],
 });
+
+/** 底部统计栏展开/收缩 */
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
 
-// 表格数据获取
+// 筛选状态核心变量
+const activeName = ref('全部'); // 状态筛选：全部/启用/禁用
+const filterArea = ref(''); // 区域筛选：空=未筛选，有值=当前筛选区域
+const filterType = ref(''); // 类型筛选：空=未筛选，有值=当前筛选车场类型
+
+/** 行政区域筛选：点击筛选，再次点击取消 */
+const handleFilterByArea = (area) => {
+  filterArea.value = filterArea.value === area ? '' : area;
+  gridApi.query();
+};
+
+/** 车场类型筛选：点击筛选，再次点击取消 */
+const handleFilterByType = (type) => {
+  filterType.value = filterType.value === type ? '' : type;
+  gridApi.query();
+};
+
+/** 取消行政区域筛选（筛选标签关闭按钮） */
+const handleCancelAreaFilter = () => {
+  filterArea.value = '';
+  gridApi.query();
+};
+
+/** 取消车场类型筛选（筛选标签关闭按钮） */
+const handleCancelTypeFilter = () => {
+  filterType.value = '';
+  gridApi.query();
+};
+
+/** 表格核心数据获取：三条件叠加筛选 + 分页 */
 const getTableData = (pageObj) => {
   const page = pageObj.page;
-
-  // 根据activeName筛选数据
-  const filteredList = dataObj.apilist.filter((v) => {
+  // 第一步：状态筛选（全部/启用/禁用）
+  let filteredList = dataObj.apilist.filter((v) => {
     switch (activeName.value) {
       case '全部': {
         return true;
@@ -190,11 +231,20 @@ const getTableData = (pageObj) => {
       case '禁用': {
         return v.status === '0';
       }
-      // No default
+      default: {
+        return false;
+      }
     }
-    return false;
   });
-
+  // 第二步：叠加行政区域筛选
+  if (filterArea.value) {
+    filteredList = filteredList.filter((v) => v.area === filterArea.value);
+  }
+  // 第三步：叠加车场类型筛选
+  if (filterType.value) {
+    filteredList = filteredList.filter((v) => v.type === filterType.value);
+  }
+  // 分页处理
   dataObj.total = filteredList.length;
   dataObj.list = filteredList.slice(
     (page.currentPage - 1) * page.pageSize,
@@ -203,52 +253,38 @@ const getTableData = (pageObj) => {
   return dataObj;
 };
 
+// 表单配置 - 搜索表单
 const [QueryForm] = useVbenForm({
-  // 默认展开
   collapsed: false,
-  // 所有表单项共用，可单独在表单内覆盖
   commonConfig: {
-    // 所有表单项
-    componentProps: {
-      class: 'w-full',
-    },
+    componentProps: { class: 'w-full' },
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
-  // 提交函数
   handleSubmit: onSubmit,
   layout: 'horizontal',
   schema: useFormSchema().map((v) => {
     delete v.rules;
-    return {
-      ...v,
-    };
+    return { ...v };
   }),
-  // 是否可展开
   showCollapseButton: true,
-  submitButtonOptions: {
-    content: '查询',
-  },
+  submitButtonOptions: { content: '查询' },
 });
 
-// 搜索表单查询
+/** 搜索表单提交 */
 function onSubmit() {
   drawerApi.close();
 }
 
+// 表格配置 - VxeGrid核心表格
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
     keepSource: true,
     proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getTableData({ page }),
-      },
+      ajax: { query: async ({ page }) => getTableData({ page }) },
     },
-    rowConfig: {
-      keyField: 'id',
-      isHover: true,
-    },
+    rowConfig: { keyField: 'id', isHover: true },
     pagerConfig: dataObj,
     toolbarConfig: {
       'class-name': 'common-tool-bar-config',
@@ -264,150 +300,124 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-const activeName = ref('全部');
-
-const handleOpenDetail = (row) => {
-  dataObj.detailObj = row;
-  detailDrawerApi.open();
-};
-
-// 修改tabsData为三个标签：全部、启用、禁用
+// 状态Tabs数据
 const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用' }]);
 
-// 创建标签文本，显示数量统计
+/** 生成状态Tabs标签（带数量统计） */
 const createLabel = (item) => {
   let count = 0;
-
   switch (item.label) {
     case '全部': {
       count = dataObj.apilist.length;
       break;
     }
     case '启用': {
-      // 统计status为'1'的数据
       count = dataObj.apilist.filter((v) => v.status === '1').length;
       break;
     }
     case '禁用': {
-      // 统计status为'0'的数据
       count = dataObj.apilist.filter((v) => v.status === '0').length;
       break;
     }
-    // No default
+    default: {
+      count = 0;
+    }
   }
-
   return `${item.label}(${count})`;
 };
 
+/** 状态Tabs切换刷新表格 */
 const handleClick = () => {
   gridApi.query();
 };
+
+/** 打开详情抽屉 */
+const handleOpenDetail = (row) => {
+  dataObj.detailObj = row;
+  detailDrawerApi.open();
+};
+
+/** 打开搜索抽屉 */
 const handleSerachShow = () => {
   drawerApi.open();
 };
+
+/** 全屏切换 */
 const handleFullShow = () => {
   screenfull.toggle();
 };
 
-// 核心修改：子组件的展开/收缩按钮点击事件
+/** 展开/收缩按钮点击：切换自身状态 + 向父组件派发事件 */
 const arrowChange = () => {
-  // 切换自身按钮状态
   arrowShow.value = !arrowShow.value;
-  // 关键修改2：触发的事件名和defineEmits中声明的保持一致（这里是toggleChart）
-  // 原代码这里触发的是'toggle-chart'，和声明的toggleChart不匹配（也可以选择把defineEmits改成['toggle-chart']，这里统一为驼峰更符合Vue习惯）
   emit('toggleChart');
 };
 </script>
 
 <template>
   <div class="park-lot-table-new">
+    <!-- 新增/编辑表单抽屉 -->
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
+
+    <!-- 数据详情抽屉 -->
     <DetailDrawer :title="`${dataObj.detailObj.induction_name}详情`">
       <div class="detail-card">
-        <div class="detail-card-row">
-          <div class="detail-row-left">诱导屏ID:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.induction_id }}
+        <div
+          class="detail-card-row"
+          v-for="(value, key) in dataObj.detailObj"
+          :key="key"
+        >
+          <div class="detail-row-left">
+            {{
+              key === 'induction_id'
+                ? '诱导屏ID'
+                : key === 'area'
+                  ? '行政区域'
+                  : key === 'type'
+                    ? '车场类型'
+                    : key === 'asset'
+                      ? '距离范围'
+                      : key === 'induction_name'
+                        ? '诱导屏名称'
+                        : key === 'region'
+                          ? '覆盖区域'
+                          : key === 'related_lot_ids'
+                            ? '关联车场'
+                            : key === 'push_strategy'
+                              ? '推送策略'
+                              : key === 'status'
+                                ? '状态'
+                                : key === 'create_time'
+                                  ? '创建时间'
+                                  : key === 'update_time'
+                                    ? '更新时间'
+                                    : key === 'remark'
+                                      ? '备注'
+                                      : key
+            }}:
           </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">行政区域:</div>
           <div class="detail-row-right">
-            {{ dataObj.detailObj.area }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">车场类型:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.type }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">距离范围:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.asset }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">诱导屏名称:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.induction_name }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">覆盖区域:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.region }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">关联车场:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.related_lot_ids }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">推送策略:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.push_strategy }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">状态:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.status === '1' ? '启用' : '禁用' }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">创建时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.create_time }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">更新时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.update_time }}
-          </div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">备注:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.remark }}
+            {{ key === 'status' ? (value === '1' ? '启用' : '禁用') : value }}
           </div>
         </div>
       </div>
     </DetailDrawer>
+
+    <!-- 搜索表单抽屉 -->
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+
+    <!-- 核心表格 -->
     <Grid>
-      <!-- 三级状态 -->
+      <!-- 表格标题栏：状态Tabs + 双维度筛选标签 -->
       <template #table-title>
-        <div class="tabel-tabs">
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
+        >
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -422,8 +432,30 @@ const arrowChange = () => {
               />
             </el-tabs>
           </div>
+          <!-- 行政区域筛选标签：蓝色primary，仅筛选时显示 -->
+          <ElTag
+            v-if="filterArea"
+            type="primary"
+            closable
+            @close="handleCancelAreaFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            区域：{{ filterArea }}
+          </ElTag>
+          <!-- 车场类型筛选标签：绿色success，仅筛选时显示 -->
+          <ElTag
+            v-if="filterType"
+            type="success"
+            closable
+            @close="handleCancelTypeFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            类型：{{ filterType }}
+          </ElTag>
         </div>
       </template>
+
+      <!-- 表格工具栏：新增/导出/删除/搜索等按钮 -->
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
@@ -444,7 +476,6 @@ const arrowChange = () => {
             icon-name="search"
             @click="handleSerachShow"
           />
-          <!-- 核心修改：子组件的展开/收缩按钮，使用自身的arrowShow状态 -->
           <IconButton
             :content="arrowShow ? '收缩' : '展开'"
             :icon-name="arrowShow ? 'ArrowUp' : 'ArrowDown'"
@@ -457,35 +488,44 @@ const arrowChange = () => {
           />
         </div>
       </template>
+
+      <!-- 表格列：诱导屏名称（点击打开详情，唯一保留） -->
       <template #induction_name="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
+          style="cursor: pointer"
         >
           {{ row.induction_name }}
         </el-text>
       </template>
 
+      <!-- 表格列：行政区域（点击筛选该区域） -->
       <template #area="{ row }">
         <el-text
-          @click="handleOpenDetail(row)"
+          @click="handleFilterByArea(row.area)"
           class="common-align"
           type="primary"
+          style="cursor: pointer"
         >
           {{ row.area }}
         </el-text>
       </template>
 
+      <!-- 表格列：车场类型（点击筛选同类型） -->
       <template #type="{ row }">
         <el-text
-          @click="handleOpenDetail(row)"
+          @click="handleFilterByType(row.type)"
           class="common-align"
           type="primary"
+          style="cursor: pointer"
         >
           {{ row.type }}
         </el-text>
       </template>
+
+      <!-- 表格列：操作栏 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
@@ -506,6 +546,8 @@ const arrowChange = () => {
           />
         </div>
       </template>
+
+      <!-- 表格底部：统计信息展开/收缩 -->
       <template #bottom>
         <div class="common-total" @click="changeTotalShow">
           <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
@@ -523,3 +565,71 @@ const arrowChange = () => {
     </Grid>
   </div>
 </template>
+
+<style scoped>
+/* 筛选项蓝色文字：悬浮下划线+指针，强化可点击提示 */
+:deep(.el-text--primary) {
+  cursor: pointer;
+}
+
+:deep(.el-text--primary):hover {
+  text-decoration: underline;
+  opacity: 0.9;
+}
+
+/* 表格标题栏：宽度100%，内边距优化 */
+.tabel-tabs {
+  width: 100%;
+  padding: 8px 0;
+}
+
+/* 详情卡片样式：间距、对齐优化 */
+.detail-card {
+  padding: 24px;
+}
+
+.detail-card-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.detail-row-left {
+  min-width: 120px;
+  margin-right: 16px;
+  font-weight: 500;
+  color: #606266;
+}
+
+.detail-row-right {
+  flex: 1;
+  color: #303133;
+}
+
+/* 表格工具栏：按钮间距、自动换行 */
+:deep(.common-toolbar-tools) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+/* 表格操作列：按钮间距 */
+:deep(.table-toolbar-tools) {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+/* 底部统计栏：鼠标指针，提示可点击 */
+.common-total {
+  padding: 8px 0;
+  cursor: pointer;
+}
+
+.common-total-bottom {
+  padding: 8px 0;
+  color: #606266;
+}
+</style>

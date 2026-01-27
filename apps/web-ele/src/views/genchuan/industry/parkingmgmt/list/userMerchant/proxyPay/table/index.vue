@@ -573,9 +573,9 @@ async function handleDelete(row) {
   const key =
     activeTab.value === 'proxyRule'
       ? 'proxyId'
-      : activeTab.value === 'proxyOrder'
+      : (activeTab.value === 'proxyOrder'
         ? 'orderId'
-        : 'recordId';
+        : 'recordId');
 
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting', [row[key]]),
@@ -600,9 +600,9 @@ async function handleDeleteBatch() {
   const key =
     activeTab.value === 'proxyRule'
       ? 'proxyId'
-      : (activeTab.value === 'proxyOrder'
+      : activeTab.value === 'proxyOrder'
         ? 'orderId'
-        : 'recordId');
+        : 'recordId';
 
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deletingBatch'),
@@ -628,9 +628,9 @@ function handleRowCheckboxChange({ records }) {
   const key =
     activeTab.value === 'proxyRule'
       ? 'proxyId'
-      : (activeTab.value === 'proxyOrder'
+      : activeTab.value === 'proxyOrder'
         ? 'orderId'
-        : 'recordId');
+        : 'recordId';
   checkedIds.value = records.map((item) => item[key]);
 }
 

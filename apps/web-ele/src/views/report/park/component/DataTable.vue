@@ -192,17 +192,18 @@
           />
         </el-select>
         <el-pagination
-          :current-page="currentPage"
-          :page-size="pageSize"
-          :page-sizes="pageSizes"
-          :layout="getPaginationLayout()"
-          :total="total"
-          :small="mobileLayout"
-          :pager-count="getPagerCount()"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-          class="responsive-pagination"
-          :background="true"
+          v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="pageSizes"
+        :layout="getPaginationLayout()"
+        :total="total"
+        :small="mobileLayout"
+        :pager-count="getPagerCount()"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        class="responsive-pagination"
+        :background="true"
+        :disabled="total === 0"
         />
       </div>
     </div>
@@ -246,11 +247,11 @@ const props = defineProps({
     type: Number,
     default: 0
   },
-  currentPageProp: {
+  currentPage: { // 修复：props 命名统一为 currentPage（原 currentPageProp 易混淆）
     type: Number,
     default: 1
   },
-  pageSizeProp: {
+  pageSize: { // 修复：props 命名统一为 pageSize（原 pageSizeProp 易混淆）
     type: Number,
     default: 10
   },
@@ -322,14 +323,14 @@ const emit = defineEmits([
   'page-change',
   'sort-change',
   'row-click',
-  'update:currentPage',
+  'update:currentPage', // 修复：保持 v-model 规范的 update 事件
   'update:pageSize'
 ]);
 
-// 响应式数据
+// 响应式数据（修复：从 props 初始化，保持双向绑定一致性）
 const tableRef = ref(null);
-const currentPage = ref(props.currentPageProp);
-const pageSize = ref(props.pageSizeProp);
+const currentPage = ref(props.currentPage);
+const pageSize = ref(props.pageSize);
 const mobileLayout = ref(false);
 const screenWidth = ref(window.innerWidth);
 const containerWidth = ref(0);
@@ -389,16 +390,16 @@ const indexMethod = (index) => {
   return index + 1;
 };
 
-// 响应式分页布局
+// 响应式分页布局（修复：确保桌面端显示 jumper，保证手动输入页码跳转）
 const getPaginationLayout = () => {
   if (!props.responsive) return props.paginationLayout;
 
   if (mobileLayout.value) {
-    return 'prev, pager, next';
+    return 'prev, pager, next'; // 移动端仅保留基础翻页
   } else if (screenWidth.value < 1024) {
-    return 'sizes, prev, pager, next';
+    return 'total, sizes, prev, pager, next'; // 平板隐藏 jumper
   } else {
-    return props.paginationLayout;
+    return props.paginationLayout; // 桌面端显示完整布局（含 jumper）
   }
 };
 
@@ -465,27 +466,48 @@ const getColumnClassName = (column) => {
   return classNames.join(' ');
 };
 
-// 分页处理
+// 分页处理（核心修复：页码切换逻辑）
 const handleSizeChange = (size) => {
   pageSize.value = size;
-  currentPage.value = 1;
+  currentPage.value = 1; // 切换页大小时重置为第一页
   emitPageChange();
 };
 
 const handleCurrentChange = (page) => {
-  currentPage.value = page;
+  // 校验页码合法性，避免越界
+  const maxPage = Math.ceil(props.total / pageSize.value) || 1;
+  const validPage = Math.max(1, Math.min(page, maxPage));
+  if (validPage !== currentPage.value) {
+    currentPage.value = validPage;
+  }
   emitPageChange();
 };
 
+// 统一触发分页变更事件
 const emitPageChange = () => {
+  // 触发 v-model 规范的 update 事件
   emit('update:currentPage', currentPage.value);
   emit('update:pageSize', pageSize.value);
+  // 触发业务级 page-change 事件
   emit('page-change', {
     page: currentPage.value,
     pageSize: pageSize.value,
     total: props.total
   });
 };
+
+// 监听 props 变化（修复：深度监听，确保父组件传值更新时同步）
+watch(() => props.currentPage, (val) => {
+  if (val !== currentPage.value) {
+    currentPage.value = val;
+  }
+}, { immediate: true });
+
+watch(() => props.pageSize, (val) => {
+  if (val !== pageSize.value) {
+    pageSize.value = val;
+  }
+}, { immediate: true });
 
 // 排序处理
 const handleSortChange = ({ column, prop, order }) => {
@@ -562,19 +584,6 @@ const handleResize = () => {
   }
 };
 
-// 监听props变化
-watch(() => props.currentPageProp, (val) => {
-  if (val !== currentPage.value) {
-    currentPage.value = val;
-  }
-});
-
-watch(() => props.pageSizeProp, (val) => {
-  if (val !== pageSize.value) {
-    pageSize.value = val;
-  }
-});
-
 // 初始化
 onMounted(() => {
   handleResize();
@@ -607,12 +616,19 @@ defineExpose({
       }
     }
   },
-  // 添加跳转到指定页的方法
+  // 跳转到指定页（增强：支持外部调用）
   goToPage: (page) => {
-    if (page >= 1 && page <= Math.ceil(props.total / pageSize.value)) {
+    const maxPage = Math.ceil(props.total / pageSize.value) || 1;
+    if (page >= 1 && page <= maxPage) {
       currentPage.value = page;
       emitPageChange();
     }
+  },
+  // 重置分页（新增：方便列表刷新后重置页码）
+  resetPagination: () => {
+    currentPage.value = 1;
+    pageSize.value = props.pageSizes[0] || 10;
+    emitPageChange();
   }
 });
 </script>

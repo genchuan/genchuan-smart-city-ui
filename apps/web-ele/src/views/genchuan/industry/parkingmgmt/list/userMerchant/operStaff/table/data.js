@@ -447,32 +447,39 @@ export const getOperStaffStatsData = () => {
 
   // 卡片数据
   const totalCount = data.length;
-  const onDutyCount = data.filter(item => item.onDutyStatus === '在岗').length;
-  const enabledCount = data.filter(item => item.status === '启用').length;
+  const onDutyCount = data.filter(
+    (item) => item.onDutyStatus === '在岗',
+  ).length;
+  const enabledCount = data.filter((item) => item.status === '启用').length;
 
   // 岗位类型占比数据
   const jobTypeStats = {};
-  data.forEach(item => {
+  data.forEach((item) => {
     jobTypeStats[item.jobType] = (jobTypeStats[item.jobType] || 0) + 1;
   });
-  const jobTypeChartData = Object.entries(jobTypeStats).map(([name, value]) => ({
-    name,
-    value
-  }));
+  const jobTypeChartData = Object.entries(jobTypeStats).map(
+    ([name, value]) => ({
+      name,
+      value,
+    }),
+  );
 
   // 值班状态占比数据
   const dutyStatusStats = {};
-  data.forEach(item => {
-    dutyStatusStats[item.onDutyStatus] = (dutyStatusStats[item.onDutyStatus] || 0) + 1;
+  data.forEach((item) => {
+    dutyStatusStats[item.onDutyStatus] =
+      (dutyStatusStats[item.onDutyStatus] || 0) + 1;
   });
-  const dutyStatusChartData = Object.entries(dutyStatusStats).map(([name, value]) => ({
-    name,
-    value
-  }));
+  const dutyStatusChartData = Object.entries(dutyStatusStats).map(
+    ([name, value]) => ({
+      name,
+      value,
+    }),
+  );
 
   // 各运维团队人员数量对比
   const teamStats = {};
-  data.forEach(item => {
+  data.forEach((item) => {
     teamStats[item.teamName] = (teamStats[item.teamName] || 0) + 1;
   });
   const teamChartXAxis = Object.keys(teamStats);
@@ -484,39 +491,39 @@ export const getOperStaffStatsData = () => {
         title: '总运维人员数',
         value: totalCount,
         desc: `共${totalCount}位运维人员`,
-        color: '#4A90E2'
+        color: '#4A90E2',
       },
       {
         title: '在岗人员数',
         value: onDutyCount,
         desc: `较上月增长${Math.floor(Math.random() * 10) + 5}%`,
-        color: '#50E3C2'
+        color: '#50E3C2',
       },
       {
         title: '启用人员数',
         value: enabledCount,
         desc: `较上月增长${Math.floor(Math.random() * 10) + 5}%`,
-        color: '#FF9F40'
-      }
+        color: '#FF9F40',
+      },
     ],
     charts: [
       {
         title: '岗位类型占比',
         type: 'pie',
-        data: jobTypeChartData
+        data: jobTypeChartData,
       },
       {
         title: '值班状态占比',
         type: 'pie',
-        data: dutyStatusChartData
+        data: dutyStatusChartData,
       },
       {
         title: '各运维团队人员数量对比',
         type: 'bar',
         xAxis: teamChartXAxis,
-        series: teamChartSeries
-      }
-    ]
+        series: teamChartSeries,
+      },
+    ],
   };
 };
 
