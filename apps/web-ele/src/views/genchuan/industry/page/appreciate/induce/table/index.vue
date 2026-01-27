@@ -580,7 +580,7 @@ const arrowChange = () => {
 /* 表格标题栏：宽度100%，内边距优化 */
 .tabel-tabs {
   width: 100%;
-  padding: 8px 0;
+
 }
 
 /* 详情卡片样式：间距、对齐优化 */
@@ -629,7 +629,7 @@ const arrowChange = () => {
 }
 
 .common-total-bottom {
-  padding: 8px 0;
+  padding: 0px 0;
   color: #606266;
 }
 </style>
