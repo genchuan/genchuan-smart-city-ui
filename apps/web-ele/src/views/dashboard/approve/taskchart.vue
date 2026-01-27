@@ -25,7 +25,6 @@ const state = reactive({
         v-bind="item"
       />
     </div>
-    <div class="chart-box-right">
       <Circle
         title-text="任务类型占比"
         :data="[
@@ -54,7 +53,6 @@ const state = reactive({
           { name: '完成任务', data: [10, 12, 7, 9, 14, 4, 6] },
         ]"
       />
-    </div>
   </div>
 </template>
 
