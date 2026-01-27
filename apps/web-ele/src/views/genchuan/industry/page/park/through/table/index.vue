@@ -21,7 +21,17 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  arrowShow: {
+    type: Boolean,
+    default: false,
+  },
+  arrowState: {
+    type: Boolean,
+    default: false,
+  },
 });
+const emit = defineEmits(['arrow-change']);
+
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
 });
@@ -276,6 +286,9 @@ const handleFullShow = () => {
 
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
+const arrowChange = () => {
+  emit('arrow-change');
+};
 </script>
 
 <template>
@@ -330,6 +343,11 @@ const parkDetailDrawerRef = ref(null);
             content="搜索"
             icon-name="search"
             @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
           />
           <IconButton
             content="全屏"

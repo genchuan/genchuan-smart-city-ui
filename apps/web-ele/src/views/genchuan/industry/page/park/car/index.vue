@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 
+import carchart from './carchart.vue';
 import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
@@ -17,13 +18,21 @@ const tabArray = ref([
     components: Table,
     showSecondary: true,
     secondShow: false,
+    arrowShow: true,
+    arrowState: false,
   },
 ]);
+const arrowChange = () => {
+  tabArray.value.forEach((v) => {
+    v.arrowShow = !v.arrowShow;
+  });
+};
 const activeName = ref('车位信息管理');
 const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
+    <carchart v-if="tabArray[0].arrowShow" />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -60,6 +69,8 @@ const secondShow = ref(false);
           :is="item.components"
           :second-show="item.secondShow"
           :key="item.label"
+          :arrow-show="item.arrowShow"
+          @arrow-change="arrowChange"
         />
       </el-tab-pane>
     </el-tabs>
