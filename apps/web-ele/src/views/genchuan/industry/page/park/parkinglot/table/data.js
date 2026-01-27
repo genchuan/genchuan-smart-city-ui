@@ -243,10 +243,13 @@ export function useFormSchema() {
       },
     },
     {
-      field: 'phonename',
-      title: '联系人',
-      minWidth: 200,
-      sortable: true,
+      fieldName: 'phonename',
+      label: '联系人',
+      component: 'Input',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请输入联系人',
+      },
     },
     {
       fieldName: 'phone',
@@ -294,8 +297,7 @@ export function useGridColumns() {
       field: 'name',
       title: '停车场名称',
       minWidth: 200,
-      sortable: true,
-      slots: { default: 'parkName' },
+      sortable: true
     },
     {
       field: 'type',
@@ -360,12 +362,6 @@ export function useGridColumns() {
     {
       field: 'division',
       title: '所属行政区划',
-      minWidth: 200,
-      sortable: true,
-    },
-    {
-      field: 'status',
-      title: '运营状态',
       minWidth: 200,
       sortable: true,
     },

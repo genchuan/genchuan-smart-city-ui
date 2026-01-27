@@ -13,7 +13,12 @@ export function getOutDriveinList(params) {
     params,
   });
 }
-
+/** 车场信息记录 */
+export function getParkingData(params) { 
+  return requestClient.get('/industry/park-lot/page', {
+    params,
+  });
+} 
 
 /** 车辆创建记录 */
 export function createDriveObj(data) { 
@@ -24,6 +29,17 @@ export function createDriveObj(data) {
 export function createOutDriveObj(data) { 
   return requestClient.post('/industry/car-driveout-record/create', data);
 }
+
+/** 车场创建记录 */
+export function createParklot(data) { 
+  return requestClient.post('/industry/park-lot/create', data);
+}
+export function updateParklot(data) {
+  return requestClient.put('/industry/park-lot/update', data);
+}
+export function deleteParklot(id) {
+  return requestClient.delete(`/industry/park-lot/delete?id=${id}`);
+} 
 /** 同步数据 */
 export function refreshSync(data) { 
   return requestClient.post('/industry/parking-record-sync/sync', data);
