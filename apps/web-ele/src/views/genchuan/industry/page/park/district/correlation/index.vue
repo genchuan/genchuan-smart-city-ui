@@ -368,7 +368,7 @@ const parkDetailDrawerRef = ref(null);
           <el-input v-model="state.reason" />
         </div>
       </div>
-      <div class="park-bind-row">
+      <div class="park-bind-row-bottom">
         <div class="bind-left"><el-button>取消</el-button></div>
         <div class="bind-right"><el-button type="primary">保存</el-button></div>
       </div>
@@ -505,7 +505,7 @@ const parkDetailDrawerRef = ref(null);
             @click="handleEdit(row)"
           />
           <IconButton
-            content="解绑"
+            content="批量关联"
             icon-name="Connection"
             color="#E6A23C"
             @click="handleBind(row)"

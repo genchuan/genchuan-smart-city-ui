@@ -46,58 +46,58 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle" class="area-detail-drawer">
     <div class="detail-card">
-      <!-- 核心字段展示（适配片区字段结构） -->
+      <!-- 核心字段展示（适配新的表单schema字段结构） -->
       <div class="detail-card-row">
         <div class="detail-row-left">片区名称:</div>
         <div class="detail-row-right">{{ detailObj.areaName || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">所属行政区划:</div>
-        <div class="detail-row-right">{{ detailObj.division || '-' }}</div>
+        <div class="detail-row-left">当前关联车场:</div>
+        <div class="detail-row-right">
+          {{ detailObj.currentRelatedParks || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">负责人:</div>
-        <div class="detail-row-right">{{ detailObj.principal || '-' }}</div>
+        <div class="detail-row-left">待关联车场:</div>
+        <div class="detail-row-right">
+          {{ detailObj.toBeRelatedParks || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">联系电话:</div>
-        <div class="detail-row-right">{{ detailObj.phone || '-' }}</div>
+        <div class="detail-row-left">当前关联道路:</div>
+        <div class="detail-row-right">
+          {{ detailObj.currentRelatedRoads || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">片区描述:</div>
-        <div class="detail-row-right">{{ detailObj.areaDesc || '-' }}</div>
+        <div class="detail-row-left">待关联道路:</div>
+        <div class="detail-row-right">
+          {{ detailObj.toBeRelatedRoads || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">关联车场:</div>
-        <div class="detail-row-right">{{ detailObj.relatedParks || '-' }}</div>
+        <div class="detail-row-left">调整原因:</div>
+        <div class="detail-row-right">{{ detailObj.adjustReason || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">关联道路:</div>
-        <div class="detail-row-right">{{ detailObj.relatedRoads || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">片区编码:</div>
-        <div class="detail-row-right">{{ detailObj.areaCode || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">状态:</div>
-        <div class="detail-row-right">{{ detailObj.status || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">关联车场数:</div>
-        <div class="detail-row-right">{{ detailObj.parkCount || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">关联道路数:</div>
-        <div class="detail-row-right">{{ detailObj.roadCount || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">创建时间:</div>
-        <div class="detail-row-right">{{ detailObj.createTime || '-' }}</div>
+        <div class="detail-row-left">调整时间:</div>
+        <div class="detail-row-right">{{ detailObj.adjustTime || '-' }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">操作人:</div>
         <div class="detail-row-right">{{ detailObj.operator || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">更新后关联车场数:</div>
+        <div class="detail-row-right">
+          {{ detailObj.updatedParkCount || '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">更新后关联道路数:</div>
+        <div class="detail-row-right">
+          {{ detailObj.updatedRoadCount || '-' }}
+        </div>
       </div>
     </div>
   </DetailDrawer>
@@ -117,7 +117,7 @@ defineExpose({
 // 每行的布局
 .detail-card-row {
   display: flex;
-  align-items: flex-start; // 顶部对齐，适配长文本
+  align-items: flex-start; // 顶部对齐，适配长文本（如调整原因）
   padding: 12px 0;
   border-bottom: 1px solid #f0f0f0; // 分隔线增强可读性
 
@@ -140,12 +140,12 @@ defineExpose({
 
 // 左侧标签样式（固定宽度保证对齐）
 .detail-row-left {
-  width: 140px; // 加宽标签宽度，适配长标签
+  width: 140px; // 加宽标签宽度，适配长标签（如更新后关联车场数）
   flex-shrink: 0; // 不收缩
   font-weight: 500; // 加粗突出标签
   color: #606266; // 灰色调，区分内容
   font-size: 14px;
-  line-height: 20px; // 适配行高
+  line-height: 24px; // 提升行高，适配textarea类长文本
 }
 
 // 右侧内容样式
@@ -153,9 +153,10 @@ defineExpose({
   flex: 1; // 剩余宽度自适应
   color: #303133; // 主文本色
   font-size: 14px;
-  line-height: 20px;
+  line-height: 24px; // 提升行高，优化长文本阅读体验
   word-break: break-all; // 处理长文本换行
   padding-right: 10px;
+  white-space: pre-line; // 保留textarea的换行符，适配多行文本展示
 }
 
 // 响应式适配

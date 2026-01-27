@@ -184,6 +184,16 @@
     min-height: 60px;
     display: flex;
     align-items: center;
+
+    .bind-left {
+      width: 200px;
+      margin-left: 15px;
+    }
+  }
+
+  .park-bind-row-bottom {
+    display: flex;
+    align-items: center;
     justify-content: space-around;
   }
 
