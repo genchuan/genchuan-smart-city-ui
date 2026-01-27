@@ -36,11 +36,21 @@ const state = reactive({
   carList: [],
   roadValue: '',
   roadList: [],
+  reason: '',
 });
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
 });
-
+const [SwitchDrawer, SwitchDrawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    drawerApi.close();
+  },
+  onConfirm() {},
+  async onOpenChange() {},
+});
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -306,12 +316,63 @@ const handleBind = (row) => {
 
   bindDrawerApi.open();
 };
+const handleSwitch = () => {
+  SwitchDrawerApi.open();
+};
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
 </script>
 
 <template>
   <div class="park-lot-table-new">
+    <SwitchDrawer title="关联调整">
+      <div class="park-bind-row">
+        <div class="bind-left">关联车场</div>
+        <div class="bind-right">
+          <el-select
+            v-model="state.carValue"
+            multiple
+            placeholder="Select"
+            style="width: 240px"
+          >
+            <el-option
+              v-for="item in state.carList"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </div>
+      </div>
+      <div class="park-bind-row">
+        <div class="bind-left">关联道路</div>
+        <div class="bind-right">
+          <el-select
+            v-model="state.roadValue"
+            multiple
+            placeholder="Select"
+            style="width: 240px"
+          >
+            <el-option
+              v-for="item in state.roadList"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </div>
+      </div>
+      <div class="park-bind-row">
+        <div class="bind-left">调整原因</div>
+        <div class="bind-right">
+          <el-input v-model="state.reason" />
+        </div>
+      </div>
+      <div class="park-bind-row">
+        <div class="bind-left"><el-button>取消</el-button></div>
+        <div class="bind-right"><el-button type="primary">保存</el-button></div>
+      </div>
+    </SwitchDrawer>
     <bindDrawer title="解绑类型">
       <div class="park-bind-row">
         <div class="bind-left">关联车场</div>
@@ -390,7 +451,7 @@ const parkDetailDrawerRef = ref(null);
           <IconButton
             content="关联调整"
             icon-name="Switch"
-            @click="handleCreate"
+            @click="handleSwitch"
           />
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
