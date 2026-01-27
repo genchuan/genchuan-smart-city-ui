@@ -1,19 +1,14 @@
 <script setup>
 import { computed, ref } from 'vue';
+
 import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
 
 import StatsVisualization from '#/components/stats/StatsVisualization.vue';
+
+import { getStatsDataByTabType } from './table/data.js';
 import Table from './table/index.vue';
-import { getStatsDataByRateType } from './table/data';
 
 import '#/components/page/index.scss';
-
-const changeArrowStatus = () => {
-  secondShow.value = !secondShow.value;
-  tabArray.value.forEach((v) => {
-    v.secondShow = secondShow.value;
-  });
-};
 
 // 控制统计组件显示/隐藏的状态
 const showStats = ref(false);
@@ -23,46 +18,53 @@ const toggleStats = () => {
   showStats.value = !showStats.value;
 };
 
+const changeArrowStatus = () => {
+  secondShow.value = !secondShow.value;
+  tabArray.value.forEach((v) => {
+    v.secondShow = secondShow.value;
+  });
+};
 const tabArray = ref([
   {
-    label: '基础费率管理',
+    label: '收费规则管理',
     components: Table,
     showSecondary: true,
     secondShow: false,
-    rateType: 'base',
+    tabType: 'chargeRule',
   },
   {
-    label: '时段费率管理',
+    label: '费用核算管理',
     components: Table,
     showSecondary: true,
     secondShow: false,
-    rateType: 'time',
+    tabType: 'feeCalculation',
   },
   {
-    label: '区域费率管理',
+    label: '优惠抵扣管理',
     components: Table,
     showSecondary: true,
     secondShow: false,
-    rateType: 'area',
+    tabType: 'discountManagement',
   },
 ]);
-
-const activeName = ref('基础费率管理');
+const activeName = ref('收费规则管理');
 const secondShow = ref(false);
-const currentRateType = ref('base');
 
-// 获取当前费率类型的统计数据
+// 当前选中的标签类型
+const currentTabType = ref('chargeRule');
+
+// 获取当前标签类型的统计数据
 const statsData = computed(() => {
-  return getStatsDataByRateType(currentRateType.value);
+  return getStatsDataByTabType(currentTabType.value);
 });
 
-// 标签页切换事件
+// 监听标签页切换，更新当前标签类型
 const tabChange = (tabName) => {
   activeName.value = tabName;
-  // 根据标签页名称更新当前费率类型
+  // 根据标签页名称更新当前标签类型
   const tab = tabArray.value.find((item) => item.label === tabName);
   if (tab) {
-    currentRateType.value = tab.rateType;
+    currentTabType.value = tab.tabType;
   }
 };
 </script>
@@ -105,7 +107,7 @@ const tabChange = (tabName) => {
         <component
           :is="item.components"
           :second-show="item.secondShow"
-          :rate-type="item.rateType"
+          :tab-type="item.tabType"
           :show-stats="showStats"
           :toggle-stats="toggleStats"
           :key="item.label"

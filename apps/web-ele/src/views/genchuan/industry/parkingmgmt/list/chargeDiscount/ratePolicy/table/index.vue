@@ -4,24 +4,54 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
-import { dataList, textObj, useFormSchema, useGridColumns } from './data';
+import {
+  dataList,
+  getRateDetailFields,
+  getStatusTagType,
+  textObj,
+  useFormSchema,
+  useGridColumns,
+} from './data';
 
 const props = defineProps({
   secondShow: {
     type: Boolean,
     default: false,
   },
+  rateType: {
+    type: String,
+    default: 'base',
+  },
+  showStats: {
+    type: Boolean,
+    default: false,
+  },
+  toggleStats: {
+    type: Function,
+    default: () => {},
+  },
 });
 const getTitle = computed(() => {
-  return formData.value?.id ? textObj.editText : textObj.addText;
+  return formData.value?.feeStrategyId ? textObj.editText : textObj.addText;
+});
+
+// 当前费率类型
+const currentTabType = computed(() => {
+  return props.rateType;
+});
+
+// 详情字段配置
+const detailFields = computed(() => {
+  return getRateDetailFields(currentTabType.value);
 });
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -34,16 +64,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
-const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  onCancel() {
-    detailDrawerApi.close();
-  },
-  onConfirm() {},
-  async onOpenChange() {},
-});
+
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -51,12 +72,23 @@ const [Form, formApi] = useVbenForm({
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
-    labelWidth: 80,
+    labelWidth: 100,
   },
   layout: 'horizontal',
-  schema: useFormSchema(),
+  schema: useFormSchema(currentTabType.value),
   showDefaultActions: false,
 });
+
+// 生成新的策略ID
+const generateNewStrategyId = () => {
+  // 从现有数据中获取最大ID，然后自增
+  const maxId = dataObj.apilist.reduce((max, item) => {
+    const idNum = Number.parseInt(item.feeStrategyId.replace('FEE', ''));
+    return Math.max(idNum, max);
+  }, 0);
+  return `FEE${String(maxId + 1).padStart(3, '0')}`;
+};
+
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
@@ -65,12 +97,29 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
   onConfirm() {
     const obj = formApi.form.values;
+    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
     if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-      dataObj.apilist.push(obj);
+      // 新增时生成唯一的策略ID
+      const newObj = {
+        ...obj,
+        feeStrategyId: generateNewStrategyId(),
+        createTime: now,
+        updateTime: now,
+        createUserName: '管理员',
+      };
+      dataObj.apilist.push(newObj);
     } else {
+      // 编辑时保留原有ID和创建时间
       dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
+        if (v.feeStrategyId === formData.value?.feeStrategyId) {
+          dataObj.apilist[i] = {
+            ...obj,
+            feeStrategyId: formData.value.feeStrategyId,
+            createTime: formData.value.createTime || now,
+            updateTime: now,
+            createUserName: formData.value.createUserName || '管理员',
+          };
         }
       });
     }
@@ -80,7 +129,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   async onOpenChange(isOpen) {
     if (isOpen) {
       formData.value = formDrawerApi.getData();
-      if (formData.value?.id) {
+      if (formData.value?.feeStrategyId) {
         await formApi.setValues(formData.value);
       } else {
         formApi.resetForm();
@@ -96,10 +145,27 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+  // 导出当前标签页下的数据
+  const filteredList = dataObj.apilist.filter((v) => {
+    switch (activeName.value) {
+      case '全部': {
+        return true;
+      }
+      case '启用': {
+        return v.status === '启用';
+      }
+      case '禁用': {
+        return v.status === '禁用';
+      }
+      default: {
+        return true;
+      }
+    }
+  });
+  exportToExcel(filteredList, textObj.excelName, textObj.excelAllName);
 }
 
-/** 创建角色 */
+/** 创建策略 */
 function handleCreate() {
   formDrawerApi
     .setData({
@@ -108,7 +174,7 @@ function handleCreate() {
     .open();
 }
 
-/** 编辑角色 */
+/** 编辑策略 */
 function handleEdit(row) {
   formDrawerApi
     .setData({
@@ -117,21 +183,24 @@ function handleEdit(row) {
     })
     .open();
 }
+
+/** 删除策略 */
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.induction_name]), // 修复：使用正确的字段名
+    text: $t('ui.actionMessage.deleting', [row.strategyName]),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success(
-      $t('ui.actionMessage.deleteSuccess', [row.induction_name]),
-    ); // 修复：使用正确的字段名
+    dataObj.apilist = dataObj.apilist.filter(
+      (v) => v.feeStrategyId !== row.feeStrategyId,
+    );
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.strategyName]));
     handleRefresh();
   } finally {
     loadingInstance.close();
   }
 }
 
+/** 批量删除策略 */
 async function handleDeleteBatch() {
   await confirm($t('确定删除这些数据吗？'));
   const loadingInstance = ElLoading.service({
@@ -139,7 +208,7 @@ async function handleDeleteBatch() {
   });
   try {
     dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
+      (v) => !checkedIds.value.includes(v.feeStrategyId),
     );
     checkedIds.value = [];
     ElMessage.success($t('删除成功'));
@@ -151,16 +220,17 @@ async function handleDeleteBatch() {
 
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map((item) => item.id);
+  checkedIds.value = records.map((item) => item.feeStrategyId);
 }
+
 const dataObj = reactive({
   totalShow: false,
-  detailObj: {},
-  total: dataList().length,
+  total: dataList(currentTabType.value).length,
   currentPage: 1,
   pageSize: 10,
-  apilist: dataList(),
+  apilist: dataList(currentTabType.value),
   list: [],
+  searchParams: {},
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -170,21 +240,40 @@ const changeTotalShow = () => {
 const getTableData = (pageObj) => {
   const page = pageObj.page;
 
-  // 根据activeName筛选数据
+  // 根据activeName和searchParams筛选数据
   const filteredList = dataObj.apilist.filter((v) => {
+    // 状态筛选
+    let statusMatch = true;
     switch (activeName.value) {
-      case '全部': {
-        return true;
-      }
       case '启用': {
-        return v.status === '1';
+        statusMatch = v.status === '启用';
+        break;
       }
       case '禁用': {
-        return v.status === '0';
+        statusMatch = v.status === '禁用';
+        break;
       }
-      // No default
     }
-    return false;
+
+    // 适用范围筛选
+    const applyScopeMatch = !filterApplyScope.value || v.applyScope === filterApplyScope.value;
+
+    // 区域名称筛选
+    const regionNameMatch = !filterRegionName.value || v.regionName === filterRegionName.value;
+
+    // 搜索条件筛选
+    let searchMatch = true;
+    Object.keys(dataObj.searchParams).forEach((key) => {
+      const value = dataObj.searchParams[key];
+      if (value) {
+        searchMatch =
+          typeof value === 'string'
+            ? searchMatch && v[key]?.toString().includes(value)
+            : searchMatch && v[key] === value;
+      }
+    });
+
+    return statusMatch && applyScopeMatch && regionNameMatch && searchMatch;
   });
 
   dataObj.total = filteredList.length;
@@ -212,7 +301,7 @@ const [QueryForm] = useVbenForm({
   // 垂直布局，label和input在不同行，值为vertical
   // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
+  schema: useFormSchema(currentTabType.value).map((v) => {
     delete v.rules;
     return {
       ...v,
@@ -226,13 +315,15 @@ const [QueryForm] = useVbenForm({
 });
 
 // 搜索表单查询
-function onSubmit() {
+function onSubmit(values) {
+  dataObj.searchParams = values;
+  handleRefresh();
   drawerApi.close();
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    columns: useGridColumns(),
+    columns: useGridColumns(currentTabType.value),
     keepSource: true,
     proxyConfig: {
       ajax: {
@@ -240,7 +331,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       },
     },
     rowConfig: {
-      keyField: 'id',
+      keyField: 'feeStrategyId',
       isHover: true,
     },
     pagerConfig: dataObj,
@@ -259,10 +350,18 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const activeName = ref('全部');
+const filterApplyScope = ref(''); // 适用范围筛选：空=未筛选，有值=当前筛选适用范围
+const filterRegionName = ref(''); // 区域名称筛选：空=未筛选，有值=当前筛选区域名称
 
-const handleOpenDetail = (row) => {
-  dataObj.detailObj = row;
-  detailDrawerApi.open();
+// 选中的策略详情
+const selectedStrategy = ref(null);
+
+// 详情抽屉引用
+const detailDrawerRef = ref(null);
+
+// 处理详情抽屉关闭
+const handleDetailClose = () => {
+  selectedStrategy.value = null;
 };
 
 // 修改tabsData为三个标签：全部、启用、禁用
@@ -275,22 +374,16 @@ const createLabel = (item) => {
   switch (item.label) {
     case '全部': {
       count = dataObj.apilist.length;
-
       break;
     }
     case '启用': {
-      // 统计status为'1'的数据
-      count = dataObj.apilist.filter((v) => v.status === '1').length;
-
+      count = dataObj.apilist.filter((v) => v.status === '启用').length;
       break;
     }
     case '禁用': {
-      // 统计status为'0'的数据
-      count = dataObj.apilist.filter((v) => v.status === '0').length;
-
+      count = dataObj.apilist.filter((v) => v.status === '禁用').length;
       break;
     }
-    // No default
   }
 
   return `${item.label}(${count})`;
@@ -299,11 +392,55 @@ const createLabel = (item) => {
 const handleClick = () => {
   gridApi.query();
 };
+
 const handleSerachShow = () => {
   drawerApi.open();
 };
+
 const handleFullShow = () => {
   screenfull.toggle();
+};
+
+// 处理策略ID点击
+const handleFeeStrategyIdClick = (row) => {
+  handleOpenDetail(row);
+};
+
+// 处理适用范围点击
+const handleApplyScopeClick = (scope) => {
+  filterApplyScope.value = filterApplyScope.value === scope ? '' : scope;
+  gridApi.query();
+};
+/** 取消适用范围筛选（筛选标签关闭按钮） */
+const handleCancelApplyScopeFilter = () => {
+  filterApplyScope.value = '';
+  gridApi.query();
+};
+
+// 处理区域名称点击
+const handleRegionNameClick = (regionName) => {
+  filterRegionName.value = filterRegionName.value === regionName ? '' : regionName;
+  gridApi.query();
+};
+
+/** 取消区域名称筛选（筛选标签关闭按钮） */
+const handleCancelRegionNameFilter = () => {
+  filterRegionName.value = '';
+  gridApi.query();
+};
+
+// 处理状态点击
+const handleStatusClick = (status) => {
+  activeName.value = status;
+  handleRefresh();
+};
+
+// 处理打开详情抽屉
+const handleOpenDetail = (row) => {
+  selectedStrategy.value = row;
+  if (detailDrawerRef.value) {
+    detailDrawerRef.value.open();
+  }
 };
 </script>
 
@@ -312,80 +449,28 @@ const handleFullShow = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-<!--   todo 详情抽屉-->
-    <DetailDrawer :title="`${dataObj.detailObj.induction_name}详情`">
-      <div class="detail-card">
-        <div class="detail-card-row">
-          <div class="detail-row-left">诱导屏ID:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.induction_id }}
-          </div>
-        </div>
 
-        <div class="detail-card-row">
-          <div class="detail-row-left">诱导屏名称:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.induction_name }}
-          </div>
-        </div>
+    <!-- 详情抽屉 -->
+    <DetailDrawer
+      ref="detailDrawerRef"
+      :title="selectedStrategy?.strategyName || '策略详情'"
+      :data="selectedStrategy"
+      :fields="detailFields"
+      @close="handleDetailClose"
+      @confirm="handleDetailClose"
+    />
 
-        <div class="detail-card-row">
-          <div class="detail-row-left">覆盖区域:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.region }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">关联车场:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.related_lot_ids }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">推送策略:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.push_strategy }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">状态:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.status === '1' ? '启用' : '禁用' }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">创建时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.create_time }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">更新时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.update_time }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">备注:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.remark }}
-          </div>
-        </div>
-      </div>
-    </DetailDrawer>
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+
     <Grid>
       <!-- 三级状态 -->
       <template #table-title>
-        <div class="tabel-tabs">
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
+        >
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -400,8 +485,29 @@ const handleFullShow = () => {
               />
             </el-tabs>
           </div>
+          <!-- 适用范围筛选标签：蓝色primary，仅筛选时显示 -->
+          <ElTag
+            v-if="filterApplyScope"
+            type="primary"
+            closable
+            @close="handleCancelApplyScopeFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            适用范围：{{ filterApplyScope }}
+          </ElTag>
+          <!-- 区域名称筛选标签：绿色success，仅筛选时显示 -->
+          <ElTag
+            v-if="filterRegionName"
+            type="success"
+            closable
+            @close="handleCancelRegionNameFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            区域名称：{{ filterRegionName }}
+          </ElTag>
         </div>
       </template>
+
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
@@ -423,22 +529,63 @@ const handleFullShow = () => {
             @click="handleSerachShow"
           />
           <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
+          />
+          <IconButton
             content="全屏"
             icon-name="FullScreen"
             @click="handleFullShow"
           />
         </div>
       </template>
-      <!-- 修复：使用正确的字段名'induction_name' -->
-      <template #induction_name="{ row }">
+
+      <!-- 策略ID插槽 -->
+      <template #feeStrategyId="{ row }">
         <el-text
-          @click="handleOpenDetail(row)"
+          @click="handleFeeStrategyIdClick(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.induction_name }}
+          {{ row.feeStrategyId }}
         </el-text>
       </template>
+
+      <!-- 适用范围插槽 -->
+      <template #applyScope="{ row }">
+        <el-text
+          @click="handleApplyScopeClick(row.applyScope)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.applyScope }}
+        </el-text>
+      </template>
+
+      <!-- 区域名称插槽 -->
+      <template #regionName="{ row }">
+        <el-text
+          @click="handleRegionNameClick(row.regionName)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.regionName }}
+        </el-text>
+      </template>
+
+      <!-- 状态插槽 -->
+      <template #status="{ row }">
+        <ElTag
+          :type="getStatusTagType(row.status)"
+          @click="handleStatusClick(row.status)"
+          class="cursor-pointer"
+        >
+          {{ row.status }}
+        </ElTag>
+      </template>
+
+      <!-- 操作插槽 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
@@ -459,6 +606,7 @@ const handleFullShow = () => {
           />
         </div>
       </template>
+
       <template #bottom>
         <div class="common-total" @click="changeTotalShow">
           <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
@@ -467,7 +615,12 @@ const handleFullShow = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：诱导屏数量: 10; 启用: 8; 禁用: 2 </span>
+          <span>
+            本页统计：策略数量: {{ dataObj.total }}; 启用:
+            {{ dataObj.apilist.filter((v) => v.status === '启用').length }};
+            禁用:
+            {{ dataObj.apilist.filter((v) => v.status === '禁用').length }}
+          </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span> 全部统计：{{ textObj.total }} </span>
@@ -476,3 +629,9 @@ const handleFullShow = () => {
     </Grid>
   </div>
 </template>
+
+<style scoped>
+.cursor-pointer {
+  cursor: pointer;
+}
+</style>
