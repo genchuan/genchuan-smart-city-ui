@@ -8,6 +8,7 @@ export const dataList = () => {
       car_number: '闽D12345',
       lot_id: '万达广场停车场',
       space_id: 'S001',
+      park_space: '充电车位',
       reserve_date: '2023-01-01',
       start_time: '09:00:00',
       end_time: '12:00:00',
@@ -27,6 +28,7 @@ export const dataList = () => {
       car_number: '闽D67890',
       lot_id: '火车站北广场停车场',
       space_id: null,
+      park_space: '普通车位',
       reserve_date: '2023-01-01',
       start_time: '14:00:00',
       end_time: '18:00:00',
@@ -46,6 +48,7 @@ export const dataList = () => {
       car_number: '闽E11223',
       lot_id: '市人民医院停车场',
       space_id: 'S005',
+      park_space: '普通车位',
       reserve_date: '2023-01-02',
       start_time: '10:00:00',
       end_time: '15:00:00',
@@ -65,6 +68,7 @@ export const dataList = () => {
       car_number: '闽F44556',
       lot_id: '万达广场停车场',
       space_id: 'S002',
+      park_space: '普通车位',
       reserve_date: '2023-01-03',
       start_time: '08:30:00',
       end_time: '17:30:00',
@@ -84,6 +88,7 @@ export const dataList = () => {
       car_number: '闽G77889',
       lot_id: '第一中学停车场',
       space_id: null,
+      park_space: '充电车位',
       reserve_date: '2023-01-04',
       start_time: '13:00:00',
       end_time: '16:00:00',
@@ -103,6 +108,7 @@ export const dataList = () => {
       car_number: '闽D12345',
       lot_id: '火车站北广场停车场',
       space_id: 'S003',
+      park_space: '普通车位',
       reserve_date: '2023-01-05',
       start_time: '09:00:00',
       end_time: '18:00:00',
@@ -122,6 +128,7 @@ export const dataList = () => {
       car_number: '闽H99001',
       lot_id: '奥林匹克体育中心停车场',
       space_id: 'S008',
+      park_space: '普通车位',
       reserve_date: '2023-01-06',
       start_time: '19:00:00',
       end_time: '22:00:00',
@@ -141,6 +148,7 @@ export const dataList = () => {
       car_number: '闽D67890',
       lot_id: '市人民医院停车场',
       space_id: null,
+      park_space: '普通车位',
       reserve_date: '2023-01-07',
       start_time: '08:00:00',
       end_time: '12:00:00',
@@ -160,6 +168,7 @@ export const dataList = () => {
       car_number: '闽J22334',
       lot_id: '万达广场停车场',
       space_id: 'S004',
+      park_space: '充电车位',
       reserve_date: '2023-01-08',
       start_time: '10:30:00',
       end_time: '15:30:00',
@@ -179,6 +188,7 @@ export const dataList = () => {
       car_number: '闽K55667',
       lot_id: '人民广场地铁站停车场',
       space_id: 'S010',
+      park_space: '普通车位',
       reserve_date: '2023-01-09',
       start_time: '14:00:00',
       end_time: '16:00:00',
@@ -226,7 +236,7 @@ export function useFormSchema() {
     },
     {
       fieldName: 'lot_id',
-      label: '停车场名称',
+      label: '车场选择',
       component: 'Input',
       componentProps: {
         placeholder: '请输入停车场名称',
@@ -240,6 +250,22 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入车位ID（可为空）',
       },
+    },
+    {
+      fieldName: 'park_space',
+      label: '泊位类型',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择泊位类型',
+        options: [
+          { label: '普通车位', value: '普通车位' },
+          { label: '充电车位', value: '充电车位' },
+          { label: '无障碍车位', value: '无障碍车位' },
+          { label: 'VIP车位', value: 'VIP车位' },
+          { label: '临时车位', value: '临时车位' },
+        ],
+      },
+      rules: 'required',
     },
     {
       fieldName: 'reserve_date',
@@ -310,7 +336,7 @@ export function useFormSchema() {
   ];
 }
 
-/** 表格字段 */
+/** 表格字段 - 仅修改lot_id和park_space列插槽，其余不变 */
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
@@ -324,15 +350,15 @@ export function useGridColumns() {
     {
       field: 'user_id',
       title: '用户ID',
-      minWidth: 100,
+      minWidth: 90,
       sortable: true,
     },
     {
       field: 'lot_id',
-      title: '停车场名称',
+      title: '车场选择',
       minWidth: 180,
       sortable: true,
-      slots: { default: 'parkingLot' },
+      slots: { default: 'lot_id' } // 匹配模板插槽名
     },
     {
       field: 'reservation_no',
@@ -351,6 +377,13 @@ export function useGridColumns() {
       title: '车位ID',
       minWidth: 100,
       sortable: true,
+    },
+    {
+      field: 'park_space',
+      title: '泊位类型',
+      minWidth: 120,
+      sortable: true,
+      slots: { default: 'park_space' } // 匹配模板插槽名
     },
     {
       field: 'reserve_date',

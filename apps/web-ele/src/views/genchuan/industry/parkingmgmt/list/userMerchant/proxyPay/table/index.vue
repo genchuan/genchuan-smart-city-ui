@@ -573,9 +573,9 @@ async function handleDelete(row) {
   const key =
     activeTab.value === 'proxyRule'
       ? 'proxyId'
-      : (activeTab.value === 'proxyOrder'
+      : activeTab.value === 'proxyOrder'
         ? 'orderId'
-        : 'recordId');
+        : 'recordId';
 
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting', [row[key]]),

@@ -84,7 +84,7 @@ import {
   submitParkHiddenDangerAccept,
   submitParkHiddenDangerRectify,
 } from '#/api/genchuan/industry/parkingmgmt/overview/RiskWarning.ts';
-import FlightGanttChart1 from '#/views/genchuan/industry/parkingmgmt/overview/components/FlightGanttChart1.vue';
+import FlightGanttChart1 from '#/views/genchuan/industry/templatesstatchart/FlightGanttChart1.vue';
 import ChartLine1 from '#/views/genchuan/industry/templatesstatchart/ChartLine1.vue';
 import ChartPie1 from '#/views/genchuan/industry/templatesstatchart/ChartPie1.vue';
 import ChartPie2 from '#/views/genchuan/industry/templatesstatchart/ChartPie2.vue';

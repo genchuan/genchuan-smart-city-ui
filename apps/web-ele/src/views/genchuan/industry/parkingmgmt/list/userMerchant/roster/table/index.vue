@@ -4,7 +4,7 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -255,7 +255,18 @@ const getTableData = (pageObj) => {
     }
     return false;
   });
-
+  // 第二步：叠加运维人员筛选
+  if (filterUser.value) {
+    filteredList = filteredList.filter(
+      (v) => v.maintainUserName === filterUser.value,
+    );
+  }
+  // 第三步：叠加班次类型筛选
+  if (filterShiftType.value) {
+    filteredList = filteredList.filter(
+      (v) => v.shiftType === filterShiftType.value,
+    );
+  }
   // 再根据搜索条件筛选数据
   if (Object.keys(searchFormData.value).length > 0) {
     filteredList = filteredList.filter((item) => {
@@ -343,7 +354,8 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const activeName = ref('全部');
-
+const filterUser = ref(''); // 运维人员筛选：空=未筛选，有值=当前筛选运维人员
+const filterShiftType = ref(''); // 班次类型筛选：空=未筛选，有值=当前筛选班次类型
 // 详情抽屉相关
 const detailDrawerRef = ref(null);
 const detailData = ref({});
@@ -445,14 +457,26 @@ const handleFullShow = () => {
 
 // 筛选运维人员排班记录
 const filterByMaintainUser = (userName) => {
-  // 这里可以添加筛选逻辑，目前仅作为示例
-  ElMessage.info(`筛选运维人员: ${userName}`);
+  filterUser.value = filterUser.value === userName ? '' : userName;
+  gridApi.query();
+  // ElMessage.info(`筛选运维人员: ${userName}`);
 };
-
+/** 取消筛选运维人员排班记录（筛选标签关闭按钮） */
+const handleCancelUserFilter = () => {
+  filterUser.value = '';
+  gridApi.query();
+};
 // 筛选同班次类型排班
 const filterByShiftType = (shiftType) => {
   // 这里可以添加筛选逻辑，目前仅作为示例
-  ElMessage.info(`筛选班次类型: ${shiftType}`);
+  filterShiftType.value = filterShiftType.value === shiftType ? '' : shiftType;
+  gridApi.query();
+  // ElMessage.info(`筛选班次类型: ${shiftType}`);
+};
+/** 取消筛选运维人员排班记录（筛选标签关闭按钮） */
+const handleCancelShiftTypeFilter = () => {
+  filterShiftType.value = '';
+  gridApi.query();
 };
 </script>
 
@@ -478,7 +502,6 @@ const filterByShiftType = (shiftType) => {
       :title="`部门详情 - ${selectedDept?.deptName || ''}`"
       @close="handleDeptDetailClose"
     />
-    <!--    todo此处写抽屉展示部门详情逻辑-->
 
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -486,7 +509,10 @@ const filterByShiftType = (shiftType) => {
     <Grid>
       <!-- 三级状态 -->
       <template #table-title>
-        <div class="tabel-tabs">
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
+        >
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -501,6 +527,26 @@ const filterByShiftType = (shiftType) => {
               />
             </el-tabs>
           </div>
+          <!-- 运维人员筛选标签：蓝色primary，仅筛选时显示 -->
+          <ElTag
+            v-if="filterUser"
+            type="primary"
+            closable
+            @close="handleCancelUserFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            运维人员：{{ filterUser }}
+          </ElTag>
+          <!-- 班次类型筛选标签：绿色success，仅筛选时显示 -->
+          <ElTag
+            v-if="filterShiftType"
+            type="success"
+            closable
+            @close="handleCancelShiftTypeFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            班次类型：{{ filterShiftType }}
+          </ElTag>
         </div>
       </template>
       <template #toolbar-tools>
@@ -553,6 +599,7 @@ const filterByShiftType = (shiftType) => {
           @click="filterByMaintainUser(row.maintainUserName)"
           class="common-align"
           type="primary"
+          style="cursor: pointer"
         >
           {{ row.maintainUserName }}
         </el-text>
@@ -574,21 +621,22 @@ const filterByShiftType = (shiftType) => {
           @click="filterByShiftType(row.shiftType)"
           class="common-align"
           type="primary"
+          style="cursor: pointer"
         >
           {{ row.shiftType }}
         </el-text>
       </template>
 
       <template #status="{ row }">
-        <el-tag v-if="row.status === '正常'" type="success" size="small">
+        <ElTag v-if="row.status === '正常'" type="success" size="small">
           {{ row.status }}
-        </el-tag>
-        <el-tag v-else-if="row.status === '调班'" type="warning" size="small">
+        </ElTag>
+        <ElTag v-else-if="row.status === '调班'" type="warning" size="small">
           {{ row.status }}
-        </el-tag>
-        <el-tag v-else type="info" size="small">
+        </ElTag>
+        <ElTag v-else type="info" size="small">
           {{ row.status }}
-        </el-tag>
+        </ElTag>
       </template>
 
       <!-- 操作插槽 -->
