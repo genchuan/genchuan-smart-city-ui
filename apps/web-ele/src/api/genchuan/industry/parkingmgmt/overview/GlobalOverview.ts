@@ -2,7 +2,731 @@ import { requestClient } from '#/api/request';
 
 const BASE_URL = '/industry/parking';
 
-// ========== 停车资源分布 ==========
+
+// ========== 运维服务 ==========
+// 运维服务核心指标（卡片：工单总数、已完成数、处置完成率、平均处置时长、满意度）
+export const fetchOperationIndicators = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/park/operation/indicators/get`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.tbOperationStatWorkorderTotal &&
+          response.tbOperationStatCompletedCount
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无运维服务核心数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '运维服务核心指标接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              tbOperationStatWorkorderTotal: 1250, // 工单总数
+              tbOperationStatCompletedCount: 1180, // 已完成数
+              tbOperationStatAverageDuration: 2.5, // 平均处置时长
+              tbOperationStatCompletionRate: 94.4, // 处置完成率
+              sysWorkorderTypeName: '设备故障', // 热门工单类型
+              tbOperationStatOvertimeCount: 15, // 超时工单数
+              tbOperationStatSatisfactionRate: 96.8, // 客户满意度
+              tbOperationStatChainChange: 8.2, // 环比工单变化
+              tbRegionOperationRate: '中山路区域 28%', // 区域工单分布
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 运维服务核心指标函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      tbOperationStatWorkorderTotal: 0,
+      tbOperationStatCompletedCount: 0,
+      tbOperationStatAverageDuration: 0,
+      tbOperationStatCompletionRate: 0,
+      sysWorkorderTypeName: '',
+      tbOperationStatOvertimeCount: 0,
+      tbOperationStatSatisfactionRate: 0,
+      tbOperationStatChainChange: 0,
+      tbRegionOperationRate: '',
+    });
+  }
+};
+
+// 工单类型占比（饼图）
+export const fetchOperationTypeRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/park/operation/stat/type/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无工单类型占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '工单类型占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['设备故障', '网络问题', '计费异常', '停车异常', '其他'],
+              series: [{ name: '工单类型占比(%)', data: [45, 25, 15, 10, 5] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 工单类型占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '工单类型占比(%)', data: [] }],
+    });
+  }
+};
+
+// 区域工单分布占比（饼图）
+export const fetchOperationRegionRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/park/operation/stat/region/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无区域工单分布占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '区域工单分布占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['中山路区域', '火车站区域', '大学城片区', '工业区', '其他'],
+              series: [{ name: '区域工单分布占比(%)', data: [28, 22, 20, 18, 12] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 区域工单分布占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '区域工单分布占比(%)', data: [] }],
+    });
+  }
+};
+
+// 统计周期内工单新增趋势（折线图）
+export const fetchOperationNewTrend = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/park/operation/stat/new/trend`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无工单新增趋势数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '工单新增趋势接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const xAxis = Array.from({length: 7}, (_, i) => {
+              const date = new Date();
+              date.setDate(date.getDate() - 6 + i);
+              return `${date.getMonth() + 1}-${date.getDate()}`;
+            });
+            const data = [180, 165, 190, 175, 200, 185, 210];
+            resolve({
+              xAxis,
+              series: [{ name: '工单新增数', data }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 工单新增趋势函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '工单新增数', data: [] }],
+    });
+  }
+};
+
+// 统计周期内工单完成趋势（折线图）
+export const fetchOperationCompleteTrend = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/park/operation/stat/complete/trend`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无工单完成趋势数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '工单完成趋势接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const xAxis = Array.from({length: 7}, (_, i) => {
+              const date = new Date();
+              date.setDate(date.getDate() - 6 + i);
+              return `${date.getMonth() + 1}-${date.getDate()}`;
+            });
+            const data = [170, 160, 180, 175, 190, 185, 200];
+            resolve({
+              xAxis,
+              series: [{ name: '工单完成数', data }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 工单完成趋势函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '工单完成数', data: [] }],
+    });
+  }
+};
+
+
+// ========== 通行交易 ==========
+// 交易核心指标（卡片：总笔数、总金额、支付完成率、环比增长）
+export const fetchTradeIndicators = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/park/trade/indicators/get`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.tbTradeStatTotalCount &&
+          response.tbTradeStatTotalAmount
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无交易核心数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '交易核心指标接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              tbTradeStatTotalCount: 8560, // 交易总笔数
+              tbTradeStatTotalAmount: 342500, // 交易总金额
+              tbTradeStatAverageAmount: 40.0, // 平均单笔金额
+              tbTradeStatPayCompleteRate: 95.8, // 支付完成率
+              sysPayTypeName: '微信支付', // 热门支付方式
+              tbTradeStatChainGrowth: 12.5, // 环比增长
+              tbTradeStatPeakHour: '18:00-19:00', // 高峰时段
+              tbTradeStatUnfinishedCount: 180, // 未完成交易数
+              tbRegionTradeRate: '中山路商圈 35%', // 区域交易占比
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 交易核心指标函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      tbTradeStatTotalCount: 0,
+      tbTradeStatTotalAmount: 0,
+      tbTradeStatAverageAmount: 0,
+      tbTradeStatPayCompleteRate: 0,
+      sysPayTypeName: '',
+      tbTradeStatChainGrowth: 0,
+      tbTradeStatPeakHour: '',
+      tbTradeStatUnfinishedCount: 0,
+      tbRegionTradeRate: '',
+    });
+  }
+};
+
+// 支付方式占比（饼图）
+export const fetchTradePayTypeRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/park/trade/stat/paytype/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无支付方式占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '支付方式占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['微信支付', '支付宝', '银联支付', '现金支付', 'ETC支付'],
+              series: [{ name: '支付方式占比(%)', data: [45, 30, 15, 5, 5] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 支付方式占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '支付方式占比(%)', data: [] }],
+    });
+  }
+};
+
+// 区域交易占比（饼图）
+export const fetchTradeRegionRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/park/trade/stat/region/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无区域交易占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '区域交易占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['中山路商圈', '火车站区域', '大学城片区', '工业区', '住宅区'],
+              series: [{ name: '区域交易占比(%)', data: [35, 25, 20, 12, 8] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 区域交易占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '区域交易占比(%)', data: [] }],
+    });
+  }
+};
+
+// 统计周期内交易笔数趋势（折线图）
+export const fetchTradeCountTrend = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/park/trade/stat/count/trend`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无交易笔数趋势数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '交易笔数趋势接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const xAxis = Array.from({length: 7}, (_, i) => {
+              const date = new Date();
+              date.setDate(date.getDate() - 6 + i);
+              return `${date.getMonth() + 1}-${date.getDate()}`;
+            });
+            const data = [1200, 1150, 1300, 1250, 1400, 1350, 1500];
+            resolve({
+              xAxis,
+              series: [{ name: '交易笔数', data }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 交易笔数趋势函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '交易笔数', data: [] }],
+    });
+  }
+};
+
+// 统计周期内交易金额趋势（折线图）
+export const fetchTradeAmountTrend = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/park/trade/stat/amount/trend`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无交易金额趋势数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '交易金额趋势接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const xAxis = Array.from({length: 7}, (_, i) => {
+              const date = new Date();
+              date.setDate(date.getDate() - 6 + i);
+              return `${date.getMonth() + 1}-${date.getDate()}`;
+            });
+            const data = [48000, 46000, 52000, 50000, 56000, 54000, 60000];
+            resolve({
+              xAxis,
+              series: [{ name: '交易金额(元)', data }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 交易金额趋势函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '交易金额(元)', data: [] }],
+    });
+  }
+};
+
+
+// ========== 资源设备 ==========
+// 设备核心指标（卡片：总数、在线数、正常运行数、完好率、故障数）
+export const fetchParkDeviceIndicators = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/park/device/indicators/get`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.tbDeviceTotalCount &&
+          response.tbDeviceOnlineCount &&
+          response.tbDeviceNormalCount &&
+          response.tbDeviceFaultCount &&
+          response.tbDeviceIntactRate
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无设备核心数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '设备核心指标接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              tbDeviceTotalCount: 1200, // 设备总数
+              tbDeviceOnlineCount: 1120, // 在线设备数
+              tbDeviceNormalCount: 1080, // 正常运行数
+              tbDeviceFaultCount: 80, // 故障设备数
+              tbDeviceIntactRate: 90.0, // 设备完好率
+              tbDeviceNewCount7d: 50, // 近7日新增设备数
+              tbDeviceRepairCount7d: 45, // 近7日故障修复数
+              sysFaultTypeName: '通讯故障', // 热门故障类型
+              tbDeviceCoverageRate: 95.5, // 设备覆盖度
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 设备核心指标函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      tbDeviceTotalCount: 0,
+      tbDeviceOnlineCount: 0,
+      tbDeviceNormalCount: 0,
+      tbDeviceFaultCount: 0,
+      tbDeviceIntactRate: 0,
+      tbDeviceNewCount7d: 0,
+      tbDeviceRepairCount7d: 0,
+      sysFaultTypeName: '',
+      tbDeviceCoverageRate: 0,
+    });
+  }
+};
+
+// 设备类型占比（饼图）
+export const fetchParkDeviceTypeRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/park/device/stat/type/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无设备类型占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '设备类型占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['道闸', '摄像头', '计费桩', '充电桩', '传感器', '边缘网关'],
+              series: [{ name: '设备类型占比(%)', data: [25, 30, 15, 10, 12, 8] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 设备类型占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '设备类型占比(%)', data: [] }],
+    });
+  }
+};
+
+// 设备运行状态占比（饼图）
+export const fetchParkDeviceStatusRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/park/device/stat/status/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无设备运行状态占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '设备运行状态占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['正常运行', '在线故障', '离线', '禁用'],
+              series: [{ name: '设备运行状态占比(%)', data: [90, 5, 4, 1] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 设备运行状态占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '设备运行状态占比(%)', data: [] }],
+    });
+  }
+};
+
+// 近7日设备在线率变化趋势（折线图）
+export const fetchParkDeviceOnlineRateTrend7d = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/park/device/stat/online/rate/trend/7d`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无设备在线率趋势数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '设备在线率趋势接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const xAxis = Array.from({length: 7}, (_, i) => {
+              const date = new Date();
+              date.setDate(date.getDate() - 6 + i);
+              return `${date.getMonth() + 1}-${date.getDate()}`;
+            });
+            const data = [95.2, 94.8, 96.1, 95.5, 94.9, 95.8, 96.5];
+            resolve({
+              xAxis,
+              series: [{ name: '设备在线率(%)', data }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 设备在线率趋势函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '设备在线率(%)', data: [] }],
+    });
+  }
+};
+
+
+// ========== 在停车辆实时监控 ==========
 // 获取停车车辆分布数据（按支付状态）
 export const fetchParkingLotGeometries = (params = {}) => {
   try {
@@ -107,6 +831,341 @@ export const fetchParkingLotGeometries = (params = {}) => {
   }
 };
 
+// 在停车辆实时监控列表
+export const fetchParkingVehicleList = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/park/vehicle/monitoring/list`,
+        params,
+      })
+      .then((response) => {
+        console.log('在停车辆实时监控列表-接口请求成功');
+        if (response && Array.isArray(response)) {
+          console.log('在停车辆实时监控列表-响应符合实际格式');
+          return response.map((item) => ({
+            tbVehicleLicensePlate: item.tbVehicleLicensePlate,
+            tbParkingName: item.tbParkingName,
+            tbParkingSpaceSpaceNo: item.tbParkingSpaceSpaceNo,
+            tbParkingRecordEntryTime: item.tbParkingRecordEntryTime,
+            tbParkingRecordExpectedExitTime: item.tbParkingRecordExpectedExitTime,
+            tbParkingRecordParkingDuration: item.tbParkingRecordParkingDuration,
+            tbParkingRecordRecordId: item.tbParkingRecordRecordId,
+            sysPayStatusName: item.sysPayStatusName,
+            tbParkingSpaceType: item.tbParkingSpaceType,
+            tbRegionName: item.tbRegionName,
+            vehicleLongitude: item.vehicleLongitude,
+            vehicleLatitude: item.vehicleLatitude,
+            lotId: item.lotId,
+          }));
+        }
+        throw new Error('真实接口返回无在停车辆数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('在停车辆实时监控列表接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve([
+              {
+                tbVehicleLicensePlate: '闽A·12345',
+                tbParkingName: '高新区智慧停车场',
+                tbParkingSpaceSpaceNo: 'A-001',
+                tbParkingRecordEntryTime: Date.now() - 3600000,
+                tbParkingRecordExpectedExitTime: Date.now() + 7200000,
+                tbParkingRecordParkingDuration: 60,
+                tbParkingRecordRecordId: 'REC001',
+                sysPayStatusName: '已支付',
+                tbParkingSpaceType: '小型车位',
+                tbRegionName: '高新区',
+                vehicleLongitude: 117.6501,
+                vehicleLatitude: 24.5802,
+                lotId: 'LOT001',
+              },
+              {
+                tbVehicleLicensePlate: '闽B·67890',
+                tbParkingName: '主城区中心停车场',
+                tbParkingSpaceSpaceNo: 'B-203',
+                tbParkingRecordEntryTime: Date.now() - 7200000,
+                tbParkingRecordExpectedExitTime: Date.now() + 10800000,
+                tbParkingRecordParkingDuration: 120,
+                tbParkingRecordRecordId: 'REC002',
+                sysPayStatusName: '未支付',
+                tbParkingSpaceType: '中型车位',
+                tbRegionName: '主城区',
+                vehicleLongitude: 117.6603,
+                vehicleLatitude: 24.5901,
+                lotId: 'LOT002',
+              },
+            ]);
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchParkingVehicleList 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve([]);
+  }
+};
+
+// 在停车辆详情查询
+export const fetchParkingVehicleDetail = (recordId, params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/park/vehicle/monitoring/detail/${recordId}`,
+        params,
+      })
+      .then((response) => {
+        if (response && response.tbParkingRecordRecordId === recordId) {
+          return response;
+        }
+        throw new Error('真实接口返回无在停车辆详情数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('在停车辆详情接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              tbParkingRecordRecordId: recordId,
+              tbVehicleLicensePlate: recordId === 'REC001' ? '闽A·12345' : '闽B·67890',
+              tbParkingName: recordId === 'REC001' ? '高新区智慧停车场' : '主城区中心停车场',
+              tbParkingSpaceSpaceNo: recordId === 'REC001' ? 'A-001' : 'B-203',
+              tbParkingRecordEntryTime: Date.now() - 3600000,
+              tbParkingRecordExpectedExitTime: Date.now() + 7200000,
+              tbParkingRecordParkingDuration: 60,
+              sysPayStatusName: recordId === 'REC001' ? '已支付' : '未支付',
+              tbParkingSpaceType: '小型车位',
+              tbRegionName: recordId === 'REC001' ? '高新区' : '主城区',
+              // 停车记录
+              parkingRecord: {
+                entryTime: Date.now() - 3600000,
+                expectedExitTime: Date.now() + 7200000,
+                actualExitTime: null,
+                parkingDuration: 60,
+                totalFee: recordId === 'REC001' ? 15 : 30,
+                discountFee: recordId === 'REC001' ? 3 : 0,
+                finalFee: recordId === 'REC001' ? 12 : 30,
+              },
+              // 支付明细
+              paymentDetail: {
+                payMethod: recordId === 'REC001' ? '微信支付' : '待支付',
+                payTime: recordId === 'REC001' ? Date.now() - 1800000 : null,
+                payAmount: recordId === 'REC001' ? 12 : 30,
+                payStatus: recordId === 'REC001' ? '已支付' : '未支付',
+                invoiceStatus: recordId === 'REC001' ? '已开票' : '未开票',
+                transactionNo: recordId === 'REC001' ? 'WX202401270001' : '',
+              },
+              // 泊位位置
+              spaceLocation: {
+                longitude: recordId === 'REC001' ? 117.6501 : 117.6603,
+                latitude: recordId === 'REC001' ? 24.5802 : 24.5901,
+                floor: '1F',
+                zone: recordId === 'REC001' ? 'A区' : 'B区',
+                spaceNo: recordId === 'REC001' ? 'A-001' : 'B-203',
+              },
+              // 车辆信息
+              vehicleInfo: {
+                vehicleType: '小型客车',
+                vehicleColor: '白色',
+                vehicleBrand: '丰田',
+                ownerName: recordId === 'REC001' ? '张三' : '李四',
+                ownerPhone: recordId === 'REC001' ? '138****5678' : '139****9012',
+              },
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchParkingVehicleDetail 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({});
+  }
+};
+
+// 车辆追踪（聚焦泊位）
+export const trackParkingVehicle = (params = {}) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/park/vehicle/monitoring/track`,
+        data: params,
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return response;
+        }
+        throw new Error('真实接口返回无追踪结果，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('车辆追踪接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              success: true,
+              message: '车辆追踪成功，已聚焦到目标泊位',
+              data: {
+                longitude: 117.6501,
+                latitude: 24.5802,
+                zoomLevel: 16,
+                highlightSpaceNo: 'A-001',
+              },
+            });
+          }, 300);
+        });
+      });
+  } catch (error) {
+    console.error('===== trackParkingVehicle 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      success: false,
+      message: '车辆追踪失败',
+    });
+  }
+};
+
+// 催离操作
+export const urgeVehicleLeave = (recordId, params = {}) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/park/vehicle/monitoring/urge/${recordId}`,
+        data: params,
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return response;
+        }
+        throw new Error('真实接口返回无催离结果，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('催离操作接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              success: true,
+              message: '催离通知已发送',
+              data: {
+                recordId: recordId,
+                urgeTime: Date.now(),
+                urgeMethod: '短信通知',
+                status: '已发送',
+              },
+            });
+          }, 300);
+        });
+      });
+  } catch (error) {
+    console.error('===== urgeVehicleLeave 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      success: false,
+      message: '催离操作失败',
+    });
+  }
+};
+
+// 在停车辆核心指标（用于叠加层卡片展示）
+export const fetchParkingVehicleIndicators = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/park/vehicle/monitoring/indicators/get`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.totalVehicleCount &&
+          response.regionVehicleCount &&
+          response.unpaidVehicleCount &&
+          response.averageParkingDuration
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无在停车辆核心数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '在停车辆指标接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              totalVehicleCount: 128, // 在停车辆总数
+              regionVehicleCount: 42, // 各区域在停数
+              unpaidVehicleCount: 35, // 未支付车辆数
+              averageParkingDuration: 68, // 平均停车时长（分钟）
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchParkingVehicleIndicators 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      totalVehicleCount: 0,
+      regionVehicleCount: 0,
+      unpaidVehicleCount: 0,
+      averageParkingDuration: 0,
+    });
+  }
+};
+
+// 在停车辆变化趋势（用于叠加层折线图）
+export const fetchParkingVehicleTrend = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/park/vehicle/monitoring/trend`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无在停车辆趋势数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '在停车辆趋势接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'],
+              series: [{ name: '在停车辆数', data: [85, 92, 105, 120, 128, 115, 108, 95] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 在停车辆趋势函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '在停车辆数', data: [] }],
+    });
+  }
+};
+
+
+// ========== 停车资源分布 ==========
 // 获取停车热力图数据
 export const fetchHeatmapData = (params = {}) => {
   try {
@@ -1561,214 +2620,6 @@ export const fetchTradeTrendTimeTrend = (tradeTrendId, params = {}) => {
       tbTradeTrendTime: '',
       xAxis: [],
       series: [{ name: '时段交易笔数', data: [] }]
-    });
-  }
-};
-
-// ========== 资源设备 ==========
-// 设备核心指标（卡片：总数、在线数、正常运行数、完好率、故障数）
-export const fetchParkDeviceIndicators = (params = {}) => {
-  try {
-    return requestClient
-      .get({
-        url: `${BASE_URL}/park/device/indicators/get`,
-        params,
-      })
-      .then((response) => {
-        if (
-          response &&
-          typeof response === 'object' &&
-          !Array.isArray(response) &&
-          response.tbDeviceTotalCount &&
-          response.tbDeviceOnlineCount &&
-          response.tbDeviceNormalCount &&
-          response.tbDeviceFaultCount &&
-          response.tbDeviceIntactRate
-        ) {
-          return response;
-        }
-        throw new Error('真实接口返回无设备核心数据，使用模拟数据兜底');
-      })
-      .catch((error) => {
-        console.warn(
-          '设备核心指标接口调用失败-使用模拟数据兜底',
-          error.message,
-        );
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({
-              tbDeviceTotalCount: 1200, // 设备总数
-              tbDeviceOnlineCount: 1120, // 在线设备数
-              tbDeviceNormalCount: 1080, // 正常运行数
-              tbDeviceFaultCount: 80, // 故障设备数
-              tbDeviceIntactRate: 90.0, // 设备完好率
-              tbDeviceNewCount7d: 50, // 近7日新增设备数
-              tbDeviceRepairCount7d: 45, // 近7日故障修复数
-              sysFaultTypeName: '通讯故障', // 热门故障类型
-              tbDeviceCoverageRate: 95.5, // 设备覆盖度
-            });
-          }, 500);
-        });
-      });
-  } catch (error) {
-    console.error('===== 设备核心指标函数初始化异常 =====');
-    console.error('错误信息:', error.message);
-    console.error('错误堆栈:', error.stack);
-    return Promise.resolve({
-      tbDeviceTotalCount: 0,
-      tbDeviceOnlineCount: 0,
-      tbDeviceNormalCount: 0,
-      tbDeviceFaultCount: 0,
-      tbDeviceIntactRate: 0,
-      tbDeviceNewCount7d: 0,
-      tbDeviceRepairCount7d: 0,
-      sysFaultTypeName: '',
-      tbDeviceCoverageRate: 0,
-    });
-  }
-};
-
-// 设备类型占比（饼图）
-export const fetchParkDeviceTypeRatio = (params = {}) => {
-  try {
-    return requestClient
-      .get({
-        url: `${BASE_URL}/park/device/stat/type/ratio`,
-        params,
-      })
-      .then((response) => {
-        if (
-          response &&
-          typeof response === 'object' &&
-          !Array.isArray(response) &&
-          response.legend &&
-          Array.isArray(response.legend) &&
-          response.series &&
-          Array.isArray(response.series)
-        ) {
-          return response;
-        }
-        throw new Error('真实接口返回无设备类型占比数据，使用模拟数据兜底');
-      })
-      .catch((error) => {
-        console.warn(
-          '设备类型占比饼图接口调用失败-使用模拟数据兜底',
-          error.message,
-        );
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({
-              legend: ['道闸', '摄像头', '计费桩', '充电桩', '传感器', '边缘网关'],
-              series: [{ name: '设备类型占比(%)', data: [25, 30, 15, 10, 12, 8] }],
-            });
-          }, 500);
-        });
-      });
-  } catch (error) {
-    console.error('===== 设备类型占比饼图函数初始化异常 =====');
-    console.error('错误信息:', error.message);
-    console.error('错误堆栈:', error.stack);
-    return Promise.resolve({
-      legend: [],
-      series: [{ name: '设备类型占比(%)', data: [] }],
-    });
-  }
-};
-
-// 设备运行状态占比（饼图）
-export const fetchParkDeviceStatusRatio = (params = {}) => {
-  try {
-    return requestClient
-      .get({
-        url: `${BASE_URL}/park/device/stat/status/ratio`,
-        params,
-      })
-      .then((response) => {
-        if (
-          response &&
-          typeof response === 'object' &&
-          !Array.isArray(response) &&
-          response.legend &&
-          Array.isArray(response.legend) &&
-          response.series &&
-          Array.isArray(response.series)
-        ) {
-          return response;
-        }
-        throw new Error('真实接口返回无设备运行状态占比数据，使用模拟数据兜底');
-      })
-      .catch((error) => {
-        console.warn(
-          '设备运行状态占比饼图接口调用失败-使用模拟数据兜底',
-          error.message,
-        );
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({
-              legend: ['正常运行', '在线故障', '离线', '禁用'],
-              series: [{ name: '设备运行状态占比(%)', data: [90, 5, 4, 1] }],
-            });
-          }, 500);
-        });
-      });
-  } catch (error) {
-    console.error('===== 设备运行状态占比饼图函数初始化异常 =====');
-    console.error('错误信息:', error.message);
-    console.error('错误堆栈:', error.stack);
-    return Promise.resolve({
-      legend: [],
-      series: [{ name: '设备运行状态占比(%)', data: [] }],
-    });
-  }
-};
-
-// 近7日设备在线率变化趋势（折线图）
-export const fetchParkDeviceOnlineRateTrend7d = (params = {}) => {
-  try {
-    return requestClient
-      .get({
-        url: `${BASE_URL}/park/device/stat/online/rate/trend/7d`,
-        params,
-      })
-      .then((response) => {
-        if (
-          response &&
-          typeof response === 'object' &&
-          !Array.isArray(response) &&
-          response.xAxis &&
-          response.series
-        ) {
-          return response;
-        }
-        throw new Error('真实接口返回无设备在线率趋势数据，使用模拟数据兜底');
-      })
-      .catch((error) => {
-        console.warn(
-          '设备在线率趋势接口调用失败-使用模拟数据兜底',
-          error.message,
-        );
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            const xAxis = Array.from({length: 7}, (_, i) => {
-              const date = new Date();
-              date.setDate(date.getDate() - 6 + i);
-              return `${date.getMonth() + 1}-${date.getDate()}`;
-            });
-            const data = [95.2, 94.8, 96.1, 95.5, 94.9, 95.8, 96.5];
-            resolve({
-              xAxis,
-              series: [{ name: '设备在线率(%)', data }],
-            });
-          }, 500);
-        });
-      });
-  } catch (error) {
-    console.error('===== 设备在线率趋势函数初始化异常 =====');
-    console.error('错误信息:', error.message);
-    console.error('错误堆栈:', error.stack);
-    return Promise.resolve({
-      xAxis: [],
-      series: [{ name: '设备在线率(%)', data: [] }],
     });
   }
 };

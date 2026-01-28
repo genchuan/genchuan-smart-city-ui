@@ -142,7 +142,7 @@ const initChart = () => {
         name: props.data.series[0]?.name || '数据',
         type: 'pie',
         radius: ['40%', '80%'],
-        center: ['50%', '45%'],
+        center: ['50%', '52%'],
         roseType: 'area',
         itemStyle: {
           borderRadius: 8,
@@ -241,6 +241,6 @@ onUnmounted(() => {
 .chart-container {
   width: 100%;
   height: 100%;
-  min-height: 30vh;
+  min-height: 10vh;
 }
 </style>
