@@ -236,7 +236,10 @@ export const timeRateDataList = () => {
       strategyName: '工作日时段费率',
       peakTime: [{ start: '08:00', end: '18:00' }],
       peakRate: 0.15,
-      offPeakTime: [{ start: '00:00', end: '08:00' }, { start: '18:00', end: '24:00' }],
+      offPeakTime: [
+        { start: '00:00', end: '08:00' },
+        { start: '18:00', end: '24:00' },
+      ],
       offPeakRate: 0.05,
       applyScope: '全局',
       scopeIds: [],
@@ -251,7 +254,10 @@ export const timeRateDataList = () => {
       strategyName: '节假日时段费率',
       peakTime: [{ start: '10:00', end: '20:00' }],
       peakRate: 0.2,
-      offPeakTime: [{ start: '00:00', end: '10:00' }, { start: '20:00', end: '24:00' }],
+      offPeakTime: [
+        { start: '00:00', end: '10:00' },
+        { start: '20:00', end: '24:00' },
+      ],
       offPeakRate: 0.1,
       applyScope: '全局',
       scopeIds: [],
@@ -266,7 +272,10 @@ export const timeRateDataList = () => {
       strategyName: '商业区时段费率',
       peakTime: [{ start: '09:00', end: '22:00' }],
       peakRate: 0.25,
-      offPeakTime: [{ start: '00:00', end: '09:00' }, { start: '22:00', end: '24:00' }],
+      offPeakTime: [
+        { start: '00:00', end: '09:00' },
+        { start: '22:00', end: '24:00' },
+      ],
       offPeakRate: 0.1,
       applyScope: '区域',
       scopeIds: ['REGION001'],
@@ -281,7 +290,10 @@ export const timeRateDataList = () => {
       strategyName: '机场区域时段费率',
       peakTime: [{ start: '07:00', end: '21:00' }],
       peakRate: 0.2,
-      offPeakTime: [{ start: '00:00', end: '07:00' }, { start: '21:00', end: '24:00' }],
+      offPeakTime: [
+        { start: '00:00', end: '07:00' },
+        { start: '21:00', end: '24:00' },
+      ],
       offPeakRate: 0.1,
       applyScope: '区域',
       scopeIds: ['REGION005'],
@@ -296,7 +308,10 @@ export const timeRateDataList = () => {
       strategyName: '火车站区域时段费率',
       peakTime: [{ start: '08:00', end: '20:00' }],
       peakRate: 0.18,
-      offPeakTime: [{ start: '00:00', end: '08:00' }, { start: '20:00', end: '24:00' }],
+      offPeakTime: [
+        { start: '00:00', end: '08:00' },
+        { start: '20:00', end: '24:00' },
+      ],
       offPeakRate: 0.08,
       applyScope: '区域',
       scopeIds: ['REGION006'],
@@ -311,7 +326,10 @@ export const timeRateDataList = () => {
       strategyName: '医院区域时段费率',
       peakTime: [{ start: '08:00', end: '18:00' }],
       peakRate: 0.12,
-      offPeakTime: [{ start: '00:00', end: '08:00' }, { start: '18:00', end: '24:00' }],
+      offPeakTime: [
+        { start: '00:00', end: '08:00' },
+        { start: '18:00', end: '24:00' },
+      ],
       offPeakRate: 0.06,
       applyScope: '区域',
       scopeIds: ['REGION007'],
@@ -326,7 +344,10 @@ export const timeRateDataList = () => {
       strategyName: '学校区域时段费率',
       peakTime: [{ start: '07:00', end: '19:00' }],
       peakRate: 0.1,
-      offPeakTime: [{ start: '00:00', end: '07:00' }, { start: '19:00', end: '24:00' }],
+      offPeakTime: [
+        { start: '00:00', end: '07:00' },
+        { start: '19:00', end: '24:00' },
+      ],
       offPeakRate: 0.05,
       applyScope: '区域',
       scopeIds: ['REGION008'],
@@ -341,7 +362,10 @@ export const timeRateDataList = () => {
       strategyName: '工业区时段费率',
       peakTime: [{ start: '06:00', end: '18:00' }],
       peakRate: 0.15,
-      offPeakTime: [{ start: '00:00', end: '06:00' }, { start: '18:00', end: '24:00' }],
+      offPeakTime: [
+        { start: '00:00', end: '06:00' },
+        { start: '18:00', end: '24:00' },
+      ],
       offPeakRate: 0.08,
       applyScope: '区域',
       scopeIds: ['REGION009'],
@@ -356,7 +380,10 @@ export const timeRateDataList = () => {
       strategyName: '科技园区时段费率',
       peakTime: [{ start: '09:00', end: '19:00' }],
       peakRate: 0.18,
-      offPeakTime: [{ start: '00:00', end: '09:00' }, { start: '19:00', end: '24:00' }],
+      offPeakTime: [
+        { start: '00:00', end: '09:00' },
+        { start: '19:00', end: '24:00' },
+      ],
       offPeakRate: 0.09,
       applyScope: '区域',
       scopeIds: ['REGION010'],
@@ -371,7 +398,10 @@ export const timeRateDataList = () => {
       strategyName: '景区区域时段费率',
       peakTime: [{ start: '10:00', end: '18:00' }],
       peakRate: 0.25,
-      offPeakTime: [{ start: '00:00', end: '10:00' }, { start: '18:00', end: '24:00' }],
+      offPeakTime: [
+        { start: '00:00', end: '10:00' },
+        { start: '18:00', end: '24:00' },
+      ],
       offPeakRate: 0.12,
       applyScope: '区域',
       scopeIds: ['REGION011'],
@@ -386,7 +416,10 @@ export const timeRateDataList = () => {
       strategyName: '郊区时段费率',
       peakTime: [{ start: '08:00', end: '17:00' }],
       peakRate: 0.1,
-      offPeakTime: [{ start: '00:00', end: '08:00' }, { start: '17:00', end: '24:00' }],
+      offPeakTime: [
+        { start: '00:00', end: '08:00' },
+        { start: '17:00', end: '24:00' },
+      ],
       offPeakRate: 0.05,
       applyScope: '区域',
       scopeIds: ['REGION013'],
@@ -584,14 +617,18 @@ export const areaRateDataList = () => {
 /** 获取指定类型的数据列表 */
 export const dataList = (type = 'base') => {
   switch (type) {
-    case 'base':
-      return baseRateDataList();
-    case 'time':
-      return timeRateDataList();
-    case 'area':
+    case 'area': {
       return areaRateDataList();
-    default:
+    }
+    case 'base': {
       return baseRateDataList();
+    }
+    case 'time': {
+      return timeRateDataList();
+    }
+    default: {
+      return baseRateDataList();
+    }
   }
 };
 
@@ -905,14 +942,18 @@ export function useAreaRateFormSchema() {
 /** 根据类型获取表单配置 */
 export function useFormSchema(type = 'base') {
   switch (type) {
-    case 'base':
-      return useBaseRateFormSchema();
-    case 'time':
-      return useTimeRateFormSchema();
-    case 'area':
+    case 'area': {
       return useAreaRateFormSchema();
-    default:
+    }
+    case 'base': {
       return useBaseRateFormSchema();
+    }
+    case 'time': {
+      return useTimeRateFormSchema();
+    }
+    default: {
+      return useBaseRateFormSchema();
+    }
   }
 }
 
@@ -1016,7 +1057,7 @@ export function useTimeRateGridColumns() {
       sortable: true,
       formatter: ({ cellValue }) => {
         if (!Array.isArray(cellValue)) return '';
-        return cellValue.map(item => `${item.start}-${item.end}`).join(', ');
+        return cellValue.map((item) => `${item.start}-${item.end}`).join(', ');
       },
     },
     {
@@ -1032,7 +1073,7 @@ export function useTimeRateGridColumns() {
       sortable: true,
       formatter: ({ cellValue }) => {
         if (!Array.isArray(cellValue)) return '';
-        return cellValue.map(item => `${item.start}-${item.end}`).join(', ');
+        return cellValue.map((item) => `${item.start}-${item.end}`).join(', ');
       },
     },
     {
@@ -1150,14 +1191,18 @@ export function useAreaRateGridColumns() {
 /** 根据类型获取表格列配置 */
 export function useGridColumns(type = 'base') {
   switch (type) {
-    case 'base':
-      return useBaseRateGridColumns();
-    case 'time':
-      return useTimeRateGridColumns();
-    case 'area':
+    case 'area': {
       return useAreaRateGridColumns();
-    default:
+    }
+    case 'base': {
       return useBaseRateGridColumns();
+    }
+    case 'time': {
+      return useTimeRateGridColumns();
+    }
+    default: {
+      return useBaseRateGridColumns();
+    }
   }
 }
 
@@ -1179,14 +1224,18 @@ export const baseRateDetailFields = [
   { key: 'baseRate', label: '基础费率' },
   { key: 'maxDailyFee', label: '单日最高费用' },
   { key: 'applyScope', label: '适用范围' },
-  { key: 'scopeIds', label: '适用范围ID列表', formatter: (value) => JSON.stringify(value || []) },
+  {
+    key: 'scopeIds',
+    label: '适用范围ID列表',
+    formatter: (value) => JSON.stringify(value || []),
+  },
   { key: 'effectTime', label: '生效时间' },
   { key: 'expireTime', label: '失效时间' },
   {
     key: 'status',
     label: '状态',
     type: 'tag',
-    tagType: (value) => getStatusTagType(value)
+    tagType: (value) => getStatusTagType(value),
   },
   { key: 'createTime', label: '创建时间' },
   { key: 'updateTime', label: '更新时间' },
@@ -1198,17 +1247,29 @@ export const baseRateDetailFields = [
 export const timeRateDetailFields = [
   { key: 'feeStrategyId', label: '策略ID' },
   { key: 'strategyName', label: '策略名称' },
-  { key: 'peakTime', label: '高峰时段', formatter: (value) => JSON.stringify(value || []) },
+  {
+    key: 'peakTime',
+    label: '高峰时段',
+    formatter: (value) => JSON.stringify(value || []),
+  },
   { key: 'peakRate', label: '高峰费率' },
-  { key: 'offPeakTime', label: '平峰时段', formatter: (value) => JSON.stringify(value || []) },
+  {
+    key: 'offPeakTime',
+    label: '平峰时段',
+    formatter: (value) => JSON.stringify(value || []),
+  },
   { key: 'offPeakRate', label: '平峰费率' },
   { key: 'applyScope', label: '适用范围' },
-  { key: 'scopeIds', label: '适用范围ID列表', formatter: (value) => JSON.stringify(value || []) },
+  {
+    key: 'scopeIds',
+    label: '适用范围ID列表',
+    formatter: (value) => JSON.stringify(value || []),
+  },
   {
     key: 'status',
     label: '状态',
     type: 'tag',
-    tagType: (value) => getStatusTagType(value)
+    tagType: (value) => getStatusTagType(value),
   },
   { key: 'createTime', label: '创建时间' },
   { key: 'updateTime', label: '更新时间' },
@@ -1222,14 +1283,18 @@ export const areaRateDetailFields = [
   { key: 'regionName', label: '区域名称' },
   { key: 'regionRate', label: '区域费率' },
   { key: 'applyScope', label: '适用范围' },
-  { key: 'scopeIds', label: '适用范围ID列表', formatter: (value) => JSON.stringify(value || []) },
+  {
+    key: 'scopeIds',
+    label: '适用范围ID列表',
+    formatter: (value) => JSON.stringify(value || []),
+  },
   { key: 'effectTime', label: '生效时间' },
   { key: 'expireTime', label: '失效时间' },
   {
     key: 'status',
     label: '状态',
     type: 'tag',
-    tagType: (value) => getStatusTagType(value)
+    tagType: (value) => getStatusTagType(value),
   },
   { key: 'createTime', label: '创建时间' },
   { key: 'updateTime', label: '更新时间' },
@@ -1240,14 +1305,18 @@ export const areaRateDetailFields = [
 /** 根据费率类型获取详情字段配置 */
 export const getRateDetailFields = (rateType = 'base') => {
   switch (rateType) {
-    case 'base':
-      return baseRateDetailFields;
-    case 'time':
-      return timeRateDetailFields;
-    case 'area':
+    case 'area': {
       return areaRateDetailFields;
-    default:
+    }
+    case 'base': {
       return baseRateDetailFields;
+    }
+    case 'time': {
+      return timeRateDetailFields;
+    }
+    default: {
+      return baseRateDetailFields;
+    }
   }
 };
 
@@ -1263,26 +1332,98 @@ export const getStatsDataByRateType = (rateType = 'base') => {
   // 获取对应费率类型的数据
   const rateData = dataList(rateType);
   const totalCount = rateData.length;
-  const enabledCount = rateData.filter(item => item.status === '启用').length;
-  const disabledCount = rateData.filter(item => item.status === '禁用').length;
+  const enabledCount = rateData.filter((item) => item.status === '启用').length;
+  const disabledCount = rateData.filter(
+    (item) => item.status === '禁用',
+  ).length;
 
   // 统计适用范围占比
   const applyScopeStats = {};
-  rateData.forEach(item => {
-    applyScopeStats[item.applyScope] = (applyScopeStats[item.applyScope] || 0) + 1;
+  rateData.forEach((item) => {
+    applyScopeStats[item.applyScope] =
+      (applyScopeStats[item.applyScope] || 0) + 1;
   });
 
   // 统计状态占比
   const statusStats = {
     启用: enabledCount,
-    禁用: disabledCount
+    禁用: disabledCount,
   };
 
   switch (rateType) {
+    case 'area': {
+      // 区域费率统计
+      const regionRates = rateData.map((item) => item.regionRate);
+      const regionRateAvg =
+        regionRates.length > 0
+          ? regionRates.reduce((sum, rate) => sum + rate, 0) /
+            regionRates.length
+          : 0;
+
+      // 统计区域名称占比
+      const regionNameStats = {};
+      rateData.forEach((item) => {
+        regionNameStats[item.regionName] = (regionNameStats[item.regionName] || 0) + 1;
+      });
+
+      return {
+        cards: [
+          {
+            title: '总策略数',
+            value: totalCount,
+            desc: `共${totalCount}个区域费率策略`,
+            color: '#13ce66',
+          },
+          {
+            title: '启用策略数',
+            value: enabledCount,
+            desc: `${Math.round((enabledCount / totalCount) * 100)}%的策略已启用`,
+            color: '#4ECDC4',
+          },
+          {
+            title: '区域费率均值',
+            value: regionRateAvg.toFixed(2),
+            desc: '所有策略的区域费率平均值',
+            color: '#FF6B6B',
+          },
+        ],
+        charts: [
+          {
+            title: '区域名称占比',
+            type: 'pie',
+            data: Object.entries(regionNameStats)
+              .filter(([_, value]) => value > 0)
+              .map(([name, value]) => ({
+                value: Math.round((value / totalCount) * 100),
+                name,
+              })),
+          },
+          {
+            title: '状态占比',
+            type: 'pie',
+            data: Object.entries(statusStats)
+              .filter(([_, value]) => value > 0)
+              .map(([name, value]) => ({
+                value: Math.round((value / totalCount) * 100),
+                name,
+              })),
+          },
+          {
+            title: '不同区域费率对比',
+            type: 'bar',
+            xAxis: rateData.map((item) => item.regionName),
+            series: rateData.map((item) => item.regionRate),
+          },
+        ],
+      };
+    }
     case 'base': {
       // 基础费率统计
-      const baseRates = rateData.map(item => item.baseRate);
-      const baseRateAvg = baseRates.length > 0 ? baseRates.reduce((sum, rate) => sum + rate, 0) / baseRates.length : 0;
+      const baseRates = rateData.map((item) => item.baseRate);
+      const baseRateAvg =
+        baseRates.length > 0
+          ? baseRates.reduce((sum, rate) => sum + rate, 0) / baseRates.length
+          : 0;
 
       return {
         cards: [
@@ -1329,18 +1470,25 @@ export const getStatsDataByRateType = (rateType = 'base') => {
           {
             title: '不同策略基础费率对比',
             type: 'line',
-            xAxis: rateData.map(item => item.strategyName),
-            series: rateData.map(item => item.baseRate),
+            xAxis: rateData.map((item) => item.strategyName),
+            series: rateData.map((item) => item.baseRate),
           },
         ],
       };
     }
     case 'time': {
       // 时段费率统计
-      const peakRates = rateData.map(item => item.peakRate);
-      const offPeakRates = rateData.map(item => item.offPeakRate);
-      const peakRateAvg = peakRates.length > 0 ? peakRates.reduce((sum, rate) => sum + rate, 0) / peakRates.length : 0;
-      const offPeakRateAvg = offPeakRates.length > 0 ? offPeakRates.reduce((sum, rate) => sum + rate, 0) / offPeakRates.length : 0;
+      const peakRates = rateData.map((item) => item.peakRate);
+      const offPeakRates = rateData.map((item) => item.offPeakRate);
+      const peakRateAvg =
+        peakRates.length > 0
+          ? peakRates.reduce((sum, rate) => sum + rate, 0) / peakRates.length
+          : 0;
+      const offPeakRateAvg =
+        offPeakRates.length > 0
+          ? offPeakRates.reduce((sum, rate) => sum + rate, 0) /
+            offPeakRates.length
+          : 0;
 
       return {
         cards: [
@@ -1387,72 +1535,17 @@ export const getStatsDataByRateType = (rateType = 'base') => {
           {
             title: '不同策略高峰费率对比',
             type: 'bar',
-            xAxis: rateData.map(item => item.strategyName),
-            series: rateData.map(item => item.peakRate),
+            xAxis: rateData.map((item) => item.strategyName),
+            series: rateData.map((item) => item.peakRate),
           },
         ],
       };
     }
-    case 'area': {
-      // 区域费率统计
-      const regionRates = rateData.map(item => item.regionRate);
-      const regionRateAvg = regionRates.length > 0 ? regionRates.reduce((sum, rate) => sum + rate, 0) / regionRates.length : 0;
-
-      return {
-        cards: [
-          {
-            title: '总策略数',
-            value: totalCount,
-            desc: `共${totalCount}个区域费率策略`,
-            color: '#13ce66',
-          },
-          {
-            title: '启用策略数',
-            value: enabledCount,
-            desc: `${Math.round((enabledCount / totalCount) * 100)}%的策略已启用`,
-            color: '#4ECDC4',
-          },
-          {
-            title: '区域费率均值',
-            value: regionRateAvg.toFixed(2),
-            desc: '所有策略的区域费率平均值',
-            color: '#FF6B6B',
-          },
-        ],
-        charts: [
-          {
-            title: '适用范围占比',
-            type: 'pie',
-            data: Object.entries(applyScopeStats)
-              .filter(([_, value]) => value > 0)
-              .map(([name, value]) => ({
-                value: Math.round((value / totalCount) * 100),
-                name,
-              })),
-          },
-          {
-            title: '状态占比',
-            type: 'pie',
-            data: Object.entries(statusStats)
-              .filter(([_, value]) => value > 0)
-              .map(([name, value]) => ({
-                value: Math.round((value / totalCount) * 100),
-                name,
-              })),
-          },
-          {
-            title: '不同区域费率对比',
-            type: 'bar',
-            xAxis: rateData.map(item => item.regionName),
-            series: rateData.map(item => item.regionRate),
-          },
-        ],
-      };
-    }
-    default:
+    default: {
       return {
         cards: [],
         charts: [],
       };
+    }
   }
 };

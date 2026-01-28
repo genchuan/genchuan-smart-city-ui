@@ -1,0 +1,434 @@
+/** 充值套餐表格初始数据 - 按指定字段生成 */
+export const dataList = () => {
+  return [
+    {
+      packageId: 'RCP001',
+      packageName: '月度充值套餐A',
+      rechargeAmount: '100.00',
+      giveAmountOrTime: '赠送10元',
+      validDays: 30,
+      rechargeTypeName: '满减充值',
+      operator: '张三',
+      salesCount: 1256,
+      packageStatusName: '启用',
+      createTime: '2025-01-10 09:20:30',
+      lastSaleTime: '2025-02-20 14:30:00'
+    },
+    {
+      packageId: 'RCP002',
+      packageName: '季度充值套餐B',
+      rechargeAmount: '300.00',
+      giveAmountOrTime: '赠送50元',
+      validDays: 90,
+      rechargeTypeName: '满减充值',
+      operator: '李四',
+      salesCount: 856,
+      packageStatusName: '启用',
+      createTime: '2025-01-12 14:15:20',
+      lastSaleTime: '2025-02-19 16:45:00'
+    },
+    {
+      packageId: 'RCP003',
+      packageName: '年度充值套餐C',
+      rechargeAmount: '1000.00',
+      giveAmountOrTime: '赠送200元',
+      validDays: 365,
+      rechargeTypeName: '满减充值',
+      operator: '王五',
+      salesCount: 345,
+      packageStatusName: '启用',
+      createTime: '2025-01-15 10:05:10',
+      lastSaleTime: '2025-02-20 10:20:00'
+    },
+    {
+      packageId: 'RCP004',
+      packageName: '周末特惠充值',
+      rechargeAmount: '50.00',
+      giveAmountOrTime: '赠送5小时停车时长',
+      validDays: 7,
+      rechargeTypeName: '时长充值',
+      operator: '赵六',
+      salesCount: 2345,
+      packageStatusName: '启用',
+      createTime: '2025-01-18 08:30:45',
+      lastSaleTime: '2025-02-20 08:15:00'
+    },
+    {
+      packageId: 'RCP005',
+      packageName: '企业大客户充值',
+      rechargeAmount: '5000.00',
+      giveAmountOrTime: '赠送1000元',
+      validDays: 365,
+      rechargeTypeName: '企业充值',
+      operator: '孙七',
+      salesCount: 56,
+      packageStatusName: '启用',
+      createTime: '2025-01-20 16:40:15',
+      lastSaleTime: '2025-02-18 11:30:00'
+    },
+    {
+      packageId: 'RCP006',
+      packageName: '夜间充值套餐',
+      rechargeAmount: '30.00',
+      giveAmountOrTime: '赠送夜间2小时',
+      validDays: 30,
+      rechargeTypeName: '时长充值',
+      operator: '周八',
+      salesCount: 1890,
+      packageStatusName: '禁用',
+      createTime: '2025-01-22 11:10:30',
+      lastSaleTime: '2025-02-15 22:00:00'
+    },
+    {
+      packageId: 'RCP007',
+      packageName: '新手引导充值',
+      rechargeAmount: '20.00',
+      giveAmountOrTime: '赠送5元',
+      validDays: 15,
+      rechargeTypeName: '满减充值',
+      operator: '吴九',
+      salesCount: 3567,
+      packageStatusName: '启用',
+      createTime: '2025-01-25 13:25:40',
+      lastSaleTime: '2025-02-20 09:45:00'
+    },
+    {
+      packageId: 'RCP008',
+      packageName: '家庭共享充值',
+      rechargeAmount: '200.00',
+      giveAmountOrTime: '赠送30元',
+      validDays: 90,
+      rechargeTypeName: '家庭充值',
+      operator: '郑十',
+      salesCount: 678,
+      packageStatusName: '启用',
+      createTime: '2025-01-28 09:50:25',
+      lastSaleTime: '2025-02-19 15:20:00'
+    },
+    {
+      packageId: 'RCP009',
+      packageName: '老年优惠充值',
+      rechargeAmount: '50.00',
+      giveAmountOrTime: '赠送10元',
+      validDays: 30,
+      rechargeTypeName: '优惠充值',
+      operator: '张三',
+      salesCount: 890,
+      packageStatusName: '禁用',
+      createTime: '2025-02-01 15:15:10',
+      lastSaleTime: '2025-02-10 10:30:00'
+    },
+    {
+      packageId: 'RCP010',
+      packageName: '学生特惠充值',
+      rechargeAmount: '30.00',
+      giveAmountOrTime: '赠送5元',
+      validDays: 30,
+      rechargeTypeName: '优惠充值',
+      operator: '李四',
+      salesCount: 2345,
+      packageStatusName: '启用',
+      createTime: '2025-02-05 10:30:50',
+      lastSaleTime: '2025-02-20 12:00:00'
+    },
+    {
+      packageId: 'RCP011',
+      packageName: '商务差旅充值',
+      rechargeAmount: '500.00',
+      giveAmountOrTime: '赠送80元',
+      validDays: 30,
+      rechargeTypeName: '商务充值',
+      operator: '王五',
+      salesCount: 567,
+      packageStatusName: '启用',
+      createTime: '2025-02-08 14:20:15',
+      lastSaleTime: '2025-02-20 08:50:00'
+    },
+    {
+      packageId: 'RCP012',
+      packageName: '节假日充值特惠',
+      rechargeAmount: '100.00',
+      giveAmountOrTime: '赠送20元',
+      validDays: 7,
+      rechargeTypeName: '限时充值',
+      operator: '赵六',
+      salesCount: 1234,
+      packageStatusName: '启用',
+      createTime: '2025-02-10 09:40:30',
+      lastSaleTime: '2025-02-19 16:10:00'
+    },
+    {
+      packageId: 'RCP013',
+      packageName: 'VIP尊享充值',
+      rechargeAmount: '2000.00',
+      giveAmountOrTime: '赠送500元',
+      validDays: 365,
+      rechargeTypeName: 'VIP充值',
+      operator: '孙七',
+      salesCount: 89,
+      packageStatusName: '启用',
+      createTime: '2025-02-12 11:25:00',
+      lastSaleTime: '2025-02-20 14:00:00'
+    },
+    {
+      packageId: 'RCP014',
+      packageName: '临时体验充值',
+      rechargeAmount: '10.00',
+      giveAmountOrTime: '赠送1小时',
+      validDays: 3,
+      rechargeTypeName: '体验充值',
+      operator: '周八',
+      salesCount: 5678,
+      packageStatusName: '禁用',
+      createTime: '2025-02-15 16:30:45',
+      lastSaleTime: '2025-02-18 20:00:00'
+    },
+    {
+      packageId: 'RCP015',
+      packageName: '团队优惠充值',
+      rechargeAmount: '1000.00',
+      giveAmountOrTime: '赠送150元',
+      validDays: 90,
+      rechargeTypeName: '团队充值',
+      operator: '吴九',
+      salesCount: 234,
+      packageStatusName: '启用',
+      createTime: '2025-02-18 10:15:20',
+      lastSaleTime: '2025-02-20 11:30:00'
+    }
+  ];
+};
+
+/** 充值套餐表单配置（包含所有指定字段） */
+export function useFormSchema() {
+  return [
+    {
+      fieldName: 'packageId',
+      label: '套餐ID',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入套餐ID',
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'packageName',
+      label: '套餐名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入套餐名称'
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'rechargeAmount',
+      label: '充值金额',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入充值金额',
+        min: 0,
+        precision: 2
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'giveAmountOrTime',
+      label: '赠送金额/时长',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入赠送金额或时长'
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'validDays',
+      label: '生效天数',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入生效天数',
+        min: 1
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'rechargeTypeName',
+      label: '套餐类型',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择套餐类型',
+        options: [
+          { label: '满减充值', value: '满减充值' },
+          { label: '时长充值', value: '时长充值' },
+          { label: '企业充值', value: '企业充值' },
+          { label: '家庭充值', value: '家庭充值' },
+          { label: '优惠充值', value: '优惠充值' },
+          { label: '商务充值', value: '商务充值' },
+          { label: '限时充值', value: '限时充值' },
+          { label: 'VIP充值', value: 'VIP充值' },
+          { label: '体验充值', value: '体验充值' },
+          { label: '团队充值', value: '团队充值' }
+        ]
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'operator',
+      label: '操作人',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入操作人'
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'salesCount',
+      label: '销量',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入销量',
+        min: 0
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'packageStatusName',
+      label: '状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择状态',
+        options: [
+          { label: '启用', value: '启用' },
+          { label: '禁用', value: '禁用' }
+        ]
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'createTime',
+      label: '创建时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择创建时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'lastSaleTime',
+      label: '最近销售时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择最近销售时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+      },
+      rules: 'required'
+    }
+  ];
+}
+
+/** 充值套餐表格列配置 */
+export function useGridColumns() {
+  return [
+    { type: 'checkbox', width: 40 },
+    {
+      field: 'packageId',
+      title: '套餐ID',
+      minWidth: 100,
+      sortable: true,
+      slots: { default: 'packageId' }
+    },
+    {
+      field: 'packageName',
+      title: '套餐名称',
+      minWidth: 150,
+      sortable: true,
+      slots: { default: 'packageName' }
+    },
+    {
+      field: 'rechargeAmount',
+      title: '充值金额',
+      minWidth: 100,
+      sortable: true
+    },
+    {
+      field: 'giveAmountOrTime',
+      title: '赠送金额/时长',
+      minWidth: 120,
+      sortable: true
+    },
+    {
+      field: 'validDays',
+      title: '生效天数',
+      minWidth: 100,
+      sortable: true
+    },
+    {
+      field: 'rechargeTypeName',
+      title: '套餐类型',
+      minWidth: 120,
+      sortable: true
+    },
+    {
+      field: 'operator',
+      title: '操作人',
+      minWidth: 100,
+      sortable: true
+    },
+    {
+      field: 'salesCount',
+      title: '销量',
+      minWidth: 100,
+      sortable: true
+    },
+    {
+      field: 'packageStatusName',
+      title: '状态',
+      minWidth: 100,
+      sortable: true,
+      slots: { default: 'packageStatusName' }
+    },
+    {
+      field: 'createTime',
+      title: '创建时间',
+      minWidth: 180,
+      sortable: true
+    },
+    {
+      field: 'lastSaleTime',
+      title: '最近销售时间',
+      minWidth: 180,
+      sortable: true
+    },
+    {
+      title: '操作',
+      width: 150,
+      fixed: 'right',
+      slots: { default: 'actions' }
+    }
+  ];
+}
+
+export const textObj = {
+  editText: '编辑套餐',
+  addText: '新增套餐',
+  excelName: '充值套餐列表',
+  excelAllName: '充值套餐数据.xlsx',
+  total: ' 总计: 套餐数量15;总销量:21005;启用套餐12;禁用套餐3',
+};
+
+/** 详情抽屉字段配置 */
+export const detailFields = [
+  { key: 'packageId', label: '套餐ID' },
+  { key: 'packageName', label: '套餐名称' },
+  { key: 'rechargeAmount', label: '充值金额' },
+  { key: 'giveAmountOrTime', label: '赠送金额/时长' },
+  { key: 'validDays', label: '生效天数' },
+  { key: 'rechargeTypeName', label: '套餐类型' },
+  { key: 'operator', label: '操作人' },
+  { key: 'salesCount', label: '销量' },
+  { key: 'packageStatusName', label: '状态' },
+  { key: 'createTime', label: '创建时间' },
+  { key: 'lastSaleTime', label: '最近销售时间' }
+];

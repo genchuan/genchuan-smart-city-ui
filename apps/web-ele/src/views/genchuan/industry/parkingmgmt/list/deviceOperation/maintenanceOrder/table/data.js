@@ -1,0 +1,478 @@
+/** 告警管理表格初始数据 - 按指定字段生成 */
+export const dataList = () => {
+  return [
+    {
+      alarmNo: 'AL-20250101-001',
+      deviceCode: 'DEV-001',
+      deviceTypeName: '道闸设备',
+      alarmTypeName: '设备故障',
+      alarmTime: '2025-01-01 09:00:00',
+      receiveTime: '2025-01-01 09:01:00',
+      alarmContent: '道闸电机运行异响',
+      alarmId: 'ALID001',
+      alarmLevelName: '一般',
+      receiveStatusName: '已接收',
+      receiveWayName: '系统自动',
+      dealStatusName: '待处理'
+    },
+    {
+      alarmNo: 'AL-20250101-002',
+      deviceCode: 'DEV-002',
+      deviceTypeName: '车牌识别摄像头',
+      alarmTypeName: '设备故障',
+      alarmTime: '2025-01-01 10:30:00',
+      receiveTime: '2025-01-01 10:31:00',
+      alarmContent: '车牌识别摄像头无图像',
+      alarmId: 'ALID002',
+      alarmLevelName: '严重',
+      receiveStatusName: '已接收',
+      receiveWayName: '系统自动',
+      dealStatusName: '处理中'
+    },
+    {
+      alarmNo: 'AL-20250101-003',
+      deviceCode: 'DEV-003',
+      deviceTypeName: '地磁检测器',
+      alarmTypeName: '通信故障',
+      alarmTime: '2025-01-01 11:15:00',
+      receiveTime: '2025-01-01 11:16:00',
+      alarmContent: '地磁检测器通信中断',
+      alarmId: 'ALID003',
+      alarmLevelName: '一般',
+      receiveStatusName: '已接收',
+      receiveWayName: '系统自动',
+      dealStatusName: '已处理'
+    },
+    {
+      alarmNo: 'AL-20250101-004',
+      deviceCode: 'DEV-004',
+      deviceTypeName: '收费终端',
+      alarmTypeName: '软件故障',
+      alarmTime: '2025-01-01 12:00:00',
+      receiveTime: '2025-01-01 12:01:00',
+      alarmContent: '收费终端系统卡顿',
+      alarmId: 'ALID004',
+      alarmLevelName: '一般',
+      receiveStatusName: '已接收',
+      receiveWayName: '系统自动',
+      dealStatusName: '已处理'
+    },
+    {
+      alarmNo: 'AL-20250101-005',
+      deviceCode: 'DEV-005',
+      deviceTypeName: '道闸设备',
+      alarmTypeName: '设备故障',
+      alarmTime: '2025-01-01 13:45:00',
+      receiveTime: '2025-01-01 13:46:00',
+      alarmContent: '道闸杆无法升起',
+      alarmId: 'ALID005',
+      alarmLevelName: '严重',
+      receiveStatusName: '已接收',
+      receiveWayName: '系统自动',
+      dealStatusName: '待处理'
+    },
+    {
+      alarmNo: 'AL-20250101-006',
+      deviceCode: 'DEV-006',
+      deviceTypeName: '诱导屏',
+      alarmTypeName: '设备故障',
+      alarmTime: '2025-01-01 14:30:00',
+      receiveTime: '2025-01-01 14:31:00',
+      alarmContent: '诱导屏亮度异常',
+      alarmId: 'ALID006',
+      alarmLevelName: '轻微',
+      receiveStatusName: '已接收',
+      receiveWayName: '系统自动',
+      dealStatusName: '处理中'
+    },
+    {
+      alarmNo: 'AL-20250101-007',
+      deviceCode: 'DEV-007',
+      deviceTypeName: '车牌识别终端',
+      alarmTypeName: '通信故障',
+      alarmTime: '2025-01-01 15:15:00',
+      receiveTime: '2025-01-01 15:16:00',
+      alarmContent: '车牌识别终端网络连接失败',
+      alarmId: 'ALID007',
+      alarmLevelName: '一般',
+      receiveStatusName: '已接收',
+      receiveWayName: '系统自动',
+      dealStatusName: '已处理'
+    },
+    {
+      alarmNo: 'AL-20250101-008',
+      deviceCode: 'DEV-008',
+      deviceTypeName: '地磁检测器',
+      alarmTypeName: '通信故障',
+      alarmTime: '2025-01-01 16:00:00',
+      receiveTime: '2025-01-01 16:01:00',
+      alarmContent: '地磁检测器数据上传延迟',
+      alarmId: 'ALID008',
+      alarmLevelName: '轻微',
+      receiveStatusName: '已接收',
+      receiveWayName: '系统自动',
+      dealStatusName: '已处理'
+    },
+    {
+      alarmNo: 'AL-20250101-009',
+      deviceCode: 'DEV-009',
+      deviceTypeName: '道闸设备',
+      alarmTypeName: '设备故障',
+      alarmTime: '2025-01-01 16:45:00',
+      receiveTime: '2025-01-01 16:46:00',
+      alarmContent: '道闸减速机漏油',
+      alarmId: 'ALID009',
+      alarmLevelName: '一般',
+      receiveStatusName: '已接收',
+      receiveWayName: '系统自动',
+      dealStatusName: '待处理'
+    },
+    {
+      alarmNo: 'AL-20250101-010',
+      deviceCode: 'DEV-010',
+      deviceTypeName: '收费终端',
+      alarmTypeName: '设备故障',
+      alarmTime: '2025-01-01 17:30:00',
+      receiveTime: '2025-01-01 17:31:00',
+      alarmContent: '收费终端电源故障',
+      alarmId: 'ALID010',
+      alarmLevelName: '严重',
+      receiveStatusName: '已接收',
+      receiveWayName: '系统自动',
+      dealStatusName: '处理中'
+    },
+    {
+      alarmNo: 'AL-20250101-011',
+      deviceCode: 'DEV-011',
+      deviceTypeName: '诱导屏',
+      alarmTypeName: '通信故障',
+      alarmTime: '2025-01-01 18:15:00',
+      receiveTime: '2025-01-01 18:16:00',
+      alarmContent: '诱导屏与服务器断开连接',
+      alarmId: 'ALID011',
+      alarmLevelName: '一般',
+      receiveStatusName: '已接收',
+      receiveWayName: '系统自动',
+      dealStatusName: '已处理'
+    },
+    {
+      alarmNo: 'AL-20250101-012',
+      deviceCode: 'DEV-012',
+      deviceTypeName: '车牌识别系统',
+      alarmTypeName: '软件故障',
+      alarmTime: '2025-01-01 19:00:00',
+      receiveTime: '2025-01-01 19:01:00',
+      alarmContent: '车牌识别算法识别率下降',
+      alarmId: 'ALID012',
+      alarmLevelName: '一般',
+      receiveStatusName: '已接收',
+      receiveWayName: '系统自动',
+      dealStatusName: '已处理'
+    },
+    {
+      alarmNo: 'AL-20250101-013',
+      deviceCode: 'DEV-013',
+      deviceTypeName: '道闸设备',
+      alarmTypeName: '设备故障',
+      alarmTime: '2025-01-01 20:30:00',
+      receiveTime: '2025-01-01 20:31:00',
+      alarmContent: '道闸电机烧毁',
+      alarmId: 'ALID013',
+      alarmLevelName: '严重',
+      receiveStatusName: '已接收',
+      receiveWayName: '系统自动',
+      dealStatusName: '待处理'
+    },
+    {
+      alarmNo: 'AL-20250101-014',
+      deviceCode: 'DEV-014',
+      deviceTypeName: '地磁检测器',
+      alarmTypeName: '设备故障',
+      alarmTime: '2025-01-01 21:15:00',
+      receiveTime: '2025-01-01 21:16:00',
+      alarmContent: '地磁检测器电池耗尽',
+      alarmId: 'ALID014',
+      alarmLevelName: '轻微',
+      receiveStatusName: '已接收',
+      receiveWayName: '系统自动',
+      dealStatusName: '处理中'
+    },
+    {
+      alarmNo: 'AL-20250101-015',
+      deviceCode: 'DEV-015',
+      deviceTypeName: '收费终端',
+      alarmTypeName: '通信故障',
+      alarmTime: '2025-01-01 22:00:00',
+      receiveTime: '2025-01-01 22:01:00',
+      alarmContent: '收费终端无法连接数据库',
+      alarmId: 'ALID015',
+      alarmLevelName: '严重',
+      receiveStatusName: '已接收',
+      receiveWayName: '系统自动',
+      dealStatusName: '已处理'
+    }
+  ];
+};
+
+/** 告警管理表单配置（包含所有指定字段） */
+export function useFormSchema() {
+  return [
+    {
+      fieldName: 'alarmId',
+      label: '告警ID',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入告警ID',
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'alarmNo',
+      label: '告警编号',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入告警编号'
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'deviceCode',
+      label: '设备编码',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入设备编码'
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'deviceTypeName',
+      label: '设备类型',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择设备类型',
+        options: [
+          { label: '道闸设备', value: '道闸设备' },
+          { label: '车牌识别摄像头', value: '车牌识别摄像头' },
+          { label: '地磁检测器', value: '地磁检测器' },
+          { label: '收费终端', value: '收费终端' },
+          { label: '诱导屏', value: '诱导屏' },
+          { label: '车牌识别终端', value: '车牌识别终端' },
+          { label: '车牌识别系统', value: '车牌识别系统' }
+        ]
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'alarmTypeName',
+      label: '告警类型',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择告警类型',
+        options: [
+          { label: '设备故障', value: '设备故障' },
+          { label: '通信故障', value: '通信故障' },
+          { label: '软件故障', value: '软件故障' }
+        ]
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'alarmTime',
+      label: '告警时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择告警时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'receiveTime',
+      label: '接收时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择接收时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'alarmContent',
+      label: '告警内容',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入告警内容',
+        type: 'textarea'
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'alarmLevelName',
+      label: '告警等级',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择告警等级',
+        options: [
+          { label: '轻微', value: '轻微' },
+          { label: '一般', value: '一般' },
+          { label: '严重', value: '严重' }
+        ]
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'receiveStatusName',
+      label: '接收状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择接收状态',
+        options: [
+          { label: '已接收', value: '已接收' },
+          { label: '未接收', value: '未接收' }
+        ]
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'receiveWayName',
+      label: '接收方式',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择接收方式',
+        options: [
+          { label: '系统自动', value: '系统自动' },
+          { label: '人工上报', value: '人工上报' }
+        ]
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'dealStatusName',
+      label: '处理状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择处理状态',
+        options: [
+          { label: '待处理', value: '待处理' },
+          { label: '处理中', value: '处理中' },
+          { label: '已处理', value: '已处理' }
+        ]
+      },
+      rules: 'required'
+    }
+  ];
+}
+
+/** 告警管理表格列配置 */
+export function useGridColumns() {
+  return [
+    { type: 'checkbox', width: 40 },
+    {
+      field: 'alarmId',
+      title: '告警ID',
+      minWidth: 100,
+      sortable: true,
+      slots: { default: 'alarmId' }
+    },
+    {
+      field: 'alarmNo',
+      title: '告警编号',
+      minWidth: 150,
+      sortable: true
+    },
+    {
+      field: 'deviceCode',
+      title: '设备编码',
+      minWidth: 120,
+      sortable: true
+    },
+    {
+      field: 'deviceTypeName',
+      title: '设备类型',
+      minWidth: 120,
+      sortable: true
+    },
+    {
+      field: 'alarmTypeName',
+      title: '告警类型',
+      minWidth: 100,
+      sortable: true
+    },
+    {
+      field: 'alarmTime',
+      title: '告警时间',
+      minWidth: 180,
+      sortable: true
+    },
+    {
+      field: 'receiveTime',
+      title: '接收时间',
+      minWidth: 180,
+      sortable: true
+    },
+    {
+      field: 'alarmContent',
+      title: '告警内容',
+      minWidth: 150,
+      sortable: true
+    },
+    {
+      field: 'alarmLevelName',
+      title: '告警等级',
+      minWidth: 100,
+      sortable: true
+    },
+    {
+      field: 'receiveStatusName',
+      title: '接收状态',
+      minWidth: 100,
+      sortable: true
+    },
+    {
+      field: 'receiveWayName',
+      title: '接收方式',
+      minWidth: 100,
+      sortable: true
+    },
+    {
+      field: 'dealStatusName',
+      title: '处理状态',
+      minWidth: 100,
+      sortable: true,
+      slots: { default: 'dealStatusName' }
+    },
+    {
+      title: '操作',
+      width: 100,
+      fixed: 'right',
+      slots: { default: 'actions' }
+    }
+  ];
+}
+
+export const textObj = {
+  editText: '编辑告警',
+  addText: '新增告警',
+  excelName: '告警列表',
+  excelAllName: '告警数据.xlsx',
+  total: ' 总计: 告警数15; 待处理4; 处理中3; 已处理8',
+};
+
+/** 详情抽屉字段配置 */
+export const detailFields = [
+  { key: 'alarmId', label: '告警ID' },
+  { key: 'alarmNo', label: '告警编号' },
+  { key: 'deviceCode', label: '设备编码' },
+  { key: 'deviceTypeName', label: '设备类型' },
+  { key: 'alarmTypeName', label: '告警类型' },
+  { key: 'alarmTime', label: '告警时间' },
+  { key: 'receiveTime', label: '接收时间' },
+  { key: 'alarmContent', label: '告警内容' },
+  { key: 'alarmLevelName', label: '告警等级' },
+  { key: 'receiveStatusName', label: '接收状态' },
+  { key: 'receiveWayName', label: '接收方式' },
+  { key: 'dealStatusName', label: '处理状态' }
+];
+
