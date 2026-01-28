@@ -3,6 +3,7 @@ import { ref } from 'vue';
 
 import Billing from './billing/index.vue';
 import roadchart from './roadchart.vue';
+import Staggered from './staggered/index.vue';
 import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
@@ -25,6 +26,12 @@ const tabArray = ref([
   {
     label: '路侧计费桩关联管理',
     components: Billing,
+    showSecondary: true,
+    secondShow: false,
+  },
+  {
+    label: '错时停车订单管理',
+    components: Staggered,
     showSecondary: true,
     secondShow: false,
   },
