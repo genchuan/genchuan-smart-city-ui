@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 
 import Billing from './billing/index.vue';
+import ListComponent from './list/index.vue';
 import roadchart from './roadchart.vue';
 import Staggered from './staggered/index.vue';
 import Table from './table/index.vue';
@@ -32,6 +33,12 @@ const tabArray = ref([
   {
     label: '错时停车订单管理',
     components: Staggered,
+    showSecondary: true,
+    secondShow: false,
+  },
+  {
+    label: '道路列表管理',
+    components: ListComponent,
     showSecondary: true,
     secondShow: false,
   },
