@@ -1,0 +1,522 @@
+/** 故障管理表格初始数据 - 按指定字段生成 */
+export const dataList = () => {
+  return [
+    {
+      deviceCode: 'DEV-001',
+      assetName: '芗城区XX社区公共停车场资产',
+      faultTypeName: '机械故障',
+      faultLevelName: '一般',
+      faultDesc: '道闸电机运行异响',
+      faultTime: '2025-01-01 09:00:00',
+      reporterName: '张三',
+      contactPhone: '138****1234',
+      faultImages: 'fault-001.jpg',
+      faultId: 'FAULT001',
+      disposalStatusName: '待处理',
+      assigner: '',
+      assignTime: '',
+      workorderNo: ''
+    },
+    {
+      deviceCode: 'DEV-002',
+      assetName: '龙文区碧湖公园停车场资产',
+      faultTypeName: '电气故障',
+      faultLevelName: '严重',
+      faultDesc: '车牌识别摄像头无图像',
+      faultTime: '2025-01-01 10:30:00',
+      reporterName: '李四',
+      contactPhone: '139****5678',
+      faultImages: 'fault-002.jpg',
+      faultId: 'FAULT002',
+      disposalStatusName: '已派单',
+      assigner: '王五',
+      assignTime: '2025-01-01 11:00:00',
+      workorderNo: 'WO-20250101-001'
+    },
+    {
+      deviceCode: 'DEV-003',
+      assetName: '龙海区石码镇便民停车场资产',
+      faultTypeName: '通信故障',
+      faultLevelName: '轻微',
+      faultDesc: '地磁检测器通信中断',
+      faultTime: '2025-01-01 11:15:00',
+      reporterName: '王五',
+      contactPhone: '136****9012',
+      faultImages: 'fault-003.jpg',
+      faultId: 'FAULT003',
+      disposalStatusName: '处理中',
+      assigner: '赵六',
+      assignTime: '2025-01-01 11:30:00',
+      workorderNo: 'WO-20250101-002'
+    },
+    {
+      deviceCode: 'DEV-004',
+      assetName: '芗城区江滨路生态停车场资产',
+      faultTypeName: '软件故障',
+      faultLevelName: '一般',
+      faultDesc: '收费终端系统卡顿',
+      faultTime: '2025-01-01 12:00:00',
+      reporterName: '赵六',
+      contactPhone: '137****3456',
+      faultImages: 'fault-004.jpg',
+      faultId: 'FAULT004',
+      disposalStatusName: '已解决',
+      assigner: '孙七',
+      assignTime: '2025-01-01 12:15:00',
+      workorderNo: 'WO-20250101-003'
+    },
+    {
+      deviceCode: 'DEV-005',
+      assetName: '龙文区万达商圈停车场资产',
+      faultTypeName: '机械故障',
+      faultLevelName: '严重',
+      faultDesc: '道闸杆无法升起',
+      faultTime: '2025-01-01 13:45:00',
+      reporterName: '孙七',
+      contactPhone: '135****7890',
+      faultImages: 'fault-005.jpg',
+      faultId: 'FAULT005',
+      disposalStatusName: '待处理',
+      assigner: '',
+      assignTime: '',
+      workorderNo: ''
+    },
+    {
+      deviceCode: 'DEV-006',
+      assetName: '长泰区武安镇公共停车场资产',
+      faultTypeName: '电气故障',
+      faultLevelName: '轻微',
+      faultDesc: '诱导屏亮度异常',
+      faultTime: '2025-01-01 14:30:00',
+      reporterName: '周八',
+      contactPhone: '138****2345',
+      faultImages: 'fault-006.jpg',
+      faultId: 'FAULT006',
+      disposalStatusName: '已派单',
+      assigner: '吴九',
+      assignTime: '2025-01-01 14:45:00',
+      workorderNo: 'WO-20250101-004'
+    },
+    {
+      deviceCode: 'DEV-007',
+      assetName: '漳浦县绥安镇便民停车场资产',
+      faultTypeName: '通信故障',
+      faultLevelName: '一般',
+      faultDesc: '车牌识别终端网络连接失败',
+      faultTime: '2025-01-01 15:15:00',
+      reporterName: '吴九',
+      contactPhone: '139****6789',
+      faultImages: 'fault-007.jpg',
+      faultId: 'FAULT007',
+      disposalStatusName: '处理中',
+      assigner: '郑十',
+      assignTime: '2025-01-01 15:30:00',
+      workorderNo: 'WO-20250101-005'
+    },
+    {
+      deviceCode: 'DEV-008',
+      assetName: '芗城区巷口街道停车场资产',
+      faultTypeName: '软件故障',
+      faultLevelName: '轻微',
+      faultDesc: '地磁检测器数据上传延迟',
+      faultTime: '2025-01-01 16:00:00',
+      reporterName: '郑十',
+      contactPhone: '136****0123',
+      faultImages: 'fault-008.jpg',
+      faultId: 'FAULT008',
+      disposalStatusName: '已解决',
+      assigner: '张三',
+      assignTime: '2025-01-01 16:15:00',
+      workorderNo: 'WO-20250101-006'
+    },
+    {
+      deviceCode: 'DEV-009',
+      assetName: '龙文区蓝田街道停车场资产',
+      faultTypeName: '机械故障',
+      faultLevelName: '一般',
+      faultDesc: '道闸减速机漏油',
+      faultTime: '2025-01-01 16:45:00',
+      reporterName: '张三',
+      contactPhone: '137****4567',
+      faultImages: 'fault-009.jpg',
+      faultId: 'FAULT009',
+      disposalStatusName: '待处理',
+      assigner: '',
+      assignTime: '',
+      workorderNo: ''
+    },
+    {
+      deviceCode: 'DEV-010',
+      assetName: '龙文区步文街道停车场资产',
+      faultTypeName: '电气故障',
+      faultLevelName: '严重',
+      faultDesc: '收费终端电源故障',
+      faultTime: '2025-01-01 17:30:00',
+      reporterName: '李四',
+      contactPhone: '135****8901',
+      faultImages: 'fault-010.jpg',
+      faultId: 'FAULT010',
+      disposalStatusName: '已派单',
+      assigner: '王五',
+      assignTime: '2025-01-01 17:45:00',
+      workorderNo: 'WO-20250101-007'
+    },
+    {
+      deviceCode: 'DEV-011',
+      assetName: '芗城区东铺头街道停车场资产',
+      faultTypeName: '通信故障',
+      faultLevelName: '一般',
+      faultDesc: '诱导屏与服务器断开连接',
+      faultTime: '2025-01-01 18:15:00',
+      reporterName: '王五',
+      contactPhone: '138****2346',
+      faultImages: 'fault-011.jpg',
+      faultId: 'FAULT011',
+      disposalStatusName: '处理中',
+      assigner: '赵六',
+      assignTime: '2025-01-01 18:30:00',
+      workorderNo: 'WO-20250101-008'
+    },
+    {
+      deviceCode: 'DEV-012',
+      assetName: '全市通用资产',
+      faultTypeName: '软件故障',
+      faultLevelName: '轻微',
+      faultDesc: '车牌识别算法识别率下降',
+      faultTime: '2025-01-01 19:00:00',
+      reporterName: '赵六',
+      contactPhone: '139****6780',
+      faultImages: 'fault-012.jpg',
+      faultId: 'FAULT012',
+      disposalStatusName: '已解决',
+      assigner: '孙七',
+      assignTime: '2025-01-01 19:15:00',
+      workorderNo: 'WO-20250101-009'
+    },
+    {
+      deviceCode: 'DEV-013',
+      assetName: '龙文区万达商圈停车场资产',
+      faultTypeName: '机械故障',
+      faultLevelName: '严重',
+      faultDesc: '道闸电机烧毁',
+      faultTime: '2025-01-01 20:30:00',
+      reporterName: '孙七',
+      contactPhone: '136****9013',
+      faultImages: 'fault-013.jpg',
+      faultId: 'FAULT013',
+      disposalStatusName: '待处理',
+      assigner: '',
+      assignTime: '',
+      workorderNo: ''
+    },
+    {
+      deviceCode: 'DEV-014',
+      assetName: '芗城区江滨路生态停车场资产',
+      faultTypeName: '电气故障',
+      faultLevelName: '一般',
+      faultDesc: '地磁检测器电池耗尽',
+      faultTime: '2025-01-01 21:15:00',
+      reporterName: '周八',
+      contactPhone: '137****3457',
+      faultImages: 'fault-014.jpg',
+      faultId: 'FAULT014',
+      disposalStatusName: '已派单',
+      assigner: '吴九',
+      assignTime: '2025-01-01 21:30:00',
+      workorderNo: 'WO-20250101-010'
+    },
+    {
+      deviceCode: 'DEV-015',
+      assetName: '龙海区闽齐社区停车场资产',
+      faultTypeName: '通信故障',
+      faultLevelName: '轻微',
+      faultDesc: '收费终端无法连接数据库',
+      faultTime: '2025-01-01 22:00:00',
+      reporterName: '吴九',
+      contactPhone: '135****7891',
+      faultImages: 'fault-015.jpg',
+      faultId: 'FAULT015',
+      disposalStatusName: '处理中',
+      assigner: '郑十',
+      assignTime: '2025-01-01 22:15:00',
+      workorderNo: 'WO-20250101-011'
+    }
+  ];
+};
+
+/** 故障管理表单配置（包含所有指定字段） */
+export function useFormSchema() {
+  return [
+    {
+      fieldName: 'faultId',
+      label: '故障ID',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入故障ID',
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'deviceCode',
+      label: '设备编码',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入设备编码'
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'assetName',
+      label: '所属资产',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入所属资产'
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'faultTypeName',
+      label: '故障类型',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择故障类型',
+        options: [
+          { label: '机械故障', value: '机械故障' },
+          { label: '电气故障', value: '电气故障' },
+          { label: '通信故障', value: '通信故障' },
+          { label: '软件故障', value: '软件故障' }
+        ]
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'faultLevelName',
+      label: '故障等级',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择故障等级',
+        options: [
+          { label: '轻微', value: '轻微' },
+          { label: '一般', value: '一般' },
+          { label: '严重', value: '严重' }
+        ]
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'faultDesc',
+      label: '故障描述',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入故障描述',
+        type: 'textarea'
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'faultTime',
+      label: '故障发生时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择故障发生时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'reporterName',
+      label: '上报人',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入上报人'
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'contactPhone',
+      label: '联系电话',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入联系电话'
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'faultImages',
+      label: '故障照片',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入故障照片'
+      }
+    },
+    {
+      fieldName: 'disposalStatusName',
+      label: '处置状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择处置状态',
+        options: [
+          { label: '待处理', value: '待处理' },
+          { label: '已派单', value: '已派单' },
+          { label: '处理中', value: '处理中' },
+          { label: '已解决', value: '已解决' }
+        ]
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'assigner',
+      label: '派单人',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入派单人'
+      }
+    },
+    {
+      fieldName: 'assignTime',
+      label: '派单时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择派单时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+      }
+    },
+    {
+      fieldName: 'workorderNo',
+      label: '关联工单',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入关联工单'
+      }
+    }
+  ];
+}
+
+/** 故障管理表格列配置 */
+export function useGridColumns() {
+  return [
+    { type: 'checkbox', width: 40 },
+    {
+      field: 'faultId',
+      title: '故障ID',
+      minWidth: 100,
+      sortable: true,
+      slots: { default: 'faultId' }
+    },
+    {
+      field: 'deviceCode',
+      title: '设备编码',
+      minWidth: 120,
+      sortable: true
+    },
+    {
+      field: 'assetName',
+      title: '所属资产',
+      minWidth: 150,
+      sortable: true
+    },
+    {
+      field: 'faultTypeName',
+      title: '故障类型',
+      minWidth: 100,
+      sortable: true
+    },
+    {
+      field: 'faultLevelName',
+      title: '故障等级',
+      minWidth: 100,
+      sortable: true
+    },
+    {
+      field: 'faultDesc',
+      title: '故障描述',
+      minWidth: 150,
+      sortable: true
+    },
+    {
+      field: 'faultTime',
+      title: '故障发生时间',
+      minWidth: 180,
+      sortable: true
+    },
+    {
+      field: 'reporterName',
+      title: '上报人',
+      minWidth: 100,
+      sortable: true
+    },
+    {
+      field: 'contactPhone',
+      title: '联系电话',
+      minWidth: 120,
+      sortable: true
+    },
+    {
+      field: 'faultImages',
+      title: '故障照片',
+      minWidth: 120,
+      sortable: true
+    },
+    {
+      field: 'disposalStatusName',
+      title: '处置状态',
+      minWidth: 100,
+      sortable: true,
+      slots: { default: 'disposalStatusName' }
+    },
+    {
+      field: 'assigner',
+      title: '派单人',
+      minWidth: 100,
+      sortable: true
+    },
+    {
+      field: 'assignTime',
+      title: '派单时间',
+      minWidth: 180,
+      sortable: true
+    },
+    {
+      field: 'workorderNo',
+      title: '关联工单',
+      minWidth: 150,
+      sortable: true
+    },
+    {
+      title: '操作',
+      width: 100,
+      fixed: 'right',
+      slots: { default: 'actions' }
+    }
+  ];
+}
+
+export const textObj = {
+  editText: '编辑故障',
+  addText: '新增故障',
+  excelName: '故障管理列表',
+  excelAllName: '故障管理数据.xlsx',
+  total: ' 总计: 故障数15; 待处理4; 已派单3; 处理中3; 已解决5',
+};
+
+/** 详情抽屉字段配置 */
+export const detailFields = [
+  { key: 'faultId', label: '故障ID' },
+  { key: 'deviceCode', label: '设备编码' },
+  { key: 'assetName', label: '所属资产' },
+  { key: 'faultTypeName', label: '故障类型' },
+  { key: 'faultLevelName', label: '故障等级' },
+  { key: 'faultDesc', label: '故障描述' },
+  { key: 'faultTime', label: '故障发生时间' },
+  { key: 'reporterName', label: '上报人' },
+  { key: 'contactPhone', label: '联系电话' },
+  { key: 'faultImages', label: '故障照片' },
+  { key: 'disposalStatusName', label: '处置状态' },
+  { key: 'assigner', label: '派单人' },
+  { key: 'assignTime', label: '派单时间' },
+  { key: 'workorderNo', label: '关联工单' }
+];
+
+

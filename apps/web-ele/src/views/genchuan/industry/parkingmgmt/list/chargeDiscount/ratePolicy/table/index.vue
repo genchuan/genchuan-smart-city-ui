@@ -256,10 +256,12 @@ const getTableData = (pageObj) => {
     }
 
     // 适用范围筛选
-    const applyScopeMatch = !filterApplyScope.value || v.applyScope === filterApplyScope.value;
+    const applyScopeMatch =
+      !filterApplyScope.value || v.applyScope === filterApplyScope.value;
 
     // 区域名称筛选
-    const regionNameMatch = !filterRegionName.value || v.regionName === filterRegionName.value;
+    const regionNameMatch =
+      !filterRegionName.value || v.regionName === filterRegionName.value;
 
     // 搜索条件筛选
     let searchMatch = true;
@@ -419,7 +421,8 @@ const handleCancelApplyScopeFilter = () => {
 
 // 处理区域名称点击
 const handleRegionNameClick = (regionName) => {
-  filterRegionName.value = filterRegionName.value === regionName ? '' : regionName;
+  filterRegionName.value =
+    filterRegionName.value === regionName ? '' : regionName;
   gridApi.query();
 };
 

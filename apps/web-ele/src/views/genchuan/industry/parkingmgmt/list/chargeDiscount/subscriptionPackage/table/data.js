@@ -1,0 +1,493 @@
+/** 订阅套餐表格初始数据 - 按指定字段生成 */
+export const dataList = () => {
+  return [
+    {
+      packageId: 'PKG001',
+      packageName: '月度基础套餐',
+      packageTypeName: '基础套餐',
+      originalPrice: '99.00',
+      salePrice: '79.00',
+      validDays: 30,
+      applicableParkingLot: '芗城区XX社区公共停车场',
+      bindCarLimit: 2,
+      operator: '张三',
+      salesCount: 156,
+      packageStatusName: '启用',
+      createTime: '2025-01-10 09:20:30',
+      lastSaleTime: '2025-02-20 14:30:00'
+    },
+    {
+      packageId: 'PKG002',
+      packageName: '季度黄金套餐',
+      packageTypeName: '黄金套餐',
+      originalPrice: '268.00',
+      salePrice: '198.00',
+      validDays: 90,
+      applicableParkingLot: '龙文区碧湖公园停车场',
+      bindCarLimit: 3,
+      operator: '李四',
+      salesCount: 89,
+      packageStatusName: '启用',
+      createTime: '2025-01-12 14:15:20',
+      lastSaleTime: '2025-02-19 16:45:00'
+    },
+    {
+      packageId: 'PKG003',
+      packageName: '年度钻石套餐',
+      packageTypeName: '钻石套餐',
+      originalPrice: '999.00',
+      salePrice: '699.00',
+      validDays: 365,
+      applicableParkingLot: '龙海区石码镇便民停车场',
+      bindCarLimit: 5,
+      operator: '王五',
+      salesCount: 45,
+      packageStatusName: '启用',
+      createTime: '2025-01-15 10:05:10',
+      lastSaleTime: '2025-02-20 10:20:00'
+    },
+    {
+      packageId: 'PKG004',
+      packageName: '周末畅停套餐',
+      packageTypeName: '特殊套餐',
+      originalPrice: '49.00',
+      salePrice: '39.00',
+      validDays: 7,
+      applicableParkingLot: '龙海区闽齐社区停车场',
+      bindCarLimit: 1,
+      operator: '赵六',
+      salesCount: 234,
+      packageStatusName: '启用',
+      createTime: '2025-01-18 08:30:45',
+      lastSaleTime: '2025-02-20 08:15:00'
+    },
+    {
+      packageId: 'PKG005',
+      packageName: '企业商务套餐',
+      packageTypeName: '企业套餐',
+      originalPrice: '1999.00',
+      salePrice: '1499.00',
+      validDays: 365,
+      applicableParkingLot: '芗城区江滨路生态停车场',
+      bindCarLimit: 20,
+      operator: '孙七',
+      salesCount: 12,
+      packageStatusName: '启用',
+      createTime: '2025-01-20 16:40:15',
+      lastSaleTime: '2025-02-18 11:30:00'
+    },
+    {
+      packageId: 'PKG006',
+      packageName: '夜间专属套餐',
+      packageTypeName: '特殊套餐',
+      originalPrice: '69.00',
+      salePrice: '49.00',
+      validDays: 30,
+      applicableParkingLot: '龙文区万达商圈停车场',
+      bindCarLimit: 2,
+      operator: '周八',
+      salesCount: 178,
+      packageStatusName: '禁用',
+      createTime: '2025-01-22 11:10:30',
+      lastSaleTime: '2025-02-15 22:00:00'
+    },
+    {
+      packageId: 'PKG007',
+      packageName: '新手入门套餐',
+      packageTypeName: '基础套餐',
+      originalPrice: '39.00',
+      salePrice: '29.00',
+      validDays: 15,
+      applicableParkingLot: '长泰区武安镇公共停车场',
+      bindCarLimit: 1,
+      operator: '吴九',
+      salesCount: 345,
+      packageStatusName: '启用',
+      createTime: '2025-01-25 13:25:40',
+      lastSaleTime: '2025-02-20 09:45:00'
+    },
+    {
+      packageId: 'PKG008',
+      packageName: '家庭共享套餐',
+      packageTypeName: '黄金套餐',
+      originalPrice: '168.00',
+      salePrice: '128.00',
+      validDays: 90,
+      applicableParkingLot: '漳浦县绥安镇便民停车场',
+      bindCarLimit: 4,
+      operator: '郑十',
+      salesCount: 67,
+      packageStatusName: '启用',
+      createTime: '2025-01-28 09:50:25',
+      lastSaleTime: '2025-02-19 15:20:00'
+    },
+    {
+      packageId: 'PKG009',
+      packageName: '老年优惠套餐',
+      packageTypeName: '特殊套餐',
+      originalPrice: '59.00',
+      salePrice: '39.00',
+      validDays: 30,
+      applicableParkingLot: '芗城区巷口街道停车场',
+      bindCarLimit: 1,
+      operator: '张三',
+      salesCount: 89,
+      packageStatusName: '禁用',
+      createTime: '2025-02-01 15:15:10',
+      lastSaleTime: '2025-02-10 10:30:00'
+    },
+    {
+      packageId: 'PKG010',
+      packageName: '学生特惠套餐',
+      packageTypeName: '基础套餐',
+      originalPrice: '49.00',
+      salePrice: '29.00',
+      validDays: 30,
+      applicableParkingLot: '龙文区蓝田街道停车场',
+      bindCarLimit: 1,
+      operator: '李四',
+      salesCount: 234,
+      packageStatusName: '启用',
+      createTime: '2025-02-05 10:30:50',
+      lastSaleTime: '2025-02-20 12:00:00'
+    },
+    {
+      packageId: 'PKG011',
+      packageName: '商务差旅套餐',
+      packageTypeName: '企业套餐',
+      originalPrice: '399.00',
+      salePrice: '299.00',
+      validDays: 30,
+      applicableParkingLot: '龙文区步文街道停车场',
+      bindCarLimit: 3,
+      operator: '王五',
+      salesCount: 56,
+      packageStatusName: '启用',
+      createTime: '2025-02-08 14:20:15',
+      lastSaleTime: '2025-02-20 08:50:00'
+    },
+    {
+      packageId: 'PKG012',
+      packageName: '节假日套餐',
+      packageTypeName: '特殊套餐',
+      originalPrice: '89.00',
+      salePrice: '69.00',
+      validDays: 7,
+      applicableParkingLot: '芗城区东铺头街道停车场',
+      bindCarLimit: 2,
+      operator: '赵六',
+      salesCount: 123,
+      packageStatusName: '启用',
+      createTime: '2025-02-10 09:40:30',
+      lastSaleTime: '2025-02-19 16:10:00'
+    },
+    {
+      packageId: 'PKG013',
+      packageName: 'VIP尊享套餐',
+      packageTypeName: '钻石套餐',
+      originalPrice: '2999.00',
+      salePrice: '1999.00',
+      validDays: 365,
+      applicableParkingLot: '全市通用',
+      bindCarLimit: 10,
+      operator: '孙七',
+      salesCount: 8,
+      packageStatusName: '启用',
+      createTime: '2025-02-12 11:25:00',
+      lastSaleTime: '2025-02-20 14:00:00'
+    },
+    {
+      packageId: 'PKG014',
+      packageName: '临时体验套餐',
+      packageTypeName: '基础套餐',
+      originalPrice: '19.00',
+      salePrice: '9.00',
+      validDays: 3,
+      applicableParkingLot: '龙文区万达商圈停车场',
+      bindCarLimit: 1,
+      operator: '周八',
+      salesCount: 567,
+      packageStatusName: '禁用',
+      createTime: '2025-02-15 16:30:45',
+      lastSaleTime: '2025-02-18 20:00:00'
+    },
+    {
+      packageId: 'PKG015',
+      packageName: '团队优惠套餐',
+      packageTypeName: '企业套餐',
+      originalPrice: '599.00',
+      salePrice: '449.00',
+      validDays: 90,
+      applicableParkingLot: '芗城区江滨路生态停车场',
+      bindCarLimit: 8,
+      operator: '吴九',
+      salesCount: 34,
+      packageStatusName: '启用',
+      createTime: '2025-02-18 10:15:20',
+      lastSaleTime: '2025-02-20 11:30:00'
+    }
+  ];
+};
+
+/** 订阅套餐表单配置（包含所有指定字段） */
+export function useFormSchema() {
+  return [
+    {
+      fieldName: 'packageId',
+      label: '套餐ID',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入套餐ID',
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'packageName',
+      label: '套餐名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入套餐名称'
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'packageTypeName',
+      label: '套餐类型',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择套餐类型',
+        options: [
+          { label: '基础套餐', value: '基础套餐' },
+          { label: '黄金套餐', value: '黄金套餐' },
+          { label: '钻石套餐', value: '钻石套餐' },
+          { label: '特殊套餐', value: '特殊套餐' },
+          { label: '企业套餐', value: '企业套餐' }
+        ]
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'originalPrice',
+      label: '原价',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入原价',
+        min: 0,
+        precision: 2
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'salePrice',
+      label: '售价',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入售价',
+        min: 0,
+        precision: 2
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'validDays',
+      label: '有效天数',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入有效天数',
+        min: 1
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'applicableParkingLot',
+      label: '适用车场',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入适用车场'
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'bindCarLimit',
+      label: '可绑定车牌数',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入可绑定车牌数',
+        min: 1
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'operator',
+      label: '操作人',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入操作人'
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'salesCount',
+      label: '销量',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入销量',
+        min: 0
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'packageStatusName',
+      label: '状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择状态',
+        options: [
+          { label: '启用', value: '启用' },
+          { label: '禁用', value: '禁用' }
+        ]
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'createTime',
+      label: '创建时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择创建时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+      },
+      rules: 'required'
+    },
+    {
+      fieldName: 'lastSaleTime',
+      label: '最近销售时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择最近销售时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+      },
+      rules: 'required'
+    }
+  ];
+}
+
+/** 订阅套餐表格列配置 */
+export function useGridColumns() {
+  return [
+    { type: 'checkbox', width: 40 },
+    {
+      field: 'packageId',
+      title: '套餐ID',
+      minWidth: 100,
+      sortable: true,
+      slots: { default: 'packageId' }
+    },
+    {
+      field: 'packageName',
+      title: '套餐名称',
+      minWidth: 150,
+      sortable: true
+    },
+    {
+      field: 'packageTypeName',
+      title: '套餐类型',
+      minWidth: 120,
+      sortable: true
+    },
+    {
+      field: 'originalPrice',
+      title: '原价',
+      minWidth: 100,
+      sortable: true
+    },
+    {
+      field: 'salePrice',
+      title: '售价',
+      minWidth: 100,
+      sortable: true
+    },
+    {
+      field: 'validDays',
+      title: '有效天数',
+      minWidth: 100,
+      sortable: true
+    },
+    {
+      field: 'applicableParkingLot',
+      title: '适用车场',
+      minWidth: 180,
+      sortable: true
+    },
+    {
+      field: 'bindCarLimit',
+      title: '可绑定车牌数',
+      minWidth: 120,
+      sortable: true
+    },
+    {
+      field: 'operator',
+      title: '操作人',
+      minWidth: 100,
+      sortable: true
+    },
+    {
+      field: 'salesCount',
+      title: '销量',
+      minWidth: 100,
+      sortable: true
+    },
+    {
+      field: 'packageStatusName',
+      title: '状态',
+      minWidth: 100,
+      sortable: true,
+      slots: { default: 'packageStatusName' }
+    },
+    {
+      field: 'createTime',
+      title: '创建时间',
+      minWidth: 180,
+      sortable: true
+    },
+    {
+      field: 'lastSaleTime',
+      title: '最近销售时间',
+      minWidth: 180,
+      sortable: true
+    },
+    {
+      title: '操作',
+      width: 150,
+      fixed: 'right',
+      slots: { default: 'actions' }
+    }
+  ];
+}
+
+export const textObj = {
+  editText: '编辑套餐',
+  addText: '新增套餐',
+  excelName: '订阅套餐列表',
+  excelAllName: '订阅套餐数据.xlsx',
+  total: ' 总计: 套餐数量15;总销量:2135;启用套餐12;禁用套餐3',
+};
+
+/** 详情抽屉字段配置 */
+export const detailFields = [
+  { key: 'packageId', label: '套餐ID' },
+  { key: 'packageName', label: '套餐名称' },
+  { key: 'packageTypeName', label: '套餐类型' },
+  { key: 'originalPrice', label: '原价' },
+  { key: 'salePrice', label: '售价' },
+  { key: 'validDays', label: '有效天数' },
+  { key: 'applicableParkingLot', label: '适用车场' },
+  { key: 'bindCarLimit', label: '可绑定车牌数' },
+  { key: 'operator', label: '操作人' },
+  { key: 'salesCount', label: '销量' },
+  { key: 'packageStatusName', label: '状态' },
+  { key: 'createTime', label: '创建时间' },
+  { key: 'lastSaleTime', label: '最近销售时间' }
+];
