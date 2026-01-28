@@ -133,7 +133,7 @@ const buildChartOption = () => {
         name: props.data.series[0]?.name || '数据统计',
         type: 'pie',
         radius: ['30%', '60%'],
-        center: ['45%', '45%'],
+        center: ['45%', '52%'],
         avoidLabelOverlap: true,
         label: {
           show: false,

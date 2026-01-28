@@ -134,7 +134,7 @@ const initChart = () => {
       ...item,
       type: 'pie',
       radius: '60%',
-      center: ['50%', '45%'],
+      center: ['50%', '52%'],
       avoidLabelOverlap: false,
       label: {
         show: false,

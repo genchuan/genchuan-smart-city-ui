@@ -323,13 +323,8 @@ defineExpose({
 <template>
   <div class="map-container">
     <div :id="idName" class="map-common-css"></div>
-
-    <!-- 车辆支付状态图例 -->
     <div class="legend">
       <div class="legend-items">
-        <div class="legend-divider">
-          <p>车辆支付状态:</p>
-        </div>
         <div class="legend-item">
           <img :src="carPaid" class="legend-icon" alt="已支付" />
           <span>已支付</span>
@@ -348,11 +343,12 @@ defineExpose({
   position: relative;
   width: 100%;
   height: 100%;
+  min-height: 400px;
 }
 
 .map-common-css {
   width: 100%;
-  height: 99.2%;
+  height: 100%;
   margin: 0 auto;
   overflow: hidden;
   border-radius: 8px;
@@ -375,7 +371,7 @@ defineExpose({
 .legend-items {
   display: flex;
   flex-direction: row;
-  gap: 1.5vw;
+  gap: 1vw;
   align-items: center;
   justify-content: center;
 }
@@ -383,8 +379,8 @@ defineExpose({
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 0.5vw;
-  font-size: 0.8vw;
+  gap: 0.1vw;
+  font-size: 0.7vw;
   color: #fff;
 }
 
@@ -392,10 +388,5 @@ defineExpose({
   width: 1vw;
   height: 2vh;
   object-fit: contain;
-}
-
-.legend-divider {
-  font-size: 0.8vw;
-  color: #fff;
 }
 </style>

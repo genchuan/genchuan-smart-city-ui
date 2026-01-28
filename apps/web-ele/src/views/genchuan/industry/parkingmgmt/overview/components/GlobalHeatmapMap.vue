@@ -1,27 +1,3 @@
-<template>
-  <div class="map-container">
-    <div :id="idName" class="map-common-css"></div>
-    <!-- 新增：图例容器 -->
-    <div class="legend">
-      <div class="legend-items">
-        <!-- 资源密度图例（热力颜色梯度 + 文字） -->
-        <div class="legend-item">
-          <div class="density-gradient">
-            <div v-for="(color, level) in heatmapConfig.colorGradient" :key="level"
-                 class="gradient-item" :style="{ backgroundColor: color }"></div>
-          </div>
-          资源密度
-        </div>
-        <!-- 停车场图例（图标 + 文字） -->
-        <div class="legend-item" style="margin-right: 1vw !important;">
-          <img :src="parkingIcon" class="legend-icon" alt="停车场" />
-          停车场
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup>
 import {
   defineExpose,
@@ -680,6 +656,27 @@ defineExpose({
 });
 </script>
 
+<template>
+  <div class="map-container">
+    <div :id="idName" class="map-common-css"></div>
+    <div class="legend">
+      <div class="legend-items">
+        <div class="legend-item">
+          <div class="density-gradient">
+            <div v-for="(color, level) in heatmapConfig.colorGradient" :key="level"
+                 class="gradient-item" :style="{ backgroundColor: color }"></div>
+          </div>
+          资源密度
+        </div>
+        <div class="legend-item" style="margin-right: 1vw !important;">
+          <img :src="parkingIcon" class="legend-icon" alt="停车场" />
+          停车场
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
 <style scoped>
 .map-container {
   position: relative;
@@ -694,7 +691,6 @@ defineExpose({
   margin: 0 auto;
   overflow: hidden;
   border-radius: 8px;
-  background-color: #f0f0f0;
 }
 
 .legend {
@@ -710,6 +706,20 @@ defineExpose({
   padding: 0.5vw;
   background: rgb(0 0 0 / 50%);
   z-index: 100;
+}
+
+/* 资源密度梯度条样式 */
+.density-gradient {
+  display: flex;
+  width: 6vw; /* 梯度条总宽度 */
+  height: 1.5vh; /* 和停车场图标高度一致 */
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.gradient-item {
+  flex: 1; /* 6个等级的颜色块等分宽度 */
+  height: 100%;
 }
 
 .legend-items {
@@ -729,23 +739,8 @@ defineExpose({
   white-space: nowrap;
 }
 
-/* 资源密度梯度条样式 */
-.density-gradient {
-  display: flex;
-  width: 6vw; /* 梯度条总宽度 */
-  height: 1.5vh; /* 和停车场图标高度一致 */
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.gradient-item {
-  flex: 1; /* 6个等级的颜色块等分宽度 */
-  height: 100%;
-}
-
-/* 停车场图标样式 */
 .legend-icon {
-  width: 1.5vw;
+  width: 1vw;
   height: 2vh;
   object-fit: contain;
 }
