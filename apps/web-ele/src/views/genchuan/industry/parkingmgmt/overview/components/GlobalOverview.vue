@@ -19,19 +19,46 @@ import {
   ElMessage,
 } from 'element-plus';
 import { Filter, FullScreen, Refresh, Setting, VideoPause, VideoPlay,} from '@element-plus/icons-vue';
-import MapCommon from './GlobalDataMap.vue';
+import GlobalNormalMap from '#/views/genchuan/industry/parkingmgmt/overview/components/GlobalNormalMap.vue';
 import ChartLine1 from "#/views/genchuan/industry/templatesstatchart/ChartLine1.vue";
 import ChartLine2 from "#/views/genchuan/industry/templatesstatchart/ChartLine2.vue";
+import ChartLine3 from "#/views/genchuan/industry/templatesstatchart/ChartLine3-desc.vue";
 import ChartPie1 from '#/views/genchuan/industry/templatesstatchart/ChartPie1.vue';
 import ChartPie2 from '#/views/genchuan/industry/templatesstatchart/ChartPie2.vue';
 import ChartPie3 from '#/views/genchuan/industry/templatesstatchart/ChartPie3.vue';
 import ChartPie5 from '#/views/genchuan/industry/templatesstatchart/ChartPie5-desc.vue';
 import VerticalBar1 from '#/views/genchuan/industry/templatesstatchart/VerticalBar1.vue';
 import VerticalBar2 from '#/views/genchuan/industry/templatesstatchart/VerticalBar2.vue';
+import VerticalBar3 from '#/views/genchuan/industry/templatesstatchart/VerticalBar3.vue';
+import Heatmap1 from '#/views/genchuan/industry/templatesstatchart/Heatmap1.vue';
+import GlobalHeatmapMap from '#/views/genchuan/industry/parkingmgmt/overview/components/GlobalHeatmapMap.vue';
 
 import {
+  fetchTradeTrendList,
+  fetchTradeTrendIndicators,
+  fetchTradeTrendCountTrend,
+  fetchTradeTrendAmountTrend,
+  fetchTradeTrendTimeCountCompare,
+  fetchTradeTrendRegionAmountCompare,
+  fetchTradeTrendPayMethodRatio,
+  fetchTradeTrendRegionTradeRatio,
+  fetchTradeTrendDetail,
+  fetchTradeTrendTimeTrend,
+  fetchSupplyDemandList,
+  fetchSupplyDemandIndicators,
+  fetchSupplyDemandTrend,
+  fetchSupplyDemandBalanceRatio,
+  fetchSupplyDemandRegionRatio,
+  fetchSupplyDemandDetail,
+  fetchSupplyDemandAnalysis,
+  exportSupplyDemandAnalysisReport,
+  fetchParkAreaDistributionList,
+  fetchParkAreaDistributionDetail,
+  fetchParkAreaDistributionIndicators,
+  fetchParkAreaDistributionAreaCount,
+  fetchParkAreaDistributionAreaSpaceCount,
   fetchParkingLotGeometries,
-} from '#/api/genchuan/industry/parkingmgmt/overview/GlobalSituationOverview.ts';
+} from '#/api/genchuan/industry/parkingmgmt/overview/GlobalOverview.ts';
 import {
   fetchParkDeviceIndicators,
   fetchParkDeviceTypeRatio,
@@ -54,11 +81,16 @@ import {
 } from '#/api/genchuan/industry/parkingmgmt/overview/GlobalOverview.ts';
 
 const pageContainerRef = ref(null);
-const mapCommonRef = ref(null);
-const geometriesArray = ref([]);
 const router = useRouter();
 const instance = getCurrentInstance();
 const currentFullscreenPanel = ref<HTMLElement | null>(null);
+
+const normalMapRef = ref<InstanceType<typeof GlobalNormalMap> | null>(null); // 第一个地图
+const heatmapMapRef = ref<InstanceType<typeof GlobalHeatmapMap> | null>(null); // 第二个地图
+
+// 新增地图加载状态（参考参考代码的 mapLoading 逻辑）
+const normalMapLoading = ref(true);
+const heatmapLoading = ref(false); // 第二个地图默认不加载，切换Tab时加载
 
 // 标签页激活状态
 const topLeftActiveTab = ref('tab1');
@@ -144,170 +176,52 @@ const handleFullscreenChange = () => {
     setTimeout(() => {
       parkResourceDistributionChartRefreshKey.value++;
       parkingSpaceChartRefreshKey.value++;
+      tradeTrendChartRefreshKey.value++;
+      supplyDemandChartRefreshKey.value++;
+      parkAreaDistributionChartRefreshKey.value++;
     }, 300);
   } else if (currentFullscreenPanel.value) {
     currentFullscreenPanel.value.style = '';
     nextTick(() => {
       parkResourceDistributionChartRefreshKey.value++;
       parkingSpaceChartRefreshKey.value++;
+      tradeTrendChartRefreshKey.value++;
+      supplyDemandChartRefreshKey.value++;
+      parkAreaDistributionChartRefreshKey.value++;
     });
     currentFullscreenPanel.value = null;
   }
 };
 
-// 地图筛选相关
-const filterDrawerVisible = ref(false);
-const filterForm = ref({
-  timeRange: 'all',
-  deviceTypes: [],
-  deviceStatuses: [],
-  parkTypes: [],
-  berthStatuses: [],
-  alertLevels: [],
-});
-const filterMapDataByConditions = (data, params = {}) => {
-  let filteredData = [...data];
-
-  if (params.timeRange && params.timeRange !== 'all') {
-    const now = new Date();
-    const todayStart = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-    ).getTime();
-    const oneDay = 24 * 60 * 60 * 1000;
-
-    filteredData = filteredData.filter((item) => {
-      const createTime = Number(item.createTime);
-      if (Number.isNaN(createTime)) {
-        console.warn(`数据${item.berthNumber}：时间戳无效`);
-        return false;
-      }
-      const createTimeStr = new Date(createTime).toLocaleString();
-      let isMatch;
-
-      switch (params.timeRange) {
-        case '7days': {
-          const sevenDaysAgo = todayStart - 7 * oneDay;
-          isMatch = createTime >= sevenDaysAgo && createTime <= now.getTime();
-          break;
-        }
-        case 'today': {
-          isMatch = createTime >= todayStart && createTime <= now.getTime();
-          break;
-        }
-        case 'yesterday': {
-          const yesterdayStart = todayStart - oneDay;
-          isMatch = createTime >= yesterdayStart && createTime < todayStart;
-          break;
-        }
-        default: {
-          isMatch = true;
-        }
-      }
-
-      console.warn(
-        `数据${item.berthNumber}：时间${createTimeStr}，是否匹配${params.timeRange}：${isMatch}`,
-      );
-      return isMatch;
-    });
-    console.warn(`时间筛选后数据数量：${filteredData.length}`);
-  }
-
-  if (params.parkTypes && params.parkTypes.trim() !== '') {
-    const parkTypeList = params.parkTypes.split(',').filter(Boolean);
-    if (parkTypeList.length > 0) {
-      filteredData = filteredData.filter((item) =>
-        parkTypeList.includes(item.lotType || '路侧'),
-      );
-    }
-  }
-
-  if (params.berthStatuses && params.berthStatuses.trim() !== '') {
-    const berthStatusList = new Set(
-      params.berthStatuses.split(',').filter(Boolean),
-    );
-    filteredData = filteredData.filter((item) =>
-      berthStatusList.has(item.roadsideStatus),
-    );
-  }
-
-  if (params.deviceTypes && params.deviceTypes.trim() !== '') {
-    const deviceTypeList = params.deviceTypes.split(',').filter(Boolean);
-    if (deviceTypeList.length > 0) {
-      filteredData = filteredData.filter((item) =>
-        deviceTypeList.includes(item.deviceType),
-      );
-    }
-  }
-
-  if (params.deviceStatuses && params.deviceStatuses.trim() !== '') {
-    const deviceStatusList = new Set(
-      params.deviceStatuses.split(',').filter(Boolean),
-    );
-    filteredData = filteredData.filter((item) =>
-      deviceStatusList.has(item.deviceStatus),
-    );
-  }
-
-  if (params.alertLevels && params.alertLevels.trim() !== '') {
-    const alertLevelList = new Set(
-      params.alertLevels.split(',').filter(Boolean),
-    );
-    filteredData = filteredData.filter((item) =>
-      alertLevelList.has(item.alertLevel),
-    );
-  }
-
-  return filteredData;
-};
-const openMapFilterDrawer = () => {
-  filterDrawerVisible.value = true;
-};
-const submitMapFilter = async () => {
-  try {
-    const filterParams = {
-      timeRange: filterForm.value.timeRange,
-      deviceTypes: filterForm.value.deviceTypes.join(','),
-      deviceStatuses: filterForm.value.deviceStatuses.join(','),
-      parkTypes: filterForm.value.parkTypes.join(','),
-      berthStatuses: filterForm.value.berthStatuses.join(','),
-      alertLevels: filterForm.value.alertLevels.join(','),
-    };
-
-    const rawData = await fetchParkingLotGeometries(filterParams);
-    geometriesArray.value = filterMapDataByConditions(rawData, filterParams);
-
-    ElMessage.success('筛选成功！地图数据已更新');
-    filterDrawerVisible.value = false;
-  } catch (error) {
-    console.error('筛选失败：', error);
-    ElMessage.error('筛选失败，请检查参数或重试！');
-  }
-};
-const resetMapFilter = () => {
-  filterForm.value = {
-    timeRange: 'all',
-    deviceTypes: [],
-    deviceStatuses: [],
-    parkTypes: [],
-    berthStatuses: [],
-    alertLevels: [],
-  };
-  ElMessage.info('筛选条件已重置为默认值');
+const handleTabChange = () => {
+  nextTick(() => {
+    setTimeout(() => {
+      parkResourceDistributionChartRefreshKey.value++;
+      parkingSpaceChartRefreshKey.value++;
+      tradeTrendChartRefreshKey.value++;
+      supplyDemandChartRefreshKey.value++;
+      parkAreaDistributionChartRefreshKey.value++;
+    }, 100);
+  });
 };
 
 // 地图环绕动画
 const handleOrbitAnimation = () => {
-  if (
-    mapCommonRef.value &&
-    typeof mapCommonRef.value.toggleOrbitAnimation === 'function'
-  ) {
-    mapCommonRef.value.toggleOrbitAnimation();
+  let targetRef = null;
+  // 根据当前激活的Tab判断操作哪个地图
+  if (topMiddleActiveTab.value === 'tab1') { // 第一个Tab（在停车辆）
+    targetRef = normalMapRef.value;
+  } else if (topMiddleActiveTab.value === 'tab2') { // 第二个Tab（停车资源）
+    targetRef = heatmapMapRef.value;
+  }
+
+  if (targetRef && typeof targetRef.toggleOrbitAnimation === 'function') {
+    targetRef.toggleOrbitAnimation();
   } else {
     ElMessage.warning('地图环绕功能暂未初始化完成');
   }
 };
+
 // 地图环绕配置相关
 const getStoredOrbitConfig = () => {
   const stored = localStorage.getItem('parkingMapOrbitConfig');
@@ -425,10 +339,10 @@ const submitOrbitConfig = async () => {
     orbitConfigData.value = newConfig;
     saveOrbitConfigToLocal(newConfig);
 
-    if (mapCommonRef.value) {
-      mapCommonRef.value.stopOrbitAnimation();
-      mapCommonRef.value.startOrbitAnimation();
-    }
+    [normalMapRef.value].forEach(ref => {
+      ref && (ref.stopOrbitAnimation(), ref.startOrbitAnimation());
+    });
+
     orbitConfigDialogVisible.value = false;
     ElMessage.success('地图环绕配置已生效（已持久化，刷新不丢失）');
   } catch (error) {
@@ -454,25 +368,31 @@ const resetToDefaultConfig = () => {
     loop: defaultConfig.loop,
   };
   localStorage.removeItem('parkingMapOrbitConfig');
-  if (mapCommonRef.value) {
-    mapCommonRef.value.stopOrbitAnimation();
-    mapCommonRef.value.startOrbitAnimation();
-  }
-  ElMessage.success('已恢复默认配置，刷新后生效');
+
+  [normalMapRef.value].forEach(ref => {
+    ref && (ref.stopOrbitAnimation(), ref.startOrbitAnimation());
+  });
+
+  ElMessage.success('已恢复默认配置');
 };
 
-// 初始化地图数据
+//缓存原始车辆数据（只加载一次）
+const originalGeometriesData = ref<VehicleData[]>([]);
+
+// 修改初始化地图数据函数：移除筛选逻辑，直接使用原始数据
 const initMapData = async () => {
   try {
-    const defaultParams = {
-      timeRange: filterForm.value.timeRange,
-    };
-    const rawData = await fetchParkingLotGeometries(defaultParams);
-    geometriesArray.value = filterMapDataByConditions(rawData, defaultParams);
+    // 只请求一次接口，缓存原始数据
+    const rawData = await fetchParkingLotGeometries();
+    originalGeometriesData.value = rawData;
+    geometriesArray.value = rawData;
+    normalMapLoading.value = false; // 第一个地图加载完成
   } catch (error) {
     console.error('地图数据加载失败：', error);
     ElMessage.error('地图数据加载失败，请刷新页面重试');
     geometriesArray.value = [];
+    originalGeometriesData.value = [];
+    normalMapLoading.value = false;
   }
 };
 
@@ -579,6 +499,150 @@ interface ReleaseForm {
   releaseReason: string;
 }
 
+// 通行交易趋势TS类型定义
+interface TradeTrendRow {
+  tbTradeTrendPeriod: string;
+  tbTradeTrendTime: string;
+  tbTradeTrendCount: number;
+  tbTradeTrendAmount: number;
+  tbTradeTrendPayRate: number;
+  tbTradeTrendAverageDuration: number;
+  tbTradeTrendId: string;
+}
+interface TradeTrendIndicators {
+  totalCount: number; // 总笔数
+  totalAmount: number; // 总金额
+  payRate: number; // 支付完成率
+  chainCountGrowth: number; // 环比增长
+}
+interface TradeTrendDetail {
+  tbTradeTrendId: string;
+  tbTradeTrendPeriod: string;
+  tbTradeTrendTime: string;
+  tbTradeTrendChainCountGrowth: number; // 环比增长笔数
+  tbTradeTrendChainAmountGrowth: number; // 环比增长金额
+  tbTradeTrendPeakPeriod: string; // 高峰交易时段
+  tbRegionTradeContributionRate: string; // 区域贡献占比
+  tradeDetail: {
+    tbTradeTrendCount: number;
+    tbTradeTrendAmount: number;
+    tbTradeTrendPayRate: number;
+    tbTradeTrendAverageDuration: number;
+  };
+  payMethodDistribution: ChartRatioData; // 支付方式分布
+  regionDistribution: ChartRatioData; // 区域分布
+}
+interface TradeTrendTimeTrend {
+  tbTradeTrendId: string;
+  tbTradeTrendPeriod: string;
+  tbTradeTrendTime: string;
+  xAxis: string[];
+  series: { data: number[]; name: string }[];
+}
+
+// 供需运营态势TS类型定义
+interface SupplyDemandRow {
+  period: string;
+  tbRegionName: string;
+  tbParkingCount: number;
+  tbParkingSpaceTotalCount: number;
+  tbParkingRecordCurrentCount: number;
+  tbSupplyDemandGapCount: number;
+  tbSupplyDemandBalanceRate: number;
+  tbRegionId: string;
+}
+interface SupplyDemandIndicators {
+  globalBalanceRate: number; // 全局供需平衡率
+  totalGapCount: number; // 总缺口数
+  peakGapCount: number; // 高峰缺口数
+  hotUnbalanceRegionCount: number; // 热门失衡区域数
+}
+interface SupplyDemandDetail {
+  tbRegionId: string;
+  tbRegionName: string;
+  tbSupplyDemandPeakGap: number; // 高峰供需缺口
+  tbRegionHotUnbalanceName: string; // 门供需失衡区域
+  tbSupplyDemandChainBalanceChange: number; // 环比平衡率变化
+  tbSupplyDemandOptimizeSuggest: string; // 建议优化方向
+  regionDetails: {
+    tbParkingCount: number;
+    tbParkingSpaceTotalCount: number;
+    tbParkingRecordCurrentCount: number;
+    tbSupplyDemandGapCount: number;
+    tbSupplyDemandBalanceRate: number;
+  };
+  peakTimeDistribution: ChartLineData;
+  parkingSupplyDemand: {
+    name: string;
+    total: number;
+    current: number;
+    gap: number;
+    rate: number;
+  }[];
+}
+interface SupplyDemandAnalysis {
+  tbRegionId: string;
+  tbRegionName: string;
+  analysisTime: number | string;
+  analysisContent: string;
+  optimizationSuggestions: string[];
+  predictedEffect: string;
+}
+
+// 停车资源分布TS类型定义
+interface ParkAreaDistributionRow {
+  tbRegionName: string;
+  tbParkingCount: number;
+  tbParkingSpaceTotalCount: number;
+  tbParkingSpaceAvailableCount: number;
+  sysOperationStatusName: string;
+  tbRegionParkingDensity: number;
+  tbRegionRegionId: string;
+}
+
+interface ParkAreaDistributionIndicators {
+  totalParkCount: number; // 全域停车场总数
+  totalSpaceCount: number; // 总泊位数
+  availableSpaceCount: number; // 可用泊位数
+  runningParkCount: number; // 运营中停车场数
+}
+
+interface ParkAreaDistributionDetail {
+  tbRegionRegionId: string;
+  tbRegionName: string;
+  tbRegionSaturationRate: number; // 饱和率
+  tbParkingNewCount: number; // 新增停车场数
+  tbParkingHotName: string; // 热门停车场
+  // 区域停车场清单
+  regionParkingList: {
+    parkingName: string;
+    parkingType: string;
+    totalSpaces: number;
+    availableSpaces: number;
+    operationStatus: string;
+  }[];
+  // 泊位分布明细
+  spaceDistributionDetail: ChartRatioData;
+  // 运营数据
+  operationData: {
+    avgUtilizationRate: number;
+    avgTurnoverRate: number;
+    peakUtilizationRate: number;
+  };
+}
+
+// 新增：车辆数据类型（匹配文件1）
+interface VehicleData {
+  tbVehicleLicensePlate: string; // 车牌
+  sysPayStatusName: '已支付' | '未支付'; // 支付状态
+  tbParkingRecordEntryTime: number; // 入场时间戳
+  tbParkingRecordExpectedExitTime: number; // 预计离场时间戳
+  vehicleLongitude: number; // 经度
+  vehicleLatitude: number; // 纬度
+  lotId: string; // 停车场ID
+  lotName: string; // 停车场名称
+}
+const geometriesArray = ref<VehicleData[]>([]);
 
 // 资源设备响应式数据
 const parkDeviceIndicators = ref<ParkDeviceIndicators>({
@@ -631,7 +695,7 @@ const parkResourceDistributionStatusRatioData = ref<ChartRatioData>({
 });
 // 停车资源分布明细视图切换相关
 const parkResourceDistributionChartRefreshKey = ref(0);
-const activeParkResourceDistributionView = ref('卡片');
+const activeParkResourceDistributionView = ref('饼图');
 const parkResourceDistributionViewBtnList = ref(['卡片', '柱状图', '饼图', '列表']);
 // 停车资源分布明细弹窗相关
 const parkResourceDistributionDetailDialogVisible = ref(false);
@@ -705,6 +769,175 @@ const releaseFormRules = {
 const releaseFormRef = ref<FormInstance>();
 const releasingSpaceId = ref(''); // 当前正在释放的泊位ID
 
+// 通行交易趋势响应式数据
+const tradeTrendList = ref<TradeTrendRow[]>([]);
+const tradeTrendIndicators = ref<TradeTrendIndicators>({
+  totalCount: 0,
+  totalAmount: 0,
+  payRate: 0,
+  chainCountGrowth: 0,
+});
+const tradeTrendCountTrend = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '交易笔数', data: [] }],
+});
+const tradeTrendAmountTrend = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '交易金额', data: [] }],
+});
+const tradeTrendTimeCountCompare = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '交易笔数', data: [] }],
+});
+const tradeTrendRegionAmountCompare = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '交易金额', data: [] }],
+});
+const tradeTrendPayMethodRatio = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '支付方式占比(%)', data: [] }],
+});
+const tradeTrendRegionTradeRatio = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '区域交易占比(%)', data: [] }],
+});
+// 通行交易趋势视图切换相关
+const tradeTrendChartRefreshKey = ref(0);
+const activeTradeTrendView = ref('折线图');
+const tradeTrendViewBtnList = ref(['卡片', '折线图', '柱状图', '饼图', '列表']);
+// 通行交易趋势弹窗相关
+const tradeTrendDetailDialogVisible = ref(false);
+const tradeTrendTimeTrendDialogVisible = ref(false);
+const activeTradeTrendDetailView = ref('明细');
+const tradeTrendDetailViewBtnList = ref(['明细', '分布']);
+const tradeTrendDetailSelectedRow = ref<TradeTrendDetail>({
+  tbTradeTrendId: '',
+  tbTradeTrendPeriod: '',
+  tbTradeTrendTime: '',
+  tbTradeTrendChainCountGrowth: 0,
+  tbTradeTrendChainAmountGrowth: 0,
+  tbTradeTrendPeakPeriod: '',
+  tbRegionTradeContributionRate: '',
+  tradeDetail: {
+    tbTradeTrendCount: 0,
+    tbTradeTrendAmount: 0,
+    tbTradeTrendPayRate: 0,
+    tbTradeTrendAverageDuration: 0,
+  },
+  payMethodDistribution: {
+    legend: [],
+    series: [{ name: '支付方式分布(%)', data: [] }]
+  },
+  regionDistribution: {
+    legend: [],
+    series: [{ name: '区域分布(%)', data: [] }]
+  }
+});
+const tradeTrendTimeTrendSelectedRow = ref<TradeTrendTimeTrend>({
+  tbTradeTrendId: '',
+  tbTradeTrendPeriod: '',
+  tbTradeTrendTime: '',
+  xAxis: [],
+  series: [{ name: '时段交易笔数', data: [] }]
+});
+
+// 供需运营态势响应式数据
+const supplyDemandList = ref<SupplyDemandRow[]>([]);
+const supplyDemandIndicators = ref<SupplyDemandIndicators>({
+  globalBalanceRate: 0,
+  totalGapCount: 0,
+  peakGapCount: 0,
+  hotUnbalanceRegionCount: 0,
+});
+const supplyDemandTrendData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '区域泊位数', data: [] }, { name: '在停车辆数', data: [] }]
+});
+const supplyDemandBalanceRatioData = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '供需平衡状态占比(%)', data: [] }],
+});
+const supplyDemandRegionRatioData = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '区域供需贡献占比(%)', data: [] }],
+});
+// 供需运营态势视图切换相关
+const supplyDemandChartRefreshKey = ref(0);
+const activeSupplyDemandView = ref('热力图');
+const supplyDemandViewBtnList = ref(['卡片', '折线图', '热力图', '饼图', '列表']);
+// 供需运营态势弹窗相关
+const supplyDemandDetailDialogVisible = ref(false);
+const supplyDemandAnalysisDialogVisible = ref(false);
+const activeSupplyDemandDetailView = ref('区域供需明细');
+const supplyDemandDetailViewBtnList = ref(['区域供需明细', '高峰时段分布', '停车场供需情况']);
+const supplyDemandDetailSelectedRow = ref<SupplyDemandDetail>({
+  tbRegionId: '',
+  tbRegionName: '',
+  tbSupplyDemandPeakGap: 0,
+  tbRegionHotUnbalanceName: '',
+  tbSupplyDemandChainBalanceChange: 0,
+  tbSupplyDemandOptimizeSuggest: '',
+  regionDetails: {
+    tbParkingCount: 0,
+    tbParkingSpaceTotalCount: 0,
+    tbParkingRecordCurrentCount: 0,
+    tbSupplyDemandGapCount: 0,
+    tbSupplyDemandBalanceRate: 0,
+  },
+  peakTimeDistribution: {
+    xAxis: [],
+    series: [{ name: '时段缺口数', data: [] }]
+  },
+  parkingSupplyDemand: []
+});
+const supplyDemandAnalysisSelectedRow = ref<SupplyDemandAnalysis>({
+  tbRegionId: '',
+  tbRegionName: '',
+  analysisTime: '',
+  analysisContent: '',
+  optimizationSuggestions: [],
+  predictedEffect: ''
+});
+
+// 停车资源分布响应式数据
+const parkAreaDistributionList = ref<ParkAreaDistributionRow[]>([]);
+const parkAreaDistributionIndicators = ref<ParkAreaDistributionIndicators>({
+  totalParkCount: 0,
+  totalSpaceCount: 0,
+  availableSpaceCount: 0,
+  runningParkCount: 0,
+});
+const parkAreaDistributionAreaCountData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '停车场数量', data: [] }],
+});
+const parkAreaDistributionAreaSpaceCountData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '泊位数', data: [] }],
+});
+// 停车资源分布视图切换相关
+const parkAreaDistributionChartRefreshKey = ref(0);
+const activeParkAreaDistributionView = ref('地图'); // 默认显示地图
+const parkAreaDistributionViewBtnList = ref(['地图', '列表']);
+// 停车资源分布弹窗相关
+const parkAreaDistributionDetailDialogVisible = ref(false);
+const parkAreaDistributionDetailSelectedRow = ref<ParkAreaDistributionDetail>({
+  tbRegionRegionId: '',
+  tbRegionName: '',
+  tbRegionSaturationRate: 0,
+  tbParkingNewCount: 0,
+  tbParkingHotName: '',
+  regionParkingList: [],
+  spaceDistributionDetail: {
+    legend: [],
+    series: [{ name: '泊位分布', data: [] }]
+  },
+  operationData: {
+    avgUtilizationRate: 0,
+    avgTurnoverRate: 0,
+    peakUtilizationRate: 0
+  }
+});
 
 // 资源设备接口请求方法
 const getParkDeviceIndicatorsData = async () => {
@@ -875,6 +1108,202 @@ const releaseParkingSpaceData = async (spaceId: string, releaseReason: string) =
   }
 };
 
+// 通行交易趋势接口请求方法
+const getTradeTrendListData = async () => {
+  try {
+    tradeTrendList.value = (await fetchTradeTrendList()) as TradeTrendRow[];
+  } catch (error: any) {
+    ElMessage.error(`通行交易趋势列表加载失败：${error.message}`);
+    tradeTrendList.value = [];
+  }
+};
+const getTradeTrendIndicatorsData = async () => {
+  try {
+    tradeTrendIndicators.value =
+      (await fetchTradeTrendIndicators()) as TradeTrendIndicators;
+  } catch (error: any) {
+    ElMessage.error(`通行交易趋势核心指标加载失败：${error.message}`);
+  }
+};
+const getTradeTrendCountTrendData = async () => {
+  try {
+    tradeTrendCountTrend.value =
+      (await fetchTradeTrendCountTrend()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`交易笔数趋势加载失败：${error.message}`);
+  }
+};
+const getTradeTrendAmountTrendData = async () => {
+  try {
+    tradeTrendAmountTrend.value =
+      (await fetchTradeTrendAmountTrend()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`交易金额趋势加载失败：${error.message}`);
+  }
+};
+const getTradeTrendTimeCountCompareData = async () => {
+  try {
+    tradeTrendTimeCountCompare.value =
+      (await fetchTradeTrendTimeCountCompare()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`各时段交易笔数对比加载失败：${error.message}`);
+  }
+};
+const getTradeTrendRegionAmountCompareData = async () => {
+  try {
+    tradeTrendRegionAmountCompare.value =
+      (await fetchTradeTrendRegionAmountCompare()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`各区域交易金额对比加载失败：${error.message}`);
+  }
+};
+const getTradeTrendPayMethodRatioData = async () => {
+  try {
+    tradeTrendPayMethodRatio.value =
+      (await fetchTradeTrendPayMethodRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`支付方式占比加载失败：${error.message}`);
+  }
+};
+const getTradeTrendRegionTradeRatioData = async () => {
+  try {
+    tradeTrendRegionTradeRatio.value =
+      (await fetchTradeTrendRegionTradeRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`区域交易占比加载失败：${error.message}`);
+  }
+};
+const getTradeTrendDetailData = async (tradeTrendId: string) => {
+  try {
+    tradeTrendDetailSelectedRow.value = {
+      ...tradeTrendDetailSelectedRow.value,
+      ...(await fetchTradeTrendDetail(tradeTrendId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`通行交易趋势详情加载失败：${error.message}`);
+  }
+};
+const getTradeTrendTimeTrendData = async (tradeTrendId: string) => {
+  try {
+    tradeTrendTimeTrendSelectedRow.value = {
+      ...tradeTrendTimeTrendSelectedRow.value,
+      ...(await fetchTradeTrendTimeTrend(tradeTrendId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`时段级趋势数据加载失败：${error.message}`);
+  }
+};
+
+// 供需运营态势接口请求方法
+const getSupplyDemandListData = async () => {
+  try {
+    supplyDemandList.value = (await fetchSupplyDemandList()) as SupplyDemandRow[];
+  } catch (error: any) {
+    ElMessage.error(`供需运营态势列表加载失败：${error.message}`);
+    supplyDemandList.value = [];
+  }
+};
+const getSupplyDemandIndicatorsData = async () => {
+  try {
+    supplyDemandIndicators.value =
+      (await fetchSupplyDemandIndicators()) as SupplyDemandIndicators;
+  } catch (error: any) {
+    ElMessage.error(`供需运营态势核心指标加载失败：${error.message}`);
+  }
+};
+const getSupplyDemandTrendData = async () => {
+  try {
+    supplyDemandTrendData.value =
+      (await fetchSupplyDemandTrend()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`供需趋势对比加载失败：${error.message}`);
+  }
+};
+const getSupplyDemandBalanceRatioData = async () => {
+  try {
+    supplyDemandBalanceRatioData.value =
+      (await fetchSupplyDemandBalanceRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`供需平衡状态占比加载失败：${error.message}`);
+  }
+};
+const getSupplyDemandRegionRatioData = async () => {
+  try {
+    supplyDemandRegionRatioData.value =
+      (await fetchSupplyDemandRegionRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`区域供需贡献占比加载失败：${error.message}`);
+  }
+};
+const getSupplyDemandDetailData = async (regionId: string) => {
+  try {
+    supplyDemandDetailSelectedRow.value = {
+      ...supplyDemandDetailSelectedRow.value,
+      ...(await fetchSupplyDemandDetail(regionId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`供需运营态势详情加载失败：${error.message}`);
+  }
+};
+const getSupplyDemandAnalysisData = async (regionId: string) => {
+  try {
+    supplyDemandAnalysisSelectedRow.value = {
+      ...supplyDemandAnalysisSelectedRow.value,
+      ...(await fetchSupplyDemandAnalysis(regionId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`供需分析报告加载失败：${error.message}`);
+  }
+};
+
+// 停车资源分布接口请求方法
+const getParkAreaDistributionListData = async () => {
+  try {
+    parkAreaDistributionList.value = (await fetchParkAreaDistributionList()) as ParkAreaDistributionRow[];
+  } catch (error: any) {
+    ElMessage.error(`停车资源分布列表加载失败：${error.message}`);
+    parkAreaDistributionList.value = [];
+  }
+};
+
+const getParkAreaDistributionIndicatorsData = async () => {
+  try {
+    parkAreaDistributionIndicators.value =
+      (await fetchParkAreaDistributionIndicators()) as ParkAreaDistributionIndicators;
+  } catch (error: any) {
+    ElMessage.error(`停车资源分布核心指标加载失败：${error.message}`);
+  }
+};
+
+const getParkAreaDistributionAreaCountData = async () => {
+  try {
+    parkAreaDistributionAreaCountData.value =
+      (await fetchParkAreaDistributionAreaCount()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`各区域停车场数量加载失败：${error.message}`);
+  }
+};
+
+const getParkAreaDistributionAreaSpaceCountData = async () => {
+  try {
+    parkAreaDistributionAreaSpaceCountData.value =
+      (await fetchParkAreaDistributionAreaSpaceCount()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`各区域泊位数加载失败：${error.message}`);
+  }
+};
+
+const getParkAreaDistributionDetailData = async (regionId: string) => {
+  try {
+    parkAreaDistributionDetailSelectedRow.value = {
+      ...parkAreaDistributionDetailSelectedRow.value,
+      ...(await fetchParkAreaDistributionDetail(regionId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`停车资源分布详情加载失败：${error.message}`);
+  }
+};
+
 
 // 资源设备视图切换方法
 const changeDeviceView = (viewName: string) => {
@@ -1004,6 +1433,216 @@ const refreshParkingSpaceData = async () => {
   ElMessage.success('泊位车位数据刷新成功');
 };
 
+// 通行交易趋势视图切换
+const changeTradeTrendView = (viewName: string) => {
+  activeTradeTrendView.value = viewName;
+  viewName === '卡片' &&
+  nextTick(() => setTimeout(initNumberAnimations, 300));
+  (viewName === '折线图' || viewName === '柱状图' || viewName === '饼图') &&
+  nextTick(() => tradeTrendChartRefreshKey.value++);
+};
+const changeTradeTrendDetailView = (viewName: string) => {
+  activeTradeTrendDetailView.value = viewName;
+};
+// 通行交易趋势弹窗方法
+const openTradeTrendDetailDialog = async (row: TradeTrendRow) => {
+  await getTradeTrendDetailData(row.tbTradeTrendId);
+  tradeTrendDetailDialogVisible.value = true;
+};
+const closeTradeTrendDetailDialog = () => {
+  tradeTrendDetailDialogVisible.value = false;
+  tradeTrendDetailSelectedRow.value = {
+    tbTradeTrendId: '',
+    tbTradeTrendPeriod: '',
+    tbTradeTrendTime: '',
+    tbTradeTrendChainCountGrowth: 0,
+    tbTradeTrendChainAmountGrowth: 0,
+    tbTradeTrendPeakPeriod: '',
+    tbRegionTradeContributionRate: '',
+    tradeDetail: {
+      tbTradeTrendCount: 0,
+      tbTradeTrendAmount: 0,
+      tbTradeTrendPayRate: 0,
+      tbTradeTrendAverageDuration: 0,
+    },
+    payMethodDistribution: {
+      legend: [],
+      series: [{ name: '支付方式分布(%)', data: [] }]
+    },
+    regionDistribution: {
+      legend: [],
+      series: [{ name: '区域分布(%)', data: [] }]
+    }
+  };
+  activeTradeTrendDetailView.value = '明细';
+};
+const openTradeTrendTimeTrendDialog = async (row: TradeTrendRow) => {
+  await getTradeTrendTimeTrendData(row.tbTradeTrendId);
+  tradeTrendTimeTrendDialogVisible.value = true;
+};
+const closeTradeTrendTimeTrendDialog = () => {
+  tradeTrendTimeTrendDialogVisible.value = false;
+  tradeTrendTimeTrendSelectedRow.value = {
+    tbTradeTrendId: '',
+    tbTradeTrendPeriod: '',
+    tbTradeTrendTime: '',
+    xAxis: [],
+    series: [{ name: '时段交易笔数', data: [] }]
+  };
+};
+// 通行交易趋势数据刷新
+const refreshTradeTrendData = async () => {
+  await Promise.all([
+    getTradeTrendListData(),
+    getTradeTrendIndicatorsData(),
+    getTradeTrendCountTrendData(),
+    getTradeTrendAmountTrendData(),
+    getTradeTrendTimeCountCompareData(),
+    getTradeTrendRegionAmountCompareData(),
+    getTradeTrendPayMethodRatioData(),
+    getTradeTrendRegionTradeRatioData(),
+  ]);
+  tradeTrendChartRefreshKey.value++;
+  ElMessage.success('通行交易趋势数据刷新成功');
+};
+
+// 供需运营态势视图切换
+const changeSupplyDemandView = (viewName: string) => {
+  activeSupplyDemandView.value = viewName;
+  viewName === '卡片' &&
+  nextTick(() => setTimeout(initNumberAnimations, 300));
+  (viewName === '折线图' || viewName === '热力图' || viewName === '饼图') &&
+  nextTick(() => supplyDemandChartRefreshKey.value++);
+};
+const changeSupplyDemandDetailView = (viewName: string) => {
+  activeSupplyDemandDetailView.value = viewName;
+};
+// 供需运营态势弹窗方法
+const openSupplyDemandDetailDialog = async (row: SupplyDemandRow) => {
+  await getSupplyDemandDetailData(row.tbRegionId);
+  supplyDemandDetailDialogVisible.value = true;
+};
+const closeSupplyDemandDetailDialog = () => {
+  supplyDemandDetailDialogVisible.value = false;
+  supplyDemandDetailSelectedRow.value = {
+    tbRegionId: '',
+    tbRegionName: '',
+    tbSupplyDemandPeakGap: 0,
+    tbRegionHotUnbalanceName: '',
+    tbSupplyDemandChainBalanceChange: 0,
+    tbSupplyDemandOptimizeSuggest: '',
+    regionDetails: {
+      tbParkingCount: 0,
+      tbParkingSpaceTotalCount: 0,
+      tbParkingRecordCurrentCount: 0,
+      tbSupplyDemandGapCount: 0,
+      tbSupplyDemandBalanceRate: 0,
+    },
+    peakTimeDistribution: {
+      xAxis: [],
+      series: [{ name: '时段缺口数', data: [] }]
+    },
+    parkingSupplyDemand: []
+  };
+  activeSupplyDemandDetailView.value = '区域供需明细';
+};
+const openSupplyDemandAnalysisDialog = async (row: SupplyDemandRow) => {
+  await getSupplyDemandAnalysisData(row.tbRegionId);
+  supplyDemandAnalysisDialogVisible.value = true;
+};
+const closeSupplyDemandAnalysisDialog = () => {
+  supplyDemandAnalysisDialogVisible.value = false;
+  supplyDemandAnalysisSelectedRow.value = {
+    tbRegionId: '',
+    tbRegionName: '',
+    analysisTime: '',
+    analysisContent: '',
+    optimizationSuggestions: [],
+    predictedEffect: ''
+  };
+};
+// 导出分析报告为PDF
+const exportAnalysisReport = async () => {
+  try {
+    const result = await exportSupplyDemandAnalysisReport(supplyDemandAnalysisSelectedRow.value.tbRegionId);
+    if (result.success) {
+      tipDialogContent.value = result.message;
+      tipDialogVisible.value = true;
+      // 关闭分析弹窗
+      supplyDemandAnalysisDialogVisible.value = false;
+    } else {
+      tipDialogContent.value = result.message || '导出失败';
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    tipDialogContent.value = `导出失败：${error.message}`;
+    tipDialogVisible.value = true;
+  }
+};
+// 供需运营态势数据刷新
+const refreshSupplyDemandData = async () => {
+  await Promise.all([
+    getSupplyDemandListData(),
+    getSupplyDemandIndicatorsData(),
+    getSupplyDemandTrendData(),
+    getSupplyDemandBalanceRatioData(),
+    getSupplyDemandRegionRatioData(),
+  ]);
+  supplyDemandChartRefreshKey.value++;
+  ElMessage.success('供需运营态势数据刷新成功');
+};
+
+// 停车资源分布视图切换
+const changeParkAreaDistributionView = (viewName: string) => {
+  activeParkAreaDistributionView.value = viewName;
+  nextTick(() => parkAreaDistributionChartRefreshKey.value++);
+};
+
+// 停车资源分布弹窗方法
+const openParkAreaDistributionDetailDialog = async (row: ParkAreaDistributionRow) => {
+  await getParkAreaDistributionDetailData(row.tbRegionRegionId);
+  parkAreaDistributionDetailDialogVisible.value = true;
+};
+
+const closeParkAreaDistributionDetailDialog = () => {
+  parkAreaDistributionDetailDialogVisible.value = false;
+  parkAreaDistributionDetailSelectedRow.value = {
+    tbRegionRegionId: '',
+    tbRegionName: '',
+    tbRegionSaturationRate: 0,
+    tbParkingNewCount: 0,
+    tbParkingHotName: '',
+    regionParkingList: [],
+    spaceDistributionDetail: {
+      legend: [],
+      series: [{ name: '泊位分布', data: [] }]
+    },
+    operationData: {
+      avgUtilizationRate: 0,
+      avgTurnoverRate: 0,
+      peakUtilizationRate: 0
+    }
+  };
+};
+
+// 停车资源分布数据刷新
+const refreshParkAreaDistributionData = async () => {
+  await Promise.all([
+    getParkAreaDistributionListData(),
+    getParkAreaDistributionIndicatorsData(),
+    getParkAreaDistributionAreaCountData(),
+    getParkAreaDistributionAreaSpaceCountData(),
+  ]);
+  parkAreaDistributionChartRefreshKey.value++;
+  ElMessage.success('停车资源分布数据刷新成功');
+};
+
+// 查看热门停车场（跳转至停车场详情）
+const viewHotParking = () => {
+  // 这里可以跳转到停车场详情弹窗，根据需求实现
+  ElMessage.info('跳转至停车场详情功能待实现');
+};
+
 
 onMounted(async () => {
   await initMapData();
@@ -1024,10 +1663,30 @@ onMounted(async () => {
     getParkingSpaceUtilizationTrendData(),
     getParkingSpaceTypeRatioData(),
     getParkingSpaceStatusRatioData(),
+    getTradeTrendListData(),
+    getTradeTrendIndicatorsData(),
+    getTradeTrendCountTrendData(),
+    getTradeTrendAmountTrendData(),
+    getTradeTrendTimeCountCompareData(),
+    getTradeTrendRegionAmountCompareData(),
+    getTradeTrendPayMethodRatioData(),
+    getTradeTrendRegionTradeRatioData(),
+    getSupplyDemandListData(),
+    getSupplyDemandIndicatorsData(),
+    getSupplyDemandTrendData(),
+    getSupplyDemandBalanceRatioData(),
+    getSupplyDemandRegionRatioData(),
+    getParkAreaDistributionListData(),
+    getParkAreaDistributionIndicatorsData(),
+    getParkAreaDistributionAreaCountData(),
+    getParkAreaDistributionAreaSpaceCountData(),
   ]);
   setTimeout(() => {
     parkResourceDistributionChartRefreshKey.value++;
     parkingSpaceChartRefreshKey.value++;
+    tradeTrendChartRefreshKey.value++;
+    supplyDemandChartRefreshKey.value++;
+    parkAreaDistributionChartRefreshKey.value++;
   }, 200);
   screenFull.on('change', handleFullscreenChange);
 });
@@ -1044,7 +1703,7 @@ onUnmounted(() => {
     <div class="mainbox">
       <div class="top">
         <div class="panel top-left">
-          <el-tabs v-model="topLeftActiveTab" class="common-tabs">
+          <el-tabs v-model="topLeftActiveTab" class="common-tabs" @tab-change="handleTabChange">
             <el-tab-pane label="资源设备指标" name="tab1">
               <div class="header-actions">
                 <div class="actions-left"><p></p></div>
@@ -1067,7 +1726,6 @@ onUnmounted(() => {
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                 </div>
               </div>
-
               <!-- 卡片视图 -->
               <div v-if="activeDeviceView === '卡片'" class="view-content">
                 <div class="indicator-cards4">
@@ -1108,7 +1766,6 @@ onUnmounted(() => {
                   </div>
                 </div>
               </div>
-
               <!-- 饼图视图 -->
               <div v-if="activeDeviceView === '饼图'" class="view-content">
                 <div
@@ -1142,7 +1799,6 @@ onUnmounted(() => {
                   />
                 </div>
               </div>
-
               <!-- 折线图视图 -->
               <div v-if="activeDeviceView === '折线图'" class="view-content">
                 <div
@@ -1170,15 +1826,15 @@ onUnmounted(() => {
           </el-tabs>
           <div class="panel-footer"></div>
         </div>
-        <div class="panel top-middle" ref="map">
-          <el-tabs v-model="topMiddleActiveTab" class="common-tabs">
-            <el-tab-pane label="停车资源分布" name="tab1">
+        <div class="panel top-middle" ref="topMiddle">
+          <el-tabs v-model="topMiddleActiveTab" class="common-tabs" @tab-change="handleTabChange">
+            <el-tab-pane label="在停车辆实时监控" name="tab1">
               <div class="header-actions">
                 <div class="actions-left"><p></p></div>
                 <div class="actions-right">
                   <button class="control-btn" @click="handleOrbitAnimation">
                     <el-icon color="#409eff" size="16">
-                      <VideoPause v-if="mapCommonRef?.orbitStatus?.playing" />
+                      <VideoPause v-if="normalMapRef?.orbitStatus?.playing" />
                       <VideoPlay v-else />
                     </el-icon>
                   </button>
@@ -1188,116 +1844,21 @@ onUnmounted(() => {
                   >
                     <el-icon color="#409eff" size="16"><Setting /></el-icon>
                   </button>
-                  <button class="control-btn" @click="openMapFilterDrawer">
-                    <el-icon color="#409eff" size="16"><Filter /></el-icon>
-                  </button>
+                  <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button
                     class="panel-fullscreen-btn"
-                    @click="togglePanelFullscreen('map')"
+                    @click="togglePanelFullscreen('topMiddle')"
                   >
                     <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
                   </button>
                 </div>
               </div>
-              <!-- 筛选抽屉 -->
-              <div
-                v-if="filterDrawerVisible"
-                class="top-drawer-mask"
-                @click="filterDrawerVisible = false"
-              ></div>
-              <transition name="top-drawer">
-                <div v-if="filterDrawerVisible" class="top-drawer-container">
-                  <div class="filter-form-container">
-                    <el-form :model="filterForm" inline class="filter-form">
-                      <el-form-item
-                        label="时间范围："
-                        prop="timeRange"
-                        style="background-color: aliceblue"
-                      >
-                        <el-radio-group v-model="filterForm.timeRange">
-                          <el-radio label="all">所有时间</el-radio>
-                          <el-radio label="today">今日</el-radio>
-                          <el-radio label="yesterday">昨日</el-radio>
-                          <el-radio label="7days">近7日</el-radio>
-                        </el-radio-group>
-                      </el-form-item>
-                      <el-form-item
-                        label="停车场类型："
-                        prop="parkTypes"
-                        style="background-color: aliceblue"
-                      >
-                        <el-checkbox-group v-model="filterForm.parkTypes">
-                          <el-checkbox label="路侧" />
-                          <el-checkbox label="公共" />
-                          <el-checkbox label="专用" />
-                        </el-checkbox-group>
-                      </el-form-item>
-                      <el-form-item
-                        label="泊位状态："
-                        prop="berthStatuses"
-                        style="background-color: aliceblue"
-                      >
-                        <el-checkbox-group v-model="filterForm.berthStatuses">
-                          <el-checkbox label="故障" />
-                          <el-checkbox label="空闲" />
-                          <el-checkbox label="占用" />
-                          <el-checkbox label="禁用" />
-                        </el-checkbox-group>
-                      </el-form-item>
-                      <el-form-item
-                        label="设备类型："
-                        prop="deviceTypes"
-                        style="background-color: aliceblue"
-                      >
-                        <el-checkbox-group v-model="filterForm.deviceTypes">
-                          <el-checkbox label="道闸" />
-                          <el-checkbox label="摄像头" />
-                          <el-checkbox label="计费桩" />
-                          <el-checkbox label="充电桩" />
-                          <el-checkbox label="传感器" />
-                          <el-checkbox label="边缘网关" />
-                        </el-checkbox-group>
-                      </el-form-item>
-                      <el-form-item
-                        label="设备状态："
-                        prop="deviceStatuses"
-                        style="background-color: aliceblue"
-                      >
-                        <el-checkbox-group v-model="filterForm.deviceStatuses">
-                          <el-checkbox label="故障" />
-                          <el-checkbox label="在线" />
-                          <el-checkbox label="离线" />
-                        </el-checkbox-group>
-                      </el-form-item>
-                      <el-form-item
-                        label="预警等级："
-                        prop="alertLevels"
-                        style="background-color: aliceblue"
-                      >
-                        <el-checkbox-group v-model="filterForm.alertLevels">
-                          <el-checkbox label="高" />
-                          <el-checkbox label="中" />
-                          <el-checkbox label="低" />
-                        </el-checkbox-group>
-                      </el-form-item>
-                      <el-button @click="resetMapFilter">重置</el-button>
-                    </el-form>
-                    <div class="filter-btn-group">
-                      <el-button type="primary" @click="submitMapFilter">
-                        确定
-                      </el-button>
-                      <el-button @click="filterDrawerVisible = false">
-                        取消
-                      </el-button>
-                    </div>
-                  </div>
-                </div>
-              </transition>
               <!-- 地图组件 -->
               <div style="flex: 1; width: 100%; height: calc(100% - 2vh)">
-                <MapCommon
-                  ref="mapCommonRef"
-                  id-name="parkingMap"
+                <GlobalNormalMap
+                  v-if="!normalMapLoading && topMiddleActiveTab === 'tab1'"
+                  ref="normalMapRef"
+                  id-name="parkingMap_normal"
                   :geometries-array="geometriesArray"
                   :orbit-config="orbitConfigData"
                 />
@@ -1376,14 +1937,168 @@ onUnmounted(() => {
                 </template>
               </el-dialog>
             </el-tab-pane>
-            <el-tab-pane label="在停车辆实时监控" name="tab2">
-              <div class="content-placeholder"><p>在停车辆实时监控</p></div>
+            <el-tab-pane label="停车资源分布" name="tab2">
+              <div class="header-actions">
+                <div class="actions-left"><p></p></div>
+                <div class="actions-right">
+                  <div class="view-btn-group">
+                    <ElButton
+                      v-for="item in parkAreaDistributionViewBtnList"
+                      :key="item"
+                      :type="activeParkAreaDistributionView === item ? 'primary' : ''"
+                      plain
+                      @click="changeParkAreaDistributionView(item)"
+                      class="view-btn"
+                    >
+                      {{ item }}
+                    </ElButton>
+                  </div>
+                  <el-icon color="#409eff" size="16" @click="refreshParkAreaDistributionData"><Refresh /></el-icon>
+                  <el-icon color="#409eff" size="16"><Filter /></el-icon>
+                  <button
+                    class="panel-fullscreen-btn"
+                    @click="togglePanelFullscreen('topMiddle')"
+                  >
+                    <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
+                  </button>
+                </div>
+              </div>
+              <!-- 地图视图 -->
+              <div v-if="activeParkAreaDistributionView === '地图'" class="view-content">
+                <!-- 卡片叠加层 -->
+                <div class="stats-overlay1">
+                  <div class="stats-cards1">
+                    <div class="stat-card">
+                      <div class="stat-content">
+                        <div class="stat-title">全域停车场总数</div>
+                        <div class="stat-value">{{ parkAreaDistributionIndicators.totalParkCount || 0 }} 个</div>
+                      </div>
+                    </div>
+                    <div class="stat-card">
+                      <div class="stat-content">
+                        <div class="stat-title">总泊位数</div>
+                        <div class="stat-value">{{ parkAreaDistributionIndicators.totalSpaceCount || 0 }} 个</div>
+                      </div>
+                    </div>
+                    <div class="stat-card">
+                      <div class="stat-content">
+                        <div class="stat-title">可用泊位数</div>
+                        <div class="stat-value">{{ parkAreaDistributionIndicators.availableSpaceCount || 0 }} 个</div>
+                      </div>
+                    </div>
+                    <div class="stat-card">
+                      <div class="stat-content">
+                        <div class="stat-title">运营中停车场数</div>
+                        <div class="stat-value">{{ parkAreaDistributionIndicators.runningParkCount || 0 }} 个</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- 地图 -->
+                <div style="width: 100%; height: 100%;" v-if="!heatmapLoading && topMiddleActiveTab === 'tab2'">
+                  <GlobalHeatmapMap
+                    ref="heatmapMapRef"
+                    id="parkingMap_heat"
+                    :orbit-config="orbitConfigData"
+                  />
+                </div>
+                <!-- 柱状图叠加层 -->
+                <div class="chart-overlay1">
+                  <div class="chart-cards1">
+                    <div class="chart-card">
+                      <VerticalBar2
+                        :x-axis="parkAreaDistributionAreaCountData.xAxis"
+                        :series="parkAreaDistributionAreaCountData.series"
+                        unit="个"
+                        title="各区域停车场数量对比"
+                        :key="parkAreaDistributionChartRefreshKey"
+                        style="width:100%;height:100%"
+                      />
+                    </div>
+                    <div class="chart-card">
+                      <VerticalBar1
+                        :x-axis="parkAreaDistributionAreaSpaceCountData.xAxis"
+                        :series="parkAreaDistributionAreaSpaceCountData.series"
+                        unit="个"
+                        title="各区域泊位数对比"
+                        :key="parkAreaDistributionChartRefreshKey"
+                        style="width:100%;height:100%"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- 列表视图 -->
+              <div v-if="activeParkAreaDistributionView === '列表'" class="view-content">
+                <div class="table-box4">
+                  <ElTable
+                    class="table4"
+                    :data="parkAreaDistributionList"
+                    border
+                    size="small"
+                    width="100%"
+                    height="100%"
+                    table-layout="fixed"
+                    highlight-current-row
+                    @row-click="(row) => openParkAreaDistributionDetailDialog(row)"
+                  >
+                    <ElTableColumn
+                      prop="tbRegionName"
+                      label="区域名称"
+                      align="center"
+                    />
+                    <ElTableColumn
+                      prop="tbParkingCount"
+                      label="停车场总数"
+                      align="center"
+                    />
+                    <ElTableColumn
+                      prop="tbParkingSpaceTotalCount"
+                      label="总泊位数"
+                      align="center"
+                    >
+                      <template #default="scope">
+                        {{ formatNumber(scope.row.tbParkingSpaceTotalCount) }}
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="tbParkingSpaceAvailableCount"
+                      label="可用泊位数"
+                      align="center"
+                    >
+                      <template #default="scope">
+                        {{ formatNumber(scope.row.tbParkingSpaceAvailableCount) }}
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="sysOperationStatusName"
+                      label="运营状态"
+                      align="center"
+                    >
+                      <template #default="scope">
+                        <ElTag :type="scope.row.sysOperationStatusName === '运营良好' ? 'success' : 'warning'">
+                          {{ scope.row.sysOperationStatusName || '-' }}
+                        </ElTag>
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="tbRegionParkingDensity"
+                      label="覆盖密度"
+                      align="center"
+                    >
+                      <template #default="scope">
+                        {{ formatDecimal(scope.row.tbRegionParkingDensity) }}
+                      </template>
+                    </ElTableColumn>
+                  </ElTable>
+                </div>
+              </div>
             </el-tab-pane>
           </el-tabs>
           <div class="panel-footer"></div>
         </div>
         <div class="panel top-right" ref="parkingSpacePanelRef">
-          <el-tabs v-model="topRightActiveTab" class="common-tabs">
+          <el-tabs v-model="topRightActiveTab" class="common-tabs" @tab-change="handleTabChange">
             <el-tab-pane label="泊位车位" name="tab1">
                 <div class="header-actions">
                   <div class="actions-left"><p></p></div>
@@ -1410,39 +2125,38 @@ onUnmounted(() => {
                     </button>
                   </div>
                 </div>
-
                 <!-- 卡片视图 -->
                 <div v-if="activeParkingSpaceView === '卡片'" class="view-content">
-                  <div class="indicator-cards3">
-                    <div class="indicator-card3 card1">
+                  <div class="indicator-cards4">
+                    <div class="indicator-card4 card1">
                       <div class="indicator-title">总泊位数</div>
                       <div class="indicator-value">
                         <span class="number-animate">{{ parkingSpaceIndicators.totalSpaceCount }}</span>
                       </div>
                       <div class="indicator-unit">个</div>
                     </div>
-                    <div class="indicator-card3 card2">
+                    <div class="indicator-card4 card2">
                       <div class="indicator-title">空闲数</div>
                       <div class="indicator-value">
                         <span class="number-animate">{{ parkingSpaceIndicators.availableSpaceCount }}</span>
                       </div>
                       <div class="indicator-unit">个</div>
                     </div>
-                    <div class="indicator-card3 card3">
+                    <div class="indicator-card4 card3">
                       <div class="indicator-title">占用数</div>
                       <div class="indicator-value">
                         <span class="number-animate">{{ parkingSpaceIndicators.occupiedSpaceCount }}</span>
                       </div>
                       <div class="indicator-unit">个</div>
                     </div>
-                    <div class="indicator-card3 card4">
+                    <div class="indicator-card4 card4">
                       <div class="indicator-title">故障数</div>
                       <div class="indicator-value">
                         <span class="number-animate">{{ parkingSpaceIndicators.faultSpaceCount }}</span>
                       </div>
                       <div class="indicator-unit">个</div>
                     </div>
-                    <div class="indicator-card3 card5">
+                    <div class="indicator-card4 card5">
                       <div class="indicator-title">使用率</div>
                       <div class="indicator-value">
                         <span class="number-animate">{{ formatDecimal(parkingSpaceIndicators.utilizationRate) }}</span>
@@ -1451,7 +2165,6 @@ onUnmounted(() => {
                     </div>
                   </div>
                 </div>
-
                 <!-- 折线图视图 -->
                 <div v-if="activeParkingSpaceView === '折线图'" class="view-content">
                   <ChartLine1
@@ -1460,7 +2173,6 @@ onUnmounted(() => {
                     :key="parkingSpaceChartRefreshKey"
                   />
                 </div>
-
                 <!-- 饼图视图 -->
                 <div v-if="activeParkingSpaceView === '饼图'" class="view-content">
                   <div
@@ -1494,7 +2206,6 @@ onUnmounted(() => {
                     />
                   </div>
                 </div>
-
                 <!-- 列表视图 -->
                 <div v-if="activeParkingSpaceView === '列表'" class="view-content">
                   <div class="table-box4">
@@ -1589,10 +2300,248 @@ onUnmounted(() => {
         </div>
       </div>
       <div class="bottom">
-        <div class="panel bottom-left">
-          <el-tabs v-model="bottomLeftActiveTab" class="common-tabs">
+        <div class="panel bottom-left" ref="tradeTrendPanelRef">
+          <el-tabs v-model="bottomLeftActiveTab" class="common-tabs" @tab-change="handleTabChange">
             <el-tab-pane label="通行交易趋势" name="tab1">
-              <div class="content-placeholder"><p>通行交易趋势</p></div>
+              <div class="header-actions">
+                <div class="actions-left"><p></p></div>
+                <div class="actions-right">
+                  <div class="view-btn-group">
+                    <ElButton
+                      v-for="item in tradeTrendViewBtnList"
+                      :key="item"
+                      :type="activeTradeTrendView === item ? 'primary' : ''"
+                      plain
+                      @click="changeTradeTrendView(item)"
+                      class="view-btn"
+                    >
+                      {{ item }}
+                    </ElButton>
+                  </div>
+                  <el-icon color="#409eff" size="16" @click="refreshTradeTrendData"><Refresh /></el-icon>
+                  <el-icon color="#409eff" size="16"><Filter /></el-icon>
+                  <button
+                    class="panel-fullscreen-btn"
+                    @click="togglePanelFullscreen('tradeTrendPanelRef')"
+                  >
+                    <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
+                  </button>
+                </div>
+              </div>
+              <!-- 卡片视图 -->
+              <div v-if="activeTradeTrendView === '卡片'" class="view-content">
+                <div class="indicator-cards3">
+                  <div class="indicator-card3 card1">
+                    <div class="indicator-title">总笔数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ tradeTrendIndicators.totalCount }}</span>
+                    </div>
+                    <div class="indicator-unit">笔</div>
+                  </div>
+                  <div class="indicator-card3 card2">
+                    <div class="indicator-title">总金额</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatNumber(tradeTrendIndicators.totalAmount) }}</span>
+                    </div>
+                    <div class="indicator-unit">元</div>
+                  </div>
+                  <div class="indicator-card3 card3">
+                    <div class="indicator-title">支付完成率</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(tradeTrendIndicators.payRate) }}</span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                  <div class="indicator-card3 card4">
+                    <div class="indicator-title">环比增长</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(tradeTrendIndicators.chainCountGrowth) }}</span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                </div>
+              </div>
+              <!-- 折线图视图 -->
+              <div v-if="activeTradeTrendView === '折线图'" class="view-content">
+                <div
+                  style="
+            display: inline-block;
+            width: 49%;
+            height: 100%;
+            vertical-align: top;
+          "
+                >
+                  <ChartLine1
+                    :data="tradeTrendCountTrend"
+                    title="交易笔数趋势"
+                    :key="tradeTrendChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+            display: inline-block;
+            width: 49%;
+            height: 100%;
+            padding-left: 0.3vw;
+            vertical-align: top;
+            border-left: 0.3vh solid #02a6b5;
+          "
+                >
+                  <ChartLine2
+                    :data="tradeTrendAmountTrend"
+                    title="交易金额趋势"
+                    :key="tradeTrendChartRefreshKey"
+                  />
+                </div>
+              </div>
+              <!-- 柱状图视图 -->
+              <div v-if="activeTradeTrendView === '柱状图'" class="view-content">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                >
+                  <VerticalBar3
+                    :x-axis="tradeTrendTimeCountCompare.xAxis"
+                    :series="tradeTrendTimeCountCompare.series"
+                    unit="笔"
+                    title="各时段交易笔数对比"
+                    :key="tradeTrendChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <VerticalBar1
+                    :x-axis="tradeTrendRegionAmountCompare.xAxis"
+                    :series="tradeTrendRegionAmountCompare.series"
+                    unit="元"
+                    title="各区域交易金额对比"
+                    :key="tradeTrendChartRefreshKey"
+                  />
+                </div>
+              </div>
+              <!-- 饼图视图 -->
+              <div v-if="activeTradeTrendView === '饼图'" class="view-content">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                >
+                  <ChartPie1
+                    :data="tradeTrendPayMethodRatio"
+                    title="支付方式占比"
+                    :key="tradeTrendChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <ChartPie2
+                    :data="tradeTrendRegionTradeRatio"
+                    title="区域交易占比"
+                    :key="tradeTrendChartRefreshKey"
+                  />
+                </div>
+              </div>
+              <!-- 列表视图 -->
+              <div v-if="activeTradeTrendView === '列表'" class="view-content">
+                <div class="table-box4">
+                  <ElTable
+                    class="table4"
+                    :data="tradeTrendList"
+                    border
+                    size="small"
+                    width="100%"
+                    height="100%"
+                    table-layout="fixed"
+                    highlight-current-row
+                    @row-click="(row) => openTradeTrendDetailDialog(row)"
+                  >
+                    <ElTableColumn
+                      prop="tbTradeTrendPeriod"
+                      label="统计周期"
+                      align="center"
+                      min-width="80"
+                    >
+                      <template #default="scope">
+          <span
+            v-if="scope.row.tbTradeTrendPeriod === '日'"
+            style="color:#409eff;cursor:pointer;text-decoration: underline;"
+            @click.stop="openTradeTrendTimeTrendDialog(scope.row)"
+          >
+            {{ scope.row.tbTradeTrendPeriod }}
+          </span>
+                        <span v-else>
+            {{ scope.row.tbTradeTrendPeriod }}
+          </span>
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="tbTradeTrendTime"
+                      label="日期/时段"
+                      align="center"
+                      min-width="120"
+                    />
+                    <ElTableColumn
+                      prop="tbTradeTrendCount"
+                      label="交易笔数"
+                      align="center"
+                      width="100"
+                    />
+                    <ElTableColumn
+                      prop="tbTradeTrendAmount"
+                      label="交易金额"
+                      align="center"
+                      width="100"
+                    >
+                      <template #default="scope">
+                        {{ formatNumber(scope.row.tbTradeTrendAmount) }}
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="tbTradeTrendPayRate"
+                      label="支付完成率(%)"
+                      align="center"
+                      width="120"
+                    >
+                      <template #default="scope">
+                        {{ formatDecimal(scope.row.tbTradeTrendPayRate) }}
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="tbTradeTrendAverageDuration"
+                      label="平均停车时长"
+                      align="center"
+                      width="120"
+                    >
+                      <template #default="scope">
+                        {{ formatDecimal(scope.row.tbTradeTrendAverageDuration) }}
+                      </template>
+                    </ElTableColumn>
+                  </ElTable>
+                </div>
+              </div>
             </el-tab-pane>
             <el-tab-pane label="设备运维趋势" name="tab2">
               <div class="content-placeholder"><p>设备运维趋势</p></div>
@@ -1601,7 +2550,7 @@ onUnmounted(() => {
           <div class="panel-footer"></div>
         </div>
         <div class="panel bottom-middle" ref="parkResourcePanelRef">
-          <el-tabs v-model="bottomMiddleActiveTab" class="common-tabs">
+          <el-tabs v-model="bottomMiddleActiveTab" class="common-tabs" @tab-change="handleTabChange">
             <el-tab-pane label="停车资源分布明细" name="tab1">
               <div class="header-actions">
                 <div class="actions-left"><p></p></div>
@@ -1628,7 +2577,6 @@ onUnmounted(() => {
                   </button>
                 </div>
               </div>
-
               <!-- 卡片视图 -->
               <div v-if="activeParkResourceDistributionView === '卡片'" class="view-content-low">
                 <div class="indicator-cards3">
@@ -1662,7 +2610,6 @@ onUnmounted(() => {
                   </div>
                 </div>
               </div>
-
               <!-- 柱状图视图 -->
               <div v-if="activeParkResourceDistributionView === '柱状图'" class="view-content-low">
                 <div
@@ -1700,7 +2647,6 @@ onUnmounted(() => {
                   />
                 </div>
               </div>
-
               <!-- 饼图视图 -->
               <div v-if="activeParkResourceDistributionView === '饼图'" class="view-content-low">
                 <div
@@ -1734,7 +2680,6 @@ onUnmounted(() => {
                   />
                 </div>
               </div>
-
               <!-- 列表视图 -->
               <div v-if="activeParkResourceDistributionView === '列表'" class="view-content-low">
                 <div class="table-box4">
@@ -1807,10 +2752,200 @@ onUnmounted(() => {
           </el-tabs>
           <div class="panel-footer"></div>
         </div>
-        <div class="panel bottom-right">
-          <el-tabs v-model="bottomRightActiveTab" class="common-tabs">
+        <div class="panel bottom-right" ref="bottomRight">
+          <el-tabs v-model="bottomRightActiveTab" class="common-tabs" @tab-change="handleTabChange">
             <el-tab-pane label="供需运营态势" name="tab1">
-              <div class="content-placeholder"><p>供需运营态势</p></div>
+              <div class="header-actions">
+                <div class="actions-left"><p></p></div>
+                <div class="actions-right">
+                  <div class="view-btn-group">
+                    <ElButton
+                      v-for="item in supplyDemandViewBtnList"
+                      :key="item"
+                      :type="activeSupplyDemandView === item ? 'primary' : ''"
+                      plain
+                      @click="changeSupplyDemandView(item)"
+                      class="view-btn"
+                    >
+                      {{ item }}
+                    </ElButton>
+                  </div>
+                  <el-icon color="#409eff" size="16" @click="refreshSupplyDemandData"><Refresh /></el-icon>
+                  <el-icon color="#409eff" size="16"><Filter /></el-icon>
+                  <button
+                    class="panel-fullscreen-btn"
+                    @click="togglePanelFullscreen('bottomRight')"
+                  >
+                    <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
+                  </button>
+                </div>
+              </div>
+              <!-- 卡片视图 -->
+              <div v-if="activeSupplyDemandView === '卡片'" class="view-content">
+                <div class="indicator-cards3">
+                  <div class="indicator-card3 card1">
+                    <div class="indicator-title">全局供需平衡率</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(supplyDemandIndicators.globalBalanceRate) }}</span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                  <div class="indicator-card3 card2">
+                    <div class="indicator-title">总缺口数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ supplyDemandIndicators.totalGapCount }}</span>
+                    </div>
+                    <div class="indicator-unit">个</div>
+                  </div>
+                  <div class="indicator-card3 card3">
+                    <div class="indicator-title">高峰缺口数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ supplyDemandIndicators.peakGapCount }}</span>
+                    </div>
+                    <div class="indicator-unit">个</div>
+                  </div>
+                  <div class="indicator-card3 card4">
+                    <div class="indicator-title">热门失衡区域数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ supplyDemandIndicators.hotUnbalanceRegionCount }}</span>
+                    </div>
+                    <div class="indicator-unit">个</div>
+                  </div>
+                </div>
+              </div>
+              <!-- 折线图视图 -->
+              <div v-if="activeSupplyDemandView === '折线图'" class="view-content">
+                <ChartLine1
+                  :data="supplyDemandTrendData"
+                  title="区域泊位数与在停车辆数趋势对比"
+                  :key="supplyDemandChartRefreshKey"
+                />
+              </div>
+              <!-- 热力图视图 -->
+              <div v-if="activeSupplyDemandView === '热力图'" class="view-content">
+                <div style="width: 100%; height: 100%; box-sizing: border-box;">
+                  <Heatmap1 :key="supplyDemandChartRefreshKey" />
+                </div>
+              </div>
+              <!-- 饼图视图 -->
+              <div v-if="activeSupplyDemandView === '饼图'" class="view-content">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                >
+                  <ChartPie1
+                    :data="supplyDemandBalanceRatioData"
+                    title="供需平衡状态占比"
+                    :key="supplyDemandChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <ChartPie2
+                    :data="supplyDemandRegionRatioData"
+                    title="区域供需贡献占比"
+                    :key="supplyDemandChartRefreshKey"
+                  />
+                </div>
+              </div>
+              <!-- 列表视图 -->
+              <div v-if="activeSupplyDemandView === '列表'" class="view-content">
+                <div class="table-box4">
+                  <ElTable
+                    class="table4"
+                    :data="supplyDemandList"
+                    border
+                    size="small"
+                    width="100%"
+                    height="100%"
+                    table-layout="fixed"
+                    highlight-current-row
+                    @row-click="(row) => openSupplyDemandDetailDialog(row)"
+                  >
+                    <ElTableColumn
+                      prop="period"
+                      label="统计周期"
+                      align="center"
+                      width="100"
+                    />
+                    <ElTableColumn
+                      prop="tbRegionName"
+                      label="区域名称"
+                      align="center"
+                      min-width="120"
+                    />
+                    <ElTableColumn
+                      prop="tbParkingCount"
+                      label="停车场总数"
+                      align="center"
+                      width="100"
+                    />
+                    <ElTableColumn
+                      prop="tbParkingSpaceTotalCount"
+                      label="泊位数"
+                      align="center"
+                      width="100"
+                    />
+                    <ElTableColumn
+                      prop="tbParkingRecordCurrentCount"
+                      label="在停车辆数"
+                      align="center"
+                      width="100"
+                    />
+                    <ElTableColumn
+                      prop="tbSupplyDemandGapCount"
+                      label="需求缺口数"
+                      align="center"
+                      width="100"
+                    >
+                      <template #default="scope">
+                        <span :style="{ color: scope.row.tbSupplyDemandGapCount >= 0 ? '#67c23a' : '#f56c6c' }">
+                          {{ scope.row.tbSupplyDemandGapCount }}
+                        </span>
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="tbSupplyDemandBalanceRate"
+                      label="供需平衡率(%)"
+                      align="center"
+                      width="120"
+                    >
+                      <template #default="scope">
+                        {{ formatDecimal(scope.row.tbSupplyDemandBalanceRate) }}
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      label="操作"
+                      align="center"
+                      width="120"
+                      fixed="right"
+                    >
+                      <template #default="scope">
+                        <ElButton
+                          type="primary"
+                          size="small"
+                          plain
+                          @click.stop="openSupplyDemandAnalysisDialog(scope.row)"
+                        >
+                          分析
+                        </ElButton>
+                      </template>
+                    </ElTableColumn>
+                  </ElTable>
+                </div>
+              </div>
             </el-tab-pane>
             <el-tab-pane label="运维收费合规" name="tab2">
               <div class="content-placeholder"><p>运维收费合规</p></div>
@@ -2116,6 +3251,389 @@ onUnmounted(() => {
         </template>
       </ElDialog>
 
+      <!-- 通行交易趋势详情弹窗 -->
+      <ElDialog
+        v-model="tradeTrendDetailDialogVisible"
+        width="50%"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="通行交易趋势详情"
+      >
+        <div class="header-actions" style="margin-bottom:10px;">
+          <div class="actions-right">
+            <div class="view-btn-group">
+              <ElButton
+                v-for="item in tradeTrendDetailViewBtnList"
+                :key="item"
+                :type="activeTradeTrendDetailView === item ? 'primary' : ''"
+                plain
+                @click="changeTradeTrendDetailView(item)"
+                class="view-btn"
+              >
+                {{ item }}
+              </ElButton>
+            </div>
+          </div>
+        </div>
+        <!-- 明细视图 -->
+        <div v-if="activeTradeTrendDetailView === '明细'" class="view-content" style="padding:0;">
+          <ElDescriptions bordered :column="2" class="desc-detail">
+            <ElDescriptionsItem label="统计周期" span="2">
+              {{ tradeTrendDetailSelectedRow.tbTradeTrendPeriod || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="日期/时段" span="2">
+              {{ tradeTrendDetailSelectedRow.tbTradeTrendTime || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="环比增长笔数(%)">
+              {{ formatDecimal(tradeTrendDetailSelectedRow.tbTradeTrendChainCountGrowth) }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="环比增长金额(%)">
+              {{ formatDecimal(tradeTrendDetailSelectedRow.tbTradeTrendChainAmountGrowth) }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="高峰交易时段">
+              {{ tradeTrendDetailSelectedRow.tbTradeTrendPeakPeriod || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="区域贡献占比">
+              {{ tradeTrendDetailSelectedRow.tbRegionTradeContributionRate || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="交易笔数" span="2">
+              {{ tradeTrendDetailSelectedRow.tradeDetail.tbTradeTrendCount || 0 }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="交易金额" span="2">
+              {{ formatNumber(tradeTrendDetailSelectedRow.tradeDetail.tbTradeTrendAmount) }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="支付完成率(%)" span="2">
+              {{ formatDecimal(tradeTrendDetailSelectedRow.tradeDetail.tbTradeTrendPayRate) }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="平均停车时长" span="2">
+              {{ formatDecimal(tradeTrendDetailSelectedRow.tradeDetail.tbTradeTrendAverageDuration) }}
+            </ElDescriptionsItem>
+          </ElDescriptions>
+        </div>
+        <!-- 分布视图 -->
+        <div v-if="activeTradeTrendDetailView === '分布'" class="view-content" style="padding:0; display: flex; gap: 0.6vw;">
+          <div style="flex: 1;">
+            <ChartPie5
+              :data="tradeTrendDetailSelectedRow.payMethodDistribution"
+              title="支付方式分布"
+              :key="tradeTrendChartRefreshKey"
+            />
+          </div>
+          <div style="flex: 1;">
+            <ChartPie5
+              :data="tradeTrendDetailSelectedRow.regionDistribution"
+              title="区域分布"
+              :key="tradeTrendChartRefreshKey"
+            />
+          </div>
+        </div>
+        <template #footer>
+          <ElButton plain @click="closeTradeTrendDetailDialog">关闭</ElButton>
+        </template>
+      </ElDialog>
+      <!-- 时段级趋势数据弹窗 -->
+      <ElDialog
+        v-model="tradeTrendTimeTrendDialogVisible"
+        width="40%"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        class="park-dialog"
+        center
+        destroy-on-close
+      >
+        <template #title>
+          <span>{{ tradeTrendTimeTrendSelectedRow.tbTradeTrendTime }} - 时段交易笔数趋势</span>
+        </template>
+        <div class="view-content" style="padding:0;height:400px;">
+          <ChartLine3
+            :data="tradeTrendTimeTrendSelectedRow"
+            title="时段交易笔数趋势"
+            :key="tradeTrendChartRefreshKey"
+          />
+        </div>
+        <template #footer>
+          <ElButton plain @click="closeTradeTrendTimeTrendDialog">关闭</ElButton>
+        </template>
+      </ElDialog>
+
+      <!-- 供需运营态势详情弹窗 -->
+      <ElDialog
+        v-model="supplyDemandDetailDialogVisible"
+        width="50%"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="供需运营态势详情"
+      >
+        <div class="header-actions" style="margin-bottom:10px;">
+          <div class="actions-right">
+            <div class="view-btn-group">
+              <ElButton
+                v-for="item in supplyDemandDetailViewBtnList"
+                :key="item"
+                :type="activeSupplyDemandDetailView === item ? 'primary' : ''"
+                plain
+                @click="changeSupplyDemandDetailView(item)"
+                class="view-btn"
+              >
+                {{ item }}
+              </ElButton>
+            </div>
+          </div>
+        </div>
+        <!-- 区域供需明细视图 -->
+        <div v-if="activeSupplyDemandDetailView === '区域供需明细'" class="view-content" style="padding:0;">
+          <ElDescriptions bordered :column="2" class="desc-detail">
+            <ElDescriptionsItem label="区域ID" span="2">
+              {{ supplyDemandDetailSelectedRow.tbRegionId || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="区域名称" span="2">
+              {{ supplyDemandDetailSelectedRow.tbRegionName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="高峰供需缺口">
+              {{ supplyDemandDetailSelectedRow.tbSupplyDemandPeakGap }} 个
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="门供需失衡区域">
+              {{ supplyDemandDetailSelectedRow.tbRegionHotUnbalanceName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="环比平衡率变化(%)">
+              {{ formatDecimal(supplyDemandDetailSelectedRow.tbSupplyDemandChainBalanceChange) }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="建议优化方向" span="2">
+              {{ supplyDemandDetailSelectedRow.tbSupplyDemandOptimizeSuggest || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="停车场总数">
+              {{ supplyDemandDetailSelectedRow.regionDetails.tbParkingCount || 0 }} 个
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="总泊位数">
+              {{ supplyDemandDetailSelectedRow.regionDetails.tbParkingSpaceTotalCount || 0 }} 个
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="在停车辆数">
+              {{ supplyDemandDetailSelectedRow.regionDetails.tbParkingRecordCurrentCount || 0 }} 辆
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="需求缺口数">
+        <span :style="{ color: supplyDemandDetailSelectedRow.regionDetails.tbSupplyDemandGapCount >= 0 ? '#67c23a' : '#f56c6c' }">
+          {{ supplyDemandDetailSelectedRow.regionDetails.tbSupplyDemandGapCount || 0 }} 个
+        </span>
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="供需平衡率(%)">
+              {{ formatDecimal(supplyDemandDetailSelectedRow.regionDetails.tbSupplyDemandBalanceRate) }}
+            </ElDescriptionsItem>
+          </ElDescriptions>
+        </div>
+        <!-- 高峰时段分布视图 -->
+        <div v-if="activeSupplyDemandDetailView === '高峰时段分布'" class="view-content" style="padding:0;">
+          <ChartLine3
+            :data="supplyDemandDetailSelectedRow.peakTimeDistribution"
+            title="高峰时段供需缺口分布"
+            :key="supplyDemandChartRefreshKey"
+          />
+        </div>
+        <!-- 停车场供需情况视图 -->
+        <div v-if="activeSupplyDemandDetailView === '停车场供需情况'" class="view-content" style="padding:0;">
+          <ElTable
+            :data="supplyDemandDetailSelectedRow.parkingSupplyDemand"
+            border
+            size="small"
+            width="100%"
+            height="100%"
+            table-layout="fixed"
+          >
+            <ElTableColumn
+              prop="name"
+              label="停车场名称"
+              align="center"
+              min-width="120"
+            />
+            <ElTableColumn
+              prop="total"
+              label="总泊位数"
+              align="center"
+            />
+            <ElTableColumn
+              prop="current"
+              label="在停车辆数"
+              align="center"
+            />
+            <ElTableColumn
+              prop="gap"
+              label="缺口数"
+              align="center"
+            >
+              <template #default="scope">
+          <span :style="{ color: scope.row.gap >= 0 ? '#67c23a' : '#f56c6c' }">
+            {{ scope.row.gap }}
+          </span>
+              </template>
+            </ElTableColumn>
+            <ElTableColumn
+              prop="rate"
+              label="使用率(%)"
+              align="center"
+            >
+              <template #default="scope">
+                {{ formatDecimal(scope.row.rate) }}
+              </template>
+            </ElTableColumn>
+          </ElTable>
+        </div>
+        <template #footer>
+          <ElButton plain @click="closeSupplyDemandDetailDialog">关闭</ElButton>
+        </template>
+      </ElDialog>
+      <!-- 供需分析报告弹窗 -->
+      <ElDialog
+        v-model="supplyDemandAnalysisDialogVisible"
+        width="50%"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="区域供需优化分析报告"
+      >
+        <div class="view-content" style="padding:0;">
+          <ElDescriptions bordered :column="1" class="desc-detail">
+            <ElDescriptionsItem label="区域名称">
+              {{ supplyDemandAnalysisSelectedRow.tbRegionName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="分析时间">
+              {{ formatTimeStamp(supplyDemandAnalysisSelectedRow.analysisTime) }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="分析内容" span="1">
+              <div style="white-space: pre-wrap; max-height: 200px; overflow-y: auto;">
+                {{ supplyDemandAnalysisSelectedRow.analysisContent || '-' }}
+              </div>
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="优化建议" span="1">
+              <ul style="margin: 0; padding-left: 20px;">
+                <li v-for="(suggestion, index) in supplyDemandAnalysisSelectedRow.optimizationSuggestions" :key="index">
+                  {{ suggestion }}
+                </li>
+              </ul>
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="预期效果">
+              {{ supplyDemandAnalysisSelectedRow.predictedEffect || '-' }}
+            </ElDescriptionsItem>
+          </ElDescriptions>
+        </div>
+
+        <template #footer>
+          <ElButton plain @click="closeSupplyDemandAnalysisDialog">关闭</ElButton>
+          <ElButton type="primary" @click="exportAnalysisReport">导出报告</ElButton>
+        </template>
+      </ElDialog>
+
+      <!-- 区域停车资源分布详情弹窗 -->
+      <ElDialog
+        v-model="parkAreaDistributionDetailDialogVisible"
+        width="60%"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="区域停车资源详情"
+      >
+        <div class="view-content" style="display: flex; padding:0;">
+          <div style="display: flex; flex-direction: column; gap: 20px; flex: 1;">
+            <div style="flex: 1;">
+              <ChartPie5
+                :data="parkAreaDistributionDetailSelectedRow.spaceDistributionDetail"
+                title="泊位分布"
+                :key="parkAreaDistributionChartRefreshKey"
+              />
+            </div>
+            <div style="flex: 1;">
+              <ElDescriptions bordered :column="2" class="desc-detail">
+                <ElDescriptionsItem label="区域ID" span="2">
+                  {{ parkAreaDistributionDetailSelectedRow.tbRegionRegionId || '-' }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="区域名称">
+                  {{ parkAreaDistributionDetailSelectedRow.tbRegionName || '-' }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="饱和率(%)">
+                  {{ formatDecimal(parkAreaDistributionDetailSelectedRow.tbRegionSaturationRate) }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="新增停车场数">
+                  {{ parkAreaDistributionDetailSelectedRow.tbParkingNewCount || 0 }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="热门停车场">
+              <span @click="viewHotParking" style="color:#409eff;cursor:pointer;">
+                {{ parkAreaDistributionDetailSelectedRow.tbParkingHotName || '-' }}
+                <i class="el-icon-arrow-right" style="font-size:12px;"></i>
+              </span>
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="平均使用率(%)">
+                  {{ formatDecimal(parkAreaDistributionDetailSelectedRow.operationData.avgUtilizationRate) }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="平均周转率">
+                  {{ formatDecimal(parkAreaDistributionDetailSelectedRow.operationData.avgTurnoverRate) }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="高峰时段使用率(%)">
+                  {{ formatDecimal(parkAreaDistributionDetailSelectedRow.operationData.peakUtilizationRate) }}
+                </ElDescriptionsItem>
+              </ElDescriptions>
+            </div>
+          </div>
+          <div style="flex: 1;">
+            <ElTable
+              :data="parkAreaDistributionDetailSelectedRow.regionParkingList"
+              border
+              size="small"
+              width="100%"
+              table-layout="fixed"
+              style="margin-bottom: 20px;"
+            >
+              <ElTableColumn
+                prop="parkingName"
+                label="停车场名称"
+                align="center"
+                min-width="150"
+              />
+              <ElTableColumn
+                prop="parkingType"
+                label="停车场类型"
+                align="center"
+                width="120"
+              />
+              <ElTableColumn
+                prop="totalSpaces"
+                label="总泊位数"
+                align="center"
+                width="100"
+              />
+              <ElTableColumn
+                prop="availableSpaces"
+                label="可用泊位数"
+                align="center"
+                width="100"
+              />
+              <ElTableColumn
+                prop="operationStatus"
+                label="运营状态"
+                align="center"
+                width="100"
+              >
+                <template #default="scope">
+                  <ElTag :type="scope.row.operationStatus === '运营中' ? 'success' : 'warning'">
+                    {{ scope.row.operationStatus || '-' }}
+                  </ElTag>
+                </template>
+              </ElTableColumn>
+            </ElTable>
+          </div>
+        </div>
+        <template #footer>
+          <ElButton plain @click="closeParkAreaDistributionDetailDialog">关闭</ElButton>
+        </template>
+      </ElDialog>
+
       <ElDialog
         v-model="tipDialogVisible"
         width="460px"
@@ -2150,6 +3668,8 @@ onUnmounted(() => {
 @import '../../../templatesstyle/table4';
 @import '../../../templatesstyle/indicator-cards3';
 @import '../../../templatesstyle/indicator-cards4';
+@import '../../../templatesstyle/stat-cards1';
+@import '../../../templatesstyle/chart-cards1';
 
 // 最外层容器
 .page-container {

@@ -22,7 +22,7 @@ import {
   fetchParkingLotGeometries,
   fetchParkingStatisticsDistribution,
   fetchRoadsideBerthCoreElements,
-} from '#/api/genchuan/industry/parkingmgmt/overview/GlobalSituationOverview.ts';
+} from '#/api/genchuan/industry/parkingmgmt/overview/GlobalOverviewMap.ts';
 import ChartPie from '#/views/genchuan/industry/templatesstatchart/ChartPie.vue';
 import HorizontalBar1 from '#/views/genchuan/industry/templatesstatchart/HorizontalBar1.vue';
 import VerticalBar1 from '#/views/genchuan/industry/templatesstatchart/VerticalBar1.vue';

@@ -239,6 +239,75 @@ export const fetchParkingLotGeometries = (params = {}) => {
 };
 
 /**
+ * 获取停车热力图数据
+ */
+export const fetchHeatmapData = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/map/heatdata/get`,
+        params,
+      })
+      .then((response) => {
+        if (response && Array.isArray(response)) {
+          return response;
+        }
+        throw new Error('真实接口返回无热力图数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn('热力图接口调用失败，使用模拟数据兜底', error.message);
+
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const mockData = [
+              [24.510, 117.640, 280],
+              [24.513, 117.643, 50],
+              [24.514, 117.644, 80],
+              [24.515, 117.645, 20],
+              [24.520, 117.650, 180],
+              [24.525, 117.655, 240],
+              [24.518, 117.648, 150],
+              [24.512, 117.642, 190],
+              [24.522, 117.652, 210],
+              [24.480, 117.690, 260],
+              [24.485, 117.695, 10],
+              [24.490, 117.700, 170],
+              [24.495, 117.705, 220],
+              [24.488, 117.698, 140],
+              [24.550, 117.750, 290],
+              [24.555, 117.755, 40],
+              [24.560, 117.760, 200],
+              [24.565, 117.765, 250],
+              [24.558, 117.758, 160],
+              [24.080, 117.580, 270],
+              [24.085, 117.585, 30],
+              [24.090, 117.590, 190],
+              [24.095, 117.595, 230],
+              [24.650, 117.720, 300],
+              [24.655, 117.725, 350],
+              [24.660, 117.730, 210],
+              [24.665, 117.735, 260],
+              [24.658, 117.728, 170],
+              [24.420, 117.620, 110],
+              [24.580, 117.780, 130],
+              [24.350, 117.550, 90],
+              [24.700, 117.680, 120],
+            ];
+            console.log('【热力图排查】🔌 模拟数据返回：', mockData);
+            resolve(mockData);
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 热力图数据函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve([]);
+  }
+};
+
+
+/**
  * 获取核心指标看板数据
  */
 export const fetchParkingCoreIndicators = (params = {}) => {
