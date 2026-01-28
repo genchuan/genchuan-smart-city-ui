@@ -12,7 +12,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 // 引入封装后的详情抽屉组件
-import roadDetailDrawer from '#/views/genchuan/industry/page/park/road/list/detail.vue';
+import roadDetailDrawer from '#/views/genchuan/industry/page/park/road/vehiclentry/detail.vue';
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
@@ -344,13 +344,13 @@ const roadDetailDrawerRef = ref(null);
           />
         </div>
       </template>
-      <template #roadName="{ row }">
+      <template #targetBerthNo="{ row }">
         <el-text
           class="common-align"
           type="primary"
           @click="handleOpenDetail(row)"
         >
-          {{ row.roadName }}
+          {{ row.targetBerthNo }}
         </el-text>
       </template>
 

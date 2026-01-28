@@ -108,6 +108,7 @@ export function useGridColumns() {
             title: '道路名称',
             minWidth: 120,
             sortable: true,
+            slots: { default: 'roadName' },
         },
         {
             field: 'areaName',

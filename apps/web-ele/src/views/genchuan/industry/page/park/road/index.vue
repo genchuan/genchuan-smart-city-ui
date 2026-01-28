@@ -6,6 +6,7 @@ import ListComponent from './list/index.vue';
 import roadchart from './roadchart.vue';
 import Staggered from './staggered/index.vue';
 import Table from './table/index.vue';
+import Vehiclentry from './vehiclentry/index.vue';
 
 import '#/components/page/index.scss';
 
@@ -39,6 +40,12 @@ const tabArray = ref([
   {
     label: '道路列表管理',
     components: ListComponent,
+    showSecondary: true,
+    secondShow: false,
+  },
+  {
+    label: '录入车辆',
+    components: Vehiclentry,
     showSecondary: true,
     secondShow: false,
   },
