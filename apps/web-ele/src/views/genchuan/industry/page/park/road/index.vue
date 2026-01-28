@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 
 import Billing from './billing/index.vue';
+import End from './End/index.vue';
 import ListComponent from './list/index.vue';
 import Query from './query/index.vue';
 import roadchart from './roadchart.vue';
@@ -53,6 +54,12 @@ const tabArray = ref([
   {
     label: '泊位在停车辆类型查询',
     components: Query,
+    showSecondary: true,
+    secondShow: false,
+  },
+  {
+    label: '结束停车',
+    components: End,
     showSecondary: true,
     secondShow: false,
   },
