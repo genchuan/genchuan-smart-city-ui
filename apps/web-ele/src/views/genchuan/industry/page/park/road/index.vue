@@ -1,8 +1,9 @@
 <script setup>
 import { ref } from 'vue';
 
+import Arrears from './arrears/index.vue';
 import Billing from './billing/index.vue';
-import End from './End/index.vue';
+import End from './end/index.vue';
 import ListComponent from './list/index.vue';
 import Query from './query/index.vue';
 import roadchart from './roadchart.vue';
@@ -60,6 +61,12 @@ const tabArray = ref([
   {
     label: '结束停车',
     components: End,
+    showSecondary: true,
+    secondShow: false,
+  },
+  {
+    label: '欠费追缴',
+    components: Arrears,
     showSecondary: true,
     secondShow: false,
   },
