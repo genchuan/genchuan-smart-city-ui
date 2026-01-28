@@ -24,8 +24,7 @@ const drawerTitle = computed(() => {
 // 初始化抽屉实例（优化层级配置，避免被覆盖）
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
-  appendToBody: true, // 挂载到body避免层级问题
-  appendToMain: false,
+  appendToMain: true,
   footer: false,
   width: 800, // 加宽适配更多字段
   zIndex: 9999, // 提升层级
