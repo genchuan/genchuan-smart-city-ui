@@ -4,6 +4,7 @@ import { ref } from 'vue';
 
 import TaskChart from './taskchart.vue';
 import TaskTable from './table/index.vue';
+import Approve from './approve/index.vue';
 
 import '#/components/page/index.scss';
 
@@ -27,14 +28,14 @@ const tabArray = ref([
     arrowShow: true,
     arrowState: false,
   },
-  // {
-  //   label: '审批',
-  //   components: TaskTable,
-  //   showSecondary: true,
-  //   secondShow: false,
-  //   arrowShow: true,
-  //   arrowState: false,
-  // },
+  {
+    label: '我的审批',
+    components: Approve,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false,
+  },
 ]);
 const activeName = ref('我的任务');
 const secondShow = ref(false);
