@@ -344,13 +344,13 @@ const roadDetailDrawerRef = ref(null);
           />
         </div>
       </template>
-      <template #targetBerthNo="{ row }">
+      <template #licensePlate="{ row }">
         <el-text
           class="common-align"
           type="primary"
           @click="handleOpenDetail(row)"
         >
-          {{ row.targetBerthNo }}
+          {{ row.licensePlate }}
         </el-text>
       </template>
 
