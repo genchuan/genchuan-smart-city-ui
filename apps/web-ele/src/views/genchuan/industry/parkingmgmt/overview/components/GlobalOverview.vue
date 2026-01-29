@@ -24,10 +24,14 @@ import GlobalNormalMap from '#/views/genchuan/industry/parkingmgmt/overview/comp
 import ChartLine1 from "#/views/genchuan/industry/templatesstatchart/ChartLine1.vue";
 import ChartLine2 from "#/views/genchuan/industry/templatesstatchart/ChartLine2.vue";
 import ChartLine3 from "#/views/genchuan/industry/templatesstatchart/ChartLine3-desc.vue";
+import ChartLine4 from "#/views/genchuan/industry/templatesstatchart/ChartLine4.vue";
+import ChartLine5 from "#/views/genchuan/industry/templatesstatchart/ChartLine5.vue";
+import ChartLine6 from "#/views/genchuan/industry/templatesstatchart/ChartLine6.vue";
 import ChartPie1 from '#/views/genchuan/industry/templatesstatchart/ChartPie1.vue';
 import ChartPie2 from '#/views/genchuan/industry/templatesstatchart/ChartPie2.vue';
 import ChartPie3 from '#/views/genchuan/industry/templatesstatchart/ChartPie3.vue';
 import ChartPie5 from '#/views/genchuan/industry/templatesstatchart/ChartPie5-desc.vue';
+import ChartPie6 from '#/views/genchuan/industry/templatesstatchart/ChartPie6.vue';
 import VerticalBar1 from '#/views/genchuan/industry/templatesstatchart/VerticalBar1.vue';
 import VerticalBar2 from '#/views/genchuan/industry/templatesstatchart/VerticalBar2.vue';
 import VerticalBar3 from '#/views/genchuan/industry/templatesstatchart/VerticalBar3.vue';
@@ -65,8 +69,6 @@ import {
   fetchParkingVehicleTrend,
   trackParkingVehicle,
   urgeVehicleLeave,
-} from '#/api/genchuan/industry/parkingmgmt/overview/GlobalOverview.ts';
-import {
   fetchOperationIndicators,
   fetchOperationTypeRatio,
   fetchOperationRegionRatio,
@@ -95,6 +97,43 @@ import {
   fetchParkingSpaceStatusRatio,
   fetchParkingSpaceDetail,
   releaseParkingSpace,
+  fetchDeviceDistributionList,
+  fetchDeviceDistributionTypeCount,
+  fetchDeviceDistributionParkingCount,
+  fetchDeviceDistributionDetail,
+  submitDeviceMaintenance,
+  fetchTerminalDeviceList,
+  fetchTerminalDeviceIndicators,
+  fetchTerminalDeviceTypeRatio,
+  fetchTerminalDeviceStatusRatio,
+  fetchTerminalDeviceOnlineRateTrend7d,
+  fetchTerminalDeviceFaultTrend,
+  fetchTerminalDeviceDetail,
+  submitTerminalDeviceMaintenance,
+  fetchMaintainTrendList,
+  fetchMaintainTrendIndicators,
+  fetchMaintainTrendNewTrend,
+  fetchMaintainTrendCompletedTrend,
+  fetchMaintainTrendFaultTrend,
+  fetchMaintainTrendDeviceTypeCount,
+  fetchMaintainTrendFaultTypeCount,
+  fetchMaintainTrendFaultTypeRatio,
+  fetchMaintainTrendStatusRatio,
+  fetchMaintainTrendDetail,
+  fetchFaultTraceDetail,
+  fetchWorkOrderDetail,
+  fetchComplianceList,
+  fetchComplianceIndicators,
+  fetchComplianceRateTrend,
+  fetchComplianceNonCompliantTrend,
+  fetchComplianceRegionRateCompare,
+  fetchComplianceTypeRateCompare,
+  fetchComplianceTypeRatio,
+  fetchComplianceNonCompliantItemRatio,
+  fetchComplianceRegionDistributionRatio,
+  fetchComplianceDetail,
+  fetchNonCompliantTraceDetail,
+  handleNonCompliantItem,
 } from '#/api/genchuan/industry/parkingmgmt/overview/GlobalOverview.ts';
 
 const pageContainerRef = ref(null);
@@ -193,22 +232,32 @@ const handleFullscreenChange = () => {
     setTimeout(() => {
       deviceChartRefreshKey.value++;
       tradeChartRefreshKey.value++;
+      operationChartRefreshKey.value++;
       parkResourceDistributionChartRefreshKey.value++;
+      deviceDistributionChartRefreshKey.value++;
       parkingSpaceChartRefreshKey.value++;
       tradeTrendChartRefreshKey.value++;
       supplyDemandChartRefreshKey.value++;
       parkAreaDistributionChartRefreshKey.value++;
+      terminalDeviceChartRefreshKey.value++;
+      maintainTrendChartRefreshKey.value++;
+      complianceChartRefreshKey.value++;
     }, 300);
   } else if (currentFullscreenPanel.value) {
     currentFullscreenPanel.value.style = '';
     nextTick(() => {
       deviceChartRefreshKey.value++;
       tradeChartRefreshKey.value++;
+      operationChartRefreshKey.value++;
       parkResourceDistributionChartRefreshKey.value++;
+      deviceDistributionChartRefreshKey.value++;
       parkingSpaceChartRefreshKey.value++;
       tradeTrendChartRefreshKey.value++;
       supplyDemandChartRefreshKey.value++;
       parkAreaDistributionChartRefreshKey.value++;
+      terminalDeviceChartRefreshKey.value++;
+      maintainTrendChartRefreshKey.value++;
+      complianceChartRefreshKey.value++;
     });
     currentFullscreenPanel.value = null;
   }
@@ -219,11 +268,16 @@ const handleTabChange = () => {
     setTimeout(() => {
       deviceChartRefreshKey.value++;
       tradeChartRefreshKey.value++;
+      operationChartRefreshKey.value++;
       parkResourceDistributionChartRefreshKey.value++;
+      deviceDistributionChartRefreshKey.value++;
       parkingSpaceChartRefreshKey.value++;
       tradeTrendChartRefreshKey.value++;
       supplyDemandChartRefreshKey.value++;
       parkAreaDistributionChartRefreshKey.value++;
+      terminalDeviceChartRefreshKey.value++;
+      maintainTrendChartRefreshKey.value++;
+      complianceChartRefreshKey.value++;
     }, 100);
   });
 };
@@ -759,6 +813,269 @@ interface ParkingVehicleIndicators {
   averageParkingDuration: number; // 平均停车时长（分钟）
 }
 
+// 终端设备分布明细TS类型定义
+interface DeviceDistributionRow {
+  tbDeviceName: string;
+  tbDeviceDeviceNo: string;
+  sysDeviceTypeName: string;
+  tbParkingName: string;
+  tbDeviceInstallPosition: string;
+  sysDeviceStatusName: string;
+  tbDeviceInstallTime: number;
+  tbDeviceDeviceId: string;
+}
+interface DeviceDistributionDetail {
+  tbDeviceDeviceId: string;
+  tbDeviceName: string;
+  tbDeviceDeviceNo: string;
+  sysDeviceTypeName: string;
+  tbParkingName: string;
+  tbDeviceInstallPosition: string;
+  sysDeviceStatusName: string;
+  tbDeviceInstallTime: number;
+  // 弹窗展示字段
+  tbDeviceOnlineDuration: number; // 在线时长（小时）
+  tbDeviceFaultTime: number; // 最近故障时间
+  sysUserUserName: string; // 负责人
+  // 运行数据
+  operationData: {
+    tbDeviceUptime: number; // 设备运行率
+    tbDeviceResponseTime: number; // 平均响应时间
+    tbDeviceLastMaintainTime: number; // 最近维护时间
+    tbDeviceNextMaintainTime: number; // 下次维护时间
+  };
+  // 运维记录
+  maintenanceRecords: {
+    time: number;
+    type: string;
+    content: string;
+    operator: string;
+    status: string;
+  }[];
+}
+interface MaintenanceForm {
+  maintenanceType: '巡检' | '维修';
+  maintenanceContent: string;
+}
+
+// 终端设备TS类型定义
+interface TerminalDeviceRow {
+  tbDeviceName: string; // 设备名称
+  tbDeviceDeviceNo: string; // 设备编号
+  sysDeviceTypeName: string; // 设备类型
+  tbParkingName: string; // 所属停车场
+  sysDeviceStatusName: string; // 运行状态
+  tbDeviceOnlineDuration: number; // 在线时长（分钟）
+  tbDeviceLastCommTime: number; // 最后通信时间戳
+  tbDeviceDeviceId: string; // 设备ID
+}
+interface TerminalDeviceIndicators {
+  deviceTotalCount: number; // 设备总数
+  deviceOnlineCount: number; // 在线数
+  deviceNormalCount: number; // 正常运行数
+  deviceFaultCount: number; // 故障数
+  deviceInspectCount: number; // 待巡检数
+}
+interface TerminalDeviceDetail {
+  tbDeviceDeviceId: string;
+  tbDeviceName: string;
+  tbDeviceDeviceNo: string;
+  tbParkingName: string;
+  sysDeviceTypeName: string;
+  sysDeviceStatusName: string;
+  // 弹窗展示字段
+  tbDeviceFaultCount: number; // 故障次数
+  tbDeviceMaintainCount: number; // 累计运维次数
+  tbDeviceNextInspectTime: number; // 下次巡检时间戳
+  // 设备参数
+  deviceParams: {
+    paramName: string;
+    paramValue: string;
+  }[];
+  // 运行日志
+  runLogs: {
+    logTime: number | string;
+    logContent: string;
+    logLevel: string;
+  }[];
+  // 运维记录
+  maintainRecords: {
+    maintainTime: number | string;
+    maintainType: string;
+    maintainContent: string;
+  }[];
+  // 故障记录
+  faultRecords: {
+    faultTime: number | string;
+    faultContent: string;
+    handleStatus: string;
+  }[];
+}
+interface TerminalDeviceMaintenanceForm {
+  maintenanceType: string; // 运维类型：巡检/维修/校准
+  maintenanceContent?: string; // 运维内容（可选）
+}
+
+// 设备运维趋势TS类型定义
+interface MaintainTrendRow {
+  tbMaintainTrendPeriod: string;
+  tbMaintainTrendDate: string;
+  tbMaintainTrendNewCount: number;
+  tbMaintainTrendCompletedCount: number;
+  tbMaintainTrendAverageDuration: number;
+  tbMaintainTrendFaultDeviceCount: number;
+  tbMaintainTrendId: string;
+}
+interface MaintainTrendIndicators {
+  totalNewCount: number; // 新增工单数
+  totalCompletedCount: number; // 完成数
+  completionRate: number; // 完成率
+  averageDuration: number; // 平均处置时长
+  unfinishedCount: number; // 未完成数
+}
+interface MaintainTrendDetail {
+  tbMaintainTrendId: string;
+  tbMaintainTrendPeriod: string;
+  tbMaintainTrendDate: string;
+  // 弹窗展示字段
+  tbMaintainTrendCompletionRate: number; // 工单完成率
+  tbMaintainTrendChainGrowth: number; // 环比工单增长
+  sysFaultTypeName: string; // 热门故障类型
+  tbMaintainTrendUnfinishedCount: number; // 未完成工单数
+  // 工单明细
+  workOrderDetails: {
+    orderNo: string;
+    deviceType: string;
+    faultType: string;
+    status: string;
+    duration: number;
+  }[];
+  // 故障分布
+  faultDistribution: ChartRatioData;
+  // 处置情况
+  disposalSituation: {
+    completedRate: number;
+    avgDuration: number;
+    urgentCount: number;
+    normalCount: number;
+  };
+  // 故障设备追溯列表
+  faultDeviceList: {
+    deviceId: string;
+    deviceName: string;
+    deviceType: string;
+    faultType: string;
+    faultTime: number;
+  }[];
+}
+interface FaultTraceRow {
+  deviceId: string;
+  deviceName: string;
+  deviceType: string;
+  faultType: string;
+  faultTime: number;
+  workOrderNo: string;
+  workOrderStatus: string;
+  handler: string;
+  handleTime: number | null;
+}
+interface WorkOrderDetail {
+  orderNo: string;
+  orderStatus: string;
+  deviceName: string;
+  deviceType: string;
+  faultType: string;
+  reportTime: number;
+  reportPerson: string;
+  handler: string;
+  handleTime: number;
+  handleResult: string;
+  handleDuration: number;
+  faultDescription: string;
+  handleSteps: string;
+  partsUsed: string;
+  cost: number;
+}
+
+// 运维收费合规TS类型定义
+interface ComplianceRow {
+  tbCompliancePeriod: string;
+  sysComplianceTypeName: string;
+  tbComplianceTotalCheck: number;
+  tbComplianceCompliantCount: number;
+  tbComplianceNonCompliantCount: number;
+  tbComplianceCompliantRate: number;
+  sysNonCompliantItemName: string;
+  tbComplianceId: string;
+}
+interface ComplianceIndicators {
+  totalCompliantRate: number; // 总合规率
+  operationCompliantRate: number; // 运维合规率
+  chargeCompliantRate: number; // 收费合规率
+  nonCompliantCount: number; // 不合规数
+  handledRate: number; // 处理完成率
+}
+interface ComplianceDetail {
+  tbComplianceId: string;
+  tbCompliancePeriod: string;
+  sysComplianceTypeName: string;
+  // 弹窗展示字段
+  tbComplianceChainCompliantChange: number; // 环比合规率变化
+  tbRegionKeyMonitorName: string; // 重点监控区域
+  tbComplianceHandledCount: number; // 不合规处理完成数
+  tbComplianceHandledRate: number; // 处理完成率
+  // 合规检查明细
+  checkDetails: {
+    checkNo: string;
+    checkItem: string;
+    checkResult: string;
+    checkTime: number;
+  }[];
+  // 不合规项详情
+  nonCompliantDetails: {
+    item: string;
+    description: string;
+    severity: string;
+    responsible: string;
+    deadline: number;
+  }[];
+  // 处理记录
+  handleRecords: {
+    recordNo: string;
+    handleItem: string;
+    handlePerson: string;
+    handleTime: number;
+    handleResult: string;
+    remark: string;
+  }[];
+  // 不合规追溯列表
+  nonCompliantTraceList: {
+    recordId: string;
+    nonCompliantItem: string;
+    relatedParking: string;
+    checkTime: number;
+    status: string;
+    workOrderNo: string | null;
+  }[];
+}
+interface NonCompliantTraceRow {
+  recordId: string;
+  nonCompliantItem: string;
+  relatedParking: string;
+  checkTime: number;
+  checkPerson: string;
+  description: string;
+  severity: string;
+  status: string;
+  workOrderNo: string | null;
+  handlePerson: string | null;
+  handleTime: number | null;
+  handleResult: string | null;
+}
+interface HandleForm {
+  handleSolution: string;
+}
+
 
 // 资源设备响应式数据
 const parkDeviceIndicators = ref<ParkDeviceIndicators>({
@@ -1195,6 +1512,276 @@ const urgeFormRules = {
   urgeMethod: [{ required: true, message: '请选择催离方式', trigger: 'change' }],
 };
 const urgeFormRef = ref<FormInstance>();
+
+// 终端设备分布明细响应式数据
+const deviceDistributionList = ref<DeviceDistributionRow[]>([]);
+const deviceDistributionTypeCountData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '设备数量', data: [] }],
+});
+const deviceDistributionParkingCountData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '设备数量', data: [] }],
+});
+// 终端设备分布明细视图切换相关
+const deviceDistributionChartRefreshKey = ref(0);
+const activeDeviceDistributionView = ref('列表'); // 默认显示列表
+const deviceDistributionViewBtnList = ref(['卡片', '柱状图', '饼图', '列表']);
+// 终端设备分布明细弹窗相关
+const deviceDistributionDetailDialogVisible = ref(false);
+const deviceMaintenanceDialogVisible = ref(false);
+const activeDeviceDistributionDetailView = ref('基本信息');
+const deviceDistributionDetailViewBtnList = ref(['基本信息', '运行数据', '运维记录']);
+const deviceDistributionDetailSelectedRow = ref<DeviceDistributionDetail>({
+  tbDeviceDeviceId: '',
+  tbDeviceName: '',
+  tbDeviceDeviceNo: '',
+  sysDeviceTypeName: '',
+  tbParkingName: '',
+  tbDeviceInstallPosition: '',
+  sysDeviceStatusName: '',
+  tbDeviceInstallTime: 0,
+  tbDeviceOnlineDuration: 0,
+  tbDeviceFaultTime: 0,
+  sysUserUserName: '',
+  operationData: {
+    tbDeviceUptime: 0,
+    tbDeviceResponseTime: 0,
+    tbDeviceLastMaintainTime: 0,
+    tbDeviceNextMaintainTime: 0,
+  },
+  maintenanceRecords: []
+});
+// 运维表单
+const maintenanceForm = ref<MaintenanceForm>({
+  maintenanceType: '巡检',
+  maintenanceContent: '',
+});
+const maintenanceFormRules = {
+  maintenanceType: [{ required: true, message: '请选择运维类型', trigger: 'change' }],
+};
+const maintenanceFormRef = ref<FormInstance>();
+const maintainingDeviceId = ref(''); // 当前正在运维的设备ID
+
+// 终端设备响应式数据
+const terminalDeviceList = ref<TerminalDeviceRow[]>([]);
+const terminalDeviceIndicators = ref<TerminalDeviceIndicators>({
+  deviceTotalCount: 0,
+  deviceOnlineCount: 0,
+  deviceNormalCount: 0,
+  deviceFaultCount: 0,
+  deviceInspectCount: 0,
+});
+const terminalDeviceTypeRatioData = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '设备类型占比(%)', data: [] }],
+});
+const terminalDeviceStatusRatioData = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '运行状态占比(%)', data: [] }],
+});
+const terminalDeviceOnlineRateTrend7d = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '设备在线率(%)', data: [] }],
+});
+const terminalDeviceFaultTrend = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '故障发生次数', data: [] }],
+});
+// 终端设备视图切换相关
+const terminalDeviceChartRefreshKey = ref(0);
+const activeTerminalDeviceView = ref('卡片');
+const terminalDeviceViewBtnList = ref(['卡片', '折线图', '饼图', '列表']);
+// 终端设备弹窗相关
+const terminalDeviceDetailDialogVisible = ref(false);
+const terminalDeviceMaintenanceDialogVisible = ref(false);
+const activeTerminalDeviceDetailView = ref('设备参数');
+const terminalDeviceDetailViewBtnList = ref(['设备参数', '运行日志', '运维记录', '故障记录']);
+const terminalDeviceDetailSelectedRow = ref<TerminalDeviceDetail>({
+  tbDeviceDeviceId: '',
+  tbDeviceName: '',
+  tbDeviceDeviceNo: '',
+  tbParkingName: '',
+  sysDeviceTypeName: '',
+  sysDeviceStatusName: '',
+  tbDeviceFaultCount: 0,
+  tbDeviceMaintainCount: 0,
+  tbDeviceNextInspectTime: 0,
+  deviceParams: [],
+  runLogs: [],
+  maintainRecords: [],
+  faultRecords: []
+});
+const terminalDeviceMaintenanceForm = ref<TerminalDeviceMaintenanceForm>({
+  maintenanceType: '巡检',
+  maintenanceContent: ''
+});
+const terminalDeviceMaintenanceFormRules = {
+  maintenanceType: [{ required: true, message: '请选择运维类型', trigger: 'change' }],
+};
+const terminalDeviceMaintenanceFormRef = ref<FormInstance>();
+const maintainingTerminalDeviceId = ref(''); // 当前正在运维的设备ID
+
+// 设备运维趋势响应式数据
+const maintainTrendList = ref<MaintainTrendRow[]>([]);
+const maintainTrendIndicators = ref<MaintainTrendIndicators>({
+  totalNewCount: 0,
+  totalCompletedCount: 0,
+  completionRate: 0,
+  averageDuration: 0,
+  unfinishedCount: 0,
+});
+const maintainTrendNewTrendData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '工单新增数', data: [] }],
+});
+const maintainTrendCompletedTrendData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '工单完成数', data: [] }],
+});
+const maintainTrendFaultTrendData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '故障设备数', data: [] }],
+});
+const maintainTrendDeviceTypeCountData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '工单数量', data: [] }],
+});
+const maintainTrendFaultTypeCountData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '工单数量', data: [] }],
+});
+const maintainTrendFaultTypeRatioData = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '故障类型占比(%)', data: [] }],
+});
+const maintainTrendStatusRatioData = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '工单状态占比(%)', data: [] }],
+});
+// 设备运维趋势视图切换相关
+const maintainTrendChartRefreshKey = ref(0);
+const activeMaintainTrendView = ref('卡片');
+const maintainTrendViewBtnList = ref(['卡片', '折线图', '柱状图', '饼图', '列表']);
+// 设备运维趋势弹窗相关
+const maintainTrendDetailDialogVisible = ref(false);
+const faultTraceDialogVisible = ref(false);
+const activeMaintainTrendDetailView = ref('工单明细');
+const maintainTrendDetailViewBtnList = ref(['工单明细', '故障分布', '处置情况']);
+const maintainTrendDetailSelectedRow = ref<MaintainTrendDetail>({
+  tbMaintainTrendId: '',
+  tbMaintainTrendPeriod: '',
+  tbMaintainTrendDate: '',
+  tbMaintainTrendCompletionRate: 0,
+  tbMaintainTrendChainGrowth: 0,
+  sysFaultTypeName: '',
+  tbMaintainTrendUnfinishedCount: 0,
+  workOrderDetails: [],
+  faultDistribution: {
+    legend: [],
+    series: [{ name: '故障分布', data: [] }]
+  },
+  disposalSituation: {
+    completedRate: 0,
+    avgDuration: 0,
+    urgentCount: 0,
+    normalCount: 0,
+  },
+  faultDeviceList: []
+});
+const faultTraceList = ref<FaultTraceRow[]>([]);
+const currentTraceFaultType = ref('');
+// 工单详情弹窗相关
+const workOrderDetailDialogVisible = ref(false);
+const workOrderDetailSelectedRow = ref<WorkOrderDetail>({
+  orderNo: '',
+  orderStatus: '',
+  deviceName: '',
+  deviceType: '',
+  faultType: '',
+  reportTime: 0,
+  reportPerson: '',
+  handler: '',
+  handleTime: 0,
+  handleResult: '',
+  handleDuration: 0,
+  faultDescription: '',
+  handleSteps: '',
+  partsUsed: '',
+  cost: 0,
+});
+
+// 运维收费合规响应式数据
+const complianceList = ref<ComplianceRow[]>([]);
+const complianceIndicators = ref<ComplianceIndicators>({
+  totalCompliantRate: 0,
+  operationCompliantRate: 0,
+  chargeCompliantRate: 0,
+  nonCompliantCount: 0,
+  handledRate: 0,
+});
+const complianceRateTrendData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '合规率(%)', data: [] }],
+});
+const complianceNonCompliantTrendData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '不合规数', data: [] }],
+});
+const complianceRegionRateCompareData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '合规率(%)', data: [] }],
+});
+const complianceTypeRateCompareData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '合规率(%)', data: [] }],
+});
+const complianceTypeRatioData = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '合规类型占比(%)', data: [] }],
+});
+const complianceNonCompliantItemRatioData = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '不合规项占比(%)', data: [] }],
+});
+const complianceRegionDistributionRatioData = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '区域不合规分布占比(%)', data: [] }],
+});
+// 运维收费合规视图切换相关
+const complianceChartRefreshKey = ref(0);
+const activeComplianceView = ref('卡片');
+const complianceViewBtnList = ref(['卡片', '折线图', '柱状图', '饼图', '列表']);
+// 运维收费合规弹窗相关
+const complianceDetailDialogVisible = ref(false);
+const nonCompliantTraceDialogVisible = ref(false);
+const complianceHandleDialogVisible = ref(false);
+const activeComplianceDetailView = ref('合规检查明细');
+const complianceDetailViewBtnList = ref(['合规检查明细', '不合规项详情', '处理记录']);
+const complianceDetailSelectedRow = ref<ComplianceDetail>({
+  tbComplianceId: '',
+  tbCompliancePeriod: '',
+  sysComplianceTypeName: '',
+  tbComplianceChainCompliantChange: 0,
+  tbRegionKeyMonitorName: '',
+  tbComplianceHandledCount: 0,
+  tbComplianceHandledRate: 0,
+  checkDetails: [],
+  nonCompliantDetails: [],
+  handleRecords: [],
+  nonCompliantTraceList: []
+});
+const nonCompliantTraceList = ref<NonCompliantTraceRow[]>([]);
+const currentTraceNonCompliantItem = ref('');
+const handleForm = ref<HandleForm>({
+  handleSolution: ''
+});
+const handleFormRules = {
+  handleSolution: [{ required: true, message: '处理方案不能为空', trigger: 'blur' }]
+};
+const handleFormRef = ref<FormInstance>();
+const currentHandleComplianceId = ref('');
+const currentHandleNonCompliantItem = ref('');
 
 
 // 资源设备接口请求方法
@@ -1728,6 +2315,367 @@ const urgeVehicleLeaveData = async () => {
   }
 };
 
+// 终端设备分布明细接口请求方法
+const getDeviceDistributionListData = async () => {
+  try {
+    deviceDistributionList.value = (await fetchDeviceDistributionList()) as DeviceDistributionRow[];
+  } catch (error: any) {
+    ElMessage.error(`终端设备分布明细列表加载失败：${error.message}`);
+    deviceDistributionList.value = [];
+  }
+};
+const getDeviceDistributionTypeCountData = async () => {
+  try {
+    deviceDistributionTypeCountData.value =
+      (await fetchDeviceDistributionTypeCount()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`各类型设备数量加载失败：${error.message}`);
+  }
+};
+const getDeviceDistributionParkingCountData = async () => {
+  try {
+    deviceDistributionParkingCountData.value =
+      (await fetchDeviceDistributionParkingCount()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`各停车场设备数量加载失败：${error.message}`);
+  }
+};
+const getDeviceDistributionDetailData = async (deviceId: string) => {
+  try {
+    deviceDistributionDetailSelectedRow.value = {
+      ...deviceDistributionDetailSelectedRow.value,
+      ...(await fetchDeviceDistributionDetail(deviceId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`终端设备分布明细详情加载失败：${error.message}`);
+  }
+};
+const submitDeviceMaintenanceData = async (deviceId: string, formData: MaintenanceForm) => {
+  try {
+    await maintenanceFormRef.value?.validate();
+    const res = await submitDeviceMaintenance(deviceId, formData);
+
+    if (res.success) {
+      tipDialogContent.value = res.message;
+      tipDialogVisible.value = true;
+      deviceMaintenanceDialogVisible.value = false;
+      maintenanceForm.value.maintenanceContent = '';
+      maintenanceFormRef.value?.resetFields();
+      // 刷新数据
+      await getDeviceDistributionListData();
+    } else {
+      tipDialogContent.value = res.message || '提交失败';
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    tipDialogContent.value = `提交失败：${error.message}`;
+    tipDialogVisible.value = true;
+  }
+};
+
+// 终端设备接口请求方法
+const getTerminalDeviceListData = async () => {
+  try {
+    terminalDeviceList.value = (await fetchTerminalDeviceList()) as TerminalDeviceRow[];
+  } catch (error: any) {
+    ElMessage.error(`终端设备列表加载失败：${error.message}`);
+    terminalDeviceList.value = [];
+  }
+};
+const getTerminalDeviceIndicatorsData = async () => {
+  try {
+    terminalDeviceIndicators.value = (await fetchTerminalDeviceIndicators()) as TerminalDeviceIndicators;
+  } catch (error: any) {
+    ElMessage.error(`终端设备核心指标加载失败：${error.message}`);
+  }
+};
+const getTerminalDeviceTypeRatioData = async () => {
+  try {
+    terminalDeviceTypeRatioData.value = (await fetchTerminalDeviceTypeRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`终端设备类型占比加载失败：${error.message}`);
+  }
+};
+const getTerminalDeviceStatusRatioData = async () => {
+  try {
+    terminalDeviceStatusRatioData.value = (await fetchTerminalDeviceStatusRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`终端设备运行状态占比加载失败：${error.message}`);
+  }
+};
+const getTerminalDeviceOnlineRateTrend7dData = async () => {
+  try {
+    terminalDeviceOnlineRateTrend7d.value = (await fetchTerminalDeviceOnlineRateTrend7d()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`终端设备在线率变化趋势加载失败：${error.message}`);
+  }
+};
+const getTerminalDeviceFaultTrendData = async () => {
+  try {
+    terminalDeviceFaultTrend.value = (await fetchTerminalDeviceFaultTrend()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`终端设备故障发生趋势加载失败：${error.message}`);
+  }
+};
+const getTerminalDeviceDetailData = async (deviceId: string) => {
+  try {
+    terminalDeviceDetailSelectedRow.value = {
+      ...terminalDeviceDetailSelectedRow.value,
+      ...(await fetchTerminalDeviceDetail(deviceId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`终端设备详情加载失败：${error.message}`);
+  }
+};
+const submitTerminalDeviceMaintenanceData = async (deviceId: string, maintenanceData: TerminalDeviceMaintenanceForm) => {
+  try {
+    await terminalDeviceMaintenanceFormRef.value?.validate();
+    const res = await submitTerminalDeviceMaintenance(deviceId, maintenanceData);
+    if (res.success) {
+      tipDialogContent.value = res.message;
+      tipDialogVisible.value = true;
+      terminalDeviceMaintenanceDialogVisible.value = false;
+      terminalDeviceMaintenanceForm.value = {
+        maintenanceType: '巡检',
+        maintenanceContent: ''
+      };
+      terminalDeviceMaintenanceFormRef.value?.resetFields();
+      // 刷新数据
+      await getTerminalDeviceListData();
+      await getTerminalDeviceIndicatorsData();
+      await getTerminalDeviceStatusRatioData();
+    } else {
+      tipDialogContent.value = res.message || '运维工单提交失败';
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    tipDialogContent.value = `运维工单提交失败：${error.message}`;
+    tipDialogVisible.value = true;
+  }
+};
+
+// 设备运维趋势接口请求方法
+const getMaintainTrendListData = async () => {
+  try {
+    maintainTrendList.value = (await fetchMaintainTrendList()) as MaintainTrendRow[];
+  } catch (error: any) {
+    ElMessage.error(`设备运维趋势列表加载失败：${error.message}`);
+    maintainTrendList.value = [];
+  }
+};
+const getMaintainTrendIndicatorsData = async () => {
+  try {
+    maintainTrendIndicators.value =
+      (await fetchMaintainTrendIndicators()) as MaintainTrendIndicators;
+  } catch (error: any) {
+    ElMessage.error(`设备运维趋势核心指标加载失败：${error.message}`);
+  }
+};
+const getMaintainTrendNewTrendData = async () => {
+  try {
+    maintainTrendNewTrendData.value =
+      (await fetchMaintainTrendNewTrend()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`工单新增趋势加载失败：${error.message}`);
+  }
+};
+const getMaintainTrendCompletedTrendData = async () => {
+  try {
+    maintainTrendCompletedTrendData.value =
+      (await fetchMaintainTrendCompletedTrend()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`工单完成趋势加载失败：${error.message}`);
+  }
+};
+const getMaintainTrendFaultTrendData = async () => {
+  try {
+    maintainTrendFaultTrendData.value =
+      (await fetchMaintainTrendFaultTrend()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`故障设备数趋势加载失败：${error.message}`);
+  }
+};
+const getMaintainTrendDeviceTypeCountData = async () => {
+  try {
+    maintainTrendDeviceTypeCountData.value =
+      (await fetchMaintainTrendDeviceTypeCount()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`各类型设备工单数量加载失败：${error.message}`);
+  }
+};
+const getMaintainTrendFaultTypeCountData = async () => {
+  try {
+    maintainTrendFaultTypeCountData.value =
+      (await fetchMaintainTrendFaultTypeCount()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`各故障类型工单数量加载失败：${error.message}`);
+  }
+};
+const getMaintainTrendFaultTypeRatioData = async () => {
+  try {
+    maintainTrendFaultTypeRatioData.value =
+      (await fetchMaintainTrendFaultTypeRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`故障类型占比加载失败：${error.message}`);
+  }
+};
+const getMaintainTrendStatusRatioData = async () => {
+  try {
+    maintainTrendStatusRatioData.value =
+      (await fetchMaintainTrendStatusRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`工单状态占比加载失败：${error.message}`);
+  }
+};
+const getMaintainTrendDetailData = async (maintainTrendId: string) => {
+  try {
+    maintainTrendDetailSelectedRow.value = {
+      ...maintainTrendDetailSelectedRow.value,
+      ...(await fetchMaintainTrendDetail(maintainTrendId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`设备运维趋势详情加载失败：${error.message}`);
+  }
+};
+const getFaultTraceData = async (faultType: string) => {
+  try {
+    faultTraceList.value = (await fetchFaultTraceDetail(faultType)) as FaultTraceRow[];
+    currentTraceFaultType.value = faultType;
+  } catch (error: any) {
+    ElMessage.warning(`故障追溯数据加载失败：${error.message}`);
+    faultTraceList.value = [];
+  }
+};
+const getWorkOrderDetailData = async (orderNo: string) => {
+  try {
+    workOrderDetailSelectedRow.value = {
+      ...workOrderDetailSelectedRow.value,
+      ...(await fetchWorkOrderDetail(orderNo)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`工单详情加载失败：${error.message}`);
+  }
+};
+
+// 运维收费合规接口请求方法
+const getComplianceListData = async () => {
+  try {
+    complianceList.value = (await fetchComplianceList()) as ComplianceRow[];
+  } catch (error: any) {
+    ElMessage.error(`运维收费合规列表加载失败：${error.message}`);
+    complianceList.value = [];
+  }
+};
+const getComplianceIndicatorsData = async () => {
+  try {
+    complianceIndicators.value =
+      (await fetchComplianceIndicators()) as ComplianceIndicators;
+  } catch (error: any) {
+    ElMessage.error(`运维收费合规核心指标加载失败：${error.message}`);
+  }
+};
+const getComplianceRateTrendData = async () => {
+  try {
+    complianceRateTrendData.value =
+      (await fetchComplianceRateTrend()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`合规率变化趋势加载失败：${error.message}`);
+  }
+};
+const getComplianceNonCompliantTrendData = async () => {
+  try {
+    complianceNonCompliantTrendData.value =
+      (await fetchComplianceNonCompliantTrend()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`不合规数变化趋势加载失败：${error.message}`);
+  }
+};
+const getComplianceRegionRateCompareData = async () => {
+  try {
+    complianceRegionRateCompareData.value =
+      (await fetchComplianceRegionRateCompare()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`各区域合规率对比加载失败：${error.message}`);
+  }
+};
+const getComplianceTypeRateCompareData = async () => {
+  try {
+    complianceTypeRateCompareData.value =
+      (await fetchComplianceTypeRateCompare()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`各合规类型合规率对比加载失败：${error.message}`);
+  }
+};
+const getComplianceTypeRatioData = async () => {
+  try {
+    complianceTypeRatioData.value =
+      (await fetchComplianceTypeRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`合规类型占比加载失败：${error.message}`);
+  }
+};
+const getComplianceNonCompliantItemRatioData = async () => {
+  try {
+    complianceNonCompliantItemRatioData.value =
+      (await fetchComplianceNonCompliantItemRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`不合规项占比加载失败：${error.message}`);
+  }
+};
+const getComplianceRegionDistributionRatioData = async () => {
+  try {
+    complianceRegionDistributionRatioData.value =
+      (await fetchComplianceRegionDistributionRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`区域不合规分布占比加载失败：${error.message}`);
+  }
+};
+const getComplianceDetailData = async (complianceId: string) => {
+  try {
+    complianceDetailSelectedRow.value = {
+      ...complianceDetailSelectedRow.value,
+      ...(await fetchComplianceDetail(complianceId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`运维收费合规详情加载失败：${error.message}`);
+  }
+};
+const getNonCompliantTraceData = async (nonCompliantItem: string) => {
+  try {
+    nonCompliantTraceList.value = (await fetchNonCompliantTraceDetail(nonCompliantItem)) as NonCompliantTraceRow[];
+    currentTraceNonCompliantItem.value = nonCompliantItem;
+  } catch (error: any) {
+    ElMessage.warning(`不合规追溯数据加载失败：${error.message}`);
+    nonCompliantTraceList.value = [];
+  }
+};
+const handleNonCompliantItemData = async () => {
+  try {
+    await handleFormRef.value?.validate();
+    const res = await handleNonCompliantItem(
+      currentHandleComplianceId.value,
+      currentHandleNonCompliantItem.value,
+      handleForm.value.handleSolution
+    );
+    if (res.success) {
+      tipDialogContent.value = res.message;
+      tipDialogVisible.value = true;
+      // 关闭处理弹窗
+      complianceHandleDialogVisible.value = false;
+      handleForm.value.handleSolution = '';
+      handleFormRef.value?.resetFields();
+      // 刷新详情数据
+      await getComplianceDetailData(currentHandleComplianceId.value);
+    } else {
+      tipDialogContent.value = res.message || '处理提交失败';
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    tipDialogContent.value = `处理提交失败：${error.message}`;
+    tipDialogVisible.value = true;
+  }
+};
+
 
 // 资源设备视图切换方法
 const changeDeviceView = (viewName: string) => {
@@ -2187,6 +3135,292 @@ const refreshParkingVehicleData = async () => {
   ElMessage.success('在停车辆数据刷新成功');
 };
 
+// 终端设备分布明细视图切换
+const changeDeviceDistributionView = (viewName: string) => {
+  activeDeviceDistributionView.value = viewName;
+  viewName === '卡片' &&
+  nextTick(() => setTimeout(initNumberAnimations, 300));
+  (viewName === '柱状图' || viewName === '饼图') &&
+  nextTick(() => deviceDistributionChartRefreshKey.value++);
+};
+const changeDeviceDistributionDetailView = (viewName: string) => {
+  activeDeviceDistributionDetailView.value = viewName;
+};
+// 终端设备分布明细弹窗方法
+const openDeviceDistributionDetailDialog = async (row: DeviceDistributionRow) => {
+  await getDeviceDistributionDetailData(row.tbDeviceDeviceId);
+  deviceDistributionDetailDialogVisible.value = true;
+};
+const closeDeviceDistributionDetailDialog = () => {
+  deviceDistributionDetailDialogVisible.value = false;
+  deviceDistributionDetailSelectedRow.value = {
+    tbDeviceDeviceId: '',
+    tbDeviceName: '',
+    tbDeviceDeviceNo: '',
+    sysDeviceTypeName: '',
+    tbParkingName: '',
+    tbDeviceInstallPosition: '',
+    sysDeviceStatusName: '',
+    tbDeviceInstallTime: 0,
+    tbDeviceOnlineDuration: 0,
+    tbDeviceFaultTime: 0,
+    sysUserUserName: '',
+    operationData: {
+      tbDeviceUptime: 0,
+      tbDeviceResponseTime: 0,
+      tbDeviceLastMaintainTime: 0,
+      tbDeviceNextMaintainTime: 0,
+    },
+    maintenanceRecords: []
+  };
+  activeDeviceDistributionDetailView.value = '基本信息';
+};
+const openDeviceMaintenanceDialog = (row: DeviceDistributionRow) => {
+  maintainingDeviceId.value = row.tbDeviceDeviceId;
+  deviceMaintenanceDialogVisible.value = true;
+};
+const closeDeviceMaintenanceDialog = () => {
+  deviceMaintenanceDialogVisible.value = false;
+  maintenanceForm.value = {
+    maintenanceType: '巡检',
+    maintenanceContent: '',
+  };
+  maintenanceFormRef.value?.resetFields();
+  maintainingDeviceId.value = '';
+};
+// 终端设备分布明细数据刷新
+const refreshDeviceDistributionData = async () => {
+  await Promise.all([
+    getDeviceDistributionListData(),
+    getDeviceDistributionTypeCountData(),
+    getDeviceDistributionParkingCountData(),
+  ]);
+  deviceDistributionChartRefreshKey.value++;
+  ElMessage.success('终端设备分布明细数据刷新成功');
+};
+
+// 终端设备视图切换
+const changeTerminalDeviceView = (viewName: string) => {
+  activeTerminalDeviceView.value = viewName;
+  viewName === '卡片' && nextTick(() => setTimeout(initNumberAnimations, 300));
+  (viewName === '折线图' || viewName === '饼图') && nextTick(() => terminalDeviceChartRefreshKey.value++);
+};
+const changeTerminalDeviceDetailView = (viewName: string) => {
+  activeTerminalDeviceDetailView.value = viewName;
+};
+// 终端设备弹窗方法
+const openTerminalDeviceDetailDialog = async (row: TerminalDeviceRow) => {
+  await getTerminalDeviceDetailData(row.tbDeviceDeviceId);
+  terminalDeviceDetailDialogVisible.value = true;
+};
+const closeTerminalDeviceDetailDialog = () => {
+  terminalDeviceDetailDialogVisible.value = false;
+  terminalDeviceDetailSelectedRow.value = {
+    tbDeviceDeviceId: '',
+    tbDeviceName: '',
+    tbDeviceDeviceNo: '',
+    tbParkingName: '',
+    sysDeviceTypeName: '',
+    sysDeviceStatusName: '',
+    tbDeviceFaultCount: 0,
+    tbDeviceMaintainCount: 0,
+    tbDeviceNextInspectTime: 0,
+    deviceParams: [],
+    runLogs: [],
+    maintainRecords: [],
+    faultRecords: []
+  };
+  activeTerminalDeviceDetailView.value = '设备参数';
+};
+const openTerminalDeviceMaintenanceDialog = (row: TerminalDeviceRow) => {
+  maintainingTerminalDeviceId.value = row.tbDeviceDeviceId;
+  terminalDeviceMaintenanceDialogVisible.value = true;
+};
+const closeTerminalDeviceMaintenanceDialog = () => {
+  terminalDeviceMaintenanceDialogVisible.value = false;
+  terminalDeviceMaintenanceForm.value = {
+    maintenanceType: '巡检',
+    maintenanceContent: ''
+  };
+  terminalDeviceMaintenanceFormRef.value?.resetFields();
+  maintainingTerminalDeviceId.value = '';
+};
+// 终端设备数据刷新
+const refreshTerminalDeviceData = async () => {
+  await Promise.all([
+    getTerminalDeviceListData(),
+    getTerminalDeviceIndicatorsData(),
+    getTerminalDeviceTypeRatioData(),
+    getTerminalDeviceStatusRatioData(),
+    getTerminalDeviceOnlineRateTrend7dData(),
+    getTerminalDeviceFaultTrendData(),
+  ]);
+  terminalDeviceChartRefreshKey.value++;
+  ElMessage.success('终端设备数据刷新成功');
+};
+
+// 设备运维趋势视图切换
+const changeMaintainTrendView = (viewName: string) => {
+  activeMaintainTrendView.value = viewName;
+  viewName === '卡片' &&
+  nextTick(() => setTimeout(initNumberAnimations, 300));
+  (viewName === '折线图' || viewName === '柱状图' || viewName === '饼图') &&
+  nextTick(() => maintainTrendChartRefreshKey.value++);
+};
+const changeMaintainTrendDetailView = (viewName: string) => {
+  activeMaintainTrendDetailView.value = viewName;
+};
+// 设备运维趋势弹窗方法
+const openMaintainTrendDetailDialog = async (row: MaintainTrendRow) => {
+  await getMaintainTrendDetailData(row.tbMaintainTrendId);
+  maintainTrendDetailDialogVisible.value = true;
+};
+const closeMaintainTrendDetailDialog = () => {
+  maintainTrendDetailDialogVisible.value = false;
+  maintainTrendDetailSelectedRow.value = {
+    tbMaintainTrendId: '',
+    tbMaintainTrendPeriod: '',
+    tbMaintainTrendDate: '',
+    tbMaintainTrendCompletionRate: 0,
+    tbMaintainTrendChainGrowth: 0,
+    sysFaultTypeName: '',
+    tbMaintainTrendUnfinishedCount: 0,
+    workOrderDetails: [],
+    faultDistribution: {
+      legend: [],
+      series: [{ name: '故障分布', data: [] }]
+    },
+    disposalSituation: {
+      completedRate: 0,
+      avgDuration: 0,
+      urgentCount: 0,
+      normalCount: 0,
+    },
+    faultDeviceList: []
+  };
+  activeMaintainTrendDetailView.value = '工单明细';
+};
+const openFaultTraceDialog = async (faultType: string) => {
+  await getFaultTraceData(faultType);
+  faultTraceDialogVisible.value = true;
+};
+const closeFaultTraceDialog = () => {
+  faultTraceDialogVisible.value = false;
+  faultTraceList.value = [];
+  currentTraceFaultType.value = '';
+};
+const openWorkOrderDetailDialog = async (orderNo: string) => {
+  await getWorkOrderDetailData(orderNo);
+  workOrderDetailDialogVisible.value = true;
+};
+const closeWorkOrderDetailDialog = () => {
+  workOrderDetailDialogVisible.value = false;
+  workOrderDetailSelectedRow.value = {
+    orderNo: '',
+    orderStatus: '',
+    deviceName: '',
+    deviceType: '',
+    faultType: '',
+    reportTime: 0,
+    reportPerson: '',
+    handler: '',
+    handleTime: 0,
+    handleResult: '',
+    handleDuration: 0,
+    faultDescription: '',
+    handleSteps: '',
+    partsUsed: '',
+    cost: 0,
+  };
+};
+// 设备运维趋势数据刷新
+const refreshMaintainTrendData = async () => {
+  await Promise.all([
+    getMaintainTrendListData(),
+    getMaintainTrendIndicatorsData(),
+    getMaintainTrendNewTrendData(),
+    getMaintainTrendCompletedTrendData(),
+    getMaintainTrendFaultTrendData(),
+    getMaintainTrendDeviceTypeCountData(),
+    getMaintainTrendFaultTypeCountData(),
+    getMaintainTrendFaultTypeRatioData(),
+    getMaintainTrendStatusRatioData(),
+  ]);
+  maintainTrendChartRefreshKey.value++;
+  ElMessage.success('设备运维趋势数据刷新成功');
+};
+
+// 运维收费合规视图切换
+const changeComplianceView = (viewName: string) => {
+  activeComplianceView.value = viewName;
+  viewName === '卡片' &&
+  nextTick(() => setTimeout(initNumberAnimations, 300));
+  (viewName === '折线图' || viewName === '柱状图' || viewName === '饼图') &&
+  nextTick(() => complianceChartRefreshKey.value++);
+};
+const changeComplianceDetailView = (viewName: string) => {
+  activeComplianceDetailView.value = viewName;
+};
+// 运维收费合规弹窗方法
+const openComplianceDetailDialog = async (row: ComplianceRow) => {
+  await getComplianceDetailData(row.tbComplianceId);
+  complianceDetailDialogVisible.value = true;
+};
+const closeComplianceDetailDialog = () => {
+  complianceDetailDialogVisible.value = false;
+  complianceDetailSelectedRow.value = {
+    tbComplianceId: '',
+    tbCompliancePeriod: '',
+    sysComplianceTypeName: '',
+    tbComplianceChainCompliantChange: 0,
+    tbRegionKeyMonitorName: '',
+    tbComplianceHandledCount: 0,
+    tbComplianceHandledRate: 0,
+    checkDetails: [],
+    nonCompliantDetails: [],
+    handleRecords: [],
+    nonCompliantTraceList: []
+  };
+  activeComplianceDetailView.value = '合规检查明细';
+};
+const openNonCompliantTraceDialog = async (nonCompliantItem: string) => {
+  await getNonCompliantTraceData(nonCompliantItem);
+  nonCompliantTraceDialogVisible.value = true;
+};
+const closeNonCompliantTraceDialog = () => {
+  nonCompliantTraceDialogVisible.value = false;
+  nonCompliantTraceList.value = [];
+  currentTraceNonCompliantItem.value = '';
+};
+const openComplianceHandleDialog = (complianceId: string, nonCompliantItem: string) => {
+  currentHandleComplianceId.value = complianceId;
+  currentHandleNonCompliantItem.value = nonCompliantItem;
+  complianceHandleDialogVisible.value = true;
+};
+const closeComplianceHandleDialog = () => {
+  complianceHandleDialogVisible.value = false;
+  handleForm.value.handleSolution = '';
+  handleFormRef.value?.resetFields();
+  currentHandleComplianceId.value = '';
+  currentHandleNonCompliantItem.value = '';
+};
+// 运维收费合规数据刷新
+const refreshComplianceData = async () => {
+  await Promise.all([
+    getComplianceListData(),
+    getComplianceIndicatorsData(),
+    getComplianceRateTrendData(),
+    getComplianceNonCompliantTrendData(),
+    getComplianceRegionRateCompareData(),
+    getComplianceTypeRateCompareData(),
+    getComplianceTypeRatioData(),
+    getComplianceNonCompliantItemRatioData(),
+    getComplianceRegionDistributionRatioData(),
+  ]);
+  complianceChartRefreshKey.value++;
+  ElMessage.success('运维收费合规数据刷新成功');
+};
+
 
 onMounted(async () => {
   await initMapData();
@@ -2237,15 +3471,47 @@ onMounted(async () => {
     getParkingVehicleIndicatorsData(),
     getParkingVehicleTrendData(),
     getParkingVehicleListData(),
+    getDeviceDistributionListData(),
+    getDeviceDistributionTypeCountData(),
+    getDeviceDistributionParkingCountData(),
+    getTerminalDeviceListData(),
+    getTerminalDeviceIndicatorsData(),
+    getTerminalDeviceTypeRatioData(),
+    getTerminalDeviceStatusRatioData(),
+    getTerminalDeviceOnlineRateTrend7dData(),
+    getTerminalDeviceFaultTrendData(),
+    getMaintainTrendListData(),
+    getMaintainTrendIndicatorsData(),
+    getMaintainTrendNewTrendData(),
+    getMaintainTrendCompletedTrendData(),
+    getMaintainTrendFaultTrendData(),
+    getMaintainTrendDeviceTypeCountData(),
+    getMaintainTrendFaultTypeCountData(),
+    getMaintainTrendFaultTypeRatioData(),
+    getMaintainTrendStatusRatioData(),
+    getComplianceListData(),
+    getComplianceIndicatorsData(),
+    getComplianceRateTrendData(),
+    getComplianceNonCompliantTrendData(),
+    getComplianceRegionRateCompareData(),
+    getComplianceTypeRateCompareData(),
+    getComplianceTypeRatioData(),
+    getComplianceNonCompliantItemRatioData(),
+    getComplianceRegionDistributionRatioData(),
   ]);
   setTimeout(() => {
     deviceChartRefreshKey.value++;
     tradeChartRefreshKey.value++;
+    operationChartRefreshKey.value++;
     parkResourceDistributionChartRefreshKey.value++;
+    deviceDistributionChartRefreshKey.value++;
     parkingSpaceChartRefreshKey.value++;
     tradeTrendChartRefreshKey.value++;
     supplyDemandChartRefreshKey.value++;
     parkAreaDistributionChartRefreshKey.value++;
+    terminalDeviceChartRefreshKey.value++;
+    maintainTrendChartRefreshKey.value++;
+    complianceChartRefreshKey.value++;
   }, 200);
   screenFull.on('change', handleFullscreenChange);
 });
@@ -2479,7 +3745,7 @@ onUnmounted(() => {
                 "
               >
                 <div style="flex: 1; width: 100%;">
-                  <ChartLine1
+                  <ChartLine4
                     :data="tradeCountTrend"
                     title="统计周期内交易笔数趋势"
                     :key="tradeChartRefreshKey"
@@ -2612,7 +3878,7 @@ onUnmounted(() => {
                 "
               >
                 <div style="flex: 1; width: 100%;">
-                  <ChartLine1
+                  <ChartLine4
                     :data="operationNewTrend"
                     title="统计周期内工单新增趋势"
                     :key="operationChartRefreshKey"
@@ -2669,7 +3935,9 @@ onUnmounted(() => {
                   >
                     <el-icon color="#409eff" size="16"><Setting /></el-icon>
                   </button>
-                  <el-icon color="#409eff" size="16" @click="refreshParkingVehicleData"><Refresh /></el-icon>
+                  <button class="control-btn" @click="refreshParkingVehicleData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button
                     class="panel-fullscreen-btn"
@@ -2829,7 +4097,9 @@ onUnmounted(() => {
                       {{ item }}
                     </ElButton>
                   </div>
-                  <el-icon color="#409eff" size="16" @click="refreshParkAreaDistributionData"><Refresh /></el-icon>
+                  <button class="control-btn" @click="refreshParkAreaDistributionData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button
                     class="panel-fullscreen-btn"
@@ -2991,7 +4261,9 @@ onUnmounted(() => {
                         {{ item }}
                       </ElButton>
                     </div>
-                    <el-icon color="#409eff" size="16" @click="refreshParkingSpaceData"><Refresh /></el-icon>
+                    <button class="control-btn" @click="refreshParkingSpaceData">
+                      <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                    </button>
                     <el-icon color="#409eff" size="16"><Filter /></el-icon>
                     <button
                       class="panel-fullscreen-btn"
@@ -3053,33 +4325,34 @@ onUnmounted(() => {
                 <div v-if="activeParkingSpaceView === '饼图'" class="view-content">
                   <div
                     style="
-          display: inline-block;
-          width: 49%;
-          height: 100%;
-          vertical-align: top;
-        "
+                      display: flex;
+                      flex-direction: column;
+                      width: 100%;
+                      height: 100%;
+                      gap: 10px;
+                    "
                   >
-                    <ChartPie1
-                      :data="parkingSpaceTypeRatio"
-                      title="泊位类型占比"
-                      :key="parkingSpaceChartRefreshKey"
-                    />
-                  </div>
-                  <div
-                    style="
-          display: inline-block;
-          width: 49%;
-          height: 100%;
-          padding-left: 0.3vw;
-          vertical-align: top;
-          border-left: 0.3vh solid #02a6b5;
-        "
-                  >
-                    <ChartPie2
-                      :data="parkingSpaceStatusRatio"
-                      title="使用状态占比"
-                      :key="parkingSpaceChartRefreshKey"
-                    />
+                    <div style="flex: 1; width: 100%;">
+                      <ChartPie3
+                        :data="parkingSpaceTypeRatio"
+                        title="泊位类型占比"
+                        :key="parkingSpaceChartRefreshKey"
+                      />
+                    </div>
+                    <div
+                      style="
+                        flex: 1;
+                        width: 100%;
+                        padding-top: 10px;
+                        border-top: 0.3vh solid #02a6b5;
+                      "
+                    >
+                      <ChartPie2
+                        :data="parkingSpaceStatusRatio"
+                        title="使用状态占比"
+                        :key="parkingSpaceChartRefreshKey"
+                      />
+                    </div>
                   </div>
                 </div>
                 <!-- 列表视图 -->
@@ -3169,7 +4442,231 @@ onUnmounted(() => {
                 </div>
               </el-tab-pane>
             <el-tab-pane label="终端设备" name="tab2">
-              <div class="content-placeholder"><p>终端设备</p></div>
+              <div class="header-actions">
+                <div class="actions-left"><p></p></div>
+                <div class="actions-right">
+                  <div class="view-btn-group">
+                    <ElButton
+                      v-for="item in terminalDeviceViewBtnList"
+                      :key="item"
+                      :type="activeTerminalDeviceView === item ? 'primary' : ''"
+                      plain
+                      @click="changeTerminalDeviceView(item)"
+                      class="view-btn"
+                    >
+                      {{ item }}
+                    </ElButton>
+                  </div>
+                  <button class="control-btn" @click="refreshTerminalDeviceData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
+                  <el-icon color="#409eff" size="16"><Filter /></el-icon>
+                  <button
+                    class="panel-fullscreen-btn"
+                    @click="togglePanelFullscreen('parkingSpacePanelRef')"
+                  >
+                    <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
+                  </button>
+                </div>
+              </div>
+              <!-- 卡片视图 -->
+              <div v-if="activeTerminalDeviceView === '卡片'" class="view-content">
+                <div class="indicator-cards4">
+                  <div class="indicator-card4 card1">
+                    <div class="indicator-title">设备总数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ terminalDeviceIndicators.deviceTotalCount }}</span>
+                    </div>
+                    <div class="indicator-unit">台</div>
+                  </div>
+                  <div class="indicator-card4 card2">
+                    <div class="indicator-title">在线数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ terminalDeviceIndicators.deviceOnlineCount }}</span>
+                    </div>
+                    <div class="indicator-unit">台</div>
+                  </div>
+                  <div class="indicator-card4 card3">
+                    <div class="indicator-title">正常运行数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ terminalDeviceIndicators.deviceNormalCount }}</span>
+                    </div>
+                    <div class="indicator-unit">台</div>
+                  </div>
+                  <div class="indicator-card4 card4">
+                    <div class="indicator-title">故障数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ terminalDeviceIndicators.deviceFaultCount }}</span>
+                    </div>
+                    <div class="indicator-unit">台</div>
+                  </div>
+                  <div class="indicator-card4 card5">
+                    <div class="indicator-title">待巡检数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ terminalDeviceIndicators.deviceInspectCount }}</span>
+                    </div>
+                    <div class="indicator-unit">台</div>
+                  </div>
+                </div>
+              </div>
+              <!-- 折线图视图 -->
+              <div v-if="activeTerminalDeviceView === '折线图'" class="view-content">
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    width: 100%;
+                    height: 100%;
+                    gap: 10px;
+                  "
+                >
+                  <div style="flex: 1; width: 100%;">
+                    <ChartLine4
+                      :data="terminalDeviceOnlineRateTrend7d"
+                      title="近7日设备在线率变化趋势"
+                      :key="terminalDeviceChartRefreshKey"
+                    />
+                  </div>
+                  <div
+                    style="
+                      flex: 1;
+                      width: 100%;
+                      padding-top: 10px;
+                      border-top: 0.3vh solid #02a6b5;
+                    "
+                  >
+                    <ChartLine2
+                      :data="terminalDeviceFaultTrend"
+                      title="近7日故障发生趋势"
+                      :key="terminalDeviceChartRefreshKey"
+                    />
+                  </div>
+                </div>
+              </div>
+              <!-- 饼图视图 -->
+              <div v-if="activeTerminalDeviceView === '饼图'" class="view-content">
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    width: 100%;
+                    height: 100%;
+                    gap: 10px;
+                  "
+                >
+                  <div style="flex: 1; width: 100%;">
+                    <ChartPie2
+                      :data="terminalDeviceTypeRatioData"
+                      title="设备类型占比"
+                      :key="terminalDeviceChartRefreshKey"
+                    />
+                  </div>
+                  <div
+                    style="
+                      flex: 1;
+                      width: 100%;
+                      padding-top: 10px;
+                      border-top: 0.3vh solid #02a6b5;
+                    "
+                  >
+                    <ChartPie3
+                      :data="terminalDeviceStatusRatioData"
+                      title="运行状态占比"
+                      :key="terminalDeviceChartRefreshKey"
+                    />
+                  </div>
+                </div>
+              </div>
+              <!-- 列表视图 -->
+              <div v-if="activeTerminalDeviceView === '列表'" class="view-content">
+                <div class="table-box4">
+                  <ElTable
+                    class="table4"
+                    :data="terminalDeviceList"
+                    border
+                    size="small"
+                    width="100%"
+                    height="100%"
+                    table-layout="fixed"
+                    highlight-current-row
+                    @row-click="(row) => openTerminalDeviceDetailDialog(row)"
+                  >
+                    <ElTableColumn
+                      prop="tbDeviceName"
+                      label="设备名称"
+                      align="center"
+                      min-width="120"
+                    />
+                    <ElTableColumn
+                      prop="tbDeviceDeviceNo"
+                      label="设备编号"
+                      align="center"
+                      min-width="120"
+                    />
+                    <ElTableColumn
+                      prop="sysDeviceTypeName"
+                      label="设备类型"
+                      align="center"
+                      min-width="100"
+                    />
+                    <ElTableColumn
+                      prop="tbParkingName"
+                      label="所属停车场"
+                      align="center"
+                      min-width="120"
+                    />
+                    <ElTableColumn
+                      prop="sysDeviceStatusName"
+                      label="运行状态"
+                      align="center"
+                      width="100"
+                    >
+                      <template #default="scope">
+                        <ElTag
+                          :type="scope.row.sysDeviceStatusName === '在线' ? 'success' :
+                     scope.row.sysDeviceStatusName === '离线' ? 'warning' :
+                     scope.row.sysDeviceStatusName === '故障' ? 'danger' : 'info'"
+                        >
+                          {{ scope.row.sysDeviceStatusName || '-' }}
+                        </ElTag>
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="tbDeviceOnlineDuration"
+                      label="在线时长(分钟)"
+                      align="center"
+                      width="120"
+                    />
+                    <ElTableColumn
+                      prop="tbDeviceLastCommTime"
+                      label="最后通信时间"
+                      align="center"
+                      width="160"
+                    >
+                      <template #default="scope">
+                        {{ formatTimeStamp(scope.row.tbDeviceLastCommTime) }}
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      label="操作"
+                      align="center"
+                      width="100"
+                      fixed="right"
+                    >
+                      <template #default="scope">
+                        <ElButton
+                          type="primary"
+                          size="small"
+                          plain
+                          @click.stop="openTerminalDeviceMaintenanceDialog(scope.row)"
+                        >
+                          运维
+                        </ElButton>
+                      </template>
+                    </ElTableColumn>
+                  </ElTable>
+                </div>
+              </div>
             </el-tab-pane>
           </el-tabs>
           <div class="panel-footer"></div>
@@ -3194,7 +4691,9 @@ onUnmounted(() => {
                       {{ item }}
                     </ElButton>
                   </div>
-                  <el-icon color="#409eff" size="16" @click="refreshTradeTrendData"><Refresh /></el-icon>
+                  <button class="control-btn" @click="refreshTradeTrendData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button
                     class="panel-fullscreen-btn"
@@ -3247,7 +4746,7 @@ onUnmounted(() => {
             vertical-align: top;
           "
                 >
-                  <ChartLine1
+                  <ChartLine4
                     :data="tradeTrendCountTrend"
                     title="交易笔数趋势"
                     :key="tradeTrendChartRefreshKey"
@@ -3420,7 +4919,241 @@ onUnmounted(() => {
               </div>
             </el-tab-pane>
             <el-tab-pane label="设备运维趋势" name="tab2">
-              <div class="content-placeholder"><p>设备运维趋势</p></div>
+              <div class="header-actions">
+                <div class="actions-left"><p></p></div>
+                <div class="actions-right">
+                  <div class="view-btn-group">
+                    <ElButton
+                      v-for="item in maintainTrendViewBtnList"
+                      :key="item"
+                      :type="activeMaintainTrendView === item ? 'primary' : ''"
+                      plain
+                      @click="changeMaintainTrendView(item)"
+                      class="view-btn"
+                    >
+                      {{ item }}
+                    </ElButton>
+                  </div>
+                  <button class="control-btn" @click="refreshMaintainTrendData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
+                  <el-icon color="#409eff" size="16"><Filter /></el-icon>
+                  <button
+                    class="panel-fullscreen-btn"
+                    @click="togglePanelFullscreen('tradeTrendPanelRef')"
+                  >
+                    <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
+                  </button>
+                </div>
+              </div>
+              <!-- 卡片视图 -->
+              <div v-if="activeMaintainTrendView === '卡片'" class="view-content">
+                <div class="indicator-cards5">
+                  <div class="indicator-card5 card1">
+                    <div class="indicator-title">新增工单数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ maintainTrendIndicators.totalNewCount }}</span>
+                    </div>
+                    <div class="indicator-unit">个</div>
+                  </div>
+                  <div class="indicator-card5 card2">
+                    <div class="indicator-title">完成数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ maintainTrendIndicators.totalCompletedCount }}</span>
+                    </div>
+                    <div class="indicator-unit">个</div>
+                  </div>
+                  <div class="indicator-card5 card3">
+                    <div class="indicator-title">完成率</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(maintainTrendIndicators.completionRate) }}</span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                  <div class="indicator-card5 card4">
+                    <div class="indicator-title">平均处置时长</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(maintainTrendIndicators.averageDuration) }}</span>
+                    </div>
+                    <div class="indicator-unit">分钟</div>
+                  </div>
+                  <div class="indicator-card5 card5">
+                    <div class="indicator-title">未完成数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ maintainTrendIndicators.unfinishedCount }}</span>
+                    </div>
+                    <div class="indicator-unit">个</div>
+                  </div>
+                </div>
+              </div>
+              <!-- 折线图视图 -->
+              <div v-if="activeMaintainTrendView === '折线图'" class="view-content">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 31%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                >
+                  <ChartLine6
+                    :data="maintainTrendNewTrendData"
+                    title="工单新增趋势"
+                    :key="maintainTrendChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 31%;
+                    height: 100%;
+                    padding-left: 0.5vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <ChartLine5
+                    :data="maintainTrendCompletedTrendData"
+                    title="工单完成趋势"
+                    :key="maintainTrendChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 31%;
+                    height: 100%;
+                    padding-left: 0.5vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <ChartLine6
+                    :data="maintainTrendFaultTrendData"
+                    title="故障设备数趋势"
+                    :key="maintainTrendChartRefreshKey"
+                  />
+                </div>
+              </div>
+              <!-- 柱状图视图 -->
+              <div v-if="activeMaintainTrendView === '柱状图'" class="view-content">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                >
+                  <VerticalBar3
+                    :x-axis="maintainTrendDeviceTypeCountData.xAxis"
+                    :series="maintainTrendDeviceTypeCountData.series"
+                    unit="个"
+                    title="各类型设备工单数量对比"
+                    :key="maintainTrendChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <VerticalBar1
+                    :x-axis="maintainTrendFaultTypeCountData.xAxis"
+                    :series="maintainTrendFaultTypeCountData.series"
+                    unit="个"
+                    title="各故障类型工单数量对比"
+                    :key="maintainTrendChartRefreshKey"
+                  />
+                </div>
+              </div>
+              <!-- 饼图视图 -->
+              <div v-if="activeMaintainTrendView === '饼图'" class="view-content">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                >
+                  <ChartPie1
+                    :data="maintainTrendFaultTypeRatioData"
+                    title="故障类型占比"
+                    :key="maintainTrendChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <ChartPie2
+                    :data="maintainTrendStatusRatioData"
+                    title="工单状态占比"
+                    :key="maintainTrendChartRefreshKey"
+                  />
+                </div>
+              </div>
+              <!-- 列表视图 -->
+              <div v-if="activeMaintainTrendView === '列表'" class="view-content">
+                <div class="table-box4">
+                  <ElTable
+                    class="table4"
+                    :data="maintainTrendList"
+                    border
+                    size="small"
+                    width="100%"
+                    height="100%"
+                    table-layout="fixed"
+                    highlight-current-row
+                    @row-click="(row) => openMaintainTrendDetailDialog(row)"
+                  >
+                    <ElTableColumn
+                      prop="tbMaintainTrendPeriod"
+                      label="统计周期"
+                      align="center"
+                    />
+                    <ElTableColumn
+                      prop="tbMaintainTrendDate"
+                      label="日期"
+                      align="center"
+                      min-width="100"
+                    />
+                    <ElTableColumn
+                      prop="tbMaintainTrendNewCount"
+                      label="工单新增数"
+                      align="center"
+                    />
+                    <ElTableColumn
+                      prop="tbMaintainTrendCompletedCount"
+                      label="工单完成数"
+                      align="center"
+                    />
+                    <ElTableColumn
+                      prop="tbMaintainTrendAverageDuration"
+                      label="平均处置时长"
+                      align="center"
+                      min-width="100"
+                    />
+                    <ElTableColumn
+                      prop="tbMaintainTrendFaultDeviceCount"
+                      label="故障设备数"
+                      align="center"
+                    />
+                  </ElTable>
+                </div>
+              </div>
             </el-tab-pane>
           </el-tabs>
           <div class="panel-footer"></div>
@@ -3443,7 +5176,9 @@ onUnmounted(() => {
                       {{ item }}
                     </ElButton>
                   </div>
-                  <el-icon color="#409eff" size="16" @click="refreshParkResourceDistributionData"><Refresh /></el-icon>
+                  <button class="control-btn" @click="refreshParkResourceDistributionData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button
                     class="panel-fullscreen-btn"
@@ -3623,7 +5358,226 @@ onUnmounted(() => {
               </div>
             </el-tab-pane>
             <el-tab-pane label="终端设备分布明细" name="tab2">
-              <div class="content-placeholder"><p>终端设备分布明细</p></div>
+              <div class="header-actions">
+                <div class="actions-left"><p></p></div>
+                <div class="actions-right">
+                  <div class="view-btn-group">
+                    <ElButton
+                      v-for="item in deviceDistributionViewBtnList"
+                      :key="item"
+                      :type="activeDeviceDistributionView === item ? 'primary' : ''"
+                      plain
+                      @click="changeDeviceDistributionView(item)"
+                      class="view-btn"
+                    >
+                      {{ item }}
+                    </ElButton>
+                  </div>
+                  <button class="control-btn" @click="refreshDeviceDistributionData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
+                  <el-icon color="#409eff" size="16"><Filter /></el-icon>
+                  <button
+                    class="panel-fullscreen-btn"
+                    @click="togglePanelFullscreen('parkResourcePanelRef')"
+                  >
+                    <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
+                  </button>
+                </div>
+              </div>
+              <!-- 卡片视图 -->
+              <div v-if="activeDeviceDistributionView === '卡片'" class="view-content-low">
+                <div class="indicator-cards3">
+                  <div class="indicator-card3 card1">
+                    <div class="indicator-title">设备总数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ parkDeviceIndicators.tbDeviceTotalCount }}</span>
+                    </div>
+                    <div class="indicator-unit">台</div>
+                  </div>
+                  <div class="indicator-card3 card2">
+                    <div class="indicator-title">在线数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ parkDeviceIndicators.tbDeviceOnlineCount }}</span>
+                    </div>
+                    <div class="indicator-unit">台</div>
+                  </div>
+                  <div class="indicator-card3 card3">
+                    <div class="indicator-title">正常运行数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ parkDeviceIndicators.tbDeviceNormalCount }}</span>
+                    </div>
+                    <div class="indicator-unit">台</div>
+                  </div>
+                  <div class="indicator-card3 card4">
+                    <div class="indicator-title">故障数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ parkDeviceIndicators.tbDeviceFaultCount }}</span>
+                    </div>
+                    <div class="indicator-unit">台</div>
+                  </div>
+                </div>
+              </div>
+              <!-- 柱状图视图 -->
+              <div v-if="activeDeviceDistributionView === '柱状图'" class="view-content-low">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                >
+                  <VerticalBar2
+                    :x-axis="deviceDistributionTypeCountData.xAxis"
+                    :series="deviceDistributionTypeCountData.series"
+                    unit="台"
+                    title="各类型设备数量对比"
+                    :key="deviceDistributionChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <VerticalBar1
+                    :x-axis="deviceDistributionParkingCountData.xAxis"
+                    :series="deviceDistributionParkingCountData.series"
+                    unit="台"
+                    title="各停车场设备数量对比"
+                    :key="deviceDistributionChartRefreshKey"
+                  />
+                </div>
+              </div>
+              <!-- 饼图视图 -->
+              <div v-if="activeDeviceDistributionView === '饼图'" class="view-content-low">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                >
+                  <ChartPie1
+                    :data="parkDeviceTypeRatio"
+                    title="设备类型占比"
+                    :key="deviceDistributionChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <ChartPie2
+                    :data="parkDeviceStatusRatio"
+                    title="运行状态占比"
+                    :key="deviceDistributionChartRefreshKey"
+                  />
+                </div>
+              </div>
+              <!-- 列表视图 -->
+              <div v-if="activeDeviceDistributionView === '列表'" class="view-content-low">
+                <div class="table-box4">
+                  <ElTable
+                    class="table4"
+                    :data="deviceDistributionList"
+                    border
+                    size="small"
+                    width="100%"
+                    height="100%"
+                    table-layout="fixed"
+                    highlight-current-row
+                    @row-click="(row) => openDeviceDistributionDetailDialog(row)"
+                  >
+                    <ElTableColumn
+                      prop="tbDeviceName"
+                      label="设备名称"
+                      align="center"
+                      min-width="120"
+                    />
+                    <ElTableColumn
+                      prop="tbDeviceDeviceNo"
+                      label="设备编号"
+                      align="center"
+                      min-width="100"
+                    />
+                    <ElTableColumn
+                      prop="sysDeviceTypeName"
+                      label="设备类型"
+                      align="center"
+                      min-width="100"
+                    />
+                    <ElTableColumn
+                      prop="tbParkingName"
+                      label="所属停车场"
+                      align="center"
+                      min-width="120"
+                    />
+                    <ElTableColumn
+                      prop="tbDeviceInstallPosition"
+                      label="安装位置"
+                      align="center"
+                      min-width="120"
+                    />
+                    <ElTableColumn
+                      prop="sysDeviceStatusName"
+                      label="运行状态"
+                      align="center"
+                      width="100"
+                    >
+                      <template #default="scope">
+                        <ElTag
+                          :type="scope.row.sysDeviceStatusName === '正常运行' || scope.row.sysDeviceStatusName === '在线' ? 'success' :
+                           scope.row.sysDeviceStatusName === '故障' ? 'danger' :
+                           scope.row.sysDeviceStatusName === '离线' ? 'warning' : 'info'"
+                        >
+                          {{ scope.row.sysDeviceStatusName || '-' }}
+                        </ElTag>
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="tbDeviceInstallTime"
+                      label="安装时间"
+                      align="center"
+                      width="120"
+                    >
+                      <template #default="scope">
+                        {{ formatTimeStamp(scope.row.tbDeviceInstallTime) }}
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      label="操作"
+                      align="center"
+                      width="100"
+                      fixed="right"
+                    >
+                      <template #default="scope">
+                        <ElButton
+                          type="primary"
+                          size="small"
+                          plain
+                          @click.stop="openDeviceMaintenanceDialog(scope.row)"
+                        >
+                          运维
+                        </ElButton>
+                      </template>
+                    </ElTableColumn>
+                  </ElTable>
+                </div>
+              </div>
             </el-tab-pane>
           </el-tabs>
           <div class="panel-footer"></div>
@@ -3646,7 +5600,9 @@ onUnmounted(() => {
                       {{ item }}
                     </ElButton>
                   </div>
-                  <el-icon color="#409eff" size="16" @click="refreshSupplyDemandData"><Refresh /></el-icon>
+                  <button class="control-btn" @click="refreshSupplyDemandData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button
                     class="panel-fullscreen-btn"
@@ -3824,7 +5780,259 @@ onUnmounted(() => {
               </div>
             </el-tab-pane>
             <el-tab-pane label="运维收费合规" name="tab2">
-              <div class="content-placeholder"><p>运维收费合规</p></div>
+              <div class="header-actions">
+                <div class="actions-left"><p></p></div>
+                <div class="actions-right">
+                  <div class="view-btn-group">
+                    <ElButton
+                      v-for="item in complianceViewBtnList"
+                      :key="item"
+                      :type="activeComplianceView === item ? 'primary' : ''"
+                      plain
+                      @click="changeComplianceView(item)"
+                      class="view-btn"
+                    >
+                      {{ item }}
+                    </ElButton>
+                  </div>
+                  <button class="control-btn" @click="refreshComplianceData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
+                  <el-icon color="#409eff" size="16"><Filter /></el-icon>
+                  <button
+                    class="panel-fullscreen-btn"
+                    @click="togglePanelFullscreen('bottomRight')"
+                  >
+                    <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
+                  </button>
+                </div>
+              </div>
+              <!-- 卡片视图 -->
+              <div v-if="activeComplianceView === '卡片'" class="view-content">
+                <div class="indicator-cards5">
+                  <div class="indicator-card5 card1">
+                    <div class="indicator-title">总合规率</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(complianceIndicators.totalCompliantRate) }}</span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                  <div class="indicator-card5 card2">
+                    <div class="indicator-title">运维合规率</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(complianceIndicators.operationCompliantRate) }}</span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                  <div class="indicator-card5 card3">
+                    <div class="indicator-title">收费合规率</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(complianceIndicators.chargeCompliantRate) }}</span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                  <div class="indicator-card5 card4">
+                    <div class="indicator-title">不合规数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ complianceIndicators.nonCompliantCount }}</span>
+                    </div>
+                    <div class="indicator-unit">个</div>
+                  </div>
+                  <div class="indicator-card5 card5">
+                    <div class="indicator-title">处理完成率</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(complianceIndicators.handledRate) }}</span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                </div>
+              </div>
+              <!-- 折线图视图 -->
+              <div v-if="activeComplianceView === '折线图'" class="view-content">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                >
+                  <ChartLine4
+                    :data="complianceRateTrendData"
+                    title="统计周期内合规率变化趋势"
+                    :key="complianceChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <ChartLine2
+                    :data="complianceNonCompliantTrendData"
+                    title="统计周期内不合规数变化趋势"
+                    :key="complianceChartRefreshKey"
+                  />
+                </div>
+              </div>
+              <!-- 柱状图视图 -->
+              <div v-if="activeComplianceView === '柱状图'" class="view-content">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                >
+                  <VerticalBar3
+                    :x-axis="complianceRegionRateCompareData.xAxis"
+                    :series="complianceRegionRateCompareData.series"
+                    unit="%"
+                    title="各区域合规率对比"
+                    :key="complianceChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <VerticalBar1
+                    :x-axis="complianceTypeRateCompareData.xAxis"
+                    :series="complianceTypeRateCompareData.series"
+                    unit="%"
+                    title="各合规类型合规率对比"
+                    :key="complianceChartRefreshKey"
+                  />
+                </div>
+              </div>
+              <!-- 饼图视图 -->
+              <div v-if="activeComplianceView === '饼图'" class="view-content">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 32%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                >
+                  <ChartPie6
+                    :data="complianceTypeRatioData"
+                    title="合规类型占比"
+                    :key="complianceChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 32%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <ChartPie6
+                    :data="complianceNonCompliantItemRatioData"
+                    title="不合规项占比"
+                    :key="complianceChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 32%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <ChartPie6
+                    :data="complianceRegionDistributionRatioData"
+                    title="区域不合规分布占比"
+                    :key="complianceChartRefreshKey"
+                  />
+                </div>
+              </div>
+              <!-- 列表视图 -->
+              <div v-if="activeComplianceView === '列表'" class="view-content">
+                <div class="table-box4">
+                  <ElTable
+                    class="table4"
+                    :data="complianceList"
+                    border
+                    size="small"
+                    width="100%"
+                    height="100%"
+                    table-layout="fixed"
+                    highlight-current-row
+                    @row-click="(row) => openComplianceDetailDialog(row)"
+                  >
+                    <ElTableColumn
+                      prop="tbCompliancePeriod"
+                      label="统计周期"
+                      align="center"
+                      min-width="80"
+                    />
+                    <ElTableColumn
+                      prop="sysComplianceTypeName"
+                      label="合规类型"
+                      align="center"
+                    />
+                    <ElTableColumn
+                      prop="tbComplianceTotalCheck"
+                      label="总检查数"
+                      align="center"
+                    />
+                    <ElTableColumn
+                      prop="tbComplianceCompliantCount"
+                      label="合规数"
+                      align="center"
+                    />
+                    <ElTableColumn
+                      prop="tbComplianceNonCompliantCount"
+                      label="不合规数"
+                      align="center"
+                    />
+                    <ElTableColumn
+                      prop="tbComplianceCompliantRate"
+                      label="合规率(%)"
+                      align="center"
+                    >
+                      <template #default="scope">
+                        {{ formatDecimal(scope.row.tbComplianceCompliantRate) }}
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="sysNonCompliantItemName"
+                      label="主要不合规项"
+                      align="center"
+                      min-width="150"
+                    >
+                      <template #default="scope">
+                        <span
+                          @click.stop="openNonCompliantTraceDialog(scope.row.sysNonCompliantItemName)"
+                          style="color:#409eff;cursor:pointer;text-decoration: underline;"
+                        >
+                          {{ scope.row.sysNonCompliantItemName }}
+                        </span>
+                      </template>
+                    </ElTableColumn>
+                  </ElTable>
+                </div>
+              </div>
             </el-tab-pane>
           </el-tabs>
           <div class="panel-footer"></div>
@@ -4786,6 +6994,1305 @@ onUnmounted(() => {
         </template>
       </el-dialog>
 
+      <!-- 终端设备分布明细详情弹窗 -->
+      <el-dialog
+        v-model="deviceDistributionDetailDialogVisible"
+        width="60%"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="终端设备分布明细详情"
+      >
+        <div class="header-actions" style="margin-bottom:10px;">
+          <div class="actions-right">
+            <div class="view-btn-group">
+              <ElButton
+                v-for="item in deviceDistributionDetailViewBtnList"
+                :key="item"
+                :type="activeDeviceDistributionDetailView === item ? 'primary' : ''"
+                plain
+                @click="changeDeviceDistributionDetailView(item)"
+                class="view-btn"
+              >
+                {{ item }}
+              </ElButton>
+            </div>
+          </div>
+        </div>
+        <!-- 基本信息视图 -->
+        <div v-if="activeDeviceDistributionDetailView === '基本信息'" class="view-content" style="padding:0;">
+          <ElDescriptions bordered :column="2" class="desc-detail">
+            <ElDescriptionsItem label="设备ID" span="2">
+              {{ deviceDistributionDetailSelectedRow.tbDeviceDeviceId || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="设备名称">
+              {{ deviceDistributionDetailSelectedRow.tbDeviceName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="设备编号">
+              {{ deviceDistributionDetailSelectedRow.tbDeviceDeviceNo || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="设备类型">
+              {{ deviceDistributionDetailSelectedRow.sysDeviceTypeName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="所属停车场">
+              {{ deviceDistributionDetailSelectedRow.tbParkingName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="安装位置">
+              {{ deviceDistributionDetailSelectedRow.tbDeviceInstallPosition || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="运行状态">
+              <ElTag
+                :type="deviceDistributionDetailSelectedRow.sysDeviceStatusName === '正常运行' || deviceDistributionDetailSelectedRow.sysDeviceStatusName === '在线' ? 'success' :
+                 deviceDistributionDetailSelectedRow.sysDeviceStatusName === '故障' ? 'danger' :
+                 deviceDistributionDetailSelectedRow.sysDeviceStatusName === '离线' ? 'warning' : 'info'"
+              >
+                {{ deviceDistributionDetailSelectedRow.sysDeviceStatusName || '-' }}
+              </ElTag>
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="安装时间">
+              {{ formatTimeStamp(deviceDistributionDetailSelectedRow.tbDeviceInstallTime) }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="在线时长">
+              {{ deviceDistributionDetailSelectedRow.tbDeviceOnlineDuration || 0 }} 小时
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="最近故障时间">
+              {{ formatTimeStamp(deviceDistributionDetailSelectedRow.tbDeviceFaultTime) }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="负责人">
+              {{ deviceDistributionDetailSelectedRow.sysUserUserName || '-' }}
+            </ElDescriptionsItem>
+          </ElDescriptions>
+        </div>
+        <!-- 运行数据视图 -->
+        <div v-if="activeDeviceDistributionDetailView === '运行数据'" class="view-content" style="padding:0;">
+          <ElDescriptions bordered :column="2" class="desc-detail">
+            <ElDescriptionsItem label="设备运行率">
+              {{ formatDecimal(deviceDistributionDetailSelectedRow.operationData.tbDeviceUptime) }}%
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="平均响应时间">
+              {{ deviceDistributionDetailSelectedRow.operationData.tbDeviceResponseTime }} 毫秒
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="最近维护时间">
+              {{ formatTimeStamp(deviceDistributionDetailSelectedRow.operationData.tbDeviceLastMaintainTime) }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="下次维护时间">
+              {{ formatTimeStamp(deviceDistributionDetailSelectedRow.operationData.tbDeviceNextMaintainTime) }}
+            </ElDescriptionsItem>
+          </ElDescriptions>
+        </div>
+        <!-- 运维记录视图 -->
+        <div v-if="activeDeviceDistributionDetailView === '运维记录'" class="view-content" style="padding:0;">
+          <div style="height:400px;">
+            <ElTable
+              :data="deviceDistributionDetailSelectedRow.maintenanceRecords"
+              border
+              size="small"
+              width="100%"
+              height="100%"
+              table-layout="fixed"
+            >
+              <ElTableColumn
+                prop="time"
+                label="运维时间"
+                align="center"
+                width="180"
+              >
+                <template #default="scope">
+                  {{ formatTimeStamp(scope.row.time) }}
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
+                prop="type"
+                label="运维类型"
+                align="center"
+                width="100"
+              >
+                <template #default="scope">
+                  <ElTag :type="scope.row.type === '巡检' ? 'success' : 'warning'">
+                    {{ scope.row.type || '-' }}
+                  </ElTag>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
+                prop="content"
+                label="运维内容"
+                align="center"
+                min-width="200"
+              />
+              <ElTableColumn
+                prop="operator"
+                label="操作人"
+                align="center"
+                width="100"
+              />
+              <ElTableColumn
+                prop="status"
+                label="状态"
+                align="center"
+                width="100"
+              >
+                <template #default="scope">
+                  <ElTag :type="scope.row.status === '已完成' ? 'success' : 'info'">
+                    {{ scope.row.status || '-' }}
+                  </ElTag>
+                </template>
+              </ElTableColumn>
+            </ElTable>
+          </div>
+        </div>
+        <template #footer>
+          <ElButton plain @click="closeDeviceDistributionDetailDialog">关闭</ElButton>
+        </template>
+      </el-dialog>
+      <!-- 运维工单弹窗 -->
+      <el-dialog
+        v-model="deviceMaintenanceDialogVisible"
+        width="40%"
+        :close-on-click-modal="false"
+        :close-on-press-escape="false"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="提交运维工单"
+      >
+        <el-form
+          ref="maintenanceFormRef"
+          :model="maintenanceForm"
+          :rules="maintenanceFormRules"
+          label-width="80px"
+          style="width: 100%;"
+        >
+          <el-form-item label="运维类型" prop="maintenanceType">
+            <el-radio-group
+              v-model="maintenanceForm.maintenanceType"
+              placeholder="请选择运维类型"
+              style="width: 100%;"
+            >
+              <el-radio label="巡检" value="巡检" />
+              <el-radio label="维修" value="维修" />
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="运维内容">
+            <el-input
+              v-model="maintenanceForm.maintenanceContent"
+              type="textarea"
+              :rows="4"
+              placeholder="请输入运维内容（可选）"
+            />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <ElButton plain @click="closeDeviceMaintenanceDialog">取消</ElButton>
+          <ElButton type="primary" @click="submitDeviceMaintenanceData(maintainingDeviceId, maintenanceForm)">提交</ElButton>
+        </template>
+      </el-dialog>
+
+      <!-- 终端设备详情弹窗 -->
+      <el-dialog
+        v-model="terminalDeviceDetailDialogVisible"
+        width="60%"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="终端设备详情"
+      >
+        <div class="header-actions" style="margin-bottom:10px;">
+          <div class="actions-right">
+            <div class="view-btn-group">
+              <ElButton
+                v-for="item in terminalDeviceDetailViewBtnList"
+                :key="item"
+                :type="activeTerminalDeviceDetailView === item ? 'primary' : ''"
+                plain
+                @click="changeTerminalDeviceDetailView(item)"
+                class="view-btn"
+              >
+                {{ item }}
+              </ElButton>
+            </div>
+          </div>
+        </div>
+        <!-- 设备参数视图 -->
+        <div v-if="activeTerminalDeviceDetailView === '设备参数'" class="view-content" style="padding:0;">
+          <div style="display: flex; flex-direction: column; gap: 20px; margin-bottom: 20px; height:400px; width: 100%;">
+            <div style="flex: 1;">
+              <ElDescriptions bordered :column="3" class="desc-detail" title="基本信息">
+                <ElDescriptionsItem label="设备ID">
+                  {{ terminalDeviceDetailSelectedRow.tbDeviceDeviceId || '-' }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="设备名称">
+                  {{ terminalDeviceDetailSelectedRow.tbDeviceName || '-' }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="设备编号">
+                  {{ terminalDeviceDetailSelectedRow.tbDeviceDeviceNo || '-' }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="所属停车场">
+                  {{ terminalDeviceDetailSelectedRow.tbParkingName || '-' }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="设备类型">
+                  {{ terminalDeviceDetailSelectedRow.sysDeviceTypeName || '-' }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="运行状态">
+                  <ElTag :type="terminalDeviceDetailSelectedRow.sysDeviceStatusName === '在线' ? 'success' : 'warning'">
+                    {{ terminalDeviceDetailSelectedRow.sysDeviceStatusName || '-' }}
+                  </ElTag>
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="故障次数">
+                  {{ terminalDeviceDetailSelectedRow.tbDeviceFaultCount || 0 }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="累计运维次数">
+                  {{ terminalDeviceDetailSelectedRow.tbDeviceMaintainCount || 0 }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="下次巡检时间">
+                  {{ formatTimeStamp(terminalDeviceDetailSelectedRow.tbDeviceNextInspectTime) }}
+                </ElDescriptionsItem>
+              </ElDescriptions>
+            </div>
+            <div style="flex: 1;">
+              <h3>设备参数</h3>
+              <ElTable
+                :data="terminalDeviceDetailSelectedRow.deviceParams"
+                border
+                size="small"
+                width="100%"
+                height="200"
+                table-layout="fixed"
+              >
+                <ElTableColumn
+                  prop="paramName"
+                  label="参数名称"
+                  align="center"
+                  width="150"
+                />
+                <ElTableColumn
+                  prop="paramValue"
+                  label="参数值"
+                  align="center"
+                  min-width="200"
+                />
+              </ElTable>
+            </div>
+          </div>
+        </div>
+        <!-- 运行日志视图 -->
+        <div v-if="activeTerminalDeviceDetailView === '运行日志'" class="view-content" style="padding:0;">
+          <div style="height:400px;">
+            <ElTable
+              :data="terminalDeviceDetailSelectedRow.runLogs"
+              border
+              size="small"
+              width="100%"
+              height="100%"
+              table-layout="fixed"
+            >
+              <ElTableColumn
+                prop="logTime"
+                label="日志时间"
+                align="center"
+                width="180"
+              >
+                <template #default="scope">
+                  {{ formatTimeStamp(scope.row.logTime) }}
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
+                prop="logContent"
+                label="日志内容"
+                align="center"
+                min-width="300"
+              />
+              <ElTableColumn
+                prop="logLevel"
+                label="日志级别"
+                align="center"
+                width="100"
+              >
+                <template #default="scope">
+                  <ElTag :type="scope.row.logLevel === 'ERROR' ? 'danger' : 'info'">
+                    {{ scope.row.logLevel || '-' }}
+                  </ElTag>
+                </template>
+              </ElTableColumn>
+            </ElTable>
+          </div>
+        </div>
+        <!-- 运维记录视图 -->
+        <div v-if="activeTerminalDeviceDetailView === '运维记录'" class="view-content" style="padding:0;">
+          <div style="height:400px;">
+            <ElTable
+              :data="terminalDeviceDetailSelectedRow.maintainRecords"
+              border
+              size="small"
+              width="100%"
+              height="100%"
+              table-layout="fixed"
+            >
+              <ElTableColumn
+                prop="maintainTime"
+                label="运维时间"
+                align="center"
+                width="180"
+              >
+                <template #default="scope">
+                  {{ formatTimeStamp(scope.row.maintainTime) }}
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
+                prop="maintainType"
+                label="运维类型"
+                align="center"
+                width="120"
+              />
+              <ElTableColumn
+                prop="maintainContent"
+                label="运维内容"
+                align="center"
+                min-width="300"
+              />
+            </ElTable>
+          </div>
+        </div>
+        <!-- 故障记录视图 -->
+        <div v-if="activeTerminalDeviceDetailView === '故障记录'" class="view-content" style="padding:0;">
+          <div style="height:400px;">
+            <ElTable
+              :data="terminalDeviceDetailSelectedRow.faultRecords"
+              border
+              size="small"
+              width="100%"
+              height="100%"
+              table-layout="fixed"
+            >
+              <ElTableColumn
+                prop="faultTime"
+                label="故障时间"
+                align="center"
+                width="180"
+              >
+                <template #default="scope">
+                  {{ formatTimeStamp(scope.row.faultTime) }}
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
+                prop="faultContent"
+                label="故障内容"
+                align="center"
+                min-width="300"
+              />
+              <ElTableColumn
+                prop="handleStatus"
+                label="处理状态"
+                align="center"
+                width="120"
+              >
+                <template #default="scope">
+                  <ElTag :type="scope.row.handleStatus === '已修复' ? 'success' : 'warning'">
+                    {{ scope.row.handleStatus || '-' }}
+                  </ElTag>
+                </template>
+              </ElTableColumn>
+            </ElTable>
+          </div>
+        </div>
+        <template #footer>
+          <ElButton plain @click="closeTerminalDeviceDetailDialog">关闭</ElButton>
+        </template>
+      </el-dialog>
+      <!-- 终端设备运维弹窗 -->
+      <el-dialog
+        v-model="terminalDeviceMaintenanceDialogVisible"
+        width="40%"
+        :close-on-click-modal="false"
+        :close-on-press-escape="false"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="设备运维"
+      >
+        <el-form
+          ref="terminalDeviceMaintenanceFormRef"
+          :model="terminalDeviceMaintenanceForm"
+          :rules="terminalDeviceMaintenanceFormRules"
+          label-width="100px"
+          style="width: 100%;"
+        >
+          <el-form-item label="运维类型" prop="maintenanceType">
+            <el-radio-group
+              v-model="terminalDeviceMaintenanceForm.maintenanceType"
+              placeholder="请选择运维类型"
+              style="width: 100%;"
+            >
+              <el-radio label="巡检" value="巡检" />
+              <el-radio label="维修" value="维修" />
+              <el-radio label="校准" value="校准" />
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="运维内容">
+            <el-input
+              v-model="terminalDeviceMaintenanceForm.maintenanceContent"
+              type="textarea"
+              :rows="4"
+              placeholder="请输入运维内容（可选）"
+            />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <ElButton plain @click="closeTerminalDeviceMaintenanceDialog">取消</ElButton>
+          <ElButton type="primary" @click="submitTerminalDeviceMaintenanceData(maintainingTerminalDeviceId, terminalDeviceMaintenanceForm)">提交</ElButton>
+        </template>
+      </el-dialog>
+
+      <!-- 设备运维趋势详情弹窗 -->
+      <el-dialog
+        v-model="maintainTrendDetailDialogVisible"
+        width="60%"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="设备运维趋势详情"
+      >
+        <div class="header-actions" style="margin-bottom:10px;">
+          <div class="actions-right">
+            <div class="view-btn-group">
+              <ElButton
+                v-for="item in maintainTrendDetailViewBtnList"
+                :key="item"
+                :type="activeMaintainTrendDetailView === item ? 'primary' : ''"
+                plain
+                @click="changeMaintainTrendDetailView(item)"
+                class="view-btn"
+              >
+                {{ item }}
+              </ElButton>
+            </div>
+          </div>
+        </div>
+        <!-- 工单明细视图 -->
+        <div v-if="activeMaintainTrendDetailView === '工单明细'" class="view-content" style="padding:0;">
+          <div style="display: flex; gap: 20px; margin-bottom: 20px; height:400px; width: 100%;">
+            <div style="flex: 1;">
+              <ElTable
+                  :data="maintainTrendDetailSelectedRow.workOrderDetails"
+                  border
+                  size="small"
+                  width="100%"
+                  height="100%"
+                  table-layout="fixed"
+                >
+                  <ElTableColumn
+                    prop="orderNo"
+                    label="工单编号"
+                    align="center"
+                    width="120"
+                  >
+                    <template #default="scope">
+                  <span
+                    @click="openWorkOrderDetailDialog(scope.row.orderNo)"
+                    style="color:#409eff;cursor:pointer;text-decoration: underline;"
+                  >
+                    {{ scope.row.orderNo }}
+                  </span>
+                    </template>
+                  </ElTableColumn>
+                  <ElTableColumn
+                    prop="deviceType"
+                    label="设备类型"
+                    align="center"
+                    width="120"
+                  />
+                  <ElTableColumn
+                    prop="faultType"
+                    label="故障类型"
+                    align="center"
+                    width="120"
+                  >
+                    <template #default="scope">
+                  <span
+                    @click="openFaultTraceDialog(scope.row.faultType)"
+                    style="color:#409eff;cursor:pointer;text-decoration: underline;"
+                  >
+                    {{ scope.row.faultType }}
+                  </span>
+                    </template>
+                  </ElTableColumn>
+                  <ElTableColumn
+                    prop="status"
+                    label="状态"
+                    align="center"
+                    width="100"
+                  >
+                    <template #default="scope">
+                      <ElTag :type="scope.row.status === '已完成' ? 'success' :
+                         scope.row.status === '处理中' ? 'warning' :
+                         scope.row.status === '待处理' ? 'danger' : 'info'">
+                        {{ scope.row.status || '-' }}
+                      </ElTag>
+                    </template>
+                  </ElTableColumn>
+                  <ElTableColumn
+                    prop="duration"
+                    label="处置时长(分钟)"
+                    align="center"
+                    width="120"
+                  />
+                </ElTable>
+            </div>
+            <div style="flex: 1;">
+              <ElDescriptions bordered :column="2" class="desc-detail">
+                <ElDescriptionsItem label="统计周期">
+                  {{ maintainTrendDetailSelectedRow.tbMaintainTrendPeriod || '-' }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="日期">
+                  {{ maintainTrendDetailSelectedRow.tbMaintainTrendDate || '-' }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="工单完成率">
+                  {{ formatDecimal(maintainTrendDetailSelectedRow.tbMaintainTrendCompletionRate) }}%
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="环比工单增长">
+                  {{ formatDecimal(maintainTrendDetailSelectedRow.tbMaintainTrendChainGrowth) }}%
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="完成率">
+                  {{ formatDecimal(maintainTrendDetailSelectedRow.disposalSituation.completedRate) }}%
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="平均处置时长">
+                  {{ formatDecimal(maintainTrendDetailSelectedRow.disposalSituation.avgDuration) }} 分钟
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="紧急工单数">
+                  {{ maintainTrendDetailSelectedRow.disposalSituation.urgentCount || 0 }} 个
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="普通工单数">
+                  {{ maintainTrendDetailSelectedRow.disposalSituation.normalCount || 0 }} 个
+                </ElDescriptionsItem>
+              </ElDescriptions>
+            </div>
+          </div>
+        </div>
+        <!-- 故障分布视图 -->
+        <div v-if="activeMaintainTrendDetailView === '故障分布'" class="view-content" style="padding:0;">
+          <div style="flex: 1;">
+            <ChartPie5
+              :data="maintainTrendDetailSelectedRow.faultDistribution"
+              title="故障分布"
+              :key="maintainTrendChartRefreshKey"
+            />
+          </div>
+        </div>
+        <!-- 处置情况视图 -->
+        <div v-if="activeMaintainTrendDetailView === '处置情况'" class="view-content" style="padding:0;">
+          <div style="display: flex; gap: 20px; width: 100%;">
+            <div style="flex: 1;">
+              <ElDescriptions bordered :column="1" class="desc-detail" title="处置概况">
+                <ElDescriptionsItem label="工单总数">
+                  {{ maintainTrendDetailSelectedRow.workOrderDetails.length || 0 }} 个
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="已完成数">
+                  {{ maintainTrendDetailSelectedRow.workOrderDetails.filter(item => item.status === '已完成').length || 0 }} 个
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="处理中数">
+                  {{ maintainTrendDetailSelectedRow.workOrderDetails.filter(item => item.status === '处理中').length || 0 }} 个
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="待处理数">
+                  {{ maintainTrendDetailSelectedRow.workOrderDetails.filter(item => item.status === '待处理').length || 0 }} 个
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="平均处置时长">
+                  {{ formatDecimal(maintainTrendDetailSelectedRow.disposalSituation.avgDuration) }} 分钟
+                </ElDescriptionsItem>
+              </ElDescriptions>
+            </div>
+            <div style="flex: 2;">
+              <h3>故障设备列表</h3>
+              <div style="height:300px;">
+                <ElTable
+                  :data="maintainTrendDetailSelectedRow.faultDeviceList"
+                  border
+                  size="small"
+                  width="100%"
+                  height="100%"
+                  table-layout="fixed"
+                >
+                  <ElTableColumn
+                    prop="deviceId"
+                    label="设备ID"
+                    align="center"
+                    width="120"
+                  />
+                  <ElTableColumn
+                    prop="deviceName"
+                    label="设备名称"
+                    align="center"
+                    min-width="150"
+                  />
+                  <ElTableColumn
+                    prop="deviceType"
+                    label="设备类型"
+                    align="center"
+                    width="120"
+                  />
+                  <ElTableColumn
+                    prop="faultType"
+                    label="故障类型"
+                    align="center"
+                    width="120"
+                  >
+                    <template #default="scope">
+                      <span
+                        @click="openFaultTraceDialog(scope.row.faultType)"
+                        style="color:#409eff;cursor:pointer;text-decoration: underline;"
+                      >
+                        {{ scope.row.faultType }}
+                      </span>
+                    </template>
+                  </ElTableColumn>
+                  <ElTableColumn
+                    prop="faultTime"
+                    label="故障时间"
+                    align="center"
+                    width="180"
+                  >
+                    <template #default="scope">
+                      {{ formatTimeStamp(scope.row.faultTime) }}
+                    </template>
+                  </ElTableColumn>
+                </ElTable>
+              </div>
+            </div>
+          </div>
+        </div>
+        <template #footer>
+          <ElButton plain @click="closeMaintainTrendDetailDialog">关闭</ElButton>
+        </template>
+      </el-dialog>
+      <!-- 故障追溯弹窗 -->
+      <el-dialog
+        v-model="faultTraceDialogVisible"
+        width="60%"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        class="park-dialog"
+        center
+        destroy-on-close
+        :title="`故障追溯 - ${currentTraceFaultType}`"
+      >
+        <div class="view-content" style="padding:0; height: 60vh; overflow-y: auto;">
+          <div style="height:400px;">
+            <ElTable
+              :data="faultTraceList"
+              border
+              size="small"
+              width="100%"
+              height="100%"
+              table-layout="fixed"
+            >
+              <ElTableColumn
+                prop="deviceId"
+                label="设备ID"
+                align="center"
+              />
+              <ElTableColumn
+                prop="deviceName"
+                label="设备名称"
+                align="center"
+                min-width="150"
+              />
+              <ElTableColumn
+                prop="deviceType"
+                label="设备类型"
+                align="center"
+              />
+              <ElTableColumn
+                prop="faultType"
+                label="故障类型"
+                align="center"
+              />
+              <ElTableColumn
+                prop="faultTime"
+                label="故障时间"
+                align="center"
+                min-width="150"
+              >
+                <template #default="scope">
+                  {{ formatTimeStamp(scope.row.faultTime) }}
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
+                prop="workOrderNo"
+                label="关联工单"
+                align="center"
+              >
+                <template #default="scope">
+                  <span
+                    @click="openWorkOrderDetailDialog(scope.row.orderNo)"
+                    style="color:#409eff;cursor:pointer;text-decoration: underline;"
+                  >
+                    {{ scope.row.orderNo }}
+                  </span>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
+                prop="workOrderStatus"
+                label="工单状态"
+                align="center"
+              >
+                <template #default="scope">
+                  <ElTag :type="scope.row.workOrderStatus === '已完成' ? 'success' :
+                             scope.row.workOrderStatus === '处理中' ? 'warning' :
+                             scope.row.workOrderStatus === '待处理' ? 'danger' : 'info'">
+                    {{ scope.row.workOrderStatus || '-' }}
+                  </ElTag>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
+                prop="handler"
+                label="处理人"
+                align="center"
+              />
+              <ElTableColumn
+                prop="handleTime"
+                label="处理时间"
+                align="center"
+                min-width="150"
+              >
+                <template #default="scope">
+                  {{ scope.row.handleTime ? formatTimeStamp(scope.row.handleTime) : '-' }}
+                </template>
+              </ElTableColumn>
+            </ElTable>
+          </div>
+        </div>
+        <template #footer>
+          <ElButton plain @click="closeFaultTraceDialog">关闭</ElButton>
+        </template>
+      </el-dialog>
+      <!-- 工单详情弹窗 -->
+      <el-dialog
+        v-model="workOrderDetailDialogVisible"
+        width="50%"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        class="park-dialog"
+        center
+        destroy-on-close
+        :title="`工单详情 - ${workOrderDetailSelectedRow.orderNo}`"
+      >
+        <div class="view-content" style="padding:0; height: 60vh; overflow-y: auto;">
+          <ElDescriptions bordered :column="2" class="desc-detail">
+            <ElDescriptionsItem label="工单编号" span="2">
+              {{ workOrderDetailSelectedRow.orderNo || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="工单状态" span="2">
+              <ElTag :type="workOrderDetailSelectedRow.orderStatus === '已完成' ? 'success' :
+                         workOrderDetailSelectedRow.orderStatus === '处理中' ? 'warning' :
+                         workOrderDetailSelectedRow.orderStatus === '待处理' ? 'danger' : 'info'">
+                {{ workOrderDetailSelectedRow.orderStatus || '-' }}
+              </ElTag>
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="设备名称">
+              {{ workOrderDetailSelectedRow.deviceName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="设备类型">
+              {{ workOrderDetailSelectedRow.deviceType || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="故障类型">
+              {{ workOrderDetailSelectedRow.faultType || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="上报时间">
+              {{ formatTimeStamp(workOrderDetailSelectedRow.reportTime) }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="上报人">
+              {{ workOrderDetailSelectedRow.reportPerson || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="处理人">
+              {{ workOrderDetailSelectedRow.handler || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="处理时间">
+              {{ formatTimeStamp(workOrderDetailSelectedRow.handleTime) }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="处理时长">
+              {{ workOrderDetailSelectedRow.handleDuration || 0 }} 分钟
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="处理结果" span="2">
+              {{ workOrderDetailSelectedRow.handleResult || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="故障描述" span="2">
+              {{ workOrderDetailSelectedRow.faultDescription || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="处理步骤" span="2">
+              {{ workOrderDetailSelectedRow.handleSteps || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="使用备件">
+              {{ workOrderDetailSelectedRow.partsUsed || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="维修费用">
+              {{ workOrderDetailSelectedRow.cost || 0 }} 元
+            </ElDescriptionsItem>
+          </ElDescriptions>
+        </div>
+        <template #footer>
+          <ElButton plain @click="closeWorkOrderDetailDialog">关闭</ElButton>
+        </template>
+      </el-dialog>
+
+      <!-- 运维收费合规详情弹窗 -->
+      <el-dialog
+        v-model="complianceDetailDialogVisible"
+        width="70%"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="运维收费合规详情"
+      >
+        <div class="header-actions" style="margin-bottom:10px;">
+          <div class="actions-right">
+            <div class="view-btn-group">
+              <ElButton
+                v-for="item in complianceDetailViewBtnList"
+                :key="item"
+                :type="activeComplianceDetailView === item ? 'primary' : ''"
+                plain
+                @click="changeComplianceDetailView(item)"
+                class="view-btn"
+              >
+                {{ item }}
+              </ElButton>
+            </div>
+          </div>
+        </div>
+        <!-- 合规检查明细视图 -->
+        <div v-if="activeComplianceDetailView === '合规检查明细'" class="view-content" style="padding:0;">
+          <div style="display: flex; gap: 20px; margin-bottom: 20px; width: 100%;">
+            <div style="flex: 1;">
+              <ElDescriptions bordered :column="2" class="desc-detail">
+                <ElDescriptionsItem label="统计周期" span="2">
+                  {{ complianceDetailSelectedRow.tbCompliancePeriod || '-' }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="合规类型" span="2">
+                  {{ complianceDetailSelectedRow.sysComplianceTypeName || '-' }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="环比合规率变化">
+                  {{ formatDecimal(complianceDetailSelectedRow.tbComplianceChainCompliantChange) }}%
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="重点监控区域">
+                  {{ complianceDetailSelectedRow.tbRegionKeyMonitorName || '-' }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="不合规处理完成数">
+                  {{ complianceDetailSelectedRow.tbComplianceHandledCount || 0 }} 个
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="处理完成率">
+                  {{ formatDecimal(complianceDetailSelectedRow.tbComplianceHandledRate) }}%
+                </ElDescriptionsItem>
+              </ElDescriptions>
+            </div>
+            <div style="flex: 1; height:300px;">
+              <ElTable
+                :data="complianceDetailSelectedRow.checkDetails"
+                border
+                size="small"
+                width="100%"
+                height="100%"
+                table-layout="fixed"
+              >
+                <ElTableColumn
+                  prop="checkNo"
+                  label="检查编号"
+                  align="center"
+                  width="120"
+                />
+                <ElTableColumn
+                  prop="checkItem"
+                  label="检查项目"
+                  align="center"
+                  min-width="150"
+                />
+                <ElTableColumn
+                  prop="checkResult"
+                  label="检查结果"
+                  align="center"
+                  width="100"
+                >
+                  <template #default="scope">
+                    <ElTag :type="scope.row.checkResult === '合规' ? 'success' : 'danger'">
+                      {{ scope.row.checkResult || '-' }}
+                    </ElTag>
+                  </template>
+                </ElTableColumn>
+                <ElTableColumn
+                  prop="checkTime"
+                  label="检查时间"
+                  align="center"
+                  width="180"
+                >
+                  <template #default="scope">
+                    {{ formatTimeStamp(scope.row.checkTime) }}
+                  </template>
+                </ElTableColumn>
+              </ElTable>
+            </div>
+          </div>
+        </div>
+        <!-- 不合规项详情视图 -->
+        <div v-if="activeComplianceDetailView === '不合规项详情'" class="view-content" style="padding:0;">
+          <div style="height:300px; width: 100%;">
+            <ElTable
+              :data="complianceDetailSelectedRow.nonCompliantDetails"
+              border
+              size="small"
+              width="100%"
+              height="100%"
+              table-layout="fixed"
+            >
+              <ElTableColumn
+                prop="item"
+                label="不合规项"
+                align="center"
+                min-width="150"
+              >
+                <template #default="scope">
+                  <span
+                    @click="openNonCompliantTraceDialog(scope.row.item)"
+                    style="color:#409eff;cursor:pointer;text-decoration: underline;"
+                  >
+                    {{ scope.row.item }}
+                  </span>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
+                prop="description"
+                label="问题描述"
+                align="center"
+                min-width="200"
+              />
+              <ElTableColumn
+                prop="severity"
+                label="严重程度"
+                align="center"
+              >
+                <template #default="scope">
+                  <ElTag :type="scope.row.severity === '高' ? 'danger' :
+                             scope.row.severity === '中' ? 'warning' : 'success'">
+                    {{ scope.row.severity || '-' }}
+                  </ElTag>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
+                prop="responsible"
+                label="责任部门"
+                align="center"
+              />
+              <ElTableColumn
+                prop="deadline"
+                label="整改期限"
+                align="center"
+              >
+                <template #default="scope">
+                  {{ formatTimeStamp(scope.row.deadline) }}
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
+                label="操作"
+                align="center"
+                fixed="right"
+              >
+                <template #default="scope">
+                  <ElButton
+                    type="primary"
+                    size="small"
+                    plain
+                    @click="openComplianceHandleDialog(complianceDetailSelectedRow.tbComplianceId, scope.row.item)"
+                  >
+                    处理
+                  </ElButton>
+                </template>
+              </ElTableColumn>
+            </ElTable>
+          </div>
+        </div>
+        <!-- 处理记录视图 -->
+        <div v-if="activeComplianceDetailView === '处理记录'" class="view-content" style="padding:0;">
+          <div style="display: flex; gap: 20px; margin-bottom: 20px; width: 100%;">
+            <div style="height:300px; flex: 1;">
+              <h3>处理记录：</h3>
+              <ElTable
+                :data="complianceDetailSelectedRow.handleRecords"
+                border
+                size="small"
+                width="100%"
+                height="100%"
+                table-layout="fixed"
+              >
+                <ElTableColumn
+                  prop="recordNo"
+                  label="记录编号"
+                  align="center"
+                />
+                <ElTableColumn
+                  prop="handleItem"
+                  label="处理事项"
+                  align="center"
+                  min-width="120"
+                />
+                <ElTableColumn
+                  prop="handlePerson"
+                  label="处理人"
+                  align="center"
+                />
+                <ElTableColumn
+                  prop="handleTime"
+                  label="处理时间"
+                  align="center"
+                >
+                  <template #default="scope">
+                    {{ formatTimeStamp(scope.row.handleTime) }}
+                  </template>
+                </ElTableColumn>
+                <ElTableColumn
+                  prop="handleResult"
+                  label="处理结果"
+                  align="center"
+                >
+                  <template #default="scope">
+                    <ElTag :type="scope.row.handleResult === '已处理' ? 'success' :
+                               scope.row.handleResult === '处理中' ? 'warning' : 'danger'">
+                      {{ scope.row.handleResult || '-' }}
+                    </ElTag>
+                  </template>
+                </ElTableColumn>
+                <ElTableColumn
+                  prop="remark"
+                  label="备注"
+                  align="center"
+                  min-width="150"
+                />
+              </ElTable>
+            </div>
+            <div style="height:300px; flex: 1;">
+              <h3>不合规追溯列表：</h3>
+              <ElTable
+                :data="complianceDetailSelectedRow.nonCompliantTraceList"
+                border
+                size="small"
+                width="100%"
+                height="100%"
+                table-layout="fixed"
+              >
+                <ElTableColumn
+                  prop="recordId"
+                  label="记录ID"
+                  align="center"
+                />
+                <ElTableColumn
+                  prop="nonCompliantItem"
+                  label="不合规项"
+                  align="center"
+                >
+                  <template #default="scope">
+                    <span
+                      @click="openNonCompliantTraceDialog(scope.row.nonCompliantItem)"
+                      style="color:#409eff;cursor:pointer;text-decoration: underline;"
+                    >
+                      {{ scope.row.nonCompliantItem }}
+                    </span>
+                  </template>
+                </ElTableColumn>
+                <ElTableColumn
+                  prop="relatedParking"
+                  label="关联停车场"
+                  align="center"
+                />
+                <ElTableColumn
+                  prop="checkTime"
+                  label="检查时间"
+                  align="center"
+                >
+                  <template #default="scope">
+                    {{ formatTimeStamp(scope.row.checkTime) }}
+                  </template>
+                </ElTableColumn>
+                <ElTableColumn
+                  prop="status"
+                  label="状态"
+                  align="center"
+                >
+                  <template #default="scope">
+                    <ElTag :type="scope.row.status === '已处理' ? 'success' :
+                               scope.row.status === '处理中' ? 'warning' : 'danger'">
+                      {{ scope.row.status || '-' }}
+                    </ElTag>
+                  </template>
+                </ElTableColumn>
+                <ElTableColumn
+                  prop="workOrderNo"
+                  label="关联工单"
+                  align="center"
+                >
+                  <template #default="scope">
+                    {{ scope.row.workOrderNo || '暂无' }}
+                  </template>
+                </ElTableColumn>
+              </ElTable>
+            </div>
+          </div>
+        </div>
+        <template #footer>
+          <ElButton plain @click="closeComplianceDetailDialog">关闭</ElButton>
+        </template>
+      </el-dialog>
+      <!-- 不合规追溯弹窗 -->
+      <el-dialog
+        v-model="nonCompliantTraceDialogVisible"
+        width="70%"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        class="park-dialog"
+        center
+        destroy-on-close
+        :title="`不合规追溯 - ${currentTraceNonCompliantItem}`"
+      >
+        <div class="view-content" style="padding:0; height: 60vh; overflow-y: auto;">
+          <div style="height:400px;">
+            <ElTable
+              :data="nonCompliantTraceList"
+              border
+              size="small"
+              width="100%"
+              height="100%"
+              table-layout="fixed"
+            >
+              <ElTableColumn
+                prop="recordId"
+                label="记录ID"
+                align="center"
+              />
+              <ElTableColumn
+                prop="nonCompliantItem"
+                label="不合规项"
+                align="center"
+              />
+              <ElTableColumn
+                prop="relatedParking"
+                label="关联停车场"
+                align="center"
+              />
+              <ElTableColumn
+                prop="checkTime"
+                label="检查时间"
+                align="center"
+              >
+                <template #default="scope">
+                  {{ formatTimeStamp(scope.row.checkTime) }}
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
+                prop="checkPerson"
+                label="检查人员"
+                align="center"
+              />
+              <ElTableColumn
+                prop="description"
+                label="问题描述"
+                align="center"
+                min-width="200"
+              />
+              <ElTableColumn
+                prop="severity"
+                label="严重程度"
+                align="center"
+              >
+                <template #default="scope">
+                  <ElTag :type="scope.row.severity === '高' ? 'danger' :
+                             scope.row.severity === '中' ? 'warning' : 'success'">
+                    {{ scope.row.severity || '-' }}
+                  </ElTag>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
+                prop="status"
+                label="状态"
+                align="center"
+              >
+                <template #default="scope">
+                  <ElTag :type="scope.row.status === '已处理' ? 'success' :
+                             scope.row.status === '处理中' ? 'warning' : 'danger'">
+                    {{ scope.row.status || '-' }}
+                  </ElTag>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
+                prop="workOrderNo"
+                label="关联工单"
+                align="center"
+              >
+                <template #default="scope">
+                  {{ scope.row.workOrderNo || '暂无' }}
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
+                prop="handlePerson"
+                label="处理人"
+                align="center"
+              />
+              <ElTableColumn
+                prop="handleTime"
+                label="处理时间"
+                align="center"
+              >
+                <template #default="scope">
+                  {{ scope.row.handleTime ? formatTimeStamp(scope.row.handleTime) : '-' }}
+                </template>
+              </ElTableColumn>
+              <ElTableColumn
+                prop="handleResult"
+                label="处理结果"
+                align="center"
+                min-width="150"
+              />
+            </ElTable>
+          </div>
+        </div>
+        <template #footer>
+          <ElButton plain @click="closeNonCompliantTraceDialog">关闭</ElButton>
+        </template>
+      </el-dialog>
+      <!-- 不合规项处理弹窗 -->
+      <el-dialog
+        v-model="complianceHandleDialogVisible"
+        width="40%"
+        :close-on-click-modal="false"
+        :close-on-press-escape="false"
+        class="park-dialog"
+        center
+        destroy-on-close
+        :title="`不合规项处理 - ${currentHandleNonCompliantItem}`"
+      >
+        <el-form
+          ref="handleFormRef"
+          :model="handleForm"
+          :rules="handleFormRules"
+          label-width="100px"
+          style="width: 100%;"
+        >
+          <el-form-item label="处理方案" prop="handleSolution">
+            <el-input
+              v-model="handleForm.handleSolution"
+              type="textarea"
+              :rows="6"
+              placeholder="请输入详细的处理方案，包括整改措施、责任人、完成时限等"
+            />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <ElButton plain @click="closeComplianceHandleDialog">取消</ElButton>
+          <ElButton type="primary" @click="handleNonCompliantItemData">确认提交</ElButton>
+        </template>
+      </el-dialog>
+
       <el-dialog
         v-model="tipDialogVisible"
         width="460px"
@@ -4820,6 +8327,7 @@ onUnmounted(() => {
 @import '../../../templatesstyle/table4';
 @import '../../../templatesstyle/indicator-cards3';
 @import '../../../templatesstyle/indicator-cards4';
+@import '../../../templatesstyle/indicator-cards5';
 @import '../../../templatesstyle/stat-cards1';
 @import '../../../templatesstyle/chart-cards1';
 

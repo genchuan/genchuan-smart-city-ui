@@ -3,8 +3,11 @@
 import { ref } from 'vue';
 
 import TaskChart from './taskchart.vue';
+import ApproveChart from './approvechart.vue';
+
 import TaskTable from './table/index.vue';
 import Approve from './approve/index.vue';
+import Work from './work/index.vue';
 
 import '#/components/page/index.scss';
 
@@ -14,10 +17,8 @@ const changeArrowStatus = () => {
     v.secondShow = secondShow.value;
   });
 };
-const arrowChange = () => {
-  tabArray.value.forEach((v) => {
-    v.arrowShow = !v.arrowShow;
-  });
+const arrowChange = (index) => {
+  tabArray.value[index].arrowShow = !tabArray.value[index].arrowShow;
 };
 const tabArray = ref([
   {
@@ -25,24 +26,38 @@ const tabArray = ref([
     components: TaskTable,
     showSecondary: true,
     secondShow: false,
-    arrowShow: true,
+    arrowShow: false,
     arrowState: false,
   },
   {
-    label: '我的审批',
+    label: '审批',
     components: Approve,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: false,
+    arrowState: false,
+  },
+  {
+    label: '工单',
+    components: Work,
     showSecondary: true,
     secondShow: false,
     arrowShow: true,
     arrowState: false,
   },
 ]);
+const tabChange = () => {
+  tabArray.value.forEach((v) => {
+    v.arrowShow = false;
+  });
+};
 const activeName = ref('我的任务');
 const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
     <TaskChart v-if="tabArray[0].arrowShow" />
+    <ApproveChart v-if="tabArray[1].arrowShow" />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -66,7 +81,7 @@ const secondShow = ref(false);
       @tab-change="tabChange"
     >
       <el-tab-pane
-        v-for="item in tabArray"
+        v-for="(item, index) in tabArray"
         :key="item.label"
         :name="item.label"
       >
@@ -80,7 +95,7 @@ const secondShow = ref(false);
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"
-          @arrow-change="arrowChange"
+          @arrow-change="arrowChange(index)"
         />
       </el-tab-pane>
     </el-tabs>

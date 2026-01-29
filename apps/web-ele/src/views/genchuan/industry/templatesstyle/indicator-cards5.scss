@@ -1,0 +1,97 @@
+// 补充4列指标卡片样式（修改为上三下二、居中对齐）
+.indicator-cards5 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5vw;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  align-content: center;
+
+  .indicator-card5 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5vw;
+    border-radius: 0.3vw;
+    background: rgba(0, 122, 255, 0.1);
+    border: 1px solid rgba(0, 204, 255, 0.2);
+
+    &:nth-child(1),
+    &:nth-child(2),
+    &:nth-child(3) {
+      width: calc(33.333% - 0.333vw);
+    }
+
+    &:nth-child(4),
+    &:nth-child(5) {
+      width: calc(50% - 0.25vw);
+    }
+
+    .indicator-title {
+      font-size: 0.9vw;
+      color: #00ffd0;
+      margin-bottom: 0.5vh;
+      text-align: center;
+    }
+
+    .indicator-value {
+      font-size: 1.5vw;
+      font-weight: bold;
+      color: #fff;
+      margin-bottom: 0.3vh;
+    }
+
+    .indicator-unit {
+      font-size: 0.8vw;
+      color: #999;
+    }
+  }
+}
+
+// 以下卡片样式保持不变（仅颜色/阴影个性化）
+.indicator-card5.card1 {
+  border-color: #0cf;
+  box-shadow: 0 5px 15px rgb(0 204 255 / 30%);
+  .indicator-title { color: #66e0ff; }
+  .indicator-value { color: #0cf; }
+  .indicator-unit { color: #66e0ff; }
+  &:hover { box-shadow: 0 5px 20px rgb(0 204 255 / 50%); }
+}
+
+.indicator-card5.card2 {
+  border-color: #13ce66;
+  box-shadow: 0 5px 15px rgb(19 206 102 / 30%);
+  .indicator-title { color: #70f59c; }
+  .indicator-value { color: #13ce66; }
+  .indicator-unit { color: #70f59c; }
+  &:hover { box-shadow: 0 5px 20px rgb(19 206 102 / 50%); }
+}
+
+.indicator-card5.card3 {
+  border-color: #ffc107;
+  box-shadow: 0 5px 15px rgb(255 193 7 / 30%);
+  .indicator-title { color: #ffe066; }
+  .indicator-value { color: #ffc107; }
+  .indicator-unit { color: #ffe066; }
+  &:hover { box-shadow: 0 5px 20px rgb(255 193 7 / 50%); }
+}
+
+.indicator-card5.card4 {
+  border-color: #722ed1;
+  box-shadow: 0 5px 15px rgb(114 46 209 / 30%);
+  .indicator-title { color: #b38ef2; }
+  .indicator-value { color: #722ed1; }
+  .indicator-unit { color: #b38ef2; }
+  &:hover { box-shadow: 0 5px 20px rgb(114 46 209 / 50%); }
+}
+
+.indicator-card5.card5 {
+  border-color: #ff4d4f;
+  box-shadow: 0 5px 15px rgb(255 77 79 / 30%);
+  .indicator-title { color: #ff8080; }
+  .indicator-value { color: #ff4d4f; }
+  .indicator-unit { color: #ff8080; }
+  &:hover { box-shadow: 0 5px 20px rgb(255 77 79 / 50%); }
+}
