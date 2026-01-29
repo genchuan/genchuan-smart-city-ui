@@ -6,6 +6,7 @@ import Billing from './billing/index.vue';
 import End from './end/index.vue';
 import ListComponent from './list/index.vue';
 import Query from './query/index.vue';
+import Recover from './recover/index.vue';
 import roadchart from './roadchart.vue';
 import Staggered from './staggered/index.vue';
 import Table from './table/index.vue';
@@ -67,6 +68,12 @@ const tabArray = ref([
   {
     label: '欠费追缴',
     components: Arrears,
+    showSecondary: true,
+    secondShow: false,
+  },
+  {
+    label: '追缴二维码',
+    components: Recover,
     showSecondary: true,
     secondShow: false,
   },
