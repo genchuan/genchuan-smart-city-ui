@@ -358,7 +358,7 @@ export function useGridColumns() {
       title: '车场选择',
       minWidth: 180,
       sortable: true,
-      slots: { default: 'lot_id' } // 匹配模板插槽名
+      slots: { default: 'lot_id' }, // 匹配模板插槽名
     },
     {
       field: 'reservation_no',
@@ -383,7 +383,7 @@ export function useGridColumns() {
       title: '泊位类型',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'park_space' } // 匹配模板插槽名
+      slots: { default: 'park_space' }, // 匹配模板插槽名
     },
     {
       field: 'reserve_date',

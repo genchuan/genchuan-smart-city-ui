@@ -1,9 +1,18 @@
 <script setup>
 import { ref } from 'vue';
 
+import garagechart from './garagechart.vue';
 import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
+
+// 新增：控制图表显示的状态
+const chartShow = ref(true);
+
+// 新增：供子组件调用的切换图表方法
+const toggleChart = () => {
+  chartShow.value = !chartShow.value;
+};
 
 const changeArrowStatus = (item) => {
   item.secondShow = !item.secondShow;
@@ -20,6 +29,9 @@ const activeName = ref('反向寻车服务');
 </script>
 <template>
   <div class="common-index">
+    <!-- 新增：添加 v-if 控制图表显示隐藏 -->
+    <garagechart v-if="chartShow" />
+
     <el-tabs
       v-model="activeName"
       class="common-tabs"
@@ -52,10 +64,12 @@ const activeName = ref('反向寻车服务');
             <span>{{ item.label }}</span>
           </div>
         </template>
+        <!-- 修改：给子组件传递 toggleChart 方法 -->
         <component
           :is="item.components"
           :second-show="item.secondShow"
           :key="item.label"
+          @toggle-chart="toggleChart"
         />
       </el-tab-pane>
     </el-tabs>
