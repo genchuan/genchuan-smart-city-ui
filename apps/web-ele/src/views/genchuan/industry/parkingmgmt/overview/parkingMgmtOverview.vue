@@ -86,16 +86,20 @@ onUnmounted(() => {
       </button>
       <ul class="left-but nav-lise">
         <li v-for="(item, key) in leftNavList" :key="key" @click="routerClick(item)">
-          <div class="border-box-8">
+          <div class="datav-border">
             <span>{{ item.name }}</span>
+            <div class="corner top-left"></div>
+            <div class="corner bottom-right"></div>
           </div>
         </li>
       </ul>
       <span class="head-name">{{ name }}</span>
       <ul class="right-but nav-lise">
         <li v-for="(item, key) in rightNavList" :key="key" @click="routerClick(item)">
-          <div class="border-box-8 border-reverse">
+          <div class="datav-border-reverse">
             <span>{{ item.name }}</span>
+            <div class="corner top-right"></div>
+            <div class="corner bottom-left"></div>
           </div>
         </li>
       </ul>
@@ -122,6 +126,7 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 @import '../../templatesstyle/common.scss';
 @import '../../templatesstyle/dataV.scss';
+@import '../../templatesstyle/datav-border.scss';
 
 .page-container {
   box-sizing: border-box;
@@ -155,13 +160,13 @@ onUnmounted(() => {
 
   .left-but {
     position: absolute;
-    top: 1vh;
+    top: 0.5vh;
     left: 4vw;
   }
 
   .right-but {
     position: absolute;
-    top: 1vh;
+    top: 0.5vh;
     right: 4vw;
   }
 
@@ -176,8 +181,8 @@ onUnmounted(() => {
       cursor: pointer;
 
       div {
-        padding: 0.2vw 0.5vw;
-        margin: 0.3vw 0.8vw;
+        padding: 0.3vw 0.5vw;
+        margin: 0.4vw 0.8vw;
         white-space: nowrap;
       }
     }
@@ -209,26 +214,6 @@ onUnmounted(() => {
 
   .fullScreenBut {
     right: 1vw;
-  }
-
-  .border-box-8 {
-    position: relative;
-    background: rgb(0 60 120 / 30%);
-    border: 1px solid #0cf;
-    box-shadow: 0 0 8px #0cf;
-
-    &::before {
-      position: absolute;
-      inset: -2px;
-      pointer-events: none;
-      content: '';
-      border: 1px solid rgb(0 204 255 / 50%);
-    }
-  }
-
-  .border-reverse {
-    background: rgb(0 30 60 / 50%);
-    box-shadow: 0 0 10px #09c;
   }
 }
 

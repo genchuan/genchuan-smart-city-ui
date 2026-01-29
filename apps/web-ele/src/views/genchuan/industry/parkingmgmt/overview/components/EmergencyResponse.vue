@@ -202,7 +202,7 @@ const dispatchTaskReceiverCompareData = ref({ xAxis: [], series: [] });
 const dispatchTaskBaseFontScale = ref(1);
 const dispatchTaskActiveIndices = ref([]);
 const dispatchTaskChartRefreshKey = ref(0);
-const activeDispatchTaskView = ref('卡片');
+const activeDispatchTaskView = ref('柱状图');
 const dispatchTaskViewBtnList = ref(['卡片', '柱状图', '列表']);
 
 const parkResourcePanelRef = ref<HTMLElement | null>(null);
@@ -212,7 +212,7 @@ const disposalProgressTrendData = ref({ xAxis: [], series: [] });
 const disposalProgressBaseFontScale = ref(1);
 const disposalProgressActiveIndices = ref([]);
 const disposalProgressChartRefreshKey = ref(0);
-const activeDisposalProgressView = ref('卡片');
+const activeDisposalProgressView = ref('折线图');
 const disposalProgressViewBtnList = ref(['卡片', '折线图', '列表']);
 
 const sparePartPanelRef = ref<HTMLElement | null>(null);
@@ -222,7 +222,7 @@ const emergencyPlanTypeRatioData = ref({ legend: [], series: [] });
 const emergencyPlanBaseFontScale = ref(1);
 const emergencyPlanActiveIndices = ref([]);
 const emergencyPlanChartRefreshKey = ref(0);
-const activeEmergencyPlanView = ref('卡片');
+const activeEmergencyPlanView = ref('列表');
 const emergencyPlanViewBtnList = ref(['卡片', '饼图', '列表']);
 
 const parkMap2Ref = ref<HTMLElement | null>(null);
