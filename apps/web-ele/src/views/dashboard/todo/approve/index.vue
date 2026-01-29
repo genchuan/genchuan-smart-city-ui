@@ -5,7 +5,7 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage, ElDialog } from 'element-plus';
+import { ElLoading, ElMessage, ElButton } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -47,9 +47,47 @@ const [Drawer, drawerApi] = useVbenDrawer({
   async onOpenChange() {},
 });
 
-// 审批相关弹窗
-const approveDialog = reactive({
-  visible: false,
+// 创建审批操作抽屉（用于同意/驳回）
+const [ApproveActionDrawer, approveActionDrawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: true,
+  onCancel() {
+    approveActionDrawerApi.close();
+  },
+  onConfirm() {
+    handleSubmitApprove();
+  },
+  async onOpenChange(isOpen) {
+    if (!isOpen) {
+      // 关闭时清空数据
+      approveAction.opinion = '';
+      approveAction.rejectReason = '';
+    }
+  },
+});
+
+// 创建批量审批操作抽屉
+const [BatchApproveDrawer, batchApproveDrawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: true,
+  onCancel() {
+    batchApproveDrawerApi.close();
+  },
+  onConfirm() {
+    handleSubmitBatchApprove();
+  },
+  async onOpenChange(isOpen) {
+    if (!isOpen) {
+      // 关闭时清空数据
+      batchApproveAction.opinion = '';
+    }
+  },
+});
+
+// 审批相关状态
+const approveAction = reactive({
   type: 'agree', // agree: 同意, reject: 驳回
   title: '',
   row: null,
@@ -57,26 +95,25 @@ const approveDialog = reactive({
   rejectReason: '',
 });
 
-// 复盘弹窗
+// 批量审批相关状态
+const batchApproveAction = reactive({
+  type: 'agree',
+  title: '',
+  rows: [],
+  opinion: '',
+});
+
+// 复盘弹窗（保持原有对话框）
 const reviewDialog = reactive({
   visible: false,
   row: null,
   reviewOpinion: '',
 });
 
-// 重提弹窗
+// 重提弹窗（保持原有对话框）
 const resubmitDialog = reactive({
   visible: false,
   row: null,
-});
-
-// 批量审批弹窗
-const batchApproveDialog = reactive({
-  visible: false,
-  type: 'agree',
-  title: '',
-  rows: [],
-  opinion: '',
 });
 
 const formData = ref();
@@ -317,27 +354,29 @@ const handleOpenDetail = (row) => {
   approveDetailDrawerRef.value.open();
 };
 
-// 同意审批
+// 同意审批 - 使用抽屉
 const handleAgree = (row) => {
-  approveDialog.type = 'agree';
-  approveDialog.title = '同意审批';
-  approveDialog.row = row;
-  approveDialog.opinion = '';
-  approveDialog.visible = true;
+  approveAction.type = 'agree';
+  approveAction.title = '同意审批';
+  approveAction.row = row;
+  approveAction.opinion = '';
+  approveAction.rejectReason = '';
+  approveActionDrawerApi.open();
 };
 
-// 驳回审批
+// 驳回审批 - 使用抽屉
 const handleReject = (row) => {
-  approveDialog.type = 'reject';
-  approveDialog.title = '驳回审批';
-  approveDialog.row = row;
-  approveDialog.rejectReason = '';
-  approveDialog.visible = true;
+  approveAction.type = 'reject';
+  approveAction.title = '驳回审批';
+  approveAction.row = row;
+  approveAction.opinion = '';
+  approveAction.rejectReason = '';
+  approveActionDrawerApi.open();
 };
 
 // 提交审批
 const handleSubmitApprove = () => {
-  if (approveDialog.type === 'reject' && !approveDialog.rejectReason) {
+  if (approveAction.type === 'reject' && !approveAction.rejectReason) {
     ElMessage.error('驳回理由不能为空');
     return;
   }
@@ -348,28 +387,28 @@ const handleSubmitApprove = () => {
 
   try {
     // 更新审批状态
-    const index = taskObj.apilist.findIndex(v => v.id === approveDialog.row.id);
+    const index = taskObj.apilist.findIndex(v => v.id === approveAction.row.id);
     if (index !== -1) {
-      taskObj.apilist[index].approveResult = approveDialog.type === 'agree' ? '同意' : '驳回';
+      taskObj.apilist[index].approveResult = approveAction.type === 'agree' ? '同意' : '驳回';
       taskObj.apilist[index].approveTime = new Date().toISOString().slice(0, 16).replace('T', ' ');
-      taskObj.apilist[index].opinion = approveDialog.type === 'agree' ? approveDialog.opinion : approveDialog.rejectReason;
+      taskObj.apilist[index].opinion = approveAction.type === 'agree' ? approveAction.opinion : approveAction.rejectReason;
       taskObj.apilist[index].approveStatus = '已完成';
       taskObj.apilist[index].moduleType = 'approved';
 
-      if (approveDialog.type === 'reject') {
-        taskObj.apilist[index].rejectReason = approveDialog.rejectReason;
+      if (approveAction.type === 'reject') {
+        taskObj.apilist[index].rejectReason = approveAction.rejectReason;
       }
     }
 
-    ElMessage.success(approveDialog.type === 'agree' ? '审批同意成功' : '审批驳回成功');
-    approveDialog.visible = false;
+    ElMessage.success(approveAction.type === 'agree' ? '审批同意成功' : '审批驳回成功');
+    approveActionDrawerApi.close();
     handleRefresh();
   } finally {
     loadingInstance.close();
   }
 };
 
-// 批量审批
+// 批量审批 - 使用抽屉
 const handleBatchApprove = (type) => {
   if (checkedIds.value.length === 0) {
     ElMessage.warning('请选择要审批的事项');
@@ -385,16 +424,16 @@ const handleBatchApprove = (type) => {
     return;
   }
 
-  batchApproveDialog.type = type;
-  batchApproveDialog.title = type === 'agree' ? '批量同意审批' : '批量驳回审批';
-  batchApproveDialog.rows = selectedRows;
-  batchApproveDialog.opinion = '';
-  batchApproveDialog.visible = true;
+  batchApproveAction.type = type;
+  batchApproveAction.title = type === 'agree' ? '批量同意审批' : '批量驳回审批';
+  batchApproveAction.rows = selectedRows;
+  batchApproveAction.opinion = '';
+  batchApproveDrawerApi.open();
 };
 
 // 提交批量审批
 const handleSubmitBatchApprove = () => {
-  if (batchApproveDialog.type === 'reject' && !batchApproveDialog.opinion) {
+  if (batchApproveAction.type === 'reject' && !batchApproveAction.opinion) {
     ElMessage.error('驳回理由不能为空');
     return;
   }
@@ -404,23 +443,23 @@ const handleSubmitBatchApprove = () => {
   });
 
   try {
-    batchApproveDialog.rows.forEach(row => {
+    batchApproveAction.rows.forEach(row => {
       const index = taskObj.apilist.findIndex(v => v.id === row.id);
       if (index !== -1) {
-        taskObj.apilist[index].approveResult = batchApproveDialog.type === 'agree' ? '同意' : '驳回';
+        taskObj.apilist[index].approveResult = batchApproveAction.type === 'agree' ? '同意' : '驳回';
         taskObj.apilist[index].approveTime = new Date().toISOString().slice(0, 16).replace('T', ' ');
-        taskObj.apilist[index].opinion = batchApproveDialog.opinion;
+        taskObj.apilist[index].opinion = batchApproveAction.opinion;
         taskObj.apilist[index].approveStatus = '已完成';
         taskObj.apilist[index].moduleType = 'approved';
 
-        if (batchApproveDialog.type === 'reject') {
-          taskObj.apilist[index].rejectReason = batchApproveDialog.opinion;
+        if (batchApproveAction.type === 'reject') {
+          taskObj.apilist[index].rejectReason = batchApproveAction.opinion;
         }
       }
     });
 
-    ElMessage.success(`批量${batchApproveDialog.type === 'agree' ? '同意' : '驳回'}成功`);
-    batchApproveDialog.visible = false;
+    ElMessage.success(`批量${batchApproveAction.type === 'agree' ? '同意' : '驳回'}成功`);
+    batchApproveDrawerApi.close();
     checkedIds.value = [];
     handleRefresh();
   } finally {
@@ -616,92 +655,121 @@ const approveDetailDrawerRef = ref(null);
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
+
     <!-- 使用封装后的详情抽屉组件 -->
     <ApproveDetailDrawer
       ref="approveDetailDrawerRef"
       :detail-obj="taskObj.detailObj"
       :title="`审批详情 - ${taskObj.detailObj.approveTitle}`"
     />
+
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
 
-    <!-- 审批弹窗 -->
-    <ElDialog
-      v-model="approveDialog.visible"
-      :title="approveDialog.title"
-      width="500px"
-    >
-      <div v-if="approveDialog.type === 'agree'">
-        <p style="margin-bottom: 10px;">审批意见（可选）：</p>
-        <el-input
-          v-model="approveDialog.opinion"
-          type="textarea"
-          :rows="4"
-          placeholder="请输入审批意见"
-          maxlength="500"
-          show-word-limit
-        />
+    <!-- 审批操作抽屉（同意/驳回） -->
+    <ApproveActionDrawer :title="approveAction.title">
+      <div class="approve-action-content">
+        <div v-if="approveAction.type === 'agree'" class="action-form">
+          <div class="form-title">审批意见（可选）：</div>
+          <el-input
+            v-model="approveAction.opinion"
+            type="textarea"
+            :rows="5"
+            placeholder="请输入审批意见"
+            maxlength="500"
+            show-word-limit
+            class="action-textarea"
+          />
+          <div class="form-tips">审批标题：{{ approveAction.row?.approveTitle }}</div>
+          <div class="form-tips">申请人：{{ approveAction.row?.applicant }}</div>
+          <div class="form-tips">紧急程度：{{ approveAction.row?.emergencyDegree }}</div>
+        </div>
+        <div v-else class="action-form">
+          <div class="form-title">驳回理由<span class="required">*</span>：</div>
+          <el-input
+            v-model="approveAction.rejectReason"
+            type="textarea"
+            :rows="5"
+            placeholder="请输入驳回理由"
+            maxlength="300"
+            show-word-limit
+            class="action-textarea"
+          />
+          <div class="form-tips" style="color: #f56c6c;">请务必填写详细驳回理由</div>
+          <div class="form-tips">审批标题：{{ approveAction.row?.approveTitle }}</div>
+          <div class="form-tips">申请人：{{ approveAction.row?.applicant }}</div>
+          <div class="form-tips">紧急程度：{{ approveAction.row?.emergencyDegree }}</div>
+        </div>
       </div>
-      <div v-else>
-        <p style="margin-bottom: 10px; color: #f56c6c;">驳回理由<span style="color: red;">*</span>：</p>
-        <el-input
-          v-model="approveDialog.rejectReason"
-          type="textarea"
-          :rows="4"
-          placeholder="请输入驳回理由"
-          maxlength="300"
-          show-word-limit
-        />
-      </div>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="approveDialog.visible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmitApprove">确认</el-button>
-        </span>
-      </template>
-    </ElDialog>
 
-    <!-- 批量审批弹窗 -->
-    <ElDialog
-      v-model="batchApproveDialog.visible"
-      :title="batchApproveDialog.title"
-      width="500px"
-    >
-      <div v-if="batchApproveDialog.type === 'agree'">
-        <p style="margin-bottom: 10px;">批量审批意见（可选）：</p>
-        <el-input
-          v-model="batchApproveDialog.opinion"
-          type="textarea"
-          :rows="4"
-          placeholder="请输入审批意见"
-          maxlength="500"
-          show-word-limit
-        />
-      </div>
-      <div v-else>
-        <p style="margin-bottom: 10px; color: #f56c6c;">批量驳回理由<span style="color: red;">*</span>：</p>
-        <el-input
-          v-model="batchApproveDialog.opinion"
-          type="textarea"
-          :rows="4"
-          placeholder="请输入驳回理由"
-          maxlength="300"
-          show-word-limit
-        />
-      </div>
-      <p style="margin-top: 10px; color: #909399; font-size: 12px;">
-        将批量处理 {{ batchApproveDialog.rows.length }} 条审批事项
-      </p>
+      <!-- 自定义底部按钮 -->
       <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="batchApproveDialog.visible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmitBatchApprove">确认</el-button>
-        </span>
+        <div class="drawer-footer">
+          <ElButton @click="approveActionDrawerApi.close">取消</ElButton>
+          <ElButton
+            type="primary"
+            @click="handleSubmitApprove"
+            :disabled="approveAction.type === 'reject' && !approveAction.rejectReason"
+          >
+            {{ approveAction.type === 'agree' ? '确认同意' : '确认驳回' }}
+          </ElButton>
+        </div>
       </template>
-    </ElDialog>
+    </ApproveActionDrawer>
 
-    <!-- 复盘弹窗 -->
+    <!-- 批量审批操作抽屉 -->
+    <BatchApproveDrawer :title="batchApproveAction.title">
+      <div class="approve-action-content">
+        <div v-if="batchApproveAction.type === 'agree'" class="action-form">
+          <div class="form-title">批量审批意见（可选）：</div>
+          <el-input
+            v-model="batchApproveAction.opinion"
+            type="textarea"
+            :rows="5"
+            placeholder="请输入审批意见"
+            maxlength="500"
+            show-word-limit
+            class="action-textarea"
+          />
+          <div class="form-tips">将批量处理 {{ batchApproveAction.rows.length }} 条审批事项</div>
+          <div class="form-tips">业务类型：{{ batchApproveAction.rows[0]?.businessType }}</div>
+          <div class="form-tips">涉及申请人：{{ [...new Set(batchApproveAction.rows.map(r => r.applicant))].join('、') }}</div>
+        </div>
+        <div v-else class="action-form">
+          <div class="form-title">批量驳回理由<span class="required">*</span>：</div>
+          <el-input
+            v-model="batchApproveAction.opinion"
+            type="textarea"
+            :rows="5"
+            placeholder="请输入驳回理由"
+            maxlength="300"
+            show-word-limit
+            class="action-textarea"
+          />
+          <div class="form-tips" style="color: #f56c6c;">请务必填写详细驳回理由</div>
+          <div class="form-tips">将批量处理 {{ batchApproveAction.rows.length }} 条审批事项</div>
+          <div class="form-tips">业务类型：{{ batchApproveAction.rows[0]?.businessType }}</div>
+          <div class="form-tips">涉及申请人：{{ [...new Set(batchApproveAction.rows.map(r => r.applicant))].join('、') }}</div>
+        </div>
+      </div>
+
+      <!-- 自定义底部按钮 -->
+      <template #footer>
+        <div class="drawer-footer">
+          <ElButton @click="batchApproveDrawerApi.close">取消</ElButton>
+          <ElButton
+            type="primary"
+            @click="handleSubmitBatchApprove"
+            :disabled="batchApproveAction.type === 'reject' && !batchApproveAction.opinion"
+          >
+            {{ batchApproveAction.type === 'agree' ? '确认批量同意' : '确认批量驳回' }}
+          </ElButton>
+        </div>
+      </template>
+    </BatchApproveDrawer>
+
+    <!-- 复盘弹窗（保持原有对话框） -->
     <ElDialog
       v-model="reviewDialog.visible"
       title="审批复盘"
@@ -724,7 +792,7 @@ const approveDetailDrawerRef = ref(null);
       </template>
     </ElDialog>
 
-    <!-- 重提弹窗 -->
+    <!-- 重提弹窗（保持原有对话框） -->
     <ElDialog
       v-model="resubmitDialog.visible"
       title="重提审批"
@@ -1051,3 +1119,41 @@ const approveDetailDrawerRef = ref(null);
     </Grid>
   </div>
 </template>
+
+<style scoped lang="scss">
+.approve-action-content {
+  padding: 20px;
+}
+
+.action-form {
+  .form-title {
+    font-weight: 500;
+    margin-bottom: 10px;
+    color: #303133;
+
+    .required {
+      color: #f56c6c;
+      margin-left: 2px;
+    }
+  }
+
+  .action-textarea {
+    margin-bottom: 15px;
+  }
+
+  .form-tips {
+    font-size: 13px;
+    color: #909399;
+    margin-bottom: 5px;
+    line-height: 1.5;
+  }
+}
+
+.drawer-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 10px 16px;
+  border-top: 1px solid #f0f0f0;
+}
+</style>

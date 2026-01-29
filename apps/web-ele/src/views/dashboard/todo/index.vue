@@ -47,14 +47,14 @@ const tabArray = ref([
     arrowShow: false,
     arrowState: false,
   },
-  // {
-  //   label: '预警',
-  //   components: Alarm,
-  //   showSecondary: true,
-  //   secondShow: false,
-  //   arrowShow: false,
-  //   arrowState: false,
-  // },
+  {
+    label: '预警',
+    components: Alarm,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: false,
+    arrowState: false,
+  },
 ]);
 const tabChange = () => {
   tabArray.value.forEach((v) => {
