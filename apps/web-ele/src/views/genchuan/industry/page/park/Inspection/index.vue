@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 
+import Electronic from './electronic/index.vue';
 import ledgerchart from './ledgerchart.vue';
 import Table from './table/index.vue';
 import Trajectory from './trajectory/index.vue';
@@ -32,7 +33,7 @@ const tabArray = ref([
   },
   {
     label: '电子围栏管理',
-    components: Table,
+    components: Electronic,
     showSecondary: true,
     secondShow: false,
     arrowShow: true,

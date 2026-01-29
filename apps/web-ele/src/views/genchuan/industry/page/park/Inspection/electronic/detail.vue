@@ -5,13 +5,13 @@ import { useVbenDrawer } from '@vben/common-ui';
 
 // 定义组件接收的属性
 const props = defineProps({
-  // 详情数据对象（新巡检记录数据：关联泊位点等字段）
+  // 详情数据对象（围栏管理数据：8个核心字段）
   detailObj: {
     type: Object,
     required: true,
     default: () => ({}),
   },
-  // 抽屉标题（可选，默认使用巡检员姓名+巡检详情）
+  // 抽屉标题（可选，默认使用围栏名称+围栏详情）
   title: {
     type: String,
     default: '',
@@ -20,10 +20,10 @@ const props = defineProps({
 
 const { detailObj, title } = toRefs(props);
 
-// 计算属性处理标题，优先使用巡检员姓名，兜底显示默认值
+// 计算属性处理标题，优先使用围栏名称，兜底显示默认值
 const drawerTitle = computed(() => {
-  const inspectorName = detailObj.value?.inspectorName || '巡检记录';
-  return title.value || `${inspectorName}巡检详情`;
+  const fenceName = detailObj.value?.fenceName || '围栏记录';
+  return title.value || `${fenceName}详情`;
 });
 
 // 初始化抽屉实例
@@ -31,7 +31,7 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 800, // 加宽抽屉适配关联泊位点等长文本字段
+  width: 900, // 加宽至900px，更好适配围栏范围等超长文本字段
   onCancel() {
     detailDrawerApi.close();
   },
@@ -49,42 +49,44 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 新巡检记录基础信息（8个核心字段） -->
+      <!-- 围栏管理基础信息（8个核心字段，按业务优先级排序） -->
       <div class="detail-card-row">
-        <div class="detail-row-left">巡检员姓名:</div>
-        <div class="detail-row-right">{{ detailObj.inspectorName || '-' }}</div>
+        <div class="detail-row-left">围栏名称:</div>
+        <div class="detail-row-right">{{ detailObj.fenceName || '-' }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">所属片区:</div>
         <div class="detail-row-right">{{ detailObj.belongArea || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">关联泊位点:</div>
+        <div class="detail-row-left">关联单元网格:</div>
         <div class="detail-row-right">
-          {{ detailObj.relatedBerthPoints || '-' }}
+          {{ detailObj.relatedUnitGrid || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">负责时段:</div>
+        <div class="detail-row-left">围栏范围:</div>
+        <div class="detail-row-right">{{ detailObj.fenceRange || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">关联巡检员:</div>
         <div class="detail-row-right">
-          {{ detailObj.responsiblePeriod || '-' }}
+          {{ detailObj.relatedInspector || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">联系电话:</div>
-        <div class="detail-row-right">{{ detailObj.contactPhone || '-' }}</div>
+        <div class="detail-row-left">围栏状态:</div>
+        <div class="detail-row-right">{{ detailObj.fenceStatus || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">关联状态:</div>
-        <div class="detail-row-right">{{ detailObj.relatedStatus || '-' }}</div>
+        <div class="detail-row-left">关联泊位点数量:</div>
+        <div class="detail-row-right">
+          {{ detailObj.relatedBerthCount || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">生效时间:</div>
-        <div class="detail-row-right">{{ detailObj.effectiveTime || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">操作人:</div>
-        <div class="detail-row-right">{{ detailObj.operator || '-' }}</div>
+        <div class="detail-row-left">创建时间:</div>
+        <div class="detail-row-right">{{ detailObj.createTime || '-' }}</div>
       </div>
     </div>
   </DetailDrawer>
@@ -96,7 +98,7 @@ defineExpose({
   padding: 20px;
   background-color: #f9fafb;
   border-radius: 8px;
-  min-height: 320px; // 适配8个新巡检字段，高度保持适中无冗余
+  min-height: 340px; // 适配8个围栏字段，略调高高度保证界面紧凑不拥挤
   max-height: 70vh; // 限制最大高度，避免内容过多溢出
   overflow-y: auto; // 内容过多时显示滚动条
 }
@@ -104,7 +106,7 @@ defineExpose({
 // 每行的布局
 .detail-card-row {
   display: flex;
-  align-items: flex-start; // 顶部对齐，适配关联泊位点等长文本
+  align-items: flex-start; // 顶部对齐，适配围栏范围/关联单元网格等长文本
   padding: 12px 0;
   border-bottom: 1px solid #f0f0f0; // 分隔线增强可读性
 
@@ -127,7 +129,7 @@ defineExpose({
 
 // 左侧标签样式
 .detail-row-left {
-  width: 120px; // 固定宽度，保证所有标签（含「关联泊位点」）对齐
+  width: 130px; // 调整至130px，适配「关联单元网格」「关联泊位点数量」等长标签
   flex-shrink: 0; // 不收缩
   font-weight: 500; // 加粗突出标签
   color: #606266; // 灰色调，区分内容
@@ -141,7 +143,7 @@ defineExpose({
   color: #303133; // 主文本色
   font-size: 14px;
   line-height: 18px;
-  word-break: break-all; // 处理关联泊位点等长文本换行
+  word-break: break-all; // 处理围栏范围等超长文本换行，避免溢出
   padding-right: 10px;
   white-space: pre-line; // 保留长文本中的自然换行，提升阅读体验
 }
@@ -149,7 +151,7 @@ defineExpose({
 // 响应式适配
 @media (max-width: 768px) {
   .detail-row-left {
-    width: 100px;
+    width: 110px;
   }
   .detail-card {
     padding: 15px;

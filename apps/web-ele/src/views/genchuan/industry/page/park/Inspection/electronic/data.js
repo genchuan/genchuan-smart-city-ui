@@ -1,0 +1,415 @@
+/** 表格初始数据 - 改造为围栏管理数据（新字段适配） */
+export const dataList = () => {
+  return [
+    {
+      id: '2',
+      fenceName: '碧湖公园核心围栏', // 围栏名称
+      belongArea: '龙文区-碧湖街道', // 所属片区
+      relatedUnitGrid: 'WG001、WG002、碧湖街道第一单元网格', // 关联单元网格
+      fenceRange: '东至碧湖大道，南至江滨路，西至九龙大道，北至水仙大街（面积约0.8平方公里）', // 围栏范围
+      relatedInspector: '王小明', // 关联巡检员
+      fenceStatus: '启用', // 围栏状态
+      relatedBerthCount: 28, // 关联泊位点数量
+      createTime: '2026-01-01 09:00:00', // 创建时间
+    },
+    {
+      id: '3',
+      fenceName: '石码便民停车场围栏',
+      belongArea: '龙海区-石码街道',
+      relatedUnitGrid: 'WG003、WG004、石码街道第二单元网格',
+      fenceRange: '东至新华路，南至锦江路，西至紫光路，北至人民路（面积约0.5平方公里）',
+      relatedInspector: '李华',
+      fenceStatus: '启用',
+      relatedBerthCount: 16,
+      createTime: '2026-01-01 09:15:00',
+    },
+    {
+      id: '4',
+      fenceName: '闽齐社区停车场围栏',
+      belongArea: '龙海区-海澄镇',
+      relatedUnitGrid: 'WG005、WG006、海澄镇第三单元网格',
+      fenceRange: '东至海澄大道，南至月港路，西至城隍路，北至和平路（面积约0.3平方公里）',
+      relatedInspector: '张伟',
+      fenceStatus: '待启用',
+      relatedBerthCount: 12,
+      createTime: '2026-01-10 10:00:00',
+    },
+    {
+      id: '5',
+      fenceName: '江滨路生态停车场围栏',
+      belongArea: '芗城区-巷口街道',
+      relatedUnitGrid: 'WG007、WG008、巷口街道第一单元网格',
+      fenceRange: '东至新华东路，南至江滨北路，西至延安东路，北至南昌路（面积约0.6平方公里）',
+      relatedInspector: '陈晨',
+      fenceStatus: '启用',
+      relatedBerthCount: 22,
+      createTime: '2026-01-01 09:30:00',
+    },
+    {
+      id: '6',
+      fenceName: '万达商圈周边围栏',
+      belongArea: '龙文区-蓝田街道',
+      relatedUnitGrid: 'WG009、WG010、蓝田街道第四单元网格',
+      fenceRange: '东至天亭路，南至建元东路，西至龙江中路，北至水仙大街（面积约1.2平方公里）',
+      relatedInspector: '刘洋',
+      fenceStatus: '启用',
+      relatedBerthCount: 36,
+      createTime: '2026-01-01 09:45:00',
+    },
+    {
+      id: '7',
+      fenceName: '武安镇公共停车场围栏',
+      belongArea: '长泰区-武安镇',
+      relatedUnitGrid: 'WG011、WG012、武安镇第一单元网格',
+      fenceRange: '东至建设北路，南至人民西路，西至文昌北路，北至五里亭路（面积约0.4平方公里）',
+      relatedInspector: '黄涛',
+      fenceStatus: '启用',
+      relatedBerthCount: 14,
+      createTime: '2026-01-01 10:00:00',
+    },
+    {
+      id: '8',
+      fenceName: '绥安镇便民停车场围栏',
+      belongArea: '漳浦县-绥安镇',
+      relatedUnitGrid: 'WG013、WG014、绥安镇第二单元网格',
+      fenceRange: '东至朝阳东路，南至龙湖路，西至金浦大道，北至麦市街（面积约0.7平方公里）',
+      relatedInspector: '郑凯',
+      fenceStatus: '停用',
+      relatedBerthCount: 18,
+      createTime: '2025-12-01 08:00:00',
+    },
+    {
+      id: '9',
+      fenceName: '巷口街道沿线围栏',
+      belongArea: '芗城区-巷口街道',
+      relatedUnitGrid: 'WG015、WG016、巷口街道第二单元网格',
+      fenceRange: '东至东环城路，南至江滨北路，西至新华东路，北至漳华路（面积约0.9平方公里）',
+      relatedInspector: '吴杰',
+      fenceStatus: '启用',
+      relatedBerthCount: 25,
+      createTime: '2026-01-01 10:15:00',
+    },
+    {
+      id: '10',
+      fenceName: '蓝田街道路侧围栏',
+      belongArea: '龙文区-蓝田街道',
+      relatedUnitGrid: 'WG017、WG018、蓝田街道第五单元网格',
+      fenceRange: '东至龙文北路，南至迎宾大道，西至龙江北路，北至北环城路（面积约1.0平方公里）',
+      relatedInspector: '林强',
+      fenceStatus: '启用',
+      relatedBerthCount: 30,
+      createTime: '2026-01-01 10:30:00',
+    },
+    {
+      id: '11',
+      fenceName: '步文街道停车场围栏',
+      belongArea: '龙文区-步文街道',
+      relatedUnitGrid: 'WG019、WG020、步文街道第一单元网格',
+      fenceRange: '东至坂中路，南至水仙大街，西至建元西路，北至龙江中路（面积约0.8平方公里）',
+      relatedInspector: '赵阳',
+      fenceStatus: '待启用',
+      relatedBerthCount: 20,
+      createTime: '2026-01-15 11:00:00',
+    },
+    {
+      id: '12',
+      fenceName: '东铺头街道专用围栏',
+      belongArea: '芗城区-东铺头街道',
+      relatedUnitGrid: 'WG021、WG022、东铺头街道第一单元网格',
+      fenceRange: '东至延安北路，南至胜利路，西至大通北路，北至漳华路（面积约0.5平方公里）',
+      relatedInspector: '孙丽',
+      fenceStatus: '停用',
+      relatedBerthCount: 13,
+      createTime: '2025-11-30 09:00:00',
+    },
+    {
+      id: '13',
+      fenceName: '西桥街道专用停车场围栏',
+      belongArea: '芗城区-西桥街道',
+      relatedUnitGrid: 'WG023、WG024、西桥街道第一单元网格',
+      fenceRange: '东至新华南路，南至江滨南路，西至博爱西路，北至胜利路（面积约0.4平方公里）',
+      relatedInspector: '周敏',
+      fenceStatus: '启用',
+      relatedBerthCount: 15,
+      createTime: '2026-01-01 10:45:00',
+    },
+    {
+      id: '14',
+      fenceName: '石码街道改造围栏',
+      belongArea: '龙海区-石码街道',
+      relatedUnitGrid: 'WG025、WG026、石码街道第三单元网格',
+      fenceRange: '东至紫光路，南至锦江路，西至平宁路，北至人民路（面积约0.6平方公里）',
+      relatedInspector: '马丽',
+      fenceStatus: '启用',
+      relatedBerthCount: 21,
+      createTime: '2026-01-01 11:00:00',
+    },
+    {
+      id: '15',
+      fenceName: '武安镇汇总停车场围栏',
+      belongArea: '长泰区-武安镇',
+      relatedUnitGrid: 'WG027、WG028、武安镇第二单元网格',
+      fenceRange: '东至国泰路，南至人民东路，西至文昌南路，北至建设南路（面积约0.7平方公里）',
+      relatedInspector: '朱峰',
+      fenceStatus: '启用',
+      relatedBerthCount: 19,
+      createTime: '2026-01-01 11:15:00',
+    },
+    {
+      id: '16',
+      fenceName: '绥安镇核心区域围栏',
+      belongArea: '漳浦县-绥安镇',
+      relatedUnitGrid: 'WG029、WG030、绥安镇第一单元网格',
+      fenceRange: '东至金鹿东路，南至龙湖大道，西至大亭路，北至麦市东街（面积约0.9平方公里）',
+      relatedInspector: '韩磊',
+      fenceStatus: '待启用',
+      relatedBerthCount: 24,
+      createTime: '2026-01-20 10:00:00',
+    },
+    {
+      id: '17',
+      fenceName: '云陵镇专用停车场围栏',
+      belongArea: '云霄县-云陵镇',
+      relatedUnitGrid: 'WG031、WG032、云陵镇第一单元网格',
+      fenceRange: '东至江滨东路，南至宝城路，西至元光路，北至莆美路（面积约0.5平方公里）',
+      relatedInspector: '秦芳',
+      fenceStatus: '启用',
+      relatedBerthCount: 17,
+      createTime: '2026-01-01 11:30:00',
+    },
+    {
+      id: '18',
+      fenceName: '南诏镇整改停车场围栏',
+      belongArea: '诏安县-南诏镇',
+      relatedUnitGrid: 'WG033、WG034、南诏镇第一单元网格',
+      fenceRange: '东至东关街，南至南诏大道，西至西门街，北至县前街（面积约0.6平方公里）',
+      relatedInspector: '许燕',
+      fenceStatus: '停用',
+      relatedBerthCount: 14,
+      createTime: '2025-12-15 09:00:00',
+    },
+    {
+      id: '19',
+      fenceName: '小溪镇公共停车场围栏',
+      belongArea: '平和县-小溪镇',
+      relatedUnitGrid: 'WG035、WG036、小溪镇第一单元网格',
+      fenceRange: '东至东大路，南至南环路，西至西大路，北至北环路（面积约0.8平方公里）',
+      relatedInspector: '邓佳',
+      fenceStatus: '启用',
+      relatedBerthCount: 23,
+      createTime: '2026-01-01 11:45:00',
+    },
+    {
+      id: '24',
+      fenceName: '蓝田街道二期停车场围栏',
+      belongArea: '龙文区-蓝田街道',
+      relatedUnitGrid: 'WG037、WG038、蓝田街道第六单元网格',
+      fenceRange: '东至纵一路，南至迎宾大道，西至纵二路，北至北环城路（面积约0.4平方公里）',
+      relatedInspector: '彭伟',
+      fenceStatus: '启用',
+      relatedBerthCount: 16,
+      createTime: '2026-01-01 12:00:00',
+    },
+    {
+      id: '25',
+      fenceName: '蓝田街道三期停车场围栏',
+      belongArea: '龙文区-蓝田街道',
+      relatedUnitGrid: 'WG039、WG040、蓝田街道第七单元网格',
+      fenceRange: '东至纵三路，南至迎宾大道，西至纵四路，北至北环城路（面积约0.5平方公里）',
+      relatedInspector: '彭伟',
+      fenceStatus: '待启用',
+      relatedBerthCount: 18,
+      createTime: '2026-01-25 10:00:00',
+    },
+  ];
+};
+
+/** 新增/修改的表单/列表的搜索表单 - 改造为围栏管理表单（新字段适配） */
+export function useFormSchema() {
+  return [
+    {
+      fieldName: 'id',
+      label: '围栏记录ID',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入围栏记录ID',
+      },
+      labelWidth: '100',
+      rules: 'required',
+    },
+    {
+      fieldName: 'fenceName',
+      label: '围栏名称',
+      component: 'Input',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请输入围栏名称',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'belongArea',
+      label: '所属片区',
+      component: 'Input',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请输入所属片区（如：龙文区-碧湖街道）',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'relatedUnitGrid',
+      label: '关联单元网格',
+      component: 'Input',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请输入关联单元网格（如：WG001、WG002、碧湖街道第一单元网格）',
+        type: 'textarea',
+        rows: 3
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'fenceRange',
+      label: '围栏范围',
+      component: 'Input',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请输入围栏范围（如：东至碧湖大道，南至江滨路，西至九龙大道，北至水仙大街）',
+        type: 'textarea',
+        rows: 3
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'relatedInspector',
+      label: '关联巡检员',
+      component: 'Input',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请输入关联巡检员姓名',
+      },
+      rules: 'required',
+    },
+    {
+      component: 'Select',
+      labelWidth: '100',
+      componentProps: {
+        allowClear: true,
+        filterOption: true,
+        options: [
+          { label: '启用', value: '启用' },
+          { label: '待启用', value: '待启用' },
+          { label: '停用', value: '停用' }
+        ],
+        placeholder: '请选择围栏状态',
+        showSearch: true,
+      },
+      fieldName: 'fenceStatus',
+      label: '围栏状态',
+      rules: 'required',
+    },
+    {
+      fieldName: 'relatedBerthCount',
+      label: '关联泊位点数量',
+      component: 'Input',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请输入关联泊位点数量',
+        type: 'number',
+        min: 0
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'createTime',
+      label: '创建时间',
+      component: 'DatePicker',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请选择创建时间',
+        type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      rules: 'required',
+    },
+  ];
+}
+
+/** 表格字段 - 改造为围栏管理表格列（新字段适配） */
+export function useGridColumns() {
+  return [
+    { type: 'checkbox', width: 40 },
+    {
+      field: 'id',
+      title: '围栏记录ID',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: 'fenceName',
+      title: '围栏名称',
+      minWidth: 180,
+      sortable: true,
+      slots: { default: 'fenceName' },
+    },
+    {
+      field: 'belongArea',
+      title: '所属片区',
+      minWidth: 180,
+      sortable: true,
+    },
+    {
+      field: 'relatedUnitGrid',
+      title: '关联单元网格',
+      minWidth: 280,
+      sortable: false,
+    },
+    {
+      field: 'fenceRange',
+      title: '围栏范围',
+      minWidth: 320,
+      sortable: false,
+    },
+    {
+      field: 'relatedInspector',
+      title: '关联巡检员',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'fenceStatus',
+      title: '围栏状态',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'relatedBerthCount',
+      title: '关联泊位点数量',
+      minWidth: 150,
+      sortable: true,
+    },
+    {
+      field: 'createTime',
+      title: '创建时间',
+      minWidth: 200,
+      sortable: true,
+    },
+    {
+      title: '操作',
+      width: 80,
+      fixed: 'right',
+      slots: { default: 'actions' },
+    },
+  ];
+}
+
+/** 文字描述对象 - 改造为围栏管理文案（新字段适配） */
+export const textObj = {
+  editText: '编辑围栏记录',
+  addText: '新增围栏记录',
+  excelName: '围栏记录列表',
+  excelAllName: '全市围栏记录数据.xlsx',
+  total: '围栏记录数量20;启用14条;待启用4条;停用2条',
+};
