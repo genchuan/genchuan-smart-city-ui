@@ -1,6 +1,6 @@
 <!-- index.vue - 预警管理主页面 -->
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { reactive, ref, watch } from 'vue';
 
 import { confirm, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
@@ -32,6 +32,85 @@ const props = defineProps({
   },
 });
 const emit = defineEmits(['arrow-change']);
+
+// 将 activeName 的定义移到最前面
+const activeName = ref('待处置');
+
+// 预警数据对象
+const alarmObj = reactive({
+  totalShow: false,
+  detailObj: {},
+  total: dataList().length,
+  currentPage: 1,
+  pageSize: 10,
+  apilist: dataList(),
+  list: [],
+});
+
+// 表格数据获取
+const getTableData = (pageObj) => {
+  const page = pageObj.page;
+
+  let filteredList = alarmObj.apilist;
+
+  // 根据当前标签页筛选数据
+  if (activeName.value === '待处置') {
+    filteredList = alarmObj.apilist.filter(v => v.alarm_status === '待处置');
+  } else if (activeName.value === '处置中') {
+    filteredList = alarmObj.apilist.filter(v => v.alarm_status === '处置中');
+  } else if (activeName.value === '已归档') {
+    filteredList = alarmObj.apilist.filter(v => v.alarm_status === '已处理' || v.alarm_status === '已忽略');
+  }
+
+  alarmObj.total = filteredList.length;
+  alarmObj.list = filteredList.slice(
+    (page.currentPage - 1) * page.pageSize,
+    page.currentPage * page.pageSize,
+  );
+
+  return alarmObj;
+};
+
+// 动态获取表格列 - 使用函数返回，避免在计算属性中引用 activeName
+const getGridColumns = () => {
+  return useGridColumns(activeName.value);
+};
+
+const [Grid, gridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: getGridColumns(), // 使用函数获取初始列
+    keepSource: true,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }) => getTableData({ page }),
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+      isHover: true,
+    },
+    pagerConfig: alarmObj,
+    toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
+      refresh: true,
+      search: true,
+    },
+    showOverflow: true,
+  },
+  gridEvents: {
+    checkboxAll: handleRowCheckboxChange,
+    checkboxChange: handleRowCheckboxChange,
+  },
+  showSearchForm: false,
+});
+
+// 监听activeName变化，重新设置表格列
+watch(activeName, () => {
+  // 重新设置列
+  gridApi.setColumns(getGridColumns());
+  // 重新查询数据
+  gridApi.query();
+});
 
 // 抽屉和弹窗实例
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -296,17 +375,6 @@ function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
 
-// 预警数据对象
-const alarmObj = reactive({
-  totalShow: false,
-  detailObj: {},
-  total: dataList().length,
-  currentPage: 1,
-  pageSize: 10,
-  apilist: dataList(),
-  list: [],
-});
-
 // 当前操作的行
 const currentRow = ref({});
 
@@ -351,30 +419,6 @@ const changeTotalShow = () => {
   alarmObj.totalShow = !alarmObj.totalShow;
 };
 
-// 表格数据获取
-const getTableData = (pageObj) => {
-  const page = pageObj.page;
-
-  let filteredList = alarmObj.apilist;
-
-  // 根据当前标签页筛选数据
-  if (activeName.value === '待处置') {
-    filteredList = alarmObj.apilist.filter(v => v.alarm_status === '待处置');
-  } else if (activeName.value === '处置中') {
-    filteredList = alarmObj.apilist.filter(v => v.alarm_status === '处置中');
-  } else if (activeName.value === '已归档') {
-    filteredList = alarmObj.apilist.filter(v => v.alarm_status === '已处理' || v.alarm_status === '已忽略');
-  }
-
-  alarmObj.total = filteredList.length;
-  alarmObj.list = filteredList.slice(
-    (page.currentPage - 1) * page.pageSize,
-    page.currentPage * page.pageSize,
-  );
-
-  return alarmObj;
-};
-
 // 搜索表单
 const [QueryForm] = useVbenForm({
   collapsed: false,
@@ -403,39 +447,6 @@ function onSubmit() {
   drawerApi.close();
   gridApi.query();
 }
-
-// 动态获取表格列
-const gridColumns = computed(() => useGridColumns(activeName.value));
-
-const [Grid, gridApi] = useVbenVxeGrid({
-  gridOptions: {
-    columns: gridColumns.value,
-    keepSource: true,
-    proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getTableData({ page }),
-      },
-    },
-    rowConfig: {
-      keyField: 'id',
-      isHover: true,
-    },
-    pagerConfig: alarmObj,
-    toolbarConfig: {
-      'class-name': 'common-tool-bar-config',
-      refresh: true,
-      search: true,
-    },
-    showOverflow: true,
-  },
-  gridEvents: {
-    checkboxAll: handleRowCheckboxChange,
-    checkboxChange: handleRowCheckboxChange,
-  },
-  showSearchForm: false,
-});
-
-const activeName = ref('待处置');
 
 // 打开详情
 const handleOpenDetail = (row) => {
@@ -538,12 +549,6 @@ const arrowChange = () => {
 
 // 定义组件ref
 const alarmDetailDrawerRef = ref(null);
-
-// 监听activeName变化，重新设置表格列
-watch(activeName, () => {
-  gridApi.setColumns(useGridColumns(activeName.value));
-  gridApi.query();
-});
 </script>
 
 <template>
@@ -849,48 +854,69 @@ watch(activeName, () => {
         </el-tag>
       </template>
 
-      <!-- 待处置状态操作按钮 -->
+      <!-- 待处置状态操作按钮 - 使用 IconButton -->
       <template #actions_waiting="{ row }">
         <div class="table-toolbar-tools">
-          <el-button size="small" type="primary" @click="handleDeal(row)">
-            处置
-          </el-button>
-          <el-button size="small" type="warning" @click="handleAssign(row)">
-            派单
-          </el-button>
-          <el-button size="small" type="info" @click="handleIgnore(row)">
-            忽略
-          </el-button>
+          <IconButton
+            content="处置"
+            icon-name="operation"
+            @click="handleDeal(row)"
+          />
+          <IconButton
+            content="派单"
+            icon-name="send"
+            @click="handleAssign(row)"
+          />
+          <IconButton
+            content="忽略"
+            icon-name="close"
+            color="#E6A23C"
+            @click="handleIgnore(row)"
+          />
         </div>
       </template>
 
-      <!-- 处置中状态操作按钮 -->
+      <!-- 处置中状态操作按钮 - 使用 IconButton -->
       <template #actions_handling="{ row }">
         <div class="table-toolbar-tools">
-          <el-button size="small" type="primary" @click="handleUpdate(row)">
-            更新
-          </el-button>
-          <el-button size="small" @click="handleOpenDetail(row)">
-            备注
-          </el-button>
-          <el-button size="small" type="success" @click="handleVerify(row)">
-            验证
-          </el-button>
+          <IconButton
+            content="更新"
+            icon-name="edit"
+            @click="handleUpdate(row)"
+          />
+          <IconButton
+            content="备注"
+            icon-name="document"
+            @click="handleOpenDetail(row)"
+          />
+          <IconButton
+            content="验证"
+            icon-name="check"
+            color="#13ce66"
+            @click="handleVerify(row)"
+          />
         </div>
       </template>
 
-      <!-- 已归档状态操作按钮 -->
+      <!-- 已归档状态操作按钮 - 使用 IconButton -->
       <template #actions_archived="{ row }">
         <div class="table-toolbar-tools">
-          <el-button size="small" type="primary" @click="handleDetail(row)">
-            详情
-          </el-button>
-          <el-button size="small" @click="handleDownload(row)">
-            下载
-          </el-button>
-          <el-button size="small" type="warning" @click="handleReview(row)">
-            复盘
-          </el-button>
+          <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleDetail(row)"
+          />
+          <IconButton
+            content="下载"
+            icon-name="download"
+            @click="handleDownload(row)"
+          />
+          <IconButton
+            content="复盘"
+            icon-name="refresh"
+            color="#E6A23C"
+            @click="handleReview(row)"
+          />
         </div>
       </template>
 
