@@ -2,13 +2,12 @@
 <script setup>
 import { ref } from 'vue';
 
-import Taskechart from './taskechart.vue';
-import ApproveChart from './approvechart.vue';
-import Workechart from './workechart.vue';
-
-import TaskTable from './table/index.vue';
 import Approve from './approve/index.vue';
+import ApproveChart from './approvechart.vue';
+import TaskTable from './table/index.vue';
+import Taskechart from './taskechart.vue';
 import Work from './work/index.vue';
+import Workechart from './workechart.vue';
 // import Alarm from './alarm/index.vue';
 
 import '#/components/page/index.scss';
@@ -47,14 +46,14 @@ const tabArray = ref([
     arrowShow: false,
     arrowState: false,
   },
-  {
-    label: '预警',
-    components: Alarm,
-    showSecondary: true,
-    secondShow: false,
-    arrowShow: false,
-    arrowState: false,
-  },
+  // {
+  //   label: '预警',
+  //   components: Alarm,
+  //   showSecondary: true,
+  //   secondShow: false,
+  //   arrowShow: false,
+  //   arrowState: false,
+  // },
 ]);
 const tabChange = () => {
   tabArray.value.forEach((v) => {
