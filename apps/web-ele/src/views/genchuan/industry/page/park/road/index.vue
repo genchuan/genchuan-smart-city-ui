@@ -4,6 +4,8 @@ import { ref } from 'vue';
 import Arrears from './arrears/index.vue';
 import Billing from './billing/index.vue';
 import End from './end/index.vue';
+import Geomagnetic from './geomagnetic/index.vue';
+import Highvideo from './highvideo/index.vue';
 import ListComponent from './list/index.vue';
 import Query from './query/index.vue';
 import Recover from './recover/index.vue';
@@ -74,6 +76,18 @@ const tabArray = ref([
   {
     label: '追缴二维码',
     components: Recover,
+    showSecondary: true,
+    secondShow: false,
+  },
+  {
+    label: '地磁设备管理',
+    components: Geomagnetic,
+    showSecondary: true,
+    secondShow: false,
+  },
+  {
+    label: '高位视频管理',
+    components: Highvideo,
     showSecondary: true,
     secondShow: false,
   },
