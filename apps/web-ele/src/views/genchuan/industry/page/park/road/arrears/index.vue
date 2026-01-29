@@ -4,7 +4,14 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import {
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElLoading,
+  ElMessage,
+} from 'element-plus'; // 新增：引入ElDialog等组件
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -282,6 +289,43 @@ const createType = (type) => {
 };
 // 定义组件ref，用于调用组件方法
 const roadDetailDrawerRef = ref(null);
+
+// ====================================== 新增：追缴功能相关变量和方法 ======================================
+// 1. 定义弹框是否显示
+const arrearsDialogVisible = ref(false);
+// 2. 定义追缴数据（存储当前行的手机号码、车牌、姓名）
+const arrearsData = ref({
+  phone: '18033315151', // 手机号码
+  plateNo: '闽EF66002', // 车牌
+  name: '黄白', // 姓名
+});
+
+// 3. 实现追缴方法（赋值并打开弹框）
+const handleArrears = (row) => {
+  // 给追缴数据赋值（对应row中的字段，若字段名不一致请修改为你实际的字段名）
+  arrearsData.value = {
+    phone: '18033315151', // 手机号码
+    plateNo: '闽EF66002', // 车牌
+    name: '黄白', // 姓名
+  };
+  // 打开弹框
+  arrearsDialogVisible.value = true;
+};
+
+// 4. 关闭弹框方法（可选，用于重置数据）
+const closeArrearsDialog = () => {
+  arrearsDialogVisible.value = false;
+  // 重置追缴数据（可选，避免下次打开残留上一次数据）
+  arrearsData.value = {
+    phone: '18033315151', // 手机号码
+    plateNo: '闽EF66002', // 车牌
+    name: '黄白', // 姓名
+  };
+};
+const confirmArrears = () => {
+  arrearsDialogVisible.value = false;
+  ElMessage.success('已向车主发送追缴短信');
+};
 </script>
 
 <template>
@@ -297,6 +341,34 @@ const roadDetailDrawerRef = ref(null);
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+
+    <!-- ====================================== 新增：追缴弹框 ====================================== -->
+    <ElDialog
+      v-model="arrearsDialogVisible"
+      title="追缴信息"
+      width="400px"
+      center
+      @closed="closeArrearsDialog"
+    >
+      <ElForm label-width="80px" :model="arrearsData" class="arrears-form">
+        <ElFormItem label="车牌">
+          <ElInput v-model="arrearsData.plateNo" placeholder="暂无车牌数据" />
+        </ElFormItem>
+        <ElFormItem label="姓名">
+          <ElInput v-model="arrearsData.name" placeholder="暂无姓名数据" />
+        </ElFormItem>
+        <ElFormItem label="手机号码">
+          <ElInput v-model="arrearsData.phone" placeholder="暂无手机号码数据" />
+        </ElFormItem>
+      </ElForm>
+      <!-- 弹框底部按钮（可选，可添加"确认追缴"等业务按钮） -->
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button type="primary" @click="confirmArrears">确认追缴</el-button>
+        </span>
+      </template>
+    </ElDialog>
+
     <Grid>
       <!-- 三级状态 -->
       <template #table-title>
@@ -357,6 +429,12 @@ const roadDetailDrawerRef = ref(null);
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
+            content="追缴"
+            icon-name="Money"
+            color="#F56C6C"
+            @click="handleArrears(row)"
+          />
+          <IconButton
             content="详情"
             icon-name="View"
             @click="handleOpenDetail(row)"
@@ -391,3 +469,14 @@ const roadDetailDrawerRef = ref(null);
     </Grid>
   </div>
 </template>
+
+<style scoped>
+/* 新增：追缴弹框表单样式优化（可选） */
+.arrears-form {
+  margin-top: 10px;
+}
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+</style>
