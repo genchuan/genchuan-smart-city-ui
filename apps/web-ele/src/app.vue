@@ -33,3 +33,12 @@ useElementPlusDesignTokens();
     <RouterView />
   </ElConfigProvider>
 </template>
+<style lang="scss">
+.dark {
+  .items-center {
+    a {
+      color: #fff;
+    }
+  }
+}
+</style>
