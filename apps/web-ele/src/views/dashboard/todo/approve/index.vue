@@ -13,7 +13,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 // 引入封装后的详情抽屉组件
-import ApproveDetailDrawer from '#/views/dashboard/todo/table/detail.vue';
+import ApproveDetailDrawer from '#/views/dashboard/todo/approve/detail.vue';
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 

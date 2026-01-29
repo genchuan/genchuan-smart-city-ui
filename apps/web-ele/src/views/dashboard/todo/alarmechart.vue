@@ -1,4 +1,4 @@
-<!-- taskchart.vue -->
+<!-- alarmechart.vue -->
 <script setup>
 import { reactive } from 'vue';
 

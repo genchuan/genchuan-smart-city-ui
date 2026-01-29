@@ -364,7 +364,7 @@ const workorderDetailDrawerRef = ref(null);
 </script>
 
 <template>
-  <div class="park-lot-table-new">
+                                    <div class="park-lot-table-new">
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>

@@ -2,12 +2,14 @@
 <script setup>
 import { ref } from 'vue';
 
-import TaskChart from './taskchart.vue';
+import Taskechart from './taskechart.vue';
 import ApproveChart from './approvechart.vue';
+import Workechart from './workechart.vue';
 
 import TaskTable from './table/index.vue';
 import Approve from './approve/index.vue';
 import Work from './work/index.vue';
+// import Alarm from './alarm/index.vue';
 
 import '#/components/page/index.scss';
 
@@ -42,9 +44,17 @@ const tabArray = ref([
     components: Work,
     showSecondary: true,
     secondShow: false,
-    arrowShow: true,
+    arrowShow: false,
     arrowState: false,
   },
+  // {
+  //   label: '预警',
+  //   components: Alarm,
+  //   showSecondary: true,
+  //   secondShow: false,
+  //   arrowShow: false,
+  //   arrowState: false,
+  // },
 ]);
 const tabChange = () => {
   tabArray.value.forEach((v) => {
@@ -56,8 +66,9 @@ const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <TaskChart v-if="tabArray[0].arrowShow" />
+    <Taskechart v-if="tabArray[0].arrowShow" />
     <ApproveChart v-if="tabArray[1].arrowShow" />
+    <Workechart v-if="tabArray[2].arrowShow" />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
