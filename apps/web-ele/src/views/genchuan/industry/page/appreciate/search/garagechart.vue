@@ -1,10 +1,9 @@
-,<script setup>
+,
+<script setup>
 import { reactive } from 'vue';
 
 import Card from '#/components/stats/card.vue';
-import Circle from '#/components/stats/circle.vue';
 import Columnar from '#/components/stats/columnar.vue';
-
 
 const state = reactive({
   cardList: [
@@ -26,12 +25,11 @@ const state = reactive({
       />
     </div>
 
-
     <Columnar
       height="330px"
       title="车位分布"
       :x-data="['1F', '2F', '3F', 'B1', 'B2']"
-      :series-data="[{ name: '', data: [58, 42,12,35,56,] }]"
+      :series-data="[{ name: '', data: [58, 42, 12, 35, 56] }]"
     />
   </div>
 </template>

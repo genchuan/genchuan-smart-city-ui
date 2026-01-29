@@ -1,4 +1,5 @@
-,<script setup>
+,
+<script setup>
 import { reactive } from 'vue';
 
 import Card from '#/components/stats/card.vue';
