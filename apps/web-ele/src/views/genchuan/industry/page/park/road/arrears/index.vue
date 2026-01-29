@@ -18,8 +18,9 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
+import arrearsDetailDrawer from '#/views/genchuan/industry/page/park/road/arrears/detail.vue';
 // 引入封装后的详情抽屉组件
-import roadDetailDrawer from '#/views/genchuan/industry/page/park/road/arrears/detail.vue';
+import roadDetailDrawer from '#/views/genchuan/industry/page/park/road/arrears/histroyDialog.vue';
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
@@ -153,6 +154,7 @@ function handleRowCheckboxChange({ records }) {
 const dataObj = reactive({
   totalShow: false,
   detailObj: {}, // 保留详情对象用于传递给组件
+  arrearList: [], // 新增：存储欠费明细数据，传递给详情组件
   total: dataList().length,
   currentPage: 1,
   pageSize: 10,
@@ -250,11 +252,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const activeName = ref('全部');
-// 修改打开详情的方法，调用组件的open方法
+// 修改打开详情的方法，调用组件的open方法（同步赋值明细数据）
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
+  // 新增：给明细数据赋值（保证点击详情也能看到欠费明细）
+  setArrearListData(row);
   // 通过ref调用组件的open方法
-  roadDetailDrawerRef.value.open();
+  arrearsDetailDrawerRef.value.open();
   console.log(row);
 };
 const tabsData = ref([
@@ -289,7 +293,7 @@ const createType = (type) => {
 };
 // 定义组件ref，用于调用组件方法
 const roadDetailDrawerRef = ref(null);
-
+const arrearsDetailDrawerRef = ref(null);
 // ====================================== 新增：追缴功能相关变量和方法 ======================================
 // 1. 定义弹框是否显示
 const arrearsDialogVisible = ref(false);
@@ -304,9 +308,9 @@ const arrearsData = ref({
 const handleArrears = (row) => {
   // 给追缴数据赋值（对应row中的字段，若字段名不一致请修改为你实际的字段名）
   arrearsData.value = {
-    phone: '18033315151', // 手机号码
-    plateNo: '闽EF66002', // 车牌
-    name: '黄白', // 姓名
+    phone: '18033315151', // 手机号码（可改为 row.phone 若表格行有该字段）
+    plateNo: row.plateNo || '闽EF66002', // 优先取当前行车牌，兜底默认值
+    name: '黄白', // 姓名（可改为 row.name 若表格行有该字段）
   };
   // 打开弹框
   arrearsDialogVisible.value = true;
@@ -326,6 +330,51 @@ const confirmArrears = () => {
   arrearsDialogVisible.value = false;
   ElMessage.success('已向车主发送追缴短信');
 };
+
+// 新增：封装欠费明细数据赋值方法（复用逻辑）
+const setArrearListData = (row) => {
+  // 模拟4条漳州欠费明细数据（可根据row.plateNo匹配不同数据，此处统一返回模拟数据）
+  dataObj.arrearList = [
+    {
+      plateNo: row.plateNo || '闽ECFF07Q',
+      arrearsAmount: '15.0',
+      address: '龙海区万达广场',
+      allTime: '2025年12月5日 6:00 至 2025年12月5日9:00',
+      time: '3小时',
+    },
+    {
+      plateNo: row.plateNo || '闽E8899X',
+      arrearsAmount: '24.0',
+      address: '芗城区古城历史文化街区',
+      allTime: '2025年12月6日 8:30 至 2025年12月6日12:30',
+      time: '4小时',
+    },
+    {
+      plateNo: row.plateNo || '闽E6780Y',
+      arrearsAmount: '9.0',
+      address: '龙文区吾悦广场',
+      allTime: '2025年12月7日 14:00 至 2025年12月7日17:00',
+      time: '3小时',
+    },
+    {
+      plateNo: row.plateNo || '闽E3456Z',
+      arrearsAmount: '36.0',
+      address: '长泰区天柱山欢乐大世界附近',
+      allTime: '2025年12月8日 20:00 至 2025年12月9日 2:00',
+      time: '6小时',
+    },
+  ];
+};
+
+// 完善：打开欠费订单数（赋值明细并打开详情抽屉）
+const openArrearsOrderCount = (row) => {
+  dataObj.detailObj = row;
+  // 赋值欠费明细数据
+  setArrearListData(row);
+  // 打开详情抽屉
+  roadDetailDrawerRef.value.open();
+  console.log('欠费订单明细：', dataObj.arrearList);
+};
 </script>
 
 <template>
@@ -333,10 +382,17 @@ const confirmArrears = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <!-- 使用封装后的详情抽屉组件 -->
+    <!-- 使用封装后的详情抽屉组件：传递 detail-obj 和 arrear-list 两个属性 -->
     <roadDetailDrawer
       ref="roadDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
+      :arrear-list="dataObj.arrearList"
+    />
+    <!-- 使用封装后的详情抽屉组件：传递 detail-obj 和 arrear-list 两个属性 -->
+    <arrearsDetailDrawer
+      ref="arrearsDetailDrawerRef"
+      :detail-obj="dataObj.detailObj"
+      :arrear-list="dataObj.arrearList"
     />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -425,7 +481,15 @@ const confirmArrears = () => {
           {{ row.plateNo }}
         </el-text>
       </template>
-
+      <template #arrearsOrderCount="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          @click="openArrearsOrderCount(row)"
+        >
+          {{ row.arrearsOrderCount }}
+        </el-text>
+      </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton

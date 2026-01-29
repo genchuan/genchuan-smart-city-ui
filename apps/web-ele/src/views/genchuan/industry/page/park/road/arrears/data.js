@@ -116,6 +116,7 @@ export function useGridColumns() {
             title: '欠费订单数',
             minWidth: 100,
             sortable: true,
+            slots: { default: 'arrearsOrderCount' },
         },
         {
             field: 'areaName',
