@@ -9,11 +9,17 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
-import { dataList, textObj, useFormSchema, useGridColumns, detailFields } from './data';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import {
+  dataList,
+  detailFields,
+  textObj,
+  useFormSchema,
+  useGridColumns,
+} from './data';
 
 const props = defineProps({
   secondShow: {
@@ -114,10 +120,10 @@ async function handleDelete(row) {
     text: $t('ui.actionMessage.deleting', [row.packageName]),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.packageId !== row.packageId);
-    ElMessage.success(
-      $t('ui.actionMessage.deleteSuccess', [row.packageName]),
+    dataObj.apilist = dataObj.apilist.filter(
+      (v) => v.packageId !== row.packageId,
     );
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.packageName]));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -264,13 +270,17 @@ const createLabel = (item) => {
     }
     case '启用': {
       // 统计packageStatusName为'启用'的数据
-      count = dataObj.apilist.filter((v) => v.packageStatusName === '启用').length;
+      count = dataObj.apilist.filter(
+        (v) => v.packageStatusName === '启用',
+      ).length;
 
       break;
     }
     case '禁用': {
       // 统计packageStatusName为'禁用'的数据
-      count = dataObj.apilist.filter((v) => v.packageStatusName === '禁用').length;
+      count = dataObj.apilist.filter(
+        (v) => v.packageStatusName === '禁用',
+      ).length;
 
       break;
     }
@@ -292,12 +302,15 @@ const handleFullShow = () => {
 // 状态标签类型映射
 const getStatusType = (status) => {
   switch (status) {
-    case '启用':
+    case '启用': {
       return 'success';
-    case '禁用':
+    }
+    case '禁用': {
       return 'danger';
-    default:
+    }
+    default: {
       return 'info';
+    }
   }
 };
 </script>
@@ -307,7 +320,7 @@ const getStatusType = (status) => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-<!--   详情抽屉-->
+    <!--   详情抽屉-->
     <DetailDrawer
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.packageName}详情`"

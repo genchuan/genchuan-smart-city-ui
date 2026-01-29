@@ -9,11 +9,17 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
-import { dataList, textObj, useFormSchema, useGridColumns, detailFields } from './data';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import {
+  dataList,
+  detailFields,
+  textObj,
+  useFormSchema,
+  useGridColumns,
+} from './data';
 
 const props = defineProps({
   secondShow: {
@@ -114,10 +120,10 @@ async function handleDelete(row) {
     text: $t('ui.actionMessage.deleting', [row.couponName]),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.couponId !== row.couponId);
-    ElMessage.success(
-      $t('ui.actionMessage.deleteSuccess', [row.couponName]),
+    dataObj.apilist = dataObj.apilist.filter(
+      (v) => v.couponId !== row.couponId,
     );
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.couponName]));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -272,13 +278,17 @@ const createLabel = (item) => {
     }
     case '启用': {
       // 统计couponStatusName为'启用'的数据
-      count = dataObj.apilist.filter((v) => v.couponStatusName === '启用').length;
+      count = dataObj.apilist.filter(
+        (v) => v.couponStatusName === '启用',
+      ).length;
 
       break;
     }
     case '禁用': {
       // 统计couponStatusName为'禁用'的数据
-      count = dataObj.apilist.filter((v) => v.couponStatusName === '禁用').length;
+      count = dataObj.apilist.filter(
+        (v) => v.couponStatusName === '禁用',
+      ).length;
 
       break;
     }
@@ -304,7 +314,7 @@ const handleFullShow = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-<!--   详情抽屉-->
+    <!--   详情抽屉-->
     <DetailDrawer
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.couponName}详情`"

@@ -1398,8 +1398,8 @@ export const lotData = [
 export const getLotByNames = (lotNames) => {
   if (!lotNames) return [];
 
-  const names = lotNames.split(',').map(name => name.trim());
-  return lotData.filter(lot => names.includes(lot.name));
+  const names = new Set(lotNames.split(',').map((name) => name.trim()));
+  return lotData.filter((lot) => names.has(lot.name));
 };
 
 /** 车辆信息静态数据 */
@@ -1553,7 +1553,7 @@ export const carInfoData = [
 /** 根据车牌获取车辆详情 */
 export const getCarByNumber = (carNumber) => {
   if (!carNumber) return null;
-  return carInfoData.find(car => car.car_number === carNumber);
+  return carInfoData.find((car) => car.car_number === carNumber);
 };
 
 /** 根据标签类型获取统计数据 */
@@ -1582,7 +1582,7 @@ export const getStatsDataByTabType = (tabType = 'chargeRule') => {
       tabData.forEach((item) => {
         const lotCount = item.applyLotNames.split(',').length;
         const lotType =
-          lotCount === 1 ? '单一车场' : lotCount <= 3 ? '少量车场' : '多个车场';
+          lotCount === 1 ? '单一车场' : (lotCount <= 3 ? '少量车场' : '多个车场');
         lotTypeStats[lotType] = (lotTypeStats[lotType] || 0) + 1;
       });
 

@@ -15,7 +15,7 @@ export const dataList = () => {
       gatewayStatusName: '运行中',
       configTime: '2025-01-01 09:00:00',
       configBy: '张三',
-      relatedDeviceCount: 15
+      relatedDeviceCount: 15,
     },
     {
       gatewayName: '出口边缘网关',
@@ -31,7 +31,7 @@ export const dataList = () => {
       gatewayStatusName: '运行中',
       configTime: '2025-01-02 14:30:00',
       configBy: '李四',
-      relatedDeviceCount: 12
+      relatedDeviceCount: 12,
     },
     {
       gatewayName: 'A区边缘网关',
@@ -47,7 +47,7 @@ export const dataList = () => {
       gatewayStatusName: '离线',
       configTime: '2025-01-03 10:15:00',
       configBy: '王五',
-      relatedDeviceCount: 8
+      relatedDeviceCount: 8,
     },
     {
       gatewayName: 'B区边缘网关',
@@ -63,7 +63,7 @@ export const dataList = () => {
       gatewayStatusName: '故障',
       configTime: '2025-01-04 08:30:00',
       configBy: '赵六',
-      relatedDeviceCount: 10
+      relatedDeviceCount: 10,
     },
     {
       gatewayName: 'C区边缘网关',
@@ -79,7 +79,7 @@ export const dataList = () => {
       gatewayStatusName: '运行中',
       configTime: '2025-01-05 16:40:00',
       configBy: '孙七',
-      relatedDeviceCount: 6
+      relatedDeviceCount: 6,
     },
     {
       gatewayName: 'D区边缘网关',
@@ -95,7 +95,7 @@ export const dataList = () => {
       gatewayStatusName: '运行中',
       configTime: '2025-01-06 11:20:00',
       configBy: '周八',
-      relatedDeviceCount: 20
+      relatedDeviceCount: 20,
     },
     {
       gatewayName: 'E区边缘网关',
@@ -111,7 +111,7 @@ export const dataList = () => {
       gatewayStatusName: '维护中',
       configTime: '2025-01-07 13:25:00',
       configBy: '吴九',
-      relatedDeviceCount: 5
+      relatedDeviceCount: 5,
     },
     {
       gatewayName: 'F区边缘网关',
@@ -127,7 +127,7 @@ export const dataList = () => {
       gatewayStatusName: '离线',
       configTime: '2025-01-08 09:50:00',
       configBy: '郑十',
-      relatedDeviceCount: 7
+      relatedDeviceCount: 7,
     },
     {
       gatewayName: 'G区边缘网关',
@@ -143,7 +143,7 @@ export const dataList = () => {
       gatewayStatusName: '运行中',
       configTime: '2025-01-09 15:15:00',
       configBy: '张三',
-      relatedDeviceCount: 12
+      relatedDeviceCount: 12,
     },
     {
       gatewayName: 'H区边缘网关',
@@ -159,7 +159,7 @@ export const dataList = () => {
       gatewayStatusName: '故障',
       configTime: '2025-01-10 10:30:00',
       configBy: '李四',
-      relatedDeviceCount: 6
+      relatedDeviceCount: 6,
     },
     {
       gatewayName: 'I区边缘网关',
@@ -175,7 +175,7 @@ export const dataList = () => {
       gatewayStatusName: '运行中',
       configTime: '2025-01-11 14:20:00',
       configBy: '王五',
-      relatedDeviceCount: 18
+      relatedDeviceCount: 18,
     },
     {
       gatewayName: 'J区边缘网关',
@@ -191,7 +191,7 @@ export const dataList = () => {
       gatewayStatusName: '维护中',
       configTime: '2025-01-12 09:40:00',
       configBy: '赵六',
-      relatedDeviceCount: 9
+      relatedDeviceCount: 9,
     },
     {
       gatewayName: 'K区边缘网关',
@@ -207,7 +207,7 @@ export const dataList = () => {
       gatewayStatusName: '运行中',
       configTime: '2025-01-13 11:25:00',
       configBy: '孙七',
-      relatedDeviceCount: 14
+      relatedDeviceCount: 14,
     },
     {
       gatewayName: 'L区边缘网关',
@@ -223,7 +223,7 @@ export const dataList = () => {
       gatewayStatusName: '离线',
       configTime: '2025-01-14 16:30:00',
       configBy: '周八',
-      relatedDeviceCount: 7
+      relatedDeviceCount: 7,
     },
     {
       gatewayName: 'M区边缘网关',
@@ -239,8 +239,8 @@ export const dataList = () => {
       gatewayStatusName: '运行中',
       configTime: '2025-01-15 10:15:00',
       configBy: '吴九',
-      relatedDeviceCount: 13
-    }
+      relatedDeviceCount: 13,
+    },
   ];
 };
 
@@ -254,43 +254,43 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入网关ID',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'gatewayName',
       label: '网关名称',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入网关名称'
+        placeholder: '请输入网关名称',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'gatewayCode',
       label: '网关编码',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入网关编码'
+        placeholder: '请输入网关编码',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'assetName',
       label: '所属资产',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入所属资产'
+        placeholder: '请输入所属资产',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'ipAddress',
       label: 'IP地址',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入IP地址'
+        placeholder: '请输入IP地址',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'port',
@@ -299,9 +299,9 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入通信端口',
         min: 1,
-        max: 65535
+        max: 65_535,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'networkTypeName',
@@ -311,10 +311,10 @@ export function useFormSchema() {
         placeholder: '请选择网络类型',
         options: [
           { label: '有线网络', value: '有线网络' },
-          { label: '无线网络', value: '无线网络' }
-        ]
+          { label: '无线网络', value: '无线网络' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'protocolTypeName',
@@ -325,19 +325,19 @@ export function useFormSchema() {
         options: [
           { label: 'MQTT', value: 'MQTT' },
           { label: 'HTTP', value: 'HTTP' },
-          { label: 'WebSocket', value: 'WebSocket' }
-        ]
+          { label: 'WebSocket', value: 'WebSocket' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'cacheCapacity',
       label: '缓存容量',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入缓存容量'
+        placeholder: '请输入缓存容量',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'offlineCacheHour',
@@ -345,9 +345,9 @@ export function useFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入断网缓存时长',
-        min: 1
+        min: 1,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'gatewayStatusName',
@@ -359,10 +359,10 @@ export function useFormSchema() {
           { label: '运行中', value: '运行中' },
           { label: '离线', value: '离线' },
           { label: '故障', value: '故障' },
-          { label: '维护中', value: '维护中' }
-        ]
+          { label: '维护中', value: '维护中' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'configTime',
@@ -371,18 +371,18 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择配置时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'configBy',
       label: '配置人',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入配置人'
+        placeholder: '请输入配置人',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'relatedDeviceCount',
@@ -390,10 +390,10 @@ export function useFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入关联设备数',
-        min: 0
+        min: 0,
       },
-      rules: 'required'
-    }
+      rules: 'required',
+    },
   ];
 }
 
@@ -406,93 +406,93 @@ export function useGridColumns() {
       title: '网关ID',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'gatewayId' }
+      slots: { default: 'gatewayId' },
     },
     {
       field: 'gatewayName',
       title: '网关名称',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'gatewayCode',
       title: '网关编码',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'assetName',
       title: '所属资产',
       minWidth: 150,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'ipAddress',
       title: 'IP地址',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'port',
       title: '通信端口',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'networkTypeName',
       title: '网络类型',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'protocolTypeName',
       title: '通信协议',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'cacheCapacity',
       title: '缓存容量',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'offlineCacheHour',
       title: '断网缓存时长',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'gatewayStatusName',
       title: '运行状态',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'gatewayStatusName' }
+      slots: { default: 'gatewayStatusName' },
     },
     {
       field: 'configTime',
       title: '配置时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'configBy',
       title: '配置人',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'relatedDeviceCount',
       title: '关联设备数',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       title: '操作',
       width: 100,
       fixed: 'right',
-      slots: { default: 'actions' }
-    }
+      slots: { default: 'actions' },
+    },
   ];
 }
 
@@ -519,6 +519,5 @@ export const detailFields = [
   { key: 'gatewayStatusName', label: '运行状态' },
   { key: 'configTime', label: '配置时间' },
   { key: 'configBy', label: '配置人' },
-  { key: 'relatedDeviceCount', label: '关联设备数' }
+  { key: 'relatedDeviceCount', label: '关联设备数' },
 ];
-

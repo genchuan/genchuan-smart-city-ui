@@ -12,7 +12,13 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
-import { dataList, textObj, useFormSchema, useGridColumns, detailFields } from './data';
+import {
+  dataList,
+  textObj,
+  useFormSchema,
+  useGridColumns,
+  detailFields,
+} from './data';
 import DetailDrawer from '#/components/common/DetailDrawer.vue';
 
 const props = defineProps({
@@ -114,7 +120,9 @@ async function handleDelete(row) {
     text: $t('ui.actionMessage.deleting', [row.deviceTypeName]),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.deviceId !== row.deviceId);
+    dataObj.apilist = dataObj.apilist.filter(
+      (v) => v.deviceId !== row.deviceId,
+    );
     ElMessage.success(
       $t('ui.actionMessage.deleteSuccess', [row.deviceTypeName]),
     );
@@ -256,7 +264,13 @@ const handleOpenDetail = (row) => {
 };
 
 // 修改tabsData为五个标签：全部、在线、离线、故障、维护中
-const tabsData = ref([{ label: '全部' }, { label: '在线' }, { label: '离线' }, { label: '故障' }, { label: '维护中' }]);
+const tabsData = ref([
+  { label: '全部' },
+  { label: '在线' },
+  { label: '离线' },
+  { label: '故障' },
+  { label: '维护中' },
+]);
 
 // 创建标签文本，显示数量统计
 const createLabel = (item) => {
@@ -270,25 +284,33 @@ const createLabel = (item) => {
     }
     case '在线': {
       // 统计deviceStatusName为'在线'的数据
-      count = dataObj.apilist.filter((v) => v.deviceStatusName === '在线').length;
+      count = dataObj.apilist.filter(
+        (v) => v.deviceStatusName === '在线',
+      ).length;
 
       break;
     }
     case '离线': {
       // 统计deviceStatusName为'离线'的数据
-      count = dataObj.apilist.filter((v) => v.deviceStatusName === '离线').length;
+      count = dataObj.apilist.filter(
+        (v) => v.deviceStatusName === '离线',
+      ).length;
 
       break;
     }
     case '故障': {
       // 统计deviceStatusName为'故障'的数据
-      count = dataObj.apilist.filter((v) => v.deviceStatusName === '故障').length;
+      count = dataObj.apilist.filter(
+        (v) => v.deviceStatusName === '故障',
+      ).length;
 
       break;
     }
     case '维护中': {
       // 统计deviceStatusName为'维护中'的数据
-      count = dataObj.apilist.filter((v) => v.deviceStatusName === '维护中').length;
+      count = dataObj.apilist.filter(
+        (v) => v.deviceStatusName === '维护中',
+      ).length;
 
       break;
     }
@@ -329,7 +351,7 @@ const getStatusType = (status) => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-<!--   详情抽屉-->
+    <!--   详情抽屉-->
     <DetailDrawer
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.deviceTypeName}详情`"
@@ -428,7 +450,9 @@ const getStatusType = (status) => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：终端设备数量: 15; 在线: 10; 离线: 2; 故障: 2; 维护中: 1 </span>
+          <span>
+            本页统计：终端设备数量: 15; 在线: 10; 离线: 2; 故障: 2; 维护中: 1
+          </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span> 全部统计：{{ textObj.total }} </span>

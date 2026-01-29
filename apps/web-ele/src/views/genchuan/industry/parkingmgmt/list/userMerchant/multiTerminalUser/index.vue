@@ -47,6 +47,21 @@ const tabArray = ref([
     secondShow: false,
     userType: '政府',
   },
+  // todo 增加标签
+  {
+    label: '客服查询',
+    components: Table,
+    showSecondary: true,
+    secondShow: false,
+    userType: '客服查询',
+  },
+  {
+    label: '信用分管理',
+    components: Table,
+    showSecondary: true,
+    secondShow: false,
+    userType: '信用分管理',
+  },
 ]);
 const activeName = ref('个人用户管理');
 const secondShow = ref(false);

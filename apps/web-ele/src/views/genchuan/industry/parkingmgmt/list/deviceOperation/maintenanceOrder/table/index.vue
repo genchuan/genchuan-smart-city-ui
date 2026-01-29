@@ -9,11 +9,17 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
-import { dataList, textObj, useFormSchema, useGridColumns, detailFields } from './data';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import {
+  dataList,
+  detailFields,
+  textObj,
+  useFormSchema,
+  useGridColumns,
+} from './data';
 
 const props = defineProps({
   secondShow: {
@@ -58,14 +64,14 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onConfirm() {
     const obj = formApi.form.values;
     if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-          dataObj.apilist.push(obj);
-        } else {
-          dataObj.apilist.forEach((v, i) => {
-            if (v.alarmId === formData.value?.alarmId) {
-              dataObj.apilist[i] = obj;
-            }
-          });
+      dataObj.apilist.push(obj);
+    } else {
+      dataObj.apilist.forEach((v, i) => {
+        if (v.alarmId === formData.value?.alarmId) {
+          dataObj.apilist[i] = obj;
         }
+      });
+    }
     handleRefresh();
     formDrawerApi.close();
   },
@@ -115,9 +121,7 @@ async function handleDelete(row) {
   });
   try {
     dataObj.apilist = dataObj.apilist.filter((v) => v.alarmId !== row.alarmId);
-    ElMessage.success(
-      $t('ui.actionMessage.deleteSuccess', [row.alarmId]),
-    );
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.alarmId]));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -168,14 +172,14 @@ const getTableData = (pageObj) => {
       case '全部': {
         return true;
       }
-      case '待处理': {
-        return v.dealStatusName === '待处理';
-      }
       case '处理中': {
         return v.dealStatusName === '处理中';
       }
       case '已处理': {
         return v.dealStatusName === '已处理';
+      }
+      case '待处理': {
+        return v.dealStatusName === '待处理';
       }
     }
     return false;
@@ -253,7 +257,12 @@ const handleOpenDetail = (row) => {
 };
 
 // 修改tabsData为四个标签：全部、待处理、处理中、已处理
-const tabsData = ref([{ label: '全部' }, { label: '待处理' }, { label: '处理中' }, { label: '已处理' }]);
+const tabsData = ref([
+  { label: '全部' },
+  { label: '待处理' },
+  { label: '处理中' },
+  { label: '已处理' },
+]);
 
 // 创建标签文本，显示数量统计
 const createLabel = (item) => {
@@ -265,21 +274,27 @@ const createLabel = (item) => {
 
       break;
     }
-    case '待处理': {
-      // 统计dealStatusName为'待处理'的数据
-      count = dataObj.apilist.filter((v) => v.dealStatusName === '待处理').length;
-
-      break;
-    }
     case '处理中': {
       // 统计dealStatusName为'处理中'的数据
-      count = dataObj.apilist.filter((v) => v.dealStatusName === '处理中').length;
+      count = dataObj.apilist.filter(
+        (v) => v.dealStatusName === '处理中',
+      ).length;
 
       break;
     }
     case '已处理': {
       // 统计dealStatusName为'已处理'的数据
-      count = dataObj.apilist.filter((v) => v.dealStatusName === '已处理').length;
+      count = dataObj.apilist.filter(
+        (v) => v.dealStatusName === '已处理',
+      ).length;
+
+      break;
+    }
+    case '待处理': {
+      // 统计dealStatusName为'待处理'的数据
+      count = dataObj.apilist.filter(
+        (v) => v.dealStatusName === '待处理',
+      ).length;
 
       break;
     }
@@ -301,14 +316,18 @@ const handleFullShow = () => {
 // 状态标签类型映射
 const getStatusType = (status) => {
   switch (status) {
-    case '已处理':
-      return 'success';
-    case '待处理':
-      return 'warning';
-    case '处理中':
+    case '处理中': {
       return 'primary';
-    default:
+    }
+    case '已处理': {
+      return 'success';
+    }
+    case '待处理': {
+      return 'warning';
+    }
+    default: {
       return 'info';
+    }
   }
 };
 </script>
@@ -318,7 +337,7 @@ const getStatusType = (status) => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-<!--   详情抽屉-->
+    <!--   详情抽屉-->
     <DetailDrawer
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.alarmId}详情`"

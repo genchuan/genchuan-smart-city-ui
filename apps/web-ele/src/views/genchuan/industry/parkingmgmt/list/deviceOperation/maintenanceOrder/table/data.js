@@ -13,7 +13,7 @@ export const dataList = () => {
       alarmLevelName: '一般',
       receiveStatusName: '已接收',
       receiveWayName: '系统自动',
-      dealStatusName: '待处理'
+      dealStatusName: '待处理',
     },
     {
       alarmNo: 'AL-20250101-002',
@@ -27,7 +27,7 @@ export const dataList = () => {
       alarmLevelName: '严重',
       receiveStatusName: '已接收',
       receiveWayName: '系统自动',
-      dealStatusName: '处理中'
+      dealStatusName: '处理中',
     },
     {
       alarmNo: 'AL-20250101-003',
@@ -41,7 +41,7 @@ export const dataList = () => {
       alarmLevelName: '一般',
       receiveStatusName: '已接收',
       receiveWayName: '系统自动',
-      dealStatusName: '已处理'
+      dealStatusName: '已处理',
     },
     {
       alarmNo: 'AL-20250101-004',
@@ -55,7 +55,7 @@ export const dataList = () => {
       alarmLevelName: '一般',
       receiveStatusName: '已接收',
       receiveWayName: '系统自动',
-      dealStatusName: '已处理'
+      dealStatusName: '已处理',
     },
     {
       alarmNo: 'AL-20250101-005',
@@ -69,7 +69,7 @@ export const dataList = () => {
       alarmLevelName: '严重',
       receiveStatusName: '已接收',
       receiveWayName: '系统自动',
-      dealStatusName: '待处理'
+      dealStatusName: '待处理',
     },
     {
       alarmNo: 'AL-20250101-006',
@@ -83,7 +83,7 @@ export const dataList = () => {
       alarmLevelName: '轻微',
       receiveStatusName: '已接收',
       receiveWayName: '系统自动',
-      dealStatusName: '处理中'
+      dealStatusName: '处理中',
     },
     {
       alarmNo: 'AL-20250101-007',
@@ -97,7 +97,7 @@ export const dataList = () => {
       alarmLevelName: '一般',
       receiveStatusName: '已接收',
       receiveWayName: '系统自动',
-      dealStatusName: '已处理'
+      dealStatusName: '已处理',
     },
     {
       alarmNo: 'AL-20250101-008',
@@ -111,7 +111,7 @@ export const dataList = () => {
       alarmLevelName: '轻微',
       receiveStatusName: '已接收',
       receiveWayName: '系统自动',
-      dealStatusName: '已处理'
+      dealStatusName: '已处理',
     },
     {
       alarmNo: 'AL-20250101-009',
@@ -125,7 +125,7 @@ export const dataList = () => {
       alarmLevelName: '一般',
       receiveStatusName: '已接收',
       receiveWayName: '系统自动',
-      dealStatusName: '待处理'
+      dealStatusName: '待处理',
     },
     {
       alarmNo: 'AL-20250101-010',
@@ -139,7 +139,7 @@ export const dataList = () => {
       alarmLevelName: '严重',
       receiveStatusName: '已接收',
       receiveWayName: '系统自动',
-      dealStatusName: '处理中'
+      dealStatusName: '处理中',
     },
     {
       alarmNo: 'AL-20250101-011',
@@ -153,7 +153,7 @@ export const dataList = () => {
       alarmLevelName: '一般',
       receiveStatusName: '已接收',
       receiveWayName: '系统自动',
-      dealStatusName: '已处理'
+      dealStatusName: '已处理',
     },
     {
       alarmNo: 'AL-20250101-012',
@@ -167,7 +167,7 @@ export const dataList = () => {
       alarmLevelName: '一般',
       receiveStatusName: '已接收',
       receiveWayName: '系统自动',
-      dealStatusName: '已处理'
+      dealStatusName: '已处理',
     },
     {
       alarmNo: 'AL-20250101-013',
@@ -181,7 +181,7 @@ export const dataList = () => {
       alarmLevelName: '严重',
       receiveStatusName: '已接收',
       receiveWayName: '系统自动',
-      dealStatusName: '待处理'
+      dealStatusName: '待处理',
     },
     {
       alarmNo: 'AL-20250101-014',
@@ -195,7 +195,7 @@ export const dataList = () => {
       alarmLevelName: '轻微',
       receiveStatusName: '已接收',
       receiveWayName: '系统自动',
-      dealStatusName: '处理中'
+      dealStatusName: '处理中',
     },
     {
       alarmNo: 'AL-20250101-015',
@@ -209,8 +209,8 @@ export const dataList = () => {
       alarmLevelName: '严重',
       receiveStatusName: '已接收',
       receiveWayName: '系统自动',
-      dealStatusName: '已处理'
-    }
+      dealStatusName: '已处理',
+    },
   ];
 };
 
@@ -224,25 +224,25 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入告警ID',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'alarmNo',
       label: '告警编号',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入告警编号'
+        placeholder: '请输入告警编号',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'deviceCode',
       label: '设备编码',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入设备编码'
+        placeholder: '请输入设备编码',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'deviceTypeName',
@@ -257,10 +257,10 @@ export function useFormSchema() {
           { label: '收费终端', value: '收费终端' },
           { label: '诱导屏', value: '诱导屏' },
           { label: '车牌识别终端', value: '车牌识别终端' },
-          { label: '车牌识别系统', value: '车牌识别系统' }
-        ]
+          { label: '车牌识别系统', value: '车牌识别系统' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'alarmTypeName',
@@ -271,10 +271,10 @@ export function useFormSchema() {
         options: [
           { label: '设备故障', value: '设备故障' },
           { label: '通信故障', value: '通信故障' },
-          { label: '软件故障', value: '软件故障' }
-        ]
+          { label: '软件故障', value: '软件故障' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'alarmTime',
@@ -283,9 +283,9 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择告警时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'receiveTime',
@@ -294,9 +294,9 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择接收时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'alarmContent',
@@ -304,9 +304,9 @@ export function useFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入告警内容',
-        type: 'textarea'
+        type: 'textarea',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'alarmLevelName',
@@ -317,10 +317,10 @@ export function useFormSchema() {
         options: [
           { label: '轻微', value: '轻微' },
           { label: '一般', value: '一般' },
-          { label: '严重', value: '严重' }
-        ]
+          { label: '严重', value: '严重' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'receiveStatusName',
@@ -330,10 +330,10 @@ export function useFormSchema() {
         placeholder: '请选择接收状态',
         options: [
           { label: '已接收', value: '已接收' },
-          { label: '未接收', value: '未接收' }
-        ]
+          { label: '未接收', value: '未接收' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'receiveWayName',
@@ -343,10 +343,10 @@ export function useFormSchema() {
         placeholder: '请选择接收方式',
         options: [
           { label: '系统自动', value: '系统自动' },
-          { label: '人工上报', value: '人工上报' }
-        ]
+          { label: '人工上报', value: '人工上报' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'dealStatusName',
@@ -357,11 +357,11 @@ export function useFormSchema() {
         options: [
           { label: '待处理', value: '待处理' },
           { label: '处理中', value: '处理中' },
-          { label: '已处理', value: '已处理' }
-        ]
+          { label: '已处理', value: '已处理' },
+        ],
       },
-      rules: 'required'
-    }
+      rules: 'required',
+    },
   ];
 }
 
@@ -374,81 +374,81 @@ export function useGridColumns() {
       title: '告警ID',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'alarmId' }
+      slots: { default: 'alarmId' },
     },
     {
       field: 'alarmNo',
       title: '告警编号',
       minWidth: 150,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'deviceCode',
       title: '设备编码',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'deviceTypeName',
       title: '设备类型',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'alarmTypeName',
       title: '告警类型',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'alarmTime',
       title: '告警时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'receiveTime',
       title: '接收时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'alarmContent',
       title: '告警内容',
       minWidth: 150,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'alarmLevelName',
       title: '告警等级',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'receiveStatusName',
       title: '接收状态',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'receiveWayName',
       title: '接收方式',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'dealStatusName',
       title: '处理状态',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'dealStatusName' }
+      slots: { default: 'dealStatusName' },
     },
     {
       title: '操作',
       width: 100,
       fixed: 'right',
-      slots: { default: 'actions' }
-    }
+      slots: { default: 'actions' },
+    },
   ];
 }
 
@@ -473,6 +473,5 @@ export const detailFields = [
   { key: 'alarmLevelName', label: '告警等级' },
   { key: 'receiveStatusName', label: '接收状态' },
   { key: 'receiveWayName', label: '接收方式' },
-  { key: 'dealStatusName', label: '处理状态' }
+  { key: 'dealStatusName', label: '处理状态' },
 ];
-

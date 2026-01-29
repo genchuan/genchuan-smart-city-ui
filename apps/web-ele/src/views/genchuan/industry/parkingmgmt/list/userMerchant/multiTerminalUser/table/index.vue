@@ -96,7 +96,9 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     const hasId =
       (props.userType === '个人' && formData.value?.user_id) ||
       (props.userType === '企业' && formData.value?.enterprise_id) ||
-      (props.userType === '政府' && formData.value?.gov_user_id);
+      (props.userType === '政府' && formData.value?.gov_user_id) ||
+      (props.userType === '客服查询' && formData.value?.queryId) ||
+      (props.userType === '信用分管理' && formData.value?.userId);
 
     if (hasId) {
       // 编辑用户
@@ -107,7 +109,11 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
           (props.userType === '企业' &&
             v.enterprise_id === formData.value?.enterprise_id) ||
           (props.userType === '政府' &&
-            v.gov_user_id === formData.value?.gov_user_id)
+            v.gov_user_id === formData.value?.gov_user_id) ||
+          (props.userType === '客服查询' &&
+            v.queryId === formData.value?.queryId) ||
+          (props.userType === '信用分管理' &&
+            v.userId === formData.value?.userId)
         ) {
           dataObj.apilist[i] = {
             ...v,
@@ -137,7 +143,9 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       const isEditMode =
         drawerData.user_id ||
         drawerData.enterprise_id ||
-        drawerData.gov_user_id;
+        drawerData.gov_user_id ||
+        drawerData.queryId ||
+        drawerData.userId;
 
       if (isEditMode) {
         // 编辑模式：设置表单值
@@ -172,9 +180,13 @@ async function handleExport() {
       ? '个人用户列表'
       : props.userType === '企业'
         ? '企业用户列表'
-        : '政府用户列表';
+        : props.userType === '政府'
+          ? '政府用户列表'
+          : props.userType === '客服查询'
+            ? '客服查询列表'
+            : '信用分管理列表';
   const excelAllName = `${excelName}.xlsx`;
-  exportToExcel(dataObj.apilist, excelName, excelAllName);
+  exportToExcel(dataObj.list, excelName, excelAllName);
 }
 
 /** 创建用户 */
@@ -244,14 +256,23 @@ async function handleDeleteBatch() {
   });
   try {
     dataObj.apilist = dataObj.apilist.filter(
-      (v) =>
-        !checkedIds.value.includes(
-          props.userType === '个人'
-            ? v.user_id
-            : props.userType === '企业'
-              ? v.enterprise_id
-              : v.gov_user_id,
-        ),
+      (v) => {
+        let id;
+        if (props.userType === '个人') {
+          id = v.user_id;
+        } else if (props.userType === '企业') {
+          id = v.enterprise_id;
+        } else if (props.userType === '政府') {
+          id = v.gov_user_id;
+        } else if (props.userType === '客服查询') {
+          id = v.queryId;
+        } else if (props.userType === '信用分管理') {
+          id = v.userId;
+        } else {
+          id = v.id;
+        }
+        return !checkedIds.value.includes(id);
+      }
     );
     checkedIds.value = [];
     ElMessage.success($t('删除成功'));
@@ -264,13 +285,20 @@ async function handleDeleteBatch() {
 const checkedIds = ref([]);
 
 function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map((item) =>
-    props.userType === '个人'
-      ? item.user_id
-      : props.userType === '企业'
-        ? item.enterprise_id
-        : item.gov_user_id,
-  );
+  checkedIds.value = records.map((item) => {
+    if (props.userType === '个人') {
+      return item.user_id;
+    } else if (props.userType === '企业') {
+      return item.enterprise_id;
+    } else if (props.userType === '政府') {
+      return item.gov_user_id;
+    } else if (props.userType === '客服查询') {
+      return item.queryId;
+    } else if (props.userType === '信用分管理') {
+      return item.userId;
+    }
+    return item.id;
+  });
 }
 
 const dataObj = reactive({
@@ -295,9 +323,15 @@ const getTableData = async (pageObj) => {
         return true;
       }
       // 根据用户类型选择不同的状态字段进行过滤
-      return props.userType === '政府'
-        ? v.online_status === activeStatus.value
-        : v.cert_status === activeStatus.value;
+      if (props.userType === '政府') {
+        return v.online_status === activeStatus.value;
+      } else if (props.userType === '信用分管理') {
+        return v.appealStatus === activeStatus.value;
+      } else if (props.userType === '客服查询') {
+        return v.certStatus === activeStatus.value;
+      } else {
+        return v.cert_status === activeStatus.value;
+      }
     })
     .filter((v) => {
       // 搜索条件过滤
@@ -378,7 +412,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
           ? 'user_id'
           : props.userType === '企业'
             ? 'enterprise_id'
-            : 'gov_user_id',
+            : props.userType === '政府'
+              ? 'gov_user_id'
+              : props.userType === '客服查询'
+                ? 'queryId'
+                : 'userId',
       isHover: true,
     },
     pagerConfig: dataObj,
@@ -424,6 +462,23 @@ const getStatusTabs = () => {
         { label: '离线', value: '离线' },
       ];
     }
+    case '客服查询': {
+      return [
+        { label: '全部', value: '全部' },
+        { label: '未认证', value: '未认证' },
+        { label: '待审核', value: '待审核' },
+        { label: '已认证', value: '已认证' },
+        { label: '认证失败', value: '认证失败' },
+      ];
+    }
+    case '信用分管理': {
+      return [
+        { label: '全部', value: '全部' },
+        { label: '无申诉', value: '无申诉' },
+        { label: '申诉中', value: '申诉中' },
+        { label: '已申诉', value: '已申诉' },
+      ];
+    }
     default: {
       return [];
     }
@@ -443,8 +498,16 @@ const createLabel = (item) => {
   let count = 0;
 
   // 根据用户类型选择不同的状态字段
-  const statusField =
-    props.userType === '政府' ? 'online_status' : 'cert_status';
+  let statusField;
+  if (props.userType === '政府') {
+    statusField = 'online_status';
+  } else if (props.userType === '信用分管理') {
+    statusField = 'appealStatus';
+  } else if (props.userType === '客服查询') {
+    statusField = 'certStatus';
+  } else {
+    statusField = 'cert_status';
+  }
 
   count =
     item.value === '全部'
@@ -655,32 +718,32 @@ const handleAuthDrawerClose = () => {
       <template #certStatus="{ row }">
         <el-tag
           :type="
-            row.cert_status === '已认证'
+            (row.cert_status || row.certStatus) === '已认证'
               ? 'success'
-              : row.cert_status === '待审核'
+              : (row.cert_status || row.certStatus) === '待审核'
                 ? 'warning'
-                : row.cert_status === '认证失败'
+                : (row.cert_status || row.certStatus) === '认证失败'
                   ? 'danger'
                   : 'info'
           "
         >
-          {{ row.cert_status }}
+          {{ row.cert_status || row.certStatus }}
         </el-tag>
       </template>
       <!-- 账号状态插槽 -->
       <template #accountStatus="{ row }">
         <el-tag
           :type="
-            row.account_status === '正常'
+            (row.account_status || row.accountStatus) === '正常'
               ? 'success'
-              : row.account_status === '禁用'
+              : (row.account_status || row.accountStatus) === '禁用'
                 ? 'danger'
-                : row.account_status === '冻结'
+                : (row.account_status || row.accountStatus) === '冻结'
                   ? 'warning'
                   : 'info'
           "
         >
-          {{ row.account_status }}
+          {{ row.account_status || row.accountStatus }}
         </el-tag>
       </template>
       <!-- 代付规则状态插槽 -->
@@ -743,6 +806,82 @@ const handleAuthDrawerClose = () => {
           }}
         </span>
       </template>
+      <!-- 客服查询绑定车牌插槽 -->
+      <template #bindCarNumber="{ row }">
+        <el-text
+          v-if="row.bindCarNumber && row.bindCarNumber.length > 0"
+          @click="handleCarNumbersClick(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{
+            Array.isArray(row.bindCarNumber)
+              ? row.bindCarNumber.join(', ')
+              : row.bindCarNumber
+          }}
+        </el-text>
+        <span v-else>
+          {{
+            Array.isArray(row.bindCarNumber)
+              ? row.bindCarNumber.join(', ')
+              : row.bindCarNumber || '-'
+          }}
+        </span>
+      </template>
+      <!-- 客服查询查询记录ID插槽 -->
+      <template #queryId="{ row }">
+        <el-text
+          @click="handleUserDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.queryId }}
+        </el-text>
+      </template>
+      <!-- 信用分管理用户ID插槽 -->
+      <template #userId="{ row }">
+        <el-text
+          @click="handleUserDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.userId }}
+        </el-text>
+      </template>
+      <!-- 信用分管理申诉状态插槽 -->
+      <template #appealStatus="{ row }">
+        <el-tag
+          :type="
+            row.appealStatus === '无申诉'
+              ? 'info'
+              : row.appealStatus === '申诉中'
+                ? 'warning'
+                : row.appealStatus === '已申诉'
+                  ? 'success'
+                  : 'info'
+          "
+        >
+          {{ row.appealStatus }}
+        </el-tag>
+      </template>
+      <!-- 信用分管理申诉处理结果插槽 -->
+      <template #appealResult="{ row }">
+        <el-tag
+          :type="
+            row.appealResult === '无'
+              ? 'info'
+              : row.appealResult === '处理中'
+                ? 'warning'
+                : row.appealResult === '通过'
+                  ? 'success'
+                  : row.appealResult === '驳回'
+                    ? 'danger'
+                    : 'info'
+          "
+        >
+          {{ row.appealResult }}
+        </el-tag>
+      </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
@@ -756,10 +895,11 @@ const handleAuthDrawerClose = () => {
             @click="handleEdit(row)"
           />
           <IconButton
+            v-if="props.userType !== '客服查询' && props.userType !== '信用分管理'"
             content="禁用"
             icon-name="Lock"
             color="#F56C6C"
-            :disabled="row.account_status !== '正常'"
+            :disabled="(row.account_status || row.accountStatus) !== '正常'"
             @click="confirmDisable(row)"
           />
         </div>
@@ -803,6 +943,29 @@ const handleAuthDrawerClose = () => {
                   .length
               }};正常账号:{{
                 dataObj.list.filter((item) => item.account_status === '正常')
+                  .length
+              }}
+            </template>
+            <template v-else-if="props.userType === '客服查询'">
+              本页统计：查询记录数量{{ dataObj.list.length }};认证通过:{{
+                dataObj.list.filter((item) => item.certStatus === '已认证')
+                  .length
+              }};未缴订单用户:{{
+                dataObj.list.filter((item) => item.unpaidOrderCount > 0)
+                  .length
+              }};正常账号:{{
+                dataObj.list.filter((item) => item.accountStatus === '正常')
+                  .length
+              }}
+            </template>
+            <template v-else-if="props.userType === '信用分管理'">
+              本页统计：用户数量{{ dataObj.list.length }};平均信用分:{{
+                Math.round(dataObj.list.reduce((sum, item) => sum + item.creditScore, 0) / (dataObj.list.length || 1))
+              }};申诉中:{{
+                dataObj.list.filter((item) => item.appealStatus === '申诉中')
+                  .length
+              }};无申诉:{{
+                dataObj.list.filter((item) => item.appealStatus === '无申诉')
                   .length
               }}
             </template>

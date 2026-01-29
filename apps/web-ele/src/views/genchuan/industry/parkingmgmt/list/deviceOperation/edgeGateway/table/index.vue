@@ -9,11 +9,17 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
-import { dataList, textObj, useFormSchema, useGridColumns, detailFields } from './data';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import {
+  dataList,
+  detailFields,
+  textObj,
+  useFormSchema,
+  useGridColumns,
+} from './data';
 
 const props = defineProps({
   secondShow: {
@@ -58,14 +64,14 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onConfirm() {
     const obj = formApi.form.values;
     if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-          dataObj.apilist.push(obj);
-        } else {
-          dataObj.apilist.forEach((v, i) => {
-            if (v.gatewayId === formData.value?.gatewayId) {
-              dataObj.apilist[i] = obj;
-            }
-          });
+      dataObj.apilist.push(obj);
+    } else {
+      dataObj.apilist.forEach((v, i) => {
+        if (v.gatewayId === formData.value?.gatewayId) {
+          dataObj.apilist[i] = obj;
         }
+      });
+    }
     handleRefresh();
     formDrawerApi.close();
   },
@@ -114,10 +120,10 @@ async function handleDelete(row) {
     text: $t('ui.actionMessage.deleting', [row.gatewayName]),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.gatewayId !== row.gatewayId);
-    ElMessage.success(
-      $t('ui.actionMessage.deleteSuccess', [row.gatewayName]),
+    dataObj.apilist = dataObj.apilist.filter(
+      (v) => v.gatewayId !== row.gatewayId,
     );
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.gatewayName]));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -168,17 +174,17 @@ const getTableData = (pageObj) => {
       case '全部': {
         return true;
       }
-      case '运行中': {
-        return v.gatewayStatusName === '运行中';
+      case '故障': {
+        return v.gatewayStatusName === '故障';
       }
       case '离线': {
         return v.gatewayStatusName === '离线';
       }
-      case '故障': {
-        return v.gatewayStatusName === '故障';
-      }
       case '维护中': {
         return v.gatewayStatusName === '维护中';
+      }
+      case '运行中': {
+        return v.gatewayStatusName === '运行中';
       }
     }
     return false;
@@ -256,7 +262,13 @@ const handleOpenDetail = (row) => {
 };
 
 // 修改tabsData为五个标签：全部、运行中、离线、故障、维护中
-const tabsData = ref([{ label: '全部' }, { label: '运行中' }, { label: '离线' }, { label: '故障' }, { label: '维护中' }]);
+const tabsData = ref([
+  { label: '全部' },
+  { label: '运行中' },
+  { label: '离线' },
+  { label: '故障' },
+  { label: '维护中' },
+]);
 
 // 创建标签文本，显示数量统计
 const createLabel = (item) => {
@@ -268,27 +280,35 @@ const createLabel = (item) => {
 
       break;
     }
-    case '运行中': {
-      // 统计gatewayStatusName为'运行中'的数据
-      count = dataObj.apilist.filter((v) => v.gatewayStatusName === '运行中').length;
+    case '故障': {
+      // 统计gatewayStatusName为'故障'的数据
+      count = dataObj.apilist.filter(
+        (v) => v.gatewayStatusName === '故障',
+      ).length;
 
       break;
     }
     case '离线': {
       // 统计gatewayStatusName为'离线'的数据
-      count = dataObj.apilist.filter((v) => v.gatewayStatusName === '离线').length;
-
-      break;
-    }
-    case '故障': {
-      // 统计gatewayStatusName为'故障'的数据
-      count = dataObj.apilist.filter((v) => v.gatewayStatusName === '故障').length;
+      count = dataObj.apilist.filter(
+        (v) => v.gatewayStatusName === '离线',
+      ).length;
 
       break;
     }
     case '维护中': {
       // 统计gatewayStatusName为'维护中'的数据
-      count = dataObj.apilist.filter((v) => v.gatewayStatusName === '维护中').length;
+      count = dataObj.apilist.filter(
+        (v) => v.gatewayStatusName === '维护中',
+      ).length;
+
+      break;
+    }
+    case '运行中': {
+      // 统计gatewayStatusName为'运行中'的数据
+      count = dataObj.apilist.filter(
+        (v) => v.gatewayStatusName === '运行中',
+      ).length;
 
       break;
     }
@@ -310,16 +330,21 @@ const handleFullShow = () => {
 // 状态标签类型映射
 const getStatusType = (status) => {
   switch (status) {
-    case '运行中':
-      return 'success';
-    case '离线':
-      return 'info';
-    case '故障':
+    case '故障': {
       return 'danger';
-    case '维护中':
-      return 'warning';
-    default:
+    }
+    case '离线': {
       return 'info';
+    }
+    case '维护中': {
+      return 'warning';
+    }
+    case '运行中': {
+      return 'success';
+    }
+    default: {
+      return 'info';
+    }
   }
 };
 </script>
@@ -329,7 +354,7 @@ const getStatusType = (status) => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-<!--   详情抽屉-->
+    <!--   详情抽屉-->
     <DetailDrawer
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.gatewayName}详情`"

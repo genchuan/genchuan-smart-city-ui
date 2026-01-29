@@ -14,7 +14,7 @@ export const dataList = () => {
       deviceStatusName: '在线',
       installPosition: '停车场入口左侧',
       createTime: '2025-01-10 09:20:30',
-      operator: '李四'
+      operator: '李四',
     },
     {
       deviceId: 'DEV002',
@@ -29,7 +29,7 @@ export const dataList = () => {
       deviceStatusName: '在线',
       installPosition: '停车场出口中间',
       createTime: '2025-01-12 14:15:20',
-      operator: '王五'
+      operator: '王五',
     },
     {
       deviceId: 'DEV003',
@@ -44,7 +44,7 @@ export const dataList = () => {
       deviceStatusName: '离线',
       installPosition: '停车场A区第1车位',
       createTime: '2025-01-15 10:05:10',
-      operator: '赵六'
+      operator: '赵六',
     },
     {
       deviceId: 'DEV004',
@@ -59,7 +59,7 @@ export const dataList = () => {
       deviceStatusName: '故障',
       installPosition: '停车场入口右侧',
       createTime: '2025-01-18 08:30:45',
-      operator: '孙七'
+      operator: '孙七',
     },
     {
       deviceId: 'DEV005',
@@ -74,7 +74,7 @@ export const dataList = () => {
       deviceStatusName: '在线',
       installPosition: '停车场出口右侧',
       createTime: '2025-01-20 16:40:15',
-      operator: '周八'
+      operator: '周八',
     },
     {
       deviceId: 'DEV006',
@@ -89,7 +89,7 @@ export const dataList = () => {
       deviceStatusName: '在线',
       installPosition: '停车场入口中间',
       createTime: '2025-01-22 11:10:30',
-      operator: '吴九'
+      operator: '吴九',
     },
     {
       deviceId: 'DEV007',
@@ -104,7 +104,7 @@ export const dataList = () => {
       deviceStatusName: '维护中',
       installPosition: '停车场出口左侧',
       createTime: '2025-01-25 13:25:40',
-      operator: '郑十'
+      operator: '郑十',
     },
     {
       deviceId: 'DEV008',
@@ -119,7 +119,7 @@ export const dataList = () => {
       deviceStatusName: '离线',
       installPosition: '停车场入口',
       createTime: '2025-01-28 09:50:25',
-      operator: '张三'
+      operator: '张三',
     },
     {
       deviceId: 'DEV009',
@@ -134,7 +134,7 @@ export const dataList = () => {
       deviceStatusName: '在线',
       installPosition: '停车场B区第5车位',
       createTime: '2025-02-01 15:15:10',
-      operator: '李四'
+      operator: '李四',
     },
     {
       deviceId: 'DEV010',
@@ -149,7 +149,7 @@ export const dataList = () => {
       deviceStatusName: '故障',
       installPosition: '停车场出口指示牌',
       createTime: '2025-02-05 10:30:50',
-      operator: '王五'
+      operator: '王五',
     },
     {
       deviceId: 'DEV011',
@@ -164,7 +164,7 @@ export const dataList = () => {
       deviceStatusName: '在线',
       installPosition: '停车场入口识别区',
       createTime: '2025-02-08 14:20:15',
-      operator: '赵六'
+      operator: '赵六',
     },
     {
       deviceId: 'DEV012',
@@ -179,7 +179,7 @@ export const dataList = () => {
       deviceStatusName: '维护中',
       installPosition: '停车场出口收费亭',
       createTime: '2025-02-10 09:40:30',
-      operator: '孙七'
+      operator: '孙七',
     },
     {
       deviceId: 'DEV013',
@@ -194,7 +194,7 @@ export const dataList = () => {
       deviceStatusName: '在线',
       installPosition: '主出入口道闸',
       createTime: '2025-02-12 11:25:00',
-      operator: '周八'
+      operator: '周八',
     },
     {
       deviceId: 'DEV014',
@@ -209,7 +209,7 @@ export const dataList = () => {
       deviceStatusName: '离线',
       installPosition: 'VIP车位区',
       createTime: '2025-02-15 16:30:45',
-      operator: '吴九'
+      operator: '吴九',
     },
     {
       deviceId: 'DEV015',
@@ -224,8 +224,8 @@ export const dataList = () => {
       deviceStatusName: '在线',
       installPosition: '自助缴费区',
       createTime: '2025-02-18 10:15:20',
-      operator: '郑十'
-    }
+      operator: '郑十',
+    },
   ];
 };
 
@@ -239,7 +239,7 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入设备ID',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'deviceTypeName',
@@ -252,28 +252,28 @@ export function useFormSchema() {
           { label: '道闸终端', value: '道闸终端' },
           { label: '地磁检测器', value: '地磁检测器' },
           { label: '诱导屏', value: '诱导屏' },
-          { label: '车牌识别终端', value: '车牌识别终端' }
-        ]
+          { label: '车牌识别终端', value: '车牌识别终端' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'assetName',
       label: '所属资产',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入所属资产'
+        placeholder: '请输入所属资产',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'deviceCode',
       label: '设备编码',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入设备编码'
+        placeholder: '请输入设备编码',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'installTime',
@@ -282,9 +282,9 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择安装时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'lastMaintainTime',
@@ -293,9 +293,9 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择上次维护时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'nextMaintainTime',
@@ -304,27 +304,27 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择下次维护时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'contactName',
       label: '联系人',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入联系人'
+        placeholder: '请输入联系人',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'contactPhone',
       label: '联系电话',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入联系电话'
+        placeholder: '请输入联系电话',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'deviceStatusName',
@@ -336,19 +336,19 @@ export function useFormSchema() {
           { label: '在线', value: '在线' },
           { label: '离线', value: '离线' },
           { label: '故障', value: '故障' },
-          { label: '维护中', value: '维护中' }
-        ]
+          { label: '维护中', value: '维护中' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'installPosition',
       label: '安装位置',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入安装位置'
+        placeholder: '请输入安装位置',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'createTime',
@@ -357,19 +357,19 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择创建时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'operator',
       label: '操作人',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入操作人'
+        placeholder: '请输入操作人',
       },
-      rules: 'required'
-    }
+      rules: 'required',
+    },
   ];
 }
 
@@ -382,87 +382,87 @@ export function useGridColumns() {
       title: '设备ID',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'deviceId' }
+      slots: { default: 'deviceId' },
     },
     {
       field: 'deviceTypeName',
       title: '设备类型',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'assetName',
       title: '所属资产',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'deviceCode',
       title: '设备编码',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'installTime',
       title: '安装时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'lastMaintainTime',
       title: '上次维护时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'nextMaintainTime',
       title: '下次维护时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'contactName',
       title: '联系人',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'contactPhone',
       title: '联系电话',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'deviceStatusName',
       title: '状态',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'deviceStatusName' }
+      slots: { default: 'deviceStatusName' },
     },
     {
       field: 'installPosition',
       title: '安装位置',
       minWidth: 150,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'createTime',
       title: '创建时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'operator',
       title: '操作人',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       title: '操作',
       width: 100,
       fixed: 'right',
-      slots: { default: 'actions' }
-    }
+      slots: { default: 'actions' },
+    },
   ];
 }
 
@@ -488,5 +488,5 @@ export const detailFields = [
   { key: 'deviceStatusName', label: '状态' },
   { key: 'installPosition', label: '安装位置' },
   { key: 'createTime', label: '创建时间' },
-  { key: 'operator', label: '操作人' }
+  { key: 'operator', label: '操作人' },
 ];
