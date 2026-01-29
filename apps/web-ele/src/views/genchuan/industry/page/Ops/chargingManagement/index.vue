@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 
 import Table from './table/index.vue';
+
 import '#/components/page/index.scss';
 
 const changeArrowStatus = (item) => {
@@ -19,7 +20,7 @@ const activeName = ref('充电管理');
 </script>
 <template>
   <div class="common-index">
-    <garagechart></garagechart>
+    <garagechart />
     <el-tabs
       v-model="activeName"
       class="common-tabs"

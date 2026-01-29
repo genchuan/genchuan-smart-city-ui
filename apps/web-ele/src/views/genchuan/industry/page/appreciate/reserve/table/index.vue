@@ -4,8 +4,8 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage, ElTag, ElIcon } from 'element-plus';
 import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
+import { ElIcon, ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -75,6 +75,7 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   async onOpenChange() {},
 });
 
+
 // 新增/编辑表单数据绑定
 const formData = ref();
 
@@ -105,14 +106,32 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     if (formDrawerApi.sharedData.payload.title === textObj.addText) {
       // 新增时补充唯一ID，模拟后端生成
       obj.reservation_id = `550e8400-e29b-41d4-a716-${Math.random().toString(16).slice(2, 10)}`;
-      obj.create_time = new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\//g, '-');
+      obj.create_time = new Date()
+        .toLocaleString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        })
+        .replaceAll('/', '-');
       obj.update_time = obj.create_time;
       dataObj.apilist.push(obj);
     } else {
       // 编辑逻辑，修正主键为reservation_id
       dataObj.apilist.forEach((v, i) => {
         if (v.reservation_id === formData.value?.reservation_id) {
-          obj.update_time = new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\//g, '-');
+          obj.update_time = new Date()
+            .toLocaleString('zh-CN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })
+            .replaceAll('/', '-');
           dataObj.apilist[i] = obj;
         }
       });
@@ -214,8 +233,8 @@ const changeTotalShow = () => {
 
 // 筛选状态核心变量 - 完全匹配参考代码命名规范
 const activeName = ref('全部'); // 状态筛选：全部/待核验/已确认/已使用/已取消/已过期
-const filterArea = ref('');     // 区域筛选：停车场名称（蓝色primary标签）
-const filterType = ref('');     // 类型筛选：泊位类型（绿色success标签）
+const filterArea = ref(''); // 区域筛选：停车场名称（蓝色primary标签）
+const filterType = ref(''); // 类型筛选：泊位类型（绿色success标签）
 
 /** 停车场名称筛选：点击筛选，再次点击取消（匹配参考代码方法名） */
 const handleFilterByArea = (area) => {
@@ -254,7 +273,9 @@ const getTableData = (pageObj) => {
   }
   // 第三步：叠加泊位类型筛选
   if (filterType.value) {
-    filteredList = filteredList.filter((v) => v.park_space === filterType.value);
+    filteredList = filteredList.filter(
+      (v) => v.park_space === filterType.value,
+    );
   }
   // 分页处理（与参考代码完全一致）
   dataObj.total = filteredList.length;
@@ -325,11 +346,10 @@ const tabsData = ref([
 /** 生成状态Tabs标签（带数量统计）- 完全匹配参考代码逻辑 */
 const createLabel = (item) => {
   let count = 0;
-  if (item.label === '全部') {
-    count = dataObj.apilist.length;
-  } else {
-    count = dataObj.apilist.filter((v) => v.status === item.label).length;
-  }
+  count =
+    item.label === '全部'
+      ? dataObj.apilist.length
+      : dataObj.apilist.filter((v) => v.status === item.label).length;
   return `${item.label}(${count})`;
 };
 
@@ -378,35 +398,60 @@ const arrowChange = () => {
         >
           <div class="detail-row-left">
             {{
-              key === 'reservation_id' ? '预约记录ID' :
-                key === 'reservation_no' ? '预约编号' :
-                  key === 'user_id' ? '用户ID' :
-                    key === 'car_number' ? '车牌号码' :
-                      key === 'lot_id' ? '停车场名称' :
-                        key === 'space_id' ? '车位ID' :
-                          key === 'park_space' ? '泊位类型' :
-                            key === 'reserve_date' ? '预约日期' :
-                              key === 'start_time' ? '开始时间' :
-                                key === 'end_time' ? '结束时间' :
-                                  key === 'status' ? '预约状态' :
-                                    key === 'verify_time' ? '核验时间' :
-                                      key === 'verify_by' ? '核验人' :
-                                        key === 'cancel_time' ? '取消时间' :
-                                          key === 'cancel_reason' ? '取消原因' :
-                                            key === 'create_time' ? '创建时间' :
-                                              key === 'update_time' ? '更新时间' :
-                                                key === 'remark' ? '备注' : key
+              key === 'reservation_id'
+                ? '预约记录ID'
+                : key === 'reservation_no'
+                  ? '预约编号'
+                  : key === 'user_id'
+                    ? '用户ID'
+                    : key === 'car_number'
+                      ? '车牌号码'
+                      : key === 'lot_id'
+                        ? '停车场名称'
+                        : key === 'space_id'
+                          ? '车位ID'
+                          : key === 'park_space'
+                            ? '泊位类型'
+                            : key === 'reserve_date'
+                              ? '预约日期'
+                              : key === 'start_time'
+                                ? '开始时间'
+                                : key === 'end_time'
+                                  ? '结束时间'
+                                  : key === 'status'
+                                    ? '预约状态'
+                                    : key === 'verify_time'
+                                      ? '核验时间'
+                                      : key === 'verify_by'
+                                        ? '核验人'
+                                        : key === 'cancel_time'
+                                          ? '取消时间'
+                                          : key === 'cancel_reason'
+                                            ? '取消原因'
+                                            : key === 'create_time'
+                                              ? '创建时间'
+                                              : key === 'update_time'
+                                                ? '更新时间'
+                                                : key === 'remark'
+                                                  ? '备注'
+                                                  : key
             }}:
           </div>
           <div class="detail-row-right">
             {{
-              (key === 'space_id' && !value) ? '未分配' :
-                (key === 'verify_time' && !value) ? '未核验' :
-                  (key === 'verify_by' && !value) ? '未核验' :
-                    (key === 'cancel_time' && !value) ? '未取消' :
-                      (key === 'cancel_reason' && !value) ? '无' :
-                        (key === 'remark' && !value) ? '无' :
-                          value
+              key === 'space_id' && !value
+                ? '未分配'
+                : key === 'verify_time' && !value
+                  ? '未核验'
+                  : key === 'verify_by' && !value
+                    ? '未核验'
+                    : key === 'cancel_time' && !value
+                      ? '未取消'
+                      : key === 'cancel_reason' && !value
+                        ? '无'
+                        : key === 'remark' && !value
+                          ? '无'
+                          : value
             }}
             <ElTag
               v-if="key === 'status'"
@@ -554,12 +599,12 @@ const arrowChange = () => {
       <!-- 表格底部：统计信息展开/收缩 - 适配停车预约业务，样式与参考代码完全一致 -->
       <template #bottom>
         <div class="common-total" @click="changeTotalShow">
-          <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
+          <ElIcon class="tabel-tab-icon" v-if="!dataObj.totalShow">
             <ArrowDown />
-          </el-icon>
-          <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
+          </ElIcon>
+          <ElIcon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
-          </el-icon>
+          </ElIcon>
           <span>
             本页统计：预约记录{{ dataObj.list.length }}条; 已使用:{{
               getCountByStatus('已使用')
@@ -642,7 +687,7 @@ const arrowChange = () => {
 }
 
 .common-total-bottom {
-  padding: 0px 0;
+  padding: 0;
   color: #606266;
 }
 

@@ -1,4 +1,4 @@
-<script setup>
+,<script setup>
 import { reactive } from 'vue';
 
 import Card from '#/components/stats/card.vue';
@@ -44,15 +44,14 @@ const state = reactive({
         { name: '已使用', value: 2 },
         { name: '已取消', value: 2 },
         { name: '已过期', value: 2 },
-
       ]"
       :colors="['#67C23A', '#E6A23C', '#F56C6C', '#909399']"
     />
     <Columnar
       height="330px"
       title="车位类型"
-      :x-data="['充电车位', '普通车位', ]"
-      :series-data="[{ name: '', data: [58, 42,] }]"
+      :x-data="['充电车位', '普通车位']"
+      :series-data="[{ name: '', data: [58, 42] }]"
     />
   </div>
 </template>
