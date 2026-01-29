@@ -96,8 +96,7 @@ export function useGridColumns() {
         {
             field: 'arrearsQrCode',
             title: '欠费聚合支付二维码',
-            minWidth: 280, // 加宽适配二维码链接展示
-            sortable: false, // 链接无需排序
+            width:100, // 加宽适配二维码链接展示 
             slots: { default: 'arrearsQrCode' },
         },
         {
@@ -110,7 +109,7 @@ export function useGridColumns() {
             field: 'qrCode',
             title: '二维码',
             minWidth: 150,
-            sortable: true,
+            sortable: true, 
         },
         {
             field: 'amount',

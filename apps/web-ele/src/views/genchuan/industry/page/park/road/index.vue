@@ -2,7 +2,6 @@
 import { ref } from 'vue';
 
 import Arrears from './arrears/index.vue';
-import Billing from './billing/index.vue';
 import End from './end/index.vue';
 import Geomagnetic from './geomagnetic/index.vue';
 import Highvideo from './highvideo/index.vue';
@@ -10,7 +9,6 @@ import ListComponent from './list/index.vue';
 import Query from './query/index.vue';
 import Recover from './recover/index.vue';
 import roadchart from './roadchart.vue';
-import Staggered from './staggered/index.vue';
 import Table from './table/index.vue';
 import Vehiclentry from './vehiclentry/index.vue';
 
@@ -31,18 +29,18 @@ const tabArray = ref([
     arrowShow: true,
     arrowState: false,
   },
-  {
-    label: '路侧计费桩关联管理',
-    components: Billing,
-    showSecondary: true,
-    secondShow: false,
-  },
-  {
-    label: '错时停车订单管理',
-    components: Staggered,
-    showSecondary: true,
-    secondShow: false,
-  },
+  // {
+  //   label: '路侧计费桩关联管理',
+  //   components: Billing,
+  //   showSecondary: true,
+  //   secondShow: false,
+  // },
+  // {
+  //   label: '错时停车订单管理',
+  //   components: Staggered,
+  //   showSecondary: true,
+  //   secondShow: false,
+  // },
   {
     label: '道路列表管理',
     components: ListComponent,

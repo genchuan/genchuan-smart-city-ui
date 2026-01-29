@@ -3,6 +3,7 @@ import { computed, defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
+import testImg from './test.png';
 // 定义组件接收的属性
 const props = defineProps({
   // 停车欠费缴费详情数据对象（适配缴费相关字段结构）
@@ -46,7 +47,9 @@ defineExpose({
       <!-- 停车欠费缴费核心字段展示 -->
       <div class="detail-card-row">
         <div class="detail-row-left">欠费聚合支付二维码:</div>
-        <div class="detail-row-right">{{ detailObj.arrearsQrCode || '-' }}</div>
+        <div class="detail-row-right">
+          <img class="test-img" :src="testImg" width="200" />
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">缴费状态同步结果:</div>
