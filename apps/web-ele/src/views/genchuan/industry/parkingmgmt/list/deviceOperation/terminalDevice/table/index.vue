@@ -9,17 +9,17 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
 import {
   dataList,
+  detailFields,
   textObj,
   useFormSchema,
   useGridColumns,
-  detailFields,
 } from './data';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
 
 const props = defineProps({
   secondShow: {
@@ -179,11 +179,11 @@ const getTableData = (pageObj) => {
       case '在线': {
         return v.deviceStatusName === '在线';
       }
-      case '离线': {
-        return v.deviceStatusName === '离线';
-      }
       case '故障': {
         return v.deviceStatusName === '故障';
+      }
+      case '离线': {
+        return v.deviceStatusName === '离线';
       }
       case '维护中': {
         return v.deviceStatusName === '维护中';
@@ -290,18 +290,18 @@ const createLabel = (item) => {
 
       break;
     }
-    case '离线': {
-      // 统计deviceStatusName为'离线'的数据
-      count = dataObj.apilist.filter(
-        (v) => v.deviceStatusName === '离线',
-      ).length;
-
-      break;
-    }
     case '故障': {
       // 统计deviceStatusName为'故障'的数据
       count = dataObj.apilist.filter(
         (v) => v.deviceStatusName === '故障',
+      ).length;
+
+      break;
+    }
+    case '离线': {
+      // 统计deviceStatusName为'离线'的数据
+      count = dataObj.apilist.filter(
+        (v) => v.deviceStatusName === '离线',
       ).length;
 
       break;
@@ -332,16 +332,21 @@ const handleFullShow = () => {
 // 状态标签类型映射
 const getStatusType = (status) => {
   switch (status) {
-    case '在线':
+    case '在线': {
       return 'success';
-    case '离线':
-      return 'info';
-    case '故障':
+    }
+    case '故障': {
       return 'danger';
-    case '维护中':
-      return 'warning';
-    default:
+    }
+    case '离线': {
       return 'info';
+    }
+    case '维护中': {
+      return 'warning';
+    }
+    default: {
+      return 'info';
+    }
   }
 };
 </script>

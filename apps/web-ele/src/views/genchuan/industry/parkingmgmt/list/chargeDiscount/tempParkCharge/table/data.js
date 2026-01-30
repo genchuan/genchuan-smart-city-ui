@@ -1582,7 +1582,7 @@ export const getStatsDataByTabType = (tabType = 'chargeRule') => {
       tabData.forEach((item) => {
         const lotCount = item.applyLotNames.split(',').length;
         const lotType =
-          lotCount === 1 ? '单一车场' : (lotCount <= 3 ? '少量车场' : '多个车场');
+          lotCount === 1 ? '单一车场' : lotCount <= 3 ? '少量车场' : '多个车场';
         lotTypeStats[lotType] = (lotTypeStats[lotType] || 0) + 1;
       });
 
@@ -1668,9 +1668,9 @@ export const getStatsDataByTabType = (tabType = 'chargeRule') => {
         const status =
           item.couponStatus === '1'
             ? '启用'
-            : (item.couponStatus === '0'
+            : item.couponStatus === '0'
               ? '禁用'
-              : '已过期');
+              : '已过期';
         couponStatusStats[status] = (couponStatusStats[status] || 0) + 1;
       });
 

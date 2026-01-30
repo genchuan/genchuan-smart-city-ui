@@ -3,7 +3,6 @@ import { AuthPageLayout } from '@vben/layouts';
 
 import logoImg from '../../public/static/imgs/logo/logo.png';
 
-
 const companySiteLink = import.meta.env.VITE_COMPANY_SiteLink;
 </script>
 <template>
@@ -19,7 +18,7 @@ const companySiteLink = import.meta.env.VITE_COMPANY_SiteLink;
         Copyright © 2026
         <a
           :href="companySiteLink"
-          class="hover:text-primary-hover mx-1"
+          class="mx-1 hover:text-primary-hover"
           target="_blank"
         >
           智慧城市一网统管解决方案|闽ICP备19026857号-4
@@ -32,11 +31,12 @@ const companySiteLink = import.meta.env.VITE_COMPANY_SiteLink;
 </template>
 <style>
 /* 使用全局样式确保能够覆盖子组件样式 */
+
 /* 解决图片压缩问题，调整大小使其与登录页布局和谐 */
 .flex-col-center {
   img {
-      height: 350px;
-      width: 350px;
+    width: 350px;
+    height: 350px;
   }
 }
 </style>

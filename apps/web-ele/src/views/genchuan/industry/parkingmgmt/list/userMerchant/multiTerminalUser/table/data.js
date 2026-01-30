@@ -1011,7 +1011,7 @@ export const customerServiceQueryList = () => {
       recentOrderNo: 'order001',
       recentTradeTime: '2024-01-10 09:15:00',
       userRegisterTime: '2024-01-01 10:00:00',
-      accountStatus: '正常'
+      accountStatus: '正常',
     },
     {
       queryId: 'query002',
@@ -1026,7 +1026,7 @@ export const customerServiceQueryList = () => {
       recentOrderNo: 'order002',
       recentTradeTime: '2024-01-09 16:20:00',
       userRegisterTime: '2024-01-02 11:30:00',
-      accountStatus: '正常'
+      accountStatus: '正常',
     },
     {
       queryId: 'query003',
@@ -1041,7 +1041,7 @@ export const customerServiceQueryList = () => {
       recentOrderNo: 'order003',
       recentTradeTime: '2024-01-08 14:30:00',
       userRegisterTime: '2024-01-03 14:20:00',
-      accountStatus: '禁用'
+      accountStatus: '禁用',
     },
     {
       queryId: 'query004',
@@ -1056,7 +1056,7 @@ export const customerServiceQueryList = () => {
       recentOrderNo: 'order004',
       recentTradeTime: '2024-01-07 11:45:00',
       userRegisterTime: '2024-01-04 09:15:00',
-      accountStatus: '冻结'
+      accountStatus: '冻结',
     },
     {
       queryId: 'query005',
@@ -1071,8 +1071,8 @@ export const customerServiceQueryList = () => {
       recentOrderNo: 'order005',
       recentTradeTime: '2024-01-10 10:30:00',
       userRegisterTime: '2024-01-05 16:45:00',
-      accountStatus: '正常'
-    }
+      accountStatus: '正常',
+    },
   ];
 };
 
@@ -1087,7 +1087,7 @@ export const creditScoreManagementList = () => {
       appealStatus: '无申诉',
       creditAdjustValue: 5,
       adjustReason: '按时缴费',
-      appealResult: '无'
+      appealResult: '无',
     },
     {
       userId: 'user002',
@@ -1097,7 +1097,7 @@ export const creditScoreManagementList = () => {
       appealStatus: '申诉中',
       creditAdjustValue: -3,
       adjustReason: '逾期缴费',
-      appealResult: '处理中'
+      appealResult: '处理中',
     },
     {
       userId: 'user003',
@@ -1107,7 +1107,7 @@ export const creditScoreManagementList = () => {
       appealStatus: '已申诉',
       creditAdjustValue: -10,
       adjustReason: '多次逾期',
-      appealResult: '驳回'
+      appealResult: '驳回',
     },
     {
       userId: 'user004',
@@ -1117,7 +1117,7 @@ export const creditScoreManagementList = () => {
       appealStatus: '无申诉',
       creditAdjustValue: 2,
       adjustReason: '良好记录',
-      appealResult: '无'
+      appealResult: '无',
     },
     {
       userId: 'user005',
@@ -1127,8 +1127,8 @@ export const creditScoreManagementList = () => {
       appealStatus: '已申诉',
       creditAdjustValue: -5,
       adjustReason: '一次逾期',
-      appealResult: '通过'
-    }
+      appealResult: '通过',
+    },
   ];
 };
 
@@ -1141,14 +1141,14 @@ export const dataList = (userType) => {
     case '企业': {
       return enterpriseUserList();
     }
-    case '政府': {
-      return governmentUserList();
+    case '信用分管理': {
+      return creditScoreManagementList();
     }
     case '客服查询': {
       return customerServiceQueryList();
     }
-    case '信用分管理': {
-      return creditScoreManagementList();
+    case '政府': {
+      return governmentUserList();
     }
     default: {
       return [];
@@ -1654,14 +1654,14 @@ export function useFormSchema(userType) {
     case '企业': {
       return enterpriseFormSchema();
     }
-    case '政府': {
-      return governmentFormSchema();
+    case '信用分管理': {
+      return creditScoreManagementFormSchema();
     }
     case '客服查询': {
       return customerServiceQueryFormSchema();
     }
-    case '信用分管理': {
-      return creditScoreManagementFormSchema();
+    case '政府': {
+      return governmentFormSchema();
     }
     default: {
       return [];
@@ -2065,14 +2065,14 @@ export function useGridFormSchema(userType) {
     case '企业': {
       return enterpriseGridFormSchema();
     }
-    case '政府': {
-      return governmentGridFormSchema();
+    case '信用分管理': {
+      return creditScoreManagementGridFormSchema();
     }
     case '客服查询': {
       return customerServiceQueryGridFormSchema();
     }
-    case '信用分管理': {
-      return creditScoreManagementGridFormSchema();
+    case '政府': {
+      return governmentGridFormSchema();
     }
     default: {
       return [];
@@ -2598,14 +2598,14 @@ export function useGridColumns(userType) {
     case '企业': {
       return enterpriseGridColumns();
     }
-    case '政府': {
-      return governmentGridColumns();
+    case '信用分管理': {
+      return creditScoreManagementGridColumns();
     }
     case '客服查询': {
       return customerServiceQueryGridColumns();
     }
-    case '信用分管理': {
-      return creditScoreManagementGridColumns();
+    case '政府': {
+      return governmentGridColumns();
     }
     default: {
       return [];
@@ -3044,14 +3044,14 @@ export const creditScoreManagementDetailFields = [
     type: 'tag',
     tagType: (value) => {
       switch (value) {
+        case '已申诉': {
+          return 'success';
+        }
         case '无申诉': {
           return 'info';
         }
         case '申诉中': {
           return 'warning';
-        }
-        case '已申诉': {
-          return 'success';
         }
         default: {
           return 'info';
@@ -3067,11 +3067,11 @@ export const creditScoreManagementDetailFields = [
     type: 'tag',
     tagType: (value) => {
       switch (value) {
-        case '无': {
-          return 'info';
-        }
         case '处理中': {
           return 'warning';
+        }
+        case '无': {
+          return 'info';
         }
         case '通过': {
           return 'success';
@@ -3096,14 +3096,14 @@ export const getUserDetailFields = (userType) => {
     case '企业': {
       return enterpriseDetailFields;
     }
-    case '政府': {
-      return governmentDetailFields;
+    case '信用分管理': {
+      return creditScoreManagementDetailFields;
     }
     case '客服查询': {
       return customerServiceQueryDetailFields;
     }
-    case '信用分管理': {
-      return creditScoreManagementDetailFields;
+    case '政府': {
+      return governmentDetailFields;
     }
     default: {
       return [];
@@ -3351,65 +3351,76 @@ export const getStatsDataByUserType = (userType) => {
         ],
       };
     }
-    case '政府': {
-      // 政府用户统计
+    case '信用分管理': {
+      // 信用分管理统计
       const totalCount = userData.length;
-      const onlineCount = userData.filter(
-        (item) => item.online_status === '在线',
+      const avgCreditScore = Math.round(
+        userData.reduce((sum, item) => sum + item.creditScore, 0) / totalCount,
+      );
+      const appealingUserCount = userData.filter(
+        (item) => item.appealStatus === '申诉中',
       ).length;
 
-      // 统计不同部门的数量
-      const deptStats = {};
-      userData.forEach((item) => {
-        deptStats[item.dept_name] = (deptStats[item.dept_name] || 0) + 1;
-      });
-
-      // 统计不同账号状态的数量
-      const accountStatusStats = {
-        正常: userData.filter((item) => item.account_status === '正常').length,
-        禁用: userData.filter((item) => item.account_status === '禁用').length,
-        冻结: userData.filter((item) => item.account_status === '冻结').length,
+      // 统计不同申诉状态的数量
+      const appealStatusStats = {
+        无申诉: userData.filter((item) => item.appealStatus === '无申诉')
+          .length,
+        申诉中: userData.filter((item) => item.appealStatus === '申诉中')
+          .length,
+        已申诉: userData.filter((item) => item.appealStatus === '已申诉')
+          .length,
       };
 
-      // 统计不同角色的数量
-      const roleStats = {};
-      userData.forEach((item) => {
-        roleStats[item.role_name] = (roleStats[item.role_name] || 0) + 1;
-      });
+      // 统计不同申诉处理结果的数量
+      const appealResultStats = {
+        无: userData.filter((item) => item.appealResult === '无').length,
+        处理中: userData.filter((item) => item.appealResult === '处理中')
+          .length,
+        通过: userData.filter((item) => item.appealResult === '通过').length,
+        驳回: userData.filter((item) => item.appealResult === '驳回').length,
+      };
 
-      // 统计不同区域的数量
-      const regionStats = {};
-      userData.forEach((item) => {
-        regionStats[item.region_name] =
-          (regionStats[item.region_name] || 0) + 1;
-      });
+      // 统计信用分区间分布
+      const creditScoreRangeStats = {
+        '0-60': userData.filter((item) => item.creditScore < 60).length,
+        '60-70': userData.filter(
+          (item) => item.creditScore >= 60 && item.creditScore < 70,
+        ).length,
+        '70-80': userData.filter(
+          (item) => item.creditScore >= 70 && item.creditScore < 80,
+        ).length,
+        '80-90': userData.filter(
+          (item) => item.creditScore >= 80 && item.creditScore < 90,
+        ).length,
+        '90-100': userData.filter((item) => item.creditScore >= 90).length,
+      };
 
       return {
         cards: [
           {
-            title: '总政府用户数',
+            title: '总用户数',
             value: totalCount,
-            desc: `较上月增长${Math.floor(Math.random() * 5) + 3}%`,
+            desc: `较上月增长${Math.floor(Math.random() * 10) + 5}%`,
             color: '#13ce66',
           },
           {
-            title: '活跃用户数',
-            value: onlineCount,
-            desc: '近7日活跃',
+            title: '平均信用分',
+            value: avgCreditScore,
+            desc: '整体信用水平',
             color: '#4ECDC4',
           },
           {
-            title: '不同部门用户数',
-            value: Object.keys(deptStats).length,
-            desc: `覆盖${Object.keys(deptStats).length}个部门`,
+            title: '申诉中用户数',
+            value: appealingUserCount,
+            desc: `占比${Math.round((appealingUserCount / totalCount) * 100)}%`,
             color: '#FF6B6B',
           },
         ],
         charts: [
           {
-            title: '账号状态占比',
+            title: '申诉状态占比',
             type: 'pie',
-            data: Object.entries(accountStatusStats)
+            data: Object.entries(appealStatusStats)
               .filter(([_, value]) => value > 0)
               .map(([name, value]) => ({
                 value: Math.round((value / totalCount) * 100),
@@ -3417,9 +3428,9 @@ export const getStatsDataByUserType = (userType) => {
               })),
           },
           {
-            title: '用户角色占比',
+            title: '申诉处理结果占比',
             type: 'pie',
-            data: Object.entries(roleStats)
+            data: Object.entries(appealResultStats)
               .filter(([_, value]) => value > 0)
               .map(([name, value]) => ({
                 value: Math.round((value / totalCount) * 100),
@@ -3427,10 +3438,10 @@ export const getStatsDataByUserType = (userType) => {
               })),
           },
           {
-            title: '不同区域用户分布',
+            title: '信用分区间分布',
             type: 'bar',
-            xAxis: Object.keys(regionStats),
-            series: Object.values(regionStats),
+            xAxis: Object.keys(creditScoreRangeStats),
+            series: Object.values(creditScoreRangeStats),
           },
         ],
       };
@@ -3516,66 +3527,65 @@ export const getStatsDataByUserType = (userType) => {
         ],
       };
     }
-    case '信用分管理': {
-      // 信用分管理统计
+    case '政府': {
+      // 政府用户统计
       const totalCount = userData.length;
-      const avgCreditScore = Math.round(
-        userData.reduce((sum, item) => sum + item.creditScore, 0) / totalCount
-      );
-      const appealingUserCount = userData.filter(
-        (item) => item.appealStatus === '申诉中',
+      const onlineCount = userData.filter(
+        (item) => item.online_status === '在线',
       ).length;
 
-      // 统计不同申诉状态的数量
-      const appealStatusStats = {
-        无申诉: userData.filter((item) => item.appealStatus === '无申诉').length,
-        申诉中: userData.filter((item) => item.appealStatus === '申诉中').length,
-        已申诉: userData.filter((item) => item.appealStatus === '已申诉').length,
+      // 统计不同部门的数量
+      const deptStats = {};
+      userData.forEach((item) => {
+        deptStats[item.dept_name] = (deptStats[item.dept_name] || 0) + 1;
+      });
+
+      // 统计不同账号状态的数量
+      const accountStatusStats = {
+        正常: userData.filter((item) => item.account_status === '正常').length,
+        禁用: userData.filter((item) => item.account_status === '禁用').length,
+        冻结: userData.filter((item) => item.account_status === '冻结').length,
       };
 
-      // 统计不同申诉处理结果的数量
-      const appealResultStats = {
-        无: userData.filter((item) => item.appealResult === '无').length,
-        处理中: userData.filter((item) => item.appealResult === '处理中').length,
-        通过: userData.filter((item) => item.appealResult === '通过').length,
-        驳回: userData.filter((item) => item.appealResult === '驳回').length,
-      };
+      // 统计不同角色的数量
+      const roleStats = {};
+      userData.forEach((item) => {
+        roleStats[item.role_name] = (roleStats[item.role_name] || 0) + 1;
+      });
 
-      // 统计信用分区间分布
-      const creditScoreRangeStats = {
-        '0-60': userData.filter((item) => item.creditScore < 60).length,
-        '60-70': userData.filter((item) => item.creditScore >= 60 && item.creditScore < 70).length,
-        '70-80': userData.filter((item) => item.creditScore >= 70 && item.creditScore < 80).length,
-        '80-90': userData.filter((item) => item.creditScore >= 80 && item.creditScore < 90).length,
-        '90-100': userData.filter((item) => item.creditScore >= 90).length,
-      };
+      // 统计不同区域的数量
+      const regionStats = {};
+      userData.forEach((item) => {
+        regionStats[item.region_name] =
+          (regionStats[item.region_name] || 0) + 1;
+      });
 
       return {
         cards: [
           {
-            title: '总用户数',
+            title: '总政府用户数',
             value: totalCount,
-            desc: `较上月增长${Math.floor(Math.random() * 10) + 5}%`,
+            desc: `较上月增长${Math.floor(Math.random() * 5) + 3}%`,
             color: '#13ce66',
           },
           {
-            title: '平均信用分',
-            value: avgCreditScore,
-            desc: '整体信用水平',
+            title: '活跃用户数',
+            value: onlineCount,
+            desc: '近7日活跃',
             color: '#4ECDC4',
           },
           {
-            title: '申诉中用户数',
-            value: appealingUserCount,
-            desc: `占比${Math.round((appealingUserCount / totalCount) * 100)}%`,
+            title: '不同部门用户数',
+            value: Object.keys(deptStats).length,
+            desc: `覆盖${Object.keys(deptStats).length}个部门`,
             color: '#FF6B6B',
           },
         ],
         charts: [
           {
-            title: '申诉状态占比',
+            title: '账号状态占比',
             type: 'pie',
-            data: Object.entries(appealStatusStats)
+            data: Object.entries(accountStatusStats)
               .filter(([_, value]) => value > 0)
               .map(([name, value]) => ({
                 value: Math.round((value / totalCount) * 100),
@@ -3583,9 +3593,9 @@ export const getStatsDataByUserType = (userType) => {
               })),
           },
           {
-            title: '申诉处理结果占比',
+            title: '用户角色占比',
             type: 'pie',
-            data: Object.entries(appealResultStats)
+            data: Object.entries(roleStats)
               .filter(([_, value]) => value > 0)
               .map(([name, value]) => ({
                 value: Math.round((value / totalCount) * 100),
@@ -3593,10 +3603,10 @@ export const getStatsDataByUserType = (userType) => {
               })),
           },
           {
-            title: '信用分区间分布',
+            title: '不同区域用户分布',
             type: 'bar',
-            xAxis: Object.keys(creditScoreRangeStats),
-            series: Object.values(creditScoreRangeStats),
+            xAxis: Object.keys(regionStats),
+            series: Object.values(regionStats),
           },
         ],
       };

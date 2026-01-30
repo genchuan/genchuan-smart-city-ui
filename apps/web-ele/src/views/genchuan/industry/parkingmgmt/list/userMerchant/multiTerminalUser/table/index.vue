@@ -255,25 +255,40 @@ async function handleDeleteBatch() {
     text: $t('ui.actionMessage.deletingBatch'),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => {
-        let id;
-        if (props.userType === '个人') {
+    dataObj.apilist = dataObj.apilist.filter((v) => {
+      let id;
+      switch (props.userType) {
+        case '个人': {
           id = v.user_id;
-        } else if (props.userType === '企业') {
+
+          break;
+        }
+        case '企业': {
           id = v.enterprise_id;
-        } else if (props.userType === '政府') {
-          id = v.gov_user_id;
-        } else if (props.userType === '客服查询') {
-          id = v.queryId;
-        } else if (props.userType === '信用分管理') {
+
+          break;
+        }
+        case '信用分管理': {
           id = v.userId;
-        } else {
+
+          break;
+        }
+        case '客服查询': {
+          id = v.queryId;
+
+          break;
+        }
+        case '政府': {
+          id = v.gov_user_id;
+
+          break;
+        }
+        default: {
           id = v.id;
         }
-        return !checkedIds.value.includes(id);
       }
-    );
+      return !checkedIds.value.includes(id);
+    });
     checkedIds.value = [];
     ElMessage.success($t('删除成功'));
     handleRefresh();
@@ -286,16 +301,23 @@ const checkedIds = ref([]);
 
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => {
-    if (props.userType === '个人') {
-      return item.user_id;
-    } else if (props.userType === '企业') {
-      return item.enterprise_id;
-    } else if (props.userType === '政府') {
-      return item.gov_user_id;
-    } else if (props.userType === '客服查询') {
-      return item.queryId;
-    } else if (props.userType === '信用分管理') {
-      return item.userId;
+    switch (props.userType) {
+      case '个人': {
+        return item.user_id;
+      }
+      case '企业': {
+        return item.enterprise_id;
+      }
+      case '信用分管理': {
+        return item.userId;
+      }
+      case '客服查询': {
+        return item.queryId;
+      }
+      case '政府': {
+        return item.gov_user_id;
+      }
+      // No default
     }
     return item.id;
   });
@@ -323,14 +345,19 @@ const getTableData = async (pageObj) => {
         return true;
       }
       // 根据用户类型选择不同的状态字段进行过滤
-      if (props.userType === '政府') {
-        return v.online_status === activeStatus.value;
-      } else if (props.userType === '信用分管理') {
-        return v.appealStatus === activeStatus.value;
-      } else if (props.userType === '客服查询') {
-        return v.certStatus === activeStatus.value;
-      } else {
-        return v.cert_status === activeStatus.value;
+      switch (props.userType) {
+        case '信用分管理': {
+          return v.appealStatus === activeStatus.value;
+        }
+        case '客服查询': {
+          return v.certStatus === activeStatus.value;
+        }
+        case '政府': {
+          return v.online_status === activeStatus.value;
+        }
+        default: {
+          return v.cert_status === activeStatus.value;
+        }
       }
     })
     .filter((v) => {
@@ -455,11 +482,12 @@ const getStatusTabs = () => {
         { label: '认证失败', value: '认证失败' },
       ];
     }
-    case '政府': {
+    case '信用分管理': {
       return [
         { label: '全部', value: '全部' },
-        { label: '在线', value: '在线' },
-        { label: '离线', value: '离线' },
+        { label: '无申诉', value: '无申诉' },
+        { label: '申诉中', value: '申诉中' },
+        { label: '已申诉', value: '已申诉' },
       ];
     }
     case '客服查询': {
@@ -471,12 +499,11 @@ const getStatusTabs = () => {
         { label: '认证失败', value: '认证失败' },
       ];
     }
-    case '信用分管理': {
+    case '政府': {
       return [
         { label: '全部', value: '全部' },
-        { label: '无申诉', value: '无申诉' },
-        { label: '申诉中', value: '申诉中' },
-        { label: '已申诉', value: '已申诉' },
+        { label: '在线', value: '在线' },
+        { label: '离线', value: '离线' },
       ];
     }
     default: {
@@ -499,14 +526,25 @@ const createLabel = (item) => {
 
   // 根据用户类型选择不同的状态字段
   let statusField;
-  if (props.userType === '政府') {
-    statusField = 'online_status';
-  } else if (props.userType === '信用分管理') {
-    statusField = 'appealStatus';
-  } else if (props.userType === '客服查询') {
-    statusField = 'certStatus';
-  } else {
-    statusField = 'cert_status';
+  switch (props.userType) {
+    case '信用分管理': {
+      statusField = 'appealStatus';
+
+      break;
+    }
+    case '客服查询': {
+      statusField = 'certStatus';
+
+      break;
+    }
+    case '政府': {
+      statusField = 'online_status';
+
+      break;
+    }
+    default: {
+      statusField = 'cert_status';
+    }
   }
 
   count =
@@ -895,7 +933,9 @@ const handleAuthDrawerClose = () => {
             @click="handleEdit(row)"
           />
           <IconButton
-            v-if="props.userType !== '客服查询' && props.userType !== '信用分管理'"
+            v-if="
+              props.userType !== '客服查询' && props.userType !== '信用分管理'
+            "
             content="禁用"
             icon-name="Lock"
             color="#F56C6C"
@@ -951,8 +991,7 @@ const handleAuthDrawerClose = () => {
                 dataObj.list.filter((item) => item.certStatus === '已认证')
                   .length
               }};未缴订单用户:{{
-                dataObj.list.filter((item) => item.unpaidOrderCount > 0)
-                  .length
+                dataObj.list.filter((item) => item.unpaidOrderCount > 0).length
               }};正常账号:{{
                 dataObj.list.filter((item) => item.accountStatus === '正常')
                   .length
@@ -960,7 +999,12 @@ const handleAuthDrawerClose = () => {
             </template>
             <template v-else-if="props.userType === '信用分管理'">
               本页统计：用户数量{{ dataObj.list.length }};平均信用分:{{
-                Math.round(dataObj.list.reduce((sum, item) => sum + item.creditScore, 0) / (dataObj.list.length || 1))
+                Math.round(
+                  dataObj.list.reduce(
+                    (sum, item) => sum + item.creditScore,
+                    0,
+                  ) / (dataObj.list.length || 1),
+                )
               }};申诉中:{{
                 dataObj.list.filter((item) => item.appealStatus === '申诉中')
                   .length
