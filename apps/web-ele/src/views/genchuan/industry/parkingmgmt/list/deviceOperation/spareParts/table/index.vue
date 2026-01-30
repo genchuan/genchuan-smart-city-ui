@@ -9,11 +9,17 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
-import { dataList, textObj, useFormSchema, useGridColumns, detailFields } from './data';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import {
+  dataList,
+  detailFields,
+  textObj,
+  useFormSchema,
+  useGridColumns,
+} from './data';
 
 const props = defineProps({
   secondShow: {
@@ -58,14 +64,14 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onConfirm() {
     const obj = formApi.form.values;
     if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-          dataObj.apilist.push(obj);
-        } else {
-          dataObj.apilist.forEach((v, i) => {
-            if (v.inId === formData.value?.inId) {
-              dataObj.apilist[i] = obj;
-            }
-          });
+      dataObj.apilist.push(obj);
+    } else {
+      dataObj.apilist.forEach((v, i) => {
+        if (v.inId === formData.value?.inId) {
+          dataObj.apilist[i] = obj;
         }
+      });
+    }
     handleRefresh();
     formDrawerApi.close();
   },
@@ -115,9 +121,7 @@ async function handleDelete(row) {
   });
   try {
     dataObj.apilist = dataObj.apilist.filter((v) => v.inId !== row.inId);
-    ElMessage.success(
-      $t('ui.actionMessage.deleteSuccess', [row.partName]),
-    );
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.partName]));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -168,14 +172,14 @@ const getTableData = (pageObj) => {
       case '全部': {
         return true;
       }
-      case '待审核': {
-        return v.statusName === '待审核';
-      }
       case '已审核': {
         return v.statusName === '已审核';
       }
       case '已拒绝': {
         return v.statusName === '已拒绝';
+      }
+      case '待审核': {
+        return v.statusName === '待审核';
       }
     }
     return false;
@@ -253,7 +257,12 @@ const handleOpenDetail = (row) => {
 };
 
 // 修改tabsData为四个标签：全部、待审核、已审核、已拒绝
-const tabsData = ref([{ label: '全部' }, { label: '待审核' }, { label: '已审核' }, { label: '已拒绝' }]);
+const tabsData = ref([
+  { label: '全部' },
+  { label: '待审核' },
+  { label: '已审核' },
+  { label: '已拒绝' },
+]);
 
 // 创建标签文本，显示数量统计
 const createLabel = (item) => {
@@ -262,12 +271,6 @@ const createLabel = (item) => {
   switch (item.label) {
     case '全部': {
       count = dataObj.apilist.length;
-
-      break;
-    }
-    case '待审核': {
-      // 统计statusName为'待审核'的数据
-      count = dataObj.apilist.filter((v) => v.statusName === '待审核').length;
 
       break;
     }
@@ -280,6 +283,12 @@ const createLabel = (item) => {
     case '已拒绝': {
       // 统计statusName为'已拒绝'的数据
       count = dataObj.apilist.filter((v) => v.statusName === '已拒绝').length;
+
+      break;
+    }
+    case '待审核': {
+      // 统计statusName为'待审核'的数据
+      count = dataObj.apilist.filter((v) => v.statusName === '待审核').length;
 
       break;
     }
@@ -301,14 +310,18 @@ const handleFullShow = () => {
 // 状态标签类型映射
 const getStatusType = (status) => {
   switch (status) {
-    case '已审核':
+    case '已审核': {
       return 'success';
-    case '待审核':
-      return 'warning';
-    case '已拒绝':
+    }
+    case '已拒绝': {
       return 'danger';
-    default:
+    }
+    case '待审核': {
+      return 'warning';
+    }
+    default: {
       return 'info';
+    }
   }
 };
 </script>
@@ -318,7 +331,7 @@ const getStatusType = (status) => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-<!--   详情抽屉-->
+    <!--   详情抽屉-->
     <DetailDrawer
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.partName}详情`"

@@ -995,6 +995,393 @@ export const governmentUserList = () => {
   ];
 };
 
+// 客服查询数据列表
+export const customerServiceQueryList = () => {
+  return [
+    {
+      queryId: 'query001',
+      queryKeyword: '停车费',
+      userName: '张三',
+      userPhone: '13800138001',
+      bindCarNumber: ['京A12345', '京B67890'],
+      certStatus: '已认证',
+      walletBalance: 1000.5,
+      unpaidOrderCount: 2,
+      couponHoldCount: 5,
+      recentOrderNo: 'order001',
+      recentTradeTime: '2024-01-10 09:15:00',
+      userRegisterTime: '2024-01-01 10:00:00',
+      accountStatus: '正常',
+    },
+    {
+      queryId: 'query002',
+      queryKeyword: '优惠券',
+      userName: '李四',
+      userPhone: '13800138002',
+      bindCarNumber: ['京C34567'],
+      certStatus: '待审核',
+      walletBalance: 500.25,
+      unpaidOrderCount: 0,
+      couponHoldCount: 3,
+      recentOrderNo: 'order002',
+      recentTradeTime: '2024-01-09 16:20:00',
+      userRegisterTime: '2024-01-02 11:30:00',
+      accountStatus: '正常',
+    },
+    {
+      queryId: 'query003',
+      queryKeyword: '账号异常',
+      userName: '王五',
+      userPhone: '13800138003',
+      bindCarNumber: [],
+      certStatus: '未认证',
+      walletBalance: 0,
+      unpaidOrderCount: 1,
+      couponHoldCount: 0,
+      recentOrderNo: 'order003',
+      recentTradeTime: '2024-01-08 14:30:00',
+      userRegisterTime: '2024-01-03 14:20:00',
+      accountStatus: '禁用',
+    },
+    {
+      queryId: 'query004',
+      queryKeyword: '绑定车牌',
+      userName: '赵六',
+      userPhone: '13800138004',
+      bindCarNumber: ['京D78901'],
+      certStatus: '认证失败',
+      walletBalance: 2000,
+      unpaidOrderCount: 0,
+      couponHoldCount: 2,
+      recentOrderNo: 'order004',
+      recentTradeTime: '2024-01-07 11:45:00',
+      userRegisterTime: '2024-01-04 09:15:00',
+      accountStatus: '冻结',
+    },
+    {
+      queryId: 'query005',
+      queryKeyword: '发票',
+      userName: '孙七',
+      userPhone: '13800138005',
+      bindCarNumber: ['京E23456', '京F78901'],
+      certStatus: '已认证',
+      walletBalance: 1500.75,
+      unpaidOrderCount: 3,
+      couponHoldCount: 4,
+      recentOrderNo: 'order005',
+      recentTradeTime: '2024-01-10 10:30:00',
+      userRegisterTime: '2024-01-05 16:45:00',
+      accountStatus: '正常',
+    },
+    {
+      queryId: 'query006',
+      queryKeyword: '停车时长',
+      userName: '周八',
+      userPhone: '13800138006',
+      bindCarNumber: ['京G34567'],
+      certStatus: '待审核',
+      walletBalance: 800,
+      unpaidOrderCount: 1,
+      couponHoldCount: 2,
+      recentOrderNo: 'order006',
+      recentTradeTime: '2024-01-09 14:50:00',
+      userRegisterTime: '2024-01-06 10:30:00',
+      accountStatus: '正常',
+    },
+    {
+      queryId: 'query007',
+      queryKeyword: '会员权益',
+      userName: '吴九',
+      userPhone: '13800138007',
+      bindCarNumber: [],
+      certStatus: '未认证',
+      walletBalance: 0,
+      unpaidOrderCount: 0,
+      couponHoldCount: 1,
+      recentOrderNo: 'order007',
+      recentTradeTime: '2024-01-08 09:15:00',
+      userRegisterTime: '2024-01-07 14:20:00',
+      accountStatus: '正常',
+    },
+    {
+      queryId: 'query008',
+      queryKeyword: '退款',
+      userName: '郑十',
+      userPhone: '13800138008',
+      bindCarNumber: ['京H45678', '京I89012'],
+      certStatus: '已认证',
+      walletBalance: 3000.25,
+      unpaidOrderCount: 0,
+      couponHoldCount: 6,
+      recentOrderNo: 'order008',
+      recentTradeTime: '2024-01-10 11:45:00',
+      userRegisterTime: '2024-01-08 09:45:00',
+      accountStatus: '正常',
+    },
+    {
+      queryId: 'query009',
+      queryKeyword: '违章查询',
+      userName: '冯十一',
+      userPhone: '13800138009',
+      bindCarNumber: ['京J56789'],
+      certStatus: '认证失败',
+      walletBalance: 1200,
+      unpaidOrderCount: 2,
+      couponHoldCount: 1,
+      recentOrderNo: 'order009',
+      recentTradeTime: '2024-01-10 14:50:00',
+      userRegisterTime: '2024-01-09 13:10:00',
+      accountStatus: '正常',
+    },
+    {
+      queryId: 'query010',
+      queryKeyword: '积分兑换',
+      userName: '陈十二',
+      userPhone: '13800138010',
+      bindCarNumber: [],
+      certStatus: '待审核',
+      walletBalance: 600.5,
+      unpaidOrderCount: 0,
+      couponHoldCount: 3,
+      recentOrderNo: 'order010',
+      recentTradeTime: '2024-01-10 15:20:00',
+      userRegisterTime: '2024-01-10 11:20:00',
+      accountStatus: '正常',
+    },
+    {
+      queryId: 'query011',
+      queryKeyword: '停车场导航',
+      userName: '褚十三',
+      userPhone: '13800138011',
+      bindCarNumber: ['京K67890'],
+      certStatus: '已认证',
+      walletBalance: 2500,
+      unpaidOrderCount: 0,
+      couponHoldCount: 4,
+      recentOrderNo: 'order011',
+      recentTradeTime: '2024-01-10 09:30:00',
+      userRegisterTime: '2024-01-11 15:45:00',
+      accountStatus: '正常',
+    },
+    {
+      queryId: 'query012',
+      queryKeyword: '电子发票',
+      userName: '卫十四',
+      userPhone: '13800138012',
+      bindCarNumber: ['京L78901', '京M23456'],
+      certStatus: '待审核',
+      walletBalance: 900.75,
+      unpaidOrderCount: 1,
+      couponHoldCount: 2,
+      recentOrderNo: 'order012',
+      recentTradeTime: '2024-01-10 10:20:00',
+      userRegisterTime: '2024-01-12 10:30:00',
+      accountStatus: '正常',
+    },
+    {
+      queryId: 'query013',
+      queryKeyword: '月卡办理',
+      userName: '蒋十五',
+      userPhone: '13800138013',
+      bindCarNumber: ['京N89012'],
+      certStatus: '已认证',
+      walletBalance: 1800,
+      unpaidOrderCount: 0,
+      couponHoldCount: 5,
+      recentOrderNo: 'order013',
+      recentTradeTime: '2024-01-10 11:45:00',
+      userRegisterTime: '2024-01-13 14:20:00',
+      accountStatus: '正常',
+    },
+    {
+      queryId: 'query014',
+      queryKeyword: '账号找回',
+      userName: '沈十六',
+      userPhone: '13800138014',
+      bindCarNumber: [],
+      certStatus: '未认证',
+      walletBalance: 0,
+      unpaidOrderCount: 0,
+      couponHoldCount: 0,
+      recentOrderNo: 'order014',
+      recentTradeTime: '2024-01-09 14:30:00',
+      userRegisterTime: '2024-01-14 09:45:00',
+      accountStatus: '正常',
+    },
+    {
+      queryId: 'query015',
+      queryKeyword: '缴费记录',
+      userName: '韩十七',
+      userPhone: '13800138015',
+      bindCarNumber: ['京O90123'],
+      certStatus: '认证失败',
+      walletBalance: 1300.5,
+      unpaidOrderCount: 1,
+      couponHoldCount: 2,
+      recentOrderNo: 'order015',
+      recentTradeTime: '2024-01-10 14:50:00',
+      userRegisterTime: '2024-01-15 13:10:00',
+      accountStatus: '正常',
+    },
+  ];
+};
+
+// 信用分管理数据列表
+export const creditScoreManagementList = () => {
+  return [
+    {
+      userId: 'user001',
+      userName: '张三',
+      creditScore: 95,
+      scoreChangeRecord: '2024-01-10 +5分',
+      appealStatus: '无申诉',
+      creditAdjustValue: 5,
+      adjustReason: '按时缴费',
+      appealResult: '无',
+    },
+    {
+      userId: 'user002',
+      userName: '李四',
+      creditScore: 85,
+      scoreChangeRecord: '2024-01-09 -3分',
+      appealStatus: '申诉中',
+      creditAdjustValue: -3,
+      adjustReason: '逾期缴费',
+      appealResult: '处理中',
+    },
+    {
+      userId: 'user003',
+      userName: '王五',
+      creditScore: 70,
+      scoreChangeRecord: '2024-01-08 -10分',
+      appealStatus: '已申诉',
+      creditAdjustValue: -10,
+      adjustReason: '多次逾期',
+      appealResult: '驳回',
+    },
+    {
+      userId: 'user004',
+      userName: '赵六',
+      creditScore: 90,
+      scoreChangeRecord: '2024-01-07 +2分',
+      appealStatus: '无申诉',
+      creditAdjustValue: 2,
+      adjustReason: '良好记录',
+      appealResult: '无',
+    },
+    {
+      userId: 'user005',
+      userName: '孙七',
+      creditScore: 80,
+      scoreChangeRecord: '2024-01-06 -5分',
+      appealStatus: '已申诉',
+      creditAdjustValue: -5,
+      adjustReason: '一次逾期',
+      appealResult: '通过',
+    },
+    {
+      userId: 'user006',
+      userName: '周八',
+      creditScore: 88,
+      scoreChangeRecord: '2024-01-05 +3分',
+      appealStatus: '无申诉',
+      creditAdjustValue: 3,
+      adjustReason: '连续缴费',
+      appealResult: '无',
+    },
+    {
+      userId: 'user007',
+      userName: '吴九',
+      creditScore: 75,
+      scoreChangeRecord: '2024-01-04 -2分',
+      appealStatus: '无申诉',
+      creditAdjustValue: -2,
+      adjustReason: '轻微逾期',
+      appealResult: '无',
+    },
+    {
+      userId: 'user008',
+      userName: '郑十',
+      creditScore: 92,
+      scoreChangeRecord: '2024-01-03 +4分',
+      appealStatus: '无申诉',
+      creditAdjustValue: 4,
+      adjustReason: '优质用户',
+      appealResult: '无',
+    },
+    {
+      userId: 'user009',
+      userName: '冯十一',
+      creditScore: 65,
+      scoreChangeRecord: '2024-01-02 -8分',
+      appealStatus: '已申诉',
+      creditAdjustValue: -8,
+      adjustReason: '严重逾期',
+      appealResult: '驳回',
+    },
+    {
+      userId: 'user010',
+      userName: '陈十二',
+      creditScore: 82,
+      scoreChangeRecord: '2024-01-01 +1分',
+      appealStatus: '无申诉',
+      creditAdjustValue: 1,
+      adjustReason: '首次缴费',
+      appealResult: '无',
+    },
+    {
+      userId: 'user011',
+      userName: '褚十三',
+      creditScore: 94,
+      scoreChangeRecord: '2023-12-31 +6分',
+      appealStatus: '无申诉',
+      creditAdjustValue: 6,
+      adjustReason: '年度优秀',
+      appealResult: '无',
+    },
+    {
+      userId: 'user012',
+      userName: '卫十四',
+      creditScore: 86,
+      scoreChangeRecord: '2023-12-30 +2分',
+      appealStatus: '无申诉',
+      creditAdjustValue: 2,
+      adjustReason: '按时缴费',
+      appealResult: '无',
+    },
+    {
+      userId: 'user013',
+      userName: '蒋十五',
+      creditScore: 89,
+      scoreChangeRecord: '2023-12-29 +3分',
+      appealStatus: '无申诉',
+      creditAdjustValue: 3,
+      adjustReason: '连续缴费',
+      appealResult: '无',
+    },
+    {
+      userId: 'user014',
+      userName: '沈十六',
+      creditScore: 78,
+      scoreChangeRecord: '2023-12-28 -1分',
+      appealStatus: '无申诉',
+      creditAdjustValue: -1,
+      adjustReason: '轻微逾期',
+      appealResult: '无',
+    },
+    {
+      userId: 'user015',
+      userName: '韩十七',
+      creditScore: 72,
+      scoreChangeRecord: '2023-12-27 -5分',
+      appealStatus: '申诉中',
+      creditAdjustValue: -5,
+      adjustReason: '逾期缴费',
+      appealResult: '处理中',
+    },
+  ];
+};
+
 // 根据用户类型获取对应的数据列表
 export const dataList = (userType) => {
   switch (userType) {
@@ -1003,6 +1390,12 @@ export const dataList = (userType) => {
     }
     case '企业': {
       return enterpriseUserList();
+    }
+    case '信用分管理': {
+      return creditScoreManagementList();
+    }
+    case '客服查询': {
+      return customerServiceQueryList();
     }
     case '政府': {
       return governmentUserList();
@@ -1274,6 +1667,234 @@ export function governmentFormSchema() {
   ];
 }
 
+/** 客服查询表单schema */
+export function customerServiceQueryFormSchema() {
+  return [
+    {
+      fieldName: 'queryId',
+      label: '查询记录ID',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入查询记录ID',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'queryKeyword',
+      label: '查询关键词',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入查询关键词',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'userName',
+      label: '用户姓名',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入用户姓名',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'userPhone',
+      label: '手机号',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入手机号',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'bindCarNumber',
+      label: '绑定车牌',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入绑定车牌，多个车牌用逗号分隔',
+      },
+    },
+    {
+      fieldName: 'certStatus',
+      label: '认证状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择认证状态',
+        options: [
+          { label: '未认证', value: '未认证' },
+          { label: '待审核', value: '待审核' },
+          { label: '已认证', value: '已认证' },
+          { label: '认证失败', value: '认证失败' },
+        ],
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'walletBalance',
+      label: '钱包余额',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入钱包余额',
+        min: 0,
+        step: 0.01,
+      },
+    },
+    {
+      fieldName: 'unpaidOrderCount',
+      label: '未缴订单数',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入未缴订单数',
+        min: 0,
+        step: 1,
+      },
+    },
+    {
+      fieldName: 'couponHoldCount',
+      label: '优惠券持有数量',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入优惠券持有数量',
+        min: 0,
+        step: 1,
+      },
+    },
+    {
+      fieldName: 'recentOrderNo',
+      label: '最近订单编号',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入最近订单编号',
+      },
+    },
+    {
+      fieldName: 'recentTradeTime',
+      label: '最近交易时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择最近交易时间',
+        type: 'datetime',
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'userRegisterTime',
+      label: '用户注册时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择用户注册时间',
+        type: 'datetime',
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'accountStatus',
+      label: '账号状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择账号状态',
+        options: [
+          { label: '正常', value: '正常' },
+          { label: '禁用', value: '禁用' },
+          { label: '冻结', value: '冻结' },
+        ],
+        clearable: true,
+      },
+    },
+  ];
+}
+
+/** 信用分管理表单schema */
+export function creditScoreManagementFormSchema() {
+  return [
+    {
+      fieldName: 'userId',
+      label: '用户ID',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入用户ID',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'userName',
+      label: '用户名',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入用户名',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'creditScore',
+      label: '信用分',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入信用分',
+        min: 0,
+        max: 100,
+        step: 1,
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'scoreChangeRecord',
+      label: '分数变动记录',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入分数变动记录',
+      },
+    },
+    {
+      fieldName: 'appealStatus',
+      label: '申诉状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择申诉状态',
+        options: [
+          { label: '无申诉', value: '无申诉' },
+          { label: '申诉中', value: '申诉中' },
+          { label: '已申诉', value: '已申诉' },
+        ],
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'creditAdjustValue',
+      label: '信用分调整值',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入信用分调整值',
+        step: 1,
+      },
+    },
+    {
+      fieldName: 'adjustReason',
+      label: '调整原因',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入调整原因',
+        type: 'textarea',
+      },
+    },
+    {
+      fieldName: 'appealResult',
+      label: '申诉处理结果',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择申诉处理结果',
+        options: [
+          { label: '无', value: '无' },
+          { label: '处理中', value: '处理中' },
+          { label: '通过', value: '通过' },
+          { label: '驳回', value: '驳回' },
+        ],
+        clearable: true,
+      },
+    },
+  ];
+}
+
 /** 新增/修改的表单，根据用户类型返回不同的schema */
 export function useFormSchema(userType) {
   switch (userType) {
@@ -1282,6 +1903,12 @@ export function useFormSchema(userType) {
     }
     case '企业': {
       return enterpriseFormSchema();
+    }
+    case '信用分管理': {
+      return creditScoreManagementFormSchema();
+    }
+    case '客服查询': {
+      return customerServiceQueryFormSchema();
     }
     case '政府': {
       return governmentFormSchema();
@@ -1536,6 +2163,149 @@ export function governmentGridFormSchema() {
   ];
 }
 
+/** 客服查询搜索表单schema */
+export function customerServiceQueryGridFormSchema() {
+  return [
+    {
+      fieldName: 'queryId',
+      label: '查询记录ID',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入查询记录ID',
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'queryKeyword',
+      label: '查询关键词',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入查询关键词',
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'userName',
+      label: '用户姓名',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入用户姓名',
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'userPhone',
+      label: '手机号',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入手机号',
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'certStatus',
+      label: '认证状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择认证状态',
+        options: [
+          { label: '未认证', value: '未认证' },
+          { label: '待审核', value: '待审核' },
+          { label: '已认证', value: '已认证' },
+          { label: '认证失败', value: '认证失败' },
+        ],
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'accountStatus',
+      label: '账号状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择账号状态',
+        options: [
+          { label: '正常', value: '正常' },
+          { label: '禁用', value: '禁用' },
+          { label: '冻结', value: '冻结' },
+        ],
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'recentTradeTime',
+      label: '最近交易时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择最近交易时间',
+        type: 'daterange',
+        clearable: true,
+      },
+    },
+  ];
+}
+
+/** 信用分管理搜索表单schema */
+export function creditScoreManagementGridFormSchema() {
+  return [
+    {
+      fieldName: 'userId',
+      label: '用户ID',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入用户ID',
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'userName',
+      label: '用户名',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入用户名',
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'creditScore',
+      label: '信用分',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入信用分',
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'appealStatus',
+      label: '申诉状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择申诉状态',
+        options: [
+          { label: '无申诉', value: '无申诉' },
+          { label: '申诉中', value: '申诉中' },
+          { label: '已申诉', value: '已申诉' },
+        ],
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'appealResult',
+      label: '申诉处理结果',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择申诉处理结果',
+        options: [
+          { label: '无', value: '无' },
+          { label: '处理中', value: '处理中' },
+          { label: '通过', value: '通过' },
+          { label: '驳回', value: '驳回' },
+        ],
+        clearable: true,
+      },
+    },
+  ];
+}
+
 /** 列表的搜索表单，根据用户类型返回不同的schema */
 export function useGridFormSchema(userType) {
   switch (userType) {
@@ -1544,6 +2314,12 @@ export function useGridFormSchema(userType) {
     }
     case '企业': {
       return enterpriseGridFormSchema();
+    }
+    case '信用分管理': {
+      return creditScoreManagementGridFormSchema();
+    }
+    case '客服查询': {
+      return customerServiceQueryGridFormSchema();
     }
     case '政府': {
       return governmentGridFormSchema();
@@ -1561,7 +2337,7 @@ export function personalGridColumns() {
     {
       field: 'user_id',
       title: '用户ID',
-      minWidth: 150,
+      minWidth: 100,
       sortable: true,
     },
     {
@@ -1675,7 +2451,7 @@ export function enterpriseGridColumns() {
     {
       field: 'enterprise_id',
       title: '企业ID',
-      minWidth: 150,
+      minWidth: 100,
       sortable: true,
     },
     {
@@ -1787,7 +2563,7 @@ export function governmentGridColumns() {
     {
       field: 'gov_user_id',
       title: '用户ID',
-      minWidth: 150,
+      minWidth: 100,
       sortable: true,
     },
     {
@@ -1883,6 +2659,186 @@ export function governmentGridColumns() {
   ];
 }
 
+/** 客服查询表格列配置 */
+export function customerServiceQueryGridColumns() {
+  return [
+    { type: 'checkbox', width: 40 },
+    {
+      field: 'queryId',
+      title: '查询记录ID',
+      minWidth: 120,
+      sortable: true,
+      slots: {
+        default: 'queryId',
+      },
+    },
+    {
+      field: 'queryKeyword',
+      title: '查询关键词',
+      minWidth: 150,
+      sortable: true,
+    },
+    {
+      field: 'userName',
+      title: '用户姓名',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'userPhone',
+      title: '手机号',
+      minWidth: 150,
+      sortable: true,
+      formatter: ({ cellValue }) => {
+        return maskPhone(cellValue);
+      },
+    },
+    {
+      field: 'bindCarNumber',
+      title: '绑定车牌',
+      minWidth: 200,
+      sortable: true,
+      slots: {
+        default: 'bindCarNumber',
+      },
+    },
+    {
+      field: 'certStatus',
+      title: '认证状态',
+      minWidth: 120,
+      sortable: true,
+      slots: {
+        default: 'certStatus',
+      },
+    },
+    {
+      field: 'walletBalance',
+      title: '钱包余额',
+      minWidth: 120,
+      sortable: true,
+      formatter: ({ cellValue }) => {
+        const numValue = Number.parseFloat(cellValue) || 0;
+        return `¥${numValue.toFixed(2)}`;
+      },
+    },
+    {
+      field: 'unpaidOrderCount',
+      title: '未缴订单数',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'couponHoldCount',
+      title: '优惠券持有数量',
+      minWidth: 150,
+      sortable: true,
+    },
+    {
+      field: 'recentOrderNo',
+      title: '最近订单编号',
+      minWidth: 150,
+      sortable: true,
+    },
+    {
+      field: 'recentTradeTime',
+      title: '最近交易时间',
+      minWidth: 200,
+      sortable: true,
+    },
+    {
+      field: 'userRegisterTime',
+      title: '用户注册时间',
+      minWidth: 200,
+      sortable: true,
+    },
+    {
+      field: 'accountStatus',
+      title: '账号状态',
+      minWidth: 120,
+      sortable: true,
+      slots: {
+        default: 'accountStatus',
+      },
+    },
+    {
+      title: '操作',
+      width: 80,
+      fixed: 'right',
+      slots: { default: 'actions' },
+    },
+  ];
+}
+
+/** 信用分管理表格列配置 */
+export function creditScoreManagementGridColumns() {
+  return [
+    { type: 'checkbox', width: 40 },
+    {
+      field: 'userId',
+      title: '用户ID',
+      minWidth: 120,
+      sortable: true,
+      slots: {
+        default: 'userId',
+      },
+    },
+    {
+      field: 'userName',
+      title: '用户名',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'creditScore',
+      title: '信用分',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: 'scoreChangeRecord',
+      title: '分数变动记录',
+      minWidth: 180,
+      sortable: true,
+    },
+    {
+      field: 'appealStatus',
+      title: '申诉状态',
+      minWidth: 120,
+      sortable: true,
+      slots: {
+        default: 'appealStatus',
+      },
+    },
+    {
+      field: 'creditAdjustValue',
+      title: '信用分调整值',
+      minWidth: 150,
+      sortable: true,
+    },
+    {
+      field: 'adjustReason',
+      title: '调整原因',
+      minWidth: 150,
+      sortable: true,
+    },
+    {
+      field: 'appealResult',
+      title: '申诉处理结果',
+      minWidth: 150,
+      sortable: true,
+      slots: {
+        default: 'appealResult',
+      },
+    },
+    {
+      title: '操作',
+      width: 80,
+      fixed: 'right',
+      slots: { default: 'actions' },
+    },
+  ];
+}
+
 /** 列表的字段，根据用户类型返回不同的列配置 */
 export function useGridColumns(userType) {
   switch (userType) {
@@ -1891,6 +2847,12 @@ export function useGridColumns(userType) {
     }
     case '企业': {
       return enterpriseGridColumns();
+    }
+    case '信用分管理': {
+      return creditScoreManagementGridColumns();
+    }
+    case '客服查询': {
+      return customerServiceQueryGridColumns();
     }
     case '政府': {
       return governmentGridColumns();
@@ -2246,6 +3208,135 @@ export const governmentDetailFields = [
   { key: 'remark', label: '备注' },
 ];
 
+/** 客服查询详情字段配置 */
+export const customerServiceQueryDetailFields = [
+  { key: 'queryId', label: '查询记录ID' },
+  { key: 'queryKeyword', label: '查询关键词' },
+  { key: 'userName', label: '用户姓名' },
+  {
+    key: 'userPhone',
+    label: '手机号',
+    formatter: maskPhone,
+  },
+  {
+    key: 'bindCarNumber',
+    label: '绑定车牌',
+    formatter: (value) => {
+      if (!value || !Array.isArray(value)) return '';
+      return value.join(', ');
+    },
+  },
+  {
+    key: 'certStatus',
+    label: '认证状态',
+    type: 'tag',
+    tagType: (value) => {
+      switch (value) {
+        case '已认证': {
+          return 'success';
+        }
+        case '待审核': {
+          return 'warning';
+        }
+        case '认证失败': {
+          return 'danger';
+        }
+        default: {
+          return 'info';
+        }
+      }
+    },
+  },
+  {
+    key: 'walletBalance',
+    label: '钱包余额',
+    formatter: (value) => {
+      return `¥${value.toFixed(2)}`;
+    },
+  },
+  { key: 'unpaidOrderCount', label: '未缴订单数' },
+  { key: 'couponHoldCount', label: '优惠券持有数量' },
+  { key: 'recentOrderNo', label: '最近订单编号' },
+  { key: 'recentTradeTime', label: '最近交易时间' },
+  { key: 'userRegisterTime', label: '用户注册时间' },
+  {
+    key: 'accountStatus',
+    label: '账号状态',
+    type: 'tag',
+    tagType: (value) => {
+      switch (value) {
+        case '冻结': {
+          return 'warning';
+        }
+        case '正常': {
+          return 'success';
+        }
+        case '禁用': {
+          return 'danger';
+        }
+        default: {
+          return 'info';
+        }
+      }
+    },
+  },
+];
+
+/** 信用分管理详情字段配置 */
+export const creditScoreManagementDetailFields = [
+  { key: 'userId', label: '用户ID' },
+  { key: 'userName', label: '用户名' },
+  { key: 'creditScore', label: '信用分' },
+  { key: 'scoreChangeRecord', label: '分数变动记录' },
+  {
+    key: 'appealStatus',
+    label: '申诉状态',
+    type: 'tag',
+    tagType: (value) => {
+      switch (value) {
+        case '已申诉': {
+          return 'success';
+        }
+        case '无申诉': {
+          return 'info';
+        }
+        case '申诉中': {
+          return 'warning';
+        }
+        default: {
+          return 'info';
+        }
+      }
+    },
+  },
+  { key: 'creditAdjustValue', label: '信用分调整值' },
+  { key: 'adjustReason', label: '调整原因' },
+  {
+    key: 'appealResult',
+    label: '申诉处理结果',
+    type: 'tag',
+    tagType: (value) => {
+      switch (value) {
+        case '处理中': {
+          return 'warning';
+        }
+        case '无': {
+          return 'info';
+        }
+        case '通过': {
+          return 'success';
+        }
+        case '驳回': {
+          return 'danger';
+        }
+        default: {
+          return 'info';
+        }
+      }
+    },
+  },
+];
+
 /** 根据用户类型获取详情字段配置 */
 export const getUserDetailFields = (userType) => {
   switch (userType) {
@@ -2254,6 +3345,12 @@ export const getUserDetailFields = (userType) => {
     }
     case '企业': {
       return enterpriseDetailFields;
+    }
+    case '信用分管理': {
+      return creditScoreManagementDetailFields;
+    }
+    case '客服查询': {
+      return customerServiceQueryDetailFields;
     }
     case '政府': {
       return governmentDetailFields;
@@ -2500,6 +3597,182 @@ export const getStatsDataByUserType = (userType) => {
             xAxis: Object.keys(industryStats),
             series: Object.values(industryStats),
             // showXAxisLabel: false,
+          },
+        ],
+      };
+    }
+    case '信用分管理': {
+      // 信用分管理统计
+      const totalCount = userData.length;
+      const avgCreditScore = Math.round(
+        userData.reduce((sum, item) => sum + item.creditScore, 0) / totalCount,
+      );
+      const appealingUserCount = userData.filter(
+        (item) => item.appealStatus === '申诉中',
+      ).length;
+
+      // 统计不同申诉状态的数量
+      const appealStatusStats = {
+        无申诉: userData.filter((item) => item.appealStatus === '无申诉')
+          .length,
+        申诉中: userData.filter((item) => item.appealStatus === '申诉中')
+          .length,
+        已申诉: userData.filter((item) => item.appealStatus === '已申诉')
+          .length,
+      };
+
+      // 统计不同申诉处理结果的数量
+      const appealResultStats = {
+        无: userData.filter((item) => item.appealResult === '无').length,
+        处理中: userData.filter((item) => item.appealResult === '处理中')
+          .length,
+        通过: userData.filter((item) => item.appealResult === '通过').length,
+        驳回: userData.filter((item) => item.appealResult === '驳回').length,
+      };
+
+      // 统计信用分区间分布
+      const creditScoreRangeStats = {
+        '0-60': userData.filter((item) => item.creditScore < 60).length,
+        '60-70': userData.filter(
+          (item) => item.creditScore >= 60 && item.creditScore < 70,
+        ).length,
+        '70-80': userData.filter(
+          (item) => item.creditScore >= 70 && item.creditScore < 80,
+        ).length,
+        '80-90': userData.filter(
+          (item) => item.creditScore >= 80 && item.creditScore < 90,
+        ).length,
+        '90-100': userData.filter((item) => item.creditScore >= 90).length,
+      };
+
+      return {
+        cards: [
+          {
+            title: '总用户数',
+            value: totalCount,
+            desc: `较上月增长${Math.floor(Math.random() * 10) + 5}%`,
+            color: '#13ce66',
+          },
+          {
+            title: '平均信用分',
+            value: avgCreditScore,
+            desc: '整体信用水平',
+            color: '#4ECDC4',
+          },
+          {
+            title: '申诉中用户数',
+            value: appealingUserCount,
+            desc: `占比${Math.round((appealingUserCount / totalCount) * 100)}%`,
+            color: '#FF6B6B',
+          },
+        ],
+        charts: [
+          {
+            title: '申诉状态占比',
+            type: 'pie',
+            data: Object.entries(appealStatusStats)
+              .filter(([_, value]) => value > 0)
+              .map(([name, value]) => ({
+                value: Math.round((value / totalCount) * 100),
+                name,
+              })),
+          },
+          {
+            title: '申诉处理结果占比',
+            type: 'pie',
+            data: Object.entries(appealResultStats)
+              .filter(([_, value]) => value > 0)
+              .map(([name, value]) => ({
+                value: Math.round((value / totalCount) * 100),
+                name,
+              })),
+          },
+          {
+            title: '信用分区间分布',
+            type: 'bar',
+            xAxis: Object.keys(creditScoreRangeStats),
+            series: Object.values(creditScoreRangeStats),
+          },
+        ],
+      };
+    }
+    case '客服查询': {
+      // 客服查询统计
+      const totalCount = userData.length;
+      const unpaidOrderUserCount = userData.filter(
+        (item) => item.unpaidOrderCount > 0,
+      ).length;
+      const certifiedUserCount = userData.filter(
+        (item) => item.certStatus === '已认证',
+      ).length;
+
+      // 统计不同认证状态的数量
+      const certStatusStats = {
+        已认证: userData.filter((item) => item.certStatus === '已认证').length,
+        待审核: userData.filter((item) => item.certStatus === '待审核').length,
+        未认证: userData.filter((item) => item.certStatus === '未认证').length,
+        认证失败: userData.filter((item) => item.certStatus === '认证失败')
+          .length,
+      };
+
+      // 统计不同账号状态的数量
+      const accountStatusStats = {
+        正常: userData.filter((item) => item.accountStatus === '正常').length,
+        禁用: userData.filter((item) => item.accountStatus === '禁用').length,
+        冻结: userData.filter((item) => item.accountStatus === '冻结').length,
+      };
+
+      // 生成近24小时查询量趋势
+      const hours = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+      const queryVolume = hours.map(() => Math.floor(Math.random() * 10) + 1);
+
+      return {
+        cards: [
+          {
+            title: '查询结果总数',
+            value: totalCount,
+            desc: `较昨日增长${Math.floor(Math.random() * 15) + 5}%`,
+            color: '#13ce66',
+          },
+          {
+            title: '未缴订单用户数',
+            value: unpaidOrderUserCount,
+            desc: `占比${Math.round((unpaidOrderUserCount / totalCount) * 100)}%`,
+            color: '#4ECDC4',
+          },
+          {
+            title: '认证用户数',
+            value: certifiedUserCount,
+            desc: `认证率${Math.round((certifiedUserCount / totalCount) * 100)}%`,
+            color: '#FF6B6B',
+          },
+        ],
+        charts: [
+          {
+            title: '用户认证状态占比',
+            type: 'pie',
+            data: Object.entries(certStatusStats)
+              .filter(([_, value]) => value > 0)
+              .map(([name, value]) => ({
+                value: Math.round((value / totalCount) * 100),
+                name,
+              })),
+          },
+          {
+            title: '账号状态占比',
+            type: 'pie',
+            data: Object.entries(accountStatusStats)
+              .filter(([_, value]) => value > 0)
+              .map(([name, value]) => ({
+                value: Math.round((value / totalCount) * 100),
+                name,
+              })),
+          },
+          {
+            title: '近24小时查询量趋势',
+            type: 'bar',
+            xAxis: hours,
+            series: queryVolume,
           },
         ],
       };

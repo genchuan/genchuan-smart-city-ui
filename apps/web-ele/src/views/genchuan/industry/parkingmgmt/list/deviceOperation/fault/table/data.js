@@ -15,7 +15,7 @@ export const dataList = () => {
       disposalStatusName: '待处理',
       assigner: '',
       assignTime: '',
-      workorderNo: ''
+      workorderNo: '',
     },
     {
       deviceCode: 'DEV-002',
@@ -31,7 +31,7 @@ export const dataList = () => {
       disposalStatusName: '已派单',
       assigner: '王五',
       assignTime: '2025-01-01 11:00:00',
-      workorderNo: 'WO-20250101-001'
+      workorderNo: 'WO-20250101-001',
     },
     {
       deviceCode: 'DEV-003',
@@ -47,7 +47,7 @@ export const dataList = () => {
       disposalStatusName: '处理中',
       assigner: '赵六',
       assignTime: '2025-01-01 11:30:00',
-      workorderNo: 'WO-20250101-002'
+      workorderNo: 'WO-20250101-002',
     },
     {
       deviceCode: 'DEV-004',
@@ -63,7 +63,7 @@ export const dataList = () => {
       disposalStatusName: '已解决',
       assigner: '孙七',
       assignTime: '2025-01-01 12:15:00',
-      workorderNo: 'WO-20250101-003'
+      workorderNo: 'WO-20250101-003',
     },
     {
       deviceCode: 'DEV-005',
@@ -79,7 +79,7 @@ export const dataList = () => {
       disposalStatusName: '待处理',
       assigner: '',
       assignTime: '',
-      workorderNo: ''
+      workorderNo: '',
     },
     {
       deviceCode: 'DEV-006',
@@ -95,7 +95,7 @@ export const dataList = () => {
       disposalStatusName: '已派单',
       assigner: '吴九',
       assignTime: '2025-01-01 14:45:00',
-      workorderNo: 'WO-20250101-004'
+      workorderNo: 'WO-20250101-004',
     },
     {
       deviceCode: 'DEV-007',
@@ -111,7 +111,7 @@ export const dataList = () => {
       disposalStatusName: '处理中',
       assigner: '郑十',
       assignTime: '2025-01-01 15:30:00',
-      workorderNo: 'WO-20250101-005'
+      workorderNo: 'WO-20250101-005',
     },
     {
       deviceCode: 'DEV-008',
@@ -127,7 +127,7 @@ export const dataList = () => {
       disposalStatusName: '已解决',
       assigner: '张三',
       assignTime: '2025-01-01 16:15:00',
-      workorderNo: 'WO-20250101-006'
+      workorderNo: 'WO-20250101-006',
     },
     {
       deviceCode: 'DEV-009',
@@ -143,7 +143,7 @@ export const dataList = () => {
       disposalStatusName: '待处理',
       assigner: '',
       assignTime: '',
-      workorderNo: ''
+      workorderNo: '',
     },
     {
       deviceCode: 'DEV-010',
@@ -159,7 +159,7 @@ export const dataList = () => {
       disposalStatusName: '已派单',
       assigner: '王五',
       assignTime: '2025-01-01 17:45:00',
-      workorderNo: 'WO-20250101-007'
+      workorderNo: 'WO-20250101-007',
     },
     {
       deviceCode: 'DEV-011',
@@ -175,7 +175,7 @@ export const dataList = () => {
       disposalStatusName: '处理中',
       assigner: '赵六',
       assignTime: '2025-01-01 18:30:00',
-      workorderNo: 'WO-20250101-008'
+      workorderNo: 'WO-20250101-008',
     },
     {
       deviceCode: 'DEV-012',
@@ -191,7 +191,7 @@ export const dataList = () => {
       disposalStatusName: '已解决',
       assigner: '孙七',
       assignTime: '2025-01-01 19:15:00',
-      workorderNo: 'WO-20250101-009'
+      workorderNo: 'WO-20250101-009',
     },
     {
       deviceCode: 'DEV-013',
@@ -207,7 +207,7 @@ export const dataList = () => {
       disposalStatusName: '待处理',
       assigner: '',
       assignTime: '',
-      workorderNo: ''
+      workorderNo: '',
     },
     {
       deviceCode: 'DEV-014',
@@ -223,7 +223,7 @@ export const dataList = () => {
       disposalStatusName: '已派单',
       assigner: '吴九',
       assignTime: '2025-01-01 21:30:00',
-      workorderNo: 'WO-20250101-010'
+      workorderNo: 'WO-20250101-010',
     },
     {
       deviceCode: 'DEV-015',
@@ -239,8 +239,8 @@ export const dataList = () => {
       disposalStatusName: '处理中',
       assigner: '郑十',
       assignTime: '2025-01-01 22:15:00',
-      workorderNo: 'WO-20250101-011'
-    }
+      workorderNo: 'WO-20250101-011',
+    },
   ];
 };
 
@@ -254,25 +254,25 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入故障ID',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'deviceCode',
       label: '设备编码',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入设备编码'
+        placeholder: '请输入设备编码',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'assetName',
       label: '所属资产',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入所属资产'
+        placeholder: '请输入所属资产',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'faultTypeName',
@@ -284,10 +284,10 @@ export function useFormSchema() {
           { label: '机械故障', value: '机械故障' },
           { label: '电气故障', value: '电气故障' },
           { label: '通信故障', value: '通信故障' },
-          { label: '软件故障', value: '软件故障' }
-        ]
+          { label: '软件故障', value: '软件故障' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'faultLevelName',
@@ -298,10 +298,10 @@ export function useFormSchema() {
         options: [
           { label: '轻微', value: '轻微' },
           { label: '一般', value: '一般' },
-          { label: '严重', value: '严重' }
-        ]
+          { label: '严重', value: '严重' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'faultDesc',
@@ -309,9 +309,9 @@ export function useFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入故障描述',
-        type: 'textarea'
+        type: 'textarea',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'faultTime',
@@ -320,35 +320,35 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择故障发生时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'reporterName',
       label: '上报人',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入上报人'
+        placeholder: '请输入上报人',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'contactPhone',
       label: '联系电话',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入联系电话'
+        placeholder: '请输入联系电话',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'faultImages',
       label: '故障照片',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入故障照片'
-      }
+        placeholder: '请输入故障照片',
+      },
     },
     {
       fieldName: 'disposalStatusName',
@@ -360,18 +360,18 @@ export function useFormSchema() {
           { label: '待处理', value: '待处理' },
           { label: '已派单', value: '已派单' },
           { label: '处理中', value: '处理中' },
-          { label: '已解决', value: '已解决' }
-        ]
+          { label: '已解决', value: '已解决' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'assigner',
       label: '派单人',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入派单人'
-      }
+        placeholder: '请输入派单人',
+      },
     },
     {
       fieldName: 'assignTime',
@@ -380,17 +380,17 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择派单时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
-      }
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
     },
     {
       fieldName: 'workorderNo',
       label: '关联工单',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入关联工单'
-      }
-    }
+        placeholder: '请输入关联工单',
+      },
+    },
   ];
 }
 
@@ -403,93 +403,93 @@ export function useGridColumns() {
       title: '故障ID',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'faultId' }
+      slots: { default: 'faultId' },
     },
     {
       field: 'deviceCode',
       title: '设备编码',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'assetName',
       title: '所属资产',
       minWidth: 150,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'faultTypeName',
       title: '故障类型',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'faultLevelName',
       title: '故障等级',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'faultDesc',
       title: '故障描述',
       minWidth: 150,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'faultTime',
       title: '故障发生时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'reporterName',
       title: '上报人',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'contactPhone',
       title: '联系电话',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'faultImages',
       title: '故障照片',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'disposalStatusName',
       title: '处置状态',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'disposalStatusName' }
+      slots: { default: 'disposalStatusName' },
     },
     {
       field: 'assigner',
       title: '派单人',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'assignTime',
       title: '派单时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'workorderNo',
       title: '关联工单',
       minWidth: 150,
-      sortable: true
+      sortable: true,
     },
     {
       title: '操作',
       width: 100,
       fixed: 'right',
-      slots: { default: 'actions' }
-    }
+      slots: { default: 'actions' },
+    },
   ];
 }
 
@@ -516,7 +516,5 @@ export const detailFields = [
   { key: 'disposalStatusName', label: '处置状态' },
   { key: 'assigner', label: '派单人' },
   { key: 'assignTime', label: '派单时间' },
-  { key: 'workorderNo', label: '关联工单' }
+  { key: 'workorderNo', label: '关联工单' },
 ];
-
-

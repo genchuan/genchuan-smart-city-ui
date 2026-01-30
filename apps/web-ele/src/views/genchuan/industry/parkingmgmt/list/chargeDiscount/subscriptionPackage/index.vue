@@ -26,30 +26,30 @@ const secondShow = ref(false);
   <div class="common-index">
     <div class="icon-change">
       <el-icon
-          class="tabel-tab-icon"
-          v-if="secondShow"
-          @click="changeArrowStatus"
+        class="tabel-tab-icon"
+        v-if="secondShow"
+        @click="changeArrowStatus"
       >
         <ArrowDown />
       </el-icon>
       <el-icon
-          class="tabel-tab-icon"
-          v-if="!secondShow"
-          @click="changeArrowStatus"
+        class="tabel-tab-icon"
+        v-if="!secondShow"
+        @click="changeArrowStatus"
       >
         <ArrowUp />
       </el-icon>
     </div>
     <el-tabs
-        v-model="activeName"
-        class="common-tabs"
-        type="card"
-        @tab-change="tabChange"
+      v-model="activeName"
+      class="common-tabs"
+      type="card"
+      @tab-change="tabChange"
     >
       <el-tab-pane
-          v-for="item in tabArray"
-          :key="item.label"
-          :name="item.label"
+        v-for="item in tabArray"
+        :key="item.label"
+        :name="item.label"
       >
         <template #label>
           <div class="table-first">
@@ -57,9 +57,9 @@ const secondShow = ref(false);
           </div>
         </template>
         <component
-            :is="item.components"
-            :second-show="item.secondShow"
-            :key="item.label"
+          :is="item.components"
+          :second-show="item.secondShow"
+          :key="item.label"
         />
       </el-tab-pane>
     </el-tabs>

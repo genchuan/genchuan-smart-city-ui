@@ -11,7 +11,7 @@ export const dataList = () => {
       monitorData: '正常',
       isAbnormal: '否',
       abnormalDesc: '',
-      monitorTime: '2025-01-01 12:00:00'
+      monitorTime: '2025-01-01 12:00:00',
     },
     {
       deviceCode: 'DEV-002',
@@ -23,7 +23,7 @@ export const dataList = () => {
       monitorData: '98%',
       isAbnormal: '否',
       abnormalDesc: '',
-      monitorTime: '2025-01-01 12:05:00'
+      monitorTime: '2025-01-01 12:05:00',
     },
     {
       deviceCode: 'DEV-003',
@@ -35,7 +35,7 @@ export const dataList = () => {
       monitorData: '2.8V',
       isAbnormal: '是',
       abnormalDesc: '电池电压偏低',
-      monitorTime: '2025-01-01 12:10:00'
+      monitorTime: '2025-01-01 12:10:00',
     },
     {
       deviceCode: 'DEV-004',
@@ -47,7 +47,7 @@ export const dataList = () => {
       monitorData: '125笔',
       isAbnormal: '否',
       abnormalDesc: '',
-      monitorTime: '2025-01-01 12:15:00'
+      monitorTime: '2025-01-01 12:15:00',
     },
     {
       deviceCode: 'DEV-005',
@@ -59,7 +59,7 @@ export const dataList = () => {
       monitorData: '正常',
       isAbnormal: '否',
       abnormalDesc: '',
-      monitorTime: '2025-01-01 12:20:00'
+      monitorTime: '2025-01-01 12:20:00',
     },
     {
       deviceCode: 'DEV-006',
@@ -71,7 +71,7 @@ export const dataList = () => {
       monitorData: '128次',
       isAbnormal: '否',
       abnormalDesc: '',
-      monitorTime: '2025-01-01 12:25:00'
+      monitorTime: '2025-01-01 12:25:00',
     },
     {
       deviceCode: 'DEV-007',
@@ -83,7 +83,7 @@ export const dataList = () => {
       monitorData: '-75dBm',
       isAbnormal: '是',
       abnormalDesc: '信号强度弱',
-      monitorTime: '2025-01-01 12:30:00'
+      monitorTime: '2025-01-01 12:30:00',
     },
     {
       deviceCode: 'DEV-008',
@@ -95,7 +95,7 @@ export const dataList = () => {
       monitorData: '0.3s',
       isAbnormal: '否',
       abnormalDesc: '',
-      monitorTime: '2025-01-01 12:35:00'
+      monitorTime: '2025-01-01 12:35:00',
     },
     {
       deviceCode: 'DEV-009',
@@ -107,7 +107,7 @@ export const dataList = () => {
       monitorData: '在线',
       isAbnormal: '否',
       abnormalDesc: '',
-      monitorTime: '2025-01-01 12:40:00'
+      monitorTime: '2025-01-01 12:40:00',
     },
     {
       deviceCode: 'DEV-010',
@@ -119,7 +119,7 @@ export const dataList = () => {
       monitorData: '80%',
       isAbnormal: '否',
       abnormalDesc: '',
-      monitorTime: '2025-01-01 12:45:00'
+      monitorTime: '2025-01-01 12:45:00',
     },
     {
       deviceCode: 'DEV-011',
@@ -131,7 +131,7 @@ export const dataList = () => {
       monitorData: '55dB',
       isAbnormal: '是',
       abnormalDesc: '噪音偏大',
-      monitorTime: '2025-01-01 12:50:00'
+      monitorTime: '2025-01-01 12:50:00',
     },
     {
       deviceCode: 'DEV-012',
@@ -143,7 +143,7 @@ export const dataList = () => {
       monitorData: '45℃',
       isAbnormal: '是',
       abnormalDesc: '温度偏高',
-      monitorTime: '2025-01-01 12:55:00'
+      monitorTime: '2025-01-01 12:55:00',
     },
     {
       deviceCode: 'DEV-013',
@@ -155,7 +155,7 @@ export const dataList = () => {
       monitorData: '清洁',
       isAbnormal: '否',
       abnormalDesc: '',
-      monitorTime: '2025-01-01 13:00:00'
+      monitorTime: '2025-01-01 13:00:00',
     },
     {
       deviceCode: 'DEV-014',
@@ -167,7 +167,7 @@ export const dataList = () => {
       monitorData: '正常',
       isAbnormal: '否',
       abnormalDesc: '',
-      monitorTime: '2025-01-01 13:05:00'
+      monitorTime: '2025-01-01 13:05:00',
     },
     {
       deviceCode: 'DEV-015',
@@ -179,8 +179,8 @@ export const dataList = () => {
       monitorData: '12W',
       isAbnormal: '否',
       abnormalDesc: '',
-      monitorTime: '2025-01-01 13:10:00'
-    }
+      monitorTime: '2025-01-01 13:10:00',
+    },
   ];
 };
 
@@ -194,16 +194,16 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入监控ID',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'deviceCode',
       label: '设备编码',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入设备编码'
+        placeholder: '请输入设备编码',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'deviceTypeName',
@@ -216,28 +216,28 @@ export function useFormSchema() {
           { label: '车牌识别终端', value: '车牌识别终端' },
           { label: '地磁检测器', value: '地磁检测器' },
           { label: '收费终端', value: '收费终端' },
-          { label: '诱导屏', value: '诱导屏' }
-        ]
+          { label: '诱导屏', value: '诱导屏' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'monitorTimeRange',
       label: '监控时间范围',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入监控时间范围'
+        placeholder: '请输入监控时间范围',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'assetName',
       label: '所属资产',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入所属资产'
+        placeholder: '请输入所属资产',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'dataTypeName',
@@ -260,19 +260,19 @@ export function useFormSchema() {
           { label: '温度', value: '温度' },
           { label: '镜头清洁度', value: '镜头清洁度' },
           { label: '打印机状态', value: '打印机状态' },
-          { label: '能耗', value: '能耗' }
-        ]
+          { label: '能耗', value: '能耗' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'monitorData',
       label: '监控数据',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入监控数据'
+        placeholder: '请输入监控数据',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'isAbnormal',
@@ -282,10 +282,10 @@ export function useFormSchema() {
         placeholder: '请选择是否异常',
         options: [
           { label: '是', value: '是' },
-          { label: '否', value: '否' }
-        ]
+          { label: '否', value: '否' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'abnormalDesc',
@@ -293,8 +293,8 @@ export function useFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入异常描述',
-        type: 'textarea'
-      }
+        type: 'textarea',
+      },
     },
     {
       fieldName: 'monitorTime',
@@ -303,10 +303,10 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择监控时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
-    }
+      rules: 'required',
+    },
   ];
 }
 
@@ -319,69 +319,69 @@ export function useGridColumns() {
       title: '监控ID',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'monitorId' }
+      slots: { default: 'monitorId' },
     },
     {
       field: 'deviceCode',
       title: '设备编码',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'deviceTypeName',
       title: '设备类型',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'monitorTimeRange',
       title: '监控时间范围',
       minWidth: 200,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'assetName',
       title: '所属资产',
       minWidth: 150,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'dataTypeName',
       title: '数据类型',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'monitorData',
       title: '监控数据',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'isAbnormal',
       title: '是否异常',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'isAbnormal' }
+      slots: { default: 'isAbnormal' },
     },
     {
       field: 'abnormalDesc',
       title: '异常描述',
       minWidth: 150,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'monitorTime',
       title: '监控时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       title: '操作',
       width: 100,
       fixed: 'right',
-      slots: { default: 'actions' }
-    }
+      slots: { default: 'actions' },
+    },
   ];
 }
 
@@ -404,7 +404,5 @@ export const detailFields = [
   { key: 'monitorData', label: '监控数据' },
   { key: 'isAbnormal', label: '是否异常' },
   { key: 'abnormalDesc', label: '异常描述' },
-  { key: 'monitorTime', label: '监控时间' }
+  { key: 'monitorTime', label: '监控时间' },
 ];
-
-

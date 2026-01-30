@@ -15,6 +15,7 @@ import { exportToExcel } from '#/utils/excel.js';
 import roadDetailDrawer from '#/views/genchuan/industry/page/park/road/recover/detail.vue';
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
+import testImg from './test.png';
 
 const props = defineProps({
   secondShow: {
@@ -345,15 +346,15 @@ const roadDetailDrawerRef = ref(null);
         </div>
       </template>
       <template #arrearsQrCode="{ row }">
-        <el-text
-          class="common-align"
-          type="primary"
-          @click="handleOpenDetail(row)"
-        >
-          {{ row.arrearsQrCode }}
-        </el-text>
+        <div class="test-img-dev">
+          <img
+            class="test-img"
+            :src="testImg"
+            width="200"
+            @click="handleOpenDetail(row)"
+          />
+        </div>
       </template>
-
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
@@ -391,3 +392,16 @@ const roadDetailDrawerRef = ref(null);
     </Grid>
   </div>
 </template>
+<style lang="scss">
+.test-img-dev {
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  .test-img {
+    width: 30px;
+    height: 30px;
+  }
+}
+</style>

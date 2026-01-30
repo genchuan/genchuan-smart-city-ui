@@ -12,7 +12,7 @@ export const dataList = () => {
       salesCount: 1256,
       packageStatusName: '启用',
       createTime: '2025-01-10 09:20:30',
-      lastSaleTime: '2025-02-20 14:30:00'
+      lastSaleTime: '2025-02-20 14:30:00',
     },
     {
       packageId: 'RCP002',
@@ -25,7 +25,7 @@ export const dataList = () => {
       salesCount: 856,
       packageStatusName: '启用',
       createTime: '2025-01-12 14:15:20',
-      lastSaleTime: '2025-02-19 16:45:00'
+      lastSaleTime: '2025-02-19 16:45:00',
     },
     {
       packageId: 'RCP003',
@@ -38,7 +38,7 @@ export const dataList = () => {
       salesCount: 345,
       packageStatusName: '启用',
       createTime: '2025-01-15 10:05:10',
-      lastSaleTime: '2025-02-20 10:20:00'
+      lastSaleTime: '2025-02-20 10:20:00',
     },
     {
       packageId: 'RCP004',
@@ -51,7 +51,7 @@ export const dataList = () => {
       salesCount: 2345,
       packageStatusName: '启用',
       createTime: '2025-01-18 08:30:45',
-      lastSaleTime: '2025-02-20 08:15:00'
+      lastSaleTime: '2025-02-20 08:15:00',
     },
     {
       packageId: 'RCP005',
@@ -64,7 +64,7 @@ export const dataList = () => {
       salesCount: 56,
       packageStatusName: '启用',
       createTime: '2025-01-20 16:40:15',
-      lastSaleTime: '2025-02-18 11:30:00'
+      lastSaleTime: '2025-02-18 11:30:00',
     },
     {
       packageId: 'RCP006',
@@ -77,7 +77,7 @@ export const dataList = () => {
       salesCount: 1890,
       packageStatusName: '禁用',
       createTime: '2025-01-22 11:10:30',
-      lastSaleTime: '2025-02-15 22:00:00'
+      lastSaleTime: '2025-02-15 22:00:00',
     },
     {
       packageId: 'RCP007',
@@ -90,7 +90,7 @@ export const dataList = () => {
       salesCount: 3567,
       packageStatusName: '启用',
       createTime: '2025-01-25 13:25:40',
-      lastSaleTime: '2025-02-20 09:45:00'
+      lastSaleTime: '2025-02-20 09:45:00',
     },
     {
       packageId: 'RCP008',
@@ -103,7 +103,7 @@ export const dataList = () => {
       salesCount: 678,
       packageStatusName: '启用',
       createTime: '2025-01-28 09:50:25',
-      lastSaleTime: '2025-02-19 15:20:00'
+      lastSaleTime: '2025-02-19 15:20:00',
     },
     {
       packageId: 'RCP009',
@@ -116,7 +116,7 @@ export const dataList = () => {
       salesCount: 890,
       packageStatusName: '禁用',
       createTime: '2025-02-01 15:15:10',
-      lastSaleTime: '2025-02-10 10:30:00'
+      lastSaleTime: '2025-02-10 10:30:00',
     },
     {
       packageId: 'RCP010',
@@ -129,7 +129,7 @@ export const dataList = () => {
       salesCount: 2345,
       packageStatusName: '启用',
       createTime: '2025-02-05 10:30:50',
-      lastSaleTime: '2025-02-20 12:00:00'
+      lastSaleTime: '2025-02-20 12:00:00',
     },
     {
       packageId: 'RCP011',
@@ -142,7 +142,7 @@ export const dataList = () => {
       salesCount: 567,
       packageStatusName: '启用',
       createTime: '2025-02-08 14:20:15',
-      lastSaleTime: '2025-02-20 08:50:00'
+      lastSaleTime: '2025-02-20 08:50:00',
     },
     {
       packageId: 'RCP012',
@@ -155,7 +155,7 @@ export const dataList = () => {
       salesCount: 1234,
       packageStatusName: '启用',
       createTime: '2025-02-10 09:40:30',
-      lastSaleTime: '2025-02-19 16:10:00'
+      lastSaleTime: '2025-02-19 16:10:00',
     },
     {
       packageId: 'RCP013',
@@ -168,7 +168,7 @@ export const dataList = () => {
       salesCount: 89,
       packageStatusName: '启用',
       createTime: '2025-02-12 11:25:00',
-      lastSaleTime: '2025-02-20 14:00:00'
+      lastSaleTime: '2025-02-20 14:00:00',
     },
     {
       packageId: 'RCP014',
@@ -181,7 +181,7 @@ export const dataList = () => {
       salesCount: 5678,
       packageStatusName: '禁用',
       createTime: '2025-02-15 16:30:45',
-      lastSaleTime: '2025-02-18 20:00:00'
+      lastSaleTime: '2025-02-18 20:00:00',
     },
     {
       packageId: 'RCP015',
@@ -194,8 +194,8 @@ export const dataList = () => {
       salesCount: 234,
       packageStatusName: '启用',
       createTime: '2025-02-18 10:15:20',
-      lastSaleTime: '2025-02-20 11:30:00'
-    }
+      lastSaleTime: '2025-02-20 11:30:00',
+    },
   ];
 };
 
@@ -209,16 +209,16 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入套餐ID',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'packageName',
       label: '套餐名称',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入套餐名称'
+        placeholder: '请输入套餐名称',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'rechargeAmount',
@@ -227,18 +227,18 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入充值金额',
         min: 0,
-        precision: 2
+        precision: 2,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'giveAmountOrTime',
       label: '赠送金额/时长',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入赠送金额或时长'
+        placeholder: '请输入赠送金额或时长',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'validDays',
@@ -246,9 +246,9 @@ export function useFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入生效天数',
-        min: 1
+        min: 1,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'rechargeTypeName',
@@ -266,19 +266,19 @@ export function useFormSchema() {
           { label: '限时充值', value: '限时充值' },
           { label: 'VIP充值', value: 'VIP充值' },
           { label: '体验充值', value: '体验充值' },
-          { label: '团队充值', value: '团队充值' }
-        ]
+          { label: '团队充值', value: '团队充值' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'operator',
       label: '操作人',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入操作人'
+        placeholder: '请输入操作人',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'salesCount',
@@ -286,9 +286,9 @@ export function useFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入销量',
-        min: 0
+        min: 0,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'packageStatusName',
@@ -298,10 +298,10 @@ export function useFormSchema() {
         placeholder: '请选择状态',
         options: [
           { label: '启用', value: '启用' },
-          { label: '禁用', value: '禁用' }
-        ]
+          { label: '禁用', value: '禁用' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'createTime',
@@ -310,9 +310,9 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择创建时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'lastSaleTime',
@@ -321,10 +321,10 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择最近销售时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
-    }
+      rules: 'required',
+    },
   ];
 }
 
@@ -337,76 +337,76 @@ export function useGridColumns() {
       title: '套餐ID',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'packageId' }
+      slots: { default: 'packageId' },
     },
     {
       field: 'packageName',
       title: '套餐名称',
       minWidth: 150,
       sortable: true,
-      slots: { default: 'packageName' }
+      slots: { default: 'packageName' },
     },
     {
       field: 'rechargeAmount',
       title: '充值金额',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'giveAmountOrTime',
       title: '赠送金额/时长',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'validDays',
       title: '生效天数',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'rechargeTypeName',
       title: '套餐类型',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'operator',
       title: '操作人',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'salesCount',
       title: '销量',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'packageStatusName',
       title: '状态',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'packageStatusName' }
+      slots: { default: 'packageStatusName' },
     },
     {
       field: 'createTime',
       title: '创建时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'lastSaleTime',
       title: '最近销售时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       title: '操作',
       width: 150,
       fixed: 'right',
-      slots: { default: 'actions' }
-    }
+      slots: { default: 'actions' },
+    },
   ];
 }
 
@@ -430,5 +430,5 @@ export const detailFields = [
   { key: 'salesCount', label: '销量' },
   { key: 'packageStatusName', label: '状态' },
   { key: 'createTime', label: '创建时间' },
-  { key: 'lastSaleTime', label: '最近销售时间' }
+  { key: 'lastSaleTime', label: '最近销售时间' },
 ];

@@ -16,12 +16,12 @@ import { exportToExcel } from '#/utils/excel.js';
 
 import {
   dataList,
+  getCarByNumber,
+  getLotByNames,
   textObj,
   useDetailFields,
   useFormSchema,
   useGridColumns,
-  getLotByNames,
-  getCarByNumber,
 } from './data';
 
 const props = defineProps({
@@ -303,13 +303,14 @@ const getTableData = async (pageObj) => {
   // 快捷筛选
   filteredList = filteredList.filter((v) => {
     // 关联费率策略/费率策略筛选
-    const strategyMatch = !filterStrategyName.value || 
-      (v.strategyName === filterStrategyName.value) || 
-      (v.strategyName === filterStrategyName.value);
+    const strategyMatch =
+      !filterStrategyName.value ||
+      v.strategyName === filterStrategyName.value ||
+      v.strategyName === filterStrategyName.value;
 
     // 优惠券类型筛选
-    const couponTypeMatch = !filterCouponType.value || 
-      (v.couponType === filterCouponType.value);
+    const couponTypeMatch =
+      !filterCouponType.value || v.couponType === filterCouponType.value;
 
     return strategyMatch && couponTypeMatch;
   });
@@ -551,7 +552,7 @@ const handleOpenDetail = (row) => {
 const handleFeeTempIdClick = (row) => {
   handleOpenDetail(row);
 };
-const handleOrderNoClick  = (row) => {
+const handleOrderNoClick = (row) => {
   handleOpenDetail(row);
 };
 const handleDetailClose = () => {
@@ -630,7 +631,8 @@ const useCarDetailFields = () => {
 
 // 处理策略名称点击筛选
 const handleStrategyNameClick = (strategyName) => {
-  filterStrategyName.value = filterStrategyName.value === strategyName ? '' : strategyName;
+  filterStrategyName.value =
+    filterStrategyName.value === strategyName ? '' : strategyName;
   handleRefresh();
 };
 
@@ -642,7 +644,8 @@ const handleCancelStrategyNameFilter = () => {
 
 // 处理优惠券类型点击筛选
 const handleCouponTypeClick = (couponType) => {
-  filterCouponType.value = filterCouponType.value === couponType ? '' : couponType;
+  filterCouponType.value =
+    filterCouponType.value === couponType ? '' : couponType;
   handleRefresh();
 };
 
@@ -684,7 +687,9 @@ const handleCancelCouponTypeFilter = () => {
     <!-- 车辆详情抽屉 -->
     <DetailDrawer
       ref="carDetailDrawerRef"
-      :title="selectedCarRow ? `车辆详情 - ${selectedCarRow.car_number}` : '车辆详情'"
+      :title="
+        selectedCarRow ? `车辆详情 - ${selectedCarRow.car_number}` : '车辆详情'
+      "
       :data="selectedCarRow"
       :fields="useCarDetailFields()"
       @close="handleCarDetailClose"
@@ -697,7 +702,10 @@ const handleCancelCouponTypeFilter = () => {
     <Grid>
       <!-- 三级状态 -->
       <template #table-title>
-        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
+        >
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeStatus"

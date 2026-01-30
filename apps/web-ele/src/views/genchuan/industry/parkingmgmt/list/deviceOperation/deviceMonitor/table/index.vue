@@ -9,11 +9,17 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
-import { dataList, textObj, useFormSchema, useGridColumns, detailFields } from './data';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import {
+  dataList,
+  detailFields,
+  textObj,
+  useFormSchema,
+  useGridColumns,
+} from './data';
 
 const props = defineProps({
   secondShow: {
@@ -58,14 +64,14 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onConfirm() {
     const obj = formApi.form.values;
     if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-          dataObj.apilist.push(obj);
-        } else {
-          dataObj.apilist.forEach((v, i) => {
-            if (v.monitorId === formData.value?.monitorId) {
-              dataObj.apilist[i] = obj;
-            }
-          });
+      dataObj.apilist.push(obj);
+    } else {
+      dataObj.apilist.forEach((v, i) => {
+        if (v.monitorId === formData.value?.monitorId) {
+          dataObj.apilist[i] = obj;
         }
+      });
+    }
     handleRefresh();
     formDrawerApi.close();
   },
@@ -114,7 +120,9 @@ async function handleDelete(row) {
     text: $t('ui.actionMessage.deleting', [row.deviceTypeName]),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.monitorId !== row.monitorId);
+    dataObj.apilist = dataObj.apilist.filter(
+      (v) => v.monitorId !== row.monitorId,
+    );
     ElMessage.success(
       $t('ui.actionMessage.deleteSuccess', [row.deviceTypeName]),
     );
@@ -168,11 +176,11 @@ const getTableData = (pageObj) => {
       case '全部': {
         return true;
       }
-      case '正常': {
-        return v.isAbnormal === '否';
-      }
       case '异常': {
         return v.isAbnormal === '是';
+      }
+      case '正常': {
+        return v.isAbnormal === '否';
       }
     }
     return false;
@@ -262,15 +270,15 @@ const createLabel = (item) => {
 
       break;
     }
-    case '正常': {
-      // 统计isAbnormal为'否'的数据
-      count = dataObj.apilist.filter((v) => v.isAbnormal === '否').length;
-
-      break;
-    }
     case '异常': {
       // 统计isAbnormal为'是'的数据
       count = dataObj.apilist.filter((v) => v.isAbnormal === '是').length;
+
+      break;
+    }
+    case '正常': {
+      // 统计isAbnormal为'否'的数据
+      count = dataObj.apilist.filter((v) => v.isAbnormal === '否').length;
 
       break;
     }
@@ -292,12 +300,15 @@ const handleFullShow = () => {
 // 状态标签类型映射
 const getStatusType = (status) => {
   switch (status) {
-    case '否':
+    case '否': {
       return 'success';
-    case '是':
+    }
+    case '是': {
       return 'danger';
-    default:
+    }
+    default: {
       return 'info';
+    }
   }
 };
 </script>
@@ -307,7 +318,7 @@ const getStatusType = (status) => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-<!--   详情抽屉-->
+    <!--   详情抽屉-->
     <DetailDrawer
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.deviceTypeName}详情`"

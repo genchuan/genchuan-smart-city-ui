@@ -15,7 +15,7 @@ export const dataList = () => {
       statusName: '已审核',
       auditor: '李四',
       auditTime: '2025-01-01 10:00:00',
-      stockUpdateResult: '成功'
+      stockUpdateResult: '成功',
     },
     {
       inNo: 'IN20250102002',
@@ -31,7 +31,7 @@ export const dataList = () => {
       statusName: '待审核',
       auditor: '',
       auditTime: '',
-      stockUpdateResult: '待处理'
+      stockUpdateResult: '待处理',
     },
     {
       inNo: 'IN20250103003',
@@ -47,7 +47,7 @@ export const dataList = () => {
       statusName: '已审核',
       auditor: '孙七',
       auditTime: '2025-01-03 11:00:00',
-      stockUpdateResult: '成功'
+      stockUpdateResult: '成功',
     },
     {
       inNo: 'IN20250104004',
@@ -63,7 +63,7 @@ export const dataList = () => {
       statusName: '已审核',
       auditor: '吴九',
       auditTime: '2025-01-04 16:30:00',
-      stockUpdateResult: '成功'
+      stockUpdateResult: '成功',
     },
     {
       inNo: 'IN20250105005',
@@ -79,7 +79,7 @@ export const dataList = () => {
       statusName: '已拒绝',
       auditor: '张三',
       auditTime: '2025-01-05 10:15:00',
-      stockUpdateResult: '失败'
+      stockUpdateResult: '失败',
     },
     {
       inNo: 'IN20250106006',
@@ -95,7 +95,7 @@ export const dataList = () => {
       statusName: '已审核',
       auditor: '王五',
       auditTime: '2025-01-06 14:00:00',
-      stockUpdateResult: '成功'
+      stockUpdateResult: '成功',
     },
     {
       inNo: 'IN20250107007',
@@ -111,7 +111,7 @@ export const dataList = () => {
       statusName: '待审核',
       auditor: '',
       auditTime: '',
-      stockUpdateResult: '待处理'
+      stockUpdateResult: '待处理',
     },
     {
       inNo: 'IN20250108008',
@@ -127,7 +127,7 @@ export const dataList = () => {
       statusName: '已审核',
       auditor: '周八',
       auditTime: '2025-01-08 11:30:00',
-      stockUpdateResult: '成功'
+      stockUpdateResult: '成功',
     },
     {
       inNo: 'IN20250109009',
@@ -143,7 +143,7 @@ export const dataList = () => {
       statusName: '已审核',
       auditor: '郑十',
       auditTime: '2025-01-09 16:45:00',
-      stockUpdateResult: '成功'
+      stockUpdateResult: '成功',
     },
     {
       inNo: 'IN20250110010',
@@ -159,7 +159,7 @@ export const dataList = () => {
       statusName: '待审核',
       auditor: '',
       auditTime: '',
-      stockUpdateResult: '待处理'
+      stockUpdateResult: '待处理',
     },
     {
       inNo: 'IN20250111011',
@@ -175,7 +175,7 @@ export const dataList = () => {
       statusName: '已审核',
       auditor: '王五',
       auditTime: '2025-01-11 15:30:00',
-      stockUpdateResult: '成功'
+      stockUpdateResult: '成功',
     },
     {
       inNo: 'IN20250112012',
@@ -191,7 +191,7 @@ export const dataList = () => {
       statusName: '已审核',
       auditor: '赵六',
       auditTime: '2025-01-12 12:00:00',
-      stockUpdateResult: '成功'
+      stockUpdateResult: '成功',
     },
     {
       inNo: 'IN20250113013',
@@ -207,7 +207,7 @@ export const dataList = () => {
       statusName: '已拒绝',
       auditor: '孙七',
       auditTime: '2025-01-13 10:45:00',
-      stockUpdateResult: '失败'
+      stockUpdateResult: '失败',
     },
     {
       inNo: 'IN20250114014',
@@ -223,7 +223,7 @@ export const dataList = () => {
       statusName: '已审核',
       auditor: '周八',
       auditTime: '2025-01-14 15:50:00',
-      stockUpdateResult: '成功'
+      stockUpdateResult: '成功',
     },
     {
       inNo: 'IN20250115015',
@@ -239,8 +239,8 @@ export const dataList = () => {
       statusName: '待审核',
       auditor: '',
       auditTime: '',
-      stockUpdateResult: '待处理'
-    }
+      stockUpdateResult: '待处理',
+    },
   ];
 };
 
@@ -254,34 +254,34 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入入库ID',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'inNo',
       label: '入库单号',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入入库单号'
+        placeholder: '请输入入库单号',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'partName',
       label: '备件名称',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入备件名称'
+        placeholder: '请输入备件名称',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'partCode',
       label: '备件编码',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入备件编码'
+        placeholder: '请输入备件编码',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'inQuantity',
@@ -289,9 +289,9 @@ export function useFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入入库数量',
-        min: 1
+        min: 1,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'inPrice',
@@ -300,9 +300,9 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入入库单价',
         min: 0,
-        step: 0.01
+        step: 0.01,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'totalAmount',
@@ -311,18 +311,18 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入总金额',
         min: 0,
-        step: 0.01
+        step: 0.01,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'supplierName',
       label: '供应商',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入供应商'
+        placeholder: '请输入供应商',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'inTime',
@@ -331,18 +331,18 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择入库时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'operator',
       label: '操作人',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入操作人'
+        placeholder: '请输入操作人',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'statusName',
@@ -353,18 +353,18 @@ export function useFormSchema() {
         options: [
           { label: '待审核', value: '待审核' },
           { label: '已审核', value: '已审核' },
-          { label: '已拒绝', value: '已拒绝' }
-        ]
+          { label: '已拒绝', value: '已拒绝' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'auditor',
       label: '审核人',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入审核人'
-      }
+        placeholder: '请输入审核人',
+      },
     },
     {
       fieldName: 'auditTime',
@@ -373,8 +373,8 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择审核时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
-      }
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
     },
     {
       fieldName: 'stockUpdateResult',
@@ -385,10 +385,10 @@ export function useFormSchema() {
         options: [
           { label: '成功', value: '成功' },
           { label: '失败', value: '失败' },
-          { label: '待处理', value: '待处理' }
-        ]
-      }
-    }
+          { label: '待处理', value: '待处理' },
+        ],
+      },
+    },
   ];
 }
 
@@ -401,93 +401,93 @@ export function useGridColumns() {
       title: '入库ID',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'inId' }
+      slots: { default: 'inId' },
     },
     {
       field: 'inNo',
       title: '入库单号',
       minWidth: 150,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'partName',
       title: '备件名称',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'partCode',
       title: '备件编码',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'inQuantity',
       title: '入库数量',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'inPrice',
       title: '入库单价',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'totalAmount',
       title: '总金额',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'supplierName',
       title: '供应商',
       minWidth: 150,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'inTime',
       title: '入库时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'operator',
       title: '操作人',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'statusName',
       title: '状态',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'statusName' }
+      slots: { default: 'statusName' },
     },
     {
       field: 'auditor',
       title: '审核人',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'auditTime',
       title: '审核时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'stockUpdateResult',
       title: '库存更新结果',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       title: '操作',
       width: 100,
       fixed: 'right',
-      slots: { default: 'actions' }
-    }
+      slots: { default: 'actions' },
+    },
   ];
 }
 
@@ -514,6 +514,5 @@ export const detailFields = [
   { key: 'statusName', label: '状态' },
   { key: 'auditor', label: '审核人' },
   { key: 'auditTime', label: '审核时间' },
-  { key: 'stockUpdateResult', label: '库存更新结果' }
+  { key: 'stockUpdateResult', label: '库存更新结果' },
 ];
-
