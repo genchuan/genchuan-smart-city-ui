@@ -588,9 +588,18 @@ const handleCarNumbersClick = (row) => {
   });
 
   // 进一步过滤出当前显示的车牌号码对应的车辆信息
-  const carNumbers = Array.isArray(row.car_numbers)
-    ? row.car_numbers
-    : [row.car_numbers];
+  let carNumbers = [];
+  if (props.userType === '客服查询') {
+    // 客服查询标签页使用bindCarNumber字段
+    carNumbers = Array.isArray(row.bindCarNumber)
+      ? row.bindCarNumber
+      : [row.bindCarNumber];
+  } else {
+    // 其他标签页使用car_numbers字段
+    carNumbers = Array.isArray(row.car_numbers)
+      ? row.car_numbers
+      : [row.car_numbers];
+  }
   selectedCars.value = userCars.filter((car) =>
     carNumbers.includes(car.car_number),
   );
