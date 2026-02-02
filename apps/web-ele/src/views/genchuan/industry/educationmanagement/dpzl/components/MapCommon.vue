@@ -143,7 +143,7 @@
 </template>
 
 <script setup>
-import { onMounted, watch, ref, nextTick } from 'vue';
+import { onMounted, watch, ref, nextTick, onUnmounted } from 'vue';
 import {
   Close,
   Phone,
@@ -170,6 +170,9 @@ const emit = defineEmits(['marker-click', 'marker-action']);
 // 地图实例
 let map = null;
 let markerLayer = null;
+let initRetryCount = 0;
+const MAX_RETRY_COUNT = 10;
+let initTimer = null;
 
 // 信息窗口相关
 const showInfoWindow = ref(false);
@@ -327,11 +330,44 @@ const handleMarkerAction = (action) => {
 
 // 初始化地图
 const initMap = () => {
+  // 先检查容器是否存在
+  const mapContainer = document.getElementById(props.idName);
+  if (!mapContainer) {
+    console.warn(`地图容器未找到，等待 DOM 渲染...：${props.idName}`);
+
+    // 如果重试次数超过最大限制，停止重试
+    if (initRetryCount >= MAX_RETRY_COUNT) {
+      console.error(`地图容器 ${props.idName} 在最大重试次数后仍未找到`);
+      return;
+    }
+
+    // 等待 DOM 渲染完成，然后重试
+    initRetryCount++;
+    initTimer = setTimeout(initMap, 200);
+    return;
+  }
+
+  // 容器找到，清除重试计时器
+  if (initTimer) {
+    clearTimeout(initTimer);
+    initTimer = null;
+  }
+
+  console.log(`地图容器 ${props.idName} 找到，开始加载地图...`);
+
   const callbackName = `initMap_${props.idName}`;
+
+  // 清除之前的回调函数（如果存在）
+  if (window[callbackName]) {
+    delete window[callbackName];
+  }
 
   const script = document.createElement('script');
   script.src = `https://map.qq.com/api/gljs?v=1.exp&key=QTQBZ-F3RWW-JJJRV-YNPA5-ZIKDK-3SBNO&callback=${callbackName}`;
   script.async = true;
+  script.onerror = () => {
+    console.error('地图脚本加载失败');
+  };
 
   window[callbackName] = () => {
     mapCallback();
@@ -343,26 +379,45 @@ const initMap = () => {
 
 // 地图回调函数
 const mapCallback = () => {
-  const mapContainer = document.getElementById(props.idName);
-  if (!mapContainer) {
-    console.error(`地图容器不存在：${props.idName}`);
-    return;
-  }
+  // 使用 nextTick 确保 DOM 完全渲染
+  nextTick(() => {
+    const mapContainer = document.getElementById(props.idName);
+    if (!mapContainer) {
+      console.error(`地图容器不存在：${props.idName}`);
+      return;
+    }
 
-  // 创建地图实例
-  map = new TMap.Map(mapContainer, {
-    center: new TMap.LatLng(26.793227, 117.810114),
-    zoom: 11,
-    mapStyleId: 'style1'
-  });
+    // 检查是否已经存在地图实例
+    if (map) {
+      try {
+        map.destroy();
+      } catch (e) {
+        console.warn('清理旧地图实例时出错:', e);
+      }
+      map = null;
+    }
 
-  // 添加标记点
-  updateMarkers();
+    // 创建地图实例
+    try {
+      map = new TMap.Map(mapContainer, {
+        center: new TMap.LatLng(26.793227, 117.810114),
+        zoom: 11,
+        mapStyleId: 'style1'
+      });
 
-  // 添加地图点击事件，点击空白处关闭信息窗口
-  map.on('click', (evt) => {
-    if (!evt.geometry) {
-      closeInfoWindow();
+      // 添加标记点
+      updateMarkers();
+
+      // 添加地图点击事件，点击空白处关闭信息窗口
+      map.on('click', (evt) => {
+        if (!evt.geometry) {
+          closeInfoWindow();
+        }
+      });
+
+      console.log(`地图 ${props.idName} 初始化成功`);
+    } catch (error) {
+      console.error('地图初始化失败:', error);
     }
   });
 };
@@ -556,7 +611,31 @@ watch(() => props.geometriesArray, () => {
 }, { deep: true });
 
 onMounted(() => {
-  initMap();
+  // 延迟初始化，确保 DOM 完全渲染
+  setTimeout(initMap, 100);
+});
+
+// 添加销毁逻辑
+onUnmounted(() => {
+  // 清除重试计时器
+  if (initTimer) {
+    clearTimeout(initTimer);
+    initTimer = null;
+  }
+
+  if (map) {
+    try {
+      map.destroy();
+    } catch (e) {
+      console.warn('销毁地图实例时出错:', e);
+    }
+    map = null;
+  }
+
+  if (markerLayer) {
+    markerLayer.setMap(null);
+    markerLayer = null;
+  }
 });
 </script>
 

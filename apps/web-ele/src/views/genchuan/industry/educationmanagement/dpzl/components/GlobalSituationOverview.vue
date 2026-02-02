@@ -1,5 +1,17 @@
 <template>
-  <div class="page-container">
+  <div class="page-container" ref="pageContainerRef">
+    <!-- 头部 -->
+    <div class="header-box">
+      <span class="head-name">
+        教育管理-全局态势总览
+      </span>
+      <button class="fullScreenBut" @click="clickFullscreen">
+        <el-icon color="#00ccff" :size="`${1.2}vw`">
+          <FullScreen />
+        </el-icon>
+      </button>
+    </div>
+
     <!-- 加载遮罩 -->
     <div v-if="loading" class="loading-overlay">
       <div class="loading-content">
@@ -915,7 +927,7 @@ import {ref, computed, onMounted, onUnmounted, nextTick} from 'vue';
 import {
   ElSelect, ElOption, ElButton, ElTag, ElInput, ElDialog,
   ElDescriptions, ElDescriptionsItem, ElForm, ElFormItem,
-  ElTable, ElTableColumn,  ElTooltip, ElTimeline, ElTimelineItem, ElProgress
+  ElTable, ElTableColumn,  ElTooltip, ElTimeline, ElTimelineItem, ElProgress, ElMessage
 } from 'element-plus';
 import {
   FullScreen, Warning, CircleCheck, User, Van, OfficeBuilding,
@@ -943,7 +955,7 @@ import {
   fetchRealTimeLocations,
   filterServices,
   fetchServiceDetail
-} from '@/api/overview/educationmanagement/GlobalSituationOverview.js';
+} from '#/api/genchuan/industry/educationmanagement/GlobalSituationOverview.js';
 
 // 路由实例
 import { useRouter } from 'vue-router';
@@ -955,6 +967,19 @@ const coreIndicatorsPanel = ref(null);
 const mapPanel = ref(null);
 const regionPatternPanel = ref(null);
 const serviceOverviewPanel = ref(null);
+
+// 页面容器引用
+const pageContainerRef = ref(null);
+
+// 全屏功能
+const clickFullscreen = () => {
+  if (!screenFull.isEnabled) {
+    ElMessage.warning('您的浏览器不支持全屏功能');
+    return;
+  }
+  const targetEl = pageContainerRef.value;
+  screenFull.isFullscreen ? screenFull.exit() : screenFull.request(targetEl);
+};
 
 // 响应式数据定义
 const eduOverviewStats = ref([]);
@@ -1282,6 +1307,7 @@ const refreshServiceOverview = async () => {
     console.error('服务总览刷新失败:', error);
   }
 };
+
 // 全屏功能
 const togglePanelFullscreen = (panelElement) => {
   if (!screenFull.isEnabled) {
@@ -2303,13 +2329,13 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@import url('./common-styles.scss');
+@import './common-styles.scss';
 
 .page-container {
   width: 100%;
   height: 100vh;
   overflow: auto;
-  background: url("@/assets/chart/images/bg.jpg") no-repeat;
+  background: url("../images/bg.jpg") no-repeat;
   background-size: cover;
   background-position: center;
   color: #fff;
@@ -2332,12 +2358,54 @@ onMounted(() => {
   }
 }
 
+// 添加标头样式
+.header-box {
+  width: 100%;
+  height: 70px;
+  position: relative;
+  background: url("../images/head_bg.png") no-repeat;
+  background-size: 100% 100%;
+  color: $primary-color;
+  font-size: 24px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .head-name {
+    display: inline-block;
+    line-height: 70px;
+    white-space: nowrap;
+  }
+}
+
+.fullScreenBut {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  transition: transform 0.2s;
+
+  &:hover {
+    background: rgb(0 30 60 / 80%);
+    border-radius: 4px;
+    transform: translateY(-50%) scale(1.05);
+  }
+}
+
 .mainbox {
   display: flex;
   flex-direction: column;
   margin: 0 auto;
   padding: 15px 0;
-  height: calc(100% - 30px);
+  height: calc(100vh - 100px); // 减去标头高度
   box-sizing: border-box;
   gap: 15px;
 }
@@ -3083,6 +3151,7 @@ onMounted(() => {
     }
   }
 }
+
 // 服务详情样式修复
 .service-detail-content {
   max-height: 70vh;
