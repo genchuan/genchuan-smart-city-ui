@@ -117,7 +117,7 @@
                   <div class="force-stat-card" @click="handleStatCardClick('staff')">
                     <div class="stat-icon staff"><el-icon><User /></el-icon></div>
                     <div class="stat-content">
-                      <div class="stat-title">综合人员总数</div>
+                      <div class="stat-title">人员总数</div>
                       <div class="stat-value">{{ lawForceStats.total_staff_count || 0 }}</div>
                       <div class="stat-sub">在线: {{ lawForceStats.online_staff_count || 0 }}</div>
                     </div>
@@ -126,7 +126,7 @@
                   <div class="force-stat-card" @click="handleStatCardClick('vehicle')">
                     <div class="stat-icon vehicle"><el-icon><Van /></el-icon></div>
                     <div class="stat-content">
-                      <div class="stat-title">综合车辆总数</div>
+                      <div class="stat-title">车辆总数</div>
                       <div class="stat-value">{{ lawForceStats.total_vehicle_count || 0 }}</div>
                       <div class="stat-sub">活跃: {{ lawForceStats.active_vehicle_count || 0 }}</div>
                     </div>
@@ -135,7 +135,7 @@
                   <div class="force-stat-card" @click="handleStatCardClick('station')">
                     <div class="stat-icon station"><el-icon><OfficeBuilding /></el-icon></div>
                     <div class="stat-content">
-                      <div class="stat-title">综合站点总数</div>
+                      <div class="stat-title">站点总数</div>
                       <div class="stat-value">{{ lawForceStats.total_station_count || 0 }}</div>
                       <div class="stat-sub">个</div>
                     </div>

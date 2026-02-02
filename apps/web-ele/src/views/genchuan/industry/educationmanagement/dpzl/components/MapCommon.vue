@@ -11,20 +11,20 @@
       class="map-common-css"
     ></div>
 
-    <!-- 图例：综合人员、车辆、站点 -->
+    <!-- 图例：教师、校车、学校 -->
     <div class="legend">
       <div class="legend-items">
         <div class="legend-item">
-          <img :src="getLegendIcon('staff')" class="legend-icon" alt="人员" />
-          <span>人员</span>
+          <img :src="getLegendIcon('teacher')" class="legend-icon" alt="教师" />
+          <span>教师</span>
         </div>
         <div class="legend-item">
-          <img :src="getLegendIcon('vehicle')" class="legend-icon" alt="车辆" />
-          <span>车辆</span>
+          <img :src="getLegendIcon('schoolbus')" class="legend-icon" alt="校车" />
+          <span>校车</span>
         </div>
         <div class="legend-item">
-          <img :src="getLegendIcon('station')" class="legend-icon" alt="站点" />
-          <span>站点</span>
+          <img :src="getLegendIcon('school')" class="legend-icon" alt="学校" />
+          <span>学校</span>
         </div>
       </div>
     </div>
@@ -33,7 +33,7 @@
     <div v-if="showInfoWindow && selectedMarker" class="map-info-window-risk" :style="infoWindowStyle">
       <div class="info-window-content">
         <div class="info-header">
-          <h4>信息</h4>
+          <h4>教育信息</h4>
           <el-icon class="close-btn" @click.stop="closeInfoWindow"><Close /></el-icon>
         </div>
         <div class="info-body">
@@ -54,12 +54,20 @@
             </span>
           </div>
           <div v-if="selectedMarker.properties.team" class="info-row">
-            <span class="info-label">所属中队:</span>
+            <span class="info-label">所属教研组:</span>
             <span class="info-value">{{ selectedMarker.properties.team }}</span>
           </div>
+          <div v-if="selectedMarker.properties.school" class="info-row">
+            <span class="info-label">所在学校:</span>
+            <span class="info-value">{{ selectedMarker.properties.school }}</span>
+          </div>
           <div v-if="selectedMarker.properties.type" class="info-row">
-            <span class="info-label">车辆类型:</span>
+            <span class="info-label">学校类型:</span>
             <span class="info-value">{{ selectedMarker.properties.type }}</span>
+          </div>
+          <div v-if="selectedMarker.properties.route" class="info-row">
+            <span class="info-label">校车路线:</span>
+            <span class="info-value">{{ selectedMarker.properties.route }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">位置:</span>
@@ -97,19 +105,19 @@
               size="small"
               type="primary"
               @click="handleMarkerAction('contact')"
-              v-if="selectedMarker.properties.dataType === 'staff'"
+              v-if="selectedMarker.properties.dataType === 'teacher'"
             >
               <el-icon><Phone /></el-icon>
-              联系人员
+              联系教师
             </el-button>
             <el-button
               size="small"
               type="warning"
               @click="handleMarkerAction('dispatch')"
-              v-if="selectedMarker.properties.dataType === 'vehicle'"
+              v-if="selectedMarker.properties.dataType === 'schoolbus'"
             >
               <el-icon><Position /></el-icon>
-              调度车辆
+              调度校车
             </el-button>
             <el-button
               size="small"
@@ -143,7 +151,7 @@ import {
   Location,
   View
 } from "@element-plus/icons-vue";
-import { ElMessage, ElButton } from 'element-plus';
+import { ElButton } from 'element-plus';
 
 const props = defineProps({
   idName: {
@@ -177,15 +185,15 @@ const markerInfoMap = ref(new Map());
 // 获取图例图标
 const getLegendIcon = (dataType) => {
   const iconMap = {
-    'staff': getStaffIcon('online'),
-    'vehicle': getVehicleIcon('moving'),
-    'station': getStationIcon('normal')
+    'teacher': getTeacherIcon('online'),
+    'schoolbus': getSchoolbusIcon('moving'),
+    'school': getSchoolIcon('normal')
   };
-  return iconMap[dataType] || iconMap.staff;
+  return iconMap[dataType] || iconMap.teacher;
 };
 
-// 人员图标
-const getStaffIcon = (status) => {
+// 教师图标 - 使用新图标
+const getTeacherIcon = (status) => {
   const colorMap = {
     'online': '#22c55e', // 绿色
     'busy': '#f59e0b',   // 黄色
@@ -193,33 +201,33 @@ const getStaffIcon = (status) => {
   };
   const color = colorMap[status] || colorMap.online;
 
-  const svg = `<svg width="20" height="30" viewBox="0 0 1119 1024" xmlns="http://www.w3.org/2000/svg">
-    <path d="M556.016934 370.913185c-224.48702 0-406.370664 44.241967-406.370664 98.86168s181.883644 99.407878 406.370664 99.407878 406.370664-44.241967 406.370664-99.407878c0-54.619713-181.883644-98.86168-406.370664-98.86168z" fill="${color}" p-id="896"></path>
-    <path d="M1081.458572 133.863631L732.984804 0.591531a36.595208 36.595208 0 0 0-13.108731 0H386.149627a36.595208 36.595208 0 0 0-13.108731 0L24.567127 133.863631a36.595208 36.595208 0 0 0-18.570702 54.619713l109.239426 186.253221a36.595208 36.595208 0 0 0 40.964785 16.385914l19.663096-4.369577a1032.858771 1032.858771 0 0 1 374.691231-54.619713c172.052096 0 320.071518 24.578871 385.615173 58.98929h11.47014a36.595208 36.595208 0 0 0 37.687602-17.478308l112.516608-187.891813a36.595208 36.595208 0 0 0-16.385914-51.888727zM623.745378 273.690096l-71.005627-37.141405L482.280322 273.690096l13.654928-78.652387L437.492157 136.594617l79.198584-11.47014 36.04901-69.913233 35.502814 72.098021 79.198583 11.47014-57.350698 54.619713zM168.763169 551.158238H164.393592v68.820838a389.438553 389.438553 0 1 0 778.33091 0v-68.274641c-58.98929 37.687602-209.1935 64.451261-386.161371 64.451261s-329.356869-27.309856-387.799962-64.997458z" fill="${color}" p-id="897"></path>
+  const svg = `<svg width="20" height="30" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+    <path d="M433 119c128.682 0 233 104.318 233 233 0 83.088-43.49 156.017-108.949 197.267v-0.011c79.695 33.428 144.49 95.338 181.65 172.995L887.316 509.32c10.115-14.492 30.063-18.04 44.556-7.926 14.347 10.014 17.968 29.665 8.225 44.12l-0.3 0.436-170.556 244.365a32.089 32.089 0 0 1-4.944 5.579C769.995 821.013 773 847.155 773 874c0 17.673-14.327 32-32 32-17.496 0-31.713-14.042-31.996-31.47L709 874c0-159.058-128.942-288-288-288-157.467 0-285.418 126.376-287.961 283.237L133 874c0 17.673-14.327 32-32 32-17.673 0-32-14.327-32-32 0-151.898 96.214-281.324 231.023-330.66l-0.003 0.01C239.565 501.259 200 431.25 200 352c0-128.682 104.318-233 233-233z m0 64c-93.336 0-169 75.664-169 169s75.664 169 169 169 169-75.664 169-169-75.664-169-169-169z m489 98c17.673 0 32 14.327 32 32 0 17.496-14.042 31.713-31.47 31.996L922 345H802c-17.673 0-32-14.327-32-32 0-17.496 14.042-31.713 31.47-31.996L802 281h120z m0-141c17.673 0 32 14.327 32 32 0 17.496-14.042 31.713-31.47 31.996L922 204H718c-17.673 0-32-14.327-32-32 0-17.496 14.042-31.713 31.47-31.996L718 140h204z" fill="${color}" p-id="929"></path>
   </svg>`;
 
   return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
 };
 
-//车辆图标
-const getVehicleIcon = (status) => {
+// 校车图标 - 使用新图标
+const getSchoolbusIcon = (status) => {
   const colorMap = {
     'moving': '#3b82f6', // 蓝色
     'parked': '#22c55e'  // 绿色
   };
   const color = colorMap[status] || colorMap.moving;
 
-  const svg = `<svg width="25" height="25" viewBox="0 0 1082 1024" xmlns="http://www.w3.org/2000/svg">
-    <path fill="${color}" d="M856.608782 665.768977v14.194059a421.766337 421.766337 0 0 1-4.731354 67.590759l35.147195 20.277228V665.093069z"/>
-    <path fill="${color}" d="M791.721653 442.719472a290.640264 290.640264 0 1 0 290.640264 290.640264 291.316172 291.316172 0 0 0-290.640264-290.640264z m155.458746 465.70033c-35.823102 0-55.424422-25.684488-58.803961-67.590759v-43.933993l-25.684488 36.499009a83.812541 83.812541 0 0 0-14.19406-9.462706l-12.166336-12.842244a352.823762 352.823762 0 0 1-67.590759 106.117492l-52.720792-44.609901a217.642244 217.642244 0 0 0 67.590759-98.006601c-14.869967-10.814521-27.036304-18.925413-37.850825-25.684488v11.490429a45.961716 45.961716 0 0 1-15.545875 0h-11.490429v93.951155c0 31.091749-13.518152 47.989439-41.230363 48.665346a333.89835 333.89835 0 0 1-45.961716 0c0-20.277228-6.759076-39.20264-10.814522-57.452145h25.008581c10.814521 0 15.545875-4.731353 14.19406-16.89769v-58.80396c-7.434983 0-17.573597 0-31.09175 6.083168h-8.110891l-4.731353-67.590759 20.277228-3.379538a120.311551 120.311551 0 0 0 23.656766 0v-48.665346h-39.202641v-57.452146h39.202641v-63.535313h58.80396v63.535313h30.415842v57.452146h-30.415842v48.665346l27.036304-4.731353v38.526733l27.036303-36.49901a36.49901 36.49901 0 0 1 15.545875 9.462706h6.759076v-36.49901a19.60132 19.60132 0 0 1 0-6.083168v-3.379538h-37.850825V608.316832h37.850825V540.726073h60.831683v67.590759H947.180399c-3.379538 91.923432-3.379538 168.30099 0 229.808581 0 8.110891 0 12.166337 4.731353 12.166336s0-5.407261 4.731353-14.194059 0-28.388119 0-50.69307v-22.30495a228.456766 228.456766 0 0 0 23.656766 8.110891 111.524752 111.524752 0 0 1 20.953135 8.110891c0 39.20264-6.083168 67.590759-8.110891 80.433003-2.70363 31.091749-19.60132 48.665347-45.961716 48.665347z"/>
-    <path fill="${color}" d="M417.944755 734.711551A372.425083 372.425083 0 0 1 474.045085 557.623762H332.780399a54.072607 54.072607 0 0 1 0-107.469307h246.70627a373.776898 373.776898 0 0 1 501.523433 67.59076v-29.064027A235.891749 235.891749 0 0 0 974.216702 277.122112c-19.60132-160.190099-101.386139-277.122112-202.772277-277.122112H308.447725c-100.710231 0-181.819142 116.932013-202.772277 277.79802A235.215842 235.215842 0 0 0 0.909772 494.764356a259.548515 259.548515 0 0 0 60.155775 176.411882v155.458745h182.49505v-91.247524zM308.447725 60.831683h464.348515c64.211221 0 120.987459 83.136634 142.616502 196.013201H213.144755a253.465347 253.465347 0 0 0-46.637624 4.731354C187.460267 143.968317 244.236504 60.831683 308.447725 60.831683zM188.136174 572.493729A75.70165 75.70165 0 0 1 115.814062 494.088449a74.349835 74.349835 0 0 1 71.646205-78.405281 75.70165 75.70165 0 0 1 72.322112 78.405281 75.025743 75.025743 0 0 1-71.646205 78.40528z"/>
+  const svg = `<svg width="25" height="25" viewBox="0 0 1263 1024" xmlns="http://www.w3.org/2000/svg">
+    <path d="M1262.276923 829.046154H1094.892308v-78.769231h88.615384v-196.923077a39.384615 39.384615 0 0 0-39.384615-39.384615h-39.384615v-393.846154a39.384615 39.384615 0 0 0-39.384616-39.384615H130.756923a49.624615 49.624615 0 0 0-50.018461 47.655384v621.883077H200.861538v78.769231h-196.923076V128.393846A126.424615 126.424615 0 0 1 39.384615 39.384615a128 128 0 0 1 91.372308-39.384615h935.384615a118.153846 118.153846 0 0 1 118.153847 118.153846v323.741539a118.153846 118.153846 0 0 1 78.76923 111.458461z" fill="${color}" p-id="1085"></path>
+    <path d="M376.516923 750.276923h539.569231v78.769231H376.516923z" fill="${color}" p-id="1086"></path>
+    <path d="M296.566154 907.815385A137.058462 137.058462 0 1 1 433.230769 770.756923a137.058462 137.058462 0 0 1-136.664615 137.058462z m0-194.953847A58.289231 58.289231 0 1 0 354.461538 770.756923a57.895385 57.895385 0 0 0-57.895384-57.895385zM1005.883077 907.815385A137.058462 137.058462 0 1 1 1142.153846 770.756923a137.058462 137.058462 0 0 1-136.270769 137.058462z m0-194.953847A58.289231 58.289231 0 1 0 1063.384615 770.756923a58.289231 58.289231 0 0 0-57.501538-57.895385z" fill="${color}" p-id="1087"></path>
+    <path d="M869.218462 827.076923h-78.769231V236.307692h-78.769231v590.769231h-78.769231V236.307692a78.769231 78.769231 0 0 1 78.769231-78.76923h78.769231a78.769231 78.769231 0 0 1 78.769231 78.76923zM474.978462 472.615385h-78.769231a78.769231 78.769231 0 0 1-78.769231-78.769231V236.307692a78.769231 78.769231 0 0 1 78.769231-78.76923h78.769231a78.769231 78.769231 0 0 1 78.76923 78.76923v157.538462a78.769231 78.769231 0 0 1-78.76923 78.769231z m-78.769231-236.307693v157.538462h78.769231V236.307692zM159.507692 472.615385h-118.153846v-78.769231h118.153846V236.307692h-118.153846V157.538462h118.153846a78.769231 78.769231 0 0 1 78.769231 78.76923v157.538462a78.769231 78.769231 0 0 1-78.769231 78.769231zM1144.910769 513.969231h-118.153846a78.769231 78.769231 0 0 1-78.769231-80.738462V236.307692a78.769231 78.769231 0 0 1 78.769231-78.76923h118.153846v78.76923h-118.153846v196.923077l118.153846 1.969231zM0 945.230769h1260.307692v78.769231H0z" fill="${color}" p-id="1088"></path>
   </svg>`;
 
   return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
 };
 
-// 站点图标
-const getStationIcon = (status) => {
+// 学校图标 - 使用新图标
+const getSchoolIcon = (status) => {
   const colorMap = {
     'normal': '#22c55e', // 绿色
     'offline': '#ef4444' // 红色
@@ -227,10 +235,10 @@ const getStationIcon = (status) => {
   const color = colorMap[status] || colorMap.normal;
 
   const svg = `<svg width="30" height="30" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-    <path fill="${color}" d="M113.357934 110.523985h544.118081c19.837638 0 35.896679 16.059041 35.896679 35.896679v723.601476c0 19.837638-16.059041 34.95203-35.896679 34.95203H113.357934c-19.837638 0-35.896679-15.114391-35.896679-34.95203V146.420664c0-19.837638 16.059041-35.896679 35.896679-35.896679z m509.166051 70.848709H148.309963v652.752767h474.214022V181.372694z"/>
-    <path fill="${color}" d="M657.476015 346.686347h251.276753c19.837638 0 34.95203 16.059041 34.952029 35.896679v487.439114c0 19.837638-15.114391 34.95203-34.952029 34.95203H657.476015c-18.892989 0-34.95203-15.114391-34.95203-34.95203V382.583026c0-19.837638 16.059041-35.896679 34.95203-35.896679z m215.380074 70.848708H693.372694v416.590406h179.483395V417.535055z"/>
-    <path fill="${color}" d="M754.774908 600.797048h56.282214v56.282214H754.774908zM754.774908 715.099631h56.282214v56.282214H754.774908z"/>
-    <path fill="${color}" d="M754.774908 484.605166h56.282214v56.282214H754.774908zM219.158672 312.678967h55.734317v-56.678967h-55.734317v56.678967z m112.413284 531.837638h115.247232V715.099631H331.571956v129.416974z m0-187.98524h114.302583v-56.678966H331.571956v56.678966z m0-114.302583h114.302583v-56.678967H331.571956v56.678967z m0-115.247232h114.302583v-55.734318H331.571956v55.734318z m0-114.302583h114.302583v-56.678967H331.571956v56.678967z m171.926199 458.154981h56.678967v-55.734317h-56.678967v55.734317z m0-114.302583h56.678967v-56.678966h-56.678967v56.678966z m0-114.302583h56.678967v-56.678967h-56.678967v56.678967z m0-115.247232h56.678967v-55.734318h-56.678967v55.734318z m0-114.302583h56.678967v-56.678967h-56.678967v56.678967zM219.158672 770.833948h55.734317v-55.734317h-55.734317v55.734317z m0-114.302583h55.734317v-56.678966h-55.734317v56.678966z m0-114.302583h55.734317v-56.678967h-55.734317v56.678967z m0-115.247232h55.734317v-55.734318h-55.734317v55.734318z"/>
+    <path d="M810.666667 661.333333v192H213.333333v-192h597.333334m40.533333-85.333333H172.8c-25.6 0-44.8 19.2-44.8 44.8V896c0 23.466667 19.2 42.666667 44.8 42.666667H853.333333c23.466667 0 44.8-19.2 44.8-44.8V620.8c-2.133333-25.6-21.333333-44.8-46.933333-44.8z" fill="${color}" p-id="1242"></path>
+    <path d="M512 469.333333m-42.666667 0a42.666667 42.666667 0 1 0 85.333334 0 42.666667 42.666667 0 1 0-85.333334 0Z" fill="${color}" p-id="1243"></path>
+    <path d="M512 320c-23.466667 0-42.666667-19.2-42.666667-42.666667V128c0-23.466667 19.2-42.666667 42.666667-42.666667s42.666667 19.2 42.666667 42.666667v149.333333c0 23.466667-19.2 42.666667-42.666667 42.666667z" fill="${color}" p-id="1244"></path>
+    <path d="M640 170.666667h-128c-23.466667 0-42.666667-19.2-42.666667-42.666667s19.2-42.666667 42.666667-42.666667h128c23.466667 0 42.666667 19.2 42.666667 42.666667s-19.2 42.666667-42.666667 42.666667zM512 938.666667c-23.466667 0-42.666667-19.2-42.666667-42.666667v-128c0-23.466667 19.2-42.666667 42.666667-42.666667s42.666667 19.2 42.666667 42.666667v128c0 23.466667-19.2 42.666667-42.666667 42.666667zM512 322.133333l128 102.4V576H384v-151.466667l128-102.4m0-96c-10.666667 0-19.2 4.266667-27.733333 10.666667l-168.533334 134.4c-10.666667 8.533333-17.066667 21.333333-17.066666 34.133333v211.2c0 25.6 19.2 44.8 44.8 44.8h337.066666c25.6 0 44.8-19.2 44.8-44.8V405.333333c0-12.8-6.4-25.6-17.066666-34.133333l-168.533334-134.4c-8.533333-8.533333-17.066667-10.666667-27.733333-10.666667z" fill="${color}" p-id="1245"></path>
   </svg>`;
 
   return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
@@ -239,9 +247,9 @@ const getStationIcon = (status) => {
 // 获取数据类型名称
 const getDataTypeName = (dataType) => {
   const nameMap = {
-    'staff': '人员',
-    'vehicle': '车辆',
-    'station': '站点'
+    'teacher': '教师',
+    'schoolbus': '校车',
+    'school': '学校'
   };
   return nameMap[dataType] || dataType;
 };
@@ -249,9 +257,9 @@ const getDataTypeName = (dataType) => {
 // 获取数据类型样式类
 const getDataTypeClass = (dataType) => {
   const classMap = {
-    'staff': 'type-staff',
-    'vehicle': 'type-vehicle',
-    'station': 'type-station'
+    'teacher': 'type-teacher',
+    'schoolbus': 'type-schoolbus',
+    'school': 'type-school'
   };
   return classMap[dataType] || '';
 };
@@ -299,13 +307,11 @@ const handleMarkerAction = (action) => {
   if (!selectedMarker.value) return;
 
   const actions = {
-    'contact': `正在联系人员 ${selectedMarker.value.properties.title}...`,
-    'dispatch': `正在调度车辆 ${selectedMarker.value.properties.title}...`,
+    'contact': `正在联系教师 ${selectedMarker.value.properties.title}...`,
+    'dispatch': `正在调度校车 ${selectedMarker.value.properties.title}...`,
     'navigate': `正在导航至 ${selectedMarker.value.properties.title}...`,
     'detail': `查看 ${selectedMarker.value.properties.title} 的详细信息...`
   };
-
-  ElMessage.success(actions[action] || '操作执行成功');
 
   // 触发父组件事件
   emit('marker-action', {
@@ -345,8 +351,7 @@ const mapCallback = () => {
 
   // 创建地图实例
   map = new TMap.Map(mapContainer, {
-    center: new TMap.LatLng(23.7356, 114.6826),
-    // center: new TMap.LatLng(26.793227, 117.810114),
+    center: new TMap.LatLng(26.793227, 117.810114),
     zoom: 11,
     mapStyleId: 'style1'
   });
@@ -381,7 +386,9 @@ const updateMarkers = () => {
             dataType: item.dataType,
             status: item.status,
             team: item.team,
+            school: item.school,
             type: item.type,
+            route: item.route,
             originalData: item
           }
         });
@@ -397,7 +404,9 @@ const updateMarkers = () => {
               dataType: item.dataType,
               status: item.status,
               team: item.team,
+              school: item.school,
               type: item.type,
+              route: item.route,
               originalData: item
             }
           },
@@ -416,52 +425,52 @@ const updateMarkers = () => {
   // 添加新标记
   if (geometriesData.length > 0) {
     const markerStyles = {
-      // 人员状态图标
-      'marker-staff-online': new TMap.MarkerStyle({
+      // 教师状态图标
+      'marker-teacher-online': new TMap.MarkerStyle({
         width: 20,
         height: 30,
         anchor: { x: 10, y: 15 },
-        src: getStaffIcon('online')
+        src: getTeacherIcon('online')
       }),
-      'marker-staff-busy': new TMap.MarkerStyle({
+      'marker-teacher-busy': new TMap.MarkerStyle({
         width: 20,
         height: 30,
         anchor: { x: 10, y: 15 },
-        src: getStaffIcon('busy')
+        src: getTeacherIcon('busy')
       }),
-      'marker-staff-offline': new TMap.MarkerStyle({
+      'marker-teacher-offline': new TMap.MarkerStyle({
         width: 20,
         height: 30,
         anchor: { x: 10, y: 15 },
-        src: getStaffIcon('offline')
+        src: getTeacherIcon('offline')
       }),
 
-      // 车辆状态图标
-      'marker-vehicle-moving': new TMap.MarkerStyle({
+      // 校车状态图标
+      'marker-schoolbus-moving': new TMap.MarkerStyle({
         width: 25,
         height: 25,
         anchor: { x: 12.5, y: 12.5 },
-        src: getVehicleIcon('moving')
+        src: getSchoolbusIcon('moving')
       }),
-      'marker-vehicle-parked': new TMap.MarkerStyle({
+      'marker-schoolbus-parked': new TMap.MarkerStyle({
         width: 25,
         height: 25,
         anchor: { x: 12.5, y: 12.5 },
-        src: getVehicleIcon('parked')
+        src: getSchoolbusIcon('parked')
       }),
 
-      // 站点状态图标
-      'marker-station-normal': new TMap.MarkerStyle({
+      // 学校状态图标
+      'marker-school-normal': new TMap.MarkerStyle({
         width: 30,
         height: 30,
         anchor: { x: 15, y: 15 },
-        src: getStationIcon('normal')
+        src: getSchoolIcon('normal')
       }),
-      'marker-station-offline': new TMap.MarkerStyle({
+      'marker-school-offline': new TMap.MarkerStyle({
         width: 30,
         height: 30,
         anchor: { x: 15, y: 15 },
-        src: getStationIcon('offline')
+        src: getSchoolIcon('offline')
       })
     };
 
@@ -476,6 +485,15 @@ const updateMarkers = () => {
       if (evt.geometry) {
         const properties = evt.geometry.properties;
         emit('marker-click', properties);
+
+        // 修复：确保每次点击都能正确显示信息窗口
+        const markerInfo = markerInfoMap.value.get(evt.geometry.id);
+        if (markerInfo) {
+          showMarkerInfo(markerInfo.geometry, markerInfo.latLng, evt.pixel);
+        } else {
+          // 如果找不到存储的信息，使用当前事件数据
+          showMarkerInfo(evt.geometry, evt.latLng, evt.pixel);
+        }
       }
     });
   }
@@ -543,7 +561,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 样式保持不变 */
+/* 样式保持不变，主要修改类型和状态的颜色和样式 */
 .map-container {
   position: relative;
   width: 100%;
@@ -679,19 +697,19 @@ onMounted(() => {
   font-weight: 500;
 }
 
-.type-staff {
+.type-teacher {
   background: rgba(59, 130, 246, 0.1);
   color: #3b82f6;
   border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
-.type-vehicle {
+.type-schoolbus {
   background: rgba(239, 68, 68, 0.1);
   color: #ef4444;
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
-.type-station {
+.type-school {
   background: rgba(245, 158, 11, 0.1);
   color: #f59e0b;
   border: 1px solid rgba(245, 158, 11, 0.3);
