@@ -19,7 +19,7 @@ const props = defineProps({
     })
   },
   title: {type: String, default: ''},
-  // 新增：基础字体缩放比例
+  // 基础字体缩放比例
   baseFontScale: {
     type: Number,
     default: 1
@@ -33,8 +33,8 @@ const vwToPx = (vw) => {
 
 // 图表颜色方案
 const colorScheme = [
-  '#00ccff', '#42b983', '#ff7d00', '#ff4949',
-  '#9c27b0', '#1976d2', '#8d6e63', '#e53935'
+  'rgba(43,82,128,0.8)', 'rgba(30,124,81,0.8)', 'rgba(236,171,109,0.8)',
+  'rgba(163,71,180,0.8)', '#1976d2', '#8d6e63', '#e53935'
 ];
 
 // 初始化图表
@@ -43,19 +43,25 @@ const initChart = () => {
     chartInstance.value.dispose();
   }
 
-  // 计算自适应字号
+  // 计算自适应字号（补充内部标签字号配置）
   const titleFontSize = vwToPx(0.8); // 图表标题
   const tooltipFontSize = vwToPx(0.65); // 提示框文字
-  const legendFontSize = vwToPx(0.7); // 图例文字
-  const emphasisLabelFontSize = vwToPx(0.8); // 高亮状态标签文字
+  const legendFontSize = vwToPx(0.7); // 图例文字（预留）
+  const legendIconSize = vwToPx(0.6); // 图例图标大小（预留）
+  const innerLabelFontSize = vwToPx(0.7); // 饼图内部标签文字
+  const innerLabelLineHeight = vwToPx(0.8); // 内部标签行高
 
   chartInstance.value = echarts.init(chartRef.value);
 
+  // 核心修复：格式化系列数据，确保每个数据项都有name（与图例匹配）
   const formattedSeries = props.data.series.map(seriesItem => {
+    // 处理数据格式：将数值数组转换为 {name, value} 对象数组
     const formattedData = seriesItem.data.map((item, index) => {
+      // 如果是已包含name的对象，直接使用
       if (typeof item === 'object' && item.name) {
         return item;
       }
+      // 否则自动匹配图例的name
       return {
         name: props.data.legend[index] || `类别${index + 1}`,
         value: item
@@ -75,6 +81,9 @@ const initChart = () => {
       },
       left: 'center'
     },
+    legend: {
+      show: false
+    },
     tooltip: {
       trigger: 'item',
       backgroundColor: 'rgba(0, 30, 60, 0.8)',
@@ -86,49 +95,40 @@ const initChart = () => {
       },
       formatter: '{a} <br/>{b}: {c} ({d}%)'
     },
-    legend: {
-      orient: 'vertical',
-      right: '0%',
-      bottom: '0%',
-      textStyle: {
-        color: '#ccc',
-        fontSize: legendFontSize // 图例文字自适应
-      },
-      itemWidth: vwToPx(0.6), // 图例图标大小自适应
-      itemHeight: vwToPx(0.6),
-      data: props.data.legend // 图例数据
-    },
     series: formattedSeries.map(item => ({
       ...item,
       type: 'pie',
-      radius: ['40%', '70%'],
-      center: ['35%', '55%'],
+      radius: '80%',
+      center: ['50%', '60%'],
       avoidLabelOverlap: false,
       itemStyle: {
-        borderRadius: 4,
+        borderRadius: 6,
         borderColor: 'rgba(0, 30, 60, 0.8)',
         borderWidth: 2
       },
-      label: {show: false, position: 'center'},
+      label: {
+        show: true,
+        position: 'inside',
+        color: '#fff',
+        fontSize: innerLabelFontSize, // 内部标签文字自适应
+        lineHeight: innerLabelLineHeight, // 内部标签行高自适应
+        formatter: '{b}' // 分行显示名称和数值
+      },
       emphasis: {
-        label: {
-          show: true,
-          fontSize: emphasisLabelFontSize, // 高亮标签文字自适应
-          fontWeight: 'bold',
-          color: '#fff'
-        },
-        animation: false
+        scale: true,
+        itemStyle: {
+          shadowBlur: 10,
+          shadowOffsetX: 0,
+          shadowColor: 'rgba(0, 0, 0, 0.5)'
+        }
       },
       labelLine: {show: false},
-      color: colorScheme,
-      animation: false,
-      animationDuration: 0,
-      animationEasingUpdate: 'none'
+      color: colorScheme
     }))
   };
 
   chartInstance.value.setOption(option);
-  chartInstance.value.resize();
+  setTimeout(() => chartInstance.value?.resize(), 0);
 };
 
 // 监听数据及缩放比例变化，重新渲染图表
@@ -136,17 +136,19 @@ watch([() => props.data, () => props.baseFontScale], () => {
   if (chartInstance.value) initChart();
 }, {deep: true});
 
-// 窗口大小变化时更新字体并调整图表尺寸
+// 窗口大小变化时更新所有文本配置并调整图表尺寸
 const handleResize = () => {
   if (!chartInstance.value) return;
 
-  // 重新计算自适应字号
+  // 重新计算所有自适应字号
   const titleFontSize = vwToPx(0.8);
   const tooltipFontSize = vwToPx(0.65);
   const legendFontSize = vwToPx(0.7);
-  const emphasisLabelFontSize = vwToPx(0.8);
+  const legendIconSize = vwToPx(0.6);
+  const innerLabelFontSize = vwToPx(0.7);
+  const innerLabelLineHeight = vwToPx(0.8);
 
-  // 更新文本配置
+  // 全面更新文本配置（包含内部标签）
   chartInstance.value.setOption({
     title: {
       textStyle: {fontSize: titleFontSize}
@@ -156,12 +158,13 @@ const handleResize = () => {
     },
     legend: {
       textStyle: {fontSize: legendFontSize},
-      itemWidth: vwToPx(0.6),
-      itemHeight: vwToPx(0.6)
+      itemWidth: legendIconSize,
+      itemHeight: legendIconSize
     },
     series: [{
-      emphasis: {
-        label: {fontSize: emphasisLabelFontSize}
+      label: {
+        fontSize: innerLabelFontSize,
+        lineHeight: innerLabelLineHeight
       }
     }]
   });
@@ -184,6 +187,6 @@ onUnmounted(() => {
 .chart-container {
   width: 100%;
   height: 100%;
-  max-height: 200px;
+  min-height: 30vh;
 }
 </style>

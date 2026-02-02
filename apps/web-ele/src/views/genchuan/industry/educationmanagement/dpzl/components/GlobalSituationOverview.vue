@@ -347,7 +347,7 @@
                     <el-button size="small" text @click="handleChartAction('type', 'drill')">下钻</el-button>
                   </div>
                   <div class="chart-container">
-                    <ChartPie3 :data="serviceTypePieData" :title="''" height="100%" />
+                    <ChartPie2 :data="serviceTypePieData" :title="''" height="100%" />
                   </div>
                 </div>
                 <!-- 服务来源分布 -->
@@ -940,7 +940,7 @@ import MapCommon from "./MapCommon.vue";
 import ChartLine3 from './ChartLine3.vue';
 import ChartBar from './ChartBar.vue';
 import ChartPie from './ChartPie.vue';
-import ChartPie3 from './ChartPie3.vue';
+import ChartPie2 from './ChartPie2.vue';
 
 // 导入API方法
 import {
@@ -3157,7 +3157,7 @@ onMounted(() => {
   max-height: 70vh;
   overflow-y: auto;
   padding: 10px;
-  color: #333; // 确保文字可见
+  color: #3e3b3b; // 确保文字可见
 
   // 调试信息样式
   .debug-info {
@@ -3211,7 +3211,7 @@ onMounted(() => {
       }
 
       .info-value {
-        color: #1a1a1a;
+        color: #322e2e;
         font-weight: 500;
       }
     }
