@@ -17,6 +17,14 @@ const tabArray = ref([
     components: Table,
     showSecondary: true,
     secondShow: false,
+    type: 'coupon'
+  },
+  {
+    label: '活动配置管理',
+    components: Table,
+    showSecondary: true,
+    secondShow: false,
+    type: 'activity'
   },
 ]);
 const activeName = ref('优惠券管理');
@@ -59,6 +67,7 @@ const secondShow = ref(false);
         <component
           :is="item.components"
           :second-show="item.secondShow"
+          :type="item.type"
           :key="item.label"
         />
       </el-tab-pane>

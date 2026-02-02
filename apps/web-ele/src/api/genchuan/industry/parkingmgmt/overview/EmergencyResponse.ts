@@ -2,6 +2,329 @@ import { requestClient } from '#/api/request';
 
 const BASE_URL = '/industry/parking';
 
+
+// ========== 现场态势 ==========
+// 现场态势列表
+export const fetchSceneSituationList = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/emergency/scene/list`,
+        params,
+      })
+      .then((response) => {
+        console.log('现场态势-接口请求成功');
+        if (response && Array.isArray(response)) {
+          console.log('现场态势-响应符合实际格式');
+          return response.map((item) => ({
+            taskEmergencyEmergencyId: item.taskEmergencyEmergencyId,
+            tbAssetExtendAddress: item.tbAssetExtendAddress,
+            taskEmergencySceneSceneStatus: item.taskEmergencySceneSceneStatus,
+            taskEmergencySceneAffectedBerthCount: item.taskEmergencySceneAffectedBerthCount,
+            taskEmergencySceneEvacuatedVehicleCount: item.taskEmergencySceneEvacuatedVehicleCount,
+            taskEmergencySceneRepairBerthCount: item.taskEmergencySceneRepairBerthCount,
+          }));
+        }
+        throw new Error('真实接口返回无现场态势数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('现场态势接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve([
+              {
+                taskEmergencyEmergencyId: 'EM202501001',
+                tbAssetExtendAddress: '高新区创业路128号',
+                taskEmergencySceneSceneStatus: '处置中',
+                taskEmergencySceneAffectedBerthCount: 15,
+                taskEmergencySceneEvacuatedVehicleCount: 8,
+                taskEmergencySceneRepairBerthCount: 5,
+              },
+              {
+                taskEmergencyEmergencyId: 'EM202501002',
+                tbAssetExtendAddress: '主城区人民广场东侧',
+                taskEmergencySceneSceneStatus: '已处置',
+                taskEmergencySceneAffectedBerthCount: 8,
+                taskEmergencySceneEvacuatedVehicleCount: 8,
+                taskEmergencySceneRepairBerthCount: 8,
+              },
+              {
+                taskEmergencyEmergencyId: 'EM202501003',
+                tbAssetExtendAddress: '经开区工业大道56号',
+                taskEmergencySceneSceneStatus: '待处置',
+                taskEmergencySceneAffectedBerthCount: 20,
+                taskEmergencySceneEvacuatedVehicleCount: 5,
+                taskEmergencySceneRepairBerthCount: 0,
+              },
+              {
+                taskEmergencyEmergencyId: 'EM202501004',
+                tbAssetExtendAddress: '文旅区景区北路32号',
+                taskEmergencySceneSceneStatus: '处置中',
+                taskEmergencySceneAffectedBerthCount: 12,
+                taskEmergencySceneEvacuatedVehicleCount: 9,
+                taskEmergencySceneRepairBerthCount: 8,
+              },
+              {
+                taskEmergencyEmergencyId: 'EM202501005',
+                tbAssetExtendAddress: '龙文区中山路78号',
+                taskEmergencySceneSceneStatus: '已处置',
+                taskEmergencySceneAffectedBerthCount: 6,
+                taskEmergencySceneEvacuatedVehicleCount: 6,
+                taskEmergencySceneRepairBerthCount: 6,
+              },
+            ]);
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchSceneSituationList 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve([]);
+  }
+};
+
+// 现场态势详情查询 - 详情弹窗专用
+export const fetchSceneSituationDetail = (emergencyId, params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/emergency/scene/detail/${emergencyId}`,
+        params,
+      })
+      .then((response) => {
+        if (response && response.taskEmergencyEmergencyId === emergencyId) {
+          return response;
+        }
+        throw new Error('真实接口返回无现场态势详情数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('现场态势详情接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              taskEmergencyEmergencyId: emergencyId,
+              tbAssetExtendAddress: '高新区创业路128号',
+              taskEmergencySceneSceneStatus: '处置中',
+              taskEmergencySceneAffectedBerthCount: 15,
+              taskEmergencySceneEvacuatedVehicleCount: 8,
+              taskEmergencySceneRepairBerthCount: 5,
+              // 弹窗展示字段
+              sysUserUserName: '张伟',
+              sysUserUserPhone: '138****5678',
+              taskEmergencySceneScenePhotos: [
+                'https://example.com/photo1.jpg',
+                'https://example.com/photo2.jpg',
+                'https://example.com/photo3.jpg'
+              ],
+              taskEmergencySceneDisposalSuggestion: '建议立即疏散周边车辆，设置警示标志，安排维修人员进行紧急修复。',
+              // 现场完整态势
+              sceneOverview: {
+                affectedRange: '周边200米',
+                startTime: new Date().getTime() - 2 * 60 * 60 * 1000,
+                emergencyLevel: '中等',
+                weatherCondition: '晴',
+                temperature: '25°C',
+                windSpeed: '3级',
+              },
+              // 实时数据
+              realtimeData: {
+                currentEvacuatedCount: 8,
+                currentRepairCount: 5,
+                remainingAffectedCount: 7,
+                evacuationProgress: 57,
+                repairProgress: 33,
+                currentPersonnelCount: 12,
+              },
+              // 处置进展
+              disposalProgress: [
+                { time: new Date().getTime() - 120, action: '应急小组到达现场', status: '已完成' },
+                { time: new Date().getTime() - 90, action: '开始疏散车辆', status: '进行中' },
+                { time: new Date().getTime() - 60, action: '开始修复泊位', status: '进行中' },
+                { time: new Date().getTime() - 30, action: '完成现场评估', status: '已完成' },
+                { time: new Date().getTime() - 15, action: '协调周边资源', status: '进行中' },
+              ]
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchSceneSituationDetail 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({});
+  }
+};
+
+// 联系现场负责人
+export const contactScenePerson = (emergencyId) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        success: true,
+        message: '已触发联系现场负责人',
+        contactInfo: {
+          name: '张伟',
+          phone: '138****5678',
+          position: '现场负责人'
+        }
+      });
+    }, 300);
+  });
+};
+
+// 下发处置指令
+export const submitDisposalInstruction = (emergencyId, instruction) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        success: true,
+        message: '处置指令已下发，系统消息已发送给接收人',
+        instructionId: `INST${Date.now()}`,
+        sendTime: new Date().getTime()
+      });
+    }, 500);
+  });
+};
+
+// 现场态势核心指标（卡片展示）
+export const fetchSceneSituationIndicators = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/scene/situation/indicators/get`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.evacuatedVehicleCount &&
+          response.repairBerthCount &&
+          response.affectedRange
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无现场态势核心数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '现场态势指标接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              evacuatedVehicleCount: 150, // 已疏导车辆数
+              repairBerthCount: 85, // 已修复泊位数
+              affectedRange: '3个区域', // 受影响范围
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 现场态势指标函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      evacuatedVehicleCount: 0,
+      repairBerthCount: 0,
+      affectedRange: '',
+    });
+  }
+};
+
+// 现场处置成效对比（柱状图）
+export const fetchSceneDisposalEffectCompare = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/scene/situation/stat/disposal/effect/compare`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无现场处置成效对比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '现场处置成效对比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['北区停车场', '南区停车场', '东区停车场', '西区停车场'],
+              series: [
+                { name: '已疏导车辆数', data: [45, 38, 52, 29] },
+                { name: '已修复泊位数', data: [28, 35, 40, 22] },
+                { name: '受影响泊位数', data: [65, 42, 70, 38] },
+              ],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 现场处置成效对比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [],
+    });
+  }
+};
+
+// 散点标注模拟数据（现场位置+关键区域）
+export const fetchDotAnimationData = async (params: any = {}) => {
+  // 模拟异步请求（符合原有组件的异步调用逻辑）
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const mockDotData = [
+        { lat: 22.59843, lng: 113.850704, styleId: "style1" },
+        { lat: 22.73174, lng: 113.83156, styleId: "style1" },
+        { lat: 22.51992, lng: 114.041128, styleId: "style1" },
+        { lat: 22.51272, lng: 113.923216, styleId: "style1" },
+        { lat: 22.63708, lng: 114.021664, styleId: "style1" },
+        { lat: 22.5685, lng: 113.937664, styleId: "style1" },
+        { lat: 22.47647, lng: 113.87896, styleId: "style1" },
+        { lat: 22.56663, lng: 113.971456, styleId: "style1" },
+        { lat: 22.65771, lng: 114.008152, styleId: "style1" },
+        { lat: 22.54694, lng: 113.985288, styleId: "style1" },
+        { lat: 22.74182, lng: 113.987864, styleId: "style1" },
+        { lat: 22.61793, lng: 114.054416, styleId: "style1" },
+        { lat: 22.62883, lng: 114.04849, styleId: "style1" },
+        { lat: 22.68143, lng: 113.89202, styleId: "style1" },
+        { lat: 22.56446, lng: 114.06516, styleId: "style1" },
+        { lat: 22.68407, lng: 113.891515, styleId: "style1" },
+        { lat: 22.62253, lng: 113.919701, styleId: "style2" },
+        { lat: 22.52789, lng: 114.033568, styleId: "style2" },
+        { lat: 22.52885, lng: 114.050111, styleId: "style2" },
+        { lat: 22.55658, lng: 114.017307, styleId: "style2" },
+        { lat: 22.71386, lng: 113.852661, styleId: "style2" },
+        { lat: 22.54378, lng: 113.93253, styleId: "style2" },
+        { lat: 22.55387, lng: 113.966907, styleId: "style2" },
+        { lat: 22.54396, lng: 113.932743, styleId: "style2" },
+        { lat: 22.5447, lng: 113.933098, styleId: "style2" },
+        { lat: 22.56445, lng: 113.933779, styleId: "style2" },
+        { lat: 22.68963, lng: 114.33684, styleId: "style2" },
+        { lat: 22.68206, lng: 114.339015, styleId: "style2" },
+      ];
+      resolve(mockDotData);
+    }, 100);
+  });
+};
+
+
 // ======================== 应急态势 新增接口 (指标卡片+图表) ========================
 // 应急态势-核心指标卡片 (应急事件总数、各等级应急数、受影响车辆数)
 export const fetchEmergencySituationIndicators = (params = {}) => {
