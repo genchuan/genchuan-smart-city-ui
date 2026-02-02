@@ -20,6 +20,12 @@ const props = defineProps({
     default: false,
   },
 });
+// 向父组件派发事件（与参考代码一致，预留扩展）
+const emit = defineEmits(['toggleChart']);
+
+// 展开/收缩按钮自身状态（与参考代码一致）
+const arrowShow = ref(false);
+
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
 });
@@ -107,44 +113,44 @@ function handleCreate() {
     .open();
 }
 
-/** 编辑角色 */
-function handleEdit(row) {
-  formDrawerApi
-    .setData({
-      title: textObj.editText,
-      ...row,
-    })
-    .open();
-}
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.name]),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
-}
-
-async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
-}
+// /** 编辑角色 */
+// function handleEdit(row) {
+//   formDrawerApi
+//     .setData({
+//       title: textObj.editText,
+//       ...row,
+//     })
+//     .open();
+// }
+// async function handleDelete(row) {
+//   const loadingInstance = ElLoading.service({
+//     text: $t('ui.actionMessage.deleting', [row.name]),
+//   });
+//   try {
+//     dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
+//     ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
+//     handleRefresh();
+//   } finally {
+//     loadingInstance.close();
+//   }
+// }
+//
+// async function handleDeleteBatch() {
+//   await confirm($t('确定删除这些数据吗？'));
+//   const loadingInstance = ElLoading.service({
+//     text: $t('ui.actionMessage.deletingBatch'),
+//   });
+//   try {
+//     dataObj.apilist = dataObj.apilist.filter(
+//       (v) => !checkedIds.value.includes(v.id),
+//     );
+//     checkedIds.value = [];
+//     ElMessage.success($t('删除成功'));
+//     handleRefresh();
+//   } finally {
+//     loadingInstance.close();
+//   }
+// }
 
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
@@ -276,6 +282,11 @@ const handleSerachShow = () => {
 };
 const handleFullShow = () => {
   screenfull.toggle();
+};
+/** 展开/收缩按钮点击：切换自身状态 + 向父组件派发事件（与参考代码完全一致） */
+const arrowChange = () => {
+  arrowShow.value = !arrowShow.value;
+  emit('toggleChart');
 };
 </script>
 
@@ -443,6 +454,11 @@ const handleFullShow = () => {
             @click="handleSerachShow"
           />
           <IconButton
+            :content="arrowShow ? '收缩' : '展开'"
+            :icon-name="arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
+          <IconButton
             content="全屏"
             icon-name="FullScreen"
             @click="handleFullShow"
@@ -465,17 +481,17 @@ const handleFullShow = () => {
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
-          <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
-          />
+          <!--          <IconButton-->
+          <!--            content="编辑"-->
+          <!--            icon-name="edit"-->
+          <!--            @click="handleEdit(row)"-->
+          <!--          />-->
+          <!--          <IconButton-->
+          <!--            content="删除"-->
+          <!--            icon-name="delete"-->
+          <!--            color="#F56C6C"-->
+          <!--            @click="handleDelete(row)"-->
+          <!--          />-->
         </div>
       </template>
       <template #bottom>
