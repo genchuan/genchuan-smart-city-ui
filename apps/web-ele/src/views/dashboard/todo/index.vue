@@ -9,6 +9,7 @@ import Taskechart from './taskechart.vue';
 import Work from './work/index.vue';
 import Workechart from './workechart.vue';
 // import Alarm from './alarm/index.vue';
+// import Inspection from './inspection/index.vue';
 
 import '#/components/page/index.scss';
 
@@ -54,6 +55,15 @@ const tabArray = ref([
   //   arrowShow: false,
   //   arrowState: false,
   // },
+  // {
+  //   label: '巡检',
+  //   components: Inspection,
+  //   showSecondary: true,
+  //   secondShow: false,
+  //   arrowShow: false,
+  //   arrowState: false,
+  // },
+
 ]);
 const tabChange = () => {
   tabArray.value.forEach((v) => {
