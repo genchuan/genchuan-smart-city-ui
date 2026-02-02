@@ -1,6 +1,6 @@
 // GlobalSituationOverview.ts
 // 引入axios（假设项目中已配置axios）
-import axios from 'axios';
+import { requestClient } from '#/api/request';
 
 // ==================== 基础配置 ====================
 const BASE_URL = '/api/educationmanagement';
