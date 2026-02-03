@@ -15,18 +15,18 @@ import { exportToExcel } from '#/utils/excel.js';
 
 import {
   dataList,
-  washCardDataList,
   detailFields,
-  washCardDetailFields,
   textObj,
-  washCardTextObj,
-  useFormSchema,
-  useWashCardFormSchema,
   useConfigFormSchema,
-  useWashCardConfigFormSchema,
+  useFormSchema,
   useGridColumns,
+  useWashCardConfigFormSchema,
+  useWashCardFormSchema,
   useWashCardGridColumns,
   useWashCardQueryFormSchema,
+  washCardDataList,
+  washCardDetailFields,
+  washCardTextObj,
 } from './data';
 
 const props = defineProps({
@@ -52,7 +52,9 @@ const currentTextObj = computed(() => {
 });
 
 const getTitle = computed(() => {
-  return formData.value?.packageId ? currentTextObj.value.editText : currentTextObj.value.addText;
+  return formData.value?.packageId
+    ? currentTextObj.value.editText
+    : currentTextObj.value.addText;
 });
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -76,7 +78,10 @@ const [Form, formApi] = useVbenForm({
     labelWidth: 110,
   },
   layout: 'horizontal',
-  schema: props.activeTab === '洗车卡套餐' ? useWashCardFormSchema() : useFormSchema(),
+  schema:
+    props.activeTab === '洗车卡套餐'
+      ? useWashCardFormSchema()
+      : useFormSchema(),
   showDefaultActions: false,
 });
 
@@ -90,7 +95,10 @@ const [ConfigForm, configFormApi] = useVbenForm({
     labelWidth: 110,
   },
   layout: 'horizontal',
-  schema: props.activeTab === '洗车卡套餐' ? useWashCardConfigFormSchema() : useConfigFormSchema(),
+  schema:
+    props.activeTab === '洗车卡套餐'
+      ? useWashCardConfigFormSchema()
+      : useConfigFormSchema(),
   showDefaultActions: false,
 });
 const [ConfigDrawer, configDrawerApi] = useVbenDrawer({
@@ -102,7 +110,9 @@ const [ConfigDrawer, configDrawerApi] = useVbenDrawer({
   },
   onConfirm() {
     const obj = configFormApi.form.values;
-    const index = dataObj.apilist.findIndex(v => v.packageId === obj.packageId);
+    const index = dataObj.apilist.findIndex(
+      (v) => v.packageId === obj.packageId,
+    );
     if (index !== -1) {
       dataObj.apilist[index] = { ...dataObj.apilist[index], ...obj };
       ElMessage.success('配置更新成功');
@@ -160,7 +170,11 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  exportToExcel(dataObj.apilist, currentTextObj.excelName, currentTextObj.excelAllName);
+  exportToExcel(
+    dataObj.apilist,
+    currentTextObj.value.excelName,
+    currentTextObj.value.excelAllName,
+  );
 }
 
 /** 创建套餐 */
@@ -220,11 +234,15 @@ function handleRowCheckboxChange({ records }) {
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
-  total: props.activeTab === '洗车卡套餐' ? washCardDataList().length : dataList().length,
+  total:
+    props.activeTab === '洗车卡套餐'
+      ? washCardDataList().length
+      : dataList().length,
   currentPage: 1,
   pageSize: 10,
   apilist: props.activeTab === '洗车卡套餐' ? washCardDataList() : dataList(),
   list: [],
+  searchParams: {},
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -237,14 +255,18 @@ const getTableData = (pageObj) => {
   // 根据activeName筛选数据
   let filteredList = dataObj.apilist.filter((v) => {
     switch (activeName.value) {
-      case '全部': {
-        return true;
-      }
       case '上架': {
-        return props.activeTab === '洗车卡套餐' ? v.status === '上架' : v.packageStatusName === '上架';
+        return props.activeTab === '洗车卡套餐'
+          ? v.status === '上架'
+          : v.packageStatusName === '上架';
       }
       case '下架': {
-        return props.activeTab === '洗车卡套餐' ? v.status === '下架' : v.packageStatusName === '下架';
+        return props.activeTab === '洗车卡套餐'
+          ? v.status === '下架'
+          : v.packageStatusName === '下架';
+      }
+      case '全部': {
+        return true;
       }
     }
     return false;
@@ -253,44 +275,35 @@ const getTableData = (pageObj) => {
   // 快捷筛选
   filteredList = filteredList.filter((v) => {
     // 套餐类型筛选 - 洗车卡套餐不需要此筛选
-    const packageTypeMatch = !filterPackageType.value || (v.packageTypeName && v.packageTypeName === filterPackageType.value);
+    const packageTypeMatch =
+      !filterPackageType.value ||
+      (v.packageTypeName && v.packageTypeName === filterPackageType.value);
 
     // 适用车场筛选
-    const applyLotNamesMatch = !filterApplyLotNames.value || v.applicableParkingLot === filterApplyLotNames.value;
+    const applyLotNamesMatch =
+      !filterApplyLotNames.value ||
+      v.applicableParkingLot === filterApplyLotNames.value;
 
     // 合作洗车店筛选
-    const cooperationWashShopMatch = !filterCooperationWashShop.value || v.cooperationWashShop === filterCooperationWashShop.value;
+    const cooperationWashShopMatch =
+      !filterCooperationWashShop.value ||
+      v.cooperationWashShop === filterCooperationWashShop.value;
 
-    // 搜索表单筛选
-    const searchMatch = Object.entries(searchFormValues.value).every(([key, value]) => {
-      if (!value) return true;
-      // 转换key以匹配数据对象中的字段名
-      let fieldName = key;
-      if (props.activeTab === '洗车卡套餐') {
-        if (fieldName === 'status') {
-          return v.status === value;
-        }
-      } else {
-        if (fieldName === 'packageStatusName') {
-          return v.packageStatusName === value;
-        }
-        if (fieldName === 'packageTypeName') {
-          return v.packageTypeName === value;
-        }
+    // 搜索条件筛选
+    let searchMatch = true;
+    Object.keys(dataObj.searchParams).forEach((key) => {
+      const value = dataObj.searchParams[key];
+      if (value) {
+        searchMatch = typeof value === 'string' ? searchMatch && v[key]?.toString().includes(value) : searchMatch && v[key] === value;
       }
-      if (fieldName === 'applicableParkingLot') {
-        return v.applicableParkingLot === value;
-      }
-      if (fieldName === 'cooperationWashShop') {
-        return v.cooperationWashShop === value;
-      }
-      if (typeof v[fieldName] === 'string') {
-        return v[fieldName].includes(value);
-      }
-      return v[fieldName] === value;
     });
 
-    return packageTypeMatch && applyLotNamesMatch && cooperationWashShopMatch && searchMatch;
+    return (
+      packageTypeMatch &&
+      applyLotNamesMatch &&
+      cooperationWashShopMatch &&
+      searchMatch
+    );
   });
 
   dataObj.total = filteredList.length;
@@ -312,12 +325,15 @@ const [QueryForm, queryFormApi] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: props.activeTab === '洗车卡套餐' ? useWashCardQueryFormSchema() : useFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
-  }),
+  schema:
+    props.activeTab === '洗车卡套餐'
+      ? useWashCardQueryFormSchema()
+      : useFormSchema().map((v) => {
+          delete v.rules;
+          return {
+            ...v,
+          };
+        }),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -325,15 +341,18 @@ const [QueryForm, queryFormApi] = useVbenForm({
 });
 
 // 搜索表单查询
-function onSubmit() {
-  searchFormValues.value = queryFormApi.form.values;
-  drawerApi.close();
+function onSubmit(values) {
+  dataObj.searchParams = values;
   handleRefresh();
+  drawerApi.close();
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    columns: props.activeTab === '洗车卡套餐' ? useWashCardGridColumns() : useGridColumns(),
+    columns:
+      props.activeTab === '洗车卡套餐'
+        ? useWashCardGridColumns()
+        : useGridColumns(),
     keepSource: true,
     proxyConfig: {
       ajax: {
@@ -366,9 +385,6 @@ const filterPackageType = ref(''); // 套餐类型筛选
 const filterApplyLotNames = ref(''); // 适用车场筛选
 const filterCooperationWashShop = ref(''); // 合作洗车店筛选
 
-// 搜索表单值
-const searchFormValues = ref({});
-
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
   detailDrawerRef.value.open();
@@ -382,24 +398,28 @@ const createLabel = (item) => {
   let count = 0;
 
   switch (item.label) {
-    case '全部': {
-      count = dataObj.apilist.length;
-
-      break;
-    }
     case '上架': {
       // 统计状态为'上架'的数据
-      count = dataObj.apilist.filter(
-        (v) => props.activeTab === '洗车卡套餐' ? v.status === '上架' : v.packageStatusName === '上架',
+      count = dataObj.apilist.filter((v) =>
+        props.activeTab === '洗车卡套餐'
+          ? v.status === '上架'
+          : v.packageStatusName === '上架',
       ).length;
 
       break;
     }
     case '下架': {
       // 统计状态为'下架'的数据
-      count = dataObj.apilist.filter(
-        (v) => props.activeTab === '洗车卡套餐' ? v.status === '下架' : v.packageStatusName === '下架',
+      count = dataObj.apilist.filter((v) =>
+        props.activeTab === '洗车卡套餐'
+          ? v.status === '下架'
+          : v.packageStatusName === '下架',
       ).length;
+
+      break;
+    }
+    case '全部': {
+      count = dataObj.apilist.length;
 
       break;
     }
@@ -435,7 +455,8 @@ const getStatusType = (status) => {
 
 // 处理套餐类型点击筛选
 const handlePackageTypeClick = (packageType) => {
-  filterPackageType.value = filterPackageType.value === packageType ? '' : packageType;
+  filterPackageType.value =
+    filterPackageType.value === packageType ? '' : packageType;
   handleRefresh();
 };
 
@@ -447,7 +468,8 @@ const handleCancelPackageTypeFilter = () => {
 
 // 处理适用车场点击筛选
 const handleApplyLotNamesClick = (applyLotNames) => {
-  filterApplyLotNames.value = filterApplyLotNames.value === applyLotNames ? '' : applyLotNames;
+  filterApplyLotNames.value =
+    filterApplyLotNames.value === applyLotNames ? '' : applyLotNames;
   handleRefresh();
 };
 
@@ -459,7 +481,10 @@ const handleCancelApplyLotNamesFilter = () => {
 
 // 处理合作洗车店点击筛选
 const handleCooperationWashShopClick = (cooperationWashShop) => {
-  filterCooperationWashShop.value = filterCooperationWashShop.value === cooperationWashShop ? '' : cooperationWashShop;
+  filterCooperationWashShop.value =
+    filterCooperationWashShop.value === cooperationWashShop
+      ? ''
+      : cooperationWashShop;
   handleRefresh();
 };
 
@@ -474,7 +499,8 @@ const handleToggleStatus = async (row) => {
   const isWashCard = props.activeTab === '洗车卡套餐';
   const currentStatus = isWashCard ? row.status : row.packageStatusName;
   const newStatus = currentStatus === '上架' ? '下架' : '上架';
-  const confirmMessage = currentStatus === '上架' ? '确定要下架该套餐吗？' : '确定要上架该套餐吗？';
+  const confirmMessage =
+    currentStatus === '上架' ? '确定要下架该套餐吗？' : '确定要上架该套餐吗？';
 
   try {
     await ElMessageBox.confirm(confirmMessage, '操作确认', {
@@ -530,7 +556,9 @@ const handleOpenConfigDrawer = (row) => {
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.packageName}详情`"
       :data="dataObj.detailObj"
-      :fields="props.activeTab === '洗车卡套餐' ? washCardDetailFields : detailFields"
+      :fields="
+        props.activeTab === '洗车卡套餐' ? washCardDetailFields : detailFields
+      "
     />
     <!--   配置抽屉-->
     <ConfigDrawer :title="currentTextObj.configText">
@@ -612,8 +640,8 @@ const handleOpenConfigDrawer = (row) => {
             icon-name="search"
             @click="handleSerachShow"
           />
-          <IconButton 
-            :content="props.showStats ? '隐藏统计' : '显示统计'" 
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
             :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
             @click="props.toggleStats"
           />
@@ -696,9 +724,33 @@ const handleOpenConfigDrawer = (row) => {
             @click="handleEdit(row)"
           />
           <IconButton
-            :content="props.activeTab === '洗车卡套餐' ? (row.status === '上架' ? '下架' : '上架') : (row.packageStatusName === '上架' ? '下架' : '上架')"
-            :icon-name="props.activeTab === '洗车卡套餐' ? (row.status === '上架' ? 'Bottom' : 'Top') : (row.packageStatusName === '上架' ? 'Bottom' : 'Top')"
-            :color="props.activeTab === '洗车卡套餐' ? (row.status === '上架' ? '#E6A23C' : '#67C23A') : (row.packageStatusName === '上架' ? '#E6A23C' : '#67C23A')"
+            :content="
+              props.activeTab === '洗车卡套餐'
+                ? row.status === '上架'
+                  ? '下架'
+                  : '上架'
+                : row.packageStatusName === '上架'
+                  ? '下架'
+                  : '上架'
+            "
+            :icon-name="
+              props.activeTab === '洗车卡套餐'
+                ? row.status === '上架'
+                  ? 'Bottom'
+                  : 'Top'
+                : row.packageStatusName === '上架'
+                  ? 'Bottom'
+                  : 'Top'
+            "
+            :color="
+              props.activeTab === '洗车卡套餐'
+                ? row.status === '上架'
+                  ? '#E6A23C'
+                  : '#67C23A'
+                : row.packageStatusName === '上架'
+                  ? '#E6A23C'
+                  : '#67C23A'
+            "
             @click="handleToggleStatus(row)"
           />
           <IconButton
@@ -708,12 +760,12 @@ const handleOpenConfigDrawer = (row) => {
             color="#409EFF"
             @click="handleOpenConfigDrawer(row)"
           />
-<!--          <IconButton-->
-<!--            content="删除"-->
-<!--            icon-name="delete"-->
-<!--            color="#F56C6C"-->
-<!--            @click="handleDelete(row)"-->
-<!--          />-->
+          <!--          <IconButton-->
+          <!--            content="删除"-->
+          <!--            icon-name="delete"-->
+          <!--            color="#F56C6C"-->
+          <!--            @click="handleDelete(row)"-->
+          <!--          />-->
         </div>
       </template>
       <template #bottom>
@@ -724,10 +776,34 @@ const handleOpenConfigDrawer = (row) => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：{{ props.activeTab === '洗车卡套餐' ? '洗车卡套餐' : '套餐' }}数量: {{ dataObj.total }}; 上架: {{ dataObj.apilist.filter(v => props.activeTab === '洗车卡套餐' ? v.status === '上架' : v.packageStatusName === '上架').length }}; 下架: {{ dataObj.apilist.filter(v => props.activeTab === '洗车卡套餐' ? v.status === '下架' : v.packageStatusName === '下架').length }} </span>
+          <span>
+            本页统计：{{
+              props.activeTab === '洗车卡套餐' ? '洗车卡套餐' : '套餐'
+            }}数量: {{ dataObj.total }}; 上架:
+            {{
+              dataObj.apilist.filter((v) =>
+                props.activeTab === '洗车卡套餐'
+                  ? v.status === '上架'
+                  : v.packageStatusName === '上架',
+              ).length
+            }}; 下架:
+            {{
+              dataObj.apilist.filter((v) =>
+                props.activeTab === '洗车卡套餐'
+                  ? v.status === '下架'
+                  : v.packageStatusName === '下架',
+              ).length
+            }}
+          </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span> 全部统计：{{ props.activeTab === '洗车卡套餐' ? washCardTextObj.total : textObj.total }} </span>
+          <span>
+            全部统计：{{
+              props.activeTab === '洗车卡套餐'
+                ? washCardTextObj.total
+                : textObj.total
+            }}
+          </span>
         </div>
       </template>
     </Grid>

@@ -682,8 +682,8 @@ export const activityDataList = () => {
       applyScopeName: '全部车场',
       ruleConfig: '春节期间停车享受8折优惠',
       operator: '管理员',
-      status: '启用',
-      createTime: '2024-01-15 00:00:00'
+      status: '启动',
+      createTime: '2024-01-15 00:00:00',
     },
     {
       activityId: 'ACT002',
@@ -697,8 +697,8 @@ export const activityDataList = () => {
       applyScopeName: '会员专享',
       ruleConfig: '会员停车享受7折优惠',
       operator: '管理员',
-      status: '启用',
-      createTime: '2024-01-01 00:00:00'
+      status: '启动',
+      createTime: '2024-01-01 00:00:00',
     },
     {
       activityId: 'ACT003',
@@ -712,8 +712,8 @@ export const activityDataList = () => {
       applyScopeName: '全部车场',
       ruleConfig: '周末停车享受9折优惠',
       operator: '管理员',
-      status: '启用',
-      createTime: '2024-01-01 00:00:00'
+      status: '启动',
+      createTime: '2024-01-01 00:00:00',
     },
     {
       activityId: 'ACT004',
@@ -727,8 +727,8 @@ export const activityDataList = () => {
       applyScopeName: '全部车场',
       ruleConfig: '22:00-08:00停车享受8折优惠',
       operator: '管理员',
-      status: '启用',
-      createTime: '2024-01-01 00:00:00'
+      status: '启动',
+      createTime: '2024-01-01 00:00:00',
     },
     {
       activityId: 'ACT005',
@@ -742,8 +742,8 @@ export const activityDataList = () => {
       applyScopeName: '新用户',
       ruleConfig: '新用户注册送5元停车券',
       operator: '管理员',
-      status: '启用',
-      createTime: '2024-01-01 00:00:00'
+      status: '启动',
+      createTime: '2024-01-01 00:00:00',
     },
     {
       activityId: 'ACT006',
@@ -757,8 +757,8 @@ export const activityDataList = () => {
       applyScopeName: '全部车场',
       ruleConfig: '季度停车卡享受6折优惠',
       operator: '管理员',
-      status: '启用',
-      createTime: '2024-01-01 00:00:00'
+      status: '启动',
+      createTime: '2024-01-01 00:00:00',
     },
     {
       activityId: 'ACT007',
@@ -772,8 +772,8 @@ export const activityDataList = () => {
       applyScopeName: '指定车场',
       ruleConfig: '开业期间免费停车',
       operator: '管理员',
-      status: '禁用',
-      createTime: '2024-01-01 00:00:00'
+      status: '结束',
+      createTime: '2024-01-01 00:00:00',
     },
     {
       activityId: 'ACT008',
@@ -787,8 +787,8 @@ export const activityDataList = () => {
       applyScopeName: '全部车场',
       ruleConfig: '五一期间停车享受7折优惠',
       operator: '管理员',
-      status: '启用',
-      createTime: '2024-04-01 00:00:00'
+      status: '启动',
+      createTime: '2024-04-01 00:00:00',
     },
     {
       activityId: 'ACT009',
@@ -802,8 +802,8 @@ export const activityDataList = () => {
       applyScopeName: '全部车场',
       ruleConfig: '暑期停车享受8折优惠',
       operator: '管理员',
-      status: '启用',
-      createTime: '2024-06-01 00:00:00'
+      status: '启动',
+      createTime: '2024-06-01 00:00:00',
     },
     {
       activityId: 'ACT010',
@@ -817,8 +817,8 @@ export const activityDataList = () => {
       applyScopeName: '会员专享',
       ruleConfig: '每月15日会员日停车免费',
       operator: '管理员',
-      status: '启用',
-      createTime: '2024-01-01 00:00:00'
+      status: '启动',
+      createTime: '2024-01-01 00:00:00',
     },
     {
       activityId: 'ACT011',
@@ -832,9 +832,9 @@ export const activityDataList = () => {
       applyScopeName: '全部车场',
       ruleConfig: '秋季停车卡享受7折优惠',
       operator: '管理员',
-      status: '启用',
-      createTime: '2024-08-01 00:00:00'
-    }
+      status: '启动',
+      createTime: '2024-08-01 00:00:00',
+    },
   ];
 };
 
@@ -848,16 +848,16 @@ export function useActivityFormSchema() {
       componentProps: {
         placeholder: '请输入活动ID',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'activityName',
       label: '活动名称',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入活动名称'
+        placeholder: '请输入活动名称',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'activityTypeName',
@@ -873,10 +873,10 @@ export function useActivityFormSchema() {
           { label: '拉新活动', value: '拉新活动' },
           { label: '促销活动', value: '促销活动' },
           { label: '开业活动', value: '开业活动' },
-          { label: '季节性活动', value: '季节性活动' }
-        ]
+          { label: '季节性活动', value: '季节性活动' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'startTime',
@@ -885,9 +885,9 @@ export function useActivityFormSchema() {
       componentProps: {
         placeholder: '请选择开始时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'endTime',
@@ -896,9 +896,9 @@ export function useActivityFormSchema() {
       componentProps: {
         placeholder: '请选择结束时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'totalQuota',
@@ -906,9 +906,9 @@ export function useActivityFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入总名额',
-        min: 0
+        min: 0,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'remainingQuota',
@@ -916,8 +916,8 @@ export function useActivityFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入剩余名额',
-        min: 0
-      }
+        min: 0,
+      },
     },
     {
       fieldName: 'usedQuota',
@@ -925,8 +925,8 @@ export function useActivityFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入已使用名额',
-        min: 0
-      }
+        min: 0,
+      },
     },
     {
       fieldName: 'applyScopeName',
@@ -938,10 +938,10 @@ export function useActivityFormSchema() {
           { label: '全部车场', value: '全部车场' },
           { label: '指定车场', value: '指定车场' },
           { label: '会员专享', value: '会员专享' },
-          { label: '新用户', value: '新用户' }
-        ]
+          { label: '新用户', value: '新用户' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'ruleConfig',
@@ -950,17 +950,17 @@ export function useActivityFormSchema() {
       componentProps: {
         placeholder: '请输入活动规则',
         type: 'textarea',
-        rows: 3
+        rows: 3,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'operator',
       label: '操作人',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入操作人'
-      }
+        placeholder: '请输入操作人',
+      },
     },
     {
       fieldName: 'status',
@@ -969,11 +969,11 @@ export function useActivityFormSchema() {
       componentProps: {
         placeholder: '请选择状态',
         options: [
-          { label: '启用', value: '启用' },
-          { label: '禁用', value: '禁用' }
-        ]
+          { label: '启动', value: '启动' },
+          { label: '结束', value: '结束' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'createTime',
@@ -982,9 +982,9 @@ export function useActivityFormSchema() {
       componentProps: {
         placeholder: '请选择创建时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
-      }
-    }
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+    },
   ];
 }
 
@@ -997,87 +997,89 @@ export function useActivityGridColumns() {
       title: '活动ID',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'activityId' }
+      slots: { default: 'activityId' },
     },
     {
       field: 'activityName',
       title: '活动名称',
       minWidth: 150,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'activityTypeName',
       title: '活动类型',
       minWidth: 120,
-      sortable: true
+      sortable: true,
+      slots: { default: 'activityTypeName' },
     },
     {
       field: 'startTime',
       title: '开始时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'endTime',
       title: '结束时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'totalQuota',
       title: '总名额',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'remainingQuota',
       title: '剩余名额',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'usedQuota',
       title: '已使用名额',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'applyScopeName',
       title: '适用范围',
       minWidth: 120,
-      sortable: true
+      sortable: true,
+      slots: { default: 'applyScopeName' },
     },
     {
       field: 'ruleConfig',
       title: '活动规则',
       minWidth: 150,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'operator',
       title: '操作人',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'status',
       title: '状态',
       minWidth: 80,
       sortable: true,
-      slots: { default: 'status' }
+      slots: { default: 'status' },
     },
     {
       field: 'createTime',
       title: '创建时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       title: '操作',
-      width: 80,
+      width: 100,
       fixed: 'right',
-      slots: { default: 'actions' }
-    }
+      slots: { default: 'actions' },
+    },
   ];
 }
 
@@ -1086,7 +1088,7 @@ export const activityTextObj = {
   addText: '新增活动',
   excelName: '活动列表',
   excelAllName: '活动数据.xlsx',
-  total: ' 总计: 活动数量11; 启用状态10; 禁用状态1',
+  total: ' 总计: 活动数量11; 启动状态10; 结束状态1',
 };
 
 /** 活动详情抽屉字段配置 */
@@ -1103,7 +1105,7 @@ export const activityDetailFields = [
   { key: 'ruleConfig', label: '活动规则' },
   { key: 'operator', label: '操作人' },
   { key: 'status', label: '状态' },
-  { key: 'createTime', label: '创建时间' }
+  { key: 'createTime', label: '创建时间' },
 ];
 
 /** 详情抽屉字段配置 */
@@ -1128,5 +1130,171 @@ export const detailFields = [
   { key: 'createTime', label: '创建时间' },
   { key: 'arrearsUseRecord', label: '历史欠费使用记录' },
   { key: 'newUserRecord', label: '新用户赠券记录' },
-  { key: 'overlapStatus', label: '叠加使用状态' }
+  { key: 'overlapStatus', label: '叠加使用状态' },
 ];
+
+/**
+ * 根据类型获取统计数据
+ * @param {string} type - 类型：coupon（优惠券）或 activity（活动）
+ * @returns {Object} 统计数据对象
+ */
+export function getStatsDataByType(type) {
+  if (type === 'coupon') {
+    const coupons = dataList();
+    
+    // 总优惠券数
+    const totalCoupons = coupons.length;
+    
+    // 已发放数（领取次数总和）
+    const issuedCount = coupons.reduce((sum, coupon) => sum + parseInt(coupon.getCount || 0), 0);
+    
+    // 已使用数（使用次数总和）
+    const usedCount = coupons.reduce((sum, coupon) => sum + parseInt(coupon.useCount || 0), 0);
+    
+    // 优惠券类型占比
+    const typeMap = {};
+    coupons.forEach(coupon => {
+      const typeName = coupon.couponTypeName;
+      typeMap[typeName] = (typeMap[typeName] || 0) + 1;
+    });
+    const typeData = Object.entries(typeMap).map(([name, value]) => ({
+      name,
+      value
+    }));
+    
+    // 优惠券状态占比
+    const statusMap = {};
+    coupons.forEach(coupon => {
+      const statusName = coupon.couponStatusName;
+      statusMap[statusName] = (statusMap[statusName] || 0) + 1;
+    });
+    const statusData = Object.entries(statusMap).map(([name, value]) => ({
+      name,
+      value
+    }));
+    
+    // 优惠券领取次数对比
+    // 按优惠券名称排序并取前10个
+    const sortedCoupons = [...coupons].sort((a, b) => parseInt(b.getCount || 0) - parseInt(a.getCount || 0)).slice(0, 10);
+    const couponNames = sortedCoupons.map(coupon => coupon.couponName);
+    const getCountData = sortedCoupons.map(coupon => parseInt(coupon.getCount || 0));
+    
+    return {
+      cards: [
+        {
+          title: '总优惠券数',
+          value: totalCoupons,
+          color: '#4A90E2'
+        },
+        {
+          title: '已发放数',
+          value: issuedCount,
+          color: '#50E3C2'
+        },
+        {
+          title: '已使用数',
+          value: usedCount,
+          color: '#FF9F40'
+        }
+      ],
+      charts: [
+        {
+          title: '优惠券类型占比',
+          type: 'pie',
+          data: typeData
+        },
+        {
+          title: '优惠券状态占比',
+          type: 'pie',
+          data: statusData
+        },
+        {
+          title: '优惠券领取次数对比',
+          type: 'line',
+          xAxis: couponNames,
+          series: getCountData
+        }
+      ]
+    };
+  } else if (type === 'activity') {
+    const activities = activityDataList();
+    
+    // 总活动数
+    const totalActivities = activities.length;
+    
+    // 启动活动数
+    const startedActivities = activities.filter(activity => activity.status === '启动').length;
+    
+    // 结束活动数
+    const endedActivities = activities.filter(activity => activity.status === '结束').length;
+    
+    // 活动类型占比
+    const typeMap = {};
+    activities.forEach(activity => {
+      const typeName = activity.activityTypeName;
+      typeMap[typeName] = (typeMap[typeName] || 0) + 1;
+    });
+    const typeData = Object.entries(typeMap).map(([name, value]) => ({
+      name,
+      value
+    }));
+    
+    // 活动状态占比
+    const statusMap = {};
+    activities.forEach(activity => {
+      const statusName = activity.status;
+      statusMap[statusName] = (statusMap[statusName] || 0) + 1;
+    });
+    const statusData = Object.entries(statusMap).map(([name, value]) => ({
+      name,
+      value
+    }));
+    
+    // 活动名额使用情况（柱状图）
+    const activityNames = activities.map(activity => activity.activityName);
+    const usedQuotaData = activities.map(activity => parseInt(activity.usedQuota || 0));
+    
+    return {
+      cards: [
+        {
+          title: '总活动数',
+          value: totalActivities,
+          color: '#4A90E2'
+        },
+        {
+          title: '启动活动数',
+          value: startedActivities,
+          color: '#50E3C2'
+        },
+        {
+          title: '结束活动数',
+          value: endedActivities,
+          color: '#FF9F40'
+        }
+      ],
+      charts: [
+        {
+          title: '活动类型占比',
+          type: 'pie',
+          data: typeData
+        },
+        {
+          title: '活动状态占比',
+          type: 'pie',
+          data: statusData
+        },
+        {
+          title: '活动名额使用情况',
+          type: 'bar',
+          xAxis: activityNames,
+          series: usedQuotaData
+        }
+      ]
+    };
+  }
+  
+  return {
+    cards: [],
+    charts: []
+  };
+}

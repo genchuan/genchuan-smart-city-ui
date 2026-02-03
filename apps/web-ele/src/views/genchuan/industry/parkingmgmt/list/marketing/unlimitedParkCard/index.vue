@@ -5,7 +5,7 @@ import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
 
 import StatsVisualization from '#/components/stats/StatsVisualization.vue';
 
-import { getSubscriptionStatsData } from './table/data.js';
+import { getStatsDataByTabType } from './table/data.js';
 import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
@@ -27,29 +27,38 @@ const toggleStats = () => {
 
 const tabArray = ref([
   {
-    label: '期卡套餐信息',
+    label: '卡种配置',
     components: Table,
     showSecondary: true,
     secondShow: false,
   },
   {
-    label: '洗车卡套餐',
+    label: '畅停卡订单',
+    components: Table,
+    showSecondary: true,
+    secondShow: false,
+  },
+  {
+    label: '短信通知配置',
     components: Table,
     showSecondary: true,
     secondShow: false,
   },
 ]);
-const activeName = ref('期卡套餐信息');
+const activeName = ref('卡种配置');
 const secondShow = ref(false);
+
+// 当前选中的标签页
+const currentTab = ref('卡种配置');
 
 // 获取当前标签页的统计数据
 const statsData = computed(() => {
-  return getSubscriptionStatsData(activeName.value);
+  return getStatsDataByTabType(currentTab.value);
 });
 
-// 监听标签页切换
-const tabChange = (tabName) => {
-  activeName.value = tabName;
+const tabChange = (newTab) => {
+  activeName.value = newTab;
+  currentTab.value = newTab;
 };
 </script>
 <template>

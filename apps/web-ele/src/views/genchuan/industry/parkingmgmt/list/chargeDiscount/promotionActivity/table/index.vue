@@ -14,16 +14,16 @@ import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
 import {
-  dataList,
-  detailFields,
-  textObj,
-  useFormSchema,
-  useGridColumns,
   activityDataList,
   activityDetailFields,
   activityTextObj,
+  dataList,
+  detailFields,
+  textObj,
   useActivityFormSchema,
-  useActivityGridColumns
+  useActivityGridColumns,
+  useFormSchema,
+  useGridColumns,
 } from './data';
 
 const props = defineProps({
@@ -33,13 +33,23 @@ const props = defineProps({
   },
   type: {
     type: String,
-    default: 'coupon'
+    default: 'coupon',
+  },
+  showStats: {
+    type: Boolean,
+    default: false,
+  },
+  toggleStats: {
+    type: Function,
+    default: () => {},
   },
 });
 const getTitle = computed(() => {
   const currentTextObj = props.type === 'activity' ? activityTextObj : textObj;
   const idField = props.type === 'activity' ? 'activityId' : 'couponId';
-  return formData.value?.[idField] ? currentTextObj.editText : currentTextObj.addText;
+  return formData.value?.[idField]
+    ? currentTextObj.editText
+    : currentTextObj.addText;
 });
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -60,7 +70,7 @@ const [Form, formApi] = useVbenForm({
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
-    labelWidth: 110,
+    labelWidth: 120,
   },
   layout: 'horizontal',
   schema: props.type === 'activity' ? useActivityFormSchema() : useFormSchema(),
@@ -74,7 +84,8 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
   onConfirm() {
     const obj = formApi.form.values;
-    const currentTextObj = props.type === 'activity' ? activityTextObj : textObj;
+    const currentTextObj =
+      props.type === 'activity' ? activityTextObj : textObj;
     const idField = props.type === 'activity' ? 'activityId' : 'couponId';
 
     if (formDrawerApi.sharedData.payload.title === currentTextObj.addText) {
@@ -113,10 +124,10 @@ const issueFormSchema = [
       options: [
         { label: '手动发放', value: 'manual' },
         { label: '自动发放', value: 'auto' },
-        { label: '批量发放', value: 'batch' }
-      ]
+        { label: '批量发放', value: 'batch' },
+      ],
     },
-    rules: 'required'
+    rules: 'required',
   },
   {
     fieldName: 'issueScope',
@@ -128,10 +139,10 @@ const issueFormSchema = [
         { label: '全部用户', value: 'all' },
         { label: '新用户', value: 'new' },
         { label: '老用户', value: 'old' },
-        { label: '指定用户', value: 'specific' }
-      ]
-    }
-  }
+        { label: '指定用户', value: 'specific' },
+      ],
+    },
+  },
 ];
 
 const issueFormData = ref();
@@ -179,9 +190,30 @@ function handleIssue(row) {
     .setData({
       title: `发放优惠券 - ${row.couponName}`,
       couponId: row.couponId,
-      couponName: row.couponName
+      couponName: row.couponName,
     })
     .open();
+}
+
+// 处理活动状态切换
+async function handleToggleStatus(row) {
+  const newStatus = row.status === '启动' ? '结束' : '启动';
+  const confirmMessage = `确定要${newStatus === '启动' ? '启动' : '结束'}活动「${row.activityName}」吗？`;
+
+  try {
+    await confirm(confirmMessage);
+
+    // 查找并更新活动状态
+    const index = dataObj.apilist.findIndex(item => item.activityId === row.activityId);
+    if (index !== -1) {
+      dataObj.apilist[index].status = newStatus;
+      ElMessage.success(`${newStatus === '启动' ? '启动' : '结束'}活动成功`);
+      // 刷新表格
+      handleRefresh();
+    }
+  } catch (error) {
+    // 用户取消操作
+  }
 }
 
 /** 刷新表格 */
@@ -192,7 +224,11 @@ function handleRefresh() {
 /** 导出表格 */
 async function handleExport() {
   const currentTextObj = props.type === 'activity' ? activityTextObj : textObj;
-  exportToExcel(dataObj.apilist, currentTextObj.excelName, currentTextObj.excelAllName);
+  exportToExcel(
+    dataObj.apilist,
+    currentTextObj.excelName,
+    currentTextObj.excelAllName,
+  );
 }
 
 /** 创建活动/优惠券 */
@@ -261,6 +297,7 @@ const dataObj = reactive({
   pageSize: 10,
   apilist: props.type === 'activity' ? activityDataList() : dataList(),
   list: [],
+  searchParams: {},
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -274,30 +311,69 @@ const getTableData = (pageObj) => {
   const filteredList = dataObj.apilist.filter((v) => {
     // 状态筛选
     let statusMatch = true;
+    // 根据当前类型使用不同的状态字段
+    const statusField = props.type === 'activity' ? 'status' : 'couponStatusName';
     switch (activeName.value) {
+      case '启动': {
+        statusMatch = v[statusField] === '启动';
+        break;
+      }
+      case '结束': {
+        statusMatch = v[statusField] === '结束';
+        break;
+      }
       case '启用': {
-        statusMatch = v.couponStatusName === '启用';
+        statusMatch = v[statusField] === '启用';
         break;
       }
       case '禁用': {
-        statusMatch = v.couponStatusName === '禁用';
+        statusMatch = v[statusField] === '禁用';
         break;
       }
     }
 
     // 优惠券码筛选
-    const couponCodeMatch = !filterCouponCode.value || v.couponCode === filterCouponCode.value;
+    const couponCodeMatch =
+      !filterCouponCode.value || v.couponCode === filterCouponCode.value;
 
     // 优惠券类型筛选
-    const couponTypeNameMatch = !filterCouponTypeName.value || v.couponTypeName === filterCouponTypeName.value;
+    const couponTypeNameMatch =
+      !filterCouponTypeName.value ||
+      v.couponTypeName === filterCouponTypeName.value;
 
     // 适用范围筛选
-    const applyScopeNameMatch = !filterApplyScopeName.value || v.applyScopeName === filterApplyScopeName.value;
+    const applyScopeNameMatch =
+      !filterApplyScopeName.value ||
+      v.applyScopeName === filterApplyScopeName.value;
 
     // 适用场景筛选
-    const couponSceneNameMatch = !filterCouponSceneName.value || v.couponSceneName === filterCouponSceneName.value;
+    const couponSceneNameMatch =
+      !filterCouponSceneName.value ||
+      v.couponSceneName === filterCouponSceneName.value;
 
-    return statusMatch && couponCodeMatch && couponTypeNameMatch && applyScopeNameMatch && couponSceneNameMatch;
+    // 活动类型筛选
+    const activityTypeNameMatch =
+      !filterActivityTypeName.value ||
+      v.activityTypeName === filterActivityTypeName.value;
+
+    // 搜索条件筛选
+    let searchMatch = true;
+    Object.keys(dataObj.searchParams).forEach((key) => {
+      const value = dataObj.searchParams[key];
+      if (value) {
+        searchMatch = searchMatch && (v[key]?.toString().includes(value) || false);
+      }
+    });
+
+    return (
+      statusMatch &&
+      couponCodeMatch &&
+      couponTypeNameMatch &&
+      applyScopeNameMatch &&
+      couponSceneNameMatch &&
+      activityTypeNameMatch &&
+      searchMatch
+    );
   });
 
   dataObj.total = filteredList.length;
@@ -318,14 +394,14 @@ const [QueryForm] = useVbenForm({
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
-    labelWidth: 100,
+    labelWidth: 120,
   },
   // 提交函数
   handleSubmit: onSubmit,
   // 垂直布局，label和input在不同行，值为vertical
   // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
+  schema: (props.type === 'activity' ? useActivityFormSchema() : useFormSchema()).map((v) => {
     delete v.rules;
     return {
       ...v,
@@ -339,13 +415,19 @@ const [QueryForm] = useVbenForm({
 });
 
 // 搜索表单查询
-function onSubmit() {
+function onSubmit(values) {
+  // 处理搜索数据
+  dataObj.searchParams = values;
+  // 触发表格重新查询
+  handleRefresh();
+  // 关闭抽屉
   drawerApi.close();
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    columns: props.type === 'activity' ? useActivityGridColumns() : useGridColumns(),
+    columns:
+      props.type === 'activity' ? useActivityGridColumns() : useGridColumns(),
     keepSource: true,
     proxyConfig: {
       ajax: {
@@ -378,6 +460,7 @@ const filterCouponCode = ref(''); // 优惠券码筛选
 const filterCouponTypeName = ref(''); // 优惠券类型筛选
 const filterApplyScopeName = ref(''); // 适用范围筛选
 const filterCouponSceneName = ref(''); // 适用场景筛选
+const filterActivityTypeName = ref(''); // 活动类型筛选
 
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
@@ -386,7 +469,8 @@ const handleOpenDetail = (row) => {
 
 // 处理优惠券码点击
 const handleCouponCodeClick = (couponCode) => {
-  filterCouponCode.value = filterCouponCode.value === couponCode ? '' : couponCode;
+  filterCouponCode.value =
+    filterCouponCode.value === couponCode ? '' : couponCode;
   gridApi.query();
 };
 /** 取消优惠券码筛选 */
@@ -397,7 +481,8 @@ const handleCancelCouponCodeFilter = () => {
 
 // 处理优惠券类型点击
 const handleCouponTypeNameClick = (couponTypeName) => {
-  filterCouponTypeName.value = filterCouponTypeName.value === couponTypeName ? '' : couponTypeName;
+  filterCouponTypeName.value =
+    filterCouponTypeName.value === couponTypeName ? '' : couponTypeName;
   gridApi.query();
 };
 /** 取消优惠券类型筛选 */
@@ -408,7 +493,8 @@ const handleCancelCouponTypeNameFilter = () => {
 
 // 处理适用范围点击
 const handleApplyScopeNameClick = (applyScopeName) => {
-  filterApplyScopeName.value = filterApplyScopeName.value === applyScopeName ? '' : applyScopeName;
+  filterApplyScopeName.value =
+    filterApplyScopeName.value === applyScopeName ? '' : applyScopeName;
   gridApi.query();
 };
 /** 取消适用范围筛选 */
@@ -419,7 +505,8 @@ const handleCancelApplyScopeNameFilter = () => {
 
 // 处理适用场景点击
 const handleCouponSceneNameClick = (couponSceneName) => {
-  filterCouponSceneName.value = filterCouponSceneName.value === couponSceneName ? '' : couponSceneName;
+  filterCouponSceneName.value =
+    filterCouponSceneName.value === couponSceneName ? '' : couponSceneName;
   gridApi.query();
 };
 /** 取消适用场景筛选 */
@@ -428,8 +515,26 @@ const handleCancelCouponSceneNameFilter = () => {
   gridApi.query();
 };
 
-// 修改tabsData为三个标签：全部、启用、禁用
-const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用' }]);
+// 处理活动类型点击
+const handleActivityTypeNameClick = (activityTypeName) => {
+  filterActivityTypeName.value =
+    filterActivityTypeName.value === activityTypeName ? '' : activityTypeName;
+  gridApi.query();
+};
+/** 取消活动类型筛选 */
+const handleCancelActivityTypeNameFilter = () => {
+  filterActivityTypeName.value = '';
+  gridApi.query();
+};
+
+// 修改tabsData为三个标签：全部、启用/启动、禁用/结束
+const tabsData = computed(() => {
+  if (props.type === 'activity') {
+    return [{ label: '全部' }, { label: '启动' }, { label: '结束' }];
+  } else {
+    return [{ label: '全部' }, { label: '启用' }, { label: '禁用' }];
+  }
+});
 
 // 创建标签文本，显示数量统计
 const createLabel = (item) => {
@@ -441,18 +546,24 @@ const createLabel = (item) => {
 
       break;
     }
-    case '启用': {
-      // 统计couponStatusName为'启用'的数据
+    case '启用':
+    case '启动': {
+      // 根据当前类型使用不同的状态字段和值
+      const statusField = props.type === 'activity' ? 'status' : 'couponStatusName';
+      const statusValue = props.type === 'activity' ? '启动' : '启用';
       count = dataObj.apilist.filter(
-        (v) => v.couponStatusName === '启用',
+        (v) => v[statusField] === statusValue,
       ).length;
 
       break;
     }
-    case '禁用': {
-      // 统计couponStatusName为'禁用'的数据
+    case '禁用':
+    case '结束': {
+      // 根据当前类型使用不同的状态字段和值
+      const statusField = props.type === 'activity' ? 'status' : 'couponStatusName';
+      const statusValue = props.type === 'activity' ? '结束' : '禁用';
       count = dataObj.apilist.filter(
-        (v) => v.couponStatusName === '禁用',
+        (v) => v[statusField] === statusValue,
       ).length;
 
       break;
@@ -482,12 +593,19 @@ const handleFullShow = () => {
     <!--   详情抽屉-->
     <DetailDrawer
       ref="detailDrawerRef"
-      :title="props.type === 'activity' ? `${dataObj.detailObj.activityName}详情` : `${dataObj.detailObj.couponName}详情`"
+      :title="
+        props.type === 'activity'
+          ? `${dataObj.detailObj.activityName}详情`
+          : `${dataObj.detailObj.couponName}详情`
+      "
       :data="dataObj.detailObj"
       :fields="props.type === 'activity' ? activityDetailFields : detailFields"
     />
     <!--   发放抽屉（仅优惠券管理显示）-->
-    <IssueDrawer v-if="props.type === 'coupon'" :title="issueDrawerApi.sharedData.payload?.title || '发放优惠券'">
+    <IssueDrawer
+      v-if="props.type === 'coupon'"
+      :title="issueDrawerApi.sharedData.payload?.title || '发放优惠券'"
+    >
       <IssueForm />
     </IssueDrawer>
     <Drawer title="搜索">
@@ -496,7 +614,10 @@ const handleFullShow = () => {
     <Grid>
       <!-- 三级状态 -->
       <template #table-title>
-        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
+        >
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -551,6 +672,16 @@ const handleFullShow = () => {
           >
             适用场景：{{ filterCouponSceneName }}
           </el-tag>
+          <!-- 活动类型筛选标签 -->
+          <el-tag
+            v-if="filterActivityTypeName"
+            type="success"
+            closable
+            @close="handleCancelActivityTypeNameFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            活动类型：{{ filterActivityTypeName }}
+          </el-tag>
         </div>
       </template>
       <template #toolbar-tools>
@@ -572,6 +703,11 @@ const handleFullShow = () => {
             content="搜索"
             icon-name="search"
             @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
           />
           <IconButton
             content="全屏"
@@ -634,6 +770,15 @@ const handleFullShow = () => {
           {{ row.couponSceneName }}
         </el-text>
       </template>
+      <template #activityTypeName="{ row }">
+        <el-text
+          @click="handleActivityTypeNameClick(row.activityTypeName)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.activityTypeName }}
+        </el-text>
+      </template>
       <template #couponStatusName="{ row }">
         <el-tag
           :type="row.couponStatusName === '启用' ? 'success' : 'danger'"
@@ -644,7 +789,7 @@ const handleFullShow = () => {
       </template>
       <template #status="{ row }">
         <el-tag
-          :type="row.status === '启用' ? 'success' : 'danger'"
+          :type="row.status === '启动' ? 'success' : 'danger'"
           size="small"
         >
           {{ row.status }}
@@ -668,6 +813,12 @@ const handleFullShow = () => {
             icon-name="Promotion"
             @click="handleIssue(row)"
           />
+          <IconButton
+            v-if="props.type === 'activity'"
+            :content="row.status === '启动' ? '结束' : '启动'"
+            icon-name="SwitchButton"
+            @click="handleToggleStatus(row)"
+          />
           <!-- <IconButton
             content="删除"
             icon-name="delete"
@@ -685,13 +836,33 @@ const handleFullShow = () => {
             <ArrowUp />
           </el-icon>
           <span>
-            本页统计：{{ props.type === 'activity' ? '活动数量' : '优惠券数量' }}: {{ dataObj.total }};
-            启用: {{ dataObj.apilist.filter((v) => (props.type === 'activity' ? v.status : v.couponStatusName) === '启用').length }};
-            禁用: {{ dataObj.apilist.filter((v) => (props.type === 'activity' ? v.status : v.couponStatusName) === '禁用').length }}
+            本页统计：{{
+              props.type === 'activity' ? '活动数量' : '优惠券数量'
+            }}: {{ dataObj.total }}; {{ props.type === 'activity' ? '启动' : '启用' }}:
+            {{
+              dataObj.apilist.filter(
+                (v) =>
+                  (props.type === 'activity'
+                    ? v.status === '启动'
+                    : v.couponStatusName === '启用'),
+              ).length
+            }}; {{ props.type === 'activity' ? '结束' : '禁用' }}:
+            {{
+              dataObj.apilist.filter(
+                (v) =>
+                  (props.type === 'activity'
+                    ? v.status === '结束'
+                    : v.couponStatusName === '禁用'),
+              ).length
+            }}
           </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span> 全部统计：{{ props.type === 'activity' ? activityTextObj.total : textObj.total }} </span>
+          <span>
+            全部统计：{{
+              props.type === 'activity' ? activityTextObj.total : textObj.total
+            }}
+          </span>
         </div>
       </template>
     </Grid>
