@@ -1,20 +1,40 @@
 <script setup lang="ts">
-import { nextTick, onMounted, onUnmounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { Filter, FullScreen } from '@element-plus/icons-vue';
-import { ElButton, ElMessage, ElTable, ElTableColumn, ElTag } from 'element-plus';
+import {getCurrentInstance, nextTick, onMounted, onUnmounted, ref} from 'vue';
+import {useRouter} from 'vue-router';
+import {Filter, FullScreen} from '@element-plus/icons-vue';
+import {ElButton, ElMessage, ElTable, ElTableColumn, ElTag} from 'element-plus';
 import screenFull from 'screenfull';
 
 import {
-  fetchCoopAreaCount, fetchCoopAreaRatio, fetchCoopCoreIndicators, fetchCoopEfficiencyAreaCount,
-  fetchCoopEfficiencyIndicators, fetchCoopEfficiencyList, fetchCoopEfficiencyRecurrenceRatio,
-  fetchCoopEfficiencyTrendData, fetchCoopEfficiencyTypeCount, fetchCoopIndustryRatio,
-  fetchCoopItemTypeRatio, fetchCoopTrendData, fetchCoopTypeCount, fetchCrossRegionAreaCount,
-  fetchCrossRegionCoopIndicators, fetchCrossRegionCoopList, fetchCrossRegionRateTrendData,
-  fetchCrossRegionTaskTypeCount, fetchEnterpriseTypeCoopCount, fetchGovDeptCoopCount,
-  fetchGovEnterpriseCoopIndicators, fetchGovEnterpriseCoopList, fetchHighFrequencyCoopTop10,
-  fetchSatisfactionLevelRatio, fetchSpecialCoopDeptCount, fetchSpecialCoopIndicators,
-  fetchSpecialCoopList, fetchSpecialCoopSceneCount, fetchSpecialCoopSceneRatio,
+  fetchCoopAreaCount,
+  fetchCoopAreaRatio,
+  fetchCoopCoreIndicators,
+  fetchCoopEfficiencyAreaCount,
+  fetchCoopEfficiencyIndicators,
+  fetchCoopEfficiencyList,
+  fetchCoopEfficiencyRecurrenceRatio,
+  fetchCoopEfficiencyTrendData,
+  fetchCoopEfficiencyTypeCount,
+  fetchCoopIndustryRatio,
+  fetchCoopItemTypeRatio,
+  fetchCoopTrendData,
+  fetchCoopTypeCount,
+  fetchCrossRegionAreaCount,
+  fetchCrossRegionCoopIndicators,
+  fetchCrossRegionCoopList,
+  fetchCrossRegionRateTrendData,
+  fetchCrossRegionTaskTypeCount,
+  fetchEnterpriseTypeCoopCount,
+  fetchGovDeptCoopCount,
+  fetchGovEnterpriseCoopIndicators,
+  fetchGovEnterpriseCoopList,
+  fetchHighFrequencyCoopTop10,
+  fetchSatisfactionLevelRatio,
+  fetchSpecialCoopDeptCount,
+  fetchSpecialCoopIndicators,
+  fetchSpecialCoopList,
+  fetchSpecialCoopSceneCount,
+  fetchSpecialCoopSceneRatio,
   fetchSpecialCoopStatusRatio
 } from '#/api/genchuan/industry/parkingmgmt/overview/SynergyLinkage.ts';
 
@@ -25,10 +45,121 @@ import ChartPie4 from '#/views/genchuan/industry/templatesstatchart/ChartPie4.vu
 import VerticalBar1 from '#/views/genchuan/industry/templatesstatchart/VerticalBar1.vue';
 import VerticalBar2 from '#/views/genchuan/industry/templatesstatchart/VerticalBar2.vue';
 
+const pageContainerRef = ref<HTMLElement | null>(null);
+const router = useRouter();
+const instance = getCurrentInstance();
+const currentFullscreenPanel = ref<HTMLElement | null>(null);
+
+// 标签页激活状态
 const topLeftActiveTab = ref('tab1');
 
-const crossRegionCoopPanelRef = ref<HTMLElement | null>(null);
-const crossRegionCoopCurrentFullscreenPanel = ref<HTMLElement | null>(null);
+// 数字滚动动画方法
+const animateValue = (element, start, end, duration) => {
+  let startTimestamp = null;
+  const isInteger = Number.isInteger(end);
+  const step = (timestamp) => {
+    if (!startTimestamp) startTimestamp = timestamp;
+    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+    const currentValue = progress * (end - start) + start;
+    element.textContent = isInteger ? currentValue.toFixed(0) : currentValue.toFixed(1);
+    if (progress < 1) window.requestAnimationFrame(step);
+  };
+  window.requestAnimationFrame(step);
+};
+const initCrossRegionCoopNumberAnimations = () => {
+  const elements = document.querySelectorAll('.cross-region-coop-number-animate');
+  elements.forEach((el) => {
+    const value = Number.parseFloat(el.dataset.value);
+    animateValue(el, 0, value, 1500);
+  });
+};
+const initGovCoopNumberAnimations = () => {
+  const elements = document.querySelectorAll('.gov-coop-number-animate');
+  elements.forEach((el) => {
+    const value = Number.parseFloat(el.dataset.value);
+    animateValue(el, 0, value, 1500);
+  });
+};
+const initSpecialCoopNumberAnimations = () => {
+  const elements = document.querySelectorAll('.special-coop-number-animate');
+  elements.forEach((el) => {
+    const value = Number.parseFloat(el.dataset.value);
+    animateValue(el, 0, value, 1500);
+  });
+};
+const initCoopAnalysisNumberAnimations = () => {
+  const elements = document.querySelectorAll('.coop-analysis-number-animate');
+  elements.forEach((el) => {
+    const value = Number.parseFloat(el.dataset.value);
+    animateValue(el, 0, value, 1500);
+  });
+};
+const initCoopEfficiencyNumberAnimations = () => {
+  const elements = document.querySelectorAll('.coop-efficiency-number-animate');
+  elements.forEach((el) => {
+    const value = Number.parseFloat(el.dataset.value);
+    animateValue(el, 0, value, 1500);
+  });
+};
+
+// 时间戳格式化方法
+const formatNumber = (num: number) => {
+  return num.toString().replaceAll(/\B(?=(\d{3})+(?!\d))/g, ',');
+};
+const formatCompleteRate = (rate: number) => {
+  return `${(rate * 100).toFixed(1)}%`;
+};
+const formatSpecialCoopTimeStamp = (timeStamp: any) => {
+  if (!timeStamp) return '-';
+  const date = new Date(Number(timeStamp));
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// 全屏方法
+const togglePanelFullscreen = (panelRefName: string) => {
+  if (!screenFull.isEnabled) {
+    ElMessage.warning('您的浏览器不支持全屏功能');
+    return;
+  }
+  const panel = instance?.refs[panelRefName];
+  if (!panel) {
+    ElMessage.error('未找到面板元素');
+    return;
+  }
+  if (screenFull.isFullscreen && document.fullscreenElement === panel) {
+    screenFull.exit();
+  } else {
+    screenFull.request(panel);
+  }
+  currentFullscreenPanel.value = panel as HTMLElement;
+};
+const handleFullscreenChange = () => {
+  if (!currentFullscreenPanel.value) return;
+  if (screenFull.isFullscreen) {
+    setTimeout(() => {
+      crossRegionCoopChartRefreshKey.value++;
+      coopAnalysisChartRefreshKey.value++;
+      govCoopChartRefreshKey.value++;
+      specialCoopChartRefreshKey.value++;
+      coopEfficiencyChartRefreshKey.value++;
+    }, 300);
+  }
+  else {
+    currentFullscreenPanel.value.style = '';
+    nextTick(() => {
+      crossRegionCoopChartRefreshKey.value++;
+      coopAnalysisChartRefreshKey.value++;
+      govCoopChartRefreshKey.value++;
+      specialCoopChartRefreshKey.value++;
+      coopEfficiencyChartRefreshKey.value++;
+    });
+    currentFullscreenPanel.value = null;
+  }
+};
+
 const crossRegionCoopList = ref<any[]>([]);
 const crossRegionCoopIndicators = ref({ totalCount: 0, completeRate: 0, avgCoopDuration: 0 });
 const crossRegionCoopAreaData = ref({ xAxis: [], series: [] });
@@ -37,11 +168,9 @@ const crossRegionCoopTrendData = ref({ xAxis: [], series: [] });
 const crossRegionCoopBaseFontScale = ref(1);
 const crossRegionCoopActiveIndices = ref([]);
 const crossRegionCoopChartRefreshKey = ref(0);
-const activeCrossRegionCoopView = ref('列表');
+const activeCrossRegionCoopView = ref('柱状图');
 const crossRegionCoopViewBtnList = ref(['卡片', '柱状图', '折线图', '列表']);
 
-const coopAnalysisPanelRef = ref<HTMLElement | null>(null);
-const coopAnalysisCurrentFullscreenPanel = ref<HTMLElement | null>(null);
 const highFreqCoopTop10List = ref<any[]>([]);
 const coopAnalysisIndicators = ref({ totalCoopCount: 0, avgHandleCycle: 0, finishRate: 0, highPriorityRate: 0 });
 const coopAnalysisTypeData = ref({ xAxis: [], series: [] });
@@ -55,10 +184,6 @@ const coopAnalysisChartRefreshKey = ref(0);
 const activeCoopAnalysisView = ref('列表');
 const coopAnalysisViewBtnList = ref(['卡片', '柱状图', '饼图', '折线图', '列表']);
 
-const pageContainerRef = ref<HTMLElement | null>(null);
-const govCoopPanelRef = ref<HTMLElement | null>(null);
-const govCoopCurrentFullscreenPanel = ref<HTMLElement | null>(null);
-const router = useRouter();
 const govCoopList = ref<any[]>([]);
 const govCoopIndicators = ref({ totalCount: 0, responseRate: 0, satisfactionRate: 0 });
 const govCoopDeptData = ref({ xAxis: [], series: [] });
@@ -68,13 +193,11 @@ const govCoopSatisfactionRatioData = ref({ legend: [], series: [] });
 const govCoopBaseFontScale = ref(1);
 const govCoopActiveIndices = ref([]);
 const govCoopChartRefreshKey = ref(0);
-const activeGovCoopView = ref('卡片');
+const activeGovCoopView = ref('饼图');
 const govCoopViewBtnList = ref(['卡片', '柱状图', '饼图', '列表']);
 const govCoopDetailDialogVisible = ref(false);
 const govCoopSelectedRow = ref<any>({});
 
-const specialCoopPanelRef = ref<HTMLElement | null>(null);
-const specialCoopCurrentFullscreenPanel = ref<HTMLElement | null>(null);
 const specialCoopList = ref<any[]>([]);
 const specialCoopIndicators = ref({ totalCount: 0, completeRate: 0, averageCycle: 0 });
 const specialCoopSceneData = ref({ xAxis: [], series: [] });
@@ -84,11 +207,9 @@ const specialCoopStatusRatioData = ref({ legend: [], series: [] });
 const specialCoopBaseFontScale = ref(1);
 const specialCoopActiveIndices = ref([]);
 const specialCoopChartRefreshKey = ref(0);
-const activeSpecialCoopView = ref('列表');
+const activeSpecialCoopView = ref('卡片');
 const specialCoopViewBtnList = ref(['卡片', '柱状图', '饼图', '列表']);
 
-const coopEfficiencyPanelRef = ref<HTMLElement | null>(null);
-const coopEfficiencyCurrentFullscreenPanel = ref<HTMLElement | null>(null);
 const coopEfficiencyList = ref<any[]>([]);
 const coopEfficiencyIndicators = ref({ avgResponseDuration: 0, avgDisposalDuration: 0, avgEffectAchievementRate: 0 });
 const coopEfficiencyTypeData = ref({ xAxis: [], series: [] });
@@ -98,9 +219,271 @@ const coopEfficiencyTrendData = ref({ xAxis: [], series: [] });
 const coopEfficiencyBaseFontScale = ref(1);
 const coopEfficiencyActiveIndices = ref([]);
 const coopEfficiencyChartRefreshKey = ref(0);
-const activeCoopEfficiencyView = ref('卡片');
+const activeCoopEfficiencyView = ref('折线图');
 const coopEfficiencyViewBtnList = ref(['卡片', '柱状图', '饼图', '折线图', '列表']);
 
+
+// 区域协同接口请求方法
+const getCrossRegionCoopListData = async () => {
+  try {
+    crossRegionCoopList.value = await fetchCrossRegionCoopList();
+  } catch {
+    ElMessage.error('跨区域协同数据加载失败');
+    crossRegionCoopList.value = [];
+  }
+};
+const getCrossRegionCoopIndicatorData = async () => {
+  try {
+    crossRegionCoopIndicators.value = await fetchCrossRegionCoopIndicators();
+    nextTick(() => initCrossRegionCoopNumberAnimations());
+  } catch {
+    crossRegionCoopIndicators.value = { totalCount: 0, completeRate: 0, avgCoopDuration: 0 };
+  }
+};
+const getCrossRegionCoopAreaCountData = async () => {
+  try {
+    crossRegionCoopAreaData.value = await fetchCrossRegionAreaCount();
+  } catch {
+    crossRegionCoopAreaData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
+  }
+};
+const getCrossRegionCoopTaskTypeCountData = async () => {
+  try {
+    crossRegionCoopTaskTypeData.value = await fetchCrossRegionTaskTypeCount();
+  } catch {
+    crossRegionCoopTaskTypeData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
+  }
+};
+const getCrossRegionCoopTrendData = async () => {
+  try {
+    crossRegionCoopTrendData.value = await fetchCrossRegionRateTrendData();
+  } catch {
+    crossRegionCoopTrendData.value = { xAxis: [], series: [{ name: '协同完成率(%)', data: [] }] };
+  }
+};
+
+// 协同统计分析接口请求方法
+const getHighFreqCoopTop10Data = async () => {
+  try {
+    highFreqCoopTop10List.value = await fetchHighFrequencyCoopTop10();
+  } catch {
+    ElMessage.error('高频协同事项TOP10数据加载失败');
+    highFreqCoopTop10List.value = [];
+  }
+};
+const getCoopAnalysisIndicatorData = async () => {
+  try {
+    coopAnalysisIndicators.value = await fetchCoopCoreIndicators();
+    nextTick(() => initCoopAnalysisNumberAnimations());
+  } catch {
+    coopAnalysisIndicators.value = { totalCoopCount: 0, avgHandleCycle: 0, finishRate: 0, highPriorityRate: 0 };
+  }
+};
+const getCoopAnalysisTypeCountData = async () => {
+  try {
+    coopAnalysisTypeData.value = await fetchCoopTypeCount();
+  } catch {
+    coopAnalysisTypeData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
+  }
+};
+const getCoopAnalysisAreaCountData = async () => {
+  try {
+    coopAnalysisAreaData.value = await fetchCoopAreaCount();
+  } catch {
+    coopAnalysisAreaData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
+  }
+};
+const getCoopAnalysisIndustryRatioData = async () => {
+  try {
+    coopAnalysisIndustryRatioData.value = await fetchCoopIndustryRatio();
+  } catch {
+    coopAnalysisIndustryRatioData.value = { legend: [], series: [{ name: '行业协同占比', data: [] }] };
+  }
+};
+const getCoopAnalysisAreaRatioData = async () => {
+  try {
+    coopAnalysisAreaRatioData.value = await fetchCoopAreaRatio();
+  } catch {
+    coopAnalysisAreaRatioData.value = { legend: [], series: [{ name: '区域协同占比', data: [] }] };
+  }
+};
+const getCoopAnalysisTrendData = async () => {
+  try {
+    coopAnalysisTrendData.value = await fetchCoopTrendData();
+  } catch {
+    coopAnalysisTrendData.value = { xAxis: [], series: [{ name: '协同事件数', data: [] }] };
+  }
+};
+
+// 协同效率评估接口请求方法
+const getCoopEfficiencyListData = async () => {
+  try {
+    coopEfficiencyList.value = await fetchCoopEfficiencyList();
+  } catch {
+    ElMessage.error('协同效率评估数据加载失败');
+    coopEfficiencyList.value = [];
+  }
+};
+const getCoopEfficiencyIndicatorData = async () => {
+  try {
+    coopEfficiencyIndicators.value = await fetchCoopEfficiencyIndicators();
+    nextTick(() => initCoopEfficiencyNumberAnimations());
+  } catch {
+    coopEfficiencyIndicators.value = { avgResponseDuration: 0, avgDisposalDuration: 0, avgEffectAchievementRate: 0 };
+  }
+};
+const getCoopEfficiencyTypeCountData = async () => {
+  try {
+    coopEfficiencyTypeData.value = await fetchCoopEfficiencyTypeCount();
+  } catch {
+    coopEfficiencyTypeData.value = { xAxis: [], series: [{ name: '平均处置时长(小时)', data: [] }] };
+  }
+};
+const getCoopEfficiencyAreaCountData = async () => {
+  try {
+    coopEfficiencyAreaData.value = await fetchCoopEfficiencyAreaCount();
+  } catch {
+    coopEfficiencyAreaData.value = { xAxis: [], series: [{ name: '平均响应时长(小时)', data: [] }] };
+  }
+};
+const getCoopEfficiencyRecurrenceRatioData = async () => {
+  try {
+    coopEfficiencyRecurrenceRatioData.value = await fetchCoopEfficiencyRecurrenceRatio();
+  } catch {
+    coopEfficiencyRecurrenceRatioData.value = { legend: [], series: [{ name: '问题复发率占比', data: [] }] };
+  }
+};
+const getCoopEfficiencyTrendData = async () => {
+  try {
+    coopEfficiencyTrendData.value = await fetchCoopEfficiencyTrendData();
+  } catch {
+    coopEfficiencyTrendData.value = { xAxis: [], series: [{ name: '综合效率评分', data: [] }] };
+  }
+};
+const getCoopTypeTagType = (val: string) => {
+  switch (val) {
+    case 'high': return 'danger';
+    case 'low': return 'success';
+    case 'medium': return 'warning';
+    default: return '';
+  }
+};
+const getCoopTypeName = (val: string) => {
+  switch (val) {
+    case 'high': return '高优先级';
+    case 'low': return '低优先级';
+    case 'medium': return '中优先级';
+    default: return '未知类型';
+  }
+};
+
+// 政企协同视图接口请求方法
+const getGovCoopListData = async () => {
+  try {
+    govCoopList.value = await fetchGovEnterpriseCoopList();
+  } catch {
+    ElMessage.error('政企协同数据加载失败');
+    govCoopList.value = [];
+  }
+};
+const getGovCoopIndicatorData = async () => {
+  try {
+    govCoopIndicators.value = await fetchGovEnterpriseCoopIndicators();
+    nextTick(() => initGovCoopNumberAnimations());
+  } catch {
+    govCoopIndicators.value = { totalCount: 0, responseRate: 0, satisfactionRate: 0 };
+  }
+};
+const getGovCoopDeptCountData = async () => {
+  try {
+    govCoopDeptData.value = await fetchGovDeptCoopCount();
+  } catch {
+    govCoopDeptData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
+  }
+};
+const getGovCoopEntTypeCountData = async () => {
+  try {
+    govCoopEntTypeData.value = await fetchEnterpriseTypeCoopCount();
+  } catch {
+    govCoopEntTypeData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
+  }
+};
+const getGovCoopItemRatioData = async () => {
+  try {
+    govCoopItemRatioData.value = await fetchCoopItemTypeRatio();
+  } catch {
+    govCoopItemRatioData.value = { legend: [], series: [{ name: '协同事项占比', data: [] }] };
+  }
+};
+const getGovCoopSatisfactionRatioData = async () => {
+  try {
+    govCoopSatisfactionRatioData.value = await fetchSatisfactionLevelRatio();
+  } catch {
+    govCoopSatisfactionRatioData.value = { legend: [], series: [{ name: '满意度占比', data: [] }] };
+  }
+};
+const getGovCoopSatisfactionTagType = (val: string) => {
+  switch (val) {
+    case '一般': return 'danger';
+    case '基本满意': return 'warning';
+    case '满意': return 'info';
+    case '非常满意': return 'success';
+    default: return '';
+  }
+};
+const handleGovCoopRowClick = (row: any) => {
+  govCoopSelectedRow.value = JSON.parse(JSON.stringify(row));
+  govCoopDetailDialogVisible.value = true;
+};
+
+// 专属协同视图接口请求方法
+const getSpecialCoopListData = async () => {
+  try {
+    specialCoopList.value = await fetchSpecialCoopList();
+  } catch {
+    ElMessage.error('专属协同数据加载失败');
+    specialCoopList.value = [];
+  }
+};
+const getSpecialCoopIndicatorData = async () => {
+  try {
+    specialCoopIndicators.value = await fetchSpecialCoopIndicators();
+    nextTick(() => initSpecialCoopNumberAnimations());
+  } catch {
+    specialCoopIndicators.value = { totalCount: 0, completeRate: 0, averageCycle: 0 };
+  }
+};
+const getSpecialCoopSceneCountData = async () => {
+  try {
+    specialCoopSceneData.value = await fetchSpecialCoopSceneCount();
+  } catch {
+    specialCoopSceneData.value = { xAxis: [], series: [{ name: '协同完成数', data: [] }] };
+  }
+};
+const getSpecialCoopDeptCountData = async () => {
+  try {
+    specialCoopDeptData.value = await fetchSpecialCoopDeptCount();
+  } catch {
+    specialCoopDeptData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
+  }
+};
+const getSpecialCoopSceneRatioData = async () => {
+  try {
+    specialCoopSceneRatioData.value = await fetchSpecialCoopSceneRatio();
+  } catch {
+    specialCoopSceneRatioData.value = { legend: [], series: [{ name: '协同场景占比', data: [] }] };
+  }
+};
+const getSpecialCoopStatusRatioData = async () => {
+  try {
+    specialCoopStatusRatioData.value = await fetchSpecialCoopStatusRatio();
+  } catch {
+    specialCoopStatusRatioData.value = { legend: [], series: [{ name: '协同状态占比', data: [] }] };
+  }
+};
+
+
+// 区域协同视图切换方法
 const changeCrossRegionCoopView = (viewName: string) => {
   activeCrossRegionCoopView.value = viewName;
   if (viewName === '卡片') nextTick(() => initCrossRegionCoopNumberAnimations());
@@ -111,6 +494,7 @@ const changeCrossRegionCoopView = (viewName: string) => {
   }
 };
 
+// 协同统计分析视图切换方法
 const changeCoopAnalysisView = (viewName: string) => {
   activeCoopAnalysisView.value = viewName;
   if (viewName === '卡片') nextTick(() => initCoopAnalysisNumberAnimations());
@@ -121,26 +505,7 @@ const changeCoopAnalysisView = (viewName: string) => {
   }
 };
 
-const changeGovCoopView = (viewName: string) => {
-  activeGovCoopView.value = viewName;
-  if (viewName === '卡片') nextTick(() => initGovCoopNumberAnimations());
-  if (viewName === '柱状图' || viewName === '饼图') {
-    nextTick(() => {
-      govCoopChartRefreshKey.value += 1;
-    });
-  }
-};
-
-const changeSpecialCoopView = (viewName: string) => {
-  activeSpecialCoopView.value = viewName;
-  if (viewName === '卡片') nextTick(() => initSpecialCoopNumberAnimations());
-  if (viewName === '柱状图' || viewName === '饼图') {
-    nextTick(() => {
-      specialCoopChartRefreshKey.value += 1;
-    });
-  }
-};
-
+// 协同效率评估视图切换方法
 const changeCoopEfficiencyView = (viewName: string) => {
   activeCoopEfficiencyView.value = viewName;
   if (viewName === '卡片') nextTick(() => initCoopEfficiencyNumberAnimations());
@@ -151,601 +516,62 @@ const changeCoopEfficiencyView = (viewName: string) => {
   }
 };
 
-const handleCrossRegionCoopFullscreenChange = () => {
-  if (!screenFull.isFullscreen && crossRegionCoopCurrentFullscreenPanel.value) {
-    crossRegionCoopCurrentFullscreenPanel.value.style.width = '';
-    crossRegionCoopCurrentFullscreenPanel.value.style.maxWidth = '';
-    crossRegionCoopCurrentFullscreenPanel.value.style.overflow = 'hidden';
-    screenFull.off('change', handleCrossRegionCoopFullscreenChange);
+// 政企协同视图视图切换方法
+const changeGovCoopView = (viewName: string) => {
+  activeGovCoopView.value = viewName;
+  if (viewName === '卡片') nextTick(() => initGovCoopNumberAnimations());
+  if (viewName === '柱状图' || viewName === '饼图') {
     nextTick(() => {
-      setTimeout(() => {
-        crossRegionCoopChartRefreshKey.value += 1;
-      }, 200);
+      govCoopChartRefreshKey.value += 1;
     });
-    crossRegionCoopCurrentFullscreenPanel.value = null;
   }
 };
 
-const toggleCrossRegionCoopPanelFullscreen = () => {
-  if (!screenFull.isEnabled) {
-    ElMessage.warning('您的浏览器不支持全屏功能');
-    return;
-  }
-  const panel = crossRegionCoopPanelRef.value;
-  if (!panel) return;
-  if (crossRegionCoopCurrentFullscreenPanel.value) screenFull.off('change', handleCrossRegionCoopFullscreenChange);
-  crossRegionCoopCurrentFullscreenPanel.value = panel;
-  if (screenFull.isFullscreen && document.fullscreenElement === panel) {
-    screenFull.exit();
-  } else {
-    screenFull.on('change', handleCrossRegionCoopFullscreenChange);
-    screenFull.request(panel).catch((error) => ElMessage.error(`全屏失败：${error.message}`));
-  }
-};
-
-const handleCoopAnalysisFullscreenChange = () => {
-  if (!screenFull.isFullscreen && coopAnalysisCurrentFullscreenPanel.value) {
-    coopAnalysisCurrentFullscreenPanel.value.style.width = '';
-    coopAnalysisCurrentFullscreenPanel.value.style.maxWidth = '';
-    coopAnalysisCurrentFullscreenPanel.value.style.overflow = 'hidden';
-    screenFull.off('change', handleCoopAnalysisFullscreenChange);
+// 专属协同视图视图切换方法
+const changeSpecialCoopView = (viewName: string) => {
+  activeSpecialCoopView.value = viewName;
+  if (viewName === '卡片') nextTick(() => initSpecialCoopNumberAnimations());
+  if (viewName === '柱状图' || viewName === '饼图') {
     nextTick(() => {
-      setTimeout(() => {
-        coopAnalysisChartRefreshKey.value += 1;
-      }, 200);
+      specialCoopChartRefreshKey.value += 1;
     });
-    coopAnalysisCurrentFullscreenPanel.value = null;
   }
 };
 
-const toggleCoopAnalysisPanelFullscreen = () => {
-  if (!screenFull.isEnabled) {
-    ElMessage.warning('您的浏览器不支持全屏功能');
-    return;
-  }
-  const panel = coopAnalysisPanelRef.value;
-  if (!panel) return;
-  if (coopAnalysisCurrentFullscreenPanel.value) screenFull.off('change', handleCoopAnalysisFullscreenChange);
-  coopAnalysisCurrentFullscreenPanel.value = panel;
-  if (screenFull.isFullscreen && document.fullscreenElement === panel) {
-    screenFull.exit();
-  } else {
-    screenFull.on('change', handleCoopAnalysisFullscreenChange);
-    screenFull.request(panel).catch((error) => ElMessage.error(`全屏失败：${error.message}`));
-  }
-};
-
-const handleCoopEfficiencyFullscreenChange = () => {
-  if (!screenFull.isFullscreen && coopEfficiencyCurrentFullscreenPanel.value) {
-    coopEfficiencyCurrentFullscreenPanel.value.style.width = '';
-    coopEfficiencyCurrentFullscreenPanel.value.style.maxWidth = '';
-    coopEfficiencyCurrentFullscreenPanel.value.style.overflow = 'hidden';
-    screenFull.off('change', handleCoopEfficiencyFullscreenChange);
-    nextTick(() => {
-      setTimeout(() => {
-        coopEfficiencyChartRefreshKey.value += 1;
-      }, 200);
-    });
-    coopEfficiencyCurrentFullscreenPanel.value = null;
-  }
-};
-
-const toggleCoopEfficiencyPanelFullscreen = () => {
-  if (!screenFull.isEnabled) {
-    ElMessage.warning('您的浏览器不支持全屏功能');
-    return;
-  }
-  const panel = coopEfficiencyPanelRef.value;
-  if (!panel) return;
-  if (coopEfficiencyCurrentFullscreenPanel.value) screenFull.off('change', handleCoopEfficiencyFullscreenChange);
-  coopEfficiencyCurrentFullscreenPanel.value = panel;
-  if (screenFull.isFullscreen && document.fullscreenElement === panel) {
-    screenFull.exit();
-  } else {
-    screenFull.on('change', handleCoopEfficiencyFullscreenChange);
-    screenFull.request(panel).catch((error) => ElMessage.error(`全屏失败：${error.message}`));
-  }
-};
-
-const getCrossRegionCoopListData = async () => {
-  try {
-    const res = await fetchCrossRegionCoopList();
-    crossRegionCoopList.value = res;
-  } catch {
-    ElMessage.error('跨区域协同数据加载失败');
-    crossRegionCoopList.value = [];
-  }
-};
-
-const getCrossRegionCoopIndicatorData = async () => {
-  try {
-    const res = await fetchCrossRegionCoopIndicators();
-    crossRegionCoopIndicators.value = res;
-    nextTick(() => initCrossRegionCoopNumberAnimations());
-  } catch {
-    crossRegionCoopIndicators.value = { totalCount: 0, completeRate: 0, avgCoopDuration: 0 };
-  }
-};
-
-const getCrossRegionCoopAreaCountData = async () => {
-  try {
-    const res = await fetchCrossRegionAreaCount();
-    crossRegionCoopAreaData.value = res;
-  } catch {
-    crossRegionCoopAreaData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
-  }
-};
-
-const getCrossRegionCoopTaskTypeCountData = async () => {
-  try {
-    const res = await fetchCrossRegionTaskTypeCount();
-    crossRegionCoopTaskTypeData.value = res;
-  } catch {
-    crossRegionCoopTaskTypeData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
-  }
-};
-
-const getCrossRegionCoopTrendData = async () => {
-  try {
-    const res = await fetchCrossRegionRateTrendData();
-    crossRegionCoopTrendData.value = res;
-  } catch {
-    crossRegionCoopTrendData.value = { xAxis: [], series: [{ name: '协同完成率(%)', data: [] }] };
-  }
-};
-
-const getHighFreqCoopTop10Data = async () => {
-  try {
-    const res = await fetchHighFrequencyCoopTop10();
-    highFreqCoopTop10List.value = res;
-  } catch {
-    ElMessage.error('高频协同事项TOP10数据加载失败');
-    highFreqCoopTop10List.value = [];
-  }
-};
-
-const getCoopAnalysisIndicatorData = async () => {
-  try {
-    const res = await fetchCoopCoreIndicators();
-    coopAnalysisIndicators.value = res;
-    nextTick(() => initCoopAnalysisNumberAnimations());
-  } catch {
-    coopAnalysisIndicators.value = { totalCoopCount: 0, avgHandleCycle: 0, finishRate: 0, highPriorityRate: 0 };
-  }
-};
-
-const getCoopAnalysisTypeCountData = async () => {
-  try {
-    const res = await fetchCoopTypeCount();
-    coopAnalysisTypeData.value = res;
-  } catch {
-    coopAnalysisTypeData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
-  }
-};
-
-const getCoopAnalysisAreaCountData = async () => {
-  try {
-    const res = await fetchCoopAreaCount();
-    coopAnalysisAreaData.value = res;
-  } catch {
-    coopAnalysisAreaData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
-  }
-};
-
-const getCoopAnalysisIndustryRatioData = async () => {
-  try {
-    const res = await fetchCoopIndustryRatio();
-    coopAnalysisIndustryRatioData.value = res;
-  } catch {
-    coopAnalysisIndustryRatioData.value = { legend: [], series: [{ name: '行业协同占比', data: [] }] };
-  }
-};
-
-const getCoopAnalysisAreaRatioData = async () => {
-  try {
-    const res = await fetchCoopAreaRatio();
-    coopAnalysisAreaRatioData.value = res;
-  } catch {
-    coopAnalysisAreaRatioData.value = { legend: [], series: [{ name: '区域协同占比', data: [] }] };
-  }
-};
-
-const getCoopAnalysisTrendData = async () => {
-  try {
-    const res = await fetchCoopTrendData();
-    coopAnalysisTrendData.value = res;
-  } catch {
-    coopAnalysisTrendData.value = { xAxis: [], series: [{ name: '协同事件数', data: [] }] };
-  }
-};
-
-const getCoopEfficiencyListData = async () => {
-  try {
-    const res = await fetchCoopEfficiencyList();
-    coopEfficiencyList.value = res;
-  } catch {
-    ElMessage.error('协同效率评估数据加载失败');
-    coopEfficiencyList.value = [];
-  }
-};
-
-const getCoopEfficiencyIndicatorData = async () => {
-  try {
-    const res = await fetchCoopEfficiencyIndicators();
-    coopEfficiencyIndicators.value = res;
-    nextTick(() => initCoopEfficiencyNumberAnimations());
-  } catch {
-    coopEfficiencyIndicators.value = { avgResponseDuration: 0, avgDisposalDuration: 0, avgEffectAchievementRate: 0 };
-  }
-};
-
-const getCoopEfficiencyTypeCountData = async () => {
-  try {
-    const res = await fetchCoopEfficiencyTypeCount();
-    coopEfficiencyTypeData.value = res;
-  } catch {
-    coopEfficiencyTypeData.value = { xAxis: [], series: [{ name: '平均处置时长(小时)', data: [] }] };
-  }
-};
-
-const getCoopEfficiencyAreaCountData = async () => {
-  try {
-    const res = await fetchCoopEfficiencyAreaCount();
-    coopEfficiencyAreaData.value = res;
-  } catch {
-    coopEfficiencyAreaData.value = { xAxis: [], series: [{ name: '平均响应时长(小时)', data: [] }] };
-  }
-};
-
-const getCoopEfficiencyRecurrenceRatioData = async () => {
-  try {
-    const res = await fetchCoopEfficiencyRecurrenceRatio();
-    coopEfficiencyRecurrenceRatioData.value = res;
-  } catch {
-    coopEfficiencyRecurrenceRatioData.value = { legend: [], series: [{ name: '问题复发率占比', data: [] }] };
-  }
-};
-
-const getCoopEfficiencyTrendData = async () => {
-  try {
-    const res = await fetchCoopEfficiencyTrendData();
-    coopEfficiencyTrendData.value = res;
-  } catch {
-    coopEfficiencyTrendData.value = { xAxis: [], series: [{ name: '综合效率评分', data: [] }] };
-  }
-};
-
-const getCoopTypeTagType = (val: string) => {
-  switch (val) {
-    case 'high': return 'danger';
-    case 'low': return 'success';
-    case 'medium': return 'warning';
-    default: return '';
-  }
-};
-
-const getCoopTypeName = (val: string) => {
-  switch (val) {
-    case 'high': return '高优先级';
-    case 'low': return '低优先级';
-    case 'medium': return '中优先级';
-    default: return '未知类型';
-  }
-};
-
-const formatNumber = (num: number) => {
-  return num.toString().replaceAll(/\B(?=(\d{3})+(?!\d))/g, ',');
-};
-
-const formatCompleteRate = (rate: number) => {
-  return `${(rate * 100).toFixed(1)}%`;
-};
-
-const getGovCoopListData = async () => {
-  try {
-    const res = await fetchGovEnterpriseCoopList();
-    govCoopList.value = res;
-  } catch {
-    ElMessage.error('政企协同数据加载失败');
-    govCoopList.value = [];
-  }
-};
-
-const getGovCoopIndicatorData = async () => {
-  try {
-    const res = await fetchGovEnterpriseCoopIndicators();
-    govCoopIndicators.value = res;
-    nextTick(() => initGovCoopNumberAnimations());
-  } catch {
-    govCoopIndicators.value = { totalCount: 0, responseRate: 0, satisfactionRate: 0 };
-  }
-};
-
-const getGovCoopDeptCountData = async () => {
-  try {
-    const res = await fetchGovDeptCoopCount();
-    govCoopDeptData.value = res;
-  } catch {
-    govCoopDeptData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
-  }
-};
-
-const getGovCoopEntTypeCountData = async () => {
-  try {
-    const res = await fetchEnterpriseTypeCoopCount();
-    govCoopEntTypeData.value = res;
-  } catch {
-    govCoopEntTypeData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
-  }
-};
-
-const getGovCoopItemRatioData = async () => {
-  try {
-    const res = await fetchCoopItemTypeRatio();
-    govCoopItemRatioData.value = res;
-  } catch {
-    govCoopItemRatioData.value = { legend: [], series: [{ name: '协同事项占比', data: [] }] };
-  }
-};
-
-const getGovCoopSatisfactionRatioData = async () => {
-  try {
-    const res = await fetchSatisfactionLevelRatio();
-    govCoopSatisfactionRatioData.value = res;
-  } catch {
-    govCoopSatisfactionRatioData.value = { legend: [], series: [{ name: '满意度占比', data: [] }] };
-  }
-};
-
-const getSpecialCoopListData = async () => {
-  try {
-    const res = await fetchSpecialCoopList();
-    specialCoopList.value = res;
-  } catch {
-    ElMessage.error('专属协同数据加载失败');
-    specialCoopList.value = [];
-  }
-};
-
-const getSpecialCoopIndicatorData = async () => {
-  try {
-    const res = await fetchSpecialCoopIndicators();
-    specialCoopIndicators.value = res;
-    nextTick(() => initSpecialCoopNumberAnimations());
-  } catch {
-    specialCoopIndicators.value = { totalCount: 0, completeRate: 0, averageCycle: 0 };
-  }
-};
-
-const getSpecialCoopSceneCountData = async () => {
-  try {
-    const res = await fetchSpecialCoopSceneCount();
-    specialCoopSceneData.value = res;
-  } catch {
-    specialCoopSceneData.value = { xAxis: [], series: [{ name: '协同完成数', data: [] }] };
-  }
-};
-
-const getSpecialCoopDeptCountData = async () => {
-  try {
-    const res = await fetchSpecialCoopDeptCount();
-    specialCoopDeptData.value = res;
-  } catch {
-    specialCoopDeptData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
-  }
-};
-
-const getSpecialCoopSceneRatioData = async () => {
-  try {
-    const res = await fetchSpecialCoopSceneRatio();
-    specialCoopSceneRatioData.value = res;
-  } catch {
-    specialCoopSceneRatioData.value = { legend: [], series: [{ name: '协同场景占比', data: [] }] };
-  }
-};
-
-const getSpecialCoopStatusRatioData = async () => {
-  try {
-    const res = await fetchSpecialCoopStatusRatio();
-    specialCoopStatusRatioData.value = res;
-  } catch {
-    specialCoopStatusRatioData.value = { legend: [], series: [{ name: '协同状态占比', data: [] }] };
-  }
-};
-
-const formatGovCoopTimeStamp = (timeStamp: any) => {
-  if (!timeStamp) return '-';
-  const date = new Date(Number(timeStamp));
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-};
-
-const getGovCoopSatisfactionTagType = (val: string) => {
-  switch (val) {
-    case '一般': return 'danger';
-    case '基本满意': return 'warning';
-    case '满意': return 'info';
-    case '非常满意': return 'success';
-    default: return '';
-  }
-};
-
-const handleGovCoopRowClick = (row: any) => {
-  govCoopSelectedRow.value = JSON.parse(JSON.stringify(row));
-  govCoopDetailDialogVisible.value = true;
-};
-
-const handleGovCoopFullscreenChange = () => {
-  if (!screenFull.isFullscreen && govCoopCurrentFullscreenPanel.value) {
-    govCoopCurrentFullscreenPanel.value.style.width = '';
-    govCoopCurrentFullscreenPanel.value.style.maxWidth = '';
-    govCoopCurrentFullscreenPanel.value.style.overflow = 'hidden';
-    screenFull.off('change', handleGovCoopFullscreenChange);
-    nextTick(() => {
-      setTimeout(() => {
-        govCoopChartRefreshKey.value += 1;
-      }, 200);
-    });
-    govCoopCurrentFullscreenPanel.value = null;
-  }
-};
-
-const toggleGovCoopPanelFullscreen = () => {
-  if (!screenFull.isEnabled) {
-    ElMessage.warning('您的浏览器不支持全屏功能');
-    return;
-  }
-  const panel = govCoopPanelRef.value;
-  if (!panel) return;
-  if (govCoopCurrentFullscreenPanel.value) screenFull.off('change', handleGovCoopFullscreenChange);
-  govCoopCurrentFullscreenPanel.value = panel;
-  if (screenFull.isFullscreen && document.fullscreenElement === panel) {
-    screenFull.exit();
-  } else {
-    screenFull.on('change', handleGovCoopFullscreenChange);
-    screenFull.request(panel).catch((error) => ElMessage.error(`全屏失败：${error.message}`));
-  }
-};
-
-const formatSpecialCoopTimeStamp = (timeStamp: any) => {
-  if (!timeStamp) return '-';
-  const date = new Date(Number(timeStamp));
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-const handleSpecialCoopFullscreenChange = () => {
-  if (!screenFull.isFullscreen && specialCoopCurrentFullscreenPanel.value) {
-    specialCoopCurrentFullscreenPanel.value.style.width = '';
-    specialCoopCurrentFullscreenPanel.value.style.maxWidth = '';
-    specialCoopCurrentFullscreenPanel.value.style.overflow = 'hidden';
-    screenFull.off('change', handleSpecialCoopFullscreenChange);
-    nextTick(() => {
-      setTimeout(() => {
-        specialCoopChartRefreshKey.value += 1;
-      }, 200);
-    });
-    specialCoopCurrentFullscreenPanel.value = null;
-  }
-};
-
-const toggleSpecialCoopPanelFullscreen = () => {
-  if (!screenFull.isEnabled) {
-    ElMessage.warning('您的浏览器不支持全屏功能');
-    return;
-  }
-  const panel = specialCoopPanelRef.value;
-  if (!panel) return;
-  if (specialCoopCurrentFullscreenPanel.value) screenFull.off('change', handleSpecialCoopFullscreenChange);
-  specialCoopCurrentFullscreenPanel.value = panel;
-  if (screenFull.isFullscreen && document.fullscreenElement === panel) {
-    screenFull.exit();
-  } else {
-    screenFull.on('change', handleSpecialCoopFullscreenChange);
-    screenFull.request(panel).catch((error) => ElMessage.error(`全屏失败：${error.message}`));
-  }
-};
-
-const animateValue = (element, start, end, duration) => {
-  let startTimestamp = null;
-  const isInteger = Number.isInteger(end);
-  const step = (timestamp) => {
-    if (!startTimestamp) startTimestamp = timestamp;
-    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-    const currentValue = progress * (end - start) + start;
-    element.textContent = isInteger ? currentValue.toFixed(0) : currentValue.toFixed(1);
-    if (progress < 1) window.requestAnimationFrame(step);
-  };
-  window.requestAnimationFrame(step);
-};
-
-const initCrossRegionCoopNumberAnimations = () => {
-  const elements = document.querySelectorAll('.cross-region-coop-number-animate');
-  elements.forEach((el) => {
-    const value = Number.parseFloat(el.dataset.value);
-    animateValue(el, 0, value, 1500);
-  });
-};
-
-const initGovCoopNumberAnimations = () => {
-  const elements = document.querySelectorAll('.gov-coop-number-animate');
-  elements.forEach((el) => {
-    const value = Number.parseFloat(el.dataset.value);
-    animateValue(el, 0, value, 1500);
-  });
-};
-
-const initSpecialCoopNumberAnimations = () => {
-  const elements = document.querySelectorAll('.special-coop-number-animate');
-  elements.forEach((el) => {
-    const value = Number.parseFloat(el.dataset.value);
-    animateValue(el, 0, value, 1500);
-  });
-};
-
-const initCoopAnalysisNumberAnimations = () => {
-  const elements = document.querySelectorAll('.coop-analysis-number-animate');
-  elements.forEach((el) => {
-    const value = Number.parseFloat(el.dataset.value);
-    animateValue(el, 0, value, 1500);
-  });
-};
-
-const initCoopEfficiencyNumberAnimations = () => {
-  const elements = document.querySelectorAll('.coop-efficiency-number-animate');
-  elements.forEach((el) => {
-    const value = Number.parseFloat(el.dataset.value);
-    animateValue(el, 0, value, 1500);
-  });
-};
-
-const handleGovCoopBack = () => {
-  router.push('/');
-};
 
 onMounted(async () => {
-  await getCrossRegionCoopListData();
-  await getCrossRegionCoopIndicatorData();
-  await getCrossRegionCoopAreaCountData();
-  await getCrossRegionCoopTaskTypeCountData();
-  await getCrossRegionCoopTrendData();
-
-  await getCoopAnalysisIndicatorData();
-  await getCoopAnalysisTypeCountData();
-  await getCoopAnalysisAreaCountData();
-  await getCoopAnalysisIndustryRatioData();
-  await getCoopAnalysisAreaRatioData();
-  await getCoopAnalysisTrendData();
-  await getHighFreqCoopTop10Data();
-
-  await getGovCoopListData();
-  await getGovCoopIndicatorData();
-  await getGovCoopDeptCountData();
-  await getGovCoopEntTypeCountData();
-  await getGovCoopItemRatioData();
-  await getGovCoopSatisfactionRatioData();
-
-  await getSpecialCoopListData();
-  await getSpecialCoopIndicatorData();
-  await getSpecialCoopSceneCountData();
-  await getSpecialCoopDeptCountData();
-  await getSpecialCoopSceneRatioData();
-  await getSpecialCoopStatusRatioData();
-
-  await getCoopEfficiencyListData();
-  await getCoopEfficiencyIndicatorData();
-  await getCoopEfficiencyTypeCountData();
-  await getCoopEfficiencyAreaCountData();
-  await getCoopEfficiencyRecurrenceRatioData();
-  await getCoopEfficiencyTrendData();
-
+  await Promise.all([
+    getCrossRegionCoopListData(),
+    getCrossRegionCoopIndicatorData(),
+    getCrossRegionCoopAreaCountData(),
+    getCrossRegionCoopTaskTypeCountData(),
+    getCrossRegionCoopTrendData(),
+    getCoopAnalysisIndicatorData(),
+    getCoopAnalysisTypeCountData(),
+    getCoopAnalysisAreaCountData(),
+    getCoopAnalysisIndustryRatioData(),
+    getCoopAnalysisAreaRatioData(),
+    getCoopAnalysisTrendData(),
+    getHighFreqCoopTop10Data(),
+    getGovCoopListData(),
+    getGovCoopIndicatorData(),
+    getGovCoopDeptCountData(),
+    getGovCoopEntTypeCountData(),
+    getGovCoopItemRatioData(),
+    getGovCoopSatisfactionRatioData(),
+    getSpecialCoopListData(),
+    getSpecialCoopIndicatorData(),
+    getSpecialCoopSceneCountData(),
+    getSpecialCoopDeptCountData(),
+    getSpecialCoopSceneRatioData(),
+    getSpecialCoopStatusRatioData(),
+    getCoopEfficiencyListData(),
+    getCoopEfficiencyIndicatorData(),
+    getCoopEfficiencyTypeCountData(),
+    getCoopEfficiencyAreaCountData(),
+    getCoopEfficiencyRecurrenceRatioData(),
+    getCoopEfficiencyTrendData(),
+  ]);
   setTimeout(() => {
     crossRegionCoopChartRefreshKey.value += 1;
     coopAnalysisChartRefreshKey.value += 1;
@@ -753,14 +579,12 @@ onMounted(async () => {
     specialCoopChartRefreshKey.value += 1;
     coopEfficiencyChartRefreshKey.value += 1;
   }, 200);
+  screenFull.on('change', handleFullscreenChange);
 });
 
 onUnmounted(() => {
-  if (crossRegionCoopCurrentFullscreenPanel.value) screenFull.off('change', handleCrossRegionCoopFullscreenChange);
-  if (govCoopCurrentFullscreenPanel.value) screenFull.off('change', handleGovCoopFullscreenChange);
-  if (specialCoopCurrentFullscreenPanel.value) screenFull.off('change', handleSpecialCoopFullscreenChange);
-  if (coopAnalysisCurrentFullscreenPanel.value) screenFull.off('change', handleCoopAnalysisFullscreenChange);
-  if (coopEfficiencyCurrentFullscreenPanel.value) screenFull.off('change', handleCoopEfficiencyFullscreenChange);
+  screenFull.off('change', handleFullscreenChange);
+  currentFullscreenPanel.value = null;
 });
 </script>
 
@@ -768,7 +592,7 @@ onUnmounted(() => {
   <div class="page-container" ref="pageContainerRef">
     <div class="mainbox">
       <div class="top">
-        <div class="panel top-left" ref="crossRegionCoopPanelRef">
+        <div class="panel top-left" ref="topLeftPanel">
           <el-tabs v-model="topLeftActiveTab" class="custom-tabs top-left-tabs">
             <el-tab-pane label="区域协同" name="tab1">
               <div class="header-actions">
@@ -785,7 +609,7 @@ onUnmounted(() => {
                     >{{ item }}</ElButton>
                   </div>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
-                  <button class="panel-fullscreen-btn" @click="toggleCrossRegionCoopPanelFullscreen">
+                  <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('topLeftPanel')">
                     <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
                   </button>
                 </div>
@@ -884,7 +708,7 @@ onUnmounted(() => {
           </el-tabs>
           <div class="panel-footer"></div>
         </div>
-        <div class="panel top-right" ref="coopAnalysisPanelRef">
+        <div class="panel top-right" ref="topRightPanel">
           <div class="header-actions">
             <div class="actions-left"><p>协同统计分析</p></div>
             <div class="actions-right">
@@ -899,7 +723,7 @@ onUnmounted(() => {
                 >{{ item }}</ElButton>
               </div>
               <el-icon color="#409eff" size="16"><Filter /></el-icon>
-              <button class="panel-fullscreen-btn" @click="toggleCoopAnalysisPanelFullscreen">
+              <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('topRightPanel')">
                 <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
               </button>
             </div>
@@ -1023,7 +847,7 @@ onUnmounted(() => {
         </div>
       </div>
       <div class="bottom">
-        <div class="panel bottom-left" ref="govCoopPanelRef">
+        <div class="panel bottom-left" ref="bottomLeftPanel">
           <div class="header-actions">
             <div class="actions-left"><p>政企协同视图</p></div>
             <div class="actions-right">
@@ -1038,7 +862,7 @@ onUnmounted(() => {
                 >{{ item }}</ElButton>
               </div>
               <el-icon color="#409eff" size="16"><Filter /></el-icon>
-              <button class="panel-fullscreen-btn" @click="toggleGovCoopPanelFullscreen">
+              <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('bottomLeftPanel')">
                 <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
               </button>
             </div>
@@ -1144,7 +968,7 @@ onUnmounted(() => {
           </div>
           <div class="panel-footer"></div>
         </div>
-        <div class="panel bottom-middle" ref="specialCoopPanelRef">
+        <div class="panel bottom-middle" ref="bottomMiddlePanel">
           <div class="header-actions">
             <div class="actions-left"><p>专属协同视图</p></div>
             <div class="actions-right">
@@ -1159,7 +983,7 @@ onUnmounted(() => {
                 >{{ item }}</ElButton>
               </div>
               <el-icon color="#409eff" size="16"><Filter /></el-icon>
-              <button class="panel-fullscreen-btn" @click="toggleSpecialCoopPanelFullscreen">
+              <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('bottomMiddlePanel')">
                 <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
               </button>
             </div>
@@ -1264,7 +1088,7 @@ onUnmounted(() => {
           </div>
           <div class="panel-footer"></div>
         </div>
-        <div class="panel bottom-right" ref="coopEfficiencyPanelRef">
+        <div class="panel bottom-right" ref="bottomRightPanel">
           <div class="header-actions">
             <div class="actions-left"><p>协同效率评估</p></div>
             <div class="actions-right">
@@ -1279,7 +1103,7 @@ onUnmounted(() => {
                 >{{ item }}</ElButton>
               </div>
               <el-icon color="#409eff" size="16"><Filter /></el-icon>
-              <button class="panel-fullscreen-btn" @click="toggleCoopEfficiencyPanelFullscreen">
+              <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('bottomRightPanel')">
                 <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
               </button>
             </div>

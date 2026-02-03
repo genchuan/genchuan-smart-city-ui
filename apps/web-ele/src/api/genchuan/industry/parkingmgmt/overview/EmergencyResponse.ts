@@ -3,6 +3,418 @@ import { requestClient } from '#/api/request';
 const BASE_URL = '/industry/parking';
 
 
+// ========== 协同指挥 ==========
+// 协同事件列表
+export const fetchCooperationList = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/cooperation/list`,
+        params,
+      })
+      .then((response) => {
+        console.log('协同指挥-接口请求成功');
+        if (response && Array.isArray(response)) {
+          console.log('协同指挥-响应符合实际格式');
+          return response.map((item) => ({
+            taskCooperationCooperationId: item.taskCooperationCooperationId,
+            sysCooperationTypeName: item.sysCooperationTypeName,
+            taskCooperationTaskContent: item.taskCooperationTaskContent,
+            sysDeptDeptName: item.sysDeptDeptName,
+            taskCooperationCreateTime: item.taskCooperationCreateTime,
+            sysResponseStatusName: item.sysResponseStatusName,
+          }));
+        }
+        throw new Error('真实接口返回无协同指挥数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('协同指挥接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve([
+              {
+                taskCooperationCooperationId: 'COOP202501001',
+                sysCooperationTypeName: '联合处置',
+                taskCooperationTaskContent: '交通疏导与设备维修联合行动',
+                sysDeptDeptName: '交通管理局',
+                taskCooperationCreateTime: new Date().getTime() - 2 * 60 * 60 * 1000,
+                sysResponseStatusName: '待响应',
+              },
+              {
+                taskCooperationCooperationId: 'COOP202501002',
+                sysCooperationTypeName: '资源调配',
+                taskCooperationTaskContent: '应急物资跨区域调配',
+                sysDeptDeptName: '物资保障部',
+                taskCooperationCreateTime: new Date().getTime() - 3 * 60 * 60 * 1000,
+                sysResponseStatusName: '已响应',
+              },
+              {
+                taskCooperationCooperationId: 'COOP202501003',
+                sysCooperationTypeName: '信息共享',
+                taskCooperationTaskContent: '现场情况实时数据共享',
+                sysDeptDeptName: '信息中心',
+                taskCooperationCreateTime: new Date().getTime() - 1 * 60 * 60 * 1000,
+                sysResponseStatusName: '已反馈',
+              },
+              {
+                taskCooperationCooperationId: 'COOP202501004',
+                sysCooperationTypeName: '联合处置',
+                taskCooperationTaskContent: '消防隐患联合排查',
+                sysDeptDeptName: '消防救援支队',
+                taskCooperationCreateTime: new Date().getTime() - 4 * 60 * 60 * 1000,
+                sysResponseStatusName: '已完成',
+              },
+              {
+                taskCooperationCooperationId: 'COOP202501005',
+                sysCooperationTypeName: '资源调配',
+                taskCooperationTaskContent: '专业人员紧急增援',
+                sysDeptDeptName: '人力资源部',
+                taskCooperationCreateTime: new Date().getTime() - 30 * 60 * 1000,
+                sysResponseStatusName: '已拒绝',
+              },
+            ]);
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchCooperationList 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve([]);
+  }
+};
+
+// 协同详情查询 - 详情弹窗专用
+export const fetchCooperationDetail = (cooperationId, params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/cooperation/detail/${cooperationId}`,
+        params,
+      })
+      .then((response) => {
+        if (response && response.taskCooperationCooperationId === cooperationId) {
+          return response;
+        }
+        throw new Error('真实接口返回无协同指挥详情数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('协同指挥详情接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              taskCooperationCooperationId: cooperationId,
+              sysCooperationTypeName: '联合处置',
+              taskCooperationTaskContent: '交通疏导与设备维修联合行动',
+              sysDeptDeptName: '交通管理局',
+              taskCooperationCreateTime: new Date().getTime() - 2 * 60 * 60 * 1000,
+              sysResponseStatusName: '待响应',
+              // 详情弹窗展示字段
+              initiatingDept: '应急指挥中心',
+              cooperationLeader: '王刚',
+              cooperationEffect: '',
+              completeTime: null,
+              // 参与单位
+              participatingUnits: [
+                { deptName: '交通管理局', contact: '张科长', phone: '138****1234' },
+                { deptName: '设备维修部', contact: '李工', phone: '139****5678' },
+                { deptName: '安全监察部', contact: '刘主任', phone: '137****9012' },
+              ],
+              // 任务要求
+              taskRequirements: '1. 确保周边交通畅通\n2. 设备维修需在2小时内完成\n3. 现场安全警戒到位\n4. 每小时汇报进度',
+              // 反馈结果
+              feedbackResults: [],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchCooperationDetail 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({});
+  }
+};
+
+// 响应协同
+export const respondToCooperation = (cooperationId, responseData) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        success: true,
+        message: responseData.responseResult === 'accept' ? '协同响应已提交' : '协同已拒绝',
+        cooperationId: cooperationId,
+        responseTime: new Date().getTime(),
+      });
+    }, 500);
+  });
+};
+
+// 反馈协同
+export const feedbackCooperation = (cooperationId, feedbackData) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        success: true,
+        message: '协同反馈已提交',
+        cooperationId: cooperationId,
+        feedbackTime: new Date().getTime(),
+      });
+    }, 500);
+  });
+};
+
+// 协同指挥核心指标（卡片展示）
+export const fetchCooperationIndicators = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/cooperation/indicators/get`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.totalCooperationCount &&
+          response.responseRate &&
+          response.effectStandardCount
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无协同指挥核心数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '协同指挥指标接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              totalCooperationCount: 42, // 协同事件总数
+              responseRate: 85.7, // 响应率
+              effectStandardCount: 36, // 配合成效达标数
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 协同指挥指标函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      totalCooperationCount: 0,
+      responseRate: 0,
+      effectStandardCount: 0,
+    });
+  }
+};
+
+// 不同协同类型联动数对比（柱状图）
+export const fetchCooperationTypeCompare = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/cooperation/stat/type/compare`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无协同类型对比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '协同类型对比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['联合处置', '资源调配', '信息共享', '联合演练', '技术支持'],
+              series: [
+                { name: '联动数', data: [15, 12, 8, 5, 2] },
+              ],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 协同类型对比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [],
+    });
+  }
+};
+
+// 不同参与单位联动数对比（柱状图）
+export const fetchCooperationDeptCompare = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/cooperation/stat/dept/compare`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无参与单位对比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '参与单位对比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['交通管理局', '消防救援支队', '设备维修部', '信息中心', '物资保障部'],
+              series: [
+                { name: '联动数', data: [18, 15, 12, 10, 8] },
+              ],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 参与单位对比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [],
+    });
+  }
+};
+
+// 协同类型占比（饼图）
+export const fetchCooperationTypeRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/cooperation/stat/type/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无协同类型占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '协同类型占比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['联合处置', '资源调配', '信息共享', '联合演练', '技术支持'],
+              series: [{
+                name: '协同类型占比',
+                data: [
+                  { name: '联合处置', value: 35 },
+                  { name: '资源调配', value: 28 },
+                  { name: '信息共享', value: 20 },
+                  { name: '联合演练', value: 12 },
+                  { name: '技术支持', value: 5 },
+                ]
+              }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 协同类型占比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '协同类型占比', data: [] }]
+    });
+  }
+};
+
+// 响应状态占比（饼图）
+export const fetchCooperationStatusRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/cooperation/stat/status/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无响应状态占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '响应状态占比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['待响应', '已响应', '已反馈', '已完成', '已拒绝'],
+              series: [{
+                name: '响应状态占比',
+                data: [
+                  { name: '待响应', value: 15 },
+                  { name: '已响应', value: 25 },
+                  { name: '已反馈', value: 30 },
+                  { name: '已完成', value: 20 },
+                  { name: '已拒绝', value: 10 },
+                ]
+              }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 响应状态占比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '响应状态占比', data: [] }]
+    });
+  }
+};
+
+
 // ========== 资源调度 ==========
 // 调度路径地图 (资源调度起点/终点、调度路径线标注，匹配指定调度字段)
 export const fetchDispatchPathMap = (params = {}) => {
@@ -109,7 +521,6 @@ export const fetchDispatchPathMap = (params = {}) => {
   }
 };
 
-// ========== 资源调度 ==========
 // 资源调度列表
 export const fetchResourceDispatchList = (params = {}) => {
   try {

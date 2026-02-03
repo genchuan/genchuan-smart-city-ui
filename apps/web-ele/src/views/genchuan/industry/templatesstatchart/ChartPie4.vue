@@ -127,12 +127,12 @@ const initChart = () => {
     series: formattedSeries.map((item) => ({
       ...item,
       type: 'pie',
-      radius: '60%',
-      center: ['55%', '55%'],
+      radius: '66%',
+      center: ['50%', '52%'],
       avoidLabelOverlap: false,
       label: {
         show: true,
-        position: 'outside',
+        position: 'inside',
         color: '#e6f7ff',
         fontSize: labelFontSize,
         formatter: '{b}',

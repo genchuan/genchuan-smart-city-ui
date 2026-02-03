@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { getCurrentInstance, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { Filter, FullScreen, Setting, VideoPause, VideoPlay, Picture } from '@element-plus/icons-vue'; // 补充导入Picture
+import { Filter, FullScreen, Setting, VideoPause, VideoPlay, Picture } from '@element-plus/icons-vue';
 import {
   ElButton,
   ElDialog,
@@ -21,19 +21,21 @@ import {
   ElRadio,
   ElRadioGroup,
   type FormInstance
-} from 'element-plus'; // 补充导入相关组件
+} from 'element-plus';
 import screenFull from 'screenfull';
 import ChartLine1 from '#/views/genchuan/industry/templatesstatchart/ChartLine1.vue';
 import ChartLine2 from '#/views/genchuan/industry/templatesstatchart/ChartLine2.vue';
 import ChartPie1 from '#/views/genchuan/industry/templatesstatchart/ChartPie1.vue';
 import ChartPie2 from '#/views/genchuan/industry/templatesstatchart/ChartPie2.vue';
+import ChartPie3 from '#/views/genchuan/industry/templatesstatchart/ChartPie3.vue';
+import ChartPie4 from '#/views/genchuan/industry/templatesstatchart/ChartPie4.vue';
 import VerticalBar2 from '#/views/genchuan/industry/templatesstatchart/VerticalBar2.vue';
 import VerticalBar3 from '#/views/genchuan/industry/templatesstatchart/VerticalBar3.vue';
 import VerticalBar4 from '#/views/genchuan/industry/templatesstatchart/VerticalBar4.vue';
 import EmergencyResponseMap1 from './EmergencyResponseMap1.vue';
 import EmergencyResponseMap2 from './EmergencyResponseMap2.vue';
 import EmergencyResponseMap3 from './EmergencyResponseMap3.vue';
-import EmergencyResponseMap4 from './EmergencyResponseMap4.vue'; // 保留调度路径地图组件
+import EmergencyResponseMap4 from './EmergencyResponseMap4.vue';
 import DotAnimationMap from './DotAnimationMap.vue';
 
 import {
@@ -70,6 +72,15 @@ import {
   feedbackResourceDispatch,
   fetchResourceDispatchIndicators,
   fetchResourceDispatchTypeCompare,
+  fetchCooperationList,
+  fetchCooperationDetail,
+  respondToCooperation,
+  feedbackCooperation,
+  fetchCooperationIndicators,
+  fetchCooperationTypeCompare,
+  fetchCooperationDeptCompare,
+  fetchCooperationTypeRatio,
+  fetchCooperationStatusRatio,
 } from '#/api/genchuan/industry/parkingmgmt/overview/EmergencyResponse.ts';
 
 
@@ -123,6 +134,11 @@ const initEmergencyPlanNumberAnimations = () => {
     animateValue(el, 0, Number.parseFloat(el.dataset.value || '0'), 1500)
   );
 };
+const initCooperationNumberAnimations = () => {
+  document.querySelectorAll<HTMLElement>('.cooperation-number-animate').forEach((el) =>
+    animateValue(el, 0, Number.parseFloat(el.dataset.value || '0'), 1500)
+  );
+};
 
 // 时间戳格式化方法
 const formatTimeStamp = (timeStamp: number | null | undefined) => {
@@ -130,6 +146,8 @@ const formatTimeStamp = (timeStamp: number | null | undefined) => {
   const d = new Date(Number(timeStamp));
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
+// 格式化时长（分钟）
+const formatDuration = (val: number | null | undefined) => val ? `${val} 分钟` : '-';
 
 // 全屏方法
 const togglePanelFullscreen = (panelRefName: string) => {
@@ -188,12 +206,12 @@ const handleTabChange = () => {
 const emergencyMap1Ref = ref<InstanceType<typeof EmergencyResponseMap1> | null>(null);
 const emergencyMap2Ref = ref<InstanceType<typeof EmergencyResponseMap2> | null>(null);
 const emergencyMap3Ref = ref<InstanceType<typeof EmergencyResponseMap3> | null>(null);
-const emergencyMap4Ref = ref<InstanceType<typeof EmergencyResponseMap4> | null>(null); // 新增：调度路径地图引用
+const emergencyMap4Ref = ref<InstanceType<typeof EmergencyResponseMap4> | null>(null);
 // 地图数据
 const emergencySituationData = ref<EmergencySituationItem[]>([]);
 const emergencyResourceData = ref<EmergencySituationItem[]>([]);
 const specialEmergencyData = ref<EmergencySituationItem[]>([]);
-const dispatchPathData = ref<DispatchPathItem[]>([]); // 新增：调度路径数据（对应EmergencyResponseMap4）
+const dispatchPathData = ref<DispatchPathItem[]>([]);
 // 地图环绕配置相关
 // 获取本地存储的地图环绕配置
 const getStoredOrbitConfig = (): OrbitConfig => {
@@ -258,7 +276,7 @@ const handleOrbitAnimation3 = () => {
   else
     ElMessage.warning('专项应急地图环绕功能暂未初始化完成');
 };
-// 新增：调度路径地图环绕动画切换（对应EmergencyResponseMap4）
+// 调度路径地图环绕动画切换
 const handleOrbitAnimation4 = () => {
   const targetRef = emergencyMap4Ref.value;
   if (targetRef && typeof targetRef.toggleOrbitAnimation === 'function')
@@ -292,7 +310,6 @@ const submitOrbitConfig = async () => {
     };
     orbitConfigData.value = newConfig;
     saveOrbitConfigToLocal(newConfig);
-    // 新增：包含emergencyMap4Ref，让调度路径地图生效新配置
     [emergencyMap1Ref.value, emergencyMap2Ref.value, emergencyMap3Ref.value, emergencyMap4Ref.value].forEach(ref => {
       ref && (ref.stopOrbitAnimation(), ref.startOrbitAnimation());
     });
@@ -315,7 +332,6 @@ const resetToDefaultConfig = () => {
     loop: defaultConfig.loop
   };
   localStorage.removeItem('parkingMapOrbitConfig');
-  // 新增：包含emergencyMap4Ref，恢复调度路径地图默认配置
   [emergencyMap1Ref.value, emergencyMap2Ref.value, emergencyMap3Ref.value, emergencyMap4Ref.value].forEach(ref => {
     ref && (ref.stopOrbitAnimation(), ref.startOrbitAnimation());
   });
@@ -327,7 +343,7 @@ const initAllMapData = async () => {
     emergencySituationData.value = await fetchEmergencySituationMap({});
     emergencyResourceData.value = await fetchEmergencyResourceDistributionMap({});
     specialEmergencyData.value = await fetchSpecialEmergencyViewMap({});
-    dispatchPathData.value = await fetchDispatchPathMap({}); // 新增：加载调度路径数据（给EmergencyResponseMap4）
+    dispatchPathData.value = await fetchDispatchPathMap({});
 
     await Promise.all([
       getEmergencySituationIndicatorData(),
@@ -343,7 +359,7 @@ const initAllMapData = async () => {
     map1Loading.value = false;
     map2Loading.value = false;
     map3Loading.value = false;
-    map4Loading.value = false; // 新增：标记调度路径地图加载完成
+    map4Loading.value = false;
     dotMapLoading.value = false;
   } catch (error) {
     console.error('地图数据加载失败：', error);
@@ -351,11 +367,11 @@ const initAllMapData = async () => {
     emergencySituationData.value = [];
     emergencyResourceData.value = [];
     specialEmergencyData.value = [];
-    dispatchPathData.value = []; // 新增：初始化调度路径数据为空
+    dispatchPathData.value = [];
     map1Loading.value = false;
     map2Loading.value = false;
     map3Loading.value = false;
-    map4Loading.value = false; // 新增：标记调度路径地图加载完成（即使失败）
+    map4Loading.value = false;
     dotMapLoading.value = false;
   }
 };
@@ -404,74 +420,6 @@ interface OrbitConfigForm {
   pitch: number; // 地图俯仰角
   zoom: number; // 地图缩放级别
   loop: boolean; // 是否循环旋转
-}
-
-// 资源调度TS类型定义
-interface ResourceDispatchRow {
-  taskResourceDispatchDispatchRecordId: string; // 调度记录ID
-  taskEmergencyResourceResourceId: string; // 资源ID
-  sysResourceTypeName: string; // 资源类型
-  taskResourceDispatchDispatchQuantity: number; // 调配数量
-  fromAddress: string; // 调出位置
-  toAddress: string; // 调入位置
-  sysDispatchStatusName: string; // 调度状态
-  taskResourceDispatchDispatchTime: number | null; // 调度时间
-  taskResourceDispatchEstimatedArrivalTime: number | null; // 预计到达时间
-  taskResourceDispatchActualArrivalTime: number | null; // 实际到达时间
-  sysUserUserName: string; // 接收人
-}
-interface ResourceDispatchDetail {
-  taskResourceDispatchDispatchRecordId: string;
-  taskEmergencyResourceResourceId: string;
-  sysResourceTypeName: string;
-  taskResourceDispatchDispatchQuantity: number;
-  fromAddress: string;
-  toAddress: string;
-  sysDispatchStatusName: string;
-  taskResourceDispatchDispatchTime: number | null;
-  taskResourceDispatchEstimatedArrivalTime: number | null;
-  taskResourceDispatchActualArrivalTime: number | null;
-  sysUserUserName: string;
-  // 弹窗展示字段
-  resourceDetails: {
-    name: string;
-    model: string;
-    quantity: number;
-    status: string;
-  }[];
-  dispatchInstruction: string;
-  dispatchTrack: {
-    time: number;
-    location: string;
-    action: string;
-  }[];
-}
-interface ResourceDispatchIndicators {
-  transitingCount: number; // 在途资源数
-  deliveredCount: number; // 已送达资源数
-  abnormalCount: number; // 异常资源数
-}
-interface DispatchConfirmData {
-  confirmNote: string; // 必填，标星
-  receiveOpinion: string; // 可选
-}
-interface DispatchFeedbackData {
-  feedbackContent: string; // 可选
-}
-interface DispatchPathItem {
-  taskResourceDispatchDispatchRecordId: string; // 调度记录ID
-  taskEmergencyResourceResourceId: string; // 资源ID
-  sysResourceTypeName: string; // 资源类型
-  taskResourceDispatchDispatchQuantity: number; // 调配数量
-  tbAssetExtendAddress: string; // 调出/调入位置
-  sysDispatchStatusName: string; // 调度状态
-  taskResourceDispatchEstimatedArrivalTime: string | null; // 预计到达时间
-  taskResourceDispatchActualArrivalTime: string | null; // 实际到达时间
-  sysUserUserName: string; // 接收人
-  startLongitude: number; // 起点经度
-  startLatitude: number; // 起点纬度
-  endLongitude: number; // 终点经度
-  endLatitude: number; // 终点纬度
 }
 
 // 应急态势TS类型定义
@@ -657,6 +605,126 @@ interface SpecialEmergencyIndicators {
   repairedDeviceCount: number; // 已修复设备数
 }
 
+// 资源调度TS类型定义
+interface ResourceDispatchRow {
+  taskResourceDispatchDispatchRecordId: string; // 调度记录ID
+  taskEmergencyResourceResourceId: string; // 资源ID
+  sysResourceTypeName: string; // 资源类型
+  taskResourceDispatchDispatchQuantity: number; // 调配数量
+  fromAddress: string; // 调出位置
+  toAddress: string; // 调入位置
+  sysDispatchStatusName: string; // 调度状态
+  taskResourceDispatchDispatchTime: number | null; // 调度时间
+  taskResourceDispatchEstimatedArrivalTime: number | null; // 预计到达时间
+  taskResourceDispatchActualArrivalTime: number | null; // 实际到达时间
+  sysUserUserName: string; // 接收人
+}
+interface ResourceDispatchDetail {
+  taskResourceDispatchDispatchRecordId: string;
+  taskEmergencyResourceResourceId: string;
+  sysResourceTypeName: string;
+  taskResourceDispatchDispatchQuantity: number;
+  fromAddress: string;
+  toAddress: string;
+  sysDispatchStatusName: string;
+  taskResourceDispatchDispatchTime: number | null;
+  taskResourceDispatchEstimatedArrivalTime: number | null;
+  taskResourceDispatchActualArrivalTime: number | null;
+  sysUserUserName: string;
+  // 弹窗展示字段
+  resourceDetails: {
+    name: string;
+    model: string;
+    quantity: number;
+    status: string;
+  }[];
+  dispatchInstruction: string;
+  dispatchTrack: {
+    time: number;
+    location: string;
+    action: string;
+  }[];
+}
+interface ResourceDispatchIndicators {
+  transitingCount: number; // 在途资源数
+  deliveredCount: number; // 已送达资源数
+  abnormalCount: number; // 异常资源数
+}
+interface DispatchConfirmData {
+  confirmNote: string; // 必填，标星
+  receiveOpinion: string; // 可选
+}
+interface DispatchFeedbackData {
+  feedbackContent: string; // 可选
+}
+interface DispatchPathItem {
+  taskResourceDispatchDispatchRecordId: string; // 调度记录ID
+  taskEmergencyResourceResourceId: string; // 资源ID
+  sysResourceTypeName: string; // 资源类型
+  taskResourceDispatchDispatchQuantity: number; // 调配数量
+  tbAssetExtendAddress: string; // 调出/调入位置
+  sysDispatchStatusName: string; // 调度状态
+  taskResourceDispatchEstimatedArrivalTime: string | null; // 预计到达时间
+  taskResourceDispatchActualArrivalTime: string | null; // 实际到达时间
+  sysUserUserName: string; // 接收人
+  startLongitude: number; // 起点经度
+  startLatitude: number; // 起点纬度
+  endLongitude: number; // 终点经度
+  endLatitude: number; // 终点纬度
+}
+
+// 现场态势TS类型定义
+interface SceneSituationRow {
+  taskEmergencyEmergencyId: string;
+  tbAssetExtendAddress: string;
+  taskEmergencySceneSceneStatus: string;
+  taskEmergencySceneAffectedBerthCount: number;
+  taskEmergencySceneEvacuatedVehicleCount: number;
+  taskEmergencySceneRepairBerthCount: number;
+}
+interface SceneSituationDetail {
+  taskEmergencyEmergencyId: string;
+  tbAssetExtendAddress: string;
+  taskEmergencySceneSceneStatus: string;
+  taskEmergencySceneAffectedBerthCount: number;
+  taskEmergencySceneEvacuatedVehicleCount: number;
+  taskEmergencySceneRepairBerthCount: number;
+  // 弹窗展示字段
+  sysUserUserName: string;
+  sysUserUserPhone: string;
+  taskEmergencySceneScenePhotos: string[];
+  taskEmergencySceneDisposalSuggestion: string;
+  // 现场完整态势
+  sceneOverview: {
+    affectedRange: string;
+    startTime: number;
+    emergencyLevel: string;
+    weatherCondition: string;
+    temperature: string;
+    windSpeed: string;
+  };
+  // 实时数据
+  realtimeData: {
+    currentEvacuatedCount: number;
+    currentRepairCount: number;
+    remainingAffectedCount: number;
+    evacuationProgress: number;
+    repairProgress: number;
+    currentPersonnelCount: number;
+  };
+  // 处置进展
+  disposalProgress: {
+    time: number;
+    action: string;
+    status: string;
+  }[];
+}
+interface SceneSituationIndicators {
+  evacuatedVehicleCount: number; // 已疏导车辆数
+  repairBerthCount: number; // 已修复泊位数
+  affectedRange: string; // 受影响范围
+}
+
 // 调度任务TS类型定义
 interface DispatchTaskIndicators {
   pendingCount: number; // 待执行任务数
@@ -712,97 +780,49 @@ interface EmergencyPlanRow {
   launch_time: number | null; // 启动时间
 }
 
-// 现场态势TS类型定义
-interface SceneSituationRow {
-  taskEmergencyEmergencyId: string;
-  tbAssetExtendAddress: string;
-  taskEmergencySceneSceneStatus: string;
-  taskEmergencySceneAffectedBerthCount: number;
-  taskEmergencySceneEvacuatedVehicleCount: number;
-  taskEmergencySceneRepairBerthCount: number;
+// 协同指挥TS类型定义
+interface CooperationIndicators {
+  totalCooperationCount: number; // 协同事件总数
+  responseRate: number; // 响应率
+  effectStandardCount: number; // 配合成效达标数
 }
-interface SceneSituationDetail {
-  taskEmergencyEmergencyId: string;
-  tbAssetExtendAddress: string;
-  taskEmergencySceneSceneStatus: string;
-  taskEmergencySceneAffectedBerthCount: number;
-  taskEmergencySceneEvacuatedVehicleCount: number;
-  taskEmergencySceneRepairBerthCount: number;
-  // 弹窗展示字段
-  sysUserUserName: string;
-  sysUserUserPhone: string;
-  taskEmergencySceneScenePhotos: string[];
-  taskEmergencySceneDisposalSuggestion: string;
-  // 现场完整态势
-  sceneOverview: {
-    affectedRange: string;
-    startTime: number;
-    emergencyLevel: string;
-    weatherCondition: string;
-    temperature: string;
-    windSpeed: string;
-  };
-  // 实时数据
-  realtimeData: {
-    currentEvacuatedCount: number;
-    currentRepairCount: number;
-    remainingAffectedCount: number;
-    evacuationProgress: number;
-    repairProgress: number;
-    currentPersonnelCount: number;
-  };
-  // 处置进展
-  disposalProgress: {
+interface CooperationRow {
+  taskCooperationCooperationId: string; // 协同ID
+  sysCooperationTypeName: string; // 协同类型
+  taskCooperationTaskContent: string; // 协同任务
+  sysDeptDeptName: string; // 参与单位
+  taskCooperationCreateTime: number | null; // 发起时间
+  sysResponseStatusName: string; // 响应状态
+}
+interface CooperationDetail {
+  taskCooperationCooperationId: string;
+  sysCooperationTypeName: string;
+  taskCooperationTaskContent: string;
+  sysDeptDeptName: string;
+  taskCooperationCreateTime: number | null;
+  sysResponseStatusName: string;
+  // 详情弹窗展示字段
+  initiatingDept: string; // 发起单位
+  cooperationLeader: string; // 协同负责人
+  cooperationEffect: string; // 配合成效
+  completeTime: number | null; // 完成时间
+  // 参与单位
+  participatingUnits: {
+    deptName: string;
+    contact: string;
+    phone: string;
+  }[];
+  // 任务要求
+  taskRequirements: string;
+  // 反馈结果
+  feedbackResults: {
     time: number;
-    action: string;
-    status: string;
+    deptName: string;
+    feedback: string;
+    materials?: string[];
   }[];
 }
-interface SceneSituationIndicators {
-  evacuatedVehicleCount: number; // 已疏导车辆数
-  repairBerthCount: number; // 已修复泊位数
-  affectedRange: string; // 受影响范围
-}
 
-
-// 资源调度响应式数据
-const resourceDispatchList = ref<ResourceDispatchRow[]>([]);
-const resourceDispatchDetailSelectedRow = ref<ResourceDispatchDetail>({
-  taskResourceDispatchDispatchRecordId: '',
-  taskEmergencyResourceResourceId: '',
-  sysResourceTypeName: '',
-  taskResourceDispatchDispatchQuantity: 0,
-  fromAddress: '',
-  toAddress: '',
-  sysDispatchStatusName: '',
-  taskResourceDispatchDispatchTime: null,
-  taskResourceDispatchEstimatedArrivalTime: null,
-  taskResourceDispatchActualArrivalTime: null,
-  sysUserUserName: '',
-  resourceDetails: [],
-  dispatchInstruction: '',
-  dispatchTrack: [],
-});
-const resourceDispatchIndicators = ref<ResourceDispatchIndicators>({
-  transitingCount: 0,
-  deliveredCount: 0,
-  abnormalCount: 0,
-});
-const resourceDispatchTypeCompareData = ref<ChartBarData>({ xAxis: [], series: [] });
-
-// 资源调度视图切换相关
-const activeResourceDispatchView = ref('地图');
-const resourceDispatchViewBtnList = ref(['地图', '列表']);
-
-// 资源调度弹窗相关
-const resourceDispatchDetailDialogVisible = ref(false);
-const dispatchConfirmDialogVisible = ref(false);
-const dispatchFeedbackDialogVisible = ref(false);
-const dispatchConfirmForm = ref<DispatchConfirmData>({ confirmNote: '', receiveOpinion: '' });
-const dispatchFeedbackForm = ref<DispatchFeedbackData>({ feedbackContent: '' });
-const dispatchConfirmFormRules = ref({
-  confirmNote: [{ required: true, message: '请输入接收确认信息', trigger: 'blur' }],
-});
 
 // 应急态势响应式数据
 const emergencySituationList = ref<EmergencySituationRow[]>([]);
@@ -980,55 +1000,37 @@ const specialEmergencyIndicatorData = ref<SpecialEmergencyIndicators>({
 });
 const specialEmergencyTrendData = ref<ChartLineData>({ xAxis: [], series: [] });
 
-// 指挥调度响应式数据
-const dispatchTaskList = ref<DispatchTaskRow[]>([]);
-const dispatchTaskIndicators = ref<DispatchTaskIndicators>({
-  pendingCount: 0,
-  executingCount: 0,
-  completedCount: 0
+// 资源调度响应式数据
+const resourceDispatchList = ref<ResourceDispatchRow[]>([]);
+const resourceDispatchDetailSelectedRow = ref<ResourceDispatchDetail>({
+  taskResourceDispatchDispatchRecordId: '',
+  taskEmergencyResourceResourceId: '',
+  sysResourceTypeName: '',
+  taskResourceDispatchDispatchQuantity: 0,
+  fromAddress: '',
+  toAddress: '',
+  sysDispatchStatusName: '',
+  taskResourceDispatchDispatchTime: null,
+  taskResourceDispatchEstimatedArrivalTime: null,
+  taskResourceDispatchActualArrivalTime: null,
+  sysUserUserName: '',
+  resourceDetails: [],
+  dispatchInstruction: '',
+  dispatchTrack: [],
 });
-const dispatchTaskReceiverCompareData = ref<ChartBarData>({ xAxis: [], series: [] });
-const dispatchTaskBaseFontScale = ref<number>(1);
-const dispatchTaskActiveIndices = ref<number[]>([]);
-// 指挥调度视图切换相关
-const dispatchTaskChartRefreshKey = ref<number>(0);
-const activeDispatchTaskView = ref<string>('柱状图');
-const dispatchTaskViewBtnList = ref<string[]>(['卡片', '柱状图', '列表']);
-
-// 处置进度响应式数据
-const disposalProgressList = ref<DisposalProgressRow[]>([]);
-const disposalProgressIndicators = ref<DisposalProgressIndicators>({
-  avgAlarmDuration:0,
-  avgReceiveDuration:0,
-  avgArriveDuration:0,
-  avgDisposeDuration:0,
-  avgCloseDuration:0,
-  timeoutDisposalCount:0
+const resourceDispatchIndicators = ref<ResourceDispatchIndicators>({
+  transitingCount: 0,
+  deliveredCount: 0,
+  abnormalCount: 0,
 });
-const disposalProgressTrendData = ref<ChartLineData>({ xAxis: [], series: [] });
-const disposalProgressBaseFontScale = ref<number>(1);
-const disposalProgressActiveIndices = ref<number[]>([]);
-// 处置进度视图切换相关
-const disposalProgressChartRefreshKey = ref<number>(0);
-const activeDisposalProgressView = ref<string>('折线图');
-const disposalProgressViewBtnList = ref<string[]>(['卡片', '折线图', '列表']);
-
-// 应急方案响应式数据
-const emergencyPlanList = ref<EmergencyPlanRow[]>([]);
-const emergencyPlanIndicators = ref<EmergencyPlanIndicators>({
-  launchedCount: 0,
-  executingCount: 0
-});
-const emergencyPlanTypeRatioData = ref<ChartRatioData>({
-  legend: [],
-  series: [{ name: '方案适配应急类型占比', data: [] }]
-});
-const emergencyPlanBaseFontScale = ref<number>(1);
-const emergencyPlanActiveIndices = ref<number[]>([]);
-// 应急方案视图切换相关
-const emergencyPlanChartRefreshKey = ref<number>(0);
-const activeEmergencyPlanView = ref<string>('列表');
-const emergencyPlanViewBtnList = ref<string[]>(['卡片', '饼图', '列表']);
+const resourceDispatchTypeCompareData = ref<ChartBarData>({ xAxis: [], series: [] });
+// 资源调度视图切换相关
+const activeResourceDispatchView = ref('地图');
+const resourceDispatchViewBtnList = ref(['地图', '列表']);
+// 资源调度弹窗相关
+const resourceDispatchDetailDialogVisible = ref(false);
+const dispatchFeedbackDialogVisible = ref(false);
+const dispatchFeedbackForm = ref<DispatchFeedbackData>({ feedbackContent: '' });
 
 // 现场态势响应式数据
 const sceneSituationList = ref<SceneSituationRow[]>([]);
@@ -1087,131 +1089,101 @@ const disposalInstructionOptions = ref([
 const selectedDisposalInstruction = ref<string>(''); // 选中的指令值
 const customDisposalInstruction = ref<string>(''); // 自定义指令内容
 
+// 指挥调度响应式数据
+const dispatchTaskList = ref<DispatchTaskRow[]>([]);
+const dispatchTaskIndicators = ref<DispatchTaskIndicators>({
+  pendingCount: 0,
+  executingCount: 0,
+  completedCount: 0
+});
+const dispatchTaskReceiverCompareData = ref<ChartBarData>({ xAxis: [], series: [] });
+const dispatchTaskBaseFontScale = ref<number>(1);
+const dispatchTaskActiveIndices = ref<number[]>([]);
+// 指挥调度视图切换相关
+const dispatchTaskChartRefreshKey = ref<number>(0);
+const activeDispatchTaskView = ref<string>('柱状图');
+const dispatchTaskViewBtnList = ref<string[]>(['卡片', '柱状图', '列表']);
 
-// 资源调度接口请求方法
-const getResourceDispatchListData = async () => {
-  try {
-    resourceDispatchList.value = (await fetchResourceDispatchList()) as ResourceDispatchRow[];
-  } catch (error: any) {
-    ElMessage.error(`资源调度列表加载失败：${error.message}`);
-    resourceDispatchList.value = [];
-  }
-};
-const getResourceDispatchDetailData = async (dispatchRecordId: string) => {
-  try {
-    resourceDispatchDetailSelectedRow.value = {
-      ...resourceDispatchDetailSelectedRow.value,
-      ...(await fetchResourceDispatchDetail(dispatchRecordId)),
-    };
-  } catch (error: any) {
-    ElMessage.warning(`资源调度详情加载失败：${error.message}`);
-  }
-};
-const getResourceDispatchIndicatorData = async () => {
-  try {
-    resourceDispatchIndicators.value = await fetchResourceDispatchIndicators();
-  } catch {
-    resourceDispatchIndicators.value = {
-      transitingCount: 0,
-      deliveredCount: 0,
-      abnormalCount: 0,
-    };
-  }
-};
-const getResourceDispatchTypeCompareData = async () => {
-  try {
-    resourceDispatchTypeCompareData.value = await fetchResourceDispatchTypeCompare();
-  } catch {
-    resourceDispatchTypeCompareData.value = {
-      xAxis: [],
-      series: [],
-    };
-  }
-};
+// 处置进度响应式数据
+const disposalProgressList = ref<DisposalProgressRow[]>([]);
+const disposalProgressIndicators = ref<DisposalProgressIndicators>({
+  avgAlarmDuration:0,
+  avgReceiveDuration:0,
+  avgArriveDuration:0,
+  avgDisposeDuration:0,
+  avgCloseDuration:0,
+  timeoutDisposalCount:0
+});
+const disposalProgressTrendData = ref<ChartLineData>({ xAxis: [], series: [] });
+const disposalProgressBaseFontScale = ref<number>(1);
+const disposalProgressActiveIndices = ref<number[]>([]);
+// 处置进度视图切换相关
+const disposalProgressChartRefreshKey = ref<number>(0);
+const activeDisposalProgressView = ref<string>('折线图');
+const disposalProgressViewBtnList = ref<string[]>(['卡片', '折线图', '列表']);
 
-// 确认调度接收
-const confirmDispatchData = async () => {
-  try {
-    const res = await confirmResourceDispatch(
-      resourceDispatchDetailSelectedRow.value.taskResourceDispatchDispatchRecordId,
-      dispatchConfirmForm.value
-    );
-    if (res.success) {
-      ElMessage.success('接收确认成功');
-      dispatchConfirmDialogVisible.value = false;
-      dispatchConfirmForm.value = { confirmNote: '', receiveOpinion: '' };
-      // 刷新数据
-      await getResourceDispatchListData();
-      await getResourceDispatchIndicatorData();
-    }
-  } catch (error: any) {
-    ElMessage.error(`确认失败：${error.message}`);
-  }
-};
+// 应急方案响应式数据
+const emergencyPlanList = ref<EmergencyPlanRow[]>([]);
+const emergencyPlanIndicators = ref<EmergencyPlanIndicators>({
+  launchedCount: 0,
+  executingCount: 0
+});
+const emergencyPlanTypeRatioData = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '方案适配应急类型占比', data: [] }]
+});
+const emergencyPlanBaseFontScale = ref<number>(1);
+const emergencyPlanActiveIndices = ref<number[]>([]);
+// 应急方案视图切换相关
+const emergencyPlanChartRefreshKey = ref<number>(0);
+const activeEmergencyPlanView = ref<string>('列表');
+const emergencyPlanViewBtnList = ref<string[]>(['卡片', '饼图', '列表']);
 
-// 提交调度反馈
-const feedbackDispatchData = async () => {
-  try {
-    const res = await feedbackResourceDispatch(
-      resourceDispatchDetailSelectedRow.value.taskResourceDispatchDispatchRecordId,
-      dispatchFeedbackForm.value
-    );
-    if (res.success) {
-      ElMessage.success('反馈提交成功');
-      dispatchFeedbackDialogVisible.value = false;
-      dispatchFeedbackForm.value = { feedbackContent: '' };
-      // 刷新数据
-      await getResourceDispatchListData();
-    }
-  } catch (error: any) {
-    ElMessage.error(`反馈提交失败：${error.message}`);
-  }
-};
+// 协同指挥响应式数据
+const cooperationList = ref<CooperationRow[]>([]);
+const cooperationDetailSelectedRow = ref<CooperationDetail>({
+  taskCooperationCooperationId: '',
+  sysCooperationTypeName: '',
+  taskCooperationTaskContent: '',
+  sysDeptDeptName: '',
+  taskCooperationCreateTime: null,
+  sysResponseStatusName: '',
+  initiatingDept: '',
+  cooperationLeader: '',
+  cooperationEffect: '',
+  completeTime: null,
+  participatingUnits: [],
+  taskRequirements: '',
+  feedbackResults: [],
+});
+const cooperationIndicators = ref<CooperationIndicators>({
+  totalCooperationCount: 0,
+  responseRate: 0,
+  effectStandardCount: 0
+});
+const cooperationTypeCompareData = ref<ChartBarData>({ xAxis: [], series: [] });
+const cooperationDeptCompareData = ref<ChartBarData>({ xAxis: [], series: [] });
+const cooperationTypeRatioData = ref<ChartRatioData>({ legend: [], series: [] });
+const cooperationStatusRatioData = ref<ChartRatioData>({ legend: [], series: [] });
+const cooperationBaseFontScale = ref<number>(1);
+const cooperationActiveIndices = ref<number[]>([]);
+// 协同指挥视图切换相关
+const cooperationChartRefreshKey = ref<number>(0);
+const activeCooperationView = ref<string>('卡片');
+const cooperationViewBtnList = ref<string[]>(['卡片', '柱状图', '饼图', '列表']);
+// 协同指挥弹窗相关
+const cooperationDetailDialogVisible = ref(false);
+const cooperationResponseDialogVisible = ref(false);
+const cooperationFeedbackDialogVisible = ref(false);
+const responseForm = ref({
+  responseResult: 'accept', // 'accept' or 'reject'
+  reason: '',
+});
+const feedbackForm = ref({
+  cooperationEffect: '',
+  materials: [] as File[],
+});
 
-// 资源调度视图切换方法
-const changeResourceDispatchView = (viewName: string) => {
-  activeResourceDispatchView.value = viewName;
-  if (viewName === '列表') {
-    nextTick(() => {
-      getResourceDispatchListData();
-    });
-  }
-};
-
-// 资源调度弹窗方法
-const openResourceDispatchDetailDialog = async (row: ResourceDispatchRow) => {
-  await getResourceDispatchDetailData(row.taskResourceDispatchDispatchRecordId);
-  resourceDispatchDetailDialogVisible.value = true;
-};
-const closeResourceDispatchDetailDialog = () => {
-  resourceDispatchDetailDialogVisible.value = false;
-  resourceDispatchDetailSelectedRow.value = {
-    taskResourceDispatchDispatchRecordId: '',
-    taskEmergencyResourceResourceId: '',
-    sysResourceTypeName: '',
-    taskResourceDispatchDispatchQuantity: 0,
-    fromAddress: '',
-    toAddress: '',
-    sysDispatchStatusName: '',
-    taskResourceDispatchDispatchTime: null,
-    taskResourceDispatchEstimatedArrivalTime: null,
-    taskResourceDispatchActualArrivalTime: null,
-    sysUserUserName: '',
-    resourceDetails: [],
-    dispatchInstruction: '',
-    dispatchTrack: [],
-  };
-};
-const openDispatchConfirmDialog = () => {
-  if (resourceDispatchDetailSelectedRow.value.sysDispatchStatusName !== '已送达') {
-    ElMessage.warning('只有已送达状态的调度记录才能确认接收');
-    return;
-  }
-  dispatchConfirmDialogVisible.value = true;
-};
-const openDispatchFeedbackDialog = () => {
-  dispatchFeedbackDialogVisible.value = true;
-};
 
 // 应急态势接口请求方法
 const getEmergencySituationListData = async () => {
@@ -1450,6 +1422,138 @@ const getSpecialEmergencyTrendData = async () => {
   }
 };
 
+// 资源调度接口请求方法
+const getResourceDispatchListData = async () => {
+  try {
+    resourceDispatchList.value = (await fetchResourceDispatchList()) as ResourceDispatchRow[];
+  } catch (error: any) {
+    ElMessage.error(`资源调度列表加载失败：${error.message}`);
+    resourceDispatchList.value = [];
+  }
+};
+const getResourceDispatchDetailData = async (dispatchRecordId: string) => {
+  try {
+    resourceDispatchDetailSelectedRow.value = {
+      ...resourceDispatchDetailSelectedRow.value,
+      ...(await fetchResourceDispatchDetail(dispatchRecordId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`资源调度详情加载失败：${error.message}`);
+  }
+};
+const getResourceDispatchIndicatorData = async () => {
+  try {
+    resourceDispatchIndicators.value = await fetchResourceDispatchIndicators();
+  } catch {
+    resourceDispatchIndicators.value = {
+      transitingCount: 0,
+      deliveredCount: 0,
+      abnormalCount: 0,
+    };
+  }
+};
+const getResourceDispatchTypeCompareData = async () => {
+  try {
+    resourceDispatchTypeCompareData.value = await fetchResourceDispatchTypeCompare();
+  } catch {
+    resourceDispatchTypeCompareData.value = {
+      xAxis: [],
+      series: [],
+    };
+  }
+};
+
+// 现场态势接口请求方法
+const getSceneSituationListData = async () => {
+  try {
+    sceneSituationList.value = (await fetchSceneSituationList()) as SceneSituationRow[];
+  } catch (error: any) {
+    ElMessage.error(`现场态势列表加载失败：${error.message}`);
+    sceneSituationList.value = [];
+  }
+};
+const getSceneSituationDetailData = async (emergencyId: string) => {
+  try {
+    sceneSituationDetailSelectedRow.value = {
+      ...sceneSituationDetailSelectedRow.value,
+      ...(await fetchSceneSituationDetail(emergencyId)),
+    };
+    // 重置指令选择
+    selectedDisposalInstruction.value = '';
+    customDisposalInstruction.value = '';
+  } catch (error: any) {
+    ElMessage.warning(`现场态势详情加载失败：${error.message}`);
+  }
+};
+const contactScenePersonData = async (emergencyId: string) => {
+  try {
+    const res = await contactScenePerson(emergencyId);
+    if (res.success) {
+      // 无需弹窗，直接展示联系方式
+      const contactInfo = res.contactInfo;
+      tipDialogContent.value = `现场负责人：${contactInfo.name}\n联系方式：${contactInfo.phone}\n职位：${contactInfo.position}`;
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    ElMessage.error(`联系负责人失败：${error.message}`);
+  }
+};
+const submitDisposalInstructionData = async () => {
+  // 确定最终提交的指令内容
+  let finalInstruction = '';
+  if (selectedDisposalInstruction.value === 'custom') {
+    if (!customDisposalInstruction.value.trim()) {
+      ElMessage.warning('请输入自定义处置指令');
+      return;
+    }
+    finalInstruction = customDisposalInstruction.value.trim();
+  } else if (selectedDisposalInstruction.value) {
+    finalInstruction = selectedDisposalInstruction.value;
+  } else {
+    ElMessage.warning('请选择或输入处置指令');
+    return;
+  }
+
+  try {
+    const res = await submitDisposalInstruction(
+      sceneSituationDetailSelectedRow.value.taskEmergencyEmergencyId,
+      finalInstruction
+    );
+    if (res.success) {
+      tipDialogContent.value = res.message;
+      tipDialogVisible.value = true;
+      // 重置指令
+      selectedDisposalInstruction.value = '';
+      customDisposalInstruction.value = '';
+      // 刷新数据
+      await getSceneSituationListData();
+    }
+  } catch (error: any) {
+    ElMessage.error(`下发指令失败：${error.message}`);
+  }
+};
+const getSceneSituationIndicatorData = async () => {
+  try {
+    sceneSituationIndicators.value = await fetchSceneSituationIndicators();
+  } catch {
+    sceneSituationIndicators.value = {
+      evacuatedVehicleCount: 0,
+      repairBerthCount: 0,
+      affectedRange: ''
+    };
+  }
+};
+const getSceneDisposalEffectCompareData = async () => {
+  try {
+    sceneDisposalEffectCompareData.value = await fetchSceneDisposalEffectCompare();
+  } catch {
+    sceneDisposalEffectCompareData.value = {
+      xAxis: [],
+      series: []
+    };
+  }
+};
+
 // 指挥调度接口请求方法
 const getDispatchTaskListData = async () => {
   try {
@@ -1541,92 +1645,113 @@ const getEmergencyPlanTypeRatioData = async () => {
   }
 };
 
-// 现场态势接口请求方法
-const getSceneSituationListData = async () => {
+// 协同指挥接口请求方法
+const getCooperationListData = async () => {
   try {
-    sceneSituationList.value = (await fetchSceneSituationList()) as SceneSituationRow[];
+    cooperationList.value = await fetchCooperationList();
   } catch (error: any) {
-    ElMessage.error(`现场态势列表加载失败：${error.message}`);
-    sceneSituationList.value = [];
+    ElMessage.error(`协同指挥列表加载失败：${error.message}`);
+    cooperationList.value = [];
   }
 };
-const getSceneSituationDetailData = async (emergencyId: string) => {
+const getCooperationDetailData = async (cooperationId: string) => {
   try {
-    sceneSituationDetailSelectedRow.value = {
-      ...sceneSituationDetailSelectedRow.value,
-      ...(await fetchSceneSituationDetail(emergencyId)),
+    cooperationDetailSelectedRow.value = {
+      ...cooperationDetailSelectedRow.value,
+      ...(await fetchCooperationDetail(cooperationId)),
     };
-    // 重置指令选择
-    selectedDisposalInstruction.value = '';
-    customDisposalInstruction.value = '';
   } catch (error: any) {
-    ElMessage.warning(`现场态势详情加载失败：${error.message}`);
+    ElMessage.warning(`协同指挥详情加载失败：${error.message}`);
   }
 };
-const contactScenePersonData = async (emergencyId: string) => {
+const respondToCooperationData = async () => {
   try {
-    const res = await contactScenePerson(emergencyId);
-    if (res.success) {
-      // 无需弹窗，直接展示联系方式
-      const contactInfo = res.contactInfo;
-      tipDialogContent.value = `现场负责人：${contactInfo.name}\n联系方式：${contactInfo.phone}\n职位：${contactInfo.position}`;
-      tipDialogVisible.value = true;
-    }
-  } catch (error: any) {
-    ElMessage.error(`联系负责人失败：${error.message}`);
-  }
-};
-const submitDisposalInstructionData = async () => {
-  // 确定最终提交的指令内容
-  let finalInstruction = '';
-  if (selectedDisposalInstruction.value === 'custom') {
-    if (!customDisposalInstruction.value.trim()) {
-      ElMessage.warning('请输入自定义处置指令');
-      return;
-    }
-    finalInstruction = customDisposalInstruction.value.trim();
-  } else if (selectedDisposalInstruction.value) {
-    finalInstruction = selectedDisposalInstruction.value;
-  } else {
-    ElMessage.warning('请选择或输入处置指令');
-    return;
-  }
-
-  try {
-    const res = await submitDisposalInstruction(
-      sceneSituationDetailSelectedRow.value.taskEmergencyEmergencyId,
-      finalInstruction
+    const res = await respondToCooperation(
+      cooperationDetailSelectedRow.value.taskCooperationCooperationId,
+      responseForm.value
     );
     if (res.success) {
       tipDialogContent.value = res.message;
       tipDialogVisible.value = true;
-      // 重置指令
-      selectedDisposalInstruction.value = '';
-      customDisposalInstruction.value = '';
+      cooperationResponseDialogVisible.value = false;
+      // 重置表单
+      responseForm.value = { responseResult: 'accept', reason: '' };
       // 刷新数据
-      await getSceneSituationListData();
+      await getCooperationListData();
+      await getCooperationIndicatorData();
     }
   } catch (error: any) {
-    ElMessage.error(`下发指令失败：${error.message}`);
+    ElMessage.error(`响应协同失败：${error.message}`);
   }
 };
-const getSceneSituationIndicatorData = async () => {
+const feedbackCooperationData = async () => {
   try {
-    sceneSituationIndicators.value = await fetchSceneSituationIndicators();
+    const res = await feedbackCooperation(
+      cooperationDetailSelectedRow.value.taskCooperationCooperationId,
+      feedbackForm.value
+    );
+    if (res.success) {
+      tipDialogContent.value = res.message;
+      tipDialogVisible.value = true;
+      cooperationFeedbackDialogVisible.value = false;
+      // 重置表单
+      feedbackForm.value = { cooperationEffect: '', materials: [] };
+      // 刷新数据
+      await getCooperationListData();
+      await getCooperationIndicatorData();
+    }
+  } catch (error: any) {
+    ElMessage.error(`提交反馈失败：${error.message}`);
+  }
+};
+const getCooperationIndicatorData = async () => {
+  try {
+    cooperationIndicators.value = await fetchCooperationIndicators();
+    nextTick(() => initCooperationNumberAnimations());
   } catch {
-    sceneSituationIndicators.value = {
-      evacuatedVehicleCount: 0,
-      repairBerthCount: 0,
-      affectedRange: ''
+    cooperationIndicators.value = {
+      totalCooperationCount: 0,
+      responseRate: 0,
+      effectStandardCount: 0
     };
   }
 };
-const getSceneDisposalEffectCompareData = async () => {
+const getCooperationTypeCompareData = async () => {
   try {
-    sceneDisposalEffectCompareData.value = await fetchSceneDisposalEffectCompare();
+    cooperationTypeCompareData.value = await fetchCooperationTypeCompare();
   } catch {
-    sceneDisposalEffectCompareData.value = {
+    cooperationTypeCompareData.value = {
       xAxis: [],
+      series: []
+    };
+  }
+};
+const getCooperationDeptCompareData = async () => {
+  try {
+    cooperationDeptCompareData.value = await fetchCooperationDeptCompare();
+  } catch {
+    cooperationDeptCompareData.value = {
+      xAxis: [],
+      series: []
+    };
+  }
+};
+const getCooperationTypeRatioData = async () => {
+  try {
+    cooperationTypeRatioData.value = await fetchCooperationTypeRatio();
+  } catch {
+    cooperationTypeRatioData.value = {
+      legend: [],
+      series: []
+    };
+  }
+};
+const getCooperationStatusRatioData = async () => {
+  try {
+    cooperationStatusRatioData.value = await fetchCooperationStatusRatio();
+  } catch {
+    cooperationStatusRatioData.value = {
+      legend: [],
       series: []
     };
   }
@@ -1762,17 +1887,69 @@ const closeResourceDispatchDialog = () => {
     estimatedArrivalTime: ''
   };
 };
-// 调度任务视图切换方法
-const changeDispatchTaskView = (viewName: string) => {
-  activeDispatchTaskView.value = viewName;
-  viewName === '卡片' && nextTick(() => initDispatchTaskNumberAnimations());
-  viewName === '柱状图' && nextTick(() => dispatchTaskChartRefreshKey.value += 1);
+
+// 提交调度反馈
+const feedbackDispatchData = async () => {
+  try {
+    const res = await feedbackResourceDispatch(
+      resourceDispatchDetailSelectedRow.value.taskResourceDispatchDispatchRecordId,
+      dispatchFeedbackForm.value
+    );
+    if (res.success) {
+      // 显示成功提示弹窗
+      tipDialogContent.value = '调度反馈提交成功！';
+      tipDialogVisible.value = true;
+
+      // 关闭反馈弹窗
+      dispatchFeedbackDialogVisible.value = false;
+      dispatchFeedbackForm.value = { feedbackContent: '' };
+
+      // 刷新数据
+      await getResourceDispatchListData();
+    }
+  } catch (error: any) {
+    ElMessage.error(`反馈提交失败：${error.message}`);
+  }
 };
-// 处置进度视图切换方法
-const changeDisposalProgressView = (viewName: string) => {
-  activeDisposalProgressView.value = viewName;
-  viewName === '卡片' && nextTick(() => initDisposalProgressNumberAnimations());
-  viewName === '折线图' && nextTick(() => disposalProgressChartRefreshKey.value += 1);
+// 资源调度视图切换方法
+const changeResourceDispatchView = (viewName: string) => {
+  activeResourceDispatchView.value = viewName;
+  if (viewName === '列表') {
+    nextTick(() => {
+      getResourceDispatchListData();
+    });
+  }
+};
+// 资源调度弹窗方法
+const openResourceDispatchDetailDialog = async (row: ResourceDispatchRow) => {
+  await getResourceDispatchDetailData(row.taskResourceDispatchDispatchRecordId);
+  resourceDispatchDetailDialogVisible.value = true;
+};
+const closeResourceDispatchDetailDialog = () => {
+  resourceDispatchDetailDialogVisible.value = false;
+  resourceDispatchDetailSelectedRow.value = {
+    taskResourceDispatchDispatchRecordId: '',
+    taskEmergencyResourceResourceId: '',
+    sysResourceTypeName: '',
+    taskResourceDispatchDispatchQuantity: 0,
+    fromAddress: '',
+    toAddress: '',
+    sysDispatchStatusName: '',
+    taskResourceDispatchDispatchTime: null,
+    taskResourceDispatchEstimatedArrivalTime: null,
+    taskResourceDispatchActualArrivalTime: null,
+    sysUserUserName: '',
+    resourceDetails: [],
+    dispatchInstruction: '',
+    dispatchTrack: [],
+  };
+};
+const openDispatchFeedbackDialog = (row: ResourceDispatchRow) => {
+  // 设置当前操作的记录
+  resourceDispatchDetailSelectedRow.value.taskResourceDispatchDispatchRecordId = row.taskResourceDispatchDispatchRecordId;
+
+  // 打开反馈弹窗
+  dispatchFeedbackDialogVisible.value = true;
 };
 
 // 专项应急视图切换方法
@@ -1897,9 +2074,71 @@ const closeScenePhotoDialog = () => {
   selectedPhotoUrl.value = '';
 };
 
+// 调度任务视图切换方法
+const changeDispatchTaskView = (viewName: string) => {
+  activeDispatchTaskView.value = viewName;
+  viewName === '卡片' && nextTick(() => initDispatchTaskNumberAnimations());
+  viewName === '柱状图' && nextTick(() => dispatchTaskChartRefreshKey.value += 1);
+};
+
+// 处置进度视图切换方法
+const changeDisposalProgressView = (viewName: string) => {
+  activeDisposalProgressView.value = viewName;
+  viewName === '卡片' && nextTick(() => initDisposalProgressNumberAnimations());
+  viewName === '折线图' && nextTick(() => disposalProgressChartRefreshKey.value += 1);
+};
+
+// 协同指挥视图切换方法
+const changeCooperationView = (viewName: string) => {
+  activeCooperationView.value = viewName;
+  viewName === '卡片' && nextTick(() => initCooperationNumberAnimations());
+  (viewName === '柱状图' || viewName === '饼图') && nextTick(() => cooperationChartRefreshKey.value += 1);
+  if (viewName === '列表') {
+    nextTick(() => {
+      getCooperationListData();
+    });
+  }
+};
+// 协同指挥弹窗方法
+const openCooperationDetailDialog = async (row: CooperationRow) => {
+  await getCooperationDetailData(row.taskCooperationCooperationId);
+  cooperationDetailDialogVisible.value = true;
+};
+const closeCooperationDetailDialog = () => {
+  cooperationDetailDialogVisible.value = false;
+  cooperationDetailSelectedRow.value = {
+    taskCooperationCooperationId: '',
+    sysCooperationTypeName: '',
+    taskCooperationTaskContent: '',
+    sysDeptDeptName: '',
+    taskCooperationCreateTime: null,
+    sysResponseStatusName: '',
+    initiatingDept: '',
+    cooperationLeader: '',
+    cooperationEffect: '',
+    completeTime: null,
+    participatingUnits: [],
+    taskRequirements: '',
+    feedbackResults: [],
+  };
+};
+const openCooperationResponseDialog = () => {
+  cooperationResponseDialogVisible.value = true;
+};
+const closeCooperationResponseDialog = () => {
+  cooperationResponseDialogVisible.value = false;
+  responseForm.value = { responseResult: 'accept', reason: '' };
+};
+const openCooperationFeedbackDialog = () => {
+  cooperationFeedbackDialogVisible.value = true;
+};
+const closeCooperationFeedbackDialog = () => {
+  cooperationFeedbackDialogVisible.value = false;
+  feedbackForm.value = { cooperationEffect: '', materials: [] };
+};
+
 
 // 标签映射
-// 资源调度状态标签
 const getDispatchStatusTag = (val: string) => {
   switch(val){
     case '在途': return 'primary';
@@ -1968,7 +2207,6 @@ const getEmergencyTypeName = (val: string) => {
     default:return '其他';
   }
 };
-// 资源状态标签映射
 const getResourceStatusTag = (val: string) => {
   switch(val) {
     case '待命': return 'success';
@@ -1978,9 +2216,18 @@ const getResourceStatusTag = (val: string) => {
     default: return '';
   }
 };
+// 协同指挥状态标签
+const getCooperationStatusTag = (val: string) => {
+  switch(val){
+    case '待响应': return 'warning';
+    case '已响应': return 'primary';
+    case '已反馈': return 'info';
+    case '已完成': return 'success';
+    case '已拒绝': return 'danger';
+    default: return '';
+  }
+};
 
-// 格式化时长（分钟）
-const formatDuration = (val: number | null | undefined) => val ? `${val} 分钟` : '-';
 
 // 页面挂载生命周期
 onMounted(async () => {
@@ -2006,18 +2253,24 @@ onMounted(async () => {
     getResourceDispatchListData(),
     getResourceDispatchIndicatorData(),
     getResourceDispatchTypeCompareData(),
+    getCooperationListData(),
+    getCooperationIndicatorData(),
+    getCooperationTypeCompareData(),
+    getCooperationDeptCompareData(),
+    getCooperationTypeRatioData(),
+    getCooperationStatusRatioData(),
   ]);
   setTimeout(() => {
     dispatchTaskChartRefreshKey.value += 1;
     emergencyPlanChartRefreshKey.value += 1;
     disposalProgressChartRefreshKey.value += 1;
+    cooperationChartRefreshKey.value += 1;
   }, 200);
   screenFull.on('change', handleFullscreenChange);
 });
 
 // 页面卸载生命周期
 onUnmounted(() => {
-  // 新增：包含emergencyMap4Ref，停止调度路径地图环绕动画
   [emergencyMap1Ref.value, emergencyMap2Ref.value, emergencyMap3Ref.value, emergencyMap4Ref.value].forEach(ref => ref && ref.stopOrbitAnimation());
   screenFull.off('change', handleFullscreenChange);
   currentFullscreenPanel.value = null;
@@ -2088,10 +2341,24 @@ onUnmounted(() => {
                 <div class="chart-overlay2">
                   <div class="chart-cards2">
                     <div class="chart-card">
-                      <ChartPie1 :key="topMainChartRefreshKey" :data="emergencyTypeRatioData" title="应急类型占比" :base-font-scale="disposalProgressBaseFontScale" :active-indices="disposalProgressActiveIndices" style="width:100%;height:100%"/>
+                      <ChartPie1
+                        :key="topMainChartRefreshKey"
+                        :data="emergencyTypeRatioData"
+                        title="应急类型占比"
+                        :base-font-scale="disposalProgressBaseFontScale"
+                        :active-indices="disposalProgressActiveIndices"
+                        style="width:100%;height:100%"
+                      />
                     </div>
                     <div class="chart-card">
-                      <ChartPie2 :key="topMainChartRefreshKey" :data="emergencyLevelRatioData" title="应急等级占比" :base-font-scale="disposalProgressBaseFontScale" :active-indices="disposalProgressActiveIndices" style="width:100%;height:100%"/>
+                      <ChartPie2
+                        :key="topMainChartRefreshKey"
+                        :data="emergencyLevelRatioData"
+                        title="应急等级占比"
+                        :base-font-scale="disposalProgressBaseFontScale"
+                        :active-indices="disposalProgressActiveIndices"
+                        style="width:100%;height:100%"
+                      />
                     </div>
                   </div>
                 </div>
@@ -2620,9 +2887,9 @@ onUnmounted(() => {
                           type="warning"
                           size="small"
                           plain
-                          @click.stop="openDispatchFeedbackDialog"
+                          @click.stop="openDispatchFeedbackDialog(scope.row)"
                         >
-                          反馈
+                        反馈
                         </ElButton>
                       </template>
                     </ElTableColumn>
@@ -2899,7 +3166,7 @@ onUnmounted(() => {
                 </div>
               </div>
               <div v-if="activeEmergencyPlanView === '饼图'" class="view-content" style="box-sizing: border-box; width:100%;height:100%;padding:0.3vw" :key="emergencyPlanChartRefreshKey">
-                <ChartPie1 :data="emergencyPlanTypeRatioData" title="方案适配应急类型占比" :base-font-scale="emergencyPlanBaseFontScale" :active-indices="emergencyPlanActiveIndices" style="width:100%;height:100%"/>
+                <ChartPie3 :data="emergencyPlanTypeRatioData" title="方案适配应急类型占比" :base-font-scale="emergencyPlanBaseFontScale" :active-indices="emergencyPlanActiveIndices" style="width:100%;height:100%"/>
               </div>
               <div v-if="activeEmergencyPlanView === '列表'" class="view-content">
                 <div class="table-box3">
@@ -2917,7 +3184,194 @@ onUnmounted(() => {
               </div>
             </el-tab-pane>
             <el-tab-pane label="协同指挥" name="tab2">
-              <div class="view-content"><div class="content-placeholder">协同指挥</div></div>
+              <div class="header-actions">
+                <div class="actions-left"></div>
+                <div class="actions-right">
+                  <div class="view-btn-group">
+                    <ElButton
+                      v-for="item in cooperationViewBtnList"
+                      :key="item"
+                      :type="activeCooperationView === item ? 'primary' : ''"
+                      plain
+                      @click="changeCooperationView(item)"
+                      class="view-btn"
+                    >
+                      {{ item }}
+                    </ElButton>
+                  </div>
+                  <el-icon color="#409eff" size="16"><Filter /></el-icon>
+                  <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('bottomRightPanel')">
+                    <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
+                  </button>
+                </div>
+              </div>
+              <!-- 卡片视图 -->
+              <div v-if="activeCooperationView === '卡片'" class="view-content">
+                <div class="indicator-cards1">
+                  <div class="indicator-card1 card1" style="cursor: default">
+                    <div class="indicator-title">协同事件总数</div>
+                    <div class="indicator-value">
+          <span :data-value="cooperationIndicators.totalCooperationCount" class="cooperation-number-animate">
+            {{ cooperationIndicators.totalCooperationCount }}
+          </span>
+                    </div>
+                    <div class="indicator-unit">个</div>
+                  </div>
+                  <div class="indicator-card1 card2" style="cursor: default">
+                    <div class="indicator-title">响应率</div>
+                    <div class="indicator-value">
+          <span :data-value="cooperationIndicators.responseRate" class="cooperation-number-animate">
+            {{ cooperationIndicators.responseRate.toFixed(1) }}
+          </span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                  <div class="indicator-card1 card3" style="cursor: default">
+                    <div class="indicator-title">配合成效达标数</div>
+                    <div class="indicator-value">
+          <span :data-value="cooperationIndicators.effectStandardCount" class="cooperation-number-animate">
+            {{ cooperationIndicators.effectStandardCount }}
+          </span>
+                    </div>
+                    <div class="indicator-unit">个</div>
+                  </div>
+                </div>
+              </div>
+              <!-- 柱状图视图 -->
+              <div v-if="activeCooperationView === '柱状图'" class="view-content" style="display: flex; flex-direction: column; height: 100%;">
+                <div style="flex: 1; padding: 0.3vw;">
+                  <VerticalBar3
+                    :key="cooperationChartRefreshKey"
+                    :x-axis="cooperationTypeCompareData.xAxis"
+                    :series="cooperationTypeCompareData.series"
+                    unit="个"
+                    title="不同协同类型联动数对比"
+                    :base-font-scale="cooperationBaseFontScale"
+                    :active-indices="cooperationActiveIndices"
+                    style="width:100%;height:100%"
+                  />
+                </div>
+                <div style="flex: 1; padding: 0.3vw;">
+                  <VerticalBar3
+                    :key="cooperationChartRefreshKey"
+                    :x-axis="cooperationDeptCompareData.xAxis"
+                    :series="cooperationDeptCompareData.series"
+                    unit="个"
+                    title="不同参与单位联动数对比"
+                    :base-font-scale="cooperationBaseFontScale"
+                    :active-indices="cooperationActiveIndices"
+                    style="width:100%;height:100%"
+                  />
+                </div>
+              </div>
+              <!-- 饼图视图 -->
+              <div v-if="activeCooperationView === '饼图'" class="view-content" style="box-sizing: border-box; width:100%;height:100%;padding:0.3vw; display: flex; gap: 0.3vw;">
+                <div style="flex: 1; height: 100%;">
+                  <ChartPie4
+                    :key="cooperationChartRefreshKey"
+                    :data="cooperationTypeRatioData"
+                    title="协同类型占比"
+                    :base-font-scale="cooperationBaseFontScale"
+                    :active-indices="cooperationActiveIndices"
+                    style="width:100%;height:100%"
+                  />
+                </div>
+                <div style="flex: 1; height: 100%;">
+                  <ChartPie2
+                    :key="cooperationChartRefreshKey"
+                    :data="cooperationStatusRatioData"
+                    title="响应状态占比"
+                    :base-font-scale="cooperationBaseFontScale"
+                    :active-indices="cooperationActiveIndices"
+                    style="width:100%;height:100%"
+                  />
+                </div>
+              </div>
+              <!-- 列表视图 -->
+              <div v-if="activeCooperationView === '列表'" class="view-content">
+                <div class="table-box4">
+                  <ElTable
+                    class="table4"
+                    :data="cooperationList"
+                    border
+                    size="small"
+                    width="100%"
+                    height="100%"
+                    table-layout="fixed"
+                    highlight-current-row
+                    @row-click="(row) => openCooperationDetailDialog(row)"
+                  >
+                    <ElTableColumn
+                      prop="taskCooperationCooperationId"
+                      label="协同ID"
+                      align="center"
+                    />
+                    <ElTableColumn
+                      prop="sysCooperationTypeName"
+                      label="协同类型"
+                      align="center"
+                    />
+                    <ElTableColumn
+                      prop="taskCooperationTaskContent"
+                      label="协同任务"
+                      align="center"
+                      min-width="200px"
+                    />
+                    <ElTableColumn
+                      prop="sysDeptDeptName"
+                      label="参与单位"
+                      align="center"
+                    />
+                    <ElTableColumn
+                      prop="taskCooperationCreateTime"
+                      label="发起时间"
+                      align="center"
+                    >
+                      <template #default="scope">{{ formatTimeStamp(scope.row.taskCooperationCreateTime) }}</template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="sysResponseStatusName"
+                      label="响应状态"
+                      align="center"
+                    >
+                      <template #default="scope">
+                        <ElTag :type="getCooperationStatusTag(scope.row.sysResponseStatusName)">
+                          {{ scope.row.sysResponseStatusName || '-' }}
+                        </ElTag>
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      label="操作"
+                      align="center"
+                      width="100"
+                      fixed="right"
+                    >
+                      <template #default="scope">
+                        <ElButton
+                          v-if="scope.row.sysResponseStatusName === '待响应'"
+                          type="primary"
+                          size="small"
+                          plain
+                          @click.stop="openCooperationResponseDialog(scope.row)"
+                          style="margin-left: 8px;"
+                        >
+                          响应
+                        </ElButton>
+                        <ElButton
+                          v-if="scope.row.sysResponseStatusName === '已响应'"
+                          type="success"
+                          size="small"
+                          plain
+                          @click.stop="openCooperationFeedbackDialog(scope.row)"
+                          style="margin-left: 8px;"
+                        >
+                          反馈
+                        </ElButton>
+                      </template>
+                    </ElTableColumn>
+                  </ElTable>
+                </div>
+              </div>
             </el-tab-pane>
           </el-tabs>
           <div class="panel-footer"></div>
@@ -3790,41 +4244,6 @@ onUnmounted(() => {
           <ElButton plain @click="closeResourceDispatchDetailDialog">关闭</ElButton>
         </template>
       </el-dialog>
-
-      <!-- 调度确认弹窗 -->
-      <el-dialog
-        v-model="dispatchConfirmDialogVisible"
-        width="400px"
-        :close-on-click-modal="false"
-        :close-on-press-escape="false"
-        center
-        destroy-on-close
-        title="调度接收确认"
-      >
-        <ElForm :model="dispatchConfirmForm" :rules="dispatchConfirmFormRules" ref="dispatchConfirmFormRef">
-          <ElFormItem label="接收确认" prop="confirmNote" label-width="100px">
-            <ElInput
-              v-model="dispatchConfirmForm.confirmNote"
-              type="textarea"
-              :rows="3"
-              placeholder="请输入接收确认信息 *"
-            />
-          </ElFormItem>
-          <ElFormItem label="接收意见" label-width="100px">
-            <ElInput
-              v-model="dispatchConfirmForm.receiveOpinion"
-              type="textarea"
-              :rows="2"
-              placeholder="请输入接收意见（可选）"
-            />
-          </ElFormItem>
-        </ElForm>
-        <template #footer>
-          <ElButton @click="dispatchConfirmDialogVisible = false">取消</ElButton>
-          <ElButton type="primary" @click="confirmDispatchData">提交</ElButton>
-        </template>
-      </el-dialog>
-
       <!-- 调度反馈弹窗 -->
       <el-dialog
         v-model="dispatchFeedbackDialogVisible"
@@ -4082,6 +4501,189 @@ onUnmounted(() => {
         </div>
         <template #footer>
           <ElButton plain @click="closeScenePhotoDialog">关闭</ElButton>
+        </template>
+      </el-dialog>
+
+      <!-- 协同指挥详情弹窗 -->
+      <el-dialog
+        v-model="cooperationDetailDialogVisible"
+        width="60%"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="协同指挥详情"
+      >
+        <div class="view-content" style="padding:0;">
+          <div style="display: flex; flex-direction: column; gap: 20px; margin-bottom: 20px; width: 100%;">
+            <div style="flex: 1;">
+              <ElDescriptions bordered :column="3" class="desc-detail" title="协同基本信息">
+                <ElDescriptionsItem label="协同ID">
+                  {{ cooperationDetailSelectedRow.taskCooperationCooperationId || '-' }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="协同类型">
+                  {{ cooperationDetailSelectedRow.sysCooperationTypeName || '-' }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="协同任务">
+                  {{ cooperationDetailSelectedRow.taskCooperationTaskContent || '-' }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="参与单位">
+                  {{ cooperationDetailSelectedRow.sysDeptDeptName || '-' }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="发起单位">
+                  {{ cooperationDetailSelectedRow.initiatingDept || '-' }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="协同负责人">
+                  {{ cooperationDetailSelectedRow.cooperationLeader || '-' }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="发起时间">
+                  {{ formatTimeStamp(cooperationDetailSelectedRow.taskCooperationCreateTime) }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="响应状态">
+                  <ElTag :type="getCooperationStatusTag(cooperationDetailSelectedRow.sysResponseStatusName)">
+                    {{ cooperationDetailSelectedRow.sysResponseStatusName || '-' }}
+                  </ElTag>
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="配合成效">
+                  {{ cooperationDetailSelectedRow.cooperationEffect || '-' }}
+                </ElDescriptionsItem>
+                <ElDescriptionsItem label="完成时间">
+                  {{ formatTimeStamp(cooperationDetailSelectedRow.completeTime) }}
+                </ElDescriptionsItem>
+              </ElDescriptions>
+            </div>
+            <div style="flex: 1;">
+              <ElDescriptions bordered :column="3" class="desc-detail" title="参与单位信息">
+                <template v-for="(unit, index) in cooperationDetailSelectedRow.participatingUnits" :key="index">
+                  <ElDescriptionsItem :label="`单位${index + 1}`">
+                    {{ unit.deptName }}
+                  </ElDescriptionsItem>
+                  <ElDescriptionsItem label="联系人">
+                    {{ unit.contact }}
+                  </ElDescriptionsItem>
+                  <ElDescriptionsItem label="联系方式">
+                    {{ unit.phone }}
+                  </ElDescriptionsItem>
+                </template>
+              </ElDescriptions>
+            </div>
+            <div style="display: flex; gap: 20px; flex: 1;">
+              <div style="flex: 1;">
+                <h3 style="margin: 0 0 10px 0; color: #409eff;">任务要求</h3>
+                <div style="padding: 15px; background: #f5f7fa; border-radius: 4px; white-space: pre-line;">
+                  {{ cooperationDetailSelectedRow.taskRequirements || '暂无任务要求' }}
+                </div>
+              </div>
+              <div style="flex: 1;">
+                <h3 style="margin: 0 0 10px 0; color: #409eff;">反馈结果</h3>
+                <ElTable
+                  v-if="cooperationDetailSelectedRow.feedbackResults.length > 0"
+                  :data="cooperationDetailSelectedRow.feedbackResults"
+                  border
+                  size="small"
+                  width="100%"
+                  table-layout="fixed"
+                >
+                  <ElTableColumn
+                    prop="time"
+                    label="反馈时间"
+                    align="center"
+                  >
+                    <template #default="scope">{{ formatTimeStamp(scope.row.time) }}</template>
+                  </ElTableColumn>
+                  <ElTableColumn
+                    prop="deptName"
+                    label="反馈单位"
+                    align="center"
+                  />
+                  <ElTableColumn
+                    prop="feedback"
+                    label="反馈内容"
+                    align="center"
+                    min-width="200px"
+                  />
+                </ElTable>
+                <div v-else style="padding: 15px; background: #f5f7fa; border-radius: 4px; text-align: center;">
+                  暂无反馈结果
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <template #footer>
+          <div style="text-align: right;">
+            <ElButton plain @click="closeCooperationDetailDialog">关闭</ElButton>
+          </div>
+        </template>
+      </el-dialog>
+      <!-- 响应协同弹窗 -->
+      <el-dialog
+        v-model="cooperationResponseDialogVisible"
+        width="40%"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        center
+        destroy-on-close
+        title="响应协同"
+      >
+        <ElForm :model="responseForm" label-width="80px">
+          <ElFormItem label="响应结果" required>
+            <el-radio-group v-model="responseForm.responseResult">
+              <el-radio label="accept">接受</el-radio>
+              <el-radio label="reject">拒绝</el-radio>
+            </el-radio-group>
+          </ElFormItem>
+          <ElFormItem label="理由">
+            <ElInput
+              v-model="responseForm.reason"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入响应理由（可选）"
+            />
+          </ElFormItem>
+        </ElForm>
+        <template #footer>
+          <ElButton plain @click="closeCooperationResponseDialog">取消</ElButton>
+          <ElButton type="primary" @click="respondToCooperationData">确认</ElButton>
+        </template>
+      </el-dialog>
+      <!-- 反馈协同弹窗 -->
+      <el-dialog
+        v-model="cooperationFeedbackDialogVisible"
+        width="40%"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        center
+        destroy-on-close
+        title="反馈协同"
+      >
+        <ElForm :model="feedbackForm" label-width="100px">
+          <ElFormItem label="协同成效" required>
+            <ElInput
+              v-model="feedbackForm.cooperationEffect"
+              type="textarea"
+              :rows="4"
+              placeholder="请输入协同成效（必填）"
+            />
+          </ElFormItem>
+          <ElFormItem label="佐证材料">
+            <el-upload
+              v-model:file-list="feedbackForm.materials"
+              multiple
+              :limit="5"
+              :on-exceed="() => ElMessage.warning('最多上传5个文件')"
+            >
+              <ElButton type="primary">点击上传</ElButton>
+              <template #tip>
+                <div class="el-upload__tip">支持上传图片、文档等文件，大小不超过10MB</div>
+              </template>
+            </el-upload>
+          </ElFormItem>
+        </ElForm>
+        <template #footer>
+          <ElButton plain @click="closeCooperationFeedbackDialog">取消</ElButton>
+          <ElButton type="primary" @click="feedbackCooperationData">提交</ElButton>
         </template>
       </el-dialog>
 
