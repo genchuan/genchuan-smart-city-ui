@@ -1364,7 +1364,7 @@ export const fetchResourceDetail = (resourceId, params = {}) => {
                 purchaseDate: new Date().getTime() - 365 * 24 * 60 * 60 * 1000,
                 warrantyPeriod: '3年',
                 specifications: '载重10吨，配备起重设备',
-                maintenanceRecord: '最近一次保养：2024-01-15',
+                maintenanceRecord: '最近一次保养：2026-01-15',
               },
               // 库存明细
               inventoryDetails: [

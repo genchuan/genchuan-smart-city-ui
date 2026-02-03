@@ -4620,7 +4620,7 @@ export const fetchServiceDevelopmentList = (params = {}) => {
             resolve([
               {
                 sysServiceTypeName: '智能停车服务',
-                tbServiceDevelopmentPeriod: '2024-01',
+                tbServiceDevelopmentPeriod: '2026-01',
                 tbServiceDevelopmentNewServiceCount: 15,
                 tbServiceDevelopmentCoverageRegionCount: 8,
                 tbServiceDevelopmentUserGrowthRate: 12.5,
@@ -4629,7 +4629,7 @@ export const fetchServiceDevelopmentList = (params = {}) => {
               },
               {
                 sysServiceTypeName: '车位预订服务',
-                tbServiceDevelopmentPeriod: '2024-01',
+                tbServiceDevelopmentPeriod: '2026-01',
                 tbServiceDevelopmentNewServiceCount: 8,
                 tbServiceDevelopmentCoverageRegionCount: 5,
                 tbServiceDevelopmentUserGrowthRate: 18.2,
@@ -4638,7 +4638,7 @@ export const fetchServiceDevelopmentList = (params = {}) => {
               },
               {
                 sysServiceTypeName: '缴费服务',
-                tbServiceDevelopmentPeriod: '2024-01',
+                tbServiceDevelopmentPeriod: '2026-01',
                 tbServiceDevelopmentNewServiceCount: 12,
                 tbServiceDevelopmentCoverageRegionCount: 10,
                 tbServiceDevelopmentUserGrowthRate: 8.7,
@@ -4647,7 +4647,7 @@ export const fetchServiceDevelopmentList = (params = {}) => {
               },
               {
                 sysServiceTypeName: '会员服务',
-                tbServiceDevelopmentPeriod: '2024-01',
+                tbServiceDevelopmentPeriod: '2026-01',
                 tbServiceDevelopmentNewServiceCount: 6,
                 tbServiceDevelopmentCoverageRegionCount: 3,
                 tbServiceDevelopmentUserGrowthRate: 25.3,
@@ -4656,7 +4656,7 @@ export const fetchServiceDevelopmentList = (params = {}) => {
               },
               {
                 sysServiceTypeName: '信息服务',
-                tbServiceDevelopmentPeriod: '2024-01',
+                tbServiceDevelopmentPeriod: '2026-01',
                 tbServiceDevelopmentNewServiceCount: 10,
                 tbServiceDevelopmentCoverageRegionCount: 7,
                 tbServiceDevelopmentUserGrowthRate: 15.8,
@@ -5029,7 +5029,7 @@ export const fetchServiceDevelopmentDetail = (serviceDevelopmentId, params = {})
             resolve({
               tbServiceDevelopmentId: serviceDevelopmentId,
               sysServiceTypeName: serviceDevelopmentId === 'SD20260119001' ? '智能停车服务' : '车位预订服务',
-              tbServiceDevelopmentPeriod: '2024-01',
+              tbServiceDevelopmentPeriod: '2026-01',
               tbServiceDevelopmentYearOnYearGrowth: serviceDevelopmentId === 'SD20260119001' ? 25.3 : 18.7, // 同比增长率
               tbServiceDevelopmentTotalUserCount: serviceDevelopmentId === 'SD20260119001' ? 12500 : 8500, // 累计服务用户数
               tbServiceDevelopmentOptimizationDemandCount: serviceDevelopmentId === 'SD20260119001' ? 8 : 5, // 服务优化需求数
@@ -6549,7 +6549,7 @@ export const fetchOperationRiskDetail = (riskId, params = {}) => {
               tbRegionName: '高新区',
               sysRiskLevelName: '高',
               tbOperationRiskResolutionRate: 75.8, // 风险化解率
-              tbOperationRiskResolutionDeadline: '2024-02-15', // 化解期限
+              tbOperationRiskResolutionDeadline: '2026-02-15', // 化解期限
               tbOperationRiskMainCause: '设备老化、维护不及时', // 主要诱因
               detail: {
                 tbOperationRiskResourceCount: 5,
