@@ -1,21 +1,12 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { ref, computed } from 'vue';
 
 import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
-
 import StatsVisualization from '#/components/stats/StatsVisualization.vue';
 
-import { getStatsDataByType } from './table/data';
 import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
-
-const changeArrowStatus = () => {
-  secondShow.value = !secondShow.value;
-  tabArray.value.forEach((v) => {
-    v.secondShow = secondShow.value;
-  });
-};
 
 // 控制统计组件显示/隐藏的状态
 const showStats = ref(false);
@@ -25,41 +16,56 @@ const toggleStats = () => {
   showStats.value = !showStats.value;
 };
 
-const tabArray = ref([
-  {
-    label: '优惠券管理',
-    components: Table,
-    showSecondary: true,
-    secondShow: false,
-    type: 'coupon',
-  },
-  {
-    label: '活动配置管理',
-    components: Table,
-    showSecondary: true,
-    secondShow: false,
-    type: 'activity',
-  },
-]);
-const activeName = ref('优惠券管理');
-const secondShow = ref(false);
+// 当前选中的标签页名称
+const activeTabName = ref('充值订单');
 
-// 当前选中的类型
-const currentType = ref('coupon');
-// 获取当前类型的统计数据
+// 监听标签页切换，更新当前标签页名称
+const tabChange = (tabName) => {
+  activeTabName.value = tabName;
+};
+
+// 导入获取统计数据的函数
+import { getStatsDataByTabName } from './table/data';
+
+// 根据当前标签页获取统计数据
 const statsData = computed(() => {
-  return getStatsDataByType(currentType.value);
+  return getStatsDataByTabName(activeTabName.value);
 });
 
-// 监听标签页切换，更新当前类型
-const tabChange = (tabName) => {
-  activeName.value = tabName;
-  // 根据标签页名称更新当前类型
-  const tab = tabArray.value.find((item) => item.label === tabName);
-  if (tab) {
-    currentType.value = tab.type;
-  }
+const changeArrowStatus = () => {
+  secondShow.value = !secondShow.value;
+  tabArray.value.forEach((v) => {
+    v.secondShow = secondShow.value;
+  });
 };
+const tabArray = ref([
+  {
+    label: '充值订单',
+    components: Table,
+    showSecondary: true,
+    secondShow: false,
+  },
+  {
+    label: '充值记录',
+    components: Table,
+    showSecondary: true,
+    secondShow: false,
+  },
+  {
+    label: '充值优惠管理',
+    components: Table,
+    showSecondary: true,
+    secondShow: false,
+  },
+  {
+    label: '储值卡管理',
+    components: Table,
+    showSecondary: true,
+    secondShow: false,
+  },
+]);
+const activeName = ref('充值订单');
+const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
@@ -100,7 +106,7 @@ const tabChange = (tabName) => {
         <component
           :is="item.components"
           :second-show="item.secondShow"
-          :type="item.type"
+          :tab-name="item.label"
           :show-stats="showStats"
           :toggle-stats="toggleStats"
           :key="item.label"

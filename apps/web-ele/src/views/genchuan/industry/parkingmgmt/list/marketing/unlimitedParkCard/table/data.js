@@ -3,56 +3,62 @@ import { maskPhone } from '#/utils/dataMask/index.js';
 /** 统计数据生成函数 - 根据标签页类型生成对应统计数据 */
 export const getStatsDataByTabType = (tabType) => {
   switch (tabType) {
-    case '卡种配置':
+    case '卡种配置': {
       return getCardConfigStats();
-    case '畅停卡订单':
+    }
+    case '畅停卡订单': {
       return getOrderStats();
-    case '短信通知配置':
+    }
+    case '短信通知配置': {
       return getSmsConfigStats();
-    default:
+    }
+    default: {
       return {
         cards: [],
         charts: [],
       };
+    }
   }
 };
 
 /** 卡种配置统计数据 */
 const getCardConfigStats = () => {
   const data = dataList();
-  
+
   // 卡片数据
   const totalCards = data.length;
-  const enabledCards = data.filter(item => item.enableStatus === '启用').length;
-  const onSaleCards = data.filter(item => item.status === '在售').length;
-  
+  const enabledCards = data.filter(
+    (item) => item.enableStatus === '启用',
+  ).length;
+  const onSaleCards = data.filter((item) => item.status === '在售').length;
+
   // 卡种类型占比
   const cardTypeMap = {};
-  data.forEach(item => {
+  data.forEach((item) => {
     cardTypeMap[item.cardType] = (cardTypeMap[item.cardType] || 0) + 1;
   });
-  const cardTypeData = Object.keys(cardTypeMap).map(key => ({
+  const cardTypeData = Object.keys(cardTypeMap).map((key) => ({
     name: key,
     value: cardTypeMap[key],
   }));
-  
+
   // 适用车场分布占比
   const parkingLotMap = {};
-  data.forEach(item => {
-    parkingLotMap[item.applicableParkingLot] = (parkingLotMap[item.applicableParkingLot] || 0) + 1;
+  data.forEach((item) => {
+    parkingLotMap[item.applicableParkingLot] =
+      (parkingLotMap[item.applicableParkingLot] || 0) + 1;
   });
-  const parkingLotData = Object.keys(parkingLotMap).map(key => ({
+  const parkingLotData = Object.keys(parkingLotMap).map((key) => ({
     name: key,
     value: parkingLotMap[key],
   }));
-  
+
   // 各卡种销量排名
-  const salesRankData = data
-    .sort((a, b) => b.salesCount - a.salesCount);
-  
-  const salesRankXAxis = salesRankData.map(item => item.cardName);
-  const salesRankSeries = salesRankData.map(item => item.salesCount);
-  
+  const salesRankData = data.sort((a, b) => b.salesCount - a.salesCount);
+
+  const salesRankXAxis = salesRankData.map((item) => item.cardName);
+  const salesRankSeries = salesRankData.map((item) => item.salesCount);
+
   return {
     cards: [
       {
@@ -95,42 +101,51 @@ const getCardConfigStats = () => {
 /** 畅停卡订单统计数据 */
 const getOrderStats = () => {
   const data = orderDataList();
-  
+
   // 卡片数据
   const totalOrders = data.length;
-  const paidOrders = data.filter(item => item.payStatus === '已支付').length;
-  const refundOrders = data.filter(item => item.payStatus === '已退款').length;
-  
+  const paidOrders = data.filter((item) => item.payStatus === '已支付').length;
+  const refundOrders = data.filter(
+    (item) => item.payStatus === '已退款',
+  ).length;
+
   // 支付方式占比
   const payWayMap = {};
-  data.forEach(item => {
+  data.forEach((item) => {
     payWayMap[item.payWay] = (payWayMap[item.payWay] || 0) + 1;
   });
-  const payWayData = Object.keys(payWayMap).map(key => ({
+  const payWayData = Object.keys(payWayMap).map((key) => ({
     name: key,
     value: payWayMap[key],
   }));
-  
+
   // 售价占比
   const priceMap = {};
-  data.forEach(item => {
-    const priceRange = item.payAmount < 100 ? '<100' : item.payAmount < 500 ? '100-500' : item.payAmount < 2000 ? '500-2000' : '>2000';
+  data.forEach((item) => {
+    const priceRange =
+      item.payAmount < 100
+        ? '<100'
+        : item.payAmount < 500
+          ? '100-500'
+          : item.payAmount < 2000
+            ? '500-2000'
+            : '>2000';
     priceMap[priceRange] = (priceMap[priceRange] || 0) + 1;
   });
-  const priceData = Object.keys(priceMap).map(key => ({
+  const priceData = Object.keys(priceMap).map((key) => ({
     name: key,
     value: priceMap[key],
   }));
-  
+
   // 订单卡种类型对比
   const cardTypeMap = {};
-  data.forEach(item => {
+  data.forEach((item) => {
     cardTypeMap[item.cardType] = (cardTypeMap[item.cardType] || 0) + 1;
   });
-  
+
   const cardTypeXAxis = Object.keys(cardTypeMap);
   const cardTypeSeries = Object.values(cardTypeMap);
-  
+
   return {
     cards: [
       {
@@ -173,42 +188,44 @@ const getOrderStats = () => {
 /** 短信通知配置统计数据 */
 const getSmsConfigStats = () => {
   const data = smsConfigDataList();
-  
+
   // 卡片数据
   const totalTemplates = data.length;
-  const enabledTemplates = data.filter(item => item.enableStatus === '启用').length;
+  const enabledTemplates = data.filter(
+    (item) => item.enableStatus === '启用',
+  ).length;
   const totalUsage = data.reduce((sum, item) => sum + item.useCount, 0);
-  
+
   // 触发事件占比
   const eventMap = {};
-  data.forEach(item => {
+  data.forEach((item) => {
     eventMap[item.triggerEvent] = (eventMap[item.triggerEvent] || 0) + 1;
   });
-  const eventData = Object.keys(eventMap).map(key => ({
+  const eventData = Object.keys(eventMap).map((key) => ({
     name: key,
     value: eventMap[key],
   }));
-  
+
   // 适用卡种占比
   const cardMap = {};
-  data.forEach(item => {
+  data.forEach((item) => {
     cardMap[item.applicableCard] = (cardMap[item.applicableCard] || 0) + 1;
   });
-  const cardData = Object.keys(cardMap).map(key => ({
+  const cardData = Object.keys(cardMap).map((key) => ({
     name: key,
     value: cardMap[key],
   }));
-  
+
   // 模板创建趋势（按日期）
   const dateMap = {};
-  data.forEach(item => {
+  data.forEach((item) => {
     const date = item.createTime.split(' ')[0];
     dateMap[date] = (dateMap[date] || 0) + 1;
   });
-  
+
   const trendXAxis = Object.keys(dateMap).sort();
-  const trendSeries = trendXAxis.map(date => dateMap[date]);
-  
+  const trendSeries = trendXAxis.map((date) => dateMap[date]);
+
   return {
     cards: [
       {
@@ -248,7 +265,6 @@ const getSmsConfigStats = () => {
   };
 };
 
-
 /** 无限停车卡表格初始数据 - 按指定字段生成 */
 export const dataList = () => {
   return [
@@ -263,7 +279,7 @@ export const dataList = () => {
       enableStatus: '启用',
       status: '在售',
       salesCount: 156,
-      createTime: '2025-01-10 09:20:30'
+      createTime: '2025-01-10 09:20:30',
     },
     {
       cardId: 'CARD002',
@@ -276,7 +292,7 @@ export const dataList = () => {
       enableStatus: '启用',
       status: '在售',
       salesCount: 89,
-      createTime: '2025-01-12 14:15:20'
+      createTime: '2025-01-12 14:15:20',
     },
     {
       cardId: 'CARD003',
@@ -289,7 +305,7 @@ export const dataList = () => {
       enableStatus: '启用',
       status: '在售',
       salesCount: 45,
-      createTime: '2025-01-15 10:05:10'
+      createTime: '2025-01-15 10:05:10',
     },
     {
       cardId: 'CARD004',
@@ -302,7 +318,7 @@ export const dataList = () => {
       enableStatus: '启用',
       status: '在售',
       salesCount: 234,
-      createTime: '2025-01-18 08:30:45'
+      createTime: '2025-01-18 08:30:45',
     },
     {
       cardId: 'CARD005',
@@ -315,7 +331,7 @@ export const dataList = () => {
       enableStatus: '启用',
       status: '在售',
       salesCount: 12,
-      createTime: '2025-01-20 16:40:15'
+      createTime: '2025-01-20 16:40:15',
     },
     {
       cardId: 'CARD006',
@@ -328,7 +344,7 @@ export const dataList = () => {
       enableStatus: '禁用',
       status: '下架',
       salesCount: 78,
-      createTime: '2025-01-22 11:10:30'
+      createTime: '2025-01-22 11:10:30',
     },
     {
       cardId: 'CARD007',
@@ -341,7 +357,7 @@ export const dataList = () => {
       enableStatus: '启用',
       status: '在售',
       salesCount: 345,
-      createTime: '2025-01-25 13:25:40'
+      createTime: '2025-01-25 13:25:40',
     },
     {
       cardId: 'CARD008',
@@ -354,7 +370,7 @@ export const dataList = () => {
       enableStatus: '启用',
       status: '在售',
       salesCount: 67,
-      createTime: '2025-01-28 09:50:25'
+      createTime: '2025-01-28 09:50:25',
     },
     {
       cardId: 'CARD009',
@@ -367,7 +383,7 @@ export const dataList = () => {
       enableStatus: '禁用',
       status: '下架',
       salesCount: 45,
-      createTime: '2025-02-01 15:15:10'
+      createTime: '2025-02-01 15:15:10',
     },
     {
       cardId: 'CARD010',
@@ -380,7 +396,7 @@ export const dataList = () => {
       enableStatus: '启用',
       status: '已过期',
       salesCount: 56,
-      createTime: '2025-02-05 10:30:50'
+      createTime: '2025-02-05 10:30:50',
     },
     {
       cardId: 'CARD011',
@@ -393,7 +409,7 @@ export const dataList = () => {
       enableStatus: '启用',
       status: '在售',
       salesCount: 8,
-      createTime: '2025-02-08 14:20:15'
+      createTime: '2025-02-08 14:20:15',
     },
     {
       cardId: 'CARD012',
@@ -406,8 +422,8 @@ export const dataList = () => {
       enableStatus: '启用',
       status: '在售',
       salesCount: 123,
-      createTime: '2025-02-10 09:40:30'
-    }
+      createTime: '2025-02-10 09:40:30',
+    },
   ];
 };
 
@@ -421,16 +437,16 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入卡ID',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'cardName',
       label: '卡种名称',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入卡种名称'
+        placeholder: '请输入卡种名称',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'cardType',
@@ -447,10 +463,10 @@ export function useFormSchema() {
           { label: '家庭卡', value: '家庭卡' },
           { label: '商务卡', value: '商务卡' },
           { label: 'VIP卡', value: 'VIP卡' },
-          { label: '临时卡', value: '临时卡' }
-        ]
+          { label: '临时卡', value: '临时卡' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'salePrice',
@@ -459,9 +475,9 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入售价',
         min: 0,
-        precision: 2
+        precision: 2,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'validDays',
@@ -469,18 +485,18 @@ export function useFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入有效天数',
-        min: 1
+        min: 1,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'applicableParkingLot',
       label: '适用车场',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入适用车场'
+        placeholder: '请输入适用车场',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'bindCarCount',
@@ -488,9 +504,9 @@ export function useFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入可绑定车牌数',
-        min: 1
+        min: 1,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'enableStatus',
@@ -500,10 +516,10 @@ export function useFormSchema() {
         placeholder: '请选择启用状态',
         options: [
           { label: '启用', value: '启用' },
-          { label: '禁用', value: '禁用' }
-        ]
+          { label: '禁用', value: '禁用' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'status',
@@ -514,10 +530,10 @@ export function useFormSchema() {
         options: [
           { label: '在售', value: '在售' },
           { label: '下架', value: '下架' },
-          { label: '已过期', value: '已过期' }
-        ]
+          { label: '已过期', value: '已过期' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'salesCount',
@@ -525,9 +541,9 @@ export function useFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入销量',
-        min: 0
+        min: 0,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'createTime',
@@ -536,10 +552,10 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择创建时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
-    }
+      rules: 'required',
+    },
   ];
 }
 
@@ -650,24 +666,30 @@ export const detailFields = [
   { key: 'enableStatus', label: '启用状态' },
   { key: 'status', label: '状态' },
   { key: 'salesCount', label: '销量' },
-  { key: 'createTime', label: '创建时间' }
+  { key: 'createTime', label: '创建时间' },
 ];
 
 /** 状态标签类型映射 */
 export const getStatusTagType = (status) => {
   switch (status) {
-    case '在售':
-      return 'success';
-    case '启用':
-      return 'success';
-    case '下架':
+    case '下架': {
       return 'warning';
-    case '禁用':
+    }
+    case '启用': {
+      return 'success';
+    }
+    case '在售': {
+      return 'success';
+    }
+    case '已过期': {
       return 'danger';
-    case '已过期':
+    }
+    case '禁用': {
       return 'danger';
-    default:
+    }
+    default: {
       return 'info';
+    }
   }
 };
 
@@ -685,7 +707,7 @@ export const orderDataList = () => {
       payWay: '微信支付',
       createTime: '2025-01-01 10:00:00',
       orderStatus: '已激活',
-      payAmount: 199
+      payAmount: 199,
     },
     {
       orderNo: 'ORDER002',
@@ -698,7 +720,7 @@ export const orderDataList = () => {
       payWay: '支付宝',
       createTime: '2025-01-02 11:00:00',
       orderStatus: '已激活',
-      payAmount: 499
+      payAmount: 499,
     },
     {
       orderNo: 'ORDER003',
@@ -711,7 +733,7 @@ export const orderDataList = () => {
       payWay: '银行卡',
       createTime: '2025-01-03 12:00:00',
       orderStatus: '已激活',
-      payAmount: 1999
+      payAmount: 1999,
     },
     {
       orderNo: 'ORDER004',
@@ -724,7 +746,7 @@ export const orderDataList = () => {
       payWay: '微信支付',
       createTime: '2025-01-04 13:00:00',
       orderStatus: '待激活',
-      payAmount: 99
+      payAmount: 99,
     },
     {
       orderNo: 'ORDER005',
@@ -737,7 +759,7 @@ export const orderDataList = () => {
       payWay: '银行转账',
       createTime: '2025-01-05 14:00:00',
       orderStatus: '已取消',
-      payAmount: 2999
+      payAmount: 2999,
     },
     {
       orderNo: 'ORDER006',
@@ -750,7 +772,7 @@ export const orderDataList = () => {
       payWay: '微信支付',
       createTime: '2025-01-06 15:00:00',
       orderStatus: '已过期',
-      payAmount: 149
+      payAmount: 149,
     },
     {
       orderNo: 'ORDER007',
@@ -763,7 +785,7 @@ export const orderDataList = () => {
       payWay: '支付宝',
       createTime: '2025-01-07 16:00:00',
       orderStatus: '已激活',
-      payAmount: 149
+      payAmount: 149,
     },
     {
       orderNo: 'ORDER008',
@@ -776,7 +798,7 @@ export const orderDataList = () => {
       payWay: '微信支付',
       createTime: '2025-01-08 17:00:00',
       orderStatus: '已激活',
-      payAmount: 299
+      payAmount: 299,
     },
     {
       orderNo: 'ORDER009',
@@ -789,7 +811,7 @@ export const orderDataList = () => {
       payWay: '支付宝',
       createTime: '2025-01-09 18:00:00',
       orderStatus: '已激活',
-      payAmount: 99
+      payAmount: 99,
     },
     {
       orderNo: 'ORDER010',
@@ -802,7 +824,7 @@ export const orderDataList = () => {
       payWay: '微信支付',
       createTime: '2025-01-10 19:00:00',
       orderStatus: '已激活',
-      payAmount: 499
+      payAmount: 499,
     },
     {
       orderNo: 'ORDER011',
@@ -815,7 +837,7 @@ export const orderDataList = () => {
       payWay: '银行转账',
       createTime: '2025-01-11 20:00:00',
       orderStatus: '已激活',
-      payAmount: 5999
+      payAmount: 5999,
     },
     {
       orderNo: 'ORDER012',
@@ -828,8 +850,8 @@ export const orderDataList = () => {
       payWay: '微信支付',
       createTime: '2025-01-12 21:00:00',
       orderStatus: '已过期',
-      payAmount: 49
-    }
+      payAmount: 49,
+    },
   ];
 };
 
@@ -843,34 +865,34 @@ export function useOrderFormSchema() {
       componentProps: {
         placeholder: '请输入订单编号',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'userName',
       label: '用户姓名',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入用户姓名'
+        placeholder: '请输入用户姓名',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'cardName',
       label: '卡种名称',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入卡种名称'
+        placeholder: '请输入卡种名称',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'createTimeRange',
       label: '时间范围',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入时间范围'
+        placeholder: '请输入时间范围',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'cardType',
@@ -887,10 +909,10 @@ export function useOrderFormSchema() {
           { label: '家庭卡', value: '家庭卡' },
           { label: '商务卡', value: '商务卡' },
           { label: 'VIP卡', value: 'VIP卡' },
-          { label: '临时卡', value: '临时卡' }
-        ]
+          { label: '临时卡', value: '临时卡' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'payStatus',
@@ -901,19 +923,19 @@ export function useOrderFormSchema() {
         options: [
           { label: '已支付', value: '已支付' },
           { label: '未支付', value: '未支付' },
-          { label: '已退款', value: '已退款' }
-        ]
+          { label: '已退款', value: '已退款' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'userPhone',
       label: '用户手机号',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入用户手机号'
+        placeholder: '请输入用户手机号',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'payWay',
@@ -925,10 +947,10 @@ export function useOrderFormSchema() {
           { label: '微信支付', value: '微信支付' },
           { label: '支付宝', value: '支付宝' },
           { label: '银行卡', value: '银行卡' },
-          { label: '银行转账', value: '银行转账' }
-        ]
+          { label: '银行转账', value: '银行转账' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'createTime',
@@ -937,9 +959,9 @@ export function useOrderFormSchema() {
       componentProps: {
         placeholder: '请选择创建时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'orderStatus',
@@ -951,10 +973,10 @@ export function useOrderFormSchema() {
           { label: '待激活', value: '待激活' },
           { label: '已激活', value: '已激活' },
           { label: '已过期', value: '已过期' },
-          { label: '已取消', value: '已取消' }
-        ]
+          { label: '已取消', value: '已取消' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'payAmount',
@@ -963,10 +985,10 @@ export function useOrderFormSchema() {
       componentProps: {
         placeholder: '请输入售价',
         min: 0,
-        precision: 2
+        precision: 2,
       },
-      rules: 'required'
-    }
+      rules: 'required',
+    },
   ];
 }
 
@@ -1079,7 +1101,7 @@ export const orderDetailFields = [
   { key: 'payWay', label: '支付方式' },
   { key: 'createTime', label: '创建时间' },
   { key: 'orderStatus', label: '订单状态' },
-  { key: 'payAmount', label: '售价' }
+  { key: 'payAmount', label: '售价' },
 ];
 
 /** 短信通知配置表格初始数据 */
@@ -1089,112 +1111,123 @@ export const smsConfigDataList = () => {
       templateId: 'SMS001',
       templateName: '卡激活通知',
       triggerEvent: '卡激活',
-      templateContent: '尊敬的用户，您的畅停卡已成功激活，有效期至：{expireDate}，祝您使用愉快！',
+      templateContent:
+        '尊敬的用户，您的畅停卡已成功激活，有效期至：{expireDate}，祝您使用愉快！',
       applicableCard: '月度无限停车卡',
       enableStatus: '启用',
       useCount: 156,
-      createTime: '2025-01-01 10:00:00'
+      createTime: '2025-01-01 10:00:00',
     },
     {
       templateId: 'SMS002',
       templateName: '卡到期提醒',
       triggerEvent: '卡到期',
-      templateContent: '尊敬的用户，您的畅停卡将于3天后到期，请及时续费，以免影响您的正常使用！',
+      templateContent:
+        '尊敬的用户，您的畅停卡将于3天后到期，请及时续费，以免影响您的正常使用！',
       applicableCard: '季度无限停车卡',
       enableStatus: '启用',
       useCount: 89,
-      createTime: '2025-01-02 11:00:00'
+      createTime: '2025-01-02 11:00:00',
     },
     {
       templateId: 'SMS003',
       templateName: '订单支付成功',
       triggerEvent: '订单支付',
-      templateContent: '尊敬的用户，您的订单{orderNo}已支付成功，卡种：{cardName}，金额：{amount}元，感谢您的购买！',
+      templateContent:
+        '尊敬的用户，您的订单{orderNo}已支付成功，卡种：{cardName}，金额：{amount}元，感谢您的购买！',
       applicableCard: '年度无限停车卡',
       enableStatus: '启用',
       useCount: 234,
-      createTime: '2025-01-03 12:00:00'
+      createTime: '2025-01-03 12:00:00',
     },
     {
       templateId: 'SMS004',
       templateName: '订单取消通知',
       triggerEvent: '订单取消',
-      templateContent: '尊敬的用户，您的订单{orderNo}已取消，如有疑问，请联系客服。',
+      templateContent:
+        '尊敬的用户，您的订单{orderNo}已取消，如有疑问，请联系客服。',
       applicableCard: '周末无限停车卡',
       enableStatus: '启用',
       useCount: 45,
-      createTime: '2025-01-04 13:00:00'
+      createTime: '2025-01-04 13:00:00',
     },
     {
       templateId: 'SMS005',
       templateName: '退款成功通知',
       triggerEvent: '退款成功',
-      templateContent: '尊敬的用户，您的退款申请已处理成功，金额：{amount}元，预计1-3个工作日到账，请查收。',
+      templateContent:
+        '尊敬的用户，您的退款申请已处理成功，金额：{amount}元，预计1-3个工作日到账，请查收。',
       applicableCard: '夜间无限停车卡',
       enableStatus: '启用',
       useCount: 23,
-      createTime: '2025-01-05 14:00:00'
+      createTime: '2025-01-05 14:00:00',
     },
     {
       templateId: 'SMS006',
       templateName: '新卡种上线通知',
       triggerEvent: '新卡种上线',
-      templateContent: '尊敬的用户，我们推出了新的{cardName}，限时优惠，快来体验吧！',
+      templateContent:
+        '尊敬的用户，我们推出了新的{cardName}，限时优惠，快来体验吧！',
       applicableCard: '学生无限停车卡',
       enableStatus: '启用',
       useCount: 67,
-      createTime: '2025-01-06 15:00:00'
+      createTime: '2025-01-06 15:00:00',
     },
     {
       templateId: 'SMS007',
       templateName: '活动促销通知',
       triggerEvent: '活动促销',
-      templateContent: '尊敬的用户，限时促销活动开始了，{cardName}享受{discount}折优惠，数量有限，先到先得！',
+      templateContent:
+        '尊敬的用户，限时促销活动开始了，{cardName}享受{discount}折优惠，数量有限，先到先得！',
       applicableCard: '家庭无限停车卡',
       enableStatus: '启用',
       useCount: 123,
-      createTime: '2025-01-07 16:00:00'
+      createTime: '2025-01-07 16:00:00',
     },
     {
       templateId: 'SMS008',
       templateName: '卡状态变更通知',
       triggerEvent: '卡状态变更',
-      templateContent: '尊敬的用户，您的{cardName}状态已变更为{status}，如有疑问，请联系客服。',
+      templateContent:
+        '尊敬的用户，您的{cardName}状态已变更为{status}，如有疑问，请联系客服。',
       applicableCard: '老年无限停车卡',
       enableStatus: '禁用',
       useCount: 34,
-      createTime: '2025-01-08 17:00:00'
+      createTime: '2025-01-08 17:00:00',
     },
     {
       templateId: 'SMS009',
       templateName: '绑定车牌提醒',
       triggerEvent: '绑定车牌',
-      templateContent: '尊敬的用户，您已成功绑定车牌{plateNumber}到{cardName}，请确认信息是否正确。',
+      templateContent:
+        '尊敬的用户，您已成功绑定车牌{plateNumber}到{cardName}，请确认信息是否正确。',
       applicableCard: '商务无限停车卡',
       enableStatus: '启用',
       useCount: 56,
-      createTime: '2025-01-09 18:00:00'
+      createTime: '2025-01-09 18:00:00',
     },
     {
       templateId: 'SMS010',
       templateName: '解绑车牌提醒',
       triggerEvent: '解绑车牌',
-      templateContent: '尊敬的用户，您已成功解绑车牌{plateNumber}，如有疑问，请联系客服。',
+      templateContent:
+        '尊敬的用户，您已成功解绑车牌{plateNumber}，如有疑问，请联系客服。',
       applicableCard: 'VIP无限停车卡',
       enableStatus: '启用',
       useCount: 12,
-      createTime: '2025-01-10 19:00:00'
+      createTime: '2025-01-10 19:00:00',
     },
     {
       templateId: 'SMS011',
       templateName: '系统维护通知',
       triggerEvent: '系统维护',
-      templateContent: '尊敬的用户，系统将于{maintenanceTime}进行维护，届时可能影响您的使用，敬请谅解。',
+      templateContent:
+        '尊敬的用户，系统将于{maintenanceTime}进行维护，届时可能影响您的使用，敬请谅解。',
       applicableCard: '临时无限停车卡',
       enableStatus: '启用',
       useCount: 78,
-      createTime: '2025-01-11 20:00:00'
-    }
+      createTime: '2025-01-11 20:00:00',
+    },
   ];
 };
 
@@ -1206,18 +1239,18 @@ export function useSmsConfigFormSchema() {
       label: '模板ID',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入模板ID'
+        placeholder: '请输入模板ID',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'templateName',
       label: '模板名称',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入模板名称'
+        placeholder: '请输入模板名称',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'triggerEvent',
@@ -1236,10 +1269,10 @@ export function useSmsConfigFormSchema() {
           { label: '卡状态变更', value: '卡状态变更' },
           { label: '绑定车牌', value: '绑定车牌' },
           { label: '解绑车牌', value: '解绑车牌' },
-          { label: '系统维护', value: '系统维护' }
-        ]
+          { label: '系统维护', value: '系统维护' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'templateContent',
@@ -1248,18 +1281,18 @@ export function useSmsConfigFormSchema() {
       componentProps: {
         placeholder: '请输入模板内容',
         type: 'textarea',
-        rows: 4
+        rows: 4,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'applicableCard',
       label: '适用卡种',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入适用卡种'
+        placeholder: '请输入适用卡种',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'enableStatus',
@@ -1269,10 +1302,10 @@ export function useSmsConfigFormSchema() {
         placeholder: '请选择启用状态',
         options: [
           { label: '启用', value: '启用' },
-          { label: '禁用', value: '禁用' }
-        ]
+          { label: '禁用', value: '禁用' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'useCount',
@@ -1280,9 +1313,9 @@ export function useSmsConfigFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入使用次数',
-        min: 0
+        min: 0,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'createTime',
@@ -1291,10 +1324,10 @@ export function useSmsConfigFormSchema() {
       componentProps: {
         placeholder: '请选择创建时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
-    }
+      rules: 'required',
+    },
   ];
 }
 
@@ -1372,7 +1405,7 @@ export const smsConfigDetailFields = [
   { key: 'applicableCard', label: '适用卡种' },
   { key: 'enableStatus', label: '启用状态' },
   { key: 'useCount', label: '使用次数' },
-  { key: 'createTime', label: '创建时间' }
+  { key: 'createTime', label: '创建时间' },
 ];
 
 /** 短信通知配置文本对象 */
@@ -1390,23 +1423,29 @@ export const smsConfigTextObj = {
 /** 畅停卡订单状态标签类型映射 */
 export const getOrderStatusTagType = (status) => {
   switch (status) {
-    case '已支付':
-      return 'success';
-    case '未支付':
-      return 'warning';
-    case '已退款':
-      return 'danger';
-    case '待激活':
-      return 'warning';
-    case '已激活':
-      return 'success';
-    case '已过期':
-      return 'danger';
-    case '已取消':
+    case '已取消': {
       return 'info';
-    default:
+    }
+    case '已支付': {
+      return 'success';
+    }
+    case '已激活': {
+      return 'success';
+    }
+    case '已过期': {
+      return 'danger';
+    }
+    case '已退款': {
+      return 'danger';
+    }
+    case '待激活': {
+      return 'warning';
+    }
+    case '未支付': {
+      return 'warning';
+    }
+    default: {
       return 'info';
+    }
   }
 };
-
-
