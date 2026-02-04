@@ -33,7 +33,7 @@ export const fetchCooperationList = (params = {}) => {
           setTimeout(() => {
             resolve([
               {
-                taskCooperationCooperationId: 'COOP202501001',
+                taskCooperationCooperationId: 'COOP202601001',
                 sysCooperationTypeName: '联合处置',
                 taskCooperationTaskContent: '交通疏导与设备维修联合行动',
                 sysDeptDeptName: '交通管理局',
@@ -41,7 +41,7 @@ export const fetchCooperationList = (params = {}) => {
                 sysResponseStatusName: '待响应',
               },
               {
-                taskCooperationCooperationId: 'COOP202501002',
+                taskCooperationCooperationId: 'COOP202601002',
                 sysCooperationTypeName: '资源调配',
                 taskCooperationTaskContent: '应急物资跨区域调配',
                 sysDeptDeptName: '物资保障部',
@@ -49,15 +49,15 @@ export const fetchCooperationList = (params = {}) => {
                 sysResponseStatusName: '已响应',
               },
               {
-                taskCooperationCooperationId: 'COOP202501003',
+                taskCooperationCooperationId: 'COOP202601003',
                 sysCooperationTypeName: '信息共享',
                 taskCooperationTaskContent: '现场情况实时数据共享',
                 sysDeptDeptName: '信息中心',
-                taskCooperationCreateTime: new Date().getTime() - 1 * 60 * 60 * 1000,
+                taskCooperationCreateTime: new Date().getTime() - 60 * 60 * 1000,
                 sysResponseStatusName: '已反馈',
               },
               {
-                taskCooperationCooperationId: 'COOP202501004',
+                taskCooperationCooperationId: 'COOP202601004',
                 sysCooperationTypeName: '联合处置',
                 taskCooperationTaskContent: '消防隐患联合排查',
                 sysDeptDeptName: '消防救援支队',
@@ -65,7 +65,7 @@ export const fetchCooperationList = (params = {}) => {
                 sysResponseStatusName: '已完成',
               },
               {
-                taskCooperationCooperationId: 'COOP202501005',
+                taskCooperationCooperationId: 'COOP202601005',
                 sysCooperationTypeName: '资源调配',
                 taskCooperationTaskContent: '专业人员紧急增援',
                 sysDeptDeptName: '人力资源部',
@@ -555,7 +555,7 @@ export const fetchResourceDispatchList = (params = {}) => {
           setTimeout(() => {
             resolve([
               {
-                taskResourceDispatchDispatchRecordId: 'DISP202501001',
+                taskResourceDispatchDispatchRecordId: 'DISP202601001',
                 taskEmergencyResourceResourceId: 'RES001',
                 sysResourceTypeName: '维修设备',
                 taskResourceDispatchDispatchQuantity: 5,
@@ -563,12 +563,12 @@ export const fetchResourceDispatchList = (params = {}) => {
                 toAddress: '创业路128号停车场',
                 sysDispatchStatusName: '在途',
                 taskResourceDispatchDispatchTime: new Date().getTime() - 2 * 60 * 60 * 1000,
-                taskResourceDispatchEstimatedArrivalTime: new Date().getTime() + 1 * 60 * 60 * 1000,
+                taskResourceDispatchEstimatedArrivalTime: new Date().getTime() + 60 * 60 * 1000,
                 taskResourceDispatchActualArrivalTime: null,
                 sysUserUserName: '王强',
               },
               {
-                taskResourceDispatchDispatchRecordId: 'DISP202501002',
+                taskResourceDispatchDispatchRecordId: 'DISP202601002',
                 taskEmergencyResourceResourceId: 'RES002',
                 sysResourceTypeName: '救援车辆',
                 taskResourceDispatchDispatchQuantity: 2,
@@ -581,7 +581,7 @@ export const fetchResourceDispatchList = (params = {}) => {
                 sysUserUserName: '李娜',
               },
               {
-                taskResourceDispatchDispatchRecordId: 'DISP202501003',
+                taskResourceDispatchDispatchRecordId: 'DISP202601003',
                 taskEmergencyResourceResourceId: 'RES003',
                 sysResourceTypeName: '安全设备',
                 taskResourceDispatchDispatchQuantity: 10,
@@ -594,20 +594,20 @@ export const fetchResourceDispatchList = (params = {}) => {
                 sysUserUserName: '张伟',
               },
               {
-                taskResourceDispatchDispatchRecordId: 'DISP202501004',
+                taskResourceDispatchDispatchRecordId: 'DISP202601004',
                 taskEmergencyResourceResourceId: 'RES004',
                 sysResourceTypeName: '交通设施',
                 taskResourceDispatchDispatchQuantity: 8,
                 fromAddress: '文旅区仓库',
                 toAddress: '景区北路32号停车场',
                 sysDispatchStatusName: '在途',
-                taskResourceDispatchDispatchTime: new Date().getTime() - 1 * 60 * 60 * 1000,
+                taskResourceDispatchDispatchTime: new Date().getTime() - 60 * 60 * 1000,
                 taskResourceDispatchEstimatedArrivalTime: new Date().getTime() + 30 * 60 * 1000,
                 taskResourceDispatchActualArrivalTime: null,
                 sysUserUserName: '赵敏',
               },
               {
-                taskResourceDispatchDispatchRecordId: 'DISP202501005',
+                taskResourceDispatchDispatchRecordId: 'DISP202601005',
                 taskEmergencyResourceResourceId: 'RES005',
                 sysResourceTypeName: '维修设备',
                 taskResourceDispatchDispatchQuantity: 3,
@@ -658,14 +658,14 @@ export const fetchResourceDispatchDetail = (dispatchRecordId, params = {}) => {
               toAddress: '创业路128号停车场',
               sysDispatchStatusName: '在途',
               taskResourceDispatchDispatchTime: new Date().getTime() - 2 * 60 * 60 * 1000,
-              taskResourceDispatchEstimatedArrivalTime: new Date().getTime() + 1 * 60 * 60 * 1000,
+              taskResourceDispatchEstimatedArrivalTime: new Date().getTime() + 60 * 60 * 1000,
               taskResourceDispatchActualArrivalTime: null,
               sysUserUserName: '王强',
               // 弹窗展示字段
               resourceDetails: [
-                { name: '电动扳手', model: 'DB-2023', quantity: 2, status: '正常' },
-                { name: '安全警示牌', model: 'AJ-2023', quantity: 5, status: '正常' },
-                { name: '应急照明灯', model: 'ZM-2023', quantity: 3, status: '正常' },
+                { name: '电动扳手', model: 'DB-2025', quantity: 2, status: '正常' },
+                { name: '安全警示牌', model: 'AJ-2025', quantity: 5, status: '正常' },
+                { name: '应急照明灯', model: 'ZM-2025', quantity: 3, status: '正常' },
               ],
               dispatchInstruction: '请优先将维修设备送达现场，配合现场维修人员进行设备检修工作。注意运输过程中避免颠簸。',
               // 调度轨迹
@@ -939,7 +939,7 @@ export const fetchSpecialEmergencyList = (params = {}) => {
           setTimeout(() => {
             resolve([
               {
-                taskSpecialEmergencySpecialEmergencyId: 'SE202501001',
+                taskSpecialEmergencySpecialEmergencyId: 'SE202601001',
                 sysEmergencyScenarioName: '地下停车场火灾',
                 taskSpecialEmergencyTrappedVehicleCount: 12,
                 taskSpecialEmergencyEvacuationRoute: 'A区1号通道、B区2号通道',
@@ -947,7 +947,7 @@ export const fetchSpecialEmergencyList = (params = {}) => {
                 sysDisposalProgressName: '处置中',
               },
               {
-                taskSpecialEmergencySpecialEmergencyId: 'SE202501002',
+                taskSpecialEmergencySpecialEmergencyId: 'SE202601002',
                 sysEmergencyScenarioName: '特大暴雨积水',
                 taskSpecialEmergencyTrappedVehicleCount: 8,
                 taskSpecialEmergencyEvacuationRoute: '主出入口、应急出口',
@@ -955,7 +955,7 @@ export const fetchSpecialEmergencyList = (params = {}) => {
                 sysDisposalProgressName: '已处置',
               },
               {
-                taskSpecialEmergencySpecialEmergencyId: 'SE202501003',
+                taskSpecialEmergencySpecialEmergencyId: 'SE202601003',
                 sysEmergencyScenarioName: '电梯故障困人',
                 taskSpecialEmergencyTrappedVehicleCount: 3,
                 taskSpecialEmergencyEvacuationRoute: '消防通道、备用电梯',
@@ -963,7 +963,7 @@ export const fetchSpecialEmergencyList = (params = {}) => {
                 sysDisposalProgressName: '待处置',
               },
               {
-                taskSpecialEmergencySpecialEmergencyId: 'SE202501004',
+                taskSpecialEmergencySpecialEmergencyId: 'SE202601004',
                 sysEmergencyScenarioName: '电力系统瘫痪',
                 taskSpecialEmergencyTrappedVehicleCount: 15,
                 taskSpecialEmergencyEvacuationRoute: '应急照明指示路线',
@@ -971,7 +971,7 @@ export const fetchSpecialEmergencyList = (params = {}) => {
                 sysDisposalProgressName: '处置中',
               },
               {
-                taskSpecialEmergencySpecialEmergencyId: 'SE202501005',
+                taskSpecialEmergencySpecialEmergencyId: 'SE202601005',
                 sysEmergencyScenarioName: '结构安全隐患',
                 taskSpecialEmergencyTrappedVehicleCount: 6,
                 taskSpecialEmergencyEvacuationRoute: '安全疏散通道',
@@ -1375,9 +1375,9 @@ export const fetchResourceDetail = (resourceId, params = {}) => {
               ],
               // 使用记录
               usageRecords: [
-                { time: new Date().getTime() - 30 * 24 * 60 * 60 * 1000, eventId: 'EM202412001', duration: '2天', operator: '张明' },
-                { time: new Date().getTime() - 60 * 24 * 60 * 60 * 1000, eventId: 'EM202411002', duration: '1天', operator: '李华' },
-                { time: new Date().getTime() - 90 * 24 * 60 * 60 * 1000, eventId: 'EM202410003', duration: '3天', operator: '刘伟' },
+                { time: new Date().getTime() - 30 * 24 * 60 * 60 * 1000, eventId: 'EM202612001', duration: '2天', operator: '张明' },
+                { time: new Date().getTime() - 60 * 24 * 60 * 60 * 1000, eventId: 'EM202611002', duration: '1天', operator: '李华' },
+                { time: new Date().getTime() - 90 * 24 * 60 * 60 * 1000, eventId: 'EM202610003', duration: '3天', operator: '刘伟' },
               ]
             });
           }, 500);
@@ -1699,7 +1699,7 @@ export const fetchEmergencySituationList = (params = {}) => {
           setTimeout(() => {
             resolve([
               {
-                taskEmergencyEmergencyId: 'EM202501101',
+                taskEmergencyEmergencyId: 'EM202601101',
                 sysEmergencyLevelName: '一级',
                 sysEmergencyTypeName: '车辆事故',
                 taskEmergencyEmergencyTime: new Date().getTime() - 2 * 60 * 60 * 1000,
@@ -1708,7 +1708,7 @@ export const fetchEmergencySituationList = (params = {}) => {
                 sysRescueProgressName: '处置中',
               },
               {
-                taskEmergencyEmergencyId: 'EM202501102',
+                taskEmergencyEmergencyId: 'EM202601102',
                 sysEmergencyLevelName: '二级',
                 sysEmergencyTypeName: '设备故障',
                 taskEmergencyEmergencyTime: new Date().getTime() - 3 * 60 * 60 * 1000,
@@ -1717,16 +1717,16 @@ export const fetchEmergencySituationList = (params = {}) => {
                 sysRescueProgressName: '已调度',
               },
               {
-                taskEmergencyEmergencyId: 'EM202501103',
+                taskEmergencyEmergencyId: 'EM202601103',
                 sysEmergencyLevelName: '三级',
                 sysEmergencyTypeName: '交通拥堵',
-                taskEmergencyEmergencyTime: new Date().getTime() - 1 * 60 * 60 * 1000,
+                taskEmergencyEmergencyTime: new Date().getTime() - 60 * 60 * 1000,
                 tbAssetExtendAddress: '经开区工业大道56号东区停车场',
                 taskEmergencyAffectedVehicleCount: 20,
                 sysRescueProgressName: '待响应',
               },
               {
-                taskEmergencyEmergencyId: 'EM202501104',
+                taskEmergencyEmergencyId: 'EM202601104',
                 sysEmergencyLevelName: '二级',
                 sysEmergencyTypeName: '消防隐患',
                 taskEmergencyEmergencyTime: new Date().getTime() - 4 * 60 * 60 * 1000,
@@ -1735,7 +1735,7 @@ export const fetchEmergencySituationList = (params = {}) => {
                 sysRescueProgressName: '处置中',
               },
               {
-                taskEmergencyEmergencyId: 'EM202501105',
+                taskEmergencyEmergencyId: 'EM202601105',
                 sysEmergencyLevelName: '一级',
                 sysEmergencyTypeName: '人员求助',
                 taskEmergencyEmergencyTime: new Date().getTime() - 30 * 60 * 1000,
@@ -2039,7 +2039,7 @@ export const fetchSceneSituationList = (params = {}) => {
           setTimeout(() => {
             resolve([
               {
-                taskEmergencyEmergencyId: 'EM202501001',
+                taskEmergencyEmergencyId: 'EM202601001',
                 tbAssetExtendAddress: '高新区创业路128号',
                 taskEmergencySceneSceneStatus: '处置中',
                 taskEmergencySceneAffectedBerthCount: 15,
@@ -2047,7 +2047,7 @@ export const fetchSceneSituationList = (params = {}) => {
                 taskEmergencySceneRepairBerthCount: 5,
               },
               {
-                taskEmergencyEmergencyId: 'EM202501002',
+                taskEmergencyEmergencyId: 'EM202601002',
                 tbAssetExtendAddress: '主城区人民广场东侧',
                 taskEmergencySceneSceneStatus: '已处置',
                 taskEmergencySceneAffectedBerthCount: 8,
@@ -2055,7 +2055,7 @@ export const fetchSceneSituationList = (params = {}) => {
                 taskEmergencySceneRepairBerthCount: 8,
               },
               {
-                taskEmergencyEmergencyId: 'EM202501003',
+                taskEmergencyEmergencyId: 'EM202601003',
                 tbAssetExtendAddress: '经开区工业大道56号',
                 taskEmergencySceneSceneStatus: '待处置',
                 taskEmergencySceneAffectedBerthCount: 20,
@@ -2063,7 +2063,7 @@ export const fetchSceneSituationList = (params = {}) => {
                 taskEmergencySceneRepairBerthCount: 0,
               },
               {
-                taskEmergencyEmergencyId: 'EM202501004',
+                taskEmergencyEmergencyId: 'EM202601004',
                 tbAssetExtendAddress: '文旅区景区北路32号',
                 taskEmergencySceneSceneStatus: '处置中',
                 taskEmergencySceneAffectedBerthCount: 12,
@@ -2071,7 +2071,7 @@ export const fetchSceneSituationList = (params = {}) => {
                 taskEmergencySceneRepairBerthCount: 8,
               },
               {
-                taskEmergencyEmergencyId: 'EM202501005',
+                taskEmergencyEmergencyId: 'EM202601005',
                 tbAssetExtendAddress: '龙文区中山路78号',
                 taskEmergencySceneSceneStatus: '已处置',
                 taskEmergencySceneAffectedBerthCount: 6,

@@ -6199,7 +6199,7 @@ export const fetchOperationRiskList = (params = {}) => {
                 tbOperationRiskResourceCount: 5,
                 tbOperationRiskImpactScope: '停车场运营',
                 tbOperationRiskWarningCount: 3,
-                tbOperationRiskId: 'OR202401001',
+                tbOperationRiskId: 'OR202601001',
               },
               {
                 sysRiskTypeName: '资金安全风险',
@@ -6208,7 +6208,7 @@ export const fetchOperationRiskList = (params = {}) => {
                 tbOperationRiskResourceCount: 8,
                 tbOperationRiskImpactScope: '计费系统',
                 tbOperationRiskWarningCount: 2,
-                tbOperationRiskId: 'OR202401002',
+                tbOperationRiskId: 'OR202601002',
               },
               {
                 sysRiskTypeName: '合规风险',
@@ -6217,7 +6217,7 @@ export const fetchOperationRiskList = (params = {}) => {
                 tbOperationRiskResourceCount: 3,
                 tbOperationRiskImpactScope: '运营资质',
                 tbOperationRiskWarningCount: 1,
-                tbOperationRiskId: 'OR202401003',
+                tbOperationRiskId: 'OR202601003',
               },
             ]);
           }, 500);

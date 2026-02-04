@@ -573,7 +573,7 @@ export const fetchParkAlarmDetail = (alarmId, params = {}) => {
               parkAlarmProgress: '待派单',
               parkAlarmDesc:
                 '道闸电机卡死，无法正常抬杆，影响车辆通行，现场无人员值守', // 补充详情扩展字段
-              parkAlarmRemark: '该道闸为2025年新装设备，首次出现故障', // 补充详情扩展字段
+              parkAlarmRemark: '该道闸为2026年新装设备，首次出现故障', // 补充详情扩展字段
             });
           }, 500);
         });

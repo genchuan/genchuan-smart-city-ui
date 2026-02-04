@@ -264,7 +264,7 @@ defineExpose({
 
 .map-common-css {
   width: 100%;
-  height: 98%;
+  height: 99%;
   margin: 0 auto;
   overflow: hidden;
   border-radius: 8px;

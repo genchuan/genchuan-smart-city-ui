@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { getCurrentInstance, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { Filter, FullScreen, Setting, VideoPause, VideoPlay, Picture } from '@element-plus/icons-vue';
+import { Filter, Refresh, FullScreen, Setting, VideoPause, VideoPlay, Picture } from '@element-plus/icons-vue';
 import {
   ElButton,
   ElDialog,
@@ -176,6 +176,12 @@ const handleFullscreenChange = () => {
       dispatchTaskChartRefreshKey.value++;
       emergencyPlanChartRefreshKey.value++;
       disposalProgressChartRefreshKey.value++;
+      cooperationChartRefreshKey.value++;
+      emergencySituationChartRefreshKey.value++;
+      resourceDistributionChartRefreshKey.value++;
+      specialEmergencyChartRefreshKey.value++;
+      resourceDispatchChartRefreshKey.value++;
+      sceneSituationChartRefreshKey.value++;
     }, 300);
   }
   // 退出全屏时：重置面板样式 + 刷新图表 + 清空当前全屏面板
@@ -186,6 +192,12 @@ const handleFullscreenChange = () => {
       dispatchTaskChartRefreshKey.value++;
       emergencyPlanChartRefreshKey.value++;
       disposalProgressChartRefreshKey.value++;
+      cooperationChartRefreshKey.value++;
+      emergencySituationChartRefreshKey.value++;
+      resourceDistributionChartRefreshKey.value++;
+      specialEmergencyChartRefreshKey.value++;
+      resourceDispatchChartRefreshKey.value++;
+      sceneSituationChartRefreshKey.value++;
     });
     currentFullscreenPanel.value = null;
   }
@@ -198,6 +210,12 @@ const handleTabChange = () => {
       dispatchTaskChartRefreshKey.value += 1;
       emergencyPlanChartRefreshKey.value += 1;
       disposalProgressChartRefreshKey.value += 1;
+      cooperationChartRefreshKey.value += 1;
+      emergencySituationChartRefreshKey.value++;
+      resourceDistributionChartRefreshKey.value++;
+      specialEmergencyChartRefreshKey.value++;
+      resourceDispatchChartRefreshKey.value++;
+      sceneSituationChartRefreshKey.value++;
     }, 100);
   });
 };
@@ -882,6 +900,7 @@ const dispatchFormRules = {
   cooperatingUnits: [{ required: true, message: '请至少选择一个协同单位', trigger: 'change' }],
 };
 // 应急态势视图切换相关
+const emergencySituationChartRefreshKey = ref(0);
 const activeEmergencySituationView = ref('地图');
 const emergencySituationViewBtnList = ref(['地图', '列表']);
 // 应急态势弹窗相关
@@ -933,6 +952,7 @@ const resourceDistributionIndicators = ref<ResourceDistributionIndicators>({
   underMaintenanceCount: 0
 });
 // 资源分布视图切换相关
+const resourceDistributionChartRefreshKey = ref(0);
 const activeResourceDistributionView = ref('地图');
 const resourceDistributionViewBtnList = ref(['地图', '列表']);
 // 资源分布弹窗相关
@@ -975,6 +995,7 @@ const specialEmergencyDetailSelectedRow = ref<SpecialEmergencyDetail>({
   safetyExitDistribution: []
 });
 // 专项应急视图切换相关
+const specialEmergencyChartRefreshKey = ref(0);
 const activeSpecialEmergencyView = ref('地图');
 const specialEmergencyViewBtnList = ref(['地图', '列表']);
 // 专项应急弹窗相关
@@ -1025,6 +1046,7 @@ const resourceDispatchIndicators = ref<ResourceDispatchIndicators>({
 });
 const resourceDispatchTypeCompareData = ref<ChartBarData>({ xAxis: [], series: [] });
 // 资源调度视图切换相关
+const resourceDispatchChartRefreshKey = ref(0);
 const activeResourceDispatchView = ref('地图');
 const resourceDispatchViewBtnList = ref(['地图', '列表']);
 // 资源调度弹窗相关
@@ -1071,6 +1093,7 @@ const sceneSituationIndicators = ref<SceneSituationIndicators>({
 const sceneDisposalEffectCompareData = ref<ChartBarData>({ xAxis: [], series: [] });
 const sceneSituationBaseFontScale = ref<number>(1);
 // 现场态势视图切换相关
+const sceneSituationChartRefreshKey = ref(0);
 const activeSceneSituationView = ref('列表');
 const sceneSituationViewBtnList = ref(['列表', '地图']);
 // 现场态势弹窗相关
@@ -1581,6 +1604,20 @@ const getDispatchTaskReceiverCompareData = async () => {
     };
   }
 };
+// 指挥调度数据刷新
+const refreshDispatchTaskData = async () => {
+  try {
+    await Promise.all([
+      getDispatchTaskListData(),
+      getDispatchTaskIndicatorData(),
+      getDispatchTaskReceiverCompareData(),
+    ]);
+    dispatchTaskChartRefreshKey.value++;
+    ElMessage.success('指挥调度数据刷新成功');
+  } catch (error: any) {
+    ElMessage.error(`指挥调度数据刷新失败：${error.message}`);
+  }
+};
 
 // 处置进度接口请求方法
 const getDisposalProgressListData = async () => {
@@ -1616,6 +1653,20 @@ const getDisposalProgressTrendData = async () => {
     };
   }
 };
+// 处置进度数据刷新
+const refreshDisposalProgressData = async () => {
+  try {
+    await Promise.all([
+      getDisposalProgressListData(),
+      getDisposalProgressIndicatorData(),
+      getDisposalProgressTrendData(),
+    ]);
+    disposalProgressChartRefreshKey.value++;
+    ElMessage.success('处置进度数据刷新成功');
+  } catch (error: any) {
+    ElMessage.error(`处置进度数据刷新失败：${error.message}`);
+  }
+};
 
 // 应急方案接口请求方法
 const getEmergencyPlanListData = async () => {
@@ -1642,6 +1693,20 @@ const getEmergencyPlanTypeRatioData = async () => {
       legend: [],
       series: [{ name: '方案适配应急类型占比', data: [] }]
     };
+  }
+};
+// 应急方案数据刷新
+const refreshEmergencyPlanData = async () => {
+  try {
+    await Promise.all([
+      getEmergencyPlanListData(),
+      getEmergencyPlanIndicatorData(),
+      getEmergencyPlanTypeRatioData(),
+    ]);
+    emergencyPlanChartRefreshKey.value++;
+    ElMessage.success('应急方案数据刷新成功');
+  } catch (error: any) {
+    ElMessage.error(`应急方案数据刷新失败：${error.message}`);
   }
 };
 
@@ -1756,6 +1821,23 @@ const getCooperationStatusRatioData = async () => {
     };
   }
 };
+// 协同指挥数据刷新
+const refreshCooperationData = async () => {
+  try {
+    await Promise.all([
+      getCooperationListData(),
+      getCooperationIndicatorData(),
+      getCooperationTypeCompareData(),
+      getCooperationDeptCompareData(),
+      getCooperationTypeRatioData(),
+      getCooperationStatusRatioData(),
+    ]);
+    cooperationChartRefreshKey.value++;
+    ElMessage.success('协同指挥数据刷新成功');
+  } catch (error: any) {
+    ElMessage.error(`协同指挥数据刷新失败：${error.message}`);
+  }
+};
 
 
 // 应急态势视图切换
@@ -1833,6 +1915,21 @@ const closeEmergencySituationDispatchDialog = () => {
   };
   dispatchFormRef.value?.resetFields();
 };
+// 应急态势数据刷新
+const refreshEmergencySituationData = async () => {
+  try {
+    await Promise.all([
+      getEmergencySituationListData(),
+      getEmergencySituationIndicatorData(),
+      getEmergencyTypeRatioData(),
+      getEmergencyLevelRatioData(),
+    ]);
+    emergencySituationChartRefreshKey.value++;
+    ElMessage.success('应急态势数据刷新成功');
+  } catch (error: any) {
+    ElMessage.error(`应急态势数据刷新失败：${error.message}`);
+  }
+};
 
 // 资源分布视图切换方法
 const changeResourceDistributionView = (viewName: string) => {
@@ -1886,6 +1983,22 @@ const closeResourceDispatchDialog = () => {
     instruction: '',
     estimatedArrivalTime: ''
   };
+};
+// 资源分布数据刷新
+const refreshResourceDistributionData = async () => {
+  try {
+    await Promise.all([
+      getResourceDistributionListData(),
+      getResourceDistributionIndicatorData(),
+      getResourceTypeCompareData(),
+      getResourceDeptCompareData(),
+      getResourceStatusRatioData(),
+    ]);
+    resourceDistributionChartRefreshKey.value++;
+    ElMessage.success('资源分布数据刷新成功');
+  } catch (error: any) {
+    ElMessage.error(`资源分布数据刷新失败：${error.message}`);
+  }
 };
 
 // 提交调度反馈
@@ -1951,6 +2064,20 @@ const openDispatchFeedbackDialog = (row: ResourceDispatchRow) => {
   // 打开反馈弹窗
   dispatchFeedbackDialogVisible.value = true;
 };
+// 资源调度数据刷新
+const refreshResourceDispatchData = async () => {
+  try {
+    await Promise.all([
+      getResourceDispatchListData(),
+      getResourceDispatchIndicatorData(),
+      getResourceDispatchTypeCompareData(),
+    ]);
+    resourceDispatchChartRefreshKey.value++;
+    ElMessage.success('资源调度数据刷新成功');
+  } catch (error: any) {
+    ElMessage.error(`资源调度数据刷新失败：${error.message}`);
+  }
+};
 
 // 专项应急视图切换方法
 const changeSpecialEmergencyView = (viewName: string) => {
@@ -2010,6 +2137,20 @@ const changeEmergencyPlanView = (viewName: string) => {
   activeEmergencyPlanView.value = viewName;
   viewName === '卡片' && nextTick(() => initEmergencyPlanNumberAnimations());
   viewName === '饼图' && nextTick(() => emergencyPlanChartRefreshKey.value += 1);
+};
+// 专项应急数据刷新
+const refreshSpecialEmergencyData = async () => {
+  try {
+    await Promise.all([
+      getSpecialEmergencyListData(),
+      getSpecialEmergencyIndicatorData(),
+      getSpecialEmergencyTrendData(),
+    ]);
+    specialEmergencyChartRefreshKey.value++;
+    ElMessage.success('专项应急数据刷新成功');
+  } catch (error: any) {
+    ElMessage.error(`专项应急数据刷新失败：${error.message}`);
+  }
 };
 
 // 现场态势视图切换方法
@@ -2072,6 +2213,20 @@ const openScenePhotoDialog = (photoUrl: string) => {
 const closeScenePhotoDialog = () => {
   scenePhotoDialogVisible.value = false;
   selectedPhotoUrl.value = '';
+};
+// 现场态势数据刷新
+const refreshSceneSituationData = async () => {
+  try {
+    await Promise.all([
+      getSceneSituationListData(),
+      getSceneSituationIndicatorData(),
+      getSceneDisposalEffectCompareData(),
+    ]);
+    sceneSituationChartRefreshKey.value++;
+    ElMessage.success('现场态势数据刷新成功');
+  } catch (error: any) {
+    ElMessage.error(`现场态势数据刷新失败：${error.message}`);
+  }
 };
 
 // 调度任务视图切换方法
@@ -2308,6 +2463,9 @@ onUnmounted(() => {
                   <button class="control-btn" @click="orbitConfigDialogVisible = true">
                     <el-icon color="#409eff" size="16"><Setting /></el-icon>
                   </button>
+                  <button class="control-btn" @click="refreshEmergencySituationData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('topMiddlePanel')">
                     <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
@@ -2479,6 +2637,9 @@ onUnmounted(() => {
                   <button class="control-btn" @click="orbitConfigDialogVisible = true">
                     <el-icon color="#409eff" size="16"><Setting /></el-icon>
                   </button>
+                  <button class="control-btn" @click="refreshResourceDistributionData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('topMiddlePanel')">
                     <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
@@ -2628,6 +2789,9 @@ onUnmounted(() => {
                   <button class="control-btn" @click="orbitConfigDialogVisible = true">
                     <el-icon color="#409eff" size="16"><Setting /></el-icon>
                   </button>
+                  <button class="control-btn" @click="refreshSpecialEmergencyData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('topMiddlePanel')">
                     <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
@@ -2769,6 +2933,9 @@ onUnmounted(() => {
                   <button class="control-btn" @click="orbitConfigDialogVisible = true">
                     <el-icon color="#409eff" size="16"><Setting /></el-icon>
                   </button>
+                  <button class="control-btn" @click="refreshResourceDispatchData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('topMiddlePanel')">
                     <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
@@ -2908,6 +3075,9 @@ onUnmounted(() => {
                       {{ item }}
                     </ElButton>
                   </div>
+                  <button class="control-btn" @click="refreshSceneSituationData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('topMiddlePanel')">
                     <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
@@ -3044,6 +3214,9 @@ onUnmounted(() => {
               <div class="view-btn-group">
                 <ElButton v-for="item in dispatchTaskViewBtnList" :key="item" :type="activeDispatchTaskView === item ? 'primary' : ''" plain @click="changeDispatchTaskView(item)" class="view-btn">{{ item }}</ElButton>
               </div>
+              <button class="control-btn" @click="refreshDispatchTaskData">
+                <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+              </button>
               <el-icon color="#409eff" size="16"><Filter /></el-icon>
               <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('bottomLeftPanel')">
                 <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
@@ -3097,6 +3270,9 @@ onUnmounted(() => {
               <div class="view-btn-group">
                 <ElButton v-for="item in disposalProgressViewBtnList" :key="item" :type="activeDisposalProgressView === item ? 'primary' : ''" plain @click="changeDisposalProgressView(item)" class="view-btn">{{ item }}</ElButton>
               </div>
+              <button class="control-btn" @click="refreshDisposalProgressData">
+                <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+              </button>
               <el-icon color="#409eff" size="16"><Filter /></el-icon>
               <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('bottomMiddlePanel')">
                 <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
@@ -3145,6 +3321,9 @@ onUnmounted(() => {
                   <div class="view-btn-group">
                     <ElButton v-for="item in emergencyPlanViewBtnList" :key="item" :type="activeEmergencyPlanView === item ? 'primary' : ''" plain @click="changeEmergencyPlanView(item)" class="view-btn">{{ item }}</ElButton>
                   </div>
+                  <button class="control-btn" @click="refreshEmergencyPlanData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('bottomRightPanel')">
                     <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
@@ -3199,6 +3378,9 @@ onUnmounted(() => {
                       {{ item }}
                     </ElButton>
                   </div>
+                  <button class="control-btn" @click="refreshCooperationData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('bottomRightPanel')">
                     <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
