@@ -1,7 +1,7 @@
 import { requestClient } from '#/api/request';
 
 // 基础URL，根据实际项目配置
-const BASE_URL = '/api/overview/smartcommunity';
+const BASE_URL = '/api/smartcommunity';
 
 // 颜色配置常量（与前端样式统一）
 const COLOR_CONFIG = {
