@@ -244,12 +244,8 @@ async function handleDelete(row) {
       text: $t('ui.actionMessage.deleting', [row.templateName]),
     });
     try {
-      dataObj.apilist = dataObj.apilist.filter(
-        (v) => v.templateId !== row.templateId,
-      );
-      ElMessage.success(
-        $t('ui.actionMessage.deleteSuccess', [row.templateName]),
-      );
+      dataObj.apilist = dataObj.apilist.filter((v) => v.templateId !== row.templateId);
+      ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.templateName]));
       handleRefresh();
     } finally {
       loadingInstance.close();
@@ -275,17 +271,11 @@ async function handleDeleteBatch() {
   });
   try {
     if (props.activeTab === '畅停卡订单') {
-      dataObj.apilist = dataObj.apilist.filter(
-        (v) => !checkedIds.value.includes(v.orderNo),
-      );
+      dataObj.apilist = dataObj.apilist.filter((v) => !checkedIds.value.includes(v.orderNo));
     } else if (props.activeTab === '短信通知配置') {
-      dataObj.apilist = dataObj.apilist.filter(
-        (v) => !checkedIds.value.includes(v.templateId),
-      );
+      dataObj.apilist = dataObj.apilist.filter((v) => !checkedIds.value.includes(v.templateId));
     } else {
-      dataObj.apilist = dataObj.apilist.filter(
-        (v) => !checkedIds.value.includes(v.cardId),
-      );
+      dataObj.apilist = dataObj.apilist.filter((v) => !checkedIds.value.includes(v.cardId));
     }
     checkedIds.value = [];
     ElMessage.success($t('删除成功'));
@@ -312,16 +302,11 @@ const dataObj = reactive({
     props.activeTab === '畅停卡订单'
       ? orderDataList().length
       : props.activeTab === '短信通知配置'
-        ? smsConfigDataList().length
-        : dataList().length,
+      ? smsConfigDataList().length
+      : dataList().length,
   currentPage: 1,
   pageSize: 10,
-  apilist:
-    props.activeTab === '畅停卡订单'
-      ? orderDataList()
-      : props.activeTab === '短信通知配置'
-        ? smsConfigDataList()
-        : dataList(),
+  apilist: props.activeTab === '畅停卡订单' ? orderDataList() : props.activeTab === '短信通知配置' ? smsConfigDataList() : dataList(),
   list: [],
   searchParams: {},
 });
@@ -334,70 +319,70 @@ const getTableData = (pageObj) => {
   const page = pageObj.page;
 
   // 根据activeName筛选数据
-  const filteredList = dataObj.apilist.filter((v) => {
-    // 状态筛选
-    let statusMatch = true;
-    if (props.activeTab === '畅停卡订单') {
-      switch (activeName.value) {
-        case '全部': {
-          statusMatch = true;
-          break;
+    const filteredList = dataObj.apilist.filter((v) => {
+      // 状态筛选
+      let statusMatch = true;
+      if (props.activeTab === '畅停卡订单') {
+        switch (activeName.value) {
+          case '全部': {
+            statusMatch = true;
+            break;
+          }
+          case '已取消': {
+            statusMatch = v.orderStatus === '已取消';
+            break;
+          }
+          case '已激活': {
+            statusMatch = v.orderStatus === '已激活';
+            break;
+          }
+          case '已过期': {
+            statusMatch = v.orderStatus === '已过期';
+            break;
+          }
+          case '待激活': {
+            statusMatch = v.orderStatus === '待激活';
+            break;
+          }
+          // No default
         }
-        case '已取消': {
-          statusMatch = v.orderStatus === '已取消';
-          break;
+      } else if (props.activeTab === '短信通知配置') {
+        switch (activeName.value) {
+          case '全部': {
+            statusMatch = true;
+            break;
+          }
+          case '启用': {
+            statusMatch = v.enableStatus === '启用';
+            break;
+          }
+          case '禁用': {
+            statusMatch = v.enableStatus === '禁用';
+            break;
+          }
+          // No default
         }
-        case '已激活': {
-          statusMatch = v.orderStatus === '已激活';
-          break;
+      } else {
+        switch (activeName.value) {
+          case '下架': {
+            statusMatch = v.status === '下架';
+            break;
+          }
+          case '全部': {
+            statusMatch = true;
+            break;
+          }
+          case '在售': {
+            statusMatch = v.status === '在售';
+            break;
+          }
+          case '已过期': {
+            statusMatch = v.status === '已过期';
+            break;
+          }
+          // No default
         }
-        case '已过期': {
-          statusMatch = v.orderStatus === '已过期';
-          break;
-        }
-        case '待激活': {
-          statusMatch = v.orderStatus === '待激活';
-          break;
-        }
-        // No default
       }
-    } else if (props.activeTab === '短信通知配置') {
-      switch (activeName.value) {
-        case '全部': {
-          statusMatch = true;
-          break;
-        }
-        case '启用': {
-          statusMatch = v.enableStatus === '启用';
-          break;
-        }
-        case '禁用': {
-          statusMatch = v.enableStatus === '禁用';
-          break;
-        }
-        // No default
-      }
-    } else {
-      switch (activeName.value) {
-        case '下架': {
-          statusMatch = v.status === '下架';
-          break;
-        }
-        case '全部': {
-          statusMatch = true;
-          break;
-        }
-        case '在售': {
-          statusMatch = v.status === '在售';
-          break;
-        }
-        case '已过期': {
-          statusMatch = v.status === '已过期';
-          break;
-        }
-        // No default
-      }
-    }
 
     // 卡种类型筛选
     const cardTypeMatch =
@@ -410,8 +395,7 @@ const getTableData = (pageObj) => {
 
     // 适用卡种筛选（短信通知配置标签页）
     const applicableCardMatch =
-      !filterApplicableCard.value ||
-      v.applicableCard === filterApplicableCard.value;
+      !filterApplicableCard.value || v.applicableCard === filterApplicableCard.value;
 
     // 触发事件筛选（短信通知配置标签页）
     const triggerEventMatch =
@@ -422,21 +406,11 @@ const getTableData = (pageObj) => {
     Object.keys(dataObj.searchParams).forEach((key) => {
       const value = dataObj.searchParams[key];
       if (value) {
-        searchMatch =
-          typeof value === 'string'
-            ? searchMatch && v[key]?.toString().includes(value)
-            : searchMatch && v[key] === value;
+        searchMatch = typeof value === 'string' ? searchMatch && v[key]?.toString().includes(value) : searchMatch && v[key] === value;
       }
     });
 
-    return (
-      statusMatch &&
-      cardTypeMatch &&
-      applicableParkingLotMatch &&
-      applicableCardMatch &&
-      triggerEventMatch &&
-      searchMatch
-    );
+    return statusMatch && cardTypeMatch && applicableParkingLotMatch && applicableCardMatch && triggerEventMatch && searchMatch;
   });
 
   dataObj.total = filteredList.length;
@@ -586,8 +560,7 @@ const handleCancelApplicableParkingLotFilter = () => {
 
 // 处理适用卡种点击筛选
 const handleApplicableCardClick = (applicableCard) => {
-  filterApplicableCard.value =
-    filterApplicableCard.value === applicableCard ? '' : applicableCard;
+  filterApplicableCard.value = filterApplicableCard.value === applicableCard ? '' : applicableCard;
   handleRefresh();
 };
 
@@ -599,8 +572,7 @@ const handleCancelApplicableCardFilter = () => {
 
 // 处理触发事件点击筛选
 const handleTriggerEventClick = (triggerEvent) => {
-  filterTriggerEvent.value =
-    filterTriggerEvent.value === triggerEvent ? '' : triggerEvent;
+  filterTriggerEvent.value = filterTriggerEvent.value === triggerEvent ? '' : triggerEvent;
   handleRefresh();
 };
 
@@ -621,7 +593,11 @@ const tabsData = computed(() => {
       { label: '已取消' },
     ];
   } else if (props.activeTab === '短信通知配置') {
-    return [{ label: '全部' }, { label: '启用' }, { label: '禁用' }];
+    return [
+      { label: '全部' },
+      { label: '启用' },
+      { label: '禁用' },
+    ];
   } else {
     return [
       { label: '全部' },
@@ -675,11 +651,15 @@ const createLabel = (item) => {
         break;
       }
       case '启用': {
-        count = dataObj.apilist.filter((v) => v.enableStatus === '启用').length;
+        count = dataObj.apilist.filter(
+          (v) => v.enableStatus === '启用',
+        ).length;
         break;
       }
       case '禁用': {
-        count = dataObj.apilist.filter((v) => v.enableStatus === '禁用').length;
+        count = dataObj.apilist.filter(
+          (v) => v.enableStatus === '禁用',
+        ).length;
         break;
       }
       // No default
@@ -836,16 +816,16 @@ const handleDisable = async (row) => {
         props.activeTab === '畅停卡订单'
           ? `${dataObj.detailObj.orderNo}详情`
           : props.activeTab === '短信通知配置'
-            ? `${dataObj.detailObj.templateName}详情`
-            : `${dataObj.detailObj.cardName}详情`
+          ? `${dataObj.detailObj.templateName}详情`
+          : `${dataObj.detailObj.cardName}详情`
       "
       :data="dataObj.detailObj"
       :fields="
         props.activeTab === '畅停卡订单'
           ? orderDetailFields
           : props.activeTab === '短信通知配置'
-            ? smsConfigDetailFields
-            : detailFields
+          ? smsConfigDetailFields
+          : detailFields
       "
     />
     <Drawer title="搜索">
@@ -1050,10 +1030,7 @@ const handleDisable = async (row) => {
           />
           <!-- 上下架按钮只在卡种配置标签页显示 -->
           <IconButton
-            v-if="
-              props.activeTab !== '畅停卡订单' &&
-              props.activeTab !== '短信通知配置'
-            "
+            v-if="props.activeTab !== '畅停卡订单' && props.activeTab !== '短信通知配置'"
             :content="row.status === '在售' ? '下架' : '上架'"
             :icon-name="row.status === '在售' ? 'Bottom' : 'Top'"
             :color="row.status === '在售' ? '#E6A23C' : '#67C23A'"
@@ -1062,9 +1039,7 @@ const handleDisable = async (row) => {
           />
           <!-- 禁用按钮只在短信通知配置标签页显示 -->
           <IconButton
-            v-if="
-              props.activeTab === '短信通知配置' && row.enableStatus === '启用'
-            "
+            v-if="props.activeTab === '短信通知配置' && row.enableStatus === '启用'"
             content="禁用"
             icon-name="Lock"
             color="#F56C6C"
@@ -1072,9 +1047,7 @@ const handleDisable = async (row) => {
           />
           <!-- 退款按钮只在畅停卡订单标签页显示，仅已支付订单可操作 -->
           <IconButton
-            v-if="
-              props.activeTab === '畅停卡订单' && row.payStatus === '已支付'
-            "
+            v-if="props.activeTab === '畅停卡订单' && row.payStatus === '已支付'"
             content="退款"
             icon-name="RefreshRight"
             color="#409EFF"
@@ -1135,8 +1108,8 @@ const handleDisable = async (row) => {
               props.activeTab === '畅停卡订单'
                 ? orderTextObj.total
                 : props.activeTab === '短信通知配置'
-                  ? smsConfigTextObj.total
-                  : textObj.total
+                ? smsConfigTextObj.total
+                : textObj.total
             }}
           </span>
         </div>

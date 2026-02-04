@@ -204,16 +204,14 @@ async function handleToggleStatus(row) {
     await confirm(confirmMessage);
 
     // 查找并更新活动状态
-    const index = dataObj.apilist.findIndex(
-      (item) => item.activityId === row.activityId,
-    );
+    const index = dataObj.apilist.findIndex(item => item.activityId === row.activityId);
     if (index !== -1) {
       dataObj.apilist[index].status = newStatus;
       ElMessage.success(`${newStatus === '启动' ? '启动' : '结束'}活动成功`);
       // 刷新表格
       handleRefresh();
     }
-  } catch {
+  } catch (error) {
     // 用户取消操作
   }
 }
@@ -314,11 +312,14 @@ const getTableData = (pageObj) => {
     // 状态筛选
     let statusMatch = true;
     // 根据当前类型使用不同的状态字段
-    const statusField =
-      props.type === 'activity' ? 'status' : 'couponStatusName';
+    const statusField = props.type === 'activity' ? 'status' : 'couponStatusName';
     switch (activeName.value) {
       case '启动': {
         statusMatch = v[statusField] === '启动';
+        break;
+      }
+      case '结束': {
+        statusMatch = v[statusField] === '结束';
         break;
       }
       case '启用': {
@@ -327,10 +328,6 @@ const getTableData = (pageObj) => {
       }
       case '禁用': {
         statusMatch = v[statusField] === '禁用';
-        break;
-      }
-      case '结束': {
-        statusMatch = v[statusField] === '结束';
         break;
       }
     }
@@ -364,8 +361,7 @@ const getTableData = (pageObj) => {
     Object.keys(dataObj.searchParams).forEach((key) => {
       const value = dataObj.searchParams[key];
       if (value) {
-        searchMatch =
-          searchMatch && (v[key]?.toString().includes(value) || false);
+        searchMatch = searchMatch && (v[key]?.toString().includes(value) || false);
       }
     });
 
@@ -405,10 +401,7 @@ const [QueryForm] = useVbenForm({
   // 垂直布局，label和input在不同行，值为vertical
   // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: (props.type === 'activity'
-    ? useActivityFormSchema()
-    : useFormSchema()
-  ).map((v) => {
+  schema: (props.type === 'activity' ? useActivityFormSchema() : useFormSchema()).map((v) => {
     delete v.rules;
     return {
       ...v,
@@ -536,9 +529,11 @@ const handleCancelActivityTypeNameFilter = () => {
 
 // 修改tabsData为三个标签：全部、启用/启动、禁用/结束
 const tabsData = computed(() => {
-  return props.type === 'activity'
-    ? [{ label: '全部' }, { label: '启动' }, { label: '结束' }]
-    : [{ label: '全部' }, { label: '启用' }, { label: '禁用' }];
+  if (props.type === 'activity') {
+    return [{ label: '全部' }, { label: '启动' }, { label: '结束' }];
+  } else {
+    return [{ label: '全部' }, { label: '启用' }, { label: '禁用' }];
+  }
 });
 
 // 创建标签文本，显示数量统计
@@ -551,11 +546,10 @@ const createLabel = (item) => {
 
       break;
     }
-    case '启动':
-    case '启用': {
+    case '启用':
+    case '启动': {
       // 根据当前类型使用不同的状态字段和值
-      const statusField =
-        props.type === 'activity' ? 'status' : 'couponStatusName';
+      const statusField = props.type === 'activity' ? 'status' : 'couponStatusName';
       const statusValue = props.type === 'activity' ? '启动' : '启用';
       count = dataObj.apilist.filter(
         (v) => v[statusField] === statusValue,
@@ -566,8 +560,7 @@ const createLabel = (item) => {
     case '禁用':
     case '结束': {
       // 根据当前类型使用不同的状态字段和值
-      const statusField =
-        props.type === 'activity' ? 'status' : 'couponStatusName';
+      const statusField = props.type === 'activity' ? 'status' : 'couponStatusName';
       const statusValue = props.type === 'activity' ? '结束' : '禁用';
       count = dataObj.apilist.filter(
         (v) => v[statusField] === statusValue,
@@ -845,20 +838,21 @@ const handleFullShow = () => {
           <span>
             本页统计：{{
               props.type === 'activity' ? '活动数量' : '优惠券数量'
-            }}: {{ dataObj.total }};
-            {{ props.type === 'activity' ? '启动' : '启用' }}:
+            }}: {{ dataObj.total }}; {{ props.type === 'activity' ? '启动' : '启用' }}:
             {{
-              dataObj.apilist.filter((v) =>
-                props.type === 'activity'
-                  ? v.status === '启动'
-                  : v.couponStatusName === '启用',
+              dataObj.apilist.filter(
+                (v) =>
+                  (props.type === 'activity'
+                    ? v.status === '启动'
+                    : v.couponStatusName === '启用'),
               ).length
             }}; {{ props.type === 'activity' ? '结束' : '禁用' }}:
             {{
-              dataObj.apilist.filter((v) =>
-                props.type === 'activity'
-                  ? v.status === '结束'
-                  : v.couponStatusName === '禁用',
+              dataObj.apilist.filter(
+                (v) =>
+                  (props.type === 'activity'
+                    ? v.status === '结束'
+                    : v.couponStatusName === '禁用'),
               ).length
             }}
           </span>

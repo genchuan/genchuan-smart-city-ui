@@ -1136,184 +1136,165 @@ export const detailFields = [
 /**
  * 根据类型获取统计数据
  * @param {string} type - 类型：coupon（优惠券）或 activity（活动）
- * @returns {object} 统计数据对象
+ * @returns {Object} 统计数据对象
  */
 export function getStatsDataByType(type) {
   if (type === 'coupon') {
     const coupons = dataList();
-
+    
     // 总优惠券数
     const totalCoupons = coupons.length;
-
+    
     // 已发放数（领取次数总和）
-    const issuedCount = coupons.reduce(
-      (sum, coupon) => sum + Number.parseInt(coupon.getCount || 0),
-      0,
-    );
-
+    const issuedCount = coupons.reduce((sum, coupon) => sum + parseInt(coupon.getCount || 0), 0);
+    
     // 已使用数（使用次数总和）
-    const usedCount = coupons.reduce(
-      (sum, coupon) => sum + Number.parseInt(coupon.useCount || 0),
-      0,
-    );
-
+    const usedCount = coupons.reduce((sum, coupon) => sum + parseInt(coupon.useCount || 0), 0);
+    
     // 优惠券类型占比
     const typeMap = {};
-    coupons.forEach((coupon) => {
+    coupons.forEach(coupon => {
       const typeName = coupon.couponTypeName;
       typeMap[typeName] = (typeMap[typeName] || 0) + 1;
     });
     const typeData = Object.entries(typeMap).map(([name, value]) => ({
       name,
-      value,
+      value
     }));
-
+    
     // 优惠券状态占比
     const statusMap = {};
-    coupons.forEach((coupon) => {
+    coupons.forEach(coupon => {
       const statusName = coupon.couponStatusName;
       statusMap[statusName] = (statusMap[statusName] || 0) + 1;
     });
     const statusData = Object.entries(statusMap).map(([name, value]) => ({
       name,
-      value,
+      value
     }));
-
+    
     // 优惠券领取次数对比
     // 按优惠券名称排序并取前10个
-    const sortedCoupons = [...coupons]
-      .sort(
-        (a, b) =>
-          Number.parseInt(b.getCount || 0) - Number.parseInt(a.getCount || 0),
-      )
-      .slice(0, 10);
-    const couponNames = sortedCoupons.map((coupon) => coupon.couponName);
-    const getCountData = sortedCoupons.map((coupon) =>
-      Number.parseInt(coupon.getCount || 0),
-    );
-
+    const sortedCoupons = [...coupons].sort((a, b) => parseInt(b.getCount || 0) - parseInt(a.getCount || 0)).slice(0, 10);
+    const couponNames = sortedCoupons.map(coupon => coupon.couponName);
+    const getCountData = sortedCoupons.map(coupon => parseInt(coupon.getCount || 0));
+    
     return {
       cards: [
         {
           title: '总优惠券数',
           value: totalCoupons,
-          color: '#4A90E2',
+          color: '#4A90E2'
         },
         {
           title: '已发放数',
           value: issuedCount,
-          color: '#50E3C2',
+          color: '#50E3C2'
         },
         {
           title: '已使用数',
           value: usedCount,
-          color: '#FF9F40',
-        },
+          color: '#FF9F40'
+        }
       ],
       charts: [
         {
           title: '优惠券类型占比',
           type: 'pie',
-          data: typeData,
+          data: typeData
         },
         {
           title: '优惠券状态占比',
           type: 'pie',
-          data: statusData,
+          data: statusData
         },
         {
           title: '优惠券领取次数对比',
           type: 'line',
           xAxis: couponNames,
-          series: getCountData,
-        },
-      ],
+          series: getCountData
+        }
+      ]
     };
   } else if (type === 'activity') {
     const activities = activityDataList();
-
+    
     // 总活动数
     const totalActivities = activities.length;
-
+    
     // 启动活动数
-    const startedActivities = activities.filter(
-      (activity) => activity.status === '启动',
-    ).length;
-
+    const startedActivities = activities.filter(activity => activity.status === '启动').length;
+    
     // 结束活动数
-    const endedActivities = activities.filter(
-      (activity) => activity.status === '结束',
-    ).length;
-
+    const endedActivities = activities.filter(activity => activity.status === '结束').length;
+    
     // 活动类型占比
     const typeMap = {};
-    activities.forEach((activity) => {
+    activities.forEach(activity => {
       const typeName = activity.activityTypeName;
       typeMap[typeName] = (typeMap[typeName] || 0) + 1;
     });
     const typeData = Object.entries(typeMap).map(([name, value]) => ({
       name,
-      value,
+      value
     }));
-
+    
     // 活动状态占比
     const statusMap = {};
-    activities.forEach((activity) => {
+    activities.forEach(activity => {
       const statusName = activity.status;
       statusMap[statusName] = (statusMap[statusName] || 0) + 1;
     });
     const statusData = Object.entries(statusMap).map(([name, value]) => ({
       name,
-      value,
+      value
     }));
-
+    
     // 活动名额使用情况（柱状图）
-    const activityNames = activities.map((activity) => activity.activityName);
-    const usedQuotaData = activities.map((activity) =>
-      Number.parseInt(activity.usedQuota || 0),
-    );
-
+    const activityNames = activities.map(activity => activity.activityName);
+    const usedQuotaData = activities.map(activity => parseInt(activity.usedQuota || 0));
+    
     return {
       cards: [
         {
           title: '总活动数',
           value: totalActivities,
-          color: '#4A90E2',
+          color: '#4A90E2'
         },
         {
           title: '启动活动数',
           value: startedActivities,
-          color: '#50E3C2',
+          color: '#50E3C2'
         },
         {
           title: '结束活动数',
           value: endedActivities,
-          color: '#FF9F40',
-        },
+          color: '#FF9F40'
+        }
       ],
       charts: [
         {
           title: '活动类型占比',
           type: 'pie',
-          data: typeData,
+          data: typeData
         },
         {
           title: '活动状态占比',
           type: 'pie',
-          data: statusData,
+          data: statusData
         },
         {
           title: '活动名额使用情况',
           type: 'bar',
           xAxis: activityNames,
-          series: usedQuotaData,
-        },
-      ],
+          series: usedQuotaData
+        }
+      ]
     };
   }
-
+  
   return {
     cards: [],
-    charts: [],
+    charts: []
   };
 }

@@ -16,12 +16,12 @@ import { exportToExcel } from '#/utils/excel.js';
 import {
   dataList,
   detailFields,
-  salesDataList,
-  salesDetailFields,
-  salesTextObj,
   textObj,
   useFormSchema,
   useGridColumns,
+  salesDataList,
+  salesDetailFields,
+  salesTextObj,
   useSalesFormSchema,
   useSalesGridColumns,
 } from './data';
@@ -54,13 +54,9 @@ const currentDetailFields = computed(() => {
 
 const getTitle = computed(() => {
   if (props.type === 'sales') {
-    return formData.value?.rechargeNo
-      ? currentTextObj.value.editText
-      : currentTextObj.value.addText;
+    return formData.value?.rechargeNo ? currentTextObj.value.editText : currentTextObj.value.addText;
   }
-  return formData.value?.packageId
-    ? currentTextObj.value.editText
-    : currentTextObj.value.addText;
+  return formData.value?.packageId ? currentTextObj.value.editText : currentTextObj.value.addText;
 });
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -99,9 +95,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
   onConfirm() {
     const obj = formApi.form.values;
-    if (
-      formDrawerApi.sharedData.payload.title === currentTextObj.value.addText
-    ) {
+    if (formDrawerApi.sharedData.payload.title === currentTextObj.value.addText) {
       dataObj.apilist.push(obj);
     } else {
       dataObj.apilist.forEach((v, i) => {
@@ -122,11 +116,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   async onOpenChange(isOpen) {
     if (isOpen) {
       formData.value = formDrawerApi.getData();
-      if (
-        props.type === 'sales'
-          ? formData.value?.rechargeNo
-          : formData.value?.packageId
-      ) {
+      if (props.type === 'sales' ? formData.value?.rechargeNo : formData.value?.packageId) {
         await formApi.setValues(formData.value);
       } else {
         formApi.resetForm();
@@ -142,11 +132,7 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  exportToExcel(
-    dataObj.apilist,
-    currentTextObj.value.excelName,
-    currentTextObj.value.excelAllName,
-  );
+  exportToExcel(dataObj.apilist, currentTextObj.value.excelName, currentTextObj.value.excelAllName);
 }
 
 /** 创建套餐或销售记录 */
@@ -173,10 +159,15 @@ async function handleDelete(row) {
     text: $t('ui.actionMessage.deleting', [itemName]),
   });
   try {
-    dataObj.apilist =
-      props.type === 'sales'
-        ? dataObj.apilist.filter((v) => v.rechargeNo !== row.rechargeNo)
-        : dataObj.apilist.filter((v) => v.packageId !== row.packageId);
+    if (props.type === 'sales') {
+      dataObj.apilist = dataObj.apilist.filter(
+        (v) => v.rechargeNo !== row.rechargeNo,
+      );
+    } else {
+      dataObj.apilist = dataObj.apilist.filter(
+        (v) => v.packageId !== row.packageId,
+      );
+    }
     ElMessage.success($t('ui.actionMessage.deleteSuccess', [itemName]));
     handleRefresh();
   } finally {
@@ -190,14 +181,15 @@ async function handleDeleteBatch() {
     text: $t('ui.actionMessage.deletingBatch'),
   });
   try {
-    dataObj.apilist =
-      props.type === 'sales'
-        ? dataObj.apilist.filter(
-            (v) => !checkedIds.value.includes(v.rechargeNo),
-          )
-        : dataObj.apilist.filter(
-            (v) => !checkedIds.value.includes(v.packageId),
-          );
+    if (props.type === 'sales') {
+      dataObj.apilist = dataObj.apilist.filter(
+        (v) => !checkedIds.value.includes(v.rechargeNo),
+      );
+    } else {
+      dataObj.apilist = dataObj.apilist.filter(
+        (v) => !checkedIds.value.includes(v.packageId),
+      );
+    }
     checkedIds.value = [];
     ElMessage.success($t('删除成功'));
     handleRefresh();
@@ -208,9 +200,7 @@ async function handleDeleteBatch() {
 
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map((item) =>
-    props.type === 'sales' ? item.rechargeNo : item.packageId,
-  );
+  checkedIds.value = records.map((item) => props.type === 'sales' ? item.rechargeNo : item.packageId);
 }
 const dataObj = reactive({
   totalShow: false,
@@ -236,16 +226,16 @@ const getTableData = (pageObj) => {
     let statusMatch = true;
     if (props.type === 'sales') {
       switch (activeName.value) {
-        case '处理中': {
-          statusMatch = v.rechargeStatus === '处理中';
+        case '成功': {
+          statusMatch = v.rechargeStatus === '成功';
           break;
         }
         case '失败': {
           statusMatch = v.rechargeStatus === '失败';
           break;
         }
-        case '成功': {
-          statusMatch = v.rechargeStatus === '成功';
+        case '处理中': {
+          statusMatch = v.rechargeStatus === '处理中';
           break;
         }
         case '退款': {
@@ -267,23 +257,17 @@ const getTableData = (pageObj) => {
     }
 
     // 套餐类型筛选
-    const rechargeTypeMatch =
-      !filterRechargeType.value ||
-      v.rechargeTypeName === filterRechargeType.value;
+    const rechargeTypeMatch = !filterRechargeType.value || v.rechargeTypeName === filterRechargeType.value;
 
     // 支付方式筛选
-    const payTypeMatch =
-      !filterPayType.value || v.payType === filterPayType.value;
+    const payTypeMatch = !filterPayType.value || v.payType === filterPayType.value;
 
     // 搜索条件筛选
     let searchMatch = true;
     Object.keys(dataObj.searchParams).forEach((key) => {
       const value = dataObj.searchParams[key];
       if (value) {
-        searchMatch =
-          typeof value === 'string'
-            ? searchMatch && v[key]?.toString().includes(value)
-            : searchMatch && v[key] === value;
+        searchMatch = typeof value === 'string' ? searchMatch && v[key]?.toString().includes(value) : searchMatch && v[key] === value;
       }
     });
 
@@ -396,13 +380,7 @@ const handleCancelPayTypeFilter = () => {
 // 根据类型设置标签数据
 const tabsData = computed(() => {
   if (props.type === 'sales') {
-    return [
-      { label: '全部' },
-      { label: '成功' },
-      { label: '失败' },
-      { label: '处理中' },
-      { label: '退款' },
-    ];
+    return [{ label: '全部' }, { label: '成功' }, { label: '失败' }, { label: '处理中' }, { label: '退款' }];
   }
   return [{ label: '全部' }, { label: '上架' }, { label: '下架' }];
 });
@@ -417,10 +395,10 @@ const createLabel = (item) => {
         count = dataObj.apilist.length;
         break;
       }
-      case '处理中': {
-        // 统计rechargeStatus为'处理中'的数据
+      case '成功': {
+        // 统计rechargeStatus为'成功'的数据
         count = dataObj.apilist.filter(
-          (v) => v.rechargeStatus === '处理中',
+          (v) => v.rechargeStatus === '成功',
         ).length;
         break;
       }
@@ -431,10 +409,10 @@ const createLabel = (item) => {
         ).length;
         break;
       }
-      case '成功': {
-        // 统计rechargeStatus为'成功'的数据
+      case '处理中': {
+        // 统计rechargeStatus为'处理中'的数据
         count = dataObj.apilist.filter(
-          (v) => v.rechargeStatus === '成功',
+          (v) => v.rechargeStatus === '处理中',
         ).length;
         break;
       }
@@ -448,6 +426,10 @@ const createLabel = (item) => {
     }
   } else {
     switch (item.label) {
+      case '全部': {
+        count = dataObj.apilist.length;
+        break;
+      }
       case '上架': {
         // 统计packageStatusName为'上架'的数据
         count = dataObj.apilist.filter(
@@ -460,10 +442,6 @@ const createLabel = (item) => {
         count = dataObj.apilist.filter(
           (v) => v.packageStatusName === '下架',
         ).length;
-        break;
-      }
-      case '全部': {
-        count = dataObj.apilist.length;
         break;
       }
     }
@@ -486,8 +464,7 @@ const handleFullShow = () => {
 const handleToggleStatus = async (row) => {
   const currentStatus = row.packageStatusName;
   const newStatus = currentStatus === '上架' ? '下架' : '上架';
-  const confirmMessage =
-    currentStatus === '上架' ? '确定要下架该套餐吗？' : '确定要上架该套餐吗？';
+  const confirmMessage = currentStatus === '上架' ? '确定要下架该套餐吗？' : '确定要上架该套餐吗？';
 
   try {
     await ElMessageBox.confirm(confirmMessage, '操作确认', {
@@ -558,14 +535,14 @@ const getStatusType = (status) => {
     case '下架': {
       return 'danger';
     }
-    case '处理中': {
-      return 'warning';
+    case '成功': {
+      return 'success';
     }
     case '失败': {
       return 'danger';
     }
-    case '成功': {
-      return 'success';
+    case '处理中': {
+      return 'warning';
     }
     case '退款': {
       return 'info';
@@ -578,18 +555,14 @@ const getStatusType = (status) => {
 
 // 监听props.type变化，更新数据
 
-watch(
-  () => props.type,
-  (newType) => {
-    // 重置数据为对应类型的数据
-    dataObj.apilist = newType === 'sales' ? salesDataList() : dataList();
-    dataObj.total = dataObj.apilist.length;
-    activeName.value = '全部';
-    // 重新查询数据
-    gridApi.query();
-  },
-  { immediate: false },
-);
+watch(() => props.type, (newType) => {
+  // 重置数据为对应类型的数据
+  dataObj.apilist = newType === 'sales' ? salesDataList() : dataList();
+  dataObj.total = dataObj.apilist.length;
+  activeName.value = '全部';
+  // 重新查询数据
+  gridApi.query();
+}, { immediate: false });
 </script>
 
 <template>
@@ -610,10 +583,7 @@ watch(
     <Grid>
       <!-- 三级状态 -->
       <template #table-title>
-        <div
-          class="tabel-tabs"
-          style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
-        >
+        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -715,17 +685,7 @@ watch(
         </el-tag>
       </template>
       <template #rechargeStatus="{ row }">
-        <el-tag
-          :type="
-            row.rechargeStatus === '成功'
-              ? 'success'
-              : row.rechargeStatus === '失败'
-                ? 'danger'
-                : row.rechargeStatus === '处理中'
-                  ? 'warning'
-                  : 'info'
-          "
-        >
+        <el-tag :type="row.rechargeStatus === '成功' ? 'success' : row.rechargeStatus === '失败' ? 'danger' : row.rechargeStatus === '处理中' ? 'warning' : 'info'">
           {{ row.rechargeStatus }}
         </el-tag>
       </template>
@@ -767,9 +727,7 @@ watch(
               @click="handleToggleStatus(row)"
             />
           </template>
-          <template
-            v-if="props.type === 'sales' && row.rechargeStatus === '成功'"
-          >
+          <template v-if="props.type === 'sales' && row.rechargeStatus === '成功'">
             <IconButton
               content="退款"
               icon-name="RefreshRight"
