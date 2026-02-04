@@ -44,3 +44,20 @@ export function deleteParklot(id) {
 export function refreshSync(data) { 
   return requestClient.post('/industry/parking-record-sync/sync', data);
 }
+
+
+export function getRoadList(params) { 
+  return requestClient.get('/park/roadside-berth-manage/page', {
+    params,
+  });
+}
+export function updateRoad(data) { 
+  return requestClient.put('/park/roadside-berth-manage/update', data);
+}
+export function createRoad(data) { 
+  return requestClient.post('/park/roadside-berth-manage/create', data);
+} 
+
+export function deleteRoad(id) { 
+  return requestClient.delete(`/park/roadside-berth-manage/delete?id=${id}` );
+} 

@@ -1,171 +1,8 @@
-/** 泊位表格初始数据 */
-export const dataList = () => {
-  return [
-    {
-      berthId: 'B00201',
-      berthCode: 'LW001',
-      roadName: '碧湖路',
-      locationDesc: '龙文区碧湖路126号公园西门北侧1号泊位',
-      berthType: '小型车',
-      coordX: '117.705612',
-      coordY: '24.498712',
-      enableStatus: '占用',
-      divisionCode: '350603002',
-      roadSideManage: '设施维修,暂停使用',
-    },
-    {
-      berthId: 'B00301',
-      berthCode: 'SM001',
-      roadName: '解放北路',
-      locationDesc: '龙海区石码镇解放北路59号便民停车场东侧1号泊位',
-      berthType: '小型车',
-      coordX: '117.890111',
-      coordY: '24.456211',
-      enableStatus: '空置',
-      divisionCode: '350604001',
-      roadSideManage: '充电桩改造,暂停使用',
-    },
-    {
-      berthId: 'B00401',
-      berthCode: 'HQ001',
-      roadName: '闽齐社区西路',
-      locationDesc: '龙海区海澄镇闽齐社区西门南侧1号泊位',
-      berthType: '小型车',
-      coordX: '117.876522',
-      coordY: '24.443822',
-      enableStatus: '空置',
-      divisionCode: '350604002',
-      roadSideManage: '日常巡检,卫生保洁',
-    },
-    {
-      berthId: 'B00501',
-      berthCode: 'JB001',
-      roadName: '江滨南路',
-      locationDesc: '芗城区江滨南路189号生态停车场沿江1号泊位',
-      berthType: '大型车',
-      coordX: '117.678933',
-      coordY: '24.501233',
-      enableStatus: '空置',
-      divisionCode: '350602003',
-      roadSideManage: '高峰疏导,违停管理',
-    },
-    {
-      berthId: 'B00601',
-      berthCode: 'WD001',
-      roadName: '建元东路',
-      locationDesc: '龙文区建元东路2号万达商圈停车场入口1号泊位',
-      berthType: '小型车',
-      coordX: '117.723444',
-      coordY: '24.489744',
-      enableStatus: '占用',
-      divisionCode: '350603004',
-      roadSideManage: '流量统计,秩序维护',
-    },
-    {
-      berthId: 'B00701',
-      berthCode: 'WA001',
-      roadName: '人民西路',
-      locationDesc: '长泰区武安镇人民西路77号公共停车场北侧1号泊位',
-      berthType: '小型车',
-      coordX: '117.789055',
-      coordY: '24.612355',
-      enableStatus: '故障',
-      divisionCode: '350625001',
-      roadSideManage: '定期巡检,设施维护',
-    },
-    {
-      berthId: 'B00801',
-      berthCode: 'SA001',
-      roadName: '金浦大道',
-      locationDesc: '漳浦县绥安镇金浦大道101号便民停车场西侧1号泊位',
-      berthType: '小型车',
-      coordX: '117.456766',
-      coordY: '24.123466',
-      enableStatus: '故障',
-      divisionCode: '350623001',
-      roadSideManage: '积水清理,待恢复使用',
-    },
-    {
-      berthId: 'B00901',
-      berthCode: 'XK001',
-      roadName: '新华东路',
-      locationDesc: '芗城区新华东路32号巷口街道停车场东侧1号泊位',
-      berthType: '小型车',
-      coordX: '117.689077',
-      coordY: '24.523477',
-      enableStatus: '故障',
-      divisionCode: '350602002',
-      roadSideManage: '收费监督,泊位管理',
-    },
-    {
-      berthId: 'B01001',
-      berthCode: 'LT001',
-      roadName: '梧桥中路',
-      locationDesc: '龙文区蓝田街道梧桥中路58号停车场地下1层1号泊位',
-      berthType: '小型车',
-      coordX: '117.712388',
-      coordY: '24.478988',
-      enableStatus: '空置',
-      divisionCode: '350603005',
-      roadSideManage: '卫生管理,设施维修',
-    },
-    {
-      berthId: 'B01101',
-      berthCode: 'BW001',
-      roadName: '天亭路',
-      locationDesc: '龙文区步文街道天亭路23号停车场南侧1号泊位',
-      berthType: '小型车',
-      coordX: '117.734599',
-      coordY: '24.481299',
-      enableStatus: '空置',
-      divisionCode: '350603006',
-      roadSideManage: '秩序维护,收费管理',
-    },
-    {
-      berthId: 'B01201',
-      berthCode: 'DP001',
-      roadName: '新华西路',
-      locationDesc: '芗城区东铺头街道新华西路128号停车场西侧1号泊位',
-      berthType: '小型车',
-      coordX: '117.645600',
-      coordY: '24.518900',
-      enableStatus: '空置',
-      divisionCode: '350602001',
-      roadSideManage: '安全巡查,车位引导',
-    },
-    {
-      berthId: 'B01301',
-      berthCode: 'XQ001',
-      roadName: '江滨路',
-      locationDesc: '芗城区西桥街道江滨路89号专用停车场内部1号泊位',
-      berthType: '内部车辆',
-      coordX: '117.667811',
-      coordY: '24.509811',
-      enableStatus: '占用',
-      divisionCode: '350602004',
-      roadSideManage: '门禁管理,登记管理',
-    },
-    {
-      berthId: 'B01401',
-      berthCode: 'SM002',
-      roadName: '紫葳路',
-      locationDesc: '龙海区石码街道紫葳路156号停车场施工区域1号泊位',
-      berthType: '小型车',
-      coordX: '117.887622',
-      coordY: '24.467822',
-      enableStatus: '占用',
-      divisionCode: '350604001',
-      roadSideManage: '场地翻新,暂停使用',
-    },
-  ];
-};
-
-/** 泊位新增/修改的表单/搜索表单 */
 export function useFormSchema() {
   return [
     {
-      fieldName: 'berthId',
-      label: '泊位ID',
+      fieldName: 'id', // 对齐表格 field: 'id'（原 berthId 改为 id）
+      label: '泊位ID', // 对齐表格标题「泊位ID」
       component: 'Input',
       labelWidth: '150',
       componentProps: {
@@ -206,22 +43,16 @@ export function useFormSchema() {
     {
       fieldName: 'berthType',
       label: '泊位类型',
-      component: 'Select',
+      component: 'Input',
       labelWidth: '150',
       componentProps: {
-        placeholder: '请选择泊位类型',
-        options: [
-          { label: '小型车', value: '小型车' },
-          { label: '大型车', value: '大型车' },
-          { label: '无障碍', value: '无障碍' },
-          { label: '内部车辆', value: '内部车辆' },
-        ],
+        placeholder: '请选择泊位类型', 
       },
       rules: 'required',
     },
     {
-      fieldName: 'coordX',
-      label: '坐标X',
+      fieldName: 'coordinateX', // 对齐表格 field: 'coordinateX'（原 coordX 改为 coordinateX）
+      label: '坐标X', // 对齐表格标题「坐标X」
       component: 'Input',
       labelWidth: '150',
       componentProps: {
@@ -230,8 +61,8 @@ export function useFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'coordY',
-      label: '坐标Y',
+      fieldName: 'coordinateY', // 对齐表格 field: 'coordinateY'（原 coordY 改为 coordinateY）
+      label: '坐标Y', // 对齐表格标题「坐标Y」
       component: 'Input',
       labelWidth: '150',
       componentProps: {
@@ -239,24 +70,33 @@ export function useFormSchema() {
       },
       rules: 'required',
     },
+     {
+      fieldName: 'currentCar', // 对齐表格 field: 'coordinateY'（原 coordY 改为 coordinateY）
+      label: '当前车辆', // 对齐表格标题「坐标Y」
+      component: 'Input',
+      labelWidth: '150',
+      componentProps: {
+        placeholder: '请输入当前车辆',
+      },
+      rules: 'required',
+    },
     {
-      fieldName: 'enableStatus',
-      label: '启用状态',
+      fieldName: 'berthStatus', // 对齐表格 field: 'berthStatus'（原 enableStatus 改为 berthStatus）
+      label: '启用状态', // 对齐表格标题「启用状态」
       component: 'Select',
       labelWidth: '150',
       componentProps: {
         placeholder: '请选择启用状态',
         options: [
-          { label: '启用', value: '启用' },
-          { label: '禁用', value: '禁用' },
-          { label: '维护中', value: '维护中' },
+          { label: '占用', value: '占用' },
+          { label: '空闲', value: '空闲' }, 
         ],
       },
       rules: 'required',
     },
     {
-      fieldName: 'divisionCode',
-      label: '所属行政区划代码',
+      fieldName: 'areaCode', // 对齐表格 field: 'areaCode'（原 divisionCode 改为 areaCode）
+      label: '所属行政区划代码', // 对齐表格标题「所属行政区划代码」
       component: 'Select',
       labelWidth: '150',
       componentProps: {
@@ -276,8 +116,8 @@ export function useFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'roadSideManage',
-      label: '路侧管理信息',
+      fieldName: 'roadsideInfo', // 对齐表格 field: 'roadsideInfo'（原 roadSideManage 改为 roadsideInfo）
+      label: '路侧管理信息', // 对齐表格标题「路侧管理信息」
       component: 'Input',
       labelWidth: '150',
       componentProps: {
@@ -287,13 +127,12 @@ export function useFormSchema() {
     },
   ];
 }
-
 /** 泊位表格字段 */
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
     {
-      field: 'berthId',
+      field: 'id',
       title: '泊位ID',
       minWidth: 100,
       sortable: true,
@@ -308,8 +147,7 @@ export function useGridColumns() {
       field: 'roadName',
       title: '路段名称',
       minWidth: 120,
-      sortable: true,
-      slots: { default: 'roadName' },
+      sortable: true, 
     },
     {
       field: 'locationDesc',
@@ -324,32 +162,37 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'coordX',
+      field: 'coordinateX',
       title: '坐标X',
       minWidth: 120,
       sortable: true,
     },
     {
-      field: 'coordY',
+      field: 'coordinateY',
       title: '坐标Y',
       minWidth: 120,
       sortable: true,
     },
     {
-      field: 'enableStatus',
+      field: 'currentCar',
+      title: '当前车辆',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'berthStatus',
       title: '启用状态',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'enableStatus' },
     },
     {
-      field: 'divisionCode',
+      field: 'areaCode',
       title: '所属行政区划代码',
       minWidth: 150,
       sortable: true,
     },
     {
-      field: 'roadSideManage',
+      field: 'roadsideInfo',
       title: '路侧管理信息',
       minWidth: 200,
       sortable: true,
