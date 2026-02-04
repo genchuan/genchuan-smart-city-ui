@@ -1,6 +1,10 @@
 <script setup>
 import { ref } from 'vue';
 
+import Geomagnetic from './geomagnetic/index.vue';
+import Highvideo from './highvideo/index.vue';
+import ListComponent from './list/index.vue';
+import roadchart from './roadchart.vue';
 import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
@@ -12,6 +16,12 @@ const changeArrowStatus = () => {
   });
 };
 const tabArray = ref([
+  {
+    label: '道路列表管理',
+    components: ListComponent,
+    showSecondary: true,
+    secondShow: false,
+  },
   {
     label: '路测泊位管理',
     components: Table,
@@ -32,12 +42,7 @@ const tabArray = ref([
   //   showSecondary: true,
   //   secondShow: false,
   // },
-  // {
-  //   label: '道路列表管理',
-  //   components: ListComponent,
-  //   showSecondary: true,
-  //   secondShow: false,
-  // },
+
   // {
   //   label: '录入车辆',
   //   components: Vehiclentry,
@@ -68,18 +73,18 @@ const tabArray = ref([
   //   showSecondary: true,
   //   secondShow: false,
   // },
-  // {
-  //   label: '地磁设备管理',
-  //   components: Geomagnetic,
-  //   showSecondary: true,
-  //   secondShow: false,
-  // },
-  // {
-  //   label: '高位视频管理',
-  //   components: Highvideo,
-  //   showSecondary: true,
-  //   secondShow: false,
-  // },
+  {
+    label: '地磁设备管理',
+    components: Geomagnetic,
+    showSecondary: true,
+    secondShow: false,
+  },
+  {
+    label: '高位视频管理',
+    components: Highvideo,
+    showSecondary: true,
+    secondShow: false,
+  },
 ]);
 const activeName = ref('路测泊位管理');
 const secondShow = ref(false);
@@ -91,7 +96,7 @@ const arrowChange = () => {
 </script>
 <template>
   <div class="common-index">
-    <!-- <roadchart v-if="tabArray[0].arrowShow" /> -->
+    <roadchart v-if="tabArray[0].arrowShow" />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"

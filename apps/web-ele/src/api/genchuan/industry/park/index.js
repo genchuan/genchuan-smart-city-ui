@@ -56,8 +56,27 @@ export function updateRoad(data) {
 }
 export function createRoad(data) { 
   return requestClient.post('/park/roadside-berth-manage/create', data);
-} 
+}  
+export function getHistroyList(targetBerthNo, parkingStatus) {
+  return requestClient.get(`/park/input-car/history-by-berth?targetBerthNo=${targetBerthNo}&parkingStatus=${parkingStatus}`)
+}
 
 export function deleteRoad(id) { 
   return requestClient.delete(`/park/roadside-berth-manage/delete?id=${id}` );
 } 
+
+/** 模拟地磁录入数据 */
+export  function simulateMagneticDetection(data) { 
+ return requestClient.post('/park/input-car/simulate-magnetic-detection', data);
+} 
+ 
+export function outPark(data) { 
+  return requestClient.post('/park/input-car/simulate-magnetic-detection-exit', data);
+}  
+/**
+ * 车辆出场
+ */
+export function realOutPark(data) { 
+  return requestClient.put('/park/input-car/exit', data);
+}  
+ 

@@ -4,7 +4,13 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElImage, ElLoading, ElMessage } from 'element-plus';
+import {
+  ElDatePicker,
+  ElDialog,
+  ElImage,
+  ElLoading,
+  ElMessage,
+} from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -12,13 +18,16 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   createRoad,
   deleteRoad,
+  getHistroyList,
   getRoadList,
+  outPark,
+  realOutPark,
+  simulateMagneticDetection,
   updateRoad,
 } from '#/api/genchuan/industry/park/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
 import { exportToExcel } from '#/utils/excel.js';
-// 引入封装后的详情抽屉组件
 import ParkDetailDrawer from '#/views/genchuan/industry/page/vehicle/entry/table/detail.vue';
 
 import { textObj, useFormSchema, useGridColumns } from './data';
@@ -43,7 +52,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
-// 移除原 DetailDrawer 初始化逻辑
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -141,7 +149,7 @@ function handleRowCheckboxChange({ records }) {
 }
 const dataObj = reactive({
   totalShow: false,
-  detailObj: {}, // 保留详情对象用于传递给组件
+  detailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -175,21 +183,15 @@ const getTableData = async (pageObj) => {
 };
 
 const [QueryForm, QueryFormApi] = useVbenForm({
-  // 默认展开
   collapsed: false,
-  // 所有表单项共用，可单独在表单内覆盖
   commonConfig: {
-    // 所有表单项
     componentProps: {
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
-  // 提交函数
   handleSubmit: onSubmit,
-  // 垂直布局，label和input在不同行，值为vertical
-  // 水平布局，label和input在同一行
   layout: 'horizontal',
   schema: useFormSchema().map((v) => {
     delete v.rules;
@@ -197,7 +199,6 @@ const [QueryForm, QueryFormApi] = useVbenForm({
       ...v,
     };
   }),
-  // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -238,10 +239,8 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const activeName = ref('');
-// 修改打开详情的方法，调用组件的open方法
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
-  // 通过ref调用组件的open方法
   parkDetailDrawerRef.value.open();
   console.log(row);
 };
@@ -255,7 +254,6 @@ const createLabel = (item) => {
 };
 const handleClick = () => {
   dataObj.serachObj.plateType = activeName.value;
-
   gridApi.query();
 };
 const handleSerachShow = () => {
@@ -265,26 +263,189 @@ const handleFullShow = () => {
   screenfull.toggle();
 };
 
-// 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
 const dialogVisible = ref(false);
 const openImg = (url) => {
   dataObj.imgUrl = url;
   dialogVisible.value = true;
 };
+
+// ========== 地磁车辆入场弹窗相关配置（原有） ==========
+const driveInDialogVisible = ref(false);
+const currentDriveInRow = ref(null);
+const driveInTime = ref(Date.now());
+
+const handleOpenDriveInDialog = (row) => {
+  currentDriveInRow.value = row;
+  const validTimeStamp = Date.now();
+  driveInTime.value = validTimeStamp;
+  driveInDialogVisible.value = true;
+};
+
+const handleConfirmDriveIn = async () => {
+  if (!currentDriveInRow.value || !driveInTime.value) {
+    ElMessage.warning('请选择有效的入场时间！');
+    return;
+  }
+
+  try {
+    const res = await simulateMagneticDetection({
+      targetBerthNo: currentDriveInRow.value.berthCode,
+      entryTime: driveInTime.value,
+    });
+
+    ElMessage.success('地磁车辆入场操作成功！');
+    handleRefresh();
+    driveInDialogVisible.value = false;
+  } catch (error) {
+    ElMessage.error('地磁车辆入场操作失败！');
+    console.error('入场失败：', error);
+  }
+};
+
+const handleCancelDriveIn = () => {
+  driveInDialogVisible.value = false;
+  currentDriveInRow.value = null;
+  driveInTime.value = Date.now();
+};
+
+// ========== 新增：地磁车辆出场弹窗相关配置 ==========
+// 1. 出场弹窗显示状态
+const driveOutDialogVisible = ref(false);
+// 2. 当前选中的行数据（传递给出场弹窗）
+const currentDriveOutRow = ref(null);
+// 3. 出场时间（绑定时间选择器，默认值为当前时间戳）
+const driveOutTime = ref(Date.now());
+const histObj = ref([]);
+// 4. 打开出场弹窗方法
+const handleOpenDriveOutDialog = async (row) => {
+  currentDriveOutRow.value = row;
+  const resObj = await getHistroyList(row.berthCode, '已停入');
+  histObj.value = resObj;
+  const validTimeStamp = Date.now(); // 默认当前时间
+  // 最终赋值：确保只有合法时间戳被绑定
+  driveOutTime.value = validTimeStamp;
+  driveOutDialogVisible.value = true;
+};
+
+// 5. 确认出场操作方法
+const handleConfirmDriveOut = async () => {
+  if (!currentDriveOutRow.value || !driveOutTime.value) {
+    ElMessage.warning('请选择有效的出场时间！');
+    return;
+  }
+
+  try {
+    // 后续可替换为实际的地磁车辆出场接口
+    // 示例：调用出场接口，传递泊位编号和出场时间戳
+    const res = await outPark({
+      id: histObj.value[0].id,
+      exitTime: driveOutTime.value,
+    });
+    const result = await realOutPark({
+      id: histObj.value[0].id,
+      parkingStatus: '已驶离',
+      exitTime: driveOutTime.value,
+    });
+    // 临时提示（后续替换为接口返回结果）
+    ElMessage.success('地磁车辆出场操作成功！');
+    // 刷新表格数据
+    handleRefresh();
+    // 关闭弹窗
+    driveOutDialogVisible.value = false;
+  } catch (error) {
+    ElMessage.error('地磁车辆出场操作失败！');
+    console.error('出场失败：', error);
+  }
+};
+
+// 6. 取消出场弹窗（重置状态）
+const handleCancelDriveOut = () => {
+  driveOutDialogVisible.value = false;
+  currentDriveOutRow.value = null;
+  driveOutTime.value = Date.now();
+};
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <el-dialog v-model="dialogVisible">
+    <ElDialog v-model="dialogVisible">
       <div class="park-img-center">
         <img style="width: 100%; height: 100%" :src="dataObj.imgUrl" />
       </div>
-    </el-dialog>
+    </ElDialog>
+
+    <!-- ========== 地磁车辆入场弹窗（原有） ========== -->
+    <ElDialog
+      v-model="driveInDialogVisible"
+      title="地磁车辆入场"
+      width="500px"
+      @close="handleCancelDriveIn"
+    >
+      <div class="drive-in-form">
+        <div class="form-item">
+          <label class="form-label">入场时间：</label>
+          <ElDatePicker
+            v-model="driveInTime"
+            type="datetime"
+            placeholder="请选择入场日期和时间"
+            style="width: 100%"
+          />
+        </div>
+      </div>
+      <template #footer>
+        <button
+          class="el-button el-button--default"
+          @click="handleCancelDriveIn"
+        >
+          取消
+        </button>
+        <button
+          class="el-button el-button--primary"
+          @click="handleConfirmDriveIn"
+        >
+          确认入场
+        </button>
+      </template>
+    </ElDialog>
+
+    <!-- ========== 新增：地磁车辆出场弹窗 ========== -->
+    <ElDialog
+      v-model="driveOutDialogVisible"
+      title="地磁车辆出场"
+      width="500px"
+      @close="handleCancelDriveOut"
+    >
+      <div class="drive-in-form">
+        <div class="form-item">
+          <label class="form-label">出场时间：</label>
+          <ElDatePicker
+            v-model="driveOutTime"
+            type="datetime"
+            placeholder="请选择出场日期和时间"
+            style="width: 100%"
+          />
+        </div>
+      </div>
+      <template #footer>
+        <button
+          class="el-button el-button--default"
+          @click="handleCancelDriveOut"
+        >
+          取消
+        </button>
+        <button
+          class="el-button el-button--primary"
+          @click="handleConfirmDriveOut"
+        >
+          确认出场
+        </button>
+      </template>
+    </ElDialog>
+
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <!-- 使用封装后的详情抽屉组件 -->
     <ParkDetailDrawer
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
@@ -294,7 +455,6 @@ const openImg = (url) => {
       <QueryForm class="query-form" />
     </Drawer>
     <Grid>
-      <!-- 三级状态 -->
       <template #table-title>
         <div class="tabel-tabs">
           <div v-if="props.secondShow">
@@ -359,6 +519,18 @@ const openImg = (url) => {
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
+          <!-- 地磁车辆入场（原有） -->
+          <IconButton
+            content="地磁车辆入场"
+            icon-name="Upload"
+            @click="handleOpenDriveInDialog(row)"
+          />
+          <!-- ========== 修改：绑定出场弹窗打开方法 ========== -->
+          <IconButton
+            content="地磁车辆出场"
+            icon-name="Download"
+            @click="handleOpenDriveOutDialog(row)"
+          />
           <IconButton
             content="详情"
             icon-name="View"
@@ -401,5 +573,21 @@ const openImg = (url) => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.drive-in-form {
+  padding: 10px 0;
+}
+
+.form-item {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: inline-block;
+  width: 80px;
+  text-align: right;
+  margin-right: 10px;
+  color: #606266;
 }
 </style>
