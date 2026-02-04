@@ -954,7 +954,7 @@ export const fetchParkingVehicleDetail = (recordId, params = {}) => {
                 payAmount: recordId === 'REC001' ? 12 : 30,
                 payStatus: recordId === 'REC001' ? '已支付' : '未支付',
                 invoiceStatus: recordId === 'REC001' ? '已开票' : '未开票',
-                transactionNo: recordId === 'REC001' ? 'WX202401270001' : '',
+                transactionNo: recordId === 'REC001' ? 'WX202601270001' : '',
               },
               // 泊位位置
               spaceLocation: {
@@ -2111,7 +2111,7 @@ export const fetchTradeTrendList = (params = {}) => {
                 tbTradeTrendAmount: 38500,
                 tbTradeTrendPayRate: 96.8,
                 tbTradeTrendAverageDuration: 2.5,
-                tbTradeTrendId: 'TR20240115001',
+                tbTradeTrendId: 'TR20260115001',
               },
               {
                 tbTradeTrendPeriod: '周',
@@ -2120,7 +2120,7 @@ export const fetchTradeTrendList = (params = {}) => {
                 tbTradeTrendAmount: 269500,
                 tbTradeTrendPayRate: 97.2,
                 tbTradeTrendAverageDuration: 2.4,
-                tbTradeTrendId: 'TR20240121001',
+                tbTradeTrendId: 'TR20260121001',
               },
               {
                 tbTradeTrendPeriod: '月',
@@ -2129,7 +2129,7 @@ export const fetchTradeTrendList = (params = {}) => {
                 tbTradeTrendAmount: 1155000,
                 tbTradeTrendPayRate: 96.5,
                 tbTradeTrendAverageDuration: 2.6,
-                tbTradeTrendId: 'TR20240131001',
+                tbTradeTrendId: 'TR20260131001',
               },
               {
                 tbTradeTrendPeriod: '日',
@@ -2138,7 +2138,7 @@ export const fetchTradeTrendList = (params = {}) => {
                 tbTradeTrendAmount: 40500,
                 tbTradeTrendPayRate: 97.0,
                 tbTradeTrendAverageDuration: 2.3,
-                tbTradeTrendId: 'TR20240116001',
+                tbTradeTrendId: 'TR20260116001',
               },
               {
                 tbTradeTrendPeriod: '日',
@@ -2147,7 +2147,7 @@ export const fetchTradeTrendList = (params = {}) => {
                 tbTradeTrendAmount: 42800,
                 tbTradeTrendPayRate: 97.1,
                 tbTradeTrendAverageDuration: 2.4,
-                tbTradeTrendId: 'TR20240117001',
+                tbTradeTrendId: 'TR20260117001',
               },
               {
                 tbTradeTrendPeriod: '周',
@@ -2156,7 +2156,7 @@ export const fetchTradeTrendList = (params = {}) => {
                 tbTradeTrendAmount: 275800,
                 tbTradeTrendPayRate: 97.3,
                 tbTradeTrendAverageDuration: 2.5,
-                tbTradeTrendId: 'TR20240128001',
+                tbTradeTrendId: 'TR20260128001',
               },
               {
                 tbTradeTrendPeriod: '月',
@@ -2165,7 +2165,7 @@ export const fetchTradeTrendList = (params = {}) => {
                 tbTradeTrendAmount: 1186000,
                 tbTradeTrendPayRate: 96.7,
                 tbTradeTrendAverageDuration: 2.5,
-                tbTradeTrendId: 'TR20240229001',
+                tbTradeTrendId: 'TR20260229001',
               },
               {
                 tbTradeTrendPeriod: '月',
@@ -2174,7 +2174,7 @@ export const fetchTradeTrendList = (params = {}) => {
                 tbTradeTrendAmount: 1218000,
                 tbTradeTrendPayRate: 97.0,
                 tbTradeTrendAverageDuration: 2.4,
-                tbTradeTrendId: 'TR20240331001',
+                tbTradeTrendId: 'TR20260331001',
               },
             ]);
           }, 500);
@@ -2545,18 +2545,18 @@ export const fetchTradeTrendDetail = (tradeTrendId, params = {}) => {
           setTimeout(() => {
             resolve({
               tbTradeTrendId: tradeTrendId,
-              tbTradeTrendPeriod: tradeTrendId === 'TR20240115001' ? '日' : '周',
-              tbTradeTrendTime: tradeTrendId === 'TR20240115001' ? '2026-01-15' : '2026-01-15~2026-01-21',
-              tbTradeTrendChainCountGrowth: tradeTrendId === 'TR20240115001' ? 5.2 : 3.8,
-              tbTradeTrendChainAmountGrowth: tradeTrendId === 'TR20240115001' ? 4.8 : 3.5,
-              tbTradeTrendPeakPeriod: tradeTrendId === 'TR20240115001' ? '17:00-19:00' : '18:00-20:00',
-              tbRegionTradeContributionRate: tradeTrendId === 'TR20240115001' ? '主城区:32.8%' : '高新区:28.5%',
+              tbTradeTrendPeriod: tradeTrendId === 'TR20260115001' ? '日' : '周',
+              tbTradeTrendTime: tradeTrendId === 'TR20260115001' ? '2026-01-15' : '2026-01-15~2026-01-21',
+              tbTradeTrendChainCountGrowth: tradeTrendId === 'TR20260115001' ? 5.2 : 3.8,
+              tbTradeTrendChainAmountGrowth: tradeTrendId === 'TR20260115001' ? 4.8 : 3.5,
+              tbTradeTrendPeakPeriod: tradeTrendId === 'TR20260115001' ? '17:00-19:00' : '18:00-20:00',
+              tbRegionTradeContributionRate: tradeTrendId === 'TR20260115001' ? '主城区:32.8%' : '高新区:28.5%',
               // 交易明细（模拟数据）
               tradeDetail: {
-                tbTradeTrendCount: tradeTrendId === 'TR20240115001' ? 1250 : 8750,
-                tbTradeTrendAmount: tradeTrendId === 'TR20240115001' ? 38500 : 269500,
-                tbTradeTrendPayRate: tradeTrendId === 'TR20240115001' ? 96.8 : 97.2,
-                tbTradeTrendAverageDuration: tradeTrendId === 'TR20240115001' ? 2.5 : 2.4,
+                tbTradeTrendCount: tradeTrendId === 'TR20260115001' ? 1250 : 8750,
+                tbTradeTrendAmount: tradeTrendId === 'TR20260115001' ? 38500 : 269500,
+                tbTradeTrendPayRate: tradeTrendId === 'TR20260115001' ? 96.8 : 97.2,
+                tbTradeTrendAverageDuration: tradeTrendId === 'TR20260115001' ? 2.5 : 2.4,
               },
               // 支付方式分布（模拟数据）
               payMethodDistribution: {
@@ -2602,8 +2602,8 @@ export const fetchTradeTrendTimeTrend = (tradeTrendId, params = {}) => {
             const data = xAxis.map(() => 50 + Math.random() * 300);
             resolve({
               tbTradeTrendId: tradeTrendId,
-              tbTradeTrendPeriod: tradeTrendId === 'TR20240115001' ? '日' : '周',
-              tbTradeTrendTime: tradeTrendId === 'TR20240115001' ? '2026-01-15' : '2026-01-15~2026-01-21',
+              tbTradeTrendPeriod: tradeTrendId === 'TR20260115001' ? '日' : '周',
+              tbTradeTrendTime: tradeTrendId === 'TR20260115001' ? '2026-01-15' : '2026-01-15~2026-01-21',
               xAxis,
               series: [{ name: '时段交易笔数', data }]
             });

@@ -27,19 +27,6 @@ import {
 import screenFull from 'screenfull';
 
 import {
-  fetchCoopAreaCount,
-  fetchCoopAreaRatio,
-  fetchCoopCoreIndicators,
-  fetchCoopEfficiencyAreaCount,
-  fetchCoopEfficiencyIndicators,
-  fetchCoopEfficiencyList,
-  fetchCoopEfficiencyRecurrenceRatio,
-  fetchCoopEfficiencyTrendData,
-  fetchCoopEfficiencyTypeCount,
-  fetchCoopIndustryRatio,
-  fetchCoopItemTypeRatio,
-  fetchCoopTrendData,
-  fetchCoopTypeCount,
   fetchRegionCooperationList,
   fetchRegionCooperationIndicators,
   fetchRegionCooperationAreaCount,
@@ -48,18 +35,6 @@ import {
   fetchRegionCooperationDetail,
   fetchRegionCooperationTrack,
   submitRegionCooperationAction,
-  fetchEnterpriseTypeCoopCount,
-  fetchGovDeptCoopCount,
-  fetchGovEnterpriseCoopIndicators,
-  fetchGovEnterpriseCoopList,
-  fetchHighFrequencyCoopTop10,
-  fetchSatisfactionLevelRatio,
-  fetchSpecialCoopDeptCount,
-  fetchSpecialCoopIndicators,
-  fetchSpecialCoopList,
-  fetchSpecialCoopSceneCount,
-  fetchSpecialCoopSceneRatio,
-  fetchSpecialCoopStatusRatio,
   fetchDepartmentCooperationList,
   fetchDepartmentCooperationIndicators,
   fetchDepartmentCooperationDeptCount,
@@ -78,12 +53,51 @@ import {
   fetchIndustryCooperationDetail,
   submitIndustryCooperationAssist,
   submitIndustryCooperationEvaluate,
+  fetchLevelCooperationList,
+  fetchLevelCooperationIndicators,
+  fetchLevelCooperationLevelCount,
+  fetchLevelCooperationUnitCount,
+  fetchLevelCooperationStatusRatio,
+  fetchLevelCooperationDetail,
+  submitLevelCooperationFeedback,
+  fetchGovEnterpriseCooperationList,
+  fetchGovEnterpriseCooperationIndicators,
+  fetchGovEnterpriseCooperationDeptCount,
+  fetchGovEnterpriseCooperationEntTypeCount,
+  fetchGovEnterpriseCooperationItemRatio,
+  fetchGovEnterpriseCooperationSatisfactionRatio,
+  fetchGovEnterpriseCooperationDetail,
+  submitCooperationTracking,
+  submitCooperationEvaluation,
+  fetchMaintainerDynamicList,
+  fetchMaintainerDynamicIndicators,
+  fetchMaintainerDynamicDeptTaskCount,
+  fetchMaintainerDynamicAreaTaskCount,
+  fetchMaintainerDynamicDetail,
+  submitMaintainerDispatchTask,
+  fetchSpecialCooperationList,
+  fetchSpecialCooperationIndicators,
+  fetchSpecialCooperationSceneCount,
+  fetchSpecialCooperationUnitCount,
+  fetchSpecialCooperationSceneRatio,
+  fetchSpecialCooperationStatusRatio,
+  fetchSpecialCooperationDetail,
+  submitExecutionProgress,
+  submitReviewConclusion,
+  fetchEfficiencyEvaluationList,
+  fetchEfficiencyEvaluationIndicators,
+  fetchEfficiencyEvaluationTypeCompare,
+  fetchEfficiencyEvaluationAreaCompare,
+  fetchEfficiencyEvaluationTrend,
+  fetchEfficiencyEvaluationRecurrenceRatio,
+  fetchEfficiencyEvaluationDetail,
+  submitOptimizationPlan,
 } from '#/api/genchuan/industry/parkingmgmt/overview/SynergyLinkage.ts';
 
 import ChartLine1 from '#/views/genchuan/industry/templatesstatchart/ChartLine1.vue';
+import ChartLine2 from '#/views/genchuan/industry/templatesstatchart/ChartLine2.vue';
 import ChartPie1 from '#/views/genchuan/industry/templatesstatchart/ChartPie1.vue';
 import ChartPie2 from '#/views/genchuan/industry/templatesstatchart/ChartPie2.vue';
-import ChartPie4 from '#/views/genchuan/industry/templatesstatchart/ChartPie4.vue';
 import VerticalBar1 from '#/views/genchuan/industry/templatesstatchart/VerticalBar1.vue';
 import VerticalBar2 from '#/views/genchuan/industry/templatesstatchart/VerticalBar2.vue';
 
@@ -98,53 +112,43 @@ const topLeftActiveTab = ref('tab1');
 const tipDialogVisible = ref(false);
 const tipDialogContent = ref('');
 
-// 数字滚动动画方法
-const animateValue = (element: HTMLElement, start: number, end: number, duration: number) => {
-  let startTimestamp: number | null = null;
-  const isInteger = Number.isInteger(end);
+const animateValue = (
+  element: HTMLElement,
+  start: number,
+  end: number,
+  duration: number,
+) => {
+  if (!element) return;
+  let startTimestamp: null | number = null;
   const step = (timestamp: number) => {
     if (!startTimestamp) startTimestamp = timestamp;
+
     const progress = Math.min((timestamp - startTimestamp) / duration, 1);
     const currentValue = progress * (end - start) + start;
-    element.textContent = isInteger ? currentValue.toFixed(0) : currentValue.toFixed(1);
+
+    element.textContent = Number.isInteger(end)
+      ? formatNumber(Math.floor(currentValue))
+      : formatDecimal(currentValue);
+
     if (progress < 1) window.requestAnimationFrame(step);
   };
   window.requestAnimationFrame(step);
 };
-const initCrossRegionCoopNumberAnimations = () => {
-  const elements = document.querySelectorAll('.cross-region-coop-number-animate');
-  elements.forEach((el) => {
-    const value = Number.parseFloat(el.dataset.value);
-    animateValue(el, 0, value, 1500);
-  });
-};
-const initGovCoopNumberAnimations = () => {
-  const elements = document.querySelectorAll('.gov-coop-number-animate');
-  elements.forEach((el) => {
-    const value = Number.parseFloat(el.dataset.value);
-    animateValue(el, 0, value, 1500);
-  });
-};
-const initSpecialCoopNumberAnimations = () => {
-  const elements = document.querySelectorAll('.special-coop-number-animate');
-  elements.forEach((el) => {
-    const value = Number.parseFloat(el.dataset.value);
-    animateValue(el, 0, value, 1500);
-  });
-};
-const initCoopAnalysisNumberAnimations = () => {
-  const elements = document.querySelectorAll('.coop-analysis-number-animate');
-  elements.forEach((el) => {
-    const value = Number.parseFloat(el.dataset.value);
-    animateValue(el, 0, value, 1500);
-  });
-};
-const initCoopEfficiencyNumberAnimations = () => {
-  const elements = document.querySelectorAll('.coop-efficiency-number-animate');
-  elements.forEach((el) => {
-    const value = Number.parseFloat(el.dataset.value);
-    animateValue(el, 0, value, 1500);
-  });
+
+const initNumberAnimations = () => {
+  document
+    .querySelectorAll('.number-animate')
+    .forEach((el) => {
+      const targetEl = el as HTMLElement;
+      const rawText = (targetEl.textContent || '0').replace(/[^\d.-]/g, '');
+      const endValue = Number(rawText) || 0;
+      animateValue(
+        targetEl,
+        0,
+        endValue,
+        1500,
+      );
+    });
 };
 
 // 时间戳格式化方法
@@ -301,67 +305,6 @@ interface RegionCooperationActionForm {
   actionContent: string;
 }
 
-// 协同统计分析TS类型定义
-interface CoopAnalysisIndicators {
-  totalCoopCount: number; // 协同事项总数
-  avgHandleCycle: number; // 平均处理周期
-  finishRate: number; // 协同完成率
-  highPriorityRate: number; // 高优协同占比
-}
-interface HighFreqCoopRow {
-  rank: number; // 排名
-  coopStatId: string; // 协同统计ID
-  coopType: string; // 协同类型
-  coopCount: number; // 协同事件数量
-  top10CoopItem: string; // 协同事项
-}
-
-// 政企协同视图TS类型定义
-interface GovCoopIndicators {
-  totalCount: number; // 政企协同总数
-  responseRate: number; // 政企响应率
-  satisfactionRate: number; // 政企满意度
-}
-interface GovCoopRow {
-  govEnterpriseCoopId: string; // 政企协同ID
-  coopItem: string; // 协同事项
-  govDepartment: string; // 政府部门
-  merchantId: string; // 企业ID
-  progressFeedback: string; // 进度反馈
-  satisfactionEvaluation: string; // 满意度评价
-}
-
-// 专属协同视图TS类型定义
-interface SpecialCoopIndicators {
-  totalCount: number; // 专属协同总数
-  completeRate: number; // 协同完成率
-  averageCycle: number; // 平均协同周期
-}
-interface SpecialCoopRow {
-  specialCoopId: string; // 专属协同ID
-  coopScene: string; // 协同场景
-  coopRule: string; // 协同规则
-  responsibilityDivision: string; // 责任分工
-  coopResult: string; // 协同结果
-  completeTime: number | null; // 完成时间
-}
-
-// 协同效率评估TS类型定义
-interface CoopEfficiencyIndicators {
-  avgResponseDuration: number; // 平均响应时长
-  avgDisposalDuration: number; // 平均处置时长
-  avgEffectAchievementRate: number; // 平均成效达标率
-}
-interface CoopEfficiencyRow {
-  coopEfficiencyId: string; // 协同效率评估ID
-  coopType: string; // 协同类型
-  responseDuration: number; // 响应时长(小时)
-  disposalDuration: number; // 处置时长(小时)
-  collaborationCost: number; // 协同成本
-  effectAchievementRate: number; // 成效达标率
-  problemRecurrenceRate: number; // 问题复发率
-}
-
 // 部门协同TS类型定义
 interface DepartmentCooperationRow {
   bizCrossDepartmentCoopCrossDepartmentCoopId: string;
@@ -455,6 +398,288 @@ interface IndustryCooperationEvaluateForm {
   score: number | null;
 }
 
+// 层级协同TS类型定义
+interface LevelCooperationRow {
+  bizCrossLevelCoopCrossLevelCoopId: string;
+  issueLevelName: string; // 下达层级
+  receiveLevelName: string; // 接收层级
+  bizCrossLevelCoopInstructionContent: string;
+  sysInstructionStatusName: string;
+  bizCrossLevelCoopIssueTime: string;
+  currentUserLevel: string; // 当前用户层级
+}
+interface LevelCooperationIndicators {
+  totalCooperationCount: number; // 跨层级协同总数
+  instructionCompleteRate: number; // 指令完成率(%)
+  averageFeedbackDuration: number; // 平均反馈时长(天)
+}
+interface LevelCooperationDetail {
+  bizCrossLevelCoopCrossLevelCoopId: string;
+  issueLevelName: string;
+  receiveLevelName: string;
+  bizCrossLevelCoopInstructionContent: string;
+  sysInstructionStatusName: string;
+  bizCrossLevelCoopIssueTime: string;
+  currentUserLevel: string;
+  // 详情字段
+  bizCrossLevelCoopAverageFeedbackDuration: number; // 平均反馈时长
+  sysResponsibleUnitName: string; // 责任单位
+  bizCrossLevelCoopFeedbackResult: string; // 反馈结果
+  bizCrossLevelCoopCompleteTime: string; // 完成时间
+  // 层级分工
+  levelDivision: {
+    levelName: string;
+    task: string;
+    person: string;
+  }[];
+  // 反馈记录
+  feedbackRecords: {
+    time: string;
+    level: string;
+    content: string;
+  }[];
+  // 流转时间轴
+  flowTimeline: {
+    time: string;
+    level: string;
+    action: string;
+    status: string;
+  }[];
+}
+interface LevelCooperationFeedbackForm {
+  feedbackContent: string;
+  evidenceFiles: File[];
+}
+
+// 运维人员动态TS类型定义
+interface MaintainerDynamicRow {
+  sysMaintainUserMaintainUserId: string; // 人员ID
+  sysUserUserName: string; // 人员姓名
+  sysDeptDeptName: string; // 所属部门
+  sysAreaAreaName: string; // 负责区域
+  sysOnDutyStatusName: string; // 当前状态
+  bizCoopStatCurrentCoopTaskCount: number; // 当前协同任务数
+}
+
+interface MaintainerDynamicIndicators {
+  totalMaintainerCount: number; // 总运维人数
+  onDutyCount: number; // 在岗人数
+  totalCoopTaskCount: number; // 当前协同任务总数
+}
+
+interface MaintainerDynamicDetail {
+  sysMaintainUserMaintainUserId: string;
+  sysUserUserName: string;
+  sysDeptDeptName: string;
+  sysAreaAreaName: string;
+  sysOnDutyStatusName: string;
+  bizCoopStatCurrentCoopTaskCount: number;
+  // 详情字段
+  bizCoopStatCompletedCoopTaskCount: number; // 已完成协同任务数
+  bizCoopStatCoopResponseDuration: number; // 协同响应时长
+  sysCooperationTypeName: string; // 擅长协同类型
+  bizCoopStatLatestCoopTime: string; // 最近协同时间
+  // 基础信息
+  contactPhone: string; // 联系方式（脱敏）
+  email: string; // 邮箱
+  skillTags: string[]; // 技能标签
+  // 协同历史
+  cooperationHistory: {
+    taskId: string;
+    taskName: string;
+    status: string;
+    time: string;
+  }[];
+}
+
+interface DispatchTaskForm {
+  taskDetail: string; // 协同任务详情
+  coopTarget: string; // 指定协同对象
+}
+
+// 政企协同TS类型定义
+interface GovEnterpriseCooperationRow {
+  bizGovernmentEnterpriseCoopGovEnterpriseCoopId: string;
+  sysDeptDeptName: string;
+  sysMerchantMerchantName: string;
+  sysEnterpriseTypeName: string;
+  sysCooperationItemName: string;
+  sysCooperationStatusName: string;
+}
+interface GovEnterpriseCooperationIndicators {
+  totalCooperationCount: number; // 政企协同总数
+  responseRate: number; // 响应率(%)
+  satisfactionRate: number; // 满意度(%)
+}
+interface GovEnterpriseCooperationDetail {
+  bizGovernmentEnterpriseCoopGovEnterpriseCoopId: string;
+  sysDeptDeptName: string;
+  sysMerchantMerchantName: string;
+  sysEnterpriseTypeName: string;
+  sysCooperationItemName: string;
+  sysCooperationStatusName: string;
+  // 详情字段
+  bizGovernmentEnterpriseCoopProgressFeedback: string; // 进度反馈
+  sysSatisfactionName: string; // 满意度评价
+  bizGovernmentEnterpriseCoopCompleteTime: string; // 完成时间
+  bizGovernmentEnterpriseCoopCoopCycle: string; // 协同周期
+  // 协同详情
+  cooperationDetail: {
+    launchTime: string;
+    expectedCompleteTime: string;
+    contactPerson: string;
+    contactPhone: string;
+    cooperationContent: string;
+  };
+  // 责任分工
+  responsibilityDivision: {
+    department: string;
+    task: string;
+    person: string;
+    phone: string;
+  }[];
+  // 执行计划
+  executionPlan: {
+    stage: string;
+    task: string;
+    startTime: string;
+    endTime: string;
+    status: string;
+  }[];
+  // 协同进度时间轴
+  progressTimeline: {
+    time: string;
+    content: string;
+    operator: string;
+  }[];
+  // 双方反馈记录
+  feedbackRecords: {
+    time: string;
+    sender: string;
+    content: string;
+    type: string;
+  }[];
+}
+interface CooperationTrackingForm {
+  trackingContent: string;
+}
+interface CooperationEvaluationForm {
+  satisfactionLevel: number; // 1-5星
+  evaluationContent: string;
+}
+
+// 专属协同TS类型定义
+interface SpecialCooperationRow {
+  bizSpecialCoopSpecialCoopId: string;
+  sysCoopSceneName: string;
+  sysResponsibleUnitName: string;
+  bizSpecialCoopCoopRule: string;
+  bizSpecialCoopResponsibilityDivision: string;
+  sysCooperationStatusName: string;
+}
+interface SpecialCooperationIndicators {
+  totalCooperationCount: number; // 专属协同总数
+  completionRate: number; // 完成率(%)
+  averageCooperationCycle: number; // 平均协同周期(天)
+}
+interface SpecialCooperationDetail {
+  bizSpecialCoopSpecialCoopId: string;
+  sysCoopSceneName: string;
+  sysResponsibleUnitName: string;
+  bizSpecialCoopCoopRule: string;
+  bizSpecialCoopResponsibilityDivision: string;
+  sysCooperationStatusName: string;
+  // 详情字段
+  bizSpecialCoopAverageCoopCycle: number; // 平均协同周期
+  bizSpecialCoopCoopResult: string; // 协同结果
+  bizSpecialCoopCompleteTime: string; // 完成时间
+  bizSpecialCoopReviewConclusion: string; // 复盘结论
+  // 协同配置详情
+  cooperationConfig: {
+    item: string;
+    value: string;
+  }[];
+  // 场景要求
+  sceneRequirements: {
+    item: string;
+    value: string;
+  }[];
+  // 责任清单
+  responsibilityList: {
+    unit: string;
+    task: string;
+    person: string;
+  }[];
+  // 执行进展时间轴
+  executionProgress: {
+    time: string;
+    content: string;
+  }[];
+}
+interface ExecutionProgressForm {
+  progressContent: string;
+  evidenceFiles: File[];
+}
+interface ReviewConclusionForm {
+  reviewConclusion: string;
+  optimizationSuggestions: string;
+}
+
+// 协同效率评估TS类型定义
+interface EfficiencyEvaluationRow {
+  bizCoopEfficiencyCoopEfficiencyId: string;
+  sysCooperationTypeName: string;
+  sysAreaAreaName: string;
+  sysStatCycleName: string;
+  bizCoopEfficiencyAverageResponseDuration: number;
+  bizCoopEfficiencyAverageDisposalDuration: number;
+  bizCoopEfficiencyEffectivenessRate: number;
+}
+
+interface EfficiencyEvaluationIndicators {
+  averageResponseDuration: number; // 平均响应时长(小时)
+  averageDisposalDuration: number; // 平均处置时长(小时)
+  effectivenessRate: number; // 成效达标率(%)
+}
+
+interface EfficiencyEvaluationDetail {
+  bizCoopEfficiencyCoopEfficiencyId: string;
+  sysCooperationTypeName: string;
+  sysAreaAreaName: string;
+  sysStatCycleName: string;
+  bizCoopEfficiencyAverageResponseDuration: number;
+  bizCoopEfficiencyAverageDisposalDuration: number;
+  bizCoopEfficiencyEffectivenessRate: number;
+  // 详情字段
+  bizCoopEfficiencyCoopCost: number; // 协同成本
+  bizCoopEfficiencyProblemRecurrenceRate: number; // 问题复发率(%)
+  bizCoopEfficiencyEfficiencyBottleneck: string; // 效率瓶颈
+  bizCoopEfficiencyOptimizationSuggestion: string; // 优化建议
+  // 效率评估明细
+  efficiencyDetails: {
+    item: string;
+    value: string;
+    standard: string;
+    status: string;
+  }[];
+  // 数据来源
+  dataSources: {
+    source: string;
+    type: string;
+    frequency: string;
+  }[];
+  // 计算逻辑
+  calculationLogic: {
+    item: string;
+    logic: string;
+  }[];
+}
+
+interface OptimizationPlanForm {
+  optimizationPlan: string;
+  optimizationDeadline: string;
+}
+
 
 // 区域协同响应式数据
 const regionCooperationList = ref<RegionCooperationRow[]>([]);
@@ -477,7 +702,7 @@ const regionCooperationCompletionRateTrendData = ref<ChartLineData>({
 });
 // 区域协同视图切换相关
 const regionCooperationChartRefreshKey = ref(0);
-const activeRegionCooperationView = ref('卡片');
+const activeRegionCooperationView = ref('折线图');
 const regionCooperationViewBtnList = ref(['卡片', '柱状图', '折线图', '列表']);
 // 区域协同弹窗相关
 const regionCooperationDetailDialogVisible = ref(false);
@@ -521,96 +746,253 @@ const regionCooperationActionFormRules = {
 };
 const regionCooperationActionFormRef = ref<FormInstance>();
 
-// 协同统计分析响应式数据
-const highFreqCoopTop10List = ref<HighFreqCoopRow[]>([]);
-const coopAnalysisIndicators = ref<CoopAnalysisIndicators>({
-  totalCoopCount: 0,
-  avgHandleCycle: 0,
-  finishRate: 0,
-  highPriorityRate: 0
+// 运维人员动态响应式数据
+const maintainerDynamicList = ref<MaintainerDynamicRow[]>([]);
+const maintainerDynamicIndicators = ref<MaintainerDynamicIndicators>({
+  totalMaintainerCount: 0,
+  onDutyCount: 0,
+  totalCoopTaskCount: 0,
 });
-const coopAnalysisTypeData = ref<ChartBarData>({ xAxis: [], series: [] });
-const coopAnalysisAreaData = ref<ChartBarData>({ xAxis: [], series: [] });
-const coopAnalysisIndustryRatioData = ref<ChartRatioData>({
-  legend: [],
-  series: [{ name: '行业协同占比', data: [] }]
+const maintainerDynamicDeptTaskData = ref<ChartBarData>({ xAxis: [], series: [] });
+const maintainerDynamicAreaTaskData = ref<ChartBarData>({ xAxis: [], series: [] });
+// 运维人员动态视图切换相关
+const maintainerDynamicChartRefreshKey = ref(0);
+const activeMaintainerDynamicView = ref('柱状图');
+const maintainerDynamicViewBtnList = ref(['卡片', '柱状图', '列表']);
+// 运维人员动态弹窗相关
+const maintainerDynamicDetailDialogVisible = ref(false);
+const maintainerDynamicDispatchDialogVisible = ref(false);
+const activeMaintainerDynamicDetailView = ref('人员基础信息');
+const maintainerDynamicDetailViewBtnList = ref(['人员基础信息', '协同历史', '技能标签']);
+const maintainerDynamicDetailSelectedRow = ref<MaintainerDynamicDetail>({
+  sysMaintainUserMaintainUserId: '',
+  sysUserUserName: '',
+  sysDeptDeptName: '',
+  sysAreaAreaName: '',
+  sysOnDutyStatusName: '',
+  bizCoopStatCurrentCoopTaskCount: 0,
+  bizCoopStatCompletedCoopTaskCount: 0,
+  bizCoopStatCoopResponseDuration: 0,
+  sysCooperationTypeName: '',
+  bizCoopStatLatestCoopTime: '',
+  contactPhone: '',
+  email: '',
+  skillTags: [],
+  cooperationHistory: []
 });
-const coopAnalysisAreaRatioData = ref<ChartRatioData>({
-  legend: [],
-  series: [{ name: '区域协同占比', data: [] }]
+// 调度表单
+const dispatchTaskForm = ref<DispatchTaskForm>({
+  taskDetail: '',
+  coopTarget: ''
 });
-const coopAnalysisTrendData = ref<ChartLineData>({ xAxis: [], series: [] });
-const coopAnalysisBaseFontScale = ref<number>(1);
-const coopAnalysisActiveIndices = ref<number[]>([]);
-const coopAnalysisChartRefreshKey = ref<number>(0);
-const activeCoopAnalysisView = ref<string>('列表');
-const coopAnalysisViewBtnList = ref<string[]>(['卡片', '柱状图', '饼图', '折线图', '列表']);
+const dispatchTaskFormRules = {
+  taskDetail: [{ required: true, message: '协同任务详情不能为空', trigger: 'blur' }],
+  coopTarget: [{ required: true, message: '指定协同对象不能为空', trigger: 'blur' }]
+};
+const dispatchTaskFormRef = ref<FormInstance>();
 
-// 政企协同视图响应式数据
-const govCoopList = ref<GovCoopRow[]>([]);
-const govCoopIndicators = ref<GovCoopIndicators>({
-  totalCount: 0,
+// 政企协同响应式数据
+const govEnterpriseCooperationList = ref<GovEnterpriseCooperationRow[]>([]);
+const govEnterpriseCooperationIndicators = ref<GovEnterpriseCooperationIndicators>({
+  totalCooperationCount: 0,
   responseRate: 0,
-  satisfactionRate: 0
+  satisfactionRate: 0,
 });
-const govCoopDeptData = ref<ChartBarData>({ xAxis: [], series: [] });
-const govCoopEntTypeData = ref<ChartBarData>({ xAxis: [], series: [] });
-const govCoopItemRatioData = ref<ChartRatioData>({
+const govEnterpriseCooperationDeptCountData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '协同数量', data: [] }],
+});
+const govEnterpriseCooperationEntTypeCountData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '协同数量', data: [] }],
+});
+const govEnterpriseCooperationItemRatioData = ref<ChartRatioData>({
   legend: [],
-  series: [{ name: '协同事项占比', data: [] }]
+  series: [{ name: '协同事项占比(%)', data: [] }],
 });
-const govCoopSatisfactionRatioData = ref<ChartRatioData>({
+const govEnterpriseCooperationSatisfactionRatioData = ref<ChartRatioData>({
   legend: [],
-  series: [{ name: '满意度占比', data: [] }]
+  series: [{ name: '满意度占比(%)', data: [] }],
 });
-const govCoopBaseFontScale = ref<number>(1);
-const govCoopActiveIndices = ref<number[]>([]);
-const govCoopChartRefreshKey = ref<number>(0);
-const activeGovCoopView = ref<string>('饼图');
-const govCoopViewBtnList = ref<string[]>(['卡片', '柱状图', '饼图', '列表']);
+// 政企协同视图切换相关
+const govEnterpriseCooperationChartRefreshKey = ref(0);
+const activeGovEnterpriseCooperationView = ref('列表');
+const govEnterpriseCooperationViewBtnList = ref(['卡片', '柱状图', '饼图', '列表']);
+// 政企协同弹窗相关
+const govEnterpriseCooperationDetailDialogVisible = ref(false);
+const govEnterpriseCooperationTrackingDialogVisible = ref(false);
+const govEnterpriseCooperationEvaluationDialogVisible = ref(false);
+const activeGovEnterpriseCooperationDetailView = ref('协同详情');
+const govEnterpriseCooperationDetailViewBtnList = ref(['协同详情', '责任分工', '执行计划']);
+const govEnterpriseCooperationTrackingView = ref('进度时间轴');
+const govEnterpriseCooperationTrackingViewBtnList = ref(['进度时间轴', '反馈记录']);
+const govEnterpriseCooperationDetailSelectedRow = ref<GovEnterpriseCooperationDetail>({
+  bizGovernmentEnterpriseCoopGovEnterpriseCoopId: '',
+  sysDeptDeptName: '',
+  sysMerchantMerchantName: '',
+  sysEnterpriseTypeName: '',
+  sysCooperationItemName: '',
+  sysCooperationStatusName: '',
+  bizGovernmentEnterpriseCoopProgressFeedback: '',
+  sysSatisfactionName: '',
+  bizGovernmentEnterpriseCoopCompleteTime: '',
+  bizGovernmentEnterpriseCoopCoopCycle: '',
+  cooperationDetail: {
+    launchTime: '',
+    expectedCompleteTime: '',
+    contactPerson: '',
+    contactPhone: '',
+    cooperationContent: ''
+  },
+  responsibilityDivision: [],
+  executionPlan: [],
+  progressTimeline: [],
+  feedbackRecords: []
+});
+// 跟踪表单
+const cooperationTrackingForm = ref<CooperationTrackingForm>({
+  trackingContent: ''
+});
+const cooperationTrackingFormRules = {
+  trackingContent: [{ required: true, message: '跟踪内容不能为空', trigger: 'blur' }]
+};
+const cooperationTrackingFormRef = ref<FormInstance>();
+// 评价表单
+const cooperationEvaluationForm = ref<CooperationEvaluationForm>({
+  satisfactionLevel: 5,
+  evaluationContent: ''
+});
+const cooperationEvaluationFormRules = {
+  satisfactionLevel: [{ required: true, message: '请选择满意度等级', trigger: 'blur' }]
+};
+const cooperationEvaluationFormRef = ref<FormInstance>();
 
-// 专属协同视图响应式数据
-const specialCoopList = ref<SpecialCoopRow[]>([]);
-const specialCoopIndicators = ref<SpecialCoopIndicators>({
-  totalCount: 0,
-  completeRate: 0,
-  averageCycle: 0
+// 专属协同响应式数据
+const specialCooperationList = ref<SpecialCooperationRow[]>([]);
+const specialCooperationIndicators = ref<SpecialCooperationIndicators>({
+  totalCooperationCount: 0,
+  completionRate: 0,
+  averageCooperationCycle: 0,
 });
-const specialCoopSceneData = ref<ChartBarData>({ xAxis: [], series: [] });
-const specialCoopDeptData = ref<ChartBarData>({ xAxis: [], series: [] });
-const specialCoopSceneRatioData = ref<ChartRatioData>({
+const specialCooperationSceneCountData = ref<ChartBarData>({
+  xAxis: [],
+  series: [{ name: '协同数量', data: [] }],
+});
+const specialCooperationUnitCountData = ref<ChartBarData>({
+  xAxis: [],
+  series: [{ name: '协同数量', data: [] }],
+});
+const specialCooperationSceneRatioData = ref<ChartRatioData>({
   legend: [],
-  series: [{ name: '协同场景占比', data: [] }]
+  series: [{ name: '协同场景占比(%)', data: [] }],
 });
-const specialCoopStatusRatioData = ref<ChartRatioData>({
+const specialCooperationStatusRatioData = ref<ChartRatioData>({
   legend: [],
-  series: [{ name: '协同状态占比', data: [] }]
+  series: [{ name: '协同状态占比(%)', data: [] }],
 });
-const specialCoopBaseFontScale = ref<number>(1);
-const specialCoopActiveIndices = ref<number[]>([]);
-const specialCoopChartRefreshKey = ref<number>(0);
-const activeSpecialCoopView = ref<string>('卡片');
-const specialCoopViewBtnList = ref<string[]>(['卡片', '柱状图', '饼图', '列表']);
+// 专属协同视图切换相关
+const specialCooperationChartRefreshKey = ref(0);
+const activeSpecialCooperationView = ref('饼图');
+const specialCooperationViewBtnList = ref(['卡片', '柱状图', '饼图', '列表']);
+// 专属协同弹窗相关
+const specialCooperationDetailDialogVisible = ref(false);
+const specialCooperationExecuteDialogVisible = ref(false);
+const specialCooperationReviewDialogVisible = ref(false);
+const activeSpecialCooperationDetailView = ref('协同详情');
+const specialCooperationDetailViewBtnList = ref(['协同详情', '协同配置', '场景要求', '责任清单']);
+const specialCooperationDetailSelectedRow = ref<SpecialCooperationDetail>({
+  bizSpecialCoopSpecialCoopId: '',
+  sysCoopSceneName: '',
+  sysResponsibleUnitName: '',
+  bizSpecialCoopCoopRule: '',
+  bizSpecialCoopResponsibilityDivision: '',
+  sysCooperationStatusName: '',
+  bizSpecialCoopAverageCoopCycle: 0,
+  bizSpecialCoopCoopResult: '',
+  bizSpecialCoopCompleteTime: '',
+  bizSpecialCoopReviewConclusion: '',
+  cooperationConfig: [],
+  sceneRequirements: [],
+  responsibilityList: [],
+  executionProgress: []
+});
+// 执行表单
+const executionProgressForm = ref<ExecutionProgressForm>({
+  progressContent: '',
+  evidenceFiles: []
+});
+const executionProgressFormRules = {
+  progressContent: [{ required: true, message: '执行进展不能为空', trigger: 'blur' }]
+};
+const executionProgressFormRef = ref<FormInstance>();
+// 复盘表单
+const reviewConclusionForm = ref<ReviewConclusionForm>({
+  reviewConclusion: '',
+  optimizationSuggestions: ''
+});
+const reviewConclusionFormRules = {
+  reviewConclusion: [{ required: true, message: '复盘结论不能为空', trigger: 'blur' }]
+};
+const reviewConclusionFormRef = ref<FormInstance>();
 
 // 协同效率评估响应式数据
-const coopEfficiencyList = ref<CoopEfficiencyRow[]>([]);
-const coopEfficiencyIndicators = ref<CoopEfficiencyIndicators>({
-  avgResponseDuration: 0,
-  avgDisposalDuration: 0,
-  avgEffectAchievementRate: 0
+const efficiencyEvaluationList = ref<EfficiencyEvaluationRow[]>([]);
+const efficiencyEvaluationIndicators = ref<EfficiencyEvaluationIndicators>({
+  averageResponseDuration: 0,
+  averageDisposalDuration: 0,
+  effectivenessRate: 0,
 });
-const coopEfficiencyTypeData = ref<ChartBarData>({ xAxis: [], series: [] });
-const coopEfficiencyAreaData = ref<ChartBarData>({ xAxis: [], series: [] });
-const coopEfficiencyRecurrenceRatioData = ref<ChartRatioData>({
+const efficiencyEvaluationTypeCompareData = ref<ChartBarData>({
+  xAxis: [],
+  series: [{ name: '平均处置时长(小时)', data: [] }],
+});
+const efficiencyEvaluationAreaCompareData = ref<ChartBarData>({
+  xAxis: [],
+  series: [{ name: '平均响应时长(小时)', data: [] }],
+});
+const efficiencyEvaluationTrendData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '综合效率评分', data: [] }],
+});
+const efficiencyEvaluationRecurrenceRatioData = ref<ChartRatioData>({
   legend: [],
-  series: [{ name: '问题复发率占比', data: [] }]
+  series: [{ name: '问题复发率占比(%)', data: [] }],
 });
-const coopEfficiencyTrendData = ref<ChartLineData>({ xAxis: [], series: [] });
-const coopEfficiencyBaseFontScale = ref<number>(1);
-const coopEfficiencyActiveIndices = ref<number[]>([]);
-const coopEfficiencyChartRefreshKey = ref<number>(0);
-const activeCoopEfficiencyView = ref<string>('折线图');
-const coopEfficiencyViewBtnList = ref<string[]>(['卡片', '柱状图', '饼图', '折线图', '列表']);
+// 协同效率评估视图切换相关
+const efficiencyEvaluationChartRefreshKey = ref(0);
+const activeEfficiencyEvaluationView = ref('折线图');
+const efficiencyEvaluationViewBtnList = ref(['卡片', '柱状图', '折线图', '饼图', '列表']);
+// 协同效率评估弹窗相关
+const efficiencyEvaluationDetailDialogVisible = ref(false);
+const efficiencyEvaluationOptimizeDialogVisible = ref(false);
+const activeEfficiencyEvaluationDetailView = ref('效率评估');
+const efficiencyEvaluationDetailViewBtnList = ref(['效率评估', '评估明细', '数据来源', '计算逻辑']);
+const efficiencyEvaluationDetailSelectedRow = ref<EfficiencyEvaluationDetail>({
+  bizCoopEfficiencyCoopEfficiencyId: '',
+  sysCooperationTypeName: '',
+  sysAreaAreaName: '',
+  sysStatCycleName: '',
+  bizCoopEfficiencyAverageResponseDuration: 0,
+  bizCoopEfficiencyAverageDisposalDuration: 0,
+  bizCoopEfficiencyEffectivenessRate: 0,
+  bizCoopEfficiencyCoopCost: 0,
+  bizCoopEfficiencyProblemRecurrenceRate: 0,
+  bizCoopEfficiencyEfficiencyBottleneck: '',
+  bizCoopEfficiencyOptimizationSuggestion: '',
+  efficiencyDetails: [],
+  dataSources: [],
+  calculationLogic: []
+});
+// 优化方案表单
+const optimizationPlanForm = ref<OptimizationPlanForm>({
+  optimizationPlan: '',
+  optimizationDeadline: ''
+});
+const optimizationPlanFormRules = {
+  optimizationPlan: [{ required: true, message: '优化方案不能为空', trigger: 'blur' }],
+  optimizationDeadline: [{ required: true, message: '优化时限不能为空', trigger: 'blur' }]
+};
+const optimizationPlanFormRef = ref<FormInstance>();
 
 // 部门协同响应式数据
 const departmentCooperationList = ref<DepartmentCooperationRow[]>([]);
@@ -743,6 +1125,61 @@ const industryCooperationEvaluateFormRules = {
 };
 const industryCooperationEvaluateFormRef = ref<FormInstance>();
 
+// 层级协同响应式数据
+const levelCooperationList = ref<LevelCooperationRow[]>([]);
+const levelCooperationIndicators = ref<LevelCooperationIndicators>({
+  totalCooperationCount: 0,
+  instructionCompleteRate: 0,
+  averageFeedbackDuration: 0,
+});
+const levelCooperationLevelCountData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '协同数量', data: [] }],
+});
+const levelCooperationUnitCountData = ref<ChartLineData>({
+  xAxis: [],
+  series: [{ name: '协同数量', data: [] }],
+});
+const levelCooperationStatusRatioData = ref<ChartRatioData>({
+  legend: [],
+  series: [{ name: '指令状态占比(%)', data: [] }],
+});
+// 层级协同视图切换相关
+const levelCooperationChartRefreshKey = ref(0);
+const activeLevelCooperationView = ref('卡片');
+const levelCooperationViewBtnList = ref(['卡片', '柱状图', '饼图', '列表']);
+// 层级协同弹窗相关
+const levelCooperationDetailDialogVisible = ref(false);
+const levelCooperationFeedbackDialogVisible = ref(false);
+const levelCooperationTrackDialogVisible = ref(false);
+const activeLevelCooperationDetailView = ref('指令详情');
+const levelCooperationDetailViewBtnList = ref(['指令详情', '层级分工', '反馈记录']);
+const levelCooperationDetailSelectedRow = ref<LevelCooperationDetail>({
+  bizCrossLevelCoopCrossLevelCoopId: '',
+  issueLevelName: '',
+  receiveLevelName: '',
+  bizCrossLevelCoopInstructionContent: '',
+  sysInstructionStatusName: '',
+  bizCrossLevelCoopIssueTime: '',
+  currentUserLevel: '',
+  bizCrossLevelCoopAverageFeedbackDuration: 0,
+  sysResponsibleUnitName: '',
+  bizCrossLevelCoopFeedbackResult: '',
+  bizCrossLevelCoopCompleteTime: '',
+  levelDivision: [],
+  feedbackRecords: [],
+  flowTimeline: []
+});
+// 反馈表单
+const levelCooperationFeedbackForm = ref<LevelCooperationFeedbackForm>({
+  feedbackContent: '',
+  evidenceFiles: []
+});
+const levelCooperationFeedbackFormRules = {
+  feedbackContent: [{ required: true, message: '反馈内容不能为空', trigger: 'blur' }]
+};
+const levelCooperationFeedbackFormRef = ref<FormInstance>();
+
 
 // 区域协同接口请求方法
 const getRegionCooperationListData = async () => {
@@ -829,223 +1266,393 @@ const submitRegionCooperationActionData = async (cooperationId: string) => {
   }
 };
 
-// 协同统计分析接口请求方法
-const getHighFreqCoopTop10Data = async () => {
+// 运维人员动态接口请求方法
+const getMaintainerDynamicListData = async () => {
   try {
-    highFreqCoopTop10List.value = await fetchHighFrequencyCoopTop10();
-  } catch {
-    ElMessage.error('高频协同事项TOP10数据加载失败');
-    highFreqCoopTop10List.value = [];
+    maintainerDynamicList.value = (await fetchMaintainerDynamicList()) as MaintainerDynamicRow[];
+  } catch (error: any) {
+    ElMessage.error(`运维人员动态列表加载失败：${error.message}`);
+    maintainerDynamicList.value = [];
   }
 };
-const getCoopAnalysisIndicatorData = async () => {
+const getMaintainerDynamicIndicatorsData = async () => {
   try {
-    coopAnalysisIndicators.value = await fetchCoopCoreIndicators();
-    nextTick(() => initCoopAnalysisNumberAnimations());
-  } catch {
-    coopAnalysisIndicators.value = { totalCoopCount: 0, avgHandleCycle: 0, finishRate: 0, highPriorityRate: 0 };
+    maintainerDynamicIndicators.value =
+      (await fetchMaintainerDynamicIndicators()) as MaintainerDynamicIndicators;
+  } catch (error: any) {
+    ElMessage.error(`运维人员动态核心指标加载失败：${error.message}`);
   }
 };
-const getCoopAnalysisTypeCountData = async () => {
+const getMaintainerDynamicDeptTaskData = async () => {
   try {
-    coopAnalysisTypeData.value = await fetchCoopTypeCount();
-  } catch {
-    coopAnalysisTypeData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
+    maintainerDynamicDeptTaskData.value =
+      (await fetchMaintainerDynamicDeptTaskCount()) as ChartBarData;
+  } catch (error: any) {
+    ElMessage.error(`部门协同任务数加载失败：${error.message}`);
   }
 };
-const getCoopAnalysisAreaCountData = async () => {
+const getMaintainerDynamicAreaTaskData = async () => {
   try {
-    coopAnalysisAreaData.value = await fetchCoopAreaCount();
-  } catch {
-    coopAnalysisAreaData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
+    maintainerDynamicAreaTaskData.value =
+      (await fetchMaintainerDynamicAreaTaskCount()) as ChartBarData;
+  } catch (error: any) {
+    ElMessage.error(`区域协同任务数加载失败：${error.message}`);
   }
 };
-const getCoopAnalysisIndustryRatioData = async () => {
+const getMaintainerDynamicDetailData = async (maintainerId: string) => {
   try {
-    coopAnalysisIndustryRatioData.value = await fetchCoopIndustryRatio();
-  } catch {
-    coopAnalysisIndustryRatioData.value = { legend: [], series: [{ name: '行业协同占比', data: [] }] };
+    maintainerDynamicDetailSelectedRow.value = {
+      ...maintainerDynamicDetailSelectedRow.value,
+      ...(await fetchMaintainerDynamicDetail(maintainerId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`运维人员详情加载失败：${error.message}`);
   }
 };
-const getCoopAnalysisAreaRatioData = async () => {
+const submitDispatchTaskData = async (maintainerId: string) => {
   try {
-    coopAnalysisAreaRatioData.value = await fetchCoopAreaRatio();
-  } catch {
-    coopAnalysisAreaRatioData.value = { legend: [], series: [{ name: '区域协同占比', data: [] }] };
-  }
-};
-const getCoopAnalysisTrendData = async () => {
-  try {
-    coopAnalysisTrendData.value = await fetchCoopTrendData();
-  } catch {
-    coopAnalysisTrendData.value = { xAxis: [], series: [{ name: '协同事件数', data: [] }] };
+    await dispatchTaskFormRef.value?.validate();
+    const res = await submitMaintainerDispatchTask(
+      maintainerId,
+      dispatchTaskForm.value.taskDetail,
+      dispatchTaskForm.value.coopTarget
+    );
+    if (res.success) {
+      // 更新当前协同任务数
+      maintainerDynamicDetailSelectedRow.value.bizCoopStatCurrentCoopTaskCount = res.updatedTaskCount;
+      tipDialogContent.value = '调度任务提交成功';
+      tipDialogVisible.value = true;
+      maintainerDynamicDispatchDialogVisible.value = false;
+      dispatchTaskForm.value.taskDetail = '';
+      dispatchTaskForm.value.coopTarget = '';
+      dispatchTaskFormRef.value?.resetFields();
+      // 刷新列表数据
+      getMaintainerDynamicListData();
+      getMaintainerDynamicIndicatorsData();
+    } else {
+      tipDialogContent.value = '调度任务提交失败';
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    tipDialogContent.value = `调度任务提交失败：${error.message}`;
+    tipDialogVisible.value = true;
   }
 };
 
 // 协同效率评估接口请求方法
-const getCoopEfficiencyListData = async () => {
+const getEfficiencyEvaluationListData = async () => {
   try {
-    coopEfficiencyList.value = await fetchCoopEfficiencyList();
-  } catch {
-    ElMessage.error('协同效率评估数据加载失败');
-    coopEfficiencyList.value = [];
+    efficiencyEvaluationList.value = (await fetchEfficiencyEvaluationList()) as EfficiencyEvaluationRow[];
+  } catch (error: any) {
+    ElMessage.error(`协同效率评估列表加载失败：${error.message}`);
+    efficiencyEvaluationList.value = [];
   }
 };
-const getCoopEfficiencyIndicatorData = async () => {
+const getEfficiencyEvaluationIndicatorsData = async () => {
   try {
-    coopEfficiencyIndicators.value = await fetchCoopEfficiencyIndicators();
-    nextTick(() => initCoopEfficiencyNumberAnimations());
-  } catch {
-    coopEfficiencyIndicators.value = { avgResponseDuration: 0, avgDisposalDuration: 0, avgEffectAchievementRate: 0 };
+    efficiencyEvaluationIndicators.value =
+      (await fetchEfficiencyEvaluationIndicators()) as EfficiencyEvaluationIndicators;
+  } catch (error: any) {
+    ElMessage.error(`协同效率评估核心指标加载失败：${error.message}`);
   }
 };
-const getCoopEfficiencyTypeCountData = async () => {
+const getEfficiencyEvaluationTypeCompareData = async () => {
   try {
-    coopEfficiencyTypeData.value = await fetchCoopEfficiencyTypeCount();
-  } catch {
-    coopEfficiencyTypeData.value = { xAxis: [], series: [{ name: '平均处置时长(小时)', data: [] }] };
+    efficiencyEvaluationTypeCompareData.value =
+      (await fetchEfficiencyEvaluationTypeCompare()) as ChartBarData;
+  } catch (error: any) {
+    ElMessage.error(`不同类型协同效率对比加载失败：${error.message}`);
   }
 };
-const getCoopEfficiencyAreaCountData = async () => {
+const getEfficiencyEvaluationAreaCompareData = async () => {
   try {
-    coopEfficiencyAreaData.value = await fetchCoopEfficiencyAreaCount();
-  } catch {
-    coopEfficiencyAreaData.value = { xAxis: [], series: [{ name: '平均响应时长(小时)', data: [] }] };
+    efficiencyEvaluationAreaCompareData.value =
+      (await fetchEfficiencyEvaluationAreaCompare()) as ChartBarData;
+  } catch (error: any) {
+    ElMessage.error(`不同区域协同效率对比加载失败：${error.message}`);
   }
 };
-const getCoopEfficiencyRecurrenceRatioData = async () => {
+const getEfficiencyEvaluationTrendData = async () => {
   try {
-    coopEfficiencyRecurrenceRatioData.value = await fetchCoopEfficiencyRecurrenceRatio();
-  } catch {
-    coopEfficiencyRecurrenceRatioData.value = { legend: [], series: [{ name: '问题复发率占比', data: [] }] };
+    efficiencyEvaluationTrendData.value =
+      (await fetchEfficiencyEvaluationTrend()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`协同效率趋势数据加载失败：${error.message}`);
   }
 };
-const getCoopEfficiencyTrendData = async () => {
+const getEfficiencyEvaluationRecurrenceRatioData = async () => {
   try {
-    coopEfficiencyTrendData.value = await fetchCoopEfficiencyTrendData();
-  } catch {
-    coopEfficiencyTrendData.value = { xAxis: [], series: [{ name: '综合效率评分', data: [] }] };
+    efficiencyEvaluationRecurrenceRatioData.value =
+      (await fetchEfficiencyEvaluationRecurrenceRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`问题复发率占比加载失败：${error.message}`);
   }
 };
-const getCoopTypeTagType = (val: string) => {
-  switch (val) {
-    case 'high': return 'danger';
-    case 'low': return 'success';
-    case 'medium': return 'warning';
-    default: return '';
+const getEfficiencyEvaluationDetailData = async (efficiencyId: string) => {
+  try {
+    efficiencyEvaluationDetailSelectedRow.value = {
+      ...efficiencyEvaluationDetailSelectedRow.value,
+      ...(await fetchEfficiencyEvaluationDetail(efficiencyId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`协同效率评估详情加载失败：${error.message}`);
   }
 };
-const getCoopTypeName = (val: string) => {
-  switch (val) {
-    case 'high': return '高优先级';
-    case 'low': return '低优先级';
-    case 'medium': return '中优先级';
-    default: return '未知类型';
+const submitOptimizationPlanData = async (efficiencyId: string) => {
+  try {
+    await optimizationPlanFormRef.value?.validate();
+    const res = await submitOptimizationPlan(
+      efficiencyId,
+      optimizationPlanForm.value.optimizationPlan,
+      optimizationPlanForm.value.optimizationDeadline
+    );
+    if (res.success) {
+      tipDialogContent.value = '优化方案提交成功';
+      tipDialogVisible.value = true;
+      efficiencyEvaluationOptimizeDialogVisible.value = false;
+      optimizationPlanForm.value.optimizationPlan = '';
+      optimizationPlanForm.value.optimizationDeadline = '';
+      optimizationPlanFormRef.value?.resetFields();
+      // 刷新列表数据
+      getEfficiencyEvaluationListData();
+    } else {
+      tipDialogContent.value = '优化方案提交失败';
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    tipDialogContent.value = `优化方案提交失败：${error.message}`;
+    tipDialogVisible.value = true;
   }
 };
 
-// 政企协同视图接口请求方法
-const getGovCoopListData = async () => {
+// 政企协同接口请求方法
+const getGovEnterpriseCooperationListData = async () => {
   try {
-    govCoopList.value = await fetchGovEnterpriseCoopList();
-  } catch {
-    ElMessage.error('政企协同数据加载失败');
-    govCoopList.value = [];
+    govEnterpriseCooperationList.value = (await fetchGovEnterpriseCooperationList()) as GovEnterpriseCooperationRow[];
+  } catch (error: any) {
+    ElMessage.error(`政企协同列表加载失败：${error.message}`);
+    govEnterpriseCooperationList.value = [];
   }
 };
-const getGovCoopIndicatorData = async () => {
+const getGovEnterpriseCooperationIndicatorsData = async () => {
   try {
-    govCoopIndicators.value = await fetchGovEnterpriseCoopIndicators();
-    nextTick(() => initGovCoopNumberAnimations());
-  } catch {
-    govCoopIndicators.value = { totalCount: 0, responseRate: 0, satisfactionRate: 0 };
+    govEnterpriseCooperationIndicators.value =
+      (await fetchGovEnterpriseCooperationIndicators()) as GovEnterpriseCooperationIndicators;
+  } catch (error: any) {
+    ElMessage.error(`政企协同核心指标加载失败：${error.message}`);
   }
 };
-const getGovCoopDeptCountData = async () => {
+const getGovEnterpriseCooperationDeptCountData = async () => {
   try {
-    govCoopDeptData.value = await fetchGovDeptCoopCount();
-  } catch {
-    govCoopDeptData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
+    govEnterpriseCooperationDeptCountData.value =
+      (await fetchGovEnterpriseCooperationDeptCount()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`政府部门协同数加载失败：${error.message}`);
   }
 };
-const getGovCoopEntTypeCountData = async () => {
+const getGovEnterpriseCooperationEntTypeCountData = async () => {
   try {
-    govCoopEntTypeData.value = await fetchEnterpriseTypeCoopCount();
-  } catch {
-    govCoopEntTypeData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
+    govEnterpriseCooperationEntTypeCountData.value =
+      (await fetchGovEnterpriseCooperationEntTypeCount()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`企业类型协同数加载失败：${error.message}`);
   }
 };
-const getGovCoopItemRatioData = async () => {
+const getGovEnterpriseCooperationItemRatioData = async () => {
   try {
-    govCoopItemRatioData.value = await fetchCoopItemTypeRatio();
-  } catch {
-    govCoopItemRatioData.value = { legend: [], series: [{ name: '协同事项占比', data: [] }] };
+    govEnterpriseCooperationItemRatioData.value =
+      (await fetchGovEnterpriseCooperationItemRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`协同事项占比加载失败：${error.message}`);
   }
 };
-const getGovCoopSatisfactionRatioData = async () => {
+const getGovEnterpriseCooperationSatisfactionRatioData = async () => {
   try {
-    govCoopSatisfactionRatioData.value = await fetchSatisfactionLevelRatio();
-  } catch {
-    govCoopSatisfactionRatioData.value = { legend: [], series: [{ name: '满意度占比', data: [] }] };
+    govEnterpriseCooperationSatisfactionRatioData.value =
+      (await fetchGovEnterpriseCooperationSatisfactionRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`满意度占比加载失败：${error.message}`);
   }
 };
-const getGovCoopSatisfactionTagType = (val: string) => {
-  switch (val) {
-    case '一般': return 'danger';
-    case '基本满意': return 'warning';
-    case '满意': return 'info';
-    case '非常满意': return 'success';
-    default: return '';
+const getGovEnterpriseCooperationDetailData = async (cooperationId: string) => {
+  try {
+    govEnterpriseCooperationDetailSelectedRow.value = {
+      ...govEnterpriseCooperationDetailSelectedRow.value,
+      ...(await fetchGovEnterpriseCooperationDetail(cooperationId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`政企协同详情加载失败：${error.message}`);
   }
 };
-const handleGovCoopRowClick = (row: any) => {
-  govCoopSelectedRow.value = JSON.parse(JSON.stringify(row));
-  govCoopDetailDialogVisible.value = true;
+const submitTrackingData = async (cooperationId: string) => {
+  try {
+    await cooperationTrackingFormRef.value?.validate();
+    const res = await submitCooperationTracking(cooperationId, cooperationTrackingForm.value.trackingContent);
+    if (res.success) {
+      tipDialogContent.value = '跟踪记录提交成功';
+      tipDialogVisible.value = true;
+      govEnterpriseCooperationTrackingDialogVisible.value = false;
+      cooperationTrackingForm.value.trackingContent = '';
+      cooperationTrackingFormRef.value?.resetFields();
+      // 刷新详情数据
+      await getGovEnterpriseCooperationDetailData(cooperationId);
+    } else {
+      tipDialogContent.value = '跟踪记录提交失败';
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    tipDialogContent.value = `跟踪记录提交失败：${error.message}`;
+    tipDialogVisible.value = true;
+  }
+};
+const submitEvaluationData = async (cooperationId: string) => {
+  try {
+    await cooperationEvaluationFormRef.value?.validate();
+    const res = await submitCooperationEvaluation(
+      cooperationId,
+      cooperationEvaluationForm.value.satisfactionLevel,
+      cooperationEvaluationForm.value.evaluationContent
+    );
+    if (res.success) {
+      // 更新协同状态和满意度
+      govEnterpriseCooperationDetailSelectedRow.value.sysCooperationStatusName = res.cooperationStatus;
+      govEnterpriseCooperationDetailSelectedRow.value.sysSatisfactionName =
+        cooperationEvaluationForm.value.satisfactionLevel === 5 ? '非常满意' :
+          cooperationEvaluationForm.value.satisfactionLevel === 4 ? '满意' :
+            cooperationEvaluationForm.value.satisfactionLevel === 3 ? '基本满意' :
+              cooperationEvaluationForm.value.satisfactionLevel === 2 ? '一般' : '不满意';
+
+      tipDialogContent.value = '评价提交成功';
+      tipDialogVisible.value = true;
+      govEnterpriseCooperationEvaluationDialogVisible.value = false;
+      cooperationEvaluationForm.value.satisfactionLevel = 5;
+      cooperationEvaluationForm.value.evaluationContent = '';
+      cooperationEvaluationFormRef.value?.resetFields();
+      // 刷新列表数据
+      getGovEnterpriseCooperationListData();
+    } else {
+      tipDialogContent.value = '评价提交失败';
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    tipDialogContent.value = `评价提交失败：${error.message}`;
+    tipDialogVisible.value = true;
+  }
 };
 
-// 专属协同视图接口请求方法
-const getSpecialCoopListData = async () => {
+// 专属协同接口请求方法
+const getSpecialCooperationListData = async () => {
   try {
-    specialCoopList.value = await fetchSpecialCoopList();
-  } catch {
-    ElMessage.error('专属协同数据加载失败');
-    specialCoopList.value = [];
+    specialCooperationList.value = (await fetchSpecialCooperationList()) as SpecialCooperationRow[];
+  } catch (error: any) {
+    ElMessage.error(`专属协同列表加载失败：${error.message}`);
+    specialCooperationList.value = [];
   }
 };
-const getSpecialCoopIndicatorData = async () => {
+const getSpecialCooperationIndicatorsData = async () => {
   try {
-    specialCoopIndicators.value = await fetchSpecialCoopIndicators();
-    nextTick(() => initSpecialCoopNumberAnimations());
-  } catch {
-    specialCoopIndicators.value = { totalCount: 0, completeRate: 0, averageCycle: 0 };
+    specialCooperationIndicators.value =
+      (await fetchSpecialCooperationIndicators()) as SpecialCooperationIndicators;
+  } catch (error: any) {
+    ElMessage.error(`专属协同核心指标加载失败：${error.message}`);
   }
 };
-const getSpecialCoopSceneCountData = async () => {
+const getSpecialCooperationSceneCountData = async () => {
   try {
-    specialCoopSceneData.value = await fetchSpecialCoopSceneCount();
-  } catch {
-    specialCoopSceneData.value = { xAxis: [], series: [{ name: '协同完成数', data: [] }] };
+    specialCooperationSceneCountData.value =
+      (await fetchSpecialCooperationSceneCount()) as ChartBarData;
+  } catch (error: any) {
+    ElMessage.error(`不同场景协同数加载失败：${error.message}`);
   }
 };
-const getSpecialCoopDeptCountData = async () => {
+const getSpecialCooperationUnitCountData = async () => {
   try {
-    specialCoopDeptData.value = await fetchSpecialCoopDeptCount();
-  } catch {
-    specialCoopDeptData.value = { xAxis: [], series: [{ name: '协同事项数', data: [] }] };
+    specialCooperationUnitCountData.value =
+      (await fetchSpecialCooperationUnitCount()) as ChartBarData;
+  } catch (error: any) {
+    ElMessage.error(`不同责任单位协同数加载失败：${error.message}`);
   }
 };
-const getSpecialCoopSceneRatioData = async () => {
+const getSpecialCooperationSceneRatioData = async () => {
   try {
-    specialCoopSceneRatioData.value = await fetchSpecialCoopSceneRatio();
-  } catch {
-    specialCoopSceneRatioData.value = { legend: [], series: [{ name: '协同场景占比', data: [] }] };
+    specialCooperationSceneRatioData.value =
+      (await fetchSpecialCooperationSceneRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`协同场景占比加载失败：${error.message}`);
   }
 };
-const getSpecialCoopStatusRatioData = async () => {
+const getSpecialCooperationStatusRatioData = async () => {
   try {
-    specialCoopStatusRatioData.value = await fetchSpecialCoopStatusRatio();
-  } catch {
-    specialCoopStatusRatioData.value = { legend: [], series: [{ name: '协同状态占比', data: [] }] };
+    specialCooperationStatusRatioData.value =
+      (await fetchSpecialCooperationStatusRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`协同状态占比加载失败：${error.message}`);
+  }
+};
+const getSpecialCooperationDetailData = async (cooperationId: string) => {
+  try {
+    specialCooperationDetailSelectedRow.value = {
+      ...specialCooperationDetailSelectedRow.value,
+      ...(await fetchSpecialCooperationDetail(cooperationId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`专属协同详情加载失败：${error.message}`);
+  }
+};
+const submitExecutionProgressData = async (cooperationId: string) => {
+  try {
+    await executionProgressFormRef.value?.validate();
+    const res = await submitExecutionProgress(
+      cooperationId,
+      executionProgressForm.value.progressContent,
+      executionProgressForm.value.evidenceFiles
+    );
+    if (res.success) {
+      // 更新协同状态
+      specialCooperationDetailSelectedRow.value.sysCooperationStatusName = res.cooperationStatus;
+      tipDialogContent.value = '执行进展提交成功';
+      tipDialogVisible.value = true;
+      specialCooperationExecuteDialogVisible.value = false;
+      executionProgressForm.value.progressContent = '';
+      executionProgressForm.value.evidenceFiles = [];
+      executionProgressFormRef.value?.resetFields();
+      // 刷新列表数据
+      getSpecialCooperationListData();
+    } else {
+      tipDialogContent.value = '执行进展提交失败';
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    tipDialogContent.value = `执行进展提交失败：${error.message}`;
+    tipDialogVisible.value = true;
+  }
+};
+const submitReviewConclusionData = async (cooperationId: string) => {
+  try {
+    await reviewConclusionFormRef.value?.validate();
+    const res = await submitReviewConclusion(
+      cooperationId,
+      reviewConclusionForm.value.reviewConclusion,
+      reviewConclusionForm.value.optimizationSuggestions
+    );
+    if (res.success) {
+      // 更新协同状态
+      specialCooperationDetailSelectedRow.value.sysCooperationStatusName = res.cooperationStatus;
+      tipDialogContent.value = '复盘结论提交成功';
+      tipDialogVisible.value = true;
+      specialCooperationReviewDialogVisible.value = false;
+      reviewConclusionForm.value.reviewConclusion = '';
+      reviewConclusionForm.value.optimizationSuggestions = '';
+      reviewConclusionFormRef.value?.resetFields();
+      // 刷新列表数据
+      getSpecialCooperationListData();
+    } else {
+      tipDialogContent.value = '复盘结论提交失败';
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    tipDialogContent.value = `复盘结论提交失败：${error.message}`;
+    tipDialogVisible.value = true;
   }
 };
 
@@ -1263,6 +1870,82 @@ const submitEvaluateData = async (cooperationId: string) => {
   }
 };
 
+// 层级协同接口请求方法
+const getLevelCooperationListData = async () => {
+  try {
+    levelCooperationList.value = (await fetchLevelCooperationList()) as LevelCooperationRow[];
+  } catch (error: any) {
+    ElMessage.error(`层级协同列表加载失败：${error.message}`);
+    levelCooperationList.value = [];
+  }
+};
+const getLevelCooperationIndicatorsData = async () => {
+  try {
+    levelCooperationIndicators.value =
+      (await fetchLevelCooperationIndicators()) as LevelCooperationIndicators;
+  } catch (error: any) {
+    ElMessage.error(`层级协同核心指标加载失败：${error.message}`);
+  }
+};
+const getLevelCooperationLevelCountData = async () => {
+  try {
+    levelCooperationLevelCountData.value =
+      (await fetchLevelCooperationLevelCount()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`不同层级协同数加载失败：${error.message}`);
+  }
+};
+const getLevelCooperationUnitCountData = async () => {
+  try {
+    levelCooperationUnitCountData.value =
+      (await fetchLevelCooperationUnitCount()) as ChartLineData;
+  } catch (error: any) {
+    ElMessage.error(`不同责任单位协同数加载失败：${error.message}`);
+  }
+};
+const getLevelCooperationStatusRatioData = async () => {
+  try {
+    levelCooperationStatusRatioData.value =
+      (await fetchLevelCooperationStatusRatio()) as ChartRatioData;
+  } catch (error: any) {
+    ElMessage.error(`指令状态占比加载失败：${error.message}`);
+  }
+};
+const getLevelCooperationDetailData = async (cooperationId: string) => {
+  try {
+    levelCooperationDetailSelectedRow.value = {
+      ...levelCooperationDetailSelectedRow.value,
+      ...(await fetchLevelCooperationDetail(cooperationId)),
+    };
+  } catch (error: any) {
+    ElMessage.warning(`层级协同详情加载失败：${error.message}`);
+  }
+};
+const submitLevelFeedbackData = async (cooperationId: string) => {
+  try {
+    await levelCooperationFeedbackFormRef.value?.validate();
+    const res = await submitLevelCooperationFeedback(cooperationId, levelCooperationFeedbackForm.value.feedbackContent, levelCooperationFeedbackForm.value.evidenceFiles);
+    if (res.success) {
+      // 更新指令状态
+      levelCooperationDetailSelectedRow.value.sysInstructionStatusName = res.instructionStatus;
+      tipDialogContent.value = '反馈提交成功';
+      tipDialogVisible.value = true;
+      levelCooperationFeedbackDialogVisible.value = false;
+      levelCooperationFeedbackForm.value.feedbackContent = '';
+      levelCooperationFeedbackForm.value.evidenceFiles = [];
+      levelCooperationFeedbackFormRef.value?.resetFields();
+      // 刷新列表数据
+      getLevelCooperationListData();
+    } else {
+      tipDialogContent.value = '反馈提交失败';
+      tipDialogVisible.value = true;
+    }
+  } catch (error: any) {
+    tipDialogContent.value = `反馈提交失败：${error.message}`;
+    tipDialogVisible.value = true;
+  }
+};
+
 
 // 区域协同视图切换
 const changeRegionCooperationView = (viewName: string) => {
@@ -1337,6 +2020,48 @@ const refreshRegionCooperationData = async () => {
   ]);
   regionCooperationChartRefreshKey.value++;
   ElMessage.success('区域协同数据刷新成功');
+};
+const getCooperationStatusType = (status: string) => {
+  switch(status) {
+    case '待响应': return 'warning';
+    case '响应中': return 'info';
+    case '反馈中': return 'primary';
+    case '已完成': return 'success';
+    default: return 'info';
+  }
+};
+// Timeline 时间线组件辅助方法
+const getTimelineItemType = (status: string) => {
+  switch(status) {
+    case '已完成': return 'success';
+    case '进行中': return 'primary';
+    case '未开始': return 'info';
+    default: return '';
+  }
+};
+const getTimelineItemColor = (status: string) => {
+  switch(status) {
+    case '已完成': return '#67C23A';
+    case '进行中': return '#409EFF';
+    case '未开始': return '#909399';
+    default: return '#E6A23C';
+  }
+};
+const getTimelineItemIcon = (status: string) => {
+  switch(status) {
+    case '已完成': return 'Check';
+    case '进行中': return 'Loading';
+    case '未开始': return 'Clock';
+    default: return 'Warning';
+  }
+};
+const getTimelineStatusTagType = (status: string) => {
+  switch(status) {
+    case '已完成': return 'success';
+    case '进行中': return 'info';
+    case '未开始': return 'warning';
+    default: return 'info';
+  }
 };
 
 // 部门协同视图切换
@@ -1480,95 +2205,6 @@ const refreshIndustryCooperationData = async () => {
   industryCooperationChartRefreshKey.value++;
   ElMessage.success('行业协同数据刷新成功');
 };
-
-// 协同统计分析视图切换方法
-const changeCoopAnalysisView = (viewName: string) => {
-  activeCoopAnalysisView.value = viewName;
-  if (viewName === '卡片') nextTick(() => initCoopAnalysisNumberAnimations());
-  if (viewName === '柱状图' || viewName === '饼图' || viewName === '折线图') {
-    nextTick(() => {
-      coopAnalysisChartRefreshKey.value += 1;
-    });
-  }
-};
-
-// 协同效率评估视图切换方法
-const changeCoopEfficiencyView = (viewName: string) => {
-  activeCoopEfficiencyView.value = viewName;
-  if (viewName === '卡片') nextTick(() => initCoopEfficiencyNumberAnimations());
-  if (viewName === '柱状图' || viewName === '饼图' || viewName === '折线图') {
-    nextTick(() => {
-      coopEfficiencyChartRefreshKey.value += 1;
-    });
-  }
-};
-
-// 政企协同视图视图切换方法
-const changeGovCoopView = (viewName: string) => {
-  activeGovCoopView.value = viewName;
-  if (viewName === '卡片') nextTick(() => initGovCoopNumberAnimations());
-  if (viewName === '柱状图' || viewName === '饼图') {
-    nextTick(() => {
-      govCoopChartRefreshKey.value += 1;
-    });
-  }
-};
-
-// 专属协同视图视图切换方法
-const changeSpecialCoopView = (viewName: string) => {
-  activeSpecialCoopView.value = viewName;
-  if (viewName === '卡片') nextTick(() => initSpecialCoopNumberAnimations());
-  if (viewName === '柱状图' || viewName === '饼图') {
-    nextTick(() => {
-      specialCoopChartRefreshKey.value += 1;
-    });
-  }
-};
-
-
-// Timeline 时间线组件辅助方法
-const getTimelineItemType = (status: string) => {
-  switch(status) {
-    case '已完成': return 'success';
-    case '进行中': return 'primary';
-    case '未开始': return 'info';
-    default: return '';
-  }
-};
-const getTimelineItemColor = (status: string) => {
-  switch(status) {
-    case '已完成': return '#67C23A';
-    case '进行中': return '#409EFF';
-    case '未开始': return '#909399';
-    default: return '#E6A23C';
-  }
-};
-const getTimelineItemIcon = (status: string) => {
-  switch(status) {
-    case '已完成': return 'Check';
-    case '进行中': return 'Loading';
-    case '未开始': return 'Clock';
-    default: return 'Warning';
-  }
-};
-const getTimelineStatusTagType = (status: string) => {
-  switch(status) {
-    case '已完成': return 'success';
-    case '进行中': return 'info';
-    case '未开始': return 'warning';
-    default: return 'info';
-  }
-};
-
-const getCooperationStatusType = (status: string) => {
-  switch(status) {
-    case '待响应': return 'warning';
-    case '响应中': return 'info';
-    case '反馈中': return 'primary';
-    case '已完成': return 'success';
-    default: return 'info';
-  }
-};
 const getIndustryCooperationStatusType = (status: string) => {
   switch(status) {
     case '待配合': return 'warning';
@@ -1579,11 +2215,406 @@ const getIndustryCooperationStatusType = (status: string) => {
   }
 };
 
+// 层级协同视图切换
+const changeLevelCooperationView = (viewName: string) => {
+  activeLevelCooperationView.value = viewName;
+  viewName === '卡片' &&
+  nextTick(() => setTimeout(initNumberAnimations, 300));
+  (viewName === '柱状图' || viewName === '饼图') &&
+  nextTick(() => levelCooperationChartRefreshKey.value++);
+};
+const changeLevelCooperationDetailView = (viewName: string) => {
+  activeLevelCooperationDetailView.value = viewName;
+};
+// 层级协同弹窗方法
+const openLevelCooperationDetailDialog = async (row: LevelCooperationRow) => {
+  await getLevelCooperationDetailData(row.bizCrossLevelCoopCrossLevelCoopId);
+  levelCooperationDetailDialogVisible.value = true;
+};
+const closeLevelCooperationDetailDialog = () => {
+  levelCooperationDetailDialogVisible.value = false;
+  levelCooperationDetailSelectedRow.value = {
+    bizCrossLevelCoopCrossLevelCoopId: '',
+    issueLevelName: '',
+    receiveLevelName: '',
+    bizCrossLevelCoopInstructionContent: '',
+    sysInstructionStatusName: '',
+    bizCrossLevelCoopIssueTime: '',
+    currentUserLevel: '',
+    bizCrossLevelCoopAverageFeedbackDuration: 0,
+    sysResponsibleUnitName: '',
+    bizCrossLevelCoopFeedbackResult: '',
+    bizCrossLevelCoopCompleteTime: '',
+    levelDivision: [],
+    feedbackRecords: [],
+    flowTimeline: []
+  };
+  activeLevelCooperationDetailView.value = '指令详情';
+};
+const openLevelCooperationFeedbackDialog = () => {
+  levelCooperationFeedbackDialogVisible.value = true;
+};
+const closeLevelCooperationFeedbackDialog = () => {
+  levelCooperationFeedbackDialogVisible.value = false;
+  levelCooperationFeedbackForm.value.feedbackContent = '';
+  levelCooperationFeedbackForm.value.evidenceFiles = [];
+  levelCooperationFeedbackFormRef.value?.resetFields();
+};
+const openLevelCooperationTrackDialog = async (row: LevelCooperationRow) => {
+  await getLevelCooperationDetailData(row.bizCrossLevelCoopCrossLevelCoopId);
+  levelCooperationTrackDialogVisible.value = true;
+};
+const closeLevelCooperationTrackDialog = () => {
+  levelCooperationTrackDialogVisible.value = false;
+};
+// 层级协同数据刷新
+const refreshLevelCooperationData = async () => {
+  await Promise.all([
+    getLevelCooperationListData(),
+    getLevelCooperationIndicatorsData(),
+    getLevelCooperationLevelCountData(),
+    getLevelCooperationUnitCountData(),
+    getLevelCooperationStatusRatioData(),
+  ]);
+  levelCooperationChartRefreshKey.value++;
+  ElMessage.success('层级协同数据刷新成功');
+};
+const getInstructionStatusType = (status: string) => {
+  switch(status) {
+    case '已下发': return 'warning';
+    case '已接收': return 'info';
+    case '已反馈': return 'primary';
+    case '已完成': return 'success';
+    default: return 'info';
+  }
+};
+const getLevelTimelineItemType = (status: string) => {
+  switch(status) {
+    case '已下发': return 'warning';
+    case '已接收': return 'info';
+    case '已反馈': return 'primary';
+    case '已完成': return 'success';
+    default: return 'info';
+  }
+};
 const getEffectLevelType = (level: string) => {
   switch(level) {
     case '高成效': return 'success';
     case '中成效': return 'warning';
     case '低成效': return 'danger';
+    default: return 'info';
+  }
+};
+
+// 政企协同视图切换
+const changeGovEnterpriseCooperationView = (viewName: string) => {
+  activeGovEnterpriseCooperationView.value = viewName;
+  (viewName === '柱状图' || viewName === '饼图') &&
+  nextTick(() => govEnterpriseCooperationChartRefreshKey.value++);
+};
+const changeGovEnterpriseCooperationDetailView = (viewName: string) => {
+  activeGovEnterpriseCooperationDetailView.value = viewName;
+};
+const changeGovEnterpriseCooperationTrackingView = (viewName: string) => {
+  govEnterpriseCooperationTrackingView.value = viewName;
+};
+// 政企协同弹窗方法
+const openGovEnterpriseCooperationDetailDialog = async (row: GovEnterpriseCooperationRow) => {
+  await getGovEnterpriseCooperationDetailData(row.bizGovernmentEnterpriseCoopGovEnterpriseCoopId);
+  govEnterpriseCooperationDetailDialogVisible.value = true;
+};
+const closeGovEnterpriseCooperationDetailDialog = () => {
+  govEnterpriseCooperationDetailDialogVisible.value = false;
+  govEnterpriseCooperationDetailSelectedRow.value = {
+    bizGovernmentEnterpriseCoopGovEnterpriseCoopId: '',
+    sysDeptDeptName: '',
+    sysMerchantMerchantName: '',
+    sysEnterpriseTypeName: '',
+    sysCooperationItemName: '',
+    sysCooperationStatusName: '',
+    bizGovernmentEnterpriseCoopProgressFeedback: '',
+    sysSatisfactionName: '',
+    bizGovernmentEnterpriseCoopCompleteTime: '',
+    bizGovernmentEnterpriseCoopCoopCycle: '',
+    cooperationDetail: {
+      launchTime: '',
+      expectedCompleteTime: '',
+      contactPerson: '',
+      contactPhone: '',
+      cooperationContent: ''
+    },
+    responsibilityDivision: [],
+    executionPlan: [],
+    progressTimeline: [],
+    feedbackRecords: []
+  };
+  activeGovEnterpriseCooperationDetailView.value = '协同详情';
+};
+const openGovEnterpriseCooperationTrackingDialog = async (row: GovEnterpriseCooperationRow) => {
+  // 获取跟踪数据
+  await getGovEnterpriseCooperationDetailData(row.bizGovernmentEnterpriseCoopGovEnterpriseCoopId);
+  govEnterpriseCooperationTrackingDialogVisible.value = true;
+};
+const closeGovEnterpriseCooperationTrackingDialog = () => {
+  govEnterpriseCooperationTrackingDialogVisible.value = false;
+  cooperationTrackingForm.value.trackingContent = '';
+  cooperationTrackingFormRef.value?.resetFields();
+  govEnterpriseCooperationTrackingView.value = '进度时间轴';
+};
+const openGovEnterpriseCooperationEvaluationDialog = (row: GovEnterpriseCooperationRow) => {
+  // 先获取当前行的详情数据
+  getGovEnterpriseCooperationDetailData(row.bizGovernmentEnterpriseCoopGovEnterpriseCoopId)
+    .then(() => {
+      govEnterpriseCooperationEvaluationDialogVisible.value = true;
+    })
+    .catch((error) => {
+      ElMessage.error(`获取协同信息失败：${error.message}`);
+    });
+};
+const closeGovEnterpriseCooperationEvaluationDialog = () => {
+  govEnterpriseCooperationEvaluationDialogVisible.value = false;
+  cooperationEvaluationForm.value.satisfactionLevel = 5;
+  cooperationEvaluationForm.value.evaluationContent = '';
+  cooperationEvaluationFormRef.value?.resetFields();
+};
+// 政企协同数据刷新
+const refreshGovEnterpriseCooperationData = async () => {
+  await Promise.all([
+    getGovEnterpriseCooperationListData(),
+    getGovEnterpriseCooperationIndicatorsData(),
+    getGovEnterpriseCooperationDeptCountData(),
+    getGovEnterpriseCooperationEntTypeCountData(),
+    getGovEnterpriseCooperationItemRatioData(),
+    getGovEnterpriseCooperationSatisfactionRatioData(),
+  ]);
+  govEnterpriseCooperationChartRefreshKey.value++;
+  ElMessage.success('政企协同数据刷新成功');
+};
+
+// 专属协同视图切换
+const changeSpecialCooperationView = (viewName: string) => {
+  activeSpecialCooperationView.value = viewName;
+  viewName === '卡片' &&
+  nextTick(() => setTimeout(initNumberAnimations, 300));
+  (viewName === '柱状图' || viewName === '饼图') &&
+  nextTick(() => specialCooperationChartRefreshKey.value++);
+};
+const changeSpecialCooperationDetailView = (viewName: string) => {
+  activeSpecialCooperationDetailView.value = viewName;
+};
+// 专属协同弹窗方法
+const openSpecialCooperationDetailDialog = async (row: SpecialCooperationRow) => {
+  await getSpecialCooperationDetailData(row.bizSpecialCoopSpecialCoopId);
+  specialCooperationDetailDialogVisible.value = true;
+};
+const closeSpecialCooperationDetailDialog = () => {
+  specialCooperationDetailDialogVisible.value = false;
+  specialCooperationDetailSelectedRow.value = {
+    bizSpecialCoopSpecialCoopId: '',
+    sysCoopSceneName: '',
+    sysResponsibleUnitName: '',
+    bizSpecialCoopCoopRule: '',
+    bizSpecialCoopResponsibilityDivision: '',
+    sysCooperationStatusName: '',
+    bizSpecialCoopAverageCoopCycle: 0,
+    bizSpecialCoopCoopResult: '',
+    bizSpecialCoopCompleteTime: '',
+    bizSpecialCoopReviewConclusion: '',
+    cooperationConfig: [],
+    sceneRequirements: [],
+    responsibilityList: [],
+    executionProgress: []
+  };
+  activeSpecialCooperationDetailView.value = '协同详情';
+};
+const openSpecialCooperationExecuteDialog = () => {
+  specialCooperationExecuteDialogVisible.value = true;
+};
+const closeSpecialCooperationExecuteDialog = () => {
+  specialCooperationExecuteDialogVisible.value = false;
+  executionProgressForm.value.progressContent = '';
+  executionProgressForm.value.evidenceFiles = [];
+  executionProgressFormRef.value?.resetFields();
+};
+const openSpecialCooperationReviewDialog = () => {
+  specialCooperationReviewDialogVisible.value = true;
+};
+const closeSpecialCooperationReviewDialog = () => {
+  specialCooperationReviewDialogVisible.value = false;
+  reviewConclusionForm.value.reviewConclusion = '';
+  reviewConclusionForm.value.optimizationSuggestions = '';
+  reviewConclusionFormRef.value?.resetFields();
+};
+// 专属协同数据刷新
+const refreshSpecialCooperationData = async () => {
+  await Promise.all([
+    getSpecialCooperationListData(),
+    getSpecialCooperationIndicatorsData(),
+    getSpecialCooperationSceneCountData(),
+    getSpecialCooperationUnitCountData(),
+    getSpecialCooperationSceneRatioData(),
+    getSpecialCooperationStatusRatioData(),
+  ]);
+  specialCooperationChartRefreshKey.value++;
+  ElMessage.success('专属协同数据刷新成功');
+};
+const getSpecialCooperationStatusType = (status: string) => {
+  switch(status) {
+    case '待执行': return 'warning';
+    case '执行中': return 'info';
+    case '已完成': return 'success';
+    case '待复盘': return 'primary';
+    case '已复盘': return '';
+    default: return 'info';
+  }
+};
+
+// 运维人员动态视图切换
+const changeMaintainerDynamicView = (viewName: string) => {
+  activeMaintainerDynamicView.value = viewName;
+  if (viewName === '卡片') {
+    nextTick(() => {
+      // 初始化数字动画
+      const elements = document.querySelectorAll('.maintainer-dynamic-number-animate');
+      elements.forEach((el) => {
+        const value = Number.parseFloat(el.dataset.value);
+        animateValue(el, 0, value, 1500);
+      });
+    });
+  }
+  if (viewName === '柱状图') {
+    nextTick(() => {
+      maintainerDynamicChartRefreshKey.value++;
+    });
+  }
+};
+const changeMaintainerDynamicDetailView = (viewName: string) => {
+  activeMaintainerDynamicDetailView.value = viewName;
+};
+// 运维人员动态弹窗方法
+const openMaintainerDynamicDetailDialog = async (row: MaintainerDynamicRow) => {
+  await getMaintainerDynamicDetailData(row.sysMaintainUserMaintainUserId);
+  maintainerDynamicDetailDialogVisible.value = true;
+};
+const closeMaintainerDynamicDetailDialog = () => {
+  maintainerDynamicDetailDialogVisible.value = false;
+  maintainerDynamicDetailSelectedRow.value = {
+    sysMaintainUserMaintainUserId: '',
+    sysUserUserName: '',
+    sysDeptDeptName: '',
+    sysAreaAreaName: '',
+    sysOnDutyStatusName: '',
+    bizCoopStatCurrentCoopTaskCount: 0,
+    bizCoopStatCompletedCoopTaskCount: 0,
+    bizCoopStatCoopResponseDuration: 0,
+    sysCooperationTypeName: '',
+    bizCoopStatLatestCoopTime: '',
+    contactPhone: '',
+    email: '',
+    skillTags: [],
+    cooperationHistory: []
+  };
+  activeMaintainerDynamicDetailView.value = '人员基础信息';
+};
+const openMaintainerDynamicDispatchDialog = (row: MaintainerDynamicRow) => {
+  maintainerDynamicDetailSelectedRow.value.sysMaintainUserMaintainUserId = row.sysMaintainUserMaintainUserId;
+  maintainerDynamicDetailSelectedRow.value.sysUserUserName = row.sysUserUserName;
+  maintainerDynamicDispatchDialogVisible.value = true;
+};
+const closeMaintainerDynamicDispatchDialog = () => {
+  maintainerDynamicDispatchDialogVisible.value = false;
+  dispatchTaskForm.value.taskDetail = '';
+  dispatchTaskForm.value.coopTarget = '';
+  dispatchTaskFormRef.value?.resetFields();
+};
+// 联系方式展示（脱敏）
+const showContactInfo = (row: MaintainerDynamicRow) => {
+  tipDialogContent.value = `联系方式：138****5678`;
+  tipDialogVisible.value = true;
+};
+// 获取状态标签类型
+const getOnDutyStatusType = (status: string) => {
+  switch(status) {
+    case '在岗': return 'success';
+    case '待命': return 'warning';
+    case '休息': return 'info';
+    default: return 'info';
+  }
+};
+// 运维人员动态数据刷新
+const refreshMaintainerDynamicData = async () => {
+  await Promise.all([
+    getMaintainerDynamicListData(),
+    getMaintainerDynamicIndicatorsData(),
+    getMaintainerDynamicDeptTaskData(),
+    getMaintainerDynamicAreaTaskData(),
+  ]);
+  maintainerDynamicChartRefreshKey.value++;
+  ElMessage.success('运维人员动态数据刷新成功');
+};
+
+// 协同效率评估视图切换
+const changeEfficiencyEvaluationView = (viewName: string) => {
+  activeEfficiencyEvaluationView.value = viewName;
+  viewName === '卡片' &&
+  nextTick(() => setTimeout(initNumberAnimations, 300));
+  (viewName === '柱状图' || viewName === '折线图' || viewName === '饼图') &&
+  nextTick(() => efficiencyEvaluationChartRefreshKey.value++);
+};
+const changeEfficiencyEvaluationDetailView = (viewName: string) => {
+  activeEfficiencyEvaluationDetailView.value = viewName;
+};
+// 协同效率评估弹窗方法
+const openEfficiencyEvaluationDetailDialog = async (row: EfficiencyEvaluationRow) => {
+  await getEfficiencyEvaluationDetailData(row.bizCoopEfficiencyCoopEfficiencyId);
+  efficiencyEvaluationDetailDialogVisible.value = true;
+};
+const closeEfficiencyEvaluationDetailDialog = () => {
+  efficiencyEvaluationDetailDialogVisible.value = false;
+  efficiencyEvaluationDetailSelectedRow.value = {
+    bizCoopEfficiencyCoopEfficiencyId: '',
+    sysCooperationTypeName: '',
+    sysAreaAreaName: '',
+    sysStatCycleName: '',
+    bizCoopEfficiencyAverageResponseDuration: 0,
+    bizCoopEfficiencyAverageDisposalDuration: 0,
+    bizCoopEfficiencyEffectivenessRate: 0,
+    bizCoopEfficiencyCoopCost: 0,
+    bizCoopEfficiencyProblemRecurrenceRate: 0,
+    bizCoopEfficiencyEfficiencyBottleneck: '',
+    bizCoopEfficiencyOptimizationSuggestion: '',
+    efficiencyDetails: [],
+    dataSources: [],
+    calculationLogic: []
+  };
+  activeEfficiencyEvaluationDetailView.value = '效率评估';
+};
+const openEfficiencyEvaluationOptimizeDialog = () => {
+  efficiencyEvaluationOptimizeDialogVisible.value = true;
+};
+const closeEfficiencyEvaluationOptimizeDialog = () => {
+  efficiencyEvaluationOptimizeDialogVisible.value = false;
+  optimizationPlanForm.value.optimizationPlan = '';
+  optimizationPlanForm.value.optimizationDeadline = '';
+  optimizationPlanFormRef.value?.resetFields();
+};
+// 协同效率评估数据刷新
+const refreshEfficiencyEvaluationData = async () => {
+  await Promise.all([
+    getEfficiencyEvaluationListData(),
+    getEfficiencyEvaluationIndicatorsData(),
+    getEfficiencyEvaluationTypeCompareData(),
+    getEfficiencyEvaluationAreaCompareData(),
+    getEfficiencyEvaluationTrendData(),
+    getEfficiencyEvaluationRecurrenceRatioData(),
+  ]);
+  efficiencyEvaluationChartRefreshKey.value++;
+  ElMessage.success('协同效率评估数据刷新成功');
+};
+const getEfficiencyStatusType = (status: string) => {
+  switch(status) {
+    case '达标': return 'success';
+    case '未达标': return 'danger';
     default: return 'info';
   }
 };
@@ -1596,31 +2627,22 @@ onMounted(async () => {
     getRegionCooperationAreaCountData(),
     getRegionCooperationTaskTypeCountData(),
     getRegionCooperationCompletionRateTrendData(),
-    getCoopAnalysisIndicatorData(),
-    getCoopAnalysisTypeCountData(),
-    getCoopAnalysisAreaCountData(),
-    getCoopAnalysisIndustryRatioData(),
-    getCoopAnalysisAreaRatioData(),
-    getCoopAnalysisTrendData(),
-    getHighFreqCoopTop10Data(),
-    getGovCoopListData(),
-    getGovCoopIndicatorData(),
-    getGovCoopDeptCountData(),
-    getGovCoopEntTypeCountData(),
-    getGovCoopItemRatioData(),
-    getGovCoopSatisfactionRatioData(),
-    getSpecialCoopListData(),
-    getSpecialCoopIndicatorData(),
-    getSpecialCoopSceneCountData(),
-    getSpecialCoopDeptCountData(),
-    getSpecialCoopSceneRatioData(),
-    getSpecialCoopStatusRatioData(),
-    getCoopEfficiencyListData(),
-    getCoopEfficiencyIndicatorData(),
-    getCoopEfficiencyTypeCountData(),
-    getCoopEfficiencyAreaCountData(),
-    getCoopEfficiencyRecurrenceRatioData(),
-    getCoopEfficiencyTrendData(),
+    getMaintainerDynamicListData(),
+    getMaintainerDynamicIndicatorsData(),
+    getMaintainerDynamicDeptTaskData(),
+    getMaintainerDynamicAreaTaskData(),
+    getGovEnterpriseCooperationListData(),
+    getGovEnterpriseCooperationIndicatorsData(),
+    getGovEnterpriseCooperationDeptCountData(),
+    getGovEnterpriseCooperationEntTypeCountData(),
+    getGovEnterpriseCooperationItemRatioData(),
+    getGovEnterpriseCooperationSatisfactionRatioData(),
+    getEfficiencyEvaluationListData(),
+    getEfficiencyEvaluationIndicatorsData(),
+    getEfficiencyEvaluationTypeCompareData(),
+    getEfficiencyEvaluationAreaCompareData(),
+    getEfficiencyEvaluationTrendData(),
+    getEfficiencyEvaluationRecurrenceRatioData(),
     getDepartmentCooperationListData(),
     getDepartmentCooperationIndicatorsData(),
     getDepartmentCooperationDeptCountData(),
@@ -1633,15 +2655,27 @@ onMounted(async () => {
     getIndustryCooperationSceneCountData(),
     getIndustryCooperationIndustryRatioData(),
     getIndustryCooperationSceneRatioData(),
+    getLevelCooperationListData(),
+    getLevelCooperationIndicatorsData(),
+    getLevelCooperationLevelCountData(),
+    getLevelCooperationUnitCountData(),
+    getLevelCooperationStatusRatioData(),
+    getSpecialCooperationListData(),
+    getSpecialCooperationIndicatorsData(),
+    getSpecialCooperationSceneCountData(),
+    getSpecialCooperationUnitCountData(),
+    getSpecialCooperationSceneRatioData(),
+    getSpecialCooperationStatusRatioData(),
   ]);
   setTimeout(() => {
     regionCooperationChartRefreshKey.value++;
-    coopAnalysisChartRefreshKey.value += 1;
-    govCoopChartRefreshKey.value += 1;
-    specialCoopChartRefreshKey.value += 1;
-    coopEfficiencyChartRefreshKey.value += 1;
+    maintainerDynamicChartRefreshKey.value++;
+    govEnterpriseCooperationChartRefreshKey.value++;
+    specialCooperationChartRefreshKey.value++;
+    efficiencyEvaluationChartRefreshKey.value++;
     departmentCooperationChartRefreshKey.value++;
     industryCooperationChartRefreshKey.value++;
+    levelCooperationChartRefreshKey.value++;
   }, 200);
   screenFull.on('change', handleFullscreenChange);
 });
@@ -1674,7 +2708,9 @@ onUnmounted(() => {
                       {{ item }}
                     </ElButton>
                   </div>
-                  <el-icon color="#409eff" size="16" @click="refreshRegionCooperationData"><Refresh /></el-icon>
+                  <button class="control-btn" @click="refreshRegionCooperationData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button
                     class="panel-fullscreen-btn"
@@ -1684,7 +2720,6 @@ onUnmounted(() => {
                   </button>
                 </div>
               </div>
-
               <!-- 卡片视图 -->
               <div v-if="activeRegionCooperationView === '卡片'" class="view-content">
                 <div class="indicator-cards3">
@@ -1718,7 +2753,6 @@ onUnmounted(() => {
                   </div>
                 </div>
               </div>
-
               <!-- 柱状图视图 -->
               <div v-if="activeRegionCooperationView === '柱状图'" class="view-content">
                 <div
@@ -1756,11 +2790,10 @@ onUnmounted(() => {
                   />
                 </div>
               </div>
-
               <!-- 折线图视图 -->
               <div v-if="activeRegionCooperationView === '折线图'" class="view-content">
                 <div style="width:100%;height:100%;padding:0.3vw 0.2vw 1.2vw 0.2vw;" :key="regionCooperationChartRefreshKey">
-                  <ChartLine1
+                  <ChartLine2
                     :data="regionCooperationCompletionRateTrendData"
                     title="近周期协同完成率趋势"
                     y-axis-name="协同完成率(%)"
@@ -1768,7 +2801,6 @@ onUnmounted(() => {
                   />
                 </div>
               </div>
-
               <!-- 列表视图 -->
               <div v-if="activeRegionCooperationView === '列表'" class="view-content">
                 <div class="table-box4">
@@ -1871,7 +2903,9 @@ onUnmounted(() => {
                       {{ item }}
                     </ElButton>
                   </div>
-                  <el-icon color="#409eff" size="16" @click="refreshDepartmentCooperationData"><Refresh /></el-icon>
+                  <button class="control-btn" @click="refreshDepartmentCooperationData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button
                     class="panel-fullscreen-btn"
@@ -2092,7 +3126,9 @@ onUnmounted(() => {
                       {{ item }}
                     </ElButton>
                   </div>
-                  <el-icon color="#409eff" size="16" @click="refreshIndustryCooperationData"><Refresh /></el-icon>
+                  <button class="control-btn" @click="refreshIndustryCooperationData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
                   <el-icon color="#409eff" size="16"><Filter /></el-icon>
                   <button
                     class="panel-fullscreen-btn"
@@ -2305,146 +3341,350 @@ onUnmounted(() => {
                 </div>
               </div>
             </el-tab-pane>
-            <el-tab-pane label="层级协同" name="tab4" />
+            <el-tab-pane label="层级协同" name="tab4">
+              <div class="header-actions">
+                <div class="actions-left"><p></p></div>
+                <div class="actions-right">
+                  <div class="view-btn-group">
+                    <ElButton
+                      v-for="item in levelCooperationViewBtnList"
+                      :key="item"
+                      :type="activeLevelCooperationView === item ? 'primary' : ''"
+                      plain
+                      @click="changeLevelCooperationView(item)"
+                      class="view-btn"
+                    >
+                      {{ item }}
+                    </ElButton>
+                  </div>
+                  <button class="control-btn" @click="refreshLevelCooperationData">
+                    <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+                  </button>
+                  <el-icon color="#409eff" size="16"><Filter /></el-icon>
+                  <button
+                    class="panel-fullscreen-btn"
+                    @click="togglePanelFullscreen('levelCooperationPanelRef')"
+                  >
+                    <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
+                  </button>
+                </div>
+              </div>
+              <!-- 卡片视图 -->
+              <div v-if="activeLevelCooperationView === '卡片'" class="view-content">
+                <div class="indicator-cards3">
+                  <div class="indicator-card3 card1">
+                    <div class="indicator-title">跨层级协同总数</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ levelCooperationIndicators.totalCooperationCount }}</span>
+                    </div>
+                    <div class="indicator-unit">个</div>
+                  </div>
+                  <div class="indicator-card3 card2">
+                    <div class="indicator-title">指令完成率</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(levelCooperationIndicators.instructionCompleteRate) }}</span>
+                    </div>
+                    <div class="indicator-unit">%</div>
+                  </div>
+                  <div class="indicator-card3 card3">
+                    <div class="indicator-title">平均反馈时长</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(levelCooperationIndicators.averageFeedbackDuration) }}</span>
+                    </div>
+                    <div class="indicator-unit">天</div>
+                  </div>
+                  <div class="indicator-card3 card4">
+                    <div class="indicator-title">平均流转时长</div>
+                    <div class="indicator-value">
+                      <span class="number-animate">{{ formatDecimal(1.8) }}</span>
+                    </div>
+                    <div class="indicator-unit">天</div>
+                  </div>
+                </div>
+              </div>
+              <!-- 柱状图视图 -->
+              <div v-if="activeLevelCooperationView === '柱状图'" class="view-content">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                >
+                  <VerticalBar2
+                    :x-axis="levelCooperationLevelCountData.xAxis"
+                    :series="levelCooperationLevelCountData.series"
+                    unit="个"
+                    title="不同层级协同数对比"
+                    :key="levelCooperationChartRefreshKey"
+                  />
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    width: 49%;
+                    height: 100%;
+                    padding-left: 0.3vw;
+                    vertical-align: top;
+                    border-left: 0.3vh solid #02a6b5;
+                  "
+                >
+                  <VerticalBar1
+                    :x-axis="levelCooperationUnitCountData.xAxis"
+                    :series="levelCooperationUnitCountData.series"
+                    unit="个"
+                    title="不同责任单位协同数对比"
+                    :key="levelCooperationChartRefreshKey"
+                  />
+                </div>
+              </div>
+              <!-- 饼图视图 -->
+              <div v-if="activeLevelCooperationView === '饼图'" class="view-content">
+                <div
+                  style="
+                    display: inline-block;
+                    width: 100%;
+                    height: 100%;
+                    vertical-align: top;
+                  "
+                >
+                  <ChartPie1
+                    :data="levelCooperationStatusRatioData"
+                    title="指令状态占比"
+                    :key="levelCooperationChartRefreshKey"
+                  />
+                </div>
+              </div>
+              <!-- 列表视图 -->
+              <div v-if="activeLevelCooperationView === '列表'" class="view-content">
+                <div class="table-box4">
+                  <ElTable
+                    class="table4"
+                    :data="levelCooperationList"
+                    border
+                    size="small"
+                    width="100%"
+                    height="100%"
+                    table-layout="fixed"
+                    highlight-current-row
+                    @row-click="(row) => openLevelCooperationDetailDialog(row)"
+                  >
+                    <ElTableColumn
+                      prop="bizCrossLevelCoopCrossLevelCoopId"
+                      label="协同ID"
+                      align="center"
+                      min-width="140"
+                    />
+                    <ElTableColumn
+                      prop="issueLevelName"
+                      label="下达层级"
+                      align="center"
+                      min-width="100"
+                    />
+                    <ElTableColumn
+                      prop="receiveLevelName"
+                      label="接收层级"
+                      align="center"
+                      min-width="100"
+                    />
+                    <ElTableColumn
+                      prop="bizCrossLevelCoopInstructionContent"
+                      label="指令内容"
+                      align="center"
+                      min-width="180"
+                    />
+                    <ElTableColumn
+                      prop="sysInstructionStatusName"
+                      label="指令状态"
+                      align="center"
+                      width="100"
+                    >
+                      <template #default="scope">
+                        <ElTag :type="getInstructionStatusType(scope.row.sysInstructionStatusName)">
+                          {{ scope.row.sysInstructionStatusName || '-' }}
+                        </ElTag>
+                      </template>
+                    </ElTableColumn>
+                    <ElTableColumn
+                      prop="bizCrossLevelCoopIssueTime"
+                      label="下发时间"
+                      align="center"
+                      width="120"
+                    />
+                    <ElTableColumn
+                      label="操作"
+                      align="center"
+                      width="160"
+                      fixed="right"
+                    >
+                      <template #default="scope">
+                        <ElButton
+                          v-if="scope.row.currentUserLevel === scope.row.receiveLevelName"
+                          type="success"
+                          size="small"
+                          plain
+                          @click.stop="openLevelCooperationFeedbackDialog()"
+                          :disabled="scope.row.sysInstructionStatusName !== '已下发' && scope.row.sysInstructionStatusName !== '已接收'"
+                        >
+                          反馈
+                        </ElButton>
+                        <ElButton
+                          type="warning"
+                          size="small"
+                          plain
+                          @click.stop="openLevelCooperationTrackDialog(scope.row)"
+                        >
+                          跟踪
+                        </ElButton>
+                      </template>
+                    </ElTableColumn>
+                  </ElTable>
+                </div>
+              </div>
+            </el-tab-pane>
           </el-tabs>
           <div class="panel-footer"></div>
         </div>
         <div class="panel top-right" ref="topRightPanel">
           <div class="header-actions">
-            <div class="actions-left"><p>协同统计分析</p></div>
+            <div class="actions-left"><p>运维人员动态</p></div>
             <div class="actions-right">
               <div class="view-btn-group">
                 <ElButton
-                  v-for="item in coopAnalysisViewBtnList"
+                  v-for="item in maintainerDynamicViewBtnList"
                   :key="item"
-                  :type="activeCoopAnalysisView === item ? 'primary' : ''"
+                  :type="activeMaintainerDynamicView === item ? 'primary' : ''"
                   plain
-                  @click="changeCoopAnalysisView(item)"
+                  @click="changeMaintainerDynamicView(item)"
                   class="view-btn"
                 >{{ item }}</ElButton>
               </div>
+              <button class="control-btn" @click="refreshMaintainerDynamicData">
+                <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+              </button>
               <el-icon color="#409eff" size="16"><Filter /></el-icon>
               <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('topRightPanel')">
                 <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
               </button>
             </div>
           </div>
-          <div v-if="activeCoopAnalysisView === '卡片'" class="view-content">
+          <!-- 卡片视图 -->
+          <div v-if="activeMaintainerDynamicView === '卡片'" class="view-content">
             <div class="indicator-cards1">
               <div class="indicator-card1 card1" style="cursor: default">
-                <div class="indicator-title">协同事项总数</div>
+                <div class="indicator-title">总运维人数</div>
                 <div class="indicator-value">
-                  <span :data-value="coopAnalysisIndicators.totalCoopCount" class="coop-analysis-number-animate">
-                    {{ coopAnalysisIndicators.totalCoopCount }}
+                  <span
+                    :data-value="maintainerDynamicIndicators.totalMaintainerCount"
+                    class="maintainer-dynamic-number-animate"
+                  >
+                    {{ maintainerDynamicIndicators.totalMaintainerCount }}
                   </span>
                 </div>
-                <div class="indicator-unit">件</div>
+                <div class="indicator-unit">人</div>
               </div>
               <div class="indicator-card1 card2" style="cursor: default">
-                <div class="indicator-title">平均处理周期</div>
+                <div class="indicator-title">在岗人数</div>
                 <div class="indicator-value">
-                  <span :data-value="coopAnalysisIndicators.avgHandleCycle" class="coop-analysis-number-animate">
-                    {{ coopAnalysisIndicators.avgHandleCycle }}
+                  <span
+                    :data-value="maintainerDynamicIndicators.onDutyCount"
+                    class="maintainer-dynamic-number-animate"
+                  >
+                    {{ maintainerDynamicIndicators.onDutyCount }}
                   </span>
                 </div>
-                <div class="indicator-unit">天</div>
+                <div class="indicator-unit">人</div>
               </div>
               <div class="indicator-card1 card3" style="cursor: default">
-                <div class="indicator-title">协同完成率</div>
+                <div class="indicator-title">协同任务总数</div>
                 <div class="indicator-value">
-                  <span :data-value="coopAnalysisIndicators.finishRate * 100" class="coop-analysis-number-animate">
-                    {{ (coopAnalysisIndicators.finishRate * 100).toFixed(1) }}
+                  <span
+                    :data-value="maintainerDynamicIndicators.totalCoopTaskCount"
+                    class="maintainer-dynamic-number-animate"
+                  >
+                    {{ maintainerDynamicIndicators.totalCoopTaskCount }}
                   </span>
                 </div>
-                <div class="indicator-unit">%</div>
-              </div>
-              <div class="indicator-card1 card4" style="cursor: default">
-                <div class="indicator-title">高优协同占比</div>
-                <div class="indicator-value">
-                  <span :data-value="coopAnalysisIndicators.highPriorityRate * 100" class="coop-analysis-number-animate">
-                    {{ (coopAnalysisIndicators.highPriorityRate * 100).toFixed(1) }}
-                  </span>
-                </div>
-                <div class="indicator-unit">%</div>
+                <div class="indicator-unit">个</div>
               </div>
             </div>
           </div>
-          <div v-if="activeCoopAnalysisView === '柱状图'" class="view-content" style="box-sizing: border-box;width: 100%;height: 100%;padding: 0.3vw 0.2vw 0.8vw 0.2vw;">
-            <div style="box-sizing: border-box;display: inline-block;width: 49%;height: 100%;vertical-align: top;" :key="coopAnalysisChartRefreshKey">
+          <!-- 柱状图视图 -->
+          <div v-if="activeMaintainerDynamicView === '柱状图'" class="view-content" style="box-sizing: border-box;width: 100%;height: 100%;padding: 0.3vw 0.2vw 0.8vw 0.2vw;">
+            <div style="box-sizing: border-box;display: inline-block;width: 49%;height: 100%;vertical-align: top;" :key="maintainerDynamicChartRefreshKey">
               <VerticalBar1
-                :x-axis="coopAnalysisTypeData.xAxis"
-                :series="coopAnalysisTypeData.series"
-                unit="件"
-                title="类型协同数对比"
-                :base-font-scale="coopAnalysisBaseFontScale"
-                :active-indices="coopAnalysisActiveIndices"
+                :x-axis="maintainerDynamicDeptTaskData.xAxis"
+                :series="maintainerDynamicDeptTaskData.series"
+                unit="个"
+                title="各部门协同任务数对比"
+                :base-font-scale="1"
+                :active-indices="[]"
                 style="width:100%;height:100%;"
               />
             </div>
-            <div style="box-sizing: border-box;display: inline-block;width: 49%;height: 100%;padding-left: 0.3vw;vertical-align: top;border-left: 0.3vh solid #02a6b5;" :key="coopAnalysisChartRefreshKey">
+            <div style="box-sizing: border-box;display: inline-block;width: 49%;height: 100%;padding-left: 0.3vw;vertical-align: top;border-left: 0.3vh solid #02a6b5;" :key="maintainerDynamicChartRefreshKey">
               <VerticalBar2
-                :x-axis="coopAnalysisAreaData.xAxis"
-                :series="coopAnalysisAreaData.series"
-                unit="件"
-                title="区域协同数对比"
-                :base-font-scale="coopAnalysisBaseFontScale"
-                :active-indices="coopAnalysisActiveIndices"
+                :x-axis="maintainerDynamicAreaTaskData.xAxis"
+                :series="maintainerDynamicAreaTaskData.series"
+                unit="个"
+                title="不同区域协同任务数对比"
+                :base-font-scale="1"
+                :active-indices="[]"
                 style="width:100%;height:100%;"
               />
             </div>
           </div>
-          <div v-if="activeCoopAnalysisView === '饼图'" class="view-content" style="box-sizing: border-box;width: 100%;height: 100%;padding: 0.3vw 0.2vw 0.8vw 0.2vw;">
-            <div style="box-sizing: border-box;display: inline-block;width: 49%;height: 100%;vertical-align: top;" :key="coopAnalysisChartRefreshKey">
-              <ChartPie2
-                :data="coopAnalysisIndustryRatioData"
-                title="行业协同占比"
-                :base-font-scale="coopAnalysisBaseFontScale"
-                :active-indices="coopAnalysisActiveIndices"
-                style="width:100%;height:100%;"
-              />
-            </div>
-            <div style="box-sizing: border-box;display: inline-block;width: 49%;height: 100%;padding-left: 0.3vw;vertical-align: top;border-left: 0.3vh solid #02a6b5;" :key="coopAnalysisChartRefreshKey">
-              <ChartPie4
-                :data="coopAnalysisAreaRatioData"
-                title="区域协同占比"
-                :base-font-scale="coopAnalysisBaseFontScale"
-                :active-indices="coopAnalysisActiveIndices"
-                style="width:100%;height:100%;"
-              />
-            </div>
-          </div>
-          <div v-if="activeCoopAnalysisView === '折线图'" class="view-content" style="box-sizing: border-box;width:100%;height:100%;padding:0.3vw;" :key="coopAnalysisChartRefreshKey">
-            <ChartLine1
-              :data="coopAnalysisTrendData"
-              title="协同事件近周期趋势"
-              y-axis-name="协同事件数"
-              :base-font-scale="coopAnalysisBaseFontScale"
-              style="width:100%;height:100%;"
-            />
-          </div>
-          <div v-if="activeCoopAnalysisView === '列表'" class="view-content">
-            <div class="rank-box">
+          <!-- 列表视图 -->
+          <div v-if="activeMaintainerDynamicView === '列表'" class="view-content">
+            <div class="table-box4">
               <ElTable
-                :data="highFreqCoopTop10List"
+                class="table4"
+                :data="maintainerDynamicList"
                 border
                 size="small"
-                style="width: 100%; height: 100%"
-                row-class-name="rank-row"
+                width="100%"
+                height="100%"
+                table-layout="fixed"
+                highlight-current-row
+                @row-click="(row) => openMaintainerDynamicDetailDialog(row)"
               >
-                <ElTableColumn prop="rank" label="排名" width="80" align="center">
-                  <template #default="scope"><div class="rank-tag">{{ scope.row.rank }}</div></template>
+                <ElTableColumn prop="sysMaintainUserMaintainUserId" label="人员ID" align="center" />
+                <ElTableColumn prop="sysUserUserName" label="人员姓名" align="center" />
+                <ElTableColumn prop="sysDeptDeptName" label="所属部门" align="center" />
+                <ElTableColumn prop="sysAreaAreaName" label="负责区域" align="center" />
+                <ElTableColumn prop="sysOnDutyStatusName" label="当前状态" align="center">
+                  <template #default="scope">
+                    <ElTag :type="getOnDutyStatusType(scope.row.sysOnDutyStatusName)">
+                      {{ scope.row.sysOnDutyStatusName }}
+                    </ElTag>
+                  </template>
                 </ElTableColumn>
-                <ElTableColumn prop="coopStatId" label="协同统计ID" />
-                <ElTableColumn prop="coopType" label="协同类型">
-                  <template #default="scope"><ElTag :type="getCoopTypeTagType(scope.row.coopType)">{{ getCoopTypeName(scope.row.coopType) }}</ElTag></template>
+                <ElTableColumn prop="bizCoopStatCurrentCoopTaskCount" label="当前协同任务数" align="center" />
+                <ElTableColumn label="操作" align="center" width="180" fixed="right">
+                  <template #default="scope">
+                    <ElButton
+                      type="primary"
+                      size="small"
+                      plain
+                      @click.stop="openMaintainerDynamicDispatchDialog(scope.row)"
+                    >
+                      调度
+                    </ElButton>
+                    <ElButton
+                      type="info"
+                      size="small"
+                      plain
+                      @click.stop="showContactInfo(scope.row)"
+                    >
+                      联系
+                    </ElButton>
+                  </template>
                 </ElTableColumn>
-                <ElTableColumn prop="coopCount" label="协同事件数量">
-                  <template #default="scope">{{ formatNumber(scope.row.coopCount) }}</template>
-                </ElTableColumn>
-                <ElTableColumn prop="top10CoopItem" label="协同事项" min-width="150" />
               </ElTable>
             </div>
           </div>
+          <div class="panel-footer"></div>
         </div>
       </div>
       <div class="bottom">
@@ -2454,115 +3694,212 @@ onUnmounted(() => {
             <div class="actions-right">
               <div class="view-btn-group">
                 <ElButton
-                  v-for="item in govCoopViewBtnList"
+                  v-for="item in govEnterpriseCooperationViewBtnList"
                   :key="item"
-                  :type="activeGovCoopView === item ? 'primary' : ''"
+                  :type="activeGovEnterpriseCooperationView === item ? 'primary' : ''"
                   plain
-                  @click="changeGovCoopView(item)"
+                  @click="changeGovEnterpriseCooperationView(item)"
                   class="view-btn"
-                >{{ item }}</ElButton>
+                >
+                  {{ item }}
+                </ElButton>
               </div>
+              <button class="control-btn" @click="refreshGovEnterpriseCooperationData">
+                <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+              </button>
               <el-icon color="#409eff" size="16"><Filter /></el-icon>
-              <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('bottomLeftPanel')">
+              <button
+                class="panel-fullscreen-btn"
+                @click="togglePanelFullscreen('govEnterpriseCooperationPanelRef')"
+              >
                 <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
               </button>
             </div>
           </div>
-          <div v-if="activeGovCoopView === '卡片'" class="view-content">
-            <div class="indicator-cards1">
-              <div class="indicator-card1 card1" style="cursor: default">
+          <!-- 卡片视图 -->
+          <div v-if="activeGovEnterpriseCooperationView === '卡片'" class="view-content">
+            <div class="indicator-cards3">
+              <div class="indicator-card3 card1">
                 <div class="indicator-title">政企协同总数</div>
                 <div class="indicator-value">
-                  <span :data-value="govCoopIndicators.totalCount" class="gov-coop-number-animate">
-                    {{ govCoopIndicators.totalCount }}
-                  </span>
+                  <span class="number-animate">{{ govEnterpriseCooperationIndicators.totalCooperationCount }}</span>
                 </div>
-                <div class="indicator-unit">件</div>
+                <div class="indicator-unit">个</div>
               </div>
-              <div class="indicator-card1 card2" style="cursor: default">
-                <div class="indicator-title">政企响应率</div>
+              <div class="indicator-card3 card2">
+                <div class="indicator-title">响应率</div>
                 <div class="indicator-value">
-                  <span :data-value="govCoopIndicators.responseRate * 100" class="gov-coop-number-animate">
-                    {{ (govCoopIndicators.responseRate * 100).toFixed(1) }}
-                  </span>
+                  <span class="number-animate">{{ formatDecimal(govEnterpriseCooperationIndicators.responseRate) }}</span>
                 </div>
                 <div class="indicator-unit">%</div>
               </div>
-              <div class="indicator-card1 card3" style="cursor: default">
-                <div class="indicator-title">政企满意度</div>
+              <div class="indicator-card3 card3">
+                <div class="indicator-title">满意度</div>
                 <div class="indicator-value">
-                  <span :data-value="govCoopIndicators.satisfactionRate" class="gov-coop-number-animate">
-                    {{ govCoopIndicators.satisfactionRate.toFixed(1) }}
-                  </span>
+                  <span class="number-animate">{{ formatDecimal(govEnterpriseCooperationIndicators.satisfactionRate) }}</span>
                 </div>
                 <div class="indicator-unit">%</div>
+              </div>
+              <div class="indicator-card3 card4">
+                <div class="indicator-title">平均协同周期</div>
+                <div class="indicator-value">
+                  <span class="number-animate">{{ formatDecimal(2.3) }}</span>
+                </div>
+                <div class="indicator-unit">天</div>
               </div>
             </div>
           </div>
-          <div v-if="activeGovCoopView === '柱状图'" class="view-content" style="box-sizing: border-box;width: 100%;height: 100%;padding: 0.3vw 0.2vw 0.8vw 0.2vw;">
-            <div style="box-sizing: border-box;display: inline-block;width: 49%;height: 100%;vertical-align: top;" :key="govCoopChartRefreshKey">
+          <!-- 柱状图视图 -->
+          <div v-if="activeGovEnterpriseCooperationView === '柱状图'" class="view-content">
+            <div
+              style="
+                display: inline-block;
+                width: 49%;
+                height: 100%;
+                vertical-align: top;
+              "
+            >
               <VerticalBar2
-                :x-axis="govCoopDeptData.xAxis"
-                :series="govCoopDeptData.series"
-                unit="件"
-                title="政府部门协同数对比"
-                :base-font-scale="govCoopBaseFontScale"
-                :active-indices="govCoopActiveIndices"
-                style="width:100%;height:100%;"
+                :x-axis="govEnterpriseCooperationDeptCountData.xAxis"
+                :series="govEnterpriseCooperationDeptCountData.series"
+                unit="个"
+                title="不同政府部门协同数对比"
+                :key="govEnterpriseCooperationChartRefreshKey"
               />
             </div>
-            <div style="box-sizing: border-box;display: inline-block;width: 49%;height: 100%;padding-left: 0.3vw;vertical-align: top;border-left: 0.3vh solid #02a6b5;" :key="govCoopChartRefreshKey">
+            <div
+              style="
+                display: inline-block;
+                width: 49%;
+                height: 100%;
+                padding-left: 0.3vw;
+                vertical-align: top;
+                border-left: 0.3vh solid #02a6b5;
+              "
+            >
               <VerticalBar1
-                :x-axis="govCoopEntTypeData.xAxis"
-                :series="govCoopEntTypeData.series"
-                unit="件"
-                title="企业类型协同数对比"
-                :base-font-scale="govCoopBaseFontScale"
-                :active-indices="govCoopActiveIndices"
-                style="width:100%;height:100%;"
+                :x-axis="govEnterpriseCooperationEntTypeCountData.xAxis"
+                :series="govEnterpriseCooperationEntTypeCountData.series"
+                unit="个"
+                title="不同企业类型协同数对比"
+                :key="govEnterpriseCooperationChartRefreshKey"
               />
             </div>
           </div>
-          <div v-if="activeGovCoopView === '饼图'" class="view-content" style="box-sizing: border-box;width: 100%;height: 100%;padding: 0.3vw 0.2vw 0.8vw 0.2vw;">
-            <div style="box-sizing: border-box;display: inline-block;width: 49%;height: 100%;vertical-align: top;" :key="govCoopChartRefreshKey">
+          <!-- 饼图视图 -->
+          <div v-if="activeGovEnterpriseCooperationView === '饼图'" class="view-content">
+            <div
+              style="
+                display: inline-block;
+                width: 49%;
+                height: 100%;
+                vertical-align: top;
+              "
+            >
               <ChartPie1
-                :data="govCoopItemRatioData"
-                title="协同事项类型占比"
-                :base-font-scale="govCoopBaseFontScale"
-                :active-indices="govCoopActiveIndices"
-                style="width:100%;height:100%;"
+                :data="govEnterpriseCooperationItemRatioData"
+                title="协同事项占比"
+                :key="govEnterpriseCooperationChartRefreshKey"
               />
             </div>
-            <div style="box-sizing: border-box;display: inline-block;width: 49%;height: 100%;padding-left: 0.3vw;vertical-align: top;border-left: 0.3vh solid #02a6b5;" :key="govCoopChartRefreshKey">
+            <div
+              style="
+                display: inline-block;
+                width: 49%;
+                height: 100%;
+                padding-left: 0.3vw;
+                vertical-align: top;
+                border-left: 0.3vh solid #02a6b5;
+              "
+            >
               <ChartPie2
-                :data="govCoopSatisfactionRatioData"
-                title="满意度评价占比"
-                :base-font-scale="govCoopBaseFontScale"
-                :active-indices="govCoopActiveIndices"
-                style="width:100%;height:100%;"
+                :data="govEnterpriseCooperationSatisfactionRatioData"
+                title="满意度占比"
+                :key="govEnterpriseCooperationChartRefreshKey"
               />
             </div>
           </div>
-          <div v-if="activeGovCoopView === '列表'" class="view-content">
-            <div class="table-box1">
+          <!-- 列表视图 -->
+          <div v-if="activeGovEnterpriseCooperationView === '列表'" class="view-content">
+            <div class="table-box4">
               <ElTable
-                class="table1"
-                :data="govCoopList"
+                class="table4"
+                :data="govEnterpriseCooperationList"
                 border
                 size="small"
                 width="100%"
                 height="100%"
                 table-layout="fixed"
                 highlight-current-row
-                @row-click="handleGovCoopRowClick"
+                @row-click="(row) => openGovEnterpriseCooperationDetailDialog(row)"
               >
-                <ElTableColumn prop="govEnterpriseCoopId" label="政企协同ID" align="center" />
-                <ElTableColumn prop="coopItem" label="协同事项" align="center" min-width="120px" />
-                <ElTableColumn prop="govDepartment" label="政府部门" align="center" min-width="100px" />
-                <ElTableColumn prop="merchantId" label="企业ID" align="center" />
-                <ElTableColumn prop="progressFeedback" label="进度反馈" align="center" min-width="180px" />
-                <ElTableColumn label="满意度评价" align="center" min-width="100px">
-                  <template #default="scope"><ElTag :type="getGovCoopSatisfactionTagType(scope.row.satisfactionEvaluation)">{{ scope.row.satisfactionEvaluation }}</ElTag></template>
+                <ElTableColumn
+                  prop="bizGovernmentEnterpriseCoopGovEnterpriseCoopId"
+                  label="协同ID"
+                  align="center"
+                  min-width="140"
+                />
+                <ElTableColumn
+                  prop="sysDeptDeptName"
+                  label="政府部门"
+                  align="center"
+                  min-width="120"
+                />
+                <ElTableColumn
+                  prop="sysMerchantMerchantName"
+                  label="企业名称"
+                  align="center"
+                  min-width="120"
+                />
+                <ElTableColumn
+                  prop="sysEnterpriseTypeName"
+                  label="企业类型"
+                  align="center"
+                  min-width="100"
+                />
+                <ElTableColumn
+                  prop="sysCooperationItemName"
+                  label="协同事项"
+                  align="center"
+                  min-width="150"
+                />
+                <ElTableColumn
+                  prop="sysCooperationStatusName"
+                  label="协同状态"
+                  align="center"
+                  width="100"
+                >
+                  <template #default="scope">
+                    <ElTag :type="getCooperationStatusType(scope.row.sysCooperationStatusName)">
+                      {{ scope.row.sysCooperationStatusName || '-' }}
+                    </ElTag>
+                  </template>
+                </ElTableColumn>
+                <ElTableColumn
+                  label="操作"
+                  align="center"
+                  width="160"
+                  fixed="right"
+                >
+                  <template #default="scope">
+                    <ElButton
+                      type="primary"
+                      size="small"
+                      plain
+                      @click.stop="openGovEnterpriseCooperationTrackingDialog(scope.row)"
+                    >
+                      跟踪
+                    </ElButton>
+                    <ElButton
+                      type="success"
+                      size="small"
+                      plain
+                      @click.stop="openGovEnterpriseCooperationEvaluationDialog(scope.row)"
+                      :disabled="scope.row.sysCooperationStatusName !== '已完成'"
+                    >
+                      评价
+                    </ElButton>
+                  </template>
                 </ElTableColumn>
               </ElTable>
             </div>
@@ -2575,114 +3912,214 @@ onUnmounted(() => {
             <div class="actions-right">
               <div class="view-btn-group">
                 <ElButton
-                  v-for="item in specialCoopViewBtnList"
+                  v-for="item in specialCooperationViewBtnList"
                   :key="item"
-                  :type="activeSpecialCoopView === item ? 'primary' : ''"
+                  :type="activeSpecialCooperationView === item ? 'primary' : ''"
                   plain
-                  @click="changeSpecialCoopView(item)"
+                  @click="changeSpecialCooperationView(item)"
                   class="view-btn"
-                >{{ item }}</ElButton>
+                >
+                  {{ item }}
+                </ElButton>
               </div>
+              <button class="control-btn" @click="refreshSpecialCooperationData">
+                <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+              </button>
               <el-icon color="#409eff" size="16"><Filter /></el-icon>
-              <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('bottomMiddlePanel')">
+              <button
+                class="panel-fullscreen-btn"
+                @click="togglePanelFullscreen('bottomMiddlePanel')"
+              >
                 <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
               </button>
             </div>
           </div>
-          <div v-if="activeSpecialCoopView === '卡片'" class="view-content">
-            <div class="indicator-cards1">
-              <div class="indicator-card1 card1" style="cursor: default">
+          <!-- 卡片视图 -->
+          <div v-if="activeSpecialCooperationView === '卡片'" class="view-content">
+            <div class="indicator-cards3">
+              <div class="indicator-card3 card1">
                 <div class="indicator-title">专属协同总数</div>
                 <div class="indicator-value">
-                  <span :data-value="specialCoopIndicators.totalCount" class="special-coop-number-animate">
-                    {{ specialCoopIndicators.totalCount }}
-                  </span>
+                  <span class="number-animate">{{ specialCooperationIndicators.totalCooperationCount }}</span>
                 </div>
-                <div class="indicator-unit">件</div>
+                <div class="indicator-unit">个</div>
               </div>
-              <div class="indicator-card1 card2" style="cursor: default">
-                <div class="indicator-title">协同完成率</div>
+              <div class="indicator-card3 card2">
+                <div class="indicator-title">完成率</div>
                 <div class="indicator-value">
-                  <span :data-value="specialCoopIndicators.completeRate * 100" class="special-coop-number-animate">
-                    {{ (specialCoopIndicators.completeRate * 100).toFixed(1) }}
-                  </span>
+                  <span class="number-animate">{{ formatDecimal(specialCooperationIndicators.completionRate) }}</span>
                 </div>
                 <div class="indicator-unit">%</div>
               </div>
-              <div class="indicator-card1 card3" style="cursor: default">
+              <div class="indicator-card3 card3">
                 <div class="indicator-title">平均协同周期</div>
                 <div class="indicator-value">
-                  <span :data-value="specialCoopIndicators.averageCycle" class="special-coop-number-animate">
-                    {{ specialCoopIndicators.averageCycle }}
-                  </span>
+                  <span class="number-animate">{{ formatDecimal(specialCooperationIndicators.averageCooperationCycle) }}</span>
                 </div>
                 <div class="indicator-unit">天</div>
               </div>
+              <div class="indicator-card3 card4">
+                <div class="indicator-title">平均执行时长</div>
+                <div class="indicator-value">
+                  <span class="number-animate">{{ formatDecimal(3.8) }}</span>
+                </div>
+                <div class="indicator-unit">小时</div>
+              </div>
             </div>
           </div>
-          <div v-if="activeSpecialCoopView === '柱状图'" class="view-content" style="box-sizing: border-box;width: 100%;height: 100%;padding: 0.3vw 0.2vw 0.8vw 0.2vw;">
-            <div style="box-sizing: border-box;display: inline-block;width: 49%;height: 100%;vertical-align: top;" :key="specialCoopChartRefreshKey">
-              <VerticalBar1
-                :x-axis="specialCoopSceneData.xAxis"
-                :series="specialCoopSceneData.series"
-                unit="件"
-                title="场景协同数对比"
-                :base-font-scale="specialCoopBaseFontScale"
-                :active-indices="specialCoopActiveIndices"
-                style="width:100%;height:100%;"
-              />
-            </div>
-            <div style="box-sizing: border-box;display: inline-block;width: 49%;height: 100%;padding-left: 0.3vw;vertical-align: top;border-left: 0.3vh solid #02a6b5;" :key="specialCoopChartRefreshKey">
+          <!-- 柱状图视图 -->
+          <div v-if="activeSpecialCooperationView === '柱状图'" class="view-content">
+            <div
+              style="
+        display: inline-block;
+        width: 49%;
+        height: 100%;
+        vertical-align: top;
+      "
+            >
               <VerticalBar2
-                :x-axis="specialCoopDeptData.xAxis"
-                :series="specialCoopDeptData.series"
-                unit="件"
-                title="责任单位协同数对比"
-                :base-font-scale="specialCoopBaseFontScale"
-                :active-indices="specialCoopActiveIndices"
-                style="width:100%;height:100%;"
+                :x-axis="specialCooperationSceneCountData.xAxis"
+                :series="specialCooperationSceneCountData.series"
+                unit="个"
+                title="不同场景协同数对比"
+                :key="specialCooperationChartRefreshKey"
+              />
+            </div>
+            <div
+              style="
+        display: inline-block;
+        width: 49%;
+        height: 100%;
+        padding-left: 0.3vw;
+        vertical-align: top;
+        border-left: 0.3vh solid #02a6b5;
+      "
+            >
+              <VerticalBar1
+                :x-axis="specialCooperationUnitCountData.xAxis"
+                :series="specialCooperationUnitCountData.series"
+                unit="个"
+                title="不同责任单位协同数对比"
+                :key="specialCooperationChartRefreshKey"
               />
             </div>
           </div>
-          <div v-if="activeSpecialCoopView === '饼图'" class="view-content" style="box-sizing: border-box;width: 100%;height: 100%;padding: 0.3vw 0.2vw 0.8vw 0.2vw;">
-            <div style="box-sizing: border-box;display: inline-block;width: 49%;height: 100%;vertical-align: top;" :key="specialCoopChartRefreshKey">
+
+          <!-- 饼图视图 -->
+          <div v-if="activeSpecialCooperationView === '饼图'" class="view-content">
+            <div
+              style="
+        display: inline-block;
+        width: 49%;
+        height: 100%;
+        vertical-align: top;
+      "
+            >
               <ChartPie1
-                :data="specialCoopSceneRatioData"
+                :data="specialCooperationSceneRatioData"
                 title="协同场景占比"
-                :base-font-scale="specialCoopBaseFontScale"
-                :active-indices="specialCoopActiveIndices"
-                style="width:100%;height:100%;"
+                :key="specialCooperationChartRefreshKey"
               />
             </div>
-            <div style="box-sizing: border-box;display: inline-block;width: 49%;height: 100%;padding-left: 0.3vw;vertical-align: top;border-left: 0.3vh solid #02a6b5;" :key="specialCoopChartRefreshKey">
+            <div
+              style="
+        display: inline-block;
+        width: 49%;
+        height: 100%;
+        padding-left: 0.3vw;
+        vertical-align: top;
+        border-left: 0.3vh solid #02a6b5;
+      "
+            >
               <ChartPie2
-                :data="specialCoopStatusRatioData"
+                :data="specialCooperationStatusRatioData"
                 title="协同状态占比"
-                :base-font-scale="specialCoopBaseFontScale"
-                :active-indices="specialCoopActiveIndices"
-                style="width:100%;height:100%;"
+                :key="specialCooperationChartRefreshKey"
               />
             </div>
           </div>
-          <div v-if="activeSpecialCoopView === '列表'" class="view-content">
-            <div class="table-box1">
+          <!-- 列表视图 -->
+          <div v-if="activeSpecialCooperationView === '列表'" class="view-content">
+            <div class="table-box4">
               <ElTable
-                class="table1"
-                :data="specialCoopList"
+                class="table4"
+                :data="specialCooperationList"
                 border
                 size="small"
                 width="100%"
                 height="100%"
                 table-layout="fixed"
                 highlight-current-row
+                @row-click="(row) => openSpecialCooperationDetailDialog(row)"
               >
-                <ElTableColumn prop="specialCoopId" label="专属协同ID" align="center" />
-                <ElTableColumn prop="coopScene" label="协同场景" align="center" min-width="160px" />
-                <ElTableColumn prop="coopRule" label="协同规则" align="center" min-width="180px" />
-                <ElTableColumn prop="responsibilityDivision" label="责任分工" align="center" min-width="200px" />
-                <ElTableColumn prop="coopResult" label="协同结果" align="center" min-width="180px" />
-                <ElTableColumn prop="completeTime" label="完成时间" align="center" min-width="120px">
-                  <template #default="scope">{{ formatSpecialCoopTimeStamp(scope.row.completeTime) }}</template>
+                <ElTableColumn
+                  prop="bizSpecialCoopSpecialCoopId"
+                  label="协同ID"
+                  align="center"
+                  min-width="140"
+                />
+                <ElTableColumn
+                  prop="sysCoopSceneName"
+                  label="协同场景"
+                  align="center"
+                  min-width="100"
+                />
+                <ElTableColumn
+                  prop="sysResponsibleUnitName"
+                  label="责任单位"
+                  align="center"
+                  min-width="100"
+                />
+                <ElTableColumn
+                  prop="bizSpecialCoopCoopRule"
+                  label="协同规则"
+                  align="center"
+                  min-width="120"
+                />
+                <ElTableColumn
+                  prop="bizSpecialCoopResponsibilityDivision"
+                  label="责任分工"
+                  align="center"
+                  min-width="180"
+                />
+                <ElTableColumn
+                  prop="sysCooperationStatusName"
+                  label="协同状态"
+                  align="center"
+                  width="100"
+                >
+                  <template #default="scope">
+                    <ElTag :type="getSpecialCooperationStatusType(scope.row.sysCooperationStatusName)">
+                      {{ scope.row.sysCooperationStatusName || '-' }}
+                    </ElTag>
+                  </template>
+                </ElTableColumn>
+                <ElTableColumn
+                  label="操作"
+                  align="center"
+                  width="160"
+                  fixed="right"
+                >
+                  <template #default="scope">
+                    <ElButton
+                      v-if="scope.row.sysCooperationStatusName === '待执行' || scope.row.sysCooperationStatusName === '执行中'"
+                      type="success"
+                      size="small"
+                      plain
+                      @click.stop="openSpecialCooperationExecuteDialog()"
+                    >
+                      执行
+                    </ElButton>
+                    <ElButton
+                      v-if="scope.row.sysCooperationStatusName === '待复盘'"
+                      type="warning"
+                      size="small"
+                      plain
+                      @click.stop="openSpecialCooperationReviewDialog()"
+                    >
+                      复盘
+                    </ElButton>
+                  </template>
                 </ElTableColumn>
               </ElTable>
             </div>
@@ -2695,125 +4132,212 @@ onUnmounted(() => {
             <div class="actions-right">
               <div class="view-btn-group">
                 <ElButton
-                  v-for="item in coopEfficiencyViewBtnList"
+                  v-for="item in efficiencyEvaluationViewBtnList"
                   :key="item"
-                  :type="activeCoopEfficiencyView === item ? 'primary' : ''"
+                  :type="activeEfficiencyEvaluationView === item ? 'primary' : ''"
                   plain
-                  @click="changeCoopEfficiencyView(item)"
+                  @click="changeEfficiencyEvaluationView(item)"
                   class="view-btn"
-                >{{ item }}</ElButton>
+                >
+                  {{ item }}
+                </ElButton>
               </div>
+              <button class="control-btn" @click="refreshEfficiencyEvaluationData">
+                <el-icon color="#409eff" size="16"><Refresh /></el-icon>
+              </button>
               <el-icon color="#409eff" size="16"><Filter /></el-icon>
-              <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('bottomRightPanel')">
+              <button
+                class="panel-fullscreen-btn"
+                @click="togglePanelFullscreen('bottomRightPanel')"
+              >
                 <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
               </button>
             </div>
           </div>
-          <div v-if="activeCoopEfficiencyView === '卡片'" class="view-content">
-            <div class="indicator-cards1">
-              <div class="indicator-card1 card1" style="cursor: default">
+          <!-- 卡片视图 -->
+          <div v-if="activeEfficiencyEvaluationView === '卡片'" class="view-content">
+            <div class="indicator-cards3">
+              <div class="indicator-card3 card1">
                 <div class="indicator-title">平均响应时长</div>
                 <div class="indicator-value">
-                  <span :data-value="coopEfficiencyIndicators.avgResponseDuration" class="coop-efficiency-number-animate">
-                    {{ coopEfficiencyIndicators.avgResponseDuration }}
-                  </span>
+                  <span class="number-animate">{{ formatDecimal(efficiencyEvaluationIndicators.averageResponseDuration) }}</span>
                 </div>
                 <div class="indicator-unit">小时</div>
               </div>
-              <div class="indicator-card1 card2" style="cursor: default">
+              <div class="indicator-card3 card2">
                 <div class="indicator-title">平均处置时长</div>
                 <div class="indicator-value">
-                  <span :data-value="coopEfficiencyIndicators.avgDisposalDuration" class="coop-efficiency-number-animate">
-                    {{ coopEfficiencyIndicators.avgDisposalDuration }}
-                  </span>
+                  <span class="number-animate">{{ formatDecimal(efficiencyEvaluationIndicators.averageDisposalDuration) }}</span>
                 </div>
                 <div class="indicator-unit">小时</div>
               </div>
-              <div class="indicator-card1 card3" style="cursor: default">
-                <div class="indicator-title">平均成效达标率</div>
+              <div class="indicator-card3 card3">
+                <div class="indicator-title">成效达标率</div>
                 <div class="indicator-value">
-                  <span :data-value="coopEfficiencyIndicators.avgEffectAchievementRate * 100" class="coop-efficiency-number-animate">
-                    {{ (coopEfficiencyIndicators.avgEffectAchievementRate * 100).toFixed(1) }}
-                  </span>
+                  <span class="number-animate">{{ formatDecimal(efficiencyEvaluationIndicators.effectivenessRate) }}</span>
                 </div>
                 <div class="indicator-unit">%</div>
               </div>
+              <div class="indicator-card3 card4">
+                <div class="indicator-title">综合效率评分</div>
+                <div class="indicator-value">
+                  <span class="number-animate">{{ formatDecimal(89.5) }}</span>
+                </div>
+                <div class="indicator-unit">分</div>
+              </div>
             </div>
           </div>
-          <div v-if="activeCoopEfficiencyView === '柱状图'" class="view-content" style="box-sizing: border-box;width: 100%;height: 100%;padding: 0.3vw 0.2vw 0.8vw 0.2vw;">
-            <div style="box-sizing: border-box;display: inline-block;width: 49%;height: 100%;vertical-align: top;" :key="coopEfficiencyChartRefreshKey">
-              <VerticalBar1
-                :x-axis="coopEfficiencyTypeData.xAxis"
-                :series="coopEfficiencyTypeData.series"
-                unit="小时"
-                title="类型协同效率对比"
-                :base-font-scale="coopEfficiencyBaseFontScale"
-                :active-indices="coopEfficiencyActiveIndices"
-                style="width:100%;height:100%;"
-              />
-            </div>
-            <div style="box-sizing: border-box;display: inline-block;width: 49%;height: 100%;padding-left: 0.3vw;vertical-align: top;border-left: 0.3vh solid #02a6b5;" :key="coopEfficiencyChartRefreshKey">
+          <!-- 柱状图视图 -->
+          <div v-if="activeEfficiencyEvaluationView === '柱状图'" class="view-content">
+            <div
+              style="
+        display: inline-block;
+        width: 49%;
+        height: 100%;
+        vertical-align: top;
+      "
+            >
               <VerticalBar2
-                :x-axis="coopEfficiencyAreaData.xAxis"
-                :series="coopEfficiencyAreaData.series"
+                :x-axis="efficiencyEvaluationTypeCompareData.xAxis"
+                :series="efficiencyEvaluationTypeCompareData.series"
                 unit="小时"
-                title="区域协同效率对比"
-                :base-font-scale="coopEfficiencyBaseFontScale"
-                :active-indices="coopEfficiencyActiveIndices"
+                title="不同类型协同效率对比"
+                :key="efficiencyEvaluationChartRefreshKey"
+              />
+            </div>
+            <div
+              style="
+        display: inline-block;
+        width: 49%;
+        height: 100%;
+        padding-left: 0.3vw;
+        vertical-align: top;
+        border-left: 0.3vh solid #02a6b5;
+      "
+            >
+              <VerticalBar1
+                :x-axis="efficiencyEvaluationAreaCompareData.xAxis"
+                :series="efficiencyEvaluationAreaCompareData.series"
+                unit="小时"
+                title="不同区域协同效率对比"
+                :key="efficiencyEvaluationChartRefreshKey"
+              />
+            </div>
+          </div>
+
+          <!-- 折线图视图 -->
+          <div v-if="activeEfficiencyEvaluationView === '折线图'" class="view-content">
+            <div class="view-content" style="box-sizing: border-box;width:100%;height:100%;padding:0.3vw;" :key="efficiencyEvaluationChartRefreshKey">
+              <ChartLine1
+                :data="efficiencyEvaluationTrendData"
+                title="协同效率近周期趋势"
+                y-axis-name="综合效率评分"
+                :key="efficiencyEvaluationChartRefreshKey"
                 style="width:100%;height:100%;"
               />
             </div>
           </div>
-          <div v-if="activeCoopEfficiencyView === '饼图'" class="view-content" style="box-sizing: border-box;width: 100%;height: 100%;padding: 0.3vw 0.2vw 0.8vw 0.2vw;">
-            <div style="box-sizing: border-box;display: inline-block;width: 100%;height: 100%;vertical-align: top;" :key="coopEfficiencyChartRefreshKey">
-              <ChartPie2
-                :data="coopEfficiencyRecurrenceRatioData"
+          <!-- 饼图视图 -->
+          <div v-if="activeEfficiencyEvaluationView === '饼图'" class="view-content">
+            <div
+              style="
+        display: inline-block;
+        width: 100%;
+        height: 100%;
+        vertical-align: top;
+      "
+            >
+              <ChartPie1
+                :data="efficiencyEvaluationRecurrenceRatioData"
                 title="问题复发率占比"
-                :base-font-scale="coopEfficiencyBaseFontScale"
-                :active-indices="coopEfficiencyActiveIndices"
-                style="width:100%;height:100%;"
+                :key="efficiencyEvaluationChartRefreshKey"
               />
             </div>
           </div>
-          <div v-if="activeCoopEfficiencyView === '折线图'" class="view-content" style="box-sizing: border-box;width:100%;height:100%;padding:0.3vw;" :key="coopEfficiencyChartRefreshKey">
-            <ChartLine1
-              :data="coopEfficiencyTrendData"
-              title="协同效率趋势"
-              y-axis-name="综合效率评分"
-              :base-font-scale="coopEfficiencyBaseFontScale"
-              style="width:100%;height:100%;"
-            />
-          </div>
-          <div v-if="activeCoopEfficiencyView === '列表'" class="view-content">
-            <div class="table-box1">
+          <!-- 列表视图 -->
+          <div v-if="activeEfficiencyEvaluationView === '列表'" class="view-content">
+            <div class="table-box4">
               <ElTable
-                class="table1"
-                :data="coopEfficiencyList"
+                class="table4"
+                :data="efficiencyEvaluationList"
                 border
                 size="small"
                 width="100%"
                 height="100%"
                 table-layout="fixed"
                 highlight-current-row
+                @row-click="(row) => openEfficiencyEvaluationDetailDialog(row)"
               >
-                <ElTableColumn prop="coopEfficiencyId" label="协同效率评估ID" align="center" />
-                <ElTableColumn prop="coopType" label="协同类型" align="center">
-                  <template #default="scope"><ElTag :type="getCoopTypeTagType(scope.row.coopType)">{{ getCoopTypeName(scope.row.coopType) }}</ElTag></template>
+                <ElTableColumn
+                  prop="bizCoopEfficiencyCoopEfficiencyId"
+                  label="评估ID"
+                  align="center"
+                  min-width="140"
+                />
+                <ElTableColumn
+                  prop="sysCooperationTypeName"
+                  label="协同类型"
+                  align="center"
+                  min-width="120"
+                />
+                <ElTableColumn
+                  prop="sysAreaAreaName"
+                  label="区域名称"
+                  align="center"
+                  min-width="100"
+                />
+                <ElTableColumn
+                  prop="sysStatCycleName"
+                  label="统计周期"
+                  align="center"
+                  min-width="100"
+                />
+                <ElTableColumn
+                  prop="bizCoopEfficiencyAverageResponseDuration"
+                  label="平均响应时长(小时)"
+                  align="center"
+                  width="120"
+                >
+                  <template #default="scope">
+                    {{ formatDecimal(scope.row.bizCoopEfficiencyAverageResponseDuration) }}
+                  </template>
                 </ElTableColumn>
-                <ElTableColumn prop="responseDuration" label="响应时长(小时)" align="center" min-width="100px">
-                  <template #default="scope">{{ scope.row.responseDuration.toFixed(1) }}</template>
+                <ElTableColumn
+                  prop="bizCoopEfficiencyAverageDisposalDuration"
+                  label="平均处置时长(小时)"
+                  align="center"
+                  width="120"
+                >
+                  <template #default="scope">
+                    {{ formatDecimal(scope.row.bizCoopEfficiencyAverageDisposalDuration) }}
+                  </template>
                 </ElTableColumn>
-                <ElTableColumn prop="disposalDuration" label="处置时长(小时)" align="center" min-width="100px">
-                  <template #default="scope">{{ scope.row.disposalDuration.toFixed(1) }}</template>
+                <ElTableColumn
+                  prop="bizCoopEfficiencyEffectivenessRate"
+                  label="成效达标率"
+                  align="center"
+                  width="100"
+                >
+                  <template #default="scope">
+                    {{ formatDecimal(scope.row.bizCoopEfficiencyEffectivenessRate) }}%
+                  </template>
                 </ElTableColumn>
-                <ElTableColumn prop="collaborationCost" label="协同成本" align="center" min-width="100px">
-                  <template #default="scope">{{ formatNumber(scope.row.collaborationCost) }}</template>
-                </ElTableColumn>
-                <ElTableColumn prop="effectAchievementRate" label="成效达标率" align="center" min-width="100px">
-                  <template #default="scope">{{ (scope.row.effectAchievementRate * 100).toFixed(1) }}%</template>
-                </ElTableColumn>
-                <ElTableColumn prop="problemRecurrenceRate" label="问题复发率" align="center" min-width="100px">
-                  <template #default="scope">{{ (scope.row.problemRecurrenceRate * 100).toFixed(1) }}%</template>
+                <ElTableColumn
+                  label="操作"
+                  align="center"
+                  width="100"
+                  fixed="right"
+                >
+                  <template #default="scope">
+                    <ElButton
+                      type="warning"
+                      size="small"
+                      plain
+                      @click.stop="openEfficiencyEvaluationOptimizeDialog()"
+                    >
+                      优化
+                    </ElButton>
+                  </template>
                 </ElTableColumn>
               </ElTable>
             </div>
@@ -3497,6 +5021,1170 @@ onUnmounted(() => {
           <ElButton type="primary" @click="submitEvaluateData(industryCooperationDetailSelectedRow.bizCrossIndustryCoopCrossIndustryCoopId)">确认</ElButton>
         </template>
       </el-dialog>
+
+      <!-- 层级协同详情弹窗 -->
+      <el-dialog
+        v-model="levelCooperationDetailDialogVisible"
+        width="40%"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="层级协同详情"
+      >
+        <div class="header-actions" style="margin-bottom:10px;">
+          <div class="actions-right">
+            <div class="view-btn-group">
+              <ElButton
+                v-for="item in levelCooperationDetailViewBtnList"
+                :key="item"
+                :type="activeLevelCooperationDetailView === item ? 'primary' : ''"
+                plain
+                @click="changeLevelCooperationDetailView(item)"
+                class="view-btn"
+              >
+                {{ item }}
+              </ElButton>
+            </div>
+          </div>
+        </div>
+        <!-- 指令详情视图 -->
+        <div v-if="activeLevelCooperationDetailView === '指令详情'" class="view-content" style="padding:0;">
+          <ElDescriptions bordered :column="2" class="desc-detail">
+            <ElDescriptionsItem label="协同ID" span="2">
+              {{ levelCooperationDetailSelectedRow.bizCrossLevelCoopCrossLevelCoopId || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="下达层级">
+              {{ levelCooperationDetailSelectedRow.issueLevelName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="接收层级">
+              {{ levelCooperationDetailSelectedRow.receiveLevelName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="指令状态">
+              <ElTag :type="getInstructionStatusType(levelCooperationDetailSelectedRow.sysInstructionStatusName)">
+                {{ levelCooperationDetailSelectedRow.sysInstructionStatusName || '-' }}
+              </ElTag>
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="指令内容" span="2">
+              {{ levelCooperationDetailSelectedRow.bizCrossLevelCoopInstructionContent || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="平均反馈时长">
+              {{ formatDecimal(levelCooperationDetailSelectedRow.bizCrossLevelCoopAverageFeedbackDuration) }}天
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="责任单位">
+              {{ levelCooperationDetailSelectedRow.sysResponsibleUnitName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="反馈结果">
+              {{ levelCooperationDetailSelectedRow.bizCrossLevelCoopFeedbackResult || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="下发时间">
+              {{ levelCooperationDetailSelectedRow.bizCrossLevelCoopIssueTime || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="完成时间">
+              {{ levelCooperationDetailSelectedRow.bizCrossLevelCoopCompleteTime || '-' }}
+            </ElDescriptionsItem>
+          </ElDescriptions>
+        </div>
+        <!-- 层级分工视图 -->
+        <div v-if="activeLevelCooperationDetailView === '层级分工'" class="view-content" style="padding:0;">
+          <div style="height:400px;">
+            <ElTable
+              :data="levelCooperationDetailSelectedRow.levelDivision"
+              border
+              size="small"
+              width="100%"
+              height="100%"
+              table-layout="fixed"
+            >
+              <ElTableColumn
+                prop="levelName"
+                label="层级"
+                align="center"
+                width="120"
+              />
+              <ElTableColumn
+                prop="task"
+                label="任务"
+                align="center"
+                min-width="200"
+              />
+              <ElTableColumn
+                prop="person"
+                label="负责人"
+                align="center"
+                width="100"
+              />
+            </ElTable>
+          </div>
+        </div>
+        <!-- 反馈记录视图 -->
+        <div v-if="activeLevelCooperationDetailView === '反馈记录'" class="view-content" style="padding:0;">
+          <div style="height:400px;">
+            <ElTable
+              :data="levelCooperationDetailSelectedRow.feedbackRecords"
+              border
+              size="small"
+              width="100%"
+              height="100%"
+              table-layout="fixed"
+            >
+              <ElTableColumn
+                prop="time"
+                label="反馈时间"
+                align="center"
+                width="140"
+              />
+              <ElTableColumn
+                prop="level"
+                label="反馈层级"
+                align="center"
+                width="100"
+              />
+              <ElTableColumn
+                prop="content"
+                label="反馈内容"
+                align="center"
+                min-width="200"
+              />
+            </ElTable>
+          </div>
+        </div>
+        <template #footer>
+          <ElButton plain @click="closeLevelCooperationDetailDialog">关闭</ElButton>
+        </template>
+      </el-dialog>
+      <!-- 层级反馈弹窗 -->
+      <el-dialog
+        v-model="levelCooperationFeedbackDialogVisible"
+        width="40%"
+        :close-on-click-modal="false"
+        :close-on-press-escape="false"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="层级反馈"
+      >
+        <el-form
+          ref="levelCooperationFeedbackFormRef"
+          :model="levelCooperationFeedbackForm"
+          :rules="levelCooperationFeedbackFormRules"
+          label-width="80px"
+          style="width: 100%;"
+        >
+          <el-form-item label="反馈内容" prop="feedbackContent" required>
+            <el-input
+              v-model="levelCooperationFeedbackForm.feedbackContent"
+              type="textarea"
+              :rows="6"
+              placeholder="请输入反馈内容（必填）"
+            />
+          </el-form-item>
+          <el-form-item label="上传凭证">
+            <el-upload
+              v-model:file-list="levelCooperationFeedbackForm.evidenceFiles"
+              action="#"
+              multiple
+              :limit="3"
+              :on-exceed="handleFileExceed"
+              :before-upload="handleBeforeUpload"
+            >
+              <ElButton type="primary">上传文件</ElButton>
+              <template #tip>
+                <div class="el-upload__tip">
+                  支持上传图片、文档等格式，最多3个文件
+                </div>
+              </template>
+            </el-upload>
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <ElButton plain @click="closeLevelCooperationFeedbackDialog">取消</ElButton>
+          <ElButton type="primary" @click="submitLevelFeedbackData(levelCooperationDetailSelectedRow.bizCrossLevelCoopCrossLevelCoopId)">确认</ElButton>
+        </template>
+      </el-dialog>
+      <!-- 层级跟踪弹窗 -->
+      <el-dialog
+        v-model="levelCooperationTrackDialogVisible"
+        width="50%"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="指令流转跟踪"
+      >
+        <div class="view-content" style="padding:20px;">
+          <ElTimeline>
+            <ElTimelineItem
+              v-for="(item, index) in levelCooperationDetailSelectedRow.flowTimeline"
+              :key="index"
+              :timestamp="item.time"
+              placement="top"
+              :type="getLevelTimelineItemType(item.status)"
+            >
+              <div style="display: flex; align-items: center;">
+                <div style="margin-right: 20px; min-width: 80px;">
+                  <ElTag :type="getInstructionStatusType(item.status)" size="small">
+                    {{ item.status }}
+                  </ElTag>
+                </div>
+                <div>
+                  <div style="font-weight: bold;">{{ item.level }} - {{ item.action }}</div>
+                  <div style="color: #666; margin-top: 5px;">时间：{{ item.time }}</div>
+                </div>
+              </div>
+            </ElTimelineItem>
+          </ElTimeline>
+        </div>
+        <template #footer>
+          <ElButton plain @click="closeLevelCooperationTrackDialog">关闭</ElButton>
+        </template>
+      </el-dialog>
+
+      <!-- 政企协同详情弹窗 -->
+      <el-dialog
+        v-model="govEnterpriseCooperationDetailDialogVisible"
+        width="45%"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="政企协同详情"
+      >
+        <div class="header-actions" style="margin-bottom:10px;">
+          <div class="actions-right">
+            <div class="view-btn-group">
+              <ElButton
+                v-for="item in govEnterpriseCooperationDetailViewBtnList"
+                :key="item"
+                :type="activeGovEnterpriseCooperationDetailView === item ? 'primary' : ''"
+                plain
+                @click="changeGovEnterpriseCooperationDetailView(item)"
+                class="view-btn"
+              >
+                {{ item }}
+              </ElButton>
+            </div>
+          </div>
+        </div>
+        <!-- 协同详情视图 -->
+        <div v-if="activeGovEnterpriseCooperationDetailView === '协同详情'" class="view-content" style="padding:0;">
+          <ElDescriptions bordered :column="2" class="desc-detail">
+            <ElDescriptionsItem label="协同ID" span="2">
+              {{ govEnterpriseCooperationDetailSelectedRow.bizGovernmentEnterpriseCoopGovEnterpriseCoopId || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="政府部门">
+              {{ govEnterpriseCooperationDetailSelectedRow.sysDeptDeptName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="企业名称">
+              {{ govEnterpriseCooperationDetailSelectedRow.sysMerchantMerchantName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="企业类型">
+              {{ govEnterpriseCooperationDetailSelectedRow.sysEnterpriseTypeName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="协同事项" span="2">
+              {{ govEnterpriseCooperationDetailSelectedRow.sysCooperationItemName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="协同状态">
+              <ElTag :type="getCooperationStatusType(govEnterpriseCooperationDetailSelectedRow.sysCooperationStatusName)">
+                {{ govEnterpriseCooperationDetailSelectedRow.sysCooperationStatusName || '-' }}
+              </ElTag>
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="进度反馈">
+              {{ govEnterpriseCooperationDetailSelectedRow.bizGovernmentEnterpriseCoopProgressFeedback || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="满意度评价">
+              {{ govEnterpriseCooperationDetailSelectedRow.sysSatisfactionName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="完成时间">
+              {{ govEnterpriseCooperationDetailSelectedRow.bizGovernmentEnterpriseCoopCompleteTime || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="协同周期">
+              {{ govEnterpriseCooperationDetailSelectedRow.bizGovernmentEnterpriseCoopCoopCycle || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="发起时间">
+              {{ govEnterpriseCooperationDetailSelectedRow.cooperationDetail?.launchTime || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="预计完成">
+              {{ govEnterpriseCooperationDetailSelectedRow.cooperationDetail?.expectedCompleteTime || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="联系人">
+              {{ govEnterpriseCooperationDetailSelectedRow.cooperationDetail?.contactPerson || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="联系电话">
+              {{ govEnterpriseCooperationDetailSelectedRow.cooperationDetail?.contactPhone || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="协同内容" span="2">
+              {{ govEnterpriseCooperationDetailSelectedRow.cooperationDetail?.cooperationContent || '-' }}
+            </ElDescriptionsItem>
+          </ElDescriptions>
+        </div>
+        <!-- 责任分工视图 -->
+        <div v-if="activeGovEnterpriseCooperationDetailView === '责任分工'" class="view-content" style="padding:0;">
+          <div style="height:400px;">
+            <ElTable
+              :data="govEnterpriseCooperationDetailSelectedRow.responsibilityDivision"
+              border
+              size="small"
+              width="100%"
+              height="100%"
+              table-layout="fixed"
+            >
+              <ElTableColumn
+                prop="department"
+                label="部门"
+                align="center"
+                width="120"
+              />
+              <ElTableColumn
+                prop="task"
+                label="任务"
+                align="center"
+                min-width="180"
+              />
+              <ElTableColumn
+                prop="person"
+                label="负责人"
+                align="center"
+                width="100"
+              />
+              <ElTableColumn
+                prop="phone"
+                label="联系电话"
+                align="center"
+                width="120"
+              />
+            </ElTable>
+          </div>
+        </div>
+        <!-- 执行计划视图 -->
+        <div v-if="activeGovEnterpriseCooperationDetailView === '执行计划'" class="view-content" style="padding:0;">
+          <div style="height:400px;">
+            <ElTable
+              :data="govEnterpriseCooperationDetailSelectedRow.executionPlan"
+              border
+              size="small"
+              width="100%"
+              height="100%"
+              table-layout="fixed"
+            >
+              <ElTableColumn
+                prop="stage"
+                label="阶段"
+                align="center"
+                width="100"
+              />
+              <ElTableColumn
+                prop="task"
+                label="任务内容"
+                align="center"
+                min-width="180"
+              />
+              <ElTableColumn
+                prop="startTime"
+                label="开始时间"
+                align="center"
+                width="100"
+              />
+              <ElTableColumn
+                prop="endTime"
+                label="结束时间"
+                align="center"
+                width="100"
+              />
+              <ElTableColumn
+                prop="status"
+                label="状态"
+                align="center"
+                width="80"
+              >
+                <template #default="scope">
+                  <ElTag :type="scope.row.status === '已完成' ? 'success' : scope.row.status === '进行中' ? 'primary' : 'info'">
+                    {{ scope.row.status }}
+                  </ElTag>
+                </template>
+              </ElTableColumn>
+            </ElTable>
+          </div>
+        </div>
+        <template #footer>
+          <ElButton plain @click="closeGovEnterpriseCooperationDetailDialog">关闭</ElButton>
+        </template>
+      </el-dialog>
+      <!-- 协同跟踪弹窗 -->
+      <el-dialog
+        v-model="govEnterpriseCooperationTrackingDialogVisible"
+        width="45%"
+        :close-on-click-modal="false"
+        :close-on-press-escape="false"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="协同跟踪"
+      >
+        <div class="header-actions" style="margin-bottom:10px;">
+          <div class="actions-right">
+            <div class="view-btn-group">
+              <ElButton
+                v-for="item in govEnterpriseCooperationTrackingViewBtnList"
+                :key="item"
+                :type="govEnterpriseCooperationTrackingView === item ? 'primary' : ''"
+                plain
+                @click="changeGovEnterpriseCooperationTrackingView(item)"
+                class="view-btn"
+              >
+                {{ item }}
+              </ElButton>
+            </div>
+          </div>
+        </div>
+        <!-- 进度时间轴视图 -->
+        <div v-if="govEnterpriseCooperationTrackingView === '进度时间轴'" class="view-content" style="padding:0;">
+          <el-timeline>
+              <el-timeline-item
+                v-for="(item, index) in govEnterpriseCooperationDetailSelectedRow.progressTimeline"
+                :key="index"
+                :timestamp="item.time"
+                placement="top"
+              >
+                <el-card>
+                  <p>{{ item.content }}</p>
+                  <p style="color:#888;font-size:12px;">操作人：{{ item.operator }}</p>
+                </el-card>
+              </el-timeline-item>
+            </el-timeline>
+        </div>
+        <!-- 反馈记录视图 -->
+        <div v-if="govEnterpriseCooperationTrackingView === '反馈记录'" class="view-content" style="padding:0;">
+          <div style="height:300px;overflow-y:auto;width:100%;">
+            <ElTable
+              :data="govEnterpriseCooperationDetailSelectedRow.feedbackRecords"
+              border
+              size="small"
+              width="100%"
+              height="100%"
+              table-layout="fixed"
+            >
+              <ElTableColumn
+                prop="time"
+                label="时间"
+                align="center"
+                width="140"
+              />
+              <ElTableColumn
+                prop="sender"
+                label="发送方"
+                align="center"
+                width="80"
+              />
+              <ElTableColumn
+                prop="content"
+                label="内容"
+                align="center"
+                min-width="180"
+              />
+              <ElTableColumn
+                prop="type"
+                label="类型"
+                align="center"
+                width="80"
+              />
+            </ElTable>
+          </div>
+        </div>
+        <el-form
+          ref="cooperationTrackingFormRef"
+          :model="cooperationTrackingForm"
+          :rules="cooperationTrackingFormRules"
+          label-width="80px"
+          style="width: 100%;margin-top:20px;"
+        >
+          <el-form-item label="跟踪记录" prop="trackingContent" required>
+            <el-input
+              v-model="cooperationTrackingForm.trackingContent"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入跟踪记录内容（必填）"
+            />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <ElButton plain @click="closeGovEnterpriseCooperationTrackingDialog">取消</ElButton>
+          <ElButton type="primary" @click="submitTrackingData(govEnterpriseCooperationDetailSelectedRow.bizGovernmentEnterpriseCoopGovEnterpriseCoopId)">提交</ElButton>
+        </template>
+      </el-dialog>
+      <!-- 协同评价弹窗 -->
+      <el-dialog
+        v-model="govEnterpriseCooperationEvaluationDialogVisible"
+        width="40%"
+        :close-on-click-modal="false"
+        :close-on-press-escape="false"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="协同评价"
+      >
+        <el-form
+          ref="cooperationEvaluationFormRef"
+          :model="cooperationEvaluationForm"
+          :rules="cooperationEvaluationFormRules"
+          label-width="80px"
+          style="width: 100%;"
+        >
+          <el-form-item label="满意度" prop="satisfactionLevel" required>
+            <el-rate
+              v-model="cooperationEvaluationForm.satisfactionLevel"
+              :max="5"
+              show-text
+              :texts="['非常不满意', '不满意', '一般', '满意', '非常满意']"
+            />
+          </el-form-item>
+          <el-form-item label="评价意见">
+            <el-input
+              v-model="cooperationEvaluationForm.evaluationContent"
+              type="textarea"
+              :rows="4"
+              placeholder="请输入评价意见（可选）"
+            />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <ElButton plain @click="closeGovEnterpriseCooperationEvaluationDialog">取消</ElButton>
+          <ElButton type="primary" @click="submitEvaluationData(govEnterpriseCooperationDetailSelectedRow.bizGovernmentEnterpriseCoopGovEnterpriseCoopId)">确认</ElButton>
+        </template>
+      </el-dialog>
+
+      <!-- 专属协同详情弹窗 -->
+      <ElDialog
+        v-model="specialCooperationDetailDialogVisible"
+        width="50%"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="专属协同详情"
+      >
+        <div class="header-actions" style="margin-bottom:10px;">
+          <div class="actions-right">
+            <div class="view-btn-group">
+              <ElButton
+                v-for="item in specialCooperationDetailViewBtnList"
+                :key="item"
+                :type="activeSpecialCooperationDetailView === item ? 'primary' : ''"
+                plain
+                @click="changeSpecialCooperationDetailView(item)"
+                class="view-btn"
+              >
+                {{ item }}
+              </ElButton>
+            </div>
+          </div>
+        </div>
+        <!-- 协同详情视图 -->
+        <div v-if="activeSpecialCooperationDetailView === '协同详情'" class="view-content" style="padding:0;">
+          <ElDescriptions bordered :column="2" class="desc-detail">
+            <ElDescriptionsItem label="协同ID" span="2">
+              {{ specialCooperationDetailSelectedRow.bizSpecialCoopSpecialCoopId || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="协同场景">
+              {{ specialCooperationDetailSelectedRow.sysCoopSceneName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="责任单位">
+              {{ specialCooperationDetailSelectedRow.sysResponsibleUnitName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="协同状态">
+              <ElTag :type="getSpecialCooperationStatusType(specialCooperationDetailSelectedRow.sysCooperationStatusName)">
+                {{ specialCooperationDetailSelectedRow.sysCooperationStatusName || '-' }}
+              </ElTag>
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="协同规则" span="2">
+              {{ specialCooperationDetailSelectedRow.bizSpecialCoopCoopRule || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="责任分工" span="2">
+              {{ specialCooperationDetailSelectedRow.bizSpecialCoopResponsibilityDivision || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="平均协同周期">
+              {{ formatDecimal(specialCooperationDetailSelectedRow.bizSpecialCoopAverageCoopCycle) }} 天
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="协同结果">
+              {{ specialCooperationDetailSelectedRow.bizSpecialCoopCoopResult || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="完成时间">
+              {{ specialCooperationDetailSelectedRow.bizSpecialCoopCompleteTime || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="复盘结论">
+              {{ specialCooperationDetailSelectedRow.bizSpecialCoopReviewConclusion || '-' }}
+            </ElDescriptionsItem>
+          </ElDescriptions>
+          <!-- 执行进展时间轴 -->
+          <div v-if="specialCooperationDetailSelectedRow.executionProgress.length > 0" style="margin-top: 20px;">
+            <div style="font-size: 14px; color: #409eff; margin-bottom: 10px; font-weight: bold;">执行进展</div>
+            <el-timeline>
+              <el-timeline-item
+                v-for="(item, index) in specialCooperationDetailSelectedRow.executionProgress"
+                :key="index"
+                :timestamp="item.time"
+                placement="top"
+              >
+                {{ item.content }}
+              </el-timeline-item>
+            </el-timeline>
+          </div>
+        </div>
+        <!-- 协同配置视图 -->
+        <div v-if="activeSpecialCooperationDetailView === '协同配置'" class="view-content" style="padding:0;">
+          <div style="height:400px;">
+            <ElTable
+              :data="specialCooperationDetailSelectedRow.cooperationConfig"
+              border
+              size="small"
+              width="100%"
+              height="100%"
+              table-layout="fixed"
+            >
+              <ElTableColumn
+                prop="item"
+                label="项目"
+                align="center"
+                width="120"
+              />
+              <ElTableColumn
+                prop="value"
+                label="配置内容"
+                align="center"
+                min-width="300"
+              />
+            </ElTable>
+          </div>
+        </div>
+        <!-- 场景要求视图 -->
+        <div v-if="activeSpecialCooperationDetailView === '场景要求'" class="view-content" style="padding:0;">
+          <div style="height:400px;">
+            <ElTable
+              :data="specialCooperationDetailSelectedRow.sceneRequirements"
+              border
+              size="small"
+              width="100%"
+              height="100%"
+              table-layout="fixed"
+            >
+              <ElTableColumn
+                prop="item"
+                label="要求项目"
+                align="center"
+                width="120"
+              />
+              <ElTableColumn
+                prop="value"
+                label="具体要求"
+                align="center"
+                min-width="300"
+              />
+            </ElTable>
+          </div>
+        </div>
+        <!-- 责任清单视图 -->
+        <div v-if="activeSpecialCooperationDetailView === '责任清单'" class="view-content" style="padding:0;">
+          <div style="height:400px;">
+            <ElTable
+              :data="specialCooperationDetailSelectedRow.responsibilityList"
+              border
+              size="small"
+              width="100%"
+              height="100%"
+              table-layout="fixed"
+            >
+              <ElTableColumn
+                prop="unit"
+                label="责任单位"
+                align="center"
+                width="120"
+              />
+              <ElTableColumn
+                prop="task"
+                label="任务内容"
+                align="center"
+                min-width="200"
+              />
+              <ElTableColumn
+                prop="person"
+                label="负责人"
+                align="center"
+                width="100"
+              />
+            </ElTable>
+          </div>
+        </div>
+        <template #footer>
+          <ElButton plain @click="closeSpecialCooperationDetailDialog">关闭</ElButton>
+        </template>
+      </ElDialog>
+      <!-- 协同执行弹窗 -->
+      <ElDialog
+        v-model="specialCooperationExecuteDialogVisible"
+        width="40%"
+        :close-on-click-modal="false"
+        :close-on-press-escape="false"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="协同执行"
+      >
+        <el-form
+          ref="executionProgressFormRef"
+          :model="executionProgressForm"
+          :rules="executionProgressFormRules"
+          label-width="80px"
+          style="width: 100%;"
+        >
+          <el-form-item label="执行进展" prop="progressContent" required>
+            <el-input
+              v-model="executionProgressForm.progressContent"
+              type="textarea"
+              :rows="6"
+              placeholder="请输入执行进展（必填）"
+            />
+          </el-form-item>
+          <el-form-item label="执行凭证">
+            <el-upload
+              v-model:file-list="executionProgressForm.evidenceFiles"
+              action="#"
+              multiple
+              :limit="3"
+              :on-exceed="handleFileExceed"
+              :before-upload="handleBeforeUpload"
+            >
+              <ElButton type="primary">上传文件</ElButton>
+              <template #tip>
+                <div class="el-upload__tip">
+                  支持上传图片、文档等格式，最多3个文件
+                </div>
+              </template>
+            </el-upload>
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <ElButton plain @click="closeSpecialCooperationExecuteDialog">取消</ElButton>
+          <ElButton type="primary" @click="submitExecutionProgressData(specialCooperationDetailSelectedRow.bizSpecialCoopSpecialCoopId)">确认</ElButton>
+        </template>
+      </ElDialog>
+      <!-- 协同复盘弹窗 -->
+      <ElDialog
+        v-model="specialCooperationReviewDialogVisible"
+        width="40%"
+        :close-on-click-modal="false"
+        :close-on-press-escape="false"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="协同复盘"
+      >
+        <el-form
+          ref="reviewConclusionFormRef"
+          :model="reviewConclusionForm"
+          :rules="reviewConclusionFormRules"
+          label-width="80px"
+          style="width: 100%;"
+        >
+          <el-form-item label="复盘结论" prop="reviewConclusion" required>
+            <el-input
+              v-model="reviewConclusionForm.reviewConclusion"
+              type="textarea"
+              :rows="6"
+              placeholder="请输入复盘结论（必填）"
+            />
+          </el-form-item>
+          <el-form-item label="优化建议">
+            <el-input
+              v-model="reviewConclusionForm.optimizationSuggestions"
+              type="textarea"
+              :rows="4"
+              placeholder="请输入优化建议（可选）"
+            />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <ElButton plain @click="closeSpecialCooperationReviewDialog">取消</ElButton>
+          <ElButton type="primary" @click="submitReviewConclusionData(specialCooperationDetailSelectedRow.bizSpecialCoopSpecialCoopId)">保存</ElButton>
+        </template>
+      </ElDialog>
+
+      <!-- 协同效率评估详情弹窗 -->
+      <ElDialog
+        v-model="efficiencyEvaluationDetailDialogVisible"
+        width="50%"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="协同效率评估详情"
+      >
+        <div class="header-actions" style="margin-bottom:10px;">
+          <div class="actions-right">
+            <div class="view-btn-group">
+              <ElButton
+                v-for="item in efficiencyEvaluationDetailViewBtnList"
+                :key="item"
+                :type="activeEfficiencyEvaluationDetailView === item ? 'primary' : ''"
+                plain
+                @click="changeEfficiencyEvaluationDetailView(item)"
+                class="view-btn"
+              >
+                {{ item }}
+              </ElButton>
+            </div>
+          </div>
+        </div>
+        <!-- 效率评估视图 -->
+        <div v-if="activeEfficiencyEvaluationDetailView === '效率评估'" class="view-content" style="padding:0;">
+          <ElDescriptions bordered :column="2" class="desc-detail">
+            <ElDescriptionsItem label="评估ID" span="2">
+              {{ efficiencyEvaluationDetailSelectedRow.bizCoopEfficiencyCoopEfficiencyId || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="协同类型">
+              {{ efficiencyEvaluationDetailSelectedRow.sysCooperationTypeName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="区域名称">
+              {{ efficiencyEvaluationDetailSelectedRow.sysAreaAreaName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="统计周期">
+              {{ efficiencyEvaluationDetailSelectedRow.sysStatCycleName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="平均响应时长">
+              {{ formatDecimal(efficiencyEvaluationDetailSelectedRow.bizCoopEfficiencyAverageResponseDuration) }} 小时
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="平均处置时长">
+              {{ formatDecimal(efficiencyEvaluationDetailSelectedRow.bizCoopEfficiencyAverageDisposalDuration) }} 小时
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="成效达标率">
+              {{ formatDecimal(efficiencyEvaluationDetailSelectedRow.bizCoopEfficiencyEffectivenessRate) }}%
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="协同成本">
+              {{ formatNumber(efficiencyEvaluationDetailSelectedRow.bizCoopEfficiencyCoopCost) }} 元
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="问题复发率">
+              {{ formatDecimal(efficiencyEvaluationDetailSelectedRow.bizCoopEfficiencyProblemRecurrenceRate) }}%
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="效率瓶颈" span="2">
+              {{ efficiencyEvaluationDetailSelectedRow.bizCoopEfficiencyEfficiencyBottleneck || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="优化建议" span="2">
+              {{ efficiencyEvaluationDetailSelectedRow.bizCoopEfficiencyOptimizationSuggestion || '-' }}
+            </ElDescriptionsItem>
+          </ElDescriptions>
+        </div>
+        <!-- 评估明细视图 -->
+        <div v-if="activeEfficiencyEvaluationDetailView === '评估明细'" class="view-content" style="padding:0;">
+          <div style="height:400px;">
+            <ElTable
+              :data="efficiencyEvaluationDetailSelectedRow.efficiencyDetails"
+              border
+              size="small"
+              width="100%"
+              height="100%"
+              table-layout="fixed"
+            >
+              <ElTableColumn
+                prop="item"
+                label="评估项目"
+                align="center"
+                width="120"
+              />
+              <ElTableColumn
+                prop="value"
+                label="实际值"
+                align="center"
+                width="100"
+              />
+              <ElTableColumn
+                prop="standard"
+                label="标准值"
+                align="center"
+                width="100"
+              />
+              <ElTableColumn
+                prop="status"
+                label="达标状态"
+                align="center"
+                width="100"
+              >
+                <template #default="scope">
+                  <ElTag :type="getEfficiencyStatusType(scope.row.status)">
+                    {{ scope.row.status || '-' }}
+                  </ElTag>
+                </template>
+              </ElTableColumn>
+            </ElTable>
+          </div>
+        </div>
+        <!-- 数据来源视图 -->
+        <div v-if="activeEfficiencyEvaluationDetailView === '数据来源'" class="view-content" style="padding:0;">
+          <div style="height:400px;">
+            <ElTable
+              :data="efficiencyEvaluationDetailSelectedRow.dataSources"
+              border
+              size="small"
+              width="100%"
+              height="100%"
+              table-layout="fixed"
+            >
+              <ElTableColumn
+                prop="source"
+                label="数据源"
+                align="center"
+                width="120"
+              />
+              <ElTableColumn
+                prop="type"
+                label="数据类型"
+                align="center"
+                width="120"
+              />
+              <ElTableColumn
+                prop="frequency"
+                label="更新频率"
+                align="center"
+                width="120"
+              />
+            </ElTable>
+          </div>
+        </div>
+        <!-- 计算逻辑视图 -->
+        <div v-if="activeEfficiencyEvaluationDetailView === '计算逻辑'" class="view-content" style="padding:0;">
+          <div style="height:400px;">
+            <ElTable
+              :data="efficiencyEvaluationDetailSelectedRow.calculationLogic"
+              border
+              size="small"
+              width="100%"
+              height="100%"
+              table-layout="fixed"
+            >
+              <ElTableColumn
+                prop="item"
+                label="计算项目"
+                align="center"
+                width="120"
+              />
+              <ElTableColumn
+                prop="logic"
+                label="计算逻辑"
+                align="center"
+                min-width="300"
+              />
+            </ElTable>
+          </div>
+        </div>
+        <template #footer>
+          <ElButton plain @click="closeEfficiencyEvaluationDetailDialog">关闭</ElButton>
+        </template>
+      </ElDialog>
+      <!-- 协同效率优化弹窗 -->
+      <ElDialog
+        v-model="efficiencyEvaluationOptimizeDialogVisible"
+        width="40%"
+        :close-on-click-modal="false"
+        :close-on-press-escape="false"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="协同效率优化"
+      >
+        <el-form
+          ref="optimizationPlanFormRef"
+          :model="optimizationPlanForm"
+          :rules="optimizationPlanFormRules"
+          label-width="80px"
+          style="width: 100%;"
+        >
+          <el-form-item label="优化方案" prop="optimizationPlan" required>
+            <el-input
+              v-model="optimizationPlanForm.optimizationPlan"
+              type="textarea"
+              :rows="6"
+              placeholder="请输入优化方案（必填）"
+            />
+          </el-form-item>
+          <el-form-item label="优化时限" prop="optimizationDeadline" required>
+            <ElInput
+              v-model="optimizationPlanForm.optimizationDeadline"
+              type="datetime-local"
+              placeholder="请选择优化时限"
+            />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <ElButton plain @click="closeEfficiencyEvaluationOptimizeDialog">取消</ElButton>
+          <ElButton type="primary" @click="submitOptimizationPlanData(efficiencyEvaluationDetailSelectedRow.bizCoopEfficiencyCoopEfficiencyId)">提交</ElButton>
+        </template>
+      </ElDialog>
+
+      <!-- 运维人员详情弹窗 -->
+      <ElDialog
+        v-model="maintainerDynamicDetailDialogVisible"
+        width="45%"
+        :close-on-click-modal="true"
+        :close-on-press-escape="true"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="运维人员详情"
+      >
+        <div class="header-actions" style="margin-bottom:10px;">
+          <div class="actions-right">
+            <div class="view-btn-group">
+              <ElButton
+                v-for="item in maintainerDynamicDetailViewBtnList"
+                :key="item"
+                :type="activeMaintainerDynamicDetailView === item ? 'primary' : ''"
+                plain
+                @click="changeMaintainerDynamicDetailView(item)"
+                class="view-btn"
+              >
+                {{ item }}
+              </ElButton>
+            </div>
+          </div>
+        </div>
+
+        <!-- 人员基础信息视图 -->
+        <div v-if="activeMaintainerDynamicDetailView === '人员基础信息'" class="view-content" style="padding:0;">
+          <ElDescriptions bordered :column="2" class="desc-detail">
+            <ElDescriptionsItem label="人员ID" span="2">
+              {{ maintainerDynamicDetailSelectedRow.sysMaintainUserMaintainUserId || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="人员姓名">
+              {{ maintainerDynamicDetailSelectedRow.sysUserUserName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="所属部门">
+              {{ maintainerDynamicDetailSelectedRow.sysDeptDeptName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="负责区域">
+              {{ maintainerDynamicDetailSelectedRow.sysAreaAreaName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="当前状态">
+              <ElTag :type="getOnDutyStatusType(maintainerDynamicDetailSelectedRow.sysOnDutyStatusName)">
+                {{ maintainerDynamicDetailSelectedRow.sysOnDutyStatusName || '-' }}
+              </ElTag>
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="当前协同任务数">
+              {{ maintainerDynamicDetailSelectedRow.bizCoopStatCurrentCoopTaskCount || 0 }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="已完成协同任务数">
+              {{ maintainerDynamicDetailSelectedRow.bizCoopStatCompletedCoopTaskCount || 0 }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="协同响应时长(小时)">
+              {{ formatDecimal(maintainerDynamicDetailSelectedRow.bizCoopStatCoopResponseDuration) }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="擅长协同类型">
+              {{ maintainerDynamicDetailSelectedRow.sysCooperationTypeName || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="最近协同时间">
+              {{ maintainerDynamicDetailSelectedRow.bizCoopStatLatestCoopTime || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="联系方式">
+              {{ maintainerDynamicDetailSelectedRow.contactPhone || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="邮箱">
+              {{ maintainerDynamicDetailSelectedRow.email || '-' }}
+            </ElDescriptionsItem>
+          </ElDescriptions>
+        </div>
+
+        <!-- 协同历史视图 -->
+        <div v-if="activeMaintainerDynamicDetailView === '协同历史'" class="view-content" style="padding:0;">
+          <div style="height:400px;">
+            <ElTable
+              :data="maintainerDynamicDetailSelectedRow.cooperationHistory"
+              border
+              size="small"
+              width="100%"
+              height="100%"
+              table-layout="fixed"
+            >
+              <ElTableColumn prop="taskId" label="任务ID" align="center" width="120" />
+              <ElTableColumn prop="taskName" label="任务名称" align="center" min-width="200" />
+              <ElTableColumn prop="status" label="状态" align="center" width="100">
+                <template #default="scope">
+                  <ElTag :type="scope.row.status === '已完成' ? 'success' : 'warning'">
+                    {{ scope.row.status }}
+                  </ElTag>
+                </template>
+              </ElTableColumn>
+              <ElTableColumn prop="time" label="时间" align="center" width="120" />
+            </ElTable>
+          </div>
+        </div>
+
+        <!-- 技能标签视图 -->
+        <div v-if="activeMaintainerDynamicDetailView === '技能标签'" class="view-content" style="padding:0;">
+          <div style="height:400px; padding: 20px;">
+            <div v-if="maintainerDynamicDetailSelectedRow.skillTags.length > 0">
+              <el-tag
+                v-for="(tag, index) in maintainerDynamicDetailSelectedRow.skillTags"
+                :key="index"
+                type="info"
+                style="margin: 5px;"
+              >
+                {{ tag }}
+              </el-tag>
+            </div>
+            <div v-else style="text-align: center; color: #999; line-height: 200px;">
+              暂无技能标签
+            </div>
+          </div>
+        </div>
+
+        <template #footer>
+          <ElButton plain @click="closeMaintainerDynamicDetailDialog">关闭</ElButton>
+        </template>
+      </ElDialog>
+
+      <!-- 调度任务弹窗 -->
+      <ElDialog
+        v-model="maintainerDynamicDispatchDialogVisible"
+        width="45%"
+        :close-on-click-modal="false"
+        :close-on-press-escape="false"
+        class="park-dialog"
+        center
+        destroy-on-close
+        title="调度任务"
+      >
+        <div style="margin-bottom: 15px; font-size: 14px;">
+          调度人员：{{ maintainerDynamicDetailSelectedRow.sysUserUserName }}
+        </div>
+        <el-form
+          ref="dispatchTaskFormRef"
+          :model="dispatchTaskForm"
+          :rules="dispatchTaskFormRules"
+          label-width="120px"
+          style="width: 100%;"
+        >
+          <el-form-item label="协同任务详情" prop="taskDetail" required>
+            <el-input
+              v-model="dispatchTaskForm.taskDetail"
+              type="textarea"
+              :rows="4"
+              placeholder="请输入协同任务详情（必填）"
+            />
+          </el-form-item>
+          <el-form-item label="指定协同对象" prop="coopTarget" required>
+            <el-input
+              v-model="dispatchTaskForm.coopTarget"
+              placeholder="请输入指定协同对象（必填）"
+            />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <ElButton plain @click="closeMaintainerDynamicDispatchDialog">取消</ElButton>
+          <ElButton type="primary" @click="submitDispatchTaskData(maintainerDynamicDetailSelectedRow.sysMaintainUserMaintainUserId)">确认</ElButton>
+        </template>
+      </ElDialog>
 
       <el-dialog
         v-model="tipDialogVisible"

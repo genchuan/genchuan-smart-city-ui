@@ -322,9 +322,9 @@
   font-size: 0.7vw;
 }
 
-::v-deep(.el-button--small.el-button--primary) {
-  min-width: 5vw;
-  max-width: 8vw;
+::v-deep(.el-button--small) {
+  min-width: 3vw;
+  max-width: 6vw;
   height: auto;
   padding: 0.3vw 0.8vw;
   font-size: 0.7vw;
@@ -332,7 +332,7 @@
   border-radius: 0.3vw;
 }
 
-::v-deep(.el-button--small.el-button--primary:hover) {
+::v-deep(.el-button--small:hover) {
   padding: 0.35vw 0.85vw;
 }
 

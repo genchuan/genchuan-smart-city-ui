@@ -3,6 +3,1784 @@ import { requestClient } from '#/api/request';
 const BASE_URL = '/industry/parking';
 
 
+// ========== 协同效率评估 ==========
+// 协同效率评估列表
+export const fetchEfficiencyEvaluationList = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/efficiency/evaluation/list`,
+        params,
+      })
+      .then((response) => {
+        console.log('协同效率评估列表-接口请求成功');
+        if (response && Array.isArray(response)) {
+          console.log('协同效率评估列表-响应符合实际格式');
+          return response.map((item) => ({
+            bizCoopEfficiencyCoopEfficiencyId: item.bizCoopEfficiencyCoopEfficiencyId,
+            sysCooperationTypeName: item.sysCooperationTypeName,
+            sysAreaAreaName: item.sysAreaAreaName,
+            sysStatCycleName: item.sysStatCycleName,
+            bizCoopEfficiencyAverageResponseDuration: item.bizCoopEfficiencyAverageResponseDuration,
+            bizCoopEfficiencyAverageDisposalDuration: item.bizCoopEfficiencyAverageDisposalDuration,
+            bizCoopEfficiencyEffectivenessRate: item.bizCoopEfficiencyEffectivenessRate,
+          }));
+        }
+        throw new Error('真实接口返回无协同效率评估列表数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('协同效率评估列表接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve([
+              {
+                bizCoopEfficiencyCoopEfficiencyId: 'EFF20260121001',
+                sysCooperationTypeName: '故障处置协同',
+                sysAreaAreaName: '浦东新区',
+                sysStatCycleName: '2024年1月第3周',
+                bizCoopEfficiencyAverageResponseDuration: 1.5,
+                bizCoopEfficiencyAverageDisposalDuration: 4.8,
+                bizCoopEfficiencyEffectivenessRate: 92.3,
+              },
+              {
+                bizCoopEfficiencyCoopEfficiencyId: 'EFF20260121002',
+                sysCooperationTypeName: '投诉处理协同',
+                sysAreaAreaName: '徐汇区',
+                sysStatCycleName: '2024年1月第3周',
+                bizCoopEfficiencyAverageResponseDuration: 2.2,
+                bizCoopEfficiencyAverageDisposalDuration: 6.5,
+                bizCoopEfficiencyEffectivenessRate: 88.7,
+              },
+              {
+                bizCoopEfficiencyCoopEfficiencyId: 'EFF20260121003',
+                sysCooperationTypeName: '日常运维协同',
+                sysAreaAreaName: '静安区',
+                sysStatCycleName: '2024年1月第3周',
+                bizCoopEfficiencyAverageResponseDuration: 1.2,
+                bizCoopEfficiencyAverageDisposalDuration: 3.5,
+                bizCoopEfficiencyEffectivenessRate: 95.2,
+              },
+              {
+                bizCoopEfficiencyCoopEfficiencyId: 'EFF20260121004',
+                sysCooperationTypeName: '费用结算协同',
+                sysAreaAreaName: '黄浦区',
+                sysStatCycleName: '2024年1月第3周',
+                bizCoopEfficiencyAverageResponseDuration: 3.5,
+                bizCoopEfficiencyAverageDisposalDuration: 8.2,
+                bizCoopEfficiencyEffectivenessRate: 81.4,
+              },
+              {
+                bizCoopEfficiencyCoopEfficiencyId: 'EFF20260121005',
+                sysCooperationTypeName: '活动推广协同',
+                sysAreaAreaName: '杨浦区',
+                sysStatCycleName: '2024年1月第3周',
+                bizCoopEfficiencyAverageResponseDuration: 1.8,
+                bizCoopEfficiencyAverageDisposalDuration: 5.2,
+                bizCoopEfficiencyEffectivenessRate: 89.6,
+              },
+            ]);
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchEfficiencyEvaluationList 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve([]);
+  }
+};
+
+// 协同效率评估核心指标（卡片展示）
+export const fetchEfficiencyEvaluationIndicators = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/efficiency/evaluation/indicators/get`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.averageResponseDuration &&
+          response.averageDisposalDuration &&
+          response.effectivenessRate
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无协同效率评估核心数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '协同效率评估指标接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              averageResponseDuration: 2.1, // 平均响应时长
+              averageDisposalDuration: 5.7, // 平均处置时长
+              effectivenessRate: 89.5, // 成效达标率
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 协同效率评估指标函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      averageResponseDuration: 0,
+      averageDisposalDuration: 0,
+      effectivenessRate: 0,
+    });
+  }
+};
+
+// 不同类型协同效率对比（柱状图）
+export const fetchEfficiencyEvaluationTypeCompare = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/efficiency/evaluation/stat/type/compare`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无类型协同效率对比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '类型协同效率对比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['故障处置协同', '投诉处理协同', '日常运维协同', '费用结算协同', '活动推广协同'],
+              series: [{ name: '平均处置时长(小时)', data: [4.8, 6.5, 3.5, 8.2, 5.2] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 类型协同效率对比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '平均处置时长(小时)', data: [] }],
+    });
+  }
+};
+
+// 不同区域协同效率对比（柱状图）
+export const fetchEfficiencyEvaluationAreaCompare = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/efficiency/evaluation/stat/area/compare`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无区域协同效率对比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '区域协同效率对比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['浦东新区', '徐汇区', '静安区', '黄浦区', '杨浦区'],
+              series: [{ name: '平均响应时长(小时)', data: [1.5, 2.2, 1.2, 3.5, 1.8] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 区域协同效率对比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '平均响应时长(小时)', data: [] }],
+    });
+  }
+};
+
+// 协同效率近周期趋势（折线图）
+export const fetchEfficiencyEvaluationTrend = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/efficiency/evaluation/stat/trend`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无协同效率趋势数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '协同效率趋势接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['第1周', '第2周', '第3周', '第4周', '第5周'],
+              series: [{ name: '综合效率评分', data: [85, 87, 89, 91, 89] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 协同效率趋势函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '综合效率评分', data: [] }],
+    });
+  }
+};
+
+// 问题复发率占比（饼图）
+export const fetchEfficiencyEvaluationRecurrenceRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/efficiency/evaluation/stat/recurrence/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无问题复发率占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '问题复发率占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['0-5%', '5-10%', '10-15%', '15-20%', '20%以上'],
+              series: [{ name: '问题复发率占比(%)', data: [35.2, 28.6, 18.3, 12.1, 5.8] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 问题复发率占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '问题复发率占比(%)', data: [] }],
+    });
+  }
+};
+
+// 协同效率评估详情查询
+export const fetchEfficiencyEvaluationDetail = (efficiencyId, params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/efficiency/evaluation/detail/${efficiencyId}`,
+        params,
+      })
+      .then((response) => {
+        if (response && response.bizCoopEfficiencyCoopEfficiencyId === efficiencyId) {
+          return response;
+        }
+        throw new Error('真实接口返回无协同效率评估详情数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('协同效率评估详情接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const details = {
+              'EFF20260121001': {
+                bizCoopEfficiencyCoopEfficiencyId: efficiencyId,
+                sysCooperationTypeName: '故障处置协同',
+                sysAreaAreaName: '浦东新区',
+                sysStatCycleName: '2024年1月第3周',
+                bizCoopEfficiencyAverageResponseDuration: 1.5,
+                bizCoopEfficiencyAverageDisposalDuration: 4.8,
+                bizCoopEfficiencyEffectivenessRate: 92.3,
+                // 详情字段
+                bizCoopEfficiencyCoopCost: 2850,
+                bizCoopEfficiencyProblemRecurrenceRate: 8.5,
+                bizCoopEfficiencyEfficiencyBottleneck: '人员响应不及时',
+                bizCoopEfficiencyOptimizationSuggestion: '加强人员培训，建立快速响应机制',
+                // 效率评估明细
+                efficiencyDetails: [
+                  { item: '响应达标率', value: '95.6%', standard: '≥90%', status: '达标' },
+                  { item: '处置达标率', value: '92.3%', standard: '≥90%', status: '达标' },
+                  { item: '成本控制率', value: '88.7%', standard: '≥85%', status: '达标' },
+                  { item: '问题复发率', value: '8.5%', standard: '≤10%', status: '达标' }
+                ],
+                // 数据来源
+                dataSources: [
+                  { source: '协同系统', type: '主数据', frequency: '实时' },
+                  { source: '人工填报', type: '补充数据', frequency: '每日' },
+                  { source: '监控系统', type: '监测数据', frequency: '每分钟' },
+                  { source: '业务系统', type: '业务数据', frequency: '实时' }
+                ],
+                // 计算逻辑
+                calculationLogic: [
+                  { item: '响应时长', logic: '从协同发起时间到首次响应时间的差值' },
+                  { item: '处置时长', logic: '从首次响应时间到问题解决时间的差值' },
+                  { item: '成效达标率', logic: '实际成效与预期成效的比率' },
+                  { item: '协同成本', logic: '人力成本+物资成本+时间成本的总和' }
+                ]
+              },
+              'EFF20260121002': {
+                bizCoopEfficiencyCoopEfficiencyId: efficiencyId,
+                sysCooperationTypeName: '投诉处理协同',
+                sysAreaAreaName: '徐汇区',
+                sysStatCycleName: '2024年1月第3周',
+                bizCoopEfficiencyAverageResponseDuration: 2.2,
+                bizCoopEfficiencyAverageDisposalDuration: 6.5,
+                bizCoopEfficiencyEffectivenessRate: 88.7,
+                // 详情字段
+                bizCoopEfficiencyCoopCost: 3200,
+                bizCoopEfficiencyProblemRecurrenceRate: 12.3,
+                bizCoopEfficiencyEfficiencyBottleneck: '跨部门协调耗时较长',
+                bizCoopEfficiencyOptimizationSuggestion: '优化跨部门沟通流程，建立联席会议制度',
+                // 效率评估明细
+                efficiencyDetails: [
+                  { item: '响应达标率', value: '89.2%', standard: '≥90%', status: '未达标' },
+                  { item: '处置达标率', value: '88.7%', standard: '≥90%', status: '未达标' },
+                  { item: '成本控制率', value: '91.5%', standard: '≥85%', status: '达标' },
+                  { item: '问题复发率', value: '12.3%', standard: '≤10%', status: '未达标' }
+                ],
+                // 数据来源
+                dataSources: [
+                  { source: '协同系统', type: '主数据', frequency: '实时' },
+                  { source: '客服系统', type: '业务数据', frequency: '实时' },
+                  { source: '投诉系统', type: '反馈数据', frequency: '每日' },
+                  { source: '质量系统', type: '评估数据', frequency: '每周' }
+                ],
+                // 计算逻辑
+                calculationLogic: [
+                  { item: '响应时长', logic: '投诉受理时间到首次联系用户的时间' },
+                  { item: '处置时长', logic: '首次联系到问题解决并反馈用户的时间' },
+                  { item: '成效达标率', logic: '用户满意度调查结果的综合评分' },
+                  { item: '协同成本', logic: '人工成本+系统使用成本+沟通成本' }
+                ]
+              }
+            };
+            resolve(details[efficiencyId] || details['EFF20260121001']);
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchEfficiencyEvaluationDetail 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({});
+  }
+};
+
+// 提交优化方案
+export const submitOptimizationPlan = (efficiencyId, optimizationPlan, optimizationDeadline) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/efficiency/evaluation/optimize/${efficiencyId}`,
+        data: { optimizationPlan, optimizationDeadline },
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return response;
+        }
+        throw new Error('真实接口返回无优化结果，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('优化方案接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              success: true,
+              message: '优化方案提交成功',
+              optimizationStatus: '已优化'
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== submitOptimizationPlan 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({ success: false, message: '接口异常' });
+  }
+};
+
+
+// ========== 专属协同 ==========
+// 专属协同列表
+export const fetchSpecialCooperationList = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/special/cooperation/list`,
+        params,
+      })
+      .then((response) => {
+        console.log('专属协同列表-接口请求成功');
+        if (response && Array.isArray(response)) {
+          console.log('专属协同列表-响应符合实际格式');
+          return response.map((item) => ({
+            bizSpecialCoopSpecialCoopId: item.bizSpecialCoopSpecialCoopId,
+            sysCoopSceneName: item.sysCoopSceneName,
+            sysResponsibleUnitName: item.sysResponsibleUnitName,
+            bizSpecialCoopCoopRule: item.bizSpecialCoopCoopRule,
+            bizSpecialCoopResponsibilityDivision: item.bizSpecialCoopResponsibilityDivision,
+            sysCooperationStatusName: item.sysCooperationStatusName,
+          }));
+        }
+        throw new Error('真实接口返回无专属协同列表数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('专属协同列表接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve([
+              {
+                bizSpecialCoopSpecialCoopId: 'SPECIAL20260120001',
+                sysCoopSceneName: '重大活动保障',
+                sysResponsibleUnitName: '保障部',
+                bizSpecialCoopCoopRule: '提前2小时到岗，按预案执行',
+                bizSpecialCoopResponsibilityDivision: 'A组负责入口，B组负责出口',
+                sysCooperationStatusName: '待执行',
+              },
+              {
+                bizSpecialCoopSpecialCoopId: 'SPECIAL20260120002',
+                sysCoopSceneName: '应急演练',
+                sysResponsibleUnitName: '安全部',
+                bizSpecialCoopCoopRule: '全员参与，模拟真实场景',
+                bizSpecialCoopResponsibilityDivision: '指挥组、执行组、评估组',
+                sysCooperationStatusName: '执行中',
+              },
+              {
+                bizSpecialCoopSpecialCoopId: 'SPECIAL20260120003',
+                sysCoopSceneName: '系统升级',
+                sysResponsibleUnitName: '技术部',
+                bizSpecialCoopCoopRule: '零点作业，分批次升级',
+                bizSpecialCoopResponsibilityDivision: '开发组、测试组、运维组',
+                sysCooperationStatusName: '已完成',
+              },
+              {
+                bizSpecialCoopSpecialCoopId: 'SPECIAL20260120004',
+                sysCoopSceneName: '设备大修',
+                sysResponsibleUnitName: '工程部',
+                bizSpecialCoopCoopRule: '周末停运，48小时内完成',
+                bizSpecialCoopResponsibilityDivision: '机械组、电气组、调试组',
+                sysCooperationStatusName: '待复盘',
+              },
+              {
+                bizSpecialCoopSpecialCoopId: 'SPECIAL20260120005',
+                sysCoopSceneName: '数据迁移',
+                sysResponsibleUnitName: '信息部',
+                bizSpecialCoopCoopRule: '分批次迁移，确保数据安全',
+                bizSpecialCoopResponsibilityDivision: '数据组、备份组、验证组',
+                sysCooperationStatusName: '执行中',
+              },
+            ]);
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchSpecialCooperationList 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve([]);
+  }
+};
+
+// 专属协同核心指标（卡片展示）
+export const fetchSpecialCooperationIndicators = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/special/cooperation/indicators/get`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.totalCooperationCount &&
+          response.completionRate &&
+          response.averageCooperationCycle
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无专属协同核心数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '专属协同指标接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              totalCooperationCount: 89, // 专属协同总数
+              completionRate: 76.3, // 完成率
+              averageCooperationCycle: 5.2, // 平均协同周期
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 专属协同指标函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      totalCooperationCount: 0,
+      completionRate: 0,
+      averageCooperationCycle: 0,
+    });
+  }
+};
+
+// 不同场景协同数对比（柱状图）
+export const fetchSpecialCooperationSceneCount = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/special/cooperation/stat/scene/count`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无场景协同数对比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '场景协同数对比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['重大活动保障', '应急演练', '系统升级', '设备大修', '数据迁移'],
+              series: [{ name: '协同数量', data: [22, 18, 15, 12, 22] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 场景协同数对比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '协同数量', data: [] }],
+    });
+  }
+};
+
+// 不同责任单位协同数对比（柱状图）
+export const fetchSpecialCooperationUnitCount = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/special/cooperation/stat/unit/count`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无责任单位协同数对比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '责任单位协同数对比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['保障部', '安全部', '技术部', '工程部', '信息部'],
+              series: [{ name: '协同数量', data: [28, 19, 17, 14, 11] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 责任单位协同数对比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '协同数量', data: [] }],
+    });
+  }
+};
+
+// 协同场景占比（饼图）
+export const fetchSpecialCooperationSceneRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/special/cooperation/stat/scene/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无协同场景占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '协同场景占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['重大活动保障', '应急演练', '系统升级', '设备大修', '数据迁移'],
+              series: [{ name: '协同场景占比(%)', data: [24.7, 20.2, 16.9, 13.5, 24.7] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 协同场景占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '协同场景占比(%)', data: [] }],
+    });
+  }
+};
+
+// 协同状态占比（饼图）
+export const fetchSpecialCooperationStatusRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/special/cooperation/stat/status/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无协同状态占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '协同状态占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['待执行', '执行中', '已完成', '待复盘', '已复盘'],
+              series: [{ name: '协同状态占比(%)', data: [15.7, 28.1, 33.7, 12.4, 10.1] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 协同状态占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '协同状态占比(%)', data: [] }],
+    });
+  }
+};
+
+// 专属协同详情查询
+export const fetchSpecialCooperationDetail = (cooperationId, params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/special/cooperation/detail/${cooperationId}`,
+        params,
+      })
+      .then((response) => {
+        if (response && response.bizSpecialCoopSpecialCoopId === cooperationId) {
+          return response;
+        }
+        throw new Error('真实接口返回无专属协同详情数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('专属协同详情接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const details = {
+              'SPECIAL20260120001': {
+                bizSpecialCoopSpecialCoopId: cooperationId,
+                sysCoopSceneName: '重大活动保障',
+                sysResponsibleUnitName: '保障部',
+                bizSpecialCoopCoopRule: '提前2小时到岗，按预案执行',
+                bizSpecialCoopResponsibilityDivision: 'A组负责入口，B组负责出口',
+                sysCooperationStatusName: '待执行',
+                // 详情字段
+                bizSpecialCoopAverageCoopCycle: 3.5,
+                bizSpecialCoopCoopResult: '',
+                bizSpecialCoopCompleteTime: '',
+                bizSpecialCoopReviewConclusion: '',
+                // 协同配置详情
+                cooperationConfig: [
+                  { item: '协同类型', value: '专属协同' },
+                  { item: '优先级', value: '高' },
+                  { item: '启动时间', value: '2026-01-20 08:00' },
+                  { item: '预计时长', value: '48小时' },
+                  { item: '参与人数', value: '25人' }
+                ],
+                // 场景要求
+                sceneRequirements: [
+                  { item: '安全保障', value: '全时段安保巡逻' },
+                  { item: '设备要求', value: '备用设备100%完好' },
+                  { item: '人员要求', value: '持证上岗，统一着装' },
+                  { item: '通信要求', value: '专用对讲频道' }
+                ],
+                // 责任清单
+                responsibilityList: [
+                  { unit: '指挥组', task: '现场指挥协调', person: '张主任' },
+                  { unit: '安保组', task: '安全保障', person: '李队长' },
+                  { unit: '设备组', task: '设备运维', person: '王工' },
+                  { unit: '后勤组', task: '物资保障', person: '赵主管' }
+                ],
+                // 执行进展时间轴
+                executionProgress: [
+                  { time: '2026-01-20 08:00', content: '任务启动，人员集合' },
+                  { time: '2026-01-20 09:30', content: '现场勘查完成' },
+                  { time: '2026-01-20 10:15', content: '设备调试完成' }
+                ]
+              },
+              'SPECIAL20260120002': {
+                bizSpecialCoopSpecialCoopId: cooperationId,
+                sysCoopSceneName: '应急演练',
+                sysResponsibleUnitName: '安全部',
+                bizSpecialCoopCoopRule: '全员参与，模拟真实场景',
+                bizSpecialCoopResponsibilityDivision: '指挥组、执行组、评估组',
+                sysCooperationStatusName: '执行中',
+                // 详情字段
+                bizSpecialCoopAverageCoopCycle: 2.8,
+                bizSpecialCoopCoopResult: '',
+                bizSpecialCoopCompleteTime: '',
+                bizSpecialCoopReviewConclusion: '',
+                // 协同配置详情
+                cooperationConfig: [
+                  { item: '协同类型', value: '专属协同' },
+                  { item: '优先级', value: '中' },
+                  { item: '启动时间', value: '2026-01-19 14:00' },
+                  { item: '预计时长', value: '8小时' },
+                  { item: '参与人数', value: '45人' }
+                ],
+                // 场景要求
+                sceneRequirements: [
+                  { item: '真实性', value: '模拟真实应急场景' },
+                  { item: '安全性', value: '确保演练人员安全' },
+                  { item: '评估标准', value: '按评分表逐项评估' },
+                  { item: '报告要求', value: '演练后24小时内提交报告' }
+                ],
+                // 责任清单
+                responsibilityList: [
+                  { unit: '指挥组', task: '演练总指挥', person: '孙总' },
+                  { unit: '执行组', task: '场景执行', person: '周经理' },
+                  { unit: '评估组', task: '效果评估', person: '吴专员' },
+                  { unit: '记录组', task: '过程记录', person: '郑助理' }
+                ],
+                // 执行进展时间轴
+                executionProgress: [
+                  { time: '2026-01-19 14:00', content: '演练启动会召开' },
+                  { time: '2026-01-19 14:30', content: '各小组就位' },
+                  { time: '2026-01-19 15:15', content: '第一阶段演练完成' }
+                ]
+              }
+            };
+            resolve(details[cooperationId] || details['SPECIAL20260120001']);
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchSpecialCooperationDetail 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({});
+  }
+};
+
+// 提交执行进展
+export const submitExecutionProgress = (cooperationId, progressContent, evidenceFiles) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/special/cooperation/execute/${cooperationId}`,
+        data: { progressContent, evidenceFiles },
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return response;
+        }
+        throw new Error('真实接口返回无执行结果，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('执行进展接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              success: true,
+              message: '执行进展提交成功',
+              cooperationStatus: '执行中'
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== submitExecutionProgress 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({ success: false, message: '接口异常' });
+  }
+};
+
+// 提交复盘结论
+export const submitReviewConclusion = (cooperationId, reviewConclusion, optimizationSuggestions) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/special/cooperation/review/${cooperationId}`,
+        data: { reviewConclusion, optimizationSuggestions },
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return response;
+        }
+        throw new Error('真实接口返回无复盘结果，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('复盘结论接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              success: true,
+              message: '复盘结论提交成功',
+              cooperationStatus: '已复盘'
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== submitReviewConclusion 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({ success: false, message: '接口异常' });
+  }
+};
+
+
+// ========== 政企协同 ==========
+// 政企协同列表
+export const fetchGovEnterpriseCooperationList = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/gov-enterprise/cooperation/list`,
+        params,
+      })
+      .then((response) => {
+        console.log('政企协同列表-接口请求成功');
+        if (response && Array.isArray(response)) {
+          console.log('政企协同列表-响应符合实际格式');
+          return response.map((item) => ({
+            bizGovernmentEnterpriseCoopGovEnterpriseCoopId: item.bizGovernmentEnterpriseCoopGovEnterpriseCoopId,
+            sysDeptDeptName: item.sysDeptDeptName,
+            sysMerchantMerchantName: item.sysMerchantMerchantName,
+            sysEnterpriseTypeName: item.sysEnterpriseTypeName,
+            sysCooperationItemName: item.sysCooperationItemName,
+            sysCooperationStatusName: item.sysCooperationStatusName,
+          }));
+        }
+        throw new Error('真实接口返回无政企协同列表数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('政企协同列表接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve([
+              {
+                bizGovernmentEnterpriseCoopGovEnterpriseCoopId: 'GE20260120001',
+                sysDeptDeptName: '市场监督管理局',
+                sysMerchantMerchantName: 'XX科技有限公司',
+                sysEnterpriseTypeName: '高新技术企业',
+                sysCooperationItemName: '企业注册审批',
+                sysCooperationStatusName: '进行中',
+              },
+              {
+                bizGovernmentEnterpriseCoopGovEnterpriseCoopId: 'GE20260120002',
+                sysDeptDeptName: '税务局',
+                sysMerchantMerchantName: 'YY餐饮有限公司',
+                sysEnterpriseTypeName: '小微企业',
+                sysCooperationItemName: '税务申报指导',
+                sysCooperationStatusName: '已完成',
+              },
+              {
+                bizGovernmentEnterpriseCoopGovEnterpriseCoopId: 'GE20260120003',
+                sysDeptDeptName: '人社局',
+                sysMerchantMerchantName: 'ZZ制造厂',
+                sysEnterpriseTypeName: '制造业',
+                sysCooperationItemName: '用工政策咨询',
+                sysCooperationStatusName: '待响应',
+              },
+              {
+                bizGovernmentEnterpriseCoopGovEnterpriseCoopId: 'GE20260120004',
+                sysDeptDeptName: '环保局',
+                sysMerchantMerchantName: 'AA化工有限公司',
+                sysEnterpriseTypeName: '化工企业',
+                sysCooperationItemName: '环保审批',
+                sysCooperationStatusName: '进行中',
+              },
+              {
+                bizGovernmentEnterpriseCoopGovEnterpriseCoopId: 'GE20260120005',
+                sysDeptDeptName: '发改委',
+                sysMerchantMerchantName: 'BB能源集团',
+                sysEnterpriseTypeName: '能源企业',
+                sysCooperationItemName: '项目立项审批',
+                sysCooperationStatusName: '反馈中',
+              },
+            ]);
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchGovEnterpriseCooperationList 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve([]);
+  }
+};
+
+// 政企协同核心指标（卡片展示）
+export const fetchGovEnterpriseCooperationIndicators = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/gov-enterprise/cooperation/indicators/get`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.totalCooperationCount &&
+          response.responseRate &&
+          response.satisfactionRate
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无政企协同核心数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '政企协同指标接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              totalCooperationCount: 328, // 政企协同总数
+              responseRate: 92.3, // 响应率
+              satisfactionRate: 94.5, // 满意度
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 政企协同指标函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      totalCooperationCount: 0,
+      responseRate: 0,
+      satisfactionRate: 0,
+    });
+  }
+};
+
+// 不同政府部门协同数对比（柱状图）
+export const fetchGovEnterpriseCooperationDeptCount = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/gov-enterprise/cooperation/stat/dept/count`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无政府部门协同数对比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '政府部门协同数对比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['市场监督管理局', '税务局', '人社局', '环保局', '发改委'],
+              series: [{ name: '协同数量', data: [86, 72, 58, 64, 48] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 政府部门协同数对比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '协同数量', data: [] }],
+    });
+  }
+};
+
+// 不同企业类型协同数对比（柱状图）
+export const fetchGovEnterpriseCooperationEntTypeCount = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/gov-enterprise/cooperation/stat/ent-type/count`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无企业类型协同数对比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '企业类型协同数对比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['高新技术企业', '小微企业', '制造业', '化工企业', '能源企业'],
+              series: [{ name: '协同数量', data: [95, 112, 68, 32, 21] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 企业类型协同数对比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '协同数量', data: [] }],
+    });
+  }
+};
+
+// 协同事项占比（饼图）
+export const fetchGovEnterpriseCooperationItemRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/gov-enterprise/cooperation/stat/item/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无协同事项占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '协同事项占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['企业注册审批', '税务申报指导', '用工政策咨询', '环保审批', '项目立项审批'],
+              series: [{ name: '协同事项占比(%)', data: [32.5, 28.2, 18.6, 12.8, 7.9] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 协同事项占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '协同事项占比(%)', data: [] }],
+    });
+  }
+};
+
+// 满意度占比（饼图）
+export const fetchGovEnterpriseCooperationSatisfactionRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/gov-enterprise/cooperation/stat/satisfaction/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无满意度占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '满意度占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['非常满意', '满意', '基本满意', '一般', '不满意'],
+              series: [{ name: '满意度占比(%)', data: [42.5, 36.8, 15.2, 4.3, 1.2] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 满意度占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '满意度占比(%)', data: [] }],
+    });
+  }
+};
+
+// 政企协同详情查询
+export const fetchGovEnterpriseCooperationDetail = (cooperationId, params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/gov-enterprise/cooperation/detail/${cooperationId}`,
+        params,
+      })
+      .then((response) => {
+        if (response && response.bizGovernmentEnterpriseCoopGovEnterpriseCoopId === cooperationId) {
+          return response;
+        }
+        throw new Error('真实接口返回无政企协同详情数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('政企协同详情接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const mockData = {
+              bizGovernmentEnterpriseCoopGovEnterpriseCoopId: cooperationId,
+              sysDeptDeptName: cooperationId === 'GE20260120001' ? '市场监督管理局' : '税务局',
+              sysMerchantMerchantName: cooperationId === 'GE20260120001' ? 'XX科技有限公司' : 'YY餐饮有限公司',
+              sysEnterpriseTypeName: cooperationId === 'GE20260120001' ? '高新技术企业' : '小微企业',
+              sysCooperationItemName: cooperationId === 'GE20260120001' ? '企业注册审批' : '税务申报指导',
+              sysCooperationStatusName: cooperationId === 'GE20260120001' ? '进行中' : '已完成',
+              // 详情字段
+              bizGovernmentEnterpriseCoopProgressFeedback: cooperationId === 'GE20260120001' ? '已完成材料初审，待现场核验' : '已完成申报指导，企业已成功完成税务申报',
+              sysSatisfactionName: cooperationId === 'GE20260120001' ? '待评价' : '非常满意',
+              bizGovernmentEnterpriseCoopCompleteTime: cooperationId === 'GE20260120001' ? '' : '2026-01-19 16:30:00',
+              bizGovernmentEnterpriseCoopCoopCycle: cooperationId === 'GE20260120001' ? '3天' : '2天',
+              // 协同详情
+              cooperationDetail: {
+                launchTime: '2026-01-18 09:00:00',
+                expectedCompleteTime: '2026-01-21 17:00:00',
+                contactPerson: '张科长',
+                contactPhone: '13800138000',
+                cooperationContent: cooperationId === 'GE20260120001' ? '协助企业完成工商注册审批，提供政策咨询服务' : '指导企业完成税务申报，解答税务政策疑问'
+              },
+              // 责任分工
+              responsibilityDivision: [
+                { department: '市场监督管理局', task: '材料审核', person: '张三', phone: '13800138001' },
+                { department: '行政审批科', task: '现场核验', person: '李四', phone: '13800138002' },
+                { department: '法规科', task: '法律咨询', person: '王五', phone: '13800138003' }
+              ],
+              // 执行计划
+              executionPlan: [
+                { stage: '第一阶段', task: '材料收集与初审', startTime: '2026-01-18', endTime: '2026-01-19', status: '已完成' },
+                { stage: '第二阶段', task: '现场核验与评估', startTime: '2026-01-20', endTime: '2026-01-21', status: '进行中' },
+                { stage: '第三阶段', task: '审批决定与反馈', startTime: '2026-01-22', endTime: '2026-01-23', status: '待开始' }
+              ],
+              // 协同进度时间轴
+              progressTimeline: [
+                { time: '2026-01-18 09:30', content: '企业提交申请材料', operator: '企业端' },
+                { time: '2026-01-18 14:20', content: '市场监管局受理申请', operator: '张科长' },
+                { time: '2026-01-19 10:15', content: '材料初审通过', operator: '李四' },
+                { time: '2026-01-20 09:00', content: '安排现场核验', operator: '王五' }
+              ],
+              // 双方反馈记录
+              feedbackRecords: [
+                { time: '2026-01-18 10:00', sender: '企业', content: '请问材料是否齐全？', type: '咨询' },
+                { time: '2026-01-18 11:30', sender: '政府', content: '材料已收到，正在审核中', type: '回复' },
+                { time: '2026-01-19 14:00', sender: '政府', content: '材料初审通过，请准备现场核验', type: '通知' }
+              ]
+            };
+            resolve(mockData);
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchGovEnterpriseCooperationDetail 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({});
+  }
+};
+
+// 提交协同跟踪
+export const submitCooperationTracking = (cooperationId, trackingContent) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/gov-enterprise/cooperation/tracking/${cooperationId}`,
+        data: { trackingContent },
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return response;
+        }
+        throw new Error('真实接口返回无跟踪结果，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('协同跟踪接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              success: true,
+              message: '跟踪记录提交成功',
+              trackingId: 'TRACK' + Date.now()
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== submitCooperationTracking 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({ success: false, message: '接口异常' });
+  }
+};
+
+// 提交协同评价
+export const submitCooperationEvaluation = (cooperationId, satisfactionLevel, evaluationContent) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/gov-enterprise/cooperation/evaluation/${cooperationId}`,
+        data: { satisfactionLevel, evaluationContent },
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return response;
+        }
+        throw new Error('真实接口返回无评价结果，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('协同评价接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              success: true,
+              message: '评价提交成功',
+              cooperationStatus: '已完成'
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== submitCooperationEvaluation 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({ success: false, message: '接口异常' });
+  }
+};
+
+
+// ========== 层级协同 ==========
+// 层级协同列表
+export const fetchLevelCooperationList = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/level/cooperation/list`,
+        params,
+      })
+      .then((response) => {
+        console.log('层级协同列表-接口请求成功');
+        if (response && Array.isArray(response)) {
+          console.log('层级协同列表-响应符合实际格式');
+          return response.map((item) => ({
+            bizCrossLevelCoopCrossLevelCoopId: item.bizCrossLevelCoopCrossLevelCoopId,
+            issueLevelName: item.issueLevelName, // 下达层级
+            receiveLevelName: item.receiveLevelName, // 接收层级
+            bizCrossLevelCoopInstructionContent: item.bizCrossLevelCoopInstructionContent,
+            sysInstructionStatusName: item.sysInstructionStatusName,
+            bizCrossLevelCoopIssueTime: item.bizCrossLevelCoopIssueTime,
+            currentUserLevel: item.currentUserLevel, // 当前用户层级，用于判断操作权限
+          }));
+        }
+        throw new Error('真实接口返回无层级协同列表数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('层级协同列表接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve([
+              {
+                bizCrossLevelCoopCrossLevelCoopId: 'LEVEL20260119001',
+                issueLevelName: '市级',
+                receiveLevelName: '区级',
+                bizCrossLevelCoopInstructionContent: '关于停车场智能化改造的指导意见',
+                sysInstructionStatusName: '已下发',
+                bizCrossLevelCoopIssueTime: '2026-01-19 09:30:00',
+                currentUserLevel: '区级', // 模拟当前用户为区级，可操作反馈
+              },
+              {
+                bizCrossLevelCoopCrossLevelCoopId: 'LEVEL20260119002',
+                issueLevelName: '省级',
+                receiveLevelName: '市级',
+                bizCrossLevelCoopInstructionContent: '停车管理平台数据对接要求',
+                sysInstructionStatusName: '已接收',
+                bizCrossLevelCoopIssueTime: '2026-01-18 14:20:00',
+                currentUserLevel: '市级', // 模拟当前用户为市级，可操作反馈
+              },
+              {
+                bizCrossLevelCoopCrossLevelCoopId: 'LEVEL20260119003',
+                issueLevelName: '区级',
+                receiveLevelName: '街道',
+                bizCrossLevelCoopInstructionContent: '停车设施安全检查通知',
+                sysInstructionStatusName: '已反馈',
+                bizCrossLevelCoopIssueTime: '2026-01-17 11:15:00',
+                currentUserLevel: '街道', // 模拟当前用户为街道
+              },
+              {
+                bizCrossLevelCoopCrossLevelCoopId: 'LEVEL20260119004',
+                issueLevelName: '市级',
+                receiveLevelName: '区级',
+                bizCrossLevelCoopInstructionContent: '停车收费标准调整通知',
+                sysInstructionStatusName: '已完成',
+                bizCrossLevelCoopIssueTime: '2026-01-16 16:45:00',
+                currentUserLevel: '区级',
+              },
+              {
+                bizCrossLevelCoopCrossLevelCoopId: 'LEVEL20260119005',
+                issueLevelName: '省级',
+                receiveLevelName: '市级',
+                bizCrossLevelCoopInstructionContent: '智慧停车平台建设方案',
+                sysInstructionStatusName: '已下发',
+                bizCrossLevelCoopIssueTime: '2026-01-15 10:00:00',
+                currentUserLevel: '市级',
+              },
+            ]);
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchLevelCooperationList 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve([]);
+  }
+};
+
+// 层级协同核心指标（卡片展示）
+export const fetchLevelCooperationIndicators = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/level/cooperation/indicators/get`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.totalCooperationCount &&
+          response.instructionCompleteRate &&
+          response.averageFeedbackDuration
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无层级协同核心数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '层级协同指标接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              totalCooperationCount: 189, // 跨层级协同总数
+              instructionCompleteRate: 78.5, // 指令完成率
+              averageFeedbackDuration: 3.2, // 平均反馈时长
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 层级协同指标函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      totalCooperationCount: 0,
+      instructionCompleteRate: 0,
+      averageFeedbackDuration: 0,
+    });
+  }
+};
+
+// 不同层级协同数对比（柱状图）
+export const fetchLevelCooperationLevelCount = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/level/cooperation/stat/level/count`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无层级协同数对比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '层级协同数对比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['省级', '市级', '区级', '街道'],
+              series: [{ name: '协同数量', data: [32, 68, 45, 44] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 层级协同数对比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '协同数量', data: [] }],
+    });
+  }
+};
+
+// 不同责任单位协同数对比（柱状图）
+export const fetchLevelCooperationUnitCount = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/level/cooperation/stat/unit/count`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无责任单位协同数对比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '责任单位协同数对比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['交通局', '城管局', '公安局', '住建局', '街道办'],
+              series: [{ name: '协同数量', data: [56, 42, 38, 28, 25] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 责任单位协同数对比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '协同数量', data: [] }],
+    });
+  }
+};
+
+// 指令状态占比（饼图）
+export const fetchLevelCooperationStatusRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/level/cooperation/stat/status/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无指令状态占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '指令状态占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['已下发', '已接收', '已反馈', '已完成'],
+              series: [{ name: '指令状态占比(%)', data: [25.4, 18.0, 30.7, 25.9] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 指令状态占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '指令状态占比(%)', data: [] }],
+    });
+  }
+};
+
+// 层级协同详情查询 - 详情弹窗专用
+export const fetchLevelCooperationDetail = (cooperationId, params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/level/cooperation/detail/${cooperationId}`,
+        params,
+      })
+      .then((response) => {
+        if (response && response.bizCrossLevelCoopCrossLevelCoopId === cooperationId) {
+          return response;
+        }
+        throw new Error('真实接口返回无层级协同详情数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('层级协同详情接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              bizCrossLevelCoopCrossLevelCoopId: cooperationId,
+              issueLevelName: cooperationId === 'LEVEL20260119001' ? '市级' : '省级',
+              receiveLevelName: cooperationId === 'LEVEL20260119001' ? '区级' : '市级',
+              bizCrossLevelCoopInstructionContent: cooperationId === 'LEVEL20260119001' ? '关于停车场智能化改造的指导意见' : '停车管理平台数据对接要求',
+              sysInstructionStatusName: cooperationId === 'LEVEL20260119001' ? '已下发' : '已接收',
+              bizCrossLevelCoopIssueTime: cooperationId === 'LEVEL20260119001' ? '2026-01-19 09:30:00' : '2026-01-18 14:20:00',
+              // 详情字段
+              bizCrossLevelCoopAverageFeedbackDuration: cooperationId === 'LEVEL20260119001' ? 2.8 : 3.5,
+              sysResponsibleUnitName: cooperationId === 'LEVEL20260119001' ? '区交通局' : '市城管局',
+              bizCrossLevelCoopFeedbackResult: cooperationId === 'LEVEL20260119001' ? '已收到指令，正在制定实施方案' : '数据对接方案已完成初步设计',
+              bizCrossLevelCoopCompleteTime: cooperationId === 'LEVEL20260119001' ? '2026-01-20 17:30:00' : '2026-01-19 15:45:00',
+              // 层级分工
+              levelDivision: [
+                { levelName: '省级', task: '政策制定与指导', person: '王局' },
+                { levelName: '市级', task: '方案细化与部署', person: '李处' },
+                { levelName: '区级', task: '具体实施与执行', person: '张科长' },
+                { levelName: '街道', task: '现场协调与反馈', person: '赵主任' }
+              ],
+              // 反馈记录
+              feedbackRecords: [
+                { time: '2026-01-19 10:15:00', level: '区级', content: '已收到指令，开始组织学习' },
+                { time: '2026-01-19 14:30:00', level: '区级', content: '实施方案初稿已完成' },
+                { time: '2026-01-20 09:00:00', level: '市级', content: '请于本周五前提交详细实施计划' },
+                { time: '2026-01-20 16:45:00', level: '区级', content: '详细实施计划已提交' }
+              ],
+              // 流转时间轴
+              flowTimeline: [
+                { time: '2026-01-19 09:30:00', level: '市级', action: '指令下发', status: '已下发' },
+                { time: '2026-01-19 10:15:00', level: '区级', action: '指令接收', status: '已接收' },
+                { time: '2026-01-19 14:30:00', level: '区级', action: '初步反馈', status: '已反馈' },
+                { time: '2026-01-20 16:45:00', level: '区级', action: '完成反馈', status: '已完成' }
+              ]
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchLevelCooperationDetail 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({});
+  }
+};
+
+// 提交层级反馈
+export const submitLevelCooperationFeedback = (cooperationId, feedbackContent, evidenceFiles) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/level/cooperation/feedback/${cooperationId}`,
+        data: { feedbackContent, evidenceFiles },
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return response;
+        }
+        throw new Error('真实接口返回无反馈结果，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('层级反馈接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              success: true,
+              message: '反馈提交成功',
+              instructionStatus: '已反馈'
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== submitLevelCooperationFeedback 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({ success: false, message: '接口异常' });
+  }
+};
+
+
 // ========== 行业协同 ==========
 // 行业协同列表
 export const fetchIndustryCooperationList = (params = {}) => {
@@ -695,7 +2473,7 @@ export const fetchRegionCooperationCompletionRateTrend = (params = {}) => {
         return new Promise((resolve) => {
           setTimeout(() => {
             const xAxis = Array.from({length: 12}, (_, i) => {
-              return `${2023}-${String(i+1).padStart(2, '0')}`;
+              return `${2026}-${String(i+1).padStart(2, '0')}`;
             });
             const data = xAxis.map(() => 70 + Math.random() * 15);
             resolve({
@@ -1298,133 +3076,93 @@ export const submitCooperationFeedback = (cooperationId, feedbackResult, evidenc
 };
 
 
-// 政企协同详情及进度
-export const fetchGovEnterpriseCoopList = (params = {}) => {
+// ========== 运维人员动态 ==========
+// 运维人员列表
+export const fetchMaintainerDynamicList = (params = {}) => {
   try {
     return requestClient
       .get({
-        url: `${BASE_URL}/gov/enterprise/coop/list`,
+        url: `${BASE_URL}/maintainer/dynamic/list`,
         params,
       })
       .then((response) => {
-        console.log('政企协同视图-接口请求成功');
+        console.log('运维人员动态列表-接口请求成功');
         if (response && Array.isArray(response)) {
-          console.log('政企协同视图-响应符合实际格式');
+          console.log('运维人员动态列表-响应符合实际格式');
           return response.map((item) => ({
-            govEnterpriseCoopId: item.govEnterpriseCoopId,
-            coopItem: item.coopItem,
-            govDepartment: item.govDepartment,
-            merchantId: 'M2025001',
-            progressFeedback: item.progressFeedback,
-            satisfactionEvaluation: item.satisfactionEvaluation,
+            sysMaintainUserMaintainUserId: item.sysMaintainUserMaintainUserId,
+            sysUserUserName: item.sysUserUserName,
+            sysDeptDeptName: item.sysDeptDeptName,
+            sysAreaAreaName: item.sysAreaAreaName,
+            sysOnDutyStatusName: item.sysOnDutyStatusName,
+            bizCoopStatCurrentCoopTaskCount: item.bizCoopStatCurrentCoopTaskCount,
           }));
         }
-        throw new Error('真实接口返回无核心数据，使用模拟数据兜底');
+        throw new Error('真实接口返回无运维人员动态数据，使用模拟数据兜底');
       })
       .catch((error) => {
-        console.log('政企协同视图接口调用失败-使用模拟数据兜底', error.message);
+        console.log('运维人员动态列表接口调用失败-使用模拟数据兜底', error.message);
         return new Promise((resolve) => {
           setTimeout(() => {
             resolve([
               {
-                govEnterpriseCoopId: 'GEC20250109001',
-                coopItem: '企业诉求响应',
-                govDepartment: '漳州市发改委营商环境科',
-                merchantId: 'M2025001',
-                progressFeedback:
-                  '企业提出的停车收费备案诉求已受理，材料审核完成，备案登记办结',
-                satisfactionEvaluation: '满意',
+                sysMaintainUserMaintainUserId: 'MAINT202601001',
+                sysUserUserName: '张三',
+                sysDeptDeptName: '运营部',
+                sysAreaAreaName: 'A区停车场',
+                sysOnDutyStatusName: '在岗',
+                bizCoopStatCurrentCoopTaskCount: 3,
               },
               {
-                govEnterpriseCoopId: 'GEC20250109002',
-                coopItem: '联合安全生产',
-                govDepartment: '漳州市应急管理局+消防救援支队',
-                merchantId: 'M2025002',
-                progressFeedback:
-                  '已完成停车场消防设施联合检查，发现3处隐患，企业已全部整改完毕，复检合格',
-                satisfactionEvaluation: '非常满意',
+                sysMaintainUserMaintainUserId: 'MAINT202601002',
+                sysUserUserName: '李四',
+                sysDeptDeptName: '技术部',
+                sysAreaAreaName: 'B区停车场',
+                sysOnDutyStatusName: '待命',
+                bizCoopStatCurrentCoopTaskCount: 1,
               },
               {
-                govEnterpriseCoopId: 'GEC20250109003',
-                coopItem: '应急物资采购供应',
-                govDepartment: '漳州市工信局物资保障科',
-                merchantId: 'M2025003',
-                progressFeedback:
-                  '应急消防器材采购合同已签订，物资已到货80%，剩余物资预计今日送达并完成验收',
-                satisfactionEvaluation: '基本满意',
+                sysMaintainUserMaintainUserId: 'MAINT202601003',
+                sysUserUserName: '王五',
+                sysDeptDeptName: '客服部',
+                sysAreaAreaName: 'C区停车场',
+                sysOnDutyStatusName: '休息',
+                bizCoopStatCurrentCoopTaskCount: 0,
               },
               {
-                govEnterpriseCoopId: 'GEC20250109004',
-                coopItem: '企业诉求响应',
-                govDepartment: '漳州市城管局停车管理处',
-                merchantId: 'M2025004',
-                progressFeedback:
-                  '企业提出的停车场出入口扩建诉求已完成现场勘查，规划方案正在审批中',
-                satisfactionEvaluation: '一般',
+                sysMaintainUserMaintainUserId: 'MAINT202601004',
+                sysUserUserName: '赵六',
+                sysDeptDeptName: '安全部',
+                sysAreaAreaName: 'D区停车场',
+                sysOnDutyStatusName: '在岗',
+                bizCoopStatCurrentCoopTaskCount: 2,
               },
               {
-                govEnterpriseCoopId: 'GEC20250109005',
-                coopItem: '企业诉求响应',
-                govDepartment: '漳州市住建局城建科',
-                merchantId: 'M2025005',
-                progressFeedback:
-                  '企业申请的园区停车场规划许可已审核通过，相关施工手续已同步办结发放',
-                satisfactionEvaluation: '满意',
-              },
-              {
-                govEnterpriseCoopId: 'GEC20250109006',
-                coopItem: '联合安全生产',
-                govDepartment: '漳州市交通运输局路政科',
-                merchantId: 'M2025006',
-                progressFeedback:
-                  '完成漳州高速口停车场安全隐患排查，整改占道经营、消防通道堵塞等问题2项',
-                satisfactionEvaluation: '非常满意',
-              },
-              {
-                govEnterpriseCoopId: 'GEC20250109007',
-                coopItem: '应急物资采购供应',
-                govDepartment: '漳州市商务局商贸科',
-                merchantId: 'M2025007',
-                progressFeedback:
-                  '漳州开发区应急物资储备库补货完成，防汛、防疫类物资备货量达需求标准120%',
-                satisfactionEvaluation: '满意',
-              },
-              {
-                govEnterpriseCoopId: 'GEC20250109008',
-                coopItem: '企业诉求响应',
-                govDepartment: '漳州市市场监管局企业科',
-                merchantId: 'M2025008',
-                progressFeedback:
-                  '企业反映的停车场收费公示不规范问题，已完成现场核查并督促整改到位',
-                satisfactionEvaluation: '基本满意',
-              },
-              {
-                govEnterpriseCoopId: 'GEC20250109009',
-                coopItem: '联合安全生产',
-                govDepartment: '漳州市文旅局产业科',
-                merchantId: 'M2025009',
-                progressFeedback:
-                  '完成漳州景区配套停车场安全检查，整改观光车停放、标识不清等安全问题3项',
-                satisfactionEvaluation: '一般',
+                sysMaintainUserMaintainUserId: 'MAINT202601005',
+                sysUserUserName: '钱七',
+                sysDeptDeptName: '运维部',
+                sysAreaAreaName: 'E区停车场',
+                sysOnDutyStatusName: '在岗',
+                bizCoopStatCurrentCoopTaskCount: 4,
               },
             ]);
           }, 500);
         });
       });
   } catch (error) {
-    console.error('===== fetchGovEnterpriseCoopList 函数初始化异常 =====');
+    console.error('===== fetchMaintainerDynamicList 函数初始化异常 =====');
     console.error('错误信息:', error.message);
     console.error('错误堆栈:', error.stack);
     return Promise.resolve([]);
   }
 };
 
-// 政企协同核心指标
-export const fetchGovEnterpriseCoopIndicators = (params = {}) => {
+// 运维人员核心指标（卡片展示）
+export const fetchMaintainerDynamicIndicators = (params = {}) => {
   try {
     return requestClient
       .get({
-        url: `${BASE_URL}/coop/indicators/get`,
+        url: `${BASE_URL}/maintainer/dynamic/indicators/get`,
         params,
       })
       .then((response) => {
@@ -1432,47 +3170,47 @@ export const fetchGovEnterpriseCoopIndicators = (params = {}) => {
           response &&
           typeof response === 'object' &&
           !Array.isArray(response) &&
-          response.totalCount &&
-          response.responseRate &&
-          response.satisfactionRate
+          response.totalMaintainerCount &&
+          response.onDutyCount &&
+          response.totalCoopTaskCount
         ) {
           return response;
         }
-        throw new Error('真实接口返回无政企协同核心数据，使用模拟数据兜底');
+        throw new Error('真实接口返回无运维人员核心指标数据，使用模拟数据兜底');
       })
       .catch((error) => {
         console.warn(
-          '政企协同指标接口调用失败-使用模拟数据兜底',
+          '运维人员核心指标接口调用失败-使用模拟数据兜底',
           error.message,
         );
         return new Promise((resolve) => {
           setTimeout(() => {
             resolve({
-              totalCount: 36, // 政企协同总数
-              responseRate: 0.97, // 响应率
-              satisfactionRate: 94.2, // 满意度(%)
+              totalMaintainerCount: 85, // 总运维人数
+              onDutyCount: 62, // 在岗人数
+              totalCoopTaskCount: 187, // 当前协同任务总数
             });
           }, 500);
         });
       });
   } catch (error) {
-    console.error('===== 政企协同指标函数初始化异常 =====');
+    console.error('===== fetchMaintainerDynamicIndicators 函数初始化异常 =====');
     console.error('错误信息:', error.message);
     console.error('错误堆栈:', error.stack);
     return Promise.resolve({
-      totalCount: 0,
-      responseRate: 0,
-      satisfactionRate: 0,
+      totalMaintainerCount: 0,
+      onDutyCount: 0,
+      totalCoopTaskCount: 0,
     });
   }
 };
 
-// 政府部门协同数对比
-export const fetchGovDeptCoopCount = (params = {}) => {
+// 不同部门协同任务数对比（柱状图）
+export const fetchMaintainerDynamicDeptTaskCount = (params = {}) => {
   try {
     return requestClient
       .get({
-        url: `${BASE_URL}/synergy/govDeptCoopCount/get`,
+        url: `${BASE_URL}/maintainer/dynamic/stat/dept/task/count`,
         params,
       })
       .then((response) => {
@@ -1485,39 +3223,39 @@ export const fetchGovDeptCoopCount = (params = {}) => {
         ) {
           return response;
         }
-        throw new Error('真实接口返回无政府部门协同数据，使用模拟数据兜底');
+        throw new Error('真实接口返回无部门协同任务数对比数据，使用模拟数据兜底');
       })
       .catch((error) => {
         console.warn(
-          '政府部门协同数对比接口调用失败-使用模拟数据兜底',
+          '部门协同任务数对比接口调用失败-使用模拟数据兜底',
           error.message,
         );
         return new Promise((resolve) => {
           setTimeout(() => {
             resolve({
-              xAxis: ['城管局', '交通局', '住建局', '文旅局', '行政审批局'],
-              series: [{ name: '协同事项数', data: [28, 35, 19, 12, 23] }],
+              xAxis: ['运营部', '技术部', '客服部', '安全部', '运维部'],
+              series: [{ name: '协同任务数', data: [45, 38, 22, 28, 54] }],
             });
           }, 500);
         });
       });
   } catch (error) {
-    console.error('===== 政府部门协同数对比函数初始化异常 =====');
+    console.error('===== fetchMaintainerDynamicDeptTaskCount 函数初始化异常 =====');
     console.error('错误信息:', error.message);
     console.error('错误堆栈:', error.stack);
     return Promise.resolve({
       xAxis: [],
-      series: [{ name: '协同事项数', data: [] }],
+      series: [{ name: '协同任务数', data: [] }],
     });
   }
 };
 
-// 获取企业类型协同数对比
-export const fetchEnterpriseTypeCoopCount = (params = {}) => {
+// 不同区域运维人员协同任务数对比（柱状图）
+export const fetchMaintainerDynamicAreaTaskCount = (params = {}) => {
   try {
     return requestClient
       .get({
-        url: `${BASE_URL}/synergy/enterpriseTypeCoopCount/get`,
+        url: `${BASE_URL}/maintainer/dynamic/stat/area/task/count`,
         params,
       })
       .then((response) => {
@@ -1530,1066 +3268,115 @@ export const fetchEnterpriseTypeCoopCount = (params = {}) => {
         ) {
           return response;
         }
-        throw new Error('真实接口返回无企业类型协同数据，使用模拟数据兜底');
+        throw new Error('真实接口返回无区域协同任务数对比数据，使用模拟数据兜底');
       })
       .catch((error) => {
         console.warn(
-          '企业类型协同数对比接口调用失败-使用模拟数据兜底',
+          '区域协同任务数对比接口调用失败-使用模拟数据兜底',
           error.message,
         );
         return new Promise((resolve) => {
           setTimeout(() => {
             resolve({
-              xAxis: ['国有企业', '民营企业', '外资企业', '合资企业'],
-              series: [{ name: '协同事项数', data: [42, 58, 16, 24] }],
+              xAxis: ['A区停车场', 'B区停车场', 'C区停车场', 'D区停车场', 'E区停车场'],
+              series: [{ name: '协同任务数', data: [52, 48, 35, 41, 31] }],
             });
           }, 500);
         });
       });
   } catch (error) {
-    console.error('===== 企业类型协同数对比函数初始化异常 =====');
+    console.error('===== fetchMaintainerDynamicAreaTaskCount 函数初始化异常 =====');
     console.error('错误信息:', error.message);
     console.error('错误堆栈:', error.stack);
     return Promise.resolve({
       xAxis: [],
-      series: [{ name: '协同事项数', data: [] }],
+      series: [{ name: '协同任务数', data: [] }],
     });
   }
 };
 
-// 协同事项类型占比饼图接口
-export const fetchCoopItemTypeRatio = (params = {}) => {
+// 运维人员详情查询 - 详情弹窗专用
+export const fetchMaintainerDynamicDetail = (maintainerId, params = {}) => {
   try {
     return requestClient
       .get({
-        url: `${BASE_URL}/synergy/coopItemTypeRatio/get`,
+        url: `${BASE_URL}/maintainer/dynamic/detail/${maintainerId}`,
         params,
       })
       .then((response) => {
-        if (
-          response &&
-          typeof response === 'object' &&
-          !Array.isArray(response) &&
-          response.legend &&
-          Array.isArray(response.legend) &&
-          response.series &&
-          Array.isArray(response.series)
-        ) {
+        if (response && response.sysMaintainUserMaintainUserId === maintainerId) {
           return response;
         }
-        throw new Error('真实接口返回无协同事项占比数据，使用模拟数据兜底');
+        throw new Error('真实接口返回无运维人员详情数据，使用模拟数据兜底');
       })
       .catch((error) => {
-        console.warn(
-          '协同事项类型占比饼图接口调用失败-使用模拟数据兜底',
-          error.message,
-        );
+        console.log('运维人员详情接口调用失败-使用模拟数据兜底', error.message);
         return new Promise((resolve) => {
           setTimeout(() => {
             resolve({
-              legend: ['企业诉求响应', '联合安全生产', '应急物资采购供应'],
-              series: [{ name: '协同事项占比', data: [52, 28, 20] }],
-            });
-          }, 500);
-        });
-      });
-  } catch (error) {
-    console.error('===== 协同事项类型占比饼图函数初始化异常 =====');
-    console.error('错误信息:', error.message);
-    console.error('错误堆栈:', error.stack);
-    return Promise.resolve({
-      legend: [],
-      series: [{ name: '协同事项占比', data: [] }],
-    });
-  }
-};
-
-// 满意度评价占比饼图接口
-export const fetchSatisfactionLevelRatio = (params = {}) => {
-  try {
-    return requestClient
-      .get({
-        url: `${BASE_URL}/synergy/satisfactionLevelRatio/get`,
-        params,
-      })
-      .then((response) => {
-        if (
-          response &&
-          typeof response === 'object' &&
-          !Array.isArray(response) &&
-          response.legend &&
-          Array.isArray(response.legend) &&
-          response.series &&
-          Array.isArray(response.series)
-        ) {
-          return response;
-        }
-        throw new Error('真实接口返回无满意度占比数据，使用模拟数据兜底');
-      })
-      .catch((error) => {
-        console.warn(
-          '满意度评价占比饼图接口调用失败-使用模拟数据兜底',
-          error.message,
-        );
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({
-              legend: ['非常满意', '满意', '基本满意', '一般'],
-              series: [{ name: '满意度占比', data: [26, 45, 18, 11] }],
-            });
-          }, 500);
-        });
-      });
-  } catch (error) {
-    console.error('===== 满意度评价占比饼图函数初始化异常 =====');
-    console.error('错误信息:', error.message);
-    console.error('错误堆栈:', error.stack);
-    return Promise.resolve({
-      legend: [],
-      series: [{ name: '满意度占比', data: [] }],
-    });
-  }
-};
-
-// 高频协同事项TOP10
-export const fetchHighFrequencyCoopTop10 = (params = {}) => {
-  try {
-    return requestClient
-      .get({
-        url: `${BASE_URL}/coop/stat/top10`,
-        params,
-      })
-      .then((response) => {
-        console.log('高频协同事项TOP10-接口请求成功');
-        if (response && Array.isArray(response)) {
-          return response.map((item, index) => ({
-            rank: index + 1,
-            coopStatId: item.coopStatId,
-            coopType: item.coopType,
-            coopCount: item.coopCount,
-            top10CoopItem: item.top10CoopItem,
-          }));
-        }
-        throw new Error('真实接口返回无核心数据，使用模拟数据兜底');
-      })
-      .catch((error) => {
-        console.log(
-          '高频协同事项TOP10接口调用失败-使用模拟数据兜底',
-          error.message,
-        );
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve([
-              {
-                rank: 1,
-                coopStatId: 'CST2025001',
-                coopType: 'high',
-                coopCount: 89,
-                top10CoopItem: '企业停车收费备案诉求响应',
-              },
-              {
-                rank: 2,
-                coopStatId: 'CST2025002',
-                coopType: 'high',
-                coopCount: 76,
-                top10CoopItem: '停车场消防设施联合安全检查',
-              },
-              {
-                rank: 3,
-                coopStatId: 'CST2025003',
-                coopType: 'medium',
-                coopCount: 65,
-                top10CoopItem: '应急消防器材采购供应对接',
-              },
-              {
-                rank: 4,
-                coopStatId: 'CST2025004',
-                coopType: 'medium',
-                coopCount: 58,
-                top10CoopItem: '停车场出入口扩建规划审批',
-              },
-              {
-                rank: 5,
-                coopStatId: 'CST2025005',
-                coopType: 'medium',
-                coopCount: 49,
-                top10CoopItem: '园区停车场规划许可办理',
-              },
-              {
-                rank: 6,
-                coopStatId: 'CST2025006',
-                coopType: 'low',
-                coopCount: 42,
-                top10CoopItem: '高速口停车场占道经营整改',
-              },
-              {
-                rank: 7,
-                coopStatId: 'CST2025007',
-                coopType: 'low',
-                coopCount: 37,
-                top10CoopItem: '应急物资储备库补货验收',
-              },
-              {
-                rank: 8,
-                coopStatId: 'CST2025008',
-                coopType: 'low',
-                coopCount: 31,
-                top10CoopItem: '停车场收费公示规范整改',
-              },
-              {
-                rank: 9,
-                coopStatId: 'CST2025009',
-                coopType: 'medium',
-                coopCount: 26,
-                top10CoopItem: '景区配套停车场安全检查',
-              },
-              {
-                rank: 10,
-                coopStatId: 'CST2025010',
-                coopType: 'high',
-                coopCount: 22,
-                top10CoopItem: '停车场监控设备升级改造',
-              },
-            ]);
-          }, 500);
-        });
-      });
-  } catch (error) {
-    console.error('===== fetchHighFrequencyCoopTop10 函数初始化异常 =====');
-    console.error('错误信息:', error.message);
-    console.error('错误堆栈:', error.stack);
-    return Promise.resolve([]);
-  }
-};
-
-// 协同统计分析-核心统计指标
-export const fetchCoopCoreIndicators = (params = {}) => {
-  try {
-    return requestClient
-      .get({ url: `${BASE_URL}/coop/stat/core`, params })
-      .then((res) => {
-        if (res && Object.keys(res).length > 0) return res;
-        throw new Error('核心指标无数据，使用兜底');
-      })
-      .catch((error) => {
-        console.log('协同核心指标接口异常，使用兜底数据', error.message);
-        return {
-          totalCoopCount: 896,
-          avgHandleCycle: 3.2,
-          finishRate: 0.925,
-          highPriorityRate: 0.46,
-        };
-      });
-  } catch (error) {
-    console.error('fetchCoopCoreIndicators 异常:', error);
-    return Promise.resolve({
-      totalCoopCount: 0,
-      avgHandleCycle: 0,
-      finishRate: 0,
-      highPriorityRate: 0,
-    });
-  }
-};
-
-// 协同统计分析-类型协同数对比 (柱状图)
-export const fetchCoopTypeCount = (params = {}) => {
-  try {
-    return requestClient
-      .get({ url: `${BASE_URL}/coop/stat/type/count`, params })
-      .then((res) => res || { xAxis: [], series: [] })
-      .catch((error) => {
-        console.log('类型协同数接口异常，使用兜底数据', error.message);
-        return {
-          xAxis: ['高优先级', '中优先级', '低优先级', '紧急协同', '常规协同'],
-          series: [{ name: '协同事项数', data: [326, 285, 198, 87, 126] }],
-        };
-      });
-  } catch (error) {
-    console.error('fetchCoopTypeCount 异常:', error);
-    return Promise.resolve({ xAxis: [], series: [] });
-  }
-};
-
-// 协同统计分析-区域协同数对比 (柱状图)
-export const fetchCoopAreaCount = (params = {}) => {
-  try {
-    return requestClient
-      .get({ url: `${BASE_URL}/coop/stat/area/count`, params })
-      .then((res) => res || { xAxis: [], series: [] })
-      .catch((error) => {
-        console.log('区域协同数接口异常，使用兜底数据', error.message);
-        return {
-          xAxis: ['主城区', '高新区', '经开区', '文旅区', '周边区县'],
-          series: [{ name: '协同事项数', data: [268, 195, 156, 125, 98] }],
-        };
-      });
-  } catch (error) {
-    console.error('fetchCoopAreaCount 异常:', error);
-    return Promise.resolve({ xAxis: [], series: [] });
-  }
-};
-
-// 协同统计分析-行业协同占比 (饼图)
-export const fetchCoopIndustryRatio = (params = {}) => {
-  try {
-    return requestClient
-      .get({ url: `${BASE_URL}/coop/stat/industry/ratio`, params })
-      .then((res) => res || { legend: [], series: [] })
-      .catch((error) => {
-        console.log('行业协同占比接口异常，使用兜底数据', error.message);
-        return {
-          legend: ['停车服务', '消防安防', '规划审批', '物资供应', '运营管理'],
-          series: [
-            {
-              name: '行业协同占比',
-              data: [
-                { value: 35, name: '停车服务' },
-                { value: 25, name: '消防安防' },
-                { value: 20, name: '规划审批' },
-                { value: 12, name: '物资供应' },
-                { value: 8, name: '运营管理' },
-              ],
-            },
-          ],
-        };
-      });
-  } catch (error) {
-    console.error('fetchCoopIndustryRatio 异常:', error);
-    return Promise.resolve({ legend: [], series: [] });
-  }
-};
-
-// 协同统计分析-区域协同占比 (饼图)
-export const fetchCoopAreaRatio = (params = {}) => {
-  try {
-    return requestClient
-      .get({ url: `${BASE_URL}/coop/stat/area/ratio`, params })
-      .then((res) => res || { legend: [], series: [] })
-      .catch((error) => {
-        console.log('区域协同占比接口异常，使用兜底数据', error.message);
-        return {
-          legend: ['主城区', '高新区', '经开区', '文旅区', '周边区县'],
-          series: [
-            {
-              name: '区域协同占比',
-              data: [
-                { value: 32, name: '主城区' },
-                { value: 24, name: '高新区' },
-                { value: 18, name: '经开区' },
-                { value: 15, name: '文旅区' },
-                { value: 11, name: '周边区县' },
-              ],
-            },
-          ],
-        };
-      });
-  } catch (error) {
-    console.error('fetchCoopAreaRatio 异常:', error);
-    return Promise.resolve({ legend: [], series: [] });
-  }
-};
-
-// 协同统计分析-协同事件近周期趋势
-export const fetchCoopTrendData = (params = {}) => {
-  try {
-    return requestClient
-      .get({ url: `${BASE_URL}/coop/stat/trend`, params })
-      .then((res) => res || { xAxis: [], series: [] })
-      .catch((error) => {
-        console.log('协同趋势折线图接口异常，使用兜底数据', error.message);
-        return {
-          xAxis: [
-            '01-01',
-            '01-02',
-            '01-03',
-            '01-04',
-            '01-05',
-            '01-06',
-            '01-07',
-            '01-08',
-            '01-09',
-            '01-10',
-          ],
-          series: [
-            {
-              name: '协同事件数',
-              data: [68, 75, 59, 82, 96, 78, 92, 85, 102, 98],
-            },
-          ],
-        };
-      });
-  } catch (error) {
-    console.error('fetchCoopTrendData 异常:', error);
-    return Promise.resolve({ xAxis: [], series: [] });
-  }
-};
-
-// 协同效率评估-详情及优化建议列表
-export const fetchCoopEfficiencyList = (params = {}) => {
-  try {
-    return requestClient
-      .get({
-        url: `${BASE_URL}/efficiency/coop/list`,
-        params,
-      })
-      .then((response) => {
-        console.log('协同效率评估-接口请求成功');
-        if (response && Array.isArray(response)) {
-          console.log('协同效率评估-响应符合实际格式');
-          return response.map((item) => ({
-            coopEfficiencyId: item.coopEfficiencyId,
-            coopType: item.coopType,
-            responseDuration: item.responseDuration,
-            disposalDuration: item.disposalDuration,
-            collaborationCost: item.collaborationCost,
-            effectAchievementRate: item.effectAchievementRate,
-            problemRecurrenceRate: item.problemRecurrenceRate,
-          }));
-        }
-        throw new Error('真实接口返回无核心数据，使用模拟数据兜底');
-      })
-      .catch((error) => {
-        console.log('协同效率评估接口调用失败-使用模拟数据兜底', error.message);
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve([
-              {
-                coopEfficiencyId: 'CE20250110001',
-                coopType: 'high',
-                responseDuration: 2.5,
-                disposalDuration: 8.2,
-                collaborationCost: 1260,
-                effectAchievementRate: 0.98,
-                problemRecurrenceRate: 0.02,
-              },
-              {
-                coopEfficiencyId: 'CE20250110002',
-                coopType: 'high',
-                responseDuration: 1.8,
-                disposalDuration: 6.5,
-                collaborationCost: 980,
-                effectAchievementRate: 0.96,
-                problemRecurrenceRate: 0.03,
-              },
-              {
-                coopEfficiencyId: 'CE20250110003',
-                coopType: 'medium',
-                responseDuration: 4.2,
-                disposalDuration: 12.6,
-                collaborationCost: 850,
-                effectAchievementRate: 0.92,
-                problemRecurrenceRate: 0.05,
-              },
-              {
-                coopEfficiencyId: 'CE20250110004',
-                coopType: 'medium',
-                responseDuration: 3.6,
-                disposalDuration: 10.8,
-                collaborationCost: 720,
-                effectAchievementRate: 0.9,
-                problemRecurrenceRate: 0.06,
-              },
-              {
-                coopEfficiencyId: 'CE20250110005',
-                coopType: 'medium',
-                responseDuration: 5.1,
-                disposalDuration: 14.2,
-                collaborationCost: 650,
-                effectAchievementRate: 0.88,
-                problemRecurrenceRate: 0.07,
-              },
-              {
-                coopEfficiencyId: 'CE20250110006',
-                coopType: 'low',
-                responseDuration: 8.5,
-                disposalDuration: 20.5,
-                collaborationCost: 420,
-                effectAchievementRate: 0.85,
-                problemRecurrenceRate: 0.1,
-              },
-              {
-                coopEfficiencyId: 'CE20250110007',
-                coopType: 'low',
-                responseDuration: 7.2,
-                disposalDuration: 18.6,
-                collaborationCost: 380,
-                effectAchievementRate: 0.82,
-                problemRecurrenceRate: 0.12,
-              },
-              {
-                coopEfficiencyId: 'CE20250110008',
-                coopType: 'high',
-                responseDuration: 3,
-                disposalDuration: 9.5,
-                collaborationCost: 1150,
-                effectAchievementRate: 0.95,
-                problemRecurrenceRate: 0.04,
-              },
-              {
-                coopEfficiencyId: 'CE20250110009',
-                coopType: 'medium',
-                responseDuration: 4.8,
-                disposalDuration: 13.8,
-                collaborationCost: 780,
-                effectAchievementRate: 0.89,
-                problemRecurrenceRate: 0.08,
-              },
-              {
-                coopEfficiencyId: 'CE20250110010',
-                coopType: 'low',
-                responseDuration: 9.2,
-                disposalDuration: 22.3,
-                collaborationCost: 350,
-                effectAchievementRate: 0.8,
-                problemRecurrenceRate: 0.15,
-              },
-            ]);
-          }, 500);
-        });
-      });
-  } catch (error) {
-    console.error('===== fetchCoopEfficiencyList 函数初始化异常 =====');
-    console.error('错误信息:', error.message);
-    console.error('错误堆栈:', error.stack);
-    return Promise.resolve([]);
-  }
-};
-
-// 协同效率评估-核心指标 (平均响应时长、平均处置时长、平均成效达标率)
-export const fetchCoopEfficiencyIndicators = (params = {}) => {
-  try {
-    return requestClient
-      .get({
-        url: `${BASE_URL}/efficiency/indicators/get`,
-        params,
-      })
-      .then((response) => {
-        if (
-          response &&
-          typeof response === 'object' &&
-          !Array.isArray(response) &&
-          response.avgResponseDuration &&
-          response.avgDisposalDuration &&
-          response.avgEffectAchievementRate
-        ) {
-          return response;
-        }
-        throw new Error('真实接口返回无效率评估核心数据，使用模拟数据兜底');
-      })
-      .catch((error) => {
-        console.warn(
-          '协同效率评估指标接口调用失败-使用模拟数据兜底',
-          error.message,
-        );
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({
-              avgResponseDuration: 4.6, // 平均响应时长(小时)
-              avgDisposalDuration: 13.2, // 平均处置时长(小时)
-              avgEffectAchievementRate: 0.915, // 平均成效达标率
-            });
-          }, 500);
-        });
-      });
-  } catch (error) {
-    console.error('===== 协同效率评估指标函数初始化异常 =====');
-    console.error('错误信息:', error.message);
-    console.error('错误堆栈:', error.stack);
-    return Promise.resolve({
-      avgResponseDuration: 0,
-      avgDisposalDuration: 0,
-      avgEffectAchievementRate: 0,
-    });
-  }
-};
-
-// 协同效率评估-类型协同效率对比 柱状图
-export const fetchCoopEfficiencyTypeCount = (params = {}) => {
-  try {
-    return requestClient
-      .get({
-        url: `${BASE_URL}/efficiency/stat/type/count`,
-        params,
-      })
-      .then((response) => {
-        if (
-          response &&
-          typeof response === 'object' &&
-          !Array.isArray(response) &&
-          response.xAxis &&
-          response.series
-        ) {
-          return response;
-        }
-        throw new Error('真实接口返回无类型效率数据，使用模拟数据兜底');
-      })
-      .catch((error) => {
-        console.warn(
-          '类型协同效率对比接口调用失败-使用模拟数据兜底',
-          error.message,
-        );
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({
-              xAxis: [
-                '高优先级',
-                '中优先级',
-                '低优先级',
-                '紧急协同',
-                '常规协同',
-              ],
-              series: [
-                {
-                  name: '平均处置时长(小时)',
-                  data: [7.8, 12.5, 20.3, 5.6, 14.2],
-                },
+              sysMaintainUserMaintainUserId: maintainerId,
+              sysUserUserName: maintainerId === 'MAINT202601001' ? '张三' : '李四',
+              sysDeptDeptName: maintainerId === 'MAINT202601001' ? '运营部' : '技术部',
+              sysAreaAreaName: maintainerId === 'MAINT202601001' ? 'A区停车场' : 'B区停车场',
+              sysOnDutyStatusName: maintainerId === 'MAINT202601001' ? '在岗' : '待命',
+              bizCoopStatCurrentCoopTaskCount: maintainerId === 'MAINT202601001' ? 3 : 1,
+              // 详情字段
+              bizCoopStatCompletedCoopTaskCount: maintainerId === 'MAINT202601001' ? 125 : 98,
+              bizCoopStatCoopResponseDuration: maintainerId === 'MAINT202601001' ? 1.8 : 2.3,
+              sysCooperationTypeName: maintainerId === 'MAINT202601001' ? '设备巡检,故障处理' : '系统维护,数据备份',
+              bizCoopStatLatestCoopTime: maintainerId === 'MAINT202601001' ? '2026-01-19 14:30:00' : '2026-01-18 16:45:00',
+              // 基础信息
+              contactPhone: '138****5678',
+              email: 'zhangsan@example.com',
+              skillTags: maintainerId === 'MAINT202601001' ? ['设备维修', '电气工程', '安全管理'] : ['系统运维', '网络管理', '数据库'],
+              // 协同历史
+              cooperationHistory: [
+                { taskId: 'TASK001', taskName: 'A区设备巡检', status: '已完成', time: '2026-01-18' },
+                { taskId: 'TASK002', taskName: 'B区故障处理', status: '已完成', time: '2026-01-17' },
+                { taskId: 'TASK003', taskName: 'C区系统升级', status: '进行中', time: '2026-01-19' },
               ],
             });
           }, 500);
         });
       });
-  } catch {
-    console.error('===== 类型协同效率对比函数初始化异常 =====');
-    return Promise.resolve({
-      xAxis: [],
-      series: [{ name: '平均处置时长(小时)', data: [] }],
-    });
-  }
-};
-
-// 协同效率评估-区域协同效率对比 柱状图
-export const fetchCoopEfficiencyAreaCount = (params = {}) => {
-  try {
-    return requestClient
-      .get({
-        url: `${BASE_URL}/efficiency/stat/area/count`,
-        params,
-      })
-      .then((response) => {
-        if (
-          response &&
-          typeof response === 'object' &&
-          !Array.isArray(response) &&
-          response.xAxis &&
-          response.series
-        ) {
-          return response;
-        }
-        throw new Error('真实接口返回无区域效率数据，使用模拟数据兜底');
-      })
-      .catch((error) => {
-        console.warn(
-          '区域协同效率对比接口调用失败-使用模拟数据兜底',
-          error.message,
-        );
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({
-              xAxis: ['主城区', '高新区', '经开区', '文旅区', '周边区县'],
-              series: [
-                { name: '平均响应时长(小时)', data: [3.2, 4.1, 3.8, 5.5, 6.8] },
-              ],
-            });
-          }, 500);
-        });
-      });
-  } catch {
-    console.error('===== 区域协同效率对比函数初始化异常 =====');
-    return Promise.resolve({
-      xAxis: [],
-      series: [{ name: '平均响应时长(小时)', data: [] }],
-    });
-  }
-};
-
-// 协同效率评估-问题复发率占比 饼图
-export const fetchCoopEfficiencyRecurrenceRatio = (params = {}) => {
-  try {
-    return requestClient
-      .get({
-        url: `${BASE_URL}/efficiency/stat/recurrence/ratio`,
-        params,
-      })
-      .then((response) => {
-        if (
-          response &&
-          typeof response === 'object' &&
-          !Array.isArray(response) &&
-          response.legend &&
-          Array.isArray(response.legend) &&
-          response.series &&
-          Array.isArray(response.series)
-        ) {
-          return response;
-        }
-        throw new Error('真实接口返回无复发率占比数据，使用模拟数据兜底');
-      })
-      .catch((error) => {
-        console.warn(
-          '问题复发率占比饼图接口调用失败-使用模拟数据兜底',
-          error.message,
-        );
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({
-              legend: [
-                '无复发',
-                '低复发(≤5%)',
-                '中复发(5%-10%)',
-                '高复发(>10%)',
-              ],
-              series: [{ name: '问题复发率占比', data: [68, 18, 9, 5] }],
-            });
-          }, 500);
-        });
-      });
-  } catch {
-    console.error('===== 问题复发率占比饼图函数初始化异常 =====');
-    return Promise.resolve({
-      legend: [],
-      series: [{ name: '问题复发率占比', data: [] }],
-    });
-  }
-};
-
-// 协同效率评估-协同效率趋势 折线图
-export const fetchCoopEfficiencyTrendData = (params = {}) => {
-  try {
-    return requestClient
-      .get({ url: `${BASE_URL}/efficiency/stat/trend`, params })
-      .then((res) => res || { xAxis: [], series: [] })
-      .catch((error) => {
-        console.log('协同效率趋势折线图接口异常，使用兜底数据', error.message);
-        return {
-          xAxis: [
-            '01-01',
-            '01-02',
-            '01-03',
-            '01-04',
-            '01-05',
-            '01-06',
-            '01-07',
-            '01-08',
-            '01-09',
-            '01-10',
-          ],
-          series: [
-            {
-              name: '综合效率评分',
-              data: [82, 85, 83, 86, 88, 87, 90, 89, 92, 93],
-            },
-          ],
-        };
-      });
   } catch (error) {
-    console.error('fetchCoopEfficiencyTrendData 异常:', error);
-    return Promise.resolve({ xAxis: [], series: [] });
-  }
-};
-
-// ======================== 新增 专属协同视图 6个接口 (完整新增 无冲突) ========================
-// 专属协同详情及结果列表
-export const fetchSpecialCoopList = (params = {}) => {
-  try {
-    return requestClient
-      .get({
-        url: `${BASE_URL}/special/coop/list`,
-        params,
-      })
-      .then((response) => {
-        console.log('专属协同视图-接口请求成功');
-        if (response && Array.isArray(response)) {
-          console.log('专属协同视图-响应符合实际格式');
-          return response.map((item) => ({
-            specialCoopId: item.specialCoopId,
-            coopScene: item.coopScene,
-            coopRule: item.coopRule,
-            responsibilityDivision: item.responsibilityDivision,
-            coopResult: item.coopResult,
-            completeTime: item.completeTime,
-          }));
-        }
-        throw new Error('真实接口返回无核心数据，使用模拟数据兜底');
-      })
-      .catch((error) => {
-        console.log('专属协同视图接口调用失败-使用模拟数据兜底', error.message);
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve([
-              {
-                specialCoopId: 'SPC20250110001',
-                coopScene: '社区-停车场秩序协同',
-                coopRule:
-                  '每日早晚高峰巡逻，违规占道立即整改，违停车辆短信提醒',
-                responsibilityDivision:
-                  '社区居委会：秩序巡查；城管局：违停执法；物业：现场整改',
-                coopResult:
-                  '停车场出入口拥堵问题解决，违停率下降90%，居民投诉量清零',
-                completeTime: 1_736_486_400_000,
-              },
-              {
-                specialCoopId: 'SPC20250110002',
-                coopScene: '物业-停车运营服务协同',
-                coopRule: '车位预约登记，包月缴费绿色通道，充电桩维保定期巡检',
-                responsibilityDivision:
-                  '物业公司：运营服务；充电桩企业：设备维保；街道办：监督协调',
-                coopResult:
-                  '车位利用率提升40%，包月缴费效率提升80%，充电桩故障率低于2%',
-                completeTime: 1_736_572_800_000,
-              },
-              {
-                specialCoopId: 'SPC20250110003',
-                coopScene: '社区-停车场秩序协同',
-                coopRule: '节假日增派人员值守，临时车位扩容，人车分流规划整改',
-                responsibilityDivision:
-                  '社区居委会：人员调配；住建局：规划整改；交警中队：交通疏导',
-                coopResult: '节假日停车通行效率提升60%，未发生拥堵及剐蹭事故',
-                completeTime: 1_736_659_200_000,
-              },
-              {
-                specialCoopId: 'SPC20250110004',
-                coopScene: '物业-停车运营服务协同',
-                coopRule: '智能停车系统升级，线上缴费全覆盖，车位导航精准推送',
-                responsibilityDivision:
-                  '物业公司：系统运维；科技公司：技术支持；市场监管局：价格监督',
-                coopResult:
-                  '停车缴费时长缩短至10秒内，车位找车效率提升70%，用户好评率98%',
-                completeTime: 1_736_745_600_000,
-              },
-              {
-                specialCoopId: 'SPC20250110005',
-                coopScene: '社区-停车场秩序协同',
-                coopRule: '非机动车专区规划，充电桩合规整改，消防通道专项清理',
-                responsibilityDivision:
-                  '社区居委会：场地规划；消防大队：合规检查；物业：日常维护',
-                coopResult:
-                  '非机动车乱停放问题解决，消防通道畅通率100%，充电安全零事故',
-                completeTime: 1_736_832_000_000,
-              },
-            ]);
-          }, 500);
-        });
-      });
-  } catch (error) {
-    console.error('===== fetchSpecialCoopList 函数初始化异常 =====');
+    console.error('===== fetchMaintainerDynamicDetail 函数初始化异常 =====');
     console.error('错误信息:', error.message);
     console.error('错误堆栈:', error.stack);
-    return Promise.resolve([]);
+    return Promise.resolve({});
   }
 };
 
-// 专属协同核心指标 (总数、完成率、平均协同周期)
-export const fetchSpecialCoopIndicators = (params = {}) => {
+// 提交调度任务
+export const submitMaintainerDispatchTask = (maintainerId, taskDetail, coopTarget) => {
   try {
     return requestClient
-      .get({
-        url: `${BASE_URL}/special/coop/indicators/get`,
-        params,
+      .post({
+        url: `${BASE_URL}/maintainer/dynamic/dispatch/${maintainerId}`,
+        data: { taskDetail, coopTarget },
       })
       .then((response) => {
-        if (
-          response &&
-          typeof response === 'object' &&
-          !Array.isArray(response) &&
-          response.totalCount &&
-          response.completeRate &&
-          response.averageCycle
-        ) {
+        if (response && response.success) {
           return response;
         }
-        throw new Error('真实接口返回无专属协同核心数据，使用模拟数据兜底');
+        throw new Error('真实接口返回无调度结果，使用模拟数据兜底');
       })
       .catch((error) => {
-        console.warn(
-          '专属协同指标接口调用失败-使用模拟数据兜底',
-          error.message,
-        );
+        console.log('调度任务接口调用失败-使用模拟数据兜底', error.message);
         return new Promise((resolve) => {
           setTimeout(() => {
             resolve({
-              totalCount: 28, // 专属协同总数
-              completeRate: 0.92, // 完成率
-              averageCycle: 3.5, // 平均协同周期(天)
+              success: true,
+              message: '调度任务提交成功',
+              updatedTaskCount: 4,
             });
           }, 500);
         });
       });
   } catch (error) {
-    console.error('===== 专属协同指标函数初始化异常 =====');
+    console.error('===== submitMaintainerDispatchTask 函数初始化异常 =====');
     console.error('错误信息:', error.message);
     console.error('错误堆栈:', error.stack);
-    return Promise.resolve({ totalCount: 0, completeRate: 0, averageCycle: 0 });
-  }
-};
-
-// 专属协同-场景协同数对比柱状图
-export const fetchSpecialCoopSceneCount = (params = {}) => {
-  try {
-    return requestClient
-      .get({
-        url: `${BASE_URL}/special/synergy/sceneCount/get`,
-        params,
-      })
-      .then((response) => {
-        if (
-          response &&
-          typeof response === 'object' &&
-          !Array.isArray(response) &&
-          response.xAxis &&
-          response.series
-        ) {
-          return response;
-        }
-        throw new Error('真实接口返回无场景协同数数据，使用模拟数据兜底');
-      })
-      .catch((error) => {
-        console.warn(
-          '场景协同数对比接口调用失败-使用模拟数据兜底',
-          error.message,
-        );
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({
-              xAxis: ['社区-停车场秩序', '物业-停车运营服务'],
-              series: [{ name: '协同完成数', data: [16, 12] }],
-            });
-          }, 500);
-        });
-      });
-  } catch {
-    console.error('===== 场景协同数对比函数初始化异常 =====');
-    return Promise.resolve({
-      xAxis: [],
-      series: [{ name: '协同完成数', data: [] }],
-    });
-  }
-};
-
-// 专属协同-责任单位协同数对比柱状图
-export const fetchSpecialCoopDeptCount = (params = {}) => {
-  try {
-    return requestClient
-      .get({
-        url: `${BASE_URL}/special/synergy/deptCount/get`,
-        params,
-      })
-      .then((response) => {
-        if (
-          response &&
-          typeof response === 'object' &&
-          !Array.isArray(response) &&
-          response.xAxis &&
-          response.series
-        ) {
-          return response;
-        }
-        throw new Error('真实接口返回无责任单位协同数数据，使用模拟数据兜底');
-      })
-      .catch((error) => {
-        console.warn(
-          '责任单位协同数对比接口调用失败-使用模拟数据兜底',
-          error.message,
-        );
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({
-              xAxis: ['社区居委会', '物业公司', '城管局', '住建局', '消防大队'],
-              series: [{ name: '协同事项数', data: [22, 19, 15, 8, 6] }],
-            });
-          }, 500);
-        });
-      });
-  } catch {
-    console.error('===== 责任单位协同数对比函数初始化异常 =====');
-    return Promise.resolve({
-      xAxis: [],
-      series: [{ name: '协同事项数', data: [] }],
-    });
-  }
-};
-
-// 专属协同-协同场景占比饼图
-export const fetchSpecialCoopSceneRatio = (params = {}) => {
-  try {
-    return requestClient
-      .get({
-        url: `${BASE_URL}/special/synergy/sceneRatio/get`,
-        params,
-      })
-      .then((response) => {
-        if (
-          response &&
-          typeof response === 'object' &&
-          !Array.isArray(response) &&
-          response.legend &&
-          response.series
-        ) {
-          return response;
-        }
-        throw new Error('真实接口返回无协同场景占比数据，使用模拟数据兜底');
-      })
-      .catch((error) => {
-        console.warn(
-          '协同场景占比饼图接口调用失败-使用模拟数据兜底',
-          error.message,
-        );
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({
-              legend: ['社区-停车场秩序', '物业-停车运营服务'],
-              series: [{ name: '协同场景占比', data: [57, 43] }],
-            });
-          }, 500);
-        });
-      });
-  } catch {
-    console.error('===== 协同场景占比饼图函数初始化异常 =====');
-    return Promise.resolve({
-      legend: [],
-      series: [{ name: '协同场景占比', data: [] }],
-    });
-  }
-};
-
-// 专属协同-协同状态占比饼图
-export const fetchSpecialCoopStatusRatio = (params = {}) => {
-  try {
-    return requestClient
-      .get({
-        url: `${BASE_URL}/special/synergy/statusRatio/get`,
-        params,
-      })
-      .then((response) => {
-        if (
-          response &&
-          typeof response === 'object' &&
-          !Array.isArray(response) &&
-          response.legend &&
-          response.series
-        ) {
-          return response;
-        }
-        throw new Error('真实接口返回无协同状态占比数据，使用模拟数据兜底');
-      })
-      .catch((error) => {
-        console.warn(
-          '协同状态占比饼图接口调用失败-使用模拟数据兜底',
-          error.message,
-        );
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({
-              legend: ['已完成', '进行中', '待协同'],
-              series: [{ name: '协同状态占比', data: [92, 5, 3] }],
-            });
-          }, 500);
-        });
-      });
-  } catch {
-    console.error('===== 协同状态占比饼图函数初始化异常 =====');
-    return Promise.resolve({
-      legend: [],
-      series: [{ name: '协同状态占比', data: [] }],
-    });
+    return Promise.resolve({ success: false, message: '接口异常' });
   }
 };

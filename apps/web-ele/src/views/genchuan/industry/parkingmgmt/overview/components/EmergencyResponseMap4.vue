@@ -350,7 +350,7 @@ defineExpose({ toggleOrbitAnimation, orbitStatus, startOrbitAnimation, stopOrbit
 
 <style scoped>
 .map-container { position: relative; width: 100%; height: 100%; }
-.map-common-css { width: 100%; height: 100%; margin: 0 auto; overflow: hidden; border-radius: 8px; }
+.map-common-css { width: 100%; height: 99%; margin: 0 auto; overflow: hidden; border-radius: 8px; }
 .legend { position: absolute; bottom: 0.1vh; left: 0; box-sizing: border-box; display: flex; flex-flow: column wrap; align-items: flex-end; width: 100%; height: auto; padding: 0.5vw; background: rgb(0 0 0 / 50%); }
 .legend-items { display: flex; flex-direction: row; gap: 1vw; align-items: center; justify-content: center; }
 .legend-item { display: flex; gap: 0.1vw; align-items: center; font-size: 0.7vw; color: #fff; }
