@@ -22,7 +22,7 @@ export const dataList = () => {
       createTime: '2024-01-01 00:00:00',
       arrearsUseRecord: '无',
       newUserRecord: '已发放',
-      overlapStatus: '可叠加'
+      overlapStatus: '可叠加',
     },
     {
       couponId: 'CP002',
@@ -45,7 +45,7 @@ export const dataList = () => {
       createTime: '2024-01-02 00:00:00',
       arrearsUseRecord: '无',
       newUserRecord: '未发放',
-      overlapStatus: '不可叠加'
+      overlapStatus: '不可叠加',
     },
     {
       couponId: 'CP003',
@@ -68,7 +68,7 @@ export const dataList = () => {
       createTime: '2024-01-15 00:00:00',
       arrearsUseRecord: '无',
       newUserRecord: '未发放',
-      overlapStatus: '可叠加'
+      overlapStatus: '可叠加',
     },
     {
       couponId: 'CP004',
@@ -91,7 +91,7 @@ export const dataList = () => {
       createTime: '2024-01-01 00:00:00',
       arrearsUseRecord: '无',
       newUserRecord: '未发放',
-      overlapStatus: '可叠加'
+      overlapStatus: '可叠加',
     },
     {
       couponId: 'CP005',
@@ -114,7 +114,7 @@ export const dataList = () => {
       createTime: '2024-01-03 00:00:00',
       arrearsUseRecord: '无',
       newUserRecord: '未发放',
-      overlapStatus: '不可叠加'
+      overlapStatus: '不可叠加',
     },
     {
       couponId: 'CP006',
@@ -137,7 +137,7 @@ export const dataList = () => {
       createTime: '2024-01-01 00:00:00',
       arrearsUseRecord: '无',
       newUserRecord: '已发放',
-      overlapStatus: '不可叠加'
+      overlapStatus: '不可叠加',
     },
     {
       couponId: 'CP007',
@@ -160,7 +160,7 @@ export const dataList = () => {
       createTime: '2024-01-01 00:00:00',
       arrearsUseRecord: '无',
       newUserRecord: '未发放',
-      overlapStatus: '可叠加'
+      overlapStatus: '可叠加',
     },
     {
       couponId: 'CP008',
@@ -183,7 +183,7 @@ export const dataList = () => {
       createTime: '2024-02-01 00:00:00',
       arrearsUseRecord: '无',
       newUserRecord: '未发放',
-      overlapStatus: '不可叠加'
+      overlapStatus: '不可叠加',
     },
     {
       couponId: 'CP009',
@@ -206,7 +206,7 @@ export const dataList = () => {
       createTime: '2024-01-05 00:00:00',
       arrearsUseRecord: '无',
       newUserRecord: '未发放',
-      overlapStatus: '可叠加'
+      overlapStatus: '可叠加',
     },
     {
       couponId: 'CP010',
@@ -229,7 +229,7 @@ export const dataList = () => {
       createTime: '2024-01-01 00:00:00',
       arrearsUseRecord: '无',
       newUserRecord: '未发放',
-      overlapStatus: '可叠加'
+      overlapStatus: '可叠加',
     },
     {
       couponId: 'CP011',
@@ -252,7 +252,7 @@ export const dataList = () => {
       createTime: '2024-01-01 00:00:00',
       arrearsUseRecord: '无',
       newUserRecord: '未发放',
-      overlapStatus: '不可叠加'
+      overlapStatus: '不可叠加',
     },
     {
       couponId: 'CP012',
@@ -275,8 +275,8 @@ export const dataList = () => {
       createTime: '2024-01-01 00:00:00',
       arrearsUseRecord: '无',
       newUserRecord: '未发放',
-      overlapStatus: '不可叠加'
-    }
+      overlapStatus: '不可叠加',
+    },
   ];
 };
 
@@ -290,25 +290,25 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入优惠券ID',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'couponName',
       label: '优惠券名称',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入优惠券名称'
+        placeholder: '请输入优惠券名称',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'couponCode',
       label: '优惠券码',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入优惠券码'
+        placeholder: '请输入优惠券码',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'couponTypeName',
@@ -319,19 +319,19 @@ export function useFormSchema() {
         options: [
           { label: '满减券', value: '满减券' },
           { label: '折扣券', value: '折扣券' },
-          { label: '免费券', value: '免费券' }
-        ]
+          { label: '免费券', value: '免费券' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'faceValueOrDiscountRatio',
       label: '面值/折扣比例',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入面值或折扣比例'
+        placeholder: '请输入面值或折扣比例',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'minConsume',
@@ -339,9 +339,9 @@ export function useFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入最低消费金额',
-        min: 0
+        min: 0,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'startTime',
@@ -350,9 +350,9 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择生效时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'endTime',
@@ -361,9 +361,9 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择失效时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'applyScopeName',
@@ -376,10 +376,10 @@ export function useFormSchema() {
           { label: '指定车场', value: '指定车场' },
           { label: '新用户', value: '新用户' },
           { label: '会员', value: '会员' },
-          { label: '推荐人', value: '推荐人' }
-        ]
+          { label: '推荐人', value: '推荐人' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'couponSceneName',
@@ -395,10 +395,10 @@ export function useFormSchema() {
           { label: '限时活动', value: '限时活动' },
           { label: '推荐好友', value: '推荐好友' },
           { label: '生日当月', value: '生日当月' },
-          { label: '日常停车', value: '日常停车' }
-        ]
+          { label: '日常停车', value: '日常停车' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'newUserCouponSwitch',
@@ -406,17 +406,17 @@ export function useFormSchema() {
       component: 'Switch',
       componentProps: {
         activeText: '开启',
-        inactiveText: '关闭'
+        inactiveText: '关闭',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'regularCouponRule',
       label: '定期赠券规则',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入定期赠券规则'
-      }
+        placeholder: '请输入定期赠券规则',
+      },
     },
     {
       fieldName: 'couponPackageOnlineConfig',
@@ -426,9 +426,9 @@ export function useFormSchema() {
         placeholder: '请选择券包上架配置',
         options: [
           { label: '已上架', value: '已上架' },
-          { label: '未上架', value: '未上架' }
-        ]
-      }
+          { label: '未上架', value: '未上架' },
+        ],
+      },
     },
     {
       fieldName: 'overlapUseConfig',
@@ -438,9 +438,9 @@ export function useFormSchema() {
         placeholder: '请选择叠加使用配置',
         options: [
           { label: '可叠加', value: '可叠加' },
-          { label: '不可叠加', value: '不可叠加' }
-        ]
-      }
+          { label: '不可叠加', value: '不可叠加' },
+        ],
+      },
     },
     {
       fieldName: 'couponStatusName',
@@ -450,10 +450,10 @@ export function useFormSchema() {
         placeholder: '请选择状态',
         options: [
           { label: '启用', value: '启用' },
-          { label: '禁用', value: '禁用' }
-        ]
+          { label: '禁用', value: '禁用' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'getCount',
@@ -461,8 +461,8 @@ export function useFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入领取次数',
-        min: 0
-      }
+        min: 0,
+      },
     },
     {
       fieldName: 'useCount',
@@ -470,8 +470,8 @@ export function useFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入使用次数',
-        min: 0
-      }
+        min: 0,
+      },
     },
     {
       fieldName: 'createTime',
@@ -480,24 +480,24 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择创建时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
-      }
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
     },
     {
       fieldName: 'arrearsUseRecord',
       label: '历史欠费使用记录',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入历史欠费使用记录'
-      }
+        placeholder: '请输入历史欠费使用记录',
+      },
     },
     {
       fieldName: 'newUserRecord',
       label: '新用户赠券记录',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入新用户赠券记录'
-      }
+        placeholder: '请输入新用户赠券记录',
+      },
     },
     {
       fieldName: 'overlapStatus',
@@ -507,10 +507,10 @@ export function useFormSchema() {
         placeholder: '请选择叠加使用状态',
         options: [
           { label: '可叠加', value: '可叠加' },
-          { label: '不可叠加', value: '不可叠加' }
-        ]
-      }
-    }
+          { label: '不可叠加', value: '不可叠加' },
+        ],
+      },
+    },
   ];
 }
 
@@ -523,135 +523,139 @@ export function useGridColumns() {
       title: '优惠券ID',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'couponId' }
+      slots: { default: 'couponId' },
     },
     {
       field: 'couponName',
       title: '优惠券名称',
       minWidth: 150,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'couponCode',
       title: '优惠券码',
       minWidth: 120,
-      sortable: true
+      sortable: true,
+      slots: { default: 'couponCode' },
     },
     {
       field: 'couponTypeName',
       title: '优惠券类型',
       minWidth: 100,
-      sortable: true
+      sortable: true,
+      slots: { default: 'couponTypeName' },
     },
     {
       field: 'faceValueOrDiscountRatio',
       title: '面值/折扣比例',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'minConsume',
       title: '最低消费金额',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'startTime',
       title: '生效时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'endTime',
       title: '失效时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'applyScopeName',
       title: '适用范围',
       minWidth: 100,
-      sortable: true
+      sortable: true,
+      slots: { default: 'applyScopeName' },
     },
     {
       field: 'couponSceneName',
       title: '适用场景',
       minWidth: 100,
-      sortable: true
+      sortable: true,
+      slots: { default: 'couponSceneName' },
     },
     {
       field: 'newUserCouponSwitch',
       title: '新用户赠券开关',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'regularCouponRule',
       title: '定期赠券规则',
       minWidth: 150,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'couponPackageOnlineConfig',
       title: '券包上架配置',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'overlapUseConfig',
       title: '叠加使用配置',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'couponStatusName',
       title: '状态',
       minWidth: 80,
       sortable: true,
-      slots: { default: 'couponStatusName' }
+      slots: { default: 'couponStatusName' },
     },
     {
       field: 'getCount',
       title: '领取次数',
       minWidth: 80,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'useCount',
       title: '使用次数',
       minWidth: 80,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'createTime',
       title: '创建时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'arrearsUseRecord',
       title: '历史欠费使用记录',
       minWidth: 150,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'newUserRecord',
       title: '新用户赠券记录',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'overlapStatus',
       title: '叠加使用状态',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       title: '操作',
-      width: 120,
+      width: 100,
       fixed: 'right',
-      slots: { default: 'actions' }
-    }
+      slots: { default: 'actions' },
+    },
   ];
 }
 
@@ -662,6 +666,447 @@ export const textObj = {
   excelAllName: '优惠券数据.xlsx',
   total: ' 总计: 优惠券数量12; 启用状态10; 禁用状态2',
 };
+
+/** 活动配置管理表格初始数据 - 按指定字段生成 */
+export const activityDataList = () => {
+  return [
+    {
+      activityId: 'ACT001',
+      activityName: '春节停车优惠活动',
+      activityTypeName: '节日活动',
+      startTime: '2024-02-01 00:00:00',
+      endTime: '2024-02-15 23:59:59',
+      totalQuota: '1000',
+      remainingQuota: '850',
+      usedQuota: '150',
+      applyScopeName: '全部车场',
+      ruleConfig: '春节期间停车享受8折优惠',
+      operator: '管理员',
+      status: '启动',
+      createTime: '2024-01-15 00:00:00',
+    },
+    {
+      activityId: 'ACT002',
+      activityName: '会员专享活动',
+      activityTypeName: '会员活动',
+      startTime: '2024-01-01 00:00:00',
+      endTime: '2024-12-31 23:59:59',
+      totalQuota: '5000',
+      remainingQuota: '4500',
+      usedQuota: '500',
+      applyScopeName: '会员专享',
+      ruleConfig: '会员停车享受7折优惠',
+      operator: '管理员',
+      status: '启动',
+      createTime: '2024-01-01 00:00:00',
+    },
+    {
+      activityId: 'ACT003',
+      activityName: '周末特惠活动',
+      activityTypeName: '周期性活动',
+      startTime: '2024-01-01 00:00:00',
+      endTime: '2024-12-31 23:59:59',
+      totalQuota: '2000',
+      remainingQuota: '1800',
+      usedQuota: '200',
+      applyScopeName: '全部车场',
+      ruleConfig: '周末停车享受9折优惠',
+      operator: '管理员',
+      status: '启动',
+      createTime: '2024-01-01 00:00:00',
+    },
+    {
+      activityId: 'ACT004',
+      activityName: '夜间停车优惠',
+      activityTypeName: '时段活动',
+      startTime: '2024-01-01 00:00:00',
+      endTime: '2024-12-31 23:59:59',
+      totalQuota: '3000',
+      remainingQuota: '2700',
+      usedQuota: '300',
+      applyScopeName: '全部车场',
+      ruleConfig: '22:00-08:00停车享受8折优惠',
+      operator: '管理员',
+      status: '启动',
+      createTime: '2024-01-01 00:00:00',
+    },
+    {
+      activityId: 'ACT005',
+      activityName: '新用户注册活动',
+      activityTypeName: '拉新活动',
+      startTime: '2024-01-01 00:00:00',
+      endTime: '2024-12-31 23:59:59',
+      totalQuota: '10000',
+      remainingQuota: '9500',
+      usedQuota: '500',
+      applyScopeName: '新用户',
+      ruleConfig: '新用户注册送5元停车券',
+      operator: '管理员',
+      status: '启动',
+      createTime: '2024-01-01 00:00:00',
+    },
+    {
+      activityId: 'ACT006',
+      activityName: '季度促销活动',
+      activityTypeName: '促销活动',
+      startTime: '2024-01-01 00:00:00',
+      endTime: '2024-03-31 23:59:59',
+      totalQuota: '500',
+      remainingQuota: '300',
+      usedQuota: '200',
+      applyScopeName: '全部车场',
+      ruleConfig: '季度停车卡享受6折优惠',
+      operator: '管理员',
+      status: '启动',
+      createTime: '2024-01-01 00:00:00',
+    },
+    {
+      activityId: 'ACT007',
+      activityName: '停车场开业活动',
+      activityTypeName: '开业活动',
+      startTime: '2024-01-01 00:00:00',
+      endTime: '2024-01-31 23:59:59',
+      totalQuota: '200',
+      remainingQuota: '0',
+      usedQuota: '200',
+      applyScopeName: '指定车场',
+      ruleConfig: '开业期间免费停车',
+      operator: '管理员',
+      status: '结束',
+      createTime: '2024-01-01 00:00:00',
+    },
+    {
+      activityId: 'ACT008',
+      activityName: '五一劳动节活动',
+      activityTypeName: '节日活动',
+      startTime: '2024-04-28 00:00:00',
+      endTime: '2024-05-05 23:59:59',
+      totalQuota: '500',
+      remainingQuota: '500',
+      usedQuota: '0',
+      applyScopeName: '全部车场',
+      ruleConfig: '五一期间停车享受7折优惠',
+      operator: '管理员',
+      status: '启动',
+      createTime: '2024-04-01 00:00:00',
+    },
+    {
+      activityId: 'ACT009',
+      activityName: '暑期优惠活动',
+      activityTypeName: '季节性活动',
+      startTime: '2024-07-01 00:00:00',
+      endTime: '2024-08-31 23:59:59',
+      totalQuota: '1000',
+      remainingQuota: '1000',
+      usedQuota: '0',
+      applyScopeName: '全部车场',
+      ruleConfig: '暑期停车享受8折优惠',
+      operator: '管理员',
+      status: '启动',
+      createTime: '2024-06-01 00:00:00',
+    },
+    {
+      activityId: 'ACT010',
+      activityName: '会员日活动',
+      activityTypeName: '会员活动',
+      startTime: '2024-01-01 00:00:00',
+      endTime: '2024-12-31 23:59:59',
+      totalQuota: '1200',
+      remainingQuota: '1000',
+      usedQuota: '200',
+      applyScopeName: '会员专享',
+      ruleConfig: '每月15日会员日停车免费',
+      operator: '管理员',
+      status: '启动',
+      createTime: '2024-01-01 00:00:00',
+    },
+    {
+      activityId: 'ACT011',
+      activityName: '秋季促销活动',
+      activityTypeName: '促销活动',
+      startTime: '2024-09-01 00:00:00',
+      endTime: '2024-11-30 23:59:59',
+      totalQuota: '800',
+      remainingQuota: '800',
+      usedQuota: '0',
+      applyScopeName: '全部车场',
+      ruleConfig: '秋季停车卡享受7折优惠',
+      operator: '管理员',
+      status: '启动',
+      createTime: '2024-08-01 00:00:00',
+    },
+  ];
+};
+
+/** 活动配置管理表单配置（包含所有指定字段） */
+export function useActivityFormSchema() {
+  return [
+    {
+      fieldName: 'activityId',
+      label: '活动ID',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入活动ID',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'activityName',
+      label: '活动名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入活动名称',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'activityTypeName',
+      label: '活动类型',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择活动类型',
+        options: [
+          { label: '节日活动', value: '节日活动' },
+          { label: '会员活动', value: '会员活动' },
+          { label: '周期性活动', value: '周期性活动' },
+          { label: '时段活动', value: '时段活动' },
+          { label: '拉新活动', value: '拉新活动' },
+          { label: '促销活动', value: '促销活动' },
+          { label: '开业活动', value: '开业活动' },
+          { label: '季节性活动', value: '季节性活动' },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'startTime',
+      label: '开始时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择开始时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'endTime',
+      label: '结束时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择结束时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'totalQuota',
+      label: '总名额',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入总名额',
+        min: 0,
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'remainingQuota',
+      label: '剩余名额',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入剩余名额',
+        min: 0,
+      },
+    },
+    {
+      fieldName: 'usedQuota',
+      label: '已使用名额',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入已使用名额',
+        min: 0,
+      },
+    },
+    {
+      fieldName: 'applyScopeName',
+      label: '适用范围',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择适用范围',
+        options: [
+          { label: '全部车场', value: '全部车场' },
+          { label: '指定车场', value: '指定车场' },
+          { label: '会员专享', value: '会员专享' },
+          { label: '新用户', value: '新用户' },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'ruleConfig',
+      label: '活动规则',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入活动规则',
+        type: 'textarea',
+        rows: 3,
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'operator',
+      label: '操作人',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入操作人',
+      },
+    },
+    {
+      fieldName: 'status',
+      label: '状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择状态',
+        options: [
+          { label: '启动', value: '启动' },
+          { label: '结束', value: '结束' },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'createTime',
+      label: '创建时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择创建时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+    },
+  ];
+}
+
+/** 活动配置管理表格列配置 */
+export function useActivityGridColumns() {
+  return [
+    { type: 'checkbox', width: 40 },
+    {
+      field: 'activityId',
+      title: '活动ID',
+      minWidth: 120,
+      sortable: true,
+      slots: { default: 'activityId' },
+    },
+    {
+      field: 'activityName',
+      title: '活动名称',
+      minWidth: 150,
+      sortable: true,
+    },
+    {
+      field: 'activityTypeName',
+      title: '活动类型',
+      minWidth: 120,
+      sortable: true,
+      slots: { default: 'activityTypeName' },
+    },
+    {
+      field: 'startTime',
+      title: '开始时间',
+      minWidth: 180,
+      sortable: true,
+    },
+    {
+      field: 'endTime',
+      title: '结束时间',
+      minWidth: 180,
+      sortable: true,
+    },
+    {
+      field: 'totalQuota',
+      title: '总名额',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: 'remainingQuota',
+      title: '剩余名额',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: 'usedQuota',
+      title: '已使用名额',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: 'applyScopeName',
+      title: '适用范围',
+      minWidth: 120,
+      sortable: true,
+      slots: { default: 'applyScopeName' },
+    },
+    {
+      field: 'ruleConfig',
+      title: '活动规则',
+      minWidth: 150,
+      sortable: true,
+    },
+    {
+      field: 'operator',
+      title: '操作人',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: 'status',
+      title: '状态',
+      minWidth: 80,
+      sortable: true,
+      slots: { default: 'status' },
+    },
+    {
+      field: 'createTime',
+      title: '创建时间',
+      minWidth: 180,
+      sortable: true,
+    },
+    {
+      title: '操作',
+      width: 100,
+      fixed: 'right',
+      slots: { default: 'actions' },
+    },
+  ];
+}
+
+export const activityTextObj = {
+  editText: '编辑活动',
+  addText: '新增活动',
+  excelName: '活动列表',
+  excelAllName: '活动数据.xlsx',
+  total: ' 总计: 活动数量11; 启动状态10; 结束状态1',
+};
+
+/** 活动详情抽屉字段配置 */
+export const activityDetailFields = [
+  { key: 'activityId', label: '活动ID' },
+  { key: 'activityName', label: '活动名称' },
+  { key: 'activityTypeName', label: '活动类型' },
+  { key: 'startTime', label: '开始时间' },
+  { key: 'endTime', label: '结束时间' },
+  { key: 'totalQuota', label: '总名额' },
+  { key: 'remainingQuota', label: '剩余名额' },
+  { key: 'usedQuota', label: '已使用名额' },
+  { key: 'applyScopeName', label: '适用范围' },
+  { key: 'ruleConfig', label: '活动规则' },
+  { key: 'operator', label: '操作人' },
+  { key: 'status', label: '状态' },
+  { key: 'createTime', label: '创建时间' },
+];
 
 /** 详情抽屉字段配置 */
 export const detailFields = [
@@ -685,5 +1130,171 @@ export const detailFields = [
   { key: 'createTime', label: '创建时间' },
   { key: 'arrearsUseRecord', label: '历史欠费使用记录' },
   { key: 'newUserRecord', label: '新用户赠券记录' },
-  { key: 'overlapStatus', label: '叠加使用状态' }
+  { key: 'overlapStatus', label: '叠加使用状态' },
 ];
+
+/**
+ * 根据类型获取统计数据
+ * @param {string} type - 类型：coupon（优惠券）或 activity（活动）
+ * @returns {Object} 统计数据对象
+ */
+export function getStatsDataByType(type) {
+  if (type === 'coupon') {
+    const coupons = dataList();
+    
+    // 总优惠券数
+    const totalCoupons = coupons.length;
+    
+    // 已发放数（领取次数总和）
+    const issuedCount = coupons.reduce((sum, coupon) => sum + parseInt(coupon.getCount || 0), 0);
+    
+    // 已使用数（使用次数总和）
+    const usedCount = coupons.reduce((sum, coupon) => sum + parseInt(coupon.useCount || 0), 0);
+    
+    // 优惠券类型占比
+    const typeMap = {};
+    coupons.forEach(coupon => {
+      const typeName = coupon.couponTypeName;
+      typeMap[typeName] = (typeMap[typeName] || 0) + 1;
+    });
+    const typeData = Object.entries(typeMap).map(([name, value]) => ({
+      name,
+      value
+    }));
+    
+    // 优惠券状态占比
+    const statusMap = {};
+    coupons.forEach(coupon => {
+      const statusName = coupon.couponStatusName;
+      statusMap[statusName] = (statusMap[statusName] || 0) + 1;
+    });
+    const statusData = Object.entries(statusMap).map(([name, value]) => ({
+      name,
+      value
+    }));
+    
+    // 优惠券领取次数对比
+    // 按优惠券名称排序并取前10个
+    const sortedCoupons = [...coupons].sort((a, b) => parseInt(b.getCount || 0) - parseInt(a.getCount || 0)).slice(0, 10);
+    const couponNames = sortedCoupons.map(coupon => coupon.couponName);
+    const getCountData = sortedCoupons.map(coupon => parseInt(coupon.getCount || 0));
+    
+    return {
+      cards: [
+        {
+          title: '总优惠券数',
+          value: totalCoupons,
+          color: '#4A90E2'
+        },
+        {
+          title: '已发放数',
+          value: issuedCount,
+          color: '#50E3C2'
+        },
+        {
+          title: '已使用数',
+          value: usedCount,
+          color: '#FF9F40'
+        }
+      ],
+      charts: [
+        {
+          title: '优惠券类型占比',
+          type: 'pie',
+          data: typeData
+        },
+        {
+          title: '优惠券状态占比',
+          type: 'pie',
+          data: statusData
+        },
+        {
+          title: '优惠券领取次数对比',
+          type: 'line',
+          xAxis: couponNames,
+          series: getCountData
+        }
+      ]
+    };
+  } else if (type === 'activity') {
+    const activities = activityDataList();
+    
+    // 总活动数
+    const totalActivities = activities.length;
+    
+    // 启动活动数
+    const startedActivities = activities.filter(activity => activity.status === '启动').length;
+    
+    // 结束活动数
+    const endedActivities = activities.filter(activity => activity.status === '结束').length;
+    
+    // 活动类型占比
+    const typeMap = {};
+    activities.forEach(activity => {
+      const typeName = activity.activityTypeName;
+      typeMap[typeName] = (typeMap[typeName] || 0) + 1;
+    });
+    const typeData = Object.entries(typeMap).map(([name, value]) => ({
+      name,
+      value
+    }));
+    
+    // 活动状态占比
+    const statusMap = {};
+    activities.forEach(activity => {
+      const statusName = activity.status;
+      statusMap[statusName] = (statusMap[statusName] || 0) + 1;
+    });
+    const statusData = Object.entries(statusMap).map(([name, value]) => ({
+      name,
+      value
+    }));
+    
+    // 活动名额使用情况（柱状图）
+    const activityNames = activities.map(activity => activity.activityName);
+    const usedQuotaData = activities.map(activity => parseInt(activity.usedQuota || 0));
+    
+    return {
+      cards: [
+        {
+          title: '总活动数',
+          value: totalActivities,
+          color: '#4A90E2'
+        },
+        {
+          title: '启动活动数',
+          value: startedActivities,
+          color: '#50E3C2'
+        },
+        {
+          title: '结束活动数',
+          value: endedActivities,
+          color: '#FF9F40'
+        }
+      ],
+      charts: [
+        {
+          title: '活动类型占比',
+          type: 'pie',
+          data: typeData
+        },
+        {
+          title: '活动状态占比',
+          type: 'pie',
+          data: statusData
+        },
+        {
+          title: '活动名额使用情况',
+          type: 'bar',
+          xAxis: activityNames,
+          series: usedQuotaData
+        }
+      ]
+    };
+  }
+  
+  return {
+    cards: [],
+    charts: []
+  };
+}

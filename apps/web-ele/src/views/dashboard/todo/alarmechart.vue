@@ -8,9 +8,9 @@ import Columnar from '#/components/stats/columnar.vue';
 
 const state = reactive({
   cardList: [
-    { title: '待处理任务数', value: 15, color: '#FF6B6B' },
-    { title: '处理中任务数', value: 23, color: '#4ECDC4' },
-    { title: '已完成任务数', value: 42, color: '#13ce66' },
+    { title: '待处置预警数', value: 28, color: '#FF6B6B' },
+    { title: '处置中预警数', value: 15, color: '#4ECDC4' },
+    { title: '已归档预警数', value: 42, color: '#13ce66' },
   ],
 });
 </script>
@@ -25,36 +25,33 @@ const state = reactive({
         v-bind="item"
       />
     </div>
-      <Circle
-        title-text="任务类型占比"
-        :data="[
-          { name: '日常运维', value: 35 },
-          { name: '故障处理', value: 28 },
-          { name: '项目任务', value: 22 },
-          { name: '巡检任务', value: 15 },
+    <Circle
+      title-text="预警类型占比"
+      :data="[
+          { name: '设备故障', value: 35 },
+          { name: '网络异常', value: 25 },
+          { name: '环境告警', value: 18 },
+          { name: '安全事件', value: 12 },
           { name: '其他', value: 10 },
         ]"
-      />
-      <Circle
-        title-text="任务优先级分布"
-        :data="[
+    />
+    <Circle
+      title-text="预警等级分布"
+      :data="[
+          { name: '严重', value: 8 },
           { name: '高', value: 15 },
-          { name: '中', value: 45 },
-          { name: '低', value: 30 },
-          { name: '紧急', value: 10 },
+          { name: '中', value: 32 },
+          { name: '低', value: 25 },
         ]"
-        :colors="['#E6A23C', '#4a90e2', '#13ce66', '#F56C6C']"
-      />
-      <Columnar
-        title="近7日任务趋势"
-        :x-data="['周一', '周二', '周三', '周四', '周五', '周六', '周日']"
-        :series-data="[
-          { name: '新增任务', data: [12, 15, 8, 10, 18, 5, 7] },
-          { name: '完成任务', data: [10, 12, 7, 9, 14, 4, 6] },
+      :colors="['#F56C6C', '#E6A23C', '#4a90e2', '#13ce66']"
+    />
+    <Columnar
+      title="近7日预警趋势"
+      :x-data="['周一', '周二', '周三', '周四', '周五', '周六', '周日']"
+      :series-data="[
+          { name: '新增预警', data: [15, 12, 18, 10, 22, 8, 5] },
+          { name: '处理预警', data: [10, 8, 15, 9, 18, 6, 4] },
         ]"
-      />
+    />
   </div>
 </template>
-
-
-

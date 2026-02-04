@@ -16,7 +16,7 @@ import {
   ElDescriptions,
   ElDescriptionsItem,
   ElTag,
-  ElMessage,
+  ElMessage, type FormInstance,
 } from 'element-plus';
 import { Filter, FullScreen, Refresh } from '@element-plus/icons-vue';
 import VerticalBar1 from '#/views/genchuan/industry/templatesstatchart/VerticalBar1.vue';
@@ -280,6 +280,23 @@ const handleFullscreenChange = () => {
   }
 };
 
+// 图表通用类型
+interface ChartRatioData {
+  legend: string[];
+  series: { data: number[]; name: string }[];
+}
+interface ChartLineData {
+  xAxis: string[];
+  series: { data: number[]; name: string }[];
+}
+interface ChartBarData {
+  xAxis: string[];
+  series: {
+    name: string;
+    data: number[];
+  }[];
+}
+
 // 资源运行TS类型定义
 interface ParkResourceRunRow {
   tbParkingName: string;
@@ -295,14 +312,6 @@ interface ParkResourceRunIndicators {
   averageUtilizationRate: number;
   averageTurnoverRate: number;
   peakAverageUtilizationRate: number;
-}
-interface ChartRatioData {
-  legend: string[];
-  series: { data: number[]; name: string }[];
-}
-interface ChartLineData {
-  xAxis: string[];
-  series: { data: number[]; name: string }[];
 }
 interface ParkResourceRunDetail {
   tbParkingParkingId: string;
@@ -1277,11 +1286,11 @@ const resourceDevelopmentPlanCompletionTrendData = ref<ChartLineData>({
   xAxis: [],
   series: [{ name: '规划达成率趋势(%)', data: [] }],
 });
-const resourceDevelopmentTypeCountData = ref<ChartLineData>({
+const resourceDevelopmentTypeCountData = ref<ChartBarData>({
   xAxis: [],
   series: [{ name: '发展数量', data: [] }],
 });
-const resourceDevelopmentRegionCountData = ref<ChartLineData>({
+const resourceDevelopmentRegionCountData = ref<ChartBarData>({
   xAxis: [],
   series: [{ name: '发展数量', data: [] }],
 });
@@ -1419,11 +1428,11 @@ const supportResourceRegionRatio = ref<ChartRatioData>({
   legend: [],
   series: [{ name: '区域分布占比(%)', data: [] }],
 });
-const supportResourceTypeCountData = ref<ChartLineData>({
+const supportResourceTypeCountData = ref<ChartBarData>({
   xAxis: [],
   series: [{ name: '资源数量', data: [] }],
 });
-const supportResourceParkingCountData = ref<ChartLineData>({
+const supportResourceParkingCountData = ref<ChartBarData>({
   xAxis: [],
   series: [{ name: '资源数量', data: [] }],
 });
@@ -1618,11 +1627,11 @@ const serviceDevelopmentServiceUtilizationTrend = ref<ChartLineData>({
   xAxis: [],
   series: [{ name: '服务使用率(%)', data: [] }],
 });
-const serviceDevelopmentTypeCompareData = ref<ChartLineData>({
+const serviceDevelopmentTypeCompareData = ref<ChartBarData>({
   xAxis: [],
   series: [{ name: '服务数量', data: [] }],
 });
-const serviceDevelopmentRegionCoverageCompareData = ref<ChartLineData>({
+const serviceDevelopmentRegionCoverageCompareData = ref<ChartBarData>({
   xAxis: [],
   series: [{ name: '覆盖区域数', data: [] }],
 });
@@ -1692,11 +1701,11 @@ const complianceRectificationStatusRatio = ref<ChartRatioData>({
   legend: [],
   series: [{ name: '整改完成状态占比(%)', data: [] }],
 });
-const complianceCheckItemComplianceRateData = ref<ChartLineData>({
+const complianceCheckItemComplianceRateData = ref<ChartBarData>({
   xAxis: [],
   series: [{ name: '合规率(%)', data: [] }],
 });
-const complianceRectificationStageCountData = ref<ChartLineData>({
+const complianceRectificationStageCountData = ref<ChartBarData>({
   xAxis: [],
   series: [{ name: '整改完成数', data: [] }],
 });
@@ -1981,7 +1990,7 @@ const getParkResourceIndicatorsData = async () => {
 const getParkResourceAreaCountData = async () => {
   try {
     parkResourceAreaCountData.value =
-      (await fetchParkResourceAreaCount()) as ChartLineData;
+      (await fetchParkResourceAreaCount()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各区域停车场数量加载失败：${error.message}`);
   }
@@ -1989,7 +1998,7 @@ const getParkResourceAreaCountData = async () => {
 const getParkResourceTypeSpaceCountData = async () => {
   try {
     parkResourceTypeSpaceCountData.value =
-      (await fetchParkResourceTypeSpaceCount()) as ChartLineData;
+      (await fetchParkResourceTypeSpaceCount()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各类型泊位数加载失败：${error.message}`);
   }
@@ -2041,7 +2050,7 @@ const getParkServiceQualitySatisfactionTrendData = async () => {
 const getParkServiceQualityRegionCompareData = async () => {
   try {
     parkServiceQualityRegionCompare.value =
-      (await fetchParkServiceQualityRegionCompare()) as ChartLineData;
+      (await fetchParkServiceQualityRegionCompare()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各区域服务质量指标对比加载失败：${error.message}`);
   }
@@ -2049,7 +2058,7 @@ const getParkServiceQualityRegionCompareData = async () => {
 const getParkServiceQualityTimeEntryCompareData = async () => {
   try {
     parkServiceQualityTimeEntryCompare.value =
-      (await fetchParkServiceQualityTimeEntryCompare()) as ChartLineData;
+      (await fetchParkServiceQualityTimeEntryCompare()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各时段平均入场时长对比加载失败：${error.message}`);
   }
@@ -2111,7 +2120,7 @@ const getBusinessFlowCompletionRateTrendData = async () => {
 const getBusinessFlowTypeDurationData = async () => {
   try {
     businessFlowTypeDurationData.value =
-      (await fetchBusinessFlowTypeDuration()) as ChartLineData;
+      (await fetchBusinessFlowTypeDuration()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各业务类型流转时长加载失败：${error.message}`);
   }
@@ -2119,7 +2128,7 @@ const getBusinessFlowTypeDurationData = async () => {
 const getBusinessFlowLinkDurationData = async () => {
   try {
     businessFlowLinkDurationData.value =
-      (await fetchBusinessFlowLinkDuration()) as ChartLineData;
+      (await fetchBusinessFlowLinkDuration()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各环节流转时长加载失败：${error.message}`);
   }
@@ -2272,7 +2281,7 @@ const getResourceDevelopmentPlanCompletionTrendData = async () => {
 const getResourceDevelopmentTypeCountData = async () => {
   try {
     resourceDevelopmentTypeCountData.value =
-      (await fetchResourceDevelopmentTypeCount()) as ChartLineData;
+      (await fetchResourceDevelopmentTypeCount()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各类型资源发展数量加载失败：${error.message}`);
   }
@@ -2280,7 +2289,7 @@ const getResourceDevelopmentTypeCountData = async () => {
 const getResourceDevelopmentRegionCountData = async () => {
   try {
     resourceDevelopmentRegionCountData.value =
-      (await fetchResourceDevelopmentRegionCount()) as ChartLineData;
+      (await fetchResourceDevelopmentRegionCount()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各区域资源发展数量加载失败：${error.message}`);
   }
@@ -2461,7 +2470,7 @@ const getSupportResourceRegionRatioData = async () => {
 const getSupportResourceTypeCountData = async () => {
   try {
     supportResourceTypeCountData.value =
-      (await fetchSupportResourceTypeCount()) as ChartLineData;
+      (await fetchSupportResourceTypeCount()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各类型支撑资源数量加载失败：${error.message}`);
   }
@@ -2469,7 +2478,7 @@ const getSupportResourceTypeCountData = async () => {
 const getSupportResourceParkingCountData = async () => {
   try {
     supportResourceParkingCountData.value =
-      (await fetchSupportResourceParkingCount()) as ChartLineData;
+      (await fetchSupportResourceParkingCount()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各停车场支撑资源配置加载失败：${error.message}`);
   }
@@ -2744,7 +2753,7 @@ const getServiceDevelopmentServiceUtilizationTrendData = async () => {
 const getServiceDevelopmentTypeCompareData = async () => {
   try {
     serviceDevelopmentTypeCompareData.value =
-      (await fetchServiceDevelopmentTypeCompare()) as ChartLineData;
+      (await fetchServiceDevelopmentTypeCompare()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各类型服务发展数量对比加载失败：${error.message}`);
   }
@@ -2752,7 +2761,7 @@ const getServiceDevelopmentTypeCompareData = async () => {
 const getServiceDevelopmentRegionCoverageCompareData = async () => {
   try {
     serviceDevelopmentRegionCoverageCompareData.value =
-      (await fetchServiceDevelopmentRegionCoverageCompare()) as ChartLineData;
+      (await fetchServiceDevelopmentRegionCoverageCompare()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各区域服务覆盖对比加载失败：${error.message}`);
   }
@@ -2849,7 +2858,7 @@ const getComplianceRectificationStatusRatioData = async () => {
 const getComplianceCheckItemComplianceRateData = async () => {
   try {
     complianceCheckItemComplianceRateData.value =
-      (await fetchComplianceCheckItemComplianceRate()) as ChartLineData;
+      (await fetchComplianceCheckItemComplianceRate()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各检查项目合规率加载失败：${error.message}`);
   }
@@ -2857,7 +2866,7 @@ const getComplianceCheckItemComplianceRateData = async () => {
 const getComplianceRectificationStageCountData = async () => {
   try {
     complianceRectificationStageCountData.value =
-      (await fetchComplianceRectificationStageCount()) as ChartLineData;
+      (await fetchComplianceRectificationStageCount()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各阶段整改完成数加载失败：${error.message}`);
   }
@@ -10027,11 +10036,6 @@ onUnmounted(() => {
 @import '../../../templatesstyle/table4';
 @import '../../../templatesstyle/indicator-cards3';
 @import '../../../templatesstyle/indicator-cards4';
-
-@keyframes blink {
-  0%,100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
 
 .page-container {
   box-sizing: border-box;

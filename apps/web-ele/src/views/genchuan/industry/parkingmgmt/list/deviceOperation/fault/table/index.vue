@@ -9,11 +9,17 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
-import { dataList, textObj, useFormSchema, useGridColumns, detailFields } from './data';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import {
+  dataList,
+  detailFields,
+  textObj,
+  useFormSchema,
+  useGridColumns,
+} from './data';
 
 const props = defineProps({
   secondShow: {
@@ -58,14 +64,14 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onConfirm() {
     const obj = formApi.form.values;
     if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-          dataObj.apilist.push(obj);
-        } else {
-          dataObj.apilist.forEach((v, i) => {
-            if (v.faultId === formData.value?.faultId) {
-              dataObj.apilist[i] = obj;
-            }
-          });
+      dataObj.apilist.push(obj);
+    } else {
+      dataObj.apilist.forEach((v, i) => {
+        if (v.faultId === formData.value?.faultId) {
+          dataObj.apilist[i] = obj;
         }
+      });
+    }
     handleRefresh();
     formDrawerApi.close();
   },
@@ -115,9 +121,7 @@ async function handleDelete(row) {
   });
   try {
     dataObj.apilist = dataObj.apilist.filter((v) => v.faultId !== row.faultId);
-    ElMessage.success(
-      $t('ui.actionMessage.deleteSuccess', [row.faultId]),
-    );
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.faultId]));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -168,17 +172,17 @@ const getTableData = (pageObj) => {
       case '全部': {
         return true;
       }
-      case '待处理': {
-        return v.disposalStatusName === '待处理';
+      case '处理中': {
+        return v.disposalStatusName === '处理中';
       }
       case '已派单': {
         return v.disposalStatusName === '已派单';
       }
-      case '处理中': {
-        return v.disposalStatusName === '处理中';
-      }
       case '已解决': {
         return v.disposalStatusName === '已解决';
+      }
+      case '待处理': {
+        return v.disposalStatusName === '待处理';
       }
     }
     return false;
@@ -256,7 +260,13 @@ const handleOpenDetail = (row) => {
 };
 
 // 修改tabsData为五个标签：全部、待处理、已派单、处理中、已解决
-const tabsData = ref([{ label: '全部' }, { label: '待处理' }, { label: '已派单' }, { label: '处理中' }, { label: '已解决' }]);
+const tabsData = ref([
+  { label: '全部' },
+  { label: '待处理' },
+  { label: '已派单' },
+  { label: '处理中' },
+  { label: '已解决' },
+]);
 
 // 创建标签文本，显示数量统计
 const createLabel = (item) => {
@@ -268,27 +278,35 @@ const createLabel = (item) => {
 
       break;
     }
-    case '待处理': {
-      // 统计disposalStatusName为'待处理'的数据
-      count = dataObj.apilist.filter((v) => v.disposalStatusName === '待处理').length;
+    case '处理中': {
+      // 统计disposalStatusName为'处理中'的数据
+      count = dataObj.apilist.filter(
+        (v) => v.disposalStatusName === '处理中',
+      ).length;
 
       break;
     }
     case '已派单': {
       // 统计disposalStatusName为'已派单'的数据
-      count = dataObj.apilist.filter((v) => v.disposalStatusName === '已派单').length;
-
-      break;
-    }
-    case '处理中': {
-      // 统计disposalStatusName为'处理中'的数据
-      count = dataObj.apilist.filter((v) => v.disposalStatusName === '处理中').length;
+      count = dataObj.apilist.filter(
+        (v) => v.disposalStatusName === '已派单',
+      ).length;
 
       break;
     }
     case '已解决': {
       // 统计disposalStatusName为'已解决'的数据
-      count = dataObj.apilist.filter((v) => v.disposalStatusName === '已解决').length;
+      count = dataObj.apilist.filter(
+        (v) => v.disposalStatusName === '已解决',
+      ).length;
+
+      break;
+    }
+    case '待处理': {
+      // 统计disposalStatusName为'待处理'的数据
+      count = dataObj.apilist.filter(
+        (v) => v.disposalStatusName === '待处理',
+      ).length;
 
       break;
     }
@@ -310,16 +328,21 @@ const handleFullShow = () => {
 // 状态标签类型映射
 const getStatusType = (status) => {
   switch (status) {
-    case '已解决':
-      return 'success';
-    case '待处理':
-      return 'warning';
-    case '已派单':
-      return 'info';
-    case '处理中':
+    case '处理中': {
       return 'primary';
-    default:
+    }
+    case '已派单': {
       return 'info';
+    }
+    case '已解决': {
+      return 'success';
+    }
+    case '待处理': {
+      return 'warning';
+    }
+    default: {
+      return 'info';
+    }
   }
 };
 </script>
@@ -329,7 +352,7 @@ const getStatusType = (status) => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-<!--   详情抽屉-->
+    <!--   详情抽屉-->
     <DetailDrawer
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.faultId}详情`"

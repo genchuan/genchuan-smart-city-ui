@@ -9,6 +9,7 @@ export const dataList = () => {
       complaint_type: '服务投诉',
       related_asset_id: '',
       related_order_id: 'ORDER001',
+      park_lot: '世纪城停车场',
       complaint_content: '工作人员服务态度差，处理问题不积极',
       complaint_time: '2023-10-12 09:30:00',
       status: '已办结',
@@ -29,6 +30,7 @@ export const dataList = () => {
       complaint_type: '设备故障',
       related_asset_id: 'ASSET001',
       related_order_id: '',
+      park_lot: '世纪城停车场',
       complaint_content: '停车场出口道闸无法正常抬起，导致车辆堵塞',
       complaint_time: '2023-10-12 10:15:00',
       status: '已办结',
@@ -49,6 +51,7 @@ export const dataList = () => {
       complaint_type: '收费争议',
       related_asset_id: '',
       related_order_id: 'ORDER003',
+      park_lot: '金融中心停车场',
       complaint_content: '系统多收取停车费用，计费时间与实际不符',
       complaint_time: '2023-10-12 11:00:00',
       status: '已办结',
@@ -69,6 +72,7 @@ export const dataList = () => {
       complaint_type: '其他',
       related_asset_id: '',
       related_order_id: '',
+      park_lot: '购物中心停车场',
       complaint_content: '停车场内标识不清晰，容易迷路',
       complaint_time: '2023-10-12 14:20:00',
       status: '处理中',
@@ -89,6 +93,7 @@ export const dataList = () => {
       complaint_type: '设备故障',
       related_asset_id: 'ASSET002',
       related_order_id: 'ORDER005',
+      park_lot: '科技园停车场',
       complaint_content: '充电桩无法正常充电，显示故障代码E001',
       complaint_time: '2023-10-12 16:45:00',
       status: '待处理',
@@ -109,6 +114,7 @@ export const dataList = () => {
       complaint_type: '服务投诉',
       related_asset_id: '',
       related_order_id: 'ORDER006',
+      park_lot: '金融中心停车场',
       complaint_content: '客服电话长时间无人接听',
       complaint_time: '2023-10-13 08:30:00',
       status: '已驳回',
@@ -130,6 +136,7 @@ export const dataList = () => {
       complaint_type: '收费争议',
       related_asset_id: '',
       related_order_id: 'ORDER007',
+      park_lot: '购物中心停车场',
       complaint_content: '月卡续费价格突然上涨，未提前通知',
       complaint_time: '2023-10-13 10:00:00',
       status: '已办结',
@@ -150,6 +157,7 @@ export const dataList = () => {
       complaint_type: '设备故障',
       related_asset_id: 'ASSET003',
       related_order_id: '',
+      park_lot: '科技园停车场',
       complaint_content: '停车场入口摄像头无法识别车牌',
       complaint_time: '2023-10-13 12:30:00',
       status: '处理中',
@@ -170,6 +178,7 @@ export const dataList = () => {
       complaint_type: '其他',
       related_asset_id: '',
       related_order_id: 'ORDER009',
+      park_lot: '世纪城停车场',
       complaint_content: '建议增加残疾人停车位',
       complaint_time: '2023-10-13 15:10:00',
       status: '已办结',
@@ -190,6 +199,7 @@ export const dataList = () => {
       complaint_type: '服务投诉',
       related_asset_id: '',
       related_order_id: 'ORDER010',
+      park_lot: '购物中心停车场',
       complaint_content: '清洁人员打扫时溅水到车辆上',
       complaint_time: '2023-10-13 17:30:00',
       status: '待处理',
@@ -268,6 +278,22 @@ export function useFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入关联订单ID（可为空）',
+      },
+    },
+    {
+      fieldName: 'park_lot',
+      label: '关联车场',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择关联车场',
+        options: [
+          { label: '世纪城停车场', value: '世纪城停车场' },
+          { label: '金融中心停车场', value: '金融中心停车场' },
+          { label: '购物中心停车场', value: '购物中心停车场' },
+          { label: '科技园停车场', value: '科技园停车场' },
+          { label: '机场停车场', value: '机场停车场' },
+          { label: '火车站停车场', value: '火车站停车场' },
+        ],
       },
     },
     {
@@ -394,12 +420,12 @@ export function useFormSchema() {
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
-    {
-      field: 'complaint_no',
-      title: '投诉编号',
-      minWidth: 140,
-      sortable: true,
-    },
+    // {
+    //   field: 'complaint_no',
+    //   title: '投诉编号',
+    //   minWidth: 140,
+    //   sortable: true,
+    // },
     {
       field: 'complainant_id',
       title: '投诉人ID',
@@ -427,6 +453,12 @@ export function useGridColumns() {
     {
       field: 'related_order_id',
       title: '关联订单',
+      minWidth: 140,
+      sortable: true,
+    },
+    {
+      field: 'park_lot',
+      title: '关联车场', // 新增：表格列
       minWidth: 140,
       sortable: true,
     },
@@ -498,7 +530,7 @@ export function useGridColumns() {
     },
     {
       title: '操作',
-      width: 180,
+      width: 80,
       fixed: 'right',
       slots: { default: 'actions' },
     },

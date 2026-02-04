@@ -473,6 +473,26 @@ const initMapData = async () => {
   }
 };
 
+// 图表通用类型
+interface ChartRatioData {
+  legend: string[];
+  series: { data: number[]; name: string }[];
+}
+interface ChartLineData {
+  xAxis: string[];
+  series: {
+    data: number[];
+    name: string
+  }[];
+}
+interface ChartBarData {
+  xAxis: string[];
+  series: {
+    name: string;
+    data: number[];
+  }[];
+}
+
 // 资源设备TS类型定义
 interface ParkDeviceIndicators {
   tbDeviceTotalCount: number; // 设备总数
@@ -484,14 +504,6 @@ interface ParkDeviceIndicators {
   tbDeviceRepairCount7d?: number; // 近7日故障修复数
   sysFaultTypeName?: string; // 热门故障类型
   tbDeviceCoverageRate?: number; // 设备覆盖度
-}
-interface ChartRatioData {
-  legend: string[];
-  series: { data: number[]; name: string }[];
-}
-interface ChartLineData {
-  xAxis: string[];
-  series: { data: number[]; name: string }[];
 }
 
 // 通行交易TS类型定义
@@ -1176,11 +1188,11 @@ const parkResourceDistributionIndicators = ref<ParkResourceDistributionIndicator
   totalSpaceCount: 0,
   availableSpaceCount: 0,
 });
-const parkResourceDistributionAreaCountData = ref<ChartLineData>({
+const parkResourceDistributionAreaCountData = ref<ChartBarData>({
   xAxis: [],
   series: [{ name: '停车场数量', data: [] }],
 });
-const parkResourceDistributionTypeCountData = ref<ChartLineData>({
+const parkResourceDistributionTypeCountData = ref<ChartBarData>({
   xAxis: [],
   series: [{ name: '停车场数量', data: [] }],
 });
@@ -1284,11 +1296,11 @@ const tradeTrendAmountTrend = ref<ChartLineData>({
   xAxis: [],
   series: [{ name: '交易金额', data: [] }],
 });
-const tradeTrendTimeCountCompare = ref<ChartLineData>({
+const tradeTrendTimeCountCompare = ref<ChartBarData>({
   xAxis: [],
   series: [{ name: '交易笔数', data: [] }],
 });
-const tradeTrendRegionAmountCompare = ref<ChartLineData>({
+const tradeTrendRegionAmountCompare = ref<ChartBarData>({
   xAxis: [],
   series: [{ name: '交易金额', data: [] }],
 });
@@ -1515,11 +1527,11 @@ const urgeFormRef = ref<FormInstance>();
 
 // 终端设备分布明细响应式数据
 const deviceDistributionList = ref<DeviceDistributionRow[]>([]);
-const deviceDistributionTypeCountData = ref<ChartLineData>({
+const deviceDistributionTypeCountData = ref<ChartBarData>({
   xAxis: [],
   series: [{ name: '设备数量', data: [] }],
 });
-const deviceDistributionParkingCountData = ref<ChartLineData>({
+const deviceDistributionParkingCountData = ref<ChartBarData>({
   xAxis: [],
   series: [{ name: '设备数量', data: [] }],
 });
@@ -1643,11 +1655,11 @@ const maintainTrendFaultTrendData = ref<ChartLineData>({
   xAxis: [],
   series: [{ name: '故障设备数', data: [] }],
 });
-const maintainTrendDeviceTypeCountData = ref<ChartLineData>({
+const maintainTrendDeviceTypeCountData = ref<ChartBarData>({
   xAxis: [],
   series: [{ name: '工单数量', data: [] }],
 });
-const maintainTrendFaultTypeCountData = ref<ChartLineData>({
+const maintainTrendFaultTypeCountData = ref<ChartBarData>({
   xAxis: [],
   series: [{ name: '工单数量', data: [] }],
 });
@@ -1728,11 +1740,11 @@ const complianceNonCompliantTrendData = ref<ChartLineData>({
   xAxis: [],
   series: [{ name: '不合规数', data: [] }],
 });
-const complianceRegionRateCompareData = ref<ChartLineData>({
+const complianceRegionRateCompareData = ref<ChartBarData>({
   xAxis: [],
   series: [{ name: '合规率(%)', data: [] }],
 });
-const complianceTypeRateCompareData = ref<ChartLineData>({
+const complianceTypeRateCompareData = ref<ChartBarData>({
   xAxis: [],
   series: [{ name: '合规率(%)', data: [] }],
 });
@@ -1912,7 +1924,7 @@ const getParkResourceDistributionIndicatorsData = async () => {
 const getParkResourceDistributionAreaCountData = async () => {
   try {
     parkResourceDistributionAreaCountData.value =
-      (await fetchParkResourceDistributionAreaCount()) as ChartLineData;
+      (await fetchParkResourceDistributionAreaCount()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各区域停车场数量加载失败：${error.message}`);
   }
@@ -1920,7 +1932,7 @@ const getParkResourceDistributionAreaCountData = async () => {
 const getParkResourceDistributionTypeCountData = async () => {
   try {
     parkResourceDistributionTypeCountData.value =
-      (await fetchParkResourceDistributionTypeCount()) as ChartLineData;
+      (await fetchParkResourceDistributionTypeCount()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各类型停车场数量加载失败：${error.message}`);
   }
@@ -2063,7 +2075,7 @@ const getTradeTrendAmountTrendData = async () => {
 const getTradeTrendTimeCountCompareData = async () => {
   try {
     tradeTrendTimeCountCompare.value =
-      (await fetchTradeTrendTimeCountCompare()) as ChartLineData;
+      (await fetchTradeTrendTimeCountCompare()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各时段交易笔数对比加载失败：${error.message}`);
   }
@@ -2071,7 +2083,7 @@ const getTradeTrendTimeCountCompareData = async () => {
 const getTradeTrendRegionAmountCompareData = async () => {
   try {
     tradeTrendRegionAmountCompare.value =
-      (await fetchTradeTrendRegionAmountCompare()) as ChartLineData;
+      (await fetchTradeTrendRegionAmountCompare()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各区域交易金额对比加载失败：${error.message}`);
   }
@@ -2195,7 +2207,7 @@ const getParkAreaDistributionIndicatorsData = async () => {
 const getParkAreaDistributionAreaCountData = async () => {
   try {
     parkAreaDistributionAreaCountData.value =
-      (await fetchParkAreaDistributionAreaCount()) as ChartLineData;
+      (await fetchParkAreaDistributionAreaCount()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各区域停车场数量加载失败：${error.message}`);
   }
@@ -2203,7 +2215,7 @@ const getParkAreaDistributionAreaCountData = async () => {
 const getParkAreaDistributionAreaSpaceCountData = async () => {
   try {
     parkAreaDistributionAreaSpaceCountData.value =
-      (await fetchParkAreaDistributionAreaSpaceCount()) as ChartLineData;
+      (await fetchParkAreaDistributionAreaSpaceCount()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各区域泊位数加载失败：${error.message}`);
   }
@@ -2327,7 +2339,7 @@ const getDeviceDistributionListData = async () => {
 const getDeviceDistributionTypeCountData = async () => {
   try {
     deviceDistributionTypeCountData.value =
-      (await fetchDeviceDistributionTypeCount()) as ChartLineData;
+      (await fetchDeviceDistributionTypeCount()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各类型设备数量加载失败：${error.message}`);
   }
@@ -2335,7 +2347,7 @@ const getDeviceDistributionTypeCountData = async () => {
 const getDeviceDistributionParkingCountData = async () => {
   try {
     deviceDistributionParkingCountData.value =
-      (await fetchDeviceDistributionParkingCount()) as ChartLineData;
+      (await fetchDeviceDistributionParkingCount()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各停车场设备数量加载失败：${error.message}`);
   }
@@ -2498,7 +2510,7 @@ const getMaintainTrendFaultTrendData = async () => {
 const getMaintainTrendDeviceTypeCountData = async () => {
   try {
     maintainTrendDeviceTypeCountData.value =
-      (await fetchMaintainTrendDeviceTypeCount()) as ChartLineData;
+      (await fetchMaintainTrendDeviceTypeCount()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各类型设备工单数量加载失败：${error.message}`);
   }
@@ -2506,7 +2518,7 @@ const getMaintainTrendDeviceTypeCountData = async () => {
 const getMaintainTrendFaultTypeCountData = async () => {
   try {
     maintainTrendFaultTypeCountData.value =
-      (await fetchMaintainTrendFaultTypeCount()) as ChartLineData;
+      (await fetchMaintainTrendFaultTypeCount()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各故障类型工单数量加载失败：${error.message}`);
   }
@@ -2593,7 +2605,7 @@ const getComplianceNonCompliantTrendData = async () => {
 const getComplianceRegionRateCompareData = async () => {
   try {
     complianceRegionRateCompareData.value =
-      (await fetchComplianceRegionRateCompare()) as ChartLineData;
+      (await fetchComplianceRegionRateCompare()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各区域合规率对比加载失败：${error.message}`);
   }
@@ -2601,7 +2613,7 @@ const getComplianceRegionRateCompareData = async () => {
 const getComplianceTypeRateCompareData = async () => {
   try {
     complianceTypeRateCompareData.value =
-      (await fetchComplianceTypeRateCompare()) as ChartLineData;
+      (await fetchComplianceTypeRateCompare()) as ChartBarData;
   } catch (error: any) {
     ElMessage.error(`各合规类型合规率对比加载失败：${error.message}`);
   }
@@ -8402,49 +8414,5 @@ onUnmounted(() => {
 
 .bottom-right {
   flex: 1;
-}
-
-.content-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  font-size: 1vw;
-  color: #00ffd0;
-}
-
-::v-deep(.el-button--text.el-button--small) {
-  font-size: 0.7vw;
-}
-
-::v-deep(.el-button--small.el-button--primary) {
-  min-width: 5vw;
-  max-width: 8vw;
-  height: auto;
-  padding: 0.3vw 0.8vw;
-  font-size: 0.7vw;
-  line-height: 1.2;
-  border-radius: 0.3vw;
-}
-
-::v-deep(.el-button--small.el-button--primary:hover) {
-  padding: 0.35vw 0.85vw;
-}
-
-::v-deep(.filter-form-container) {
-  padding-left: 6vw !important;
-
-  .el-form-item {
-    margin-right: 3vw;
-
-    .el-radio-group,
-    .el-checkbox-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0 !important;
-      align-items: center;
-    }
-  }
 }
 </style>

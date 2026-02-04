@@ -2106,7 +2106,7 @@ export const fetchTradeTrendList = (params = {}) => {
             resolve([
               {
                 tbTradeTrendPeriod: '日',
-                tbTradeTrendTime: '2024-01-15',
+                tbTradeTrendTime: '2026-01-15',
                 tbTradeTrendCount: 1250,
                 tbTradeTrendAmount: 38500,
                 tbTradeTrendPayRate: 96.8,
@@ -2115,7 +2115,7 @@ export const fetchTradeTrendList = (params = {}) => {
               },
               {
                 tbTradeTrendPeriod: '周',
-                tbTradeTrendTime: '2024-01-15~2024-01-21',
+                tbTradeTrendTime: '2026-01-15~2026-01-21',
                 tbTradeTrendCount: 8750,
                 tbTradeTrendAmount: 269500,
                 tbTradeTrendPayRate: 97.2,
@@ -2124,7 +2124,7 @@ export const fetchTradeTrendList = (params = {}) => {
               },
               {
                 tbTradeTrendPeriod: '月',
-                tbTradeTrendTime: '2024-01',
+                tbTradeTrendTime: '2026-01',
                 tbTradeTrendCount: 37500,
                 tbTradeTrendAmount: 1155000,
                 tbTradeTrendPayRate: 96.5,
@@ -2133,7 +2133,7 @@ export const fetchTradeTrendList = (params = {}) => {
               },
               {
                 tbTradeTrendPeriod: '日',
-                tbTradeTrendTime: '2024-01-16',
+                tbTradeTrendTime: '2026-01-16',
                 tbTradeTrendCount: 1320,
                 tbTradeTrendAmount: 40500,
                 tbTradeTrendPayRate: 97.0,
@@ -2142,7 +2142,7 @@ export const fetchTradeTrendList = (params = {}) => {
               },
               {
                 tbTradeTrendPeriod: '日',
-                tbTradeTrendTime: '2024-01-17',
+                tbTradeTrendTime: '2026-01-17',
                 tbTradeTrendCount: 1410,
                 tbTradeTrendAmount: 42800,
                 tbTradeTrendPayRate: 97.1,
@@ -2151,7 +2151,7 @@ export const fetchTradeTrendList = (params = {}) => {
               },
               {
                 tbTradeTrendPeriod: '周',
-                tbTradeTrendTime: '2024-01-22~2024-01-28',
+                tbTradeTrendTime: '2026-01-22~2026-01-28',
                 tbTradeTrendCount: 8920,
                 tbTradeTrendAmount: 275800,
                 tbTradeTrendPayRate: 97.3,
@@ -2160,7 +2160,7 @@ export const fetchTradeTrendList = (params = {}) => {
               },
               {
                 tbTradeTrendPeriod: '月',
-                tbTradeTrendTime: '2024-02',
+                tbTradeTrendTime: '2026-02',
                 tbTradeTrendCount: 38200,
                 tbTradeTrendAmount: 1186000,
                 tbTradeTrendPayRate: 96.7,
@@ -2169,7 +2169,7 @@ export const fetchTradeTrendList = (params = {}) => {
               },
               {
                 tbTradeTrendPeriod: '月',
-                tbTradeTrendTime: '2024-03',
+                tbTradeTrendTime: '2026-03',
                 tbTradeTrendCount: 39500,
                 tbTradeTrendAmount: 1218000,
                 tbTradeTrendPayRate: 97.0,
@@ -2546,7 +2546,7 @@ export const fetchTradeTrendDetail = (tradeTrendId, params = {}) => {
             resolve({
               tbTradeTrendId: tradeTrendId,
               tbTradeTrendPeriod: tradeTrendId === 'TR20240115001' ? '日' : '周',
-              tbTradeTrendTime: tradeTrendId === 'TR20240115001' ? '2024-01-15' : '2024-01-15~2024-01-21',
+              tbTradeTrendTime: tradeTrendId === 'TR20240115001' ? '2026-01-15' : '2026-01-15~2026-01-21',
               tbTradeTrendChainCountGrowth: tradeTrendId === 'TR20240115001' ? 5.2 : 3.8,
               tbTradeTrendChainAmountGrowth: tradeTrendId === 'TR20240115001' ? 4.8 : 3.5,
               tbTradeTrendPeakPeriod: tradeTrendId === 'TR20240115001' ? '17:00-19:00' : '18:00-20:00',
@@ -2603,7 +2603,7 @@ export const fetchTradeTrendTimeTrend = (tradeTrendId, params = {}) => {
             resolve({
               tbTradeTrendId: tradeTrendId,
               tbTradeTrendPeriod: tradeTrendId === 'TR20240115001' ? '日' : '周',
-              tbTradeTrendTime: tradeTrendId === 'TR20240115001' ? '2024-01-15' : '2024-01-15~2024-01-21',
+              tbTradeTrendTime: tradeTrendId === 'TR20240115001' ? '2026-01-15' : '2026-01-15~2026-01-21',
               xAxis,
               series: [{ name: '时段交易笔数', data }]
             });
@@ -3660,7 +3660,7 @@ export const fetchTerminalDeviceDetail = (deviceId, params = {}) => {
               tbDeviceNextInspectTime: new Date().getTime() + 7 * 24 * 60 * 60 * 1000,
               // 设备参数
               deviceParams: [
-                { paramName: '设备型号', paramValue: deviceId === 'DEV20260119001' ? 'DZ-2024' : 'SP-2024' },
+                { paramName: '设备型号', paramValue: deviceId === 'DEV20260119001' ? 'DZ-2026' : 'SP-2026' },
                 { paramName: 'IP地址', paramValue: deviceId === 'DEV20260119001' ? '192.168.1.101' : '192.168.1.102' },
                 { paramName: '固件版本', paramValue: deviceId === 'DEV20260119001' ? 'V2.1.5' : 'V1.8.3' },
                 { paramName: '安装位置', paramValue: deviceId === 'DEV20260119001' ? '入口处' : '出口处' },
@@ -3760,7 +3760,7 @@ export const fetchMaintainTrendList = (params = {}) => {
             resolve([
               {
                 tbMaintainTrendPeriod: '日',
-                tbMaintainTrendDate: '2025-01-20',
+                tbMaintainTrendDate: '2026-01-20',
                 tbMaintainTrendNewCount: 12,
                 tbMaintainTrendCompletedCount: 10,
                 tbMaintainTrendAverageDuration: 45,
@@ -3769,7 +3769,7 @@ export const fetchMaintainTrendList = (params = {}) => {
               },
               {
                 tbMaintainTrendPeriod: '日',
-                tbMaintainTrendDate: '2025-01-21',
+                tbMaintainTrendDate: '2026-01-21',
                 tbMaintainTrendNewCount: 15,
                 tbMaintainTrendCompletedCount: 13,
                 tbMaintainTrendAverageDuration: 38,
@@ -4200,7 +4200,7 @@ export const fetchMaintainTrendDetail = (maintainTrendId, params = {}) => {
             resolve({
               tbMaintainTrendId: maintainTrendId,
               tbMaintainTrendPeriod: maintainTrendId === 'MT20260120001' ? '日' : '周',
-              tbMaintainTrendDate: maintainTrendId === 'MT20260120001' ? '2025-01-20' : '第3周',
+              tbMaintainTrendDate: maintainTrendId === 'MT20260120001' ? '2026-01-20' : '第3周',
               // 弹窗展示字段
               tbMaintainTrendCompletionRate: maintainTrendId === 'MT20260120001' ? 83.3 : 91.8,
               tbMaintainTrendChainGrowth: maintainTrendId === 'MT20260120001' ? 8.5 : 12.2,

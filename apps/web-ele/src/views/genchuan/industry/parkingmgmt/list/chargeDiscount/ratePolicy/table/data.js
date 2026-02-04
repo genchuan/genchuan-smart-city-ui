@@ -1363,7 +1363,8 @@ export const getStatsDataByRateType = (rateType = 'base') => {
       // 统计区域名称占比
       const regionNameStats = {};
       rateData.forEach((item) => {
-        regionNameStats[item.regionName] = (regionNameStats[item.regionName] || 0) + 1;
+        regionNameStats[item.regionName] =
+          (regionNameStats[item.regionName] || 0) + 1;
       });
 
       return {

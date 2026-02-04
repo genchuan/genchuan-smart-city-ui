@@ -294,7 +294,6 @@
     }
   }
 
-  // 新增：覆盖按钮文字颜色（包括默认/hover/active状态）
   .el-button {
     --el-button-text-color: #000 !important;
     --el-button-hover-text-color: #000 !important;
@@ -302,7 +301,6 @@
     color: #000 !important;
   }
 
-  // 新增：覆盖输入框、下拉框等表单元素文字颜色
   .el-input, .el-select, .el-input__inner, .el-select__input {
     color: #000 !important;
   }
@@ -318,6 +316,40 @@
 
 :deep(.el-table__row) {
   cursor: pointer;
+}
+
+::v-deep(.el-button--text.el-button--small) {
+  font-size: 0.7vw;
+}
+
+::v-deep(.el-button--small.el-button--primary) {
+  min-width: 5vw;
+  max-width: 8vw;
+  height: auto;
+  padding: 0.3vw 0.8vw;
+  font-size: 0.7vw;
+  line-height: 1.2;
+  border-radius: 0.3vw;
+}
+
+::v-deep(.el-button--small.el-button--primary:hover) {
+  padding: 0.35vw 0.85vw;
+}
+
+::v-deep(.filter-form-container) {
+  padding-left: 6vw !important;
+
+  .el-form-item {
+    margin-right: 3vw;
+
+    .el-radio-group,
+    .el-checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0 !important;
+      align-items: center;
+    }
+  }
 }
 
 // 顶部抽屉核心样式

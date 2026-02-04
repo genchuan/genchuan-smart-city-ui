@@ -31,15 +31,15 @@ const routes: RouteRecordRaw[] = [
           title: $t('page.dashboard.analytics'),
         },
       },
-      // {
-      //   name: 'todo',
-      //   path: '/todo',
-      //   component: () => import('#/views/dashboard/todo/index.vue'),
-      //   meta: {
-      //     icon: 'carbon:workspace',
-      //     title: '我的任务',
-      //   },
-      // },
+      {
+        name: 'todo',
+        path: '/todo',
+        component: () => import('#/views/dashboard/todo/index.vue'),
+        meta: {
+          icon: 'carbon:workspace',
+          title: '任务中心',
+        },
+      },
       // {
       //   name: 'approve',
       //   path: '/approve',

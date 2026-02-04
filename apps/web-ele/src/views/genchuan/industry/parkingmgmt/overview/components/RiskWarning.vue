@@ -214,6 +214,23 @@ const handleFullscreenChange = () => {
   }
 };
 
+// 图表通用类型
+interface ChartRatioData {
+  legend: string[];
+  series: { data: number[]; name: string }[];
+}
+interface ChartLineData {
+  xAxis: string[];
+  series: {
+    name: string;
+    data: number[];
+  }[];
+}
+interface ChartBarData {
+  xAxis: string[];
+  series: { data: number[]; name: string }[];
+}
+
 // TS类型定义
 interface ParkAlarmDisposalLog {
   time: number | string;
@@ -367,15 +384,6 @@ interface SubmitAbnormalDisposeParams {
 }
 interface SubmitAbnormalRelieveParams {
   parkAbnormalAbnormalId: string;
-}
-
-interface ChartRatioData {
-  legend: string[];
-  series: { data: number[]; name: string }[];
-}
-interface ChartBarData {
-  xAxis: string[];
-  series: { data: number[]; name: string }[];
 }
 
 interface ParkFaultRepairLog {
@@ -647,7 +655,7 @@ const parkAbnormalIndicators = ref<ParkAbnormalIndicators>({
   dataAbnormalCount: 0,
   commAbnormalCount: 0,
 });
-const parkAbnormalTrendData = ref<ChartBarData>({ xAxis: [], series: [] });
+const parkAbnormalTrendData = ref<ChartLineData>({ xAxis: [], series: [] });
 const parkAbnormalAreaData = ref<ChartBarData>({ xAxis: [], series: [] });
 const parkAbnormalTypeData = ref<ChartBarData>({ xAxis: [], series: [] });
 const parkAbnormalChartRefreshKey = ref(0);
@@ -1018,7 +1026,7 @@ const getParkAbnormalIndicatorData = async () => {
 const getParkAbnormalTrendData = async () => {
   try {
     parkAbnormalTrendData.value =
-      (await fetchParkAbnormalTrend()) as ChartBarData;
+      (await fetchParkAbnormalTrend()) as ChartLineData;
   } catch (error: any) {
     ElMessage.error(`异常趋势加载失败：${error.message}`);
   }
@@ -3406,7 +3414,7 @@ onUnmounted(() => {
     width="620px"
     :close-on-click-modal="true"
     :close-on-press-escape="true"
-    class="park-alarm-dialog"
+    class="park-dialog"
     center
     destroy-on-close
   >
@@ -3574,7 +3582,7 @@ onUnmounted(() => {
     width="620px"
     :close-on-click-modal="true"
     :close-on-press-escape="true"
-    class="park-alarm-dialog"
+    class="park-dialog"
     center
     destroy-on-close
   >
@@ -3791,7 +3799,7 @@ onUnmounted(() => {
     width="620px"
     :close-on-click-modal="true"
     :close-on-press-escape="true"
-    class="park-alarm-dialog"
+    class="park-dialog"
     center
     destroy-on-close
   >
@@ -3935,7 +3943,7 @@ onUnmounted(() => {
     width="620px"
     :close-on-click-modal="true"
     :close-on-press-escape="true"
-    class="park-alarm-dialog"
+    class="park-dialog"
     center
     destroy-on-close
   >
@@ -4115,7 +4123,7 @@ onUnmounted(() => {
     width="620px"
     :close-on-click-modal="true"
     :close-on-press-escape="true"
-    class="park-alarm-dialog"
+    class="park-dialog"
     center
     destroy-on-close
   >
@@ -4338,7 +4346,7 @@ onUnmounted(() => {
     width="620px"
     :close-on-click-modal="true"
     :close-on-press-escape="true"
-    class="park-alarm-dialog"
+    class="park-dialog"
     center
     destroy-on-close
   >
@@ -4634,6 +4642,19 @@ onUnmounted(() => {
   background-size: 100% 100%;
 }
 
+.panel {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: 0.5vw;
+  overflow: hidden;
+  background: url('../../images/line(1).png') rgb(255 255 255 / 4%);
+  border: 0.2vh solid rgb(25 186 139 / 17%);
+}
+
 .mainbox {
   box-sizing: border-box;
   display: flex;
@@ -4680,19 +4701,6 @@ onUnmounted(() => {
 
 .bottom-right {
   flex: 1;
-}
-
-.panel {
-  position: relative;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  padding: 0.5vw;
-  overflow: hidden;
-  background: url('../../images/line(1).png') rgb(255 255 255 / 4%);
-  border: 0.2vh solid rgb(25 186 139 / 17%);
 }
 
 :deep(.el-table) {
@@ -4747,134 +4755,5 @@ onUnmounted(() => {
 
 :deep(.el-table__row) {
   cursor: pointer;
-}
-
-:deep(.park-alarm-dialog) {
-  --el-dialog-bg-color: #fff !important;
-  --el-text-color-primary: #000 !important;
-
-  color: var(--el-text-color-primary) !important;
-  background: var(--el-dialog-bg-color) !important;
-  border-radius: 8px !important;
-  box-shadow: 0 5px 20px rgb(0 0 0 / 10%) !important;
-
-  .el-dialog__header {
-    padding: 12px 20px;
-    border-bottom: 1px solid rgb(0 198 255 / 30%);
-  }
-
-  .el-dialog__title {
-    font-size: 0.9vw;
-    font-weight: 500;
-    color: #000;
-  }
-
-  .el-dialog__headerbtn {
-    top: 12px;
-    right: 20px;
-  }
-
-  .el-dialog__close {
-    font-size: 18px;
-    color: #000;
-
-    &:hover {
-      color: rgb(0 122 255 / 70%);
-    }
-  }
-
-  .el-dialog__body {
-    max-height: 70vh;
-    padding: 20px;
-    overflow-y: auto;
-  }
-
-  .el-descriptions {
-    width: 100%;
-    font-size: 0.7vw;
-
-    .el-descriptions__label {
-      width: 4vw;
-      font-weight: 500;
-      color: #000;
-    }
-  }
-
-  .evidence-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5vw;
-    margin-top: 0.5vw;
-  }
-
-  .evidence-list :deep(.el-image) {
-    width: 6vw;
-    height: 4.5vh;
-    border-radius: 0.2vw;
-  }
-
-  .log-list {
-    padding: 0.5vw;
-    margin-top: 0.5vw;
-    border: 1px solid rgb(0 204 255 / 15%);
-    border-radius: 0.2vw;
-  }
-
-  .log-item {
-    display: flex;
-    flex-direction: column;
-    padding-bottom: 0.5vh;
-    margin-bottom: 0.5vh;
-    border-bottom: 1px dashed rgb(0 204 255 / 15%);
-  }
-
-  .log-time {
-    font-size: 0.7vw;
-    font-weight: 500;
-    color: rgb(0 82 103 / 80%);
-  }
-
-  .log-content {
-    font-size: 0.7vw;
-    color: #000;
-  }
-
-  .empty-log {
-    padding: 0.5vw;
-    font-size: 0.7vw;
-    color: rgb(0 0 0 / 60%);
-    text-align: center;
-  }
-
-  .feedback-content {
-    min-height: 8vh;
-    padding: 0.5vw;
-    font-size: 0.7vw;
-    color: #000;
-    background: rgb(255 255 255 / 90%);
-    border: 1px solid rgb(0 204 255 / 15%);
-    border-radius: 0.2vw;
-  }
-
-  .dispose-form {
-    width: 100%;
-    padding: 10px 0;
-
-    .el-form-item {
-      margin-bottom: 1vh;
-    }
-
-    .el-form-item__label {
-      font-size: 0.7vw;
-      font-weight: 500;
-      color: #000;
-    }
-  }
-
-  .form-item-required label::after {
-    margin-left: 0.2vw;
-    color: #eb5757;
-    content: '*';
-  }
 }
 </style>
