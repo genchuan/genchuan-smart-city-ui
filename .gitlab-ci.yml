@@ -12,7 +12,7 @@ build_and_push:
   stage: build_and_push
   # 仅在develop 环境下执行
   rules:
-    - if: $CI_COMMIT_BRANCH == "dev-ln"
+    - if: $CI_COMMIT_BRANCH == "dev-genchuan"
       when: on_success
     - when: never
   script:
