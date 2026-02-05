@@ -27,7 +27,7 @@ import ChartPie from '#/views/genchuan/industry/templatesstatchart/ChartPie.vue'
 import HorizontalBar1 from '#/views/genchuan/industry/templatesstatchart/HorizontalBar1.vue';
 import VerticalBar1 from '#/views/genchuan/industry/templatesstatchart/VerticalBar1.vue';
 
-import MapCommon from './GlobalDataMap.vue';
+import MapCommon from './bf_GlobalDataMap.vue';
 
 const router = useRouter();
 const pageContainerRef = ref(null);
