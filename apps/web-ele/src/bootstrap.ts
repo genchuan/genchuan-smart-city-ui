@@ -17,6 +17,8 @@ import { setupFormCreate } from '#/plugins/form-create';
 import { initComponentAdapter } from './adapter/component';
 import { initSetupVbenForm } from './adapter/form';
 import App from './app.vue';
+
+import IconButton from './components/common/IconButton.vue';
 import { router } from './router';
 
 async function bootstrap(namespace: string) {
@@ -35,6 +37,7 @@ async function bootstrap(namespace: string) {
   //   zIndex: 2000,
   // });
   const app = createApp(App);
+  app.component('IconButton', IconButton)
   app.use(VueDOMPurifyHTML);
   // 注册Element Plus提供的v-loading指令
   app.directive('loading', ElLoading.directive);

@@ -1,27 +1,72 @@
 // 入场车流API - 包含模拟数据
 import { ElMessage } from 'element-plus';
 
-/**
- * 模拟入场车流报表数据
- * @param {string} startDate 开始日期，格式：YYYY-MM-DD
- * @param {string} endDate 结束日期，格式：YYYY-MM-DD
- * @param {string} region 区域代码：空字符串表示全部
- * @param {string} parkingType 停车场类型：空字符串表示全部
- * @returns {Promise} 模拟数据
- */
-export const getEntryFlowReport = async (params) => {
-  // 模拟API延迟
-  await new Promise((resolve) => setTimeout(resolve, 500));
+// 区域映射
+const regionMap = {
+  '': '全部区域',
+  'xiangcheng': '芗城区',
+  'longwen': '龙文区',
+  'longhai': '龙海区',
+  'zhangpu': '漳浦县',
+  'yunxiao': '云霄县'
+};
 
-  const {
-    startDate = '2023-12-21',
-    endDate = '2023-12-21',
-    region = '',
-    parkingType = '',
-  } = params;
+// 停车场类型映射
+const parkingTypeMap = {
+  '': '全部类型',
+  'public': '公共停车场',
+  'roadside': '路侧停车场',
+  'special': '专用停车场'
+};
 
-  // 模拟核心指标数据
-  const coreIndicators = [
+// 生成模拟的核心指标数据
+function generateCoreIndicators(filtered = false) {
+  if (filtered) {
+    return [
+      {
+        key: 'totalCount',
+        name: '总入场车次',
+        value: Math.floor(Math.random() * 5000) + 8000,
+        unit: '次',
+        comparison: Math.floor(Math.random() * 20) - 5,
+        abnormal: false,
+      },
+      {
+        key: 'morningPeak',
+        name: '早高峰车次',
+        value: Math.floor(Math.random() * 800) + 1000,
+        unit: '次',
+        comparison: Math.floor(Math.random() * 15) - 3,
+        abnormal: false,
+      },
+      {
+        key: 'eveningPeak',
+        name: '晚高峰车次',
+        value: Math.floor(Math.random() * 900) + 1100,
+        unit: '次',
+        comparison: Math.floor(Math.random() * 25) - 5,
+        abnormal: Math.random() > 0.7,
+      },
+      {
+        key: 'newEnergyRate',
+        name: '新能源占比',
+        value: Number.parseFloat((Math.random() * 8 + 8).toFixed(1)),
+        unit: '%',
+        comparison: Math.floor(Math.random() * 15) + 5,
+        abnormal: false,
+      },
+      {
+        key: 'avgHourly',
+        name: '平均小时车流',
+        value: Math.floor(Math.random() * 200) + 400,
+        unit: '车次',
+        comparison: Math.floor(Math.random() * 10) - 2,
+        abnormal: false,
+      },
+    ];
+  }
+
+  return [
     {
       key: 'totalCount',
       name: '总入场车次',
@@ -63,15 +108,31 @@ export const getEntryFlowReport = async (params) => {
       abnormal: false,
     },
   ];
+}
 
-  // 模拟时段分布数据
-  const timeDistribution = {
-    today: [120, 80, 150, 300, 900, 850, 600, 450, 300, 250, 200, 150],
-    average: [110, 75, 140, 280, 850, 800, 550, 420, 280, 230, 180, 130],
+// 根据筛选条件生成时段分布数据
+function generateTimeDistribution(region, parkingType) {
+  const base = [120, 80, 150, 300, 900, 850, 600, 450, 300, 250, 200, 150];
+  const avg = [110, 75, 140, 280, 850, 800, 550, 420, 280, 230, 180, 130];
+
+  if (region || parkingType) {
+    // 根据筛选条件调整数据
+    const factor = 0.3 + Math.random() * 0.5; // 0.3-0.8之间的随机系数
+    return {
+      today: base.map(value => Math.round(value * factor)),
+      average: avg.map(value => Math.round(value * factor))
+    };
+  }
+
+  return {
+    today: base,
+    average: avg
   };
+}
 
-  // 模拟区域分布数据
-  const regionDistribution = [
+// 根据筛选条件生成区域分布数据
+function generateRegionDistribution(region) {
+  const baseData = [
     { name: '芗城区', value: 4500 },
     { name: '龙文区', value: 3800 },
     { name: '龙海区', value: 2800 },
@@ -80,40 +141,101 @@ export const getEntryFlowReport = async (params) => {
     { name: '其他区域', value: 800 },
   ];
 
-  // 模拟车型分布数据
-  const vehicleType = {
+  if (region && region !== '') {
+    const regionName = regionMap[region];
+    // 只返回筛选的区域
+    return baseData.filter(item => item.name === regionName);
+  }
+
+  return baseData;
+}
+
+// 根据筛选条件生成车型分布数据
+function generateVehicleType(region, parkingType) {
+  const baseData = {
     small: 13_430,
     medium: 1580,
     large: 420,
     newEnergy: 1970,
   };
 
-  // 模拟表格数据
+  if (region || parkingType) {
+    const factor = 0.2 + Math.random() * 0.8;
+    return {
+      small: Math.round(baseData.small * factor),
+      medium: Math.round(baseData.medium * factor),
+      large: Math.round(baseData.large * factor),
+      newEnergy: Math.round(baseData.newEnergy * factor),
+    };
+  }
+
+  return baseData;
+}
+
+// 生成表格数据
+function generateTableData(params) {
+  const { startDate, endDate, region, parkingType } = params;
   const tableData = [];
+
   const start = new Date(startDate);
   const end = new Date(endDate);
   const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+  const regionName = regionMap[region] || '芗城区';
+  const parkingTypeName = parkingTypeMap[parkingType] || '公共停车场';
 
   for (let i = 0; i < Math.min(days, 10); i++) {
     const date = new Date(start);
     date.setDate(start.getDate() + i);
     const dateStr = date.toISOString().split('T')[0];
 
+    const baseCount = region || parkingType ? 800 : 1500; // 筛选后数据量减少
+    const totalCount = Math.floor(Math.random() * baseCount) + baseCount;
+    const morningPeak = Math.floor(totalCount * 0.15);
+    const eveningPeak = Math.floor(totalCount * 0.18);
+    const offPeak = totalCount - morningPeak - eveningPeak;
+
     tableData.push({
       date: dateStr,
-      regionName: region || '芗城区',
-      parkingType: parkingType || '公共停车场',
-      totalCount: Math.floor(Math.random() * 2000) + 1000,
-      morningPeak: Math.floor(Math.random() * 400) + 200,
-      eveningPeak: Math.floor(Math.random() * 500) + 250,
-      offPeak: Math.floor(Math.random() * 1200) + 600,
-      smallVehicle: Math.floor(Math.random() * 1800) + 900,
-      mediumVehicle: Math.floor(Math.random() * 300) + 100,
-      largeVehicle: Math.floor(Math.random() * 100) + 50,
-      newEnergy: Math.floor(Math.random() * 400) + 150,
+      regionName: regionName,
+      parkingType: parkingTypeName,
+      totalCount: totalCount,
+      morningPeak: morningPeak,
+      eveningPeak: eveningPeak,
+      offPeak: offPeak,
+      smallVehicle: Math.floor(totalCount * 0.85),
+      mediumVehicle: Math.floor(totalCount * 0.1),
+      largeVehicle: Math.floor(totalCount * 0.03),
+      newEnergy: Math.floor(totalCount * 0.12),
       newEnergyRate: Number.parseFloat((Math.random() * 10 + 8).toFixed(1)),
     });
   }
+
+  return tableData;
+}
+
+/**
+ * 获取入场车流报表数据（支持筛选）
+ */
+export const getEntryFlowReport = async (params) => {
+  // 模拟API延迟
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  const {
+    startDate = '2023-12-21',
+    endDate = '2023-12-21',
+    region = '',
+    parkingType = '',
+  } = params;
+
+  // 根据筛选条件生成相应数据
+  const hasFilter = region !== '' || parkingType !== '';
+
+  const coreIndicators = generateCoreIndicators(hasFilter);
+  const timeDistribution = generateTimeDistribution(region, parkingType);
+  const regionDistribution = generateRegionDistribution(region);
+  const vehicleType = generateVehicleType(region, parkingType);
+  const tableData = generateTableData(params);
 
   return {
     startDate,
@@ -130,9 +252,7 @@ export const getEntryFlowReport = async (params) => {
 };
 
 /**
- * 生成入场车流报表CSV文件
- * @param {object} params 导出参数
- * @returns {Promise} 模拟导出
+ * 导出入场车流报表
  */
 export const exportEntryFlowReport = async (params) => {
   try {
@@ -181,14 +301,14 @@ export const exportEntryFlowReport = async (params) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `入场车流报表_${params.startDate || '开始'}_${params.endDate || '结束'}.csv`;
+    link.download = `入场车流报表_${params.startDate || '开始'}_${params.endDate || '结束'}_${new Date().getTime()}.csv`;
 
     document.body.append(link);
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
 
-    ElMessage.success('导出成功（CSV格式）');
+    ElMessage.success(`导出成功，共${data.tableData.length}条记录`);
 
     return {
       success: true,
@@ -202,57 +322,4 @@ export const exportEntryFlowReport = async (params) => {
     ElMessage.error(`导出失败: ${error.message}`);
     throw error;
   }
-};
-
-/**
- * 获取入场车流趋势数据
- * @param {object} params 查询参数
- * @returns {Promise} 趋势数据
- */
-export const getEntryFlowTrend = async (params) => {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-
-  return {
-    trendData: [
-      { date: '2023-12-15', value: 14_500 },
-      { date: '2023-12-16', value: 15_200 },
-      { date: '2023-12-17', value: 14_800 },
-      { date: '2023-12-18', value: 15_500 },
-      { date: '2023-12-19', value: 16_000 },
-      { date: '2023-12-20', value: 15_700 },
-      { date: '2023-12-21', value: 15_800 },
-    ],
-    generatedAt: new Date().toISOString(),
-  };
-};
-
-/**
- * 获取入场车流对比数据
- * @param {object} params 查询参数
- * @returns {Promise} 对比数据
- */
-export const getEntryFlowComparison = async (params) => {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-
-  return {
-    current: {
-      total: 15_800,
-      morningPeak: 2100,
-      eveningPeak: 2300,
-      newEnergyRate: 12.5,
-    },
-    comparison: {
-      total: 14_050,
-      morningPeak: 1940,
-      eveningPeak: 1990,
-      newEnergyRate: 10,
-    },
-    change: {
-      total: '+12.5%',
-      morningPeak: '+8.3%',
-      eveningPeak: '+15.7%',
-      newEnergyRate: '+25.0%',
-    },
-    generatedAt: new Date().toISOString(),
-  };
 };

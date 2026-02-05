@@ -9,19 +9,19 @@ import {
   exportEntryFlowReport,
   getEntryFlowReport,
 } from '#/api/reports/park/entryFlowApi';
-import ChartContainer from '#/views/report/park/operation/component/ChartContainer.vue';
-import CoreIndicators from '#/views/report/park/operation/component/CoreIndicators.vue';
-import DataTable from '#/views/report/park/operation/component/DataTable.vue';
-import LoadingOverlay from '#/views/report/park/operation/component/LoadingOverlay.vue';
-import ReportSection from '#/views/report/park/operation/component/ReportSection.vue';
+import ChartContainer from '#/views/report/park/component/ChartContainer.vue';
+import CoreIndicators from '#/views/report/park/component/CoreIndicators.vue';
+import DataTable from '#/views/report/park/component/DataTable.vue';
+import LoadingOverlay from '#/views/report/park/component/LoadingOverlay.vue';
+import ReportSection from '#/views/report/park/component/ReportSection.vue';
 // 组件引入
-import ReportToolbar from '#/views/report/park/operation/component/ReportToolbar.vue';
+import ReportToolbar from '#/views/report/park/component/ReportToolbar.vue';
 // 工具函数
 import {
-  generateIndicatorTag,
+  // generateIndicatorTag,
   getComparisonClass,
   getYesterdayDate,
-} from '#/views/report/park/operation/component/ReportUtils';
+} from '#/views/report/park/component/ReportUtils';
 
 // 响应式数据
 const dateRange = ref([getYesterdayDate(), getYesterdayDate()]);
@@ -40,8 +40,8 @@ const tableData = ref([]);
 const processedCoreIndicators = computed(() => {
   return coreIndicators.value.map((indicator) => ({
     ...indicator,
-    tag: generateIndicatorTag(indicator.comparison),
-    abnormal: Math.abs(indicator.comparison) > 30,
+    // tag: generateIndicatorTag(indicator.comparison),
+    // abnormal: Math.abs(indicator.comparison) > 30,
   }));
 });
 
@@ -339,13 +339,13 @@ const handleExport = async () => {
       :indicators="processedCoreIndicators"
       :format-value="formatValue"
     >
-      <template #comparison="{ indicator }">
-        <span :class="getComparisonClass(indicator.comparison)">
-          <el-icon v-if="indicator.comparison > 0"><Top /></el-icon>
-          <el-icon v-if="indicator.comparison < 0"><Bottom /></el-icon>
-          较近7日均值 {{ Math.abs(indicator.comparison) }}%
-        </span>
-      </template>
+<!--      <template #comparison="{ indicator }">-->
+<!--        <span :class="getComparisonClass(indicator.comparison)">-->
+<!--          <el-icon v-if="indicator.comparison > 0"><Top /></el-icon>-->
+<!--          <el-icon v-if="indicator.comparison < 0"><Bottom /></el-icon>-->
+<!--          较近7日均值 {{ Math.abs(indicator.comparison) }}%-->
+<!--        </span>-->
+<!--      </template>-->
     </CoreIndicators>
 
     <!-- 时段分布 -->
@@ -401,14 +401,14 @@ const handleExport = async () => {
 .entry-flow-report {
   position: relative;
   min-height: 600px;
-  padding: 24px;
+  padding: 12px;
 }
 
 .distribution-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 @media (max-width: 992px) {

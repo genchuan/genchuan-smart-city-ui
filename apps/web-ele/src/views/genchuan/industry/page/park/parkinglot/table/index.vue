@@ -8,9 +8,11 @@ import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
+// 引入封装后的详情抽屉组件
+import ParkDetailDrawer from '#/views/genchuan/industry/page/park/components/detail.vue';
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
@@ -19,11 +21,23 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  arrowShow: {
+    type: Boolean,
+    default: false,
+  },
+  arrowState: {
+    type: Boolean,
+    default: false,
+  },
 });
+const emit = defineEmits(['arrow-change']);
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
 });
+
 const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
   footer: false,
   onCancel() {
     drawerApi.close();
@@ -31,6 +45,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
+// 移除原 DetailDrawer 初始化逻辑
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -45,6 +60,8 @@ const [Form, formApi] = useVbenForm({
   showDefaultActions: false,
 });
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
   onCancel() {
     formDrawerApi.close();
   },
@@ -73,7 +90,6 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     }
   },
 });
-const [searchDrawer] = useVbenDrawer();
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
@@ -137,12 +153,17 @@ function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
 const dataObj = reactive({
+  totalShow: false,
+  detailObj: {}, // 保留详情对象用于传递给组件
   total: dataList().length,
   currentPage: 1,
   pageSize: 10,
   apilist: dataList(),
   list: [],
 });
+const changeTotalShow = () => {
+  dataObj.totalShow = !dataObj.totalShow;
+};
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
@@ -186,7 +207,12 @@ const [QueryForm] = useVbenForm({
   // 垂直布局，label和input在不同行，值为vertical
   // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useFormSchema(),
+  schema: useFormSchema().map((v) => {
+    delete v.rules;
+    return {
+      ...v,
+    };
+  }),
   // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
@@ -226,7 +252,27 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const activeName = ref('全部');
-const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用' }]);
+// 修改打开详情的方法，调用组件的open方法
+const handleOpenDetail = (row) => {
+  dataObj.detailObj = row;
+  // 通过ref调用组件的open方法
+  parkDetailDrawerRef.value.open();
+  console.log(row);
+};
+const tabsData = ref([
+  { label: '全部' },
+  { label: '启用' },
+  { label: '禁用' },
+  { label: '暂停运营' },
+  { label: '维修中' },
+]);
+const createLabel = (item) => {
+  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
+  if (item.label === '全部') {
+    text = `(${dataObj.apilist.length})`;
+  }
+  return item.label + text;
+};
 const handleClick = () => {
   gridApi.query();
 };
@@ -236,6 +282,11 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+const arrowChange = () => {
+  emit('arrow-change');
+};
+// 定义组件ref，用于调用组件方法
+const parkDetailDrawerRef = ref(null);
 </script>
 
 <template>
@@ -243,8 +294,12 @@ const handleFullShow = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <!-- <NewFormModel @success="handleRefresh" /> -->
-    <searchDrawer title="搜索栏设置" />
+    <!-- 使用封装后的详情抽屉组件 -->
+    <ParkDetailDrawer
+      ref="parkDetailDrawerRef"
+      :detail-obj="dataObj.detailObj"
+      :title="`${dataObj.detailObj.name}`"
+    />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -261,7 +316,7 @@ const handleFullShow = () => {
               <el-tab-pane
                 v-for="item in tabsData"
                 :key="item.label"
-                :label="item.label"
+                :label="createLabel(item)"
                 :name="item.label"
               />
             </el-tabs>
@@ -269,82 +324,79 @@ const handleFullShow = () => {
         </div>
       </template>
       <template #toolbar-tools>
-        <TableAction
-          :actions="[
-            {
-              label: textObj.addText,
-              type: 'primary',
-              icon: ACTION_ICON.ADD,
-              auth: ['system:role:create'],
-              onClick: handleCreate,
-            },
-            {
-              label: $t('ui.actionTitle.export'),
-              type: 'primary',
-              icon: ACTION_ICON.DOWNLOAD,
-              auth: ['system:role:export'],
-              onClick: handleExport,
-            },
-            {
-              label: $t('ui.actionTitle.deleteBatch'),
-              type: 'danger',
-              icon: ACTION_ICON.DELETE,
-              disabled: isEmpty(checkedIds),
-              auth: ['system:role:delete'],
-              onClick: handleDeleteBatch,
-            },
-          ]"
-        />
-        <button
-          class="vxe-button type--button size--small is--circle ml-2"
-          title="搜索"
-          type="button"
-          @click="handleSerachShow"
+        <div class="common-toolbar-tools">
+          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="批量删除"
+            icon-name="delete"
+            color="#F56C6C"
+            :disabled="isEmpty(checkedIds)"
+            @click="handleDeleteBatch"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="handleFullShow"
+          />
+        </div>
+      </template>
+      <template #parkName="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
         >
-          <i
-            class="vxe-button--item vxe-button--prefix-icon vxe-icon-search"
-          ></i>
-        </button>
-        <button
-          class="vxe-button type--button size--small is--circle"
-          title="全屏"
-          type="button"
-          @click="handleFullShow"
-        >
-          <i
-            class="vxe-button--item vxe-button--prefix-icon vxe-table-icon-fullscreen"
-          ></i>
-        </button>
+          {{ row.name }}
+        </el-text>
       </template>
       <template #actions="{ row }">
-        <TableAction
-          :actions="[
-            {
-              label: '编辑',
-              type: 'primary',
-              link: true,
-              icon: ACTION_ICON.EDIT,
-              auth: ['system:role:update'],
-              onClick: handleEdit.bind(null, row),
-            },
-            {
-              label: '删除',
-              type: 'danger',
-              link: true,
-              icon: ACTION_ICON.DELETE,
-              auth: ['system:role:delete'],
-              popConfirm: {
-                title: $t('ui.actionMessage.deleteConfirm', [row.name]),
-                confirm: handleDelete.bind(null, row),
-              },
-            },
-          ]"
-        />
+        <div class="table-toolbar-tools">
+          <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleOpenDetail(row)"
+          />
+          <IconButton
+            content="编辑"
+            icon-name="edit"
+            @click="handleEdit(row)"
+          />
+          <IconButton
+            content="删除"
+            icon-name="delete"
+            color="#F56C6C"
+            @click="handleDelete(row)"
+          />
+        </div>
       </template>
       <template #bottom>
-        <span class="bottom-title">
-          {{ textObj.total }}
-        </span>
+        <div class="common-total" @click="changeTotalShow">
+          <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
+            <ArrowDown />
+          </el-icon>
+          <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
+            <ArrowUp />
+          </el-icon>
+          <span> 本页统计：停车场数量5;车位总数:266;车场车位3 </span>
+        </div>
+        <div class="common-total-bottom" v-if="dataObj.totalShow">
+          <span> 全部统计：{{ textObj.total }} </span>
+        </div>
       </template>
     </Grid>
   </div>

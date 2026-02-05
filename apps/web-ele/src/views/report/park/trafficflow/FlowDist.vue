@@ -9,13 +9,13 @@ import {
   exportFlowDistributionReport,
   getFlowDistributionReport,
 } from '#/api/reports/park/flowDistApi';
-import ChartContainer from '#/views/report/park/operation/component/ChartContainer.vue';
-import CoreIndicators from '#/views/report/park/operation/component/CoreIndicators.vue';
-import DataTable from '#/views/report/park/operation/component/DataTable.vue';
-import LoadingOverlay from '#/views/report/park/operation/component/LoadingOverlay.vue';
-import ReportSection from '#/views/report/park/operation/component/ReportSection.vue';
+import ChartContainer from '#/views/report/park/component/ChartContainer.vue';
+import CoreIndicators from '#/views/report/park/component/CoreIndicators.vue';
+import DataTable from '#/views/report/park/component/DataTable.vue';
+import LoadingOverlay from '#/views/report/park/component/LoadingOverlay.vue';
+import ReportSection from '#/views/report/park/component/ReportSection.vue';
 // 组件引入
-import ReportToolbar from '#/views/report/park/operation/component/ReportToolbar.vue';
+import ReportToolbar from '#/views/report/park/component/ReportToolbar.vue';
 // 工具函数
 
 // 响应式数据
@@ -643,14 +643,14 @@ const handleExport = async () => {
 .flow-distribution-report {
   position: relative;
   min-height: 600px;
-  padding: 24px;
+  padding: 12px;
 }
 
 .multi-dimension {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 @media (max-width: 992px) {

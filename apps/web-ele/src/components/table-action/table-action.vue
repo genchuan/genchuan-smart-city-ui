@@ -234,20 +234,26 @@ function handleMenuClick(command: any) {
                   <IconifyIcon :icon="action.popConfirm.icon" />
                 </template>
                 <template #reference>
-                  <div>
-                    <IconifyIcon v-if="action.icon" :icon="action.icon" />
-                    <span :class="action.icon ? 'ml-1' : ''">
-                      {{ action.text }}
-                    </span>
-                  </div>
+                  <span class="flex items-center">
+                    <IconifyIcon
+                      v-if="action.icon"
+                      :icon="action.icon"
+                      class="mr-1"
+                    />
+                    {{ action.text }}
+                  </span>
                 </template>
               </ElPopconfirm>
             </template>
             <template v-else>
-              <div>
-                <IconifyIcon v-if="action.icon" :icon="action.icon" />
+              <span class="flex items-center">
+                <IconifyIcon
+                  v-if="action.icon"
+                  :icon="action.icon"
+                  class="mr-1"
+                />
                 {{ action.label }}
-              </div>
+              </span>
             </template>
           </ElDropdownItem>
         </ElDropdownMenu>
@@ -281,6 +287,38 @@ function handleMenuClick(command: any) {
     text-rendering: optimizelegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  // 确保下拉菜单项中的图标和文字在同一行
+  .el-dropdown-menu__item {
+    display: flex;
+    align-items: center;
+  }
+
+  // 确保下拉菜单项中的图标和文字在同一行
+  .el-dropdown-menu__item * {
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+
+  // 为图标添加右边距
+  .el-dropdown-menu__item .iconify {
+    margin-right: 4px;
+  }
+
+  // 确保flex类名生效
+  .flex {
+    display: flex !important;
+  }
+
+  // 确保items-center类名生效
+  .items-center {
+    align-items: center !important;
+  }
+
+  // 为图标添加右边距
+  .mr-1 {
+    margin-right: 4px !important;
   }
 }
 

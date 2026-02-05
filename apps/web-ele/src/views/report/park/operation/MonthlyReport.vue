@@ -10,22 +10,21 @@ import {
   exportMonthlyReport,
   getMonthlyReport,
 } from '#/api/reports/park/monthlyReportApi';
-import ChartContainer from '#/views/report/park/operation/component/ChartContainer.vue';
-import CoreIndicators from '#/views/report/park/operation/component/CoreIndicators.vue';
-import DataTable from '#/views/report/park/operation/component/DataTable.vue';
-import LoadingOverlay from '#/views/report/park/operation/component/LoadingOverlay.vue';
-import ReportSection from '#/views/report/park/operation/component/ReportSection.vue';
+import ChartContainer from '#/views/report/park/component/ChartContainer.vue';
+import CoreIndicators from '#/views/report/park/component/CoreIndicators.vue';
+import DataTable from '#/views/report/park/component/DataTable.vue';
+import LoadingOverlay from '#/views/report/park/component/LoadingOverlay.vue';
+import ReportSection from '#/views/report/park/component/ReportSection.vue';
 // 组件引入
-import ReportToolbar from '#/views/report/park/operation/component/ReportToolbar.vue';
+import ReportToolbar from '#/views/report/park/component/ReportToolbar.vue';
 // 工具函数
 import {
   formatCurrency,
-  generateIndicatorTag,
   getComparisonClass,
   getLastMonth,
   getParkingTypeName,
   getParkingTypeTagType,
-} from '#/views/report/park/operation/component/ReportUtils';
+} from '#/views/report/park/component/ReportUtils';
 
 // 响应式数据
 const selectedMonth = ref(getLastMonth());
@@ -37,13 +36,16 @@ const monthlyIndicators = ref([]);
 const typeDistribution = ref([]);
 const monthlyData = ref([]);
 
-// 处理后的核心指标数据
+// 处理后的核心指标数据 - 直接使用API数据
 const processedMonthlyIndicators = computed(() => {
   return monthlyIndicators.value.map((indicator) => ({
     ...indicator,
-    tag: generateIndicatorTag(indicator.comparison),
-    comparisonLabel: '较上月',
   }));
+});
+
+// 分类型统计数据 - 直接使用API数据
+const processedTypeDistribution = computed(() => {
+  return typeDistribution.value;
 });
 
 // 类型表格列定义
@@ -178,7 +180,7 @@ const pieChartOptions = computed(() => ({
   legend: {
     orient: 'vertical',
     left: 'left',
-    data: typeDistribution.value.map((item) => getParkingTypeName(item.type)),
+    data: processedTypeDistribution.value.map((item) => getParkingTypeName(item.type)),
   },
   series: [
     {
@@ -186,7 +188,7 @@ const pieChartOptions = computed(() => ({
       type: 'pie',
       radius: '50%',
       center: ['50%', '60%'],
-      data: typeDistribution.value.map((item) => ({
+      data: processedTypeDistribution.value.map((item) => ({
         value: item.revenue,
         name: getParkingTypeName(item.type),
       })),
@@ -320,13 +322,13 @@ const handleExport = async () => {
       :indicators="processedMonthlyIndicators"
       :format-value="formatValue"
     >
-      <template #comparison="{ indicator }">
-        <span :class="getComparisonClass(indicator.comparison, 0)">
-          <el-icon v-if="indicator.comparison > 0"><Top /></el-icon>
-          <el-icon v-if="indicator.comparison < 0"><Bottom /></el-icon>
-          较上月 {{ Math.abs(indicator.comparison) }}%
-        </span>
-      </template>
+      <!--      <template #comparison="{ indicator }">-->
+      <!--        <span :class="getComparisonClass(indicator.comparison, 0)">-->
+      <!--          <el-icon v-if="indicator.comparison > 0"><Top /></el-icon>-->
+      <!--          <el-icon v-if="indicator.comparison < 0"><Bottom /></el-icon>-->
+      <!--          较上月 {{ Math.abs(indicator.comparison) }}%-->
+      <!--        </span>-->
+      <!--      </template>-->
     </CoreIndicators>
 
     <!-- 趋势对比 -->
@@ -355,7 +357,7 @@ const handleExport = async () => {
           <ChartContainer :options="pieChartOptions" height="300px" />
         </div>
         <div class="type-table">
-          <DataTable :data="typeDistribution" :columns="typeTableColumns" />
+          <DataTable :data="processedTypeDistribution" :columns="typeTableColumns" />
         </div>
       </div>
     </ReportSection>
@@ -379,13 +381,13 @@ const handleExport = async () => {
 .monthly-report {
   position: relative;
   min-height: 600px;
-  padding: 24px;
+  padding: 12px;
 }
 
 .type-charts {
   display: grid;
   grid-template-columns: 1fr 2fr;
-  gap: 24px;
+  gap: 12px;
 }
 
 @media (max-width: 768px) {

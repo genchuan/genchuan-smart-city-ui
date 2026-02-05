@@ -1,0 +1,537 @@
+import { maskPhone } from '#/utils/dataMask/index.js';
+
+/** 表格初始数据*/
+export const dataList = () => {
+  return [
+    {
+      maintainUserId: '1',
+      userId: 'user_001',
+      deptId: 'dept_001',
+      jobType: '设备维护',
+      skillTags: ['道闸维修', '传感器调试'],
+      onDutyStatus: '在岗',
+      name: '张三',
+      phone: '13800138001',
+      teamId: 'team_001',
+      postCode: 'dev_maintain',
+      areaCode: '350602',
+      status: '启用',
+      createBy: 'admin',
+      createTime: '2023-01-15 10:30:00',
+      updateTime: '2023-01-15 10:30:00',
+      remark: '设备维护专员，擅长道闸系统维修',
+      deptName: '运维部',
+      teamName: '芗城区运维队',
+      postName: '设备维修员',
+      areaName: '芗城区',
+    },
+    {
+      maintainUserId: '2',
+      userId: 'user_002',
+      deptId: 'dept_001',
+      jobType: '故障排查',
+      skillTags: ['系统故障', '网络排查'],
+      onDutyStatus: '休假',
+      name: '李四',
+      phone: '13800138002',
+      teamId: 'team_002',
+      postCode: 'fault_check',
+      areaCode: '350603',
+      status: '启用',
+      createBy: 'admin',
+      createTime: '2023-02-20 14:20:00',
+      updateTime: '2023-02-20 14:20:00',
+      remark: '故障排查专员，擅长系统故障诊断',
+      deptName: '运维部',
+      teamName: '龙文区运维队',
+      postName: '故障排查员',
+      areaName: '龙文区',
+    },
+    {
+      maintainUserId: '3',
+      userId: 'user_003',
+      deptId: 'dept_001',
+      jobType: '工单处理',
+      skillTags: ['工单管理', '客户沟通'],
+      onDutyStatus: '在岗',
+      name: '王五',
+      phone: '13800138003',
+      teamId: 'team_001',
+      postCode: 'ticket_handle',
+      areaCode: '350602',
+      status: '启用',
+      createBy: 'admin',
+      createTime: '2023-03-10 09:15:00',
+      updateTime: '2023-03-10 09:15:00',
+      remark: '工单处理专员，负责芗城区工单管理',
+      deptName: '运维部',
+      teamName: '芗城区运维队',
+      postName: '工单处置员',
+      areaName: '芗城区',
+    },
+    {
+      maintainUserId: '4',
+      userId: 'user_004',
+      deptId: 'dept_001',
+      jobType: '设备维护',
+      skillTags: ['充电桩维修', '监控系统'],
+      onDutyStatus: '请假',
+      name: '赵六',
+      phone: '13800138004',
+      teamId: 'team_003',
+      postCode: 'dev_maintain',
+      areaCode: '350681',
+      status: '启用',
+      createBy: 'admin',
+      createTime: '2023-04-05 16:45:00',
+      updateTime: '2023-04-05 16:45:00',
+      remark: '设备维护专员，擅长充电桩系统维修',
+      deptName: '运维部',
+      teamName: '龙海区运维队',
+      postName: '设备维修员',
+      areaName: '龙海区',
+    },
+    {
+      maintainUserId: '5',
+      userId: 'user_005',
+      deptId: 'dept_001',
+      jobType: '故障排查',
+      skillTags: ['软件故障', '数据库'],
+      onDutyStatus: '在岗',
+      name: '孙七',
+      phone: '13800138005',
+      teamId: 'team_002',
+      postCode: 'fault_check',
+      areaCode: '350603',
+      status: '启用',
+      createBy: 'admin',
+      createTime: '2023-05-12 11:20:00',
+      updateTime: '2023-05-12 11:20:00',
+      remark: '故障排查专员，擅长软件故障诊断',
+      deptName: '运维部',
+      teamName: '龙文区运维队',
+      postName: '故障排查员',
+      areaName: '龙文区',
+    },
+    {
+      maintainUserId: '6',
+      userId: 'user_006',
+      deptId: 'dept_001',
+      jobType: '工单处理',
+      skillTags: ['工单管理', '数据分析'],
+      onDutyStatus: '在岗',
+      name: '周八',
+      phone: '13800138006',
+      teamId: 'team_003',
+      postCode: 'ticket_handle',
+      areaCode: '350681',
+      status: '禁用',
+      createBy: 'admin',
+      createTime: '2023-06-18 13:50:00',
+      updateTime: '2023-06-18 13:50:00',
+      remark: '工单处理专员，负责龙海区工单管理，已离职',
+      deptName: '运维部',
+      teamName: '龙海区运维队',
+      postName: '工单处置员',
+      areaName: '龙海区',
+    },
+    {
+      maintainUserId: '7',
+      userId: 'user_007',
+      deptId: 'dept_001',
+      jobType: '设备维护',
+      skillTags: ['道闸维修', '车牌识别'],
+      onDutyStatus: '在岗',
+      name: '吴九',
+      phone: '13800138007',
+      teamId: 'team_004',
+      postCode: 'dev_maintain',
+      areaCode: '350623',
+      status: '启用',
+      createBy: 'admin',
+      createTime: '2023-07-22 08:30:00',
+      updateTime: '2023-07-22 08:30:00',
+      remark: '设备维护专员，擅长车牌识别系统维修',
+      deptName: '运维部',
+      teamName: '漳浦县运维队',
+      postName: '设备维修员',
+      areaName: '漳浦县',
+    },
+    {
+      maintainUserId: '8',
+      userId: 'user_008',
+      deptId: 'dept_001',
+      jobType: '故障排查',
+      skillTags: ['网络故障', '服务器'],
+      onDutyStatus: '在岗',
+      name: '郑十',
+      phone: '13800138008',
+      teamId: 'team_005',
+      postCode: 'fault_check',
+      areaCode: '350622',
+      status: '启用',
+      createBy: 'admin',
+      createTime: '2023-08-28 15:10:00',
+      updateTime: '2023-08-28 15:10:00',
+      remark: '故障排查专员，擅长网络故障诊断',
+      deptName: '运维部',
+      teamName: '云霄县运维队',
+      postName: '故障排查员',
+      areaName: '云霄县',
+    },
+  ];
+};
+
+/** 新增/修改的表单/列表的搜索表单 */
+export function useFormSchema() {
+  return [
+    {
+      fieldName: 'maintainUserId',
+      label: '运维人员ID',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入运维人员ID',
+      },
+      labelWidth: '120',
+    },
+    {
+      fieldName: 'name',
+      label: '姓名',
+      component: 'Input',
+      labelWidth: '120',
+      componentProps: {
+        placeholder: '请输入姓名',
+      },
+      rules: 'required',
+    },
+    {
+      component: 'Select',
+      labelWidth: '120',
+      componentProps: {
+        allowClear: true,
+        filterOption: true,
+        options: [
+          { label: '设备维护', value: '设备维护' },
+          { label: '故障排查', value: '故障排查' },
+          { label: '工单处理', value: '工单处理' },
+        ],
+        placeholder: '请选择岗位类型',
+        showSearch: true,
+      },
+      fieldName: 'jobType',
+      label: '岗位类型',
+    },
+    {
+      fieldName: 'phone',
+      label: '联系电话',
+      component: 'Input',
+      labelWidth: '120',
+      componentProps: {
+        placeholder: '请输入联系电话',
+      },
+      rules: 'required',
+    },
+    {
+      component: 'Select',
+      labelWidth: '120',
+      componentProps: {
+        allowClear: true,
+        filterOption: true,
+        options: [
+          { label: '芗城区运维队', value: 'team_001' },
+          { label: '龙文区运维队', value: 'team_002' },
+          { label: '龙海区运维队', value: 'team_003' },
+          { label: '漳浦县运维队', value: 'team_004' },
+          { label: '云霄县运维队', value: 'team_005' },
+        ],
+        placeholder: '请选择所属团队',
+        showSearch: true,
+      },
+      fieldName: 'teamId',
+      label: '所属团队',
+      rules: 'required',
+    },
+    {
+      component: 'Select',
+      labelWidth: '120',
+      componentProps: {
+        allowClear: true,
+        filterOption: true,
+        options: [
+          { label: '设备维修员', value: 'dev_maintain' },
+          { label: '故障排查员', value: 'fault_check' },
+          { label: '工单处置员', value: 'ticket_handle' },
+        ],
+        placeholder: '请选择岗位编码',
+        showSearch: true,
+      },
+      fieldName: 'postCode',
+      label: '岗位编码',
+      rules: 'required',
+    },
+    {
+      component: 'Select',
+      labelWidth: '120',
+      componentProps: {
+        allowClear: true,
+        filterOption: true,
+        options: [
+          { label: '芗城区', value: '350602' },
+          { label: '龙文区', value: '350603' },
+          { label: '龙海区', value: '350681' },
+          { label: '漳浦县', value: '350623' },
+          { label: '云霄县', value: '350622' },
+        ],
+        placeholder: '请选择负责区域',
+        showSearch: true,
+      },
+      fieldName: 'areaCode',
+      label: '负责区域',
+      rules: 'required',
+    },
+    {
+      component: 'Select',
+      labelWidth: '120',
+      componentProps: {
+        allowClear: true,
+        filterOption: true,
+        options: [
+          { label: '在岗', value: '在岗' },
+          { label: '休假', value: '休假' },
+          { label: '请假', value: '请假' },
+        ],
+        placeholder: '请选择值班状态',
+        showSearch: true,
+      },
+      fieldName: 'onDutyStatus',
+      label: '值班状态',
+    },
+    {
+      fieldName: 'status',
+      label: '人员状态',
+      component: 'Select',
+      labelWidth: '120',
+      componentProps: {
+        options: [
+          { label: '启用', value: '启用' },
+          { label: '禁用', value: '禁用' },
+        ],
+        placeholder: '请选择人员状态',
+      },
+      rules: 'required',
+    },
+  ];
+}
+
+/** 表格字段 */
+export function useGridColumns() {
+  return [
+    { type: 'checkbox', width: 40 },
+    {
+      field: 'maintainUserId',
+      title: '运维人员ID',
+      minWidth: 80,
+      sortable: true,
+    },
+    {
+      field: 'name',
+      title: '姓名',
+      minWidth: 120,
+      sortable: true,
+      slots: { default: 'name' },
+    },
+    {
+      field: 'jobType',
+      title: '岗位类型',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'phone',
+      title: '联系电话',
+      minWidth: 150,
+      sortable: true,
+      formatter: ({ cellValue }) => {
+        return maskPhone(cellValue);
+      },
+    },
+    {
+      field: 'teamName',
+      title: '所属团队',
+      minWidth: 150,
+      sortable: true,
+    },
+    {
+      field: 'postName',
+      title: '岗位名称',
+      minWidth: 150,
+      sortable: true,
+    },
+    {
+      field: 'areaName',
+      title: '负责区域',
+      minWidth: 150,
+      sortable: true,
+    },
+    {
+      field: 'onDutyStatus',
+      title: '值班状态',
+      minWidth: 120,
+      sortable: true,
+      slots: { default: 'onDutyStatus' },
+    },
+    {
+      field: 'status',
+      title: '人员状态',
+      minWidth: 120,
+      sortable: true,
+      slots: { default: 'status' },
+    },
+    {
+      field: 'createTime',
+      title: '创建时间',
+      minWidth: 180,
+      sortable: true,
+    },
+    {
+      title: '操作',
+      width: 100,
+      fixed: 'right',
+      slots: { default: 'actions' },
+    },
+  ];
+}
+
+/** 详情字段配置 */
+export const detailFields = [
+  { label: '运维人员ID', key: 'maintainUserId' },
+  { label: '用户ID', key: 'userId' },
+  { label: '姓名', key: 'name' },
+  { label: '部门ID', key: 'deptId' },
+  { label: '部门名称', key: 'deptName' },
+  { label: '岗位类型', key: 'jobType' },
+  {
+    label: '技能标签',
+    key: 'skillTags',
+    formatter: (value) => (Array.isArray(value) ? value.join(', ') : value),
+  },
+  { label: '值班状态', key: 'onDutyStatus' },
+  {
+    label: '联系电话',
+    key: 'phone',
+    formatter: maskPhone,
+  },
+  { label: '所属团队ID', key: 'teamId' },
+  { label: '所属团队', key: 'teamName' },
+  { label: '岗位编码', key: 'postCode' },
+  { label: '岗位名称', key: 'postName' },
+  { label: '负责区域代码', key: 'areaCode' },
+  { label: '负责区域', key: 'areaName' },
+  {
+    label: '人员状态',
+    key: 'status',
+    type: 'tag',
+    tagType: (status) => {
+      return status === '启用' ? 'success' : 'danger';
+    },
+  },
+  { label: '创建人', key: 'createBy' },
+  { label: '创建时间', key: 'createTime' },
+  { label: '更新时间', key: 'updateTime' },
+  { label: '备注', key: 'remark' },
+];
+
+/** 获取运维人员统计数据 */
+export const getOperStaffStatsData = () => {
+  const data = dataList();
+
+  // 卡片数据
+  const totalCount = data.length;
+  const onDutyCount = data.filter(
+    (item) => item.onDutyStatus === '在岗',
+  ).length;
+  const enabledCount = data.filter((item) => item.status === '启用').length;
+
+  // 岗位类型占比数据
+  const jobTypeStats = {};
+  data.forEach((item) => {
+    jobTypeStats[item.jobType] = (jobTypeStats[item.jobType] || 0) + 1;
+  });
+  const jobTypeChartData = Object.entries(jobTypeStats).map(
+    ([name, value]) => ({
+      name,
+      value,
+    }),
+  );
+
+  // 值班状态占比数据
+  const dutyStatusStats = {};
+  data.forEach((item) => {
+    dutyStatusStats[item.onDutyStatus] =
+      (dutyStatusStats[item.onDutyStatus] || 0) + 1;
+  });
+  const dutyStatusChartData = Object.entries(dutyStatusStats).map(
+    ([name, value]) => ({
+      name,
+      value,
+    }),
+  );
+
+  // 各运维团队人员数量对比
+  const teamStats = {};
+  data.forEach((item) => {
+    teamStats[item.teamName] = (teamStats[item.teamName] || 0) + 1;
+  });
+  const teamChartXAxis = Object.keys(teamStats);
+  const teamChartSeries = Object.values(teamStats);
+
+  return {
+    cards: [
+      {
+        title: '总运维人员数',
+        value: totalCount,
+        desc: `共${totalCount}位运维人员`,
+        color: '#4A90E2',
+      },
+      {
+        title: '在岗人员数',
+        value: onDutyCount,
+        desc: `较上月增长${Math.floor(Math.random() * 10) + 5}%`,
+        color: '#50E3C2',
+      },
+      {
+        title: '启用人员数',
+        value: enabledCount,
+        desc: `较上月增长${Math.floor(Math.random() * 10) + 5}%`,
+        color: '#FF9F40',
+      },
+    ],
+    charts: [
+      {
+        title: '岗位类型占比',
+        type: 'pie',
+        data: jobTypeChartData,
+      },
+      {
+        title: '值班状态占比',
+        type: 'pie',
+        data: dutyStatusChartData,
+      },
+      {
+        title: '各运维团队人员数量对比',
+        type: 'bar',
+        xAxis: teamChartXAxis,
+        series: teamChartSeries,
+      },
+    ],
+  };
+};
+
+/** 文字描述对象 */
+export const textObj = {
+  editText: '编辑运维人员',
+  addText: '新增运维人员',
+  excelName: '运维人员列表',
+  excelAllName: '运维人员数据.xlsx',
+  total: '运维人员总数8;启用:7;禁用:1',
+};

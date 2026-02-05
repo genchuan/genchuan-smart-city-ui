@@ -1,8 +1,9 @@
 .common-index {
-  height: 100%;
+  height: 89vh;
   padding: 0.5rem;
-  background-color: #fff;
+  background-color: hsl(var(--card));
   overflow: auto;
+  position: relative;
 
   .icon-first {
     margin-right: 5px;
@@ -18,8 +19,11 @@
     padding-bottom: 0px;
   }
 
-  .el-tabs__header {
-    margin-bottom: 0px;
+  .common-tabs {
+    .el-tabs__header {
+      margin-bottom: 0px;
+      position: absolute;
+    }
   }
 
   .el-tabs__item {
@@ -28,13 +32,36 @@
 
   .common-tabs {
     position: relative;
+
+    .el-tabs__nav {
+      margin-left: 20px;
+    }
   }
+
+  .vxe-toolbar.size--small {
+    min-height: auto;
+  }
+
+  .vxe-toolbar {
+
+    height: auto;
+  }
+
+  .el-tabs__header::before {
+    width: 20px;
+  }
+
+  .el-tabs__nav-wrap {}
 
   .park-lot-table-new {
     height: 84vh;
 
     .vxe-buttons--wrapper {
-      padding-top: 0px;
+      padding-top: 5px;
+
+      .el-tabs__header {
+        position: static;
+      }
     }
 
     .table-first {
@@ -47,40 +74,63 @@
       }
     }
 
-    .vxe-tools--wrapper {
-      position: fixed;
-      right: 77px;
-      top: 90px;
+    .vxe-grid--toolbar-wrapper {
+      margin-top: 30px;
+
+      .vxe-tools--wrapper {
+        position: absolute;
+        right: 77px;
+        top: -30px;
+      }
+
+      .vxe-tools--operate {
+        position: absolute;
+        right: 0px;
+        top: -30px;
+      }
     }
 
-    .vxe-tools--operate {
-      position: fixed;
-      right: 0px;
-      top: 90px;
-    }
 
     .vxe-pager .vxe-pager--sizes {
       margin-right: 10px;
     }
 
     .vxe-grid--bottom-wrapper {
-      display: inline;
-      position: relative;
+      height: 40px;
+      width: 500px;
       top: 18px;
-      z-index: 10;
+      z-index: 1;
+
+      .common-total {
+        font-size: 14px;
+        display: inline;
+        position: relative;
+        cursor: pointer;
+      }
+
+      .common-total-bottom {
+        font-size: 14px;
+        margin-left: 18px;
+        margin-top: 10px;
+      }
 
       .bottom-title {
-        font-size: 16px;
+        font-size: 14px;
+        cursor: pointer;
       }
     }
 
     .vxe-grid--pager-wrapper {
       .vxe-pager {
-        margin-top: -9px;
+        margin-top: -43px;
+        position: relative;
+        height: 65px;
       }
     }
 
     .common-tool-bar-config {
+      position: relative;
+
       .vxe-tools--operate {
         .vxe-button:nth-child(2) {
           display: none;
@@ -89,8 +139,252 @@
     }
 
     .vxe-grid--table-wrapper {
-      max-height: 74vh;
+      max-height: 71vh;
       overflow: auto;
+    }
+  }
+
+  .common-align {
+    cursor: pointer;
+  }
+
+  .table-toolbar-tools {
+    .genchuan-common-button {
+      height: 20px;
+      padding: 0px;
+      margin-left: 3px;
+    }
+  }
+
+  .detail-card {
+    padding: 10px;
+    background-color: hsl(var(--card));
+    border: 1px solid #e4e7ed;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+
+    .detail-card-row {
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      line-height: 1.5;
+      padding-bottom: 8px;
+
+      .detail-row-left {
+        width: 100px;
+        margin-right: 16px;
+        font-weight: 500;
+        color: #606266;
+        text-align: right;
+      }
+    }
+  }
+
+  .park-bind-row {
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+
+    .bind-left {
+      width: 200px;
+      margin-left: 15px;
+    }
+  }
+
+  .park-bind-row-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+  }
+
+  .detail-card:hover {
+    border-color: #409eff;
+  }
+
+  .icon-change {
+    margin-top: 10px;
+    position: absolute;
+    cursor: pointer;
+    z-index: 1;
+  }
+
+  .park-chart-box {
+    padding-bottom: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px; // 统一子元素间距，替代零散的margin
+    padding-left: 15px;
+    padding-right: 15px;
+
+    // 大屏样式（≥1200px）：恢复原有间距逻辑
+    @media (min-width: 1200px) {
+      padding-left: 0;
+      padding-right: 0;
+      gap: 0;
+    }
+
+    .chart-box-left {
+      display: flex;
+      flex: 0 0 max(280px, min(25vw, 320px));
+      flex-direction: column;
+      gap: 12px;
+      min-width: 280px;
+      max-width: 320px;
+      margin: 0; // 移除原有margin，改用外层gap控制
+
+      // 大屏样式：恢复原有左侧间距
+      @media (min-width: 1200px) {
+        margin-left: 15px;
+      }
+
+      // 平板/小屏适配：统计卡片占满宽度，横向滚动
+      @media (max-width: 1199px) {
+        flex: 0 0 100%;
+        max-width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 10px;
+
+        // 优化横向滚动条样式
+        &::-webkit-scrollbar {
+          height: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 3px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          background: #dcdfe6;
+          border-radius: 3px;
+        }
+
+        .stat-card {
+          flex: 0 0 280px; // 卡片固定宽度
+          margin-right: 12px;
+
+          // 小屏优化卡片高度和内边距
+          @media (max-width: 768px) {
+            height: auto;
+            padding: 16px 12px;
+
+            .card-body .card-value {
+              font-size: 24px; // 缩小数值字体，适配小屏
+            }
+          }
+        }
+      }
+
+      .stat-card {
+        height: 102px;
+        position: relative;
+        background-color: hsl(var(--card));
+        border-radius: 8px;
+        padding: 20px 16px;
+        border-left: 4px solid #13ce66;
+        box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        cursor: default;
+
+        &:hover {
+          box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.1);
+          transform: translateY(-2px);
+        }
+
+        .card-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+
+          .card-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #606266;
+            margin: 0;
+          }
+
+          .card-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+          }
+        }
+
+        .card-body {
+          .card-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4a90e2;
+            line-height: 1.2;
+            margin-bottom: 4px;
+          }
+
+          .card-desc {
+            font-size: 12px;
+            color: #909399;
+            line-height: 1;
+          }
+        }
+      }
+    }
+
+    .park-type-chart {
+      flex: 1; // 改为自适应宽度，替代固定0.52
+      min-width: 280px; // 降低最小宽度，适配手机
+      max-width: 100%; // 防止溢出
+      height: 330px;
+      display: inline-block;
+      box-sizing: border-box;
+      background-color: hsl(var(--card));
+      border-radius: 8px;
+      padding: 10px;
+      box-shadow: 0 2px 12px 0 rgb(74 144 226 / 10%);
+      margin: 0; // 移除margin，改用外层gap控制
+      display: flex;
+      justify-content: center;
+
+      // 小屏适配：降低图表高度
+      @media (max-width: 768px) {
+        height: 280px;
+      }
+
+      // 大屏样式：恢复原有宽度和间距
+      @media (min-width: 1200px) {
+        flex: 0.52;
+        min-width: 330px;
+        margin-left: 5px;
+      }
+    }
+
+    .simple-bar-chart {
+      flex: 1;
+      min-width: 280px; // 降低最小宽度，适配手机
+      max-width: 100%; // 防止溢出
+      height: 330px;
+      margin: 0; // 移除margin，改用外层gap控制
+      display: inline-block;
+      background-color: hsl(var(--card));
+      border-radius: 8px;
+      padding: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+      // 小屏适配：降低图表高度
+      @media (max-width: 768px) {
+        height: 280px;
+      }
+
+      // 大屏样式：恢复原有最小宽度和间距
+      @media (min-width: 1200px) {
+        min-width: 620px;
+        margin-left: 15px;
+      }
+
+      // 平板适配：调整最小宽度
+      @media (min-width: 768px) and (max-width: 1199px) {
+        min-width: 330px;
+      }
     }
   }
 }

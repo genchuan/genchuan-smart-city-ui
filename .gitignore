@@ -26,8 +26,10 @@ package-lock.json
 # local env files
 .env.local
 .env.*.local
+.env.development
+*.development
 .eslintcache
-
+.eslintignore
 logs
 *.log
 npm-debug.log*
@@ -50,3 +52,7 @@ vite.config.ts.*
 *.sw?
 .history
 .cursor
+
+# 不在提交版本锁文件
+pnpm-lock.yaml
+npm-lock.yaml

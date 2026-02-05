@@ -193,8 +193,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
               label: $t('common.edit'),
               type: 'primary',
               link: true,
-              icon: ACTION_ICON.EDIT,
-              auth: ['system:role:update'],
+              icon: ACTION_ICON.EDIT, 
               onClick: handleEdit.bind(null, row),
             },
             {

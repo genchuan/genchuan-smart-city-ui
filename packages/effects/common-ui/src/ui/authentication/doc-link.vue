@@ -16,32 +16,33 @@ defineOptions({
 
     <div class="mt-4 flex w-full justify-between">
       <a
-        href="https://doc.iocoder.cn/"
+        href="https://gitee.com/genchuan/Genchuan-Smart-City"
         target="_blank"
         class="text-primary hover:text-primary/80 text-sm"
       >
         📚 开发指南
       </a>
       <a
-        href="https://doc.iocoder.cn/video/"
+        href="http://genchuan.cn/"
         target="_blank"
         class="text-primary hover:text-primary/80 text-sm"
       >
-        🔥 视频教程
+        🏢 关于我们
       </a>
       <a
-        href="https://www.iocoder.cn/Interview/good-collection/"
+        href="https://appa50w17034868.h5.xet.citv.cn/p/decorate/homepage"
         target="_blank"
         class="text-primary hover:text-primary/80 text-sm"
       >
-        ⚡ 面试手册
+        🎓 亘川学院
       </a>
       <a
-        href="http://static.yudao.iocoder.cn/mp/xinyu370.jpeg"
+        href="https://gitee.com/genchuan/genchuan-smart-city/raw/master/images/%E5%AE%A2%E6%9C%8D%E5%B0%8F%E4%BD%95.jpg"
         target="_blank"
+        rel="noopener noreferrer"
         class="text-primary hover:text-primary/80 text-sm"
       >
-        🤝 外包咨询
+        📞 定制咨询
       </a>
     </div>
   </div>

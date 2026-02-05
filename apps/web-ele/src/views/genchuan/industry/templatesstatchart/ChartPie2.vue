@@ -41,7 +41,6 @@ const vwToPx = (vw) => {
 };
 
 const colorScheme = [
-  '#E53935',
   '#FF9800',
   '#FFC107',
   '#4CAF50',
@@ -108,9 +107,17 @@ const initChart = () => {
         color: '#FFD166',
       },
       left: 'center',
+      top: 0,
     },
     legend: {
-      show: false,
+      orient: 'vertical', // 水平排列
+      bottom: 0,
+      right: 0,
+      textStyle: {
+        color: '#ccc',
+      },
+      itemWidth: vwToPx(0.6), // 图例图标大小自适应
+      itemHeight: vwToPx(0.6),
     },
     tooltip: {
       trigger: 'item',
@@ -127,17 +134,17 @@ const initChart = () => {
       ...item,
       type: 'pie',
       radius: '60%',
-      center: ['55%', '60%'],
+      center: ['50%', '52%'],
       avoidLabelOverlap: false,
       label: {
-        show: true,
+        show: false,
         position: 'outside',
         color: '#e6f7ff',
         fontSize: labelFontSize,
         formatter: '{b}',
       },
       labelLine: {
-        show: true,
+        show: false,
         length: 6,
         lineStyle: {
           color: 'rgba(255, 255, 255, 0.5)',

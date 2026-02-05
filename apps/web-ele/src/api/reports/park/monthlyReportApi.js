@@ -1,6 +1,5 @@
 // 月报表API - 包含模拟数据
 import { ElMessage } from 'element-plus';
-
 /**
  * 模拟月报表数据
  * @param {object} params 参数对象
@@ -14,139 +13,64 @@ export const getMonthlyReport = async (params) => {
 
   const { month = '2023-12', parkingType = 'all' } = params;
 
-  // 模拟月度核心指标
-  const monthlyIndicators = [
-    {
-      key: 'totalEnter',
-      name: '总入场车次',
-      value: 256_000,
-      unit: '次',
-      comparison: 12, // 较上月增长12%
-      lastMonth: 228_571,
-      abnormal: false,
+  // 基础数据定义 - 确保全部类型 > 各分类型总和
+  const typeDataMap = {
+    public: {
+      count: 25,
+      totalBerths: 8500,
+      baseEnter: 3000,
+      baseRevenue: 60000,
+      baseUtilization: 68,
+      revenue: 2_200_000,
     },
-    {
-      key: 'totalExit',
-      name: '总出场车次',
-      value: 254_800,
-      unit: '次',
-      comparison: 11,
-      lastMonth: 229_545,
-      abnormal: false,
+    roadside: {
+      count: 38,
+      totalBerths: 4200,
+      baseEnter: 2500,
+      baseRevenue: 40000,
+      baseUtilization: 72,
+      revenue: 1_200_000,
     },
-    {
-      key: 'totalRevenue',
-      name: '总收费金额',
-      value: 3_800_000,
-      unit: '元',
-      comparison: 20, // 较上月增长20%
-      lastMonth: 3_166_666,
-      abnormal: true,
+    special: {
+      count: 12,
+      totalBerths: 2800,
+      baseEnter: 1500,
+      baseRevenue: 20000,
+      baseUtilization: 45,
+      revenue: 400_000,
     },
-    {
-      key: 'avgUtilization',
-      name: '月均泊位利用率',
-      value: 65,
-      unit: '%',
-      comparison: 8,
-      lastMonth: 60,
-      abnormal: false,
-    },
-    {
-      key: 'faultHandleRate',
-      name: '故障处置率',
-      value: 95,
-      unit: '%',
-      comparison: 5,
-      lastMonth: 90,
-      abnormal: false,
-    },
-    {
-      key: 'warningHandleRate',
-      name: '预警处置率',
-      value: 92,
-      unit: '%',
-      comparison: 7,
-      lastMonth: 86,
-      abnormal: false,
-    },
-  ];
+  };
 
-  // 模拟分类型统计数据
-  let typeDistribution;
-  if (parkingType === 'all') {
-    typeDistribution = [
-      {
-        type: 'public',
-        count: 25,
-        totalBerths: 8500,
-        revenue: 2_200_000,
-        revenuePercentage: 58,
-        utilizationRate: 68,
-      },
-      {
-        type: 'roadside',
-        count: 38,
-        totalBerths: 4200,
-        revenue: 1_200_000,
-        revenuePercentage: 32,
-        utilizationRate: 72,
-      },
-      {
-        type: 'special',
-        count: 12,
-        totalBerths: 2800,
-        revenue: 400_000,
-        revenuePercentage: 10,
-        utilizationRate: 45,
-      },
-    ];
-  } else {
-    // 根据停车类型返回对应的数据
-    const typeDataMap = {
-      public: {
-        count: 25,
-        totalBerths: 8500,
-        revenue: 2_200_000,
-        utilizationRate: 68,
-      },
-      roadside: {
-        count: 38,
-        totalBerths: 4200,
-        revenue: 1_200_000,
-        utilizationRate: 72,
-      },
-      special: {
-        count: 12,
-        totalBerths: 2800,
-        revenue: 400_000,
-        utilizationRate: 45,
-      },
-    };
+  // 全部类型的基础值 = 各分类型基础值之和
+  const allTypeBase = {
+    baseEnter: Object.values(typeDataMap).reduce((sum, item) => sum + item.baseEnter, 0), // 3000 + 2500 + 1500 = 7000
+    baseRevenue: Object.values(typeDataMap).reduce((sum, item) => sum + item.baseRevenue, 0), // 60000 + 40000 + 20000 = 120000
+    baseUtilization: Math.round(
+      Object.values(typeDataMap).reduce((sum, item) => sum + item.baseUtilization * item.count, 0) /
+      Object.values(typeDataMap).reduce((sum, item) => sum + item.count, 0)
+    ), // 加权平均
+  };
 
-    const typeData = typeDataMap[parkingType] || typeDataMap.public;
-    typeDistribution = [
-      {
-        type: parkingType,
-        count: typeData.count,
-        totalBerths: typeData.totalBerths,
-        revenue: typeData.revenue,
-        revenuePercentage: 100,
-        utilizationRate: typeData.utilizationRate,
-      },
-    ];
-  }
+  // 根据停车类型选择基础值
+  const baseData = parkingType === 'all'
+    ? allTypeBase
+    : typeDataMap[parkingType];
 
   // 模拟月度每日数据（12月有31天）
   const monthlyData = [];
+  let totalEnter = 0;
+  let totalExit = 0;
+  let totalRevenue = 0;
+  let totalUtilization = 0;
+
   for (let i = 1; i <= 31; i++) {
     const day = i.toString().padStart(2, '0');
     const date = `${month}-${day}`;
 
-    // 模拟波动数据
-    const baseEnter = 8000;
-    const baseRevenue = 120_000;
-    const baseUtilization = 65;
+    // 模拟波动数据 - 使用选定的基础值
+    const baseEnter = baseData.baseEnter;
+    const baseRevenue = baseData.baseRevenue;
+    const baseUtilization = baseData.baseUtilization;
 
     // 添加随机波动（周末数据更高）
     const dayOfWeek = new Date(date).getDay();
@@ -156,26 +80,153 @@ export const getMonthlyReport = async (params) => {
     // 添加趋势增长（月初到月末逐步增长）
     const trendMultiplier = 1 + (i / 31) * 0.2;
 
+    const enterCount = Math.round(
+      baseEnter * weekendMultiplier * trendMultiplier + Math.random() * 500,
+    );
+    const exitCount = Math.round(
+      baseEnter * weekendMultiplier * trendMultiplier + Math.random() * 500,
+    );
+    const revenue = Math.round(
+      baseRevenue * weekendMultiplier * trendMultiplier +
+      Math.random() * 20_000,
+    );
+    const utilizationRate = Math.round(
+      baseUtilization + (isWeekend ? 5 : 0) + Math.random() * 10,
+    );
+
     monthlyData.push({
       date,
-      enterCount: Math.round(
-        baseEnter * weekendMultiplier * trendMultiplier + Math.random() * 500,
-      ),
-      exitCount: Math.round(
-        baseEnter * weekendMultiplier * trendMultiplier + Math.random() * 500,
-      ),
-      revenue: Math.round(
-        baseRevenue * weekendMultiplier * trendMultiplier +
-          Math.random() * 20_000,
-      ),
-      utilizationRate: Math.round(
-        baseUtilization + (isWeekend ? 5 : 0) + Math.random() * 10,
-      ),
+      enterCount,
+      exitCount,
+      revenue,
+      utilizationRate,
       warningCount: Math.round(Math.random() * 10),
       faultCount: Math.round(Math.random() * 3),
       faultHandleRate: 90 + Math.round(Math.random() * 10),
       warningHandleRate: 85 + Math.round(Math.random() * 15),
     });
+
+    // 累加月度总计
+    totalEnter += enterCount;
+    totalExit += exitCount;
+    totalRevenue += revenue;
+    totalUtilization += utilizationRate;
+  }
+
+  // 计算平均值
+  const avgUtilization = Math.round(totalUtilization / 31);
+  const avgFaultHandleRate = Math.round(
+    monthlyData.reduce((sum, item) => sum + item.faultHandleRate, 0) / 31
+  );
+  const avgWarningHandleRate = Math.round(
+    monthlyData.reduce((sum, item) => sum + item.warningHandleRate, 0) / 31
+  );
+
+  // 动态计算月度核心指标（基于实际monthlyData）
+  const monthlyIndicators = [
+    {
+      key: 'totalEnter',
+      name: '总入场车次',
+      value: totalEnter,
+      unit: '次',
+      comparison: 12,
+      lastMonth: Math.round(totalEnter / 1.12),
+      abnormal: false,
+    },
+    {
+      key: 'totalExit',
+      name: '总出场车次',
+      value: totalExit,
+      unit: '次',
+      comparison: 11,
+      lastMonth: Math.round(totalExit / 1.11),
+      abnormal: false,
+    },
+    {
+      key: 'totalRevenue',
+      name: '总收费金额',
+      value: totalRevenue,
+      unit: '元',
+      comparison: 20,
+      lastMonth: Math.round(totalRevenue / 1.2),
+      abnormal: totalRevenue > 4_000_000,
+    },
+    {
+      key: 'avgUtilization',
+      name: '月均泊位利用率',
+      value: avgUtilization,
+      unit: '%',
+      comparison: 8,
+      lastMonth: Math.round(avgUtilization / 1.08),
+      abnormal: false,
+    },
+    {
+      key: 'faultHandleRate',
+      name: '故障处置率',
+      value: avgFaultHandleRate,
+      unit: '%',
+      comparison: 5,
+      lastMonth: Math.round(avgFaultHandleRate / 1.05),
+      abnormal: false,
+    },
+    {
+      key: 'warningHandleRate',
+      name: '预警处置率',
+      value: avgWarningHandleRate,
+      unit: '%',
+      comparison: 7,
+      lastMonth: Math.round(avgWarningHandleRate / 1.07),
+      abnormal: false,
+    },
+  ];
+
+  // 分类型统计数据
+  let typeDistribution;
+  if (parkingType === 'all') {
+    // 计算各类型总收入
+    const totalRevenueAll = typeDataMap.public.revenue +
+      typeDataMap.roadside.revenue +
+      typeDataMap.special.revenue;
+
+    typeDistribution = [
+      {
+        type: 'public',
+        count: typeDataMap.public.count,
+        totalBerths: typeDataMap.public.totalBerths,
+        revenue: typeDataMap.public.revenue,
+        revenuePercentage: Math.round(typeDataMap.public.revenue / totalRevenueAll * 100),
+        utilizationRate: typeDataMap.public.baseUtilization,
+      },
+      {
+        type: 'roadside',
+        count: typeDataMap.roadside.count,
+        totalBerths: typeDataMap.roadside.totalBerths,
+        revenue: typeDataMap.roadside.revenue,
+        revenuePercentage: Math.round(typeDataMap.roadside.revenue / totalRevenueAll * 100),
+        utilizationRate: typeDataMap.roadside.baseUtilization,
+      },
+      {
+        type: 'special',
+        count: typeDataMap.special.count,
+        totalBerths: typeDataMap.special.totalBerths,
+        revenue: typeDataMap.special.revenue,
+        revenuePercentage: Math.round(typeDataMap.special.revenue / totalRevenueAll * 100),
+        utilizationRate: typeDataMap.special.baseUtilization,
+      },
+    ];
+  } else {
+    // 根据停车类型返回对应的数据
+    const typeData = typeDataMap[parkingType];
+    typeDistribution = [
+      {
+        type: parkingType,
+        count: typeData.count,
+        totalBerths: typeData.totalBerths,
+        revenue: typeData.revenue,
+        revenuePercentage: 100,
+        utilizationRate: typeData.baseUtilization,
+      },
+    ];
   }
 
   return {

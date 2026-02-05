@@ -9,12 +9,12 @@ import {
   exportTrendReport,
   getTrendReport,
 } from '#/api/reports/park/trendReportApi';
-import ChartContainer from '#/views/report/park/operation/component/ChartContainer.vue';
-import DataTable from '#/views/report/park/operation/component/DataTable.vue';
-import LoadingOverlay from '#/views/report/park/operation/component/LoadingOverlay.vue';
-import ReportSection from '#/views/report/park/operation/component/ReportSection.vue';
+import ChartContainer from '#/views/report/park/component/ChartContainer.vue';
+import DataTable from '#/views/report/park/component/DataTable.vue';
+import LoadingOverlay from '#/views/report/park/component/LoadingOverlay.vue';
+import ReportSection from '#/views/report/park/component/ReportSection.vue';
 // 组件引入
-import ReportToolbar from '#/views/report/park/operation/component/ReportToolbar.vue';
+import ReportToolbar from '#/views/report/park/component/ReportToolbar.vue';
 // 工具函数
 import {
   formatCurrency,
@@ -22,7 +22,7 @@ import {
   getIndicatorName,
   getTrendText,
   getTrendType,
-} from '#/views/report/park/operation/component/ReportUtils';
+} from '#/views/report/park/component/ReportUtils';
 
 // 响应式数据
 const timeRange = ref('6');
@@ -34,38 +34,58 @@ const chartType = ref('line');
 const trendData = ref([]);
 const trendAnalysis = ref([]);
 
-// 表格列定义
-const tableColumns = computed(() => [
-  { prop: 'month', label: '月份', width: 120 },
-  { prop: 'revenue', label: '收费金额', width: 150, type: 'currency' },
-  { prop: 'enterCount', label: '入场车次', width: 120 },
-  {
-    prop: 'utilizationRate',
-    label: '泊位利用率',
-    width: 150,
-    type: 'percentage',
-  },
-  {
-    prop: 'revenueGrowth',
-    label: '收费金额环比',
-    width: 150,
-    type: 'growth',
-  },
-  {
-    prop: 'enterCountGrowth',
-    label: '入场车次环比',
-    width: 150,
-    type: 'growth',
-  },
-]);
+// 强制图表重新渲染的key
+const chartKey = ref(0);
 
-// 图表配置
+// 表格列定义 - 改为计算属性，根据选中的指标动态生成
+const tableColumns = computed(() => {
+  const baseColumns = [{ prop: 'month', label: '月份', width: 120 }];
+
+  // 动态添加指标列
+  if (selectedIndicators.value.includes('revenue')) {
+    baseColumns.push({ prop: 'revenue', label: '收费金额', width: 150, type: 'currency' });
+  }
+  if (selectedIndicators.value.includes('enterCount')) {
+    baseColumns.push({ prop: 'enterCount', label: '入场车次', width: 120 });
+  }
+  if (selectedIndicators.value.includes('utilizationRate')) {
+    baseColumns.push({ prop: 'utilizationRate', label: '泊位利用率', width: 150, type: 'percentage' });
+  }
+  if (selectedIndicators.value.includes('memberRevenue')) {
+    baseColumns.push({ prop: 'memberRevenue', label: '会员消费金额', width: 150, type: 'currency' });
+  }
+
+  // 添加环比列（如果有对应指标）
+  if (selectedIndicators.value.includes('revenue')) {
+    baseColumns.push({ prop: 'revenueGrowth', label: '收费金额环比', width: 150, type: 'growth' });
+  }
+  if (selectedIndicators.value.includes('enterCount')) {
+    baseColumns.push({ prop: 'enterCountGrowth', label: '入场车次环比', width: 150, type: 'growth' });
+  }
+
+  return baseColumns;
+});
+
+// 图表配置 - 确保响应指标变化
 const chartOptions = computed(() => {
+  // 确保指标数据存在
+  if (!trendData.value || trendData.value.length === 0) {
+    return {
+      title: { text: '暂无数据', left: 'center' },
+      xAxis: { type: 'category', data: [] },
+      yAxis: { type: 'value' },
+      series: []
+    };
+  }
+
+  // 根据选中的指标生成series
   const series = selectedIndicators.value.map((indicator) => {
+    const data = trendData.value.map((item) => item[indicator] || 0);
+
     return {
       name: getIndicatorName(indicator),
       type: chartType.value,
-      data: trendData.value.map((item) => item[indicator]),
+      data: data,
       yAxisIndex: getYAxisIndex(indicator),
       itemStyle: {
         color: getIndicatorColor(indicator),
@@ -73,7 +93,13 @@ const chartOptions = computed(() => {
     };
   });
 
-  const option = {
+  // 动态生成图例
+  const legendData = selectedIndicators.value.map(getIndicatorName);
+
+  // 动态调整grid底部间距
+  const bottomMargin = legendData.length > 2 ? '20%' : (legendData.length > 0 ? '15%' : '10%');
+
+  return {
     title: {
       text: '运营趋势分析',
       left: 'center',
@@ -90,13 +116,14 @@ const chartOptions = computed(() => {
       },
     },
     legend: {
-      data: selectedIndicators.value.map(getIndicatorName),
+      data: legendData,
       bottom: 10,
+      show: legendData.length > 0, // 有数据时才显示图例
     },
     grid: {
       left: '3%',
       right: '4%',
-      bottom: '15%',
+      bottom: bottomMargin,
       top: '15%',
       containLabel: true,
     },
@@ -113,18 +140,108 @@ const chartOptions = computed(() => {
         type: 'value',
         name: '金额/车次',
         position: 'left',
+        show: selectedIndicators.value.some(ind => getYAxisIndex(ind) === 0),
       },
       {
         type: 'value',
         name: '利用率(%)',
         position: 'right',
         max: 100,
+        min: 0,
+        show: selectedIndicators.value.some(ind => getYAxisIndex(ind) === 1),
       },
     ],
     series,
   };
+});
 
-  return option;
+// 趋势分析数据 - 只显示选中的指标
+const processedTrendAnalysis = computed(() => {
+  return selectedIndicators.value.map((indicator) => {
+    // 从API返回的trendAnalysis中查找对应指标
+    const analysis = trendAnalysis.value.find(item => item.indicator === indicator);
+    if (analysis) {
+      return analysis;
+    }
+
+    // 如果没有找到，动态计算
+    if (trendData.value.length > 0) {
+      const firstValue = trendData.value[0][indicator] || 0;
+      const lastValue = trendData.value[trendData.value.length - 1][indicator] || 0;
+      const growthRate = firstValue ? Math.round(((lastValue - firstValue) / firstValue) * 100) : 0;
+
+      let trend = 'stable';
+      let description = '';
+
+      // 根据指标类型生成描述
+      switch (indicator) {
+        case 'enterCount':
+          if (growthRate > 5) {
+            trend = 'up';
+            description = `入场车次稳步增长，累计增长${growthRate}%，表明停车需求持续增加。`;
+          } else if (growthRate < -5) {
+            trend = 'down';
+            description = `入场车次有所下降，需要分析原因并采取措施。`;
+          } else {
+            description = `入场车次保持稳定，运营状况良好。`;
+          }
+          break;
+
+        case 'memberRevenue':
+          if (growthRate > 15) {
+            trend = 'up';
+            description = `会员消费金额大幅增长${growthRate}%，会员体系运营效果显著。`;
+          } else {
+            description = `会员消费金额保持稳定增长。`;
+          }
+          break;
+
+        case 'revenue':
+          if (growthRate > 10) {
+            trend = 'up';
+            description = `收费金额从${formatCurrency(firstValue)}增长至${formatCurrency(lastValue)}，整体呈上升趋势，累计增长${growthRate}%。`;
+          } else if (growthRate < -10) {
+            trend = 'down';
+            description = `收费金额呈下降趋势，需要关注市场变化和运营策略。`;
+          } else {
+            description = `收费金额保持稳定，建议继续优化运营效率。`;
+          }
+          break;
+
+        case 'utilizationRate':
+          if (growthRate > 3) {
+            trend = 'up';
+            description = `泊位利用率提升${growthRate}%，资源利用效率持续优化。`;
+          } else if (growthRate < -3) {
+            trend = 'down';
+            description = `泊位利用率下降，需要调整资源配置。`;
+          } else {
+            description = `泊位利用率保持稳定，处于合理区间。`;
+          }
+          break;
+
+        default:
+          description = `${getIndicatorName(indicator)}保持${growthRate > 0 ? '增长' : '下降'}趋势。`;
+      }
+
+      return {
+        indicator,
+        currentValue: lastValue,
+        growthRate,
+        trend,
+        description,
+      };
+    }
+
+    // 默认返回
+    return {
+      indicator,
+      currentValue: 0,
+      growthRate: 0,
+      trend: 'stable',
+      description: '暂无数据',
+    };
+  });
 });
 
 // 获取Y轴索引
@@ -169,10 +286,12 @@ watch(timeRange, () => {
   loadData();
 });
 
-// 监听指标变化
+// 监听指标变化 - 优化：强制图表重新渲染
 watch(selectedIndicators, () => {
-  loadData();
-});
+  // 当指标变化时，增加chartKey强制图表组件重新渲染
+  chartKey.value++;
+  console.log('指标变化，强制图表重新渲染:', selectedIndicators.value);
+}, { deep: true });
 
 // 监听自定义日期范围变化
 watch(customDateRange, () => {
@@ -188,7 +307,7 @@ const loadData = async () => {
 
     const params = {
       timeRange: timeRange.value,
-      indicators: selectedIndicators.value,
+      indicators: ['revenue', 'enterCount', 'utilizationRate', 'memberRevenue'], // 固定获取所有指标数据
     };
 
     if (timeRange.value === 'custom' && customDateRange.value?.length === 2) {
@@ -201,6 +320,9 @@ const loadData = async () => {
     // 更新数据
     trendData.value = response.trendData;
     trendAnalysis.value = response.trendAnalysis;
+
+    // 数据加载完成后，强制图表重新渲染
+    chartKey.value++;
   } catch (error) {
     console.error('加载趋势报表数据失败:', error);
     ElMessage.error('加载数据失败');
@@ -283,11 +405,12 @@ const handleExport = async () => {
             collapse-tags-tooltip
             :max-collapse-tags="2"
             class="indicator-multiselect"
+            @change="chartKey++"
           >
-            <el-option label="收费金额" value="revenue" />
-            <el-option label="入场车次" value="enterCount" />
-            <el-option label="泊位利用率" value="utilizationRate" />
-            <el-option label="会员消费金额" value="memberRevenue" />
+          <el-option label="收费金额" value="revenue" />
+          <el-option label="入场车次" value="enterCount" />
+          <el-option label="泊位利用率" value="utilizationRate" />
+          <el-option label="会员消费金额" value="memberRevenue" />
           </el-select>
         </div>
       </template>
@@ -311,35 +434,39 @@ const handleExport = async () => {
         <el-button-group size="small">
           <el-button
             :type="chartType === 'line' ? 'primary' : ''"
-            @click="chartType = 'line'"
+            @click="chartType = 'line'; chartKey++"
           >
             折线图
           </el-button>
           <el-button
             :type="chartType === 'bar' ? 'primary' : ''"
-            @click="chartType = 'bar'"
+            @click="chartType = 'bar'; chartKey++"
           >
             柱状图
           </el-button>
         </el-button-group>
       </template>
 
-      <!-- 图表区域 -->
-      <ChartContainer :options="chartOptions" height="400px" />
+      <!-- 图表区域 - 添加key强制重新渲染 -->
+      <ChartContainer
+        :key="chartKey"
+        :options="chartOptions"
+        height="400px"
+      />
     </ReportSection>
 
     <!-- 趋势分析 -->
     <ReportSection title="趋势分析">
       <div class="analysis-cards">
         <div
-          v-for="analysis in trendAnalysis"
+          v-for="analysis in processedTrendAnalysis"
           :key="analysis.indicator"
           class="analysis-card"
         >
           <div class="analysis-header">
             <span class="analysis-name">{{
-              getIndicatorName(analysis.indicator)
-            }}</span>
+                getIndicatorName(analysis.indicator)
+              }}</span>
             <el-tag :type="getTrendType(analysis.trend)" size="small">
               {{ getTrendText(analysis.trend) }}
             </el-tag>
@@ -347,8 +474,8 @@ const handleExport = async () => {
           <div class="analysis-content">
             <div class="analysis-value">
               <span class="value">{{
-                formatValue(analysis.currentValue, analysis.indicator)
-              }}</span>
+                  formatValue(analysis.currentValue, analysis.indicator)
+                }}</span>
               <span
                 v-if="analysis.growthRate"
                 class="growth-rate"
@@ -386,14 +513,14 @@ const handleExport = async () => {
 .trend-report {
   position: relative;
   min-height: 600px;
-  padding: 24px;
+  padding: 12px;
 }
 
 /* 修改点：优化指标筛选样式 */
 .indicator-filter-group {
   display: flex;
   align-items: center;
-  margin-left: 12px;
+  margin-left: 6px;
 }
 
 .filter-label {
@@ -441,12 +568,12 @@ const handleExport = async () => {
 .analysis-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 16px;
-  margin-top: 20px;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .analysis-card {
-  padding: 20px;
+  padding: 10px;
   background: #f8f9fa;
   border-radius: 8px;
 }
@@ -455,7 +582,7 @@ const handleExport = async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 
 .analysis-name {
@@ -468,7 +595,7 @@ const handleExport = async () => {
   .analysis-value {
     display: flex;
     align-items: baseline;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
   }
 
   .value {
