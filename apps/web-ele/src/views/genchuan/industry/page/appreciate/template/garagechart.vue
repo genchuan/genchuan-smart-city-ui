@@ -31,7 +31,6 @@ const state = reactive({
       :data="[
         { name: '模板类型占比', value: 4 },
         { name: '启用状态占比', value: 5 },
-
       ]"
     />
 
