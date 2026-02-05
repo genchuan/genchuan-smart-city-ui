@@ -225,6 +225,7 @@ watch(
 
 <template>
   <BasicLayout @clear-preferences-and-logout="handleLogout">
+    <template #logo-text>智慧城市一网统管AI平台</template>
     <template #user-dropdown>
       <UserDropdown
         :avatar
@@ -270,3 +271,8 @@ watch(
   </BasicLayout>
   <HelpModal />
 </template>
+<style>
+.bg-transparent {
+  display: none;
+}
+</style>

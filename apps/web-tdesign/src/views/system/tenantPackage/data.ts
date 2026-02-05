@@ -34,6 +34,7 @@ export function useFormSchema(): VbenFormSchema[] {
       fieldName: 'status',
       label: '状态',
       component: 'RadioGroup',
+      labelWidth: '2000px',
       componentProps: {
         options: getDictOptions(DICT_TYPE.COMMON_STATUS, 'number'),
         buttonStyle: 'solid',
@@ -56,6 +57,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       fieldName: 'name',
       label: '套餐名称',
       component: 'Input',
+      labelWidth: '2000px',
       componentProps: {
         allowClear: true,
         placeholder: '请输入套餐名称',

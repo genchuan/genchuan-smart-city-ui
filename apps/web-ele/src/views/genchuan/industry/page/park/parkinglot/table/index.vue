@@ -1,44 +1,51 @@
-<script lang="ts" setup>
-import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { SystemRoleApi } from '#/api/system/role';
-
+<script setup>
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
+import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteRole, deleteRoleList, exportRole } from '#/api/system/role';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
+import { exportToExcel } from '#/utils/excel.js';
+// 引入封装后的详情抽屉组件
+import ParkDetailDrawer from '#/views/genchuan/industry/page/park/components/detail.vue';
 
-import {
-  dataList,
-  useFormSchema,
-  useGridColumns,
-  useGridFormSchema,
-} from './data';
+import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
 const props = defineProps({
   secondShow: {
     type: Boolean,
     default: false,
   },
+  arrowShow: {
+    type: Boolean,
+    default: false,
+  },
+  arrowState: {
+    type: Boolean,
+    default: false,
+  },
 });
+const emit = defineEmits(['arrow-change']);
 const getTitle = computed(() => {
-  return formData.value?.id ? '编辑停车场' : '新增停车场';
+  return formData.value?.id ? textObj.editText : textObj.addText;
 });
+
 const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
   footer: false,
   onCancel() {
     drawerApi.close();
   },
   onConfirm() {},
-  async onOpenChange(isOpen: boolean) {},
+  async onOpenChange() {},
 });
+// 移除原 DetailDrawer 初始化逻辑
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -53,15 +60,28 @@ const [Form, formApi] = useVbenForm({
   showDefaultActions: false,
 });
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
   onCancel() {
     formDrawerApi.close();
   },
   onConfirm() {
-    console.info('onConfirm');
+    const obj = formApi.form.values;
+    if (formDrawerApi.sharedData.payload.title === textObj.addText) {
+      dataObj.apilist.push(obj);
+    } else {
+      dataObj.apilist.forEach((v, i) => {
+        if (v.id === formData.value?.id) {
+          dataObj.apilist[i] = obj;
+        }
+      });
+    }
+    handleRefresh();
+    formDrawerApi.close();
   },
-  async onOpenChange(isOpen: boolean) {
+  async onOpenChange(isOpen) {
     if (isOpen) {
-      formData.value = formDrawerApi.getData<Record<string, any>>();
+      formData.value = formDrawerApi.getData();
       if (formData.value?.id) {
         await formApi.setValues(formData.value);
       } else {
@@ -70,7 +90,6 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     }
   },
 });
-const [searchDrawer] = useVbenDrawer();
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
@@ -78,36 +97,33 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  const data = await exportRole(await gridApi.formApi.getValues());
-  downloadFileFromBlobPart({ fileName: '角色.xls', source: data });
+  exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
 }
 
 /** 创建角色 */
 function handleCreate() {
   formDrawerApi
     .setData({
-      title: '新增停车场',
+      title: textObj.addText,
     })
     .open();
 }
 
 /** 编辑角色 */
-function handleEdit(row: SystemRoleApi.Role) {
+function handleEdit(row) {
   formDrawerApi
     .setData({
-      title: '编辑停车场',
+      title: textObj.editText,
       ...row,
     })
     .open();
 }
-
-/** 删除角色 */
-async function handleDelete(row: SystemRoleApi.Role) {
+async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting', [row.name]),
   });
   try {
-    await deleteRole(row.id!);
+    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
     ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
     handleRefresh();
   } finally {
@@ -115,51 +131,66 @@ async function handleDelete(row: SystemRoleApi.Role) {
   }
 }
 
-/** 批量删除角色 */
 async function handleDeleteBatch() {
-  await confirm($t('ui.actionMessage.deleteBatchConfirm'));
+  await confirm($t('确定删除这些数据吗？'));
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deletingBatch'),
   });
   try {
-    await deleteRoleList(checkedIds.value);
+    dataObj.apilist = dataObj.apilist.filter(
+      (v) => !checkedIds.value.includes(v.id),
+    );
     checkedIds.value = [];
-    ElMessage.success($t('ui.actionMessage.deleteSuccess'));
+    ElMessage.success($t('删除成功'));
     handleRefresh();
   } finally {
     loadingInstance.close();
   }
 }
 
-const checkedIds = ref<number[]>([]);
-function handleRowCheckboxChange({
-  records,
-}: {
-  records: SystemRoleApi.Role[];
-}) {
-  checkedIds.value = records.map((item) => item.id!);
+const checkedIds = ref([]);
+function handleRowCheckboxChange({ records }) {
+  checkedIds.value = records.map((item) => item.id);
 }
 const dataObj = reactive({
-  total: 10,
+  totalShow: false,
+  detailObj: {}, // 保留详情对象用于传递给组件
+  total: dataList().length,
+  currentPage: 1,
+  pageSize: 10,
   apilist: dataList(),
   list: [],
 });
+const changeTotalShow = () => {
+  dataObj.totalShow = !dataObj.totalShow;
+};
 // 表格数据获取
-const getTableData = () => {
-  const tabelObj = {
-    list: dataObj.apilist.map((v) => v),
-    total: dataObj.apilist.length,
-  };
-  tabelObj.list = tabelObj.list.filter((v) => {
-    if (activeName.value === '全部') {
-      return true;
-    }
-    return v.status === activeName.value;
-  });
-  return tabelObj;
+const getTableData = (pageObj) => {
+  const page = pageObj.page;
+  dataObj.total = dataObj.apilist
+    .map((v) => v)
+    .filter((v) => {
+      if (activeName.value === '全部') {
+        return true;
+      }
+      return v.status === activeName.value;
+    }).length;
+  dataObj.list = dataObj.apilist
+    .map((v) => v)
+    .filter((v) => {
+      if (activeName.value === '全部') {
+        return true;
+      }
+      return v.status === activeName.value;
+    })
+    .slice(
+      (page.currentPage - 1) * page.pageSize,
+      page.currentPage * page.pageSize,
+    );
+  return dataObj;
 };
 
-const [QueryForm, QueryFormApi] = useVbenForm({
+const [QueryForm] = useVbenForm({
   // 默认展开
   collapsed: false,
   // 所有表单项共用，可单独在表单内覆盖
@@ -176,7 +207,12 @@ const [QueryForm, QueryFormApi] = useVbenForm({
   // 垂直布局，label和input在不同行，值为vertical
   // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useGridFormSchema(),
+  schema: useFormSchema().map((v) => {
+    delete v.rules;
+    return {
+      ...v,
+    };
+  }),
   // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
@@ -193,30 +229,51 @@ const [Grid, gridApi] = useVbenVxeGrid({
     keepSource: true,
     proxyConfig: {
       ajax: {
-        query: async ({ page }, formValues) => getTableData(),
+        query: async ({ page }) => getTableData({ page }),
       },
     },
     rowConfig: {
       keyField: 'id',
       isHover: true,
     },
+    pagerConfig: dataObj,
     toolbarConfig: {
       'class-name': 'common-tool-bar-config',
       refresh: true,
       search: true,
     },
     showOverflow: true,
-  } as VxeTableGridOptions<SystemRoleApi.Role>,
+  },
   gridEvents: {
     checkboxAll: handleRowCheckboxChange,
     checkboxChange: handleRowCheckboxChange,
   },
   showSearchForm: false,
-} as any);
+});
 
 const activeName = ref('全部');
-const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用' }]);
-const handleClick = (tab, event: Event) => {
+// 修改打开详情的方法，调用组件的open方法
+const handleOpenDetail = (row) => {
+  dataObj.detailObj = row;
+  // 通过ref调用组件的open方法
+  parkDetailDrawerRef.value.open();
+  console.log(row);
+};
+const tabsData = ref([
+  { label: '全部' },
+  { label: '启用' },
+  { label: '禁用' },
+  { label: '暂停运营' },
+  { label: '维修中' },
+]);
+const createLabel = (item) => {
+  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
+  if (item.label === '全部') {
+    text = `(${dataObj.apilist.length})`;
+  }
+  return item.label + text;
+};
+const handleClick = () => {
   gridApi.query();
 };
 const handleSerachShow = () => {
@@ -225,6 +282,11 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+const arrowChange = () => {
+  emit('arrow-change');
+};
+// 定义组件ref，用于调用组件方法
+const parkDetailDrawerRef = ref(null);
 </script>
 
 <template>
@@ -232,8 +294,12 @@ const handleFullShow = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <!-- <NewFormModel @success="handleRefresh" /> -->
-    <searchDrawer title="搜索栏设置" />
+    <!-- 使用封装后的详情抽屉组件 -->
+    <ParkDetailDrawer
+      ref="parkDetailDrawerRef"
+      :detail-obj="dataObj.detailObj"
+      :title="`${dataObj.detailObj.name}`"
+    />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -250,7 +316,7 @@ const handleFullShow = () => {
               <el-tab-pane
                 v-for="item in tabsData"
                 :key="item.label"
-                :label="item.label"
+                :label="createLabel(item)"
                 :name="item.label"
               />
             </el-tabs>
@@ -258,122 +324,80 @@ const handleFullShow = () => {
         </div>
       </template>
       <template #toolbar-tools>
-        <TableAction
-          :actions="[
-            {
-              label: '新增路测停车',
-              type: 'primary',
-              icon: ACTION_ICON.ADD,
-              auth: ['system:role:create'],
-              onClick: handleCreate,
-            },
-            {
-              label: $t('ui.actionTitle.export'),
-              type: 'primary',
-              icon: ACTION_ICON.DOWNLOAD,
-              auth: ['system:role:export'],
-              onClick: handleExport,
-            },
-            {
-              label: $t('ui.actionTitle.deleteBatch'),
-              type: 'danger',
-              icon: ACTION_ICON.DELETE,
-              disabled: isEmpty(checkedIds),
-              auth: ['system:role:delete'],
-              onClick: handleDeleteBatch,
-            },
-          ]"
-        />
-        <button
-          class="vxe-button type--button size--small is--circle ml-2"
-          title="搜索"
-          type="button"
-          @click="handleSerachShow"
+        <div class="common-toolbar-tools">
+          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="批量删除"
+            icon-name="delete"
+            color="#F56C6C"
+            :disabled="isEmpty(checkedIds)"
+            @click="handleDeleteBatch"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="handleFullShow"
+          />
+        </div>
+      </template>
+      <template #parkName="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
         >
-          <i
-            class="vxe-button--item vxe-button--prefix-icon vxe-icon-search"
-          ></i>
-        </button>
-        <button
-          class="vxe-button type--button size--small is--circle"
-          title="全屏"
-          type="button"
-          @click="handleFullShow"
-        >
-          <i
-            class="vxe-button--item vxe-button--prefix-icon vxe-table-icon-fullscreen"
-          ></i>
-        </button>
+          {{ row.name }}
+        </el-text>
       </template>
       <template #actions="{ row }">
-        <TableAction
-          :actions="[
-            {
-              label: '编辑',
-              type: 'primary',
-              link: true,
-              icon: ACTION_ICON.EDIT,
-              auth: ['system:role:update'],
-              onClick: handleEdit.bind(null, row),
-            },
-            {
-              label: '删除',
-              type: 'danger',
-              link: true,
-              icon: ACTION_ICON.DELETE,
-              auth: ['system:role:delete'],
-              popConfirm: {
-                title: $t('ui.actionMessage.deleteConfirm', [row.name]),
-                confirm: handleDelete.bind(null, row),
-              },
-            },
-          ]"
-        />
+        <div class="table-toolbar-tools">
+          <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleOpenDetail(row)"
+          />
+          <IconButton
+            content="编辑"
+            icon-name="edit"
+            @click="handleEdit(row)"
+          />
+          <IconButton
+            content="删除"
+            icon-name="delete"
+            color="#F56C6C"
+            @click="handleDelete(row)"
+          />
+        </div>
+      </template>
+      <template #bottom>
+        <div class="common-total" @click="changeTotalShow">
+          <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
+            <ArrowDown />
+          </el-icon>
+          <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
+            <ArrowUp />
+          </el-icon>
+          <span> 本页统计：停车场数量5;车位总数:266;车场车位3 </span>
+        </div>
+        <div class="common-total-bottom" v-if="dataObj.totalShow">
+          <span> 全部统计：{{ textObj.total }} </span>
+        </div>
       </template>
     </Grid>
-    <div class="bottom-title">
-      总计: 停车场数量10;车位总数:1211;评价车场车位73;
-    </div>
   </div>
 </template>
-<style lang="scss">
-.park-lot-table-new { 
-  padding-bottom: 20px;
-  .vxe-buttons--wrapper {
-    padding-top: 0px;
-  }
-  .table-first {
-    display: flex;
-    align-items: center;
-    .tabel-tab-icon {
-      margin-right: 5px;
-      cursor: pointer;
-    }
-  }
-  .vxe-tools--wrapper {
-    position: fixed;
-    right: 77px;
-    top: 90px;
-  }
-  .vxe-tools--operate {
-    position: fixed;
-    right: 0px;
-    top: 90px;
-  }
-  .vxe-pager .vxe-pager--sizes {
-    margin-right: 10px;
-  }
-  .bottom-title {
-    position: relative;
-    margin-top: -30px;
-    margin-left: 10px;
-  }
-  .common-tool-bar-config {
-    .vxe-tools--operate {
-      .vxe-button:nth-child(2) {
-        display: none;
-      }
-    }
-  }
-}
-</style>

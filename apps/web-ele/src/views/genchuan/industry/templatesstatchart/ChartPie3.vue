@@ -109,9 +109,10 @@ const initChart = () => {
       text: props.title,
       textStyle: {
         fontSize: titleFontSize, // 标题文字自适应
-        color: 'white',
+        color: '#FFD166',
       },
       left: 'center',
+      top: 0,
     },
     tooltip: {
       trigger: 'item',
@@ -126,7 +127,7 @@ const initChart = () => {
     },
     legend: {
       orient: 'vertical', // 水平排列
-      top: 0,
+      bottom: 0,
       right: 0,
       textStyle: {
         color: '#ccc',
@@ -141,7 +142,7 @@ const initChart = () => {
         name: props.data.series[0]?.name || '数据',
         type: 'pie',
         radius: ['40%', '80%'],
-        center: ['50%', '60%'],
+        center: ['50%', '52%'],
         roseType: 'area',
         itemStyle: {
           borderRadius: 8,
@@ -149,7 +150,7 @@ const initChart = () => {
           borderWidth: 2,
         },
         label: {
-          show: true,
+          show: false,
           fontSize: labelFontSize, // 标签文字自适应（预留）
           color: '#e6f7ff',
           formatter: '{b}: {c}',
@@ -240,6 +241,6 @@ onUnmounted(() => {
 .chart-container {
   width: 100%;
   height: 100%;
-  min-height: 30vh;
+  min-height: 6vh;
 }
 </style>

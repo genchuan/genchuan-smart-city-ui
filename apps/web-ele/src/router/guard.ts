@@ -49,7 +49,7 @@ function setupCommonGuard(router: Router) {
  * @param router
  */
 function setupAccessGuard(router: Router) {
-  router.beforeEach(async (to, from) => {
+  router.beforeEach(async (to, from) => { 
     const accessStore = useAccessStore();
     const userStore = useUserStore();
     const authStore = useAuthStore();
@@ -135,8 +135,7 @@ function setupAccessGuard(router: Router) {
     const redirectPath = (from.query.redirect ??
       (to.path === preferences.app.defaultHomePath
         ? userInfo?.homePath || preferences.app.defaultHomePath
-        : to.fullPath)) as string;
-
+        : to.fullPath)) as string; 
     return {
       ...router.resolve(decodeURIComponent(redirectPath)),
       replace: true,

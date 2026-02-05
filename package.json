@@ -113,6 +113,7 @@
       "esbuild": "0.25.3",
       "jiti": "catalog:",
       "pinia": "catalog:",
+      "@tinyflow-ai/vue>@tinyflow-ai/ui": "npm:noop@1.0.0",
       "vue": "catalog:"
     },
     "neverBuiltDependencies": [
