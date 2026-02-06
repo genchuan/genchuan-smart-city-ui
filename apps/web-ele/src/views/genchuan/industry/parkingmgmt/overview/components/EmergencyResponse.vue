@@ -240,7 +240,7 @@ const getStoredOrbitConfig = (): OrbitConfig => {
       console.warn('读取本地存储的地图配置失败，使用默认值:', error);
     }
   }
-  return { center: { lat: 24.58, lng: 117.65 }, rotateSpeed: 0.1, pitch: 40, zoom: 16, loop: true };
+  return { center: { lat: 24.58, lng: 117.65 }, rotateSpeed: 0.05, pitch: 40, zoom: 16, loop: true };
 };
 // 保存地图环绕配置到本地存储
 const saveOrbitConfigToLocal = (config: OrbitConfig) => {
@@ -339,7 +339,7 @@ const submitOrbitConfig = async () => {
 };
 // 恢复地图默认配置
 const resetToDefaultConfig = () => {
-  const defaultConfig: OrbitConfig = { center: { lat: 24.58, lng: 117.65 }, rotateSpeed: 0.1, pitch: 40, zoom: 16, loop: true };
+  const defaultConfig: OrbitConfig = { center: { lat: 24.58, lng: 117.65 }, rotateSpeed: 0.05, pitch: 40, zoom: 16, loop: true };
   orbitConfigData.value = defaultConfig;
   orbitConfigForm.value = {
     centerLat: defaultConfig.center.lat,

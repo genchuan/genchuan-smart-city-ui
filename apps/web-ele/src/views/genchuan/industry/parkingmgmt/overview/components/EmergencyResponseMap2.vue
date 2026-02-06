@@ -31,7 +31,7 @@ const props = defineProps({
     type: Object,
     default: () => ({
       center: { lat: 24.58, lng: 117.65 },
-      rotateSpeed: 0.2,
+      rotateSpeed: 0.05,
       pitch: 40,
       zoom: 18,
       loop: true,

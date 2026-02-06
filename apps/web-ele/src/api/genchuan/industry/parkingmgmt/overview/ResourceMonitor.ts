@@ -2,6 +2,1201 @@ import { requestClient } from '#/api/request';
 
 const BASE_URL = '/industry/parking';
 
+
+// ========== 终端设备状态 ==========
+// 终端设备状态列表
+export const fetchTerminalDeviceList = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/terminal/device/list`,
+        params,
+      })
+      .then((response) => {
+        console.log('终端设备状态列表-接口请求成功');
+        if (response && Array.isArray(response)) {
+          console.log('终端设备状态列表-响应符合实际格式');
+          return response.map((item) => ({
+            tbDeviceExtendDeviceCode: item.tbDeviceExtendDeviceCode,
+            sysEquipmentTypeName: item.sysEquipmentTypeName,
+            tbAssetExtendName: item.tbAssetExtendName,
+            sysOperationStatusName: item.sysOperationStatusName,
+            parkDeviceMonitorDataContent: item.parkDeviceMonitorDataContent,
+            sysAreaAreaName: item.sysAreaAreaName,
+          }));
+        }
+        throw new Error('真实接口返回无终端设备数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('终端设备状态列表接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve([
+              {
+                tbDeviceExtendDeviceCode: 'DEV202401001',
+                sysEquipmentTypeName: '摄像头',
+                tbAssetExtendName: '停车场监控系统',
+                sysOperationStatusName: '在线',
+                parkDeviceMonitorDataContent: '网络延迟:12ms,CPU使用率:45%',
+                sysAreaAreaName: 'A区停车场',
+              },
+              {
+                tbDeviceExtendDeviceCode: 'DEV202401002',
+                sysEquipmentTypeName: '道闸',
+                tbAssetExtendName: '出入口控制系统',
+                sysOperationStatusName: '故障',
+                parkDeviceMonitorDataContent: '网络延迟:25ms,设备异常',
+                sysAreaAreaName: 'B区停车场',
+              },
+              {
+                tbDeviceExtendDeviceCode: 'DEV202401003',
+                sysEquipmentTypeName: '收费机',
+                tbAssetExtendName: '收费系统终端',
+                sysOperationStatusName: '在线',
+                parkDeviceMonitorDataContent: '网络延迟:8ms,CPU使用率:32%',
+                sysAreaAreaName: 'C区停车场',
+              },
+              {
+                tbDeviceExtendDeviceCode: 'DEV202401004',
+                sysEquipmentTypeName: 'LED屏',
+                tbAssetExtendName: '信息发布系统',
+                sysOperationStatusName: '离线',
+                parkDeviceMonitorDataContent: '网络延迟:无,设备离线',
+                sysAreaAreaName: 'D区停车场',
+              },
+              {
+                tbDeviceExtendDeviceCode: 'DEV202401005',
+                sysEquipmentTypeName: '服务器',
+                tbAssetExtendName: '数据服务器',
+                sysOperationStatusName: '在线',
+                parkDeviceMonitorDataContent: '网络延迟:5ms,CPU使用率:68%',
+                sysAreaAreaName: '中央机房',
+              },
+            ]);
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchTerminalDeviceList 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve([]);
+  }
+};
+
+// 终端设备状态核心指标（卡片展示）
+export const fetchTerminalDeviceIndicators = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/terminal/device/indicators/get`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.totalDeviceCount &&
+          response.onlineDeviceCount &&
+          response.faultDeviceCount
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无终端设备核心数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '终端设备状态指标接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              totalDeviceCount: 356, // 总设备数
+              onlineDeviceCount: 298, // 在线设备数
+              faultDeviceCount: 42, // 故障设备数
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 终端设备状态指标函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      totalDeviceCount: 0,
+      onlineDeviceCount: 0,
+      faultDeviceCount: 0,
+    });
+  }
+};
+
+// 近24小时设备在线率趋势（折线图）
+export const fetchTerminalDeviceOnlineTrend = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/terminal/device/stat/online/trend`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无在线率趋势数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '在线率趋势接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+              series: [{ name: '在线率(%)', data: [92.5, 93.8, 94.2, 95.1, 94.8, 93.5, 92.8] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 在线率趋势函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '在线率(%)', data: [] }],
+    });
+  }
+};
+
+// 设备类型占比（饼图）
+export const fetchTerminalDeviceTypeRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/terminal/device/stat/type/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无设备类型占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '设备类型占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['摄像头', '道闸', '收费机', 'LED屏', '服务器'],
+              series: [{ name: '设备类型占比(%)', data: [35.2, 28.6, 18.4, 12.8, 5.0] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 设备类型占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '设备类型占比(%)', data: [] }],
+    });
+  }
+};
+
+// 运行状态占比（饼图）
+export const fetchTerminalDeviceStatusRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/terminal/device/stat/status/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无运行状态占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '运行状态占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['在线', '故障', '离线', '维护中', '待机'],
+              series: [{ name: '运行状态占比(%)', data: [83.7, 11.8, 3.5, 0.8, 0.2] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 运行状态占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '运行状态占比(%)', data: [] }],
+    });
+  }
+};
+
+// 不同区域故障数对比（柱状图）
+export const fetchTerminalDeviceAreaFaultCount = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/terminal/device/stat/area/fault/count`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无区域故障数数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '区域故障数对比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['A区停车场', 'B区停车场', 'C区停车场', 'D区停车场', '中央机房'],
+              series: [{ name: '故障数量', data: [8, 15, 6, 10, 3] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 区域故障数对比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '故障数量', data: [] }],
+    });
+  }
+};
+
+// 不同设备类型故障数对比（柱状图）
+export const fetchTerminalDeviceTypeFaultCount = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/terminal/device/stat/type/fault/count`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无设备类型故障数数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '设备类型故障数对比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['摄像头', '道闸', '收费机', 'LED屏', '服务器'],
+              series: [{ name: '故障数量', data: [12, 18, 5, 4, 3] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 设备类型故障数对比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '故障数量', data: [] }],
+    });
+  }
+};
+
+// 终端设备详情查询 - 详情弹窗专用
+export const fetchTerminalDeviceDetail = (deviceCode, params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/terminal/device/detail/${deviceCode}`,
+        params,
+      })
+      .then((response) => {
+        if (response && response.tbDeviceExtendDeviceCode === deviceCode) {
+          return response;
+        }
+        throw new Error('真实接口返回无终端设备详情数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('终端设备详情接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              tbDeviceExtendDeviceCode: deviceCode,
+              tbDeviceExtendOfflineTime: deviceCode === 'DEV202401001' ? '0' : '2.5',
+              sysFaultTypeName: deviceCode === 'DEV202401001' ? '-' : '硬件故障',
+              sysMaintainUserUserName: deviceCode === 'DEV202401001' ? '张三' : '李四',
+              tbDeviceExtendNextMaintainTime: deviceCode === 'DEV202401001' ? '2024-02-01 10:00:00' : '2024-01-25 14:30:00',
+              // 详情字段
+              sysEquipmentTypeName: deviceCode === 'DEV202401001' ? '摄像头' : '道闸',
+              tbAssetExtendName: deviceCode === 'DEV202401001' ? '停车场监控系统' : '出入口控制系统',
+              sysOperationStatusName: deviceCode === 'DEV202401001' ? '在线' : '故障',
+              parkDeviceMonitorDataContent: deviceCode === 'DEV202401001' ? '网络延迟:12ms,CPU使用率:45%' : '网络延迟:25ms,设备异常',
+              sysAreaAreaName: deviceCode === 'DEV202401001' ? 'A区停车场' : 'B区停车场',
+              // 监控日志
+              monitorLogs: [
+                { time: '2024-01-19 10:30:00', data: 'CPU:45%,内存:65%', status: '正常' },
+                { time: '2024-01-19 09:15:00', data: '网络延迟:12ms', status: '正常' },
+                { time: '2024-01-18 16:45:00', data: '设备重启成功', status: '正常' },
+                { time: '2024-01-18 14:20:00', data: '温度:32℃', status: '正常' }
+              ],
+              // 故障记录
+              faultRecords: [
+                { time: '2024-01-10 09:30:00', type: '网络中断', duration: '2.5小时', result: '已修复' },
+                { time: '2023-12-25 14:20:00', type: '硬件故障', duration: '8小时', result: '已更换' },
+                { time: '2023-11-15 16:10:00', type: '软件异常', duration: '1.2小时', result: '已修复' }
+              ]
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchTerminalDeviceDetail 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({});
+  }
+};
+
+// 提交设备处置
+export const submitDeviceDisposal = (deviceCode, disposalMeasures, disposalEvidence) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/terminal/device/disposal/${deviceCode}`,
+        data: { disposalMeasures, disposalEvidence },
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return response;
+        }
+        throw new Error('真实接口返回无处置结果，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('设备处置接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              success: true,
+              message: '设备处置提交成功',
+              deviceStatus: '维护中'
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== submitDeviceDisposal 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({ success: false, message: '接口异常' });
+  }
+};
+
+// 提交设备维护
+export const submitDeviceMaintenance = (deviceCode, maintenanceType, maintenanceTime) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/terminal/device/maintenance/${deviceCode}`,
+        data: { maintenanceType, maintenanceTime },
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return response;
+        }
+        throw new Error('真实接口返回无维护结果，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('设备维护接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              success: true,
+              message: '维护工单生成成功',
+              workOrderNo: 'WO' + new Date().getTime()
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== submitDeviceMaintenance 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({ success: false, message: '接口异常' });
+  }
+};
+
+
+// ========== 关键岗位人员 ==========
+// 关键岗位人员列表
+export const fetchKeyPersonnelList = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/key/personnel/list`,
+        params,
+      })
+      .then((response) => {
+        console.log('关键岗位人员列表-接口请求成功');
+        if (response && Array.isArray(response)) {
+          console.log('关键岗位人员列表-响应符合实际格式');
+          return response.map((item) => ({
+            sysUserUserId: item.sysUserUserId,
+            sysUserUserName: item.sysUserUserName,
+            sysRoleRoleName: item.sysRoleRoleName,
+            sysAreaAreaName: item.sysAreaAreaName,
+            sysOnlineStatusName: item.sysOnlineStatusName,
+            sysMerchantMerchantName: item.sysMerchantMerchantName,
+          }));
+        }
+        throw new Error('真实接口返回无关键岗位人员数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('关键岗位人员列表接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve([
+              {
+                sysUserUserId: 'USER202401001',
+                sysUserUserName: '张三',
+                sysRoleRoleName: '运营主管',
+                sysAreaAreaName: 'A区停车场',
+                sysOnlineStatusName: '在线',
+                sysMerchantMerchantName: '停车场管理有限公司',
+              },
+              {
+                sysUserUserId: 'USER202401002',
+                sysUserUserName: '李四',
+                sysRoleRoleName: '技术工程师',
+                sysAreaAreaName: 'B区停车场',
+                sysOnlineStatusName: '在线',
+                sysMerchantMerchantName: '智能停车技术公司',
+              },
+              {
+                sysUserUserId: 'USER202401003',
+                sysUserUserName: '王五',
+                sysRoleRoleName: '客服专员',
+                sysAreaAreaName: 'C区停车场',
+                sysOnlineStatusName: '离线',
+                sysMerchantMerchantName: '客户服务有限公司',
+              },
+              {
+                sysUserUserId: 'USER202401004',
+                sysUserUserName: '赵六',
+                sysRoleRoleName: '安全管理员',
+                sysAreaAreaName: 'D区停车场',
+                sysOnlineStatusName: '在线',
+                sysMerchantMerchantName: '安防科技有限公司',
+              },
+              {
+                sysUserUserId: 'USER202401005',
+                sysUserUserName: '钱七',
+                sysRoleRoleName: '财务专员',
+                sysAreaAreaName: 'E区停车场',
+                sysOnlineStatusName: '在线',
+                sysMerchantMerchantName: '财务管理有限公司',
+              },
+            ]);
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchKeyPersonnelList 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve([]);
+  }
+};
+
+// 关键岗位人员核心指标（卡片展示）
+export const fetchKeyPersonnelIndicators = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/key/personnel/indicators/get`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.totalPersonnelCount &&
+          response.onlinePersonnelCount
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无关键岗位人员核心数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '关键岗位人员指标接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              totalPersonnelCount: 156, // 各岗位人员总数
+              onlinePersonnelCount: 124, // 在线人数
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 关键岗位人员指标函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      totalPersonnelCount: 0,
+      onlinePersonnelCount: 0,
+    });
+  }
+};
+
+// 不同负责范围人员数量对比（柱状图）
+export const fetchKeyPersonnelAreaCount = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/key/personnel/stat/area/count`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无不同负责范围人员数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '不同负责范围人员数量对比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['A区停车场', 'B区停车场', 'C区停车场', 'D区停车场', 'E区停车场'],
+              series: [{ name: '人员数量', data: [35, 42, 28, 31, 20] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 不同负责范围人员数量对比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '人员数量', data: [] }],
+    });
+  }
+};
+
+// 岗位角色占比（饼图）
+export const fetchKeyPersonnelRoleRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/key/personnel/stat/role/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无岗位角色占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '岗位角色占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['运营主管', '技术工程师', '客服专员', '安全管理员', '财务专员'],
+              series: [{ name: '岗位角色占比(%)', data: [25.6, 28.8, 19.2, 17.6, 9.6] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 岗位角色占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '岗位角色占比(%)', data: [] }],
+    });
+  }
+};
+
+// 关键岗位人员详情查询 - 详情弹窗专用
+export const fetchKeyPersonnelDetail = (userId, params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/key/personnel/detail/${userId}`,
+        params,
+      })
+      .then((response) => {
+        if (response && response.sysUserUserId === userId) {
+          return response;
+        }
+        throw new Error('真实接口返回无关键岗位人员详情数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('关键岗位人员详情接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              sysUserUserId: userId,
+              sysUserUserName: userId === 'USER202401001' ? '张三' : '李四',
+              sysUserUserPhone: userId === 'USER202401001' ? '13800138001' : '13800138002',
+              sysUserOnDutyTime: userId === 'USER202401001' ? '8.5' : '7.2',
+              taskAllTableTaskName: userId === 'USER202401001' ? '停车场设备巡检' : '系统故障处理',
+              sysOperationLogOperateTime: userId === 'USER202401001' ? '2024-01-19 10:30:00' : '2024-01-19 09:15:00',
+              // 详情字段
+              sysRoleRoleName: userId === 'USER202401001' ? '运营主管' : '技术工程师',
+              sysAreaAreaName: userId === 'USER202401001' ? 'A区停车场' : 'B区停车场',
+              sysOnlineStatusName: userId === 'USER202401001' ? '在线' : '在线',
+              sysMerchantMerchantName: userId === 'USER202401001' ? '停车场管理有限公司' : '智能停车技术公司',
+              // 权限范围
+              permissionScope: [
+                { scope: '操作权限', value: '设备管理、人员调度' },
+                { scope: '查看权限', value: '全部停车场数据' },
+                { scope: '审批权限', value: '费用报销审批' },
+                { scope: '系统权限', value: '后台管理系统' }
+              ],
+              // 操作日志
+              operationLogs: [
+                { time: '2024-01-19 10:30:00', operation: '处理协同响应', result: '成功' },
+                { time: '2024-01-19 09:15:00', operation: '提交故障报告', result: '成功' },
+                { time: '2024-01-18 16:45:00', operation: '更新设备状态', result: '成功' },
+                { time: '2024-01-18 14:20:00', operation: '审批费用申请', result: '通过' }
+              ]
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchKeyPersonnelDetail 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({});
+  }
+};
+
+// 提交调度任务
+export const submitDispatchTask = (userId, taskContent, deadline) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/key/personnel/dispatch/${userId}`,
+        data: { taskContent, deadline },
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return response;
+        }
+        throw new Error('真实接口返回无调度结果，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('调度任务接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              success: true,
+              message: '调度任务分配成功',
+              taskName: taskContent.substring(0, 20) + '...'
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== submitDispatchTask 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({ success: false, message: '接口异常' });
+  }
+};
+
+// 提交留言
+export const submitPersonnelMessage = (userId, messageContent) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/key/personnel/message/${userId}`,
+        data: { messageContent },
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return response;
+        }
+        throw new Error('真实接口返回无留言结果，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('留言接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              success: true,
+              message: '留言发送成功',
+              sendTime: new Date().toISOString()
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== submitPersonnelMessage 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({ success: false, message: '接口异常' });
+  }
+};
+
+
+// ========== 设备资源效能 ==========
+// 设备资源效能列表
+export const fetchDeviceResourceEfficiencyList = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/device/efficiency/list`,
+        params,
+      })
+      .then((response) => {
+        console.log('设备资源效能列表-接口请求成功');
+        if (response && Array.isArray(response)) {
+          console.log('设备资源效能列表-响应符合实际格式');
+          return response.map((item) => ({
+            id: item.id,
+            sysEquipmentTypeName: item.sysEquipmentTypeName,
+            sysAreaAreaName: item.sysAreaAreaName,
+            sysStatCycleName: item.sysStatCycleName,
+            parkDeviceEfficiencyDeviceOperationEfficiency: item.parkDeviceEfficiencyDeviceOperationEfficiency,
+            parkDeviceEfficiencyFaultRepairRate: item.parkDeviceEfficiencyFaultRepairRate,
+            parkDeviceEfficiencyAverageFaultFreeDuration: item.parkDeviceEfficiencyAverageFaultFreeDuration,
+          }));
+        }
+        throw new Error('真实接口返回无设备资源效能列表数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('设备资源效能列表接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve([
+              {
+                id: 'EFF202501001',
+                sysEquipmentTypeName: '道闸设备',
+                sysAreaAreaName: 'A区停车场',
+                sysStatCycleName: '本月',
+                parkDeviceEfficiencyDeviceOperationEfficiency: 92.5,
+                parkDeviceEfficiencyFaultRepairRate: 85.3,
+                parkDeviceEfficiencyAverageFaultFreeDuration: 720,
+              },
+              {
+                id: 'EFF202501002',
+                sysEquipmentTypeName: '监控摄像头',
+                sysAreaAreaName: 'B区停车场',
+                sysStatCycleName: '本月',
+                parkDeviceEfficiencyDeviceOperationEfficiency: 88.7,
+                parkDeviceEfficiencyFaultRepairRate: 92.1,
+                parkDeviceEfficiencyAverageFaultFreeDuration: 650,
+              },
+              {
+                id: 'EFF202501003',
+                sysEquipmentTypeName: '充电桩',
+                sysAreaAreaName: 'C区停车场',
+                sysStatCycleName: '本月',
+                parkDeviceEfficiencyDeviceOperationEfficiency: 95.2,
+                parkDeviceEfficiencyFaultRepairRate: 78.6,
+                parkDeviceEfficiencyAverageFaultFreeDuration: 810,
+              },
+              {
+                id: 'EFF202501004',
+                sysEquipmentTypeName: '车位引导屏',
+                sysAreaAreaName: 'D区停车场',
+                sysStatCycleName: '本月',
+                parkDeviceEfficiencyDeviceOperationEfficiency: 90.3,
+                parkDeviceEfficiencyFaultRepairRate: 88.9,
+                parkDeviceEfficiencyAverageFaultFreeDuration: 680,
+              },
+              {
+                id: 'EFF202501005',
+                sysEquipmentTypeName: '地磁传感器',
+                sysAreaAreaName: 'E区停车场',
+                sysStatCycleName: '本月',
+                parkDeviceEfficiencyDeviceOperationEfficiency: 87.6,
+                parkDeviceEfficiencyFaultRepairRate: 91.4,
+                parkDeviceEfficiencyAverageFaultFreeDuration: 590,
+              },
+            ]);
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchDeviceResourceEfficiencyList 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve([]);
+  }
+};
+
+// 设备资源效能核心指标（卡片展示）
+export const fetchDeviceResourceEfficiencyIndicators = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/device/efficiency/indicators/get`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.avgOperationEfficiency &&
+          response.avgFaultFreeDuration &&
+          response.avgFaultRepairRate
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无设备资源效能核心数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '设备资源效能指标接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              avgOperationEfficiency: 90.8, // 设备平均运行效率
+              avgFaultFreeDuration: 690, // 平均无故障时长
+              avgFaultRepairRate: 87.2, // 平均故障修复率
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 设备资源效能指标函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      avgOperationEfficiency: 0,
+      avgFaultFreeDuration: 0,
+      avgFaultRepairRate: 0,
+    });
+  }
+};
+
+// 不同设备类型运行效率对比（柱状图）
+export const fetchDeviceResourceEfficiencyTypeCompare = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/device/efficiency/stat/type/compare`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无设备类型运行效率对比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '设备类型运行效率对比接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['道闸设备', '监控摄像头', '充电桩', '车位引导屏', '地磁传感器'],
+              series: [{ name: '运行效率(%)', data: [92.5, 88.7, 95.2, 90.3, 87.6] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 设备类型运行效率对比函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '运行效率(%)', data: [] }],
+    });
+  }
+};
+
+// 近周期设备故障修复率趋势（折线图）
+export const fetchDeviceResourceEfficiencyTrend = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/device/efficiency/stat/trend`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.xAxis &&
+          response.series
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无设备故障修复率趋势数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '设备故障修复率趋势接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              xAxis: ['第1周', '第2周', '第3周', '第4周', '第5周'],
+              series: [{ name: '故障修复率(%)', data: [82.5, 85.3, 87.6, 89.2, 91.4] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 设备故障修复率趋势函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      xAxis: [],
+      series: [{ name: '故障修复率(%)', data: [] }],
+    });
+  }
+};
+
+// 各区域设备效能占比（饼图）
+export const fetchDeviceResourceEfficiencyAreaRatio = (params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/device/efficiency/stat/area/ratio`,
+        params,
+      })
+      .then((response) => {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          response.legend &&
+          Array.isArray(response.legend) &&
+          response.series &&
+          Array.isArray(response.series)
+        ) {
+          return response;
+        }
+        throw new Error('真实接口返回无区域设备效能占比数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn(
+          '区域设备效能占比饼图接口调用失败-使用模拟数据兜底',
+          error.message,
+        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              legend: ['A区停车场', 'B区停车场', 'C区停车场', 'D区停车场', 'E区停车场'],
+              series: [{ name: '设备效能占比(%)', data: [25.8, 22.3, 18.7, 20.5, 12.7] }],
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== 区域设备效能占比饼图函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({
+      legend: [],
+      series: [{ name: '设备效能占比(%)', data: [] }],
+    });
+  }
+};
+
+// 设备资源效能详情查询 - 详情弹窗专用
+export const fetchDeviceResourceEfficiencyDetail = (efficiencyId, params = {}) => {
+  try {
+    return requestClient
+      .get({
+        url: `${BASE_URL}/device/efficiency/detail/${efficiencyId}`,
+        params,
+      })
+      .then((response) => {
+        if (response && response.id === efficiencyId) {
+          return response;
+        }
+        throw new Error('真实接口返回无设备资源效能详情数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('设备资源效能详情接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              id: efficiencyId,
+              sysEquipmentTypeName: efficiencyId === 'EFF202501001' ? '道闸设备' : '监控摄像头',
+              sysAreaAreaName: efficiencyId === 'EFF202501001' ? 'A区停车场' : 'B区停车场',
+              sysStatCycleName: efficiencyId === 'EFF202501001' ? '本月' : '本月',
+              parkDeviceEfficiencyDeviceOperationEfficiency: efficiencyId === 'EFF202501001' ? 92.5 : 88.7,
+              parkDeviceEfficiencyFaultRepairRate: efficiencyId === 'EFF202501001' ? 85.3 : 92.1,
+              parkDeviceEfficiencyAverageFaultFreeDuration: efficiencyId === 'EFF202501001' ? 720 : 650,
+              // 详情字段
+              parkDeviceEfficiencyYoyGrowthRate: efficiencyId === 'EFF202501001' ? 8.2 : 6.7,
+              parkDeviceEfficiencyMomGrowthRate: efficiencyId === 'EFF202501001' ? 2.5 : 1.8,
+              parkDeviceEfficiencyLowEfficiencyCount: efficiencyId === 'EFF202501001' ? 3 : 2,
+              parkDeviceEfficiencyMaintenanceSuggestion: efficiencyId === 'EFF202501001' ? '建议定期检查道闸电机，更新控制程序' : '建议升级摄像头固件，优化夜间识别算法',
+              // 效能计算明细
+              efficiencyCalculationDetails: [
+                { item: '运行时间占比', value: '92.5%', standard: '≥90%' },
+                { item: '响应时间达标率', value: '88.7%', standard: '≥85%' },
+                { item: '故障响应时长', value: '15分钟', standard: '≤20分钟' },
+                { item: '维护及时率', value: '95.2%', standard: '≥90%' }
+              ],
+              // 设备故障记录
+              faultRecords: [
+                { faultTime: '2024-01-15 10:30', faultType: '机械故障', repairTime: '2024-01-15 11:45', status: '已修复' },
+                { faultTime: '2024-01-10 14:20', faultType: '电气故障', repairTime: '2024-01-10 16:10', status: '已修复' },
+                { faultTime: '2024-01-05 08:45', faultType: '通信故障', repairTime: '2024-01-05 09:30', status: '已修复' }
+              ],
+              // 运行日志
+              operationLogs: [
+                { time: '2024-01-20 08:00', operation: '设备启动', operator: '系统', result: '成功' },
+                { time: '2024-01-19 18:00', operation: '日常巡检', operator: '张三', result: '正常' },
+                { time: '2024-01-18 14:30', operation: '固件升级', operator: '李四', result: '成功' }
+              ]
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== fetchDeviceResourceEfficiencyDetail 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({});
+  }
+};
+
+// 提交维护工单
+export const submitDeviceMaintenanceOrder = (efficiencyId, maintenanceType, maintenanceTime) => {
+  try {
+    return requestClient
+      .post({
+        url: `${BASE_URL}/device/efficiency/maintenance/${efficiencyId}`,
+        data: { maintenanceType, maintenanceTime },
+      })
+      .then((response) => {
+        if (response && response.success) {
+          return response;
+        }
+        throw new Error('真实接口返回无维护工单结果，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.log('维护工单接口调用失败-使用模拟数据兜底', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              success: true,
+              message: '维护工单提交成功',
+              orderId: 'MAINT' + Date.now(),
+            });
+          }, 500);
+        });
+      });
+  } catch (error) {
+    console.error('===== submitDeviceMaintenanceOrder 函数初始化异常 =====');
+    console.error('错误信息:', error.message);
+    console.error('错误堆栈:', error.stack);
+    return Promise.resolve({ success: false, message: '接口异常' });
+  }
+};
+
+
 // ======================== 运维人员动态 所有接口 ========================
 // 运维人员动态-人员列表地图接口
 export const fetchMaintainStaffGeometries = (params = {}) => {
@@ -668,7 +1863,7 @@ export const fetchCarTrackSingleTrend = (params = {}) => {
   }
 };
 
-// ======================== 新增：停车资源效能 所有接口 ========================
+// ======================== 停车资源效能 所有接口 ========================
 // 停车资源效能-车场资源详情列表 (核心字段全量包含)
 export const fetchParkResourceList = (params = {}) => {
   try {
@@ -988,327 +2183,7 @@ export const fetchParkResourceTypeCompare = (params = {}) => {
   }
 };
 
-// 终端设备状态-故障/离线设备详情列表 (核心字段全量包含)
-export const fetchTerminalDeviceList = (params = {}) => {
-  try {
-    return requestClient
-      .get({
-        url: `${BASE_URL}/terminal/device/list`,
-        params,
-      })
-      .then((response) => {
-        console.log('终端设备状态-接口请求成功');
-        if (response && Array.isArray(response)) {
-          console.log('终端设备状态-响应符合实际格式');
-          return response.map((item) => ({
-            deviceExtendId: item.deviceExtendId,
-            deviceCode: item.deviceCode,
-            deviceType: item.deviceType,
-            status: item.status,
-            responsiblePerson: item.responsiblePerson,
-            monitorId: item.monitorId,
-            monitorData: item.monitorData,
-            updateTime: item.updateTime,
-            assetId: item.assetId,
-            installPosition: item.installPosition,
-          }));
-        }
-        throw new Error('真实接口返回无设备列表数据，使用模拟数据兜底');
-      })
-      .catch((error) => {
-        console.log('终端设备状态接口调用失败-使用模拟数据兜底', error.message);
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve([
-              {
-                deviceExtendId: 'DEV20260114001',
-                deviceCode: 'CDZ001001',
-                deviceType: 'charging',
-                status: 'fault',
-                responsiblePerson: '张三',
-                monitorId: 'MON2026001',
-                monitorData: { voltage: 220.5, signalStrength: -75 },
-                updateTime: 1_736_889_600_000,
-                assetId: 'ASSET001',
-                installPosition: '主城区A区充电站1号桩',
-              },
-              {
-                deviceExtendId: 'DEV20260114002',
-                deviceCode: 'DZ002003',
-                deviceType: 'barrier',
-                status: 'offline',
-                responsiblePerson: '李四',
-                monitorId: 'MON2026002',
-                monitorData: { voltage: 219.8, signalStrength: -98 },
-                updateTime: 1_736_893_200_000,
-                assetId: 'ASSET002',
-                installPosition: '高新区B停车场入口道闸',
-              },
-              {
-                deviceExtendId: 'DEV20260114003',
-                deviceCode: 'CAM005002',
-                deviceType: 'camera',
-                status: 'fault',
-                responsiblePerson: '王五',
-                monitorId: 'MON2026003',
-                monitorData: { voltage: 12.2, signalStrength: -82 },
-                updateTime: 1_736_896_800_000,
-                assetId: 'ASSET003',
-                installPosition: '经开区C路段监控摄像头',
-              },
-              {
-                deviceExtendId: 'DEV20260114004',
-                deviceCode: 'SEN008005',
-                deviceType: 'sensor',
-                status: 'abnormal',
-                responsiblePerson: '赵六',
-                monitorId: 'MON2026004',
-                monitorData: { voltage: 5.1, signalStrength: -89 },
-                updateTime: 1_736_900_400_000,
-                assetId: 'ASSET004',
-                installPosition: '文旅区D停车场地磁传感器',
-              },
-              {
-                deviceExtendId: 'DEV20260114005',
-                deviceCode: 'CDZ001006',
-                deviceType: 'charging',
-                status: 'offline',
-                responsiblePerson: '张三',
-                monitorId: 'MON2026005',
-                monitorData: { voltage: 0, signalStrength: -110 },
-                updateTime: 1_736_904_000_000,
-                assetId: 'ASSET001',
-                installPosition: '主城区A区充电站6号桩',
-              },
-              {
-                deviceExtendId: 'DEV20260114006',
-                deviceCode: 'LED003002',
-                deviceType: 'screen',
-                status: 'fault',
-                responsiblePerson: '钱七',
-                monitorId: 'MON2026006',
-                monitorData: { voltage: 24.3, signalStrength: -78 },
-                updateTime: 1_736_907_600_000,
-                assetId: 'ASSET005',
-                installPosition: '周边区县E停车场引导屏',
-              },
-            ]);
-          }, 500);
-        });
-      });
-  } catch (error) {
-    console.error('===== fetchTerminalDeviceList 函数初始化异常 =====');
-    console.error('错误信息:', error.message);
-    console.error('错误堆栈:', error.stack);
-    return Promise.resolve([]);
-  }
-};
-
-// 终端设备状态-核心指标 (总设备数、在线设备数、故障设备数)
-export const fetchTerminalDeviceIndicators = (params = {}) => {
-  try {
-    return requestClient
-      .get({
-        url: `${BASE_URL}/terminal/device/indicators/get`,
-        params,
-      })
-      .then((response) => {
-        if (
-          response &&
-          typeof response === 'object' &&
-          !Array.isArray(response) &&
-          response.totalDeviceCount &&
-          response.onlineDeviceCount &&
-          response.faultDeviceCount
-        ) {
-          return response;
-        }
-        throw new Error('真实接口返回无设备核心指标数据，使用模拟数据兜底');
-      })
-      .catch((error) => {
-        console.warn(
-          '终端设备核心指标接口调用失败-使用模拟数据兜底',
-          error.message,
-        );
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({
-              totalDeviceCount: 864, // 总设备数
-              onlineDeviceCount: 792, // 在线设备数
-              faultDeviceCount: 46, // 故障设备数
-              offlineDeviceCount: 26, // 离线设备数（备用）
-            });
-          }, 500);
-        });
-      });
-  } catch (error) {
-    console.error('===== 终端设备核心指标函数初始化异常 =====');
-    console.error('错误信息:', error.message);
-    console.error('错误堆栈:', error.stack);
-    return Promise.resolve({
-      totalDeviceCount: 0,
-      onlineDeviceCount: 0,
-      faultDeviceCount: 0,
-    });
-  }
-};
-
-// 终端设备状态-近24小时设备在线率趋势 折线图
-export const fetchTerminalDeviceOnlineRateTrend = (params = {}) => {
-  try {
-    return requestClient
-      .get({
-        url: `${BASE_URL}/terminal/device/stat/online/rate/trend`,
-        params,
-      })
-      .then((res) => res || { xAxis: [], series: [] })
-      .catch((error) => {
-        console.log(
-          '设备在线率趋势折线图接口异常，使用兜底数据',
-          error.message,
-        );
-        return {
-          xAxis: [
-            '00:00',
-            '01:00',
-            '02:00',
-            '03:00',
-            '04:00',
-            '05:00',
-            '06:00',
-            '07:00',
-            '08:00',
-            '09:00',
-            '10:00',
-            '11:00',
-            '12:00',
-            '13:00',
-            '14:00',
-            '15:00',
-            '16:00',
-            '17:00',
-            '18:00',
-            '19:00',
-            '20:00',
-            '21:00',
-            '22:00',
-            '23:00',
-          ],
-          series: [
-            {
-              name: '设备在线率(%)',
-              data: [
-                96.2, 95.8, 95.5, 95.3, 95.6, 96.1, 97, 97.5, 97.8, 98, 98.2,
-                98.1, 97.9, 97.6, 97.8, 97.9, 98.3, 98, 97.5, 97, 96.8, 96.5,
-                96.3, 96.2,
-              ],
-            },
-          ],
-        };
-      });
-  } catch (error) {
-    console.error('fetchTerminalDeviceOnlineRateTrend 异常:', error);
-    return Promise.resolve({ xAxis: [], series: [] });
-  }
-};
-
-// 终端设备状态-设备类型占比 饼图
-export const fetchTerminalDeviceTypeRatio = (params = {}) => {
-  try {
-    return requestClient
-      .get({
-        url: `${BASE_URL}/terminal/device/stat/type/ratio`,
-        params,
-      })
-      .then((response) => {
-        if (
-          response &&
-          typeof response === 'object' &&
-          !Array.isArray(response) &&
-          response.legend &&
-          Array.isArray(response.legend) &&
-          response.series &&
-          Array.isArray(response.series)
-        ) {
-          return response;
-        }
-        throw new Error('真实接口返回无设备类型占比数据，使用模拟数据兜底');
-      })
-      .catch((error) => {
-        console.warn(
-          '设备类型占比饼图接口调用失败-使用模拟数据兜底',
-          error.message,
-        );
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({
-              legend: [
-                '充电桩',
-                '道闸设备',
-                '监控摄像头',
-                '地磁传感器',
-                '车位引导屏',
-              ],
-              series: [{ name: '设备类型占比', data: [45, 20, 18, 10, 7] }],
-            });
-          }, 500);
-        });
-      });
-  } catch {
-    console.error('===== 设备类型占比饼图函数初始化异常 =====');
-    return Promise.resolve({
-      legend: [],
-      series: [{ name: '设备类型占比', data: [] }],
-    });
-  }
-};
-
-// 终端设备状态-设备运行状态占比 饼图
-export const fetchTerminalDeviceStatusRatio = (params = {}) => {
-  try {
-    return requestClient
-      .get({
-        url: `${BASE_URL}/terminal/device/stat/status/ratio`,
-        params,
-      })
-      .then((response) => {
-        if (
-          response &&
-          typeof response === 'object' &&
-          !Array.isArray(response) &&
-          response.legend &&
-          Array.isArray(response.legend) &&
-          response.series &&
-          Array.isArray(response.series)
-        ) {
-          return response;
-        }
-        throw new Error('真实接口返回无设备状态占比数据，使用模拟数据兜底');
-      })
-      .catch((error) => {
-        console.warn(
-          '设备运行状态占比饼图接口调用失败-使用模拟数据兜底',
-          error.message,
-        );
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({
-              legend: ['在线运行', '离线设备', '故障设备', '通讯异常'],
-              series: [{ name: '设备运行状态占比', data: [91.7, 3, 5.3, 0] }],
-            });
-          }, 500);
-        });
-      });
-  } catch {
-    console.error('===== 设备运行状态占比饼图函数初始化异常 =====');
-    return Promise.resolve({
-      legend: [],
-      series: [{ name: '设备运行状态占比', data: [] }],
-    });
-  }
-};
-
-// ======================== 新增：备品备件仓储 所有接口 ========================
+// ======================== 备品备件仓储 所有接口 ========================
 // 备品备件仓储-库存详情列表 (核心字段全量包含)
 export const fetchSparePartList = (params = {}) => {
   try {
