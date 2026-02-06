@@ -317,7 +317,6 @@ const arrowChange = () => {
   arrowShow.value = !arrowShow.value;
   emit('toggleChart');
 };
-
 </script>
 
 <template>

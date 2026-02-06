@@ -7,9 +7,9 @@ import Columnar from '#/components/stats/columnar.vue';
 
 const state = reactive({
   cardList: [
-    { title: '总共享车位数', value: 15, color: '#13ce66' },
-    { title: '启用共享车位数', value: 14, color: '#4ECDC4' },
-    { title: '共享订单总数', value: 8, color: '#FF6B6B' },
+    { title: '总规则数', value: 15, color: '#13ce66' },
+    { title: '启用规则数', value: 14, color: '#4ECDC4' },
+    { title: '常用规则数', value: 8, color: '#FF6B6B' },
   ],
 });
 </script>
@@ -27,7 +27,7 @@ const state = reactive({
     <Circle
       width="340px"
       height="330px"
-      title-text="共享时段占比"
+      title-text="触发类型占比"
       :data="[
         { name: '白天', value: 4 },
         { name: '夜晚', value: 5 },
@@ -36,16 +36,15 @@ const state = reactive({
     <Circle
       width="340px"
       height="330px"
-      title-text="所属车场占比"
+      title-text="启用状态占比"
       :data="[
-        { name: '商业停车场', value: 4 },
-        { name: '车站停车场', value: 5 },
-        { name: '超市停车场', value: 5 },
+        { name: '启用', value: 4 },
+        { name: '禁用', value: 5 },
       ]"
     />
     <Columnar
       height="330px"
-      title="各共享车位订单数排名"
+      title="规则使用次数排名"
       :x-data="['商业车位', '车站车位', '超市车位']"
       :series-data="[{ name: '', data: [58, 42, 33] }]"
     />
