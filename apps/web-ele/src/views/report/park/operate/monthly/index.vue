@@ -1,4 +1,4 @@
-<!-- index.vue 内部-->
+<!-- index.vue - 月度报表版本 -->
 <script setup>
 import { computed, reactive, ref } from 'vue';
 
@@ -12,8 +12,7 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
-// 引入封装后的详情抽屉组件
-import TaskDetailDrawer from '#/views/dashboard/todo/table/detail.vue';
+import ReportDetailDrawer from '#/views/report/park/operate/monthly/detail.vue';
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
@@ -46,7 +45,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
-// 移除原 DetailDrawer 初始化逻辑
+
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -60,6 +59,7 @@ const [Form, formApi] = useVbenForm({
   schema: useFormSchema(),
   showDefaultActions: false,
 });
+
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
@@ -69,11 +69,11 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onConfirm() {
     const obj = formApi.form.values;
     if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-      taskObj.apilist.push(obj);
+      reportObj.apilist.push(obj);
     } else {
-      taskObj.apilist.forEach((v, i) => {
+      reportObj.apilist.forEach((v, i) => {
         if (v.id === formData.value?.id) {
-          taskObj.apilist[i] = obj;
+          reportObj.apilist[i] = obj;
         }
       });
     }
@@ -91,6 +91,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     }
   },
 });
+
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
@@ -98,10 +99,10 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  exportToExcel(taskObj.apilist, textObj.excelName, textObj.excelAllName);
+  exportToExcel(reportObj.apilist, textObj.excelName, textObj.excelAllName);
 }
 
-/** 创建任务 */
+/** 创建报表 */
 function handleCreate() {
   formDrawerApi
     .setData({
@@ -110,7 +111,7 @@ function handleCreate() {
     .open();
 }
 
-/** 编辑任务 */
+/** 编辑报表 */
 function handleEdit(row) {
   formDrawerApi
     .setData({
@@ -122,11 +123,11 @@ function handleEdit(row) {
 
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.taskName]),
+    text: $t('ui.actionMessage.deleting', [row.areaName + ' - ' + row.parkType]),
   });
   try {
-    taskObj.apilist = taskObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.taskName]));
+    reportObj.apilist = reportObj.apilist.filter((v) => v.id !== row.id);
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.areaName + ' - ' + row.parkType]));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -139,7 +140,7 @@ async function handleDeleteBatch() {
     text: $t('ui.actionMessage.deletingBatch'),
   });
   try {
-    taskObj.apilist = taskObj.apilist.filter(
+    reportObj.apilist = reportObj.apilist.filter(
       (v) => !checkedIds.value.includes(v.id),
     );
     checkedIds.value = [];
@@ -155,9 +156,9 @@ function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
 
-const taskObj = reactive({
+const reportObj = reactive({
   totalShow: false,
-  detailObj: {}, // 保留详情对象用于传递给组件
+  detailObj: {},
   total: dataList().length,
   currentPage: 1,
   pageSize: 10,
@@ -166,49 +167,44 @@ const taskObj = reactive({
 });
 
 const changeTotalShow = () => {
-  taskObj.totalShow = !taskObj.totalShow;
+  reportObj.totalShow = !reportObj.totalShow;
 };
 
-// 表格数据获取
+// 表格数据获取 - 月度版本
 const getTableData = (pageObj) => {
   const page = pageObj.page;
 
-  let filteredList = taskObj.apilist;
-  if (activeName.value === '待处理') {
-    filteredList = taskObj.apilist.filter(v => v.taskStatus === '待处理');
-  } else if (activeName.value === '处理中') {
-    filteredList = taskObj.apilist.filter(v => v.taskStatus === '处理中');
-  } else if (activeName.value === '已完成') {
-    filteredList = taskObj.apilist.filter(v => v.taskStatus === '已完成');
-  } else if (activeName.value === '我发起的') {
-    filteredList = taskObj.apilist.filter(v => v.taskStatus !== '我发起的');
+  let filteredList = reportObj.apilist;
+  if (activeName.value === '本月数据') {
+    filteredList = reportObj.apilist.filter(v => v.statMonth === '2026-02');
+  } else if (activeName.value === '近6月数据') {
+    const sixMonthsAgo = '2025-09';
+    filteredList = reportObj.apilist.filter(v => v.statMonth >= sixMonthsAgo);
+  } else if (activeName.value === '商业停车场') {
+    filteredList = reportObj.apilist.filter(v => v.parkType === '商业停车场');
+  } else if (activeName.value === '路侧停车') {
+    filteredList = reportObj.apilist.filter(v => v.parkType === '路侧停车');
   }
 
-  taskObj.total = filteredList.length;
-  taskObj.list = filteredList.slice(
+  reportObj.total = filteredList.length;
+  reportObj.list = filteredList.slice(
     (page.currentPage - 1) * page.pageSize,
     page.currentPage * page.pageSize,
   );
 
-  return taskObj;
+  return reportObj;
 };
 
 const [QueryForm] = useVbenForm({
-  // 默认展开
   collapsed: false,
-  // 所有表单项共用，可单独在表单内覆盖
   commonConfig: {
-    // 所有表单项
     componentProps: {
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
-  // 提交函数
   handleSubmit: onSubmit,
-  // 垂直布局，label和input在不同行，值为vertical
-  // 水平布局，label和input在同一行
   layout: 'horizontal',
   schema: useFormSchema().map((v) => {
     delete v.rules;
@@ -216,7 +212,6 @@ const [QueryForm] = useVbenForm({
       ...v,
     };
   }),
-  // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -241,7 +236,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       keyField: 'id',
       isHover: true,
     },
-    pagerConfig: taskObj,
+    pagerConfig: reportObj,
     toolbarConfig: {
       'class-name': 'common-tool-bar-config',
       refresh: true,
@@ -256,35 +251,35 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-const activeName = ref('待处理');
+const activeName = ref('本月数据');
 // 修改打开详情的方法，调用组件的open方法
 const handleOpenDetail = (row) => {
-  taskObj.detailObj = row;
-  // 通过ref调用组件的open方法
-  taskDetailDrawerRef.value.open();
+  reportObj.detailObj = row;
+  reportDetailDrawerRef.value.open();
   console.log(row);
 };
 
 const tabsData = ref([
-  { label: '待处理' },
-  { label: '处理中' },
-  { label: '已完成' },
-  { label: '我发起的' },
-  { label: '全部任务' },
+  { label: '本月数据' },
+  { label: '近6月数据' },
+  { label: '商业停车场' },
+  { label: '路侧停车' },
+  { label: '全部数据' },
 ]);
 
 const createLabel = (item) => {
   let count = 0;
-  if (item.label === '待处理') {
-    count = taskObj.apilist.filter((v) => v.taskStatus === '待处理').length;
-  } else if (item.label === '处理中') {
-    count = taskObj.apilist.filter((v) => v.taskStatus === '处理中').length;
-  } else if (item.label === '已完成') {
-    count = taskObj.apilist.filter((v) => v.taskStatus === '已完成').length;
-  } else if (item.label === '我发起的') {
-    count = taskObj.apilist.filter((v) => v.initiator !== '我发起的').length;
-  } else if (item.label === '全部任务') {
-    count = taskObj.apilist.length;
+  if (item.label === '本月数据') {
+    count = reportObj.apilist.filter((v) => v.statMonth === '2026-02').length;
+  } else if (item.label === '近6月数据') {
+    const sixMonthsAgo = '2025-09';
+    count = reportObj.apilist.filter(v => v.statMonth >= sixMonthsAgo).length;
+  } else if (item.label === '商业停车场') {
+    count = reportObj.apilist.filter((v) => v.parkType === '商业停车场').length;
+  } else if (item.label === '路侧停车') {
+    count = reportObj.apilist.filter((v) => v.parkType === '路侧停车').length;
+  } else if (item.label === '全部数据') {
+    count = reportObj.apilist.length;
   }
   return `${item.label}(${count})`;
 };
@@ -305,8 +300,7 @@ const arrowChange = () => {
   emit('arrow-change');
 };
 
-// 定义组件ref，用于调用组件方法
-const taskDetailDrawerRef = ref(null);
+const reportDetailDrawerRef = ref(null);
 </script>
 
 <template>
@@ -315,10 +309,10 @@ const taskDetailDrawerRef = ref(null);
       <Form />
     </FormDrawer>
     <!-- 使用封装后的详情抽屉组件 -->
-    <TaskDetailDrawer
-      ref="taskDetailDrawerRef"
-      :detail-obj="taskObj.detailObj"
-      :title="`任务详情 - ${taskObj.detailObj.taskName}`"
+    <ReportDetailDrawer
+      ref="reportDetailDrawerRef"
+      :detail-obj="reportObj.detailObj"
+      :title="`月度运营详情 - ${reportObj.detailObj.areaName} ${reportObj.detailObj.parkType}`"
     />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -375,45 +369,63 @@ const taskDetailDrawerRef = ref(null);
           />
         </div>
       </template>
-      <template #taskName="{ row }">
+      <template #areaName="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.taskName }}
+          {{ row.areaName }}
         </el-text>
       </template>
-      <template #priority="{ row }">
-        <el-tag
-          :type="row.priority === '紧急' ? 'danger' :
-                 row.priority === '高' ? 'warning' :
-                 row.priority === '中' ? 'primary' : 'info'"
-          size="small"
-        >
-          {{ row.priority }}
+      <template #totalEntry="{ row }">
+        <el-tag type="info" size="small">
+          {{ row.totalEntry?.toLocaleString() }}
         </el-tag>
       </template>
-      <template #progress="{ row }">
-        <div v-if="row.currentProgress && row.currentProgress !== '待处理'">
-          <el-progress
-            :percentage="parseInt(row.currentProgress)"
-            :show-text="false"
-            :stroke-width="6"
-          />
-          <span style="font-size: 12px;">{{ row.currentProgress }}</span>
-        </div>
-        <span v-else>{{ row.currentProgress || '-' }}</span>
+      <template #totalIncome="{ row }">
+        <el-tag type="success" size="small">
+          ¥{{ row.totalIncome?.toLocaleString() }}
+        </el-tag>
       </template>
-      <template #taskStatus="{ row }">
+      <template #faultDisposalRate="{ row }">
         <el-tag
-          :type="row.taskStatus === '待处理' ? 'info' :
-                 row.taskStatus === '处理中' ? 'primary' :
-                 row.taskStatus === '已完成' ? 'success' :
-                 row.taskStatus === '已撤回' ? 'danger' : 'warning'"
+          :type="parseFloat(row.faultDisposalRate) > 95 ? 'success' :
+                 parseFloat(row.faultDisposalRate) > 90 ? 'primary' :
+                 parseFloat(row.faultDisposalRate) > 85 ? 'warning' : 'danger'"
           size="small"
         >
-          {{ row.taskStatus }}
+          {{ row.faultDisposalRate }}
+        </el-tag>
+      </template>
+      <template #alarmDisposalRate="{ row }">
+        <el-tag
+          :type="parseFloat(row.alarmDisposalRate) > 96 ? 'success' :
+                 parseFloat(row.alarmDisposalRate) > 93 ? 'primary' :
+                 parseFloat(row.alarmDisposalRate) > 90 ? 'warning' : 'danger'"
+          size="small"
+        >
+          {{ row.alarmDisposalRate }}
+        </el-tag>
+      </template>
+      <template #yoyGrowthRate="{ row }">
+        <el-tag
+          :type="parseFloat(row.yoyGrowthRate) > 10 ? 'success' :
+                 parseFloat(row.yoyGrowthRate) > 5 ? 'primary' :
+                 parseFloat(row.yoyGrowthRate) > 0 ? 'warning' : 'danger'"
+          size="small"
+        >
+          {{ row.yoyGrowthRate }}
+        </el-tag>
+      </template>
+      <template #momGrowthRate="{ row }">
+        <el-tag
+          :type="parseFloat(row.momGrowthRate) > 8 ? 'success' :
+                 parseFloat(row.momGrowthRate) > 4 ? 'primary' :
+                 parseFloat(row.momGrowthRate) > 0 ? 'warning' : 'danger'"
+          size="small"
+        >
+          {{ row.momGrowthRate }}
         </el-tag>
       </template>
       <template #actions="{ row }">
@@ -424,32 +436,27 @@ const taskDetailDrawerRef = ref(null);
             @click="handleOpenDetail(row)"
           />
           <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
+            content="导出"
+            icon-name="download"
+            @click="handleExportRow(row)"
           />
         </div>
       </template>
       <template #bottom>
         <div class="common-total" @click="changeTotalShow">
-          <el-icon class="tabel-tab-icon" v-if="!taskObj.totalShow">
+          <el-icon class="tabel-tab-icon" v-if="!reportObj.totalShow">
             <ArrowDown />
           </el-icon>
-          <el-icon class="tabel-tab-icon" v-if="taskObj.totalShow">
+          <el-icon class="tabel-tab-icon" v-if="reportObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：任务数量{{ taskObj.list.length }};
-            待处理: {{ taskObj.list.filter(v => v.taskStatus === '待处理').length }};
-            处理中: {{ taskObj.list.filter(v => v.taskStatus === '处理中').length }};
+          <span> 本页统计：数据量{{ reportObj.list.length }};
+            总入场车次: {{ reportObj.list.reduce((sum, v) => sum + v.totalEntry, 0).toLocaleString() }};
+            总收费金额: ¥{{ reportObj.list.reduce((sum, v) => sum + v.totalIncome, 0).toLocaleString() }};
+            平均泊位利用率: {{ (reportObj.list.reduce((sum, v) => sum + parseFloat(v.avgBerthUtilization), 0) / reportObj.list.length).toFixed(1) }}%;
             </span>
         </div>
-        <div class="common-total-bottom" v-if="taskObj.totalShow">
+        <div class="common-total-bottom" v-if="reportObj.totalShow">
           <span> 全部统计：{{ textObj.total }} </span>
         </div>
       </template>
