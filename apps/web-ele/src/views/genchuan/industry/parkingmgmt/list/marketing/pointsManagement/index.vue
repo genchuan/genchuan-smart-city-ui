@@ -1,14 +1,19 @@
 <script setup>
-import { computed, ref } from 'vue';
-
+import { ref, computed } from 'vue';
 import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
 
 import StatsVisualization from '#/components/stats/StatsVisualization.vue';
-// 导入获取统计数据的函数
-import { getStatsDataByTabName } from '#/views/genchuan/industry/parkingmgmt/list/operation/walletManage/table/data.js';
-import Table from '#/views/genchuan/industry/parkingmgmt/list/operation/walletManage/table/index.vue';
+import Table from './table/index.vue';
+import { getStatsDataByTab } from './table/data';
 
 import '#/components/page/index.scss';
+
+const changeArrowStatus = () => {
+  secondShow.value = !secondShow.value;
+  tabArray.value.forEach((v) => {
+    v.secondShow = secondShow.value;
+  });
+};
 
 // 控制统计组件显示/隐藏的状态
 const showStats = ref(false);
@@ -18,53 +23,49 @@ const toggleStats = () => {
   showStats.value = !showStats.value;
 };
 
-// 当前选中的标签页名称
-const activeTabName = ref('充值订单');
-
-// 监听标签页切换，更新当前标签页名称
-const tabChange = (tabName) => {
-  activeTabName.value = tabName;
-};
-
-// 根据当前标签页获取统计数据
-const statsData = computed(() => {
-  return getStatsDataByTabName(activeTabName.value);
-});
-
-const changeArrowStatus = () => {
-  secondShow.value = !secondShow.value;
-  tabArray.value.forEach((v) => {
-    v.secondShow = secondShow.value;
-  });
-};
 const tabArray = ref([
   {
-    label: '充值订单',
+    label: '积分规则',
     components: Table,
     showSecondary: true,
     secondShow: false,
   },
   {
-    label: '充值记录',
+    label: '用户积分查询',
     components: Table,
     showSecondary: true,
     secondShow: false,
   },
   {
-    label: '充值优惠管理',
+    label: '积分兑换管理',
     components: Table,
     showSecondary: true,
     secondShow: false,
   },
   {
-    label: '储值卡管理',
+    label: '人工积分导入',
     components: Table,
     showSecondary: true,
     secondShow: false,
   },
 ]);
-const activeName = ref('充值订单');
+const activeName = ref('积分规则');
 const secondShow = ref(false);
+
+// 当前选中的标签页
+const currentTab = computed(() => {
+  return activeName.value;
+});
+
+// 获取当前标签页的统计数据
+const statsData = computed(() => {
+  return getStatsDataByTab(activeName.value);
+});
+
+// 监听标签页切换，更新当前标签页
+const tabChange = (tabName) => {
+  activeName.value = tabName;
+};
 </script>
 <template>
   <div class="common-index">
@@ -105,7 +106,7 @@ const secondShow = ref(false);
         <component
           :is="item.components"
           :second-show="item.secondShow"
-          :tab-name="item.label"
+          :active-tab="item.label"
           :show-stats="showStats"
           :toggle-stats="toggleStats"
           :key="item.label"
