@@ -1,10 +1,8 @@
 <!-- detail.vue -->
 <script setup>
-import { defineProps, toRefs, reactive } from 'vue';
+import { defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
-import Columnar from '#/components/stats/columnar.vue';
-import Line from '#/components/stats/line.vue';
 
 // 定义组件接收的属性
 const props = defineProps({
@@ -22,22 +20,6 @@ const props = defineProps({
 });
 
 const { detailObj, title } = toRefs(props);
-
-// 模拟周转率趋势数据
-const turnoverTrend = reactive({
-  xData: ['2026-02-01', '2026-02-02', '2026-02-03', '2026-02-04', '2026-02-05', '2026-02-06', '2026-02-07'],
-  seriesData: [
-    { name: '周转率', data: [2.3, 2.8, 2.9, 2.7, 2.8, 2.6, 2.5] }
-  ]
-});
-
-// 模拟出场车流时段分布
-const exitTimeDistribution = reactive({
-  xData: ['早高峰(7-9点)', '午间平峰(10-16点)', '晚高峰(17-19点)', '夜间平峰(20-6点)'],
-  seriesData: [
-    { name: '出场车流', data: [detailObj.value?.peakMorningExit || 0, 450, detailObj.value?.peakEveningExit || 0, 300] }
-  ]
-});
 
 // 初始化抽屉实例
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
@@ -90,10 +72,10 @@ defineExpose({
         <div class="detail-row-left">停留时长:</div>
         <div class="detail-row-right">
           <el-tag
-            :type="detailObj.stayDuration === '1小时内' ? 'success' :
-                   detailObj.stayDuration === '1-3小时' ? 'primary' :
-                   detailObj.stayDuration === '3-6小时' ? 'warning' :
-                   detailObj.stayDuration === '6-12小时' ? 'info' : 'danger'"
+            :type="detailObj.stayDuration === '0.5-1小时' ? 'success' :
+                   detailObj.stayDuration === '1-2小时' ? 'primary' :
+                   detailObj.stayDuration === '2-4小时' ? 'warning' :
+                   detailObj.stayDuration === '4-8小时' ? 'info' : 'danger'"
             size="small"
           >
             {{ detailObj.stayDuration }}
@@ -119,7 +101,7 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">总出场数:</div>
         <div class="detail-row-right">
-          <el-tag type="success" size="small">
+          <el-tag type="info" size="small">
             {{ detailObj.totalExit }}
           </el-tag>
         </div>
@@ -127,9 +109,17 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">车流周转率:</div>
         <div class="detail-row-right">
-          <el-tag type="info" size="small">
-            {{ detailObj.turnoverRate }}
-          </el-tag>
+          <el-progress
+            :percentage="detailObj.turnoverRate * 100"
+            :color="detailObj.turnoverRate > 0.8 ? '#67C23A' :
+                   detailObj.turnoverRate > 0.6 ? '#E6A23C' : '#F56C6C'"
+            :show-text="false"
+            style="width: 200px; display: inline-block; margin-right: 10px;"
+          />
+          <span :style="{ color: detailObj.turnoverRate > 0.8 ? '#67C23A' :
+                               detailObj.turnoverRate > 0.6 ? '#E6A23C' : '#F56C6C' }">
+            {{ (detailObj.turnoverRate * 100).toFixed(1) }}%
+          </span>
         </div>
       </div>
       <div class="detail-card-row">
@@ -139,24 +129,6 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">操作人:</div>
         <div class="detail-row-right">{{ detailObj.operator }}</div>
-      </div>
-
-      <!-- 出场车流时段分布图表 -->
-      <div class="detail-card-chart">
-        <h4 class="chart-title">当日出场车流时段分布</h4>
-        <Columnar
-          :x-data="exitTimeDistribution.xData"
-          :series-data="exitTimeDistribution.seriesData"
-        />
-      </div>
-
-      <!-- 近7天周转率趋势图表 -->
-      <div class="detail-card-chart">
-        <h4 class="chart-title">近7天车流周转率趋势</h4>
-        <Line
-          :x-data="turnoverTrend.xData"
-          :series-data="turnoverTrend.seriesData"
-        />
       </div>
     </div>
   </DetailDrawer>
@@ -174,7 +146,7 @@ defineExpose({
 // 每行的布局
 .detail-card-row {
   display: flex;
-  align-items: flex-start; // 顶部对齐，适配多行文本
+  align-items: center; // 居中对齐
   padding: 12px 0;
   border-bottom: 1px solid #f0f0f0; // 分隔线增强可读性
 
@@ -218,20 +190,6 @@ defineExpose({
   &:empty::before {
     content: '-';
     color: #c0c4cc;
-  }
-}
-
-// 图表区域样式
-.detail-card-chart {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #f0f0f0;
-
-  .chart-title {
-    font-size: 14px;
-    font-weight: 500;
-    color: #606266;
-    margin-bottom: 10px;
   }
 }
 

@@ -189,10 +189,12 @@ const getTableData = (pageObj) => {
     filteredList = reportObj.apilist.filter(v => v.parkType === '商业停车场');
   } else if (activeName.value === '路侧停车') {
     filteredList = reportObj.apilist.filter(v => v.parkType === '路侧停车');
-  } else if (activeName.value === '1小时内') {
-    filteredList = reportObj.apilist.filter(v => v.stayDuration === '1小时内');
-  } else if (activeName.value === '1-3小时') {
-    filteredList = reportObj.apilist.filter(v => v.stayDuration === '1-3小时');
+  } else if (activeName.value === '0.5-1小时') {
+    filteredList = reportObj.apilist.filter(v => v.stayDuration === '0.5-1小时');
+  } else if (activeName.value === '1-2小时') {
+    filteredList = reportObj.apilist.filter(v => v.stayDuration === '1-2小时');
+  } else if (activeName.value === '2-4小时') {
+    filteredList = reportObj.apilist.filter(v => v.stayDuration === '2-4小时');
   }
 
   reportObj.total = filteredList.length;
@@ -276,10 +278,10 @@ const handleOpenDetail = (row) => {
   console.log(row);
 };
 
-// 查看图表页面（停留时长分布对比）
-const handleViewChart = (row) => {
-  // 跳转到图表页面，传递参数
-  window.open(`/report/park/traffic/exit/chart?area=${row.areaName}&type=${row.parkType}`, '_blank');
+// 查看停留时长分布对比
+const handleViewDuration = (row) => {
+  // 这里可以跳转到停留时长分布页面
+  window.open(`/chart/stay-duration?area=${row.areaName}&type=${row.parkType}`, '_blank');
 };
 
 const tabsData = ref([
@@ -287,8 +289,9 @@ const tabsData = ref([
   { label: '本周数据' },
   { label: '商业停车场' },
   { label: '路侧停车' },
-  { label: '1小时内' },
-  { label: '1-3小时' },
+  { label: '0.5-1小时' },
+  { label: '1-2小时' },
+  { label: '2-4小时' },
   { label: '全部数据' },
 ]);
 
@@ -307,10 +310,12 @@ const createLabel = (item) => {
     count = reportObj.apilist.filter((v) => v.parkType === '商业停车场').length;
   } else if (item.label === '路侧停车') {
     count = reportObj.apilist.filter((v) => v.parkType === '路侧停车').length;
-  } else if (item.label === '1小时内') {
-    count = reportObj.apilist.filter((v) => v.stayDuration === '1小时内').length;
-  } else if (item.label === '1-3小时') {
-    count = reportObj.apilist.filter((v) => v.stayDuration === '1-3小时').length;
+  } else if (item.label === '0.5-1小时') {
+    count = reportObj.apilist.filter((v) => v.stayDuration === '0.5-1小时').length;
+  } else if (item.label === '1-2小时') {
+    count = reportObj.apilist.filter((v) => v.stayDuration === '1-2小时').length;
+  } else if (item.label === '2-4小时') {
+    count = reportObj.apilist.filter((v) => v.stayDuration === '2-4小时').length;
   } else if (item.label === '全部数据') {
     count = reportObj.apilist.length;
   }
@@ -423,14 +428,22 @@ const trafficDetailDrawerRef = ref(null);
         </el-tag>
       </template>
       <template #totalExit="{ row }">
-        <el-tag type="success" size="small">
+        <el-tag type="info" size="small">
           {{ row.totalExit }}
         </el-tag>
       </template>
       <template #turnoverRate="{ row }">
-        <el-tag type="info" size="small">
-          {{ row.turnoverRate }}
-        </el-tag>
+        <el-progress
+          :percentage="row.turnoverRate * 100"
+          :color="row.turnoverRate > 0.8 ? '#67C23A' :
+                 row.turnoverRate > 0.6 ? '#E6A23C' : '#F56C6C'"
+          :show-text="false"
+          style="width: 100px; display: inline-block; margin-right: 10px;"
+        />
+        <span :style="{ color: row.turnoverRate > 0.8 ? '#67C23A' :
+                         row.turnoverRate > 0.6 ? '#E6A23C' : '#F56C6C' }">
+          {{ (row.turnoverRate * 100).toFixed(1) }}%
+        </span>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
@@ -441,8 +454,8 @@ const trafficDetailDrawerRef = ref(null);
           />
           <IconButton
             content="查看"
-            icon-name="Chart"
-            @click="handleViewChart(row)"
+            icon-name="PieChart"
+            @click="handleViewDuration(row)"
           />
         </div>
       </template>
@@ -458,6 +471,7 @@ const trafficDetailDrawerRef = ref(null);
             总出场数: {{ reportObj.list.reduce((sum, v) => sum + v.totalExit, 0) }};
             早高峰出场: {{ reportObj.list.reduce((sum, v) => sum + v.peakMorningExit, 0) }};
             晚高峰出场: {{ reportObj.list.reduce((sum, v) => sum + v.peakEveningExit, 0) }};
+            平均周转率: {{ (reportObj.list.reduce((sum, v) => sum + v.turnoverRate, 0) / reportObj.list.length * 100).toFixed(1) }}%;
             </span>
         </div>
         <div class="common-total-bottom" v-if="reportObj.totalShow">
