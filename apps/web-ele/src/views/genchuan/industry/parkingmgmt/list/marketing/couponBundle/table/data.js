@@ -1,4 +1,4 @@
-import {maskPhone} from "#/utils/dataMask/index.js";
+import { maskPhone } from '#/utils/dataMask/index.js';
 
 /** 券包表格初始数据 - 按指定字段生成 */
 export const dataList = () => {
@@ -14,7 +14,7 @@ export const dataList = () => {
       status: '上架',
       createTime: '2025-01-10 09:20:30',
       soldCount: 500,
-      remainingCount: 500
+      remainingCount: 500,
     },
     {
       packageId: 'PB002',
@@ -27,7 +27,7 @@ export const dataList = () => {
       status: '上架',
       createTime: '2025-01-12 14:15:20',
       soldCount: 1200,
-      remainingCount: 800
+      remainingCount: 800,
     },
     {
       packageId: 'PB003',
@@ -40,7 +40,7 @@ export const dataList = () => {
       status: '下架',
       createTime: '2025-01-15 10:05:10',
       soldCount: 300,
-      remainingCount: 200
+      remainingCount: 200,
     },
     {
       packageId: 'PB004',
@@ -53,7 +53,7 @@ export const dataList = () => {
       status: '上架',
       createTime: '2025-01-18 08:30:45',
       soldCount: 3500,
-      remainingCount: 1500
+      remainingCount: 1500,
     },
     {
       packageId: 'PB005',
@@ -66,7 +66,7 @@ export const dataList = () => {
       status: '上架',
       createTime: '2025-01-20 16:40:15',
       soldCount: 800,
-      remainingCount: 700
+      remainingCount: 700,
     },
     {
       packageId: 'PB006',
@@ -79,7 +79,7 @@ export const dataList = () => {
       status: '上架',
       createTime: '2025-01-22 11:10:30',
       soldCount: 1800,
-      remainingCount: 1200
+      remainingCount: 1200,
     },
     {
       packageId: 'PB007',
@@ -92,7 +92,7 @@ export const dataList = () => {
       status: '下架',
       createTime: '2025-01-25 13:25:40',
       soldCount: 150,
-      remainingCount: 150
+      remainingCount: 150,
     },
     {
       packageId: 'PB008',
@@ -105,7 +105,7 @@ export const dataList = () => {
       status: '上架',
       createTime: '2025-01-28 09:50:25',
       soldCount: 1300,
-      remainingCount: 1200
+      remainingCount: 1200,
     },
     {
       packageId: 'PB009',
@@ -118,7 +118,7 @@ export const dataList = () => {
       status: '上架',
       createTime: '2025-02-01 15:15:10',
       soldCount: 600,
-      remainingCount: 400
+      remainingCount: 400,
     },
     {
       packageId: 'PB010',
@@ -131,7 +131,7 @@ export const dataList = () => {
       status: '上架',
       createTime: '2025-02-05 10:30:50',
       soldCount: 900,
-      remainingCount: 600
+      remainingCount: 600,
     },
     {
       packageId: 'PB011',
@@ -144,7 +144,7 @@ export const dataList = () => {
       status: '下架',
       createTime: '2025-02-08 14:20:15',
       soldCount: 400,
-      remainingCount: 400
+      remainingCount: 400,
     },
     {
       packageId: 'PB012',
@@ -157,8 +157,8 @@ export const dataList = () => {
       status: '上架',
       createTime: '2025-02-10 09:40:30',
       soldCount: 1200,
-      remainingCount: 800
-    }
+      remainingCount: 800,
+    },
   ];
 };
 
@@ -174,7 +174,7 @@ export const releaseDataList = () => {
       releaseTime: '2025-01-10 09:20:30',
       receiveCount: 850,
       receiveRate: '85%',
-      releaseStatus: '已完成'
+      releaseStatus: '已完成',
     },
     {
       releaseId: 'RL002',
@@ -185,7 +185,7 @@ export const releaseDataList = () => {
       releaseTime: '2025-01-12 14:15:20',
       receiveCount: 1600,
       receiveRate: '80%',
-      releaseStatus: '已完成'
+      releaseStatus: '已完成',
     },
     {
       releaseId: 'RL003',
@@ -196,7 +196,7 @@ export const releaseDataList = () => {
       releaseTime: '2025-01-15 10:05:10',
       receiveCount: 4200,
       receiveRate: '84%',
-      releaseStatus: '已完成'
+      releaseStatus: '已完成',
     },
     {
       releaseId: 'RL004',
@@ -207,7 +207,7 @@ export const releaseDataList = () => {
       releaseTime: '2025-01-18 08:30:45',
       receiveCount: 1200,
       receiveRate: '80%',
-      releaseStatus: '已完成'
+      releaseStatus: '已完成',
     },
     {
       releaseId: 'RL005',
@@ -218,7 +218,7 @@ export const releaseDataList = () => {
       releaseTime: '2025-01-20 16:40:15',
       receiveCount: 2500,
       receiveRate: '83.3%',
-      releaseStatus: '已完成'
+      releaseStatus: '已完成',
     },
     {
       releaseId: 'RL006',
@@ -229,7 +229,7 @@ export const releaseDataList = () => {
       releaseTime: '2025-01-22 11:10:30',
       receiveCount: 1800,
       receiveRate: '72%',
-      releaseStatus: '已完成'
+      releaseStatus: '已完成',
     },
     {
       releaseId: 'RL007',
@@ -240,7 +240,7 @@ export const releaseDataList = () => {
       releaseTime: '2025-01-25 13:25:40',
       receiveCount: 850,
       receiveRate: '85%',
-      releaseStatus: '已完成'
+      releaseStatus: '已完成',
     },
     {
       releaseId: 'RL008',
@@ -251,7 +251,7 @@ export const releaseDataList = () => {
       releaseTime: '2025-01-28 09:50:25',
       receiveCount: 1300,
       receiveRate: '86.7%',
-      releaseStatus: '已完成'
+      releaseStatus: '已完成',
     },
     {
       releaseId: 'RL009',
@@ -262,7 +262,7 @@ export const releaseDataList = () => {
       releaseTime: '2025-02-01 15:15:10',
       receiveCount: 1700,
       receiveRate: '85%',
-      releaseStatus: '已完成'
+      releaseStatus: '已完成',
     },
     {
       releaseId: 'RL010',
@@ -273,7 +273,7 @@ export const releaseDataList = () => {
       releaseTime: '2025-02-05 10:30:50',
       receiveCount: 800,
       receiveRate: '80%',
-      releaseStatus: '进行中'
+      releaseStatus: '进行中',
     },
     {
       releaseId: 'RL011',
@@ -284,7 +284,7 @@ export const releaseDataList = () => {
       releaseTime: '2025-02-08 14:20:15',
       receiveCount: 600,
       receiveRate: '40%',
-      releaseStatus: '进行中'
+      releaseStatus: '进行中',
     },
     {
       releaseId: 'RL012',
@@ -295,8 +295,8 @@ export const releaseDataList = () => {
       releaseTime: '2025-02-10 09:40:30',
       receiveCount: 0,
       receiveRate: '0%',
-      releaseStatus: '未开始'
-    }
+      releaseStatus: '未开始',
+    },
   ];
 };
 
@@ -310,16 +310,16 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入券包ID',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'packageName',
       label: '券包名称',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入券包名称'
+        placeholder: '请输入券包名称',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'salePrice',
@@ -327,27 +327,27 @@ export function useFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入售价',
-        min: 0
+        min: 0,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'couponName',
       label: '包含优惠券',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入包含优惠券'
+        placeholder: '请输入包含优惠券',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'applyScope',
       label: '适用范围',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入适用范围'
+        placeholder: '请输入适用范围',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'validDays',
@@ -355,9 +355,9 @@ export function useFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入有效天数',
-        min: 1
+        min: 1,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'saleLimit',
@@ -365,9 +365,9 @@ export function useFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入售卖数量上限',
-        min: 1
+        min: 1,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'status',
@@ -377,10 +377,10 @@ export function useFormSchema() {
         placeholder: '请选择状态',
         options: [
           { label: '上架', value: '上架' },
-          { label: '下架', value: '下架' }
-        ]
+          { label: '下架', value: '下架' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'createTime',
@@ -389,9 +389,9 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择创建时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'soldCount',
@@ -399,9 +399,9 @@ export function useFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入已售数量',
-        min: 0
+        min: 0,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'remainingCount',
@@ -409,10 +409,10 @@ export function useFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入剩余数量',
-        min: 0
+        min: 0,
       },
-      rules: 'required'
-    }
+      rules: 'required',
+    },
   ];
 }
 
@@ -426,7 +426,7 @@ export function useReleaseFormSchema() {
       componentProps: {
         placeholder: '请输入发放ID',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'packageSelection',
@@ -446,10 +446,10 @@ export function useReleaseFormSchema() {
           { label: '商务出行包', value: '商务出行包' },
           { label: '学生专享包', value: '学生专享包' },
           { label: '家庭套餐', value: '家庭套餐' },
-          { label: '会员专享包', value: '会员专享包' }
-        ]
+          { label: '会员专享包', value: '会员专享包' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'targetedUserTag',
@@ -467,10 +467,10 @@ export function useReleaseFormSchema() {
           { label: '学生用户', value: '学生用户' },
           { label: '家庭用户', value: '家庭用户' },
           { label: '年轻用户', value: '年轻用户' },
-          { label: '会员用户', value: '会员用户' }
-        ]
+          { label: '会员用户', value: '会员用户' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'releaseCount',
@@ -478,9 +478,9 @@ export function useReleaseFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入发放数量',
-        min: 1
+        min: 1,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'releaseWay',
@@ -491,10 +491,10 @@ export function useReleaseFormSchema() {
         options: [
           { label: '短信', value: '短信' },
           { label: 'APP推送', value: 'APP推送' },
-          { label: '短信+APP推送', value: '短信+APP推送' }
-        ]
+          { label: '短信+APP推送', value: '短信+APP推送' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'releaseTime',
@@ -503,9 +503,9 @@ export function useReleaseFormSchema() {
       componentProps: {
         placeholder: '请选择发放时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'receiveCount',
@@ -513,18 +513,18 @@ export function useReleaseFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入领取数量',
-        min: 0
+        min: 0,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'receiveRate',
       label: '领取率',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入领取率'
+        placeholder: '请输入领取率',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'releaseStatus',
@@ -536,11 +536,11 @@ export function useReleaseFormSchema() {
           { label: '未开始', value: '未开始' },
           { label: '进行中', value: '进行中' },
           { label: '已完成', value: '已完成' },
-          { label: '已暂停', value: '已暂停' }
-        ]
+          { label: '已暂停', value: '已暂停' },
+        ],
       },
-      rules: 'required'
-    }
+      rules: 'required',
+    },
   ];
 }
 
@@ -553,78 +553,78 @@ export function useGridColumns() {
       title: '券包ID',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'id' }
+      slots: { default: 'id' },
     },
     {
       field: 'packageName',
       title: '券包名称',
       minWidth: 150,
       sortable: true,
-      slots: { default: 'packageName' }
+      slots: { default: 'packageName' },
     },
     {
       field: 'salePrice',
       title: '售价',
       minWidth: 80,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'couponName',
       title: '包含优惠券',
       minWidth: 200,
       sortable: true,
-      slots: { default: 'couponName' }
+      slots: { default: 'couponName' },
     },
     {
       field: 'applyScope',
       title: '适用范围',
       minWidth: 150,
       sortable: true,
-      slots: { default: 'applyScope' }
+      slots: { default: 'applyScope' },
     },
     {
       field: 'validDays',
       title: '有效天数',
       minWidth: 80,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'saleLimit',
       title: '售卖数量上限',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'status',
       title: '状态',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'status' }
+      slots: { default: 'status' },
     },
     {
       field: 'createTime',
       title: '创建时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'soldCount',
       title: '已售数量',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'remainingCount',
       title: '剩余数量',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       title: '操作',
       width: 100,
       fixed: 'right',
-      slots: { default: 'actions' }
-    }
+      slots: { default: 'actions' },
+    },
   ];
 }
 
@@ -637,66 +637,66 @@ export function useReleaseGridColumns() {
       title: '发放ID',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'id' }
+      slots: { default: 'id' },
     },
     {
       field: 'packageSelection',
       title: '券包选择',
       minWidth: 150,
       sortable: true,
-      slots: { default: 'packageSelection' }
+      slots: { default: 'packageSelection' },
     },
     {
       field: 'targetedUserTag',
       title: '定向用户标签',
       minWidth: 150,
       sortable: true,
-      slots: { default: 'targetedUserTag' }
+      slots: { default: 'targetedUserTag' },
     },
     {
       field: 'releaseCount',
       title: '发放数量',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'releaseWay',
       title: '发放方式',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'releaseWay' }
+      slots: { default: 'releaseWay' },
     },
     {
       field: 'releaseTime',
       title: '发放时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'receiveCount',
       title: '领取数量',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'receiveRate',
       title: '领取率',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'releaseStatus',
       title: '发放状态',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'status' }
+      slots: { default: 'status' },
     },
     {
       title: '操作',
       width: 120,
       fixed: 'right',
-      slots: { default: 'actions' }
-    }
+      slots: { default: 'actions' },
+    },
   ];
 }
 
@@ -710,9 +710,8 @@ export const releaseDetailFields = [
   { key: 'releaseTime', label: '发放时间' },
   { key: 'receiveCount', label: '领取数量' },
   { key: 'receiveRate', label: '领取率' },
-  { key: 'releaseStatus', label: '发放状态' }
+  { key: 'releaseStatus', label: '发放状态' },
 ];
-
 
 export const textObj = {
   // 操作类文本（对应编辑/新增）
@@ -748,7 +747,7 @@ export const useDataList = () => {
       useTime: '2025-01-15 10:30:45',
       useStatus: '已使用',
       lotName: '中央商务区停车场',
-      deductAmount: 20
+      deductAmount: 20,
     },
     {
       useId: 'UR002',
@@ -759,7 +758,7 @@ export const useDataList = () => {
       useTime: '2025-01-16 14:20:15',
       useStatus: '已使用',
       lotName: '西湖景区停车场',
-      deductAmount: 10
+      deductAmount: 10,
     },
     {
       useId: 'UR003',
@@ -770,7 +769,7 @@ export const useDataList = () => {
       useTime: '2025-01-17 09:15:30',
       useStatus: '已使用',
       lotName: '高铁站停车场',
-      deductAmount: 15
+      deductAmount: 15,
     },
     {
       useId: 'UR004',
@@ -781,7 +780,7 @@ export const useDataList = () => {
       useTime: '2025-01-18 18:45:20',
       useStatus: '已使用',
       lotName: '科技园停车场',
-      deductAmount: 40
+      deductAmount: 40,
     },
     {
       useId: 'UR005',
@@ -792,7 +791,7 @@ export const useDataList = () => {
       useTime: '2025-01-19 11:30:10',
       useStatus: '已使用',
       lotName: '主题公园停车场',
-      deductAmount: 20
+      deductAmount: 20,
     },
     {
       useId: 'UR006',
@@ -803,7 +802,7 @@ export const useDataList = () => {
       useTime: '2025-01-20 20:15:45',
       useStatus: '已使用',
       lotName: '市中心停车场',
-      deductAmount: 15
+      deductAmount: 15,
     },
     {
       useId: 'UR007',
@@ -814,7 +813,7 @@ export const useDataList = () => {
       useTime: '2025-01-21 16:20:30',
       useStatus: '已使用',
       lotName: '商务中心停车场',
-      deductAmount: 30
+      deductAmount: 30,
     },
     {
       useId: 'UR008',
@@ -825,7 +824,7 @@ export const useDataList = () => {
       useTime: '2025-01-22 14:10:20',
       useStatus: '已使用',
       lotName: '大学城停车场',
-      deductAmount: 12
+      deductAmount: 12,
     },
     {
       useId: 'UR009',
@@ -836,7 +835,7 @@ export const useDataList = () => {
       useTime: '2025-01-23 10:45:15',
       useStatus: '已使用',
       lotName: '购物中心停车场',
-      deductAmount: 22
+      deductAmount: 22,
     },
     {
       useId: 'UR010',
@@ -847,7 +846,7 @@ export const useDataList = () => {
       useTime: '2025-01-24 15:30:40',
       useStatus: '已使用',
       lotName: '机场停车场',
-      deductAmount: 50
+      deductAmount: 50,
     },
     {
       useId: 'UR011',
@@ -858,7 +857,7 @@ export const useDataList = () => {
       useTime: '2025-01-25 12:15:25',
       useStatus: '已使用',
       lotName: '景区停车场',
-      deductAmount: 25
+      deductAmount: 25,
     },
     {
       useId: 'UR012',
@@ -869,7 +868,7 @@ export const useDataList = () => {
       useTime: '2025-01-26 08:50:10',
       useStatus: '已使用',
       lotName: '地铁站停车场',
-      deductAmount: 25
+      deductAmount: 25,
     },
     {
       useId: 'UR013',
@@ -880,8 +879,8 @@ export const useDataList = () => {
       useTime: '2025-01-27 19:20:35',
       useStatus: '已使用',
       lotName: '办公区停车场',
-      deductAmount: 75
-    }
+      deductAmount: 75,
+    },
   ];
 };
 
@@ -895,43 +894,43 @@ export function useUseFormSchema() {
       componentProps: {
         placeholder: '请输入使用记录ID',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'packageName',
       label: '券包名称',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入券包名称'
+        placeholder: '请输入券包名称',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'userPhone',
       label: '用户手机号',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入用户手机号'
+        placeholder: '请输入用户手机号',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'userName',
       label: '用户姓名',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入用户姓名'
+        placeholder: '请输入用户姓名',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'couponName',
       label: '优惠券名称',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入优惠券名称'
+        placeholder: '请输入优惠券名称',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'useTime',
@@ -940,9 +939,9 @@ export function useUseFormSchema() {
       componentProps: {
         placeholder: '请选择使用时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'useStatus',
@@ -953,19 +952,19 @@ export function useUseFormSchema() {
         options: [
           { label: '已使用', value: '已使用' },
           { label: '未使用', value: '未使用' },
-          { label: '已过期', value: '已过期' }
-        ]
+          { label: '已过期', value: '已过期' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'lotName',
       label: '使用车场',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入使用车场'
+        placeholder: '请输入使用车场',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'deductAmount',
@@ -973,10 +972,10 @@ export function useUseFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入抵扣金额',
-        min: 0
+        min: 0,
       },
-      rules: 'required'
-    }
+      rules: 'required',
+    },
   ];
 }
 
@@ -989,14 +988,14 @@ export function useUseGridColumns() {
       title: '使用记录ID',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'id' }
+      slots: { default: 'id' },
     },
     {
       field: 'packageName',
       title: '券包名称',
       minWidth: 150,
       sortable: true,
-      slots: { default: 'packageName' }
+      slots: { default: 'packageName' },
     },
     {
       field: 'userPhone',
@@ -1011,46 +1010,46 @@ export function useUseGridColumns() {
       field: 'userName',
       title: '用户姓名',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'couponName',
       title: '优惠券名称',
       minWidth: 150,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'useTime',
       title: '使用时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'useStatus',
       title: '使用状态',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'status' }
+      slots: { default: 'status' },
     },
     {
       field: 'lotName',
       title: '使用车场',
       minWidth: 150,
       sortable: true,
-      slots: { default: 'lotName' }
+      slots: { default: 'lotName' },
     },
     {
       field: 'deductAmount',
       title: '抵扣金额',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       title: '操作',
       width: 120,
       fixed: 'right',
-      slots: { default: 'actions' }
-    }
+      slots: { default: 'actions' },
+    },
   ];
 }
 
@@ -1064,7 +1063,7 @@ export const useDetailFields = [
   { key: 'useTime', label: '使用时间' },
   { key: 'useStatus', label: '使用状态' },
   { key: 'lotName', label: '使用车场' },
-  { key: 'deductAmount', label: '抵扣金额' }
+  { key: 'deductAmount', label: '抵扣金额' },
 ];
 
 /** 详情抽屉字段配置 */
@@ -1079,7 +1078,7 @@ export const detailFields = [
   { key: 'status', label: '状态' },
   { key: 'createTime', label: '创建时间' },
   { key: 'soldCount', label: '已售数量' },
-  { key: 'remainingCount', label: '剩余数量' }
+  { key: 'remainingCount', label: '剩余数量' },
 ];
 
 export const useTextObj = {
@@ -1101,42 +1100,42 @@ export const receiveUserList = (releaseId) => {
       userName: '张三',
       userPhone: '13800138001',
       receiveTime: '2025-01-15 10:30:45',
-      status: '已领取'
+      status: '已领取',
     },
     {
       userId: 'U002',
       userName: '李四',
       userPhone: '13800138002',
       receiveTime: '2025-01-15 11:20:15',
-      status: '已领取'
+      status: '已领取',
     },
     {
       userId: 'U003',
       userName: '王五',
       userPhone: '13800138003',
       receiveTime: '2025-01-15 12:10:30',
-      status: '已领取'
+      status: '已领取',
     },
     {
       userId: 'U004',
       userName: '赵六',
       userPhone: '13800138004',
       receiveTime: '2025-01-15 13:45:20',
-      status: '已领取'
+      status: '已领取',
     },
     {
       userId: 'U005',
       userName: '孙七',
       userPhone: '13800138005',
       receiveTime: '2025-01-15 14:30:10',
-      status: '已领取'
-    }
+      status: '已领取',
+    },
   ];
 
   // 根据releaseId返回不同的数据，模拟不同发放记录的领取用户
   return baseList.map((item, index) => ({
     ...item,
-    id: `${releaseId}-U${String(index + 1).padStart(3, '0')}`
+    id: `${releaseId}-U${String(index + 1).padStart(3, '0')}`,
   }));
 };
 
@@ -1144,7 +1143,7 @@ export const receiveUserList = (releaseId) => {
 export const orderDetailList = (useId) => {
   return [
     {
-      orderId: `ORD${useId.substring(2)}`,
+      orderId: `ORD${useId.slice(2)}`,
       orderTime: '2025-01-15 10:30:45',
       totalAmount: 100,
       deductAmount: 20,
@@ -1153,8 +1152,7 @@ export const orderDetailList = (useId) => {
       lotName: '中央商务区停车场',
       parkingTime: '2025-01-15 08:30:00',
       leaveTime: '2025-01-15 10:30:00',
-      couponName: '满50减20优惠券'
-    }
+      couponName: '满50减20优惠券',
+    },
   ];
 };
-

@@ -1,16 +1,17 @@
 <script setup>
 import { computed } from 'vue';
+
 import { useVbenDrawer } from '@vben/common-ui';
 
 const props = defineProps({
   userList: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   title: {
     type: String,
-    default: '查看领取用户'
-  }
+    default: '查看领取用户',
+  },
 });
 
 const emit = defineEmits(['close']);
@@ -33,7 +34,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
 // 暴露open方法给父组件
 defineExpose({
   open: drawerApi.open,
-  setData: drawerApi.setData
+  setData: drawerApi.setData,
 });
 </script>
 
@@ -45,8 +46,16 @@ defineExpose({
           <el-table :data="userList" style="width: 100%">
             <el-table-column prop="userId" label="用户ID" min-width="100" />
             <el-table-column prop="userName" label="用户姓名" min-width="100" />
-            <el-table-column prop="userPhone" label="用户手机号" min-width="120" />
-            <el-table-column prop="receiveTime" label="领取时间" min-width="180" />
+            <el-table-column
+              prop="userPhone"
+              label="用户手机号"
+              min-width="120"
+            />
+            <el-table-column
+              prop="receiveTime"
+              label="领取时间"
+              min-width="180"
+            />
             <el-table-column prop="status" label="状态" min-width="80" />
           </el-table>
         </div>

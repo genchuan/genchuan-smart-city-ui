@@ -5,7 +5,7 @@ export const dataList = () => {
       scheduleId: 'SCH001', // 排班ID
       maintainUserId: 'M001', // 运维人员ID
       deptId: 'D001', // 所属部门ID
-      scheduleDate: '2026-01-10', // 排班日期
+      scheduleDate: '2026-02-10', // 排班日期
       shiftType: '早班', // 班次类型
       startTime: '08:00', // 上班时间
       endTime: '16:00', // 下班时间
@@ -23,7 +23,7 @@ export const dataList = () => {
       scheduleId: 'SCH002',
       maintainUserId: 'M002',
       deptId: 'D001',
-      scheduleDate: '2026-01-10',
+      scheduleDate: '2026-02-10',
       shiftType: '中班',
       startTime: '16:00',
       endTime: '24:00',
@@ -41,7 +41,7 @@ export const dataList = () => {
       scheduleId: 'SCH003',
       maintainUserId: 'M003',
       deptId: 'D002',
-      scheduleDate: '2026-01-10',
+      scheduleDate: '2026-02-10',
       shiftType: '晚班',
       startTime: '20:00',
       endTime: '04:00',
@@ -59,7 +59,7 @@ export const dataList = () => {
       scheduleId: 'SCH004',
       maintainUserId: 'M004',
       deptId: 'D002',
-      scheduleDate: '2026-01-11',
+      scheduleDate: '2026-02-11',
       shiftType: '早班',
       startTime: '08:00',
       endTime: '16:00',
@@ -77,7 +77,7 @@ export const dataList = () => {
       scheduleId: 'SCH005',
       maintainUserId: 'M005',
       deptId: 'D003',
-      scheduleDate: '2026-01-11',
+      scheduleDate: '2026-02-11',
       shiftType: '中班',
       startTime: '16:00',
       endTime: '24:00',
@@ -95,7 +95,7 @@ export const dataList = () => {
       scheduleId: 'SCH006',
       maintainUserId: 'M006',
       deptId: 'D003',
-      scheduleDate: '2026-01-11',
+      scheduleDate: '2026-02-11',
       shiftType: '晚班',
       startTime: '20:00',
       endTime: '04:00',
@@ -113,7 +113,7 @@ export const dataList = () => {
       scheduleId: 'SCH007',
       maintainUserId: 'M001',
       deptId: 'D001',
-      scheduleDate: '2026-01-12',
+      scheduleDate: '2026-02-12',
       shiftType: '早班',
       startTime: '08:00',
       endTime: '16:00',
@@ -131,7 +131,7 @@ export const dataList = () => {
       scheduleId: 'SCH008',
       maintainUserId: 'M002',
       deptId: 'D001',
-      scheduleDate: '2026-01-12',
+      scheduleDate: '2026-02-12',
       shiftType: '中班',
       startTime: '16:00',
       endTime: '24:00',
@@ -149,7 +149,7 @@ export const dataList = () => {
       scheduleId: 'SCH009',
       maintainUserId: 'M003',
       deptId: 'D002',
-      scheduleDate: '2026-01-12',
+      scheduleDate: '2026-02-12',
       shiftType: '晚班',
       startTime: '20:00',
       endTime: '04:00',
@@ -167,7 +167,7 @@ export const dataList = () => {
       scheduleId: 'SCH010',
       maintainUserId: 'M004',
       deptId: 'D002',
-      scheduleDate: '2026-01-13',
+      scheduleDate: '2026-02-13',
       shiftType: '早班',
       startTime: '08:00',
       endTime: '16:00',
@@ -185,7 +185,7 @@ export const dataList = () => {
       scheduleId: 'SCH011',
       maintainUserId: 'M005',
       deptId: 'D003',
-      scheduleDate: '2026-01-13',
+      scheduleDate: '2026-02-13',
       shiftType: '中班',
       startTime: '16:00',
       endTime: '24:00',
@@ -203,7 +203,7 @@ export const dataList = () => {
       scheduleId: 'SCH012',
       maintainUserId: 'M006',
       deptId: 'D003',
-      scheduleDate: '2026-01-13',
+      scheduleDate: '2026-02-13',
       shiftType: '晚班',
       startTime: '20:00',
       endTime: '04:00',
@@ -520,7 +520,7 @@ export const getScheduleStatsData = () => {
   // 计算班次类型占比数据
   const shiftTypeStats = {};
   monthlyData.forEach((schedule) => {
-    shiftTypeStats[schedule.shiftType] =
+    shiftTypeStats[schedule.shiftType] = 
       (shiftTypeStats[schedule.shiftType] || 0) + 1;
   });
 

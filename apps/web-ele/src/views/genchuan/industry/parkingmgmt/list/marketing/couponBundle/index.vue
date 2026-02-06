@@ -4,9 +4,9 @@ import { computed, ref } from 'vue';
 import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
 
 import StatsVisualization from '#/components/stats/StatsVisualization.vue';
-import Table from './table/index.vue';
 
 import { dataList, releaseDataList, useDataList } from './table/data';
+import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
 
@@ -59,12 +59,17 @@ const tabChange = (tabName) => {
 
 // 获取当前标签页的统计数据
 const statsData = computed(() => {
-  if (currentTab.value === '券包管理') {
-    return getCouponBundleStats();
-  } else if (currentTab.value === '定向发放管理') {
-    return getTargetedDistributionStats();
-  } else if (currentTab.value === '使用记录') {
-    return getUsageRecordStats();
+  switch (currentTab.value) {
+    case '使用记录': {
+      return getUsageRecordStats();
+    }
+    case '券包管理': {
+      return getCouponBundleStats();
+    }
+    case '定向发放管理': {
+      return getTargetedDistributionStats();
+    }
+    // No default
   }
   return {};
 });
@@ -73,130 +78,143 @@ const statsData = computed(() => {
 function getCouponBundleStats() {
   const data = dataList();
   const totalCount = data.length;
-  const onlineCount = data.filter(item => item.status === '上架').length;
+  const onlineCount = data.filter((item) => item.status === '上架').length;
   const totalSold = data.reduce((sum, item) => sum + item.soldCount, 0);
-  
+
   // 适用范围占比
   const applyScopeMap = {};
-  data.forEach(item => {
+  data.forEach((item) => {
     applyScopeMap[item.applyScope] = (applyScopeMap[item.applyScope] || 0) + 1;
   });
   const applyScopeData = Object.entries(applyScopeMap).map(([name, value]) => ({
     name,
-    value
+    value,
   }));
-  
+
   // 优惠券类型占比
   const couponTypeMap = {};
-  data.forEach(item => {
+  data.forEach((item) => {
     const coupons = item.couponName.split(',');
-    coupons.forEach(coupon => {
+    coupons.forEach((coupon) => {
       const type = coupon.trim().split(' ')[0];
       couponTypeMap[type] = (couponTypeMap[type] || 0) + 1;
     });
   });
   const couponTypeData = Object.entries(couponTypeMap).map(([name, value]) => ({
     name,
-    value
+    value,
   }));
-  
+
   // 各券包销量排名
   const salesRankData = data
-    .map(item => ({
+    .map((item) => ({
       name: item.packageName,
-      value: item.soldCount
+      value: item.soldCount,
     }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 5);
-  
+
   return {
     cards: [
       { title: '券包总数', value: totalCount },
       { title: '上架券包数', value: onlineCount },
-      { title: '已售总数', value: totalSold }
+      { title: '已售总数', value: totalSold },
     ],
     charts: [
       {
         type: 'pie',
         title: '适用范围占比',
-        data: applyScopeData
+        data: applyScopeData,
       },
       {
         type: 'pie',
         title: '优惠券类型占比',
-        data: couponTypeData
+        data: couponTypeData,
       },
       {
         type: 'bar',
         title: '各券包销量排名',
-        xAxis: salesRankData.map(item => item.name),
-        series: salesRankData.map(item => item.value)
-      }
-    ]
+        xAxis: salesRankData.map((item) => item.name),
+        series: salesRankData.map((item) => item.value),
+      },
+    ],
   };
 }
 
 // 定向发放管理统计数据
 function getTargetedDistributionStats() {
   const data = releaseDataList();
-  const totalReleaseCount = data.reduce((sum, item) => sum + item.releaseCount, 0);
-  const successReleaseCount = data.reduce((sum, item) => sum + item.receiveCount, 0);
-  const avgReceiveRate = data.length > 0 
-    ? (data.reduce((sum, item) => sum + parseInt(item.receiveRate), 0) / data.length).toFixed(1) + '%'
-    : '0%';
-  
+  const totalReleaseCount = data.reduce(
+    (sum, item) => sum + item.releaseCount,
+    0,
+  );
+  const successReleaseCount = data.reduce(
+    (sum, item) => sum + item.receiveCount,
+    0,
+  );
+  const avgReceiveRate =
+    data.length > 0
+      ? `${(
+          data.reduce(
+            (sum, item) => sum + Number.parseInt(item.receiveRate),
+            0,
+          ) / data.length
+        ).toFixed(1)}%`
+      : '0%';
+
   // 定向用户标签占比
   const userTagMap = {};
-  data.forEach(item => {
-    userTagMap[item.targetedUserTag] = (userTagMap[item.targetedUserTag] || 0) + 1;
+  data.forEach((item) => {
+    userTagMap[item.targetedUserTag] =
+      (userTagMap[item.targetedUserTag] || 0) + 1;
   });
   const userTagData = Object.entries(userTagMap).map(([name, value]) => ({
     name,
-    value
+    value,
   }));
-  
+
   // 发放方式占比
   const releaseWayMap = {};
-  data.forEach(item => {
+  data.forEach((item) => {
     releaseWayMap[item.releaseWay] = (releaseWayMap[item.releaseWay] || 0) + 1;
   });
   const releaseWayData = Object.entries(releaseWayMap).map(([name, value]) => ({
     name,
-    value
+    value,
   }));
-  
+
   // 定向发放数量趋势
   const releaseTrendData = data
-    .map(item => ({
-      name: item.releaseTime.substring(0, 10),
-      value: item.releaseCount
+    .map((item) => ({
+      name: item.releaseTime.slice(0, 10),
+      value: item.releaseCount,
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
-  
+
   return {
     cards: [
       { title: '总发放次数', value: totalReleaseCount },
       { title: '成功发放次数', value: successReleaseCount },
-      { title: '平均领取率', value: avgReceiveRate }
+      { title: '平均领取率', value: avgReceiveRate },
     ],
     charts: [
       {
         type: 'pie',
         title: '定向用户标签占比',
-        data: userTagData
+        data: userTagData,
       },
       {
         type: 'pie',
         title: '发放方式占比',
-        data: releaseWayData
+        data: releaseWayData,
       },
       {
         type: 'bar',
         title: '定向发放数量趋势',
-        xAxis: releaseTrendData.map(item => item.name),
-        series: releaseTrendData.map(item => item.value)
-      }
-    ]
+        xAxis: releaseTrendData.map((item) => item.name),
+        series: releaseTrendData.map((item) => item.value),
+      },
+    ],
   };
 }
 
@@ -204,64 +222,72 @@ function getTargetedDistributionStats() {
 function getUsageRecordStats() {
   const data = useDataList();
   const totalUseCount = data.length;
-  const validUseCount = data.filter(item => item.useStatus === '已使用').length;
-  const avgDeductAmount = data.length > 0
-    ? (data.reduce((sum, item) => sum + item.deductAmount, 0) / data.length).toFixed(2)
-    : '0.00';
-  
+  const validUseCount = data.filter(
+    (item) => item.useStatus === '已使用',
+  ).length;
+  const avgDeductAmount =
+    data.length > 0
+      ? (
+          data.reduce((sum, item) => sum + item.deductAmount, 0) / data.length
+        ).toFixed(2)
+      : '0.00';
+
   // 使用状态占比
   const useStatusMap = {};
-  data.forEach(item => {
+  data.forEach((item) => {
     useStatusMap[item.useStatus] = (useStatusMap[item.useStatus] || 0) + 1;
   });
   const useStatusData = Object.entries(useStatusMap).map(([name, value]) => ({
     name,
-    value
+    value,
   }));
-  
+
   // 券包类型占比
   const packageTypeMap = {};
-  data.forEach(item => {
-    packageTypeMap[item.packageName] = (packageTypeMap[item.packageName] || 0) + 1;
+  data.forEach((item) => {
+    packageTypeMap[item.packageName] =
+      (packageTypeMap[item.packageName] || 0) + 1;
   });
-  const packageTypeData = Object.entries(packageTypeMap).map(([name, value]) => ({
-    name,
-    value
-  }));
-  
+  const packageTypeData = Object.entries(packageTypeMap).map(
+    ([name, value]) => ({
+      name,
+      value,
+    }),
+  );
+
   // 各券包使用次数排行
   const usageRankData = Object.entries(packageTypeMap)
     .map(([name, value]) => ({
       name,
-      value
+      value,
     }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 5);
-  
+
   return {
     cards: [
       { title: '总使用次数', value: totalUseCount },
       { title: '有效使用次数', value: validUseCount },
-      { title: '平均抵扣金额', value: avgDeductAmount }
+      { title: '平均抵扣金额', value: avgDeductAmount },
     ],
     charts: [
       {
         type: 'pie',
         title: '使用状态占比',
-        data: useStatusData
+        data: useStatusData,
       },
       {
         type: 'pie',
         title: '券包类型占比',
-        data: packageTypeData
+        data: packageTypeData,
       },
       {
         type: 'bar',
         title: '各券包使用次数排行',
-        xAxis: usageRankData.map(item => item.name),
-        series: usageRankData.map(item => item.value)
-      }
-    ]
+        xAxis: usageRankData.map((item) => item.name),
+        series: usageRankData.map((item) => item.value),
+      },
+    ],
   };
 }
 </script>

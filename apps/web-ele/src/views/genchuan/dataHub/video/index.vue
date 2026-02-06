@@ -1,17 +1,6 @@
-<template>
-  <!-- 外层容器占满整个屏幕，绑定点击事件 -->
-  <div
-    class="video-stream-page"
-    @click="jumpToVideoPlayUrl"
-  >
-    <!-- 可选：添加提示文本，也可以删除 -->
-    <div class="click-tip">点击页面任意位置播放视频</div>
-  </div>
-</template>
-
 <script>
 export default {
-  name: "index",
+  name: 'Index',
   methods: {
     // 跳转视频播放地址的方法
     jumpToVideoPlayUrl() {
@@ -23,24 +12,33 @@ export default {
 
       // 方式2：新窗口打开（如需替换方式1，取消下面注释即可）
       // window.open(targetUrl, '_blank');
-    }
-  }
-}
+    },
+  },
+};
 </script>
+
+<template>
+  <!-- 外层容器占满整个屏幕，绑定点击事件 -->
+  <div class="video-stream-page" @click="jumpToVideoPlayUrl">
+    <!-- 可选：添加提示文本，也可以删除 -->
+    <div class="click-tip">点击页面任意位置播放视频</div>
+  </div>
+</template>
 
 <style scoped>
 /* 让页面容器占满整个屏幕 */
 .video-stream-page {
-  width: 100vw;
-  height: 100vh;
-  margin: 0;
-  padding: 0;
-  /* 鼠标悬浮显示手型，提示可点击 */
-  cursor: pointer;
   /* 可选：居中显示提示文本 */
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100vw;
+  height: 100vh;
+  padding: 0;
+  margin: 0;
+
+  /* 鼠标悬浮显示手型，提示可点击 */
+  cursor: pointer;
   background-color: #f5f5f5;
 }
 
