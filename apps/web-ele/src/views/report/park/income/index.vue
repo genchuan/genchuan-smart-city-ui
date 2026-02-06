@@ -2,12 +2,12 @@
 <script setup>
 import { ref } from 'vue';
 
-import DistChart from './dist/distchart.vue';
-import DistReport from './dist/index.vue';
-import EntryChart from './entry/entrychart.vue';
-import EntryReport from './entry/index.vue';
-import ExitChart from './exit/exitchart.vue';
-import ExitReport from './exit/index.vue';
+import DailyReport from './daily/index.vue';
+import DailyChart from './daily/dailychart.vue';
+import MonthlyReport from './monthly/index.vue';
+import MonthlyChart from './monthly/monthlychart.vue';
+import DetailReport from './detail/index.vue';
+import DetailChart from './detail/detailchart.vue';
 
 import '#/components/page/index.scss';
 
@@ -22,24 +22,24 @@ const arrowChange = (index) => {
 };
 const tabArray = ref([
   {
-    label: '入场车流报表',
-    components: EntryReport,
+    label: '日收入数据报表',
+    components: DailyReport,
     showSecondary: true,
     secondShow: false,
     arrowShow: false,
     arrowState: false,
   },
   {
-    label: '出场车流报表',
-    components: ExitReport,
+    label: '月收入数据报表',
+    components: MonthlyReport,
     showSecondary: true,
     secondShow: false,
     arrowShow: false,
     arrowState: false,
   },
   {
-    label: '车流分布报表',
-    components: DistReport,
+    label: '收入明细报表',
+    components: DetailReport,
     showSecondary: true,
     secondShow: false,
     arrowShow: false,
@@ -51,15 +51,14 @@ const tabChange = () => {
     v.arrowShow = false;
   });
 };
-const activeName = ref('入场车流报表');
+const activeName = ref('日收入数据报表');
 const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <EntryChart v-if="tabArray[0].arrowShow" />
-    <ExitChart v-if="tabArray[1].arrowShow" />
-    <DistChart v-if="tabArray[2].arrowShow" />
-    <!-- 其他图表... -->
+    <DailyChart v-if="tabArray[0].arrowShow" />
+    <MonthlyChart v-if="tabArray[1].arrowShow" />
+    <DetailChart v-if="tabArray[2].arrowShow" />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"

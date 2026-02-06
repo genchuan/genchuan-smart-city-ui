@@ -1,4 +1,4 @@
-<!-- index.vue 内部 - 出场车流报表版本 -->
+<!-- index.vue 内部 - 月收入数据报表版本 -->
 <script setup>
 import { computed, reactive, ref } from 'vue';
 
@@ -12,8 +12,8 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
-// 引入封装后的详情抽屉组件
-import TrafficDetailDrawer from '#/views/report/park/traffic/exit/detail.vue';
+// 修改详情抽屉组件引用
+import IncomeDetailDrawer from '#/views/report/park/income/monthly/detail.vue';
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
@@ -124,17 +124,11 @@ function handleEdit(row) {
 
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [
-      `${row.areaName} - ${row.parkType} - ${row.stayDuration}`,
-    ]),
+    text: $t('ui.actionMessage.deleting', [row.areaName + ' - ' + row.parkType + ' - ' + row.orderType]),
   });
   try {
     reportObj.apilist = reportObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success(
-      $t('ui.actionMessage.deleteSuccess', [
-        `${row.areaName} - ${row.parkType} - ${row.stayDuration}`,
-      ]),
-    );
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.areaName + ' - ' + row.parkType + ' - ' + row.orderType]));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -177,63 +171,26 @@ const changeTotalShow = () => {
   reportObj.totalShow = !reportObj.totalShow;
 };
 
-// 表格数据获取
+// 表格数据获取 - 根据筛选条件过滤
 const getTableData = (pageObj) => {
   const page = pageObj.page;
 
   let filteredList = reportObj.apilist;
-  switch (activeName.value) {
-    case '0.5-1小时': {
-      filteredList = reportObj.apilist.filter(
-        (v) => v.stayDuration === '0.5-1小时',
-      );
-
-      break;
-    }
-    case '1-2小时': {
-      filteredList = reportObj.apilist.filter(
-        (v) => v.stayDuration === '1-2小时',
-      );
-
-      break;
-    }
-    case '2-4小时': {
-      filteredList = reportObj.apilist.filter(
-        (v) => v.stayDuration === '2-4小时',
-      );
-
-      break;
-    }
-    case '今日数据': {
-      filteredList = reportObj.apilist.filter(
-        (v) => v.statDate === '2026-02-05',
-      );
-
-      break;
-    }
-    case '商业停车场': {
-      filteredList = reportObj.apilist.filter(
-        (v) => v.parkType === '商业停车场',
-      );
-
-      break;
-    }
-    case '本周数据': {
-      filteredList = reportObj.apilist.filter((v) => {
-        const date = new Date(v.statDate);
-        const weekStart = new Date('2026-02-01');
-        const weekEnd = new Date('2026-02-07');
-        return date >= weekStart && date <= weekEnd;
-      });
-
-      break;
-    }
-    case '路侧停车': {
-      filteredList = reportObj.apilist.filter((v) => v.parkType === '路侧停车');
-
-      break;
-    }
-    // No default
+  if (activeName.value === '本月数据') {
+    filteredList = reportObj.apilist.filter(v => v.statMonth === '2026-01');
+  } else if (activeName.value === '近3个月') {
+    filteredList = reportObj.apilist.filter(v => {
+      const month = v.statMonth;
+      return ['2025-11', '2025-12', '2026-01'].includes(month);
+    });
+  } else if (activeName.value === '商业停车场') {
+    filteredList = reportObj.apilist.filter(v => v.parkType === '商业停车场');
+  } else if (activeName.value === '路侧停车') {
+    filteredList = reportObj.apilist.filter(v => v.parkType === '路侧停车');
+  } else if (activeName.value === '临时停车') {
+    filteredList = reportObj.apilist.filter(v => v.orderType === '临时停车');
+  } else if (activeName.value === '月卡停车') {
+    filteredList = reportObj.apilist.filter(v => v.orderType === '月卡停车');
   }
 
   reportObj.total = filteredList.length;
@@ -308,84 +265,50 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-const activeName = ref('今日数据');
+const activeName = ref('本月数据');
 // 修改打开详情的方法，调用组件的open方法
 const handleOpenDetail = (row) => {
   reportObj.detailObj = row;
   // 通过ref调用组件的open方法
-  trafficDetailDrawerRef.value.open();
+  incomeDetailDrawerRef.value.open();
   console.log(row);
 };
+
+// 导出单条数据PDF
+const handleExportPDF = (row) => {
+  // 这里可以调用PDF导出函数
+  ElMessage.success(`正在导出 ${row.areaName} ${row.statMonth} 的PDF报表`);
+  // window.open(`/api/export/pdf?month=${row.statMonth}&area=${row.areaCode}`, '_blank');
+};
+
 const tabsData = ref([
-  { label: '今日数据' },
-  { label: '本周数据' },
+  { label: '本月数据' },
+  { label: '近3个月' },
   { label: '商业停车场' },
   { label: '路侧停车' },
-  { label: '0.5-1小时' },
-  { label: '1-2小时' },
-  { label: '2-4小时' },
+  { label: '临时停车' },
+  { label: '月卡停车' },
   { label: '全部数据' },
 ]);
 
 const createLabel = (item) => {
   let count = 0;
-  switch (item.label) {
-    case '0.5-1小时': {
-      count = reportObj.apilist.filter(
-        (v) => v.stayDuration === '0.5-1小时',
-      ).length;
-
-      break;
-    }
-    case '1-2小时': {
-      count = reportObj.apilist.filter(
-        (v) => v.stayDuration === '1-2小时',
-      ).length;
-
-      break;
-    }
-    case '2-4小时': {
-      count = reportObj.apilist.filter(
-        (v) => v.stayDuration === '2-4小时',
-      ).length;
-
-      break;
-    }
-    case '今日数据': {
-      count = reportObj.apilist.filter(
-        (v) => v.statDate === '2026-02-05',
-      ).length;
-
-      break;
-    }
-    case '全部数据': {
-      count = reportObj.apilist.length;
-
-      break;
-    }
-    case '商业停车场': {
-      count = reportObj.apilist.filter(
-        (v) => v.parkType === '商业停车场',
-      ).length;
-
-      break;
-    }
-    case '本周数据': {
-      count = reportObj.apilist.filter((v) => {
-        const date = new Date(v.statDate);
-        const weekStart = new Date('2026-02-01');
-        const weekEnd = new Date('2026-02-07');
-        return date >= weekStart && date <= weekEnd;
-      }).length;
-
-      break;
-    }
-    case '路侧停车': {
-      count = reportObj.apilist.filter((v) => v.parkType === '路侧停车').length;
-
-      break;
-    }
-    // No default
+  if (item.label === '本月数据') {
+    count = reportObj.apilist.filter((v) => v.statMonth === '2026-01').length;
+  } else if (item.label === '近3个月') {
+    count = reportObj.apilist.filter(v =>
+      ['2025-11', '2025-12', '2026-01'].includes(v.statMonth)
+    ).length;
+  } else if (item.label === '商业停车场') {
+    count = reportObj.apilist.filter((v) => v.parkType === '商业停车场').length;
+  } else if (item.label === '路侧停车') {
+    count = reportObj.apilist.filter((v) => v.parkType === '路侧停车').length;
+  } else if (item.label === '临时停车') {
+    count = reportObj.apilist.filter((v) => v.orderType === '临时停车').length;
+  } else if (item.label === '月卡停车') {
+    count = reportObj.apilist.filter((v) => v.orderType === '月卡停车').length;
+  } else if (item.label === '全部数据') {
+    count = reportObj.apilist.length;
   }
   return `${item.label}(${count})`;
 };
@@ -407,7 +330,7 @@ const arrowChange = () => {
 };
 
 // 定义组件ref，用于调用组件方法
-const trafficDetailDrawerRef = ref(null);
+const incomeDetailDrawerRef = ref(null);
 </script>
 
 <template>
@@ -415,11 +338,11 @@ const trafficDetailDrawerRef = ref(null);
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <!-- 使用封装后的详情抽屉组件 -->
-    <TrafficDetailDrawer
-      ref="trafficDetailDrawerRef"
+    <!-- 使用月收入详情抽屉组件 -->
+    <IncomeDetailDrawer
+      ref="incomeDetailDrawerRef"
       :detail-obj="reportObj.detailObj"
-      :title="`出场车流详情 - ${reportObj.detailObj.areaName} ${reportObj.detailObj.parkType}`"
+      :title="`月收入详情 - ${reportObj.detailObj.areaName} ${reportObj.detailObj.statMonth}`"
     />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -485,46 +408,33 @@ const trafficDetailDrawerRef = ref(null);
           {{ row.areaName }}
         </el-text>
       </template>
-      <template #peakMorningExit="{ row }">
-        <el-tag type="danger" size="small">
-          {{ row.peakMorningExit }}
+      <template #totalIncome="{ row }">
+        <el-tag type="success" size="small">
+          ¥{{ row.totalIncome?.toLocaleString() }}
         </el-tag>
       </template>
-      <template #peakEveningExit="{ row }">
+      <template #orderCount="{ row }">
+        <el-tag type="primary" size="small">
+          {{ row.orderCount?.toLocaleString() }}
+        </el-tag>
+      </template>
+      <template #avgOrderAmount="{ row }">
         <el-tag type="warning" size="small">
-          {{ row.peakEveningExit }}
+          ¥{{ row.avgOrderAmount }}
         </el-tag>
       </template>
-      <template #totalExit="{ row }">
-        <el-tag type="info" size="small">
-          {{ row.totalExit }}
+      <template #arrearsAmount="{ row }">
+        <el-tag type="danger" size="small">
+          ¥{{ row.arrearsAmount?.toLocaleString() }}
         </el-tag>
       </template>
-      <template #turnoverRate="{ row }">
-        <el-progress
-          :percentage="row.turnoverRate * 100"
-          :color="
-            row.turnoverRate > 0.8
-              ? '#67C23A'
-              : row.turnoverRate > 0.6
-                ? '#E6A23C'
-                : '#F56C6C'
-          "
-          :show-text="false"
-          style="display: inline-block; width: 100px; margin-right: 10px"
-        />
-        <span
-          :style="{
-            color:
-              row.turnoverRate > 0.8
-                ? '#67C23A'
-                : row.turnoverRate > 0.6
-                  ? '#E6A23C'
-                  : '#F56C6C',
-          }"
+      <template #yoyGrowthRate="{ row }">
+        <el-tag
+          :type="row.yoyGrowthRate > 0 ? 'success' : 'danger'"
+          size="small"
         >
-          {{ (row.turnoverRate * 100).toFixed(1) }}%
-        </span>
+          {{ row.yoyGrowthRate }}%
+        </el-tag>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
@@ -532,6 +442,11 @@ const trafficDetailDrawerRef = ref(null);
             content="详情"
             icon-name="View"
             @click="handleOpenDetail(row)"
+          />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExportPDF(row)"
           />
         </div>
       </template>
@@ -543,22 +458,11 @@ const trafficDetailDrawerRef = ref(null);
           <el-icon class="tabel-tab-icon" v-if="reportObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span>
-            本页统计：数据量{{ reportObj.list.length }}; 总出场数:
-            {{ reportObj.list.reduce((sum, v) => sum + v.totalExit, 0) }};
-            早高峰出场:
-            {{ reportObj.list.reduce((sum, v) => sum + v.peakMorningExit, 0) }};
-            晚高峰出场:
-            {{ reportObj.list.reduce((sum, v) => sum + v.peakEveningExit, 0) }};
-            平均周转率:
-            {{
-              (
-                (reportObj.list.reduce((sum, v) => sum + v.turnoverRate, 0) /
-                  reportObj.list.length) *
-                100
-              ).toFixed(1)
-            }}%;
-          </span>
+          <span> 本页统计：数据量{{ reportObj.list.length }};
+            总收费: ¥{{ reportObj.list.reduce((sum, v) => sum + v.totalIncome, 0).toLocaleString() }};
+            总订单: {{ reportObj.list.reduce((sum, v) => sum + v.orderCount, 0).toLocaleString() }};
+            总欠费: ¥{{ reportObj.list.reduce((sum, v) => sum + v.arrearsAmount, 0).toLocaleString() }};
+            </span>
         </div>
         <div class="common-total-bottom" v-if="reportObj.totalShow">
           <span> 全部统计：{{ textObj.total }} </span>

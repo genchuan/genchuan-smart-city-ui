@@ -69,7 +69,7 @@ const initChart = async () => {
       title: { text: props.title, left: 'center' },
       tooltip: {
         trigger: 'axis',
-        axisPointer: { type: 'shadow' } // 保持和柱状图一致的指示器风格
+        axisPointer: { type: 'shadow' }, // 保持和柱状图一致的指示器风格
       },
       legend: { bottom: 10, left: 'center' },
       grid: {
@@ -139,18 +139,19 @@ const initChart = async () => {
         },
         lineStyle: {
           width: 2, // 折线宽度
-          color: seriesItem.color || '#4a90e2' // 支持自定义系列颜色
+          color: seriesItem.color || '#4a90e2', // 支持自定义系列颜色
         },
         itemStyle: {
           color: seriesItem.color || '#4a90e2', // 拐点颜色
-          borderWidth: 2
+          borderWidth: 2,
         },
-        areaStyle: { // 渐变面积填充（折线图特色）
+        areaStyle: {
+          // 渐变面积填充（折线图特色）
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: `${seriesItem.color || '#4a90e2'}80` },
-            { offset: 1, color: `${seriesItem.color || '#4a90e2'}10` }
-          ])
-        }
+            { offset: 1, color: `${seriesItem.color || '#4a90e2'}10` },
+          ]),
+        },
       })),
     };
 
@@ -206,15 +207,5 @@ onUnmounted(() => {
 
 <template>
   <!-- 折线图容器：强制设置基础宽高，避免尺寸为0 -->
-  <div ref="chartRef" class="simple-line-chart"></div>
+  <div ref="chartRef" class="simple-bar-chart"></div>
 </template>
-
-<style scoped>
-/* 基础样式：保证容器默认尺寸，避免初始化时宽高为0 */
-.simple-line-chart {
-  width: 100%;
-  height: 300px;
-  min-width: 300px;
-  min-height: 200px;
-}
-</style>
