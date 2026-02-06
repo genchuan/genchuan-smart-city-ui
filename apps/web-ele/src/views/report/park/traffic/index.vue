@@ -2,8 +2,8 @@
 <script setup>
 import { ref } from 'vue';
 
-import DistChart from './dist/distchart.vue';
-import DistReport from './dist/index.vue';
+import DistChart from '#/views/report/park/traffic/flowdist/distchart.vue';
+import DistReport from '#/views/report/park/traffic/flowdist/index.vue';
 import EntryChart from './entry/entrychart.vue';
 import EntryReport from './entry/index.vue';
 import ExitChart from './exit/exitchart.vue';
