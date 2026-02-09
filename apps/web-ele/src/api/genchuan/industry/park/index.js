@@ -6,6 +6,11 @@ export function getDriveinList(params) {
     params,
   });
 }
+export function getOrderPage(params) {
+  return requestClient.get('/park/order-temp/page', {
+    params,
+  });
+}
 /** 车辆出场记录分页 */
 export function getOutDriveinList(params) {
   return requestClient.get('/industry/car-driveout-record/page', {
@@ -24,6 +29,9 @@ export function createDriveObj(data) {
   return requestClient.post('/industry/car-drivein-record/create', data);
 }
 
+export function updateOrderTemp(data) {
+  return requestClient.put('/park/order-temp/update', data);
+}
 /** 车辆出场创建记录 */
 export function createOutDriveObj(data) {
   return requestClient.post('/industry/car-driveout-record/create', data);

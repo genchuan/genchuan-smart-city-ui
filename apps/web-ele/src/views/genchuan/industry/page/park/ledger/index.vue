@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 
 import ledgerchart from './ledgerchart.vue';
+import Record from './record/index.vue';
 import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
@@ -13,6 +14,14 @@ const changeArrowStatus = () => {
   });
 };
 const tabArray = ref([
+  {
+    label: '对账记录',
+    components: Record,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false,
+  },
   {
     label: '资源台账管理',
     components: Table,
@@ -27,7 +36,7 @@ const arrowChange = () => {
     v.arrowShow = !v.arrowShow;
   });
 };
-const activeName = ref('资源台账管理');
+const activeName = ref('对账记录');
 const secondShow = ref(false);
 </script>
 <template>
