@@ -299,12 +299,12 @@ export function useFormSchema() {
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
-    {
-      field: 'share_no',
-      title: '共享编号',
-      minWidth: 150,
-      sortable: true,
-    },
+    // {
+    //   field: 'share_no',
+    //   title: '共享编号',
+    //   minWidth: 150,
+    //   sortable: true,
+    // },
     {
       field: 'space_id',
       title: '车位ID',
@@ -390,7 +390,7 @@ export function useGridColumns() {
     },
     {
       title: '操作',
-      width: 180,
+      width: 80,
       fixed: 'right',
       slots: { default: 'actions' },
     },

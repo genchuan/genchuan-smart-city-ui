@@ -23,7 +23,7 @@ export const mapOrbitAnimation = (mapInstanceRef, options) => {
   // 默认配置
   const defaultConfig = {
     center: { lat: 24.9, lng: 118.69 },
-    rotateSpeed: 0.1,
+    rotateSpeed: 0.05,
     pitch: 40,
     zoom: 12,
     loop: true,

@@ -8,17 +8,16 @@ import {
   watch,
 } from 'vue';
 
-import { mapOrbitAnimation } from '#/api/genchuan/industry/mapOrbitAnimation.js';
+import {mapOrbitAnimation} from '#/api/genchuan/industry/mapOrbitAnimation.js';
 
 import markerCarAbnormal from '../../images/abnormal.png';
 import markerCarNormal from '../../images/normal.png';
-// ✅ 仅保留接口存在的【车辆轨迹图标】，删除停车场/泊位/设备/运维人员所有图标，极致精简
 import markerUnknown from '../../images/unknown.png';
 
 const props = defineProps({
   idName: {
     type: String,
-    default: 'chinaEcharts',
+    default: 'satelliteMap',
   },
   geometriesArray: {
     type: Array,
@@ -27,16 +26,15 @@ const props = defineProps({
   orbitConfig: {
     type: Object,
     default: () => ({
-      center: { lat: 24.58, lng: 117.65 },
-      rotateSpeed: 0.2,
-      pitch: 40,
+      center: {lat: 24.58, lng: 117.65},
+      rotateSpeed: 0.05,
+      pitch: 0,
       zoom: 10,
       loop: true,
     }),
   },
 });
 
-// ✅ 仅保留接口存在的【车辆轨迹标注层】，删除所有其他冗余ref，无多余代码
 const mapInstance = ref(null);
 const infoWindow = ref(null);
 const carMarkerLayer = ref(null);
@@ -55,37 +53,35 @@ watch(
   (newConfig) => {
     Object.assign(orbitConfig.value, newConfig);
   },
-  { deep: true, immediate: true },
+  {deep: true, immediate: true},
 );
 
-// ✅ 仅保留接口存在的【车辆轨迹状态映射表】，匹配接口的carStatus字段(normal/abnormal)
 const carTrackStatusMap = {
   normal: {
     color: '#39b20d',
     icon: markerCarNormal,
     text: '正常通行',
-    size: { w: 36, h: 36 },
+    size: {w: 36, h: 36},
     styleId: 'car-normal',
   },
   abnormal: {
     color: '#FF4500',
     icon: markerCarAbnormal,
     text: '异常通行',
-    size: { w: 36, h: 36 },
+    size: {w: 36, h: 36},
     styleId: 'car-abnormal',
   },
   '': {
     color: '#999',
     icon: markerUnknown,
     text: '状态未知',
-    size: { w: 36, h: 36 },
+    size: {w: 36, h: 36},
     styleId: 'car-unknown',
   },
 };
 
-// 点击标注展示信息窗口
 const handleMarkerClick = (e) => {
-  const { properties, position } = e.geometry;
+  const {properties, position} = e.geometry;
   if (properties && position && infoWindow.value) {
     infoWindow.value.setContent(getTooltipContent(properties));
     infoWindow.value.setPosition(position);
@@ -100,6 +96,7 @@ const handleInfoWindowClose = () => {
 const initMap = () => {
   const callbackName = `initMap_${props.idName}`;
   const script = document.createElement('script');
+  // 使用卫星地图的key
   script.src = `https://map.qq.com/api/gljs?v=1.exp&key=QTQBZ-F3RWW-JJJRV-YNPA5-ZIKDK-3SBNO&callback=${callbackName}`;
   script.async = true;
   window[callbackName] = () => {
@@ -109,9 +106,7 @@ const initMap = () => {
   document.head.append(script);
 };
 
-// ✅ 核心重构：仅渲染【车辆轨迹】，经纬度字段为接口的carLatitude/carLongitude，100%匹配无错误
 const createAllMarkers = (map) => {
-  // 销毁原有车辆轨迹标注层
   if (carMarkerLayer.value) {
     try {
       carMarkerLayer.value.off('click', handleMarkerClick);
@@ -129,9 +124,8 @@ const createAllMarkers = (map) => {
     return;
 
   const carTrackData = [];
-  const carTrackSet = new Set(); // 车辆去重：车牌+入场ID 唯一标识
+  const carTrackSet = new Set();
 
-  // 仅提取车辆轨迹数据，完全匹配文件1接口返回字段
   props.geometriesArray.forEach((item) => {
     const {
       carNumber,
@@ -153,19 +147,18 @@ const createAllMarkers = (map) => {
         carTrackSet.add(carKey);
         const carStyleId =
           carTrackStatusMap[
-            carStatus || (inspectionResult === '正常' ? 'normal' : 'abnormal')
-          ]?.styleId || 'car-unknown';
+          carStatus || (inspectionResult === '正常' ? 'normal' : 'abnormal')
+            ]?.styleId || 'car-unknown';
         carTrackData.push({
           id: `car-${carKey}`,
           styleId: carStyleId,
           position: new TMap.LatLng(carLatitude, carLongitude),
-          properties: { ...item, markerType: 'carTrack' },
+          properties: {...item, markerType: 'carTrack'},
         });
       }
     }
   });
 
-  // 仅创建车辆轨迹标注层
   if (carTrackData.length > 0) {
     carMarkerLayer.value = new TMap.MultiMarker({
       map,
@@ -173,19 +166,19 @@ const createAllMarkers = (map) => {
         'car-normal': new TMap.MarkerStyle({
           width: 36,
           height: 36,
-          anchor: { x: 18, y: 18 },
+          anchor: {x: 18, y: 18},
           src: markerCarNormal,
         }),
         'car-abnormal': new TMap.MarkerStyle({
           width: 36,
           height: 36,
-          anchor: { x: 18, y: 18 },
+          anchor: {x: 18, y: 18},
           src: markerCarAbnormal,
         }),
         'car-unknown': new TMap.MarkerStyle({
           width: 36,
           height: 36,
-          anchor: { x: 18, y: 18 },
+          anchor: {x: 18, y: 18},
           src: markerUnknown,
         }),
       },
@@ -195,7 +188,6 @@ const createAllMarkers = (map) => {
   }
 };
 
-// ✅ 信息窗：仅保留【车辆轨迹详情】，字段100%匹配文件1接口返回，无任何多余字段
 const getTooltipContent = (properties) => {
   const labelStyle =
     'width: 120px; text-align: right; font-weight: bold; margin-right: 8px; flex-shrink: 0;';
@@ -249,16 +241,22 @@ const mapCallback = () => {
     console.error(`地图容器不存在：${props.idName}`);
     return;
   }
-  const { center, zoom, pitch } = props.orbitConfig;
+  const {center, zoom, pitch} = props.orbitConfig;
+
+  // 关键修改：使用卫星地图配置
   const map = new TMap.Map(mapContainer, {
     center: new TMap.LatLng(center.lat, center.lng),
     zoom,
-    mapStyleId: 'style1',
+    // 设置卫星地图
+    baseMap: {
+      type: 'satellite'
+    },
     enablePitch: true,
     enableRotate: true,
     pitch,
     rotation: 0,
   });
+
   mapInstance.value = map;
   mapInitialized.value = true;
 
@@ -266,7 +264,7 @@ const mapCallback = () => {
     map,
     position: new TMap.LatLng(0, 0),
     content: '',
-    offset: { x: 0, y: -40 },
+    offset: {x: 0, y: -40},
     visible: false,
   });
   infoWindow.value.on('close', handleInfoWindowClose);
@@ -281,14 +279,13 @@ watch(
     if (mapInitialized.value && Array.isArray(newVal))
       createAllMarkers(mapInstance.value);
   },
-  { deep: true },
+  {deep: true},
 );
 
 onMounted(() => {
   initMap();
 });
 
-// ✅ 仅销毁车辆轨迹标注层，无其他冗余销毁逻辑
 onUnmounted(() => {
   stopOrbitAnimation();
   if (carMarkerLayer.value) {
@@ -333,8 +330,7 @@ defineExpose({
 
 <template>
   <div class="map-container">
-    <div :id="idName" class="map-common-css"></div>
-    <!-- ✅ 仅保留车辆轨迹图例，无其他冗余图例，文字补充完整 -->
+    <div :id="idName" class="map-satellite"></div>
     <div class="legend">
       <div class="legend-items">
         <div class="legend-item">
@@ -363,9 +359,9 @@ defineExpose({
   height: 100%;
 }
 
-.map-common-css {
+.map-satellite {
   width: 100%;
-  height: 100%;
+  height: 99%;
   margin: 0 auto;
   overflow: hidden;
   border-radius: 8px;

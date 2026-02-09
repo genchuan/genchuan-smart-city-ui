@@ -1377,173 +1377,151 @@ export const getSubscriptionStatsData = (tabName) => {
 
     // 卡片数据
     const totalCount = data.length;
-    const onlineCount = data.filter(
-      (item) => item.packageStatusName === '上架',
-    ).length;
-    const completeBenefitCount = data.filter(
-      (item) => item.benefitStatus === '生效中',
-    ).length;
+    const onlineCount = data.filter(item => item.packageStatusName === '上架').length;
+    const completeBenefitCount = data.filter(item => item.benefitStatus === '生效中').length;
 
     // 套餐类型占比数据
     const packageTypeStats = {};
-    data.forEach((item) => {
-      packageTypeStats[item.packageTypeName] =
-        (packageTypeStats[item.packageTypeName] || 0) + 1;
+    data.forEach(item => {
+      packageTypeStats[item.packageTypeName] = (packageTypeStats[item.packageTypeName] || 0) + 1;
     });
-    const packageTypeChartData = Object.entries(packageTypeStats).map(
-      ([name, value]) => ({
-        name,
-        value,
-      }),
-    );
+    const packageTypeChartData = Object.entries(packageTypeStats).map(([name, value]) => ({
+      name,
+      value
+    }));
 
     // 权益类型占比数据
     const benefitTypeStats = {};
-    data.forEach((item) => {
-      benefitTypeStats[item.benefitStatus] =
-        (benefitTypeStats[item.benefitStatus] || 0) + 1;
+    data.forEach(item => {
+      benefitTypeStats[item.benefitStatus] = (benefitTypeStats[item.benefitStatus] || 0) + 1;
     });
-    const benefitTypeChartData = Object.entries(benefitTypeStats).map(
-      ([name, value]) => ({
-        name,
-        value,
-      }),
-    );
+    const benefitTypeChartData = Object.entries(benefitTypeStats).map(([name, value]) => ({
+      name,
+      value
+    }));
 
     // 不同套餐销量对比
-    const salesData = data
-      .map((item) => ({
-        name: item.packageName,
-        value: item.salesCount,
-      }))
-      .sort((a, b) => b.value - a.value);
-    const salesChartXAxis = salesData.map((item) => item.name);
-    const salesChartSeries = salesData.map((item) => item.value);
+    const salesData = data.map(item => ({
+      name: item.packageName,
+      value: item.salesCount
+    })).sort((a, b) => b.value - a.value);
+    const salesChartXAxis = salesData.map(item => item.name);
+    const salesChartSeries = salesData.map(item => item.value);
 
     return {
       cards: [
         {
           title: '总套餐数',
           value: totalCount,
-          color: '#4A90E2',
+          color: '#4A90E2'
         },
         {
           title: '上架套餐数',
           value: onlineCount,
-          color: '#50E3C2',
+          color: '#50E3C2'
         },
         {
           title: '已配置完整权益套餐数',
           value: completeBenefitCount,
-          color: '#FF9F40',
-        },
+          color: '#FF9F40'
+        }
       ],
       charts: [
         {
           title: '套餐类型占比',
           type: 'pie',
-          data: packageTypeChartData,
+          data: packageTypeChartData
         },
         {
           title: '权益类型占比',
           type: 'pie',
-          data: benefitTypeChartData,
+          data: benefitTypeChartData
         },
         {
           title: '不同套餐销量对比',
           type: 'bar',
           xAxis: salesChartXAxis,
-          series: salesChartSeries,
-        },
-      ],
+          series: salesChartSeries
+        }
+      ]
     };
   } else if (tabName === '洗车卡套餐') {
     const data = washCardDataList();
 
     // 卡片数据
     const totalCount = data.length;
-    const onlineCount = data.filter((item) => item.status === '上架').length;
-    const totalSalesCount = data.reduce(
-      (sum, item) => sum + item.salesCount,
-      0,
-    );
+    const onlineCount = data.filter(item => item.status === '上架').length;
+    const totalSalesCount = data.reduce((sum, item) => sum + item.salesCount, 0);
 
     // 合作洗车店占比数据
     const washShopStats = {};
-    data.forEach((item) => {
-      washShopStats[item.cooperationWashShop] =
-        (washShopStats[item.cooperationWashShop] || 0) + 1;
+    data.forEach(item => {
+      washShopStats[item.cooperationWashShop] = (washShopStats[item.cooperationWashShop] || 0) + 1;
     });
-    const washShopChartData = Object.entries(washShopStats).map(
-      ([name, value]) => ({
-        name,
-        value,
-      }),
-    );
+    const washShopChartData = Object.entries(washShopStats).map(([name, value]) => ({
+      name,
+      value
+    }));
 
     // 套餐状态占比数据
     const statusStats = {};
-    data.forEach((item) => {
+    data.forEach(item => {
       statusStats[item.status] = (statusStats[item.status] || 0) + 1;
     });
-    const statusChartData = Object.entries(statusStats).map(
-      ([name, value]) => ({
-        name,
-        value,
-      }),
-    );
+    const statusChartData = Object.entries(statusStats).map(([name, value]) => ({
+      name,
+      value
+    }));
 
     // 不同洗车卡套餐销量排名
-    const salesData = data
-      .map((item) => ({
-        name: item.packageName,
-        value: item.salesCount,
-      }))
-      .sort((a, b) => b.value - a.value);
-    const salesChartXAxis = salesData.map((item) => item.name);
-    const salesChartSeries = salesData.map((item) => item.value);
+    const salesData = data.map(item => ({
+      name: item.packageName,
+      value: item.salesCount
+    })).sort((a, b) => b.value - a.value);
+    const salesChartXAxis = salesData.map(item => item.name);
+    const salesChartSeries = salesData.map(item => item.value);
 
     return {
       cards: [
         {
           title: '洗车卡套餐总数',
           value: totalCount,
-          color: '#4A90E2',
+          color: '#4A90E2'
         },
         {
           title: '上架数',
           value: onlineCount,
-          color: '#50E3C2',
+          color: '#50E3C2'
         },
         {
           title: '销量总数',
           value: totalSalesCount,
-          color: '#FF9F40',
-        },
+          color: '#FF9F40'
+        }
       ],
       charts: [
         {
           title: '合作洗车店占比',
           type: 'pie',
-          data: washShopChartData,
+          data: washShopChartData
         },
         {
           title: '套餐状态占比',
           type: 'pie',
-          data: statusChartData,
+          data: statusChartData
         },
         {
           title: '不同洗车卡套餐销量排名',
           type: 'bar',
           xAxis: salesChartXAxis,
-          series: salesChartSeries,
-        },
-      ],
+          series: salesChartSeries
+        }
+      ]
     };
   }
 
   return {
     cards: [],
-    charts: [],
+    charts: []
   };
 };

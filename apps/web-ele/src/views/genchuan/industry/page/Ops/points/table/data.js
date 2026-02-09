@@ -8,6 +8,9 @@ export const dataList = () => {
       available_points: 4500,
       used_points: 300,
       expired_points: 200,
+      rule_name: '消费返积分', // 新增字段
+      type: { name: '消费触发' }, // 新增字段
+      status: '启用', // 新增字段
       last_update_time: '2024-05-10 08:30:15',
       create_time: '2024-05-10 08:30:00',
       remark: '初始积分',
@@ -19,6 +22,9 @@ export const dataList = () => {
       available_points: 2800,
       used_points: 250,
       expired_points: 150,
+      rule_name: '签到奖励', // 新增字段
+      type: { name: '每日签到' }, // 新增字段
+      status: '启用', // 新增字段
       last_update_time: '2024-05-10 09:15:22',
       create_time: '2024-05-10 09:15:00',
       remark: '日常积分',
@@ -30,6 +36,9 @@ export const dataList = () => {
       available_points: 6800,
       used_points: 500,
       expired_points: 200,
+      rule_name: 'VIP专属奖励', // 新增字段
+      type: { name: '会员等级' }, // 新增字段
+      status: '启用', // 新增字段
       last_update_time: '2024-05-10 10:05:33',
       create_time: '2024-05-10 10:05:00',
       remark: 'VIP用户积分',
@@ -41,6 +50,9 @@ export const dataList = () => {
       available_points: 1800,
       used_points: 200,
       expired_points: 100,
+      rule_name: '普通用户奖励', // 新增字段
+      type: { name: '注册触发' }, // 新增字段
+      status: '禁用', // 新增字段
       last_update_time: '2024-05-10 11:20:45',
       create_time: '2024-05-10 11:20:00',
       remark: '普通用户积分',
@@ -52,6 +64,9 @@ export const dataList = () => {
       available_points: 3800,
       used_points: 300,
       expired_points: 100,
+      rule_name: '活跃度奖励', // 新增字段
+      type: { name: '行为触发' }, // 新增字段
+      status: '启用', // 新增字段
       last_update_time: '2024-05-10 13:45:10',
       create_time: '2024-05-10 13:45:00',
       remark: '活跃用户积分',
@@ -63,6 +78,9 @@ export const dataList = () => {
       available_points: 5200,
       used_points: 400,
       expired_points: 200,
+      rule_name: '购物返利', // 新增字段
+      type: { name: '消费触发' }, // 新增字段
+      status: '启用', // 新增字段
       last_update_time: '2024-05-10 15:30:18',
       create_time: '2024-05-10 15:30:00',
       remark: '购物积分',
@@ -74,6 +92,9 @@ export const dataList = () => {
       available_points: 8200,
       used_points: 500,
       expired_points: 200,
+      rule_name: '高级会员特权', // 新增字段
+      type: { name: '会员等级' }, // 新增字段
+      status: '启用', // 新增字段
       last_update_time: '2024-05-10 17:10:55',
       create_time: '2024-05-10 17:10:00',
       remark: '高级会员积分',
@@ -85,6 +106,9 @@ export const dataList = () => {
       available_points: 2800,
       used_points: 200,
       expired_points: 100,
+      rule_name: '新用户礼包', // 新增字段
+      type: { name: '注册触发' }, // 新增字段
+      status: '启用', // 新增字段
       last_update_time: '2024-05-10 18:45:30',
       create_time: '2024-05-10 18:45:00',
       remark: '新用户积分',
@@ -96,6 +120,9 @@ export const dataList = () => {
       available_points: 6100,
       used_points: 400,
       expired_points: 200,
+      rule_name: '活动奖励', // 新增字段
+      type: { name: '活动触发' }, // 新增字段
+      status: '启用', // 新增字段
       last_update_time: '2024-05-10 20:15:42',
       create_time: '2024-05-10 20:15:00',
       remark: '活动积分',
@@ -107,6 +134,9 @@ export const dataList = () => {
       available_points: 2000,
       used_points: 200,
       expired_points: 100,
+      rule_name: '注册赠送', // 新增字段
+      type: { name: '注册触发' }, // 新增字段
+      status: '禁用', // 新增字段
       last_update_time: '2024-05-10 21:30:25',
       create_time: '2024-05-10 21:30:00',
       remark: '注册赠送积分',
@@ -132,6 +162,45 @@ export function useFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入用户ID',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'rule_name',
+      label: '规则名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入规则名称',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'type.name',
+      label: '触发类型',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择触发类型',
+        options: [
+          { label: '消费触发', value: '消费触发' },
+          { label: '每日签到', value: '每日签到' },
+          { label: '会员等级', value: '会员等级' },
+          { label: '注册触发', value: '注册触发' },
+          { label: '行为触发', value: '行为触发' },
+          { label: '活动触发', value: '活动触发' },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'status',
+      label: '启用状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择启用状态',
+        options: [
+          { label: '启用', value: '启用' },
+          { label: '禁用', value: '禁用' },
+        ],
       },
       rules: 'required',
     },
@@ -195,6 +264,24 @@ export function useGridColumns() {
     {
       field: 'user_id',
       title: '用户ID',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: 'rule_name',
+      title: '规则名称',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'type.name',
+      title: '触发类型',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'status',
+      title: '启用状态',
       minWidth: 100,
       sortable: true,
     },

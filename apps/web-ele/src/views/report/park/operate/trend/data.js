@@ -1,0 +1,382 @@
+// data.js - 运营趋势报表数据
+/** 运营趋势数据报表 - 初始数据 */
+export const dataList = () => {
+  return [
+    {
+      "id": 1,
+      "statCycle": "日",
+      "statTime": "2026-02-05",
+      "startDate": "2026-02-05",
+      "endDate": "2026-02-05",
+      "areaName": "天河区",
+      "parkType": "商业停车场",
+      "totalIncome": 28750.50,
+      "totalEntry": 1250,
+      "avgBerthUtilization": "78.5%",
+      "keyNode": "春节促销活动",
+      "updateTime": "2026-02-05 18:30",
+      "operator": "系统自动生成"
+    },
+    {
+      "id": 2,
+      "statCycle": "周",
+      "statTime": "2026年第6周",
+      "startDate": "2026-02-02",
+      "endDate": "2026-02-08",
+      "areaName": "天河区",
+      "parkType": "商业停车场",
+      "totalIncome": 185640.50,
+      "totalEntry": 8250,
+      "avgBerthUtilization": "79.2%",
+      "keyNode": "周末大型活动",
+      "updateTime": "2026-02-08 18:30",
+      "operator": "系统自动生成"
+    },
+    {
+      "id": 3,
+      "statCycle": "月",
+      "statTime": "2026-02",
+      "startDate": "2026-02-01",
+      "endDate": "2026-02-28",
+      "areaName": "天河区",
+      "parkType": "商业停车场",
+      "totalIncome": 805600.00,
+      "totalEntry": 35800,
+      "avgBerthUtilization": "77.8%",
+      "keyNode": "会员月活动",
+      "updateTime": "2026-02-28 18:30",
+      "operator": "系统自动生成"
+    },
+    {
+      "id": 4,
+      "statCycle": "日",
+      "statTime": "2026-02-05",
+      "startDate": "2026-02-05",
+      "endDate": "2026-02-05",
+      "areaName": "越秀区",
+      "parkType": "路侧停车",
+      "totalIncome": 15680.00,
+      "totalEntry": 980,
+      "avgBerthUtilization": "82.3%",
+      "keyNode": "节假日调价",
+      "updateTime": "2026-02-05 18:30",
+      "operator": "系统自动生成"
+    },
+    {
+      "id": 5,
+      "statCycle": "周",
+      "statTime": "2026年第6周",
+      "startDate": "2026-02-02",
+      "endDate": "2026-02-08",
+      "areaName": "越秀区",
+      "parkType": "路侧停车",
+      "totalIncome": 98750.00,
+      "totalEntry": 6150,
+      "avgBerthUtilization": "80.5%",
+      "keyNode": "交通管制",
+      "updateTime": "2026-02-08 18:30",
+      "operator": "系统自动生成"
+    },
+    {
+      "id": 6,
+      "statCycle": "日",
+      "statTime": "2026-02-04",
+      "startDate": "2026-02-04",
+      "endDate": "2026-02-04",
+      "areaName": "海珠区",
+      "parkType": "商业停车场",
+      "totalIncome": 25300.00,
+      "totalEntry": 1100,
+      "avgBerthUtilization": "75.2%",
+      "keyNode": "正常运营",
+      "updateTime": "2026-02-04 18:30",
+      "operator": "系统自动生成"
+    },
+    {
+      "id": 7,
+      "statCycle": "周",
+      "statTime": "2026年第6周",
+      "startDate": "2026-02-02",
+      "endDate": "2026-02-08",
+      "areaName": "海珠区",
+      "parkType": "商业停车场",
+      "totalIncome": 162350.00,
+      "totalEntry": 7250,
+      "avgBerthUtilization": "74.8%",
+      "keyNode": "商场促销",
+      "updateTime": "2026-02-08 18:30",
+      "operator": "系统自动生成"
+    },
+    {
+      "id": 8,
+      "statCycle": "月",
+      "statTime": "2026-02",
+      "startDate": "2026-02-01",
+      "endDate": "2026-02-28",
+      "areaName": "海珠区",
+      "parkType": "商业停车场",
+      "totalIncome": 692500.00,
+      "totalEntry": 30500,
+      "avgBerthUtilization": "73.9%",
+      "keyNode": "新增充电桩",
+      "updateTime": "2026-02-28 18:30",
+      "operator": "系统自动生成"
+    },
+    {
+      "id": 9,
+      "statCycle": "日",
+      "statTime": "2026-02-05",
+      "startDate": "2026-02-05",
+      "endDate": "2026-02-05",
+      "areaName": "白云区",
+      "parkType": "小区停车场",
+      "totalIncome": 10200.00,
+      "totalEntry": 850,
+      "avgBerthUtilization": "68.7%",
+      "keyNode": "正常运营",
+      "updateTime": "2026-02-05 18:30",
+      "operator": "系统自动生成"
+    },
+    {
+      "id": 10,
+      "statCycle": "周",
+      "statTime": "2026年第6周",
+      "startDate": "2026-02-02",
+      "endDate": "2026-02-08",
+      "areaName": "白云区",
+      "parkType": "小区停车场",
+      "totalIncome": 62500.00,
+      "totalEntry": 5250,
+      "avgBerthUtilization": "69.3%",
+      "keyNode": "设备维护",
+      "updateTime": "2026-02-08 18:30",
+      "operator": "系统自动生成"
+    },
+    {
+      "id": 11,
+      "statCycle": "日",
+      "statTime": "2026-02-05",
+      "startDate": "2026-02-05",
+      "endDate": "2026-02-05",
+      "areaName": "黄埔区",
+      "parkType": "商业停车场",
+      "totalIncome": 21160.00,
+      "totalEntry": 920,
+      "avgBerthUtilization": "71.4%",
+      "keyNode": "商务区高峰",
+      "updateTime": "2026-02-05 18:30",
+      "operator": "系统自动生成"
+    },
+    {
+      "id": 12,
+      "statCycle": "月",
+      "statTime": "2026-02",
+      "startDate": "2026-02-01",
+      "endDate": "2026-02-28",
+      "areaName": "黄埔区",
+      "parkType": "商业停车场",
+      "totalIncome": 578900.00,
+      "totalEntry": 25200,
+      "avgBerthUtilization": "72.1%",
+      "keyNode": "园区活动",
+      "updateTime": "2026-02-28 18:30",
+      "operator": "系统自动生成"
+    },
+    {
+      "id": 13,
+      "statCycle": "日",
+      "statTime": "2026-02-01",
+      "startDate": "2026-02-01",
+      "endDate": "2026-02-01",
+      "areaName": "荔湾区",
+      "parkType": "路侧停车",
+      "totalIncome": 14240.00,
+      "totalEntry": 890,
+      "avgBerthUtilization": "77.8%",
+      "keyNode": "正常运营",
+      "updateTime": "2026-02-01 18:30",
+      "operator": "系统自动生成"
+    },
+    {
+      "id": 14,
+      "statCycle": "日",
+      "statTime": "2026-02-01",
+      "startDate": "2026-02-01",
+      "endDate": "2026-02-01",
+      "areaName": "番禺区",
+      "parkType": "小区停车场",
+      "totalIncome": 9360.00,
+      "totalEntry": 780,
+      "avgBerthUtilization": "65.4%",
+      "keyNode": "设备升级",
+      "updateTime": "2026-02-01 18:30",
+      "operator": "系统自动生成"
+    },
+    {
+      "id": 15,
+      "statCycle": "月",
+      "statTime": "2026-02",
+      "startDate": "2026-02-01",
+      "endDate": "2026-02-28",
+      "areaName": "番禺区",
+      "parkType": "小区停车场",
+      "totalIncome": 285600.00,
+      "totalEntry": 23800,
+      "avgBerthUtilization": "66.8%",
+      "keyNode": "社区活动",
+      "updateTime": "2026-02-28 18:30",
+      "operator": "系统自动生成"
+    }
+  ];
+};
+
+/** 搜索表单配置 - 运营趋势报表 */
+export function useFormSchema() {
+  return [
+    {
+      fieldName: 'statCycle',
+      label: '统计周期',
+      component: 'Select',
+      labelWidth: '100',
+      componentProps: {
+        options: [
+          { label: '日', value: '日' },
+          { label: '周', value: '周' },
+          { label: '月', value: '月' },
+        ],
+        placeholder: '请选择统计周期',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'timeRange',
+      label: '时间范围',
+      component: 'DatePicker',
+      labelWidth: '100',
+      componentProps: {
+        type: 'daterange',
+        startPlaceholder: '开始日期',
+        endPlaceholder: '结束日期',
+        valueFormat: 'YYYY-MM-DD',
+        defaultValue: [
+          new Date(new Date().setMonth(new Date().getMonth() - 3)).toISOString().split('T')[0],
+          new Date().toISOString().split('T')[0]
+        ]
+      },
+      rules: 'required',
+    },
+    {
+      component: 'Select',
+      labelWidth: '100',
+      componentProps: {
+        allowClear: true,
+        filterOption: true,
+        options: [
+          { label: '天河区', value: '天河区' },
+          { label: '越秀区', value: '越秀区' },
+          { label: '海珠区', value: '海珠区' },
+          { label: '白云区', value: '白云区' },
+          { label: '黄埔区', value: '黄埔区' },
+          { label: '荔湾区', value: '荔湾区' },
+          { label: '番禺区', value: '番禺区' },
+          { label: '南沙区', value: '南沙区' },
+          { label: '从化区', value: '从化区' },
+        ],
+        placeholder: '请选择行政区域',
+        showSearch: true,
+      },
+      fieldName: 'areaName',
+      label: '行政区域',
+    },
+    {
+      fieldName: 'parkType',
+      label: '车场类型',
+      component: 'Select',
+      labelWidth: '100',
+      componentProps: {
+        options: [
+          { label: '商业停车场', value: '商业停车场' },
+          { label: '路侧停车', value: '路侧停车' },
+          { label: '小区停车场', value: '小区停车场' },
+          { label: '景区停车场', value: '景区停车场' },
+          { label: '医院停车场', value: '医院停车场' },
+          { label: '学校停车场', value: '学校停车场' },
+        ],
+        placeholder: '请选择车场类型',
+      },
+    },
+  ];
+}
+
+/** 表格字段配置 - 运营趋势报表 */
+export function useGridColumns() {
+  return [
+    { type: 'checkbox', width: 40 },
+    {
+      field: 'statCycle',
+      title: '统计周期',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: 'statTime',
+      title: '统计时间',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'areaName',
+      title: '区域名称',
+      minWidth: 100,
+      sortable: true,
+      slots: { default: 'areaName' },
+    },
+    {
+      field: 'parkType',
+      title: '车场类型',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'totalIncome',
+      title: '总收费金额(元)',
+      minWidth: 140,
+      sortable: true,
+      slots: { default: 'totalIncome' },
+    },
+    {
+      field: 'totalEntry',
+      title: '总入场车次',
+      minWidth: 120,
+      sortable: true,
+      slots: { default: 'totalEntry' },
+    },
+    {
+      field: 'avgBerthUtilization',
+      title: '平均泊位利用率',
+      minWidth: 140,
+      sortable: true,
+    },
+    {
+      field: 'keyNode',
+      title: '关键节点',
+      minWidth: 150,
+      slots: { default: 'keyNode' },
+    },
+    {
+      title: '操作',
+      width: 180,
+      fixed: 'right',
+      slots: { default: 'actions' },
+    },
+  ];
+}
+
+/** 文字描述对象 - 运营趋势报表 */
+export const textObj = {
+  editText: '编辑趋势报表',
+  addText: '新增趋势报表',
+  excelName: '运营趋势报表',
+  excelAllName: '运营趋势报表.xlsx',
+  total: '报表总数: 15; 今日数据: 3; 本周数据: 4;',
+};

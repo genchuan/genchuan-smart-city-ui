@@ -13,13 +13,12 @@ import { mapOrbitAnimation } from '#/api/genchuan/industry/mapOrbitAnimation.js'
 import maintainOffDuty from '../../images/maintain_off.png'; // 离岗
 import maintainOnDuty from '../../images/maintain_on_duty.png'; // 在岗
 import maintainTask from '../../images/maintain_task.png'; // 任务中
-// ✅ 仅保留接口存在的【运维人员图标】，删除所有停车场/泊位/设备图标，无冗余
 import markerUnknown from '../../images/unknown.png';
 
 const props = defineProps({
   idName: {
     type: String,
-    default: 'chinaEcharts',
+    default: 'satelliteMaintainMap',
   },
   geometriesArray: {
     type: Array,
@@ -28,16 +27,15 @@ const props = defineProps({
   orbitConfig: {
     type: Object,
     default: () => ({
-      center: { lat: 24.58, lng: 117.65 },
-      rotateSpeed: 0.2,
-      pitch: 40,
+      center: {lat: 24.58, lng: 117.65},
+      rotateSpeed: 0.05,
+      pitch: 0,
       zoom: 10,
       loop: true,
     }),
   },
 });
 
-// ✅ 仅保留接口存在的【运维人员标注层】，删除停车场/泊位/设备层ref，无冗余
 const mapInstance = ref(null);
 const infoWindow = ref(null);
 const maintainMarkerLayer = ref(null);
@@ -56,44 +54,43 @@ watch(
   (newConfig) => {
     Object.assign(orbitConfig.value, newConfig);
   },
-  { deep: true, immediate: true },
+  {deep: true, immediate: true},
 );
 
-// ✅ 仅保留接口存在的【运维人员状态映射表】，删除所有停车场/泊位/设备映射表
 const maintainStatusMap = {
   在岗: {
     color: '#39b20d',
     icon: maintainOnDuty,
     text: '在岗',
-    size: { w: 36, h: 36 },
+    size: {w: 36, h: 36},
     styleId: 'onDuty',
   },
   任务中: {
     color: '#1E90FF',
     icon: maintainTask,
     text: '任务中',
-    size: { w: 36, h: 36 },
+    size: {w: 36, h: 36},
     styleId: 'tasking',
   },
   离岗: {
     color: '#5b5757',
     icon: maintainOffDuty,
     text: '离岗',
-    size: { w: 36, h: 36 },
+    size: {w: 36, h: 36},
     styleId: 'offDuty',
   },
   '': {
     color: '#999',
     icon: markerUnknown,
     text: '状态未知',
-    size: { w: 36, h: 36 },
+    size: {w: 36, h: 36},
     styleId: 'unknown',
   },
 };
 
 // 点击标注展示信息窗口
 const handleMarkerClick = (e) => {
-  const { properties, position } = e.geometry;
+  const {properties, position} = e.geometry;
   if (properties && position && infoWindow.value) {
     infoWindow.value.setContent(getTooltipContent(properties));
     infoWindow.value.setPosition(position);
@@ -108,6 +105,7 @@ const handleInfoWindowClose = () => {
 const initMap = () => {
   const callbackName = `initMap_${props.idName}`;
   const script = document.createElement('script');
+  // 使用卫星地图的API Key
   script.src = `https://map.qq.com/api/gljs?v=1.exp&key=QTQBZ-F3RWW-JJJRV-YNPA5-ZIKDK-3SBNO&callback=${callbackName}`;
   script.async = true;
   window[callbackName] = () => {
@@ -117,7 +115,6 @@ const initMap = () => {
   document.head.append(script);
 };
 
-// ✅ 核心重构：仅渲染【运维人员标注层】，匹配接口字段maintainLatitude/maintainLongitude，无其他冗余逻辑
 const createAllMarkers = (map) => {
   // 销毁原有运维人员标注层
   if (maintainMarkerLayer.value) {
@@ -162,7 +159,7 @@ const createAllMarkers = (map) => {
         id: `maintain-${maintainUserId}`,
         styleId: `maintain-${styleId}`,
         position: new TMap.LatLng(maintainLatitude, maintainLongitude),
-        properties: { ...item, markerType: 'maintainStaff' },
+        properties: {...item, markerType: 'maintainStaff'},
       });
     }
   });
@@ -175,25 +172,25 @@ const createAllMarkers = (map) => {
         'maintain-onDuty': new TMap.MarkerStyle({
           width: 36,
           height: 36,
-          anchor: { x: 18, y: 30 },
+          anchor: {x: 18, y: 30},
           src: maintainOnDuty,
         }),
         'maintain-tasking': new TMap.MarkerStyle({
           width: 36,
           height: 36,
-          anchor: { x: 18, y: 30 },
+          anchor: {x: 18, y: 30},
           src: maintainTask,
         }),
         'maintain-offDuty': new TMap.MarkerStyle({
           width: 36,
           height: 36,
-          anchor: { x: 18, y: 30 },
+          anchor: {x: 18, y: 30},
           src: maintainOffDuty,
         }),
         'maintain-unknown': new TMap.MarkerStyle({
           width: 36,
           height: 36,
-          anchor: { x: 18, y: 30 },
+          anchor: {x: 18, y: 30},
           src: markerUnknown,
         }),
       },
@@ -203,7 +200,6 @@ const createAllMarkers = (map) => {
   }
 };
 
-// ✅ 信息窗：仅保留【运维人员详情】，字段100%匹配文件1接口返回，无任何多余字段
 const getTooltipContent = (properties) => {
   const labelStyle =
     'width: 120px; text-align: right; font-weight: bold; margin-right: 8px; flex-shrink: 0;';
@@ -240,16 +236,21 @@ const mapCallback = () => {
     return;
   }
 
-  const { center, zoom, pitch } = props.orbitConfig;
+  const {center, zoom, pitch} = props.orbitConfig;
+  // 关键修改：使用卫星地图配置
   const map = new TMap.Map(mapContainer, {
     center: new TMap.LatLng(center.lat, center.lng),
     zoom,
-    mapStyleId: 'style1',
+    // 设置卫星地图
+    baseMap: {
+      type: 'satellite'
+    },
     enablePitch: true,
     enableRotate: true,
     pitch,
     rotation: 0,
   });
+
   mapInstance.value = map;
   mapInitialized.value = true;
 
@@ -257,7 +258,7 @@ const mapCallback = () => {
     map,
     position: new TMap.LatLng(0, 0),
     content: '',
-    offset: { x: 0, y: -40 },
+    offset: {x: 0, y: -40},
     visible: false,
   });
   infoWindow.value.on('close', handleInfoWindowClose);
@@ -273,7 +274,7 @@ watch(
     if (mapInitialized.value && Array.isArray(newVal))
       createAllMarkers(mapInstance.value);
   },
-  { deep: true },
+  {deep: true},
 );
 
 onMounted(() => {
@@ -326,18 +327,17 @@ defineExpose({
 
 <template>
   <div class="map-container">
-    <div :id="idName" class="map-common-css"></div>
-    <!-- ✅ 仅保留运维人员图例，无其他冗余图例 -->
+    <div :id="idName" class="map-satellite"></div>
     <div class="legend">
       <div class="legend-items">
         <div class="legend-item">
-          <img :src="maintainOnDuty" class="legend-icon" alt="在岗" />在岗
+          <img :src="maintainOnDuty" class="legend-icon" alt="在岗"/>在岗
         </div>
         <div class="legend-item">
-          <img :src="maintainTask" class="legend-icon" alt="任务中" />任务中
+          <img :src="maintainTask" class="legend-icon" alt="任务中"/>任务中
         </div>
         <div class="legend-item">
-          <img :src="maintainOffDuty" class="legend-icon" alt="离岗" />离岗
+          <img :src="maintainOffDuty" class="legend-icon" alt="离岗"/>离岗
         </div>
       </div>
     </div>
@@ -351,9 +351,9 @@ defineExpose({
   height: 100%;
 }
 
-.map-common-css {
+.map-satellite {
   width: 100%;
-  height: 100%;
+  height: 99%;
   margin: 0 auto;
   overflow: hidden;
   border-radius: 8px;
