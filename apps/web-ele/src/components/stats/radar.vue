@@ -1,4 +1,4 @@
-<!-- /components/stats/line.vue -->
+<!-- /components/stats/radar.vue -->
 <script setup>
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 
@@ -8,14 +8,16 @@ import * as echarts from 'echarts';
 const props = defineProps({
   // 图表标题
   title: { type: String, default: '数据统计' },
-  // X轴类目（如时间/日期/区域）
-  xData: { type: Array, required: true },
+  // 雷达图指标名称数组
+  indicatorNames: { type: Array, required: true },
   // 数据系列（[{name: '名称', data: [数值]}]）
   seriesData: { type: Array, required: true },
-  // Y轴名称
-  yName: { type: String, default: '数量' },
-  // 是否平滑曲线（扩展配置，贴合折线图特性）
-  smooth: { type: Boolean, default: true },
+  // 雷达图形状：'polygon' 多边形，'circle' 圆形
+  shape: { type: String, default: 'polygon' },
+  // 雷达图半径（百分比或像素）
+  radius: { type: String, default: '75%' },
+  // 是否显示面积
+  area: { type: Boolean, default: true },
 });
 
 const chartRef = ref(null);
@@ -64,47 +66,28 @@ const initChart = async () => {
     // 3. 创建新实例（包裹try-catch避免初始化异常）
     chartInstance = echarts.init(chartRef.value);
 
-    // 核心配置（贴合折线图特性，保持和柱状图一致的样式风格）
+    // 构建雷达图指标
+    const indicators = props.indicatorNames.map((name) => ({
+      name,
+      max: 100, // 默认最大值为100，实际项目中可能需要根据数据动态计算
+    }));
+
+    // 核心配置（雷达图特有配置）
     const option = {
       title: { text: props.title, left: 'center' },
       tooltip: {
-        trigger: 'axis',
-        axisPointer: { type: 'shadow' }, // 保持和柱状图一致的指示器风格
+        trigger: 'item',
       },
-      legend: { bottom: 10, left: 'center' },
-      grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '3%',
-        containLabel: true,
-        backgroundColor: 'transparent',
+      legend: {
+        bottom: 10,
+        left: 'center',
+        data: props.seriesData.map((item) => item.name),
       },
-      xAxis: {
-        type: 'category',
-        boundaryGap: false, // 折线图关闭边界间隙，更贴合趋势展示
-        data: props.xData,
-        axisLabel: {
-          color: '#9AA8B7',
-          fontSize: 11,
-        },
-        axisLine: {
-          lineStyle: {
-            color: '#E8F4FD',
-          },
-        },
-        axisTick: {
-          lineStyle: {
-            color: '#E8F4FD',
-          },
-        },
-        splitLine: {
-          show: false,
-        },
-      },
-      yAxis: {
-        type: 'value',
-        name: props.yName,
-        axisLabel: {
+      radar: {
+        indicator: indicators,
+        shape: props.shape,
+        radius: props.radius,
+        axisName: {
           color: '#9AA8B7',
           fontSize: 11,
         },
@@ -124,35 +107,54 @@ const initChart = async () => {
             type: 'dashed',
           },
         },
-      },
-      color: ['#4a90e2', '#FF6B6B', '#FFD166', '#06D6A0'], // 扩展配色适配多系列
-      series: props.seriesData.map((seriesItem) => ({
-        name: seriesItem.name,
-        type: 'line', // 折线图核心类型
-        smooth: props.smooth, // 平滑曲线配置
-        data: seriesItem.data.map((value, idx) => ({ value })),
-        emphasis: {
-          itemStyle: {
-            shadowBlur: 10,
-            shadowColor: `rgba(${seriesItem.color ? seriesItem.color.replace('#', '') : '74,144,226'}, 0.3)`,
+        splitArea: {
+          areaStyle: {
+            color: ['rgba(250, 250, 250, 0.2)', 'rgba(200, 200, 200, 0.1)'],
           },
         },
-        lineStyle: {
-          width: 2, // 折线宽度
-          color: seriesItem.color || '#4a90e2', // 支持自定义系列颜色
+      },
+      color: ['#4a90e2', '#FF6B6B', '#FFD166', '#06D6A0'], // 扩展配色适配多系列
+      series: [
+        {
+          type: 'radar',
+          emphasis: {
+            lineStyle: {
+              width: 4,
+            },
+          },
+          data: props.seriesData.map((seriesItem, index) => ({
+            name: seriesItem.name,
+            value: seriesItem.data,
+            symbol: 'circle',
+            symbolSize: 6,
+            lineStyle: {
+              width: 2,
+              color:
+                seriesItem.color ||
+                ['#4a90e2', '#FF6B6B', '#FFD166', '#06D6A0'][index % 4],
+            },
+            itemStyle: {
+              color:
+                seriesItem.color ||
+                ['#4a90e2', '#FF6B6B', '#FFD166', '#06D6A0'][index % 4],
+            },
+            areaStyle: props.area
+              ? {
+                  color: new echarts.graphic.RadialGradient(0.5, 0.5, 1, [
+                    {
+                      offset: 0,
+                      color: `${seriesItem.color || ['#4a90e2', '#FF6B6B', '#FFD166', '#06D6A0'][index % 4]}80`,
+                    },
+                    {
+                      offset: 1,
+                      color: `${seriesItem.color || ['#4a90e2', '#FF6B6B', '#FFD166', '#06D6A0'][index % 4]}10`,
+                    },
+                  ]),
+                }
+              : null,
+          })),
         },
-        itemStyle: {
-          color: seriesItem.color || '#4a90e2', // 拐点颜色
-          borderWidth: 2,
-        },
-        areaStyle: {
-          // 渐变面积填充（折线图特色）
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: `${seriesItem.color || '#4a90e2'}80` },
-            { offset: 1, color: `${seriesItem.color || '#4a90e2'}10` },
-          ]),
-        },
-      })),
+      ],
     };
 
     // 4. 强制设置配置（避免配置残留）
@@ -168,7 +170,13 @@ const initChart = async () => {
 
 // 监听数据变化重绘（增加守卫，避免无效触发）
 watch(
-  [() => props.xData, () => props.seriesData, () => props.smooth],
+  [
+    () => props.indicatorNames,
+    () => props.seriesData,
+    () => props.shape,
+    () => props.radius,
+    () => props.area,
+  ],
   () => {
     // 仅当组件已挂载、容器有效时才重绘
     if (chartRef.value) {
@@ -206,6 +214,6 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <!-- 折线图容器：强制设置基础宽高，避免尺寸为0 -->
+  <!-- 雷达图容器：强制设置基础宽高，避免尺寸为0 -->
   <div ref="chartRef" class="park-type-chart"></div>
 </template>

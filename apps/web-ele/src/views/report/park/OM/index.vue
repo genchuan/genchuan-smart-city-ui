@@ -2,12 +2,15 @@
 <script setup>
 import { ref } from 'vue';
 
-// import OccupancyReport from './occupancy/index.vue';
-// import OccupancyChart from './occupancy/occupancychart.vue';
-// import VacancyReport from './vacancy/index.vue';
-// import VacancyChart from './vacancy/vacancychart.vue';
-// import UsagerateReport from './usagerate/index.vue';
-// import UsagerateChart from './usagerate/usageratechart.vue';
+// import EquipmentReport from './equipment/index.vue';
+// import EquipmentChart from './equipment/equipmentchart.vue';
+// import FaultReport from './fault/index.vue';
+// import FaultChart from './fault/faultchart.vue';
+// import EfficiencyReport from './efficiency/index.vue';
+// import EfficiencyChart from './efficiency/efficiencychart.vue';
+// import StaffReport from './staff/index.vue';
+// import StaffChart from './staff/Staffchart.vue';
+
 import '#/components/page/index.scss';
 
 const changeArrowStatus = () => {
@@ -21,24 +24,32 @@ const arrowChange = (index) => {
 };
 const tabArray = ref([
   // {
-  //   label: '泊位占用报表',
-  //   components: OccupancyReport,
+  //   label: '设备运行报表',
+  //   components: EquipmentReport,
   //   showSecondary: true,
   //   secondShow: false,
   //   arrowShow: false,
   //   arrowState: false,
   // },
   // {
-  //   label: '泊位空置报表',
-  //   components: VacancyReport,
+  //   label: '故障统计报表',
+  //   components: FaultReport,
   //   showSecondary: true,
   //   secondShow: false,
   //   arrowShow: false,
   //   arrowState: false,
   // },
   // {
-  //   label: '泊位利用率报表',
-  //   components: UsagerateReport,
+  //   label: '运维效率报表',
+  //   components: EfficiencyReport,
+  //   showSecondary: true,
+  //   secondShow: false,
+  //   arrowShow: false,
+  //   arrowState: false,
+  // },
+  // {
+  //   label: '运维人员绩效考核报表',
+  //   components: StaffReport,
   //   showSecondary: true,
   //   secondShow: false,
   //   arrowShow: false,
@@ -50,14 +61,15 @@ const tabChange = () => {
     v.arrowShow = false;
   });
 };
-const activeName = ref('泊位占用报表');
+const activeName = ref('设备运行报表');
 const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <!--    <OccupancyChart v-if="tabArray[0].arrowShow" />-->
-    <!--    <VacancyChart v-if="tabArray[1].arrowShow" />-->
-    <!--    <UsagerateChart v-if="tabArray[2].arrowShow" />-->
+<!--    <EquipmentChart v-if="tabArray[0].arrowShow" />-->
+<!--    <FaultChart v-if="tabArray[1].arrowShow" />-->
+<!--    <EfficiencyChart v-if="tabArray[2].arrowShow" />-->
+<!--    <StaffChart v-if="tabArray[3].arrowShow"/>-->
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
