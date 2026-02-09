@@ -2,33 +2,25 @@
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
 
-import {
-  ElDatePicker,
-  ElDialog,
-  ElImage,
-  ElLoading,
-  ElMessage,
-} from 'element-plus';
+import { ElImage, ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  createRoad,
-  deleteRoad,
-  getHistroyList,
-  getRoadList,
-  outPark,
-  realOutPark,
-  simulateMagneticDetection,
-  updateRoad,
+  getOrderPage,
+  updateOrderTemp,
 } from '#/api/genchuan/industry/park/index.js';
+import {
+  createOutDriveObj,
+  deleteOutDriveObj,
+} from '#/api/genchuan/industry/vehicle/entry.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
 import { exportToExcel } from '#/utils/excel.js';
-import ParkDetailDrawer from '#/views/genchuan/industry/page/vehicle/entry/table/detail.vue';
+// 引入封装后的详情抽屉组件
+import ParkDetailDrawer from '#/views/genchuan/industry/page/park/ledger/record/detail.vue';
 
 import { textObj, useFormSchema, useGridColumns } from './data';
 
@@ -38,6 +30,7 @@ const props = defineProps({
     default: false,
   },
 });
+const title = ref('编辑');
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
 });
@@ -52,6 +45,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
+// 移除原 DetailDrawer 初始化逻辑
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -73,9 +67,9 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
   async onConfirm() {
     const obj = formApi.form.values;
-    await (formDrawerApi.sharedData.payload.title === textObj.addText
-      ? createRoad(obj)
-      : updateRoad({ ...dataObj.editObj, ...obj }));
+    (await title.value) === '编辑'
+      ? updateOrderTemp({ ...dataObj.editObj, ...obj })
+      : createOutDriveObj(obj);
     handleRefresh();
     formDrawerApi.close();
   },
@@ -111,6 +105,7 @@ function handleCreate() {
 
 /** 编辑角色 */
 function handleEdit(row) {
+  title.value = '编辑';
   dataObj.editObj = row;
   formDrawerApi
     .setData({
@@ -124,7 +119,7 @@ async function handleDelete(row) {
     text: $t('ui.actionMessage.deleting'),
   });
   try {
-    await deleteRoad(row.id);
+    await deleteOutDriveObj(row.id);
     ElMessage.success($t('ui.actionMessage.deleteSuccess'));
     handleRefresh();
   } finally {
@@ -149,7 +144,7 @@ function handleRowCheckboxChange({ records }) {
 }
 const dataObj = reactive({
   totalShow: false,
-  detailObj: {},
+  detailObj: {}, // 保留详情对象用于传递给组件
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -162,6 +157,20 @@ const dataObj = reactive({
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
+const outTypeObj = {
+  0: '收费放行',
+  1: '免费放行',
+  2: '异常放行',
+  3: '系统放行',
+};
+const payObj = {
+  1: '微信',
+  2: '支付宝',
+  3: '银联',
+  4: '余额',
+  5: '现金',
+  25: 'ETC支付',
+};
 // 表格数据获取
 const getTableData = async (pageObj) => {
   const getParams = {
@@ -169,7 +178,7 @@ const getTableData = async (pageObj) => {
     pageSize: pageObj.page.pageSize,
     ...dataObj.serachObj,
   };
-  const data = await getRoadList(getParams);
+  const data = await getOrderPage(getParams);
   dataObj.total = data.total;
   dataObj.list = data.list.map((v) => {
     return {
@@ -177,21 +186,30 @@ const getTableData = async (pageObj) => {
       plateType: v.plateType === '1' ? '月租车' : '临时车',
       driveInTime: formatTimestamp(v.driveInTime),
       createTime: formatTimestamp(v.createTime),
+      driveOutTime: formatTimestamp(v.driveOutTime),
+      outType: outTypeObj[v.outType] || v.outType,
+      payMethod: payObj[v.payMethod] || v.payMethod,
     };
   });
   return dataObj;
 };
 
 const [QueryForm, QueryFormApi] = useVbenForm({
+  // 默认展开
   collapsed: false,
+  // 所有表单项共用，可单独在表单内覆盖
   commonConfig: {
+    // 所有表单项
     componentProps: {
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
+  // 提交函数
   handleSubmit: onSubmit,
+  // 垂直布局，label和input在不同行，值为vertical
+  // 水平布局，label和input在同一行
   layout: 'horizontal',
   schema: useFormSchema().map((v) => {
     delete v.rules;
@@ -199,6 +217,7 @@ const [QueryForm, QueryFormApi] = useVbenForm({
       ...v,
     };
   }),
+  // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -239,8 +258,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const activeName = ref('');
+// 修改打开详情的方法，调用组件的open方法
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
+  // 通过ref调用组件的open方法
   parkDetailDrawerRef.value.open();
   console.log(row);
 };
@@ -263,190 +284,34 @@ const handleFullShow = () => {
   screenfull.toggle();
 };
 
+// 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
 const dialogVisible = ref(false);
 const openImg = (url) => {
   dataObj.imgUrl = url;
   dialogVisible.value = true;
 };
-
-// ========== 地磁车辆入场弹窗相关配置（原有） ==========
-const driveInDialogVisible = ref(false);
-const currentDriveInRow = ref(null);
-const driveInTime = ref(Date.now());
-
-const handleOpenDriveInDialog = (row) => {
-  currentDriveInRow.value = row;
-  const validTimeStamp = Date.now();
-  driveInTime.value = validTimeStamp;
-  driveInDialogVisible.value = true;
-};
-
-const handleConfirmDriveIn = async () => {
-  if (!currentDriveInRow.value || !driveInTime.value) {
-    ElMessage.warning('请选择有效的入场时间！');
-    return;
-  }
-
-  try {
-    const res = await simulateMagneticDetection({
-      targetBerthNo: currentDriveInRow.value.berthCode,
-      entryTime: driveInTime.value,
-      parkId: currentDriveInRow.value.parkId,
-    });
-
-    ElMessage.success('地磁车辆入场操作成功！');
+const handleF5 = async () => {
+  const loadingInstance = ElLoading.service();
+  await refreshSync();
+  setTimeout(() => {
+    loadingInstance.close();
     handleRefresh();
-    driveInDialogVisible.value = false;
-  } catch (error) {
-    ElMessage.error('地磁车辆入场操作失败！');
-    console.error('入场失败：', error);
-  }
-};
-
-const handleCancelDriveIn = () => {
-  driveInDialogVisible.value = false;
-  currentDriveInRow.value = null;
-  driveInTime.value = Date.now();
-};
-
-// ========== 新增：地磁车辆出场弹窗相关配置 ==========
-// 1. 出场弹窗显示状态
-const driveOutDialogVisible = ref(false);
-// 2. 当前选中的行数据（传递给出场弹窗）
-const currentDriveOutRow = ref(null);
-// 3. 出场时间（绑定时间选择器，默认值为当前时间戳）
-const driveOutTime = ref(Date.now());
-const histObj = ref([]);
-// 4. 打开出场弹窗方法
-const handleOpenDriveOutDialog = async (row) => {
-  currentDriveOutRow.value = row;
-  const resObj = await getHistroyList(row.berthCode, '已停入', row.parkId);
-  histObj.value = resObj;
-  const validTimeStamp = Date.now(); // 默认当前时间
-  // 最终赋值：确保只有合法时间戳被绑定
-  driveOutTime.value = validTimeStamp;
-  driveOutDialogVisible.value = true;
-};
-
-// 5. 确认出场操作方法
-const handleConfirmDriveOut = async () => {
-  if (!currentDriveOutRow.value || !driveOutTime.value) {
-    ElMessage.warning('请选择有效的出场时间！');
-    return;
-  }
-
-  try {
-    // 后续可替换为实际的地磁车辆出场接口
-    // 示例：调用出场接口，传递泊位编号和出场时间戳
-    const res = await outPark({
-      id: histObj.value[0].id,
-      exitTime: driveOutTime.value,
-    });
-    const result = await realOutPark({
-      id: histObj.value[0].id,
-      parkingStatus: '已驶离',
-      exitTime: driveOutTime.value,
-    });
-    // 临时提示（后续替换为接口返回结果）
-    ElMessage.success('地磁车辆出场操作成功！');
-    // 刷新表格数据
-    handleRefresh();
-    // 关闭弹窗
-    driveOutDialogVisible.value = false;
-  } catch (error) {
-    ElMessage.error('地磁车辆出场操作失败！');
-    console.error('出场失败：', error);
-  }
-};
-
-// 6. 取消出场弹窗（重置状态）
-const handleCancelDriveOut = () => {
-  driveOutDialogVisible.value = false;
-  currentDriveOutRow.value = null;
-  driveOutTime.value = Date.now();
+  }, 3000);
 };
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <ElDialog v-model="dialogVisible">
+    <el-dialog v-model="dialogVisible">
       <div class="park-img-center">
         <img style="width: 100%; height: 100%" :src="dataObj.imgUrl" />
       </div>
-    </ElDialog>
-
-    <!-- ========== 地磁车辆入场弹窗（原有） ========== -->
-    <ElDialog
-      v-model="driveInDialogVisible"
-      title="地磁车辆入场"
-      width="500px"
-      @close="handleCancelDriveIn"
-    >
-      <div class="drive-in-form">
-        <div class="form-item">
-          <label class="form-label">入场时间：</label>
-          <ElDatePicker
-            v-model="driveInTime"
-            type="datetime"
-            placeholder="请选择入场日期和时间"
-            style="width: 100%"
-          />
-        </div>
-      </div>
-      <template #footer>
-        <button
-          class="el-button el-button--default"
-          @click="handleCancelDriveIn"
-        >
-          取消
-        </button>
-        <button
-          class="el-button el-button--primary"
-          @click="handleConfirmDriveIn"
-        >
-          确认入场
-        </button>
-      </template>
-    </ElDialog>
-
-    <!-- ========== 新增：地磁车辆出场弹窗 ========== -->
-    <ElDialog
-      v-model="driveOutDialogVisible"
-      title="地磁车辆出场"
-      width="500px"
-      @close="handleCancelDriveOut"
-    >
-      <div class="drive-in-form">
-        <div class="form-item">
-          <label class="form-label">出场时间：</label>
-          <ElDatePicker
-            v-model="driveOutTime"
-            type="datetime"
-            placeholder="请选择出场日期和时间"
-            style="width: 100%"
-          />
-        </div>
-      </div>
-      <template #footer>
-        <button
-          class="el-button el-button--default"
-          @click="handleCancelDriveOut"
-        >
-          取消
-        </button>
-        <button
-          class="el-button el-button--primary"
-          @click="handleConfirmDriveOut"
-        >
-          确认出场
-        </button>
-      </template>
-    </ElDialog>
-
+    </el-dialog>
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
+    <!-- 使用封装后的详情抽屉组件 -->
     <ParkDetailDrawer
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
@@ -456,6 +321,7 @@ const handleCancelDriveOut = () => {
       <QueryForm class="query-form" />
     </Drawer>
     <Grid>
+      <!-- 三级状态 -->
       <template #table-title>
         <div class="tabel-tabs">
           <div v-if="props.secondShow">
@@ -476,19 +342,19 @@ const handleCancelDriveOut = () => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <!-- <IconButton content="新增" icon-name="Plus" @click="handleCreate" /> -->
           <IconButton
             content="导出"
             icon-name="download"
             @click="handleExport"
           />
-          <IconButton
+          <!-- <IconButton
             content="批量删除"
             icon-name="delete"
             color="#F56C6C"
             :disabled="isEmpty(checkedIds)"
             @click="handleDeleteBatch"
-          />
+          /> -->
           <IconButton
             content="搜索"
             icon-name="search"
@@ -501,14 +367,24 @@ const handleCancelDriveOut = () => {
           />
         </div>
       </template>
-      <template #recordId="{ row }">
+      <template #orderCode="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.recordId }}
+          {{ row.orderCode }}
         </el-text>
+      </template>
+      <template #entryTime="{ row }">
+        <div>
+          {{ formatTimestamp(row.entryTime) }}
+        </div>
+      </template>
+      <template #exitTime="{ row }">
+        <div>
+          {{ formatTimestamp(row.exitTime) }}
+        </div>
       </template>
       <template #driveInPhoto="{ row }">
         <ElImage
@@ -517,21 +393,16 @@ const handleCancelDriveOut = () => {
           @click="openImg(row.driveInPhoto)"
         />
       </template>
+      <template #driveOutPhoto="{ row }">
+        <ElImage
+          style="width: 100px; height: 100px"
+          :src="row.driveOutPhoto"
+          @click="openImg(row.driveOutPhoto)"
+        />
+      </template>
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <!-- 地磁车辆入场（原有） -->
-          <IconButton
-            content="地磁车辆入场"
-            icon-name="Upload"
-            @click="handleOpenDriveInDialog(row)"
-          />
-          <!-- ========== 修改：绑定出场弹窗打开方法 ========== -->
-          <IconButton
-            content="地磁车辆出场"
-            icon-name="Download"
-            @click="handleOpenDriveOutDialog(row)"
-          />
           <IconButton
             content="详情"
             icon-name="View"
@@ -542,12 +413,12 @@ const handleCancelDriveOut = () => {
             icon-name="edit"
             @click="handleEdit(row)"
           />
-          <IconButton
+          <!-- <IconButton
             content="删除"
             icon-name="delete"
             color="#F56C6C"
             @click="handleDelete(row)"
-          />
+          /> -->
         </div>
       </template>
       <template #bottom>
@@ -561,7 +432,7 @@ const handleCancelDriveOut = () => {
           <span> 本页统计：停车记录10条 </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span> 全部统计：停车记录15条 </span>
+          <span> 全部统计：停车记录55条 </span>
         </div>
       </template>
     </Grid>
@@ -574,21 +445,5 @@ const handleCancelDriveOut = () => {
   justify-content: center;
   width: 700px;
   height: 700px;
-}
-
-.drive-in-form {
-  padding: 10px 0;
-}
-
-.form-item {
-  margin-bottom: 16px;
-}
-
-.form-label {
-  display: inline-block;
-  width: 80px;
-  margin-right: 10px;
-  color: #606266;
-  text-align: right;
 }
 </style>
