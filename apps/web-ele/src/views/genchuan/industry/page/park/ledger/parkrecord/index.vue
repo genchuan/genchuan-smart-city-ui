@@ -408,6 +408,17 @@ const handleF5 = async () => {
           />
         </div>
       </template>
+      <template #bottom>
+        <div class="common-total" @click="changeTotalShow">
+          <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
+            <ArrowDown />
+          </el-icon>
+          <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
+            <ArrowUp />
+          </el-icon>
+          <span>停车订单 </span>
+        </div>
+      </template>
     </Grid>
   </div>
 </template>
