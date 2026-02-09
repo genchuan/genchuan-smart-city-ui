@@ -6,6 +6,11 @@ export function getDriveinList(params) {
     params,
   });
 }
+export function getInputCar(params) {
+  return requestClient.get('/park/input-car/page', {
+    params,
+  });
+}
 export function getOrderPage(params) {
   return requestClient.get('/park/order-temp/page', {
     params,
@@ -31,6 +36,9 @@ export function createDriveObj(data) {
 
 export function updateOrderTemp(data) {
   return requestClient.put('/park/order-temp/update', data);
+}
+export function updatecarInput(data) {
+  return requestClient.put('/park/input-car/update', data);
 }
 /** 车辆出场创建记录 */
 export function createOutDriveObj(data) {

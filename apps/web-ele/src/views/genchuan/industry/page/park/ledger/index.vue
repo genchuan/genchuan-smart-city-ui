@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 
-import ledgerchart from './ledgerchart.vue';
+import Parkrecord from './parkrecord/index.vue';
 import Record from './record/index.vue';
 import Table from './table/index.vue';
 
@@ -17,9 +17,17 @@ const tabArray = ref([
   {
     label: '对账记录',
     components: Record,
-    showSecondary: true,
+    showSecondary: false,
     secondShow: false,
-    arrowShow: true,
+    arrowShow: false,
+    arrowState: false,
+  },
+  {
+    label: '停车记录',
+    components: Parkrecord,
+    showSecondary: false,
+    secondShow: false,
+    arrowShow: false,
     arrowState: false,
   },
   {
@@ -41,7 +49,7 @@ const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <ledgerchart v-if="tabArray[0].arrowShow" />
+    <!-- <ledgerchart v-if="tabArray[0].arrowShow" /> -->
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
