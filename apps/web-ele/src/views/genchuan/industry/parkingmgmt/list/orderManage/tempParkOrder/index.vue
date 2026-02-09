@@ -1,19 +1,14 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
+
 import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
 
 import StatsVisualization from '#/components/stats/StatsVisualization.vue';
+
 import Table from './table/index.vue';
 import { getStatsDataByTab } from './table/data.js';
 
 import '#/components/page/index.scss';
-
-const changeArrowStatus = () => {
-  secondShow.value = !secondShow.value;
-  tabArray.value.forEach((v) => {
-    v.secondShow = secondShow.value;
-  });
-};
 
 // 控制统计组件显示/隐藏的状态
 const showStats = ref(false);
@@ -23,42 +18,47 @@ const toggleStats = () => {
   showStats.value = !showStats.value;
 };
 
-const tabArray = ref([
-  {
-    label: '发票申请',
-    components: Table,
-    showSecondary: true,
-    secondShow: false,
-  },
-  {
-    label: '发票生成',
-    components: Table,
-    showSecondary: true,
-    secondShow: false,
-  },
-  {
-    label: '发票查询',
-    components: Table,
-    showSecondary: true,
-    secondShow: false,
-  },
-]);
-const activeName = ref('发票申请');
-const secondShow = ref(false);
-
-// 当前选中的标签页名称
-const currentTab = ref('发票申请');
+// 当前选中的标签页
+const currentTab = ref('订单生成');
 
 // 获取当前标签页的统计数据
 const statsData = computed(() => {
   return getStatsDataByTab(currentTab.value);
 });
 
-// 监听标签页切换，更新当前标签页名称
+const changeArrowStatus = () => {
+  secondShow.value = !secondShow.value;
+  tabArray.value.forEach((v) => {
+    v.secondShow = secondShow.value;
+  });
+};
+
 const tabChange = (tabName) => {
   activeName.value = tabName;
   currentTab.value = tabName;
 };
+const tabArray = ref([
+  {
+    label: '订单生成',
+    components: Table,
+    showSecondary: true,
+    secondShow: false,
+  },
+  {
+    label: '状态跟踪',
+    components: Table,
+    showSecondary: true,
+    secondShow: false,
+  },
+  {
+    label: '订单明细',
+    components: Table,
+    showSecondary: true,
+    secondShow: false,
+  },
+]);
+const activeName = ref('订单生成');
+const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
@@ -99,10 +99,10 @@ const tabChange = (tabName) => {
         <component
           :is="item.components"
           :second-show="item.secondShow"
-          :active-tab="activeName"
+          :active-tab="item.label"
           :show-stats="showStats"
           :toggle-stats="toggleStats"
-          :key="activeName"
+          :key="item.label"
         />
       </el-tab-pane>
     </el-tabs>
