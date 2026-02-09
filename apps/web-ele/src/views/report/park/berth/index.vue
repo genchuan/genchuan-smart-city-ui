@@ -2,12 +2,12 @@
 <script setup>
 import { ref } from 'vue';
 
-import DailyReport from './daily/index.vue';
-import DailyChart from './daily/dailychart.vue';
-import MonthlyReport from './monthly/index.vue';
-import MonthlyChart from './monthly/monthlychart.vue';
-import DetailReport from './detail/index.vue';
-import DetailChart from './detail/detailchart.vue';
+import OccupancyReport from './occupancy/index.vue';
+import OccupancyChart from './occupancy/occupancychart.vue';
+import VacancyReport from './vacancy/index.vue';
+import VacancyChart from './vacancy/vacancychart.vue';
+import UsagerateReport from './usagerate/index.vue';
+import UsagerateChart from './usagerate/usageratechart.vue';
 
 import '#/components/page/index.scss';
 
@@ -22,24 +22,24 @@ const arrowChange = (index) => {
 };
 const tabArray = ref([
   {
-    label: '日收入数据报表',
-    components: DailyReport,
+    label: '泊位占用报表',
+    components: OccupancyReport,
     showSecondary: true,
     secondShow: false,
     arrowShow: false,
     arrowState: false,
   },
   {
-    label: '月收入数据报表',
-    components: MonthlyReport,
+    label: '泊位空置报表',
+    components: VacancyReport,
     showSecondary: true,
     secondShow: false,
     arrowShow: false,
     arrowState: false,
   },
   {
-    label: '收入明细报表',
-    components: DetailReport,
+    label: '泊位利用率报表',
+    components: UsagerateReport,
     showSecondary: true,
     secondShow: false,
     arrowShow: false,
@@ -51,14 +51,14 @@ const tabChange = () => {
     v.arrowShow = false;
   });
 };
-const activeName = ref('日收入数据报表');
+const activeName = ref('泊位占用报表');
 const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <DailyChart v-if="tabArray[0].arrowShow" />
-    <MonthlyChart v-if="tabArray[1].arrowShow" />
-    <DetailChart v-if="tabArray[2].arrowShow" />
+    <OccupancyChart v-if="tabArray[0].arrowShow" />
+    <VacancyChart v-if="tabArray[1].arrowShow" />
+    <UsagerateChart v-if="tabArray[2].arrowShow" />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
