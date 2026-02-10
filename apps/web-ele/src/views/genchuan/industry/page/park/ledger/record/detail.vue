@@ -106,7 +106,7 @@ defineExpose({
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">用户实际支付金额:</div>
+        <div class="detail-row-left">最终金额:</div>
         <div class="detail-row-right">
           {{
             detailObj.payAmount ? `${detailObj.payAmount.toFixed(2)} 元` : '-'
@@ -203,7 +203,7 @@ defineExpose({
 // 左侧标签样式
 .detail-row-left {
   flex-shrink: 0; // 不收缩
-  width: 140px; // 加宽适配长标签（订单优惠金额/用户实际支付金额）
+  width: 140px; // 加宽适配长标签（订单优惠金额/最终金额）
   font-size: 14px;
   font-weight: 500; // 加粗突出标签
   line-height: 18px; // 统一行高

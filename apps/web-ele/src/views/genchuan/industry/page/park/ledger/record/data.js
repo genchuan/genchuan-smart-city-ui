@@ -100,13 +100,13 @@ export function useFormSchema() {
       component: 'InputNumber',
       labelWidth: '100',
       componentProps: {
-        placeholder: '请输入用户实际支付金额',
+        placeholder: '请输入最终金额',
         min: 0,
         precision: 2,
         style: { width: '100%' },
       },
       fieldName: 'payAmount', // 对应表格payAmount字段
-      label: '用户实际支付金额',
+      label: '最终金额',
     },
     {
       component: 'Select',
@@ -221,7 +221,7 @@ export function useGridColumns() {
     },
     {
       field: 'payAmount',
-      title: '用户实际支付金额',
+      title: '最终金额',
       minWidth: 100,
       sortable: true,
     },
