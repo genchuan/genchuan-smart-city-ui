@@ -2,12 +2,12 @@
 <script setup>
 import { ref } from 'vue';
 
-// import OccupancyReport from './occupancy/index.vue';
-// import OccupancyChart from './occupancy/occupancychart.vue';
-// import VacancyReport from './vacancy/index.vue';
-// import VacancyChart from './vacancy/vacancychart.vue';
-// import UsagerateReport from './usagerate/index.vue';
-// import UsagerateChart from './usagerate/usageratechart.vue';
+import OccupancyReport from './occupancy/index.vue';
+import OccupancyChart from './occupancy/occupancychart.vue';
+import VacancyReport from './vacancy/index.vue';
+import VacancyChart from './vacancy/vacancychart.vue';
+import UsagerateReport from './usagerate/index.vue';
+import UsagerateChart from './usagerate/usageratechart.vue';
 import '#/components/page/index.scss';
 
 const changeArrowStatus = () => {
@@ -20,30 +20,30 @@ const arrowChange = (index) => {
   tabArray.value[index].arrowShow = !tabArray.value[index].arrowShow;
 };
 const tabArray = ref([
-  // {
-  //   label: '泊位占用报表',
-  //   components: OccupancyReport,
-  //   showSecondary: true,
-  //   secondShow: false,
-  //   arrowShow: false,
-  //   arrowState: false,
-  // },
-  // {
-  //   label: '泊位空置报表',
-  //   components: VacancyReport,
-  //   showSecondary: true,
-  //   secondShow: false,
-  //   arrowShow: false,
-  //   arrowState: false,
-  // },
-  // {
-  //   label: '泊位利用率报表',
-  //   components: UsagerateReport,
-  //   showSecondary: true,
-  //   secondShow: false,
-  //   arrowShow: false,
-  //   arrowState: false,
-  // },
+  {
+    label: '泊位占用报表',
+    components: OccupancyReport,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: false,
+    arrowState: false,
+  },
+  {
+    label: '泊位空置报表',
+    components: VacancyReport,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: false,
+    arrowState: false,
+  },
+  {
+    label: '泊位利用率报表',
+    components: UsagerateReport,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: false,
+    arrowState: false,
+  },
 ]);
 const tabChange = () => {
   tabArray.value.forEach((v) => {
@@ -55,9 +55,9 @@ const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <!--    <OccupancyChart v-if="tabArray[0].arrowShow" />-->
-    <!--    <VacancyChart v-if="tabArray[1].arrowShow" />-->
-    <!--    <UsagerateChart v-if="tabArray[2].arrowShow" />-->
+        <OccupancyChart v-if="tabArray[0].arrowShow" />
+        <VacancyChart v-if="tabArray[1].arrowShow" />
+        <UsagerateChart v-if="tabArray[2].arrowShow" />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
