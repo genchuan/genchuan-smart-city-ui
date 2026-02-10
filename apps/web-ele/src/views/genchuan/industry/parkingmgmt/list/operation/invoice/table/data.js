@@ -11,7 +11,7 @@ export const dataList = () => {
       applicationNo: 'AP202602010001',
       invoiceStatus: '已开具',
       estimateTime: '2026-02-02 10:00:00',
-      relatedOrderCount: 2
+      relatedOrderCount: 2,
     },
     {
       orderSelection: '订单3',
@@ -23,7 +23,7 @@ export const dataList = () => {
       applicationNo: 'AP202602010002',
       invoiceStatus: '处理中',
       estimateTime: '2026-02-03 14:00:00',
-      relatedOrderCount: 1
+      relatedOrderCount: 1,
     },
     {
       orderSelection: '订单4,订单5,订单6',
@@ -35,7 +35,7 @@ export const dataList = () => {
       applicationNo: 'AP202602010003',
       invoiceStatus: '待处理',
       estimateTime: '2026-02-04 09:00:00',
-      relatedOrderCount: 3
+      relatedOrderCount: 3,
     },
     {
       orderSelection: '订单7',
@@ -47,7 +47,7 @@ export const dataList = () => {
       applicationNo: 'AP202602010004',
       invoiceStatus: '已开具',
       estimateTime: '2026-02-02 16:00:00',
-      relatedOrderCount: 1
+      relatedOrderCount: 1,
     },
     {
       orderSelection: '订单8,订单9',
@@ -59,7 +59,7 @@ export const dataList = () => {
       applicationNo: 'AP202602010005',
       invoiceStatus: '处理中',
       estimateTime: '2026-02-03 11:00:00',
-      relatedOrderCount: 2
+      relatedOrderCount: 2,
     },
     {
       orderSelection: '订单10',
@@ -71,7 +71,7 @@ export const dataList = () => {
       applicationNo: 'AP202602010006',
       invoiceStatus: '待处理',
       estimateTime: '2026-02-04 10:30:00',
-      relatedOrderCount: 1
+      relatedOrderCount: 1,
     },
     {
       orderSelection: '订单11,订单12,订单13',
@@ -83,7 +83,7 @@ export const dataList = () => {
       applicationNo: 'AP202602010007',
       invoiceStatus: '已开具',
       estimateTime: '2026-02-02 14:30:00',
-      relatedOrderCount: 3
+      relatedOrderCount: 3,
     },
     {
       orderSelection: '订单14',
@@ -95,7 +95,7 @@ export const dataList = () => {
       applicationNo: 'AP202602010008',
       invoiceStatus: '处理中',
       estimateTime: '2026-02-03 15:00:00',
-      relatedOrderCount: 1
+      relatedOrderCount: 1,
     },
     {
       orderSelection: '订单15,订单16',
@@ -107,7 +107,7 @@ export const dataList = () => {
       applicationNo: 'AP202602010009',
       invoiceStatus: '待处理',
       estimateTime: '2026-02-04 11:00:00',
-      relatedOrderCount: 2
+      relatedOrderCount: 2,
     },
     {
       orderSelection: '订单17',
@@ -119,7 +119,7 @@ export const dataList = () => {
       applicationNo: 'AP202602010010',
       invoiceStatus: '已开具',
       estimateTime: '2026-02-02 11:30:00',
-      relatedOrderCount: 1
+      relatedOrderCount: 1,
     },
     {
       orderSelection: '订单18,订单19,订单20',
@@ -131,7 +131,7 @@ export const dataList = () => {
       applicationNo: 'AP202602010011',
       invoiceStatus: '处理中',
       estimateTime: '2026-02-03 10:00:00',
-      relatedOrderCount: 3
+      relatedOrderCount: 3,
     },
     {
       orderSelection: '订单21',
@@ -143,8 +143,8 @@ export const dataList = () => {
       applicationNo: 'AP202602010012',
       invoiceStatus: '待处理',
       estimateTime: '2026-02-04 09:30:00',
-      relatedOrderCount: 1
-    }
+      relatedOrderCount: 1,
+    },
   ];
 };
 
@@ -159,7 +159,7 @@ export const generateDataList = () => {
       invoiceNo: '1234567890',
       issueTime: '2026-02-02 10:30:00',
       pdfUrl: 'https://example.com/invoices/INV001.pdf',
-      sendStatus: '已发送'
+      sendStatus: '已发送',
     },
     {
       applicationNo: 'AP202602010002',
@@ -169,7 +169,7 @@ export const generateDataList = () => {
       invoiceNo: '0987654321',
       issueTime: '2026-02-03 14:30:00',
       pdfUrl: 'https://example.com/invoices/INV002.pdf',
-      sendStatus: '待发送'
+      sendStatus: '待发送',
     },
     {
       applicationNo: 'AP202602010003',
@@ -179,7 +179,7 @@ export const generateDataList = () => {
       invoiceNo: '1357924680',
       issueTime: '2026-02-04 09:30:00',
       pdfUrl: 'https://example.com/invoices/INV003.pdf',
-      sendStatus: '待发送'
+      sendStatus: '待发送',
     },
     {
       applicationNo: 'AP202602010004',
@@ -189,7 +189,7 @@ export const generateDataList = () => {
       invoiceNo: '2468013579',
       issueTime: '2026-02-02 16:30:00',
       pdfUrl: 'https://example.com/invoices/INV004.pdf',
-      sendStatus: '已发送'
+      sendStatus: '已发送',
     },
     {
       applicationNo: 'AP202602010005',
@@ -199,7 +199,7 @@ export const generateDataList = () => {
       invoiceNo: '3579246801',
       issueTime: '2026-02-03 11:30:00',
       pdfUrl: 'https://example.com/invoices/INV005.pdf',
-      sendStatus: '待发送'
+      sendStatus: '待发送',
     },
     {
       applicationNo: 'AP202602010006',
@@ -209,7 +209,7 @@ export const generateDataList = () => {
       invoiceNo: '4680135792',
       issueTime: '2026-02-04 10:30:00',
       pdfUrl: 'https://example.com/invoices/INV006.pdf',
-      sendStatus: '待发送'
+      sendStatus: '待发送',
     },
     {
       applicationNo: 'AP202602010007',
@@ -219,7 +219,7 @@ export const generateDataList = () => {
       invoiceNo: '5792468013',
       issueTime: '2026-02-02 14:30:00',
       pdfUrl: 'https://example.com/invoices/INV007.pdf',
-      sendStatus: '已发送'
+      sendStatus: '已发送',
     },
     {
       applicationNo: 'AP202602010008',
@@ -229,7 +229,7 @@ export const generateDataList = () => {
       invoiceNo: '6801357924',
       issueTime: '2026-02-03 15:30:00',
       pdfUrl: 'https://example.com/invoices/INV008.pdf',
-      sendStatus: '待发送'
+      sendStatus: '待发送',
     },
     {
       applicationNo: 'AP202602010009',
@@ -239,7 +239,7 @@ export const generateDataList = () => {
       invoiceNo: '7924680135',
       issueTime: '2026-02-04 11:30:00',
       pdfUrl: 'https://example.com/invoices/INV009.pdf',
-      sendStatus: '待发送'
+      sendStatus: '待发送',
     },
     {
       applicationNo: 'AP202602010010',
@@ -249,7 +249,7 @@ export const generateDataList = () => {
       invoiceNo: '8013579246',
       issueTime: '2026-02-02 11:30:00',
       pdfUrl: 'https://example.com/invoices/INV010.pdf',
-      sendStatus: '已发送'
+      sendStatus: '已发送',
     },
     {
       applicationNo: 'AP202602010011',
@@ -259,7 +259,7 @@ export const generateDataList = () => {
       invoiceNo: '9246801357',
       issueTime: '2026-02-03 10:30:00',
       pdfUrl: 'https://example.com/invoices/INV011.pdf',
-      sendStatus: '待发送'
+      sendStatus: '待发送',
     },
     {
       applicationNo: 'AP202602010012',
@@ -269,8 +269,8 @@ export const generateDataList = () => {
       invoiceNo: '0135792468',
       issueTime: '2026-02-04 09:30:00',
       pdfUrl: 'https://example.com/invoices/INV012.pdf',
-      sendStatus: '待发送'
-    }
+      sendStatus: '待发送',
+    },
   ];
 };
 
@@ -284,10 +284,10 @@ export const queryDataList = () => {
       carNumber: '闽A12345',
       invoiceId: 'INV001',
       invoiceTitle: '漳州市芗城区XX公司',
-      invoiceAmount: 100.00,
+      invoiceAmount: 100,
       issueTime: '2026-02-02 10:30:00',
       invoiceType: '增值税普通发票',
-      operationButton: true
+      operationButton: true,
     },
     {
       invoiceNo: '0987654321',
@@ -296,10 +296,10 @@ export const queryDataList = () => {
       carNumber: '闽B67890',
       invoiceId: 'INV002',
       invoiceTitle: '漳州市龙文区YY企业',
-      invoiceAmount: 200.50,
+      invoiceAmount: 200.5,
       issueTime: '2026-02-03 14:30:00',
       invoiceType: '增值税专用发票',
-      operationButton: true
+      operationButton: true,
     },
     {
       invoiceNo: '1357924680',
@@ -308,10 +308,10 @@ export const queryDataList = () => {
       carNumber: '闽C23456',
       invoiceId: 'INV003',
       invoiceTitle: '漳州市龙海区ZZ有限公司',
-      invoiceAmount: 300.00,
+      invoiceAmount: 300,
       issueTime: '2026-02-04 09:30:00',
       invoiceType: '增值税普通发票',
-      operationButton: true
+      operationButton: true,
     },
     {
       invoiceNo: '2468013579',
@@ -323,7 +323,7 @@ export const queryDataList = () => {
       invoiceAmount: 150.75,
       issueTime: '2026-02-02 16:30:00',
       invoiceType: '增值税专用发票',
-      operationButton: true
+      operationButton: true,
     },
     {
       invoiceNo: '3579246801',
@@ -335,7 +335,7 @@ export const queryDataList = () => {
       invoiceAmount: 250.25,
       issueTime: '2026-02-03 11:30:00',
       invoiceType: '增值税普通发票',
-      operationButton: true
+      operationButton: true,
     },
     {
       invoiceNo: '4680135792',
@@ -344,10 +344,10 @@ export const queryDataList = () => {
       carNumber: '闽F89012',
       invoiceId: 'INV006',
       invoiceTitle: '漳州市云霄县CC有限公司',
-      invoiceAmount: 350.50,
+      invoiceAmount: 350.5,
       issueTime: '2026-02-04 10:30:00',
       invoiceType: '增值税专用发票',
-      operationButton: true
+      operationButton: true,
     },
     {
       invoiceNo: '5792468013',
@@ -356,10 +356,10 @@ export const queryDataList = () => {
       carNumber: '闽G45678',
       invoiceId: 'INV007',
       invoiceTitle: '漳州市诏安县DD公司',
-      invoiceAmount: 120.00,
+      invoiceAmount: 120,
       issueTime: '2026-02-02 14:30:00',
       invoiceType: '增值税普通发票',
-      operationButton: true
+      operationButton: true,
     },
     {
       invoiceNo: '6801357924',
@@ -371,7 +371,7 @@ export const queryDataList = () => {
       invoiceAmount: 220.75,
       issueTime: '2026-02-03 15:30:00',
       invoiceType: '增值税专用发票',
-      operationButton: true
+      operationButton: true,
     },
     {
       invoiceNo: '7924680135',
@@ -383,7 +383,7 @@ export const queryDataList = () => {
       invoiceAmount: 320.25,
       issueTime: '2026-02-04 11:30:00',
       invoiceType: '增值税普通发票',
-      operationButton: true
+      operationButton: true,
     },
     {
       invoiceNo: '8013579246',
@@ -392,10 +392,10 @@ export const queryDataList = () => {
       carNumber: '闽K01234',
       invoiceId: 'INV010',
       invoiceTitle: '漳州市平和县GG公司',
-      invoiceAmount: 180.00,
+      invoiceAmount: 180,
       issueTime: '2026-02-02 11:30:00',
       invoiceType: '增值税专用发票',
-      operationButton: true
+      operationButton: true,
     },
     {
       invoiceNo: '9246801357',
@@ -404,10 +404,10 @@ export const queryDataList = () => {
       carNumber: '闽L67890',
       invoiceId: 'INV011',
       invoiceTitle: '漳州市华安县HH企业',
-      invoiceAmount: 280.50,
+      invoiceAmount: 280.5,
       issueTime: '2026-02-03 10:30:00',
       invoiceType: '增值税普通发票',
-      operationButton: true
+      operationButton: true,
     },
     {
       invoiceNo: '0135792468',
@@ -419,8 +419,8 @@ export const queryDataList = () => {
       invoiceAmount: 380.75,
       issueTime: '2026-02-04 09:30:00',
       invoiceType: '增值税专用发票',
-      operationButton: true
-    }
+      operationButton: true,
+    },
   ];
 };
 
@@ -446,12 +446,12 @@ export const orderOptions = [
   { label: '订单18（期卡）- 闽P45678', value: '订单18' },
   { label: '订单19（临停）- 闽P45678', value: '订单19' },
   { label: '订单20（期卡）- 闽Q56789', value: '订单20' },
-  { label: '订单21（临停）- 闽Q56789', value: '订单21' }
+  { label: '订单21（临停）- 闽Q56789', value: '订单21' },
 ];
 
 /** 订单详情静态数据 */
 export const orderDetails = {
-  '订单1': {
+  订单1: {
     type: '临停订单',
     orderTempId: '123e4567-e89b-12d3-a456-426614174000',
     carNumber: '闽A12345',
@@ -460,9 +460,9 @@ export const orderDetails = {
     lotId: 'LOT001',
     spaceId: 'SPACE001',
     parkingDuration: 120,
-    originalAmount: 20.00,
-    discountAmount: 5.00,
-    payAmount: 15.00,
+    originalAmount: 20,
+    discountAmount: 5,
+    payAmount: 15,
     feeStrategyId: 'FEE001',
     orderStatus: '已完成',
     payStatus: '已支付',
@@ -470,9 +470,9 @@ export const orderDetails = {
     paymentId: 'PAY001',
     createTime: '2026-02-01 10:00:00',
     updateTime: '2026-02-01 12:00:00',
-    remark: '正常临停订单'
+    remark: '正常临停订单',
   },
-  '订单2': {
+  订单2: {
     type: '临停订单',
     orderTempId: '123e4567-e89b-12d3-a456-426614174001',
     carNumber: '闽B67890',
@@ -481,9 +481,9 @@ export const orderDetails = {
     lotId: 'LOT002',
     spaceId: 'SPACE002',
     parkingDuration: 90,
-    originalAmount: 15.00,
-    discountAmount: 0.00,
-    payAmount: 15.00,
+    originalAmount: 15,
+    discountAmount: 0,
+    payAmount: 15,
     feeStrategyId: 'FEE001',
     orderStatus: '已完成',
     payStatus: '已支付',
@@ -491,9 +491,9 @@ export const orderDetails = {
     paymentId: 'PAY002',
     createTime: '2026-02-01 11:00:00',
     updateTime: '2026-02-01 12:30:00',
-    remark: '正常临停订单'
+    remark: '正常临停订单',
   },
-  '订单3': {
+  订单3: {
     type: '临停订单',
     orderTempId: '123e4567-e89b-12d3-a456-426614174002',
     carNumber: '闽C23456',
@@ -502,9 +502,9 @@ export const orderDetails = {
     lotId: 'LOT003',
     spaceId: 'SPACE003',
     parkingDuration: 60,
-    originalAmount: 10.00,
-    discountAmount: 2.00,
-    payAmount: 8.00,
+    originalAmount: 10,
+    discountAmount: 2,
+    payAmount: 8,
     feeStrategyId: 'FEE001',
     orderStatus: '已完成',
     payStatus: '已支付',
@@ -512,18 +512,18 @@ export const orderDetails = {
     paymentId: 'PAY003',
     createTime: '2026-02-01 12:00:00',
     updateTime: '2026-02-01 13:00:00',
-    remark: '正常临停订单'
+    remark: '正常临停订单',
   },
-  '订单4': {
+  订单4: {
     type: '期卡订单',
     orderPeriodId: '123e4567-e89b-12d3-a456-426614174003',
     userId: '1',
     carId: 'CAR001',
     packageId: 'PKG001',
     lotIds: ['LOT001', 'LOT002', 'LOT003'],
-    originalPrice: 300.00,
-    payAmount: 280.00,
-    discountAmount: 20.00,
+    originalPrice: 300,
+    payAmount: 280,
+    discountAmount: 20,
     effectTime: '2026-02-01 00:00:00',
     expireTime: '2026-03-01 00:00:00',
     orderStatus: '已支付',
@@ -532,18 +532,18 @@ export const orderDetails = {
     paymentId: 'PAY004',
     createTime: '2026-01-31 10:00:00',
     updateTime: '2026-01-31 10:05:00',
-    remark: '月度期卡'
+    remark: '月度期卡',
   },
-  '订单5': {
+  订单5: {
     type: '期卡订单',
     orderPeriodId: '123e4567-e89b-12d3-a456-426614174004',
     userId: '2',
     carId: 'CAR002',
     packageId: 'PKG002',
     lotIds: ['LOT001', 'LOT002'],
-    originalPrice: 600.00,
-    payAmount: 550.00,
-    discountAmount: 50.00,
+    originalPrice: 600,
+    payAmount: 550,
+    discountAmount: 50,
     effectTime: '2026-02-01 00:00:00',
     expireTime: '2026-04-01 00:00:00',
     orderStatus: '已支付',
@@ -552,9 +552,9 @@ export const orderDetails = {
     paymentId: 'PAY005',
     createTime: '2026-01-31 11:00:00',
     updateTime: '2026-01-31 11:05:00',
-    remark: '季度期卡'
+    remark: '季度期卡',
   },
-  '订单6': {
+  订单6: {
     type: '临停订单',
     orderTempId: '123e4567-e89b-12d3-a456-426614174005',
     carNumber: '闽F89012',
@@ -563,9 +563,9 @@ export const orderDetails = {
     lotId: 'LOT004',
     spaceId: 'SPACE004',
     parkingDuration: 180,
-    originalAmount: 30.00,
-    discountAmount: 5.00,
-    payAmount: 25.00,
+    originalAmount: 30,
+    discountAmount: 5,
+    payAmount: 25,
     feeStrategyId: 'FEE001',
     orderStatus: '已完成',
     payStatus: '已支付',
@@ -573,9 +573,9 @@ export const orderDetails = {
     paymentId: 'PAY006',
     createTime: '2026-02-01 13:00:00',
     updateTime: '2026-02-01 16:00:00',
-    remark: '长时间临停订单'
+    remark: '长时间临停订单',
   },
-  '订单7': {
+  订单7: {
     type: '临停订单',
     orderTempId: '123e4567-e89b-12d3-a456-426614174006',
     carNumber: '闽G45678',
@@ -584,9 +584,9 @@ export const orderDetails = {
     lotId: 'LOT005',
     spaceId: 'SPACE005',
     parkingDuration: 45,
-    originalAmount: 7.50,
-    discountAmount: 0.00,
-    payAmount: 7.50,
+    originalAmount: 7.5,
+    discountAmount: 0,
+    payAmount: 7.5,
     feeStrategyId: 'FEE001',
     orderStatus: '已完成',
     payStatus: '已支付',
@@ -594,18 +594,18 @@ export const orderDetails = {
     paymentId: 'PAY007',
     createTime: '2026-02-01 14:00:00',
     updateTime: '2026-02-01 14:45:00',
-    remark: '短时间临停订单'
+    remark: '短时间临停订单',
   },
-  '订单8': {
+  订单8: {
     type: '期卡订单',
     orderPeriodId: '123e4567-e89b-12d3-a456-426614174007',
     userId: '3',
     carId: 'CAR003',
     packageId: 'PKG003',
     lotIds: ['LOT001', 'LOT002', 'LOT003', 'LOT004'],
-    originalPrice: 1200.00,
-    payAmount: 1100.00,
-    discountAmount: 100.00,
+    originalPrice: 1200,
+    payAmount: 1100,
+    discountAmount: 100,
     effectTime: '2026-02-01 00:00:00',
     expireTime: '2026-08-01 00:00:00',
     orderStatus: '已支付',
@@ -614,9 +614,9 @@ export const orderDetails = {
     paymentId: 'PAY008',
     createTime: '2026-01-31 12:00:00',
     updateTime: '2026-01-31 12:05:00',
-    remark: '半年期卡'
+    remark: '半年期卡',
   },
-  '订单9': {
+  订单9: {
     type: '临停订单',
     orderTempId: '123e4567-e89b-12d3-a456-426614174008',
     carNumber: '闽J56789',
@@ -625,9 +625,9 @@ export const orderDetails = {
     lotId: 'LOT006',
     spaceId: 'SPACE006',
     parkingDuration: 150,
-    originalAmount: 25.00,
-    discountAmount: 3.00,
-    payAmount: 22.00,
+    originalAmount: 25,
+    discountAmount: 3,
+    payAmount: 22,
     feeStrategyId: 'FEE001',
     orderStatus: '已完成',
     payStatus: '已支付',
@@ -635,18 +635,18 @@ export const orderDetails = {
     paymentId: 'PAY009',
     createTime: '2026-02-01 15:00:00',
     updateTime: '2026-02-01 17:30:00',
-    remark: '正常临停订单'
+    remark: '正常临停订单',
   },
-  '订单10': {
+  订单10: {
     type: '期卡订单',
     orderPeriodId: '123e4567-e89b-12d3-a456-426614174009',
     userId: '4',
     carId: 'CAR004',
     packageId: 'PKG004',
     lotIds: ['LOT001'],
-    originalPrice: 2400.00,
-    payAmount: 2200.00,
-    discountAmount: 200.00,
+    originalPrice: 2400,
+    payAmount: 2200,
+    discountAmount: 200,
     effectTime: '2026-02-01 00:00:00',
     expireTime: '2027-02-01 00:00:00',
     orderStatus: '已支付',
@@ -655,9 +655,9 @@ export const orderDetails = {
     paymentId: 'PAY010',
     createTime: '2026-01-31 13:00:00',
     updateTime: '2026-01-31 13:05:00',
-    remark: '年期卡'
+    remark: '年期卡',
   },
-  '订单11': {
+  订单11: {
     type: '临停订单',
     orderTempId: '123e4567-e89b-12d3-a456-426614174010',
     carNumber: '闽K67890',
@@ -666,9 +666,9 @@ export const orderDetails = {
     lotId: 'LOT007',
     spaceId: 'SPACE007',
     parkingDuration: 120,
-    originalAmount: 20.00,
-    discountAmount: 5.00,
-    payAmount: 15.00,
+    originalAmount: 20,
+    discountAmount: 5,
+    payAmount: 15,
     feeStrategyId: 'FEE001',
     orderStatus: '已完成',
     payStatus: '已支付',
@@ -676,9 +676,9 @@ export const orderDetails = {
     paymentId: 'PAY011',
     createTime: '2026-02-01 16:00:00',
     updateTime: '2026-02-01 18:00:00',
-    remark: '正常临停订单'
+    remark: '正常临停订单',
   },
-  '订单12': {
+  订单12: {
     type: '临停订单',
     orderTempId: '123e4567-e89b-12d3-a456-426614174011',
     carNumber: '闽L23456',
@@ -687,9 +687,9 @@ export const orderDetails = {
     lotId: 'LOT008',
     spaceId: 'SPACE008',
     parkingDuration: 90,
-    originalAmount: 15.00,
-    discountAmount: 0.00,
-    payAmount: 15.00,
+    originalAmount: 15,
+    discountAmount: 0,
+    payAmount: 15,
     feeStrategyId: 'FEE001',
     orderStatus: '已完成',
     payStatus: '已支付',
@@ -697,18 +697,18 @@ export const orderDetails = {
     paymentId: 'PAY012',
     createTime: '2026-02-01 17:00:00',
     updateTime: '2026-02-01 18:30:00',
-    remark: '正常临停订单'
+    remark: '正常临停订单',
   },
-  '订单13': {
+  订单13: {
     type: '期卡订单',
     orderPeriodId: '123e4567-e89b-12d3-a456-426614174012',
     userId: '5',
     carId: 'CAR005',
     packageId: 'PKG005',
     lotIds: ['LOT001', 'LOT002', 'LOT003', 'LOT004', 'LOT005'],
-    originalPrice: 1800.00,
-    payAmount: 1600.00,
-    discountAmount: 200.00,
+    originalPrice: 1800,
+    payAmount: 1600,
+    discountAmount: 200,
     effectTime: '2026-02-01 00:00:00',
     expireTime: '2026-08-01 00:00:00',
     orderStatus: '已支付',
@@ -717,9 +717,9 @@ export const orderDetails = {
     paymentId: 'PAY013',
     createTime: '2026-01-31 14:00:00',
     updateTime: '2026-01-31 14:05:00',
-    remark: '半年期卡'
+    remark: '半年期卡',
   },
-  '订单14': {
+  订单14: {
     type: '临停订单',
     orderTempId: '123e4567-e89b-12d3-a456-426614174013',
     carNumber: '闽M78901',
@@ -728,9 +728,9 @@ export const orderDetails = {
     lotId: 'LOT009',
     spaceId: 'SPACE009',
     parkingDuration: 60,
-    originalAmount: 10.00,
-    discountAmount: 2.00,
-    payAmount: 8.00,
+    originalAmount: 10,
+    discountAmount: 2,
+    payAmount: 8,
     feeStrategyId: 'FEE001',
     orderStatus: '已完成',
     payStatus: '已支付',
@@ -738,18 +738,18 @@ export const orderDetails = {
     paymentId: 'PAY014',
     createTime: '2026-02-01 18:00:00',
     updateTime: '2026-02-01 19:00:00',
-    remark: '正常临停订单'
+    remark: '正常临停订单',
   },
-  '订单15': {
+  订单15: {
     type: '期卡订单',
     orderPeriodId: '123e4567-e89b-12d3-a456-426614174014',
     userId: '6',
     carId: 'CAR006',
     packageId: 'PKG006',
     lotIds: ['LOT001', 'LOT002'],
-    originalPrice: 600.00,
-    payAmount: 550.00,
-    discountAmount: 50.00,
+    originalPrice: 600,
+    payAmount: 550,
+    discountAmount: 50,
     effectTime: '2026-02-01 00:00:00',
     expireTime: '2026-05-01 00:00:00',
     orderStatus: '已支付',
@@ -758,9 +758,9 @@ export const orderDetails = {
     paymentId: 'PAY015',
     createTime: '2026-01-31 15:00:00',
     updateTime: '2026-01-31 15:05:00',
-    remark: '季度期卡'
+    remark: '季度期卡',
   },
-  '订单16': {
+  订单16: {
     type: '临停订单',
     orderTempId: '123e4567-e89b-12d3-a456-426614174015',
     carNumber: '闽N34567',
@@ -769,9 +769,9 @@ export const orderDetails = {
     lotId: 'LOT010',
     spaceId: 'SPACE010',
     parkingDuration: 150,
-    originalAmount: 25.00,
-    discountAmount: 3.00,
-    payAmount: 22.00,
+    originalAmount: 25,
+    discountAmount: 3,
+    payAmount: 22,
     feeStrategyId: 'FEE001',
     orderStatus: '已完成',
     payStatus: '已支付',
@@ -779,9 +779,9 @@ export const orderDetails = {
     paymentId: 'PAY016',
     createTime: '2026-02-01 19:00:00',
     updateTime: '2026-02-01 21:30:00',
-    remark: '正常临停订单'
+    remark: '正常临停订单',
   },
-  '订单17': {
+  订单17: {
     type: '临停订单',
     orderTempId: '123e4567-e89b-12d3-a456-426614174016',
     carNumber: '闽O89012',
@@ -790,9 +790,9 @@ export const orderDetails = {
     lotId: 'LOT011',
     spaceId: 'SPACE011',
     parkingDuration: 90,
-    originalAmount: 15.00,
-    discountAmount: 0.00,
-    payAmount: 15.00,
+    originalAmount: 15,
+    discountAmount: 0,
+    payAmount: 15,
     feeStrategyId: 'FEE001',
     orderStatus: '已完成',
     payStatus: '已支付',
@@ -800,18 +800,18 @@ export const orderDetails = {
     paymentId: 'PAY017',
     createTime: '2026-02-01 20:00:00',
     updateTime: '2026-02-01 21:30:00',
-    remark: '正常临停订单'
+    remark: '正常临停订单',
   },
-  '订单18': {
+  订单18: {
     type: '期卡订单',
     orderPeriodId: '123e4567-e89b-12d3-a456-426614174017',
     userId: '7',
     carId: 'CAR007',
     packageId: 'PKG007',
     lotIds: ['LOT001', 'LOT002', 'LOT003'],
-    originalPrice: 900.00,
-    payAmount: 850.00,
-    discountAmount: 50.00,
+    originalPrice: 900,
+    payAmount: 850,
+    discountAmount: 50,
     effectTime: '2026-02-01 00:00:00',
     expireTime: '2026-05-01 00:00:00',
     orderStatus: '已支付',
@@ -820,9 +820,9 @@ export const orderDetails = {
     paymentId: 'PAY018',
     createTime: '2026-01-31 16:00:00',
     updateTime: '2026-01-31 16:05:00',
-    remark: '季度期卡'
+    remark: '季度期卡',
   },
-  '订单19': {
+  订单19: {
     type: '临停订单',
     orderTempId: '123e4567-e89b-12d3-a456-426614174018',
     carNumber: '闽P45678',
@@ -831,9 +831,9 @@ export const orderDetails = {
     lotId: 'LOT012',
     spaceId: 'SPACE012',
     parkingDuration: 120,
-    originalAmount: 20.00,
-    discountAmount: 5.00,
-    payAmount: 15.00,
+    originalAmount: 20,
+    discountAmount: 5,
+    payAmount: 15,
     feeStrategyId: 'FEE001',
     orderStatus: '已完成',
     payStatus: '已支付',
@@ -841,18 +841,18 @@ export const orderDetails = {
     paymentId: 'PAY019',
     createTime: '2026-02-01 21:00:00',
     updateTime: '2026-02-01 23:00:00',
-    remark: '正常临停订单'
+    remark: '正常临停订单',
   },
-  '订单20': {
+  订单20: {
     type: '期卡订单',
     orderPeriodId: '123e4567-e89b-12d3-a456-426614174019',
     userId: '8',
     carId: 'CAR008',
     packageId: 'PKG008',
     lotIds: ['LOT001'],
-    originalPrice: 300.00,
-    payAmount: 280.00,
-    discountAmount: 20.00,
+    originalPrice: 300,
+    payAmount: 280,
+    discountAmount: 20,
     effectTime: '2026-02-01 00:00:00',
     expireTime: '2026-03-01 00:00:00',
     orderStatus: '已支付',
@@ -861,9 +861,9 @@ export const orderDetails = {
     paymentId: 'PAY020',
     createTime: '2026-01-31 17:00:00',
     updateTime: '2026-01-31 17:05:00',
-    remark: '月度期卡'
+    remark: '月度期卡',
   },
-  '订单21': {
+  订单21: {
     type: '临停订单',
     orderTempId: '123e4567-e89b-12d3-a456-426614174020',
     carNumber: '闽Q56789',
@@ -872,9 +872,9 @@ export const orderDetails = {
     lotId: 'LOT013',
     spaceId: 'SPACE013',
     parkingDuration: 60,
-    originalAmount: 10.00,
-    discountAmount: 2.00,
-    payAmount: 8.00,
+    originalAmount: 10,
+    discountAmount: 2,
+    payAmount: 8,
     feeStrategyId: 'FEE001',
     orderStatus: '已完成',
     payStatus: '已支付',
@@ -882,8 +882,8 @@ export const orderDetails = {
     paymentId: 'PAY021',
     createTime: '2026-02-01 22:00:00',
     updateTime: '2026-02-01 23:00:00',
-    remark: '正常临停订单'
-  }
+    remark: '正常临停订单',
+  },
 };
 
 /** 发票申请表单配置（包含所有指定字段） */
@@ -896,9 +896,9 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择订单',
         multiple: true,
-        options: orderOptions
+        options: orderOptions,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'invoiceType',
@@ -908,37 +908,37 @@ export function useFormSchema() {
         placeholder: '请选择发票类型',
         options: [
           { label: '增值税普通发票', value: '增值税普通发票' },
-          { label: '增值税专用发票', value: '增值税专用发票' }
-        ]
+          { label: '增值税专用发票', value: '增值税专用发票' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'invoiceTitle',
       label: '发票抬头',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入发票抬头'
+        placeholder: '请输入发票抬头',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'taxpayerId',
       label: '纳税人识别号',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入纳税人识别号'
+        placeholder: '请输入纳税人识别号',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'email',
       label: '接收邮箱',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入接收邮箱'
+        placeholder: '请输入接收邮箱',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'applicationId',
@@ -946,8 +946,8 @@ export function useFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入申请ID',
-        disabled: true
-      }
+        disabled: true,
+      },
     },
     {
       fieldName: 'applicationNo',
@@ -955,8 +955,8 @@ export function useFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入申请编号',
-        disabled: true
-      }
+        disabled: true,
+      },
     },
     {
       fieldName: 'invoiceStatus',
@@ -968,10 +968,10 @@ export function useFormSchema() {
           { label: '待处理', value: '待处理' },
           { label: '处理中', value: '处理中' },
           { label: '已开具', value: '已开具' },
-          { label: '已撤销', value: '已撤销' }
-        ]
+          { label: '已撤销', value: '已撤销' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'estimateTime',
@@ -980,9 +980,9 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择预计开具时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'relatedOrderCount',
@@ -991,9 +991,9 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入关联订单数',
         min: 1,
-        disabled: true
-      }
-    }
+        disabled: true,
+      },
+    },
   ];
 }
 
@@ -1005,9 +1005,9 @@ export function useGenerateFormSchema() {
       label: '申请编号',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入申请编号'
+        placeholder: '请输入申请编号',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'invoiceStatus',
@@ -1019,10 +1019,10 @@ export function useGenerateFormSchema() {
           { label: '待处理', value: '待处理' },
           { label: '处理中', value: '处理中' },
           { label: '已开具', value: '已开具' },
-          { label: '已撤销', value: '已撤销' }
-        ]
+          { label: '已撤销', value: '已撤销' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'invoiceId',
@@ -1030,17 +1030,17 @@ export function useGenerateFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入发票ID',
-        disabled: true
-      }
+        disabled: true,
+      },
     },
     {
       fieldName: 'invoiceNo',
       label: '发票号码',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入发票号码'
+        placeholder: '请输入发票号码',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'issueTime',
@@ -1049,18 +1049,18 @@ export function useGenerateFormSchema() {
       componentProps: {
         placeholder: '请选择开具时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'pdfUrl',
       label: 'PDF地址',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入PDF地址'
+        placeholder: '请输入PDF地址',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'sendStatus',
@@ -1070,11 +1070,11 @@ export function useGenerateFormSchema() {
         placeholder: '请选择发送状态',
         options: [
           { label: '待发送', value: '待发送' },
-          { label: '已发送', value: '已发送' }
-        ]
+          { label: '已发送', value: '已发送' },
+        ],
       },
-      rules: 'required'
-    }
+      rules: 'required',
+    },
   ];
 }
 
@@ -1086,18 +1086,18 @@ export function useQueryFormSchema() {
       label: '发票号码',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入发票号码'
+        placeholder: '请输入发票号码',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'timeRange',
       label: '时间范围',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入时间范围'
+        placeholder: '请输入时间范围',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'invoiceStatus',
@@ -1109,19 +1109,19 @@ export function useQueryFormSchema() {
           { label: '待处理', value: '待处理' },
           { label: '处理中', value: '处理中' },
           { label: '已开具', value: '已开具' },
-          { label: '已撤销', value: '已撤销' }
-        ]
+          { label: '已撤销', value: '已撤销' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'carNumber',
       label: '车牌号码',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入车牌号码'
+        placeholder: '请输入车牌号码',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'invoiceId',
@@ -1129,17 +1129,17 @@ export function useQueryFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入发票ID',
-        disabled: true
-      }
+        disabled: true,
+      },
     },
     {
       fieldName: 'invoiceTitle',
       label: '发票抬头',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入发票抬头'
+        placeholder: '请输入发票抬头',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'invoiceAmount',
@@ -1148,9 +1148,9 @@ export function useQueryFormSchema() {
       componentProps: {
         placeholder: '请输入发票金额',
         min: 0,
-        precision: 2
+        precision: 2,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'issueTime',
@@ -1159,9 +1159,9 @@ export function useQueryFormSchema() {
       componentProps: {
         placeholder: '请选择开具时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'invoiceType',
@@ -1171,11 +1171,11 @@ export function useQueryFormSchema() {
         placeholder: '请选择发票类型',
         options: [
           { label: '增值税普通发票', value: '增值税普通发票' },
-          { label: '增值税专用发票', value: '增值税专用发票' }
-        ]
+          { label: '增值税专用发票', value: '增值税专用发票' },
+        ],
       },
-      rules: 'required'
-    }
+      rules: 'required',
+    },
   ];
 }
 
@@ -1188,7 +1188,7 @@ export function useGridColumns() {
       title: '订单选择',
       minWidth: 150,
       sortable: true,
-      slots: { default: 'orderSelection' }
+      slots: { default: 'orderSelection' },
     },
     {
       field: 'invoiceType',
@@ -1201,26 +1201,26 @@ export function useGridColumns() {
       field: 'invoiceTitle',
       title: '发票抬头',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'taxpayerId',
       title: '纳税人识别号',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'email',
       title: '接收邮箱',
       minWidth: 150,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'applicationId',
       title: '申请ID',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'applicationId' }
+      slots: { default: 'applicationId' },
     },
     {
       field: 'applicationNo',
@@ -1252,7 +1252,7 @@ export function useGridColumns() {
       width: 150,
       fixed: 'right',
       slots: { default: 'actions' },
-    }
+    },
   ];
 }
 
@@ -1264,61 +1264,61 @@ export function useGenerateGridColumns() {
       field: 'applicationNo',
       title: '申请编号',
       minWidth: 150,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'invoiceStatus',
       title: '发票状态',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'invoiceStatus' }
+      slots: { default: 'invoiceStatus' },
     },
     {
       field: 'refreshButton',
       title: '刷新按钮',
       minWidth: 80,
       sortable: true,
-      slots: { default: 'refreshButton' }
+      slots: { default: 'refreshButton' },
     },
     {
       field: 'invoiceId',
       title: '发票ID',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'invoiceId' }
+      slots: { default: 'invoiceId' },
     },
     {
       field: 'invoiceNo',
       title: '发票号码',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'issueTime',
       title: '开具时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'pdfUrl',
       title: 'PDF地址',
       minWidth: 200,
       sortable: true,
-      slots: { default: 'pdfUrl' }
+      slots: { default: 'pdfUrl' },
     },
     {
       field: 'sendStatus',
       title: '发送状态',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'sendStatus' }
+      slots: { default: 'sendStatus' },
     },
     {
       title: '操作',
       width: 150,
       fixed: 'right',
-      slots: { default: 'actions' }
-    }
+      slots: { default: 'actions' },
+    },
   ];
 }
 
@@ -1330,20 +1330,20 @@ export function useQueryGridColumns() {
       field: 'invoiceNo',
       title: '发票号码',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'timeRange',
       title: '时间范围',
       minWidth: 150,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'invoiceStatus',
       title: '发票状态',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'invoiceStatus' }
+      slots: { default: 'invoiceStatus' },
     },
     {
       field: 'carNumber',
@@ -1363,19 +1363,19 @@ export function useQueryGridColumns() {
       field: 'invoiceTitle',
       title: '发票抬头',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'invoiceAmount',
       title: '发票金额',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'issueTime',
       title: '开具时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'invoiceType',
@@ -1388,8 +1388,8 @@ export function useQueryGridColumns() {
       title: '操作',
       width: 150,
       fixed: 'right',
-      slots: { default: 'actions' }
-    }
+      slots: { default: 'actions' },
+    },
   ];
 }
 
@@ -1437,7 +1437,7 @@ export const detailFields = [
   { key: 'applicationNo', label: '申请编号' },
   { key: 'invoiceStatus', label: '发票状态' },
   { key: 'estimateTime', label: '预计开具时间' },
-  { key: 'relatedOrderCount', label: '关联订单数' }
+  { key: 'relatedOrderCount', label: '关联订单数' },
 ];
 
 /** 发票生成详情抽屉字段配置 */
@@ -1448,7 +1448,7 @@ export const generateDetailFields = [
   { key: 'invoiceNo', label: '发票号码' },
   { key: 'issueTime', label: '开具时间' },
   { key: 'pdfUrl', label: 'PDF地址' },
-  { key: 'sendStatus', label: '发送状态' }
+  { key: 'sendStatus', label: '发送状态' },
 ];
 
 /** 发票查询详情抽屉字段配置 */
@@ -1461,7 +1461,7 @@ export const queryDetailFields = [
   { key: 'invoiceTitle', label: '发票抬头' },
   { key: 'invoiceAmount', label: '发票金额' },
   { key: 'issueTime', label: '开具时间' },
-  { key: 'invoiceType', label: '发票类型' }
+  { key: 'invoiceType', label: '发票类型' },
 ];
 
 /** 状态选项配置 */
@@ -1470,7 +1470,7 @@ export const statusOptions = [
   { label: '待处理', value: '待处理' },
   { label: '处理中', value: '处理中' },
   { label: '已开具', value: '已开具' },
-  { label: '已撤销', value: '已撤销' }
+  { label: '已撤销', value: '已撤销' },
 ];
 
 /** 车辆详情字段配置 */
@@ -1484,23 +1484,155 @@ export const carDetailFields = [
   { key: 'user_id', label: '用户ID' },
   { key: 'bind_time', label: '绑定时间' },
   { key: 'status', label: '状态' },
-  { key: 'remark', label: '备注' }
+  { key: 'remark', label: '备注' },
 ];
 
 /** 车辆信息模拟数据 */
 export const carInfoData = [
-  { car_id: 'CAR001', car_number: '闽A12345', car_type: '小型车', brand: '大众', model: '帕萨特', color: '黑色', user_id: '1', bind_time: '2026-01-01 10:00:00', status: '正常', remark: '个人车辆' },
-  { car_id: 'CAR002', car_number: '闽B67890', car_type: '小型车', brand: '丰田', model: '凯美瑞', color: '白色', user_id: '2', bind_time: '2026-01-02 11:00:00', status: '正常', remark: '个人车辆' },
-  { car_id: 'CAR003', car_number: '闽C23456', car_type: '小型车', brand: '本田', model: '雅阁', color: '银色', user_id: '3', bind_time: '2026-01-03 12:00:00', status: '正常', remark: '个人车辆' },
-  { car_id: 'CAR004', car_number: '闽D78901', car_type: '小型车', brand: '奥迪', model: 'A4L', color: '蓝色', user_id: '4', bind_time: '2026-01-04 13:00:00', status: '正常', remark: '个人车辆' },
-  { car_id: 'CAR005', car_number: '闽E34567', car_type: '小型车', brand: '宝马', model: '3系', color: '黑色', user_id: '5', bind_time: '2026-01-05 14:00:00', status: '正常', remark: '个人车辆' },
-  { car_id: 'CAR006', car_number: '闽F89012', car_type: '小型车', brand: '奔驰', model: 'C级', color: '白色', user_id: '6', bind_time: '2026-01-06 15:00:00', status: '正常', remark: '个人车辆' },
-  { car_id: 'CAR007', car_number: '闽G45678', car_type: '小型车', brand: '大众', model: '速腾', color: '红色', user_id: '7', bind_time: '2026-01-07 16:00:00', status: '正常', remark: '个人车辆' },
-  { car_id: 'CAR008', car_number: '闽H90123', car_type: '小型车', brand: '丰田', model: '卡罗拉', color: '银色', user_id: '8', bind_time: '2026-01-08 17:00:00', status: '正常', remark: '个人车辆' },
-  { car_id: 'CAR009', car_number: '闽J56789', car_type: '小型车', brand: '本田', model: '思域', color: '蓝色', user_id: '9', bind_time: '2026-01-09 18:00:00', status: '正常', remark: '个人车辆' },
-  { car_id: 'CAR010', car_number: '闽K01234', car_type: '小型车', brand: '日产', model: '轩逸', color: '黑色', user_id: '10', bind_time: '2026-01-10 19:00:00', status: '正常', remark: '个人车辆' },
-  { car_id: 'CAR011', car_number: '闽L67890', car_type: '小型车', brand: '大众', model: '朗逸', color: '白色', user_id: '11', bind_time: '2026-01-11 20:00:00', status: '正常', remark: '个人车辆' },
-  { car_id: 'CAR012', car_number: '闽M23456', car_type: '小型车', brand: '丰田', model: '雷凌', color: '银色', user_id: '12', bind_time: '2026-01-12 21:00:00', status: '正常', remark: '个人车辆' }
+  {
+    car_id: 'CAR001',
+    car_number: '闽A12345',
+    car_type: '小型车',
+    brand: '大众',
+    model: '帕萨特',
+    color: '黑色',
+    user_id: '1',
+    bind_time: '2026-01-01 10:00:00',
+    status: '正常',
+    remark: '个人车辆',
+  },
+  {
+    car_id: 'CAR002',
+    car_number: '闽B67890',
+    car_type: '小型车',
+    brand: '丰田',
+    model: '凯美瑞',
+    color: '白色',
+    user_id: '2',
+    bind_time: '2026-01-02 11:00:00',
+    status: '正常',
+    remark: '个人车辆',
+  },
+  {
+    car_id: 'CAR003',
+    car_number: '闽C23456',
+    car_type: '小型车',
+    brand: '本田',
+    model: '雅阁',
+    color: '银色',
+    user_id: '3',
+    bind_time: '2026-01-03 12:00:00',
+    status: '正常',
+    remark: '个人车辆',
+  },
+  {
+    car_id: 'CAR004',
+    car_number: '闽D78901',
+    car_type: '小型车',
+    brand: '奥迪',
+    model: 'A4L',
+    color: '蓝色',
+    user_id: '4',
+    bind_time: '2026-01-04 13:00:00',
+    status: '正常',
+    remark: '个人车辆',
+  },
+  {
+    car_id: 'CAR005',
+    car_number: '闽E34567',
+    car_type: '小型车',
+    brand: '宝马',
+    model: '3系',
+    color: '黑色',
+    user_id: '5',
+    bind_time: '2026-01-05 14:00:00',
+    status: '正常',
+    remark: '个人车辆',
+  },
+  {
+    car_id: 'CAR006',
+    car_number: '闽F89012',
+    car_type: '小型车',
+    brand: '奔驰',
+    model: 'C级',
+    color: '白色',
+    user_id: '6',
+    bind_time: '2026-01-06 15:00:00',
+    status: '正常',
+    remark: '个人车辆',
+  },
+  {
+    car_id: 'CAR007',
+    car_number: '闽G45678',
+    car_type: '小型车',
+    brand: '大众',
+    model: '速腾',
+    color: '红色',
+    user_id: '7',
+    bind_time: '2026-01-07 16:00:00',
+    status: '正常',
+    remark: '个人车辆',
+  },
+  {
+    car_id: 'CAR008',
+    car_number: '闽H90123',
+    car_type: '小型车',
+    brand: '丰田',
+    model: '卡罗拉',
+    color: '银色',
+    user_id: '8',
+    bind_time: '2026-01-08 17:00:00',
+    status: '正常',
+    remark: '个人车辆',
+  },
+  {
+    car_id: 'CAR009',
+    car_number: '闽J56789',
+    car_type: '小型车',
+    brand: '本田',
+    model: '思域',
+    color: '蓝色',
+    user_id: '9',
+    bind_time: '2026-01-09 18:00:00',
+    status: '正常',
+    remark: '个人车辆',
+  },
+  {
+    car_id: 'CAR010',
+    car_number: '闽K01234',
+    car_type: '小型车',
+    brand: '日产',
+    model: '轩逸',
+    color: '黑色',
+    user_id: '10',
+    bind_time: '2026-01-10 19:00:00',
+    status: '正常',
+    remark: '个人车辆',
+  },
+  {
+    car_id: 'CAR011',
+    car_number: '闽L67890',
+    car_type: '小型车',
+    brand: '大众',
+    model: '朗逸',
+    color: '白色',
+    user_id: '11',
+    bind_time: '2026-01-11 20:00:00',
+    status: '正常',
+    remark: '个人车辆',
+  },
+  {
+    car_id: 'CAR012',
+    car_number: '闽M23456',
+    car_type: '小型车',
+    brand: '丰田',
+    model: '雷凌',
+    color: '银色',
+    user_id: '12',
+    bind_time: '2026-01-12 21:00:00',
+    status: '正常',
+    remark: '个人车辆',
+  },
 ];
 
 /** 根据标签页获取统计数据 */
@@ -1508,203 +1640,48 @@ export const getStatsDataByTab = (tabName) => {
   // 获取对应标签页的数据
   let tabData;
   switch (tabName) {
-    case '发票申请':
-      tabData = dataList();
-      break;
-    case '发票生成':
-      tabData = generateDataList();
-      break;
-    case '发票查询':
+    case '发票查询': {
       tabData = queryDataList();
       break;
-    default:
+    }
+    case '发票生成': {
+      tabData = generateDataList();
+      break;
+    }
+    case '发票申请': {
+      tabData = dataList();
+      break;
+    }
+    default: {
       tabData = [];
+    }
   }
 
   const totalCount = tabData.length;
 
   switch (tabName) {
-    case '发票申请': {
-      // 发票申请统计
-      const todayCount = tabData.length; // 模拟今日申请数
-      const issuedCount = tabData.filter(item => item.invoiceStatus === '已开具').length;
-      const pendingCount = tabData.filter(item => ['待处理', '处理中'].includes(item.invoiceStatus)).length;
-
-      // 统计不同发票类型的数量
-      const invoiceTypeStats = {};
-      tabData.forEach(item => {
-        invoiceTypeStats[item.invoiceType] = (invoiceTypeStats[item.invoiceType] || 0) + 1;
-      });
-
-      // 统计不同申请状态的数量
-      const statusStats = {};
-      tabData.forEach(item => {
-        statusStats[item.invoiceStatus] = (statusStats[item.invoiceStatus] || 0) + 1;
-      });
-
-      // 统计不同订单类型开票量
-      const orderTypeStats = {
-        临停订单: 0,
-        期卡订单: 0
-      };
-      // 解析订单选择字段，统计订单类型
-      tabData.forEach(item => {
-        const orderNames = item.orderSelection.split(',').map(order => order.trim());
-        orderNames.forEach(orderName => {
-          const orderDetail = orderDetails[orderName];
-          if (orderDetail) {
-            if (orderDetail.type === '临停订单') {
-              orderTypeStats['临停订单']++;
-            } else if (orderDetail.type === '期卡订单') {
-              orderTypeStats['期卡订单']++;
-            }
-          }
-        });
-      });
-
-      return {
-        cards: [
-          {
-            title: '今日申请数',
-            value: todayCount,
-            desc: `较昨日增长${Math.floor(Math.random() * 15) + 5}%`,
-            color: '#13ce66',
-          },
-          {
-            title: '已开具数',
-            value: issuedCount,
-            desc: `占比${Math.round((issuedCount / totalCount) * 100)}%`,
-            color: '#4ECDC4',
-          },
-          {
-            title: '待开具数',
-            value: pendingCount,
-            desc: `占比${Math.round((pendingCount / totalCount) * 100)}%`,
-            color: '#FF6B6B',
-          },
-        ],
-        charts: [
-          {
-            title: '发票类型占比',
-            type: 'pie',
-            data: Object.entries(invoiceTypeStats)
-              .filter(([_, value]) => value > 0)
-              .map(([name, value]) => ({
-                value: Math.round((value / totalCount) * 100),
-                name,
-              })),
-          },
-          {
-            title: '申请状态占比',
-            type: 'pie',
-            data: Object.entries(statusStats)
-              .filter(([_, value]) => value > 0)
-              .map(([name, value]) => ({
-                value: Math.round((value / totalCount) * 100),
-                name,
-              })),
-          },
-          {
-            title: '不同订单类型开票量对比',
-            type: 'bar',
-            xAxis: Object.keys(orderTypeStats),
-            series: Object.values(orderTypeStats),
-          },
-        ],
-      };
-    }
-    case '发票生成': {
-      // 发票生成统计
-      const generatedCount = tabData.length;
-      const sentCount = tabData.filter(item => item.sendStatus === '已发送').length;
-      const downloadCount = Math.floor(totalCount * 1.5); // 基于实际数据量模拟下载次数
-
-      // 统计不同发送状态的数量
-      const sendStatusStats = {};
-      tabData.forEach(item => {
-        sendStatusStats[item.sendStatus] = (sendStatusStats[item.sendStatus] || 0) + 1;
-      });
-
-      // 统计不同发票状态的数量
-      const invoiceStatusStats = {};
-      tabData.forEach(item => {
-        invoiceStatusStats[item.invoiceStatus] = (invoiceStatusStats[item.invoiceStatus] || 0) + 1;
-      });
-
-      // 生成近7天发票生成趋势（基于实际数据分布）
-      const days = ['2月3日', '2月4日', '2月5日', '2月6日', '2月7日', '2月8日', '2月9日'];
-      const trendData = days.map((_, index) => {
-        // 基于实际数据量生成合理的趋势数据
-        return Math.floor((totalCount / 7) * (0.8 + Math.random() * 0.4));
-      });
-
-      return {
-        cards: [
-          {
-            title: '已生成发票数',
-            value: generatedCount,
-            desc: `较昨日增长${Math.floor(Math.random() * 10) + 5}%`,
-            color: '#13ce66',
-          },
-          {
-            title: '成功发送数',
-            value: sentCount,
-            desc: `发送率${Math.round((sentCount / totalCount) * 100)}%`,
-            color: '#4ECDC4',
-          },
-          {
-            title: '下载次数',
-            value: downloadCount,
-            desc: '近7日累计',
-            color: '#FF6B6B',
-          },
-        ],
-        charts: [
-          {
-            title: '发送状态占比',
-            type: 'pie',
-            data: Object.entries(sendStatusStats)
-              .filter(([_, value]) => value > 0)
-              .map(([name, value]) => ({
-                value: Math.round((value / totalCount) * 100),
-                name,
-              })),
-          },
-          {
-            title: '发票状态占比',
-            type: 'pie',
-            data: Object.entries(invoiceStatusStats)
-              .filter(([_, value]) => value > 0)
-              .map(([name, value]) => ({
-                value: Math.round((value / totalCount) * 100),
-                name,
-              })),
-          },
-          {
-            title: '近7天发票生成趋势',
-            type: 'line',
-            xAxis: days,
-            series: trendData,
-          },
-        ],
-      };
-    }
     case '发票查询': {
       // 发票查询统计
       const totalInvoiceCount = tabData.length;
-      const totalAmount = tabData.reduce((sum, item) => sum + (item.invoiceAmount || 0), 0);
-      const avgAmount = totalCount > 0 ? Math.round(totalAmount / totalCount * 100) / 100 : 0;
+      const totalAmount = tabData.reduce(
+        (sum, item) => sum + (item.invoiceAmount || 0),
+        0,
+      );
+      const avgAmount =
+        totalCount > 0 ? Math.round((totalAmount / totalCount) * 100) / 100 : 0;
 
       // 统计不同发票类型的数量
       const invoiceTypeStats = {};
-      tabData.forEach(item => {
-        invoiceTypeStats[item.invoiceType] = (invoiceTypeStats[item.invoiceType] || 0) + 1;
+      tabData.forEach((item) => {
+        invoiceTypeStats[item.invoiceType] =
+          (invoiceTypeStats[item.invoiceType] || 0) + 1;
       });
 
       // 统计不同发票状态的数量
       const statusStats = {};
-      tabData.forEach(item => {
-        statusStats[item.invoiceStatus] = (statusStats[item.invoiceStatus] || 0) + 1;
+      tabData.forEach((item) => {
+        statusStats[item.invoiceStatus] =
+          (statusStats[item.invoiceStatus] || 0) + 1;
       });
 
       // 基于实际数据生成不同月份开票金额趋势
@@ -1768,10 +1745,196 @@ export const getStatsDataByTab = (tabName) => {
         ],
       };
     }
-    default:
+    case '发票生成': {
+      // 发票生成统计
+      const generatedCount = tabData.length;
+      const sentCount = tabData.filter(
+        (item) => item.sendStatus === '已发送',
+      ).length;
+      const downloadCount = Math.floor(totalCount * 1.5); // 基于实际数据量模拟下载次数
+
+      // 统计不同发送状态的数量
+      const sendStatusStats = {};
+      tabData.forEach((item) => {
+        sendStatusStats[item.sendStatus] =
+          (sendStatusStats[item.sendStatus] || 0) + 1;
+      });
+
+      // 统计不同发票状态的数量
+      const invoiceStatusStats = {};
+      tabData.forEach((item) => {
+        invoiceStatusStats[item.invoiceStatus] =
+          (invoiceStatusStats[item.invoiceStatus] || 0) + 1;
+      });
+
+      // 生成近7天发票生成趋势（基于实际数据分布）
+      const days = [
+        '2月3日',
+        '2月4日',
+        '2月5日',
+        '2月6日',
+        '2月7日',
+        '2月8日',
+        '2月9日',
+      ];
+      const trendData = days.map((_, index) => {
+        // 基于实际数据量生成合理的趋势数据
+        return Math.floor((totalCount / 7) * (0.8 + Math.random() * 0.4));
+      });
+
+      return {
+        cards: [
+          {
+            title: '已生成发票数',
+            value: generatedCount,
+            desc: `较昨日增长${Math.floor(Math.random() * 10) + 5}%`,
+            color: '#13ce66',
+          },
+          {
+            title: '成功发送数',
+            value: sentCount,
+            desc: `发送率${Math.round((sentCount / totalCount) * 100)}%`,
+            color: '#4ECDC4',
+          },
+          {
+            title: '下载次数',
+            value: downloadCount,
+            desc: '近7日累计',
+            color: '#FF6B6B',
+          },
+        ],
+        charts: [
+          {
+            title: '发送状态占比',
+            type: 'pie',
+            data: Object.entries(sendStatusStats)
+              .filter(([_, value]) => value > 0)
+              .map(([name, value]) => ({
+                value: Math.round((value / totalCount) * 100),
+                name,
+              })),
+          },
+          {
+            title: '发票状态占比',
+            type: 'pie',
+            data: Object.entries(invoiceStatusStats)
+              .filter(([_, value]) => value > 0)
+              .map(([name, value]) => ({
+                value: Math.round((value / totalCount) * 100),
+                name,
+              })),
+          },
+          {
+            title: '近7天发票生成趋势',
+            type: 'line',
+            xAxis: days,
+            series: trendData,
+          },
+        ],
+      };
+    }
+    case '发票申请': {
+      // 发票申请统计
+      const todayCount = tabData.length; // 模拟今日申请数
+      const issuedCount = tabData.filter(
+        (item) => item.invoiceStatus === '已开具',
+      ).length;
+      const pendingCount = tabData.filter((item) =>
+        ['处理中', '待处理'].includes(item.invoiceStatus),
+      ).length;
+
+      // 统计不同发票类型的数量
+      const invoiceTypeStats = {};
+      tabData.forEach((item) => {
+        invoiceTypeStats[item.invoiceType] =
+          (invoiceTypeStats[item.invoiceType] || 0) + 1;
+      });
+
+      // 统计不同申请状态的数量
+      const statusStats = {};
+      tabData.forEach((item) => {
+        statusStats[item.invoiceStatus] =
+          (statusStats[item.invoiceStatus] || 0) + 1;
+      });
+
+      // 统计不同订单类型开票量
+      const orderTypeStats = {
+        临停订单: 0,
+        期卡订单: 0,
+      };
+      // 解析订单选择字段，统计订单类型
+      tabData.forEach((item) => {
+        const orderNames = item.orderSelection
+          .split(',')
+          .map((order) => order.trim());
+        orderNames.forEach((orderName) => {
+          const orderDetail = orderDetails[orderName];
+          if (orderDetail) {
+            if (orderDetail.type === '临停订单') {
+              orderTypeStats['临停订单']++;
+            } else if (orderDetail.type === '期卡订单') {
+              orderTypeStats['期卡订单']++;
+            }
+          }
+        });
+      });
+
+      return {
+        cards: [
+          {
+            title: '今日申请数',
+            value: todayCount,
+            desc: `较昨日增长${Math.floor(Math.random() * 15) + 5}%`,
+            color: '#13ce66',
+          },
+          {
+            title: '已开具数',
+            value: issuedCount,
+            desc: `占比${Math.round((issuedCount / totalCount) * 100)}%`,
+            color: '#4ECDC4',
+          },
+          {
+            title: '待开具数',
+            value: pendingCount,
+            desc: `占比${Math.round((pendingCount / totalCount) * 100)}%`,
+            color: '#FF6B6B',
+          },
+        ],
+        charts: [
+          {
+            title: '发票类型占比',
+            type: 'pie',
+            data: Object.entries(invoiceTypeStats)
+              .filter(([_, value]) => value > 0)
+              .map(([name, value]) => ({
+                value: Math.round((value / totalCount) * 100),
+                name,
+              })),
+          },
+          {
+            title: '申请状态占比',
+            type: 'pie',
+            data: Object.entries(statusStats)
+              .filter(([_, value]) => value > 0)
+              .map(([name, value]) => ({
+                value: Math.round((value / totalCount) * 100),
+                name,
+              })),
+          },
+          {
+            title: '不同订单类型开票量对比',
+            type: 'bar',
+            xAxis: Object.keys(orderTypeStats),
+            series: Object.values(orderTypeStats),
+          },
+        ],
+      };
+    }
+    default: {
       return {
         cards: [],
         charts: [],
       };
+    }
   }
 };

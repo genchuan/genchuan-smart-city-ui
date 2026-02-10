@@ -9,11 +9,30 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
-import { dataList, textObj, useFormSchema, useGridColumns, detailFields, orderStatusOptions, payStatusOptions, statusTrackDataList, statusTrackTextObj, useStatusTrackFormSchema, useStatusTrackGridColumns, statusTrackDetailFields, statusOptions, orderDetailDataList, orderDetailTextObj, useOrderDetailFormSchema, useOrderDetailGridColumns, orderDetailDetailFields, orderDetailStatusOptions } from './data';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import {
+  dataList,
+  detailFields,
+  orderDetailDataList,
+  orderDetailDetailFields,
+  orderDetailStatusOptions,
+  orderDetailTextObj,
+  orderStatusOptions,
+  statusOptions,
+  statusTrackDataList,
+  statusTrackDetailFields,
+  statusTrackTextObj,
+  textObj,
+  useFormSchema,
+  useGridColumns,
+  useOrderDetailFormSchema,
+  useOrderDetailGridColumns,
+  useStatusTrackFormSchema,
+  useStatusTrackGridColumns,
+} from './data';
 
 const props = defineProps({
   secondShow: {
@@ -44,7 +63,9 @@ const currentTextObj = computed(() => {
 });
 
 const getTitle = computed(() => {
-  return formData.value?.orderNo ? currentTextObj.value.editText : currentTextObj.value.addText;
+  return formData.value?.orderNo
+    ? currentTextObj.value.editText
+    : currentTextObj.value.addText;
 });
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -97,15 +118,23 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
   onConfirm() {
     const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === currentTextObj.value.addText) {
+    if (
+      formDrawerApi.sharedData.payload.title === currentTextObj.value.addText
+    ) {
       if (props.activeTab === '订单生成') {
         // 生成新的订单编号
-        obj.orderNo = `TEMP${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${String(dataObj.apilist.length + 1).padStart(4, '0')}`;
-        obj.createTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+        obj.orderNo = `TEMP${new Date().toISOString().slice(0, 10).replaceAll('-', '')}${String(dataObj.apilist.length + 1).padStart(4, '0')}`;
+        obj.createTime = new Date()
+          .toISOString()
+          .slice(0, 19)
+          .replace('T', ' ');
         obj.operator = '系统';
       } else {
         // 状态跟踪记录
-        obj.changeTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+        obj.changeTime = new Date()
+          .toISOString()
+          .slice(0, 19)
+          .replace('T', ' ');
       }
       dataObj.apilist.push(obj);
     } else {
@@ -141,7 +170,7 @@ const [SupplementDrawer, supplementDrawerApi] = useVbenDrawer({
   onConfirm() {
     const obj = formApi.form.values;
     // 生成新的订单编号
-    obj.orderNo = `TEMP${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${String(dataObj.apilist.length + 1).padStart(4, '0')}`;
+    obj.orderNo = `TEMP${new Date().toISOString().slice(0, 10).replaceAll('-', '')}${String(dataObj.apilist.length + 1).padStart(4, '0')}`;
     obj.createTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
     obj.operator = '系统';
     obj.orderStatus = '待支付';
@@ -174,7 +203,7 @@ const [TrackDrawer, trackDrawerApi] = useVbenDrawer({
 const trackData = ref({
   orderNo: '',
   carNumber: '',
-  timeline: []
+  timeline: [],
 });
 
 // 干预抽屉
@@ -208,9 +237,9 @@ const useInterventionFormSchema = () => {
       componentProps: {
         placeholder: '请输入干预措施',
         type: 'textarea',
-        rows: 4
+        rows: 4,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'interventionReason',
@@ -219,18 +248,18 @@ const useInterventionFormSchema = () => {
       componentProps: {
         placeholder: '请输入干预原因',
         type: 'textarea',
-        rows: 3
-      }
+        rows: 3,
+      },
     },
     {
       fieldName: 'operator',
       label: '操作人',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入操作人'
+        placeholder: '请输入操作人',
       },
-      rules: 'required'
-    }
+      rules: 'required',
+    },
   ];
 };
 
@@ -266,47 +295,47 @@ const useInvoiceFormSchema = () => {
         placeholder: '请选择发票类型',
         options: [
           { label: '增值税普通发票', value: '普通发票' },
-          { label: '增值税专用发票', value: '专用发票' }
-        ]
+          { label: '增值税专用发票', value: '专用发票' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'invoiceTitle',
       label: '发票抬头',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入发票抬头'
+        placeholder: '请输入发票抬头',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'taxpayerId',
       label: '纳税人识别号',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入纳税人识别号'
+        placeholder: '请输入纳税人识别号',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'contactPhone',
       label: '联系电话',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入联系电话'
+        placeholder: '请输入联系电话',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'contactEmail',
       label: '联系邮箱',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入联系邮箱'
+        placeholder: '请输入联系邮箱',
       },
-      rules: 'required'
-    }
+      rules: 'required',
+    },
   ];
 };
 
@@ -353,11 +382,13 @@ async function handleCancelOrder(row) {
   try {
     await confirm('确定要取消该订单吗？');
     const loadingInstance = ElLoading.service({
-      text: '取消订单中...'
+      text: '取消订单中...',
     });
 
     // 更新订单状态为已取消
-    const orderIndex = dataObj.apilist.findIndex(v => v.orderNo === row.orderNo);
+    const orderIndex = dataObj.apilist.findIndex(
+      (v) => v.orderNo === row.orderNo,
+    );
     if (orderIndex !== -1) {
       dataObj.apilist[orderIndex].orderStatus = '已取消';
       dataObj.apilist[orderIndex].payStatus = '待支付';
@@ -366,7 +397,7 @@ async function handleCancelOrder(row) {
     handleRefresh();
     ElMessage.success('订单已成功取消');
     loadingInstance.close();
-  } catch (error) {
+  } catch {
     // 用户取消确认
   }
 }
@@ -381,24 +412,24 @@ function handleTrackStatus(row) {
       {
         time: '2026-02-01 08:30:00',
         status: '订单创建',
-        description: '系统生成临时停车订单'
+        description: '系统生成临时停车订单',
       },
       {
         time: '2026-02-01 08:30:00',
         status: '待支付',
-        description: '等待用户支付停车费用'
+        description: '等待用户支付停车费用',
       },
       {
         time: '2026-02-01 09:30:00',
         status: '已支付',
-        description: '用户完成支付'
+        description: '用户完成支付',
       },
       {
         time: '2026-02-01 09:30:00',
         status: '已完成',
-        description: '订单支付成功，交易完成'
-      }
-    ]
+        description: '订单支付成功，交易完成',
+      },
+    ],
   };
   trackDrawerApi.open();
 }
@@ -485,11 +516,15 @@ const dataObj = reactive({
 });
 
 // 监听标签页变化，更新数据列表
-watch(() => props.activeTab, () => {
-  dataObj.apilist = currentDataList.value;
-  dataObj.total = currentDataList.value.length;
-  handleRefresh();
-}, { immediate: true });
+watch(
+  () => props.activeTab,
+  () => {
+    dataObj.apilist = currentDataList.value;
+    dataObj.total = currentDataList.value.length;
+    handleRefresh();
+  },
+  { immediate: true },
+);
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
@@ -513,19 +548,31 @@ const getTableData = (pageObj) => {
     }
 
     // 快捷筛选
-    const carNumberMatch = !filterCarNumber.value || v.carNumber === filterCarNumber.value;
-    const lotNameMatch = !filterLotName.value || v.lotName === filterLotName.value;
-    const feeTypeNameMatch = !filterFeeTypeName.value || v.feeTypeName === filterFeeTypeName.value;
-    const payStatusMatch = !filterPayStatus.value || v.payStatus === filterPayStatus.value;
-    const payTypeMatch = !filterPayType.value || v.payType === filterPayType.value;
+    const carNumberMatch =
+      !filterCarNumber.value || v.carNumber === filterCarNumber.value;
+    const lotNameMatch =
+      !filterLotName.value || v.lotName === filterLotName.value;
+    const feeTypeNameMatch =
+      !filterFeeTypeName.value || v.feeTypeName === filterFeeTypeName.value;
+    const payStatusMatch =
+      !filterPayStatus.value || v.payStatus === filterPayStatus.value;
+    const payTypeMatch =
+      !filterPayType.value || v.payType === filterPayType.value;
 
-    return statusMatch && carNumberMatch && lotNameMatch && feeTypeNameMatch && payStatusMatch && payTypeMatch;
+    return (
+      statusMatch &&
+      carNumberMatch &&
+      lotNameMatch &&
+      feeTypeNameMatch &&
+      payStatusMatch &&
+      payTypeMatch
+    );
   });
 
   dataObj.total = filteredList.length;
   dataObj.list = filteredList.slice(
     (page.currentPage - 1) * page.pageSize,
-    page.currentPage * page.pageSize
+    page.currentPage * page.pageSize,
   );
   return dataObj;
 };
@@ -671,11 +718,17 @@ const createLabel = (item) => {
     count = dataObj.apilist.length;
   } else {
     if (props.activeTab === '订单生成') {
-      count = dataObj.apilist.filter((v) => v.orderStatus === item.value).length;
+      count = dataObj.apilist.filter(
+        (v) => v.orderStatus === item.value,
+      ).length;
     } else if (props.activeTab === '状态跟踪') {
-      count = dataObj.apilist.filter((v) => v.currentStatus === item.value).length;
+      count = dataObj.apilist.filter(
+        (v) => v.currentStatus === item.value,
+      ).length;
     } else {
-      count = dataObj.apilist.filter((v) => v.orderStatusName === item.value).length;
+      count = dataObj.apilist.filter(
+        (v) => v.orderStatusName === item.value,
+      ).length;
     }
   }
 
@@ -720,7 +773,8 @@ const handleCancelLotNameFilter = () => {
 
 // 处理费率类型点击
 const handleFeeTypeNameClick = (feeTypeName) => {
-  filterFeeTypeName.value = filterFeeTypeName.value === feeTypeName ? '' : feeTypeName;
+  filterFeeTypeName.value =
+    filterFeeTypeName.value === feeTypeName ? '' : feeTypeName;
   gridApi.query();
 };
 
@@ -776,25 +830,36 @@ const handleCancelPayTypeFilter = () => {
           </div>
         </div>
         <div class="track-timeline">
-          <el-timeline>
-            <el-timeline-item
+          <ElTimeline>
+            <ElTimelineItem
               v-for="(item, index) in trackData.timeline"
               :key="index"
               :timestamp="item.time"
-              :type="index === 0 ? 'primary' : index === trackData.timeline.length - 1 ? 'success' : 'info'"
+              :type="
+                index === 0
+                  ? 'primary'
+                  : index === trackData.timeline.length - 1
+                    ? 'success'
+                    : 'info'
+              "
               :size="16"
-              :icon="index === 0 ? 'Plus' : index === trackData.timeline.length - 1 ? 'Check' : 'Clock'"
+              :icon="
+                index === 0
+                  ? 'Plus'
+                  : index === trackData.timeline.length - 1
+                    ? 'Check'
+                    : 'Clock'
+              "
             >
               <div class="timeline-item-content">
                 <div class="status">{{ item.status }}</div>
                 <div class="description">{{ item.description }}</div>
               </div>
-            </el-timeline-item>
-          </el-timeline>
+            </ElTimelineItem>
+          </ElTimeline>
         </div>
       </div>
     </TrackDrawer>
-
 
     <InterventionDrawer>
       <Form :schema="useInterventionFormSchema()" />
@@ -802,12 +867,18 @@ const handleCancelPayTypeFilter = () => {
     <InvoiceDrawer>
       <Form :schema="useInvoiceFormSchema()" />
     </InvoiceDrawer>
-<!--   详情抽屉-->
+    <!--   详情抽屉-->
     <DetailDrawer
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.orderNo}详情`"
       :data="dataObj.detailObj"
-      :fields="props.activeTab === '订单生成' ? detailFields : props.activeTab === '状态跟踪' ? statusTrackDetailFields : orderDetailDetailFields"
+      :fields="
+        props.activeTab === '订单生成'
+          ? detailFields
+          : props.activeTab === '状态跟踪'
+            ? statusTrackDetailFields
+            : orderDetailDetailFields
+      "
     />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -973,7 +1044,13 @@ const handleCancelPayTypeFilter = () => {
       <!-- 支付状态快捷筛选 -->
       <template #payStatus="{ row }">
         <el-tag
-          :type="row.payStatus === '已支付' ? 'success' : row.payStatus === '待支付' ? 'warning' : 'danger'"
+          :type="
+            row.payStatus === '已支付'
+              ? 'success'
+              : row.payStatus === '待支付'
+                ? 'warning'
+                : 'danger'
+          "
           @click="handlePayStatusClick(row.payStatus)"
           class="cursor-pointer"
         >
@@ -992,18 +1069,42 @@ const handleCancelPayTypeFilter = () => {
         </el-text>
       </template>
       <template #orderStatus="{ row }">
-        <el-tag :type="row.orderStatus === '已完成' ? 'success' : row.orderStatus === '待支付' ? 'warning' : 'danger'">
+        <el-tag
+          :type="
+            row.orderStatus === '已完成'
+              ? 'success'
+              : row.orderStatus === '待支付'
+                ? 'warning'
+                : 'danger'
+          "
+        >
           {{ row.orderStatus }}
         </el-tag>
       </template>
 
       <template #currentStatus="{ row }">
-        <el-tag :type="row.currentStatus === '已完成' ? 'success' : row.currentStatus === '待支付' ? 'warning' : 'danger'">
+        <el-tag
+          :type="
+            row.currentStatus === '已完成'
+              ? 'success'
+              : row.currentStatus === '待支付'
+                ? 'warning'
+                : 'danger'
+          "
+        >
           {{ row.currentStatus }}
         </el-tag>
       </template>
       <template #orderStatusName="{ row }">
-        <el-tag :type="row.orderStatusName === '已完成' ? 'success' : row.orderStatusName === '待支付' ? 'warning' : 'danger'">
+        <el-tag
+          :type="
+            row.orderStatusName === '已完成'
+              ? 'success'
+              : row.orderStatusName === '待支付'
+                ? 'warning'
+                : 'danger'
+          "
+        >
           {{ row.orderStatusName }}
         </el-tag>
       </template>
@@ -1059,12 +1160,12 @@ const handleCancelPayTypeFilter = () => {
           </template>
 
           <!-- 删除按钮 - 所有标签页都有 -->
-<!--          <IconButton-->
-<!--            content="删除"-->
-<!--            icon-name="delete"-->
-<!--            color="#F56C6C"-->
-<!--            @click="handleDelete(row)"-->
-<!--          />-->
+          <!--          <IconButton-->
+          <!--            content="删除"-->
+          <!--            icon-name="delete"-->
+          <!--            color="#F56C6C"-->
+          <!--            @click="handleDelete(row)"-->
+          <!--          />-->
         </div>
       </template>
       <template #bottom>

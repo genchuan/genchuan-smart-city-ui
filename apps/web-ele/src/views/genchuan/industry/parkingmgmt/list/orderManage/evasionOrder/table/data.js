@@ -2,19 +2,19 @@
 export const dataList = () => {
   return [
     {
-      id: 'G001',                // 车库ID（使用字段id）
-      assetExtendId: 'AE001',    // 资产扩展ID（关联 tb_asset_extend）
-      parkId: '1',               // 所属车场ID（关联原有停车场id）
+      id: 'G001', // 车库ID（使用字段id）
+      assetExtendId: 'AE001', // 资产扩展ID（关联 tb_asset_extend）
+      parkId: '1', // 所属车场ID（关联原有停车场id）
       garageName: '芗城区XX社区公共停车场-地下一层', // 车库名称
-      floorCount: '1',           // 楼层数
-      totalParkingSpaces: '90',  // 总车位数
+      floorCount: '1', // 楼层数
+      totalParkingSpaces: '90', // 总车位数
       accessControlType: '道闸', // 门禁类型
       detailedAddress: '芗城区XX街道XX路88号地下一层', // 详细地址
-      longitude: '117.6589',     // 经度
-      latitude: '24.5123',       // 纬度
-      enableStatus: '启用',      // 启用状态
-      creator: '张三',           // 创建人
-      createTime: '2025-01-10 09:20:30' // 创建时间
+      longitude: '117.6589', // 经度
+      latitude: '24.5123', // 纬度
+      enableStatus: '启用', // 启用状态
+      creator: '张三', // 创建人
+      createTime: '2025-01-10 09:20:30', // 创建时间
     },
     {
       id: 'G002',
@@ -29,7 +29,7 @@ export const dataList = () => {
       latitude: '24.4987',
       enableStatus: '禁用',
       creator: '李四',
-      createTime: '2025-01-12 14:15:20'
+      createTime: '2025-01-12 14:15:20',
     },
     {
       id: 'G003',
@@ -44,7 +44,7 @@ export const dataList = () => {
       latitude: '24.4562',
       enableStatus: '禁用',
       creator: '王五',
-      createTime: '2025-01-15 10:05:10'
+      createTime: '2025-01-15 10:05:10',
     },
     {
       id: 'G004',
@@ -59,7 +59,7 @@ export const dataList = () => {
       latitude: '24.4438',
       enableStatus: '启用',
       creator: '赵六',
-      createTime: '2025-01-18 08:30:45'
+      createTime: '2025-01-18 08:30:45',
     },
     {
       id: 'G005',
@@ -74,7 +74,7 @@ export const dataList = () => {
       latitude: '24.5012',
       enableStatus: '启用',
       creator: '孙七',
-      createTime: '2025-01-20 16:40:15'
+      createTime: '2025-01-20 16:40:15',
     },
     {
       id: 'G006',
@@ -89,7 +89,7 @@ export const dataList = () => {
       latitude: '24.4897',
       enableStatus: '启用',
       creator: '周八',
-      createTime: '2025-01-22 11:10:30'
+      createTime: '2025-01-22 11:10:30',
     },
     {
       id: 'G007',
@@ -104,7 +104,7 @@ export const dataList = () => {
       latitude: '24.6123',
       enableStatus: '启用',
       creator: '吴九',
-      createTime: '2025-01-25 13:25:40'
+      createTime: '2025-01-25 13:25:40',
     },
     {
       id: 'G008',
@@ -119,7 +119,7 @@ export const dataList = () => {
       latitude: '24.1234',
       enableStatus: '禁用',
       creator: '郑十',
-      createTime: '2025-01-28 09:50:25'
+      createTime: '2025-01-28 09:50:25',
     },
     {
       id: 'G009',
@@ -134,7 +134,7 @@ export const dataList = () => {
       latitude: '24.5234',
       enableStatus: '启用',
       creator: '张三',
-      createTime: '2025-02-01 15:15:10'
+      createTime: '2025-02-01 15:15:10',
     },
     {
       id: 'G010',
@@ -149,7 +149,7 @@ export const dataList = () => {
       latitude: '24.4789',
       enableStatus: '启用',
       creator: '李四',
-      createTime: '2025-02-05 10:30:50'
+      createTime: '2025-02-05 10:30:50',
     },
     {
       id: 'G011',
@@ -164,7 +164,7 @@ export const dataList = () => {
       latitude: '24.4812',
       enableStatus: '启用',
       creator: '王五',
-      createTime: '2025-02-08 14:20:15'
+      createTime: '2025-02-08 14:20:15',
     },
     {
       id: 'G012',
@@ -179,8 +179,8 @@ export const dataList = () => {
       latitude: '24.5189',
       enableStatus: '启用',
       creator: '赵六',
-      createTime: '2025-02-10 09:40:30'
-    }
+      createTime: '2025-02-10 09:40:30',
+    },
   ];
 };
 
@@ -194,16 +194,16 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入车库ID',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'assetExtendId',
       label: '资产扩展ID',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入资产扩展ID（关联tb_asset_extend）'
+        placeholder: '请输入资产扩展ID（关联tb_asset_extend）',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'parkId',
@@ -223,19 +223,19 @@ export function useFormSchema() {
           { label: '芗城区巷口街道停车场', value: '9' },
           { label: '龙文区蓝田街道停车场', value: '10' },
           { label: '龙文区步文街道停车场', value: '11' },
-          { label: '芗城区东铺头街道停车场', value: '12' }
-        ]
+          { label: '芗城区东铺头街道停车场', value: '12' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'garageName',
       label: '车库名称',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入车库名称'
+        placeholder: '请输入车库名称',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'floorCount',
@@ -243,9 +243,9 @@ export function useFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入楼层数',
-        min: 1
+        min: 1,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'totalParkingSpaces',
@@ -253,9 +253,9 @@ export function useFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入总车位数',
-        min: 1
+        min: 1,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'accessControlType',
@@ -270,37 +270,37 @@ export function useFormSchema() {
           { label: '智能道闸', value: '智能道闸' },
           { label: '车牌识别+人脸识别', value: '车牌识别+人脸识别' },
           { label: '刷卡', value: '刷卡' },
-          { label: '车牌识别+道闸', value: '车牌识别+道闸' }
-        ]
+          { label: '车牌识别+道闸', value: '车牌识别+道闸' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'detailedAddress',
       label: '详细地址',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入详细地址'
+        placeholder: '请输入详细地址',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'longitude',
       label: '经度',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入经度（例：117.6589）'
+        placeholder: '请输入经度（例：117.6589）',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'latitude',
       label: '纬度',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入纬度（例：24.5123）'
+        placeholder: '请输入纬度（例：24.5123）',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'enableStatus',
@@ -310,19 +310,19 @@ export function useFormSchema() {
         placeholder: '请选择启用状态',
         options: [
           { label: '启用', value: '启用' },
-          { label: '禁用', value: '禁用' }
-        ]
+          { label: '禁用', value: '禁用' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'creator',
       label: '创建人',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入创建人'
+        placeholder: '请输入创建人',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'createTime',
@@ -331,10 +331,10 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择创建时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
-    }
+      rules: 'required',
+    },
   ];
 }
 
@@ -347,86 +347,86 @@ export function useGridColumns() {
       title: '车库ID',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'id' }
+      slots: { default: 'id' },
     },
     {
       field: 'assetExtendId',
       title: '资产扩展ID',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'parkId',
       title: '所属车场ID',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'garageName',
       title: '车库名称',
       minWidth: 200,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'floorCount',
       title: '楼层数',
       minWidth: 80,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'totalParkingSpaces',
       title: '总车位数',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'accessControlType',
       title: '门禁类型',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'detailedAddress',
       title: '详细地址',
       minWidth: 200,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'longitude',
       title: '经度',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'latitude',
       title: '纬度',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'enableStatus',
       title: '启用状态',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'creator',
       title: '创建人',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'createTime',
       title: '创建时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       title: '操作',
       width: 100,
       fixed: 'right',
-      slots: { default: 'actions' }
-    }
+      slots: { default: 'actions' },
+    },
   ];
 }
 
@@ -455,5 +455,5 @@ export const detailFields = [
   { key: 'latitude', label: '纬度' },
   { key: 'enableStatus', label: '启用状态' },
   { key: 'creator', label: '创建人' },
-  { key: 'createTime', label: '创建时间' }
+  { key: 'createTime', label: '创建时间' },
 ];

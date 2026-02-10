@@ -9,11 +9,31 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
-import { dataList, generateDataList, queryDataList, orderOptions, orderDetails, textObj, generateTextObj, queryTextObj, useFormSchema, useGenerateFormSchema, useQueryFormSchema, useGridColumns, useGenerateGridColumns, useQueryGridColumns, detailFields, generateDetailFields, queryDetailFields, statusOptions, carDetailFields, carInfoData } from './data';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import {
+  carDetailFields,
+  carInfoData,
+  dataList,
+  detailFields,
+  generateDataList,
+  generateDetailFields,
+  generateTextObj,
+  orderDetails,
+  queryDataList,
+  queryDetailFields,
+  queryTextObj,
+  statusOptions,
+  textObj,
+  useFormSchema,
+  useGenerateFormSchema,
+  useGenerateGridColumns,
+  useGridColumns,
+  useQueryFormSchema,
+  useQueryGridColumns,
+} from './data';
 
 const props = defineProps({
   secondShow: {
@@ -37,21 +57,25 @@ const getTitle = computed(() => {
   let currentTextObj;
   let isEdit;
   switch (props.activeTab) {
-    case '发票申请':
-      currentTextObj = textObj;
-      isEdit = !!formData.value?.applicationId;
-      break;
-    case '发票生成':
-      currentTextObj = generateTextObj;
-      isEdit = !!formData.value?.invoiceId;
-      break;
-    case '发票查询':
+    case '发票查询': {
       currentTextObj = queryTextObj;
       isEdit = !!formData.value?.invoiceId;
       break;
-    default:
+    }
+    case '发票生成': {
+      currentTextObj = generateTextObj;
+      isEdit = !!formData.value?.invoiceId;
+      break;
+    }
+    case '发票申请': {
+      currentTextObj = textObj;
+      isEdit = !!formData.value?.applicationId;
+      break;
+    }
+    default: {
       currentTextObj = textObj;
       isEdit = false;
+    }
   }
   return isEdit ? currentTextObj.editText : currentTextObj.addText;
 });
@@ -102,7 +126,7 @@ const orderDetailFields = [
   { key: 'paymentId', label: '缴费记录ID' },
   { key: 'createTime', label: '创建时间' },
   { key: 'updateTime', label: '更新时间' },
-  { key: 'remark', label: '备注' }
+  { key: 'remark', label: '备注' },
 ];
 // 创建表单实例，根据当前激活的标签页使用相应的表单配置
 const [Form, formApi] = useVbenForm({
@@ -114,7 +138,12 @@ const [Form, formApi] = useVbenForm({
     labelWidth: 100,
   },
   layout: 'horizontal',
-  schema: props.activeTab === '发票申请' ? useFormSchema() : props.activeTab === '发票生成' ? useGenerateFormSchema() : useQueryFormSchema(),
+  schema:
+    props.activeTab === '发票申请'
+      ? useFormSchema()
+      : (props.activeTab === '发票生成'
+        ? useGenerateFormSchema()
+        : useQueryFormSchema()),
   showDefaultActions: false,
 });
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
@@ -125,56 +154,81 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
   onConfirm() {
     const obj = formApi.form.values;
-    if (props.activeTab === '发票申请') {
-      if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-        // 为新增数据生成一个唯一的applicationId
-        const newId = 'APP' + String(dataObj.apilist.length + 1).padStart(3, '0');
-        obj.applicationId = newId;
-        obj.applicationNo = 'AP' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + String(dataObj.apilist.length + 1).padStart(4, '0');
-        obj.estimateTime = obj.estimateTime || new Date().toISOString().slice(0, 19).replace('T', ' ');
-        obj.relatedOrderCount = obj.relatedOrderCount || 1;
-        obj.invoiceStatus = obj.invoiceStatus || '待处理';
-        dataObj.apilist.push(obj);
-      } else {
-        dataObj.apilist.forEach((v, i) => {
-          if (v.applicationId === formData.value?.applicationId) {
-            dataObj.apilist[i] = obj;
-          }
-        });
+    switch (props.activeTab) {
+      case '发票查询': {
+        if (formDrawerApi.sharedData.payload.title === queryTextObj.addText) {
+          // 为新增数据生成一个唯一的invoiceId
+          const newId = `INV${String(dataObj.apilist.length + 1).padStart(3, '0')}`;
+          obj.invoiceId = newId;
+          obj.operationButton = true;
+          obj.issueTime =
+            obj.issueTime ||
+            new Date().toISOString().slice(0, 19).replace('T', ' ');
+          obj.invoiceAmount = obj.invoiceAmount || 0;
+          obj.invoiceStatus = obj.invoiceStatus || '待处理';
+          dataObj.apilist.push(obj);
+        } else {
+          dataObj.apilist.forEach((v, i) => {
+            if (v.invoiceId === formData.value?.invoiceId) {
+              dataObj.apilist[i] = obj;
+            }
+          });
+        }
+
+        break;
       }
-    } else if (props.activeTab === '发票生成') {
-      if (formDrawerApi.sharedData.payload.title === generateTextObj.addText) {
-        // 为新增数据生成一个唯一的invoiceId
-        const newId = 'INV' + String(dataObj.apilist.length + 1).padStart(3, '0');
-        obj.invoiceId = newId;
-        obj.refreshButton = true;
-        obj.issueTime = obj.issueTime || new Date().toISOString().slice(0, 19).replace('T', ' ');
-        obj.sendStatus = obj.sendStatus || '待发送';
-        dataObj.apilist.push(obj);
-      } else {
-        dataObj.apilist.forEach((v, i) => {
-          if (v.invoiceId === formData.value?.invoiceId) {
-            dataObj.apilist[i] = obj;
-          }
-        });
+      case '发票生成': {
+        if (
+          formDrawerApi.sharedData.payload.title === generateTextObj.addText
+        ) {
+          // 为新增数据生成一个唯一的invoiceId
+          const newId = `INV${String(dataObj.apilist.length + 1).padStart(3, '0')}`;
+          obj.invoiceId = newId;
+          obj.refreshButton = true;
+          obj.issueTime =
+            obj.issueTime ||
+            new Date().toISOString().slice(0, 19).replace('T', ' ');
+          obj.sendStatus = obj.sendStatus || '待发送';
+          dataObj.apilist.push(obj);
+        } else {
+          dataObj.apilist.forEach((v, i) => {
+            if (v.invoiceId === formData.value?.invoiceId) {
+              dataObj.apilist[i] = obj;
+            }
+          });
+        }
+
+        break;
       }
-    } else if (props.activeTab === '发票查询') {
-      if (formDrawerApi.sharedData.payload.title === queryTextObj.addText) {
-        // 为新增数据生成一个唯一的invoiceId
-        const newId = 'INV' + String(dataObj.apilist.length + 1).padStart(3, '0');
-        obj.invoiceId = newId;
-        obj.operationButton = true;
-        obj.issueTime = obj.issueTime || new Date().toISOString().slice(0, 19).replace('T', ' ');
-        obj.invoiceAmount = obj.invoiceAmount || 0.00;
-        obj.invoiceStatus = obj.invoiceStatus || '待处理';
-        dataObj.apilist.push(obj);
-      } else {
-        dataObj.apilist.forEach((v, i) => {
-          if (v.invoiceId === formData.value?.invoiceId) {
-            dataObj.apilist[i] = obj;
-          }
-        });
+      case '发票申请': {
+        if (formDrawerApi.sharedData.payload.title === textObj.addText) {
+          // 为新增数据生成一个唯一的applicationId
+          const newId = `APP${String(dataObj.apilist.length + 1).padStart(3, '0')}`;
+          obj.applicationId = newId;
+          obj.applicationNo = `AP${new Date()
+            .toISOString()
+            .slice(0, 10)
+            .replaceAll(
+              '-',
+              '',
+            )}${String(dataObj.apilist.length + 1).padStart(4, '0')}`;
+          obj.estimateTime =
+            obj.estimateTime ||
+            new Date().toISOString().slice(0, 19).replace('T', ' ');
+          obj.relatedOrderCount = obj.relatedOrderCount || 1;
+          obj.invoiceStatus = obj.invoiceStatus || '待处理';
+          dataObj.apilist.push(obj);
+        } else {
+          dataObj.apilist.forEach((v, i) => {
+            if (v.applicationId === formData.value?.applicationId) {
+              dataObj.apilist[i] = obj;
+            }
+          });
+        }
+
+        break;
       }
+      // No default
     }
     handleRefresh();
     formDrawerApi.close();
@@ -187,7 +241,10 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       // 根据当前激活的标签页设置表单值
       if (props.activeTab === '发票申请' && formData.value?.applicationId) {
         await formApi.setValues(formData.value);
-      } else if ((props.activeTab === '发票生成' || props.activeTab === '发票查询') && formData.value?.invoiceId) {
+      } else if (
+        (props.activeTab === '发票生成' || props.activeTab === '发票查询') &&
+        formData.value?.invoiceId
+      ) {
         await formApi.setValues(formData.value);
       }
     }
@@ -219,7 +276,7 @@ async function handleCancel(row) {
       handleRefresh();
       loadingInstance.close();
     }, 1000);
-  } catch (error) {
+  } catch {
     // 用户取消确认
   }
 }
@@ -229,7 +286,10 @@ function handleDownload(row) {
   // 模拟下载操作
   ElMessage.success('发票PDF文件已开始下载');
   // 实际项目中这里应该是一个真实的下载链接
-  console.log('下载发票PDF文件:', row.pdfUrl || `https://example.com/invoices/${row.invoiceId}.pdf`);
+  console.log(
+    '下载发票PDF文件:',
+    row.pdfUrl || `https://example.com/invoices/${row.invoiceId}.pdf`,
+  );
 }
 
 /** 重发发票 */
@@ -245,7 +305,7 @@ async function handleResend(row) {
       ElMessage.success('发票已成功重新发送至接收邮箱');
       loadingInstance.close();
     }, 1000);
-  } catch (error) {
+  } catch {
     // 用户取消确认
   }
 }
@@ -254,19 +314,27 @@ async function handleResend(row) {
 async function handleExport() {
   let currentTextObj;
   switch (props.activeTab) {
-    case '发票申请':
-      currentTextObj = textObj;
-      break;
-    case '发票生成':
-      currentTextObj = generateTextObj;
-      break;
-    case '发票查询':
+    case '发票查询': {
       currentTextObj = queryTextObj;
       break;
-    default:
+    }
+    case '发票生成': {
+      currentTextObj = generateTextObj;
+      break;
+    }
+    case '发票申请': {
       currentTextObj = textObj;
+      break;
+    }
+    default: {
+      currentTextObj = textObj;
+    }
   }
-  exportToExcel(dataObj.apilist, currentTextObj.excelName, currentTextObj.excelAllName);
+  exportToExcel(
+    dataObj.apilist,
+    currentTextObj.excelName,
+    currentTextObj.excelAllName,
+  );
 }
 
 /** 创建角色 */
@@ -293,14 +361,11 @@ async function handleDelete(row) {
     text: $t('ui.actionMessage.deleting', [id]),
   });
   try {
-    if (props.activeTab === '发票申请') {
-      dataObj.apilist = dataObj.apilist.filter((v) => v.applicationId !== row.applicationId);
-    } else {
-      dataObj.apilist = dataObj.apilist.filter((v) => v.invoiceId !== row.invoiceId);
-    }
-    ElMessage.success(
-      $t('ui.actionMessage.deleteSuccess', [id]),
-    );
+    dataObj.apilist =
+      props.activeTab === '发票申请'
+        ? dataObj.apilist.filter((v) => v.applicationId !== row.applicationId)
+        : dataObj.apilist.filter((v) => v.invoiceId !== row.invoiceId);
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [id]));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -313,15 +378,14 @@ async function handleDeleteBatch() {
     text: $t('ui.actionMessage.deletingBatch'),
   });
   try {
-    if (props.activeTab === '发票申请') {
-      dataObj.apilist = dataObj.apilist.filter(
-        (v) => !checkedIds.value.includes(v.applicationId),
-      );
-    } else {
-      dataObj.apilist = dataObj.apilist.filter(
-        (v) => !checkedIds.value.includes(v.invoiceId),
-      );
-    }
+    dataObj.apilist =
+      props.activeTab === '发票申请'
+        ? dataObj.apilist.filter(
+            (v) => !checkedIds.value.includes(v.applicationId),
+          )
+        : dataObj.apilist.filter(
+            (v) => !checkedIds.value.includes(v.invoiceId),
+          );
     checkedIds.value = [];
     ElMessage.success($t('删除成功'));
     handleRefresh();
@@ -332,15 +396,27 @@ async function handleDeleteBatch() {
 
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map((item) => item.applicationId || item.invoiceId);
+  checkedIds.value = records.map(
+    (item) => item.applicationId || item.invoiceId,
+  );
 }
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
-  total: props.activeTab === '发票申请' ? dataList().length : props.activeTab === '发票生成' ? generateDataList().length : queryDataList().length,
+  total:
+    props.activeTab === '发票申请'
+      ? dataList().length
+      : (props.activeTab === '发票生成'
+        ? generateDataList().length
+        : queryDataList().length),
   currentPage: 1,
   pageSize: 10,
-  apilist: props.activeTab === '发票申请' ? dataList() : props.activeTab === '发票生成' ? generateDataList() : queryDataList(),
+  apilist:
+    props.activeTab === '发票申请'
+      ? dataList()
+      : (props.activeTab === '发票生成'
+        ? generateDataList()
+        : queryDataList()),
   list: [],
 });
 const changeTotalShow = () => {
@@ -348,30 +424,37 @@ const changeTotalShow = () => {
 };
 
 // 监听activeTab变化，切换数据
-watch(() => props.activeTab, (newTab) => {
-  // 切换数据列表
-  switch (newTab) {
-    case '发票申请':
-      dataObj.apilist = dataList();
-      break;
-    case '发票生成':
-      dataObj.apilist = generateDataList();
-      break;
-    case '发票查询':
-      dataObj.apilist = queryDataList();
-      break;
-    default:
-      dataObj.apilist = dataList();
-  }
-  dataObj.total = dataObj.apilist.length;
-  dataObj.currentPage = 1;
+watch(
+  () => props.activeTab,
+  (newTab) => {
+    // 切换数据列表
+    switch (newTab) {
+      case '发票查询': {
+        dataObj.apilist = queryDataList();
+        break;
+      }
+      case '发票生成': {
+        dataObj.apilist = generateDataList();
+        break;
+      }
+      case '发票申请': {
+        dataObj.apilist = dataList();
+        break;
+      }
+      default: {
+        dataObj.apilist = dataList();
+      }
+    }
+    dataObj.total = dataObj.apilist.length;
+    dataObj.currentPage = 1;
 
-  // 重置表单
-  formApi.resetForm();
+    // 重置表单
+    formApi.resetForm();
 
-  // 刷新表格数据
-  handleRefresh();
-});
+    // 刷新表格数据
+    handleRefresh();
+  },
+);
 
 // 表格数据获取
 const getTableData = (pageObj) => {
@@ -386,7 +469,8 @@ const getTableData = (pageObj) => {
     }
 
     // 发票类型筛选
-    const invoiceTypeMatch = !filterInvoiceType.value || v.invoiceType === filterInvoiceType.value;
+    const invoiceTypeMatch =
+      !filterInvoiceType.value || v.invoiceType === filterInvoiceType.value;
 
     return statusMatch && invoiceTypeMatch;
   });
@@ -437,7 +521,12 @@ function onSubmit() {
 // 根据当前激活的标签页初始化表格配置
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    columns: props.activeTab === '发票申请' ? useGridColumns() : props.activeTab === '发票生成' ? useGenerateGridColumns() : useQueryGridColumns(),
+    columns:
+      props.activeTab === '发票申请'
+        ? useGridColumns()
+        : (props.activeTab === '发票生成'
+          ? useGenerateGridColumns()
+          : useQueryGridColumns()),
     keepSource: true,
     proxyConfig: {
       ajax: {
@@ -464,10 +553,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 // 监听activeTab变化，更新表格配置
-watch(() => props.activeTab, (newTab) => {
-  // 刷新表格数据
-  handleRefresh();
-});
+watch(
+  () => props.activeTab,
+  (newTab) => {
+    // 刷新表格数据
+    handleRefresh();
+  },
+);
 
 const activeName = ref('全部');
 const filterInvoiceType = ref(''); // 发票类型筛选：空=未筛选，有值=当前筛选发票类型
@@ -479,7 +571,8 @@ const handleOpenDetail = (row) => {
 
 // 处理发票类型点击
 const handleInvoiceTypeClick = (invoiceType) => {
-  filterInvoiceType.value = filterInvoiceType.value === invoiceType ? '' : invoiceType;
+  filterInvoiceType.value =
+    filterInvoiceType.value === invoiceType ? '' : invoiceType;
   gridApi.query();
 };
 
@@ -492,9 +585,11 @@ const handleCancelInvoiceTypeFilter = () => {
 // 处理订单详情点击
 const handleOrderDetail = (row) => {
   // 解析订单选择字段，获取订单列表
-  const orderNames = row.orderSelection.split(',').map(order => order.trim());
+  const orderNames = row.orderSelection.split(',').map((order) => order.trim());
   // 根据订单名称获取订单详情
-  const orderDetailsList = orderNames.map(orderName => orderDetails[orderName]).filter(Boolean);
+  const orderDetailsList = orderNames
+    .map((orderName) => orderDetails[orderName])
+    .filter(Boolean);
   // 将订单详情列表设置到dataObj中
   dataObj.orderDetailObj = orderDetailsList;
   // 打开订单详情抽屉
@@ -504,7 +599,7 @@ const handleOrderDetail = (row) => {
 // 处理车牌号码点击
 const handleCarNumberClick = (row) => {
   // 根据车牌号码获取车辆信息
-  const carInfo = carInfoData.find(car => car.car_number === row.carNumber);
+  const carInfo = carInfoData.find((car) => car.car_number === row.carNumber);
   if (carInfo) {
     selectedCars.value = [carInfo];
     // 打开车辆详情抽屉
@@ -520,17 +615,16 @@ const handleCarDetailClose = () => {
 };
 
 // 修改tabsData为三个标签：全部、待处理、处理中、已开具
-const tabsData = ref(statusOptions.map(item => ({ label: item.label })));
+const tabsData = ref(statusOptions.map((item) => ({ label: item.label })));
 
 // 创建标签文本，显示数量统计
 const createLabel = (item) => {
   let count = 0;
 
-  if (item.label === '全部') {
-    count = dataObj.apilist.length;
-  } else {
-    count = dataObj.apilist.filter((v) => v.invoiceStatus === item.label).length;
-  }
+  count =
+    item.label === '全部'
+      ? dataObj.apilist.length
+      : dataObj.apilist.filter((v) => v.invoiceStatus === item.label).length;
 
   return `${item.label}(${count})`;
 };
@@ -551,17 +645,23 @@ const handleFullShow = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-<!--   详情抽屉-->
+    <!--   详情抽屉-->
     <DetailDrawer
       ref="detailDrawerRef"
       :title="`${props.activeTab === '发票申请' ? dataObj.detailObj.applicationId : dataObj.detailObj.invoiceId}详情`"
       :data="dataObj.detailObj"
-      :fields="props.activeTab === '发票申请' ? detailFields : props.activeTab === '发票生成' ? generateDetailFields : queryDetailFields"
+      :fields="
+        props.activeTab === '发票申请'
+          ? detailFields
+          : props.activeTab === '发票生成'
+            ? generateDetailFields
+            : queryDetailFields
+      "
     />
     <!-- 订单详情抽屉 -->
     <DetailDrawer
       ref="orderDetailDrawerRef"
-      :title="'订单信息详情'"
+      title="订单信息详情"
       :data="dataObj.orderDetailObj"
       :fields="orderDetailFields"
     />
@@ -569,7 +669,7 @@ const handleFullShow = () => {
     <!-- 车辆详情抽屉 -->
     <DetailDrawer
       ref="carDetailDrawerRef"
-      :title="'车辆信息详情'"
+      title="车辆信息详情"
       :data="selectedCars"
       :fields="carDetailFields"
       @close="handleCarDetailClose"
@@ -654,18 +754,21 @@ const handleFullShow = () => {
       </template>
       <template #invoiceStatus="{ row }">
         <el-tag
-          :type="row.invoiceStatus === '已开具' ? 'success' : row.invoiceStatus === '处理中' ? 'warning' : row.invoiceStatus === '已撤销' ? 'danger' : 'info'"
+          :type="
+            row.invoiceStatus === '已开具'
+              ? 'success'
+              : row.invoiceStatus === '处理中'
+                ? 'warning'
+                : row.invoiceStatus === '已撤销'
+                  ? 'danger'
+                  : 'info'
+          "
         >
           {{ row.invoiceStatus }}
         </el-tag>
       </template>
       <template #refreshButton="{ row }">
-        <el-button
-          @click="handleRefresh"
-          size="small"
-          type="primary"
-          plain
-        >
+        <el-button @click="handleRefresh" size="small" type="primary" plain>
           刷新
         </el-button>
       </template>
@@ -679,9 +782,7 @@ const handleFullShow = () => {
         </el-text>
       </template>
       <template #sendStatus="{ row }">
-        <el-tag
-          :type="row.sendStatus === '已发送' ? 'success' : 'warning'"
-        >
+        <el-tag :type="row.sendStatus === '已发送' ? 'success' : 'warning'">
           {{ row.sendStatus }}
         </el-tag>
       </template>
@@ -778,10 +879,20 @@ const handleFullShow = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：{{ props.activeTab }}: {{ dataObj.list.length }} </span>
+          <span>
+            本页统计：{{ props.activeTab }}: {{ dataObj.list.length }}
+          </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span> 全部统计：{{ props.activeTab === '发票申请' ? textObj.total : props.activeTab === '发票生成' ? generateTextObj.total : queryTextObj.total }} </span>
+          <span>
+            全部统计：{{
+              props.activeTab === '发票申请'
+                ? textObj.total
+                : props.activeTab === '发票生成'
+                  ? generateTextObj.total
+                  : queryTextObj.total
+            }}
+          </span>
         </div>
       </template>
     </Grid>

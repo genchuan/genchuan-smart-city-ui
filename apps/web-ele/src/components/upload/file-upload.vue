@@ -305,7 +305,7 @@ function getValue() {
 </script>
 
 <template>
-  <div>
+  <div class="file-upload-container">
     <ElUpload
       v-bind="$attrs"
       v-model:file-list="fileList"
@@ -374,6 +374,22 @@ function getValue() {
   margin-bottom: 8px;
   font-size: 16px;
   color: #666;
+}
+
+.file-upload-container {
+  display: inline-block;
+  width: 100%;
+}
+
+.file-upload-container :deep(.el-upload) {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.file-upload-container :deep(.el-upload-list) {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 8px;
 }
 
 .upload-drag-hint {

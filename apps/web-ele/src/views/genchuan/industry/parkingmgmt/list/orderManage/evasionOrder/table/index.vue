@@ -153,6 +153,7 @@ const dataObj = reactive({
   pageSize: 10,
   apilist: dataList(),
   list: [],
+  searchParams: {},
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -162,21 +163,31 @@ const changeTotalShow = () => {
 const getTableData = (pageObj) => {
   const page = pageObj.page;
 
-  // 根据activeName筛选数据
+  // 根据activeName和searchParams筛选数据
   const filteredList = dataObj.apilist.filter((v) => {
+    // 状态筛选
+    let statusMatch = true;
     switch (activeName.value) {
-      case '全部': {
-        return true;
-      }
       case '启用': {
-        return v.status === '1';
+        statusMatch = v.status === '1';
+        break;
       }
       case '禁用': {
-        return v.status === '0';
+        statusMatch = v.status === '0';
+        break;
       }
-      // No default
     }
-    return false;
+
+    // 搜索条件筛选
+    let searchMatch = true;
+    Object.keys(dataObj.searchParams).forEach((key) => {
+      const value = dataObj.searchParams[key];
+      if (value) {
+        searchMatch = typeof value === 'string' ? searchMatch && v[key]?.toString().includes(value) : searchMatch && v[key] === value;
+      }
+    });
+
+    return statusMatch && searchMatch;
   });
 
   dataObj.total = filteredList.length;
@@ -218,7 +229,9 @@ const [QueryForm] = useVbenForm({
 });
 
 // 搜索表单查询
-function onSubmit() {
+function onSubmit(values) {
+  dataObj.searchParams = values;
+  handleRefresh();
   drawerApi.close();
 }
 
@@ -304,7 +317,7 @@ const handleFullShow = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-<!--   详情抽屉-->
+    <!--   详情抽屉-->
     <DetailDrawer
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.garageName}详情`"

@@ -15,7 +15,7 @@ export const dataList = () => {
       payStatus: '已支付',
       payType: '微信支付',
       createTime: '2026-02-01 08:30:00',
-      operator: '系统'
+      operator: '系统',
     },
     {
       orderNo: 'TEMP202602010002',
@@ -31,7 +31,7 @@ export const dataList = () => {
       payStatus: '已支付',
       payType: '支付宝',
       createTime: '2026-02-01 09:15:00',
-      operator: '系统'
+      operator: '系统',
     },
     {
       orderNo: 'TEMP202602010003',
@@ -47,7 +47,7 @@ export const dataList = () => {
       payStatus: '已支付',
       payType: '微信支付',
       createTime: '2026-02-01 10:20:00',
-      operator: '系统'
+      operator: '系统',
     },
     {
       orderNo: 'TEMP202602010004',
@@ -63,7 +63,7 @@ export const dataList = () => {
       payStatus: '待支付',
       payType: '',
       createTime: '2026-02-01 11:30:00',
-      operator: '系统'
+      operator: '系统',
     },
     {
       orderNo: 'TEMP202602010005',
@@ -79,7 +79,7 @@ export const dataList = () => {
       payStatus: '待支付',
       payType: '',
       createTime: '2026-02-01 12:45:00',
-      operator: '系统'
+      operator: '系统',
     },
     {
       orderNo: 'TEMP202602010006',
@@ -95,7 +95,7 @@ export const dataList = () => {
       payStatus: '待支付',
       payType: '',
       createTime: '2026-02-01 14:10:00',
-      operator: '系统'
+      operator: '系统',
     },
     {
       orderNo: 'TEMP202602010007',
@@ -111,7 +111,7 @@ export const dataList = () => {
       payStatus: '待支付',
       payType: '',
       createTime: '2026-02-01 15:25:00',
-      operator: '系统'
+      operator: '系统',
     },
     {
       orderNo: 'TEMP202602010008',
@@ -127,7 +127,7 @@ export const dataList = () => {
       payStatus: '已支付',
       payType: '支付宝',
       createTime: '2026-02-01 16:40:00',
-      operator: '系统'
+      operator: '系统',
     },
     {
       orderNo: 'TEMP202602010009',
@@ -143,7 +143,7 @@ export const dataList = () => {
       payStatus: '已支付',
       payType: '微信支付',
       createTime: '2026-02-01 17:55:00',
-      operator: '系统'
+      operator: '系统',
     },
     {
       orderNo: 'TEMP202602010010',
@@ -159,7 +159,7 @@ export const dataList = () => {
       payStatus: '待支付',
       payType: '',
       createTime: '2026-02-01 19:10:00',
-      operator: '系统'
+      operator: '系统',
     },
     {
       orderNo: 'TEMP202602010011',
@@ -175,7 +175,7 @@ export const dataList = () => {
       payStatus: '待支付',
       payType: '',
       createTime: '2026-02-01 20:25:00',
-      operator: '系统'
+      operator: '系统',
     },
     {
       orderNo: 'TEMP202602020001',
@@ -191,8 +191,8 @@ export const dataList = () => {
       payStatus: '已支付',
       payType: '支付宝',
       createTime: '2026-02-02 08:30:00',
-      operator: '系统'
-    }
+      operator: '系统',
+    },
   ];
 };
 
@@ -205,17 +205,17 @@ export function useFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入订单编号',
-        disabled: true
-      }
+        disabled: true,
+      },
     },
     {
       fieldName: 'carNumber',
       label: '车牌号码',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入车牌号码'
+        placeholder: '请输入车牌号码',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'entryTime',
@@ -224,9 +224,9 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择入场时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'lotName',
@@ -245,19 +245,19 @@ export function useFormSchema() {
           { label: '芗城区巷口街道停车场', value: '芗城区巷口街道停车场' },
           { label: '龙文区蓝田街道停车场', value: '龙文区蓝田街道停车场' },
           { label: '龙文区步文街道停车场', value: '龙文区步文街道停车场' },
-          { label: '芗城区东铺头街道停车场', value: '芗城区东铺头街道停车场' }
-        ]
+          { label: '芗城区东铺头街道停车场', value: '芗城区东铺头街道停车场' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'spaceNumber',
       label: '泊位编号',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入泊位编号'
+        placeholder: '请输入泊位编号',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'feeTypeName',
@@ -268,10 +268,10 @@ export function useFormSchema() {
         options: [
           { label: '临时停车', value: '临时停车' },
           { label: '月卡', value: '月卡' },
-          { label: '年卡', value: '年卡' }
-        ]
+          { label: '年卡', value: '年卡' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'originalAmount',
@@ -281,9 +281,9 @@ export function useFormSchema() {
         placeholder: '请输入基础费用',
         min: 0,
         step: 0.01,
-        precision: 2
+        precision: 2,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'discountAmount',
@@ -293,8 +293,8 @@ export function useFormSchema() {
         placeholder: '请输入优惠金额',
         min: 0,
         step: 0.01,
-        precision: 2
-      }
+        precision: 2,
+      },
     },
     {
       fieldName: 'payAmount',
@@ -304,9 +304,9 @@ export function useFormSchema() {
         placeholder: '请输入实付金额',
         min: 0,
         step: 0.01,
-        precision: 2
+        precision: 2,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'orderStatus',
@@ -317,10 +317,10 @@ export function useFormSchema() {
         options: [
           { label: '待支付', value: '待支付' },
           { label: '已完成', value: '已完成' },
-          { label: '已取消', value: '已取消' }
-        ]
+          { label: '已取消', value: '已取消' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'payStatus',
@@ -331,10 +331,10 @@ export function useFormSchema() {
         options: [
           { label: '待支付', value: '待支付' },
           { label: '已支付', value: '已支付' },
-          { label: '支付失败', value: '支付失败' }
-        ]
+          { label: '支付失败', value: '支付失败' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'payType',
@@ -345,10 +345,10 @@ export function useFormSchema() {
         options: [
           { label: '微信支付', value: '微信支付' },
           { label: '支付宝', value: '支付宝' },
-          { label: '现金支付', value: '现金支付' }
-        ]
+          { label: '现金支付', value: '现金支付' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'createTime',
@@ -358,8 +358,8 @@ export function useFormSchema() {
         placeholder: '请选择生成时间',
         format: 'YYYY-MM-DD HH:mm:ss',
         valueFormat: 'YYYY-MM-DD HH:mm:ss',
-        disabled: true
-      }
+        disabled: true,
+      },
     },
     {
       fieldName: 'operator',
@@ -367,9 +367,9 @@ export function useFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入操作人',
-        disabled: true
-      }
-    }
+        disabled: true,
+      },
+    },
   ];
 }
 
@@ -382,72 +382,72 @@ export function useGridColumns() {
       title: '订单编号',
       minWidth: 180,
       sortable: true,
-      slots: { default: 'orderNo' }
+      slots: { default: 'orderNo' },
     },
     {
       field: 'carNumber',
       title: '车牌号码',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'carNumber' }
+      slots: { default: 'carNumber' },
     },
     {
       field: 'entryTime',
       title: '入场时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'lotName',
       title: '所属车场',
       minWidth: 180,
       sortable: true,
-      slots: { default: 'lotName' }
+      slots: { default: 'lotName' },
     },
     {
       field: 'spaceNumber',
       title: '泊位编号',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'feeTypeName',
       title: '费率类型',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'feeTypeName' }
+      slots: { default: 'feeTypeName' },
     },
     {
       field: 'originalAmount',
       title: '基础费用',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'discountAmount',
       title: '优惠金额',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'payAmount',
       title: '实付金额',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'orderStatus',
       title: '订单状态',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'orderStatus' }
+      slots: { default: 'orderStatus' },
     },
     {
       field: 'payStatus',
       title: '支付状态',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'payStatus' }
+      slots: { default: 'payStatus' },
     },
     {
       field: 'payType',
@@ -473,7 +473,7 @@ export function useGridColumns() {
       width: 80,
       fixed: 'right',
       slots: { default: 'actions' },
-    }
+    },
   ];
 }
 
@@ -503,7 +503,7 @@ export const detailFields = [
   { key: 'payStatus', label: '支付状态' },
   { key: 'payType', label: '支付方式' },
   { key: 'createTime', label: '生成时间' },
-  { key: 'operator', label: '操作人' }
+  { key: 'operator', label: '操作人' },
 ];
 
 /** 订单状态选项 */
@@ -511,7 +511,7 @@ export const orderStatusOptions = [
   { label: '全部', value: '' },
   { label: '待支付', value: '待支付' },
   { label: '已完成', value: '已完成' },
-  { label: '已取消', value: '已取消' }
+  { label: '已取消', value: '已取消' },
 ];
 
 /** 支付状态选项 */
@@ -519,7 +519,7 @@ export const payStatusOptions = [
   { label: '全部', value: '' },
   { label: '待支付', value: '待支付' },
   { label: '已支付', value: '已支付' },
-  { label: '支付失败', value: '支付失败' }
+  { label: '支付失败', value: '支付失败' },
 ];
 
 /** 状态跟踪表格初始数据 - 按指定字段生成 */
@@ -536,7 +536,7 @@ export const statusTrackDataList = () => {
       changeReason: '用户完成支付',
       expectCompleteTime: '2026-02-01 10:00:00',
       abnormalRemind: '无',
-      latestOperateLog: '2026-02-01 09:30:00 系统: 订单支付成功'
+      latestOperateLog: '2026-02-01 09:30:00 系统: 订单支付成功',
     },
     {
       orderNo: 'TEMP202602010002',
@@ -549,7 +549,7 @@ export const statusTrackDataList = () => {
       changeReason: '用户完成支付',
       expectCompleteTime: '2026-02-01 11:00:00',
       abnormalRemind: '无',
-      latestOperateLog: '2026-02-01 10:15:00 系统: 订单支付成功'
+      latestOperateLog: '2026-02-01 10:15:00 系统: 订单支付成功',
     },
     {
       orderNo: 'TEMP202602010003',
@@ -562,7 +562,7 @@ export const statusTrackDataList = () => {
       changeReason: '用户完成支付',
       expectCompleteTime: '2026-02-01 12:00:00',
       abnormalRemind: '无',
-      latestOperateLog: '2026-02-01 11:20:00 系统: 订单支付成功'
+      latestOperateLog: '2026-02-01 11:20:00 系统: 订单支付成功',
     },
     {
       orderNo: 'TEMP202602010004',
@@ -575,7 +575,7 @@ export const statusTrackDataList = () => {
       changeReason: '订单创建',
       expectCompleteTime: '2026-02-01 12:30:00',
       abnormalRemind: '无',
-      latestOperateLog: '2026-02-01 11:30:00 系统: 订单创建成功'
+      latestOperateLog: '2026-02-01 11:30:00 系统: 订单创建成功',
     },
     {
       orderNo: 'TEMP202602010005',
@@ -588,7 +588,7 @@ export const statusTrackDataList = () => {
       changeReason: '订单创建',
       expectCompleteTime: '2026-02-01 13:45:00',
       abnormalRemind: '无',
-      latestOperateLog: '2026-02-01 12:45:00 系统: 订单创建成功'
+      latestOperateLog: '2026-02-01 12:45:00 系统: 订单创建成功',
     },
     {
       orderNo: 'TEMP202602010006',
@@ -601,7 +601,7 @@ export const statusTrackDataList = () => {
       changeReason: '用户取消订单',
       expectCompleteTime: '2026-02-01 15:10:00',
       abnormalRemind: '无',
-      latestOperateLog: '2026-02-01 14:10:00 系统: 订单已取消'
+      latestOperateLog: '2026-02-01 14:10:00 系统: 订单已取消',
     },
     {
       orderNo: 'TEMP202602010007',
@@ -614,7 +614,7 @@ export const statusTrackDataList = () => {
       changeReason: '超时未支付',
       expectCompleteTime: '2026-02-01 16:25:00',
       abnormalRemind: '超时未支付',
-      latestOperateLog: '2026-02-01 15:25:00 系统: 订单超时取消'
+      latestOperateLog: '2026-02-01 15:25:00 系统: 订单超时取消',
     },
     {
       orderNo: 'TEMP202602010008',
@@ -627,7 +627,7 @@ export const statusTrackDataList = () => {
       changeReason: '用户完成支付',
       expectCompleteTime: '2026-02-01 17:40:00',
       abnormalRemind: '无',
-      latestOperateLog: '2026-02-01 16:40:00 系统: 订单支付成功'
+      latestOperateLog: '2026-02-01 16:40:00 系统: 订单支付成功',
     },
     {
       orderNo: 'TEMP202602010009',
@@ -640,7 +640,7 @@ export const statusTrackDataList = () => {
       changeReason: '用户完成支付',
       expectCompleteTime: '2026-02-01 18:55:00',
       abnormalRemind: '无',
-      latestOperateLog: '2026-02-01 17:55:00 系统: 订单支付成功'
+      latestOperateLog: '2026-02-01 17:55:00 系统: 订单支付成功',
     },
     {
       orderNo: 'TEMP202602010010',
@@ -653,7 +653,7 @@ export const statusTrackDataList = () => {
       changeReason: '订单创建',
       expectCompleteTime: '2026-02-01 20:10:00',
       abnormalRemind: '无',
-      latestOperateLog: '2026-02-01 19:10:00 系统: 订单创建成功'
+      latestOperateLog: '2026-02-01 19:10:00 系统: 订单创建成功',
     },
     {
       orderNo: 'TEMP202602010011',
@@ -666,7 +666,7 @@ export const statusTrackDataList = () => {
       changeReason: '用户取消订单',
       expectCompleteTime: '2026-02-01 21:25:00',
       abnormalRemind: '无',
-      latestOperateLog: '2026-02-01 20:25:00 系统: 订单已取消'
+      latestOperateLog: '2026-02-01 20:25:00 系统: 订单已取消',
     },
     {
       orderNo: 'TEMP202602020001',
@@ -679,8 +679,8 @@ export const statusTrackDataList = () => {
       changeReason: '用户完成支付',
       expectCompleteTime: '2026-02-02 10:30:00',
       abnormalRemind: '无',
-      latestOperateLog: '2026-02-02 09:30:00 系统: 订单支付成功'
-    }
+      latestOperateLog: '2026-02-02 09:30:00 系统: 订单支付成功',
+    },
   ];
 };
 
@@ -693,17 +693,17 @@ export function useStatusTrackFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入订单编号',
-        disabled: true
-      }
+        disabled: true,
+      },
     },
     {
       fieldName: 'carNumber',
       label: '车牌号码',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入车牌号码'
+        placeholder: '请输入车牌号码',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'currentStatus',
@@ -714,10 +714,10 @@ export function useStatusTrackFormSchema() {
         options: [
           { label: '待支付', value: '待支付' },
           { label: '已完成', value: '已完成' },
-          { label: '已取消', value: '已取消' }
-        ]
+          { label: '已取消', value: '已取消' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'previousStatus',
@@ -728,10 +728,10 @@ export function useStatusTrackFormSchema() {
         options: [
           { label: '待支付', value: '待支付' },
           { label: '已完成', value: '已完成' },
-          { label: '已取消', value: '已取消' }
-        ]
+          { label: '已取消', value: '已取消' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'changeTime',
@@ -740,18 +740,18 @@ export function useStatusTrackFormSchema() {
       componentProps: {
         placeholder: '请选择变更时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'operator',
       label: '操作人',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入操作人'
+        placeholder: '请输入操作人',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'payStatus',
@@ -762,19 +762,19 @@ export function useStatusTrackFormSchema() {
         options: [
           { label: '待支付', value: '待支付' },
           { label: '已支付', value: '已支付' },
-          { label: '支付失败', value: '支付失败' }
-        ]
+          { label: '支付失败', value: '支付失败' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'changeReason',
       label: '变更原因',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入变更原因'
+        placeholder: '请输入变更原因',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'expectCompleteTime',
@@ -783,16 +783,16 @@ export function useStatusTrackFormSchema() {
       componentProps: {
         placeholder: '请选择预计完成时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
-      }
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
     },
     {
       fieldName: 'abnormalRemind',
       label: '异常提醒',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入异常提醒'
-      }
+        placeholder: '请输入异常提醒',
+      },
     },
     {
       fieldName: 'latestOperateLog',
@@ -800,9 +800,9 @@ export function useStatusTrackFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入最新操作日志',
-        type: 'textarea'
-      }
-    }
+        type: 'textarea',
+      },
+    },
   ];
 }
 
@@ -815,77 +815,77 @@ export function useStatusTrackGridColumns() {
       title: '订单编号',
       minWidth: 180,
       sortable: true,
-      slots: { default: 'orderNo' }
+      slots: { default: 'orderNo' },
     },
     {
       field: 'carNumber',
       title: '车牌号码',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'carNumber' }
+      slots: { default: 'carNumber' },
     },
     {
       field: 'currentStatus',
       title: '当前状态',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'currentStatus' }
+      slots: { default: 'currentStatus' },
     },
     {
       field: 'previousStatus',
       title: '变更前状态',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'changeTime',
       title: '变更时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'operator',
       title: '操作人',
       minWidth: 100,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'payStatus',
       title: '支付状态',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'payStatus' }
+      slots: { default: 'payStatus' },
     },
     {
       field: 'changeReason',
       title: '变更原因',
       minWidth: 150,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'expectCompleteTime',
       title: '预计完成时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'abnormalRemind',
       title: '异常提醒',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'latestOperateLog',
       title: '最新操作日志',
       minWidth: 200,
-      sortable: true
+      sortable: true,
     },
     {
       title: '操作',
       width: 80,
       fixed: 'right',
-      slots: { default: 'actions' }
-    }
+      slots: { default: 'actions' },
+    },
   ];
 }
 
@@ -913,7 +913,7 @@ export const statusTrackDetailFields = [
   { key: 'changeReason', label: '变更原因' },
   { key: 'expectCompleteTime', label: '预计完成时间' },
   { key: 'abnormalRemind', label: '异常提醒' },
-  { key: 'latestOperateLog', label: '最新操作日志' }
+  { key: 'latestOperateLog', label: '最新操作日志' },
 ];
 
 /** 状态选项 */
@@ -921,7 +921,7 @@ export const statusOptions = [
   { label: '全部', value: '' },
   { label: '待支付', value: '待支付' },
   { label: '已完成', value: '已完成' },
-  { label: '已取消', value: '已取消' }
+  { label: '已取消', value: '已取消' },
 ];
 
 /** 订单明细表格初始数据 - 按指定字段生成 */
@@ -938,13 +938,14 @@ export const orderDetailDataList = () => {
       feeDetail: '首小时10元，超时时长0小时，超时费用0元',
       payType: '微信支付',
       discountDetails: '无优惠',
-      operateLog: '2026-02-01 08:30:00 系统: 订单生成; 2026-02-01 09:30:00 系统: 订单支付成功; 2026-02-01 09:30:00 系统: 订单完成',
+      operateLog:
+        '2026-02-01 08:30:00 系统: 订单生成; 2026-02-01 09:30:00 系统: 订单支付成功; 2026-02-01 09:30:00 系统: 订单完成',
       originalAmount: '10.00',
       discountAmount: '0.00',
       payAmount: '10.00',
       payTime: '2026-02-01 09:30:00',
       payVoucher: 'https://example.com/pay-voucher/1',
-      orderStatusName: '已完成'
+      orderStatusName: '已完成',
     },
     {
       orderNo: 'TEMP202602010002',
@@ -957,13 +958,14 @@ export const orderDetailDataList = () => {
       feeDetail: '首小时10元，超时时长0.5小时，超时费用5元',
       payType: '支付宝',
       discountDetails: '优惠券折扣',
-      operateLog: '2026-02-01 09:15:00 系统: 订单生成; 2026-02-01 10:45:00 系统: 订单支付成功; 2026-02-01 10:45:00 系统: 订单完成',
+      operateLog:
+        '2026-02-01 09:15:00 系统: 订单生成; 2026-02-01 10:45:00 系统: 订单支付成功; 2026-02-01 10:45:00 系统: 订单完成',
       originalAmount: '15.00',
       discountAmount: '2.00',
       payAmount: '13.00',
       payTime: '2026-02-01 10:45:00',
       payVoucher: 'https://example.com/pay-voucher/2',
-      orderStatusName: '已完成'
+      orderStatusName: '已完成',
     },
     {
       orderNo: 'TEMP202602010003',
@@ -976,13 +978,14 @@ export const orderDetailDataList = () => {
       feeDetail: '首小时10元，超时时长1小时，超时费用10元',
       payTypeName: '微信支付',
       discountDetails: '无优惠',
-      operateLog: '2026-02-01 10:20:00 系统: 订单生成; 2026-02-01 12:20:00 系统: 订单支付成功; 2026-02-01 12:20:00 系统: 订单完成',
+      operateLog:
+        '2026-02-01 10:20:00 系统: 订单生成; 2026-02-01 12:20:00 系统: 订单支付成功; 2026-02-01 12:20:00 系统: 订单完成',
       originalAmount: '20.00',
       discountAmount: '0.00',
       payAmount: '20.00',
       payTime: '2026-02-01 12:20:00',
       payVoucher: 'https://example.com/pay-voucher/3',
-      orderStatusName: '已完成'
+      orderStatusName: '已完成',
     },
     {
       orderNo: 'TEMP202602010004',
@@ -1001,7 +1004,7 @@ export const orderDetailDataList = () => {
       payAmount: '10.00',
       payTime: '',
       payVoucher: '',
-      orderStatusName: '待支付'
+      orderStatusName: '待支付',
     },
     {
       orderNo: 'TEMP202602010005',
@@ -1020,7 +1023,7 @@ export const orderDetailDataList = () => {
       payAmount: '20.00',
       payTime: '',
       payVoucher: '',
-      orderStatusName: '待支付'
+      orderStatusName: '待支付',
     },
     {
       orderNo: 'TEMP202602010006',
@@ -1033,13 +1036,14 @@ export const orderDetailDataList = () => {
       feeDetail: '首小时8元，超时时长0小时，超时费用0元',
       payTypeName: '',
       discountDetails: '无优惠',
-      operateLog: '2026-02-01 14:10:00 系统: 订单生成; 2026-02-01 15:10:00 系统: 订单取消',
+      operateLog:
+        '2026-02-01 14:10:00 系统: 订单生成; 2026-02-01 15:10:00 系统: 订单取消',
       originalAmount: '8.00',
       discountAmount: '0.00',
       payAmount: '8.00',
       payTime: '',
       payVoucher: '',
-      orderStatusName: '已取消'
+      orderStatusName: '已取消',
     },
     {
       orderNo: 'TEMP202602010007',
@@ -1052,13 +1056,14 @@ export const orderDetailDataList = () => {
       feeDetail: '首小时10元，超时时长1.33小时，超时费用13.3元',
       payTypeName: '',
       discountDetails: '无优惠',
-      operateLog: '2026-02-01 15:25:00 系统: 订单生成; 2026-02-01 17:45:00 系统: 订单超时取消',
+      operateLog:
+        '2026-02-01 15:25:00 系统: 订单生成; 2026-02-01 17:45:00 系统: 订单超时取消',
       originalAmount: '23.30',
       discountAmount: '0.00',
       payAmount: '23.30',
       payTime: '',
       payVoucher: '',
-      orderStatusName: '已取消'
+      orderStatusName: '已取消',
     },
     {
       orderNo: 'TEMP202602010008',
@@ -1071,13 +1076,14 @@ export const orderDetailDataList = () => {
       feeDetail: '首小时10元，超时时长1.5小时，超时费用15元',
       payTypeName: '支付宝',
       discountDetails: '线下折扣',
-      operateLog: '2026-02-01 16:40:00 系统: 订单生成; 2026-02-01 19:10:00 系统: 订单支付成功; 2026-02-01 19:10:00 系统: 订单完成',
+      operateLog:
+        '2026-02-01 16:40:00 系统: 订单生成; 2026-02-01 19:10:00 系统: 订单支付成功; 2026-02-01 19:10:00 系统: 订单完成',
       originalAmount: '25.00',
       discountAmount: '2.00',
       payAmount: '23.00',
       payTime: '2026-02-01 19:10:00',
       payVoucher: 'https://example.com/pay-voucher/8',
-      orderStatusName: '已完成'
+      orderStatusName: '已完成',
     },
     {
       orderNo: 'TEMP202602010009',
@@ -1090,13 +1096,14 @@ export const orderDetailDataList = () => {
       feeDetail: '首小时10元，超时时长1.58小时，超时费用15.8元',
       payTypeName: '微信支付',
       discountDetails: '无优惠',
-      operateLog: '2026-02-01 17:55:00 系统: 订单生成; 2026-02-01 20:30:00 系统: 订单支付成功; 2026-02-01 20:30:00 系统: 订单完成',
+      operateLog:
+        '2026-02-01 17:55:00 系统: 订单生成; 2026-02-01 20:30:00 系统: 订单支付成功; 2026-02-01 20:30:00 系统: 订单完成',
       originalAmount: '25.80',
       discountAmount: '0.00',
       payAmount: '25.80',
       payTime: '2026-02-01 20:30:00',
       payVoucher: 'https://example.com/pay-voucher/9',
-      orderStatusName: '已完成'
+      orderStatusName: '已完成',
     },
     {
       orderNo: 'TEMP202602010010',
@@ -1115,7 +1122,7 @@ export const orderDetailDataList = () => {
       payAmount: '20.80',
       payTime: '',
       payVoucher: '',
-      orderStatusName: '待支付'
+      orderStatusName: '待支付',
     },
     {
       orderNo: 'TEMP202602010011',
@@ -1128,13 +1135,14 @@ export const orderDetailDataList = () => {
       feeDetail: '首小时10元，超时时长0小时，超时费用0元',
       payTypeName: '',
       discountDetails: '无优惠',
-      operateLog: '2026-02-01 20:25:00 系统: 订单生成; 2026-02-01 21:25:00 系统: 订单取消',
+      operateLog:
+        '2026-02-01 20:25:00 系统: 订单生成; 2026-02-01 21:25:00 系统: 订单取消',
       originalAmount: '10.00',
       discountAmount: '0.00',
       payAmount: '10.00',
       payTime: '',
       payVoucher: '',
-      orderStatusName: '已取消'
+      orderStatusName: '已取消',
     },
     {
       orderNo: 'TEMP202602020001',
@@ -1147,14 +1155,15 @@ export const orderDetailDataList = () => {
       feeDetail: '首小时10元，超时时长0.25小时，超时费用2.5元',
       payTypeName: '支付宝',
       discountDetails: '优惠券折扣',
-      operateLog: '2026-02-02 08:30:00 系统: 订单生成; 2026-02-02 09:45:00 系统: 订单支付成功; 2026-02-02 09:45:00 系统: 订单完成',
+      operateLog:
+        '2026-02-02 08:30:00 系统: 订单生成; 2026-02-02 09:45:00 系统: 订单支付成功; 2026-02-02 09:45:00 系统: 订单完成',
       originalAmount: '12.50',
       discountAmount: '2.00',
       payAmount: '10.50',
       payTime: '2026-02-02 09:45:00',
       payVoucher: 'https://example.com/pay-voucher/12',
-      orderStatusName: '已完成'
-    }
+      orderStatusName: '已完成',
+    },
   ];
 };
 
@@ -1167,17 +1176,17 @@ export function useOrderDetailFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入订单编号',
-        disabled: true
-      }
+        disabled: true,
+      },
     },
     {
       fieldName: 'carNumber',
       label: '车牌号码',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入车牌号码'
+        placeholder: '请输入车牌号码',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'entryTime',
@@ -1186,9 +1195,9 @@ export function useOrderDetailFormSchema() {
       componentProps: {
         placeholder: '请选择入场时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'exitTime',
@@ -1197,18 +1206,18 @@ export function useOrderDetailFormSchema() {
       componentProps: {
         placeholder: '请选择离场时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'parkingDuration',
       label: '停放时长',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入停放时长'
+        placeholder: '请输入停放时长',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'lotName',
@@ -1227,19 +1236,19 @@ export function useOrderDetailFormSchema() {
           { label: '芗城区巷口街道停车场', value: '芗城区巷口街道停车场' },
           { label: '龙文区蓝田街道停车场', value: '龙文区蓝田街道停车场' },
           { label: '龙文区步文街道停车场', value: '龙文区步文街道停车场' },
-          { label: '芗城区东铺头街道停车场', value: '芗城区东铺头街道停车场' }
-        ]
+          { label: '芗城区东铺头街道停车场', value: '芗城区东铺头街道停车场' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'spaceNumber',
       label: '泊位编号',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入泊位编号'
+        placeholder: '请输入泊位编号',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'feeDetail',
@@ -1247,9 +1256,9 @@ export function useOrderDetailFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入费用明细',
-        type: 'textarea'
+        type: 'textarea',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'payType',
@@ -1260,10 +1269,10 @@ export function useOrderDetailFormSchema() {
         options: [
           { label: '微信支付', value: '微信支付' },
           { label: '支付宝', value: '支付宝' },
-          { label: '现金支付', value: '现金支付' }
-        ]
+          { label: '现金支付', value: '现金支付' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'discountDetails',
@@ -1276,9 +1285,9 @@ export function useOrderDetailFormSchema() {
           { label: '优惠券折扣', value: '优惠券折扣' },
           { label: '无感支付折扣', value: '无感支付折扣' },
           { label: '线下折扣', value: '线下折扣' },
-          { label: '新能源折扣', value: '新能源折扣' }
-        ]
-      }
+          { label: '新能源折扣', value: '新能源折扣' },
+        ],
+      },
     },
     {
       fieldName: 'operateLog',
@@ -1286,8 +1295,8 @@ export function useOrderDetailFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入订单操作日志',
-        type: 'textarea'
-      }
+        type: 'textarea',
+      },
     },
     {
       fieldName: 'originalAmount',
@@ -1297,9 +1306,9 @@ export function useOrderDetailFormSchema() {
         placeholder: '请输入应付金额',
         min: 0,
         step: 0.01,
-        precision: 2
+        precision: 2,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'discountAmount',
@@ -1309,8 +1318,8 @@ export function useOrderDetailFormSchema() {
         placeholder: '请输入优惠金额',
         min: 0,
         step: 0.01,
-        precision: 2
-      }
+        precision: 2,
+      },
     },
     {
       fieldName: 'payAmount',
@@ -1320,9 +1329,9 @@ export function useOrderDetailFormSchema() {
         placeholder: '请输入实付金额',
         min: 0,
         step: 0.01,
-        precision: 2
+        precision: 2,
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'payTime',
@@ -1331,16 +1340,16 @@ export function useOrderDetailFormSchema() {
       componentProps: {
         placeholder: '请选择支付时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
-      }
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
     },
     {
       fieldName: 'payVoucher',
       label: '支付凭证',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入支付凭证'
-      }
+        placeholder: '请输入支付凭证',
+      },
     },
     {
       fieldName: 'orderStatusName',
@@ -1351,11 +1360,11 @@ export function useOrderDetailFormSchema() {
         options: [
           { label: '待支付', value: '待支付' },
           { label: '已完成', value: '已完成' },
-          { label: '已取消', value: '已取消' }
-        ]
+          { label: '已取消', value: '已取消' },
+        ],
       },
-      rules: 'required'
-    }
+      rules: 'required',
+    },
   ];
 }
 
@@ -1368,26 +1377,26 @@ export function useOrderDetailGridColumns() {
       title: '订单编号',
       minWidth: 180,
       sortable: true,
-      slots: { default: 'orderNo' }
+      slots: { default: 'orderNo' },
     },
     {
       field: 'carNumber',
       title: '车牌号码',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'carNumber' }
+      slots: { default: 'carNumber' },
     },
     {
       field: 'entryTime',
       title: '入场时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'exitTime',
       title: '离场时间',
       minWidth: 180,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'parkingDuration',
@@ -1475,7 +1484,7 @@ export function useOrderDetailGridColumns() {
       width: 80,
       fixed: 'right',
       slots: { default: 'actions' },
-    }
+    },
   ];
 }
 
@@ -1509,7 +1518,7 @@ export const orderDetailDetailFields = [
   { key: 'payAmount', label: '实付金额' },
   { key: 'payTime', label: '支付时间' },
   { key: 'payVoucher', label: '支付凭证' },
-  { key: 'orderStatusName', label: '订单状态' }
+  { key: 'orderStatusName', label: '订单状态' },
 ];
 
 /** 订单明细状态选项 */
@@ -1517,301 +1526,328 @@ export const orderDetailStatusOptions = [
   { label: '全部', value: '' },
   { label: '待支付', value: '待支付' },
   { label: '已完成', value: '已完成' },
-  { label: '已取消', value: '已取消' }
+  { label: '已取消', value: '已取消' },
 ];
 
 /** 获取订单生成标签页的统计数据 */
 export function getOrderGenerationStatsData() {
   const data = dataList();
-  
+
   // 计算卡片数据
   const totalOrders = data.length;
-  const paidOrders = data.filter(item => item.payStatus === '已支付').length;
-  const discountOrders = data.filter(item => parseFloat(item.discountAmount) > 0).length;
-  
+  const paidOrders = data.filter((item) => item.payStatus === '已支付').length;
+  const discountOrders = data.filter(
+    (item) => Number.parseFloat(item.discountAmount) > 0,
+  ).length;
+
   // 计算订单状态占比
   const orderStatusCount = {
-    '待支付': 0,
-    '已完成': 0,
-    '已取消': 0
+    待支付: 0,
+    已完成: 0,
+    已取消: 0,
   };
-  data.forEach(item => {
+  data.forEach((item) => {
     if (orderStatusCount.hasOwnProperty(item.orderStatus)) {
       orderStatusCount[item.orderStatus]++;
     }
   });
-  
-  const orderStatusData = Object.entries(orderStatusCount).map(([name, value]) => ({
-    name,
-    value
-  }));
-  
+
+  const orderStatusData = Object.entries(orderStatusCount).map(
+    ([name, value]) => ({
+      name,
+      value,
+    }),
+  );
+
   // 计算支付方式占比
   const payTypeCount = {
-    '微信支付': 0,
-    '支付宝': 0,
-    '现金支付': 0,
-    '其他': 0
+    微信支付: 0,
+    支付宝: 0,
+    现金支付: 0,
+    其他: 0,
   };
-  data.forEach(item => {
+  data.forEach((item) => {
     if (payTypeCount.hasOwnProperty(item.payType)) {
       payTypeCount[item.payType]++;
     } else if (item.payType) {
       payTypeCount['其他']++;
     }
   });
-  
+
   const payTypeData = Object.entries(payTypeCount).map(([name, value]) => ({
     name,
-    value
+    value,
   }));
-  
+
   // 生成近24小时订单生成趋势数据
   const hours = Array.from({ length: 24 }, (_, i) => {
     const hour = i < 10 ? `0${i}` : `${i}`;
     return `${hour}:00`;
   });
-  
+
   const orderTrendCounts = hours.map(() => Math.floor(Math.random() * 10) + 1);
-  
+
   return {
     cards: [
       {
         title: '订单总数',
         value: totalOrders,
         icon: 'Order',
-        color: '#409EFF'
+        color: '#409EFF',
       },
       {
         title: '已支付订单数',
         value: paidOrders,
         icon: 'Check',
-        color: '#67C23A'
+        color: '#67C23A',
       },
       {
         title: '优惠订单数',
         value: discountOrders,
         icon: 'Discount',
-        color: '#E6A23C'
-      }
+        color: '#E6A23C',
+      },
     ],
     charts: [
       {
         title: '订单状态占比',
         type: 'pie',
-        data: orderStatusData
+        data: orderStatusData,
       },
       {
         title: '支付方式占比',
         type: 'pie',
-        data: payTypeData
+        data: payTypeData,
       },
       {
         title: '近24小时订单生成趋势',
         type: 'line',
         xAxis: hours,
-        series: orderTrendCounts
-      }
-    ]
+        series: orderTrendCounts,
+      },
+    ],
   };
 }
 
 /** 获取状态跟踪标签页的统计数据 */
 export function getStatusTrackStatsData() {
   const data = statusTrackDataList();
-  
+
   // 计算卡片数据
   const totalOrders = data.length;
-  const completedOrders = data.filter(item => item.currentStatus === '已完成').length;
-  const cancelledOrders = data.filter(item => item.currentStatus === '已取消').length;
-  
+  const completedOrders = data.filter(
+    (item) => item.currentStatus === '已完成',
+  ).length;
+  const cancelledOrders = data.filter(
+    (item) => item.currentStatus === '已取消',
+  ).length;
+
   // 计算订单当前状态占比
   const currentStatusCount = {
-    '待支付': 0,
-    '已完成': 0,
-    '已取消': 0
+    待支付: 0,
+    已完成: 0,
+    已取消: 0,
   };
-  data.forEach(item => {
+  data.forEach((item) => {
     if (currentStatusCount.hasOwnProperty(item.currentStatus)) {
       currentStatusCount[item.currentStatus]++;
     }
   });
-  
-  const currentStatusData = Object.entries(currentStatusCount).map(([name, value]) => ({
-    name,
-    value
-  }));
-  
+
+  const currentStatusData = Object.entries(currentStatusCount).map(
+    ([name, value]) => ({
+      name,
+      value,
+    }),
+  );
+
   // 计算订单变更原因占比
   const changeReasonCount = {};
-  data.forEach(item => {
+  data.forEach((item) => {
     if (item.changeReason) {
-      changeReasonCount[item.changeReason] = (changeReasonCount[item.changeReason] || 0) + 1;
+      changeReasonCount[item.changeReason] =
+        (changeReasonCount[item.changeReason] || 0) + 1;
     }
   });
-  
-  const changeReasonData = Object.entries(changeReasonCount).map(([name, value]) => ({
-    name,
-    value
-  }));
-  
+
+  const changeReasonData = Object.entries(changeReasonCount).map(
+    ([name, value]) => ({
+      name,
+      value,
+    }),
+  );
+
   // 生成近7天订单状态变更趋势数据
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() - 6 + i);
     return `${date.getMonth() + 1}/${date.getDate()}`;
   });
-  
-  const statusChangeTrendCounts = days.map(() => Math.floor(Math.random() * 20) + 5);
-  
+
+  const statusChangeTrendCounts = days.map(
+    () => Math.floor(Math.random() * 20) + 5,
+  );
+
   return {
     cards: [
       {
         title: '订单总数',
         value: totalOrders,
         icon: 'Order',
-        color: '#409EFF'
+        color: '#409EFF',
       },
       {
         title: '已完成订单数',
         value: completedOrders,
         icon: 'Check',
-        color: '#67C23A'
+        color: '#67C23A',
       },
       {
         title: '已取消订单数',
         value: cancelledOrders,
         icon: 'Close',
-        color: '#F56C6C'
-      }
+        color: '#F56C6C',
+      },
     ],
     charts: [
       {
         title: '订单当前状态占比',
         type: 'pie',
-        data: currentStatusData
+        data: currentStatusData,
       },
       {
         title: '订单变更原因占比',
         type: 'pie',
-        data: changeReasonData
+        data: changeReasonData,
       },
       {
         title: '近7天订单状态变更趋势',
         type: 'line',
         xAxis: days,
-        series: statusChangeTrendCounts
-      }
-    ]
+        series: statusChangeTrendCounts,
+      },
+    ],
   };
 }
 
 /** 获取订单明细标签页的统计数据 */
 export function getOrderDetailStatsData() {
   const data = orderDetailDataList();
-  
+
   // 计算卡片数据
   const totalOrders = data.length;
-  const completedOrders = data.filter(item => item.orderStatusName === '已完成').length;
-  const totalAmount = data.reduce((sum, item) => sum + parseFloat(item.payAmount), 0);
-  const avgPayAmount = totalOrders > 0 ? (totalAmount / totalOrders).toFixed(2) : '0.00';
-  
+  const completedOrders = data.filter(
+    (item) => item.orderStatusName === '已完成',
+  ).length;
+  const totalAmount = data.reduce(
+    (sum, item) => sum + Number.parseFloat(item.payAmount),
+    0,
+  );
+  const avgPayAmount =
+    totalOrders > 0 ? (totalAmount / totalOrders).toFixed(2) : '0.00';
+
   // 计算订单状态占比
   const orderStatusCount = {
-    '待支付': 0,
-    '已完成': 0,
-    '已取消': 0
+    待支付: 0,
+    已完成: 0,
+    已取消: 0,
   };
-  data.forEach(item => {
+  data.forEach((item) => {
     if (orderStatusCount.hasOwnProperty(item.orderStatusName)) {
       orderStatusCount[item.orderStatusName]++;
     }
   });
-  
-  const orderStatusData = Object.entries(orderStatusCount).map(([name, value]) => ({
-    name,
-    value
-  }));
-  
+
+  const orderStatusData = Object.entries(orderStatusCount).map(
+    ([name, value]) => ({
+      name,
+      value,
+    }),
+  );
+
   // 计算订单所属车场占比
   const lotNameCount = {};
-  data.forEach(item => {
+  data.forEach((item) => {
     if (item.lotName) {
       lotNameCount[item.lotName] = (lotNameCount[item.lotName] || 0) + 1;
     }
   });
-  
+
   const lotNameData = Object.entries(lotNameCount).map(([name, value]) => ({
     name,
-    value
+    value,
   }));
-  
+
   // 生成近7天订单状态变更趋势数据
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() - 6 + i);
     return `${date.getMonth() + 1}/${date.getDate()}`;
   });
-  
-  const orderStatusTrendCounts = days.map(() => Math.floor(Math.random() * 15) + 3);
-  
+
+  const orderStatusTrendCounts = days.map(
+    () => Math.floor(Math.random() * 15) + 3,
+  );
+
   return {
     cards: [
       {
         title: '订单总数',
         value: totalOrders,
         icon: 'Order',
-        color: '#409EFF'
+        color: '#409EFF',
       },
       {
         title: '订单平均支付金额',
         value: `¥${avgPayAmount}`,
         icon: 'Money',
-        color: '#67C23A'
+        color: '#67C23A',
       },
       {
         title: '已完成订单数',
         value: completedOrders,
         icon: 'Check',
-        color: '#E6A23C'
-      }
+        color: '#E6A23C',
+      },
     ],
     charts: [
       {
         title: '订单状态占比',
         type: 'pie',
-        data: orderStatusData
+        data: orderStatusData,
       },
       {
         title: '订单所属车场占比',
         type: 'pie',
-        data: lotNameData
+        data: lotNameData,
       },
       {
         title: '近7天订单状态变更趋势',
         type: 'line',
         xAxis: days,
-        series: orderStatusTrendCounts
-      }
-    ]
+        series: orderStatusTrendCounts,
+      },
+    ],
   };
 }
 
 /** 根据标签页获取对应的统计数据 */
 export function getStatsDataByTab(tabName) {
   switch (tabName) {
-    case '订单生成':
-      return getOrderGenerationStatsData();
-    case '状态跟踪':
+    case '状态跟踪': {
       return getStatusTrackStatsData();
-    case '订单明细':
+    }
+    case '订单明细': {
       return getOrderDetailStatsData();
-    default:
+    }
+    case '订单生成': {
+      return getOrderGenerationStatsData();
+    }
+    default: {
       return {
         cards: [],
-        charts: []
+        charts: [],
       };
+    }
   }
-};
-
-
+}
