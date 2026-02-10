@@ -65,6 +65,18 @@ export function useGridColumns() {
       sortable: true,
     },
     {
+      field: 'plateColor',
+      title: '颜色',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: 'extCommon1',
+      title: '类型',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
       field: 'entryTime',
       title: '入场时间',
       minWidth: 150,

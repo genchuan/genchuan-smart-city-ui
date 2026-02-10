@@ -60,6 +60,10 @@ defineExpose({
         <div class="detail-row-right">{{ detailObj.carNumber || '-' }}</div>
       </div>
       <div class="detail-card-row">
+        <div class="detail-row-left">颜色:</div>
+        <div class="detail-row-right">{{ detailObj.plateColor || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
         <div class="detail-row-left">入场时间:</div>
         <div class="detail-row-right">
           {{ formatTimestamp(detailObj.entryTime) || '-' }}
