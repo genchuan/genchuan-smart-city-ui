@@ -200,6 +200,12 @@ export const dataList = () => {
   ];
 };
 
+/** 获取最大ID */
+export function getMaxId() {
+  const list = dataList();
+  return list.length > 0 ? Math.max(...list.map(item => item.id)) : 0;
+}
+
 /** 搜索表单配置 */
 export function useFormSchema() {
   return [

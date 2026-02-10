@@ -6,8 +6,8 @@ import EscapeReport from './escape/index.vue';
 import EscapeChart from './escape/escapechart.vue';
 import DeviceReport from './device/index.vue';
 import DeviceChart from './device/devicechart.vue';
-// import ChargeReport from './charge/index.vue';
-// import ChargeChart from './charge/chargechart.vue';
+import ChargeReport from './charge/index.vue';
+import ChargeChart from './charge/chargechart.vue';
 
 import '#/components/page/index.scss';
 
@@ -37,14 +37,14 @@ const tabArray = ref([
     arrowShow: false,
     arrowState: false,
   },
-  // {
-  //   label: '收费异常报表',
-  //   components: ChargeReport,
-  //   showSecondary: true,
-  //   secondShow: false,
-  //   arrowShow: false,
-  //   arrowState: false,
-  // },
+  {
+    label: '收费异常报表',
+    components: ChargeReport,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: false,
+    arrowState: false,
+  },
 ]);
 const tabChange = () => {
   tabArray.value.forEach((v) => {
@@ -58,7 +58,7 @@ const secondShow = ref(false);
   <div class="common-index">
     <EscapeChart v-if="tabArray[0].arrowShow" />
     <DeviceChart v-if="tabArray[1].arrowShow" />
-<!--    <ChargeChart v-if="tabArray[2].arrowShow" />-->
+    <ChargeChart v-if="tabArray[2].arrowShow" />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"

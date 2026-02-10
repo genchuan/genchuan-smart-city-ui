@@ -1,6 +1,6 @@
 <!-- detail.vue - 修改为月度详情 -->
 <script setup>
-import { defineProps, toRefs } from 'vue';
+import { defineProps, toRefs, defineEmits } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
@@ -16,18 +16,25 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['edit']);
+
 const { detailObj, title } = toRefs(props);
 
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
-  footer: false,
+  footer: true,
   onCancel() {
     detailDrawerApi.close();
   },
   onConfirm() {},
   async onOpenChange() {},
 });
+
+const handleEdit = () => {
+  emit('edit', detailObj.value);
+  detailDrawerApi.close();
+};
 
 defineExpose({
   open: () => detailDrawerApi.open(),
@@ -36,7 +43,10 @@ defineExpose({
 </script>
 
 <template>
-  <DetailDrawer :title="title || `月度运营详情 - ${detailObj.areaName} ${detailObj.parkType}`">
+  <DetailDrawer
+    :title="title || `月度运营详情 - ${detailObj.areaName} ${detailObj.parkType}`"
+    @ok="handleEdit"
+  >
     <div class="detail-card">
       <div class="detail-card-row">
         <div class="detail-row-left">统计月份:</div>

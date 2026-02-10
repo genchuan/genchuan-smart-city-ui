@@ -56,6 +56,13 @@ const state = reactive({
         ]"
         class="chart-item"
       />
+    <LineChart
+      title="近30天故障发生趋势"
+      :x-data="['01-30', '01-31', '02-01', '02-02', '02-03', '02-04', '02-05']"
+      :series-data="[
+        { name: '故障数', data: [1, 1, 1, 1, 1, 2, 3] },
+      ]"
+    />
       <Columnar
         title="各设备类型故障次数对比"
         :x-data="['入口道闸', '出口道闸', '车位相机', '监控摄像头', '支付终端', 'LED显示屏']"
@@ -64,13 +71,7 @@ const state = reactive({
         ]"
         class="chart-item"
       />
-      <LineChart
-      title="近30天故障发生趋势"
-      :x-data="['01-30', '01-31', '02-01', '02-02', '02-03', '02-04', '02-05']"
-      :series-data="[
-        { name: '故障数', data: [1, 1, 1, 1, 1, 2, 3] },
-      ]"
-      />
+
   </div>
 </template>
 
