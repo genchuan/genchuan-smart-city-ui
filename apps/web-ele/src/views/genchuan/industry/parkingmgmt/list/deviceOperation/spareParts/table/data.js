@@ -1,5 +1,466 @@
 /** 备件入库表格初始数据 - 按指定字段生成 */
-export const dataList = () => {
+export const dataList = (type = 'inbound') => {
+  if (type === 'stock') {
+    // 库存管理静态数据
+    return [
+      {
+        partName: '道闸电机',
+        partCode: 'PART-001',
+        partType: '机电设备',
+        specModel: 'DM-2000',
+        stockQuantity: 8,
+        safeStock: 5,
+        stockStatus: '正常',
+        supplier: '漳州市机电设备有限公司',
+        sparePartId: 'SP001',
+        unitPrice: 500,
+        stockAmount: 4000,
+        lastInTime: '2025-01-01 09:00:00',
+        lastOutTime: '2025-01-01 10:00:00',
+      },
+      {
+        partName: '车牌识别摄像头',
+        partCode: 'PART-002',
+        partType: '安防设备',
+        specModel: 'CR-3000',
+        stockQuantity: 4,
+        safeStock: 3,
+        stockStatus: '正常',
+        supplier: '厦门市安防科技有限公司',
+        sparePartId: 'SP002',
+        unitPrice: 1200,
+        stockAmount: 4800,
+        lastInTime: '2025-01-02 14:30:00',
+        lastOutTime: '2025-01-02 15:00:00',
+      },
+      {
+        partName: '地磁传感器',
+        partCode: 'PART-003',
+        partType: '电子元件',
+        specModel: 'GS-1000',
+        stockQuantity: 15,
+        safeStock: 10,
+        stockStatus: '正常',
+        supplier: '泉州市电子元件有限公司',
+        sparePartId: 'SP003',
+        unitPrice: 80,
+        stockAmount: 1200,
+        lastInTime: '2025-01-03 10:15:00',
+        lastOutTime: '2025-01-03 11:00:00',
+      },
+      {
+        partName: '道闸杆',
+        partCode: 'PART-004',
+        partType: '机电设备',
+        specModel: 'GB-5000',
+        stockQuantity: 6,
+        safeStock: 4,
+        stockStatus: '正常',
+        supplier: '漳州市机电设备有限公司',
+        sparePartId: 'SP004',
+        unitPrice: 200,
+        stockAmount: 1200,
+        lastInTime: '2025-01-04 15:45:00',
+        lastOutTime: '2025-01-04 16:00:00',
+      },
+      {
+        partName: '收费终端主板',
+        partCode: 'PART-005',
+        partType: '计算机配件',
+        specModel: 'MB-8000',
+        stockQuantity: 3,
+        safeStock: 4,
+        stockStatus: '不足',
+        supplier: '福州市计算机配件有限公司',
+        sparePartId: 'SP005',
+        unitPrice: 800,
+        stockAmount: 2400,
+        lastInTime: '2025-01-05 09:30:00',
+        lastOutTime: '2025-01-05 10:00:00',
+      },
+      {
+        partName: '诱导屏LED灯',
+        partCode: 'PART-006',
+        partType: '光电元件',
+        specModel: 'LED-500',
+        stockQuantity: 40,
+        safeStock: 20,
+        stockStatus: '正常',
+        supplier: '深圳市光电科技有限公司',
+        sparePartId: 'SP006',
+        unitPrice: 15,
+        stockAmount: 600,
+        lastInTime: '2025-01-06 13:20:00',
+        lastOutTime: '2025-01-06 14:00:00',
+      },
+      {
+        partName: '道闸控制板',
+        partCode: 'PART-007',
+        partType: '机电设备',
+        specModel: 'CB-4000',
+        stockQuantity: 4,
+        safeStock: 5,
+        stockStatus: '不足',
+        supplier: '漳州市机电设备有限公司',
+        sparePartId: 'SP007',
+        unitPrice: 350,
+        stockAmount: 1400,
+        lastInTime: '2025-01-07 11:00:00',
+        lastOutTime: '2025-01-07 12:00:00',
+      },
+      {
+        partName: '车牌识别算法模块',
+        partCode: 'PART-008',
+        partType: '软件模块',
+        specModel: 'AL-2000',
+        stockQuantity: 1,
+        safeStock: 2,
+        stockStatus: '不足',
+        supplier: '杭州市人工智能科技有限公司',
+        sparePartId: 'SP008',
+        unitPrice: 2000,
+        stockAmount: 2000,
+        lastInTime: '2025-01-08 10:45:00',
+        lastOutTime: '2025-01-08 12:00:00',
+      },
+      {
+        partName: '地磁检测器电池',
+        partCode: 'PART-009',
+        partType: '电子元件',
+        specModel: 'B-12V',
+        stockQuantity: 25,
+        safeStock: 15,
+        stockStatus: '正常',
+        supplier: '泉州市电子元件有限公司',
+        sparePartId: 'SP009',
+        unitPrice: 25,
+        stockAmount: 625,
+        lastInTime: '2025-01-09 16:00:00',
+        lastOutTime: '2025-01-09 17:00:00',
+      },
+      {
+        partName: '收费终端触摸屏',
+        partCode: 'PART-010',
+        partType: '计算机配件',
+        specModel: 'TP-1500',
+        stockQuantity: 3,
+        safeStock: 4,
+        stockStatus: '不足',
+        supplier: '福州市计算机配件有限公司',
+        sparePartId: 'SP010',
+        unitPrice: 600,
+        stockAmount: 1800,
+        lastInTime: '2025-01-10 09:15:00',
+        lastOutTime: '2025-01-10 10:00:00',
+      },
+      {
+        partName: '道闸减速机',
+        partCode: 'PART-011',
+        partType: '机电设备',
+        specModel: 'RM-3000',
+        stockQuantity: 2,
+        safeStock: 3,
+        stockStatus: '不足',
+        supplier: '漳州市机电设备有限公司',
+        sparePartId: 'SP011',
+        unitPrice: 450,
+        stockAmount: 900,
+        lastInTime: '2025-01-11 14:50:00',
+        lastOutTime: '2025-01-11 16:00:00',
+      },
+      {
+        partName: '车牌识别相机护罩',
+        partCode: 'PART-012',
+        partType: '安防设备',
+        specModel: 'SH-6000',
+        stockQuantity: 8,
+        safeStock: 5,
+        stockStatus: '正常',
+        supplier: '厦门市安防科技有限公司',
+        sparePartId: 'SP012',
+        unitPrice: 80,
+        stockAmount: 640,
+        lastInTime: '2025-01-12 11:20:00',
+        lastOutTime: '2025-01-12 13:00:00',
+      },
+      {
+        partName: '诱导屏控制卡',
+        partCode: 'PART-013',
+        partType: '光电元件',
+        specModel: 'CC-8000',
+        stockQuantity: 5,
+        safeStock: 3,
+        stockStatus: '正常',
+        supplier: '深圳市光电科技有限公司',
+        sparePartId: 'SP013',
+        unitPrice: 280,
+        stockAmount: 1400,
+        lastInTime: '2025-01-13 10:00:00',
+        lastOutTime: '2025-01-13 11:00:00',
+      },
+      {
+        partName: '地磁检测器外壳',
+        partCode: 'PART-014',
+        partType: '电子元件',
+        specModel: 'HS-200',
+        stockQuantity: 12,
+        safeStock: 8,
+        stockStatus: '正常',
+        supplier: '泉州市电子元件有限公司',
+        sparePartId: 'SP014',
+        unitPrice: 40,
+        stockAmount: 480,
+        lastInTime: '2025-01-14 15:10:00',
+        lastOutTime: '2025-01-14 16:00:00',
+      },
+      {
+        partName: '收费终端打印机',
+        partCode: 'PART-015',
+        partType: '计算机配件',
+        specModel: 'PR-58',
+        stockQuantity: 4,
+        safeStock: 3,
+        stockStatus: '正常',
+        supplier: '福州市计算机配件有限公司',
+        sparePartId: 'SP015',
+        unitPrice: 320,
+        stockAmount: 1280,
+        lastInTime: '2025-01-15 09:45:00',
+        lastOutTime: '2025-01-15 10:00:00',
+      },
+    ];
+  } else if (type === 'outbound') {
+    // 出库管理静态数据
+    return [
+      {
+        outNo: 'OUT20250101001',
+        partName: '道闸电机',
+        partCode: 'PART-001',
+        outQuantity: 2,
+        useDevice: '道闸设备1',
+        relatedWorkorder: 'WO20250101001',
+        outTime: '2025-01-01 10:00:00',
+        operator: '张三',
+        outId: 'OUTID001',
+        statusName: '已审核',
+        partUnitPrice: 500,
+        outAmount: 1000,
+        stockRemaining: 8,
+      },
+      {
+        outNo: 'OUT20250102002',
+        partName: '车牌识别摄像头',
+        partCode: 'PART-002',
+        outQuantity: 1,
+        useDevice: '车牌识别设备1',
+        relatedWorkorder: 'WO20250102002',
+        outTime: '2025-01-02 15:00:00',
+        operator: '王五',
+        outId: 'OUTID002',
+        statusName: '待审核',
+        partUnitPrice: 1200,
+        outAmount: 1200,
+        stockRemaining: 4,
+      },
+      {
+        outNo: 'OUT20250103003',
+        partName: '地磁传感器',
+        partCode: 'PART-003',
+        outQuantity: 5,
+        useDevice: '地磁设备1',
+        relatedWorkorder: 'WO20250103003',
+        outTime: '2025-01-03 11:00:00',
+        operator: '赵六',
+        outId: 'OUTID003',
+        statusName: '已审核',
+        partUnitPrice: 80,
+        outAmount: 400,
+        stockRemaining: 15,
+      },
+      {
+        outNo: 'OUT20250104004',
+        partName: '道闸杆',
+        partCode: 'PART-004',
+        outQuantity: 2,
+        useDevice: '道闸设备2',
+        relatedWorkorder: 'WO20250104004',
+        outTime: '2025-01-04 16:00:00',
+        operator: '周八',
+        outId: 'OUTID004',
+        statusName: '已审核',
+        partUnitPrice: 200,
+        outAmount: 400,
+        stockRemaining: 6,
+      },
+      {
+        outNo: 'OUT20250105005',
+        partName: '收费终端主板',
+        partCode: 'PART-005',
+        outQuantity: 1,
+        useDevice: '收费终端1',
+        relatedWorkorder: 'WO20250105005',
+        outTime: '2025-01-05 10:00:00',
+        operator: '郑十',
+        outId: 'OUTID005',
+        statusName: '已拒绝',
+        partUnitPrice: 800,
+        outAmount: 800,
+        stockRemaining: 3,
+      },
+      {
+        outNo: 'OUT20250106006',
+        partName: '诱导屏LED灯',
+        partCode: 'PART-006',
+        outQuantity: 10,
+        useDevice: '诱导屏1',
+        relatedWorkorder: 'WO20250106006',
+        outTime: '2025-01-06 14:00:00',
+        operator: '李四',
+        outId: 'OUTID006',
+        statusName: '已审核',
+        partUnitPrice: 15,
+        outAmount: 150,
+        stockRemaining: 40,
+      },
+      {
+        outNo: 'OUT20250107007',
+        partName: '道闸控制板',
+        partCode: 'PART-007',
+        outQuantity: 2,
+        useDevice: '道闸设备3',
+        relatedWorkorder: 'WO20250107007',
+        outTime: '2025-01-07 12:00:00',
+        operator: '赵六',
+        outId: 'OUTID007',
+        statusName: '待审核',
+        partUnitPrice: 350,
+        outAmount: 700,
+        stockRemaining: 4,
+      },
+      {
+        outNo: 'OUT20250108008',
+        partName: '车牌识别算法模块',
+        partCode: 'PART-008',
+        outQuantity: 1,
+        useDevice: '车牌识别设备2',
+        relatedWorkorder: 'WO20250108008',
+        outTime: '2025-01-08 12:00:00',
+        operator: '孙七',
+        outId: 'OUTID008',
+        statusName: '已审核',
+        partUnitPrice: 2000,
+        outAmount: 2000,
+        stockRemaining: 1,
+      },
+      {
+        outNo: 'OUT20250109009',
+        partName: '地磁检测器电池',
+        partCode: 'PART-009',
+        outQuantity: 5,
+        useDevice: '地磁设备2',
+        relatedWorkorder: 'WO20250109009',
+        outTime: '2025-01-09 17:00:00',
+        operator: '吴九',
+        outId: 'OUTID009',
+        statusName: '已审核',
+        partUnitPrice: 25,
+        outAmount: 125,
+        stockRemaining: 25,
+      },
+      {
+        outNo: 'OUT20250110010',
+        partName: '收费终端触摸屏',
+        partCode: 'PART-010',
+        outQuantity: 1,
+        useDevice: '收费终端2',
+        relatedWorkorder: 'WO20250110010',
+        outTime: '2025-01-10 10:00:00',
+        operator: '张三',
+        outId: 'OUTID010',
+        statusName: '待审核',
+        partUnitPrice: 600,
+        outAmount: 600,
+        stockRemaining: 3,
+      },
+      {
+        outNo: 'OUT20250111011',
+        partName: '道闸减速机',
+        partCode: 'PART-011',
+        outQuantity: 1,
+        useDevice: '道闸设备4',
+        relatedWorkorder: 'WO20250111011',
+        outTime: '2025-01-11 16:00:00',
+        operator: '李四',
+        outId: 'OUTID011',
+        statusName: '已审核',
+        partUnitPrice: 450,
+        outAmount: 450,
+        stockRemaining: 2,
+      },
+      {
+        outNo: 'OUT20250112012',
+        partName: '车牌识别相机护罩',
+        partCode: 'PART-012',
+        outQuantity: 2,
+        useDevice: '车牌识别设备3',
+        relatedWorkorder: 'WO20250112012',
+        outTime: '2025-01-12 13:00:00',
+        operator: '王五',
+        outId: 'OUTID012',
+        statusName: '已审核',
+        partUnitPrice: 80,
+        outAmount: 160,
+        stockRemaining: 8,
+      },
+      {
+        outNo: 'OUT20250113013',
+        partName: '诱导屏控制卡',
+        partCode: 'PART-013',
+        outQuantity: 3,
+        useDevice: '诱导屏2',
+        relatedWorkorder: 'WO20250113013',
+        outTime: '2025-01-13 11:00:00',
+        operator: '赵六',
+        outId: 'OUTID013',
+        statusName: '已拒绝',
+        partUnitPrice: 280,
+        outAmount: 840,
+        stockRemaining: 5,
+      },
+      {
+        outNo: 'OUT20250114014',
+        partName: '地磁检测器外壳',
+        partCode: 'PART-014',
+        outQuantity: 3,
+        useDevice: '地磁设备3',
+        relatedWorkorder: 'WO20250114014',
+        outTime: '2025-01-14 16:00:00',
+        operator: '孙七',
+        outId: 'OUTID014',
+        statusName: '已审核',
+        partUnitPrice: 40,
+        outAmount: 120,
+        stockRemaining: 12,
+      },
+      {
+        outNo: 'OUT20250115015',
+        partName: '收费终端打印机',
+        partCode: 'PART-015',
+        outQuantity: 1,
+        useDevice: '收费终端3',
+        relatedWorkorder: 'WO20250115015',
+        outTime: '2025-01-15 10:00:00',
+        operator: '周八',
+        outId: 'OUTID015',
+        statusName: '待审核',
+        partUnitPrice: 320,
+        outAmount: 320,
+        stockRemaining: 4,
+      },
+    ];
+  }
+
+  // 入库管理静态数据
   return [
     {
       inNo: 'IN20250101001',
@@ -8,7 +469,7 @@ export const dataList = () => {
       inQuantity: 10,
       inPrice: 500,
       totalAmount: 5000,
-      supplierName: '漳州市机电设备有限公司',
+      supplier: '漳州市机电设备有限公司',
       inTime: '2025-01-01 09:00:00',
       operator: '张三',
       inId: 'INID001',
@@ -24,7 +485,7 @@ export const dataList = () => {
       inQuantity: 5,
       inPrice: 1200,
       totalAmount: 6000,
-      supplierName: '厦门市安防科技有限公司',
+      supplier: '厦门市安防科技有限公司',
       inTime: '2025-01-02 14:30:00',
       operator: '王五',
       inId: 'INID002',
@@ -40,7 +501,7 @@ export const dataList = () => {
       inQuantity: 20,
       inPrice: 80,
       totalAmount: 1600,
-      supplierName: '泉州市电子元件有限公司',
+      supplier: '泉州市电子元件有限公司',
       inTime: '2025-01-03 10:15:00',
       operator: '赵六',
       inId: 'INID003',
@@ -56,7 +517,7 @@ export const dataList = () => {
       inQuantity: 8,
       inPrice: 200,
       totalAmount: 1600,
-      supplierName: '漳州市机电设备有限公司',
+      supplier: '漳州市机电设备有限公司',
       inTime: '2025-01-04 15:45:00',
       operator: '周八',
       inId: 'INID004',
@@ -72,7 +533,7 @@ export const dataList = () => {
       inQuantity: 3,
       inPrice: 800,
       totalAmount: 2400,
-      supplierName: '福州市计算机配件有限公司',
+      supplier: '福州市计算机配件有限公司',
       inTime: '2025-01-05 09:30:00',
       operator: '郑十',
       inId: 'INID005',
@@ -88,7 +549,7 @@ export const dataList = () => {
       inQuantity: 50,
       inPrice: 15,
       totalAmount: 750,
-      supplierName: '深圳市光电科技有限公司',
+      supplier: '深圳市光电科技有限公司',
       inTime: '2025-01-06 13:20:00',
       operator: '李四',
       inId: 'INID006',
@@ -104,7 +565,7 @@ export const dataList = () => {
       inQuantity: 6,
       inPrice: 350,
       totalAmount: 2100,
-      supplierName: '漳州市机电设备有限公司',
+      supplier: '漳州市机电设备有限公司',
       inTime: '2025-01-07 11:00:00',
       operator: '赵六',
       inId: 'INID007',
@@ -120,7 +581,7 @@ export const dataList = () => {
       inQuantity: 2,
       inPrice: 2000,
       totalAmount: 4000,
-      supplierName: '杭州市人工智能科技有限公司',
+      supplier: '杭州市人工智能科技有限公司',
       inTime: '2025-01-08 10:45:00',
       operator: '孙七',
       inId: 'INID008',
@@ -136,7 +597,7 @@ export const dataList = () => {
       inQuantity: 30,
       inPrice: 25,
       totalAmount: 750,
-      supplierName: '泉州市电子元件有限公司',
+      supplier: '泉州市电子元件有限公司',
       inTime: '2025-01-09 16:00:00',
       operator: '吴九',
       inId: 'INID009',
@@ -152,7 +613,7 @@ export const dataList = () => {
       inQuantity: 4,
       inPrice: 600,
       totalAmount: 2400,
-      supplierName: '福州市计算机配件有限公司',
+      supplier: '福州市计算机配件有限公司',
       inTime: '2025-01-10 09:15:00',
       operator: '张三',
       inId: 'INID010',
@@ -168,7 +629,7 @@ export const dataList = () => {
       inQuantity: 3,
       inPrice: 450,
       totalAmount: 1350,
-      supplierName: '漳州市机电设备有限公司',
+      supplier: '漳州市机电设备有限公司',
       inTime: '2025-01-11 14:50:00',
       operator: '李四',
       inId: 'INID011',
@@ -184,7 +645,7 @@ export const dataList = () => {
       inQuantity: 10,
       inPrice: 80,
       totalAmount: 800,
-      supplierName: '厦门市安防科技有限公司',
+      supplier: '厦门市安防科技有限公司',
       inTime: '2025-01-12 11:20:00',
       operator: '王五',
       inId: 'INID012',
@@ -200,7 +661,7 @@ export const dataList = () => {
       inQuantity: 8,
       inPrice: 280,
       totalAmount: 2240,
-      supplierName: '深圳市光电科技有限公司',
+      supplier: '深圳市光电科技有限公司',
       inTime: '2025-01-13 10:00:00',
       operator: '赵六',
       inId: 'INID013',
@@ -216,7 +677,7 @@ export const dataList = () => {
       inQuantity: 15,
       inPrice: 40,
       totalAmount: 600,
-      supplierName: '泉州市电子元件有限公司',
+      supplier: '泉州市电子元件有限公司',
       inTime: '2025-01-14 15:10:00',
       operator: '孙七',
       inId: 'INID014',
@@ -232,7 +693,7 @@ export const dataList = () => {
       inQuantity: 5,
       inPrice: 320,
       totalAmount: 1600,
-      supplierName: '福州市计算机配件有限公司',
+      supplier: '福州市计算机配件有限公司',
       inTime: '2025-01-15 09:45:00',
       operator: '周八',
       inId: 'INID015',
@@ -245,7 +706,280 @@ export const dataList = () => {
 };
 
 /** 备件入库表单配置（包含所有指定字段） */
-export function useFormSchema() {
+export function useFormSchema(type = 'inbound') {
+  if (type === 'stock') {
+    // 库存管理表单配置
+    return [
+      {
+        fieldName: 'sparePartId',
+        label: '备件ID',
+        component: 'Input',
+        componentProps: {
+          placeholder: '请输入备件ID',
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'partName',
+        label: '备件名称',
+        component: 'Input',
+        componentProps: {
+          placeholder: '请输入备件名称',
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'partCode',
+        label: '备件编码',
+        component: 'Input',
+        componentProps: {
+          placeholder: '请输入备件编码',
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'partType',
+        label: '备件类型',
+        component: 'Input',
+        componentProps: {
+          placeholder: '请输入备件类型',
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'specModel',
+        label: '规格型号',
+        component: 'Input',
+        componentProps: {
+          placeholder: '请输入规格型号',
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'stockQuantity',
+        label: '库存数量',
+        component: 'InputNumber',
+        componentProps: {
+          placeholder: '请输入库存数量',
+          min: 0,
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'safeStock',
+        label: '安全库存',
+        component: 'InputNumber',
+        componentProps: {
+          placeholder: '请输入安全库存',
+          min: 0,
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'stockStatus',
+        label: '库存状态',
+        component: 'Select',
+        componentProps: {
+          placeholder: '请选择库存状态',
+          options: [
+            { label: '正常', value: '正常' },
+            { label: '不足', value: '不足' },
+            { label: '过剩', value: '过剩' },
+          ],
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'supplier',
+        label: '供应商',
+        component: 'Input',
+        componentProps: {
+          placeholder: '请输入供应商',
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'unitPrice',
+        label: '单价',
+        component: 'InputNumber',
+        componentProps: {
+          placeholder: '请输入单价',
+          min: 0,
+          step: 0.01,
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'stockAmount',
+        label: '库存金额',
+        component: 'InputNumber',
+        componentProps: {
+          placeholder: '请输入库存金额',
+          min: 0,
+          step: 0.01,
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'lastInTime',
+        label: '最近入库时间',
+        component: 'DatePicker',
+        componentProps: {
+          placeholder: '请选择最近入库时间',
+          format: 'YYYY-MM-DD HH:mm:ss',
+          valueFormat: 'YYYY-MM-DD HH:mm:ss',
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'lastOutTime',
+        label: '最近出库时间',
+        component: 'DatePicker',
+        componentProps: {
+          placeholder: '请选择最近出库时间',
+          format: 'YYYY-MM-DD HH:mm:ss',
+          valueFormat: 'YYYY-MM-DD HH:mm:ss',
+        },
+        rules: 'required',
+      },
+    ];
+  } else if (type === 'outbound') {
+    // 出库管理表单配置
+    return [
+      {
+        fieldName: 'outId',
+        label: '出库ID',
+        component: 'Input',
+        componentProps: {
+          placeholder: '请输入出库ID',
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'outNo',
+        label: '出库单号',
+        component: 'Input',
+        componentProps: {
+          placeholder: '请输入出库单号',
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'partName',
+        label: '备件名称',
+        component: 'Input',
+        componentProps: {
+          placeholder: '请输入备件名称',
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'partCode',
+        label: '备件编码',
+        component: 'Input',
+        componentProps: {
+          placeholder: '请输入备件编码',
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'outQuantity',
+        label: '出库数量',
+        component: 'InputNumber',
+        componentProps: {
+          placeholder: '请输入出库数量',
+          min: 1,
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'useDevice',
+        label: '使用设备',
+        component: 'Input',
+        componentProps: {
+          placeholder: '请输入使用设备',
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'relatedWorkorder',
+        label: '关联工单',
+        component: 'Input',
+        componentProps: {
+          placeholder: '请输入关联工单',
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'outTime',
+        label: '出库时间',
+        component: 'DatePicker',
+        componentProps: {
+          placeholder: '请选择出库时间',
+          format: 'YYYY-MM-DD HH:mm:ss',
+          valueFormat: 'YYYY-MM-DD HH:mm:ss',
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'operator',
+        label: '操作人',
+        component: 'Input',
+        componentProps: {
+          placeholder: '请输入操作人',
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'statusName',
+        label: '状态',
+        component: 'Select',
+        componentProps: {
+          placeholder: '请选择状态',
+          options: [
+            { label: '待审核', value: '待审核' },
+            { label: '已审核', value: '已审核' },
+            { label: '已拒绝', value: '已拒绝' },
+          ],
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'partUnitPrice',
+        label: '备件单价',
+        component: 'InputNumber',
+        componentProps: {
+          placeholder: '请输入备件单价',
+          min: 0,
+          step: 0.01,
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'outAmount',
+        label: '出库金额',
+        component: 'InputNumber',
+        componentProps: {
+          placeholder: '请输入出库金额',
+          min: 0,
+          step: 0.01,
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'stockRemaining',
+        label: '库存剩余',
+        component: 'InputNumber',
+        componentProps: {
+          placeholder: '请输入库存剩余',
+          min: 0,
+        },
+        rules: 'required',
+      },
+    ];
+  }
+
+  // 入库管理表单配置
   return [
     {
       fieldName: 'inId',
@@ -316,7 +1050,7 @@ export function useFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'supplierName',
+      fieldName: 'supplier',
       label: '供应商',
       component: 'Input',
       componentProps: {
@@ -393,7 +1127,200 @@ export function useFormSchema() {
 }
 
 /** 备件入库表格列配置 */
-export function useGridColumns() {
+export function useGridColumns(type = 'inbound') {
+  if (type === 'stock') {
+    // 库存管理表格列配置
+    return [
+      { type: 'checkbox', width: 40 },
+      {
+        field: 'sparePartId',
+        title: '备件ID',
+        minWidth: 100,
+        sortable: true,
+        slots: { default: 'inId' },
+      },
+      {
+        field: 'partName',
+        title: '备件名称',
+        minWidth: 120,
+        sortable: true,
+        slots: { default: 'partName' },
+      },
+      {
+        field: 'partCode',
+        title: '备件编码',
+        minWidth: 120,
+        sortable: true,
+        slots: { default: 'partCode' },
+      },
+      {
+        field: 'partType',
+        title: '备件类型',
+        minWidth: 120,
+        sortable: true,
+        slots: { default: 'partType' },
+      },
+      {
+        field: 'specModel',
+        title: '规格型号',
+        minWidth: 120,
+        sortable: true,
+      },
+      {
+        field: 'stockQuantity',
+        title: '库存数量',
+        minWidth: 100,
+        sortable: true,
+      },
+      {
+        field: 'safeStock',
+        title: '安全库存',
+        minWidth: 100,
+        sortable: true,
+      },
+      {
+        field: 'stockStatus',
+        title: '库存状态',
+        minWidth: 100,
+        sortable: true,
+        slots: { default: 'statusName' },
+      },
+      {
+        field: 'supplier',
+        title: '供应商',
+        minWidth: 150,
+        sortable: true,
+        slots: { default: 'supplier' },
+      },
+      {
+        field: 'unitPrice',
+        title: '单价',
+        minWidth: 100,
+        sortable: true,
+      },
+      {
+        field: 'stockAmount',
+        title: '库存金额',
+        minWidth: 100,
+        sortable: true,
+      },
+      {
+        field: 'lastInTime',
+        title: '最近入库时间',
+        minWidth: 180,
+        sortable: true,
+      },
+      {
+        field: 'lastOutTime',
+        title: '最近出库时间',
+        minWidth: 180,
+        sortable: true,
+      },
+      {
+        title: '操作',
+        width: 100,
+        fixed: 'right',
+        slots: { default: 'actions' },
+      },
+    ];
+  } else if (type === 'outbound') {
+    // 出库管理表格列配置
+    return [
+      { type: 'checkbox', width: 40 },
+      {
+        field: 'outId',
+        title: '出库ID',
+        minWidth: 100,
+        sortable: true,
+        slots: { default: 'inId' },
+      },
+      {
+        field: 'outNo',
+        title: '出库单号',
+        minWidth: 150,
+        sortable: true,
+      },
+      {
+        field: 'partName',
+        title: '备件名称',
+        minWidth: 120,
+        sortable: true,
+        slots: { default: 'partName' },
+      },
+      {
+        field: 'partCode',
+        title: '备件编码',
+        minWidth: 120,
+        sortable: true,
+        slots: { default: 'partCode' },
+      },
+      {
+        field: 'outQuantity',
+        title: '出库数量',
+        minWidth: 100,
+        sortable: true,
+      },
+      {
+        field: 'useDevice',
+        title: '使用设备',
+        minWidth: 150,
+        sortable: true,
+        slots: { default: 'useDevice' },
+      },
+      {
+        field: 'relatedWorkorder',
+        title: '关联工单',
+        minWidth: 150,
+        sortable: true,
+        slots: { default: 'relatedWorkorder' },
+      },
+      {
+        field: 'outTime',
+        title: '出库时间',
+        minWidth: 180,
+        sortable: true,
+      },
+      {
+        field: 'operator',
+        title: '操作人',
+        minWidth: 100,
+        sortable: true,
+      },
+      {
+        field: 'statusName',
+        title: '状态',
+        minWidth: 100,
+        sortable: true,
+        slots: { default: 'statusName' },
+      },
+      {
+        field: 'partUnitPrice',
+        title: '备件单价',
+        minWidth: 100,
+        sortable: true,
+      },
+      {
+        field: 'outAmount',
+        title: '出库金额',
+        minWidth: 100,
+        sortable: true,
+      },
+      {
+        field: 'stockRemaining',
+        title: '库存剩余',
+        minWidth: 100,
+        sortable: true,
+      },
+      {
+        title: '操作',
+        width: 100,
+        fixed: 'right',
+        slots: { default: 'actions' },
+      },
+    ];
+  }
+
+  // 入库管理表格列配置
   return [
     { type: 'checkbox', width: 40 },
     {
@@ -414,12 +1341,14 @@ export function useGridColumns() {
       title: '备件名称',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'partName' },
     },
     {
       field: 'partCode',
       title: '备件编码',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'partCode' },
     },
     {
       field: 'inQuantity',
@@ -440,10 +1369,11 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'supplierName',
+      field: 'supplier',
       title: '供应商',
       minWidth: 150,
       sortable: true,
+      slots: { default: 'supplier' },
     },
     {
       field: 'inTime',
@@ -481,6 +1411,7 @@ export function useGridColumns() {
       title: '库存更新结果',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'stockUpdateResult' },
     },
     {
       title: '操作',
@@ -494,9 +1425,19 @@ export function useGridColumns() {
 export const textObj = {
   editText: '编辑备件入库',
   addText: '新增备件入库',
+  outboundEditText: '编辑备件出库',
+  outboundAddText: '新增备件出库',
+  stockEditText: '编辑备件库存',
+  stockAddText: '新增备件库存',
   excelName: '备件入库列表',
   excelAllName: '备件入库数据.xlsx',
+  outboundExcelName: '备件出库列表',
+  outboundExcelAllName: '备件出库数据.xlsx',
+  stockExcelName: '备件库存列表',
+  stockExcelAllName: '备件库存数据.xlsx',
   total: ' 总计: 入库单数15; 已审核8; 待审核5; 已拒绝2',
+  outboundTotal: ' 总计: 出库单数15; 已审核8; 待审核5; 已拒绝2',
+  stockTotal: ' 总计: 库存件数15; 正常10; 不足5; 过剩0',
 };
 
 /** 详情抽屉字段配置 */
@@ -508,7 +1449,7 @@ export const detailFields = [
   { key: 'inQuantity', label: '入库数量' },
   { key: 'inPrice', label: '入库单价' },
   { key: 'totalAmount', label: '总金额' },
-  { key: 'supplierName', label: '供应商' },
+  { key: 'supplier', label: '供应商' },
   { key: 'inTime', label: '入库时间' },
   { key: 'operator', label: '操作人' },
   { key: 'statusName', label: '状态' },
@@ -516,3 +1457,564 @@ export const detailFields = [
   { key: 'auditTime', label: '审核时间' },
   { key: 'stockUpdateResult', label: '库存更新结果' },
 ];
+
+/** 出库管理详情抽屉字段配置 */
+export const detailFieldsOutbound = [
+  { key: 'outId', label: '出库ID' },
+  { key: 'outNo', label: '出库单号' },
+  { key: 'partName', label: '备件名称' },
+  { key: 'partCode', label: '备件编码' },
+  { key: 'outQuantity', label: '出库数量' },
+  { key: 'useDevice', label: '使用设备' },
+  { key: 'relatedWorkorder', label: '关联工单' },
+  { key: 'outTime', label: '出库时间' },
+  { key: 'operator', label: '操作人' },
+  { key: 'statusName', label: '状态' },
+  { key: 'partUnitPrice', label: '备件单价' },
+  { key: 'outAmount', label: '出库金额' },
+  { key: 'stockRemaining', label: '库存剩余' },
+];
+
+/** 库存管理详情抽屉字段配置 */
+export const detailFieldsStock = [
+  { key: 'sparePartId', label: '备件ID' },
+  { key: 'partName', label: '备件名称' },
+  { key: 'partCode', label: '备件编码' },
+  { key: 'partType', label: '备件类型' },
+  { key: 'specModel', label: '规格型号' },
+  { key: 'stockQuantity', label: '库存数量' },
+  { key: 'safeStock', label: '安全库存' },
+  { key: 'stockStatus', label: '库存状态' },
+  { key: 'supplier', label: '供应商' },
+  { key: 'unitPrice', label: '单价' },
+  { key: 'stockAmount', label: '库存金额' },
+  { key: 'lastInTime', label: '最近入库时间' },
+  { key: 'lastOutTime', label: '最近出库时间' },
+];
+
+// 运维工单静态数据
+export const workorderList = [
+  {
+    workorderId: '123e4567-e89b-12d3-a456-426614174000',
+    workorderNo: 'WO20250101001',
+    orderType: '故障维修',
+    faultId: 'FAULT-001',
+    assetId: 'ASSET-001',
+    deviceIds: JSON.stringify(['DEVICE-001']),
+    content: '道闸电机故障维修',
+    emergencyLevel: '一般',
+    assignTo: 'MAINTAIN-001',
+    assignTime: '2025-01-01 08:00:00',
+    claimTime: '2025-01-01 08:30:00',
+    completeTime: '2025-01-01 11:00:00',
+    status: '已完成',
+    acceptResult: '通过',
+    acceptBy: 'USER-001',
+    acceptTime: '2025-01-01 11:30:00',
+    createBy: 'USER-001',
+    createTime: '2025-01-01 07:30:00',
+    updateTime: '2025-01-01 11:30:00',
+    remark: '维修完成，设备正常运行',
+  },
+  {
+    workorderId: '123e4567-e89b-12d3-a456-426614174001',
+    workorderNo: 'WO20250102002',
+    orderType: '故障维修',
+    faultId: 'FAULT-002',
+    assetId: 'ASSET-002',
+    deviceIds: JSON.stringify(['DEVICE-002']),
+    content: '车牌识别摄像头故障维修',
+    emergencyLevel: '紧急',
+    assignTo: 'MAINTAIN-002',
+    assignTime: '2025-01-02 10:00:00',
+    claimTime: '2025-01-02 10:30:00',
+    completeTime: '2025-01-02 14:00:00',
+    status: '已完成',
+    acceptResult: '通过',
+    acceptBy: 'USER-002',
+    acceptTime: '2025-01-02 14:30:00',
+    createBy: 'USER-002',
+    createTime: '2025-01-02 09:30:00',
+    updateTime: '2025-01-02 14:30:00',
+    remark: '摄像头已更换，识别正常',
+  },
+  {
+    workorderId: '123e4567-e89b-12d3-a456-426614174002',
+    workorderNo: 'WO20250103003',
+    orderType: '定期维护',
+    faultId: null,
+    assetId: 'ASSET-003',
+    deviceIds: JSON.stringify(['DEVICE-003']),
+    content: '地磁传感器定期维护',
+    emergencyLevel: '一般',
+    assignTo: 'MAINTAIN-003',
+    assignTime: '2025-01-03 09:00:00',
+    claimTime: '2025-01-03 09:30:00',
+    completeTime: '2025-01-03 11:00:00',
+    status: '已完成',
+    acceptResult: '通过',
+    acceptBy: 'USER-003',
+    acceptTime: '2025-01-03 11:30:00',
+    createBy: 'USER-003',
+    createTime: '2025-01-02 16:00:00',
+    updateTime: '2025-01-03 11:30:00',
+    remark: '维护完成，传感器工作正常',
+  },
+  {
+    workorderId: '123e4567-e89b-12d3-a456-426614174003',
+    workorderNo: 'WO20250104004',
+    orderType: '故障维修',
+    faultId: 'FAULT-004',
+    assetId: 'ASSET-004',
+    deviceIds: JSON.stringify(['DEVICE-004']),
+    content: '道闸杆故障维修',
+    emergencyLevel: '一般',
+    assignTo: 'MAINTAIN-001',
+    assignTime: '2025-01-04 13:00:00',
+    claimTime: '2025-01-04 13:30:00',
+    completeTime: '2025-01-04 15:00:00',
+    status: '已完成',
+    acceptResult: '通过',
+    acceptBy: 'USER-001',
+    acceptTime: '2025-01-04 15:30:00',
+    createBy: 'USER-001',
+    createTime: '2025-01-04 12:30:00',
+    updateTime: '2025-01-04 15:30:00',
+    remark: '道闸杆已更换，运行正常',
+  },
+  {
+    workorderId: '123e4567-e89b-12d3-a456-426614174004',
+    workorderNo: 'WO20250105005',
+    orderType: '故障维修',
+    faultId: 'FAULT-005',
+    assetId: 'ASSET-005',
+    deviceIds: JSON.stringify(['DEVICE-005']),
+    content: '收费终端主板故障维修',
+    emergencyLevel: '紧急',
+    assignTo: 'MAINTAIN-004',
+    assignTime: '2025-01-05 08:00:00',
+    claimTime: '2025-01-05 08:30:00',
+    completeTime: '2025-01-05 10:00:00',
+    status: '已完成',
+    acceptResult: '通过',
+    acceptBy: 'USER-004',
+    acceptTime: '2025-01-05 10:30:00',
+    createBy: 'USER-004',
+    createTime: '2025-01-04 22:00:00',
+    updateTime: '2025-01-05 10:30:00',
+    remark: '主板已更换，终端运行正常',
+  },
+  {
+    workorderId: '123e4567-e89b-12d3-a456-426614174005',
+    workorderNo: 'WO20250106006',
+    orderType: '故障维修',
+    faultId: 'FAULT-006',
+    assetId: 'ASSET-006',
+    deviceIds: JSON.stringify(['DEVICE-006']),
+    content: '诱导屏LED灯故障维修',
+    emergencyLevel: '一般',
+    assignTo: 'MAINTAIN-005',
+    assignTime: '2025-01-06 10:00:00',
+    claimTime: '2025-01-06 10:30:00',
+    completeTime: '2025-01-06 12:00:00',
+    status: '已完成',
+    acceptResult: '通过',
+    acceptBy: 'USER-005',
+    acceptTime: '2025-01-06 12:30:00',
+    createBy: 'USER-005',
+    createTime: '2025-01-06 09:30:00',
+    updateTime: '2025-01-06 12:30:00',
+    remark: 'LED灯已更换，显示正常',
+  },
+  {
+    workorderId: '123e4567-e89b-12d3-a456-426614174006',
+    workorderNo: 'WO20250107007',
+    orderType: '故障维修',
+    faultId: 'FAULT-007',
+    assetId: 'ASSET-007',
+    deviceIds: JSON.stringify(['DEVICE-007']),
+    content: '道闸控制板故障维修',
+    emergencyLevel: '紧急',
+    assignTo: 'MAINTAIN-001',
+    assignTime: '2025-01-07 09:00:00',
+    claimTime: '2025-01-07 09:30:00',
+    completeTime: '2025-01-07 11:00:00',
+    status: '已完成',
+    acceptResult: '通过',
+    acceptBy: 'USER-001',
+    acceptTime: '2025-01-07 11:30:00',
+    createBy: 'USER-001',
+    createTime: '2025-01-06 23:00:00',
+    updateTime: '2025-01-07 11:30:00',
+    remark: '控制板已更换，道闸运行正常',
+  },
+  {
+    workorderId: '123e4567-e89b-12d3-a456-426614174007',
+    workorderNo: 'WO20250108008',
+    orderType: '设备安装',
+    faultId: null,
+    assetId: 'ASSET-008',
+    deviceIds: JSON.stringify(['DEVICE-008']),
+    content: '车牌识别算法模块安装',
+    emergencyLevel: '一般',
+    assignTo: 'MAINTAIN-006',
+    assignTime: '2025-01-08 10:00:00',
+    claimTime: '2025-01-08 10:30:00',
+    completeTime: '2025-01-08 12:00:00',
+    status: '已完成',
+    acceptResult: '通过',
+    acceptBy: 'USER-006',
+    acceptTime: '2025-01-08 12:30:00',
+    createBy: 'USER-006',
+    createTime: '2025-01-07 16:00:00',
+    updateTime: '2025-01-08 12:30:00',
+    remark: '算法模块已安装并调试完成',
+  },
+  {
+    workorderId: '123e4567-e89b-12d3-a456-426614174008',
+    workorderNo: 'WO20250109009',
+    orderType: '定期维护',
+    faultId: null,
+    assetId: 'ASSET-009',
+    deviceIds: JSON.stringify(['DEVICE-009']),
+    content: '地磁检测器电池更换',
+    emergencyLevel: '一般',
+    assignTo: 'MAINTAIN-003',
+    assignTime: '2025-01-09 14:00:00',
+    claimTime: '2025-01-09 14:30:00',
+    completeTime: '2025-01-09 16:00:00',
+    status: '已完成',
+    acceptResult: '通过',
+    acceptBy: 'USER-003',
+    acceptTime: '2025-01-09 16:30:00',
+    createBy: 'USER-003',
+    createTime: '2025-01-09 13:30:00',
+    updateTime: '2025-01-09 16:30:00',
+    remark: '电池已更换，检测器工作正常',
+  },
+  {
+    workorderId: '123e4567-e89b-12d3-a456-426614174009',
+    workorderNo: 'WO20250110010',
+    orderType: '故障维修',
+    faultId: 'FAULT-010',
+    assetId: 'ASSET-010',
+    deviceIds: JSON.stringify(['DEVICE-010']),
+    content: '收费终端触摸屏故障维修',
+    emergencyLevel: '紧急',
+    assignTo: 'MAINTAIN-004',
+    assignTime: '2025-01-10 08:00:00',
+    claimTime: '2025-01-10 08:30:00',
+    completeTime: '2025-01-10 10:00:00',
+    status: '已完成',
+    acceptResult: '通过',
+    acceptBy: 'USER-004',
+    acceptTime: '2025-01-10 10:30:00',
+    createBy: 'USER-004',
+    createTime: '2025-01-09 22:00:00',
+    updateTime: '2025-01-10 10:30:00',
+    remark: '触摸屏已更换，操作正常',
+  },
+  {
+    workorderId: '123e4567-e89b-12d3-a456-426614174010',
+    workorderNo: 'WO20250111011',
+    orderType: '故障维修',
+    faultId: 'FAULT-011',
+    assetId: 'ASSET-011',
+    deviceIds: JSON.stringify(['DEVICE-011']),
+    content: '道闸减速机故障维修',
+    emergencyLevel: '一般',
+    assignTo: 'MAINTAIN-001',
+    assignTime: '2025-01-11 13:00:00',
+    claimTime: '2025-01-11 13:30:00',
+    completeTime: '2025-01-11 15:00:00',
+    status: '已完成',
+    acceptResult: '通过',
+    acceptBy: 'USER-001',
+    acceptTime: '2025-01-11 15:30:00',
+    createBy: 'USER-001',
+    createTime: '2025-01-11 12:30:00',
+    updateTime: '2025-01-11 15:30:00',
+    remark: '减速机已更换，道闸运行正常',
+  },
+  {
+    workorderId: '123e4567-e89b-12d3-a456-426614174011',
+    workorderNo: 'WO20250112012',
+    orderType: '故障维修',
+    faultId: 'FAULT-012',
+    assetId: 'ASSET-012',
+    deviceIds: JSON.stringify(['DEVICE-012']),
+    content: '车牌识别相机护罩更换',
+    emergencyLevel: '一般',
+    assignTo: 'MAINTAIN-002',
+    assignTime: '2025-01-12 10:00:00',
+    claimTime: '2025-01-12 10:30:00',
+    completeTime: '2025-01-12 12:00:00',
+    status: '已完成',
+    acceptResult: '通过',
+    acceptBy: 'USER-002',
+    acceptTime: '2025-01-12 12:30:00',
+    createBy: 'USER-002',
+    createTime: '2025-01-12 09:30:00',
+    updateTime: '2025-01-12 12:30:00',
+    remark: '相机护罩已更换，防护效果良好',
+  },
+  {
+    workorderId: '123e4567-e89b-12d3-a456-426614174012',
+    workorderNo: 'WO20250113013',
+    orderType: '故障维修',
+    faultId: 'FAULT-013',
+    assetId: 'ASSET-013',
+    deviceIds: JSON.stringify(['DEVICE-013']),
+    content: '诱导屏控制卡故障维修',
+    emergencyLevel: '紧急',
+    assignTo: 'MAINTAIN-005',
+    assignTime: '2025-01-13 09:00:00',
+    claimTime: '2025-01-13 09:30:00',
+    completeTime: '2025-01-13 11:00:00',
+    status: '已完成',
+    acceptResult: '通过',
+    acceptBy: 'USER-005',
+    acceptTime: '2025-01-13 11:30:00',
+    createBy: 'USER-005',
+    createTime: '2025-01-12 23:00:00',
+    updateTime: '2025-01-13 11:30:00',
+    remark: '控制卡已更换，诱导屏显示正常',
+  },
+  {
+    workorderId: '123e4567-e89b-12d3-a456-426614174013',
+    workorderNo: 'WO20250114014',
+    orderType: '定期维护',
+    faultId: null,
+    assetId: 'ASSET-014',
+    deviceIds: JSON.stringify(['DEVICE-014']),
+    content: '地磁检测器外壳清洁维护',
+    emergencyLevel: '一般',
+    assignTo: 'MAINTAIN-003',
+    assignTime: '2025-01-14 14:00:00',
+    claimTime: '2025-01-14 14:30:00',
+    completeTime: '2025-01-14 15:30:00',
+    status: '已完成',
+    acceptResult: '通过',
+    acceptBy: 'USER-003',
+    acceptTime: '2025-01-14 16:00:00',
+    createBy: 'USER-003',
+    createTime: '2025-01-14 13:30:00',
+    updateTime: '2025-01-14 16:00:00',
+    remark: '外壳已清洁，防护效果良好',
+  },
+  {
+    workorderId: '123e4567-e89b-12d3-a456-426614174014',
+    workorderNo: 'WO20250115015',
+    orderType: '设备安装',
+    faultId: null,
+    assetId: 'ASSET-015',
+    deviceIds: JSON.stringify(['DEVICE-015']),
+    content: '收费终端打印机安装',
+    emergencyLevel: '一般',
+    assignTo: 'MAINTAIN-004',
+    assignTime: '2025-01-15 08:00:00',
+    claimTime: '2025-01-15 08:30:00',
+    completeTime: '2025-01-15 10:00:00',
+    status: '已完成',
+    acceptResult: '通过',
+    acceptBy: 'USER-004',
+    acceptTime: '2025-01-15 10:30:00',
+    createBy: 'USER-004',
+    createTime: '2025-01-14 16:00:00',
+    updateTime: '2025-01-15 10:30:00',
+    remark: '打印机已安装并调试完成',
+  },
+];
+
+// 根据工单号获取工单详情
+export const getWorkorderByNo = (workorderNo) => {
+  return workorderList.find(item => item.workorderNo === workorderNo) || {};
+};
+
+// 根据类型获取统计数据
+export const getStatsDataByType = (type = 'inbound') => {
+  if (type === 'inbound') {
+    // 入库管理统计数据
+    const inboundData = dataList('inbound');
+    const totalInboundCount = inboundData.length;
+    const totalInboundQuantity = inboundData.reduce((sum, item) => sum + (item.inQuantity || 0), 0);
+    const totalInboundAmount = inboundData.reduce((sum, item) => sum + (item.totalAmount || 0), 0);
+    
+    // 供应商入库占比
+    const supplierMap = {};
+    inboundData.forEach(item => {
+      const supplier = item.supplier || '未知供应商';
+      supplierMap[supplier] = (supplierMap[supplier] || 0) + (item.totalAmount || 0);
+    });
+    const supplierData = Object.entries(supplierMap).map(([name, value]) => ({ name, value }));
+    
+    // 入库备件状态占比
+    const statusMap = {};
+    inboundData.forEach(item => {
+      const status = item.statusName || '未知状态';
+      statusMap[status] = (statusMap[status] || 0) + (item.totalAmount || 0);
+    });
+    const statusData = Object.entries(statusMap).map(([name, value]) => ({ name, value }));
+    
+    // 近期入库金额趋势
+    const dateMap = {};
+    inboundData.forEach(item => {
+      const date = item.inTime ? item.inTime.slice(0, 10) : '未知日期';
+      dateMap[date] = (dateMap[date] || 0) + (item.totalAmount || 0);
+    });
+    const dates = Object.keys(dateMap).sort();
+    const amountData = dates.map(date => dateMap[date]);
+    
+    return {
+      cards: [
+        { title: '总入库次数', value: totalInboundCount, color: '#4A90E2' },
+        { title: '入库备件总数量', value: totalInboundQuantity, color: '#50E3C2' },
+        { title: '入库总金额', value: totalInboundAmount, color: '#FF9F40' },
+      ],
+      charts: [
+        {
+          title: '供应商入库占比',
+          type: 'pie',
+          data: supplierData,
+        },
+        {
+          title: '入库备件状态占比',
+          type: 'pie',
+          data: statusData,
+        },
+        {
+          title: '近期入库金额趋势',
+          type: 'line',
+          xAxis: dates,
+          series: amountData,
+        },
+      ],
+    };
+  } else if (type === 'outbound') {
+    // 出库管理统计数据
+    const outboundData = dataList('outbound');
+    const totalOutboundCount = outboundData.length;
+    const totalOutboundQuantity = outboundData.reduce((sum, item) => sum + (item.outQuantity || 0), 0);
+    const totalOutboundAmount = outboundData.reduce((sum, item) => sum + (item.outAmount || 0), 0);
+    
+    // 出库备件类型占比
+    const partTypeMap = {};
+    outboundData.forEach(item => {
+      const partType = item.partType || '未知类型';
+      partTypeMap[partType] = (partTypeMap[partType] || 0) + (item.outQuantity || 0);
+    });
+    const partTypeData = Object.entries(partTypeMap).map(([name, value]) => ({ name, value }));
+    
+    // 使用设备类型占比
+    const deviceMap = {};
+    outboundData.forEach(item => {
+      const device = item.useDevice || '未知设备';
+      deviceMap[device] = (deviceMap[device] || 0) + 1;
+    });
+    const deviceData = Object.entries(deviceMap).map(([name, value]) => ({ name, value }));
+    
+    // 出库备件状态占比
+    const statusMap = {};
+    outboundData.forEach(item => {
+      const status = item.statusName || '未知状态';
+      statusMap[status] = (statusMap[status] || 0) + (item.outQuantity || 0);
+    });
+    const statusData = Object.entries(statusMap).map(([name, value]) => ({ name, value }));
+    
+    // 近期出库数量趋势
+    const dateMap = {};
+    outboundData.forEach(item => {
+      const date = item.outTime ? item.outTime.slice(0, 10) : '未知日期';
+      dateMap[date] = (dateMap[date] || 0) + (item.outQuantity || 0);
+    });
+    const dates = Object.keys(dateMap).sort();
+    const quantityData = dates.map(date => dateMap[date]);
+    
+    return {
+      cards: [
+        { title: '总出库次数', value: totalOutboundCount, color: '#4A90E2' },
+        { title: '出库备件总数量', value: totalOutboundQuantity, color: '#50E3C2' },
+        { title: '出库总金额', value: totalOutboundAmount, color: '#FF9F40' },
+      ],
+      charts: [
+        {
+          title: '出库备件状态占比',
+          type: 'pie',
+          data: statusData,
+        },
+        {
+          title: '使用设备类型占比',
+          type: 'pie',
+          data: deviceData,
+        },
+        {
+          title: '近期出库数量趋势',
+          type: 'line',
+          xAxis: dates,
+          series: quantityData,
+        },
+      ],
+    };
+  } else if (type === 'stock') {
+    // 库存管理统计数据
+    const stockData = dataList('stock');
+    const totalPartTypes = stockData.length;
+    const sufficientStockCount = stockData.filter(item => item.stockStatus === '正常').length;
+    const insufficientStockCount = stockData.filter(item => item.stockStatus === '不足').length;
+    const outOfStockCount = stockData.filter(item => item.stockQuantity === 0).length;
+    
+    // 备件类型占比
+    const partTypeMap = {};
+    stockData.forEach(item => {
+      const partType = item.partType || '未知类型';
+      partTypeMap[partType] = (partTypeMap[partType] || 0) + 1;
+    });
+    const partTypeData = Object.entries(partTypeMap).map(([name, value]) => ({ name, value }));
+    
+    // 库存状态占比
+    const statusMap = {};
+    stockData.forEach(item => {
+      const status = item.stockStatus || '未知状态';
+      statusMap[status] = (statusMap[status] || 0) + 1;
+    });
+    const statusData = Object.entries(statusMap).map(([name, value]) => ({ name, value }));
+    
+    // 库存不足备件排名
+    const insufficientParts = stockData
+      .filter(item => item.stockStatus === '不足')
+      .sort((a, b) => (a.stockQuantity || 0) - (b.stockQuantity || 0))
+      .slice(0, 5);
+    const partNames = insufficientParts.map(item => item.partName);
+    const stockQuantities = insufficientParts.map(item => item.stockQuantity || 0);
+    
+    return {
+      cards: [
+        { title: '总备件种类数', value: totalPartTypes, color: '#4A90E2' },
+        { title: '库存充足数', value: sufficientStockCount, color: '#50E3C2' },
+        { title: '库存不足数', value: insufficientStockCount, color: '#FF9F40' },
+      ],
+      charts: [
+        {
+          title: '备件类型占比',
+          type: 'pie',
+          data: partTypeData,
+        },
+        {
+          title: '库存状态占比',
+          type: 'pie',
+          data: statusData,
+        },
+        {
+          title: '库存不足备件排名',
+          type: 'bar',
+          xAxis: partNames,
+          series: stockQuantities,
+        },
+      ],
+    };
+  }
+  return {
+    cards: [],
+    charts: [],
+  };
+};
