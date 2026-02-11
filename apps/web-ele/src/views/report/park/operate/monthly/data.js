@@ -230,18 +230,26 @@ export const dataList = () => {
   ];
 };
 
+/** 获取最大ID */
+export function getMaxId() {
+  const list = dataList();
+  return list.length > 0 ? Math.max(...list.map(item => item.id)) : 0;
+}
+
 /** 搜索表单配置 - 月度版本 */
 export function useFormSchema() {
   return [
     {
       fieldName: 'statMonth',
       label: '统计月份',
-      component: 'MonthPicker',
+      component: 'DatePicker',
       labelWidth: '100',
       componentProps: {
         type: 'month',
         placeholder: '请选择统计月份',
         format: 'YYYY-MM',
+        valueFormat: 'YYYY-MM',
+        class: 'w-full',
       },
       rules: 'required',
     },
@@ -264,6 +272,7 @@ export function useFormSchema() {
         ],
         placeholder: '请选择行政区域',
         showSearch: true,
+        class: 'w-full',
       },
       fieldName: 'areaName',
       label: '行政区域',
@@ -283,6 +292,148 @@ export function useFormSchema() {
           { label: '学校停车场', value: '学校停车场' },
         ],
         placeholder: '请选择车场类型',
+        class: 'w-full',
+      },
+    },
+  ];
+}
+
+/** 扩展表单配置用于新增编辑 */
+export function useExtendedFormSchema() {
+  return [
+    {
+      fieldName: 'statMonth',
+      label: '统计月份',
+      component: 'DatePicker',
+      labelWidth: '100',
+      componentProps: {
+        type: 'month',
+        placeholder: '请选择统计月份',
+        format: 'YYYY-MM',
+        valueFormat: 'YYYY-MM',
+        class: 'w-full',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'areaName',
+      label: '行政区域',
+      component: 'Select',
+      labelWidth: '100',
+      componentProps: {
+        allowClear: true,
+        filterOption: true,
+        options: [
+          { label: '天河区', value: '天河区' },
+          { label: '越秀区', value: '越秀区' },
+          { label: '海珠区', value: '海珠区' },
+          { label: '白云区', value: '白云区' },
+          { label: '黄埔区', value: '黄埔区' },
+          { label: '荔湾区', value: '荔湾区' },
+          { label: '番禺区', value: '番禺区' },
+          { label: '南沙区', value: '南沙区' },
+          { label: '从化区', value: '从化区' },
+        ],
+        placeholder: '请选择行政区域',
+        showSearch: true,
+        class: 'w-full',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'parkType',
+      label: '车场类型',
+      component: 'Select',
+      labelWidth: '100',
+      componentProps: {
+        options: [
+          { label: '商业停车场', value: '商业停车场' },
+          { label: '路侧停车', value: '路侧停车' },
+          { label: '小区停车场', value: '小区停车场' },
+          { label: '景区停车场', value: '景区停车场' },
+          { label: '医院停车场', value: '医院停车场' },
+          { label: '学校停车场', value: '学校停车场' },
+        ],
+        placeholder: '请选择车场类型',
+        class: 'w-full',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'totalEntry',
+      label: '总入场车次',
+      component: 'InputNumber',
+      labelWidth: '100',
+      componentProps: {
+        min: 0,
+        placeholder: '请输入总入场车次',
+        class: 'w-full',
+      },
+      rules: 'required|numeric',
+    },
+    {
+      fieldName: 'totalIncome',
+      label: '总收费金额',
+      component: 'InputNumber',
+      labelWidth: '100',
+      componentProps: {
+        min: 0,
+        placeholder: '请输入总收费金额',
+        precision: 2,
+        step: 0.01,
+        class: 'w-full',
+      },
+      rules: 'required|numeric',
+    },
+    {
+      fieldName: 'avgBerthUtilization',
+      label: '月均泊位利用率',
+      component: 'Input',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请输入平均泊位利用率，如：78.5%',
+        class: 'w-full',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'faultDisposalRate',
+      label: '故障处置率',
+      component: 'Input',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请输入故障处置率，如：94.2%',
+        class: 'w-full',
+      },
+    },
+    {
+      fieldName: 'alarmDisposalRate',
+      label: '预警处置率',
+      component: 'Input',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请输入预警处置率，如：96.5%',
+        class: 'w-full',
+      },
+    },
+    {
+      fieldName: 'yoyGrowthRate',
+      label: '同比增长率',
+      component: 'Input',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请输入同比增长率，如：12.3%',
+        class: 'w-full',
+      },
+    },
+    {
+      fieldName: 'momGrowthRate',
+      label: '环比增长率',
+      component: 'Input',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请输入环比增长率，如：5.7%',
+        class: 'w-full',
       },
     },
   ];
@@ -361,7 +512,7 @@ export function useGridColumns() {
     },
     {
       title: '操作',
-      width: 150,
+      width: 180,
       fixed: 'right',
       slots: { default: 'actions' },
     },

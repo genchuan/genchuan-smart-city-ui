@@ -1,7 +1,8 @@
 <script setup>
 import { ref } from 'vue';
 
-import ledgerchart from './ledgerchart.vue';
+import Parkrecord from './parkrecord/index.vue';
+import Record from './record/index.vue';
 import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
@@ -13,6 +14,22 @@ const changeArrowStatus = () => {
   });
 };
 const tabArray = ref([
+  {
+    label: '对账记录',
+    components: Record,
+    showSecondary: false,
+    secondShow: false,
+    arrowShow: false,
+    arrowState: false,
+  },
+  {
+    label: '停车记录',
+    components: Parkrecord,
+    showSecondary: false,
+    secondShow: false,
+    arrowShow: false,
+    arrowState: false,
+  },
   {
     label: '资源台账管理',
     components: Table,
@@ -27,12 +44,12 @@ const arrowChange = () => {
     v.arrowShow = !v.arrowShow;
   });
 };
-const activeName = ref('资源台账管理');
+const activeName = ref('对账记录');
 const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <ledgerchart v-if="tabArray[0].arrowShow" />
+    <!-- <ledgerchart v-if="tabArray[0].arrowShow" /> -->
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"

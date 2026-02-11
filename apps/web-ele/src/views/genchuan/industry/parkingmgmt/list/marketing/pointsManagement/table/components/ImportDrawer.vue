@@ -1,18 +1,81 @@
+<script setup>
+import { reactive, ref } from 'vue';
+
+import { ElMessage } from 'element-plus';
+
+const emit = defineEmits(['close', 'save']);
+
+const formRef = ref(null);
+const formData = reactive({
+  selectUserName: '',
+  importPoints: 1,
+  importReason: '',
+  importType: '单个导入',
+  batchImportFile: '',
+});
+
+const rules = {
+  selectUserName: [
+    { required: true, message: '请输入用户选择', trigger: 'blur' },
+  ],
+  importPoints: [
+    { required: true, message: '请输入积分数量', trigger: 'blur' },
+  ],
+  importReason: [
+    { required: true, message: '请输入导入原因', trigger: 'blur' },
+  ],
+  importType: [
+    { required: true, message: '请选择导入方式', trigger: 'change' },
+  ],
+};
+
+const handleFileChange = (file) => {
+  formData.batchImportFile = file.raw;
+};
+
+const handleSave = async () => {
+  if (!formRef.value) return;
+
+  try {
+    await formRef.value.validate();
+    emit('save', formData);
+    ElMessage.success('导入成功');
+  } catch (error) {
+    console.error('表单验证失败:', error);
+  }
+};
+</script>
+
 <template>
   <div class="import-drawer">
     <div class="drawer-header">
       <h3>人工积分导入</h3>
     </div>
     <div class="drawer-content">
-      <el-form :model="formData" :rules="rules" ref="formRef" label-width="100px">
+      <el-form
+        :model="formData"
+        :rules="rules"
+        ref="formRef"
+        label-width="100px"
+      >
         <el-form-item label="用户选择" required>
-          <el-input v-model="formData.selectUserName" placeholder="请输入用户选择" />
+          <el-input
+            v-model="formData.selectUserName"
+            placeholder="请输入用户选择"
+          />
         </el-form-item>
         <el-form-item label="积分数量" required>
-          <el-input-number v-model="formData.importPoints" placeholder="请输入积分数量" :min="1" />
+          <el-input-number
+            v-model="formData.importPoints"
+            placeholder="请输入积分数量"
+            :min="1"
+          />
         </el-form-item>
         <el-form-item label="导入原因" required>
-          <el-input v-model="formData.importReason" placeholder="请输入导入原因" />
+          <el-input
+            v-model="formData.importReason"
+            placeholder="请输入导入原因"
+          />
         </el-form-item>
         <el-form-item label="导入方式" required>
           <el-select v-model="formData.importType" placeholder="请选择导入方式">
@@ -20,7 +83,10 @@
             <el-option label="批量导入" value="批量导入" />
           </el-select>
         </el-form-item>
-        <el-form-item label="批量导入文件" v-if="formData.importType === '批量导入'">
+        <el-form-item
+          label="批量导入文件"
+          v-if="formData.importType === '批量导入'"
+        >
           <el-upload
             class="upload-demo"
             action="#"
@@ -45,45 +111,6 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { ref, reactive } from 'vue';
-import { ElMessage } from 'element-plus';
-
-const emit = defineEmits(['close', 'save']);
-
-const formRef = ref(null);
-const formData = reactive({
-  selectUserName: '',
-  importPoints: 1,
-  importReason: '',
-  importType: '单个导入',
-  batchImportFile: ''
-});
-
-const rules = {
-  selectUserName: [{ required: true, message: '请输入用户选择', trigger: 'blur' }],
-  importPoints: [{ required: true, message: '请输入积分数量', trigger: 'blur' }],
-  importReason: [{ required: true, message: '请输入导入原因', trigger: 'blur' }],
-  importType: [{ required: true, message: '请选择导入方式', trigger: 'change' }]
-};
-
-const handleFileChange = (file) => {
-  formData.batchImportFile = file.raw;
-};
-
-const handleSave = async () => {
-  if (!formRef.value) return;
-  
-  try {
-    await formRef.value.validate();
-    emit('save', formData);
-    ElMessage.success('导入成功');
-  } catch (error) {
-    console.error('表单验证失败:', error);
-  }
-};
-</script>
 
 <style scoped>
 .import-drawer {

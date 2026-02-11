@@ -15,7 +15,7 @@ import { exportToExcel } from '#/utils/excel.js';
 // 引入封装后的详情抽屉组件
 import ReportDetailDrawer from '#/views/report/park/operate/daily/detail.vue';
 
-import { dataList, textObj, useFormSchema, useGridColumns } from './data';
+import { dataList, textObj, useFormSchema, useGridColumns, getMaxId } from './data';
 
 const props = defineProps({
   secondShow: {
@@ -57,9 +57,80 @@ const [Form, formApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useFormSchema(),
+  schema: extendedFormSchema(),
   showDefaultActions: false,
 });
+
+// 扩展表单配置，包含所有字段
+function extendedFormSchema() {
+  const baseSchema = useFormSchema();
+  return [
+    ...baseSchema,
+    {
+      fieldName: 'totalEntry',
+      label: '总入场车次',
+      component: 'InputNumber',
+      labelWidth: '100',
+      componentProps: {
+        min: 0,
+        placeholder: '请输入总入场车次',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'totalIncome',
+      label: '总收费金额',
+      component: 'InputNumber',
+      labelWidth: '100',
+      componentProps: {
+        min: 0,
+        placeholder: '请输入总收费金额',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'avgBerthUtilization',
+      label: '平均泊位利用率',
+      component: 'Input',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请输入平均泊位利用率，如：78.5%',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'alarmTotal',
+      label: '预警总数',
+      component: 'InputNumber',
+      labelWidth: '100',
+      componentProps: {
+        min: 0,
+        placeholder: '请输入预警总数',
+      },
+    },
+    {
+      fieldName: 'faultDeviceCount',
+      label: '故障设备数',
+      component: 'InputNumber',
+      labelWidth: '100',
+      componentProps: {
+        min: 0,
+        placeholder: '请输入故障设备数',
+      },
+    },
+  ];
+}
+
+// 生成当前时间
+const getCurrentTime = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
+};
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   appendToMain: true,
@@ -69,14 +140,41 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
   onConfirm() {
     const obj = formApi.form.values;
+    const currentTime = getCurrentTime();
+
     if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-      reportObj.apilist.push(obj);
+      // 新增数据
+      const newId = getMaxId() + 1;
+      const newData = {
+        ...obj,
+        id: newId,
+        totalEntry: Number(obj.totalEntry) || 0,
+        totalIncome: Number(obj.totalIncome) || 0,
+        avgBerthUtilization: obj.avgBerthUtilization || '0%',
+        alarmTotal: Number(obj.alarmTotal) || 0,
+        faultDeviceCount: Number(obj.faultDeviceCount) || 0,
+        updateTime: currentTime,
+        operator: '系统自动生成'
+      };
+      reportObj.apilist.unshift(newData); // 添加到列表开头
+      ElMessage.success('新增成功');
     } else {
-      reportObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          reportObj.apilist[i] = obj;
-        }
-      });
+      // 编辑数据
+      const index = reportObj.apilist.findIndex(v => v.id === formData.value?.id);
+      if (index !== -1) {
+        const updatedData = {
+          ...reportObj.apilist[index],
+          ...obj,
+          totalEntry: Number(obj.totalEntry) || 0,
+          totalIncome: Number(obj.totalIncome) || 0,
+          alarmTotal: Number(obj.alarmTotal) || 0,
+          faultDeviceCount: Number(obj.faultDeviceCount) || 0,
+          updateTime: currentTime,
+          operator: '系统自动生成'
+        };
+        reportObj.apilist[index] = updatedData;
+        ElMessage.success('编辑成功');
+      }
     }
     handleRefresh();
     formDrawerApi.close();
@@ -85,9 +183,16 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     if (isOpen) {
       formData.value = formDrawerApi.getData();
       if (formData.value?.id) {
+        // 编辑模式：设置表单值
         await formApi.setValues(formData.value);
       } else {
+        // 新增模式：重置表单并设置默认值
         formApi.resetForm();
+        // 可以设置默认值，比如默认日期为今天
+        const today = new Date().toISOString().split('T')[0];
+        formApi.setValues({
+          statDate: today
+        });
       }
     }
   },
@@ -101,6 +206,11 @@ function handleRefresh() {
 /** 导出表格 */
 async function handleExport() {
   exportToExcel(reportObj.apilist, textObj.excelName, textObj.excelAllName);
+}
+
+/** 导出单行数据 */
+function handleExportRow(row) {
+  exportToExcel([row], `${row.areaName}-${row.parkType}`, `${row.areaName}-${row.parkType}.xlsx`);
 }
 
 /** 创建报表 */
@@ -136,6 +246,11 @@ async function handleDelete(row) {
 }
 
 async function handleDeleteBatch() {
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请先选择要删除的数据');
+    return;
+  }
+
   await confirm($t('确定删除这些数据吗？'));
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deletingBatch'),
@@ -171,24 +286,40 @@ const changeTotalShow = () => {
   reportObj.totalShow = !reportObj.totalShow;
 };
 
+// 搜索条件
+const searchParams = ref({});
+
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
 
   let filteredList = reportObj.apilist;
+
+  // 1. 先根据标签页过滤
   if (activeName.value === '今日数据') {
-    filteredList = reportObj.apilist.filter(v => v.statDate === '2026-02-05');
+    filteredList = filteredList.filter(v => v.statDate === '2026-02-05');
   } else if (activeName.value === '本周数据') {
-    filteredList = reportObj.apilist.filter(v => {
+    filteredList = filteredList.filter(v => {
       const date = new Date(v.statDate);
       const weekStart = new Date('2026-02-01');
       const weekEnd = new Date('2026-02-07');
       return date >= weekStart && date <= weekEnd;
     });
   } else if (activeName.value === '商业停车场') {
-    filteredList = reportObj.apilist.filter(v => v.parkType === '商业停车场');
+    filteredList = filteredList.filter(v => v.parkType === '商业停车场');
   } else if (activeName.value === '路侧停车') {
-    filteredList = reportObj.apilist.filter(v => v.parkType === '路侧停车');
+    filteredList = filteredList.filter(v => v.parkType === '路侧停车');
+  }
+
+  // 2. 再根据搜索条件过滤
+  if (searchParams.value.statDate) {
+    filteredList = filteredList.filter(v => v.statDate === searchParams.value.statDate);
+  }
+  if (searchParams.value.areaName) {
+    filteredList = filteredList.filter(v => v.areaName === searchParams.value.areaName);
+  }
+  if (searchParams.value.parkType) {
+    filteredList = filteredList.filter(v => v.parkType === searchParams.value.parkType);
   }
 
   reportObj.total = filteredList.length;
@@ -200,39 +331,45 @@ const getTableData = (pageObj) => {
   return reportObj;
 };
 
-const [QueryForm] = useVbenForm({
-  // 默认展开
+// 添加查询表单
+const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
-  // 所有表单项共用，可单独在表单内覆盖
   commonConfig: {
-    // 所有表单项
     componentProps: {
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
-  // 提交函数
   handleSubmit: onSubmit,
-  // 垂直布局，label和input在不同行，值为vertical
-  // 水平布局，label和input在同一行
+  handleReset: onReset,
   layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
-  }),
-  // 是否可展开
+  schema: useFormSchema().map((v) => ({
+    ...v,
+    rules: undefined, // 移除表单验证规则，搜索不需要验证
+  })),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
+    type: 'primary',
+  },
+  resetButtonOptions: {
+    content: '重置',
   },
 });
 
 // 搜索表单查询
-function onSubmit() {
+function onSubmit(values) {
+  searchParams.value = { ...values };
   drawerApi.close();
+  gridApi.query();
+}
+
+// 重置搜索表单
+function onReset() {
+  searchParams.value = {};
+  queryFormApi.resetForm();
+  gridApi.query();
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -269,7 +406,6 @@ const handleOpenDetail = (row) => {
   reportObj.detailObj = row;
   // 通过ref调用组件的open方法
   reportDetailDrawerRef.value.open();
-  console.log(row);
 };
 
 const tabsData = ref([
@@ -282,21 +418,34 @@ const tabsData = ref([
 
 const createLabel = (item) => {
   let count = 0;
+  let filteredList = reportObj.apilist;
+
+  // 先应用搜索条件
+  if (searchParams.value.statDate) {
+    filteredList = filteredList.filter(v => v.statDate === searchParams.value.statDate);
+  }
+  if (searchParams.value.areaName) {
+    filteredList = filteredList.filter(v => v.areaName === searchParams.value.areaName);
+  }
+  if (searchParams.value.parkType) {
+    filteredList = filteredList.filter(v => v.parkType === searchParams.value.parkType);
+  }
+
   if (item.label === '今日数据') {
-    count = reportObj.apilist.filter((v) => v.statDate === '2026-02-05').length;
+    count = filteredList.filter((v) => v.statDate === '2026-02-05').length;
   } else if (item.label === '本周数据') {
-    count = reportObj.apilist.filter(v => {
+    count = filteredList.filter(v => {
       const date = new Date(v.statDate);
       const weekStart = new Date('2026-02-01');
       const weekEnd = new Date('2026-02-07');
       return date >= weekStart && date <= weekEnd;
     }).length;
   } else if (item.label === '商业停车场') {
-    count = reportObj.apilist.filter((v) => v.parkType === '商业停车场').length;
+    count = filteredList.filter((v) => v.parkType === '商业停车场').length;
   } else if (item.label === '路侧停车') {
-    count = reportObj.apilist.filter((v) => v.parkType === '路侧停车').length;
+    count = filteredList.filter((v) => v.parkType === '路侧停车').length;
   } else if (item.label === '全部数据') {
-    count = reportObj.apilist.length;
+    count = filteredList.length;
   }
   return `${item.label}(${count})`;
 };
@@ -430,9 +579,20 @@ const reportDetailDrawerRef = ref(null);
             @click="handleOpenDetail(row)"
           />
           <IconButton
+            content="编辑"
+            icon-name="Edit"
+            @click="handleEdit(row)"
+          />
+          <IconButton
             content="导出"
             icon-name="download"
             @click="handleExportRow(row)"
+          />
+          <IconButton
+            content="删除"
+            icon-name="Delete"
+            color="#F56C6C"
+            @click="handleDelete(row)"
           />
         </div>
       </template>

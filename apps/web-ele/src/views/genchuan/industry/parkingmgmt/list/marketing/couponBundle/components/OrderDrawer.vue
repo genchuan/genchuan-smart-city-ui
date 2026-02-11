@@ -1,16 +1,17 @@
 <script setup>
 import { computed } from 'vue';
+
 import { useVbenDrawer } from '@vben/common-ui';
 
 const props = defineProps({
   orderDetail: {
     type: Object,
-    default: () => ({})
+    default: () => ({}),
   },
   title: {
     type: String,
-    default: '查看关联订单'
-  }
+    default: '查看关联订单',
+  },
 });
 
 const emit = defineEmits(['close']);
@@ -33,7 +34,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
 // 暴露open方法给父组件
 defineExpose({
   open: drawerApi.open,
-  setData: drawerApi.setData
+  setData: drawerApi.setData,
 });
 
 // 订单详情字段配置
@@ -41,13 +42,21 @@ const orderFields = [
   { key: 'orderId', label: '订单ID' },
   { key: 'orderTime', label: '订单时间' },
   { key: 'totalAmount', label: '总金额', formatter: (value) => `${value}元` },
-  { key: 'deductAmount', label: '抵扣金额', formatter: (value) => `${value}元` },
-  { key: 'actualAmount', label: '实际金额', formatter: (value) => `${value}元` },
+  {
+    key: 'deductAmount',
+    label: '抵扣金额',
+    formatter: (value) => `${value}元`,
+  },
+  {
+    key: 'actualAmount',
+    label: '实际金额',
+    formatter: (value) => `${value}元`,
+  },
   { key: 'payStatus', label: '支付状态' },
   { key: 'lotName', label: '车场名称' },
   { key: 'couponName', label: '优惠券名称' },
   { key: 'parkingTime', label: '入场时间' },
-  { key: 'leaveTime', label: '出场时间' }
+  { key: 'leaveTime', label: '出场时间' },
 ];
 
 // 格式化值
@@ -64,7 +73,11 @@ const formatValue = (field, value) => {
     <div class="detail-container">
       <div class="detail-card">
         <div class="detail-content">
-          <div class="detail-item" v-for="field in orderFields" :key="field.key">
+          <div
+            class="detail-item"
+            v-for="field in orderFields"
+            :key="field.key"
+          >
             <span class="detail-label">{{ field.label }}:</span>
             <span class="detail-value">
               {{ formatValue(field, orderDetail[field.key]) }}

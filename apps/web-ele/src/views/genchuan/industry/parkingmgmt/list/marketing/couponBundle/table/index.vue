@@ -12,11 +12,11 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import IconButton from '#/components/common/IconButton.vue';
-import UserDrawer from '../components/UserDrawer.vue';
-import OrderDrawer from '../components/OrderDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
+import OrderDrawer from '../components/OrderDrawer.vue';
+import UserDrawer from '../components/UserDrawer.vue';
 import {
   dataList,
   detailFields,
@@ -428,20 +428,52 @@ const getTableData = (pageObj) => {
 
     // 字段筛选
     let fieldMatch = true;
-    if (props.activeTab === '券包管理') {
-      // 券包管理标签页的筛选
-      fieldMatch = fieldMatch && (!filterCouponName.value || v.couponName.includes(filterCouponName.value));
-      fieldMatch = fieldMatch && (!filterApplyScope.value || v.applyScope === filterApplyScope.value);
-      fieldMatch = fieldMatch && (!filterPackageName.value || v.packageName.includes(filterPackageName.value));
-    } else if (props.activeTab === '定向发放管理') {
-      // 定向发放管理标签页的筛选
-      fieldMatch = fieldMatch && (!filterPackageSelection.value || v.packageSelection === filterPackageSelection.value);
-      fieldMatch = fieldMatch && (!filterTargetedUserTag.value || v.targetedUserTag === filterTargetedUserTag.value);
-      fieldMatch = fieldMatch && (!filterReleaseWay.value || v.releaseWay === filterReleaseWay.value);
-    } else if (props.activeTab === '使用记录') {
-      // 使用记录标签页的筛选
-      fieldMatch = fieldMatch && (!filterPackageName.value || v.packageName.includes(filterPackageName.value));
-      fieldMatch = fieldMatch && (!filterLotName.value || v.lotName === filterLotName.value);
+    switch (props.activeTab) {
+      case '使用记录': {
+        // 使用记录标签页的筛选
+        fieldMatch =
+          fieldMatch &&
+          (!filterPackageName.value ||
+            v.packageName.includes(filterPackageName.value));
+        fieldMatch =
+          fieldMatch &&
+          (!filterLotName.value || v.lotName === filterLotName.value);
+
+        break;
+      }
+      case '券包管理': {
+        // 券包管理标签页的筛选
+        fieldMatch =
+          fieldMatch &&
+          (!filterCouponName.value ||
+            v.couponName.includes(filterCouponName.value));
+        fieldMatch =
+          fieldMatch &&
+          (!filterApplyScope.value || v.applyScope === filterApplyScope.value);
+        fieldMatch =
+          fieldMatch &&
+          (!filterPackageName.value ||
+            v.packageName.includes(filterPackageName.value));
+
+        break;
+      }
+      case '定向发放管理': {
+        // 定向发放管理标签页的筛选
+        fieldMatch =
+          fieldMatch &&
+          (!filterPackageSelection.value ||
+            v.packageSelection === filterPackageSelection.value);
+        fieldMatch =
+          fieldMatch &&
+          (!filterTargetedUserTag.value ||
+            v.targetedUserTag === filterTargetedUserTag.value);
+        fieldMatch =
+          fieldMatch &&
+          (!filterReleaseWay.value || v.releaseWay === filterReleaseWay.value);
+
+        break;
+      }
+      // No default
     }
 
     return statusMatch && fieldMatch;
@@ -806,7 +838,8 @@ const handleDownloadPDF = (row) => {
 
 // 处理包含优惠券点击
 const handleCouponNameClick = (couponName) => {
-  filterCouponName.value = filterCouponName.value === couponName ? '' : couponName;
+  filterCouponName.value =
+    filterCouponName.value === couponName ? '' : couponName;
   gridApi.query();
 };
 
@@ -818,7 +851,8 @@ const handleCancelCouponNameFilter = () => {
 
 // 处理适用范围点击
 const handleApplyScopeClick = (applyScope) => {
-  filterApplyScope.value = filterApplyScope.value === applyScope ? '' : applyScope;
+  filterApplyScope.value =
+    filterApplyScope.value === applyScope ? '' : applyScope;
   gridApi.query();
 };
 
@@ -830,7 +864,8 @@ const handleCancelApplyScopeFilter = () => {
 
 // 处理券包选择点击
 const handlePackageSelectionClick = (packageSelection) => {
-  filterPackageSelection.value = filterPackageSelection.value === packageSelection ? '' : packageSelection;
+  filterPackageSelection.value =
+    filterPackageSelection.value === packageSelection ? '' : packageSelection;
   gridApi.query();
 };
 
@@ -842,7 +877,8 @@ const handleCancelPackageSelectionFilter = () => {
 
 // 处理定向用户标签点击
 const handleTargetedUserTagClick = (targetedUserTag) => {
-  filterTargetedUserTag.value = filterTargetedUserTag.value === targetedUserTag ? '' : targetedUserTag;
+  filterTargetedUserTag.value =
+    filterTargetedUserTag.value === targetedUserTag ? '' : targetedUserTag;
   gridApi.query();
 };
 
@@ -854,7 +890,8 @@ const handleCancelTargetedUserTagFilter = () => {
 
 // 处理发放方式点击
 const handleReleaseWayClick = (releaseWay) => {
-  filterReleaseWay.value = filterReleaseWay.value === releaseWay ? '' : releaseWay;
+  filterReleaseWay.value =
+    filterReleaseWay.value === releaseWay ? '' : releaseWay;
   gridApi.query();
 };
 
@@ -866,7 +903,8 @@ const handleCancelReleaseWayFilter = () => {
 
 // 处理券包名称点击
 const handlePackageNameClick = (packageName) => {
-  filterPackageName.value = filterPackageName.value === packageName ? '' : packageName;
+  filterPackageName.value =
+    filterPackageName.value === packageName ? '' : packageName;
   gridApi.query();
 };
 
@@ -1081,7 +1119,7 @@ const handleCancelLotNameFilter = () => {
           type="primary"
           style="cursor: pointer"
         >
-          {{ 
+          {{
             props.activeTab === '定向发放管理'
               ? row.releaseId
               : props.activeTab === '使用记录'
@@ -1189,7 +1227,7 @@ const handleCancelLotNameFilter = () => {
                   : 'danger'
           "
         >
-          {{ 
+          {{
             props.activeTab === '定向发放管理'
               ? row.releaseStatus
               : props.activeTab === '使用记录'

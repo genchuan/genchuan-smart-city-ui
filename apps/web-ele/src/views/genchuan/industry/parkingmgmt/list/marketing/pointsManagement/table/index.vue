@@ -62,20 +62,25 @@ const props = defineProps({
   },
 });
 const getTitle = computed(() => {
-  if (props.activeTab === '积分规则') {
-    return formData.value?.ruleId ? textObj.editText : textObj.addText;
-  } else if (props.activeTab === '用户积分查询') {
-    return formData.value?.userId
-      ? userPointsTextObj.editText
-      : userPointsTextObj.addText;
-  } else if (props.activeTab === '积分兑换管理') {
-    return formData.value?.exchangeRecordId
-      ? exchangeManagementTextObj.editText
-      : exchangeManagementTextObj.addText;
-  } else {
-    return formData.value?.importId
-      ? manualPointsImportTextObj.editText
-      : manualPointsImportTextObj.addText;
+  switch (props.activeTab) {
+    case '用户积分查询': {
+      return formData.value?.userId
+        ? userPointsTextObj.editText
+        : userPointsTextObj.addText;
+    }
+    case '积分兑换管理': {
+      return formData.value?.exchangeRecordId
+        ? exchangeManagementTextObj.editText
+        : exchangeManagementTextObj.addText;
+    }
+    case '积分规则': {
+      return formData.value?.ruleId ? textObj.editText : textObj.addText;
+    }
+    default: {
+      return formData.value?.importId
+        ? manualPointsImportTextObj.editText
+        : manualPointsImportTextObj.addText;
+    }
   }
 });
 
@@ -121,7 +126,7 @@ const [ImportDrawer, importDrawerApi] = useVbenDrawer({
       handleRefresh();
       // 显示成功消息
       ElMessage.success('导入成功');
-    } catch (error) {
+    } catch {
       // console.error('表单验证失败:', error);
       ElMessage.error('请检查必填字段');
     }
@@ -135,7 +140,7 @@ const [ImportDrawer, importDrawerApi] = useVbenDrawer({
         importPoints: 1,
         importReason: '',
         importType: '单个导入',
-        batchImportFile: ''
+        batchImportFile: '',
       });
     }
   },
@@ -147,7 +152,7 @@ const importFormData = reactive({
   importPoints: 1,
   importReason: '',
   importType: '单个导入',
-  batchImportFile: ''
+  batchImportFile: '',
 });
 
 // 当前用户信息
@@ -162,7 +167,7 @@ const pointsDetailData = ref([
     changePoints: 50,
     changeTime: '2025-02-05 10:30:50',
     reason: '首次注册送积分',
-    operator: '系统'
+    operator: '系统',
   },
   {
     recordId: 'REC002',
@@ -170,7 +175,7 @@ const pointsDetailData = ref([
     changePoints: 10,
     changeTime: '2025-02-06 09:45:20',
     reason: '每日登录送积分',
-    operator: '系统'
+    operator: '系统',
   },
   {
     recordId: 'REC003',
@@ -178,7 +183,7 @@ const pointsDetailData = ref([
     changePoints: 20,
     changeTime: '2025-02-06 14:20:15',
     reason: '兑换优惠券',
-    operator: '用户'
+    operator: '用户',
   },
   {
     recordId: 'REC004',
@@ -186,7 +191,7 @@ const pointsDetailData = ref([
     changePoints: 30,
     changeTime: '2025-02-07 11:10:30',
     reason: '首次停车送积分',
-    operator: '系统'
+    operator: '系统',
   },
   {
     recordId: 'REC005',
@@ -194,8 +199,8 @@ const pointsDetailData = ref([
     changePoints: 15,
     changeTime: '2025-02-07 16:40:15',
     reason: '评价停车场送积分',
-    operator: '系统'
-  }
+    operator: '系统',
+  },
 ]);
 
 // 用户选项数据
@@ -209,17 +214,25 @@ const userOptions = [
   { label: '吴九', value: '吴九' },
   { label: '郑十', value: '郑十' },
   { label: '王十一', value: '王十一' },
-  { label: '李十二', value: '李十二' }
+  { label: '李十二', value: '李十二' },
 ];
 
 // 收藏状态映射
 const collectedMap = ref(new Map());
 
 const importRules = {
-  selectUserName: [{ required: true, message: '请选择用户', trigger: 'change' }],
-  importPoints: [{ required: true, message: '请输入积分数量', trigger: 'blur' }],
-  importReason: [{ required: true, message: '请输入导入原因', trigger: 'blur' }],
-  importType: [{ required: true, message: '请选择导入方式', trigger: 'change' }]
+  selectUserName: [
+    { required: true, message: '请选择用户', trigger: 'change' },
+  ],
+  importPoints: [
+    { required: true, message: '请输入积分数量', trigger: 'blur' },
+  ],
+  importReason: [
+    { required: true, message: '请输入导入原因', trigger: 'blur' },
+  ],
+  importType: [
+    { required: true, message: '请选择导入方式', trigger: 'change' },
+  ],
 };
 
 /** 处理文件上传 */
@@ -227,14 +240,19 @@ function handleFileChange(file) {
   importFormData.batchImportFile = file.raw;
 }
 const currentFormSchema = computed(() => {
-  if (props.activeTab === '积分规则') {
-    return useFormSchema();
-  } else if (props.activeTab === '用户积分查询') {
-    return useUserPointsFormSchema();
-  } else if (props.activeTab === '积分兑换管理') {
-    return useExchangeManagementFormSchema();
-  } else {
-    return useManualPointsImportFormSchema();
+  switch (props.activeTab) {
+    case '用户积分查询': {
+      return useUserPointsFormSchema();
+    }
+    case '积分兑换管理': {
+      return useExchangeManagementFormSchema();
+    }
+    case '积分规则': {
+      return useFormSchema();
+    }
+    default: {
+      return useManualPointsImportFormSchema();
+    }
   }
 });
 
@@ -258,45 +276,64 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
   onConfirm() {
     const obj = formApi.form.values;
-    if (props.activeTab === '积分规则') {
-      if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-        dataObj.apilist.push(obj);
-      } else {
-        dataObj.apilist.forEach((v, i) => {
-          if (v.ruleId === formData.value?.ruleId) {
-            dataObj.apilist[i] = obj;
-          }
-        });
+    switch (props.activeTab) {
+      case '用户积分查询': {
+        if (
+          formDrawerApi.sharedData.payload.title === userPointsTextObj.addText
+        ) {
+          dataObj.apilist.push(obj);
+        } else {
+          dataObj.apilist.forEach((v, i) => {
+            if (v.userId === formData.value?.userId) {
+              dataObj.apilist[i] = obj;
+            }
+          });
+        }
+
+        break;
       }
-    } else if (props.activeTab === '用户积分查询') {
-      if (formDrawerApi.sharedData.payload.title === userPointsTextObj.addText) {
-        dataObj.apilist.push(obj);
-      } else {
-        dataObj.apilist.forEach((v, i) => {
-          if (v.userId === formData.value?.userId) {
-            dataObj.apilist[i] = obj;
-          }
-        });
+      case '积分兑换管理': {
+        if (
+          formDrawerApi.sharedData.payload.title ===
+          exchangeManagementTextObj.addText
+        ) {
+          dataObj.apilist.push(obj);
+        } else {
+          dataObj.apilist.forEach((v, i) => {
+            if (v.exchangeRecordId === formData.value?.exchangeRecordId) {
+              dataObj.apilist[i] = obj;
+            }
+          });
+        }
+
+        break;
       }
-    } else if (props.activeTab === '积分兑换管理') {
-      if (formDrawerApi.sharedData.payload.title === exchangeManagementTextObj.addText) {
-        dataObj.apilist.push(obj);
-      } else {
-        dataObj.apilist.forEach((v, i) => {
-          if (v.exchangeRecordId === formData.value?.exchangeRecordId) {
-            dataObj.apilist[i] = obj;
-          }
-        });
+      case '积分规则': {
+        if (formDrawerApi.sharedData.payload.title === textObj.addText) {
+          dataObj.apilist.push(obj);
+        } else {
+          dataObj.apilist.forEach((v, i) => {
+            if (v.ruleId === formData.value?.ruleId) {
+              dataObj.apilist[i] = obj;
+            }
+          });
+        }
+
+        break;
       }
-    } else {
-      if (formDrawerApi.sharedData.payload.title === manualPointsImportTextObj.addText) {
-        dataObj.apilist.push(obj);
-      } else {
-        dataObj.apilist.forEach((v, i) => {
-          if (v.importId === formData.value?.importId) {
-            dataObj.apilist[i] = obj;
-          }
-        });
+      default: {
+        if (
+          formDrawerApi.sharedData.payload.title ===
+          manualPointsImportTextObj.addText
+        ) {
+          dataObj.apilist.push(obj);
+        } else {
+          dataObj.apilist.forEach((v, i) => {
+            if (v.importId === formData.value?.importId) {
+              dataObj.apilist[i] = obj;
+            }
+          });
+        }
       }
     }
     handleRefresh();
@@ -309,9 +346,15 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
         await formApi.setValues(formData.value);
       } else if (props.activeTab === '用户积分查询' && formData.value?.userId) {
         await formApi.setValues(formData.value);
-      } else if (props.activeTab === '积分兑换管理' && formData.value?.exchangeRecordId) {
+      } else if (
+        props.activeTab === '积分兑换管理' &&
+        formData.value?.exchangeRecordId
+      ) {
         await formApi.setValues(formData.value);
-      } else if (props.activeTab === '人工积分导入' && formData.value?.importId) {
+      } else if (
+        props.activeTab === '人工积分导入' &&
+        formData.value?.importId
+      ) {
         await formApi.setValues(formData.value);
       } else {
         formApi.resetForm();
@@ -327,140 +370,190 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  if (props.activeTab === '积分规则') {
-    exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
-  } else if (props.activeTab === '用户积分查询') {
-    exportToExcel(
-      dataObj.apilist,
-      userPointsTextObj.excelName,
-      userPointsTextObj.excelAllName,
-    );
-  } else if (props.activeTab === '积分兑换管理') {
-    exportToExcel(
-      dataObj.apilist,
-      exchangeManagementTextObj.excelName,
-      exchangeManagementTextObj.excelAllName,
-    );
-  } else {
-    exportToExcel(
-      dataObj.apilist,
-      manualPointsImportTextObj.excelName,
-      manualPointsImportTextObj.excelAllName,
-    );
+  switch (props.activeTab) {
+    case '用户积分查询': {
+      exportToExcel(
+        dataObj.apilist,
+        userPointsTextObj.excelName,
+        userPointsTextObj.excelAllName,
+      );
+
+      break;
+    }
+    case '积分兑换管理': {
+      exportToExcel(
+        dataObj.apilist,
+        exchangeManagementTextObj.excelName,
+        exchangeManagementTextObj.excelAllName,
+      );
+
+      break;
+    }
+    case '积分规则': {
+      exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+
+      break;
+    }
+    default: {
+      exportToExcel(
+        dataObj.apilist,
+        manualPointsImportTextObj.excelName,
+        manualPointsImportTextObj.excelAllName,
+      );
+    }
   }
 }
 
 /** 创建角色 */
 function handleCreate() {
-  if (props.activeTab === '积分规则') {
-    formDrawerApi
-      .setData({
-        title: textObj.addText,
-      })
-      .open();
-  } else if (props.activeTab === '用户积分查询') {
-    formDrawerApi
-      .setData({
-        title: userPointsTextObj.addText,
-      })
-      .open();
-  } else if (props.activeTab === '积分兑换管理') {
-    formDrawerApi
-      .setData({
-        title: exchangeManagementTextObj.addText,
-      })
-      .open();
-  } else {
-    formDrawerApi
-      .setData({
-        title: manualPointsImportTextObj.addText,
-      })
-      .open();
+  switch (props.activeTab) {
+    case '用户积分查询': {
+      formDrawerApi
+        .setData({
+          title: userPointsTextObj.addText,
+        })
+        .open();
+
+      break;
+    }
+    case '积分兑换管理': {
+      formDrawerApi
+        .setData({
+          title: exchangeManagementTextObj.addText,
+        })
+        .open();
+
+      break;
+    }
+    case '积分规则': {
+      formDrawerApi
+        .setData({
+          title: textObj.addText,
+        })
+        .open();
+
+      break;
+    }
+    default: {
+      formDrawerApi
+        .setData({
+          title: manualPointsImportTextObj.addText,
+        })
+        .open();
+    }
   }
 }
 
 /** 编辑角色 */
 function handleEdit(row) {
-  if (props.activeTab === '积分规则') {
-    formDrawerApi
-      .setData({
-        title: textObj.editText,
-        ...row,
-      })
-      .open();
-  } else if (props.activeTab === '用户积分查询') {
-    formDrawerApi
-      .setData({
-        title: userPointsTextObj.editText,
-        ...row,
-      })
-      .open();
-  } else if (props.activeTab === '积分兑换管理') {
-    formDrawerApi
-      .setData({
-        title: exchangeManagementTextObj.editText,
-        ...row,
-      })
-      .open();
-  } else {
-    formDrawerApi
-      .setData({
-        title: manualPointsImportTextObj.editText,
-        ...row,
-      })
-      .open();
+  switch (props.activeTab) {
+    case '用户积分查询': {
+      formDrawerApi
+        .setData({
+          title: userPointsTextObj.editText,
+          ...row,
+        })
+        .open();
+
+      break;
+    }
+    case '积分兑换管理': {
+      formDrawerApi
+        .setData({
+          title: exchangeManagementTextObj.editText,
+          ...row,
+        })
+        .open();
+
+      break;
+    }
+    case '积分规则': {
+      formDrawerApi
+        .setData({
+          title: textObj.editText,
+          ...row,
+        })
+        .open();
+
+      break;
+    }
+    default: {
+      formDrawerApi
+        .setData({
+          title: manualPointsImportTextObj.editText,
+          ...row,
+        })
+        .open();
+    }
   }
 }
 async function handleDelete(row) {
-  if (props.activeTab === '积分规则') {
-    const loadingInstance = ElLoading.service({
-      text: $t('ui.actionMessage.deleting', [row.ruleName]),
-    });
-    try {
-      dataObj.apilist = dataObj.apilist.filter((v) => v.ruleId !== row.ruleId);
-      ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.ruleName]));
-      handleRefresh();
-    } finally {
-      loadingInstance.close();
+  switch (props.activeTab) {
+    case '用户积分查询': {
+      const loadingInstance = ElLoading.service({
+        text: $t('ui.actionMessage.deleting', [row.userName]),
+      });
+      try {
+        dataObj.apilist = dataObj.apilist.filter(
+          (v) => v.userId !== row.userId,
+        );
+        ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.userName]));
+        handleRefresh();
+      } finally {
+        loadingInstance.close();
+      }
+
+      break;
     }
-  } else if (props.activeTab === '用户积分查询') {
-    const loadingInstance = ElLoading.service({
-      text: $t('ui.actionMessage.deleting', [row.userName]),
-    });
-    try {
-      dataObj.apilist = dataObj.apilist.filter((v) => v.userId !== row.userId);
-      ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.userName]));
-      handleRefresh();
-    } finally {
-      loadingInstance.close();
+    case '积分兑换管理': {
+      const loadingInstance = ElLoading.service({
+        text: $t('ui.actionMessage.deleting', [row.exchangeProductName]),
+      });
+      try {
+        dataObj.apilist = dataObj.apilist.filter(
+          (v) => v.exchangeRecordId !== row.exchangeRecordId,
+        );
+        ElMessage.success(
+          $t('ui.actionMessage.deleteSuccess', [row.exchangeProductName]),
+        );
+        handleRefresh();
+      } finally {
+        loadingInstance.close();
+      }
+
+      break;
     }
-  } else if (props.activeTab === '积分兑换管理') {
-    const loadingInstance = ElLoading.service({
-      text: $t('ui.actionMessage.deleting', [row.exchangeProductName]),
-    });
-    try {
-      dataObj.apilist = dataObj.apilist.filter(
-        (v) => v.exchangeRecordId !== row.exchangeRecordId,
-      );
-      ElMessage.success(
-        $t('ui.actionMessage.deleteSuccess', [row.exchangeProductName]),
-      );
-      handleRefresh();
-    } finally {
-      loadingInstance.close();
+    case '积分规则': {
+      const loadingInstance = ElLoading.service({
+        text: $t('ui.actionMessage.deleting', [row.ruleName]),
+      });
+      try {
+        dataObj.apilist = dataObj.apilist.filter(
+          (v) => v.ruleId !== row.ruleId,
+        );
+        ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.ruleName]));
+        handleRefresh();
+      } finally {
+        loadingInstance.close();
+      }
+
+      break;
     }
-  } else {
-    const loadingInstance = ElLoading.service({
-      text: $t('ui.actionMessage.deleting', [row.selectUserName]),
-    });
-    try {
-      dataObj.apilist = dataObj.apilist.filter((v) => v.importId !== row.importId);
-      ElMessage.success(
-        $t('ui.actionMessage.deleteSuccess', [row.selectUserName]),
-      );
-      handleRefresh();
-    } finally {
-      loadingInstance.close();
+    default: {
+      const loadingInstance = ElLoading.service({
+        text: $t('ui.actionMessage.deleting', [row.selectUserName]),
+      });
+      try {
+        dataObj.apilist = dataObj.apilist.filter(
+          (v) => v.importId !== row.importId,
+        );
+        ElMessage.success(
+          $t('ui.actionMessage.deleteSuccess', [row.selectUserName]),
+        );
+        handleRefresh();
+      } finally {
+        loadingInstance.close();
+      }
     }
   }
 }
@@ -471,22 +564,33 @@ async function handleDeleteBatch() {
     text: $t('ui.actionMessage.deletingBatch'),
   });
   try {
-    if (props.activeTab === '积分规则') {
-      dataObj.apilist = dataObj.apilist.filter(
-        (v) => !checkedIds.value.includes(v.ruleId),
-      );
-    } else if (props.activeTab === '用户积分查询') {
-      dataObj.apilist = dataObj.apilist.filter(
-        (v) => !checkedIds.value.includes(v.userId),
-      );
-    } else if (props.activeTab === '积分兑换管理') {
-      dataObj.apilist = dataObj.apilist.filter(
-        (v) => !checkedIds.value.includes(v.exchangeRecordId),
-      );
-    } else {
-      dataObj.apilist = dataObj.apilist.filter(
-        (v) => !checkedIds.value.includes(v.importId),
-      );
+    switch (props.activeTab) {
+      case '用户积分查询': {
+        dataObj.apilist = dataObj.apilist.filter(
+          (v) => !checkedIds.value.includes(v.userId),
+        );
+
+        break;
+      }
+      case '积分兑换管理': {
+        dataObj.apilist = dataObj.apilist.filter(
+          (v) => !checkedIds.value.includes(v.exchangeRecordId),
+        );
+
+        break;
+      }
+      case '积分规则': {
+        dataObj.apilist = dataObj.apilist.filter(
+          (v) => !checkedIds.value.includes(v.ruleId),
+        );
+
+        break;
+      }
+      default: {
+        dataObj.apilist = dataObj.apilist.filter(
+          (v) => !checkedIds.value.includes(v.importId),
+        );
+      }
     }
     checkedIds.value = [];
     ElMessage.success($t('删除成功'));
@@ -498,14 +602,25 @@ async function handleDeleteBatch() {
 
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
-  if (props.activeTab === '积分规则') {
-    checkedIds.value = records.map((item) => item.ruleId);
-  } else if (props.activeTab === '用户积分查询') {
-    checkedIds.value = records.map((item) => item.userId);
-  } else if (props.activeTab === '积分兑换管理') {
-    checkedIds.value = records.map((item) => item.exchangeRecordId);
-  } else {
-    checkedIds.value = records.map((item) => item.importId);
+  switch (props.activeTab) {
+    case '用户积分查询': {
+      checkedIds.value = records.map((item) => item.userId);
+
+      break;
+    }
+    case '积分兑换管理': {
+      checkedIds.value = records.map((item) => item.exchangeRecordId);
+
+      break;
+    }
+    case '积分规则': {
+      checkedIds.value = records.map((item) => item.ruleId);
+
+      break;
+    }
+    default: {
+      checkedIds.value = records.map((item) => item.importId);
+    }
   }
 }
 const dataObj = reactive({
@@ -531,18 +646,29 @@ const filterImportReason = ref(''); // 导入原因筛选
 
 // 初始化数据
 function initData() {
-  if (props.activeTab === '积分规则') {
-    dataObj.apilist = dataList();
-    dataObj.total = dataList().length;
-  } else if (props.activeTab === '用户积分查询') {
-    dataObj.apilist = userPointsDataList();
-    dataObj.total = userPointsDataList().length;
-  } else if (props.activeTab === '积分兑换管理') {
-    dataObj.apilist = exchangeManagementDataList();
-    dataObj.total = exchangeManagementDataList().length;
-  } else {
-    dataObj.apilist = manualPointsImportDataList();
-    dataObj.total = manualPointsImportDataList().length;
+  switch (props.activeTab) {
+    case '用户积分查询': {
+      dataObj.apilist = userPointsDataList();
+      dataObj.total = userPointsDataList().length;
+
+      break;
+    }
+    case '积分兑换管理': {
+      dataObj.apilist = exchangeManagementDataList();
+      dataObj.total = exchangeManagementDataList().length;
+
+      break;
+    }
+    case '积分规则': {
+      dataObj.apilist = dataList();
+      dataObj.total = dataList().length;
+
+      break;
+    }
+    default: {
+      dataObj.apilist = manualPointsImportDataList();
+      dataObj.total = manualPointsImportDataList().length;
+    }
   }
   dataObj.currentPage = 1;
   dataObj.list = [];
@@ -563,77 +689,97 @@ const getTableData = (pageObj) => {
   const filteredList = dataObj.apilist.filter((v) => {
     // 状态筛选
     let statusMatch = true;
-    if (props.activeTab === '积分规则') {
-      switch (activeName.value) {
-        case '启用': {
-          statusMatch = v.enableStatus === '启用';
-          break;
+    switch (props.activeTab) {
+      case '人工积分导入': {
+        switch (activeName.value) {
+          case '失败': {
+            statusMatch = v.importStatus === '失败';
+            break;
+          }
+          case '成功': {
+            statusMatch = v.importStatus === '成功';
+            break;
+          }
+          case '部分成功': {
+            statusMatch = v.importStatus === '部分成功';
+            break;
+          }
         }
-        case '禁用': {
-          statusMatch = v.enableStatus === '禁用';
-          break;
-        }
+
+        break;
       }
-    } else if (props.activeTab === '用户积分查询') {
-      switch (activeName.value) {
-        case '减少': {
-          statusMatch = v.changeType === '减少';
-          break;
+      case '用户积分查询': {
+        switch (activeName.value) {
+          case '减少': {
+            statusMatch = v.changeType === '减少';
+            break;
+          }
+          case '增加': {
+            statusMatch = v.changeType === '增加';
+            break;
+          }
         }
-        case '增加': {
-          statusMatch = v.changeType === '增加';
-          break;
-        }
+
+        break;
       }
-    } else if (props.activeTab === '积分兑换管理') {
-      switch (activeName.value) {
-        case '处理中': {
-          statusMatch = v.exchangeStatus === '处理中';
-          break;
+      case '积分兑换管理': {
+        switch (activeName.value) {
+          case '处理中': {
+            statusMatch = v.exchangeStatus === '处理中';
+            break;
+          }
+          case '已取消': {
+            statusMatch = v.exchangeStatus === '已取消';
+            break;
+          }
+          case '已完成': {
+            statusMatch = v.exchangeStatus === '已完成';
+            break;
+          }
         }
-        case '已取消': {
-          statusMatch = v.exchangeStatus === '已取消';
-          break;
-        }
-        case '已完成': {
-          statusMatch = v.exchangeStatus === '已完成';
-          break;
-        }
+
+        break;
       }
-    } else if (props.activeTab === '人工积分导入') {
-      switch (activeName.value) {
-        case '成功': {
-          statusMatch = v.importStatus === '成功';
-          break;
+      case '积分规则': {
+        switch (activeName.value) {
+          case '启用': {
+            statusMatch = v.enableStatus === '启用';
+            break;
+          }
+          case '禁用': {
+            statusMatch = v.enableStatus === '禁用';
+            break;
+          }
         }
-        case '失败': {
-          statusMatch = v.importStatus === '失败';
-          break;
-        }
-        case '部分成功': {
-          statusMatch = v.importStatus === '部分成功';
-          break;
-        }
+
+        break;
       }
+      // No default
     }
 
     // 触发类型筛选
-    const triggerTypeMatch = !filterTriggerType.value || v.triggerType === filterTriggerType.value;
+    const triggerTypeMatch =
+      !filterTriggerType.value || v.triggerType === filterTriggerType.value;
 
     // 用户姓名筛选
-    const userNameMatch = !filterUserName.value || v.userName === filterUserName.value;
+    const userNameMatch =
+      !filterUserName.value || v.userName === filterUserName.value;
 
     // 变动类型筛选
-    const changeTypeMatch = !filterChangeType.value || v.changeType === filterChangeType.value;
+    const changeTypeMatch =
+      !filterChangeType.value || v.changeType === filterChangeType.value;
 
     // 适用范围筛选
-    const applyScopeMatch = !filterApplyScope.value || v.applyScope === filterApplyScope.value;
+    const applyScopeMatch =
+      !filterApplyScope.value || v.applyScope === filterApplyScope.value;
 
     // 导入方式筛选
-    const importTypeMatch = !filterImportType.value || v.importType === filterImportType.value;
+    const importTypeMatch =
+      !filterImportType.value || v.importType === filterImportType.value;
 
     // 导入原因筛选
-    const importReasonMatch = !filterImportReason.value || v.importReason === filterImportReason.value;
+    const importReasonMatch =
+      !filterImportReason.value || v.importReason === filterImportReason.value;
 
     // 搜索条件筛选
     let searchMatch = true;
@@ -647,7 +793,16 @@ const getTableData = (pageObj) => {
       }
     });
 
-    return statusMatch && triggerTypeMatch && userNameMatch && changeTypeMatch && applyScopeMatch && importTypeMatch && importReasonMatch && searchMatch;
+    return (
+      statusMatch &&
+      triggerTypeMatch &&
+      userNameMatch &&
+      changeTypeMatch &&
+      applyScopeMatch &&
+      importTypeMatch &&
+      importReasonMatch &&
+      searchMatch
+    );
   });
 
   dataObj.total = filteredList.length;
@@ -659,34 +814,39 @@ const getTableData = (pageObj) => {
 };
 
 const queryFormSchema = computed(() => {
-  if (props.activeTab === '积分规则') {
-    return useFormSchema().map((v) => {
-      delete v.rules;
-      return {
-        ...v,
-      };
-    });
-  } else if (props.activeTab === '用户积分查询') {
-    return useUserPointsFormSchema().map((v) => {
-      delete v.rules;
-      return {
-        ...v,
-      };
-    });
-  } else if (props.activeTab === '积分兑换管理') {
-    return useExchangeManagementFormSchema().map((v) => {
-      delete v.rules;
-      return {
-        ...v,
-      };
-    });
-  } else {
-    return useManualPointsImportFormSchema().map((v) => {
-      delete v.rules;
-      return {
-        ...v,
-      };
-    });
+  switch (props.activeTab) {
+    case '用户积分查询': {
+      return useUserPointsFormSchema().map((v) => {
+        delete v.rules;
+        return {
+          ...v,
+        };
+      });
+    }
+    case '积分兑换管理': {
+      return useExchangeManagementFormSchema().map((v) => {
+        delete v.rules;
+        return {
+          ...v,
+        };
+      });
+    }
+    case '积分规则': {
+      return useFormSchema().map((v) => {
+        delete v.rules;
+        return {
+          ...v,
+        };
+      });
+    }
+    default: {
+      return useManualPointsImportFormSchema().map((v) => {
+        delete v.rules;
+        return {
+          ...v,
+        };
+      });
+    }
   }
 });
 
@@ -723,26 +883,36 @@ function onSubmit(values) {
 }
 
 const gridColumns = computed(() => {
-  if (props.activeTab === '积分规则') {
-    return useGridColumns();
-  } else if (props.activeTab === '用户积分查询') {
-    return useUserPointsGridColumns();
-  } else if (props.activeTab === '积分兑换管理') {
-    return useExchangeManagementGridColumns();
-  } else {
-    return useManualPointsImportGridColumns();
+  switch (props.activeTab) {
+    case '用户积分查询': {
+      return useUserPointsGridColumns();
+    }
+    case '积分兑换管理': {
+      return useExchangeManagementGridColumns();
+    }
+    case '积分规则': {
+      return useGridColumns();
+    }
+    default: {
+      return useManualPointsImportGridColumns();
+    }
   }
 });
 
 const gridKeyField = computed(() => {
-  if (props.activeTab === '积分规则') {
-    return 'ruleId';
-  } else if (props.activeTab === '用户积分查询') {
-    return 'userId';
-  } else if (props.activeTab === '积分兑换管理') {
-    return 'exchangeRecordId';
-  } else {
-    return 'importId';
+  switch (props.activeTab) {
+    case '用户积分查询': {
+      return 'userId';
+    }
+    case '积分兑换管理': {
+      return 'exchangeRecordId';
+    }
+    case '积分规则': {
+      return 'ruleId';
+    }
+    default: {
+      return 'importId';
+    }
   }
 });
 
@@ -817,24 +987,29 @@ const handleOpenDetail = (row) => {
 
 // 根据当前标签页动态生成tabsData
 const tabsData = computed(() => {
-  if (props.activeTab === '积分规则') {
-    return [{ label: '全部' }, { label: '启用' }, { label: '禁用' }];
-  } else if (props.activeTab === '用户积分查询') {
-    return [{ label: '全部' }, { label: '增加' }, { label: '减少' }];
-  } else if (props.activeTab === '积分兑换管理') {
-    return [
-      { label: '全部' },
-      { label: '已完成' },
-      { label: '处理中' },
-      { label: '已取消' },
-    ];
-  } else {
-    return [
-      { label: '全部' },
-      { label: '成功' },
-      { label: '失败' },
-      { label: '部分成功' },
-    ];
+  switch (props.activeTab) {
+    case '用户积分查询': {
+      return [{ label: '全部' }, { label: '增加' }, { label: '减少' }];
+    }
+    case '积分兑换管理': {
+      return [
+        { label: '全部' },
+        { label: '已完成' },
+        { label: '处理中' },
+        { label: '已取消' },
+      ];
+    }
+    case '积分规则': {
+      return [{ label: '全部' }, { label: '启用' }, { label: '禁用' }];
+    }
+    default: {
+      return [
+        { label: '全部' },
+        { label: '成功' },
+        { label: '失败' },
+        { label: '部分成功' },
+      ];
+    }
   }
 });
 
@@ -842,99 +1017,114 @@ const tabsData = computed(() => {
 const createLabel = (item) => {
   let count = 0;
 
-  if (props.activeTab === '积分规则') {
-    switch (item.label) {
-      case '全部': {
-        count = dataObj.apilist.length;
-        break;
+  switch (props.activeTab) {
+    case '用户积分查询': {
+      switch (item.label) {
+        case '全部': {
+          count = dataObj.apilist.length;
+          break;
+        }
+        case '减少': {
+          // 统计changeType为'减少'的数据
+          count = dataObj.apilist.filter((v) => v.changeType === '减少').length;
+          break;
+        }
+        case '增加': {
+          // 统计changeType为'增加'的数据
+          count = dataObj.apilist.filter((v) => v.changeType === '增加').length;
+          break;
+        }
+        // No default
       }
-      case '启用': {
-        // 统计enableStatus为'启用'的数据
-        count = dataObj.apilist.filter((v) => v.enableStatus === '启用').length;
-        break;
-      }
-      case '禁用': {
-        // 统计enableStatus为'禁用'的数据
-        count = dataObj.apilist.filter((v) => v.enableStatus === '禁用').length;
-        break;
-      }
-      // No default
+
+      break;
     }
-  } else if (props.activeTab === '用户积分查询') {
-    switch (item.label) {
-      case '全部': {
-        count = dataObj.apilist.length;
-        break;
+    case '积分兑换管理': {
+      switch (item.label) {
+        case '全部': {
+          count = dataObj.apilist.length;
+          break;
+        }
+        case '处理中': {
+          // 统计exchangeStatus为'处理中'的数据
+          count = dataObj.apilist.filter(
+            (v) => v.exchangeStatus === '处理中',
+          ).length;
+          break;
+        }
+        case '已取消': {
+          // 统计exchangeStatus为'已取消'的数据
+          count = dataObj.apilist.filter(
+            (v) => v.exchangeStatus === '已取消',
+          ).length;
+          break;
+        }
+        case '已完成': {
+          // 统计exchangeStatus为'已完成'的数据
+          count = dataObj.apilist.filter(
+            (v) => v.exchangeStatus === '已完成',
+          ).length;
+          break;
+        }
+        // No default
       }
-      case '减少': {
-        // 统计changeType为'减少'的数据
-        count = dataObj.apilist.filter((v) => v.changeType === '减少').length;
-        break;
-      }
-      case '增加': {
-        // 统计changeType为'增加'的数据
-        count = dataObj.apilist.filter((v) => v.changeType === '增加').length;
-        break;
-      }
-      // No default
+
+      break;
     }
-  } else if (props.activeTab === '积分兑换管理') {
-    switch (item.label) {
-      case '全部': {
-        count = dataObj.apilist.length;
-        break;
+    case '积分规则': {
+      switch (item.label) {
+        case '全部': {
+          count = dataObj.apilist.length;
+          break;
+        }
+        case '启用': {
+          // 统计enableStatus为'启用'的数据
+          count = dataObj.apilist.filter(
+            (v) => v.enableStatus === '启用',
+          ).length;
+          break;
+        }
+        case '禁用': {
+          // 统计enableStatus为'禁用'的数据
+          count = dataObj.apilist.filter(
+            (v) => v.enableStatus === '禁用',
+          ).length;
+          break;
+        }
+        // No default
       }
-      case '处理中': {
-        // 统计exchangeStatus为'处理中'的数据
-        count = dataObj.apilist.filter(
-          (v) => v.exchangeStatus === '处理中',
-        ).length;
-        break;
-      }
-      case '已取消': {
-        // 统计exchangeStatus为'已取消'的数据
-        count = dataObj.apilist.filter(
-          (v) => v.exchangeStatus === '已取消',
-        ).length;
-        break;
-      }
-      case '已完成': {
-        // 统计exchangeStatus为'已完成'的数据
-        count = dataObj.apilist.filter(
-          (v) => v.exchangeStatus === '已完成',
-        ).length;
-        break;
-      }
-      // No default
+
+      break;
     }
-  } else {
-    switch (item.label) {
-      case '全部': {
-        count = dataObj.apilist.length;
-        break;
+    default: {
+      switch (item.label) {
+        case '全部': {
+          count = dataObj.apilist.length;
+          break;
+        }
+        case '失败': {
+          // 统计importStatus为'失败'的数据
+          count = dataObj.apilist.filter(
+            (v) => v.importStatus === '失败',
+          ).length;
+          break;
+        }
+        case '成功': {
+          // 统计importStatus为'成功'的数据
+          count = dataObj.apilist.filter(
+            (v) => v.importStatus === '成功',
+          ).length;
+          break;
+        }
+        case '部分成功': {
+          // 统计importStatus为'部分成功'的数据
+          count = dataObj.apilist.filter(
+            (v) => v.importStatus === '部分成功',
+          ).length;
+          break;
+        }
+        // No default
       }
-      case '成功': {
-        // 统计importStatus为'成功'的数据
-        count = dataObj.apilist.filter(
-          (v) => v.importStatus === '成功',
-        ).length;
-        break;
-      }
-      case '失败': {
-        // 统计importStatus为'失败'的数据
-        count = dataObj.apilist.filter(
-          (v) => v.importStatus === '失败',
-        ).length;
-        break;
-      }
-      case '部分成功': {
-        // 统计importStatus为'部分成功'的数据
-        count = dataObj.apilist.filter(
-          (v) => v.importStatus === '部分成功',
-        ).length;
-        break;
-      }
-      // No default
     }
   }
 
@@ -953,7 +1143,8 @@ const handleFullShow = () => {
 
 // 处理触发类型点击
 function handleTriggerTypeClick(triggerType) {
-  filterTriggerType.value = filterTriggerType.value === triggerType ? '' : triggerType;
+  filterTriggerType.value =
+    filterTriggerType.value === triggerType ? '' : triggerType;
   gridApi.query();
 }
 
@@ -977,7 +1168,8 @@ function handleCancelUserNameFilter() {
 
 // 处理变动类型点击
 function handleChangeTypeClick(changeType) {
-  filterChangeType.value = filterChangeType.value === changeType ? '' : changeType;
+  filterChangeType.value =
+    filterChangeType.value === changeType ? '' : changeType;
   gridApi.query();
 }
 
@@ -989,7 +1181,8 @@ function handleCancelChangeTypeFilter() {
 
 // 处理适用范围点击
 function handleApplyScopeClick(applyScope) {
-  filterApplyScope.value = filterApplyScope.value === applyScope ? '' : applyScope;
+  filterApplyScope.value =
+    filterApplyScope.value === applyScope ? '' : applyScope;
   gridApi.query();
 }
 
@@ -1001,7 +1194,8 @@ function handleCancelApplyScopeFilter() {
 
 // 处理导入方式点击
 function handleImportTypeClick(importType) {
-  filterImportType.value = filterImportType.value === importType ? '' : importType;
+  filterImportType.value =
+    filterImportType.value === importType ? '' : importType;
   gridApi.query();
 }
 
@@ -1013,7 +1207,8 @@ function handleCancelImportTypeFilter() {
 
 // 处理导入原因点击
 function handleImportReasonClick(importReason) {
-  filterImportReason.value = filterImportReason.value === importReason ? '' : importReason;
+  filterImportReason.value =
+    filterImportReason.value === importReason ? '' : importReason;
   gridApi.query();
 }
 
@@ -1033,14 +1228,16 @@ function handleDisable(row) {
   ElMessageBox.confirm('确定要禁用该积分规则吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    row.enableStatus = '禁用';
-    handleRefresh();
-    ElMessage.success('禁用成功');
-  }).catch(() => {
-    // 取消操作
-  });
+    type: 'warning',
+  })
+    .then(() => {
+      row.enableStatus = '禁用';
+      handleRefresh();
+      ElMessage.success('禁用成功');
+    })
+    .catch(() => {
+      // 取消操作
+    });
 }
 
 /** 下载用户积分记录 */
@@ -1065,14 +1262,16 @@ function handleExchange(row) {
   ElMessageBox.confirm('确定要兑换该商品吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    // 模拟兑换操作
-    console.log('兑换商品:', row);
-    ElMessage.success('兑换成功');
-  }).catch(() => {
-    // 取消操作
-  });
+    type: 'warning',
+  })
+    .then(() => {
+      // 模拟兑换操作
+      console.log('兑换商品:', row);
+      ElMessage.success('兑换成功');
+    })
+    .catch(() => {
+      // 取消操作
+    });
 }
 
 /** 收藏商品 */
@@ -1098,16 +1297,17 @@ function handleImportRetry(row) {
   ElMessageBox.confirm('确定要重试导入吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    // 模拟重试操作
-    console.log('重试导入:', row);
-    ElMessage.success('重试成功');
-  }).catch(() => {
-    // 取消操作
-  });
+    type: 'warning',
+  })
+    .then(() => {
+      // 模拟重试操作
+      console.log('重试导入:', row);
+      ElMessage.success('重试成功');
+    })
+    .catch(() => {
+      // 取消操作
+    });
 }
-
 </script>
 
 <template>
@@ -1143,9 +1343,17 @@ function handleImportRetry(row) {
     </Drawer>
     <ImportDrawer title="人工积分导入">
       <div class="import-drawer-content">
-        <el-form :model="importFormData" :rules="importRules" ref="importFormRef" label-width="100px">
+        <el-form
+          :model="importFormData"
+          :rules="importRules"
+          ref="importFormRef"
+          label-width="100px"
+        >
           <el-form-item label="用户选择" required>
-            <el-select v-model="importFormData.selectUserName" placeholder="请选择用户">
+            <el-select
+              v-model="importFormData.selectUserName"
+              placeholder="请选择用户"
+            >
               <el-option
                 v-for="option in userOptions"
                 :key="option.value"
@@ -1155,18 +1363,31 @@ function handleImportRetry(row) {
             </el-select>
           </el-form-item>
           <el-form-item label="积分数量" required>
-            <el-input-number v-model="importFormData.importPoints" placeholder="请输入积分数量" :min="1" />
+            <el-input-number
+              v-model="importFormData.importPoints"
+              placeholder="请输入积分数量"
+              :min="1"
+            />
           </el-form-item>
           <el-form-item label="导入原因" required>
-            <el-input v-model="importFormData.importReason" placeholder="请输入导入原因" />
+            <el-input
+              v-model="importFormData.importReason"
+              placeholder="请输入导入原因"
+            />
           </el-form-item>
           <el-form-item label="导入方式" required>
-            <el-select v-model="importFormData.importType" placeholder="请选择导入方式">
+            <el-select
+              v-model="importFormData.importType"
+              placeholder="请选择导入方式"
+            >
               <el-option label="单个导入" value="单个导入" />
               <el-option label="批量导入" value="批量导入" />
             </el-select>
           </el-form-item>
-          <el-form-item label="批量导入文件" v-if="importFormData.importType === '批量导入'">
+          <el-form-item
+            label="批量导入文件"
+            v-if="importFormData.importType === '批量导入'"
+          >
             <el-upload
               class="upload-demo"
               action="#"
@@ -1198,7 +1419,11 @@ function handleImportRetry(row) {
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="changePoints" label="变动积分" min-width="100" />
+          <el-table-column
+            prop="changePoints"
+            label="变动积分"
+            min-width="100"
+          />
           <el-table-column prop="changeTime" label="变动时间" min-width="180" />
           <el-table-column prop="reason" label="变动原因" min-width="150" />
           <el-table-column prop="operator" label="操作人" min-width="100" />
@@ -1209,7 +1434,10 @@ function handleImportRetry(row) {
     <Grid>
       <!-- 三级状态 -->
       <template #table-title>
-        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
+        >
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -1499,7 +1727,9 @@ function handleImportRetry(row) {
             <IconButton
               content="收藏"
               icon-name="Star"
-              :color="collectedMap.get(row.exchangeRecordId) ? '#F59E0B' : undefined"
+              :color="
+                collectedMap.get(row.exchangeRecordId) ? '#F59E0B' : undefined
+              "
               @click="handleCollect(row)"
             />
           </template>
@@ -1559,17 +1789,20 @@ function handleImportRetry(row) {
           </span>
           <span v-else-if="props.activeTab === '积分兑换管理'">
             本页统计：兑换记录数量: {{ dataObj.total }}; 总积分:
-            {{ dataObj.apilist.reduce(
+            {{
+              dataObj.apilist.reduce(
                 (sum, item) => sum + item.requiredPoints,
                 0,
               )
             }}; 总库存:
-            {{ dataObj.apilist.reduce(
+            {{
+              dataObj.apilist.reduce(
                 (sum, item) => sum + item.remainingStock,
                 0,
               )
             }}; 总可用积分:
-            {{ dataObj.apilist.reduce(
+            {{
+              dataObj.apilist.reduce(
                 (sum, item) => sum + item.userAvailablePoints,
                 0,
               )
@@ -1577,21 +1810,13 @@ function handleImportRetry(row) {
           </span>
           <span v-else>
             本页统计：导入记录: {{ dataObj.total }}; 总积分:
-            {{ dataObj.apilist.reduce(
-                (sum, item) => sum + item.importPoints,
-                0,
-              )
+            {{
+              dataObj.apilist.reduce((sum, item) => sum + item.importPoints, 0)
             }}; 总成功数:
-            {{ dataObj.apilist.reduce(
-                (sum, item) => sum + item.successCount,
-                0,
-              )
+            {{
+              dataObj.apilist.reduce((sum, item) => sum + item.successCount, 0)
             }}; 总失败数:
-            {{ dataObj.apilist.reduce(
-                (sum, item) => sum + item.failCount,
-                0,
-              )
-            }}
+            {{ dataObj.apilist.reduce((sum, item) => sum + item.failCount, 0) }}
           </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">

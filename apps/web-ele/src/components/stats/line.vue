@@ -207,5 +207,5 @@ onUnmounted(() => {
 
 <template>
   <!-- 折线图容器：强制设置基础宽高，避免尺寸为0 -->
-  <div ref="chartRef" class="simple-bar-chart"></div>
+  <div ref="chartRef" class="park-type-chart"></div>
 </template>

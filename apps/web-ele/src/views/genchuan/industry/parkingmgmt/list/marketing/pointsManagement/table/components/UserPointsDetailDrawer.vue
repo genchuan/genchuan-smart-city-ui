@@ -1,3 +1,84 @@
+<script setup>
+import { computed, onMounted, ref } from 'vue';
+
+const props = defineProps({
+  userId: {
+    type: String,
+    required: true,
+  },
+  userName: {
+    type: String,
+    required: true,
+  },
+});
+const emit = defineEmits(['close']);
+const userName = computed(() => props.userName);
+
+// 积分变动明细数据
+const pointsDetailData = ref([
+  {
+    recordId: 'REC001',
+    changeType: '增加',
+    changePoints: 50,
+    changeTime: '2025-02-05 10:30:50',
+    reason: '首次注册送积分',
+    operator: '系统',
+  },
+  {
+    recordId: 'REC002',
+    changeType: '增加',
+    changePoints: 10,
+    changeTime: '2025-02-06 09:45:20',
+    reason: '每日登录送积分',
+    operator: '系统',
+  },
+  {
+    recordId: 'REC003',
+    changeType: '减少',
+    changePoints: 20,
+    changeTime: '2025-02-06 14:20:15',
+    reason: '兑换优惠券',
+    operator: '用户',
+  },
+  {
+    recordId: 'REC004',
+    changeType: '增加',
+    changePoints: 30,
+    changeTime: '2025-02-07 11:10:30',
+    reason: '首次停车送积分',
+    operator: '系统',
+  },
+  {
+    recordId: 'REC005',
+    changeType: '增加',
+    changePoints: 15,
+    changeTime: '2025-02-07 16:40:15',
+    reason: '评价停车场送积分',
+    operator: '系统',
+  },
+]);
+
+/** 获取变动类型标签类型 */
+function getChangeTypeTagType(changeType) {
+  switch (changeType) {
+    case '减少': {
+      return 'danger';
+    }
+    case '增加': {
+      return 'success';
+    }
+    default: {
+      return 'info';
+    }
+  }
+}
+
+onMounted(() => {
+  // 这里可以根据userId获取真实的积分变动明细数据
+  console.log('获取用户积分明细:', props.userId);
+});
+</script>
+
 <template>
   <div class="user-points-detail-drawer">
     <div class="drawer-header">
@@ -24,85 +105,6 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { computed, ref, onMounted } from 'vue';
-
-const emit = defineEmits(['close']);
-const props = defineProps({
-  userId: {
-    type: String,
-    required: true
-  },
-  userName: {
-    type: String,
-    required: true
-  }
-});
-
-const userName = computed(() => props.userName);
-
-// 积分变动明细数据
-const pointsDetailData = ref([
-  {
-    recordId: 'REC001',
-    changeType: '增加',
-    changePoints: 50,
-    changeTime: '2025-02-05 10:30:50',
-    reason: '首次注册送积分',
-    operator: '系统'
-  },
-  {
-    recordId: 'REC002',
-    changeType: '增加',
-    changePoints: 10,
-    changeTime: '2025-02-06 09:45:20',
-    reason: '每日登录送积分',
-    operator: '系统'
-  },
-  {
-    recordId: 'REC003',
-    changeType: '减少',
-    changePoints: 20,
-    changeTime: '2025-02-06 14:20:15',
-    reason: '兑换优惠券',
-    operator: '用户'
-  },
-  {
-    recordId: 'REC004',
-    changeType: '增加',
-    changePoints: 30,
-    changeTime: '2025-02-07 11:10:30',
-    reason: '首次停车送积分',
-    operator: '系统'
-  },
-  {
-    recordId: 'REC005',
-    changeType: '增加',
-    changePoints: 15,
-    changeTime: '2025-02-07 16:40:15',
-    reason: '评价停车场送积分',
-    operator: '系统'
-  }
-]);
-
-/** 获取变动类型标签类型 */
-function getChangeTypeTagType(changeType) {
-  switch (changeType) {
-    case '增加':
-      return 'success';
-    case '减少':
-      return 'danger';
-    default:
-      return 'info';
-  }
-}
-
-onMounted(() => {
-  // 这里可以根据userId获取真实的积分变动明细数据
-  console.log('获取用户积分明细:', props.userId);
-});
-</script>
 
 <style scoped>
 .user-points-detail-drawer {

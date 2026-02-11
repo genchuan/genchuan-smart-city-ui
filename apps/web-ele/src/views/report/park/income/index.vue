@@ -6,8 +6,8 @@ import DailyReport from './daily/index.vue';
 import DailyChart from './daily/dailychart.vue';
 import MonthlyReport from './monthly/index.vue';
 import MonthlyChart from './monthly/monthlychart.vue';
-// import DetailReport from './detail/index.vue';
-// import DetailChart from './detail/detailchart.vue';
+import DetailReport from './detail/index.vue';
+import DetailChart from './detail/detailchart.vue';
 
 import '#/components/page/index.scss';
 
@@ -37,14 +37,14 @@ const tabArray = ref([
     arrowShow: false,
     arrowState: false,
   },
-  // {
-  //   label: '收入明细报表',
-  //   components: DetailReport,
-  //   showSecondary: true,
-  //   secondShow: false,
-  //   arrowShow: false,
-  //   arrowState: false,
-  // },
+  {
+    label: '收入明细报表',
+    components: DetailReport,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: false,
+    arrowState: false,
+  },
 ]);
 const tabChange = () => {
   tabArray.value.forEach((v) => {
@@ -58,7 +58,7 @@ const secondShow = ref(false);
   <div class="common-index">
     <DailyChart v-if="tabArray[0].arrowShow" />
     <MonthlyChart v-if="tabArray[1].arrowShow" />
-<!--    <DetailChart v-if="tabArray[2].arrowShow" />-->
+    <DetailChart v-if="tabArray[2].arrowShow" />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
