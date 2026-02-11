@@ -1,8 +1,8 @@
 <script setup>
 import { ref } from 'vue';
 
-import Table from './table/index.vue';
 import garagechart from './garagechart.vue';
+import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
 // 新增：控制图表显示的状态
