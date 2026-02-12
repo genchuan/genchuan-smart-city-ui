@@ -1,10 +1,10 @@
 <script setup>
 import { ref } from 'vue';
 
+import garagechart from './garagechart.vue';
 import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
-import garagechart from './garagechart.vue';
 
 // 新增：控制图表显示的状态
 const chartShow = ref(true);
@@ -66,7 +66,6 @@ const activeName = ref('畅停卡管理');
           :second-show="item.secondShow"
           :key="item.label"
           @toggle-chart="toggleChart"
-
         />
       </el-tab-pane>
     </el-tabs>

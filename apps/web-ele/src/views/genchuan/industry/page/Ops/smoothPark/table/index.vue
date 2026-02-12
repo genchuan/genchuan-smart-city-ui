@@ -20,6 +20,9 @@ const props = defineProps({
     default: false,
   },
 });
+// 向父组件派发事件（与参考代码一致，预留扩展）
+const emit = defineEmits(['toggleChart']);
+
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
 });
@@ -44,9 +47,6 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
-// 向父组件派发事件（与参考代码一致，预留扩展）
-const emit = defineEmits(['toggleChart']);
-
 // 展开/收缩按钮自身状态（与参考代码一致）
 const arrowShow = ref(false);
 const formData = ref();
