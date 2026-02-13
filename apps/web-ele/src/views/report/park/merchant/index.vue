@@ -2,14 +2,12 @@
 <script setup>
 import { ref } from 'vue';
 
-import EfficiencyChart from './efficiency/efficiencychart.vue';
-import EfficiencyReport from './efficiency/index.vue';
-import EquipmentChart from './equipment/equipmentchart.vue';
-import EquipmentReport from './equipment/index.vue';
-import FaultChart from './fault/faultchart.vue';
-import FaultReport from './fault/index.vue';
-import StaffReport from './staff/index.vue';
-import StaffChart from './staff/Staffchart.vue';
+import DailyReport from './daily/index.vue';
+import DailyChart from './daily/dailychart.vue';
+import MonthlyReport from './monthly/index.vue';
+import MonthlyChart from './monthly/monthlychart.vue';
+import RevenueReport from './revenue/index.vue';
+import RevenueChart from './revenue/revenuechart.vue';
 
 import '#/components/page/index.scss';
 
@@ -24,32 +22,24 @@ const arrowChange = (index) => {
 };
 const tabArray = ref([
   {
-    label: '设备运行报表',
-    components: EquipmentReport,
+    label: '日运营报表',
+    components: DailyReport,
     showSecondary: true,
     secondShow: false,
     arrowShow: false,
     arrowState: false,
   },
   {
-    label: '故障统计报表',
-    components: FaultReport,
+    label: '月运营报表',
+    components: MonthlyReport,
     showSecondary: true,
     secondShow: false,
     arrowShow: false,
     arrowState: false,
   },
   {
-    label: '运维效率报表',
-    components: EfficiencyReport,
-    showSecondary: true,
-    secondShow: false,
-    arrowShow: false,
-    arrowState: false,
-  },
-  {
-    label: '运维人员绩效考核报表',
-    components: StaffReport,
+    label: '商户营收报表',
+    components: RevenueReport,
     showSecondary: true,
     secondShow: false,
     arrowShow: false,
@@ -61,15 +51,14 @@ const tabChange = () => {
     v.arrowShow = false;
   });
 };
-const activeName = ref('设备运行报表');
+const activeName = ref('日运营报表');
 const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <EquipmentChart v-if="tabArray[0].arrowShow" />
-    <FaultChart v-if="tabArray[1].arrowShow" />
-    <EfficiencyChart v-if="tabArray[2].arrowShow" />
-    <StaffChart v-if="tabArray[3].arrowShow" />
+    <DailyChart v-if="tabArray[0].arrowShow" />
+    <MonthlyChart v-if="tabArray[1].arrowShow" />
+    <RevenueChart v-if="tabArray[2].arrowShow" />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"

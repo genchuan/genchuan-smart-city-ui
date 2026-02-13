@@ -1,4 +1,4 @@
-<!-- index.vue 内部 - 运营趋势报表版本 -->
+<!-- index.vue - 商户月度报表版本 -->
 <script setup>
 import { computed, reactive, ref } from 'vue';
 
@@ -12,10 +12,9 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
-// 引入封装后的详情抽屉组件
-import ReportDetailDrawer from '#/views/report/park/operate/trend/detail.vue';
+import ReportDetailDrawer from '#/views/report/park/merchant/monthly/detail.vue';
 
-import { dataList, textObj, useFormSchema, useGridColumns } from './data';
+import { dataList, textObj, useFormSchema, useExtendedFormSchema, useGridColumns, getMaxId } from './data';
 
 const props = defineProps({
   secondShow: {
@@ -54,12 +53,23 @@ const [Form, formApi] = useVbenForm({
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
-    labelWidth: 80,
+    labelWidth: 100,
   },
   layout: 'horizontal',
-  schema: useFormSchema(),
+  schema: useExtendedFormSchema(),
   showDefaultActions: false,
 });
+
+// 生成当前时间
+const getCurrentTime = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
+};
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   appendToMain: true,
@@ -69,62 +79,40 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
   onConfirm() {
     const obj = formApi.form.values;
-
-    // 处理时间范围字段
-    const [startDate, endDate] = obj.timeRange || [];
-
-    // 生成统计时间
-    let statTime = '';
-    if (obj.statCycle === '日' && startDate) {
-      statTime = startDate;
-    } else if (obj.statCycle === '周') {
-      const weekNumber = getWeekNumber(new Date(startDate));
-      statTime = `2026年第${weekNumber}周`;
-    } else if (obj.statCycle === '月' && startDate) {
-      statTime = startDate.slice(0, 7);
-    }
-
-    // 格式化平均泊位利用率（确保有%符号）
-    let avgBerthUtilization = obj.avgBerthUtilization || '0%';
-    if (!avgBerthUtilization.includes('%')) {
-      avgBerthUtilization = `${avgBerthUtilization}%`;
-    }
-
-    const updatedRecord = {
-      id:
-        formData.value?.id ||
-        (reportObj.apilist.length > 0
-          ? Math.max(...reportObj.apilist.map((v) => v.id)) + 1
-          : 1),
-      statCycle: obj.statCycle,
-      statTime,
-      startDate: startDate || obj.startDate,
-      endDate: endDate || obj.endDate,
-      areaName: obj.areaName,
-      parkType: obj.parkType,
-      totalIncome: Number(obj.totalIncome) || 0,
-      totalEntry: Number(obj.totalEntry) || 0,
-      avgBerthUtilization,
-      keyNode: obj.keyNode || '正常运营',
-      updateTime: `${new Date().toISOString().split('T')[0]} 18:30`,
-      operator: '系统管理员',
-    };
+    const currentTime = getCurrentTime();
 
     if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-      // 新增模式
-      reportObj.apilist.push(updatedRecord);
+      // 新增数据
+      const newId = getMaxId() + 1;
+      const newData = {
+        ...obj,
+        id: newId,
+        totalIncome: Number(obj.totalIncome) || 0,
+        totalOrder: Number(obj.totalOrder) || 0,
+        avgUtilization: obj.avgUtilization || '0%',
+        peakHourDistribution: obj.peakHourDistribution || '',
+        growthRate: obj.growthRate || '0%',
+        updateTime: currentTime,
+        operator: '系统自动生成'
+      };
+      reportObj.apilist.unshift(newData);
       ElMessage.success('新增成功');
     } else {
-      // 编辑模式
-      const index = reportObj.apilist.findIndex(
-        (v) => v.id === formData.value?.id,
-      );
+      // 编辑数据
+      const index = reportObj.apilist.findIndex(v => v.id === formData.value?.id);
       if (index !== -1) {
-        reportObj.apilist[index] = updatedRecord;
+        const updatedData = {
+          ...reportObj.apilist[index],
+          ...obj,
+          totalIncome: Number(obj.totalIncome) || 0,
+          totalOrder: Number(obj.totalOrder) || 0,
+          updateTime: currentTime,
+          operator: '系统自动生成'
+        };
+        reportObj.apilist[index] = updatedData;
         ElMessage.success('编辑成功');
       }
     }
-
     handleRefresh();
     formDrawerApi.close();
   },
@@ -132,47 +120,22 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     if (isOpen) {
       formData.value = formDrawerApi.getData();
       if (formData.value?.id) {
-        // 编辑模式：查找完整数据
-        const record = reportObj.apilist.find(
-          (v) => v.id === formData.value.id,
-        );
-        if (record) {
-          const formValues = {
-            ...record,
-            timeRange: [record.startDate, record.endDate],
-          };
-          await formApi.setValues(formValues);
-        }
+        // 编辑模式：设置表单值
+        await formApi.setValues(formData.value);
       } else {
         // 新增模式：重置表单并设置默认值
         formApi.resetForm();
-
-        // 设置默认值
-        const defaultValues = {
-          statCycle: '日',
-          timeRange: [
-            new Date().toISOString().split('T')[0],
-            new Date().toISOString().split('T')[0],
-          ],
-          areaName: '天河区',
-          parkType: '商业停车场',
-          totalIncome: 0,
-          totalEntry: 0,
-          avgBerthUtilization: '0%',
-          keyNode: '正常运营',
-        };
-        await formApi.setValues(defaultValues);
+        // 设置默认月份为当前月
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        formApi.setValues({
+          statMonth: `${year}-${month}`
+        });
       }
     }
   },
 });
-
-/** 获取周数 */
-function getWeekNumber(date) {
-  const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
-  const pastDaysOfYear = (date - firstDayOfYear) / 86_400_000;
-  return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-}
 
 /** 刷新表格 */
 function handleRefresh() {
@@ -182,17 +145,11 @@ function handleRefresh() {
 /** 导出表格 */
 async function handleExport() {
   exportToExcel(reportObj.apilist, textObj.excelName, textObj.excelAllName);
-  ElMessage.success('导出成功');
 }
 
 /** 导出单行数据 */
-async function handleExportRow(row) {
-  exportToExcel(
-    [row],
-    `${row.areaName}-${row.parkType}`,
-    `${row.areaName}-${row.parkType}.xlsx`,
-  );
-  ElMessage.success('导出成功');
+function handleExportRow(row) {
+  exportToExcel([row], `${row.merchantName}-${row.statMonth}`, `${row.merchantName}-${row.statMonth}.xlsx`);
 }
 
 /** 创建报表 */
@@ -216,17 +173,11 @@ function handleEdit(row) {
 
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [
-      `${row.areaName} - ${row.parkType}`,
-    ]),
+    text: $t('ui.actionMessage.deleting', [row.merchantName + ' - ' + row.statMonth]),
   });
   try {
     reportObj.apilist = reportObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success(
-      $t('ui.actionMessage.deleteSuccess', [
-        `${row.areaName} - ${row.parkType}`,
-      ]),
-    );
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.merchantName + ' - ' + row.statMonth]));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -234,6 +185,11 @@ async function handleDelete(row) {
 }
 
 async function handleDeleteBatch() {
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请先选择要删除的数据');
+    return;
+  }
+
   await confirm($t('确定删除这些数据吗？'));
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deletingBatch'),
@@ -257,7 +213,7 @@ function handleRowCheckboxChange({ records }) {
 
 const reportObj = reactive({
   totalShow: false,
-  detailObj: {}, // 保留详情对象用于传递给组件
+  detailObj: {},
   total: dataList().length,
   currentPage: 1,
   pageSize: 10,
@@ -269,69 +225,45 @@ const changeTotalShow = () => {
   reportObj.totalShow = !reportObj.totalShow;
 };
 
+// 搜索条件
+const searchParams = ref({});
+
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
 
   let filteredList = reportObj.apilist;
-  switch (activeName.value) {
-    case '周数据': {
-      filteredList = reportObj.apilist.filter((v) => v.statCycle === '周');
 
-      break;
-    }
-    case '商业停车场': {
-      filteredList = reportObj.apilist.filter(
-        (v) => v.parkType === '商业停车场',
-      );
+  // 1. 先根据标签页过滤
+  if (activeName.value === '本月数据') {
+    filteredList = filteredList.filter(v => v.statMonth === '2026-02');
+  } else if (activeName.value === '近6月数据') {
+    // 计算近6个月（包含当前月）
+    const currentMonth = '2026-02';
+    const currentDate = new Date(currentMonth + '-01');
+    const sixMonthsAgo = new Date(currentDate);
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5); // 包含当前月，所以是5个月
+    const startMonth = sixMonthsAgo.toISOString().slice(0, 7);
 
-      break;
-    }
-    case '天河区': {
-      filteredList = reportObj.apilist.filter((v) => v.areaName === '天河区');
-
-      break;
-    }
-    case '日数据': {
-      filteredList = reportObj.apilist.filter((v) => v.statCycle === '日');
-
-      break;
-    }
-    case '月数据': {
-      filteredList = reportObj.apilist.filter((v) => v.statCycle === '月');
-
-      break;
-    }
-    // No default
+    filteredList = filteredList.filter(v => v.statMonth >= startMonth && v.statMonth <= currentMonth);
+  } else if (activeName.value === '天河商贸中心') {
+    filteredList = filteredList.filter(v => v.merchantName === '天河商贸中心');
+  } else if (activeName.value === '海珠商业集团') {
+    filteredList = filteredList.filter(v => v.merchantName === '海珠商业集团');
   }
 
-  // 获取搜索表单的查询条件
-  const queryValues = QueryFormApi?.form?.values || {};
-  if (queryValues.areaName) {
-    filteredList = filteredList.filter(
-      (v) => v.areaName === queryValues.areaName,
-    );
+  // 2. 再根据搜索条件过滤
+  if (searchParams.value.statMonth) {
+    filteredList = filteredList.filter(v => v.statMonth === searchParams.value.statMonth);
   }
-  if (queryValues.parkType) {
-    filteredList = filteredList.filter(
-      (v) => v.parkType === queryValues.parkType,
-    );
+  if (searchParams.value.merchantName) {
+    filteredList = filteredList.filter(v => v.merchantName === searchParams.value.merchantName);
   }
-  if (queryValues.statCycle) {
-    filteredList = filteredList.filter(
-      (v) => v.statCycle === queryValues.statCycle,
-    );
+  if (searchParams.value.areaName) {
+    filteredList = filteredList.filter(v => v.areaName === searchParams.value.areaName);
   }
-  if (
-    queryValues.timeRange &&
-    queryValues.timeRange[0] &&
-    queryValues.timeRange[1]
-  ) {
-    filteredList = filteredList.filter(
-      (v) =>
-        v.startDate >= queryValues.timeRange[0] &&
-        v.endDate <= queryValues.timeRange[1],
-    );
+  if (searchParams.value.lotName) {
+    filteredList = filteredList.filter(v => v.lotName === searchParams.value.lotName);
   }
 
   reportObj.total = filteredList.length;
@@ -343,55 +275,45 @@ const getTableData = (pageObj) => {
   return reportObj;
 };
 
-const [QueryForm, QueryFormApi] = useVbenForm({
-  // 默认展开
+// 添加查询表单
+const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
-  // 所有表单项共用，可单独在表单内覆盖
   commonConfig: {
-    // 所有表单项
     componentProps: {
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
-  // 提交函数
   handleSubmit: onSubmit,
-  // 垂直布局，label和input在不同行，值为vertical
-  // 水平布局，label和input在同一行
+  handleReset: onReset,
   layout: 'horizontal',
-  schema: useFormSchema()
-    .map((v) => {
-      // 搜索表单不需要关键节点字段
-      if (
-        v.fieldName === 'keyNode' ||
-        v.fieldName === 'totalIncome' ||
-        v.fieldName === 'totalEntry' ||
-        v.fieldName === 'avgBerthUtilization'
-      ) {
-        return null;
-      }
-      delete v.rules;
-      return v;
-    })
-    .filter((v) => v !== null),
-  // 是否可展开
+  schema: useFormSchema().map((v) => ({
+    ...v,
+    rules: undefined,
+  })),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
+    type: 'primary',
+  },
+  resetButtonOptions: {
+    content: '重置',
   },
 });
 
 // 搜索表单查询
-function onSubmit() {
-  handleRefresh();
+function onSubmit(values) {
+  searchParams.value = { ...values };
   drawerApi.close();
+  gridApi.query();
 }
 
-// 重置查询条件
-function handleReset() {
-  QueryFormApi?.resetForm();
-  handleRefresh();
+// 重置搜索表单
+function onReset() {
+  searchParams.value = {};
+  queryFormApi.resetForm();
+  gridApi.query();
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -422,7 +344,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-const activeName = ref('日数据');
+const activeName = ref('本月数据');
 // 修改打开详情的方法，调用组件的open方法
 const handleOpenDetail = (row) => {
   reportObj.detailObj = row;
@@ -431,50 +353,47 @@ const handleOpenDetail = (row) => {
 };
 
 const tabsData = ref([
-  { label: '日数据' },
-  { label: '周数据' },
-  { label: '月数据' },
-  { label: '商业停车场' },
-  { label: '天河区' },
+  { label: '本月数据' },
+  { label: '近6月数据' },
+  { label: '天河商贸中心' },
+  { label: '海珠商业集团' },
   { label: '全部数据' },
 ]);
 
 const createLabel = (item) => {
   let count = 0;
-  switch (item.label) {
-    case '全部数据': {
-      count = reportObj.apilist.length;
+  let filteredList = reportObj.apilist;
 
-      break;
-    }
-    case '周数据': {
-      count = reportObj.apilist.filter((v) => v.statCycle === '周').length;
+  // 先应用搜索条件
+  if (searchParams.value.statMonth) {
+    filteredList = filteredList.filter(v => v.statMonth === searchParams.value.statMonth);
+  }
+  if (searchParams.value.merchantName) {
+    filteredList = filteredList.filter(v => v.merchantName === searchParams.value.merchantName);
+  }
+  if (searchParams.value.areaName) {
+    filteredList = filteredList.filter(v => v.areaName === searchParams.value.areaName);
+  }
+  if (searchParams.value.lotName) {
+    filteredList = filteredList.filter(v => v.lotName === searchParams.value.lotName);
+  }
 
-      break;
-    }
-    case '商业停车场': {
-      count = reportObj.apilist.filter(
-        (v) => v.parkType === '商业停车场',
-      ).length;
+  if (item.label === '本月数据') {
+    count = filteredList.filter((v) => v.statMonth === '2026-02').length;
+  } else if (item.label === '近6月数据') {
+    const currentMonth = '2026-02';
+    const currentDate = new Date(currentMonth + '-01');
+    const sixMonthsAgo = new Date(currentDate);
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    const startMonth = sixMonthsAgo.toISOString().slice(0, 7);
 
-      break;
-    }
-    case '天河区': {
-      count = reportObj.apilist.filter((v) => v.areaName === '天河区').length;
-
-      break;
-    }
-    case '日数据': {
-      count = reportObj.apilist.filter((v) => v.statCycle === '日').length;
-
-      break;
-    }
-    case '月数据': {
-      count = reportObj.apilist.filter((v) => v.statCycle === '月').length;
-
-      break;
-    }
-    // No default
+    count = filteredList.filter(v => v.statMonth >= startMonth && v.statMonth <= currentMonth).length;
+  } else if (item.label === '天河商贸中心') {
+    count = filteredList.filter((v) => v.merchantName === '天河商贸中心').length;
+  } else if (item.label === '海珠商业集团') {
+    count = filteredList.filter((v) => v.merchantName === '海珠商业集团').length;
+  } else if (item.label === '全部数据') {
+    count = filteredList.length;
   }
   return `${item.label}(${count})`;
 };
@@ -508,9 +427,10 @@ const reportDetailDrawerRef = ref(null);
     <ReportDetailDrawer
       ref="reportDetailDrawerRef"
       :detail-obj="reportObj.detailObj"
-      :title="`趋势详情 - ${reportObj.detailObj.areaName} ${reportObj.detailObj.parkType}`"
+      :title="`商户月运营详情 - ${reportObj.detailObj.merchantName}`"
+      @edit="handleEdit"
     />
-    <Drawer title="趋势筛选">
+    <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
     <Grid>
@@ -549,7 +469,7 @@ const reportDetailDrawerRef = ref(null);
             @click="handleDeleteBatch"
           />
           <IconButton
-            content="筛选"
+            content="搜索"
             icon-name="search"
             @click="handleSerachShow"
           />
@@ -565,37 +485,33 @@ const reportDetailDrawerRef = ref(null);
           />
         </div>
       </template>
-      <template #areaName="{ row }">
+      <template #merchantName="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.areaName }}
+          {{ row.merchantName }}
         </el-text>
-      </template>
-      <template #totalEntry="{ row }">
-        <el-tag type="info" size="small">
-          {{ row.totalEntry?.toLocaleString() }}
-        </el-tag>
       </template>
       <template #totalIncome="{ row }">
         <el-tag type="success" size="small">
           ¥{{ row.totalIncome?.toLocaleString() }}
         </el-tag>
       </template>
-      <template #keyNode="{ row }">
+      <template #totalOrder="{ row }">
+        <el-tag type="info" size="small">
+          {{ row.totalOrder?.toLocaleString() }}
+        </el-tag>
+      </template>
+      <template #growthRate="{ row }">
         <el-tag
-          :type="
-            row.keyNode && row.keyNode.includes('促销')
-              ? 'danger'
-              : row.keyNode && row.keyNode.includes('活动')
-                ? 'warning'
-                : 'info'
-          "
+          :type="parseFloat(row.growthRate) > 8 ? 'success' :
+                 parseFloat(row.growthRate) > 4 ? 'primary' :
+                 parseFloat(row.growthRate) > 0 ? 'warning' : 'danger'"
           size="small"
         >
-          {{ row.keyNode || '正常运营' }}
+          {{ row.growthRate }}
         </el-tag>
       </template>
       <template #actions="{ row }">
@@ -607,19 +523,19 @@ const reportDetailDrawerRef = ref(null);
           />
           <IconButton
             content="编辑"
-            icon-name="edit"
+            icon-name="Edit"
             @click="handleEdit(row)"
-          />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
           />
           <IconButton
             content="导出"
             icon-name="download"
             @click="handleExportRow(row)"
+          />
+          <IconButton
+            content="删除"
+            icon-name="Delete"
+            color="#F56C6C"
+            @click="handleDelete(row)"
           />
         </div>
       </template>
@@ -631,18 +547,10 @@ const reportDetailDrawerRef = ref(null);
           <el-icon class="tabel-tab-icon" v-if="reportObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span>
-            本页统计：数据量{{ reportObj.list.length }}; 总入场车次:
-            {{
-              reportObj.list
-                .reduce((sum, v) => sum + v.totalEntry, 0)
-                .toLocaleString()
-            }}; 总收费金额: ¥{{
-              reportObj.list
-                .reduce((sum, v) => sum + v.totalIncome, 0)
-                .toLocaleString()
-            }};
-          </span>
+          <span> 本页统计：数据量{{ reportObj.list.length }};
+            总营收: ¥{{ reportObj.list.reduce((sum, v) => sum + v.totalIncome, 0).toLocaleString() }};
+            总订单数: {{ reportObj.list.reduce((sum, v) => sum + v.totalOrder, 0).toLocaleString() }};
+            </span>
         </div>
         <div class="common-total-bottom" v-if="reportObj.totalShow">
           <span> 全部统计：{{ textObj.total }} </span>

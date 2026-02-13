@@ -5,7 +5,6 @@ import { reactive } from 'vue';
 import Card from '#/components/stats/card.vue';
 import Circle from '#/components/stats/circle.vue';
 import Columnar from '#/components/stats/columnar.vue';
-// import LineChart from '#/components/stats/line.vue';
 
 const state = reactive({
   cardList: [
@@ -46,13 +45,6 @@ const state = reactive({
           { name: '显示屏', value: 8 },
         ]"
     />
-<!--    <LineChart-->
-<!--      title="近7天设备在线率趋势"-->
-<!--      :x-data="['02-01', '02-02', '02-03', '02-04', '02-05', '02-06', '02-07']"-->
-<!--      :series-data="[-->
-<!--          { name: '在线率', data: [93.5, 93.8, 93.2, 93.6, 94.0, 93.7, 93.9] },-->
-<!--        ]"-->
-<!--    />-->
     <Columnar
       title="各区域设备在线率对比"
       :x-data="['天河区', '越秀区', '海珠区', '白云区', '黄埔区', '荔湾区', '番禺区']"
