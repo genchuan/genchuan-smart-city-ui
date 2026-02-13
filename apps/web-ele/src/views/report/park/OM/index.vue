@@ -9,7 +9,7 @@ import EquipmentReport from './equipment/index.vue';
 import FaultChart from './fault/faultchart.vue';
 import FaultReport from './fault/index.vue';
 import StaffReport from './staff/index.vue';
-import StaffChart from './staff/Staffchart.vue';
+import StaffChart from './staff/staffchart.vue';
 
 import '#/components/page/index.scss';
 
