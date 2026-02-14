@@ -2,14 +2,12 @@
 <script setup>
 import { ref } from 'vue';
 
-import EfficiencyChart from './efficiency/efficiencychart.vue';
-import EfficiencyReport from './efficiency/index.vue';
-import EquipmentChart from './equipment/equipmentchart.vue';
-import EquipmentReport from './equipment/index.vue';
-import FaultChart from './fault/faultchart.vue';
-import FaultReport from './fault/index.vue';
-import StaffReport from './staff/index.vue';
-import StaffChart from './staff/staffchart.vue';
+// import TemplateReport from './template/index.vue';
+// import TemplateChart from './template/templatechart.vue';
+// import GenerateReport from './generate/index.vue';
+// import GenerateChart from './generate/generatechart.vue';
+// import RecordReport from './record/index.vue';
+// import RecordChart from './record/recordchart.vue';
 
 import '#/components/page/index.scss';
 
@@ -23,53 +21,44 @@ const arrowChange = (index) => {
   tabArray.value[index].arrowShow = !tabArray.value[index].arrowShow;
 };
 const tabArray = ref([
-  {
-    label: '设备运行报表',
-    components: EquipmentReport,
-    showSecondary: true,
-    secondShow: false,
-    arrowShow: false,
-    arrowState: false,
-  },
-  {
-    label: '故障统计报表',
-    components: FaultReport,
-    showSecondary: true,
-    secondShow: false,
-    arrowShow: false,
-    arrowState: false,
-  },
-  {
-    label: '运维效率报表',
-    components: EfficiencyReport,
-    showSecondary: true,
-    secondShow: false,
-    arrowShow: false,
-    arrowState: false,
-  },
-  {
-    label: '运维人员绩效考核报表',
-    components: StaffReport,
-    showSecondary: true,
-    secondShow: false,
-    arrowShow: false,
-    arrowState: false,
-  },
+  // {
+  //   label: '数据上报模板配置',
+  //   components: TemplateReport,
+  //   showSecondary: true,
+  //   secondShow: false,
+  //   arrowShow: false,
+  //   arrowState: false,
+  // },
+  // {
+  //   label: '政务报表生成',
+  //   components: GenerateReport,
+  //   showSecondary: true,
+  //   secondShow: false,
+  //   arrowShow: false,
+  //   arrowState: false,
+  // },
+  // {
+  //   label: '上报记录管理',
+  //   components: RecordReport,
+  //   showSecondary: true,
+  //   secondShow: false,
+  //   arrowShow: false,
+  //   arrowState: false,
+  // },
 ]);
 const tabChange = () => {
   tabArray.value.forEach((v) => {
     v.arrowShow = false;
   });
 };
-const activeName = ref('设备运行报表');
+const activeName = ref('数据上报模板配置');
 const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <EquipmentChart v-if="tabArray[0].arrowShow" />
-    <FaultChart v-if="tabArray[1].arrowShow" />
-    <EfficiencyChart v-if="tabArray[2].arrowShow" />
-    <StaffChart v-if="tabArray[3].arrowShow" />
+<!--    <TemplateChart v-if="tabArray[0].arrowShow" />-->
+<!--    <GenerateChart v-if="tabArray[1].arrowShow" />-->
+<!--    <RecordChart v-if="tabArray[2].arrowShow" />-->
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"

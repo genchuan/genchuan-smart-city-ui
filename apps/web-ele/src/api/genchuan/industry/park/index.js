@@ -11,6 +11,23 @@ export function getInputCar(params) {
     params,
   });
 }
+export function getParkLotPage(params) {
+  return requestClient.get('/park/park-lot/page', {
+    params,
+  });
+}
+/** 车场创建 */
+export function createParkLot(data) {
+  return requestClient.post('/park/park-lot/create', data);
+}
+/** 车场更新*/
+export function updateParkLot(data) {
+  return requestClient.put('/park/park-lot/update', data);
+}
+/** 车场删除*/
+export function deleteParkLot(id) {
+  return requestClient.delete(`/park/park-lot/delete?id=${id}`);
+}
 export function getOrderPage(params) {
   return requestClient.get('/park/order-temp/page', {
     params,
