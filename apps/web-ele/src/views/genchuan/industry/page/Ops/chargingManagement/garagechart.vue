@@ -27,22 +27,19 @@ const state = reactive({
     <Circle
       width="340px"
       height="330px"
-      title-text="各等级用户占比"
+      title-text="设备状态占比"
       :data="[
-        { name: '普通会员', value: 4 },
-        { name: '白银会员', value: 5 },
-        { name: '黄金会员', value: 5 },
-        { name: '白金会员', value: 5 },
-        { name: '钻石会员', value: 5 },
-        { name: '测试会员', value: 5 },
+        { name: '正常', value: 4 },
+        { name: '故障', value: 5 },
+        { name: '离线', value: 5 },
       ]"
     />
 
     <Columnar
       height="330px"
-      title="各等级所需成长值对比"
-      :x-data="['初级会员等级', '中级会员等级', '高级会员等级', '顶级会员等级']"
-      :series-data="[{ name: '', data: [58, 42, 33, 33] }]"
+      title="不同运营范围充电站数量对比"
+      :x-data="['商业停车场', '小区停车场', '学校停车场']"
+      :series-data="[{ name: '', data: [58, 42, 33, ] }]"
     />
   </div>
 </template>
