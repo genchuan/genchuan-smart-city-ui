@@ -17,9 +17,7 @@ const changeArrowStatus = () => {
     v.secondShow = secondShow.value;
   });
 };
-const arrowChange = (index) => {
-  tabArray.value[index].arrowShow = !tabArray.value[index].arrowShow;
-};
+
 const tabArray = ref([
   {
     label: '日运营报表',
@@ -46,19 +44,25 @@ const tabArray = ref([
     arrowState: false,
   },
 ]);
-const tabChange = () => {
-  tabArray.value.forEach((v) => {
-    v.arrowShow = false;
-  });
-};
+
 const activeName = ref('日运营报表');
 const secondShow = ref(false);
+
+// 全局图表显示状态
+const showStats = ref(false);
+const toggleStats = () => {
+  showStats.value = !showStats.value;
+};
 </script>
+
 <template>
   <div class="common-index">
-    <DailyChart v-if="tabArray[0].arrowShow" />
-    <MonthlyChart v-if="tabArray[1].arrowShow" />
-    <RevenueChart v-if="tabArray[2].arrowShow" />
+    <!-- 图表区域：根据全局状态和当前激活标签显示对应图表 -->
+    <DailyChart v-if="showStats && activeName === '日运营报表'" />
+    <MonthlyChart v-if="showStats && activeName === '月运营报表'" />
+    <RevenueChart v-if="showStats && activeName === '商户营收报表'" />
+
+    <!-- 原有二级显示控制按钮 -->
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -75,14 +79,14 @@ const secondShow = ref(false);
         <ArrowUp />
       </el-icon>
     </div>
+
     <el-tabs
       v-model="activeName"
       class="common-tabs"
       type="card"
-      @tab-change="tabChange"
     >
       <el-tab-pane
-        v-for="(item, index) in tabArray"
+        v-for="(item) in tabArray"
         :key="item.label"
         :name="item.label"
       >
@@ -95,8 +99,8 @@ const secondShow = ref(false);
           :is="item.components"
           :second-show="item.secondShow"
           :key="item.label"
-          :arrow-show="item.arrowShow"
-          @arrow-change="arrowChange(index)"
+          :arrow-show="showStats"
+          @arrow-change="toggleStats"
         />
       </el-tab-pane>
     </el-tabs>

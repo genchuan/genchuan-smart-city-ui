@@ -468,7 +468,6 @@ const utilizationDetailDrawerRef = ref(null);
           <span> 本页统计：数据量{{ reportObj.list.length }};
             平均利用率: {{ (reportObj.list.reduce((sum, v) => sum + parseFloat(v.utilizationRate), 0) / reportObj.list.length).toFixed(2) }}%;
             总可用时长: {{ reportObj.list.reduce((sum, v) => sum + v.totalAvailableHours, 0) }}小时;
-            总占用时长: {{ reportObj.list.reduce((sum, v) => sum + v.totalOccupiedHours, 0) }}小时;
             </span>
         </div>
         <div class="common-total-bottom" v-if="reportObj.totalShow">

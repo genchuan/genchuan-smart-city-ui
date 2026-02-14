@@ -17,9 +17,7 @@ const changeArrowStatus = () => {
     v.secondShow = secondShow.value;
   });
 };
-const arrowChange = (index) => {
-  tabArray.value[index].arrowShow = !tabArray.value[index].arrowShow;
-};
+
 const tabArray = ref([
   // {
   //   label: '数据上报模板配置',
@@ -46,19 +44,15 @@ const tabArray = ref([
   //   arrowState: false,
   // },
 ]);
-const tabChange = () => {
-  tabArray.value.forEach((v) => {
-    v.arrowShow = false;
-  });
-};
+
 const activeName = ref('数据上报模板配置');
 const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-<!--    <TemplateChart v-if="tabArray[0].arrowShow" />-->
-<!--    <GenerateChart v-if="tabArray[1].arrowShow" />-->
-<!--    <RecordChart v-if="tabArray[2].arrowShow" />-->
+<!--    <TemplateChart v-if="showStats && activeName === '数据上报模板配置'" />-->
+<!--    <GenerateChart v-if="showStats && activeName === '政务报表生成'" />-->
+<!--    <RecordChart v-if="showStats && activeName === '上报记录管理'" />-->
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -79,10 +73,9 @@ const secondShow = ref(false);
       v-model="activeName"
       class="common-tabs"
       type="card"
-      @tab-change="tabChange"
     >
       <el-tab-pane
-        v-for="(item, index) in tabArray"
+        v-for="(item) in tabArray"
         :key="item.label"
         :name="item.label"
       >
@@ -95,8 +88,8 @@ const secondShow = ref(false);
           :is="item.components"
           :second-show="item.secondShow"
           :key="item.label"
-          :arrow-show="item.arrowShow"
-          @arrow-change="arrowChange(index)"
+          :arrow-show="showStats"
+          @arrow-change="toggleStats"
         />
       </el-tab-pane>
     </el-tabs>

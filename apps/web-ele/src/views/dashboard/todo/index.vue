@@ -12,8 +12,8 @@ import Alarm from './alarm/index.vue';
 import Alarmechart from './alarmechart.vue';
 import Inspection from './inspection/index.vue';
 import Inspectionechart from './inspectionechart.vue';
-// import Schedule from './schedule/index.vue';
-// import Scheduleechart from './scheduleechart.vue';
+import Schedule from './schedule/index.vue';
+import Scheduleechart from './scheduleechart.vue';
 
 import '#/components/page/index.scss';
 
@@ -23,9 +23,7 @@ const changeArrowStatus = () => {
     v.secondShow = secondShow.value;
   });
 };
-const arrowChange = (index) => {
-  tabArray.value[index].arrowShow = !tabArray.value[index].arrowShow;
-};
+
 const tabArray = ref([
   {
     label: '我的任务',
@@ -67,31 +65,33 @@ const tabArray = ref([
     arrowShow: false,
     arrowState: false,
   },
-  // {
-  //   label: '排班',
-  //   components: Schedule,
-  //   showSecondary: true,
-  //   secondShow: false,
-  //   arrowShow: false,
-  //   arrowState: false,
-  // },
+  {
+    label: '排班',
+    components: Schedule,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: false,
+    arrowState: false,
+  },
 ]);
-const tabChange = () => {
-  tabArray.value.forEach((v) => {
-    v.arrowShow = false;
-  });
-};
+
 const activeName = ref('我的任务');
 const secondShow = ref(false);
+
+// 全局图表显示状态
+const showStats = ref(false);
+const toggleStats = () => {
+  showStats.value = !showStats.value;
+};
 </script>
 <template>
   <div class="common-index">
-    <Taskechart v-if="tabArray[0].arrowShow" />
-    <ApproveChart v-if="tabArray[1].arrowShow" />
-    <Workechart v-if="tabArray[2].arrowShow" />
-    <Alarmechart v-if="tabArray[3].arrowShow" />
-    <Inspectionechart v-if="tabArray[4].arrowShow" />
-<!--    <Scheduleechart v-if="tabArray[5].arrowShow" />-->
+    <Taskechart v-if="showStats && activeName === '我的任务'" />
+    <ApproveChart v-if="showStats && activeName === '审批'" />
+    <Workechart v-if="showStats && activeName === '工单'" />
+    <Alarmechart v-if="showStats && activeName === '预警'"/>
+    <Inspectionechart v-if="showStats && activeName === '巡检'"/>
+    <Scheduleechart v-if="showStats && activeName === '排班'" />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -112,10 +112,9 @@ const secondShow = ref(false);
       v-model="activeName"
       class="common-tabs"
       type="card"
-      @tab-change="tabChange"
     >
       <el-tab-pane
-        v-for="(item, index) in tabArray"
+        v-for="(item) in tabArray"
         :key="item.label"
         :name="item.label"
       >
@@ -128,8 +127,8 @@ const secondShow = ref(false);
           :is="item.components"
           :second-show="item.secondShow"
           :key="item.label"
-          :arrow-show="item.arrowShow"
-          @arrow-change="arrowChange(index)"
+          :arrow-show="item.showStats"
+          @arrow-change="toggleStats"
         />
       </el-tab-pane>
     </el-tabs>

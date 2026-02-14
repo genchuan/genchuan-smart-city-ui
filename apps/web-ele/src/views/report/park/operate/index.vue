@@ -19,12 +19,10 @@ const changeArrowStatus = () => {
     v.secondShow = secondShow.value;
   });
 };
-const arrowChange = (index) => {
-  tabArray.value[index].arrowShow = !tabArray.value[index].arrowShow;
-};
+
 const tabArray = ref([
   {
-    label: '日运营数据报表',
+    label: '日运营报表',
     components: DailyReport,
     showSecondary: true,
     secondShow: false,
@@ -32,7 +30,7 @@ const tabArray = ref([
     arrowState: false,
   },
   {
-    label: '月运营数据报表',
+    label: '月运营报表',
     components: MonthlyReport,
     showSecondary: true,
     secondShow: false,
@@ -56,20 +54,22 @@ const tabArray = ref([
     arrowState: false,
   },
 ]);
-const tabChange = () => {
-  tabArray.value.forEach((v) => {
-    v.arrowShow = false;
-  });
-};
-const activeName = ref('日运营数据报表');
+
+const activeName = ref('日运营报表');
 const secondShow = ref(false);
+
+// 全局图表显示状态
+const showStats = ref(false);
+const toggleStats = () => {
+  showStats.value = !showStats.value;
+};
 </script>
 <template>
   <div class="common-index">
-    <DailyChart v-if="tabArray[0].arrowShow" />
-    <MonthlyChart v-if="tabArray[1].arrowShow" />
-    <TrendChart v-if="tabArray[2].arrowShow" />
-    <WashCardChart v-if="tabArray[3].arrowShow" />
+    <DailyChart v-if="showStats && activeName === '日运营报表'" />
+    <MonthlyChart v-if="showStats && activeName === '月运营报表'" />
+    <TrendChart v-if="showStats && activeName === '运营趋势报表'" />
+    <WashCardChart v-if="showStats && activeName === '洗车卡运营报表'" />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -106,8 +106,8 @@ const secondShow = ref(false);
           :is="item.components"
           :second-show="item.secondShow"
           :key="item.label"
-          :arrow-show="item.arrowShow"
-          @arrow-change="arrowChange(index)"
+          :arrow-show="showStats"
+          @arrow-change="toggleStats"
         />
       </el-tab-pane>
     </el-tabs>

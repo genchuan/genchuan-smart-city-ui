@@ -1,4 +1,4 @@
-<!-- detail.vue（最终整合版） -->
+<!-- detail.vue -->
 <script setup>
 import { defineProps, toRefs, computed, ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
@@ -288,7 +288,7 @@ defineExpose({
         </div>
       </div>
 
-      <!-- 统计数据展示（采用新风格） -->
+      <!-- 统计数据展示 -->
       <div class="detail-card-section">
         <div class="section-title">统计数据</div>
         <div class="data-content-grid">

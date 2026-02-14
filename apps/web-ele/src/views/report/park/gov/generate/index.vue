@@ -1,4 +1,4 @@
-<!-- index.vue 政务报表生成主页面（完整改造版） -->
+<!-- index.vue 政务报表生成主页面 -->
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
