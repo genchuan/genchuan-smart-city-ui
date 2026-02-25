@@ -2,6 +2,8 @@
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 
 import * as echarts from 'echarts';
+import MapComponent from '../Map/index.vue';
+import IconButton from '#/components/common/IconButton.vue';
 
 const props = defineProps({
   data: {
@@ -12,10 +14,29 @@ const props = defineProps({
       charts: [],
     }),
   },
+  showMapToggle: {
+    type: Boolean,
+    default: false,
+  },
+  mapData: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const chartRefs = ref({});
 const chartInstances = ref({});
+const showMap = ref(false);
+const toggleView = () => {
+  showMap.value = !showMap.value;
+  // 当切换回图表视图时，重新初始化图表
+  if (!showMap.value) {
+    // 使用nextTick确保DOM已经更新
+    setTimeout(() => {
+      initCharts();
+    }, 0);
+  }
+};
 
 const initCharts = () => {
   props.data.charts.forEach((chart, index) => {
@@ -169,8 +190,8 @@ const getChartOption = (chart) => {
         lineStyle:
           chart.type === 'line'
             ? {
-                width: 3,
-              }
+              width: 3,
+            }
             : undefined,
         symbol: chart.type === 'line' ? 'circle' : undefined,
         symbolSize: chart.type === 'line' ? 6 : undefined,
@@ -240,15 +261,91 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- 图表区域：给chart-card添加动态类名区分图表类型 -->
-    <div
-      v-for="(chart, index) in data.charts"
-      :key="`chart-${index}`"
-      :class="{
-        'simple-bar-chart': chart.type !== 'pie', // 非圆环图（pie）添加类名
-        'park-type-chart': chart.type === 'pie', // 圆环图添加类名
-      }"
-      :ref="(el) => (chartRefs[`chart-${index}`] = el)"
-    ></div>
+    <!-- 图表/地图区域 -->
+    <div v-if="!showMap" class="charts-wrapper">
+      <!-- 地图/图表切换按钮 -->
+      <div v-if="showMapToggle" class="toggle-container">
+        <IconButton
+          :content="showMap ? '图表' : '地图'"
+          :icon-name="'Switch'"
+          @click="toggleView"
+          class="toggle-button"
+        />
+      </div>
+      <div
+        v-for="(chart, index) in data.charts"
+        :key="`chart-${index}`"
+        :class="{
+          'simple-bar-chart': chart.type !== 'pie', // 非圆环图（pie）添加类名
+          'park-type-chart': chart.type === 'pie', // 圆环图添加类名
+        }"
+        :ref="(el) => (chartRefs[`chart-${index}`] = el)"
+      ></div>
+    </div>
+    <!-- 地图区域 -->
+    <div v-else class="map-wrapper">
+      <!-- 地图/图表切换按钮 -->
+      <div v-if="showMapToggle" class="toggle-container">
+        <IconButton
+          :content="showMap ? '图表' : '地图'"
+          :icon-name="'Switch'"
+          @click="toggleView"
+          class="toggle-button"
+        />
+      </div>
+      <MapComponent :data="mapData" />
+    </div>
   </div>
 </template>
+
+<style scoped>
+.park-chart-box {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  height: 350px;
+  flex-wrap: nowrap; /* 强制不换行 */
+  overflow: hidden; /* 防止内容溢出 */
+}
+
+.chart-box-left {
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex-shrink: 0; /* 防止卡片区域被压缩 */
+}
+
+.charts-wrapper {
+  flex: 1 1 0;      /* 允许收缩和增长 */
+  min-width: 0;     /* 允许内容收缩到小于内容宽度 */
+  display: flex;
+  gap: 20px;
+  position: relative;
+}
+
+.map-wrapper {
+  flex: 1 1 0;
+  min-width: 0;
+  position: relative;
+  height: 330px;
+}
+
+.toggle-container {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1999;
+}
+
+.toggle-button {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.simple-bar-chart,
+.park-type-chart {
+  flex: 1;
+  min-width: 0;
+  height: 300px;
+}
+</style>

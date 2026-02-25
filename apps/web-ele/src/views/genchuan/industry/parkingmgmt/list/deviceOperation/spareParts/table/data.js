@@ -1828,190 +1828,254 @@ export const workorderList = [
 
 // 根据工单号获取工单详情
 export const getWorkorderByNo = (workorderNo) => {
-  return workorderList.find(item => item.workorderNo === workorderNo) || {};
+  return workorderList.find((item) => item.workorderNo === workorderNo) || {};
 };
 
 // 根据类型获取统计数据
 export const getStatsDataByType = (type = 'inbound') => {
-  if (type === 'inbound') {
-    // 入库管理统计数据
-    const inboundData = dataList('inbound');
-    const totalInboundCount = inboundData.length;
-    const totalInboundQuantity = inboundData.reduce((sum, item) => sum + (item.inQuantity || 0), 0);
-    const totalInboundAmount = inboundData.reduce((sum, item) => sum + (item.totalAmount || 0), 0);
-    
-    // 供应商入库占比
-    const supplierMap = {};
-    inboundData.forEach(item => {
-      const supplier = item.supplier || '未知供应商';
-      supplierMap[supplier] = (supplierMap[supplier] || 0) + (item.totalAmount || 0);
-    });
-    const supplierData = Object.entries(supplierMap).map(([name, value]) => ({ name, value }));
-    
-    // 入库备件状态占比
-    const statusMap = {};
-    inboundData.forEach(item => {
-      const status = item.statusName || '未知状态';
-      statusMap[status] = (statusMap[status] || 0) + (item.totalAmount || 0);
-    });
-    const statusData = Object.entries(statusMap).map(([name, value]) => ({ name, value }));
-    
-    // 近期入库金额趋势
-    const dateMap = {};
-    inboundData.forEach(item => {
-      const date = item.inTime ? item.inTime.slice(0, 10) : '未知日期';
-      dateMap[date] = (dateMap[date] || 0) + (item.totalAmount || 0);
-    });
-    const dates = Object.keys(dateMap).sort();
-    const amountData = dates.map(date => dateMap[date]);
-    
-    return {
-      cards: [
-        { title: '总入库次数', value: totalInboundCount, color: '#4A90E2' },
-        { title: '入库备件总数量', value: totalInboundQuantity, color: '#50E3C2' },
-        { title: '入库总金额', value: totalInboundAmount, color: '#FF9F40' },
-      ],
-      charts: [
-        {
-          title: '供应商入库占比',
-          type: 'pie',
-          data: supplierData,
-        },
-        {
-          title: '入库备件状态占比',
-          type: 'pie',
-          data: statusData,
-        },
-        {
-          title: '近期入库金额趋势',
-          type: 'line',
-          xAxis: dates,
-          series: amountData,
-        },
-      ],
-    };
-  } else if (type === 'outbound') {
-    // 出库管理统计数据
-    const outboundData = dataList('outbound');
-    const totalOutboundCount = outboundData.length;
-    const totalOutboundQuantity = outboundData.reduce((sum, item) => sum + (item.outQuantity || 0), 0);
-    const totalOutboundAmount = outboundData.reduce((sum, item) => sum + (item.outAmount || 0), 0);
-    
-    // 出库备件类型占比
-    const partTypeMap = {};
-    outboundData.forEach(item => {
-      const partType = item.partType || '未知类型';
-      partTypeMap[partType] = (partTypeMap[partType] || 0) + (item.outQuantity || 0);
-    });
-    const partTypeData = Object.entries(partTypeMap).map(([name, value]) => ({ name, value }));
-    
-    // 使用设备类型占比
-    const deviceMap = {};
-    outboundData.forEach(item => {
-      const device = item.useDevice || '未知设备';
-      deviceMap[device] = (deviceMap[device] || 0) + 1;
-    });
-    const deviceData = Object.entries(deviceMap).map(([name, value]) => ({ name, value }));
-    
-    // 出库备件状态占比
-    const statusMap = {};
-    outboundData.forEach(item => {
-      const status = item.statusName || '未知状态';
-      statusMap[status] = (statusMap[status] || 0) + (item.outQuantity || 0);
-    });
-    const statusData = Object.entries(statusMap).map(([name, value]) => ({ name, value }));
-    
-    // 近期出库数量趋势
-    const dateMap = {};
-    outboundData.forEach(item => {
-      const date = item.outTime ? item.outTime.slice(0, 10) : '未知日期';
-      dateMap[date] = (dateMap[date] || 0) + (item.outQuantity || 0);
-    });
-    const dates = Object.keys(dateMap).sort();
-    const quantityData = dates.map(date => dateMap[date]);
-    
-    return {
-      cards: [
-        { title: '总出库次数', value: totalOutboundCount, color: '#4A90E2' },
-        { title: '出库备件总数量', value: totalOutboundQuantity, color: '#50E3C2' },
-        { title: '出库总金额', value: totalOutboundAmount, color: '#FF9F40' },
-      ],
-      charts: [
-        {
-          title: '出库备件状态占比',
-          type: 'pie',
-          data: statusData,
-        },
-        {
-          title: '使用设备类型占比',
-          type: 'pie',
-          data: deviceData,
-        },
-        {
-          title: '近期出库数量趋势',
-          type: 'line',
-          xAxis: dates,
-          series: quantityData,
-        },
-      ],
-    };
-  } else if (type === 'stock') {
-    // 库存管理统计数据
-    const stockData = dataList('stock');
-    const totalPartTypes = stockData.length;
-    const sufficientStockCount = stockData.filter(item => item.stockStatus === '正常').length;
-    const insufficientStockCount = stockData.filter(item => item.stockStatus === '不足').length;
-    const outOfStockCount = stockData.filter(item => item.stockQuantity === 0).length;
-    
-    // 备件类型占比
-    const partTypeMap = {};
-    stockData.forEach(item => {
-      const partType = item.partType || '未知类型';
-      partTypeMap[partType] = (partTypeMap[partType] || 0) + 1;
-    });
-    const partTypeData = Object.entries(partTypeMap).map(([name, value]) => ({ name, value }));
-    
-    // 库存状态占比
-    const statusMap = {};
-    stockData.forEach(item => {
-      const status = item.stockStatus || '未知状态';
-      statusMap[status] = (statusMap[status] || 0) + 1;
-    });
-    const statusData = Object.entries(statusMap).map(([name, value]) => ({ name, value }));
-    
-    // 库存不足备件排名
-    const insufficientParts = stockData
-      .filter(item => item.stockStatus === '不足')
-      .sort((a, b) => (a.stockQuantity || 0) - (b.stockQuantity || 0))
-      .slice(0, 5);
-    const partNames = insufficientParts.map(item => item.partName);
-    const stockQuantities = insufficientParts.map(item => item.stockQuantity || 0);
-    
-    return {
-      cards: [
-        { title: '总备件种类数', value: totalPartTypes, color: '#4A90E2' },
-        { title: '库存充足数', value: sufficientStockCount, color: '#50E3C2' },
-        { title: '库存不足数', value: insufficientStockCount, color: '#FF9F40' },
-      ],
-      charts: [
-        {
-          title: '备件类型占比',
-          type: 'pie',
-          data: partTypeData,
-        },
-        {
-          title: '库存状态占比',
-          type: 'pie',
-          data: statusData,
-        },
-        {
-          title: '库存不足备件排名',
-          type: 'bar',
-          xAxis: partNames,
-          series: stockQuantities,
-        },
-      ],
-    };
+  switch (type) {
+    case 'inbound': {
+      // 入库管理统计数据
+      const inboundData = dataList('inbound');
+      const totalInboundCount = inboundData.length;
+      const totalInboundQuantity = inboundData.reduce(
+        (sum, item) => sum + (item.inQuantity || 0),
+        0,
+      );
+      const totalInboundAmount = inboundData.reduce(
+        (sum, item) => sum + (item.totalAmount || 0),
+        0,
+      );
+
+      // 供应商入库占比
+      const supplierMap = {};
+      inboundData.forEach((item) => {
+        const supplier = item.supplier || '未知供应商';
+        supplierMap[supplier] =
+          (supplierMap[supplier] || 0) + (item.totalAmount || 0);
+      });
+      const supplierData = Object.entries(supplierMap).map(([name, value]) => ({
+        name,
+        value,
+      }));
+
+      // 入库备件状态占比
+      const statusMap = {};
+      inboundData.forEach((item) => {
+        const status = item.statusName || '未知状态';
+        statusMap[status] = (statusMap[status] || 0) + (item.totalAmount || 0);
+      });
+      const statusData = Object.entries(statusMap).map(([name, value]) => ({
+        name,
+        value,
+      }));
+
+      // 近期入库金额趋势
+      const dateMap = {};
+      inboundData.forEach((item) => {
+        const date = item.inTime ? item.inTime.slice(0, 10) : '未知日期';
+        dateMap[date] = (dateMap[date] || 0) + (item.totalAmount || 0);
+      });
+      const dates = Object.keys(dateMap).sort();
+      const amountData = dates.map((date) => dateMap[date]);
+
+      return {
+        cards: [
+          { title: '总入库次数', value: totalInboundCount, color: '#4A90E2' },
+          {
+            title: '入库备件总数量',
+            value: totalInboundQuantity,
+            color: '#50E3C2',
+          },
+          { title: '入库总金额', value: totalInboundAmount, color: '#FF9F40' },
+        ],
+        charts: [
+          {
+            title: '供应商入库占比',
+            type: 'pie',
+            data: supplierData,
+          },
+          {
+            title: '入库备件状态占比',
+            type: 'pie',
+            data: statusData,
+          },
+          {
+            title: '近期入库金额趋势',
+            type: 'line',
+            xAxis: dates,
+            series: amountData,
+          },
+        ],
+      };
+    }
+    case 'outbound': {
+      // 出库管理统计数据
+      const outboundData = dataList('outbound');
+      const totalOutboundCount = outboundData.length;
+      const totalOutboundQuantity = outboundData.reduce(
+        (sum, item) => sum + (item.outQuantity || 0),
+        0,
+      );
+      const totalOutboundAmount = outboundData.reduce(
+        (sum, item) => sum + (item.outAmount || 0),
+        0,
+      );
+
+      // 出库备件类型占比
+      const partTypeMap = {};
+      outboundData.forEach((item) => {
+        const partType = item.partType || '未知类型';
+        partTypeMap[partType] =
+          (partTypeMap[partType] || 0) + (item.outQuantity || 0);
+      });
+      const partTypeData = Object.entries(partTypeMap).map(([name, value]) => ({
+        name,
+        value,
+      }));
+
+      // 使用设备类型占比
+      const deviceMap = {};
+      outboundData.forEach((item) => {
+        const device = item.useDevice || '未知设备';
+        deviceMap[device] = (deviceMap[device] || 0) + 1;
+      });
+      const deviceData = Object.entries(deviceMap).map(([name, value]) => ({
+        name,
+        value,
+      }));
+
+      // 出库备件状态占比
+      const statusMap = {};
+      outboundData.forEach((item) => {
+        const status = item.statusName || '未知状态';
+        statusMap[status] = (statusMap[status] || 0) + (item.outQuantity || 0);
+      });
+      const statusData = Object.entries(statusMap).map(([name, value]) => ({
+        name,
+        value,
+      }));
+
+      // 近期出库数量趋势
+      const dateMap = {};
+      outboundData.forEach((item) => {
+        const date = item.outTime ? item.outTime.slice(0, 10) : '未知日期';
+        dateMap[date] = (dateMap[date] || 0) + (item.outQuantity || 0);
+      });
+      const dates = Object.keys(dateMap).sort();
+      const quantityData = dates.map((date) => dateMap[date]);
+
+      return {
+        cards: [
+          { title: '总出库次数', value: totalOutboundCount, color: '#4A90E2' },
+          {
+            title: '出库备件总数量',
+            value: totalOutboundQuantity,
+            color: '#50E3C2',
+          },
+          { title: '出库总金额', value: totalOutboundAmount, color: '#FF9F40' },
+        ],
+        charts: [
+          {
+            title: '出库备件状态占比',
+            type: 'pie',
+            data: statusData,
+          },
+          {
+            title: '使用设备类型占比',
+            type: 'pie',
+            data: deviceData,
+          },
+          {
+            title: '近期出库数量趋势',
+            type: 'line',
+            xAxis: dates,
+            series: quantityData,
+          },
+        ],
+      };
+    }
+    case 'stock': {
+      // 库存管理统计数据
+      const stockData = dataList('stock');
+      const totalPartTypes = stockData.length;
+      const sufficientStockCount = stockData.filter(
+        (item) => item.stockStatus === '正常',
+      ).length;
+      const insufficientStockCount = stockData.filter(
+        (item) => item.stockStatus === '不足',
+      ).length;
+      const outOfStockCount = stockData.filter(
+        (item) => item.stockQuantity === 0,
+      ).length;
+
+      // 备件类型占比
+      const partTypeMap = {};
+      stockData.forEach((item) => {
+        const partType = item.partType || '未知类型';
+        partTypeMap[partType] = (partTypeMap[partType] || 0) + 1;
+      });
+      const partTypeData = Object.entries(partTypeMap).map(([name, value]) => ({
+        name,
+        value,
+      }));
+
+      // 库存状态占比
+      const statusMap = {};
+      stockData.forEach((item) => {
+        const status = item.stockStatus || '未知状态';
+        statusMap[status] = (statusMap[status] || 0) + 1;
+      });
+      const statusData = Object.entries(statusMap).map(([name, value]) => ({
+        name,
+        value,
+      }));
+
+      // 库存不足备件排名
+      const insufficientParts = stockData
+        .filter((item) => item.stockStatus === '不足')
+        .sort((a, b) => (a.stockQuantity || 0) - (b.stockQuantity || 0))
+        .slice(0, 5);
+      const partNames = insufficientParts.map((item) => item.partName);
+      const stockQuantities = insufficientParts.map(
+        (item) => item.stockQuantity || 0,
+      );
+
+      return {
+        cards: [
+          { title: '总备件种类数', value: totalPartTypes, color: '#4A90E2' },
+          {
+            title: '库存充足数',
+            value: sufficientStockCount,
+            color: '#50E3C2',
+          },
+          {
+            title: '库存不足数',
+            value: insufficientStockCount,
+            color: '#FF9F40',
+          },
+        ],
+        charts: [
+          {
+            title: '备件类型占比',
+            type: 'pie',
+            data: partTypeData,
+          },
+          {
+            title: '库存状态占比',
+            type: 'pie',
+            data: statusData,
+          },
+          {
+            title: '库存不足备件排名',
+            type: 'bar',
+            xAxis: partNames,
+            series: stockQuantities,
+          },
+        ],
+      };
+    }
+    // No default
   }
   return {
     cards: [],
