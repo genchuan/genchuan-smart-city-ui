@@ -400,12 +400,3 @@ export function useGridColumns() {
     },
   ];
 }
-
-/** 文字描述对象 - 改造为出入口管理文案 */
-export const textObj = {
-  editText: '编辑出入口',
-  addText: '新增出入口',
-  excelName: '出入口列表',
-  excelAllName: '全市出入口数据.xlsx',
-  total: '出入口数量20;车道总数:45;关联设备数:128', // 适配新数据的统计文案
-};

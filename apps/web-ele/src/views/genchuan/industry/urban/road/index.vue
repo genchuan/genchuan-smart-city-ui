@@ -1,7 +1,10 @@
 <script setup>
 import { ref } from 'vue';
 
-import gateChart from './gateChart.vue';
+import completed from './completed/index.vue';
+import disposal from './disposal/index.vue';
+import pending from './pending/index.vue';
+import gateChart from './table/gateChart.vue';
 import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
@@ -16,6 +19,30 @@ const tabArray = ref([
   {
     label: '实时监测',
     components: Table,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false,
+  },
+  {
+    label: '待处置预警',
+    components: pending,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false,
+  },
+  {
+    label: '处置中工单',
+    components: disposal,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false,
+  },
+  {
+    label: '已完成归档',
+    components: completed,
     showSecondary: true,
     secondShow: false,
     arrowShow: true,
