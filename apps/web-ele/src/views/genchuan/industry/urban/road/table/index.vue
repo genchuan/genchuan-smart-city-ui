@@ -12,8 +12,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 // 引入封装后的详情抽屉组件
-import ParkDetailDrawer from '#/views/genchuan/industry/page/park/components/detail.vue';
-import garageDetailDrawer from '#/views/genchuan/industry/page/park/garage/table/detail.vue'; 
+import ParkDetailDrawer from '#/views/genchuan/industry/urban/road/table/detail.vue';
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 
@@ -22,7 +21,17 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  arrowShow: {
+    type: Boolean,
+    default: false,
+  },
+  arrowState: {
+    type: Boolean,
+    default: false,
+  },
 });
+const emit = defineEmits(['arrow-change']);
+
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
 });
@@ -147,7 +156,6 @@ function handleRowCheckboxChange({ records }) {
 const dataObj = reactive({
   totalShow: false,
   detailObj: {}, // 保留详情对象用于传递给组件
-  garageDetail: {},
   total: dataList().length,
   currentPage: 1,
   pageSize: 10,
@@ -166,7 +174,7 @@ const getTableData = (pageObj) => {
       if (activeName.value === '全部') {
         return true;
       }
-      return v.verification_status === activeName.value;
+      return v.status === activeName.value;
     }).length;
   dataObj.list = dataObj.apilist
     .map((v) => v)
@@ -174,7 +182,7 @@ const getTableData = (pageObj) => {
       if (activeName.value === '全部') {
         return true;
       }
-      return v.verification_status === activeName.value;
+      return v.status === activeName.value;
     })
     .slice(
       (page.currentPage - 1) * page.pageSize,
@@ -247,22 +255,20 @@ const [Grid, gridApi] = useVbenVxeGrid({
 const activeName = ref('全部');
 // 修改打开详情的方法，调用组件的open方法
 const handleOpenDetail = (row) => {
-  const parkObj = parkData().find((v) => v.name === row.name);
-  dataObj.detailObj = parkObj;
+  dataObj.detailObj = row;
   // 通过ref调用组件的open方法
   parkDetailDrawerRef.value.open();
-};
-const handleGarageOpenDetail = (row) => {
-  dataObj.garageDetail = row;
-  garageDetailRef.value.open();
+  console.log(row);
 };
 const tabsData = ref([
   { label: '全部' },
-  { label: '已核验' },
-  { label: '未核验' },
+  { label: '启用' },
+  { label: '禁用' },
+  { label: '暂停运营' },
+  { label: '维修中' },
 ]);
 const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.verification_status === item.label).length})`;
+  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
   if (item.label === '全部') {
     text = `(${dataObj.apilist.length})`;
   }
@@ -280,7 +286,10 @@ const handleFullShow = () => {
 
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
-const garageDetailRef = ref(null);
+
+const arrowChange = () => {
+  emit('arrow-change');
+};
 </script>
 
 <template>
@@ -292,11 +301,6 @@ const garageDetailRef = ref(null);
     <ParkDetailDrawer
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
-      :title="`${dataObj.detailObj.name}`"
-    />
-    <garageDetailDrawer
-      ref="garageDetailRef"
-      :detail-obj="dataObj.garageDetail"
     />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -342,28 +346,24 @@ const garageDetailRef = ref(null);
             @click="handleSerachShow"
           />
           <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
+          <IconButton
             content="全屏"
             icon-name="FullScreen"
             @click="handleFullShow"
           />
         </div>
       </template>
-      <template #parkName="{ row }">
+      <template #roadSectionName="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.name }}
-        </el-text>
-      </template>
-      <template #garageName="{ row }">
-        <el-text
-          @click="handleGarageOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.garageName }}
+          {{ row.roadSectionName }}
         </el-text>
       </template>
       <template #actions="{ row }">
@@ -394,12 +394,7 @@ const garageDetailRef = ref(null);
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span>
-            本页统计：支付记录数量10;应收总额:1546;实收总额:1380;优惠总额:166
-          </span>
-        </div>
-        <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span> 全部统计：{{ textObj.total }} </span>
+          <span> 全部统计：10条 </span>
         </div>
       </template>
     </Grid>
