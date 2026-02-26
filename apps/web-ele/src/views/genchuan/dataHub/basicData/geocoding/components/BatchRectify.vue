@@ -1,9 +1,58 @@
+<script setup>
+import { ref } from 'vue';
+
+const props = defineProps({
+  selectedCount: {
+    type: Number,
+    default: 0,
+  },
+});
+
+const emit = defineEmits(['close', 'confirm']);
+
+const rectifyType = ref('');
+const loading = ref(false);
+const result = ref({
+  show: false,
+  success: false,
+  successCount: 0,
+  failCount: 0,
+  message: '',
+});
+
+const handleConfirm = () => {
+  if (!rectifyType.value) {
+    return;
+  }
+
+  loading.value = true;
+
+  // 模拟处理过程
+  setTimeout(() => {
+    loading.value = false;
+    // 模拟处理结果
+    result.value = {
+      show: true,
+      success: true,
+      successCount: props.selectedCount,
+      failCount: 0,
+    };
+    emit('confirm', {
+      rectifyType: rectifyType.value,
+      successCount: result.value.successCount,
+    });
+  }, 2000);
+};
+
+const handleCancel = () => {
+  emit('close');
+};
+</script>
+
 <template>
   <div class="batch-rectify">
     <div class="content">
-      <div class="selected-count">
-        已选择 {{ selectedCount }} 条数据
-      </div>
+      <div class="selected-count">已选择 {{ selectedCount }} 条数据</div>
       <div class="rectify-type">
         <el-form-item label="整改类型">
           <el-radio-group v-model="rectifyType">
@@ -20,7 +69,7 @@
       </div>
       <div class="loading-container" v-if="loading">
         <el-loading v-loading="loading" element-loading-text="正在处理...">
-          <div style="height: 200px;"></div>
+          <div style="height: 200px"></div>
         </el-loading>
       </div>
       <div class="result-info" v-if="result.show">
@@ -41,76 +90,30 @@
     </div>
     <div class="dialog-footer">
       <el-button @click="handleCancel">取消</el-button>
-      <el-button type="primary" @click="handleConfirm" :loading="loading" :disabled="!rectifyType">
+      <el-button
+        type="primary"
+        @click="handleConfirm"
+        :loading="loading"
+        :disabled="!rectifyType"
+      >
         {{ loading ? '处理中...' : '确认' }}
       </el-button>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, computed } from 'vue';
-
-const props = defineProps({
-  selectedCount: {
-    type: Number,
-    default: 0
-  }
-});
-
-const emit = defineEmits(['close', 'confirm']);
-
-const rectifyType = ref('');
-const loading = ref(false);
-const result = ref({
-  show: false,
-  success: false,
-  successCount: 0,
-  failCount: 0,
-  message: ''
-});
-
-const handleConfirm = () => {
-  if (!rectifyType.value) {
-    return;
-  }
-
-  loading.value = true;
-
-  // 模拟处理过程
-  setTimeout(() => {
-    loading.value = false;
-    // 模拟处理结果
-    result.value = {
-      show: true,
-      success: true,
-      successCount: props.selectedCount,
-      failCount: 0
-    };
-    emit('confirm', {
-      rectifyType: rectifyType.value,
-      successCount: result.value.successCount
-    });
-  }, 2000);
-};
-
-const handleCancel = () => {
-  emit('close');
-};
-</script>
-
 <style scoped>
 .batch-rectify {
-  height: 100%;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .title {
+  padding-bottom: 10px;
+  margin-bottom: 20px;
   font-size: 16px;
   font-weight: bold;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
   border-bottom: 1px solid #eaeaea;
 }
 
@@ -120,8 +123,8 @@ const handleCancel = () => {
 }
 
 .selected-count {
-  margin-bottom: 20px;
   padding: 10px;
+  margin-bottom: 20px;
   background-color: #f5f7fa;
   border-radius: 4px;
 }
@@ -131,11 +134,11 @@ const handleCancel = () => {
 }
 
 .rectify-info {
-  margin: 20px 0;
   padding: 10px;
+  margin: 20px 0;
   background-color: #ecf5ff;
-  border-radius: 4px;
   border-left: 4px solid #409eff;
+  border-radius: 4px;
 }
 
 .loading-container {
@@ -148,8 +151,8 @@ const handleCancel = () => {
 
 .success-info,
 .error-info {
-  margin-top: 10px;
   padding: 10px;
+  margin-top: 10px;
   background-color: #f0f9eb;
   border-radius: 4px;
 }
@@ -159,11 +162,11 @@ const handleCancel = () => {
 }
 
 .dialog-footer {
-  margin-top: 20px;
-  padding-top: 10px;
-  border-top: 1px solid #eaeaea;
   display: flex;
-  justify-content: flex-end;
   gap: 10px;
+  justify-content: flex-end;
+  padding-top: 10px;
+  margin-top: 20px;
+  border-top: 1px solid #eaeaea;
 }
 </style>

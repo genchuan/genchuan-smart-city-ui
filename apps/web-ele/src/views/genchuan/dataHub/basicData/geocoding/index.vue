@@ -3,8 +3,8 @@ import { computed, ref } from 'vue';
 
 import StatsVisualization from '#/components/stats/StatsVisualization.vue';
 
+import { dataList, getGeocodingStatsData } from './table/data.js';
 import Table from './table/index.vue';
-import { getGeocodingStatsData, dataList } from './table/data.js';
 
 import '#/components/page/index.scss';
 
@@ -29,8 +29,8 @@ const tabArray = ref([
     components: Table,
     showSecondary: true,
     secondShow: false,
-    showStats: showStats,
-    toggleStats: toggleStats
+    showStats,
+    toggleStats,
   },
 ]);
 const activeName = ref('地理编码管理');
@@ -49,10 +49,10 @@ const mapData = computed(() => {
 <template>
   <div class="common-index">
     <!-- 统计可视化组件，根据showStats状态显示/隐藏 -->
-    <StatsVisualization 
-      v-if="showStats" 
-      :data="statsData" 
-      :show-map-toggle="true" 
+    <StatsVisualization
+      v-if="showStats"
+      :data="statsData"
+      :show-map-toggle="true"
       :map-data="mapData"
     />
     <div class="icon-change">

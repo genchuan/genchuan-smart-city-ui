@@ -9,14 +9,20 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
-import { dataList, textObj, useFormSchema, useGridColumns, detailFields } from './data';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
-import ImportExcel from '../components/ImportExcel.vue';
 import BatchRectify from '../components/BatchRectify.vue';
+import ImportExcel from '../components/ImportExcel.vue';
 import SingleRectify from '../components/SingleRectify.vue';
+import {
+  dataList,
+  detailFields,
+  textObj,
+  useFormSchema,
+  useGridColumns,
+} from './data';
 
 const props = defineProps({
   secondShow: {
@@ -163,9 +169,7 @@ async function handleDelete(row) {
   });
   try {
     dataObj.apilist = dataObj.apilist.filter((v) => v.geoCode !== row.geoCode);
-    ElMessage.success(
-      $t('ui.actionMessage.deleteSuccess', [row.locationName]),
-    );
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.locationName]));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -216,14 +220,6 @@ const getTableData = (pageObj) => {
     // 状态筛选
     let statusMatch = true;
     switch (activeName.value) {
-      case '正常': {
-        statusMatch = v.statusName === '正常';
-        break;
-      }
-      case '维护中': {
-        statusMatch = v.statusName === '维护中';
-        break;
-      }
       case '停用': {
         statusMatch = v.statusName === '停用';
         break;
@@ -232,32 +228,50 @@ const getTableData = (pageObj) => {
         statusMatch = v.statusName === '建设中';
         break;
       }
+      case '正常': {
+        statusMatch = v.statusName === '正常';
+        break;
+      }
+      case '维护中': {
+        statusMatch = v.statusName === '维护中';
+        break;
+      }
     }
 
     // 地点名称筛选
-    const locationNameMatch = !filterLocationName.value || v.locationName === filterLocationName.value;
+    const locationNameMatch =
+      !filterLocationName.value || v.locationName === filterLocationName.value;
 
     // 所属区域筛选
-    const areaNameMatch = !filterAreaName.value || v.areaName === filterAreaName.value;
+    const areaNameMatch =
+      !filterAreaName.value || v.areaName === filterAreaName.value;
 
     // 图层类型筛选
-    const layerTypeNameMatch = !filterLayerTypeName.value || v.layerTypeName === filterLayerTypeName.value;
+    const layerTypeNameMatch =
+      !filterLayerTypeName.value ||
+      v.layerTypeName === filterLayerTypeName.value;
 
     // 数据质量校验结果筛选
-    const checkResultNameMatch = !filterCheckResultName.value || v.checkResultName === filterCheckResultName.value;
+    const checkResultNameMatch =
+      !filterCheckResultName.value ||
+      v.checkResultName === filterCheckResultName.value;
 
     // 树形结构筛选
     let geoCodeMatch = true;
     if (filterGeoCode.value) {
       // 筛选当前节点及其所有子节点
       const isChildOf = (nodeId, parentId) => {
-        const node = dataObj.apilist.find(item => item.geoCode === nodeId);
+        const node = dataObj.apilist.find((item) => item.geoCode === nodeId);
         if (!node) return false;
-        if (node.geoCode === parentId || node.parentGeoCodeId === parentId) return true;
-        if (node.parentGeoCodeId) return isChildOf(node.parentGeoCodeId, parentId);
+        if (node.geoCode === parentId || node.parentGeoCodeId === parentId)
+          return true;
+        if (node.parentGeoCodeId)
+          return isChildOf(node.parentGeoCodeId, parentId);
         return false;
       };
-      geoCodeMatch = v.geoCode === filterGeoCode.value || isChildOf(v.geoCode, filterGeoCode.value);
+      geoCodeMatch =
+        v.geoCode === filterGeoCode.value ||
+        isChildOf(v.geoCode, filterGeoCode.value);
     }
 
     // 搜索条件筛选
@@ -265,11 +279,22 @@ const getTableData = (pageObj) => {
     Object.keys(dataObj.searchParams).forEach((key) => {
       const value = dataObj.searchParams[key];
       if (value) {
-        searchMatch = typeof value === 'string' ? searchMatch && v[key]?.toString().includes(value) : searchMatch && v[key] === value;
+        searchMatch =
+          typeof value === 'string'
+            ? searchMatch && v[key]?.toString().includes(value)
+            : searchMatch && v[key] === value;
       }
     });
 
-    return statusMatch && locationNameMatch && areaNameMatch && layerTypeNameMatch && checkResultNameMatch && searchMatch && geoCodeMatch;
+    return (
+      statusMatch &&
+      locationNameMatch &&
+      areaNameMatch &&
+      layerTypeNameMatch &&
+      checkResultNameMatch &&
+      searchMatch &&
+      geoCodeMatch
+    );
   });
 
   dataObj.total = filteredList.length;
@@ -334,15 +359,17 @@ const filterGeoCode = ref(''); // 地理编码筛选（树形结构）
 // 构建树形数据
 const treeData = computed(() => {
   const allData = dataObj.apilist;
-  const rootNodes = allData.filter(item => item.parentGeoCodeId === null);
+  const rootNodes = allData.filter((item) => item.parentGeoCodeId === null);
 
   const buildTree = (nodes) => {
-    return nodes.map(node => {
-      const children = allData.filter(item => item.parentGeoCodeId === node.geoCode);
+    return nodes.map((node) => {
+      const children = allData.filter(
+        (item) => item.parentGeoCodeId === node.geoCode,
+      );
       return {
         id: node.geoCode,
         label: `${node.locationName} (${node.layerTypeName})`,
-        children: children.length > 0 ? buildTree(children) : []
+        children: children.length > 0 ? buildTree(children) : [],
       };
     });
   };
@@ -390,15 +417,29 @@ const handleOpenDetail = (row) => {
 };
 
 // 修改tabsData为状态标签：全部、正常、维护中、停用、建设中
-const tabsData = ref([{ label: '全部' }, { label: '正常' }, { label: '维护中' }, { label: '停用' }, { label: '建设中' }]);
+const tabsData = ref([
+  { label: '全部' },
+  { label: '正常' },
+  { label: '维护中' },
+  { label: '停用' },
+  { label: '建设中' },
+]);
 
 // 创建标签文本，显示数量统计
 const createLabel = (item) => {
   let count = 0;
 
   switch (item.label) {
+    case '停用': {
+      count = dataObj.apilist.filter((v) => v.statusName === '停用').length;
+      break;
+    }
     case '全部': {
       count = dataObj.apilist.length;
+      break;
+    }
+    case '建设中': {
+      count = dataObj.apilist.filter((v) => v.statusName === '建设中').length;
       break;
     }
     case '正常': {
@@ -407,14 +448,6 @@ const createLabel = (item) => {
     }
     case '维护中': {
       count = dataObj.apilist.filter((v) => v.statusName === '维护中').length;
-      break;
-    }
-    case '停用': {
-      count = dataObj.apilist.filter((v) => v.statusName === '停用').length;
-      break;
-    }
-    case '建设中': {
-      count = dataObj.apilist.filter((v) => v.statusName === '建设中').length;
       break;
     }
   }
@@ -475,7 +508,8 @@ const handleSingleRectifyConfirm = (result) => {
 
 // 处理地点名称点击
 const handleLocationNameClick = (locationName) => {
-  filterLocationName.value = filterLocationName.value === locationName ? '' : locationName;
+  filterLocationName.value =
+    filterLocationName.value === locationName ? '' : locationName;
   gridApi.query();
 };
 
@@ -499,7 +533,8 @@ const handleCancelAreaNameFilter = () => {
 
 // 处理图层类型点击
 const handleLayerTypeNameClick = (layerTypeName) => {
-  filterLayerTypeName.value = filterLayerTypeName.value === layerTypeName ? '' : layerTypeName;
+  filterLayerTypeName.value =
+    filterLayerTypeName.value === layerTypeName ? '' : layerTypeName;
   gridApi.query();
 };
 
@@ -511,7 +546,8 @@ const handleCancelLayerTypeNameFilter = () => {
 
 // 处理数据质量校验结果点击
 const handleCheckResultNameClick = (checkResultName) => {
-  filterCheckResultName.value = filterCheckResultName.value === checkResultName ? '' : checkResultName;
+  filterCheckResultName.value =
+    filterCheckResultName.value === checkResultName ? '' : checkResultName;
   gridApi.query();
 };
 
@@ -527,7 +563,7 @@ const handleCancelCheckResultNameFilter = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-<!--   详情抽屉-->
+    <!--   详情抽屉-->
     <DetailDrawer
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.locationName}详情`"
@@ -544,7 +580,10 @@ const handleCancelCheckResultNameFilter = () => {
       width="500px"
       @close="handleImportDialogClose"
     >
-      <ImportExcel @close="handleImportDialogClose" @import-success="handleImportSuccess" />
+      <ImportExcel
+        @close="handleImportDialogClose"
+        @import-success="handleImportSuccess"
+      />
     </el-dialog>
     <!-- 批量整改抽屉 -->
     <BatchRectifyDrawer>
@@ -562,24 +601,46 @@ const handleCancelCheckResultNameFilter = () => {
         @confirm="handleSingleRectifyConfirm"
       />
     </SingleRectifyDrawer>
-    <div style="display: flex; gap: 20px; align-items: flex-start; height: calc(100vh - 200px);">
+    <div
+      style="
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+        height: calc(100vh - 200px);
+      "
+    >
       <!-- 左侧树形结构 -->
-      <div style="width: 300px; border: 1px solid #e4e7ed; border-radius: 4px; overflow: auto; margin-top: 43px; max-height: calc(100vh - 220px);">
+      <div
+        style="
+          width: 300px;
+          max-height: calc(100vh - 220px);
+          margin-top: 43px;
+          overflow: auto;
+          border: 1px solid #e4e7ed;
+          border-radius: 4px;
+        "
+      >
         <ElTree
           :data="treeData"
           node-key="id"
           @node-click="handleTreeNodeClick"
-          style="padding: 10px;"
+          :default-expand-all="true"
+          style="padding: 10px"
         />
       </div>
       <!-- 右侧表格 -->
-      <div style="flex: 1; overflow: auto; max-height: calc(100vh - 200px);">
+      <div style="flex: 1; max-height: calc(100vh - 200px); overflow: auto">
         <Grid>
           <!-- 三级状态 -->
           <template #table-title>
             <div
               class="tabel-tabs"
-              style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center;"
+              style="
+                display: flex;
+                flex-wrap: wrap;
+                gap: 16px;
+                align-items: center;
+              "
             >
               <div v-if="props.secondShow">
                 <el-tabs
@@ -640,7 +701,10 @@ const handleCancelCheckResultNameFilter = () => {
                 v-if="filterGeoCode"
                 type="primary"
                 closable
-                @close="filterGeoCode = ''; gridApi.query()"
+                @close="
+                  filterGeoCode = '';
+                  gridApi.query();
+                "
                 style="height: 32px; margin: 4px 0; line-height: 32px"
               >
                 地理编码：{{ filterGeoCode }}
@@ -649,7 +713,11 @@ const handleCancelCheckResultNameFilter = () => {
           </template>
           <template #toolbar-tools>
             <div class="common-toolbar-tools">
-              <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+              <IconButton
+                content="新增"
+                icon-name="Plus"
+                @click="handleCreate"
+              />
               <IconButton
                 content="导入"
                 icon-name="Upload"
@@ -737,7 +805,15 @@ const handleCancelCheckResultNameFilter = () => {
           </template>
           <template #statusName="{ row }">
             <ElTag
-              :type="row.statusName === '正常' ? 'success' : row.statusName === '维护中' ? 'warning' : row.statusName === '停用' ? 'danger' : 'info'"
+              :type="
+                row.statusName === '正常'
+                  ? 'success'
+                  : row.statusName === '维护中'
+                    ? 'warning'
+                    : row.statusName === '停用'
+                      ? 'danger'
+                      : 'info'
+              "
             >
               {{ row.statusName }}
             </ElTag>

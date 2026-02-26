@@ -1,3 +1,61 @@
+<script setup>
+import { ref } from 'vue';
+
+const emit = defineEmits(['close', 'import-success']);
+
+const file = ref(null);
+const loading = ref(false);
+const result = ref({
+  show: false,
+  success: false,
+  successCount: 0,
+  passCount: 0,
+  failCount: 0,
+  message: '',
+});
+
+const handleFileChange = (fileObj) => {
+  file.value = fileObj.raw;
+  result.value.show = false;
+};
+
+const removeFile = () => {
+  file.value = null;
+  result.value.show = false;
+};
+
+const handleImport = () => {
+  if (!file.value) {
+    result.value = {
+      show: true,
+      success: false,
+      message: '请先选择Excel文件',
+    };
+    return;
+  }
+
+  loading.value = true;
+
+  // 模拟导入过程
+  setTimeout(() => {
+    loading.value = false;
+    // 模拟校验结果
+    result.value = {
+      show: true,
+      success: true,
+      successCount: 15,
+      passCount: 12,
+      failCount: 3,
+    };
+    emit('import-success', result.value);
+  }, 2000);
+};
+
+const handleCancel = () => {
+  emit('close');
+};
+</script>
+
 <template>
   <div class="import-excel">
     <el-upload
@@ -8,9 +66,7 @@
       :show-file-list="false"
       accept=".xlsx,.xls"
     >
-      <el-button type="primary" icon="UploadFilled">
-        选择Excel文件
-      </el-button>
+      <el-button type="primary" icon="UploadFilled"> 选择Excel文件 </el-button>
     </el-upload>
     <div v-if="file" class="file-info">
       {{ file.name }}
@@ -41,64 +97,6 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue';
-
-const emit = defineEmits(['close', 'import-success']);
-
-const file = ref(null);
-const loading = ref(false);
-const result = ref({
-  show: false,
-  success: false,
-  successCount: 0,
-  passCount: 0,
-  failCount: 0,
-  message: ''
-});
-
-const handleFileChange = (fileObj) => {
-  file.value = fileObj.raw;
-  result.value.show = false;
-};
-
-const removeFile = () => {
-  file.value = null;
-  result.value.show = false;
-};
-
-const handleImport = () => {
-  if (!file.value) {
-    result.value = {
-      show: true,
-      success: false,
-      message: '请先选择Excel文件'
-    };
-    return;
-  }
-
-  loading.value = true;
-
-  // 模拟导入过程
-  setTimeout(() => {
-    loading.value = false;
-    // 模拟校验结果
-    result.value = {
-      show: true,
-      success: true,
-      successCount: 15,
-      passCount: 12,
-      failCount: 3
-    };
-    emit('import-success', result.value);
-  }, 2000);
-};
-
-const handleCancel = () => {
-  emit('close');
-};
-</script>
-
 <style scoped>
 .import-excel {
   padding: 20px;
@@ -109,13 +107,13 @@ const handleCancel = () => {
 }
 
 .file-info {
-  margin: 10px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 10px;
+  margin: 10px 0;
   background-color: #f5f7fa;
   border-radius: 4px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
 .result-info {
@@ -124,8 +122,8 @@ const handleCancel = () => {
 
 .success-info,
 .error-info {
-  margin-top: 10px;
   padding: 10px;
+  margin-top: 10px;
   background-color: #f0f9eb;
   border-radius: 4px;
 }
@@ -135,9 +133,9 @@ const handleCancel = () => {
 }
 
 .dialog-footer {
-  margin-top: 30px;
   display: flex;
-  justify-content: flex-end;
   gap: 10px;
+  justify-content: flex-end;
+  margin-top: 30px;
 }
 </style>

@@ -147,16 +147,16 @@ const handleCancel = () => {
 
 <style scoped>
 .single-rectify {
-  height: 100%;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .title {
+  padding-bottom: 10px;
+  margin-bottom: 20px;
   font-size: 16px;
   font-weight: bold;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
   border-bottom: 1px solid #eaeaea;
 }
 
@@ -166,8 +166,8 @@ const handleCancel = () => {
 }
 
 .data-info {
-  margin-bottom: 20px;
   padding: 15px;
+  margin-bottom: 20px;
   background-color: #f5f7fa;
   border-radius: 4px;
 }
@@ -194,8 +194,8 @@ const handleCancel = () => {
 
 .success-info,
 .error-info {
-  margin-top: 10px;
   padding: 10px;
+  margin-top: 10px;
   background-color: #f0f9eb;
   border-radius: 4px;
 }
@@ -205,11 +205,11 @@ const handleCancel = () => {
 }
 
 .dialog-footer {
-  margin-top: 20px;
-  padding-top: 10px;
-  border-top: 1px solid #eaeaea;
   display: flex;
-  justify-content: flex-end;
   gap: 10px;
+  justify-content: flex-end;
+  padding-top: 10px;
+  margin-top: 20px;
+  border-top: 1px solid #eaeaea;
 }
 </style>

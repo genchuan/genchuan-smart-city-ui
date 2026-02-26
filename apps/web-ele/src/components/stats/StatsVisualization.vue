@@ -2,8 +2,10 @@
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 
 import * as echarts from 'echarts';
-import MapComponent from '../Map/index.vue';
+
 import IconButton from '#/components/common/IconButton.vue';
+
+import MapComponent from '../Map/index.vue';
 
 const props = defineProps({
   data: {
@@ -190,8 +192,8 @@ const getChartOption = (chart) => {
         lineStyle:
           chart.type === 'line'
             ? {
-              width: 3,
-            }
+                width: 3,
+              }
             : undefined,
         symbol: chart.type === 'line' ? 'circle' : undefined,
         symbolSize: chart.type === 'line' ? 6 : undefined,
@@ -267,7 +269,7 @@ onUnmounted(() => {
       <div v-if="showMapToggle" class="toggle-container">
         <IconButton
           :content="showMap ? '图表' : '地图'"
-          :icon-name="'Switch'"
+          icon-name="Switch"
           @click="toggleView"
           class="toggle-button"
         />
@@ -288,7 +290,7 @@ onUnmounted(() => {
       <div v-if="showMapToggle" class="toggle-container">
         <IconButton
           :content="showMap ? '图表' : '地图'"
-          :icon-name="'Switch'"
+          icon-name="Switch"
           @click="toggleView"
           class="toggle-button"
         />
@@ -301,33 +303,33 @@ onUnmounted(() => {
 <style scoped>
 .park-chart-box {
   display: flex;
+  flex-wrap: nowrap; /* 强制不换行 */
   gap: 20px;
   width: 100%;
   height: 350px;
-  flex-wrap: nowrap; /* 强制不换行 */
   overflow: hidden; /* 防止内容溢出 */
 }
 
 .chart-box-left {
-  width: 200px;
   display: flex;
+  flex-shrink: 0; /* 防止卡片区域被压缩 */
   flex-direction: column;
   gap: 16px;
-  flex-shrink: 0; /* 防止卡片区域被压缩 */
+  width: 200px;
 }
 
 .charts-wrapper {
-  flex: 1 1 0;      /* 允许收缩和增长 */
-  min-width: 0;     /* 允许内容收缩到小于内容宽度 */
-  display: flex;
-  gap: 20px;
   position: relative;
+  display: flex;
+  flex: 1 1 0; /* 允许收缩和增长 */
+  gap: 20px;
+  min-width: 0; /* 允许内容收缩到小于内容宽度 */
 }
 
 .map-wrapper {
+  position: relative;
   flex: 1 1 0;
   min-width: 0;
-  position: relative;
   height: 330px;
 }
 
@@ -339,7 +341,7 @@ onUnmounted(() => {
 }
 
 .toggle-button {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
 }
 
 .simple-bar-chart,

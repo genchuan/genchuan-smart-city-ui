@@ -2,20 +2,20 @@
 export const dataList = () => {
   return [
     {
-      geoCode: 'GC001',              // 地理编码
-      parentGeoCodeId: null,         // 父级地理编码ID
-      locationName: '芗城区',            // 地点名称
-      areaName: '漳州市',            // 所属区域
-      layerTypeName: '区域',            // 图层类型
-      beidouGridCode: '1234567890',  // 北斗网格码
+      geoCode: 'GC001', // 地理编码
+      parentGeoCodeId: null, // 父级地理编码ID
+      locationName: '芗城区', // 地点名称
+      areaName: '漳州市', // 所属区域
+      layerTypeName: '区域', // 图层类型
+      beidouGridCode: '1234567890', // 北斗网格码
       coordinateInfo: '117.6589, 24.5123', // 坐标信息
-      adminCode: '350602',           // 行政区划代码
-      statusName: '正常',            // 状态
+      adminCode: '350602', // 行政区划代码
+      statusName: '正常', // 状态
       uniqueCode: '350602001001001', // 15位标识码
-      creator: '张三',               // 创建人
+      creator: '张三', // 创建人
       createTime: '2025-01-10 09:20:30', // 创建时间
       updateTime: '2025-01-10 09:20:30', // 更新时间
-      checkResultName: '通过'        // 数据质量校验结果
+      checkResultName: '通过', // 数据质量校验结果
     },
     {
       geoCode: 'GC002',
@@ -31,7 +31,7 @@ export const dataList = () => {
       creator: '李四',
       createTime: '2025-01-12 14:15:20',
       updateTime: '2025-01-12 14:15:20',
-      checkResultName: '通过'
+      checkResultName: '通过',
     },
     {
       geoCode: 'GC003',
@@ -47,7 +47,7 @@ export const dataList = () => {
       creator: '王五',
       createTime: '2025-01-15 10:05:10',
       updateTime: '2025-01-20 16:30:00',
-      checkResultName: '通过'
+      checkResultName: '通过',
     },
     {
       geoCode: 'GC004',
@@ -63,7 +63,7 @@ export const dataList = () => {
       creator: '赵六',
       createTime: '2025-01-18 08:30:45',
       updateTime: '2025-01-18 08:30:45',
-      checkResultName: '通过'
+      checkResultName: '通过',
     },
     {
       geoCode: 'GC005',
@@ -79,7 +79,7 @@ export const dataList = () => {
       creator: '孙七',
       createTime: '2025-01-20 16:40:15',
       updateTime: '2025-01-20 16:40:15',
-      checkResultName: '通过'
+      checkResultName: '通过',
     },
     {
       geoCode: 'GC006',
@@ -95,7 +95,7 @@ export const dataList = () => {
       creator: '周八',
       createTime: '2025-01-22 11:10:30',
       updateTime: '2025-01-22 11:10:30',
-      checkResultName: '通过'
+      checkResultName: '通过',
     },
     {
       geoCode: 'GC007',
@@ -111,7 +111,7 @@ export const dataList = () => {
       creator: '吴九',
       createTime: '2025-01-25 13:25:40',
       updateTime: '2025-01-28 14:20:00',
-      checkResultName: '通过'
+      checkResultName: '通过',
     },
     {
       geoCode: 'GC008',
@@ -127,7 +127,7 @@ export const dataList = () => {
       creator: '郑十',
       createTime: '2025-01-28 09:50:25',
       updateTime: '2025-01-28 09:50:25',
-      checkResultName: '通过'
+      checkResultName: '通过',
     },
     {
       geoCode: 'GC009',
@@ -143,7 +143,7 @@ export const dataList = () => {
       creator: '张三',
       createTime: '2025-02-01 15:15:10',
       updateTime: '2025-02-01 15:15:10',
-      checkResultName: '通过'
+      checkResultName: '通过',
     },
     {
       geoCode: 'GC010',
@@ -159,7 +159,7 @@ export const dataList = () => {
       creator: '李四',
       createTime: '2025-02-05 10:30:50',
       updateTime: '2025-02-05 10:30:50',
-      checkResultName: '通过'
+      checkResultName: '通过',
     },
     {
       geoCode: 'GC011',
@@ -175,7 +175,7 @@ export const dataList = () => {
       creator: '王五',
       createTime: '2025-02-08 14:20:15',
       updateTime: '2025-02-08 14:20:15',
-      checkResultName: '通过'
+      checkResultName: '通过',
     },
     {
       geoCode: 'GC012',
@@ -191,7 +191,7 @@ export const dataList = () => {
       creator: '赵六',
       createTime: '2025-02-10 09:40:30',
       updateTime: '2025-02-15 16:00:00',
-      checkResultName: '通过'
+      checkResultName: '通过',
     },
     {
       geoCode: 'GC013',
@@ -207,7 +207,7 @@ export const dataList = () => {
       creator: '孙七',
       createTime: '2025-02-12 10:20:15',
       updateTime: '2025-02-12 10:20:15',
-      checkResultName: '通过'
+      checkResultName: '通过',
     },
     {
       geoCode: 'GC014',
@@ -223,7 +223,7 @@ export const dataList = () => {
       creator: '周八',
       createTime: '2025-02-15 14:30:45',
       updateTime: '2025-02-15 14:30:45',
-      checkResultName: '通过'
+      checkResultName: '通过',
     },
     {
       geoCode: 'GC015',
@@ -239,7 +239,7 @@ export const dataList = () => {
       creator: '吴九',
       createTime: '2025-02-18 09:10:30',
       updateTime: '2025-02-18 09:10:30',
-      checkResultName: '通过'
+      checkResultName: '通过',
     },
     {
       geoCode: 'GC016',
@@ -255,7 +255,7 @@ export const dataList = () => {
       creator: '郑十',
       createTime: '2025-02-20 10:20:15',
       updateTime: '2025-02-25 16:30:00',
-      checkResultName: '通过'
+      checkResultName: '通过',
     },
     {
       geoCode: 'GC017',
@@ -271,7 +271,7 @@ export const dataList = () => {
       creator: '张三',
       createTime: '2025-02-22 11:10:30',
       updateTime: '2025-02-22 11:10:30',
-      checkResultName: '通过'
+      checkResultName: '通过',
     },
     {
       geoCode: 'GC018',
@@ -287,7 +287,7 @@ export const dataList = () => {
       creator: '李四',
       createTime: '2025-02-25 13:25:40',
       updateTime: '2025-02-28 14:20:00',
-      checkResultName: '通过'
+      checkResultName: '通过',
     },
     {
       geoCode: 'GC019',
@@ -303,7 +303,7 @@ export const dataList = () => {
       creator: '王五',
       createTime: '2025-02-20 09:30:00',
       updateTime: '2025-02-25 15:00:00',
-      checkResultName: '未通过'
+      checkResultName: '未通过',
     },
     {
       geoCode: 'GC020',
@@ -319,8 +319,8 @@ export const dataList = () => {
       creator: '赵六',
       createTime: '2025-02-15 10:00:00',
       updateTime: '2025-02-20 16:00:00',
-      checkResultName: '通过'
-    }
+      checkResultName: '通过',
+    },
   ];
 };
 
@@ -334,16 +334,16 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入地理编码',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'locationName',
       label: '地点名称',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入地点名称'
+        placeholder: '请输入地点名称',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'areaName',
@@ -362,10 +362,10 @@ export function useFormSchema() {
           { label: '东山县', value: '东山县' },
           { label: '南靖县', value: '南靖县' },
           { label: '平和县', value: '平和县' },
-          { label: '华安县', value: '华安县' }
-        ]
+          { label: '华安县', value: '华安县' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'layerTypeName',
@@ -378,37 +378,37 @@ export function useFormSchema() {
           { label: '地片', value: '地片' },
           { label: '街巷', value: '街巷' },
           { label: '门楼牌', value: '门楼牌' },
-          { label: '兴趣点', value: '兴趣点' }
-        ]
+          { label: '兴趣点', value: '兴趣点' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'beidouGridCode',
       label: '北斗网格码',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入北斗网格码'
+        placeholder: '请输入北斗网格码',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'coordinateInfo',
       label: '坐标信息',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入坐标信息（格式：经度,纬度）'
+        placeholder: '请输入坐标信息（格式：经度,纬度）',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'adminCode',
       label: '行政区划代码',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入行政区划代码'
+        placeholder: '请输入行政区划代码',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'statusName',
@@ -420,28 +420,28 @@ export function useFormSchema() {
           { label: '正常', value: '正常' },
           { label: '维护中', value: '维护中' },
           { label: '停用', value: '停用' },
-          { label: '建设中', value: '建设中' }
-        ]
+          { label: '建设中', value: '建设中' },
+        ],
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'uniqueCode',
       label: '15位标识码',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入15位标识码'
+        placeholder: '请输入15位标识码',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'creator',
       label: '创建人',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入创建人'
+        placeholder: '请输入创建人',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'createTime',
@@ -450,9 +450,9 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择创建时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'updateTime',
@@ -461,9 +461,9 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择更新时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss'
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'checkResultName',
@@ -473,11 +473,11 @@ export function useFormSchema() {
         placeholder: '请选择数据质量校验结果',
         options: [
           { label: '通过', value: '通过' },
-          { label: '未通过', value: '未通过' }
-        ]
+          { label: '未通过', value: '未通过' },
+        ],
       },
-      rules: 'required'
-    }
+      rules: 'required',
+    },
   ];
 }
 
@@ -517,7 +517,7 @@ export function useGridColumns() {
       field: 'beidouGridCode',
       title: '北斗网格码',
       minWidth: 120,
-      sortable: true
+      sortable: true,
     },
     {
       field: 'coordinateInfo',
@@ -573,8 +573,8 @@ export function useGridColumns() {
       title: '操作',
       width: 100,
       fixed: 'right',
-      slots: { default: 'actions' }
-    }
+      slots: { default: 'actions' },
+    },
   ];
 }
 
@@ -603,7 +603,7 @@ export const detailFields = [
   { key: 'creator', label: '创建人' },
   { key: 'createTime', label: '创建时间' },
   { key: 'updateTime', label: '更新时间' },
-  { key: 'checkResultName', label: '数据质量校验结果' }
+  { key: 'checkResultName', label: '数据质量校验结果' },
 ];
 
 /** 获取地理编码统计数据 */
@@ -613,34 +613,40 @@ export const getGeocodingStatsData = () => {
 
   // 计算卡片数据
   const totalCount = geocodingData.length;
-  
+
   // 计算各图层类型编码数
   const layerTypeStats = {};
   geocodingData.forEach((item) => {
-    layerTypeStats[item.layerTypeName] = (layerTypeStats[item.layerTypeName] || 0) + 1;
+    layerTypeStats[item.layerTypeName] =
+      (layerTypeStats[item.layerTypeName] || 0) + 1;
   });
   const layerTypeCount = Object.keys(layerTypeStats).length;
-  
+
   // 计算正常状态编码数
   const normalCount = geocodingData.filter(
-    (item) => item.statusName === '正常'
+    (item) => item.statusName === '正常',
   ).length;
 
   // 计算图层类型占比数据
-  const layerTypeChartData = Object.entries(layerTypeStats).map(([name, value]) => ({
-    name,
-    value,
-  }));
+  const layerTypeChartData = Object.entries(layerTypeStats).map(
+    ([name, value]) => ({
+      name,
+      value,
+    }),
+  );
 
   // 计算数据质量校验结果占比数据
   const checkResultStats = {};
   geocodingData.forEach((item) => {
-    checkResultStats[item.checkResultName] = (checkResultStats[item.checkResultName] || 0) + 1;
+    checkResultStats[item.checkResultName] =
+      (checkResultStats[item.checkResultName] || 0) + 1;
   });
-  const checkResultChartData = Object.entries(checkResultStats).map(([name, value]) => ({
-    name,
-    value,
-  }));
+  const checkResultChartData = Object.entries(checkResultStats).map(
+    ([name, value]) => ({
+      name,
+      value,
+    }),
+  );
 
   // 计算不同区域地理编码数量对比数据
   const areaStats = {};
@@ -693,4 +699,3 @@ export const getGeocodingStatsData = () => {
     ],
   };
 };
-
