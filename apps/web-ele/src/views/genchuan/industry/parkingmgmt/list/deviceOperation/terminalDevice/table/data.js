@@ -479,26 +479,32 @@ export const textObj = {
 /** 根据设备数据生成统计数据 */
 export const getStatsData = (deviceData) => {
   const totalCount = deviceData.length;
-  const onlineCount = deviceData.filter(item => item.deviceStatusName === '在线').length;
-  const faultCount = deviceData.filter(item => item.deviceStatusName === '故障').length;
+  const onlineCount = deviceData.filter(
+    (item) => item.deviceStatusName === '在线',
+  ).length;
+  const faultCount = deviceData.filter(
+    (item) => item.deviceStatusName === '故障',
+  ).length;
 
   // 统计不同设备类型的数量
   const deviceTypeStats = {};
-  deviceData.forEach(item => {
-    deviceTypeStats[item.deviceTypeName] = (deviceTypeStats[item.deviceTypeName] || 0) + 1;
+  deviceData.forEach((item) => {
+    deviceTypeStats[item.deviceTypeName] =
+      (deviceTypeStats[item.deviceTypeName] || 0) + 1;
   });
 
   // 统计不同设备状态的数量
   const deviceStatusStats = {
-    在线: deviceData.filter(item => item.deviceStatusName === '在线').length,
-    离线: deviceData.filter(item => item.deviceStatusName === '离线').length,
-    故障: deviceData.filter(item => item.deviceStatusName === '故障').length,
-    维护中: deviceData.filter(item => item.deviceStatusName === '维护中').length,
+    在线: deviceData.filter((item) => item.deviceStatusName === '在线').length,
+    离线: deviceData.filter((item) => item.deviceStatusName === '离线').length,
+    故障: deviceData.filter((item) => item.deviceStatusName === '故障').length,
+    维护中: deviceData.filter((item) => item.deviceStatusName === '维护中')
+      .length,
   };
 
   // 统计不同所属资产的设备数量
   const assetNameStats = {};
-  deviceData.forEach(item => {
+  deviceData.forEach((item) => {
     assetNameStats[item.assetName] = (assetNameStats[item.assetName] || 0) + 1;
   });
 

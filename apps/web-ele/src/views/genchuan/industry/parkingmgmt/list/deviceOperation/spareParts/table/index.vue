@@ -19,10 +19,10 @@ import {
   detailFields,
   detailFieldsOutbound,
   detailFieldsStock,
+  getWorkorderByNo,
   textObj,
   useFormSchema,
   useGridColumns,
-  getWorkorderByNo,
 } from './data';
 
 const props = defineProps({
@@ -45,9 +45,13 @@ const props = defineProps({
 });
 const getTitle = computed(() => {
   if (props.type === 'outbound') {
-    return formData.value?.outId ? textObj.outboundEditText : textObj.outboundAddText;
+    return formData.value?.outId
+      ? textObj.outboundEditText
+      : textObj.outboundAddText;
   } else if (props.type === 'stock') {
-    return formData.value?.sparePartId ? textObj.stockEditText : textObj.stockAddText;
+    return formData.value?.sparePartId
+      ? textObj.stockEditText
+      : textObj.stockAddText;
   }
   return formData.value?.inId ? textObj.editText : textObj.addText;
 });
@@ -87,7 +91,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     let currentList;
     let idField;
     let addText;
-    
+
     if (props.type === 'outbound') {
       currentList = dataObj.outboundList;
       idField = 'outId';
@@ -101,7 +105,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       idField = 'inId';
       addText = textObj.addText;
     }
-    
+
     if (formDrawerApi.sharedData.payload.title === addText) {
       currentList.push(obj);
     } else {
@@ -174,15 +178,16 @@ const [StockInDrawer, stockInDrawerApi] = useVbenDrawer({
     // 添加到入库列表
     dataObj.inboundList.push(obj);
     // 更新库存数量
-    const stockItem = dataObj.stockList.find(item => item.sparePartId === obj.sparePartId);
+    const stockItem = dataObj.stockList.find(
+      (item) => item.sparePartId === obj.sparePartId,
+    );
     if (stockItem) {
-      stockItem.stockQuantity = (parseInt(stockItem.stockQuantity) || 0) + (parseInt(obj.quantity) || 0);
+      stockItem.stockQuantity =
+        (Number.parseInt(stockItem.stockQuantity) || 0) +
+        (Number.parseInt(obj.quantity) || 0);
       // 更新库存状态
-      if (stockItem.stockQuantity >= stockItem.safeStock) {
-        stockItem.stockStatus = '正常';
-      } else {
-        stockItem.stockStatus = '不足';
-      }
+      stockItem.stockStatus =
+        stockItem.stockQuantity >= stockItem.safeStock ? '正常' : '不足';
     }
     handleRefresh();
     stockInDrawerApi.close();
@@ -211,9 +216,13 @@ const [StockOutDrawer, stockOutDrawerApi] = useVbenDrawer({
     // 添加到出库列表
     dataObj.outboundList.push(obj);
     // 更新库存数量
-    const stockItem = dataObj.stockList.find(item => item.sparePartId === obj.sparePartId);
+    const stockItem = dataObj.stockList.find(
+      (item) => item.sparePartId === obj.sparePartId,
+    );
     if (stockItem) {
-      stockItem.stockQuantity = (parseInt(stockItem.stockQuantity) || 0) - (parseInt(obj.outQuantity) || 0);
+      stockItem.stockQuantity =
+        (Number.parseInt(stockItem.stockQuantity) || 0) -
+        (Number.parseInt(obj.outQuantity) || 0);
       // 更新库存状态
       if (stockItem.stockQuantity >= stockItem.safeStock) {
         stockItem.stockStatus = '正常';
@@ -248,7 +257,7 @@ async function handleExport() {
   let currentList;
   let excelName;
   let excelAllName;
-  
+
   if (props.type === 'outbound') {
     currentList = dataObj.outboundList;
     excelName = textObj.outboundExcelName;
@@ -307,13 +316,19 @@ async function handleDelete(row) {
     let idField;
     if (props.type === 'outbound') {
       idField = 'outId';
-      dataObj.outboundList = dataObj.outboundList.filter((v) => v.outId !== row.outId);
+      dataObj.outboundList = dataObj.outboundList.filter(
+        (v) => v.outId !== row.outId,
+      );
     } else if (props.type === 'stock') {
       idField = 'sparePartId';
-      dataObj.stockList = dataObj.stockList.filter((v) => v.sparePartId !== row.sparePartId);
+      dataObj.stockList = dataObj.stockList.filter(
+        (v) => v.sparePartId !== row.sparePartId,
+      );
     } else {
       idField = 'inId';
-      dataObj.inboundList = dataObj.inboundList.filter((v) => v.inId !== row.inId);
+      dataObj.inboundList = dataObj.inboundList.filter(
+        (v) => v.inId !== row.inId,
+      );
     }
     ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.partName]));
     handleRefresh();
@@ -373,15 +388,26 @@ const dataObj = reactive({
 
 // 初始化数据
 const initData = () => {
-  if (props.type === 'inbound') {
-    dataObj.inboundList = dataList('inbound');
-    dataObj.total = dataObj.inboundList.length;
-  } else if (props.type === 'outbound') {
-    dataObj.outboundList = dataList('outbound');
-    dataObj.total = dataObj.outboundList.length;
-  } else if (props.type === 'stock') {
-    dataObj.stockList = dataList('stock');
-    dataObj.total = dataObj.stockList.length;
+  switch (props.type) {
+    case 'inbound': {
+      dataObj.inboundList = dataList('inbound');
+      dataObj.total = dataObj.inboundList.length;
+
+      break;
+    }
+    case 'outbound': {
+      dataObj.outboundList = dataList('outbound');
+      dataObj.total = dataObj.outboundList.length;
+
+      break;
+    }
+    case 'stock': {
+      dataObj.stockList = dataList('stock');
+      dataObj.total = dataObj.stockList.length;
+
+      break;
+    }
+    // No default
   }
 };
 
@@ -396,7 +422,7 @@ const changeTotalShow = () => {
 const getTableData = (pageObj) => {
   const page = pageObj.page;
   let currentList;
-  
+
   if (props.type === 'outbound') {
     currentList = dataObj.outboundList;
   } else if (props.type === 'stock') {
@@ -411,20 +437,21 @@ const getTableData = (pageObj) => {
     // 库存管理根据库存状态筛选
     filteredList = currentList.filter((v) => {
       switch (activeName.value) {
+        case '不足': {
+          return v.stockStatus === '不足';
+        }
         case '全部': {
           return true;
         }
         case '正常': {
           return v.stockStatus === '正常';
         }
-        case '不足': {
-          return v.stockStatus === '不足';
-        }
         case '过剩': {
           return v.stockStatus === '过剩';
         }
-        default:
+        default: {
           return true;
+        }
       }
     });
   } else {
@@ -443,8 +470,9 @@ const getTableData = (pageObj) => {
         case '待审核': {
           return v.statusName === '待审核';
         }
-        default:
+        default: {
           return true;
+        }
       }
     });
   }
@@ -476,7 +504,10 @@ const getTableData = (pageObj) => {
       return false;
     }
     // 关联工单筛选
-    if (filterRelatedWorkorder.value && v.relatedWorkorder !== filterRelatedWorkorder.value) {
+    if (
+      filterRelatedWorkorder.value &&
+      v.relatedWorkorder !== filterRelatedWorkorder.value
+    ) {
       return false;
     }
     return true;
@@ -528,7 +559,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
       },
     },
     rowConfig: {
-      keyField: props.type === 'outbound' ? 'outId' : props.type === 'stock' ? 'sparePartId' : 'inId',
+      keyField:
+        props.type === 'outbound'
+          ? 'outId'
+          : props.type === 'stock'
+            ? 'sparePartId'
+            : 'inId',
       isHover: true,
     },
     pagerConfig: dataObj,
@@ -569,27 +605,35 @@ const handleOpenDetail = (row) => {
 // 处理快捷筛选点击
 const handleFilterClick = (filterKey, value) => {
   switch (filterKey) {
-    case 'partName':
-      filterPartName.value = filterPartName.value === value ? '' : value;
-      break;
-    case 'supplier':
-      filterSupplier.value = filterSupplier.value === value ? '' : value;
-      break;
-    case 'stockResult':
-      filterStockResult.value = filterStockResult.value === value ? '' : value;
-      break;
-    case 'useDevice':
-      filterUseDevice.value = filterUseDevice.value === value ? '' : value;
-      break;
-    case 'partCode':
+    case 'partCode': {
       filterPartCode.value = filterPartCode.value === value ? '' : value;
       break;
-    case 'partType':
+    }
+    case 'partName': {
+      filterPartName.value = filterPartName.value === value ? '' : value;
+      break;
+    }
+    case 'partType': {
       filterPartType.value = filterPartType.value === value ? '' : value;
       break;
-    case 'relatedWorkorder':
-      filterRelatedWorkorder.value = filterRelatedWorkorder.value === value ? '' : value;
+    }
+    case 'relatedWorkorder': {
+      filterRelatedWorkorder.value =
+        filterRelatedWorkorder.value === value ? '' : value;
       break;
+    }
+    case 'stockResult': {
+      filterStockResult.value = filterStockResult.value === value ? '' : value;
+      break;
+    }
+    case 'supplier': {
+      filterSupplier.value = filterSupplier.value === value ? '' : value;
+      break;
+    }
+    case 'useDevice': {
+      filterUseDevice.value = filterUseDevice.value === value ? '' : value;
+      break;
+    }
   }
   gridApi.query();
 };
@@ -597,27 +641,34 @@ const handleFilterClick = (filterKey, value) => {
 // 取消快捷筛选
 const handleCancelFilter = (filterKey) => {
   switch (filterKey) {
-    case 'partName':
-      filterPartName.value = '';
-      break;
-    case 'supplier':
-      filterSupplier.value = '';
-      break;
-    case 'stockResult':
-      filterStockResult.value = '';
-      break;
-    case 'useDevice':
-      filterUseDevice.value = '';
-      break;
-    case 'partCode':
+    case 'partCode': {
       filterPartCode.value = '';
       break;
-    case 'partType':
+    }
+    case 'partName': {
+      filterPartName.value = '';
+      break;
+    }
+    case 'partType': {
       filterPartType.value = '';
       break;
-    case 'relatedWorkorder':
+    }
+    case 'relatedWorkorder': {
       filterRelatedWorkorder.value = '';
       break;
+    }
+    case 'stockResult': {
+      filterStockResult.value = '';
+      break;
+    }
+    case 'supplier': {
+      filterSupplier.value = '';
+      break;
+    }
+    case 'useDevice': {
+      filterUseDevice.value = '';
+      break;
+    }
   }
   gridApi.query();
 };
@@ -645,9 +696,7 @@ const handleStockIn = (row) => {
     operator: '当前用户',
     statusName: '待审核',
   };
-  stockInDrawerApi
-    .setData(stockInData)
-    .open();
+  stockInDrawerApi.setData(stockInData).open();
 };
 
 // 处理出库操作
@@ -666,9 +715,7 @@ const handleStockOut = (row) => {
     operator: '当前用户',
     statusName: '待审核',
   };
-  stockOutDrawerApi
-    .setData(stockOutData)
-    .open();
+  stockOutDrawerApi.setData(stockOutData).open();
 };
 
 // 根据当前类型动态生成状态标签
@@ -693,7 +740,7 @@ const tabsData = computed(() => {
 const createLabel = (item) => {
   let count = 0;
   let currentList;
-  
+
   // 根据当前类型选择正确的数据列表
   if (props.type === 'outbound') {
     currentList = dataObj.outboundList;
@@ -704,6 +751,11 @@ const createLabel = (item) => {
   }
 
   switch (item.label) {
+    case '不足': {
+      // 统计stockStatus为'不足'的数据
+      count = currentList.filter((v) => v.stockStatus === '不足').length;
+      break;
+    }
     case '全部': {
       count = currentList.length;
       break;
@@ -726,11 +778,6 @@ const createLabel = (item) => {
     case '正常': {
       // 统计stockStatus为'正常'的数据
       count = currentList.filter((v) => v.stockStatus === '正常').length;
-      break;
-    }
-    case '不足': {
-      // 统计stockStatus为'不足'的数据
-      count = currentList.filter((v) => v.stockStatus === '不足').length;
       break;
     }
     case '过剩': {
@@ -758,6 +805,9 @@ const handleFullShow = () => {
 // 状态标签类型映射
 const getStatusType = (status) => {
   switch (status) {
+    case '不足': {
+      return 'danger';
+    }
     // 审核状态
     case '已审核': {
       return 'success';
@@ -771,9 +821,6 @@ const getStatusType = (status) => {
     // 库存状态
     case '正常': {
       return 'success';
-    }
-    case '不足': {
-      return 'danger';
     }
     case '过剩': {
       return 'warning';
@@ -795,7 +842,13 @@ const getStatusType = (status) => {
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.partName}详情`"
       :data="dataObj.detailObj"
-      :fields="props.type === 'outbound' ? detailFieldsOutbound : props.type === 'stock' ? detailFieldsStock : detailFields"
+      :fields="
+        props.type === 'outbound'
+          ? detailFieldsOutbound
+          : props.type === 'stock'
+            ? detailFieldsStock
+            : detailFields
+      "
     />
     <!-- 入库抽屉 -->
     <StockInDrawer title="入库操作">
@@ -830,7 +883,7 @@ const getStatusType = (status) => {
         { key: 'createBy', label: '创建人ID' },
         { key: 'createTime', label: '创建时间' },
         { key: 'updateTime', label: '更新时间' },
-        { key: 'remark', label: '备注' }
+        { key: 'remark', label: '备注' },
       ]"
     />
     <Drawer title="搜索">
@@ -839,7 +892,10 @@ const getStatusType = (status) => {
     <Grid>
       <!-- 三级状态 -->
       <template #table-title>
-        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
+        >
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -958,7 +1014,13 @@ const getStatusType = (status) => {
           class="common-align"
           type="primary"
         >
-          {{ props.type === 'outbound' ? row.outId : props.type === 'stock' ? row.sparePartId : row.inId }}
+          {{
+            props.type === 'outbound'
+              ? row.outId
+              : props.type === 'stock'
+                ? row.sparePartId
+                : row.inId
+          }}
         </el-text>
       </template>
       <template #statusName="{ row }">
@@ -966,7 +1028,7 @@ const getStatusType = (status) => {
           {{ row.statusName || row.stockStatus }}
         </el-tag>
       </template>
-      
+
       <!-- 备件名称插槽 -->
       <template #partName="{ row }">
         <el-text
@@ -977,7 +1039,7 @@ const getStatusType = (status) => {
           {{ row.partName }}
         </el-text>
       </template>
-      
+
       <!-- 供应商插槽 -->
       <template #supplier="{ row }">
         <el-text
@@ -988,7 +1050,7 @@ const getStatusType = (status) => {
           {{ row.supplier }}
         </el-text>
       </template>
-      
+
       <!-- 库存更新结果插槽 -->
       <template #stockResult="{ row }">
         <el-text
@@ -999,7 +1061,7 @@ const getStatusType = (status) => {
           {{ row.stockResult }}
         </el-text>
       </template>
-      
+
       <!-- 使用设备插槽 -->
       <template #useDevice="{ row }">
         <el-text
@@ -1010,7 +1072,7 @@ const getStatusType = (status) => {
           {{ row.useDevice }}
         </el-text>
       </template>
-      
+
       <!-- 备件编码插槽 -->
       <template #partCode="{ row }">
         <el-text
@@ -1021,7 +1083,7 @@ const getStatusType = (status) => {
           {{ row.partCode }}
         </el-text>
       </template>
-      
+
       <!-- 备件类型插槽 -->
       <template #partType="{ row }">
         <el-text
@@ -1032,7 +1094,7 @@ const getStatusType = (status) => {
           {{ row.partType }}
         </el-text>
       </template>
-      
+
       <!-- 关联工单插槽 -->
       <template #relatedWorkorder="{ row }">
         <el-text
@@ -1088,10 +1150,26 @@ const getStatusType = (status) => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：{{ props.type === 'outbound' ? '出库单数' : props.type === 'stock' ? '库存件数' : '入库单数' }}: {{ dataObj.total }} </span>
+          <span>
+            本页统计：{{
+              props.type === 'outbound'
+                ? '出库单数'
+                : props.type === 'stock'
+                  ? '库存件数'
+                  : '入库单数'
+            }}: {{ dataObj.total }}
+          </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span> 全部统计：{{ props.type === 'outbound' ? textObj.outboundTotal : props.type === 'stock' ? textObj.stockTotal : textObj.total }} </span>
+          <span>
+            全部统计：{{
+              props.type === 'outbound'
+                ? textObj.outboundTotal
+                : props.type === 'stock'
+                  ? textObj.stockTotal
+                  : textObj.total
+            }}
+          </span>
         </div>
       </template>
     </Grid>

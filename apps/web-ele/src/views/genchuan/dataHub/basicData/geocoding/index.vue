@@ -1,12 +1,10 @@
 <script setup>
 import { computed, ref } from 'vue';
 
-import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
-
 import StatsVisualization from '#/components/stats/StatsVisualization.vue';
 
-import { getStatsDataByType } from './table/data';
 import Table from './table/index.vue';
+import { getGeocodingStatsData, dataList } from './table/data.js';
 
 import '#/components/page/index.scss';
 
@@ -27,52 +25,36 @@ const toggleStats = () => {
 
 const tabArray = ref([
   {
-    label: '入库管理',
+    label: '地理编码管理',
     components: Table,
     showSecondary: true,
     secondShow: false,
-    type: 'inbound',
-  },
-  {
-    label: '出库管理',
-    components: Table,
-    showSecondary: true,
-    secondShow: false,
-    type: 'outbound',
-  },
-  {
-    label: '库存管理',
-    components: Table,
-    showSecondary: true,
-    secondShow: false,
-    type: 'stock',
+    showStats: showStats,
+    toggleStats: toggleStats
   },
 ]);
-const activeName = ref('入库管理');
+const activeName = ref('地理编码管理');
 const secondShow = ref(false);
 
-// 当前选中的类型
-const currentType = ref('inbound');
-
-// 获取当前类型的统计数据
+// 获取地理编码统计数据
 const statsData = computed(() => {
-  return getStatsDataByType(currentType.value);
+  return getGeocodingStatsData();
 });
 
-// 监听标签页切换，更新当前类型
-const tabChange = (tabName) => {
-  activeName.value = tabName;
-  // 根据标签页名称更新当前类型
-  const tab = tabArray.value.find((item) => item.label === tabName);
-  if (tab) {
-    currentType.value = tab.type;
-  }
-};
+// 获取地理编码地图数据
+const mapData = computed(() => {
+  return dataList();
+});
 </script>
 <template>
   <div class="common-index">
     <!-- 统计可视化组件，根据showStats状态显示/隐藏 -->
-    <StatsVisualization v-if="showStats" :data="statsData" />
+    <StatsVisualization 
+      v-if="showStats" 
+      :data="statsData" 
+      :show-map-toggle="true" 
+      :map-data="mapData"
+    />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -108,7 +90,6 @@ const tabChange = (tabName) => {
         <component
           :is="item.components"
           :second-show="item.secondShow"
-          :type="item.type"
           :show-stats="showStats"
           :toggle-stats="toggleStats"
           :key="item.label"

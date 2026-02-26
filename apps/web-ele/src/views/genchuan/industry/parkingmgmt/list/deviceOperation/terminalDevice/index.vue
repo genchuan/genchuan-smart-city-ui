@@ -2,8 +2,9 @@
 import { computed, ref } from 'vue';
 
 import StatsVisualization from '#/components/stats/StatsVisualization.vue';
-import Table from './table/index.vue';
+
 import { dataList, getStatsData } from './table/data';
+import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
 
@@ -36,7 +37,7 @@ const secondShow = ref(false);
 // 统计数据
 const statsData = computed(() => {
   // 根据当前标签页筛选数据
-  let filteredData = dataList();
+  const filteredData = dataList();
   if (activeName.value !== '终端设备信息') {
     // 这里可以根据实际标签页逻辑进行筛选
     // 例如：如果标签页是状态筛选，可以根据deviceStatusName筛选

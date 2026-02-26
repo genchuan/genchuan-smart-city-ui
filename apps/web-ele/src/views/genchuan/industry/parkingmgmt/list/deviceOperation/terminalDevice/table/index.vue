@@ -13,6 +13,8 @@ import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
+import UnbindDrawer from '../components/UnbindDrawer.vue';
+import UpdateStatusDrawer from '../components/UpdateStatusDrawer.vue';
 import {
   dataList,
   detailFields,
@@ -20,8 +22,6 @@ import {
   useFormSchema,
   useGridColumns,
 } from './data';
-import UnbindDrawer from '../components/UnbindDrawer.vue';
-import UpdateStatusDrawer from '../components/UpdateStatusDrawer.vue';
 
 const props = defineProps({
   secondShow: {
@@ -260,10 +260,12 @@ const getTableData = (pageObj) => {
     }
 
     // 设备类型筛选
-    const deviceTypeMatch = !filterDeviceType.value || v.deviceTypeName === filterDeviceType.value;
+    const deviceTypeMatch =
+      !filterDeviceType.value || v.deviceTypeName === filterDeviceType.value;
 
     // 所属资产筛选
-    const assetNameMatch = !filterAssetName.value || v.assetName === filterAssetName.value;
+    const assetNameMatch =
+      !filterAssetName.value || v.assetName === filterAssetName.value;
 
     return statusMatch && deviceTypeMatch && assetNameMatch;
   });
@@ -409,7 +411,8 @@ const handleFullShow = () => {
 
 // 处理设备类型点击
 const handleDeviceTypeClick = (deviceType) => {
-  filterDeviceType.value = filterDeviceType.value === deviceType ? '' : deviceType;
+  filterDeviceType.value =
+    filterDeviceType.value === deviceType ? '' : deviceType;
   gridApi.query();
 };
 
@@ -441,7 +444,9 @@ function handleUnbind() {
     ElMessage.warning('请选择单个设备进行解绑');
     return;
   }
-  const selectedRow = dataObj.apilist.find(item => item.deviceId === checkedIds.value[0]);
+  const selectedRow = dataObj.apilist.find(
+    (item) => item.deviceId === checkedIds.value[0],
+  );
   if (selectedRow) {
     unbindRow.value = selectedRow;
     unbindDrawerApi.open();
@@ -451,7 +456,9 @@ function handleUnbind() {
 // 解绑提交事件
 function handleUnbindSubmit(values) {
   // 找到要解绑的设备并更新其所属资产字段
-  const deviceIndex = dataObj.apilist.findIndex(item => item.deviceId === unbindRow.value.deviceId);
+  const deviceIndex = dataObj.apilist.findIndex(
+    (item) => item.deviceId === unbindRow.value.deviceId,
+  );
   if (deviceIndex !== -1) {
     dataObj.apilist[deviceIndex].assetName = '已解绑';
   }
@@ -469,7 +476,9 @@ function handleUpdateStatus(row) {
 // 更新状态提交事件
 function handleUpdateStatusSubmit(values) {
   // 找到要更新状态的设备并更新其状态字段
-  const deviceIndex = dataObj.apilist.findIndex(item => item.deviceId === updateStatusRow.value.deviceId);
+  const deviceIndex = dataObj.apilist.findIndex(
+    (item) => item.deviceId === updateStatusRow.value.deviceId,
+  );
   if (deviceIndex !== -1) {
     dataObj.apilist[deviceIndex].deviceStatusName = values.newStatus;
   }
@@ -536,7 +545,10 @@ const getStatusType = (status) => {
     <Grid>
       <!-- 三级状态 -->
       <template #table-title>
-        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
+        >
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -664,13 +676,12 @@ const getStatusType = (status) => {
             icon-name="Refresh"
             @click="handleUpdateStatus(row)"
           />
-<!--          <IconButton-->
-<!--            content="删除"-->
-<!--            icon-name="delete"-->
-<!--            color="#F56C6C"-->
-<!--            @click="handleDelete(row)"-->
-<!--          />-->
-
+          <!--          <IconButton-->
+          <!--            content="删除"-->
+          <!--            icon-name="delete"-->
+          <!--            color="#F56C6C"-->
+          <!--            @click="handleDelete(row)"-->
+          <!--          />-->
         </div>
       </template>
       <template #bottom>
