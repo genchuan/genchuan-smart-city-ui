@@ -338,13 +338,13 @@ const arrowChange = () => {
           />
         </div>
       </template>
-      <template #warningCode="{ row }">
+      <template #roadSectionName="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.warningCode }}
+          {{ row.roadSectionName }}
         </el-text>
       </template>
       <template #actions="{ row }">

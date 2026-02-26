@@ -1,11 +1,9 @@
 <script setup>
 import { ref } from 'vue';
 
-import completed from './completed/index.vue';
-import disposal from './disposal/index.vue';
-import pending from './pending/index.vue';
-import gateChart from './table/gateChart.vue';
-import Table from './table/index.vue';
+import monitor from './monitor/index.vue';
+import gateChart from './monitor/table/gateChart.vue';
+import report from './report/index.vue';
 
 import '#/components/page/index.scss';
 
@@ -17,35 +15,19 @@ const changeArrowStatus = () => {
 };
 const tabArray = ref([
   {
-    label: '实时监测',
-    components: Table,
-    showSecondary: true,
+    label: '道路设施监测',
+    components: monitor,
+    showSecondary: false,
     secondShow: false,
     arrowShow: true,
     arrowState: false,
   },
   {
-    label: '待处置预警',
-    components: pending,
-    showSecondary: true,
+    label: '道路设施监测报表',
+    components: report,
+    showSecondary: false,
     secondShow: false,
-    arrowShow: true,
-    arrowState: false,
-  },
-  {
-    label: '处置中工单',
-    components: disposal,
-    showSecondary: true,
-    secondShow: false,
-    arrowShow: true,
-    arrowState: false,
-  },
-  {
-    label: '已完成归档',
-    components: completed,
-    showSecondary: true,
-    secondShow: false,
-    arrowShow: true,
+    arrowShow: false,
     arrowState: false,
   },
 ]);
@@ -55,8 +37,20 @@ const arrowChange = () => {
     v.arrowShow = !v.arrowShow;
   });
 };
-const activeName = ref('实时监测');
+const activeName = ref('道路设施监测');
 const secondShow = ref(false);
+const tabChange = (item) => {
+  tabArray.value.forEach((v) => {
+    v.showSecondary = false;
+    v.secondShow = false;
+    v.arrowShow = false;
+    v.arrowState = false;
+  });
+  const nowObj = tabArray.value.find((v) => v.label === item);
+  nowObj.arrowShow = true;
+  nowObj.arrowState = true;
+  nowObj.secondShow = true;
+};
 </script>
 <template>
   <div class="common-index">

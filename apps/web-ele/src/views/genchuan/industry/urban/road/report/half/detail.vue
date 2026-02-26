@@ -3,15 +3,15 @@ import { computed, defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 定义组件接收的属性（替换为道路预警工单处置数据）
+// 定义组件接收的属性（替换为道路监测数据）
 const props = defineProps({
-  // 详情数据对象（道路预警工单处置数据）
+  // 详情数据对象（道路监测数据）
   detailObj: {
     type: Object,
     required: true,
     default: () => ({}),
   },
-  // 抽屉标题（可选，默认使用详情对象的workOrderCode）
+  // 抽屉标题（可选，默认使用详情对象的roadSectionName）
   title: {
     type: String,
     default: '',
@@ -20,18 +20,18 @@ const props = defineProps({
 
 const { detailObj, title } = toRefs(props);
 
-// 计算属性处理标题，优先用工单编号，兜底显示默认值
+// 计算属性处理标题，优先用路段名称，兜底显示默认值
 const drawerTitle = computed(() => {
-  const workOrderCode = detailObj.value?.workOrderCode || '道路预警工单';
-  return title.value || `${workOrderCode}详情`;
+  const roadSectionName = detailObj.value?.roadSectionName || '道路监测';
+  return title.value || `${roadSectionName}详情`;
 });
 
-// 初始化抽屉实例（加宽适配工单处置字段）
+// 初始化抽屉实例（加宽适配道路监测更多字段）
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 900, // 加宽到900px适配工单处置更多字段
+  width: 800, // 加宽到800px适配道路监测字段
   onCancel() {
     detailDrawerApi.close();
   },
@@ -49,85 +49,75 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 道路预警工单处置基础信息 -->
+      <!-- 道路监测基础信息 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">工单编号:</div>
-        <div class="detail-row-right">{{ detailObj.workOrderCode || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">关联预警编号:</div>
+        <div class="detail-row-left">路段名称:</div>
         <div class="detail-row-right">
-          {{ detailObj.relatedWarningCode || '-' }}
+          {{ detailObj.roadSectionName || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">处置路段:</div>
+        <div class="detail-row-left">坑洼数量:</div>
         <div class="detail-row-right">
-          {{ detailObj.disposalRoadSection || '-' }}
+          {{ detailObj.potholeCount || '-' }} 个
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">处置类型:</div>
-        <div class="detail-row-right">{{ detailObj.disposalType || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">指派运维员:</div>
+        <div class="detail-row-left">裂缝长度:</div>
         <div class="detail-row-right">
-          {{ detailObj.assignedMaintenancePerson || '-' }}
+          {{ detailObj.crackLength || '-' }} 米
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">工单创建时间:</div>
+        <div class="detail-row-left">路面温度:</div>
         <div class="detail-row-right">
-          {{ detailObj.workOrderCreateTime || '-' }}
+          {{ detailObj.roadSurfaceTemp || '-' }} ℃
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">处置时限:</div>
+        <div class="detail-row-left">交通流量:</div>
         <div class="detail-row-right">
-          {{ detailObj.disposalTimeLimit || '-' }} 小时
+          {{ detailObj.trafficFlow || '-' }} 辆/小时
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">当前处置进度:</div>
+        <div class="detail-row-left">监测设备编号:</div>
         <div class="detail-row-right">
-          {{ detailObj.currentDisposalProgress || '-' }}
+          {{ detailObj.monitorDeviceCode || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">抵达现场时间:</div>
+        <div class="detail-row-left">设备在线状态:</div>
         <div class="detail-row-right">
-          {{ detailObj.arriveSceneTime || '-' }}
+          {{ detailObj.deviceOnlineStatus || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">剩余处置时间:</div>
+        <div class="detail-row-left">负责运维员:</div>
         <div class="detail-row-right">
-          {{ detailObj.remainingDisposalTime || '-' }} 小时
+          {{ detailObj.maintenancePerson || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">处置进度更新时间:</div>
+        <div class="detail-row-left">数据采集频率:</div>
         <div class="detail-row-right">
-          {{ detailObj.disposalProgressUpdateTime || '-' }}
+          {{ detailObj.dataCollectionFreq || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">已完成处置内容:</div>
+        <div class="detail-row-left">数据同步时长:</div>
         <div class="detail-row-right">
-          {{ detailObj.completedDisposalContent || '-' }}
+          {{ detailObj.dataSyncDuration || '-' }} 秒
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">现场检测数据:</div>
-        <div class="detail-row-right">
-          {{ detailObj.sceneDetectionData || '-' }}
-        </div>
+        <div class="detail-row-left">监测状态:</div>
+        <div class="detail-row-right">{{ detailObj.monitorStatus || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">超时提醒标识:</div>
+        <div class="detail-row-left">指标阈值范围:</div>
         <div class="detail-row-right">
-          {{ detailObj.timeoutReminderFlag || '-' }}
+          {{ detailObj.indexThresholdRange || '-' }}
         </div>
       </div>
     </div>
@@ -138,19 +128,19 @@ defineExpose({
 // 响应式适配
 @media (max-width: 768px) {
   .detail-row-left {
-    width: 130px; // 小屏适配工单字段标签宽度
+    width: 110px; // 小屏适配标签宽度
   }
 
   .detail-card {
-    min-height: 520px;
-    max-height: 70vh;
+    min-height: 450px;
+    max-height: 60vh;
     padding: 15px;
   }
 }
 
 .detail-card {
-  min-height: 600px; // 适配工单处置14个字段，提升最小高度
-  max-height: 85vh; // 提高最大高度，容纳更多工单字段
+  min-height: 500px; // 适配道路监测字段数量，提升最小高度
+  max-height: 75vh; // 提高最大高度，容纳更多内容
   padding: 20px;
   overflow-y: auto; // 内容过多时显示滚动条
   background-color: #f9fafb;
@@ -160,7 +150,7 @@ defineExpose({
 // 每行的布局
 .detail-card-row {
   display: flex;
-  align-items: flex-start; // 顶部对齐，适配多行文本（处置内容/检测数据）
+  align-items: flex-start; // 顶部对齐，适配多行文本
   padding: 12px 0;
   border-bottom: 1px solid #f0f0f0; // 分隔线增强可读性
 
@@ -184,7 +174,7 @@ defineExpose({
 // 左侧标签样式
 .detail-row-left {
   flex-shrink: 0; // 不收缩
-  width: 150px; // 加宽标签宽度，适配"处置进度更新时间"等长标签
+  width: 130px; // 加宽标签宽度，适配"监测设备编号"等长标签
   font-size: 14px;
   font-weight: 500; // 加粗突出标签
   line-height: 18px; // 统一行高
@@ -198,7 +188,7 @@ defineExpose({
   font-size: 14px;
   line-height: 18px;
   color: #303133; // 主文本色
-  word-break: break-all; // 处理长文本换行（如现场检测数据、处置内容）
+  word-break: break-all; // 处理长文本换行（如指标阈值范围）
 }
 
 // 滚动条样式优化
@@ -218,5 +208,5 @@ defineExpose({
 
 .detail-card::-webkit-scrollbar-thumb:hover {
   background: #c0c4cc;
-}
+} // 详情卡片整体样式
 </style>

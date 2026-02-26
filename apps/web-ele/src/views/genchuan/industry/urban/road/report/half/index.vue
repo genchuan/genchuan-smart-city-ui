@@ -11,10 +11,10 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
-// 引入封装后的详情抽屉组件
-import ParkDetailDrawer from '#/views/genchuan/industry/urban/road/table/detail.vue';
 
 import { dataList, useFormSchema, useGridColumns } from './data';
+// 引入封装后的详情抽屉组件
+import ParkDetailDrawer from './detail.vue';
 
 const props = defineProps({
   secondShow: {
