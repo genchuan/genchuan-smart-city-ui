@@ -54,7 +54,7 @@ const tabChange = (item) => {
 </script>
 <template>
   <div class="common-index">
-    <gateChart v-if="tabArray[0].arrowShow" />
+    <gateChart />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"

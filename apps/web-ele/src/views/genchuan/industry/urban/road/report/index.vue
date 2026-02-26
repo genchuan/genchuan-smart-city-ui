@@ -1,7 +1,13 @@
 <script setup>
 import { ref } from 'vue';
 
+import CustomizeTable from './customize/index.vue';
 import Daytable from './day/index.vue';
+import Halftable from './half/index.vue';
+import Montlytable from './montly/index.vue';
+import Seasontable from './season/index.vue';
+import Weektable from './week/index.vue';
+import Yeartable from './year/index.vue';
 
 const props = defineProps({
   secondShow: {
@@ -21,12 +27,12 @@ const activeName = ref('日报');
 
 const tabsData = ref([
   { label: '日报', component: Daytable },
-  { label: '周报', component: Daytable },
-  { label: '月报', component: Daytable },
-  { label: '季报', component: Daytable },
-  { label: '半年报', component: Daytable },
-  { label: '年报', component: Daytable },
-  { label: '自定义报表', component: Daytable },
+  { label: '周报', component: Weektable },
+  { label: '月报', component: Montlytable },
+  { label: '季报', component: Seasontable },
+  { label: '半年报', component: Halftable },
+  { label: '年报', component: Yeartable },
+  { label: '自定义报表', component: CustomizeTable },
 ]);
 const handleClick = (item) => {
   const nowObj = tabsData.value.find((v) => v.label === item);
