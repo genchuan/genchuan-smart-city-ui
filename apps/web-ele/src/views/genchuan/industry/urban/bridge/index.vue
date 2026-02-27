@@ -15,7 +15,7 @@ const changeArrowStatus = () => {
 };
 const tabArray = ref([
   {
-    label: '道路设施监测',
+    label: '桥梁设施监测',
     components: monitor,
     showSecondary: false,
     secondShow: false,
@@ -23,7 +23,7 @@ const tabArray = ref([
     arrowState: false,
   },
   {
-    label: '道路设施监测报表',
+    label: '桥梁设施监测报表',
     components: report,
     showSecondary: false,
     secondShow: false,
@@ -37,7 +37,7 @@ const arrowChange = () => {
     v.arrowShow = !v.arrowShow;
   });
 };
-const activeName = ref('道路设施监测');
+const activeName = ref('桥梁设施监测');
 const secondShow = ref(false);
 const tabChange = (item) => {
   tabArray.value.forEach((v) => {

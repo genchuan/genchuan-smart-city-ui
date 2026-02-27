@@ -1,176 +1,204 @@
-/** 表格初始数据 - 改造为道路预警归档管理数据 */
+/** 表格初始数据 - 改造为桥梁养护归档管理数据 */
 export const dataList = () => [
   {
-    archiveCode: 'FJ-GD-202406-ARC001',
-    relatedWorkOrderCode: 'FJ-GD-202406-001',
-    relatedWarningCode: 'FJ-YJ-202406-001',
-    disposalRoadSection: '福州市鼓楼区杨桥东路（东街口-五一广场）',
-    disposalType: '坑洼修补',
-    assignedMaintenancePerson: '陈铭（FJYW001）',
+    archiveCode: 'FJ-YH-B-202406-ARC001',
+    relatedWorkOrderCode: 'FJ-YH-B-202406-001',
+    relatedWarningCode: 'FJ-YJ-B-202406-001',
+    maintenanceBridge: '福州市闽江大桥',
+    monitorPosition: '主桥左侧支座',
+    maintenanceType: '支座更换',
+    assignedMaintenancePerson: '陈铭（FJYH001）',
     verificationResult: '合格',
     workOrderCompleteTime: '2024-06-16 02:00:00',
     archiveTime: '2024-06-16 09:00:00',
-    warningDisposalTotalTime: 19,
-    indexRecoveryValue: 8,
+    warningMaintenanceTotalTime: 19,
+    indexRecoveryValue: 1.2,
     verificationPerson: '张明（FJHC001）',
     indexComparisonBeforeAfter:
-      '处置前坑洼数量12个，处置后8个，恢复至阈值范围内',
+      '处置前支座位移2.5mm，处置后1.2mm，恢复至阈值（≤2mm）范围内',
+    maintenanceMaterialTotalUsage:
+      '橡胶支座8个，高强螺栓48套，密封胶12支，润滑油5L',
     archiveFileCount: 5,
   },
   {
-    archiveCode: 'FJ-GD-202406-ARC002',
-    relatedWorkOrderCode: 'FJ-GD-202406-002',
-    relatedWarningCode: 'FJ-YJ-202406-002',
-    disposalRoadSection: '厦门市思明区鹭江道（轮渡码头-中山路）',
-    disposalType: '裂缝填补',
-    assignedMaintenancePerson: '林晓婷（FJYW002）',
+    archiveCode: 'FJ-YH-B-202406-ARC002',
+    relatedWorkOrderCode: 'FJ-YH-B-202406-002',
+    relatedWarningCode: 'FJ-YJ-B-202406-002',
+    maintenanceBridge: '厦门市集美大桥',
+    monitorPosition: '引桥右侧支座',
+    maintenanceType: '振动检测与加固',
+    assignedMaintenancePerson: '林晓婷（FJYH002）',
     verificationResult: '合格',
     workOrderCompleteTime: '2024-06-15 10:00:00',
     archiveTime: '2024-06-15 15:00:00',
-    warningDisposalTotalTime: 29,
-    indexRecoveryValue: 0,
+    warningMaintenanceTotalTime: 29,
+    indexRecoveryValue: 4.2,
     verificationPerson: '李丽（FJHC002）',
-    indexComparisonBeforeAfter: '处置前裂缝长度18.5米，处置后0米，完全修复',
+    indexComparisonBeforeAfter:
+      '处置前振动频率5.8Hz，处置后4.2Hz，恢复至阈值（1~5Hz）范围内',
+    maintenanceMaterialTotalUsage:
+      '抗震加固钢板12㎡，膨胀螺栓36套，环氧结构胶8kg',
     archiveFileCount: 8,
   },
   {
-    archiveCode: 'FJ-GD-202406-ARC003',
-    relatedWorkOrderCode: 'FJ-GD-202406-003',
-    relatedWarningCode: 'FJ-YJ-202406-003',
-    disposalRoadSection: '泉州市丰泽区刺桐路（湖心街-泉秀街）',
-    disposalType: '路面降温处理',
-    assignedMaintenancePerson: '王志远（FJYW003）',
+    archiveCode: 'FJ-YH-B-202406-ARC003',
+    relatedWorkOrderCode: 'FJ-YH-B-202406-003',
+    relatedWarningCode: 'FJ-YJ-B-202406-003',
+    maintenanceBridge: '泉州市晋江大桥',
+    monitorPosition: '主桥中跨支座',
+    maintenanceType: '应变检测与修复',
+    assignedMaintenancePerson: '王志远（FJYH003）',
     verificationResult: '合格',
     workOrderCompleteTime: '2024-06-15 18:00:00',
     archiveTime: '2024-06-15 20:00:00',
-    warningDisposalTotalTime: 8,
-    indexRecoveryValue: 38.5,
+    warningMaintenanceTotalTime: 8,
+    indexRecoveryValue: 190.5,
     verificationPerson: '王强（FJHC003）',
     indexComparisonBeforeAfter:
-      '处置前路面温度42.3℃，处置后38.5℃，恢复至阈值范围内',
+      '处置前应变值210.5με，处置后190.5με，恢复至阈值（≤200με）范围内',
+    maintenanceMaterialTotalUsage:
+      '应变片20片，数据采集仪1台，环氧结构胶3kg，砂纸10张',
     archiveFileCount: 3,
   },
   {
-    archiveCode: 'FJ-GD-202406-ARC004',
-    relatedWorkOrderCode: 'FJ-GD-202406-004',
-    relatedWarningCode: 'FJ-YJ-202406-004',
-    disposalRoadSection: '漳州市芗城区胜利路（延安北路-新华西路）',
-    disposalType: '交通疏导',
-    assignedMaintenancePerson: '黄丽萍（FJYW004）',
+    archiveCode: 'FJ-YH-B-202406-ARC004',
+    relatedWorkOrderCode: 'FJ-YH-B-202406-004',
+    relatedWarningCode: 'FJ-YJ-B-202406-004',
+    maintenanceBridge: '漳州市九龙江大桥',
+    monitorPosition: '副桥左侧支座',
+    maintenanceType: '支座调平',
+    assignedMaintenancePerson: '黄丽萍（FJYH004）',
     verificationResult: '合格',
     workOrderCompleteTime: '2024-06-15 16:00:00',
     archiveTime: '2024-06-15 18:00:00',
-    warningDisposalTotalTime: 8,
-    indexRecoveryValue: 1800,
+    warningMaintenanceTotalTime: 8,
+    indexRecoveryValue: 0.8,
     verificationPerson: '陈杰（FJHC004）',
     indexComparisonBeforeAfter:
-      '处置前交通流量2500辆/小时，处置后1800辆/小时，恢复至阈值范围内',
+      '处置前支座位移1.8mm，处置后0.8mm，恢复至阈值（≤2mm）范围内',
+    maintenanceMaterialTotalUsage:
+      '液压调平千斤顶2台，水平仪1台，防锈剂3L，密封胶2支',
     archiveFileCount: 4,
   },
   {
-    archiveCode: 'FJ-GD-202406-ARC005',
-    relatedWorkOrderCode: 'FJ-GD-202406-005',
-    relatedWarningCode: 'FJ-YJ-202406-005',
-    disposalRoadSection: '莆田市城厢区荔城南大道（凤凰山-万达广场）',
-    disposalType: '坑洼修补',
-    assignedMaintenancePerson: '郑建明（FJYW005）',
+    archiveCode: 'FJ-YH-B-202406-ARC005',
+    relatedWorkOrderCode: 'FJ-YH-B-202406-005',
+    relatedWarningCode: 'FJ-YJ-B-202406-005',
+    maintenanceBridge: '莆田市木兰溪大桥',
+    monitorPosition: '主桥右侧支座',
+    maintenanceType: '支座更换',
+    assignedMaintenancePerson: '郑建明（FJYH005）',
     verificationResult: '不合格',
     workOrderCompleteTime: '2024-06-14 10:00:00',
     archiveTime: '2024-06-14 12:00:00',
-    warningDisposalTotalTime: 14,
-    indexRecoveryValue: 8,
+    warningMaintenanceTotalTime: 14,
+    indexRecoveryValue: 1.9,
     verificationPerson: '赵伟（FJHC005）',
     indexComparisonBeforeAfter:
-      '处置前坑洼数量15个（预警值），实际8个，数据误差未通过核查',
+      '处置前支座位移2.2mm（预警值），实际1.9mm，数据误差未通过核查',
+    maintenanceMaterialTotalUsage: '未使用，材料已退回仓库',
     archiveFileCount: 2,
   },
   {
-    archiveCode: 'FJ-GD-202406-ARC006',
-    relatedWorkOrderCode: 'FJ-GD-202406-006',
-    relatedWarningCode: 'FJ-YJ-202406-006',
-    disposalRoadSection: '宁德市蕉城区闽东中路（市政府-万达广场）',
-    disposalType: '裂缝填补',
-    assignedMaintenancePerson: '吴永辉（FJYW006）',
+    archiveCode: 'FJ-YH-B-202406-ARC006',
+    relatedWorkOrderCode: 'FJ-YH-B-202406-006',
+    relatedWarningCode: 'FJ-YJ-B-202406-006',
+    maintenanceBridge: '宁德市东湖大桥',
+    monitorPosition: '引桥左侧支座',
+    maintenanceType: '振动检测与加固',
+    assignedMaintenancePerson: '吴永辉（FJYH006）',
     verificationResult: '合格',
     workOrderCompleteTime: '2024-06-15 19:00:00',
     archiveTime: '2024-06-15 21:00:00',
-    warningDisposalTotalTime: 32,
-    indexRecoveryValue: 6.8,
+    warningMaintenanceTotalTime: 32,
+    indexRecoveryValue: 4.5,
     verificationPerson: '孙丽（FJHC006）',
     indexComparisonBeforeAfter:
-      '处置前裂缝长度16.8米，处置后6.8米，剩余部分择期处理',
+      '处置前振动频率5.2Hz，处置后4.5Hz，恢复至阈值（1~5Hz）范围内',
+    maintenanceMaterialTotalUsage: '加固钢板8㎡，螺栓24套，结构胶5kg，防锈剂2L',
     archiveFileCount: 6,
   },
   {
-    archiveCode: 'FJ-GD-202406-ARC007',
-    relatedWorkOrderCode: 'FJ-GD-202406-007',
-    relatedWarningCode: 'FJ-YJ-202406-007',
-    disposalRoadSection: '龙岩市新罗区龙川路（中山路-登高西路）',
-    disposalType: '路面降温处理',
-    assignedMaintenancePerson: '张志强（FJYW007）',
+    archiveCode: 'FJ-YH-B-202406-ARC007',
+    relatedWorkOrderCode: 'FJ-YH-B-202406-007',
+    relatedWarningCode: 'FJ-YJ-B-202406-007',
+    maintenanceBridge: '龙岩市龙津河大桥',
+    monitorPosition: '主桥边跨支座',
+    maintenanceType: '应变检测与修复',
+    assignedMaintenancePerson: '张志强（FJYH007）',
     verificationResult: '合格',
     workOrderCompleteTime: '2024-06-15 17:00:00',
     archiveTime: '2024-06-15 19:00:00',
-    warningDisposalTotalTime: 5,
-    indexRecoveryValue: 39.2,
+    warningMaintenanceTotalTime: 5,
+    indexRecoveryValue: 192.8,
     verificationPerson: '周明（FJHC007）',
     indexComparisonBeforeAfter:
-      '处置前路面温度41.5℃，处置后39.2℃，恢复至阈值范围内',
+      '处置前应变值198.8με，处置后192.8με，恢复至阈值（≤200με）范围内',
+    maintenanceMaterialTotalUsage:
+      '应变片15片，数据采集仪1台，结构胶2kg，清洁布10块',
     archiveFileCount: 3,
   },
   {
-    archiveCode: 'FJ-GD-202406-ARC008',
-    relatedWorkOrderCode: 'FJ-GD-202406-008',
-    relatedWarningCode: 'FJ-YJ-202406-008',
-    disposalRoadSection: '三明市梅列区列东街（东新四路-东新六路）',
-    disposalType: '交通疏导',
-    assignedMaintenancePerson: '李芳（FJYW008）',
+    archiveCode: 'FJ-YH-B-202406-ARC008',
+    relatedWorkOrderCode: 'FJ-YH-B-202406-008',
+    relatedWarningCode: 'FJ-YJ-B-202406-008',
+    maintenanceBridge: '三明市沙溪大桥',
+    monitorPosition: '副桥右侧支座',
+    maintenanceType: '支座调平',
+    assignedMaintenancePerson: '李芳（FJYH008）',
     verificationResult: '合格',
     workOrderCompleteTime: '2024-06-15 10:00:00',
     archiveTime: '2024-06-15 12:00:00',
-    warningDisposalTotalTime: 13,
-    indexRecoveryValue: 1800,
+    warningMaintenanceTotalTime: 13,
+    indexRecoveryValue: 1.2,
     verificationPerson: '吴杰（FJHC008）',
     indexComparisonBeforeAfter:
-      '处置前交通流量2150辆/小时，处置后1800辆/小时，恢复至阈值范围内',
+      '处置前支座位移1.8mm，处置后1.2mm，恢复至阈值（≤2mm）范围内',
+    maintenanceMaterialTotalUsage: '千斤顶1台，水平仪1台，防锈剂2L，密封胶4支',
     archiveFileCount: 5,
   },
   {
-    archiveCode: 'FJ-GD-202406-ARC009',
-    relatedWorkOrderCode: 'FJ-GD-202406-009',
-    relatedWarningCode: 'FJ-YJ-202406-009',
-    disposalRoadSection: '南平市延平区八一路（江滨路-中山路）',
-    disposalType: '坑洼修补',
-    assignedMaintenancePerson: '刘建国（FJYW009）',
+    archiveCode: 'FJ-YH-B-202406-ARC009',
+    relatedWorkOrderCode: 'FJ-YH-B-202406-009',
+    relatedWarningCode: 'FJ-YJ-B-202406-009',
+    maintenanceBridge: '南平市建溪大桥',
+    monitorPosition: '主桥中支座',
+    maintenanceType: '振动检测与加固',
+    assignedMaintenancePerson: '刘建国（FJYH009）',
     verificationResult: '合格',
     workOrderCompleteTime: '2024-06-16 07:00:00',
     archiveTime: '2024-06-16 09:00:00',
-    warningDisposalTotalTime: 21.5,
-    indexRecoveryValue: 0,
+    warningMaintenanceTotalTime: 21.5,
+    indexRecoveryValue: 4.8,
     verificationPerson: '郑浩（FJHC009）',
-    indexComparisonBeforeAfter: '处置前坑洼数量11个，处置后0个，完全修复',
+    indexComparisonBeforeAfter:
+      '处置前振动频率5.8Hz，处置后4.8Hz，恢复至阈值（1~5Hz）范围内',
+    maintenanceMaterialTotalUsage:
+      '加固钢板10㎡，螺栓30套，结构胶7kg，防锈剂5L',
     archiveFileCount: 7,
   },
   {
-    archiveCode: 'FJ-GD-202406-ARC010',
-    relatedWorkOrderCode: 'FJ-GD-202406-010',
-    relatedWarningCode: 'FJ-YJ-202406-010',
-    disposalRoadSection: '平潭综合实验区金井大道（管委会-龙凤头沙滩）',
-    disposalType: '裂缝填补',
-    assignedMaintenancePerson: '蔡伟明（FJYW010）',
+    archiveCode: 'FJ-YH-B-202406-ARC010',
+    relatedWorkOrderCode: 'FJ-YH-B-202406-010',
+    relatedWarningCode: 'FJ-YJ-B-202406-010',
+    maintenanceBridge: '平潭综合实验区海峡大桥',
+    monitorPosition: '引桥中支座',
+    maintenanceType: '应变检测与修复',
+    assignedMaintenancePerson: '蔡伟明（FJYH010）',
     verificationResult: '不合格',
     workOrderCompleteTime: '2024-06-14 09:00:00',
     archiveTime: '2024-06-14 11:00:00',
-    warningDisposalTotalTime: 16,
-    indexRecoveryValue: 12,
+    warningMaintenanceTotalTime: 16,
+    indexRecoveryValue: 195.6,
     verificationPerson: '黄鑫（FJHC010）',
     indexComparisonBeforeAfter:
-      '处置前裂缝长度17.2米（预警值），实际12米，数据误差未通过核查',
+      '处置前应变值205.6με（预警值），实际195.6με，数据误差未通过核查',
+    maintenanceMaterialTotalUsage: '未使用，材料已退回仓库',
     archiveFileCount: 2,
   },
 ];
 
-/** 新增/修改的表单/列表的搜索表单 - 改造为道路预警归档管理表单 */
+/** 新增/修改的表单/列表的搜索表单 - 改造为桥梁养护归档管理表单 */
 export function useFormSchema() {
   return [
     {
@@ -178,10 +206,10 @@ export function useFormSchema() {
       label: '归档编号',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入归档编号（如：FJ-GD-202406-ARC001）',
+        placeholder: '请输入归档编号（如：FJ-YH-B-202406-ARC001）',
         maxLength: 50, // 限制编号长度，符合编码规范
       },
-      labelWidth: '100',
+      labelWidth: '120',
       rules: 'required', // 归档编号为必填项
     },
     {
@@ -189,10 +217,10 @@ export function useFormSchema() {
       label: '关联工单编号',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入关联工单编号（如：FJ-GD-202406-001）',
+        placeholder: '请输入关联工单编号（如：FJ-YH-B-202406-001）',
         maxLength: 50,
       },
-      labelWidth: '100',
+      labelWidth: '120',
       rules: 'required', // 关联工单编号为必填项
     },
     {
@@ -200,57 +228,67 @@ export function useFormSchema() {
       label: '关联预警编号',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入关联预警编号（如：FJ-YJ-202406-001）',
+        placeholder: '请输入关联预警编号（如：FJ-YJ-B-202406-001）',
         maxLength: 50,
       },
-      labelWidth: '100',
+      labelWidth: '120',
       rules: 'required', // 关联预警编号为必填项
     },
     {
-      fieldName: 'disposalRoadSection',
-      label: '处置路段',
+      fieldName: 'maintenanceBridge',
+      label: '养护桥梁',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入处置路段（如：福州市鼓楼区杨桥东路）',
+        placeholder: '请输入养护桥梁（如：福州市闽江大桥）',
       },
-      labelWidth: '100',
-      rules: 'required', // 处置路段为必填项
+      labelWidth: '120',
+      rules: 'required', // 养护桥梁为必填项
+    },
+    {
+      fieldName: 'monitorPosition',
+      label: '监测部位',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入监测部位（如：主桥左侧支座）',
+      },
+      labelWidth: '120',
+      rules: 'required', // 监测部位为必填项
     },
     {
       component: 'Select',
-      labelWidth: '100',
+      labelWidth: '120',
       componentProps: {
         allowClear: true,
         filterOption: true,
         options: [
-          { label: '坑洼修补', value: '坑洼修补' },
-          { label: '裂缝填补', value: '裂缝填补' },
-          { label: '路面降温处理', value: '路面降温处理' },
-          { label: '交通疏导', value: '交通疏导' },
+          { label: '支座更换', value: '支座更换' },
+          { label: '支座调平', value: '支座调平' },
+          { label: '振动检测与加固', value: '振动检测与加固' },
+          { label: '应变检测与修复', value: '应变检测与修复' },
           { label: '设备维修', value: '设备维修' },
           { label: '现场巡检', value: '现场巡检' },
         ],
-        placeholder: '请选择处置类型',
+        placeholder: '请选择养护类型',
         showSearch: true,
       },
-      fieldName: 'disposalType',
-      label: '处置类型',
+      fieldName: 'maintenanceType',
+      label: '养护类型',
       rules: 'required',
     },
     {
       fieldName: 'assignedMaintenancePerson',
-      label: '指派运维员',
+      label: '指派养护员',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入指派运维员（姓名/工号，如：陈铭（FJYW001））',
+        placeholder: '请输入指派养护员（姓名/工号，如：陈铭（FJYH001））',
         maxLength: 100,
       },
-      labelWidth: '100',
-      rules: 'required', // 指派运维员为必填项
+      labelWidth: '120',
+      rules: 'required', // 指派养护员为必填项
     },
     {
       component: 'Select',
-      labelWidth: '100',
+      labelWidth: '120',
       componentProps: {
         allowClear: true,
         filterOption: true,
@@ -269,7 +307,7 @@ export function useFormSchema() {
       fieldName: 'workOrderCompleteTime',
       label: '工单完成时间',
       component: 'DatePicker',
-      labelWidth: '100',
+      labelWidth: '120',
       componentProps: {
         placeholder: '请选择工单完成时间',
         type: 'datetime', // 支持日期+时间选择
@@ -282,7 +320,7 @@ export function useFormSchema() {
       fieldName: 'archiveTime',
       label: '归档时间',
       component: 'DatePicker',
-      labelWidth: '100',
+      labelWidth: '120',
       componentProps: {
         placeholder: '请选择归档时间',
         type: 'datetime',
@@ -292,25 +330,25 @@ export function useFormSchema() {
       rules: 'required', // 归档时间为必填项
     },
     {
-      fieldName: 'warningDisposalTotalTime',
-      label: '预警处置总时长',
+      fieldName: 'warningMaintenanceTotalTime',
+      label: '预警养护总时长',
       component: 'InputNumber',
-      labelWidth: '100',
+      labelWidth: '120',
       componentProps: {
-        placeholder: '请输入预警处置总时长（单位：小时）',
+        placeholder: '请输入预警养护总时长（单位：小时）',
         min: 0, // 时长非负
         precision: 1, // 支持小数（如21.5小时）
         addonAfter: '小时',
       },
-      rules: 'required', // 预警处置总时长为必填项
+      rules: 'required', // 预警养护总时长为必填项
     },
     {
       fieldName: 'indexRecoveryValue',
       label: '指标恢复值',
       component: 'InputNumber',
-      labelWidth: '100',
+      labelWidth: '120',
       componentProps: {
-        placeholder: '请输入指标恢复值（如坑洼数量8个）',
+        placeholder: '请输入指标恢复值（如支座位移1.2mm）',
         min: 0, // 数值非负
         precision: 1,
       },
@@ -324,27 +362,39 @@ export function useFormSchema() {
         placeholder: '请输入核查员（姓名/工号，如：张明（FJHC001））',
         maxLength: 100,
       },
-      labelWidth: '100',
+      labelWidth: '120',
       rules: 'required', // 核查员为必填项
     },
     {
       fieldName: 'indexComparisonBeforeAfter',
-      label: '处置前后指标对比',
-      component: 'Input',
+      label: '养护前后指标对比',
+      component: 'InputTextArea',
       componentProps: {
-        placeholder: '请输入处置前后指标对比（如：处置前坑洼12个，处置后8个）',
+        placeholder:
+          '请输入养护前后指标对比（如：处置前支座位移2.5mm，处置后1.2mm）',
         maxlength: 500, // 适配长文本描述
-        type: 'textarea',
         rows: 4,
       },
-      labelWidth: '100',
-      rules: 'required', // 处置前后指标对比为必填项
+      labelWidth: '120',
+      rules: 'required', // 养护前后指标对比为必填项
+    },
+    {
+      fieldName: 'maintenanceMaterialTotalUsage',
+      label: '养护材料总使用量',
+      component: 'InputTextArea',
+      componentProps: {
+        placeholder: '请输入养护材料总使用量（如：橡胶支座8个，高强螺栓48套）',
+        maxlength: 300,
+        rows: 3,
+      },
+      labelWidth: '120',
+      rules: 'required', // 养护材料总使用量为必填项
     },
     {
       fieldName: 'archiveFileCount',
       label: '归档文件数',
       component: 'InputNumber',
-      labelWidth: '100',
+      labelWidth: '120',
       componentProps: {
         placeholder: '请输入归档文件数',
         min: 0, // 文件数非负
@@ -355,45 +405,51 @@ export function useFormSchema() {
   ];
 }
 
-/** 表格字段 - 改造为道路预警归档管理表格列 */
+/** 表格字段 - 改造为桥梁养护归档管理表格列 */
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
     {
       field: 'archiveCode',
       title: '归档编号',
-      minWidth: 200,
+      minWidth: 220,
       sortable: true,
       slots: { default: 'archiveCode' }, // 自定义slot适配归档编号渲染
     },
     {
       field: 'relatedWorkOrderCode',
       title: '关联工单编号',
-      minWidth: 180,
+      minWidth: 200,
       sortable: true,
     },
     {
       field: 'relatedWarningCode',
       title: '关联预警编号',
-      minWidth: 180,
-      sortable: true,
-    },
-    {
-      field: 'disposalRoadSection',
-      title: '处置路段',
       minWidth: 200,
       sortable: true,
     },
     {
-      field: 'disposalType',
-      title: '处置类型',
-      minWidth: 120,
+      field: 'maintenanceBridge',
+      title: '养护桥梁',
+      minWidth: 180,
+      sortable: true,
+    },
+    {
+      field: 'monitorPosition',
+      title: '监测部位',
+      minWidth: 160,
+      sortable: true,
+    },
+    {
+      field: 'maintenanceType',
+      title: '养护类型',
+      minWidth: 140,
       sortable: true,
     },
     {
       field: 'assignedMaintenancePerson',
-      title: '指派运维员',
-      minWidth: 150,
+      title: '指派养护员',
+      minWidth: 160,
       sortable: true,
     },
     {
@@ -415,9 +471,9 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'warningDisposalTotalTime',
-      title: '预警处置总时长(小时)',
-      minWidth: 150,
+      field: 'warningMaintenanceTotalTime',
+      title: '预警养护总时长(小时)',
+      minWidth: 160,
       sortable: true,
     },
     {
@@ -434,7 +490,13 @@ export function useGridColumns() {
     },
     {
       field: 'indexComparisonBeforeAfter',
-      title: '处置前后指标对比',
+      title: '养护前后指标对比',
+      minWidth: 280,
+      sortable: false, // 文本描述类字段无需排序
+    },
+    {
+      field: 'maintenanceMaterialTotalUsage',
+      title: '养护材料总使用量',
       minWidth: 250,
       sortable: false, // 文本描述类字段无需排序
     },
