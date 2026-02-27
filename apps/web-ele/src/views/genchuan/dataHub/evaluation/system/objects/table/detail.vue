@@ -10,7 +10,7 @@ const props = defineProps({
 const { detailObj, title } = toRefs(props);
 
 const drawerTitle = computed(() => {
-  const objName = detailObj.value?.objectName || '评价对象';
+  const objName = detailObj.value?.name || '评价对象';
   return title.value || `${objName}详情`;
 });
 
@@ -29,17 +29,17 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <div class="detail-card-row"><div class="detail-row-left">对象名称：</div><div class="detail-row-right">{{ detailObj.objectName || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">对象编码：</div><div class="detail-row-right">{{ detailObj.objectCode || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">对象名称：</div><div class="detail-row-right">{{ detailObj.name || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">对象编码：</div><div class="detail-row-right">{{ detailObj.code || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">所属区域：</div><div class="detail-row-right">{{ detailObj.areaName || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">对象类型：</div><div class="detail-row-right">{{ detailObj.objectTypeName || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">负责人：</div><div class="detail-row-right">{{ detailObj.managerName || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">联系电话：</div><div class="detail-row-right">{{ detailObj.managerPhone || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">关联网格/部门：</div><div class="detail-row-right">{{ detailObj.relatedName || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">状态：</div><div class="detail-row-right">{{ detailObj.statusName || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">创建人：</div><div class="detail-row-right">{{ detailObj.createByName || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">创建人：</div><div class="detail-row-right">{{ detailObj.createUserName || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">创建时间：</div><div class="detail-row-right">{{ detailObj.createTime || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">更新人：</div><div class="detail-row-right">{{ detailObj.updateByName || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">更新人：</div><div class="detail-row-right">{{ detailObj.updateUserName || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">更新时间：</div><div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">变更日志：</div><div class="detail-row-right">{{ detailObj.changeLog || '-' }}</div></div>
     </div>
