@@ -272,7 +272,6 @@ defineExpose({
   border-radius: 3px;
 }
 
-
 .detail-card::-webkit-scrollbar-thumb:hover {
   background: #c0c4cc;
 }

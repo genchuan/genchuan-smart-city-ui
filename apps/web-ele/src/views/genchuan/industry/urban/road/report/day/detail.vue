@@ -1,7 +1,20 @@
 <script setup>
-import { computed, defineProps, toRefs } from 'vue';
+import { computed, defineProps, reactive, ref, toRefs } from 'vue';
 
-import { useVbenDrawer } from '@vben/common-ui';
+import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { isEmpty } from '@vben/utils';
+
+import { ElLoading, ElMessage } from 'element-plus';
+import screenfull from 'screenfull';
+
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { $t } from '#/locales';
+import { exportToExcel } from '#/utils/excel.js';
+
+import { dataList, useFormSchema, useGridColumns } from './detail';
+// 引入封装后的详情抽屉组件
+import detailCardDrawer from './detailDrawer.vue';
 
 // 定义组件接收的属性（替换为道路监测统计分析数据）
 const props = defineProps({
@@ -18,6 +31,8 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['arrow-change']);
+
 const { detailObj, title } = toRefs(props);
 
 // 计算属性处理标题，优先用路段名称，兜底显示默认值
@@ -31,7 +46,7 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 950, // 加宽到950px适配统计分析17个字段+长标签
+  width: 1950, // 加宽到950px适配统计分析17个字段+长标签
   onCancel() {
     detailDrawerApi.close();
   },
@@ -44,161 +59,336 @@ defineExpose({
   open: () => detailDrawerApi.open(),
   close: () => detailDrawerApi.close(),
 });
+
+const getTitle = computed(() => {
+  return formData.value?.id ? '编辑' : '新增';
+});
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    drawerApi.close();
+  },
+  onConfirm() {},
+  async onOpenChange() {},
+});
+// 移除原 DetailDrawer 初始化逻辑
+const formData = ref();
+const [Form, formApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 80,
+  },
+  layout: 'horizontal',
+  schema: useFormSchema(),
+  showDefaultActions: false,
+});
+const [FormDrawer, formDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    formDrawerApi.close();
+  },
+  onConfirm() {
+    const obj = formApi.form.values;
+    if (formDrawerApi.sharedData.payload.title === '新增') {
+      dataObj.apilist.push(obj);
+    } else {
+      dataObj.apilist.forEach((v, i) => {
+        if (v.id === formData.value?.id) {
+          dataObj.apilist[i] = obj;
+        }
+      });
+    }
+    handleRefresh();
+    formDrawerApi.close();
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      formData.value = formDrawerApi.getData();
+      if (formData.value?.id) {
+        await formApi.setValues(formData.value);
+      } else {
+        formApi.resetForm();
+      }
+    }
+  },
+});
+/** 刷新表格 */
+function handleRefresh() {
+  gridApi.query();
+}
+
+/** 导出表格 */
+async function handleExport() {
+  exportToExcel(dataObj.apilist, '导出', 'excel');
+}
+
+/** 创建角色 */
+function handleCreate() {
+  formDrawerApi
+    .setData({
+      title: '新增',
+    })
+    .open();
+}
+
+/** 编辑角色 */
+function handleEdit(row) {
+  formDrawerApi
+    .setData({
+      title: '编辑',
+      ...row,
+    })
+    .open();
+}
+async function handleDelete(row) {
+  const loadingInstance = ElLoading.service({
+    text: $t('ui.actionMessage.deleting', [row.name]),
+  });
+  try {
+    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
+    handleRefresh();
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+async function handleDeleteBatch() {
+  await confirm($t('确定删除这些数据吗？'));
+  const loadingInstance = ElLoading.service({
+    text: $t('ui.actionMessage.deletingBatch'),
+  });
+  try {
+    dataObj.apilist = dataObj.apilist.filter(
+      (v) => !checkedIds.value.includes(v.id),
+    );
+    checkedIds.value = [];
+    ElMessage.success($t('删除成功'));
+    handleRefresh();
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+const checkedIds = ref([]);
+function handleRowCheckboxChange({ records }) {
+  checkedIds.value = records.map((item) => item.id);
+}
+const dataObj = reactive({
+  totalShow: false,
+  detailObj: {}, // 保留详情对象用于传递给组件
+  total: dataList().length,
+  currentPage: 1,
+  pageSize: 10,
+  apilist: dataList(),
+  list: [],
+});
+const changeTotalShow = () => {
+  dataObj.totalShow = !dataObj.totalShow;
+};
+// 表格数据获取
+const getTableData = (pageObj) => {
+  const page = pageObj.page;
+  dataObj.total = dataObj.apilist
+    .map((v) => v)
+    .filter((v) => {
+      if (activeName.value === '全部') {
+        return true;
+      }
+      return v.status === activeName.value;
+    }).length;
+  dataObj.list = dataObj.apilist
+    .map((v) => v)
+    .filter((v) => {
+      if (activeName.value === '全部') {
+        return true;
+      }
+      return v.status === activeName.value;
+    })
+    .slice(
+      (page.currentPage - 1) * page.pageSize,
+      page.currentPage * page.pageSize,
+    );
+  return dataObj;
+};
+
+const [QueryForm] = useVbenForm({
+  // 默认展开
+  collapsed: false,
+  // 所有表单项共用，可单独在表单内覆盖
+  commonConfig: {
+    // 所有表单项
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  // 提交函数
+  handleSubmit: onSubmit,
+  // 垂直布局，label和input在不同行，值为vertical
+  // 水平布局，label和input在同一行
+  layout: 'horizontal',
+  schema: useFormSchema().map((v) => {
+    delete v.rules;
+    return {
+      ...v,
+    };
+  }),
+  // 是否可展开
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+// 搜索表单查询
+function onSubmit() {
+  drawerApi.close();
+}
+const [Grid, gridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: useGridColumns(),
+    keepSource: true,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }) => getTableData({ page }),
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+      isHover: true,
+    },
+    pagerConfig: dataObj,
+    toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
+      refresh: true,
+      search: true,
+    },
+    showOverflow: true,
+  },
+  gridEvents: {
+    checkboxAll: handleRowCheckboxChange,
+    checkboxChange: handleRowCheckboxChange,
+  },
+  showSearchForm: false,
+});
+
+const activeName = ref('全部');
+// 修改打开详情的方法，调用组件的open方法
+const handleOpenDetail = (row) => {
+  dataObj.detailObj = row;
+  // 通过ref调用组件的open方法
+  parkDetailDrawerRef.value.open();
+};
+const handleClick = () => {
+  gridApi.query();
+};
+const handleSerachShow = () => {
+  drawerApi.open();
+};
+const handleFullShow = () => {
+  screenfull.toggle();
+};
+
+const arrowChange = () => {
+  emit('arrow-change');
+};
+
+// 定义组件ref，用于调用组件方法
+const parkDetailDrawerRef = ref(null);
 </script>
 
 <template>
-  <DetailDrawer :title="drawerTitle">
-    <div class="detail-card">
-      <!-- 道路监测统计分析信息 -->
-      <div class="detail-card-row">
-        <div class="detail-row-left">路段名称:</div>
-        <div class="detail-row-right">
-          {{ detailObj.roadSectionName || '-' }}
+  <DetailDrawer :title="drawerTitle" class="genchuan-detail-drawer">
+    <detailCardDrawer
+      ref="parkDetailDrawerRef"
+      :detail-obj="dataObj.detailObj"
+    />
+    <FormDrawer :title="getTitle">
+      <Form />
+    </FormDrawer>
+    <Grid>
+      <template #toolbar-tools>
+        <div class="common-toolbar-tools">
+          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="批量删除"
+            icon-name="delete"
+            color="#F56C6C"
+            :disabled="isEmpty(checkedIds)"
+            @click="handleDeleteBatch"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="handleFullShow"
+          />
         </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">坑洼数量均值:</div>
-        <div class="detail-row-right">
-          {{ detailObj.potholeCountAvg || '-' }} 个
+      </template>
+      <template #roadSectionName="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.roadSectionName }}
+        </el-text>
+      </template>
+      <template #actions="{ row }">
+        <div class="table-toolbar-tools">
+          <IconButton
+            content="编辑"
+            icon-name="edit"
+            @click="handleEdit(row)"
+          />
+          <IconButton
+            content="删除"
+            icon-name="delete"
+            color="#F56C6C"
+            @click="handleDelete(row)"
+          />
         </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">裂缝长度均值:</div>
-        <div class="detail-row-right">
-          {{ detailObj.crackLengthAvg || '-' }} 米
+      </template>
+      <template #bottom>
+        <div class="common-total" @click="changeTotalShow">
+          <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
+            <ArrowDown />
+          </el-icon>
+          <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
+            <ArrowUp />
+          </el-icon>
+          <span> 全部统计：10条 </span>
         </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">路面温度范围:</div>
-        <div class="detail-row-right">
-          {{ detailObj.roadSurfaceTempRange || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">交通流量峰值:</div>
-        <div class="detail-row-right">
-          {{ detailObj.trafficFlowPeak || '-' }} 辆/小时
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">交通流量谷值:</div>
-        <div class="detail-row-right">
-          {{ detailObj.trafficFlowValley || '-' }} 辆/小时
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">预警触发次数:</div>
-        <div class="detail-row-right">
-          {{ detailObj.warningTriggerCount || '-' }} 次
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">工单创建数:</div>
-        <div class="detail-row-right">
-          {{ detailObj.workOrderCreateCount || '-' }} 个
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">处置完成数:</div>
-        <div class="detail-row-right">
-          {{ detailObj.disposalCompleteCount || '-' }} 个
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">核查通过率:</div>
-        <div class="detail-row-right">
-          <span
-            :class="{
-              'text-green-600': detailObj.verificationPassRate >= 90,
-              'text-yellow-600':
-                detailObj.verificationPassRate >= 70 &&
-                detailObj.verificationPassRate < 90,
-              'text-red-600':
-                detailObj.verificationPassRate > 0 &&
-                detailObj.verificationPassRate < 70,
-            }"
-          >
-            {{ detailObj.verificationPassRate || '-' }} %
-          </span>
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">设备在线率:</div>
-        <div class="detail-row-right">
-          <span
-            :class="{
-              'text-green-600': detailObj.deviceOnlineRate >= 95,
-              'text-yellow-600':
-                detailObj.deviceOnlineRate >= 85 &&
-                detailObj.deviceOnlineRate < 95,
-              'text-red-600':
-                detailObj.deviceOnlineRate > 0 &&
-                detailObj.deviceOnlineRate < 85,
-            }"
-          >
-            {{ detailObj.deviceOnlineRate || '-' }} %
-          </span>
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">坑洼数量环比变化率:</div>
-        <div class="detail-row-right">
-          <span
-            :class="{
-              'text-red-600': detailObj.potholeCountMomChangeRate > 0,
-              'text-green-600': detailObj.potholeCountMomChangeRate < 0,
-            }"
-          >
-            {{ detailObj.potholeCountMomChangeRate || '-' }} %
-          </span>
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">裂缝长度环比变化率:</div>
-        <div class="detail-row-right">
-          <span
-            :class="{
-              'text-red-600': detailObj.crackLengthMomChangeRate > 0,
-              'text-green-600': detailObj.crackLengthMomChangeRate < 0,
-            }"
-          >
-            {{ detailObj.crackLengthMomChangeRate || '-' }} %
-          </span>
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">平均处置时长:</div>
-        <div class="detail-row-right">
-          {{ detailObj.avgDisposalDuration || '-' }} 小时
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">正常监测路段数:</div>
-        <div class="detail-row-right">
-          {{ detailObj.normalMonitorRoadCount || '-' }} 个
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">超标指标分布:</div>
-        <div class="detail-row-right">
-          <div class="break-words">
-            {{ detailObj.indexOverStandardDistribution || '-' }}
-          </div>
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">数据统计时段:</div>
-        <div class="detail-row-right">
-          {{ detailObj.dataStatisticsPeriod || '-' }}
-        </div>
-      </div>
-    </div>
+      </template>
+    </Grid>
   </DetailDrawer>
 </template>
 
 <style scoped lang="scss">
 // 响应式适配
-@media (max-width: 768px) {
+@media (max-width: 1768px) {
   .detail-row-left {
     width: 150px; // 小屏适配统计长标签宽度
   }
