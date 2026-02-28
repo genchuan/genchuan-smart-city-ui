@@ -2,36 +2,33 @@
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import {
+  addRoad,
+  deleteRoad,
+  exportRoadExcel,
+  getRoadList,
+  updateRoad,
+} from '#/api/genchuan/industry/urban/index.js';
 import { $t } from '#/locales';
-import { exportToExcel } from '#/utils/excel.js';
+import { formatTimestamp } from '#/utils';
 
-import { dataList, useFormSchema, useGridColumns } from './data';
+import { useFormSchema, useGridColumns } from './data';
 // 引入封装后的详情抽屉组件
-import ParkDetailDrawer from './detail.vue';
+import tableDetail from './detail.vue';
 
 const props = defineProps({
   secondShow: {
     type: Boolean,
     default: false,
   },
-  arrowShow: {
-    type: Boolean,
-    default: false,
-  },
-  arrowState: {
-    type: Boolean,
-    default: false,
-  },
 });
-const emit = defineEmits(['arrow-change']);
-
 const getTitle = computed(() => {
   return formData.value?.id ? '编辑' : '新增';
 });
@@ -66,17 +63,11 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onCancel() {
     formDrawerApi.close();
   },
-  onConfirm() {
+  async onConfirm() {
     const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === '新增') {
-      dataObj.apilist.push(obj);
-    } else {
-      dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
-        }
-      });
-    }
+    await (formDrawerApi.sharedData.payload.title === '增加'
+      ? addRoad(obj)
+      : updateRoad({ ...dataObj.editObj, ...obj }));
     handleRefresh();
     formDrawerApi.close();
   },
@@ -98,20 +89,22 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  exportToExcel(dataObj.apilist, '导出', 'excel');
+  const data = await exportRoadExcel();
+  downloadFileFromBlobPart({ fileName: '列表单.xls', source: data });
 }
 
 /** 创建角色 */
 function handleCreate() {
   formDrawerApi
     .setData({
-      title: '新增',
+      title: '增加',
     })
     .open();
 }
 
 /** 编辑角色 */
 function handleEdit(row) {
+  dataObj.editObj = row;
   formDrawerApi
     .setData({
       title: '编辑',
@@ -121,11 +114,11 @@ function handleEdit(row) {
 }
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.name]),
+    text: $t('ui.actionMessage.deleting'),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
+    await deleteRoad(row.id);
+    ElMessage.success($t('ui.actionMessage.deleteSuccess'));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -133,20 +126,14 @@ async function handleDelete(row) {
 }
 
 async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
+  await confirm($t('确定删除这些数据吗？')).then(() => {
+    checkedIds.value.forEach(async (v) => {
+      await handleDelete({
+        id: v,
+      });
+    });
   });
-  try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
+  handleRefresh();
 }
 
 const checkedIds = ref([]);
@@ -156,42 +143,56 @@ function handleRowCheckboxChange({ records }) {
 const dataObj = reactive({
   totalShow: false,
   detailObj: {}, // 保留详情对象用于传递给组件
-  total: dataList().length,
+  total: 0,
   currentPage: 1,
   pageSize: 10,
-  apilist: dataList(),
+  apilist: [],
+  imgUrl: '',
+  serachObj: {},
   list: [],
+  editObj: {},
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
+const outTypeObj = {
+  0: '收费放行',
+  1: '免费放行',
+  2: '异常放行',
+  3: '系统放行',
+};
+const payObj = {
+  1: '微信',
+  2: '支付宝',
+  3: '银联',
+  4: '余额',
+  5: '现金',
+  25: 'ETC支付',
+};
 // 表格数据获取
-const getTableData = (pageObj) => {
-  const page = pageObj.page;
-  dataObj.total = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    }).length;
-  dataObj.list = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    })
-    .slice(
-      (page.currentPage - 1) * page.pageSize,
-      page.currentPage * page.pageSize,
-    );
+const getTableData = async (pageObj) => {
+  const getParams = {
+    pageNo: pageObj.page.currentPage,
+    pageSize: pageObj.page.pageSize,
+    ...dataObj.serachObj,
+  };
+  const data = await getRoadList(getParams);
+  dataObj.total = data.total;
+  dataObj.list = data.list.map((v) => {
+    return {
+      ...v,
+      plateType: v.plateType === '1' ? '月租车' : '临时车',
+      driveInTime: formatTimestamp(v.driveInTime),
+      createTime: formatTimestamp(v.createTime),
+      driveOutTime: formatTimestamp(v.driveOutTime),
+      outType: outTypeObj[v.outType] || v.outType,
+      payMethod: payObj[v.payMethod] || v.payMethod,
+    };
+  });
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [QueryForm, QueryFormApi] = useVbenForm({
   // 默认展开
   collapsed: false,
   // 所有表单项共用，可单独在表单内覆盖
@@ -208,12 +209,14 @@ const [QueryForm] = useVbenForm({
   // 垂直布局，label和input在不同行，值为vertical
   // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
-  }),
+  schema: useFormSchema()
+    .filter((v) => !v.searchFilter)
+    .map((v) => {
+      delete v.rules;
+      return {
+        ...v,
+      };
+    }),
   // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
@@ -221,7 +224,9 @@ const [QueryForm] = useVbenForm({
   },
 });
 // 搜索表单查询
-function onSubmit() {
+async function onSubmit() {
+  dataObj.serachObj = await QueryFormApi.getValues();
+  gridApi.reload();
   drawerApi.close();
 }
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -252,30 +257,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-const activeName = ref('全部');
+const activeName = ref('');
 // 修改打开详情的方法，调用组件的open方法
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
   // 通过ref调用组件的open方法
   parkDetailDrawerRef.value.open();
   console.log(row);
-};
-const tabsData = ref([
-  { label: '全部' },
-  { label: '启用' },
-  { label: '禁用' },
-  { label: '暂停运营' },
-  { label: '维修中' },
-]);
-const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
-  if (item.label === '全部') {
-    text = `(${dataObj.apilist.length})`;
-  }
-  return item.label + text;
-};
-const handleClick = () => {
-  gridApi.query();
 };
 const handleSerachShow = () => {
   drawerApi.open();
@@ -286,21 +274,24 @@ const handleFullShow = () => {
 
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
-
-const arrowChange = () => {
-  emit('arrow-change');
-};
+const dialogVisible = ref(false);
 </script>
 
 <template>
   <div class="park-lot-table-new">
+    <el-dialog v-model="dialogVisible">
+      <div class="park-img-center">
+        <img style="width: 100%; height: 100%" :src="dataObj.imgUrl" />
+      </div>
+    </el-dialog>
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
     <!-- 使用封装后的详情抽屉组件 -->
-    <ParkDetailDrawer
+    <tableDetail
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
+      title="详情"
     />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -327,24 +318,19 @@ const arrowChange = () => {
             @click="handleSerachShow"
           />
           <IconButton
-            :content="props.arrowShow ? '展开' : '收缩'"
-            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
-            @click="arrowChange"
-          />
-          <IconButton
             content="全屏"
             icon-name="FullScreen"
             @click="handleFullShow"
           />
         </div>
       </template>
-      <template #roadSectionName="{ row }">
+      <template #roadName="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.roadSectionName }}
+          {{ row.roadName }}
         </el-text>
       </template>
       <template #actions="{ row }">
@@ -368,15 +354,7 @@ const arrowChange = () => {
         </div>
       </template>
       <template #bottom>
-        <div class="common-total" @click="changeTotalShow">
-          <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
-            <ArrowDown />
-          </el-icon>
-          <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
-            <ArrowUp />
-          </el-icon>
-          <span> 全部统计：10条 </span>
-        </div>
+        <div class="common-total" @click="changeTotalShow"></div>
       </template>
     </Grid>
   </div>
