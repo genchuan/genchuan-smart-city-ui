@@ -1,11 +1,6 @@
 /** 评价对象管理 - 静态枚举配置（字段名与后端完全一致） */
-// 状态（id 为数字，与后端一致）
-export const statusList = [
-  { id: 1, name: '启用' },
-  { id: 2, name: '停用' }
-];
 
-/** 表单配置（新增/编辑）- 字段名与后端一致 */
+/** 新增/编辑表单配置 - 使用 ID 字段 + 选择器 */
 export function useFormSchema() {
   return [
     {
@@ -26,28 +21,31 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择所属区域',
-        options: [
-          { label: '上海市', value: '0' },
-          { label: '广州市', value: '1' },
-        ]
+        options: [], // 动态加载
+        valueField: 'value',
+        labelField: 'label',
       },
     },
     {
       fieldName: 'objectTypeId',
       label: '对象类型',
-      component: 'Select',                // 原为小写 input
+      component: 'Select',
       componentProps: {
         placeholder: '请选择对象类型',
-        options: []                        // 需从接口动态获取（示例留空）
+        options: [],
+        valueField: 'value',
+        labelField: 'label',
       },
     },
     {
       fieldName: 'managerId',
       label: '负责人',
-      component: 'Select',                // 原为 input
+      component: 'Select',
       componentProps: {
         placeholder: '请选择负责人',
-        options: []                        // 需从接口动态获取
+        options: [],
+        valueField: 'value',
+        labelField: 'label',
       },
     },
     {
@@ -59,12 +57,50 @@ export function useFormSchema() {
     {
       fieldName: 'relatedId',
       label: '关联网格/部门',
-      component: 'Select',                // 原为 input
+      component: 'Select',
       componentProps: {
         placeholder: '请选择关联网格/部门',
-        options: []                        // 需从接口动态获取
+        options: [],
+        valueField: 'value',
+        labelField: 'label',
       },
-    }
+    },
+  ];
+}
+
+/** 查询表单配置 - 使用文本输入支持模糊搜索 */
+export function useQuerySchema() {
+  return [
+    {
+      fieldName: 'name',
+      label: '对象名称',
+      component: 'Input',
+      componentProps: { placeholder: '请输入对象名称' },
+    },
+    {
+      fieldName: 'code',
+      label: '对象编码',
+      component: 'Input',
+      componentProps: { placeholder: '请输入对象编码' },
+    },
+    {
+      fieldName: 'areaName',
+      label: '所属区域',
+      component: 'Input',
+      componentProps: { placeholder: '请输入所属区域' },
+    },
+    {
+      fieldName: 'objectTypeName',
+      label: '对象类型',
+      component: 'Input',
+      componentProps: { placeholder: '请输入对象类型' },
+    },
+    {
+      fieldName: 'statusName',
+      label: '状态',
+      component: 'Input',
+      componentProps: { placeholder: '请输入状态' },
+    },
   ];
 }
 
@@ -146,11 +182,10 @@ export function useGridColumns() {
       sortable: true
     },
     {
-      field: 'changeLog',
+      field: 'changeLogShort',
       title: '变更日志',
       minWidth: 200,
       sortable: false,
-      formatter: (row) => row.changeLogShort || row.changeLog?.substring(0, 50) + (row.changeLog?.length > 50 ? '...' : '') || '-'
     },
     {
       title: '操作',
@@ -165,11 +200,11 @@ export function useGridColumns() {
 export const importFields = [
   { label: '对象名称', key: 'name', required: true },
   { label: '对象编码', key: 'code', required: true },
-  { label: '所属区域编码', key: 'areaCode', required: true },
-  { label: '对象类型ID', key: 'objectTypeId', required: true },
-  { label: '负责人ID', key: 'managerId', required: true },
+  { label: '所属区域', key: 'areaName', required: true },
+  { label: '对象类型', key: 'objectTypeName', required: true },
+  { label: '负责人ID', key: 'managerName', required: true },
   { label: '联系电话', key: 'managerPhone', required: true },
-  { label: '关联网格/部门ID', key: 'relatedId', required: true },
+  { label: '关联网格/部门', key: 'relatedName', required: true },
   { label: '状态ID', key: 'statusId', required: true, defaultValue: 1 },
 ];
 

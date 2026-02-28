@@ -1,17 +1,67 @@
 <script setup>
-import { reactive } from 'vue';
+import { reactive, onMounted } from 'vue';
+import { getOverview } from '#/api/genchuan/dataHub/evaluation/system/objects.js';
 
 import Card from '#/components/stats/card.vue';
 import Circle from '#/components/stats/circle.vue';
 import Columnar from '#/components/stats/columnar.vue';
 
 const state = reactive({
-  cardList: [
-    { title: '总对象数', value: 15, color: '#13ce66' },
-    { title: '网格对象数', value: 8, color: '#4ECDC4' },
-    { title: '部门对象数', value: 5, color: '#FF6B6B' },
-    { title: '社区对象数', value: 2, color: '#FFC107' },
-  ],
+  cardList: [],
+  typePieData: [],
+  statusPieData: [],
+  areaBarXData: [],
+  areaBarSeriesData: [],
+});
+
+const fetchOverview = async () => {
+  try {
+    const data = await getOverview(); // 直接获取数据
+    console.log('overview response:', data);
+
+    // 卡片数据
+    const cardData = data.cardData || {};
+    state.cardList = [
+      { title: '总对象数', value: cardData.totalCount || 0, color: '#13ce66' },
+      { title: '正常状态', value: cardData.normalStatusCount || 0, color: '#4ECDC4' },
+      { title: '停用状态', value: cardData.pendingCheckCount || 0, color: '#FF6B6B' },
+      { title: '对象类型数', value: cardData.typeCounts?.length || 0, color: '#FFC107' },
+    ];
+
+    // 对象类型饼图
+    state.typePieData = (data.typePieChart || []).map(item => ({
+      name: item.name || '未知',
+      value: item.value || 0,
+    }));
+
+    // 状态饼图
+    state.statusPieData = (data.statusPieChart || []).map(item => ({
+      name: item.name || '未知',
+      value: item.value || 0,
+    }));
+
+    // 区域柱状图
+    const areaBar = data.areaBarChart || [];
+    state.areaBarXData = areaBar.map(item => item.areaName || '未知');
+    state.areaBarSeriesData = [
+      {
+        name: '对象数量',
+        data: areaBar.map(item => item.count || 0),
+      },
+    ];
+  } catch (error) {
+    console.error('获取概览数据失败', error);
+    // 清空数据避免报错
+    state.cardList = [];
+    state.typePieData = [];
+    state.statusPieData = [];
+    state.areaBarXData = [];
+    state.areaBarSeriesData = [];
+  }
+};
+
+onMounted(() => {
+  fetchOverview();
 });
 </script>
 
@@ -29,28 +79,20 @@ const state = reactive({
       width="340px"
       height="330px"
       title-text="对象类型占比"
-      :data="[
-        { name: '网格', value: 8 },
-        { name: '部门', value: 5 },
-        { name: '社区', value: 2 },
-      ]"
+      :data="state.typePieData"
     />
     <Circle
       width="340px"
       height="330px"
       title-text="状态占比"
-      :data="[
-        { name: '启用', value: 9 },
-        { name: '停用', value: 4 },
-        { name: '其他', value: 2 },
-      ]"
+      :data="state.statusPieData"
       :colors="['#67C23A', '#E6A23C', '#F56C6C']"
     />
     <Columnar
       height="330px"
       title="不同区域对象数量对比"
-      :x-data="['芗城区', '龙文区', '龙海区', '长泰区', '漳浦县']"
-      :series-data="[{ name: '对象数量', data: [5, 4, 3, 2, 1] }]"
+      :x-data="state.areaBarXData"
+      :series-data="state.areaBarSeriesData"
     />
   </div>
 </template>
@@ -59,9 +101,9 @@ const state = reactive({
 .park-district-chart {
   .chart-box-left {
     display: grid !important;
-    grid-template-columns: repeat(2, 1fr); /* 每行2列，每列宽度均分 */
-    gap: 16px; /* 卡片之间的间距（水平+垂直），可自定义 */
-    max-width: 100%; /* 防止溢出 */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    max-width: 100%;
     height: 100%;
     .left-card {
       height: 159px !important;
