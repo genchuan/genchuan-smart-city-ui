@@ -28,7 +28,17 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  arrowShow: {
+    type: Boolean,
+    default: false,
+  },
+  arrowState: {
+    type: Boolean,
+    default: false,
+  },
 });
+const emit = defineEmits(['arrow-change']);
+
 const getTitle = computed(() => {
   return formData.value?.id ? '编辑' : '新增';
 });
@@ -271,7 +281,9 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
-
+const arrowChange = () => {
+  emit('arrow-change');
+};
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
 const dialogVisible = ref(false);
@@ -316,6 +328,11 @@ const dialogVisible = ref(false);
             content="搜索"
             icon-name="search"
             @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
           />
           <IconButton
             content="全屏"

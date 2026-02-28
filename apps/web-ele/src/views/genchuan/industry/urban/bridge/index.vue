@@ -2,7 +2,6 @@
 import { ref } from 'vue';
 
 import monitor from './monitor/index.vue';
-import gateChart from './monitor/table/gateChart.vue';
 import report from './report/index.vue';
 
 import '#/components/page/index.scss';
@@ -54,7 +53,6 @@ const tabChange = (item) => {
 </script>
 <template>
   <div class="common-index">
-    <gateChart />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
