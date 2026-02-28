@@ -103,8 +103,12 @@ async function handleExport() {
   downloadFileFromBlobPart({ fileName: '列表单.xls', source: data });
 }
 
-/** 创建角色 */
 function handleCreate() {
+  formApi.setState((prev) => {
+    return {
+      schema: useFormSchema().filter((v) => v.addShow),
+    };
+  });
   formDrawerApi
     .setData({
       title: '增加',
@@ -112,9 +116,18 @@ function handleCreate() {
     .open();
 }
 
-/** 编辑角色 */
 function handleEdit(row) {
   dataObj.editObj = row;
+  formApi.setState((prev) => {
+    return {
+      schema: useFormSchema().map((v) => {
+        return {
+          ...v,
+          disabled: !v.editShow,
+        };
+      }),
+    };
+  });
   formDrawerApi
     .setData({
       title: '编辑',
@@ -267,13 +280,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-const activeName = ref('');
 // 修改打开详情的方法，调用组件的open方法
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
   // 通过ref调用组件的open方法
   parkDetailDrawerRef.value.open();
-  console.log(row);
 };
 const handleSerachShow = () => {
   drawerApi.open();

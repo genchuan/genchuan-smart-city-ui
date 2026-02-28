@@ -23,6 +23,8 @@ export function useFormSchema() {
         precision: 0,
       },
       rules: 'required',
+      addShow: true,
+      editShow: true,
     },
     {
       fieldName: 'deviceId',
@@ -35,6 +37,8 @@ export function useFormSchema() {
         precision: 0,
       },
       rules: 'required',
+      addShow: true,
+      editShow: true,
     },
     {
       fieldName: 'configId',
@@ -47,6 +51,8 @@ export function useFormSchema() {
         precision: 0,
       },
       rules: 'required',
+      addShow: true,
+      editShow: true,
     },
     {
       fieldName: 'roadName',
@@ -109,6 +115,8 @@ export function useFormSchema() {
         precision: 0,
       },
       rules: 'required',
+      addShow: true,
+      editShow: true,
     },
     {
       fieldName: 'crackLength',
@@ -122,6 +130,8 @@ export function useFormSchema() {
         addonAfter: '米',
       },
       rules: 'required',
+      addShow: true,
+      editShow: true,
     },
     {
       fieldName: 'roadTemp',
@@ -136,6 +146,8 @@ export function useFormSchema() {
         addonAfter: '℃',
       },
       rules: 'required',
+      addShow: true,
+      editShow: true,
     },
     {
       fieldName: 'trafficFlow',
@@ -149,6 +161,8 @@ export function useFormSchema() {
         addonAfter: '辆/小时',
       },
       rules: 'required',
+      addShow: true,
+      editShow: true,
     },
     {
       fieldName: 'potholeNumThreshold',
@@ -260,6 +274,7 @@ export function useFormSchema() {
       fieldName: 'monitorStatus',
       label: '监测状态',
       rules: 'required',
+      editShow: true,
     },
     {
       fieldName: 'staffId',
@@ -272,6 +287,8 @@ export function useFormSchema() {
         precision: 0,
       },
       rules: 'required',
+      addShow: true,
+      editShow: true,
     },
     {
       fieldName: 'staffName',
@@ -282,6 +299,8 @@ export function useFormSchema() {
         placeholder: '请输入运维员姓名',
       },
       rules: 'required',
+      addShow: true,
+      editShow: true,
     },
     {
       fieldName: 'syncDuration',
