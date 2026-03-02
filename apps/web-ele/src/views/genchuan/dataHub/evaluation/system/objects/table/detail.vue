@@ -41,7 +41,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       <div class="detail-card-row"><div class="detail-row-left">创建时间：</div><div class="detail-row-right">{{ detailObj.createTime || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">更新人：</div><div class="detail-row-right">{{ detailObj.updateUserName || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">更新时间：</div><div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">变更日志：</div><div class="detail-row-right">{{ detailObj.changeLog || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">变更日志：</div><div class="detail-row-right">{{ detailObj.changeLogShort || '-' }}</div></div>
     </div>
   </DetailDrawer>
 </template>
@@ -78,7 +78,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
 }
 
 .detail-row-left {
-  width: 140px;
+  width: 140px !important;
   flex-shrink: 0;
   font-weight: 500;
   color: #606266;
