@@ -147,7 +147,6 @@ export function deleteGarbageAbnormalBatch(ids) {
 
 /**
  * 获取垃圾收运概览卡片数据（全部状态）
- * @returns {Promise<Object>} 返回 totalCount, executingCount, completedCount, abnormalCount 等
  */
 export function getGarbageCollectionStats() {
   return requestClient.get('/envirhealth/garbage-collection/chart/card-all');
@@ -155,7 +154,6 @@ export function getGarbageCollectionStats() {
 
 /**
  * 获取垃圾类型占比饼图数据（全部状态）
- * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
  */
 export function getGarbageTypeCircle() {
   return requestClient.get('/envirhealth/garbage-collection/chart/garbage-type-circle-all');
@@ -163,7 +161,6 @@ export function getGarbageTypeCircle() {
 
 /**
  * 获取计划状态占比饼图数据（全部状态）
- * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
  */
 export function getPlanStatusCircle() {
   return requestClient.get('/envirhealth/garbage-collection/chart/plan-status-circle-all');
@@ -171,7 +168,6 @@ export function getPlanStatusCircle() {
 
 /**
  * 获取区域分布占比饼图数据（全部状态）
- * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
  */
 export function getAreaDistributionCircle() {
   return requestClient.get('/envirhealth/garbage-collection/chart/area-distribution-circle-all');
@@ -179,7 +175,6 @@ export function getAreaDistributionCircle() {
 
 /**
  * 获取区域完成率柱状图数据（全部状态）
- * @returns {Promise<Array>} 返回 [{ areaName, completionRate }]
  */
 export function getAreaCompletionRateColumn() {
   return requestClient.get('/envirhealth/garbage-collection/chart/area-completion-rate-column-all');
@@ -189,7 +184,6 @@ export function getAreaCompletionRateColumn() {
 
 /**
  * 获取异常待处置卡片数据
- * @returns {Promise<Object>} 返回 toHandleTotal, highPriorityTotal, timeoutTotal
  */
 export function getGarbageAbnormalCard() {
   return requestClient.get('/envirhealth/garbage-abnormal/chart/card-abnormal');
@@ -197,7 +191,6 @@ export function getGarbageAbnormalCard() {
 
 /**
  * 获取异常类型占比饼图数据（用于异常待处置）
- * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
  */
 export function getGarbageAbnormalTypeCircle() {
   return requestClient.get('/envirhealth/garbage-abnormal/chart/circle-abnormal-type');
@@ -205,7 +198,6 @@ export function getGarbageAbnormalTypeCircle() {
 
 /**
  * 获取异常类型占比饼图数据（用于处置待复核）
- * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
  */
 export function getGarbageAbnormalTypeCircleForReview() {
   return requestClient.get('/envirhealth/garbage-abnormal/chart/circle-abnormal-type-for-review');
@@ -213,7 +205,6 @@ export function getGarbageAbnormalTypeCircleForReview() {
 
 /**
  * 获取异常区域分布占比饼图数据
- * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
  */
 export function getGarbageAbnormalAreaCircle() {
   return requestClient.get('/envirhealth/garbage-abnormal/chart/circle-area-distribution');
@@ -221,7 +212,6 @@ export function getGarbageAbnormalAreaCircle() {
 
 /**
  * 获取异常责任人柱状图数据
- * @returns {Promise<Array>} 返回 [{ name, value }] 责任人及其异常数量
  */
 export function getGarbageAbnormalColumn() {
   return requestClient.get('/envirhealth/garbage-abnormal/chart/column-abnormal');
@@ -229,7 +219,6 @@ export function getGarbageAbnormalColumn() {
 
 /**
  * 获取处置待复核卡片数据
- * @returns {Promise<Object>} 返回 reviewTotal, passedCount, returnCount
  */
 export function getGarbageAbnormalReviewCard() {
   return requestClient.get('/envirhealth/garbage-abnormal/chart/card-review');
@@ -237,7 +226,6 @@ export function getGarbageAbnormalReviewCard() {
 
 /**
  * 获取复核结果占比饼图数据
- * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
  */
 export function getGarbageAbnormalReviewResultCircle() {
   return requestClient.get('/envirhealth/garbage-abnormal/chart/circle-review-result');
@@ -245,17 +233,14 @@ export function getGarbageAbnormalReviewResultCircle() {
 
 /**
  * 获取异常处置平均时长柱状图数据
- * @returns {Promise<Array>} 返回 [{ name, avgHandleHours }]
  */
 export function getGarbageAbnormalAvgHandleColumn() {
   return requestClient.get('/envirhealth/garbage-abnormal/chart/column-avg-handle-time');
 }
 
-// 计划待执行
 
 /**
  * 获取计划待执行卡片数据
- * @returns {Promise<Object>} 返回 totalPendingCount, areaPendingCountMap, garbageTypePendingCountMap
  */
 export function getGarbageCollectionCardPending() {
   return requestClient.get('/envirhealth/garbage-collection/chart/card-pending');
@@ -263,7 +248,6 @@ export function getGarbageCollectionCardPending() {
 
 /**
  * 获取计划待执行区域分布饼图数据
- * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
  */
 export function getGarbageCollectionPendingByArea() {
   return requestClient.get('/envirhealth/garbage-collection/chart/pending-by-area');
@@ -271,7 +255,6 @@ export function getGarbageCollectionPendingByArea() {
 
 /**
  * 获取计划待执行品类分布饼图数据
- * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
  */
 export function getGarbageCollectionPendingByGarbageType() {
   return requestClient.get('/envirhealth/garbage-collection/chart/pending-by-garbage-type');
@@ -279,17 +262,14 @@ export function getGarbageCollectionPendingByGarbageType() {
 
 /**
  * 获取计划待执行时段分布柱状图数据
- * @returns {Promise<Array>} 返回 [{ timePeriod, count }]
  */
 export function getGarbageCollectionTimePeriodPendingColumn() {
   return requestClient.get('/envirhealth/garbage-collection/chart/time-period-pending-column');
 }
 
-// 作业进行中
 
 /**
  * 获取作业进行中卡片数据
- * @returns {Promise<Object>} 返回 currentTaskCount, normalRunningCount, abnormalCount
  */
 export function getGarbageCollectionCardExecuting() {
   return requestClient.get('/envirhealth/garbage-collection/chart/card-executing');
@@ -297,17 +277,14 @@ export function getGarbageCollectionCardExecuting() {
 
 /**
  * 获取作业进行中日收运量趋势数据
- * @returns {Promise<Array>} 返回 [{ timePoint, collectedVolume, cumulativeVolume }]
  */
 export function getGarbageCollectionTrendDailyVolume() {
   return requestClient.get('/envirhealth/garbage-collection/chart/trend-daily-volume');
 }
 
-// 已完成
 
 /**
  * 获取已完成卡片数据
- * @returns {Promise<Object>} 返回 completedTaskCount, totalCollectedVolume, averageCompletionRate, abnormalCompleteRate
  */
 export function getGarbageCollectionCardCompleted() {
   return requestClient.get('/envirhealth/garbage-collection/chart/card-completed');
@@ -315,8 +292,6 @@ export function getGarbageCollectionCardCompleted() {
 
 /**
  * 获取已完成收运完成率趋势数据
- * @param {Object} params - 包含 startTime, endTime (格式 YYYY-MM-DD HH:MM:SS)
- * @returns {Promise<Array>} 返回 [{ date, completionRate }]
  */
 export function getGarbageCollectionCompletionRateTrend(params) {
   return requestClient.get('/envirhealth/garbage-collection/chart/completion-rate-trend', { params });
@@ -324,8 +299,6 @@ export function getGarbageCollectionCompletionRateTrend(params) {
 
 /**
  * 获取已完成收运量对比数据
- * @param {Object} params - 包含 dimension, startTime, endTime (dimension: day/week/month)
- * @returns {Promise<Array>} 返回 [{ timeDimension, collectedVolume }]
  */
 export function getGarbageCollectionVolumeComparison(params) {
   return requestClient.get('/envirhealth/garbage-collection/chart/collection-volume-comparison', { params });
@@ -333,7 +306,6 @@ export function getGarbageCollectionVolumeComparison(params) {
 
 /**
  * 获取已完成品类收运量占比饼图数据
- * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
  */
 export function getGarbageCollectionCompletedVolumeByGarbageType() {
   return requestClient.get('/envirhealth/garbage-collection/chart/completed-volume-by-garbage-type');
@@ -341,7 +313,6 @@ export function getGarbageCollectionCompletedVolumeByGarbageType() {
 
 /**
  * 获取已完成区域收运量占比饼图数据
- * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
  */
 export function getGarbageCollectionCompletedVolumeByArea() {
   return requestClient.get('/envirhealth/garbage-collection/chart/completed-volume-by-area');
