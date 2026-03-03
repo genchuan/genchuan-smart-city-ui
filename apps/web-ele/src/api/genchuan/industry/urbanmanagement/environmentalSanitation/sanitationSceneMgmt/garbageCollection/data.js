@@ -8,55 +8,12 @@ export function getGarbageCollectionStatistics() {
 }
 
 /**
- * 导出垃圾收运计划列表 Excel
- * @param {Object} params - 查询参数（与分页列表参数一致）
- * @returns {Promise<Blob>} 返回二进制文件流
- */
-export async function exportGarbageCollectionExcel(params) {
-  const accessStore = useAccessStore();
-  return await baseRequestClient.get('/envirhealth/garbage-collection/export-excel', {
-    params,
-    responseType: 'blob',
-    validateStatus: () => true,
-    headers: {
-      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
-    },
-  });
-}
-
-/**
- * 导出垃圾异常记录 Excel
- * @param {Object} params - 查询参数（与分页列表参数一致）
- * @returns {Promise<Blob>} 返回二进制文件流
- */
-export async function exportGarbageAbnormalExcel(params) {
-  const accessStore = useAccessStore();
-  return await baseRequestClient.get('/envirhealth/plan-status/export-excel', {
-    params,
-    responseType: 'blob',
-    validateStatus: () => true,
-    headers: {
-      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
-    },
-  });
-}
-
-/**
  * 分页查询垃圾收运计划列表
  * @param {Object} params - 分页及筛选参数
  * @returns {Promise<Object>} 返回分页数据
  */
 export function getGarbageCollectionPage(params) {
   return requestClient.get('/envirhealth/garbage-collection/detail-page', { params });
-}
-
-/**
- * 分页查询垃圾异常记录列表
- * @param {Object} params - 分页及筛选参数
- * @returns {Promise<Object>} 返回分页数据
- */
-export function getGarbageAbnormalPage(params) {
-  return requestClient.get('/envirhealth/garbage-abnormal/detail-page', { params });
 }
 
 /**
@@ -104,7 +61,33 @@ export function deleteGarbageCollectionBatch(ids) {
   return requestClient.delete('/envirhealth/garbage-collection/delete-batch', { data: ids });
 }
 
+/**
+ * 导出垃圾收运计划列表 Excel
+ * @param {Object} params - 查询参数（与分页列表参数一致）
+ * @returns {Promise<Blob>} 返回二进制文件流
+ */
+export async function exportGarbageCollectionExcel(params) {
+  const accessStore = useAccessStore();
+  return await baseRequestClient.get('/envirhealth/garbage-collection/export-excel', {
+    params,
+    responseType: 'blob',
+    validateStatus: () => true,
+    headers: {
+      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
+    },
+  });
+}
+
 // 异常数据接口
+
+/**
+ * 分页查询垃圾异常记录列表
+ * @param {Object} params - 分页及筛选参数
+ * @returns {Promise<Object>} 返回分页数据
+ */
+export function getGarbageAbnormalPage(params) {
+  return requestClient.get('/envirhealth/garbage-abnormal/detail-page', { params });
+}
 
 /**
  * 创建垃圾异常记录
@@ -140,6 +123,23 @@ export function deleteGarbageAbnormal(id) {
  */
 export function deleteGarbageAbnormalBatch(ids) {
   return requestClient.delete('/envirhealth/garbage-abnormal/delete-batch', { data: ids });
+}
+
+/**
+ * 导出垃圾异常记录 Excel
+ * @param {Object} params - 查询参数（与分页列表参数一致）
+ * @returns {Promise<Blob>} 返回二进制文件流
+ */
+export async function exportGarbageAbnormalExcel(params) {
+  const accessStore = useAccessStore();
+  return await baseRequestClient.get('/envirhealth/plan-status/export-excel', {
+    params,
+    responseType: 'blob',
+    validateStatus: () => true,
+    headers: {
+      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
+    },
+  });
 }
 
 
