@@ -145,6 +145,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     const id = drawerData.id;
     const isEdit = !!id;
 
+    // 后续字段类型转换、提交等
     const numberFields = ['objectTypeId', 'managerId', 'relatedId'];
     numberFields.forEach(field => {
       if (values[field] !== undefined && values[field] !== null && values[field] !== '') {
@@ -666,9 +667,15 @@ async function handleDownloadTemplate() {
   try {
     const headers = importFields.map(field => field.label);
 
+    // 新增：备注行（每个单元格填充相同提示）
+    const remarkRow = importFields.map(() =>
+      '# 请在此行下方填写真实数据，示例仅供参考，上传时将自动忽略备注和示例行'
+    );
+
+    // 示例数据保持不变
     const exampleData = {
-      name: '上海市浦东新区人民医院',
-      code: 'OBJ_SH_PD',
+      name: '示例上海市浦东新区人民医院',
+      code: '示例OBJ_SH_PD',
       areaName: '上海市',
       objectTypeName: '事业单位',
       managerName: '李四',
@@ -677,22 +684,17 @@ async function handleDownloadTemplate() {
       statusId: 1,
       createUserName: '',
     };
-
     const exampleRow = importFields.map(field => {
-      if (field.key in exampleData) {
-        return exampleData[field.key];
-      }
-      if (field.defaultValue !== undefined) {
-        return field.defaultValue;
-      }
+      if (field.key in exampleData) return exampleData[field.key];
+      if (field.defaultValue !== undefined) return field.defaultValue;
       return '';
     });
 
-    const wsData = [headers, exampleRow];
+    // 构建三行：表头、备注、示例
+    const wsData = [headers, remarkRow, exampleRow];
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     XLSX.utils.book_append_sheet(wb, ws, '模板');
-
     const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([wbout], { type: 'application/octet-stream' });
     const url = window.URL.createObjectURL(blob);
@@ -701,7 +703,6 @@ async function handleDownloadTemplate() {
     link.download = '评价对象导入模板.xlsx';
     link.click();
     window.URL.revokeObjectURL(url);
-
     ElMessage.success('模板生成成功');
   } catch (error) {
     console.error('生成模板失败', error);
@@ -711,6 +712,7 @@ async function handleDownloadTemplate() {
   }
 }
 
+// 上传处理
 async function submitImport() {
   if (!importFile.value) {
     ElMessage.warning('请选择文件');
@@ -718,8 +720,36 @@ async function submitImport() {
   }
   importLoading.value = true;
   try {
-    const res = await importObjects(importFile.value);
-    ElMessage.success(`导入成功，${res.data || 0} 条`);
+    const file = importFile.value;
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data, { type: 'array' });
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+    let newRows;
+    if (rows.length >= 4) {
+      // 有表头 + 备注 + 示例 + 用户数据 → 删除第2、3行，保留表头和第4行及以后
+      newRows = [rows[0], ...rows.slice(3)];
+    } else if (rows.length === 3) {
+      // 只有表头、备注、示例，没有用户数据 → 只保留表头
+      newRows = [rows[0]];
+    } else {
+      // 长度 ≤2，可能是用户自己准备的文件（只有表头和数据），直接保留原样
+      newRows = rows;
+    }
+
+    // 重新生成 Excel 文件
+    const newWorksheet = XLSX.utils.aoa_to_sheet(newRows);
+    const newWorkbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, firstSheetName);
+    const newFileArrayBuffer = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
+    const newFile = new File([newFileArrayBuffer], file.name, {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const res = await importObjects(newFile);
+    ElMessage.success(`导入成功`);
     importDialogVisible.value = false;
     handleRefresh();
     fetchStatusCount();
@@ -797,7 +827,7 @@ onMounted(() => {
           <IconButton
             v-if="activeName !== '停用'"
             content="批量停用"
-            icon-name="delete"
+            icon-name="close"
             color="#F56C6C"
             :disabled="isEmpty(checkedIds)"
             @click="handleBatchStatusChange"

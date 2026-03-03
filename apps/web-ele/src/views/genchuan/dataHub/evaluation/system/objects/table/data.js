@@ -7,18 +7,21 @@ export function useFormSchema() {
       fieldName: 'name',
       label: '对象名称',
       component: 'Input',
+      rules: 'required',
       componentProps: { placeholder: '请输入对象名称' },
     },
     {
       fieldName: 'code',
       label: '对象编码',
       component: 'Input',
+      rules: 'required',
       componentProps: { placeholder: '请输入对象编码' },
     },
     {
       fieldName: 'areaCode',
       label: '所属区域',
       component: 'Select',
+      rules: 'required',
       componentProps: {
         placeholder: '请选择所属区域',
         options: [], // 动态加载
@@ -30,6 +33,7 @@ export function useFormSchema() {
       fieldName: 'objectTypeId',
       label: '对象类型',
       component: 'Select',
+      rules: 'required',
       componentProps: {
         placeholder: '请选择对象类型',
         options: [],
@@ -41,6 +45,7 @@ export function useFormSchema() {
       fieldName: 'managerId',
       label: '负责人',
       component: 'Select',
+      rules: 'required',
       componentProps: {
         placeholder: '请选择负责人',
         options: [],
@@ -52,12 +57,16 @@ export function useFormSchema() {
       fieldName: 'managerPhone',
       label: '联系电话',
       component: 'Input',
-      componentProps: { placeholder: '请输入联系电话' },
+      componentProps: {
+        placeholder: '由负责人自动填充',
+        disabled: true, // 禁用输入
+        },
     },
     {
       fieldName: 'relatedId',
       label: '关联网格/部门',
       component: 'Select',
+      rules: 'required',
       componentProps: {
         placeholder: '请选择关联网格/部门',
         options: [],
