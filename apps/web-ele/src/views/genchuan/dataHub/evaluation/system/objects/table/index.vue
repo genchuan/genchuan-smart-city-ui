@@ -5,6 +5,7 @@ import { isEmpty } from '@vben/utils';
 import { ElLoading, ElMessage, ElDialog, ElUpload } from 'element-plus';
 import screenfull from 'screenfull';
 import dayjs from 'dayjs';
+import * as XLSX from 'xlsx';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
@@ -15,11 +16,8 @@ import {
   createObject,
   updateObject,
   deleteObject,
-  exportObjectExcel,
   getStatusCount,
   importObjects,
-  getImportTemplate,
-  // 新增导入四个简单列表接口
   getUserSimpleList,
   getAreaSimpleList,
   getObjectTypeSimpleList,
@@ -32,6 +30,7 @@ import {
   useFormSchema,
   useGridColumns,
   useQuerySchema,
+  importFields,
 } from './data';
 
 const props = defineProps({
@@ -65,17 +64,16 @@ const [Form, formApi] = useVbenForm({
   commonConfig: {
     componentProps: { class: 'w-full' },
     formItemClass: 'col-span-2',
-    labelWidth: 80,
+    labelWidth: 100,
   },
   layout: 'horizontal',
   schema: useFormSchema(),
   showDefaultActions: false,
 });
 
-// 加载表单下拉选项的方法（修正版）
+// 加载表单下拉选项的方法
 const loadFormOptions = async () => {
   try {
-    // 并行请求四个下拉列表，拦截器已剥去外层，直接得到数组
     const [areaList, typeList, userList, relatedList] = await Promise.all([
       getAreaSimpleList(),
       getObjectTypeSimpleList(),
@@ -83,7 +81,6 @@ const loadFormOptions = async () => {
       getRelatedObjectSimpleList(),
     ]);
 
-    // 更新表单 schema 的 options（确保传入的是数组）
     await formApi.updateSchema([
       {
         fieldName: 'areaCode',
@@ -105,7 +102,6 @@ const loadFormOptions = async () => {
   } catch (error) {
     console.error('加载下拉选项失败', error);
     ElMessage.error('加载下拉选项失败，请重试');
-    // 发生错误时设置为空数组，避免界面异常
     await formApi.updateSchema([
       { fieldName: 'areaCode', componentProps: { options: [] } },
       { fieldName: 'objectTypeId', componentProps: { options: [] } },
@@ -118,7 +114,7 @@ const loadFormOptions = async () => {
 // 抽屉打开/关闭时的处理函数
 const onOpenChange = async (isOpen) => {
   if (isOpen) {
-    await loadFormOptions();  // 确保选项加载完成
+    await loadFormOptions();
     const drawerData = formDrawerApi.getData() || {};
     formData.value = drawerData;
     if (drawerData.id) {
@@ -139,12 +135,16 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     if (!validateResult.valid) return;
 
     let values = formApi.form.values;
-    // 从抽屉数据中获取 id（编辑时通过 setData 传入的 row 包含 id）
+    // 手机号格式校验
+    const phoneRegex = /^1[3-9]\d{9}$/;
+    if (values.managerPhone && !phoneRegex.test(values.managerPhone)) {
+      ElMessage.error('联系电话格式不正确，应为11位手机号');
+      return;
+    }
     const drawerData = formDrawerApi.getData() || {};
-    const id = drawerData.id;  // 编辑时存在，新增时为 undefined
+    const id = drawerData.id;
     const isEdit = !!id;
 
-    // 数字字段转换（确保与后端类型一致）
     const numberFields = ['objectTypeId', 'managerId', 'relatedId'];
     numberFields.forEach(field => {
       if (values[field] !== undefined && values[field] !== null && values[field] !== '') {
@@ -155,11 +155,9 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     const loadingInstance = ElLoading.service({ text: $t('ui.actionMessage.saving') });
     try {
       if (!isEdit) {
-        // 新增：补充默认状态 statusId = 1
         await createObject({ ...values, statusId: 1 });
         ElMessage.success($t('ui.actionMessage.addSuccess'));
       } else {
-        // 编辑：传入 id 和表单值
         await updateObject({ id, ...values });
         ElMessage.success($t('ui.actionMessage.editSuccess'));
       }
@@ -168,13 +166,12 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       formDrawerApi.close();
     } catch (error) {
       console.error('保存失败', error);
-      // 直接显示后端返回的错误信息（如名称重复等）
       ElMessage.error(error.message || '保存失败');
     } finally {
       loadingInstance.close();
     }
   },
-  onOpenChange,  // 使用上面定义的异步函数
+  onOpenChange,
 });
 
 /** 刷新表格 */
@@ -182,28 +179,152 @@ function handleRefresh() {
   gridApi.query();
 }
 
-/** 导出（按当前搜索条件） */
+/** 普通导出（按当前搜索条件，导出全部）- 前端生成 Excel */
 async function handleExport() {
-  const loadingInstance = ElLoading.service({ text: '导出中...' });
+  const loadingInstance = ElLoading.service({ text: '正在获取数据...' });
   try {
+    // 构建查询参数（包含搜索条件 + 状态筛选）
     const params = {
       ...searchParams.value,
       pageNo: 1,
-      pageSize: 10000,
+      pageSize: 1000, // 每页大小，可根据后端限制调整
     };
-    const blob = await exportObjectExcel(params);
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    const areaName = searchParams.value.areaName || '全部';
-    const fileName = `评价对象信息_${areaName}_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`;
-    link.href = url;
-    link.download = fileName;
-    link.click();
-    window.URL.revokeObjectURL(url);
+    if (activeName.value !== '全部') {
+      params.statusId = activeName.value === '启用' ? 1 : 2;
+    }
+
+    let allData = [];
+    let pageNo = 1;
+    let hasMore = true;
+
+    // 循环获取所有数据
+    while (hasMore) {
+      params.pageNo = pageNo;
+      const res = await getAllPage(params);
+      const { list, total } = res;
+      if (list && list.length > 0) {
+        // 格式化当前页数据
+        const formattedList = formatList(list);
+        allData = allData.concat(formattedList);
+        pageNo++;
+        // 如果当前页数据小于 pageSize，说明是最后一页
+        if (list.length < params.pageSize) {
+          hasMore = false;
+        }
+      } else {
+        hasMore = false;
+      }
+    }
+
+    if (allData.length === 0) {
+      ElMessage.warning('没有数据可导出');
+      return;
+    }
+
+    // 获取表格列配置，并过滤掉不需要导出的列
+    const allColumns = useGridColumns();
+    const exportColumns = allColumns.filter(
+      col => col.field && col.type !== 'checkbox' && col.title !== '操作'
+    ).map(col => ({ field: col.field, title: col.title }));
+
+    // 构建 Excel 数据：表头 + 数据行
+    const wsData = [];
+    // 添加表头（按表格列顺序）
+    wsData.push(exportColumns.map(col => col.title));
+    // 添加数据行
+    allData.forEach(item => {
+      const row = exportColumns.map(col => item[col.field] ?? '-');
+      wsData.push(row);
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, '评价对象');
+
+    // 根据当前标签生成文件名
+    let fileName;
+    if (activeName.value === '全部') {
+      const areaName = (searchParams.value.areaName || '全部').replace(/[\\/:*?"<>|]/g, '_');
+      fileName = `评价对象信息_${areaName}_${dayjs().format('YYYYMMDD')}.xlsx`;
+    } else if (activeName.value === '启用') {
+      fileName = `启用评价对象信息_${dayjs().format('YYYYMMDD')}.xlsx`;
+    } else if (activeName.value === '停用') {
+      fileName = `停用评价对象信息_${dayjs().format('YYYYMMDD')}.xlsx`;
+    }
+
+    XLSX.writeFile(wb, fileName);
+    ElMessage.success('导出成功');
   } catch (error) {
-    ElMessage.error('导出失败');
+    console.error('导出失败', error);
+    ElMessage.error(error.message || '导出失败');
   } finally {
     loadingInstance.close();
+  }
+}
+
+/** 批量导出选中行（按列表字段导出，多 sheet Excel）- 直接从当前表格数据获取 */
+async function handleBatchExport() {
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请至少选择一条数据');
+    return;
+  }
+
+  // 直接从当前表格数据中获取选中行
+  const selectedRows = dataObj.list.filter(item => checkedIds.value.includes(item.id));
+  if (selectedRows.length === 0) {
+    ElMessage.warning('选中的数据不在当前页，请刷新后重试');
+    return;
+  }
+
+  const loading = ElLoading.service({ text: '正在生成导出文件...' });
+  const wb = XLSX.utils.book_new();
+
+  // 获取导出列
+  const allColumns = useGridColumns();
+  const exportColumns = allColumns.filter(
+    col => col.field && col.type !== 'checkbox' && col.title !== '操作'
+  ).map(col => ({ field: col.field, title: col.title }));
+
+  try {
+    for (const row of selectedRows) {
+      // row 已经是格式化后的数据（因为 dataObj.list 经过 formatList 处理）
+      const formattedItem = row;
+
+      // 构建导出行
+      const rowForSheet = {};
+      exportColumns.forEach(col => {
+        rowForSheet[col.title] = formattedItem[col.field] ?? '-';
+      });
+
+      const ws = XLSX.utils.json_to_sheet([rowForSheet]);
+
+      // 生成 sheet 名称
+      let sheetName = (formattedItem.name || `对象_${formattedItem.id}`).replace(/[\\/:*?"<>|]/g, '_');
+      if (sheetName.length > 31) sheetName = sheetName.substring(0, 28) + '...';
+      let finalSheetName = sheetName;
+      let counter = 1;
+      while (wb.SheetNames.includes(finalSheetName)) {
+        finalSheetName = `${sheetName}_${counter}`;
+        counter++;
+      }
+
+      XLSX.utils.book_append_sheet(wb, ws, finalSheetName);
+    }
+
+    if (wb.SheetNames.length === 0) {
+      ElMessage.warning('没有有效数据可导出');
+      return;
+    }
+
+    // 生成文件名：统一为“批量导出_日期.xlsx”（带时间戳）
+    const fileName = `批量导出_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    ElMessage.success('导出成功');
+  } catch (error) {
+    console.error('批量导出失败', error);
+    ElMessage.error(error.message || '导出失败');
+  } finally {
+    loading.close();
   }
 }
 
@@ -212,7 +333,7 @@ function handleCreate() {
   formDrawerApi.setData({ title: textObj.addText }).open();
 }
 
-/** 编辑 - 直接使用表格行数据，不再调用详情接口（仿停车代码） */
+/** 编辑 */
 function handleEdit(row) {
   formDrawerApi.setData({ title: textObj.editText, ...row }).open();
 }
@@ -307,7 +428,7 @@ async function fetchStatusCount() {
   }
 }
 
-// 选中 ID（存储 id）
+// 选中 ID
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map(item => item.id);
@@ -363,7 +484,7 @@ function formatList(list) {
       }
 
       return {
-        ...item, // 保留所有原始字段（包含 ID 字段如 areaCode, objectTypeId 等）
+        ...item,
         areaName: item.areaName ?? '-',
         objectTypeName: item.objectTypeName ?? '-',
         managerName: item.managerName ?? '-',
@@ -398,7 +519,7 @@ function formatList(list) {
   });
 }
 
-// 获取表格数据（使用 allpage 接口）
+// 获取表格数据
 const getTableData = async ({ page }) => {
   const params = {
     pageNo: page.currentPage,
@@ -539,18 +660,52 @@ function handleFileChange(file) {
   return false;
 }
 
+/** 前端生成导入模板 */
 async function handleDownloadTemplate() {
-  const loadingInstance = ElLoading.service({ text: '下载模板中...' });
+  const loadingInstance = ElLoading.service({ text: '生成模板中...' });
   try {
-    const blob = await getImportTemplate();
+    const headers = importFields.map(field => field.label);
+
+    const exampleData = {
+      name: '上海市浦东新区人民医院',
+      code: 'OBJ_SH_PD',
+      areaName: '上海市',
+      objectTypeName: '事业单位',
+      managerName: '李四',
+      managerPhone: '13900139000',
+      relatedName: '第二网格',
+      statusId: 1,
+      createUserName: '',
+    };
+
+    const exampleRow = importFields.map(field => {
+      if (field.key in exampleData) {
+        return exampleData[field.key];
+      }
+      if (field.defaultValue !== undefined) {
+        return field.defaultValue;
+      }
+      return '';
+    });
+
+    const wsData = [headers, exampleRow];
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, '模板');
+
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbout], { type: 'application/octet-stream' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `评价对象导入模板.xlsx`;
+    link.download = '评价对象导入模板.xlsx';
     link.click();
     window.URL.revokeObjectURL(url);
+
+    ElMessage.success('模板生成成功');
   } catch (error) {
-    ElMessage.error('模板下载失败');
+    console.error('生成模板失败', error);
+    ElMessage.error('模板生成失败，请重试');
   } finally {
     loadingInstance.close();
   }
@@ -629,6 +784,13 @@ onMounted(() => {
           <!-- 启用/停用标签下的按钮 -->
           <template v-else>
             <IconButton content="导出" icon-name="download" @click="handleExport" />
+            <!-- 批量导出按钮（多 sheet Excel） -->
+            <IconButton
+              content="批量导出"
+              icon-name="download"
+              :disabled="isEmpty(checkedIds)"
+              @click="handleBatchExport"
+            />
           </template>
 
           <!-- 批量停用/启用按钮 -->
@@ -688,7 +850,7 @@ onMounted(() => {
       </template>
     </Grid>
 
-    <!-- 导入弹窗（新增下载模板按钮） -->
+    <!-- 导入弹窗 -->
     <el-dialog v-model="importDialogVisible" title="批量导入" width="400px" destroy-on-close>
       <div style="margin-bottom: 16px; text-align: right;">
         <el-button type="primary" link @click="handleDownloadTemplate">下载模板</el-button>

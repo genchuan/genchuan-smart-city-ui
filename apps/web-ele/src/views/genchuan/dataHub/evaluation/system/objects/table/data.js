@@ -96,6 +96,12 @@ export function useQuerySchema() {
       componentProps: { placeholder: '请输入对象类型' },
     },
     {
+      fieldName: 'managerName',
+      label: '负责人',
+      component: 'Input',
+      componentProps: { placeholder: '请输入负责人' },
+    },
+    {
       fieldName: 'statusName',
       label: '状态',
       component: 'Input',
@@ -202,10 +208,11 @@ export const importFields = [
   { label: '对象编码', key: 'code', required: true },
   { label: '所属区域', key: 'areaName', required: true },
   { label: '对象类型', key: 'objectTypeName', required: true },
-  { label: '负责人ID', key: 'managerName', required: true },
+  { label: '负责人', key: 'managerName', required: true },
   { label: '联系电话', key: 'managerPhone', required: true },
   { label: '关联网格/部门', key: 'relatedName', required: true },
   { label: '状态ID', key: 'statusId', required: true, defaultValue: 1 },
+  { label: '创建人', key: 'createUserName', required: false },
 ];
 
 export const textObj = {

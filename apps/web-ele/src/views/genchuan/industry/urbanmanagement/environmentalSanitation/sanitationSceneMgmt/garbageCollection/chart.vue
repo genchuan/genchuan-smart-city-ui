@@ -1,76 +1,181 @@
 <script setup>
-import { reactive } from 'vue';
+import { reactive, onMounted } from 'vue';
+import {
+  getGarbageCollectionStats,
+  getGarbageTypeCircle,
+  getPlanStatusCircle,
+  getAreaDistributionCircle,
+  getAreaCompletionRateColumn
+} from '#/api/genchuan/industry/urbanmanagement/environmentalSanitation/sanitationSceneMgmt/garbageCollection/data.js';
 import Indicator from '#/components/stats/indicator.vue';
 import Pie from '#/components/stats/pie.vue';
 import Bar from '#/components/stats/bar.vue';
 
+// 响应式状态
 const state = reactive({
+  // 卡片数据（接口返回对象）
   cardList: [
-    {title: '总计划数', value: 10, color: '#409EFF'},
-    {title: '执行中计划数', value: 2, color: '#c8ce13'},
-    {title: '已完成计划数', value: 2, color: '#67C23A'},
-    {title: '异常计划数', value: 4, color: '#F56C6C'},
+    { title: '总计划数', value: 0, color: '#409EFF' },
+    { title: '执行中计划数', value: 0, color: '#c8ce13' },
+    { title: '已完成计划数', value: 0, color: '#67C23A' },
+    { title: '异常计划数', value: 0, color: '#F56C6C' },
   ],
+  // 饼图数据（接口直接返回数组）
   pieData: {
-    type: [
-      {name: '其他垃圾', value: 4},
-      {name: '厨余垃圾', value: 3},
-      {name: '可回收物', value: 2},
-      {name: '有害垃圾', value: 1},
-    ],
-    status: [
-      {name: '计划待执行', value: 2},
-      {name: '作业进行中', value: 2},
-      {name: '异常待处置', value: 2},
-      {name: '处置待复核', value: 2},
-      {name: '已完成', value: 2},
-    ],
-    area: [
-      {name: '龙文区', value: 3},
-      {name: '龙海区', value: 2},
-      {name: '芗城区', value: 2},
-      {name: '长泰区', value: 2},
-      {name: '漳浦县', value: 1},
-    ],
+    type: [],        // 垃圾类型占比
+    status: [],      // 计划状态占比
+    area: [],        // 区域分布占比
   },
+  // 柱状图数据（接口直接返回数组）
   barData: {
-    x: ['龙文区', '龙海区', '芗城区', '长泰区', '漳浦县'],
-    series: [85, 62, 78, 91, 44],
+    x: [],           // 区域名称数组
+    series: [],      // 完成率数值数组
   },
+});
+
+// ----- 卡片数据（原逻辑，接口返回对象）-----
+const fetchStats = async () => {
+  try {
+    const data = await getGarbageCollectionStats();
+    if (data) {
+      state.cardList[0].value = data.totalCount ?? 0;
+      state.cardList[1].value = data.executingCount ?? 0;
+      state.cardList[2].value = data.completedCount ?? 0;
+      state.cardList[3].value = data.abnormalCount ?? 0;
+    }
+  } catch (error) {
+    console.error('【卡片接口】请求失败:', error);
+  }
+};
+
+// ----- 通用处理函数：处理直接返回数组的饼图数据 -----
+const handlePieArray = (data, chartName, targetKey) => {
+  if (Array.isArray(data)) {
+    const formatted = data.map(item => ({
+      name: item.name,
+      value: Number(item.value) || 0,
+    }));
+    // 根据 targetKey 更新对应的 pieData 字段
+    if (targetKey === 'type') state.pieData.type = formatted;
+    else if (targetKey === 'status') state.pieData.status = formatted;
+    else if (targetKey === 'area') state.pieData.area = formatted;
+  } else {
+    console.warn(`【${chartName}】返回的数据不是数组:`, data);
+  }
+};
+
+// ----- 垃圾类型占比饼图 -----
+const fetchGarbageTypeCircle = async () => {
+  try {
+    const res = await getGarbageTypeCircle(); // 直接返回数组
+    handlePieArray(res, '垃圾类型饼图', 'type');
+  } catch (error) {
+    console.error('【垃圾类型饼图】请求失败:', error);
+    if (error.response) console.error('错误详情:', error.response.data);
+  }
+};
+
+// ----- 计划状态占比饼图 -----
+const fetchPlanStatusCircle = async () => {
+  try {
+    const res = await getPlanStatusCircle(); // 直接返回数组
+    handlePieArray(res, '计划状态饼图', 'status');
+  } catch (error) {
+    console.error('【计划状态饼图】请求失败:', error);
+    if (error.response) console.error('错误详情:', error.response.data);
+  }
+};
+
+// ----- 区域分布占比饼图 -----
+const fetchAreaDistributionCircle = async () => {
+  try {
+    const res = await getAreaDistributionCircle(); // 直接返回数组
+    handlePieArray(res, '区域分布饼图', 'area');
+  } catch (error) {
+    console.error('【区域分布饼图】请求失败:', error);
+    if (error.response) console.error('错误详情:', error.response.data);
+  }
+};
+
+// ----- 区域完成率柱状图 -----
+const fetchAreaCompletionRateColumn = async () => {
+  try {
+    const res = await getAreaCompletionRateColumn(); // 直接返回数组
+    if (Array.isArray(res)) {
+      const x = [];
+      const series = [];
+      res.forEach(item => {
+        x.push(item.areaName);
+        // 处理 completionRate，可能是 "25%" 或 25
+        let rate;
+        if (typeof item.completionRate === 'string') {
+          rate = parseFloat(item.completionRate) || 0;
+        } else {
+          rate = Number(item.completionRate) || 0;
+        }
+        series.push(rate);
+      });
+      state.barData.x = x;
+      state.barData.series = series;
+    } else {
+      console.warn('【区域完成率柱状图】返回的数据不是数组:', res);
+    }
+  } catch (error) {
+    console.error('【区域完成率柱状图】请求失败:', error);
+    if (error.response) console.error('错误详情:', error.response.data);
+  }
+};
+
+// 组件挂载后并行请求所有数据
+onMounted(() => {
+  fetchStats();                         // 卡片
+  fetchGarbageTypeCircle();              // 垃圾类型饼图
+  fetchPlanStatusCircle();               // 计划状态饼图
+  fetchAreaDistributionCircle();         // 区域分布饼图
+  fetchAreaCompletionRateColumn();       // 区域完成率柱状图
 });
 </script>
 
 <template>
   <div class="chart-box">
-      <div class="box-left" style="flex: 1 !important;">
-        <Indicator
-          class="left-card"
-          v-for="item in state.cardList"
-          :key="item.title"
-          v-bind="item"
-        />
-      </div>
-      <Pie
-        style="flex: 1 !important;"
-        title-text="收运品类占比"
-        :data="state.pieData.type"
+    <!-- 卡片区域 -->
+    <div class="box-left" style="flex: 1 !important;">
+      <Indicator
+        class="left-card"
+        v-for="item in state.cardList"
+        :key="item.title"
+        v-bind="item"
       />
-      <Pie
-        style="flex: 1 !important;"
-        title-text="计划状态占比"
-        :data="state.pieData.status"
-      />
-      <Pie
-        style="flex: 1 !important;"
-        title-text="区域分布占比"
-        :data="state.pieData.area"
-      />
-      <Bar
-        style="flex: 1 !important;"
-        title="不同区域收运完成率对比"
-        :x-data="state.barData.x"
-        :series-data="[{ name: '完成率', data: state.barData.series }]"
-      />
+    </div>
+
+    <!-- 垃圾类型占比饼图 -->
+    <Pie
+      style="flex: 1 !important;"
+      title-text="收运品类占比"
+      :data="state.pieData.type"
+    />
+
+    <!-- 计划状态占比饼图 -->
+    <Pie
+      style="flex: 1 !important;"
+      title-text="计划状态占比"
+      :data="state.pieData.status"
+    />
+
+    <!-- 区域分布占比饼图 -->
+    <Pie
+      style="flex: 1 !important;"
+      title-text="区域分布占比"
+      :data="state.pieData.area"
+    />
+
+    <!-- 区域完成率柱状图 -->
+    <Bar
+      style="flex: 1 !important;"
+      title="不同区域收运完成率对比"
+      :x-data="state.barData.x"
+      :series-data="[{ name: '完成率', data: state.barData.series }]"
+    />
   </div>
 </template>
 

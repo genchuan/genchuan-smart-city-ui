@@ -1,652 +1,338 @@
-export const dataList = () => {
-  return [
-    // ---------- 原有数据（id1-id10）----------
-    {
-      id: '1',
-      planNo: 'PLAN-20250224-001',
-      garbageType: '其他垃圾',
-      area: '龙文区-碧湖街道',
-      pointIds: 'point001,point002',
-      frequency: '每日一次',
-      timePeriod: '09:00-11:00',
-      vehicle: '闽E·12345',
-      staff: '王小明',
-      status: '计划待执行',
-      completionRate: 0,
-      abnormalCount: 0,
-      createTime: '2026-02-24 08:00:00',
-      updateTime: '2026-02-24 08:00:00',
-      createBy: 'admin',
-      collectedVolume: 0,
-      checkinStatus: '未打卡',
-      trackCoverage: '未覆盖',
-      lastReportTime: null,
-      isAbnormal: false,
-      abnormalId: null,
-      abnormalType: null,
-      priority: null,
-      handler: null,
-      handleStatus: null,
-      isTimeout: false,
-      reviewStatus: null,
-      completeTime: null,
-      totalVolume: 0,
-      abnormalResult: '无',
-      abnormalCompleteRate: null,
-    },
-    {
-      id: '2',
-      planNo: 'PLAN-20250224-002',
-      garbageType: '厨余垃圾',
-      area: '龙海区-石码街道',
-      pointIds: 'point003',
-      frequency: '每日两次',
-      timePeriod: '07:00-09:00,18:00-20:00',
-      vehicle: '闽E·67890',
-      staff: '李华',
-      status: '作业进行中',
-      completionRate: 45,
-      abnormalCount: 1,
-      createTime: '2026-02-24 08:15:00',
-      updateTime: '2026-02-24 09:30:00',
-      createBy: 'admin',
-      collectedVolume: 2.3,
-      checkinStatus: '已到岗',
-      trackCoverage: '80%',
-      lastReportTime: '2026-02-24 09:25:00',
-      isAbnormal: false,
-    },
-    {
-      id: '3',
-      planNo: 'PLAN-20250224-003',
-      garbageType: '可回收物',
-      area: '芗城区-巷口街道',
-      pointIds: 'point004',
-      frequency: '每周三次',
-      timePeriod: '14:00-16:00',
-      vehicle: '闽E·11223',
-      staff: '张伟',
-      status: '异常待处置',
-      completionRate: 20,
-      abnormalCount: 2,
-      createTime: '2026-02-24 09:00:00',
-      updateTime: '2026-02-24 10:20:00',
-      createBy: 'admin',
-      collectedVolume: 0.8,
-      checkinStatus: '已离岗',
-      trackCoverage: '60%',
-      lastReportTime: '2026-02-24 10:15:00',
-      isAbnormal: true,
-      abnormalId: 'ABN001',
-      abnormalType: '车辆故障',
-      priority: '高',
-      handler: '李华',
-      handleStatus: '已派发',
-      isTimeout: false,
-    },
-    {
-      id: '4',
-      planNo: 'PLAN-20250224-004',
-      garbageType: '有害垃圾',
-      area: '长泰区-武安镇',
-      pointIds: 'point005',
-      frequency: '每周一次',
-      timePeriod: '13:00-14:00',
-      vehicle: '闽E·44556',
-      staff: '陈晨',
-      status: '处置待复核',
-      completionRate: 100,
-      abnormalCount: 1,
-      createTime: '2026-02-23 15:00:00',
-      updateTime: '2026-02-24 11:00:00',
-      createBy: 'admin',
-      collectedVolume: 0.5,
-      checkinStatus: '已完成',
-      trackCoverage: '100%',
-      lastReportTime: '2026-02-24 10:55:00',
-      isAbnormal: true,
-      abnormalId: 'ABN002',
-      abnormalType: '人员缺勤',
-      priority: '中',
-      handler: '赵阳',
-      handleStatus: '待复核',
-      isTimeout: false,
-      reviewStatus: '待复核',
-      reviewBy: null,
-      reviewTime: null,
-    },
-    {
-      id: '5',
-      planNo: 'PLAN-20250224-005',
-      garbageType: '其他垃圾',
-      area: '漳浦县-绥安镇',
-      pointIds: 'point006',
-      frequency: '每日一次',
-      timePeriod: '08:30-10:30',
-      vehicle: '闽E·77889',
-      staff: '郑凯',
-      status: '已完成',
-      completionRate: 100,
-      abnormalCount: 0,
-      createTime: '2026-02-22 10:00:00',
-      updateTime: '2026-02-23 18:00:00',
-      createBy: 'admin',
-      collectedVolume: 5.2,
-      checkinStatus: '已完成',
-      trackCoverage: '100%',
-      lastReportTime: '2026-02-23 17:50:00',
-      isAbnormal: false,
-      completeTime: '2026-02-23 18:00:00',
-      totalVolume: 5.2,
-      abnormalResult: '无',
-      abnormalCompleteRate: 100,
-    },
-    {
-      id: '6',
-      planNo: 'PLAN-20250225-001',
-      garbageType: '厨余垃圾',
-      area: '龙文区-步文街道',
-      pointIds: 'point007',
-      frequency: '每日一次',
-      timePeriod: '10:00-12:00',
-      vehicle: '闽E·33456',
-      staff: '刘洋',
-      status: '计划待执行',
-      completionRate: 0,
-      abnormalCount: 0,
-      createTime: '2026-02-25 08:00:00',
-      updateTime: '2026-02-25 08:00:00',
-    },
-    {
-      id: '7',
-      planNo: 'PLAN-20250225-002',
-      garbageType: '可回收物',
-      area: '龙海区-海澄镇',
-      pointIds: 'point008',
-      frequency: '每周两次',
-      timePeriod: '15:00-17:00',
-      vehicle: '闽E·99887',
-      staff: '黄涛',
-      status: '作业进行中',
-      completionRate: 30,
-      abnormalCount: 1,
-      createTime: '2026-02-25 09:00:00',
-      updateTime: '2026-02-25 10:30:00',
-    },
-    {
-      id: '8',
-      planNo: 'PLAN-20250225-003',
-      garbageType: '有害垃圾',
-      area: '芗城区-西桥街道',
-      pointIds: 'point009',
-      frequency: '每月一次',
-      timePeriod: '09:00-10:00',
-      vehicle: '闽E·12377',
-      staff: '周敏',
-      status: '异常待处置',
-      completionRate: 10,
-      abnormalCount: 3,
-      createTime: '2026-02-25 11:00:00',
-      updateTime: '2026-02-25 12:00:00',
-    },
-    {
-      id: '9',
-      planNo: 'PLAN-20250225-004',
-      garbageType: '其他垃圾',
-      area: '长泰区-武安镇',
-      pointIds: 'point010',
-      frequency: '每日两次',
-      timePeriod: '06:00-08:00,17:00-19:00',
-      vehicle: '闽E·55667',
-      staff: '朱峰',
-      status: '处置待复核',
-      completionRate: 100,
-      abnormalCount: 1,
-      createTime: '2026-02-25 13:00:00',
-      updateTime: '2026-02-25 14:20:00',
-      // 原本没有 reviewStatus，现添加为 '退回'
-      reviewStatus: '退回',
-      reviewBy: '质检员',
-      reviewTime: '2026-02-25 15:00:00',
-    },
-    {
-      id: '10',
-      planNo: 'PLAN-20250225-005',
-      garbageType: '厨余垃圾',
-      area: '漳浦县-绥安镇',
-      pointIds: 'point011',
-      frequency: '每日一次',
-      timePeriod: '11:00-13:00',
-      vehicle: '闽E·66778',
-      staff: '韩磊',
-      status: '已完成',
-      completionRate: 100,
-      abnormalCount: 0,
-      createTime: '2026-02-25 14:00:00',
-      updateTime: '2026-02-25 16:30:00',
-      completeTime: '2026-02-25 16:30:00',
-      totalVolume: 3.8,
-    },
+import { baseRequestClient, requestClient } from '#/api/request';
+import { useAccessStore } from '@vben/stores';
 
-    // ---------- 新增数据（id11-id17）----------
-    {
-      id: '11',
-      planNo: 'PLAN-20250226-001',
-      garbageType: '可回收物',
-      area: '龙文区-蓝田街道',
-      pointIds: 'point012',
-      frequency: '每周两次',
-      timePeriod: '10:00-12:00',
-      vehicle: '闽E·88990',
-      staff: '赵雷',
-      status: '计划待执行',
-      completionRate: 0,
-      abnormalCount: 0,
-      createTime: '2026-02-26 08:30:00',
-      updateTime: '2026-02-26 08:30:00',
-      createBy: 'admin',
-      collectedVolume: 0,
-      checkinStatus: '未打卡',
-      trackCoverage: '未覆盖',
-      lastReportTime: null,
-      isAbnormal: false,
-    },
-    {
-      id: '12',
-      planNo: 'PLAN-20250226-002',
-      garbageType: '厨余垃圾',
-      area: '龙海区-海澄镇',
-      pointIds: 'point013',
-      frequency: '每日一次',
-      timePeriod: '07:00-09:00',
-      vehicle: '闽E·12377',
-      staff: '周敏',
-      status: '计划待执行',
-      completionRate: 0,
-      abnormalCount: 0,
-      createTime: '2026-02-26 09:00:00',
-      updateTime: '2026-02-26 09:00:00',
-      createBy: 'admin',
-    },
-    {
-      id: '13',
-      planNo: 'PLAN-20250226-003',
-      garbageType: '其他垃圾',
-      area: '芗城区-西桥街道',
-      pointIds: 'point014',
-      frequency: '每日两次',
-      timePeriod: '06:00-08:00,18:00-20:00',
-      vehicle: '闽E·55667',
-      staff: '朱峰',
-      status: '作业进行中',
-      completionRate: 60,
-      abnormalCount: 0,
-      createTime: '2026-02-26 06:00:00',
-      updateTime: '2026-02-26 09:20:00',
-      createBy: 'admin',
-      collectedVolume: 1.8,
-      checkinStatus: '已到岗',
-      trackCoverage: '75%',
-      lastReportTime: '2026-02-26 09:15:00',
-      isAbnormal: false,
-    },
-    {
-      id: '14',
-      planNo: 'PLAN-20250226-004',
-      garbageType: '有害垃圾',
-      area: '龙海区-石码街道',
-      pointIds: 'point015',
-      frequency: '每周一次',
-      timePeriod: '14:00-15:00',
-      vehicle: '闽E·99887',
-      staff: '黄涛',
-      status: '异常待处置',
-      completionRate: 30,
-      abnormalCount: 1,
-      createTime: '2026-02-26 14:30:00',
-      updateTime: '2026-02-26 15:10:00',
-      createBy: 'admin',
-      collectedVolume: 0.3,
-      checkinStatus: '已离岗',
-      trackCoverage: '40%',
-      lastReportTime: '2026-02-26 15:05:00',
-      isAbnormal: true,
-      abnormalId: 'ABN003',
-      abnormalType: '设备故障',
-      priority: '中',
-      handler: '郑凯',
-      handleStatus: '已派发',
-      isTimeout: false,
-    },
-    {
-      id: '15',
-      planNo: 'PLAN-20250226-005',
-      garbageType: '可回收物',
-      area: '长泰区-武安镇',
-      pointIds: 'point016',
-      frequency: '每日一次',
-      timePeriod: '09:00-11:00',
-      vehicle: '闽E·33456',
-      staff: '刘洋',
-      status: '异常待处置',
-      completionRate: 15,
-      abnormalCount: 1,
-      createTime: '2026-02-26 09:30:00',
-      updateTime: '2026-02-26 10:45:00',
-      createBy: 'admin',
-      collectedVolume: 0.5,
-      checkinStatus: '已离岗',
-      trackCoverage: '50%',
-      lastReportTime: '2026-02-26 10:40:00',
-      isAbnormal: true,
-      abnormalId: 'ABN004',
-      abnormalType: '人员缺勤',
-      priority: '高',
-      handler: '李华',
-      handleStatus: '待派发',
-      isTimeout: true,
-    },
-    {
-      id: '16',
-      planNo: 'PLAN-20250226-006',
-      garbageType: '其他垃圾',
-      area: '漳浦县-绥安镇',
-      pointIds: 'point017',
-      frequency: '每日一次',
-      timePeriod: '08:00-10:00',
-      vehicle: '闽E·44556',
-      staff: '陈晨',
-      status: '处置待复核',
-      completionRate: 100,
-      abnormalCount: 1,
-      createTime: '2026-02-26 08:00:00',
-      updateTime: '2026-02-26 11:30:00',
-      createBy: 'admin',
-      collectedVolume: 2.1,
-      checkinStatus: '已完成',
-      trackCoverage: '100%',
-      lastReportTime: '2026-02-26 11:25:00',
-      isAbnormal: true,
-      abnormalId: 'ABN005',
-      abnormalType: '车辆故障',
-      priority: '低',
-      handler: '赵阳',
-      handleStatus: '待复核',
-      isTimeout: false,
-      reviewStatus: '通过',
-      reviewBy: '审核员',
-      reviewTime: '2026-02-26 12:00:00',
-    },
-    {
-      id: '17',
-      planNo: 'PLAN-20250226-007',
-      garbageType: '有害垃圾',
-      area: '龙文区-步文街道',
-      pointIds: 'point018',
-      frequency: '每周一次',
-      timePeriod: '13:00-14:00',
-      vehicle: '闽E·66778',
-      staff: '韩磊',
-      status: '已完成',
-      completionRate: 100,
-      abnormalCount: 0,
-      createTime: '2026-02-26 13:00:00',
-      updateTime: '2026-02-26 14:30:00',
-      createBy: 'admin',
-      collectedVolume: 0.8,
-      checkinStatus: '已完成',
-      trackCoverage: '100%',
-      lastReportTime: '2026-02-26 14:25:00',
-      isAbnormal: false,
-      completeTime: '2026-02-26 14:30:00',
-      totalVolume: 0.8,
-      abnormalResult: '无',
-      abnormalCompleteRate: 100,
-    },
-  ];
-};
-
-export function useFormSchema() {
-  return [
-    {
-      fieldName: 'planNo',
-      label: '收运计划单编号',
-      component: 'Input',
-      componentProps: { placeholder: '请输入计划单编号' },
-      labelWidth: '120',
-      rules: 'required',
-    },
-    {
-      fieldName: 'garbageType',
-      label: '收运品类',
-      component: 'Select',
-      labelWidth: '120',
-      componentProps: {
-        placeholder: '请选择收运品类',
-        options: [
-          { label: '其他垃圾', value: '其他垃圾' },
-          { label: '厨余垃圾', value: '厨余垃圾' },
-          { label: '可回收物', value: '可回收物' },
-          { label: '有害垃圾', value: '有害垃圾' },
-        ],
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'area',
-      label: '收运区域',
-      component: 'Input',
-      labelWidth: '120',
-      componentProps: { placeholder: '如：龙文区-碧湖街道' },
-      rules: 'required',
-    },
-    {
-      fieldName: 'pointIds',
-      label: '收运点位',
-      component: 'Select',
-      labelWidth: '120',
-      componentProps: {
-        placeholder: '请选择收运点位（可多选）',
-        multiple: true,
-        options: [
-          { label: '碧湖公园东门', value: 'point001' },
-          { label: '碧湖公园西门', value: 'point002' },
-          { label: '石码便民停车场', value: 'point003' },
-        ],
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'frequency',
-      label: '收运频次',
-      component: 'Select',
-      labelWidth: '120',
-      componentProps: {
-        placeholder: '请选择收运频次',
-        options: [
-          { label: '每日一次', value: '每日一次' },
-          { label: '每日两次', value: '每日两次' },
-          { label: '每周三次', value: '每周三次' },
-          { label: '每周一次', value: '每周一次' },
-        ],
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'timePeriod',
-      label: '收运时段',
-      component: 'Input',
-      labelWidth: '120',
-      componentProps: { placeholder: '如 09:00-11:00（多个用逗号分隔）' },
-      rules: 'required',
-    },
-    {
-      fieldName: 'vehicle',
-      label: '负责车辆',
-      component: 'Input',
-      labelWidth: '120',
-      componentProps: { placeholder: '请输入车牌号' },
-      rules: 'required',
-    },
-    {
-      fieldName: 'staff',
-      label: '负责人员',
-      component: 'Input',
-      labelWidth: '120',
-      componentProps: { placeholder: '请输入负责人姓名' },
-      rules: 'required',
-    },
-    {
-      fieldName: 'createTime',
-      label: '创建时间',
-      component: 'DatePicker',
-      labelWidth: '120',
-      componentProps: {
-        placeholder: '请选择创建时间',
-        type: 'datetime',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss',
-      },
-      rules: 'required',
-    },
-  ];
+// ---------- API 接口函数 ----------
+// 获取各状态数量统计（用于标签页计数）
+export function getGarbageCollectionStatistics() {
+  return requestClient.get('/envirhealth/garbage-collection/chart/statistics');
 }
 
-export function getColumnsByStatus(status) {
-  const baseColumns = [{ type: 'checkbox', width: 40 }];
-
-  const statusColumnsMap = {
-    全部: [
-      { field: 'planNo', title: '收运计划单编号', minWidth: 180, sortable: true, slots: { default: 'planNo' } },
-      { field: 'garbageType', title: '收运品类', minWidth: 120 },
-      { field: 'area', title: '收运区域', minWidth: 180 },
-      { field: 'frequency', title: '收运频次', minWidth: 120 },
-      { field: 'timePeriod', title: '收运时段', minWidth: 180 },
-      { field: 'vehicle', title: '负责车辆', minWidth: 120 },
-      { field: 'staff', title: '负责人员', minWidth: 120 },
-      { field: 'status', title: '计划状态', minWidth: 120 },
-      { field: 'completionRate', title: '完成率', minWidth: 100, formatter: ({ cellValue }) => (cellValue !== undefined ? `${cellValue}%` : '-') },
-      { field: 'abnormalCount', title: '异常记录数', minWidth: 120 },
-      { field: 'createTime', title: '创建时间', minWidth: 180 },
-      { field: 'updateTime', title: '更新时间', minWidth: 180 },
-    ],
-    计划待执行: [
-      { field: 'planNo', title: '收运计划单编号', minWidth: 180, sortable: true, slots: { default: 'planNo' } },
-      { field: 'garbageType', title: '收运品类', minWidth: 120 },
-      { field: 'area', title: '收运区域', minWidth: 180 },
-      { field: 'pointIds', title: '收运点位', minWidth: 200 },
-      { field: 'frequency', title: '收运频次', minWidth: 120 },
-      { field: 'timePeriod', title: '收运时段', minWidth: 180 },
-      { field: 'vehicle', title: '负责车辆', minWidth: 120 },
-      { field: 'staff', title: '负责人员', minWidth: 120 },
-      { field: 'createBy', title: '创建人', minWidth: 120 },
-      { field: 'createTime', title: '创建时间', minWidth: 180 },
-      { field: 'updateTime', title: '更新时间', minWidth: 180 },
-    ],
-    作业进行中: [
-      { field: 'planNo', title: '收运计划单编号', minWidth: 180, sortable: true, slots: { default: 'planNo' } },
-      { field: 'area', title: '收运区域', minWidth: 180 },
-      { field: 'vehicle', title: '负责车辆', minWidth: 120 },
-      { field: 'staff', title: '负责人员', minWidth: 120 },
-      { field: 'completionRate', title: '当前进度', minWidth: 100, formatter: ({ cellValue }) => `${cellValue || 0}%` },
-      { field: 'collectedVolume', title: '已收运量(吨)', minWidth: 120 },
-      { field: 'checkinStatus', title: '打卡状态', minWidth: 100 },
-      { field: 'trackCoverage', title: '轨迹覆盖', minWidth: 100 },
-      { field: 'lastReportTime', title: '最新上报时间', minWidth: 180 },
-      { field: 'isAbnormal', title: '是否异常', minWidth: 100, formatter: ({ cellValue }) => (cellValue ? '是' : '否') },
-    ],
-    异常待处置: [
-      { field: 'abnormalId', title: '异常编号', minWidth: 150, slots: { default: 'abnormalId' } },
-      { field: 'planNo', title: '关联计划单', minWidth: 180, slots: { default: 'planNo' } },
-      { field: 'abnormalType', title: '异常类型', minWidth: 120 },
-      { field: 'area', title: '发生区域', minWidth: 180 },
-      { field: 'staff', title: '上报人员', minWidth: 120 },
-      { field: 'createTime', title: '上报时间', minWidth: 180 },
-      { field: 'priority', title: '优先级', minWidth: 100 },
-      { field: 'handler', title: '责任人', minWidth: 120 },
-      { field: 'handleStatus', title: '处置状态', minWidth: 120 },
-      { field: 'isTimeout', title: '超时提醒', minWidth: 100, formatter: ({ cellValue }) => (cellValue ? '超时' : '正常') },
-    ],
-    处置待复核: [
-      { field: 'abnormalId', title: '异常编号', minWidth: 150, slots: { default: 'abnormalId' } },
-      { field: 'planNo', title: '关联计划单', minWidth: 180, slots: { default: 'planNo' } },
-      { field: 'abnormalType', title: '异常类型', minWidth: 120 },
-      { field: 'handler', title: '处置人员', minWidth: 120 },
-      { field: 'updateTime', title: '处置时间', minWidth: 180 },
-      { field: 'reviewStatus', title: '复核状态', minWidth: 120 },
-      { field: 'reviewBy', title: '复核人员', minWidth: 120 },
-      { field: 'reviewTime', title: '复核时间', minWidth: 180 },
-    ],
-    已完成: [
-      { field: 'planNo', title: '收运计划单编号', minWidth: 180, sortable: true, slots: { default: 'planNo' } },
-      { field: 'area', title: '收运区域', minWidth: 180 },
-      { field: 'garbageType', title: '收运品类', minWidth: 120 },
-      { field: 'completeTime', title: '完成时间', minWidth: 180 },
-      { field: 'totalVolume', title: '总收运量(吨)', minWidth: 120 },
-      { field: 'abnormalResult', title: '异常处置结果', minWidth: 120 },
-      { field: 'vehicle', title: '负责车辆', minWidth: 120 },
-      { field: 'staff', title: '负责人员', minWidth: 120 },
-      { field: 'completionRate', title: '收运完成率', minWidth: 120, formatter: ({ cellValue }) => `${cellValue || 0}%` },
-      { field: 'abnormalCompleteRate', title: '异常办结率', minWidth: 120, formatter: ({ cellValue }) => (cellValue ? `${cellValue}%` : '-') },
-      { field: 'createBy', title: '创建人', minWidth: 120 },
-    ],
-  };
-
-  const columns = [...baseColumns, ...(statusColumnsMap[status] || statusColumnsMap.全部)];
-  columns.push({
-    title: '操作',
-    width: 120,
-    fixed: 'right',
-    slots: { default: 'actions' },
-  });
-  return columns;
-}
-
-// 更新文本对象，反映新的数据分布
-export const textObj = {
-  editText: '编辑收运计划',
-  addText: '新增收运计划',
-  excelName: '收运计划列表',
-  excelAllName: '垃圾收运任务_区域_日期.xlsx',
-  total: '收运计划总数13;计划待执行4;作业进行中3;异常待处置2;处置待复核2;已完成2',
-};
-
-
-import { requestClient } from '#/api/request';
-
-/** 获得收运计划分页 */
-export function getGarbageCollectionPage(params) {
-  return requestClient.get('/envirhealth/garbage-collection/page', {
+/**
+ * 导出垃圾收运计划列表 Excel
+ * @param {Object} params - 查询参数（与分页列表参数一致）
+ * @returns {Promise<Blob>} 返回二进制文件流
+ */
+export async function exportGarbageCollectionExcel(params) {
+  const accessStore = useAccessStore();
+  return await baseRequestClient.get('/envirhealth/garbage-collection/export-excel', {
     params,
+    responseType: 'blob',
+    validateStatus: () => true,
+    headers: {
+      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
+    },
   });
 }
 
-/** 创建收运计划 */
+/**
+ * 导出垃圾异常记录 Excel
+ * @param {Object} params - 查询参数（与分页列表参数一致）
+ * @returns {Promise<Blob>} 返回二进制文件流
+ */
+export async function exportGarbageAbnormalExcel(params) {
+  const accessStore = useAccessStore();
+  return await baseRequestClient.get('/envirhealth/plan-status/export-excel', {
+    params,
+    responseType: 'blob',
+    validateStatus: () => true,
+    headers: {
+      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
+    },
+  });
+}
+
+/**
+ * 分页查询垃圾收运计划列表
+ * @param {Object} params - 分页及筛选参数
+ * @returns {Promise<Object>} 返回分页数据
+ */
+export function getGarbageCollectionPage(params) {
+  return requestClient.get('/envirhealth/garbage-collection/detail-page', { params });
+}
+
+/**
+ * 分页查询垃圾异常记录列表
+ * @param {Object} params - 分页及筛选参数
+ * @returns {Promise<Object>} 返回分页数据
+ */
+export function getGarbageAbnormalPage(params) {
+  return requestClient.get('/envirhealth/garbage-abnormal/detail-page', { params });
+}
+
+/**
+ * 创建垃圾收运计划
+ * @param {Object} data - 表单数据
+ * @returns {Promise}
+ */
 export function createGarbageCollection(data) {
   return requestClient.post('/envirhealth/garbage-collection/create', data);
 }
 
-/** 获得收运计划（单条） */
+/**
+ * 根据ID获取垃圾收运计划详情
+ * @param {string|number} id - 计划ID
+ * @returns {Promise<Object>} 返回计划详情
+ */
 export function getGarbageCollection(id) {
-  return requestClient.get('/envirhealth/garbage-collection/get', {
-    params: { id },
-  });
+  return requestClient.get('/envirhealth/garbage-collection/get', { params: { id } });
 }
 
-/** 更新收运计划 */
+/**
+ * 更新垃圾收运计划
+ * @param {Object} data - 包含ID的更新数据
+ * @returns {Promise}
+ */
 export function updateGarbageCollection(data) {
   return requestClient.put('/envirhealth/garbage-collection/update', data);
 }
 
-/** 删除收运计划 */
+/**
+ * 删除单个垃圾收运计划
+ * @param {string|number} id - 计划ID
+ * @returns {Promise}
+ */
 export function deleteGarbageCollection(id) {
   return requestClient.delete(`/envirhealth/garbage-collection/delete?id=${id}`);
 }
 
-/** 导出收运计划 Excel */
-export function exportGarbageCollectionExcel(params) {
-  return requestClient.get('/envirhealth/garbage-collection/export-excel', {
-    params,
-    responseType: 'blob', // 通常导出文件需要设置 responseType
-  });
+/**
+ * 批量删除垃圾收运计划
+ * @param {Array} ids - 计划ID数组
+ * @returns {Promise}
+ */
+export function deleteGarbageCollectionBatch(ids) {
+  return requestClient.delete('/envirhealth/garbage-collection/delete-batch', { data: ids });
+}
+
+// 异常数据接口
+
+/**
+ * 创建垃圾异常记录
+ * @param {Object} data - 异常表单数据
+ * @returns {Promise}
+ */
+export function createGarbageAbnormal(data) {
+  return requestClient.post('/envirhealth/garbage-abnormal/create', data);
+}
+
+/**
+ * 更新垃圾异常记录
+ * @param {Object} data - 包含ID的更新数据
+ * @returns {Promise}
+ */
+export function updateGarbageAbnormal(data) {
+  return requestClient.put('/envirhealth/garbage-abnormal/update', data);
+}
+
+/**
+ * 删除单个垃圾异常记录
+ * @param {string|number} id - 异常ID
+ * @returns {Promise}
+ */
+export function deleteGarbageAbnormal(id) {
+  return requestClient.delete(`/envirhealth/garbage-abnormal/delete?id=${id}`);
+}
+
+// ------全部状态下------
+
+/**
+ * 获取垃圾收运概览卡片数据（全部状态）
+ * @returns {Promise<Object>} 返回 totalCount, executingCount, completedCount, abnormalCount 等
+ */
+export function getGarbageCollectionStats() {
+  return requestClient.get('/envirhealth/garbage-collection/chart/card-all');
+}
+
+/**
+ * 获取垃圾类型占比饼图数据（全部状态）
+ * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
+ */
+export function getGarbageTypeCircle() {
+  return requestClient.get('/envirhealth/garbage-collection/chart/garbage-type-circle-all');
+}
+
+/**
+ * 获取计划状态占比饼图数据（全部状态）
+ * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
+ */
+export function getPlanStatusCircle() {
+  return requestClient.get('/envirhealth/garbage-collection/chart/plan-status-circle-all');
+}
+
+/**
+ * 获取区域分布占比饼图数据（全部状态）
+ * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
+ */
+export function getAreaDistributionCircle() {
+  return requestClient.get('/envirhealth/garbage-collection/chart/area-distribution-circle-all');
+}
+
+/**
+ * 获取区域完成率柱状图数据（全部状态）
+ * @returns {Promise<Array>} 返回 [{ areaName, completionRate }]
+ */
+export function getAreaCompletionRateColumn() {
+  return requestClient.get('/envirhealth/garbage-collection/chart/area-completion-rate-column-all');
+}
+
+// ------异常状态下------
+
+/**
+ * 获取异常待处置卡片数据
+ * @returns {Promise<Object>} 返回 toHandleTotal, highPriorityTotal, timeoutTotal
+ */
+export function getGarbageAbnormalCard() {
+  return requestClient.get('/envirhealth/garbage-abnormal/chart/card-abnormal');
+}
+
+/**
+ * 获取异常类型占比饼图数据（用于异常待处置）
+ * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
+ */
+export function getGarbageAbnormalTypeCircle() {
+  return requestClient.get('/envirhealth/garbage-abnormal/chart/circle-abnormal-type');
+}
+
+/**
+ * 获取异常类型占比饼图数据（用于处置待复核）
+ * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
+ */
+export function getGarbageAbnormalTypeCircleForReview() {
+  return requestClient.get('/envirhealth/garbage-abnormal/chart/circle-abnormal-type-for-review');
+}
+
+/**
+ * 获取异常区域分布占比饼图数据
+ * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
+ */
+export function getGarbageAbnormalAreaCircle() {
+  return requestClient.get('/envirhealth/garbage-abnormal/chart/circle-area-distribution');
+}
+
+/**
+ * 获取异常责任人柱状图数据
+ * @returns {Promise<Array>} 返回 [{ name, value }] 责任人及其异常数量
+ */
+export function getGarbageAbnormalColumn() {
+  return requestClient.get('/envirhealth/garbage-abnormal/chart/column-abnormal');
+}
+
+/**
+ * 获取处置待复核卡片数据
+ * @returns {Promise<Object>} 返回 reviewTotal, passedCount, returnCount
+ */
+export function getGarbageAbnormalReviewCard() {
+  return requestClient.get('/envirhealth/garbage-abnormal/chart/card-review');
+}
+
+/**
+ * 获取复核结果占比饼图数据
+ * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
+ */
+export function getGarbageAbnormalReviewResultCircle() {
+  return requestClient.get('/envirhealth/garbage-abnormal/chart/circle-review-result');
+}
+
+/**
+ * 获取异常处置平均时长柱状图数据
+ * @returns {Promise<Array>} 返回 [{ name, avgHandleHours }]
+ */
+export function getGarbageAbnormalAvgHandleColumn() {
+  return requestClient.get('/envirhealth/garbage-abnormal/chart/column-avg-handle-time');
+}
+
+// 计划待执行
+
+/**
+ * 获取计划待执行卡片数据
+ * @returns {Promise<Object>} 返回 totalPendingCount, areaPendingCountMap, garbageTypePendingCountMap
+ */
+export function getGarbageCollectionCardPending() {
+  return requestClient.get('/envirhealth/garbage-collection/chart/card-pending');
+}
+
+/**
+ * 获取计划待执行区域分布饼图数据
+ * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
+ */
+export function getGarbageCollectionPendingByArea() {
+  return requestClient.get('/envirhealth/garbage-collection/chart/pending-by-area');
+}
+
+/**
+ * 获取计划待执行品类分布饼图数据
+ * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
+ */
+export function getGarbageCollectionPendingByGarbageType() {
+  return requestClient.get('/envirhealth/garbage-collection/chart/pending-by-garbage-type');
+}
+
+/**
+ * 获取计划待执行时段分布柱状图数据
+ * @returns {Promise<Array>} 返回 [{ timePeriod, count }]
+ */
+export function getGarbageCollectionTimePeriodPendingColumn() {
+  return requestClient.get('/envirhealth/garbage-collection/chart/time-period-pending-column');
+}
+
+// 作业进行中
+
+/**
+ * 获取作业进行中卡片数据
+ * @returns {Promise<Object>} 返回 currentTaskCount, normalRunningCount, abnormalCount
+ */
+export function getGarbageCollectionCardExecuting() {
+  return requestClient.get('/envirhealth/garbage-collection/chart/card-executing');
+}
+
+/**
+ * 获取作业进行中日收运量趋势数据
+ * @returns {Promise<Array>} 返回 [{ timePoint, collectedVolume, cumulativeVolume }]
+ */
+export function getGarbageCollectionTrendDailyVolume() {
+  return requestClient.get('/envirhealth/garbage-collection/chart/trend-daily-volume');
+}
+
+// 已完成
+
+/**
+ * 获取已完成卡片数据
+ * @returns {Promise<Object>} 返回 completedTaskCount, totalCollectedVolume, averageCompletionRate, abnormalCompleteRate
+ */
+export function getGarbageCollectionCardCompleted() {
+  return requestClient.get('/envirhealth/garbage-collection/chart/card-completed');
+}
+
+/**
+ * 获取已完成收运完成率趋势数据
+ * @param {Object} params - 包含 startTime, endTime (格式 YYYY-MM-DD HH:MM:SS)
+ * @returns {Promise<Array>} 返回 [{ date, completionRate }]
+ */
+export function getGarbageCollectionCompletionRateTrend(params) {
+  return requestClient.get('/envirhealth/garbage-collection/chart/completion-rate-trend', { params });
+}
+
+/**
+ * 获取已完成收运量对比数据
+ * @param {Object} params - 包含 dimension, startTime, endTime (dimension: day/week/month)
+ * @returns {Promise<Array>} 返回 [{ timeDimension, collectedVolume }]
+ */
+export function getGarbageCollectionVolumeComparison(params) {
+  return requestClient.get('/envirhealth/garbage-collection/chart/collection-volume-comparison', { params });
+}
+
+/**
+ * 获取已完成品类收运量占比饼图数据
+ * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
+ */
+export function getGarbageCollectionCompletedVolumeByGarbageType() {
+  return requestClient.get('/envirhealth/garbage-collection/chart/completed-volume-by-garbage-type');
+}
+
+/**
+ * 获取已完成区域收运量占比饼图数据
+ * @returns {Promise<Array>} 返回 [{ name, value, proportion }]
+ */
+export function getGarbageCollectionCompletedVolumeByArea() {
+  return requestClient.get('/envirhealth/garbage-collection/chart/completed-volume-by-area');
 }
