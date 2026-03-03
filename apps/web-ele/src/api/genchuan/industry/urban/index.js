@@ -56,3 +56,7 @@ export function getRoadFacility(params) {
     params,
   });
 }
+/** 获得道路列表 */
+export function getRoadFacilityList(data) {
+  return requestClient.get('/facility/road-facility/page', data);
+}

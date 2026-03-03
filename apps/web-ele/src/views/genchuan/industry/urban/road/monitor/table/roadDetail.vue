@@ -26,25 +26,6 @@ const formatNumber = (value, precision = 0) => {
   return Number(value).toFixed(precision);
 };
 
-// 格式化使用状态显示
-const formatStatus = (value) => {
-  if (value === undefined || value === null || value === '-') return '-';
-  switch (value) {
-    case 1: {
-      return '正常';
-    }
-    case 2: {
-      return '维修中';
-    }
-    case 3: {
-      return '废弃';
-    }
-    default: {
-      return '未知';
-    }
-  }
-};
-
 // 计算属性处理标题，优先用路段名称，兜底显示道路设施详情
 const drawerTitle = computed(() => {
   const roadName = detailObj.value?.roadName || '道路设施详情';
@@ -90,8 +71,8 @@ defineExpose({
           <div class="detail-row-right">{{ detailObj.roadName || '-' }}</div>
         </div>
         <div class="detail-card-row">
-          <div class="detail-row-left">所属区域编码:</div>
-          <div class="detail-row-right">{{ detailObj.areaCode || '-' }}</div>
+          <div class="detail-row-left">区域名称:</div>
+          <div class="detail-row-right">{{ detailObj.areaName || '-' }}</div>
         </div>
         <div class="detail-card-row">
           <div class="detail-row-left">路段长度:</div>
@@ -106,20 +87,10 @@ defineExpose({
           </div>
         </div>
         <div class="detail-card-row">
-          <div class="detail-row-left">建成时间:</div>
-          <div class="detail-row-right">{{ detailObj.buildTime || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
           <div class="detail-row-left">使用状态:</div>
           <div class="detail-row-right">
-            <span
-              :class="{
-                'text-green-600': detailObj.status === 1,
-                'text-yellow-600': detailObj.status === 2,
-                'text-red-600': detailObj.status === 3,
-              }"
-            >
-              {{ formatStatus(detailObj.status) }}
+            <span>
+              {{ detailObj.status }}
             </span>
           </div>
         </div>
@@ -131,27 +102,6 @@ defineExpose({
         <div class="detail-card-row">
           <div class="detail-row-left">创建时间:</div>
           <div class="detail-row-right">{{ detailObj.createTime || '-' }}</div>
-        </div>
-      </div>
-
-      <!-- 扩展字段区域 -->
-      <div class="detail-section">
-        <div class="section-title">扩展字段</div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">通用扩展字段1:</div>
-          <div class="detail-row-right">{{ detailObj.extCommon1 || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">通用扩展字段2:</div>
-          <div class="detail-row-right">{{ detailObj.extCommon2 || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">通用扩展字段3:</div>
-          <div class="detail-row-right">{{ detailObj.extCommon3 || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">通用扩展字段4:</div>
-          <div class="detail-row-right">{{ detailObj.extCommon4 || '-' }}</div>
         </div>
       </div>
     </div>

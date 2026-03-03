@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
@@ -14,6 +14,7 @@ import {
   deleteRoad,
   exportRoadExcel,
   getRoadFacility,
+  getRoadFacilityList,
   getRoadList,
   updateRoad,
   updateRoadStatusList,
@@ -43,7 +44,8 @@ const props = defineProps({
 });
 const emit = defineEmits(['arrow-change']);
 const roadDetailRef = ref(null);
-const roadObj = ref({ detailObj: {} });
+const schemaData = ref(null);
+const roadObj = ref({ detailObj: {}, list: [] });
 // 新增：批量切换状态弹窗相关
 const switchDialogVisible = ref(false);
 const switchStatus = ref('运行中'); // 默认切换为运行中
@@ -52,7 +54,43 @@ const statusLoading = ref(false); // 批量操作加载状态
 const getTitle = computed(() => {
   return formData.value?.id ? '编辑' : '新增';
 });
-
+onMounted(async () => {
+  const roadList = await getRoadFacilityList({
+    pageNo: 1,
+    pageSize: 999,
+  });
+  roadObj.value.list = roadList.list;
+  let roadIndex = 0;
+  const schema = useFormSchema();
+  schema.forEach((v, i) => {
+    if (v.fieldName === 'roadId') {
+      roadIndex = i;
+    }
+  });
+  schema[roadIndex] = {
+    fieldName: 'roadId',
+    label: '道路名称',
+    component: 'Select',
+    labelWidth: '120',
+    componentProps: {
+      allowClear: true,
+      filterOption: true,
+      options: roadObj.value.list.map((v) => {
+        return {
+          label: v.roadName,
+          value: v.id,
+        };
+      }),
+      placeholder: '请选择设备在线状态',
+      showSearch: true,
+    },
+    rules: 'required',
+    isSearch: true,
+    addShow: true,
+    editShow: true,
+  };
+  schemaData.value = schema;
+});
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -116,8 +154,10 @@ async function handleExport() {
 function handleCreate() {
   formApi.resetForm();
   formApi.setState(() => {
+    const schema = schemaData.value.filter((v) => v.addShow);
+
     return {
-      schema: useFormSchema().filter((v) => v.addShow),
+      schema,
     };
   });
   formDrawerApi
@@ -132,7 +172,7 @@ function handleEdit(row) {
   formApi.resetForm();
   formApi.setState(() => {
     return {
-      schema: useFormSchema().map((v) => {
+      schema: schemaData.value.map((v) => {
         return {
           ...v,
           disabled: !v.editShow,
@@ -310,25 +350,7 @@ const settingConfig = () => {
 
 // 单个状态切换
 const handleMonitorStatusChange = async (row) => {
-  const loadingInstance = ElLoading.service({
-    text: '正在切换状态...',
-    target: document.body,
-    fullscreen: false,
-  });
-
-  try {
-    await updateRoad({ id: row.id, monitorStatus: row.monitorStatus });
-    ElMessage.success(
-      `已${row.monitorStatus === '运行中' ? '启动' : '停止'}【${row.roadName}】的监测`,
-    );
-    handleRefresh();
-  } catch (error) {
-    ElMessage.error(`状态切换失败：${error.message || '服务器异常'}`);
-    // 恢复原状态
-    row.monitorStatus = row.monitorStatus === '运行中' ? '已停止' : '运行中';
-  } finally {
-    loadingInstance.close();
-  }
+  await updateRoad({ ...row, monitorStatus: row.monitorStatus });
 };
 
 // 新增：批量切换状态弹窗打开方法
