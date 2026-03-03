@@ -407,6 +407,7 @@ export function useGridColumns() {
       title: '监测编码',
       minWidth: 180,
       sortable: true,
+      slots: { default: 'monitorCode' },
     },
     {
       field: 'roadName',

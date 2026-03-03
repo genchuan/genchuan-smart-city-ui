@@ -206,7 +206,7 @@ export function useFormSchema() {
   return [
     {
       fieldName: 'roadSectionName',
-      label: '统计名称',
+      label: '统计日期',
       component: 'Input',
       componentProps: {
         placeholder: '请输入统计名称（如：全省道路监测总计（2024-06））',
@@ -427,7 +427,7 @@ export function useGridColumns() {
     { type: 'checkbox', width: 40 },
     {
       field: 'roadSectionName',
-      title: '统计名称',
+      title: '统计日期',
       minWidth: 280,
       sortable: true,
       slots: { default: 'roadSectionName' },

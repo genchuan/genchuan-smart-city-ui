@@ -463,6 +463,15 @@ const handleSwitchConfirm = () => {
           />
         </div>
       </template>
+      <template #monitorCode="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.monitorCode }}
+        </el-text>
+      </template>
       <template #roadName="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
