@@ -1,4 +1,3 @@
-,
 <script setup>
 import { reactive } from 'vue';
 
@@ -8,9 +7,9 @@ import Columnar from '#/components/stats/columnar.vue';
 
 const state = reactive({
   cardList: [
-    { title: '今日申请数', value: 15, color: '#13ce66' },
-    { title: '已开具数', value: 14, color: '#4ECDC4' },
-    { title: '待开具数', value: 8, color: '#FF6B6B' },
+    { title: '总道路', value: 15, color: '#13ce66' },
+    { title: '可用道路', value: 14, color: '#4ECDC4' },
+    { title: '维修道路', value: 8, color: '#FF6B6B' },
   ],
 });
 </script>
@@ -28,29 +27,27 @@ const state = reactive({
     <Circle
       width="340px"
       height="330px"
-      title-text="发票类型占比"
+      title-text="道路类型占比"
       :data="[
-        { name: '普通发票', value: 4 },
-        { name: '增值税电子普通发票', value: 5 },
+        { name: '正常运行', value: 4 },
+        { name: '数据异常', value: 5 },
       ]"
     />
     <Circle
       width="340px"
       height="330px"
-      title-text="申请状态占比"
+      title-text="启用状态占比"
       :data="[
-        { name: '已开具', value: 4 },
-        { name: '待开具', value: 3 },
-        { name: '已作废', value: 1 },
-        { name: '已红冲', value: 1 },
+        { name: '启用', value: 4 },
+        { name: '禁用', value: 5 },
       ]"
       :colors="['#67C23A', '#E6A23C', '#F56C6C', '#909399']"
     />
     <Columnar
       height="330px"
-      title="订单类型"
-      :x-data="['临停', '期卡', '充值', '逃费追缴', '欠费追缴']"
-      :series-data="[{ name: '', data: [58, 42, 20, 17, 16] }]"
+      title="不同道路对比"
+      :x-data="['福州', '厦门', '泉州', '莆田', '漳州', '龙岩']"
+      :series-data="[{ name: '', data: [58, 42, 35, 15, 13, 33] }]"
     />
   </div>
 </template>
