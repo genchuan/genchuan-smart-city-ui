@@ -69,11 +69,11 @@ export function useGridColumns() {
       title: '配置名称',
       sortable: true,
     },
-    // {
-    //   field: 'roadName',
-    //   title: '道路名称',
-    //   sortable: true,
-    // },
+    {
+      field: 'roadName',
+      title: '道路名称',
+      sortable: true,
+    },
     {
       field: 'collectFrequency',
       title: '采集频率(分钟)',

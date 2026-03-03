@@ -13,8 +13,10 @@ import {
   addRoad,
   deleteRoad,
   exportRoadExcel,
+  getRoadFacility,
   getRoadList,
   updateRoad,
+  updateRoadStatusList,
 } from '#/api/genchuan/industry/urban/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
@@ -22,6 +24,7 @@ import { formatTimestamp } from '#/utils';
 import { useFormSchema, useGridColumns } from './data';
 // 引入封装后的详情抽屉组件
 import tableDetail from './detail.vue';
+import roadDetail from './roadDetail.vue';
 import settingTable from './setting/index.vue';
 
 const props = defineProps({
@@ -39,7 +42,8 @@ const props = defineProps({
   },
 });
 const emit = defineEmits(['arrow-change']);
-
+const roadDetailRef = ref(null);
+const roadObj = ref({ detailObj: {} });
 // 新增：批量切换状态弹窗相关
 const switchDialogVisible = ref(false);
 const switchStatus = ref('运行中'); // 默认切换为运行中
@@ -340,14 +344,22 @@ const switchOpen = () => {
 };
 
 // 新增：批量切换状态确认方法
-const handleSwitchConfirm = () => {
+const handleSwitchConfirm = async () => {
   statusLoading.value = true;
-  recordsList.value.forEach(async (v) => {
-    await updateRoad({ ...v, monitorStatus: switchStatus.value });
+  await updateRoadStatusList({
+    roadIdList: recordsList.value.map((v) => v.roadId),
+    monitorStatus: switchStatus.value,
   });
   statusLoading.value = false;
   switchDialogVisible.value = false;
   handleRefresh();
+};
+const openRoadDetail = async (row) => {
+  const resObj = await getRoadFacility({
+    id: row.roadId,
+  });
+  roadObj.value.detailObj = resObj;
+  roadDetailRef.value.open();
 };
 </script>
 
@@ -403,6 +415,12 @@ const handleSwitchConfirm = () => {
     <tableDetail
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
+      title="详情"
+    />
+    <!-- 道路详情 -->
+    <roadDetail
+      ref="roadDetailRef"
+      :detail-obj="roadObj.detailObj"
       title="详情"
     />
     <Drawer title="搜索">
@@ -474,7 +492,7 @@ const handleSwitchConfirm = () => {
       </template>
       <template #roadName="{ row }">
         <el-text
-          @click="handleOpenDetail(row)"
+          @click="openRoadDetail(row)"
           class="common-align"
           type="primary"
         >

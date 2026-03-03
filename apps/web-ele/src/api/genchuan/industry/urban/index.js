@@ -42,3 +42,17 @@ export function updateRoadConfig(data) {
 export function deleteRoadConfig(id) {
   return requestClient.delete(`/facility/road-config/delete?id=${id}`);
 }
+
+/** 批量修改道路设施状态 */
+export function updateRoadStatusList(data) {
+  return requestClient.post(
+    '/facility/monitor/batch-update-monitor-status',
+    data,
+  );
+}
+/** 获得道路设施 */
+export function getRoadFacility(params) {
+  return requestClient.get('/facility/road-facility/get', {
+    params,
+  });
+}
