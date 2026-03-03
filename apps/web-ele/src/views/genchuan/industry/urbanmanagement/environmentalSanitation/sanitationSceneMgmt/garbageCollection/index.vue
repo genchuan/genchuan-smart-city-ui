@@ -21,6 +21,7 @@ import {
   getGarbageAbnormalPage,
   getGarbageCollectionStatistics,
   deleteGarbageAbnormal,
+  deleteGarbageAbnormalBatch,
   exportGarbageAbnormalExcel,
   updateGarbageAbnormal,
   createGarbageAbnormal,
@@ -357,12 +358,11 @@ async function handleDeleteBatch() {
     const isAbnormal = activeName.value === '异常待处置' || activeName.value === '处置待复核';
 
     if (!isAbnormal) {
+      // 收运计划批量删除
       await deleteGarbageCollectionBatch(checkedIds.value);
     } else {
-      const deleteApi = deleteGarbageAbnormal;
-      for (const id of checkedIds.value) {
-        await deleteApi(id);
-      }
+      // 异常记录批量删除
+      await deleteGarbageAbnormalBatch(checkedIds.value);
     }
 
     checkedIds.value = [];
@@ -371,6 +371,7 @@ async function handleDeleteBatch() {
   } catch (error) {
     console.warn('批量删除失败', error);
     ElMessage.error('批量删除失败：' + (error.message || '未知错误'));
+    // 出现异常时，建议也刷新列表或清空选中状态
     checkedIds.value = [];
     handleRefresh();
   } finally {

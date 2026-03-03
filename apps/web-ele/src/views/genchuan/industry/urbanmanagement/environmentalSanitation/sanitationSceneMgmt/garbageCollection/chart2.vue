@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, watch } from 'vue';
+import { reactive, watch, ref } from 'vue';
 import Indicator from '#/components/stats/indicator.vue';
 import Pie from '#/components/stats/pie.vue';
 import Bar from '#/components/stats/bar.vue';
@@ -205,13 +205,29 @@ const fetchExecutingData = async () => {
   }
 };
 
-// ---------- 已完成专用状态 ----------
+// ---------- 已完成专用状态（新增维度切换相关） ----------
 const completedState = reactive({
   card: { completedTaskCount: 0, totalCollectedVolume: 0, averageCompletionRate: 0, abnormalCompleteRate: 0 },
   pieArea: [],
   pieType: [],
-  barComparison: {x: [], series: []},
-  trendCompletion: {x: [], series: []}
+  barComparison: { x: [], series: [] },   // 当前显示的柱状图数据
+  trendCompletion: { x: [], series: [] },
+  comparisonRaw: { today: [], week: [], month: [] } // 存储原始多维度数据
+});
+
+// 当前选中的对比维度，默认 'today'
+const comparisonDimension = ref('today');
+
+// 根据维度更新柱状图数据
+const updateBarComparisonByDimension = (dim) => {
+  const rawData = completedState.comparisonRaw[dim] || [];
+  completedState.barComparison.x = rawData.map(item => item.timeDimension);
+  completedState.barComparison.series = rawData.map(item => item.collectedVolume || 0);
+};
+
+// 监听维度变化，自动更新图表
+watch(comparisonDimension, (newDim) => {
+  updateBarComparisonByDimension(newDim);
 });
 
 const fetchCompletedData = async () => {
@@ -221,13 +237,13 @@ const fetchCompletedData = async () => {
     const [
       cardRes,
       trendRes,
-      comparisonRes,
+      comparisonRes,        // 后端返回格式：{ today: [], week: [], month: [] }
       pieTypeRes,
       pieAreaRes
     ] = await Promise.all([
       getGarbageCollectionCardCompleted(),
       getGarbageCollectionCompletionRateTrend({startTime, endTime}),
-      getGarbageCollectionVolumeComparison({dimension: 'day', startTime, endTime}),
+      getGarbageCollectionVolumeComparison({startTime, endTime}), // 注意：不再传 dimension 参数
       getGarbageCollectionCompletedVolumeByGarbageType(),
       getGarbageCollectionCompletedVolumeByArea()
     ]);
@@ -246,9 +262,15 @@ const fetchCompletedData = async () => {
       completedState.trendCompletion.series = trendRes.map(item => item.completionRate || 0);
     }
 
-    if (Array.isArray(comparisonRes)) {
-      completedState.barComparison.x = comparisonRes.map(item => item.timeDimension);
-      completedState.barComparison.series = comparisonRes.map(item => item.collectedVolume || 0);
+    // 处理多维度对比数据
+    if (comparisonRes && typeof comparisonRes === 'object') {
+      completedState.comparisonRaw = {
+        today: comparisonRes.today || [],
+        week: comparisonRes.week || [],
+        month: comparisonRes.month || []
+      };
+      // 根据当前维度更新柱状图
+      updateBarComparisonByDimension(comparisonDimension.value);
     }
 
     if (Array.isArray(pieTypeRes)) {
@@ -441,6 +463,27 @@ watch(() => props.activeName, (newVal) => {
 
     <!-- 已完成 -->
     <template v-else-if="activeName === '已完成'">
+      <div class="dimension-switch">
+        <button
+          :class="{ active: comparisonDimension === 'today' }"
+          @click="comparisonDimension = 'today'"
+        >
+          日
+        </button>
+        <button
+          :class="{ active: comparisonDimension === 'week' }"
+          @click="comparisonDimension = 'week'"
+        >
+          周
+        </button>
+        <button
+          :class="{ active: comparisonDimension === 'month' }"
+          @click="comparisonDimension = 'month'"
+        >
+          月
+        </button>
+      </div>
+
       <div class="box-left">
         <Indicator
           class="left-card"
@@ -477,12 +520,6 @@ watch(() => props.activeName, (newVal) => {
         title-text="品类收运量占比"
         :data="completedState.pieType"
       />
-      <Bar
-        style="flex:1"
-        title="按日收运量对比"
-        :x-data="completedState.barComparison.x"
-        :series-data="[{ name: '收运量(吨)', data: completedState.barComparison.series }]"
-      />
       <LineChart
         style="flex:1"
         title="收运完成率趋势"
@@ -490,6 +527,12 @@ watch(() => props.activeName, (newVal) => {
         :series-data="[{ name: '完成率', data: completedState.trendCompletion.series }]"
         y-name="%"
         :smooth="true"
+      />
+      <Bar
+        style="flex:1"
+        :title="`${comparisonDimension === 'today' ? '按日' : comparisonDimension === 'week' ? '按周' : '按月'}收运量对比`"
+        :x-data="completedState.barComparison.x"
+        :series-data="[{ name: '收运量(吨)', data: completedState.barComparison.series }]"
       />
     </template>
   </div>
@@ -524,6 +567,36 @@ watch(() => props.activeName, (newVal) => {
     min-width: 280px;
     max-width: 320px;
     margin: 0;
+  }
+
+  /* 新增维度切换按钮样式 */
+  .dimension-switch {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 8px;
+
+    button {
+      padding: 4px 12px;
+      border: 1px solid #dcdfe6;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+
+      &:hover {
+        border-color: #409eff;
+        color: #409eff;
+      }
+
+      &.active {
+        background: #409eff;
+        border-color: #409eff;
+        color: white;
+      }
+    }
   }
 }
 </style>

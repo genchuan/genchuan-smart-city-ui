@@ -12,10 +12,12 @@ import ParkDetailDrawer from './detail.vue';
 import Chart2 from './chart2.vue';
 import {
   dataList,
+} from '#/api/genchuan/industry/urbanmanagement/environmentalSanitation/sanitationSceneMgmt/publicToilet/data.js';
+import {
   textObj,
   useFormSchema,
   getColumnsByStatus,
-} from '#/api/genchuan/industry/urbanmanagement/environmentalSanitation/sanitationSceneMgmt/publicToilet/data.js';
+} from '#/api/genchuan/industry/urbanmanagement/environmentalSanitation/sanitationSceneMgmt/publicToilet/form.js';
 
 const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);

@@ -7,6 +7,14 @@ import PublicToilet from '../sanitationSceneMgmt/publicToilet/index.vue';
 import PublicToiletChart from '../sanitationSceneMgmt/publicToilet/chart.vue';
 import RoadCleaning from '../sanitationSceneMgmt/roadCleaning/index.vue';
 import RoadCleaningChart from '../sanitationSceneMgmt/roadCleaning/chart.vue';
+import garbageTransfer from '../sanitationSceneMgmt/garbageTransfer/index.vue';
+import garbageTransferChart from '../sanitationSceneMgmt/garbageTransfer/chart.vue';
+import publicInstitution from '../sanitationSceneMgmt/publicInstitution/index.vue';
+import publicInstitutionChart from '../sanitationSceneMgmt/publicInstitution/chart.vue';
+import commercialStreet from '../sanitationSceneMgmt/commercialStreet/index.vue';
+import commercialStreetChart from '../sanitationSceneMgmt/commercialStreet/chart.vue';
+import parkEnvironment from '../sanitationSceneMgmt/parkEnvironment/index.vue';
+import parkEnvironmentChart from '../sanitationSceneMgmt/parkEnvironment/chart.vue';
 
 import '#/components/page/index.scss';
 
@@ -40,6 +48,42 @@ const tabArray = ref([
     label: '道路清扫管理',
     components: RoadCleaning,
     chartComponent: RoadCleaningChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false,
+  },
+  {
+    label: '垃圾转运站管理',
+    components: garbageTransfer,
+    chartComponent: garbageTransferChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false,
+  },
+  {
+    label: '公共机构环境管理',
+    components: publicInstitution,
+    chartComponent: publicInstitutionChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false,
+  },
+  {
+    label: '商业街环境管理',
+    components: commercialStreet,
+    chartComponent: commercialStreetChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false,
+  },
+  {
+    label: '公园环境管理',
+    components: parkEnvironment,
+    chartComponent: parkEnvironmentChart,
     showSecondary: true,
     secondShow: false,
     arrowShow: true,
