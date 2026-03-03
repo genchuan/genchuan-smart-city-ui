@@ -243,9 +243,8 @@ const getTableData = async (pageObj) => {
   dataObj.list = data.list.map((v) => {
     return {
       ...v,
-      driveInTime: formatTimestamp(v.driveInTime),
+      updateTime: formatTimestamp(v.updateTime),
       createTime: formatTimestamp(v.createTime),
-      driveOutTime: formatTimestamp(v.driveOutTime),
     };
   });
   return dataObj;

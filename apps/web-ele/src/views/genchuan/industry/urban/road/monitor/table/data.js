@@ -403,13 +403,6 @@ export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
     {
-      field: 'monitorCode',
-      title: '监测编码',
-      minWidth: 180,
-      sortable: true,
-      slots: { default: 'monitorCode' },
-    },
-    {
       field: 'roadName',
       title: '路段名称',
       minWidth: 200,
@@ -422,10 +415,11 @@ export function useGridColumns() {
       minWidth: 100,
       sortable: true,
     },
+
     {
-      field: 'crackLengthThreshold',
-      title: '裂缝长度阈值(米)',
-      minWidth: 140,
+      field: 'crackLength',
+      title: '裂缝长度(米)',
+      minWidth: 120,
       sortable: true,
     },
     {
@@ -441,10 +435,11 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'deviceCode',
-      title: '设备编码',
+      field: 'monitorCode',
+      title: '监测编码',
       minWidth: 180,
       sortable: true,
+      slots: { default: 'monitorCode' },
     },
     {
       field: 'deviceOnlineStatus',
@@ -459,11 +454,18 @@ export function useGridColumns() {
       sortable: true,
     },
     {
+      field: 'collectFrequencySnapshot',
+      title: '采集频率快照(分钟)',
+      minWidth: 160,
+      sortable: true,
+    },
+    {
       field: 'syncDuration',
       title: '数据同步时长(秒)',
       minWidth: 140,
       sortable: true,
     },
+
     {
       field: 'monitorStatus',
       title: '监测状态',
@@ -478,11 +480,19 @@ export function useGridColumns() {
       sortable: false,
     },
     {
-      field: 'crackLength',
-      title: '裂缝长度(米)',
-      minWidth: 120,
+      field: 'crackLengthThreshold',
+      title: '裂缝长度阈值(米)',
+      minWidth: 140,
       sortable: true,
     },
+
+    {
+      field: 'deviceCode',
+      title: '设备编码',
+      minWidth: 180,
+      sortable: true,
+    },
+
     {
       field: 'potholeNumThreshold',
       title: '坑洼数量阈值',
@@ -503,35 +513,11 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'collectFrequencySnapshot',
-      title: '采集频率快照(分钟)',
-      minWidth: 160,
+      field: 'updateTime',
+      title: '更新时间',
+      minWidth: 180,
       sortable: true,
     },
-    {
-      field: 'isWarning',
-      title: '是否预警',
-      minWidth: 100,
-      sortable: true,
-    },
-    {
-      field: 'warningId',
-      title: '预警ID',
-      minWidth: 100,
-      sortable: true,
-    },
-    {
-      field: 'staffId',
-      title: '运维员ID',
-      minWidth: 100,
-      sortable: true,
-    },
-    // {
-    //   field: 'recordTime',
-    //   title: '记录时间',
-    //   minWidth: 180,
-    //   sortable: true,
-    // },
     {
       field: 'createTime',
       title: '创建时间',
