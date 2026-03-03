@@ -124,6 +124,13 @@ const initChart = async () => {
         name: seriesItem.name,
         type: 'bar',
         data: seriesItem.data.map((value, idx) => ({ value })),
+        label: {
+          show: true,
+          position: 'top',
+          color: '#333',
+          fontSize: 12,
+          formatter: '{c}',
+        },
         emphasis: {
           itemStyle: {
             shadowBlur: 10,

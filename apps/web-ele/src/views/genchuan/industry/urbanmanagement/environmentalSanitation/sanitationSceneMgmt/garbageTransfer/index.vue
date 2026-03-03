@@ -12,12 +12,12 @@ import ParkDetailDrawer from './detail.vue';
 import Chart2 from './chart2.vue';
 import {
   dataList,
-} from '#/api/genchuan/industry/urbanmanagement/environmentalSanitation/sanitationSceneMgmt/roadCleaning/data.js';
+} from '#/api/genchuan/industry/urbanmanagement/environmentalSanitation/sanitationSceneMgmt/garbageTransfer/data.js';
 import {
   textObj,
   useFormSchema,
   getColumnsByStatus,
-} from '#/api/genchuan/industry/urbanmanagement/environmentalSanitation/sanitationSceneMgmt/roadCleaning/form.js';
+} from '#/api/genchuan/industry/urbanmanagement/environmentalSanitation/sanitationSceneMgmt/garbageTransfer/form.js';
 
 const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
@@ -121,10 +121,10 @@ const dataObj = reactive({
 const activeName = ref('全部');
 const tabsData = ref([
   {label: '全部'},
-  {label: '清扫待执行'},
+  {label: '车辆待进站'},
   {label: '作业进行中'},
-  {label: '问题待处置'},
-  {label: '质量待核查'},
+  {label: '预警待处理'},
+  {label: '设备待维护'},
   {label: '已完成'},
 ]);
 
@@ -188,7 +188,7 @@ const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
   parkDetailDrawerRef.value.open();
 };
-// 特殊字段钻取（如区域、路段等）
+// 特殊字段钻取（如区域、投诉编号等）
 const handleOpenAreaFilter = (area) => {
   activeName.value = '全部';
   // 可以触发查询，这里简单刷新
@@ -198,12 +198,12 @@ const handleOpenStatusFilter = (status) => {
   activeName.value = status;
   gridApi.query();
 };
-const handleOpenProblemDetail = (row) => {
+const handleOpenComplaintDetail = (row) => {
   dataObj.detailObj = row;
   parkDetailDrawerRef.value.open();
 };
 const arrowChange = () => emit('arrow-change');
-const handleProcess = (row) => ElMessage.info(`处理计划：${row.planNo}，状态：${row.status}`);
+const handleProcess = (row) => ElMessage.info(`处理任务：${row.toiletName}，状态：${row.status}`);
 
 const showChart = ref(true);
 const toggleChart = () => {
@@ -247,14 +247,8 @@ const toggleChart = () => {
       </template>
 
       <!-- 钻取列自定义渲染 -->
-      <template #planNo="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.planNo }}</el-text>
-      </template>
-      <template #roadName="{ row }">
-        <el-text @click="handleOpenAreaFilter(row.roadName)" type="primary">{{
-            row.roadName
-          }}
-        </el-text>
+      <template #toiletName="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.toiletName }}</el-text>
       </template>
       <template #area="{ row }">
         <el-text @click="handleOpenAreaFilter(row.area)" type="primary">{{ row.area }}</el-text>
@@ -265,17 +259,42 @@ const toggleChart = () => {
           }}
         </el-text>
       </template>
-      <template #problemId="{ row }">
-        <el-text @click="handleOpenProblemDetail(row)" type="primary">{{ row.problemId }}</el-text>
+      <template #reserveId="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.reserveId }}</el-text>
       </template>
-      <template #problemType="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.problemType }}</el-text>
+      <template #licensePlate="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.licensePlate }}</el-text>
       </template>
-      <template #checkPhotoUrl="{ row }">
-        <span v-if="row.checkPhotoUrl">
-          <a v-for="(url, index) in row.checkPhotoUrl.split(',')" :key="index" :href="url"
-             target="_blank">照片{{ index + 1 }} </a>
-        </span>
+      <template #garbageType="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.garbageType }}</el-text>
+      </template>
+      <template #operationId="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.operationId }}</el-text>
+      </template>
+      <template #alarmId="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.alarmId }}</el-text>
+      </template>
+      <template #alarmType="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.alarmType }}</el-text>
+      </template>
+      <template #transferName="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.transferName }}</el-text>
+      </template>
+      <template #maintenanceId="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.maintenanceId }}</el-text>
+      </template>
+      <template #equipmentName="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.equipmentName }}</el-text>
+      </template>
+      <template #taskType="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.taskType }}</el-text>
+      </template>
+      <template #photoUrl="{ row }">
+        <a v-if="row.photoUrl" :href="row.photoUrl" target="_blank">查看</a>
+        <span v-else>-</span>
+      </template>
+      <template #proofUrl="{ row }">
+        <a v-if="row.proofUrl" :href="row.proofUrl" target="_blank">查看</a>
         <span v-else>-</span>
       </template>
 
@@ -295,20 +314,21 @@ const toggleChart = () => {
           </el-icon>
           <span>本页统计：任务总数{{
               dataObj.list.length
-            }}; 清扫待执行{{
-              dataObj.list.filter(v => v.status === '清扫待执行').length
+            }}; 车辆待进站{{
+              dataObj.list.filter(v => v.status === '车辆待进站').length
             }}; 作业进行中{{
               dataObj.list.filter(v => v.status === '作业进行中').length
-            }}; 问题待处置{{
-              dataObj.list.filter(v => v.status === '问题待处置').length
-            }}; 质量待核查{{
-              dataObj.list.filter(v => v.status === '质量待核查').length
+            }}; 预警待处理{{
+              dataObj.list.filter(v => v.status === '预警待处理').length
+            }}; 设备待维护{{
+              dataObj.list.filter(v => v.status === '设备待维护').length
             }}; 已完成{{ dataObj.list.filter(v => v.status === '已完成').length }}</span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span>全部统计：{{ textObj.total }}</span>
-          <div v-if="dataObj.totalShow && showChart && activeName !== '全部'" class="bottom-chart-wrapper">
-            <Chart2 :active-name="activeName" :data-list="dataObj.apilist" />
+          <div v-if="dataObj.totalShow && showChart && activeName !== '全部'"
+               class="bottom-chart-wrapper">
+            <Chart2 :active-name="activeName" :data-list="dataObj.apilist"/>
           </div>
         </div>
       </template>

@@ -133,6 +133,16 @@ export function deleteGarbageAbnormal(id) {
   return requestClient.delete(`/envirhealth/garbage-abnormal/delete?id=${id}`);
 }
 
+/**
+ * 批量删除垃圾异常记录
+ * @param {Array} ids - 异常记录ID数组
+ * @returns {Promise}
+ */
+export function deleteGarbageAbnormalBatch(ids) {
+  return requestClient.delete('/envirhealth/garbage-abnormal/delete-batch', { data: ids });
+}
+
+
 // ------全部状态下------
 
 /**
