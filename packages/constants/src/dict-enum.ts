@@ -173,6 +173,12 @@ const IOT_DICT = {
   IOT_VALIDATE_TYPE: 'iot_validate_type', // IOT 数据校验级别
 } as const;
 
+/** ========== DATA - 数据中枢模块 ========== */
+const DATA_DICT = {
+  DATA_MANAGEPART_CATEGORYTYPE: 'category_type', // 管理部件分类类型
+  DATA_MANAGEPART_RUNSTATUS: 'run_status', // 管理部件实例运行状态
+} as const;
+
 /** 字典类型枚举 - 统一导出 */
 const DICT_TYPE = {
   ...AI_DICT,
@@ -187,6 +193,7 @@ const DICT_TYPE = {
   ...MALL_DICT,
   ...SYSTEM_DICT,
   ...COMMON_DICT,
+  ...DATA_DICT,
 } as const;
 
 export { DICT_TYPE };

@@ -28,7 +28,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'confirm']);
 
-const [DetailDrawer, drawerApi] = useVbenDrawer({
+const [DrawerComponent, drawerApi] = useVbenDrawer({
   width: props.width,
   mask: false,
   modal: false,
@@ -76,7 +76,7 @@ defineExpose({
 </script>
 
 <template>
-  <DetailDrawer>
+  <DrawerComponent>
     <div class="detail-container">
       <div
         class="detail-card"
@@ -88,8 +88,15 @@ defineExpose({
             <span class="detail-label">{{ field.label }}:</span>
             <span class="detail-value">
               <template v-if="field.type === 'tag'">
-                <el-tag :type="field.tagType?.(item[field.key]) || 'info'">
-                  {{ item[field.key] }}
+                <el-tag :type="(() => {
+                  const type = field.tagType?.(item[field.key]) || 'info';
+                  switch(type) {
+                    case 'blue': return 'primary';
+                    case 'green': return 'success';
+                    default: return type;
+                  }
+                })()">
+                  {{ formatValue(field, item[field.key]) }}
                 </el-tag>
               </template>
               <template v-else>
@@ -104,7 +111,7 @@ defineExpose({
         ></div>
       </div>
     </div>
-  </DetailDrawer>
+  </DrawerComponent>
 </template>
 
 <style scoped>

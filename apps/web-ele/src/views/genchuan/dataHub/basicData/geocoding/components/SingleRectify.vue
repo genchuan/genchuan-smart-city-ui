@@ -157,7 +157,7 @@ const handleCancel = () => {
   margin-bottom: 20px;
   font-size: 16px;
   font-weight: bold;
-  border-bottom: 1px solid #eaeaea;
+  border-bottom: 1px solid var(--el-border-color);
 }
 
 .content {
@@ -168,7 +168,7 @@ const handleCancel = () => {
 .data-info {
   padding: 15px;
   margin-bottom: 20px;
-  background-color: #f5f7fa;
+  background-color: var(--el-bg-color-secondary);
   border-radius: 4px;
 }
 
@@ -192,16 +192,18 @@ const handleCancel = () => {
   margin: 20px 0;
 }
 
-.success-info,
-.error-info {
+.success-info {
   padding: 10px;
   margin-top: 10px;
-  background-color: #f0f9eb;
+  background-color: var(--el-color-success-light-9);
   border-radius: 4px;
 }
 
 .error-info {
-  background-color: #fef0f0;
+  padding: 10px;
+  margin-top: 10px;
+  background-color: var(--el-color-danger-light-9);
+  border-radius: 4px;
 }
 
 .dialog-footer {
@@ -210,6 +212,6 @@ const handleCancel = () => {
   justify-content: flex-end;
   padding-top: 10px;
   margin-top: 20px;
-  border-top: 1px solid #eaeaea;
+  border-top: 1px solid var(--el-border-color);
 }
 </style>

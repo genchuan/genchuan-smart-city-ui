@@ -1,7 +1,7 @@
 import { useDictStore } from '@vben/stores';
 import { isObject } from '@vben/utils';
 
-type ColorType = 'error' | 'info' | 'success' | 'warning';
+type ColorType = 'danger' | 'error' | 'info' | 'primary' | 'success' | 'warning' | 'orange' | 'green' | 'cyan' | 'blue' | 'purple' | 'pink' | 'red' | string;
 
 export interface DictDataType {
   dictType?: string;
@@ -80,6 +80,8 @@ export function getDictOptions(
       dictOptions.push({
         value: dictValue,
         label: d.label,
+        colorType: d.colorType as ColorType,
+        cssClass: d.cssClass,
       });
     });
   }
