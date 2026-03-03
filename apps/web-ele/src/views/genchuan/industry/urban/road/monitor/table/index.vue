@@ -114,6 +114,7 @@ async function handleExport() {
 }
 /** 创建 */
 function handleCreate() {
+  formApi.resetForm();
   formApi.setState(() => {
     return {
       schema: useFormSchema().filter((v) => v.addShow),
@@ -128,6 +129,7 @@ function handleCreate() {
 /** 编辑 */
 function handleEdit(row) {
   dataObj.editObj = row;
+  formApi.resetForm();
   formApi.setState(() => {
     return {
       schema: useFormSchema().map((v) => {
