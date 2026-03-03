@@ -60,7 +60,7 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '由负责人自动填充',
         disabled: true, // 禁用输入
-        },
+      },
     },
     {
       fieldName: 'relatedId',
@@ -134,19 +134,22 @@ export function useGridColumns() {
       field: 'code',
       title: '对象编码',
       minWidth: 120,
-      sortable: true
+      sortable: true,
+      slots: { default: 'code' }
     },
     {
       field: 'areaName',
       title: '所属区域',
       minWidth: 120,
-      sortable: true
+      sortable: true,
+      slots: { default: 'areaName' }
     },
     {
       field: 'objectTypeName',
       title: '对象类型',
       minWidth: 100,
-      sortable: true
+      sortable: true,
+      slots: { default: 'objectTypeName' }
     },
     {
       field: 'managerName',
@@ -164,13 +167,15 @@ export function useGridColumns() {
       field: 'relatedName',
       title: '关联网格/部门',
       minWidth: 180,
-      sortable: true
+      sortable: true,
+      slots: { default: 'relatedName' }
     },
     {
       field: 'statusName',
       title: '状态',
       minWidth: 100,
-      sortable: true
+      sortable: true,
+      slots: { default: 'statusName' }
     },
     {
       field: 'createUserName',

@@ -55,6 +55,7 @@ export function useFormSchema() {
       component: 'Input',
       componentProps: { placeholder: '请输入计划单编号（新增时自动生成）' },
       labelWidth: '120',
+      rules: 'required',
       searchFilter: true,
     },
     {
@@ -66,6 +67,7 @@ export function useFormSchema() {
         placeholder: '请选择收运品类',
         options: [],
       },
+      rules: 'required',
       searchFilter: true,
     },
     {
@@ -77,6 +79,7 @@ export function useFormSchema() {
         placeholder: '请选择收运区域',
         options: [],
       },
+      rules: 'required',
       searchFilter: true,
     },
     {
@@ -89,6 +92,7 @@ export function useFormSchema() {
         multiple: true,
         options: [],
       },
+      rules: 'required',
     },
     {
       fieldName: 'frequency',
@@ -99,6 +103,7 @@ export function useFormSchema() {
         placeholder: '请选择收运频次',
         options: [],
       },
+      rules: 'required',
       searchFilter: true,
     },
     {
@@ -110,6 +115,7 @@ export function useFormSchema() {
         placeholder: '请选择收运时段',
         options: [],
       },
+      rules: 'required',
     },
     {
       fieldName: 'vehicleId',
@@ -120,6 +126,7 @@ export function useFormSchema() {
         placeholder: '请选择车辆',
         options: [],
       },
+      rules: 'required',
       searchFilter: true,
     },
     {
@@ -132,6 +139,7 @@ export function useFormSchema() {
         multiple: true,
         options: [],
       },
+      rules: 'required',
     },
     {
       fieldName: 'planStatusId',
@@ -224,6 +232,7 @@ export function useAbnormalFormSchema() {
         placeholder: '请选择异常类型',
         options: [],
       },
+      rules: 'required',
       searchFilter: true,
     },
     {
@@ -314,6 +323,7 @@ export function useAbnormalFormSchema() {
         type: 'textarea',
         rows: 3,
       },
+      rules: 'required',
       labelWidth: '120',
     },
     {

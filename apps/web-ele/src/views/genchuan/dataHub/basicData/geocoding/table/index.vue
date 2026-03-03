@@ -1,10 +1,10 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage, ElTag, ElTree } from 'element-plus';
+import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -37,7 +37,13 @@ const props = defineProps({
     type: Function,
     default: () => {},
   },
+  filterGeoCode: {
+    type: String,
+    default: '',
+  },
 });
+
+const emit = defineEmits(['clearFilter']);
 const getTitle = computed(() => {
   return formData.value?.geoCode ? textObj.editText : textObj.addText;
 });
@@ -164,6 +170,9 @@ function handleEdit(row) {
     .open();
 }
 async function handleDelete(row) {
+  const confirmResult = await confirm(`确定删除地理编码 "${row.locationName}" 吗？`);
+  if (!confirmResult) return;
+  
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting', [row.locationName]),
   });
@@ -258,7 +267,7 @@ const getTableData = (pageObj) => {
 
     // 树形结构筛选
     let geoCodeMatch = true;
-    if (filterGeoCode.value) {
+    if (props.filterGeoCode) {
       // 筛选当前节点及其所有子节点
       const isChildOf = (nodeId, parentId) => {
         const node = dataObj.apilist.find((item) => item.geoCode === nodeId);
@@ -270,8 +279,8 @@ const getTableData = (pageObj) => {
         return false;
       };
       geoCodeMatch =
-        v.geoCode === filterGeoCode.value ||
-        isChildOf(v.geoCode, filterGeoCode.value);
+        v.geoCode === props.filterGeoCode ||
+        isChildOf(v.geoCode, props.filterGeoCode);
     }
 
     // 搜索条件筛选
@@ -349,39 +358,19 @@ function onSubmit(values) {
   drawerApi.close();
 }
 
+// 监听 filterGeoCode 变化，刷新表格
+watch(
+  () => props.filterGeoCode,
+  () => {
+    handleRefresh();
+  },
+);
+
 const activeName = ref('全部');
 const filterLocationName = ref(''); // 地点名称筛选
 const filterAreaName = ref(''); // 所属区域筛选
 const filterLayerTypeName = ref(''); // 图层类型筛选
 const filterCheckResultName = ref(''); // 数据质量校验结果筛选
-const filterGeoCode = ref(''); // 地理编码筛选（树形结构）
-
-// 构建树形数据
-const treeData = computed(() => {
-  const allData = dataObj.apilist;
-  const rootNodes = allData.filter((item) => item.parentGeoCodeId === null);
-
-  const buildTree = (nodes) => {
-    return nodes.map((node) => {
-      const children = allData.filter(
-        (item) => item.parentGeoCodeId === node.geoCode,
-      );
-      return {
-        id: node.geoCode,
-        label: `${node.locationName} (${node.layerTypeName})`,
-        children: children.length > 0 ? buildTree(children) : [],
-      };
-    });
-  };
-
-  return buildTree(rootNodes);
-});
-
-// 处理树形节点点击
-const handleTreeNodeClick = (data) => {
-  filterGeoCode.value = data.id;
-  gridApi.query();
-};
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
@@ -601,265 +590,231 @@ const handleCancelCheckResultNameFilter = () => {
         @confirm="handleSingleRectifyConfirm"
       />
     </SingleRectifyDrawer>
-    <div
-      style="
-        display: flex;
-        gap: 20px;
-        align-items: flex-start;
-        height: calc(100vh - 200px);
-      "
-    >
-      <!-- 左侧树形结构 -->
-      <div
-        style="
-          width: 300px;
-          max-height: calc(100vh - 220px);
-          margin-top: 43px;
-          overflow: auto;
-          border: 1px solid #e4e7ed;
-          border-radius: 4px;
-        "
-      >
-        <ElTree
-          :data="treeData"
-          node-key="id"
-          @node-click="handleTreeNodeClick"
-          :default-expand-all="true"
-          style="padding: 10px"
-        />
-      </div>
-      <!-- 右侧表格 -->
-      <div style="flex: 1; max-height: calc(100vh - 200px); overflow: auto">
-        <Grid>
-          <!-- 三级状态 -->
-          <template #table-title>
-            <div
-              class="tabel-tabs"
-              style="
-                display: flex;
-                flex-wrap: wrap;
-                gap: 16px;
-                align-items: center;
-              "
+    <Grid>
+      <!-- 三级状态 -->
+      <template #table-title>
+        <div
+          class="tabel-tabs"
+          style="
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+          "
+        >
+          <div v-if="props.secondShow">
+            <el-tabs
+              v-model="activeName"
+              class="demo-tabs"
+              @tab-change="handleClick"
             >
-              <div v-if="props.secondShow">
-                <el-tabs
-                  v-model="activeName"
-                  class="demo-tabs"
-                  @tab-change="handleClick"
-                >
-                  <el-tab-pane
-                    v-for="item in tabsData"
-                    :key="item.label"
-                    :label="createLabel(item)"
-                    :name="item.label"
-                  />
-                </el-tabs>
-              </div>
-              <!-- 地点名称筛选标签 -->
-              <ElTag
-                v-if="filterLocationName"
-                type="primary"
-                closable
-                @close="handleCancelLocationNameFilter"
-                style="height: 32px; margin: 4px 0; line-height: 32px"
-              >
-                地点名称：{{ filterLocationName }}
-              </ElTag>
-              <!-- 所属区域筛选标签 -->
-              <ElTag
-                v-if="filterAreaName"
-                type="success"
-                closable
-                @close="handleCancelAreaNameFilter"
-                style="height: 32px; margin: 4px 0; line-height: 32px"
-              >
-                所属区域：{{ filterAreaName }}
-              </ElTag>
-              <!-- 图层类型筛选标签 -->
-              <ElTag
-                v-if="filterLayerTypeName"
-                type="warning"
-                closable
-                @close="handleCancelLayerTypeNameFilter"
-                style="height: 32px; margin: 4px 0; line-height: 32px"
-              >
-                图层类型：{{ filterLayerTypeName }}
-              </ElTag>
-              <!-- 数据质量校验结果筛选标签 -->
-              <ElTag
-                v-if="filterCheckResultName"
-                type="primary"
-                closable
-                @close="handleCancelCheckResultNameFilter"
-                style="height: 32px; margin: 4px 0; line-height: 32px"
-              >
-                数据质量校验结果：{{ filterCheckResultName }}
-              </ElTag>
-              <!-- 树形结构筛选标签 -->
-              <ElTag
-                v-if="filterGeoCode"
-                type="primary"
-                closable
-                @close="
-                  filterGeoCode = '';
-                  gridApi.query();
-                "
-                style="height: 32px; margin: 4px 0; line-height: 32px"
-              >
-                地理编码：{{ filterGeoCode }}
-              </ElTag>
-            </div>
-          </template>
-          <template #toolbar-tools>
-            <div class="common-toolbar-tools">
-              <IconButton
-                content="新增"
-                icon-name="Plus"
-                @click="handleCreate"
+              <el-tab-pane
+                v-for="item in tabsData"
+                :key="item.label"
+                :label="createLabel(item)"
+                :name="item.label"
               />
-              <IconButton
-                content="导入"
-                icon-name="Upload"
-                @click="handleImport"
-              />
-              <IconButton
-                content="导出"
-                icon-name="download"
-                @click="handleExport"
-              />
-              <IconButton
-                content="批量整改"
-                icon-name="CircleCheck"
-                :disabled="isEmpty(checkedIds)"
-                @click="handleBatchRectify"
-              />
-              <IconButton
-                content="批量删除"
-                icon-name="delete"
-                color="#F56C6C"
-                :disabled="isEmpty(checkedIds)"
-                @click="handleDeleteBatch"
-              />
-              <IconButton
-                content="搜索"
-                icon-name="search"
-                @click="handleSerachShow"
-              />
-              <IconButton
-                :content="props.showStats ? '隐藏统计' : '显示统计'"
-                :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
-                @click="props.toggleStats"
-              />
-              <IconButton
-                content="全屏"
-                icon-name="FullScreen"
-                @click="handleFullShow"
-              />
-            </div>
-          </template>
-          <template #geoCode="{ row }">
-            <el-text
-              @click="handleOpenDetail(row)"
-              class="common-align"
-              type="primary"
-            >
-              {{ row.geoCode }}
-            </el-text>
-          </template>
-          <template #locationName="{ row }">
-            <el-text
-              @click="handleLocationNameClick(row.locationName)"
-              class="common-align"
-              type="primary"
-            >
-              {{ row.locationName }}
-            </el-text>
-          </template>
-          <template #areaName="{ row }">
-            <el-text
-              @click="handleAreaNameClick(row.areaName)"
-              class="common-align"
-              type="primary"
-            >
-              {{ row.areaName }}
-            </el-text>
-          </template>
-          <template #layerTypeName="{ row }">
-            <el-text
-              @click="handleLayerTypeNameClick(row.layerTypeName)"
-              class="common-align"
-              type="primary"
-            >
-              {{ row.layerTypeName }}
-            </el-text>
-          </template>
-          <template #checkResultName="{ row }">
-            <el-text
-              @click="handleCheckResultNameClick(row.checkResultName)"
-              class="common-align"
-              type="primary"
-            >
-              {{ row.checkResultName }}
-            </el-text>
-          </template>
-          <template #statusName="{ row }">
-            <ElTag
-              :type="
-                row.statusName === '正常'
-                  ? 'success'
-                  : row.statusName === '维护中'
-                    ? 'warning'
-                    : row.statusName === '停用'
-                      ? 'danger'
-                      : 'info'
-              "
-            >
-              {{ row.statusName }}
-            </ElTag>
-          </template>
-          <template #actions="{ row }">
-            <div class="table-toolbar-tools">
-              <IconButton
-                content="详情"
-                icon-name="View"
-                @click="handleOpenDetail(row)"
-              />
-              <IconButton
-                content="编辑"
-                icon-name="edit"
-                @click="handleEdit(row)"
-              />
-              <IconButton
-                content="整改"
-                icon-name="CircleCheck"
-                @click="handleSingleRectify(row)"
-              />
-              <IconButton
-                content="删除"
-                icon-name="delete"
-                color="#F56C6C"
-                @click="handleDelete(row)"
-              />
-            </div>
-          </template>
-          <template #bottom>
-            <div class="common-total" @click="changeTotalShow">
-              <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
-                <ArrowDown />
-              </el-icon>
-              <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
-                <ArrowUp />
-              </el-icon>
-              <span> 本页统计：地理编码数量: {{ dataObj.list.length }} </span>
-            </div>
-            <div class="common-total-bottom" v-if="dataObj.totalShow">
-              <span> 全部统计：{{ textObj.total }} </span>
-            </div>
-          </template>
-        </Grid>
-      </div>
-    </div>
+            </el-tabs>
+          </div>
+          <!-- 地点名称筛选标签 -->
+          <ElTag
+            v-if="filterLocationName"
+            type="primary"
+            closable
+            @close="handleCancelLocationNameFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            地点名称：{{ filterLocationName }}
+          </ElTag>
+          <!-- 所属区域筛选标签 -->
+          <ElTag
+            v-if="filterAreaName"
+            type="success"
+            closable
+            @close="handleCancelAreaNameFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            所属区域：{{ filterAreaName }}
+          </ElTag>
+          <!-- 图层类型筛选标签 -->
+          <ElTag
+            v-if="filterLayerTypeName"
+            type="warning"
+            closable
+            @close="handleCancelLayerTypeNameFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            图层类型：{{ filterLayerTypeName }}
+          </ElTag>
+          <!-- 数据质量校验结果筛选标签 -->
+          <ElTag
+            v-if="filterCheckResultName"
+            type="primary"
+            closable
+            @close="handleCancelCheckResultNameFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            数据质量校验结果：{{ filterCheckResultName }}
+          </ElTag>
+          <!-- 树形结构筛选标签 -->
+          <ElTag
+            v-if="props.filterGeoCode"
+            type="primary"
+            closable
+            @close="emit('clearFilter')"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            地理编码：{{ dataObj.apilist.find(item => item.geoCode === props.filterGeoCode)?.locationName }}
+          </ElTag>
+        </div>
+      </template>
+      <template #toolbar-tools>
+        <div class="common-toolbar-tools">
+          <IconButton
+            content="新增"
+            icon-name="Plus"
+            @click="handleCreate"
+          />
+          <IconButton
+            content="导入"
+            icon-name="Upload"
+            @click="handleImport"
+          />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="批量整改"
+            icon-name="CircleCheck"
+            :disabled="isEmpty(checkedIds)"
+            @click="handleBatchRectify"
+          />
+          <IconButton
+            content="批量删除"
+            icon-name="delete"
+            color="#F56C6C"
+            :disabled="isEmpty(checkedIds)"
+            @click="handleDeleteBatch"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="handleFullShow"
+          />
+        </div>
+      </template>
+      <template #geoCode="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.geoCode }}
+        </el-text>
+      </template>
+      <template #locationName="{ row }">
+        <el-text
+          @click="handleLocationNameClick(row.locationName)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.locationName }}
+        </el-text>
+      </template>
+      <template #areaName="{ row }">
+        <el-text
+          @click="handleAreaNameClick(row.areaName)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.areaName }}
+        </el-text>
+      </template>
+      <template #layerTypeName="{ row }">
+        <el-text
+          @click="handleLayerTypeNameClick(row.layerTypeName)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.layerTypeName }}
+        </el-text>
+      </template>
+      <template #checkResultName="{ row }">
+        <el-text
+          @click="handleCheckResultNameClick(row.checkResultName)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.checkResultName }}
+        </el-text>
+      </template>
+      <template #statusName="{ row }">
+        <ElTag
+          :type="
+            row.statusName === '正常'
+              ? 'success'
+              : row.statusName === '维护中'
+                ? 'warning'
+                : row.statusName === '停用'
+                  ? 'danger'
+                  : 'info'
+          "
+        >
+          {{ row.statusName }}
+        </ElTag>
+      </template>
+      <template #actions="{ row }">
+        <div class="table-toolbar-tools">
+          <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleOpenDetail(row)"
+          />
+          <IconButton
+            content="编辑"
+            icon-name="edit"
+            @click="handleEdit(row)"
+          />
+          <IconButton
+            content="整改"
+            icon-name="CircleCheck"
+            @click="handleSingleRectify(row)"
+          />
+          <IconButton
+            content="删除"
+            icon-name="delete"
+            color="#F56C6C"
+            @click="handleDelete(row)"
+          />
+        </div>
+      </template>
+      <template #bottom>
+        <div class="common-total" @click="changeTotalShow">
+          <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
+            <ArrowDown />
+          </el-icon>
+          <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
+            <ArrowUp />
+          </el-icon>
+          <span> 本页统计：地理编码数量: {{ dataObj.list.length }} </span>
+        </div>
+        <div class="common-total-bottom" v-if="dataObj.totalShow">
+          <span> 全部统计：{{ textObj.total }} </span>
+        </div>
+      </template>
+    </Grid>
   </div>
 </template>
 

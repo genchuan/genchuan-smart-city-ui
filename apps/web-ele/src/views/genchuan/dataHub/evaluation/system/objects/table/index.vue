@@ -111,6 +111,41 @@ const loadFormOptions = async () => {
   }
 };
 
+// ========== 新增：自定义唯一性验证函数 ==========
+const validateNameUnique = (rule, value, callback) => {
+  // 如果名称为空，由 required 规则处理
+  if (!value) {
+    return callback();
+  }
+
+  // 获取当前表单的 areaCode
+  const formValues = formApi.form.values;
+  const areaCode = formValues.areaCode;
+
+  // 如果区域未选，暂时不验证（等区域选了再触发表单校验）
+  if (!areaCode) {
+    return callback();
+  }
+
+  // 获取当前编辑项的 id（新增时为 undefined）
+  const currentId = formDrawerApi.getData()?.id;
+
+  // 在已加载的表格数据中查找重复项
+  const duplicate = dataObj.list.find(item => {
+    // 排除当前编辑项
+    if (currentId && item.id === currentId) return false;
+    // 比较区域编码和对象名称（注意表格数据中包含 areaCode 原始字段）
+    return item.areaCode === areaCode && item.name === value;
+  });
+
+  if (duplicate) {
+    callback(new Error('该区域内对象名称已存在，请重新输入'));
+  } else {
+    callback();
+  }
+};
+// ==============================================
+
 // 抽屉打开/关闭时的处理函数
 const onOpenChange = async (isOpen) => {
   if (isOpen) {
@@ -122,6 +157,18 @@ const onOpenChange = async (isOpen) => {
     } else {
       formApi.resetForm();
     }
+
+    // ========== 新增：为 name 字段添加自定义唯一性验证 ==========
+    await formApi.updateSchema([
+      {
+        fieldName: 'name',
+        rules: [
+          'required',
+          { validator: validateNameUnique, trigger: 'blur' } // 触发时机可根据需要调整
+        ]
+      }
+    ]);
+    // =======================================================
   }
 };
 
@@ -764,6 +811,34 @@ async function submitImport() {
   }
 }
 
+// ---------- 钻取筛选功能 ----------
+/** 点击字段进行筛选 */
+function handleFieldClick(fieldName, value) {
+  // 如果是状态筛选，同时将标签页切换为“全部”，避免与状态标签页冲突
+  if (fieldName === 'statusName') {
+    activeName.value = '全部';
+  }
+  // 直接更新 searchParams（保留其他已有条件）
+  searchParams.value = { ...searchParams.value, [fieldName]: value };
+  // 同步更新查询表单的值（便于查看当前条件）
+  queryFormApi.setValues({ [fieldName]: value });
+  // 手动刷新表格
+  handleRefresh();
+}
+
+/** 清除字段筛选 */
+function handleClearField(fieldName) {
+  // 从 searchParams 中移除该字段
+  const newParams = { ...searchParams.value };
+  delete newParams[fieldName];
+  searchParams.value = newParams;
+  // 清空查询表单对应字段
+  queryFormApi.setValues({ [fieldName]: '' });
+  // 刷新表格
+  handleRefresh();
+}
+// ---------------------------------
+
 onMounted(() => {
   handleRefresh();
   fetchStatusCount();
@@ -785,7 +860,8 @@ onMounted(() => {
 
     <Grid>
       <template #table-title>
-        <div class="tabel-tabs">
+        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+          <!-- 原有的标签页 -->
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -800,6 +876,53 @@ onMounted(() => {
               />
             </el-tabs>
           </div>
+
+          <!-- 钻取筛选标签 -->
+          <el-tag
+            v-if="searchParams.code"
+            type="primary"
+            closable
+            @close="handleClearField('code')"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            对象编码：{{ searchParams.code }}
+          </el-tag>
+          <el-tag
+            v-if="searchParams.areaName"
+            type="primary"
+            closable
+            @close="handleClearField('areaName')"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            所属区域：{{ searchParams.areaName }}
+          </el-tag>
+          <el-tag
+            v-if="searchParams.objectTypeName"
+            type="primary"
+            closable
+            @close="handleClearField('objectTypeName')"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            对象类型：{{ searchParams.objectTypeName }}
+          </el-tag>
+          <el-tag
+            v-if="searchParams.relatedName"
+            type="primary"
+            closable
+            @close="handleClearField('relatedName')"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            关联网格/部门：{{ searchParams.relatedName }}
+          </el-tag>
+          <el-tag
+            v-if="searchParams.statusName"
+            type="primary"
+            closable
+            @close="handleClearField('statusName')"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            状态：{{ searchParams.statusName }}
+          </el-tag>
         </div>
       </template>
       <template #toolbar-tools>
@@ -857,6 +980,32 @@ onMounted(() => {
           type="primary"
         >
           {{ row.name }}
+        </el-text>
+      </template>
+      <!-- 钻取字段插槽 -->
+      <template #code="{ row }">
+        <el-text @click="handleFieldClick('code', row.code)" class="common-align" type="primary">
+          {{ row.code }}
+        </el-text>
+      </template>
+      <template #areaName="{ row }">
+        <el-text @click="handleFieldClick('areaName', row.areaName)" class="common-align" type="primary">
+          {{ row.areaName }}
+        </el-text>
+      </template>
+      <template #objectTypeName="{ row }">
+        <el-text @click="handleFieldClick('objectTypeName', row.objectTypeName)" class="common-align" type="primary">
+          {{ row.objectTypeName }}
+        </el-text>
+      </template>
+      <template #relatedName="{ row }">
+        <el-text @click="handleFieldClick('relatedName', row.relatedName)" class="common-align" type="primary">
+          {{ row.relatedName }}
+        </el-text>
+      </template>
+      <template #statusName="{ row }">
+        <el-text @click="handleFieldClick('statusName', row.statusName)" class="common-align" type="primary">
+          {{ row.statusName }}
         </el-text>
       </template>
       <template #actions="{ row }">

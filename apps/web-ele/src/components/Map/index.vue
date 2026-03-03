@@ -101,27 +101,27 @@ const onMarkerClick = (evt) => {
       <h3 style="margin:0 0 8px;font-size:15px;">${properties.locationName}</h3>
       <table style="width:100%;border-collapse:collapse;">
         <tr>
-          <td style="width:90px;text-align:right;padding-right:3px;">地理编码：</td>
+          <td style="width:90px;text-align:right;padding-right:8px;">地理编码：</td>
           <td>${properties.geoCode}</td>
         </tr>
         <tr>
-          <td style="width:90px;text-align:right;padding-right:3px;">状态：</td>
+          <td style="width:90px;text-align:right;padding-right:8px;">状态：</td>
           <td><b>${properties.statusName}</b></td>
         </tr>
         <tr>
-          <td style="width:90px;text-align:right;padding-right:3px;">区域：</td>
+          <td style="width:90px;text-align:right;padding-right:8px;">区域：</td>
           <td>${properties.areaName}</td>
         </tr>
         <tr>
-          <td style="width:90px;text-align:right;padding-right:3px;">图层类型：</td>
+          <td style="width:90px;text-align:right;padding-right:8px;">图层类型：</td>
           <td>${properties.layerTypeName}</td>
         </tr>
         <tr>
-          <td style="width:90px;text-align:right;padding-right:3px;">行政区划：</td>
+          <td style="width:90px;text-align:right;padding-right:8px;">行政区划：</td>
           <td>${properties.adminCode}</td>
         </tr>
         <tr>
-          <td style="width:90px;text-align:right;padding-right:3px;">校验结果：</td>
+          <td style="width:90px;text-align:right;padding-right:8px;">校验结果：</td>
           <td>${properties.checkResultName}</td>
         </tr>
       </table>

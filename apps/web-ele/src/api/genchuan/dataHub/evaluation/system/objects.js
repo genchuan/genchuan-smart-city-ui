@@ -20,11 +20,6 @@ export function updateObject(data) {
   return requestClient.put('/evaluate/object/update', data);
 }
 
-/** 验证名称唯一性 */
-export function validateNameUnique(params) {
-  return requestClient.get('/evaluate/object/validate/name-unique', { params });
-}
-
 /** 批量导入评价对象 */
 export function importObjects(file) {
   const formData = new FormData();
