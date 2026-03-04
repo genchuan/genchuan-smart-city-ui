@@ -1,64 +1,76 @@
 <script setup>
-import { computed } from 'vue';
-import { subjectList } from './table/data.js'; // 导入主体数据
+import { reactive, onMounted } from 'vue';
+import { getOverview } from '#/api/genchuan/dataHub/evaluation/system/subject.js';
 
 import Card from '#/components/stats/card.vue';
 import Circle from '#/components/stats/circle.vue';
 import Columnar from '#/components/stats/columnar.vue';
 
-const subjects = subjectList(); // 获取数据
-
-// 统计卡片数据
-const cardList = computed(() => {
-  const total = subjects.length;
-  const manual = subjects.filter(s => s.subjectTypeName === '人工主体').length;
-  const system = subjects.filter(s => s.subjectTypeName === '系统主体').length;
-  const enabled = subjects.filter(s => s.statusName === '启用').length;
-  return [
-    { title: '总主体数', value: total, color: '#13ce66' },
-    { title: '人工主体数', value: manual, color: '#4ECDC4' },
-    { title: '系统主体数', value: system, color: '#FF6B6B' },
-    { title: '启用主体数', value: enabled, color: '#FFC107' },
-  ];
+const state = reactive({
+  cardList: [],
+  typePieData: [],
+  statusPieData: [],
+  memberCountBarXData: [],
+  memberCountBarSeriesData: [],
 });
 
-// 主体类型占比
-const typeData = computed(() => {
-  const manual = subjects.filter(s => s.subjectTypeName === '人工主体').length;
-  const system = subjects.filter(s => s.subjectTypeName === '系统主体').length;
-  return [
-    { name: '人工主体', value: manual },
-    { name: '系统主体', value: system },
-  ];
-});
+const fetchOverview = async () => {
+  try {
+    const data = await getOverview(); // 直接获取数据
+    console.log('overview response:', data);
 
-// 状态占比
-const statusData = computed(() => {
-  const enabled = subjects.filter(s => s.statusName === '启用').length;
-  const disabled = subjects.filter(s => s.statusName === '停用').length;
-  return [
-    { name: '启用', value: enabled },
-    { name: '停用', value: disabled },
-    { name: '其他', value: 0 }, // 占位，颜色对应
-  ];
-});
+    // 卡片数据
+    const cardData = data.cardData || {};
+    state.cardList = [
+      { title: '总主体数', value: cardData.totalCount || 0, color: '#13ce66' },
+      { title: '人工主体数', value: cardData.manualSubjectCount || 0, color: '#4ECDC4' },
+      { title: '系统主体数', value: cardData.systemSubjectCount || 0, color: '#FF6B6B' },
+      { title: '启用主体数', value: cardData.enabledSubjectCount || 0, color: '#FFC107' },
+    ];
 
-// 各主体成员数量对比（取前8个，避免柱状图太拥挤）
-const memberCompareData = computed(() => {
-  const sorted = [...subjects].sort((a, b) => b.memberCount - a.memberCount).slice(0, 8);
-  return {
-    xData: sorted.map(s => s.name),
-    seriesData: [{ name: '成员数量', data: sorted.map(s => s.memberCount) }]
-  };
+    // 主体类型饼图
+    state.typePieData = (data.typePieChart || []).map(item => ({
+      name: item.name || '未知',
+      value: item.value || 0,
+    }));
+
+    // 状态饼图
+    state.statusPieData = (data.statusPieChart || []).map(item => ({
+      name: item.name || '未知',
+      value: item.value || 0,
+    }));
+
+    // 成员数量柱状图
+    const memberCountBar = data.memberCountBarChart || [];
+    state.memberCountBarXData = memberCountBar.map(item => item.subjectName || '未知');
+    state.memberCountBarSeriesData = [
+      {
+        // name: '成员数量',
+        data: memberCountBar.map(item => item.memberCount || 0),
+      },
+    ];
+  } catch (error) {
+    console.error('获取概览数据失败', error);
+    // 清空数据避免报错
+    state.cardList = [];
+    state.typePieData = [];
+    state.statusPieData = [];
+    state.memberCountBarXData = [];
+    state.memberCountBarSeriesData = [];
+  }
+};
+
+onMounted(() => {
+  fetchOverview();
 });
 </script>
 
 <template>
-  <div class="park-chart-box park-district-chart">
+  <div class="park-chart-box park-subject-chart">
     <div class="chart-box-left">
       <Card
         class="left-card"
-        v-for="item in cardList"
+        v-for="item in state.cardList"
         :key="item.title"
         v-bind="item"
       />
@@ -67,26 +79,26 @@ const memberCompareData = computed(() => {
       width="340px"
       height="330px"
       title-text="主体类型占比"
-      :data="typeData"
+      :data="state.typePieData"
     />
     <Circle
       width="340px"
       height="330px"
       title-text="状态占比"
-      :data="statusData"
+      :data="state.statusPieData"
       :colors="['#67C23A', '#E6A23C', '#F56C6C']"
     />
     <Columnar
       height="330px"
-      title="主体成员数量对比"
-      :x-data="memberCompareData.xData"
-      :series-data="memberCompareData.seriesData"
+      title="各主体成员数量对比"
+      :x-data="state.memberCountBarXData"
+      :series-data="state.memberCountBarSeriesData"
     />
   </div>
 </template>
 
 <style lang="scss">
-.park-district-chart {
+.park-subject-chart {
   .chart-box-left {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr);
@@ -97,7 +109,7 @@ const memberCompareData = computed(() => {
       height: 159px !important;
     }
   }
-  .district-columnar {
+  .subject-columnar {
     min-width: 200px !important;
   }
 }

@@ -63,9 +63,9 @@ const initChart = async () => {
 
     // 核心配置
     const option = {
-      title: { text: props.title, left: 'center' },
+      title: { text: props.title, left: 'center', textStyle: { fontSize: 15, fontWeight: 300, color: '#6E7E91' }, },
       tooltip: { trigger: 'axis' },
-      legend: { top: 40, left: 'center' },
+      legend: { top: 40, left: 'center', textStyle: { fontSize: 12, color: '#6E7E91' }, },
       grid: {
         left: '3%',
         right: '4%',
@@ -127,7 +127,7 @@ const initChart = async () => {
         label: {
           show: true,
           position: 'top',
-          color: '#333',
+          color: '#6E7E91',
           fontSize: 12,
           formatter: '{c}',
         },

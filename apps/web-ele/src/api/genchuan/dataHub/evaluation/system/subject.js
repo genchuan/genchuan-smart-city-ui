@@ -21,11 +21,6 @@ export function updateSubject(data) {
   return requestClient.put('/evaluate/subject/update', data);
 }
 
-/** 验证名称唯一性 */
-export function validateNameUnique(params) {
-  return requestClient.get('/evaluate/subject/validate/name-unique', { params });
-}
-
 /** 批量导入评价主体 */
 export function importSubjects(file) {
   const formData = new FormData();
@@ -57,7 +52,13 @@ export function getSubjectTypeSimpleList() {
   return requestClient.get('/evaluate/subject-type/simple-list');
 }
 
-/** 获取状态简单列表 */
+/** 获取状态列表（使用分页接口） */
 export function getStatusSimpleList() {
-  return requestClient.get('/evaluate/status/simple-list');
+  return requestClient.get('/evaluate/status/page', { params: { pageNo: 1, pageSize: 100 } }).then(res => {
+    // 转换为下拉选项格式
+    return (res.list || []).map(item => ({
+      value: item.statusId,
+      label: item.name
+    }));
+  });
 }

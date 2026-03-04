@@ -35,7 +35,7 @@ onMounted(() => {
     },
     ui: {
       base: {
-        icon: 'http://192.168.8.68:9000/shunchang/20260303/aiLogo_1772526483764.png',
+        icon: 'http://112.47.127.21:59000/shunchang/20260303/aiLogo_1772526483764.png',
       },
     },
   });
@@ -60,7 +60,7 @@ const customizeStyles = () => {
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
     }
   `;
-  document.head.appendChild(style);
+  document.head.append(style);
 };
 </script>
 

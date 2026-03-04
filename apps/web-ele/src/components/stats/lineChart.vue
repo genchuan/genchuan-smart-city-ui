@@ -66,12 +66,12 @@ const initChart = async () => {
 
     // 核心配置（贴合折线图特性，保持和柱状图一致的样式风格）
     const option = {
-      title: { text: props.title, left: 'center' },
+      title: { text: props.title, left: 'center', textStyle: { fontSize: 15, fontWeight: 300, color: '#6E7E91' }, },
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'shadow' }, // 保持和柱状图一致的指示器风格
       },
-      legend: { top: 40, left: 'center' },
+      legend: { top: 40, left: 'center', textStyle: { fontSize: 12, color: '#6E7E91' }, },
       grid: {
         left: '3%',
         right: '4%',

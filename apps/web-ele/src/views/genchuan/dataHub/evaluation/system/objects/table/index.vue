@@ -716,7 +716,7 @@ async function handleDownloadTemplate() {
 
     // 新增：备注行（每个单元格填充相同提示）
     const remarkRow = importFields.map(() =>
-      '# 请在此行下方填写真实数据，示例仅供参考，上传时将自动忽略备注和示例行'
+      '# 请在示例行下方填写真实数据，示例数据仅供参考，上传时将自动忽略备注和示例行'
     );
 
     // 示例数据保持不变

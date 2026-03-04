@@ -42,6 +42,7 @@ import {
   getAbnormalTypeOptions,
   getHandleStatusOptions,
   getReviewStatusOptions,
+  getGarbageCollectionOptions,
 } from '#/api/genchuan/industry/urbanmanagement/environmentalSanitation/sanitationSceneMgmt/garbageCollection/form.js';
 
 const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
@@ -192,9 +193,12 @@ const [AbnormalEditDrawer, abnormalEditDrawerApi] = useVbenDrawer({
       if (!abnormalFormData.value?.id) {
         await createGarbageAbnormal(submitData);
         ElMessage.success('新增成功');
+        // 新增异常后，更新关联计划单的异常计数（+1）
+        await updatePlanAbnormalStatus(formValues.planNo, 1);
       } else {
         await updateGarbageAbnormal({ ...submitData, id: abnormalFormData.value.id });
         ElMessage.success('编辑成功');
+        // 若允许修改关联计划单，此处应处理新旧计划单的计数变化，暂未处理
       }
       handleRefresh();
       abnormalEditDrawerApi.close();
@@ -237,6 +241,43 @@ const [AbnormalEditDrawer, abnormalEditDrawerApi] = useVbenDrawer({
 
 // 计划单选项（用于异常表单的关联计划单字段）
 const planNoOptions = ref([]);
+
+// ----- 新增：辅助函数：更新计划单的异常计数和异常状态 -----
+async function updatePlanAbnormalStatus(planNo, delta) {
+  if (!planNo) return;
+
+  try {
+    // 1. 根据 planNo 查询计划单（假设后端支持按 planNo 过滤）
+    const res = await getGarbageCollectionPage({ planNo, pageSize: 1 });
+    const planList = res.data?.list || res.list || [];
+    if (planList.length === 0) {
+      console.warn('未找到对应的计划单:', planNo);
+      return;
+    }
+    const plan = planList[0];
+    const planId = plan.id;
+
+    // 2. 获取当前异常计数（若字段不存在则默认为0）
+    const currentCount = plan.abnormalCount || 0;
+    const newCount = Math.max(0, currentCount + delta); // 确保不为负数
+
+    // 3. 构造更新数据
+    const updateData = {
+      id: planId,
+      abnormalCount: newCount,
+      isAbnormal: newCount > 0, // 如果计数>0则设为true
+    };
+
+    // 4. 调用更新接口
+    await updateGarbageCollection(updateData);
+    console.log(`计划单 ${planNo} 异常计数已更新为 ${newCount}`);
+  } catch (error) {
+    console.error('更新计划单异常状态失败', error);
+    // 不阻塞主流程，仅警告
+    ElMessage.warning('更新关联计划单异常计数失败');
+  }
+}
+// ----- 结束新增 -----
 
 function handleRefresh() {
   gridApi.query();
@@ -342,6 +383,10 @@ async function handleDelete(row) {
   try {
     await deleteApi(row.id);
     ElMessage.success($t('ui.actionMessage.deleteSuccess', [nameField]));
+    // 如果是异常记录，更新关联计划单的异常计数（-1）
+    if (isAbnormal && row.planNo) {
+      await updatePlanAbnormalStatus(row.planNo, -1);
+    }
     handleRefresh();
   } catch (error) {
     console.error('删除失败', error);
@@ -363,6 +408,20 @@ async function handleDeleteBatch() {
     } else {
       // 异常记录批量删除
       await deleteGarbageAbnormalBatch(checkedIds.value);
+
+      // 统计每个计划单需要减少的异常记录数
+      const planDeltaMap = new Map();
+      checkedIds.value.forEach(id => {
+        const abnormal = dataObj.list.find(item => item.id === id);
+        if (abnormal && abnormal.planNo) {
+          planDeltaMap.set(abnormal.planNo, (planDeltaMap.get(abnormal.planNo) || 0) + 1);
+        }
+      });
+
+      // 逐个更新计划单
+      for (const [planNo, delta] of planDeltaMap.entries()) {
+        await updatePlanAbnormalStatus(planNo, -delta);
+      }
     }
 
     checkedIds.value = [];
@@ -765,10 +824,15 @@ const loadOptions = async () => {
 
     console.log('映射已构建', optionMaps);
 
+    // 修改：使用新接口加载计划单选项
     try {
-      const planRes = await getGarbageCollectionPage({pageSize: 100});
-      const planList = planRes.data?.list || planRes.list || [];
-      planNoOptions.value = planList.map(item => ({label: item.planNo, value: item.planNo}));
+      const planOptionsRes = await getGarbageCollectionOptions();
+      const planOptions = extractData(planOptionsRes);
+      // 注意：后端返回的 label 目前是固定字符串，建议使用 value 作为显示文本，或联系后端修正
+      planNoOptions.value = planOptions.map(item => ({
+        label: item.value,   // 临时用 value 显示，实际应使用 item.label 如果它正确
+        value: item.value
+      }));
     } catch (err) {
       console.warn('加载计划单选项失败', err);
       planNoOptions.value = [];
