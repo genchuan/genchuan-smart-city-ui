@@ -46,6 +46,10 @@ export function getReviewStatusOptions() {
   return requestClient.get('/envirhealth/review-status/options');
 }
 
+export function getGarbageCollectionOptions() {
+  return requestClient.get('/envirhealth/garbage-collection/options');
+}
+
 // 通用表单 Schema（搜索和编辑共用，通过 searchFilter 标记搜索字段）
 export function useFormSchema() {
   return [

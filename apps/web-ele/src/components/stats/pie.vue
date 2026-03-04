@@ -74,7 +74,7 @@ const initChart = async () => {
             text: props.titleText,
             left: 'center',
             top: 10,
-            textStyle: { fontSize: 14, fontWeight: 300, color: '#303133' },
+            textStyle: { fontSize: 15, fontWeight: 300, color: '#6E7E91' },
           }
         : null,
       tooltip: {
@@ -101,7 +101,7 @@ const initChart = async () => {
             position: 'outside',
             formatter: '{c}',
             fontSize: 12,
-            color: '#333',
+            color: '#6E7E91',
             lineHeight: 20,
           },
           labelLine: {
