@@ -187,13 +187,15 @@ export function getGridColumnsByTab(tab) {
       field: 'code',
       title: '体系编码',
       minWidth: 120,
-      sortable: true
+      sortable: true,
+      slots: { default: 'code' }
     },
     {
       field: 'objectTypeName',
       title: '适用对象类型',
       minWidth: 120,
-      sortable: true
+      sortable: true,
+      slots: { default: 'objectTypeName' }
     },
     {
       field: 'version',
@@ -227,7 +229,8 @@ export function getGridColumnsByTab(tab) {
       field: 'statusName',
       title: '状态',
       minWidth: 100,
-      sortable: true
+      sortable: true,
+      slots: { default: 'statusName' }
     },
     {
       field: 'createByName',

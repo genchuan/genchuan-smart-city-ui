@@ -35,7 +35,10 @@ const props = defineProps({
     type: Object,
     default: () => ({
       xData: ['指标体系1','指标体系2','指标体系3','指标体系4','指标体系5','指标体系6','指标体系7'],
-      series: [{ name: '指标项数量', data: [12,1,2,5,7,8,9,] }]
+      series: [{
+        // name: '指标项数量',
+        data: [12,1,2,5,7,8,9,]
+      }]
     })
   }
 });
