@@ -61,7 +61,6 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
 </template>
 
 <style scoped lang="scss">
-/* 样式保持不变 */
 .detail-card {
   padding: 20px;
   background-color: #f9fafb;
@@ -93,7 +92,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
 }
 
 .detail-row-left {
-  width: 140px;
+  width: 140px !important;
   flex-shrink: 0;
   font-weight: 500;
   color: #606266;

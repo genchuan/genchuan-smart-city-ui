@@ -222,6 +222,40 @@ const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
 
+// ==================== 新增钻取筛选变量 ====================
+const filterCode = ref('');
+const filterObjectType = ref('');
+const filterStatus = ref('');
+
+// 钻取点击处理函数
+const handleCodeClick = (code) => {
+  filterCode.value = filterCode.value === code ? '' : code;
+  gridApi.query();
+};
+const handleObjectTypeClick = (objectType) => {
+  filterObjectType.value = filterObjectType.value === objectType ? '' : objectType;
+  gridApi.query();
+};
+const handleStatusClick = (status) => {
+  filterStatus.value = filterStatus.value === status ? '' : status;
+  gridApi.query();
+};
+
+// 取消筛选标签
+const handleCancelCodeFilter = () => {
+  filterCode.value = '';
+  gridApi.query();
+};
+const handleCancelObjectTypeFilter = () => {
+  filterObjectType.value = '';
+  gridApi.query();
+};
+const handleCancelStatusFilter = () => {
+  filterStatus.value = '';
+  gridApi.query();
+};
+
+// ==================== 修改 getTableData，加入钻取筛选 ====================
 const getTableData = (pageObj) => {
   const page = pageObj.page;
   let filtered = dataObj.apilist.filter(v => {
@@ -241,6 +275,17 @@ const getTableData = (pageObj) => {
       if (params.statusId && item.statusId !== params.statusId) match = false;
       return match;
     });
+  }
+
+  // 钻取筛选
+  if (filterCode.value) {
+    filtered = filtered.filter(item => item.code === filterCode.value);
+  }
+  if (filterObjectType.value) {
+    filtered = filtered.filter(item => item.objectTypeName === filterObjectType.value);
+  }
+  if (filterStatus.value) {
+    filtered = filtered.filter(item => item.statusName === filterStatus.value);
   }
 
   filtered.sort((a, b) => (b.createTime || '').localeCompare(a.createTime || ''));
@@ -420,7 +465,7 @@ const chartData = computed(() => {
     </Drawer>
     <Grid>
       <template #table-title>
-        <div class="tabel-tabs">
+        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -435,6 +480,34 @@ const chartData = computed(() => {
               />
             </el-tabs>
           </div>
+          <!-- 钻取筛选标签 -->
+          <el-tag
+            v-if="filterCode"
+            type="primary"
+            closable
+            @close="handleCancelCodeFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            体系编码：{{ filterCode }}
+          </el-tag>
+          <el-tag
+            v-if="filterObjectType"
+            type="success"
+            closable
+            @close="handleCancelObjectTypeFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            适用对象类型：{{ filterObjectType }}
+          </el-tag>
+          <el-tag
+            v-if="filterStatus"
+            type="warning"
+            closable
+            @close="handleCancelStatusFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            状态：{{ filterStatus }}
+          </el-tag>
         </div>
       </template>
       <template #toolbar-tools>
@@ -444,7 +517,7 @@ const chartData = computed(() => {
           <IconButton
             v-if="activeName !== '停用'"
             content="批量停用"
-            icon-name="delete"
+            icon-name="close"
             color="#F56C6C"
             :disabled="isEmpty(checkedIds)"
             @click="handleBatchStatusChange"
@@ -466,6 +539,7 @@ const chartData = computed(() => {
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
+      <!-- 列插槽：名称点击打开详情 -->
       <template #name="{ row }">
         <el-text
           @click="handleGarageOpenDetail(row)"
@@ -473,6 +547,22 @@ const chartData = computed(() => {
           type="primary"
         >
           {{ row.name }}
+        </el-text>
+      </template>
+      <!-- 新增钻取列插槽 -->
+      <template #code="{ row }">
+        <el-text @click="handleCodeClick(row.code)" class="common-align" type="primary">
+          {{ row.code }}
+        </el-text>
+      </template>
+      <template #objectTypeName="{ row }">
+        <el-text @click="handleObjectTypeClick(row.objectTypeName)" class="common-align" type="primary">
+          {{ row.objectTypeName }}
+        </el-text>
+      </template>
+      <template #statusName="{ row }">
+        <el-text @click="handleStatusClick(row.statusName)" class="common-align" type="primary">
+          {{ row.statusName }}
         </el-text>
       </template>
       <template #actions="{ row }">
@@ -483,7 +573,7 @@ const chartData = computed(() => {
           <IconButton
             v-if="row.statusName === '启用'"
             content="停用"
-            icon-name="delete"
+            icon-name="close"
             color="#F56C6C"
             @click="handleDisable(row)"
           />
