@@ -176,8 +176,11 @@
         width: 100px;
         margin-right: 16px;
         font-weight: 500;
-        color: #606266;
+        color: #000000;
         text-align: right;
+      }
+      .detail-row-right { 
+        color: #000000;
       }
     }
   }
@@ -392,4 +395,21 @@
 }
 .genchuan-detail-drawer {
   width:70vw;
+}
+.dark {
+  .common-index {
+    .detail-card {
+    
+
+    .detail-card-row { 
+
+      .detail-row-left { 
+        color: #888888; 
+      }
+      .detail-row-right { 
+        color: #888888;
+      }
+    }
+  }
+  }
 }
