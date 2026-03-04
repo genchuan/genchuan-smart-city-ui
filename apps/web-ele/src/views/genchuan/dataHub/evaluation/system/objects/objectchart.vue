@@ -45,7 +45,7 @@ const fetchOverview = async () => {
     state.areaBarXData = areaBar.map(item => item.areaName || '未知');
     state.areaBarSeriesData = [
       {
-        name: '对象数量',
+        // name: '对象数量',
         data: areaBar.map(item => item.count || 0),
       },
     ];

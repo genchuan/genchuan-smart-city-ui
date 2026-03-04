@@ -1,15 +1,36 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, onMounted } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElLoading, ElMessage, ElDialog, ElUpload } from 'element-plus';
 import screenfull from 'screenfull';
+import dayjs from 'dayjs';
+import * as XLSX from 'xlsx';
+
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
-import { exportToExcel } from '#/utils/excel.js';
-import SubjectDetailDrawer from './detail.vue';
-import { subjectList, textObj, useFormSchema, useGridColumns, userList, subjectTypeList, statusList } from './data';
+
+import {
+  getAllPage,
+  createSubject,
+  updateSubject,
+  deleteSubject,
+  getStatusCount,
+  importSubjects,
+  getUserSimpleList,
+  getSubjectTypeSimpleList,
+  getStatusSimpleList,
+} from '#/api/genchuan/dataHub/evaluation/system/subject.js';
+
+import subjectDetailDrawer from './detail.vue';
+import {
+  textObj,
+  useFormSchema,
+  useGridColumns,
+  useQuerySchema,
+  importFields,
+} from './data';
 
 const props = defineProps({
   secondShow: { type: Boolean, default: false },
@@ -25,6 +46,7 @@ const getTitle = computed(() => {
 // 搜索参数
 const searchParams = ref({});
 
+// 搜索抽屉
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -33,117 +55,123 @@ const [Drawer, drawerApi] = useVbenDrawer({
   async onOpenChange() {},
 });
 
+// 新增/编辑表单数据（用于计算标题）
 const formData = ref();
+
+// 表单实例
 const [Form, formApi] = useVbenForm({
   commonConfig: {
     componentProps: { class: 'w-full' },
     formItemClass: 'col-span-2',
-    labelWidth: 80,
+    labelWidth: 100,
   },
   layout: 'horizontal',
   schema: useFormSchema(),
   showDefaultActions: false,
 });
 
+// 加载表单下拉选项的方法
+const loadFormOptions = async () => {
+  try {
+    const [userList, typeList, statusList] = await Promise.all([
+      getUserSimpleList(),
+      getSubjectTypeSimpleList(),
+      getStatusSimpleList(),
+    ]);
+
+    await formApi.updateSchema([
+      {
+        fieldName: 'contactId',
+        componentProps: { options: Array.isArray(userList) ? userList : [] },
+      },
+      {
+        fieldName: 'subjectTypeId',
+        componentProps: { options: Array.isArray(typeList) ? typeList : [] },
+      },
+      {
+        fieldName: 'statusId',
+        componentProps: { options: Array.isArray(statusList) ? statusList : [] },
+      },
+      {
+        fieldName: 'memberIds',
+        componentProps: { options: Array.isArray(userList) ? userList : [] },
+      },
+    ]);
+  } catch (error) {
+    console.error('加载下拉选项失败', error);
+    ElMessage.error('加载下拉选项失败，请重试');
+    await formApi.updateSchema([
+      { fieldName: 'contactId', componentProps: { options: [] } },
+      { fieldName: 'subjectTypeId', componentProps: { options: [] } },
+      { fieldName: 'statusId', componentProps: { options: [] } },
+      { fieldName: 'memberIds', componentProps: { options: [] } },
+    ]);
+  }
+};
+
+// 抽屉打开/关闭时的处理函数
+const onOpenChange = async (isOpen) => {
+  if (isOpen) {
+    await loadFormOptions();
+    const drawerData = formDrawerApi.getData() || {};
+    formData.value = drawerData;
+    if (drawerData.id) {
+      await formApi.setValues(drawerData);
+    } else {
+      formApi.resetForm();
+    }
+  }
+};
+
+// 新增/编辑抽屉
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
   onCancel() { formDrawerApi.close(); },
-  onConfirm() {
-    const obj = formApi.form.values;
-    // 根据联系人自动填充联系电话
-    if (obj.contactId) {
-      const user = userList.find(u => u.id === obj.contactId);
-      if (user) {
-        obj.contactPhone = user.phone;
-      }
-    }
-    // 处理成员：根据memberIds生成memberNames和memberCount
-    let memberNames = '';
-    let memberCount = 0;
-    if (obj.memberIds && obj.memberIds.length > 0) {
-      const members = userList.filter(u => obj.memberIds.includes(u.id));
-      memberNames = members.map(u => u.name).join('、');
-      memberCount = members.length;
-    }
-    obj.memberNames = memberNames;
-    obj.memberCount = memberCount;
+  async onConfirm() {
+    const validateResult = await formApi.validate();
+    if (!validateResult.valid) return;
 
-    if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-      // 新增
-      obj.id = Date.now().toString() + Math.random().toString(36).substr(2, 5);
-      obj.subjectTypeName = subjectTypeList.find(t => t.id === obj.subjectTypeId)?.name || '';
-      obj.contactName = userList.find(u => u.id === obj.contactId)?.name || '';
-      obj.statusName = statusList.find(s => s.id === obj.statusId)?.name || '';
-      obj.createByName = '当前用户';
-      obj.createTime = new Date().toLocaleString();
-      obj.updateByName = '当前用户';
-      obj.updateTime = obj.createTime;
-      obj.changeLog = '新建主体';
-      obj.useCount = 0;
-      dataObj.apilist.push(obj);
-      dataObj.currentPage = 1;
-    } else {
-      // 编辑
-      const index = dataObj.apilist.findIndex(v => v.id === formData.value?.id);
-      if (index !== -1) {
-        const updated = { ...dataObj.apilist[index], ...obj };
-        updated.subjectTypeName = subjectTypeList.find(t => t.id === obj.subjectTypeId)?.name || '';
-        updated.contactName = userList.find(u => u.id === obj.contactId)?.name || '';
-        updated.statusName = statusList.find(s => s.id === obj.statusId)?.name || '';
-        updated.updateByName = '当前用户';
-        updated.updateTime = new Date().toLocaleString();
-        updated.changeLog = (updated.changeLog || '') + '；编辑更新';
-        updated.memberNames = memberNames;
-        updated.memberCount = memberCount;
-        dataObj.apilist[index] = updated;
-      }
+    let values = formApi.form.values;
+    // 手机号格式校验
+    const phoneRegex = /^1[3-9]\d{9}$/;
+    if (values.contactPhone && !phoneRegex.test(values.contactPhone)) {
+      ElMessage.error('联系电话格式不正确，应为11位手机号');
+      return;
     }
-    handleRefresh();
-    formDrawerApi.close();
-  },
-  async onOpenChange(isOpen) {
-    if (isOpen) {
-      formData.value = formDrawerApi.getData();
-      if (formData.value?.id) {
-        await formApi.setValues(formData.value);
-        // 编辑时回显memberIds需要从memberNames反向解析？简单起见，memberIds不存储，暂时留空
-        // 实际应根据成员关系表获取，这里简化：清空memberIds
-        await formApi.setFieldValue('memberIds', []);
+
+    const drawerData = formDrawerApi.getData() || {};
+    const id = drawerData.id;
+    const isEdit = !!id;
+
+    // 后续字段类型转换、提交等
+    const numberFields = ['subjectTypeId', 'contactId', 'statusId'];
+    numberFields.forEach(field => {
+      if (values[field] !== undefined && values[field] !== null && values[field] !== '') {
+        values[field] = Number(values[field]);
+      }
+    });
+
+    const loadingInstance = ElLoading.service({ text: $t('ui.actionMessage.saving') });
+    try {
+      if (!isEdit) {
+        await createSubject({ ...values, statusId: 1 });
+        ElMessage.success($t('ui.actionMessage.addSuccess'));
       } else {
-        formApi.resetForm();
+        await updateSubject({ id, ...values });
+        ElMessage.success($t('ui.actionMessage.editSuccess'));
       }
-      // 动态控制成员字段的禁用和必填
-      const subjectTypeId = formData.value?.subjectTypeId || '1'; // 默认人工主体
-      const isManual = subjectTypeId === '1'; // 人工主体
-      formApi.updateSchema({
-        fieldName: 'memberIds',
-        componentProps: {
-          disabled: !isManual,
-        },
-        rules: isManual ? 'required' : '',
-      });
-      // 监听主体类型变化
-      const unwatch = watch(() => formApi.form.values.subjectTypeId, (newVal) => {
-        const isManualNow = newVal === '1';
-        formApi.updateSchema({
-          fieldName: 'memberIds',
-          componentProps: {
-            disabled: !isManualNow,
-          },
-          rules: isManualNow ? 'required' : '',
-        });
-        // 如果不是人工主体，清空memberIds
-        if (!isManualNow) {
-          formApi.setFieldValue('memberIds', []);
-        }
-      });
-      // 抽屉关闭时销毁监听
-      if (!isOpen) {
-        unwatch();
-      }
+      handleRefresh();
+      fetchStatusCount();
+      formDrawerApi.close();
+    } catch (error) {
+      console.error('保存失败', error);
+      ElMessage.error(error.message || '保存失败');
+    } finally {
+      loadingInstance.close();
     }
   },
+  onOpenChange,
 });
 
 /** 刷新表格 */
@@ -151,14 +179,152 @@ function handleRefresh() {
   gridApi.query();
 }
 
-/** 导出表格 */
+/** 普通导出（按当前搜索条件，导出全部）- 前端生成 Excel */
 async function handleExport() {
-  exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+  const loadingInstance = ElLoading.service({ text: '正在获取数据...' });
+  try {
+    // 构建查询参数（包含搜索条件 + 状态筛选）
+    const params = {
+      ...searchParams.value,
+      pageNo: 1,
+      pageSize: 1000, // 每页大小，可根据后端限制调整
+    };
+    if (activeName.value !== '全部') {
+      params.statusId = activeName.value === '启用' ? 1 : 2;
+    }
+
+    let allData = [];
+    let pageNo = 1;
+    let hasMore = true;
+
+    // 循环获取所有数据
+    while (hasMore) {
+      params.pageNo = pageNo;
+      const res = await getAllPage(params);
+      const { list, total } = res;
+      if (list && list.length > 0) {
+        // 格式化当前页数据
+        const formattedList = formatList(list);
+        allData = allData.concat(formattedList);
+        pageNo++;
+        // 如果当前页数据小于 pageSize，说明是最后一页
+        if (list.length < params.pageSize) {
+          hasMore = false;
+        }
+      } else {
+        hasMore = false;
+      }
+    }
+
+    if (allData.length === 0) {
+      ElMessage.warning('没有数据可导出');
+      return;
+    }
+
+    // 获取表格列配置，并过滤掉不需要导出的列
+    const allColumns = useGridColumns();
+    const exportColumns = allColumns.filter(
+      col => col.field && col.type !== 'checkbox' && col.title !== '操作'
+    ).map(col => ({ field: col.field, title: col.title }));
+
+    // 构建 Excel 数据：表头 + 数据行
+    const wsData = [];
+    // 添加表头（按表格列顺序）
+    wsData.push(exportColumns.map(col => col.title));
+    // 添加数据行
+    allData.forEach(item => {
+      const row = exportColumns.map(col => item[col.field] ?? '-');
+      wsData.push(row);
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, '评价主体');
+
+    // 根据当前标签生成文件名
+    let fileName;
+    if (activeName.value === '全部') {
+      fileName = `评价主体信息_全部_${dayjs().format('YYYYMMDD')}.xlsx`;
+    } else if (activeName.value === '启用') {
+      fileName = `启用评价主体信息_${dayjs().format('YYYYMMDD')}.xlsx`;
+    } else if (activeName.value === '停用') {
+      fileName = `停用评价主体信息_${dayjs().format('YYYYMMDD')}.xlsx`;
+    }
+
+    XLSX.writeFile(wb, fileName);
+    ElMessage.success('导出成功');
+  } catch (error) {
+    console.error('导出失败', error);
+    ElMessage.error(error.message || '导出失败');
+  } finally {
+    loadingInstance.close();
+  }
 }
 
-/** 批量导入（模拟） */
-async function handleImport() {
-  ElMessage.info('批量导入功能开发中');
+/** 批量导出选中行（按列表字段导出，多 sheet Excel）- 直接从当前表格数据获取 */
+async function handleBatchExport() {
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请至少选择一条数据');
+    return;
+  }
+
+  // 直接从当前表格数据中获取选中行
+  const selectedRows = dataObj.list.filter(item => checkedIds.value.includes(item.id));
+  if (selectedRows.length === 0) {
+    ElMessage.warning('选中的数据不在当前页，请刷新后重试');
+    return;
+  }
+
+  const loading = ElLoading.service({ text: '正在生成导出文件...' });
+  const wb = XLSX.utils.book_new();
+
+  // 获取导出列
+  const allColumns = useGridColumns();
+  const exportColumns = allColumns.filter(
+    col => col.field && col.type !== 'checkbox' && col.title !== '操作'
+  ).map(col => ({ field: col.field, title: col.title }));
+
+  try {
+    for (const row of selectedRows) {
+      // row 已经是格式化后的数据（因为 dataObj.list 经过 formatList 处理）
+      const formattedItem = row;
+
+      // 构建导出行
+      const rowForSheet = {};
+      exportColumns.forEach(col => {
+        rowForSheet[col.title] = formattedItem[col.field] ?? '-';
+      });
+
+      const ws = XLSX.utils.json_to_sheet([rowForSheet]);
+
+      // 生成 sheet 名称
+      let sheetName = (formattedItem.name || `主体_${formattedItem.id}`).replace(/[\\/:*?"<>|]/g, '_');
+      if (sheetName.length > 31) sheetName = sheetName.substring(0, 28) + '...';
+      let finalSheetName = sheetName;
+      let counter = 1;
+      while (wb.SheetNames.includes(finalSheetName)) {
+        finalSheetName = `${sheetName}_${counter}`;
+        counter++;
+      }
+
+      XLSX.utils.book_append_sheet(wb, ws, finalSheetName);
+    }
+
+    if (wb.SheetNames.length === 0) {
+      ElMessage.warning('没有有效数据可导出');
+      return;
+    }
+
+    // 生成文件名：统一为“批量导出_日期.xlsx”（带时间戳）
+    const fileName = `批量导出_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    ElMessage.success('导出成功');
+  } catch (error) {
+    console.error('批量导出失败', error);
+    ElMessage.error(error.message || '导出失败');
+  } finally {
+    loading.close();
+  }
 }
 
 /** 新增 */
@@ -171,22 +337,33 @@ function handleEdit(row) {
   formDrawerApi.setData({ title: textObj.editText, ...row }).open();
 }
 
+/** 删除 */
+async function handleDelete(row) {
+  await confirm($t('确定删除该评价主体吗？'));
+  const loadingInstance = ElLoading.service({ text: $t('ui.actionMessage.deleting') });
+  try {
+    await deleteSubject(row.id);
+    ElMessage.success($t('ui.actionMessage.deleteSuccess'));
+    handleRefresh();
+    fetchStatusCount();
+  } finally {
+    loadingInstance.close();
+  }
+}
+
 /** 停用 */
 async function handleDisable(row) {
-  if (row.statusName !== '启用') {
-    ElMessage.warning(`当前状态为“${row.statusName}”，不能执行停用操作`);
+  if (row.statusId !== 1) {
+    ElMessage.warning(`当前状态不是启用，不能执行停用操作`);
     return;
   }
   await confirm('确定停用该评价主体吗？');
   const loadingInstance = ElLoading.service({ text: '停用中...' });
   try {
-    const index = dataObj.apilist.findIndex(v => v.id === row.id);
-    if (index !== -1) {
-      dataObj.apilist[index].statusName = '停用';
-      dataObj.apilist[index].changeLog = (dataObj.apilist[index].changeLog || '') + '；停用操作';
-    }
+    await updateSubject({ id: row.id, statusId: 2 });
     ElMessage.success('已停用');
     handleRefresh();
+    fetchStatusCount();
   } finally {
     loadingInstance.close();
   }
@@ -194,105 +371,198 @@ async function handleDisable(row) {
 
 /** 启用 */
 async function handleEnable(row) {
-  if (row.statusName !== '停用') {
-    ElMessage.warning(`当前状态为“${row.statusName}”，不能执行启用操作`);
+  if (row.statusId !== 2) {
+    ElMessage.warning(`当前状态不是停用，不能执行启用操作`);
     return;
   }
   await confirm('确定启用该评价主体吗？');
   const loadingInstance = ElLoading.service({ text: '启用中...' });
   try {
-    const index = dataObj.apilist.findIndex(v => v.id === row.id);
-    if (index !== -1) {
-      dataObj.apilist[index].statusName = '启用';
-      dataObj.apilist[index].changeLog = (dataObj.apilist[index].changeLog || '') + '；启用操作';
-    }
+    await updateSubject({ id: row.id, statusId: 1 });
     ElMessage.success('已启用');
     handleRefresh();
+    fetchStatusCount();
   } finally {
     loadingInstance.close();
   }
 }
 
-/** 批量状态变更（根据当前tab和选中行状态校验） */
+/** 批量状态变更（停用/启用） */
 async function handleBatchStatusChange() {
   const targetStatus = activeName.value === '停用' ? '启用' : '停用';
-  const allowedCurrentStatus = targetStatus === '启用' ? '停用' : '启用';
-  const invalidRows = dataObj.apilist.filter(item => checkedIds.value.includes(item.id) && item.statusName !== allowedCurrentStatus);
-  if (invalidRows.length > 0) {
-    ElMessage.warning(`选中的行中包含状态不是“${allowedCurrentStatus}”的对象，无法批量${targetStatus}。`);
+  const targetStatusId = targetStatus === '启用' ? 1 : 2;
+  await confirm(`确定将选中的主体${targetStatus}吗？`);
+
+  const validIds = checkedIds.value.filter(id => {
+    const row = dataObj.list.find(item => item.id === id);
+    if (targetStatus === '启用') return row?.statusId === 2;
+    else return row?.statusId === 1;
+  });
+  if (validIds.length === 0) {
+    ElMessage.warning('选中的主体中没有可操作的数据');
     return;
   }
-  await confirm(`确定将选中的对象${targetStatus === '启用' ? '启用' : '停用'}吗？`);
+
   const loadingInstance = ElLoading.service({ text: '处理中...' });
   try {
-    dataObj.apilist.forEach(item => {
-      if (checkedIds.value.includes(item.id)) {
-        item.statusName = targetStatus;
-        item.changeLog = (item.changeLog || '') + `；批量${targetStatus}`;
-      }
-    });
-    checkedIds.value = [];
+    await Promise.all(validIds.map(id => updateSubject({ id, statusId: targetStatusId })));
     ElMessage.success(`批量${targetStatus}成功`);
+    checkedIds.value = [];
     handleRefresh();
+    fetchStatusCount();
   } finally {
     loadingInstance.close();
   }
 }
 
+/** 获取状态统计数据 */
+async function fetchStatusCount() {
+  try {
+    const res = await getStatusCount();
+    tabsData.value[0].count = res.totalCount || 0;
+    tabsData.value[1].count = res.status1Count || res.enabled || 0;
+    tabsData.value[2].count = res.status2Count || res.disabled || 0;
+  } catch (error) {
+    console.error('获取状态统计失败', error);
+  }
+}
+
+// 选中 ID
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map(item => item.id);
 }
 
+// 表格数据对象
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
-  subjectDetail: {}, // 用于详情抽屉
-  total: subjectList().length,
+  subjectDetail: {},
+  total: 0,
   currentPage: 1,
   pageSize: 10,
-  apilist: subjectList(), // 使用subjectList
   list: [],
+  editObj: {},
 });
 
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
 
-// 表格数据获取（按状态过滤 + 按搜索条件过滤 + 排序）
-const getTableData = (pageObj) => {
-  const page = pageObj.page;
-  // 先按状态过滤
-  let filtered = dataObj.apilist.filter(v => {
-    if (activeName.value === '全部') return true;
-    return v.statusName === activeName.value;
-  });
+// 通用的列表格式化函数
+function formatList(list) {
+  return (list || []).map(item => {
+    try {
+      let createTime = '-';
+      if (item.createTime != null) {
+        try {
+          createTime = dayjs(item.createTime).format('YYYY-MM-DD HH:mm:ss');
+        } catch (e) {
+          console.warn(`条目 ${item.id} createTime 格式化失败`, item.createTime, e);
+        }
+      }
 
-  // 再按搜索条件过滤
-  const params = searchParams.value;
-  if (Object.keys(params).length > 0) {
-    filtered = filtered.filter(item => {
-      let match = true;
-      if (params.name && !item.name.includes(params.name)) match = false;
-      if (params.code && !item.code.includes(params.code)) match = false;
-      if (params.subjectTypeId && item.subjectTypeId !== params.subjectTypeId) match = false;
-      if (params.contactId && item.contactId !== params.contactId) match = false;
-      if (params.contactPhone && !item.contactPhone.includes(params.contactPhone)) match = false;
-      if (params.statusId && item.statusId !== params.statusId) match = false;
-      // 成员筛选较复杂，暂不实现
-      return match;
-    });
+      let updateTime = '-';
+      const updateTimeField = item.updateTime ?? item.bizUpdateTime;
+      if (updateTimeField != null) {
+        try {
+          updateTime = dayjs(updateTimeField).format('YYYY-MM-DD HH:mm:ss');
+        } catch (e) {
+          console.warn(`条目 ${item.id} updateTime 格式化失败`, updateTimeField, e);
+        }
+      }
+
+      let changeLogShort = '-';
+      if (item.changeLog != null) {
+        try {
+          const logStr = String(item.changeLog);
+          changeLogShort = logStr.length > 50 ? logStr.substring(0, 50) + '...' : logStr;
+        } catch (e) {
+          console.warn(`条目 ${item.id} changeLog 处理失败`, item.changeLog, e);
+        }
+      }
+
+      return {
+        ...item,
+        // 确保 statusId 存在且为数字（如果是字符串则转换，缺失则设为 undefined）
+        statusId: item.statusId !== undefined ? Number(item.statusId) : undefined,
+        subjectTypeName: item.subjectTypeName ?? '-',
+        contactName: item.contactName ?? '-',
+        contactPhone: item.contactPhone ?? '-',
+        memberCount: item.memberCount ?? 0,
+        statusName: item.statusName ?? '-',
+        createUserName: item.createUserName ?? '-',
+        updateUserName: item.updateUserName ?? '-',
+        createTime,
+        updateTime,
+        useCount: item.useCount ?? 0,
+        changeLogShort,
+      };
+    } catch (err) {
+      console.error(`处理条目 ${item.id || 'unknown'} 时发生严重错误`, err, item);
+      return {
+        id: item.id,
+        name: item.name || '数据异常',
+        statusId: item.statusId !== undefined ? Number(item.statusId) : undefined, // 同样处理
+        code: '-',
+        subjectTypeName: '-',
+        contactName: '-',
+        contactPhone: '-',
+        memberCount: 0,
+        statusName: '-',
+        createUserName: '-',
+        updateUserName: '-',
+        createTime: '-',
+        updateTime: '-',
+        useCount: 0,
+        changeLogShort: '数据解析错误',
+      };
+    }
+  });
+}
+
+// 获取表格数据
+const getTableData = async ({ page }) => {
+  const params = {
+    pageNo: page.currentPage,
+    pageSize: page.pageSize,
+    ...searchParams.value,
+  };
+
+  // 根据标签页状态处理筛选条件
+  if (activeName.value !== '全部') {
+    params.statusId = activeName.value === '启用' ? 1 : 2;
   }
 
-  // 排序：按创建时间降序
-  filtered.sort((a, b) => (b.createTime || '').localeCompare(a.createTime || ''));
+  try {
+    const res = await getAllPage(params);
+    const { list, total } = res;
+    const formattedList = formatList(list);
+    dataObj.list = formattedList;
+    dataObj.total = total;
+    return dataObj;
+  } catch (error) {
+    // 原有错误处理逻辑（保持不变）
+    const responseData = error?.response?.data;
+    if (responseData?.data && Array.isArray(responseData.data.list)) {
+      const { list, total } = responseData.data;
+      const formattedList = formatList(list);
+      dataObj.list = formattedList;
+      dataObj.total = total;
+      return dataObj;
+    } else if (responseData && Array.isArray(responseData.list)) {
+      const { list, total } = responseData;
+      const formattedList = formatList(list);
+      dataObj.list = formattedList;
+      dataObj.total = total;
+      return dataObj;
+    }
 
-  dataObj.total = filtered.length;
-  dataObj.list = filtered.slice(
-    (page.currentPage - 1) * page.pageSize,
-    page.currentPage * page.pageSize
-  );
-  return dataObj;
+    console.error('表格数据获取失败，错误详情：', error);
+    dataObj.list = [];
+    dataObj.total = 0;
+    return dataObj;
+  }
 };
 
 // 搜索表单
@@ -305,19 +575,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useFormSchema().map(v => {
-    // 移除校验规则，但保留字段
-    delete v.rules;
-    // 成员字段改为非必填且不禁用
-    if (v.fieldName === 'memberIds') {
-      v.componentProps = { ...v.componentProps, disabled: false };
-    }
-    // 联系电话可编辑？为了搜索方便，保留为输入框
-    if (v.fieldName === 'contactPhone') {
-      v.componentProps.disabled = false;
-    }
-    return { ...v };
-  }),
+  schema: useQuerySchema(),
   showCollapseButton: true,
   submitButtonOptions: { content: '查询' },
   resetButtonOptions: {
@@ -335,6 +593,7 @@ function onSubmit(values) {
   handleRefresh();
 }
 
+// 表格实例
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
@@ -358,6 +617,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
+// 标签页
 const activeName = ref('全部');
 const handleSubjectOpenDetail = (row) => {
   dataObj.subjectDetail = row;
@@ -365,23 +625,15 @@ const handleSubjectOpenDetail = (row) => {
 };
 
 const tabsData = ref([
-  { label: '全部' },
-  { label: '启用' },
-  { label: '停用' },
+  { label: '全部', name: '全部', count: 0 },
+  { label: '启用', name: '启用', count: 0 },
+  { label: '停用', name: '停用', count: 0 },
 ]);
 
-const createLabel = (item) => {
-  let count = 0;
-  if (item.label === '全部') {
-    count = dataObj.apilist.length;
-  } else {
-    count = dataObj.apilist.filter(v => v.statusName === item.label).length;
-  }
-  return `${item.label} (${count})`;
-};
+const createLabel = (item) => `${item.label} (${item.count})`;
 
 const handleClick = () => {
-  gridApi.query();
+  handleRefresh();
 };
 
 const handleSerachShow = () => {
@@ -397,6 +649,156 @@ const subjectDetailRef = ref(null);
 const arrowChange = () => {
   emit('arrow-change');
 };
+
+// 导入相关
+const importDialogVisible = ref(false);
+const importFile = ref(null);
+const importLoading = ref(false);
+const uploadRef = ref(null);
+
+function handleImport() {
+  importDialogVisible.value = true;
+}
+
+function handleFileChange(file) {
+  importFile.value = file.raw;
+  return false;
+}
+
+/** 前端生成导入模板 */
+async function handleDownloadTemplate() {
+  const loadingInstance = ElLoading.service({ text: '生成模板中...' });
+  try {
+    const headers = importFields.map(field => field.label);
+
+    // 新增：备注行（每个单元格填充相同提示）
+    const remarkRow = importFields.map(() =>
+      '# 请在示例行下方填写真实数据，示例仅供参考，上传时将自动忽略备注和示例行'
+    );
+
+    // 示例数据
+    const exampleData = {
+      name: '示例评价主体',
+      code: '示例SUB_001',
+      subjectTypeName: '人工主体',
+      contactName: '张三',
+      contactPhone: '13900139000',
+      memberCount: 5,
+      statusId: 1,
+      createUserName: '',
+    };
+    const exampleRow = importFields.map(field => {
+      if (field.key in exampleData) return exampleData[field.key];
+      if (field.defaultValue !== undefined) return field.defaultValue;
+      return '';
+    });
+
+    // 构建三行：表头、备注、示例
+    const wsData = [headers, remarkRow, exampleRow];
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, '模板');
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbout], { type: 'application/octet-stream' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = '评价主体导入模板.xlsx';
+    link.click();
+    window.URL.revokeObjectURL(url);
+    ElMessage.success('模板生成成功');
+  } catch (error) {
+    console.error('生成模板失败', error);
+    ElMessage.error('模板生成失败，请重试');
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+// 上传处理
+async function submitImport() {
+  if (!importFile.value) {
+    ElMessage.warning('请选择文件');
+    return;
+  }
+  importLoading.value = true;
+  try {
+    const file = importFile.value;
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data, { type: 'array' });
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+    let newRows;
+    if (rows.length >= 4) {
+      // 有表头 + 备注 + 示例 + 用户数据 → 删除第2、3行，保留表头和第4行及以后
+      newRows = [rows[0], ...rows.slice(3)];
+    } else if (rows.length === 3) {
+      // 只有表头、备注、示例，没有用户数据 → 只保留表头
+      newRows = [rows[0]];
+    } else {
+      // 长度 ≤2，可能是用户自己准备的文件（只有表头和数据），直接保留原样
+      newRows = rows;
+    }
+
+    // 重新生成 Excel 文件
+    const newWorksheet = XLSX.utils.aoa_to_sheet(newRows);
+    const newWorkbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, firstSheetName);
+    const newFileArrayBuffer = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
+    const newFile = new File([newFileArrayBuffer], file.name, {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const res = await importSubjects(newFile);
+    ElMessage.success(`导入成功`);
+    importDialogVisible.value = false;
+    handleRefresh();
+    fetchStatusCount();
+    if (uploadRef.value) {
+      uploadRef.value.clearFiles();
+    }
+    importFile.value = null;
+  } catch (error) {
+    ElMessage.error(error.message || '导入失败');
+  } finally {
+    importLoading.value = false;
+  }
+}
+
+// ---------- 钻取筛选功能 ----------
+/** 点击字段进行筛选 */
+function handleFieldClick(fieldName, value) {
+  // 如果是状态筛选，同时将标签页切换为“全部”，避免与状态标签页冲突
+  if (fieldName === 'statusName') {
+    activeName.value = '全部';
+  }
+  // 直接更新 searchParams（保留其他已有条件）
+  searchParams.value = { ...searchParams.value, [fieldName]: value };
+  // 同步更新查询表单的值（便于查看当前条件）
+  queryFormApi.setValues({ [fieldName]: value });
+  // 手动刷新表格
+  handleRefresh();
+}
+
+/** 清除字段筛选 */
+function handleClearField(fieldName) {
+  // 从 searchParams 中移除该字段
+  const newParams = { ...searchParams.value };
+  delete newParams[fieldName];
+  searchParams.value = newParams;
+  // 清空查询表单对应字段
+  queryFormApi.setValues({ [fieldName]: '' });
+  // 刷新表格
+  handleRefresh();
+}
+// ---------------------------------
+
+onMounted(() => {
+  handleRefresh();
+  fetchStatusCount();
+});
 </script>
 
 <template>
@@ -404,16 +806,18 @@ const arrowChange = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <SubjectDetailDrawer
+    <subjectDetailDrawer
       ref="subjectDetailRef"
       :detail-obj="dataObj.subjectDetail"
     />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+
     <Grid>
       <template #table-title>
-        <div class="tabel-tabs">
+        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+          <!-- 原有的标签页 -->
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -428,17 +832,63 @@ const arrowChange = () => {
               />
             </el-tabs>
           </div>
+
+          <!-- 钻取筛选标签 -->
+          <el-tag
+            v-if="searchParams.code"
+            type="primary"
+            closable
+            @close="handleClearField('code')"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            主体编码：{{ searchParams.code }}
+          </el-tag>
+          <el-tag
+            v-if="searchParams.subjectTypeName"
+            type="primary"
+            closable
+            @close="handleClearField('subjectTypeName')"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            主体类型：{{ searchParams.subjectTypeName }}
+          </el-tag>
+          <el-tag
+            v-if="searchParams.statusName"
+            type="primary"
+            closable
+            @close="handleClearField('statusName')"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            状态：{{ searchParams.statusName }}
+          </el-tag>
         </div>
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton v-if="activeName === '全部'" content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="批量导入" icon-name="upload" @click="handleImport" />
+          <!-- 全部标签下的按钮 -->
+          <template v-if="activeName === '全部'">
+            <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+            <IconButton content="导入" icon-name="Upload" @click="handleImport" />
+            <IconButton content="导出" icon-name="download" @click="handleExport" />
+          </template>
+
+          <!-- 启用/停用标签下的按钮 -->
+          <template v-else>
+            <IconButton content="导出" icon-name="download" @click="handleExport" />
+            <!-- 批量导出按钮（多 sheet Excel） -->
+            <IconButton
+              content="批量导出"
+              icon-name="download"
+              :disabled="isEmpty(checkedIds)"
+              @click="handleBatchExport"
+            />
+          </template>
+
+          <!-- 批量停用/启用按钮 -->
           <IconButton
             v-if="activeName !== '停用'"
             content="批量停用"
-            icon-name="delete"
+            icon-name="close"
             color="#F56C6C"
             :disabled="isEmpty(checkedIds)"
             @click="handleBatchStatusChange"
@@ -460,6 +910,7 @@ const arrowChange = () => {
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
+      <!-- 主体名称列插槽，点击打开详情 -->
       <template #name="{ row }">
         <el-text
           @click="handleSubjectOpenDetail(row)"
@@ -469,24 +920,69 @@ const arrowChange = () => {
           {{ row.name }}
         </el-text>
       </template>
+      <!-- 钻取字段插槽 -->
+      <template #code="{ row }">
+        <el-text @click="handleFieldClick('code', row.code)" class="common-align" type="primary">
+          {{ row.code }}
+        </el-text>
+      </template>
+      <template #subjectTypeName="{ row }">
+        <el-text @click="handleFieldClick('subjectTypeName', row.subjectTypeName)" class="common-align" type="primary">
+          {{ row.subjectTypeName }}
+        </el-text>
+      </template>
+      <template #statusName="{ row }">
+        <el-text @click="handleFieldClick('statusName', row.statusName)" class="common-align" type="primary">
+          {{ row.statusName }}
+        </el-text>
+      </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
           <IconButton content="详情" icon-name="View" @click="handleSubjectOpenDetail(row)" />
           <IconButton content="编辑" icon-name="edit" @click="handleEdit(row)" />
-          <IconButton content="停用" icon-name="delete" color="#F56C6C" @click="handleDisable(row)" />
-          <IconButton content="启用" icon-name="check" color="#67C23A" @click="handleEnable(row)" />
+          <IconButton content="删除" icon-name="delete" color="#F56C6C" @click="handleDelete(row)" />
+          <IconButton v-if="row.statusId === 1" content="停用" icon-name="close" color="#F56C6C" @click="handleDisable(row)" />
+          <IconButton v-if="row.statusId === 2" content="启用" icon-name="check" color="#67C23A" @click="handleEnable(row)" />
         </div>
       </template>
       <template #bottom>
         <div class="common-total" @click="changeTotalShow">
           <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow"><ArrowDown /></el-icon>
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow"><ArrowUp /></el-icon>
-          <span>本页统计：主体数量{{ dataObj.list.length }}，启用{{ dataObj.list.filter(v => v.statusName === '启用').length }}，停用{{ dataObj.list.filter(v => v.statusName === '停用').length }}</span>
+          <span>本页统计：主体数量{{ dataObj.list.length }}，启用{{ dataObj.list.filter(v => v.statusId === 1).length }}，停用{{ dataObj.list.filter(v => v.statusId === 2).length }}</span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span>全部统计：主体总数{{ dataObj.apilist.length }}，启用{{ dataObj.apilist.filter(v => v.statusName === '启用').length }}，停用{{ dataObj.apilist.filter(v => v.statusName === '停用').length }}</span>
+          <span>全部统计：主体总数{{ dataObj.total }}</span>
         </div>
       </template>
     </Grid>
+
+    <!-- 导入弹窗 -->
+    <el-dialog v-model="importDialogVisible" title="批量导入" width="400px" destroy-on-close>
+      <div style="margin-bottom: 16px; text-align: right;">
+        <el-button type="primary" link @click="handleDownloadTemplate">下载模板</el-button>
+      </div>
+      <el-upload
+        ref="uploadRef"
+        action="#"
+        :auto-upload="false"
+        :on-change="handleFileChange"
+        :limit="1"
+        accept=".xlsx,.xls"
+      >
+        <template #trigger>
+          <el-button type="primary">选择 Excel 文件</el-button>
+        </template>
+        <template #tip>
+          <div class="el-upload__tip">只能上传 .xlsx 或 .xls 文件</div>
+        </template>
+      </el-upload>
+      <template #footer>
+        <span>
+          <el-button @click="importDialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="importLoading" @click="submitImport">确认导入</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>

@@ -14,6 +14,15 @@ const drawerTitle = computed(() => {
   return title.value || `${objName}详情`;
 });
 
+// 计算成员姓名列表字符串（基于 memberList 数组）
+const memberNames = computed(() => {
+  const list = detailObj.value?.memberList;
+  if (list && list.length > 0) {
+    return list.map(m => m.userName).join('、');
+  }
+  return '-';
+});
+
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -34,11 +43,10 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       <div class="detail-card-row"><div class="detail-row-left">主体类型：</div><div class="detail-row-right">{{ detailObj.subjectTypeName || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">联系人：</div><div class="detail-row-right">{{ detailObj.contactName || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">联系电话：</div><div class="detail-row-right">{{ detailObj.contactPhone || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">成员列表：</div>
-        <div class="detail-row-right">
-          <span v-if="detailObj.memberNames">{{ detailObj.memberNames }}</span>
-          <span v-else>-</span>
-        </div>
+      <!-- 成员列表行：使用计算属性 memberNames 展示 -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">成员列表：</div>
+        <div class="detail-row-right">{{ memberNames }}</div>
       </div>
       <div class="detail-card-row"><div class="detail-row-left">状态：</div><div class="detail-row-right">{{ detailObj.statusName || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">成员数量：</div><div class="detail-row-right">{{ detailObj.memberCount || '-' }}</div></div>
