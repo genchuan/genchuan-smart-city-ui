@@ -60,3 +60,14 @@ export function getRoadFacility(params) {
 export function getRoadFacilityList(data) {
   return requestClient.get('/facility/road-facility/page', data);
 }
+/** 获得道路监测预警分页 */
+export function getwarnList(params) {
+  return requestClient.get('/facility/road-warn/page-road-warn', {
+    params,
+  });
+}
+
+/** 道路监测预警删除 */
+export function deleteWarn(id) {
+  return requestClient.delete(`/facility/road-warn/delete?id=${id}`);
+}

@@ -11,7 +11,7 @@ const props = defineProps({
     required: true,
     default: () => ({}),
   },
-  // 抽屉标题（可选，默认使用详情对象的warningCode）
+  // 抽屉标题（可选，默认使用详情对象的warnNo）
   title: {
     type: String,
     default: '',
@@ -22,8 +22,8 @@ const { detailObj, title } = toRefs(props);
 
 // 计算属性处理标题，优先用预警编号，兜底显示默认值
 const drawerTitle = computed(() => {
-  const warningCode = detailObj.value?.warningCode || '道路预警';
-  return title.value || `${warningCode}详情`;
+  const warnNo = detailObj.value?.warnNo || '道路预警';
+  return title.value || `${warnNo}详情`;
 });
 
 // 初始化抽屉实例（加宽适配预警字段）
@@ -49,73 +49,67 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 道路预警基础信息 -->
+      <!-- 道路预警基础信息（同步表格字段） -->
       <div class="detail-card-row">
         <div class="detail-row-left">预警编号:</div>
-        <div class="detail-row-right">{{ detailObj.warningCode || '-' }}</div>
+        <div class="detail-row-right">{{ detailObj.warnNo || '-' }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">预警路段:</div>
         <div class="detail-row-right">
-          {{ detailObj.warningRoadSection || '-' }}
+          {{ detailObj.facilityName || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">超标指标:</div>
+        <div class="detail-row-left">超标指标名称:</div>
         <div class="detail-row-right">
-          {{ detailObj.overStandardIndex || '-' }}
+          {{ detailObj.overIndex || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">超标数值:</div>
         <div class="detail-row-right">
-          {{ detailObj.overStandardValue || '-' }}
+          {{ detailObj.overValue || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">阈值标准:</div>
+        <div class="detail-row-left">闽值标准:</div>
         <div class="detail-row-right">
-          {{ detailObj.thresholdStandard || '-' }}
+          {{ detailObj.thresholdValue || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">预警触发时间:</div>
         <div class="detail-row-right">
-          {{ detailObj.warningTriggerTime || '-' }}
+          {{ detailObj.triggerTime || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">预警状态:</div>
-        <div class="detail-row-right">{{ detailObj.warningStatus || '-' }}</div>
+        <div class="detail-row-right">{{ detailObj.status || '-' }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">监测设备编号:</div>
         <div class="detail-row-right">
-          {{ detailObj.monitorDeviceCode || '-' }}
+          {{ detailObj.deviceCode || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">预警处置时限:</div>
         <div class="detail-row-right">
-          {{ detailObj.warningDisposalTimeLimit || '-' }} 小时
+          {{ detailObj.dealLimit || '-' }} 小时
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">剩余处置时间:</div>
         <div class="detail-row-right">
-          {{ detailObj.remainingDisposalTime || '-' }} 小时
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">关联监测数据:</div>
-        <div class="detail-row-right">
-          {{ detailObj.relatedMonitorData || '-' }}
+          {{ detailObj.remainTime || '-' }} 小时
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">派单状态:</div>
         <div class="detail-row-right">
-          {{ detailObj.dispatchStatus || '-' }}
+          {{ detailObj.asignStatus || '-' }}
         </div>
       </div>
     </div>
