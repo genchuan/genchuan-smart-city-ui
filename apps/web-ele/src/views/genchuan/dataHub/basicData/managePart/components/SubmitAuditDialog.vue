@@ -1,6 +1,4 @@
 <script setup>
-
-
 const props = defineProps({
   category: {
     type: Object,
@@ -68,7 +66,7 @@ const handleClose = () => {
 
 .dialog-footer {
   display: flex;
-  justify-content: flex-end;
   gap: 10px;
+  justify-content: flex-end;
 }
 </style>

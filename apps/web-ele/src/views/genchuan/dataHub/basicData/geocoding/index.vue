@@ -115,6 +115,43 @@ const mapData = computed(() => {
   return dataList();
 });
 
+// 地图配置 - 使用geocoding目录下的图标
+const mapConfig = computed(() => ({
+  markerIcons: {
+    normal: '/static/imgs/dataHub/map/geocoding/marker-normal.png',
+    green: '/static/imgs/dataHub/map/geocoding/marker-green.png',
+    orange: '/static/imgs/dataHub/map/geocoding/marker-orange.png',
+    red: '/static/imgs/dataHub/map/geocoding/marker-red.png',
+    blue: '/static/imgs/dataHub/map/geocoding/marker-blue.png',
+    gray: '/static/imgs/dataHub/map/geocoding/marker-gray.png',
+  },
+  statusIconMap: {
+    green: 'green',
+    orange: 'orange',
+    red: 'red',
+    blue: 'blue',
+    gray: 'gray',
+  },
+  statusKeyMap: {
+    '正常': 'green',
+    '异常': 'red',
+    '停用': 'red',
+    '建设中': 'gray',
+    '维护中': 'orange',
+  },
+  infoWindowConfig: {
+    title: 'locationName',
+    fields: [
+      { key: 'geoCode', label: '地理编码' },
+      { key: 'statusName', label: '状态', bold: true },
+      { key: 'areaName', label: '区域' },
+      { key: 'layerTypeName', label: '图层类型' },
+      { key: 'adminCode', label: '行政区划' },
+      { key: 'checkResultName', label: '校验结果' },
+    ],
+  },
+}));
+
 // 组件挂载时展开所有树节点
 onMounted(() => {
   nextTick(() => {
@@ -131,6 +168,7 @@ onMounted(() => {
       :data="statsData"
       :show-map-toggle="true"
       :map-data="mapData"
+      :map-config="mapConfig"
     />
     <div
       style="

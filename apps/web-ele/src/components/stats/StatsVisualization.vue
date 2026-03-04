@@ -24,6 +24,40 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  mapConfig: {
+    type: Object,
+    default: () => ({
+      markerIcons: {
+        normal: '/static/imgs/dataHub/map/marker-blue.png',
+      },
+      statusIconMap: {
+        green: 'normal',
+        orange: 'normal',
+        red: 'normal',
+        blue: 'normal',
+        gray: 'normal',
+      },
+      statusKeyMap: {
+        '正常': 'green',
+        '异常': 'red',
+        '离线': 'red',
+        '维护中': 'orange',
+        '停用': 'red',
+        '建设中': 'gray',
+      },
+      infoWindowConfig: {
+        title: 'locationName',
+        fields: [
+          { key: 'geoCode', label: '地理编码' },
+          { key: 'statusName', label: '状态', bold: true },
+          { key: 'areaName', label: '区域' },
+          { key: 'layerTypeName', label: '图层类型' },
+          { key: 'adminCode', label: '行政区划' },
+          { key: 'checkResultName', label: '校验结果' },
+        ],
+      },
+    }),
+  },
 });
 
 const chartRefs = ref({});
@@ -62,7 +96,7 @@ const getChartOption = (chart) => {
 
   const option = {
     backgroundColor: 'transparent',
-    title: {
+    title: chart.type === 'pie' ? undefined : {
       text: chart.title,
       left: 'center',
       textStyle: {
@@ -84,44 +118,88 @@ const getChartOption = (chart) => {
   };
 
   if (chart.type === 'pie') {
-    option.legend = {
-      orient: 'horizontal',
-      bottom: 0,
-      // right: 0,
-      type: 'scroll', // 启用滚动模式
-      left: 'center', // 水平居中
+    // 计算数据总和用于百分比计算
+    const total = chart.data.reduce((sum, item) => sum + item.value, 0);
+
+    option.title = {
+      text: chart.title,
+      left: 'center',
+      top: 10,
       textStyle: {
         color: '#6E7E91',
-        fontSize: 12,
+        fontSize: 16,
+        fontWeight: 500,
       },
-      // 图例项换行适配
-      itemWidth: 10, // 每个图例项宽度，避免挤在一起
+    };
+    option.legend = {
+      orient: 'horizontal',
+      bottom: 5,
+      type: 'scroll',
+      left: 'center',
+      textStyle: {
+        color: '#6E7E91',
+        fontSize: 11,
+      },
+      itemWidth: 12,
+      itemHeight: 12,
       formatter(name) {
         // 名称过长时截断
-        return name.length > 6 ? `${name.slice(0, 6)}...` : name;
+        return name.length > 5 ? `${name.slice(0, 5)}...` : name;
       },
     };
     option.series = [
       {
         name: chart.title,
         type: 'pie',
-        radius: ['30%', '60%'],
-        center: ['50%', '50%'],
-        avoidLabelOverlap: false,
+        radius: ['35%', '55%'],
+        center: ['50%', '52%'],
+        avoidLabelOverlap: true,
+        minShowLabelAngle: 5,
         label: {
-          show: false,
-          position: 'center',
+          show: true,
+          position: 'outside',
+          formatter(params) {
+            const name = params.name.length > 4 ? `${params.name.slice(0, 4)}...` : params.name;
+            return `{name|${name}}\n{percent|${params.percent}%}`;
+          },
+          rich: {
+            name: {
+              color: '#6E7E91',
+              fontSize: 11,
+              lineHeight: 16,
+              align: 'center',
+            },
+            percent: {
+              color: '#4A90E2',
+              fontSize: 12,
+              fontWeight: 'bold',
+              lineHeight: 16,
+              align: 'center',
+            },
+          },
         },
         emphasis: {
           label: {
             show: true,
-            fontSize: 18,
+            fontSize: 13,
             fontWeight: 'bold',
-            color: '#6E7E91',
           },
+          scale: true,
+          scaleSize: 5,
         },
         labelLine: {
-          show: false,
+          show: true,
+          length: 12,
+          length2: 8,
+          smooth: true,
+          lineStyle: {
+            color: '#9AA8B7',
+            width: 1,
+          },
+        },
+        itemStyle: {
+          borderWidth: 2,
+          borderColor: '#fff',
         },
         data: chart.data,
       },
@@ -197,10 +275,22 @@ const getChartOption = (chart) => {
             : undefined,
         symbol: chart.type === 'line' ? 'circle' : undefined,
         symbolSize: chart.type === 'line' ? 6 : undefined,
+        label: {
+          show: chart.type === 'bar',
+          position: 'top',
+          color: '#6E7E91',
+          fontSize: 12,
+          formatter: '{c}',
+        },
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
             shadowColor: 'rgba(74, 144, 226, 0.3)',
+          },
+          label: {
+            show: chart.type === 'bar',
+            fontSize: 14,
+            fontWeight: 'bold',
           },
         },
       },
@@ -295,7 +385,13 @@ onUnmounted(() => {
           class="toggle-button"
         />
       </div>
-      <MapComponent :data="mapData" />
+      <MapComponent
+        :data="mapData"
+        :marker-icons="mapConfig.markerIcons"
+        :status-icon-map="mapConfig.statusIconMap"
+        :status-key-map="mapConfig.statusKeyMap"
+        :info-window-config="mapConfig.infoWindowConfig"
+      />
     </div>
   </div>
 </template>
@@ -306,7 +402,8 @@ onUnmounted(() => {
   flex-wrap: nowrap; /* 强制不换行 */
   gap: 20px;
   width: 100%;
-  height: 350px;
+  height: auto;
+  min-height: 300px;
   overflow: hidden; /* 防止内容溢出 */
 }
 
@@ -330,7 +427,7 @@ onUnmounted(() => {
   position: relative;
   flex: 1 1 0;
   min-width: 0;
-  height: 330px;
+  height: 280px;
 }
 
 .toggle-container {
@@ -348,6 +445,6 @@ onUnmounted(() => {
 .park-type-chart {
   flex: 1;
   min-width: 0;
-  height: 300px;
+  height: 280px;
 }
 </style>

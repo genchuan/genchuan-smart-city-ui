@@ -8,6 +8,47 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  markerIcons: {
+    type: Object,
+    default: () => ({
+      normal: '/static/imgs/dataHub/map/marker-blue.png',
+    }),
+  },
+  statusIconMap: {
+    type: Object,
+    default: () => ({
+      green: 'normal',
+      orange: 'normal',
+      red: 'normal',
+      blue: 'normal',
+      gray: 'normal',
+    }),
+  },
+  statusKeyMap: {
+    type: Object,
+    default: () => ({
+      '正常': 'green',
+      '异常': 'red',
+      '离线': 'red',
+      '维护中': 'orange',
+      '停用': 'red',
+      '建设中': 'gray',
+    }),
+  },
+  infoWindowConfig: {
+    type: Object,
+    default: () => ({
+      title: 'locationName',
+      fields: [
+        { key: 'geoCode', label: '地理编码' },
+        { key: 'statusName', label: '状态', bold: true },
+        { key: 'areaName', label: '区域' },
+        { key: 'layerTypeName', label: '图层类型' },
+        { key: 'adminCode', label: '行政区划' },
+        { key: 'checkResultName', label: '校验结果' },
+      ],
+    }),
+  },
 });
 
 const mapRef = ref(null);
@@ -23,17 +64,15 @@ const initMap = async () => {
     const TMap = await loadTMap();
     TMapInstance = TMap;
 
-    // 初始化地图
     map = new TMap.Map(mapRef.value, {
       center: new TMap.LatLng(24.5123, 117.6589),
       zoom: 12,
     });
 
-    // 初始化 infoWindow，初始关闭
     infoWindow = new TMap.InfoWindow({
       map,
       position: new TMap.LatLng(0, 0),
-      offset: { x: 0, y: -32 }, // 偏移使信息窗口在标记上方
+      offset: { x: 0, y: -32 },
     });
     infoWindow.close();
 
@@ -44,7 +83,6 @@ const initMap = async () => {
   }
 };
 
-// 初始化状态图层，每个状态一个 MultiMarker
 const initMarkerLayer = () => {
   const createLayer = (id, src) => {
     const layer = new TMapInstance.MultiMarker({
@@ -61,86 +99,64 @@ const initMarkerLayer = () => {
       },
       geometries: [],
     });
-    // 绑定点击事件
     layer.on('click', onMarkerClick);
     return layer;
   };
 
-  markerLayers = {
-    green: createLayer(
-      'green-layer',
-      '/static/imgs/dataHub/map/marker-green.png',
-    ),
-    orange: createLayer(
-      'orange-layer',
-      '../../../public/static/imgs/dataHub/map/marker-orange.png',
-    ),
-    red: createLayer(
-      'red-layer',
-      '../../../public/static/imgs/dataHub/map/marker-red.png',
-    ),
-    blue: createLayer(
-      'blue-layer',
-      '../../../public/static/imgs/dataHub/map/marker-blue.png',
-    ),
-    gray: createLayer(
-      'gray-layer',
-      '../../../public/static/imgs/dataHub/map/marker-gray.png',
-    ),
-  };
+  const layers = {};
+  Object.keys(props.statusIconMap).forEach((key) => {
+    const iconKey = props.statusIconMap[key];
+    const src = props.markerIcons[iconKey] || props.markerIcons.normal;
+    layers[key] = createLayer(`${key}-layer`, src);
+  });
+
+  markerLayers = layers;
 };
 
-// 点击标记弹出 infoWindow
+const generateInfoWindowContent = (properties) => {
+  const config = props.infoWindowConfig;
+  const title = properties[config.title] || '未知';
+  
+  let fieldsHtml = '';
+  if (config.fields) {
+    config.fields.forEach((field) => {
+      const value = properties[field.key] || '';
+      const style = field.bold ? 'font-weight:bold;' : '';
+      fieldsHtml += `
+        <tr>
+          <td style="width:90px;padding-right:8px;text-align:right;">${field.label}：</td>
+          <td style="${style}">${value}</td>
+        </tr>
+      `;
+    });
+  }
+
+  return `
+    <div style="padding:10px;min-width:220px;">
+      <h3 style="margin:0 0 8px;font-size:15px;">${title}</h3>
+      <table style="width:100%;border-collapse:collapse;">
+        ${fieldsHtml}
+      </table>
+    </div>
+  `;
+};
+
 const onMarkerClick = (evt) => {
   const { position, properties } = evt.geometry;
   if (!infoWindow || !properties) return;
 
   infoWindow.setPosition(position);
-  infoWindow.setContent(`
-    <div style="padding:10px;min-width:220px;">
-      <h3 style="margin:0 0 8px;font-size:15px;">${properties.locationName}</h3>
-      <table style="width:100%;border-collapse:collapse;">
-        <tr>
-          <td style="width:90px;text-align:right;padding-right:8px;">地理编码：</td>
-          <td>${properties.geoCode}</td>
-        </tr>
-        <tr>
-          <td style="width:90px;text-align:right;padding-right:8px;">状态：</td>
-          <td><b>${properties.statusName}</b></td>
-        </tr>
-        <tr>
-          <td style="width:90px;text-align:right;padding-right:8px;">区域：</td>
-          <td>${properties.areaName}</td>
-        </tr>
-        <tr>
-          <td style="width:90px;text-align:right;padding-right:8px;">图层类型：</td>
-          <td>${properties.layerTypeName}</td>
-        </tr>
-        <tr>
-          <td style="width:90px;text-align:right;padding-right:8px;">行政区划：</td>
-          <td>${properties.adminCode}</td>
-        </tr>
-        <tr>
-          <td style="width:90px;text-align:right;padding-right:8px;">校验结果：</td>
-          <td>${properties.checkResultName}</td>
-        </tr>
-      </table>
-    </div>
-  `);
+  infoWindow.setContent(generateInfoWindowContent(properties));
   infoWindow.open();
 };
 
-// 渲染标记
 const renderMarkers = () => {
   if (!map || !props.data?.length || !TMapInstance) return;
 
-  const buckets = {
-    green: [],
-    orange: [],
-    red: [],
-    blue: [],
-    gray: [],
-  };
+  const buckets = {};
+  Object.keys(props.statusIconMap).forEach((key) => {
+    buckets[key] = [];
+  });
 
   const bounds = new TMapInstance.LatLngBounds();
 
@@ -154,38 +170,29 @@ const renderMarkers = () => {
     bounds.extend(position);
 
     let key = 'blue';
-    if (item.checkResultName === '未通过') key = 'red';
-    else {
-      switch ((item.statusName || '').trim()) {
-        case '停用': {
-          key = 'red';
-          break;
-        }
-        case '建设中': {
-          key = 'gray';
-          break;
-        }
-        case '正常': {
-          key = 'green';
-          break;
-        }
-        case '维护中': {
-          key = 'orange';
-          break;
-        }
-      }
+    const statusName = (item.statusName || '').trim();
+    
+    // 优先根据运行状态确定图标颜色
+    if (props.statusKeyMap[statusName]) {
+      key = props.statusKeyMap[statusName];
+    } else if (item.checkResultName === '未通过') {
+      key = 'red';
     }
 
-    buckets[key].push({
-      id: item.geoCode,
-      styleId: 'normal', // 必须和 layer styles key 对应
-      position,
-      properties: item,
-    });
+    if (buckets[key]) {
+      buckets[key].push({
+        id: item.geoCode || item.id,
+        styleId: 'normal',
+        position,
+        properties: item,
+      });
+    }
   });
 
   Object.keys(markerLayers).forEach((k) => {
-    markerLayers[k].setGeometries(buckets[k]);
+    if (markerLayers[k]) {
+      markerLayers[k].setGeometries(buckets[k] || []);
+    }
   });
 
   if (!bounds.isEmpty()) {

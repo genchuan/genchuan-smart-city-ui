@@ -44,7 +44,7 @@ const iconMap = {
   Money,
   House,
   Picture,
-  Basketball
+  Basketball,
 };
 
 // 图示库数据（模拟）
@@ -111,9 +111,9 @@ const handleClose = () => {
 
 <style scoped>
 .icon-binding-drawer {
-  height: 100%;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .drawer-header {
@@ -150,20 +150,20 @@ const handleClose = () => {
   flex-direction: column;
   align-items: center;
   padding: 12px;
+  cursor: pointer;
   border: 1px solid #e4e7ed;
   border-radius: 4px;
-  cursor: pointer;
   transition: all 0.3s;
 }
 
 .icon-item:hover {
   border-color: #409eff;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 12px 0 rgb(0 0 0 / 10%);
 }
 
 .icon-item.active {
-  border-color: #409eff;
   background-color: #ecf5ff;
+  border-color: #409eff;
 }
 
 .icon-item span {
@@ -173,10 +173,10 @@ const handleClose = () => {
 }
 
 .drawer-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
   padding: 16px;
   border-top: 1px solid #e4e7ed;
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
 }
 </style>

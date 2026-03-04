@@ -8,7 +8,7 @@ import { useRouter } from 'vue-router';
 import { LOGIN_PATH } from '@vben/constants';
 import { preferences } from '@vben/preferences';
 import { resetAllStores, useAccessStore, useUserStore } from '@vben/stores';
-
+import { thingsBoardLogin } from '#/api/genchuan/thingsBoard';
 import { ElNotification } from 'element-plus';
 import { defineStore } from 'pinia';
 
@@ -69,6 +69,19 @@ export const useAuthStore = defineStore('auth', () => {
       if (accessToken) {
         accessStore.setAccessToken(accessToken);
         accessStore.setRefreshToken(refreshToken);
+        // ThingsBoard 登录
+        const thingsBoardData = {
+          username: import.meta.env.VITE_THINGS_BOARD_NAME,
+          password: import.meta.env.VITE_THINGS_BOARD_PASSWORD
+        };
+        try {
+          const thingsBoardRes = await thingsBoardLogin(thingsBoardData);
+          window.localStorage.setItem('thingsBoardJwt_token', thingsBoardRes.token);
+          window.localStorage.setItem('thingsBoardRefresh_token', thingsBoardRes.refreshToken);
+          window.localStorage.setItem('thingsBoardJwt_time', new Date().getTime().toString());
+        } catch (error) {
+          console.error('ThingsBoard 登录失败:', error);
+        }
 
         // 获取用户信息并存储到 userStore、accessStore 中
         // TODO @芋艿：清理掉 accessCodes 相关的逻辑

@@ -20,6 +20,12 @@ export default defineConfig(async () => {
             target: 'http://localhost:48080/admin-api',
             ws: true,
           },
+          '/thingsBoard-api': {
+            target: env.VITE_THINGS_BOARD_URL,
+            ws: false,
+            changeOrigin: true,
+            rewrite: (path) => path.replace(/^\/thingsBoard-api/, ''),
+          },
         },
       },
     },

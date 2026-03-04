@@ -6,9 +6,10 @@ import { useElementPlusDesignTokens } from '@vben/hooks';
 
 import { ElConfigProvider } from 'element-plus';
 
+import { CozeChat } from '#/components/CozeChat';
 import { elementLocale } from '#/locales';
 
-import { CozeChat } from '#/components/CozeChat';
+defineOptions({ name: 'App' });
 
 // Coze 配置（建议从环境变量读取）
 const COZE_CONFIG = {
@@ -16,8 +17,6 @@ const COZE_CONFIG = {
   token: import.meta.env.VITE_COZE_TOKEN || 'your-token-here',
   title: import.meta.env.VITE_COZE_TITLE || 'AI助手',
 };
-
-defineOptions({ name: 'App' });
 
 // 获取当前路由实例（响应式）
 const route = useRoute();
@@ -38,9 +37,9 @@ useElementPlusDesignTokens();
 </script>
 
 <template>
-<!--  <ElConfigProvider :locale="elementLocale">-->
-<!--    <RouterView />-->
-<!--  </ElConfigProvider>-->
+  <!--  <ElConfigProvider :locale="elementLocale">-->
+  <!--    <RouterView />-->
+  <!--  </ElConfigProvider>-->
   <ElConfigProvider :locale="elementLocale">
     <RouterView />
     <!-- 全局 Coze AI 聊天 -->

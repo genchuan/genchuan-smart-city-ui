@@ -918,18 +918,21 @@ export function useInstanceGridColumns() {
       title: '16位标识码',
       minWidth: 160,
       sortable: true,
+      slots: { default: 'uniqueCode' },
     },
     {
       field: 'categoryName',
       title: '所属分类',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'categoryName' },
     },
     {
       field: 'gridName',
       title: '所在网格',
       minWidth: 150,
       sortable: true,
+      slots: { default: 'gridName' },
     },
     {
       field: 'coordinate',
@@ -952,6 +955,7 @@ export function useInstanceGridColumns() {
       title: '主管部门',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'deptName' },
     },
     {
       field: 'creator',
@@ -1026,3 +1030,160 @@ export const instanceDetailFields = [
   { key: 'monitorCount', label: '关联监测部件数' },
   { key: 'areaName', label: '行政区划归属' },
 ];
+
+/** 获取部件管理统计数据 */
+export function getManagePartStatsData() {
+  return {
+    cards: [
+      {
+        title: '总部件数',
+        value: 1568,
+        unit: '个',
+        icon: 'Box',
+        color: '#4A90E2',
+      },
+      {
+        title: '正常运行部件数',
+        value: 1423,
+        unit: '个',
+        icon: 'CircleCheck',
+        color: '#50E3C2',
+      },
+      {
+        title: '关联监测部件数',
+        value: 3245,
+        unit: '个',
+        icon: 'Connection',
+        color: '#FF9F40',
+      },
+    ],
+    charts: [
+      {
+        title: '部件分类占比',
+        type: 'pie',
+        data: [
+          { name: '道路设施', value: 320 },
+          { name: '环境卫生', value: 280 },
+          { name: '交通设施', value: 240 },
+          { name: '公共设施', value: 200 },
+          { name: '园林绿化', value: 180 },
+          { name: '商业服务', value: 160 },
+          { name: '其他', value: 188 },
+        ],
+      },
+      {
+        title: '主管部门占比',
+        type: 'pie',
+        data: [
+          { name: '市政管理局', value: 420 },
+          { name: '环卫管理处', value: 380 },
+          { name: '交通运输局', value: 320 },
+          { name: '公安局', value: 280 },
+          { name: '消防救援支队', value: 168 },
+        ],
+      },
+      {
+        title: '不同网格部件数量对比',
+        type: 'bar',
+        xAxis: ['中山路网格', '公园路网格', '长安街网格', '建设路网格', '商业街网格', '科技路网格', '绿岛路网格', '和平路网格'],
+        data: [245, 198, 176, 154, 142, 128, 115, 98],
+      },
+    ],
+  };
+}
+
+/** 获取地图数据 */
+export function getMapData() {
+  return [
+    {
+      id: '1',
+      partName: '万达广场停车场',
+      uniqueCode: '350602TCC001001',
+      coordinate: '118.595000,24.915000',
+      runStatus: '1', // 异常
+      categoryName: '停车场设施',
+      gridName: '丰泽街道网格02',
+    },
+    {
+      id: '2',
+      partName: '中山公园西区长椅001',
+      uniqueCode: '350602GYCY00201',
+      coordinate: '118.587500,24.910300',
+      runStatus: '2', // 正常
+      categoryName: '公园长椅',
+      gridName: '海滨街道网格03',
+    },
+    {
+      id: '3',
+      partName: '中山公园东区长椅001',
+      uniqueCode: '350602GYCY00101',
+      coordinate: '118.588500,24.910500',
+      runStatus: '4', // 维护中
+      categoryName: '公园长椅',
+      gridName: '海滨街道网格03',
+    },
+    {
+      id: '4',
+      partName: '中山公园南门垃圾箱',
+      uniqueCode: '350602LJX0020002',
+      coordinate: '118.588200,24.909800',
+      runStatus: '3', // 离线
+      categoryName: '垃圾箱',
+      gridName: '海滨街道网格03',
+    },
+    {
+      id: '5',
+      partName: '中山公园北门垃圾箱',
+      uniqueCode: '350602LJX0010001',
+      coordinate: '118.588000,24.910000',
+      runStatus: '1', // 异常
+      categoryName: '垃圾箱',
+      gridName: '海滨街道网格03',
+    },
+    {
+      id: '6',
+      partName: '万达广场地下停车位A002',
+      uniqueCode: '350602TCW002A02',
+      coordinate: '118.595100,24.915100',
+      runStatus: '2', // 正常
+      categoryName: '停车位',
+      gridName: '丰泽街道网格02',
+    },
+    {
+      id: '7',
+      partName: '万达广场地下停车位A001',
+      uniqueCode: '350602TCW001A01',
+      coordinate: '118.595000,24.915000',
+      runStatus: '1', // 异常
+      categoryName: '停车位',
+      gridName: '丰泽街道网格02',
+    },
+    {
+      id: '8',
+      partName: '胜利西路钟楼路口信号灯',
+      uniqueCode: '350602JTXHD001',
+      coordinate: '118.586500,24.913200',
+      runStatus: '1', // 异常
+      categoryName: '交通信号灯',
+      gridName: '开元街道网格01',
+    },
+    {
+      id: '9',
+      partName: '胜利西路路灯002',
+      uniqueCode: '350602LD00200002',
+      coordinate: '118.586700,24.907800',
+      runStatus: '2', // 正常
+      categoryName: '路灯',
+      gridName: '开元街道网格01',
+    },
+    {
+      id: '10',
+      partName: '胜利西路路灯001',
+      uniqueCode: '350602LD00100001',
+      coordinate: '118.586500,24.907600',
+      runStatus: '1', // 异常
+      categoryName: '路灯',
+      gridName: '开元街道网格01',
+    },
+  ];
+}

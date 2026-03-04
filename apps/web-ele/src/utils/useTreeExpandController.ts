@@ -18,21 +18,21 @@ export function useTreeExpandController(treeRef) {
       }
     });
   };
-// 获取根节点
+  // 获取根节点
   const getRootNodes = () => {
     return treeRef.value?.store?.root?.childNodes || [];
   };
-// 展开全部
+  // 展开全部
   const expandAll = async () => {
     await nextTick();
     expandAllNodes(getRootNodes());
   };
-// 收起全部
+  // 收起全部
   const collapseAll = async () => {
     await nextTick();
     collapseAllNodes(getRootNodes());
   };
-// 控制展开/收缩
+  // 控制展开/收缩
   const toggle = async () => {
     await nextTick();
     const nodes = getRootNodes();
