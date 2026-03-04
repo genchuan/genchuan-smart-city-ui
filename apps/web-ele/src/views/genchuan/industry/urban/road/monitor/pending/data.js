@@ -476,14 +476,14 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'asignStatus',
+      field: 'assignStatus',
       title: '派单状态',
       minWidth: 120,
       sortable: true,
     },
     {
       title: '操作',
-      width: 140,
+      width: 160,
       fixed: 'right',
       slots: { default: 'actions' },
     },

@@ -17,7 +17,6 @@ import {
   getRoadFacilityList,
   getwarnList,
   updateRoad,
-  updateRoadStatusList,
 } from '#/api/genchuan/industry/urban/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
@@ -330,24 +329,8 @@ const arrowChange = () => {
 };
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
-const dialogVisible = ref(false);
-const [settingDrawer, settingdrawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  onCancel() {
-    settingdrawerApi.close();
-  },
-  onConfirm() {},
-  async onOpenChange() {},
-});
 const settingConfig = () => {
   settingdrawerApi.open();
-};
-
-// 单个状态切换
-const handleMonitorStatusChange = async (row) => {
-  await updateRoad({ ...row, monitorStatus: row.monitorStatus });
 };
 
 // 新增：批量切换状态弹窗打开方法
@@ -364,17 +347,6 @@ const switchOpen = () => {
   switchDialogVisible.value = true;
 };
 
-// 新增：批量切换状态确认方法
-const handleSwitchConfirm = async () => {
-  statusLoading.value = true;
-  await updateRoadStatusList({
-    roadIdList: recordsList.value.map((v) => v.roadId),
-    monitorStatus: switchStatus.value,
-  });
-  statusLoading.value = false;
-  switchDialogVisible.value = false;
-  handleRefresh();
-};
 const openRoadDetail = async (row) => {
   const resObj = await getRoadFacility({
     id: row.roadId,
@@ -382,49 +354,73 @@ const openRoadDetail = async (row) => {
   roadObj.value.detailObj = resObj;
   roadDetailRef.value.open();
 };
+// 确认有效 - 抽屉
+const currentConfirmRow = ref({});
+const confirmOpinion = ref('');
+// 确认有效 - 打开抽屉
+function handleConfirm(row) {
+  currentConfirmRow.value = row;
+  confirmOpinion.value = '';
+  confirmDrawerApi.open();
+}
+
+// 确认有效 - 保存
+async function handleConfirmSave() {
+  if (!confirmOpinion.value) {
+    ElMessage.warning('请输入确认意见');
+    return;
+  }
+
+  try {
+    // 调用你的接口：更新状态为 有效待派单
+    // await updateWarnValid({
+    //   id: currentConfirmRow.value.id,
+    //   confirmOpinion: confirmOpinion.value,
+    //   status: 2, // 有效待派单
+    // });
+
+    ElMessage.success('操作成功');
+    confirmDrawerApi.close();
+    handleRefresh();
+  } catch {
+    ElMessage.error('操作失败');
+  }
+}
+// 确认有效抽屉
+const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
+  title: '确认有效',
+  placement: 'right',
+  width: 480,
+  footer: false,
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    confirmDrawerApi.close();
+  },
+});
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <el-dialog v-model="dialogVisible">
-      <div class="park-img-center">
-        <img style="width: 100%; height: 100%" :src="dataObj.imgUrl" />
-      </div>
-    </el-dialog>
+    <!-- 确认有效抽屉 -->
+    <ConfirmDrawer>
+      <div class="p-6">
+        <div class="mb-4">
+          <label class="mb-2 block text-sm font-medium">确认意见</label>
+          <el-input
+            v-model="confirmOpinion"
+            type="textarea"
+            :rows="6"
+            placeholder="请输入确认意见"
+          />
+        </div>
 
-    <!-- 新增：批量切换监测状态弹窗 -->
-    <el-dialog
-      v-model="switchDialogVisible"
-      title="批量切换监测状态"
-      width="400px"
-      :close-on-click-modal="false"
-      :before-close="() => (statusLoading = false)"
-    >
-      <div class="switch-dialog-content" v-loading="statusLoading">
-        <div class="selected-count">
-          已选择 <span class="count-num">{{ checkedIds.length }}</span> 个路段
-        </div>
-        <div class="status-select">
-          <span class="label">目标监测状态：</span>
-          <el-radio-group v-model="switchStatus" class="ml-2">
-            <el-radio label="运行中">运行中</el-radio>
-            <el-radio label="已停止">已停止</el-radio>
-          </el-radio-group>
+        <div class="flex justify-end gap-2">
+          <el-button @click="confirmDrawerApi.close()">取消</el-button>
+          <el-button type="primary" @click="handleConfirmSave">保存</el-button>
         </div>
       </div>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="switchDialogVisible = false">取消</el-button>
-          <el-button
-            type="primary"
-            @click="handleSwitchConfirm"
-            :loading="statusLoading"
-          >
-            确认切换
-          </el-button>
-        </span>
-      </template>
-    </el-dialog>
+    </ConfirmDrawer>
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
@@ -438,18 +434,6 @@ const openRoadDetail = async (row) => {
       <QueryForm class="query-form" />
     </Drawer>
     <Grid>
-      <template #monitorStatus="{ row }">
-        <el-switch
-          v-model="row.monitorStatus"
-          active-value="运行中"
-          inactive-value="已停止"
-          active-text="运行中"
-          inactive-text="已停止"
-          active-color="#10b981"
-          inactive-color="#ef4444"
-          @change="handleMonitorStatusChange(row)"
-        />
-      </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
@@ -520,6 +504,16 @@ const openRoadDetail = async (row) => {
           <IconButton
             content="确认有效"
             icon-name="Check"
+            @click="handleConfirm(row)"
+          />
+          <IconButton
+            content="标注无效"
+            icon-name="Paperclip"
+            @click="handleOpenDetail(row)"
+          />
+          <IconButton
+            content="派发工单"
+            icon-name="Avatar"
             @click="handleOpenDetail(row)"
           />
           <IconButton
