@@ -31,34 +31,33 @@ const dictTag = computed(() => {
     return defaultDict;
   }
 
-  // 处理颜色类型
-  let colorType = dict.colorType;
-  switch (colorType) {
-    case 'danger': {
-      colorType = 'danger';
-      break;
-    }
-    case 'info': {
-      colorType = 'info';
-      break;
-    }
-    case 'primary': {
-      colorType = 'primary';
-      break;
-    }
-    case 'success': {
-      colorType = 'success';
-      break;
-    }
-    case 'warning': {
-      colorType = 'warning';
-      break;
-    }
-    default: {
-      if (!colorType) {
-        colorType = 'primary';
-      }
-    }
+  // 处理颜色类型 - 支持所有字典配置的颜色类型
+  let colorType = dict.colorType || 'primary';
+  
+  // 将后端的颜色类型映射到Element Plus支持的颜色类型
+  const colorTypeMap: Record<string, string> = {
+    'danger': 'danger',
+    'error': 'danger',
+    'info': 'info',
+    'primary': 'primary',
+    'success': 'success',
+    'warning': 'warning',
+    'blue': 'primary',
+    'green': 'success',
+    'orange': 'warning',
+    'cyan': 'info',
+    'purple': 'primary',
+    'pink': 'danger',
+    'red': 'danger',
+    'yellow': 'warning',
+  };
+  
+  // 如果colorType在映射表中，使用映射后的值
+  if (colorTypeMap[colorType]) {
+    colorType = colorTypeMap[colorType];
+  } else if (!['danger', 'info', 'primary', 'success', 'warning'].includes(colorType)) {
+    // 如果是不支持的颜色类型，默认使用primary
+    colorType = 'primary';
   }
 
   return {

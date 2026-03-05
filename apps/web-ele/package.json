@@ -16,8 +16,8 @@
   },
   "type": "module",
   "scripts": {
-    "build": "pnpm vite build --mode production",
-    "build:analyze": "pnpm vite build --mode analyze",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 pnpm vite build --mode production",
+    "build:analyze": "cross-env NODE_OPTIONS=--max-old-space-size=8192 pnpm vite build --mode analyze",
     "dev": "pnpm vite --mode development",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit --skipLibCheck"
@@ -31,6 +31,7 @@
     "@form-create/element-ui": "^3.1.1",
     "@tinymce/tinymce-vue": "^6.3.0",
     "@vben/access": "workspace:*",
+    "axios": "catalog:",
     "@vben/common-ui": "workspace:*",
     "@vben/constants": "workspace:*",
     "@vben/hooks": "workspace:*",
@@ -73,6 +74,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "cross-env": "catalog:",
     "cssnano": "catalog:",
     "unplugin-element-plus": "^0.11.2"
   }

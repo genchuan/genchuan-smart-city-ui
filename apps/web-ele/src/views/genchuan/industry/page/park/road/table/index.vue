@@ -292,6 +292,7 @@ const handleConfirmDriveIn = async () => {
     const res = await simulateMagneticDetection({
       targetBerthNo: currentDriveInRow.value.berthCode,
       entryTime: driveInTime.value,
+      parkId: currentDriveInRow.value.parkId,
     });
 
     ElMessage.success('地磁车辆入场操作成功！');
@@ -320,7 +321,7 @@ const histObj = ref([]);
 // 4. 打开出场弹窗方法
 const handleOpenDriveOutDialog = async (row) => {
   currentDriveOutRow.value = row;
-  const resObj = await getHistroyList(row.berthCode, '已停入');
+  const resObj = await getHistroyList(row.berthCode, '已停入', row.parkId);
   histObj.value = resObj;
   const validTimeStamp = Date.now(); // 默认当前时间
   // 最终赋值：确保只有合法时间戳被绑定
@@ -568,11 +569,11 @@ const handleCancelDriveOut = () => {
 </template>
 <style scoped>
 .park-img-center {
-  width: 700px;
-  height: 700px;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 700px;
+  height: 700px;
 }
 
 .drive-in-form {
@@ -586,8 +587,8 @@ const handleCancelDriveOut = () => {
 .form-label {
   display: inline-block;
   width: 80px;
-  text-align: right;
   margin-right: 10px;
   color: #606266;
+  text-align: right;
 }
 </style>

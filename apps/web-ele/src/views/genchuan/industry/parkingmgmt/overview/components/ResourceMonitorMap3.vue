@@ -8,9 +8,8 @@ import {
   watch,
 } from 'vue';
 
-import { mapOrbitAnimation } from '#/api/genchuan/industry/mapOrbitAnimation.js';
+import {mapOrbitAnimation} from '#/api/genchuan/industry/mapOrbitAnimation.js';
 
-// ✅ 仅保留接口存在的【停车场+泊位图标】，删除设备/车辆/运维人员所有图标，无冗余
 import markerFault from '../../images/berth_fault.png';
 import markerIdle from '../../images/berth_idle.png';
 import markerOccupy from '../../images/berth_occupy.png';
@@ -20,7 +19,7 @@ import markerUnknown from '../../images/unknown.png';
 const props = defineProps({
   idName: {
     type: String,
-    default: 'chinaEcharts',
+    default: 'satelliteParkingMap',
   },
   geometriesArray: {
     type: Array,
@@ -29,16 +28,15 @@ const props = defineProps({
   orbitConfig: {
     type: Object,
     default: () => ({
-      center: { lat: 24.58, lng: 117.65 },
-      rotateSpeed: 0.2,
-      pitch: 40,
+      center: {lat: 24.58, lng: 117.65},
+      rotateSpeed: 0.05,
+      pitch: 0,
       zoom: 10,
       loop: true,
     }),
   },
 });
 
-// ✅ 仅保留接口存在的【停车场+泊位标注层】，无其他冗余ref
 const mapInstance = ref(null);
 const infoWindow = ref(null);
 const parkMarkerLayer = ref(null);
@@ -58,47 +56,46 @@ watch(
   (newConfig) => {
     Object.assign(orbitConfig.value, newConfig);
   },
-  { deep: true, immediate: true },
+  {deep: true, immediate: true},
 );
 
-// ✅ 状态映射表：100%匹配接口返回值，停车场只有【正常】状态，泊位只有【空闲/占用/故障】3种状态，无其他冗余状态
 const lotStatusMap = {
   正常: {
     color: '#39b20d',
     icon: parkNormal,
     text: '正常运营',
-    size: { w: 50, h: 50 },
+    size: {w: 50, h: 50},
     styleId: 'normal',
   },
 };
-// 接口字段精准匹配：泊位状态字段为【status】，无禁用状态，删除禁用
+
 const berthStatusMap = {
   空闲: {
     color: '#FFA500',
     icon: markerIdle,
     text: '空闲',
-    size: { w: 30, h: 30 },
+    size: {w: 30, h: 30},
     styleId: 'idle',
   },
   占用: {
     color: 'blue',
     icon: markerOccupy,
     text: '占用',
-    size: { w: 30, h: 30 },
+    size: {w: 30, h: 30},
     styleId: 'occupy',
   },
   故障: {
     color: '#FF4500',
     icon: markerFault,
     text: '故障',
-    size: { w: 30, h: 30 },
+    size: {w: 30, h: 30},
     styleId: 'fault',
   },
 };
 
 // 点击标注展示信息窗口
 const handleMarkerClick = (e) => {
-  const { properties, position } = e.geometry;
+  const {properties, position} = e.geometry;
   if (properties && position && infoWindow.value) {
     infoWindow.value.setContent(getTooltipContent(properties));
     infoWindow.value.setPosition(position);
@@ -113,6 +110,7 @@ const handleInfoWindowClose = () => {
 const initMap = () => {
   const callbackName = `initMap_${props.idName}`;
   const script = document.createElement('script');
+  // 使用卫星地图的API Key
   script.src = `https://map.qq.com/api/gljs?v=1.exp&key=QTQBZ-F3RWW-JJJRV-YNPA5-ZIKDK-3SBNO&callback=${callbackName}`;
   script.async = true;
   window[callbackName] = () => {
@@ -122,7 +120,6 @@ const initMap = () => {
   document.head.append(script);
 };
 
-// ✅ 核心重构：仅渲染【停车场+泊位】，经纬度字段为接口的【longitude/latitude】，100%匹配无错误
 const createAllMarkers = (map) => {
   // 销毁原有停车场+泊位标注层
   if (parkMarkerLayer.value) {
@@ -154,7 +151,6 @@ const createAllMarkers = (map) => {
   const berthData = [];
   const parkIdSet = new Set();
 
-  // 提取唯一停车场+泊位数据，完全匹配文件1接口返回字段
   props.geometriesArray.forEach((item) => {
     const {
       lotId,
@@ -176,25 +172,23 @@ const createAllMarkers = (map) => {
     )
       return;
 
-    // 停车场标注：按lotId去重，接口统一经纬度 longitude/latitude
     if (!parkIdSet.has(lotId)) {
       parkIdSet.add(lotId);
       parkData.push({
         id: `park-${lotId}`,
         styleId: `park-normal`,
         position: new TMap.LatLng(latitude, longitude),
-        properties: { ...item, markerType: 'parkLot' },
+        properties: {...item, markerType: 'parkLot'},
       });
     }
 
-    // 泊位标注：存在roadsideId即为泊位，匹配接口的status字段
     if (roadsideId && status) {
       const styleId = berthStatusMap[status]?.styleId || 'default';
       berthData.push({
         id: `berth-${roadsideId}`,
         styleId: `berth-${styleId}`,
         position: new TMap.LatLng(latitude, longitude),
-        properties: { ...item, markerType: 'berth' },
+        properties: {...item, markerType: 'berth'},
       });
     }
   });
@@ -207,13 +201,13 @@ const createAllMarkers = (map) => {
         'park-normal': new TMap.MarkerStyle({
           width: 50,
           height: 50,
-          anchor: { x: 20, y: 35 },
+          anchor: {x: 20, y: 35},
           src: parkNormal,
         }),
         'park-default': new TMap.MarkerStyle({
           width: 50,
           height: 50,
-          anchor: { x: 20, y: 35 },
+          anchor: {x: 20, y: 35},
           src: markerUnknown,
         }),
       },
@@ -230,25 +224,25 @@ const createAllMarkers = (map) => {
         'berth-idle': new TMap.MarkerStyle({
           width: 30,
           height: 30,
-          anchor: { x: 15, y: 25 },
+          anchor: {x: 15, y: 25},
           src: markerIdle,
         }),
         'berth-occupy': new TMap.MarkerStyle({
           width: 30,
           height: 30,
-          anchor: { x: 15, y: 25 },
+          anchor: {x: 15, y: 25},
           src: markerOccupy,
         }),
         'berth-fault': new TMap.MarkerStyle({
           width: 30,
           height: 30,
-          anchor: { x: 15, y: 25 },
+          anchor: {x: 15, y: 25},
           src: markerFault,
         }),
         'berth-default': new TMap.MarkerStyle({
           width: 30,
           height: 30,
-          anchor: { x: 15, y: 25 },
+          anchor: {x: 15, y: 25},
           src: markerUnknown,
         }),
       },
@@ -258,7 +252,6 @@ const createAllMarkers = (map) => {
   }
 };
 
-// ✅ 信息窗：仅保留【停车场+泊位】，字段100%匹配文件1接口返回，无任何多余字段（无设备/车辆）
 const getTooltipContent = (properties) => {
   const labelStyle =
     'width: 120px; text-align: right; font-weight: bold; margin-right: 8px; flex-shrink: 0;';
@@ -280,7 +273,6 @@ const getTooltipContent = (properties) => {
     });
   };
 
-  // 停车场详情：字段完全匹配文件1接口
   if (properties.markerType === 'parkLot') {
     const occupyRate = properties.totalSpace
       ? `${(((properties.totalSpace - properties.availableSpace) / properties.totalSpace) * 100).toFixed(1)}%`
@@ -309,7 +301,6 @@ const getTooltipContent = (properties) => {
     `;
   }
 
-  // 泊位详情：字段完全匹配文件1接口
   if (properties.markerType === 'berth') {
     const statusText = berthStatusMap[properties.status]?.text || '未知状态';
     const statusColor = berthStatusMap[properties.status]?.color || '#999';
@@ -337,16 +328,21 @@ const mapCallback = () => {
     return;
   }
 
-  const { center, zoom, pitch } = props.orbitConfig;
+  const {center, zoom, pitch} = props.orbitConfig;
+  // 关键修改：使用卫星地图配置
   const map = new TMap.Map(mapContainer, {
     center: new TMap.LatLng(center.lat, center.lng),
     zoom,
-    mapStyleId: 'style1',
+    // 设置卫星地图
+    baseMap: {
+      type: 'satellite'
+    },
     enablePitch: true,
     enableRotate: true,
     pitch,
     rotation: 0,
   });
+
   mapInstance.value = map;
   mapInitialized.value = true;
 
@@ -354,7 +350,7 @@ const mapCallback = () => {
     map,
     position: new TMap.LatLng(0, 0),
     content: '',
-    offset: { x: 0, y: -40 },
+    offset: {x: 0, y: -40},
     visible: false,
   });
   infoWindow.value.on('close', handleInfoWindowClose);
@@ -369,7 +365,7 @@ watch(
     if (mapInitialized.value && Array.isArray(newVal))
       createAllMarkers(mapInstance.value);
   },
-  { deep: true },
+  {deep: true},
 );
 
 onMounted(() => {
@@ -422,21 +418,21 @@ defineExpose({
 
 <template>
   <div class="map-container">
-    <div :id="idName" class="map-common-css"></div>
-    <!-- ✅ 仅保留停车场+泊位图例，无其他冗余图例，文字补充完整 -->
+    <div :id="idName" class="map-satellite"></div>
+    <!-- 停车场和泊位图例 -->
     <div class="legend">
       <div class="legend-items">
         <div class="legend-item">
-          <img :src="parkNormal" class="legend-icon" alt="正常" />停车场
+          <img :src="parkNormal" class="legend-icon" alt="正常"/>停车场
         </div>
         <div class="legend-item">
-          <img :src="markerFault" class="legend-icon" alt="故障" />泊位故障
+          <img :src="markerFault" class="legend-icon" alt="故障"/>泊位故障
         </div>
         <div class="legend-item">
-          <img :src="markerIdle" class="legend-icon" alt="空闲" />泊位空闲
+          <img :src="markerIdle" class="legend-icon" alt="空闲"/>泊位空闲
         </div>
         <div class="legend-item">
-          <img :src="markerOccupy" class="legend-icon" alt="占用" />泊位占用
+          <img :src="markerOccupy" class="legend-icon" alt="占用"/>泊位占用
         </div>
       </div>
     </div>
@@ -450,9 +446,9 @@ defineExpose({
   height: 100%;
 }
 
-.map-common-css {
+.map-satellite {
   width: 100%;
-  height: 100%;
+  height: 99%;
   margin: 0 auto;
   overflow: hidden;
   border-radius: 8px;

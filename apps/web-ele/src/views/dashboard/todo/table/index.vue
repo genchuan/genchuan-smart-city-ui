@@ -1,4 +1,4 @@
-<!-- index.vue -->
+<!-- index.vue 内部-->
 <script setup>
 import { computed, reactive, ref } from 'vue';
 

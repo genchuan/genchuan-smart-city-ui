@@ -311,7 +311,7 @@ const getStoredOrbitConfig = () => {
   }
   return {
     center: { lat: 24.58, lng: 117.65 },
-    rotateSpeed: 0.1,
+    rotateSpeed: 0.05,
     pitch: 40,
     zoom: 12,
     loop: true,
@@ -430,7 +430,7 @@ const submitOrbitConfig = async () => {
 const resetToDefaultConfig = () => {
   const defaultConfig = {
     center: { lat: 24.58, lng: 117.65 },
-    rotateSpeed: 0.1,
+    rotateSpeed: 0.05,
     pitch: 40,
     zoom: 12,
     loop: true,

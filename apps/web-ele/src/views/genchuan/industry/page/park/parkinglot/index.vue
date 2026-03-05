@@ -1,7 +1,6 @@
 <script setup>
 import { ref } from 'vue';
 
-import Parkchart from './parkchart.vue';
 import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
@@ -19,7 +18,7 @@ const arrowChange = () => {
 };
 const tabArray = ref([
   {
-    label: '车库信息管理',
+    label: '车场管理',
     components: Table,
     showSecondary: true,
     secondShow: false,
@@ -27,12 +26,12 @@ const tabArray = ref([
     arrowState: false,
   },
 ]);
-const activeName = ref('车库信息管理');
+const activeName = ref('车场管理');
 const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <Parkchart v-if="tabArray[0].arrowShow" />
+    <!-- <Parkchart v-if="tabArray[0].arrowShow" /> -->
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"

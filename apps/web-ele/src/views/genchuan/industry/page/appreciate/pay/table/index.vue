@@ -13,8 +13,7 @@ import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 // 引入封装后的详情抽屉组件
 import ParkDetailDrawer from '#/views/genchuan/industry/page/park/components/detail.vue';
-import garageDetailDrawer from '#/views/genchuan/industry/page/park/garage/table/detail.vue';
-import { dataList as parkData } from '#/views/genchuan/industry/page/park/parkinglot/table/data';
+import garageDetailDrawer from '#/views/genchuan/industry/page/park/garage/table/detail.vue'; 
 
 import { dataList, textObj, useFormSchema, useGridColumns } from './data';
 

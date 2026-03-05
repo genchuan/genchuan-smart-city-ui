@@ -1,9 +1,9 @@
 <script lang="ts" setup>
-// import 'bpmn-js/dist/assets/diagram-js.css' // 左边工具栏以及编辑节点的样式
-// import 'bpmn-js/dist/assets/bpmn-font/css/bpmn.css'
-// import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-codes.css'
-// import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css'
-// import 'bpmn-js-properties-panel/dist/assets/bpmn-js-properties-panel.css' // 右侧框样式
+// import 'bpmn-js/flowdist/assets/diagram-js.css' // 左边工具栏以及编辑节点的样式
+// import 'bpmn-js/flowdist/assets/bpmn-font/css/bpmn.css'
+// import 'bpmn-js/flowdist/assets/bpmn-font/css/bpmn-codes.css'
+// import 'bpmn-js/flowdist/assets/bpmn-font/css/bpmn-embedded.css'
+// import 'bpmn-js-properties-panel/flowdist/assets/bpmn-js-properties-panel.css' // 右侧框样式
 import { computed, h, onBeforeUnmount, onMounted, provide, ref } from 'vue';
 
 import {

@@ -4,7 +4,6 @@ import { computed, ref } from 'vue';
 import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
 
 import StatsVisualization from '#/components/stats/StatsVisualization.vue';
-
 import { getSubscriptionStatsData } from './table/data.js';
 import Table from './table/index.vue';
 
@@ -27,7 +26,7 @@ const toggleStats = () => {
 
 const tabArray = ref([
   {
-    label: '期卡套餐信息',
+    label: '套餐信息管理',
     components: Table,
     showSecondary: true,
     secondShow: false,
@@ -39,7 +38,7 @@ const tabArray = ref([
     secondShow: false,
   },
 ]);
-const activeName = ref('期卡套餐信息');
+const activeName = ref('套餐信息管理');
 const secondShow = ref(false);
 
 // 获取当前标签页的统计数据

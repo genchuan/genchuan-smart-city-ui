@@ -28,7 +28,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'confirm']);
 
-const [DetailDrawer, drawerApi] = useVbenDrawer({
+const [DrawerComponent, drawerApi] = useVbenDrawer({
   width: props.width,
   mask: false,
   modal: false,
@@ -76,7 +76,7 @@ defineExpose({
 </script>
 
 <template>
-  <DetailDrawer>
+  <DrawerComponent>
     <div class="detail-container">
       <div
         class="detail-card"
@@ -88,8 +88,32 @@ defineExpose({
             <span class="detail-label">{{ field.label }}:</span>
             <span class="detail-value">
               <template v-if="field.type === 'tag'">
-                <el-tag :type="field.tagType?.(item[field.key]) || 'info'">
-                  {{ item[field.key] }}
+                <el-tag
+                  :type="
+                    (() => {
+                      const type = field.tagType?.(item[field.key]) || 'info';
+                      // 支持所有字典配置的颜色类型映射
+                      const colorTypeMap = {
+                        danger: 'danger',
+                        error: 'danger',
+                        info: 'info',
+                        primary: 'primary',
+                        success: 'success',
+                        warning: 'warning',
+                        blue: 'primary',
+                        green: 'success',
+                        orange: 'warning',
+                        cyan: 'info',
+                        purple: 'primary',
+                        pink: 'danger',
+                        red: 'danger',
+                        yellow: 'warning',
+                      };
+                      return colorTypeMap[type] || type || 'info';
+                    })()
+                  "
+                >
+                  {{ formatValue(field, item[field.key]) }}
                 </el-tag>
               </template>
               <template v-else>
@@ -104,7 +128,7 @@ defineExpose({
         ></div>
       </div>
     </div>
-  </DetailDrawer>
+  </DrawerComponent>
 </template>
 
 <style scoped>
@@ -117,8 +141,8 @@ defineExpose({
 .detail-card {
   padding: 20px;
   margin-bottom: 16px;
-  background-color: #fff;
-  border: 1px solid #ebeef5;
+  background-color: var(--el-bg-color, #fff);
+  border: 1px solid var(--el-border-color-light, #ebeef5);
   border-radius: 4px;
   box-shadow: 0 2px 12px 0 rgb(0 0 0 / 10%);
 }
@@ -144,21 +168,21 @@ defineExpose({
   width: 120px;
   font-size: 14px;
   font-weight: 500;
-  color: #606266;
+  color: var(--el-text-color-regular, #606266);
   text-align: right;
 }
 
 .detail-value {
   flex: 1;
   font-size: 14px;
-  color: #303133;
+  color: var(--el-text-color-primary, #303133);
   text-align: left;
 }
 
 .detail-separator {
   padding-top: 20px;
   margin-top: 20px;
-  border-top: 1px dashed #ebeef5;
+  border-top: 1px dashed var(--el-border-color-light, #ebeef5);
 }
 
 .detail-footer {
@@ -167,6 +191,6 @@ defineExpose({
   justify-content: flex-end;
   padding: 16px 0 0;
   margin-top: 20px;
-  border-top: 1px solid #ebeef5;
+  border-top: 1px solid var(--el-border-color-light, #ebeef5);
 }
 </style>

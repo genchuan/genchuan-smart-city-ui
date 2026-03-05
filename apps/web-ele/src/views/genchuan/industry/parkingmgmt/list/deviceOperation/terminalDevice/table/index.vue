@@ -13,6 +13,8 @@ import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
+import UnbindDrawer from '../components/UnbindDrawer.vue';
+import UpdateStatusDrawer from '../components/UpdateStatusDrawer.vue';
 import {
   dataList,
   detailFields,
@@ -25,6 +27,14 @@ const props = defineProps({
   secondShow: {
     type: Boolean,
     default: false,
+  },
+  showStats: {
+    type: Boolean,
+    default: false,
+  },
+  toggleStats: {
+    type: Function,
+    default: () => {},
   },
 });
 const getTitle = computed(() => {
@@ -43,6 +53,62 @@ const [Drawer, drawerApi] = useVbenDrawer({
 });
 const detailDrawerRef = ref(null);
 const formData = ref();
+
+// 解绑抽屉
+const [UnbindDrawerComp, unbindDrawerApi] = useVbenDrawer({
+  title: '解绑设备',
+  placement: 'right',
+  width: '500px',
+  appendToMain: true,
+  modal: false,
+  showFooter: true,
+  confirmText: '确认',
+  cancelText: '取消',
+  onCancel() {
+    unbindDrawerApi.close();
+  },
+  async onConfirm() {
+    // 触发抽屉组件的提交事件
+    unbindDrawerRef.value?.handleSubmit();
+  },
+  async onOpenChange(isOpen) {
+    if (!isOpen && unbindDrawerRef.value?.formApi) {
+      unbindDrawerRef.value.formApi.resetForm();
+    }
+  },
+});
+
+// 更新状态抽屉
+const [UpdateStatusDrawerComp, updateStatusDrawerApi] = useVbenDrawer({
+  title: '更新设备状态',
+  placement: 'right',
+  width: '500px',
+  appendToMain: true,
+  modal: false,
+  showFooter: true,
+  confirmText: '确认',
+  cancelText: '取消',
+  onCancel() {
+    updateStatusDrawerApi.close();
+  },
+  async onConfirm() {
+    // 触发抽屉组件的提交事件
+    updateStatusDrawerRef.value?.handleSubmit();
+  },
+  async onOpenChange(isOpen) {
+    if (!isOpen && updateStatusDrawerRef.value?.formApi) {
+      updateStatusDrawerRef.value.formApi.resetForm();
+    }
+  },
+});
+
+// 抽屉引用
+const unbindDrawerRef = ref(null);
+const updateStatusDrawerRef = ref(null);
+
+// 抽屉数据
+const unbindRow = ref({});
+const updateStatusRow = ref({});
 const [Form, formApi] = useVbenForm({
   commonConfig: {
     componentProps: {
@@ -115,22 +181,22 @@ function handleEdit(row) {
     })
     .open();
 }
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.deviceTypeName]),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => v.deviceId !== row.deviceId,
-    );
-    ElMessage.success(
-      $t('ui.actionMessage.deleteSuccess', [row.deviceTypeName]),
-    );
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
-}
+// async function handleDelete(row) {
+//   const loadingInstance = ElLoading.service({
+//     text: $t('ui.actionMessage.deleting', [row.deviceTypeName]),
+//   });
+//   try {
+//     dataObj.apilist = dataObj.apilist.filter(
+//       (v) => v.deviceId !== row.deviceId,
+//     );
+//     ElMessage.success(
+//       $t('ui.actionMessage.deleteSuccess', [row.deviceTypeName]),
+//     );
+//     handleRefresh();
+//   } finally {
+//     loadingInstance.close();
+//   }
+// }
 
 async function handleDeleteBatch() {
   await confirm($t('确定删除这些数据吗？'));
@@ -170,26 +236,38 @@ const changeTotalShow = () => {
 const getTableData = (pageObj) => {
   const page = pageObj.page;
 
-  // 根据activeName筛选数据
+  // 根据activeName和筛选条件筛选数据
   const filteredList = dataObj.apilist.filter((v) => {
+    // 状态筛选
+    let statusMatch = true;
     switch (activeName.value) {
-      case '全部': {
-        return true;
-      }
       case '在线': {
-        return v.deviceStatusName === '在线';
+        statusMatch = v.deviceStatusName === '在线';
+        break;
       }
       case '故障': {
-        return v.deviceStatusName === '故障';
+        statusMatch = v.deviceStatusName === '故障';
+        break;
       }
       case '离线': {
-        return v.deviceStatusName === '离线';
+        statusMatch = v.deviceStatusName === '离线';
+        break;
       }
       case '维护中': {
-        return v.deviceStatusName === '维护中';
+        statusMatch = v.deviceStatusName === '维护中';
+        break;
       }
     }
-    return false;
+
+    // 设备类型筛选
+    const deviceTypeMatch =
+      !filterDeviceType.value || v.deviceTypeName === filterDeviceType.value;
+
+    // 所属资产筛选
+    const assetNameMatch =
+      !filterAssetName.value || v.assetName === filterAssetName.value;
+
+    return statusMatch && deviceTypeMatch && assetNameMatch;
   });
 
   dataObj.total = filteredList.length;
@@ -257,6 +335,8 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const activeName = ref('全部');
+const filterDeviceType = ref(''); // 设备类型筛选：空=未筛选，有值=当前筛选设备类型
+const filterAssetName = ref(''); // 所属资产筛选：空=未筛选，有值=当前筛选所属资产
 
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
@@ -329,6 +409,84 @@ const handleFullShow = () => {
   screenfull.toggle();
 };
 
+// 处理设备类型点击
+const handleDeviceTypeClick = (deviceType) => {
+  filterDeviceType.value =
+    filterDeviceType.value === deviceType ? '' : deviceType;
+  gridApi.query();
+};
+
+/** 取消设备类型筛选（筛选标签关闭按钮） */
+const handleCancelDeviceTypeFilter = () => {
+  filterDeviceType.value = '';
+  gridApi.query();
+};
+
+// 处理所属资产点击
+const handleAssetNameClick = (assetName) => {
+  filterAssetName.value = filterAssetName.value === assetName ? '' : assetName;
+  gridApi.query();
+};
+
+/** 取消所属资产筛选（筛选标签关闭按钮） */
+const handleCancelAssetNameFilter = () => {
+  filterAssetName.value = '';
+  gridApi.query();
+};
+
+// 解绑按钮点击事件
+function handleUnbind() {
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请先选择要解绑的设备');
+    return;
+  }
+  if (checkedIds.value.length > 1) {
+    ElMessage.warning('请选择单个设备进行解绑');
+    return;
+  }
+  const selectedRow = dataObj.apilist.find(
+    (item) => item.deviceId === checkedIds.value[0],
+  );
+  if (selectedRow) {
+    unbindRow.value = selectedRow;
+    unbindDrawerApi.open();
+  }
+}
+
+// 解绑提交事件
+function handleUnbindSubmit(values) {
+  // 找到要解绑的设备并更新其所属资产字段
+  const deviceIndex = dataObj.apilist.findIndex(
+    (item) => item.deviceId === unbindRow.value.deviceId,
+  );
+  if (deviceIndex !== -1) {
+    dataObj.apilist[deviceIndex].assetName = '已解绑';
+  }
+  ElMessage.success('设备解绑成功');
+  unbindDrawerApi.close();
+  handleRefresh();
+}
+
+// 更新状态按钮点击事件
+function handleUpdateStatus(row) {
+  updateStatusRow.value = row;
+  updateStatusDrawerApi.open();
+}
+
+// 更新状态提交事件
+function handleUpdateStatusSubmit(values) {
+  // 找到要更新状态的设备并更新其状态字段
+  const deviceIndex = dataObj.apilist.findIndex(
+    (item) => item.deviceId === updateStatusRow.value.deviceId,
+  );
+  if (deviceIndex !== -1) {
+    dataObj.apilist[deviceIndex].deviceStatusName = values.newStatus;
+  }
+  ElMessage.success('设备状态更新成功');
+  updateStatusDrawerApi.close();
+  handleRefresh();
+}
+
 // 状态标签类型映射
 const getStatusType = (status) => {
   switch (status) {
@@ -363,13 +521,34 @@ const getStatusType = (status) => {
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
+    <!-- 解绑抽屉 -->
+    <UnbindDrawerComp>
+      <UnbindDrawer
+        ref="unbindDrawerRef"
+        :row="unbindRow"
+        @close="unbindDrawerApi.close()"
+        @submit="handleUnbindSubmit"
+      />
+    </UnbindDrawerComp>
+    <!-- 更新状态抽屉 -->
+    <UpdateStatusDrawerComp>
+      <UpdateStatusDrawer
+        ref="updateStatusDrawerRef"
+        :row="updateStatusRow"
+        @close="updateStatusDrawerApi.close()"
+        @submit="handleUpdateStatusSubmit"
+      />
+    </UpdateStatusDrawerComp>
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
     <Grid>
       <!-- 三级状态 -->
       <template #table-title>
-        <div class="tabel-tabs">
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
+        >
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -384,6 +563,26 @@ const getStatusType = (status) => {
               />
             </el-tabs>
           </div>
+          <!-- 设备类型筛选标签：蓝色primary，仅筛选时显示 -->
+          <el-tag
+            v-if="filterDeviceType"
+            type="primary"
+            closable
+            @close="handleCancelDeviceTypeFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            设备类型：{{ filterDeviceType }}
+          </el-tag>
+          <!-- 所属资产筛选标签：绿色success，仅筛选时显示 -->
+          <el-tag
+            v-if="filterAssetName"
+            type="success"
+            closable
+            @close="handleCancelAssetNameFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            所属资产：{{ filterAssetName }}
+          </el-tag>
         </div>
       </template>
       <template #toolbar-tools>
@@ -393,6 +592,12 @@ const getStatusType = (status) => {
             content="导出"
             icon-name="download"
             @click="handleExport"
+          />
+          <IconButton
+            content="解绑"
+            icon-name="Link"
+            :disabled="isEmpty(checkedIds)"
+            @click="handleUnbind"
           />
           <IconButton
             content="批量删除"
@@ -405,6 +610,11 @@ const getStatusType = (status) => {
             content="搜索"
             icon-name="search"
             @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
           />
           <IconButton
             content="全屏"
@@ -427,6 +637,28 @@ const getStatusType = (status) => {
           {{ row.deviceStatusName }}
         </el-tag>
       </template>
+
+      <!-- 设备类型插槽 -->
+      <template #deviceTypeName="{ row }">
+        <el-text
+          @click="handleDeviceTypeClick(row.deviceTypeName)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.deviceTypeName }}
+        </el-text>
+      </template>
+
+      <!-- 所属资产插槽 -->
+      <template #assetName="{ row }">
+        <el-text
+          @click="handleAssetNameClick(row.assetName)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.assetName }}
+        </el-text>
+      </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
@@ -440,11 +672,16 @@ const getStatusType = (status) => {
             @click="handleEdit(row)"
           />
           <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
+            content="更新状态"
+            icon-name="Refresh"
+            @click="handleUpdateStatus(row)"
           />
+          <!--          <IconButton-->
+          <!--            content="删除"-->
+          <!--            icon-name="delete"-->
+          <!--            color="#F56C6C"-->
+          <!--            @click="handleDelete(row)"-->
+          <!--          />-->
         </div>
       </template>
       <template #bottom>

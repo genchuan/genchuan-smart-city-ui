@@ -20,6 +20,9 @@ const props = defineProps({
     default: false,
   },
 });
+// 向父组件派发事件（与参考代码一致，预留扩展）
+const emit = defineEmits(['toggleChart']);
+
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
 });
@@ -44,6 +47,8 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
+// 展开/收缩按钮自身状态（与参考代码一致）
+const arrowShow = ref(false);
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -277,6 +282,11 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+/** 展开/收缩按钮点击：切换自身状态 + 向父组件派发事件（与参考代码完全一致） */
+const arrowChange = () => {
+  arrowShow.value = !arrowShow.value;
+  emit('toggleChart');
+};
 </script>
 
 <template>
@@ -434,6 +444,11 @@ const handleFullShow = () => {
             content="搜索"
             icon-name="search"
             @click="handleSerachShow"
+          />
+          <IconButton
+            :content="arrowShow ? '收缩' : '展开'"
+            :icon-name="arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
           />
           <IconButton
             content="全屏"

@@ -389,12 +389,14 @@ export function useGridColumns() {
       title: '设备类型',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'deviceTypeName' },
     },
     {
       field: 'assetName',
       title: '所属资产',
       minWidth: 180,
       sortable: true,
+      slots: { default: 'assetName' },
     },
     {
       field: 'deviceCode',
@@ -472,6 +474,90 @@ export const textObj = {
   excelName: '终端设备列表',
   excelAllName: '终端设备数据.xlsx',
   total: ' 总计: 设备数量15; 在线10; 离线2; 故障2; 维护中1',
+};
+
+/** 根据设备数据生成统计数据 */
+export const getStatsData = (deviceData) => {
+  const totalCount = deviceData.length;
+  const onlineCount = deviceData.filter(
+    (item) => item.deviceStatusName === '在线',
+  ).length;
+  const faultCount = deviceData.filter(
+    (item) => item.deviceStatusName === '故障',
+  ).length;
+
+  // 统计不同设备类型的数量
+  const deviceTypeStats = {};
+  deviceData.forEach((item) => {
+    deviceTypeStats[item.deviceTypeName] =
+      (deviceTypeStats[item.deviceTypeName] || 0) + 1;
+  });
+
+  // 统计不同设备状态的数量
+  const deviceStatusStats = {
+    在线: deviceData.filter((item) => item.deviceStatusName === '在线').length,
+    离线: deviceData.filter((item) => item.deviceStatusName === '离线').length,
+    故障: deviceData.filter((item) => item.deviceStatusName === '故障').length,
+    维护中: deviceData.filter((item) => item.deviceStatusName === '维护中')
+      .length,
+  };
+
+  // 统计不同所属资产的设备数量
+  const assetNameStats = {};
+  deviceData.forEach((item) => {
+    assetNameStats[item.assetName] = (assetNameStats[item.assetName] || 0) + 1;
+  });
+
+  return {
+    cards: [
+      {
+        title: '总设备数',
+        value: totalCount,
+        desc: `较上月增长${Math.floor(Math.random() * 10) + 5}%`,
+        color: '#13ce66',
+      },
+      {
+        title: '在线设备数',
+        value: onlineCount,
+        desc: `在线率${Math.round((onlineCount / totalCount) * 100)}%`,
+        color: '#4ECDC4',
+      },
+      {
+        title: '故障设备数',
+        value: faultCount,
+        desc: `故障率${Math.round((faultCount / totalCount) * 100)}%`,
+        color: '#FF6B6B',
+      },
+    ],
+    charts: [
+      {
+        title: '设备类型占比',
+        type: 'pie',
+        data: Object.entries(deviceTypeStats)
+          .filter(([_, value]) => value > 0)
+          .map(([name, value]) => ({
+            value: Math.round((value / totalCount) * 100),
+            name,
+          })),
+      },
+      {
+        title: '设备状态占比',
+        type: 'pie',
+        data: Object.entries(deviceStatusStats)
+          .filter(([_, value]) => value > 0)
+          .map(([name, value]) => ({
+            value: Math.round((value / totalCount) * 100),
+            name,
+          })),
+      },
+      {
+        title: '不同所属资产设备数量对比',
+        type: 'bar',
+        xAxis: Object.keys(assetNameStats),
+        series: Object.values(assetNameStats),
+      },
+    ],
+  };
 };
 
 /** 详情抽屉字段配置 */
