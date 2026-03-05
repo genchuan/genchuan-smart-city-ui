@@ -1,39 +1,54 @@
 image: harbor.genchuan.cn/library/node:v20.15.0-alpine-docker-pnpm
 
+# 定义两个独立的阶段：先构建，后推送
 stages:
-  - build_and_push
+  - build          # 所有分支都执行的构建阶段
+  - push           # 仅 develop分支执行的推送阶段
 
 variables:
   DOCKER_IMAGE: "harbor.genchuan.cn/sccsgl/genchuan-ui"
   HARBOR_USER: "guoyuanhong"
   HARBOR_PASSWORD: "Gyh12345"
   PIPELINE_TAG: "$CI_COMMIT_BRANCH"
-build_and_push:
-  stage: build_and_push
-  # 仅在develop 环境下执行
+
+# 第一阶段：构建（所有分支执行）
+build:
+  stage: build
+  script:
+    - echo "安装依赖并构建项目..."
+    - pnpm install
+    - pnpm run build:ele  # 修正原配置中多写的一个pnpm
+  # 所有分支都执行这个阶段，无需rules限制
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
+      - unknown_failure
+
+# 第二阶段：推送（仅 develop分支执行，且依赖build阶段成功）
+push:
+  stage: push
+  # 仅在develop分支且build阶段成功后才运行
   rules:
-    - if: $CI_COMMIT_BRANCH == "dev-urban"
+    - if: $CI_COMMIT_BRANCH == "develop"
       when: on_success
     - when: never
   script:
-    # 安装依赖并构建
-    - pnpm install
-    - pnpm pnpm run build:ele
-
-    # 登录 Docker 仓库
     - echo "登录 Harbor 仓库..."
     - docker login -u $HARBOR_USER -p $HARBOR_PASSWORD harbor.genchuan.cn
 
-    # 构建 Docker 镜像
     - echo "构建 Docker 镜像..."
     - docker build -t $DOCKER_IMAGE:$PIPELINE_TAG .
 
-    # 推送 Docker 镜像
     - echo "推送 Docker 镜像..."
     - docker push $DOCKER_IMAGE:$PIPELINE_TAG
+
+    - echo "登出 Harbor 仓库（提升安全性）..."
+    - docker logout harbor.genchuan.cn
   retry:
-    max: 2  # 最大重试次数
-    when:  # 重试条件
+    max: 2
+    when:
       - runner_system_failure
       - stuck_or_timeout_failure
       - unknown_failure
