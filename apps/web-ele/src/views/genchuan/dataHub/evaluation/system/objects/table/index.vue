@@ -729,7 +729,6 @@ async function handleDownloadTemplate() {
       managerPhone: '13900139000',
       relatedName: '第二网格',
       statusId: 1,
-      createUserName: '',
     };
     const exampleRow = importFields.map(field => {
       if (field.key in exampleData) return exampleData[field.key];
