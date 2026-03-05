@@ -116,10 +116,10 @@ watch(
     </div>
 
     <!-- 提示信息 -->
-<!--    <div v-if="!loading && !error" class="info-banner">-->
-<!--      <span>如果仪表盘无法显示，请尝试</span>-->
-<!--      <button @click="refreshIframe" class="link-btn">点击刷新</button>-->
-<!--    </div>-->
+    <!--    <div v-if="!loading && !error" class="info-banner">-->
+    <!--      <span>如果仪表盘无法显示，请尝试</span>-->
+    <!--      <button @click="refreshIframe" class="link-btn">点击刷新</button>-->
+    <!--    </div>-->
 
     <!-- iframe -->
     <iframe
@@ -139,29 +139,26 @@ watch(
 <style lang="scss" scoped>
 .thingsboard-container {
   position: relative;
-  width: 100%;
-  height: calc(100vh - 90px);
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: calc(100vh - 90px);
 }
 
 .loading-overlay,
 .error-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: #f5f7fa;
-  z-index: 10;
 }
 
 .loading-spinner {
-  text-align: center;
   color: #606266;
+  text-align: center;
 
   p {
     margin-top: 16px;
@@ -186,8 +183,8 @@ watch(
 }
 
 .error-content {
-  text-align: center;
   color: #606266;
+  text-align: center;
 
   p {
     margin-bottom: 16px;
@@ -199,10 +196,10 @@ watch(
   padding: 8px 20px;
   font-size: 14px;
   color: #fff;
+  cursor: pointer;
   background-color: #409eff;
   border: none;
   border-radius: 4px;
-  cursor: pointer;
   transition: background-color 0.3s;
 
   &:hover {
@@ -211,25 +208,25 @@ watch(
 }
 
 .info-banner {
+  display: flex;
+  gap: 8px;
+  align-items: center;
   padding: 8px 16px;
-  background-color: #e6f7ff;
-  border: 1px solid #91d5ff;
-  border-radius: 4px;
   margin: 8px;
   font-size: 13px;
   color: #096dd9;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  background-color: #e6f7ff;
+  border: 1px solid #91d5ff;
+  border-radius: 4px;
 
   .link-btn {
-    color: #1890ff;
-    background: none;
-    border: none;
-    cursor: pointer;
-    text-decoration: underline;
     padding: 0;
     font-size: 13px;
+    color: #1890ff;
+    text-decoration: underline;
+    cursor: pointer;
+    background: none;
+    border: none;
 
     &:hover {
       color: #40a9ff;
@@ -240,13 +237,13 @@ watch(
 .iframe-css {
   flex: 1;
   width: 100%;
-  border: none;
   min-height: 0;
+  border: none;
 }
 </style>
 
 <style lang="scss">
 .custom-body-class .cc-iframe {
-  padding: 0px !important;
+  padding: 0 !important;
 }
 </style>

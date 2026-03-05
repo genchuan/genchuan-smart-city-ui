@@ -56,3 +56,27 @@ export function getInstancePage(params) {
   });
 }
 
+/** 新增管理部件实例 */
+export function createInstance(data) {
+  return requestClient.post('/data/instance/create', data);
+}
+
+/** 更新管理部件实例 */
+export function updateInstance(data) {
+  return requestClient.put('/data/instance/update', data);
+}
+
+/** 删除管理部件实例 */
+export function deleteInstance(id) {
+  return requestClient.delete(`/data/instance/delete?id=${id}`);
+}
+
+/** 导出管理部件实例*/
+export function exportInstance() {
+  return requestClient.download('/data/instance/export-excel');
+}
+
+/** todo 导入管理部件实例*/
+export function importInstance() {
+  return requestClient.download('/data/instance/import-excel');
+}

@@ -23,6 +23,14 @@ import {
 import { thingsBoardLogin } from '#/api/genchuan/thingsBoard';
 import { $t } from '#/locales';
 
+/**
+ * ThingsBoard 登录响应类型
+ */
+interface ThingsBoardLoginResponse {
+  refreshToken: string;
+  token: string;
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const accessStore = useAccessStore();
   const userStore = useUserStore();
@@ -76,7 +84,7 @@ export const useAuthStore = defineStore('auth', () => {
           password: import.meta.env.VITE_THINGS_BOARD_PASSWORD,
         };
         try {
-          const thingsBoardRes = await thingsBoardLogin(thingsBoardData);
+          const thingsBoardRes = (await thingsBoardLogin(thingsBoardData)) as unknown as ThingsBoardLoginResponse;
           window.localStorage.setItem(
             'thingsBoardJwt_token',
             thingsBoardRes.token,

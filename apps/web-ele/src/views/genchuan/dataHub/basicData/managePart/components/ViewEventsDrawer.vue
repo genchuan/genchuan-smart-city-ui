@@ -232,23 +232,23 @@ defineExpose({
 
 <style scoped>
 .view-events-container {
-  padding: 20px;
   height: 100%;
+  padding: 20px;
   overflow-y: auto;
 }
 
 .current-part-info {
-  margin-bottom: 20px;
   padding: 16px;
+  margin-bottom: 20px;
   background-color: var(--el-fill-color-light);
   border-radius: 4px;
 }
 
 .info-title {
+  margin-bottom: 12px;
   font-size: 14px;
   font-weight: 600;
   color: var(--el-text-color-primary);
-  margin-bottom: 12px;
 }
 
 .info-content {
@@ -264,33 +264,33 @@ defineExpose({
 
 .info-item {
   display: flex;
-  font-size: 13px;
   flex: 1;
   min-width: 0;
+  font-size: 13px;
 }
 
 .info-label {
-  color: var(--el-text-color-secondary);
-  width: 90px;
   flex-shrink: 0;
-  text-align: right;
+  width: 90px;
   padding-right: 8px;
+  color: var(--el-text-color-secondary);
+  text-align: right;
 }
 
 .info-value {
-  color: var(--el-text-color-primary);
-  font-weight: 500;
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 500;
+  color: var(--el-text-color-primary);
   white-space: nowrap;
 }
 
 .event-stats {
   display: flex;
   gap: 16px;
-  margin-bottom: 24px;
   padding: 16px;
+  margin-bottom: 24px;
   background-color: var(--el-fill-color-light);
   border-radius: 4px;
 }
@@ -301,10 +301,10 @@ defineExpose({
 }
 
 .stat-value {
+  margin-bottom: 4px;
   font-size: 24px;
   font-weight: 600;
   color: var(--el-color-primary);
-  margin-bottom: 4px;
 }
 
 .stat-label {
@@ -317,31 +317,31 @@ defineExpose({
 }
 
 .timeline-title {
+  margin-bottom: 16px;
   font-size: 14px;
   font-weight: 600;
   color: var(--el-text-color-primary);
-  margin-bottom: 16px;
 }
 
 .event-card {
   padding: 16px;
+  margin-bottom: 8px;
   background-color: var(--el-bg-color);
   border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
-  margin-bottom: 8px;
 }
 
 .event-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 12px;
 }
 
 .event-title {
   display: flex;
-  align-items: center;
   gap: 8px;
+  align-items: center;
 }
 
 .event-id {
@@ -354,54 +354,54 @@ defineExpose({
 }
 
 .event-description {
-  color: var(--el-text-color-regular);
   margin-bottom: 12px;
   line-height: 1.6;
+  color: var(--el-text-color-regular);
 }
 
 .handle-record {
   padding: 12px;
+  margin-top: 12px;
   background-color: var(--el-fill-color-light);
   border-radius: 4px;
-  margin-top: 12px;
 }
 
 .record-title {
+  margin-bottom: 8px;
   font-size: 12px;
   font-weight: 600;
   color: var(--el-text-color-primary);
-  margin-bottom: 8px;
 }
 
 .record-item {
   display: flex;
-  font-size: 12px;
   margin-bottom: 4px;
+  font-size: 12px;
 }
 
 .record-label {
-  color: var(--el-text-color-secondary);
   width: 70px;
+  color: var(--el-text-color-secondary);
 }
 
 .record-value {
-  color: var(--el-text-color-primary);
   flex: 1;
+  color: var(--el-text-color-primary);
 }
 
 .pending-tip {
   padding: 12px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--el-color-warning);
   background-color: var(--el-color-warning-light-9);
   border: 1px solid var(--el-color-warning-light-5);
   border-radius: 4px;
-  color: var(--el-color-warning);
-  font-size: 12px;
-  margin-top: 12px;
 }
 
 .drawer-footer {
   display: flex;
-  justify-content: flex-end;
   gap: 12px;
+  justify-content: flex-end;
 }
 </style>

@@ -206,8 +206,12 @@ defineExpose({
           <div class="result-message">{{ validationResult.message }}</div>
           <div class="result-detail">
             <span>总记录数: {{ validationResult.total }}</span>
-            <span class="success-count">成功: {{ validationResult.successCount }}</span>
-            <span class="fail-count">失败: {{ validationResult.failCount }}</span>
+            <span class="success-count"
+              >成功: {{ validationResult.successCount }}</span
+            >
+            <span class="fail-count"
+              >失败: {{ validationResult.failCount }}</span
+            >
           </div>
         </div>
       </div>
@@ -232,10 +236,10 @@ defineExpose({
 }
 
 .section-title {
+  margin-bottom: 12px;
   font-size: 14px;
   font-weight: 600;
   color: var(--el-text-color-primary);
-  margin-bottom: 12px;
 }
 
 .section-content {
@@ -243,14 +247,14 @@ defineExpose({
 }
 
 .tip-text {
+  margin-bottom: 12px;
   font-size: 13px;
   color: var(--el-text-color-secondary);
-  margin-bottom: 12px;
 }
 
 .result-section {
-  margin-top: 20px;
   padding: 16px;
+  margin-top: 20px;
   background-color: var(--el-fill-color-light);
   border-radius: 4px;
 }
@@ -271,9 +275,9 @@ defineExpose({
 }
 
 .result-message {
+  margin-bottom: 8px;
   font-size: 14px;
   font-weight: 500;
-  margin-bottom: 8px;
 }
 
 .result-content.success .result-message {
@@ -302,9 +306,9 @@ defineExpose({
 }
 
 .validating-tip {
-  text-align: center;
   padding: 20px;
   color: var(--el-text-color-secondary);
+  text-align: center;
 }
 
 :deep(.el-upload-dragger) {

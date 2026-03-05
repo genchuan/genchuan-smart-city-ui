@@ -339,27 +339,27 @@ const handleClearFilter = () => {
       <!-- 左侧树 -->
       <div
         style="
+          display: flex;
+          flex-shrink: 0;
+          flex-direction: column;
           width: 220px;
           min-width: 220px;
-          flex-shrink: 0;
+          height: 523px;
           border: 1px solid var(--el-border-color);
           border-radius: 4px;
-          display: flex;
-          flex-direction: column;
-          height: 523px;
         "
       >
         <!-- 树头 -->
         <div
           style="
-            padding: 12px 16px;
-            font-size: 14px;
-            font-weight: 500;
-            border-bottom: 1px solid var(--el-border-color);
-            background-color: var(--el-bg-color-secondary);
             display: flex;
             align-items: center;
             justify-content: space-between;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            background-color: var(--el-bg-color-secondary);
+            border-bottom: 1px solid var(--el-border-color);
           "
         >
           <span>分类</span>
