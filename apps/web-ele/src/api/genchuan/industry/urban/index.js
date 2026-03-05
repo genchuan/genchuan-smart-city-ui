@@ -84,3 +84,27 @@ export function deleteWarn(id) {
 export function batchConfirmInvalidSysWarn(params) {
   return requestClient.put(`/facility/sys-warn/batch-confirm-invalid`, params);
 }
+/** 
+ * 确认有效预警
+ * @param {object} params 管理后台 - 确认有效 VO
+ * @param {number} params.id [主键ID] 主键，预警记录唯一标识
+ * @param {string} params.confirmOpinion [确认意见] 人工确认后的描述
+ * @returns
+ */
+export function confirmValid(params) {
+  return requestClient.put(`/facility/sys-warn/confirm-valid`, params);
+}
+/** 
+ * 标注无效预警
+ * @param {object} params 管理后台 - 确认有效 VO
+ * @param {number} params.id [主键ID] 主键，预警记录唯一标识
+ * @param {string} params.invalidReason [无效原因] 如设备故障/数据波动/人为误触等
+ * @returns
+ */
+export function confirmInvalid(params) {
+  return requestClient.put(`/facility/sys-warn/confirm-invalid`, params);
+}
+/** excel导出 */
+export function exportwarnExcel() {
+  return requestClient.download('/facility/road-warn/export-excel');
+}
