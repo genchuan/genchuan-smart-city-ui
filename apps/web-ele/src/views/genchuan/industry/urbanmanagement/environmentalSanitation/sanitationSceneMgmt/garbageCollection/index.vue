@@ -986,9 +986,6 @@ onMounted(() => {
             <ArrowDown v-if="!dataObj.totalShow"/>
             <ArrowUp v-else/>
           </el-icon>
-          <span v-if="activeName !== '异常待处置' && activeName !== '处置待复核'">
-            本页统计：计划总数 {{ dataObj.list.length }}；待执行 {{ dataObj.list.filter(v => v.planStatusName === '待执行').length }}；执行中 {{ dataObj.list.filter(v => v.planStatusName === '执行中').length }}；已完成 {{ dataObj.list.filter(v => v.planStatusName === '已完成').length }}
-          </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <div v-if="showChart && activeName !== '全部'" class="bottom-chart-wrapper">
