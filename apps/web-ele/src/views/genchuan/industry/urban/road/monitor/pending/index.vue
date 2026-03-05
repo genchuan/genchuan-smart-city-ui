@@ -4,13 +4,14 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElButton, ElDialog, ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   addRoad,
+  batchConfirmInvalidSysWarn,
   deleteWarn,
   exportRoadExcel,
   getRoadFacility,
@@ -43,10 +44,9 @@ const emit = defineEmits(['arrow-change']);
 const roadDetailRef = ref(null);
 const schemaData = ref(null);
 const roadObj = ref({ detailObj: {}, list: [] });
-// 新增：批量切换状态弹窗相关
+// 批量确认无效预警弹窗相关（改造核心）
 const switchDialogVisible = ref(false);
-const switchStatus = ref('运行中'); // 默认切换为运行中
-const statusLoading = ref(false); // 批量操作加载状态
+const switchLoading = ref(false); // 弹窗确认按钮加载状态
 
 const getTitle = computed(() => {
   return formData.value?.id ? '编辑' : '新增';
@@ -330,21 +330,40 @@ const arrowChange = () => {
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
 const settingConfig = () => {
-  settingdrawerApi.open();
+  // 这里可以补充手动触发预警的弹窗逻辑
 };
 
-// 新增：批量切换状态弹窗打开方法
+// 改造核心：批量确认无效预警 - 打开二次确认弹窗
 const switchOpen = () => {
   // 校验是否选择了数据
   if (isEmpty(checkedIds.value)) {
-    ElMessage.warning('请先选择需要切换状态的路段！');
+    ElMessage.warning('请先选择需要确认无效的预警！');
     return;
   }
 
-  // 重置默认状态为运行中
-  switchStatus.value = '运行中';
-  // 打开弹窗
+  // 打开二次确认弹窗
   switchDialogVisible.value = true;
+};
+
+// 批量确认无效预警 - 确认操作
+const handleSwitchConfirm = async () => {
+  try {
+    switchLoading.value = true; // 开启加载状态
+
+    // 调用批量确认无效预警的接口（替换为你的真实接口）
+    // 示例：await batchConfirmInvalidWarn(checkedIds.value);
+    await batchConfirmInvalidSysWarn({
+      idList: recordsList.value.map((v) => v.id),
+    });
+    // 模拟接口调用成功
+    ElMessage.success('批量确认无效预警操作成功！');
+    switchDialogVisible.value = false; // 关闭弹窗
+    handleRefresh(); // 刷新表格数据
+  } catch (error) {
+    ElMessage.error(`操作失败：${error.message || '网络异常'}`);
+  } finally {
+    switchLoading.value = false; // 关闭加载状态
+  }
 };
 
 const openRoadDetail = async (row) => {
@@ -416,11 +435,42 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
         </div>
 
         <div class="flex justify-end gap-2">
-          <el-button @click="confirmDrawerApi.close()">取消</el-button>
-          <el-button type="primary" @click="handleConfirmSave">保存</el-button>
+          <ElButton @click="confirmDrawerApi.close()">取消</ElButton>
+          <ElButton type="primary" @click="handleConfirmSave">保存</ElButton>
         </div>
       </div>
     </ConfirmDrawer>
+
+    <!-- 批量确认无效预警 二次确认弹窗（新增核心） -->
+    <ElDialog
+      v-model="switchDialogVisible"
+      title="批量确认无效预警"
+      width="380px"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      destroy-on-close
+    >
+      <div class="switch-dialog-content">
+        <div class="selected-count">
+          你已选择
+          <span class="count-num">{{ checkedIds.length }}</span>
+          条预警数据，确认要标记为无效吗？
+        </div>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <ElButton @click="switchDialogVisible = false">取消</ElButton>
+          <ElButton
+            type="primary"
+            @click="handleSwitchConfirm"
+            :loading="switchLoading"
+          >
+            确认标记为无效
+          </ElButton>
+        </div>
+      </template>
+    </ElDialog>
+
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
@@ -436,7 +486,6 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="导出"
             icon-name="download"
@@ -491,7 +540,7 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
           class="common-align"
           type="primary"
         >
-          {{ row.roadName }}
+          {{ row.warnNo }}
         </el-text>
       </template>
       <template #actions="{ row }">
@@ -570,6 +619,16 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
 :deep(.common-toolbar-tools) {
   .el-button.is-disabled {
     opacity: 0.6;
+  }
+}
+
+// 弹窗样式优化
+:deep(.el-dialog) {
+  .el-dialog__body {
+    padding: 20px 20px 10px;
+  }
+  .el-dialog__footer {
+    padding: 10px 20px 20px;
   }
 }
 </style>

@@ -66,8 +66,21 @@ export function getwarnList(params) {
     params,
   });
 }
-
+/** 预警创建 */
+export function addWarn(data) {
+  return requestClient.post('/facility/road-warn/create', data);
+}
 /** 道路监测预警删除 */
 export function deleteWarn(id) {
   return requestClient.delete(`/facility/road-warn/delete?id=${id}`);
+}
+
+/** 
+ * 批量确认无效预警
+ * @param {object} params 管理后台 - 批量修改无效状态 VO
+ * @param {array} params.idList [批量修改的预警id列表]
+ * @returns
+ */
+export function batchConfirmInvalidSysWarn(params) {
+  return requestClient.put(`/facility/sys-warn/batch-confirm-invalid`, params);
 }

@@ -11,6 +11,7 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   addRoad,
+  addWarn,
   deleteRoad,
   exportRoadExcel,
   getRoadFacility,
@@ -81,7 +82,7 @@ onMounted(async () => {
           value: v.id,
         };
       }),
-      placeholder: '请选择设备在线状态',
+      placeholder: '请选择道路名称',
       showSearch: true,
     },
     rules: 'required',
@@ -172,12 +173,7 @@ function handleEdit(row) {
   formApi.resetForm();
   formApi.setState(() => {
     return {
-      schema: schemaData.value.map((v) => {
-        return {
-          ...v,
-          disabled: !v.editShow,
-        };
-      }),
+      schema: schemaData.value.filter((v) => v.editShow),
     };
   });
   formDrawerApi
@@ -332,7 +328,6 @@ const arrowChange = () => {
 };
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
-const dialogVisible = ref(false);
 const [settingDrawer, settingdrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -384,16 +379,115 @@ const openRoadDetail = async (row) => {
   roadObj.value.detailObj = resObj;
   roadDetailRef.value.open();
 };
+// 根据数值返回对应的预警状态文本
+const getWarningText = (value) => {
+  switch (value) {
+    case 0: {
+      return '不可触发预警';
+    }
+    case 1: {
+      return '';
+    }
+    case 2: {
+      return '已预警';
+    }
+    default: {
+      return '未知状态';
+    }
+  }
+};
+const warnObj = ref({});
+const [warnDrawer, warnDrawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: true,
+  onCancel() {
+    drawerApi.close();
+  },
+  async onConfirm() {
+    const formObj = await WarnFormApi.getValues();
+    const res = await addWarn({
+      monitorId: warnObj.value.monitorId,
+      ...formObj,
+    });
+    ElMessage.success('创建成功');
+    warnDrawerApi.close();
+  },
+  async onOpenChange() {},
+});
+const [WarnForm, WarnFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 80,
+  },
+  layout: 'horizontal',
+  schema: [
+    {
+      fieldName: 'wayType',
+      label: '预警方式',
+      component: 'Select',
+      componentProps: {
+        options: [
+          { label: '自动监测', value: '自动监测' },
+          { label: '人工上报离线', value: '人工上报' },
+        ],
+        placeholder: '请选择预警方式',
+      },
+      labelWidth: '120',
+      rules: 'required',
+    },
+    {
+      fieldName: 'level',
+      label: '预警等级',
+      component: 'Select',
+      componentProps: {
+        options: [
+          { label: '一般', value: 1 },
+          { label: '较重', value: 2 },
+          { label: '严重', value: 3 },
+          { label: '紧急', value: 4 },
+        ],
+        placeholder: '请选择预警方式',
+      },
+      labelWidth: '120',
+      rules: 'required',
+    },
+    {
+      fieldName: 'dealLimit',
+      label: '预警处置时限(时)',
+      component: 'Input',
+      componentProps: {
+        placeholder: '预警处置时限',
+        maxLength: 50,
+      },
+      labelWidth: '120',
+      rules: 'required',
+    },
+  ],
+  showDefaultActions: false,
+});
+const handleManualWarn = (row) => {
+  WarnFormApi.resetForm();
+  warnObj.value = {
+    monitorId: row.id,
+    wayType: '自动监测',
+    level: 1,
+    dealLimit: 1,
+  };
+  WarnFormApi.setValues(warnObj.value);
+  warnDrawerApi.open();
+};
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <el-dialog v-model="dialogVisible">
-      <div class="park-img-center">
-        <img style="width: 100%; height: 100%" :src="dataObj.imgUrl" />
-      </div>
-    </el-dialog>
-
+    <!-- 预警出发 -->
+    <warnDrawer title="创建待处置预警">
+      <WarnForm />
+    </warnDrawer>
     <!-- 新增：批量切换监测状态弹窗 -->
     <el-dialog
       v-model="switchDialogVisible"
@@ -521,6 +615,25 @@ const openRoadDetail = async (row) => {
         >
           {{ row.roadName }}
         </el-text>
+      </template>
+      <template #isWarning="{ row }">
+        <div>
+          <!-- 展示对应的状态文本 -->
+          <span>
+            {{ getWarningText(row.isWarning) }}
+          </span>
+
+          <!-- 仅当 isWarning 为 1 时显示手动触发按钮 -->
+          <el-button
+            v-if="row.isWarning === 1"
+            type="primary"
+            size="small"
+            @click="handleManualWarn(row)"
+            style="margin-left: 8px"
+          >
+            触发预警
+          </el-button>
+        </div>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
