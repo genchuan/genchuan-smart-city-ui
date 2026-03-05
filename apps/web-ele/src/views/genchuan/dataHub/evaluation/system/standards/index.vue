@@ -1,8 +1,9 @@
 <script setup>
 import { ref } from 'vue';
 
-import carchart from './subjectschart.vue';
-import Table from './table/index.vue';
+// import standechart from './standechart.vue';
+// import Table from './table/index.vue';
+import { ArrowUp, ArrowDown } from '@element-plus/icons-vue';
 
 import '#/components/page/index.scss';
 
@@ -14,10 +15,10 @@ const changeArrowStatus = () => {
 };
 const tabArray = ref([
   {
-    label: '评价主体管理',
+    label: '评价标准管理',
     components: Table,
     showSecondary: true,
-    secondShow: true,
+    secondShow: false,
     arrowShow: true,
     arrowState: false,
   },
@@ -27,12 +28,16 @@ const arrowChange = () => {
     v.arrowShow = !v.arrowShow;
   });
 };
-const activeName = ref('评价主体管理');
-const secondShow = ref(true);
+const activeName = ref('评价标准管理');
+const secondShow = ref(false);
+
+// tab切换占位（可扩展）
+const tabChange = () => {};
 </script>
+
 <template>
   <div class="common-index">
-    <carchart v-if="tabArray[0].arrowShow" />
+    <standechart v-if="tabArray[0].arrowShow" />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -75,4 +80,4 @@ const secondShow = ref(true);
       </el-tab-pane>
     </el-tabs>
   </div>
-</template>
+</template>`

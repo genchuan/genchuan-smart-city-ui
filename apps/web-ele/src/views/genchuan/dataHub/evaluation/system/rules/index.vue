@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 
-import carchart from './subjectschart.vue';
+import carchart from './rulechart.vue';
 import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
@@ -14,10 +14,10 @@ const changeArrowStatus = () => {
 };
 const tabArray = ref([
   {
-    label: '评价主体管理',
+    label: '评价规则管理',
     components: Table,
     showSecondary: true,
-    secondShow: true,
+    secondShow: false,
     arrowShow: true,
     arrowState: false,
   },
@@ -27,8 +27,8 @@ const arrowChange = () => {
     v.arrowShow = !v.arrowShow;
   });
 };
-const activeName = ref('评价主体管理');
-const secondShow = ref(true);
+const activeName = ref('评价规则管理');
+const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">

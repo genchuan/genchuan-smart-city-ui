@@ -12,10 +12,13 @@ import {
   dataList,
   textObj,
   useFormSchema,
+  useRuleItemFormSchema,
+  useVetoItemFormSchema,
   getGridColumnsByTab,
   objectTypeList,
-  indexTypeList,
-  calcWayList,
+  ruleTypeList,
+  indexSystemList,
+  indexItemList,
   userList,
   statusList
 } from './data';
@@ -28,7 +31,15 @@ const props = defineProps({
 const emit = defineEmits(['arrow-change']);
 
 const getTitle = computed(() => {
-  return formData.value?.systemId ? textObj.editText : textObj.addText;
+  return formData.value?.ruleCategoryId ? textObj.editText : textObj.addText;
+});
+
+const getRuleItemTitle = computed(() => {
+  return ruleItemFormData.value?.ruleItemId ? '编辑规则项' : textObj.addRuleItemText;
+});
+
+const getVetoItemTitle = computed(() => {
+  return vetoItemFormData.value?.vetoItemId ? '编辑否决项' : textObj.addVetoItemText;
 });
 
 // 搜索参数
@@ -60,27 +71,28 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onCancel() { formDrawerApi.close(); },
   onConfirm() {
     const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === textObj.addText || formDrawerApi.sharedData.payload.title === textObj.versionText) {
-      // 新增或新增版本
-      obj.systemId = Date.now().toString() + Math.random().toString(36).substr(2, 5);
-      obj.objectTypeName = objectTypeList.find(t => t.id === obj.objectTypeId)?.name || '';
+    if (formDrawerApi.sharedData.payload.title === textObj.addText) {
+      // 新增
+      obj.ruleCategoryId = Date.now().toString() + Math.random().toString(36).substr(2, 5);
+      obj.systemName = indexSystemList.find(t => t.id === obj.systemId)?.name || '';
       obj.statusName = statusList.find(s => s.id === (obj.statusId || 's1'))?.name || '启用';
       obj.createByName = '当前用户';
       obj.createTime = new Date().toLocaleString();
       obj.updateByName = '当前用户';
       obj.updateTime = obj.createTime;
-      obj.categoryCount = 0;
       obj.itemCount = 0;
-      obj.categories = [];
-      obj.changeLog = '新建体系';
+      obj.vetoCount = 0;
+      obj.ruleItems = [];
+      obj.vetoItems = [];
+      obj.changeLog = '新建规则分类';
       dataObj.apilist.push(obj);
       dataObj.currentPage = 1;
     } else {
       // 编辑
-      const index = dataObj.apilist.findIndex(v => v.systemId === formData.value?.systemId);
+      const index = dataObj.apilist.findIndex(v => v.ruleCategoryId === formData.value?.ruleCategoryId);
       if (index !== -1) {
         const updated = { ...dataObj.apilist[index], ...obj };
-        updated.objectTypeName = objectTypeList.find(t => t.id === obj.objectTypeId)?.name || '';
+        updated.systemName = indexSystemList.find(t => t.id === obj.systemId)?.name || '';
         updated.statusName = statusList.find(s => s.id === (obj.statusId || 's1'))?.name || '';
         updated.updateByName = '当前用户';
         updated.updateTime = new Date().toLocaleString();
@@ -94,21 +106,130 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   async onOpenChange(isOpen) {
     if (isOpen) {
       formData.value = formDrawerApi.getData();
-      if (formData.value?.systemId) {
+      if (formData.value?.ruleCategoryId) {
         await formApi.setValues(formData.value);
       } else {
         formApi.resetForm();
-        if (formDrawerApi.sharedData.payload.title === textObj.versionText) {
-          const source = formDrawerApi.sharedData.payload.source;
-          if (source) {
-            await formApi.setValues({
-              ...source,
-              systemId: undefined,
-              version: '',
-              statusId: 's1'
-            });
-          }
+      }
+    }
+  },
+});
+
+// 规则项表单
+const ruleItemFormData = ref();
+const [RuleItemForm, ruleItemFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: { class: 'w-full' },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  layout: 'horizontal',
+  schema: useRuleItemFormSchema(),
+  showDefaultActions: false,
+});
+
+const [RuleItemDrawer, ruleItemDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() { ruleItemDrawerApi.close(); },
+  onConfirm() {
+    const obj = ruleItemFormApi.form.values;
+    const ruleCategoryId = ruleItemDrawerApi.sharedData.payload.ruleCategoryId;
+    const index = dataObj.apilist.findIndex(v => v.ruleCategoryId === ruleCategoryId);
+    if (index !== -1) {
+      if (ruleItemFormData.value?.ruleItemId) {
+        // 编辑规则项
+        const ruleItemIndex = dataObj.apilist[index].ruleItems.findIndex(ri => ri.ruleItemId === ruleItemFormData.value.ruleItemId);
+        if (ruleItemIndex !== -1) {
+          const updatedRuleItem = { ...dataObj.apilist[index].ruleItems[ruleItemIndex], ...obj };
+          updatedRuleItem.indexName = indexItemList.find(i => i.id === obj.indexId)?.name || '';
+          updatedRuleItem.ruleTypeName = ruleTypeList.find(r => r.id === obj.ruleTypeId)?.name || '';
+          dataObj.apilist[index].ruleItems[ruleItemIndex] = updatedRuleItem;
         }
+      } else {
+        // 新增规则项
+        obj.ruleItemId = Date.now().toString() + Math.random().toString(36).substr(2, 5);
+        obj.indexName = indexItemList.find(i => i.id === obj.indexId)?.name || '';
+        obj.ruleTypeName = ruleTypeList.find(r => r.id === obj.ruleTypeId)?.name || '';
+        dataObj.apilist[index].ruleItems.push(obj);
+        dataObj.apilist[index].itemCount += 1;
+      }
+      dataObj.apilist[index].updateByName = '当前用户';
+      dataObj.apilist[index].updateTime = new Date().toLocaleString();
+      dataObj.apilist[index].changeLog = (dataObj.apilist[index].changeLog || '') + '；规则项更新';
+    }
+    handleRefresh();
+    ruleItemDrawerApi.close();
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      ruleItemFormData.value = ruleItemDrawerApi.getData();
+      if (ruleItemFormData.value?.ruleItemId) {
+        await ruleItemFormApi.setValues(ruleItemFormData.value);
+      } else {
+        ruleItemFormApi.resetForm();
+      }
+    }
+  },
+});
+
+// 否决项表单
+const vetoItemFormData = ref();
+const [VetoItemForm, vetoItemFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: { class: 'w-full' },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  layout: 'horizontal',
+  schema: useVetoItemFormSchema(),
+  showDefaultActions: false,
+});
+
+const [VetoItemDrawer, vetoItemDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() { vetoItemDrawerApi.close(); },
+  onConfirm() {
+    const obj = vetoItemFormApi.form.values;
+    if (vetoItemDrawerApi.sharedData.payload.ruleCategoryId) {
+      // 关联到规则分类的否决项
+      const ruleCategoryId = vetoItemDrawerApi.sharedData.payload.ruleCategoryId;
+      const index = dataObj.apilist.findIndex(v => v.ruleCategoryId === ruleCategoryId);
+      if (index !== -1) {
+        if (vetoItemFormData.value?.vetoItemId) {
+          // 编辑否决项
+          const vetoItemIndex = dataObj.apilist[index].vetoItems.findIndex(vi => vi.vetoItemId === vetoItemFormData.value.vetoItemId);
+          if (vetoItemIndex !== -1) {
+            const updatedVetoItem = { ...dataObj.apilist[index].vetoItems[vetoItemIndex], ...obj };
+            updatedVetoItem.objectTypeName = objectTypeList.find(t => t.id === obj.objectTypeId)?.name || '';
+            dataObj.apilist[index].vetoItems[vetoItemIndex] = updatedVetoItem;
+          }
+        } else {
+          // 新增否决项
+          obj.vetoItemId = Date.now().toString() + Math.random().toString(36).substr(2, 5);
+          obj.objectTypeName = objectTypeList.find(t => t.id === obj.objectTypeId)?.name || '';
+          dataObj.apilist[index].vetoItems.push(obj);
+          dataObj.apilist[index].vetoCount += 1;
+        }
+        dataObj.apilist[index].updateByName = '当前用户';
+        dataObj.apilist[index].updateTime = new Date().toLocaleString();
+        dataObj.apilist[index].changeLog = (dataObj.apilist[index].changeLog || '') + '；否决项更新';
+      }
+    } else {
+      // 全局否决项
+      // 这里可以添加全局否决项的逻辑
+    }
+    handleRefresh();
+    vetoItemDrawerApi.close();
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      vetoItemFormData.value = vetoItemDrawerApi.getData();
+      if (vetoItemFormData.value?.vetoItemId) {
+        await vetoItemFormApi.setValues(vetoItemFormData.value);
+      } else {
+        vetoItemFormApi.resetForm();
       }
     }
   },
@@ -126,8 +247,16 @@ function handleCreate() {
   formDrawerApi.setData({ title: textObj.addText }).open();
 }
 
-function handleNewVersion(row) {
-  formDrawerApi.setData({ title: textObj.versionText, source: row }).open();
+function handleAddRuleItem(row) {
+  ruleItemDrawerApi.setData({ title: textObj.addRuleItemText, ruleCategoryId: row.ruleCategoryId }).open();
+}
+
+function handleAddVetoItem(row) {
+  vetoItemDrawerApi.setData({ title: textObj.addVetoItemText, ruleCategoryId: row.ruleCategoryId }).open();
+}
+
+function handleAddGlobalVetoItem() {
+  vetoItemDrawerApi.setData({ title: textObj.addVetoItemText }).open();
 }
 
 function handleEdit(row) {
@@ -139,10 +268,10 @@ async function handleDisable(row) {
     ElMessage.warning(`当前状态为“${row.statusName}”，不能执行停用操作`);
     return;
   }
-  await confirm('确定停用该指标体系吗？');
+  await confirm('确定停用该规则分类吗？');
   const loadingInstance = ElLoading.service({ text: '停用中...' });
   try {
-    const index = dataObj.apilist.findIndex(v => v.systemId === row.systemId);
+    const index = dataObj.apilist.findIndex(v => v.ruleCategoryId === row.ruleCategoryId);
     if (index !== -1) {
       dataObj.apilist[index].statusName = '停用';
       dataObj.apilist[index].statusId = 's2';
@@ -160,10 +289,10 @@ async function handleEnable(row) {
     ElMessage.warning(`当前状态为“${row.statusName}”，不能执行启用操作`);
     return;
   }
-  await confirm('确定启用该指标体系吗？');
+  await confirm('确定启用该规则分类吗？');
   const loadingInstance = ElLoading.service({ text: '启用中...' });
   try {
-    const index = dataObj.apilist.findIndex(v => v.systemId === row.systemId);
+    const index = dataObj.apilist.findIndex(v => v.ruleCategoryId === row.ruleCategoryId);
     if (index !== -1) {
       dataObj.apilist[index].statusName = '启用';
       dataObj.apilist[index].statusId = 's1';
@@ -179,7 +308,7 @@ async function handleEnable(row) {
 async function handleBatchStatusChange() {
   const targetStatus = activeName.value === '停用' ? '启用' : '停用';
   const allowedCurrentStatus = targetStatus === '启用' ? '停用' : '启用';
-  const invalidRows = dataObj.apilist.filter(item => checkedIds.value.includes(item.systemId) && item.statusName !== allowedCurrentStatus);
+  const invalidRows = dataObj.apilist.filter(item => checkedIds.value.includes(item.ruleCategoryId) && item.statusName !== allowedCurrentStatus);
   if (invalidRows.length > 0) {
     ElMessage.warning(`选中的行中包含状态不是“${allowedCurrentStatus}”的对象，无法批量${targetStatus}。`);
     return;
@@ -188,7 +317,7 @@ async function handleBatchStatusChange() {
   const loadingInstance = ElLoading.service({ text: '处理中...' });
   try {
     dataObj.apilist.forEach(item => {
-      if (checkedIds.value.includes(item.systemId)) {
+      if (checkedIds.value.includes(item.ruleCategoryId)) {
         item.statusName = targetStatus;
         item.statusId = targetStatus === '启用' ? 's1' : 's2';
         item.changeLog = (item.changeLog || '') + `；批量${targetStatus}`;
@@ -204,7 +333,7 @@ async function handleBatchStatusChange() {
 
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map(item => item.systemId);
+  checkedIds.value = records.map(item => item.ruleCategoryId);
 }
 
 const dataObj = reactive({
@@ -223,17 +352,12 @@ const changeTotalShow = () => {
 };
 
 // ==================== 新增钻取筛选变量 ====================
-const filterCode = ref('');
-const filterObjectType = ref('');
+const filterSystem = ref('');
 const filterStatus = ref('');
 
 // 钻取点击处理函数
-const handleCodeClick = (code) => {
-  filterCode.value = filterCode.value === code ? '' : code;
-  gridApi.query();
-};
-const handleObjectTypeClick = (objectType) => {
-  filterObjectType.value = filterObjectType.value === objectType ? '' : objectType;
+const handleSystemClick = (system) => {
+  filterSystem.value = filterSystem.value === system ? '' : system;
   gridApi.query();
 };
 const handleStatusClick = (status) => {
@@ -242,12 +366,8 @@ const handleStatusClick = (status) => {
 };
 
 // 取消筛选标签
-const handleCancelCodeFilter = () => {
-  filterCode.value = '';
-  gridApi.query();
-};
-const handleCancelObjectTypeFilter = () => {
-  filterObjectType.value = '';
+const handleCancelSystemFilter = () => {
+  filterSystem.value = '';
   gridApi.query();
 };
 const handleCancelStatusFilter = () => {
@@ -268,21 +388,15 @@ const getTableData = (pageObj) => {
     filtered = filtered.filter(item => {
       let match = true;
       if (params.name && !item.name.includes(params.name)) match = false;
-      if (params.code && !item.code.includes(params.code)) match = false;
-      if (params.objectTypeId && item.objectTypeId !== params.objectTypeId) match = false;
-      if (params.version && !item.version.includes(params.version)) match = false;
-      if (params.desc && item.desc && !item.desc.includes(params.desc)) match = false;
+      if (params.systemId && item.systemId !== params.systemId) match = false;
       if (params.statusId && item.statusId !== params.statusId) match = false;
       return match;
     });
   }
 
   // 钻取筛选
-  if (filterCode.value) {
-    filtered = filtered.filter(item => item.code === filterCode.value);
-  }
-  if (filterObjectType.value) {
-    filtered = filtered.filter(item => item.objectTypeName === filterObjectType.value);
+  if (filterSystem.value) {
+    filtered = filtered.filter(item => item.systemName === filterSystem.value);
   }
   if (filterStatus.value) {
     filtered = filtered.filter(item => item.statusName === filterStatus.value);
@@ -337,7 +451,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     proxyConfig: {
       ajax: { query: async ({ page }) => getTableData({ page }) },
     },
-    rowConfig: { keyField: 'systemId', isHover: true },
+    rowConfig: { keyField: 'ruleCategoryId', isHover: true },
     pagerConfig: dataObj,
     toolbarConfig: {
       'class-name': 'common-tool-bar-config',
@@ -400,43 +514,28 @@ const chartData = computed(() => {
   const list = dataObj.apilist;
   const total = list.length;
   const enabled = list.filter(v => v.statusName === '启用').length;
-  const versionCounts = {};
-  list.forEach(v => { versionCounts[v.version] = (versionCounts[v.version] || 0) + 1; });
-  const versionCards = Object.entries(versionCounts).slice(0, 3).map(([ver, cnt]) => ({
-    title: `${ver}体系数`,
-    value: cnt,
-    color: '#FF6B6B'
-  }));
-  while (versionCards.length < 1) versionCards.push({ title: '版本体系数', value: 0, color: '#FF6B6B' });
-
-  const itemTotal = list.reduce((acc, v) => acc + (v.itemCount || 0), 0);
+  const totalRuleItems = list.reduce((acc, v) => acc + (v.itemCount || 0), 0);
+  const totalVetoItems = list.reduce((acc, v) => acc + (v.vetoCount || 0), 0);
 
   const cardList = [
-    { title: '总体系数', value: total, color: '#13ce66' },
-    { title: '启用体系数', value: enabled, color: '#4ECDC4' },
-    ...versionCards.slice(0, 1),
-    { title: '指标项总数', value: itemTotal, color: '#FFC107' }
+    { title: '总分类数', value: total, color: '#13ce66' },
+    { title: '规则项总数', value: totalRuleItems, color: '#4ECDC4' },
+    { title: '否决项总数', value: totalVetoItems, color: '#FF6B6B' },
+    { title: '启用规则数', value: enabled, color: '#FFC107' }
   ];
 
-  const objTypeMap = {};
-  list.forEach(v => { objTypeMap[v.objectTypeName] = (objTypeMap[v.objectTypeName] || 0) + 1; });
-  const pieData1 = Object.entries(objTypeMap).map(([name, value]) => ({ name, value }));
+  const systemMap = {};
+  list.forEach(v => { systemMap[v.systemName] = (systemMap[v.systemName] || 0) + 1; });
+  const pieData1 = Object.entries(systemMap).map(([name, value]) => ({ name, value }));
 
-  const indexTypeMap = {};
-  list.forEach(sys => {
-    sys.categories?.forEach(cat => {
-      cat.items?.forEach(item => {
-        const typeName = item.indexTypeName;
-        indexTypeMap[typeName] = (indexTypeMap[typeName] || 0) + 1;
-      });
-    });
-  });
-  const pieData2 = Object.entries(indexTypeMap).map(([name, value]) => ({ name, value }));
+  const statusMap = {};
+  list.forEach(v => { statusMap[v.statusName] = (statusMap[v.statusName] || 0) + 1; });
+  const pieData2 = Object.entries(statusMap).map(([name, value]) => ({ name, value }));
 
-  const topSystems = list.slice(0, 8);
+  const topCategories = list.slice(0, 8);
   const barData = {
-    xData: topSystems.map(v => v.name.length > 6 ? v.name.slice(0,6)+'...' : v.name),
-    series: [{ name: '指标项数量', data: topSystems.map(v => v.itemCount || 0) }]
+    xData: topCategories.map(v => v.name.length > 6 ? v.name.slice(0,6)+'...' : v.name),
+    series: [{ name: '规则项数量', data: topCategories.map(v => v.itemCount || 0) }]
   };
 
   return { cardList, pieData1, pieData2, barData };
@@ -448,13 +547,24 @@ const chartData = computed(() => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
+
+    <RuleItemDrawer :title="getRuleItemTitle">
+      <RuleItemForm />
+    </RuleItemDrawer>
+
+    <VetoItemDrawer :title="getVetoItemTitle">
+      <VetoItemForm />
+    </VetoItemDrawer>
+
     <detailDrawer
       ref="detailRef"
       :detail-obj="dataObj.garageDetail"
     />
+
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+
     <Grid>
       <template #table-title>
         <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
@@ -474,22 +584,13 @@ const chartData = computed(() => {
           </div>
           <!-- 钻取筛选标签 -->
           <el-tag
-            v-if="filterCode"
+            v-if="filterSystem"
             type="primary"
             closable
-            @close="handleCancelCodeFilter"
+            @close="handleCancelSystemFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
-            体系编码：{{ filterCode }}
-          </el-tag>
-          <el-tag
-            v-if="filterObjectType"
-            type="success"
-            closable
-            @close="handleCancelObjectTypeFilter"
-            style="height: 32px; margin: 4px 0; line-height: 32px"
-          >
-            适用对象类型：{{ filterObjectType }}
+            适用指标体系：{{ filterSystem }}
           </el-tag>
           <el-tag
             v-if="filterStatus"
@@ -504,7 +605,8 @@ const chartData = computed(() => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton v-if="activeName === '全部'" content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton v-if="activeName === '全部'" content="新增分类" icon-name="Plus" @click="handleCreate" />
+          <IconButton v-if="activeName === '全部'" content="新增否决项" icon-name="Plus" @click="handleAddGlobalVetoItem" />
           <IconButton content="导出" icon-name="download" @click="handleExport" />
           <IconButton
             v-if="activeName !== '停用'"
@@ -542,14 +644,9 @@ const chartData = computed(() => {
         </el-text>
       </template>
       <!-- 新增钻取列插槽 -->
-      <template #code="{ row }">
-        <el-text @click="handleCodeClick(row.code)" class="common-align" type="primary">
-          {{ row.code }}
-        </el-text>
-      </template>
-      <template #objectTypeName="{ row }">
-        <el-text @click="handleObjectTypeClick(row.objectTypeName)" class="common-align" type="primary">
-          {{ row.objectTypeName }}
+      <template #systemName="{ row }">
+        <el-text @click="handleSystemClick(row.systemName)" class="common-align" type="primary">
+          {{ row.systemName }}
         </el-text>
       </template>
       <template #statusName="{ row }">
@@ -561,7 +658,7 @@ const chartData = computed(() => {
         <div class="table-toolbar-tools" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
           <IconButton content="详情" icon-name="View" @click="handleGarageOpenDetail(row)" />
           <IconButton content="编辑" icon-name="edit" @click="handleEdit(row)" />
-          <IconButton v-if="activeName !== '停用'" content="新增版本" icon-name="DocumentCopy" @click="handleNewVersion(row)" />
+          <IconButton v-if="activeName === '全部'" content="新增规则项" icon-name="Plus" @click="handleAddRuleItem(row)" />
           <IconButton
             v-if="row.statusName === '启用'"
             content="停用"
@@ -582,10 +679,10 @@ const chartData = computed(() => {
         <div class="common-total" @click="changeTotalShow">
           <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow"><ArrowDown /></el-icon>
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow"><ArrowUp /></el-icon>
-          <span>本页统计：体系数量{{ dataObj.list.length }}，启用{{ dataObj.list.filter(v => v.statusName === '启用').length }}，停用{{ dataObj.list.filter(v => v.statusName === '停用').length }}</span>
+          <span>本页统计：规则分类数量{{ dataObj.list.length }}，启用{{ dataObj.list.filter(v => v.statusName === '启用').length }}，停用{{ dataObj.list.filter(v => v.statusName === '停用').length }}</span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span>全部统计：体系总数{{ dataObj.apilist.length }}，启用{{ dataObj.apilist.filter(v => v.statusName === '启用').length }}，停用{{ dataObj.apilist.filter(v => v.statusName === '停用').length }}</span>
+          <span>全部统计：规则分类总数{{ dataObj.apilist.length }}，启用{{ dataObj.apilist.filter(v => v.statusName === '启用').length }}，停用{{ dataObj.apilist.filter(v => v.statusName === '停用').length }}</span>
         </div>
       </template>
     </Grid>

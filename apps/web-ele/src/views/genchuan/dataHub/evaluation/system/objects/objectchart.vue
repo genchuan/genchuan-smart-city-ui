@@ -66,7 +66,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="park-chart-box park-district-chart">
+  <div class="park-chart-box park-subject-chart">
     <div class="chart-box-left">
       <Card
         class="left-card"
@@ -98,7 +98,7 @@ onMounted(() => {
 </template>
 
 <style lang="scss">
-.park-district-chart {
+.park-subject-chart {
   .chart-box-left {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr);
@@ -109,7 +109,7 @@ onMounted(() => {
       height: 159px !important;
     }
   }
-  .district-columnar {
+  .subject-columnar {
     min-width: 200px !important;
   }
 }

@@ -9,35 +9,36 @@ const props = defineProps({
   cardList: {
     type: Array,
     default: () => [
-      { title: '总体系数', value: 30, color: '#13ce66' },
-      { title: '启用体系数', value: 10, color: '#4ECDC4' },
-      { title: '各版本体系数', value: 10, color: '#FF6B6B' },
-      { title: '指标项总数', value: 10, color: '#FFC107' },
+      { title: '总分类数', value: 12, color: '#13ce66' },
+      { title: '启用分类数', value: 8, color: '#4ECDC4' },
+      { title: '停用分类数', value: 4, color: '#FF6B6B' },
+      { title: '标准项总数', value: 35, color: '#FFC107' },
     ]
   },
   pieData1: {
     type: Array,
     default: () => [
-      { name: '网格', value: 10 },
-      { name: '部门', value: 4 },
-      { name: '社区', value: 6 },
+      { name: '网格管理评价体系V1.0', value: 4 },
+      { name: '部门绩效评价体系V2.0', value: 3 },
+      { name: '社区服务评价体系V1.5', value: 3 },
+      { name: '街道治理评价体系V3.0', value: 2 },
     ]
   },
   pieData2: {
     type: Array,
     default: () => [
-      { name: '数量', value: 1 },
-      { name: '比率', value: 5 },
-      { name: '时长', value: 7 },
+      { name: '优秀', value: 8 },
+      { name: '良好', value: 12 },
+      { name: '合格', value: 10 },
+      { name: '不合格', value: 5 },
     ]
   },
   barData: {
     type: Object,
     default: () => ({
-      xData: ['指标体系1','指标体系2','指标体系3','指标体系4','指标体系5','指标体系6','指标体系7'],
+      xData: ['标准分类1','标准分类2','标准分类3','标准分类4','标准分类5','标准分类6','标准分类7'],
       series: [{
-        // name: '指标项数量',
-        data: [12,1,2,5,7,8,9,]
+        data: [4, 2, 5, 3, 6, 2, 4]
       }]
     })
   }
@@ -57,19 +58,19 @@ const props = defineProps({
     <Circle
       width="340px"
       height="330px"
-      title-text="适用对象类型占比"
+      title-text="适用体系占比"
       :data="pieData1"
     />
     <Circle
       width="340px"
       height="330px"
-      title-text="指标类型占比"
+      title-text="标准等级分布"
       :data="pieData2"
       :colors="['#67C23A', '#E6A23C', '#F56C6C', '#909399']"
     />
     <Columnar
       height="330px"
-      title="各体系指标项数量对比"
+      title="各分类标准项数量对比"
       :x-data="barData.xData"
       :series-data="barData.series"
     />
