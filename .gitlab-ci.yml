@@ -26,12 +26,12 @@ build:
       - stuck_or_timeout_failure
       - unknown_failure
 
-# 第二阶段：推送（仅 develop分支执行，且依赖build阶段成功）
+# 第二阶段：推送（仅 dev-urban分支执行，且依赖build阶段成功）
 push:
   stage: push
-  # 仅在develop分支且build阶段成功后才运行
+  # 仅在dev-urban分支且build阶段成功后才运行
   rules:
-    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "dev-urban"
       when: on_success
     - when: never
   script:
