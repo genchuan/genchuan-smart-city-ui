@@ -1,8 +1,13 @@
 import { defineConfig } from '@vben/vite-config';
+import { loadEnv } from 'vite';
 
 import ElementPlus from 'unplugin-element-plus/vite';
 
-export default defineConfig(async () => {
+export default defineConfig(async (config) => {
+  const { mode } = config;
+  const root = process.cwd();
+  const env = loadEnv(mode, root);
+
   return {
     application: {},
     vite: {
