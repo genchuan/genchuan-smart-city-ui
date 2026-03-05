@@ -2,7 +2,7 @@
 export const dataList = () => [
   {
     outdoorAdId: 'a1b2c3d4-e5f6-4a5b-8c7d-9e8f7a6b5c4d',
-    name: '鼓楼东街口LED大屏',
+    name: '111',
     location: '福州市鼓楼区东街口百货大楼楼顶',
     approvedSize: '20m×10m',
     actualSize: '20m×10m',

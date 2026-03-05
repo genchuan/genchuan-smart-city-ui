@@ -50,94 +50,67 @@ defineExpose({
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
       <!-- 广告基础信息 -->
+      <!-- 统计季度 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">广告ID:</div>
+        <div class="detail-row-left">统计季度:</div>
         <div class="detail-row-right">
-          {{ detailObj.outdoorAdId || '-' }}
+          {{ detailObj.statisticalQuarter || '-' }}
         </div>
       </div>
+
+      <!-- 季度清运总量 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">广告名称:</div>
+        <div class="detail-row-left">季度清运总量:</div>
         <div class="detail-row-right">
-          {{ detailObj.name || '-' }}
+          {{ detailObj.quarterlyClearTotal ? detailObj.quarterlyClearTotal + ' 吨' : '-' }}
         </div>
       </div>
+
+      <!-- 季度违规案件处置率 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">广告位置:</div>
+        <div class="detail-row-left">季度违规案件处置率:</div>
         <div class="detail-row-right">
-          {{ detailObj.location || '-' }}
+          {{ detailObj.quarterlyViolationDisposalRate ? detailObj.quarterlyViolationDisposalRate + '%' : '-' }}
         </div>
       </div>
+
+      <!-- 季度清运企业合规率排名 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">审批尺寸:</div>
+        <div class="detail-row-left">季度清运企业合规率排名:</div>
         <div class="detail-row-right">
-          {{ detailObj.approvedSize || '-' }}
+          {{ detailObj.quarterlyComplianceRank || '-' }}
         </div>
       </div>
+
+      <!-- 季度卡点执法成效 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">实际尺寸:</div>
+        <div class="detail-row-left">季度卡点执法成效:</div>
         <div class="detail-row-right">
-          {{ detailObj.actualSize || '-' }}
+          {{ detailObj.quarterlyCheckpointEffect || '-' }}
         </div>
       </div>
+
+      <!-- 季度渣土消纳场使用量 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">倾斜角度:</div>
+        <div class="detail-row-left">季度渣土消纳场使用量:</div>
         <div class="detail-row-right">
-          {{ detailObj.tiltAngle || '-' }} °
+          {{ detailObj.quarterlyLandfillUsage ? detailObj.quarterlyLandfillUsage + ' 吨' : '-' }}
         </div>
       </div>
+
+      <!-- 环比增长率 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">破损状态:</div>
+        <div class="detail-row-left">环比增长率:</div>
         <div class="detail-row-right">
-          {{ detailObj.damageStatusId || '-' }}
+          {{ detailObj.quarterOnQuarterGrowthRate ? detailObj.quarterOnQuarterGrowthRate + '%' : '-' }}
         </div>
       </div>
+
+      <!-- 同比增长率 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">广告状态:</div>
+        <div class="detail-row-left">同比增长率:</div>
         <div class="detail-row-right">
-          {{ detailObj.adStatusId || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">所属区域:</div>
-        <div class="detail-row-right">
-          {{ detailObj.areaCode || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">监管员:</div>
-        <div class="detail-row-right">
-          {{ detailObj.supervisorId || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">预警类型:</div>
-        <div class="detail-row-right">
-          {{ detailObj.warningTypeId || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">预警时间:</div>
-        <div class="detail-row-right">
-          {{ detailObj.warningTime || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">创建时间:</div>
-        <div class="detail-row-right">
-          {{ detailObj.createTime || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">更新时间:</div>
-        <div class="detail-row-right">
-          {{ detailObj.updateTime || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">删除标记:</div>
-        <div class="detail-row-right">
-          {{ detailObj.delFlag || '-' }}
+          {{ detailObj.yearOnYearGrowthRate ? detailObj.yearOnYearGrowthRate + '%' : '-' }}
         </div>
       </div>
     </div>

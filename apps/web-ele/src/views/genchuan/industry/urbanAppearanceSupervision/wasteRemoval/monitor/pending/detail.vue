@@ -51,93 +51,39 @@ defineExpose({
     <div class="detail-card">
       <!-- 广告基础信息 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">广告ID:</div>
+        <div class="detail-row-left">车辆牌照:</div>
         <div class="detail-row-right">
-          {{ detailObj.outdoorAdId || '-' }}
+          {{ detailObj.license_plate || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">广告名称:</div>
+        <div class="detail-row-left">所属片区:</div>
         <div class="detail-row-right">
-          {{ detailObj.name || '-' }}
+          {{ detailObj.area_name || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">广告位置:</div>
+        <div class="detail-row-left">异常类型:</div>
         <div class="detail-row-right">
-          {{ detailObj.location || '-' }}
+          {{ detailObj.abnormal_type || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">审批尺寸:</div>
+        <div class="detail-row-left">异常数值:</div>
         <div class="detail-row-right">
-          {{ detailObj.approvedSize || '-' }}
+          {{ detailObj.planned_route || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">实际尺寸:</div>
+        <div class="detail-row-left">触发时间:</div>
         <div class="detail-row-right">
-          {{ detailObj.actualSize || '-' }}
+          {{ detailObj.warning_time || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">倾斜角度:</div>
+        <div class="detail-row-left">实时位置:</div>
         <div class="detail-row-right">
-          {{ detailObj.tiltAngle || '-' }} °
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">破损状态:</div>
-        <div class="detail-row-right">
-          {{ detailObj.damageStatusId || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">广告状态:</div>
-        <div class="detail-row-right">
-          {{ detailObj.adStatusId || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">所属区域:</div>
-        <div class="detail-row-right">
-          {{ detailObj.areaCode || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">监管员:</div>
-        <div class="detail-row-right">
-          {{ detailObj.supervisorId || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">预警类型:</div>
-        <div class="detail-row-right">
-          {{ detailObj.warningTypeId || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">预警时间:</div>
-        <div class="detail-row-right">
-          {{ detailObj.warningTime || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">创建时间:</div>
-        <div class="detail-row-right">
-          {{ detailObj.createTime || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">更新时间:</div>
-        <div class="detail-row-right">
-          {{ detailObj.updateTime || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">删除标记:</div>
-        <div class="detail-row-right">
-          {{ detailObj.delFlag || '-' }}
+          {{ detailObj.real_time_location || '-' }}
         </div>
       </div>
     </div>
