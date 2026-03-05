@@ -22,7 +22,7 @@ const { detailObj, title } = toRefs(props);
 
 // 计算属性处理标题，优先用路段名称，兜底显示默认值
 const drawerTitle = computed(() => {
-  const roadSectionName = detailObj.value?.roadSectionName || '广告';
+  const roadSectionName = detailObj.value?.roadSectionName || '占道';
   return title.value || `${roadSectionName}详情`;
 });
 
@@ -51,95 +51,107 @@ defineExpose({
     <div class="detail-card">
       <!-- 广告详情基础信息 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">广告ID:</div>
+        <div class="detail-row-left">主键ID:</div>
         <div class="detail-row-right">
-          {{ detailObj.outdoorAdId || '-' }}
+          {{ detailObj.road_occupation_id || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">广告名称:</div>
-        <div class="detail-row-right">
-          {{ detailObj.name || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">广告位置:</div>
+        <div class="detail-row-left">占道位置:</div>
         <div class="detail-row-right">
           {{ detailObj.location || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">审批尺寸:</div>
+        <div class="detail-row-left">占道类型:</div>
         <div class="detail-row-right">
-          {{ detailObj.approvedSize || '-' }}
+          {{ detailObj.occupation_type || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">实际尺寸:</div>
+        <div class="detail-row-left">占道面积:</div>
         <div class="detail-row-right">
-          {{ detailObj.actualSize || '-' }}
+          {{ detailObj.area || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">倾斜角度:</div>
+        <div class="detail-row-left">所属网格:</div>
         <div class="detail-row-right">
-          {{ detailObj.tiltAngle || '-' }} °
+          {{ detailObj.grid_name || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">破损状态:</div>
+        <div class="detail-row-left">AI识别置信度:</div>
         <div class="detail-row-right">
-          {{ detailObj.damageStatusId || '-' }}
+          {{ detailObj.ai_confidence || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">广告状态:</div>
+        <div class="detail-row-left">预警照片:</div>
         <div class="detail-row-right">
-          {{ detailObj.adStatusId || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">所属区域:</div>
-        <div class="detail-row-right">
-          {{ detailObj.areaCode || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">监管员:</div>
-        <div class="detail-row-right">
-          {{ detailObj.supervisorId || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">预警类型:</div>
-        <div class="detail-row-right">
-          {{ detailObj.warningTypeId || '-' }}
+          {{ detailObj.warning_photos || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">预警时间:</div>
         <div class="detail-row-right">
-          {{ detailObj.warningTime || '-' }}
+          {{ detailObj.warning_time || '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">执法员:</div>
+        <div class="detail-row-right">
+          {{ detailObj.law_enforcer_id || '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">处置措施:</div>
+        <div class="detail-row-right">
+          {{ detailObj.disposal_measure || '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">处置结果:</div>
+        <div class="detail-row-right">
+          {{ detailObj.disposal_result_id || '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">整改照片:</div>
+        <div class="detail-row-right">
+          {{ detailObj.rectification_photos || '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">处罚结果:</div>
+        <div class="detail-row-right">
+          {{ detailObj.penalty_result || '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">处罚凭证编号:</div>
+        <div class="detail-row-right">
+          {{ detailObj.penalty_no || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">创建时间:</div>
         <div class="detail-row-right">
-          {{ detailObj.createTime || '-' }}
+          {{ detailObj.create_time || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">更新时间:</div>
         <div class="detail-row-right">
-          {{ detailObj.updateTime || '-' }}
+          {{ detailObj.update_time || '-' }}
         </div>
       </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">删除标记:</div>
-        <div class="detail-row-right">
-          {{ detailObj.delFlag || '-' }}
-        </div>
-      </div>
+<!--      <div class="detail-card-row">-->
+<!--        <div class="detail-row-left">删除标记:</div>-->
+<!--        <div class="detail-row-right">-->
+<!--          {{ detailObj.del_flag || '-' }}-->
+<!--        </div>-->
+<!--      </div>-->
     </div>
   </DetailDrawer>
 </template>

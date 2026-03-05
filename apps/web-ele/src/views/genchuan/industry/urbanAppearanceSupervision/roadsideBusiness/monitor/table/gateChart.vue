@@ -7,8 +7,8 @@ import Columnar from '#/components/stats/columnar.vue';
 
 const state = reactive({
   cardList: [
-    { title: '总广告数', value: 15, color: '#13ce66' },
-    { title: '预警数', value: 14, color: '#4ECDC4' },
+    { title: '总占道次数', value: 15, color: '#13ce66' },
+    { title: '已闭环工单数', value: 14, color: '#4ECDC4' },
     { title: '待处置工单数', value: 8, color: '#FF6B6B' },
     // { title: '已闭环工单数', value: 8, color: '#FF6B6B' },
     // { title: '整改达标率', value: 8, color: '#FF6B6B' },
@@ -38,7 +38,7 @@ const state = reactive({
     <Circle
       width="340px"
       height="330px"
-      title-text="预警类型占比"
+      title-text="占道类型占比"
       :data="[
         { name: '启用', value: 4 },
         { name: '禁用', value: 5 },
@@ -48,7 +48,7 @@ const state = reactive({
     <Circle
       width="340px"
       height="330px"
-      title-text="复核结果占比"
+      title-text="处置结果占比"
       :data="[
         { name: '启用', value: 4 },
         { name: '禁用', value: 5 },
@@ -57,7 +57,7 @@ const state = reactive({
     />
     <Columnar
       height="330px"
-      title="不同区域广告预警数量对比"
+      title="不同网格占道经营次数对比"
       :x-data="['福州', '厦门', '泉州', '莆田', '漳州', '龙岩']"
       :series-data="[{ name: '', data: [58, 42, 35, 15, 13, 33] }]"
     />
