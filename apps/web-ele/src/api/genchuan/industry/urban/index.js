@@ -66,8 +66,45 @@ export function getwarnList(params) {
     params,
   });
 }
-
+/** 预警创建 */
+export function addWarn(data) {
+  return requestClient.post('/facility/road-warn/create', data);
+}
 /** 道路监测预警删除 */
 export function deleteWarn(id) {
   return requestClient.delete(`/facility/road-warn/delete?id=${id}`);
+}
+
+/** 
+ * 批量确认无效预警
+ * @param {object} params 管理后台 - 批量修改无效状态 VO
+ * @param {array} params.idList [批量修改的预警id列表]
+ * @returns
+ */
+export function batchConfirmInvalidSysWarn(params) {
+  return requestClient.put(`/facility/sys-warn/batch-confirm-invalid`, params);
+}
+/** 
+ * 确认有效预警
+ * @param {object} params 管理后台 - 确认有效 VO
+ * @param {number} params.id [主键ID] 主键，预警记录唯一标识
+ * @param {string} params.confirmOpinion [确认意见] 人工确认后的描述
+ * @returns
+ */
+export function confirmValid(params) {
+  return requestClient.put(`/facility/sys-warn/confirm-valid`, params);
+}
+/** 
+ * 标注无效预警
+ * @param {object} params 管理后台 - 确认有效 VO
+ * @param {number} params.id [主键ID] 主键，预警记录唯一标识
+ * @param {string} params.invalidReason [无效原因] 如设备故障/数据波动/人为误触等
+ * @returns
+ */
+export function confirmInvalid(params) {
+  return requestClient.put(`/facility/sys-warn/confirm-invalid`, params);
+}
+/** excel导出 */
+export function exportwarnExcel() {
+  return requestClient.download('/facility/road-warn/export-excel');
 }

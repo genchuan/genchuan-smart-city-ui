@@ -50,10 +50,17 @@ const handleManualClick = (obj) => {
         :type="props.type"
         :disabled="props.disabled"
         class="genchuan-common-button"
+        :class="props.disabled ? 'genchuan-common-disabled' : ''"
         @click="handleManualClick"
       >
-        <el-icon class="common-icon" :color="props.color">
-          <component :is="props.iconName" :color="props.color" />
+        <el-icon
+          class="common-icon"
+          :color="props.disabled ? 'rgb(211, 210, 210)' : props.color"
+        >
+          <component
+            :is="props.iconName"
+            :color="props.disabled ? 'rgb(211, 210, 210)' : props.color"
+          />
         </el-icon>
       </el-button>
     </template>
@@ -80,5 +87,15 @@ const handleManualClick = (obj) => {
   height: 20px;
   cursor: pointer;
   padding: 2px;
+}
+.genchuan-common-disabled {
+  .common-icon {
+    cursor: not-allowed;
+  }
+}
+.genchuan-common-disabled:hover {
+  .common-icon {
+    cursor: not-allowed;
+  }
 }
 </style>
