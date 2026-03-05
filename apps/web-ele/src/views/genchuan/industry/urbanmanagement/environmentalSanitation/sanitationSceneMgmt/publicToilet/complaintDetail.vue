@@ -82,6 +82,7 @@ const formatPhotos = (photoStr) => {
   max-height: 70vh;
   overflow-y: auto;
 }
+
 .detail-section {
   font-weight: 600;
   font-size: 16px;
@@ -89,21 +90,16 @@ const formatPhotos = (photoStr) => {
   padding-bottom: 4px;
   border-bottom: 1px solid #e0e0e0;
 }
+
 .detail-row {
   display: flex;
   padding: 8px 0;
   border-bottom: 1px solid #f0f0f0;
+
   .label {
     width: 130px;
     flex-shrink: 0;
     font-weight: 500;
-    color: #606266;
-  }
-  &:hover {
-    background: #f5f7fa;
-    border-radius: 4px;
-    padding-left: 8px;
-    margin-left: -8px;
   }
 }
 .photo-list {
