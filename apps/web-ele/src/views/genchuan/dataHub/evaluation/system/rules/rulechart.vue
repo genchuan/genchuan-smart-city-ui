@@ -6,7 +6,6 @@ import Columnar from '#/components/stats/columnar.vue';
 
 const state = reactive({
   cardList: [],
-  pieData1: [],
   pieData2: [],
   pieData3: [],
   barXData: [],
@@ -21,12 +20,6 @@ const fetchData = () => {
     { title: '规则项总数', value: 45, color: '#4ECDC4' },
     { title: '否决项总数', value: 8, color: '#FF6B6B' },
     { title: '启用规则数', value: 38, color: '#FFC107' },
-  ];
-
-  // 规则类型占比饼图
-  state.pieData1 = [
-    { name: '加分', value: 25 },
-    { name: '扣分', value: 20 },
   ];
 
   // 适用对象类型占比饼图
@@ -69,14 +62,6 @@ onMounted(() => {
         v-bind="item"
       />
     </div>
-
-    <!-- 饼图1：规则类型占比 -->
-    <Circle
-      width="340px"
-      height="330px"
-      title-text="规则类型占比"
-      :data="state.pieData1"
-    />
 
     <!-- 饼图2：适用对象类型占比 -->
     <Circle
