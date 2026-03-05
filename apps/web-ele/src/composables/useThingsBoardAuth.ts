@@ -37,7 +37,9 @@ export function useThingsBoardAuth() {
         username: import.meta.env.VITE_THINGS_BOARD_NAME,
         password: import.meta.env.VITE_THINGS_BOARD_PASSWORD,
       };
-      const res = (await thingsBoardLogin(loginData)) as unknown as ThingsBoardLoginResponse;
+      const res = (await thingsBoardLogin(
+        loginData,
+      )) as unknown as ThingsBoardLoginResponse;
       window.localStorage.setItem('thingsBoardJwt_token', res.token);
       window.localStorage.setItem('thingsBoardRefresh_token', res.refreshToken);
       window.localStorage.setItem('thingsBoardJwt_time', Date.now().toString());
