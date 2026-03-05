@@ -78,5 +78,5 @@ export function exportInstance() {
 
 /** todo 导入管理部件实例*/
 export function importInstance() {
-  return requestClient.download('/data/instance/import-excel');
+  return requestClient.post('/data/instance/import-excel');
 }

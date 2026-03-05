@@ -445,14 +445,6 @@ const chartData = computed(() => {
 
 <template>
   <div class="park-lot-table-new">
-    <!-- 图表区域 -->
-    <ObjectChart
-      :card-list="chartData.cardList"
-      :pie-data1="chartData.pieData1"
-      :pie-data2="chartData.pieData2"
-      :bar-data="chartData.barData"
-    />
-
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>

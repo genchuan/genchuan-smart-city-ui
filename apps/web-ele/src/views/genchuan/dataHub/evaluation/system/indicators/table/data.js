@@ -336,7 +336,7 @@ export function getGridColumnsByTab(tab) {
     ...dynamicColumns,
     {
       title: '操作',
-      width: 240,
+      width: 150,
       fixed: 'right',
       slots: { default: 'actions' }
     }

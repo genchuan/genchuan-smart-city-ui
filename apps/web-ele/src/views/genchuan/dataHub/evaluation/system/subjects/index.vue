@@ -1,6 +1,5 @@
 <script setup>
 import { ref } from 'vue';
-import { ArrowUp, ArrowDown } from '@element-plus/icons-vue';
 
 import carchart from './subjectschart.vue';
 import Table from './table/index.vue';

@@ -105,8 +105,8 @@ export function useQuerySchema() {
       componentProps: { placeholder: '请输入状态' },
     },
     {
-      field: 'contactName',
-      title: '联系人',
+      fieldName: 'contactName',
+      label: '联系人',
       component: 'Input',
       componentProps: { placeholder: '请输入联系人' },
     },
@@ -195,7 +195,7 @@ export function useGridColumns() {
     },
     {
       title: '操作',
-      width: 200,
+      width: 150,
       fixed: 'right',
       slots: { default: 'actions' }
     }

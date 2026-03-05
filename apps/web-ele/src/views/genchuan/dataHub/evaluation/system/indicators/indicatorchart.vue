@@ -45,7 +45,7 @@ const props = defineProps({
 </script>
 
 <template>
-  <div class="park-chart-box park-district-chart">
+  <div class="park-chart-box park-subject-chart">
     <div class="chart-box-left">
       <Card
         class="left-card"
@@ -77,20 +77,19 @@ const props = defineProps({
 </template>
 
 <style lang="scss">
-.park-district-chart {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 20px;
+.park-subject-chart {
   .chart-box-left {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
     max-width: 100%;
-    height: 330px;
+    height: 100%;
     .left-card {
       height: 159px !important;
     }
+  }
+  .subject-columnar {
+    min-width: 200px !important;
   }
 }
 </style>
