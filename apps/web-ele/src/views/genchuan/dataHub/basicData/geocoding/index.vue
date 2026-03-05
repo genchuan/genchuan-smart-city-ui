@@ -1,8 +1,8 @@
 <script setup>
-import { computed, ref, watch, nextTick, onMounted } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
-import { ElTree, ElInput } from 'element-plus';
-import { Search, ArrowDown, ArrowUp } from '@element-plus/icons-vue';
+import { ArrowDown, ArrowUp, Search } from '@element-plus/icons-vue';
+import { ElInput, ElTree } from 'element-plus';
 
 import StatsVisualization from '#/components/stats/StatsVisualization.vue';
 import { useTreeExpandController } from '#/utils/useTreeExpandController';
@@ -133,11 +133,11 @@ const mapConfig = computed(() => ({
     gray: 'gray',
   },
   statusKeyMap: {
-    '正常': 'green',
-    '异常': 'red',
-    '停用': 'red',
-    '建设中': 'gray',
-    '维护中': 'orange',
+    正常: 'green',
+    异常: 'red',
+    停用: 'red',
+    建设中: 'gray',
+    维护中: 'orange',
   },
   infoWindowConfig: {
     title: 'locationName',
@@ -179,43 +179,66 @@ onMounted(() => {
       "
     >
       <div
-          style="
+        style="
+          display: flex;
+          flex-direction: column;
           width: 300px;
           max-height: calc(100vh - 120px);
           border: 1px solid var(--el-border-color);
           border-radius: 4px;
-          display: flex;
-          flex-direction: column;
         "
+      >
+        <!-- 树头 -->
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            background-color: var(--el-bg-color-secondary);
+            border-bottom: 1px solid var(--el-border-color);
+          "
         >
-          <!-- 树头 -->
-          <div style="padding: 12px 16px; font-size: 14px; font-weight: 500; border-bottom: 1px solid var(--el-border-color); background-color: var(--el-bg-color-secondary); display: flex; align-items: center; justify-content: space-between;">
-            <span>分类</span>
-            <el-icon class="tabel-tab-icon" @click="toggleTreeExpand" style="cursor: pointer; margin-left: 8px;">
-              <ArrowUp v-if="isExpandAll" />
-              <ArrowDown v-else />
-            </el-icon>
-          </div>
+          <span>分类</span>
+          <el-icon
+            class="tabel-tab-icon"
+            @click="toggleTreeExpand"
+            style="margin-left: 8px; cursor: pointer"
+          >
+            <ArrowUp v-if="isExpandAll" />
+            <ArrowDown v-else />
+          </el-icon>
+        </div>
 
-          <!-- 树搜索 -->
-          <div style="padding: 10px; border-bottom: 1px solid var(--el-border-color)">
-            <ElInput v-model="searchValue" placeholder="搜索分类" :prefix-icon="Search" clearable style="width: 100%" />
-          </div>
+        <!-- 树搜索 -->
+        <div
+          style="padding: 10px; border-bottom: 1px solid var(--el-border-color)"
+        >
+          <ElInput
+            v-model="searchValue"
+            placeholder="搜索分类"
+            :prefix-icon="Search"
+            clearable
+            style="width: 100%"
+          />
+        </div>
 
-          <!-- 树节点 -->
-          <div style="flex: 1; overflow: auto">
-            <ElTree
-              ref="treeRef"
-              :data="treeData"
-              node-key="id"
-              @node-click="handleTreeNodeClick"
-              :filter-node-method="filterNode"
-              :filter-after-expand="false"
-              style="padding: 10px"
-            />
-          </div>
+        <!-- 树节点 -->
+        <div style="flex: 1; overflow: auto">
+          <ElTree
+            ref="treeRef"
+            :data="treeData"
+            node-key="id"
+            @node-click="handleTreeNodeClick"
+            :filter-node-method="filterNode"
+            :filter-after-expand="false"
+            style="padding: 10px"
+          />
+        </div>
       </div>
-      <div style="flex: 1; overflow-x: auto;">
+      <div style="flex: 1; overflow-x: auto">
         <div class="icon-change">
           <el-icon
             class="tabel-tab-icon"
@@ -224,19 +247,11 @@ onMounted(() => {
           >
             <ArrowDown />
           </el-icon>
-          <el-icon
-            class="tabel-tab-icon"
-            v-else
-            @click="changeArrowStatus"
-          >
+          <el-icon class="tabel-tab-icon" v-else @click="changeArrowStatus">
             <ArrowUp />
           </el-icon>
         </div>
-        <el-tabs
-          v-model="activeName"
-          class="common-tabs"
-          type="card"
-        >
+        <el-tabs v-model="activeName" class="common-tabs" type="card">
           <el-tab-pane
             v-for="item in tabArray"
             :key="item.label"

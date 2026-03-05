@@ -276,7 +276,7 @@ export function useFormSchema(treeData = []) {
         props: {
           value: 'id',
           label: 'label',
-          children: 'children'
+          children: 'children',
         },
         filterable: true,
         clearable: true,
@@ -284,7 +284,9 @@ export function useFormSchema(treeData = []) {
         filterNodeMethod: (value, data) => {
           // 根据label搜索节点
           if (!value) return true;
-          return data.label && data.label.toLowerCase().includes(value.toLowerCase());
+          return (
+            data.label && data.label.toLowerCase().includes(value.toLowerCase())
+          );
         },
         onChange: (val, formModel) => {
           if (!val) {
@@ -311,9 +313,10 @@ export function useFormSchema(treeData = []) {
 
           const selectedNode = findNode(treeData, val);
           if (selectedNode) {
-            formModel.parentCategoryName = selectedNode.label || selectedNode.categoryName;
+            formModel.parentCategoryName =
+              selectedNode.label || selectedNode.categoryName;
           }
-        }
+        },
       },
     },
 
@@ -808,14 +811,16 @@ export function useInstanceFormSchema(treeData = []) {
         props: {
           value: 'id',
           label: 'label',
-          children: 'children'
+          children: 'children',
         },
         filterable: true,
         clearable: true,
         checkStrictly: true,
         filterNodeMethod: (value, data) => {
           if (!value) return true;
-          return data.label && data.label.toLowerCase().includes(value.toLowerCase());
+          return (
+            data.label && data.label.toLowerCase().includes(value.toLowerCase())
+          );
         },
       },
       rules: 'required',
@@ -844,10 +849,7 @@ export function useInstanceFormSchema(treeData = []) {
       component: 'Select',
       componentProps: {
         placeholder: '请选择运行状态',
-        options: getDictOptions(
-          DICT_TYPE.DATA_MANAGEPART_RUNSTATUS,
-          'string',
-        ),
+        options: getDictOptions(DICT_TYPE.DATA_MANAGEPART_RUNSTATUS, 'string'),
       },
       rules: 'required',
     },
@@ -1085,7 +1087,16 @@ export function getManagePartStatsData() {
       {
         title: '不同网格部件数量对比',
         type: 'bar',
-        xAxis: ['中山路网格', '公园路网格', '长安街网格', '建设路网格', '商业街网格', '科技路网格', '绿岛路网格', '和平路网格'],
+        xAxis: [
+          '中山路网格',
+          '公园路网格',
+          '长安街网格',
+          '建设路网格',
+          '商业街网格',
+          '科技路网格',
+          '绿岛路网格',
+          '和平路网格',
+        ],
         data: [245, 198, 176, 154, 142, 128, 115, 98],
       },
     ],

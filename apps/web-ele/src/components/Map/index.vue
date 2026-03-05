@@ -27,12 +27,12 @@ const props = defineProps({
   statusKeyMap: {
     type: Object,
     default: () => ({
-      '正常': 'green',
-      '异常': 'red',
-      '离线': 'red',
-      '维护中': 'orange',
-      '停用': 'red',
-      '建设中': 'gray',
+      正常: 'green',
+      异常: 'red',
+      离线: 'red',
+      维护中: 'orange',
+      停用: 'red',
+      建设中: 'gray',
     }),
   },
   infoWindowConfig: {
@@ -116,7 +116,7 @@ const initMarkerLayer = () => {
 const generateInfoWindowContent = (properties) => {
   const config = props.infoWindowConfig;
   const title = properties[config.title] || '未知';
-  
+
   let fieldsHtml = '';
   if (config.fields) {
     config.fields.forEach((field) => {
@@ -171,7 +171,7 @@ const renderMarkers = () => {
 
     let key = 'blue';
     const statusName = (item.statusName || '').trim();
-    
+
     // 优先根据运行状态确定图标颜色
     if (props.statusKeyMap[statusName]) {
       key = props.statusKeyMap[statusName];

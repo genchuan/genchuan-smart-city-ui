@@ -38,12 +38,12 @@ const props = defineProps({
         gray: 'normal',
       },
       statusKeyMap: {
-        '正常': 'green',
-        '异常': 'red',
-        '离线': 'red',
-        '维护中': 'orange',
-        '停用': 'red',
-        '建设中': 'gray',
+        正常: 'green',
+        异常: 'red',
+        离线: 'red',
+        维护中: 'orange',
+        停用: 'red',
+        建设中: 'gray',
       },
       infoWindowConfig: {
         title: 'locationName',
@@ -96,15 +96,18 @@ const getChartOption = (chart) => {
 
   const option = {
     backgroundColor: 'transparent',
-    title: chart.type === 'pie' ? undefined : {
-      text: chart.title,
-      left: 'center',
-      textStyle: {
-        color: '#6E7E91',
-        fontSize: 16,
-        fontWeight: 500,
-      },
-    },
+    title:
+      chart.type === 'pie'
+        ? undefined
+        : {
+            text: chart.title,
+            left: 'center',
+            textStyle: {
+              color: '#6E7E91',
+              fontSize: 16,
+              fontWeight: 500,
+            },
+          },
     tooltip: {
       trigger: chart.type === 'pie' ? 'item' : 'axis',
       backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -159,7 +162,10 @@ const getChartOption = (chart) => {
           show: true,
           position: 'outside',
           formatter(params) {
-            const name = params.name.length > 4 ? `${params.name.slice(0, 4)}...` : params.name;
+            const name =
+              params.name.length > 4
+                ? `${params.name.slice(0, 4)}...`
+                : params.name;
             return `{name|${name}}\n{percent|${params.percent}%}`;
           },
           rich: {

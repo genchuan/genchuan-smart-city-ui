@@ -4,8 +4,8 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { ArrowDown, ArrowUp, Search } from '@element-plus/icons-vue';
 import { ElInput, ElLoading, ElMessage, ElTree } from 'element-plus';
 
-import StatsVisualization from '#/components/stats/StatsVisualization.vue';
 import { getCategoryTree } from '#/api/genchuan/dataHub/basicData/managePart';
+import StatsVisualization from '#/components/stats/StatsVisualization.vue';
 import { useTreeExpandController } from '#/utils/useTreeExpandController';
 
 import Table from './table/index.vue';
@@ -68,9 +68,27 @@ const statsData = computed(() => {
   if (list.length === 0) {
     return {
       cards: [
-        { title: '总部件数', value: 0, unit: '个', icon: 'Box', color: '#4A90E2' },
-        { title: '正常运行部件数', value: 0, unit: '个', icon: 'CircleCheck', color: '#50E3C2' },
-        { title: '关联监测部件数', value: 0, unit: '个', icon: 'Connection', color: '#FF9F40' },
+        {
+          title: '总部件数',
+          value: 0,
+          unit: '个',
+          icon: 'Box',
+          color: '#4A90E2',
+        },
+        {
+          title: '正常运行部件数',
+          value: 0,
+          unit: '个',
+          icon: 'CircleCheck',
+          color: '#50E3C2',
+        },
+        {
+          title: '关联监测部件数',
+          value: 0,
+          unit: '个',
+          icon: 'Connection',
+          color: '#FF9F40',
+        },
       ],
       charts: [],
     };
@@ -78,28 +96,37 @@ const statsData = computed(() => {
 
   // 计算卡片数据
   const totalCount = list.length;
-  const normalCount = list.filter(item => item.runStatus === '2').length;
-  const monitorCount = list.reduce((sum, item) => sum + Number(item.monitorCount || 0), 0);
+  const normalCount = list.filter((item) => item.runStatus === '2').length;
+  const monitorCount = list.reduce(
+    (sum, item) => sum + Number(item.monitorCount || 0),
+    0,
+  );
 
   // 计算部件分类占比
   const categoryMap = {};
-  list.forEach(item => {
+  list.forEach((item) => {
     const name = item.categoryName || '未分类';
     categoryMap[name] = (categoryMap[name] || 0) + 1;
   });
-  const categoryData = Object.entries(categoryMap).map(([name, value]) => ({ name, value }));
+  const categoryData = Object.entries(categoryMap).map(([name, value]) => ({
+    name,
+    value,
+  }));
 
   // 计算主管部门占比
   const deptMap = {};
-  list.forEach(item => {
+  list.forEach((item) => {
     const name = item.deptName || '未知部门';
     deptMap[name] = (deptMap[name] || 0) + 1;
   });
-  const deptData = Object.entries(deptMap).map(([name, value]) => ({ name, value }));
+  const deptData = Object.entries(deptMap).map(([name, value]) => ({
+    name,
+    value,
+  }));
 
   // 计算不同网格部件数量
   const gridMap = {};
-  list.forEach(item => {
+  list.forEach((item) => {
     const name = item.gridName || '未知网格';
     gridMap[name] = (gridMap[name] || 0) + 1;
   });
@@ -108,14 +135,37 @@ const statsData = computed(() => {
 
   return {
     cards: [
-      { title: '总部件数', value: totalCount, unit: '个', icon: 'Box', color: '#4A90E2' },
-      { title: '正常运行部件数', value: normalCount, unit: '个', icon: 'CircleCheck', color: '#50E3C2' },
-      { title: '关联监测部件数', value: monitorCount, unit: '个', icon: 'Connection', color: '#FF9F40' },
+      {
+        title: '总部件数',
+        value: totalCount,
+        unit: '个',
+        icon: 'Box',
+        color: '#4A90E2',
+      },
+      {
+        title: '正常运行部件数',
+        value: normalCount,
+        unit: '个',
+        icon: 'CircleCheck',
+        color: '#50E3C2',
+      },
+      {
+        title: '关联监测部件数',
+        value: monitorCount,
+        unit: '个',
+        icon: 'Connection',
+        color: '#FF9F40',
+      },
     ],
     charts: [
       { title: '部件分类占比', type: 'pie', data: categoryData },
       { title: '主管部门占比', type: 'pie', data: deptData },
-      { title: '不同网格部件数量对比', type: 'bar', xAxis: gridNames, series: gridValues },
+      {
+        title: '不同网格部件数量对比',
+        type: 'bar',
+        xAxis: gridNames,
+        series: gridValues,
+      },
     ],
   };
 });
@@ -124,23 +174,27 @@ const statsData = computed(() => {
 const mapData = computed(() => {
   const list = tableDataList.value || [];
   return list
-    .filter(item => item.longitude && item.latitude)
-    .map(item => {
+    .filter((item) => item.longitude && item.latitude)
+    .map((item) => {
       // 根据runStatus确定状态名称和颜色
       let statusName = '未知';
       switch (item.runStatus) {
-        case '1':
+        case '1': {
           statusName = '异常';
           break;
-        case '2':
+        }
+        case '2': {
           statusName = '正常';
           break;
-        case '3':
+        }
+        case '3': {
           statusName = '离线';
           break;
-        case '4':
+        }
+        case '4': {
           statusName = '维护中';
           break;
+        }
       }
 
       return {
@@ -148,7 +202,7 @@ const mapData = computed(() => {
         geoCode: item.uniqueCode,
         locationName: item.partName,
         coordinateInfo: `${item.longitude},${item.latitude}`,
-        statusName: statusName,
+        statusName,
         areaName: item.gridName || '',
         layerTypeName: item.categoryName || '',
         adminCode: item.areaName || '',
@@ -176,10 +230,10 @@ const mapConfig = computed(() => ({
     gray: 'gray',
   },
   statusKeyMap: {
-    '正常': 'green',
-    '异常': 'red',
-    '离线': 'gray',
-    '维护中': 'orange',
+    正常: 'green',
+    异常: 'red',
+    离线: 'gray',
+    维护中: 'orange',
   },
   infoWindowConfig: {
     title: 'locationName',
@@ -345,7 +399,7 @@ const handleClearFilter = () => {
       </div>
 
       <!-- 右侧内容 -->
-      <div style="flex: 1; min-width: 0; overflow: hidden;">
+      <div style="flex: 1; min-width: 0; overflow: hidden">
         <div class="icon-change">
           <el-icon
             class="tabel-tab-icon"

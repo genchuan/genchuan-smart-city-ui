@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
@@ -69,20 +69,38 @@ const open = (row: any) => {
 
 const getEventTypeType = (type: string) => {
   switch (type) {
-    case '异常报警': return 'danger';
-    case '故障维修': return 'warning';
-    case '定期巡检': return 'success';
-    default: return 'info';
+    case '定期巡检': {
+      return 'success';
+    }
+    case '异常报警': {
+      return 'danger';
+    }
+    case '故障维修': {
+      return 'warning';
+    }
+    default: {
+      return 'info';
+    }
   }
 };
 
 const getStatusType = (status: string) => {
   switch (status) {
-    case '已处置': return 'success';
-    case '已完成': return 'success';
-    case '处置中': return 'warning';
-    case '待处置': return 'danger';
-    default: return 'info';
+    case '处置中': {
+      return 'warning';
+    }
+    case '已处置': {
+      return 'success';
+    }
+    case '已完成': {
+      return 'success';
+    }
+    case '待处置': {
+      return 'danger';
+    }
+    default: {
+      return 'info';
+    }
   }
 };
 
@@ -101,11 +119,15 @@ defineExpose({
           <div class="info-row">
             <div class="info-item">
               <span class="info-label">部件名称：</span>
-              <span class="info-value" :title="currentPart.partName">{{ currentPart.partName }}</span>
+              <span class="info-value" :title="currentPart.partName">{{
+                currentPart.partName
+              }}</span>
             </div>
             <div class="info-item">
               <span class="info-label">16位标识码：</span>
-              <span class="info-value" :title="currentPart.uniqueCode">{{ currentPart.uniqueCode }}</span>
+              <span class="info-value" :title="currentPart.uniqueCode">{{
+                currentPart.uniqueCode
+              }}</span>
             </div>
           </div>
           <div class="info-row">
@@ -128,11 +150,19 @@ defineExpose({
           <div class="stat-label">全部事件</div>
         </div>
         <div class="stat-item">
-          <div class="stat-value">{{ eventList.filter(e => e.status === '已处置' || e.status === '已完成').length }}</div>
+          <div class="stat-value">
+            {{
+              eventList.filter(
+                (e) => e.status === '已处置' || e.status === '已完成',
+              ).length
+            }}
+          </div>
           <div class="stat-label">已处置</div>
         </div>
         <div class="stat-item">
-          <div class="stat-value">{{ eventList.filter(e => e.status === '处置中').length }}</div>
+          <div class="stat-value">
+            {{ eventList.filter((e) => e.status === '处置中').length }}
+          </div>
           <div class="stat-label">处置中</div>
         </div>
       </div>
@@ -161,7 +191,7 @@ defineExpose({
               </div>
               <div class="event-content">
                 <div class="event-description">{{ event.description }}</div>
-                
+
                 <!-- 处置记录 -->
                 <div v-if="event.handleTime" class="handle-record">
                   <div class="record-title">处置记录</div>

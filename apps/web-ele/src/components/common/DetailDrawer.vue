@@ -94,20 +94,20 @@ defineExpose({
                       const type = field.tagType?.(item[field.key]) || 'info';
                       // 支持所有字典配置的颜色类型映射
                       const colorTypeMap = {
-                        'danger': 'danger',
-                        'error': 'danger',
-                        'info': 'info',
-                        'primary': 'primary',
-                        'success': 'success',
-                        'warning': 'warning',
-                        'blue': 'primary',
-                        'green': 'success',
-                        'orange': 'warning',
-                        'cyan': 'info',
-                        'purple': 'primary',
-                        'pink': 'danger',
-                        'red': 'danger',
-                        'yellow': 'warning',
+                        danger: 'danger',
+                        error: 'danger',
+                        info: 'info',
+                        primary: 'primary',
+                        success: 'success',
+                        warning: 'warning',
+                        blue: 'primary',
+                        green: 'success',
+                        orange: 'warning',
+                        cyan: 'info',
+                        purple: 'primary',
+                        pink: 'danger',
+                        red: 'danger',
+                        yellow: 'warning',
                       };
                       return colorTypeMap[type] || type || 'info';
                     })()

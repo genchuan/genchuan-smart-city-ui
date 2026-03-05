@@ -21,42 +21,79 @@ const [Modal, modalApi] = useVbenModal({
 const fileList = ref<any[]>([]);
 const uploadRef = ref();
 const validating = ref(false);
-const validationResult = ref<{
-  success: boolean;
-  message: string;
-  total: number;
-  successCount: number;
+const validationResult = ref<null | {
   failCount: number;
-} | null>(null);
+  message: string;
+  success: boolean;
+  successCount: number;
+  total: number;
+}>(null);
 
 // 下载导入模板
 const downloadTemplate = () => {
   // 创建模板数据
   const templateData = [
-    ['部件名称', '16位标识码', '所属分类', '所在网格', '坐标信息', '运行状态', '主管部门', '创建人', '关联监测部件数', '行政区划归属'],
-    ['示例-路灯001', 'LD20250301000001', '道路设施', '中山路网格A区', '116.4074,39.9042', '正常', '市政管理局', '张三', '3', '朝阳区'],
-    ['示例-垃圾桶001', 'LJ20250301000002', '环境卫生', '公园路网格B区', '116.4156,39.9123', '正常', '环卫管理处', '李四', '1', '海淀区'],
+    [
+      '部件名称',
+      '16位标识码',
+      '所属分类',
+      '所在网格',
+      '坐标信息',
+      '运行状态',
+      '主管部门',
+      '创建人',
+      '关联监测部件数',
+      '行政区划归属',
+    ],
+    [
+      '示例-路灯001',
+      'LD20250301000001',
+      '道路设施',
+      '中山路网格A区',
+      '116.4074,39.9042',
+      '正常',
+      '市政管理局',
+      '张三',
+      '3',
+      '朝阳区',
+    ],
+    [
+      '示例-垃圾桶001',
+      'LJ20250301000002',
+      '环境卫生',
+      '公园路网格B区',
+      '116.4156,39.9123',
+      '正常',
+      '环卫管理处',
+      '李四',
+      '1',
+      '海淀区',
+    ],
   ];
-  
+
   // 创建CSV内容
-  const csvContent = templateData.map(row => row.join(',')).join('\n');
-  const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const csvContent = templateData.map((row) => row.join(',')).join('\n');
+  const blob = new Blob([`\uFEFF${csvContent}`], {
+    type: 'text/csv;charset=utf-8;',
+  });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
   link.download = '部件实例导入模板.csv';
-  document.body.appendChild(link);
+  document.body.append(link);
   link.click();
-  document.body.removeChild(link);
+  link.remove();
   ElMessage.success('模板下载成功');
 };
 
 // 文件上传前校验
 const beforeUpload = (file: File) => {
-  const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
-                  file.type === 'application/vnd.ms-excel' ||
-                  file.name.endsWith('.xlsx') ||
-                  file.name.endsWith('.xls') ||
-                  file.name.endsWith('.csv');
+  const isExcel =
+    file.type ===
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+    file.type === 'application/vnd.ms-excel' ||
+    file.name.endsWith('.xlsx') ||
+    file.name.endsWith('.xls') ||
+    file.name.endsWith('.csv');
   if (!isExcel) {
     ElMessage.error('请上传Excel文件(.xlsx, .xls)或CSV文件!');
     return false;
@@ -78,7 +115,7 @@ const handleImport = async () => {
   }
 
   validating.value = true;
-  
+
   // 模拟校验过程
   setTimeout(() => {
     // 模拟校验结果
@@ -89,7 +126,7 @@ const handleImport = async () => {
       successCount: 10,
       failCount: 0,
     };
-    
+
     validating.value = false;
     ElMessage.success('导入成功');
     emit('success');
@@ -115,7 +152,9 @@ defineExpose({
       <div class="template-section">
         <div class="section-title">1. 下载导入模板</div>
         <div class="section-content">
-          <p class="tip-text">请使用系统提供的模板格式导入数据，确保数据格式正确</p>
+          <p class="tip-text">
+            请使用系统提供的模板格式导入数据，确保数据格式正确
+          </p>
           <ElButton type="primary" @click="downloadTemplate">
             <template #icon>
               <i class="el-icon-download"></i>
@@ -157,7 +196,13 @@ defineExpose({
       <!-- 校验结果 -->
       <div v-if="validationResult" class="result-section">
         <div class="section-title">校验结果</div>
-        <div class="result-content" :class="{ success: validationResult.success, error: !validationResult.success }">
+        <div
+          class="result-content"
+          :class="{
+            success: validationResult.success,
+            error: !validationResult.success,
+          }"
+        >
           <div class="result-message">{{ validationResult.message }}</div>
           <div class="result-detail">
             <span>总记录数: {{ validationResult.total }}</span>

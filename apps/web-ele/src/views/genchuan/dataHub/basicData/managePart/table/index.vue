@@ -24,11 +24,11 @@ import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
-import IconBindingDrawer from '../components/IconBindingDrawer.vue';
-import SubmitAuditDialog from '../components/SubmitAuditDialog.vue';
-import ImportExcelDialog from '../components/ImportExcelDialog.vue';
 import BatchUpdateStatusDialog from '../components/BatchUpdateStatusDialog.vue';
 import BindMonitorDrawer from '../components/BindMonitorDrawer.vue';
+import IconBindingDrawer from '../components/IconBindingDrawer.vue';
+import ImportExcelDialog from '../components/ImportExcelDialog.vue';
+import SubmitAuditDialog from '../components/SubmitAuditDialog.vue';
 import ViewEventsDrawer from '../components/ViewEventsDrawer.vue';
 import {
   detailFields,
@@ -889,8 +889,7 @@ const handleCancelCategoryNameFilter = () => {
 
 // 处理所在网格点击
 const handleGridNameClick = (gridName) => {
-  filterGridName.value =
-    filterGridName.value === gridName ? '' : gridName;
+  filterGridName.value = filterGridName.value === gridName ? '' : gridName;
   gridApi.query();
 };
 
@@ -902,8 +901,7 @@ const handleCancelGridNameFilter = () => {
 
 // 处理主管部门点击
 const handleDeptNameClick = (deptName) => {
-  filterDeptName.value =
-    filterDeptName.value === deptName ? '' : deptName;
+  filterDeptName.value = filterDeptName.value === deptName ? '' : deptName;
   gridApi.query();
 };
 
@@ -1357,7 +1355,11 @@ const getAuditStatusType = (auditStatus) => {
       </template>
       <template #categoryName="{ row }">
         <el-text
-          @click="props.tabType === 'instance' ? handleCategoryNameClick(row.categoryName) : handleOpenDetail(row)"
+          @click="
+            props.tabType === 'instance'
+              ? handleCategoryNameClick(row.categoryName)
+              : handleOpenDetail(row)
+          "
           class="common-align"
           type="primary"
           style="cursor: pointer"
@@ -1560,10 +1562,7 @@ const getAuditStatusType = (auditStatus) => {
     </el-dialog>
 
     <!-- 导入Excel弹窗 -->
-    <ImportExcelDialog
-      ref="importExcelDialogRef"
-      @success="handleRefresh"
-    />
+    <ImportExcelDialog ref="importExcelDialogRef" @success="handleRefresh" />
 
     <!-- 批量更新状态弹窗 -->
     <BatchUpdateStatusDialog
@@ -1572,14 +1571,9 @@ const getAuditStatusType = (auditStatus) => {
     />
 
     <!-- 关联监测部件抽屉 -->
-    <BindMonitorDrawer
-      ref="bindMonitorDrawerRef"
-      @success="handleRefresh"
-    />
+    <BindMonitorDrawer ref="bindMonitorDrawerRef" @success="handleRefresh" />
 
     <!-- 查看关联事件抽屉 -->
-    <ViewEventsDrawer
-      ref="viewEventsDrawerRef"
-    />
+    <ViewEventsDrawer ref="viewEventsDrawerRef" />
   </div>
 </template>

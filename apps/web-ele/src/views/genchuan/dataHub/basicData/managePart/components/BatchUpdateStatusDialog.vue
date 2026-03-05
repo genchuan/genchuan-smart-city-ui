@@ -2,8 +2,8 @@
 import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
-import { getDictOptions } from '@vben/hooks';
 import { DICT_TYPE } from '@vben/constants';
+import { getDictOptions } from '@vben/hooks';
 
 import { ElButton, ElMessage, ElRadio, ElRadioGroup } from 'element-plus';
 
@@ -26,7 +26,10 @@ const targetStatus = ref<string>('');
 const confirmStep = ref<number>(1); // 1: 选择状态, 2: 二次确认
 
 // 获取运行状态字典选项
-const statusOptions = getDictOptions(DICT_TYPE.DATA_MANAGEPART_RUNSTATUS, 'string');
+const statusOptions = getDictOptions(
+  DICT_TYPE.DATA_MANAGEPART_RUNSTATUS,
+  'string',
+);
 
 const open = (ids: string[]) => {
   selectedIds.value = ids;
@@ -48,12 +51,12 @@ const handleConfirm = async () => {
     // 第二步：执行批量更新
     try {
       // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       ElMessage.success(`成功更新 ${selectedIds.value.length} 条记录的状态`);
       emit('success');
       modalApi.close();
-    } catch (error) {
+    } catch {
       ElMessage.error('更新失败');
     }
   }
@@ -64,7 +67,7 @@ const handleBack = () => {
 };
 
 const getStatusLabel = (value: string) => {
-  const option = statusOptions.find(opt => opt.value === value);
+  const option = statusOptions.find((opt) => opt.value === value);
   return option?.label || value;
 };
 
@@ -84,9 +87,9 @@ defineExpose({
         <div class="status-select">
           <div class="label">请选择目标状态：</div>
           <ElRadioGroup v-model="targetStatus" class="status-radio-group">
-            <ElRadio 
-              v-for="option in statusOptions" 
-              :key="option.value" 
+            <ElRadio
+              v-for="option in statusOptions"
+              :key="option.value"
               :label="option.value"
               class="status-radio"
             >
@@ -106,11 +109,21 @@ defineExpose({
             确认将选中的 <strong>{{ selectedIds.length }}</strong> 条记录
           </div>
           <div class="confirm-status">
-            状态更新为：<el-tag :type="targetStatus === '2' ? 'success' : targetStatus === '1' ? 'danger' : targetStatus === '3' ? 'info' : 'warning'">{{ getStatusLabel(targetStatus) }}</el-tag>
+            状态更新为：<el-tag
+              :type="
+                targetStatus === '2'
+                  ? 'success'
+                  : targetStatus === '1'
+                    ? 'danger'
+                    : targetStatus === '3'
+                      ? 'info'
+                      : 'warning'
+              "
+            >
+              {{ getStatusLabel(targetStatus) }}
+            </el-tag>
           </div>
-          <div class="confirm-warning">
-            此操作不可撤销，请确认是否继续？
-          </div>
+          <div class="confirm-warning">此操作不可撤销，请确认是否继续？</div>
         </div>
       </div>
     </div>
@@ -118,9 +131,7 @@ defineExpose({
     <!-- 自定义底部按钮 -->
     <template #footer>
       <div class="dialog-footer">
-        <ElButton v-if="confirmStep === 2" @click="handleBack">
-          返回
-        </ElButton>
+        <ElButton v-if="confirmStep === 2" @click="handleBack"> 返回 </ElButton>
         <ElButton @click="modalApi.close()">
           {{ confirmStep === 1 ? '取消' : '取消' }}
         </ElButton>
@@ -142,14 +153,14 @@ defineExpose({
 }
 
 .info-text {
+  margin-bottom: 20px;
   font-size: 14px;
   color: var(--el-text-color-regular);
-  margin-bottom: 20px;
 }
 
 .info-text strong {
-  color: var(--el-color-primary);
   font-size: 16px;
+  color: var(--el-color-primary);
 }
 
 .status-select {
@@ -157,16 +168,15 @@ defineExpose({
 }
 
 .label {
-  font-size: 14px;
-  color: var(--el-text-color-primary);
   margin-bottom: 12px;
+  font-size: 14px;
   font-weight: 500;
+  color: var(--el-text-color-primary);
 }
 
 .status-radio-group {
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
+  flex-flow: row wrap;
   gap: 16px;
 }
 
@@ -175,37 +185,37 @@ defineExpose({
 }
 
 .confirm-content {
-  text-align: center;
   padding: 20px 0;
+  text-align: center;
 }
 
 .confirm-icon {
+  margin-bottom: 16px;
   font-size: 48px;
   color: var(--el-color-warning);
-  margin-bottom: 16px;
 }
 
 .confirm-text {
+  margin-bottom: 12px;
   font-size: 14px;
   color: var(--el-text-color-regular);
-  margin-bottom: 12px;
 }
 
 .confirm-status {
+  margin-bottom: 16px;
   font-size: 14px;
   color: var(--el-text-color-primary);
-  margin-bottom: 16px;
 }
 
 .confirm-warning {
+  margin-top: 16px;
   font-size: 13px;
   color: var(--el-color-danger);
-  margin-top: 16px;
 }
 
 .dialog-footer {
   display: flex;
-  justify-content: flex-end;
   gap: 12px;
+  justify-content: flex-end;
 }
 </style>
