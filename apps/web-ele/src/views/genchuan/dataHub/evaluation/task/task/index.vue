@@ -1,10 +1,12 @@
 <script setup>
 import { ref } from 'vue';
 
-import carchart from './rulechart.vue';
-import Table from './table/index.vue';
+// import Table from './table/index.vue';
+// import Chart from './chart.vue';
 
 import '#/components/page/index.scss';
+
+const chartDataFromTable = ref(null);
 
 const changeArrowStatus = () => {
   secondShow.value = !secondShow.value;
@@ -14,7 +16,7 @@ const changeArrowStatus = () => {
 };
 const tabArray = ref([
   {
-    label: '评价规则管理',
+    label: '评价任务管理',
     components: Table,
     showSecondary: true,
     secondShow: false,
@@ -27,12 +29,18 @@ const arrowChange = () => {
     v.arrowShow = !v.arrowShow;
   });
 };
-const activeName = ref('评价规则管理');
+const activeName = ref('评价任务管理');
 const secondShow = ref(false);
+
+const updateChartData = (data) => {
+  chartDataFromTable.value = data;
+};
+
 </script>
+
 <template>
   <div class="common-index">
-    <carchart v-if="tabArray[0].arrowShow" />
+    <Chart v-if="tabArray[0].arrowShow" v-bind="chartDataFromTable" />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -71,6 +79,7 @@ const secondShow = ref(false);
           :key="item.label"
           :arrow-show="item.arrowShow"
           @arrow-change="arrowChange"
+          @update-chart="updateChartData"
         />
       </el-tab-pane>
     </el-tabs>

@@ -226,7 +226,6 @@ export const importFields = [
   { label: '联系电话', key: 'managerPhone', required: true },
   { label: '关联网格/部门', key: 'relatedName', required: true },
   { label: '状态ID', key: 'statusId', required: true, defaultValue: 1 },
-  { label: '创建人', key: 'createUserName', required: false },
 ];
 
 export const textObj = {

@@ -684,6 +684,7 @@ async function handleDownloadTemplate() {
       contactName: '张三',
       contactPhone: '13900139000',
       memberCount: 5,
+      memberNames: '王五、赵六、孙七',
       statusId: 1,
     };
     const exampleRow = importFields.map(field => {

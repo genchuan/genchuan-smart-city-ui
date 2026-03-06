@@ -51,11 +51,11 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       <div class="detail-card-row"><div class="detail-row-left">状态：</div><div class="detail-row-right">{{ detailObj.statusName || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">成员数量：</div><div class="detail-row-right">{{ detailObj.memberCount || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">使用次数：</div><div class="detail-row-right">{{ detailObj.useCount || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">创建人：</div><div class="detail-row-right">{{ detailObj.createByName || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">创建人：</div><div class="detail-row-right">{{ detailObj.createUserName || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">创建时间：</div><div class="detail-row-right">{{ detailObj.createTime || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">更新人：</div><div class="detail-row-right">{{ detailObj.updateByName || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">更新人：</div><div class="detail-row-right">{{ detailObj.updateUserName || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">更新时间：</div><div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">变更日志：</div><div class="detail-row-right">{{ detailObj.changeLog || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">变更日志：</div><div class="detail-row-right">{{ detailObj.changeLogShort || '-' }}</div></div>
     </div>
   </DetailDrawer>
 </template>
