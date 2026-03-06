@@ -338,13 +338,13 @@ const arrowChange = () => {
           />
         </div>
       </template>
-      <template #bridgeName="{ row }">
+      <template #pipeNetworkSection="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.bridgeName }}
+          {{ row.pipeNetworkSection }}
         </el-text>
       </template>
       <template #actions="{ row }">
