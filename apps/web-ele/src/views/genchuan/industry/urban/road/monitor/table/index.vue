@@ -17,6 +17,7 @@ import {
   getRoadFacility,
   getRoadFacilityList,
   getRoadList,
+  getSysDevicePage,
   updateRoad,
   updateRoadStatusList,
 } from '#/api/genchuan/industry/urban/index.js';
@@ -47,6 +48,7 @@ const emit = defineEmits(['arrow-change']);
 const roadDetailRef = ref(null);
 const schemaData = ref(null);
 const roadObj = ref({ detailObj: {}, list: [] });
+const deviceObj = ref({ detailObj: {}, list: [] });
 // 新增：批量切换状态弹窗相关
 const switchDialogVisible = ref(false);
 const switchStatus = ref('运行中'); // 默认切换为运行中
@@ -58,14 +60,23 @@ const getTitle = computed(() => {
 onMounted(async () => {
   const roadList = await getRoadFacilityList({
     pageNo: 1,
-    pageSize: 999,
+    pageSize: 99,
+  });
+  const deviceList = await getSysDevicePage({
+    pageNo: 1,
+    pageSize: 99,
   });
   roadObj.value.list = roadList.list;
+  deviceObj.value.list = deviceList.list;
   let roadIndex = 0;
+  let deviceIndex = 0;
   const schema = useFormSchema();
   schema.forEach((v, i) => {
     if (v.fieldName === 'roadId') {
       roadIndex = i;
+    }
+    if (v.fieldName === 'deviceId') {
+      deviceIndex = i;
     }
   });
   schema[roadIndex] = {
@@ -78,11 +89,33 @@ onMounted(async () => {
       filterOption: true,
       options: roadObj.value.list.map((v) => {
         return {
-          label: v.roadName,
+          label: `${v.id}----${v.roadName}`,
           value: v.id,
         };
       }),
       placeholder: '请选择道路名称',
+      showSearch: true,
+    },
+    rules: 'required',
+    isSearch: true,
+    addShow: true,
+    editShow: true,
+  };
+  schema[deviceIndex] = {
+    fieldName: 'deviceId',
+    label: '设备ID',
+    component: 'Select',
+    labelWidth: '120',
+    componentProps: {
+      allowClear: true,
+      filterOption: true,
+      options: deviceObj.value.list.map((v) => {
+        return {
+          label: `${v.id}----${v.name}`,
+          value: v.id,
+        };
+      }),
+      placeholder: '请选择道路设备ID',
       showSearch: true,
     },
     rules: 'required',
@@ -494,7 +527,7 @@ const handleManualWarn = (row) => {
       title="批量切换监测状态"
       width="400px"
       :close-on-click-modal="false"
-      :before-close="() => (statusLoading = false)"
+      :before-close="() => (switchDialogVisible = false)"
     >
       <div class="switch-dialog-content" v-loading="statusLoading">
         <div class="selected-count">
