@@ -108,3 +108,9 @@ export function confirmInvalid(params) {
 export function exportwarnExcel() {
   return requestClient.download('/facility/road-warn/export-excel');
 }
+/** 获得设备分页 */
+export function getSysDevicePage(params) {
+  return requestClient.get('/facility/sys-device/page', {
+    params,
+  });
+}

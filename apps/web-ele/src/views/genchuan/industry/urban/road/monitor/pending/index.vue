@@ -2,14 +2,17 @@
 import { computed, onMounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
+import { isEmpty } from '@vben/utils';
 
 import {
   ElButton,
+  ElDatePicker,
   ElDialog,
   ElInput,
   ElLoading,
   ElMessage,
+  ElOption,
+  ElSelect,
 } from 'element-plus';
 import screenfull from 'screenfull';
 
@@ -21,10 +24,9 @@ import {
   confirmInvalid,
   confirmValid,
   deleteWarn,
-  exportwarnExcel,
   getRoadFacility,
   getRoadFacilityList,
-  getwarnList, // 新增：标注无效预警的接口（需确认实际接口名）
+  getwarnList,
   updateRoad,
 } from '#/api/genchuan/industry/urban/index.js';
 import { $t } from '#/locales';
@@ -56,7 +58,7 @@ const roadObj = ref({ detailObj: {}, list: [] });
 const switchDialogVisible = ref(false);
 const switchLoading = ref(false);
 
-// 标注无效预警相关（新增核心）
+// 标注无效预警相关
 const noConfirmDrawerApi = ref(null);
 const currentNoConfirmRow = ref({}); // 当前标注无效的行数据
 const invalidReason = ref(''); // 无效原因
@@ -156,48 +158,6 @@ function handleRefresh() {
   gridApi.query();
 }
 
-/** 导出表格 */
-async function handleExport() {
-  const data = await exportwarnExcel();
-  downloadFileFromBlobPart({ fileName: '待处置预警.xls', source: data });
-}
-/** 创建 */
-function handleCreate() {
-  formApi.resetForm();
-  formApi.setState(() => {
-    const schema = schemaData.value.filter((v) => v.addShow);
-
-    return {
-      schema,
-    };
-  });
-  formDrawerApi
-    .setData({
-      title: '增加',
-    })
-    .open();
-}
-/** 编辑 */
-function handleEdit(row) {
-  dataObj.editObj = row;
-  formApi.resetForm();
-  formApi.setState(() => {
-    return {
-      schema: schemaData.value.map((v) => {
-        return {
-          ...v,
-          disabled: !v.editShow,
-        };
-      }),
-    };
-  });
-  formDrawerApi
-    .setData({
-      title: '编辑',
-      ...row,
-    })
-    .open();
-}
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting'),
@@ -428,7 +388,7 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
   },
 });
 
-// 标注无效预警 - 打开抽屉（核心改造）
+// 标注无效预警 - 打开抽屉
 const handleNoConfirm = (row) => {
   // 初始化数据
   currentNoConfirmRow.value = row;
@@ -437,7 +397,7 @@ const handleNoConfirm = (row) => {
   noConfirmDrawerApi.value.open();
 };
 
-// 标注无效预警 - 保存（核心改造）
+// 标注无效预警 - 保存
 const handleNoConfirmSave = async () => {
   // 校验无效原因
   if (!invalidReason.value.trim()) {
@@ -463,7 +423,7 @@ const handleNoConfirmSave = async () => {
   }
 };
 
-// 标注无效预警抽屉（新增）
+// 标注无效预警抽屉
 const [NoConfirmDrawer, noConfirmDrawerApiRef] = useVbenDrawer({
   title: '标注无效预警',
   placement: 'right',
@@ -477,6 +437,95 @@ const [NoConfirmDrawer, noConfirmDrawerApiRef] = useVbenDrawer({
 });
 // 赋值ref以便外部调用
 noConfirmDrawerApi.value = noConfirmDrawerApiRef;
+
+// -------------------- 派发工单功能（核心新增） --------------------
+// 派发工单相关
+const giveDrawerApi = ref(null); // 派发工单抽屉实例
+const currentGiveRow = ref({}); // 当前派发工单的行数据
+const giveForm = reactive({
+  operatorId: '', // 指派运维员ID（必填）
+  operatorName: '', // 运维员名称（回显用）
+  handleDeadline: '', // 处置时限（时间选择器）
+  remark: '', // 派单备注（选填）
+});
+const giveLoading = ref(false); // 派单按钮加载状态
+const operatorList = ref([]); // 运维员列表（用于下拉选择）
+
+// 权限校验：检查运维员是否有该道路的处置权限
+const checkOperatorPermission = async (operatorId, roadId) => {};
+
+// 获取运维员列表（下拉选择用）
+const getOperatorList = async () => {
+  try {
+    // 替换为实际的运维员列表接口
+  } catch {
+    ElMessage.error('获取运维员列表失败！');
+  }
+};
+
+// 打开派发工单抽屉
+const handleGive = async (row) => {
+  currentGiveRow.value = row;
+  // 重置表单
+  Object.assign(giveForm, {
+    operatorId: '',
+    operatorName: '',
+    handleDeadline: '',
+    remark: '',
+  });
+
+  giveDrawerApi.value.open();
+};
+
+// 派发工单提交
+const handleGiveSubmit = async () => {
+  // 1. 必填校验
+  if (!giveForm.operatorId) {
+    ElMessage.warning('请选择指派运维员！');
+    return;
+  }
+  if (!giveForm.handleDeadline) {
+    ElMessage.warning('请设置处置时限！');
+    return;
+  }
+
+  // 2. 权限校验
+  const hasPermission = await checkOperatorPermission(
+    giveForm.operatorId,
+    currentGiveRow.value.roadId,
+  );
+  if (!hasPermission) {
+    ElMessage.error('该运维员无此道路的处置权限，请重新选择！');
+    return;
+  }
+
+  try {
+    giveLoading.value = true;
+
+    ElMessage.success('工单派发成功！');
+    giveDrawerApi.value.close();
+    handleRefresh(); // 刷新表格
+  } catch (error) {
+    ElMessage.error(`派单失败：${error.message || '网络异常'}`);
+  } finally {
+    giveLoading.value = false;
+  }
+};
+
+// 派发工单抽屉初始化
+const [GiveDrawer, giveDrawerApiRef] = useVbenDrawer({
+  title: '派发运维工单',
+  placement: 'right',
+  width: 520,
+  footer: false,
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    giveDrawerApiRef.close();
+  },
+});
+giveDrawerApi.value = giveDrawerApiRef;
+// -------------------- 派发工单功能结束 --------------------
 </script>
 
 <template>
@@ -501,7 +550,7 @@ noConfirmDrawerApi.value = noConfirmDrawerApiRef;
       </div>
     </ConfirmDrawer>
 
-    <!-- 标注无效预警抽屉（新增核心） -->
+    <!-- 标注无效预警抽屉 -->
     <NoConfirmDrawer>
       <div class="p-6">
         <!-- 预警编号提示 -->
@@ -512,7 +561,9 @@ noConfirmDrawerApi.value = noConfirmDrawerApiRef;
         </div>
 
         <div class="mb-4">
-          <label class="mb-2 block text-sm font-medium">无效原因 <span class="text-red-500">*</span></label>
+          <label class="mb-2 block text-sm font-medium"
+            >无效原因 <span class="text-red-500">*</span></label
+          >
           <ElInput
             v-model="invalidReason"
             type="textarea"
@@ -535,6 +586,91 @@ noConfirmDrawerApi.value = noConfirmDrawerApiRef;
         </div>
       </div>
     </NoConfirmDrawer>
+
+    <!-- 派发工单抽屉（新增） -->
+    <GiveDrawer>
+      <div class="p-6">
+        <!-- 预警基本信息 -->
+        <div class="mb-6 text-sm text-gray-500">
+          <div class="mb-1">
+            预警编号：<span class="text-primary">{{
+              currentGiveRow.warnNo
+            }}</span>
+          </div>
+          <div>
+            所属道路：<span class="text-primary">{{
+              currentGiveRow.roadName
+            }}</span>
+          </div>
+        </div>
+
+        <!-- 派单表单 -->
+        <div class="form-item mb-4">
+          <label class="mb-2 block text-sm font-medium">
+            指派运维员 <span class="text-red-500">*</span>
+          </label>
+          <ElSelect
+            v-model="giveForm.operatorId"
+            placeholder="请选择运维员"
+            class="w-full"
+            @change="
+              (val) => {
+                const operator = operatorList.find(
+                  (item) => item.value === val,
+                );
+                giveForm.operatorName = operator?.label || '';
+              }
+            "
+          >
+            <ElOption
+              v-for="item in operatorList"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </ElSelect>
+        </div>
+
+        <div class="form-item mb-4">
+          <label class="mb-2 block text-sm font-medium">
+            处置时限 <span class="text-red-500">*</span>
+          </label>
+          <ElDatePicker
+            v-model="giveForm.handleDeadline"
+            type="datetime"
+            placeholder="请选择处置截止时间"
+            class="w-full"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            :min-date="new Date()"
+          />
+        </div>
+
+        <div class="form-item mb-6">
+          <label class="mb-2 block text-sm font-medium">派单备注</label>
+          <ElInput
+            v-model="giveForm.remark"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入派单备注（选填）"
+            maxlength="300"
+            show-word-limit
+          />
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="flex justify-end gap-2">
+          <ElButton @click="giveDrawerApi.close()">取消</ElButton>
+          <ElButton
+            type="primary"
+            @click="handleGiveSubmit"
+            :loading="giveLoading"
+          >
+            确认派发
+          </ElButton>
+        </div>
+      </div>
+    </GiveDrawer>
 
     <!-- 批量确认无效预警 二次确认弹窗 -->
     <ElDialog
@@ -655,7 +791,7 @@ noConfirmDrawerApi.value = noConfirmDrawerApiRef;
           <IconButton
             content="派发工单"
             icon-name="Avatar"
-            @click="handleOpenDetail(row)"
+            @click="handleGive(row)"
           />
           <!-- <IconButton
             content="编辑"
@@ -728,6 +864,18 @@ noConfirmDrawerApi.value = noConfirmDrawerApiRef;
 :deep(.el-drawer) {
   .el-drawer__body {
     padding: 0;
+  }
+}
+
+// 派发工单表单样式
+.form-item {
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+
+  .el-select,
+  .el-date-picker {
+    width: 100%;
   }
 }
 
