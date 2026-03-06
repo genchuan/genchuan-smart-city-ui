@@ -335,7 +335,7 @@ export function useFormSchema(treeData = []) {
       componentProps: {
         placeholder: '请选择分类类型',
         options: getDictOptions(
-          DICT_TYPE.DATA_MANAGEPART_CATEGORYTYPE,
+          DICT_TYPE.DATA_CATEGORYTYPE,
           'string',
         ),
       },
@@ -441,7 +441,7 @@ export function useGridColumns() {
       sortable: true,
       cellRender: {
         name: 'CellDict',
-        props: { type: DICT_TYPE.DATA_MANAGEPART_CATEGORYTYPE },
+        props: { type: DICT_TYPE.DATA_CATEGORYTYPE },
       },
     },
     {
@@ -505,14 +505,14 @@ export const detailFields = [
     type: 'tag',
     formatter: (value) => {
       const dict = getDictObj(
-        DICT_TYPE.DATA_MANAGEPART_CATEGORYTYPE,
+        DICT_TYPE.DATA_CATEGORYTYPE,
         String(value),
       );
       return dict ? dict.label : value;
     },
     tagType: (value) => {
       const dict = getDictObj(
-        DICT_TYPE.DATA_MANAGEPART_CATEGORYTYPE,
+        DICT_TYPE.DATA_CATEGORYTYPE,
         String(value),
       );
       return dict ? dict.colorType : 'primary';
@@ -821,6 +821,37 @@ export function useInstanceFormSchema(treeData = []) {
           return (
             data.label && data.label.toLowerCase().includes(value.toLowerCase())
           );
+        },
+        onChange: (val, formModel) => {
+          if (!val) {
+            formModel.categoryName = '';
+            formModel.parentCategoryId = '';
+            return;
+          }
+
+          // 递归查找选中的节点
+          const findNode = (nodes, id) => {
+            for (const node of nodes) {
+              if (node.id === id) {
+                return node;
+              }
+              if (node.children && node.children.length > 0) {
+                const found = findNode(node.children, id);
+                if (found) {
+                  return found;
+                }
+              }
+            }
+            return null;
+          };
+
+          const selectedNode = findNode(treeData, val);
+          if (selectedNode) {
+            // 存储id到parentCategoryId，存储label到categoryName
+            formModel.parentCategoryId = selectedNode.id;
+            formModel.categoryName =
+              selectedNode.label || selectedNode.categoryName;
+          }
         },
       },
       rules: 'required',
@@ -1195,6 +1226,101 @@ export function getMapData() {
       runStatus: '1', // 异常
       categoryName: '路灯',
       gridName: '开元街道网格01',
+    },
+  ];
+}
+
+/** 部件实例搜索表单配置（专门用于搜索，所属分类使用id进行搜索） */
+export function useInstanceSearchFormSchema(treeData = []) {
+  return [
+    {
+      fieldName: 'partName',
+      label: '部件名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入部件名称',
+      },
+    },
+    {
+      fieldName: 'uniqueCode',
+      label: '16位标识码',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入16位标识码',
+        maxlength: 16,
+      },
+    },
+    {
+      fieldName: 'categoryId',
+      label: '所属分类',
+      component: 'TreeSelect',
+      componentProps: {
+        placeholder: '请选择所属分类',
+        data: treeData,
+        props: {
+          value: 'id',
+          label: 'label',
+          children: 'children',
+        },
+        filterable: true,
+        clearable: true,
+        checkStrictly: true,
+        filterNodeMethod: (value, data) => {
+          if (!value) return true;
+          return (
+            data.label && data.label.toLowerCase().includes(value.toLowerCase())
+          );
+        },
+      },
+    },
+    {
+      fieldName: 'gridName',
+      label: '所在网格',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入所在网格',
+      },
+    },
+    {
+      fieldName: 'coordinate',
+      label: '坐标信息',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入坐标信息，如：116.4074,39.9042',
+      },
+    },
+    {
+      fieldName: 'runStatus',
+      label: '运行状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择运行状态',
+        options: getDictOptions(DICT_TYPE.DATA_MANAGEPART_RUNSTATUS, 'string'),
+      },
+    },
+    {
+      fieldName: 'deptName',
+      label: '主管部门',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入主管部门',
+      },
+    },
+    {
+      fieldName: 'creator',
+      label: '创建人',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入创建人',
+      },
+    },
+    {
+      fieldName: 'areaName',
+      label: '行政区划归属',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入行政区划归属',
+      },
     },
   ];
 }

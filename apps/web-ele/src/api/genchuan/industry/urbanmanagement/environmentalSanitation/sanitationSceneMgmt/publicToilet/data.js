@@ -542,3 +542,113 @@ export async function exportToiletFacilityRepairExcel(params) {
     },
   });
 }
+
+// ---------- 保洁任务 ----------
+/**
+ * 分页查询保洁任务列表
+ */
+export function getToiletCleaningTaskPage(params) {
+  return requestClient.get('/envirhealth/toilet-cleaning-task/detail-page', { params });
+}
+
+/**
+ * 创建保洁任务
+ */
+export function createToiletCleaningTask(data) {
+  return requestClient.post('/envirhealth/toilet-cleaning-task/create', data);
+}
+
+/**
+ * 更新保洁任务
+ */
+export function updateToiletCleaningTask(data) {
+  return requestClient.put('/envirhealth/toilet-cleaning-task/update', data);
+}
+
+/**
+ * 删除单个保洁任务
+ */
+export function deleteToiletCleaningTask(id) {
+  return requestClient.delete(`/envirhealth/toilet-cleaning-task/delete?id=${id}`);
+}
+
+/**
+ * 批量删除保洁任务
+ */
+export function deleteToiletCleaningTaskBatch(ids) {
+  return requestClient.delete('/envirhealth/toilet-cleaning-task/delete-batch', { data: ids });
+}
+
+/**
+ * 导出保洁任务 Excel
+ */
+export async function exportToiletCleaningTaskExcel(params) {
+  const accessStore = useAccessStore();
+  return await baseRequestClient.get('/envirhealth/toilet-cleaning-task/export-excel', {
+    params,
+    responseType: 'blob',
+    validateStatus: () => true,
+    headers: {
+      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
+    },
+  });
+}
+
+// ---------- 物资待补充（消耗品）接口 ----------
+/**
+ * 分页查询物资待补充列表
+ */
+export function getToiletConsumablePage(params) {
+  return requestClient.get('/envirhealth/toilet-consumable/detail-page', { params });
+}
+
+/**
+ * 创建物资待补充记录
+ */
+export function createToiletConsumable(data) {
+  return requestClient.post('/envirhealth/toilet-consumable/create', data);
+}
+
+/**
+ * 更新物资待补充记录
+ */
+export function updateToiletConsumable(data) {
+  return requestClient.put('/envirhealth/toilet-consumable/update', data);
+}
+
+/**
+ * 删除单个物资待补充记录
+ */
+export function deleteToiletConsumable(id) {
+  return requestClient.delete(`/envirhealth/toilet-consumable/delete?id=${id}`);
+}
+
+/**
+ * 批量删除物资待补充记录
+ */
+export function deleteToiletConsumableBatch(ids) {
+  return requestClient.delete('/envirhealth/toilet-consumable/delete-batch', { data: ids });
+}
+
+/**
+ * 导出物资待补充 Excel
+ */
+export async function exportToiletConsumableExcel(params) {
+  const accessStore = useAccessStore();
+  return await baseRequestClient.get('/envirhealth/toilet-consumable/export-excel', {
+    params,
+    responseType: 'blob',
+    validateStatus: () => true,
+    headers: {
+      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
+    },
+  });
+}
+
+// ---------- 统计接口（用于选项卡数字）----------
+/**
+ * 获取公厕运营任务统计（各状态数量）
+ */
+export function getPublicToiletStatistics() {
+  return requestClient.get('/envirhealth/public-toilet/chart/statistics');
+}

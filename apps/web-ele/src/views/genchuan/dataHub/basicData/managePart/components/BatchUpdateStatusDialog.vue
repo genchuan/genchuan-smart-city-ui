@@ -5,7 +5,9 @@ import { useVbenModal } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
 
-import { ElButton, ElMessage, ElRadio, ElRadioGroup } from 'element-plus';
+import { ElButton, ElMessage, ElRadio, ElRadioGroup, ElTag } from 'element-plus';
+
+import { batchUpdateInstanceStatus } from '#/api/genchuan/dataHub/basicData/managePart';
 
 const emit = defineEmits(['success']);
 
@@ -50,8 +52,13 @@ const handleConfirm = async () => {
   } else {
     // 第二步：执行批量更新
     try {
-      // 模拟API调用
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // 调用批量更新接口
+      // 将ID转换为数字类型
+      const ids = selectedIds.value.map((id) => Number(id));
+      // 将状态值转换为数字类型
+      const runStatus = Number(targetStatus.value);
+
+      await batchUpdateInstanceStatus(ids, runStatus);
 
       ElMessage.success(`成功更新 ${selectedIds.value.length} 条记录的状态`);
       emit('success');

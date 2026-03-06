@@ -238,8 +238,9 @@ export function useFormSchema() {
         allowClear: true,
         filterOption: true,
         options: [
-          { label: '是', value: '1' },
-          { label: '否', value: '0' },
+          { label: '不可触发预警', value: 0 },
+          { label: '可触发预警但还没触发', value: 1 },
+          { label: '已预警', value: 2 },
         ],
         placeholder: '请选择是否预警',
         showSearch: true,
@@ -247,6 +248,7 @@ export function useFormSchema() {
       fieldName: 'isWarning',
       label: '是否预警',
       rules: 'required',
+      editShow: true,
     },
     {
       fieldName: 'warningId',
@@ -358,43 +360,7 @@ export function useFormSchema() {
         valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
       rules: 'required',
-    },
-    {
-      fieldName: 'extCommon1',
-      label: '通用扩展字段1',
-      component: 'Input',
-      labelWidth: '120',
-      componentProps: {
-        placeholder: '请输入通用扩展字段1',
-      },
-    },
-    {
-      fieldName: 'extCommon2',
-      label: '通用扩展字段2',
-      component: 'Input',
-      labelWidth: '120',
-      componentProps: {
-        placeholder: '请输入通用扩展字段2',
-      },
-    },
-    {
-      fieldName: 'extCommon3',
-      label: '通用扩展字段3',
-      component: 'Input',
-      labelWidth: '120',
-      componentProps: {
-        placeholder: '请输入通用扩展字段3',
-      },
-    },
-    {
-      fieldName: 'extCommon4',
-      label: '通用扩展字段4',
-      component: 'Input',
-      labelWidth: '120',
-      componentProps: {
-        placeholder: '请输入通用扩展字段4',
-      },
-    },
+    }, 
   ];
 }
 
@@ -465,7 +431,13 @@ export function useGridColumns() {
       minWidth: 140,
       sortable: true,
     },
-
+    {
+      field: 'isWarning', 
+      title: '预警状态',
+      minWidth: 140,
+      sortable: true,
+      slots: { default: 'isWarning' },
+    },
     {
       field: 'monitorStatus',
       title: '监测状态',

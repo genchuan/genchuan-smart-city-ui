@@ -475,6 +475,12 @@ export function useGridColumns() {
       minWidth: 140,
       sortable: true,
     },
+     {
+      field: 'monitorId',
+      title: '关联检测数据id',
+      minWidth: 140,
+      sortable: true,
+    },
     {
       field: 'assignStatus',
       title: '派单状态',

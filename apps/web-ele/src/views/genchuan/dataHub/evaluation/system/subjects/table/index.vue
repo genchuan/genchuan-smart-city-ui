@@ -685,7 +685,6 @@ async function handleDownloadTemplate() {
       contactPhone: '13900139000',
       memberCount: 5,
       statusId: 1,
-      createUserName: '',
     };
     const exampleRow = importFields.map(field => {
       if (field.key in exampleData) return exampleData[field.key];

@@ -12,17 +12,20 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   bindIcon,
   createCategory,
+  createInstance,
   deleteBatchCategory,
   deleteCategory,
+  deleteInstance,
   exportCategory,
+  exportInstance,
   getCategoryPage,
   getInstancePage,
   submitAudit,
   updateCategory,
+  updateInstance,
 } from '#/api/genchuan/dataHub/basicData/managePart';
 import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
-import { exportToExcel } from '#/utils/excel.js';
 
 import BatchUpdateStatusDialog from '../components/BatchUpdateStatusDialog.vue';
 import BindMonitorDrawer from '../components/BindMonitorDrawer.vue';
@@ -39,6 +42,7 @@ import {
   useGridColumns,
   useInstanceFormSchema,
   useInstanceGridColumns,
+  useInstanceSearchFormSchema,
 } from './data';
 
 const props = defineProps({
@@ -161,9 +165,49 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 
       if (props.tabType === 'instance') {
         // 部件实例表单提交
+        // 处理所属分类数据 - 根据categoryName（实际存储的是id）查找对应的节点
+        if (submitData.categoryName) {
+          // 根据categoryName字段存储的id查找对应的节点
+          const findNode = (nodes, id) => {
+            for (const node of nodes) {
+              if (node.id === id) {
+                return node;
+              }
+              if (node.children && node.children.length > 0) {
+                const found = findNode(node.children, id);
+                if (found) {
+                  return found;
+                }
+              }
+            }
+            return null;
+          };
+
+          const selectedNode = findNode(
+            props.treeData,
+            submitData.categoryName,
+          );
+          if (selectedNode) {
+            submitData.parentCategoryId = selectedNode.id;
+            submitData.categoryName =
+              selectedNode.label || selectedNode.categoryName;
+          }
+        }
+
+        if (
+          formDrawerApi.sharedData.payload.title === instanceTextObj.addText
+        ) {
+          // 新增部件实例
+          await createInstance(submitData);
+        } else {
+          // 编辑部件实例 - 确保带上id值
+          await updateInstance({ ...submitData, id: formData.value.id });
+        }
         // 接口调用成功
         ElMessage.success('操作成功');
         handleRefresh();
+        // 刷新地图数据
+        await refreshMapData();
         formDrawerApi.close();
       } else {
         // 分类表单提交
@@ -248,17 +292,91 @@ function handleRefresh() {
   gridApi.query();
 }
 
+/** 刷新地图数据 */
+async function refreshMapData() {
+  if (props.tabType !== 'instance') return;
+
+  try {
+    // 构建查询参数获取全部数据用于地图更新
+    const allDataQueryParams = {
+      pageNo: 1,
+      pageSize: 100, // 获取足够多的数据
+      runStatus: '',
+    };
+
+    // 添加搜索参数
+    if (dataObj.searchParams) {
+      Object.keys(dataObj.searchParams).forEach((key) => {
+        if (
+          dataObj.searchParams[key] !== undefined &&
+          dataObj.searchParams[key] !== null &&
+          dataObj.searchParams[key] !== ''
+        ) {
+          allDataQueryParams[key] = dataObj.searchParams[key];
+        }
+      });
+    }
+
+    // 添加快捷筛选参数
+    if (filterUniqueCode.value) {
+      allDataQueryParams.uniqueCode = filterUniqueCode.value;
+    }
+    if (filterInstanceCategoryName.value) {
+      allDataQueryParams.categoryName = filterInstanceCategoryName.value;
+    }
+    if (filterGridName.value) {
+      allDataQueryParams.gridName = filterGridName.value;
+    }
+    if (filterDeptName.value) {
+      allDataQueryParams.deptName = filterDeptName.value;
+    }
+
+    // 添加树形查询参数
+    if (props.filterCategoryId) {
+      allDataQueryParams.treeParentId = props.filterCategoryId;
+      allDataQueryParams.includeSelf = true;
+    }
+
+    const allDataResponse = await getInstancePage(allDataQueryParams);
+    if (allDataResponse && allDataResponse.list) {
+      const allDataList = allDataResponse.list.map((item) => {
+        // 解析coordinate字段为longitude和latitude
+        let longitude = item.longitude || '';
+        let latitude = item.latitude || '';
+        if (!longitude && !latitude && item.coordinate) {
+          const coords = item.coordinate.split(',');
+          if (coords.length === 2) {
+            longitude = coords[0].trim();
+            latitude = coords[1].trim();
+          }
+        }
+        return {
+          ...item,
+          id: String(item.id),
+          monitorCount: String(item.monitorCount || 0),
+          createTime: item.createTime
+            ? new Date(item.createTime).toLocaleString('zh-CN')
+            : '',
+          creator: item.creator || '',
+          // 确保经纬度字段存在
+          longitude,
+          latitude,
+        };
+      });
+      // 传递全部数据给父组件用于更新地图
+      emit('update:tableData', allDataList);
+    }
+  } catch (error) {
+    console.error('刷新地图数据失败:', error);
+  }
+}
+
 /** 导出表格 */
 async function handleExport() {
   if (props.tabType === 'instance') {
-    // 部件实例导出
-    exportToExcel({
-      data: dataObj.list,
-      columns: useInstanceGridColumns().filter(
-        (col) => col.field && col.field !== 'actions',
-      ),
-      filename: instanceTextObj.excelAllName,
-    });
+    // 部件实例导出 - 调用接口
+    const data = await exportInstance();
+    downloadFileFromBlobPart({ fileName: '管理部件实例表.xls', source: data });
   } else {
     // 分类导出
     const data = await exportCategory();
@@ -369,13 +487,13 @@ async function handleDelete(row) {
   });
   try {
     if (props.tabType === 'instance') {
-      // 部件实例删除（前端模拟）
-      const index = dataObj.list.findIndex((item) => item.id === row.id);
-      if (index !== -1) {
-        dataObj.list.splice(index, 1);
-      }
+      // 部件实例删除 - 调用接口
+      const id = Number(row.id);
+      await deleteInstance(id);
       ElMessage.success($t('ui.actionMessage.deleteSuccess', [deleteName]));
       handleRefresh();
+      // 刷新地图数据
+      await refreshMapData();
     } else {
       // 分类删除
       // 将id转换为数字类型
@@ -437,6 +555,10 @@ const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
+
+// 标志位：是否跳过统计更新（用于快捷筛选和状态切换时）
+const skipStatsUpdate = ref(false);
+
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
@@ -541,7 +663,10 @@ const getTableData = async (pageObj) => {
 
       const response = await getInstancePage(queryParams);
       if (response) {
-        dataObj.total = response.total;
+        // 根据标志位决定是否更新统计数据（表格下方统计区）
+        if (!skipStatsUpdate.value) {
+          dataObj.total = response.total;
+        }
         // 适配数据格式
         dataObj.list = response.list.map((item) => ({
           ...item,
@@ -553,82 +678,115 @@ const getTableData = async (pageObj) => {
           creator: item.creator || '', // 处理缺失字段
         }));
 
-        // 计算统计信息 - 使用接口返回的统计数据
-        dataObj.statistics.totalCategories = dataObj.total;
-        dataObj.statistics.totalInstances = dataObj.list.reduce(
-          (sum, item) => sum + Number(item.monitorCount || 0),
-          0,
-        );
-        // 正常运行统计 - 字典值2表示正常
-        dataObj.statistics.auditedCount = dataObj.list.filter(
-          (item) => item.runStatus === '2',
-        ).length;
-
-        // 更新状态计数（如果接口返回了统计数据）
-        if (response.statistics) {
-          dataObj.statusCounts.total =
-            response.statistics.total || dataObj.total;
-          // 正常: 2, 异常: 1, 离线: 3, 维护中: 4
-          dataObj.statusCounts.enabled =
-            response.statistics.normalCount ||
-            dataObj.list.filter((item) => item.runStatus === '2').length;
-          dataObj.statusCounts.maintenance =
-            response.statistics.faultCount ||
-            dataObj.list.filter((item) => item.runStatus === '4').length;
-          dataObj.statusCounts.disabled =
-            response.statistics.stopCount ||
-            dataObj.list.filter((item) => item.runStatus === '3').length;
-          dataObj.statusCounts.abnormal = dataObj.list.filter(
-            (item) => item.runStatus === '1',
+        // 根据标志位决定是否更新统计数据（表格下方统计区）
+        if (!skipStatsUpdate.value) {
+          // 计算统计信息 - 使用接口返回的统计数据
+          dataObj.statistics.totalCategories = dataObj.total;
+          dataObj.statistics.totalInstances = dataObj.list.reduce(
+            (sum, item) => sum + Number(item.monitorCount || 0),
+            0,
+          );
+          // 正常运行统计 - 字典值2表示正常
+          dataObj.statistics.auditedCount = dataObj.list.filter(
+            (item) => item.runStatus === '2',
           ).length;
-        }
-        // 将表格数据传递给父组件用于统计（当前页数据）
-        emit('update:tableData', dataObj.list);
 
-        // 获取全部数据用于统计（不带runStatus筛选）
-        const allDataQueryParams = {
-          pageNo: 1,
-          pageSize: 100, // 获取足够多的数据
-          ...dataObj.searchParams,
-        };
-
-        // 添加快捷筛选参数（保留其他筛选条件）
-        if (filterUniqueCode.value) {
-          allDataQueryParams.uniqueCode = filterUniqueCode.value;
-        }
-        if (filterInstanceCategoryName.value) {
-          allDataQueryParams.categoryName = filterInstanceCategoryName.value;
-        }
-        if (filterGridName.value) {
-          allDataQueryParams.gridName = filterGridName.value;
-        }
-        if (filterDeptName.value) {
-          allDataQueryParams.deptName = filterDeptName.value;
-        }
-
-        // 添加树形查询参数
-        if (props.filterCategoryId) {
-          allDataQueryParams.treeParentId = props.filterCategoryId;
-          allDataQueryParams.includeSelf = true;
-        }
-
-        try {
-          const allDataResponse = await getInstancePage(allDataQueryParams);
-          if (allDataResponse && allDataResponse.list) {
-            const allDataList = allDataResponse.list.map((item) => ({
-              ...item,
-              id: String(item.id),
-              monitorCount: String(item.monitorCount || 0),
-              createTime: item.createTime
-                ? new Date(item.createTime).toLocaleString('zh-CN')
-                : '',
-              creator: item.creator || '',
-            }));
-            // 传递全部数据给父组件用于统计
-            emit('update:tableData', allDataList);
+          // 更新状态计数（如果接口返回了统计数据）
+          if (response.statistics) {
+            dataObj.statusCounts.total =
+              response.statistics.total || dataObj.total;
+            // 正常: 2, 异常: 1, 离线: 3, 维护中: 4
+            dataObj.statusCounts.enabled =
+              response.statistics.normalCount ||
+              dataObj.list.filter((item) => item.runStatus === '2').length;
+            dataObj.statusCounts.maintenance =
+              response.statistics.faultCount ||
+              dataObj.list.filter((item) => item.runStatus === '4').length;
+            dataObj.statusCounts.disabled =
+              response.statistics.stopCount ||
+              dataObj.list.filter((item) => item.runStatus === '3').length;
+            dataObj.statusCounts.abnormal = dataObj.list.filter(
+              (item) => item.runStatus === '1',
+            ).length;
           }
-        } catch (error) {
-          console.error('获取全部数据失败:', error);
+        }
+        // 根据标志位决定是否更新统计数据（上方统计区组件）
+        if (!skipStatsUpdate.value) {
+          // 将表格数据传递给父组件用于统计（当前页数据）
+          emit('update:tableData', dataObj.list);
+
+          // 获取全部数据用于统计和地图（不带runStatus筛选）
+          const allDataQueryParams = {
+            pageNo: 1,
+            pageSize: 100, // 获取足够多的数据
+          };
+
+          // 添加搜索参数
+          if (dataObj.searchParams) {
+            Object.keys(dataObj.searchParams).forEach((key) => {
+              if (
+                dataObj.searchParams[key] !== undefined &&
+                dataObj.searchParams[key] !== null &&
+                dataObj.searchParams[key] !== ''
+              ) {
+                allDataQueryParams[key] = dataObj.searchParams[key];
+              }
+            });
+          }
+
+          // 添加快捷筛选参数（保留其他筛选条件）
+          if (filterUniqueCode.value) {
+            allDataQueryParams.uniqueCode = filterUniqueCode.value;
+          }
+          if (filterInstanceCategoryName.value) {
+            allDataQueryParams.categoryName = filterInstanceCategoryName.value;
+          }
+          if (filterGridName.value) {
+            allDataQueryParams.gridName = filterGridName.value;
+          }
+          if (filterDeptName.value) {
+            allDataQueryParams.deptName = filterDeptName.value;
+          }
+
+          // 添加树形查询参数
+          if (props.filterCategoryId) {
+            allDataQueryParams.treeParentId = props.filterCategoryId;
+            allDataQueryParams.includeSelf = true;
+          }
+
+          try {
+            const allDataResponse = await getInstancePage(allDataQueryParams);
+            if (allDataResponse && allDataResponse.list) {
+              const allDataList = allDataResponse.list.map((item) => {
+                // 解析coordinate字段为longitude和latitude
+                let longitude = item.longitude || '';
+                let latitude = item.latitude || '';
+                if (!longitude && !latitude && item.coordinate) {
+                  const coords = item.coordinate.split(',');
+                  if (coords.length === 2) {
+                    longitude = coords[0].trim();
+                    latitude = coords[1].trim();
+                  }
+                }
+                return {
+                  ...item,
+                  id: String(item.id),
+                  monitorCount: String(item.monitorCount || 0),
+                  createTime: item.createTime
+                    ? new Date(item.createTime).toLocaleString('zh-CN')
+                    : '',
+                  creator: item.creator || '',
+                  // 确保经纬度字段存在，用于地图显示
+                  longitude,
+                  latitude,
+                };
+              });
+              // 传递全部数据给父组件用于统计和地图
+              emit('update:tableData', allDataList);
+            }
+          } catch (error) {
+            console.error('获取全部数据失败:', error);
+          }
         }
       } else {
         ElMessage.error(response.message || '获取数据失败');
@@ -676,7 +834,10 @@ const getTableData = async (pageObj) => {
 
       const response = await getCategoryPage(queryParams);
       if (response) {
-        dataObj.total = response.total;
+        // 根据标志位决定是否更新统计数据
+        if (!skipStatsUpdate.value) {
+          dataObj.total = response.total;
+        }
         // 适配数据格式
         dataObj.list = response.list.map((item) => ({
           ...item,
@@ -689,15 +850,18 @@ const getTableData = async (pageObj) => {
           creator: item.creator || '', // 处理缺失字段
         }));
 
-        // 计算统计信息
-        dataObj.statistics.totalCategories = dataObj.total;
-        dataObj.statistics.totalInstances = dataObj.list.reduce(
-          (sum, item) => sum + Number(item.instanceCount || 0),
-          0,
-        );
-        dataObj.statistics.auditedCount = dataObj.list.filter(
-          (item) => item.auditStatus === '已审核',
-        ).length;
+        // 根据标志位决定是否更新统计数据
+        if (!skipStatsUpdate.value) {
+          // 计算统计信息
+          dataObj.statistics.totalCategories = dataObj.total;
+          dataObj.statistics.totalInstances = dataObj.list.reduce(
+            (sum, item) => sum + Number(item.instanceCount || 0),
+            0,
+          );
+          dataObj.statistics.auditedCount = dataObj.list.filter(
+            (item) => item.auditStatus === '已审核',
+          ).length;
+        }
       } else {
         ElMessage.error(response.message || '获取数据失败');
       }
@@ -714,7 +878,7 @@ const getTableData = async (pageObj) => {
 const queryFormSchema = computed(() => {
   const schema =
     props.tabType === 'instance'
-      ? useInstanceFormSchema(props.treeData)
+      ? useInstanceSearchFormSchema(props.treeData)
       : useFormSchema(props.treeData);
   return schema.map((v) => {
     delete v.rules;
@@ -755,7 +919,7 @@ watch(
       // 根据tabType重新设置搜索表单schema
       const newSchema = (
         newTabType === 'instance'
-          ? useInstanceFormSchema(newTreeData)
+          ? useInstanceSearchFormSchema(newTreeData)
           : useFormSchema(newTreeData)
       ).map((v) => {
         delete v.rules;
@@ -774,6 +938,31 @@ function onSubmit(values) {
   // 如果上级分类为空，确保parentId为null
   if (!searchParams.parentId) {
     searchParams.parentId = null;
+  }
+  // 处理部件实例搜索时的所属分类参数
+  if (props.tabType === 'instance' && searchParams.categoryId) {
+    // 将categoryId转换为categoryName进行搜索
+    const findNode = (nodes, id) => {
+      for (const node of nodes) {
+        if (node.id === id) {
+          return node;
+        }
+        if (node.children && node.children.length > 0) {
+          const found = findNode(node.children, id);
+          if (found) {
+            return found;
+          }
+        }
+      }
+      return null;
+    };
+
+    const selectedNode = findNode(props.treeData, searchParams.categoryId);
+    if (selectedNode) {
+      searchParams.categoryName =
+        selectedNode.label || selectedNode.categoryName;
+    }
+    delete searchParams.categoryId;
   }
   dataObj.searchParams = searchParams;
   handleRefresh();
@@ -848,67 +1037,97 @@ const handleOpenDetail = (row) => {
   }
 };
 
+// 处理快捷筛选（不更新统计数据）
+const handleQuickFilter = (filterFn) => {
+  skipStatsUpdate.value = true;
+  filterFn();
+  // 使用setTimeout确保在query完成后重置标志
+  setTimeout(() => {
+    skipStatsUpdate.value = false;
+  }, 100);
+};
+
 // 处理分类代码点击
 const handleCategoryCodeClick = (categoryCode) => {
-  filterCategoryCode.value =
-    filterCategoryCode.value === categoryCode ? '' : categoryCode;
-  gridApi.query();
+  handleQuickFilter(() => {
+    filterCategoryCode.value =
+      filterCategoryCode.value === categoryCode ? '' : categoryCode;
+    gridApi.query();
+  });
 };
 
 /** 取消分类代码筛选 */
 const handleCancelCategoryCodeFilter = () => {
-  filterCategoryCode.value = '';
-  gridApi.query();
+  handleQuickFilter(() => {
+    filterCategoryCode.value = '';
+    gridApi.query();
+  });
 };
 
 // 处理16位标识码点击
 const handleUniqueCodeClick = (uniqueCode) => {
-  filterUniqueCode.value =
-    filterUniqueCode.value === uniqueCode ? '' : uniqueCode;
-  gridApi.query();
+  handleQuickFilter(() => {
+    filterUniqueCode.value =
+      filterUniqueCode.value === uniqueCode ? '' : uniqueCode;
+    gridApi.query();
+  });
 };
 
 /** 取消16位标识码筛选 */
 const handleCancelUniqueCodeFilter = () => {
-  filterUniqueCode.value = '';
-  gridApi.query();
+  handleQuickFilter(() => {
+    filterUniqueCode.value = '';
+    gridApi.query();
+  });
 };
 
 // 处理所属分类点击
 const handleCategoryNameClick = (categoryName) => {
-  filterInstanceCategoryName.value =
-    filterInstanceCategoryName.value === categoryName ? '' : categoryName;
-  gridApi.query();
+  handleQuickFilter(() => {
+    filterInstanceCategoryName.value =
+      filterInstanceCategoryName.value === categoryName ? '' : categoryName;
+    gridApi.query();
+  });
 };
 
 /** 取消所属分类筛选 */
 const handleCancelCategoryNameFilter = () => {
-  filterInstanceCategoryName.value = '';
-  gridApi.query();
+  handleQuickFilter(() => {
+    filterInstanceCategoryName.value = '';
+    gridApi.query();
+  });
 };
 
 // 处理所在网格点击
 const handleGridNameClick = (gridName) => {
-  filterGridName.value = filterGridName.value === gridName ? '' : gridName;
-  gridApi.query();
+  handleQuickFilter(() => {
+    filterGridName.value = filterGridName.value === gridName ? '' : gridName;
+    gridApi.query();
+  });
 };
 
 /** 取消所在网格筛选 */
 const handleCancelGridNameFilter = () => {
-  filterGridName.value = '';
-  gridApi.query();
+  handleQuickFilter(() => {
+    filterGridName.value = '';
+    gridApi.query();
+  });
 };
 
 // 处理主管部门点击
 const handleDeptNameClick = (deptName) => {
-  filterDeptName.value = filterDeptName.value === deptName ? '' : deptName;
-  gridApi.query();
+  handleQuickFilter(() => {
+    filterDeptName.value = filterDeptName.value === deptName ? '' : deptName;
+    gridApi.query();
+  });
 };
 
 /** 取消主管部门筛选 */
 const handleCancelDeptNameFilter = () => {
-  filterDeptName.value = '';
-  gridApi.query();
+  handleQuickFilter(() => {
+    filterDeptName.value = '';
+    gridApi.query();
+  });
 };
 
 // 获取树形节点label值
@@ -1039,7 +1258,13 @@ const createLabel = (item) => {
 };
 
 const handleClick = () => {
+  // 切换三级状态值时，不更新统计区
+  skipStatsUpdate.value = true;
   gridApi.query();
+  // 使用setTimeout确保在query完成后重置标志
+  setTimeout(() => {
+    skipStatsUpdate.value = false;
+  }, 100);
 };
 const handleSerachShow = () => {
   drawerApi.open();
@@ -1327,7 +1552,9 @@ const getAuditStatusType = (auditStatus) => {
             :disabled="isEmpty(checkedIds)"
             @click="handleBatchUpdateStatus"
           />
+          <!-- 仅在管理部件分类标签页显示批量删除按钮 -->
           <IconButton
+            v-if="props.tabType !== 'instance'"
             content="批量删除"
             icon-name="delete"
             color="#F56C6C"

@@ -146,7 +146,7 @@ const formatCleaners = (cleaners) => {
     width: 130px;
     flex-shrink: 0;
     font-weight: 500;
-    color: #606266;
+    color: #6E7E91;
   }
 
   &:hover {
