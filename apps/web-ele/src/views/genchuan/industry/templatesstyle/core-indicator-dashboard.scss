@@ -1,0 +1,149 @@
+.indicator-cards-3x3 {
+  display: grid;
+  flex: 1;
+  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5vw;
+  height: calc(100% - 60px);
+  padding: 0.5vh 0.3vw;
+}
+
+.indicator-cards-4x3 {
+  display: grid;
+  flex: 1;
+  grid-template-rows: 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5vw;
+  height: calc(100% - 60px);
+  padding: 0.5vh 0.3vw;
+}
+
+.indicator-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
+  transition: all 0.3s;
+
+  &:hover {
+    box-shadow: 0 6px 16px rgb(0 0 0 / 20%), 0 0 10px currentColor;
+    transform: translateY(-2px);
+  }
+
+  .indicator-title {
+    margin-bottom: 0.5vh;
+    font-size: 0.7vw;
+    font-weight: 600;
+    text-align: center;
+    text-shadow: 0 1px 3px rgb(0 0 0 / 50%);
+  }
+
+  .sub-indicator-value {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: center;
+    font-size: 0.8vw;
+    font-weight: 700;
+    line-height: 1.2;
+
+    .unit {
+      margin-left: 0.2vw;
+      font-size: 0.6vw;
+      opacity: 0.9;
+    }
+  }
+
+  .ratio-item {
+    font-size: 0.65vw;
+    text-align: center;
+    opacity: 0.9;
+  }
+}
+
+.indicator-card1 {
+  background: rgb(0 30 60 / 40%);
+  color: rgb(255 107 107);
+  border: 1px solid rgb(255 107 107 / 90%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%), inset 0 1px 0 rgb(255 107 107 / 30%), 0 0 8px rgb(255 107 107 / 40%);
+}
+.indicator-card2 {
+  background: rgb(0 30 60 / 40%);
+  color: rgb(255 153 0);
+  border: 1px solid rgb(255 153 0 / 90%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%), inset 0 1px 0 rgb(255 153 0 / 30%), 0 0 8px rgb(255 153 0 / 40%);
+}
+.indicator-card3 {
+  background: rgb(0 30 60 / 40%);
+  color: rgb(255 214 10);
+  border: 1px solid rgb(255 214 10 / 90%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%), inset 0 1px 0 rgb(255 214 10 / 30%), 0 0 8px rgb(255 214 10 / 40%);
+}
+.indicator-card4 {
+  background: rgb(0 30 60 / 40%);
+  color: rgb(0 255 213);
+  border: 1px solid rgb(0 255 213 / 90%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%), inset 0 1px 0 rgb(0 255 213 / 30%), 0 0 8px rgb(0 255 213 / 40%);
+}
+.indicator-card5 {
+  background: rgb(0 30 60 / 40%);
+  color: rgb(52 211 153);
+  border: 1px solid rgb(52 211 153 / 90%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%), inset 0 1px 0 rgb(52 211 153 / 30%), 0 0 8px rgb(52 211 153 / 40%);
+}
+.indicator-card6 {
+  background: rgb(0 30 60 / 40%);
+  color: rgb(0 168 255);
+  border: 1px solid rgb(0 168 255 / 90%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%), inset 0 1px 0 rgb(0 168 255 / 30%), 0 0 8px rgb(0 168 255 / 40%);
+}
+.indicator-card7 {
+  background: rgb(0 30 60 / 40%);
+  color: rgb(74 222 128);
+  border: 1px solid rgb(74 222 128 / 90%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%), inset 0 1px 0 rgb(74 222 128 / 30%), 0 0 8px rgb(74 222 128 / 40%);
+}
+.indicator-card8 {
+  background: rgb(0 30 60 / 40%);
+  color: rgb(93 165 255);
+  border: 1px solid rgb(93 165 255 / 90%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%), inset 0 1px 0 rgb(93 165 255 / 30%), 0 0 8px rgb(93 165 255 / 40%);
+}
+.indicator-card9 {
+  background: rgb(0 30 60 / 40%);
+  color: rgb(255 183 77);
+  border: 1px solid rgb(255 183 77 / 90%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%), inset 0 1px 0 rgb(255 183 77 / 30%), 0 0 8px rgb(255 183 77 / 40%);
+}
+
+.indicator-card-ratio1 {
+  background: rgb(0 30 60 / 40%);
+  color: rgb(139 92 246);
+  border: 1px solid rgb(139 92 246 / 90%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%), inset 0 1px 0 rgb(139 92 246 / 30%), 0 0 8px rgb(139 92 246 / 40%);
+}
+.indicator-card-ratio2 {
+  background: rgb(0 30 60 / 40%);
+  color: rgb(100 181 246);
+  border: 1px solid rgb(100 181 246 / 90%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%), inset 0 1px 0 rgb(100 181 246 / 30%), 0 0 8px rgb(100 181 246 / 40%);
+}
+.indicator-card-ratio3 {
+  background: rgb(0 30 60 / 40%);
+  color: rgb(167 139 250);
+  border: 1px solid rgb(167 139 250 / 90%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%), inset 0 1px 0 rgb(167 139 250 / 30%), 0 0 8px rgb(167 139 250 / 40%);
+}
+
+@keyframes pulse-danger {
+  0% { box-shadow: 0 0 0 0 rgb(255 77 77 / 70%); }
+  100% { box-shadow: 0 0 0 15px rgb(255 77 77 / 0%); }
+}
+.pulse-danger { animation: pulse-danger 1s infinite; }

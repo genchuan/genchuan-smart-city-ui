@@ -1,0 +1,241 @@
+/** 表格初始数据 - 改造为道路指示牌备案统计管理数据 */
+export const dataList = () => [
+  {
+    statisticsDate: '2025-02-01',
+    recordCount: 45,
+    illegalCount: 12,
+    rectifiedCount: 8,
+    newApprovalCount: 5,
+    expiredNotRemovedCount: 3,
+    growthRate: 5.2,
+  },
+  {
+    statisticsDate: '2025-02-02',
+    recordCount: 47,
+    illegalCount: 10,
+    rectifiedCount: 9,
+    newApprovalCount: 4,
+    expiredNotRemovedCount: 2,
+    growthRate: 4.4,
+  },
+  {
+    statisticsDate: '2025-02-03',
+    recordCount: 50,
+    illegalCount: 14,
+    rectifiedCount: 11,
+    newApprovalCount: 6,
+    expiredNotRemovedCount: 4,
+    growthRate: 6.4,
+  },
+  {
+    statisticsDate: '2025-02-04',
+    recordCount: 52,
+    illegalCount: 9,
+    rectifiedCount: 7,
+    newApprovalCount: 3,
+    expiredNotRemovedCount: 1,
+    growthRate: 4.0,
+  },
+  {
+    statisticsDate: '2025-02-05',
+    recordCount: 55,
+    illegalCount: 13,
+    rectifiedCount: 10,
+    newApprovalCount: 7,
+    expiredNotRemovedCount: 5,
+    growthRate: 5.8,
+  },
+  {
+    statisticsDate: '2025-02-06',
+    recordCount: 58,
+    illegalCount: 11,
+    rectifiedCount: 9,
+    newApprovalCount: 4,
+    expiredNotRemovedCount: 2,
+    growthRate: 5.5,
+  },
+  {
+    statisticsDate: '2025-02-07',
+    recordCount: 60,
+    illegalCount: 15,
+    rectifiedCount: 12,
+    newApprovalCount: 6,
+    expiredNotRemovedCount: 4,
+    growthRate: 3.4,
+  },
+  {
+    statisticsDate: '2025-02-08',
+    recordCount: 63,
+    illegalCount: 10,
+    rectifiedCount: 8,
+    newApprovalCount: 5,
+    expiredNotRemovedCount: 2,
+    growthRate: 5.0,
+  },
+  {
+    statisticsDate: '2025-02-09',
+    recordCount: 65,
+    illegalCount: 12,
+    rectifiedCount: 10,
+    newApprovalCount: 5,
+    expiredNotRemovedCount: 3,
+    growthRate: 3.2,
+  },
+  {
+    statisticsDate: '2025-02-10',
+    recordCount: 68,
+    illegalCount: 14,
+    rectifiedCount: 11,
+    newApprovalCount: 6,
+    expiredNotRemovedCount: 4,
+    growthRate: 4.6,
+  },
+];
+
+/** 新增/修改的表单/列表的搜索表单 - 改造为道路指示牌备案统计管理表单 */
+export function useFormSchema() {
+  return [
+    {
+      fieldName: 'statisticsDate',
+      label: '统计日期',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择统计日期',
+        type: 'date',
+        format: 'YYYY-MM-DD',
+        valueFormat: 'YYYY-MM-DD',
+      },
+      labelWidth: '100',
+      rules: 'required',
+    },
+    {
+      fieldName: 'recordCount',
+      label: '备案数量',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入备案数量',
+        min: 0,
+        precision: 0,
+      },
+      labelWidth: '100',
+      rules: 'required',
+    },
+    {
+      fieldName: 'illegalCount',
+      label: '违规设置数量',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入违规设置数量',
+        min: 0,
+        precision: 0,
+      },
+      labelWidth: '100',
+      rules: 'required',
+    },
+    {
+      fieldName: 'rectifiedCount',
+      label: '整改完成数量',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入整改完成数量',
+        min: 0,
+        precision: 0,
+      },
+      labelWidth: '100',
+      rules: 'required',
+    },
+    {
+      fieldName: 'newApprovalCount',
+      label: '新增审批数量',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入新增审批数量',
+        min: 0,
+        precision: 0,
+      },
+      labelWidth: '100',
+      rules: 'required',
+    },
+    {
+      fieldName: 'expiredNotRemovedCount',
+      label: '过期未拆除数量',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入过期未拆除数量',
+        min: 0,
+        precision: 0,
+      },
+      labelWidth: '100',
+      rules: 'required',
+    },
+    {
+      fieldName: 'growthRate',
+      label: '环比增长率',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入环比增长率（%）',
+        min: -100,
+        max: 100,
+        precision: 1,
+        addonAfter: '%',
+      },
+      labelWidth: '100',
+      rules: 'required',
+    },
+  ];
+}
+
+/** 表格字段 - 改造为道路指示牌备案统计管理表格列 */
+export function useGridColumns() {
+  return [
+    { type: 'checkbox', width: 40 },
+    {
+      field: 'statisticsDate',
+      title: '统计日期',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'recordCount',
+      title: '备案数量',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'illegalCount',
+      title: '违规设置数量',
+      minWidth: 130,
+      sortable: true,
+    },
+    {
+      field: 'rectifiedCount',
+      title: '整改完成数量',
+      minWidth: 130,
+      sortable: true,
+    },
+    {
+      field: 'newApprovalCount',
+      title: '新增审批数量',
+      minWidth: 130,
+      sortable: true,
+    },
+    {
+      field: 'expiredNotRemovedCount',
+      title: '过期未拆除数量',
+      minWidth: 140,
+      sortable: true,
+    },
+    {
+      field: 'growthRate',
+      title: '环比增长率（%）',
+      minWidth: 140,
+      sortable: true,
+    },
+    {
+      title: '操作',
+      width: 80,
+      fixed: 'right',
+      slots: { default: 'actions' },
+    },
+  ];
+}

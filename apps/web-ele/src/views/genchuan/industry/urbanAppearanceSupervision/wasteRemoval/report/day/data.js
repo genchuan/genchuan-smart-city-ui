@@ -1,0 +1,243 @@
+/** 表格初始数据 - 改造为建筑垃圾清运监管日度统计数据 */
+export const dataList = () => [
+  {
+    date: '2026-03-01',
+    vehicle_id: 128,
+    transport_id: 3,
+    dregs_transport_id: 112,
+    order_no: 45,
+    weigui_no: 9,
+    zengzhang: 5.2,
+  },
+  {
+    date: '2026-03-02',
+    vehicle_id: 143,
+    transport_id: 2,
+    dregs_transport_id: 127,
+    order_no: 52,
+    weigui_no: 7,
+    zengzhang: -1.8,
+  },
+  {
+    date: '2026-03-03',
+    vehicle_id: 137,
+    transport_id: 5,
+    dregs_transport_id: 118,
+    order_no: 48,
+    weigui_no: 11,
+    zengzhang: 3.4,
+  },
+  {
+    date: '2026-03-04',
+    vehicle_id: 152,
+    transport_id: 4,
+    dregs_transport_id: 136,
+    order_no: 61,
+    weigui_no: 6,
+    zengzhang: 2.1,
+  },
+  {
+    date: '2026-03-05',
+    vehicle_id: 149,
+    transport_id: 6,
+    dregs_transport_id: 131,
+    order_no: 55,
+    weigui_no: 8,
+    zengzhang: -2.3,
+  },
+  {
+    date: '2026-03-06',
+    vehicle_id: 158,
+    transport_id: 3,
+    dregs_transport_id: 144,
+    order_no: 67,
+    weigui_no: 5,
+    zengzhang: 6.7,
+  },
+  {
+    date: '2026-03-07',
+    vehicle_id: 144,
+    transport_id: 7,
+    dregs_transport_id: 129,
+    order_no: 59,
+    weigui_no: 10,
+    zengzhang: 0.9,
+  },
+  {
+    date: '2026-03-08',
+    vehicle_id: 162,
+    transport_id: 4,
+    dregs_transport_id: 148,
+    order_no: 73,
+    weigui_no: 7,
+    zengzhang: 4.3,
+  },
+  {
+    date: '2026-03-09',
+    vehicle_id: 139,
+    transport_id: 5,
+    dregs_transport_id: 122,
+    order_no: 51,
+    weigui_no: 9,
+    zengzhang: -3.1,
+  },
+  {
+    date: '2026-03-10',
+    vehicle_id: 171,
+    transport_id: 8,
+    dregs_transport_id: 156,
+    order_no: 82,
+    weigui_no: 12,
+    zengzhang: 7.8,
+  },
+];
+
+/** 新增/修改的表单/列表的搜索表单 - 改造为建筑垃圾清运监管日度统计表单 */
+export function useFormSchema() {
+  return [
+    {
+      fieldName: 'date',
+      label: '统计日期',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择统计日期',
+        format: 'YYYY-MM-DD',
+        valueFormat: 'YYYY-MM-DD',
+      },
+      labelWidth: '130',
+      rules: 'required',
+    },
+    {
+      fieldName: 'vehicle_id',
+      label: '备案通行数量',
+      component: 'InputNumber',
+      labelWidth: '130',
+      componentProps: {
+        placeholder: '请输入备案通行数量',
+        min: 0,
+        precision: 0,
+        addonAfter: '辆',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'transport_id',
+      label: '违规清运次数',
+      component: 'InputNumber',
+      labelWidth: '130',
+      componentProps: {
+        placeholder: '请输入违规清运次数',
+        min: 0,
+        precision: 0,
+        addonAfter: '次',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'dregs_transport_id',
+      label: '清运审批通过数量',
+      component: 'InputNumber',
+      labelWidth: '130',
+      componentProps: {
+        placeholder: '请输入清运审批通过数量',
+        min: 0,
+        precision: 0,
+        addonAfter: '辆',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'order_no',
+      label: '卡点检查次数',
+      component: 'InputNumber',
+      labelWidth: '130',
+      componentProps: {
+        placeholder: '请输入卡点检查次数',
+        min: 0,
+        precision: 0,
+        addonAfter: '次',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'weigui_no',
+      label: '违规整改完成数量',
+      component: 'InputNumber',
+      labelWidth: '130',
+      componentProps: {
+        placeholder: '请输入违规整改完成数量',
+        min: 0,
+        precision: 0,
+        addonAfter: '辆',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'zengzhang',
+      label: '环比增长率',
+      component: 'InputNumber',
+      labelWidth: '130',
+      componentProps: {
+        placeholder: '请输入环比增长率',
+        precision: 1,
+        addonAfter: '%',
+      },
+      rules: 'required',
+    },
+  ];
+}
+
+/** 表格字段 - 改造为建筑垃圾清运监管日度统计表格列 */
+export function useGridColumns() {
+  return [
+    { type: 'checkbox', width: 40 },
+    {
+      field: 'date',
+      title: '统计日期',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'vehicle_id',
+      title: '备案通行数量(辆)',
+      minWidth: 150,
+      sortable: true,
+    },
+    {
+      field: 'transport_id',
+      title: '违规清运次数(次)',
+      minWidth: 150,
+      sortable: true,
+    },
+    {
+      field: 'dregs_transport_id',
+      title: '清运审批通过数量(辆)',
+      minWidth: 180,
+      sortable: true,
+    },
+    {
+      field: 'order_no',
+      title: '卡点检查次数(次)',
+      minWidth: 150,
+      sortable: true,
+    },
+    {
+      field: 'weigui_no',
+      title: '违规整改完成数量(辆)',
+      minWidth: 180,
+      sortable: true,
+    },
+    {
+      field: 'zengzhang',
+      title: '环比增长率(%)',
+      minWidth: 140,
+      sortable: true,
+    },
+    {
+      title: '操作',
+      width: 80,
+      fixed: 'right',
+      slots: { default: 'actions' },
+    },
+  ];
+}

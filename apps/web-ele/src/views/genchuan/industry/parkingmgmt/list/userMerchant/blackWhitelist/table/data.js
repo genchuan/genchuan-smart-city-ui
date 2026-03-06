@@ -1,0 +1,423 @@
+/** 表格初始数据*/
+export const dataList = () => {
+  return [
+    {
+      listId: '1',
+      listType: '白名单',
+      targetType: '车辆',
+      targetId: '闽E·A1234',
+      reason: '公务车',
+      startTime: '2026-01-01 00:00:00',
+      endTime: null,
+      status: '生效',
+      createBy: 'admin',
+      createTime: '2026-01-01 00:00:00',
+      updateTime: '2026-01-01 00:00:00',
+      remark: '市政公务车',
+    },
+    {
+      listId: '2',
+      listType: '黑名单',
+      targetType: '车辆',
+      targetId: '闽E·B5678',
+      reason: '逃费未缴',
+      startTime: '2026-01-05 00:00:00',
+      endTime: '2026-12-31 23:59:59',
+      status: '生效',
+      createBy: 'admin',
+      createTime: '2026-01-05 09:00:00',
+      updateTime: '2026-01-05 09:00:00',
+      remark: '2026年1月逃费150元',
+    },
+    {
+      listId: '3',
+      listType: '白名单',
+      targetType: '车辆',
+      targetId: '闽E·C9012',
+      reason: '业主车',
+      startTime: '2026-01-01 00:00:00',
+      endTime: '2026-12-31 23:59:59',
+      status: '生效',
+      createBy: 'admin',
+      createTime: '2026-01-01 00:00:00',
+      updateTime: '2026-01-01 00:00:00',
+      remark: '小区业主车辆',
+    },
+    {
+      listId: '4',
+      listType: '黑名单',
+      targetType: '车辆',
+      targetId: '闽E·D3456',
+      reason: '违规占道',
+      startTime: '2026-01-10 00:00:00',
+      endTime: '2026-06-30 23:59:59',
+      status: '生效',
+      createBy: 'admin',
+      createTime: '2026-01-10 14:30:00',
+      updateTime: '2026-01-10 14:30:00',
+      remark: '连续3次违规占道停车',
+    },
+    {
+      listId: '5',
+      listType: '白名单',
+      targetType: '用户',
+      targetId: 'user-001',
+      reason: 'VIP客户',
+      startTime: '2026-01-01 00:00:00',
+      endTime: null,
+      status: '生效',
+      createBy: 'admin',
+      createTime: '2026-01-01 00:00:00',
+      updateTime: '2026-01-01 00:00:00',
+      remark: '公司VIP客户',
+    },
+    {
+      listId: '6',
+      listType: '黑名单',
+      targetType: '车辆',
+      targetId: '闽E·E7890',
+      reason: '损坏设施',
+      startTime: '2025-12-01 00:00:00',
+      endTime: '2026-11-30 23:59:59',
+      status: '失效',
+      createBy: 'admin',
+      createTime: '2025-12-01 10:00:00',
+      updateTime: '2026-01-15 09:00:00',
+      remark: '已补缴赔偿费用，状态改为失效',
+    },
+    {
+      listId: '7',
+      listType: '白名单',
+      targetType: '车辆',
+      targetId: '闽E·F2345',
+      reason: '紧急车辆',
+      startTime: '2026-01-01 00:00:00',
+      endTime: null,
+      status: '生效',
+      createBy: 'admin',
+      createTime: '2026-01-01 00:00:00',
+      updateTime: '2026-01-01 00:00:00',
+      remark: '消防应急车辆',
+    },
+    {
+      listId: '8',
+      listType: '黑名单',
+      targetType: '用户',
+      targetId: 'user-002',
+      reason: '多次纠纷',
+      startTime: '2026-01-12 00:00:00',
+      endTime: '2026-12-31 23:59:59',
+      status: '生效',
+      createBy: 'admin',
+      createTime: '2026-01-12 16:00:00',
+      updateTime: '2026-01-12 16:00:00',
+      remark: '与停车场工作人员多次发生纠纷',
+    },
+    {
+      listId: '9',
+      listType: '白名单',
+      targetType: '车辆',
+      targetId: '闽E·G6789',
+      reason: '月卡车',
+      startTime: '2026-01-01 00:00:00',
+      endTime: '2026-03-31 23:59:59',
+      status: '生效',
+      createBy: 'admin',
+      createTime: '2026-01-01 00:00:00',
+      updateTime: '2026-01-01 00:00:00',
+      remark: '2026年第一季度月卡车',
+    },
+    {
+      listId: '10',
+      listType: '白名单',
+      targetType: '车辆',
+      targetId: '闽E·H1234',
+      reason: '临时特权',
+      startTime: '2026-01-15 00:00:00',
+      endTime: '2026-01-20 23:59:59',
+      status: '生效',
+      createBy: 'admin',
+      createTime: '2026-01-15 08:00:00',
+      updateTime: '2026-01-15 08:00:00',
+      remark: '临时来访重要客户车辆',
+    },
+  ];
+};
+
+/** 新增/修改的表单/列表的搜索表单 */
+export function useFormSchema() {
+  return [
+    {
+      fieldName: 'targetId',
+      label: '目标ID',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入目标ID（用户ID或车牌）',
+      },
+      labelWidth: '100',
+      rules: 'required',
+    },
+    {
+      fieldName: 'listType',
+      label: '名单类型',
+      component: 'Select',
+      labelWidth: '100',
+      componentProps: {
+        options: [
+          { label: '白名单', value: '白名单' },
+          { label: '黑名单', value: '黑名单' },
+        ],
+        placeholder: '请选择名单类型',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'targetType',
+      label: '目标类型',
+      component: 'Select',
+      labelWidth: '100',
+      componentProps: {
+        options: [
+          { label: '用户', value: '用户' },
+          { label: '车辆', value: '车辆' },
+        ],
+        placeholder: '请选择目标类型',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'reason',
+      label: '列入原因',
+      component: 'Input',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请输入列入原因',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'startTime',
+      label: '生效时间',
+      component: 'DatePicker',
+      labelWidth: '100',
+      componentProps: {
+        type: 'datetime',
+        placeholder: '请选择生效时间',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'endTime',
+      label: '失效时间',
+      component: 'DatePicker',
+      labelWidth: '100',
+      componentProps: {
+        type: 'datetime',
+        placeholder: '请选择失效时间（永久为NULL）',
+      },
+    },
+    {
+      fieldName: 'status',
+      label: '状态',
+      component: 'Select',
+      labelWidth: '100',
+      componentProps: {
+        options: [
+          { label: '生效', value: '生效' },
+          { label: '失效', value: '失效' },
+        ],
+        placeholder: '请选择状态',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'remark',
+      label: '备注',
+      component: 'Input',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请输入备注',
+        type: 'textarea',
+      },
+    },
+  ];
+}
+
+/** 表格字段 */
+export function useGridColumns() {
+  return [
+    { type: 'checkbox', width: 40 },
+    {
+      field: 'listId',
+      title: '名单ID',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'listType',
+      title: '名单类型',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: 'targetType',
+      title: '目标类型',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: 'targetId',
+      title: '目标ID',
+      minWidth: 150,
+      sortable: true,
+      slots: { default: 'targetId' },
+    },
+    {
+      field: 'reason',
+      title: '列入原因',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'startTime',
+      title: '生效时间',
+      minWidth: 200,
+      sortable: true,
+    },
+    {
+      field: 'endTime',
+      title: '失效时间',
+      minWidth: 200,
+      sortable: true,
+    },
+    {
+      field: 'status',
+      title: '状态',
+      minWidth: 100,
+      sortable: true,
+      slots: { default: 'status' },
+    },
+    {
+      field: 'createBy',
+      title: '创建人',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: 'createTime',
+      title: '创建时间',
+      minWidth: 200,
+      sortable: true,
+    },
+    {
+      field: 'updateTime',
+      title: '更新时间',
+      minWidth: 200,
+      sortable: true,
+    },
+    {
+      field: 'remark',
+      title: '备注',
+      minWidth: 150,
+      sortable: true,
+    },
+    {
+      title: '操作',
+      width: 100,
+      fixed: 'right',
+      slots: { default: 'actions' },
+    },
+  ];
+}
+
+/** 文字描述对象 */
+export const textObj = {
+  editText: '编辑黑白名单',
+  addText: '新增黑白名单',
+  excelName: '黑白名单列表',
+  excelAllName: '黑白名单数据.xlsx',
+  total: '黑白名单数量10;白名单6;黑名单4;生效9;失效1',
+};
+
+// 获取黑白名单统计数据
+export const getStatsDataByUserType = () => {
+  // 获取黑白名单数据
+  const blackWhiteData = dataList();
+
+  // 统计卡片数据
+  const blacklistCount = blackWhiteData.filter(
+    (item) => item.listType === '黑名单',
+  ).length;
+  const whitelistCount = blackWhiteData.filter(
+    (item) => item.listType === '白名单',
+  ).length;
+  const effectiveCount = blackWhiteData.filter(
+    (item) => item.status === '生效',
+  ).length;
+
+  // 统计名单类型占比
+  const listTypeStats = {
+    黑名单: blacklistCount,
+    白名单: whitelistCount,
+  };
+
+  // 统计目标类型占比
+  const targetTypeStats = {};
+  blackWhiteData.forEach((item) => {
+    targetTypeStats[item.targetType] =
+      (targetTypeStats[item.targetType] || 0) + 1;
+  });
+
+  // 统计不同列入原因名单分布
+  const reasonStats = {};
+  blackWhiteData.forEach((item) => {
+    reasonStats[item.reason] = (reasonStats[item.reason] || 0) + 1;
+  });
+
+  return {
+    cards: [
+      {
+        title: '黑名单数',
+        value: blacklistCount,
+        desc: `占比${Math.round((blacklistCount / blackWhiteData.length) * 100)}%`,
+        color: '#FF6B6B',
+      },
+      {
+        title: '白名单数',
+        value: whitelistCount,
+        desc: `占比${Math.round((whitelistCount / blackWhiteData.length) * 100)}%`,
+        color: '#13ce66',
+      },
+      {
+        title: '生效名单数',
+        value: effectiveCount,
+        desc: `占比${Math.round((effectiveCount / blackWhiteData.length) * 100)}%`,
+        color: '#4ECDC4',
+      },
+    ],
+    charts: [
+      {
+        title: '名单类型占比',
+        type: 'pie',
+        data: Object.entries(listTypeStats).map(([name, value]) => ({
+          value: Math.round((value / blackWhiteData.length) * 100),
+          name,
+        })),
+      },
+      {
+        title: '目标类型占比',
+        type: 'pie',
+        data: Object.entries(targetTypeStats).map(([name, value]) => ({
+          value: Math.round((value / blackWhiteData.length) * 100),
+          name,
+        })),
+      },
+      {
+        title: '不同列入原因名单分布',
+        type: 'bar',
+        xAxis: Object.keys(reasonStats),
+        series: Object.values(reasonStats),
+      },
+    ],
+  };
+};
