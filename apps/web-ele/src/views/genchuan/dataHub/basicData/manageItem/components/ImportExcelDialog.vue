@@ -6,12 +6,12 @@ import { useVbenModal } from '@vben/common-ui';
 import { ElButton, ElMessage, ElUpload } from 'element-plus';
 import * as XLSX from 'xlsx';
 
-import { importInstance } from '#/api/genchuan/dataHub/basicData/managePart';
+import { importInstance } from '#/api/genchuan/dataHub/basicData/manageItem';
 
 const emit = defineEmits(['success']);
 
 const [Modal, modalApi] = useVbenModal({
-  title: '导入部件实例',
+  title: '导入事项实例',
   width: 500,
   onCancel() {
     modalApi.close();
@@ -34,43 +34,55 @@ const validationResult = ref<null | {
 
 // 下载导入模板
 const downloadTemplate = () => {
-  // 创建模板数据
+  // 创建模板数据 - 包含管理事项实例表格的所有字段
   const templateData = [
     [
-      '部件名称',
+      '事项名称',
       '16位标识码',
       '所属分类',
+      '上级分类id',
+      '事发位置',
       '所在网格',
-      '坐标信息',
-      '运行状态',
+      '描述信息',
+      '状态',
       '主管部门',
       '创建人',
-      '关联监测部件数',
-      '行政区划归属',
+      '创建时间',
+      '处置人',
+      '处置时间',
+      '关联部件数',
     ],
     [
-      '示例-路灯001',
-      'LD20250301000001',
+      '示例-道路损坏',
+      'SX20250301000001',
       '道路设施',
+      'C001',
+      '中山路100号',
       '中山路网格A区',
-      '118.596000,24.915000',
-      '2',
+      '路面出现裂缝需要维修',
+      '1',
       '市政管理局',
       '张三',
+      '2025-03-06 10:30:00',
+      '李四',
+      '2025-03-06 14:30:00',
       '3',
-      '朝阳区',
     ],
     [
-      '示例-垃圾桶001',
+      '示例-垃圾清理',
       'LJ20250301000002',
       '环境卫生',
+      'C002',
+      '公园路50号',
       '公园路网格B区',
-      '118.595000,24.925000',
-      '2',
-      '环卫管理处',
-      '李四',
+      '垃圾桶满溢需要清理',
       '1',
-      '海淀区',
+      '环卫管理处',
+      '王五',
+      '2025-03-06 09:00:00',
+      '赵六',
+      '2025-03-06 11:00:00',
+      '1',
     ],
   ];
 
@@ -86,7 +98,7 @@ const downloadTemplate = () => {
   });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = '部件实例导入模板.xlsx';
+  link.download = '事项实例导入模板.xlsx';
   document.body.append(link);
   link.click();
   link.remove();

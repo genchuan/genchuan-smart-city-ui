@@ -1,6 +1,6 @@
 import { requestClient } from '#/api/request';
 
-/** 分类分页列表 */
+/** 获取管理部件分类分页列表 */
 export function getCategoryPage(params) {
   return requestClient.get('/data/category/page', {
     params,
@@ -76,7 +76,26 @@ export function exportInstance() {
   return requestClient.download('/data/instance/export-excel');
 }
 
-/** todo 导入管理部件实例*/
-export function importInstance() {
-  return requestClient.post('/data/instance/import-excel');
+/** 导入管理部件实例
+ * @param {File} file - 要导入的Excel文件
+ */
+export function importInstance(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return requestClient.post('/data/instance/import-excel', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+}
+
+/** 批量更新部件实例运行状态
+ * @param {number[]} ids - 部件实例ID数组
+ * @param {number} runStatus - 目标运行状态
+ */
+export function batchUpdateInstanceStatus(ids, runStatus) {
+  return requestClient.post('/data/instance/update-status-batch', {
+    ids,
+    runStatus,
+  });
 }

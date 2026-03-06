@@ -335,7 +335,7 @@ export function useFormSchema(treeData = []) {
       componentProps: {
         placeholder: '请选择分类类型',
         options: getDictOptions(
-          DICT_TYPE.DATA_MANAGEPART_CATEGORYTYPE,
+          DICT_TYPE.DATA_CATEGORYTYPE,
           'string',
         ),
       },
@@ -441,7 +441,7 @@ export function useGridColumns() {
       sortable: true,
       cellRender: {
         name: 'CellDict',
-        props: { type: DICT_TYPE.DATA_MANAGEPART_CATEGORYTYPE },
+        props: { type: DICT_TYPE.DATA_CATEGORYTYPE },
       },
     },
     {
@@ -505,14 +505,14 @@ export const detailFields = [
     type: 'tag',
     formatter: (value) => {
       const dict = getDictObj(
-        DICT_TYPE.DATA_MANAGEPART_CATEGORYTYPE,
+        DICT_TYPE.DATA_CATEGORYTYPE,
         String(value),
       );
       return dict ? dict.label : value;
     },
     tagType: (value) => {
       const dict = getDictObj(
-        DICT_TYPE.DATA_MANAGEPART_CATEGORYTYPE,
+        DICT_TYPE.DATA_CATEGORYTYPE,
         String(value),
       );
       return dict ? dict.colorType : 'primary';
@@ -849,7 +849,8 @@ export function useInstanceFormSchema(treeData = []) {
           if (selectedNode) {
             // 存储id到parentCategoryId，存储label到categoryName
             formModel.parentCategoryId = selectedNode.id;
-            formModel.categoryName = selectedNode.label || selectedNode.categoryName;
+            formModel.categoryName =
+              selectedNode.label || selectedNode.categoryName;
           }
         },
       },

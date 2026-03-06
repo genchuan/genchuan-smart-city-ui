@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
@@ -7,7 +7,7 @@ import { getDictOptions } from '@vben/hooks';
 
 import { ElButton, ElMessage, ElRadio, ElRadioGroup, ElTag } from 'element-plus';
 
-import { batchUpdateInstanceStatus } from '#/api/genchuan/dataHub/basicData/managePart';
+import { batchUpdateInstanceStatus } from '#/api/genchuan/dataHub/basicData/manageItem';
 
 const emit = defineEmits(['success']);
 
@@ -27,11 +27,10 @@ const selectedIds = ref<string[]>([]);
 const targetStatus = ref<string>('');
 const confirmStep = ref<number>(1); // 1: 选择状态, 2: 二次确认
 
-// 获取运行状态字典选项
-const statusOptions = getDictOptions(
-  DICT_TYPE.DATA_MANAGEPART_RUNSTATUS,
-  'string',
-);
+// 状态选项 - 从字典动态获取
+const statusOptions = computed(() => {
+  return getDictOptions(DICT_TYPE.DATA_MANAGEITEM_STATUS, 'string');
+});
 
 const open = (ids: string[]) => {
   selectedIds.value = ids;
@@ -56,9 +55,9 @@ const handleConfirm = async () => {
       // 将ID转换为数字类型
       const ids = selectedIds.value.map((id) => Number(id));
       // 将状态值转换为数字类型
-      const runStatus = Number(targetStatus.value);
+      const status = Number(targetStatus.value);
 
-      await batchUpdateInstanceStatus(ids, runStatus);
+      await batchUpdateInstanceStatus(ids, status);
 
       ElMessage.success(`成功更新 ${selectedIds.value.length} 条记录的状态`);
       emit('success');
@@ -116,17 +115,7 @@ defineExpose({
             确认将选中的 <strong>{{ selectedIds.length }}</strong> 条记录
           </div>
           <div class="confirm-status">
-            状态更新为：<el-tag
-              :type="
-                targetStatus === '2'
-                  ? 'success'
-                  : targetStatus === '1'
-                    ? 'danger'
-                    : targetStatus === '3'
-                      ? 'info'
-                      : 'warning'
-              "
-            >
+            状态更新为：<el-tag type="primary">
               {{ getStatusLabel(targetStatus) }}
             </el-tag>
           </div>

@@ -2,6 +2,8 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage, ElTag } from 'element-plus';
@@ -10,7 +12,6 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  bindIcon,
   createCategory,
   createInstance,
   deleteBatchCategory,
@@ -20,19 +21,16 @@ import {
   exportInstance,
   getCategoryPage,
   getInstancePage,
-  submitAudit,
+  importInstance,
+  batchUpdateInstanceStatus,
   updateCategory,
   updateInstance,
-} from '#/api/genchuan/dataHub/basicData/managePart';
+} from '#/api/genchuan/dataHub/basicData/manageItem';
 import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 
-import BatchUpdateStatusDialog from '../components/BatchUpdateStatusDialog.vue';
-import BindMonitorDrawer from '../components/BindMonitorDrawer.vue';
-import IconBindingDrawer from '../components/IconBindingDrawer.vue';
 import ImportExcelDialog from '../components/ImportExcelDialog.vue';
-import SubmitAuditDialog from '../components/SubmitAuditDialog.vue';
-import ViewEventsDrawer from '../components/ViewEventsDrawer.vue';
+import BatchUpdateStatusDialog from '../components/BatchUpdateStatusDialog.vue';
 import {
   detailFields,
   instanceDetailFields,
@@ -62,17 +60,10 @@ const props = defineProps({
     type: String,
     default: 'category', // 'category' 或 'instance'
   },
-  showStats: {
-    type: Boolean,
-    default: false,
-  },
-  toggleStats: {
-    type: Function,
-    default: () => {},
-  },
 });
 
-const emit = defineEmits(['clearFilter', 'refreshTree', 'update:tableData']);
+const emit = defineEmits(['clearFilter', 'refreshTree']);
+
 const getTitle = computed(() => {
   const textObjCurrent =
     props.tabType === 'instance' ? instanceTextObj : textObj;
@@ -92,29 +83,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
 const detailDrawerRef = ref(null);
 const formData = ref();
 
-// 绑定图示抽屉
-const [IconBindingDrawerComp, iconBindingDrawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  direction: 'rtl',
-  size: '50%',
-  onCancel() {
-    iconBindingDrawerApi.close();
-  },
-  onConfirm() {},
-  async onOpenChange() {},
-});
-const currentCategory = ref({});
-
-// 提交审核弹窗
-const submitAuditDialogVisible = ref(false);
-
 // 新组件引用
 const importExcelDialogRef = ref();
 const batchUpdateStatusDialogRef = ref();
-const bindMonitorDrawerRef = ref();
-const viewEventsDrawerRef = ref();
 
 // 使用计算属性创建表单schema，根据tabType返回不同的schema
 const formSchema = computed(() => {
@@ -152,6 +123,7 @@ watch(
   },
   { deep: true, immediate: true },
 );
+
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
@@ -164,7 +136,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       const submitData = { ...obj };
 
       if (props.tabType === 'instance') {
-        // 部件实例表单提交
+        // 事项实例表单提交
         // 处理所属分类数据 - 根据categoryName（实际存储的是id）查找对应的节点
         if (submitData.categoryName) {
           // 根据categoryName字段存储的id查找对应的节点
@@ -197,17 +169,15 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
         if (
           formDrawerApi.sharedData.payload.title === instanceTextObj.addText
         ) {
-          // 新增部件实例
+          // 新增事项实例
           await createInstance(submitData);
         } else {
-          // 编辑部件实例 - 确保带上id值
+          // 编辑事项实例 - 确保带上id值
           await updateInstance({ ...submitData, id: formData.value.id });
         }
         // 接口调用成功
         ElMessage.success('操作成功');
         handleRefresh();
-        // 刷新地图数据
-        await refreshMapData();
         formDrawerApi.close();
       } else {
         // 分类表单提交
@@ -231,12 +201,12 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 
           const selectedNode = findNode(props.treeData, submitData.parentId);
           if (selectedNode) {
-            submitData.parentCategoryName =
+            submitData.parentName =
               selectedNode.label || selectedNode.categoryName;
           }
         } else {
           submitData.parentId = null;
-          submitData.parentCategoryName = '无';
+          submitData.parentName = '无';
         }
 
         if (formDrawerApi.sharedData.payload.title === textObj.addText) {
@@ -292,95 +262,16 @@ function handleRefresh() {
   gridApi.query();
 }
 
-/** 刷新地图数据 */
-async function refreshMapData() {
-  if (props.tabType !== 'instance') return;
-
-  try {
-    // 构建查询参数获取全部数据用于地图更新
-    const allDataQueryParams = {
-      pageNo: 1,
-      pageSize: 100, // 获取足够多的数据
-      runStatus: '',
-    };
-
-    // 添加搜索参数
-    if (dataObj.searchParams) {
-      Object.keys(dataObj.searchParams).forEach((key) => {
-        if (
-          dataObj.searchParams[key] !== undefined &&
-          dataObj.searchParams[key] !== null &&
-          dataObj.searchParams[key] !== ''
-        ) {
-          allDataQueryParams[key] = dataObj.searchParams[key];
-        }
-      });
-    }
-
-    // 添加快捷筛选参数
-    if (filterUniqueCode.value) {
-      allDataQueryParams.uniqueCode = filterUniqueCode.value;
-    }
-    if (filterInstanceCategoryName.value) {
-      allDataQueryParams.categoryName = filterInstanceCategoryName.value;
-    }
-    if (filterGridName.value) {
-      allDataQueryParams.gridName = filterGridName.value;
-    }
-    if (filterDeptName.value) {
-      allDataQueryParams.deptName = filterDeptName.value;
-    }
-
-    // 添加树形查询参数
-    if (props.filterCategoryId) {
-      allDataQueryParams.treeParentId = props.filterCategoryId;
-      allDataQueryParams.includeSelf = true;
-    }
-
-    const allDataResponse = await getInstancePage(allDataQueryParams);
-    if (allDataResponse && allDataResponse.list) {
-      const allDataList = allDataResponse.list.map((item) => {
-        // 解析coordinate字段为longitude和latitude
-        let longitude = item.longitude || '';
-        let latitude = item.latitude || '';
-        if (!longitude && !latitude && item.coordinate) {
-          const coords = item.coordinate.split(',');
-          if (coords.length === 2) {
-            longitude = coords[0].trim();
-            latitude = coords[1].trim();
-          }
-        }
-        return {
-          ...item,
-          id: String(item.id),
-          monitorCount: String(item.monitorCount || 0),
-          createTime: item.createTime
-            ? new Date(item.createTime).toLocaleString('zh-CN')
-            : '',
-          creator: item.creator || '',
-          // 确保经纬度字段存在
-          longitude,
-          latitude,
-        };
-      });
-      // 传递全部数据给父组件用于更新地图
-      emit('update:tableData', allDataList);
-    }
-  } catch (error) {
-    console.error('刷新地图数据失败:', error);
-  }
-}
-
 /** 导出表格 */
 async function handleExport() {
   if (props.tabType === 'instance') {
-    // 部件实例导出 - 调用接口
+    // 事项实例导出 - 调用接口
     const data = await exportInstance();
-    downloadFileFromBlobPart({ fileName: '管理部件实例表.xls', source: data });
+    downloadFileFromBlobPart({ fileName: '管理事项实例表.xls', source: data });
   } else {
     // 分类导出
     const data = await exportCategory();
-    downloadFileFromBlobPart({ fileName: '管理部件分类表.xls', source: data });
+    downloadFileFromBlobPart({ fileName: '管理事项分类表.xls', source: data });
   }
 }
 
@@ -407,47 +298,6 @@ function handleEdit(row) {
     .open();
 }
 
-/** 绑定图示 */
-function handleBindIcon(row) {
-  currentCategory.value = row;
-  iconBindingDrawerApi.open();
-}
-
-/** 处理绑定图示确认 */
-async function handleIconBindConfirm(iconName) {
-  try {
-    await bindIcon({
-      id: Number(currentCategory.value.id),
-      iconName,
-    });
-    ElMessage.success('图示绑定成功');
-    iconBindingDrawerApi.close();
-    handleRefresh();
-  } catch (error) {
-    ElMessage.error('绑定失败');
-    console.error(error);
-  }
-}
-
-/** 提交审核 */
-function handleSubmitAudit(row) {
-  currentCategory.value = row;
-  submitAuditDialogVisible.value = true;
-}
-
-/** 处理提交审核确认 */
-async function handleSubmitAuditConfirm() {
-  try {
-    await submitAudit(Number(currentCategory.value.id));
-    ElMessage.success('提交审核成功');
-    submitAuditDialogVisible.value = false;
-    handleRefresh();
-  } catch (error) {
-    ElMessage.error('提交失败');
-    console.error(error);
-  }
-}
-
 /** 导入Excel */
 function handleImport() {
   importExcelDialogRef.value?.open();
@@ -462,19 +312,9 @@ function handleBatchUpdateStatus() {
   batchUpdateStatusDialogRef.value?.open(checkedIds.value);
 }
 
-/** 关联监测部件 */
-function handleBindMonitor(row) {
-  bindMonitorDrawerRef.value?.open(row);
-}
-
-/** 查看关联事件 */
-function handleViewEvents(row) {
-  viewEventsDrawerRef.value?.open(row);
-}
-
 async function handleDelete(row) {
   const deleteName =
-    props.tabType === 'instance' ? row.partName : row.categoryName;
+    props.tabType === 'instance' ? row.name : row.categoryName;
   try {
     await confirm(`确定删除 "${deleteName}" 吗？`);
   } catch {
@@ -487,13 +327,11 @@ async function handleDelete(row) {
   });
   try {
     if (props.tabType === 'instance') {
-      // 部件实例删除 - 调用接口
+      // 事项实例删除 - 调用接口
       const id = Number(row.id);
       await deleteInstance(id);
       ElMessage.success($t('ui.actionMessage.deleteSuccess', [deleteName]));
       handleRefresh();
-      // 刷新地图数据
-      await refreshMapData();
     } else {
       // 分类删除
       // 将id转换为数字类型
@@ -525,7 +363,7 @@ async function handleDeleteBatch() {
   });
   try {
     if (props.tabType === 'instance') {
-      // 部件实例批量删除（前端模拟）
+      // 事项实例批量删除（前端模拟）
       dataObj.list = dataObj.list.filter(
         (item) => !checkedIds.value.includes(item.id),
       );
@@ -577,7 +415,6 @@ const dataObj = reactive({
     enabled: 0,
     disabled: 0,
     maintenance: 0,
-    abnormal: 0,
   },
 });
 const changeTotalShow = () => {
@@ -606,38 +443,21 @@ const getTableData = async (pageObj) => {
 
   try {
     if (props.tabType === 'instance') {
-      // 部件实例数据（API接口）
-      // 将状态文本转换为对应的数字值 - 与字典值对应：正常=2, 异常=1, 离线=3, 维护中=4
-      let runStatusValue = '';
+      // 事项实例数据（API接口）
+      // 根据字典查找状态值
+      let statusValue = '';
       if (activeName.value !== '全部') {
-        switch (activeName.value) {
-          case '异常': {
-            runStatusValue = '1';
-            break;
-          }
-          case '正常': {
-            runStatusValue = '2';
-            break;
-          }
-          case '离线': {
-            runStatusValue = '3';
-            break;
-          }
-          case '维护中': {
-            runStatusValue = '4';
-            break;
-          }
-          default: {
-            runStatusValue = '';
-          }
-        }
+        // 使用字典查找对应的值
+        const dictOptions = getDictOptions(DICT_TYPE.DATA_MANAGEITEM_STATUS, 'string');
+        const found = dictOptions.find((opt) => opt.label === activeName.value);
+        statusValue = found ? found.value : '';
       }
 
       // 构建查询参数
       const queryParams = {
         pageNo: page.currentPage,
         pageSize: page.pageSize,
-        runStatus: runStatusValue,
+        status: statusValue,
         ...dataObj.searchParams,
       };
 
@@ -670,12 +490,15 @@ const getTableData = async (pageObj) => {
         // 适配数据格式
         dataObj.list = response.list.map((item) => ({
           ...item,
-          id: String(item.id), // 转换为字符串
-          monitorCount: String(item.monitorCount || 0), // 转换为字符串
+          id: String(item.id),
+          partCount: String(item.partCount || 0),
           createTime: item.createTime
             ? new Date(item.createTime).toLocaleString('zh-CN')
-            : '', // 转换时间格式
-          creator: item.creator || '', // 处理缺失字段
+            : '',
+          creator: item.creator || '',
+          dealTime: item.dealTime
+            ? new Date(item.dealTime).toLocaleString('zh-CN')
+            : '',
         }));
 
         // 根据标志位决定是否更新统计数据（表格下方统计区）
@@ -683,136 +506,25 @@ const getTableData = async (pageObj) => {
           // 计算统计信息 - 使用接口返回的统计数据
           dataObj.statistics.totalCategories = dataObj.total;
           dataObj.statistics.totalInstances = dataObj.list.reduce(
-            (sum, item) => sum + Number(item.monitorCount || 0),
+            (sum, item) => sum + Number(item.partCount || 0),
             0,
           );
-          // 正常运行统计 - 字典值2表示正常
-          dataObj.statistics.auditedCount = dataObj.list.filter(
-            (item) => item.runStatus === '2',
-          ).length;
 
-          // 更新状态计数（如果接口返回了统计数据）
-          if (response.statistics) {
-            dataObj.statusCounts.total =
-              response.statistics.total || dataObj.total;
-            // 正常: 2, 异常: 1, 离线: 3, 维护中: 4
-            dataObj.statusCounts.enabled =
-              response.statistics.normalCount ||
-              dataObj.list.filter((item) => item.runStatus === '2').length;
-            dataObj.statusCounts.maintenance =
-              response.statistics.faultCount ||
-              dataObj.list.filter((item) => item.runStatus === '4').length;
-            dataObj.statusCounts.disabled =
-              response.statistics.stopCount ||
-              dataObj.list.filter((item) => item.runStatus === '3').length;
-            dataObj.statusCounts.abnormal = dataObj.list.filter(
-              (item) => item.runStatus === '1',
-            ).length;
-          }
-        }
-        // 根据标志位决定是否更新统计数据（上方统计区组件）
-        if (!skipStatsUpdate.value) {
-          // 将表格数据传递给父组件用于统计（当前页数据）
-          emit('update:tableData', dataObj.list);
-
-          // 获取全部数据用于统计和地图（不带runStatus筛选）
-          const allDataQueryParams = {
-            pageNo: 1,
-            pageSize: 100, // 获取足够多的数据
-          };
-
-          // 添加搜索参数
-          if (dataObj.searchParams) {
-            Object.keys(dataObj.searchParams).forEach((key) => {
-              if (
-                dataObj.searchParams[key] !== undefined &&
-                dataObj.searchParams[key] !== null &&
-                dataObj.searchParams[key] !== ''
-              ) {
-                allDataQueryParams[key] = dataObj.searchParams[key];
-              }
-            });
-          }
-
-          // 添加快捷筛选参数（保留其他筛选条件）
-          if (filterUniqueCode.value) {
-            allDataQueryParams.uniqueCode = filterUniqueCode.value;
-          }
-          if (filterInstanceCategoryName.value) {
-            allDataQueryParams.categoryName = filterInstanceCategoryName.value;
-          }
-          if (filterGridName.value) {
-            allDataQueryParams.gridName = filterGridName.value;
-          }
-          if (filterDeptName.value) {
-            allDataQueryParams.deptName = filterDeptName.value;
-          }
-
-          // 添加树形查询参数
-          if (props.filterCategoryId) {
-            allDataQueryParams.treeParentId = props.filterCategoryId;
-            allDataQueryParams.includeSelf = true;
-          }
-
-          try {
-            const allDataResponse = await getInstancePage(allDataQueryParams);
-            if (allDataResponse && allDataResponse.list) {
-              const allDataList = allDataResponse.list.map((item) => {
-                // 解析coordinate字段为longitude和latitude
-                let longitude = item.longitude || '';
-                let latitude = item.latitude || '';
-                if (!longitude && !latitude && item.coordinate) {
-                  const coords = item.coordinate.split(',');
-                  if (coords.length === 2) {
-                    longitude = coords[0].trim();
-                    latitude = coords[1].trim();
-                  }
-                }
-                return {
-                  ...item,
-                  id: String(item.id),
-                  monitorCount: String(item.monitorCount || 0),
-                  createTime: item.createTime
-                    ? new Date(item.createTime).toLocaleString('zh-CN')
-                    : '',
-                  creator: item.creator || '',
-                  // 确保经纬度字段存在，用于地图显示
-                  longitude,
-                  latitude,
-                };
-              });
-              // 传递全部数据给父组件用于统计和地图
-              emit('update:tableData', allDataList);
-            }
-          } catch (error) {
-            console.error('获取全部数据失败:', error);
-          }
+          // 注意：状态统计在 initStatusCounts 中完成，不在此处更新
+          // 以确保三级状态的统计基于全部数据，而不是当前页数据
         }
       } else {
         ElMessage.error(response.message || '获取数据失败');
       }
     } else {
-      // 分类数据（原有逻辑）
-      // 将状态文本转换为对应的数字值
+      // 分类数据（原有逻辑）- 使用 DATA_ENABLE_STATUS 字典
+      // 根据字典查找状态值
       let statusValue = '';
       if (activeName.value !== '全部') {
-        switch (activeName.value) {
-          case '启用': {
-            statusValue = '1';
-            break;
-          }
-          case '禁用': {
-            statusValue = '0';
-            break;
-          }
-          case '维护中': {
-            statusValue = '2';
-            break;
-          }
-          default: {
-            statusValue = '';
-          }
-        }
+        // 使用字典查找对应的值
+        const dictOptions = getDictOptions(DICT_TYPE.DATA_ENABLE_STATUS, 'string');
+        const found = dictOptions.find((opt) => opt.label === activeName.value);
+        statusValue = found ? found.value : '';
       }
 
       // 构建查询参数
@@ -821,7 +533,7 @@ const getTableData = async (pageObj) => {
         pageSize: page.pageSize,
         status: statusValue,
         categoryCode: filterCategoryCode.value,
-        parentCategoryName: filterParentCategoryName.value,
+        parentName: filterParentName.value,
         categoryType: filterCategoryType.value,
         ...dataObj.searchParams,
       };
@@ -841,13 +553,13 @@ const getTableData = async (pageObj) => {
         // 适配数据格式
         dataObj.list = response.list.map((item) => ({
           ...item,
-          id: String(item.id), // 转换为字符串
+          id: String(item.id),
           parentId: item.parentId ? String(item.parentId) : null,
-          instanceCount: String(item.instanceCount), // 转换为字符串
+          relatedMatterCount: String(item.relatedMatterCount || 0),
           createTime: item.createTime
             ? new Date(item.createTime).toLocaleString('zh-CN')
-            : '', // 转换时间格式
-          creator: item.creator || '', // 处理缺失字段
+            : '',
+          creator: item.creator || '',
         }));
 
         // 根据标志位决定是否更新统计数据
@@ -855,12 +567,20 @@ const getTableData = async (pageObj) => {
           // 计算统计信息
           dataObj.statistics.totalCategories = dataObj.total;
           dataObj.statistics.totalInstances = dataObj.list.reduce(
-            (sum, item) => sum + Number(item.instanceCount || 0),
+            (sum, item) => sum + Number(item.relatedMatterCount || 0),
             0,
           );
-          dataObj.statistics.auditedCount = dataObj.list.filter(
-            (item) => item.auditStatus === '已审核',
-          ).length;
+          // 计算状态统计 - 使用 DATA_ENABLE_STATUS 字典
+          dataObj.statusCounts.total = dataObj.total;
+          dataObj.statusCounts.enabled = dataObj.list.filter((item) => {
+            const dict = getDictObj(DICT_TYPE.DATA_ENABLE_STATUS, String(item.status));
+            return dict?.label === '启用';
+          }).length;
+          dataObj.statusCounts.disabled = dataObj.list.filter((item) => {
+            const dict = getDictObj(DICT_TYPE.DATA_ENABLE_STATUS, String(item.status));
+            return dict?.label === '禁用';
+          }).length;
+          dataObj.statusCounts.maintenance = 0;
         }
       } else {
         ElMessage.error(response.message || '获取数据失败');
@@ -939,7 +659,7 @@ function onSubmit(values) {
   if (!searchParams.parentId) {
     searchParams.parentId = null;
   }
-  // 处理部件实例搜索时的所属分类参数
+  // 处理事项实例搜索时的所属分类参数
   if (props.tabType === 'instance' && searchParams.categoryId) {
     // 将categoryId转换为categoryName进行搜索
     const findNode = (nodes, id) => {
@@ -1019,10 +739,10 @@ watch(
 
 const activeName = ref('全部');
 const filterCategoryCode = ref(''); // 分类代码筛选
-const filterParentCategoryName = ref(''); // 上级分类筛选
+const filterParentName = ref(''); // 上级分类筛选
 const filterCategoryType = ref(''); // 分类类型筛选
 
-// 管理部件实例快捷筛选
+// 管理事项实例快捷筛选
 const filterUniqueCode = ref(''); // 16位标识码筛选
 const filterInstanceCategoryName = ref(''); // 所属分类筛选
 const filterGridName = ref(''); // 所在网格筛选
@@ -1157,17 +877,15 @@ const getTreeNodeLabel = (nodeId) => {
 };
 
 // 处理上级分类点击
-const handleParentCategoryNameClick = (parentCategoryName) => {
-  filterParentCategoryName.value =
-    filterParentCategoryName.value === parentCategoryName
-      ? ''
-      : parentCategoryName;
+const handleParentNameClick = (parentName) => {
+  filterParentName.value =
+    filterParentName.value === parentName ? '' : parentName;
   gridApi.query();
 };
 
 /** 取消上级分类筛选 */
-const handleCancelParentCategoryNameFilter = () => {
-  filterParentCategoryName.value = '';
+const handleCancelParentNameFilter = () => {
+  filterParentName.value = '';
   gridApi.query();
 };
 
@@ -1187,21 +905,29 @@ const handleCancelCategoryTypeFilter = () => {
 // tabsData根据tabType显示不同的标签
 const tabsData = computed(() => {
   if (props.tabType === 'instance') {
-    // 与字典值对应：正常=2, 异常=1, 离线=3, 维护中=4
+    // 管理事项实例使用 DATA_MANAGEITEM_STATUS 字典
+    // 动态获取字典选项作为三级状态标签
+    const dictOptions = getDictOptions(DICT_TYPE.DATA_MANAGEITEM_STATUS, 'string');
+    const tabs = [{ label: '全部' }];
+    dictOptions.forEach((opt) => {
+      tabs.push({ label: opt.label, value: opt.value });
+    });
+    return tabs;
+  } else {
+    // 管理事项分类使用 DATA_ENABLE_STATUS 字典
     return [
       { label: '全部' },
-      { label: '正常' },
-      { label: '异常' },
-      { label: '离线' },
-      { label: '维护中' },
+      { label: '启用' },
+      { label: '禁用' },
     ];
   }
-  return [
-    { label: '全部' },
-    { label: '启用' },
-    { label: '禁用' },
-    { label: '维护中' },
-  ];
+});
+
+// 存储全部数据的状态统计 - 用于三级状态显示
+const allDataStatusCounts = reactive({
+  total: 0,
+  // 使用对象存储每个状态的数量
+  statusMap: {},
 });
 
 // 创建标签文本，显示数量统计
@@ -1209,48 +935,20 @@ const createLabel = (item) => {
   let count = 0;
 
   if (props.tabType === 'instance') {
-    // 部件实例标签统计 - 与字典值对应：正常=2, 异常=1, 离线=3, 维护中=4
-    switch (item.label) {
-      case '全部': {
-        count = dataObj.statusCounts.total;
-        break;
-      }
-      case '异常': {
-        count = dataObj.statusCounts.abnormal || 0;
-        break;
-      }
-      case '正常': {
-        count = dataObj.statusCounts.enabled;
-        break;
-      }
-      case '离线': {
-        count = dataObj.statusCounts.disabled;
-        break;
-      }
-      case '维护中': {
-        count = dataObj.statusCounts.maintenance;
-        break;
-      }
+    // 事项实例标签统计 - 使用 DATA_MANAGEITEM_STATUS 字典
+    if (item.label === '全部') {
+      count = allDataStatusCounts.total;
+    } else {
+      // 从全部数据统计中获取该状态的数量
+      count = allDataStatusCounts.statusMap[item.label] || 0;
     }
   } else {
-    // 分类标签统计
-    switch (item.label) {
-      case '全部': {
-        count = dataObj.statusCounts.total;
-        break;
-      }
-      case '启用': {
-        count = dataObj.statusCounts.enabled;
-        break;
-      }
-      case '禁用': {
-        count = dataObj.statusCounts.disabled;
-        break;
-      }
-      case '维护中': {
-        count = dataObj.statusCounts.maintenance;
-        break;
-      }
+    // 分类标签统计 - 使用 DATA_ENABLE_STATUS 字典（只有启用/禁用两种状态）
+    if (item.label === '全部') {
+      count = allDataStatusCounts.total;
+    } else {
+      // 从全部数据统计中获取该状态的数量
+      count = allDataStatusCounts.statusMap[item.label] || 0;
     }
   }
 
@@ -1277,11 +975,11 @@ const handleFullShow = () => {
 const initStatusCounts = async () => {
   try {
     if (props.tabType === 'instance') {
-      // 部件实例状态统计 - 与字典值对应：正常=2, 异常=1, 离线=3, 维护中=4
+      // 事项实例状态统计 - 使用 DATA_MANAGEITEM_STATUS 字典
       const response = await getInstancePage({
         pageNo: 1,
-        pageSize: 100, // 设置一个较大的值，确保获取所有数据
-        runStatus: '',
+        pageSize: 100,
+        status: '',
         treeParentId: props.filterCategoryId,
         includeSelf: props.filterCategoryId ? true : undefined,
         ...dataObj.searchParams,
@@ -1289,25 +987,23 @@ const initStatusCounts = async () => {
       if (response && response.list) {
         const allData = response.list;
         dataObj.statusCounts.total = response.total;
-        // 正常: 2, 异常: 1, 离线: 3, 维护中: 4
-        dataObj.statusCounts.enabled = allData.filter(
-          (item) => item.runStatus === '2',
-        ).length;
-        dataObj.statusCounts.abnormal = allData.filter(
-          (item) => item.runStatus === '1',
-        ).length;
-        dataObj.statusCounts.disabled = allData.filter(
-          (item) => item.runStatus === '3',
-        ).length;
-        dataObj.statusCounts.maintenance = allData.filter(
-          (item) => item.runStatus === '4',
-        ).length;
+        // 更新全部数据的状态统计 - 用于三级状态显示
+        allDataStatusCounts.total = response.total;
+        allDataStatusCounts.statusMap = {};
+        // 动态统计每个字典值的数量
+        allData.forEach((item) => {
+          const dict = getDictObj(DICT_TYPE.DATA_MANAGEITEM_STATUS, String(item.status));
+          if (dict && dict.label) {
+            // 根据字典标签累加数量
+            allDataStatusCounts.statusMap[dict.label] = (allDataStatusCounts.statusMap[dict.label] || 0) + 1;
+          }
+        });
       }
     } else {
-      // 分类状态统计
+      // 分类状态统计 - 使用 DATA_ENABLE_STATUS 字典
       const response = await getCategoryPage({
         pageNo: 1,
-        pageSize: 100, // 设置一个较大的值，确保获取所有数据
+        pageSize: 100,
         status: '',
         categoryId: props.filterCategoryId,
         ...dataObj.searchParams,
@@ -1315,15 +1011,20 @@ const initStatusCounts = async () => {
       if (response && response.list) {
         const allData = response.list;
         dataObj.statusCounts.total = response.total;
-        dataObj.statusCounts.enabled = allData.filter(
-          (item) => item.status === '1',
-        ).length;
-        dataObj.statusCounts.disabled = allData.filter(
-          (item) => item.status === '0',
-        ).length;
-        dataObj.statusCounts.maintenance = allData.filter(
-          (item) => item.status === '2',
-        ).length;
+        // 更新全部数据的状态统计 - 用于三级状态显示
+        allDataStatusCounts.total = response.total;
+        allDataStatusCounts.statusMap = {};
+        // 动态统计每个字典值的数量
+        allData.forEach((item) => {
+          const dict = getDictObj(DICT_TYPE.DATA_ENABLE_STATUS, String(item.status));
+          if (dict && dict.label) {
+            allDataStatusCounts.statusMap[dict.label] = (allDataStatusCounts.statusMap[dict.label] || 0) + 1;
+          }
+        });
+        // 同时更新 dataObj.statusCounts 用于底部统计区
+        dataObj.statusCounts.enabled = allDataStatusCounts.statusMap['启用'] || 0;
+        dataObj.statusCounts.disabled = allDataStatusCounts.statusMap['禁用'] || 0;
+        dataObj.statusCounts.maintenance = 0;
       }
     }
   } catch (error) {
@@ -1331,78 +1032,7 @@ const initStatusCounts = async () => {
   }
 };
 
-// 获取状态显示文本
-const getStatusText = (status) => {
-  // 分类状态: 0=禁用, 1=启用, 2=维护中
-  // 部件实例状态: 1=异常, 2=正常, 3=离线, 4=维护中
-  switch (status) {
-    case '0': {
-      return '禁用';
-    }
-    case '1': {
-      return props.tabType === 'instance' ? '异常' : '启用';
-    }
-    case '2': {
-      return props.tabType === 'instance' ? '正常' : '维护中';
-    }
-    case '3': {
-      return '离线';
-    }
-    case '4': {
-      return '维护中';
-    }
-    default: {
-      return '未知';
-    }
-  }
-};
 
-// 获取状态标签类型
-const getStatusType = (status) => {
-  // 分类状态: 0=禁用(danger), 1=启用(success), 2=维护中(warning)
-  // 部件实例状态: 1=异常(danger), 2=正常(success), 3=离线(info), 4=维护中(warning)
-  switch (status) {
-    case '0': {
-      return 'danger';
-    }
-    case '1': {
-      return props.tabType === 'instance' ? 'danger' : 'success';
-    }
-    case '2': {
-      return props.tabType === 'instance' ? 'success' : 'warning';
-    }
-    case '3': {
-      return 'info';
-    }
-    case '4': {
-      return 'warning';
-    }
-    default: {
-      return 'info';
-    }
-  }
-};
-
-// 获取审核状态标签类型
-const getAuditStatusType = (auditStatus) => {
-  switch (auditStatus) {
-    case '审核中': {
-      return 'primary';
-    }
-    case '已审核': {
-      return 'success';
-    }
-    case '待审核': {
-      return 'warning';
-    }
-    case '未审核': {
-      return 'info';
-    }
-    default: {
-      return 'info';
-    }
-  }
-};
 </script>
 
 <template>
@@ -1415,7 +1045,7 @@ const getAuditStatusType = (auditStatus) => {
       ref="detailDrawerRef"
       :title="
         props.tabType === 'instance'
-          ? `${dataObj.detailObj?.partName || '部件实例'}详情`
+          ? `${dataObj.detailObj?.name || '事项实例'}详情`
           : `${dataObj.detailObj?.categoryName || '分类'}详情`
       "
       :data="dataObj.detailObj"
@@ -1469,13 +1099,13 @@ const getAuditStatusType = (auditStatus) => {
           </ElTag>
           <!-- 上级分类筛选标签 -->
           <ElTag
-            v-if="filterParentCategoryName"
+            v-if="filterParentName"
             type="success"
             closable
-            @close="handleCancelParentCategoryNameFilter"
+            @close="handleCancelParentNameFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
-            上级分类：{{ filterParentCategoryName }}
+            上级分类：{{ filterParentName }}
           </ElTag>
           <!-- 分类类型筛选标签 -->
           <ElTag
@@ -1487,7 +1117,7 @@ const getAuditStatusType = (auditStatus) => {
           >
             分类类型：{{ filterCategoryType }}
           </ElTag>
-          <!-- 16位标识码筛选标签（仅在管理部件实例标签页显示） -->
+          <!-- 16位标识码筛选标签（仅在管理事项实例标签页显示） -->
           <ElTag
             v-if="props.tabType === 'instance' && filterUniqueCode"
             type="primary"
@@ -1497,7 +1127,7 @@ const getAuditStatusType = (auditStatus) => {
           >
             16位标识码：{{ filterUniqueCode }}
           </ElTag>
-          <!-- 所属分类筛选标签（仅在管理部件实例标签页显示） -->
+          <!-- 所属分类筛选标签（仅在管理事项实例标签页显示） -->
           <ElTag
             v-if="props.tabType === 'instance' && filterInstanceCategoryName"
             type="success"
@@ -1507,7 +1137,7 @@ const getAuditStatusType = (auditStatus) => {
           >
             所属分类：{{ filterInstanceCategoryName }}
           </ElTag>
-          <!-- 所在网格筛选标签（仅在管理部件实例标签页显示） -->
+          <!-- 所在网格筛选标签（仅在管理事项实例标签页显示） -->
           <ElTag
             v-if="props.tabType === 'instance' && filterGridName"
             type="warning"
@@ -1517,7 +1147,7 @@ const getAuditStatusType = (auditStatus) => {
           >
             所在网格：{{ filterGridName }}
           </ElTag>
-          <!-- 主管部门筛选标签（仅在管理部件实例标签页显示） -->
+          <!-- 主管部门筛选标签（仅在管理事项实例标签页显示） -->
           <ElTag
             v-if="props.tabType === 'instance' && filterDeptName"
             type="info"
@@ -1532,7 +1162,7 @@ const getAuditStatusType = (auditStatus) => {
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <!-- 仅在管理部件实例标签页显示导入按钮 -->
+          <!-- 仅在管理事项实例标签页显示导入按钮 -->
           <IconButton
             v-if="props.tabType === 'instance'"
             content="导入"
@@ -1544,7 +1174,7 @@ const getAuditStatusType = (auditStatus) => {
             icon-name="download"
             @click="handleExport"
           />
-          <!-- 仅在管理部件实例标签页显示批量更新状态按钮 -->
+          <!-- 仅在管理事项实例标签页显示批量更新状态按钮 -->
           <IconButton
             v-if="props.tabType === 'instance'"
             content="批量更新状态"
@@ -1552,7 +1182,7 @@ const getAuditStatusType = (auditStatus) => {
             :disabled="isEmpty(checkedIds)"
             @click="handleBatchUpdateStatus"
           />
-          <!-- 仅在管理部件分类标签页显示批量删除按钮 -->
+          <!-- 仅在管理事项分类标签页显示批量删除按钮 -->
           <IconButton
             v-if="props.tabType !== 'instance'"
             content="批量删除"
@@ -1566,13 +1196,6 @@ const getAuditStatusType = (auditStatus) => {
             icon-name="search"
             @click="handleSerachShow"
           />
-          <!-- 仅在管理部件实例标签页显示统计按钮 -->
-          <IconButton
-            v-if="props.tabType === 'instance'"
-            :content="props.showStats ? '隐藏统计' : '显示统计'"
-            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
-            @click="props.toggleStats"
-          />
           <IconButton
             content="全屏"
             icon-name="FullScreen"
@@ -1580,13 +1203,10 @@ const getAuditStatusType = (auditStatus) => {
           />
         </div>
       </template>
+      <!-- 分类名称插槽 -->
       <template #categoryName="{ row }">
         <el-text
-          @click="
-            props.tabType === 'instance'
-              ? handleCategoryNameClick(row.categoryName)
-              : handleOpenDetail(row)
-          "
+          @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
@@ -1605,87 +1225,16 @@ const getAuditStatusType = (auditStatus) => {
           {{ row.categoryCode }}
         </el-text>
       </template>
-      <!-- 上级分类插槽 -->
-      <template #parentCategoryName="{ row }">
-        <el-text
-          @click="handleParentCategoryNameClick(row.parentCategoryName)"
-          class="common-align"
-          type="primary"
-          style="cursor: pointer"
-        >
-          {{ row.parentCategoryName }}
-        </el-text>
-      </template>
-      <!-- 分类类型插槽 -->
-      <template #categoryType="{ row }">
-        <el-text
-          @click="handleCategoryTypeClick(row.categoryType)"
-          class="common-align"
-          type="primary"
-          style="cursor: pointer"
-        >
-          {{ row.categoryType }}
-        </el-text>
-      </template>
-      <!-- 16位标识码插槽（管理部件实例） -->
-      <template #uniqueCode="{ row }">
-        <el-text
-          @click="handleUniqueCodeClick(row.uniqueCode)"
-          class="common-align"
-          type="primary"
-          style="cursor: pointer"
-        >
-          {{ row.uniqueCode }}
-        </el-text>
-      </template>
-      <!-- 所在网格插槽（管理部件实例） -->
-      <template #gridName="{ row }">
-        <el-text
-          @click="handleGridNameClick(row.gridName)"
-          class="common-align"
-          type="primary"
-          style="cursor: pointer"
-        >
-          {{ row.gridName }}
-        </el-text>
-      </template>
-      <!-- 主管部门插槽（管理部件实例） -->
-      <template #deptName="{ row }">
-        <el-text
-          @click="handleDeptNameClick(row.deptName)"
-          class="common-align"
-          type="primary"
-          style="cursor: pointer"
-        >
-          {{ row.deptName }}
-        </el-text>
-      </template>
-      <template #status="{ row }">
-        <ElTag :type="getStatusType(row.status)">
-          {{ getStatusText(row.status) }}
-        </ElTag>
-      </template>
-      <!-- 审核状态插槽 -->
-      <template #auditStatus="{ row }">
-        <ElTag :type="getAuditStatusType(row.auditStatus)">
-          {{ row.auditStatus }}
-        </ElTag>
-      </template>
-      <!-- 运行状态插槽（部件实例） -->
-      <template #runStatus="{ row }">
-        <ElTag :type="getStatusType(row.runStatus)">
-          {{ getStatusText(row.runStatus) }}
-        </ElTag>
-      </template>
-      <!-- 部件名称插槽（部件实例） -->
-      <template #partName="{ row }">
+
+      <!-- 事项名称插槽（事项实例） -->
+      <template #name="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
         >
-          {{ row.partName }}
+          {{ row.name }}
         </el-text>
       </template>
       <template #actions="{ row }">
@@ -1699,32 +1248,6 @@ const getAuditStatusType = (auditStatus) => {
             content="编辑"
             icon-name="edit"
             @click="handleEdit(row)"
-          />
-          <IconButton
-            v-if="props.tabType !== 'instance'"
-            content="绑定图示"
-            icon-name="Link"
-            @click="handleBindIcon(row)"
-          />
-          <IconButton
-            v-if="props.tabType !== 'instance' && row.auditStatus === '未审核'"
-            content="提交审核"
-            icon-name="Position"
-            @click="handleSubmitAudit(row)"
-          />
-          <!-- 仅在管理部件实例标签页显示关联监测部件按钮 -->
-          <IconButton
-            v-if="props.tabType === 'instance'"
-            content="关联监测部件"
-            icon-name="Connection"
-            @click="handleBindMonitor(row)"
-          />
-          <!-- 仅在管理部件实例标签页显示查看关联事件按钮 -->
-          <IconButton
-            v-if="props.tabType === 'instance'"
-            content="查看关联事件"
-            icon-name="Link"
-            @click="handleViewEvents(row)"
           />
           <IconButton
             content="删除"
@@ -1743,50 +1266,24 @@ const getAuditStatusType = (auditStatus) => {
             <ArrowUp />
           </el-icon>
           <span v-if="props.tabType === 'instance'">
-            本页统计：部件实例数量: {{ dataObj.list.length }}
+            本页统计：事项实例数量: {{ dataObj.list.length }}
           </span>
           <span v-else> 本页统计：分类数量: {{ dataObj.list.length }} </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span v-if="props.tabType === 'instance'">
-            全部统计：部件实例数量{{ dataObj.statistics.totalCategories }};
-            关联监测部件数{{ dataObj.statistics.totalInstances }}; 正常{{
-              dataObj.statusCounts.enabled || 0
-            }}; 异常{{ dataObj.statusCounts.abnormal || 0 }}; 离线{{
-              dataObj.statusCounts.disabled || 0
-            }}; 维护中{{ dataObj.statusCounts.maintenance || 0 }}
+            全部统计：事项实例数量{{ dataObj.statistics.totalCategories }};
+            关联部件数{{ dataObj.statistics.totalInstances }}
           </span>
           <span v-else>
             全部统计：分类数量{{ dataObj.statistics.totalCategories }};
-            关联实例数{{ dataObj.statistics.totalInstances }}; 已审核{{
-              dataObj.statistics.auditedCount
-            }}
+            关联事项数{{ dataObj.statistics.totalInstances }}; 启用{{
+              dataObj.statusCounts.enabled || 0
+            }}; 禁用{{ dataObj.statusCounts.disabled || 0 }}
           </span>
         </div>
       </template>
     </Grid>
-
-    <!-- 绑定图示抽屉 -->
-    <IconBindingDrawerComp title="绑定图示">
-      <IconBindingDrawer
-        :category="currentCategory"
-        @close="iconBindingDrawerApi.close()"
-        @confirm="handleIconBindConfirm"
-      />
-    </IconBindingDrawerComp>
-
-    <!-- 提交审核弹窗 -->
-    <el-dialog
-      v-model="submitAuditDialogVisible"
-      title="提交审核"
-      width="400px"
-    >
-      <SubmitAuditDialog
-        :category="currentCategory"
-        @close="submitAuditDialogVisible = false"
-        @confirm="handleSubmitAuditConfirm"
-      />
-    </el-dialog>
 
     <!-- 导入Excel弹窗 -->
     <ImportExcelDialog ref="importExcelDialogRef" @success="handleRefresh" />
@@ -1796,11 +1293,5 @@ const getAuditStatusType = (auditStatus) => {
       ref="batchUpdateStatusDialogRef"
       @success="handleRefresh"
     />
-
-    <!-- 关联监测部件抽屉 -->
-    <BindMonitorDrawer ref="bindMonitorDrawerRef" @success="handleRefresh" />
-
-    <!-- 查看关联事件抽屉 -->
-    <ViewEventsDrawer ref="viewEventsDrawerRef" />
   </div>
 </template>

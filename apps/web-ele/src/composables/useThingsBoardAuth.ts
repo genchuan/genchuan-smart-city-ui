@@ -1,6 +1,7 @@
 import { ref } from 'vue';
 
 import { thingsBoardLogin } from '#/api/genchuan/thingsBoard';
+import { decryptThingsBoardCredentials, getEncryptedThingsBoardCredentials } from '#/utils/encrypt';
 
 /**
  * ThingsBoard 登录响应类型
@@ -30,16 +31,15 @@ export function useThingsBoardAuth() {
       return true;
     }
 
-    // 需要重新登录
+    // 需要重新登录（使用加密凭据，避免明文传输）
     isAuthenticating.value = true;
     try {
-      const loginData = {
-        username: import.meta.env.VITE_THINGS_BOARD_NAME,
-        password: import.meta.env.VITE_THINGS_BOARD_PASSWORD,
-      };
-      const res = (await thingsBoardLogin(
-        loginData,
-      )) as unknown as ThingsBoardLoginResponse;
+      const encryptedCreds = getEncryptedThingsBoardCredentials();
+      const decryptedCreds = decryptThingsBoardCredentials(encryptedCreds);
+      const res = (await thingsBoardLogin({
+        username: decryptedCreds.username,
+        password: decryptedCreds.password,
+      })) as unknown as ThingsBoardLoginResponse;
       window.localStorage.setItem('thingsBoardJwt_token', res.token);
       window.localStorage.setItem('thingsBoardRefresh_token', res.refreshToken);
       window.localStorage.setItem('thingsBoardJwt_time', Date.now().toString());
