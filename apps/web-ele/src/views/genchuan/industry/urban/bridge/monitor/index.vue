@@ -1,9 +1,13 @@
 <script setup>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
+import CompletedEchart from './completed/chart.vue';
 import CompletedTable from './completed/index.vue';
+import DisposalEchart from './disposal/chart.vue';
 import DisposalTable from './disposal/index.vue';
+import PendingEchart from './pending/chart.vue';
 import PendingTable from './pending/index.vue';
+import MontiorEchart from './table/chart.vue';
 import MontiorTable from './table/index.vue';
 
 const props = defineProps({
@@ -20,24 +24,45 @@ const props = defineProps({
     default: false,
   },
 });
-const emit = defineEmits(['arrow-change']);
+const emit = defineEmits(['arrow-change', 'get-component']);
 const activeName = ref('实时监测');
 const arrowChange = () => {
   emit('arrow-change');
 };
 const tabsData = ref([
-  { label: '实时监测', component: MontiorTable },
-  { label: '待处置预警', component: PendingTable },
-  { label: '处置中工单', component: DisposalTable },
-  { label: '已完成归档', component: CompletedTable },
+  {
+    label: '实时监测',
+    component: MontiorTable,
+    echartComponent: MontiorEchart,
+  },
+  {
+    label: '待处置预警',
+    component: PendingTable,
+    echartComponent: PendingEchart,
+  },
+  {
+    label: '处置中工单',
+    component: DisposalTable,
+    echartComponent: DisposalEchart,
+  },
+  {
+    label: '已完成归档',
+    component: CompletedTable,
+    echartComponent: CompletedEchart,
+  },
 ]);
 const handleClick = (item) => {
-  console.log(item);
   const nowObj = tabsData.value.find((v) => v.label === item);
   isComponent.value.now = nowObj.component;
+  isComponent.value.echartComponent = nowObj.echartComponent;
+  emit('get-component', isComponent.value.echartComponent);
 };
 const isComponent = ref({
   now: MontiorTable,
+  echartComponent: MontiorEchart,
+});
+onMounted(() => {
+  emit('get-component', tabsData.value[0].echartComponent);
 });
 </script>
 <template>
