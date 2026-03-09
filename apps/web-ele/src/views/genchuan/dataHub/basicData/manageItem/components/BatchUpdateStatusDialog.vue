@@ -3,9 +3,15 @@ import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
-import { getDictOptions } from '@vben/hooks';
+import { getDictObj, getDictOptions } from '@vben/hooks';
 
-import { ElButton, ElMessage, ElRadio, ElRadioGroup, ElTag } from 'element-plus';
+import {
+  ElButton,
+  ElMessage,
+  ElRadio,
+  ElRadioGroup,
+  ElTag,
+} from 'element-plus';
 
 import { batchUpdateInstanceStatus } from '#/api/genchuan/dataHub/basicData/manageItem';
 
@@ -53,7 +59,7 @@ const handleConfirm = async () => {
     try {
       // 调用批量更新接口
       // 将ID转换为数字类型
-      const ids = selectedIds.value.map((id) => Number(id));
+      const ids = selectedIds.value.map(Number);
       // 将状态值转换为数字类型
       const status = Number(targetStatus.value);
 
@@ -73,8 +79,40 @@ const handleBack = () => {
 };
 
 const getStatusLabel = (value: string) => {
-  const option = statusOptions.find((opt) => opt.value === value);
+  const option = statusOptions.value.find((opt) => opt.value === value);
   return option?.label || value;
+};
+
+/** 获取状态颜色 - 将字典颜色映射到 Element Plus 支持的类型 */
+const getStatusColor = (value: string): string => {
+  const dict = getDictObj(DICT_TYPE.DATA_MANAGEITEM_STATUS, String(value));
+  const colorType = dict?.colorType || 'primary';
+
+  // 将后端的颜色类型映射到Element Plus支持的颜色类型
+  const colorTypeMap: Record<string, string> = {
+    danger: 'danger',
+    error: 'danger',
+    info: 'info',
+    primary: 'primary',
+    success: 'success',
+    warning: 'warning',
+    blue: 'primary',
+    green: 'success',
+    orange: 'warning',
+    cyan: 'info',
+    purple: 'primary',
+    pink: 'danger',
+    red: 'danger',
+    yellow: 'warning',
+  };
+
+  // 如果colorType在映射表中，使用映射后的值
+  if (colorTypeMap[colorType]) {
+    return colorTypeMap[colorType];
+  }
+
+  // 如果是不支持的颜色类型，默认使用primary
+  return 'primary';
 };
 
 defineExpose({
@@ -115,9 +153,9 @@ defineExpose({
             确认将选中的 <strong>{{ selectedIds.length }}</strong> 条记录
           </div>
           <div class="confirm-status">
-            状态更新为：<el-tag type="primary">
+            状态更新为：<ElTag :type="getStatusColor(targetStatus)">
               {{ getStatusLabel(targetStatus) }}
-            </el-tag>
+            </ElTag>
           </div>
           <div class="confirm-warning">此操作不可撤销，请确认是否继续？</div>
         </div>

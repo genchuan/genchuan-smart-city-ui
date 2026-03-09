@@ -5,7 +5,13 @@ import { useVbenModal } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
 
-import { ElButton, ElMessage, ElRadio, ElRadioGroup, ElTag } from 'element-plus';
+import {
+  ElButton,
+  ElMessage,
+  ElRadio,
+  ElRadioGroup,
+  ElTag,
+} from 'element-plus';
 
 import { batchUpdateInstanceStatus } from '#/api/genchuan/dataHub/basicData/managePart';
 
@@ -54,7 +60,7 @@ const handleConfirm = async () => {
     try {
       // 调用批量更新接口
       // 将ID转换为数字类型
-      const ids = selectedIds.value.map((id) => Number(id));
+      const ids = selectedIds.value.map(Number);
       // 将状态值转换为数字类型
       const runStatus = Number(targetStatus.value);
 
@@ -116,7 +122,7 @@ defineExpose({
             确认将选中的 <strong>{{ selectedIds.length }}</strong> 条记录
           </div>
           <div class="confirm-status">
-            状态更新为：<el-tag
+            状态更新为：<ElTag
               :type="
                 targetStatus === '2'
                   ? 'success'
@@ -128,7 +134,7 @@ defineExpose({
               "
             >
               {{ getStatusLabel(targetStatus) }}
-            </el-tag>
+            </ElTag>
           </div>
           <div class="confirm-warning">此操作不可撤销，请确认是否继续？</div>
         </div>

@@ -21,16 +21,18 @@ import {
   exportInstance,
   getCategoryPage,
   getInstancePage,
-  importInstance,
-  batchUpdateInstanceStatus,
   updateCategory,
   updateInstance,
 } from '#/api/genchuan/dataHub/basicData/manageItem';
 import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 
-import ImportExcelDialog from '../components/ImportExcelDialog.vue';
+import AttachmentDrawer from '../components/AttachmentDrawer.vue';
 import BatchUpdateStatusDialog from '../components/BatchUpdateStatusDialog.vue';
+import HandleDrawer from '../components/HandleDrawer.vue';
+import ImportExcelDialog from '../components/ImportExcelDialog.vue';
+import RejectDialog from '../components/RejectDialog.vue';
+import SubmitAuditDialog from '../components/SubmitAuditDialog.vue';
 import {
   detailFields,
   instanceDetailFields,
@@ -86,6 +88,10 @@ const formData = ref();
 // 新组件引用
 const importExcelDialogRef = ref();
 const batchUpdateStatusDialogRef = ref();
+const submitAuditDialogRef = ref();
+const handleDrawerRef = ref();
+const rejectDialogRef = ref();
+const attachmentDrawerRef = ref();
 
 // 使用计算属性创建表单schema，根据tabType返回不同的schema
 const formSchema = computed(() => {
@@ -137,6 +143,14 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 
       if (props.tabType === 'instance') {
         // 事项实例表单提交
+        // 处理处置时间格式 - 转换为时间戳
+        if (submitData.dealTime) {
+          const date = new Date(submitData.dealTime);
+          if (!isNaN(date.getTime())) {
+            submitData.dealTime = date.getTime().toString();
+          }
+        }
+
         // 处理所属分类数据 - 根据categoryName（实际存储的是id）查找对应的节点
         if (submitData.categoryName) {
           // 根据categoryName字段存储的id查找对应的节点
@@ -245,6 +259,17 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
               .replace('T', ' ');
           }
         }
+        // 处理处置时间格式，确保能正确回显
+        if (formValues.dealTime) {
+          // 如果是本地时间字符串，转换为YYYY-MM-DD HH:mm:ss格式
+          const date = new Date(formValues.dealTime);
+          if (!isNaN(date.getTime())) {
+            formValues.dealTime = date
+              .toISOString()
+              .slice(0, 19)
+              .replace('T', ' ');
+          }
+        }
         // 确保parentId字段存在，用于回显上级分类
         if (formValues.parentId === undefined || formValues.parentId === null) {
           formValues.parentId = null;
@@ -257,9 +282,82 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
 });
 
+// 初始化状态计数
+const initStatusCounts = async () => {
+  try {
+    if (props.tabType === 'instance') {
+      // 事项实例状态统计 - 使用 DATA_MANAGEITEM_STATUS 字典
+      const response = await getInstancePage({
+        pageNo: 1,
+        pageSize: 100,
+        status: '',
+        treeParentId: props.filterCategoryId,
+        includeSelf: props.filterCategoryId ? true : undefined,
+        ...dataObj.searchParams,
+      });
+      if (response && response.list) {
+        const allData = response.list;
+        dataObj.statusCounts.total = response.total;
+        // 更新全部数据的状态统计 - 用于三级状态显示
+        allDataStatusCounts.total = response.total;
+        allDataStatusCounts.statusMap = {};
+        // 动态统计每个字典值的数量
+        allData.forEach((item) => {
+          const dict = getDictObj(
+            DICT_TYPE.DATA_MANAGEITEM_STATUS,
+            String(item.status),
+          );
+          if (dict && dict.label) {
+            // 根据字典标签累加数量
+            allDataStatusCounts.statusMap[dict.label] =
+              (allDataStatusCounts.statusMap[dict.label] || 0) + 1;
+          }
+        });
+      }
+    } else {
+      // 分类状态统计 - 使用 DATA_ENABLE_STATUS 字典
+      const response = await getCategoryPage({
+        pageNo: 1,
+        pageSize: 100,
+        status: '',
+        categoryId: props.filterCategoryId,
+        ...dataObj.searchParams,
+      });
+      if (response && response.list) {
+        const allData = response.list;
+        dataObj.statusCounts.total = response.total;
+        // 更新全部数据的状态统计 - 用于三级状态显示
+        allDataStatusCounts.total = response.total;
+        allDataStatusCounts.statusMap = {};
+        // 动态统计每个字典值的数量
+        allData.forEach((item) => {
+          const dict = getDictObj(
+            DICT_TYPE.DATA_ENABLE_STATUS,
+            String(item.status),
+          );
+          if (dict && dict.label) {
+            allDataStatusCounts.statusMap[dict.label] =
+              (allDataStatusCounts.statusMap[dict.label] || 0) + 1;
+          }
+        });
+        // 同时更新 dataObj.statusCounts 用于底部统计区
+        dataObj.statusCounts.enabled =
+          allDataStatusCounts.statusMap['启用'] || 0;
+        dataObj.statusCounts.disabled =
+          allDataStatusCounts.statusMap['禁用'] || 0;
+        dataObj.statusCounts.maintenance = 0;
+      }
+    }
+  } catch (error) {
+    console.error('初始化状态计数失败:', error);
+  }
+};
+
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
+  // 刷新状态统计
+  initStatusCounts();
 }
 
 /** 导出表格 */
@@ -312,9 +410,28 @@ function handleBatchUpdateStatus() {
   batchUpdateStatusDialogRef.value?.open(checkedIds.value);
 }
 
+/** 提交审核 */
+function handleSubmitAudit(row) {
+  submitAuditDialogRef.value?.open(row);
+}
+
+/** 处置事项 */
+function handleHandle(row) {
+  handleDrawerRef.value?.open(row);
+}
+
+/** 驳回事项 */
+function handleReject(row) {
+  rejectDialogRef.value?.open(row);
+}
+
+/** 查看附件 */
+function handleViewAttachment(row) {
+  attachmentDrawerRef.value?.open(row);
+}
+
 async function handleDelete(row) {
-  const deleteName =
-    props.tabType === 'instance' ? row.name : row.categoryName;
+  const deleteName = props.tabType === 'instance' ? row.name : row.categoryName;
   try {
     await confirm(`确定删除 "${deleteName}" 吗？`);
   } catch {
@@ -448,7 +565,10 @@ const getTableData = async (pageObj) => {
       let statusValue = '';
       if (activeName.value !== '全部') {
         // 使用字典查找对应的值
-        const dictOptions = getDictOptions(DICT_TYPE.DATA_MANAGEITEM_STATUS, 'string');
+        const dictOptions = getDictOptions(
+          DICT_TYPE.DATA_MANAGEITEM_STATUS,
+          'string',
+        );
         const found = dictOptions.find((opt) => opt.label === activeName.value);
         statusValue = found ? found.value : '';
       }
@@ -522,7 +642,10 @@ const getTableData = async (pageObj) => {
       let statusValue = '';
       if (activeName.value !== '全部') {
         // 使用字典查找对应的值
-        const dictOptions = getDictOptions(DICT_TYPE.DATA_ENABLE_STATUS, 'string');
+        const dictOptions = getDictOptions(
+          DICT_TYPE.DATA_ENABLE_STATUS,
+          'string',
+        );
         const found = dictOptions.find((opt) => opt.label === activeName.value);
         statusValue = found ? found.value : '';
       }
@@ -535,6 +658,8 @@ const getTableData = async (pageObj) => {
         categoryCode: filterCategoryCode.value,
         parentName: filterParentName.value,
         categoryType: filterCategoryType.value,
+        workflowCode: filterWorkflowCode.value,
+        deptName: filterDeptName.value,
         ...dataObj.searchParams,
       };
 
@@ -573,11 +698,17 @@ const getTableData = async (pageObj) => {
           // 计算状态统计 - 使用 DATA_ENABLE_STATUS 字典
           dataObj.statusCounts.total = dataObj.total;
           dataObj.statusCounts.enabled = dataObj.list.filter((item) => {
-            const dict = getDictObj(DICT_TYPE.DATA_ENABLE_STATUS, String(item.status));
+            const dict = getDictObj(
+              DICT_TYPE.DATA_ENABLE_STATUS,
+              String(item.status),
+            );
             return dict?.label === '启用';
           }).length;
           dataObj.statusCounts.disabled = dataObj.list.filter((item) => {
-            const dict = getDictObj(DICT_TYPE.DATA_ENABLE_STATUS, String(item.status));
+            const dict = getDictObj(
+              DICT_TYPE.DATA_ENABLE_STATUS,
+              String(item.status),
+            );
             return dict?.label === '禁用';
           }).length;
           dataObj.statusCounts.maintenance = 0;
@@ -741,6 +872,7 @@ const activeName = ref('全部');
 const filterCategoryCode = ref(''); // 分类代码筛选
 const filterParentName = ref(''); // 上级分类筛选
 const filterCategoryType = ref(''); // 分类类型筛选
+const filterWorkflowCode = ref(''); // 工作流编码筛选
 
 // 管理事项实例快捷筛选
 const filterUniqueCode = ref(''); // 16位标识码筛选
@@ -891,9 +1023,39 @@ const handleCancelParentNameFilter = () => {
 
 // 处理分类类型点击
 const handleCategoryTypeClick = (categoryType) => {
-  filterCategoryType.value =
-    filterCategoryType.value === categoryType ? '' : categoryType;
-  gridApi.query();
+  handleQuickFilter(() => {
+    filterCategoryType.value =
+      filterCategoryType.value === categoryType ? '' : categoryType;
+    gridApi.query();
+  });
+};
+
+/** 获取分类类型颜色 - 将字典颜色映射到 Element Plus 支持的类型 */
+const getCategoryTypeColor = (categoryType) => {
+  const dict = getDictObj(DICT_TYPE.DATA_CATEGORYTYPE, String(categoryType));
+  const colorType = dict?.colorType;
+  // 将字典颜色映射到 Element Plus 支持的类型
+  switch (colorType) {
+    case 'blue': {
+      return 'primary';
+    }
+    case 'green': {
+      return 'success';
+    }
+    case 'red': {
+      return 'danger';
+    }
+    case 'yellow': {
+      return 'warning';
+    }
+    case 'gray':
+    case 'grey': {
+      return 'info';
+    }
+    default: {
+      return colorType || 'primary';
+    }
+  }
 };
 
 /** 取消分类类型筛选 */
@@ -902,12 +1064,32 @@ const handleCancelCategoryTypeFilter = () => {
   gridApi.query();
 };
 
+// 处理工作流编码点击
+const handleWorkflowCodeClick = (workflowCode) => {
+  handleQuickFilter(() => {
+    filterWorkflowCode.value =
+      filterWorkflowCode.value === workflowCode ? '' : workflowCode;
+    gridApi.query();
+  });
+};
+
+/** 取消工作流编码筛选 */
+const handleCancelWorkflowCodeFilter = () => {
+  handleQuickFilter(() => {
+    filterWorkflowCode.value = '';
+    gridApi.query();
+  });
+};
+
 // tabsData根据tabType显示不同的标签
 const tabsData = computed(() => {
   if (props.tabType === 'instance') {
     // 管理事项实例使用 DATA_MANAGEITEM_STATUS 字典
     // 动态获取字典选项作为三级状态标签
-    const dictOptions = getDictOptions(DICT_TYPE.DATA_MANAGEITEM_STATUS, 'string');
+    const dictOptions = getDictOptions(
+      DICT_TYPE.DATA_MANAGEITEM_STATUS,
+      'string',
+    );
     const tabs = [{ label: '全部' }];
     dictOptions.forEach((opt) => {
       tabs.push({ label: opt.label, value: opt.value });
@@ -915,11 +1097,7 @@ const tabsData = computed(() => {
     return tabs;
   } else {
     // 管理事项分类使用 DATA_ENABLE_STATUS 字典
-    return [
-      { label: '全部' },
-      { label: '启用' },
-      { label: '禁用' },
-    ];
+    return [{ label: '全部' }, { label: '启用' }, { label: '禁用' }];
   }
 });
 
@@ -970,69 +1148,6 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
-
-// 初始化状态计数
-const initStatusCounts = async () => {
-  try {
-    if (props.tabType === 'instance') {
-      // 事项实例状态统计 - 使用 DATA_MANAGEITEM_STATUS 字典
-      const response = await getInstancePage({
-        pageNo: 1,
-        pageSize: 100,
-        status: '',
-        treeParentId: props.filterCategoryId,
-        includeSelf: props.filterCategoryId ? true : undefined,
-        ...dataObj.searchParams,
-      });
-      if (response && response.list) {
-        const allData = response.list;
-        dataObj.statusCounts.total = response.total;
-        // 更新全部数据的状态统计 - 用于三级状态显示
-        allDataStatusCounts.total = response.total;
-        allDataStatusCounts.statusMap = {};
-        // 动态统计每个字典值的数量
-        allData.forEach((item) => {
-          const dict = getDictObj(DICT_TYPE.DATA_MANAGEITEM_STATUS, String(item.status));
-          if (dict && dict.label) {
-            // 根据字典标签累加数量
-            allDataStatusCounts.statusMap[dict.label] = (allDataStatusCounts.statusMap[dict.label] || 0) + 1;
-          }
-        });
-      }
-    } else {
-      // 分类状态统计 - 使用 DATA_ENABLE_STATUS 字典
-      const response = await getCategoryPage({
-        pageNo: 1,
-        pageSize: 100,
-        status: '',
-        categoryId: props.filterCategoryId,
-        ...dataObj.searchParams,
-      });
-      if (response && response.list) {
-        const allData = response.list;
-        dataObj.statusCounts.total = response.total;
-        // 更新全部数据的状态统计 - 用于三级状态显示
-        allDataStatusCounts.total = response.total;
-        allDataStatusCounts.statusMap = {};
-        // 动态统计每个字典值的数量
-        allData.forEach((item) => {
-          const dict = getDictObj(DICT_TYPE.DATA_ENABLE_STATUS, String(item.status));
-          if (dict && dict.label) {
-            allDataStatusCounts.statusMap[dict.label] = (allDataStatusCounts.statusMap[dict.label] || 0) + 1;
-          }
-        });
-        // 同时更新 dataObj.statusCounts 用于底部统计区
-        dataObj.statusCounts.enabled = allDataStatusCounts.statusMap['启用'] || 0;
-        dataObj.statusCounts.disabled = allDataStatusCounts.statusMap['禁用'] || 0;
-        dataObj.statusCounts.maintenance = 0;
-      }
-    }
-  } catch (error) {
-    console.error('初始化状态计数失败:', error);
-  }
-};
-
-
 </script>
 
 <template>
@@ -1056,7 +1171,7 @@ const initStatusCounts = async () => {
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
-    <Grid :key="props.tabType">
+    <Grid>
       <!-- 三级状态 -->
       <template #table-title>
         <div
@@ -1115,7 +1230,17 @@ const initStatusCounts = async () => {
             @close="handleCancelCategoryTypeFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
-            分类类型：{{ filterCategoryType }}
+            分类类型：{{ getDictObj(DICT_TYPE.DATA_CATEGORYTYPE, String(filterCategoryType))?.label || filterCategoryType }}
+          </ElTag>
+          <!-- 工作流编码筛选标签 -->
+          <ElTag
+            v-if="filterWorkflowCode"
+            type="info"
+            closable
+            @close="handleCancelWorkflowCodeFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            工作流编码：{{ filterWorkflowCode }}
           </ElTag>
           <!-- 16位标识码筛选标签（仅在管理事项实例标签页显示） -->
           <ElTag
@@ -1147,10 +1272,10 @@ const initStatusCounts = async () => {
           >
             所在网格：{{ filterGridName }}
           </ElTag>
-          <!-- 主管部门筛选标签（仅在管理事项实例标签页显示） -->
+          <!-- 主管部门筛选标签 -->
           <ElTag
-            v-if="props.tabType === 'instance' && filterDeptName"
-            type="info"
+            v-if="filterDeptName"
+            type="primary"
             closable
             @close="handleCancelDeptNameFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
@@ -1204,7 +1329,7 @@ const initStatusCounts = async () => {
         </div>
       </template>
       <!-- 分类名称插槽 -->
-      <template #categoryName="{ row }">
+      <template #categoryNameDetail="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
@@ -1225,6 +1350,49 @@ const initStatusCounts = async () => {
           {{ row.categoryCode }}
         </el-text>
       </template>
+      <!-- 上级分类插槽 -->
+      <template #parentName="{ row }">
+        <el-text
+          @click="handleParentNameClick(row.parentName)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.parentName }}
+        </el-text>
+      </template>
+      <!-- 主管部门插槽（分类） -->
+      <template v-slot:deptName="{ row }">
+        <el-text
+          @click="handleDeptNameClick(row.deptName)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.deptName }}
+        </el-text>
+      </template>
+      <!-- 工作流编码插槽 -->
+      <template #workflowCode="{ row }">
+        <el-text
+          @click="handleWorkflowCodeClick(row.workflowCode)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.workflowCode }}
+        </el-text>
+      </template>
+      <!-- 分类类型插槽 -->
+      <template #categoryType="{ row }">
+        <ElTag
+          @click="handleCategoryTypeClick(row.categoryType)"
+          :type="getCategoryTypeColor(row.categoryType)"
+          style="cursor: pointer"
+        >
+          {{ getDictObj(DICT_TYPE.DATA_CATEGORYTYPE, String(row.categoryType))?.label || row.categoryType }}
+        </ElTag>
+      </template>
 
       <!-- 事项名称插槽（事项实例） -->
       <template #name="{ row }">
@@ -1235,6 +1403,39 @@ const initStatusCounts = async () => {
           style="cursor: pointer"
         >
           {{ row.name }}
+        </el-text>
+      </template>
+      <!-- 16位标识码插槽（事项实例） -->
+      <template #uniqueCode="{ row }">
+        <el-text
+          @click="handleUniqueCodeClick(row.uniqueCode)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.uniqueCode }}
+        </el-text>
+      </template>
+      <!-- 所属分类插槽（事项实例） -->
+      <template #categoryName="{ row }">
+        <el-text
+          @click="handleCategoryNameClick(row.categoryName)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.categoryName }}
+        </el-text>
+      </template>
+      <!-- 所在网格插槽（事项实例） -->
+      <template #gridName="{ row }">
+        <el-text
+          @click="handleGridNameClick(row.gridName)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.gridName }}
         </el-text>
       </template>
       <template #actions="{ row }">
@@ -1248,6 +1449,35 @@ const initStatusCounts = async () => {
             content="编辑"
             icon-name="edit"
             @click="handleEdit(row)"
+          />
+          <!-- 管理事项分类：提交审核按钮（仅扩展类待审核可操作） -->
+          <IconButton
+            v-if="props.tabType !== 'instance' && row.categoryType === '2' && row.auditStatus === '0'"
+            content="提交审核"
+            icon-name="Position"
+            @click="handleSubmitAudit(row)"
+          />
+          <!-- 管理事项实例：处置按钮 -->
+          <IconButton
+            v-if="props.tabType === 'instance'"
+            content="处置"
+            icon-name="Setting"
+            @click="handleHandle(row)"
+          />
+          <!-- 管理事项实例：驳回按钮 -->
+          <IconButton
+            v-if="props.tabType === 'instance'"
+            content="驳回"
+            icon-name="Close"
+            color="#F56C6C"
+            @click="handleReject(row)"
+          />
+          <!-- 管理事项实例：查看附件按钮 -->
+          <IconButton
+            v-if="props.tabType === 'instance'"
+            content="查看附件"
+            icon-name="Link"
+            @click="handleViewAttachment(row)"
           />
           <IconButton
             content="删除"
@@ -1292,6 +1522,29 @@ const initStatusCounts = async () => {
     <BatchUpdateStatusDialog
       ref="batchUpdateStatusDialogRef"
       @success="handleRefresh"
+    />
+
+    <!-- 提交审核弹窗 -->
+    <SubmitAuditDialog
+      ref="submitAuditDialogRef"
+      @success="handleRefresh"
+    />
+
+    <!-- 处置抽屉 -->
+    <HandleDrawer
+      ref="handleDrawerRef"
+      @success="handleRefresh"
+    />
+
+    <!-- 驳回弹窗 -->
+    <RejectDialog
+      ref="rejectDialogRef"
+      @success="handleRefresh"
+    />
+
+    <!-- 查看附件抽屉 -->
+    <AttachmentDrawer
+      ref="attachmentDrawerRef"
     />
   </div>
 </template>

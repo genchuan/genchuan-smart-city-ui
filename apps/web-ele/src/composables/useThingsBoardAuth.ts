@@ -1,7 +1,10 @@
 import { ref } from 'vue';
 
 import { thingsBoardLogin } from '#/api/genchuan/thingsBoard';
-import { decryptThingsBoardCredentials, getEncryptedThingsBoardCredentials } from '#/utils/encrypt';
+import {
+  decryptThingsBoardCredentials,
+  getEncryptedThingsBoardCredentials,
+} from '#/utils/encrypt';
 
 /**
  * ThingsBoard 登录响应类型
