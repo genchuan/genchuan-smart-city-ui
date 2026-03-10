@@ -20,7 +20,8 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   addRoad,
-  batchUpdateAssignStaff,
+  batchConfirmRemind,
+  batchUpdateAssignStaff, // 新增：批量提醒接口
   confirmValid,
   deleteWarn,
   getRoadFacility,
@@ -32,7 +33,6 @@ import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
 
 import { useFormSchema, useGridColumns } from './data';
-// 引入封装后的详情抽屉组件
 import tableDetail from './detail.vue';
 
 const props = defineProps({
@@ -54,43 +54,46 @@ const roadDetailRef = ref(null);
 const schemaData = ref(null);
 const roadObj = ref({ detailObj: {}, list: [] });
 
-const currentSwitchRow = ref({}); // 当前要调整的工单数据
+const currentSwitchRow = ref({});
 const switchLoading = ref(false);
-// 派单表单数据
 const assignForm = reactive({
-  assignStaffId: '', // 新运维员ID
-  assignStaffName: '', // 新运维员名称
-  remark: '', // 调整备注
+  assignStaffId: '',
+  assignStaffName: '',
+  remark: '',
 });
-// 表单校验规则
 const assignFormRules = reactive({
   assignStaffId: [
     { required: true, message: '请选择新的指派运维员', trigger: 'change' },
   ],
 });
-// 运维员列表（含权限）
 const staffList = ref([]);
-// 表单ref（用于校验）
 const assignFormRef = ref(null);
 
-// 标注无效预警相关
-const noConfirmDrawerApi = ref(null);
-const currentNoConfirmRow = ref({});
-const invalidReason = ref('');
-
+// 批量提醒相关（核心新增）
+const warnLoading = ref(false); // 批量提醒加载状态
+const warnForm = reactive({
+  warnContent: '', // 提醒内容
+  sendType: 'SYSTEM', // 发送方式：SYSTEM-系统消息，SMS-短信，WECHAT-微信
+});
+const warnFormRules = reactive({
+  warnContent: [
+    { required: true, message: '请输入提醒内容', trigger: 'blur' },
+    { min: 5, max: 200, message: '提醒内容长度在5-200个字符', trigger: 'blur' },
+  ],
+  sendType: [{ required: true, message: '请选择发送方式', trigger: 'change' }],
+});
+const warnFormRef = ref(null);
 const getTitle = computed(() => {
   return formData.value?.id ? '编辑' : '新增';
 });
 
 onMounted(async () => {
-  // 获取道路列表
   const roadList = await getRoadFacilityList({
     pageNo: 1,
     pageSize: 999,
   });
   roadObj.value.list = roadList.list;
 
-  // 获取运维员列表（含权限）
   await fetchStaffList();
 
   let roadIndex = 0;
@@ -125,7 +128,6 @@ onMounted(async () => {
   schemaData.value = schema;
 });
 
-// 获取运维员列表（含权限）
 const fetchStaffList = async () => {
   try {
     staffList.value = [
@@ -137,29 +139,20 @@ const fetchStaffList = async () => {
   }
 };
 
-// 调整派单对象 - 打开右侧抽屉（核心新增）
 const handleSwitch = (row) => {
-  // 初始化表单数据
   assignForm.assignStaffId = '';
   assignForm.assignStaffName = '';
   assignForm.remark = '';
-  // 保存当前工单数据
   currentSwitchRow.value = row;
-  // 打开右侧抽屉
   switchDrawerApi.open();
 };
 
-// 确认调整派单对象（核心新增）
 const handleSwitchConfirm = async () => {
-  // 第一步：表单校验
   const valid = await assignFormRef.value.validate();
   if (!valid) return;
 
   try {
     switchLoading.value = true;
-    // 获得当前对象
-
-    // 第三步：更新工单派单信息
     const nowObj = staffList.value.find(
       (v) => v.value === assignForm.assignStaffId,
     );
@@ -171,12 +164,60 @@ const handleSwitchConfirm = async () => {
 
     ElMessage.success('调整派单对象并推送提醒成功！');
     switchDrawerApi.close();
-    handleRefresh(); // 刷新表格
+    handleRefresh();
   } catch (error) {
     ElMessage.error(`操作失败：${error.message || '网络异常'}`);
   } finally {
     switchLoading.value = false;
   }
+};
+
+// 批量提醒抽屉（核心新增）
+const [WarnDrawer, warnDrawerApi] = useVbenDrawer({
+  title: '批量发送提醒',
+  placement: 'right',
+  width: 450,
+  appendToMain: true,
+  modal: false,
+  footer: false,
+  onCancel() {
+    warnFormRef.value?.resetFields();
+    warnDrawerApi.close();
+  },
+});
+
+// 打开批量提醒抽屉（核心新增）
+const handleWarnOpen = () => {
+  // 初始化提醒表单
+  warnForm.warnContent = '';
+  warnForm.sendType = 'SYSTEM';
+  // 打开抽屉
+  warnDrawerApi.open();
+};
+
+// 提交批量提醒（核心新增）
+const handleWarnSubmit = async () => {
+  try {
+    warnLoading.value = true;
+
+    // 3. 调用批量提醒接口
+    await batchConfirmRemind({
+      idList: checkedIds.value, // 选中的工单ID列表
+    });
+
+    ElMessage.success(`成功发送${checkedIds.value.length}条提醒！`);
+    warnDrawerApi.close();
+    handleRefresh();
+  } catch (error) {
+    ElMessage.error(`批量提醒发送失败：${error.message || '网络异常'}`);
+  } finally {
+    warnLoading.value = false;
+  }
+};
+
+// 批量提醒按钮禁用逻辑（核心新增）
+const isWarnDisabled = () => {
+  return isEmpty(checkedIds.value); // 无选中工单时禁用
 };
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -190,22 +231,19 @@ const [Drawer, drawerApi] = useVbenDrawer({
   async onOpenChange() {},
 });
 
-// 调整派单对象抽屉（核心新增）
 const [SwitchDrawer, switchDrawerApi] = useVbenDrawer({
   title: '调整派单对象',
-  placement: 'right', // 右侧抽屉
+  placement: 'right',
   width: 450,
   appendToMain: true,
   modal: false,
   footer: false,
   onCancel() {
-    // 关闭时重置表单
     assignFormRef.value?.resetFields();
     switchDrawerApi.close();
   },
 });
 
-// 移除原 DetailDrawer 初始化逻辑
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -245,7 +283,6 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
 });
 
-/** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
 }
@@ -298,7 +335,6 @@ const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
 
-// 表格数据获取
 const getTableData = async (pageObj) => {
   const getParams = {
     pageNo: pageObj.page.currentPage,
@@ -343,7 +379,6 @@ const [QueryForm, QueryFormApi] = useVbenForm({
   },
 });
 
-// 搜索表单查询
 async function onSubmit() {
   dataObj.serachObj = await QueryFormApi.getValues();
   gridApi.reload();
@@ -378,7 +413,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-// 修改打开详情的方法
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
   parkDetailDrawerRef.value.open();
@@ -396,7 +430,6 @@ const arrowChange = () => {
   emit('arrow-change');
 };
 
-// 定义组件ref
 const parkDetailDrawerRef = ref(null);
 
 const openRoadDetail = async (row) => {
@@ -407,7 +440,6 @@ const openRoadDetail = async (row) => {
   roadDetailRef.value.open();
 };
 
-// 确认有效 - 抽屉
 const currentConfirmRow = ref({});
 const confirmOpinion = ref('');
 const handleConfirm = (row) => {
@@ -416,7 +448,6 @@ const handleConfirm = (row) => {
   confirmDrawerApi.open();
 };
 
-// 确认有效 - 保存
 async function handleConfirmSave() {
   if (!confirmOpinion.value) {
     ElMessage.warning('请输入确认意见');
@@ -437,7 +468,6 @@ async function handleConfirmSave() {
   }
 }
 
-// 确认有效抽屉
 const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
   title: '确认有效',
   placement: 'right',
@@ -472,7 +502,39 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
       </div>
     </ConfirmDrawer>
 
-    <!-- 调整派单对象抽屉（核心新增） -->
+    <!-- 批量提醒抽屉（核心新增） -->
+    <WarnDrawer>
+      <div class="warn-drawer-content p-6">
+        <ElForm
+          ref="warnFormRef"
+          :model="warnForm"
+          :rules="warnFormRules"
+          class="warn-form"
+        >
+          <!-- 选中工单数量展示 -->
+          <div class="form-item mb-4">
+            <label class="mb-2 block text-sm font-medium">提醒范围</label>
+            <div class="text-sm text-gray-700">
+              已选中 {{ checkedIds.length }} 个工单
+            </div>
+          </div>
+        </ElForm>
+
+        <!-- 操作按钮 -->
+        <div class="mt-6 flex justify-end gap-2">
+          <ElButton @click="warnDrawerApi.close()">取消</ElButton>
+          <ElButton
+            type="primary"
+            @click="handleWarnSubmit"
+            :loading="warnLoading"
+          >
+            确认发送提醒
+          </ElButton>
+        </div>
+      </div>
+    </WarnDrawer>
+
+    <!-- 调整派单对象抽屉 -->
     <SwitchDrawer>
       <div class="assign-drawer-content p-6">
         <ElForm
@@ -481,7 +543,6 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
           :rules="assignFormRules"
           class="assign-form"
         >
-          <!-- 工单信息展示 -->
           <div class="form-item mb-4">
             <label class="mb-2 block text-sm font-medium">当前工单</label>
             <div class="text-sm text-gray-700">
@@ -489,7 +550,6 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
             </div>
           </div>
 
-          <!-- 新指派运维员（必填标星） -->
           <ElFormItem label="新指派运维员" prop="assignStaffId" class="mb-4">
             <ElSelect
               v-model="assignForm.assignStaffId"
@@ -512,7 +572,6 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
           </ElFormItem>
         </ElForm>
 
-        <!-- 操作按钮 -->
         <div class="mt-6 flex justify-end gap-2">
           <ElButton @click="switchDrawerApi.close()">取消</ElButton>
           <ElButton
@@ -530,7 +589,6 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
       <Form />
     </FormDrawer>
 
-    <!-- 详情组件 -->
     <tableDetail
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
@@ -544,6 +602,14 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
+          <!-- 批量提醒按钮（核心新增） -->
+          <IconButton
+            content="批量提醒"
+            icon-name="AlarmClock"
+            color="#F56C6C"
+            :disabled="isWarnDisabled()"
+            @click="handleWarnOpen"
+          />
           <IconButton
             content="批量删除"
             icon-name="delete"
@@ -614,6 +680,31 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
 </template>
 
 <style scoped lang="scss">
+// 批量提醒抽屉样式（核心新增）
+.warn-drawer-content {
+  height: 100%;
+  box-sizing: border-box;
+
+  .warn-form {
+    .el-form-item {
+      margin-bottom: 16px;
+
+      &.is-required {
+        ::v-deep .el-form-item__label::after {
+          content: '*';
+          color: #f56c6c;
+          margin-left: 4px;
+        }
+      }
+    }
+
+    .form-item {
+      font-size: 14px;
+      color: #606266;
+    }
+  }
+}
+
 // 调整派单对象抽屉样式
 .assign-drawer-content {
   height: 100%;
@@ -639,49 +730,10 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
   }
 }
 
-// 批量切换状态弹窗样式
-.switch-dialog-content {
-  padding: 20px 0;
-
-  .selected-count {
-    margin-bottom: 20px;
-    font-size: 14px;
-    color: #606266;
-
-    .count-num {
-      font-weight: 600;
-      color: #1989fa;
-    }
-  }
-
-  .status-select {
-    font-size: 14px;
-
-    .label {
-      font-weight: 500;
-      color: #303133;
-    }
-  }
-}
-
-.dialog-footer {
-  text-align: right;
-}
-
 // 按钮禁用样式优化
 :deep(.common-toolbar-tools) {
   .el-button.is-disabled {
     opacity: 0.6;
-  }
-}
-
-// 弹窗样式优化
-:deep(.el-dialog) {
-  .el-dialog__body {
-    padding: 20px 20px 10px;
-  }
-  .el-dialog__footer {
-    padding: 10px 20px 20px;
   }
 }
 
