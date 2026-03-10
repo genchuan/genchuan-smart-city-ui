@@ -138,3 +138,8 @@ export function batchUpdateAssignStaff(params) {
 export function updateWorkOrderProgress(params) {
   return requestClient.post(`/facility/work-order/update-process-status`, params);
 }
+/** 超时督办 */
+ 
+export function superviseWorkOrder(params) {
+  return requestClient.post(`/facility/work-order/supervise-overtime`, params);
+}

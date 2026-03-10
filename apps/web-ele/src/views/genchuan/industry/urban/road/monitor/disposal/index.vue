@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue';
 
-import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { confirm, useVbenDrawer, useVbenModal } from '@vben/common-ui'; // 新增 useVbenModal
 import { isEmpty } from '@vben/utils';
 
 import {
@@ -27,8 +27,9 @@ import {
   getRoadFacility,
   getRoadFacilityList,
   getRoadWorkOrder,
+  superviseWorkOrder, // 新增：超时督办接口
   updateRoad,
-  updateWorkOrderProgress, // 新增：更新工单进度接口
+  updateWorkOrderProgress,
 } from '#/api/genchuan/industry/urban/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
@@ -85,14 +86,13 @@ const warnFormRules = reactive({
 });
 const warnFormRef = ref(null);
 
-// 更新进度相关（核心新增）
-const progressLoading = ref(false); // 进度更新加载状态
-const currentProgressRow = ref({}); // 当前要更新进度的工单
+// 更新进度相关
+const progressLoading = ref(false);
+const currentProgressRow = ref({});
 const progressForm = reactive({
-  disposeProgress: '', // 处置进度
-  progressDesc: '', // 进度说明
+  disposeProgress: '',
+  progressDesc: '',
 });
-// 进度表单校验规则
 const progressFormRules = reactive({
   disposeProgress: [
     { required: true, message: '请选择处置进度', trigger: 'change' },
@@ -102,12 +102,38 @@ const progressFormRules = reactive({
   ],
 });
 const progressFormRef = ref(null);
-// 处置进度选项
 const progressOptions = ref([
   { label: '待处置', value: 'PENDING' },
   { label: '现场修补', value: 'ON_SITE_REPAIR' },
   { label: '裂缝清理', value: 'CRACK_CLEANING' },
 ]);
+
+// 超时督办相关（核心新增）
+const superviseLoading = ref(false); // 督办加载状态
+const currentSuperviseRow = ref({}); // 当前督办的工单
+const superviseForm = reactive({
+  superviseOpinion: '', // 督办意见
+});
+// 督办表单校验规则
+const superviseFormRules = reactive({
+  superviseOpinion: [
+    { required: true, message: '请输入督办意见', trigger: 'blur' },
+    { min: 5, max: 500, message: '督办意见长度在5-500个字符', trigger: 'blur' },
+  ],
+});
+const superviseFormRef = ref(null);
+// 创建督办弹窗
+const [SuperviseModal, superviseModalApi] = useVbenModal({
+  title: '超时督办',
+  width: 450, // 小型弹窗宽度
+  modalProps: {
+    destroyOnClose: true, // 关闭时销毁内容
+  },
+  onCancel() {
+    superviseFormRef.value?.resetFields();
+  },
+  footer: false,
+});
 
 const getTitle = computed(() => {
   return formData.value?.id ? '编辑' : '新增';
@@ -242,7 +268,7 @@ const isWarnDisabled = () => {
   return isEmpty(checkedIds.value);
 };
 
-// 更新进度抽屉（核心新增）
+// 更新进度抽屉
 const [ProgressDrawer, progressDrawerApi] = useVbenDrawer({
   title: '更新工单进度',
   placement: 'right',
@@ -256,40 +282,70 @@ const [ProgressDrawer, progressDrawerApi] = useVbenDrawer({
   },
 });
 
-// 打开更新进度抽屉（核心新增）
+// 打开更新进度抽屉
 const handleArrowUp = (row) => {
-  // 初始化表单数据
   progressForm.disposeProgress = '';
   progressForm.progressDesc = '';
-  // 保存当前工单数据
   currentProgressRow.value = row;
-  // 打开抽屉
   progressDrawerApi.open();
 };
 
-// 保存工单进度（核心新增）
+// 保存工单进度
 const handleProgressSave = async () => {
-  // 表单校验
   const valid = await progressFormRef.value.validate();
   if (!valid) return;
 
   try {
     progressLoading.value = true;
 
-    // 调用更新进度接口
     await updateWorkOrderProgress({
-      workOrderId: currentProgressRow.value.id, // 工单ID
-      processStatus: progressForm.disposeProgress, // 处置进度
-      processDesc: progressForm.progressDesc, // 进度说明
+      workOrderId: currentProgressRow.value.id,
+      processStatus: progressForm.disposeProgress,
+      processDesc: progressForm.progressDesc,
     });
 
     ElMessage.success('工单进度更新成功！');
     progressDrawerApi.close();
-    handleRefresh(); // 刷新表格展示
+    handleRefresh();
   } catch (error) {
     ElMessage.error(`进度更新失败：${error.message || '网络异常'}`);
   } finally {
     progressLoading.value = false;
+  }
+};
+
+// 打开超时督办弹窗（核心新增）
+const handleSupervise = (row) => {
+  // 初始化督办表单
+  superviseForm.superviseOpinion = '';
+  // 保存当前工单数据
+  currentSuperviseRow.value = row;
+  // 打开督办弹窗
+  superviseModalApi.open();
+};
+
+// 提交督办意见（核心新增）
+const handleSuperviseSubmit = async () => {
+  // 表单校验
+  const valid = await superviseFormRef.value.validate();
+  if (!valid) return;
+
+  try {
+    superviseLoading.value = true;
+
+    // 调用超时督办接口
+    await superviseWorkOrder({
+      workOrderId: currentSuperviseRow.value.id, // 工单ID
+      superviseOpinion: superviseForm.superviseOpinion, // 督办意见
+    });
+
+    ElMessage.success('超时督办提交成功！');
+    superviseModalApi.close();
+    handleRefresh(); // 刷新表格展示
+  } catch (error) {
+    ElMessage.error(`督办提交失败：${error.message || '网络异常'}`);
+  } finally {
+    superviseLoading.value = false;
   }
 };
 
@@ -422,7 +478,6 @@ const getTableData = async (pageObj) => {
       updateTime: formatTimestamp(v.updateTime),
       arriveTime: formatTimestamp(v.arriveTime),
       createTime: formatTimestamp(v.createTime),
-      // 进度状态中文转换（前端展示用）
       disposeProgressText:
         {
           PENDING: '待处置',
@@ -612,7 +667,7 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
       </div>
     </WarnDrawer>
 
-    <!-- 更新进度抽屉（核心新增） -->
+    <!-- 更新进度抽屉 -->
     <ProgressDrawer>
       <div class="progress-drawer-content p-6">
         <ElForm
@@ -621,7 +676,6 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
           :rules="progressFormRules"
           class="progress-form"
         >
-          <!-- 工单信息展示 -->
           <div class="form-item mb-4">
             <label class="mb-2 block text-sm font-medium">当前工单</label>
             <div class="text-sm text-gray-700">
@@ -629,7 +683,6 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
             </div>
           </div>
 
-          <!-- 处置进度（必填） -->
           <ElFormItem label="处置进度" prop="disposeProgress" class="mb-4">
             <ElSelect
               v-model="progressForm.disposeProgress"
@@ -645,7 +698,6 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
             </ElSelect>
           </ElFormItem>
 
-          <!-- 进度说明（必填） -->
           <ElFormItem label="进度说明" prop="progressDesc" class="mb-4">
             <ElInput
               v-model="progressForm.progressDesc"
@@ -658,7 +710,6 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
           </ElFormItem>
         </ElForm>
 
-        <!-- 操作按钮 -->
         <div class="mt-6 flex justify-end gap-2">
           <ElButton @click="progressDrawerApi.close()">取消</ElButton>
           <ElButton
@@ -671,6 +722,50 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
         </div>
       </div>
     </ProgressDrawer>
+
+    <!-- 超时督办弹窗（核心新增） -->
+    <SuperviseModal>
+      <div class="supervise-modal-content p-4">
+        <ElForm
+          ref="superviseFormRef"
+          :model="superviseForm"
+          :rules="superviseFormRules"
+          class="supervise-form"
+        >
+          <!-- 工单信息展示 -->
+          <div class="form-item mb-4">
+            <label class="mb-2 block text-sm font-medium">督办工单</label>
+            <div class="text-sm text-gray-700">
+              工单编号：{{ currentSuperviseRow.orderNo || '-' }}
+            </div>
+          </div>
+
+          <!-- 督办意见（必填） -->
+          <ElFormItem label="督办意见" prop="superviseOpinion" class="mb-4">
+            <ElInput
+              v-model="superviseForm.superviseOpinion"
+              type="textarea"
+              :rows="4"
+              placeholder="请输入督办意见（5-500个字符）"
+              maxlength="500"
+              show-word-limit
+            />
+          </ElFormItem>
+        </ElForm>
+
+        <!-- 操作按钮 -->
+        <div class="mt-4 flex justify-end gap-2">
+          <ElButton @click="superviseModalApi.close()">取消</ElButton>
+          <ElButton
+            type="primary"
+            @click="handleSuperviseSubmit"
+            :loading="superviseLoading"
+          >
+            确认
+          </ElButton>
+        </div>
+      </div>
+    </SuperviseModal>
 
     <!-- 调整派单对象抽屉 -->
     <SwitchDrawer>
@@ -802,6 +897,11 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
             @click="handleArrowUp(row)"
           />
           <IconButton
+            content="超时督办"
+            icon-name="Clock"
+            @click="handleSupervise(row)"
+          />
+          <IconButton
             content="删除"
             icon-name="delete"
             color="#F56C6C"
@@ -817,7 +917,29 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
 </template>
 
 <style scoped lang="scss">
-// 更新进度抽屉样式（核心新增）
+// 超时督办弹窗样式（核心新增）
+.supervise-modal-content {
+  .supervise-form {
+    .el-form-item {
+      margin-bottom: 16px;
+
+      &.is-required {
+        ::v-deep .el-form-item__label::after {
+          content: '*';
+          color: #f56c6c;
+          margin-left: 4px;
+        }
+      }
+    }
+
+    .form-item {
+      font-size: 14px;
+      color: #606266;
+    }
+  }
+}
+
+// 更新进度抽屉样式
 .progress-drawer-content {
   height: 100%;
   box-sizing: border-box;
