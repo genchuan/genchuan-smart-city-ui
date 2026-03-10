@@ -86,7 +86,6 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
       config.headers['visit-tenant-id'] = tenantEnable
         ? accessStore.visitTenantId
         : undefined;
-
       // 是否 API 加密
       if ((config.headers || {}).isEncrypt) {
         try {
@@ -185,3 +184,4 @@ baseRequestClient.addRequestInterceptor({
     return config;
   },
 });
+  

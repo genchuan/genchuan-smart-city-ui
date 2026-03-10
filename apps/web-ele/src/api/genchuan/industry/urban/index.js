@@ -114,3 +114,48 @@ export function getSysDevicePage(params) {
     params,
   });
 }
+
+/** 获得道路工单分页 */
+export function getRoadWorkOrder(params) {
+  return requestClient.get('/facility/road-work-order/page', {
+    params,
+  });
+}
+
+/** 批量提醒 */
+export function batchConfirmRemind(params) {
+  return requestClient.post(`/facility/work-order/batch-remind`, params);
+}
+/** 处置中预警创建 */
+export function createWorkOrder(params) {
+  return requestClient.post(`/facility/work-order/create`, params);
+}
+/** 更新派单对象 */
+export function batchUpdateAssignStaff(params) {
+  return requestClient.post(`/facility/work-order/reassign-work-order`, params);
+}
+/** 更新进度 */
+export function updateWorkOrderProgress(params) {
+  return requestClient.post(`/facility/work-order/update-process-status`, params);
+}
+/** 超时督办 */
+ 
+export function superviseWorkOrder(params) {
+  return requestClient.post(`/facility/work-order/supervise-overtime`, params);
+}
+
+/** 上传资料 */
+export function uploadWorkOrderFile(data) {
+ return requestClient.post('/facility/work-order/upload-work-order-file', data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+} 
+
+/** 获得人员统计 */
+export function getSysUserPage(data) {
+ return requestClient.get('/facility/sys-user/page', data);
+} 
+/** 已完成归档 */ 
+export function getRoadArchive(data) {
+ return requestClient.get('/facility/road-archive/page', data);
+}

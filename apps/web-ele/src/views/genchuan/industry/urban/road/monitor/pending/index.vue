@@ -6,9 +6,9 @@ import { isEmpty } from '@vben/utils';
 
 import {
   ElButton,
-  ElDatePicker,
   ElDialog,
   ElInput,
+  ElInputNumber,
   ElLoading,
   ElMessage,
   ElOption,
@@ -23,6 +23,7 @@ import {
   batchConfirmInvalidSysWarn,
   confirmInvalid,
   confirmValid,
+  createWorkOrder,
   deleteWarn,
   getRoadFacility,
   getRoadFacilityList,
@@ -103,6 +104,8 @@ onMounted(async () => {
     editShow: true,
   };
   schemaData.value = schema;
+  // 初始化获取运维员列表
+  await getOperatorList();
 });
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -438,69 +441,127 @@ const [NoConfirmDrawer, noConfirmDrawerApiRef] = useVbenDrawer({
 // 赋值ref以便外部调用
 noConfirmDrawerApi.value = noConfirmDrawerApiRef;
 
-// -------------------- 派发工单功能（核心新增） --------------------
+// -------------------- 派发工单功能（按截图字段改造） --------------------
 // 派发工单相关
 const giveDrawerApi = ref(null); // 派发工单抽屉实例
 const currentGiveRow = ref({}); // 当前派发工单的行数据
+// 工单表单数据（匹配截图字段）
 const giveForm = reactive({
-  operatorId: '', // 指派运维员ID（必填）
-  operatorName: '', // 运维员名称（回显用）
-  handleDeadline: '', // 处置时限（时间选择器）
+  warnId: '1', // 关联预警ID
+  assignStaffId: '张三', // 指派运维员ID
+  assignStaffName: '', // 指派运维员名称（冗余）
+  orderType: '', // 工单类型
+  bizType: '', // 业务类型
+  dealLimit: 0, // 处置时限（小时）
+  priorityLevel: 1, // 工单优先等级
+  riskLevel: 1, // 安全风险等级
   remark: '', // 派单备注（选填）
 });
 const giveLoading = ref(false); // 派单按钮加载状态
 const operatorList = ref([]); // 运维员列表（用于下拉选择）
-
-// 权限校验：检查运维员是否有该道路的处置权限
-const checkOperatorPermission = async (operatorId, roadId) => {};
+// 工单类型选项
+const orderTypeOptions = ref([
+  { label: '运维', value: '运维' },
+  { label: '养护', value: '养护' },
+  { label: '维修', value: '维修' },
+  { label: '清淤', value: '清淤' },
+  { label: '巡检', value: '巡检' },
+  { label: '处置', value: '处置' },
+]);
+// 业务类型选项（根据工单类型联动）
+const bizTypeOptions = ref([]);
+// 优先级/风险等级选项
+const levelOptions = ref([
+  { label: '1-低', value: 1 },
+  { label: '2-中', value: 2 },
+  { label: '3-高', value: 3 },
+]);
 
 // 获取运维员列表（下拉选择用）
 const getOperatorList = async () => {
   try {
-    // 替换为实际的运维员列表接口
+    // const res = await getStaffList(); // 替换为实际获取运维员接口
+    // operatorList.value = res.list.map((item) => ({
+    //   label: item.staffName,
+    //   value: item.staffId,
+    // }));
+    operatorList.value = [];
   } catch {
     ElMessage.error('获取运维员列表失败！');
+  }
+};
+
+// 工单类型变更联动业务类型
+const handleOrderTypeChange = (val) => {
+  giveForm.bizType = '';
+  // 根据工单类型匹配业务类型（按截图注释逻辑）
+  if (val === '清淤') {
+    bizTypeOptions.value = [
+      { label: '机械清淤', value: '机械清淤' },
+      { label: '人工清淤', value: '人工清淤' },
+      { label: '高压冲洗', value: '高压冲洗' },
+    ];
+  } else if (val === '处置') {
+    bizTypeOptions.value = [
+      { label: '倾斜', value: '倾斜' },
+      { label: '振动', value: '振动' },
+      { label: '开合异常', value: '开合异常' },
+    ];
+  } else {
+    // 其他工单类型业务类型与工单类型一致
+    bizTypeOptions.value = [{ label: val, value: val }];
   }
 };
 
 // 打开派发工单抽屉
 const handleGive = async (row) => {
   currentGiveRow.value = row;
-  // 重置表单
+  // 初始化表单数据
   Object.assign(giveForm, {
-    operatorId: '',
-    operatorName: '',
-    handleDeadline: '',
+    warnId: row.id, // 关联预警ID
+    assignStaffId: '1',
+    assignStaffName: '张三',
+    orderType: '',
+    bizType: '',
+    dealLimit: 0,
+    priorityLevel: 1,
+    riskLevel: 1,
     remark: '',
   });
-
   giveDrawerApi.value.open();
 };
 
 // 派发工单提交
 const handleGiveSubmit = async () => {
   // 1. 必填校验
-  if (!giveForm.operatorId) {
-    ElMessage.warning('请选择指派运维员！');
-    return;
-  }
-  if (!giveForm.handleDeadline) {
-    ElMessage.warning('请设置处置时限！');
-    return;
-  }
-
-  // 2. 权限校验
-  const hasPermission = await checkOperatorPermission(
-    giveForm.operatorId,
-    currentGiveRow.value.roadId,
-  );
-  if (!hasPermission) {
-    ElMessage.error('该运维员无此道路的处置权限，请重新选择！');
-    return;
+  const requiredFields = [
+    { key: 'warnId', msg: '关联预警ID不能为空' },
+    { key: 'assignStaffId', msg: '请选择指派运维员' },
+    { key: 'orderType', msg: '请选择工单类型' },
+    { key: 'bizType', msg: '请选择业务类型' },
+    { key: 'dealLimit', msg: '请设置处置时限' },
+  ];
+  for (const field of requiredFields) {
+    if (!giveForm[field.key]) {
+      ElMessage.warning(field.msg);
+      return;
+    }
   }
 
   try {
     giveLoading.value = true;
+    // 调用创建工单接口
+    await createWorkOrder({
+      warnId: giveForm.warnId,
+      assignStaffId: giveForm.assignStaffId,
+      assignStaffName: giveForm.assignStaffName,
+      orderType: giveForm.orderType,
+      bizType: giveForm.bizType,
+      dealLimit: giveForm.dealLimit,
+      priorityLevel: giveForm.priorityLevel,
+      riskLevel: giveForm.riskLevel,
+      remark: giveForm.remark,
+    });
 
     ElMessage.success('工单派发成功！');
     giveDrawerApi.value.close();
@@ -561,9 +622,7 @@ giveDrawerApi.value = giveDrawerApiRef;
         </div>
 
         <div class="mb-4">
-          <label class="mb-2 block text-sm font-medium"
-            >无效原因 <span class="text-red-500">*</span></label
-          >
+          <label class="mb-2 block text-sm font-medium">无效原因 <span class="text-red-500">*</span></label>
           <ElInput
             v-model="invalidReason"
             type="textarea"
@@ -587,7 +646,7 @@ giveDrawerApi.value = giveDrawerApiRef;
       </div>
     </NoConfirmDrawer>
 
-    <!-- 派发工单抽屉（新增） -->
+    <!-- 派发工单抽屉（按截图字段改造） -->
     <GiveDrawer>
       <div class="p-6">
         <!-- 预警基本信息 -->
@@ -604,26 +663,32 @@ giveDrawerApi.value = giveDrawerApiRef;
           </div>
         </div>
 
-        <!-- 派单表单 -->
+        <!-- 派单表单（匹配截图字段） -->
         <div class="form-item mb-4">
           <label class="mb-2 block text-sm font-medium">
             指派运维员 <span class="text-red-500">*</span>
           </label>
+          <ElInput
+            v-model="giveForm.assignStaffName"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入运维员"
+            maxlength="300"
+            show-word-limit
+          />
+        </div>
+        <div class="form-item mb-4">
+          <label class="mb-2 block text-sm font-medium">
+            工单类型 <span class="text-red-500">*</span>
+          </label>
           <ElSelect
-            v-model="giveForm.operatorId"
-            placeholder="请选择运维员"
+            v-model="giveForm.orderType"
+            placeholder="请选择工单类型"
             class="w-full"
-            @change="
-              (val) => {
-                const operator = operatorList.find(
-                  (item) => item.value === val,
-                );
-                giveForm.operatorName = operator?.label || '';
-              }
-            "
+            @change="handleOrderTypeChange"
           >
             <ElOption
-              v-for="item in operatorList"
+              v-for="item in orderTypeOptions"
               :key="item.value"
               :label="item.label"
               :value="item.value"
@@ -633,17 +698,70 @@ giveDrawerApi.value = giveDrawerApiRef;
 
         <div class="form-item mb-4">
           <label class="mb-2 block text-sm font-medium">
-            处置时限 <span class="text-red-500">*</span>
+            业务类型 <span class="text-red-500">*</span>
           </label>
-          <ElDatePicker
-            v-model="giveForm.handleDeadline"
-            type="datetime"
-            placeholder="请选择处置截止时间"
+          <ElSelect
+            v-model="giveForm.bizType"
+            placeholder="请选择业务类型"
             class="w-full"
-            format="YYYY-MM-DD HH:mm:ss"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            :min-date="new Date()"
+            :disabled="!giveForm.orderType"
+          >
+            <ElOption
+              v-for="item in bizTypeOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </ElSelect>
+        </div>
+
+        <div class="form-item mb-4">
+          <label class="mb-2 block text-sm font-medium">
+            处置时限（小时）<span class="text-red-500">*</span>
+          </label>
+          <ElInputNumber
+            v-model="giveForm.dealLimit"
+            placeholder="请输入处置时限"
+            class="w-full"
+            :min="1"
+            :precision="0"
           />
+        </div>
+
+        <div class="form-item mb-4">
+          <label class="mb-2 block text-sm font-medium">
+            工单优先等级 <span class="text-red-500">*</span>
+          </label>
+          <ElSelect
+            v-model="giveForm.priorityLevel"
+            placeholder="请选择优先等级"
+            class="w-full"
+          >
+            <ElOption
+              v-for="item in levelOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </ElSelect>
+        </div>
+
+        <div class="form-item mb-4">
+          <label class="mb-2 block text-sm font-medium">
+            安全风险等级 <span class="text-red-500">*</span>
+          </label>
+          <ElSelect
+            v-model="giveForm.riskLevel"
+            placeholder="请选择风险等级"
+            class="w-full"
+          >
+            <ElOption
+              v-for="item in levelOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </ElSelect>
         </div>
 
         <div class="form-item mb-6">
@@ -791,13 +909,9 @@ giveDrawerApi.value = giveDrawerApiRef;
           <IconButton
             content="派发工单"
             icon-name="Avatar"
+            :disabled="row.status !== '待处置'"
             @click="handleGive(row)"
           />
-          <!-- <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          /> -->
           <IconButton
             content="删除"
             icon-name="delete"
@@ -874,7 +988,8 @@ giveDrawerApi.value = giveDrawerApiRef;
   }
 
   .el-select,
-  .el-date-picker {
+  .el-date-picker,
+  .el-input-number {
     width: 100%;
   }
 }
