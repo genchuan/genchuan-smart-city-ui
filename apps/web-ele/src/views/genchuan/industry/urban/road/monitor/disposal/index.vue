@@ -21,13 +21,14 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   addRoad,
   batchConfirmRemind,
-  batchUpdateAssignStaff, // 新增：批量提醒接口
+  batchUpdateAssignStaff,
   confirmValid,
   deleteWarn,
   getRoadFacility,
   getRoadFacilityList,
   getRoadWorkOrder,
   updateRoad,
+  updateWorkOrderProgress, // 新增：更新工单进度接口
 } from '#/api/genchuan/industry/urban/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
@@ -69,11 +70,11 @@ const assignFormRules = reactive({
 const staffList = ref([]);
 const assignFormRef = ref(null);
 
-// 批量提醒相关（核心新增）
-const warnLoading = ref(false); // 批量提醒加载状态
+// 批量提醒相关
+const warnLoading = ref(false);
 const warnForm = reactive({
-  warnContent: '', // 提醒内容
-  sendType: 'SYSTEM', // 发送方式：SYSTEM-系统消息，SMS-短信，WECHAT-微信
+  warnContent: '',
+  sendType: 'SYSTEM',
 });
 const warnFormRules = reactive({
   warnContent: [
@@ -83,6 +84,31 @@ const warnFormRules = reactive({
   sendType: [{ required: true, message: '请选择发送方式', trigger: 'change' }],
 });
 const warnFormRef = ref(null);
+
+// 更新进度相关（核心新增）
+const progressLoading = ref(false); // 进度更新加载状态
+const currentProgressRow = ref({}); // 当前要更新进度的工单
+const progressForm = reactive({
+  disposeProgress: '', // 处置进度
+  progressDesc: '', // 进度说明
+});
+// 进度表单校验规则
+const progressFormRules = reactive({
+  disposeProgress: [
+    { required: true, message: '请选择处置进度', trigger: 'change' },
+  ],
+  progressDesc: [
+    { required: true, message: '请输入进度说明', trigger: 'blur' },
+  ],
+});
+const progressFormRef = ref(null);
+// 处置进度选项
+const progressOptions = ref([
+  { label: '待处置', value: 'PENDING' },
+  { label: '现场修补', value: 'ON_SITE_REPAIR' },
+  { label: '裂缝清理', value: 'CRACK_CLEANING' },
+]);
+
 const getTitle = computed(() => {
   return formData.value?.id ? '编辑' : '新增';
 });
@@ -172,7 +198,7 @@ const handleSwitchConfirm = async () => {
   }
 };
 
-// 批量提醒抽屉（核心新增）
+// 批量提醒抽屉
 const [WarnDrawer, warnDrawerApi] = useVbenDrawer({
   title: '批量发送提醒',
   placement: 'right',
@@ -186,23 +212,19 @@ const [WarnDrawer, warnDrawerApi] = useVbenDrawer({
   },
 });
 
-// 打开批量提醒抽屉（核心新增）
+// 打开批量提醒抽屉
 const handleWarnOpen = () => {
-  // 初始化提醒表单
   warnForm.warnContent = '';
   warnForm.sendType = 'SYSTEM';
-  // 打开抽屉
   warnDrawerApi.open();
 };
 
-// 提交批量提醒（核心新增）
+// 提交批量提醒
 const handleWarnSubmit = async () => {
   try {
     warnLoading.value = true;
-
-    // 3. 调用批量提醒接口
     await batchConfirmRemind({
-      idList: checkedIds.value, // 选中的工单ID列表
+      idList: checkedIds.value,
     });
 
     ElMessage.success(`成功发送${checkedIds.value.length}条提醒！`);
@@ -215,9 +237,60 @@ const handleWarnSubmit = async () => {
   }
 };
 
-// 批量提醒按钮禁用逻辑（核心新增）
+// 批量提醒按钮禁用逻辑
 const isWarnDisabled = () => {
-  return isEmpty(checkedIds.value); // 无选中工单时禁用
+  return isEmpty(checkedIds.value);
+};
+
+// 更新进度抽屉（核心新增）
+const [ProgressDrawer, progressDrawerApi] = useVbenDrawer({
+  title: '更新工单进度',
+  placement: 'right',
+  width: 450,
+  appendToMain: true,
+  modal: false,
+  footer: false,
+  onCancel() {
+    progressFormRef.value?.resetFields();
+    progressDrawerApi.close();
+  },
+});
+
+// 打开更新进度抽屉（核心新增）
+const handleArrowUp = (row) => {
+  // 初始化表单数据
+  progressForm.disposeProgress = '';
+  progressForm.progressDesc = '';
+  // 保存当前工单数据
+  currentProgressRow.value = row;
+  // 打开抽屉
+  progressDrawerApi.open();
+};
+
+// 保存工单进度（核心新增）
+const handleProgressSave = async () => {
+  // 表单校验
+  const valid = await progressFormRef.value.validate();
+  if (!valid) return;
+
+  try {
+    progressLoading.value = true;
+
+    // 调用更新进度接口
+    await updateWorkOrderProgress({
+      workOrderId: currentProgressRow.value.id, // 工单ID
+      processStatus: progressForm.disposeProgress, // 处置进度
+      processDesc: progressForm.progressDesc, // 进度说明
+    });
+
+    ElMessage.success('工单进度更新成功！');
+    progressDrawerApi.close();
+    handleRefresh(); // 刷新表格展示
+  } catch (error) {
+    ElMessage.error(`进度更新失败：${error.message || '网络异常'}`);
+  } finally {
+    progressLoading.value = false;
+  }
 };
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -349,6 +422,13 @@ const getTableData = async (pageObj) => {
       updateTime: formatTimestamp(v.updateTime),
       arriveTime: formatTimestamp(v.arriveTime),
       createTime: formatTimestamp(v.createTime),
+      // 进度状态中文转换（前端展示用）
+      disposeProgressText:
+        {
+          PENDING: '待处置',
+          ON_SITE_REPAIR: '现场修补',
+          CRACK_CLEANING: '裂缝清理',
+        }[v.disposeProgress] || '待处置',
     };
   });
   return dataObj;
@@ -502,7 +582,7 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
       </div>
     </ConfirmDrawer>
 
-    <!-- 批量提醒抽屉（核心新增） -->
+    <!-- 批量提醒抽屉 -->
     <WarnDrawer>
       <div class="warn-drawer-content p-6">
         <ElForm
@@ -511,7 +591,6 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
           :rules="warnFormRules"
           class="warn-form"
         >
-          <!-- 选中工单数量展示 -->
           <div class="form-item mb-4">
             <label class="mb-2 block text-sm font-medium">提醒范围</label>
             <div class="text-sm text-gray-700">
@@ -520,7 +599,6 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
           </div>
         </ElForm>
 
-        <!-- 操作按钮 -->
         <div class="mt-6 flex justify-end gap-2">
           <ElButton @click="warnDrawerApi.close()">取消</ElButton>
           <ElButton
@@ -533,6 +611,66 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
         </div>
       </div>
     </WarnDrawer>
+
+    <!-- 更新进度抽屉（核心新增） -->
+    <ProgressDrawer>
+      <div class="progress-drawer-content p-6">
+        <ElForm
+          ref="progressFormRef"
+          :model="progressForm"
+          :rules="progressFormRules"
+          class="progress-form"
+        >
+          <!-- 工单信息展示 -->
+          <div class="form-item mb-4">
+            <label class="mb-2 block text-sm font-medium">当前工单</label>
+            <div class="text-sm text-gray-700">
+              工单编号：{{ currentProgressRow.orderNo || '-' }}
+            </div>
+          </div>
+
+          <!-- 处置进度（必填） -->
+          <ElFormItem label="处置进度" prop="disposeProgress" class="mb-4">
+            <ElSelect
+              v-model="progressForm.disposeProgress"
+              placeholder="请选择处置进度"
+              class="w-full"
+            >
+              <ElOption
+                v-for="item in progressOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </ElSelect>
+          </ElFormItem>
+
+          <!-- 进度说明（必填） -->
+          <ElFormItem label="进度说明" prop="progressDesc" class="mb-4">
+            <ElInput
+              v-model="progressForm.progressDesc"
+              type="textarea"
+              :rows="4"
+              placeholder="请输入进度说明"
+              maxlength="500"
+              show-word-limit
+            />
+          </ElFormItem>
+        </ElForm>
+
+        <!-- 操作按钮 -->
+        <div class="mt-6 flex justify-end gap-2">
+          <ElButton @click="progressDrawerApi.close()">取消</ElButton>
+          <ElButton
+            type="primary"
+            @click="handleProgressSave"
+            :loading="progressLoading"
+          >
+            保存进度
+          </ElButton>
+        </div>
+      </div>
+    </ProgressDrawer>
 
     <!-- 调整派单对象抽屉 -->
     <SwitchDrawer>
@@ -602,7 +740,6 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <!-- 批量提醒按钮（核心新增） -->
           <IconButton
             content="批量提醒"
             icon-name="AlarmClock"
@@ -660,9 +797,9 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
             @click="handleSwitch(row)"
           />
           <IconButton
-            content="详情"
-            icon-name="View"
-            @click="handleOpenDetail(row)"
+            content="更新进度"
+            icon-name="ArrowUp"
+            @click="handleArrowUp(row)"
           />
           <IconButton
             content="删除"
@@ -680,7 +817,32 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
 </template>
 
 <style scoped lang="scss">
-// 批量提醒抽屉样式（核心新增）
+// 更新进度抽屉样式（核心新增）
+.progress-drawer-content {
+  height: 100%;
+  box-sizing: border-box;
+
+  .progress-form {
+    .el-form-item {
+      margin-bottom: 16px;
+
+      &.is-required {
+        ::v-deep .el-form-item__label::after {
+          content: '*';
+          color: #f56c6c;
+          margin-left: 4px;
+        }
+      }
+    }
+
+    .form-item {
+      font-size: 14px;
+      color: #606266;
+    }
+  }
+}
+
+// 批量提醒抽屉样式
 .warn-drawer-content {
   height: 100%;
   box-sizing: border-box;

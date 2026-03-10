@@ -134,3 +134,7 @@ export function createWorkOrder(params) {
 export function batchUpdateAssignStaff(params) {
   return requestClient.post(`/facility/work-order/reassign-work-order`, params);
 }
+/** 更新进度 */
+export function updateWorkOrderProgress(params) {
+  return requestClient.post(`/facility/work-order/update-process-status`, params);
+}
