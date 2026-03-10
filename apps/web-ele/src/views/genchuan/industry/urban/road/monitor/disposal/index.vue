@@ -1048,6 +1048,11 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleOpenDetail(row)"
+          />
+          <IconButton
             content="调整派单对象"
             icon-name="switch"
             @click="handleSwitch(row)"
