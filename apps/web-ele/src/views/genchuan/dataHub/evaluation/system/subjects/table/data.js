@@ -210,8 +210,8 @@ export const importFields = [
   { label: '联系人', key: 'contactName', required: true },
   { label: '联系电话', key: 'contactPhone', required: true },
   { label: '成员数量', key: 'memberCount', required: false },
+  { label: '成员列表', key: 'memberNames', required: false },
   { label: '状态ID', key: 'statusId', required: true, defaultValue: 1 },
-  { label: '创建人', key: 'createUserName', required: false },
 ];
 
 export const textObj = {

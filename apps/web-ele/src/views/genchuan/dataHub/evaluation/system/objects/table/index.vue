@@ -521,13 +521,15 @@ function formatList(list) {
         }
       }
 
-      let changeLogShort = '-';
-      if (item.changeLog != null) {
+      let changeLogShort = '-';                           // 1. 默认值设为 '-'
+      if (item.changeLog != null) {                       // 2. 判断 changeLog 是否非 null
         try {
-          const logStr = String(item.changeLog);
-          changeLogShort = logStr.length > 50 ? logStr.substring(0, 50) + '...' : logStr;
+          const logStr = String(item.changeLog);          // 3. 强制转为字符串（避免直接调用 substring 报错）
+          changeLogShort = logStr.length > 50            // 4. 判断长度
+            ? logStr.substring(0, 50) + '...'            //   超过50则截断并加省略号
+            : logStr;                                      //   否则原样赋值
         } catch (e) {
-          console.warn(`条目 ${item.id} changeLog 处理失败`, item.changeLog, e);
+          console.warn(`条目 ${item.id} changeLog 处理失败`, item.changeLog, e);  // 5. 异常时仅打印警告，changeLogShort 保持 '-'
         }
       }
 
