@@ -155,3 +155,7 @@ export function uploadWorkOrderFile(data) {
 export function getSysUserPage(data) {
  return requestClient.get('/facility/sys-user/page', data);
 } 
+/** 已完成归档 */ 
+export function getRoadArchive(data) {
+ return requestClient.get('/facility/road-archive/page', data);
+}
