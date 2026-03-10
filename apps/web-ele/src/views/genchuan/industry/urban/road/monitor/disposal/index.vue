@@ -2,14 +2,17 @@
 import { computed, onMounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
+import { isEmpty } from '@vben/utils';
 
 import {
   ElButton,
-  ElDialog,
+  ElForm,
+  ElFormItem,
   ElInput,
   ElLoading,
   ElMessage,
+  ElOption,
+  ElSelect,
 } from 'element-plus';
 import screenfull from 'screenfull';
 
@@ -17,14 +20,12 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   addRoad,
-  batchConfirmInvalidSysWarn,
-  confirmInvalid,
+  batchUpdateAssignStaff,
   confirmValid,
   deleteWarn,
-  exportwarnExcel,
   getRoadFacility,
   getRoadFacilityList,
-  getwarnList, // 新增：标注无效预警的接口（需确认实际接口名）
+  getRoadWorkOrder,
   updateRoad,
 } from '#/api/genchuan/industry/urban/index.js';
 import { $t } from '#/locales';
@@ -52,25 +53,46 @@ const emit = defineEmits(['arrow-change']);
 const roadDetailRef = ref(null);
 const schemaData = ref(null);
 const roadObj = ref({ detailObj: {}, list: [] });
-// 批量确认无效预警弹窗相关
-const switchDialogVisible = ref(false);
-const switchLoading = ref(false);
 
-// 标注无效预警相关（新增核心）
+const currentSwitchRow = ref({}); // 当前要调整的工单数据
+const switchLoading = ref(false);
+// 派单表单数据
+const assignForm = reactive({
+  assignStaffId: '', // 新运维员ID
+  assignStaffName: '', // 新运维员名称
+  remark: '', // 调整备注
+});
+// 表单校验规则
+const assignFormRules = reactive({
+  assignStaffId: [
+    { required: true, message: '请选择新的指派运维员', trigger: 'change' },
+  ],
+});
+// 运维员列表（含权限）
+const staffList = ref([]);
+// 表单ref（用于校验）
+const assignFormRef = ref(null);
+
+// 标注无效预警相关
 const noConfirmDrawerApi = ref(null);
-const currentNoConfirmRow = ref({}); // 当前标注无效的行数据
-const invalidReason = ref(''); // 无效原因
-const noConfirmLoading = ref(false); // 保存按钮加载状态
+const currentNoConfirmRow = ref({});
+const invalidReason = ref('');
 
 const getTitle = computed(() => {
   return formData.value?.id ? '编辑' : '新增';
 });
+
 onMounted(async () => {
+  // 获取道路列表
   const roadList = await getRoadFacilityList({
     pageNo: 1,
     pageSize: 999,
   });
   roadObj.value.list = roadList.list;
+
+  // 获取运维员列表（含权限）
+  await fetchStaffList();
+
   let roadIndex = 0;
   const schema = useFormSchema();
   schema.forEach((v, i) => {
@@ -102,6 +124,61 @@ onMounted(async () => {
   };
   schemaData.value = schema;
 });
+
+// 获取运维员列表（含权限）
+const fetchStaffList = async () => {
+  try {
+    staffList.value = [
+      { value: '1', label: '张三' },
+      { value: '2', label: '李四' },
+    ];
+  } catch {
+    ElMessage.error('获取运维员列表失败！');
+  }
+};
+
+// 调整派单对象 - 打开右侧抽屉（核心新增）
+const handleSwitch = (row) => {
+  // 初始化表单数据
+  assignForm.assignStaffId = '';
+  assignForm.assignStaffName = '';
+  assignForm.remark = '';
+  // 保存当前工单数据
+  currentSwitchRow.value = row;
+  // 打开右侧抽屉
+  switchDrawerApi.open();
+};
+
+// 确认调整派单对象（核心新增）
+const handleSwitchConfirm = async () => {
+  // 第一步：表单校验
+  const valid = await assignFormRef.value.validate();
+  if (!valid) return;
+
+  try {
+    switchLoading.value = true;
+    // 获得当前对象
+
+    // 第三步：更新工单派单信息
+    const nowObj = staffList.value.find(
+      (v) => v.value === assignForm.assignStaffId,
+    );
+    await batchUpdateAssignStaff({
+      workOrderId: currentSwitchRow.value.id,
+      assignStaffId: nowObj.value,
+      assignStaffName: nowObj.label,
+    });
+
+    ElMessage.success('调整派单对象并推送提醒成功！');
+    switchDrawerApi.close();
+    handleRefresh(); // 刷新表格
+  } catch (error) {
+    ElMessage.error(`操作失败：${error.message || '网络异常'}`);
+  } finally {
+    switchLoading.value = false;
+  }
+};
+
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -112,6 +189,22 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
+
+// 调整派单对象抽屉（核心新增）
+const [SwitchDrawer, switchDrawerApi] = useVbenDrawer({
+  title: '调整派单对象',
+  placement: 'right', // 右侧抽屉
+  width: 450,
+  appendToMain: true,
+  modal: false,
+  footer: false,
+  onCancel() {
+    // 关闭时重置表单
+    assignFormRef.value?.resetFields();
+    switchDrawerApi.close();
+  },
+});
+
 // 移除原 DetailDrawer 初始化逻辑
 const formData = ref();
 const [Form, formApi] = useVbenForm({
@@ -151,53 +244,12 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     }
   },
 });
+
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
 }
 
-/** 导出表格 */
-async function handleExport() {
-  const data = await exportwarnExcel();
-  downloadFileFromBlobPart({ fileName: '待处置预警.xls', source: data });
-}
-/** 创建 */
-function handleCreate() {
-  formApi.resetForm();
-  formApi.setState(() => {
-    const schema = schemaData.value.filter((v) => v.addShow);
-
-    return {
-      schema,
-    };
-  });
-  formDrawerApi
-    .setData({
-      title: '增加',
-    })
-    .open();
-}
-/** 编辑 */
-function handleEdit(row) {
-  dataObj.editObj = row;
-  formApi.resetForm();
-  formApi.setState(() => {
-    return {
-      schema: schemaData.value.map((v) => {
-        return {
-          ...v,
-          disabled: !v.editShow,
-        };
-      }),
-    };
-  });
-  formDrawerApi
-    .setData({
-      title: '编辑',
-      ...row,
-    })
-    .open();
-}
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting'),
@@ -221,15 +273,17 @@ async function handleDeleteBatch() {
   });
   handleRefresh();
 }
+
 const recordsList = ref([]);
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
   recordsList.value = records;
 }
+
 const dataObj = reactive({
   totalShow: false,
-  detailObj: {}, // 保留详情对象用于传递给组件
+  detailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -239,9 +293,11 @@ const dataObj = reactive({
   list: [],
   editObj: {},
 });
+
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
+
 // 表格数据获取
 const getTableData = async (pageObj) => {
   const getParams = {
@@ -249,12 +305,13 @@ const getTableData = async (pageObj) => {
     pageSize: pageObj.page.pageSize,
     ...dataObj.serachObj,
   };
-  const data = await getwarnList(getParams);
+  const data = await getRoadWorkOrder(getParams);
   dataObj.total = data.total;
   dataObj.list = data.list.map((v) => {
     return {
       ...v,
       updateTime: formatTimestamp(v.updateTime),
+      arriveTime: formatTimestamp(v.arriveTime),
       createTime: formatTimestamp(v.createTime),
     };
   });
@@ -262,21 +319,15 @@ const getTableData = async (pageObj) => {
 };
 
 const [QueryForm, QueryFormApi] = useVbenForm({
-  // 默认展开
   collapsed: false,
-  // 所有表单项共用，可单独在表单内覆盖
   commonConfig: {
-    // 所有表单项
     componentProps: {
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
-  // 提交函数
   handleSubmit: onSubmit,
-  // 垂直布局，label和input在不同行，值为vertical
-  // 水平布局，label和input在同一行
   layout: 'horizontal',
   schema: useFormSchema()
     .filter((v) => v.isSearch)
@@ -286,18 +337,19 @@ const [QueryForm, QueryFormApi] = useVbenForm({
         ...v,
       };
     }),
-  // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
   },
 });
+
 // 搜索表单查询
 async function onSubmit() {
   dataObj.serachObj = await QueryFormApi.getValues();
   gridApi.reload();
   drawerApi.close();
 }
+
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
@@ -326,57 +378,26 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-// 修改打开详情的方法，调用组件的open方法
+// 修改打开详情的方法
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
-  // 通过ref调用组件的open方法
   parkDetailDrawerRef.value.open();
 };
+
 const handleSerachShow = () => {
   drawerApi.open();
 };
+
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
 const arrowChange = () => {
   emit('arrow-change');
 };
-// 定义组件ref，用于调用组件方法
+
+// 定义组件ref
 const parkDetailDrawerRef = ref(null);
-const settingConfig = () => {
-  // 这里可以补充手动触发预警的弹窗逻辑
-};
-
-// 批量确认无效预警 - 打开二次确认弹窗
-const switchOpen = () => {
-  // 校验是否选择了数据
-  if (isEmpty(checkedIds.value)) {
-    ElMessage.warning('请先选择需要确认无效的预警！');
-    return;
-  }
-
-  // 打开二次确认弹窗
-  switchDialogVisible.value = true;
-};
-
-// 批量确认无效预警 - 确认操作
-const handleSwitchConfirm = async () => {
-  try {
-    switchLoading.value = true; // 开启加载状态
-
-    // 调用批量确认无效预警的接口
-    await batchConfirmInvalidSysWarn({
-      idList: recordsList.value.map((v) => v.id),
-    });
-    ElMessage.success('批量确认无效预警操作成功！');
-    switchDialogVisible.value = false; // 关闭弹窗
-    handleRefresh(); // 刷新表格数据
-  } catch (error) {
-    ElMessage.error(`操作失败：${error.message || '网络异常'}`);
-  } finally {
-    switchLoading.value = false; // 关闭加载状态
-  }
-};
 
 const openRoadDetail = async (row) => {
   const resObj = await getRoadFacility({
@@ -385,15 +406,15 @@ const openRoadDetail = async (row) => {
   roadObj.value.detailObj = resObj;
   roadDetailRef.value.open();
 };
+
 // 确认有效 - 抽屉
 const currentConfirmRow = ref({});
 const confirmOpinion = ref('');
-// 确认有效 - 打开抽屉
-function handleConfirm(row) {
+const handleConfirm = (row) => {
   currentConfirmRow.value = row;
   confirmOpinion.value = '';
   confirmDrawerApi.open();
-}
+};
 
 // 确认有效 - 保存
 async function handleConfirmSave() {
@@ -415,6 +436,7 @@ async function handleConfirmSave() {
     ElMessage.error('操作失败');
   }
 }
+
 // 确认有效抽屉
 const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
   title: '确认有效',
@@ -427,56 +449,6 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
     confirmDrawerApi.close();
   },
 });
-
-// 标注无效预警 - 打开抽屉（核心改造）
-const handleNoConfirm = (row) => {
-  // 初始化数据
-  currentNoConfirmRow.value = row;
-  invalidReason.value = '';
-  // 打开抽屉
-  noConfirmDrawerApi.value.open();
-};
-
-// 标注无效预警 - 保存（核心改造）
-const handleNoConfirmSave = async () => {
-  // 校验无效原因
-  if (!invalidReason.value.trim()) {
-    ElMessage.warning('请输入无效原因！');
-    return;
-  }
-
-  try {
-    noConfirmLoading.value = true;
-    // 调用标注无效预警的接口
-    await confirmInvalid({
-      id: currentNoConfirmRow.value.id,
-      invalidReason: invalidReason.value.trim(), // 无效原因
-    });
-
-    ElMessage.success('标注无效预警成功！');
-    noConfirmDrawerApi.value.close();
-    handleRefresh(); // 刷新表格
-  } catch (error) {
-    ElMessage.error(`标注失败：${error.message || '网络异常'}`);
-  } finally {
-    noConfirmLoading.value = false;
-  }
-};
-
-// 标注无效预警抽屉（新增）
-const [NoConfirmDrawer, noConfirmDrawerApiRef] = useVbenDrawer({
-  title: '标注无效预警',
-  placement: 'right',
-  width: 480,
-  footer: false,
-  appendToMain: true,
-  modal: false,
-  onCancel() {
-    noConfirmDrawerApiRef.close();
-  },
-});
-// 赋值ref以便外部调用
-noConfirmDrawerApi.value = noConfirmDrawerApiRef;
 </script>
 
 <template>
@@ -493,7 +465,6 @@ noConfirmDrawerApi.value = noConfirmDrawerApiRef;
             placeholder="请输入确认意见"
           />
         </div>
-
         <div class="flex justify-end gap-2">
           <ElButton @click="confirmDrawerApi.close()">取消</ElButton>
           <ElButton type="primary" @click="handleConfirmSave">保存</ElButton>
@@ -501,98 +472,78 @@ noConfirmDrawerApi.value = noConfirmDrawerApiRef;
       </div>
     </ConfirmDrawer>
 
-    <!-- 标注无效预警抽屉（新增核心） -->
-    <NoConfirmDrawer>
-      <div class="p-6">
-        <!-- 预警编号提示 -->
-        <div class="mb-4 text-sm text-gray-500">
-          预警编号：<span class="text-primary">{{
-            currentNoConfirmRow.warnNo
-          }}</span>
-        </div>
+    <!-- 调整派单对象抽屉（核心新增） -->
+    <SwitchDrawer>
+      <div class="assign-drawer-content p-6">
+        <ElForm
+          ref="assignFormRef"
+          :model="assignForm"
+          :rules="assignFormRules"
+          class="assign-form"
+        >
+          <!-- 工单信息展示 -->
+          <div class="form-item mb-4">
+            <label class="mb-2 block text-sm font-medium">当前工单</label>
+            <div class="text-sm text-gray-700">
+              工单编号：{{ currentSwitchRow.orderNo || '-' }}
+            </div>
+          </div>
 
-        <div class="mb-4">
-          <label class="mb-2 block text-sm font-medium"
-            >无效原因 <span class="text-red-500">*</span></label
-          >
-          <ElInput
-            v-model="invalidReason"
-            type="textarea"
-            :rows="8"
-            placeholder="请详细描述该预警标注为无效的原因（例如：误报、数据异常、已处理等）"
-            maxlength="500"
-            show-word-limit
-          />
-        </div>
+          <!-- 新指派运维员（必填标星） -->
+          <ElFormItem label="新指派运维员" prop="assignStaffId" class="mb-4">
+            <ElSelect
+              v-model="assignForm.assignStaffId"
+              placeholder="请选择运维员"
+              class="w-full"
+              @change="
+                (val) => {
+                  const staff = staffList.find((item) => item.staffId === val);
+                  assignForm.assignStaffName = staff?.staffName || '';
+                }
+              "
+            >
+              <ElOption
+                v-for="item in staffList"
+                :key="item.staffId"
+                :label="item.label"
+                :value="item.value"
+              />
+            </ElSelect>
+          </ElFormItem>
+        </ElForm>
 
-        <div class="flex justify-end gap-2">
-          <ElButton @click="noConfirmDrawerApi.close()">取消</ElButton>
-          <ElButton
-            type="primary"
-            @click="handleNoConfirmSave"
-            :loading="noConfirmLoading"
-          >
-            确认标注无效
-          </ElButton>
-        </div>
-      </div>
-    </NoConfirmDrawer>
-
-    <!-- 批量确认无效预警 二次确认弹窗 -->
-    <ElDialog
-      v-model="switchDialogVisible"
-      title="批量确认无效预警"
-      width="380px"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      destroy-on-close
-    >
-      <div class="switch-dialog-content">
-        <div class="selected-count">
-          你已选择
-          <span class="count-num">{{ checkedIds.length }}</span>
-          条预警数据，确认要标记为无效吗？
-        </div>
-      </div>
-      <template #footer>
-        <div class="dialog-footer">
-          <ElButton @click="switchDialogVisible = false">取消</ElButton>
+        <!-- 操作按钮 -->
+        <div class="mt-6 flex justify-end gap-2">
+          <ElButton @click="switchDrawerApi.close()">取消</ElButton>
           <ElButton
             type="primary"
             @click="handleSwitchConfirm"
             :loading="switchLoading"
           >
-            确认标记为无效
+            确认调整并推送提醒
           </ElButton>
         </div>
-      </template>
-    </ElDialog>
+      </div>
+    </SwitchDrawer>
 
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <!-- 使用封装后的详情抽屉组件 -->
+
+    <!-- 详情组件 -->
     <tableDetail
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
       title="详情"
     />
+
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton
-            content="手动触发预警"
-            icon-name="setting"
-            @click="settingConfig"
-          />
-          <IconButton
-            content="批量确认无效预警"
-            icon-name="switch"
-            @click="switchOpen"
-          />
           <IconButton
             content="批量删除"
             icon-name="delete"
@@ -617,13 +568,13 @@ noConfirmDrawerApi.value = noConfirmDrawerApiRef;
           />
         </div>
       </template>
-      <template #warnNo="{ row }">
+      <template #orderNo="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.warnNo }}
+          {{ row.orderNo }}
         </el-text>
       </template>
       <template #roadName="{ row }">
@@ -638,32 +589,15 @@ noConfirmDrawerApi.value = noConfirmDrawerApiRef;
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
+            content="调整派单对象"
+            icon-name="switch"
+            @click="handleSwitch(row)"
+          />
+          <IconButton
             content="详情"
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
-          <IconButton
-            content="确认有效"
-            icon-name="Check"
-            :disabled="row.status !== '待处置'"
-            @click="handleConfirm(row)"
-          />
-          <IconButton
-            content="标注无效"
-            icon-name="Paperclip"
-            :disabled="row.status !== '待处置'"
-            @click="handleNoConfirm(row)"
-          />
-          <IconButton
-            content="派发工单"
-            icon-name="Avatar"
-            @click="handleOpenDetail(row)"
-          />
-          <!-- <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          /> -->
           <IconButton
             content="删除"
             icon-name="delete"
@@ -680,6 +614,31 @@ noConfirmDrawerApi.value = noConfirmDrawerApiRef;
 </template>
 
 <style scoped lang="scss">
+// 调整派单对象抽屉样式
+.assign-drawer-content {
+  height: 100%;
+  box-sizing: border-box;
+
+  .assign-form {
+    .el-form-item {
+      margin-bottom: 16px;
+
+      &.is-required {
+        ::v-deep .el-form-item__label::after {
+          content: '*';
+          color: #f56c6c;
+          margin-left: 4px;
+        }
+      }
+    }
+
+    .form-item {
+      font-size: 14px;
+      color: #606266;
+    }
+  }
+}
+
 // 批量切换状态弹窗样式
 .switch-dialog-content {
   padding: 20px 0;
@@ -726,7 +685,7 @@ noConfirmDrawerApi.value = noConfirmDrawerApiRef;
   }
 }
 
-// 标注无效抽屉样式优化
+// 抽屉样式优化
 :deep(.el-drawer) {
   .el-drawer__body {
     padding: 0;

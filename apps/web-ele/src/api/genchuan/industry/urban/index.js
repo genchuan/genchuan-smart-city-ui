@@ -114,3 +114,23 @@ export function getSysDevicePage(params) {
     params,
   });
 }
+
+/** 获得道路工单分页 */
+export function getRoadWorkOrder(params) {
+  return requestClient.get('/facility/road-work-order/page', {
+    params,
+  });
+}
+
+/** 批量提醒 */
+export function batchConfirmRemind(params) {
+  return requestClient.post(`/facility/work-order/batch-remind`, params);
+}
+/** 处置中预警创建 */
+export function createWorkOrder(params) {
+  return requestClient.post(`/facility/work-order/create`, params);
+}
+/** 更新派单对象 */
+export function batchUpdateAssignStaff(params) {
+  return requestClient.post(`/facility/work-order/reassign-work-order`, params);
+}
