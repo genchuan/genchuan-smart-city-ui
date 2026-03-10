@@ -150,3 +150,8 @@ export function uploadWorkOrderFile(data) {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 } 
+
+/** 获得人员统计 */
+export function getSysUserPage(data) {
+ return requestClient.get('/facility/sys-user/page', data);
+} 

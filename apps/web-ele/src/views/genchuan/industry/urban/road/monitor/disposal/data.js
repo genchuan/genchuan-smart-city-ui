@@ -386,16 +386,11 @@ export function useFormSchema() {
   ];
 }
 
-/** 道路预警工单处置表格列配置 - 匹配后端数据字段 */
+/** 道路预警工单处置表格列配置 - 严格匹配业务文档顺序及后端数据字段 */
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
-    {
-      field: 'id',
-      title: '工单ID',
-      minWidth: 80,
-      sortable: true,
-    },
+    // 1. 工单编号（文档首位，支持钻取）
     {
       field: 'orderNo',
       title: '工单编号',
@@ -403,137 +398,110 @@ export function useGridColumns() {
       sortable: true,
       slots: { default: 'orderNo' },
     },
+    // 2. 关联预警编号（文档第二位，支持钻取）
     {
       field: 'warnNo',
       title: '关联预警编号',
       minWidth: 150,
       sortable: true,
     },
+    // 3. 处置路段（文档第三位，对应 road_name，支持钻取）
     {
       field: 'facilityName',
       title: '处置路段',
       minWidth: 120,
       sortable: true,
     },
+    // 4. 处置类型（文档第四位，对应 hazard_type，支持钻取）
     {
       field: 'facilityType',
       title: '处置类型',
       minWidth: 100,
       sortable: true,
     },
+    // 5. 指派运维员（文档第五位，对应 sys_user_name，支持钻取）
     {
       field: 'assignStaffName',
       title: '指派运维员',
       minWidth: 100,
       sortable: true,
     },
-    {
-      field: 'orderType',
-      title: '工单类型',
-      minWidth: 80,
-      sortable: true,
-      format: (val) => {
-        const map = { 1: '运维', 2: '养护', 3: '清淤', 4: '巡检', 5: '处置' };
-        return map[val] || val;
-      },
-    },
-    {
-      field: 'dealLimit',
-      title: '处置时限(小时)',
-      minWidth: 120,
-      sortable: true,
-    },
-    {
-      field: 'remainTime',
-      title: '剩余处置时间',
-      minWidth: 120,
-      sortable: true,
-    },
-    {
-      field: 'overTimeFlag',
-      title: '超时提醒标识',
-      minWidth: 80,
-      sortable: true,
-      format: (val) => val === 0 ? '未超时' : '已超时',
-    },
-    {
-      field: 'processStatus',
-      title: '当前处置进度',
-      minWidth: 100,
-      sortable: true,
-      format: (val) => {
-        const map = { 1: '待处置', 2: '处置中', 3: '待核查', 4: '已完成' };
-        return map[val] || val;
-      },
-    },
-    {
-      field: 'priorityLevel',
-      title: '工单优先级',
-      minWidth: 80,
-      sortable: true,
-      format: (val) => {
-        const map = { 1: '低', 2: '中', 3: '高' };
-        return map[val] || val;
-      },
-    },
-    {
-      field: 'riskLevel',
-      title: '风险等级',
-      minWidth: 80,
-      sortable: true,
-      format: (val) => {
-        const map = { 1: '低', 2: '中', 3: '高' };
-        return map[val] || val;
-      },
-    },
-    {
-      field: 'areaName',
-      title: '所属区域',
-      minWidth: 120,
-      sortable: true,
-    },
-    {
-      field: 'arriveTime',
-      title: '抵达现场时间',
-      minWidth: 180,
-      sortable: true,
-    },
-    {
-      field: 'completeTime',
-      title: '完成时间',
-      minWidth: 180,
-      sortable: true,
-    },
-    {
-      field: 'completeTime',
-      title: '完成时间',
-      minWidth: 180,
-      sortable: true,
-    },
-    {
-      field: 'siteDataUrlListStr',
-      title: '现场检测数据',
-      minWidth: 180,
-      sortable: true,
-    },
-     {
-      field: 'dealContent',
-      title: '已完成处置内容',
-      minWidth: 180,
-      sortable: true,
-    },
-    {
-      field: 'updateTime',
-      title: '处置进度更新时间',
-      minWidth: 180,
-      sortable: true,
-    },
+    // 6. 工单创建时间（文档第六位，对应 create_time）
     {
       field: 'createTime',
       title: '工单创建时间',
       minWidth: 180,
       sortable: true,
     },
+    // 7. 处置时限（文档第七位，对应 deal_limit）
+    {
+      field: 'dealLimit',
+      title: '处置时限(小时)',
+      minWidth: 120,
+      sortable: true,
+    },
+    // 8. 当前处置进度（文档第八位，对应 process_status，支持钻取）
+    {
+      field: 'processStatus',
+      title: '当前处置进度',
+      minWidth: 100,
+      sortable: true,
+      format: (val) => {
+        // 匹配文档及实际业务状态映射
+        const map = {
+          PENDING: '待处置',
+          ON_SITE_REPAIR: '现场修补',
+          CRACK_CLEANING: '裂缝清理',
+          COMPLETED: '已完成'
+        };
+        // 兼容数字和字符串两种返回格式
+        return map[val] || { 1: '待处置', 2: '处置中', 3: '待核查', 4: '已完成' }[val] || val;
+      },
+    },
+    // 9. 抵达现场时间（文档第九位，对应 arrive_time）
+    {
+      field: 'arriveTime',
+      title: '抵达现场时间',
+      minWidth: 180,
+      sortable: true,
+    },
+    // 10. 剩余处置时间（文档第十位，对应 remain_time，实时计算）
+    {
+      field: 'remainTime',
+      title: '剩余处置时间',
+      minWidth: 120,
+      sortable: true,
+    },
+    // 11. 处置进度更新时间（文档第十一位，对应 update_time，自动同步）
+    {
+      field: 'updateTime',
+      title: '处置进度更新时间',
+      minWidth: 180,
+      sortable: true,
+    },
+    // 12. 已完成处置内容（文档第十二位，对应 deal_content，手动录入）
+    {
+      field: 'dealContent',
+      title: '已完成处置内容',
+      minWidth: 180,
+      sortable: true,
+    },
+    // 13. 现场检测数据（文档第十三位，对应 site_data，手动录入，默认隐藏可开启）
+    {
+      field: 'siteDataUrlListStr',
+      title: '现场检测数据',
+      minWidth: 180,
+      sortable: true, 
+      slots: { default: 'siteDataUrlListStr' },
+    },
+    // 14. 超时提醒标识（文档第十四位，对应 over_time_flag，自动生成）
+    {
+      field: 'overTimeFlag',
+      title: '超时提醒标识',
+      minWidth: 80,
+      sortable: true,
+      format: (val) => val === 0 ? '未超时' : '已超时',
+    }, 
     {
       title: '操作',
       width: 150,

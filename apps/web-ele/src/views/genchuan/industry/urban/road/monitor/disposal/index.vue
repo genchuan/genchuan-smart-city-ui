@@ -30,6 +30,7 @@ import {
   getRoadFacility,
   getRoadFacilityList,
   getRoadWorkOrder,
+  getSysUserPage,
   superviseWorkOrder,
   updateRoad,
   updateWorkOrderProgress,
@@ -177,7 +178,11 @@ const [UploadModal, uploadModalApi] = useVbenModal({
 const getTitle = computed(() => {
   return formData.value?.id ? '编辑' : '新增';
 });
-
+const showFileLength = (row) => {
+  const str = row?.siteDataUrlListStr || '[]';
+  const arr = JSON.parse(str);
+  return arr.length;
+};
 onMounted(async () => {
   const roadList = await getRoadFacilityList({
     pageNo: 1,
@@ -221,10 +226,16 @@ onMounted(async () => {
 
 const fetchStaffList = async () => {
   try {
-    staffList.value = [
-      { value: '1', label: '张三' },
-      { value: '2', label: '李四' },
-    ];
+    const res = await getSysUserPage({
+      pageNo: 1,
+      pageSize: 999,
+    });
+    staffList.value = res.list.map((v) => {
+      return {
+        label: v.nickname,
+        value: v.id,
+      };
+    });
   } catch {
     ElMessage.error('获取运维员列表失败！');
   }
@@ -323,7 +334,7 @@ const [ProgressDrawer, progressDrawerApi] = useVbenDrawer({
 
 // 打开更新进度抽屉
 const handleArrowUp = (row) => {
-  progressForm.disposeProgress = '';
+  progressForm.disposeProgress = row.processStatus;
   progressForm.progressDesc = '';
   currentProgressRow.value = row;
   progressDrawerApi.open();
@@ -339,7 +350,6 @@ const handleProgressSave = async () => {
 
     await updateWorkOrderProgress({
       workOrderId: currentProgressRow.value.id,
-      processStatus: progressForm.disposeProgress,
       processDesc: progressForm.progressDesc,
     });
 
@@ -574,7 +584,7 @@ const getTableData = async (pageObj) => {
     return {
       ...v,
       updateTime: formatTimestamp(v.updateTime),
-      arriveTime: formatTimestamp(v.arriveTime),
+      arriveTime: v.arriveTime ? formatTimestamp(v.arriveTime) : '',
       createTime: formatTimestamp(v.createTime),
       disposeProgressText:
         {
@@ -781,21 +791,11 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
             </div>
           </div>
 
-          <ElFormItem label="处置进度" prop="disposeProgress" class="mb-4">
-            <ElSelect
-              v-model="progressForm.disposeProgress"
-              placeholder="请选择处置进度"
-              class="w-full"
-            >
-              <ElOption
-                v-for="item in progressOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-              />
-            </ElSelect>
-          </ElFormItem>
-
+          <div class="form-item mb-4">
+            <div class="text-sm text-gray-700">
+              处置状态： {{ progressForm.disposeProgress || '-' }}
+            </div>
+          </div>
           <ElFormItem label="进度说明" prop="progressDesc" class="mb-4">
             <ElInput
               v-model="progressForm.progressDesc"
@@ -1027,6 +1027,11 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
           />
         </div>
       </template>
+      <template #siteDataUrlListStr="{ row }">
+        <div>
+          {{ showFileLength(row) }}
+        </div>
+      </template>
       <template #orderNo="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
@@ -1060,6 +1065,7 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
           <IconButton
             content="更新进度"
             icon-name="ArrowUp"
+            :disabled="!['待处置', '处置中'].includes(row.processStatus)"
             @click="handleArrowUp(row)"
           />
           <IconButton
