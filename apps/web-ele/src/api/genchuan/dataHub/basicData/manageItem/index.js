@@ -79,11 +79,11 @@ export function importInstance(file) {
 
 /** 批量更新管理事项实例状态
  * @param {number[]} ids - 部件实例ID数组
- * @param {number} runStatus - 目标运行状态
+ * @param {number} status - 目标运行状态
  */
-export function batchUpdateInstanceStatus(ids, runStatus) {
+export function batchUpdateInstanceStatus(ids, status) {
   return requestClient.post('/data/matter-instance/update-status-name-batch', {
     ids,
-    runStatus,
+    status,
   });
 }

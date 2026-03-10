@@ -106,10 +106,7 @@ export function useFormSchema(treeData = []) {
       component: 'Select',
       componentProps: {
         placeholder: '请选择分类类型',
-        options: getDictOptions(
-          DICT_TYPE.DATA_CATEGORYTYPE,
-          'string',
-        ),
+        options: getDictOptions(DICT_TYPE.DATA_CATEGORYTYPE, 'string'),
       },
       rules: 'required',
     },
@@ -175,25 +172,28 @@ export function useGridColumns() {
       title: '分类名称',
       minWidth: 150,
       sortable: true,
-      slots: { default: 'categoryName' },
+      slots: { default: 'categoryNameDetail' },
     },
     {
       field: 'categoryCode',
       title: '分类代码',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'categoryCode' },
     },
     {
       field: 'parentName',
       title: '上级分类',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'parentName' },
     },
     {
       field: 'deptName',
       title: '主管部门',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'deptName' },
     },
     {
       field: 'dealLimit',
@@ -206,16 +206,14 @@ export function useGridColumns() {
       title: '工作流编码',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'workflowCode' },
     },
     {
       field: 'categoryType',
       title: '分类类型',
       minWidth: 120,
       sortable: true,
-      cellRender: {
-        name: 'CellDict',
-        props: { type: DICT_TYPE.DATA_CATEGORYTYPE },
-      },
+      slots: { default: 'categoryType' },
     },
     {
       field: 'status',
@@ -285,17 +283,11 @@ export const detailFields = [
     label: '分类类型',
     type: 'tag',
     formatter: (value) => {
-      const dict = getDictObj(
-        DICT_TYPE.DATA_CATEGORYTYPE,
-        String(value),
-      );
+      const dict = getDictObj(DICT_TYPE.DATA_CATEGORYTYPE, String(value));
       return dict ? dict.label : value;
     },
     tagType: (value) => {
-      const dict = getDictObj(
-        DICT_TYPE.DATA_CATEGORYTYPE,
-        String(value),
-      );
+      const dict = getDictObj(DICT_TYPE.DATA_CATEGORYTYPE, String(value));
       return dict ? dict.colorType : 'primary';
     },
   },
@@ -520,19 +512,21 @@ export function useInstanceGridColumns() {
       title: '16位标识码',
       minWidth: 160,
       sortable: true,
+      slots: { default: 'uniqueCode' },
     },
     {
       field: 'categoryName',
       title: '所属分类',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'categoryName' },
     },
-    {
-      field: 'parentCategoryId',
-      title: '上级分类ID',
-      minWidth: 120,
-      sortable: true,
-    },
+    // {
+    //   field: 'parentCategoryId',
+    //   title: '上级分类ID',
+    //   minWidth: 120,
+    //   sortable: true,
+    // },
     {
       field: 'location',
       title: '事发位置',
@@ -544,6 +538,7 @@ export function useInstanceGridColumns() {
       title: '所在网格',
       minWidth: 150,
       sortable: true,
+      slots: { default: 'gridName' },
     },
     {
       field: 'description',
@@ -566,6 +561,7 @@ export function useInstanceGridColumns() {
       title: '主管部门',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'deptName' },
     },
     {
       field: 'creator',
@@ -599,7 +595,7 @@ export function useInstanceGridColumns() {
     },
     {
       title: '操作',
-      width: 100,
+      width: 150,
       fixed: 'right',
       slots: { default: 'actions' },
     },
