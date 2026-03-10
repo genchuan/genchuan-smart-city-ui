@@ -6,6 +6,11 @@ import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
 
+const chartRef = ref(null);
+const refreshChart = () => {
+  chartRef.value?.fetchOverview();
+};
+
 const changeArrowStatus = () => {
   secondShow.value = !secondShow.value;
   tabArray.value.forEach((v) => {
@@ -32,7 +37,7 @@ const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <carchart v-if="tabArray[0].arrowShow" />
+    <carchart ref="chartRef" v-if="tabArray[0].arrowShow" />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -71,6 +76,7 @@ const secondShow = ref(false);
           :key="item.label"
           :arrow-show="item.arrowShow"
           @arrow-change="arrowChange"
+          @refresh-chart="refreshChart"
         />
       </el-tab-pane>
     </el-tabs>

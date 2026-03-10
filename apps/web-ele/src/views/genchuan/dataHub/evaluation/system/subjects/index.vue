@@ -6,12 +6,16 @@ import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
 
+// 图表组件 ref
+const chartRef = ref(null);
+
 const changeArrowStatus = () => {
   secondShow.value = !secondShow.value;
   tabArray.value.forEach((v) => {
     v.secondShow = secondShow.value;
   });
 };
+
 const tabArray = ref([
   {
     label: '评价主体管理',
@@ -22,17 +26,28 @@ const tabArray = ref([
     arrowState: false,
   },
 ]);
+
 const arrowChange = () => {
   tabArray.value.forEach((v) => {
     v.arrowShow = !v.arrowShow;
   });
 };
+
 const activeName = ref('评价主体管理');
 const secondShow = ref(true);
+
+// 刷新图表数据（由表格组件触发）
+const handleRefreshChart = () => {
+  if (chartRef.value) {
+    chartRef.value.refreshOverview();
+  }
+};
 </script>
+
 <template>
   <div class="common-index">
-    <carchart v-if="tabArray[0].arrowShow" />
+    <!-- 给图表组件添加 ref -->
+    <carchart ref="chartRef" v-if="tabArray[0].arrowShow" />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -71,6 +86,7 @@ const secondShow = ref(true);
           :key="item.label"
           :arrow-show="item.arrowShow"
           @arrow-change="arrowChange"
+          @refresh-chart="handleRefreshChart"
         />
       </el-tab-pane>
     </el-tabs>
