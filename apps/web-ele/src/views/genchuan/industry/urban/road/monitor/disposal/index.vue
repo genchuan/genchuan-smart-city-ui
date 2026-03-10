@@ -1,18 +1,21 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue';
 
-import { confirm, useVbenDrawer, useVbenModal } from '@vben/common-ui'; // 新增 useVbenModal
+import { confirm, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
+import { UploadFilled } from '@element-plus/icons-vue'; // 修复图标导入
 import {
   ElButton,
   ElForm,
   ElFormItem,
   ElInput,
+  ElInputNumber,
   ElLoading,
   ElMessage,
   ElOption,
   ElSelect,
+  ElUpload,
 } from 'element-plus';
 import screenfull from 'screenfull';
 
@@ -27,9 +30,10 @@ import {
   getRoadFacility,
   getRoadFacilityList,
   getRoadWorkOrder,
-  superviseWorkOrder, // 新增：超时督办接口
+  superviseWorkOrder,
   updateRoad,
   updateWorkOrderProgress,
+  uploadWorkOrderFile,
 } from '#/api/genchuan/industry/urban/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
@@ -108,13 +112,12 @@ const progressOptions = ref([
   { label: '裂缝清理', value: 'CRACK_CLEANING' },
 ]);
 
-// 超时督办相关（核心新增）
-const superviseLoading = ref(false); // 督办加载状态
-const currentSuperviseRow = ref({}); // 当前督办的工单
+// 超时督办相关
+const superviseLoading = ref(false);
+const currentSuperviseRow = ref({});
 const superviseForm = reactive({
-  superviseOpinion: '', // 督办意见
+  superviseOpinion: '',
 });
-// 督办表单校验规则
 const superviseFormRules = reactive({
   superviseOpinion: [
     { required: true, message: '请输入督办意见', trigger: 'blur' },
@@ -122,15 +125,51 @@ const superviseFormRules = reactive({
   ],
 });
 const superviseFormRef = ref(null);
-// 创建督办弹窗
 const [SuperviseModal, superviseModalApi] = useVbenModal({
   title: '超时督办',
-  width: 450, // 小型弹窗宽度
+  width: 450,
   modalProps: {
-    destroyOnClose: true, // 关闭时销毁内容
+    destroyOnClose: true,
   },
   onCancel() {
     superviseFormRef.value?.resetFields();
+  },
+  footer: false,
+});
+
+// 上传资料相关（核心改造：匹配接口所有query参数）
+const uploadLoading = ref(false);
+const currentUploadRow = ref({});
+// 新增接口要求的所有参数
+const uploadForm = reactive({
+  fileDesc: '', // 资料文字说明
+  afterIndexValue: 0, // 处理后的指标数值
+  file: null,
+});
+// 上传表单校验规则（匹配接口必填项）
+const uploadFormRules = reactive({
+  fileDesc: [
+    { required: true, message: '请输入资料文字说明', trigger: 'blur' },
+  ],
+  afterIndexValue: [
+    { required: true, message: '请输入处理后的指标数值', trigger: 'blur' },
+  ],
+  file: [{ required: true, message: '请选择要上传的文件', trigger: 'change' }],
+});
+const uploadFormRef = ref(null);
+const [UploadModal, uploadModalApi] = useVbenModal({
+  title: '上传工单资料',
+  width: 600,
+  modalProps: {
+    destroyOnClose: true,
+  },
+  onCancel() {
+    // 关闭弹窗清空所有数据
+    uploadForm.fileDesc = '';
+    uploadForm.afterIndexValue = 0;
+    uploadForm.file = null;
+    fileList.value = [];
+    uploadFormRef.value?.resetFields();
   },
   footer: false,
 });
@@ -314,38 +353,97 @@ const handleProgressSave = async () => {
   }
 };
 
-// 打开超时督办弹窗（核心新增）
+// 打开超时督办弹窗
 const handleSupervise = (row) => {
-  // 初始化督办表单
   superviseForm.superviseOpinion = '';
-  // 保存当前工单数据
   currentSuperviseRow.value = row;
-  // 打开督办弹窗
   superviseModalApi.open();
 };
 
-// 提交督办意见（核心新增）
+// 提交督办意见
 const handleSuperviseSubmit = async () => {
-  // 表单校验
   const valid = await superviseFormRef.value.validate();
   if (!valid) return;
 
   try {
     superviseLoading.value = true;
 
-    // 调用超时督办接口
     await superviseWorkOrder({
-      workOrderId: currentSuperviseRow.value.id, // 工单ID
-      superviseOpinion: superviseForm.superviseOpinion, // 督办意见
+      workOrderId: currentSuperviseRow.value.id,
+      superviseOpinion: superviseForm.superviseOpinion,
     });
 
     ElMessage.success('超时督办提交成功！');
     superviseModalApi.close();
-    handleRefresh(); // 刷新表格展示
+    handleRefresh();
   } catch (error) {
     ElMessage.error(`督办提交失败：${error.message || '网络异常'}`);
   } finally {
     superviseLoading.value = false;
+  }
+};
+
+// 上传组件相关
+const upload = ref(null);
+const fileList = ref([]);
+const handleExceed = (files) => {
+  upload.value.clearFiles();
+  const file = files[0];
+  upload.value.handleStart(file);
+};
+
+// 打开上传资料弹窗
+const handleUpdateFile = (row) => {
+  // 初始化表单数据
+  uploadForm.fileDesc = '';
+  uploadForm.afterIndexValue = 0;
+  uploadForm.file = null;
+  fileList.value = [];
+  currentUploadRow.value = row;
+  uploadModalApi.open();
+};
+
+// 文件选择事件
+const onChange = (file) => {
+  fileList.value = [];
+  fileList.value.push(file);
+  uploadForm.file = file;
+};
+
+// 提交文件上传（核心改造：匹配接口query+form-data参数）
+const handleUploadSubmit = async () => {
+  // 1. 表单整体校验
+  const valid = await uploadFormRef.value.validate();
+  if (!valid) return;
+
+  // 2. 校验文件是否选择
+  if (!uploadForm.file || fileList.value.length === 0) {
+    ElMessage.warning('请选择要上传的文件');
+    return;
+  }
+
+  try {
+    uploadLoading.value = true;
+    const file = fileList.value[0];
+
+    // 3. 构建FormData（仅传递文件）
+    const formData = new FormData();
+    formData.append('file', file.raw);
+    formData.append('workOrderId', currentUploadRow.value.id);
+    formData.append('fileDesc', uploadForm.fileDesc);
+    formData.append('afterIndexValue', uploadForm.afterIndexValue);
+
+    // 5. 调用上传接口：同时传递formData和query参数
+    await uploadWorkOrderFile(formData);
+
+    ElMessage.success('工单资料上传成功！');
+    uploadModalApi.close();
+    handleRefresh(); // 刷新工单列表
+  } catch (error) {
+    ElMessage.error(`上传失败：${error.message || '服务器异常'}`);
+    console.error('上传错误详情：', error);
+  } finally {
+    uploadLoading.value = false;
   }
 };
 
@@ -723,7 +821,7 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
       </div>
     </ProgressDrawer>
 
-    <!-- 超时督办弹窗（核心新增） -->
+    <!-- 超时督办弹窗 -->
     <SuperviseModal>
       <div class="supervise-modal-content p-4">
         <ElForm
@@ -732,7 +830,6 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
           :rules="superviseFormRules"
           class="supervise-form"
         >
-          <!-- 工单信息展示 -->
           <div class="form-item mb-4">
             <label class="mb-2 block text-sm font-medium">督办工单</label>
             <div class="text-sm text-gray-700">
@@ -740,7 +837,6 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
             </div>
           </div>
 
-          <!-- 督办意见（必填） -->
           <ElFormItem label="督办意见" prop="superviseOpinion" class="mb-4">
             <ElInput
               v-model="superviseForm.superviseOpinion"
@@ -753,7 +849,6 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
           </ElFormItem>
         </ElForm>
 
-        <!-- 操作按钮 -->
         <div class="mt-4 flex justify-end gap-2">
           <ElButton @click="superviseModalApi.close()">取消</ElButton>
           <ElButton
@@ -766,6 +861,72 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
         </div>
       </div>
     </SuperviseModal>
+
+    <!-- 上传资料弹窗（核心改造：新增所有接口参数输入框） -->
+    <UploadModal>
+      <div class="upload-modal-content p-4">
+        <ElForm
+          ref="uploadFormRef"
+          :model="uploadForm"
+          :rules="uploadFormRules"
+          label-width="120px"
+        >
+          <!-- 资料文字说明 -->
+          <ElFormItem label="资料说明" prop="fileDesc" class="mb-4">
+            <ElInput
+              v-model="uploadForm.fileDesc"
+              placeholder="请输入资料文字说明（如：现场检测图片）"
+              maxlength="100"
+              show-word-limit
+            />
+          </ElFormItem>
+
+          <!-- 处理后的指标数值 -->
+          <ElFormItem label="指标数值" prop="afterIndexValue" class="mb-4">
+            <ElInputNumber
+              v-model="uploadForm.afterIndexValue"
+              placeholder="请输入处理后的指标数值"
+              :min="0"
+              style="width: 100%"
+            />
+          </ElFormItem>
+
+          <!-- 文件上传区域 -->
+          <ElFormItem label="选择文件" prop="file" class="mb-4">
+            <ElUpload
+              ref="upload"
+              v-model:file-list="fileList"
+              :on-change="onChange"
+              :on-exceed="handleExceed"
+              :auto-upload="false"
+              class="upload-demo"
+              drag
+              :limit="1"
+            >
+              <ElIcon class="el-icon--upload"><UploadFilled /></ElIcon>
+              <div class="el-upload__text">
+                拖拽文件到此处上传，或<em>点击选择文件</em>
+              </div>
+              <div class="el-upload__tip mt-2 text-sm text-gray-500">
+                支持jpg/jpeg/png/pdf/doc/docx/xls/xlsx格式，单个文件不超过5MB
+              </div>
+            </ElUpload>
+          </ElFormItem>
+        </ElForm>
+
+        <!-- 操作按钮 -->
+        <div class="mt-4 flex justify-end gap-2">
+          <ElButton @click="uploadModalApi.close()">取消</ElButton>
+          <ElButton
+            type="primary"
+            @click="handleUploadSubmit"
+            :loading="uploadLoading"
+          >
+            确认上传
+          </ElButton>
+        </div>
+      </div>
+    </UploadModal>
 
     <!-- 调整派单对象抽屉 -->
     <SwitchDrawer>
@@ -902,6 +1063,11 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
             @click="handleSupervise(row)"
           />
           <IconButton
+            content="上传资料"
+            icon-name="Upload"
+            @click="handleUpdateFile(row)"
+          />
+          <IconButton
             content="删除"
             icon-name="delete"
             color="#F56C6C"
@@ -917,7 +1083,7 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
 </template>
 
 <style scoped lang="scss">
-// 超时督办弹窗样式（核心新增）
+// 超时督办弹窗样式
 .supervise-modal-content {
   .supervise-form {
     .el-form-item {
@@ -935,6 +1101,27 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
     .form-item {
       font-size: 14px;
       color: #606266;
+    }
+  }
+}
+
+// 上传资料弹窗样式（适配新表单）
+.upload-modal-content {
+  ::v-deep .el-form {
+    width: 100%;
+  }
+
+  .upload-demo {
+    ::v-deep .el-upload {
+      border: 1px dashed #d9d9d9;
+      border-radius: 6px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+
+      &:hover {
+        border-color: var(--el-color-primary);
+      }
     }
   }
 }

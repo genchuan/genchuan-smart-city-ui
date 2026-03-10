@@ -143,3 +143,10 @@ export function updateWorkOrderProgress(params) {
 export function superviseWorkOrder(params) {
   return requestClient.post(`/facility/work-order/supervise-overtime`, params);
 }
+
+/** 上传资料 */
+export function uploadWorkOrderFile(data) {
+ return requestClient.post('/facility/work-order/upload-work-order-file', data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+} 
