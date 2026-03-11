@@ -186,7 +186,7 @@ const showFileLength = (row) => {
 onMounted(async () => {
   const roadList = await getRoadFacilityList({
     pageNo: 1,
-    pageSize: 999,
+    pageSize: 100,
   });
   roadObj.value.list = roadList.list;
 
@@ -228,7 +228,7 @@ const fetchStaffList = async () => {
   try {
     const res = await getSysUserPage({
       pageNo: 1,
-      pageSize: 999,
+      pageSize: 100,
     });
     staffList.value = res.list.map((v) => {
       return {

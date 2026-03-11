@@ -1,10 +1,9 @@
- 
 
-/** 新增/修改的表单/列表的搜索表单 - 改造为道路预警归档管理表单 */
+/** 道路预警归档管理表单配置 - 严格匹配表格JSON原始字段 */
 export function useFormSchema() {
   return [
     {
-      fieldName: 'archiveCode',
+      fieldName: 'archiveNo', // 匹配表格字段archiveNo
       label: '归档编号',
       component: 'Input',
       componentProps: {
@@ -12,10 +11,10 @@ export function useFormSchema() {
         maxLength: 50, // 限制编号长度，符合编码规范
       },
       labelWidth: '100',
-      rules: 'required', // 归档编号为必填项
+      rules: 'required', // 归档编号为必填项 
     },
     {
-      fieldName: 'relatedWorkOrderCode',
+      fieldName: 'orderNo', // 匹配表格字段orderNo
       label: '关联工单编号',
       component: 'Input',
       componentProps: {
@@ -24,9 +23,10 @@ export function useFormSchema() {
       },
       labelWidth: '100',
       rules: 'required', // 关联工单编号为必填项
+      // 支持搜索
     },
     {
-      fieldName: 'relatedWarningCode',
+      fieldName: 'warnNo', // 匹配表格字段warnNo
       label: '关联预警编号',
       component: 'Input',
       componentProps: {
@@ -35,9 +35,10 @@ export function useFormSchema() {
       },
       labelWidth: '100',
       rules: 'required', // 关联预警编号为必填项
+      // 支持搜索
     },
     {
-      fieldName: 'disposalRoadSection',
+      fieldName: 'facilityName', // 匹配表格字段facilityName
       label: '处置路段',
       component: 'Input',
       componentProps: {
@@ -45,9 +46,13 @@ export function useFormSchema() {
       },
       labelWidth: '100',
       rules: 'required', // 处置路段为必填项
+      // 支持搜索
+      isSearch: true,
     },
     {
+      fieldName: 'facilityType', // 匹配表格字段facilityType
       component: 'Select',
+      label: '处置类型',
       labelWidth: '100',
       componentProps: {
         allowClear: true,
@@ -63,12 +68,12 @@ export function useFormSchema() {
         placeholder: '请选择处置类型',
         showSearch: true,
       },
-      fieldName: 'disposalType',
-      label: '处置类型',
       rules: 'required',
+      isSearch: true,
+      // 支持搜索
     },
     {
-      fieldName: 'assignedMaintenancePerson',
+      fieldName: 'assignStaffName', // 匹配表格字段assignStaffName
       label: '指派运维员',
       component: 'Input',
       componentProps: {
@@ -77,9 +82,12 @@ export function useFormSchema() {
       },
       labelWidth: '100',
       rules: 'required', // 指派运维员为必填项
+      // 支持搜索
     },
     {
+      fieldName: 'checkResult', // 匹配表格字段checkResult
       component: 'Select',
+      label: '核查结果',
       labelWidth: '100',
       componentProps: {
         allowClear: true,
@@ -91,12 +99,12 @@ export function useFormSchema() {
         placeholder: '请选择核查结果',
         showSearch: true,
       },
-      fieldName: 'verificationResult',
-      label: '核查结果',
       rules: 'required',
+      isSearch: true,
+      // 支持搜索
     },
     {
-      fieldName: 'workOrderCompleteTime',
+      fieldName: 'completeTime', // 匹配表格字段completeTime
       label: '工单完成时间',
       component: 'DatePicker',
       labelWidth: '100',
@@ -106,10 +114,12 @@ export function useFormSchema() {
         format: 'YYYY-MM-DD HH:mm:ss',
         valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
+      isSearch: true,
       rules: 'required', // 工单完成时间为必填项
+      // 支持搜索
     },
     {
-      fieldName: 'archiveTime',
+      fieldName: 'createTime', // 匹配表格字段createTime
       label: '归档时间',
       component: 'DatePicker',
       labelWidth: '100',
@@ -119,10 +129,12 @@ export function useFormSchema() {
         format: 'YYYY-MM-DD HH:mm:ss',
         valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
+      isSearch: true,
       rules: 'required', // 归档时间为必填项
+      // 支持搜索
     },
     {
-      fieldName: 'warningDisposalTotalTime',
+      fieldName: 'dealDuration', // 匹配表格字段dealDuration
       label: '预警处置总时长',
       component: 'InputNumber',
       labelWidth: '100',
@@ -133,9 +145,10 @@ export function useFormSchema() {
         addonAfter: '小时',
       },
       rules: 'required', // 预警处置总时长为必填项
+      // 支持搜索
     },
     {
-      fieldName: 'indexRecoveryValue',
+      fieldName: 'recoverValue', // 匹配表格字段recoverValue
       label: '指标恢复值',
       component: 'InputNumber',
       labelWidth: '100',
@@ -145,9 +158,10 @@ export function useFormSchema() {
         precision: 1,
       },
       rules: 'required', // 指标恢复值为必填项
+      // 支持搜索
     },
     {
-      fieldName: 'verificationPerson',
+      fieldName: 'checkStaffName', // 匹配表格字段checkStaffName
       label: '核查员',
       component: 'Input',
       componentProps: {
@@ -156,9 +170,10 @@ export function useFormSchema() {
       },
       labelWidth: '100',
       rules: 'required', // 核查员为必填项
+      // 支持搜索
     },
     {
-      fieldName: 'indexComparisonBeforeAfter',
+      fieldName: 'indexComparison', // 处置前后指标对比（自定义字段名，适配业务）
       label: '处置前后指标对比',
       component: 'Input',
       componentProps: {
@@ -169,9 +184,10 @@ export function useFormSchema() {
       },
       labelWidth: '100',
       rules: 'required', // 处置前后指标对比为必填项
+      isSearch: false // 文本描述类字段不支持搜索
     },
     {
-      fieldName: 'archiveFileCount',
+      fieldName: 'fileNum', // 匹配表格字段fileNum
       label: '归档文件数',
       component: 'InputNumber',
       labelWidth: '100',
@@ -181,6 +197,7 @@ export function useFormSchema() {
         precision: 0, // 整数
       },
       rules: 'required', // 归档文件数为必填项
+      // 支持搜索
     },
   ];
 }
@@ -291,7 +308,7 @@ export function useGridColumns() {
     // 操作列（固定右侧）
     {
       title: '操作',
-      width: 80,
+      width: 150,
       fixed: 'right',
       slots: { default: 'actions' },
     },
