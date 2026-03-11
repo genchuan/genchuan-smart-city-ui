@@ -97,13 +97,14 @@
     }
 
     .vxe-grid--bottom-wrapper {
+      display: none;
       height: auto;
       min-height: 40px;
       width: 100%;
       top: 18px;
       z-index: 1;
 
-      .common-total {
+      .common-total { 
         font-size: 14px;
         display: inline;
         position: relative;
@@ -121,7 +122,9 @@
         cursor: pointer;
       }
     }
-
+    .vxe-pager--wrapper {
+      justify-content: center;
+    }
     .vxe-grid--pager-wrapper {
       .vxe-pager {
         margin-top: -10px;
