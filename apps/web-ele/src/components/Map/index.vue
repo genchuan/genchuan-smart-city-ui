@@ -161,9 +161,9 @@ const renderMarkers = () => {
   const bounds = new TMapInstance.LatLngBounds();
 
   props.data.forEach((item) => {
-    if (!item.coordinateInfo) return;
+    if (!item.coordinate) return;
 
-    const [lng, lat] = item.coordinateInfo.split(',').map(Number);
+    const [lng, lat] = item.coordinate.split(',').map(Number);
     if (isNaN(lng) || isNaN(lat)) return;
 
     const position = new TMapInstance.LatLng(lat, lng);

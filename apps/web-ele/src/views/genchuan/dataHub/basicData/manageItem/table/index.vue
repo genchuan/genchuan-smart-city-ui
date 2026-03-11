@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
@@ -62,9 +62,17 @@ const props = defineProps({
     type: String,
     default: 'category', // 'category' 或 'instance'
   },
+  showStats: {
+    type: Boolean,
+    default: false,
+  },
+  toggleStats: {
+    type: Function,
+    default: () => {},
+  },
 });
 
-const emit = defineEmits(['clearFilter', 'refreshTree']);
+const emit = defineEmits(['clearFilter', 'refreshTree', 'update:tableData', 'statusChange']);
 
 const getTitle = computed(() => {
   const textObjCurrent =
@@ -153,14 +161,14 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 
         // 处理所属分类数据 - 根据categoryName（实际存储的是id）查找对应的节点
         if (submitData.categoryName) {
-          // 根据categoryName字段存储的id查找对应的节点
-          const findNode = (nodes, id) => {
+          // 根据categoryName字段存储的id查找对应的节点及其父节点
+          const findNodeWithParent = (nodes, id, parent = null) => {
             for (const node of nodes) {
               if (node.id === id) {
-                return node;
+                return { node, parent };
               }
               if (node.children && node.children.length > 0) {
-                const found = findNode(node.children, id);
+                const found = findNodeWithParent(node.children, id, node);
                 if (found) {
                   return found;
                 }
@@ -169,14 +177,19 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
             return null;
           };
 
-          const selectedNode = findNode(
+          const result = findNodeWithParent(
             props.treeData,
             submitData.categoryName,
           );
-          if (selectedNode) {
-            submitData.parentCategoryId = selectedNode.id;
+          if (result) {
+            const { node: selectedNode, parent: parentNode } = result;
+            // categoryId = 选中节点的id
+            submitData.categoryId = selectedNode.id;
+            // categoryName = 选中节点的label
             submitData.categoryName =
               selectedNode.label || selectedNode.categoryName;
+            // parentCategoryId = 父节点的id（如果有）
+            submitData.parentCategoryId = parentNode?.id || null;
           }
         }
 
@@ -355,7 +368,10 @@ const initStatusCounts = async () => {
 
 /** 刷新表格 */
 function handleRefresh() {
-  gridApi.query();
+  // 确保 gridApi 已初始化
+  if (gridApi && typeof gridApi.query === 'function') {
+    gridApi.query();
+  }
   // 刷新状态统计
   initStatusCounts();
 }
@@ -540,9 +556,11 @@ const changeTotalShow = () => {
 
 // 监听 filterCategoryId 和 tabType 变化，刷新表格
 watch([() => props.filterCategoryId, () => props.tabType], () => {
-  handleRefresh();
-  // 重新初始化状态计数
-  initStatusCounts();
+  nextTick(() => {
+    handleRefresh();
+    // 重新初始化状态计数
+    initStatusCounts();
+  });
 });
 
 // 组件挂载时初始化状态计数
@@ -633,6 +651,9 @@ const getTableData = async (pageObj) => {
           // 注意：状态统计在 initStatusCounts 中完成，不在此处更新
           // 以确保三级状态的统计基于全部数据，而不是当前页数据
         }
+
+        // 通知父组件表格数据更新（用于统计组件）
+        emit('update:tableData', response.list);
       } else {
         ElMessage.error(response.message || '获取数据失败');
       }
@@ -863,7 +884,9 @@ watch(
       newTabType === 'instance' ? useInstanceGridColumns() : useGridColumns();
     gridApi.setGridOptions({ columns: newColumns });
     // 刷新表格数据
-    handleRefresh();
+    nextTick(() => {
+      handleRefresh();
+    });
   },
   { immediate: true },
 );
@@ -1039,6 +1062,10 @@ const getCategoryTypeColor = (categoryType) => {
     case 'blue': {
       return 'primary';
     }
+    case 'gray':
+    case 'grey': {
+      return 'info';
+    }
     case 'green': {
       return 'success';
     }
@@ -1047,10 +1074,6 @@ const getCategoryTypeColor = (categoryType) => {
     }
     case 'yellow': {
       return 'warning';
-    }
-    case 'gray':
-    case 'grey': {
-      return 'info';
     }
     default: {
       return colorType || 'primary';
@@ -1136,6 +1159,8 @@ const createLabel = (item) => {
 const handleClick = () => {
   // 切换三级状态值时，不更新统计区
   skipStatsUpdate.value = true;
+  // 通知父组件状态切换（用于统计区控制）
+  emit('statusChange', activeName.value);
   gridApi.query();
   // 使用setTimeout确保在query完成后重置标志
   setTimeout(() => {
@@ -1230,7 +1255,12 @@ const handleFullShow = () => {
             @close="handleCancelCategoryTypeFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
-            分类类型：{{ getDictObj(DICT_TYPE.DATA_CATEGORYTYPE, String(filterCategoryType))?.label || filterCategoryType }}
+            分类类型：{{
+              getDictObj(
+                DICT_TYPE.DATA_CATEGORYTYPE,
+                String(filterCategoryType),
+              )?.label || filterCategoryType
+            }}
           </ElTag>
           <!-- 工作流编码筛选标签 -->
           <ElTag
@@ -1321,6 +1351,13 @@ const handleFullShow = () => {
             icon-name="search"
             @click="handleSerachShow"
           />
+          <!-- 仅在管理事项实例标签页显示统计切换按钮 -->
+          <IconButton
+            v-if="props.tabType === 'instance'"
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
+          />
           <IconButton
             content="全屏"
             icon-name="FullScreen"
@@ -1362,7 +1399,7 @@ const handleFullShow = () => {
         </el-text>
       </template>
       <!-- 主管部门插槽（分类） -->
-      <template v-slot:deptName="{ row }">
+      <template #deptName="{ row }">
         <el-text
           @click="handleDeptNameClick(row.deptName)"
           class="common-align"
@@ -1390,7 +1427,10 @@ const handleFullShow = () => {
           :type="getCategoryTypeColor(row.categoryType)"
           style="cursor: pointer"
         >
-          {{ getDictObj(DICT_TYPE.DATA_CATEGORYTYPE, String(row.categoryType))?.label || row.categoryType }}
+          {{
+            getDictObj(DICT_TYPE.DATA_CATEGORYTYPE, String(row.categoryType))
+              ?.label || row.categoryType
+          }}
         </ElTag>
       </template>
 
@@ -1452,7 +1492,11 @@ const handleFullShow = () => {
           />
           <!-- 管理事项分类：提交审核按钮（仅扩展类待审核可操作） -->
           <IconButton
-            v-if="props.tabType !== 'instance' && row.categoryType === '2' && row.auditStatus === '0'"
+            v-if="
+              props.tabType !== 'instance' &&
+              row.categoryType === '2' &&
+              row.auditStatus === '3'
+            "
             content="提交审核"
             icon-name="Position"
             @click="handleSubmitAudit(row)"
@@ -1525,26 +1569,15 @@ const handleFullShow = () => {
     />
 
     <!-- 提交审核弹窗 -->
-    <SubmitAuditDialog
-      ref="submitAuditDialogRef"
-      @success="handleRefresh"
-    />
+    <SubmitAuditDialog ref="submitAuditDialogRef" @success="handleRefresh" />
 
     <!-- 处置抽屉 -->
-    <HandleDrawer
-      ref="handleDrawerRef"
-      @success="handleRefresh"
-    />
+    <HandleDrawer ref="handleDrawerRef" @success="handleRefresh" />
 
     <!-- 驳回弹窗 -->
-    <RejectDialog
-      ref="rejectDialogRef"
-      @success="handleRefresh"
-    />
+    <RejectDialog ref="rejectDialogRef" @success="handleRefresh" />
 
     <!-- 查看附件抽屉 -->
-    <AttachmentDrawer
-      ref="attachmentDrawerRef"
-    />
+    <AttachmentDrawer ref="attachmentDrawerRef" />
   </div>
 </template>
