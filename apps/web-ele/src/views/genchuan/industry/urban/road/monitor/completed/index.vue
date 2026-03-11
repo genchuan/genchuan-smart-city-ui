@@ -4,7 +4,15 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import {
+  ElButton,
+  ElLoading,
+  ElMessage,
+  ElRadio,
+  ElRadioGroup,
+  ElTable,
+  ElTableColumn,
+} from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -13,9 +21,10 @@ import {
   addRoad,
   addWarn,
   deleteRoad,
-  exportRoadExcel,
+  exportRoadCompletedExcel,
   getRoadArchive,
   getRoadFacilityList,
+  getRoadWorkOrderAllProcess,
   getSysDevicePage,
   updateRoad,
   updateRoadStatusList,
@@ -51,9 +60,37 @@ const switchDialogVisible = ref(false);
 const switchStatus = ref('运行中'); // 默认切换为运行中
 const statusLoading = ref(false); // 批量操作加载状态
 
+// ========== 全流程记录抽屉相关 ==========
+const flowRecordList = ref([]); // 流程记录数据
+const currentRow = ref({}); // 当前行数据
+// 初始化全流程记录抽屉
+const [AllDetailDrawer, allDetailDrawerApi] = useVbenDrawer({
+  title: '全流程记录',
+  placement: 'right', // 右侧弹出
+  width: 800, // 宽度与原弹窗一致
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    allDetailDrawerApi.close();
+  },
+});
+
+// 实现handleAllDetail方法
+const handleAllDetail = async (row) => {
+  currentRow.value = row;
+  const res = await getRoadWorkOrderAllProcess({ id: row.id });
+  flowRecordList.value = res.map((v) => {
+    return { ...v, nodeTime: formatTimestamp(v.nodeTime) };
+  });
+  allDetailDrawerApi.open(); // 打开抽屉
+};
+// ========== 全流程记录抽屉结束 ==========
+
 const getTitle = computed(() => {
   return formData.value?.id ? '编辑' : '新增';
 });
+
 onMounted(async () => {
   const roadList = await getRoadFacilityList({
     pageNo: 1,
@@ -122,6 +159,7 @@ onMounted(async () => {
   };
   schemaData.value = schema;
 });
+
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -132,6 +170,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
+
 // 移除原 DetailDrawer 初始化逻辑
 const formData = ref();
 const [Form, formApi] = useVbenForm({
@@ -146,6 +185,7 @@ const [Form, formApi] = useVbenForm({
   schema: useFormSchema(),
   showDefaultActions: false,
 });
+
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
@@ -171,6 +211,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     }
   },
 });
+
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
@@ -178,9 +219,13 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  const data = await exportRoadExcel();
-  downloadFileFromBlobPart({ fileName: '道路实时监测数据.xls', source: data });
+  const data = await exportRoadCompletedExcel();
+  downloadFileFromBlobPart({
+    fileName: '路设施处置归档台账.xls',
+    source: data,
+  });
 }
+
 /** 创建 */
 function handleCreate() {
   formApi.resetForm();
@@ -197,6 +242,7 @@ function handleCreate() {
     })
     .open();
 }
+
 /** 编辑 */
 function handleEdit(row) {
   dataObj.editObj = row;
@@ -213,6 +259,7 @@ function handleEdit(row) {
     })
     .open();
 }
+
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting'),
@@ -236,12 +283,14 @@ async function handleDeleteBatch() {
   });
   handleRefresh();
 }
+
 const recordsList = ref([]);
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
   recordsList.value = records;
 }
+
 const dataObj = reactive({
   totalShow: false,
   detailObj: {}, // 保留详情对象用于传递给组件
@@ -254,9 +303,11 @@ const dataObj = reactive({
   list: [],
   editObj: {},
 });
+
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
+
 // 表格数据获取
 const getTableData = async (pageObj) => {
   try {
@@ -271,6 +322,7 @@ const getTableData = async (pageObj) => {
       return {
         ...v,
         updateTime: formatTimestamp(v.updateTime),
+        completeTime: formatTimestamp(v.completeTime),
         createTime: formatTimestamp(v.createTime),
       };
     });
@@ -312,12 +364,14 @@ const [QueryForm, QueryFormApi] = useVbenForm({
     content: '查询',
   },
 });
+
 // 搜索表单查询
 async function onSubmit() {
   dataObj.serachObj = await QueryFormApi.getValues();
   gridApi.reload();
   drawerApi.close();
 }
+
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
@@ -352,17 +406,22 @@ const handleOpenDetail = (row) => {
   // 通过ref调用组件的open方法
   parkDetailDrawerRef.value.open();
 };
+
 const handleSerachShow = () => {
   drawerApi.open();
 };
+
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
 const arrowChange = () => {
   emit('arrow-change');
 };
+
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
+
 const [settingDrawer, settingdrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -373,6 +432,7 @@ const [settingDrawer, settingdrawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
+
 const settingConfig = () => {
   settingdrawerApi.open();
 };
@@ -407,6 +467,7 @@ const handleSwitchConfirm = async () => {
   switchDialogVisible.value = false;
   handleRefresh();
 };
+
 // 根据数值返回对应的预警状态文本
 const getWarningText = (value) => {
   switch (value) {
@@ -424,6 +485,7 @@ const getWarningText = (value) => {
     }
   }
 };
+
 const warnObj = ref({});
 const [warnDrawer, warnDrawerApi] = useVbenDrawer({
   modal: false,
@@ -443,6 +505,7 @@ const [warnDrawer, warnDrawerApi] = useVbenDrawer({
   },
   async onOpenChange() {},
 });
+
 const [WarnForm, WarnFormApi] = useVbenForm({
   commonConfig: {
     componentProps: {
@@ -497,17 +560,7 @@ const [WarnForm, WarnFormApi] = useVbenForm({
   ],
   showDefaultActions: false,
 });
-const handleManualWarn = (row) => {
-  WarnFormApi.resetForm();
-  warnObj.value = {
-    monitorId: row.id,
-    wayType: '自动监测',
-    level: 1,
-    dealLimit: 1,
-  };
-  WarnFormApi.setValues(warnObj.value);
-  warnDrawerApi.open();
-};
+const handleDownLoadWord = (row) => {};
 </script>
 
 <template>
@@ -516,7 +569,8 @@ const handleManualWarn = (row) => {
     <warnDrawer title="创建待处置预警">
       <WarnForm />
     </warnDrawer>
-    <!-- 新增：批量切换监测状态弹窗 -->
+
+    <!-- 批量切换监测状态弹窗 -->
     <el-dialog
       v-model="switchDialogVisible"
       title="批量切换监测状态"
@@ -530,41 +584,90 @@ const handleManualWarn = (row) => {
         </div>
         <div class="status-select">
           <span class="label">目标监测状态：</span>
-          <el-radio-group v-model="switchStatus" class="ml-2">
-            <el-radio label="运行中">运行中</el-radio>
-            <el-radio label="已停止">已停止</el-radio>
-          </el-radio-group>
+          <ElRadioGroup v-model="switchStatus" class="ml-2">
+            <ElRadio label="运行中">运行中</ElRadio>
+            <ElRadio label="已停止">已停止</ElRadio>
+          </ElRadioGroup>
         </div>
       </div>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="switchDialogVisible = false">取消</el-button>
-          <el-button
+          <ElButton @click="switchDialogVisible = false">取消</ElButton>
+          <ElButton
             type="primary"
             @click="handleSwitchConfirm"
             :loading="statusLoading"
           >
             确认切换
-          </el-button>
+          </ElButton>
         </span>
       </template>
     </el-dialog>
 
+    <!-- 全流程记录抽屉（替换原el-dialog） -->
+    <AllDetailDrawer class="genchuan-detail-drawer">
+      <div class="flow-record-card p-4">
+        <ElTable
+          :data="flowRecordList"
+          border
+          stripe
+          :hover-row="true"
+          style="width: 100%"
+        >
+          <ElTableColumn
+            prop="stepNo"
+            label="流程步骤序号"
+            width="120"
+            align="center"
+          />
+          <ElTableColumn
+            prop="nodeName"
+            label="节点名称"
+            width="150"
+            align="center"
+          />
+          <ElTableColumn
+            prop="nodeTime"
+            label="节点时间"
+            width="200"
+            align="center"
+          />
+          <ElTableColumn
+            prop="operatorName"
+            label="操作人"
+            width="150"
+            align="center"
+          />
+          <ElTableColumn prop="nodeDesc" label="节点描述" min-width="200" />
+          <ElTableColumn
+            prop="refNo"
+            label="关联编号"
+            width="200"
+            align="center"
+          />
+        </ElTable>
+      </div>
+    </AllDetailDrawer>
+
     <settingDrawer title="配置监测参数" class="genchuan-detail-drawer">
       <settingTable />
     </settingDrawer>
+
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
+
     <!-- 使用封装后的详情抽屉组件 -->
     <tableDetail
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
       title="详情"
     />
+
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+
     <Grid>
       <template #monitorStatus="{ row }">
         <el-switch
@@ -578,9 +681,9 @@ const handleManualWarn = (row) => {
           @change="handleMonitorStatusChange(row)"
         />
       </template>
+
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="导出"
             icon-name="download"
@@ -620,6 +723,7 @@ const handleManualWarn = (row) => {
           />
         </div>
       </template>
+
       <template #orderNo="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
@@ -629,8 +733,19 @@ const handleManualWarn = (row) => {
           {{ row.orderNo }}
         </el-text>
       </template>
+
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
+          <IconButton
+            content="下载归档资料"
+            icon-name="download"
+            @click="handleDownLoadWord(row)"
+          />
+          <IconButton
+            content="查看全流程记录"
+            icon-name="Operation"
+            @click="handleAllDetail(row)"
+          />
           <IconButton
             content="详情"
             icon-name="View"
@@ -649,6 +764,7 @@ const handleManualWarn = (row) => {
           />
         </div>
       </template>
+
       <template #bottom>
         <div class="common-total" @click="changeTotalShow"></div>
       </template>
@@ -690,6 +806,34 @@ const handleManualWarn = (row) => {
 :deep(.common-toolbar-tools) {
   .el-button.is-disabled {
     opacity: 0.6;
+  }
+}
+
+// 全流程记录抽屉样式
+.flow-record-card {
+  height: 100%;
+  box-sizing: border-box;
+  min-height: 500px;
+
+  :deep(.el-table) {
+    --el-table-header-text-color: #606266;
+    --el-table-row-hover-bg-color: #f5f7fa;
+    --el-table-stripe-row-bg-color: #fafafa;
+    width: 100%;
+
+    .el-table__header-wrapper {
+      th {
+        background-color: #f9fafb;
+        font-weight: 500;
+      }
+    }
+
+    .el-table__body-wrapper {
+      td {
+        color: #303133;
+        line-height: 1.5;
+      }
+    }
   }
 }
 </style>
