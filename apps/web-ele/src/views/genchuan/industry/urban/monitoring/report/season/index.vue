@@ -168,22 +168,8 @@ const changeTotalShow = () => {
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
-  dataObj.total = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    }).length;
+  dataObj.total = dataObj.apilist.length;
   dataObj.list = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    })
     .slice(
       (page.currentPage - 1) * page.pageSize,
       page.currentPage * page.pageSize,
@@ -338,13 +324,58 @@ const arrowChange = () => {
           />
         </div>
       </template>
-      <template #roadSectionName="{ row }">
+      <template #areaName="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.roadSectionName }}
+          {{ row.areaName }}
+        </el-text>
+      </template>
+      <template #quarterTotalHiddenTroubleCount="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.quarterTotalHiddenTroubleCount }}
+        </el-text>
+      </template>
+      <template #quarterHiddenTroubleDisposalRate="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.quarterHiddenTroubleDisposalRate }}%
+        </el-text>
+      </template>
+      <template #quarterMajorHiddenTroubleDisposalRate="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.quarterMajorHiddenTroubleDisposalRate }}%
+        </el-text>
+      </template>
+      <template #momHiddenTroubleChangeRate="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          :type="row.momHiddenTroubleChangeRate >= 0 ? 'danger' : 'success'"
+        >
+          {{ row.momHiddenTroubleChangeRate > 0 ? '+' : '' }}{{ row.momHiddenTroubleChangeRate }}%
+        </el-text>
+      </template>
+      <template #areaRiskLevel="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          :type="row.areaRiskLevel === '高' ? 'danger' : row.areaRiskLevel === '中' ? 'warning' : 'success'"
+        >
+          {{ row.areaRiskLevel }}
         </el-text>
       </template>
       <template #actions="{ row }">

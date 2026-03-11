@@ -11,6 +11,8 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
+import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
+import IconButton from '#/components/common/IconButton.vue';
 
 import { dataList, useFormSchema, useGridColumns } from './data';
 // 引入封装后的详情抽屉组件
@@ -168,22 +170,8 @@ const changeTotalShow = () => {
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
-  dataObj.total = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    }).length;
+  dataObj.total = dataObj.apilist.length;
   dataObj.list = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    })
     .slice(
       (page.currentPage - 1) * page.pageSize,
       page.currentPage * page.pageSize,
@@ -290,6 +278,17 @@ const parkDetailDrawerRef = ref(null);
 const arrowChange = () => {
   emit('arrow-change');
 };
+
+/** 保存报表 */
+async function handleSaveReport() {
+  await confirm('确定保存当前报表配置吗？');
+  ElMessage.success('报表保存成功');
+}
+
+/** 图表切换 */
+function handleChartSwitch() {
+  ElMessage.info('图表切换功能已触发');
+}
 </script>
 
 <template>
@@ -308,18 +307,24 @@ const arrowChange = () => {
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton content="新建报表" icon-name="Plus" @click="handleCreate" />
+          <IconButton content="保存报表" icon-name="Save" @click="handleSaveReport" />
           <IconButton
-            content="导出"
-            icon-name="download"
-            @click="handleExport"
-          />
-          <IconButton
-            content="批量删除"
+            content="删除报表"
             icon-name="delete"
             color="#F56C6C"
             :disabled="isEmpty(checkedIds)"
             @click="handleDeleteBatch"
+          />
+          <IconButton
+            content="导出报表"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="图表切换"
+            icon-name="Histogram"
+            @click="handleChartSwitch"
           />
           <IconButton
             content="搜索"
@@ -338,13 +343,31 @@ const arrowChange = () => {
           />
         </div>
       </template>
-      <template #roadSectionName="{ row }">
+      <template #dimensionValue="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.roadSectionName }}
+          {{ row.dimensionValue }}
+        </el-text>
+      </template>
+      <template #indexComparisonDifference="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          :type="row.indexComparisonDifference >= 0 ? 'danger' : 'success'"
+        >
+          {{ row.indexComparisonDifference > 0 ? '+' : '' }}{{ row.indexComparisonDifference }}
+        </el-text>
+      </template>
+      <template #indexComparisonChangeRate="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          :type="row.indexComparisonChangeRate >= 0 ? 'danger' : 'success'"
+        >
+          {{ row.indexComparisonChangeRate > 0 ? '+' : '' }}{{ row.indexComparisonChangeRate }}%
         </el-text>
       </template>
       <template #actions="{ row }">

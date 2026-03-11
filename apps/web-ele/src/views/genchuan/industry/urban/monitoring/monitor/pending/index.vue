@@ -11,6 +11,8 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
+import IconButton from '#/components/common/IconButton.vue';
+import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
 
 import { dataList, useFormSchema, useGridColumns } from './data';
 // 引入封装后的详情抽屉组件
@@ -98,7 +100,9 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  exportToExcel(dataObj.apilist, '导出', 'excel');
+  const now = new Date();
+  const dateStr = now.toISOString().slice(0, 10);
+  exportToExcel(dataObj.apilist, `窨井盖设施待处置预警_${dateStr}`, 'excel');
 }
 
 /** 创建角色 */
@@ -149,6 +153,74 @@ async function handleDeleteBatch() {
   }
 }
 
+/** 确认预警有效 */
+async function handleConfirmValid(row) {
+  await confirm('确定确认该预警有效吗？');
+  const loadingInstance = ElLoading.service({
+    text: '确认中...',
+  });
+  try {
+    // 模拟确认有效
+    row.assignStatus = '待派单';
+    ElMessage.success('确认有效成功');
+    handleRefresh();
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+/** 标注预警无效 */
+async function handleMarkInvalid(row) {
+  await confirm('确定标注该预警无效吗？');
+  const loadingInstance = ElLoading.service({
+    text: '标注中...',
+  });
+  try {
+    // 模拟标注无效
+    row.assignStatus = '已驳回';
+    ElMessage.success('标注无效成功');
+    handleRefresh();
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+/** 派发处置单 */
+async function handleDispatchOrder(row) {
+  await confirm('确定派发处置单吗？');
+  const loadingInstance = ElLoading.service({
+    text: '派发中...',
+  });
+  try {
+    // 模拟派发处置单
+    row.assignStatus = '已派单';
+    ElMessage.success('派发处置单成功');
+    handleRefresh();
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+/** 批量确认无效预警 */
+async function handleBatchInvalid() {
+  await confirm(`确定批量确认选中的 ${checkedIds.value.length} 个预警无效吗？`);
+  const loadingInstance = ElLoading.service({
+    text: '处理中...',
+  });
+  try {
+    // 模拟批量操作
+    dataObj.apilist.forEach(item => {
+      if (checkedIds.value.includes(item.id)) {
+        item.assignStatus = '已驳回';
+      }
+    });
+    ElMessage.success('批量确认无效成功');
+    handleRefresh();
+  } finally {
+    loadingInstance.close();
+  }
+}
+
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
@@ -168,28 +240,50 @@ const changeTotalShow = () => {
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
-  dataObj.total = dataObj.apilist
+  // 先过滤数据
+  let filteredData = dataObj.apilist
     .map((v) => v)
     .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
+      // 状态筛选
+      if (activeName.value !== '全部' && v.assignStatus !== activeName.value) {
+        return false;
       }
-      return v.status === activeName.value;
-    }).length;
-  dataObj.list = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
+      
+      // 搜索表单筛选
+      if (searchFormData.value.coverNo && !v.coverNo.includes(searchFormData.value.coverNo)) {
+        return false;
       }
-      return v.status === activeName.value;
-    })
+      if (searchFormData.value.roadName && !v.roadName.includes(searchFormData.value.roadName)) {
+        return false;
+      }
+      if (searchFormData.value.abnormalType && v.abnormalType !== searchFormData.value.abnormalType) {
+        return false;
+      }
+      if (searchFormData.value.riskLevel && v.riskLevel !== searchFormData.value.riskLevel) {
+        return false;
+      }
+      
+      return true;
+    });
+  
+  // 高风险预警置顶
+  filteredData.sort((a, b) => {
+    if (a.riskLevel === '高风险' && b.riskLevel !== '高风险') return -1;
+    if (a.riskLevel !== '高风险' && b.riskLevel === '高风险') return 1;
+    return 0;
+  });
+  
+  dataObj.total = filteredData.length;
+  dataObj.list = filteredData
     .slice(
       (page.currentPage - 1) * page.pageSize,
       page.currentPage * page.pageSize,
     );
   return dataObj;
 };
+
+// 搜索表单数据
+const searchFormData = ref({});
 
 const [QueryForm] = useVbenForm({
   // 默认展开
@@ -208,12 +302,64 @@ const [QueryForm] = useVbenForm({
   // 垂直布局，label和input在不同行，值为vertical
   // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
-  }),
+  schema: [
+    {
+      fieldName: 'coverNo',
+      label: '井盖编号',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入井盖编号',
+        maxLength: 50,
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'roadName',
+      label: '路段名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入路段名称',
+        maxLength: 100,
+      },
+      labelWidth: '100',
+    },
+    {
+      component: 'Select',
+      labelWidth: '100',
+      componentProps: {
+        allowClear: true,
+        filterOption: true,
+        options: [
+          { label: '倾斜角度异常', value: '倾斜角度异常' },
+          { label: '振动异常', value: '振动异常' },
+          { label: '设备离线', value: '设备离线' },
+          { label: '设备异常', value: '设备异常' },
+          { label: '轻微倾斜', value: '轻微倾斜' },
+        ],
+        placeholder: '请选择异常类型',
+        showSearch: true,
+      },
+      fieldName: 'abnormalType',
+      label: '异常类型',
+    },
+    {
+      component: 'Select',
+      labelWidth: '100',
+      componentProps: {
+        allowClear: true,
+        filterOption: true,
+        options: [
+          { label: '高风险', value: '高风险' },
+          { label: '中风险', value: '中风险' },
+          { label: '低风险', value: '低风险' },
+        ],
+        placeholder: '请选择安全风险等级',
+        showSearch: true,
+      },
+      fieldName: 'riskLevel',
+      label: '安全风险等级',
+    },
+  ],
   // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
@@ -222,6 +368,8 @@ const [QueryForm] = useVbenForm({
 });
 // 搜索表单查询
 function onSubmit() {
+  searchFormData.value = formApi.form.values;
+  handleRefresh();
   drawerApi.close();
 }
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -262,13 +410,14 @@ const handleOpenDetail = (row) => {
 };
 const tabsData = ref([
   { label: '全部' },
-  { label: '启用' },
-  { label: '禁用' },
-  { label: '暂停运营' },
-  { label: '维修中' },
+  { label: '未派单' },
+  { label: '已派单' },
+  { label: '已接单' },
+  { label: '已完成' },
+  { label: '已驳回' },
 ]);
 const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
+  let text = `(${dataObj.apilist.filter((v) => v.assignStatus === item.label).length})`;
   if (item.label === '全部') {
     text = `(${dataObj.apilist.length})`;
   }
@@ -308,43 +457,89 @@ const arrowChange = () => {
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton
-            content="导出"
-            icon-name="download"
-            @click="handleExport"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
-          />
+          <IconButton content="筛选" icon-name="Filter" @click="handleSerachShow" />
+          <IconButton content="刷新预警" icon-name="Refresh" @click="handleRefresh" />
+          <IconButton content="手动触发预警" icon-name="Plus" @click="handleCreate" />
+          <IconButton content="批量确认无效预警" icon-name="Close" color="#F56C6C" :disabled="isEmpty(checkedIds)" @click="handleBatchInvalid" />
+          <IconButton content="导出预警数据" icon-name="download" @click="handleExport" />
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
             :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
             @click="arrowChange"
           />
-          <IconButton
-            content="全屏"
-            icon-name="FullScreen"
-            @click="handleFullShow"
-          />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
-      <template #warningCode="{ row }">
+      <template #warnNo="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.warningCode }}
+          {{ row.warnNo }}
+        </el-text>
+      </template>
+      <template #coverNo="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.coverNo }}
+        </el-text>
+      </template>
+      <template #roadName="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.roadName }}
+        </el-text>
+      </template>
+      <template #abnormalType="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.abnormalType }}
+        </el-text>
+      </template>
+      <template #openStatus="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.openStatus }}
+        </el-text>
+      </template>
+      <template #dealLimit="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.dealLimit }}
+        </el-text>
+      </template>
+      <template #assignStatus="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.assignStatus }}
+        </el-text>
+      </template>
+      <template #riskLevel="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.riskLevel }}
         </el-text>
       </template>
       <template #actions="{ row }">
@@ -355,15 +550,19 @@ const arrowChange = () => {
             @click="handleOpenDetail(row)"
           />
           <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
+            content="确认有效"
+            icon-name="Check"
+            @click="handleConfirmValid(row)"
           />
           <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
+            content="标注无效"
+            icon-name="Close"
+            @click="handleMarkInvalid(row)"
+          />
+          <IconButton
+            content="派发处置单"
+            icon-name="Send"
+            @click="handleDispatchOrder(row)"
           />
         </div>
       </template>
