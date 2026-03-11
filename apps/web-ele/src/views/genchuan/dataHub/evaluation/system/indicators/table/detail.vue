@@ -29,73 +29,71 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 体系基本信息 - 网格布局 -->
+      <!-- 体系基本信息 - 单列行布局（仿评价主体） -->
       <h3>基本信息</h3>
-      <div class="detail-grid">
-        <div class="detail-item">
-          <span class="label">体系名称：</span>
-          <span class="value">{{ detailObj.name || '-' }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">体系编码：</span>
-          <span class="value">{{ detailObj.code || '-' }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">适用对象类型：</span>
-          <span class="value">{{ detailObj.objectTypeName || '-' }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">版本号：</span>
-          <span class="value">{{ detailObj.version || '-' }}</span>
-        </div>
-        <div class="detail-item full-width">
-          <span class="label">描述信息：</span>
-          <span class="value">{{ detailObj.desc || '-' }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">分类总数：</span>
-          <span class="value">{{ detailObj.categoryCount ?? 0 }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">指标项总数：</span>
-          <span class="value">{{ detailObj.itemCount ?? 0 }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">状态：</span>
-          <span class="value">{{ detailObj.statusName || '-' }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">创建人：</span>
-          <span class="value">{{ detailObj.createUserName || '-' }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">创建时间：</span>
-          <span class="value">{{ detailObj.createTime || '-' }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">更新人：</span>
-          <span class="value">{{ detailObj.updateUserName || '-' }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">更新时间：</span>
-          <span class="value">{{ detailObj.updateTime || '-' }}</span>
-        </div>
-        <!-- 新增：最近使用时间 & 使用次数（若存在） -->
-        <div class="detail-item" v-if="detailObj.lastUseTime">
-          <span class="label">最近使用时间：</span>
-          <span class="value">{{ detailObj.lastUseTime }}</span>
-        </div>
-        <div class="detail-item" v-if="detailObj.useCount !== undefined">
-          <span class="label">使用次数：</span>
-          <span class="value">{{ detailObj.useCount }}</span>
-        </div>
-        <div class="detail-item full-width">
-          <span class="label">变更日志：</span>
-          <span class="value">{{ detailObj.changeLog || '-' }}</span>
-        </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">体系名称：</div>
+        <div class="detail-row-right">{{ detailObj.name || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">体系编码：</div>
+        <div class="detail-row-right">{{ detailObj.code || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">适用对象类型：</div>
+        <div class="detail-row-right">{{ detailObj.objectTypeName || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">版本号：</div>
+        <div class="detail-row-right">{{ detailObj.version || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">描述信息：</div>
+        <div class="detail-row-right">{{ detailObj.desc || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">分类总数：</div>
+        <div class="detail-row-right">{{ detailObj.categoryCount ?? 0 }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">指标项总数：</div>
+        <div class="detail-row-right">{{ detailObj.itemCount ?? 0 }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">状态：</div>
+        <div class="detail-row-right">{{ detailObj.statusName || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">创建人：</div>
+        <div class="detail-row-right">{{ detailObj.createUserName || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">创建时间：</div>
+        <div class="detail-row-right">{{ detailObj.createTime || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">更新人：</div>
+        <div class="detail-row-right">{{ detailObj.updateUserName || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">更新时间：</div>
+        <div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div>
+      </div>
+      <!-- 新增字段：最近使用时间 & 使用次数（若存在） -->
+      <div class="detail-card-row" v-if="detailObj.lastUseTime">
+        <div class="detail-row-left">最近使用时间：</div>
+        <div class="detail-row-right">{{ detailObj.lastUseTime }}</div>
+      </div>
+      <div class="detail-card-row" v-if="detailObj.useCount !== undefined">
+        <div class="detail-row-left">使用次数：</div>
+        <div class="detail-row-right">{{ detailObj.useCount }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">变更日志：</div>
+        <div class="detail-row-right">{{ detailObj.changeLog || '-' }}</div>
       </div>
 
-      <!-- 分类与指标项列表 -->
+      <!-- 分类与指标项列表（保留原有结构，稍作样式微调） -->
       <div class="detail-section" v-if="detailObj.categories && detailObj.categories.length">
         <h3>分类及指标项配置</h3>
         <div v-for="cat in detailObj.categories" :key="cat.categoryId" class="category-block">
@@ -123,6 +121,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
   padding: 20px;
   background-color: #f9fafb;
   border-radius: 8px;
+  min-height: 400px;
   max-height: 70vh;
   overflow-y: auto;
 
@@ -135,43 +134,61 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
     padding-left: 12px;
   }
 }
-
-/* 网格布局（仿评价对象） */
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px 24px;
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 24px;
+.detail-section{
+  h3 {
+    margin: 10px 0 0 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #303133;
+    border-left: 4px solid #409eff;
+    padding-left: 12px;
+  }
 }
 
-.detail-item {
+/* 单列行布局（完全复用评价主体样式） */
+.detail-card-row {
   display: flex;
   align-items: flex-start;
-  line-height: 1.5;
-  font-size: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+  background: white; /* 与评价主体一致，白色背景 */
+  padding-left: 20px;
+  padding-right: 20px;
 
-  .label {
-    width: 110px;
-    flex-shrink: 0;
-    color: #606266;
-    font-weight: 500;
+  &:last-child {
+    border-bottom: none;
   }
 
-  .value {
-    flex: 1;
-    color: #303133;
-    word-break: break-word;
-  }
-
-  &.full-width {
-    grid-column: span 2;
+  &:hover {
+    background-color: #f5f7fa;
+    border-radius: 4px;
+    padding-left: 28px; /* 保持左右内边距一致 */
+    padding-right: 20px;
+    margin-left: -8px;
+    margin-right: -8px;
+    transition: all 0.2s ease;
   }
 }
 
-/* 分类区块 */
+.detail-row-left {
+  width: 140px !important;
+  flex-shrink: 0;
+  font-weight: 500;
+  color: #606266;
+  font-size: 14px;
+  line-height: 18px;
+}
+
+.detail-row-right {
+  flex: 1;
+  color: #303133;
+  font-size: 14px;
+  line-height: 18px;
+  word-break: break-all;
+  padding-right: 10px;
+}
+
+/* 分类区块（微调，与整体背景融合） */
 .category-block {
   background: white;
   border-radius: 8px;
@@ -225,11 +242,12 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
 
 /* 移动端适配 */
 @media (max-width: 768px) {
-  .detail-grid {
-    grid-template-columns: 1fr;
+  .detail-row-left {
+    width: 120px;
   }
-  .detail-item.full-width {
-    grid-column: span 1;
+  .detail-card {
+    padding: 15px;
+    max-height: 60vh;
   }
 }
 </style>

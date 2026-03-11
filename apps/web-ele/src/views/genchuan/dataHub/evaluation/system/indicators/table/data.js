@@ -39,7 +39,7 @@ export function useFormSchema() {
       rules: 'required',
       componentProps: {
         placeholder: '请选择适用对象类型',
-        options: objectTypeList.map(t => ({ label: t.name, value: t.id })),
+        options: [], // 动态加载
       },
     },
     {
@@ -60,7 +60,7 @@ export function useFormSchema() {
       label: '状态',
       component: 'Select',
       componentProps: {
-        options: statusList.map(s => ({ label: s.name, value: s.id })),
+        options: [], // 动态加载
       },
       defaultValue: 1,
       hidden: true,
@@ -118,8 +118,8 @@ export function getGridColumnsByTab(tab) {
   if (tab === '全部') {
     return [
       { type: 'checkbox', width: 40 },
-      { field: 'name', title: '体系名称', minWidth: 150, sortable: true, slots: { default: 'name' } },
-      { field: 'code', title: '体系编码', minWidth: 120, sortable: true, slots: { default: 'code' } },
+      { field: 'name', title: '体系名称', minWidth: 160, sortable: true, slots: { default: 'name' } },
+      { field: 'code', title: '体系编码', minWidth: 150, sortable: true, slots: { default: 'code' } },
       { field: 'objectTypeName', title: '适用对象类型', minWidth: 120, sortable: true, slots: { default: 'objectTypeName' } },
       { field: 'version', title: '版本号', minWidth: 100, sortable: true },
       { field: 'desc', title: '描述信息', minWidth: 200 },
