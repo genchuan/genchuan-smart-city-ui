@@ -10,12 +10,12 @@ export function getStatusCount() {
   return requestClient.get('/evaluate/index-system/status-count');
 }
 
-/** 创建指标体系 */
+/** 创建指标体系（仅基本信息） */
 export function createIndexSystem(data) {
   return requestClient.post('/evaluate/index-system/create', data);
 }
 
-/** 更新指标体系 */
+/** 更新指标体系（仅基本信息） */
 export function updateIndexSystem(data) {
   return requestClient.put('/evaluate/index-system/update', data);
 }
@@ -43,20 +43,45 @@ export function exportIndexSystem(params) {
   });
 }
 
-// ========== 下拉选项接口（示例，实际需替换为真实字典接口） ==========
-export function getObjectTypeSimpleList() {
-  return Promise.resolve([
-    { value: 'obj_type_001', label: '政府部门' },
-    { value: 'obj_type_002', label: '事业单位' },
-    { value: 'obj_type_003', label: '国有企业' },
-    { value: 'obj_type_004', label: '民营企业' },
-    { value: 'obj_type_005', label: '社会组织' },
-  ]);
+/** 权重校验 */
+export function checkWeight(data) {
+  return requestClient.post('/evaluate/index-system/check-weight', data);
 }
 
+// ========== 新增：字典接口 ==========
+/** 获取指标类型列表（字典） */
+export function getIndexTypeList() {
+  return requestClient.get('/evaluate/index-type/page');
+}
+
+/** 获取计算方式列表（字典） */
+export function getCalcWayList() {
+  return requestClient.get('/evaluate/calc-way/page');
+}
+
+// ========== 新增：完整保存接口（若后端支持） ==========
+/** 保存完整的指标体系（包含分类与指标项） */
+export function saveFullIndexSystem(data) {
+  // 若后端有复合接口则使用，否则请使用分步保存（下方注释示例）
+  return requestClient.post('/evaluate/index-system/save-full', data);
+}
+
+
+
+/** 获取对象类型列表（返回下拉选项格式） */
+export function getObjectTypeSimpleList() {
+  // 假设返回格式为 [{ value: 'obj_type_001', label: '政府部门' }, ...]
+  return requestClient.get('/evaluate/object-type/simple-list');
+}
+
+/** 获取状态列表（返回下拉选项格式） */
 export function getStatusSimpleList() {
-  return Promise.resolve([
-    { value: 1, label: '启用' },
-    { value: 2, label: '停用' },
-  ]);
+  // 调用分页接口并转换为下拉选项格式
+  return requestClient.get('/evaluate/status/page', { params: { pageNo: 1, pageSize: 100 } }).then(res => {
+    // 转换为下拉选项格式
+    return (res.list || []).map(item => ({
+      value: item.statusId,
+      label: item.name
+    }));
+  });
 }

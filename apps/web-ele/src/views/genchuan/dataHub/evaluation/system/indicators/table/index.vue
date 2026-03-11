@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, onMounted } from 'vue';
+import { computed, reactive, ref, onMounted, nextTick } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 import { ElLoading, ElMessage } from 'element-plus';
@@ -17,10 +17,12 @@ import {
   deleteIndexSystem,
   getIndexSystemDetail,
   exportIndexSystem,
+  saveFullIndexSystem,   // 新增的复合保存接口
   getObjectTypeSimpleList,
   getStatusSimpleList,
-} from '#/api/genchuan/dataHub/evaluation/system/indicators.js';
+} from '#/api/genchuan/dataHub/evaluation/system/indicators';
 import detailDrawer from './detail.vue';
+import CategoryManager from '#/views/genchuan/dataHub/evaluation/system/components/CategoryManager.vue'; // 新增组件
 import {
   textObj,
   useFormSchema,
@@ -51,7 +53,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel() { drawerApi.close(); },
 });
 
-// 表单实例
+// 基本信息表单实例
 const [Form, formApi] = useVbenForm({
   commonConfig: {
     componentProps: { class: 'w-full' },
@@ -63,30 +65,73 @@ const [Form, formApi] = useVbenForm({
   showDefaultActions: false,
 });
 
+// 分类管理器引用
+const categoryManagerRef = ref(null);
+// 分类数据
+const categoryData = ref([]);
+
 // 新增/编辑抽屉
 const formData = ref();
+
+// 加载表单下拉选项的方法
+const loadFormOptions = async () => {
+  try {
+    const [objectTypeOptions, statusOptions] = await Promise.all([
+      getObjectTypeSimpleList(),
+      getStatusSimpleList(),
+    ]);
+
+    await formApi.updateSchema([
+      {
+        fieldName: 'objectTypeId',
+        componentProps: { options: Array.isArray(objectTypeOptions) ? objectTypeOptions : [] },
+      },
+      {
+        fieldName: 'statusId',
+        componentProps: { options: Array.isArray(statusOptions) ? statusOptions : [] },
+      },
+    ]);
+  } catch (error) {
+    console.error('加载下拉选项失败', error);
+    ElMessage.error('加载下拉选项失败，请重试');
+    await formApi.updateSchema([
+      { fieldName: 'objectTypeId', componentProps: { options: [] } },
+      { fieldName: 'statusId', componentProps: { options: [] } },
+    ]);
+  }
+};
+
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
+  width: 1000, // 加宽以适应分类配置
   onCancel() { formDrawerApi.close(); },
   async onConfirm() {
-    const validateResult = await formApi.validate();
-    if (!validateResult.valid) return;
+    // 保存逻辑
+    const basicValid = await formApi.validate();
+    if (!basicValid.valid) return;
 
-    const values = formApi.form.values;
+    // 校验分类管理器
+    if (!categoryManagerRef.value?.validate()) {
+      return;
+    }
+
+    const basicValues = formApi.form.values;
     const drawerData = formDrawerApi.getData() || {};
     const id = drawerData.id;
-    const isEdit = !!id;
 
-    const loadingInstance = ElLoading.service({ text: isEdit ? '更新中...' : '创建中...' });
+    // 组装完整数据
+    const fullData = {
+      ...basicValues,
+      systemId: drawerData.systemId, // 编辑时可能已有 systemId
+      categories: categoryData.value,
+    };
+
+    const loadingInstance = ElLoading.service({ text: id ? '更新中...' : '创建中...' });
     try {
-      if (!isEdit) {
-        await createIndexSystem({ ...values, statusId: 1 });
-        ElMessage.success('新增成功');
-      } else {
-        await updateIndexSystem({ id, ...values });
-        ElMessage.success('编辑成功');
-      }
+      // 调用复合保存接口（若后端无此接口，请替换为分步保存逻辑）
+      await saveFullIndexSystem(fullData);
+      ElMessage.success(id ? '编辑成功' : '新增成功');
       emit('refresh-chart');
       handleRefresh();
       fetchStatusCount();
@@ -100,20 +145,89 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
-      formData.value = formDrawerApi.getData();
-      if (formData.value?.id) {
-        await formApi.setValues(formData.value);
+      // 先加载下拉选项
+      await loadFormOptions();
+
+      const data = formDrawerApi.getData();
+      formData.value = data;
+
+      if (data?.id) {
+        // 编辑模式：先设置基本信息
+        await formApi.setValues(data);
+        // 如果有 systemId，则加载详情获取分类数据
+        if (data.systemId) {
+          const loading = ElLoading.service({ text: '加载详情...', target: '.vben-drawer' });
+          try {
+            const detail = await getIndexSystemDetail(data.systemId);
+            // 将 detail.categories 转换为分类管理器需要的格式
+            categoryData.value = (detail.categories || []).map(cat => ({
+              categoryId: cat.categoryId,
+              name: cat.name,
+              weight: cat.weight,
+              sortNo: cat.sortNo,
+              items: (cat.items || []).map(item => ({
+                itemId: item.itemId,
+                name: item.name,
+                indexType: item.indexTypeId, // 假设接口返回 indexTypeId
+                calcWay: item.calcWayId,      // 假设接口返回 calcWayId
+                threshold: item.threshold,
+                weight: item.weight,
+                sortNo: item.sortNo,
+              })),
+            }));
+          } catch (error) {
+            ElMessage.error('加载分类数据失败');
+            categoryData.value = [];
+          } finally {
+            loading.close();
+          }
+        } else {
+          categoryData.value = [];
+        }
       } else {
+        // 新增模式：清空表单和分类数据
         formApi.resetForm();
-        if (formDrawerApi.sharedData.payload?.title === textObj.versionText) {
+        // 设置默认状态为启用
+        await formApi.setValues({ statusId: 1 });
+        categoryData.value = [];
+
+        // 如果是新增版本，需要处理从上一版本复制数据
+        if (formDrawerApi.sharedData?.payload?.title === textObj.versionText) {
           const source = formDrawerApi.sharedData.payload.source;
-          if (source) {
-            await formApi.setValues({
-              ...source,
-              id: undefined,
-              version: '',
-              statusId: 1,
-            });
+          if (source && source.systemId) {
+            const loading = ElLoading.service({ text: '加载源体系数据...', target: '.vben-drawer' });
+            try {
+              const detail = await getIndexSystemDetail(source.systemId);
+              // 填充基本信息
+              await formApi.setValues({
+                name: detail.baseInfo.name,
+                code: detail.baseInfo.code,
+                objectTypeId: source.objectTypeId, // 从源行数据中取，因为 detail.baseInfo 可能没有ID
+                version: '', // 版本号清空，让用户重新输入
+                desc: detail.baseInfo.description,
+                statusId: 1,
+              });
+              // 填充分类数据
+              categoryData.value = (detail.categories || []).map(cat => ({
+                categoryId: `temp_${Date.now()}_${Math.random()}`, // 临时ID
+                name: cat.name,
+                weight: cat.weight,
+                sortNo: cat.sortNo,
+                items: (cat.items || []).map(item => ({
+                  itemId: `temp_${Date.now()}_${Math.random()}`,
+                  name: item.name,
+                  indexType: item.indexTypeId,
+                  calcWay: item.calcWayId,
+                  threshold: item.threshold,
+                  weight: item.weight,
+                  sortNo: item.sortNo,
+                })),
+              }));
+            } catch (error) {
+              ElMessage.error('加载源体系数据失败');
+            } finally {
+              loading.close();
+            }
           }
         }
       }
@@ -130,7 +244,6 @@ function handleRefresh() {
 async function fetchStatusCount() {
   try {
     const res = await getStatusCount();
-    // 假设返回 { status1Count: 4, status2Count: 1, totalCount: 5 }
     tabsData.value[0].count = res.totalCount || 0;
     tabsData.value[1].count = res.status1Count || 0;
     tabsData.value[2].count = res.status2Count || 0;
@@ -139,7 +252,7 @@ async function fetchStatusCount() {
   }
 }
 
-/** 格式化列表数据（日期、默认值等） */
+/** 格式化列表数据 */
 function formatList(list) {
   return (list || []).map(item => ({
     ...item,
@@ -264,7 +377,10 @@ function handleCreate() {
 }
 
 function handleNewVersion(row) {
-  formDrawerApi.setData({ title: textObj.versionText, source: row }).open();
+  // 将源行数据通过 sharedData 传递给弹窗
+  formDrawerApi.setData({ title: textObj.versionText }).open({
+    payload: { title: textObj.versionText, source: row },
+  });
 }
 
 function handleEdit(row) {
@@ -321,7 +437,7 @@ async function handleDelete(row) {
   }
 }
 
-/** 批量状态变更（停用/启用） */
+/** 批量状态变更 */
 async function handleBatchStatusChange() {
   const targetStatus = activeName.value === '停用' ? '启用' : '停用';
   const targetStatusId = targetStatus === '启用' ? 1 : 2;
@@ -356,7 +472,7 @@ function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map(item => item.id);
 }
 
-/** 导出（调用后端接口，下载 Excel） */
+/** 导出（后端接口） */
 async function handleExport() {
   const params = {
     ...searchParams.value,
@@ -380,7 +496,7 @@ async function handleExport() {
   }
 }
 
-/** 批量导出选中行（多 sheet Excel） */
+/** 批量导出选中行（前端生成） */
 async function handleBatchExport() {
   if (checkedIds.value.length === 0) {
     ElMessage.warning('请至少选择一条数据');
@@ -439,36 +555,37 @@ const detailRef = ref(null);
 async function handleGarageOpenDetail(row) {
   const loadingInstance = ElLoading.service({ text: '加载详情中...' });
   try {
-    const res = await getIndexSystemDetail(row.id);
+    const res = await getIndexSystemDetail(row.systemId);
     console.log('详情接口返回:', res);
+    const baseInfo = res.baseInfo || {};
+    const categories = res.categories || [];
 
-    // 根据实际接口结构调整：假设返回结构为 { data: { baseInfo, categories } } 或直接 data 为详情对象
-    const detailData = res.data || {};
-    const baseInfo = detailData.baseInfo || detailData;
-    const categories = detailData.categories || [];
+    // 计算分类总数和指标项总数（优先从 categories 计算）
+    const categoryCount = categories.length;
+    const itemCount = categories.reduce((sum, cat) => sum + (cat.items?.length || 0), 0);
 
     dataObj.garageDetail = {
-      // 基本信息
-      name: baseInfo.name,
-      code: baseInfo.code,
-      objectTypeName: baseInfo.objectTypeName,
-      version: baseInfo.version,
-      desc: baseInfo.desc,
-      categoryCount: baseInfo.categoryCount ?? 0,
-      itemCount: baseInfo.itemCount ?? 0,
-      statusName: baseInfo.statusName,
-      // 人员与时间
-      createUserName: baseInfo.createByName || baseInfo.createUserName || '-',
-      createTime: baseInfo.createTime ? dayjs(baseInfo.createTime).format('YYYY-MM-DD HH:mm:ss') : '-',
-      updateUserName: baseInfo.updateByName || baseInfo.updateUserName || '-',
-      updateTime: baseInfo.updateTime ? dayjs(baseInfo.updateTime).format('YYYY-MM-DD HH:mm:ss') : '-',
-      // 可选字段
-      lastUseTime: baseInfo.lastUseTime ? dayjs(baseInfo.lastUseTime).format('YYYY-MM-DD HH:mm:ss') : undefined,
-      useCount: baseInfo.useCount,
-      changeLog: baseInfo.changeLog || '-',
-      // 分类及指标项
+      name: baseInfo.name || row.name || '-',
+      code: baseInfo.code || row.code || '-',
+      objectTypeName: baseInfo.objectTypeName || row.objectTypeName || '-',
+      version: baseInfo.version || row.version || '-',
+      desc: baseInfo.description || row.desc || '-',
+      statusName: baseInfo.statusName || row.statusName || '-',
+      categoryCount: categoryCount || row.categoryCount || 0,
+      itemCount: itemCount || row.itemCount || 0,
+      createUserName: baseInfo.createByName || row.createUserName || '-',
+      createTime: baseInfo.bizCreateTime
+        ? dayjs(baseInfo.bizCreateTime).format('YYYY-MM-DD HH:mm:ss')
+        : (row.bizCreateTime || '-'),
+      updateUserName: row.updateUserName || '-',
+      updateTime: baseInfo.bizUpdateTime
+        ? dayjs(baseInfo.bizUpdateTime).format('YYYY-MM-DD HH:mm:ss')
+        : (row.updateTime || '-'),
+      lastUseTime: row.lastUseTime || undefined,
+      useCount: row.useCount ?? 0,
+      changeLog: row.changeLog || '-',
       categories: categories.map(cat => ({
-        categoryId: cat.id || cat.categoryId,
+        categoryId: cat.categoryId,
         name: cat.name,
         weight: cat.weight,
         sortNo: cat.sortNo,
@@ -484,7 +601,6 @@ async function handleGarageOpenDetail(row) {
   } catch (error) {
     console.error('获取详情失败', error);
     ElMessage.error(`获取详情失败，将显示基本信息`);
-    // 后备数据：直接从行数据中提取已有字段
     dataObj.garageDetail = {
       name: row.name,
       code: row.code,
@@ -501,11 +617,11 @@ async function handleGarageOpenDetail(row) {
       lastUseTime: row.lastUseTime,
       useCount: row.useCount,
       changeLog: row.changeLog || '-',
-      categories: [], // 无分类数据
+      categories: [],
     };
   } finally {
     loadingInstance.close();
-    detailRef.value.open(); // 确保无论成功失败都打开抽屉
+    detailRef.value.open();
   }
 }
 
@@ -543,13 +659,17 @@ onMounted(() => {
 
 <template>
   <div class="park-lot-table-new">
-    <FormDrawer :title="getTitle">
+    <!-- 新增/编辑抽屉，宽度加大，包含分类管理器 -->
+    <FormDrawer :title="getTitle" class="genchuan-detail-drawer">
       <Form />
+      <CategoryManager ref="categoryManagerRef" v-model="categoryData" />
     </FormDrawer>
+
     <detailDrawer
       ref="detailRef"
       :detail-obj="dataObj.garageDetail"
     />
+
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -601,7 +721,6 @@ onMounted(() => {
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <!-- 全部标签按钮 -->
           <template v-if="activeName === '全部'">
             <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
             <IconButton content="导出" icon-name="download" @click="handleExport" />
@@ -614,7 +733,6 @@ onMounted(() => {
             />
           </template>
 
-          <!-- 启用/停用标签按钮 -->
           <template v-else>
             <IconButton content="导出" icon-name="download" @click="handleExport" />
             <IconButton
@@ -700,8 +818,7 @@ onMounted(() => {
             color="#67C23A"
             @click="handleEnable(row)"
           />
-          <!-- 如需删除按钮可取消注释 -->
-          <!-- <IconButton content="删除" icon-name="delete" color="#F56C6C" @click="handleDelete(row)" /> -->
+          <IconButton content="删除" icon-name="delete" color="#F56C6C" @click="handleDelete(row)" />
         </div>
       </template>
 

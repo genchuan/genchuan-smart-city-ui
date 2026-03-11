@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, onMounted } from 'vue';
+import { reactive, onMounted, defineExpose } from 'vue';
 import { getOverview } from '#/api/genchuan/dataHub/evaluation/system/indicators';
 
 import Card from '#/components/stats/card.vue';
@@ -17,26 +17,61 @@ const state = reactive({
 const fetchOverview = async () => {
   try {
     const data = await getOverview();
-    state.cardList = data.cardList || [];
-    state.typePieData = data.pieData1 || [];
-    state.indexPieData = data.pieData2 || [];
-    state.barXData = data.barData?.xData || [];
-    state.barSeriesData = data.barData?.series || [];
+    console.log('overview response:', data);
+
+    // 卡片数据（添加颜色，与评价主体风格一致）
+    const cardData = data.cardData || {};
+    state.cardList = [
+      { title: '总体系数', value: cardData.totalSystemCount || 0, color: '#13ce66' },
+      { title: '启用体系数', value: cardData.enableSystemCount || 0, color: '#4ECDC4' },
+      { title: '总指标数', value: cardData.totalItemCount || 0, color: '#FF6B6B' },
+      { title: '版本数', value: cardData.versionCounts?.length || 0, color: '#FFC107' },
+    ];
+
+    // 适用对象类型饼图
+    state.typePieData = (data.objectTypePieChart || []).map(item => ({
+      name: item.name || '未知',
+      value: item.value || 0,
+    }));
+
+    // 指标类型饼图
+    state.indexPieData = (data.indexTypePieChart || []).map(item => ({
+      name: item.name || '未知',
+      value: item.value || 0,
+    }));
+
+    // 各体系指标项数量柱状图
+    const barData = data.systemItemCountBarChart || [];
+    state.barXData = barData.map(item => item.systemName || '未知');
+    state.barSeriesData = [
+      {
+        // name: '指标数量',
+        data: barData.map(item => item.itemCount || 0),
+      },
+    ];
   } catch (error) {
     console.error('获取概览数据失败', error);
-    state.cardList = [];
-    state.typePieData = [];
-    state.indexPieData = [];
-    state.barXData = [];
-    state.barSeriesData = [];
+    clearState();
   }
 };
+
+// 清空状态（避免界面显示异常）
+const clearState = () => {
+  state.cardList = [];
+  state.typePieData = [];
+  state.indexPieData = [];
+  state.barXData = [];
+  state.barSeriesData = [];
+};
+
+// 暴露刷新方法，命名与评价主体组件保持一致
+defineExpose({
+  refreshOverview: fetchOverview,
+});
 
 onMounted(() => {
   fetchOverview();
 });
-
-defineExpose({ fetchOverview });
 </script>
 
 <template>
