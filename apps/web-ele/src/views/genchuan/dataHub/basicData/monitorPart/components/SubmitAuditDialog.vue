@@ -1,11 +1,11 @@
-<script setup lang="ts">
+<script setup>
 import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
 import { ElButton, ElMessage } from 'element-plus';
 
-import { updateCategory } from '#/api/genchuan/dataHub/basicData/manageItem';
+import { updateCategory } from '#/api/genchuan/dataHub/basicData/monitorPart';
 
 const emit = defineEmits(['success']);
 
@@ -21,10 +21,10 @@ const [Modal, modalApi] = useVbenModal({
   },
 });
 
-const record = ref<any>({});
+const record = ref({});
 const loading = ref(false);
 
-const open = (row: any) => {
+const open = (row) => {
   record.value = row;
   modalApi.open();
 };
@@ -34,7 +34,7 @@ const handleConfirm = async () => {
     loading.value = true;
     await updateCategory({
       ...record.value,
-      auditStatus: '0', // 待审核
+      auditStatus: '1', // 待审核
     });
     ElMessage.success('提交审核成功');
     modalApi.close();
@@ -55,7 +55,7 @@ defineExpose({
 <template>
   <Modal>
     <div class="submit-audit-content">
-      <p>确定要将分类 "{{ record.categoryName }}" 提交审核吗？</p>
+      <p>确定要将分类 "{{ record.name }}" 提交审核吗？</p>
       <p class="tip">提交后审核状态将变为"待审核"</p>
     </div>
     <template #footer>

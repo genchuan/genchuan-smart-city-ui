@@ -116,6 +116,44 @@ defineExpose({
                   {{ formatValue(field, item[field.key]) }}
                 </el-tag>
               </template>
+              <template v-else-if="field.type === 'tags'">
+                <div class="tags-container">
+                  <el-tag
+                    v-for="(tag, tagIndex) in formatValue(
+                      field,
+                      item[field.key],
+                    )"
+                    :key="tagIndex"
+                    :type="
+                      (() => {
+                        const type = tag.type || 'info';
+                        // 支持所有字典配置的颜色类型映射
+                        const colorTypeMap = {
+                          danger: 'danger',
+                          error: 'danger',
+                          info: 'info',
+                          primary: 'primary',
+                          success: 'success',
+                          warning: 'warning',
+                          blue: 'primary',
+                          green: 'success',
+                          orange: 'warning',
+                          cyan: 'info',
+                          purple: 'primary',
+                          pink: 'danger',
+                          red: 'danger',
+                          yellow: 'warning',
+                        };
+                        return colorTypeMap[type] || type || 'info';
+                      })()
+                    "
+                    size="small"
+                    style="margin-right: 4px; margin-bottom: 2px"
+                  >
+                    {{ tag.label }}
+                  </el-tag>
+                </div>
+              </template>
               <template v-else>
                 {{ formatValue(field, item[field.key]) }}
               </template>

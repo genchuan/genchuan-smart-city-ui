@@ -5,7 +5,7 @@ import { getDictObj, getDictOptions } from '@vben/hooks';
 export function useFormSchema(treeData = []) {
   return [
     {
-      fieldName: 'categoryName',
+      fieldName: 'name',
       label: '分类名称',
       component: 'Input',
       componentProps: {
@@ -38,6 +38,7 @@ export function useFormSchema(treeData = []) {
         clearable: true,
         checkStrictly: true,
         filterNodeMethod: (value, data) => {
+          // 根据label搜索节点
           if (!value) return true;
           return (
             data.label && data.label.toLowerCase().includes(value.toLowerCase())
@@ -46,10 +47,11 @@ export function useFormSchema(treeData = []) {
         onChange: (val, formModel) => {
           if (!val) {
             formModel.parentId = null;
-            formModel.parentName = '无';
+            formModel.parentCategory = '无';
             return;
           }
 
+          // 递归查找选中的节点
           const findNode = (nodes, id) => {
             for (const node of nodes) {
               if (node.id === id) {
@@ -67,37 +69,32 @@ export function useFormSchema(treeData = []) {
 
           const selectedNode = findNode(treeData, val);
           if (selectedNode) {
-            formModel.parentName =
+            formModel.parentCategory =
               selectedNode.label || selectedNode.categoryName;
           }
         },
       },
     },
     {
-      fieldName: 'deptName',
-      label: '主管部门',
-      component: 'Input',
+      fieldName: 'coreIndicators',
+      label: '核心监测指标',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入主管部门',
+        placeholder: '请选择核心监测指标',
+        options: getDictOptions(DICT_TYPE.DATA_CORE_INDICATORS, 'string'),
+        multiple: true,
+        filterable: true,
+        valueFormat: (value) => value.join(','),
+        inputFormat: (value) => (value ? value.split(',') : []),
       },
       rules: 'required',
     },
     {
-      fieldName: 'dealLimit',
-      label: '处置时限',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入处置时限(小时)',
-        min: 0,
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'workflowCode',
-      label: '工作流编码',
+      fieldName: 'thresholdRules',
+      label: '告警阈值规则',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入工作流编码',
+        placeholder: '请输入告警阈值规则',
       },
     },
     {
@@ -141,14 +138,13 @@ export function useFormSchema(treeData = []) {
       rules: 'required',
     },
     {
-      fieldName: 'relatedMatterCount',
-      label: '关联事项数',
+      fieldName: 'instanceCount',
+      label: '关联实例数',
       component: 'InputNumber',
       componentProps: {
-        placeholder: '请输入关联事项数',
+        placeholder: '请输入关联实例数',
         min: 0,
       },
-      rules: 'required',
     },
     {
       fieldName: 'auditStatus',
@@ -168,11 +164,11 @@ export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
     {
-      field: 'categoryName',
+      field: 'name',
       title: '分类名称',
       minWidth: 150,
       sortable: true,
-      slots: { default: 'categoryNameDetail' },
+      slots: { default: 'name' },
     },
     {
       field: 'categoryCode',
@@ -182,31 +178,24 @@ export function useGridColumns() {
       slots: { default: 'categoryCode' },
     },
     {
-      field: 'parentName',
+      field: 'parentCategory',
       title: '上级分类',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'parentName' },
+      slots: { default: 'parentCategory' },
     },
     {
-      field: 'deptName',
-      title: '主管部门',
-      minWidth: 120,
+      field: 'coreIndicators',
+      title: '核心监测指标',
+      minWidth: 230,
       sortable: true,
-      slots: { default: 'deptName' },
+      slots: { default: 'coreIndicators' },
     },
     {
-      field: 'dealLimit',
-      title: '处置时限',
-      minWidth: 100,
+      field: 'thresholdRules',
+      title: '告警阈值规则',
+      minWidth: 150,
       sortable: true,
-    },
-    {
-      field: 'workflowCode',
-      title: '工作流编码',
-      minWidth: 120,
-      sortable: true,
-      slots: { default: 'workflowCode' },
     },
     {
       field: 'categoryType',
@@ -238,8 +227,8 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'relatedMatterCount',
-      title: '关联事项数',
+      field: 'instanceCount',
+      title: '关联实例数',
       minWidth: 120,
       sortable: true,
     },
@@ -263,21 +252,56 @@ export function useGridColumns() {
 }
 
 export const textObj = {
-  editText: '编辑分类',
-  addText: '新增分类',
-  excelName: '分类列表',
-  excelAllName: '全市分类数据.xlsx',
-  total: ' 总计: 分类数量17; 关联事项数2032; 已审核13',
+  editText: '编辑监测部件分类',
+  addText: '新增监测部件分类',
+  excelName: '监测部件分类列表',
+  excelAllName: '全市监测部件分类数据.xlsx',
+  total: ' 总计: 分类数量10; 启用: 8; 禁用: 2',
 };
 
 /** 详情抽屉字段配置 */
 export const detailFields = [
-  { key: 'categoryName', label: '分类名称' },
+  { key: 'name', label: '分类名称' },
   { key: 'categoryCode', label: '分类代码' },
-  { key: 'parentName', label: '上级分类' },
-  { key: 'deptName', label: '主管部门' },
-  { key: 'dealLimit', label: '处置时限' },
-  { key: 'workflowCode', label: '工作流编码' },
+  { key: 'parentCategory', label: '上级分类' },
+  {
+    key: 'coreIndicators',
+    label: '核心监测指标',
+    type: 'tags',
+    formatter: (value) => {
+      if (!value) return [];
+      const indicators = value.split(',');
+      // 颜色类型映射 - 将字典颜色映射到Element Plus支持的颜色类型
+      const colorTypeMap = {
+        danger: 'danger',
+        error: 'danger',
+        info: 'info',
+        primary: 'primary',
+        success: 'success',
+        warning: 'warning',
+        blue: 'primary',
+        green: 'success',
+        orange: 'warning',
+        cyan: 'info',
+        purple: 'primary',
+        pink: 'danger',
+        red: 'danger',
+        yellow: 'warning',
+      };
+      return indicators.map((indicator) => {
+        const dict = getDictObj(
+          DICT_TYPE.DATA_CORE_INDICATORS,
+          String(indicator),
+        );
+        const rawType = dict ? dict.colorType : 'primary';
+        return {
+          label: dict ? dict.label : indicator,
+          type: colorTypeMap[rawType] || rawType || 'primary',
+        };
+      });
+    },
+  },
+  { key: 'thresholdRules', label: '告警阈值规则' },
   {
     key: 'categoryType',
     label: '分类类型',
@@ -306,7 +330,7 @@ export const detailFields = [
   },
   { key: 'creator', label: '创建人' },
   { key: 'createTime', label: '创建时间' },
-  { key: 'relatedMatterCount', label: '关联事项数' },
+  { key: 'instanceCount', label: '关联实例数' },
   {
     key: 'auditStatus',
     label: '审核状态',
@@ -322,27 +346,27 @@ export const detailFields = [
   },
 ];
 
-// ==================== 事项实例相关配置 ====================
+// ==================== 部件实例相关配置 ====================
 
-/** 事项实例表单配置 */
+/** 部件实例表单配置 */
 export function useInstanceFormSchema(treeData = []) {
   return [
     {
       fieldName: 'name',
-      label: '事项名称',
+      label: '部件名称',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入事项名称',
+        placeholder: '请输入部件名称',
       },
       rules: 'required',
     },
     {
       fieldName: 'uniqueCode',
-      label: '16位标识码',
+      label: '18位标识码',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入16位标识码',
-        maxlength: 16,
+        placeholder: '请输入18位标识码',
+        maxlength: 18,
       },
       rules: 'required',
     },
@@ -370,10 +394,11 @@ export function useInstanceFormSchema(treeData = []) {
         onChange: (val, formModel) => {
           if (!val) {
             formModel.categoryName = '';
-            formModel.parentCategoryId = '';
+            formModel.categoryId = '';
             return;
           }
 
+          // 递归查找选中的节点
           const findNode = (nodes, id) => {
             for (const node of nodes) {
               if (node.id === id) {
@@ -391,20 +416,11 @@ export function useInstanceFormSchema(treeData = []) {
 
           const selectedNode = findNode(treeData, val);
           if (selectedNode) {
-            formModel.parentCategoryId = selectedNode.id;
+            formModel.categoryId = selectedNode.id;
             formModel.categoryName =
               selectedNode.label || selectedNode.categoryName;
           }
         },
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'location',
-      label: '事发位置',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入事发位置',
       },
       rules: 'required',
     },
@@ -418,30 +434,41 @@ export function useInstanceFormSchema(treeData = []) {
       rules: 'required',
     },
     {
-      fieldName: 'description',
-      label: '描述信息',
-      component: 'Textarea',
+      fieldName: 'coordinate',
+      label: '坐标信息',
+      component: 'Input',
       componentProps: {
-        placeholder: '请输入描述信息',
-        rows: 3,
-      },
-    },
-    {
-      fieldName: 'status',
-      label: '状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择状态',
-        options: getDictOptions(DICT_TYPE.DATA_MATTER_STATUS, 'string'),
+        placeholder: '请输入坐标信息，如：116.4074,39.9042',
       },
       rules: 'required',
     },
     {
-      fieldName: 'deptName',
-      label: '主管部门',
+      fieldName: 'runStatus',
+      label: '运行状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择运行状态',
+        options: getDictOptions(DICT_TYPE.DATA_RUN_STATUS, 'string'),
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'installTime',
+      label: '安装时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择安装时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'calibrateCycle',
+      label: '校准周期',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入主管部门',
+        placeholder: '请输入校准周期',
       },
       rules: 'required',
     },
@@ -466,51 +493,50 @@ export function useInstanceFormSchema(treeData = []) {
       rules: 'required',
     },
     {
-      fieldName: 'handler',
-      label: '处置人',
+      fieldName: 'areaName',
+      label: '行政区划归属',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入处置人',
+        placeholder: '请输入行政区划归属',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'relatedPartName',
+      label: '关联管理部件',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入关联管理部件',
       },
     },
     {
-      fieldName: 'dealTime',
-      label: '处置时间',
+      fieldName: 'nextCalibrateTime',
+      label: '下次校准时间',
       component: 'DatePicker',
       componentProps: {
-        placeholder: '请选择处置时间',
+        placeholder: '请选择下次校准时间',
         format: 'YYYY-MM-DD HH:mm:ss',
         valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
     },
-    {
-      fieldName: 'partCount',
-      label: '关联部件数',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入关联部件数',
-        min: 0,
-      },
-      rules: 'required',
-    },
   ];
 }
 
-/** 事项实例表格列配置 */
+/** 部件实例表格列配置 */
 export function useInstanceGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
     {
       field: 'name',
-      title: '事项名称',
+      title: '部件名称',
       minWidth: 180,
       sortable: true,
       slots: { default: 'name' },
     },
     {
       field: 'uniqueCode',
-      title: '16位标识码',
-      minWidth: 160,
+      title: '18位标识码',
+      minWidth: 180,
       sortable: true,
       slots: { default: 'uniqueCode' },
     },
@@ -519,19 +545,7 @@ export function useInstanceGridColumns() {
       title: '所属分类',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'categoryName' },
-    },
-    // {
-    //   field: 'parentCategoryId',
-    //   title: '上级分类ID',
-    //   minWidth: 120,
-    //   sortable: true,
-    // },
-    {
-      field: 'location',
-      title: '事发位置',
-      minWidth: 150,
-      sortable: true,
+      slots: { default: 'instanceCategoryName' },
     },
     {
       field: 'gridName',
@@ -541,27 +555,32 @@ export function useInstanceGridColumns() {
       slots: { default: 'gridName' },
     },
     {
-      field: 'description',
-      title: '描述信息',
-      minWidth: 200,
+      field: 'coordinate',
+      title: '坐标信息',
+      minWidth: 150,
       sortable: true,
     },
     {
-      field: 'status',
-      title: '状态',
+      field: 'runStatus',
+      title: '运行状态',
       minWidth: 100,
       sortable: true,
       cellRender: {
         name: 'CellDict',
-        props: { type: DICT_TYPE.DATA_MATTER_STATUS },
+        props: { type: DICT_TYPE.DATA_RUN_STATUS },
       },
     },
     {
-      field: 'deptName',
-      title: '主管部门',
-      minWidth: 120,
+      field: 'installTime',
+      title: '安装时间',
+      minWidth: 180,
       sortable: true,
-      slots: { default: 'deptName' },
+    },
+    {
+      field: 'calibrateCycle',
+      title: '校准周期',
+      minWidth: 100,
+      sortable: true,
     },
     {
       field: 'creator',
@@ -576,26 +595,26 @@ export function useInstanceGridColumns() {
       sortable: true,
     },
     {
-      field: 'handler',
-      title: '处置人',
-      minWidth: 100,
-      sortable: true,
-    },
-    {
-      field: 'dealTime',
-      title: '处置时间',
-      minWidth: 180,
-      sortable: true,
-    },
-    {
-      field: 'partCount',
-      title: '关联部件数',
+      field: 'areaName',
+      title: '行政区划归属',
       minWidth: 120,
       sortable: true,
     },
     {
+      field: 'relatedPartName',
+      title: '关联管理部件',
+      minWidth: 150,
+      sortable: true,
+    },
+    {
+      field: 'nextCalibrateTime',
+      title: '下次校准时间',
+      minWidth: 180,
+      sortable: true,
+    },
+    {
       title: '操作',
-      width: 150,
+      width: 130,
       fixed: 'right',
       slots: { default: 'actions' },
     },
@@ -603,61 +622,66 @@ export function useInstanceGridColumns() {
 }
 
 export const instanceTextObj = {
-  editText: '编辑事项实例',
-  addText: '新增事项实例',
-  excelName: '事项实例列表',
-  excelAllName: '全市事项实例数据.xlsx',
-  total: ' 总计: 事项实例数量15; 启用12; 禁用2; 维护中1',
+  editText: '编辑监测部件实例',
+  addText: '新增监测部件实例',
+  excelName: '监测部件实例列表',
+  excelAllName: '全市监测部件实例数据.xlsx',
+  total: ' 总计: 监测部件实例数量10; 正常运行8; 异常2',
 };
 
-/** 事项实例详情抽屉字段配置 */
+/** 部件实例详情抽屉字段配置 */
 export const instanceDetailFields = [
-  { key: 'name', label: '事项名称' },
-  { key: 'uniqueCode', label: '16位标识码' },
+  { key: 'name', label: '部件名称' },
+  { key: 'uniqueCode', label: '18位标识码' },
   { key: 'categoryName', label: '所属分类' },
-  { key: 'parentCategoryId', label: '上级分类ID' },
-  { key: 'location', label: '事发位置' },
   { key: 'gridName', label: '所在网格' },
-  { key: 'description', label: '描述信息' },
+  { key: 'coordinate', label: '坐标信息' },
   {
-    key: 'status',
-    label: '状态',
+    key: 'runStatus',
+    label: '运行状态',
     type: 'tag',
     formatter: (value) => {
-      const dict = getDictObj(DICT_TYPE.DATA_MATTER_STATUS, String(value));
+      const dict = getDictObj(
+        DICT_TYPE.DATA_RUN_STATUS,
+        String(value),
+      );
       return dict ? dict.label : value;
     },
     tagType: (value) => {
-      const dict = getDictObj(DICT_TYPE.DATA_MATTER_STATUS, String(value));
+      const dict = getDictObj(
+        DICT_TYPE.DATA_RUN_STATUS,
+        String(value),
+      );
       return dict ? dict.colorType : 'primary';
     },
   },
-  { key: 'deptName', label: '主管部门' },
+  { key: 'installTime', label: '安装时间' },
+  { key: 'calibrateCycle', label: '校准周期' },
   { key: 'creator', label: '创建人' },
   { key: 'createTime', label: '创建时间' },
-  { key: 'handler', label: '处置人' },
-  { key: 'dealTime', label: '处置时间' },
-  { key: 'partCount', label: '关联部件数' },
+  { key: 'areaName', label: '行政区划归属' },
+  { key: 'relatedPartName', label: '关联管理部件' },
+  { key: 'nextCalibrateTime', label: '下次校准时间' },
 ];
 
-/** 事项实例搜索表单配置（专门用于搜索，所属分类使用id进行搜索） */
+/** 部件实例搜索表单配置（专门用于搜索，所属分类使用id进行搜索） */
 export function useInstanceSearchFormSchema(treeData = []) {
   return [
     {
       fieldName: 'name',
-      label: '事项名称',
+      label: '部件名称',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入事项名称',
+        placeholder: '请输入部件名称',
       },
     },
     {
       fieldName: 'uniqueCode',
-      label: '16位标识码',
+      label: '18位标识码',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入16位标识码',
-        maxlength: 16,
+        placeholder: '请输入18位标识码',
+        maxlength: 18,
       },
     },
     {
@@ -684,14 +708,6 @@ export function useInstanceSearchFormSchema(treeData = []) {
       },
     },
     {
-      fieldName: 'location',
-      label: '事发位置',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入事发位置',
-      },
-    },
-    {
       fieldName: 'gridName',
       label: '所在网格',
       component: 'Input',
@@ -700,36 +716,36 @@ export function useInstanceSearchFormSchema(treeData = []) {
       },
     },
     {
-      fieldName: 'status',
-      label: '状态',
+      fieldName: 'coordinate',
+      label: '坐标信息',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入坐标信息，如：116.4074,39.9042',
+      },
+    },
+    {
+      fieldName: 'runStatus',
+      label: '运行状态',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择状态',
-        options: getDictOptions(DICT_TYPE.DATA_MATTER_STATUS, 'string'),
+        placeholder: '请选择运行状态',
+        options: getDictOptions(DICT_TYPE.DATA_RUN_STATUS, 'string'),
       },
     },
     {
-      fieldName: 'deptName',
-      label: '主管部门',
+      fieldName: 'areaName',
+      label: '行政区划归属',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入主管部门',
+        placeholder: '请输入行政区划归属',
       },
     },
     {
-      fieldName: 'creator',
-      label: '创建人',
+      fieldName: 'relatedPartName',
+      label: '关联管理部件',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入创建人',
-      },
-    },
-    {
-      fieldName: 'handler',
-      label: '处置人',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入处置人',
+        placeholder: '请输入关联管理部件',
       },
     },
   ];
