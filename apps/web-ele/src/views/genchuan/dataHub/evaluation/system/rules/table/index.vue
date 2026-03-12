@@ -13,13 +13,10 @@ import {
   textObj,
   useFormSchema,
   useRuleItemFormSchema,
-  useVetoItemFormSchema,
   getGridColumnsByTab,
-  objectTypeList,
   ruleTypeList,
   indexSystemList,
   indexItemList,
-  userList,
   statusList
 } from './data';
 
@@ -28,8 +25,30 @@ const props = defineProps({
   arrowShow: { type: Boolean, default: false },
   arrowState: { type: Boolean, default: false },
 });
-const emit = defineEmits(['arrow-change']);
+const emit = defineEmits(['arrow-change', 'data-change']);
 
+// ==================== 数据定义 ====================
+const dataObj = reactive({
+  totalShow: false,
+  detailObj: {},
+  garageDetail: {},
+  total: dataList().length,
+  currentPage: 1,
+  pageSize: 10,
+  apilist: dataList(),
+  list: [],
+});
+
+const checkedIds = ref([]);
+const filterSystem = ref('');
+const filterStatus = ref('');
+const searchParams = ref({});
+const formData = ref();
+const ruleItemFormData = ref();
+const activeName = ref('全部');
+const detailRef = ref(null);
+
+// ==================== computed ====================
 const getTitle = computed(() => {
   return formData.value?.ruleCategoryId ? textObj.editText : textObj.addText;
 });
@@ -38,13 +57,52 @@ const getRuleItemTitle = computed(() => {
   return ruleItemFormData.value?.ruleItemId ? '编辑规则项' : textObj.addRuleItemText;
 });
 
-const getVetoItemTitle = computed(() => {
-  return vetoItemFormData.value?.vetoItemId ? '编辑否决项' : textObj.addVetoItemText;
+const tabsData = ref([
+  { label: '全部' },
+  { label: '启用' },
+  { label: '停用' },
+]);
+
+const createLabel = (item) => {
+  let count = 0;
+  if (item.label === '全部') {
+    count = dataObj.apilist.length;
+  } else {
+    count = dataObj.apilist.filter(v => v.statusName === item.label).length;
+  }
+  return `${item.label} (${count})`;
+};
+
+// 图表数据计算（删除否决项总数）
+const chartData = computed(() => {
+  const list = dataObj.apilist;
+  const total = list.length;
+  const enabled = list.filter(v => v.statusName === '启用').length;
+  const totalRuleItems = list.reduce((acc, v) => acc + (v.itemCount || 0), 0);
+
+  const cardList = [
+    { title: '总分类数', value: total, color: '#13ce66' },
+    { title: '规则项总数', value: totalRuleItems, color: '#4ECDC4' },
+    { title: '启用规则数', value: enabled, color: '#FFC107' }
+  ];
+
+  const systemMap = {};
+  list.forEach(v => { systemMap[v.systemName] = (systemMap[v.systemName] || 0) + 1; });
+  const pieData1 = Object.entries(systemMap).map(([name, value]) => ({ name, value }));
+
+  const statusMap = {};
+  list.forEach(v => { statusMap[v.statusName] = (statusMap[v.statusName] || 0) + 1; });
+  const pieData2 = Object.entries(statusMap).map(([name, value]) => ({ name, value }));
+
+  const topCategories = list.slice(0, 8);
+  const barData = {
+    xData: topCategories.map(v => v.name.length > 6 ? v.name.slice(0,6)+'...' : v.name),
+    series: [{ name: '规则项数量', data: topCategories.map(v => v.itemCount || 0) }]
+  };
+  return { cardList, pieData1, pieData2, barData };
 });
 
-// 搜索参数
-const searchParams = ref({});
-
+// ==================== 抽屉和表单配置 ====================
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -53,7 +111,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   async onOpenChange() {},
 });
 
-const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
     componentProps: { class: 'w-full' },
@@ -71,6 +128,17 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onCancel() { formDrawerApi.close(); },
   onConfirm() {
     const obj = formApi.form.values;
+    // 唯一性校验：同一体系下名称不能重复
+    const exists = dataObj.apilist.some(item =>
+      item.systemId === obj.systemId &&
+      item.name === obj.name &&
+      item.ruleCategoryId !== (formData.value?.ruleCategoryId || '')
+    );
+    if (exists) {
+      ElMessage.error('同一指标体系下规则分类名称已存在');
+      return;
+    }
+
     if (formDrawerApi.sharedData.payload.title === textObj.addText) {
       // 新增
       obj.ruleCategoryId = Date.now().toString() + Math.random().toString(36).substr(2, 5);
@@ -81,9 +149,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       obj.updateByName = '当前用户';
       obj.updateTime = obj.createTime;
       obj.itemCount = 0;
-      obj.vetoCount = 0;
       obj.ruleItems = [];
-      obj.vetoItems = [];
       obj.changeLog = '新建规则分类';
       dataObj.apilist.push(obj);
       dataObj.currentPage = 1;
@@ -97,10 +163,12 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
         updated.updateByName = '当前用户';
         updated.updateTime = new Date().toLocaleString();
         updated.changeLog = (updated.changeLog || '') + '；编辑更新';
+        // 注意：ruleItems 保持不变，已在外部通过规则项操作修改
         dataObj.apilist[index] = updated;
       }
     }
     handleRefresh();
+    emit('data-change');
     formDrawerApi.close();
   },
   async onOpenChange(isOpen) {
@@ -116,7 +184,6 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 });
 
 // 规则项表单
-const ruleItemFormData = ref();
 const [RuleItemForm, ruleItemFormApi] = useVbenForm({
   commonConfig: {
     componentProps: { class: 'w-full' },
@@ -159,6 +226,7 @@ const [RuleItemDrawer, ruleItemDrawerApi] = useVbenDrawer({
       dataObj.apilist[index].changeLog = (dataObj.apilist[index].changeLog || '') + '；规则项更新';
     }
     handleRefresh();
+    emit('data-change');
     ruleItemDrawerApi.close();
   },
   async onOpenChange(isOpen) {
@@ -173,74 +241,41 @@ const [RuleItemDrawer, ruleItemDrawerApi] = useVbenDrawer({
   },
 });
 
-// 否决项表单
-const vetoItemFormData = ref();
-const [VetoItemForm, vetoItemFormApi] = useVbenForm({
-  commonConfig: {
-    componentProps: { class: 'w-full' },
-    formItemClass: 'col-span-2',
-    labelWidth: 100,
-  },
-  layout: 'horizontal',
-  schema: useVetoItemFormSchema(),
-  showDefaultActions: false,
-});
-
-const [VetoItemDrawer, vetoItemDrawerApi] = useVbenDrawer({
-  appendToMain: true,
-  modal: false,
-  onCancel() { vetoItemDrawerApi.close(); },
-  onConfirm() {
-    const obj = vetoItemFormApi.form.values;
-    if (vetoItemDrawerApi.sharedData.payload.ruleCategoryId) {
-      // 关联到规则分类的否决项
-      const ruleCategoryId = vetoItemDrawerApi.sharedData.payload.ruleCategoryId;
-      const index = dataObj.apilist.findIndex(v => v.ruleCategoryId === ruleCategoryId);
-      if (index !== -1) {
-        if (vetoItemFormData.value?.vetoItemId) {
-          // 编辑否决项
-          const vetoItemIndex = dataObj.apilist[index].vetoItems.findIndex(vi => vi.vetoItemId === vetoItemFormData.value.vetoItemId);
-          if (vetoItemIndex !== -1) {
-            const updatedVetoItem = { ...dataObj.apilist[index].vetoItems[vetoItemIndex], ...obj };
-            updatedVetoItem.objectTypeName = objectTypeList.find(t => t.id === obj.objectTypeId)?.name || '';
-            dataObj.apilist[index].vetoItems[vetoItemIndex] = updatedVetoItem;
-          }
-        } else {
-          // 新增否决项
-          obj.vetoItemId = Date.now().toString() + Math.random().toString(36).substr(2, 5);
-          obj.objectTypeName = objectTypeList.find(t => t.id === obj.objectTypeId)?.name || '';
-          dataObj.apilist[index].vetoItems.push(obj);
-          dataObj.apilist[index].vetoCount += 1;
-        }
-        dataObj.apilist[index].updateByName = '当前用户';
-        dataObj.apilist[index].updateTime = new Date().toLocaleString();
-        dataObj.apilist[index].changeLog = (dataObj.apilist[index].changeLog || '') + '；否决项更新';
-      }
-    } else {
-      // 全局否决项
-      // 这里可以添加全局否决项的逻辑
-    }
-    handleRefresh();
-    vetoItemDrawerApi.close();
-  },
-  async onOpenChange(isOpen) {
-    if (isOpen) {
-      vetoItemFormData.value = vetoItemDrawerApi.getData();
-      if (vetoItemFormData.value?.vetoItemId) {
-        await vetoItemFormApi.setValues(vetoItemFormData.value);
-      } else {
-        vetoItemFormApi.resetForm();
-      }
-    }
-  },
-});
-
+// ==================== 函数定义 ====================
 function handleRefresh() {
   gridApi.query();
 }
 
 async function handleExport() {
-  exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+  const sheets = [
+    {
+      name: '规则分类',
+      data: dataObj.apilist.map(c => ({
+        '规则分类名称': c.name,
+        '适用指标体系': c.systemName,
+        '规则项数量': c.itemCount,
+        '状态': c.statusName,
+        '创建人': c.createByName,
+        '创建时间': c.createTime,
+        '变更日志': c.changeLog
+      }))
+    },
+    {
+      name: '规则项明细',
+      data: dataObj.apilist.flatMap(c =>
+        (c.ruleItems || []).map(item => ({
+          '所属分类': c.name,
+          '规则项名称': item.name,
+          '关联指标项': item.indexName,
+          '评分逻辑': item.scoreLogic,
+          '满分值': item.fullScore,
+          '权重': item.weight,
+          '规则类型': item.ruleTypeName
+        }))
+      )
+    }
+  ];
+  exportToExcel(sheets, textObj.excelName, textObj.excelAllName);
 }
 
 function handleCreate() {
@@ -251,16 +286,38 @@ function handleAddRuleItem(row) {
   ruleItemDrawerApi.setData({ title: textObj.addRuleItemText, ruleCategoryId: row.ruleCategoryId }).open();
 }
 
-function handleAddVetoItem(row) {
-  vetoItemDrawerApi.setData({ title: textObj.addVetoItemText, ruleCategoryId: row.ruleCategoryId }).open();
-}
-
-function handleAddGlobalVetoItem() {
-  vetoItemDrawerApi.setData({ title: textObj.addVetoItemText }).open();
+// 在编辑抽屉中新增规则项
+function handleAddRuleItemInEdit(category) {
+  ruleItemDrawerApi.setData({ title: textObj.addRuleItemText, ruleCategoryId: category.ruleCategoryId }).open();
 }
 
 function handleEdit(row) {
   formDrawerApi.setData({ title: textObj.editText, ...row }).open();
+}
+
+// 在编辑抽屉中编辑规则项
+function handleEditRuleItemInEdit(category, ruleItem) {
+  ruleItemDrawerApi.setData({ title: '编辑规则项', ...ruleItem, ruleCategoryId: category.ruleCategoryId }).open();
+}
+
+// 删除规则项
+async function handleDeleteRuleItem(category, ruleItem) {
+  await confirm(`确定删除规则项“${ruleItem.name}”吗？`);
+  const index = dataObj.apilist.findIndex(v => v.ruleCategoryId === category.ruleCategoryId);
+  if (index !== -1) {
+    const ruleItems = dataObj.apilist[index].ruleItems;
+    const ruleIndex = ruleItems.findIndex(ri => ri.ruleItemId === ruleItem.ruleItemId);
+    if (ruleIndex !== -1) {
+      ruleItems.splice(ruleIndex, 1);
+      dataObj.apilist[index].itemCount = ruleItems.length;
+      dataObj.apilist[index].updateByName = '当前用户';
+      dataObj.apilist[index].updateTime = new Date().toLocaleString();
+      dataObj.apilist[index].changeLog = (dataObj.apilist[index].changeLog || '') + '；删除规则项';
+      ElMessage.success('删除成功');
+      handleRefresh();
+      emit('data-change');
+    }
+  }
 }
 
 async function handleDisable(row) {
@@ -279,6 +336,7 @@ async function handleDisable(row) {
     }
     ElMessage.success('已停用');
     handleRefresh();
+    emit('data-change');
   } finally {
     loadingInstance.close();
   }
@@ -300,6 +358,7 @@ async function handleEnable(row) {
     }
     ElMessage.success('已启用');
     handleRefresh();
+    emit('data-change');
   } finally {
     loadingInstance.close();
   }
@@ -326,56 +385,74 @@ async function handleBatchStatusChange() {
     checkedIds.value = [];
     ElMessage.success(`批量${targetStatus}成功`);
     handleRefresh();
+    emit('data-change');
   } finally {
     loadingInstance.close();
   }
 }
 
-const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map(item => item.ruleCategoryId);
 }
-
-const dataObj = reactive({
-  totalShow: false,
-  detailObj: {},
-  garageDetail: {},
-  total: dataList().length,
-  currentPage: 1,
-  pageSize: 10,
-  apilist: dataList(),
-  list: [],
-});
 
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
 
-// ==================== 新增钻取筛选变量 ====================
-const filterSystem = ref('');
-const filterStatus = ref('');
-
-// 钻取点击处理函数
 const handleSystemClick = (system) => {
   filterSystem.value = filterSystem.value === system ? '' : system;
   gridApi.query();
 };
+
 const handleStatusClick = (status) => {
   filterStatus.value = filterStatus.value === status ? '' : status;
   gridApi.query();
 };
 
-// 取消筛选标签
 const handleCancelSystemFilter = () => {
   filterSystem.value = '';
   gridApi.query();
 };
+
 const handleCancelStatusFilter = () => {
   filterStatus.value = '';
   gridApi.query();
 };
 
-// ==================== 修改 getTableData，加入钻取筛选 ====================
+// 搜索表单 schema
+const searchSchema = useFormSchema().map(v => {
+  delete v.rules;
+  return { ...v };
+});
+
+const [QueryForm, queryFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {
+    componentProps: { class: 'w-full' },
+    formItemClass: 'col-span-2',
+    labelWidth: 120,
+  },
+  handleSubmit: onSubmit,
+  layout: 'horizontal',
+  schema: searchSchema,
+  showCollapseButton: true,
+  submitButtonOptions: { content: '查询' },
+  resetButtonOptions: {
+    content: '重置',
+    onClick: () => {
+      queryFormApi.resetForm();
+      queryFormApi.submitForm();
+    }
+  }
+});
+
+function onSubmit(values) {
+  searchParams.value = values;
+  drawerApi.close();
+  handleRefresh();
+}
+
+// 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
   let filtered = dataObj.apilist.filter(v => {
@@ -394,7 +471,6 @@ const getTableData = (pageObj) => {
     });
   }
 
-  // 钻取筛选
   if (filterSystem.value) {
     filtered = filtered.filter(item => item.systemName === filterSystem.value);
   }
@@ -411,36 +487,6 @@ const getTableData = (pageObj) => {
   );
   return dataObj;
 };
-
-const [QueryForm, queryFormApi] = useVbenForm({
-  collapsed: false,
-  commonConfig: {
-    componentProps: { class: 'w-full' },
-    formItemClass: 'col-span-2',
-    labelWidth: 120,
-  },
-  handleSubmit: onSubmit,
-  layout: 'horizontal',
-  schema: useFormSchema().map(v => {
-    delete v.rules;
-    return { ...v };
-  }),
-  showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
-  resetButtonOptions: {
-    content: '重置',
-    onClick: () => {
-      queryFormApi.resetForm();
-      queryFormApi.submitForm();
-    }
-  }
-});
-
-function onSubmit(values) {
-  searchParams.value = values;
-  drawerApi.close();
-  handleRefresh();
-}
 
 const gridColumns = ref(getGridColumnsByTab('全部'));
 
@@ -467,26 +513,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-const activeName = ref('全部');
 const handleGarageOpenDetail = (row) => {
   dataObj.garageDetail = row;
   detailRef.value.open();
-};
-
-const tabsData = ref([
-  { label: '全部' },
-  { label: '启用' },
-  { label: '停用' },
-]);
-
-const createLabel = (item) => {
-  let count = 0;
-  if (item.label === '全部') {
-    count = dataObj.apilist.length;
-  } else {
-    count = dataObj.apilist.filter(v => v.statusName === item.label).length;
-  }
-  return `${item.label} (${count})`;
 };
 
 const handleClick = () => {
@@ -503,58 +532,52 @@ const handleFullShow = () => {
   screenfull.toggle();
 };
 
-const detailRef = ref(null);
-
 const arrowChange = () => {
   emit('arrow-change');
 };
 
-// 图表数据计算
-const chartData = computed(() => {
-  const list = dataObj.apilist;
-  const total = list.length;
-  const enabled = list.filter(v => v.statusName === '启用').length;
-  const totalRuleItems = list.reduce((acc, v) => acc + (v.itemCount || 0), 0);
-  const totalVetoItems = list.reduce((acc, v) => acc + (v.vetoCount || 0), 0);
+// 获取当前编辑分类的规则项（实时数据）
+const currentRuleItems = computed(() => {
+  if (!formData.value?.ruleCategoryId) return [];
+  const category = dataObj.apilist.find(c => c.ruleCategoryId === formData.value.ruleCategoryId);
+  return category?.ruleItems || [];
+});
 
-  const cardList = [
-    { title: '总分类数', value: total, color: '#13ce66' },
-    { title: '规则项总数', value: totalRuleItems, color: '#4ECDC4' },
-    { title: '否决项总数', value: totalVetoItems, color: '#FF6B6B' },
-    { title: '启用规则数', value: enabled, color: '#FFC107' }
-  ];
-
-  const systemMap = {};
-  list.forEach(v => { systemMap[v.systemName] = (systemMap[v.systemName] || 0) + 1; });
-  const pieData1 = Object.entries(systemMap).map(([name, value]) => ({ name, value }));
-
-  const statusMap = {};
-  list.forEach(v => { statusMap[v.statusName] = (statusMap[v.statusName] || 0) + 1; });
-  const pieData2 = Object.entries(statusMap).map(([name, value]) => ({ name, value }));
-
-  const topCategories = list.slice(0, 8);
-  const barData = {
-    xData: topCategories.map(v => v.name.length > 6 ? v.name.slice(0,6)+'...' : v.name),
-    series: [{ name: '规则项数量', data: topCategories.map(v => v.itemCount || 0) }]
-  };
-
-  return { cardList, pieData1, pieData2, barData };
+defineExpose({
+  dataList: dataObj.apilist
 });
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <FormDrawer :title="getTitle">
+    <FormDrawer :title="getTitle" class="genchuan-detail-drawer">
       <Form />
+      <!-- 规则项管理区域（仅在编辑时显示） -->
+      <div v-if="formData?.ruleCategoryId" class="rule-items-section" style="margin-top: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <h4 style="margin: 0; font-size: 14px; color: #1f2f3d;">规则项列表</h4>
+          <el-button type="primary" size="small" @click="handleAddRuleItemInEdit(formData)">新增规则项</el-button>
+        </div>
+        <el-table :data="currentRuleItems" border size="small" style="width: 100%;" max-height="300">
+          <el-table-column prop="name" label="规则项名称" min-width="150" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="indexName" label="关联指标项" min-width="150" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="scoreLogic" label="评分逻辑" min-width="200" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="fullScore" label="满分值" width="80"></el-table-column>
+          <el-table-column prop="weight" label="权重" width="80"></el-table-column>
+          <el-table-column prop="ruleTypeName" label="规则类型" width="100"></el-table-column>
+          <el-table-column label="操作" width="120" fixed="right">
+            <template #default="{ row }">
+              <el-button link type="primary" @click="handleEditRuleItemInEdit(formData, row)">编辑</el-button>
+              <el-button link type="danger" @click="handleDeleteRuleItem(formData, row)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </FormDrawer>
 
     <RuleItemDrawer :title="getRuleItemTitle">
       <RuleItemForm />
     </RuleItemDrawer>
-
-    <VetoItemDrawer :title="getVetoItemTitle">
-      <VetoItemForm />
-    </VetoItemDrawer>
 
     <detailDrawer
       ref="detailRef"
@@ -582,7 +605,6 @@ const chartData = computed(() => {
               />
             </el-tabs>
           </div>
-          <!-- 钻取筛选标签 -->
           <el-tag
             v-if="filterSystem"
             type="primary"
@@ -606,7 +628,6 @@ const chartData = computed(() => {
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton v-if="activeName === '全部'" content="新增分类" icon-name="Plus" @click="handleCreate" />
-          <IconButton v-if="activeName === '全部'" content="新增否决项" icon-name="Plus" @click="handleAddGlobalVetoItem" />
           <IconButton content="导出" icon-name="download" @click="handleExport" />
           <IconButton
             v-if="activeName !== '停用'"
@@ -633,7 +654,6 @@ const chartData = computed(() => {
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
-      <!-- 列插槽：名称点击打开详情 -->
       <template #name="{ row }">
         <el-text
           @click="handleGarageOpenDetail(row)"
@@ -643,7 +663,6 @@ const chartData = computed(() => {
           {{ row.name }}
         </el-text>
       </template>
-      <!-- 新增钻取列插槽 -->
       <template #systemName="{ row }">
         <el-text @click="handleSystemClick(row.systemName)" class="common-align" type="primary">
           {{ row.systemName }}

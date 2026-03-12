@@ -81,19 +81,24 @@ const loadFormOptions = async () => {
       getStatusSimpleList(),
     ]);
 
+    // 确保返回的是数组，否则置空
+    const objectOpts = Array.isArray(objectTypeOptions) ? objectTypeOptions : [];
+    const statusOpts = Array.isArray(statusOptions) ? statusOptions : [];
+
     await formApi.updateSchema([
       {
         fieldName: 'objectTypeId',
-        componentProps: { options: Array.isArray(objectTypeOptions) ? objectTypeOptions : [] },
+        componentProps: { options: objectOpts },
       },
       {
         fieldName: 'statusId',
-        componentProps: { options: Array.isArray(statusOptions) ? statusOptions : [] },
+        componentProps: { options: statusOpts },
       },
     ]);
   } catch (error) {
     console.error('加载下拉选项失败', error);
     ElMessage.error('加载下拉选项失败，请重试');
+    // 失败时置空选项，避免显示旧数据
     await formApi.updateSchema([
       { fieldName: 'objectTypeId', componentProps: { options: [] } },
       { fieldName: 'statusId', componentProps: { options: [] } },

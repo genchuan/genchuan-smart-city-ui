@@ -1,5 +1,6 @@
 <script setup>
-import { computed, defineProps, toRefs } from 'vue';
+import { computed, defineProps, defineEmits, toRefs } from 'vue';
+import { ElMessageBox, ElMessage } from 'element-plus';
 import { useVbenDrawer } from '@vben/common-ui';
 
 const props = defineProps({
@@ -27,7 +28,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
 </script>
 
 <template>
-  <DetailDrawer :title="drawerTitle">
+  <DetailDrawer :title="drawerTitle" class="genchuan-detail-drawer">
     <div class="detail-card">
       <!-- 标准分类基本信息 -->
       <h3>基本信息</h3>

@@ -18,7 +18,6 @@ const fetchData = () => {
   state.cardList = [
     { title: '总分类数', value: 12, color: '#13ce66' },
     { title: '规则项总数', value: 45, color: '#4ECDC4' },
-    { title: '否决项总数', value: 8, color: '#FF6B6B' },
     { title: '启用规则数', value: 38, color: '#FFC107' },
   ];
 
@@ -52,7 +51,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="park-chart-box park-subject-chart">
+  <div class="park-chart-box">
     <!-- 卡片区域 -->
     <div class="chart-box-left">
       <Card
@@ -91,21 +90,5 @@ onMounted(() => {
   </div>
 </template>
 
-<style lang="scss">
-.park-subject-chart {
-  .chart-box-left {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    max-width: 100%;
-    height: 100%;
-    .left-card {
-      height: 159px !important;
-    }
-  }
-  .subject-columnar {
-    min-width: 200px !important;
-  }
-}
-</style>
+
 
