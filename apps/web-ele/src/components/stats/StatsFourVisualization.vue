@@ -1,8 +1,8 @@
 <script setup>
-import { onMounted, onUnmounted, ref, watch, computed, nextTick } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 
 import * as echarts from 'echarts';
-import { ElSelect, ElOption } from 'element-plus';
+import { ElOption, ElSelect } from 'element-plus';
 
 import IconButton from '#/components/common/IconButton.vue';
 
@@ -119,7 +119,9 @@ const showMap = ref(props.defaultShowMap);
 // 当前选中的图表索引（本地状态）- 两个圆环图各自独立
 // 默认第一个圆环图显示第一个选项，第二个圆环图显示第二个选项（如果存在）
 const localPieIndex1 = ref(0);
-const localPieIndex2 = ref(props.currentPieIndex > 0 ? props.currentPieIndex : 1);
+const localPieIndex2 = ref(
+  props.currentPieIndex > 0 ? props.currentPieIndex : 1,
+);
 const localBarLineIndex = ref(props.currentBarLineIndex);
 
 // 计算第一个圆环图数据
@@ -186,7 +188,14 @@ const handleBarLineChange = (index) => {
 
 // 获取圆环图配置
 const getPieOption = (chartData) => {
-  const freshColors = ['#4A90E2', '#50E3C2', '#FF9F40', '#A17FE0', '#FF6B8B', '#FFD93D'];
+  const freshColors = [
+    '#4A90E2',
+    '#50E3C2',
+    '#FF9F40',
+    '#A17FE0',
+    '#FF6B8B',
+    '#FFD93D',
+  ];
 
   return {
     backgroundColor: 'transparent',
@@ -238,7 +247,9 @@ const getPieOption = (chartData) => {
           position: 'outside',
           formatter(params) {
             const name =
-              params.name.length > 4 ? `${params.name.slice(0, 4)}...` : params.name;
+              params.name.length > 4
+                ? `${params.name.slice(0, 4)}...`
+                : params.name;
             return `{name|${name}}\n{percent|${params.percent}%}`;
           },
           rich: {
@@ -370,7 +381,7 @@ const getBarLineOption = (chartData) => {
     series: [
       {
         name: chartData?.label || props.barLineChartTitle,
-        type: type,
+        type,
         data: chartData?.data?.series || [],
         itemStyle: {
           borderRadius: type === 'bar' ? [4, 4, 0, 0] : undefined,
@@ -467,9 +478,18 @@ const initPieCharts = () => {
 // 初始化柱状/折线图
 const initBarLineChart = () => {
   // 确保 DOM 元素和数据都存在
-  if (!barLineChartRef.value || !currentBarLineData.value || !currentBarLineData.value.data) return;
+  if (
+    !barLineChartRef.value ||
+    !currentBarLineData.value ||
+    !currentBarLineData.value.data
+  )
+    return;
   // 确保数据不为空
-  if (!currentBarLineData.value.data.xAxis || currentBarLineData.value.data.xAxis.length === 0) return;
+  if (
+    !currentBarLineData.value.data.xAxis ||
+    currentBarLineData.value.data.xAxis.length === 0
+  )
+    return;
 
   try {
     if (barLineChartInstance) {
@@ -587,7 +607,9 @@ onUnmounted(() => {
           ></div>
         </div>
         <div class="card-body">
-          <div class="card-value" :style="{ color: card.color || '#4A90E2' }">{{ card.value }}</div>
+          <div class="card-value" :style="{ color: card.color || '#4A90E2' }">
+            {{ card.value }}
+          </div>
           <div class="card-desc" v-if="card.desc">{{ card.desc }}</div>
         </div>
       </div>
@@ -663,7 +685,10 @@ onUnmounted(() => {
         <!-- 柱状/折线图展示区（更宽） -->
         <div class="bar-line-chart-area">
           <!-- 下拉切换按钮 -->
-          <div v-if="barLineChartOptions.length > 1" class="chart-select-wrapper bar-line-select">
+          <div
+            v-if="barLineChartOptions.length > 1"
+            class="chart-select-wrapper bar-line-select"
+          >
             <ElSelect
               :model-value="localBarLineIndex"
               size="small"
@@ -699,9 +724,9 @@ onUnmounted(() => {
 /* 卡片区样式 - 2x2网格布局 */
 .cards-section {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
   flex-shrink: 0;
+  grid-template-rows: 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
   width: 260px;
   height: 320px;
@@ -711,17 +736,17 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   padding: 12px 14px;
-  background: #ffffff;
-  border-radius: 8px;
-  border-left: 4px solid #4a90e2;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
   overflow: hidden;
+  background: #fff;
+  border-left: 4px solid #4a90e2;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+  transition: all 0.3s ease;
 }
 
 .stat-card:hover {
+  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .card-header {
@@ -732,42 +757,42 @@ onUnmounted(() => {
 }
 
 .card-title {
-  font-size: 13px;
-  color: #6e7e91;
-  font-weight: 600;
-  line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #6e7e91;
   white-space: nowrap;
 }
 
 .card-indicator {
+  flex-shrink: 0;
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  flex-shrink: 0;
 }
 
 .card-body {
   display: flex;
-  flex-direction: column;
   flex: 1;
+  flex-direction: column;
   justify-content: center;
 }
 
 .card-value {
+  margin-bottom: 4px;
   font-size: 22px;
   font-weight: 700;
   line-height: 1.3;
-  margin-bottom: 4px;
 }
 
 .card-desc {
-  font-size: 11px;
-  color: #9aa8b7;
-  line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 11px;
+  line-height: 1.3;
+  color: #9aa8b7;
   white-space: nowrap;
 }
 
@@ -788,15 +813,15 @@ onUnmounted(() => {
 }
 
 .toggle-button {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
 }
 
 /* 地图容器 */
 .map-wrapper {
   width: 100%;
   height: 100%;
-  border-radius: 8px;
   overflow: hidden;
+  border-radius: 8px;
 }
 
 /* 图表区样式 */
@@ -827,8 +852,8 @@ onUnmounted(() => {
 }
 
 .chart-select :deep(.el-input__wrapper) {
-  background-color: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  background-color: rgb(255 255 255 / 95%);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 10%);
 }
 
 .chart-select :deep(.el-input__inner) {

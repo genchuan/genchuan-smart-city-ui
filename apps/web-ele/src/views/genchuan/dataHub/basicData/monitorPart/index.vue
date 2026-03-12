@@ -1,15 +1,20 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
-import { ArrowDown, ArrowUp, Search } from '@element-plus/icons-vue';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj } from '@vben/hooks';
+
+import { ArrowDown, ArrowUp, Search } from '@element-plus/icons-vue';
 import { ElInput, ElLoading, ElMessage, ElTree } from 'element-plus';
 
-import { getCategoryTree, getInstancePage } from '#/api/genchuan/dataHub/basicData/monitorPart';
+import {
+  getCategoryTree,
+  getInstancePage,
+} from '#/api/genchuan/dataHub/basicData/monitorPart';
 import StatsFourVisualization from '#/components/stats/StatsFourVisualization.vue';
-import Table from './table/index.vue';
 import { useTreeExpandController } from '#/utils/useTreeExpandController';
+
+import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
 
@@ -189,10 +194,34 @@ const statsData = computed(() => {
   if (list.length === 0) {
     return {
       cards: [
-        { title: '总部件数', value: 0, desc: '全部部件', icon: '🔧', color: '#4A90E2' },
-        { title: '各分类部件数', value: 0, desc: '分类统计', icon: '📂', color: '#50E3C2' },
-        { title: '正常运行部件数', value: 0, desc: '正常运行', icon: '✅', color: '#7ED321' },
-        { title: '待校准部件数', value: 0, desc: '待校准', icon: '⏰', color: '#F5A623' },
+        {
+          title: '总部件数',
+          value: 0,
+          desc: '全部部件',
+          icon: '🔧',
+          color: '#4A90E2',
+        },
+        {
+          title: '各分类部件数',
+          value: 0,
+          desc: '分类统计',
+          icon: '📂',
+          color: '#50E3C2',
+        },
+        {
+          title: '正常运行部件数',
+          value: 0,
+          desc: '正常运行',
+          icon: '✅',
+          color: '#7ED321',
+        },
+        {
+          title: '待校准部件数',
+          value: 0,
+          desc: '待校准',
+          icon: '⏰',
+          color: '#F5A623',
+        },
       ],
       pieChartOptions: [
         { label: '部件分类占比', value: 'category', data: [] },
@@ -217,7 +246,9 @@ const statsData = computed(() => {
   const totalCount = list.length;
 
   // 各分类部件数（按所属分类统计不重复分类数）
-  const categorySet = new Set(list.map(item => item.categoryName).filter(Boolean));
+  const categorySet = new Set(
+    list.map((item) => item.categoryName).filter(Boolean),
+  );
   const categoryCount = categorySet.size;
 
   // 正常运行部件数（运行状态为正常的）- 字典值2表示正常
@@ -227,7 +258,7 @@ const statsData = computed(() => {
   }).length;
 
   // 待校准部件数（根据校准周期和下次校准时间计算）
-  const now = new Date().getTime();
+  const now = Date.now();
   const pendingCalibrateCount = list.filter((item) => {
     if (!item.nextCalibrateTime) return false;
     const nextTime = new Date(item.nextCalibrateTime).getTime();
@@ -249,7 +280,10 @@ const statsData = computed(() => {
   const statusMap = {};
   list.forEach((item) => {
     // 使用字典获取状态的中文标签
-    const dict = getDictObj(DICT_TYPE.DATA_MANAGEPART_RUNSTATUS, String(item.runStatus));
+    const dict = getDictObj(
+      DICT_TYPE.DATA_RUN_STATUS,
+      String(item.runStatus),
+    );
     const statusLabel = dict?.label || `状态${item.runStatus}` || '未知';
     statusMap[statusLabel] = (statusMap[statusLabel] || 0) + 1;
   });
@@ -264,10 +298,12 @@ const statsData = computed(() => {
     const cycle = item.calibrateCycle ? `${item.calibrateCycle}天` : '未知周期';
     calibrateMap[cycle] = (calibrateMap[cycle] || 0) + 1;
   });
-  const calibratePieData = Object.entries(calibrateMap).map(([name, value]) => ({
-    name,
-    value,
-  }));
+  const calibratePieData = Object.entries(calibrateMap).map(
+    ([name, value]) => ({
+      name,
+      value,
+    }),
+  );
 
   // 计算不同网格部件数量对比（柱状图）
   const gridMap = {};
@@ -282,10 +318,34 @@ const statsData = computed(() => {
 
   return {
     cards: [
-      { title: '总部件数', value: totalCount, desc: '全部部件', icon: '🔧', color: '#4A90E2' },
-      { title: '各分类部件数', value: categoryCount, desc: '分类统计', icon: '📂', color: '#50E3C2' },
-      { title: '正常运行部件数', value: normalCount, desc: '正常运行', icon: '✅', color: '#7ED321' },
-      { title: '待校准部件数', value: pendingCalibrateCount, desc: '待校准', icon: '⏰', color: '#F5A623' },
+      {
+        title: '总部件数',
+        value: totalCount,
+        desc: '全部部件',
+        icon: '🔧',
+        color: '#4A90E2',
+      },
+      {
+        title: '各分类部件数',
+        value: categoryCount,
+        desc: '分类统计',
+        icon: '📂',
+        color: '#50E3C2',
+      },
+      {
+        title: '正常运行部件数',
+        value: normalCount,
+        desc: '正常运行',
+        icon: '✅',
+        color: '#7ED321',
+      },
+      {
+        title: '待校准部件数',
+        value: pendingCalibrateCount,
+        desc: '待校准',
+        icon: '⏰',
+        color: '#F5A623',
+      },
     ],
     pieChartOptions: [
       { label: '部件分类占比', value: 'category', data: categoryPieData },
@@ -316,7 +376,11 @@ const mapData = computed(() => {
         locationName: item.name, // 使用name作为locationName
         name: item.name,
         status: item.runStatus,
-        statusName: getDictObj(DICT_TYPE.DATA_MANAGEPART_RUNSTATUS, String(item.runStatus))?.label || '未知',
+        statusName:
+          getDictObj(
+            DICT_TYPE.DATA_RUN_STATUS,
+            String(item.runStatus),
+          )?.label || '未知',
         categoryName: item.categoryName,
         layerTypeName: item.categoryName, // 使用categoryName作为layerTypeName
         gridName: item.gridName,
@@ -452,11 +516,7 @@ const mapConfig = computed(() => ({
           >
             <ArrowDown />
           </el-icon>
-          <el-icon
-            class="tabel-tab-icon"
-            v-else
-            @click="changeArrowStatus"
-          >
+          <el-icon class="tabel-tab-icon" v-else @click="changeArrowStatus">
             <ArrowUp />
           </el-icon>
         </div>

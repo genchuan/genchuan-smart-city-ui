@@ -72,7 +72,12 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['clearFilter', 'refreshTree', 'update:tableData', 'statusChange']);
+const emit = defineEmits([
+  'clearFilter',
+  'refreshTree',
+  'update:tableData',
+  'statusChange',
+]);
 
 const getTitle = computed(() => {
   const textObjCurrent =
@@ -317,7 +322,7 @@ const initStatusCounts = async () => {
         // 动态统计每个字典值的数量
         allData.forEach((item) => {
           const dict = getDictObj(
-            DICT_TYPE.DATA_MANAGEITEM_STATUS,
+            DICT_TYPE.DATA_MATTER_STATUS,
             String(item.status),
           );
           if (dict && dict.label) {
@@ -584,7 +589,7 @@ const getTableData = async (pageObj) => {
       if (activeName.value !== '全部') {
         // 使用字典查找对应的值
         const dictOptions = getDictOptions(
-          DICT_TYPE.DATA_MANAGEITEM_STATUS,
+          DICT_TYPE.DATA_MATTER_STATUS,
           'string',
         );
         const found = dictOptions.find((opt) => opt.label === activeName.value);
@@ -1055,7 +1060,7 @@ const handleCategoryTypeClick = (categoryType) => {
 
 /** 获取分类类型颜色 - 将字典颜色映射到 Element Plus 支持的类型 */
 const getCategoryTypeColor = (categoryType) => {
-  const dict = getDictObj(DICT_TYPE.DATA_CATEGORYTYPE, String(categoryType));
+  const dict = getDictObj(DICT_TYPE.DATA_CATEGORY_TYPE, String(categoryType));
   const colorType = dict?.colorType;
   // 将字典颜色映射到 Element Plus 支持的类型
   switch (colorType) {
@@ -1110,7 +1115,7 @@ const tabsData = computed(() => {
     // 管理事项实例使用 DATA_MANAGEITEM_STATUS 字典
     // 动态获取字典选项作为三级状态标签
     const dictOptions = getDictOptions(
-      DICT_TYPE.DATA_MANAGEITEM_STATUS,
+      DICT_TYPE.DATA_MATTER_STATUS,
       'string',
     );
     const tabs = [{ label: '全部' }];
@@ -1257,7 +1262,7 @@ const handleFullShow = () => {
           >
             分类类型：{{
               getDictObj(
-                DICT_TYPE.DATA_CATEGORYTYPE,
+                DICT_TYPE.DATA_CATEGORY_TYPE,
                 String(filterCategoryType),
               )?.label || filterCategoryType
             }}
@@ -1428,7 +1433,7 @@ const handleFullShow = () => {
           style="cursor: pointer"
         >
           {{
-            getDictObj(DICT_TYPE.DATA_CATEGORYTYPE, String(row.categoryType))
+            getDictObj(DICT_TYPE.DATA_CATEGORY_TYPE, String(row.categoryType))
               ?.label || row.categoryType
           }}
         </ElTag>

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
@@ -27,7 +27,9 @@ const relatedPartDetail = computed(() => {
   // 目前先模拟展示数据
   return {
     name: relatedPartName,
-    code: 'MP' + Math.floor(Math.random() * 1000000).toString().padStart(6, '0'),
+    code: `MP${Math.floor(Math.random() * 1_000_000)
+      .toString()
+      .padStart(6, '0')}`,
     type: '管理部件',
     status: '1',
     location: '福建省泉州市',
@@ -109,19 +111,19 @@ defineExpose({
 }
 
 .detail-section {
-  margin-bottom: 24px;
   padding-bottom: 16px;
+  margin-bottom: 24px;
   border-bottom: 1px solid var(--el-border-color-light);
 }
 
 .detail-section:last-child {
-  margin-bottom: 0;
   padding-bottom: 0;
+  margin-bottom: 0;
   border-bottom: none;
 }
 
 .detail-section h4 {
-  margin: 0 0 16px 0;
+  margin: 0 0 16px;
   font-size: 16px;
   font-weight: 600;
   color: var(--el-text-color-primary);
@@ -138,9 +140,9 @@ defineExpose({
 }
 
 .label {
+  flex-shrink: 0;
   width: 100px;
   color: var(--el-text-color-secondary);
-  flex-shrink: 0;
 }
 
 .value {
@@ -150,7 +152,7 @@ defineExpose({
 
 .empty-tip {
   padding: 40px 20px;
-  text-align: center;
   color: var(--el-text-color-secondary);
+  text-align: center;
 }
 </style>

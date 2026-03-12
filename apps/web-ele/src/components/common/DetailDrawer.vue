@@ -119,7 +119,10 @@ defineExpose({
               <template v-else-if="field.type === 'tags'">
                 <div class="tags-container">
                   <el-tag
-                    v-for="(tag, tagIndex) in formatValue(field, item[field.key])"
+                    v-for="(tag, tagIndex) in formatValue(
+                      field,
+                      item[field.key],
+                    )"
                     :key="tagIndex"
                     :type="
                       (() => {

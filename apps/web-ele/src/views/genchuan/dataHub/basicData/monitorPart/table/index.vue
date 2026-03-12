@@ -71,9 +71,15 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['clearFilter', 'refreshTree', 'tableDataUpdate', 'statusChange']);
+const emit = defineEmits([
+  'clearFilter',
+  'refreshTree',
+  'tableDataUpdate',
+  'statusChange',
+]);
 const getTitle = computed(() => {
-  const textObjCurrent = props.tabType === 'instance' ? instanceTextObj : textObj;
+  const textObjCurrent =
+    props.tabType === 'instance' ? instanceTextObj : textObj;
   return formData.value?.id ? textObjCurrent.editText : textObjCurrent.addText;
 });
 
@@ -124,7 +130,10 @@ watch(
   ([newTreeData, newTabType]) => {
     if (newTreeData && newTreeData.length > 0) {
       // 根据tabType重新设置表单schema
-      const newSchema = newTabType === 'instance' ? useInstanceFormSchema(newTreeData) : useFormSchema(newTreeData);
+      const newSchema =
+        newTabType === 'instance'
+          ? useInstanceFormSchema(newTreeData)
+          : useFormSchema(newTreeData);
       formApi.setState({ schema: newSchema });
     }
   },
@@ -181,14 +190,20 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
             return null;
           };
 
-          const selectedNode = findNode(props.treeData, submitData.categoryName);
+          const selectedNode = findNode(
+            props.treeData,
+            submitData.categoryName,
+          );
           if (selectedNode) {
             submitData.categoryId = selectedNode.id;
-            submitData.categoryName = selectedNode.label || selectedNode.categoryName;
+            submitData.categoryName =
+              selectedNode.label || selectedNode.categoryName;
           }
         }
 
-        if (formDrawerApi.sharedData.payload.title === instanceTextObj.addText) {
+        if (
+          formDrawerApi.sharedData.payload.title === instanceTextObj.addText
+        ) {
           // 新增部件实例
           await createInstance(submitData);
         } else {
@@ -221,7 +236,8 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 
           const selectedNode = findNode(props.treeData, submitData.parentId);
           if (selectedNode) {
-            submitData.parentCategory = selectedNode.label || selectedNode.categoryName;
+            submitData.parentCategory =
+              selectedNode.label || selectedNode.categoryName;
           }
         } else {
           submitData.parentId = null;
@@ -256,17 +272,25 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
         const formValues = { ...formData.value };
         // 处理时间字段格式
         const timeFields = ['createTime', 'installTime', 'nextCalibrateTime'];
-        timeFields.forEach(field => {
+        timeFields.forEach((field) => {
           if (formValues[field]) {
             const date = new Date(formValues[field]);
             if (!isNaN(date.getTime())) {
-              formValues[field] = date.toISOString().slice(0, 19).replace('T', ' ');
+              formValues[field] = date
+                .toISOString()
+                .slice(0, 19)
+                .replace('T', ' ');
             }
           }
         });
         // 处理核心监测指标字段 - 将字符串转换为数组以便多选组件回显
-        if (formValues.coreIndicators && typeof formValues.coreIndicators === 'string') {
-          formValues.coreIndicators = formValues.coreIndicators.split(',').filter(Boolean);
+        if (
+          formValues.coreIndicators &&
+          typeof formValues.coreIndicators === 'string'
+        ) {
+          formValues.coreIndicators = formValues.coreIndicators
+            .split(',')
+            .filter(Boolean);
         }
         // 确保parentId字段存在，用于回显上级分类
         if (formValues.parentId === undefined || formValues.parentId === null) {
@@ -300,7 +324,8 @@ async function handleExport() {
 
 /** 创建 */
 function handleCreate() {
-  const textObjCurrent = props.tabType === 'instance' ? instanceTextObj : textObj;
+  const textObjCurrent =
+    props.tabType === 'instance' ? instanceTextObj : textObj;
   formDrawerApi
     .setData({
       title: textObjCurrent.addText,
@@ -310,7 +335,8 @@ function handleCreate() {
 
 /** 编辑 */
 function handleEdit(row) {
-  const textObjCurrent = props.tabType === 'instance' ? instanceTextObj : textObj;
+  const textObjCurrent =
+    props.tabType === 'instance' ? instanceTextObj : textObj;
   formDrawerApi
     .setData({
       title: textObjCurrent.editText,
@@ -399,7 +425,9 @@ async function handleDeleteBatch() {
   try {
     if (props.tabType === 'instance') {
       // 部件实例批量删除（前端模拟）
-      dataObj.list = dataObj.list.filter((item) => !checkedIds.value.includes(item.id));
+      dataObj.list = dataObj.list.filter(
+        (item) => !checkedIds.value.includes(item.id),
+      );
       checkedIds.value = [];
       ElMessage.success($t('删除成功'));
       handleRefresh();
@@ -484,8 +512,13 @@ const getTableData = async (pageObj) => {
       // 根据字典标签获取对应的字典值
       let runStatusValue = '';
       if (activeName.value !== '全部') {
-        const dictOptions = getDictOptions(DICT_TYPE.DATA_MANAGEPART_RUNSTATUS, 'string');
-        const selectedOption = dictOptions.find(opt => opt.label === activeName.value);
+        const dictOptions = getDictOptions(
+          DICT_TYPE.DATA_RUN_STATUS,
+          'string',
+        );
+        const selectedOption = dictOptions.find(
+          (opt) => opt.label === activeName.value,
+        );
         runStatusValue = selectedOption ? selectedOption.value : '';
       }
 
@@ -516,9 +549,15 @@ const getTableData = async (pageObj) => {
         dataObj.list = response.list.map((item) => ({
           ...item,
           id: String(item.id), // 转换为字符串
-          createTime: item.createTime ? new Date(item.createTime).toLocaleString('zh-CN') : '', // 转换时间格式
-          installTime: item.installTime ? new Date(item.installTime).toLocaleString('zh-CN') : '', // 转换安装时间
-          nextCalibrateTime: item.nextCalibrateTime ? new Date(item.nextCalibrateTime).toLocaleString('zh-CN') : '', // 转换下次校准时间
+          createTime: item.createTime
+            ? new Date(item.createTime).toLocaleString('zh-CN')
+            : '', // 转换时间格式
+          installTime: item.installTime
+            ? new Date(item.installTime).toLocaleString('zh-CN')
+            : '', // 转换安装时间
+          nextCalibrateTime: item.nextCalibrateTime
+            ? new Date(item.nextCalibrateTime).toLocaleString('zh-CN')
+            : '', // 转换下次校准时间
           creator: item.creator || '', // 处理缺失字段
         }));
 
@@ -541,8 +580,13 @@ const getTableData = async (pageObj) => {
       // 根据字典标签获取对应的字典值
       let statusValue = '';
       if (activeName.value !== '全部') {
-        const dictOptions = getDictOptions(DICT_TYPE.DATA_ENABLE_STATUS, 'string');
-        const selectedOption = dictOptions.find(opt => opt.label === activeName.value);
+        const dictOptions = getDictOptions(
+          DICT_TYPE.DATA_ENABLE_STATUS,
+          'string',
+        );
+        const selectedOption = dictOptions.find(
+          (opt) => opt.label === activeName.value,
+        );
         statusValue = selectedOption ? selectedOption.value : '';
       }
 
@@ -575,7 +619,9 @@ const getTableData = async (pageObj) => {
           id: String(item.id), // 转换为字符串
           parentId: item.parentId ? String(item.parentId) : null,
           instanceCount: String(item.instanceCount), // 转换为字符串
-          createTime: item.createTime ? new Date(item.createTime).toLocaleString('zh-CN') : '', // 转换时间格式
+          createTime: item.createTime
+            ? new Date(item.createTime).toLocaleString('zh-CN')
+            : '', // 转换时间格式
           creator: item.creator || '', // 处理缺失字段
         }));
 
@@ -583,7 +629,10 @@ const getTableData = async (pageObj) => {
         if (!skipStatsUpdate.value) {
           // 计算统计信息
           dataObj.statistics.totalCategories = dataObj.total;
-          dataObj.statistics.totalInstances = dataObj.list.reduce((sum, item) => sum + Number(item.instanceCount || 0), 0);
+          dataObj.statistics.totalInstances = dataObj.list.reduce(
+            (sum, item) => sum + Number(item.instanceCount || 0),
+            0,
+          );
         }
       } else {
         ElMessage.error(response.message || '获取数据失败');
@@ -599,7 +648,10 @@ const getTableData = async (pageObj) => {
 
 // 使用计算属性创建搜索表单schema，根据tabType返回不同的schema
 const queryFormSchema = computed(() => {
-  const schema = props.tabType === 'instance' ? useInstanceSearchFormSchema(props.treeData) : useFormSchema(props.treeData);
+  const schema =
+    props.tabType === 'instance'
+      ? useInstanceSearchFormSchema(props.treeData)
+      : useFormSchema(props.treeData);
   return schema.map((v) => {
     delete v.rules;
     return { ...v };
@@ -637,7 +689,11 @@ watch(
   ([newTreeData, newTabType]) => {
     if (newTreeData && newTreeData.length > 0) {
       // 根据tabType重新设置搜索表单schema
-      const newSchema = (newTabType === 'instance' ? useInstanceSearchFormSchema(newTreeData) : useFormSchema(newTreeData)).map((v) => {
+      const newSchema = (
+        newTabType === 'instance'
+          ? useInstanceSearchFormSchema(newTreeData)
+          : useFormSchema(newTreeData)
+      ).map((v) => {
         delete v.rules;
         return { ...v };
       });
@@ -675,7 +731,8 @@ function onSubmit(values) {
 
     const selectedNode = findNode(props.treeData, searchParams.categoryId);
     if (selectedNode) {
-      searchParams.categoryName = selectedNode.label || selectedNode.categoryName;
+      searchParams.categoryName =
+        selectedNode.label || selectedNode.categoryName;
     }
     delete searchParams.categoryId;
   }
@@ -686,7 +743,9 @@ function onSubmit(values) {
 
 // 根据tabType获取对应的列配置
 const getGridColumns = () => {
-  return props.tabType === 'instance' ? useInstanceGridColumns() : useGridColumns();
+  return props.tabType === 'instance'
+    ? useInstanceGridColumns()
+    : useGridColumns();
 };
 
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -721,7 +780,8 @@ const [Grid, gridApi] = useVbenVxeGrid({
 watch(
   () => props.tabType,
   (newTabType) => {
-    const newColumns = newTabType === 'instance' ? useInstanceGridColumns() : useGridColumns();
+    const newColumns =
+      newTabType === 'instance' ? useInstanceGridColumns() : useGridColumns();
     gridApi.setGridOptions({ columns: newColumns });
     // 刷新表格数据
     handleRefresh();
@@ -788,7 +848,10 @@ const tabsData = computed(() => {
   if (props.tabType === 'instance') {
     // 监测部件实例使用 DATA_MANAGEPART_RUNSTATUS 字典
     // 动态获取字典选项作为三级状态标签
-    const dictOptions = getDictOptions(DICT_TYPE.DATA_MANAGEPART_RUNSTATUS, 'string');
+    const dictOptions = getDictOptions(
+      DICT_TYPE.DATA_RUN_STATUS,
+      'string',
+    );
     const tabs = [{ label: '全部' }];
     dictOptions.forEach((opt) => {
       tabs.push({ label: opt.label, value: opt.value });
@@ -857,10 +920,14 @@ const initStatusCounts = async () => {
         allDataStatusCounts.statusMap = {};
         // 动态统计每个字典值的数量
         allData.forEach((item) => {
-          const dict = getDictObj(DICT_TYPE.DATA_MANAGEPART_RUNSTATUS, String(item.runStatus));
+          const dict = getDictObj(
+            DICT_TYPE.DATA_RUN_STATUS,
+            String(item.runStatus),
+          );
           if (dict && dict.label) {
             // 根据字典标签累加数量
-            allDataStatusCounts.statusMap[dict.label] = (allDataStatusCounts.statusMap[dict.label] || 0) + 1;
+            allDataStatusCounts.statusMap[dict.label] =
+              (allDataStatusCounts.statusMap[dict.label] || 0) + 1;
           }
         });
       }
@@ -881,10 +948,14 @@ const initStatusCounts = async () => {
         allDataStatusCounts.statusMap = {};
         // 动态统计每个字典值的数量
         allData.forEach((item) => {
-          const dict = getDictObj(DICT_TYPE.DATA_ENABLE_STATUS, String(item.status));
+          const dict = getDictObj(
+            DICT_TYPE.DATA_ENABLE_STATUS,
+            String(item.status),
+          );
           if (dict && dict.label) {
             // 根据字典标签累加数量
-            allDataStatusCounts.statusMap[dict.label] = (allDataStatusCounts.statusMap[dict.label] || 0) + 1;
+            allDataStatusCounts.statusMap[dict.label] =
+              (allDataStatusCounts.statusMap[dict.label] || 0) + 1;
           }
         });
       }
@@ -897,7 +968,10 @@ const initStatusCounts = async () => {
 // 获取状态显示文本
 const getStatusText = (status) => {
   // 使用字典获取状态显示文本
-  const dictType = props.tabType === 'instance' ? DICT_TYPE.DATA_MANAGEPART_RUNSTATUS : DICT_TYPE.DATA_ENABLE_STATUS;
+  const dictType =
+    props.tabType === 'instance'
+      ? DICT_TYPE.DATA_RUN_STATUS
+      : DICT_TYPE.DATA_ENABLE_STATUS;
   const dict = getDictObj(dictType, String(status));
   return dict ? dict.label : status;
 };
@@ -905,7 +979,10 @@ const getStatusText = (status) => {
 // 获取状态标签类型
 const getStatusType = (status) => {
   // 使用字典获取状态标签类型
-  const dictType = props.tabType === 'instance' ? DICT_TYPE.DATA_MANAGEPART_RUNSTATUS : DICT_TYPE.DATA_ENABLE_STATUS;
+  const dictType =
+    props.tabType === 'instance'
+      ? DICT_TYPE.DATA_RUN_STATUS
+      : DICT_TYPE.DATA_ENABLE_STATUS;
   const dict = getDictObj(dictType, String(status));
   return dict ? dict.colorType : 'info';
 };
@@ -993,7 +1070,7 @@ const handleCategoryTypeClick = (categoryType) => {
 
 /** 获取分类类型颜色 - 将字典颜色映射到 Element Plus 支持的类型 */
 const getCategoryTypeColor = (categoryType) => {
-  const dict = getDictObj(DICT_TYPE.DATA_CATEGORYTYPE, String(categoryType));
+  const dict = getDictObj(DICT_TYPE.DATA_CATEGORY_TYPE, String(categoryType));
   const colorType = dict?.colorType;
   // 将字典颜色映射到 Element Plus 支持的类型
   switch (colorType) {
@@ -1086,9 +1163,15 @@ const handleCancelGridNameFilter = () => {
     <!--   详情抽屉-->
     <DetailDrawer
       ref="detailDrawerRef"
-      :title="props.tabType === 'instance' ? `${dataObj.detailObj?.name || '监测部件实例'}详情` : `${dataObj.detailObj?.name || '监测部件分类'}详情`"
+      :title="
+        props.tabType === 'instance'
+          ? `${dataObj.detailObj?.name || '监测部件实例'}详情`
+          : `${dataObj.detailObj?.name || '监测部件分类'}详情`
+      "
       :data="dataObj.detailObj"
-      :fields="props.tabType === 'instance' ? instanceDetailFields : detailFields"
+      :fields="
+        props.tabType === 'instance' ? instanceDetailFields : detailFields
+      "
     />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -1096,7 +1179,10 @@ const handleCancelGridNameFilter = () => {
     <Grid :key="props.tabType">
       <!-- 三级状态 -->
       <template #table-title>
-        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
+        >
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -1153,7 +1239,7 @@ const handleCancelGridNameFilter = () => {
             >
               分类类型：{{
                 getDictObj(
-                  DICT_TYPE.DATA_CATEGORYTYPE,
+                  DICT_TYPE.DATA_CATEGORY_TYPE,
                   String(filterCategoryType),
                 )?.label || filterCategoryType
               }}
@@ -1299,7 +1385,7 @@ const handleCancelGridNameFilter = () => {
           style="cursor: pointer"
         >
           {{
-            getDictObj(DICT_TYPE.DATA_CATEGORYTYPE, String(row.categoryType))
+            getDictObj(DICT_TYPE.DATA_CATEGORY_TYPE, String(row.categoryType))
               ?.label || row.categoryType
           }}
         </ElTag>
@@ -1352,7 +1438,11 @@ const handleCancelGridNameFilter = () => {
           />
           <!-- 监测部件分类：提交审核按钮 - 仅扩展类且未审核的可操作 -->
           <IconButton
-            v-if="props.tabType !== 'instance' && row.categoryType === '2' && row.auditStatus === '3'"
+            v-if="
+              props.tabType !== 'instance' &&
+              row.categoryType === '2' &&
+              row.auditStatus === '3'
+            "
             content="提交审核"
             icon-name="Position"
             @click="handleSubmitAudit(row)"
@@ -1387,11 +1477,17 @@ const handleCancelGridNameFilter = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span v-if="props.tabType === 'instance'"> 本页统计：监测部件实例数量: {{ dataObj.list.length }} </span>
-          <span v-else> 本页统计：监测部件分类数量: {{ dataObj.list.length }} </span>
+          <span v-if="props.tabType === 'instance'">
+            本页统计：监测部件实例数量: {{ dataObj.list.length }}
+          </span>
+          <span v-else>
+            本页统计：监测部件分类数量: {{ dataObj.list.length }}
+          </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span v-if="props.tabType === 'instance'"> 全部统计：总计: 监测部件实例数量{{ dataObj.total }} </span>
+          <span v-if="props.tabType === 'instance'">
+            全部统计：总计: 监测部件实例数量{{ dataObj.total }}
+          </span>
           <span v-else> 全部统计：{{ textObj.total }} </span>
         </div>
       </template>
@@ -1399,11 +1495,17 @@ const handleCancelGridNameFilter = () => {
     <!-- 导入Excel弹窗 -->
     <ImportExcelDialog ref="importExcelDialogRef" @success="handleRefresh" />
     <!-- 批量更新状态弹窗 -->
-    <BatchUpdateStatusDialog ref="batchUpdateStatusDialogRef" @success="handleRefresh" />
+    <BatchUpdateStatusDialog
+      ref="batchUpdateStatusDialogRef"
+      @success="handleRefresh"
+    />
     <!-- 提交审核弹窗 -->
     <SubmitAuditDialog ref="submitAuditDialogRef" @success="handleRefresh" />
     <!-- 提交校准记录抽屉 -->
-    <SubmitCalibrationDrawer ref="submitCalibrationDrawerRef" @success="handleRefresh" />
+    <SubmitCalibrationDrawer
+      ref="submitCalibrationDrawerRef"
+      @success="handleRefresh"
+    />
     <!-- 查看关联部件抽屉 -->
     <RelatedPartDrawer ref="relatedPartDrawerRef" />
   </div>

@@ -1,13 +1,16 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
-import { ArrowDown, ArrowUp, Search } from '@element-plus/icons-vue';
 import { DICT_TYPE } from '@vben/constants';
-import { getDictObj, getDictOptions } from '@vben/hooks';
+import { getDictObj } from '@vben/hooks';
+
+import { ArrowDown, ArrowUp, Search } from '@element-plus/icons-vue';
 import { ElInput, ElLoading, ElMessage, ElTree } from 'element-plus';
 
-import { getCategoryTree, getInstancePage } from '#/api/genchuan/dataHub/basicData/manageItem';
-import IconButton from '#/components/common/IconButton.vue';
+import {
+  getCategoryTree,
+  getInstancePage,
+} from '#/api/genchuan/dataHub/basicData/manageItem';
 import StatsFourVisualization from '#/components/stats/StatsFourVisualization.vue';
 import { useTreeExpandController } from '#/utils/useTreeExpandController';
 
@@ -114,10 +117,34 @@ const statsData = computed(() => {
   if (list.length === 0) {
     return {
       cards: [
-        { title: '总事项数', value: 0, desc: '全部事项', icon: '📋', color: '#4A90E2' },
-        { title: '各分类事项数', value: 0, desc: '分类统计', icon: '📂', color: '#50E3C2' },
-        { title: '待处置事项数', value: 0, desc: '待处理', icon: '⏳', color: '#FF9F40' },
-        { title: '已办结事项数', value: 0, desc: '已完成', icon: '✅', color: '#A17FE0' },
+        {
+          title: '总事项数',
+          value: 0,
+          desc: '全部事项',
+          icon: '📋',
+          color: '#4A90E2',
+        },
+        {
+          title: '各分类事项数',
+          value: 0,
+          desc: '分类统计',
+          icon: '📂',
+          color: '#50E3C2',
+        },
+        {
+          title: '待处置事项数',
+          value: 0,
+          desc: '待处理',
+          icon: '⏳',
+          color: '#FF9F40',
+        },
+        {
+          title: '已办结事项数',
+          value: 0,
+          desc: '已完成',
+          icon: '✅',
+          color: '#A17FE0',
+        },
       ],
       pieChartOptions: [
         { label: '事项分类占比', value: 'category', data: [] },
@@ -151,7 +178,9 @@ const statsData = computed(() => {
   const totalCount = list.length;
 
   // 各分类事项数（按分类名称统计不重复分类数）
-  const categorySet = new Set(list.map(item => item.categoryName).filter(Boolean));
+  const categorySet = new Set(
+    list.map((item) => item.categoryName).filter(Boolean),
+  );
   const categoryCount = categorySet.size;
 
   // 待处置事项数（状态为待处置的）
@@ -181,8 +210,12 @@ const statsData = computed(() => {
   const statusMap = {};
   list.forEach((item) => {
     // 使用字典获取状态的中文标签
-    const dict = getDictObj(DICT_TYPE.DATA_MANAGEITEM_STATUS, String(item.status));
-    const statusLabel = dict?.label || item.statusName || `状态${item.status}` || '未知';
+    const dict = getDictObj(
+      DICT_TYPE.DATA_MATTER_STATUS,
+      String(item.status),
+    );
+    const statusLabel =
+      dict?.label || item.statusName || `状态${item.status}` || '未知';
     statusMap[statusLabel] = (statusMap[statusLabel] || 0) + 1;
   });
   const statusPieData = Object.entries(statusMap).map(([name, value]) => ({
@@ -220,7 +253,7 @@ const statsData = computed(() => {
   }
 
   const dailyDealMap = {};
-  last7Days.forEach(day => {
+  last7Days.forEach((day) => {
     dailyDealMap[day] = 0;
   });
 
@@ -235,10 +268,34 @@ const statsData = computed(() => {
 
   return {
     cards: [
-      { title: '总事项数', value: totalCount, desc: '全部事项', icon: '📋', color: '#4A90E2' },
-      { title: '各分类事项数', value: categoryCount, desc: '分类统计', icon: '📂', color: '#50E3C2' },
-      { title: '待处置事项数', value: pendingCount, desc: '待处理', icon: '⏳', color: '#FF9F40' },
-      { title: '已办结事项数', value: completedCount, desc: '已完成', icon: '✅', color: '#A17FE0' },
+      {
+        title: '总事项数',
+        value: totalCount,
+        desc: '全部事项',
+        icon: '📋',
+        color: '#4A90E2',
+      },
+      {
+        title: '各分类事项数',
+        value: categoryCount,
+        desc: '分类统计',
+        icon: '📂',
+        color: '#50E3C2',
+      },
+      {
+        title: '待处置事项数',
+        value: pendingCount,
+        desc: '待处理',
+        icon: '⏳',
+        color: '#FF9F40',
+      },
+      {
+        title: '已办结事项数',
+        value: completedCount,
+        desc: '已完成',
+        icon: '✅',
+        color: '#A17FE0',
+      },
     ],
     pieChartOptions: [
       { label: '事项分类占比', value: 'category', data: categoryPieData },
@@ -260,8 +317,8 @@ const statsData = computed(() => {
         value: 'trend',
         type: 'line',
         data: {
-          xAxis: last7Days.map(d => d.slice(5)), // 显示 MM-DD 格式
-          series: last7Days.map(d => dailyDealMap[d]),
+          xAxis: last7Days.map((d) => d.slice(5)), // 显示 MM-DD 格式
+          series: last7Days.map((d) => dailyDealMap[d]),
         },
       },
     ],
@@ -345,7 +402,7 @@ const handleClearFilter = () => {
       :cards="statsData.cards"
       :pie-chart-options="statsData.pieChartOptions"
       :bar-line-chart-options="statsData.barLineChartOptions"
-      style="margin-bottom: 8px;"
+      style="margin-bottom: 8px"
     />
     <div
       style="

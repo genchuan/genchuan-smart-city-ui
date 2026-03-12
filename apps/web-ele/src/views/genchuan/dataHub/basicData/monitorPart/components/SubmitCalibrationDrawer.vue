@@ -3,7 +3,14 @@ import { ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
-import { ElButton, ElDatePicker, ElForm, ElFormItem, ElInput, ElMessage } from 'element-plus';
+import {
+  ElButton,
+  ElDatePicker,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElMessage,
+} from 'element-plus';
 
 const emit = defineEmits(['success']);
 
@@ -28,8 +35,12 @@ const formData = ref({
   operator: '',
 });
 const rules = {
-  calibrationTime: [{ required: true, message: '请选择校准时间', trigger: 'change' }],
-  calibrationResult: [{ required: true, message: '请输入校准结果', trigger: 'blur' }],
+  calibrationTime: [
+    { required: true, message: '请选择校准时间', trigger: 'change' },
+  ],
+  calibrationResult: [
+    { required: true, message: '请输入校准结果', trigger: 'blur' },
+  ],
   operator: [{ required: true, message: '请输入操作人员', trigger: 'blur' }],
 };
 
@@ -96,10 +107,7 @@ defineExpose({
         />
       </ElFormItem>
       <ElFormItem label="操作人员" prop="operator">
-        <ElInput
-          v-model="formData.operator"
-          placeholder="请输入操作人员"
-        />
+        <ElInput v-model="formData.operator" placeholder="请输入操作人员" />
       </ElFormItem>
     </ElForm>
     <template #footer>
@@ -109,5 +117,4 @@ defineExpose({
   </Drawer>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

@@ -40,7 +40,9 @@ export function useFormSchema(treeData = []) {
         filterNodeMethod: (value, data) => {
           // 根据label搜索节点
           if (!value) return true;
-          return data.label && data.label.toLowerCase().includes(value.toLowerCase());
+          return (
+            data.label && data.label.toLowerCase().includes(value.toLowerCase())
+          );
         },
         onChange: (val, formModel) => {
           if (!val) {
@@ -67,7 +69,8 @@ export function useFormSchema(treeData = []) {
 
           const selectedNode = findNode(treeData, val);
           if (selectedNode) {
-            formModel.parentCategory = selectedNode.label || selectedNode.categoryName;
+            formModel.parentCategory =
+              selectedNode.label || selectedNode.categoryName;
           }
         },
       },
@@ -82,7 +85,7 @@ export function useFormSchema(treeData = []) {
         multiple: true,
         filterable: true,
         valueFormat: (value) => value.join(','),
-        inputFormat: (value) => value ? value.split(',') : [],
+        inputFormat: (value) => (value ? value.split(',') : []),
       },
       rules: 'required',
     },
@@ -100,7 +103,7 @@ export function useFormSchema(treeData = []) {
       component: 'Select',
       componentProps: {
         placeholder: '请选择分类类型',
-        options: getDictOptions(DICT_TYPE.DATA_CATEGORYTYPE, 'string'),
+        options: getDictOptions(DICT_TYPE.DATA_CATEGORY_TYPE, 'string'),
       },
       rules: 'required',
     },
@@ -285,8 +288,11 @@ export const detailFields = [
         red: 'danger',
         yellow: 'warning',
       };
-      return indicators.map(indicator => {
-        const dict = getDictObj(DICT_TYPE.DATA_CORE_INDICATORS, String(indicator));
+      return indicators.map((indicator) => {
+        const dict = getDictObj(
+          DICT_TYPE.DATA_CORE_INDICATORS,
+          String(indicator),
+        );
         const rawType = dict ? dict.colorType : 'primary';
         return {
           label: dict ? dict.label : indicator,
@@ -301,11 +307,11 @@ export const detailFields = [
     label: '分类类型',
     type: 'tag',
     formatter: (value) => {
-      const dict = getDictObj(DICT_TYPE.DATA_CATEGORYTYPE, String(value));
+      const dict = getDictObj(DICT_TYPE.DATA_CATEGORY_TYPE, String(value));
       return dict ? dict.label : value;
     },
     tagType: (value) => {
-      const dict = getDictObj(DICT_TYPE.DATA_CATEGORYTYPE, String(value));
+      const dict = getDictObj(DICT_TYPE.DATA_CATEGORY_TYPE, String(value));
       return dict ? dict.colorType : 'primary';
     },
   },
@@ -381,7 +387,9 @@ export function useInstanceFormSchema(treeData = []) {
         checkStrictly: true,
         filterNodeMethod: (value, data) => {
           if (!value) return true;
-          return data.label && data.label.toLowerCase().includes(value.toLowerCase());
+          return (
+            data.label && data.label.toLowerCase().includes(value.toLowerCase())
+          );
         },
         onChange: (val, formModel) => {
           if (!val) {
@@ -409,7 +417,8 @@ export function useInstanceFormSchema(treeData = []) {
           const selectedNode = findNode(treeData, val);
           if (selectedNode) {
             formModel.categoryId = selectedNode.id;
-            formModel.categoryName = selectedNode.label || selectedNode.categoryName;
+            formModel.categoryName =
+              selectedNode.label || selectedNode.categoryName;
           }
         },
       },
@@ -439,7 +448,7 @@ export function useInstanceFormSchema(treeData = []) {
       component: 'Select',
       componentProps: {
         placeholder: '请选择运行状态',
-        options: getDictOptions(DICT_TYPE.DATA_MANAGEPART_RUNSTATUS, 'string'),
+        options: getDictOptions(DICT_TYPE.DATA_RUN_STATUS, 'string'),
       },
       rules: 'required',
     },
@@ -558,7 +567,7 @@ export function useInstanceGridColumns() {
       sortable: true,
       cellRender: {
         name: 'CellDict',
-        props: { type: DICT_TYPE.DATA_MANAGEPART_RUNSTATUS },
+        props: { type: DICT_TYPE.DATA_RUN_STATUS },
       },
     },
     {
@@ -632,11 +641,17 @@ export const instanceDetailFields = [
     label: '运行状态',
     type: 'tag',
     formatter: (value) => {
-      const dict = getDictObj(DICT_TYPE.DATA_MANAGEPART_RUNSTATUS, String(value));
+      const dict = getDictObj(
+        DICT_TYPE.DATA_RUN_STATUS,
+        String(value),
+      );
       return dict ? dict.label : value;
     },
     tagType: (value) => {
-      const dict = getDictObj(DICT_TYPE.DATA_MANAGEPART_RUNSTATUS, String(value));
+      const dict = getDictObj(
+        DICT_TYPE.DATA_RUN_STATUS,
+        String(value),
+      );
       return dict ? dict.colorType : 'primary';
     },
   },
@@ -686,7 +701,9 @@ export function useInstanceSearchFormSchema(treeData = []) {
         checkStrictly: true,
         filterNodeMethod: (value, data) => {
           if (!value) return true;
-          return data.label && data.label.toLowerCase().includes(value.toLowerCase());
+          return (
+            data.label && data.label.toLowerCase().includes(value.toLowerCase())
+          );
         },
       },
     },
@@ -712,7 +729,7 @@ export function useInstanceSearchFormSchema(treeData = []) {
       component: 'Select',
       componentProps: {
         placeholder: '请选择运行状态',
-        options: getDictOptions(DICT_TYPE.DATA_MANAGEPART_RUNSTATUS, 'string'),
+        options: getDictOptions(DICT_TYPE.DATA_RUN_STATUS, 'string'),
       },
     },
     {

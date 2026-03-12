@@ -1,28 +1,63 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { $t } from '#/locales';
-import { exportToExcel } from '#/utils/excel.js';
-
-import { dataList, textObj, useFormSchema, useGridColumns, detailFields } from './data';
+import { createCategory, createInstance, deleteBatchCategory, deleteCategory, deleteInstance, exportCategory, exportInstance, getCategoryPage, getInstancePage, updateCategory, updateInstance, importInstance, batchUpdateInstanceStatus } from '#/api/genchuan/dataHub/basicData/monitorEvent';
 import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import { $t } from '#/locales';
+
+import BatchUpdateStatusDialog from '../components/BatchUpdateStatusDialog.vue';
+import ImportExcelDialog from '../components/ImportExcelDialog.vue';
+import {
+  detailFields,
+  instanceDetailFields,
+  instanceTextObj,
+  textObj,
+  useFormSchema,
+  useGridColumns,
+  useInstanceFormSchema,
+  useInstanceGridColumns,
+  useInstanceSearchFormSchema,
+} from './data';
 
 const props = defineProps({
   secondShow: {
     type: Boolean,
     default: false,
   },
+  filterCategoryId: {
+    type: String,
+    default: '',
+  },
+  treeData: {
+    type: Array,
+    default: () => [],
+  },
+  tabType: {
+    type: String,
+    default: 'category',
+  },
 });
+
+const emit = defineEmits([
+  'clearFilter',
+  'refreshTree',
+  'update:tableData',
+  'statusChange',
+]);
+
 const getTitle = computed(() => {
-  return formData.value?.id ? textObj.editText : textObj.addText;
+  const textObjCurrent = props.tabType === 'instance' ? instanceTextObj : textObj;
+  return formData.value?.id ? textObjCurrent.editText : textObjCurrent.addText;
 });
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -37,43 +72,161 @@ const [Drawer, drawerApi] = useVbenDrawer({
 });
 const detailDrawerRef = ref(null);
 const formData = ref();
+
+// 新组件引用
+const importExcelDialogRef = ref();
+const batchUpdateStatusDialogRef = ref();
+
+// 使用计算属性创建表单schema，根据tabType返回不同的schema
+const formSchema = computed(() => {
+  if (props.tabType === 'instance') {
+    return useInstanceFormSchema(props.treeData);
+  }
+  return useFormSchema(props.treeData);
+});
+
 const [Form, formApi] = useVbenForm({
   commonConfig: {
     componentProps: {
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
-    labelWidth: 80,
+    labelWidth: 120,
   },
   layout: 'horizontal',
-  schema: useFormSchema(),
+  schema: formSchema.value,
   showDefaultActions: false,
 });
+
+// 监听treeData和tabType变化，更新表单schema
+watch(
+  [() => props.treeData, () => props.tabType],
+  ([newTreeData, newTabType]) => {
+    if (newTreeData && newTreeData.length > 0) {
+      const newSchema = newTabType === 'instance' ? useInstanceFormSchema(newTreeData) : useFormSchema(newTreeData);
+      formApi.setState({ schema: newSchema });
+    }
+  },
+  { deep: true, immediate: true },
+);
+
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
   onCancel() {
     formDrawerApi.close();
   },
-  onConfirm() {
+  async onConfirm() {
     const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-      dataObj.apilist.push(obj);
-    } else {
-      dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
+    try {
+      const submitData = { ...obj };
+
+      if (props.tabType === 'instance') {
+        // 监测事件实例表单提交
+        if (submitData.dealTime) {
+          const date = new Date(submitData.dealTime);
+          if (!isNaN(date.getTime())) {
+            submitData.dealTime = date.getTime().toString();
+          }
         }
-      });
+
+        // 处理所属分类数据
+        if (submitData.categoryName) {
+          const findNodeWithParent = (nodes, id, parent = null) => {
+            for (const node of nodes) {
+              if (node.id === id) {
+                return { node, parent };
+              }
+              if (node.children && node.children.length > 0) {
+                const found = findNodeWithParent(node.children, id, node);
+                if (found) {
+                  return found;
+                }
+              }
+            }
+            return null;
+          };
+
+          const result = findNodeWithParent(props.treeData, submitData.categoryName);
+          if (result) {
+            const { node: selectedNode } = result;
+            submitData.categoryId = selectedNode.id;
+            submitData.categoryName = selectedNode.label || selectedNode.categoryName;
+          }
+        }
+
+        if (formDrawerApi.sharedData.payload.title === instanceTextObj.addText) {
+          await createInstance(submitData);
+        } else {
+          await updateInstance({ ...submitData, id: formData.value.id });
+        }
+        ElMessage.success('操作成功');
+        handleRefresh();
+        formDrawerApi.close();
+      } else {
+        // 分类表单提交
+        if (submitData.parentId) {
+          const findNode = (nodes, id) => {
+            for (const node of nodes) {
+              if (node.id === id) {
+                return node;
+              }
+              if (node.children && node.children.length > 0) {
+                const found = findNode(node.children, id);
+                if (found) {
+                  return found;
+                }
+              }
+            }
+            return null;
+          };
+
+          const selectedNode = findNode(props.treeData, submitData.parentId);
+          if (selectedNode) {
+            submitData.parentCategory = selectedNode.label || selectedNode.categoryName;
+          }
+        } else {
+          submitData.parentId = null;
+          submitData.parentCategory = '无';
+        }
+
+        if (formDrawerApi.sharedData.payload.title === textObj.addText) {
+          await createCategory(submitData);
+        } else {
+          await updateCategory({ ...submitData, id: formData.value.id });
+        }
+
+        ElMessage.success('操作成功');
+        handleRefresh();
+        emit('refreshTree');
+        formDrawerApi.close();
+      }
+    } catch (error) {
+      ElMessage.error('操作失败');
+      console.error(error);
     }
-    handleRefresh();
-    formDrawerApi.close();
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
       formData.value = formDrawerApi.getData();
       if (formData.value?.id) {
-        await formApi.setValues(formData.value);
+        const formValues = { ...formData.value };
+        if (formValues.createTime) {
+          const date = new Date(formValues.createTime);
+          if (!isNaN(date.getTime())) {
+            formValues.createTime = date.toISOString().slice(0, 19).replace('T', ' ');
+          }
+        }
+        if (formValues.dealTime) {
+          const date = new Date(formValues.dealTime);
+          if (!isNaN(date.getTime())) {
+            formValues.dealTime = date.toISOString().slice(0, 19).replace('T', ' ');
+          }
+        }
+        if (formValues.parentId === undefined || formValues.parentId === null) {
+          formValues.parentId = null;
+        }
+        await formApi.setValues(formValues);
       } else {
         formApi.resetForm();
       }
@@ -81,61 +234,176 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
 });
 
+// 初始化状态计数
+const initStatusCounts = async () => {
+  try {
+    if (props.tabType === 'instance') {
+      const response = await getInstancePage({
+        pageNo: 1,
+        pageSize: 100,
+        status: '',
+        treeParentId: props.filterCategoryId,
+        includeSelf: props.filterCategoryId ? true : undefined,
+        ...dataObj.searchParams,
+      });
+      if (response && response.list) {
+        const allData = response.list;
+        dataObj.statusCounts.total = response.total;
+        allDataStatusCounts.total = response.total;
+        allDataStatusCounts.statusMap = {};
+        allData.forEach((item) => {
+          const dict = getDictObj(DICT_TYPE.DATA_RUN_STATUS, String(item.status));
+          if (dict && dict.label) {
+            allDataStatusCounts.statusMap[dict.label] = (allDataStatusCounts.statusMap[dict.label] || 0) + 1;
+          }
+        });
+      }
+    } else {
+      const response = await getCategoryPage({
+        pageNo: 1,
+        pageSize: 100,
+        status: '',
+        categoryId: props.filterCategoryId,
+        ...dataObj.searchParams,
+      });
+      if (response && response.list) {
+        const allData = response.list;
+        dataObj.statusCounts.total = response.total;
+        allDataStatusCounts.total = response.total;
+        allDataStatusCounts.statusMap = {};
+        allData.forEach((item) => {
+          const dict = getDictObj(DICT_TYPE.DATA_ENABLE_STATUS, String(item.status));
+          if (dict && dict.label) {
+            allDataStatusCounts.statusMap[dict.label] = (allDataStatusCounts.statusMap[dict.label] || 0) + 1;
+          }
+        });
+        dataObj.statusCounts.enabled = allDataStatusCounts.statusMap['启用'] || 0;
+        dataObj.statusCounts.disabled = allDataStatusCounts.statusMap['禁用'] || 0;
+        dataObj.statusCounts.maintenance = 0;
+      }
+    }
+  } catch (error) {
+    console.error('初始化状态计数失败:', error);
+  }
+};
+
 /** 刷新表格 */
 function handleRefresh() {
-  gridApi.query();
+  if (gridApi && typeof gridApi.query === 'function') {
+    gridApi.query();
+  }
+  initStatusCounts();
 }
 
 /** 导出表格 */
 async function handleExport() {
-  exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+  if (props.tabType === 'instance') {
+    const data = await exportInstance();
+    downloadFileFromBlobPart({ fileName: '监测事件实例表.xls', source: data });
+  } else {
+    const data = await exportCategory();
+    downloadFileFromBlobPart({ fileName: '监测事件分类表.xls', source: data });
+  }
 }
 
-/** 创建角色 */
+/** 创建 */
 function handleCreate() {
+  const textObjCurrent = props.tabType === 'instance' ? instanceTextObj : textObj;
   formDrawerApi
     .setData({
-      title: textObj.addText,
+      title: textObjCurrent.addText,
     })
     .open();
 }
 
-/** 编辑角色 */
+/** 编辑 */
 function handleEdit(row) {
+  const textObjCurrent = props.tabType === 'instance' ? instanceTextObj : textObj;
   formDrawerApi
     .setData({
-      title: textObj.editText,
+      title: textObjCurrent.editText,
       ...row,
     })
     .open();
 }
+
+/** 导入Excel */
+function handleImport() {
+  importExcelDialogRef.value?.open();
+}
+
+/** 批量更新状态 */
+function handleBatchUpdateStatus() {
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请至少选择一条记录');
+    return;
+  }
+  batchUpdateStatusDialogRef.value?.open(checkedIds.value);
+}
+
 async function handleDelete(row) {
+  const deleteName = props.tabType === 'instance' ? row.name : row.categoryName;
+  try {
+    await confirm(`确定删除 "${deleteName}" 吗？`);
+  } catch {
+    return;
+  }
+
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.garageName]),
+    text: $t('ui.actionMessage.deleting', [deleteName]),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success(
-      $t('ui.actionMessage.deleteSuccess', [row.garageName]),
-    );
-    handleRefresh();
+    if (props.tabType === 'instance') {
+      const id = Number(row.id);
+      await deleteInstance(id);
+      ElMessage.success($t('ui.actionMessage.deleteSuccess', [deleteName]));
+      handleRefresh();
+    } else {
+      const id = Number(row.id);
+      await deleteCategory(id);
+      ElMessage.success($t('ui.actionMessage.deleteSuccess', [deleteName]));
+      handleRefresh();
+      emit('refreshTree');
+    }
+  } catch (error) {
+    ElMessage.error('删除失败');
+    console.error(error);
   } finally {
     loadingInstance.close();
   }
 }
 
 async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
+  try {
+    await confirm($t('确定删除这些数据吗？'));
+  } catch {
+    return;
+  }
+
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deletingBatch'),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
+    if (props.tabType === 'instance') {
+      // 监测事件实例批量删除
+      for (const id of checkedIds.value) {
+        await deleteInstance(Number(id));
+      }
+      checkedIds.value = [];
+      ElMessage.success($t('删除成功'));
+      handleRefresh();
+    } else {
+      // 分类批量删除
+      const ids = checkedIds.value.map(Number);
+      await deleteBatchCategory(ids);
+      checkedIds.value = [];
+      ElMessage.success($t('删除成功'));
+      handleRefresh();
+      emit('refreshTree');
+    }
+  } catch (error) {
+    ElMessage.error('删除失败');
+    console.error(error);
   } finally {
     loadingInstance.close();
   }
@@ -145,99 +413,239 @@ const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
+
+// 标志位：是否跳过统计更新
+const skipStatsUpdate = ref(false);
+
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
-  total: dataList().length,
+  total: 0,
   currentPage: 1,
   pageSize: 10,
-  apilist: dataList(),
   list: [],
   searchParams: {},
+  statistics: {
+    totalCategories: 0,
+    totalInstances: 0,
+    auditedCount: 0,
+  },
+  statusCounts: {
+    total: 0,
+    enabled: 0,
+    disabled: 0,
+    maintenance: 0,
+  },
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
 
+// 监听 filterCategoryId 和 tabType 变化，刷新表格
+watch([() => props.filterCategoryId, () => props.tabType], () => {
+  nextTick(() => {
+    handleRefresh();
+    initStatusCounts();
+  });
+});
+
+// 组件挂载时初始化状态计数
+onMounted(() => {
+  initStatusCounts();
+});
+
 // 表格数据获取
-const getTableData = (pageObj) => {
+const getTableData = async (pageObj) => {
   const page = pageObj.page;
 
-  // 根据activeName和searchParams筛选数据
-  const filteredList = dataObj.apilist.filter((v) => {
-    // 状态筛选
-    let statusMatch = true;
-    switch (activeName.value) {
-      case '启用': {
-        statusMatch = v.status === '1';
-        break;
+  dataObj.currentPage = page.currentPage;
+  dataObj.pageSize = page.pageSize;
+
+  try {
+    if (props.tabType === 'instance') {
+      // 监测事件实例数据
+      let statusValue = '';
+      if (activeName.value !== '全部') {
+        const dictOptions = getDictOptions(DICT_TYPE.DATA_RUN_STATUS, 'string');
+        const found = dictOptions.find((opt) => opt.label === activeName.value);
+        statusValue = found ? found.value : '';
       }
-      case '禁用': {
-        statusMatch = v.status === '0';
-        break;
+
+      const queryParams = {
+        pageNo: page.currentPage,
+        pageSize: page.pageSize,
+        status: statusValue,
+        ...dataObj.searchParams,
+      };
+
+      if (props.filterCategoryId) {
+        queryParams.treeParentId = props.filterCategoryId;
+        queryParams.includeSelf = true;
+      }
+
+      const response = await getInstancePage(queryParams);
+      if (response) {
+        if (!skipStatsUpdate.value) {
+          dataObj.total = response.total;
+        }
+        dataObj.list = response.list.map((item) => ({
+          ...item,
+          id: String(item.id),
+          createTime: item.createTime ? new Date(item.createTime).toLocaleString('zh-CN') : '',
+          creator: item.creator || '',
+          dealTime: item.dealTime ? new Date(item.dealTime).toLocaleString('zh-CN') : '',
+        }));
+
+        if (!skipStatsUpdate.value) {
+          dataObj.statistics.totalCategories = dataObj.total;
+        }
+
+        emit('update:tableData', response.list);
+      } else {
+        ElMessage.error(response.message || '获取数据失败');
+      }
+    } else {
+      // 分类数据
+      let statusValue = '';
+      if (activeName.value !== '全部') {
+        const dictOptions = getDictOptions(DICT_TYPE.DATA_ENABLE_STATUS, 'string');
+        const found = dictOptions.find((opt) => opt.label === activeName.value);
+        statusValue = found ? found.value : '';
+      }
+
+      const queryParams = {
+        pageNo: page.currentPage,
+        pageSize: page.pageSize,
+        status: statusValue,
+        ...dataObj.searchParams,
+      };
+
+      if (props.filterCategoryId) {
+        queryParams.treeParentId = props.filterCategoryId;
+        queryParams.includeSelf = true;
+      }
+
+      const response = await getCategoryPage(queryParams);
+      if (response) {
+        if (!skipStatsUpdate.value) {
+          dataObj.total = response.total;
+        }
+        dataObj.list = response.list.map((item) => ({
+          ...item,
+          id: String(item.id),
+          parentId: item.parentId ? String(item.parentId) : null,
+          createTime: item.createTime ? new Date(item.createTime).toLocaleString('zh-CN') : '',
+          creator: item.creator || '',
+        }));
+
+        if (!skipStatsUpdate.value) {
+          dataObj.statistics.totalCategories = dataObj.total;
+          dataObj.statusCounts.total = dataObj.total;
+          dataObj.statusCounts.enabled = dataObj.list.filter((item) => {
+            const dict = getDictObj(DICT_TYPE.DATA_ENABLE_STATUS, String(item.status));
+            return dict?.label === '启用';
+          }).length;
+          dataObj.statusCounts.disabled = dataObj.list.filter((item) => {
+            const dict = getDictObj(DICT_TYPE.DATA_ENABLE_STATUS, String(item.status));
+            return dict?.label === '禁用';
+          }).length;
+          dataObj.statusCounts.maintenance = 0;
+        }
+      } else {
+        ElMessage.error(response.message || '获取数据失败');
       }
     }
+  } catch (error) {
+    ElMessage.error('获取数据失败');
+    console.error(error);
+  }
 
-    // 搜索条件筛选
-    let searchMatch = true;
-    Object.keys(dataObj.searchParams).forEach((key) => {
-      const value = dataObj.searchParams[key];
-      if (value) {
-        searchMatch = typeof value === 'string' ? searchMatch && v[key]?.toString().includes(value) : searchMatch && v[key] === value;
-      }
-    });
-
-    return statusMatch && searchMatch;
-  });
-
-  dataObj.total = filteredList.length;
-  dataObj.list = filteredList.slice(
-    (page.currentPage - 1) * page.pageSize,
-    page.currentPage * page.pageSize,
-  );
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
-  // 默认展开
+// 使用计算属性创建搜索表单schema，根据tabType返回不同的schema
+const queryFormSchema = computed(() => {
+  const schema = props.tabType === 'instance' ? useInstanceSearchFormSchema(props.treeData) : useFormSchema(props.treeData);
+  return schema.map((v) => {
+    delete v.rules;
+    return { ...v };
+  });
+});
+
+const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
-  // 所有表单项共用，可单独在表单内覆盖
   commonConfig: {
-    // 所有表单项
     componentProps: {
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
-  // 提交函数
   handleSubmit: onSubmit,
-  // 垂直布局，label和input在不同行，值为vertical
-  // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
-  }),
-  // 是否可展开
+  schema: queryFormSchema.value,
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
   },
 });
 
+// 监听treeData和tabType变化，更新搜索表单schema
+watch(
+  [() => props.treeData, () => props.tabType],
+  ([newTreeData, newTabType]) => {
+    if (newTreeData && newTreeData.length > 0) {
+      const newSchema = (newTabType === 'instance' ? useInstanceSearchFormSchema(newTreeData) : useFormSchema(newTreeData)).map((v) => {
+        delete v.rules;
+        return { ...v };
+      });
+      queryFormApi.setState({ schema: newSchema });
+    }
+  },
+  { deep: true, immediate: true },
+);
+
 // 搜索表单查询
 function onSubmit(values) {
-  dataObj.searchParams = values;
+  const searchParams = { ...values };
+  if (!searchParams.parentId) {
+    searchParams.parentId = null;
+  }
+  if (props.tabType === 'instance' && searchParams.categoryId) {
+    const findNode = (nodes, id) => {
+      for (const node of nodes) {
+        if (node.id === id) {
+          return node;
+        }
+        if (node.children && node.children.length > 0) {
+          const found = findNode(node.children, id);
+          if (found) {
+            return found;
+          }
+        }
+      }
+      return null;
+    };
+
+    const selectedNode = findNode(props.treeData, searchParams.categoryId);
+    if (selectedNode) {
+      searchParams.categoryName = selectedNode.label || selectedNode.categoryName;
+    }
+    delete searchParams.categoryId;
+  }
+  dataObj.searchParams = searchParams;
   handleRefresh();
   drawerApi.close();
 }
 
+// 根据tabType获取对应的列配置
+const getGridColumns = () => {
+  return props.tabType === 'instance' ? useInstanceGridColumns() : useGridColumns();
+};
+
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    columns: useGridColumns(),
+    columns: getGridColumns(),
     keepSource: true,
     proxyConfig: {
       ajax: {
@@ -263,46 +671,110 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
+// 监听tabType变化，更新表格列
+watch(
+  () => props.tabType,
+  (newTabType) => {
+    const newColumns = newTabType === 'instance' ? useInstanceGridColumns() : useGridColumns();
+    gridApi.setGridOptions({ columns: newColumns });
+    nextTick(() => {
+      handleRefresh();
+    });
+  },
+  { immediate: true },
+);
+
 const activeName = ref('全部');
 
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
-  detailDrawerRef.value.open();
+  if (detailDrawerRef.value) {
+    detailDrawerRef.value.open();
+  }
 };
 
-// 修改tabsData为三个标签：全部、启用、禁用
-const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用' }]);
+// 处理快捷筛选
+const handleQuickFilter = (filterFn) => {
+  skipStatsUpdate.value = true;
+  filterFn();
+  setTimeout(() => {
+    skipStatsUpdate.value = false;
+  }, 100);
+};
+
+// 获取树形节点label值
+const getTreeNodeLabel = (nodeId) => {
+  if (!nodeId || !props.treeData || props.treeData.length === 0) {
+    return '未知分类';
+  }
+
+  const findNode = (nodes, id) => {
+    for (const node of nodes) {
+      if (node.id === id) {
+        return node;
+      }
+      if (node.children && node.children.length > 0) {
+        const found = findNode(node.children, id);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    return null;
+  };
+
+  const node = findNode(props.treeData, nodeId);
+  return node?.label || node?.categoryName || '未知分类';
+};
+
+// tabsData根据tabType显示不同的标签
+const tabsData = computed(() => {
+  if (props.tabType === 'instance') {
+    const dictOptions = getDictOptions(DICT_TYPE.DATA_RUN_STATUS, 'string');
+    const tabs = [{ label: '全部' }];
+    dictOptions.forEach((opt) => {
+      tabs.push({ label: opt.label, value: opt.value });
+    });
+    return tabs;
+  } else {
+    return [{ label: '全部' }, { label: '启用' }, { label: '禁用' }];
+  }
+});
+
+// 存储全部数据的状态统计 - 用于三级状态显示
+const allDataStatusCounts = reactive({
+  total: 0,
+  statusMap: {},
+});
 
 // 创建标签文本，显示数量统计
 const createLabel = (item) => {
   let count = 0;
 
-  switch (item.label) {
-    case '全部': {
-      count = dataObj.apilist.length;
-
-      break;
+  if (props.tabType === 'instance') {
+    if (item.label === '全部') {
+      count = allDataStatusCounts.total;
+    } else {
+      count = allDataStatusCounts.statusMap[item.label] || 0;
     }
-    case '启用': {
-      // 统计status为'1'的数据
-      count = dataObj.apilist.filter((v) => v.status === '1').length;
-
-      break;
+  } else {
+    if (item.label === '全部') {
+      count = allDataStatusCounts.total;
+    } else {
+      count = allDataStatusCounts.statusMap[item.label] || 0;
     }
-    case '禁用': {
-      // 统计status为'0'的数据
-      count = dataObj.apilist.filter((v) => v.status === '0').length;
-
-      break;
-    }
-    // No default
   }
 
   return `${item.label}(${count})`;
 };
 
 const handleClick = () => {
+  skipStatsUpdate.value = true;
+  emit('statusChange', activeName.value);
   gridApi.query();
+  setTimeout(() => {
+    skipStatsUpdate.value = false;
+  }, 100);
 };
 const handleSerachShow = () => {
   drawerApi.open();
@@ -317,12 +789,12 @@ const handleFullShow = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-<!--   详情抽屉-->
+    <!--   详情抽屉-->
     <DetailDrawer
       ref="detailDrawerRef"
-      :title="`${dataObj.detailObj.garageName}详情`"
+      :title="props.tabType === 'instance' ? `${dataObj.detailObj?.name || '监测事件实例'}详情` : `${dataObj.detailObj?.categoryName || '分类'}详情`"
       :data="dataObj.detailObj"
-      :fields="detailFields"
+      :fields="props.tabType === 'instance' ? instanceDetailFields : detailFields"
     />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -330,7 +802,7 @@ const handleFullShow = () => {
     <Grid>
       <!-- 三级状态 -->
       <template #table-title>
-        <div class="tabel-tabs">
+        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -345,17 +817,44 @@ const handleFullShow = () => {
               />
             </el-tabs>
           </div>
+          <!-- 树形结构筛选标签 -->
+          <ElTag
+            v-if="props.filterCategoryId"
+            type="primary"
+            closable
+            @close="emit('clearFilter')"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            分类：{{ getTreeNodeLabel(props.filterCategoryId) }}
+          </ElTag>
         </div>
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <!-- 仅在监测事件实例标签页显示导入按钮 -->
+          <IconButton
+            v-if="props.tabType === 'instance'"
+            content="导入"
+            icon-name="Upload"
+            @click="handleImport"
+          />
           <IconButton
             content="导出"
             icon-name="download"
             @click="handleExport"
           />
+          <!-- 仅在监测事件实例标签页显示批量更新状态按钮 -->
           <IconButton
+            v-if="props.tabType === 'instance'"
+            content="批量更新状态"
+            icon-name="Refresh"
+            :disabled="isEmpty(checkedIds)"
+            @click="handleBatchUpdateStatus"
+          />
+          <!-- 仅在监测事件分类标签页显示批量删除按钮 -->
+          <IconButton
+            v-if="props.tabType !== 'instance'"
             content="批量删除"
             icon-name="delete"
             color="#F56C6C"
@@ -374,13 +873,26 @@ const handleFullShow = () => {
           />
         </div>
       </template>
-      <template #id="{ row }">
+      <!-- 分类名称插槽 -->
+      <template #categoryNameDetail="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
+          style="cursor: pointer"
         >
-          {{ row.id }}
+          {{ row.categoryName }}
+        </el-text>
+      </template>
+      <!-- 事项名称插槽（监测事件实例） -->
+      <template #name="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.name }}
         </el-text>
       </template>
       <template #actions="{ row }">
@@ -411,12 +923,26 @@ const handleFullShow = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：诱导屏数量: 10; 启用: 8; 禁用: 2 </span>
+          <span v-if="props.tabType === 'instance'">
+            本页统计：监测事件实例数量: {{ dataObj.list.length }}
+          </span>
+          <span v-else> 本页统计：分类数量: {{ dataObj.list.length }} </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span> 全部统计：{{ textObj.total }} </span>
+          <span v-if="props.tabType === 'instance'">
+            全部统计：监测事件实例数量{{ dataObj.statistics.totalCategories }}
+          </span>
+          <span v-else>
+            全部统计：分类数量{{ dataObj.statistics.totalCategories }}; 启用{{ dataObj.statusCounts.enabled || 0 }}; 禁用{{ dataObj.statusCounts.disabled || 0 }}
+          </span>
         </div>
       </template>
     </Grid>
+
+    <!-- 导入Excel弹窗 -->
+    <ImportExcelDialog ref="importExcelDialogRef" @success="handleRefresh" />
+
+    <!-- 批量更新状态弹窗 -->
+    <BatchUpdateStatusDialog ref="batchUpdateStatusDialogRef" @success="handleRefresh" />
   </div>
 </template>
