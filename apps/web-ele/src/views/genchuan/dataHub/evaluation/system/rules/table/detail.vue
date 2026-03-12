@@ -32,7 +32,7 @@ defineExpose({
 </script>
 
 <template>
-  <DetailDrawer :title="drawerTitle">
+  <DetailDrawer :title="drawerTitle" class="genchuan-detail-drawer">
     <!-- 整体滚动容器（避免多个卡片各自滚动） -->
     <div class="detail-scroll-container">
       <!-- 基本信息卡片 -->
@@ -49,10 +49,6 @@ defineExpose({
         <div class="detail-card-row">
           <div class="detail-row-left">规则项数量：</div>
           <div class="detail-row-right">{{ detailObj.itemCount || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">否决项数量：</div>
-          <div class="detail-row-right">{{ detailObj.vetoCount || '-' }}</div>
         </div>
         <div class="detail-card-row">
           <div class="detail-row-left">状态：</div>
@@ -72,7 +68,7 @@ defineExpose({
         </div>
       </div>
 
-      <!-- 规则项列表卡片 -->
+      <!-- 规则项列表卡片（增加权重列） -->
       <div v-if="detailObj.ruleItems?.length" class="detail-card">
         <h3 class="detail-card-title">规则项列表</h3>
         <div class="detail-table-wrapper">
@@ -83,6 +79,7 @@ defineExpose({
               <th>关联指标项</th>
               <th>评分逻辑</th>
               <th>满分值</th>
+              <th>权重</th>
               <th>规则类型</th>
             </tr>
             </thead>
@@ -92,6 +89,7 @@ defineExpose({
               <td>{{ item.indexName || '-' }}</td>
               <td>{{ item.scoreLogic || '-' }}</td>
               <td>{{ item.fullScore || '-' }}</td>
+              <td>{{ item.weight || '-' }}</td>
               <td>{{ item.ruleTypeName || '-' }}</td>
             </tr>
             </tbody>
@@ -99,30 +97,7 @@ defineExpose({
         </div>
       </div>
 
-      <!-- 否决项列表卡片 -->
-      <div v-if="detailObj.vetoItems?.length" class="detail-card">
-        <h3 class="detail-card-title">否决项列表</h3>
-        <div class="detail-table-wrapper">
-          <table class="detail-table">
-            <thead>
-            <tr>
-              <th>否决项名称</th>
-              <th>适用对象类型</th>
-              <th>否决条件</th>
-              <th>生效周期</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr v-for="item in detailObj.vetoItems" :key="item.vetoItemId">
-              <td>{{ item.name || '-' }}</td>
-              <td>{{ item.objectTypeName || '-' }}</td>
-              <td>{{ item.condition || '-' }}</td>
-              <td>{{ item.validCycle || '-' }}</td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <!-- 删除了否决项列表卡片 -->
     </div>
   </DetailDrawer>
 </template>

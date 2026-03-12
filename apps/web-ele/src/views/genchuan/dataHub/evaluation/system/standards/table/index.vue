@@ -1,8 +1,8 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, nextTick } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
@@ -30,6 +30,9 @@ const currentCategory = ref(null);
 const currentItem = ref(null);
 const activeTab = ref('全部'); // 用于决定批量操作文案等
 
+// 临时存储当前编辑分类下的标准项（用于分类抽屉内管理）
+const currentCategoryItems = ref([]);
+
 // 标准分类表单抽屉
 const [CategoryForm, categoryFormApi] = useVbenForm({
   commonConfig: {
@@ -52,10 +55,20 @@ const [CategoryDrawer, categoryDrawerApi] = useVbenDrawer({
       ElMessage.warning('请填写必填项');
       return;
     }
-    // 模拟保存
+
+    // 校验同一体系内名称唯一性
+    const existing = dataObj.apilist.find(c =>
+      c.systemId === values.systemId && c.name === values.name &&
+      c.standardCategoryId !== currentCategory.value?.standardCategoryId
+    );
+    if (existing) {
+      ElMessage.error('该体系下已存在同名分类');
+      return;
+    }
+
     const title = categoryDrawerApi.sharedData.payload?.title;
     if (title === textObj.addText) {
-      // 新增
+      // 新增分类
       const newCategory = {
         standardCategoryId: Date.now().toString(),
         name: values.name,
@@ -67,21 +80,29 @@ const [CategoryDrawer, categoryDrawerApi] = useVbenDrawer({
         createTime: new Date().toLocaleString(),
         updateByName: '当前用户',
         updateTime: new Date().toLocaleString(),
-        itemCount: 0,
-        items: [],
+        itemCount: currentCategoryItems.value.length,
+        items: currentCategoryItems.value.map(item => ({
+          ...item,
+          standardItemId: item.standardItemId || `item_${Date.now()}_${Math.random()}`
+        })),
         changeLog: '新建分类'
       };
       dataObj.apilist.push(newCategory);
     } else if (title === textObj.editText) {
-      // 编辑
+      // 编辑分类
       const index = dataObj.apilist.findIndex(c => c.standardCategoryId === currentCategory.value?.standardCategoryId);
       if (index !== -1) {
         dataObj.apilist[index] = {
           ...dataObj.apilist[index],
-          ...values,
+          name: values.name,
+          systemId: values.systemId,
           systemName: indexSystemList.find(s => s.id === values.systemId)?.name,
+          statusId: values.statusId || 's1',
+          statusName: values.statusId === 's2' ? '停用' : '启用',
           updateByName: '当前用户',
           updateTime: new Date().toLocaleString(),
+          itemCount: currentCategoryItems.value.length,
+          items: currentCategoryItems.value,
           changeLog: (dataObj.apilist[index].changeLog || '') + '；编辑分类'
         };
       }
@@ -95,9 +116,12 @@ const [CategoryDrawer, categoryDrawerApi] = useVbenDrawer({
       if (payload?.title === textObj.editText && payload?.category) {
         currentCategory.value = payload.category;
         await categoryFormApi.setValues(payload.category);
+        // 深拷贝标准项到临时列表
+        currentCategoryItems.value = payload.category.items ? JSON.parse(JSON.stringify(payload.category.items)) : [];
       } else {
         currentCategory.value = null;
         categoryFormApi.resetForm();
+        currentCategoryItems.value = [];
       }
     }
   }
@@ -125,27 +149,37 @@ const [ItemDrawer, itemDrawerApi] = useVbenDrawer({
       ElMessage.warning('请填写完整');
       return;
     }
-    const categoryId = itemDrawerApi.sharedData.payload?.categoryId;
-    const categoryIndex = dataObj.apilist.findIndex(c => c.standardCategoryId === categoryId);
-    if (categoryIndex === -1) return;
 
-    const category = dataObj.apilist[categoryIndex];
-    const items = category.items || [];
+    const payload = itemDrawerApi.sharedData.payload;
+    const { categoryId, item, mode, onSave } = payload || {};
+
+    // 确定要操作的标准项列表（如果是分类抽屉内的临时管理，则操作 currentCategoryItems）
+    let targetItems = [];
+    let isTemp = false; // 是否临时列表（分类抽屉内）
+    if (categoryId === 'temp' || mode === 'temp') {
+      targetItems = currentCategoryItems.value;
+      isTemp = true;
+    } else {
+      const categoryIndex = dataObj.apilist.findIndex(c => c.standardCategoryId === categoryId);
+      if (categoryIndex === -1) return;
+      targetItems = dataObj.apilist[categoryIndex].items;
+    }
 
     // 分数范围重叠校验
-    const rangePattern = /^(≥?\d+|\d+-\d+|<=\d+|<\\d+)$/; // 简化校验，实际需解析
     const newRange = values.scoreRange;
-    const overlap = items.some(item => item.standardItemId !== currentItem.value?.standardItemId && isRangeOverlap(item.scoreRange, newRange));
+    const overlap = targetItems.some(existingItem =>
+      existingItem.standardItemId !== item?.standardItemId && isRangeOverlap(existingItem.scoreRange, newRange)
+    );
     if (overlap) {
       ElMessage.error('分数范围与现有标准项重叠，请调整');
       return;
     }
 
-    if (currentItem.value) {
+    if (item) {
       // 编辑
-      const itemIndex = items.findIndex(i => i.standardItemId === currentItem.value.standardItemId);
-      if (itemIndex !== -1) {
-        items[itemIndex] = { ...items[itemIndex], ...values, updateTime: new Date().toLocaleString() };
+      const index = targetItems.findIndex(i => i.standardItemId === item.standardItemId);
+      if (index !== -1) {
+        targetItems[index] = { ...targetItems[index], ...values, updateTime: new Date().toLocaleString() };
       }
     } else {
       // 新增
@@ -155,14 +189,26 @@ const [ItemDrawer, itemDrawerApi] = useVbenDrawer({
         createTime: new Date().toLocaleString(),
         updateTime: new Date().toLocaleString()
       };
-      items.push(newItem);
+      targetItems.push(newItem);
     }
+
     // 按sortNo排序
-    items.sort((a, b) => a.sortNo - b.sortNo);
-    category.items = items;
-    category.itemCount = items.length;
-    category.changeLog = (category.changeLog || '') + `；${currentItem.value ? '编辑' : '新增'}标准项`;
-    category.updateTime = new Date().toLocaleString();
+    targetItems.sort((a, b) => a.sortNo - b.sortNo);
+
+    // 如果不是临时列表，需要更新分类的itemCount和changeLog
+    if (!isTemp) {
+      const categoryIndex = dataObj.apilist.findIndex(c => c.standardCategoryId === categoryId);
+      if (categoryIndex !== -1) {
+        const category = dataObj.apilist[categoryIndex];
+        category.items = targetItems;
+        category.itemCount = targetItems.length;
+        category.changeLog = (category.changeLog || '') + `；${item ? '编辑' : '新增'}标准项`;
+        category.updateTime = new Date().toLocaleString();
+      }
+    }
+
+    // 如果提供了onSave回调（用于分类抽屉内新增后更新临时列表）
+    if (onSave) onSave(values);
 
     handleRefresh();
     itemDrawerApi.close();
@@ -181,10 +227,30 @@ const [ItemDrawer, itemDrawerApi] = useVbenDrawer({
   }
 });
 
-// 分数范围重叠辅助函数（简化版，仅演示逻辑）
+// 分数范围重叠辅助函数（完整实现）
+function parseRange(rangeStr) {
+  const str = rangeStr.trim();
+  if (str.includes('-')) {
+    const [min, max] = str.split('-').map(Number);
+    return [min, max];
+  } else if (str.startsWith('≥')) {
+    const min = Number(str.slice(1));
+    return [min, Infinity];
+  } else if (str.startsWith('<=')) {
+    const max = Number(str.slice(2));
+    return [-Infinity, max];
+  } else if (str.startsWith('<')) {
+    const max = Number(str.slice(1)) - 1; // 小于 x 视为 ≤ x-1
+    return [-Infinity, max];
+  } else {
+    const val = Number(str);
+    return [val, val]; // 精确值
+  }
+}
 function isRangeOverlap(range1, range2) {
-  // 实际应解析范围，此处简单返回false避免阻塞演示
-  return false;
+  const [a1, a2] = parseRange(range1);
+  const [b1, b2] = parseRange(range2);
+  return !(a2 < b1 || a1 > b2);
 }
 
 // 搜索参数
@@ -265,6 +331,11 @@ const getTableData = (pageObj) => {
       if (params.name && !item.name.includes(params.name)) match = false;
       if (params.systemId && item.systemId !== params.systemId) match = false;
       if (params.statusId && item.statusId !== params.statusId) match = false;
+      if (params.grade) {
+        // 标准等级过滤：检查该分类下是否有任一标准项的grade包含关键字
+        const hasGrade = item.items?.some(it => it.grade.includes(params.grade));
+        if (!hasGrade) match = false;
+      }
       return match;
     });
   }
@@ -314,7 +385,8 @@ const [QueryForm, queryFormApi] = useVbenForm({
       componentProps: {
         options: statusList.map(s => ({ label: s.name, value: s.id }))
       }
-    }
+    },
+    { fieldName: 'grade', label: '标准等级', component: 'Input', componentProps: { placeholder: '请输入等级关键字' } }
   ],
   showCollapseButton: true,
   submitButtonOptions: { content: '查询' },
@@ -375,7 +447,25 @@ function handleRefresh() {
 }
 
 function handleExport() {
-  exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+  // 导出分类及标准项明细（简化：将分类和标准项合并为扁平数组）
+  const flatData = [];
+  dataObj.apilist.forEach(cat => {
+    cat.items.forEach(item => {
+      flatData.push({
+        分类名称: cat.name,
+        适用体系: cat.systemName,
+        状态: cat.statusName,
+        创建人: cat.createByName,
+        创建时间: cat.createTime,
+        标准项等级: item.grade,
+        分数范围: item.scoreRange,
+        排序序号: item.sortNo,
+        标准项创建时间: item.createTime,
+        标准项更新时间: item.updateTime
+      });
+    });
+  });
+  exportToExcel(flatData, textObj.excelName, textObj.excelAllName);
 }
 
 function handleCreate() {
@@ -387,11 +477,48 @@ function handleEdit(row) {
 }
 
 function handleAddItem(row) {
+  // 从表格行直接新增标准项，属于直接操作数据库分类
   itemDrawerApi.setData({ title: textObj.addItemText, categoryId: row.standardCategoryId }).open();
 }
 
-function handleEditItem(row, item) {
-  itemDrawerApi.setData({ title: textObj.editItemText, categoryId: row.standardCategoryId, item }).open();
+// 在分类抽屉内新增标准项
+function addItemInDrawer() {
+  itemDrawerApi.setData({
+    title: textObj.addItemText,
+    categoryId: 'temp',
+    mode: 'temp',
+    onSave: (newItem) => {
+      currentCategoryItems.value.push(newItem);
+      currentCategoryItems.value.sort((a,b) => a.sortNo - b.sortNo);
+    }
+  }).open();
+}
+
+// 在分类抽屉内编辑标准项
+function editItemInDrawer(item) {
+  itemDrawerApi.setData({
+    title: textObj.editItemText,
+    item,
+    categoryId: 'temp',
+    mode: 'temp',
+    onSave: (updatedItem) => {
+      const index = currentCategoryItems.value.findIndex(i => i.standardItemId === updatedItem.standardItemId);
+      if (index !== -1) {
+        currentCategoryItems.value[index] = updatedItem;
+        currentCategoryItems.value.sort((a,b) => a.sortNo - b.sortNo);
+      }
+    }
+  }).open();
+}
+
+// 在分类抽屉内删除标准项
+function removeItemFromDrawer(item) {
+  ElMessageBox.confirm('确定删除该标准项吗？', '提示', { type: 'warning' }).then(() => {
+    const index = currentCategoryItems.value.findIndex(i => i.standardItemId === item.standardItemId);
+    if (index !== -1) {
+      currentCategoryItems.value.splice(index, 1);
+    }
+  }).catch(() => {});
 }
 
 async function handleDisable(row) {
@@ -473,6 +600,26 @@ function handleGarageOpenDetail(row) {
   dataObj.garageDetail = row;
   detailRef.value.open();
 }
+
+// 处理详情内编辑标准项
+function handleDetailEditItem(category, item) {
+  // 打开ItemDrawer，传入分类ID和项
+  itemDrawerApi.setData({
+    title: textObj.editItemText,
+    categoryId: category.standardCategoryId,
+    item
+  }).open();
+}
+
+// 处理详情内标准项变更（删除后）
+function handleDetailItemChange(updatedCategory) {
+  const index = dataObj.apilist.findIndex(c => c.standardCategoryId === updatedCategory.standardCategoryId);
+  if (index !== -1) {
+    dataObj.apilist[index] = updatedCategory;
+    handleRefresh();
+  }
+}
+
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
@@ -481,9 +628,25 @@ const changeTotalShow = () => dataObj.totalShow = !dataObj.totalShow;
 
 <template>
   <div class="park-lot-table-new">
-    <!-- 分类抽屉 -->
+    <!-- 分类抽屉（含标准项管理） -->
     <CategoryDrawer :title="categoryDrawerApi.sharedData.payload?.title">
       <CategoryForm />
+      <!-- 标准项管理区域（仅在编辑/新增时显示） -->
+      <div class="category-items-section" v-if="currentCategoryItems.length || categoryDrawerApi?.sharedData?.payload?.title === textObj.addText">
+        <h4>标准项列表</h4>
+        <el-table :data="currentCategoryItems" border size="small">
+          <el-table-column prop="grade" label="等级" />
+          <el-table-column prop="scoreRange" label="分数范围" />
+          <el-table-column prop="sortNo" label="排序序号" width="80" />
+          <el-table-column label="操作" width="150">
+            <template #default="{ row }">
+              <el-button size="small" @click="editItemInDrawer(row)">编辑</el-button>
+              <el-button size="small" type="danger" @click="removeItemFromDrawer(row)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-button class="mt-2" size="small" @click="addItemInDrawer">新增标准项</el-button>
+      </div>
     </CategoryDrawer>
 
     <!-- 标准项抽屉 -->
@@ -495,6 +658,8 @@ const changeTotalShow = () => dataObj.totalShow = !dataObj.totalShow;
     <detailDrawer
       ref="detailRef"
       :detail-obj="dataObj.garageDetail"
+      @edit-item="handleDetailEditItem"
+      @item-change="handleDetailItemChange"
     />
 
     <!-- 搜索抽屉 -->
@@ -581,7 +746,6 @@ const changeTotalShow = () => dataObj.totalShow = !dataObj.totalShow;
           <IconButton content="详情" icon-name="View" @click="handleGarageOpenDetail(row)" />
           <IconButton content="编辑" icon-name="edit" @click="handleEdit(row)" />
           <IconButton v-if="activeName === '全部'" content="新增标准项" icon-name="Plus" @click="handleAddItem(row)" />
-          <!-- 标准项列表内嵌快速编辑（示例：可再添加一个编辑标准项的入口，但为避免拥挤，此处省略，可在详情中编辑） -->
           <IconButton
             v-if="row.statusName === '启用'"
             content="停用"
@@ -612,3 +776,21 @@ const changeTotalShow = () => dataObj.totalShow = !dataObj.totalShow;
     </Grid>
   </div>
 </template>
+
+<style scoped>
+.category-items-section {
+  margin-top: 20px;
+  padding: 16px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+}
+.category-items-section h4 {
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+}
+.mt-2 {
+  margin-top: 8px;
+}
+</style>
