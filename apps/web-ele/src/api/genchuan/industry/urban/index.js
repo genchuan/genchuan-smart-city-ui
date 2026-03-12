@@ -180,3 +180,7 @@ export function downLoadComplete(params) {
     params,
   });
 }
+/** 删除归档资料 */
+export function deleteArchive(id) {
+  return requestClient.delete(`/facility/sys-archive/delete?id=${id}`);
+}

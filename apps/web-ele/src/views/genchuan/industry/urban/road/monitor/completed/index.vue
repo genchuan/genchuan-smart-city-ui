@@ -20,7 +20,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   addRoad,
   addWarn,
-  deleteRoad,
+  deleteArchive,
   downLoadComplete,
   exportRoadCompletedExcel,
   getRoadArchive,
@@ -266,7 +266,7 @@ async function handleDelete(row) {
     text: $t('ui.actionMessage.deleting'),
   });
   try {
-    await deleteRoad(row.id);
+    await deleteArchive(row.id);
     ElMessage.success($t('ui.actionMessage.deleteSuccess'));
     handleRefresh();
   } finally {
@@ -277,7 +277,7 @@ async function handleDelete(row) {
 async function handleDeleteBatch() {
   await confirm($t('确定删除这些数据吗？')).then(() => {
     checkedIds.value.forEach(async (v) => {
-      await handleDelete({
+      await deleteArchive({
         id: v,
       });
     });
