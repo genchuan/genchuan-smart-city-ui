@@ -184,3 +184,7 @@ export function downLoadComplete(params) {
 export function deleteArchive(id) {
   return requestClient.delete(`/facility/sys-archive/delete?id=${id}`);
 }
+/** 删除工单 */
+export function deleteOrder(id) {
+  return requestClient.delete(`/facility/work-order/delete?id=${id}`);
+}

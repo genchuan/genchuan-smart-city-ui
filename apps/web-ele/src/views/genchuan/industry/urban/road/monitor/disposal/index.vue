@@ -26,7 +26,7 @@ import {
   batchConfirmRemind,
   batchUpdateAssignStaff,
   confirmValid,
-  deleteWarn,
+  deleteOrder,
   getRoadFacility,
   getRoadFacilityList,
   getRoadWorkOrder,
@@ -529,7 +529,7 @@ async function handleDelete(row) {
     text: $t('ui.actionMessage.deleting'),
   });
   try {
-    await deleteWarn(row.id);
+    await deleteOrder(row.id);
     ElMessage.success($t('ui.actionMessage.deleteSuccess'));
     handleRefresh();
   } finally {

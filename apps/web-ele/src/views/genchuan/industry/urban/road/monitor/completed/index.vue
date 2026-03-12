@@ -277,7 +277,7 @@ async function handleDelete(row) {
 async function handleDeleteBatch() {
   await confirm($t('确定删除这些数据吗？')).then(() => {
     checkedIds.value.forEach(async (v) => {
-      await deleteArchive({
+      await handleDelete({
         id: v,
       });
     });
