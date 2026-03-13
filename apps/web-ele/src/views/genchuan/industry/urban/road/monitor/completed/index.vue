@@ -761,11 +761,6 @@ const handleDownLoadWord = async (row) => {
             @click="handleOpenDetail(row)"
           />
           <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
             content="删除"
             icon-name="delete"
             color="#F56C6C"
