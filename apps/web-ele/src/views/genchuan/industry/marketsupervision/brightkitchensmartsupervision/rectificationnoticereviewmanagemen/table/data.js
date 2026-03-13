@@ -388,106 +388,118 @@ export function useFormSchema() {
   ];
 }
 
-/** 表格字段 - 改造为执法复审台账表格列 */
+/** 整改通知书台账表表格列配置 */
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
     {
+      field: 'id',
+      title: '主键ID',
+      minWidth: 80,
+      sortable: true,
+    },
+    {
       field: 'ledgerCode',
       title: '台账编号',
-      minWidth: 180,
-      sortable: true,
-      slots: { default: 'ledgerCode' },
-    },
-    {
-      field: 'enterpriseName',
-      title: '企业名称',
       minWidth: 200,
       sortable: true,
+      slots: { default: 'ledgerCode' }, // 整改通知书复审台账唯一编号，预留钻取插槽
     },
     {
-      field: 'violationType',
-      title: '违规类型',
-      minWidth: 180,
-      sortable: true,
-    },
-    {
-      field: 'violationLevel',
-      title: '违规等级',
+      field: 'entId',
+      title: '企业ID',
       minWidth: 120,
       sortable: true,
     },
     {
-      field: 'violationEvidenceUrl',
+      field: 'illegalTypeId',
+      title: '违规类型ID',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'illegalLevelId',
+      title: '违规等级ID',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'evidenceUrl',
       title: '违规证据链接',
-      minWidth: 220,
+      minWidth: 200,
       sortable: false,
     },
     {
       field: 'draftTime',
       title: '草拟时间',
-      minWidth: 200,
+      minWidth: 180,
       sortable: true,
     },
     {
       field: 'reviewStatus',
       title: '复审状态',
       minWidth: 120,
-      sortable: true,
+      sortable: true, 
     },
     {
-      field: 'reviewer',
-      title: '复审人',
+      field: 'reviewerId',
+      title: '复审人ID',
       minWidth: 120,
       sortable: true,
     },
     {
       field: 'reviewTime',
       title: '复审时间',
-      minWidth: 200,
+      minWidth: 180,
       sortable: true,
     },
     {
-      field: 'issueTime',
-      title: '下发时间',
-      minWidth: 200,
-      sortable: true,
-    },
-    {
-      field: 'revokeTime',
+      field: 'cancelTime',
       title: '撤销时间',
-      minWidth: 200,
+      minWidth: 180,
       sortable: true,
     },
     {
-      field: 'revokeReason',
-      title: '撤销原因',
-      minWidth: 200,
-      sortable: false,
-    },
-    {
-      field: 'serviceStatus',
-      title: '送达状态',
+      field: 'cancelReasonId',
+      title: '撤销原因ID',
       minWidth: 120,
       sortable: true,
     },
     {
-      field: 'enterpriseRectificationStatus',
-      title: '企业整改反馈状态',
-      minWidth: 160,
-      sortable: true,
-    },
-    {
-      field: 'lawEnforcementReviewLedgerCode',
+      field: 'lawLedgerCode',
       title: '执法复审台账编号',
       minWidth: 200,
       sortable: true,
     },
     {
+      field: 'createTime',
+      title: '创建时间',
+      minWidth: 180,
+      sortable: true,
+    },
+    {
+      field: 'updateTime',
+      title: '更新时间',
+      minWidth: 180,
+      sortable: true,
+    },
+    {
+      field: 'creator',
+      title: '创建人',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: 'updater',
+      title: '更新人',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
       title: '操作',
-      width: 80,
+      width: 120,
       fixed: 'right',
-      slots: { default: 'actions' },
+      slots: { default: 'actions' }, // 操作列（编辑/删除/详情/复审）
     },
   ];
 }

@@ -9,7 +9,7 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getRectifyList } from '#/api/genchuan/industry/marketsupervision/index.js';
+import { getWarnList } from '#/api/genchuan/industry/marketsupervision/index.js';
 import {
   createParkLot,
   deleteParkLot,
@@ -161,7 +161,7 @@ const getTableData = async (pageObj) => {
     pageSize: pageObj.page.pageSize,
     ...dataObj.serachObj,
   };
-  const data = await getRectifyList(getParams);
+  const data = await getWarnList(getParams);
   dataObj.total = data.total;
   dataObj.list = data.list.map((v) => {
     return {
@@ -339,13 +339,13 @@ const openImg = (url) => {
           />
         </div>
       </template>
-      <template #ledgerCode="{ row }">
+      <template #userIds="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.ledgerCode }}
+          {{ row.userIds }}
         </el-text>
       </template>
       <template #driveInPhoto="{ row }">
