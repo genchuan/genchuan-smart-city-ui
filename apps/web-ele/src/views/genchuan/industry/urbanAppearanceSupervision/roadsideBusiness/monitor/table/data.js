@@ -45,7 +45,7 @@ export const dataList = () => [
     area: 210.0,
     grid_name: '丰泽区刺桐网格',  // 改为中文网格名称
     ai_confidence: 76.3,
-    warning_photos: '[]',
+    warning_photos: '[无]',
     warning_time: '2024-06-19 08:15:00',
     law_enforcer_id: 'd36gec99-9c0b-4ef8-bb6d-6bb9bd380aee',
     disposal_measure: '暂扣占道物品',
@@ -140,12 +140,12 @@ export const dataList = () => [
     area: 0.0,
     grid_name: '梅列区列东网格',  // 改为中文网格名称
     ai_confidence: 100.0,
-    warning_photos: '[]',
+    warning_photos: '[无]',
     warning_time: '2024-06-21 13:20:00',
     law_enforcer_id: 'w81dzc99-9c0b-4ef8-bb6d-6bb9bd380c99',
     disposal_measure: '无需处置（误报）',
     disposal_result_id: 'x92eac99-9c0b-4ef8-bb6d-6bb9bd380caa',
-    rectification_photos: '[]',
+    rectification_photos: '[无]',
     penalty_result: '无',
     penalty_no: '',
     create_time: '2024-06-21 13:25:00',
