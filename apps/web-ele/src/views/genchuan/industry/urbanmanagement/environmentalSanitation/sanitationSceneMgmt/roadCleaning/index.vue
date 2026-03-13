@@ -293,20 +293,8 @@ const toggleChart = () => {
             <ArrowDown v-if="!dataObj.totalShow"/>
             <ArrowUp v-else/>
           </el-icon>
-          <span>本页统计：任务总数{{
-              dataObj.list.length
-            }}; 清扫待执行{{
-              dataObj.list.filter(v => v.status === '清扫待执行').length
-            }}; 作业进行中{{
-              dataObj.list.filter(v => v.status === '作业进行中').length
-            }}; 问题待处置{{
-              dataObj.list.filter(v => v.status === '问题待处置').length
-            }}; 质量待核查{{
-              dataObj.list.filter(v => v.status === '质量待核查').length
-            }}; 已完成{{ dataObj.list.filter(v => v.status === '已完成').length }}</span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span>全部统计：{{ textObj.total }}</span>
           <div v-if="dataObj.totalShow && showChart && activeName !== '全部'" class="bottom-chart-wrapper">
             <Chart2 :active-name="activeName" :data-list="dataObj.apilist" />
           </div>
@@ -315,3 +303,10 @@ const toggleChart = () => {
     </Grid>
   </div>
 </template>
+
+<style scoped lang="scss">
+/* 强制显示底部容器，覆盖全局样式的 display: none */
+:deep(.vxe-grid--bottom-wrapper) {
+  display: block !important;
+}
+</style>
