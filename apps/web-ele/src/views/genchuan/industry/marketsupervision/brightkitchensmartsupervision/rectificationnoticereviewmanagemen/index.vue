@@ -34,25 +34,9 @@ const secondShow = ref(false);
 <template>
   <div class="common-index">
     <gateChart v-if="tabArray[0].arrowShow" />
-    <div class="icon-change">
-      <el-icon
-        class="tabel-tab-icon"
-        v-if="secondShow"
-        @click="changeArrowStatus"
-      >
-        <ArrowDown />
-      </el-icon>
-      <el-icon
-        class="tabel-tab-icon"
-        v-if="!secondShow"
-        @click="changeArrowStatus"
-      >
-        <ArrowUp />
-      </el-icon>
-    </div>
     <el-tabs
       v-model="activeName"
-      class="common-tabs"
+      class="common-tabs mark-tabs"
       type="card"
       @tab-change="tabChange"
     >
@@ -77,3 +61,15 @@ const secondShow = ref(false);
     </el-tabs>
   </div>
 </template>
+<style scoped lang="scss">
+.common-index {
+  .common-tabs {
+    :deep(.el-tabs__nav) {
+      margin-left: 0px !important;
+    }
+    :deep(.el-tabs__item) {
+      padding-right: 5px !important;
+    }
+  }
+}
+</style>
