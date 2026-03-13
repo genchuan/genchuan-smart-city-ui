@@ -1,7 +1,8 @@
 <script setup>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
-import CustomizeTable from './customize/index.vue';
+import MontiorEchart from './customize/chart.vue';
+import MontiorTable from './customize/index.vue';
 
 const props = defineProps({
   secondShow: {
@@ -17,15 +18,23 @@ const props = defineProps({
     default: false,
   },
 });
-const activeName = ref('日报');
-
-const tabsData = ref([{ label: '自定义报表', component: CustomizeTable }]);
-const handleClick = (item) => {
-  const nowObj = tabsData.value.find((v) => v.label === item);
-  isComponent.value.now = nowObj.component;
+const emit = defineEmits(['arrow-change', 'get-component']);
+const arrowChange = () => {
+  emit('arrow-change');
 };
+const tabsData = ref([
+  {
+    label: '实时监测',
+    component: MontiorTable,
+    echartComponent: MontiorEchart,
+  },
+]);
 const isComponent = ref({
-  now: CustomizeTable,
+  now: MontiorTable,
+  echartComponent: MontiorEchart,
+});
+onMounted(() => {
+  emit('get-component', tabsData.value[0].echartComponent);
 });
 </script>
 <template>
@@ -39,15 +48,11 @@ const isComponent = ref({
     />
   </div>
 </template>
-<style scoped lang="scss">
-.common-index {
-  .common-tabs {
-    :deep(.el-tabs__nav) {
-      margin-left: 0px !important;
-    }
-    :deep(.el-tabs__item) {
-      padding-right: 5px !important;
-    }
+<style lang="scss">
+.monitor-index {
+  margin-top: 35px;
+  .mark-table {
+    margin-top: -35px;
   }
 }
 </style>

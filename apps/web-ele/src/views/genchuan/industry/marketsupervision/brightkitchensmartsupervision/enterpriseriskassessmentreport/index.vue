@@ -2,16 +2,12 @@
 import { ref } from 'vue';
 
 import monitor from './monitor/index.vue';
+import monitorchart from './monitor/table/chart.vue';
+import reportchart from './report/customize/chart.vue';
 import report from './report/index.vue';
 
 import '#/components/page/index.scss';
 
-const changeArrowStatus = () => {
-  secondShow.value = !secondShow.value;
-  tabArray.value.forEach((v) => {
-    v.secondShow = secondShow.value;
-  });
-};
 const tabArray = ref([
   {
     label: '月报',
@@ -20,6 +16,7 @@ const tabArray = ref([
     secondShow: false,
     arrowShow: true,
     arrowState: false,
+    chartComponet: monitorchart,
   },
   {
     label: '自定义报表',
@@ -28,6 +25,7 @@ const tabArray = ref([
     secondShow: false,
     arrowShow: false,
     arrowState: false,
+    chartComponet: reportchart,
   },
 ]);
 
@@ -37,7 +35,6 @@ const arrowChange = () => {
   });
 };
 const activeName = ref('月报');
-const secondShow = ref(false);
 const tabChange = (item) => {
   tabArray.value.forEach((v) => {
     v.showSecondary = false;
@@ -49,18 +46,15 @@ const tabChange = (item) => {
   nowObj.arrowShow = true;
   nowObj.arrowState = true;
   nowObj.secondShow = true;
+  chartComponet.value.components = nowObj.chartComponet;
 };
 const chartComponet = ref({
-  components: '',
+  components: monitorchart,
 });
-const getComponent = (echart) => {
-  chartComponet.value.components = echart;
-};
 </script>
 <template>
   <div class="common-index">
-    <component :is="chartComponet.components" v-if="tabArray[0].arrowShow" />
-
+    <component :is="chartComponet.components" />
     <el-tabs
       v-model="activeName"
       class="common-tabs"
@@ -83,7 +77,6 @@ const getComponent = (echart) => {
           :key="item.label"
           :arrow-show="item.arrowShow"
           @arrow-change="arrowChange"
-          @get-component="getComponent"
         />
       </el-tab-pane>
     </el-tabs>
