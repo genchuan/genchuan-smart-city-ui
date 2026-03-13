@@ -8,24 +8,24 @@ import MapComponent from '#/components/Map/index.vue';
 
 const state = reactive({
   cardList: [
-    { title: '总监测分区数', value: 10, color: '#4A90E2' },
-    { title: '在线设备数', value: 8, color: '#50E3C2' },
+    { title: '总监测路段数', value: 15, color: '#4A90E2' },
+    { title: '在线设备数', value: 12, color: '#50E3C2' },
     { title: '设备在线率', value: '80%', color: '#FF9F40' },
-    { title: '泄漏预警数', value: 1, color: '#A17FE0' },
-    { title: '正常监测分区数', value: 9, color: '#FF6B8B' },
-    { title: '高危监测分区数', value: 1, color: '#FFD93D' },
+    { title: '降雨联动预警数', value: 3, color: '#A17FE0' },
+    { title: '正常监测路段数', value: 12, color: '#FF6B8B' },
+    { title: '当前降雨量均值', value: '12.5mm', color: '#FFD93D' },
   ],
   mapData: [
-    { id: 1, locationName: '福州市鼓楼区供水管网', coordinateInfo: '119.2965,26.0753', statusName: '正常', riskLevel: '低风险' },
-    { id: 2, locationName: '厦门市思明区供水管网', coordinateInfo: '118.0889,24.4708', statusName: '正常', riskLevel: '低风险' },
-    { id: 3, locationName: '泉州市丰泽区供水管网', coordinateInfo: '118.6880,24.8740', statusName: '异常', riskLevel: '高风险' },
-    { id: 4, locationName: '漳州市芗城区供水管网', coordinateInfo: '117.6505,24.5115', statusName: '正常', riskLevel: '低风险' },
-    { id: 5, locationName: '莆田市城厢区供水管网', coordinateInfo: '119.0071,25.4366', statusName: '已停止', riskLevel: '中风险' },
-    { id: 6, locationName: '宁德市蕉城区供水管网', coordinateInfo: '119.5268,26.6597', statusName: '正常', riskLevel: '低风险' },
-    { id: 7, locationName: '龙岩市新罗区供水管网', coordinateInfo: '117.0227,25.1054', statusName: '正常', riskLevel: '低风险' },
-    { id: 8, locationName: '三明市梅列区供水管网', coordinateInfo: '117.6333,26.2717', statusName: '正常', riskLevel: '低风险' },
-    { id: 9, locationName: '南平市延平区供水管网', coordinateInfo: '118.1972,26.6597', statusName: '已停止', riskLevel: '中风险' },
-    { id: 10, locationName: '平潭综合实验区供水管网', coordinateInfo: '119.7854,25.4615', statusName: '正常', riskLevel: '低风险' },
+    { id: 1, locationName: '福州路段1', coordinateInfo: '119.2965,26.0753', statusName: '正常', riskLevel: '低风险' },
+    { id: 2, locationName: '福州路段2', coordinateInfo: '119.3065,26.0853', statusName: '异常', riskLevel: '高风险' },
+    { id: 3, locationName: '厦门路段1', coordinateInfo: '118.0889,24.4708', statusName: '正常', riskLevel: '低风险' },
+    { id: 4, locationName: '厦门路段2', coordinateInfo: '118.0989,24.4808', statusName: '异常', riskLevel: '中风险' },
+    { id: 5, locationName: '泉州路段1', coordinateInfo: '118.6880,24.8740', statusName: '异常', riskLevel: '高风险' },
+    { id: 6, locationName: '莆田路段1', coordinateInfo: '119.0094,25.4311', statusName: '正常', riskLevel: '低风险' },
+    { id: 7, locationName: '宁德路段1', coordinateInfo: '119.5295,26.6470', statusName: '正常', riskLevel: '低风险' },
+    { id: 8, locationName: '龙岩路段1', coordinateInfo: '116.9139,25.1054', statusName: '异常', riskLevel: '中风险' },
+    { id: 9, locationName: '三明路段1', coordinateInfo: '117.6393,26.2650', statusName: '正常', riskLevel: '低风险' },
+    { id: 10, locationName: '南平路段1', coordinateInfo: '118.1755,26.6327', statusName: '正常', riskLevel: '低风险' },
   ],
   mapConfig: {
     markerIcons: {
@@ -51,7 +51,7 @@ const state = reactive({
     infoWindowConfig: {
       title: 'locationName',
       fields: [
-        { key: 'id', label: '编号' },
+        { key: 'id', label: '路段编号' },
         { key: 'statusName', label: '状态', bold: true },
         { key: 'riskLevel', label: '风险等级' },
       ],
@@ -80,16 +80,15 @@ const firstChartData = [
   {
     label: '监测状态占比',
     data: [
-      { name: '运行中', value: 8 },
-      { name: '已停止', value: 2 },
+      { name: '正常监测', value: 12 },
+      { name: '暂停监测', value: 3 },
     ]
   },
   {
-    label: '泄漏状态占比',
+    label: '采集频率类型占比',
     data: [
-      { name: '正常', value: 9 },
-      { name: '疑似泄漏', value: 1 },
-      { name: '确认泄漏', value: 0 },
+      { name: '常规', value: 10 },
+      { name: '降雨期', value: 5 },
     ]
   }
 ];
@@ -99,15 +98,16 @@ const secondChartData = [
   {
     label: '设备在线率',
     data: [
-      { name: '在线', value: 8 },
-      { name: '离线/异常', value: 2 },
+      { name: '在线', value: 12 },
+      { name: '离线/异常', value: 3 },
     ]
   },
   {
-    label: '预警触发占比',
+    label: '安全风险等级占比',
     data: [
-      { name: '正常', value: 9 },
-      { name: '异常', value: 1 },
+      { name: '低风险', value: 8 },
+      { name: '中风险', value: 2 },
+      { name: '高风险', value: 5 },
     ]
   }
 ];
@@ -115,35 +115,43 @@ const secondChartData = [
 // 所有折线图和柱状图的数据
 const allChartsData = [
   {
-    label: '单区域管网压力近24小时变化趋势',
+    label: '单路段液位近24小时变化趋势',
     type: 'line',
     data: {
       xAxis: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'],
-      series: [0.45, 0.43, 0.42, 0.44, 0.46, 0.48, 0.47, 0.45]
+      series: [1.2, 1.3, 1.5, 1.8, 2.0, 1.9, 1.7, 1.6]
     }
   },
   {
-    label: '单区域管网流量近24小时变化趋势',
+    label: '单路段流速近24小时变化趋势',
     type: 'line',
     data: {
       xAxis: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'],
-      series: [100, 95, 90, 110, 120, 115, 105, 100]
+      series: [0.5, 0.6, 0.8, 1.0, 1.2, 1.1, 0.9, 0.7]
     }
   },
   {
-    label: '不同分区压力对比',
+    label: '不同路段液位对比',
     type: 'bar',
     data: {
-      xAxis: ['福州', '厦门', '泉州', '漳州', '莆田', '宁德'],
-      series: [0.45, 0.52, 0.35, 0.48, 0.55, 0.42]
+      xAxis: ['福州', '厦门', '泉州', '莆田', '宁德', '龙岩'],
+      series: [1.8, 1.5, 2.0, 1.2, 1.4, 1.6]
     }
   },
   {
-    label: '各区域泄漏预警数对比',
+    label: '不同路段异常预警数对比',
     type: 'bar',
     data: {
-      xAxis: ['福州', '厦门', '泉州', '漳州', '莆田', '宁德'],
-      series: [0, 0, 1, 0, 0, 0]
+      xAxis: ['福州', '厦门', '泉州', '莆田', '宁德', '龙岩'],
+      series: [1, 1, 1, 0, 0, 0]
+    }
+  },
+  {
+    label: '各运维员负责路段数对比',
+    type: 'bar',
+    data: {
+      xAxis: ['张三', '李四', '王五', '赵六', '钱七'],
+      series: [4, 3, 3, 3, 2]
     }
   }
 ];

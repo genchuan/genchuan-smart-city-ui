@@ -3,15 +3,15 @@ import { computed, defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 定义组件接收的属性（桥梁监测数据）
+// 定义组件接收的属性（燃气管网监测数据）
 const props = defineProps({
-  // 详情数据对象（桥梁监测数据）
+  // 详情数据对象（燃气管网监测数据）
   detailObj: {
     type: Object,
     required: true,
     default: () => ({}),
   },
-  // 抽屉标题（可选，默认使用详情对象的bridgeName）
+  // 抽屉标题（可选，默认使用详情对象的pipeRoad）
   title: {
     type: String,
     default: '',
@@ -20,18 +20,18 @@ const props = defineProps({
 
 const { detailObj, title } = toRefs(props);
 
-// 计算属性处理标题，优先用桥梁名称，兜底显示默认值
+// 计算属性处理标题，优先用管网路段，兜底显示默认值
 const drawerTitle = computed(() => {
-  const bridgeName = detailObj.value?.bridgeName || '桥梁监测';
-  return title.value || `${bridgeName}详情`;
+  const pipeRoad = detailObj.value?.pipeRoad || '燃气管网监测';
+  return title.value || `${pipeRoad}详情`;
 });
 
-// 初始化抽屉实例（加宽适配桥梁监测更多字段）
+// 初始化抽屉实例（加宽适配燃气管网监测更多字段）
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 850, // 加宽到850px适配桥梁监测字段（含时间/预警等级）
+  width: 850, // 加宽到850px适配燃气管网监测字段
   onCancel() {
     detailDrawerApi.close();
   },
@@ -49,65 +49,59 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 桥梁监测基础信息 -->
+      <!-- 燃气管网监测基础信息 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">桥梁名称:</div>
+        <div class="detail-row-left">管网路段:</div>
         <div class="detail-row-right">
-          {{ detailObj.bridgeName || '-' }}
+          {{ detailObj.pipeRoad || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">监测部位:</div>
+        <div class="detail-row-left">所属区域:</div>
         <div class="detail-row-right">
-          {{ detailObj.monitorPosition || '-' }}
+          {{ detailObj.areaName || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">支座位移:</div>
+        <div class="detail-row-left">管网压力:</div>
         <div class="detail-row-right">
-          {{ detailObj.bearingDisplacement || '-' }} mm
+          {{ detailObj.pipePressure || '-' }} MPa
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">振动频率:</div>
+        <div class="detail-row-left">燃气浓度:</div>
         <div class="detail-row-right">
-          {{ detailObj.vibrationFrequency || '-' }} Hz
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">应变值:</div>
-        <div class="detail-row-right">
-          {{ detailObj.strainValue || '-' }} με
+          {{ detailObj.gasConcentration || '-' }} %
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">监测设备编号:</div>
         <div class="detail-row-right">
-          {{ detailObj.monitorDeviceCode || '-' }}
+          {{ detailObj.deviceCode || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">设备在线状态:</div>
         <div class="detail-row-right">
-          {{ detailObj.deviceOnlineStatus || '-' }}
+          {{ detailObj.deviceStatus || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">负责养护员:</div>
+        <div class="detail-row-left">负责运维员:</div>
         <div class="detail-row-right">
-          {{ detailObj.maintenancePerson || '-' }}
+          {{ detailObj.staffName || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">数据采集频率:</div>
         <div class="detail-row-right">
-          {{ detailObj.dataCollectionFreq || '-' }}
+          {{ detailObj.collectFrequency || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">数据同步时长:</div>
         <div class="detail-row-right">
-          {{ detailObj.dataSyncDuration || '-' }} 秒
+          {{ detailObj.syncDuration || '-' }} 秒
         </div>
       </div>
       <div class="detail-card-row">
@@ -123,20 +117,20 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">最近数据更新时间:</div>
         <div class="detail-row-right">
-          {{ detailObj.latestDataUpdateTime || '-' }}
+          {{ detailObj.updateTime || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">预警等级阈值:</div>
+        <div class="detail-row-left">分级预警规则匹配结果:</div>
         <div class="detail-row-right">
           <span
             :class="{
-              'text-green-600': detailObj.warningLevelThreshold === 'Ⅰ级',
-              'text-yellow-600': detailObj.warningLevelThreshold === 'Ⅱ级',
-              'text-red-600': detailObj.warningLevelThreshold === 'Ⅲ级',
+              'text-green-600': detailObj.warnLevelRule === 'Ⅰ级',
+              'text-yellow-600': detailObj.warnLevelRule === 'Ⅱ级',
+              'text-red-600': detailObj.warnLevelRule === 'Ⅲ级',
             }"
           >
-            {{ detailObj.warningLevelThreshold || '-' }}
+            {{ detailObj.warnLevelRule || '-' }}
           </span>
         </div>
       </div>
