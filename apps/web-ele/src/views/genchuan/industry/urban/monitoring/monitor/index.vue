@@ -35,6 +35,7 @@ const handleClick = (item) => {
   console.log(item);
   const nowObj = tabsData.value.find((v) => v.label === item);
   isComponent.value.now = nowObj.component;
+  emit('sub-tab-change', item);
 };
 const isComponent = ref({
   now: MontiorTable,

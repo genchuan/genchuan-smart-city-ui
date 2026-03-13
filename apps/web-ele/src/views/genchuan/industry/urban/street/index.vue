@@ -1,6 +1,8 @@
 <script setup>
 import { ref } from 'vue';
 
+import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
+
 import monitor from './monitor/index.vue';
 import gateChart from './monitor/table/gateChart.vue';
 import report from './report/index.vue';
@@ -15,7 +17,7 @@ const changeArrowStatus = () => {
 };
 const tabArray = ref([
   {
-    label: '道路设施监测',
+    label: '路灯设施监测',
     components: monitor,
     showSecondary: false,
     secondShow: false,
@@ -23,7 +25,7 @@ const tabArray = ref([
     arrowState: false,
   },
   {
-    label: '道路设施监测报表',
+    label: '路灯设施监测报表',
     components: report,
     showSecondary: false,
     secondShow: false,
@@ -33,12 +35,31 @@ const tabArray = ref([
 ]);
 
 const arrowChange = () => {
+  // 切换secondShow状态
+  secondShow.value = !secondShow.value;
+  // 更新tabArray中的secondShow属性
   tabArray.value.forEach((v) => {
-    v.arrowShow = !v.arrowShow;
+    v.secondShow = secondShow.value;
+    v.arrowShow = secondShow.value;
   });
 };
-const activeName = ref('道路设施监测');
-const secondShow = ref(false);
+const activeName = ref('路灯设施监测');
+const secondShow = ref(true);
+
+// 初始化时设置路灯设施监测标签页的 secondShow 为 true
+const initTabState = () => {
+  const monitorTab = tabArray.value.find((v) => v.label === '路灯设施监测');
+  if (monitorTab) {
+    monitorTab.showSecondary = true;
+    monitorTab.secondShow = true;
+    monitorTab.arrowShow = true;
+    monitorTab.arrowState = true;
+  }
+};
+
+// 调用初始化函数
+initTabState();
+
 const tabChange = (item) => {
   tabArray.value.forEach((v) => {
     v.showSecondary = false;
@@ -54,23 +75,8 @@ const tabChange = (item) => {
 </script>
 <template>
   <div class="common-index">
-    <gateChart />
-    <div class="icon-change">
-      <el-icon
-        class="tabel-tab-icon"
-        v-if="secondShow"
-        @click="changeArrowStatus"
-      >
-        <ArrowDown />
-      </el-icon>
-      <el-icon
-        class="tabel-tab-icon"
-        v-if="!secondShow"
-        @click="changeArrowStatus"
-      >
-        <ArrowUp />
-      </el-icon>
-    </div>
+    <!-- 条件渲染图表组件 -->
+    <gateChart v-if="secondShow" />
     <el-tabs
       v-model="activeName"
       class="common-tabs"

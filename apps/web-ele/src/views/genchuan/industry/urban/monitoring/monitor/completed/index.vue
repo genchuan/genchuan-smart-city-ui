@@ -11,6 +11,8 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
+import IconButton from '#/components/common/IconButton.vue';
+import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
 
 import { dataList, useFormSchema, useGridColumns } from './data';
 // 引入封装后的详情抽屉组件
@@ -32,10 +34,6 @@ const props = defineProps({
 });
 const emit = defineEmits(['arrow-change']);
 
-const getTitle = computed(() => {
-  return formData.value?.id ? '编辑' : '新增';
-});
-
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -46,113 +44,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
-// 移除原 DetailDrawer 初始化逻辑
-const formData = ref();
-const [Form, formApi] = useVbenForm({
-  commonConfig: {
-    componentProps: {
-      class: 'w-full',
-    },
-    formItemClass: 'col-span-2',
-    labelWidth: 80,
-  },
-  layout: 'horizontal',
-  schema: useFormSchema(),
-  showDefaultActions: false,
-});
-const [FormDrawer, formDrawerApi] = useVbenDrawer({
-  appendToMain: true,
-  modal: false,
-  onCancel() {
-    formDrawerApi.close();
-  },
-  onConfirm() {
-    const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === '新增') {
-      dataObj.apilist.push(obj);
-    } else {
-      dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
-        }
-      });
-    }
-    handleRefresh();
-    formDrawerApi.close();
-  },
-  async onOpenChange(isOpen) {
-    if (isOpen) {
-      formData.value = formDrawerApi.getData();
-      if (formData.value?.id) {
-        await formApi.setValues(formData.value);
-      } else {
-        formApi.resetForm();
-      }
-    }
-  },
-});
-/** 刷新表格 */
-function handleRefresh() {
-  gridApi.query();
-}
 
-/** 导出表格 */
-async function handleExport() {
-  exportToExcel(dataObj.apilist, '导出', 'excel');
-}
-
-/** 创建角色 */
-function handleCreate() {
-  formDrawerApi
-    .setData({
-      title: '新增',
-    })
-    .open();
-}
-
-/** 编辑角色 */
-function handleEdit(row) {
-  formDrawerApi
-    .setData({
-      title: '编辑',
-      ...row,
-    })
-    .open();
-}
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.name]),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
-}
-
-async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
-}
-
-const checkedIds = ref([]);
-function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map((item) => item.id);
-}
 const dataObj = reactive({
   totalShow: false,
   detailObj: {}, // 保留详情对象用于传递给组件
@@ -162,28 +54,16 @@ const dataObj = reactive({
   apilist: dataList(),
   list: [],
 });
+
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
+
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
-  dataObj.total = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    }).length;
+  dataObj.total = dataObj.apilist.length;
   dataObj.list = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    })
     .slice(
       (page.currentPage - 1) * page.pageSize,
       page.currentPage * page.pageSize,
@@ -201,12 +81,12 @@ const [QueryForm] = useVbenForm({
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
-    labelWidth: 100,
+    labelWidth: 120,
   },
   // 提交函数
   handleSubmit: onSubmit,
-  // 垂直布局，label和input在不同行，值为vertical
-  // 水平布局，label和input在同一行
+  // 垂直布局，label 和 input 在不同行，值为 vertical
+  // 水平布局，label 和 input 在同一行
   layout: 'horizontal',
   schema: useFormSchema().map((v) => {
     delete v.rules;
@@ -220,10 +100,12 @@ const [QueryForm] = useVbenForm({
     content: '查询',
   },
 });
+
 // 搜索表单查询
 function onSubmit() {
   drawerApi.close();
 }
+
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
@@ -234,7 +116,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       },
     },
     rowConfig: {
-      keyField: 'id',
+      keyField: 'archiveNo',
       isHover: true,
     },
     pagerConfig: dataObj,
@@ -245,46 +127,53 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     showOverflow: true,
   },
-  gridEvents: {
-    checkboxAll: handleRowCheckboxChange,
-    checkboxChange: handleRowCheckboxChange,
-  },
   showSearchForm: false,
 });
 
-const activeName = ref('全部');
-// 修改打开详情的方法，调用组件的open方法
+// 修改打开详情的方法，调用组件的 open 方法
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
-  // 通过ref调用组件的open方法
+  // 通过 ref 调用组件的 open 方法
   parkDetailDrawerRef.value.open();
   console.log(row);
 };
-const tabsData = ref([
-  { label: '全部' },
-  { label: '启用' },
-  { label: '禁用' },
-  { label: '暂停运营' },
-  { label: '维修中' },
-]);
-const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
-  if (item.label === '全部') {
-    text = `(${dataObj.apilist.length})`;
-  }
-  return item.label + text;
+
+// 查看全流程
+const handleViewFullProcess = (row) => {
+  dataObj.detailObj = row;
+  parkDetailDrawerRef.value.open('4'); // 打开全流程追溯标签页
 };
-const handleClick = () => {
-  gridApi.query();
+
+// 下载归档资料
+const handleDownloadMaterial = (row) => {
+  ElMessage.info('下载归档资料功能开发中');
 };
+
+// 查看检测报告
+const handleViewReport = (row) => {
+  ElMessage.info('查看检测报告功能开发中');
+};
+
+// 批量查看详情
+const handleBatchViewDetail = () => {
+  ElMessage.info('批量查看详情功能开发中');
+};
+
+// 导出归档台账
+async function handleExport() {
+  const fileName = `窨井盖设施处置归档台账_${new Date().toISOString().split('T')[0]}`;
+  exportToExcel(dataObj.apilist, fileName, 'excel');
+}
+
 const handleSerachShow = () => {
   drawerApi.open();
 };
+
 const handleFullShow = () => {
   screenfull.toggle();
 };
 
-// 定义组件ref，用于调用组件方法
+// 定义组件 ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
 
 const arrowChange = () => {
@@ -294,9 +183,6 @@ const arrowChange = () => {
 
 <template>
   <div class="park-lot-table-new">
-    <FormDrawer :title="getTitle">
-      <Form />
-    </FormDrawer>
     <!-- 使用封装后的详情抽屉组件 -->
     <ParkDetailDrawer
       ref="parkDetailDrawerRef"
@@ -308,23 +194,25 @@ const arrowChange = () => {
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
-            content="导出"
+            content="筛选"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            content="刷新归档数据"
+            icon-name="Refresh"
+            @click="gridApi.query"
+          />
+          <IconButton
+            content="导出归档台账"
             icon-name="download"
             @click="handleExport"
           />
           <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
+            content="批量查看详情"
+            icon-name="View"
+            @click="handleBatchViewDetail"
           />
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
@@ -338,13 +226,13 @@ const arrowChange = () => {
           />
         </div>
       </template>
-      <template #archiveCode="{ row }">
+      <template #archiveNo="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.archiveCode }}
+          {{ row.archiveNo }}
         </el-text>
       </template>
       <template #actions="{ row }">
@@ -355,15 +243,19 @@ const arrowChange = () => {
             @click="handleOpenDetail(row)"
           />
           <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
+            content="查看全流程"
+            icon-name="Time"
+            @click="handleViewFullProcess(row)"
           />
           <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
+            content="下载归档资料"
+            icon-name="Download"
+            @click="handleDownloadMaterial(row)"
+          />
+          <IconButton
+            content="查看检测报告"
+            icon-name="Document"
+            @click="handleViewReport(row)"
           />
         </div>
       </template>
@@ -375,7 +267,7 @@ const arrowChange = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 全部统计：10条 </span>
+          <span> 全部统计：{{ dataObj.total }}条 </span>
         </div>
       </template>
     </Grid>

@@ -11,6 +11,8 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
+import IconButton from '#/components/common/IconButton.vue';
+import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
 
 import { dataList, useFormSchema, useGridColumns } from './data';
 // 引入封装后的详情抽屉组件
@@ -32,10 +34,6 @@ const props = defineProps({
 });
 const emit = defineEmits(['arrow-change']);
 
-const getTitle = computed(() => {
-  return formData.value?.id ? '编辑' : '新增';
-});
-
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -46,113 +44,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
-// 移除原 DetailDrawer 初始化逻辑
-const formData = ref();
-const [Form, formApi] = useVbenForm({
-  commonConfig: {
-    componentProps: {
-      class: 'w-full',
-    },
-    formItemClass: 'col-span-2',
-    labelWidth: 80,
-  },
-  layout: 'horizontal',
-  schema: useFormSchema(),
-  showDefaultActions: false,
-});
-const [FormDrawer, formDrawerApi] = useVbenDrawer({
-  appendToMain: true,
-  modal: false,
-  onCancel() {
-    formDrawerApi.close();
-  },
-  onConfirm() {
-    const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === '新增') {
-      dataObj.apilist.push(obj);
-    } else {
-      dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
-        }
-      });
-    }
-    handleRefresh();
-    formDrawerApi.close();
-  },
-  async onOpenChange(isOpen) {
-    if (isOpen) {
-      formData.value = formDrawerApi.getData();
-      if (formData.value?.id) {
-        await formApi.setValues(formData.value);
-      } else {
-        formApi.resetForm();
-      }
-    }
-  },
-});
-/** 刷新表格 */
-function handleRefresh() {
-  gridApi.query();
-}
 
-/** 导出表格 */
-async function handleExport() {
-  exportToExcel(dataObj.apilist, '导出', 'excel');
-}
-
-/** 创建角色 */
-function handleCreate() {
-  formDrawerApi
-    .setData({
-      title: '新增',
-    })
-    .open();
-}
-
-/** 编辑角色 */
-function handleEdit(row) {
-  formDrawerApi
-    .setData({
-      title: '编辑',
-      ...row,
-    })
-    .open();
-}
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.name]),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
-}
-
-async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
-}
-
-const checkedIds = ref([]);
-function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map((item) => item.id);
-}
 const dataObj = reactive({
   totalShow: false,
   detailObj: {}, // 保留详情对象用于传递给组件
@@ -162,28 +54,50 @@ const dataObj = reactive({
   apilist: dataList(),
   list: [],
 });
+
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
+
+// 搜索表单数据
+const searchFormData = ref({});
+
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
-  dataObj.total = dataObj.apilist
+  // 先过滤数据
+  let filteredData = dataObj.apilist
     .map((v) => v)
     .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
+      // 搜索表单筛选
+      if (searchFormData.value.coverNo && !v.coverNo.includes(searchFormData.value.coverNo)) {
+        return false;
       }
-      return v.status === activeName.value;
-    }).length;
-  dataObj.list = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
+      if (searchFormData.value.roadName && !v.roadName.includes(searchFormData.value.roadName)) {
+        return false;
       }
-      return v.status === activeName.value;
-    })
+      if (searchFormData.value.abnormalType && v.abnormalType !== searchFormData.value.abnormalType) {
+        return false;
+      }
+      if (searchFormData.value.riskLevel && v.riskLevel !== searchFormData.value.riskLevel) {
+        return false;
+      }
+      if (searchFormData.value.processStatus && v.processStatus !== searchFormData.value.processStatus) {
+        return false;
+      }
+      
+      return true;
+    });
+  
+  // 高风险工单置顶
+  filteredData.sort((a, b) => {
+    if (a.riskLevel === '高风险' && b.riskLevel !== '高风险') return -1;
+    if (a.riskLevel !== '高风险' && b.riskLevel === '高风险') return 1;
+    return 0;
+  });
+  
+  dataObj.total = filteredData.length;
+  dataObj.list = filteredData
     .slice(
       (page.currentPage - 1) * page.pageSize,
       page.currentPage * page.pageSize,
@@ -208,22 +122,96 @@ const [QueryForm] = useVbenForm({
   // 垂直布局，label和input在不同行，值为vertical
   // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
-  }),
+  schema: [
+    {
+      fieldName: 'coverNo',
+      label: '井盖编号',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入井盖编号',
+        maxLength: 50,
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'roadName',
+      label: '路段名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入路段名称',
+        maxLength: 100,
+      },
+      labelWidth: '100',
+    },
+    {
+      component: 'Select',
+      labelWidth: '100',
+      componentProps: {
+        allowClear: true,
+        filterOption: true,
+        options: [
+          { label: '倾斜角度异常', value: '倾斜角度异常' },
+          { label: '振动异常', value: '振动异常' },
+          { label: '设备离线', value: '设备离线' },
+          { label: '设备异常', value: '设备异常' },
+          { label: '轻微倾斜', value: '轻微倾斜' },
+        ],
+        placeholder: '请选择异常类型',
+        showSearch: true,
+      },
+      fieldName: 'abnormalType',
+      label: '异常类型',
+    },
+    {
+      component: 'Select',
+      labelWidth: '100',
+      componentProps: {
+        allowClear: true,
+        filterOption: true,
+        options: [
+          { label: '高风险', value: '高风险' },
+          { label: '中风险', value: '中风险' },
+          { label: '低风险', value: '低风险' },
+        ],
+        placeholder: '请选择安全风险等级',
+        showSearch: true,
+      },
+      fieldName: 'riskLevel',
+      label: '安全风险等级',
+    },
+    {
+      component: 'Select',
+      labelWidth: '100',
+      componentProps: {
+        allowClear: true,
+        filterOption: true,
+        options: [
+          { label: '待处置', value: '待处置' },
+          { label: '前往现场', value: '前往现场' },
+          { label: '现场处置', value: '现场处置' },
+          { label: '处置中', value: '处置中' },
+        ],
+        placeholder: '请选择当前进度',
+        showSearch: true,
+      },
+      fieldName: 'processStatus',
+      label: '当前进度',
+    },
+  ],
   // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
   },
 });
+
 // 搜索表单查询
 function onSubmit() {
+  searchFormData.value = formApi.form.values;
+  gridApi.query();
   drawerApi.close();
 }
+
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
@@ -234,7 +222,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       },
     },
     rowConfig: {
-      keyField: 'id',
+      keyField: 'orderNo',
       isHover: true,
     },
     pagerConfig: dataObj,
@@ -252,7 +240,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-const activeName = ref('全部');
+const checkedIds = ref([]);
+function handleRowCheckboxChange({ records }) {
+  checkedIds.value = records.map((item) => item.orderNo);
+}
+
 // 修改打开详情的方法，调用组件的open方法
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
@@ -260,26 +252,51 @@ const handleOpenDetail = (row) => {
   parkDetailDrawerRef.value.open();
   console.log(row);
 };
-const tabsData = ref([
-  { label: '全部' },
-  { label: '启用' },
-  { label: '禁用' },
-  { label: '暂停运营' },
-  { label: '维修中' },
-]);
-const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
-  if (item.label === '全部') {
-    text = `(${dataObj.apilist.length})`;
+
+// 更新进度
+const handleUpdateProgress = (row) => {
+  ElMessage.info('更新进度功能开发中');
+};
+
+// 上传资料
+const handleUploadMaterial = (row) => {
+  ElMessage.info('上传资料功能开发中');
+};
+
+// 超时督办
+const handleOvertimeSupervision = (row) => {
+  ElMessage.info('超时督办功能开发中');
+};
+
+// 批量提醒
+const handleBatchRemind = async () => {
+  await confirm(`确定向选中的 ${checkedIds.value.length} 个工单运维员发送提醒吗？`);
+  const loadingInstance = ElLoading.service({
+    text: '发送提醒中...',
+  });
+  try {
+    // 模拟批量提醒
+    ElMessage.success('批量提醒发送成功');
+  } finally {
+    loadingInstance.close();
   }
-  return item.label + text;
 };
-const handleClick = () => {
-  gridApi.query();
+
+// 调整派单对象
+const handleAdjustAssign = () => {
+  ElMessage.info('调整派单对象功能开发中');
 };
+
+// 导出工单数据
+async function handleExport() {
+  const fileName = `窨井盖设施处置中工单_${new Date().toISOString().split('T')[0]}`;
+  exportToExcel(dataObj.apilist, fileName, 'excel');
+}
+
 const handleSerachShow = () => {
   drawerApi.open();
 };
+
 const handleFullShow = () => {
   screenfull.toggle();
 };
@@ -294,9 +311,6 @@ const arrowChange = () => {
 
 <template>
   <div class="park-lot-table-new">
-    <FormDrawer :title="getTitle">
-      <Form />
-    </FormDrawer>
     <!-- 使用封装后的详情抽屉组件 -->
     <ParkDetailDrawer
       ref="parkDetailDrawerRef"
@@ -308,43 +322,26 @@ const arrowChange = () => {
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton
-            content="导出"
-            icon-name="download"
-            @click="handleExport"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
-          />
+          <IconButton content="筛选" icon-name="Filter" @click="handleSerachShow" />
+          <IconButton content="刷新工单" icon-name="Refresh" @click="gridApi.query" />
+          <IconButton content="批量提醒" icon-name="Bell" :disabled="isEmpty(checkedIds)" @click="handleBatchRemind" />
+          <IconButton content="调整派单对象" icon-name="UserFilled" @click="handleAdjustAssign" />
+          <IconButton content="导出工单数据" icon-name="download" @click="handleExport" />
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
             :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
             @click="arrowChange"
           />
-          <IconButton
-            content="全屏"
-            icon-name="FullScreen"
-            @click="handleFullShow"
-          />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
-      <template #workOrderCode="{ row }">
+      <template #orderNo="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.workOrderCode }}
+          {{ row.orderNo }}
         </el-text>
       </template>
       <template #actions="{ row }">
@@ -355,15 +352,20 @@ const arrowChange = () => {
             @click="handleOpenDetail(row)"
           />
           <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
+            content="更新进度"
+            icon-name="Refresh"
+            @click="handleUpdateProgress(row)"
           />
           <IconButton
-            content="删除"
-            icon-name="delete"
+            content="上传资料"
+            icon-name="Upload"
+            @click="handleUploadMaterial(row)"
+          />
+          <IconButton
+            content="超时督办"
+            icon-name="Warning"
             color="#F56C6C"
-            @click="handleDelete(row)"
+            @click="handleOvertimeSupervision(row)"
           />
         </div>
       </template>
@@ -375,9 +377,10 @@ const arrowChange = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 全部统计：10条 </span>
+          <span> 全部统计：{{ dataObj.total }}条 </span>
         </div>
       </template>
     </Grid>
   </div>
 </template>
+

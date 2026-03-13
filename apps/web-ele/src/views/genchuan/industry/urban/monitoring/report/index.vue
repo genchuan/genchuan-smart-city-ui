@@ -23,6 +23,7 @@ const props = defineProps({
     default: false,
   },
 });
+const emit = defineEmits(['sub-tab-change']);
 const activeName = ref('日报');
 
 const tabsData = ref([
@@ -37,6 +38,8 @@ const tabsData = ref([
 const handleClick = (item) => {
   const nowObj = tabsData.value.find((v) => v.label === item);
   isComponent.value.now = nowObj.component;
+  // 触发子标签页切换事件，通知父组件更新图表
+  emit('sub-tab-change', item);
 };
 const isComponent = ref({
   now: Daytable,

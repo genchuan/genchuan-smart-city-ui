@@ -6,11 +6,13 @@ import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
+import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
+import IconButton from '#/components/common/IconButton.vue';
 
 import { dataList, useFormSchema, useGridColumns } from './data';
 // 引入封装后的详情抽屉组件
@@ -32,10 +34,6 @@ const props = defineProps({
 });
 const emit = defineEmits(['arrow-change']);
 
-const getTitle = computed(() => {
-  return formData.value?.id ? '编辑' : '新增';
-});
-
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -46,51 +44,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
-// 移除原 DetailDrawer 初始化逻辑
-const formData = ref();
-const [Form, formApi] = useVbenForm({
-  commonConfig: {
-    componentProps: {
-      class: 'w-full',
-    },
-    formItemClass: 'col-span-2',
-    labelWidth: 80,
-  },
-  layout: 'horizontal',
-  schema: useFormSchema(),
-  showDefaultActions: false,
-});
-const [FormDrawer, formDrawerApi] = useVbenDrawer({
-  appendToMain: true,
-  modal: false,
-  onCancel() {
-    formDrawerApi.close();
-  },
-  onConfirm() {
-    const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === '新增') {
-      dataObj.apilist.push(obj);
-    } else {
-      dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
-        }
-      });
-    }
-    handleRefresh();
-    formDrawerApi.close();
-  },
-  async onOpenChange(isOpen) {
-    if (isOpen) {
-      formData.value = formDrawerApi.getData();
-      if (formData.value?.id) {
-        await formApi.setValues(formData.value);
-      } else {
-        formApi.resetForm();
-      }
-    }
-  },
-});
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
@@ -98,60 +51,34 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  exportToExcel(dataObj.apilist, '导出', 'excel');
+  const weekPeriod = dataObj.apilist[0]?.weekStatisticsPeriod || '2024年第25周';
+  exportToExcel(dataObj.apilist, `窨井盖设施周报_${weekPeriod}`, 'excel');
 }
 
-/** 创建角色 */
-function handleCreate() {
-  formDrawerApi
-    .setData({
-      title: '新增',
-    })
-    .open();
+/** 图表切换 */
+function handleChartSwitch() {
+  // 图表切换逻辑
+  ElMessage.info('图表切换功能待实现');
 }
 
-/** 编辑角色 */
-function handleEdit(row) {
-  formDrawerApi
-    .setData({
-      title: '编辑',
-      ...row,
-    })
-    .open();
-}
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.name]),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
+/** 查看周度评估 */
+function handleViewWeeklyEvaluation() {
+  // 查看周度评估逻辑
+  ElMessage.info('周度评估功能待实现');
 }
 
-async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
+/** 查看周度隐患 */
+function handleOpenWeeklyHiddenTrouble(row) {
+  dataObj.detailObj = row;
+  parkDetailDrawerRef.value.open();
+  console.log('查看周度隐患:', row);
 }
 
-const checkedIds = ref([]);
-function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map((item) => item.id);
+/** 查看处置明细 */
+function handleOpenDisposalDetail(row) {
+  dataObj.detailObj = row;
+  parkDetailDrawerRef.value.open();
+  console.log('查看处置明细:', row);
 }
 const dataObj = reactive({
   totalShow: false,
@@ -168,22 +95,8 @@ const changeTotalShow = () => {
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
-  dataObj.total = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    }).length;
+  dataObj.total = dataObj.apilist.length;
   dataObj.list = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    })
     .slice(
       (page.currentPage - 1) * page.pageSize,
       page.currentPage * page.pageSize,
@@ -234,7 +147,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       },
     },
     rowConfig: {
-      keyField: 'id',
+      keyField: 'areaName',
       isHover: true,
     },
     pagerConfig: dataObj,
@@ -245,34 +158,15 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     showOverflow: true,
   },
-  gridEvents: {
-    checkboxAll: handleRowCheckboxChange,
-    checkboxChange: handleRowCheckboxChange,
-  },
   showSearchForm: false,
 });
 
-const activeName = ref('全部');
 // 修改打开详情的方法，调用组件的open方法
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
   // 通过ref调用组件的open方法
   parkDetailDrawerRef.value.open();
   console.log(row);
-};
-const tabsData = ref([
-  { label: '全部' },
-  { label: '启用' },
-  { label: '禁用' },
-  { label: '暂停运营' },
-  { label: '维修中' },
-]);
-const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
-  if (item.label === '全部') {
-    text = `(${dataObj.apilist.length})`;
-  }
-  return item.label + text;
 };
 const handleClick = () => {
   gridApi.query();
@@ -294,37 +188,41 @@ const arrowChange = () => {
 
 <template>
   <div class="park-lot-table-new">
-    <FormDrawer :title="getTitle">
-      <Form />
-    </FormDrawer>
     <!-- 使用封装后的详情抽屉组件 -->
     <ParkDetailDrawer
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
     />
-    <Drawer title="搜索">
+    <Drawer title="筛选">
       <QueryForm class="query-form" />
     </Drawer>
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
-            content="导出"
+            content="筛选"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            content="刷新数据"
+            icon-name="Refresh"
+            @click="handleRefresh"
+          />
+          <IconButton
+            content="导出周报"
             icon-name="download"
             @click="handleExport"
           />
           <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
+            content="图表切换"
+            icon-name="Grid"
+            @click="handleChartSwitch"
           />
           <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
+            content="查看周度评估"
+            icon-name="Document"
+            @click="handleViewWeeklyEvaluation"
           />
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
@@ -338,14 +236,47 @@ const arrowChange = () => {
           />
         </div>
       </template>
-      <template #roadSectionName="{ row }">
+      <template #areaName="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.roadSectionName }}
+          {{ row.areaName }}
         </el-text>
+      </template>
+      <template #weekTotalHiddenTroubleCount="{ row }">
+        <el-text
+          @click="handleOpenWeeklyHiddenTrouble(row)"
+          class="common-align"
+          type="warning"
+        >
+          {{ row.weekTotalHiddenTroubleCount }}
+        </el-text>
+      </template>
+      <template #weekHiddenTroubleDisposalRate="{ row }">
+        <el-text
+          @click="handleOpenDisposalDetail(row)"
+          class="common-align"
+          :type="row.weekHiddenTroubleDisposalRate >= 90 ? 'success' : row.weekHiddenTroubleDisposalRate >= 70 ? 'warning' : 'danger'"
+        >
+          {{ row.weekHiddenTroubleDisposalRate }}%
+        </el-text>
+      </template>
+      <template #momHiddenTroubleChangeRate="{ row }">
+        <el-text
+          class="common-align"
+          :type="row.momHiddenTroubleChangeRate >= 0 ? 'danger' : 'success'"
+        >
+          {{ row.momHiddenTroubleChangeRate >= 0 ? '+' : '' }}{{ row.momHiddenTroubleChangeRate }}%
+        </el-text>
+      </template>
+      <template #areaHiddenTroubleControlRank="{ row }">
+        <el-tag
+          :type="row.areaHiddenTroubleControlRank <= 3 ? 'success' : row.areaHiddenTroubleControlRank <= 6 ? 'warning' : 'danger'"
+        >
+          {{ row.areaHiddenTroubleControlRank }}
+        </el-tag>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
@@ -355,15 +286,14 @@ const arrowChange = () => {
             @click="handleOpenDetail(row)"
           />
           <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
+            content="查看周度隐患"
+            icon-name="List"
+            @click="handleOpenWeeklyHiddenTrouble(row)"
           />
           <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
+            content="查看处置明细"
+            icon-name="Document"
+            @click="handleOpenDisposalDetail(row)"
           />
         </div>
       </template>
