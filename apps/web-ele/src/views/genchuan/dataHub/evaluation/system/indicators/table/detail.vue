@@ -80,17 +80,17 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
         <div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div>
       </div>
       <!-- 新增字段：最近使用时间 & 使用次数（若存在） -->
-      <div class="detail-card-row" v-if="detailObj.lastUseTime">
-        <div class="detail-row-left">最近使用时间：</div>
-        <div class="detail-row-right">{{ detailObj.lastUseTime }}</div>
-      </div>
-      <div class="detail-card-row" v-if="detailObj.useCount !== undefined">
-        <div class="detail-row-left">使用次数：</div>
-        <div class="detail-row-right">{{ detailObj.useCount }}</div>
-      </div>
+<!--      <div class="detail-card-row" v-if="detailObj.lastUseTime">-->
+<!--        <div class="detail-row-left">最近使用时间：</div>-->
+<!--        <div class="detail-row-right">{{ detailObj.lastUseTime }}</div>-->
+<!--      </div>-->
+<!--      <div class="detail-card-row" v-if="detailObj.useCount !== undefined">-->
+<!--        <div class="detail-row-left">使用次数：</div>-->
+<!--        <div class="detail-row-right">{{ detailObj.useCount }}</div>-->
+<!--      </div>-->
       <div class="detail-card-row">
         <div class="detail-row-left">变更日志：</div>
-        <div class="detail-row-right">{{ detailObj.changeLog || '-' }}</div>
+        <div class="detail-row-right">{{ detailObj.changeLogShort || '-' }}</div>
       </div>
 
       <!-- 分类与指标项列表（保留原有结构，稍作样式微调） -->

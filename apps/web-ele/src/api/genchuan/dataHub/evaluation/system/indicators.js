@@ -43,11 +43,6 @@ export function exportIndexSystem(params) {
   });
 }
 
-/** 权重校验 */
-export function checkWeight(data) {
-  return requestClient.post('/evaluate/index-system/check-weight', data);
-}
-
 // ========== 字典接口（返回下拉选项格式） ==========
 /** 获取指标类型列表（字典），返回 { value, label }[] */
 export async function getIndexTypeList() {
