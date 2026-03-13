@@ -678,7 +678,10 @@ const arrowChange = () => {
         </el-text>
       </template>
       <template #smokeStatus="{ row }">
-        <el-text class="common-align">
+        <el-text 
+          class="common-align"
+          :type="row.smokeStatus === '正常' ? 'success' : 'danger'"
+        >
           {{ row.smokeStatus }}
         </el-text>
       </template>
@@ -692,17 +695,26 @@ const arrowChange = () => {
         </el-text>
       </template>
       <template #deviceStatus="{ row }">
-        <el-text class="common-align">
+        <el-text 
+          class="common-align"
+          :type="row.deviceStatus === '在线' ? 'success' : row.deviceStatus === '离线' ? 'danger' : 'warning'"
+        >
           {{ row.deviceStatus }}
         </el-text>
       </template>
       <template #warnWay="{ row }">
-        <el-text class="common-align">
+        <el-text 
+          class="common-align"
+          :type="row.warnWay === '平台弹窗' ? 'primary' : row.warnWay === '短信' ? 'warning' : 'danger'"
+        >
           {{ row.warnWay }}
         </el-text>
       </template>
       <template #riskLevel="{ row }">
-        <el-text class="common-align">
+        <el-text 
+          class="common-align"
+          :type="row.riskLevel === '低风险' ? 'success' : row.riskLevel === '中风险' ? 'warning' : 'danger'"
+        >
           {{ row.riskLevel }}
         </el-text>
       </template>

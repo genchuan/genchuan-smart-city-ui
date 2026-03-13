@@ -668,7 +668,10 @@ const arrowChange = () => {
         </el-text>
       </template>
       <template #openStatus="{ row }">
-        <el-text class="common-align">
+        <el-text 
+          class="common-align"
+          :type="row.openStatus === '关闭' ? 'success' : 'danger'"
+        >
           {{ row.openStatus }}
         </el-text>
       </template>
@@ -682,17 +685,26 @@ const arrowChange = () => {
         </el-text>
       </template>
       <template #deviceStatus="{ row }">
-        <el-text class="common-align">
+        <el-text 
+          class="common-align"
+          :type="row.deviceStatus === '在线' ? 'success' : row.deviceStatus === '离线' ? 'danger' : 'warning'"
+        >
           {{ row.deviceStatus }}
         </el-text>
       </template>
       <template #riskLevel="{ row }">
-        <el-text class="common-align">
+        <el-text 
+          class="common-align"
+          :type="row.riskLevel === '低风险' ? 'success' : row.riskLevel === '中风险' ? 'warning' : 'danger'"
+        >
           {{ row.riskLevel }}
         </el-text>
       </template>
       <template #abnormalVibrationFlag="{ row }">
-        <el-text class="common-align">
+        <el-text 
+          class="common-align"
+          :type="row.abnormalVibrationFlag === '否' ? 'success' : 'danger'"
+        >
           {{ row.abnormalVibrationFlag }}
         </el-text>
       </template>
