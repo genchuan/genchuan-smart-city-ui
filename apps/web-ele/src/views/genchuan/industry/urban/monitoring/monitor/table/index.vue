@@ -20,6 +20,8 @@ import { dataList, useFormSchema, useFilterFormSchema, useGridColumns } from './
 import ParkDetailDrawer from './detail.vue';
 // 引入设备详情抽屉组件
 import DeviceDetailDrawer from './deviceDetail.vue';
+// 引入配置监测参数组件
+import settingTable from './settingTable.vue';
 
 const props = defineProps({
   secondShow: {
@@ -40,6 +42,11 @@ const emit = defineEmits(['arrow-change']);
 const getTitle = computed(() => {
   return formData.value?.id ? '编辑' : '新增';
 });
+
+// 新增：批量切换状态弹窗相关
+const switchDialogVisible = ref(false);
+const switchStatus = ref('运行中'); // 默认切换为运行中
+const statusLoading = ref(false); // 批量操作加载状态
 
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -74,12 +81,27 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onConfirm() {
     const obj = formApi.form.values;
     if (formDrawerApi.sharedData.payload.title === '新增') {
-      dataObj.apilist.push(obj);
+      // 为新增数据生成唯一 ID
+      const newId = String(Date.now());
+      obj.id = newId;
+      // 设置所有必要的默认值
+      obj.openStatus = '关闭'; // 开合状态默认值
+      obj.tiltAngle = 0.0; // 倾斜角度默认值
+      obj.vibrationData = 0.0; // 振动数据默认值
+      obj.deviceStatus = '在线'; // 设备在线状态默认值
+      obj.monitorStatus = '已停止'; // 监测状态默认值
+      obj.riskLevel = '低风险'; // 风险等级默认值
+      obj.abnormalVibrationFlag = '否'; // 异常振动标识默认值
+      obj.syncDuration = 3; // 同步时长默认值
+      obj.updateTime = new Date().toISOString().slice(0, 19).replace('T', ' '); // 更新时间
+      // 添加到数据源 - 使用扩展运算符创建新数组，确保响应式更新
+      dataObj.apilist = [obj, ...dataObj.apilist];
     } else {
-      dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
+      dataObj.apilist = dataObj.apilist.map(item => {
+        if (item.id === formData.value?.id) {
+          return { ...item, ...obj };
         }
+        return item;
       });
     }
     handleRefresh();
@@ -98,15 +120,16 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 });
 /** 刷新表格 */
 function handleRefresh() {
-  // 重置筛选条件，返回到第一层
-  filterFormData.value = {};
-  activeName.value = '全部';
-  // 重新获取数据列表
-  dataObj.apilist = dataList();
-  // 刷新表格
+  // 刷新表格，保留本地修改的数据
   gridApi.query();
-  // 显示刷新成功提示
-  ElMessage.success('数据刷新成功');
+}
+
+// 处理配置监测参数组件的数据更新
+function handleUpdateData(updatedList) {
+  if (updatedList && updatedList.length > 0) {
+    dataObj.apilist = updatedList;
+    handleRefresh();
+  }
 }
 
 /** 导出表格 */
@@ -117,91 +140,14 @@ async function handleExport() {
   exportToExcel(dataObj.apilist, `窨井盖设施实时监测_${dateStr}_${timeStr}`, 'excel');
 }
 
-/** 启动监测 */
-async function handleStartMonitor(row) {
-  await confirm('确定启动监测吗？');
-  const loadingInstance = ElLoading.service({
-    text: '启动监测中...',
-  });
-  try {
-    // 模拟启动监测
-    row.monitorStatus = '运行中';
-    ElMessage.success('启动监测成功');
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
-}
-
-/** 停止监测 */
-async function handleStopMonitor(row) {
-  await confirm('确定停止监测吗？');
-  const loadingInstance = ElLoading.service({
-    text: '停止监测中...',
-  });
-  try {
-    // 模拟停止监测
-    row.monitorStatus = '已停止';
-    ElMessage.success('停止监测成功');
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
-}
-
-/** 批量启动/停止监测 */
-async function handleBatchMonitor() {
-  // 检查是否有选中的项
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请先选择要操作的窨井盖');
-    return;
-  }
-  
-  // 获取选中项的当前状态
-  const selectedItems = dataObj.apilist.filter(item => checkedIds.value.includes(item.id));
-  const hasRunning = selectedItems.some(item => item.monitorStatus === '运行中');
-  const hasStopped = selectedItems.some(item => item.monitorStatus === '已停止');
-  
-  // 确定操作类型
-  let operationText = '';
-  if (hasRunning && hasStopped) {
-    operationText = '启动/停止';
-  } else if (hasRunning) {
-    operationText = '停止';
-  } else {
-    operationText = '启动';
-  }
-  
-  // 显示确认对话框
-  const confirmed = await confirm(`确定${operationText}选中的 ${checkedIds.value.length} 个窨井盖的监测吗？`);
-  if (!confirmed) return;
-  
-  const loadingInstance = ElLoading.service({
-    text: `${operationText}监测中...`,
-  });
-  
-  try {
-    // 模拟批量操作
-    dataObj.apilist.forEach(item => {
-      if (checkedIds.value.includes(item.id)) {
-        item.monitorStatus = item.monitorStatus === '运行中' ? '已停止' : '运行中';
-      }
-    });
-    ElMessage.success(`批量${operationText}监测成功`);
-    // 清空选中状态
-    checkedIds.value = [];
-    // 刷新表格
-    gridApi.query();
-  } catch (error) {
-    ElMessage.error('批量操作失败，请重试');
-    console.error('批量操作失败:', error);
-  } finally {
-    loadingInstance.close();
-  }
-}
-
-/** 创建角色 */
+/** 创建 */
 function handleCreate() {
+  formApi.resetForm();
+  formApi.setState((prev) => {
+    return {
+      schema: useFormSchema(),
+    };
+  });
   formDrawerApi
     .setData({
       title: '新增',
@@ -209,8 +155,18 @@ function handleCreate() {
     .open();
 }
 
-/** 编辑角色 */
+/** 编辑 */
 function handleEdit(row) {
+  formApi.resetForm();
+  formApi.setState((prev) => {
+    return {
+      schema: useFormSchema().map((v) => {
+        return {
+          ...v,
+        };
+      }),
+    };
+  });
   formDrawerApi
     .setData({
       title: '编辑',
@@ -232,25 +188,21 @@ async function handleDelete(row) {
 }
 
 async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
+  await confirm($t('确定删除这些数据吗？')).then(() => {
+    checkedIds.value.forEach(async (v) => {
+      await handleDelete({
+        id: v,
+      });
+    });
   });
-  try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
+  handleRefresh();
 }
 
+const recordsList = ref([]);
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
+  recordsList.value = records;
 }
 const dataObj = reactive({
   totalShow: false,
@@ -272,7 +224,7 @@ const changeTotalShow = () => {
 const getTableData = (pageObj) => {
   const page = pageObj.page;
   
-  // 过滤数据
+  // 直接使用 dataObj.apilist 的当前值（包含所有新增/编辑/删除后的数据）
   const filteredData = dataObj.apilist
     .map((v) => v)
     .filter((v) => {
@@ -323,7 +275,7 @@ const getTableData = (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm, queryFormApi] = useVbenForm({
+const [QueryForm, QueryFormApi] = useVbenForm({
   // 默认展开
   collapsed: false,
   // 所有表单项共用，可单独在表单内覆盖
@@ -340,7 +292,12 @@ const [QueryForm, queryFormApi] = useVbenForm({
   // 垂直布局，label和input在不同行，值为vertical
   // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useFilterFormSchema(),
+  schema: useFilterFormSchema().map((v) => {
+    delete v.rules;
+    return {
+      ...v,
+    };
+  }),
   // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
@@ -349,17 +306,14 @@ const [QueryForm, queryFormApi] = useVbenForm({
 });
 // 搜索表单查询
 function onSubmit() {
-  // 获取表单值
-  filterFormData.value = queryFormApi.form.values;
-  // 刷新表格
-  handleRefresh();
-  // 关闭抽屉
+  filterFormData.value = QueryFormApi.form.values;
+  gridApi.reload();
   drawerApi.close();
 }
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
-    keepSource: true,
+    keepSource: false, // 去掉 keepSource，让表格直接使用 dataObj.list
     proxyConfig: {
       ajax: {
         query: async ({ page }) => getTableData({ page }),
@@ -372,7 +326,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     pagerConfig: dataObj,
     toolbarConfig: {
       'class-name': 'common-tool-bar-config',
-      refresh: false,
+      refresh: true,
       search: true,
     },
     showOverflow: true,
@@ -429,6 +383,20 @@ const handleFilterByMonitorStatus = (monitorStatus) => {
   gridApi.query();
 };
 
+// 单个状态切换
+const handleMonitorStatusChange = (row) => {
+  ElMessage.success(`切换监测状态：${row.monitorStatus}`);
+  // 使用 map 方法确保响应式更新
+  dataObj.apilist = dataObj.apilist.map(item => {
+    if (item.id === row.id) {
+      return { ...item, monitorStatus: row.monitorStatus };
+    }
+    return item;
+  });
+  // 刷新表格
+  gridApi.reload();
+};
+
 // 筛选同风险等级窨井盖
 const handleFilterByRiskLevel = (riskLevel) => {
   ElMessage.success(`筛选风险等级：${riskLevel}`);
@@ -482,6 +450,58 @@ const handleFullShow = () => {
 const parkDetailDrawerRef = ref(null);
 const deviceDetailDrawerRef = ref(null);
 
+// 新增：批量切换状态弹窗打开方法
+const switchOpen = () => {
+  // 校验是否选择了数据
+  if (isEmpty(checkedIds.value)) {
+    ElMessage.warning('请先选择需要切换状态的窨井盖！');
+    return;
+  }
+
+  // 重置默认状态为运行中
+  switchStatus.value = '运行中';
+  // 打开弹窗
+  switchDialogVisible.value = true;
+};
+
+// 新增：批量切换状态确认方法
+const handleSwitchConfirm = async () => {
+  statusLoading.value = true;
+  try {
+    // 模拟批量更新状态
+    dataObj.apilist.forEach(item => {
+      if (recordsList.value.map(r => r.id).includes(item.id)) {
+        item.monitorStatus = switchStatus.value;
+      }
+    });
+    
+    ElMessage.success(`批量切换状态成功`);
+    statusLoading.value = false;
+    switchDialogVisible.value = false;
+    handleRefresh();
+  } catch (error) {
+    ElMessage.error('批量切换状态失败，请重试');
+    statusLoading.value = false;
+    console.error('批量切换状态失败:', error);
+  }
+};
+
+// 配置监测参数
+const [ConfigDrawer, configDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  footer: false,
+  onCancel() {
+    configDrawerApi.close();
+  },
+  onConfirm() {},
+  async onOpenChange() {},
+});
+
+function handleConfigMonitor() {
+  configDrawerApi.open();
+}
+
 const arrowChange = () => {
   emit('arrow-change');
 };
@@ -498,10 +518,80 @@ const arrowChange = () => {
     flex-shrink: 0;
   }
 }
+
+// 批量切换状态弹窗样式
+.switch-dialog-content {
+  padding: 20px 0;
+
+  .selected-count {
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: #606266;
+
+    .count-num {
+      font-weight: 600;
+      color: #1989fa;
+    }
+  }
+
+  .status-select {
+    font-size: 14px;
+
+    .label {
+      font-weight: 500;
+      color: #303133;
+    }
+  }
+}
+
+.dialog-footer {
+  text-align: right;
+}
+
+// 按钮禁用样式优化
+:deep(.common-toolbar-tools) {
+  .el-button.is-disabled {
+    opacity: 0.6;
+  }
+}
 </style>
 
 <template>
   <div class="park-lot-table-new">
+    <!-- 新增：批量切换监测状态弹窗 -->
+    <el-dialog
+      v-model="switchDialogVisible"
+      title="批量切换监测状态"
+      width="400px"
+      :close-on-click-modal="false"
+      :before-close="() => (statusLoading = false)"
+    >
+      <div class="switch-dialog-content" v-loading="statusLoading">
+        <div class="selected-count">
+          已选择 <span class="count-num">{{ checkedIds.length }}</span> 个窨井盖
+        </div>
+        <div class="status-select">
+          <span class="label">目标监测状态：</span>
+          <el-radio-group v-model="switchStatus" class="ml-2">
+            <el-radio label="运行中">运行中</el-radio>
+            <el-radio label="已停止">已停止</el-radio>
+          </el-radio-group>
+        </div>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="switchDialogVisible = false">取消</el-button>
+          <el-button
+            type="primary"
+            @click="handleSwitchConfirm"
+            :loading="statusLoading"
+          >
+            确认切换
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
+
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
@@ -515,21 +605,41 @@ const arrowChange = () => {
       ref="deviceDetailDrawerRef"
       :detail-obj="dataObj.deviceDetailObj"
     />
+    <!-- 配置监测参数抽屉组件 -->
+    <ConfigDrawer title="配置监测参数" class="genchuan-detail-drawer">
+      <settingTable 
+        :data-list="dataObj.apilist" 
+        @close="configDrawerApi.close()"
+        @update-data="handleUpdateData"
+      />
+    </ConfigDrawer>
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
     <Grid>
+      <template #monitorStatus="{ row }">
+        <el-switch
+          v-model="row.monitorStatus"
+          active-value="运行中"
+          inactive-value="已停止"
+          active-text="运行中"
+          inactive-text="已停止"
+          active-color="#10b981"
+          inactive-color="#ef4444"
+          @change="handleMonitorStatusChange(row)"
+        />
+      </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
+          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton content="筛选" icon-name="Filter" @click="handleSerachShow" />
-          <IconButton content="刷新数据" icon-name="Refresh" @click="handleRefresh" />
-          <IconButton content="配置监测参数" icon-name="SetUp" @click="handleCreate" />
+          <IconButton content="配置监测参数" icon-name="Setting" @click="handleConfigMonitor" />
           <IconButton content="导出实时数据" icon-name="Download" @click="handleExport" />
           <IconButton
             content="启动/停止批量监测"
             icon-name="Switch" 
             :disabled="isEmpty(checkedIds)"
-            @click="handleBatchMonitor"
+            @click="switchOpen"
           />
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
@@ -550,7 +660,7 @@ const arrowChange = () => {
       </template>
       <template #roadName="{ row }">
         <el-text
-          @click="handleFilterByRoadName(row.roadName)"
+          @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
@@ -558,11 +668,7 @@ const arrowChange = () => {
         </el-text>
       </template>
       <template #openStatus="{ row }">
-        <el-text
-          @click="handleFilterByOpenStatus(row.openStatus)"
-          class="common-align"
-          type="primary"
-        >
+        <el-text class="common-align">
           {{ row.openStatus }}
         </el-text>
       </template>
@@ -576,38 +682,17 @@ const arrowChange = () => {
         </el-text>
       </template>
       <template #deviceStatus="{ row }">
-        <el-text
-          @click="handleFilterByDeviceStatus(row.deviceStatus)"
-          class="common-align"
-          type="primary"
-        >
+        <el-text class="common-align">
           {{ row.deviceStatus }}
         </el-text>
       </template>
-      <template #monitorStatus="{ row }">
-        <el-text
-          @click="handleFilterByMonitorStatus(row.monitorStatus)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.monitorStatus }}
-        </el-text>
-      </template>
       <template #riskLevel="{ row }">
-        <el-text
-          @click="handleFilterByRiskLevel(row.riskLevel)"
-          class="common-align"
-          type="primary"
-        >
+        <el-text class="common-align">
           {{ row.riskLevel }}
         </el-text>
       </template>
       <template #abnormalVibrationFlag="{ row }">
-        <el-text
-          @click="handleFilterByAbnormalVibration(row.abnormalVibrationFlag)"
-          class="common-align"
-          type="primary"
-        >
+        <el-text class="common-align">
           {{ row.abnormalVibrationFlag }}
         </el-text>
       </template>
@@ -624,14 +709,10 @@ const arrowChange = () => {
             @click="handleEdit(row)"
           />
           <IconButton
-            content="启动监测"
-            icon-name="VideoPlay"
-            @click="handleStartMonitor(row)"
-          />
-          <IconButton
-            content="停止监测"
-            icon-name="VideoPause"
-            @click="handleStopMonitor(row)"
+            content="删除"
+            icon-name="delete"
+            color="#F56C6C"
+            @click="handleDelete(row)"
           />
         </div>
       </template>
@@ -643,7 +724,7 @@ const arrowChange = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 全部统计：10条 </span>
+          <span> 全部统计：10 条 </span>
         </div>
       </template>
     </Grid>

@@ -389,7 +389,7 @@ export function useGridColumns() {
     {
       field: 'monitorStatus',
       title: '监测状态',
-      minWidth: 120,
+      minWidth: 180,
       sortable: true,
       slots: { default: 'monitorStatus' },
     },
@@ -427,7 +427,7 @@ export function useGridColumns() {
     },
     {
       title: '操作',
-      width: 200,
+      width: 120,
       fixed: 'right',
       slots: { default: 'actions' },
     },
