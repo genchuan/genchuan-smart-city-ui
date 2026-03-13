@@ -57,6 +57,13 @@ export function getConsumableOptions() {
   return requestClient.get('/envirhealth/consumable/options');
 }
 
+/**
+ * 获取处置状态下拉选项（用于投诉批量处理）
+ */
+export function getHandleStatusOptions() {
+  return requestClient.get('/envirhealth/handle-status/options');
+}
+
 // ---------- 公厕基础表单 ----------
 export function useFormSchema() {
   return [
@@ -188,7 +195,11 @@ export function useFormSchema() {
       fieldName: 'lastSupplyTime',
       label: '上次补充时间',
       component: 'DatePicker',
-      componentProps: { type: 'datetime', valueFormat: 'x', placeholder: '选择时间' },
+      componentProps: {
+        type: 'datetime',
+        valueFormat: 'x',
+        placeholder: '选择时间',
+      },
       labelWidth: '120',
     },
     {
@@ -217,7 +228,7 @@ export function useComplaintFormSchema() {
       fieldName: 'complaintId',
       label: '投诉编号',
       component: 'Input',
-      componentProps: { placeholder: '自动生成', disabled: true },
+      componentProps: { placeholder: '请输入投诉编号（新增时自动生成）' },
       labelWidth: '120',
       searchFilter: true,
     },
@@ -267,20 +278,24 @@ export function useComplaintFormSchema() {
       fieldName: 'complaintTime',
       label: '投诉时间',
       component: 'DatePicker',
-      componentProps: { type: 'datetime', valueFormat: 'x', placeholder: '选择时间' },
+      componentProps: {
+        type: 'datetime',
+        valueFormat: 'x',
+        placeholder: '选择时间',
+      },
       labelWidth: '120',
     },
     {
       fieldName: 'dispatchStatus',
-      label: '派单状态',
+      label: '处理状态',
       component: 'Select',
       componentProps: {
         placeholder: '请选择',
         options: [
           { label: '待派单', value: '待派单' },
           { label: '已派单', value: '已派单' },
-          { label: '已处置', value: '已处置' }
-        ]
+          { label: '已处置', value: '已处置' },
+        ],
       },
       labelWidth: '120',
       searchFilter: true,
@@ -301,8 +316,8 @@ export function useComplaintFormSchema() {
         placeholder: '请选择',
         options: [
           { label: '是', value: '是' },
-          { label: '否', value: '否' }
-        ]
+          { label: '否', value: '否' },
+        ],
       },
       labelWidth: '120',
       searchFilter: true,
@@ -345,7 +360,7 @@ export function useRepairFormSchema() {
       fieldName: 'repairId',
       label: '维修编号',
       component: 'Input',
-      componentProps: { placeholder: '自动生成', disabled: true },
+      componentProps: { placeholder: '请输入维修编号（新增时自动生成）' },
       labelWidth: '120',
       searchFilter: true,
     },
@@ -387,14 +402,11 @@ export function useRepairFormSchema() {
       fieldName: 'reportTime',
       label: '上报时间',
       component: 'DatePicker',
-      componentProps: { type: 'datetime', valueFormat: 'x', placeholder: '选择时间' },
-      labelWidth: '120',
-    },
-    {
-      fieldName: 'photoUrl',
-      label: '现场照片',
-      component: 'Input',
-      componentProps: { placeholder: '图片URL，多个用逗号分隔' },
+      componentProps: {
+        type: 'datetime',
+        valueFormat: 'x',
+        placeholder: '选择时间',
+      },
       labelWidth: '120',
     },
     {
@@ -414,8 +426,8 @@ export function useRepairFormSchema() {
         options: [
           { label: '待维修', value: '待维修' },
           { label: '维修中', value: '维修中' },
-          { label: '已完成', value: '已完成' }
-        ]
+          { label: '已完成', value: '已完成' },
+        ],
       },
       labelWidth: '120',
       searchFilter: true,
@@ -424,7 +436,11 @@ export function useRepairFormSchema() {
       fieldName: 'expectedCompleteTime',
       label: '预计完成时间',
       component: 'DatePicker',
-      componentProps: { type: 'datetime', valueFormat: 'x', placeholder: '选择时间' },
+      componentProps: {
+        type: 'datetime',
+        valueFormat: 'x',
+        placeholder: '选择时间',
+      },
       labelWidth: '120',
     },
     {
@@ -435,8 +451,8 @@ export function useRepairFormSchema() {
         placeholder: '请选择',
         options: [
           { label: '合格', value: '合格' },
-          { label: '不合格', value: '不合格' }
-        ]
+          { label: '不合格', value: '不合格' },
+        ],
       },
       labelWidth: '120',
       searchFilter: true,
@@ -446,6 +462,13 @@ export function useRepairFormSchema() {
       label: '验收意见',
       component: 'Input',
       componentProps: { type: 'textarea', rows: 2, placeholder: '请输入' },
+      labelWidth: '120',
+    },
+    {
+      fieldName: 'photoUrl',
+      label: '现场照片',
+      component: 'Input',
+      componentProps: { placeholder: '图片URL，多个用逗号分隔' },
       labelWidth: '120',
     },
   ];
@@ -467,7 +490,7 @@ export function useCleaningFormSchema() {
       fieldName: 'taskNo',
       label: '任务编号',
       component: 'Input',
-      componentProps: { placeholder: '自动生成', disabled: true },
+      componentProps: { placeholder: '请输入任务编号（新增时自动生成）' },
       labelWidth: '120',
       searchFilter: true,
     },
@@ -523,7 +546,11 @@ export function useCleaningFormSchema() {
       fieldName: 'cleanerIds',
       label: '保洁人员',
       component: 'Select',
-      componentProps: { placeholder: '请选择保洁人员', options: [], multiple: true },
+      componentProps: {
+        placeholder: '请选择保洁人员',
+        options: [],
+        multiple: true,
+      },
       labelWidth: '120',
       searchFilter: true,
     },
@@ -563,7 +590,11 @@ export function useCleaningFormSchema() {
       fieldName: 'abnormalDesc',
       label: '异常描述',
       component: 'Input',
-      componentProps: { type: 'textarea', rows: 2, placeholder: '请输入异常描述' },
+      componentProps: {
+        type: 'textarea',
+        rows: 2,
+        placeholder: '请输入异常描述',
+      },
       labelWidth: '120',
     },
     {
@@ -594,7 +625,6 @@ export function useConsumableFormSchema() {
       component: 'Select',
       componentProps: { placeholder: '请选择物资', options: [] },
       labelWidth: '120',
-      rules: 'required',
       searchFilter: true,
     },
     {
@@ -626,12 +656,17 @@ export function useConsumableFormSchema() {
         ],
       },
       labelWidth: '120',
+      searchFilter: true,
     },
     {
       fieldName: 'lastSupplyTime',
       label: '上次补充时间',
       component: 'DatePicker',
-      componentProps: { type: 'datetime', valueFormat: 'x', placeholder: '选择时间' },
+      componentProps: {
+        type: 'datetime',
+        valueFormat: 'x',
+        placeholder: '选择时间',
+      },
       labelWidth: '120',
     },
     {
@@ -659,45 +694,443 @@ export function useConsumableFormSchema() {
   ];
 }
 
+// ---------- 新增弹窗表单 Schema（按需求补充） ----------
+
+// 批量调整弹窗（保洁待执行）
+export function useBatchAdjustSchema() {
+  return [
+    {
+      fieldName: 'adjustType',
+      label: '调整维度',
+      component: 'RadioGroup',
+      labelWidth: '100',
+      componentProps: {
+        options: [
+          { label: '时段', value: 'timePeriod' },
+          { label: '频次', value: 'frequency' },
+          { label: '人员', value: 'cleanerIds' },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'newTimePeriod',
+      label: '新时段',
+      component: 'Select',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请选择新时段',
+        options: [
+          { label: '06:00-08:00', value: '06:00-08:00' },
+          { label: '08:00-10:00', value: '08:00-10:00' },
+          { label: '10:00-12:00', value: '10:00-12:00' },
+          { label: '14:00-16:00', value: '14:00-16:00' },
+          { label: '16:00-18:00', value: '16:00-18:00' },
+          { label: '18:00-20:00', value: '18:00-20:00' },
+          { label: '20:00-22:00', value: '20:00-22:00' },
+        ],
+      },
+      dependencies: {
+        show: (values) => values.adjustType === 'timePeriod',
+      },
+    },
+    {
+      fieldName: 'newFrequency',
+      label: '新频次',
+      component: 'Select',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请选择新频次',
+        options: [
+          { label: '每日一次', value: '每日一次' },
+          { label: '每日两次', value: '每日两次' },
+          { label: '每周三次', value: '每周三次' },
+          { label: '每周一次', value: '每周一次' },
+        ],
+      },
+      dependencies: {
+        show: (values) => values.adjustType === 'frequency',
+      },
+    },
+    {
+      fieldName: 'newCleanerIds',
+      label: '新人员',
+      component: 'Select',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请选择新人员（可多选）',
+        multiple: true,
+        options: [],
+      },
+      dependencies: {
+        show: (values) => values.adjustType === 'cleanerIds',
+      },
+    },
+  ];
+}
+
+// 批量补充登记弹窗（物资待补充）
+export function useBatchSupplySchema() {
+  return [
+    {
+      fieldName: 'supplyQuantity',
+      label: '补充数量',
+      component: 'InputNumber',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请输入',
+        min: 0,
+      },
+      rules: 'required',
+    }
+  ];
+}
+
+// 单条补充登记弹窗（物资待补充）
+export function useSupplySchema() {
+  return [
+    {
+      fieldName: 'supplyQuantity',
+      label: '补充数量',
+      component: 'InputNumber',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请输入',
+        min: 0,
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'photoUrls',
+      label: '补充照片',
+      component: 'Upload',
+      labelWidth: '100',
+      componentProps: {
+        tip: '支持上传图片，最多9张',
+        limit: 9,
+        accept: 'image/*',
+      },
+    },
+  ];
+}
+
+// 派单弹窗（通用，责任人/维修人员）
+export function useDispatchSchema() {
+  return [
+    {
+      fieldName: 'handlerId',
+      label: '责任人',
+      component: 'Select',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请选择责任人',
+        options: [],
+      },
+      rules: 'required',
+    },
+  ];
+}
+
+// 批量处理投诉弹窗（派单或更新状态）
+export function useBatchHandleComplaintSchema() {
+  return [
+    {
+      fieldName: 'batchAction',
+      label: '批量操作',
+      component: 'RadioGroup',
+      labelWidth: '100',
+      componentProps: {
+        options: [
+          { label: '派单', value: 'dispatch' },
+          { label: '更新状态', value: 'updateStatus' },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'handlerId',
+      label: '责任人',
+      component: 'Select',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请选择责任人',
+        options: [],
+      },
+      dependencies: {
+        show: (values) => values.batchAction === 'dispatch',
+      },
+    },
+    {
+      fieldName: 'handleStatus',
+      label: '处置状态',
+      component: 'Select',
+      labelWidth: '100',
+      componentProps: {
+        placeholder: '请选择处置状态',
+        options: [],
+      },
+      dependencies: {
+        show: (values) => values.batchAction === 'updateStatus',
+      },
+    },
+  ];
+}
+
+// 沟通弹窗（用于维修跟踪）
+export function useCommunicationSchema() {
+  return [
+    {
+      fieldName: 'message',
+      label: '沟通内容',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 4,
+        placeholder: '请输入发送给维修人员的消息',
+      },
+      labelWidth: '100',
+      rules: 'required',
+    },
+  ];
+}
+
+// 跟进备注弹窗（通用，可用于跟踪添加备注）
+export function useTrackSchema() {
+  return [
+    {
+      fieldName: 'remark',
+      label: '跟进备注',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 3,
+        placeholder: '请输入跟进备注',
+      },
+      labelWidth: '100',
+    },
+  ];
+}
+
+// 验收弹窗（维修）
+export function useAcceptSchema() {
+  return [
+    {
+      fieldName: 'acceptResult',
+      label: '验收结果',
+      component: 'RadioGroup',
+      labelWidth: '100',
+      componentProps: {
+        options: [
+          { label: '合格', value: '合格' },
+          { label: '不合格', value: '不合格' },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'acceptOpinion',
+      label: '验收意见',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 3,
+        placeholder: '请输入验收意见',
+      },
+      labelWidth: '100',
+    },
+  ];
+}
+
+// 复盘弹窗（已完成任务复盘）
+export function useReviewPostSchema() {
+  return [
+    {
+      fieldName: 'reviewPostComment',
+      label: '复盘意见',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 4,
+        placeholder: '请输入复盘意见',
+      },
+      labelWidth: '100',
+      rules: 'required',
+    },
+  ];
+}
+
 // 表格列配置（按状态筛选）
 export function getColumnsByStatus(status) {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const statusColumnsMap = {
     全部: [
-      { field: 'name', title: '公厕名称', minWidth: 150, sortable: true, slots: { default: 'name' } },
+      {
+        field: 'name',
+        title: '公厕名称',
+        minWidth: 150,
+        sortable: true,
+        slots: { default: 'name' },
+      },
       { field: 'location', title: '公厕位置', minWidth: 180, sortable: true },
-      { field: 'areaName', title: '所属区域', minWidth: 180, sortable: true, slots: { default: 'area' } },
+      {
+        field: 'areaName',
+        title: '所属区域',
+        minWidth: 180,
+        sortable: true,
+        slots: { default: 'area' },
+      },
       { field: 'openHours', title: '开放时段', minWidth: 150, sortable: true },
       { field: 'stallCount', title: '蹲位数量', minWidth: 100, sortable: true },
-      { field: 'operationStatusName', title: '运营状态', minWidth: 120, sortable: true, slots: { default: 'status' } },
+      {
+        field: 'operationStatusName',
+        title: '运营状态',
+        minWidth: 120,
+        sortable: true,
+        slots: { default: 'status' },
+      },
       { field: 'managerName', title: '负责人', minWidth: 120, sortable: true },
-      { field: 'cleaningRate', title: '保洁达标率(%)', minWidth: 120, sortable: true, formatter: ({ cellValue }) => (cellValue !== undefined ? `${cellValue}%` : '-') },
-      { field: 'complaintRate', title: '投诉办结率(%)', minWidth: 120, sortable: true, formatter: ({ cellValue }) => (cellValue !== undefined ? `${cellValue}%` : '-') },
-      { field: 'warningCount', title: '耗材库存预警数', minWidth: 140, sortable: true },
-      { field: 'facilityRate', title: '设施完好率(%)', minWidth: 120, sortable: true, formatter: ({ cellValue }) => (cellValue !== undefined ? `${cellValue}%` : '-') },
+      {
+        field: 'cleaningRate',
+        title: '保洁达标率(%)',
+        minWidth: 120,
+        sortable: true,
+        formatter: ({ cellValue }) =>
+          cellValue === undefined ? '-' : `${cellValue}%`,
+      },
+      {
+        field: 'complaintRate',
+        title: '投诉办结率(%)',
+        minWidth: 120,
+        sortable: true,
+        formatter: ({ cellValue }) =>
+          cellValue === undefined ? '-' : `${cellValue}%`,
+      },
+      {
+        field: 'warningCount',
+        title: '耗材库存预警数',
+        minWidth: 140,
+        sortable: true,
+      },
+      {
+        field: 'facilityRate',
+        title: '设施完好率(%)',
+        minWidth: 120,
+        sortable: true,
+        formatter: ({ cellValue }) =>
+          cellValue === undefined ? '-' : `${cellValue}%`,
+      },
     ],
     保洁待执行: [
-      { field: 'toiletName', title: '公厕名称', minWidth: 150, sortable: true, slots: { default: 'name' } },
-      { field: 'areaName', title: '所属区域', minWidth: 180, sortable: true, slots: { default: 'area' } },
+      {
+        field: 'toiletName',
+        title: '公厕名称',
+        minWidth: 150,
+        sortable: true,
+        slots: { default: 'name' },
+      },
+      {
+        field: 'areaName',
+        title: '所属区域',
+        minWidth: 180,
+        sortable: true,
+        slots: { default: 'area' },
+      },
       { field: 'taskNo', title: '任务编号', minWidth: 150, sortable: true },
-      { field: 'cleaningFrequency', title: '保洁频次', minWidth: 120, sortable: true },
-      { field: 'cleaningTime', title: '保洁时段', minWidth: 150, sortable: true },
-      { field: 'cleaningContent', title: '保洁内容', minWidth: 200, sortable: true },
-      { field: 'cleanerNames', title: '保洁人员', minWidth: 150, sortable: true },
-      { field: 'cleaningStandard', title: '保洁标准', minWidth: 120, sortable: true },
-      { field: 'planStatusName', title: '任务状态', minWidth: 100, sortable: true },
-      { field: 'completionRate', title: '完成率(%)', minWidth: 100, sortable: true, formatter: ({ cellValue }) => (cellValue !== undefined ? `${cellValue}%` : '-') },
-      { field: 'isAbnormal', title: '是否异常', minWidth: 100, sortable: true, formatter: ({ cellValue }) => (cellValue === 1 ? '是' : '否') },
-      { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, formatter: ({ cellValue }) => (cellValue ? new Date(cellValue).toLocaleString() : '-') },
+      {
+        field: 'cleaningFrequency',
+        title: '保洁频次',
+        minWidth: 120,
+        sortable: true,
+      },
+      {
+        field: 'cleaningTime',
+        title: '保洁时段',
+        minWidth: 150,
+        sortable: true,
+      },
+      {
+        field: 'cleaningContent',
+        title: '保洁内容',
+        minWidth: 200,
+        sortable: true,
+      },
+      {
+        field: 'cleanerNames',
+        title: '保洁人员',
+        minWidth: 150,
+        sortable: true,
+      },
+      {
+        field: 'cleaningStandard',
+        title: '保洁标准',
+        minWidth: 120,
+        sortable: true,
+      },
+      {
+        field: 'planStatusName',
+        title: '任务状态',
+        minWidth: 100,
+        sortable: true,
+      },
+      {
+        field: 'completionRate',
+        title: '完成率(%)',
+        minWidth: 100,
+        sortable: true,
+        formatter: ({ cellValue }) =>
+          cellValue === undefined ? '-' : `${cellValue}%`,
+      },
+      {
+        field: 'isAbnormal',
+        title: '是否异常',
+        minWidth: 100,
+        sortable: true,
+        formatter: ({ cellValue }) => (cellValue === 1 ? '是' : '否'),
+      },
+      {
+        field: 'createTime',
+        title: '创建时间',
+        minWidth: 180,
+        sortable: true,
+        formatter: ({ cellValue }) =>
+          cellValue ? new Date(cellValue).toLocaleString() : '-',
+      },
     ],
     物资待补充: [
-      { field: 'toiletName', title: '公厕名称', minWidth: 150, sortable: true, slots: { default: 'toiletName' } },
+      {
+        field: 'toiletName',
+        title: '公厕名称',
+        minWidth: 150,
+        sortable: true,
+        slots: { default: 'toiletName' },
+      },
       { field: 'areaName', title: '所属区域', minWidth: 180, sortable: true },
-      { field: 'consumableName', title: '物资名称', minWidth: 120, sortable: true, slots: { default: 'consumableName' } },
-      { field: 'consumableStock', title: '当前库存', minWidth: 100, sortable: true },
-      { field: 'consumableThreshold', title: '预警阈值', minWidth: 100, sortable: true },
-      { field: 'consumableGap', title: '缺口数量', minWidth: 100, sortable: true },
+      {
+        field: 'consumableName',
+        title: '物资名称',
+        minWidth: 120,
+        sortable: true,
+        slots: { default: 'consumableName' },
+      },
+      {
+        field: 'consumableStock',
+        title: '当前库存',
+        minWidth: 100,
+        sortable: true,
+      },
+      {
+        field: 'consumableThreshold',
+        title: '预警阈值',
+        minWidth: 100,
+        sortable: true,
+      },
+      {
+        field: 'consumableGap',
+        title: '缺口数量',
+        minWidth: 100,
+        sortable: true,
+      },
       { field: 'managerName', title: '负责人', minWidth: 120, sortable: true },
       {
         field: 'consumableWarning',
@@ -706,54 +1139,197 @@ export function getColumnsByStatus(status) {
         sortable: true,
         formatter: ({ cellValue }) => cellValue || '-',
       },
-      { field: 'lastSupplyTime', title: '上次补充时间', minWidth: 180, sortable: true, formatter: ({ cellValue }) => (cellValue ? new Date(cellValue).toLocaleString() : '-') },
-      { field: 'supplyCycle', title: '补充周期（天）', minWidth: 120, sortable: true },
+      {
+        field: 'lastSupplyTime',
+        title: '上次补充时间',
+        minWidth: 180,
+        sortable: true,
+        formatter: ({ cellValue }) =>
+          cellValue ? new Date(cellValue).toLocaleString() : '-',
+      },
+      {
+        field: 'supplyCycle',
+        title: '补充周期（天）',
+        minWidth: 120,
+        sortable: true,
+      },
     ],
     投诉待处置: [
-      { field: 'complaintId', title: '投诉编号', minWidth: 150, sortable: true, slots: { default: 'complaintId' } },
-      { field: 'toiletName', title: '关联公厕', minWidth: 150, sortable: true, slots: { default: 'toiletName' } },
-      { field: 'complaintTypeName', title: '投诉类型', minWidth: 120, sortable: true },
+      {
+        field: 'complaintId',
+        title: '投诉编号',
+        minWidth: 150,
+        sortable: true,
+        slots: { default: 'complaintId' },
+      },
+      {
+        field: 'toiletName',
+        title: '关联公厕',
+        minWidth: 150,
+        sortable: true,
+        slots: { default: 'toiletName' },
+      },
+      {
+        field: 'complaintTypeName',
+        title: '投诉类型',
+        minWidth: 120,
+        sortable: true,
+      },
       { field: 'content', title: '投诉内容', minWidth: 200, sortable: true },
-      { field: 'complaintName', title: '投诉人', minWidth: 120, sortable: true },
-      { field: 'complaintTime', title: '投诉时间', minWidth: 180, sortable: true, formatter: ({ cellValue }) => (cellValue ? new Date(cellValue).toLocaleString() : '-') },
+      {
+        field: 'complaintName',
+        title: '投诉人',
+        minWidth: 120,
+        sortable: true,
+      },
+      {
+        field: 'complaintTime',
+        title: '投诉时间',
+        minWidth: 180,
+        sortable: true,
+        formatter: ({ cellValue }) =>
+          cellValue ? new Date(cellValue).toLocaleString() : '-',
+      },
       { field: 'phone', title: '联系电话', minWidth: 120, sortable: true },
-      { field: 'dispatchStatus', title: '派单状态', minWidth: 100, sortable: true },
+      {
+        field: 'dispatchStatus',
+        title: '处理状态',
+        minWidth: 100,
+        sortable: true,
+      },
       { field: 'handlerName', title: '责任人', minWidth: 120, sortable: true },
-      { field: 'isTimeout', title: '是否超时', minWidth: 100, sortable: true, formatter: ({ cellValue }) => (cellValue === '是' ? '是' : '否') },
+      {
+        field: 'isTimeout',
+        title: '是否超时',
+        minWidth: 100,
+        sortable: true,
+        formatter: ({ cellValue }) => (cellValue === '是' ? '是' : '否'),
+      },
     ],
     设施待维修: [
-      { field: 'repairId', title: '维修编号', minWidth: 150, sortable: true, slots: { default: 'repairId' } },
-      { field: 'toiletName', title: '关联公厕', minWidth: 150, sortable: true, slots: { default: 'toiletName' } },
-      { field: 'facilityName', title: '设施类型', minWidth: 120, sortable: true },
+      {
+        field: 'repairId',
+        title: '维修编号',
+        minWidth: 150,
+        sortable: true,
+        slots: { default: 'repairId' },
+      },
+      {
+        field: 'toiletName',
+        title: '关联公厕',
+        minWidth: 150,
+        sortable: true,
+        slots: { default: 'toiletName' },
+      },
+      {
+        field: 'facilityName',
+        title: '设施类型',
+        minWidth: 120,
+        sortable: true,
+      },
       { field: 'damageDesc', title: '损坏情况', minWidth: 200, sortable: true },
       { field: 'reportName', title: '上报人员', minWidth: 120, sortable: true },
-      { field: 'reportTime', title: '上报时间', minWidth: 180, sortable: true, formatter: ({ cellValue }) => (cellValue ? new Date(cellValue).toLocaleString() : '-') },
-      { field: 'photoUrl', title: '现场照片', minWidth: 100, sortable: true, slots: { default: 'photoUrl' } },
+      {
+        field: 'reportTime',
+        title: '上报时间',
+        minWidth: 180,
+        sortable: true,
+        formatter: ({ cellValue }) =>
+          cellValue ? new Date(cellValue).toLocaleString() : '-',
+      },
+      {
+        field: 'photoUrl',
+        title: '现场照片',
+        minWidth: 100,
+        sortable: true,
+        slots: { default: 'photoUrl' },
+      },
       { field: 'repairName', title: '维修人员', minWidth: 120, sortable: true },
-      { field: 'repairStatus', title: '维修状态', minWidth: 100, sortable: true },
-      { field: 'expectedCompleteTime', title: '预计完成时间', minWidth: 180, sortable: true, formatter: ({ cellValue }) => (cellValue ? new Date(cellValue).toLocaleString() : '-') },
+      {
+        field: 'repairStatus',
+        title: '维修状态',
+        minWidth: 100,
+        sortable: true,
+      },
+      {
+        field: 'expectedCompleteTime',
+        title: '预计完成时间',
+        minWidth: 180,
+        sortable: true,
+        formatter: ({ cellValue }) =>
+          cellValue ? new Date(cellValue).toLocaleString() : '-',
+      },
     ],
     已完成: [
-      { field: 'taskType', title: '任务类型', minWidth: 120, sortable: true, slots: { default: 'taskType' } },
-      { field: 'toiletName', title: '关联公厕', minWidth: 150, sortable: true, slots: { default: 'toiletName' } },
+      {
+        field: 'taskType',
+        title: '任务类型',
+        minWidth: 120,
+        sortable: true,
+        slots: { default: 'taskType' },
+      },
+      {
+        field: 'toiletName',
+        title: '关联公厕',
+        minWidth: 150,
+        sortable: true,
+        slots: { default: 'toiletName' },
+      },
       { field: 'areaName', title: '所属区域', minWidth: 180, sortable: true },
-      { field: 'completeTime', title: '完成时间', minWidth: 180, sortable: true, formatter: ({ cellValue }) => (cellValue ? new Date(cellValue).toLocaleString() : '-') },
-      { field: 'handlerName', title: '处置人员', minWidth: 120, sortable: true },
-      { field: 'handleResult', title: '处置结果', minWidth: 120, sortable: true },
-      { field: 'proofUrl', title: '佐证材料', minWidth: 100, sortable: true, slots: { default: 'proofUrl' } },
-      { field: 'handleDuration', title: '任务耗时', minWidth: 100, sortable: true },
-      { field: 'satisfaction', title: '满意度', minWidth: 100, sortable: true, formatter: ({ cellValue }) => (cellValue ? `${cellValue}%` : '-') },
+      {
+        field: 'completeTime',
+        title: '完成时间',
+        minWidth: 180,
+        sortable: true,
+        formatter: ({ cellValue }) =>
+          cellValue ? new Date(cellValue).toLocaleString() : '-',
+      },
+      {
+        field: 'handlerName',
+        title: '处置人员',
+        minWidth: 120,
+        sortable: true,
+      },
+      {
+        field: 'handleResult',
+        title: '处置结果',
+        minWidth: 120,
+        sortable: true,
+      },
+      {
+        field: 'proofUrl',
+        title: '佐证材料',
+        minWidth: 100,
+        sortable: true,
+        slots: { default: 'proofUrl' },
+      },
+      {
+        field: 'handleDuration',
+        title: '任务耗时',
+        minWidth: 100,
+        sortable: true,
+      },
+      {
+        field: 'satisfaction',
+        title: '满意度',
+        minWidth: 100,
+        sortable: true,
+        formatter: ({ cellValue }) => (cellValue ? `${cellValue}%` : '-'),
+      },
       { field: 'statPeriod', title: '统计周期', minWidth: 120, sortable: true },
     ],
   };
 
-  const columns = [...baseColumns, ...(statusColumnsMap[status] || statusColumnsMap.全部)];
-  columns.push({
-    title: '操作',
-    width: 160,
-    fixed: 'right',
-    slots: { default: 'actions' },
-  });
+  const columns = [
+    ...baseColumns,
+    ...(statusColumnsMap[status] || statusColumnsMap.全部),
+    {
+      title: '操作',
+      width: 160,
+      fixed: 'right',
+      slots: { default: 'actions' },
+    },
+  ];
   return columns;
 }
 
