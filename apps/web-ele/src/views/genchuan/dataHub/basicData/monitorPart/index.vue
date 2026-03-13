@@ -280,10 +280,7 @@ const statsData = computed(() => {
   const statusMap = {};
   list.forEach((item) => {
     // 使用字典获取状态的中文标签
-    const dict = getDictObj(
-      DICT_TYPE.DATA_RUN_STATUS,
-      String(item.runStatus),
-    );
+    const dict = getDictObj(DICT_TYPE.DATA_RUN_STATUS, String(item.runStatus));
     const statusLabel = dict?.label || `状态${item.runStatus}` || '未知';
     statusMap[statusLabel] = (statusMap[statusLabel] || 0) + 1;
   });
@@ -377,10 +374,8 @@ const mapData = computed(() => {
         name: item.name,
         status: item.runStatus,
         statusName:
-          getDictObj(
-            DICT_TYPE.DATA_RUN_STATUS,
-            String(item.runStatus),
-          )?.label || '未知',
+          getDictObj(DICT_TYPE.DATA_RUN_STATUS, String(item.runStatus))
+            ?.label || '未知',
         categoryName: item.categoryName,
         layerTypeName: item.categoryName, // 使用categoryName作为layerTypeName
         gridName: item.gridName,

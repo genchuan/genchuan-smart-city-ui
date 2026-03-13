@@ -11,12 +11,28 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { createCategory, createInstance, deleteBatchCategory, deleteCategory, deleteInstance, exportCategory, exportInstance, getCategoryPage, getInstancePage, updateCategory, updateInstance, importInstance, batchUpdateInstanceStatus } from '#/api/genchuan/dataHub/basicData/monitorEvent';
+import {
+  createCategory,
+  createInstance,
+  deleteBatchCategory,
+  deleteCategory,
+  deleteInstance,
+  exportCategory,
+  exportInstance,
+  getCategoryPage,
+  getInstancePage,
+  updateCategory,
+  updateInstance,
+} from '#/api/genchuan/dataHub/basicData/monitorEvent';
 import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import { $t } from '#/locales';
 
 import BatchUpdateStatusDialog from '../components/BatchUpdateStatusDialog.vue';
+import HandleDialog from '../components/HandleDialog.vue';
 import ImportExcelDialog from '../components/ImportExcelDialog.vue';
+import RejectDialog from '../components/RejectDialog.vue';
+import SubmitAuditDialog from '../components/SubmitAuditDialog.vue';
+import ViewRelatedMatterDialog from '../components/ViewRelatedMatterDialog.vue';
 import {
   detailFields,
   instanceDetailFields,
@@ -46,6 +62,14 @@ const props = defineProps({
     type: String,
     default: 'category',
   },
+  showStats: {
+    type: Boolean,
+    default: false,
+  },
+  toggleStats: {
+    type: Function,
+    default: () => {},
+  },
 });
 
 const emit = defineEmits([
@@ -56,7 +80,8 @@ const emit = defineEmits([
 ]);
 
 const getTitle = computed(() => {
-  const textObjCurrent = props.tabType === 'instance' ? instanceTextObj : textObj;
+  const textObjCurrent =
+    props.tabType === 'instance' ? instanceTextObj : textObj;
   return formData.value?.id ? textObjCurrent.editText : textObjCurrent.addText;
 });
 
@@ -76,6 +101,10 @@ const formData = ref();
 // 新组件引用
 const importExcelDialogRef = ref();
 const batchUpdateStatusDialogRef = ref();
+const submitAuditDialogRef = ref();
+const handleDialogRef = ref();
+const rejectDialogRef = ref();
+const viewRelatedMatterDialogRef = ref();
 
 // 使用计算属性创建表单schema，根据tabType返回不同的schema
 const formSchema = computed(() => {
@@ -103,7 +132,10 @@ watch(
   [() => props.treeData, () => props.tabType],
   ([newTreeData, newTabType]) => {
     if (newTreeData && newTreeData.length > 0) {
-      const newSchema = newTabType === 'instance' ? useInstanceFormSchema(newTreeData) : useFormSchema(newTreeData);
+      const newSchema =
+        newTabType === 'instance'
+          ? useInstanceFormSchema(newTreeData)
+          : useFormSchema(newTreeData);
       formApi.setState({ schema: newSchema });
     }
   },
@@ -147,19 +179,22 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
             return null;
           };
 
-          const result = findNodeWithParent(props.treeData, submitData.categoryName);
+          const result = findNodeWithParent(
+            props.treeData,
+            submitData.categoryName,
+          );
           if (result) {
             const { node: selectedNode } = result;
             submitData.categoryId = selectedNode.id;
-            submitData.categoryName = selectedNode.label || selectedNode.categoryName;
+            submitData.categoryName =
+              selectedNode.label || selectedNode.categoryName;
           }
         }
 
-        if (formDrawerApi.sharedData.payload.title === instanceTextObj.addText) {
-          await createInstance(submitData);
-        } else {
-          await updateInstance({ ...submitData, id: formData.value.id });
-        }
+        await (formDrawerApi.sharedData.payload.title ===
+        instanceTextObj.addText
+          ? createInstance(submitData)
+          : updateInstance({ ...submitData, id: formData.value.id }));
         ElMessage.success('操作成功');
         handleRefresh();
         formDrawerApi.close();
@@ -183,18 +218,17 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 
           const selectedNode = findNode(props.treeData, submitData.parentId);
           if (selectedNode) {
-            submitData.parentCategory = selectedNode.label || selectedNode.categoryName;
+            submitData.parentCategory =
+              selectedNode.label || selectedNode.categoryName;
           }
         } else {
           submitData.parentId = null;
           submitData.parentCategory = '无';
         }
 
-        if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-          await createCategory(submitData);
-        } else {
-          await updateCategory({ ...submitData, id: formData.value.id });
-        }
+        await (formDrawerApi.sharedData.payload.title === textObj.addText
+          ? createCategory(submitData)
+          : updateCategory({ ...submitData, id: formData.value.id }));
 
         ElMessage.success('操作成功');
         handleRefresh();
@@ -214,13 +248,19 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
         if (formValues.createTime) {
           const date = new Date(formValues.createTime);
           if (!isNaN(date.getTime())) {
-            formValues.createTime = date.toISOString().slice(0, 19).replace('T', ' ');
+            formValues.createTime = date
+              .toISOString()
+              .slice(0, 19)
+              .replace('T', ' ');
           }
         }
         if (formValues.dealTime) {
           const date = new Date(formValues.dealTime);
           if (!isNaN(date.getTime())) {
-            formValues.dealTime = date.toISOString().slice(0, 19).replace('T', ' ');
+            formValues.dealTime = date
+              .toISOString()
+              .slice(0, 19)
+              .replace('T', ' ');
           }
         }
         if (formValues.parentId === undefined || formValues.parentId === null) {
@@ -252,9 +292,13 @@ const initStatusCounts = async () => {
         allDataStatusCounts.total = response.total;
         allDataStatusCounts.statusMap = {};
         allData.forEach((item) => {
-          const dict = getDictObj(DICT_TYPE.DATA_RUN_STATUS, String(item.status));
+          const dict = getDictObj(
+            DICT_TYPE.DATA_MATTER_STATUS,
+            String(item.status),
+          );
           if (dict && dict.label) {
-            allDataStatusCounts.statusMap[dict.label] = (allDataStatusCounts.statusMap[dict.label] || 0) + 1;
+            allDataStatusCounts.statusMap[dict.label] =
+              (allDataStatusCounts.statusMap[dict.label] || 0) + 1;
           }
         });
       }
@@ -272,13 +316,19 @@ const initStatusCounts = async () => {
         allDataStatusCounts.total = response.total;
         allDataStatusCounts.statusMap = {};
         allData.forEach((item) => {
-          const dict = getDictObj(DICT_TYPE.DATA_ENABLE_STATUS, String(item.status));
+          const dict = getDictObj(
+            DICT_TYPE.DATA_ENABLE_STATUS,
+            String(item.status),
+          );
           if (dict && dict.label) {
-            allDataStatusCounts.statusMap[dict.label] = (allDataStatusCounts.statusMap[dict.label] || 0) + 1;
+            allDataStatusCounts.statusMap[dict.label] =
+              (allDataStatusCounts.statusMap[dict.label] || 0) + 1;
           }
         });
-        dataObj.statusCounts.enabled = allDataStatusCounts.statusMap['启用'] || 0;
-        dataObj.statusCounts.disabled = allDataStatusCounts.statusMap['禁用'] || 0;
+        dataObj.statusCounts.enabled =
+          allDataStatusCounts.statusMap['启用'] || 0;
+        dataObj.statusCounts.disabled =
+          allDataStatusCounts.statusMap['禁用'] || 0;
         dataObj.statusCounts.maintenance = 0;
       }
     }
@@ -308,7 +358,8 @@ async function handleExport() {
 
 /** 创建 */
 function handleCreate() {
-  const textObjCurrent = props.tabType === 'instance' ? instanceTextObj : textObj;
+  const textObjCurrent =
+    props.tabType === 'instance' ? instanceTextObj : textObj;
   formDrawerApi
     .setData({
       title: textObjCurrent.addText,
@@ -318,7 +369,8 @@ function handleCreate() {
 
 /** 编辑 */
 function handleEdit(row) {
-  const textObjCurrent = props.tabType === 'instance' ? instanceTextObj : textObj;
+  const textObjCurrent =
+    props.tabType === 'instance' ? instanceTextObj : textObj;
   formDrawerApi
     .setData({
       title: textObjCurrent.editText,
@@ -373,6 +425,26 @@ async function handleDelete(row) {
   }
 }
 
+// 处理提交审核
+const handleSubmitAudit = (row) => {
+  submitAuditDialogRef.value?.open(row);
+};
+
+// 处理处置
+const handleHandle = (row) => {
+  handleDialogRef.value?.open(row);
+};
+
+// 处理驳回
+const handleReject = (row) => {
+  rejectDialogRef.value?.open(row);
+};
+
+// 处理查看关联事项
+const handleViewRelatedMatter = (row) => {
+  viewRelatedMatterDialogRef.value?.open(row);
+};
+
 async function handleDeleteBatch() {
   try {
     await confirm($t('确定删除这些数据吗？'));
@@ -416,6 +488,18 @@ function handleRowCheckboxChange({ records }) {
 
 // 标志位：是否跳过统计更新
 const skipStatsUpdate = ref(false);
+
+// 监测事件分类快捷筛选
+const filterCategoryCode = ref(''); // 分类代码筛选
+const filterParentCategory = ref(''); // 上级分类筛选
+const filterRelatedMonitorType = ref(''); // 关联监测部件类型筛选
+const filterRelatedMatterType = ref(''); // 关联管理事项类型筛选
+const filterEventLevel = ref(''); // 事件等级筛选
+
+// 监测事件实例快捷筛选
+const filterUniqueCode = ref(''); // 18位标识码筛选
+const filterInstanceCategoryName = ref(''); // 所属分类筛选
+const filterMonitorName = ref(''); // 关联监测部件筛选
 
 const dataObj = reactive({
   totalShow: false,
@@ -466,7 +550,10 @@ const getTableData = async (pageObj) => {
       // 监测事件实例数据
       let statusValue = '';
       if (activeName.value !== '全部') {
-        const dictOptions = getDictOptions(DICT_TYPE.DATA_RUN_STATUS, 'string');
+        const dictOptions = getDictOptions(
+          DICT_TYPE.DATA_MATTER_STATUS,
+          'string',
+        );
         const found = dictOptions.find((opt) => opt.label === activeName.value);
         statusValue = found ? found.value : '';
       }
@@ -475,6 +562,10 @@ const getTableData = async (pageObj) => {
         pageNo: page.currentPage,
         pageSize: page.pageSize,
         status: statusValue,
+        uniqueCode: filterUniqueCode.value,
+        categoryName: filterInstanceCategoryName.value,
+        monitorName: filterMonitorName.value,
+        eventLevel: filterEventLevel.value,
         ...dataObj.searchParams,
       };
 
@@ -491,9 +582,13 @@ const getTableData = async (pageObj) => {
         dataObj.list = response.list.map((item) => ({
           ...item,
           id: String(item.id),
-          createTime: item.createTime ? new Date(item.createTime).toLocaleString('zh-CN') : '',
+          createTime: item.createTime
+            ? new Date(item.createTime).toLocaleString('zh-CN')
+            : '',
           creator: item.creator || '',
-          dealTime: item.dealTime ? new Date(item.dealTime).toLocaleString('zh-CN') : '',
+          dealTime: item.dealTime
+            ? new Date(item.dealTime).toLocaleString('zh-CN')
+            : '',
         }));
 
         if (!skipStatsUpdate.value) {
@@ -508,7 +603,10 @@ const getTableData = async (pageObj) => {
       // 分类数据
       let statusValue = '';
       if (activeName.value !== '全部') {
-        const dictOptions = getDictOptions(DICT_TYPE.DATA_ENABLE_STATUS, 'string');
+        const dictOptions = getDictOptions(
+          DICT_TYPE.DATA_ENABLE_STATUS,
+          'string',
+        );
         const found = dictOptions.find((opt) => opt.label === activeName.value);
         statusValue = found ? found.value : '';
       }
@@ -517,6 +615,11 @@ const getTableData = async (pageObj) => {
         pageNo: page.currentPage,
         pageSize: page.pageSize,
         status: statusValue,
+        categoryCode: filterCategoryCode.value,
+        parentCategory: filterParentCategory.value,
+        relatedMonitorType: filterRelatedMonitorType.value,
+        relatedMatterType: filterRelatedMatterType.value,
+        eventLevel: filterEventLevel.value,
         ...dataObj.searchParams,
       };
 
@@ -534,7 +637,9 @@ const getTableData = async (pageObj) => {
           ...item,
           id: String(item.id),
           parentId: item.parentId ? String(item.parentId) : null,
-          createTime: item.createTime ? new Date(item.createTime).toLocaleString('zh-CN') : '',
+          createTime: item.createTime
+            ? new Date(item.createTime).toLocaleString('zh-CN')
+            : '',
           creator: item.creator || '',
         }));
 
@@ -542,11 +647,17 @@ const getTableData = async (pageObj) => {
           dataObj.statistics.totalCategories = dataObj.total;
           dataObj.statusCounts.total = dataObj.total;
           dataObj.statusCounts.enabled = dataObj.list.filter((item) => {
-            const dict = getDictObj(DICT_TYPE.DATA_ENABLE_STATUS, String(item.status));
+            const dict = getDictObj(
+              DICT_TYPE.DATA_ENABLE_STATUS,
+              String(item.status),
+            );
             return dict?.label === '启用';
           }).length;
           dataObj.statusCounts.disabled = dataObj.list.filter((item) => {
-            const dict = getDictObj(DICT_TYPE.DATA_ENABLE_STATUS, String(item.status));
+            const dict = getDictObj(
+              DICT_TYPE.DATA_ENABLE_STATUS,
+              String(item.status),
+            );
             return dict?.label === '禁用';
           }).length;
           dataObj.statusCounts.maintenance = 0;
@@ -565,7 +676,10 @@ const getTableData = async (pageObj) => {
 
 // 使用计算属性创建搜索表单schema，根据tabType返回不同的schema
 const queryFormSchema = computed(() => {
-  const schema = props.tabType === 'instance' ? useInstanceSearchFormSchema(props.treeData) : useFormSchema(props.treeData);
+  const schema =
+    props.tabType === 'instance'
+      ? useInstanceSearchFormSchema(props.treeData)
+      : useFormSchema(props.treeData);
   return schema.map((v) => {
     delete v.rules;
     return { ...v };
@@ -595,7 +709,11 @@ watch(
   [() => props.treeData, () => props.tabType],
   ([newTreeData, newTabType]) => {
     if (newTreeData && newTreeData.length > 0) {
-      const newSchema = (newTabType === 'instance' ? useInstanceSearchFormSchema(newTreeData) : useFormSchema(newTreeData)).map((v) => {
+      const newSchema = (
+        newTabType === 'instance'
+          ? useInstanceSearchFormSchema(newTreeData)
+          : useFormSchema(newTreeData)
+      ).map((v) => {
         delete v.rules;
         return { ...v };
       });
@@ -629,7 +747,8 @@ function onSubmit(values) {
 
     const selectedNode = findNode(props.treeData, searchParams.categoryId);
     if (selectedNode) {
-      searchParams.categoryName = selectedNode.label || selectedNode.categoryName;
+      searchParams.categoryName =
+        selectedNode.label || selectedNode.categoryName;
     }
     delete searchParams.categoryId;
   }
@@ -638,9 +757,186 @@ function onSubmit(values) {
   drawerApi.close();
 }
 
+// 处理快捷筛选（不更新统计数据）
+const handleQuickFilter = (filterFn) => {
+  skipStatsUpdate.value = true;
+  filterFn();
+  setTimeout(() => {
+    skipStatsUpdate.value = false;
+  }, 100);
+};
+
+// 处理分类代码点击
+const handleCategoryCodeClick = (categoryCode) => {
+  handleQuickFilter(() => {
+    filterCategoryCode.value =
+      filterCategoryCode.value === categoryCode ? '' : categoryCode;
+    gridApi.query();
+  });
+};
+
+/** 取消分类代码筛选 */
+const handleCancelCategoryCodeFilter = () => {
+  handleQuickFilter(() => {
+    filterCategoryCode.value = '';
+    gridApi.query();
+  });
+};
+
+// 处理上级分类点击
+const handleParentCategoryClick = (parentCategory) => {
+  handleQuickFilter(() => {
+    filterParentCategory.value =
+      filterParentCategory.value === parentCategory ? '' : parentCategory;
+    gridApi.query();
+  });
+};
+
+/** 取消上级分类筛选 */
+const handleCancelParentCategoryFilter = () => {
+  handleQuickFilter(() => {
+    filterParentCategory.value = '';
+    gridApi.query();
+  });
+};
+
+// 处理关联监测部件类型点击
+const handleRelatedMonitorTypeClick = (relatedMonitorType) => {
+  handleQuickFilter(() => {
+    filterRelatedMonitorType.value =
+      filterRelatedMonitorType.value === relatedMonitorType
+        ? ''
+        : relatedMonitorType;
+    gridApi.query();
+  });
+};
+
+/** 取消关联监测部件类型筛选 */
+const handleCancelRelatedMonitorTypeFilter = () => {
+  handleQuickFilter(() => {
+    filterRelatedMonitorType.value = '';
+    gridApi.query();
+  });
+};
+
+// 处理关联管理事项类型点击
+const handleRelatedMatterTypeClick = (relatedMatterType) => {
+  handleQuickFilter(() => {
+    filterRelatedMatterType.value =
+      filterRelatedMatterType.value === relatedMatterType
+        ? ''
+        : relatedMatterType;
+    gridApi.query();
+  });
+};
+
+/** 取消关联管理事项类型筛选 */
+const handleCancelRelatedMatterTypeFilter = () => {
+  handleQuickFilter(() => {
+    filterRelatedMatterType.value = '';
+    gridApi.query();
+  });
+};
+
+// 处理事件等级点击
+const handleEventLevelClick = (eventLevel) => {
+  handleQuickFilter(() => {
+    filterEventLevel.value =
+      filterEventLevel.value === eventLevel ? '' : eventLevel;
+    gridApi.query();
+  });
+};
+
+/** 取消事件等级筛选 */
+const handleCancelEventLevelFilter = () => {
+  handleQuickFilter(() => {
+    filterEventLevel.value = '';
+    gridApi.query();
+  });
+};
+
+/** 获取事件等级的Tag类型 - 将字典颜色映射到Element Plus支持的颜色类型 */
+const getEventLevelTagType = (eventLevel) => {
+  const dict = getDictObj(DICT_TYPE.DATA_EVENT_LEVEL, String(eventLevel));
+  const colorType = dict?.colorType || 'primary';
+
+  // 颜色类型映射 - 将后端的颜色类型映射到Element Plus支持的颜色类型
+  const colorTypeMap = {
+    danger: 'danger',
+    error: 'danger',
+    info: 'info',
+    primary: 'primary',
+    success: 'success',
+    warning: 'warning',
+    blue: 'primary',
+    green: 'success',
+    orange: 'warning',
+    cyan: 'info',
+    purple: 'primary',
+    pink: 'danger',
+    red: 'danger',
+    yellow: 'warning',
+  };
+
+  return colorTypeMap[colorType] || colorType || 'primary';
+};
+
+// 处理18位标识码点击
+const handleUniqueCodeClick = (uniqueCode) => {
+  handleQuickFilter(() => {
+    filterUniqueCode.value =
+      filterUniqueCode.value === uniqueCode ? '' : uniqueCode;
+    gridApi.query();
+  });
+};
+
+/** 取消18位标识码筛选 */
+const handleCancelUniqueCodeFilter = () => {
+  handleQuickFilter(() => {
+    filterUniqueCode.value = '';
+    gridApi.query();
+  });
+};
+
+// 处理所属分类点击（实例）
+const handleInstanceCategoryNameClick = (categoryName) => {
+  handleQuickFilter(() => {
+    filterInstanceCategoryName.value =
+      filterInstanceCategoryName.value === categoryName ? '' : categoryName;
+    gridApi.query();
+  });
+};
+
+/** 取消所属分类筛选（实例） */
+const handleCancelInstanceCategoryNameFilter = () => {
+  handleQuickFilter(() => {
+    filterInstanceCategoryName.value = '';
+    gridApi.query();
+  });
+};
+
+// 处理关联监测部件点击
+const handleMonitorNameClick = (monitorName) => {
+  handleQuickFilter(() => {
+    filterMonitorName.value =
+      filterMonitorName.value === monitorName ? '' : monitorName;
+    gridApi.query();
+  });
+};
+
+/** 取消关联监测部件筛选 */
+const handleCancelMonitorNameFilter = () => {
+  handleQuickFilter(() => {
+    filterMonitorName.value = '';
+    gridApi.query();
+  });
+};
+
 // 根据tabType获取对应的列配置
 const getGridColumns = () => {
-  return props.tabType === 'instance' ? useInstanceGridColumns() : useGridColumns();
+  return props.tabType === 'instance'
+    ? useInstanceGridColumns()
+    : useGridColumns();
 };
 
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -675,7 +971,8 @@ const [Grid, gridApi] = useVbenVxeGrid({
 watch(
   () => props.tabType,
   (newTabType) => {
-    const newColumns = newTabType === 'instance' ? useInstanceGridColumns() : useGridColumns();
+    const newColumns =
+      newTabType === 'instance' ? useInstanceGridColumns() : useGridColumns();
     gridApi.setGridOptions({ columns: newColumns });
     nextTick(() => {
       handleRefresh();
@@ -691,15 +988,6 @@ const handleOpenDetail = (row) => {
   if (detailDrawerRef.value) {
     detailDrawerRef.value.open();
   }
-};
-
-// 处理快捷筛选
-const handleQuickFilter = (filterFn) => {
-  skipStatsUpdate.value = true;
-  filterFn();
-  setTimeout(() => {
-    skipStatsUpdate.value = false;
-  }, 100);
 };
 
 // 获取树形节点label值
@@ -730,7 +1018,7 @@ const getTreeNodeLabel = (nodeId) => {
 // tabsData根据tabType显示不同的标签
 const tabsData = computed(() => {
   if (props.tabType === 'instance') {
-    const dictOptions = getDictOptions(DICT_TYPE.DATA_RUN_STATUS, 'string');
+    const dictOptions = getDictOptions(DICT_TYPE.DATA_MATTER_STATUS, 'string');
     const tabs = [{ label: '全部' }];
     dictOptions.forEach((opt) => {
       tabs.push({ label: opt.label, value: opt.value });
@@ -752,17 +1040,15 @@ const createLabel = (item) => {
   let count = 0;
 
   if (props.tabType === 'instance') {
-    if (item.label === '全部') {
-      count = allDataStatusCounts.total;
-    } else {
-      count = allDataStatusCounts.statusMap[item.label] || 0;
-    }
+    count =
+      item.label === '全部'
+        ? allDataStatusCounts.total
+        : allDataStatusCounts.statusMap[item.label] || 0;
   } else {
-    if (item.label === '全部') {
-      count = allDataStatusCounts.total;
-    } else {
-      count = allDataStatusCounts.statusMap[item.label] || 0;
-    }
+    count =
+      item.label === '全部'
+        ? allDataStatusCounts.total
+        : allDataStatusCounts.statusMap[item.label] || 0;
   }
 
   return `${item.label}(${count})`;
@@ -792,9 +1078,15 @@ const handleFullShow = () => {
     <!--   详情抽屉-->
     <DetailDrawer
       ref="detailDrawerRef"
-      :title="props.tabType === 'instance' ? `${dataObj.detailObj?.name || '监测事件实例'}详情` : `${dataObj.detailObj?.categoryName || '分类'}详情`"
+      :title="
+        props.tabType === 'instance'
+          ? `${dataObj.detailObj?.name || '监测事件实例'}详情`
+          : `${dataObj.detailObj?.categoryName || '分类'}详情`
+      "
       :data="dataObj.detailObj"
-      :fields="props.tabType === 'instance' ? instanceDetailFields : detailFields"
+      :fields="
+        props.tabType === 'instance' ? instanceDetailFields : detailFields
+      "
     />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -802,7 +1094,10 @@ const handleFullShow = () => {
     <Grid>
       <!-- 三级状态 -->
       <template #table-title>
-        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
+        >
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -827,6 +1122,95 @@ const handleFullShow = () => {
           >
             分类：{{ getTreeNodeLabel(props.filterCategoryId) }}
           </ElTag>
+          <!-- 监测事件分类快捷筛选标签 -->
+          <template v-if="props.tabType !== 'instance'">
+            <!-- 分类代码筛选标签 -->
+            <ElTag
+              v-if="filterCategoryCode"
+              type="primary"
+              closable
+              @close="handleCancelCategoryCodeFilter"
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+            >
+              分类代码：{{ filterCategoryCode }}
+            </ElTag>
+            <!-- 上级分类筛选标签 -->
+            <ElTag
+              v-if="filterParentCategory"
+              type="success"
+              closable
+              @close="handleCancelParentCategoryFilter"
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+            >
+              上级分类：{{ filterParentCategory }}
+            </ElTag>
+            <!-- 关联监测部件类型筛选标签 -->
+            <ElTag
+              v-if="filterRelatedMonitorType"
+              type="warning"
+              closable
+              @close="handleCancelRelatedMonitorTypeFilter"
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+            >
+              关联监测部件类型：{{ filterRelatedMonitorType }}
+            </ElTag>
+            <!-- 关联管理事项类型筛选标签 -->
+            <ElTag
+              v-if="filterRelatedMatterType"
+              type="info"
+              closable
+              @close="handleCancelRelatedMatterTypeFilter"
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+            >
+              关联管理事项类型：{{ filterRelatedMatterType }}
+            </ElTag>
+          </template>
+          <!-- 事件等级筛选标签 - 两个标签页共用 -->
+          <ElTag
+            v-if="filterEventLevel"
+            type="danger"
+            closable
+            @close="handleCancelEventLevelFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            事件等级：{{
+              getDictObj(DICT_TYPE.DATA_EVENT_LEVEL, String(filterEventLevel))
+                ?.label || filterEventLevel
+            }}
+          </ElTag>
+          <!-- 监测事件实例快捷筛选标签 -->
+          <template v-if="props.tabType === 'instance'">
+            <!-- 18位标识码筛选标签 -->
+            <ElTag
+              v-if="filterUniqueCode"
+              type="primary"
+              closable
+              @close="handleCancelUniqueCodeFilter"
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+            >
+              18位标识码：{{ filterUniqueCode }}
+            </ElTag>
+            <!-- 所属分类筛选标签 -->
+            <ElTag
+              v-if="filterInstanceCategoryName"
+              type="success"
+              closable
+              @close="handleCancelInstanceCategoryNameFilter"
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+            >
+              所属分类：{{ filterInstanceCategoryName }}
+            </ElTag>
+            <!-- 关联监测部件筛选标签 -->
+            <ElTag
+              v-if="filterMonitorName"
+              type="warning"
+              closable
+              @close="handleCancelMonitorNameFilter"
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+            >
+              关联监测部件：{{ filterMonitorName }}
+            </ElTag>
+          </template>
         </div>
       </template>
       <template #toolbar-tools>
@@ -866,6 +1250,13 @@ const handleFullShow = () => {
             icon-name="search"
             @click="handleSerachShow"
           />
+          <!-- 仅在监测事件实例标签页显示统计按钮 -->
+          <IconButton
+            v-if="props.tabType === 'instance'"
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
+          />
           <IconButton
             content="全屏"
             icon-name="FullScreen"
@@ -895,6 +1286,96 @@ const handleFullShow = () => {
           {{ row.name }}
         </el-text>
       </template>
+      <!-- 分类代码插槽 -->
+      <template #categoryCode="{ row }">
+        <el-text
+          @click="handleCategoryCodeClick(row.categoryCode)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.categoryCode }}
+        </el-text>
+      </template>
+      <!-- 上级分类插槽 -->
+      <template #parentCategory="{ row }">
+        <el-text
+          @click="handleParentCategoryClick(row.parentCategory)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.parentCategory }}
+        </el-text>
+      </template>
+      <!-- 关联监测部件类型插槽 -->
+      <template #relatedMonitorType="{ row }">
+        <el-text
+          @click="handleRelatedMonitorTypeClick(row.relatedMonitorType)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.relatedMonitorType }}
+        </el-text>
+      </template>
+      <!-- 关联管理事项类型插槽 -->
+      <template #relatedMatterType="{ row }">
+        <el-text
+          @click="handleRelatedMatterTypeClick(row.relatedMatterType)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.relatedMatterType }}
+        </el-text>
+      </template>
+      <!-- 事件等级插槽 -->
+      <template #eventLevel="{ row }">
+        <ElTag
+          @click="handleEventLevelClick(row.eventLevel)"
+          :type="getEventLevelTagType(row.eventLevel)"
+          style="cursor: pointer"
+        >
+          {{
+            getDictObj(DICT_TYPE.DATA_EVENT_LEVEL, String(row.eventLevel))
+              ?.label || row.eventLevel
+          }}
+        </ElTag>
+      </template>
+      <!-- 18位标识码插槽 -->
+      <template #uniqueCode="{ row }">
+        <el-text
+          @click="handleUniqueCodeClick(row.uniqueCode)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.uniqueCode }}
+        </el-text>
+      </template>
+      <!-- 所属分类插槽（实例） -->
+      <template #instanceCategoryName="{ row }">
+        <el-text
+          @click="handleInstanceCategoryNameClick(row.categoryName)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.categoryName }}
+        </el-text>
+      </template>
+      <!-- 关联监测部件插槽 -->
+      <template #monitorName="{ row }">
+        <el-text
+          @click="handleMonitorNameClick(row.monitorName)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.monitorName }}
+        </el-text>
+      </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
@@ -906,6 +1387,33 @@ const handleFullShow = () => {
             content="编辑"
             icon-name="edit"
             @click="handleEdit(row)"
+          />
+          <!-- 监测事件分类标签页显示提交审核按钮 -->
+          <IconButton
+            v-if="props.tabType !== 'instance' && row.auditStatus === '3'"
+            content="提交审核"
+            icon-name="Position"
+            @click="handleSubmitAudit(row)"
+          />
+          <!-- 监测事件实例标签页显示处置、驳回、查看关联事项按钮 -->
+          <IconButton
+            v-if="props.tabType === 'instance'"
+            content="处置"
+            icon-name="Setting"
+            @click="handleHandle(row)"
+          />
+          <IconButton
+            v-if="props.tabType === 'instance'"
+            content="驳回"
+            icon-name="Close"
+            color="#F56C6C"
+            @click="handleReject(row)"
+          />
+          <IconButton
+            v-if="props.tabType === 'instance'"
+            content="查看关联事项"
+            icon-name="Link"
+            @click="handleViewRelatedMatter(row)"
           />
           <IconButton
             content="删除"
@@ -933,7 +1441,9 @@ const handleFullShow = () => {
             全部统计：监测事件实例数量{{ dataObj.statistics.totalCategories }}
           </span>
           <span v-else>
-            全部统计：分类数量{{ dataObj.statistics.totalCategories }}; 启用{{ dataObj.statusCounts.enabled || 0 }}; 禁用{{ dataObj.statusCounts.disabled || 0 }}
+            全部统计：分类数量{{ dataObj.statistics.totalCategories }}; 启用{{
+              dataObj.statusCounts.enabled || 0
+            }}; 禁用{{ dataObj.statusCounts.disabled || 0 }}
           </span>
         </div>
       </template>
@@ -943,6 +1453,21 @@ const handleFullShow = () => {
     <ImportExcelDialog ref="importExcelDialogRef" @success="handleRefresh" />
 
     <!-- 批量更新状态弹窗 -->
-    <BatchUpdateStatusDialog ref="batchUpdateStatusDialogRef" @success="handleRefresh" />
+    <BatchUpdateStatusDialog
+      ref="batchUpdateStatusDialogRef"
+      @success="handleRefresh"
+    />
+
+    <!-- 提交审核弹窗 -->
+    <SubmitAuditDialog ref="submitAuditDialogRef" @success="handleRefresh" />
+
+    <!-- 处置弹窗 -->
+    <HandleDialog ref="handleDialogRef" @success="handleRefresh" />
+
+    <!-- 驳回弹窗 -->
+    <RejectDialog ref="rejectDialogRef" @success="handleRefresh" />
+
+    <!-- 查看关联事项弹窗 -->
+    <ViewRelatedMatterDialog ref="viewRelatedMatterDialogRef" />
   </div>
 </template>

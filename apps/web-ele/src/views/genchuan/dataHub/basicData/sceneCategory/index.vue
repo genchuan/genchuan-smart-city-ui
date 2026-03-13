@@ -10,7 +10,7 @@ import { ElInput, ElLoading, ElMessage, ElTree } from 'element-plus';
 import {
   getCategoryTree,
   getInstancePage,
-} from '#/api/genchuan/dataHub/basicData/manageItem';
+} from '#/api/genchuan/dataHub/basicData/sceneCategory';
 import StatsFourVisualization from '#/components/stats/StatsFourVisualization.vue';
 import { useTreeExpandController } from '#/utils/useTreeExpandController';
 
@@ -41,14 +41,14 @@ const treeRef = ref(null);
 const isExpandAll = ref(true);
 
 const secondShow = ref(false);
-const activeName = ref('管理事项实例');
+const activeName = ref('应用场景实例');
 
 // 存储表格数据用于统计
 const tableDataList = ref([]);
 
 const tabArray = ref([
   {
-    label: '管理事项实例',
+    label: '应用场景实例',
     components: Table,
     showSecondary: true,
     secondShow: false,
@@ -57,7 +57,7 @@ const tabArray = ref([
     tabType: 'instance',
   },
   {
-    label: '管理事项分类',
+    label: '应用场景分类',
     components: Table,
     showSecondary: true,
     secondShow: false,
@@ -76,7 +76,7 @@ const handleTableDataUpdate = (data) => {
 };
 
 // 处理三级状态切换（不刷新统计区）
-const handleStatusChange = (status) => {
+const handleStatusChange = () => {
   skipStatsUpdate.value = true;
   // 使用setTimeout确保在query完成后重置标志
   setTimeout(() => {
@@ -86,7 +86,7 @@ const handleStatusChange = (status) => {
 
 // 刷新统计数据
 const refreshStatsData = async () => {
-  if (activeName.value !== '管理事项实例') return;
+  if (activeName.value !== '应用场景实例') return;
 
   try {
     const response = await getInstancePage({
@@ -105,7 +105,7 @@ const refreshStatsData = async () => {
 
 // 监听标签页切换和分类筛选变化
 watch([() => activeName.value, () => filterCategoryId.value], () => {
-  if (showStats.value && activeName.value === '管理事项实例') {
+  if (showStats.value && activeName.value === '应用场景实例') {
     refreshStatsData();
   }
 });
@@ -118,53 +118,44 @@ const statsData = computed(() => {
     return {
       cards: [
         {
-          title: '总事项数',
+          title: '总场景数',
           value: 0,
-          desc: '全部事项',
+          desc: '全部场景',
           icon: '📋',
           color: '#4A90E2',
         },
         {
-          title: '各分类事项数',
+          title: '各分类场景数',
           value: 0,
           desc: '分类统计',
           icon: '📂',
           color: '#50E3C2',
         },
         {
-          title: '待处置事项数',
+          title: '启用场景数',
           value: 0,
-          desc: '待处理',
-          icon: '⏳',
-          color: '#FF9F40',
+          desc: '已启用',
+          icon: '✅',
+          color: '#67C23A',
         },
         {
-          title: '已办结事项数',
+          title: '关联部件总数',
           value: 0,
-          desc: '已完成',
-          icon: '✅',
-          color: '#A17FE0',
+          desc: '部件统计',
+          icon: '🔧',
+          color: '#FF9F40',
         },
       ],
       pieChartOptions: [
-        { label: '事项分类占比', value: 'category', data: [] },
+        { label: '场景分类占比', value: 'category', data: [] },
         { label: '状态占比', value: 'status', data: [] },
-        { label: '主管部门占比', value: 'dept', data: [] },
+        { label: '负责人占比', value: 'manager', data: [] },
       ],
       barLineChartOptions: [
         {
-          label: '不同网格事项数量对比',
+          label: '不同网格场景数量对比',
           value: 'grid',
           type: 'bar',
-          data: {
-            xAxis: [],
-            series: [],
-          },
-        },
-        {
-          label: '近7日事项处置趋势',
-          value: 'trend',
-          type: 'line',
           data: {
             xAxis: [],
             series: [],
@@ -177,25 +168,25 @@ const statsData = computed(() => {
   // 计算卡片数据
   const totalCount = list.length;
 
-  // 各分类事项数（按分类名称统计不重复分类数）
+  // 各分类场景数（按分类名称统计不重复分类数）
   const categorySet = new Set(
     list.map((item) => item.categoryName).filter(Boolean),
   );
   const categoryCount = categorySet.size;
 
-  // 待处置事项数（状态为待处置的）
-  const pendingCount = list.filter((item) => {
-    const status = String(item.status);
-    return status === '1' || status === '待处置' || status === '待处理';
+  // 启用场景数（状态为启用的）- 使用字典映射判断
+  const enabledCount = list.filter((item) => {
+    const dict = getDictObj(DICT_TYPE.DATA_ENABLE_STATUS, String(item.status));
+    const statusLabel = dict?.label || String(item.status);
+    return statusLabel === '启用' || item.status === '0' || item.status === 0;
   }).length;
 
-  // 已办结事项数（状态为已办结的）
-  const completedCount = list.filter((item) => {
-    const status = String(item.status);
-    return status === '3' || status === '已办结' || status === '已完成';
-  }).length;
+  // 关联部件总数
+  const totalPartCount = list.reduce((sum, item) => {
+    return sum + (Number(item.partCount) || 0);
+  }, 0);
 
-  // 计算事项分类占比数据
+  // 计算场景分类占比数据
   const categoryMap = {};
   list.forEach((item) => {
     const name = item.categoryName || '未分类';
@@ -210,9 +201,9 @@ const statsData = computed(() => {
   const statusMap = {};
   list.forEach((item) => {
     // 使用字典获取状态的中文标签
-    const dict = getDictObj(DICT_TYPE.DATA_MATTER_STATUS, String(item.status));
+    const dict = getDictObj(DICT_TYPE.DATA_ENABLE_STATUS, String(item.status));
     const statusLabel =
-      dict?.label || item.statusName || `状态${item.status}` || '未知';
+      dict?.label || `状态${item.status}` || '未知';
     statusMap[statusLabel] = (statusMap[statusLabel] || 0) + 1;
   });
   const statusPieData = Object.entries(statusMap).map(([name, value]) => ({
@@ -220,18 +211,18 @@ const statsData = computed(() => {
     value,
   }));
 
-  // 计算主管部门占比数据
-  const deptMap = {};
+  // 计算负责人占比数据
+  const managerMap = {};
   list.forEach((item) => {
-    const name = item.deptName || '未知部门';
-    deptMap[name] = (deptMap[name] || 0) + 1;
+    const name = item.manager || '未知负责人';
+    managerMap[name] = (managerMap[name] || 0) + 1;
   });
-  const deptPieData = Object.entries(deptMap).map(([name, value]) => ({
+  const managerPieData = Object.entries(managerMap).map(([name, value]) => ({
     name,
     value,
   }));
 
-  // 计算不同网格事项数量对比（柱状图）
+  // 计算不同网格场景数量对比（柱状图）
   const gridMap = {};
   list.forEach((item) => {
     const name = item.gridName || '未知网格';
@@ -240,82 +231,50 @@ const statsData = computed(() => {
   const gridNames = Object.keys(gridMap);
   const gridValues = Object.values(gridMap);
 
-  // 计算近7日事项处置趋势（折线图）
-  const last7Days = [];
-  const today = new Date();
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    last7Days.push(date.toISOString().slice(0, 10));
-  }
-
-  const dailyDealMap = {};
-  last7Days.forEach((day) => {
-    dailyDealMap[day] = 0;
-  });
-
-  list.forEach((item) => {
-    if (item.dealTime) {
-      const dealDate = new Date(item.dealTime).toISOString().slice(0, 10);
-      if (dailyDealMap.hasOwnProperty(dealDate)) {
-        dailyDealMap[dealDate]++;
-      }
-    }
-  });
-
   return {
     cards: [
       {
-        title: '总事项数',
+        title: '总场景数',
         value: totalCount,
-        desc: '全部事项',
+        desc: '全部场景',
         icon: '📋',
         color: '#4A90E2',
       },
       {
-        title: '各分类事项数',
+        title: '各分类场景数',
         value: categoryCount,
         desc: '分类统计',
         icon: '📂',
         color: '#50E3C2',
       },
       {
-        title: '待处置事项数',
-        value: pendingCount,
-        desc: '待处理',
-        icon: '⏳',
-        color: '#FF9F40',
+        title: '启用场景数',
+        value: enabledCount,
+        desc: '已启用',
+        icon: '✅',
+        color: '#67C23A',
       },
       {
-        title: '已办结事项数',
-        value: completedCount,
-        desc: '已完成',
-        icon: '✅',
-        color: '#A17FE0',
+        title: '关联部件总数',
+        value: totalPartCount,
+        desc: '部件统计',
+        icon: '🔧',
+        color: '#FF9F40',
       },
     ],
     pieChartOptions: [
-      { label: '事项分类占比', value: 'category', data: categoryPieData },
+      { label: '场景分类占比', value: 'category', data: categoryPieData },
       { label: '状态占比', value: 'status', data: statusPieData },
-      { label: '主管部门占比', value: 'dept', data: deptPieData },
+      { label: '负责人占比', value: 'manager', data: managerPieData },
     ],
     barLineChartOptions: [
       {
-        label: '不同网格事项数量对比',
+        label: '不同网格场景数量对比',
         value: 'grid',
         type: 'bar',
         data: {
           xAxis: gridNames,
           series: gridValues,
-        },
-      },
-      {
-        label: '近7日事项处置趋势',
-        value: 'trend',
-        type: 'line',
-        data: {
-          xAxis: last7Days.map((d) => d.slice(5)), // 显示 MM-DD 格式
-          series: last7Days.map((d) => dailyDealMap[d]),
         },
       },
     ],
@@ -393,9 +352,9 @@ const handleClearFilter = () => {
 </script>
 <template>
   <div class="common-index">
-    <!-- 统计可视化组件，仅在管理事项实例标签页且showStats为true时显示 -->
+    <!-- 统计可视化组件，仅在应用场景实例标签页且showStats为true时显示 -->
     <StatsFourVisualization
-      v-if="showStats && activeName === '管理事项实例'"
+      v-if="showStats && activeName === '应用场景实例'"
       :cards="statsData.cards"
       :pie-chart-options="statsData.pieChartOptions"
       :bar-line-chart-options="statsData.barLineChartOptions"

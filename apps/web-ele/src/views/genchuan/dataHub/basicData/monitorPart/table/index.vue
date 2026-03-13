@@ -512,10 +512,7 @@ const getTableData = async (pageObj) => {
       // 根据字典标签获取对应的字典值
       let runStatusValue = '';
       if (activeName.value !== '全部') {
-        const dictOptions = getDictOptions(
-          DICT_TYPE.DATA_RUN_STATUS,
-          'string',
-        );
+        const dictOptions = getDictOptions(DICT_TYPE.DATA_RUN_STATUS, 'string');
         const selectedOption = dictOptions.find(
           (opt) => opt.label === activeName.value,
         );
@@ -848,10 +845,7 @@ const tabsData = computed(() => {
   if (props.tabType === 'instance') {
     // 监测部件实例使用 DATA_MANAGEPART_RUNSTATUS 字典
     // 动态获取字典选项作为三级状态标签
-    const dictOptions = getDictOptions(
-      DICT_TYPE.DATA_RUN_STATUS,
-      'string',
-    );
+    const dictOptions = getDictOptions(DICT_TYPE.DATA_RUN_STATUS, 'string');
     const tabs = [{ label: '全部' }];
     dictOptions.forEach((opt) => {
       tabs.push({ label: opt.label, value: opt.value });
