@@ -1,16 +1,26 @@
 <script setup>
 import { ref } from 'vue';
 
-import monitor from './monitor/index.vue';
-import monitorchart from './monitor/table/chart.vue';
-import reportchart from './report/customize/chart.vue';
-import report from './report/index.vue';
+import customize from './customize/index.vue';
+import customizechart from './customize/table/chart.vue';
+import monitor from './day/index.vue';
+import monitorchart from './day/table/chart.vue';
+import half from './half/index.vue';
+import halfchart from './half/table/chart.vue';
+import month from './month/index.vue';
+import monthchart from './month/table/chart.vue';
+import season from './season/index.vue';
+import seasonchart from './season/table/chart.vue';
+import week from './week/index.vue';
+import weekchart from './week/table/chart.vue';
+import year from './year/index.vue';
+import yearchart from './year/table/chart.vue';
 
 import '#/components/page/index.scss';
 
 const tabArray = ref([
   {
-    label: '月报',
+    label: '日报',
     components: monitor,
     showSecondary: false,
     secondShow: false,
@@ -19,13 +29,58 @@ const tabArray = ref([
     chartComponet: monitorchart,
   },
   {
-    label: '自定义报表',
-    components: report,
+    label: '周报',
+    components: week,
     showSecondary: false,
     secondShow: false,
     arrowShow: false,
     arrowState: false,
-    chartComponet: reportchart,
+    chartComponet: weekchart,
+  },
+  {
+    label: '月报',
+    components: month,
+    showSecondary: false,
+    secondShow: false,
+    arrowShow: false,
+    arrowState: false,
+    chartComponet: monthchart,
+  },
+  {
+    label: '季报',
+    components: season,
+    showSecondary: false,
+    secondShow: false,
+    arrowShow: false,
+    arrowState: false,
+    chartComponet: seasonchart,
+  },
+  {
+    label: '半年报',
+    components: half,
+    showSecondary: false,
+    secondShow: false,
+    arrowShow: false,
+    arrowState: false,
+    chartComponet: halfchart,
+  },
+  {
+    label: '年报',
+    components: year,
+    showSecondary: false,
+    secondShow: false,
+    arrowShow: false,
+    arrowState: false,
+    chartComponet: yearchart,
+  },
+  {
+    label: '自定义报表',
+    components: customize,
+    showSecondary: false,
+    secondShow: false,
+    arrowShow: false,
+    arrowState: false,
+    chartComponet: customizechart,
   },
 ]);
 
@@ -89,10 +144,10 @@ const chartComponet = ref({
       margin-left: 0px !important;
     }
     :deep(.el-tabs__item) {
-      padding-right: 10px !important;
+      padding-right: 5px !important;
     }
     :deep(.el-tabs__item:nth-child(2)) {
-      padding-left: 10px !important;
+      padding-left: 5px !important;
     }
   }
 }
