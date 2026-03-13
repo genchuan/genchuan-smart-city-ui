@@ -1034,17 +1034,11 @@ export const instanceDetailFields = [
     label: '运行状态',
     type: 'tag',
     formatter: (value) => {
-      const dict = getDictObj(
-        DICT_TYPE.DATA_RUN_STATUS,
-        String(value),
-      );
+      const dict = getDictObj(DICT_TYPE.DATA_RUN_STATUS, String(value));
       return dict ? dict.label : value;
     },
     tagType: (value) => {
-      const dict = getDictObj(
-        DICT_TYPE.DATA_RUN_STATUS,
-        String(value),
-      );
+      const dict = getDictObj(DICT_TYPE.DATA_RUN_STATUS, String(value));
       return dict ? dict.colorType : 'primary';
     },
   },

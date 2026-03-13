@@ -6,12 +6,12 @@ import { useVbenModal } from '@vben/common-ui';
 import { ElButton, ElMessage, ElUpload } from 'element-plus';
 import * as XLSX from 'xlsx';
 
-import { importInstance } from '#/api/genchuan/dataHub/basicData/monitorEvent';
+import { importInstance } from '#/api/genchuan/dataHub/basicData/sceneCategory';
 
 const emit = defineEmits(['success']);
 
 const [Modal, modalApi] = useVbenModal({
-  title: '导入监测事件实例',
+  title: '导入应用场景实例',
   width: 500,
   onCancel() {
     modalApi.close();
@@ -28,55 +28,52 @@ const validationResult = ref(null);
 
 // 下载导入模板
 const downloadTemplate = () => {
-  // 创建模板数据 - 包含监测事件实例表格的所有字段
+  // 创建模板数据 - 包含应用场景实例表格的所有字段
   const templateData = [
     [
-      '事件名称',
-      '18位标识码',
-      '所属分类',
-      '关联监测部件',
-      '事发坐标',
-      '事件等级',
-      '描述信息',
+      '场景名称',
+      '场景编码',
+      '关联分类',
+      '所在网格',
+      '涉及设施',
+      '负责人',
+      '处置流程',
       '状态',
       '创建人',
       '创建时间',
-      '处置人',
-      '处置时间',
-      '行政区划归属',
-      '关联管理事项',
+      '关联部件数',
+      '关联事件数',
+      '启用/停用时间',
     ],
     [
-      '示例-设备异常',
-      'SY2025030100000101',
-      '设备故障',
-      '温度传感器',
-      '117.6589,24.5123',
-      '2',
-      '温度传感器异常需要维修',
-      '1',
+      '示例-城市管理场景',
+      'CJ000001',
+      '城市管理',
+      '网格01',
+      '监控设备',
       '张三',
+      '监测→预警→处置',
+      '1',
+      'admin',
       '2025-03-06 10:30:00',
-      '李四',
-      '2025-03-06 14:30:00',
-      '芗城区',
-      '设备维护',
+      '5',
+      '10',
+      '2025-03-06 10:30:00',
     ],
     [
-      '示例-环境异常',
-      'HJ2025030100000202',
+      '示例-环境监测场景',
+      'HJ000002',
       '环境监测',
+      '网格02',
       '空气质量传感器',
-      '117.7056,24.4987',
+      '李四',
+      '采集→分析→预警',
       '1',
-      '空气质量异常',
-      '1',
-      '王五',
+      'admin',
       '2025-03-06 09:00:00',
-      '赵六',
-      '2025-03-06 11:00:00',
-      '龙文区',
-      '环境治理',
+      '3',
+      '8',
+      '2025-03-06 09:00:00',
     ],
   ];
 
@@ -92,7 +89,7 @@ const downloadTemplate = () => {
   });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = '监测事件实例导入模板.xlsx';
+  link.download = '应用场景实例导入模板.xlsx';
   document.body.append(link);
   link.click();
   link.remove();

@@ -182,6 +182,7 @@ const DATA_DICT = {
   DATA_ENABLE_STATUS: 'status_name', // 启用状态
   DATA_CORE_INDICATORS: 'sys_index', // 核心监测指标
   DATA_EVENT_LEVEL: 'sys_event_level', // 事件等级
+  DATA_TYPE: 'data_type', // 数据类型
 } as const;
 
 /** 字典类型枚举 - 统一导出 */

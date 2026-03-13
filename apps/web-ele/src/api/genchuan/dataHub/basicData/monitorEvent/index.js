@@ -82,7 +82,7 @@ export function importInstance(file) {
  * @param {number} status - 目标运行状态
  */
 export function batchUpdateInstanceStatus(ids, status) {
-  return requestClient.post('/data/event-instance/update-status-name-batch', {
+  return requestClient.put('/data/event-instance/batch-update-status', {
     ids,
     status,
   });

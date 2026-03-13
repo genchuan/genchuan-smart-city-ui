@@ -1,7 +1,7 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
-/** 监测事件分类表单配置 */
+/** 应用场景分类表单配置 */
 export function useFormSchema(treeData = []) {
   return [
     {
@@ -74,37 +74,29 @@ export function useFormSchema(treeData = []) {
       },
     },
     {
-      fieldName: 'relatedMonitorType',
-      label: '关联监测部件类型',
+      fieldName: 'applicableArea',
+      label: '适用区域',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入关联监测部件类型',
+        placeholder: '请输入适用区域',
       },
     },
     {
-      fieldName: 'relatedMatterType',
-      label: '关联管理事项类型',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入关联管理事项类型',
-      },
-    },
-    {
-      fieldName: 'eventLevel',
-      label: '事件等级',
+      fieldName: 'dataType',
+      label: '关联数据类型',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择事件等级',
-        options: getDictOptions(DICT_TYPE.DATA_EVENT_LEVEL, 'string'),
+        placeholder: '请选择关联数据类型',
+        options: getDictOptions(DICT_TYPE.DATA_TYPE, 'string'),
       },
-      rules: 'required',
     },
     {
-      fieldName: 'pushRule',
-      label: '推送规则',
-      component: 'Input',
+      fieldName: 'categoryType',
+      label: '分类类型',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入推送规则',
+        placeholder: '请选择分类类型',
+        options: getDictOptions(DICT_TYPE.DATA_CATEGORY_TYPE, 'string'),
       },
     },
     {
@@ -146,34 +138,33 @@ export function useFormSchema(treeData = []) {
   ];
 }
 
-/** 监测事件实例表单配置 */
+/** 应用场景实例表单配置 */
 export function useInstanceFormSchema(treeData = []) {
   return [
     {
-      fieldName: 'name',
-      label: '事件名称',
+      fieldName: 'sceneName',
+      label: '场景名称',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入事件名称',
+        placeholder: '请输入场景名称',
       },
       rules: 'required',
     },
     {
-      fieldName: 'uniqueCode',
-      label: '18位标识码',
+      fieldName: 'sceneCode',
+      label: '场景编码',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入18位标识码',
-        maxlength: 18,
+        placeholder: '请输入场景编码',
       },
       rules: 'required',
     },
     {
       fieldName: 'categoryName',
-      label: '所属分类',
+      label: '关联分类',
       component: 'TreeSelect',
       componentProps: {
-        placeholder: '请选择所属分类',
+        placeholder: '请选择关联分类',
         data: treeData,
         props: {
           value: 'id',
@@ -222,37 +213,35 @@ export function useInstanceFormSchema(treeData = []) {
       rules: 'required',
     },
     {
-      fieldName: 'monitorName',
-      label: '关联监测部件',
+      fieldName: 'gridName',
+      label: '所在网格',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入关联监测部件',
+        placeholder: '请输入所在网格',
       },
     },
     {
-      fieldName: 'coordinate',
-      label: '事发坐标',
+      fieldName: 'facilities',
+      label: '涉及设施',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入事发坐标',
+        placeholder: '请输入涉及设施',
       },
     },
     {
-      fieldName: 'eventLevel',
-      label: '事件等级',
-      component: 'Select',
+      fieldName: 'manager',
+      label: '负责人',
+      component: 'Input',
       componentProps: {
-        placeholder: '请选择事件等级',
-        options: getDictOptions(DICT_TYPE.DATA_EVENT_LEVEL, 'string'),
+        placeholder: '请输入负责人',
       },
     },
     {
-      fieldName: 'description',
-      label: '描述信息',
-      component: 'Textarea',
+      fieldName: 'process',
+      label: '处置流程',
+      component: 'Input',
       componentProps: {
-        placeholder: '请输入描述信息',
-        rows: 3,
+        placeholder: '请输入处置流程',
       },
     },
     {
@@ -261,42 +250,18 @@ export function useInstanceFormSchema(treeData = []) {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
-        options: getDictOptions(DICT_TYPE.DATA_MATTER_STATUS, 'string'),
+        options: getDictOptions(DICT_TYPE.DATA_ENABLE_STATUS, 'string'),
       },
       rules: 'required',
     },
     {
-      fieldName: 'handler',
-      label: '处置人',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入处置人',
-      },
-    },
-    {
-      fieldName: 'dealTime',
-      label: '处置时间',
+      fieldName: 'statusTime',
+      label: '启用/停用时间',
       component: 'DatePicker',
       componentProps: {
-        placeholder: '请选择处置时间',
+        placeholder: '请选择启用/停用时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss',
-      },
-    },
-    {
-      fieldName: 'areaName',
-      label: '行政区划归属',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入行政区划归属',
-      },
-    },
-    {
-      fieldName: 'matterName',
-      label: '关联管理事项',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入关联管理事项',
+        valueFormat: 'timestamp',
       },
     },
     {
@@ -307,35 +272,52 @@ export function useInstanceFormSchema(treeData = []) {
         placeholder: '请输入创建人',
       },
     },
-  ];
-}
-
-/** 监测事件实例搜索表单配置 */
-export function useInstanceSearchFormSchema(treeData = []) {
-  return [
     {
-      fieldName: 'name',
-      label: '事件名称',
-      component: 'Input',
+      fieldName: 'partCount',
+      label: '关联部件数',
+      component: 'InputNumber',
       componentProps: {
-        placeholder: '请输入事件名称',
+        placeholder: '请输入关联部件数',
+        min: 0,
       },
     },
     {
-      fieldName: 'uniqueCode',
-      label: '18位标识码',
+      fieldName: 'eventCount',
+      label: '关联事件数',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入关联事件数',
+        min: 0,
+      },
+    },
+  ];
+}
+
+/** 应用场景实例搜索表单配置 */
+export function useInstanceSearchFormSchema(treeData = []) {
+  return [
+    {
+      fieldName: 'sceneName',
+      label: '场景名称',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入18位标识码',
-        maxlength: 18,
+        placeholder: '请输入场景名称',
+      },
+    },
+    {
+      fieldName: 'sceneCode',
+      label: '场景编码',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入场景编码',
       },
     },
     {
       fieldName: 'categoryId',
-      label: '所属分类',
+      label: '关联分类',
       component: 'TreeSelect',
       componentProps: {
-        placeholder: '请选择所属分类',
+        placeholder: '请选择关联分类',
         data: treeData,
         props: {
           value: 'id',
@@ -359,13 +341,13 @@ export function useInstanceSearchFormSchema(treeData = []) {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
-        options: getDictOptions(DICT_TYPE.DATA_MATTER_STATUS, 'string'),
+        options: getDictOptions(DICT_TYPE.DATA_ENABLE_STATUS, 'string'),
       },
     },
   ];
 }
 
-/** 监测事件分类表格列配置 */
+/** 应用场景分类表格列配置 */
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
@@ -391,31 +373,25 @@ export function useGridColumns() {
       slots: { default: 'parentCategory' },
     },
     {
-      field: 'relatedMonitorType',
-      title: '关联监测部件类型',
-      minWidth: 180,
-      sortable: true,
-      slots: { default: 'relatedMonitorType' },
-    },
-    {
-      field: 'relatedMatterType',
-      title: '关联管理事项类型',
-      minWidth: 180,
-      sortable: true,
-      slots: { default: 'relatedMatterType' },
-    },
-    {
-      field: 'eventLevel',
-      title: '事件等级',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'eventLevel' },
-    },
-    {
-      field: 'pushRule',
-      title: '推送规则',
+      field: 'applicableArea',
+      title: '适用区域',
       minWidth: 150,
       sortable: true,
+      slots: { default: 'applicableArea' },
+    },
+    {
+      field: 'dataType',
+      title: '关联数据类型',
+      minWidth: 150,
+      sortable: true,
+      slots: { default: 'dataType' },
+    },
+    {
+      field: 'categoryType',
+      title: '分类类型',
+      minWidth: 120,
+      sortable: true,
+      slots: { default: 'categoryType' },
     },
     {
       field: 'status',
@@ -464,55 +440,55 @@ export function useGridColumns() {
   ];
 }
 
-/** 监测事件实例表格列配置 */
+/** 应用场景实例表格列配置 */
 export function useInstanceGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
     {
-      field: 'name',
-      title: '事件名称',
+      field: 'sceneName',
+      title: '场景名称',
       minWidth: 180,
       sortable: true,
-      slots: { default: 'name' },
+      slots: { default: 'sceneName' },
     },
     {
-      field: 'uniqueCode',
-      title: '18位标识码',
-      minWidth: 180,
+      field: 'sceneCode',
+      title: '场景编码',
+      minWidth: 120,
       sortable: true,
-      slots: { default: 'uniqueCode' },
+      slots: { default: 'sceneCode' },
     },
     {
       field: 'categoryName',
-      title: '所属分类',
+      title: '关联分类',
       minWidth: 150,
       sortable: true,
       slots: { default: 'instanceCategoryName' },
     },
     {
-      field: 'monitorName',
-      title: '关联监测部件',
+      field: 'gridName',
+      title: '所在网格',
       minWidth: 150,
       sortable: true,
-      slots: { default: 'monitorName' },
+      slots: { default: 'gridName' },
     },
     {
-      field: 'coordinate',
-      title: '事发坐标',
+      field: 'facilities',
+      title: '涉及设施',
       minWidth: 150,
       sortable: true,
     },
     {
-      field: 'eventLevel',
-      title: '事件等级',
+      field: 'manager',
+      title: '负责人',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'eventLevel' },
+      slots: { default: 'manager' },
     },
     {
-      field: 'description',
-      title: '描述信息',
-      minWidth: 200,
+      field: 'process',
+      title: '处置流程',
+      minWidth: 150,
       sortable: true,
     },
     {
@@ -522,7 +498,7 @@ export function useInstanceGridColumns() {
       sortable: true,
       cellRender: {
         name: 'CellDict',
-        props: { type: DICT_TYPE.DATA_MATTER_STATUS },
+        props: { type: DICT_TYPE.DATA_ENABLE_STATUS },
       },
     },
     {
@@ -538,32 +514,26 @@ export function useInstanceGridColumns() {
       sortable: true,
     },
     {
-      field: 'handler',
-      title: '处置人',
-      minWidth: 100,
+      field: 'partCount',
+      title: '关联部件数',
+      minWidth: 120,
       sortable: true,
     },
     {
-      field: 'dealTime',
-      title: '处置时间',
+      field: 'eventCount',
+      title: '关联事件数',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'statusTime',
+      title: '启用/停用时间',
       minWidth: 180,
       sortable: true,
     },
     {
-      field: 'areaName',
-      title: '行政区划归属',
-      minWidth: 150,
-      sortable: true,
-    },
-    {
-      field: 'matterName',
-      title: '关联管理事项',
-      minWidth: 150,
-      sortable: true,
-    },
-    {
       title: '操作',
-      width: 150,
+      width: 100,
       fixed: 'right',
       slots: { default: 'actions' },
     },
@@ -571,42 +541,53 @@ export function useInstanceGridColumns() {
 }
 
 export const textObj = {
-  editText: '编辑监测事件分类',
-  addText: '新增监测事件分类',
-  excelName: '监测事件分类列表',
-  excelAllName: '监测事件分类数据.xlsx',
+  editText: '编辑应用场景分类',
+  addText: '新增应用场景分类',
+  excelName: '应用场景分类列表',
+  excelAllName: '应用场景分类数据.xlsx',
   total: ' 总计: 分类数量0',
 };
 
 export const instanceTextObj = {
-  editText: '编辑监测事件实例',
-  addText: '新增监测事件实例',
-  excelName: '监测事件实例列表',
-  excelAllName: '监测事件实例数据.xlsx',
-  total: ' 总计: 监测事件实例数量0',
+  editText: '编辑应用场景实例',
+  addText: '新增应用场景实例',
+  excelName: '应用场景实例列表',
+  excelAllName: '应用场景实例数据.xlsx',
+  total: ' 总计: 应用场景实例数量0',
 };
 
-/** 监测事件分类详情抽屉字段配置 */
+/** 应用场景分类详情抽屉字段配置 */
 export const detailFields = [
   { key: 'categoryName', label: '分类名称' },
   { key: 'categoryCode', label: '分类代码' },
   { key: 'parentCategory', label: '上级分类' },
-  { key: 'relatedMonitorType', label: '关联监测部件类型' },
-  { key: 'relatedMatterType', label: '关联管理事项类型' },
+  { key: 'applicableArea', label: '适用区域' },
   {
-    key: 'eventLevel',
-    label: '事件等级',
+    key: 'dataType',
+    label: '关联数据类型',
     type: 'tag',
     formatter: (value) => {
-      const dict = getDictObj(DICT_TYPE.DATA_EVENT_LEVEL, String(value));
+      const dict = getDictObj(DICT_TYPE.DATA_TYPE, String(value));
       return dict ? dict.label : value;
     },
     tagType: (value) => {
-      const dict = getDictObj(DICT_TYPE.DATA_EVENT_LEVEL, String(value));
+      const dict = getDictObj(DICT_TYPE.DATA_TYPE, String(value));
       return dict ? dict.colorType : 'primary';
     },
   },
-  { key: 'pushRule', label: '推送规则' },
+  {
+    key: 'categoryType',
+    label: '分类类型',
+    type: 'tag',
+    formatter: (value) => {
+      const dict = getDictObj(DICT_TYPE.DATA_CATEGORY_TYPE, String(value));
+      return dict ? dict.label : value;
+    },
+    tagType: (value) => {
+      const dict = getDictObj(DICT_TYPE.DATA_CATEGORY_TYPE, String(value));
+      return dict ? dict.colorType : 'primary';
+    },
+  },
   {
     key: 'status',
     label: '状态',
@@ -638,44 +619,31 @@ export const detailFields = [
   },
 ];
 
-/** 监测事件实例详情抽屉字段配置 */
+/** 应用场景实例详情抽屉字段配置 */
 export const instanceDetailFields = [
-  { key: 'name', label: '事件名称' },
-  { key: 'uniqueCode', label: '18位标识码' },
-  { key: 'categoryName', label: '所属分类' },
-  { key: 'monitorName', label: '关联监测部件' },
-  { key: 'coordinate', label: '事发坐标' },
-  {
-    key: 'eventLevel',
-    label: '事件等级',
-    type: 'tag',
-    formatter: (value) => {
-      const dict = getDictObj(DICT_TYPE.DATA_EVENT_LEVEL, String(value));
-      return dict ? dict.label : value;
-    },
-    tagType: (value) => {
-      const dict = getDictObj(DICT_TYPE.DATA_EVENT_LEVEL, String(value));
-      return dict ? dict.colorType : 'primary';
-    },
-  },
-  { key: 'description', label: '描述信息' },
+  { key: 'sceneName', label: '场景名称' },
+  { key: 'sceneCode', label: '场景编码' },
+  { key: 'categoryName', label: '关联分类' },
+  { key: 'gridName', label: '所在网格' },
+  { key: 'facilities', label: '涉及设施' },
+  { key: 'manager', label: '负责人' },
+  { key: 'process', label: '处置流程' },
   {
     key: 'status',
     label: '状态',
     type: 'tag',
     formatter: (value) => {
-      const dict = getDictObj(DICT_TYPE.DATA_MATTER_STATUS, String(value));
+      const dict = getDictObj(DICT_TYPE.DATA_ENABLE_STATUS, String(value));
       return dict ? dict.label : value;
     },
     tagType: (value) => {
-      const dict = getDictObj(DICT_TYPE.DATA_MATTER_STATUS, String(value));
+      const dict = getDictObj(DICT_TYPE.DATA_ENABLE_STATUS, String(value));
       return dict ? dict.colorType : 'primary';
     },
   },
   { key: 'creator', label: '创建人' },
   { key: 'createTime', label: '创建时间' },
-  { key: 'handler', label: '处置人' },
-  { key: 'dealTime', label: '处置时间' },
-  { key: 'areaName', label: '行政区划归属' },
-  { key: 'matterName', label: '关联管理事项' },
+  { key: 'partCount', label: '关联部件数' },
+  { key: 'eventCount', label: '关联事件数' },
+  { key: 'statusTime', label: '启用/停用时间' },
 ];
