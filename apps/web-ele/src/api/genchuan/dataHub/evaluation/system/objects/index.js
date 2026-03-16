@@ -1,4 +1,4 @@
-import { requestClient } from '#/api/request';
+import { requestClient } from '#/api/request.js';
 
 /** 全量联表查询（分页）- 用于统计或导出全部 */
 export function getAllPage(params) {

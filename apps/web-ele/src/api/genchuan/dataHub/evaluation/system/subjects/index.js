@@ -1,5 +1,5 @@
-// <!-- 文件 1: subject.js (API) -->
-import { requestClient } from '#/api/request';
+// <!-- 文件 1: index.js (API) -->
+import { requestClient } from '#/api/request.js';
 
 /** 全量联表查询（分页）- 用于列表展示 */
 export function getAllPage(params) {

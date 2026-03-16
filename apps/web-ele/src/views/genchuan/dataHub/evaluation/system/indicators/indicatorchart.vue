@@ -1,6 +1,6 @@
 <script setup>
 import { reactive, onMounted, defineExpose } from 'vue';
-import { getOverview } from '#/api/genchuan/dataHub/evaluation/system/indicators';
+import { getOverview } from '#/api/genchuan/dataHub/evaluation/system/indicators/index.js';
 
 import Card from '#/components/stats/card.vue';
 import Circle from '#/components/stats/circle.vue';

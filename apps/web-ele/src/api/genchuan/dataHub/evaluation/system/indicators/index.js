@@ -1,4 +1,4 @@
-import { requestClient } from '#/api/request';
+import { requestClient } from '#/api/request.js';
 
 /** 分页查询（全部/启用/停用） */
 export function getAllPage(params) {

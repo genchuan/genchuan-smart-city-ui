@@ -20,7 +20,7 @@ import {
   saveFullIndexSystem,   // 新增的复合保存接口
   getObjectTypeSimpleList,
   getStatusSimpleList,
-} from '#/api/genchuan/dataHub/evaluation/system/indicators';
+} from '#/api/genchuan/dataHub/evaluation/system/indicators/index.js';
 import detailDrawer from './detail.vue';
 import CategoryManager from '#/views/genchuan/dataHub/evaluation/system/components/CategoryManager.vue'; // 新增组件
 import {

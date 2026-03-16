@@ -22,7 +22,7 @@ import {
   getAreaSimpleList,
   getObjectTypeSimpleList,
   getRelatedObjectSimpleList,
-} from '#/api/genchuan/dataHub/evaluation/system/objects.js';
+} from '#/api/genchuan/dataHub/evaluation/system/objects/index.js';
 
 import garageDetailDrawer from './detail.vue';
 import {
