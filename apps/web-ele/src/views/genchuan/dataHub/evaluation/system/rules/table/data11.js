@@ -644,14 +644,10 @@ export function useRuleItemFormSchema() {
   ];
 }
 
-/** 根据标签页获取表格列配置（删除否决项数量列） */
+/** 根据标签页获取表格列配置 */
 export function getGridColumnsByTab(tab) {
   const baseColumns = [
-    {
-      type: 'checkbox',
-      width: 40,
-      visible: true
-    }
+    { type: 'checkbox', width: 40, visible: tab === '全部' }
   ];
 
   const commonColumns = [
@@ -745,7 +741,7 @@ export function getGridColumnsByTab(tab) {
       title: '停用原因',
       minWidth: 200,
       sortable: false,
-      formatter: (row) => row.changeLog?.substring(0, 50) + (row.changeLog?.length > 50 ? '...' : '')
+      formatter: (row) => row.changeLog?.substring(0, 50) + (row.changeLog?.length > 50 ? '...'  : '')
     },
     {
       field: 'itemCount',
@@ -753,6 +749,7 @@ export function getGridColumnsByTab(tab) {
       minWidth: 120,
       sortable: true
     },
+    // 删除了 vetoCount 列
     {
       field: 'createByName',
       title: '创建人',
@@ -789,7 +786,7 @@ export function getGridColumnsByTab(tab) {
   }
 
   const columns = [
-    ...baseColumns,
+    ...(tab === '全部' ? baseColumns : []),
     ...commonColumns,
     ...dynamicColumns,
     {

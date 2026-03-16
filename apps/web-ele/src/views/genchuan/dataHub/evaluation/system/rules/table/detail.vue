@@ -96,8 +96,6 @@ defineExpose({
           </table>
         </div>
       </div>
-
-      <!-- 删除了否决项列表卡片 -->
     </div>
   </DetailDrawer>
 </template>

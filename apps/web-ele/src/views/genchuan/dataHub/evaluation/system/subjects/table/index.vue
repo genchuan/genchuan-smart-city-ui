@@ -21,7 +21,7 @@ import {
   getUserSimpleList,
   getSubjectTypeSimpleList,
   getStatusSimpleList,
-} from '#/api/genchuan/dataHub/evaluation/system/subject.js';
+} from '#/api/genchuan/dataHub/evaluation/system/subjects/index.js';
 
 import subjectDetailDrawer from './detail.vue';
 import {
