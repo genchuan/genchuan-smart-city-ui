@@ -2,26 +2,35 @@
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { ElImage, ElLoading, ElMessage } from 'element-plus';
+import {
+  ElImage,
+  ElLoading,
+  ElMessage,
+  ElTable,
+  ElTableColumn,
+} from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getRectifyList } from '#/api/genchuan/industry/marketsupervision/index.js';
+import {
+  deleteRectifyEvidence,
+  exporReviewExcel,
+  getRectifyEvidence,
+  getRectifyList,
+} from '#/api/genchuan/industry/marketsupervision/index.js';
 import {
   createParkLot,
-  deleteParkLot,
   updateParkLot,
 } from '#/api/genchuan/industry/park/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
-import { exportToExcel } from '#/utils/excel.js';
-// 引入封装后的详情抽屉组件
-import ParkDetailDrawer from '#/views/genchuan/industry/page/vehicle/appear/table/detail.vue';
 
 import { useFormSchema, useGridColumns } from './data';
+// 引入封装后的详情抽屉组件
+import ParkDetailDrawer from './detail.vue';
 
 const props = defineProps({
   secondShow: {
@@ -89,7 +98,11 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  exportToExcel(dataObj.apilist, '数据导出', '数据导出');
+  const data = await exporReviewExcel();
+  downloadFileFromBlobPart({
+    fileName: '整改通知书复审台账.xls',
+    source: data,
+  });
 }
 
 /** 创建角色 */
@@ -116,7 +129,7 @@ async function handleDelete(row) {
     text: $t('ui.actionMessage.deleting'),
   });
   try {
-    await deleteParkLot(row.id);
+    await deleteRectifyEvidence(row.id);
     ElMessage.success($t('ui.actionMessage.deleteSuccess'));
     handleRefresh();
   } finally {
@@ -150,6 +163,8 @@ const dataObj = reactive({
   serachObj: {},
   list: [],
   editObj: {},
+  batchViewData: [], // 新增：批量查看的数据列表
+  batchViewVisible: false, // 新增：批量查看弹窗显示状态
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -190,7 +205,7 @@ const [QueryForm, QueryFormApi] = useVbenForm({
   // 水平布局，label和input在同一行
   layout: 'horizontal',
   schema: useFormSchema()
-    .filter((v) => !v.searchFilter)
+    .filter((v) => v.isSearch)
     .map((v) => {
       delete v.rules;
       return {
@@ -271,27 +286,123 @@ const openImg = (url) => {
   dataObj.imgUrl = url;
   dialogVisible.value = true;
 };
+
+// 查看全部证据图片
+const handleViewAllEvidence = (row) => {
+  if (!row.evidenceList || row.evidenceList.length === 0) {
+    ElMessage.warning('无证据图片可查看');
+    return;
+  }
+  ElMessage.info(`共${row.evidenceList.length}张证据图片，已打开第一张`);
+  openImg(row.evidenceList[0].url);
+};
+
+// 批量查看数据编号（使用el-table展示）
+const handleOpenData = async () => {
+  // 1. 检查是否有选中的数据
+  if (isEmpty(checkedIds.value)) {
+    ElMessage.warning($t('请先选择要查看的数据！') || '请先选择要查看的数据！');
+    return;
+  }
+  const res = await getRectifyEvidence({
+    ledgerIdList: checkedIds.value,
+  });
+  dataObj.batchViewData = res.list;
+  // 3. 打开批量查看弹窗
+  dataObj.batchViewVisible = true;
+};
 </script>
 
 <template>
   <div class="park-lot-table-new">
+    <!-- 图片查看弹窗 -->
     <el-dialog v-model="dialogVisible">
       <div class="park-img-center">
         <img style="width: 100%; height: 100%" :src="dataObj.imgUrl" />
       </div>
     </el-dialog>
+
+    <!-- 批量查看编号弹窗（使用el-table） -->
+    <el-dialog
+      v-model="dataObj.batchViewVisible"
+      title="批量查看证据 - 编号列表"
+      width="1000px"
+      center
+      draggable
+    >
+      <ElTable
+        :data="dataObj.batchViewData"
+        border
+        stripe
+        size="small"
+        max-height="500px"
+        highlight-current-row
+      >
+        <ElTableColumn label="序号" type="index" width="60" align="center" />
+        <!-- 台账编号列 -->
+        <ElTableColumn
+          label="台账编号"
+          prop="ledgerCode"
+          min-width="200"
+          align="center"
+        />
+        <!-- 证据列表列 -->
+        <ElTableColumn
+          label="证据列表"
+          prop="evidenceList"
+          min-width="500"
+          align="center"
+        >
+          <template #default="{ row }">
+            <div
+              v-if="row.evidenceList && row.evidenceList.length > 0"
+              class="evidence-list"
+            >
+              <div
+                v-for="(item, idx) in row.evidenceList"
+                :key="idx"
+                class="evidence-item"
+              >
+                <!-- 图片预览 -->
+                <ElImage
+                  v-if="item.type === 'image'"
+                  style="width: 80px; height: 80px; margin-right: 8px"
+                  :src="item.url"
+                  @click="openImg(item.url)"
+                  fit="cover"
+                />
+                <!-- 文件名展示 -->
+                <div class="evidence-info">
+                  <div class="evidence-name">{{ item.name }}</div>
+                  <div class="evidence-type">{{ item.type }}</div>
+                </div>
+              </div>
+            </div>
+            <div v-else class="no-evidence">无证据</div>
+          </template>
+        </ElTableColumn>
+      </ElTable>
+
+      <template #footer>
+        <el-button @click="dataObj.batchViewVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
+
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
+
     <!-- 使用封装后的详情抽屉组件 -->
     <ParkDetailDrawer
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
       title="详情"
     />
+
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+
     <Grid>
       <!-- 三级状态 -->
       <template #table-title>
@@ -312,6 +423,7 @@ const openImg = (url) => {
           </div>
         </div>
       </template>
+
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
@@ -328,6 +440,12 @@ const openImg = (url) => {
             @click="handleDeleteBatch"
           />
           <IconButton
+            content="批量查看证据"
+            icon-name="Expand"
+            :disabled="isEmpty(checkedIds)"
+            @click="handleOpenData"
+          />
+          <IconButton
             content="搜索"
             icon-name="search"
             @click="handleSerachShow"
@@ -339,6 +457,7 @@ const openImg = (url) => {
           />
         </div>
       </template>
+
       <template #ledgerCode="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
@@ -348,6 +467,7 @@ const openImg = (url) => {
           {{ row.ledgerCode }}
         </el-text>
       </template>
+
       <template #driveInPhoto="{ row }">
         <ElImage
           style="width: 100px; height: 100px"
@@ -355,6 +475,7 @@ const openImg = (url) => {
           @click="openImg(row.driveInPhoto)"
         />
       </template>
+
       <template #driveOutPhoto="{ row }">
         <ElImage
           style="width: 100px; height: 100px"
@@ -383,12 +504,14 @@ const openImg = (url) => {
           />
         </div>
       </template>
+
       <template #bottom>
         <div class="common-total" @click="changeTotalShow"></div>
       </template>
     </Grid>
   </div>
 </template>
+
 <style scoped>
 .park-img-center {
   display: flex;
@@ -396,5 +519,57 @@ const openImg = (url) => {
   justify-content: center;
   width: 700px;
   height: 700px;
+}
+
+/* 批量查看表格样式优化 */
+:deep(.el-table) {
+  --el-table-header-text-color: #303133;
+  --el-table-row-hover-bg-color: #f5f7fa;
+}
+
+:deep(.el-dialog__body) {
+  padding: 20px;
+}
+
+/* 证据列表样式 */
+.evidence-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.evidence-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.evidence-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.evidence-name {
+  font-size: 12px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.evidence-type {
+  font-size: 11px;
+  color: #999;
+}
+
+.no-evidence {
+  color: #999;
+  font-size: 12px;
+  text-align: center;
+  padding: 8px 0;
 }
 </style>

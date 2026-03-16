@@ -3,15 +3,18 @@ import { computed, defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
+// 引入时间格式化工具（根据项目实际路径调整）
+import { formatTimestamp } from '#/utils';
+
 // 定义组件接收的属性
 const props = defineProps({
-  // 详情数据对象（出入口数据）
+  // 详情数据对象（整改通知书复审台账数据）
   detailObj: {
     type: Object,
     required: true,
     default: () => ({}),
   },
-  // 抽屉标题（可选，默认使用详情对象的entranceName）
+  // 抽屉标题（可选，默认使用台账编号）
   title: {
     type: String,
     default: '',
@@ -20,10 +23,10 @@ const props = defineProps({
 
 const { detailObj, title } = toRefs(props);
 
-// 计算属性处理标题，优先使用出入口名称，兜底显示默认值
+// 计算属性处理标题，优先使用台账编号，兜底显示默认值
 const drawerTitle = computed(() => {
-  const entranceName = detailObj.value?.entranceName || '出入口';
-  return title.value || `${entranceName}详情`;
+  const ledgerCode = detailObj.value?.ledgerCode || '整改通知书复审台账';
+  return title.value || `${ledgerCode}详情`;
 });
 
 // 初始化抽屉实例
@@ -31,7 +34,7 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 750, // 加宽抽屉适配更多出入口字段
+  width: 750, // 加宽抽屉适配更多台账字段
   onCancel() {
     detailDrawerApi.close();
   },
@@ -49,66 +52,106 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 出入口基础信息 -->
+      <!-- 整改通知书复审台账基础信息 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">出入口ID:</div>
+        <div class="detail-row-left">主键ID:</div>
         <div class="detail-row-right">{{ detailObj.id || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">出入口名称:</div>
-        <div class="detail-row-right">{{ detailObj.entranceName || '-' }}</div>
+        <div class="detail-row-left">台账编号:</div>
+        <div class="detail-row-right">{{ detailObj.ledgerCode || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">所属车场/车库:</div>
-        <div class="detail-row-right">{{ detailObj.parkingLot || '-' }}</div>
+        <div class="detail-row-left">企业ID:</div>
+        <div class="detail-row-right">{{ detailObj.entId || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">出入口类型:</div>
-        <div class="detail-row-right">{{ detailObj.entranceType || '-' }}</div>
+        <div class="detail-row-left">违规类型ID:</div>
+        <div class="detail-row-right">{{ detailObj.illegalTypeId || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">车道数量:</div>
-        <div class="detail-row-right">{{ detailObj.laneCount || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">地址:</div>
-        <div class="detail-row-right">{{ detailObj.address || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">开放时间:</div>
-        <div class="detail-row-right">{{ detailObj.openTime || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">关闭时间:</div>
-        <div class="detail-row-right">{{ detailObj.closeTime || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">启用状态:</div>
-        <div class="detail-row-right">{{ detailObj.enableStatus || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">联系人:</div>
-        <div class="detail-row-right">{{ detailObj.contactPerson || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">联系电话:</div>
-        <div class="detail-row-right">{{ detailObj.contactPhone || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">当前状态:</div>
-        <div class="detail-row-right">{{ detailObj.currentStatus || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">关联设备数:</div>
+        <div class="detail-row-left">违规等级ID:</div>
         <div class="detail-row-right">
-          {{ detailObj.relatedDeviceCount || '-' }}
+          {{ detailObj.illegalLevelId || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">最后运营时间:</div>
+        <div class="detail-row-left">违规证据链接:</div>
         <div class="detail-row-right">
-          {{ detailObj.lastOperateTime || '-' }}
+          <a
+            v-if="detailObj.evidenceUrl"
+            :href="detailObj.evidenceUrl"
+            target="_blank"
+            class="evidence-link"
+          >
+            点击查看
+          </a>
+          <span v-else>-</span>
         </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">草拟时间:</div>
+        <div class="detail-row-right">
+          {{ detailObj.draftTime ? formatTimestamp(detailObj.draftTime) : '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">复审状态:</div>
+        <div class="detail-row-right">{{ detailObj.reviewStatus || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">复审人ID:</div>
+        <div class="detail-row-right">{{ detailObj.reviewerId || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">复审时间:</div>
+        <div class="detail-row-right">
+          {{
+            detailObj.reviewTime ? formatTimestamp(detailObj.reviewTime) : '-'
+          }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">撤销时间:</div>
+        <div class="detail-row-right">
+          {{
+            detailObj.cancelTime ? formatTimestamp(detailObj.cancelTime) : '-'
+          }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">撤销原因ID:</div>
+        <div class="detail-row-right">
+          {{ detailObj.cancelReasonId || '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">执法复审台账编号:</div>
+        <div class="detail-row-right">{{ detailObj.lawLedgerCode || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">创建时间:</div>
+        <div class="detail-row-right">
+          {{
+            detailObj.createTime ? formatTimestamp(detailObj.createTime) : '-'
+          }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">更新时间:</div>
+        <div class="detail-row-right">
+          {{
+            detailObj.updateTime ? formatTimestamp(detailObj.updateTime) : '-'
+          }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">创建人:</div>
+        <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">更新人:</div>
+        <div class="detail-row-right">{{ detailObj.updater || '-' }}</div>
       </div>
     </div>
   </DetailDrawer>
@@ -120,7 +163,7 @@ defineExpose({
   padding: 20px;
   background-color: #f9fafb;
   border-radius: 8px;
-  min-height: 450px; // 增加最小高度适配出入口字段数量
+  min-height: 450px; // 增加最小高度适配台账字段数量
   max-height: 70vh; // 限制最大高度，避免内容过多溢出
   overflow-y: auto; // 内容过多时显示滚动条
 }
@@ -165,8 +208,19 @@ defineExpose({
   color: #303133; // 主文本色
   font-size: 14px;
   line-height: 18px;
-  word-break: break-all; // 处理长文本换行（如地址）
+  word-break: break-all; // 处理长文本换行（如链接）
   padding-right: 10px;
+}
+
+// 违规证据链接样式
+.evidence-link {
+  color: #409eff;
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:hover {
+    color: #66b1ff;
+  }
 }
 
 // 响应式适配

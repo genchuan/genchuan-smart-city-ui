@@ -13,3 +13,20 @@ export function getRectifyList(params) {
     params,
   });
 } 
+
+/** excel导出 */
+export function exporReviewExcel() {
+  return requestClient.download('/kitchen/rectify-review/export-excel');
+}
+
+
+/** 批量查看整改复审台账证据分页 */
+export function getRectifyEvidence(data) {
+  return requestClient.post('/kitchen/rectify-review/batch-view-evidence',data);
+}
+
+
+/** 删除台账数据 */
+export function deleteRectifyEvidence(id) {
+  return requestClient.delete(`/kitchen/rectify-review/delete?id=${id}`);
+}
