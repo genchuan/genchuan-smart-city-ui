@@ -21,12 +21,15 @@ export function exporReviewExcel() {
 
 
 /** 批量查看整改复审台账证据分页 */
-export function getRectifyEvidence(data) {
-  return requestClient.post('/kitchen/rectify-review/batch-view-evidence',data);
+export function getRectifyEvidence(data) { 
+  return requestClient.post('/kitchen/rectify-review/create', data);
 }
 
 
 /** 删除台账数据 */
 export function deleteRectifyEvidence(id) {
   return requestClient.delete(`/kitchen/rectify-review/delete?id=${id}`);
+}
+export function addRectify(data) {
+  return requestClient.post(`/kitchen/rectify-review/create`, data);
 }

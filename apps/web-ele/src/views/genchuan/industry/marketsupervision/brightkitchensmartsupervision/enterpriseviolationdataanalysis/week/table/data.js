@@ -1,29 +1,29 @@
-/** 表格初始数据 - 企业风险报告管理数据 */
+/** 表格初始数据 - 丰泽区学校食堂周度风险报告管理数据 */
 export const dataList = () => [
   {
-    reportNumber: 'WLY-QZ-FZ-202424-001',
+    reportNumber: 'WLY-QZ-FZ-202424-001', // 保留丰泽FZ标识
     statWeek: '2024年第24周',
-    statArea: '丰泽区',
+    statArea: '丰泽区', // 统一为丰泽区
     statCycle: '2024-06-10 至 2024-06-16',
-    weekWarnCount: 156,
-    weekIllegalEntCount: 28,
-    highIllegalType: '操作规范,设备维护,安全管理',
-    areaIllegalRank: '东海街道,丰泽街道,北峰街道',
-    timeIllegalDist: '08:00-10:00,14:00-16:00,18:00-20:00',
-    warnChangeYoy: 12.5,
-    warnChangeMom: 8.8,
-    weekRectifyRate: 82.3,
-    weekDeviceNormalRate: 91.7,
+    weekWarnCount: 156, // 周度食品安全问题总数
+    weekIllegalEntCount: 28, // 周度有问题的食堂数量
+    highIllegalType: '食品留样,餐具消毒,人员健康', // 替换为食堂高频违规类型
+    areaIllegalRank: '东海街道,丰泽街道,北峰街道', // 丰泽区街道排名
+    timeIllegalDist: '08:00-10:00,14:00-16:00,18:00-20:00', // 检查发现问题的时段分布
+    warnChangeYoy: 12.5, // 同比问题数量变化率（%）
+    warnChangeMom: 8.8, // 环比问题数量变化率（%）
+    weekRectifyRate: 82.3, // 周度整改完成率（%）
+    weekDeviceNormalRate: 91.7, // 周度食堂设备合规率（%）
   },
   {
     reportNumber: 'WLY-QZ-FZ-202424-002',
     statWeek: '2024年第24周',
-    statArea: '鲤城区',
+    statArea: '丰泽区',
     statCycle: '2024-06-10 至 2024-06-16',
     weekWarnCount: 132,
     weekIllegalEntCount: 22,
-    highIllegalType: '设备维护,操作规范,台账不规范',
-    areaIllegalRank: '鲤中街道,临江街道,海滨街道',
+    highIllegalType: '食材储存,餐具消毒,台账记录', // 食堂核心违规类型
+    areaIllegalRank: '城东街道,东湖街道,华大街道', // 丰泽区其他街道
     timeIllegalDist: '09:00-11:00,15:00-17:00,19:00-21:00',
     warnChangeYoy: 8.6,
     warnChangeMom: 5.4,
@@ -33,12 +33,12 @@ export const dataList = () => [
   {
     reportNumber: 'WLY-QZ-FZ-202424-003',
     statWeek: '2024年第24周',
-    statArea: '晋江市',
+    statArea: '丰泽区',
     statCycle: '2024-06-10 至 2024-06-16',
     weekWarnCount: 185,
     weekIllegalEntCount: 35,
-    highIllegalType: '操作规范,设备维护,安全管理',
-    areaIllegalRank: '青阳街道,梅岭街道,陈埭镇',
+    highIllegalType: '餐具消毒,食品留样,卫生管理',
+    areaIllegalRank: '泉秀街道,清源街道,东海街道', // 丰泽区街道组合
     timeIllegalDist: '08:30-10:30,14:30-16:30,18:30-20:30',
     warnChangeYoy: 15.3,
     warnChangeMom: 10.2,
@@ -47,7 +47,7 @@ export const dataList = () => [
   },
 ];
 
-/** 新增/修改的表单/列表的搜索表单 - 企业风险报告管理表单 */
+/** 新增/修改的表单/列表的搜索表单 - 丰泽区学校食堂风险报告管理表单 */
 export function useFormSchema() {
   return [
     {
@@ -76,17 +76,16 @@ export function useFormSchema() {
       componentProps: {
         allowClear: true,
         options: [
+          // 聚焦丰泽区，仅保留丰泽区及下属街道（贴合食堂监管场景）
           { label: '丰泽区', value: '丰泽区' },
-          { label: '鲤城区', value: '鲤城区' },
-          { label: '洛江区', value: '洛江区' },
-          { label: '泉港区', value: '泉港区' },
-          { label: '晋江市', value: '晋江市' },
-          { label: '石狮市', value: '石狮市' },
-          { label: '南安市', value: '南安市' },
-          { label: '惠安县', value: '惠安县' },
-          { label: '安溪县', value: '安溪县' },
-          { label: '永春县', value: '永春县' },
-          { label: '德化县', value: '德化县' },
+          { label: '丰泽区-东海街道', value: '丰泽区-东海街道' },
+          { label: '丰泽区-丰泽街道', value: '丰泽区-丰泽街道' },
+          { label: '丰泽区-北峰街道', value: '丰泽区-北峰街道' },
+          { label: '丰泽区-城东街道', value: '丰泽区-城东街道' },
+          { label: '丰泽区-东湖街道', value: '丰泽区-东湖街道' },
+          { label: '丰泽区-华大街道', value: '丰泽区-华大街道' },
+          { label: '丰泽区-泉秀街道', value: '丰泽区-泉秀街道' },
+          { label: '丰泽区-清源街道', value: '丰泽区-清源街道' },
         ],
         placeholder: '请选择统计区域',
       },

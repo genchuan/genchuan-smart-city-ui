@@ -16,15 +16,13 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
+  addRectify,
   deleteRectifyEvidence,
   exporReviewExcel,
   getRectifyEvidence,
   getRectifyList,
 } from '#/api/genchuan/industry/marketsupervision/index.js';
-import {
-  createParkLot,
-  updateParkLot,
-} from '#/api/genchuan/industry/park/index.js';
+import { updateParkLot } from '#/api/genchuan/industry/park/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
 
@@ -63,7 +61,7 @@ const [Form, formApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useFormSchema(),
+  schema: useFormSchema().filter((v) => v.isEdit),
   showDefaultActions: false,
 });
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
@@ -75,7 +73,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   async onConfirm() {
     const obj = formApi.form.values;
     await (formDrawerApi.sharedData.payload.title === '增加'
-      ? createParkLot(obj)
+      ? addRectify(obj)
       : updateParkLot({ ...dataObj.editObj, ...obj }));
     handleRefresh();
     formDrawerApi.close();

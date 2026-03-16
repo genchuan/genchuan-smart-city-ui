@@ -1,78 +1,78 @@
-/** 表格初始数据 - 企业风险报告管理数据 */
+/** 表格初始数据 - 丰泽区学校食堂日度风险报告管理数据 */
 export const dataList = () => [
   {
-    reportNumber: 'DLY-QZ-20240615-001', // 日度报告编号：DLY-泉州-日期-序号
+    reportNumber: 'DLY-QZ-FZ-20240615-001', // 日度报告编号：DLY-泉州-丰泽FZ-日期-序号
     statisticsDate: '2024-06-15', // 统计日期（日维度）
-    statisticsArea: '鲤城区', // 统计区域
-    totalAlarmCount: 28, // 当日总告警次数
-    violationCompanyCount: 8, // 当日违规企业数量
-    highFreqViolationType: '设备维护:12,操作规范:8,安全管理:5,台账不规范:3', // 高频违规类型
-    areaViolationDistribution: '鲤中街道:3,临江街道:2,海滨街道:2,浮桥街道:1', // 区域违规分布
-    yoyAlarmChangeRate: 15.6, // 同比告警变化率（%）
-    momAlarmChangeRate: 8.2, // 环比告警变化率（%）
-    deviceAlarmNormalRate: 92.5, // 设备告警正常率（%）
+    statisticsArea: '丰泽区', // 统一为丰泽区
+    totalAlarmCount: 28, // 当日总告警次数（改为：当日食品安全问题总数）
+    violationCompanyCount: 8, // 改为：当日有问题的食堂数量
+    highFreqViolationType: '食品留样:12,餐具消毒:8,人员健康:5,食材储存:3', // 替换为食堂高频违规类型
+    areaViolationDistribution: '东海街道:3,丰泽街道:2,东湖街道:2,华大街道:1', // 丰泽区街道分布
+    yoyAlarmChangeRate: 15.6, // 同比问题变化率（%）
+    momAlarmChangeRate: 8.2, // 环比问题变化率（%）
+    deviceAlarmNormalRate: 92.5, // 改为：食堂设备合规率（%）
     dailyRectificationCompletionRate: 78.3, // 当日整改完成率（%）
   },
   {
-    reportNumber: 'DLY-QZ-20240615-002',
+    reportNumber: 'DLY-QZ-FZ-20240615-002',
     statisticsDate: '2024-06-15',
     statisticsArea: '丰泽区',
     totalAlarmCount: 22,
     violationCompanyCount: 6,
-    highFreqViolationType: '操作规范:9,设备维护:7,安全管理:4,台账不规范:2',
-    areaViolationDistribution: '东海街道:2,丰泽街道:1,东湖街道:1,华大街道:1,北峰街道:1',
+    highFreqViolationType: '餐具消毒:9,食品留样:7,卫生管理:4,食材采购:2',
+    areaViolationDistribution: '北峰街道:2,清源街道:1,城东街道:1,东海街道:1,泉秀街道:1',
     yoyAlarmChangeRate: 10.3,
     momAlarmChangeRate: 5.8,
     deviceAlarmNormalRate: 94.2,
     dailyRectificationCompletionRate: 85.7,
   },
   {
-    reportNumber: 'DLY-QZ-20240615-003',
+    reportNumber: 'DLY-QZ-FZ-20240615-003',
     statisticsDate: '2024-06-15',
-    statisticsArea: '洛江区',
+    statisticsArea: '丰泽区',
     totalAlarmCount: 15,
     violationCompanyCount: 4,
-    highFreqViolationType: '设备维护:6,操作规范:5,安全管理:3,台账不规范:1',
-    areaViolationDistribution: '万安街道:2,双阳街道:1,河市镇:1',
+    highFreqViolationType: '食材储存:6,操作规范:5,人员健康:3,台账记录:1',
+    areaViolationDistribution: '城东街道:2,华大街道:1,清源街道:1',
     yoyAlarmChangeRate: 8.5,
     momAlarmChangeRate: 3.1,
     deviceAlarmNormalRate: 91.8,
     dailyRectificationCompletionRate: 82.5,
   },
   {
-    reportNumber: 'DLY-QZ-20240615-004',
+    reportNumber: 'DLY-QZ-FZ-20240615-004',
     statisticsDate: '2024-06-15',
-    statisticsArea: '泉港区',
+    statisticsArea: '丰泽区',
     totalAlarmCount: 18,
     violationCompanyCount: 5,
-    highFreqViolationType: '安全管理:7,设备维护:6,操作规范:4,台账不规范:1',
-    areaViolationDistribution: '山腰街道:2,后龙镇:1,峰尾镇:1,前黄镇:1',
+    highFreqViolationType: '卫生管理:7,食材储存:6,餐具消毒:4,台账记录:1',
+    areaViolationDistribution: '泉秀街道:2,丰泽街道:1,东湖街道:1,北峰街道:1',
     yoyAlarmChangeRate: 12.8,
     momAlarmChangeRate: 6.5,
     deviceAlarmNormalRate: 89.7,
     dailyRectificationCompletionRate: 75.2,
   },
   {
-    reportNumber: 'DLY-QZ-20240615-005',
+    reportNumber: 'DLY-QZ-FZ-20240615-005',
     statisticsDate: '2024-06-15',
-    statisticsArea: '晋江市',
+    statisticsArea: '丰泽区',
     totalAlarmCount: 35,
     violationCompanyCount: 12,
-    highFreqViolationType: '设备维护:14,操作规范:10,安全管理:7,台账不规范:4',
-    areaViolationDistribution: '青阳街道:3,梅岭街道:2,西园街道:2,陈埭镇:2,安海镇:2,东石镇:1',
+    highFreqViolationType: '食品留样:14,餐具消毒:10,卫生管理:7,食材采购:4',
+    areaViolationDistribution: '东海街道:3,城东街道:2,泉秀街道:2,北峰街道:2,华大街道:2,清源街道:1',
     yoyAlarmChangeRate: 18.2,
     momAlarmChangeRate: 9.8,
     deviceAlarmNormalRate: 90.5,
     dailyRectificationCompletionRate: 72.8,
   },
   {
-    reportNumber: 'DLY-QZ-20240615-006',
+    reportNumber: 'DLY-QZ-FZ-20240615-006',
     statisticsDate: '2024-06-15',
-    statisticsArea: '南安市',
+    statisticsArea: '丰泽区',
     totalAlarmCount: 29,
     violationCompanyCount: 9,
-    highFreqViolationType: '操作规范:11,设备维护:9,安全管理:6,台账不规范:3',
-    areaViolationDistribution: '溪美街道:2,柳城街道:2,美林街道:2,水头镇:2,官桥镇:1',
+    highFreqViolationType: '操作规范:11,食材储存:9,人员健康:6,台账记录:3',
+    areaViolationDistribution: '东湖街道:2,丰泽街道:2,东海街道:2,城东街道:2,清源街道:1',
     yoyAlarmChangeRate: 14.5,
     momAlarmChangeRate: 7.6,
     deviceAlarmNormalRate: 93.1,

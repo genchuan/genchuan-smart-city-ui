@@ -1,4 +1,4 @@
- export function useFormSchema() {
+export function useFormSchema() {
   return [
     {
       fieldName: 'ledgerCode',
@@ -10,8 +10,82 @@
       },
       labelWidth: '120',
       rules: 'required', // 台账编号为必填项
+      isEdit: true,
       isSearch: true
     },
+    {
+      fieldName: 'entId',
+      label: '企业ID',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入企业ID',
+        maxLength: 50,
+      },
+      labelWidth: '120',
+      rules: 'required', // 台账编号为必填项
+      isEdit: true,
+    },
+    {
+      fieldName: 'illegalLevelId',
+      label: '违规等级ID',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入违规等级ID',
+        maxLength: 50,
+      },
+      labelWidth: '120',
+      rules: 'required', // 台账编号为必填项
+      isEdit: true,
+    },
+    {
+      fieldName: 'illegalTypeId',
+      label: '违规类型ID',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入违规类型ID',
+        maxLength: 50,
+      },
+      labelWidth: '120',
+      rules: 'required', // 台账编号为必填项
+      isEdit: true,
+    },
+    {
+      fieldName: 'evidenceUrl',
+      label: '违规证据链接',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入违规证据链接',
+        maxLength: 50,
+      },
+      labelWidth: '120',
+      rules: 'required', // 台账编号为必填项
+      isEdit: true,
+    },
+    {
+      fieldName: 'draftTime',
+      label: '整改通知书草拟时间',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入整改通知书草拟时间',
+        maxLength: 50,
+      },
+      labelWidth: '120',
+      rules: 'required', // 台账编号为必填项
+      isEdit: true,
+    }, 
+    {
+      fieldName: 'reviewStatus',
+      label: '复审状态',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入复审状态',
+        maxLength: 50,
+      },
+      labelWidth: '120',
+      rules: 'required', // 台账编号为必填项
+      isEdit: true,
+    },
+
     {
       fieldName: 'enterpriseName',
       label: '企业名称',
@@ -20,7 +94,7 @@
         placeholder: '请输入企业名称',
       },
       labelWidth: '120',
-      rules: 'required', 
+      rules: 'required',
       isSearch: true
     },
     {
@@ -118,7 +192,7 @@
       componentProps: {
         placeholder: '请输入复审人姓名/工号',
       },
-      labelWidth: '120', 
+      labelWidth: '120',
       isSearch: true
     },
     {
@@ -272,7 +346,7 @@ export function useGridColumns() {
       field: 'reviewStatus',
       title: '复审状态',
       minWidth: 120,
-      sortable: true, 
+      sortable: true,
     },
     {
       field: 'reviewerId',
