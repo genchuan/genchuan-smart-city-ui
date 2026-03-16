@@ -15,6 +15,7 @@ build:
   stage: buildAndPush
   script:
     - echo "安装依赖并构建项目..."
+    - pnpm config set registry https://registry.npmjs.org/
     - pnpm install
     - pnpm run build:ele
         # 仅当分支是dev-urban时，才执行Docker推送逻辑

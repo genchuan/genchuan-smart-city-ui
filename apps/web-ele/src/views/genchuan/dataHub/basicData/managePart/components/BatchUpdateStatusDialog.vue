@@ -5,7 +5,15 @@ import { useVbenModal } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
 
-import { ElButton, ElMessage, ElRadio, ElRadioGroup } from 'element-plus';
+import {
+  ElButton,
+  ElMessage,
+  ElRadio,
+  ElRadioGroup,
+  ElTag,
+} from 'element-plus';
+
+import { batchUpdateInstanceStatus } from '#/api/genchuan/dataHub/basicData/managePart';
 
 const emit = defineEmits(['success']);
 
@@ -26,10 +34,7 @@ const targetStatus = ref<string>('');
 const confirmStep = ref<number>(1); // 1: 选择状态, 2: 二次确认
 
 // 获取运行状态字典选项
-const statusOptions = getDictOptions(
-  DICT_TYPE.DATA_MANAGEPART_RUNSTATUS,
-  'string',
-);
+const statusOptions = getDictOptions(DICT_TYPE.DATA_RUN_STATUS, 'string');
 
 const open = (ids: string[]) => {
   selectedIds.value = ids;
@@ -50,8 +55,13 @@ const handleConfirm = async () => {
   } else {
     // 第二步：执行批量更新
     try {
-      // 模拟API调用
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // 调用批量更新接口
+      // 将ID转换为数字类型
+      const ids = selectedIds.value.map(Number);
+      // 将状态值转换为数字类型
+      const runStatus = Number(targetStatus.value);
+
+      await batchUpdateInstanceStatus(ids, runStatus);
 
       ElMessage.success(`成功更新 ${selectedIds.value.length} 条记录的状态`);
       emit('success');
@@ -109,7 +119,7 @@ defineExpose({
             确认将选中的 <strong>{{ selectedIds.length }}</strong> 条记录
           </div>
           <div class="confirm-status">
-            状态更新为：<el-tag
+            状态更新为：<ElTag
               :type="
                 targetStatus === '2'
                   ? 'success'
@@ -121,7 +131,7 @@ defineExpose({
               "
             >
               {{ getStatusLabel(targetStatus) }}
-            </el-tag>
+            </ElTag>
           </div>
           <div class="confirm-warning">此操作不可撤销，请确认是否继续？</div>
         </div>

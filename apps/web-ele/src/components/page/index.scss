@@ -1,9 +1,9 @@
 .common-index {
+  position: relative;
   height: 89vh;
   padding: 0.5rem;
-  background-color: hsl(var(--card));
   overflow: auto;
-  position: relative;
+  background-color: hsl(var(--card));
 
   .icon-first {
     margin-right: 5px;
@@ -15,14 +15,14 @@
   }
 
   .vxe-grid {
-    padding-left: 0px;
-    padding-bottom: 0px;
+    padding-bottom: 0;
+    padding-left: 0;
   }
 
   .common-tabs {
     .el-tabs__header {
-      margin-bottom: 0px;
       position: absolute;
+      margin-bottom: 0;
     }
   }
 
@@ -43,7 +43,6 @@
   }
 
   .vxe-toolbar {
-
     height: auto;
   }
 
@@ -51,7 +50,8 @@
     width: 20px;
   }
 
-  .el-tabs__nav-wrap {}
+  .el-tabs__nav-wrap {
+  }
 
   .park-lot-table-new {
     height: 84vh;
@@ -80,40 +80,40 @@
 
       .vxe-tools--wrapper {
         position: absolute;
-        right: 77px;
         top: -30px;
+        right: 77px;
       }
 
       .vxe-tools--operate {
         position: absolute;
-        right: 0px;
         top: -30px;
+        right: 0;
       }
     }
-
 
     .vxe-pager .vxe-pager--sizes {
       margin-right: 10px;
     }
 
     .vxe-grid--bottom-wrapper {
-      height: auto;
-      min-height: 40px;
-      width: 100%;
       top: 18px;
       z-index: 1;
+      display: none;
+      width: 100%;
+      height: auto;
+      min-height: 40px;
 
       .common-total {
-        font-size: 14px;
-        display: inline;
         position: relative;
+        display: inline;
+        font-size: 14px;
         cursor: pointer;
       }
 
       .common-total-bottom {
-        font-size: 14px;
-        margin-left: 18px;
         margin-top: 10px;
+        margin-left: 18px;
+        font-size: 14px;
       }
 
       .bottom-title {
@@ -122,11 +122,15 @@
       }
     }
 
+    .vxe-pager--wrapper {
+      justify-content: center;
+    }
+
     .vxe-grid--pager-wrapper {
       .vxe-pager {
-        margin-top: -10px;
         position: relative;
         height: 65px;
+        margin-top: -10px;
       }
     }
 
@@ -153,7 +157,7 @@
   .table-toolbar-tools {
     .genchuan-common-button {
       height: 20px;
-      padding: 0px;
+      padding: 0;
       margin-left: 3px;
     }
   }
@@ -168,27 +172,28 @@
     .detail-card-row {
       display: flex;
       align-items: center;
+      padding-bottom: 8px;
       font-size: 14px;
       line-height: 1.5;
-      padding-bottom: 8px;
 
       .detail-row-left {
         width: 100px;
         margin-right: 16px;
         font-weight: 500;
-        color: #000000;
+        color: #000;
         text-align: right;
       }
-      .detail-row-right { 
-        color: #000000;
+
+      .detail-row-right {
+        color: #000;
       }
     }
   }
 
   .park-bind-row {
-    min-height: 60px;
     display: flex;
     align-items: center;
+    min-height: 60px;
 
     .bind-left {
       width: 200px;
@@ -207,25 +212,25 @@
   }
 
   .icon-change {
-    margin-top: 10px;
     position: absolute;
-    cursor: pointer;
     z-index: 1;
+    margin-top: 10px;
+    cursor: pointer;
   }
 
   .park-chart-box {
-    padding-bottom: 0.5rem;
     display: flex;
     flex-wrap: wrap;
     gap: 20px; // 统一子元素间距，替代零散的margin
-    padding-left: 15px;
     padding-right: 15px;
+    padding-bottom: 0.5rem;
+    padding-left: 15px;
 
     // 大屏样式（≥1200px）：恢复原有间距逻辑
     @media (min-width: 1200px) {
-      padding-left: 0;
-      padding-right: 0;
       gap: 0;
+      padding-right: 0;
+      padding-left: 0;
     }
 
     .chart-box-left {
@@ -245,10 +250,10 @@
       // 平板/小屏适配：统计卡片占满宽度，横向滚动
       @media (max-width: 1199px) {
         flex: 0 0 100%;
-        max-width: 100%;
         flex-direction: row;
-        overflow-x: auto;
+        max-width: 100%;
         padding-bottom: 10px;
+        overflow-x: auto;
 
         // 优化横向滚动条样式
         &::-webkit-scrollbar {
@@ -282,32 +287,32 @@
       }
 
       .stat-card {
-        height: 102px;
         position: relative;
-        background-color: hsl(var(--card));
-        border-radius: 8px;
+        height: 102px;
         padding: 20px 16px;
-        border-left: 4px solid #13ce66;
-        box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-        transition: all 0.3s ease;
         cursor: default;
+        background-color: hsl(var(--card));
+        border-left: 4px solid #13ce66;
+        border-radius: 8px;
+        box-shadow: 0 2px 12px 0 rgb(0 0 0 / 5%);
+        transition: all 0.3s ease;
 
         &:hover {
-          box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.1);
+          box-shadow: 0 4px 16px 0 rgb(0 0 0 / 10%);
           transform: translateY(-2px);
         }
 
         .card-header {
           display: flex;
-          justify-content: space-between;
           align-items: center;
+          justify-content: space-between;
           margin-bottom: 8px;
 
           .card-title {
+            margin: 0;
             font-size: 14px;
             font-weight: 500;
             color: #606266;
-            margin: 0;
           }
 
           .card-indicator {
@@ -319,36 +324,36 @@
 
         .card-body {
           .card-value {
+            margin-bottom: 4px;
             font-size: 28px;
             font-weight: bold;
-            color: #4a90e2;
             line-height: 1.2;
-            margin-bottom: 4px;
+            color: #4a90e2;
           }
 
           .card-desc {
             font-size: 12px;
-            color: #909399;
             line-height: 1;
+            color: #909399;
           }
         }
       }
     }
 
     .park-type-chart {
+      box-sizing: border-box;
+      display: inline-block;
+      display: flex;
       flex: 1; // 改为自适应宽度，替代固定0.52
+      justify-content: center;
       min-width: 280px; // 降低最小宽度，适配手机
       max-width: 100%; // 防止溢出
       height: 330px;
-      display: inline-block;
-      box-sizing: border-box;
+      padding: 10px;
+      margin: 0; // 移除margin，改用外层gap控制
       background-color: hsl(var(--card));
       border-radius: 8px;
-      padding: 10px;
       box-shadow: 0 2px 12px 0 rgb(74 144 226 / 10%);
-      margin: 0; // 移除margin，改用外层gap控制
-      display: flex;
-      justify-content: center;
 
       // 小屏适配：降低图表高度
       @media (max-width: 768px) {
@@ -364,16 +369,16 @@
     }
 
     .simple-bar-chart {
+      display: inline-block;
       flex: 1;
       min-width: 280px; // 降低最小宽度，适配手机
       max-width: 100%; // 防止溢出
       height: 330px;
+      padding: 10px;
       margin: 0; // 移除margin，改用外层gap控制
-      display: inline-block;
       background-color: hsl(var(--card));
       border-radius: 8px;
-      padding: 10px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
 
       // 小屏适配：降低图表高度
       @media (max-width: 768px) {
@@ -393,23 +398,23 @@
     }
   }
 }
+
 .genchuan-detail-drawer {
-  width:70vw;
+  width: 70vw;
 }
+
 .dark {
   .common-index {
     .detail-card {
-    
+      .detail-card-row {
+        .detail-row-left {
+          color: #888;
+        }
 
-    .detail-card-row { 
-
-      .detail-row-left { 
-        color: #888888; 
-      }
-      .detail-row-right { 
-        color: #888888;
+        .detail-row-right {
+          color: #888;
+        }
       }
     }
-  }
   }
 }

@@ -3,15 +3,15 @@ import { computed, defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 定义组件接收的属性（道路监测周度统计数据）
+// 定义组件接收的属性（窨井盖设施监测年报数据）
 const props = defineProps({
-  // 详情数据对象（道路监测周度统计数据）
+  // 详情数据对象（窨井盖设施监测年报数据）
   detailObj: {
     type: Object,
     required: true,
     default: () => ({}),
   },
-  // 抽屉标题（可选，默认使用详情对象的roadSectionName）
+  // 抽屉标题（可选，默认使用详情对象的areaName）
   title: {
     type: String,
     default: '',
@@ -20,18 +20,18 @@ const props = defineProps({
 
 const { detailObj, title } = toRefs(props);
 
-// 计算属性处理标题，优先用路段名称，兜底显示默认值
+// 计算属性处理标题，优先用区域名称，兜底显示默认值
 const drawerTitle = computed(() => {
-  const roadSectionName = detailObj.value?.roadSectionName || '道路监测周统计';
-  return title.value || `${roadSectionName}周统计详情`;
+  const areaName = detailObj.value?.areaName || '窨井盖设施监测年报';
+  return title.value || `${areaName}年报详情`;
 });
 
-// 初始化抽屉实例（加宽适配周度统计更多长字段）
+// 初始化抽屉实例（加宽适配年报更多长字段）
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 1000, // 加宽到1000px适配周统计14个字段+超长标签
+  width: 1400, // 加宽到1400px适配年报字段+超长标签+长文本
   onCancel() {
     detailDrawerApi.close();
   },
@@ -49,166 +49,123 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 道路监测周度统计分析信息 -->
+      <!-- 窨井盖设施监测年报信息 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">路段名称:</div>
-        <div class="detail-row-right">
-          {{ detailObj.roadSectionName || '-' }}
-        </div>
+        <div class="detail-row-left">所属区域:</div>
+        <div class="detail-row-right">{{ detailObj.areaName || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">坑洼数量周均值:</div>
-        <div class="detail-row-right">
-          {{ detailObj.potholeCountWeekAvg || '-' }} 个
-        </div>
+        <div class="detail-row-left">责任单位:</div>
+        <div class="detail-row-right">{{ detailObj.deptName || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">裂缝长度周均值:</div>
-        <div class="detail-row-right">
-          {{ detailObj.crackLengthWeekAvg || '-' }} 米
-        </div>
+        <div class="detail-row-left">年度统计时段:</div>
+        <div class="detail-row-right">{{ detailObj.yearStatisticsPeriod || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">周累计预警数:</div>
-        <div class="detail-row-right">
-          {{ detailObj.weekTotalWarningCount || '-' }} 次
-        </div>
+        <div class="detail-row-left">窨井盖总数:</div>
+        <div class="detail-row-right">{{ detailObj.manholeTotalCount || '-' }} 个</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">周工单处置效率:</div>
+        <div class="detail-row-left">年度累计隐患数:</div>
+        <div class="detail-row-right">{{ detailObj.yearTotalHiddenTroubleCount || '-' }} 个</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">年度处置完成数:</div>
+        <div class="detail-row-right">{{ detailObj.yearDisposalCompleteCount || '-' }} 个</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">设备年度在线率:</div>
         <div class="detail-row-right">
           <span
             :class="{
-              'text-green-600': detailObj.weekWorkOrderDisposalEfficiency >= 90,
+              'text-green-600': detailObj.deviceYearOnlineRate >= 95,
               'text-yellow-600':
-                detailObj.weekWorkOrderDisposalEfficiency >= 80 &&
-                detailObj.weekWorkOrderDisposalEfficiency < 90,
+                detailObj.deviceYearOnlineRate >= 85 &&
+                detailObj.deviceYearOnlineRate < 95,
               'text-red-600':
-                detailObj.weekWorkOrderDisposalEfficiency > 0 &&
-                detailObj.weekWorkOrderDisposalEfficiency < 80,
+                detailObj.deviceYearOnlineRate > 0 &&
+                detailObj.deviceYearOnlineRate < 85,
             }"
           >
-            {{ detailObj.weekWorkOrderDisposalEfficiency || '-' }} %
+            {{ detailObj.deviceYearOnlineRate || '-' }} %
           </span>
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">工单超时率:</div>
-        <div class="detail-row-right">
-          <span
-            :class="{
-              'text-green-600': detailObj.workOrderTimeoutRate <= 5,
-              'text-yellow-600':
-                detailObj.workOrderTimeoutRate > 5 &&
-                detailObj.workOrderTimeoutRate <= 15,
-              'text-red-600': detailObj.workOrderTimeoutRate > 15,
-            }"
-          >
-            {{ detailObj.workOrderTimeoutRate || '-' }} %
-          </span>
-        </div>
+        <div class="detail-row-left">年度重大隐患数:</div>
+        <div class="detail-row-right">{{ detailObj.yearMajorHiddenTroubleCount || '-' }} 个</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">设备周在线率:</div>
+        <div class="detail-row-left">年度隐患处置完成率:</div>
         <div class="detail-row-right">
           <span
             :class="{
-              'text-green-600': detailObj.deviceWeekOnlineRate >= 95,
+              'text-green-600': detailObj.yearHiddenTroubleDisposalRate >= 90,
               'text-yellow-600':
-                detailObj.deviceWeekOnlineRate >= 85 &&
-                detailObj.deviceWeekOnlineRate < 95,
+                detailObj.yearHiddenTroubleDisposalRate >= 80 &&
+                detailObj.yearHiddenTroubleDisposalRate < 90,
               'text-red-600':
-                detailObj.deviceWeekOnlineRate > 0 &&
-                detailObj.deviceWeekOnlineRate < 85,
+                detailObj.yearHiddenTroubleDisposalRate > 0 &&
+                detailObj.yearHiddenTroubleDisposalRate < 80,
             }"
           >
-            {{ detailObj.deviceWeekOnlineRate || '-' }} %
+            {{ detailObj.yearHiddenTroubleDisposalRate || '-' }} %
           </span>
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">周达标率:</div>
+        <div class="detail-row-left">年度重大隐患处置率:</div>
         <div class="detail-row-right">
           <span
             :class="{
-              'text-green-600': detailObj.weekComplianceRate >= 90,
+              'text-green-600': detailObj.yearMajorHiddenTroubleDisposalRate >= 95,
               'text-yellow-600':
-                detailObj.weekComplianceRate >= 75 &&
-                detailObj.weekComplianceRate < 90,
+                detailObj.yearMajorHiddenTroubleDisposalRate >= 85 &&
+                detailObj.yearMajorHiddenTroubleDisposalRate < 95,
               'text-red-600':
-                detailObj.weekComplianceRate > 0 &&
-                detailObj.weekComplianceRate < 75,
+                detailObj.yearMajorHiddenTroubleDisposalRate > 0 &&
+                detailObj.yearMajorHiddenTroubleDisposalRate < 85,
             }"
           >
-            {{ detailObj.weekComplianceRate || '-' }} %
+            {{ detailObj.yearMajorHiddenTroubleDisposalRate || '-' }} %
           </span>
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">坑洼数量环比变化率:</div>
+        <div class="detail-row-left">同比隐患变化率:</div>
         <div class="detail-row-right">
           <span
             :class="{
-              'text-red-600': detailObj.potholeCountMomChangeRate > 0,
-              'text-green-600': detailObj.potholeCountMomChangeRate < 0,
+              'text-red-600': detailObj.yoyHiddenTroubleChangeRate > 0,
+              'text-green-600': detailObj.yoyHiddenTroubleChangeRate < 0,
             }"
           >
-            {{ detailObj.potholeCountMomChangeRate || '-' }} %
+            {{ detailObj.yoyHiddenTroubleChangeRate > 0 ? '+' : '' }}{{ detailObj.yoyHiddenTroubleChangeRate || '-' }} %
           </span>
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">坑洼数量同比变化率:</div>
+        <div class="detail-row-left">年度运维综合得分:</div>
         <div class="detail-row-right">
           <span
             :class="{
-              'text-red-600': detailObj.potholeCountYoYChangeRate > 0,
-              'text-green-600': detailObj.potholeCountYoYChangeRate < 0,
+              'text-green-600': detailObj.yearOperationComprehensiveScore >= 90,
+              'text-yellow-600':
+                detailObj.yearOperationComprehensiveScore >= 80 &&
+                detailObj.yearOperationComprehensiveScore < 90,
+              'text-red-600':
+                detailObj.yearOperationComprehensiveScore > 0 &&
+                detailObj.yearOperationComprehensiveScore < 80,
             }"
           >
-            {{ detailObj.potholeCountYoYChangeRate || '-' }} %
+            {{ detailObj.yearOperationComprehensiveScore || '-' }} 分
           </span>
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">裂缝长度环比变化率:</div>
-        <div class="detail-row-right">
-          <span
-            :class="{
-              'text-red-600': detailObj.crackLengthMomChangeRate > 0,
-              'text-green-600': detailObj.crackLengthMomChangeRate < 0,
-            }"
-          >
-            {{ detailObj.crackLengthMomChangeRate || '-' }} %
-          </span>
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">裂缝长度同比变化率:</div>
-        <div class="detail-row-right">
-          <span
-            :class="{
-              'text-red-600': detailObj.crackLengthYoYChangeRate > 0,
-              'text-green-600': detailObj.crackLengthYoYChangeRate < 0,
-            }"
-          >
-            {{ detailObj.crackLengthYoYChangeRate || '-' }} %
-          </span>
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">预警类型分布:</div>
-        <div class="detail-row-right">
-          <div class="break-words">
-            {{ detailObj.warningTypeDistribution || '-' }}
-          </div>
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">周统计时段:</div>
-        <div class="detail-row-right">
-          {{ detailObj.weekStatisticsPeriod || '-' }}
-        </div>
+        <div class="detail-row-left">年度重复隐患率:</div>
+        <div class="detail-row-right">{{ detailObj.yearRepeatHiddenTroubleRate || '-' }} %</div>
       </div>
     </div>
   </DetailDrawer>

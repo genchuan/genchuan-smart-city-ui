@@ -50,9 +50,16 @@ const tabChange = (item) => {
   nowObj.arrowState = true;
   nowObj.secondShow = true;
 };
+const chartComponet = ref({
+  components: '',
+});
+const getComponent = (echart) => {
+  chartComponet.value.components = echart;
+};
 </script>
 <template>
   <div class="common-index">
+    <component :is="chartComponet.components" v-if="tabArray[0].arrowShow" />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -91,6 +98,7 @@ const tabChange = (item) => {
           :key="item.label"
           :arrow-show="item.arrowShow"
           @arrow-change="arrowChange"
+          @get-component="getComponent"
         />
       </el-tab-pane>
     </el-tabs>

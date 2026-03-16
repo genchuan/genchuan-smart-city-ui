@@ -1,6 +1,7 @@
 <script setup>
 import { computed, defineProps, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
+import { ElImage } from 'element-plus';
 
 const props = defineProps({
   detailObj: { type: Object, required: true, default: () => ({}) },
@@ -23,6 +24,28 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
 });
 
 defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.close() });
+
+// 如果 detailObj 中已有 proofUrlList，直接使用；否则解析 proofUrl/proofUrls 字段
+const proofList = computed(() => {
+  const obj = detailObj.value;
+  if (obj?.proofUrlList) return obj.proofUrlList;
+
+  const proofSource = obj?.proofUrl || obj?.proofUrls;
+  if (!proofSource) return [];
+
+  if (Array.isArray(proofSource)) return proofSource;
+  if (typeof proofSource === 'string') {
+    try {
+      const parsed = JSON.parse(proofSource);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {}
+    if (proofSource.includes(',')) {
+      return proofSource.split(',').map(url => url.trim());
+    }
+    return [proofSource];
+  }
+  return [];
+});
 </script>
 
 <template>
@@ -42,6 +65,24 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       <div class="detail-row"><span class="label">完成率：</span>{{ detailObj.completionRate ?? '-' }}%</div>
       <div class="detail-row"><span class="label">是否异常：</span>{{ detailObj.isAbnormal === 1 ? '是' : '否' }}</div>
       <div class="detail-row" v-if="detailObj.abnormalDesc"><span class="label">异常描述：</span>{{ detailObj.abnormalDesc }}</div>
+
+      <div class="detail-section" v-if="proofList.length">📎 佐证材料</div>
+      <div class="detail-row" v-if="proofList.length">
+        <span class="label">佐证材料：</span>
+        <div class="photo-list">
+          <el-image
+            v-for="(url, index) in proofList"
+            :key="index"
+            :src="url"
+            :preview-src-list="proofList"
+            fit="cover"
+            style="width: 80px; height: 80px; margin-right: 8px; border-radius: 4px; cursor: pointer;"
+            :preview-teleported="true"
+          />
+        </div>
+      </div>
+
+      <div class="detail-section">📅 系统信息</div>
       <div class="detail-row"><span class="label">创建时间：</span>{{ detailObj.createTime || '-' }}</div>
     </div>
   </DetailDrawer>
@@ -74,5 +115,10 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
     flex-shrink: 0;
     font-weight: 500;
   }
+}
+
+.photo-list {
+  display: flex;
+  flex-wrap: wrap;
 }
 </style>

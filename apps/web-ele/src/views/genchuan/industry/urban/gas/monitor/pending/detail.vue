@@ -3,9 +3,9 @@ import { computed, defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 定义组件接收的属性（替换为道路预警数据）
+// 定义组件接收的属性（桥梁预警数据）
 const props = defineProps({
-  // 详情数据对象（道路预警数据）
+  // 详情数据对象（桥梁预警数据）
   detailObj: {
     type: Object,
     required: true,
@@ -20,18 +20,18 @@ const props = defineProps({
 
 const { detailObj, title } = toRefs(props);
 
-// 计算属性处理标题，优先用预警编号，兜底显示默认值
+// 计算属性处理标题，优先用预警编号，兜底显示桥梁预警
 const drawerTitle = computed(() => {
-  const warningCode = detailObj.value?.warningCode || '道路预警';
+  const warningCode = detailObj.value?.warningCode || '桥梁预警';
   return title.value || `${warningCode}详情`;
 });
 
-// 初始化抽屉实例（加宽适配预警字段）
+// 初始化抽屉实例（加宽适配桥梁预警更多字段）
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 850, // 加宽到850px适配预警更多字段
+  width: 900, // 加宽到900px适配桥梁预警新增字段
   onCancel() {
     detailDrawerApi.close();
   },
@@ -49,15 +49,21 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 道路预警基础信息 -->
+      <!-- 桥梁预警基础信息 -->
       <div class="detail-card-row">
         <div class="detail-row-left">预警编号:</div>
         <div class="detail-row-right">{{ detailObj.warningCode || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">预警路段:</div>
+        <div class="detail-row-left">预警桥梁:</div>
         <div class="detail-row-right">
-          {{ detailObj.warningRoadSection || '-' }}
+          {{ detailObj.warningBridge || '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">监测部位:</div>
+        <div class="detail-row-right">
+          {{ detailObj.monitorPosition || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
@@ -70,6 +76,9 @@ defineExpose({
         <div class="detail-row-left">超标数值:</div>
         <div class="detail-row-right">
           {{ detailObj.overStandardValue || '-' }}
+          <span v-if="detailObj.overStandardIndex === '支座位移'">mm</span>
+          <span v-else-if="detailObj.overStandardIndex === '振动频率'">Hz</span>
+          <span v-else-if="detailObj.overStandardIndex === '应变值'">με</span>
         </div>
       </div>
       <div class="detail-card-row">
@@ -79,14 +88,24 @@ defineExpose({
         </div>
       </div>
       <div class="detail-card-row">
+        <div class="detail-row-left">预警等级:</div>
+        <div class="detail-row-right">
+          <span
+            :class="{
+              'text-green-600': detailObj.warningLevel === 'Ⅰ级',
+              'text-yellow-600': detailObj.warningLevel === 'Ⅱ级',
+              'text-red-600': detailObj.warningLevel === 'Ⅲ级',
+            }"
+          >
+            {{ detailObj.warningLevel || '-' }}
+          </span>
+        </div>
+      </div>
+      <div class="detail-card-row">
         <div class="detail-row-left">预警触发时间:</div>
         <div class="detail-row-right">
           {{ detailObj.warningTriggerTime || '-' }}
         </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">预警状态:</div>
-        <div class="detail-row-right">{{ detailObj.warningStatus || '-' }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">监测设备编号:</div>
@@ -118,6 +137,12 @@ defineExpose({
           {{ detailObj.dispatchStatus || '-' }}
         </div>
       </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">等级处置要求:</div>
+        <div class="detail-row-right">
+          {{ detailObj.levelDisposalReq || '-' }}
+        </div>
+      </div>
     </div>
   </DetailDrawer>
 </template>
@@ -126,19 +151,19 @@ defineExpose({
 // 响应式适配
 @media (max-width: 768px) {
   .detail-row-left {
-    width: 120px; // 小屏适配预警字段标签宽度
+    width: 150px; // 小屏适配"等级处置要求"等长标签
   }
 
   .detail-card {
-    min-height: 480px;
-    max-height: 65vh;
+    min-height: 650px;
+    max-height: 85vh;
     padding: 15px;
   }
 }
 
 .detail-card {
-  min-height: 550px; // 适配预警字段数量，提升最小高度
-  max-height: 80vh; // 提高最大高度，容纳更多预警字段
+  min-height: 700px; // 适配14个桥梁预警字段
+  max-height: 90vh; // 提高最大高度，容纳更多桥梁预警字段
   padding: 20px;
   overflow-y: auto; // 内容过多时显示滚动条
   background-color: #f9fafb;
@@ -172,7 +197,7 @@ defineExpose({
 // 左侧标签样式
 .detail-row-left {
   flex-shrink: 0; // 不收缩
-  width: 140px; // 加宽标签宽度，适配"预警处置时限"等长标签
+  width: 180px; // 加宽到180px，适配"等级处置要求"等超长标签
   font-size: 14px;
   font-weight: 500; // 加粗突出标签
   line-height: 18px; // 统一行高
@@ -186,7 +211,20 @@ defineExpose({
   font-size: 14px;
   line-height: 18px;
   color: #303133; // 主文本色
-  word-break: break-all; // 处理长文本换行（如关联监测数据）
+  word-break: break-all; // 处理长文本换行（如等级处置要求）
+}
+
+// 预警等级颜色样式
+.text-green-600 {
+  color: #10b981 !important; // Ⅰ级（正常）-绿色
+}
+
+.text-yellow-600 {
+  color: #f59e0b !important; // Ⅱ级（注意）-黄色
+}
+
+.text-red-600 {
+  color: #ef4444 !important; // Ⅲ级（危险）-红色
 }
 
 // 滚动条样式优化

@@ -3,15 +3,15 @@ import { computed, defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 定义组件接收的属性（替换为道路监测数据）
+// 定义组件接收的属性（综合管廊监测数据）
 const props = defineProps({
-  // 详情数据对象（道路监测数据）
+  // 详情数据对象（综合管廊监测数据）
   detailObj: {
     type: Object,
     required: true,
     default: () => ({}),
   },
-  // 抽屉标题（可选，默认使用详情对象的roadSectionName）
+  // 抽屉标题（可选，默认使用详情对象的gallerySection）
   title: {
     type: String,
     default: '',
@@ -20,18 +20,18 @@ const props = defineProps({
 
 const { detailObj, title } = toRefs(props);
 
-// 计算属性处理标题，优先用路段名称，兜底显示默认值
+// 计算属性处理标题，优先用管廊区段名称，兜底显示默认值
 const drawerTitle = computed(() => {
-  const roadSectionName = detailObj.value?.roadSectionName || '道路监测';
-  return title.value || `${roadSectionName}详情`;
+  const gallerySection = detailObj.value?.gallerySection || '综合管廊监测';
+  return title.value || `${gallerySection}详情`;
 });
 
-// 初始化抽屉实例（加宽适配道路监测更多字段）
+// 初始化抽屉实例
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 800, // 加宽到800px适配道路监测字段
+  width: 800,
   onCancel() {
     detailDrawerApi.close();
   },
@@ -49,75 +49,107 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 道路监测基础信息 -->
+      <!-- 综合管廊监测基础信息 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">路段名称:</div>
+        <div class="detail-row-left">管廊区段:</div>
         <div class="detail-row-right">
-          {{ detailObj.roadSectionName || '-' }}
+          {{ detailObj.gallerySection || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">坑洼数量:</div>
+        <div class="detail-row-left">管廊温度:</div>
         <div class="detail-row-right">
-          {{ detailObj.potholeCount || '-' }} 个
+          {{ detailObj.galleryTemp || '-' }} ℃
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">裂缝长度:</div>
+        <div class="detail-row-left">管廊湿度:</div>
         <div class="detail-row-right">
-          {{ detailObj.crackLength || '-' }} 米
+          {{ detailObj.galleryHumidity || '-' }} %
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">路面温度:</div>
+        <div class="detail-row-left">燃气浓度:</div>
         <div class="detail-row-right">
-          {{ detailObj.roadSurfaceTemp || '-' }} ℃
+          {{ detailObj.gasConcentration || '-' }} %
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">交通流量:</div>
+        <div class="detail-row-left">烟感状态:</div>
         <div class="detail-row-right">
-          {{ detailObj.trafficFlow || '-' }} 辆/小时
+          {{ detailObj.smokeStatus || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">监测设备编号:</div>
         <div class="detail-row-right">
-          {{ detailObj.monitorDeviceCode || '-' }}
+          {{ detailObj.deviceCode || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">设备在线状态:</div>
         <div class="detail-row-right">
-          {{ detailObj.deviceOnlineStatus || '-' }}
+          {{ detailObj.deviceStatus || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">负责运维员:</div>
+        <div class="detail-row-left">负责巡检员:</div>
         <div class="detail-row-right">
-          {{ detailObj.maintenancePerson || '-' }}
+          {{ detailObj.staffName || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">数据采集频率:</div>
         <div class="detail-row-right">
-          {{ detailObj.dataCollectionFreq || '-' }}
+          {{ detailObj.collectFrequency || '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">监测状态:</div>
+        <div class="detail-row-right">
+          {{ detailObj.monitorStatus || '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">温度阈值:</div>
+        <div class="detail-row-right">
+          {{ detailObj.tempThreshold || '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">湿度阈值:</div>
+        <div class="detail-row-right">
+          {{ detailObj.humidityThreshold || '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">燃气浓度阈值:</div>
+        <div class="detail-row-right">
+          {{ detailObj.gasThreshold || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">数据同步时长:</div>
         <div class="detail-row-right">
-          {{ detailObj.dataSyncDuration || '-' }} 秒
+          {{ detailObj.syncDuration || '-' }} 秒
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">监测状态:</div>
-        <div class="detail-row-right">{{ detailObj.monitorStatus || '-' }}</div>
+        <div class="detail-row-left">最近更新时间:</div>
+        <div class="detail-row-right">
+          {{ detailObj.updateTime || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">指标阈值范围:</div>
+        <div class="detail-row-left">预警方式:</div>
         <div class="detail-row-right">
-          {{ detailObj.indexThresholdRange || '-' }}
+          {{ detailObj.warnWay || '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">安全风险等级:</div>
+        <div class="detail-row-right">
+          {{ detailObj.riskLevel || '-' }}
         </div>
       </div>
     </div>
@@ -139,7 +171,7 @@ defineExpose({
 }
 
 .detail-card {
-  min-height: 500px; // 适配道路监测字段数量，提升最小高度
+  min-height: 500px; // 适配综合管廊监测字段数量
   max-height: 75vh; // 提高最大高度，容纳更多内容
   padding: 20px;
   overflow-y: auto; // 内容过多时显示滚动条
@@ -174,7 +206,7 @@ defineExpose({
 // 左侧标签样式
 .detail-row-left {
   flex-shrink: 0; // 不收缩
-  width: 130px; // 加宽标签宽度，适配"监测设备编号"等长标签
+  width: 130px; // 加宽标签宽度，适配"燃气浓度阈值"等长标签
   font-size: 14px;
   font-weight: 500; // 加粗突出标签
   line-height: 18px; // 统一行高
@@ -188,7 +220,7 @@ defineExpose({
   font-size: 14px;
   line-height: 18px;
   color: #303133; // 主文本色
-  word-break: break-all; // 处理长文本换行（如指标阈值范围）
+  word-break: break-all; // 处理长文本换行
 }
 
 // 滚动条样式优化
@@ -208,5 +240,5 @@ defineExpose({
 
 .detail-card::-webkit-scrollbar-thumb:hover {
   background: #c0c4cc;
-} // 详情卡片整体样式
+}
 </style>

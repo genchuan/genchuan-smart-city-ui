@@ -38,7 +38,7 @@ const props = defineProps({
   arrowShow: { type: Boolean, default: false },
   arrowState: { type: Boolean, default: false },
 });
-const emit = defineEmits(['arrow-change']);
+const emit = defineEmits(['arrow-change', 'refresh-chart']);
 
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
@@ -209,6 +209,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
         await updateObject({ id, ...values });
         ElMessage.success($t('ui.actionMessage.editSuccess'));
       }
+      emit('refresh-chart'); // 触发图表刷新
       handleRefresh();
       fetchStatusCount();
       formDrawerApi.close();
@@ -393,6 +394,7 @@ async function handleDelete(row) {
   try {
     await deleteObject(row.id);
     ElMessage.success($t('ui.actionMessage.deleteSuccess'));
+    emit('refresh-chart'); // 触发图表刷新
     handleRefresh();
     fetchStatusCount();
   } finally {
@@ -411,6 +413,7 @@ async function handleDisable(row) {
   try {
     await updateObject({ id: row.id, statusId: 2 });
     ElMessage.success('已停用');
+    emit('refresh-chart'); // 触发图表刷新
     handleRefresh();
     fetchStatusCount();
   } finally {
@@ -429,6 +432,7 @@ async function handleEnable(row) {
   try {
     await updateObject({ id: row.id, statusId: 1 });
     ElMessage.success('已启用');
+    emit('refresh-chart'); // 触发图表刷新
     handleRefresh();
     fetchStatusCount();
   } finally {
@@ -456,6 +460,7 @@ async function handleBatchStatusChange() {
   try {
     await Promise.all(validIds.map(id => updateObject({ id, statusId: targetStatusId })));
     ElMessage.success(`批量${targetStatus}成功`);
+    emit('refresh-chart'); // 触发图表刷新
     checkedIds.value = [];
     handleRefresh();
     fetchStatusCount();
@@ -521,13 +526,15 @@ function formatList(list) {
         }
       }
 
-      let changeLogShort = '-';
-      if (item.changeLog != null) {
+      let changeLogShort = '-';                           // 1. 默认值设为 '-'
+      if (item.changeLog != null) {                       // 2. 判断 changeLog 是否非 null
         try {
-          const logStr = String(item.changeLog);
-          changeLogShort = logStr.length > 50 ? logStr.substring(0, 50) + '...' : logStr;
+          const logStr = String(item.changeLog);          // 3. 强制转为字符串（避免直接调用 substring 报错）
+          changeLogShort = logStr.length > 50            // 4. 判断长度
+            ? logStr.substring(0, 50) + '...'            //   超过50则截断并加省略号
+            : logStr;                                      //   否则原样赋值
         } catch (e) {
-          console.warn(`条目 ${item.id} changeLog 处理失败`, item.changeLog, e);
+          console.warn(`条目 ${item.id} changeLog 处理失败`, item.changeLog, e);  // 5. 异常时仅打印警告，changeLogShort 保持 '-'
         }
       }
 
@@ -796,6 +803,7 @@ async function submitImport() {
 
     const res = await importObjects(newFile);
     ElMessage.success(`导入成功`);
+    emit('refresh-chart'); // 触发图表刷新
     importDialogVisible.value = false;
     handleRefresh();
     fetchStatusCount();

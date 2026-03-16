@@ -63,6 +63,9 @@ const fetchOverview = async () => {
 onMounted(() => {
   fetchOverview();
 });
+
+// 暴露刷新方法给父组件
+defineExpose({ fetchOverview });
 </script>
 
 <template>

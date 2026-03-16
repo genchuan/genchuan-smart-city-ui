@@ -1,6 +1,6 @@
 import http from './genchuanHttp2';
 
-// thingsBoard 登录
+// thingsBoard 登录（直接调用 ThingsBoard API）
 export function thingsBoardLogin(data) {
   return http({
     url: '/api/auth/login',

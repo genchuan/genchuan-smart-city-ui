@@ -1,0 +1,400 @@
+<script setup>
+import { computed, reactive, ref } from 'vue';
+
+import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { isEmpty } from '@vben/utils';
+
+import { ElImage, ElLoading, ElMessage } from 'element-plus';
+import screenfull from 'screenfull';
+
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getWarnList } from '#/api/genchuan/industry/marketsupervision/index.js';
+import {
+  createParkLot,
+  deleteParkLot,
+  updateParkLot,
+} from '#/api/genchuan/industry/park/index.js';
+import { $t } from '#/locales';
+import { formatTimestamp } from '#/utils';
+import { exportToExcel } from '#/utils/excel.js';
+// 引入封装后的详情抽屉组件
+import ParkDetailDrawer from '#/views/genchuan/industry/page/vehicle/appear/table/detail.vue';
+
+import { useFormSchema, useGridColumns } from './data';
+
+const props = defineProps({
+  secondShow: {
+    type: Boolean,
+    default: false,
+  },
+});
+const getTitle = computed(() => {
+  return formData.value?.id ? '编辑' : '新增';
+});
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    drawerApi.close();
+  },
+  onConfirm() {},
+  async onOpenChange() {},
+});
+// 移除原 DetailDrawer 初始化逻辑
+const formData = ref();
+const [Form, formApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 80,
+  },
+  layout: 'horizontal',
+  schema: useFormSchema(),
+  showDefaultActions: false,
+});
+const [FormDrawer, formDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    formDrawerApi.close();
+  },
+  async onConfirm() {
+    const obj = formApi.form.values;
+    await (formDrawerApi.sharedData.payload.title === '增加'
+      ? createParkLot(obj)
+      : updateParkLot({ ...dataObj.editObj, ...obj }));
+    handleRefresh();
+    formDrawerApi.close();
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      formData.value = formDrawerApi.getData();
+      if (formData.value?.id) {
+        await formApi.setValues(formData.value);
+      } else {
+        formApi.resetForm();
+      }
+    }
+  },
+});
+/** 刷新表格 */
+function handleRefresh() {
+  gridApi.query();
+}
+
+/** 导出表格 */
+async function handleExport() {
+  exportToExcel(dataObj.apilist, '数据导出', '数据导出');
+}
+
+/** 创建角色 */
+function handleCreate() {
+  formDrawerApi
+    .setData({
+      title: '增加',
+    })
+    .open();
+}
+
+/** 编辑角色 */
+function handleEdit(row) {
+  dataObj.editObj = row;
+  formDrawerApi
+    .setData({
+      title: '编辑',
+      ...row,
+    })
+    .open();
+}
+async function handleDelete(row) {
+  const loadingInstance = ElLoading.service({
+    text: $t('ui.actionMessage.deleting'),
+  });
+  try {
+    await deleteParkLot(row.id);
+    ElMessage.success($t('ui.actionMessage.deleteSuccess'));
+    handleRefresh();
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+async function handleDeleteBatch() {
+  await confirm($t('确定删除这些数据吗？')).then(() => {
+    checkedIds.value.forEach(async (v) => {
+      await handleDelete({
+        id: v,
+      });
+    });
+  });
+  handleRefresh();
+}
+
+const checkedIds = ref([]);
+function handleRowCheckboxChange({ records }) {
+  checkedIds.value = records.map((item) => item.id);
+}
+const dataObj = reactive({
+  totalShow: false,
+  detailObj: {}, // 保留详情对象用于传递给组件
+  total: 0,
+  currentPage: 1,
+  pageSize: 10,
+  apilist: [],
+  imgUrl: '',
+  serachObj: {},
+  list: [],
+  editObj: {},
+});
+const changeTotalShow = () => {
+  dataObj.totalShow = !dataObj.totalShow;
+};
+// 表格数据获取
+const getTableData = async (pageObj) => {
+  const getParams = {
+    pageNo: pageObj.page.currentPage,
+    pageSize: pageObj.page.pageSize,
+    ...dataObj.serachObj,
+  };
+  const data = await getWarnList(getParams);
+  dataObj.total = data.total;
+  dataObj.list = data.list.map((v) => {
+    return {
+      ...v,
+      alertCreateTime: formatTimestamp(v.alertCreateTime),
+    };
+  });
+  return dataObj;
+};
+
+const [QueryForm, QueryFormApi] = useVbenForm({
+  // 默认展开
+  collapsed: false,
+  // 所有表单项共用，可单独在表单内覆盖
+  commonConfig: {
+    // 所有表单项
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  // 提交函数
+  handleSubmit: onSubmit,
+  // 垂直布局，label和input在不同行，值为vertical
+  // 水平布局，label和input在同一行
+  layout: 'horizontal',
+  schema: useFormSchema()
+    .filter((v) => !v.searchFilter)
+    .map((v) => {
+      delete v.rules;
+      return {
+        ...v,
+      };
+    }),
+  // 是否可展开
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+// 搜索表单查询
+async function onSubmit() {
+  dataObj.serachObj = await QueryFormApi.getValues();
+  gridApi.reload();
+  drawerApi.close();
+}
+const [Grid, gridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: useGridColumns(),
+    keepSource: true,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }) => getTableData({ page }),
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+      isHover: true,
+    },
+    pagerConfig: dataObj,
+    toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
+      refresh: true,
+      search: true,
+    },
+    showOverflow: true,
+  },
+  gridEvents: {
+    checkboxAll: handleRowCheckboxChange,
+    checkboxChange: handleRowCheckboxChange,
+  },
+  showSearchForm: false,
+});
+
+const activeName = ref('');
+// 修改打开详情的方法，调用组件的open方法
+const handleOpenDetail = (row) => {
+  dataObj.detailObj = row;
+  // 通过ref调用组件的open方法
+  parkDetailDrawerRef.value.open();
+  console.log(row);
+};
+const tabsData = ref([
+  { label: '全部', value: '' },
+  { label: '月租车', value: '1' },
+  { label: '临时车', value: '0' },
+]);
+const createLabel = (item) => {
+  return item.label;
+};
+const handleClick = () => {
+  dataObj.serachObj.plateType = activeName.value;
+  gridApi.query();
+};
+const handleSerachShow = () => {
+  drawerApi.open();
+};
+const handleFullShow = () => {
+  screenfull.toggle();
+};
+
+// 定义组件ref，用于调用组件方法
+const parkDetailDrawerRef = ref(null);
+const dialogVisible = ref(false);
+const openImg = (url) => {
+  dataObj.imgUrl = url;
+  dialogVisible.value = true;
+};
+</script>
+
+<template>
+  <div class="park-lot-table-new">
+    <el-dialog v-model="dialogVisible">
+      <div class="park-img-center">
+        <img style="width: 100%; height: 100%" :src="dataObj.imgUrl" />
+      </div>
+    </el-dialog>
+    <FormDrawer :title="getTitle">
+      <Form />
+    </FormDrawer>
+    <!-- 使用封装后的详情抽屉组件 -->
+    <ParkDetailDrawer
+      ref="parkDetailDrawerRef"
+      :detail-obj="dataObj.detailObj"
+      title="详情"
+    />
+    <Drawer title="搜索">
+      <QueryForm class="query-form" />
+    </Drawer>
+    <Grid>
+      <!-- 三级状态 -->
+      <template #table-title>
+        <div class="tabel-tabs">
+          <div v-if="props.secondShow">
+            <el-tabs
+              v-model="activeName"
+              class="demo-tabs"
+              @tab-change="handleClick"
+            >
+              <el-tab-pane
+                v-for="item in tabsData"
+                :key="item.label"
+                :label="createLabel(item)"
+                :name="item.value"
+              />
+            </el-tabs>
+          </div>
+        </div>
+      </template>
+      <template #toolbar-tools>
+        <div class="common-toolbar-tools">
+          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="批量删除"
+            icon-name="delete"
+            color="#F56C6C"
+            :disabled="isEmpty(checkedIds)"
+            @click="handleDeleteBatch"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="handleFullShow"
+          />
+        </div>
+      </template>
+      <template #userIds="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.userIds }}
+        </el-text>
+      </template>
+      <template #driveInPhoto="{ row }">
+        <ElImage
+          style="width: 100px; height: 100px"
+          :src="row.driveInPhoto"
+          @click="openImg(row.driveInPhoto)"
+        />
+      </template>
+      <template #driveOutPhoto="{ row }">
+        <ElImage
+          style="width: 100px; height: 100px"
+          :src="row.driveOutPhoto"
+          @click="openImg(row.driveOutPhoto)"
+        />
+      </template>
+
+      <template #actions="{ row }">
+        <div class="table-toolbar-tools">
+          <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleOpenDetail(row)"
+          />
+          <IconButton
+            content="编辑"
+            icon-name="edit"
+            @click="handleEdit(row)"
+          />
+          <IconButton
+            content="删除"
+            icon-name="delete"
+            color="#F56C6C"
+            @click="handleDelete(row)"
+          />
+        </div>
+      </template>
+      <template #bottom>
+        <div class="common-total" @click="changeTotalShow"></div>
+      </template>
+    </Grid>
+  </div>
+</template>
+<style scoped>
+.park-img-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 700px;
+  height: 700px;
+}
+</style>

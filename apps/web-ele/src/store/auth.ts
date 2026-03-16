@@ -22,6 +22,10 @@ import {
 } from '#/api';
 import { thingsBoardLogin } from '#/api/genchuan/thingsBoard';
 import { $t } from '#/locales';
+import {
+  decryptThingsBoardCredentials,
+  getEncryptedThingsBoardCredentials,
+} from '#/utils/encrypt';
 
 /**
  * ThingsBoard 登录响应类型
@@ -78,15 +82,14 @@ export const useAuthStore = defineStore('auth', () => {
       if (accessToken) {
         accessStore.setAccessToken(accessToken);
         accessStore.setRefreshToken(refreshToken);
-        // ThingsBoard 登录
-        const thingsBoardData = {
-          username: import.meta.env.VITE_THINGS_BOARD_NAME,
-          password: import.meta.env.VITE_THINGS_BOARD_PASSWORD,
-        };
+        // ThingsBoard 登录（使用加密凭据，避免明文传输）
         try {
-          const thingsBoardRes = (await thingsBoardLogin(
-            thingsBoardData,
-          )) as unknown as ThingsBoardLoginResponse;
+          const encryptedCreds = getEncryptedThingsBoardCredentials();
+          const decryptedCreds = decryptThingsBoardCredentials(encryptedCreds);
+          const thingsBoardRes = (await thingsBoardLogin({
+            username: decryptedCreds.username,
+            password: decryptedCreds.password,
+          })) as unknown as ThingsBoardLoginResponse;
           window.localStorage.setItem(
             'thingsBoardJwt_token',
             thingsBoardRes.token,
