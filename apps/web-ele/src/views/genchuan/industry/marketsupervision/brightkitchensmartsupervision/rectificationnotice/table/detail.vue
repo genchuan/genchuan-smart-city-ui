@@ -3,15 +3,18 @@ import { computed, defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
+// 引入时间格式化工具（根据项目实际路径调整）
+import { formatTimestamp } from '#/utils';
+
 // 定义组件接收的属性
 const props = defineProps({
-  // 详情数据对象（出入口数据）
+  // 详情数据对象（整改通知书数据）
   detailObj: {
     type: Object,
     required: true,
     default: () => ({}),
   },
-  // 抽屉标题（可选，默认使用详情对象的entranceName）
+  // 抽屉标题（可选，默认使用通知书编号）
   title: {
     type: String,
     default: '',
@@ -20,10 +23,10 @@ const props = defineProps({
 
 const { detailObj, title } = toRefs(props);
 
-// 计算属性处理标题，优先使用出入口名称，兜底显示默认值
+// 计算属性处理标题，优先使用通知书编号，兜底显示默认值
 const drawerTitle = computed(() => {
-  const entranceName = detailObj.value?.entranceName || '出入口';
-  return title.value || `${entranceName}详情`;
+  const noticeCode = detailObj.value?.noticeCode || '整改通知书';
+  return title.value || `${noticeCode}详情`;
 });
 
 // 初始化抽屉实例
@@ -31,7 +34,7 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 750, // 加宽抽屉适配更多出入口字段
+  width: 750, // 加宽抽屉适配更多字段
   onCancel() {
     detailDrawerApi.close();
   },
@@ -49,65 +52,65 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 出入口基础信息 -->
+      <!-- 整改通知书基础信息 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">出入口ID:</div>
+        <div class="detail-row-left">主键ID:</div>
         <div class="detail-row-right">{{ detailObj.id || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">出入口名称:</div>
-        <div class="detail-row-right">{{ detailObj.entranceName || '-' }}</div>
+        <div class="detail-row-left">整改通知书编号:</div>
+        <div class="detail-row-right">{{ detailObj.noticeCode || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">所属车场/车库:</div>
-        <div class="detail-row-right">{{ detailObj.parkingLot || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">出入口类型:</div>
-        <div class="detail-row-right">{{ detailObj.entranceType || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">车道数量:</div>
-        <div class="detail-row-right">{{ detailObj.laneCount || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">地址:</div>
-        <div class="detail-row-right">{{ detailObj.address || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">开放时间:</div>
-        <div class="detail-row-right">{{ detailObj.openTime || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">关闭时间:</div>
-        <div class="detail-row-right">{{ detailObj.closeTime || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">启用状态:</div>
-        <div class="detail-row-right">{{ detailObj.enableStatus || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">联系人:</div>
-        <div class="detail-row-right">{{ detailObj.contactPerson || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">联系电话:</div>
-        <div class="detail-row-right">{{ detailObj.contactPhone || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">当前状态:</div>
-        <div class="detail-row-right">{{ detailObj.currentStatus || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">关联设备数:</div>
+        <div class="detail-row-left">整改复审台账ID:</div>
         <div class="detail-row-right">
-          {{ detailObj.relatedDeviceCount || '-' }}
+          {{ detailObj.rectifyReviewId || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">最后运营时间:</div>
+        <div class="detail-row-left">下发时间:</div>
         <div class="detail-row-right">
-          {{ detailObj.lastOperateTime || '-' }}
+          {{ detailObj.issueTime ? formatTimestamp(detailObj.issueTime) : '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">整改期限:</div>
+        <div class="detail-row-right">
+          {{
+            detailObj.rectifyDeadline
+              ? formatTimestamp(detailObj.rectifyDeadline, 'YYYY-MM-DD')
+              : '-'
+          }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">送达状态:</div>
+        <div class="detail-row-right">{{ detailObj.receiveStatus || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">送达时间:</div>
+        <div class="detail-row-right">
+          {{
+            detailObj.receiveTime ? formatTimestamp(detailObj.receiveTime) : '-'
+          }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">通知书内容:</div>
+        <div class="detail-row-right">
+          <!-- 长文本适配，保留换行 -->
+          <div
+            class="content-text"
+            v-html="detailObj.noticeContent?.replace(/\\n/g, '<br/>') || '-'"
+          ></div>
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">创建时间:</div>
+        <div class="detail-row-right">
+          {{
+            detailObj.createTime ? formatTimestamp(detailObj.createTime) : '-'
+          }}
         </div>
       </div>
     </div>
@@ -120,7 +123,7 @@ defineExpose({
   padding: 20px;
   background-color: #f9fafb;
   border-radius: 8px;
-  min-height: 450px; // 增加最小高度适配出入口字段数量
+  min-height: 450px; // 适配新字段数量
   max-height: 70vh; // 限制最大高度，避免内容过多溢出
   overflow-y: auto; // 内容过多时显示滚动条
 }
@@ -165,8 +168,15 @@ defineExpose({
   color: #303133; // 主文本色
   font-size: 14px;
   line-height: 18px;
-  word-break: break-all; // 处理长文本换行（如地址）
+  word-break: break-all; // 处理长文本换行（如内容、链接）
   padding-right: 10px;
+}
+
+// 通知书内容文本样式
+.content-text {
+  line-height: 1.6; // 增大行高，提升长文本可读性
+  padding: 8px 0;
+  white-space: pre-wrap; // 保留空白和换行
 }
 
 // 响应式适配

@@ -2,17 +2,24 @@
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElImage, ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import {
+  addNotice,
+  deleteNotice,
+  exporNoticeExcel,
+  getNoticeList,
+  updateNotice,
+} from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
-import { exportToExcel } from '#/utils/excel.js';
+import { formatTimestamp } from '#/utils';
 
-import { dataList, useFormSchema, useGridColumns } from './data';
+import { useFormSchema, useGridColumns } from './data';
 // 引入封装后的详情抽屉组件
 import ParkDetailDrawer from './detail.vue';
 
@@ -21,17 +28,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  arrowShow: {
-    type: Boolean,
-    default: false,
-  },
-  arrowState: {
-    type: Boolean,
-    default: false,
-  },
 });
-const emit = defineEmits(['arrow-change']);
-
 const getTitle = computed(() => {
   return formData.value?.id ? '编辑' : '新增';
 });
@@ -57,7 +54,7 @@ const [Form, formApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useFormSchema(),
+  schema: useFormSchema().filter((v) => v.isEdit),
   showDefaultActions: false,
 });
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
@@ -66,17 +63,11 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onCancel() {
     formDrawerApi.close();
   },
-  onConfirm() {
+  async onConfirm() {
     const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === '新增') {
-      dataObj.apilist.push(obj);
-    } else {
-      dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
-        }
-      });
-    }
+    await (formDrawerApi.sharedData.payload.title === '增加'
+      ? addNotice(obj)
+      : updateNotice({ ...dataObj.editObj, ...obj }));
     handleRefresh();
     formDrawerApi.close();
   },
@@ -98,20 +89,25 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  exportToExcel(dataObj.apilist, '导出', 'excel');
+  const data = await exporNoticeExcel();
+  downloadFileFromBlobPart({
+    fileName: '整改通知书.xls',
+    source: data,
+  });
 }
 
 /** 创建角色 */
 function handleCreate() {
   formDrawerApi
     .setData({
-      title: '新增',
+      title: '增加',
     })
     .open();
 }
 
 /** 编辑角色 */
 function handleEdit(row) {
+  dataObj.editObj = row;
   formDrawerApi
     .setData({
       title: '编辑',
@@ -121,11 +117,11 @@ function handleEdit(row) {
 }
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.name]),
+    text: $t('ui.actionMessage.deleting'),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
+    await deleteNotice(row.id);
+    ElMessage.success($t('ui.actionMessage.deleteSuccess'));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -133,20 +129,14 @@ async function handleDelete(row) {
 }
 
 async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
+  await confirm($t('确定删除这些数据吗？')).then(() => {
+    checkedIds.value.forEach(async (v) => {
+      await handleDelete({
+        id: v,
+      });
+    });
   });
-  try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
+  handleRefresh();
 }
 
 const checkedIds = ref([]);
@@ -156,42 +146,41 @@ function handleRowCheckboxChange({ records }) {
 const dataObj = reactive({
   totalShow: false,
   detailObj: {}, // 保留详情对象用于传递给组件
-  total: dataList().length,
+  total: 0,
   currentPage: 1,
   pageSize: 10,
-  apilist: dataList(),
+  apilist: [],
+  imgUrl: '',
+  serachObj: {},
   list: [],
+  editObj: {},
+  batchViewData: [], // 新增：批量查看的数据列表
+  batchViewVisible: false, // 新增：批量查看弹窗显示状态
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
 // 表格数据获取
-const getTableData = (pageObj) => {
-  const page = pageObj.page;
-  dataObj.total = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    }).length;
-  dataObj.list = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    })
-    .slice(
-      (page.currentPage - 1) * page.pageSize,
-      page.currentPage * page.pageSize,
-    );
+const getTableData = async (pageObj) => {
+  const getParams = {
+    pageNo: pageObj.page.currentPage,
+    pageSize: pageObj.page.pageSize,
+    ...dataObj.serachObj,
+  };
+  const data = await getNoticeList(getParams);
+  dataObj.total = data.total;
+  dataObj.list = data.list.map((v) => {
+    return {
+      ...v,
+      issueTime: formatTimestamp(v.issueTime),
+      receiveTime: formatTimestamp(v.receiveTime),
+      createTime: formatTimestamp(v.createTime),
+    };
+  });
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [QueryForm, QueryFormApi] = useVbenForm({
   // 默认展开
   collapsed: false,
   // 所有表单项共用，可单独在表单内覆盖
@@ -208,12 +197,14 @@ const [QueryForm] = useVbenForm({
   // 垂直布局，label和input在不同行，值为vertical
   // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
-  }),
+  schema: useFormSchema()
+    .filter((v) => v.isSearch)
+    .map((v) => {
+      delete v.rules;
+      return {
+        ...v,
+      };
+    }),
   // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
@@ -221,7 +212,9 @@ const [QueryForm] = useVbenForm({
   },
 });
 // 搜索表单查询
-function onSubmit() {
+async function onSubmit() {
+  dataObj.serachObj = await QueryFormApi.getValues();
+  gridApi.reload();
   drawerApi.close();
 }
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -252,7 +245,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-const activeName = ref('全部');
+const activeName = ref('');
 // 修改打开详情的方法，调用组件的open方法
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
@@ -261,20 +254,15 @@ const handleOpenDetail = (row) => {
   console.log(row);
 };
 const tabsData = ref([
-  { label: '全部' },
-  { label: '启用' },
-  { label: '禁用' },
-  { label: '暂停运营' },
-  { label: '维修中' },
+  { label: '全部', value: '' },
+  { label: '月租车', value: '1' },
+  { label: '临时车', value: '0' },
 ]);
 const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
-  if (item.label === '全部') {
-    text = `(${dataObj.apilist.length})`;
-  }
-  return item.label + text;
+  return item.label;
 };
 const handleClick = () => {
+  dataObj.serachObj.plateType = activeName.value;
   gridApi.query();
 };
 const handleSerachShow = () => {
@@ -286,9 +274,35 @@ const handleFullShow = () => {
 
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
+const dialogVisible = ref(false);
+const openImg = (url) => {
+  dataObj.imgUrl = url;
+  dialogVisible.value = true;
+};
 
-const arrowChange = () => {
-  emit('arrow-change');
+// 查看全部证据图片
+const handleViewAllEvidence = (row) => {
+  if (!row.evidenceList || row.evidenceList.length === 0) {
+    ElMessage.warning('无证据图片可查看');
+    return;
+  }
+  ElMessage.info(`共${row.evidenceList.length}张证据图片，已打开第一张`);
+  openImg(row.evidenceList[0].url);
+};
+
+// 批量查看数据编号（使用el-table展示）
+const handleOpenData = async () => {
+  // 1. 检查是否有选中的数据
+  if (isEmpty(checkedIds.value)) {
+    ElMessage.warning($t('请先选择要查看的数据！') || '请先选择要查看的数据！');
+    return;
+  }
+  const res = await getRectifyEvidence({
+    ledgerIdList: checkedIds.value,
+  });
+  dataObj.batchViewData = res.list;
+  // 3. 打开批量查看弹窗
+  dataObj.batchViewVisible = true;
 };
 </script>
 
@@ -297,15 +311,39 @@ const arrowChange = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
+
     <!-- 使用封装后的详情抽屉组件 -->
     <ParkDetailDrawer
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
+      title="详情"
     />
+
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+
     <Grid>
+      <!-- 三级状态 -->
+      <template #table-title>
+        <div class="tabel-tabs">
+          <div v-if="props.secondShow">
+            <el-tabs
+              v-model="activeName"
+              class="demo-tabs"
+              @tab-change="handleClick"
+            >
+              <el-tab-pane
+                v-for="item in tabsData"
+                :key="item.label"
+                :label="createLabel(item)"
+                :name="item.value"
+              />
+            </el-tabs>
+          </div>
+        </div>
+      </template>
+
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
@@ -322,14 +360,15 @@ const arrowChange = () => {
             @click="handleDeleteBatch"
           />
           <IconButton
+            content="批量查看证据"
+            icon-name="Expand"
+            :disabled="isEmpty(checkedIds)"
+            @click="handleOpenData"
+          />
+          <IconButton
             content="搜索"
             icon-name="search"
             @click="handleSerachShow"
-          />
-          <IconButton
-            :content="props.arrowShow ? '展开' : '收缩'"
-            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
-            @click="arrowChange"
           />
           <IconButton
             content="全屏"
@@ -338,15 +377,33 @@ const arrowChange = () => {
           />
         </div>
       </template>
-      <template #ledgerCode="{ row }">
+
+      <template #noticeCode="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.ledgerCode }}
+          {{ row.noticeCode }}
         </el-text>
       </template>
+
+      <template #driveInPhoto="{ row }">
+        <ElImage
+          style="width: 100px; height: 100px"
+          :src="row.driveInPhoto"
+          @click="openImg(row.driveInPhoto)"
+        />
+      </template>
+
+      <template #driveOutPhoto="{ row }">
+        <ElImage
+          style="width: 100px; height: 100px"
+          :src="row.driveOutPhoto"
+          @click="openImg(row.driveOutPhoto)"
+        />
+      </template>
+
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
@@ -367,17 +424,72 @@ const arrowChange = () => {
           />
         </div>
       </template>
+
       <template #bottom>
-        <div class="common-total" @click="changeTotalShow">
-          <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
-            <ArrowDown />
-          </el-icon>
-          <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
-            <ArrowUp />
-          </el-icon>
-          <span> 全部统计：10条 </span>
-        </div>
+        <div class="common-total" @click="changeTotalShow"></div>
       </template>
     </Grid>
   </div>
 </template>
+
+<style scoped>
+.park-img-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 700px;
+  height: 700px;
+}
+
+/* 批量查看表格样式优化 */
+:deep(.el-table) {
+  --el-table-header-text-color: #303133;
+  --el-table-row-hover-bg-color: #f5f7fa;
+}
+
+:deep(.el-dialog__body) {
+  padding: 20px;
+}
+
+/* 证据列表样式 */
+.evidence-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.evidence-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.evidence-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.evidence-name {
+  font-size: 12px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.evidence-type {
+  font-size: 11px;
+  color: #999;
+}
+
+.no-evidence {
+  color: #999;
+  font-size: 12px;
+  text-align: center;
+  padding: 8px 0;
+}
+</style>

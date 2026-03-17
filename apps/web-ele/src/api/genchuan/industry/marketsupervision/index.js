@@ -1,11 +1,20 @@
-import { requestClient } from '#/api/request';
-/** 道路实施检测分页 */
+import { requestClient } from '#/api/request'; 
 export function getWarnList(params) {
   return requestClient.get('/kitchen/ai-alert-message/page', {
     params,
   });
 } 
+ 
 
+/** excel导出 */
+export function exporReviewExcel() {
+  return requestClient.download('/kitchen/rectify-review/export-excel');
+}
+
+/** 批量查看整改复审台账证据分页 */
+export function getRectifyEvidence(data) { 
+  return requestClient.post('/kitchen/rectify-review/create', data);
+}
 
 /**整改通知书复审管理 */
 export function getRectifyList(params) {
@@ -13,19 +22,6 @@ export function getRectifyList(params) {
     params,
   });
 } 
-
-/** excel导出 */
-export function exporReviewExcel() {
-  return requestClient.download('/kitchen/rectify-review/export-excel');
-}
-
-
-/** 批量查看整改复审台账证据分页 */
-export function getRectifyEvidence(data) { 
-  return requestClient.post('/kitchen/rectify-review/create', data);
-}
-
-
 /** 删除台账数据 */
 export function deleteRectifyEvidence(id) {
   return requestClient.delete(`/kitchen/rectify-review/delete?id=${id}`);
@@ -35,4 +31,28 @@ export function addRectify(data) {
 }
 export function updateRectify(data) {
   return requestClient.put(`/kitchen/rectify-review/update`, data);
+}
+
+
+
+
+/**整改通知书 */
+export function getNoticeList(params) {
+  return requestClient.get('/kitchen/rectify-notice/page', {
+    params,
+  });
+} 
+/** 删除台账数据 */
+export function deleteNotice(id) {
+  return requestClient.delete(`/kitchen/rectify-notice/delete?id=${id}`);
+}
+export function addNotice(data) {
+  return requestClient.post(`/kitchen/rectify-notice/create`, data);
+}
+export function updateNotice(data) {
+  return requestClient.put(`/kitchen/rectify-notice/update`, data);
+}
+/** excel导出 */
+export function exporNoticeExcel() {
+  return requestClient.download('/kitchen/rectify-notice/export-excel');
 }

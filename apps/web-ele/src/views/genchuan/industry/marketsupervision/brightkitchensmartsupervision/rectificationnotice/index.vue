@@ -6,9 +6,15 @@ import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
 
+const changeArrowStatus = () => {
+  secondShow.value = !secondShow.value;
+  tabArray.value.forEach((v) => {
+    v.secondShow = secondShow.value;
+  });
+};
 const tabArray = ref([
   {
-    label: '处罚通知书复审管理',
+    label: '整改通知书',
     components: Table,
     showSecondary: true,
     secondShow: false,
@@ -22,7 +28,7 @@ const arrowChange = () => {
     v.arrowShow = !v.arrowShow;
   });
 };
-const activeName = ref('处罚通知书复审管理');
+const activeName = ref('整改通知书');
 const secondShow = ref(false);
 </script>
 <template>
