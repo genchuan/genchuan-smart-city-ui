@@ -20,7 +20,7 @@ const props = defineProps({
     default: false,
   },
 });
-const emit = defineEmits(['arrow-change', 'sub-tab-change']);
+const emit = defineEmits(['arrow-change']);
 const activeName = ref('实时监测');
 const arrowChange = () => {
   emit('arrow-change');
@@ -35,8 +35,6 @@ const handleClick = (item) => {
   console.log(item);
   const nowObj = tabsData.value.find((v) => v.label === item);
   isComponent.value.now = nowObj.component;
-  // 发送子标签页变化事件
-  emit('sub-tab-change', item);
 };
 const isComponent = ref({
   now: MontiorTable,
