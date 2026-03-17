@@ -56,3 +56,27 @@ export function updateNotice(data) {
 export function exporNoticeExcel() {
   return requestClient.download('/kitchen/rectify-notice/export-excel');
 }
+
+
+
+
+/** 企业整改记录分页 */
+export function getEntRectifyRecord(params) {
+  return requestClient.get('/kitchen/ent-rectify-record/page', {
+    params,
+  });
+} 
+/** 删除台账数据 */
+export function deleteEntNotice(id) {
+  return requestClient.delete(`/kitchen/ent-rectify-record/delete?id=${id}`);
+}
+export function addEntNotice(data) {
+  return requestClient.post(`/kitchen/ent-rectify-record/create`, data);
+}
+export function updateEntNotice(data) {
+  return requestClient.put(`/kitchen/ent-rectify-record/update`, data);
+}
+/** excel导出 */
+export function exporEntNoticeExcel() {
+  return requestClient.download('/kitchen/ent-rectify-record/export-excel');
+}
