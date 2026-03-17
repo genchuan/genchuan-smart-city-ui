@@ -103,19 +103,19 @@ export function useFormSchema() {
       rules: '',
       isEdit: true
     },
-    {
-      fieldName: 'noticeContent',
-      label: '通知书内容',
-      component: 'InputTextArea', // 富文本/大文本用文本域
-      componentProps: {
-        placeholder: '请输入通知书原件内容',
-        rows: 6,
-        maxLength: 2000,
-      },
-      labelWidth: '120',
-      rules: 'required',
-      isEdit: true
-    },
+    // {
+    //   fieldName: 'noticeContent',
+    //   label: '通知书内容',
+    //   component: 'InputTextArea', // 富文本/大文本用文本域
+    //   componentProps: {
+    //     placeholder: '请输入通知书原件内容',
+    //     rows: 6,
+    //     maxLength: 2000,
+    //   },
+    //   labelWidth: '120',
+    //   rules: 'required',
+    //   isEdit: true
+    // },
     {
       fieldName: 'createTime',
       label: '创建时间',

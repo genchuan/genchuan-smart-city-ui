@@ -314,6 +314,7 @@ const handleOpenData = async () => {
 
     <!-- 使用封装后的详情抽屉组件 -->
     <ParkDetailDrawer
+      class="genchuan-detail-drawer"
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
       title="详情"
@@ -346,7 +347,7 @@ const handleOpenData = async () => {
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <!-- <IconButton content="新增" icon-name="Plus" @click="handleCreate" /> -->
           <IconButton
             content="导出"
             icon-name="download"
