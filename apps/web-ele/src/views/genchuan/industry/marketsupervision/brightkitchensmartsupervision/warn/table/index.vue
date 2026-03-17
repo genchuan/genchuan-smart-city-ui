@@ -20,6 +20,8 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   createReviewLedger,
   getEnterpriseList,
+  // 新增：引入获取复审台账详情接口
+  getReviewLedgerDetail,
   getWarnList,
 } from '#/api/genchuan/industry/marketsupervision/index.js';
 import {
@@ -34,6 +36,7 @@ import { exportToExcel } from '#/utils/excel.js';
 import { useFormSchema, useGridColumns } from './data';
 // 引入封装后的详情抽屉组件
 import Detail from './detail.vue';
+import fuDetail from './fuDetail.vue';
 
 const props = defineProps({
   secondShow: {
@@ -154,6 +157,7 @@ function handleRowCheckboxChange({ records }) {
 const dataObj = reactive({
   totalShow: false,
   detailObj: {}, // 保留详情对象用于传递给组件
+  fuDetailObj: {}, // 新增：复审台账详情对象
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -257,6 +261,38 @@ const handleOpenDetail = (row) => {
   parkDetailDrawerRef.value.open();
   console.log(row);
 };
+
+// ========== 新增：打开复审台账详情抽屉方法 ==========
+// 定义复审台账详情组件ref
+const fuDetailDrawerRef = ref(null);
+
+// 打开复审台账详情抽屉
+const handleOpenFuDetail = async (row) => {
+  try {
+    const loadingInstance = ElLoading.service({
+      text: '加载复审台账详情中...',
+    });
+
+    // 1. 调用接口获取复审台账详情数据
+    // 传入告警ID作为查询条件（根据实际接口参数调整）
+    const detailData = await getReviewLedgerDetail(
+      row.id, // 告警ID
+    );
+
+    // 2. 将详情数据赋值给fuDetailObj
+    dataObj.fuDetailObj = detailData || {};
+
+    // 3. 调用复审台账详情组件的open方法打开抽屉
+    fuDetailDrawerRef.value.open();
+
+    loadingInstance.close();
+  } catch (error) {
+    ElMessage.error('加载复审台账详情失败，请重试');
+    console.error('加载复审台账详情失败：', error);
+  }
+};
+// ========== 复审台账详情方法结束 ==========
+
 const tabsData = ref([
   { label: '全部', value: '' },
   { label: '月租车', value: '1' },
@@ -346,7 +382,6 @@ const submitEnterpriseSelect = async () => {
     });
 
     // ========== 核心逻辑：调用生成复审台账接口 ==========
-    // 此处替换为实际的生成复审台账接口
     const res = await createReviewLedger({
       aiAlertMessageId: currentRow.value.id, // 告警ID
       entId: selectedEnterpriseId.value, // 选中的企业ID
@@ -434,6 +469,11 @@ const cancelEnterpriseSelect = () => {
       :detail-obj="dataObj.detailObj"
       title="详情"
     />
+    <fuDetail
+      ref="fuDetailDrawerRef"
+      :detail-obj="dataObj.fuDetailObj"
+      title="复审台账详情"
+    />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -513,6 +553,11 @@ const cancelEnterpriseSelect = () => {
             content="生成复审台账"
             icon-name="Plus"
             @click="addDetail(row)"
+          />
+          <IconButton
+            content="查看复审台账记录"
+            icon-name="View"
+            @click="handleOpenFuDetail(row)"
           />
           <IconButton
             content="详情"

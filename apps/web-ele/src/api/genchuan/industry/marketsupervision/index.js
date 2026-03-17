@@ -85,7 +85,11 @@ export function exporEntNoticeExcel() {
 export function getEnterpriseList(params) {
   return requestClient.get('/kitchen/enterprise-info/page'); 
 }
-/** createReviewLedger */
+/** 创建复审台账 */
 export function createReviewLedger(data) {
   return requestClient.post(`/kitchen/rectify-review/review-add`, data);
+}
+/** 获取复审台账详情 */
+export function getReviewLedgerDetail(id) {
+  return requestClient.get(`/kitchen/rectify-review/get?id=${id}`);
 }
