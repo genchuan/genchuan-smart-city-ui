@@ -797,8 +797,7 @@ onUnmounted(() => {
 .stat-card {
   display: flex;
   flex-direction: column;
-  padding: 12px 14px;
-  background: #ffffff;
+  padding: 12px 14px; 
   border-radius: 8px;
   border-left: 4px solid #4a90e2;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);

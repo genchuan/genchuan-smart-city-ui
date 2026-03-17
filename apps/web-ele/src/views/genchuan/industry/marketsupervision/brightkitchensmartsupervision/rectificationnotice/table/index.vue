@@ -4,24 +4,17 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import {
-  ElImage,
-  ElLoading,
-  ElMessage,
-  ElTable,
-  ElTableColumn,
-} from 'element-plus';
+import { ElImage, ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  addRectify,
-  deleteRectifyEvidence,
-  exporReviewExcel,
-  getRectifyEvidence,
-  getRectifyList,
-  updateRectify,
+  addNotice,
+  deleteNotice,
+  exporNoticeExcel,
+  getNoticeList,
+  updateNotice,
 } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
@@ -73,8 +66,8 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   async onConfirm() {
     const obj = formApi.form.values;
     await (formDrawerApi.sharedData.payload.title === '增加'
-      ? addRectify(obj)
-      : updateRectify({ ...dataObj.editObj, ...obj }));
+      ? addNotice(obj)
+      : updateNotice({ ...dataObj.editObj, ...obj }));
     handleRefresh();
     formDrawerApi.close();
   },
@@ -96,9 +89,9 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  const data = await exporReviewExcel();
+  const data = await exporNoticeExcel();
   downloadFileFromBlobPart({
-    fileName: '整改通知书复审台账.xls',
+    fileName: '整改通知书.xls',
     source: data,
   });
 }
@@ -127,7 +120,7 @@ async function handleDelete(row) {
     text: $t('ui.actionMessage.deleting'),
   });
   try {
-    await deleteRectifyEvidence(row.id);
+    await deleteNotice(row.id);
     ElMessage.success($t('ui.actionMessage.deleteSuccess'));
     handleRefresh();
   } finally {
@@ -174,12 +167,14 @@ const getTableData = async (pageObj) => {
     pageSize: pageObj.page.pageSize,
     ...dataObj.serachObj,
   };
-  const data = await getRectifyList(getParams);
+  const data = await getNoticeList(getParams);
   dataObj.total = data.total;
   dataObj.list = data.list.map((v) => {
     return {
       ...v,
-      alertCreateTime: formatTimestamp(v.alertCreateTime),
+      issueTime: formatTimestamp(v.issueTime),
+      receiveTime: formatTimestamp(v.receiveTime),
+      createTime: formatTimestamp(v.createTime),
     };
   });
   return dataObj;
@@ -313,85 +308,13 @@ const handleOpenData = async () => {
 
 <template>
   <div class="park-lot-table-new">
-    <!-- 图片查看弹窗 -->
-    <el-dialog v-model="dialogVisible">
-      <div class="park-img-center">
-        <img style="width: 100%; height: 100%" :src="dataObj.imgUrl" />
-      </div>
-    </el-dialog>
-
-    <!-- 批量查看编号弹窗（使用el-table） -->
-    <el-dialog
-      v-model="dataObj.batchViewVisible"
-      title="批量查看证据 - 编号列表"
-      width="1000px"
-      center
-      draggable
-    >
-      <ElTable
-        :data="dataObj.batchViewData"
-        border
-        stripe
-        size="small"
-        max-height="500px"
-        highlight-current-row
-      >
-        <ElTableColumn label="序号" type="index" width="60" align="center" />
-        <!-- 台账编号列 -->
-        <ElTableColumn
-          label="台账编号"
-          prop="ledgerCode"
-          min-width="200"
-          align="center"
-        />
-        <!-- 证据列表列 -->
-        <ElTableColumn
-          label="证据列表"
-          prop="evidenceList"
-          min-width="500"
-          align="center"
-        >
-          <template #default="{ row }">
-            <div
-              v-if="row.evidenceList && row.evidenceList.length > 0"
-              class="evidence-list"
-            >
-              <div
-                v-for="(item, idx) in row.evidenceList"
-                :key="idx"
-                class="evidence-item"
-              >
-                <!-- 图片预览 -->
-                <ElImage
-                  v-if="item.type === 'image'"
-                  style="width: 80px; height: 80px; margin-right: 8px"
-                  :src="item.url"
-                  @click="openImg(item.url)"
-                  fit="cover"
-                />
-                <!-- 文件名展示 -->
-                <div class="evidence-info">
-                  <div class="evidence-name">{{ item.name }}</div>
-                  <div class="evidence-type">{{ item.type }}</div>
-                </div>
-              </div>
-            </div>
-            <div v-else class="no-evidence">无证据</div>
-          </template>
-        </ElTableColumn>
-      </ElTable>
-
-      <template #footer>
-        <el-button @click="dataObj.batchViewVisible = false">关闭</el-button>
-      </template>
-    </el-dialog>
-
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
 
     <!-- 使用封装后的详情抽屉组件 -->
     <ParkDetailDrawer
+      class="genchuan-detail-drawer"
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
       title="详情"
@@ -424,7 +347,7 @@ const handleOpenData = async () => {
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <!-- <IconButton content="新增" icon-name="Plus" @click="handleCreate" /> -->
           <IconButton
             content="导出"
             icon-name="download"
@@ -456,13 +379,13 @@ const handleOpenData = async () => {
         </div>
       </template>
 
-      <template #ledgerCode="{ row }">
+      <template #noticeCode="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.ledgerCode }}
+          {{ row.noticeCode }}
         </el-text>
       </template>
 

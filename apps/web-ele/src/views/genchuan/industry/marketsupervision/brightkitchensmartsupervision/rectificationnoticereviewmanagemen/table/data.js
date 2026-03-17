@@ -1,178 +1,3 @@
-/** 表格初始数据 - 改造为泉州市区执法复审台账数据 */
-export const dataList = () => [
-  {
-    ledgerCode: 'ZF-QZ-202406-001',
-    enterpriseName: '泉州市路桥建设开发有限公司',
-    violationType: '未按规范进行桥梁养护',
-    violationLevel: '一般违规',
-    violationEvidenceUrl: 'https://evidence.qzzf.gov.cn/202406/001.pdf',
-    draftTime: '2024-06-01 09:30:25',
-    reviewStatus: '已复审',
-    reviewer: '张明（工号：QZZF001）',
-    reviewTime: '2024-06-05 14:20:18',
-    issueTime: '2024-06-08 10:15:36',
-    revokeTime: '',
-    revokeReason: '',
-    serviceStatus: '已送达',
-    enterpriseRectificationStatus: '已整改',
-    lawEnforcementReviewLedgerCode: 'FJSF-QZ-202406-001',
-  },
-  {
-    ledgerCode: 'ZF-QZ-202406-002',
-    enterpriseName: '泉州市市政工程有限公司',
-    violationType: '监测数据造假',
-    violationLevel: '严重违规',
-    violationEvidenceUrl: 'https://evidence.qzzf.gov.cn/202406/002.pdf',
-    draftTime: '2024-06-02 10:15:42',
-    reviewStatus: '复审中',
-    reviewer: '李丽（工号：QZZF002）',
-    reviewTime: '2024-06-06 09:18:49',
-    issueTime: '',
-    revokeTime: '',
-    revokeReason: '',
-    serviceStatus: '未送达',
-    enterpriseRectificationStatus: '整改中',
-    lawEnforcementReviewLedgerCode: 'FJSF-QZ-202406-002',
-  },
-  {
-    ledgerCode: 'ZF-QZ-202406-003',
-    enterpriseName: '泉州市交通建设发展有限公司',
-    violationType: '未按时提交养护报告',
-    violationLevel: '轻微违规',
-    violationEvidenceUrl: 'https://evidence.qzzf.gov.cn/202406/003.pdf',
-    draftTime: '2024-06-03 14:20:18',
-    reviewStatus: '未复审',
-    reviewer: '',
-    reviewTime: '',
-    issueTime: '',
-    revokeTime: '',
-    revokeReason: '',
-    serviceStatus: '待送达',
-    enterpriseRectificationStatus: '未整改',
-    lawEnforcementReviewLedgerCode: 'FJSF-QZ-202406-003',
-  },
-  {
-    ledgerCode: 'ZF-QZ-202406-004',
-    enterpriseName: '泉州市鲤城区市政养护中心',
-    violationType: '养护设备未定期校准',
-    violationLevel: '一般违规',
-    violationEvidenceUrl: 'https://evidence.qzzf.gov.cn/202406/004.pdf',
-    draftTime: '2024-06-04 15:25:36',
-    reviewStatus: '已复审',
-    reviewer: '王强（工号：QZZF003）',
-    reviewTime: '2024-06-07 11:22:05',
-    issueTime: '2024-06-09 15:10:08',
-    revokeTime: '',
-    revokeReason: '',
-    serviceStatus: '已送达',
-    enterpriseRectificationStatus: '整改完成',
-    lawEnforcementReviewLedgerCode: 'FJSF-QZ-202406-004',
-  },
-  {
-    ledgerCode: 'ZF-QZ-202406-005',
-    enterpriseName: '泉州市丰泽区路桥工程有限公司',
-    violationType: '违规占道施工',
-    violationLevel: '严重违规',
-    violationEvidenceUrl: 'https://evidence.qzzf.gov.cn/202406/005.pdf',
-    draftTime: '2024-06-05 16:50:08',
-    reviewStatus: '已撤销',
-    reviewer: '陈红（工号：QZZF004）',
-    reviewTime: '2024-06-08 16:05:33',
-    issueTime: '2024-06-10 09:32:15',
-    revokeTime: '2024-06-12 14:15:20',
-    revokeReason: '证据不足，经复核撤销',
-    serviceStatus: '已撤回',
-    enterpriseRectificationStatus: '无需整改',
-    lawEnforcementReviewLedgerCode: 'FJSF-QZ-202406-005',
-  },
-  {
-    ledgerCode: 'ZF-QZ-202406-006',
-    enterpriseName: '泉州市洛江区公路养护有限公司',
-    violationType: '安全警示标识缺失',
-    violationLevel: '轻微违规',
-    violationEvidenceUrl: 'https://evidence.qzzf.gov.cn/202406/006.pdf',
-    draftTime: '2024-06-06 08:32:15',
-    reviewStatus: '已复审',
-    reviewer: '黄明（工号：QZZF005）',
-    reviewTime: '2024-06-09 10:15:20',
-    issueTime: '2024-06-11 11:28:42',
-    revokeTime: '',
-    revokeReason: '',
-    serviceStatus: '已送达',
-    enterpriseRectificationStatus: '整改中',
-    lawEnforcementReviewLedgerCode: 'FJSF-QZ-202406-006',
-  },
-  {
-    ledgerCode: 'ZF-QZ-202406-007',
-    enterpriseName: '泉州市泉港区交通建设有限公司',
-    violationType: '养护人员无证上岗',
-    violationLevel: '一般违规',
-    violationEvidenceUrl: 'https://evidence.qzzf.gov.cn/202406/007.pdf',
-    draftTime: '2024-06-07 11:18:49',
-    reviewStatus: '复审中',
-    reviewer: '郑伟（工号：QZZF006）',
-    reviewTime: '',
-    issueTime: '',
-    revokeTime: '',
-    revokeReason: '',
-    serviceStatus: '待送达',
-    enterpriseRectificationStatus: '未整改',
-    lawEnforcementReviewLedgerCode: 'FJSF-QZ-202406-007',
-  },
-  {
-    ledgerCode: 'ZF-QZ-202406-008',
-    enterpriseName: '泉州市台商投资区市政工程有限公司',
-    violationType: '未按要求设置防护措施',
-    violationLevel: '一般违规',
-    violationEvidenceUrl: 'https://evidence.qzzf.gov.cn/202406/008.pdf',
-    draftTime: '2024-06-08 13:22:05',
-    reviewStatus: '已复审',
-    reviewer: '吴芳（工号：QZZF007）',
-    reviewTime: '2024-06-10 15:30:25',
-    issueTime: '2024-06-12 12:10:18',
-    revokeTime: '',
-    revokeReason: '',
-    serviceStatus: '已送达',
-    enterpriseRectificationStatus: '已整改',
-    lawEnforcementReviewLedgerCode: 'FJSF-QZ-202406-008',
-  },
-  {
-    ledgerCode: 'ZF-QZ-202406-009',
-    enterpriseName: '泉州市经济技术开发区路桥养护中心',
-    violationType: '养护记录不完整',
-    violationLevel: '轻微违规',
-    violationEvidenceUrl: 'https://evidence.qzzf.gov.cn/202406/009.pdf',
-    draftTime: '2024-06-09 10:05:33',
-    reviewStatus: '未复审',
-    reviewer: '',
-    reviewTime: '',
-    issueTime: '',
-    revokeTime: '',
-    revokeReason: '',
-    serviceStatus: '未送达',
-    enterpriseRectificationStatus: '整改中',
-    lawEnforcementReviewLedgerCode: 'FJSF-QZ-202406-009',
-  },
-  {
-    ledgerCode: 'ZF-QZ-202406-010',
-    enterpriseName: '泉州市晋江大桥管理有限公司',
-    violationType: '超限车辆未报备通行',
-    violationLevel: '严重违规',
-    violationEvidenceUrl: 'https://evidence.qzzf.gov.cn/202406/010.pdf',
-    draftTime: '2024-06-10 14:15:20',
-    reviewStatus: '已复审',
-    reviewer: '林达（工号：QZZF008）',
-    reviewTime: '2024-06-11 16:25:36',
-    issueTime: '2024-06-13 10:50:08',
-    revokeTime: '',
-    revokeReason: '',
-    serviceStatus: '已送达',
-    enterpriseRectificationStatus: '逾期未整改',
-    lawEnforcementReviewLedgerCode: 'FJSF-QZ-202406-010',
-  },
-];
-
-/** 新增/修改的表单/列表的搜索表单 - 改造为执法复审台账表单 */
 export function useFormSchema() {
   return [
     {
@@ -185,7 +10,82 @@ export function useFormSchema() {
       },
       labelWidth: '120',
       rules: 'required', // 台账编号为必填项
+      isEdit: true,
+      isSearch: true
     },
+    {
+      fieldName: 'entId',
+      label: '企业ID',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入企业ID',
+        maxLength: 50,
+      },
+      labelWidth: '120',
+      rules: 'required', // 台账编号为必填项
+      isEdit: true,
+    },
+    {
+      fieldName: 'illegalLevelId',
+      label: '违规等级ID',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入违规等级ID',
+        maxLength: 50,
+      },
+      labelWidth: '120',
+      rules: 'required', // 台账编号为必填项
+      isEdit: true,
+    },
+    {
+      fieldName: 'illegalTypeId',
+      label: '违规类型ID',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入违规类型ID',
+        maxLength: 50,
+      },
+      labelWidth: '120',
+      rules: 'required', // 台账编号为必填项
+      isEdit: true,
+    },
+    {
+      fieldName: 'evidenceUrl',
+      label: '违规证据链接',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入违规证据链接',
+        maxLength: 50,
+      },
+      labelWidth: '120',
+      rules: 'required', // 台账编号为必填项
+      isEdit: true,
+    },
+    {
+      fieldName: 'draftTime',
+      label: '整改通知书草拟时间',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入整改通知书草拟时间',
+        maxLength: 50,
+      },
+      labelWidth: '120',
+      rules: 'required', // 台账编号为必填项
+      isEdit: true,
+    }, 
+    {
+      fieldName: 'reviewStatus',
+      label: '复审状态',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入复审状态',
+        maxLength: 50,
+      },
+      labelWidth: '120',
+      rules: 'required', // 台账编号为必填项
+      isEdit: true,
+    },
+
     {
       fieldName: 'enterpriseName',
       label: '企业名称',
@@ -195,6 +95,7 @@ export function useFormSchema() {
       },
       labelWidth: '120',
       rules: 'required',
+      isSearch: true
     },
     {
       component: 'Select',
@@ -220,6 +121,7 @@ export function useFormSchema() {
       fieldName: 'violationType',
       label: '违规类型',
       rules: 'required',
+      isSearch: true
     },
     {
       component: 'Select',
@@ -238,6 +140,7 @@ export function useFormSchema() {
       fieldName: 'violationLevel',
       label: '违规等级',
       rules: 'required',
+      isSearch: true
     },
     {
       fieldName: 'violationEvidenceUrl',
@@ -260,6 +163,7 @@ export function useFormSchema() {
       },
       labelWidth: '120',
       rules: 'required',
+      isSearch: true
     },
     {
       component: 'Select',
@@ -279,6 +183,7 @@ export function useFormSchema() {
       fieldName: 'reviewStatus',
       label: '复审状态',
       rules: 'required',
+      isSearch: true
     },
     {
       fieldName: 'reviewer',
@@ -288,7 +193,7 @@ export function useFormSchema() {
         placeholder: '请输入复审人姓名/工号',
       },
       labelWidth: '120',
-      rules: '', // 非必填，复审状态为未复审时可空
+      isSearch: true
     },
     {
       fieldName: 'reviewTime',
@@ -310,6 +215,7 @@ export function useFormSchema() {
         maxlength: 20,
       },
       labelWidth: '120',
+      isSearch: true,
       rules: '', // 非必填，未下发时可空
     },
     {
@@ -321,6 +227,7 @@ export function useFormSchema() {
         maxlength: 20,
       },
       labelWidth: '120',
+      isSearch: true,
       rules: '', // 非必填，未撤销时可空
     },
     {
@@ -439,7 +346,7 @@ export function useGridColumns() {
       field: 'reviewStatus',
       title: '复审状态',
       minWidth: 120,
-      sortable: true, 
+      sortable: true,
     },
     {
       field: 'reviewerId',
