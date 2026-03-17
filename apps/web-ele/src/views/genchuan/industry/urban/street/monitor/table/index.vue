@@ -804,10 +804,7 @@ const arrowChange = () => {
         </el-text>
       </template>
       <template #switchStatus="{ row }">
-        <el-text 
-          class="common-align"
-          :type="row.switchStatus === '开' ? 'success' : 'danger'"
-        >
+        <el-text class="common-align">
           {{ row.switchStatus }}
         </el-text>
       </template>
@@ -821,26 +818,17 @@ const arrowChange = () => {
         </el-text>
       </template>
       <template #deviceStatus="{ row }">
-        <el-text 
-          class="common-align"
-          :type="row.deviceStatus === '在线' ? 'success' : row.deviceStatus === '离线' ? 'danger' : 'warning'"
-        >
+        <el-text class="common-align">
           {{ row.deviceStatus }}
         </el-text>
       </template>
       <template #controlStatus="{ row }">
-        <el-text 
-          class="common-align"
-          :type="row.controlStatus === '可控制' ? 'success' : 'danger'"
-        >
+        <el-text class="common-align">
           {{ row.controlStatus }}
         </el-text>
       </template>
       <template #warnStatusId="{ row }">
-        <el-text 
-          class="common-align"
-          :type="row.warnStatusId === '正常' ? 'success' : 'danger'"
-        >
+        <el-text class="common-align">
           {{ row.warnStatusId }}
         </el-text>
       </template>
