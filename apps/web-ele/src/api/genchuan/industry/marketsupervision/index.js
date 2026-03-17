@@ -33,3 +33,6 @@ export function deleteRectifyEvidence(id) {
 export function addRectify(data) {
   return requestClient.post(`/kitchen/rectify-review/create`, data);
 }
+export function updateRectify(data) {
+  return requestClient.put(`/kitchen/rectify-review/update`, data);
+}

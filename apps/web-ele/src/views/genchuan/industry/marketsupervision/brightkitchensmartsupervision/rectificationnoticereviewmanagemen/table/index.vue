@@ -21,8 +21,8 @@ import {
   exporReviewExcel,
   getRectifyEvidence,
   getRectifyList,
+  updateRectify,
 } from '#/api/genchuan/industry/marketsupervision/index.js';
-import { updateParkLot } from '#/api/genchuan/industry/park/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
 
@@ -74,7 +74,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     const obj = formApi.form.values;
     await (formDrawerApi.sharedData.payload.title === '增加'
       ? addRectify(obj)
-      : updateParkLot({ ...dataObj.editObj, ...obj }));
+      : updateRectify({ ...dataObj.editObj, ...obj }));
     handleRefresh();
     formDrawerApi.close();
   },
