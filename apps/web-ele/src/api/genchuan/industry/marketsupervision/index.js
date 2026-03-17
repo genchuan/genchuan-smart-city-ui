@@ -80,3 +80,12 @@ export function updateEntNotice(data) {
 export function exporEntNoticeExcel() {
   return requestClient.download('/kitchen/ent-rectify-record/export-excel');
 }
+
+/** 获得企业 */
+export function getEnterpriseList(params) {
+  return requestClient.get('/kitchen/enterprise-info/page'); 
+}
+/** createReviewLedger */
+export function createReviewLedger(data) {
+  return requestClient.post(`/kitchen/rectify-review/review-add`, data);
+}
