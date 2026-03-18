@@ -159,3 +159,15 @@ export function getSysUserPage(data) {
 export function getRoadArchive(data) {
  return requestClient.get('/facility/road-archive/page', data);
 }
+
+
+/** 获得巡检巡查 */
+export function getInspectionList(data) {
+ return requestClient.get('/evaluate/patrol-inspection/page', data);
+} 
+
+
+/** 获得巡检巡查报表 */
+export function getStatisticList(data) {
+ return requestClient.get('/evaluate/comment-statistic/page', data);
+} 
