@@ -1,11 +1,12 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
+import carchart from './chart.vue';
 import Table from './table/index.vue';
-import chart from './chart.vue';
 
 import '#/components/page/index.scss';
 
+// 外层 tabs 控制
 const changeArrowStatus = () => {
   secondShow.value = !secondShow.value;
   tabArray.value.forEach((v) => {
@@ -14,7 +15,7 @@ const changeArrowStatus = () => {
 };
 const tabArray = ref([
   {
-    label: '任务模板管理',
+    label: '实时监测数据接入',
     components: Table,
     showSecondary: true,
     secondShow: false,
@@ -27,14 +28,20 @@ const arrowChange = () => {
     v.arrowShow = !v.arrowShow;
   });
 };
-const activeName = ref('任务模板管理');
+const activeName = ref('实时监测数据接入'); // 外层 tabs 的激活项
 const secondShow = ref(false);
 
+// 引用表格组件实例
+const tableRef = ref(null);
+
+// 从表格组件内部获取二级 tab 激活值，默认 '全部'
+const chartActiveTab = computed(() => tableRef.value?.activeName || '全部');
 </script>
 
 <template>
   <div class="common-index">
-    <chart v-if="tabArray[0].arrowShow" />
+    <!-- 将 chartActiveTab 传递给图表组件 -->
+    <carchart :active-tab="chartActiveTab" v-if="tabArray[0].arrowShow" />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -69,10 +76,11 @@ const secondShow = ref(false);
         </template>
         <component
           :is="item.components"
-          :second-show="item.secondShow"
-          :key="item.label"
-          :arrow-show="item.arrowShow"
-          @arrow-change="arrowChange"
+          ref="tableRef"
+        :second-show="item.secondShow"
+        :key="item.label"
+        :arrow-show="item.arrowShow"
+        @arrow-change="arrowChange"
         />
       </el-tab-pane>
     </el-tabs>

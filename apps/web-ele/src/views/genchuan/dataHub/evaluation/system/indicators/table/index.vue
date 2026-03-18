@@ -159,11 +159,11 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       if (data?.id) {
         // 编辑模式：先设置基本信息
         await formApi.setValues(data);
-        // 如果有 systemId，则加载详情获取分类数据
-        if (data.systemId) {
+        // 如果有 id，则加载详情获取分类数据
+        if (data.id) {
           const loading = ElLoading.service({ text: '加载详情...', target: '.vben-drawer' });
           try {
-            const detail = await getIndexSystemDetail(data.systemId);
+            const detail = await getIndexSystemDetail(data.id);
             // 将 detail.categories 转换为分类管理器需要的格式
             categoryData.value = (detail.categories || []).map(cat => ({
               categoryId: cat.categoryId,
@@ -199,10 +199,10 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
         // 如果是新增版本，需要处理从上一版本复制数据
         if (formDrawerApi.sharedData?.payload?.title === textObj.versionText) {
           const source = formDrawerApi.sharedData.payload.source;
-          if (source && source.systemId) {
+          if (source && source.id) {
             const loading = ElLoading.service({ text: '加载源体系数据...', target: '.vben-drawer' });
             try {
-              const detail = await getIndexSystemDetail(source.systemId);
+              const detail = await getIndexSystemDetail(source.id);
               // 填充基本信息
               await formApi.setValues({
                 name: detail.baseInfo.name,
@@ -644,7 +644,7 @@ const detailRef = ref(null);
 async function handleGarageOpenDetail(row) {
   const loadingInstance = ElLoading.service({ text: '加载详情中...' });
   try {
-    const res = await getIndexSystemDetail(row.systemId);
+    const res = await getIndexSystemDetail(row.id);
     console.log('详情接口返回:', res);
     const baseInfo = res.baseInfo || {};
     const categories = res.categories || [];
