@@ -1,0 +1,435 @@
+import { useAccessStore } from '@vben/stores';
+import { baseRequestClient, requestClient } from '#/api/request';
+
+// ---------- 公厕基础信息 ----------
+/**
+ * 分页查询公厕列表
+ */
+export function getPublicToiletPage(params) {
+  return requestClient.get('/envirhealth/public-toilet/detail-page', {
+    params,
+  });
+}
+
+/**
+ * 创建公厕
+ */
+export function createPublicToilet(data) {
+  return requestClient.post('/envirhealth/public-toilet/create', data);
+}
+
+/**
+ * 更新公厕
+ */
+export function updatePublicToilet(data) {
+  return requestClient.put('/envirhealth/public-toilet/update', data);
+}
+
+/**
+ * 删除单个公厕
+ */
+export function deletePublicToilet(id) {
+  return requestClient.delete(`/envirhealth/public-toilet/delete?id=${id}`);
+}
+
+/**
+ * 批量删除公厕
+ */
+export function deletePublicToiletBatch(ids) {
+  return requestClient.delete('/envirhealth/public-toilet/delete-batch', {
+    data: ids,
+  });
+}
+
+/**
+ * 导出公厕列表 Excel
+ */
+export async function exportPublicToiletExcel(params) {
+  const accessStore = useAccessStore();
+  return await baseRequestClient.get(
+    '/envirhealth/public-toilet/export-excel',
+    {
+      params,
+      responseType: 'blob',
+      validateStatus: () => true,
+      headers: {
+        Authorization: accessStore.accessToken
+          ? `Bearer ${accessStore.accessToken}`
+          : undefined,
+      },
+    },
+  );
+}
+
+// ---------- 投诉记录 ----------
+export function getToiletComplaintPage(params) {
+  return requestClient.get('/envirhealth/toilet-complaint/detail-page', {
+    params,
+  });
+}
+
+export function createToiletComplaint(data) {
+  return requestClient.post('/envirhealth/toilet-complaint/create', data);
+}
+
+export function updateToiletComplaint(data) {
+  return requestClient.put('/envirhealth/toilet-complaint/update', data);
+}
+
+export function deleteToiletComplaint(id) {
+  return requestClient.delete(`/envirhealth/toilet-complaint/delete?id=${id}`);
+}
+
+export function deleteToiletComplaintBatch(ids) {
+  return requestClient.delete('/envirhealth/toilet-complaint/delete-batch', {
+    data: ids,
+  });
+}
+
+export async function exportToiletComplaintExcel(params) {
+  const accessStore = useAccessStore();
+  return await baseRequestClient.get(
+    '/envirhealth/toilet-complaint/export-excel',
+    {
+      params,
+      responseType: 'blob',
+      validateStatus: () => true,
+      headers: {
+        Authorization: accessStore.accessToken
+          ? `Bearer ${accessStore.accessToken}`
+          : undefined,
+      },
+    },
+  );
+}
+
+// ---------- 设施维修记录 ----------
+export function getToiletFacilityRepairPage(params) {
+  return requestClient.get('/envirhealth/toilet-facility-repair/detail-page', {
+    params,
+  });
+}
+
+export function createToiletFacilityRepair(data) {
+  return requestClient.post('/envirhealth/toilet-facility-repair/create', data);
+}
+
+export function updateToiletFacilityRepair(data) {
+  return requestClient.put('/envirhealth/toilet-facility-repair/update', data);
+}
+
+export function deleteToiletFacilityRepair(id) {
+  return requestClient.delete(
+    `/envirhealth/toilet-facility-repair/delete?id=${id}`,
+  );
+}
+
+export function deleteToiletFacilityRepairBatch(ids) {
+  return requestClient.delete(
+    '/envirhealth/toilet-facility-repair/delete-batch',
+    { data: ids },
+  );
+}
+
+export async function exportToiletFacilityRepairExcel(params) {
+  const accessStore = useAccessStore();
+  return await baseRequestClient.get(
+    '/envirhealth/toilet-facility-repair/export-excel',
+    {
+      params,
+      responseType: 'blob',
+      validateStatus: () => true,
+      headers: {
+        Authorization: accessStore.accessToken
+          ? `Bearer ${accessStore.accessToken}`
+          : undefined,
+      },
+    },
+  );
+}
+
+// ---------- 保洁任务 ----------
+/**
+ * 分页查询保洁任务列表
+ */
+export function getToiletCleaningTaskPage(params) {
+  return requestClient.get('/envirhealth/toilet-cleaning-task/detail-page', {
+    params,
+  });
+}
+
+/**
+ * 创建保洁任务
+ */
+export function createToiletCleaningTask(data) {
+  return requestClient.post('/envirhealth/toilet-cleaning-task/create', data);
+}
+
+/**
+ * 更新保洁任务
+ */
+export function updateToiletCleaningTask(data) {
+  return requestClient.put('/envirhealth/toilet-cleaning-task/update', data);
+}
+
+/**
+ * 删除单个保洁任务
+ */
+export function deleteToiletCleaningTask(id) {
+  return requestClient.delete(
+    `/envirhealth/toilet-cleaning-task/delete?id=${id}`,
+  );
+}
+
+/**
+ * 批量删除保洁任务
+ */
+export function deleteToiletCleaningTaskBatch(ids) {
+  return requestClient.delete(
+    '/envirhealth/toilet-cleaning-task/delete-batch',
+    { data: ids },
+  );
+}
+
+/**
+ * 导出保洁任务 Excel
+ */
+export async function exportToiletCleaningTaskExcel(params) {
+  const accessStore = useAccessStore();
+  return await baseRequestClient.get(
+    '/envirhealth/toilet-cleaning-task/export-excel',
+    {
+      params,
+      responseType: 'blob',
+      validateStatus: () => true,
+      headers: {
+        Authorization: accessStore.accessToken
+          ? `Bearer ${accessStore.accessToken}`
+          : undefined,
+      },
+    },
+  );
+}
+
+// ---------- 物资待补充（消耗品）接口 ----------
+/**
+ * 分页查询物资待补充列表
+ */
+export function getToiletConsumablePage(params) {
+  return requestClient.get('/envirhealth/toilet-consumable/detail-page', {
+    params,
+  });
+}
+
+/**
+ * 创建物资待补充记录
+ */
+export function createToiletConsumable(data) {
+  return requestClient.post('/envirhealth/toilet-consumable/create', data);
+}
+
+/**
+ * 更新物资待补充记录
+ */
+export function updateToiletConsumable(data) {
+  return requestClient.put('/envirhealth/toilet-consumable/update', data);
+}
+
+/**
+ * 删除单个物资待补充记录
+ */
+export function deleteToiletConsumable(id) {
+  return requestClient.delete(`/envirhealth/toilet-consumable/delete?id=${id}`);
+}
+
+/**
+ * 批量删除物资待补充记录
+ */
+export function deleteToiletConsumableBatch(ids) {
+  return requestClient.delete('/envirhealth/toilet-consumable/delete-batch', {
+    data: ids,
+  });
+}
+
+/**
+ * 导出物资待补充 Excel
+ */
+export async function exportToiletConsumableExcel(params) {
+  const accessStore = useAccessStore();
+  return await baseRequestClient.get(
+    '/envirhealth/toilet-consumable/export-excel',
+    {
+      params,
+      responseType: 'blob',
+      validateStatus: () => true,
+      headers: {
+        Authorization: accessStore.accessToken
+          ? `Bearer ${accessStore.accessToken}`
+          : undefined,
+      },
+    },
+  );
+}
+
+// ---------- 统计接口（用于选项卡数字）----------
+/**
+ * 获取公厕运营任务统计（各状态数量）
+ */
+export function getPublicToiletStatistics() {
+  return requestClient.get('/envirhealth/public-toilet/chart/statistics');
+}
+
+/**
+ * 通用批量上传图片
+ * @param {FormData} formData - 包含 files 字段的 FormData
+ * @returns 返回上传后的图片信息数组
+ */
+export function uploadImageBatch(formData) {
+  return requestClient.post('/envirhealth/image/upload/batch', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+}
+
+// ---------- 图片上传接口 ----------
+/**
+ * 维修设施 - 上传照片
+ * @param {string} id - 记录ID
+ * @param {FormData} formData - 包含 files 字段的 FormData
+ */
+export function uploadRepairPhotos(id, formData) {
+  return requestClient.post(
+    '/envirhealth/toilet-facility-repair/upload-photos',
+    formData,
+    {
+      params: { id },
+      headers: { 'Content-Type': 'multipart/form-data' },
+    },
+  );
+}
+
+/**
+ * 保洁任务 - 上传照片
+ * @param {string} id - 记录ID
+ * @param {FormData} formData - 包含 files 字段的 FormData
+ */
+export function uploadCleaningPhotos(id, formData) {
+  return requestClient.post(
+    '/envirhealth/toilet-cleaning-task/upload-photos',
+    formData,
+    {
+      params: { id },
+      headers: { 'Content-Type': 'multipart/form-data' },
+    },
+  );
+}
+
+// ---------- 图片删除接口 ----------
+/**
+ * 维修设施 - 删除照片
+ * @param {string} id - 记录ID
+ * @param {string} photoUrl - 图片URL
+ */
+export function deleteRepairPhoto(id, photoUrl) {
+  return requestClient.delete('/envirhealth/toilet-facility-repair/photo', {
+    params: { id, photoUrl },
+  });
+}
+
+/**
+ * 保洁任务 - 删除照片
+ * @param {string} id - 记录ID
+ * @param {string} photoUrl - 图片URL
+ */
+export function deleteCleaningPhoto(id, photoUrl) {
+  return requestClient.delete('/envirhealth/toilet-cleaning-task/photo', {
+    params: { id, photoUrl },
+  });
+}
+
+// ---------- 获取图片列表接口 ----------
+/**
+ * 维修设施 - 获取照片列表
+ * @param {string} id - 记录ID
+ */
+export function getRepairPhotoList(id) {
+  return requestClient.get(`/envirhealth/toilet-facility-repair/photos/${id}`);
+}
+
+/**
+ * 保洁任务 - 获取照片列表
+ * @param {string} id - 记录ID
+ */
+export function getCleaningPhotoList(id) {
+  return requestClient.get(`/envirhealth/toilet-cleaning-task/photos/${id}`);
+}
+
+// 批量调整保洁计划
+export function batchAdjustToiletCleaningTask(data) {
+  return requestClient.put('/envirhealth/toilet-cleaning-task/batch-adjust', data);
+}
+
+// 批量补充登记
+export function batchSupplyToiletConsumable(data) {
+  return requestClient.post('/envirhealth/toilet-consumable/batch-supply', data);
+}
+
+// 单条补充登记
+export function supplyToiletConsumable(data) {
+  return requestClient.post('/envirhealth/toilet-consumable/supply', data);
+}
+
+// 批量处理投诉
+export function batchHandleToiletComplaint(data) {
+  return requestClient.post('/envirhealth/toilet-complaint/batch-handle', data);
+}
+
+// 上传投诉整改照片
+export function uploadComplaintPhotos(id, formData) {
+  return requestClient.post('/envirhealth/toilet-complaint/upload-photos', formData, {
+    params: { id },
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+}
+
+// 删除投诉整改照片
+export function deleteComplaintPhoto(id, photoUrl) {
+  return requestClient.delete('/envirhealth/toilet-complaint/photo', {
+    params: { id, photoUrl },
+  });
+}
+
+// 获取投诉整改照片列表
+export function getComplaintPhotoList(id) {
+  return requestClient.get(`/envirhealth/toilet-complaint/photos/${id}`);
+}
+
+
+// 获取公厕运营全状态监控看板数据
+export function getPublicToiletChartAll() {
+  return requestClient.get('/envirhealth/public-toilet/chart/all');
+}
+
+// 保洁待执行统计
+export function getCleaningPendingChart() {
+  return requestClient.get('/envirhealth/toilet-cleaning-task/chart/pending');
+}
+
+// 物资待补充统计
+export function getConsumablePendingChart() {
+  return requestClient.get('/envirhealth/toilet-consumable/chart/pending');
+}
+
+// 投诉待处置统计
+export function getComplaintPendingChart() {
+  return requestClient.get('/envirhealth/toilet-complaint/chart/pending');
+}
+
+// 已完成统计
+export function getCleaningSummaryChart() {
+  return requestClient.get('/envirhealth/toilet-cleaning-task/chart/summary');
+}
+
+// 设施待维修统计
+export function getFacilityRepairPendingChart() {
+  return requestClient.get('/envirhealth/toilet-facility-repair/chart/pending');
+}

@@ -35,7 +35,7 @@ const confirmStep = ref<number>(1); // 1: 选择状态, 2: 二次确认
 
 // 状态选项 - 从字典动态获取
 const statusOptions = computed(() => {
-  return getDictOptions(DICT_TYPE.DATA_MANAGEITEM_STATUS, 'string');
+  return getDictOptions(DICT_TYPE.DATA_MATTER_STATUS, 'string');
 });
 
 const open = (ids: string[]) => {
@@ -85,7 +85,7 @@ const getStatusLabel = (value: string) => {
 
 /** 获取状态颜色 - 将字典颜色映射到 Element Plus 支持的类型 */
 const getStatusColor = (value: string): string => {
-  const dict = getDictObj(DICT_TYPE.DATA_MANAGEITEM_STATUS, String(value));
+  const dict = getDictObj(DICT_TYPE.DATA_MATTER_STATUS, String(value));
   const colorType = dict?.colorType || 'primary';
 
   // 将后端的颜色类型映射到Element Plus支持的颜色类型

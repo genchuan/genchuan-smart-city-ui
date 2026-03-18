@@ -27,13 +27,13 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
 </script>
 
 <template>
-  <DetailDrawer :title="drawerTitle">
+  <DetailDrawer :title="drawerTitle" >
     <div class="detail-card">
       <!-- 标准分类基本信息 -->
       <h3>基本信息</h3>
       <div class="detail-card-row"><div class="detail-row-left">分类名称：</div><div class="detail-row-right">{{ detailObj.name || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">适用指标体系：</div><div class="detail-row-right">{{ detailObj.systemName || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">标准项数量：</div><div class="detail-row-right">{{ detailObj.itemCount || 0 }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">指标数量：</div><div class="detail-row-right">{{ detailObj.itemCount || 0 }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">状态：</div><div class="detail-row-right">{{ detailObj.statusName || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">创建人：</div><div class="detail-row-right">{{ detailObj.createByName || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">创建时间：</div><div class="detail-row-right">{{ detailObj.createTime || '-' }}</div></div>
@@ -43,18 +43,18 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       <div class="detail-card-row" v-if="detailObj.lastUseTime"><div class="detail-row-left">最近使用时间：</div><div class="detail-row-right">{{ detailObj.lastUseTime }}</div></div>
       <div class="detail-card-row" v-if="detailObj.useCount !== undefined"><div class="detail-row-left">使用次数：</div><div class="detail-row-right">{{ detailObj.useCount }}</div></div>
 
-      <!-- 标准项列表 -->
+      <!-- 指标列表（每个指标显示其标准档次及分数） -->
       <div class="detail-section" v-if="detailObj.items && detailObj.items.length">
-        <h3>标准项配置</h3>
-        <el-table :data="detailObj.items" border size="small" style="width: 100%">
-          <el-table-column prop="grade" label="等级" min-width="120"></el-table-column>
-          <el-table-column prop="scoreRange" label="分数范围" min-width="150"></el-table-column>
-          <el-table-column prop="sortNo" label="排序序号" width="100"></el-table-column>
-          <el-table-column prop="createTime" label="创建时间" min-width="160"></el-table-column>
-          <el-table-column prop="updateTime" label="更新时间" min-width="160"></el-table-column>
-        </el-table>
+        <h3>指标配置详情</h3>
+        <div v-for="item in detailObj.items" :key="item.indicatorId" class="indicator-block">
+          <h4>{{ item.name }}（权重：{{ item.weight }}）</h4>
+          <el-table :data="item.standards.map((std, idx) => ({ grade: std, score: item.scores[idx] }))" border size="small" style="width: 100%">
+            <el-table-column prop="grade" label="标准档次" min-width="150" />
+            <el-table-column prop="score" label="得分" width="100" />
+          </el-table>
+        </div>
       </div>
-      <div v-else class="no-data">暂无标准项配置</div>
+      <div v-else class="no-data">暂无指标配置</div>
     </div>
   </DetailDrawer>
 </template>
@@ -135,6 +135,19 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
     color: #303133;
     border-left: 4px solid #409eff;
     padding-left: 12px;
+  }
+}
+
+.indicator-block {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  h4 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #409eff;
   }
 }
 

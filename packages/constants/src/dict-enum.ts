@@ -175,11 +175,14 @@ const IOT_DICT = {
 
 /** ========== DATA - 数据中枢模块 ========== */
 const DATA_DICT = {
-  DATA_CATEGORYTYPE: 'category_type', // 分类类型
-  DATA_MANAGEPART_RUNSTATUS: 'run_status', // 管理部件实例运行状态
-  DATA_MANAGEITEM_STATUS: 'matter_status', // 管理事项状态
+  DATA_CATEGORY_TYPE: 'category_type', // 分类类型
+  DATA_RUN_STATUS: 'run_status', // 运行状态
+  DATA_MATTER_STATUS: 'matter_status', // 事项状态
   DATA_AUDIT_STATUS: 'audit_status', // 审核状态
   DATA_ENABLE_STATUS: 'status_name', // 启用状态
+  DATA_CORE_INDICATORS: 'sys_index', // 核心监测指标
+  DATA_EVENT_LEVEL: 'sys_event_level', // 事件等级
+  DATA_TYPE: 'data_type', // 数据类型
 } as const;
 
 /** 字典类型枚举 - 统一导出 */

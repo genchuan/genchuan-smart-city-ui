@@ -26,7 +26,7 @@ import {
   batchConfirmRemind,
   batchUpdateAssignStaff,
   confirmValid,
-  deleteWarn,
+  deleteOrder,
   getRoadFacility,
   getRoadFacilityList,
   getRoadWorkOrder,
@@ -186,7 +186,7 @@ const showFileLength = (row) => {
 onMounted(async () => {
   const roadList = await getRoadFacilityList({
     pageNo: 1,
-    pageSize: 999,
+    pageSize: 100,
   });
   roadObj.value.list = roadList.list;
 
@@ -228,7 +228,7 @@ const fetchStaffList = async () => {
   try {
     const res = await getSysUserPage({
       pageNo: 1,
-      pageSize: 999,
+      pageSize: 100,
     });
     staffList.value = res.list.map((v) => {
       return {
@@ -529,7 +529,7 @@ async function handleDelete(row) {
     text: $t('ui.actionMessage.deleting'),
   });
   try {
-    await deleteWarn(row.id);
+    await deleteOrder(row.id);
     ElMessage.success($t('ui.actionMessage.deleteSuccess'));
     handleRefresh();
   } finally {

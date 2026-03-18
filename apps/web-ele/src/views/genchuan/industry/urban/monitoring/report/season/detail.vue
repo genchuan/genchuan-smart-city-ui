@@ -3,15 +3,15 @@ import { computed, defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 定义组件接收的属性（替换为道路监测季度统计数据）
+// 定义组件接收的属性（窨井盖设施监测季报数据）
 const props = defineProps({
-  // 详情数据对象（道路监测季度统计数据）
+  // 详情数据对象（窨井盖设施监测季报数据）
   detailObj: {
     type: Object,
     required: true,
     default: () => ({}),
   },
-  // 抽屉标题（可选，默认使用详情对象的roadSectionName）
+  // 抽屉标题（可选，默认使用详情对象的areaName）
   title: {
     type: String,
     default: '',
@@ -20,11 +20,10 @@ const props = defineProps({
 
 const { detailObj, title } = toRefs(props);
 
-// 计算属性处理标题，优先用路段名称，兜底显示默认值
+// 计算属性处理标题，优先用区域名称，兜底显示默认值
 const drawerTitle = computed(() => {
-  const roadSectionName =
-    detailObj.value?.roadSectionName || '道路监测季度统计';
-  return title.value || `${roadSectionName}季度统计详情`;
+  const areaName = detailObj.value?.areaName || '窨井盖设施监测';
+  return title.value || `${areaName}季度统计详情`;
 });
 
 // 初始化抽屉实例（加宽适配季度统计更多长字段）
@@ -32,7 +31,7 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 1200, // 加宽到1200px适配16个季度统计字段+超长标签
+  width: 1200, // 加宽到1200px适配季度统计字段
   onCancel() {
     detailDrawerApi.close();
   },
@@ -50,79 +49,29 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 道路监测季度统计分析信息 -->
+      <!-- 窨井盖设施监测季报信息 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">路段名称:</div>
-        <div class="detail-row-right">
-          {{ detailObj.roadSectionName || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">区域名称:</div>
+        <div class="detail-row-left">所属区域:</div>
         <div class="detail-row-right">{{ detailObj.areaName || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">坑洼数量季度均值:</div>
-        <div class="detail-row-right">
-          {{ detailObj.potholeCountQuarterAvg || '-' }} 个
-        </div>
+        <div class="detail-row-left">季统计时段:</div>
+        <div class="detail-row-right">{{ detailObj.quarterStatisticsPeriod || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">裂缝长度季度均值:</div>
-        <div class="detail-row-right">
-          {{ detailObj.crackLengthQuarterAvg || '-' }} 米
-        </div>
+        <div class="detail-row-left">窨井盖总数:</div>
+        <div class="detail-row-right">{{ detailObj.manholeTotalCount || '-' }} 个</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">季度累计预警数:</div>
-        <div class="detail-row-right">
-          {{ detailObj.quarterTotalWarningCount || '-' }} 次
-        </div>
+        <div class="detail-row-left">季累计隐患数:</div>
+        <div class="detail-row-right">{{ detailObj.quarterTotalHiddenTroubleCount || '-' }} 个</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">季度工单量:</div>
-        <div class="detail-row-right">
-          {{ detailObj.quarterWorkOrderCount || '-' }} 个
-        </div>
+        <div class="detail-row-left">季处置完成数:</div>
+        <div class="detail-row-right">{{ detailObj.quarterDisposalCompleteCount || '-' }} 个</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">季度处置效率:</div>
-        <div class="detail-row-right">
-          <span
-            :class="{
-              'text-green-600': detailObj.quarterDisposalEfficiency >= 90,
-              'text-yellow-600':
-                detailObj.quarterDisposalEfficiency >= 80 &&
-                detailObj.quarterDisposalEfficiency < 90,
-              'text-red-600':
-                detailObj.quarterDisposalEfficiency > 0 &&
-                detailObj.quarterDisposalEfficiency < 80,
-            }"
-          >
-            {{ detailObj.quarterDisposalEfficiency || '-' }} %
-          </span>
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">季度处置达标率:</div>
-        <div class="detail-row-right">
-          <span
-            :class="{
-              'text-green-600': detailObj.quarterDisposalComplianceRate >= 90,
-              'text-yellow-600':
-                detailObj.quarterDisposalComplianceRate >= 75 &&
-                detailObj.quarterDisposalComplianceRate < 90,
-              'text-red-600':
-                detailObj.quarterDisposalComplianceRate > 0 &&
-                detailObj.quarterDisposalComplianceRate < 75,
-            }"
-          >
-            {{ detailObj.quarterDisposalComplianceRate || '-' }} %
-          </span>
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">设备季度在线率:</div>
+        <div class="detail-row-left">设备季在线率:</div>
         <div class="detail-row-right">
           <span
             :class="{
@@ -140,85 +89,86 @@ defineExpose({
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">坑洼数量环比变化率:</div>
-        <div class="detail-row-right">
-          <span
-            :class="{
-              'text-red-600': detailObj.potholeCountMomChangeRate > 0,
-              'text-green-600': detailObj.potholeCountMomChangeRate < 0,
-            }"
-          >
-            {{ detailObj.potholeCountMomChangeRate || '-' }} %
-          </span>
-        </div>
+        <div class="detail-row-left">季重大隐患数:</div>
+        <div class="detail-row-right">{{ detailObj.quarterMajorHiddenTroubleCount || '-' }} 个</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">坑洼数量同比变化率:</div>
+        <div class="detail-row-left">季隐患处置完成率:</div>
         <div class="detail-row-right">
           <span
             :class="{
-              'text-red-600': detailObj.potholeCountYoYChangeRate > 0,
-              'text-green-600': detailObj.potholeCountYoYChangeRate < 0,
-            }"
-          >
-            {{ detailObj.potholeCountYoYChangeRate || '-' }} %
-          </span>
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">裂缝长度环比变化率:</div>
-        <div class="detail-row-right">
-          <span
-            :class="{
-              'text-red-600': detailObj.crackLengthMomChangeRate > 0,
-              'text-green-600': detailObj.crackLengthMomChangeRate < 0,
-            }"
-          >
-            {{ detailObj.crackLengthMomChangeRate || '-' }} %
-          </span>
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">裂缝长度同比变化率:</div>
-        <div class="detail-row-right">
-          <span
-            :class="{
-              'text-red-600': detailObj.crackLengthYoYChangeRate > 0,
-              'text-green-600': detailObj.crackLengthYoYChangeRate < 0,
-            }"
-          >
-            {{ detailObj.crackLengthYoYChangeRate || '-' }} %
-          </span>
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">区域设施健康度排名:</div>
-        <div class="detail-row-right">
-          <span
-            :class="{
-              'text-green-600': detailObj.areaFacilityHealthRank <= 3,
+              'text-green-600': detailObj.quarterHiddenTroubleDisposalRate >= 90,
               'text-yellow-600':
-                detailObj.areaFacilityHealthRank > 3 &&
-                detailObj.areaFacilityHealthRank <= 7,
-              'text-red-600': detailObj.areaFacilityHealthRank > 7,
+                detailObj.quarterHiddenTroubleDisposalRate >= 75 &&
+                detailObj.quarterHiddenTroubleDisposalRate < 90,
+              'text-red-600':
+                detailObj.quarterHiddenTroubleDisposalRate > 0 &&
+                detailObj.quarterHiddenTroubleDisposalRate < 75,
             }"
           >
-            {{ detailObj.areaFacilityHealthRank || '-' }} 名
+            {{ detailObj.quarterHiddenTroubleDisposalRate || '-' }} %
           </span>
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">季度统计时段:</div>
+        <div class="detail-row-left">季重大隐患处置率:</div>
         <div class="detail-row-right">
-          {{ detailObj.quarterStatisticsPeriod || '-' }}
+          <span
+            :class="{
+              'text-green-600': detailObj.quarterMajorHiddenTroubleDisposalRate >= 90,
+              'text-yellow-600':
+                detailObj.quarterMajorHiddenTroubleDisposalRate >= 75 &&
+                detailObj.quarterMajorHiddenTroubleDisposalRate < 90,
+              'text-red-600':
+                detailObj.quarterMajorHiddenTroubleDisposalRate > 0 &&
+                detailObj.quarterMajorHiddenTroubleDisposalRate < 75,
+            }"
+          >
+            {{ detailObj.quarterMajorHiddenTroubleDisposalRate || '-' }} %
+          </span>
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">预警类型分布占比:</div>
+        <div class="detail-row-left">环比隐患变化率:</div>
         <div class="detail-row-right">
-          <div class="break-words">
-            {{ detailObj.warningTypeDistributionRatio || '-' }}
-          </div>
+          <span
+            :class="{
+              'text-red-600': detailObj.momHiddenTroubleChangeRate > 0,
+              'text-green-600': detailObj.momHiddenTroubleChangeRate < 0,
+            }"
+          >
+            {{ detailObj.momHiddenTroubleChangeRate > 0 ? '+' : '' }}{{ detailObj.momHiddenTroubleChangeRate || '-' }} %
+          </span>
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">区域风险等级:</div>
+        <div class="detail-row-right">
+          <span
+            :class="{
+              'text-red-600': detailObj.areaRiskLevel === '高',
+              'text-yellow-600': detailObj.areaRiskLevel === '中',
+              'text-green-600': detailObj.areaRiskLevel === '低',
+            }"
+          >
+            {{ detailObj.areaRiskLevel || '-' }}
+          </span>
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">季平均处置时长:</div>
+        <div class="detail-row-right">
+          <span
+            :class="{
+              'text-green-600': detailObj.quarterAvgDisposalDuration <= 8,
+              'text-yellow-600':
+                detailObj.quarterAvgDisposalDuration > 8 &&
+                detailObj.quarterAvgDisposalDuration <= 15,
+              'text-red-600': detailObj.quarterAvgDisposalDuration > 15,
+            }"
+          >
+            {{ detailObj.quarterAvgDisposalDuration || '-' }} 小时
+          </span>
         </div>
       </div>
     </div>

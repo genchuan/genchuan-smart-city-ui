@@ -201,7 +201,7 @@ const mapData = computed(() => {
         id: String(item.id),
         geoCode: item.uniqueCode,
         locationName: item.partName,
-        coordinateInfo: `${item.longitude},${item.latitude}`,
+        coordinate: `${item.longitude},${item.latitude}`,
         statusName,
         areaName: item.gridName || '',
         layerTypeName: item.categoryName || '',

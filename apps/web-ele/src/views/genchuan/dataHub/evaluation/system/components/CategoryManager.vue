@@ -170,7 +170,7 @@
 <script setup>
 import { computed, ref, onMounted, watch } from 'vue';
 import { ElMessage } from 'element-plus';
-import { getIndexTypeList, getCalcWayList } from '#/api/genchuan/dataHub/evaluation/system/indicators';
+import { getIndexTypeList, getCalcWayList } from '#/api/genchuan/dataHub/evaluation/system/indicators/index.js';
 
 const props = defineProps({
   modelValue: { type: Array, default: () => [] },

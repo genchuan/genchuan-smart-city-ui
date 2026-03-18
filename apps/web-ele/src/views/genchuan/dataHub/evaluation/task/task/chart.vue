@@ -34,15 +34,15 @@ const props = defineProps({
       { name: '接口同步', value: 4 },
     ]
   },
-  pieData3: {
-    type: Array,
-    default: () => [
-      { name: '网格管理评价模板', value: 6 },
-      { name: '部门绩效评价模板', value: 5 },
-      { name: '社区服务评价模板', value: 5 },
-      { name: '街道治理评价模板', value: 4 },
-    ]
-  },
+  // pieData3: {
+  //   type: Array,
+  //   default: () => [
+  //     { name: '网格管理评价模板', value: 6 },
+  //     { name: '部门绩效评价模板', value: 5 },
+  //     { name: '社区服务评价模板', value: 5 },
+  //     { name: '街道治理评价模板', value: 4 },
+  //   ]
+  // },
   barData: {
     type: Object,
     default: () => ({
@@ -89,19 +89,12 @@ const props = defineProps({
       :data="pieData2"
       :colors="['#409eff', '#67c23a', '#e6a23c']"
     />
-    <Circle
-      width="340px"
-      height="330px"
-      title-text="关联模板占比"
-      :data="pieData3"
-      :colors="['#909399', '#409eff', '#67c23a', '#e6a23c']"
-    />
-    <Columnar
-      height="330px"
-      title="各周期任务数量对比"
-      :x-data="barData.xData"
-      :series-data="barData.series"
-    />
+<!--    <Columnar-->
+<!--      height="330px"-->
+<!--      title="各周期任务数量对比"-->
+<!--      :x-data="barData.xData"-->
+<!--      :series-data="barData.series"-->
+<!--    />-->
     <Line
       height="330px"
       title="近6个月任务创建与完成趋势"

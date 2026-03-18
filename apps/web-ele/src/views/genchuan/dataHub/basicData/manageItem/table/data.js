@@ -106,7 +106,7 @@ export function useFormSchema(treeData = []) {
       component: 'Select',
       componentProps: {
         placeholder: '请选择分类类型',
-        options: getDictOptions(DICT_TYPE.DATA_CATEGORYTYPE, 'string'),
+        options: getDictOptions(DICT_TYPE.DATA_CATEGORY_TYPE, 'string'),
       },
       rules: 'required',
     },
@@ -283,11 +283,11 @@ export const detailFields = [
     label: '分类类型',
     type: 'tag',
     formatter: (value) => {
-      const dict = getDictObj(DICT_TYPE.DATA_CATEGORYTYPE, String(value));
+      const dict = getDictObj(DICT_TYPE.DATA_CATEGORY_TYPE, String(value));
       return dict ? dict.label : value;
     },
     tagType: (value) => {
-      const dict = getDictObj(DICT_TYPE.DATA_CATEGORYTYPE, String(value));
+      const dict = getDictObj(DICT_TYPE.DATA_CATEGORY_TYPE, String(value));
       return dict ? dict.colorType : 'primary';
     },
   },
@@ -432,7 +432,7 @@ export function useInstanceFormSchema(treeData = []) {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
-        options: getDictOptions(DICT_TYPE.DATA_MANAGEITEM_STATUS, 'string'),
+        options: getDictOptions(DICT_TYPE.DATA_MATTER_STATUS, 'string'),
       },
       rules: 'required',
     },
@@ -553,7 +553,7 @@ export function useInstanceGridColumns() {
       sortable: true,
       cellRender: {
         name: 'CellDict',
-        props: { type: DICT_TYPE.DATA_MANAGEITEM_STATUS },
+        props: { type: DICT_TYPE.DATA_MATTER_STATUS },
       },
     },
     {
@@ -624,11 +624,11 @@ export const instanceDetailFields = [
     label: '状态',
     type: 'tag',
     formatter: (value) => {
-      const dict = getDictObj(DICT_TYPE.DATA_MANAGEITEM_STATUS, String(value));
+      const dict = getDictObj(DICT_TYPE.DATA_MATTER_STATUS, String(value));
       return dict ? dict.label : value;
     },
     tagType: (value) => {
-      const dict = getDictObj(DICT_TYPE.DATA_MANAGEITEM_STATUS, String(value));
+      const dict = getDictObj(DICT_TYPE.DATA_MATTER_STATUS, String(value));
       return dict ? dict.colorType : 'primary';
     },
   },
@@ -705,7 +705,7 @@ export function useInstanceSearchFormSchema(treeData = []) {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
-        options: getDictOptions(DICT_TYPE.DATA_MANAGEITEM_STATUS, 'string'),
+        options: getDictOptions(DICT_TYPE.DATA_MATTER_STATUS, 'string'),
       },
     },
     {

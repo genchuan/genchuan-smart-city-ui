@@ -28,13 +28,13 @@ const open = (row: any) => {
   record.value = row;
   modalApi.open();
 };
-
+// 处理提交
 const handleConfirm = async () => {
   try {
     loading.value = true;
     await updateCategory({
       ...record.value,
-      auditStatus: '1', // 待审核
+      auditStatus: '0', // 待审核
     });
     ElMessage.success('提交审核成功');
     modalApi.close();
@@ -74,8 +74,8 @@ defineExpose({
 }
 
 .tip {
-  color: #999;
-  font-size: 12px;
   margin-top: 10px;
+  font-size: 12px;
+  color: #999;
 }
 </style>

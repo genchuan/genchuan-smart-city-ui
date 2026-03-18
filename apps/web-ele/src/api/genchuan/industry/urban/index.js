@@ -152,8 +152,10 @@ export function uploadWorkOrderFile(data) {
 } 
 
 /** 获得人员统计 */
-export function getSysUserPage(data) {
- return requestClient.get('/facility/sys-user/page', data);
+export function getSysUserPage(params) {
+ return requestClient.get('/facility/sys-user/page',  {
+    params,
+  });
 } 
 /** 已完成归档 */ 
 export function getRoadArchive(data) {
@@ -171,3 +173,33 @@ export function getInspectionList(data) {
 export function getStatisticList(data) {
  return requestClient.get('/evaluate/comment-statistic/page', data);
 } 
+export function getRoadArchive(params) {
+ return requestClient.get('/facility/road-archive/page',  {
+    params,
+  });
+}
+/** 完成归档导出 */
+export function exportRoadCompletedExcel() {
+  return requestClient.download('/facility/sys-archive/export-excel');
+}
+
+/** 查看全部流程 */
+export function getRoadWorkOrderAllProcess(params) {
+  return requestClient.get('/facility/sys-archive/flow-records', {
+    params,
+  });
+}
+/** 下载归档资料 */
+export function downLoadComplete(params) {
+  return requestClient.download(`/facility/sys-archive/download-archive-files`, {
+    params,
+  });
+}
+/** 删除归档资料 */
+export function deleteArchive(id) {
+  return requestClient.delete(`/facility/sys-archive/delete?id=${id}`);
+}
+/** 删除工单 */
+export function deleteOrder(id) {
+  return requestClient.delete(`/facility/work-order/delete?id=${id}`);
+}

@@ -34,10 +34,7 @@ const targetStatus = ref<string>('');
 const confirmStep = ref<number>(1); // 1: 选择状态, 2: 二次确认
 
 // 获取运行状态字典选项
-const statusOptions = getDictOptions(
-  DICT_TYPE.DATA_MANAGEPART_RUNSTATUS,
-  'string',
-);
+const statusOptions = getDictOptions(DICT_TYPE.DATA_RUN_STATUS, 'string');
 
 const open = (ids: string[]) => {
   selectedIds.value = ids;

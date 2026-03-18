@@ -168,22 +168,8 @@ const changeTotalShow = () => {
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
-  dataObj.total = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    }).length;
+  dataObj.total = dataObj.apilist.length;
   dataObj.list = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    })
     .slice(
       (page.currentPage - 1) * page.pageSize,
       page.currentPage * page.pageSize,
@@ -338,13 +324,58 @@ const arrowChange = () => {
           />
         </div>
       </template>
-      <template #roadSectionName="{ row }">
+      <template #areaName="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.roadSectionName }}
+          {{ row.areaName }}
+        </el-text>
+      </template>
+      <template #deptName="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.deptName }}
+        </el-text>
+      </template>
+      <template #yearTotalHiddenTroubleCount="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.yearTotalHiddenTroubleCount }}
+        </el-text>
+      </template>
+      <template #yearHiddenTroubleDisposalRate="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.yearHiddenTroubleDisposalRate }}%
+        </el-text>
+      </template>
+      <template #yoyHiddenTroubleChangeRate="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          :type="row.yoyHiddenTroubleChangeRate >= 0 ? 'danger' : 'success'"
+        >
+          {{ row.yoyHiddenTroubleChangeRate > 0 ? '+' : '' }}{{ row.yoyHiddenTroubleChangeRate }}%
+        </el-text>
+      </template>
+      <template #yearOperationComprehensiveScore="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.yearOperationComprehensiveScore }}
         </el-text>
       </template>
       <template #actions="{ row }">

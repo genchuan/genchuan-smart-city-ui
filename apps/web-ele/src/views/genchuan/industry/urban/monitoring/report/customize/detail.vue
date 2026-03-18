@@ -3,15 +3,15 @@ import { computed, defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 定义组件接收的属性（出入口管理数据）
+// 定义组件接收的属性（窨井盖设施监测自定义报表数据）
 const props = defineProps({
-  // 详情数据对象（出入口管理数据）
+  // 详情数据对象（窨井盖设施监测自定义报表数据）
   detailObj: {
     type: Object,
     required: true,
     default: () => ({}),
   },
-  // 抽屉标题（可选，默认使用详情对象的roadSectionName）
+  // 抽屉标题（可选，默认使用详情对象的reportName）
   title: {
     type: String,
     default: '',
@@ -20,18 +20,18 @@ const props = defineProps({
 
 const { detailObj, title } = toRefs(props);
 
-// 计算属性处理标题，优先用路段名称，兜底显示默认值
+// 计算属性处理标题，优先用报表名称，兜底显示默认值
 const drawerTitle = computed(() => {
-  const roadSectionName = detailObj.value?.roadSectionName || '出入口管理';
-  return title.value || `${roadSectionName}详情`;
+  const reportName = detailObj.value?.reportName || '自定义报表';
+  return title.value || `${reportName}详情`;
 });
 
-// 初始化抽屉实例（加宽适配出入口管理更多长字段）
+// 初始化抽屉实例（加宽适配自定义报表更多长字段）
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 1000, // 加宽到1000px适配指标变化趋势等超长文本
+  width: 1000, // 加宽到1000px适配报表详情等信息
   onCancel() {
     detailDrawerApi.close();
   },
@@ -49,138 +49,88 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 出入口管理基础信息 -->
+      <!-- 窨井盖设施监测自定义报表信息 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">区域名称:</div>
-        <div class="detail-row-right">
-          {{ detailObj.areaName || '-' }}
-        </div>
+        <div class="detail-row-left">统计维度名称:</div>
+        <div class="detail-row-right">{{ detailObj.dimensionName || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">路段名称:</div>
-        <div class="detail-row-right">
-          {{ detailObj.roadSectionName || '-' }}
-        </div>
+        <div class="detail-row-left">统计维度值:</div>
+        <div class="detail-row-right">{{ detailObj.dimensionValue || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">设备编号:</div>
-        <div class="detail-row-right">
-          {{ detailObj.deviceCode || '-' }}
-        </div>
+        <div class="detail-row-left">核心指标1统计值:</div>
+        <div class="detail-row-right">{{ detailObj.coreIndex1 || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">坑洼数量:</div>
-        <div class="detail-row-right">
-          {{ detailObj.potholeCount || '-' }} 个
-        </div>
+        <div class="detail-row-left">核心指标2统计值:</div>
+        <div class="detail-row-right">{{ detailObj.coreIndex2 || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">裂缝长度:</div>
-        <div class="detail-row-right">
-          {{ detailObj.crackLength || '-' }} 米
-        </div>
+        <div class="detail-row-left">核心指标3统计值:</div>
+        <div class="detail-row-right">{{ detailObj.coreIndex3 || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">路面温度:</div>
-        <div class="detail-row-right">
-          {{ detailObj.roadSurfaceTemp || '-' }} ℃
-        </div>
+        <div class="detail-row-left">统计时段:</div>
+        <div class="detail-row-right">{{ detailObj.statisticsTimeRange || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">交通流量:</div>
-        <div class="detail-row-right">
-          {{ detailObj.trafficFlow || '-' }} 辆/小时
-        </div>
+        <div class="detail-row-left">报表名称:</div>
+        <div class="detail-row-right">{{ detailObj.reportName || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">预警数:</div>
-        <div class="detail-row-right">
-          {{ detailObj.warningCount || '-' }} 条
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">工单数:</div>
-        <div class="detail-row-right">
-          {{ detailObj.workOrderCount || '-' }} 个
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">处置完成数:</div>
-        <div class="detail-row-right">
-          {{ detailObj.disposalCompleteCount || '-' }} 个
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">核查通过率:</div>
+        <div class="detail-row-left">指标对比差值:</div>
         <div class="detail-row-right">
           <span
             :class="{
-              'text-green-600': detailObj.verificationPassRate >= 90,
-              'text-yellow-600':
-                detailObj.verificationPassRate >= 70 &&
-                detailObj.verificationPassRate < 90,
-              'text-red-600': detailObj.verificationPassRate < 70,
+              'text-red-600': detailObj.indexComparisonDifference >= 0,
+              'text-green-600': detailObj.indexComparisonDifference < 0,
             }"
           >
-            {{ detailObj.verificationPassRate || '-' }} %
+            {{ detailObj.indexComparisonDifference > 0 ? '+' : '' }}{{ detailObj.indexComparisonDifference || '-' }}
           </span>
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">设备在线率:</div>
+        <div class="detail-row-left">指标对比变化率:</div>
         <div class="detail-row-right">
           <span
             :class="{
-              'text-green-600': detailObj.deviceOnlineRate >= 95,
-              'text-yellow-600':
-                detailObj.deviceOnlineRate >= 85 &&
-                detailObj.deviceOnlineRate < 95,
-              'text-red-600': detailObj.deviceOnlineRate < 85,
+              'text-red-600': detailObj.indexComparisonChangeRate >= 0,
+              'text-green-600': detailObj.indexComparisonChangeRate < 0,
             }"
           >
-            {{ detailObj.deviceOnlineRate || '-' }} %
+            {{ detailObj.indexComparisonChangeRate > 0 ? '+' : '' }}{{ detailObj.indexComparisonChangeRate || '-' }}%
           </span>
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">统计时间范围:</div>
-        <div class="detail-row-right">
-          {{ detailObj.statisticsTimeRange || '-' }}
-        </div>
+        <div class="detail-row-left">报表生成时间:</div>
+        <div class="detail-row-right">{{ detailObj.reportGenerateTime || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">环比变化率:</div>
-        <div class="detail-row-right">
-          <span
-            :class="{
-              'text-red-600': detailObj.momChangeRate > 0,
-              'text-green-600': detailObj.momChangeRate < 0,
-            }"
-          >
-            {{ detailObj.momChangeRate || '-' }} %
-          </span>
-        </div>
+        <div class="detail-row-left">报表状态:</div>
+        <div class="detail-row-right">{{ detailObj.reportStatus || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">同比变化率:</div>
-        <div class="detail-row-right">
-          <span
-            :class="{
-              'text-red-600': detailObj.yoYChangeRate > 0,
-              'text-green-600': detailObj.yoYChangeRate < 0,
-            }"
-          >
-            {{ detailObj.yoYChangeRate || '-' }} %
-          </span>
-        </div>
+        <div class="detail-row-left">数据更新时间:</div>
+        <div class="detail-row-right">{{ detailObj.dataUpdateTime || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">指标变化趋势:</div>
-        <div class="detail-row-right">
-          <div class="break-words">
-            {{ detailObj.indexChangeTrend || '-' }}
-          </div>
-        </div>
+        <div class="detail-row-left">核心指标1名称:</div>
+        <div class="detail-row-right">{{ '井盖总数' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">核心指标2名称:</div>
+        <div class="detail-row-right">{{ '隐患数' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">核心指标3名称:</div>
+        <div class="detail-row-right">{{ '处置数' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">处置完成率:</div>
+        <div class="detail-row-right">{{ detailObj.coreIndex3 && detailObj.coreIndex2 ? ((detailObj.coreIndex3 / detailObj.coreIndex2) * 100).toFixed(2) + '%' : '-' }}</div>
       </div>
     </div>
   </DetailDrawer>
