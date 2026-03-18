@@ -172,12 +172,7 @@ export function getInspectionList(data) {
 /** 获得巡检巡查报表 */
 export function getStatisticList(data) {
  return requestClient.get('/evaluate/comment-statistic/page', data);
-} 
-export function getRoadArchive(params) {
- return requestClient.get('/facility/road-archive/page',  {
-    params,
-  });
-}
+}  
 /** 完成归档导出 */
 export function exportRoadCompletedExcel() {
   return requestClient.download('/facility/sys-archive/export-excel');
