@@ -26,8 +26,8 @@ export function deleteIndexSystem(id) {
 }
 
 /** 查询指标体系详情（树形结构） */
-export function getIndexSystemDetail(systemId) {
-  return requestClient.get(`evaluate/index-system/detail/${systemId}`);
+export function getIndexSystemDetail(id) {
+  return requestClient.get(`evaluate/index-system/detail/${id}`);
 }
 
 /** 获取指标体系概览数据（用于图表） */
