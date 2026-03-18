@@ -56,3 +56,40 @@ export function updateNotice(data) {
 export function exporNoticeExcel() {
   return requestClient.download('/kitchen/rectify-notice/export-excel');
 }
+
+
+
+
+/** 企业整改记录分页 */
+export function getEntRectifyRecord(params) {
+  return requestClient.get('/kitchen/ent-rectify-record/page', {
+    params,
+  });
+} 
+/** 删除台账数据 */
+export function deleteEntNotice(id) {
+  return requestClient.delete(`/kitchen/ent-rectify-record/delete?id=${id}`);
+}
+export function addEntNotice(data) {
+  return requestClient.post(`/kitchen/ent-rectify-record/create`, data);
+}
+export function updateEntNotice(data) {
+  return requestClient.put(`/kitchen/ent-rectify-record/update`, data);
+}
+/** excel导出 */
+export function exporEntNoticeExcel() {
+  return requestClient.download('/kitchen/ent-rectify-record/export-excel');
+}
+
+/** 获得企业 */
+export function getEnterpriseList(params) {
+  return requestClient.get('/kitchen/enterprise-info/page'); 
+}
+/** 创建复审台账 */
+export function createReviewLedger(data) {
+  return requestClient.post(`/kitchen/rectify-review/review-add`, data);
+}
+/** 获取复审台账详情 */
+export function getReviewLedgerDetail(id) {
+  return requestClient.get(`/kitchen/rectify-review/get?id=${id}`);
+}

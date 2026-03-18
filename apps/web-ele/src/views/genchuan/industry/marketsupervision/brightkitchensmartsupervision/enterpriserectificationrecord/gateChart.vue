@@ -6,14 +6,12 @@ import { ElOption, ElSelect } from 'element-plus';
 
 const state = reactive({
   cardList: [
-    { title: '处罚复审台账总数', value: 10, color: '#4A90E2' },
+    { title: '复审台账总数', value: 10, color: '#4A90E2' },
     { title: '待复审数', value: 10, color: '#50E3C2' },
     { title: '已下发数', value: 8, color: '#FF9F40' },
     { title: '已撤销数', value: 7, color: '#A17FE0' },
-    { title: '已下发缴款完成率', value: 3, color: '#FF6B8B' },
+    { title: '已下发整改完成率', value: 3, color: '#FF6B8B' },
     { title: '复审完成率', value: 1, color: '#FFD93D' },
-    { title: '累计处罚金额', value: 10_000, color: '#4A90E2' },
-    { title: '累计缴款金额', value: 8000, color: '#50E3C2' },
   ],
   mapConfig: {
     markerIcons: {
@@ -90,13 +88,11 @@ const secondChartData = [
     ],
   },
   {
-    label: '已撤销台账撤销原因占比',
+    label: '送达方式占比',
     data: [
-      { name: '事实不清', value: 5 },
-      { name: '证据不足', value: 3 },
-      { name: '程序错误', value: 2 },
-      { name: '适用法律不当', value: 1 },
-      { name: '其他原因', value: 1 },
+      { name: '快递送达', value: 5 },
+      { name: '现场送达', value: 3 },
+      { name: '电子送达', value: 2 },
     ],
   },
 ];
@@ -104,7 +100,7 @@ const secondChartData = [
 // 所有折线图和柱状图的数据
 const allChartsData = [
   {
-    label: '不同月份处罚复审台账新增数量及复审完成数量对比',
+    label: '不同月份复审台账新增数量及复审完成数量对比',
     type: 'bar',
     stack: 'total',
     data: {
@@ -122,7 +118,7 @@ const allChartsData = [
     },
   },
   {
-    label: '不同区域/复审人的处罚复审完成数量及缴款完成率对比',
+    label: '不同区域/复审人的复审完成数量及整改完成率对比',
     type: 'bar',
     data: {
       xAxis: ['福州', '厦门', '泉州', '莆田', '宁德', '龙岩'],
@@ -132,14 +128,14 @@ const allChartsData = [
           data: [15, 18, 12, 14, 16, 13],
         },
         {
-          name: '缴款完成率(%)',
+          name: '整改完成率(%)',
           data: [85, 92, 78, 88, 90, 82],
         },
       ],
     },
   },
   {
-    label: '近3个月处罚复审台账企业缴款完成率趋势',
+    label: '近3个月复审台账企业整改完成率趋势',
     type: 'line',
     data: {
       xAxis: [

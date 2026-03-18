@@ -4,12 +4,26 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElImage, ElLoading, ElMessage } from 'element-plus';
+import {
+  ElDialog,
+  ElImage,
+  ElLoading,
+  ElMessage,
+  ElOption,
+  ElSelect,
+} from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getWarnList } from '#/api/genchuan/industry/marketsupervision/index.js';
+// 新增：引入企业列表接口（需根据实际项目路径调整）
+import {
+  createReviewLedger,
+  getEnterpriseList,
+  // 新增：引入获取复审台账详情接口
+  getReviewLedgerDetail,
+  getWarnList,
+} from '#/api/genchuan/industry/marketsupervision/index.js';
 import {
   createParkLot,
   deleteParkLot,
@@ -18,10 +32,11 @@ import {
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
 import { exportToExcel } from '#/utils/excel.js';
-// 引入封装后的详情抽屉组件
-import ParkDetailDrawer from '#/views/genchuan/industry/page/vehicle/appear/table/detail.vue';
 
 import { useFormSchema, useGridColumns } from './data';
+// 引入封装后的详情抽屉组件
+import Detail from './detail.vue';
+import fuDetail from './fuDetail.vue';
 
 const props = defineProps({
   secondShow: {
@@ -142,6 +157,7 @@ function handleRowCheckboxChange({ records }) {
 const dataObj = reactive({
   totalShow: false,
   detailObj: {}, // 保留详情对象用于传递给组件
+  fuDetailObj: {}, // 新增：复审台账详情对象
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -245,6 +261,38 @@ const handleOpenDetail = (row) => {
   parkDetailDrawerRef.value.open();
   console.log(row);
 };
+
+// ========== 新增：打开复审台账详情抽屉方法 ==========
+// 定义复审台账详情组件ref
+const fuDetailDrawerRef = ref(null);
+
+// 打开复审台账详情抽屉
+const handleOpenFuDetail = async (row) => {
+  try {
+    const loadingInstance = ElLoading.service({
+      text: '加载复审台账详情中...',
+    });
+
+    // 1. 调用接口获取复审台账详情数据
+    // 传入告警ID作为查询条件（根据实际接口参数调整）
+    const detailData = await getReviewLedgerDetail(
+      row.id, // 告警ID
+    );
+
+    // 2. 将详情数据赋值给fuDetailObj
+    dataObj.fuDetailObj = detailData || {};
+
+    // 3. 调用复审台账详情组件的open方法打开抽屉
+    fuDetailDrawerRef.value.open();
+
+    loadingInstance.close();
+  } catch (error) {
+    ElMessage.error('加载复审台账详情失败，请重试');
+    console.error('加载复审台账详情失败：', error);
+  }
+};
+// ========== 复审台账详情方法结束 ==========
+
 const tabsData = ref([
   { label: '全部', value: '' },
   { label: '月租车', value: '1' },
@@ -271,23 +319,160 @@ const openImg = (url) => {
   dataObj.imgUrl = url;
   dialogVisible.value = true;
 };
+
+// ========== 新增：企业选择弹窗相关逻辑 ==========
+// 弹窗显示状态
+const enterpriseDialogVisible = ref(false);
+// 选中的企业ID
+const selectedEnterpriseId = ref('');
+// 企业列表数据
+const enterpriseList = ref([]);
+// 企业搜索关键词
+const enterpriseSearchKey = ref('');
+// 当前操作的行数据
+const currentRow = ref(null);
+
+// 获取企业列表
+const fetchEnterpriseList = async () => {
+  try {
+    const loadingInstance = ElLoading.service({
+      text: '加载企业列表中...',
+    });
+    // 调用企业列表接口（可传入搜索参数）
+    const res = await getEnterpriseList({
+      pageNo: 1,
+      pageSize: 100, // 加载足够多的企业数据
+    });
+    enterpriseList.value = res.list || [];
+    loadingInstance.close();
+  } catch (error) {
+    ElMessage.error('企业列表加载失败，请重试');
+    console.error('加载企业列表失败：', error);
+  }
+};
+
+// 打开企业选择弹窗
+const addDetail = (row) => {
+  // 保存当前行数据
+  currentRow.value = row;
+  // 重置选中状态和搜索关键词
+  selectedEnterpriseId.value = '';
+  enterpriseSearchKey.value = '';
+  // 打开弹窗
+  enterpriseDialogVisible.value = true;
+  // 加载企业列表
+  fetchEnterpriseList();
+};
+
+// 企业搜索
+const handleEnterpriseSearch = () => {
+  fetchEnterpriseList();
+};
+
+// 提交企业选择（生成复审台账）
+const submitEnterpriseSelect = async () => {
+  if (!selectedEnterpriseId.value) {
+    ElMessage.warning('请选择关联企业');
+    return;
+  }
+
+  try {
+    const loadingInstance = ElLoading.service({
+      text: '生成复审台账中...',
+    });
+
+    // ========== 核心逻辑：调用生成复审台账接口 ==========
+    const res = await createReviewLedger({
+      aiAlertMessageId: currentRow.value.id, // 告警ID
+      entId: selectedEnterpriseId.value, // 选中的企业ID
+    });
+
+    ElMessage.success('复审台账生成成功');
+    loadingInstance.close();
+    // 关闭弹窗
+    enterpriseDialogVisible.value = false;
+    // 刷新表格数据
+    handleRefresh();
+  } catch (error) {
+    ElMessage.error('复审台账生成失败，请重试');
+    console.error('生成复审台账失败：', error);
+  }
+};
+
+// 取消企业选择
+const cancelEnterpriseSelect = () => {
+  enterpriseDialogVisible.value = false;
+  selectedEnterpriseId.value = '';
+  enterpriseSearchKey.value = '';
+};
+// ========== 企业选择弹窗逻辑结束 ==========
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <el-dialog v-model="dialogVisible">
+    <ElDialog v-model="dialogVisible">
       <div class="park-img-center">
         <img style="width: 100%; height: 100%" :src="dataObj.imgUrl" />
       </div>
-    </el-dialog>
+    </ElDialog>
+
+    <!-- ========== 新增：企业选择弹窗 ========== -->
+    <ElDialog
+      v-model="enterpriseDialogVisible"
+      title="生成复审台账 - 选择关联企业"
+      width="500px"
+      @close="cancelEnterpriseSelect"
+    >
+      <div class="enterprise-select-container">
+        <!-- 企业选择器 -->
+        <div class="enterprise-select">
+          <ElSelect
+            v-model="selectedEnterpriseId"
+            placeholder="请选择关联企业"
+            filterable
+            clearable
+            style="width: 100%"
+          >
+            <ElOption
+              v-for="item in enterpriseList"
+              :key="item.id"
+              :label="item.entName"
+              :value="item.id"
+            >
+              <!-- 可选：显示企业ID和名称 -->
+              <span>{{ item.entName }}</span>
+              <span style="float: right; color: #8492a6; font-size: 12px">
+                ID: {{ item.id }}
+              </span>
+            </ElOption>
+          </ElSelect>
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="cancelEnterpriseSelect">取消</el-button>
+          <el-button type="primary" @click="submitEnterpriseSelect">
+            确认生成
+          </el-button>
+        </div>
+      </template>
+    </ElDialog>
+    <!-- ========== 企业选择弹窗结束 ========== -->
+
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
     <!-- 使用封装后的详情抽屉组件 -->
-    <ParkDetailDrawer
+    <Detail
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
       title="详情"
+    />
+    <fuDetail
+      ref="fuDetailDrawerRef"
+      :detail-obj="dataObj.fuDetailObj"
+      title="复审台账详情"
     />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -314,7 +499,6 @@ const openImg = (url) => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="导出"
             icon-name="download"
@@ -366,14 +550,19 @@ const openImg = (url) => {
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
+            content="生成复审台账"
+            icon-name="Plus"
+            @click="addDetail(row)"
+          />
+          <IconButton
+            content="查看复审台账记录"
+            icon-name="View"
+            @click="handleOpenFuDetail(row)"
+          />
+          <IconButton
             content="详情"
             icon-name="View"
             @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
           />
           <IconButton
             content="删除"
@@ -396,5 +585,18 @@ const openImg = (url) => {
   justify-content: center;
   width: 700px;
   height: 700px;
+}
+
+/* 企业选择弹窗样式 */
+.enterprise-select-container {
+  padding: 10px 0;
+}
+
+.enterprise-search {
+  margin-bottom: 8px;
+}
+
+.dialog-footer {
+  text-align: right;
 }
 </style>
