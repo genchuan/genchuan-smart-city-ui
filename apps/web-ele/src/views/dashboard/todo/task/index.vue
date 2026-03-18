@@ -3,7 +3,7 @@
 import { ref } from 'vue';
 
 import Table from './table/index.vue';
-import Alarmechart from './alarmechart.vue';
+import Taskechart from './taskechart.vue';
 import '#/components/page/index.scss';
 
 const changeArrowStatus = () => {
@@ -15,7 +15,7 @@ const changeArrowStatus = () => {
 
 const tabArray = ref([
   {
-    label: '我的预警',
+    label: '任务',
     components: Table,
     showSecondary: true,
     secondShow: false,
@@ -30,13 +30,13 @@ const arrowChange = () => {
   });
 };
 
-const activeName = ref('我的预警');
+const activeName = ref('任务');
 const secondShow = ref(false);
 
 </script>
 <template>
   <div class="common-index">
-    <Alarmechart v-if="tabArray[0].arrowShow"/>
+    <Taskechart v-if="tabArray[0].arrowShow"/>
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -57,7 +57,6 @@ const secondShow = ref(false);
       v-model="activeName"
       class="common-tabs"
       type="card"
-      @tab-change="tabChange"
     >
       <el-tab-pane
         v-for="(item) in tabArray"
