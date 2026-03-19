@@ -20,8 +20,10 @@ import {
   addRectify,
   deleteRectifyEvidence,
   exporReviewExcel,
+  getReasonList,
   getRectifyEvidence,
   getRectifyList,
+  sendReason,
   sendRectify,
   updateRectify,
   uploadKitchenFile,
@@ -417,10 +419,10 @@ const handleSendFileConfirm = async (row) => {
     );
     // 用户确认后执行原逻辑
     await handleSendFile(row);
-    ElMessageBox.success('通知书下发成功！');
+    ElMessage.success('通知书下发成功！');
   } catch {
     // 用户取消则不执行任何操作
-    ElMessageBox.info('已取消下发');
+    ElMessage.info('已取消下发');
   }
 };
 
@@ -431,6 +433,47 @@ const handleSendFile = async (row) => {
     id: row.id,
   });
   await handleRefresh();
+};
+const backDialogVisible = ref(false);
+const currentRow = ref(null);
+const reasonList = ref([]);
+// 撤销表单（原因+备注）
+const backForm = reactive({
+  reason: '', // 撤销原因（必选）
+  remark: '', // 补充说明（可选）
+});
+
+// 打开撤销弹窗
+const openBackDialog = async (row) => {
+  currentRow.value = row;
+  // 重置表单
+  backForm.reason = '';
+  backForm.remark = '';
+  backDialogVisible.value = true;
+  const res = await getReasonList();
+  reasonList.value = res.list;
+};
+
+// 确认撤销
+const confirmBack = async () => {
+  try {
+    // 传递行数据 + 撤销原因给原逻辑
+    await handleBack(currentRow.value, backForm);
+    // 关闭弹窗
+    backDialogVisible.value = false;
+    // 提示成功（按需调整）
+    ElMessage.success('撤销操作成功！');
+  } catch (error) {
+    ElMessage.error(`撤销失败：${error.message}`);
+  }
+};
+
+// 原撤销逻辑（接收行数据和撤销原因）
+const handleBack = async (row, formData) => {
+  await sendReason({
+    id: row.id,
+    cancelReasonId: backForm.reason,
+  });
 };
 </script>
 
@@ -488,7 +531,39 @@ const handleSendFile = async (row) => {
         <img style="width: 100%; height: 100%" :src="dataObj.imgUrl" />
       </div>
     </el-dialog>
+    <!-- 撤销确认弹窗（带原因选择） -->
+    <el-dialog
+      title="撤销操作"
+      v-model="backDialogVisible"
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <!-- 撤销原因选择框 -->
+      <el-form :model="backForm" label-width="120px" required>
+        <el-form-item label="撤销原因：" prop="reason">
+          <el-select v-model="backForm.reason" placeholder="请选择撤销原因">
+            <el-option
+              v-for="item in reasonList"
+              :key="item.id"
+              :value="item.id"
+              :label="item.reasonName"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
 
+      <!-- 弹窗底部按钮 -->
+      <template #footer>
+        <el-button @click="backDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          @click="confirmBack"
+          :disabled="!backForm.reason"
+        >
+          确认撤销
+        </el-button>
+      </template>
+    </el-dialog>
     <!-- 批量查看编号弹窗（使用el-table） -->
     <el-dialog
       v-model="dataObj.batchViewVisible"
@@ -657,7 +732,7 @@ const handleSendFile = async (row) => {
             content="撤销"
             icon-name="back"
             :disabled="!['待复审'].includes(row.reviewStatus)"
-            @click="handleBack(row)"
+            @click="openBackDialog(row)"
           />
           <IconButton
             content="下发通知书"

@@ -104,3 +104,12 @@ export function uploadKitchenFile(data) {
 export function sendRectify(data) {
   return requestClient.post(`/kitchen/rectify-review/review-issue`, data);
 }
+
+/** 获取撤销原因 */
+export function getReasonList( ) {
+  return requestClient.get('/kitchen/cancel-reason-dict/page');
+}
+/** 撤销 */
+export function sendReason(data) {
+  return requestClient.post(`/kitchen/rectify-review/review-cancel`, data);
+}
