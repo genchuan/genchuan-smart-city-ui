@@ -29,6 +29,17 @@ const drawerTitle = computed(() => {
   return title.value || `${ledgerCode}详情`;
 });
 
+// 解析违规证据链接（JSON字符串转数组）
+const evidenceList = computed(() => {
+  if (!detailObj.value?.evidenceUrl) return [];
+  try {
+    return JSON.parse(detailObj.value.evidenceUrl);
+  } catch (error) {
+    console.error('解析违规证据链接失败：', error);
+    return [];
+  }
+});
+
 // 初始化抽屉实例
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
@@ -75,18 +86,48 @@ defineExpose({
           {{ detailObj.illegalLevelId || '-' }}
         </div>
       </div>
+
+      <!-- 核心修改：违规证据链接（图片展示+文件打开新窗口） -->
       <div class="detail-card-row">
         <div class="detail-row-left">违规证据链接:</div>
         <div class="detail-row-right">
-          <a
-            v-if="detailObj.evidenceUrl"
-            :href="detailObj.evidenceUrl"
-            target="_blank"
-            class="evidence-link"
-          >
-            点击查看
-          </a>
-          <span v-else>-</span>
+          <!-- 无证据时显示 -->
+          <span v-if="evidenceList.length === 0">-</span>
+
+          <!-- 有证据时：图片+文件分开展示 -->
+          <div v-else class="evidence-container">
+            <!-- 图片直接展示 -->
+            <div
+              class="evidence-image-item"
+              v-for="(item, index) in evidenceList.filter(
+                (i) => i.type === 'image',
+              )"
+              :key="`img-${index}`"
+            >
+              <img
+                :src="item.url"
+                :alt="item.name"
+                class="evidence-img"
+                title="点击查看原图"
+                @click="window.open(item.url, '_blank')"
+              />
+              <span class="evidence-name">{{ item.name }}</span>
+            </div>
+
+            <!-- 文件点击打开新窗口（修改后的逻辑） -->
+            <a
+              class="evidence-file-item"
+              v-for="(item, index) in evidenceList.filter(
+                (i) => i.type === 'file',
+              )"
+              :key="`file-${index}`"
+              :href="item.url"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              📁 {{ item.name }} (点击查看/下载)
+            </a>
+          </div>
         </div>
       </div>
       <div class="detail-card-row">
@@ -212,14 +253,53 @@ defineExpose({
   padding-right: 10px;
 }
 
-// 违规证据链接样式
-.evidence-link {
+// 新增：违规证据容器样式
+.evidence-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+// 新增：图片项样式
+.evidence-image-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+
+  .evidence-img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: scale(1.02);
+      border-color: #409eff;
+    }
+  }
+
+  .evidence-name {
+    font-size: 13px;
+    color: #666;
+  }
+}
+
+// 新增：文件项样式
+.evidence-file-item {
+  display: inline-block;
   color: #409eff;
-  text-decoration: underline;
-  cursor: pointer;
+  text-decoration: none;
+  font-size: 14px;
+  line-height: 24px;
 
   &:hover {
     color: #66b1ff;
+    text-decoration: underline;
   }
 }
 
@@ -231,6 +311,11 @@ defineExpose({
   .detail-card {
     padding: 15px;
     max-height: 60vh;
+  }
+
+  .evidence-img {
+    width: 60px !important;
+    height: 60px !important;
   }
 }
 
