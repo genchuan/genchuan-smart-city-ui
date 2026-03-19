@@ -14,6 +14,7 @@ import {
   deleteNotice,
   exporNoticeExcel,
   getNoticeList,
+  sendRectificationNotice,
   updateNotice,
 } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
@@ -279,30 +280,47 @@ const openImg = (url) => {
   dataObj.imgUrl = url;
   dialogVisible.value = true;
 };
-
-// 查看全部证据图片
-const handleViewAllEvidence = (row) => {
-  if (!row.evidenceList || row.evidenceList.length === 0) {
-    ElMessage.warning('无证据图片可查看');
-    return;
-  }
-  ElMessage.info(`共${row.evidenceList.length}张证据图片，已打开第一张`);
-  openImg(row.evidenceList[0].url);
+// 控制弹窗显示/隐藏
+const dialogVisibleSend = ref(false);
+const rowObj = ref({});
+// 点击按钮触发弹窗显示
+const handleSend = (row) => {
+  dialogVisibleSend.value = true;
+  rowObj.value = row;
 };
 
-// 批量查看数据编号（使用el-table展示）
-const handleOpenData = async () => {
-  // 1. 检查是否有选中的数据
-  if (isEmpty(checkedIds.value)) {
-    ElMessage.warning($t('请先选择要查看的数据！') || '请先选择要查看的数据！');
-    return;
+// 弹窗关闭前的回调（可选，用于处理强制关闭的情况）
+const handleClose = (done) => {
+  dialogVisibleSend.value = false;
+  done();
+};
+
+// 确认送达的核心逻辑
+const confirmSend = async () => {
+  try {
+    // 这里替换为你实际的送达接口调用逻辑
+    await sendRectificationNotice({
+      rectifyNoticeId: rowObj.value.id,
+    });
+    console.log('整改通知书已送达');
+
+    // 提示操作成功
+    ElMessage({
+      type: 'success',
+      message: '整改通知书送达成功！',
+    });
+
+    // 关闭弹窗
+    dialogVisibleSend.value = false;
+
+    // 可添加后续操作，比如刷新列表、跳转页面等
+  } catch (error) {
+    // 异常处理
+    ElMessage({
+      type: 'error',
+      message: `送达失败：${error.message || '请稍后重试'}`,
+    });
   }
-  const res = await getRectifyEvidence({
-    ledgerIdList: checkedIds.value,
-  });
-  dataObj.batchViewData = res.list;
-  // 3. 打开批量查看弹窗
-  dataObj.batchViewVisible = true;
 };
 </script>
 
@@ -323,7 +341,20 @@ const handleOpenData = async () => {
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
-
+    <el-dialog
+      title="确认送达整改通知书"
+      v-model="dialogVisibleSend"
+      width="400px"
+      :before-close="handleClose"
+    >
+      <span>你确定要送达整改通知书吗？此操作一经确认将无法撤回。</span>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisibleSend = false">取消</el-button>
+          <el-button type="primary" @click="confirmSend">确认送达</el-button>
+        </span>
+      </template>
+    </el-dialog>
     <Grid>
       <!-- 三级状态 -->
       <template #table-title>
@@ -359,12 +390,6 @@ const handleOpenData = async () => {
             color="#F56C6C"
             :disabled="isEmpty(checkedIds)"
             @click="handleDeleteBatch"
-          />
-          <IconButton
-            content="批量查看证据"
-            icon-name="Expand"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleOpenData"
           />
           <IconButton
             content="搜索"
@@ -407,6 +432,11 @@ const handleOpenData = async () => {
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
+          <IconButton
+            content="送达整改通知书"
+            icon-name="Plus"
+            @click="handleSend(row)"
+          />
           <IconButton
             content="详情"
             icon-name="View"

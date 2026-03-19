@@ -378,7 +378,7 @@ const handleUploadSubmit = async () => {
   try {
     uploadLoading.value = true;
     const file = fileList.value[0];
-
+    debugger;
     // 3. 构建FormData（仅传递文件）
     const formData = new FormData();
     formData.append('file', file.raw);

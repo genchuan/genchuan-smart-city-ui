@@ -117,3 +117,7 @@ export function sendReason(data) {
 export function getbatchEvidence(data) {
   return requestClient.post(`/kitchen/rectify-review/batch-view-evidence`, data);
 }
+
+export function sendRectificationNotice(data) {
+  return requestClient.post(`/kitchen/ent-rectify-record/add`, data);
+}
