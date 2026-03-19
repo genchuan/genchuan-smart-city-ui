@@ -14,12 +14,22 @@ export function useFormSchema() {
       labelWidth: '100',
     },
     {
-      fieldName: 'inspectorId',
+      fieldName: 'userId',
       label: '巡检人ID',
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入巡检人ID（关联sys_user.id）',
         min: 1,
+        style: { width: '100%' },
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'userName',
+      label: '巡检人名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入巡检人名称',
         style: { width: '100%' },
       },
       labelWidth: '100',
@@ -36,12 +46,32 @@ export function useFormSchema() {
       labelWidth: '100',
     },
     {
+      fieldName: 'systemName',
+      label: '体系名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入体系名称',
+        style: { width: '100%' },
+      },
+      labelWidth: '100',
+    },
+    {
       fieldName: 'objectId',
       label: '评价对象ID',
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入评价对象ID（关联eval_object.id）',
         min: 1,
+        style: { width: '100%' },
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'objectName',
+      label: '评价对象名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入评价对象名称',
         style: { width: '100%' },
       },
       labelWidth: '100',
@@ -58,12 +88,32 @@ export function useFormSchema() {
       labelWidth: '100',
     },
     {
+      fieldName: 'itemName',
+      label: '指标项名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入指标项名称',
+        style: { width: '100%' },
+      },
+      labelWidth: '100',
+    },
+    {
       fieldName: 'categoryId',
       label: '规则分类ID',
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入规则分类ID（关联eval_index_category.id）',
         min: 1,
+        style: { width: '100%' },
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'categoryName',
+      label: '规则分类名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入规则分类名称',
         style: { width: '100%' },
       },
       labelWidth: '100',
@@ -196,8 +246,8 @@ export function useFormSchema() {
       label: '状态',
     },
     {
-      fieldName: 'image',
-      label: '图片',
+      fieldName: 'imageUrl',
+      label: '图片URL',
       component: 'Input',
       componentProps: {
         placeholder: '请输入图片地址/Base64',
@@ -215,53 +265,63 @@ export function useFormSchema() {
       },
       labelWidth: '100',
     },
+    {
+      fieldName: 'ruleId',
+      label: '评分规则ID',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入评分规则ID（关联eval_comment_rule.id）',
+        min: 0,
+        style: { width: '100%' },
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'ruleName',
+      label: '评分规则名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入评分规则名称',
+        style: { width: '100%' },
+      },
+      labelWidth: '100',
+    },
   ];
 }
 
 /** 考核评价信息表格列配置 */
 export function useGridColumns() {
   return [
-    { type: 'checkbox', width: 40 },
+    { type: 'checkbox', width: 40 },  
     {
-      field: 'id',
-      title: '主键ID',
-      minWidth: 80,
-      sortable: true,
-    },
-    {
-      field: 'userId',
-      title: '巡检人ID',
-      minWidth: 100,
-      sortable: true,
-      tips: '关联sys_user.id',
-    },
-    {
-      field: 'systemId',
-      title: '体系ID',
-      minWidth: 100,
-      sortable: true,
-      tips: '关联eval_index_system.id',
-    },
-    {
-      field: 'objectId',
-      title: '评价对象ID',
+      field: 'userName',
+      title: '巡检人名称',
       minWidth: 120,
       sortable: true,
-      tips: '关联eval_object.id',
-    },
+    }, 
     {
-      field: 'itemId',
-      title: '指标项ID',
-      minWidth: 100,
+      field: 'systemName',
+      title: '体系名称',
+      minWidth: 150,
       sortable: true,
-      tips: '关联eval_index_item.id',
-    },
+    }, 
     {
-      field: 'categoryId',
-      title: '规则分类ID',
+      field: 'objectName',
+      title: '评价对象名称',
+      minWidth: 150,
+      sortable: true,
+    }, 
+    {
+      field: 'itemName',
+      title: '指标项名称',
       minWidth: 120,
       sortable: true,
-      tips: '关联eval_index_category.id',
+    }, 
+    {
+      field: 'categoryName',
+      title: '规则分类名称',
+      minWidth: 120,
+      sortable: true,
     },
     {
       field: 'details',
@@ -286,7 +346,13 @@ export function useGridColumns() {
       title: '创建时间',
       minWidth: 180,
       sortable: true,
-    }, 
+    },
+    {
+      field: 'updateTime',
+      title: '更新时间',
+      minWidth: 180,
+      sortable: true,
+    },
     {
       field: 'changeLog',
       title: '变更日志',
@@ -308,8 +374,8 @@ export function useGridColumns() {
       },
     },
     {
-      field: 'image',
-      title: '图片',
+      field: 'imageUrl',
+      title: '图片URL',
       minWidth: 150,
       sortable: false,
       slots: { default: 'imageSlot' }, // 自定义图片展示插槽
@@ -321,6 +387,19 @@ export function useGridColumns() {
       sortable: true,
     },
     {
+      field: 'ruleId',
+      title: '评分规则ID',
+      minWidth: 120,
+      sortable: true,
+      tips: '关联eval_comment_rule.id',
+    },
+    {
+      field: 'ruleName',
+      title: '评分规则名称',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
       title: '操作',
       width: 120,
       fixed: 'right',
@@ -328,4 +407,3 @@ export function useGridColumns() {
     },
   ];
 }
- 

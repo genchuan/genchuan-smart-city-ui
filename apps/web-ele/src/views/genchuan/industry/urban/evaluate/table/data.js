@@ -25,12 +25,32 @@ export function useFormSchema() {
       labelWidth: '100',
     },
     {
+      fieldName: 'itemName',
+      label: '指标项名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入指标项名称',
+        style: { width: '100%' },
+      },
+      labelWidth: '100',
+    },
+    {
       fieldName: 'objectId',
       label: '评价对象ID',
       component: 'InputNumber',
       componentProps: {
-        placeholder: '请输入评价对象ID（关联eva_object.id）',
+        placeholder: '请输入评价对象ID（关联eval_object.id）',
         min: 1,
+        style: { width: '100%' },
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'objectName',
+      label: '评价对象名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入评价对象名称',
         style: { width: '100%' },
       },
       labelWidth: '100',
@@ -162,6 +182,48 @@ export function useFormSchema() {
       fieldName: 'status',
       label: '状态',
     },
+    {
+      fieldName: 'ruleId',
+      label: '统计规则ID',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入统计规则ID（关联eval_comment_rule.id）',
+        min: 0,
+        style: { width: '100%' },
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'ruleName',
+      label: '规则名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入规则名称',
+        style: { width: '100%' },
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'systemId',
+      label: '体系ID',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入体系ID（关联体系表主键id）',
+        min: 1,
+        style: { width: '100%' },
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'systemName',
+      label: '体系名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入体系名称',
+        style: { width: '100%' },
+      },
+      labelWidth: '100',
+    },
   ];
 }
 
@@ -175,19 +237,19 @@ export function useGridColumns() {
       minWidth: 80,
       sortable: true,
     },
+    
     {
-      field: 'itemId',
-      title: '指标项ID',
+      field: 'itemName',
+      title: '指标项名称',
       minWidth: 120,
       sortable: true,
-      tips: '关联eval_index_item.id',
     },
+     
     {
-      field: 'objectId',
-      title: '评价对象ID',
-      minWidth: 120,
+      field: 'objectName',
+      title: '评价对象名称',
+      minWidth: 150,
       sortable: true,
-      tips: '关联eva_object.id',
     },
     {
       field: 'count',
@@ -207,31 +269,8 @@ export function useGridColumns() {
       title: '地址编码',
       minWidth: 120,
       sortable: true,
-    },
-    {
-      field: 'extCommon1',
-      title: '通用扩展字段1',
-      minWidth: 100,
-      sortable: false,
-    },
-    {
-      field: 'extCommon2',
-      title: '通用扩展字段2',
-      minWidth: 100,
-      sortable: false,
-    },
-    {
-      field: 'extCommon3',
-      title: '通用扩展字段3',
-      minWidth: 100,
-      sortable: false,
-    },
-    {
-      field: 'extCommon4',
-      title: '通用扩展字段4',
-      minWidth: 100,
-      sortable: false,
-    },
+    }, 
+     
     {
       field: 'createTime',
       title: '创建时间',
@@ -264,6 +303,20 @@ export function useGridColumns() {
         return statusMap[value] || '未知状态';
       },
     },
+    
+    {
+      field: 'ruleName',
+      title: '规则名称',
+      minWidth: 120,
+      sortable: true,
+    },
+     
+    {
+      field: 'systemName',
+      title: '体系名称',
+      minWidth: 120,
+      sortable: true,
+    },
     {
       title: '操作',
       width: 120,
@@ -272,4 +325,3 @@ export function useGridColumns() {
     },
   ];
 }
- 
