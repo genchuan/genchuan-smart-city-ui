@@ -20,8 +20,8 @@ import {
   addRectify,
   deleteRectifyEvidence,
   exporReviewExcel,
+  getbatchEvidence,
   getReasonList,
-  getRectifyEvidence,
   getRectifyList,
   sendReason,
   sendRectify,
@@ -308,7 +308,7 @@ const handleOpenData = async () => {
     ElMessage.warning($t('请先选择要查看的数据！') || '请先选择要查看的数据！');
     return;
   }
-  const res = await getRectifyEvidence({
+  const res = await getbatchEvidence({
     ledgerIdList: checkedIds.value,
   });
   dataObj.batchViewData = res.list;

@@ -113,3 +113,7 @@ export function getReasonList( ) {
 export function sendReason(data) {
   return requestClient.post(`/kitchen/rectify-review/review-cancel`, data);
 }
+/** 批量查看证据 */
+export function getbatchEvidence(data) {
+  return requestClient.post(`/kitchen/rectify-review/batch-view-evidence`, data);
+}
