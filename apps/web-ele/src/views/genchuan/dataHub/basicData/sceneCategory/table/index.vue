@@ -70,7 +70,12 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['clearFilter', 'refreshTree', 'update:tableData', 'status-change']);
+const emit = defineEmits([
+  'clearFilter',
+  'refreshTree',
+  'update:tableData',
+  'status-change',
+]);
 
 const getTitle = computed(() => {
   const textObjCurrent =

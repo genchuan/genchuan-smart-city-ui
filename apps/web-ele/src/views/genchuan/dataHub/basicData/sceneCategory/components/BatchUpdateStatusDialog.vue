@@ -67,7 +67,9 @@ const handleConfirm = async () => {
 
       await batchUpdateInstanceStatus(ids, status, statusTime);
 
-      ElMessage.success(`成功更新 ${selectedIds.value.length} 条记录的状态和启用/停用时间`);
+      ElMessage.success(
+        `成功更新 ${selectedIds.value.length} 条记录的状态和启用/停用时间`,
+      );
       emit('success');
       modalApi.close();
     } catch {

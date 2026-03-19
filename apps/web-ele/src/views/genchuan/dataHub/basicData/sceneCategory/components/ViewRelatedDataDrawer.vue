@@ -25,20 +25,63 @@ const relatedData = computed(() => {
 
   return {
     // 关联部件明细
-    parts: partCount > 0 ? [
-      { name: `${sceneName}-部件1`, code: 'P001', type: '监控设备', status: '正常' },
-      { name: `${sceneName}-部件2`, code: 'P002', type: '传感器', status: '正常' },
-      { name: `${sceneName}-部件3`, code: 'P003', type: '控制器', status: '离线' },
-    ] : [],
+    parts:
+      partCount > 0
+        ? [
+            {
+              name: `${sceneName}-部件1`,
+              code: 'P001',
+              type: '监控设备',
+              status: '正常',
+            },
+            {
+              name: `${sceneName}-部件2`,
+              code: 'P002',
+              type: '传感器',
+              status: '正常',
+            },
+            {
+              name: `${sceneName}-部件3`,
+              code: 'P003',
+              type: '控制器',
+              status: '离线',
+            },
+          ]
+        : [],
     // 关联事件明细
-    events: eventCount > 0 ? [
-      { name: `${sceneName}-事件1`, code: 'E001', type: '异常报警', status: '待处理', time: '2025-03-06 10:30:00' },
-      { name: `${sceneName}-事件2`, code: 'E002', type: '预警提醒', status: '已处理', time: '2025-03-06 09:00:00' },
-    ] : [],
+    events:
+      eventCount > 0
+        ? [
+            {
+              name: `${sceneName}-事件1`,
+              code: 'E001',
+              type: '异常报警',
+              status: '待处理',
+              time: '2025-03-06 10:30:00',
+            },
+            {
+              name: `${sceneName}-事件2`,
+              code: 'E002',
+              type: '预警提醒',
+              status: '已处理',
+              time: '2025-03-06 09:00:00',
+            },
+          ]
+        : [],
     // 关联资产设备明细
     assets: [
-      { name: `${sceneName}-资产1`, code: 'A001', type: '固定资产', status: '在用' },
-      { name: `${sceneName}-资产2`, code: 'A002', type: '设备资产', status: '在用' },
+      {
+        name: `${sceneName}-资产1`,
+        code: 'A001',
+        type: '固定资产',
+        status: '在用',
+      },
+      {
+        name: `${sceneName}-资产2`,
+        code: 'A002',
+        type: '设备资产',
+        status: '在用',
+      },
     ],
   };
 });
@@ -81,13 +124,22 @@ defineExpose({
       <div class="detail-section">
         <h3 class="section-title">
           关联部件明细
-          <ElTag type="primary" size="small">{{ relatedData.parts.length }}</ElTag>
+          <ElTag type="primary" size="small">
+            {{ relatedData.parts.length }}
+          </ElTag>
         </h3>
         <div v-if="relatedData.parts.length > 0" class="data-list">
-          <div v-for="(item, index) in relatedData.parts" :key="index" class="data-item">
+          <div
+            v-for="(item, index) in relatedData.parts"
+            :key="index"
+            class="data-item"
+          >
             <div class="item-header">
               <span class="item-name">{{ item.name }}</span>
-              <ElTag :type="item.status === '正常' ? 'success' : 'danger'" size="small">
+              <ElTag
+                :type="item.status === '正常' ? 'success' : 'danger'"
+                size="small"
+              >
                 {{ item.status }}
               </ElTag>
             </div>
@@ -104,13 +156,22 @@ defineExpose({
       <div class="detail-section">
         <h3 class="section-title">
           关联事件明细
-          <ElTag type="warning" size="small">{{ relatedData.events.length }}</ElTag>
+          <ElTag type="warning" size="small">
+            {{ relatedData.events.length }}
+          </ElTag>
         </h3>
         <div v-if="relatedData.events.length > 0" class="data-list">
-          <div v-for="(item, index) in relatedData.events" :key="index" class="data-item">
+          <div
+            v-for="(item, index) in relatedData.events"
+            :key="index"
+            class="data-item"
+          >
             <div class="item-header">
               <span class="item-name">{{ item.name }}</span>
-              <ElTag :type="item.status === '已处理' ? 'success' : 'warning'" size="small">
+              <ElTag
+                :type="item.status === '已处理' ? 'success' : 'warning'"
+                size="small"
+              >
                 {{ item.status }}
               </ElTag>
             </div>
@@ -128,10 +189,16 @@ defineExpose({
       <div class="detail-section">
         <h3 class="section-title">
           关联资产设备明细
-          <ElTag type="info" size="small">{{ relatedData.assets.length }}</ElTag>
+          <ElTag type="info" size="small">
+            {{ relatedData.assets.length }}
+          </ElTag>
         </h3>
         <div class="data-list">
-          <div v-for="(item, index) in relatedData.assets" :key="index" class="data-item">
+          <div
+            v-for="(item, index) in relatedData.assets"
+            :key="index"
+            class="data-item"
+          >
             <div class="item-header">
               <span class="item-name">{{ item.name }}</span>
               <ElTag type="success" size="small">
@@ -158,8 +225,8 @@ defineExpose({
 }
 
 .detail-section {
-  margin-bottom: 24px;
   padding-bottom: 16px;
+  margin-bottom: 24px;
   border-bottom: 1px solid #ebeef5;
 }
 
@@ -185,8 +252,8 @@ defineExpose({
 
 .detail-item label {
   width: 120px;
-  color: #606266;
   font-weight: 500;
+  color: #606266;
 }
 
 .detail-item span {
@@ -208,8 +275,8 @@ defineExpose({
 
 .item-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 8px;
 }
 
