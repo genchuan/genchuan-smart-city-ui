@@ -197,4 +197,4 @@ export function deleteArchive(id) {
 /** 删除工单 */
 export function deleteOrder(id) {
   return requestClient.delete(`/facility/work-order/delete?id=${id}`);
-}
+} 
