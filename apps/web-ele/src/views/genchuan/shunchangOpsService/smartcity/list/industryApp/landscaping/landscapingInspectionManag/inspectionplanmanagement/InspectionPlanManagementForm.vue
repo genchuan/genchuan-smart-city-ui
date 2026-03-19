@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker
+  ElMessage,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
 } from 'element-plus';
-import {
-  InspectionPlanManagementApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingInspectionManag/inspectionplanmanagement';
+import { InspectionPlanManagementApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingInspectionManag/inspectionplanmanagement';
 
 /** 巡查计划管理 表单 */
 defineOptions({ name: 'InspectionPlanManagementForm' });
@@ -38,7 +42,8 @@ const formRef = ref(); // 表单 Ref
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增巡查计划管理' : '编辑巡查计划管理';
+  dialogTitle.value =
+    type === 'create' ? '新增巡查计划管理' : '编辑巡查计划管理';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -47,8 +52,12 @@ const open = async (type: string, id?: number) => {
     try {
       formData.value =
         await InspectionPlanManagementApi.getInspectionPlanManagement(id);
-      formData.value.scheduledStartTime = formData.value.scheduledStartTime ? Number(formData.value.scheduledStartTime) : '';
-      formData.value.plannedEndTime = formData.value.plannedEndTime ? Number(formData.value.plannedEndTime) : '';
+      formData.value.scheduledStartTime = formData.value.scheduledStartTime
+        ? Number(formData.value.scheduledStartTime)
+        : '';
+      formData.value.plannedEndTime = formData.value.plannedEndTime
+        ? Number(formData.value.plannedEndTime)
+        : '';
     } finally {
       formLoading.value = false;
     }
@@ -63,14 +72,10 @@ const submitForm = async () => {
   try {
     const data = formData.value;
     if (formType.value === 'create') {
-      await InspectionPlanManagementApi.createInspectionPlanManagement(
-        data,
-      );
+      await InspectionPlanManagementApi.createInspectionPlanManagement(data);
       ElMessage.success('新增成功');
     } else {
-      await InspectionPlanManagementApi.updateInspectionPlanManagement(
-        data,
-      );
+      await InspectionPlanManagementApi.updateInspectionPlanManagement(data);
       ElMessage.success('修改成功');
     }
     dialogVisible.value = false;
@@ -100,7 +105,12 @@ const resetForm = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -115,7 +125,10 @@ const resetForm = () => {
         <ElInput v-model="formData.patrolArea" placeholder="请输入巡查区域" />
       </ElFormItem>
       <ElFormItem label="巡查周期" prop="inspectionCycle">
-        <ElInput v-model="formData.inspectionCycle" placeholder="请输入巡查周期" />
+        <ElInput
+          v-model="formData.inspectionCycle"
+          placeholder="请输入巡查周期"
+        />
       </ElFormItem>
       <ElFormItem label="计划开始时间" prop="scheduledStartTime">
         <ElDatePicker
@@ -136,13 +149,23 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="巡查人员安排" prop="arrangementOfPatrolPersonnel">
-        <ElInput v-model="formData.arrangementOfPatrolPersonnel" placeholder="请输入巡查人员安排" />
+        <ElInput
+          v-model="formData.arrangementOfPatrolPersonnel"
+          placeholder="请输入巡查人员安排"
+        />
       </ElFormItem>
       <ElFormItem label="巡查区域" prop="inspectionContent">
-        <ElInput v-model="formData.inspectionContent" type="textarea" placeholder="请输入巡查区域" />
+        <ElInput
+          v-model="formData.inspectionContent"
+          type="textarea"
+          placeholder="请输入巡查区域"
+        />
       </ElFormItem>
       <ElFormItem label="巡查标准" prop="inspectionStandards">
-        <ElInput v-model="formData.inspectionStandards" placeholder="请输入巡查标准" />
+        <ElInput
+          v-model="formData.inspectionStandards"
+          placeholder="请输入巡查标准"
+        />
       </ElFormItem>
       <!--<ElFormItem label="应急处置预案" prop="emergencyResponsePlan">-->
       <!--  <ElInput v-model="formData.emergencyResponsePlan" placeholder="请输入应急处置预案" />-->

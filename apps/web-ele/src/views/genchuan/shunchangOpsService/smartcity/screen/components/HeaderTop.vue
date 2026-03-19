@@ -1,27 +1,38 @@
 <template>
   <div class="head-top">
     <ul class="left-but nav-lise">
-      <li v-for="(item, key) in leftNavList" :key="key" @click="handleNavClick(item)">
+      <li
+        v-for="(item, key) in leftNavList"
+        :key="key"
+        @click="handleNavClick(item)"
+      >
         <BorderBox8>{{ item.name }}</BorderBox8>
       </li>
     </ul>
     <span class="head-name">{{ name }}</span>
     <ul class="right-but nav-lise">
       <template v-for="(item, key) in rightNavList" :key="key">
-        <li @click="handleNavClick(item)" v-if="item.tag!== '6'">
-          <BorderBox8 :reverse="true"><span>{{ item.name }}</span></BorderBox8>
+        <li @click="handleNavClick(item)" v-if="item.tag !== '6'">
+          <BorderBox8 :reverse="true"
+            ><span>{{ item.name }}</span></BorderBox8
+          >
         </li>
         <!--专项管理-->
         <li v-else>
-          <el-dropdown class="cc-header-dropdown" popper-class="cc-header-dropdown-popper">
-            <BorderBox8 :reverse="true" class="cc-header-dropdown-box8"><span
-              class="cc-header-dropdown-span">{{ item.name }}</span>
+          <el-dropdown
+            class="cc-header-dropdown"
+            popper-class="cc-header-dropdown-popper"
+          >
+            <BorderBox8 :reverse="true" class="cc-header-dropdown-box8"
+              ><span class="cc-header-dropdown-span">{{ item.name }}</span>
             </BorderBox8>
             <template #dropdown>
               <ul class="cc-header-dropdown-popper-ul">
-                <li v-for="(item2, key2) in item.list" :key="key2"
-                    @click="handleDropdownClick(item2, key2)"
-                    :class="dropdownActive === key2 + 1? 'dropdownActive' : ''"
+                <li
+                  v-for="(item2, key2) in item.list"
+                  :key="key2"
+                  @click="handleDropdownClick(item2, key2)"
+                  :class="dropdownActive === key2 + 1 ? 'dropdownActive' : ''"
                 >
                   <span>{{ item2.name }}</span>
                 </li>
@@ -31,8 +42,13 @@
         </li>
       </template>
     </ul>
-    <el-icon color="#00ccff" size="32" class="fullScreenBut" @click="clickFullscreen">
-      <FullScreen/>
+    <el-icon
+      color="#00ccff"
+      size="32"
+      class="fullScreenBut"
+      @click="clickFullscreen"
+    >
+      <FullScreen />
     </el-icon>
   </div>
 </template>
@@ -40,48 +56,48 @@
 <script setup>
 import { ref, onMounted, defineProps, defineEmits } from 'vue';
 import screenFull from 'screenfull';
-import {FullScreen} from "@element-plus/icons-vue";
+import { FullScreen } from '@element-plus/icons-vue';
 import { BorderBox8 } from '@kjgl77/datav-vue3';
 
 // 定义 props 和 emit
 const props = defineProps({
   activeNav: {
     type: String,
-    default: 'home'
-  }
+    default: 'home',
+  },
 });
 
 const emit = defineEmits(['nav-change']);
 
 const dropdownActive = ref(0); // 专项管理 下拉选了哪个
 const leftNavList = ref([
-  {name: '管网排口', path: '', tag: '1'},
-  {name: '市政公用', path: '', tag: '2'},
-  {name: '市容环卫', path: '', tag: '3'}
+  { name: '管网排口', path: '', tag: '1' },
+  { name: '市政公用', path: '', tag: '2' },
+  { name: '市容环卫', path: '', tag: '3' },
 ]);
 const rightNavList = ref([
-  {name: '园林绿化', path: '', tag: '5'},
+  { name: '园林绿化', path: '', tag: '5' },
   {
     name: '专项管理',
     path: '',
     tag: '6',
     active: '',
     list: [
-      {name: '智能井盖管理系统', path: '', tag: '61'},
-      {name: '排水防涝管理系统', path: '', tag: '62'},
-      {name: '停车管理系统', path: '', tag: '63'},
-      {name: '扬尘监测系统', path: '', tag: '64'},
-      {name: '城市渣土车监管系统', path: '', tag: '65'},
-      {name: '餐饮油烟监测系统', path: '', tag: '66'},
-      {name: '违建巡查管理系统', path: '', tag: '67'}
-    ]
+      { name: '智能井盖管理系统', path: '', tag: '61' },
+      { name: '排水防涝管理系统', path: '', tag: '62' },
+      { name: '停车管理系统', path: '', tag: '63' },
+      { name: '扬尘监测系统', path: '', tag: '64' },
+      { name: '城市渣土车监管系统', path: '', tag: '65' },
+      { name: '餐饮油烟监测系统', path: '', tag: '66' },
+      { name: '违建巡查管理系统', path: '', tag: '67' },
+    ],
   },
   {
     name: '后台菜单',
     path: '/analytics',
     tag: '7',
-    active: 'admin'
-  }
+    active: 'admin',
+  },
 ]);
 const name = ref('智慧城市运行管理服务平台');
 
@@ -104,21 +120,21 @@ const handleDropdownClick = (item, key) => {
   name.value = item.name;
 };
 
-onMounted(()=>{
-  let navList= [...rightNavList.value, ...leftNavList.value]
+onMounted(() => {
+  let navList = [...rightNavList.value, ...leftNavList.value];
   for (let i = 0; i < navList.length; i++) {
-    if(navList[i].tag==props.activeNav){
+    if (navList[i].tag == props.activeNav) {
       name.value = navList[i].name;
-      return false
+      return false;
     }
   }
   for (let j = 0; j < rightNavList.value[1].list.length; j++) {
-    if(rightNavList.value[1].list[j].tag==props.activeNav){
+    if (rightNavList.value[1].list[j].tag == props.activeNav) {
       name.value = rightNavList.value[1].list[j].name;
       dropdownActive.value = j + 1;
     }
   }
-})
+});
 
 const clickFullscreen = () => {
   // 是否全屏  false 没有全屏 true 全屏
@@ -133,11 +149,11 @@ const clickFullscreen = () => {
 <style lang="scss">
 //专项管理
 .cc-header-dropdown {
-  padding: 0 !important;
-  margin: 0 !important;
   height: 42px !important;
-  line-height: 42px !important;
+  padding: 0 !important;
   padding-left: 12px !important;
+  margin: 0 !important;
+  line-height: 42px !important;
 
   &:focus-visible {
     /* 键盘操作聚焦时的样式 */
@@ -151,7 +167,7 @@ const clickFullscreen = () => {
 
     &:focus-visible {
       /* 键盘操作聚焦时的样式 */
-      outline: 0px;
+      outline: 0;
     }
   }
 
@@ -161,13 +177,13 @@ const clickFullscreen = () => {
 }
 
 .cc-header-dropdown-popper-ul {
+  color: rgb(255 255 255 / 65%);
   background: #001529;
-  color: rgba(255, 255, 255, 0.65);
 }
 
 .cc-header-dropdown-popper {
-  border: 0 !important;
   background: #001529 !important;
+  border: 0 !important;
 
   .el-popper__arrow {
     display: none;
@@ -178,14 +194,14 @@ const clickFullscreen = () => {
   li {
     width: 170px !important;
     height: 65px !important;
-    line-height: 65px;
-    text-align: center;
-    color: rgba(255, 255, 255, 0.65);
-    font-size: 16px;
-    background: url("../assets/images/dropdown.png") no-repeat;
-    background-size: 100% 100%;
     margin-bottom: 8px;
+    font-size: 16px;
+    line-height: 65px;
+    color: rgb(255 255 255 / 65%);
+    text-align: center;
     cursor: pointer;
+    background: url('../assets/images/dropdown.png') no-repeat;
+    background-size: 100% 100%;
   }
 
   li:nth-last-child(1) {
@@ -193,9 +209,9 @@ const clickFullscreen = () => {
   }
 
   .dropdownActive {
-    color: #00ccff !important;
-    font-weight: bold;
     font-size: 16px;
+    font-weight: bold;
+    color: #0cf !important;
   }
 }
 </style>
@@ -203,13 +219,13 @@ const clickFullscreen = () => {
 <style lang="scss" scoped>
 //头部
 .head-top {
-  background: url("../assets/images/dadaV-head.jpg") no-repeat;
-  background-size: 100% 100%;
   height: 93px;
-  text-align: center;
-  color: #00ccff;
   font-size: 41px;
   font-weight: bold;
+  color: #0cf;
+  text-align: center;
+  background: url('../assets/images/dadaV-head.jpg') no-repeat;
+  background-size: 100% 100%;
 
   .head-name {
     line-height: 93px;
@@ -217,22 +233,21 @@ const clickFullscreen = () => {
 
   .left-but {
     position: absolute;
-    left: 0;
     top: 6px;
+    left: 0;
   }
 
   .right-but {
     position: absolute;
-    right: 60px;
     top: 6px;
+    right: 60px;
   }
 
   .nav-lise {
     display: flex;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
+    flex-flow: row nowrap;
     align-items: center;
-    flex-direction: row;
+    justify-content: flex-start;
     font-size: 22px;
 
     li:nth-of-type(2) {
@@ -240,12 +255,12 @@ const clickFullscreen = () => {
     }
 
     li {
+      cursor: pointer;
+
       div {
         padding: 5px;
         margin: 5px;
       }
-
-      cursor: pointer;
     }
   }
 
@@ -253,9 +268,9 @@ const clickFullscreen = () => {
     position: absolute;
     top: 10px;
     right: 15px;
-    font-size: 30px;
     z-index: 99999;
-    color: #00ccff;
+    font-size: 30px;
+    color: #0cf;
   }
 }
 
@@ -264,7 +279,7 @@ const clickFullscreen = () => {
 }
 
 .cc-header-dropdown-span {
-  color: #00ccff;
   font-size: 22px;
+  color: #0cf;
 }
 </style>

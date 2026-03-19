@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton
+  ElMessage,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
 } from 'element-plus';
-import {
-  DynamicInformationClassificationApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/dynamicinformationclassification';
+import { DynamicInformationClassificationApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/dynamicinformationclassification';
 
 /** 动态信息分类 表单 */
 defineOptions({ name: 'DynamicInformationClassificationForm' });
@@ -32,7 +35,8 @@ const formRef = ref(); // 表单 Ref
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增动态信息分类' : '编辑动态信息分类';
+  dialogTitle.value =
+    type === 'create' ? '新增动态信息分类' : '编辑动态信息分类';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -40,7 +44,9 @@ const open = async (type: string, id?: number) => {
     formLoading.value = true;
     try {
       formData.value =
-        await DynamicInformationClassificationApi.getDynamicInformationClassification(id);
+        await DynamicInformationClassificationApi.getDynamicInformationClassification(
+          id,
+        );
     } finally {
       formLoading.value = false;
     }
@@ -86,7 +92,12 @@ const resetForm = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -95,13 +106,22 @@ const resetForm = () => {
       v-loading="formLoading"
     >
       <ElFormItem label="信息主题" prop="messageSubject">
-        <ElInput v-model="formData.messageSubject" placeholder="请输入信息主题" />
+        <ElInput
+          v-model="formData.messageSubject"
+          placeholder="请输入信息主题"
+        />
       </ElFormItem>
       <ElFormItem label="行业领域" prop="industrySector">
-        <ElInput v-model="formData.industrySector" placeholder="请输入行业领域" />
+        <ElInput
+          v-model="formData.industrySector"
+          placeholder="请输入行业领域"
+        />
       </ElFormItem>
       <ElFormItem label="信息来源" prop="informationSources">
-        <ElInput v-model="formData.informationSources" placeholder="请输入信息来源" />
+        <ElInput
+          v-model="formData.informationSources"
+          placeholder="请输入信息来源"
+        />
       </ElFormItem>
       <ElFormItem label="紧急程度" prop="urgency">
         <ElInput v-model="formData.urgency" placeholder="请输入紧急程度" />

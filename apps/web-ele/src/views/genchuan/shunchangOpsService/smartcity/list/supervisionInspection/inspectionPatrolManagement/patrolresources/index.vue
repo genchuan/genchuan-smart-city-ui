@@ -1,12 +1,22 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { confirm } from '@vben/common-ui';
-import {
-  PatrolResourcesApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/supervisionInspection/inspectionPatrolManagement/patrolresources';
+import { PatrolResourcesApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/supervisionInspection/inspectionPatrolManagement/patrolresources';
 import download from '#/utils/genchuan/download';
 import { dateFormatter } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker, ElPagination, ElSpace } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
+  ElPagination,
+  ElSpace,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 import { $t } from '#/locales';
 
@@ -32,10 +42,7 @@ const exportLoading = ref(false); // 导出的加载中
 const getList = async () => {
   loading.value = true;
   try {
-    const data =
-      await PatrolResourcesApi.getPatrolResourcesPage(
-        queryParams,
-      );
+    const data = await PatrolResourcesApi.getPatrolResourcesPage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -81,12 +88,10 @@ const handleExport = async () => {
     await confirm('是否确认导出所有巡查资源数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
-    const data =
-      await PatrolResourcesApi.exportPatrolResources(
-        queryParams,
-      );
+    const data = await PatrolResourcesApi.exportPatrolResources(queryParams);
     download.excel(data, '巡查资源.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -144,10 +149,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -172,32 +174,95 @@ onMounted(() => {
         style="width: 100%"
       >
         <ElTableColumn label="主键" align="center" prop="id" min-width="50" />
-        <ElTableColumn label="资源名称" align="center" prop="resourceName" min-width="200" />
-        <ElTableColumn label="资源编号" align="center" prop="resourceNumber" min-width="150" />
+        <ElTableColumn
+          label="资源名称"
+          align="center"
+          prop="resourceName"
+          min-width="200"
+        />
+        <ElTableColumn
+          label="资源编号"
+          align="center"
+          prop="resourceNumber"
+          min-width="150"
+        />
         <ElTableColumn label="资源类型" align="center" min-width="150">
           <template #default="scope">
-            <template v-if="scope.row.resourceType === 'building_facility'">建筑设施</template>
-            <template v-else-if="scope.row.resourceType === 'municipal_facility'">市政设施</template>
-            <template v-else-if="scope.row.resourceType === 'security_facility'">安防设施</template>
-            <template v-else-if="scope.row.resourceType === 'fire_facility'">消防设施</template>
-            <template v-else-if="scope.row.resourceType === 'electrical_equipment'">电气设备</template>
-            <template v-else-if="scope.row.resourceType === 'special_equipment'">特种设备</template>
-            <template v-else-if="scope.row.resourceType === 'production_equipment'">生产设备</template>
-            <template v-else-if="scope.row.resourceType === 'environmental_equipment'">环保设备</template>
-            <template v-else-if="scope.row.resourceType === 'power_line'">电力线路</template>
-            <template v-else-if="scope.row.resourceType === 'water_pipeline'">给排水管线</template>
-            <template v-else-if="scope.row.resourceType === 'gas_pipeline'">燃气管线</template>
-            <template v-else-if="scope.row.resourceType === 'communication_line'">通信线路</template>
-            <template v-else-if="scope.row.resourceType === 'patrol_area'">巡查区域</template>
-            <template v-else-if="scope.row.resourceType === 'key_area'">重点区域</template>
-            <template v-else-if="scope.row.resourceType === 'emergency_materials'">应急物资</template>
-            <template v-else-if="scope.row.resourceType === 'tools_equipment'">工具器材</template>
+            <template v-if="scope.row.resourceType === 'building_facility'"
+              >建筑设施</template
+            >
+            <template
+              v-else-if="scope.row.resourceType === 'municipal_facility'"
+              >市政设施</template
+            >
+            <template v-else-if="scope.row.resourceType === 'security_facility'"
+              >安防设施</template
+            >
+            <template v-else-if="scope.row.resourceType === 'fire_facility'"
+              >消防设施</template
+            >
+            <template
+              v-else-if="scope.row.resourceType === 'electrical_equipment'"
+              >电气设备</template
+            >
+            <template v-else-if="scope.row.resourceType === 'special_equipment'"
+              >特种设备</template
+            >
+            <template
+              v-else-if="scope.row.resourceType === 'production_equipment'"
+              >生产设备</template
+            >
+            <template
+              v-else-if="scope.row.resourceType === 'environmental_equipment'"
+              >环保设备</template
+            >
+            <template v-else-if="scope.row.resourceType === 'power_line'"
+              >电力线路</template
+            >
+            <template v-else-if="scope.row.resourceType === 'water_pipeline'"
+              >给排水管线</template
+            >
+            <template v-else-if="scope.row.resourceType === 'gas_pipeline'"
+              >燃气管线</template
+            >
+            <template
+              v-else-if="scope.row.resourceType === 'communication_line'"
+              >通信线路</template
+            >
+            <template v-else-if="scope.row.resourceType === 'patrol_area'"
+              >巡查区域</template
+            >
+            <template v-else-if="scope.row.resourceType === 'key_area'"
+              >重点区域</template
+            >
+            <template
+              v-else-if="scope.row.resourceType === 'emergency_materials'"
+              >应急物资</template
+            >
+            <template v-else-if="scope.row.resourceType === 'tools_equipment'"
+              >工具器材</template
+            >
             <template v-else>{{ scope.row.resourceType }}</template>
           </template>
         </ElTableColumn>
-        <ElTableColumn label="地理位置" align="center" prop="geographicLocation" min-width="240" />
-        <ElTableColumn label="区域划分" align="center" prop="regionalDivision" min-width="120" />
-        <ElTableColumn label="规格型号" align="center" prop="specificationAndModel" min-width="120" />
+        <ElTableColumn
+          label="地理位置"
+          align="center"
+          prop="geographicLocation"
+          min-width="240"
+        />
+        <ElTableColumn
+          label="区域划分"
+          align="center"
+          prop="regionalDivision"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="规格型号"
+          align="center"
+          prop="specificationAndModel"
+          min-width="120"
+        />
         <ElTableColumn
           label="创建时间"
           align="center"
@@ -205,7 +270,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="180"
         />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="120">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="120"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -215,11 +285,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

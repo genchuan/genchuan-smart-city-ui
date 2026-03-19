@@ -3,16 +3,16 @@ import type { RouteRecordRaw } from 'vue-router';
 const genchuanScreenRoutes: RouteRecordRaw[] = [
   {
     path: '/ChartAll',
-    component: () => import('#/views/genchuan/shunchangOpsService/smartcity/screen/index.vue'),
+    component: () =>
+      import('#/views/genchuan/shunchangOpsService/smartcity/screen/index.vue'),
     name: 'ChartAll',
     meta: {
       title: '态势感知',
       hideInMenu: true,
       hideInTab: true,
-      noBasicLayout: true
-    }
+      noBasicLayout: true,
+    },
   },
-
 ];
 
 export default genchuanScreenRoutes;

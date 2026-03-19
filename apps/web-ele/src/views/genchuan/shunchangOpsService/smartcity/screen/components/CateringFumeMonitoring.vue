@@ -90,17 +90,13 @@ const centerData = ref({
         contactNumber2: '139-xxxx-3468',
         realPictures: [
           {
-            imgUrl: new URL(
-              '../assets/images/imgs/88.jpeg',
-              import.meta.url,
-            ).href,
+            imgUrl: new URL('../assets/images/imgs/88.jpeg', import.meta.url)
+              .href,
             name: '激光散射监测设备',
           },
           {
-            imgUrl: new URL(
-              '../assets/images/imgs/88.png',
-              import.meta.url,
-            ).href,
+            imgUrl: new URL('../assets/images/imgs/88.png', import.meta.url)
+              .href,
             name: '无线传输',
           },
         ],
@@ -265,7 +261,7 @@ const rightData = ref({
         <div class="title">餐饮油烟监测事件清单</div>
         <ScrollBoard
           :config="leftData.CCDvScrollBoardConfig"
-          style="padding: 15px 25px 25px; height: calc(100% - 35px - 40px)"
+          style=" height: calc(100% - 35px - 40px);padding: 15px 25px 25px"
         />
       </div>
     </div>
@@ -321,7 +317,7 @@ const rightData = ref({
 .CityAppearanceAndSanitation-center-css {
   display: flex;
   flex-wrap: nowrap;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 </style>

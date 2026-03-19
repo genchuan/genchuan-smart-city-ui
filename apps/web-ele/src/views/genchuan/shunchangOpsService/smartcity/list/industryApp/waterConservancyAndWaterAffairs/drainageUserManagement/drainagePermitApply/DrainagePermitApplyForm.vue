@@ -1,13 +1,20 @@
 <script setup lang="ts">
 import { reactive, ref, computed } from 'vue';
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton, ElSelect, ElOption, ElDatePicker, ElUpload
+  ElMessage,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElSelect,
+  ElOption,
+  ElDatePicker,
+  ElUpload,
 } from 'element-plus';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
-import {
-  DrainagePermitApplyApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/waterConservancyAndWaterAffairs/drainageUserManagement/drainagePermitApply';
+import { DrainagePermitApplyApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/waterConservancyAndWaterAffairs/drainageUserManagement/drainagePermitApply';
 import { Icon } from '@iconify/vue';
 
 /** 排水许可证申请 表单 */
@@ -39,7 +46,9 @@ const formRules = reactive({});
 const formRef = ref(); // 表单 Ref
 
 // 字典选项 - 使用计算属性实时获取
-const applyStatusOptions = computed(() => getDictOptions(DICT_TYPE.CRM_AUDIT_STATUS, 'string'));
+const applyStatusOptions = computed(() =>
+  getDictOptions(DICT_TYPE.CRM_AUDIT_STATUS, 'string'),
+);
 
 // 文件上传相关
 const uploadLoading = ref(false);
@@ -58,10 +67,12 @@ const open = async (type: string, id?: number) => {
       formData.value = await DrainagePermitApplyApi.getDrainagePermitApply(id);
       // 如果有文件，设置文件列表
       if (formData.value.waterQualityReport) {
-        fileList.value = [{
-          name: formData.value.waterQualityReport.split('/').pop() || '文件',
-          url: formData.value.waterQualityReport,
-        }];
+        fileList.value = [
+          {
+            name: formData.value.waterQualityReport.split('/').pop() || '文件',
+            url: formData.value.waterQualityReport,
+          },
+        ];
       }
     } finally {
       formLoading.value = false;
@@ -114,7 +125,14 @@ const resetForm = () => {
 
 /** 文件上传前 */
 const beforeUpload = (file: File) => {
-  const isValidType = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/plain'].includes(file.type);
+  const isValidType = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'text/plain',
+  ].includes(file.type);
   const isLt5M = file.size / 1024 / 1024 < 5;
 
   if (!isValidType) {
@@ -152,7 +170,12 @@ const handleRemove = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="700px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="700px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -180,23 +203,40 @@ const handleRemove = () => {
           </ElButton>
           <template #tip>
             <div class="el-upload__tip">
-              <div style="color: #f56c6c; font-size: 12px; margin-top: 4px;">大小不超过 5MB</div>
-              <div style="color: #f56c6c; font-size: 12px; margin-top: 4px;">格式为 doc/xls/ppt/txt/pdf 的文件</div>
+              <div style=" margin-top: 4px; font-size: 12px;color: #f56c6c">
+                大小不超过 5MB
+              </div>
+              <div style=" margin-top: 4px; font-size: 12px;color: #f56c6c">
+                格式为 doc/xls/ppt/txt/pdf 的文件
+              </div>
             </div>
           </template>
         </ElUpload>
       </ElFormItem>
       <ElFormItem label="日均排水量（吨）" prop="dailyDrainage">
-        <ElInput v-model="formData.dailyDrainage" placeholder="请输入日均排水量（吨）" />
+        <ElInput
+          v-model="formData.dailyDrainage"
+          placeholder="请输入日均排水量（吨）"
+        />
       </ElFormItem>
       <ElFormItem label="重点排污单位证明文件路径" prop="pollutionProof">
-        <ElInput v-model="formData.pollutionProof" placeholder="请输入重点排污单位证明文件路径" />
+        <ElInput
+          v-model="formData.pollutionProof"
+          placeholder="请输入重点排污单位证明文件路径"
+        />
       </ElFormItem>
       <ElFormItem label="历史违规记录" prop="violationHistory">
-        <ElInput v-model="formData.violationHistory" placeholder="请输入历史违规记录" />
+        <ElInput
+          v-model="formData.violationHistory"
+          placeholder="请输入历史违规记录"
+        />
       </ElFormItem>
       <ElFormItem label="申请状态" prop="applyStatus">
-        <ElSelect v-model="formData.applyStatus" placeholder="请选择申请状态" style="width: 100%">
+        <ElSelect
+          v-model="formData.applyStatus"
+          placeholder="请选择申请状态"
+          style="width: 100%"
+        >
           <ElOption
             v-for="dict in applyStatusOptions"
             :key="dict.value"
@@ -218,7 +258,11 @@ const handleRemove = () => {
         />
       </ElFormItem>
       <ElFormItem label="审核意见" prop="approveComment">
-        <ElInput v-model="formData.approveComment" type="textarea" placeholder="请输入审核意见" />
+        <ElInput
+          v-model="formData.approveComment"
+          type="textarea"
+          placeholder="请输入审核意见"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

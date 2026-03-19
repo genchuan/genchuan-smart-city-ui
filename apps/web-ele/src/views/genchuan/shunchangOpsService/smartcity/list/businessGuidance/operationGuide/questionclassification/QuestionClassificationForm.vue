@@ -1,11 +1,18 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { reactive, ref } from 'vue';
+
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton, ElSelect, ElOption
+  ElButton,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElMessage,
+  ElOption,
+  ElSelect,
 } from 'element-plus';
-import {
-  QuestionClassificationApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/operationGuide/questionclassification';
+
+import { QuestionClassificationApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/operationGuide/questionclassification';
 
 /** 问题录入 表单 */
 defineOptions({ name: 'QuestionClassificationForm' });
@@ -28,9 +35,13 @@ const formData = ref({
 });
 const formRules = reactive({
   isArea: [{ required: true, message: '请输入所属领域', trigger: 'blur' }],
-  questionType: [{ required: true, message: '请选择问题类型', trigger: 'change' }],
+  questionType: [
+    { required: true, message: '请选择问题类型', trigger: 'change' },
+  ],
   urgency: [{ required: true, message: '请输入紧急程度', trigger: 'blur' }],
-  involvingTheSubject: [{ required: true, message: '请输入涉及主体', trigger: 'blur' }],
+  involvingTheSubject: [
+    { required: true, message: '请输入涉及主体', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
@@ -60,14 +71,10 @@ const submitForm = async () => {
   try {
     const data = formData.value;
     if (formType.value === 'create') {
-      await QuestionClassificationApi.createQuestionClassification(
-        data,
-      );
+      await QuestionClassificationApi.createQuestionClassification(data);
       ElMessage.success('新增成功');
     } else {
-      await QuestionClassificationApi.updateQuestionClassification(
-        data,
-      );
+      await QuestionClassificationApi.updateQuestionClassification(data);
       ElMessage.success('修改成功');
     }
     dialogVisible.value = false;
@@ -91,7 +98,12 @@ const resetForm = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -100,10 +112,7 @@ const resetForm = () => {
       v-loading="formLoading"
     >
       <ElFormItem label="所属领域" prop="isArea">
-        <ElInput
-          v-model="formData.isArea"
-          placeholder="请输入所属领域"
-        />
+        <ElInput v-model="formData.isArea" placeholder="请输入所属领域" />
       </ElFormItem>
       <ElFormItem label="问题类型" prop="questionType">
         <ElSelect
@@ -120,10 +129,7 @@ const resetForm = () => {
         </ElSelect>
       </ElFormItem>
       <ElFormItem label="紧急程度" prop="urgency">
-        <ElInput
-          v-model="formData.urgency"
-          placeholder="请输入紧急程度"
-        />
+        <ElInput v-model="formData.urgency" placeholder="请输入紧急程度" />
       </ElFormItem>
       <ElFormItem label="涉及主体" prop="involvingTheSubject">
         <ElInput

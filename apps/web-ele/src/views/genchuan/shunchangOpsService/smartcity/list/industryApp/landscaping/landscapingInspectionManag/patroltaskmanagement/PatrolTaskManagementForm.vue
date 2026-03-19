@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker
+  ElMessage,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
 } from 'element-plus';
-import {
-  PatrolTaskManagementApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingInspectionManag/patroltaskmanagement';
+import { PatrolTaskManagementApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingInspectionManag/patroltaskmanagement';
 
 /** 巡査任务管理 表单 */
 defineOptions({ name: 'PatrolTaskManagementForm' });
@@ -47,7 +51,8 @@ const open = async (type: string, id?: number) => {
   if (id) {
     formLoading.value = true;
     try {
-      formData.value = await PatrolTaskManagementApi.getPatrolTaskManagement(id);
+      formData.value =
+        await PatrolTaskManagementApi.getPatrolTaskManagement(id);
       if (formData.value.patrolTime) {
         formData.value.patrolTime = String(formData.value.patrolTime);
       }
@@ -102,7 +107,12 @@ const resetForm = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -129,25 +139,50 @@ const resetForm = () => {
         <ElInput v-model="formData.executive" placeholder="请输入执行人员" />
       </ElFormItem>
       <ElFormItem label="预计时长" prop="expectedDuration">
-        <ElInput v-model="formData.expectedDuration" placeholder="请输入预计时长" />
+        <ElInput
+          v-model="formData.expectedDuration"
+          placeholder="请输入预计时长"
+        />
       </ElFormItem>
       <ElFormItem label="任务描述" prop="taskDescription">
-        <ElInput v-model="formData.taskDescription" type="textarea" placeholder="请输入任务描述" />
+        <ElInput
+          v-model="formData.taskDescription"
+          type="textarea"
+          placeholder="请输入任务描述"
+        />
       </ElFormItem>
       <ElFormItem label="巡查重点" prop="keyInspectionPoints">
-        <ElInput v-model="formData.keyInspectionPoints" placeholder="请输入巡查重点" />
+        <ElInput
+          v-model="formData.keyInspectionPoints"
+          placeholder="请输入巡查重点"
+        />
       </ElFormItem>
       <ElFormItem label="携带设备清单" prop="listOfCarryingEquipment">
-        <ElInput v-model="formData.listOfCarryingEquipment" placeholder="请输入携带设备清单" />
+        <ElInput
+          v-model="formData.listOfCarryingEquipment"
+          placeholder="请输入携带设备清单"
+        />
       </ElFormItem>
       <ElFormItem label="完成情况说明" prop="completionStatusDescription">
-        <ElInput v-model="formData.completionStatusDescription" type="textarea" placeholder="请输入完成情况说明" />
+        <ElInput
+          v-model="formData.completionStatusDescription"
+          type="textarea"
+          placeholder="请输入完成情况说明"
+        />
       </ElFormItem>
       <ElFormItem label="异常情况记录" prop="abnormalSituationRecord">
-        <ElInput v-model="formData.abnormalSituationRecord" type="textarea" placeholder="请输入异常情况记录" />
+        <ElInput
+          v-model="formData.abnormalSituationRecord"
+          type="textarea"
+          placeholder="请输入异常情况记录"
+        />
       </ElFormItem>
       <ElFormItem label="处理措施" prop="handlingMeasures">
-        <ElInput v-model="formData.handlingMeasures" type="textarea" placeholder="请输入处理措施" />
+        <ElInput
+          v-model="formData.handlingMeasures"
+          type="textarea"
+          placeholder="请输入处理措施"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

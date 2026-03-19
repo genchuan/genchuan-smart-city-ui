@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker, ElSelect, ElOption
+  ElMessage,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
+  ElSelect,
+  ElOption,
 } from 'element-plus';
-import {
-  PolicyAndRegulationInputApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/policyandregulationinput';
-import {
-  ClassificationOfPoliciesAndRegulationsApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/classificationofpoliciesandregulations';
+import { PolicyAndRegulationInputApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/policyandregulationinput';
+import { ClassificationOfPoliciesAndRegulationsApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/classificationofpoliciesandregulations';
 
 /** 政策法规录入 表单 */
 defineOptions({ name: 'PolicyAndRegulationInputForm' });
@@ -45,7 +49,10 @@ const initData = async () => {
     pageNo: 1,
     pageSize: 100,
   };
-  const data = await ClassificationOfPoliciesAndRegulationsApi.getClassificationOfPoliciesAndRegulationsPage(queryParams);
+  const data =
+    await ClassificationOfPoliciesAndRegulationsApi.getClassificationOfPoliciesAndRegulationsPage(
+      queryParams,
+    );
   regulatoryCategoryOptions.value = data.list.map((item) => ({
     label: item.regulatoryCategory,
     value: item.id,
@@ -55,7 +62,8 @@ const initData = async () => {
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增政策法规录入' : '编辑政策法规录入';
+  dialogTitle.value =
+    type === 'create' ? '新增政策法规录入' : '编辑政策法规录入';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -78,14 +86,10 @@ const submitForm = async () => {
   try {
     const data = formData.value;
     if (formType.value === 'create') {
-      await PolicyAndRegulationInputApi.createPolicyAndRegulationInput(
-        data,
-      );
+      await PolicyAndRegulationInputApi.createPolicyAndRegulationInput(data);
       ElMessage.success('新增成功');
     } else {
-      await PolicyAndRegulationInputApi.updatePolicyAndRegulationInput(
-        data,
-      );
+      await PolicyAndRegulationInputApi.updatePolicyAndRegulationInput(data);
       ElMessage.success('修改成功');
     }
     dialogVisible.value = false;
@@ -120,7 +124,12 @@ onMounted(() => {
 });
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -129,10 +138,16 @@ onMounted(() => {
       v-loading="formLoading"
     >
       <ElFormItem label="制定机关" prop="developingAgencies">
-        <ElInput v-model="formData.developingAgencies" placeholder="请输入制定机关" />
+        <ElInput
+          v-model="formData.developingAgencies"
+          placeholder="请输入制定机关"
+        />
       </ElFormItem>
       <ElFormItem label="政策法规名称" prop="nameOfPolicyAndRegulation">
-        <ElInput v-model="formData.nameOfPolicyAndRegulation" placeholder="请输入政策法规名称" />
+        <ElInput
+          v-model="formData.nameOfPolicyAndRegulation"
+          placeholder="请输入政策法规名称"
+        />
       </ElFormItem>
       <ElFormItem label="文号" prop="documentNumber">
         <ElInput v-model="formData.documentNumber" placeholder="请输入文号" />
@@ -165,7 +180,10 @@ onMounted(() => {
         />
       </ElFormItem>
       <ElFormItem label="法规类别" prop="regulatoryCategory">
-        <ElSelect v-model="formData.regulatoryCategory" placeholder="请选择法规类别">
+        <ElSelect
+          v-model="formData.regulatoryCategory"
+          placeholder="请选择法规类别"
+        >
           <ElOption
             v-for="item in regulatoryCategoryOptions"
             :key="item.value"
@@ -178,10 +196,17 @@ onMounted(() => {
         <ElInput v-model="formData.isArea" placeholder="请输入所属领域" />
       </ElFormItem>
       <ElFormItem label="适用范围" prop="scopeOfApplication">
-        <ElInput v-model="formData.scopeOfApplication" placeholder="请输入适用范围" />
+        <ElInput
+          v-model="formData.scopeOfApplication"
+          placeholder="请输入适用范围"
+        />
       </ElFormItem>
       <ElFormItem label="正文内容" prop="mainContent">
-        <ElInput v-model="formData.mainContent" type="textarea" placeholder="请输入正文内容" />
+        <ElInput
+          v-model="formData.mainContent"
+          type="textarea"
+          placeholder="请输入正文内容"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

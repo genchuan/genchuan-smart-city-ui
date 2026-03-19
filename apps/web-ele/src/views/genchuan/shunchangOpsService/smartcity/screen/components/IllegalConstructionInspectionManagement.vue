@@ -10,14 +10,17 @@
       <!--第二块-->
       <div class="two bg">
         <div class="title">违建巡查质量指标</div>
-        <CapsuleChart :config="rightData.rightTwo" style="width:100%;height:calc(100% - 35px)" />
+        <CapsuleChart
+          :config="rightData.rightTwo"
+          style="width: 100%; height: calc(100% - 35px)"
+        />
       </div>
       <!--第三块-->
       <div class="three bg">
         <div class="title">违建事件清单</div>
         <ScrollBoard
           :config="leftData.CCDvScrollBoardConfig"
-          style="padding: 15px 25px 25px;  height: calc(100% - 35px - 40px);"
+          style=" height: calc(100% - 35px - 40px);padding: 15px 25px 25px"
         />
       </div>
     </div>
@@ -26,7 +29,7 @@
     <div class="content-center">
       <div class="s1">
         <chart-customize1 :paramsData="centerData.customizeParams" />
-        <map-common idName="chinaEcharts" :geometriesArray="geometriesArray"/>
+        <map-common idName="chinaEcharts" :geometriesArray="geometriesArray" />
       </div>
       <div class="s2 bg">
         <div class="title">违建巡查项目介绍</div>
@@ -81,12 +84,12 @@ import ChartTypePolyLines from './ChartTypePolyLines.vue';
 import ChartCustomize3 from './ChartCustomize3.vue';
 import { CapsuleChart, ScrollBoard } from '@kjgl77/datav-vue3';
 
-const geometriesArray=[
-  {x:26.825227,y:117.680114},
-  {x:26.803227,y:117.750114},
-  {x:26.7533227,y:117.680114},
-  {x:26.7833227,y:117.680114},
-  {x:26.813227,y:117.8020114},
+const geometriesArray = [
+  { x: 26.825227, y: 117.680114 },
+  { x: 26.803227, y: 117.750114 },
+  { x: 26.7533227, y: 117.680114 },
+  { x: 26.7833227, y: 117.680114 },
+  { x: 26.813227, y: 117.8020114 },
 ];
 
 const leftData = ref({
@@ -96,20 +99,20 @@ const leftData = ref({
     { title: '违建拆除点', num: '15', unit: '个' },
     { title: '巡查车辆', num: '20', unit: '辆' },
     { title: '日违建拆除面积', num: '500', unit: '平方米' },
-    { title: '月违建拆除总面积', num: '13000', unit: '平方米' }
+    { title: '月违建拆除总面积', num: '13000', unit: '平方米' },
   ],
   picData: [
     { value: 20, name: '违规搭建' },
     { value: 30, name: '超面积建设' },
     { value: 42, name: '未批先建' },
-    { value: 32, name: '临时建筑超期' }
+    { value: 32, name: '临时建筑超期' },
   ],
   lineAxisData: ['2-21', '2-22', '2-23', '2-24', '2-25', '2-26', '2-27'],
   picRightData2: [
     { title: '巡查站点数量', num: '50', unit: '个' },
     { title: '巡查人员数量', num: '200', unit: '人' },
     { title: '日巡查面积', num: '15000', unit: '平方米' },
-    { title: '月巡查总面积', num: '450000', unit: '平方米' }
+    { title: '月巡查总面积', num: '450000', unit: '平方米' },
   ],
   lineSeriesData: [150, 145, 152, 148, 153, 143, 150],
   CCDvScrollBoardConfig: {
@@ -129,18 +132,18 @@ const leftData = ref({
       ['西部拆除点', '设备故障', '13:40', '已解决'],
       ['南郊街道', '违建拆除不及时', '14:05', '处理中'],
       ['北郊公园', '巡查不到位', '14:30', '已解决'],
-      ['城中老街', '巡查人员不足', '15:00', '处理中']
+      ['城中老街', '巡查人员不足', '15:00', '处理中'],
     ],
     rowNum: 4,
-    align: ['center', 'center', 'center']
-  }
+    align: ['center', 'center', 'center'],
+  },
 });
 
 const centerData = ref({
   customizeParams: {
     name: '连续巡查天数：',
     runningDays: '29',
-    tail: '天'
+    tail: '天',
   },
   proJectsList: {
     processName: '巡查技术',
@@ -163,13 +166,13 @@ const centerData = ref({
         realPictures: [
           {
             imgUrl: new URL('../assets/images/imgs/99.jpeg', import.meta.url),
-            name: '无人机辅助巡查'
+            name: '无人机辅助巡查',
           },
           {
             imgUrl: new URL('../assets/images/imgs/99.jpg', import.meta.url),
-            name: '人工巡查'
-          }
-        ]
+            name: '人工巡查',
+          },
+        ],
       },
       /*{
         name: '城乡违建一体化巡查项目',
@@ -251,8 +254,8 @@ const centerData = ref({
           }
         ]
       }*/
-    ]
-  }
+    ],
+  },
 });
 
 const rightData = ref({
@@ -261,28 +264,41 @@ const rightData = ref({
     { name: '无人机', num: '135', unit: '架' },
     { name: '巡查车辆', num: '123', unit: '辆' },
     { name: '监控设备', num: '256', unit: '套' },
-    { name: '巡查终端', num: '338', unit: '个' }
+    { name: '巡查终端', num: '338', unit: '个' },
   ],
   rightOne: {
     idName: 'rightOneId',
-    xAxisData: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+    xAxisData: [
+      '1月',
+      '2月',
+      '3月',
+      '4月',
+      '5月',
+      '6月',
+      '7月',
+      '8月',
+      '9月',
+      '10月',
+      '11月',
+      '12月',
+    ],
     polyLinesData: [
       {
         lineColor: '#3a72d7',
         name: '今年',
         color: ['rgba(58,114,215,1)', 'rgba(58,114,215,0.1)'],
         type: 'line',
-        data: [38, 51, 120, 160, 180, 135, 240, 220, 291, 320, 280, 260]
+        data: [38, 51, 120, 160, 180, 135, 240, 220, 291, 320, 280, 260],
       },
       {
         lineColor: '#11e48a',
         name: '去年',
         color: ['rgba(9,114,95,1)', 'rgba(9,114,95,0.1)'],
         type: 'line',
-        data: [165, 186, 235, 268, 220, 232, 282, 260, 220, 200, 180, 140]
-      }
+        data: [165, 186, 235, 268, 220, 232, 282, 260, 220, 200, 180, 140],
+      },
     ],
-    yAxisName: '违建拆除面积（平方米）'
+    yAxisName: '违建拆除面积（平方米）',
   },
   rightTwo: {
     data: [
@@ -290,10 +306,10 @@ const rightData = ref({
       { name: '违建发现及时率', value: 120 },
       { name: '违建处理完成率', value: 78 },
       { name: '数据准确率', value: 66 },
-      { name: '群众满意度', value: 80 }
+      { name: '群众满意度', value: 80 },
     ],
-    showValue: false
-  }
+    showValue: false,
+  },
 });
 </script>
 
@@ -301,7 +317,7 @@ const rightData = ref({
 .CityAppearanceAndSanitation-center-css {
   display: flex;
   flex-wrap: nowrap;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 </style>

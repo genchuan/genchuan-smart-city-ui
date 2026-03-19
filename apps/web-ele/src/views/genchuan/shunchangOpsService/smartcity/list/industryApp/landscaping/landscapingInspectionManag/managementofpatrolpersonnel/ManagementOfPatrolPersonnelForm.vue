@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker
+  ElMessage,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
 } from 'element-plus';
-import {
-  ManagementOfPatrolPersonnelApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingInspectionManag/managementofpatrolpersonnel';
+import { ManagementOfPatrolPersonnelApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingInspectionManag/managementofpatrolpersonnel';
 
 /** 巡査人员管理 表单 */
 defineOptions({ name: 'ManagementOfPatrolPersonnelForm' });
@@ -112,7 +116,12 @@ const resetForm = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"

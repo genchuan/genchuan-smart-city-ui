@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker
+  ElMessage,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
 } from 'element-plus';
-import {
-  PatrolPersonnelApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/supervisionInspection/inspectionPatrolManagement/patrolpersonnel';
+import { PatrolPersonnelApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/supervisionInspection/inspectionPatrolManagement/patrolpersonnel';
 
 /** 巡查人员 表单 */
 defineOptions({ name: 'PatrolPersonnelForm' });
@@ -42,8 +46,7 @@ const open = async (type: string, id?: number) => {
   if (id) {
     formLoading.value = true;
     try {
-      formData.value =
-        await PatrolPersonnelApi.getPatrolPersonnel(id);
+      formData.value = await PatrolPersonnelApi.getPatrolPersonnel(id);
     } finally {
       formLoading.value = false;
     }
@@ -58,14 +61,10 @@ const submitForm = async () => {
   try {
     const data = formData.value;
     if (formType.value === 'create') {
-      await PatrolPersonnelApi.createPatrolPersonnel(
-        data,
-      );
+      await PatrolPersonnelApi.createPatrolPersonnel(data);
       ElMessage.success('新增成功');
     } else {
-      await PatrolPersonnelApi.updatePatrolPersonnel(
-        data,
-      );
+      await PatrolPersonnelApi.updatePatrolPersonnel(data);
       ElMessage.success('修改成功');
     }
     dialogVisible.value = false;
@@ -92,7 +91,12 @@ const resetForm = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -113,7 +117,10 @@ const resetForm = () => {
         <ElInput v-model="formData.age" placeholder="请输入年龄" />
       </ElFormItem>
       <ElFormItem label="联系方式" prop="contactInformation">
-        <ElInput v-model="formData.contactInformation" placeholder="请输入联系方式" />
+        <ElInput
+          v-model="formData.contactInformation"
+          placeholder="请输入联系方式"
+        />
       </ElFormItem>
       <ElFormItem label="上岗时间" prop="certificateTime">
         <ElDatePicker
@@ -125,7 +132,10 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="巡查区域" prop="inspectionRemarks">
-        <ElInput v-model="formData.inspectionRemarks" placeholder="请输入巡查区域" />
+        <ElInput
+          v-model="formData.inspectionRemarks"
+          placeholder="请输入巡查区域"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

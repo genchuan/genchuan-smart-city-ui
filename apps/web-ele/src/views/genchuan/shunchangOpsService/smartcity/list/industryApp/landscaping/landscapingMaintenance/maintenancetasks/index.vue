@@ -1,12 +1,21 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { confirm } from '@vben/common-ui';
-import {
-  MaintenanceTasksApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingMaintenance/maintenancetasks';
+import { MaintenanceTasksApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingMaintenance/maintenancetasks';
 import download from '#/utils/genchuan/download';
 import { dateFormatter } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElPagination, ElSpace } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElPagination,
+  ElSpace,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 
 import MaintenanceTasksForm from './MaintenanceTasksForm.vue';
@@ -80,7 +89,8 @@ const handleExport = async () => {
     exportLoading.value = true;
     const data = await MaintenanceTasksApi.exportMaintenanceTasks(queryParams);
     download.excel(data, '养护任务.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -145,10 +155,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -172,10 +179,30 @@ onMounted(() => {
         :show-overflow-tooltip="true"
         style="width: 100%"
       >
-        <ElTableColumn label="任务编号" align="center" prop="taskNumber" min-width="120" />
-        <ElTableColumn label="任务名称" align="center" prop="task" min-width="120" />
-        <ElTableColumn label="养护地块" align="center" prop="maintainTheLandParcel" min-width="120" />
-        <ElTableColumn label="养护人员" align="center" prop="maintenancePersonnel" min-width="100" />
+        <ElTableColumn
+          label="任务编号"
+          align="center"
+          prop="taskNumber"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="任务名称"
+          align="center"
+          prop="task"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="养护地块"
+          align="center"
+          prop="maintainTheLandParcel"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="养护人员"
+          align="center"
+          prop="maintenancePersonnel"
+          min-width="100"
+        />
         <ElTableColumn
           label="任务开始时间"
           align="center"
@@ -190,10 +217,30 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="150"
         />
-        <ElTableColumn label="任务内容" align="center" prop="taskContent" min-width="150" />
-        <ElTableColumn label="所需工具" align="center" prop="requiredTools" min-width="100" />
-        <ElTableColumn label="任务优先级" align="center" prop="taskPriority" min-width="100" />
-        <ElTableColumn label="完成情况说明" align="center" prop="completionStatusDescription" min-width="150" />
+        <ElTableColumn
+          label="任务内容"
+          align="center"
+          prop="taskContent"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="所需工具"
+          align="center"
+          prop="requiredTools"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="任务优先级"
+          align="center"
+          prop="taskPriority"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="完成情况说明"
+          align="center"
+          prop="completionStatusDescription"
+          min-width="150"
+        />
         <ElTableColumn
           label="创建时间"
           align="center"
@@ -201,7 +248,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="150"
         />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="150">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="150"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -211,11 +263,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

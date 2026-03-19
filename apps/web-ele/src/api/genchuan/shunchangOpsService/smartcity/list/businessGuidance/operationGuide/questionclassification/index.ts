@@ -13,12 +13,16 @@ export type QuestionClassificationVO = {
 export const QuestionClassificationApi = {
   // 查询问题录入分页
   getQuestionClassificationPage: async (params: any) => {
-    return await requestClient.get(`/smartcity/question-classification/page`, { params });
+    return await requestClient.get(`/smartcity/question-classification/page`, {
+      params,
+    });
   },
 
   // 查询问题录入详情
   getQuestionClassification: async (id: number) => {
-    return await requestClient.get(`/smartcity/question-classification/get`, { params: { id } });
+    return await requestClient.get(`/smartcity/question-classification/get`, {
+      params: { id },
+    });
   },
 
   // 新增问题录入

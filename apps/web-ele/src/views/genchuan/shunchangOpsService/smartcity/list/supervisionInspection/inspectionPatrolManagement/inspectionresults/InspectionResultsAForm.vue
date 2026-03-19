@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker
+  ElMessage,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
 } from 'element-plus';
-import {
-  InspectionResultsAApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/supervisionInspection/inspectionPatrolManagement/inspectionresults';
+import { InspectionResultsAApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/supervisionInspection/inspectionPatrolManagement/inspectionresults';
 
 /** 巡查结果 表单 */
 defineOptions({ name: 'InspectionResultsAForm' });
@@ -43,8 +47,7 @@ const open = async (type: string, id?: number) => {
   if (id) {
     formLoading.value = true;
     try {
-      formData.value =
-        await InspectionResultsAApi.getInspectionResultsA(id);
+      formData.value = await InspectionResultsAApi.getInspectionResultsA(id);
     } finally {
       formLoading.value = false;
     }
@@ -59,14 +62,10 @@ const submitForm = async () => {
   try {
     const data = formData.value;
     if (formType.value === 'create') {
-      await InspectionResultsAApi.createInspectionResultsA(
-        data,
-      );
+      await InspectionResultsAApi.createInspectionResultsA(data);
       ElMessage.success('新增成功');
     } else {
-      await InspectionResultsAApi.updateInspectionResultsA(
-        data,
-      );
+      await InspectionResultsAApi.updateInspectionResultsA(data);
       ElMessage.success('修改成功');
     }
     dialogVisible.value = false;
@@ -94,7 +93,12 @@ const resetForm = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -106,7 +110,10 @@ const resetForm = () => {
         <ElInput v-model="formData.number" placeholder="请输入编号" />
       </ElFormItem>
       <ElFormItem label="巡查人员" prop="patrolPersonnel">
-        <ElInput v-model="formData.patrolPersonnel" placeholder="请输入巡查人员" />
+        <ElInput
+          v-model="formData.patrolPersonnel"
+          placeholder="请输入巡查人员"
+        />
       </ElFormItem>
       <ElFormItem label="巡查时间" prop="patrolTime">
         <ElDatePicker
@@ -118,19 +125,31 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="巡查地点" prop="patrolLocation">
-        <ElInput v-model="formData.patrolLocation" placeholder="请输入巡查地点" />
+        <ElInput
+          v-model="formData.patrolLocation"
+          placeholder="请输入巡查地点"
+        />
       </ElFormItem>
       <ElFormItem label="资源名称" prop="resourceName">
         <ElInput v-model="formData.resourceName" placeholder="请输入资源名称" />
       </ElFormItem>
       <ElFormItem label="资源编号" prop="resourceNumber">
-        <ElInput v-model="formData.resourceNumber" placeholder="请输入资源编号" />
+        <ElInput
+          v-model="formData.resourceNumber"
+          placeholder="请输入资源编号"
+        />
       </ElFormItem>
       <ElFormItem label="检查项目" prop="inspectionItems">
-        <ElInput v-model="formData.inspectionItems" placeholder="请输入检查项目" />
+        <ElInput
+          v-model="formData.inspectionItems"
+          placeholder="请输入检查项目"
+        />
       </ElFormItem>
       <ElFormItem label="检查结果" prop="inspectionResults">
-        <ElInput v-model="formData.inspectionResults" placeholder="请输入检查结果" />
+        <ElInput
+          v-model="formData.inspectionResults"
+          placeholder="请输入检查结果"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

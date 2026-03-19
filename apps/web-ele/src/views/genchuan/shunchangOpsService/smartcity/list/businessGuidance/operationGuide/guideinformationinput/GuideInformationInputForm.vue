@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { reactive, ref } from 'vue';
+
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker
+  ElButton,
+  ElDatePicker,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElMessage,
 } from 'element-plus';
-import {
-  GuideInformationInputApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/operationGuide/guideinformationinput';
+
+import { GuideInformationInputApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/operationGuide/guideinformationinput';
 
 /** 指南信息录入 表单 */
 defineOptions({ name: 'GuideInformationInputForm' });
@@ -34,7 +40,8 @@ const formRef = ref(); // 表单 Ref
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增指南信息录入' : '编辑指南信息录入';
+  dialogTitle.value =
+    type === 'create' ? '新增指南信息录入' : '编辑指南信息录入';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -43,8 +50,12 @@ const open = async (type: string, id?: number) => {
     try {
       formData.value =
         await GuideInformationInputApi.getGuideInformationInput(id);
-      formData.value.releaseDate = formData.value.releaseDate ? Number(formData.value.releaseDate) : '';
-      formData.value.updateDate = formData.value.updateDate ? Number(formData.value.updateDate) : '';
+      formData.value.releaseDate = formData.value.releaseDate
+        ? Number(formData.value.releaseDate)
+        : '';
+      formData.value.updateDate = formData.value.updateDate
+        ? Number(formData.value.updateDate)
+        : '';
     } finally {
       formLoading.value = false;
     }
@@ -59,14 +70,10 @@ const submitForm = async () => {
   try {
     const data = formData.value;
     if (formType.value === 'create') {
-      await GuideInformationInputApi.createGuideInformationInput(
-        data,
-      );
+      await GuideInformationInputApi.createGuideInformationInput(data);
       ElMessage.success('新增成功');
     } else {
-      await GuideInformationInputApi.updateGuideInformationInput(
-        data,
-      );
+      await GuideInformationInputApi.updateGuideInformationInput(data);
       ElMessage.success('修改成功');
     }
     dialogVisible.value = false;
@@ -92,7 +99,12 @@ const resetForm = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -104,10 +116,16 @@ const resetForm = () => {
         <ElInput v-model="formData.guideName" placeholder="请输入指南名称" />
       </ElFormItem>
       <ElFormItem label="适用范围" prop="scopeOfApplication">
-        <ElInput v-model="formData.scopeOfApplication" placeholder="请输入适用范围" />
+        <ElInput
+          v-model="formData.scopeOfApplication"
+          placeholder="请输入适用范围"
+        />
       </ElFormItem>
       <ElFormItem label="发布单位" prop="publishingUnit">
-        <ElInput v-model="formData.publishingUnit" placeholder="请输入发布单位" />
+        <ElInput
+          v-model="formData.publishingUnit"
+          placeholder="请输入发布单位"
+        />
       </ElFormItem>
       <ElFormItem label="发布日期" prop="releaseDate">
         <ElDatePicker
@@ -128,7 +146,10 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="主要内容概述" prop="mainContentOverview">
-        <ElInput v-model="formData.mainContentOverview" placeholder="请输入主要内容概述" />
+        <ElInput
+          v-model="formData.mainContentOverview"
+          placeholder="请输入主要内容概述"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

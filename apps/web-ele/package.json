@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
+    "@iconify/vue": "^4.3.0",
     "@form-create/designer": "^3.4.0",
     "@form-create/element-ui": "^3.1.1",
     "@kjgl77/datav-vue3": "^1.7.4",

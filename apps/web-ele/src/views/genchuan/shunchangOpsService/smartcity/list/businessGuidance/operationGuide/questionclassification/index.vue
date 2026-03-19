@@ -1,13 +1,27 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
+
 import { confirm } from '@vben/common-ui';
+
+import { Icon } from '@iconify/vue';
 import {
-  QuestionClassificationApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/operationGuide/questionclassification';
+  ElButton,
+  ElCard,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElMessage,
+  ElOption,
+  ElPagination,
+  ElSelect,
+  ElSpace,
+  ElTable,
+  ElTableColumn,
+} from 'element-plus';
+
+import { QuestionClassificationApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/operationGuide/questionclassification';
 import download from '#/utils/genchuan/download';
 import { dateFormatter } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElSelect, ElOption, ElPagination, ElSpace } from 'element-plus';
-import { Icon } from '@iconify/vue';
 
 import QuestionClassificationForm from './QuestionClassificationForm.vue';
 
@@ -80,11 +94,10 @@ const handleExport = async () => {
     // 发起导出
     exportLoading.value = true;
     const data =
-      await QuestionClassificationApi.exportQuestionClassification(
-        queryParams,
-      );
+      await QuestionClassificationApi.exportQuestionClassification(queryParams);
     download.excel(data, '问题录入.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -138,10 +151,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -166,20 +176,53 @@ onMounted(() => {
         style="width: 100%"
       >
         <ElTableColumn label="主键" align="center" prop="id" min-width="80" />
-        <ElTableColumn label="所属领域" align="center" prop="isArea" min-width="120" />
+        <ElTableColumn
+          label="所属领域"
+          align="center"
+          prop="isArea"
+          min-width="120"
+        />
         <ElTableColumn label="问题类型" align="center" min-width="120">
           <template #default="scope">
-            <template v-if="scope.row.questionType === 'systemOperation'">系统操作类</template>
-            <template v-else-if="scope.row.questionType === 'onSiteOperation'">现场实操类</template>
-            <template v-else-if="scope.row.questionType === 'processManagement'">流程管理类</template>
-            <template v-else-if="scope.row.questionType === 'resourceRequirement'">资源需求类</template>
-            <template v-else-if="scope.row.questionType === 'policyConsultation'">政策咨询类</template>
-            <template v-else-if="scope.row.questionType === 'other'">其他问题</template>
+            <template v-if="scope.row.questionType === 'systemOperation'">
+              系统操作类
+            </template>
+            <template v-else-if="scope.row.questionType === 'onSiteOperation'">
+              现场实操类
+            </template>
+            <template
+              v-else-if="scope.row.questionType === 'processManagement'"
+            >
+              流程管理类
+            </template>
+            <template
+              v-else-if="scope.row.questionType === 'resourceRequirement'"
+            >
+              资源需求类
+            </template>
+            <template
+              v-else-if="scope.row.questionType === 'policyConsultation'"
+            >
+              政策咨询类
+            </template>
+            <template v-else-if="scope.row.questionType === 'other'">
+              其他问题
+            </template>
             <template v-else>未分类</template>
           </template>
         </ElTableColumn>
-        <ElTableColumn label="紧急程度" align="center" prop="urgency" min-width="100" />
-        <ElTableColumn label="涉及主体" align="center" prop="involvingTheSubject" min-width="120" />
+        <ElTableColumn
+          label="紧急程度"
+          align="center"
+          prop="urgency"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="涉及主体"
+          align="center"
+          prop="involvingTheSubject"
+          min-width="120"
+        />
         <ElTableColumn
           label="创建时间"
           align="center"
@@ -187,7 +230,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="150"
         />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="150">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="150"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -197,11 +245,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

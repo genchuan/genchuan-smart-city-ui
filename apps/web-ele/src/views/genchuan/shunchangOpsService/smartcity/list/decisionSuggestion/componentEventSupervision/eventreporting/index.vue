@@ -1,12 +1,22 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { confirm } from '@vben/common-ui';
-import {
-  EventReportingApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/decisionSuggestion/componentEventSupervision/eventreporting';
+import { EventReportingApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/decisionSuggestion/componentEventSupervision/eventreporting';
 import download from '#/utils/genchuan/download';
 import { dateFormatter } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker, ElPagination, ElSpace } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
+  ElPagination,
+  ElSpace,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 
 import EventReportingForm from './EventReportingForm.vue';
@@ -32,10 +42,7 @@ const exportLoading = ref(false); // 导出的加载中
 const getList = async () => {
   loading.value = true;
   try {
-    const data =
-      await EventReportingApi.getEventReportingPage(
-        queryParams,
-      );
+    const data = await EventReportingApi.getEventReportingPage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -81,12 +88,10 @@ const handleExport = async () => {
     await confirm('是否确认导出所有事件上报数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
-    const data =
-      await EventReportingApi.exportEventReporting(
-        queryParams,
-      );
+    const data = await EventReportingApi.exportEventReporting(queryParams);
     download.excel(data, '事件上报.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -144,10 +149,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -178,9 +180,24 @@ onMounted(() => {
           prop="eventNumber"
           min-width="150"
         />
-        <ElTableColumn label="事件名称" align="center" prop="eventName" min-width="150" />
-        <ElTableColumn label="事件类型" align="center" prop="eventType" min-width="120" />
-        <ElTableColumn label="事件描述" align="center" prop="eventDescription" min-width="200" />
+        <ElTableColumn
+          label="事件名称"
+          align="center"
+          prop="eventName"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="事件类型"
+          align="center"
+          prop="eventType"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="事件描述"
+          align="center"
+          prop="eventDescription"
+          min-width="200"
+        />
         <ElTableColumn
           label="发生时间"
           align="center"
@@ -188,9 +205,24 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="150"
         />
-        <ElTableColumn label="发生地点" align="center" prop="place" min-width="150" />
-        <ElTableColumn label="经纬度坐标" align="center" prop="latitudeLongitude" min-width="150" />
-        <ElTableColumn label="上报人" align="center" prop="reportperson" min-width="100" />
+        <ElTableColumn
+          label="发生地点"
+          align="center"
+          prop="place"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="经纬度坐标"
+          align="center"
+          prop="latitudeLongitude"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="上报人"
+          align="center"
+          prop="reportperson"
+          min-width="100"
+        />
         <ElTableColumn
           label="创建时间"
           align="center"
@@ -198,7 +230,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="150"
         />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="150">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="150"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -208,11 +245,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

@@ -3,12 +3,24 @@ import { ref, reactive, onMounted, computed } from 'vue';
 import { confirm } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictOptions, getDictLabel } from '@vben/hooks';
-import {
-  DrainageUserApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/waterConservancyAndWaterAffairs/drainageUserManagement/drainageUser';
+import { DrainageUserApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/waterConservancyAndWaterAffairs/drainageUserManagement/drainageUser';
 import download from '#/utils/genchuan/download';
 import { dateFormatter } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElSelect, ElOption, ElPagination, ElSpace, ElTag } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElSelect,
+  ElOption,
+  ElPagination,
+  ElSpace,
+  ElTag,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 
 import DrainageUserForm from './DrainageUserForm.vue';
@@ -30,8 +42,12 @@ const queryFormRef = ref(); // 搜索的表单
 const exportLoading = ref(false); // 导出的加载中
 
 // 字典选项 - 使用计算属性实时获取
-const industryTypeOptions = computed(() => getDictOptions(DICT_TYPE.SM_INDUSTRY_CATEGORY, 'string'));
-const userTypeOptions = computed(() => getDictOptions(DICT_TYPE.SM_DRAINAGE_USER, 'string'));
+const industryTypeOptions = computed(() =>
+  getDictOptions(DICT_TYPE.SM_INDUSTRY_CATEGORY, 'string'),
+);
+const userTypeOptions = computed(() =>
+  getDictOptions(DICT_TYPE.SM_DRAINAGE_USER, 'string'),
+);
 
 // 获取字典标签方法
 const getIndustryTypeLabel = (value: string) => {
@@ -94,7 +110,8 @@ const handleExport = async () => {
     exportLoading.value = true;
     const data = await DrainageUserApi.exportDrainageUser(queryParams);
     download.excel(data, '排水户信息.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -156,10 +173,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -196,7 +210,12 @@ onMounted(() => {
           prop="userName"
           min-width="150"
         />
-        <ElTableColumn label="行业类别" align="center" prop="industryType" min-width="120">
+        <ElTableColumn
+          label="行业类别"
+          align="center"
+          prop="industryType"
+          min-width="120"
+        >
           <template #default="scope">
             <ElTag v-if="scope.row.industryType" type="primary" size="small">
               {{ getIndustryTypeLabel(scope.row.industryType) }}
@@ -204,7 +223,12 @@ onMounted(() => {
             <span v-else>-</span>
           </template>
         </ElTableColumn>
-        <ElTableColumn label="排水户分类" align="center" prop="userType" min-width="120">
+        <ElTableColumn
+          label="排水户分类"
+          align="center"
+          prop="userType"
+          min-width="120"
+        >
           <template #default="scope">
             <ElTag v-if="scope.row.userType" type="success" size="small">
               {{ getUserTypeLabel(scope.row.userType) }}
@@ -212,9 +236,24 @@ onMounted(() => {
             <span v-else>-</span>
           </template>
         </ElTableColumn>
-        <ElTableColumn label="月均用水量（吨）" align="center" prop="waterUsage" min-width="130" />
-        <ElTableColumn label="排水管网接入点坐标" align="center" prop="drainagePoint" min-width="150" />
-        <ElTableColumn label="预处理设施清单" align="center" prop="preTreatment" min-width="150" />
+        <ElTableColumn
+          label="月均用水量（吨）"
+          align="center"
+          prop="waterUsage"
+          min-width="130"
+        />
+        <ElTableColumn
+          label="排水管网接入点坐标"
+          align="center"
+          prop="drainagePoint"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="预处理设施清单"
+          align="center"
+          prop="preTreatment"
+          min-width="150"
+        />
         <ElTableColumn
           label="创建时间"
           align="center"
@@ -222,7 +261,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="150"
         />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="150">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="150"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -232,11 +276,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

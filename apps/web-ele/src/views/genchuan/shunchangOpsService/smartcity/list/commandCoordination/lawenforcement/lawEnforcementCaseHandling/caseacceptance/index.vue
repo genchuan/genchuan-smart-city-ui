@@ -1,12 +1,22 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { confirm } from '@vben/common-ui';
-import {
-  CaseAcceptanceApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/commandCoordination/lawenforcement/lawEnforcementCaseHandling/caseacceptance';
+import { CaseAcceptanceApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/commandCoordination/lawenforcement/lawEnforcementCaseHandling/caseacceptance';
 import download from '#/utils/genchuan/download';
 import { dateFormatter } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker, ElPagination, ElSpace } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
+  ElPagination,
+  ElSpace,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 
 import CaseAcceptanceForm from './CaseAcceptanceForm.vue';
@@ -57,10 +67,7 @@ const getCaseStatusLabel = (value: string) => {
 const getList = async () => {
   loading.value = true;
   try {
-    const data =
-      await CaseAcceptanceApi.getCaseAcceptancePage(
-        queryParams,
-      );
+    const data = await CaseAcceptanceApi.getCaseAcceptancePage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -106,12 +113,10 @@ const handleExport = async () => {
     await confirm('是否确认导出所有案件受理数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
-    const data =
-      await CaseAcceptanceApi.exportCaseAcceptance(
-        queryParams,
-      );
+    const data = await CaseAcceptanceApi.exportCaseAcceptance(queryParams);
     download.excel(data, '案件受理.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -169,10 +174,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -197,10 +199,30 @@ onMounted(() => {
         style="width: 100%"
       >
         <ElTableColumn label="ID" align="center" prop="id" min-width="50" />
-        <ElTableColumn label="案件编号" align="center" prop="caseCode" min-width="120" />
-        <ElTableColumn label="案件名称" align="center" prop="caseName" min-width="150" />
-        <ElTableColumn label="案件类型" align="center" prop="caseType" min-width="100" />
-        <ElTableColumn label="案件来源" align="center" prop="caseSource" min-width="150">
+        <ElTableColumn
+          label="案件编号"
+          align="center"
+          prop="caseCode"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="案件名称"
+          align="center"
+          prop="caseName"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="案件类型"
+          align="center"
+          prop="caseType"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="案件来源"
+          align="center"
+          prop="caseSource"
+          min-width="150"
+        >
           <template #default="scope">
             {{ getCaseSourceLabel(scope.row.caseSource) }}
           </template>
@@ -212,17 +234,52 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="150"
         />
-        <ElTableColumn label="案件地点" align="center" prop="caseLocation" min-width="150" />
-        <ElTableColumn label="报案单位" align="center" prop="reportUnit" min-width="120" />
-        <ElTableColumn label="当事人信息" align="center" prop="reportPerson" min-width="100" />
-        <ElTableColumn label="联系电话" align="center" prop="reportPhone" min-width="120" />
-        <ElTableColumn label="案件描述" align="center" prop="caseDesc" min-width="200" />
-        <ElTableColumn label="立案状态" align="center" prop="caseStatus" min-width="100">
+        <ElTableColumn
+          label="案件地点"
+          align="center"
+          prop="caseLocation"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="报案单位"
+          align="center"
+          prop="reportUnit"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="当事人信息"
+          align="center"
+          prop="reportPerson"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="联系电话"
+          align="center"
+          prop="reportPhone"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="案件描述"
+          align="center"
+          prop="caseDesc"
+          min-width="200"
+        />
+        <ElTableColumn
+          label="立案状态"
+          align="center"
+          prop="caseStatus"
+          min-width="100"
+        >
           <template #default="scope">
             {{ getCaseStatusLabel(scope.row.caseStatus) }}
           </template>
         </ElTableColumn>
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="150">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="150"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -232,11 +289,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

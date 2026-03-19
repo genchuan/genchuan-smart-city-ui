@@ -10,14 +10,17 @@
       <!--第二块-->
       <div class="two bg">
         <div class="title">停车管理质量指标</div>
-        <CapsuleChart :config="rightData.rightTwo" style="width:100%;height:calc(100% - 35px)" />
+        <CapsuleChart
+          :config="rightData.rightTwo"
+          style="width: 100%; height: calc(100% - 35px)"
+        />
       </div>
       <!--第三块-->
       <div class="three bg">
         <div class="title">停车管理事件清单</div>
         <ScrollBoard
           :config="leftData.CCDvScrollBoardConfig"
-          style="padding: 15px 25px 25px;  height: calc(100% - 35px - 40px);"
+          style=" height: calc(100% - 35px - 40px);padding: 15px 25px 25px"
         />
       </div>
     </div>
@@ -26,7 +29,7 @@
     <div class="content-center">
       <div class="s1">
         <chart-customize1 :paramsData="centerData.customizeParams" />
-        <map-common idName="chinaEcharts" :geometriesArray="geometriesArray"/>
+        <map-common idName="chinaEcharts" :geometriesArray="geometriesArray" />
       </div>
       <div class="s2 bg">
         <div class="title">停车管理项目介绍</div>
@@ -81,13 +84,13 @@ import ChartTypePolyLines from './ChartTypePolyLines.vue';
 import ChartCustomize3 from './ChartCustomize3.vue';
 import { CapsuleChart, ScrollBoard } from '@kjgl77/datav-vue3';
 
-const geometriesArray=[
-  {x:26.725227,y:117.750114},
-  {x:26.753227,y:117.920114},
-  {x:26.743227,y:117.860114},
-  {x:26.765227,y:117.850114},
-  {x:26.7233227,y:117.720114},
-  {x:26.763227,y:117.8520114},
+const geometriesArray = [
+  { x: 26.725227, y: 117.750114 },
+  { x: 26.753227, y: 117.920114 },
+  { x: 26.743227, y: 117.860114 },
+  { x: 26.765227, y: 117.850114 },
+  { x: 26.7233227, y: 117.720114 },
+  { x: 26.763227, y: 117.8520114 },
 ];
 
 const leftData = ref({
@@ -97,20 +100,20 @@ const leftData = ref({
     { title: '停车场数量', num: '15', unit: '个' },
     { title: '巡逻车辆', num: '5', unit: '辆' },
     { title: '日车辆进出量', num: '500', unit: '辆' },
-    { title: '月车辆进出总量', num: '13000', unit: '辆' }
+    { title: '月车辆进出总量', num: '13000', unit: '辆' },
   ],
   picData: [
     { value: 20, name: '空闲车位' },
     { value: 30, name: '已占用车位' },
     { value: 42, name: '临时车位' },
-    { value: 32, name: '专用车位' }
+    { value: 32, name: '专用车位' },
   ],
   lineAxisData: ['2-21', '2-22', '2-23', '2-24', '2-25', '2-26', '2-27'],
   picRightData2: [
     { title: '巡逻站点数量', num: '10', unit: '个' },
     { title: '巡逻人员数量', num: '20', unit: '人' },
     { title: '日巡逻次数', num: '15', unit: '次' },
-    { title: '月巡逻总次数', num: '450', unit: '次' }
+    { title: '月巡逻总次数', num: '450', unit: '次' },
   ],
   lineSeriesData: [15, 14, 15, 14, 15, 13, 15],
   CCDvScrollBoardConfig: {
@@ -130,18 +133,18 @@ const leftData = ref({
       ['L区停车场', '收费亭设备故障', '13:40', '已解决'],
       ['M区停车场', '车辆进出记录异常', '14:05', '处理中'],
       ['N区停车场', '车位统计错误', '14:30', '已解决'],
-      ['O区停车场', '巡逻人员不足', '15:00', '处理中']
+      ['O区停车场', '巡逻人员不足', '15:00', '处理中'],
     ],
     rowNum: 4,
-    align: ['center', 'center', 'center']
-  }
+    align: ['center', 'center', 'center'],
+  },
 });
 
 const centerData = ref({
   customizeParams: {
     name: '系统连续稳定运行天数：',
     runningDays: '25',
-    tail: '天'
+    tail: '天',
   },
   proJectsList: {
     processName: '管理模式',
@@ -163,14 +166,16 @@ const centerData = ref({
         contactNumber2: '139-xxxx-3468',
         realPictures: [
           {
-            imgUrl: new URL('../assets/images/imgs/44.jpg', import.meta.url).href,
-            name: '车牌识别设备安装'
+            imgUrl: new URL('../assets/images/imgs/44.jpg', import.meta.url)
+              .href,
+            name: '车牌识别设备安装',
           },
           {
-            imgUrl: new URL('../assets/images/imgs/55.jpeg', import.meta.url).href,
-            name: '智能缴费终端设置'
-          }
-        ]
+            imgUrl: new URL('../assets/images/imgs/55.jpeg', import.meta.url)
+              .href,
+            name: '智能缴费终端设置',
+          },
+        ],
       },
       /*{
         name: '城乡停车场一体化管理项目',
@@ -252,8 +257,8 @@ const centerData = ref({
           }
         ]
       }*/
-    ]
-  }
+    ],
+  },
 });
 
 const rightData = ref({
@@ -262,27 +267,45 @@ const rightData = ref({
     { name: '道闸', num: '135', unit: '套' },
     { name: '车位检测器', num: '123', unit: '个' },
     { name: '监控摄像头', num: '256', unit: '个' },
-    { name: '收费终端', num: '338', unit: '台' }
+    { name: '收费终端', num: '338', unit: '台' },
   ],
   rightOne: {
     idName: 'rightOneId',
-    xAxisData: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+    xAxisData: [
+      '1月',
+      '2月',
+      '3月',
+      '4月',
+      '5月',
+      '6月',
+      '7月',
+      '8月',
+      '9月',
+      '10月',
+      '11月',
+      '12月',
+    ],
     polyLinesData: [
       {
         lineColor: '#3a72d7',
         name: '今年',
         color: ['rgba(58,114,215,1)', 'rgba(58,114,215,0.1)'],
         type: 'line',
-        data: [380, 510, 1200, 1600, 1800, 1350, 2400, 2200, 2910, 3200, 2800, 2600]
+        data: [
+          380, 510, 1200, 1600, 1800, 1350, 2400, 2200, 2910, 3200, 2800, 2600,
+        ],
       },
       {
         lineColor: '#11e48a',
         name: '去年',
         color: ['rgba(9,114,95,1)', 'rgba(9,114,95,0.1)'],
         type: 'line',
-        data: [1650, 1860, 2350, 2680, 2200, 2320, 2820, 2600, 2200, 2000, 1800, 1400]
-      }
-    ]
+        data: [
+          1650, 1860, 2350, 2680, 2200, 2320, 2820, 2600, 2200, 2000, 1800,
+          1400,
+        ],
+      },
+    ],
   },
   rightTwo: {
     data: [
@@ -290,10 +313,10 @@ const rightData = ref({
       { name: '车位检测准确率', value: 120 },
       { name: '监控设备完好率', value: 78 },
       { name: '收费系统准确率', value: 66 },
-      { name: '车辆引导及时率', value: 80 }
+      { name: '车辆引导及时率', value: 80 },
     ],
-    showValue: false
-  }
+    showValue: false,
+  },
 });
 </script>
 
@@ -301,7 +324,7 @@ const rightData = ref({
 .CityAppearanceAndSanitation-center-css {
   display: flex;
   flex-wrap: nowrap;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 </style>

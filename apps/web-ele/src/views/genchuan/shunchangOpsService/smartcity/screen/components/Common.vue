@@ -34,9 +34,8 @@ onBeforeUnmount(() => {
 <style>
 /* 滚动条优化 start */
 .ccc-scrollbar::-webkit-scrollbar {
-  width: 0px !important;
-  height: 0px !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 </style>
 <style lang="scss" scoped></style>
-

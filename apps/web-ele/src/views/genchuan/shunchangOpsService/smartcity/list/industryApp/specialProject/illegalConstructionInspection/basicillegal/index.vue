@@ -1,12 +1,22 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { confirm } from '@vben/common-ui';
-import {
-  BasicIllegalApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/specialProject/illegalConstructionInspection/basicillegal';
+import { BasicIllegalApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/specialProject/illegalConstructionInspection/basicillegal';
 import download from '#/utils/genchuan/download';
 import { dateFormatter } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker, ElPagination, ElSpace } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
+  ElPagination,
+  ElSpace,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 
 import BasicIllegalForm from './BasicIllegalForm.vue';
@@ -78,7 +88,8 @@ const handleExport = async () => {
     exportLoading.value = true;
     const data = await BasicIllegalApi.exportBasicIllegal(queryParams);
     download.excel(data, '违建基本信息.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -127,10 +138,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -155,12 +163,42 @@ onMounted(() => {
         style="width: 100%"
       >
         <ElTableColumn label="主键" align="center" prop="id" min-width="50" />
-        <ElTableColumn label="违建编号" align="center" prop="buildingNumber" min-width="120" />
-        <ElTableColumn label="违建地址" align="center" prop="buildingAddress" min-width="150" />
-        <ElTableColumn label="违建面积" align="center" prop="constructionArea" min-width="100" />
-        <ElTableColumn label="违建结构类型" align="center" prop="typesStructures" min-width="120" />
-        <ElTableColumn label="违建层数" align="center" prop="numberFloors" min-width="80" />
-        <ElTableColumn label="违建用途" align="center" prop="unauthorizedBuildings" min-width="100" />
+        <ElTableColumn
+          label="违建编号"
+          align="center"
+          prop="buildingNumber"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="违建地址"
+          align="center"
+          prop="buildingAddress"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="违建面积"
+          align="center"
+          prop="constructionArea"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="违建结构类型"
+          align="center"
+          prop="typesStructures"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="违建层数"
+          align="center"
+          prop="numberFloors"
+          min-width="80"
+        />
+        <ElTableColumn
+          label="违建用途"
+          align="center"
+          prop="unauthorizedBuildings"
+          min-width="100"
+        />
         <ElTableColumn
           label="创建时间"
           align="center"
@@ -168,7 +206,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="150"
         />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="150">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="150"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -178,11 +221,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

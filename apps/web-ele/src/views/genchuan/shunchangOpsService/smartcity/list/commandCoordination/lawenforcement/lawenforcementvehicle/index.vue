@@ -108,7 +108,8 @@ const handleExport = async () => {
     const data =
       await LawEnforcementVehicleApi.exportLawEnforcementVehicle(queryParams);
     download.excel(data, '执法车辆管理.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };

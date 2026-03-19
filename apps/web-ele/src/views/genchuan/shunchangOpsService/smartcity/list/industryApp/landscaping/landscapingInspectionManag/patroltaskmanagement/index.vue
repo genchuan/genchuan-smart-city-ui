@@ -1,12 +1,21 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { confirm } from '@vben/common-ui';
-import {
-  PatrolTaskManagementApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingInspectionManag/patroltaskmanagement';
+import { PatrolTaskManagementApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingInspectionManag/patroltaskmanagement';
 import download from '#/utils/genchuan/download';
 import { dateFormatter, dateFormatter2 } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElPagination, ElSpace } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElPagination,
+  ElSpace,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 
 import PatrolTaskManagementForm from './PatrolTaskManagementForm.vue';
@@ -31,7 +40,8 @@ const exportLoading = ref(false); // 导出的加载中
 const getList = async () => {
   loading.value = true;
   try {
-    const data = await PatrolTaskManagementApi.getPatrolTaskManagementPage(queryParams);
+    const data =
+      await PatrolTaskManagementApi.getPatrolTaskManagementPage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -77,9 +87,11 @@ const handleExport = async () => {
     await confirm('是否确认导出所有巡査任务管理数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
-    const data = await PatrolTaskManagementApi.exportPatrolTaskManagement(queryParams);
+    const data =
+      await PatrolTaskManagementApi.exportPatrolTaskManagement(queryParams);
     download.excel(data, '巡査任务管理.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -135,10 +147,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -163,8 +172,18 @@ onMounted(() => {
         style="width: 100%"
       >
         <ElTableColumn label="主键" align="center" prop="id" min-width="50" />
-        <ElTableColumn label="任务名称" align="center" prop="task" min-width="120" />
-        <ElTableColumn label="巡查区域" align="center" prop="patrolArea" min-width="120" />
+        <ElTableColumn
+          label="任务名称"
+          align="center"
+          prop="task"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="巡查区域"
+          align="center"
+          prop="patrolArea"
+          min-width="120"
+        />
         <ElTableColumn
           label="巡查时间"
           align="center"
@@ -172,14 +191,54 @@ onMounted(() => {
           :formatter="dateFormatter2"
           min-width="120"
         />
-        <ElTableColumn label="执行人员" align="center" prop="executive" min-width="100" />
-        <ElTableColumn label="预计时长" align="center" prop="expectedDuration" min-width="100" />
-        <ElTableColumn label="任务描述" align="center" prop="taskDescription" min-width="150" />
-        <ElTableColumn label="巡查重点" align="center" prop="keyInspectionPoints" min-width="150" />
-        <ElTableColumn label="携带设备清单" align="center" prop="listOfCarryingEquipment" min-width="150" />
-        <ElTableColumn label="完成情况说明" align="center" prop="completionStatusDescription" min-width="150" />
-        <ElTableColumn label="异常情况记录" align="center" prop="abnormalSituationRecord" min-width="150" />
-        <ElTableColumn label="处理措施" align="center" prop="handlingMeasures" min-width="150" />
+        <ElTableColumn
+          label="执行人员"
+          align="center"
+          prop="executive"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="预计时长"
+          align="center"
+          prop="expectedDuration"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="任务描述"
+          align="center"
+          prop="taskDescription"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="巡查重点"
+          align="center"
+          prop="keyInspectionPoints"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="携带设备清单"
+          align="center"
+          prop="listOfCarryingEquipment"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="完成情况说明"
+          align="center"
+          prop="completionStatusDescription"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="异常情况记录"
+          align="center"
+          prop="abnormalSituationRecord"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="处理措施"
+          align="center"
+          prop="handlingMeasures"
+          min-width="150"
+        />
         <ElTableColumn
           label="创建时间"
           align="center"
@@ -187,7 +246,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="150"
         />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="150">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="150"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -197,11 +261,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

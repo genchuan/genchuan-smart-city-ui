@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton, ElSelect, ElOption
+  ElMessage,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElSelect,
+  ElOption,
 } from 'element-plus';
-import {
-  PatrolResourcesApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/supervisionInspection/inspectionPatrolManagement/patrolresources';
+import { PatrolResourcesApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/supervisionInspection/inspectionPatrolManagement/patrolresources';
 
 /** 巡查资源 表单 */
 defineOptions({ name: 'PatrolResourcesForm' });
@@ -41,8 +46,7 @@ const open = async (type: string, id?: number) => {
   if (id) {
     formLoading.value = true;
     try {
-      formData.value =
-        await PatrolResourcesApi.getPatrolResources(id);
+      formData.value = await PatrolResourcesApi.getPatrolResources(id);
     } finally {
       formLoading.value = false;
     }
@@ -57,14 +61,10 @@ const submitForm = async () => {
   try {
     const data = formData.value;
     if (formType.value === 'create') {
-      await PatrolResourcesApi.createPatrolResources(
-        data,
-      );
+      await PatrolResourcesApi.createPatrolResources(data);
       ElMessage.success('新增成功');
     } else {
-      await PatrolResourcesApi.updatePatrolResources(
-        data,
-      );
+      await PatrolResourcesApi.updatePatrolResources(data);
       ElMessage.success('修改成功');
     }
     dialogVisible.value = false;
@@ -90,7 +90,12 @@ const resetForm = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -102,7 +107,10 @@ const resetForm = () => {
         <ElInput v-model="formData.resourceName" placeholder="请输入资源名称" />
       </ElFormItem>
       <ElFormItem label="资源编号" prop="resourceNumber">
-        <ElInput v-model="formData.resourceNumber" placeholder="请输入资源编号" />
+        <ElInput
+          v-model="formData.resourceNumber"
+          placeholder="请输入资源编号"
+        />
       </ElFormItem>
       <ElFormItem label="资源类型" prop="resourceType">
         <ElSelect v-model="formData.resourceType" placeholder="请选择资源类型">
@@ -125,13 +133,22 @@ const resetForm = () => {
         </ElSelect>
       </ElFormItem>
       <ElFormItem label="地理位置" prop="geographicLocation">
-        <ElInput v-model="formData.geographicLocation" placeholder="请输入地理位置" />
+        <ElInput
+          v-model="formData.geographicLocation"
+          placeholder="请输入地理位置"
+        />
       </ElFormItem>
       <ElFormItem label="区域划分" prop="regionalDivision">
-        <ElInput v-model="formData.regionalDivision" placeholder="请输入区域划分" />
+        <ElInput
+          v-model="formData.regionalDivision"
+          placeholder="请输入区域划分"
+        />
       </ElFormItem>
       <ElFormItem label="规格型号" prop="specificationAndModel">
-        <ElInput v-model="formData.specificationAndModel" placeholder="请输入规格型号" />
+        <ElInput
+          v-model="formData.specificationAndModel"
+          placeholder="请输入规格型号"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

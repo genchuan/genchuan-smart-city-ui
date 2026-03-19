@@ -18,34 +18,34 @@ const props = defineProps({
       return {
         name: '',
         runningDays: '',
-        tail: ''
+        tail: '',
       };
-    }
-  }
+    },
+  },
 });
 </script>
 
 <style lang="scss" scoped>
 .chart-customize1-css {
-  /*position: absolute;*/
-  display: flex;
-  flex-wrap: nowrap;
-  justify-content: center;
-  align-items: center;
-  flex-direction: row;
   top: 0;
-  text-align: center;
+
+  /* position: absolute; */
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  justify-content: center;
   height: 40px;
-  line-height: 40px;
-  color: #ffffff;
   font-size: 28px;
   font-weight: bold;
+  line-height: 40px;
+  color: #fff;
+  text-align: center;
 
   span {
-    background: #0069df;
     padding: 3px 5px !important;
     margin-right: 8px !important;
     font-size: 38px;
+    background: #0069df;
   }
 }
 </style>

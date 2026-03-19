@@ -1,12 +1,22 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { confirm } from '@vben/common-ui';
-import {
-  LawDocumentApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/commandCoordination/lawenforcement/lawEnforcementCaseHandling/lawdocument';
+import { LawDocumentApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/commandCoordination/lawenforcement/lawEnforcementCaseHandling/lawdocument';
 import download from '#/utils/genchuan/download';
 import { dateFormatter, dateFormatter2 } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker, ElPagination, ElSpace } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
+  ElPagination,
+  ElSpace,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 import { $t } from '#/locales';
 
@@ -33,10 +43,7 @@ const exportLoading = ref(false); // 导出的加载中
 const getList = async () => {
   loading.value = true;
   try {
-    const data =
-      await LawDocumentApi.getLawDocumentPage(
-        queryParams,
-      );
+    const data = await LawDocumentApi.getLawDocumentPage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -82,12 +89,10 @@ const handleExport = async () => {
     await confirm('是否确认导出所有执法文书数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
-    const data =
-      await LawDocumentApi.exportLawDocument(
-        queryParams,
-      );
+    const data = await LawDocumentApi.exportLawDocument(queryParams);
     download.excel(data, '执法文书.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -154,10 +159,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -182,13 +184,48 @@ onMounted(() => {
         style="width: 100%"
       >
         <ElTableColumn label="ID" align="center" prop="id" min-width="30" />
-        <ElTableColumn label="案件 ID" align="center" prop="caseId" min-width="100" />
-        <ElTableColumn label="文书类型" align="center" prop="documentType" min-width="100" />
-        <ElTableColumn label="文书编号" align="center" prop="documentCode" min-width="100" />
-        <ElTableColumn label="文书标题" align="center" prop="documentTitle" min-width="120" />
-        <ElTableColumn label="文书内容" align="center" prop="documentContent" min-width="150" />
-        <ElTableColumn label="创建人" align="center" prop="documentCreator" min-width="100" />
-        <ElTableColumn label="审批人" align="center" prop="approver" min-width="100" />
+        <ElTableColumn
+          label="案件 ID"
+          align="center"
+          prop="caseId"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="文书类型"
+          align="center"
+          prop="documentType"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="文书编号"
+          align="center"
+          prop="documentCode"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="文书标题"
+          align="center"
+          prop="documentTitle"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="文书内容"
+          align="center"
+          prop="documentContent"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="创建人"
+          align="center"
+          prop="documentCreator"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="审批人"
+          align="center"
+          prop="approver"
+          min-width="100"
+        />
         <ElTableColumn
           label="审批时间"
           align="center"
@@ -196,8 +233,18 @@ onMounted(() => {
           :formatter="dateFormatter2"
           min-width="120"
         />
-        <ElTableColumn label="审批状态" align="center" prop="approvalStatus" min-width="100" />
-        <ElTableColumn label="签署人" align="center" prop="signatory" min-width="100" />
+        <ElTableColumn
+          label="审批状态"
+          align="center"
+          prop="approvalStatus"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="签署人"
+          align="center"
+          prop="signatory"
+          min-width="100"
+        />
         <ElTableColumn
           label="签署时间"
           align="center"
@@ -205,7 +252,12 @@ onMounted(() => {
           :formatter="dateFormatter2"
           min-width="120"
         />
-        <ElTableColumn label="盖章状态" align="center" prop="sealStatus" min-width="100" />
+        <ElTableColumn
+          label="盖章状态"
+          align="center"
+          prop="sealStatus"
+          min-width="100"
+        />
         <ElTableColumn
           label="盖章时间"
           align="center"
@@ -221,7 +273,12 @@ onMounted(() => {
           min-width="180"
         />-->
 
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="120">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="120"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -231,11 +288,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

@@ -10,14 +10,17 @@
       <!--第二块-->
       <div class="two bg">
         <div class="title">市政公用质量指标</div>
-        <CapsuleChart :config="rightData.rightTwo" style="width:100%;height:calc(100% - 40px)" />
+        <CapsuleChart
+          :config="rightData.rightTwo"
+          style="width: 100%; height: calc(100% - 40px)"
+        />
       </div>
       <!--第三块-->
       <div class="three bg">
         <div class="title">市政公用事件清单</div>
         <ScrollBoard
           :config="leftData.CCDvScrollBoardConfig"
-          style="padding: 15px 25px 25px;  height: calc(100% - 40px - 40px);"
+          style=" height: calc(100% - 40px - 40px);padding: 15px 25px 25px"
         />
       </div>
     </div>
@@ -26,7 +29,7 @@
     <div class="content-center">
       <div class="s1">
         <chart-customize1 :paramsData="centerData.customizeParams" />
-        <map-common idName="chinaEcharts" :geometriesArray="geometriesArray"/>
+        <map-common idName="chinaEcharts" :geometriesArray="geometriesArray" />
       </div>
       <div class="s2 bg">
         <div class="title">市政公用项目介绍</div>
@@ -81,13 +84,13 @@ import ChartTypePolyLines from './ChartTypePolyLines.vue';
 import ChartCustomize3 from './ChartCustomize3.vue';
 import { CapsuleChart, ScrollBoard } from '@kjgl77/datav-vue3';
 
-const geometriesArray=[
-  {x:26.623227,y:117.780114},
-  {x:26.693227,y:117.760114},
-  {x:26.823227,y:117.620114},
-  {x:26.853227,y:117.650114},
-  {x:26.803227,y:117.680114},
-  {x:26.863227,y:117.6520114},
+const geometriesArray = [
+  { x: 26.623227, y: 117.780114 },
+  { x: 26.693227, y: 117.760114 },
+  { x: 26.823227, y: 117.620114 },
+  { x: 26.853227, y: 117.650114 },
+  { x: 26.803227, y: 117.680114 },
+  { x: 26.863227, y: 117.6520114 },
 ];
 
 const leftData = ref({
@@ -97,20 +100,20 @@ const leftData = ref({
     { title: '垃圾处理厂', num: '15', unit: '座' },
     { title: '市政车辆', num: '20', unit: '辆' },
     { title: '日垃圾处理量', num: '500', unit: '吨' },
-    { title: '月垃圾处理量', num: '13000', unit: '吨' }
+    { title: '月垃圾处理量', num: '13000', unit: '吨' },
   ],
   picData: [
     { value: 20, name: '垃圾分类' },
     { value: 30, name: '垃圾清运' },
     { value: 42, name: '市政清扫' },
-    { value: 32, name: '市政设施维护' }
+    { value: 32, name: '市政设施维护' },
   ],
   lineAxisData: ['2-21', '2-22', '2-23', '2-24', '2-25', '2-26', '2-27'],
   picRightData2: [
     { title: '市政站点数量', num: '50', unit: '个' },
     { title: '市政人员数量', num: '200', unit: '人' },
     { title: '日垃圾清运量', num: '150', unit: '吨' },
-    { title: '月垃圾清运总量', num: '4500', unit: '吨' }
+    { title: '月垃圾清运总量', num: '4500', unit: '吨' },
   ],
   lineSeriesData: [150, 145, 152, 148, 153, 143, 150],
   CCDvScrollBoardConfig: {
@@ -130,18 +133,18 @@ const leftData = ref({
       ['西部垃圾处理厂', '设备故障', '13:40', '已解决'],
       ['南郊街道', '垃圾清运不及时', '14:05', '处理中'],
       ['北郊公园', '市政清扫不到位', '14:30', '已解决'],
-      ['城中老街', '市政人员不足', '15:00', '处理中']
+      ['城中老街', '市政人员不足', '15:00', '处理中'],
     ],
     rowNum: 4, // 表行数
-    align: ['center', 'center', 'center']
-  }
+    align: ['center', 'center', 'center'],
+  },
 });
 
 const centerData = ref({
   customizeParams: {
     name: '连续维护天数：',
     runningDays: '22',
-    tail: '天'
+    tail: '天',
   },
   proJectsList: {
     processName: '施工技术',
@@ -164,13 +167,13 @@ const centerData = ref({
         realPictures: [
           {
             imgUrl: new URL('../assets/images/1.png', import.meta.url),
-            name: '设备辅助维修'
+            name: '设备辅助维修',
           },
           {
             imgUrl: new URL('../assets/images/imgs/2.jpg', import.meta.url),
-            name: '人工维修'
-          }
-        ]
+            name: '人工维修',
+          },
+        ],
       },
       // {
       //   name: '城乡市政一体化项目',
@@ -252,8 +255,8 @@ const centerData = ref({
       //     }
       //   ]
       // }
-    ]
-  }
+    ],
+  },
 });
 
 const rightData = ref({
@@ -262,27 +265,40 @@ const rightData = ref({
     { name: '路灯数量', num: '1256', unit: '盏' },
     { name: '排水管道长度', num: '85', unit: '公里' },
     { name: '供水管道长度', num: '68', unit: '公里' },
-    { name: '道路总里程', num: '156', unit: '公里' }
+    { name: '道路总里程', num: '156', unit: '公里' },
   ],
   rightOne: {
     idName: 'rightOneId',
-    xAxisData: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+    xAxisData: [
+      '1月',
+      '2月',
+      '3月',
+      '4月',
+      '5月',
+      '6月',
+      '7月',
+      '8月',
+      '9月',
+      '10月',
+      '11月',
+      '12月',
+    ],
     polyLinesData: [
       {
         lineColor: '#3a72d7',
         name: '今年',
         color: ['rgba(58,114,215,1)', 'rgba(58,114,215,0.1)'],
         type: 'line',
-        data: [42, 58, 115, 150, 190, 145, 230, 210, 280, 310, 270, 250]
+        data: [42, 58, 115, 150, 190, 145, 230, 210, 280, 310, 270, 250],
       },
       {
         lineColor: '#11e48a',
         name: '去年',
         color: ['rgba(9,114,95,1)', 'rgba(9,114,95,0.1)'],
         type: 'line',
-        data: [150, 170, 220, 250, 210, 220, 270, 250, 210, 190, 170, 130]
-      }
-    ]
+        data: [150, 170, 220, 250, 210, 220, 270, 250, 210, 190, 170, 130],
+      },
+    ],
   },
   rightTwo: {
     data: [
@@ -290,10 +306,10 @@ const rightData = ref({
       { name: '排水系统畅通率', value: 95 },
       { name: '路灯亮灯率', value: 98 },
       { name: '市政设施完成率', value: 99 },
-      { name: '垃圾处理合规率', value: 85 }
+      { name: '垃圾处理合规率', value: 85 },
     ],
-    showValue: false
-  }
+    showValue: false,
+  },
 });
 </script>
 
@@ -301,7 +317,7 @@ const rightData = ref({
 .CityAppearanceAndSanitation-center-css {
   display: flex;
   flex-wrap: nowrap;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 </style>

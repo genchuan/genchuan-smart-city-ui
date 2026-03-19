@@ -1,12 +1,22 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { confirm } from '@vben/common-ui';
-import {
-  InspectionStatisticsApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/supervisionInspection/inspectionPatrolManagement/inspectionstatistics';
+import { InspectionStatisticsApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/supervisionInspection/inspectionPatrolManagement/inspectionstatistics';
 import download from '#/utils/genchuan/download';
 import { dateFormatter } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker, ElPagination, ElSpace } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
+  ElPagination,
+  ElSpace,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 import { $t } from '#/locales';
 
@@ -33,9 +43,7 @@ const getList = async () => {
   loading.value = true;
   try {
     const data =
-      await InspectionStatisticsApi.getInspectionStatisticsPage(
-        queryParams,
-      );
+      await InspectionStatisticsApi.getInspectionStatisticsPage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -82,11 +90,10 @@ const handleExport = async () => {
     // 发起导出
     exportLoading.value = true;
     const data =
-      await InspectionStatisticsApi.exportInspectionStatistics(
-        queryParams,
-      );
+      await InspectionStatisticsApi.exportInspectionStatistics(queryParams);
     download.excel(data, '巡查分析统计.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -144,10 +151,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -172,16 +176,66 @@ onMounted(() => {
         style="width: 100%"
       >
         <ElTableColumn label="主键" align="center" prop="id" min-width="50" />
-        <ElTableColumn label="巡查区域" align="center" prop="patrolArea" min-width="120" />
-        <ElTableColumn label="巡查人员" align="center" prop="patrolPersonnel" min-width="100" />
-        <ElTableColumn label="巡查任务完成率" align="center" prop="completionInspectionTasks" min-width="125" />
-        <ElTableColumn label="平均巡查时长" align="center" prop="averagePatrolDuration" min-width="120" />
-        <ElTableColumn label="问题发现数量" align="center" prop="numberProblemDiscoveries" min-width="120" />
-        <ElTableColumn label="不同类型问题分布" align="center" prop="distributionProblems" min-width="140" />
-        <ElTableColumn label="问题解决率" align="center" prop="problemSolvingRate" min-width="120" />
-        <ElTableColumn label="重复问题发生率" align="center" prop="repetitiveProblemRate" min-width="125" />
-        <ElTableColumn label="风险等级评估" align="center" prop="riskLevelAssessment" min-width="120" />
-        <ElTableColumn label="建议与改进措施" align="center" prop="suggestionsMeasures" min-width="140" />
+        <ElTableColumn
+          label="巡查区域"
+          align="center"
+          prop="patrolArea"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="巡查人员"
+          align="center"
+          prop="patrolPersonnel"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="巡查任务完成率"
+          align="center"
+          prop="completionInspectionTasks"
+          min-width="125"
+        />
+        <ElTableColumn
+          label="平均巡查时长"
+          align="center"
+          prop="averagePatrolDuration"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="问题发现数量"
+          align="center"
+          prop="numberProblemDiscoveries"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="不同类型问题分布"
+          align="center"
+          prop="distributionProblems"
+          min-width="140"
+        />
+        <ElTableColumn
+          label="问题解决率"
+          align="center"
+          prop="problemSolvingRate"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="重复问题发生率"
+          align="center"
+          prop="repetitiveProblemRate"
+          min-width="125"
+        />
+        <ElTableColumn
+          label="风险等级评估"
+          align="center"
+          prop="riskLevelAssessment"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="建议与改进措施"
+          align="center"
+          prop="suggestionsMeasures"
+          min-width="140"
+        />
         <ElTableColumn
           label="创建时间"
           align="center"
@@ -189,7 +243,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="180"
         />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="120">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="120"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -199,11 +258,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

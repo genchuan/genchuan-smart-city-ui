@@ -2,24 +2,28 @@ import { requestClient } from '#/api/request';
 
 // 巡查人员 VO
 export type PatrolPersonnelVO = {
-  id: number;
-  number: string;
+  age: string;
+  certificateTime: Date;
+  contactInformation: string;
   fullName: string;
   gender: string;
-  age: string;
-  contactInformation: string;
-  certificateTime: Date;
+  id: number;
   inspectionRemarks: string;
+  number: string;
 };
 
 // 巡查人员 API
 export const PatrolPersonnelApi = {
   getPatrolPersonnelPage: async (params: any) => {
-    return await requestClient.get(`/smartcity/patrol-personnel/page`, { params });
+    return await requestClient.get(`/smartcity/patrol-personnel/page`, {
+      params,
+    });
   },
 
   getPatrolPersonnel: async (id: number) => {
-    return await requestClient.get(`/smartcity/patrol-personnel/get`, { params: { id } });
+    return await requestClient.get(`/smartcity/patrol-personnel/get`, {
+      params: { id },
+    });
   },
 
   createPatrolPersonnel: async (data: any) => {
@@ -31,10 +35,15 @@ export const PatrolPersonnelApi = {
   },
 
   deletePatrolPersonnel: async (id: number) => {
-    return await requestClient.delete(`/smartcity/patrol-personnel/delete`, { params: { id } });
+    return await requestClient.delete(`/smartcity/patrol-personnel/delete`, {
+      params: { id },
+    });
   },
 
   exportPatrolPersonnel: async (params) => {
-    return await requestClient.download(`/smartcity/patrol-personnel/export-excel`, params);
+    return await requestClient.download(
+      `/smartcity/patrol-personnel/export-excel`,
+      params,
+    );
   },
 };

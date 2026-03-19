@@ -1,12 +1,22 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { confirm } from '@vben/common-ui';
-import {
-  EventProcessingApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/decisionSuggestion/componentEventSupervision/eventprocessing';
+import { EventProcessingApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/decisionSuggestion/componentEventSupervision/eventprocessing';
 import download from '#/utils/genchuan/download';
 import { dateFormatter } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker, ElPagination, ElSpace } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
+  ElPagination,
+  ElSpace,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 
 import EventProcessingForm from './EventProcessingForm.vue';
@@ -32,10 +42,7 @@ const exportLoading = ref(false); // 导出的加载中
 const getList = async () => {
   loading.value = true;
   try {
-    const data =
-      await EventProcessingApi.getEventProcessingPage(
-        queryParams,
-      );
+    const data = await EventProcessingApi.getEventProcessingPage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -81,12 +88,10 @@ const handleExport = async () => {
     await confirm('是否确认导出所有事件处理数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
-    const data =
-      await EventProcessingApi.exportEventProcessing(
-        queryParams,
-      );
+    const data = await EventProcessingApi.exportEventProcessing(queryParams);
     download.excel(data, '事件处理.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -135,10 +140,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -169,7 +171,12 @@ onMounted(() => {
           prop="eventHandlingNumber"
           min-width="150"
         />
-        <ElTableColumn label="处理人员" align="center" prop="processingPersonnel" min-width="100" />
+        <ElTableColumn
+          label="处理人员"
+          align="center"
+          prop="processingPersonnel"
+          min-width="100"
+        />
         <ElTableColumn
           label="接收时间"
           align="center"
@@ -177,7 +184,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="150"
         />
-        <ElTableColumn label="处理措施" align="center" prop="handlingMeasures" min-width="300" />
+        <ElTableColumn
+          label="处理措施"
+          align="center"
+          prop="handlingMeasures"
+          min-width="300"
+        />
         <ElTableColumn
           label="创建时间"
           align="center"
@@ -185,7 +197,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="150"
         />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="150">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="150"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -195,11 +212,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

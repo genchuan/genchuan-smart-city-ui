@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker, ElSelect, ElOption
+  ElMessage,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
+  ElSelect,
+  ElOption,
 } from 'element-plus';
-import {
-  DynamicInformationInputApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/dynamicinformationinput';
-import {
-  DynamicInformationClassificationApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/dynamicinformationclassification';
+import { DynamicInformationInputApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/dynamicinformationinput';
+import { DynamicInformationClassificationApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/dynamicinformationclassification';
 
 /** 动态信息录入 表单 */
 defineOptions({ name: 'DynamicInformationInputForm' });
@@ -39,7 +43,10 @@ const initData = async () => {
     pageNo: 1,
     pageSize: 100,
   };
-  const data = await DynamicInformationClassificationApi.getDynamicInformationClassificationPage(queryParams);
+  const data =
+    await DynamicInformationClassificationApi.getDynamicInformationClassificationPage(
+      queryParams,
+    );
   publishingSubjectOptions.value = data.list.map((item) => ({
     label: item.messageSubject,
     value: item.id,
@@ -49,7 +56,8 @@ const initData = async () => {
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增动态信息录入' : '编辑动态信息录入';
+  dialogTitle.value =
+    type === 'create' ? '新增动态信息录入' : '编辑动态信息录入';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -72,14 +80,10 @@ const submitForm = async () => {
   try {
     const data = formData.value;
     if (formType.value === 'create') {
-      await DynamicInformationInputApi.createDynamicInformationInput(
-        data,
-      );
+      await DynamicInformationInputApi.createDynamicInformationInput(data);
       ElMessage.success('新增成功');
     } else {
-      await DynamicInformationInputApi.updateDynamicInformationInput(
-        data,
-      );
+      await DynamicInformationInputApi.updateDynamicInformationInput(data);
       ElMessage.success('修改成功');
     }
     dialogVisible.value = false;
@@ -108,7 +112,12 @@ onMounted(() => {
 });
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -129,7 +138,10 @@ onMounted(() => {
         />
       </ElFormItem>
       <ElFormItem label="信息类别" prop="publishingSubject">
-        <ElSelect v-model="formData.publishingSubject" placeholder="请选择信息类别">
+        <ElSelect
+          v-model="formData.publishingSubject"
+          placeholder="请选择信息类别"
+        >
           <ElOption
             v-for="item in publishingSubjectOptions"
             :key="item.value"
@@ -139,7 +151,10 @@ onMounted(() => {
         </ElSelect>
       </ElFormItem>
       <ElFormItem label="内容概述" prop="contentOverview">
-        <ElInput v-model="formData.contentOverview" placeholder="请输入内容概述" />
+        <ElInput
+          v-model="formData.contentOverview"
+          placeholder="请输入内容概述"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

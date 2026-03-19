@@ -1,12 +1,22 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { confirm } from '@vben/common-ui';
-import {
-  ManagementOfPatrolPersonnelApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingInspectionManag/managementofpatrolpersonnel';
+import { ManagementOfPatrolPersonnelApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingInspectionManag/managementofpatrolpersonnel';
 import download from '#/utils/genchuan/download';
 import { dateFormatter, dateFormatter2 } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker, ElPagination, ElSpace } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
+  ElPagination,
+  ElSpace,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 import { $t } from '#/locales';
 
@@ -87,7 +97,8 @@ const handleExport = async () => {
         queryParams,
       );
     download.excel(data, '巡査人员管理.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -136,10 +147,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -163,8 +171,18 @@ onMounted(() => {
         :show-overflow-tooltip="true"
         style="width: 100%"
       >
-        <ElTableColumn label="姓名" align="center" prop="fullName" min-width="100" />
-        <ElTableColumn label="性别" align="center" prop="gender" min-width="80" />
+        <ElTableColumn
+          label="姓名"
+          align="center"
+          prop="fullName"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="性别"
+          align="center"
+          prop="gender"
+          min-width="80"
+        />
         <ElTableColumn
           label="出生日期"
           align="center"
@@ -178,9 +196,24 @@ onMounted(() => {
           prop="contactInformation"
           min-width="120"
         />
-        <ElTableColumn label="巡查区域" align="center" prop="patrolArea" min-width="120" />
-        <ElTableColumn label="巡查路线" align="center" prop="patrolRoute" min-width="120" />
-        <ElTableColumn label="巡查班次" align="center" prop="inspectionShift" min-width="100" />
+        <ElTableColumn
+          label="巡查区域"
+          align="center"
+          prop="patrolArea"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="巡查路线"
+          align="center"
+          prop="patrolRoute"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="巡查班次"
+          align="center"
+          prop="inspectionShift"
+          min-width="100"
+        />
         <ElTableColumn
           label="巡查设备编号"
           align="center"
@@ -194,7 +227,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="150"
         />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="150">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="150"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -204,11 +242,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

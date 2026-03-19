@@ -1,13 +1,19 @@
 <script setup lang="ts">
 import { reactive, ref, computed } from 'vue';
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton, ElSelect, ElOption, ElDatePicker
+  ElMessage,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElSelect,
+  ElOption,
+  ElDatePicker,
 } from 'element-plus';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
-import {
-  DrainageLicenseApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/waterConservancyAndWaterAffairs/drainageUserManagement/drainageLicense';
+import { DrainageLicenseApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/waterConservancyAndWaterAffairs/drainageUserManagement/drainageLicense';
 
 /** 排水电子许可证信息 表单 */
 defineOptions({ name: 'DrainageLicenseForm' });
@@ -34,13 +40,18 @@ const formRules = reactive({});
 const formRef = ref(); // 表单 Ref
 
 // 字典选项 - 使用计算属性实时获取
-const drainageTypeOptions = computed(() => getDictOptions(DICT_TYPE.SM_DRAINAGE_TYPE, 'string'));
-const licenseStatusOptions = computed(() => getDictOptions(DICT_TYPE.CRM_AUDIT_STATUS, 'string'));
+const drainageTypeOptions = computed(() =>
+  getDictOptions(DICT_TYPE.SM_DRAINAGE_TYPE, 'string'),
+);
+const licenseStatusOptions = computed(() =>
+  getDictOptions(DICT_TYPE.CRM_AUDIT_STATUS, 'string'),
+);
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增排水电子许可证信息' : '编辑排水电子许可证信息';
+  dialogTitle.value =
+    type === 'create' ? '新增排水电子许可证信息' : '编辑排水电子许可证信息';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -93,7 +104,12 @@ const resetForm = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -123,7 +139,11 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="许可排水类型" prop="drainageType">
-        <ElSelect v-model="formData.drainageType" placeholder="请选择许可排水类型" style="width: 100%">
+        <ElSelect
+          v-model="formData.drainageType"
+          placeholder="请选择许可排水类型"
+          style="width: 100%"
+        >
           <ElOption
             v-for="dict in drainageTypeOptions"
             :key="dict.value"
@@ -136,7 +156,11 @@ const resetForm = () => {
         <ElInput v-model="formData.approvalUnit" placeholder="请输入审批单位" />
       </ElFormItem>
       <ElFormItem label="状态" prop="licenseStatus">
-        <ElSelect v-model="formData.licenseStatus" placeholder="请选择状态" style="width: 100%">
+        <ElSelect
+          v-model="formData.licenseStatus"
+          placeholder="请选择状态"
+          style="width: 100%"
+        >
           <ElOption
             v-for="dict in licenseStatusOptions"
             :key="dict.value"

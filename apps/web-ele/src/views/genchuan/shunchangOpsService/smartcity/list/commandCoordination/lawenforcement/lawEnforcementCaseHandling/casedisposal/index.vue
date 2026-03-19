@@ -1,12 +1,23 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { confirm } from '@vben/common-ui';
-import {
-  CaseDisposalApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/commandCoordination/lawenforcement/lawEnforcementCaseHandling/casedisposal';
+import { CaseDisposalApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/commandCoordination/lawenforcement/lawEnforcementCaseHandling/casedisposal';
 import download from '#/utils/genchuan/download';
 import { dateFormatter } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElSelect, ElOption, ElPagination, ElSpace } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElSelect,
+  ElOption,
+  ElPagination,
+  ElSpace,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 
 import CaseDisposalForm from './CaseDisposalForm.vue';
@@ -41,10 +52,7 @@ const getDisposalTypeLabel = (value: string) => {
 const getList = async () => {
   loading.value = true;
   try {
-    const data =
-      await CaseDisposalApi.getCaseDisposalPage(
-        queryParams,
-      );
+    const data = await CaseDisposalApi.getCaseDisposalPage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -90,12 +98,10 @@ const handleExport = async () => {
     await confirm('是否确认导出所有案件处理数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
-    const data =
-      await CaseDisposalApi.exportCaseDisposal(
-        queryParams,
-      );
+    const data = await CaseDisposalApi.exportCaseDisposal(queryParams);
     download.excel(data, '案件处理.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -146,10 +152,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -174,14 +177,34 @@ onMounted(() => {
         style="width: 100%"
       >
         <ElTableColumn label="ID" align="center" prop="id" min-width="50" />
-        <ElTableColumn label="案件 ID" align="center" prop="caseId" min-width="120" />
-        <ElTableColumn label="处理类型" align="center" prop="disposalType" min-width="120">
+        <ElTableColumn
+          label="案件 ID"
+          align="center"
+          prop="caseId"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="处理类型"
+          align="center"
+          prop="disposalType"
+          min-width="120"
+        >
           <template #default="scope">
             {{ getDisposalTypeLabel(scope.row.disposalType) }}
           </template>
         </ElTableColumn>
-        <ElTableColumn label="处理部门" align="center" prop="disposalDepartment" min-width="120" />
-        <ElTableColumn label="处理人" align="center" prop="disposalPerson" min-width="100" />
+        <ElTableColumn
+          label="处理部门"
+          align="center"
+          prop="disposalDepartment"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="处理人"
+          align="center"
+          prop="disposalPerson"
+          min-width="100"
+        />
         <ElTableColumn
           label="处理开始时间"
           align="center"
@@ -196,12 +219,42 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="150"
         />
-        <ElTableColumn label="处理依据" align="center" prop="disposalBasis" min-width="150" />
-        <ElTableColumn label="处理内容" align="center" prop="disposalContent" min-width="200" />
-        <ElTableColumn label="处理结果" align="center" prop="disposalResult" min-width="150" />
-        <ElTableColumn label="处罚金额" align="center" prop="penaltyAmount" min-width="100" />
-        <ElTableColumn label="处罚类型" align="center" prop="penaltyType" min-width="120" />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="150">
+        <ElTableColumn
+          label="处理依据"
+          align="center"
+          prop="disposalBasis"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="处理内容"
+          align="center"
+          prop="disposalContent"
+          min-width="200"
+        />
+        <ElTableColumn
+          label="处理结果"
+          align="center"
+          prop="disposalResult"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="处罚金额"
+          align="center"
+          prop="penaltyAmount"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="处罚类型"
+          align="center"
+          prop="penaltyType"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="150"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -211,11 +264,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

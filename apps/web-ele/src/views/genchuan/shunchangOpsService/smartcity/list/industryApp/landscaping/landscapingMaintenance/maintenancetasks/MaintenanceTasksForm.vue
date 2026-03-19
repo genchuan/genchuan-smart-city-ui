@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker
+  ElMessage,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
 } from 'element-plus';
-import {
-  MaintenanceTasksApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingMaintenance/maintenancetasks';
+import { MaintenanceTasksApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingMaintenance/maintenancetasks';
 
 /** 养护任务 表单 */
 defineOptions({ name: 'MaintenanceTasksForm' });
@@ -100,7 +104,12 @@ const resetForm = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -115,10 +124,16 @@ const resetForm = () => {
         <ElInput v-model="formData.task" placeholder="请输入任务名称" />
       </ElFormItem>
       <ElFormItem label="养护地块" prop="maintainTheLandParcel">
-        <ElInput v-model="formData.maintainTheLandParcel" placeholder="请输入养护地块" />
+        <ElInput
+          v-model="formData.maintainTheLandParcel"
+          placeholder="请输入养护地块"
+        />
       </ElFormItem>
       <ElFormItem label="养护人员" prop="maintenancePersonnel">
-        <ElInput v-model="formData.maintenancePersonnel" placeholder="请输入养护人员" />
+        <ElInput
+          v-model="formData.maintenancePersonnel"
+          placeholder="请输入养护人员"
+        />
       </ElFormItem>
       <ElFormItem label="任务开始时间" prop="taskStartTime">
         <ElDatePicker
@@ -139,16 +154,30 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="任务内容" prop="taskContent">
-        <ElInput v-model="formData.taskContent" type="textarea" placeholder="请输入任务内容" />
+        <ElInput
+          v-model="formData.taskContent"
+          type="textarea"
+          placeholder="请输入任务内容"
+        />
       </ElFormItem>
       <ElFormItem label="所需工具" prop="requiredTools">
-        <ElInput v-model="formData.requiredTools" placeholder="请输入所需工具" />
+        <ElInput
+          v-model="formData.requiredTools"
+          placeholder="请输入所需工具"
+        />
       </ElFormItem>
       <ElFormItem label="任务优先级" prop="taskPriority">
-        <ElInput v-model="formData.taskPriority" placeholder="请输入任务优先级" />
+        <ElInput
+          v-model="formData.taskPriority"
+          placeholder="请输入任务优先级"
+        />
       </ElFormItem>
       <ElFormItem label="完成情况说明" prop="completionStatusDescription">
-        <ElInput v-model="formData.completionStatusDescription" type="textarea" placeholder="请输入完成情况说明" />
+        <ElInput
+          v-model="formData.completionStatusDescription"
+          type="textarea"
+          placeholder="请输入完成情况说明"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

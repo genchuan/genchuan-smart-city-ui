@@ -10,7 +10,10 @@
       <!--第二块（原右边第 3 个）-->
       <div class="two bg">
         <div class="title">环卫质量指标</div>
-        <CapsuleChart :config="rightData.rightTwo" style="width:100%;height:calc(100% - 40px)" />
+        <CapsuleChart
+          :config="rightData.rightTwo"
+          style="width: 100%; height: calc(100% - 40px)"
+        />
         <!--        <chart-type-poly-lines
                   :idName="rightData.rightTwo.idName"
                   :xAxisData="rightData.rightTwo.xAxisData"
@@ -23,7 +26,7 @@
         <div class="title">环卫事件清单</div>
         <ScrollBoard
           :config="leftData.CCDvScrollBoardConfig"
-          style="padding: 15px 25px 25px;  height: calc(100% - 35px - 40px);"
+          style=" height: calc(100% - 35px - 40px);padding: 15px 25px 25px"
         />
       </div>
     </div>
@@ -32,11 +35,11 @@
     <div class="content-center">
       <div class="s1">
         <chart-customize1 :paramsData="centerData.customizeParams" />
-        <map-common idName="chinaEcharts" :geometriesArray="geometriesArray"/>
+        <map-common idName="chinaEcharts" :geometriesArray="geometriesArray" />
       </div>
       <div class="s2 bg">
         <div class="title">环卫项目介绍</div>
-        <chart-customize3 :proJectsList="centerData.proJectsList"/>
+        <chart-customize3 :proJectsList="centerData.proJectsList" />
       </div>
     </div>
 
@@ -87,13 +90,13 @@ import ChartTypePolyLines from './ChartTypePolyLines.vue';
 import ChartCustomize3 from './ChartCustomize3.vue';
 import { CapsuleChart, ScrollBoard } from '@kjgl77/datav-vue3';
 
-const geometriesArray=[
-  {x:26.925227,y:117.620114},
-  {x:26.955227,y:117.620114},
-  {x:26.693227,y:117.760114},
-  {x:26.7533227,y:117.600114},
-  {x:26.7833227,y:117.600114},
-  {x:26.863227,y:117.9220114},
+const geometriesArray = [
+  { x: 26.925227, y: 117.620114 },
+  { x: 26.955227, y: 117.620114 },
+  { x: 26.693227, y: 117.760114 },
+  { x: 26.7533227, y: 117.600114 },
+  { x: 26.7833227, y: 117.600114 },
+  { x: 26.863227, y: 117.9220114 },
 ];
 
 const leftData = ref({
@@ -103,20 +106,20 @@ const leftData = ref({
     { title: '垃圾处理厂', num: '15', unit: '座' },
     { title: '环卫车辆', num: '20', unit: '辆' },
     { title: '日垃圾处理量', num: '500', unit: '吨' },
-    { title: '月垃圾处理量', num: '13000', unit: '吨' }
+    { title: '月垃圾处理量', num: '13000', unit: '吨' },
   ],
   picData: [
     { value: 20, name: '垃圾分类' },
     { value: 30, name: '垃圾清运' },
     { value: 42, name: '环卫清扫' },
-    { value: 32, name: '环卫设施维护' }
+    { value: 32, name: '环卫设施维护' },
   ],
   lineAxisData: ['2-21', '2-22', '2-23', '2-24', '2-25', '2-26', '2-27'],
   picRightData2: [
     { title: '环卫站点数量', num: '50', unit: '个' },
     { title: '环卫人员数量', num: '200', unit: '人' },
     { title: '日垃圾清运量', num: '150', unit: '吨' },
-    { title: '月垃圾清运总量', num: '4500', unit: '吨' }
+    { title: '月垃圾清运总量', num: '4500', unit: '吨' },
   ],
   lineSeriesData: [150, 145, 152, 148, 153, 143, 150],
   CCDvScrollBoardConfig: {
@@ -136,18 +139,18 @@ const leftData = ref({
       ['西部垃圾处理厂', '设备故障', '13:40', '已解决'],
       ['南郊街道', '垃圾清运不及时', '14:05', '处理中'],
       ['北郊公园', '环卫清扫不到位', '14:30', '已解决'],
-      ['城中老街', '环卫人员不足', '15:00', '处理中']
+      ['城中老街', '环卫人员不足', '15:00', '处理中'],
     ],
     rowNum: 4, // 表行数
-    align: ['center', 'center', 'center']
-  }
+    align: ['center', 'center', 'center'],
+  },
 });
 
 const centerData = ref({
   customizeParams: {
     name: '连续清洁天数：',
     runningDays: '24',
-    tail: '天'
+    tail: '天',
   },
   proJectsList: {
     processName: '设备技术',
@@ -170,15 +173,15 @@ const centerData = ref({
         realPictures: [
           {
             imgUrl: new URL('../assets/images/2.png', import.meta.url).href,
-            name: '自动垃圾压缩'
+            name: '自动垃圾压缩',
           },
           {
             imgUrl: new URL('../assets/images/1.png', import.meta.url).href,
-            name: '机械化清扫'
-          }
-        ]
+            name: '机械化清扫',
+          },
+        ],
       },
-     /* {
+      /* {
         name: '城乡环卫一体化项目',
         process: '手动清扫 + 垃圾分类投放',
         processingScale: '1200万平方米/年',
@@ -258,8 +261,8 @@ const centerData = ref({
           }
         ]
       }*/
-    ]
-  }
+    ],
+  },
 });
 
 const rightData = ref({
@@ -268,11 +271,24 @@ const rightData = ref({
     { name: '环卫清扫车', num: '135', unit: '辆' },
     { name: '垃圾清运车', num: '123', unit: '辆' },
     { name: '洒水车', num: '256', unit: '辆' },
-    { name: '环卫垃圾桶', num: '338', unit: '个' }
+    { name: '环卫垃圾桶', num: '338', unit: '个' },
   ],
   rightOne: {
     idName: 'rightOne',
-    xAxisData: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+    xAxisData: [
+      '1月',
+      '2月',
+      '3月',
+      '4月',
+      '5月',
+      '6月',
+      '7月',
+      '8月',
+      '9月',
+      '10月',
+      '11月',
+      '12月',
+    ],
     yAxisName: '',
     polyLinesData: [
       {
@@ -280,16 +296,16 @@ const rightData = ref({
         name: '今年', // 提示的名称
         color: ['rgba(58,114,215,1)', 'rgba(58,114,215,0.1)'], // 渐变色0 - 1
         type: 'line',
-        data: [38, 51, 120, 160, 180, 135, 240, 220, 291, 320, 280, 260] // 纵坐标值
+        data: [38, 51, 120, 160, 180, 135, 240, 220, 291, 320, 280, 260], // 纵坐标值
       },
       {
         lineColor: '#11e48a',
         name: '去年',
         color: ['rgba(9,114,95,1)', 'rgba(9,114,95,0.1)'],
         type: 'line',
-        data: [165, 186, 235, 268, 220, 232, 282, 260, 220, 200, 180, 140] // 纵坐标值
-      }
-    ]
+        data: [165, 186, 235, 268, 220, 232, 282, 260, 220, 200, 180, 140], // 纵坐标值
+      },
+    ],
   },
   rightTwo: {
     data: [
@@ -297,10 +313,10 @@ const rightData = ref({
       { name: '垃圾收集率', value: 120 },
       { name: '垃圾分类参与率', value: 78 },
       { name: '环卫设施整洁度', value: 66 },
-      { name: '垃圾处理合规率', value: 80 }
+      { name: '垃圾处理合规率', value: 80 },
     ],
-    showValue: false
-  }
+    showValue: false,
+  },
 });
 </script>
 
@@ -308,7 +324,7 @@ const rightData = ref({
 .CityAppearanceAndSanitation-center-css {
   display: flex;
   flex-wrap: nowrap;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 </style>

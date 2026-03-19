@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton
+  ElMessage,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
 } from 'element-plus';
-import {
-  BasicIllegalApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/specialProject/illegalConstructionInspection/basicillegal';
+import { BasicIllegalApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/specialProject/illegalConstructionInspection/basicillegal';
 
 /** 违建基本信息 表单 */
 defineOptions({ name: 'BasicIllegalForm' });
@@ -32,7 +35,8 @@ const formRef = ref(); // 表单 Ref
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增违建基本信息' : '编辑违建基本信息';
+  dialogTitle.value =
+    type === 'create' ? '新增违建基本信息' : '编辑违建基本信息';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -85,7 +89,12 @@ const resetForm = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -94,22 +103,37 @@ const resetForm = () => {
       v-loading="formLoading"
     >
       <ElFormItem label="违建编号" prop="buildingNumber">
-        <ElInput v-model="formData.buildingNumber" placeholder="请输入违建编号" />
+        <ElInput
+          v-model="formData.buildingNumber"
+          placeholder="请输入违建编号"
+        />
       </ElFormItem>
       <ElFormItem label="违建地址" prop="buildingAddress">
-        <ElInput v-model="formData.buildingAddress" placeholder="请输入违建地址" />
+        <ElInput
+          v-model="formData.buildingAddress"
+          placeholder="请输入违建地址"
+        />
       </ElFormItem>
       <ElFormItem label="违建面积" prop="constructionArea">
-        <ElInput v-model="formData.constructionArea" placeholder="请输入违建面积" />
+        <ElInput
+          v-model="formData.constructionArea"
+          placeholder="请输入违建面积"
+        />
       </ElFormItem>
       <ElFormItem label="违建结构类型" prop="typesStructures">
-        <ElInput v-model="formData.typesStructures" placeholder="请输入违建结构类型" />
+        <ElInput
+          v-model="formData.typesStructures"
+          placeholder="请输入违建结构类型"
+        />
       </ElFormItem>
       <ElFormItem label="违建层数" prop="numberFloors">
         <ElInput v-model="formData.numberFloors" placeholder="请输入违建层数" />
       </ElFormItem>
       <ElFormItem label="违建用途" prop="unauthorizedBuildings">
-        <ElInput v-model="formData.unauthorizedBuildings" placeholder="请输入违建用途" />
+        <ElInput
+          v-model="formData.unauthorizedBuildings"
+          placeholder="请输入违建用途"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

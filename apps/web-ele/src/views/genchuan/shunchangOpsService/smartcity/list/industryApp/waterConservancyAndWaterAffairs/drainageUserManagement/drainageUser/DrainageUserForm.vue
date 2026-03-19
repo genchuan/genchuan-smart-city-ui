@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import { reactive, ref, computed } from 'vue';
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton, ElSelect, ElOption
+  ElMessage,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElSelect,
+  ElOption,
 } from 'element-plus';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
-import {
-  DrainageUserApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/waterConservancyAndWaterAffairs/drainageUserManagement/drainageUser';
+import { DrainageUserApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/waterConservancyAndWaterAffairs/drainageUserManagement/drainageUser';
 
 /** 排水户信息 表单 */
 defineOptions({ name: 'DrainageUserForm' });
@@ -35,8 +40,12 @@ const formRules = reactive({});
 const formRef = ref(); // 表单 Ref
 
 // 字典选项 - 使用计算属性实时获取
-const industryTypeOptions = computed(() => getDictOptions(DICT_TYPE.SM_INDUSTRY_CATEGORY, 'string'));
-const userTypeOptions = computed(() => getDictOptions(DICT_TYPE.SM_DRAINAGE_USER, 'string'));
+const industryTypeOptions = computed(() =>
+  getDictOptions(DICT_TYPE.SM_INDUSTRY_CATEGORY, 'string'),
+);
+const userTypeOptions = computed(() =>
+  getDictOptions(DICT_TYPE.SM_DRAINAGE_USER, 'string'),
+);
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
@@ -95,7 +104,12 @@ const resetForm = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -104,13 +118,20 @@ const resetForm = () => {
       v-loading="formLoading"
     >
       <ElFormItem label="统一社会信用代码" prop="creditCode">
-        <ElInput v-model="formData.creditCode" placeholder="请输入统一社会信用代码" />
+        <ElInput
+          v-model="formData.creditCode"
+          placeholder="请输入统一社会信用代码"
+        />
       </ElFormItem>
       <ElFormItem label="排水户名称" prop="userName">
         <ElInput v-model="formData.userName" placeholder="请输入排水户名称" />
       </ElFormItem>
       <ElFormItem label="行业类别" prop="industryType">
-        <ElSelect v-model="formData.industryType" placeholder="请选择行业类别" style="width: 100%">
+        <ElSelect
+          v-model="formData.industryType"
+          placeholder="请选择行业类别"
+          style="width: 100%"
+        >
           <ElOption
             v-for="dict in industryTypeOptions"
             :key="dict.value"
@@ -120,7 +141,11 @@ const resetForm = () => {
         </ElSelect>
       </ElFormItem>
       <ElFormItem label="排水户分类" prop="userType">
-        <ElSelect v-model="formData.userType" placeholder="请选择排水户分类" style="width: 100%">
+        <ElSelect
+          v-model="formData.userType"
+          placeholder="请选择排水户分类"
+          style="width: 100%"
+        >
           <ElOption
             v-for="dict in userTypeOptions"
             :key="dict.value"
@@ -130,13 +155,23 @@ const resetForm = () => {
         </ElSelect>
       </ElFormItem>
       <ElFormItem label="月均用水量（吨）" prop="waterUsage">
-        <ElInput v-model="formData.waterUsage" placeholder="请输入月均用水量（吨）" />
+        <ElInput
+          v-model="formData.waterUsage"
+          placeholder="请输入月均用水量（吨）"
+        />
       </ElFormItem>
       <ElFormItem label="排水管网接入点坐标" prop="drainagePoint">
-        <ElInput v-model="formData.drainagePoint" placeholder="请输入排水管网接入点坐标" />
+        <ElInput
+          v-model="formData.drainagePoint"
+          placeholder="请输入排水管网接入点坐标"
+        />
       </ElFormItem>
       <ElFormItem label="预处理设施清单" prop="preTreatment">
-        <ElInput v-model="formData.preTreatment" type="textarea" placeholder="请输入预处理设施清单" />
+        <ElInput
+          v-model="formData.preTreatment"
+          type="textarea"
+          placeholder="请输入预处理设施清单"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

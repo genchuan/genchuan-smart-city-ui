@@ -3,12 +3,24 @@ import { ref, reactive, onMounted, computed } from 'vue';
 import { confirm } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictOptions, getDictLabel } from '@vben/hooks';
-import {
-  DrainageLicenseApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/waterConservancyAndWaterAffairs/drainageUserManagement/drainageLicense';
+import { DrainageLicenseApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/waterConservancyAndWaterAffairs/drainageUserManagement/drainageLicense';
 import download from '#/utils/genchuan/download';
 import { dateFormatter, dateFormatter2 } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElSelect, ElOption, ElPagination, ElSpace, ElTag } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElSelect,
+  ElOption,
+  ElPagination,
+  ElSpace,
+  ElTag,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 
 import DrainageLicenseForm from './DrainageLicenseForm.vue';
@@ -30,8 +42,12 @@ const queryFormRef = ref(); // 搜索的表单
 const exportLoading = ref(false); // 导出的加载中
 
 // 字典选项 - 使用计算属性实时获取
-const drainageTypeOptions = computed(() => getDictOptions(DICT_TYPE.SM_DRAINAGE_TYPE, 'string'));
-const licenseStatusOptions = computed(() => getDictOptions(DICT_TYPE.CRM_AUDIT_STATUS, 'string'));
+const drainageTypeOptions = computed(() =>
+  getDictOptions(DICT_TYPE.SM_DRAINAGE_TYPE, 'string'),
+);
+const licenseStatusOptions = computed(() =>
+  getDictOptions(DICT_TYPE.CRM_AUDIT_STATUS, 'string'),
+);
 
 // 获取字典标签方法
 const getDrainageTypeLabel = (value: string) => {
@@ -94,7 +110,8 @@ const handleExport = async () => {
     exportLoading.value = true;
     const data = await DrainageLicenseApi.exportDrainageLicense(queryParams);
     download.excel(data, '排水电子许可证信息.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -156,10 +173,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -204,7 +218,12 @@ onMounted(() => {
           :formatter="dateFormatter2"
           min-width="150"
         />
-        <ElTableColumn label="许可排水类型" align="center" prop="drainageType" min-width="120">
+        <ElTableColumn
+          label="许可排水类型"
+          align="center"
+          prop="drainageType"
+          min-width="120"
+        >
           <template #default="scope">
             <ElTag v-if="scope.row.drainageType" type="primary" size="small">
               {{ getDrainageTypeLabel(scope.row.drainageType) }}
@@ -212,10 +231,24 @@ onMounted(() => {
             <span v-else>-</span>
           </template>
         </ElTableColumn>
-        <ElTableColumn label="审批单位" align="center" prop="approvalUnit" min-width="150" />
-        <ElTableColumn label="状态" align="center" prop="licenseStatus" min-width="100">
+        <ElTableColumn
+          label="审批单位"
+          align="center"
+          prop="approvalUnit"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="状态"
+          align="center"
+          prop="licenseStatus"
+          min-width="100"
+        >
           <template #default="scope">
-            <ElTag v-if="scope.row.licenseStatus" :type="scope.row.licenseStatus === '20' ? 'success' : 'info'" size="small">
+            <ElTag
+              v-if="scope.row.licenseStatus"
+              :type="scope.row.licenseStatus === '20' ? 'success' : 'info'"
+              size="small"
+            >
               {{ getLicenseStatusLabel(scope.row.licenseStatus) }}
             </ElTag>
             <span v-else>-</span>
@@ -228,7 +261,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="150"
         />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="150">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="150"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -238,11 +276,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

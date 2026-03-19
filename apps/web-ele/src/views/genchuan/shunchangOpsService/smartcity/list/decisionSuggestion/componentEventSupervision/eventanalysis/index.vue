@@ -1,12 +1,23 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { confirm } from '@vben/common-ui';
-import {
-  EventAnalysisApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/decisionSuggestion/componentEventSupervision/eventanalysis';
+import { EventAnalysisApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/decisionSuggestion/componentEventSupervision/eventanalysis';
 import download from '#/utils/genchuan/download';
 import { dateFormatter } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElPagination, ElSpace, ElSelect, ElOption } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElPagination,
+  ElSpace,
+  ElSelect,
+  ElOption,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 
 import EventAnalysisForm from './EventAnalysisForm.vue';
@@ -46,10 +57,7 @@ const getAssociationTypeLabel = (value: string) => {
 const getList = async () => {
   loading.value = true;
   try {
-    const data =
-      await EventAnalysisApi.getEventAnalysisPage(
-        queryParams,
-      );
+    const data = await EventAnalysisApi.getEventAnalysisPage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -95,12 +103,10 @@ const handleExport = async () => {
     await confirm('是否确认导出所有事件关联分析数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
-    const data =
-      await EventAnalysisApi.exportEventAnalysis(
-        queryParams,
-      );
+    const data = await EventAnalysisApi.exportEventAnalysis(queryParams);
     download.excel(data, '事件关联分析.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -147,10 +153,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -181,16 +184,46 @@ onMounted(() => {
           prop="analysisNumber"
           min-width="150"
         />
-        <ElTableColumn label="主事件编号" align="center" prop="mainEventNumber" min-width="150" />
-        <ElTableColumn label="主事件名称" align="center" prop="mainEventName" min-width="150" />
-        <ElTableColumn label="关联事件编号" align="center" prop="relatedEventNumber" min-width="150" />
-        <ElTableColumn label="关联事件名称" align="center" prop="relatedEventName" min-width="150" />
-        <ElTableColumn label="关联类型" align="center" prop="associationType" min-width="120">
+        <ElTableColumn
+          label="主事件编号"
+          align="center"
+          prop="mainEventNumber"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="主事件名称"
+          align="center"
+          prop="mainEventName"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="关联事件编号"
+          align="center"
+          prop="relatedEventNumber"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="关联事件名称"
+          align="center"
+          prop="relatedEventName"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="关联类型"
+          align="center"
+          prop="associationType"
+          min-width="120"
+        >
           <template #default="scope">
             {{ getAssociationTypeLabel(scope.row.associationType) }}
           </template>
         </ElTableColumn>
-        <ElTableColumn label="关联强度" align="center" prop="associationStrength" min-width="100" />
+        <ElTableColumn
+          label="关联强度"
+          align="center"
+          prop="associationStrength"
+          min-width="100"
+        />
         <ElTableColumn
           label="分析时间"
           align="center"
@@ -198,10 +231,30 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="150"
         />
-        <ElTableColumn label="分析人员" align="center" prop="analysts" min-width="100" />
-        <ElTableColumn label="分析结论" align="center" prop="conclusion" min-width="200" />
-        <ElTableColumn label="关联证据" align="center" prop="relatedEvidence" min-width="200" />
-        <ElTableColumn label="建议措施" align="center" prop="recommendedMeasure" min-width="200" />
+        <ElTableColumn
+          label="分析人员"
+          align="center"
+          prop="analysts"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="分析结论"
+          align="center"
+          prop="conclusion"
+          min-width="200"
+        />
+        <ElTableColumn
+          label="关联证据"
+          align="center"
+          prop="relatedEvidence"
+          min-width="200"
+        />
+        <ElTableColumn
+          label="建议措施"
+          align="center"
+          prop="recommendedMeasure"
+          min-width="200"
+        />
         <ElTableColumn
           label="创建时间"
           align="center"
@@ -209,7 +262,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="150"
         />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="150">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="150"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -219,11 +277,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

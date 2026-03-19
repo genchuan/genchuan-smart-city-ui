@@ -1,23 +1,31 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
 
-import { ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker, ElSelect, ElOption } from 'element-plus';
-
 import {
-  CaseAcceptanceApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/commandCoordination/lawenforcement/lawEnforcementCaseHandling/caseacceptance';
+  ElMessage,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
+  ElSelect,
+  ElOption,
+} from 'element-plus';
+
+import { CaseAcceptanceApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/commandCoordination/lawenforcement/lawEnforcementCaseHandling/caseacceptance';
 
 /** 案件受理 表单 */
-defineOptions({ name: 'CaseAcceptanceForm' })
+defineOptions({ name: 'CaseAcceptanceForm' });
 
 // 提供 open 方法，用于打开弹窗
 
 /** 提交表单 */
-const emit = defineEmits(['success'])
-const dialogVisible = ref(false) // 弹窗的是否展示
-const dialogTitle = ref('') // 弹窗的标题
-const formLoading = ref(false) // 表单的加载中：1）修改时的数据加载；2）提交的按钮禁用
-const formType = ref('') // 表单的类型：create - 新增；update - 修改
+const emit = defineEmits(['success']);
+const dialogVisible = ref(false); // 弹窗的是否展示
+const dialogTitle = ref(''); // 弹窗的标题
+const formLoading = ref(false); // 表单的加载中：1）修改时的数据加载；2）提交的按钮禁用
+const formType = ref(''); // 表单的类型：create - 新增；update - 修改
 const formData = ref({
   id: undefined,
   caseCode: undefined,
@@ -30,54 +38,54 @@ const formData = ref({
   reportPerson: undefined,
   reportPhone: undefined,
   caseDesc: undefined,
-  caseStatus: undefined
-})
-const formRules = reactive({})
-const formRef = ref() // 表单 Ref
+  caseStatus: undefined,
+});
+const formRules = reactive({});
+const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
-  dialogVisible.value = true
-  dialogTitle.value = type === 'create' ? '新增案件受理' : '编辑案件受理'
-  formType.value = type
-  resetForm()
+  dialogVisible.value = true;
+  dialogTitle.value = type === 'create' ? '新增案件受理' : '编辑案件受理';
+  formType.value = type;
+  resetForm();
   // 修改时，设置数据
   if (id) {
-    formLoading.value = true
+    formLoading.value = true;
     try {
-      const res = await CaseAcceptanceApi.getCaseAcceptance(id)
+      const res = await CaseAcceptanceApi.getCaseAcceptance(id);
       formData.value = {
         ...res,
         // 将字符串时间戳转为数字
-        caseTime: res.caseTime ? Number(res.caseTime) : undefined
-      }
+        caseTime: res.caseTime ? Number(res.caseTime) : undefined,
+      };
     } finally {
-      formLoading.value = false
+      formLoading.value = false;
     }
   }
-}
-defineExpose({ open }) // 定义 success 事件，用于操作成功后的回调
+};
+defineExpose({ open }); // 定义 success 事件，用于操作成功后的回调
 const submitForm = async () => {
   // 校验表单
-  await formRef.value.validate()
+  await formRef.value.validate();
   // 提交请求
-  formLoading.value = true
+  formLoading.value = true;
   try {
-    const data = formData.value
+    const data = formData.value;
     if (formType.value === 'create') {
-      await CaseAcceptanceApi.createCaseAcceptance(data)
-      ElMessage.success('新增成功')
+      await CaseAcceptanceApi.createCaseAcceptance(data);
+      ElMessage.success('新增成功');
     } else {
-      await CaseAcceptanceApi.updateCaseAcceptance(data)
-      ElMessage.success('修改成功')
+      await CaseAcceptanceApi.updateCaseAcceptance(data);
+      ElMessage.success('修改成功');
     }
-    dialogVisible.value = false
+    dialogVisible.value = false;
     // 发送操作成功的事件
-    emit('success')
+    emit('success');
   } finally {
-    formLoading.value = false
+    formLoading.value = false;
   }
-}
+};
 
 /** 重置表单 */
 const resetForm = () => {
@@ -93,13 +101,18 @@ const resetForm = () => {
     reportPerson: undefined,
     reportPhone: undefined,
     caseDesc: undefined,
-    caseStatus: undefined
-  }
-  formRef.value?.resetFields()
-}
+    caseStatus: undefined,
+  };
+  formRef.value?.resetFields();
+};
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -144,13 +157,20 @@ const resetForm = () => {
         <ElInput v-model="formData.reportUnit" placeholder="请输入报案单位" />
       </ElFormItem>
       <ElFormItem label="当事人信息" prop="reportPerson">
-        <ElInput v-model="formData.reportPerson" placeholder="请输入当事人信息" />
+        <ElInput
+          v-model="formData.reportPerson"
+          placeholder="请输入当事人信息"
+        />
       </ElFormItem>
       <ElFormItem label="联系电话" prop="reportPhone">
         <ElInput v-model="formData.reportPhone" placeholder="请输入联系电话" />
       </ElFormItem>
       <ElFormItem label="案件描述" prop="caseDesc">
-        <ElInput v-model="formData.caseDesc" type="textarea" placeholder="请输入案件描述" />
+        <ElInput
+          v-model="formData.caseDesc"
+          type="textarea"
+          placeholder="请输入案件描述"
+        />
       </ElFormItem>
       <ElFormItem label="立案状态" prop="caseStatus">
         <ElSelect v-model="formData.caseStatus" placeholder="请选择立案状态">
@@ -163,7 +183,9 @@ const resetForm = () => {
     </ElForm>
     <template #footer>
       <ElButton @click="dialogVisible = false">取 消</ElButton>
-      <ElButton @click="submitForm" type="primary" :disabled="formLoading">确 定</ElButton>
+      <ElButton @click="submitForm" type="primary" :disabled="formLoading"
+        >确 定</ElButton
+      >
     </template>
   </ElDialog>
 </template>

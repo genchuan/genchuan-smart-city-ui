@@ -1,16 +1,30 @@
 <template>
   <div class="ChartCustomize3-css">
-    <el-carousel height="100%" :interval="3000000" indicator-position="none" style="height: 100%" v-if="proJectsList.listData.length">
-      <el-carousel-item v-for="(item,key) in proJectsList.listData" :key="key">
+    <el-carousel
+      height="100%"
+      :interval="3000000"
+      indicator-position="none"
+      style="height: 100%"
+      v-if="proJectsList.listData.length"
+    >
+      <el-carousel-item v-for="(item, key) in proJectsList.listData" :key="key">
         <div class="ChartCustomize3-content">
           <div class="ChartCustomize3-content-left">
             <div class="n1">
               <!--<img src="@/assets/chart/images/dataV-02.jpg">-->
-              {{item.name}}
+              {{ item.name }}
             </div>
-            <div class="n2 space1">{{ proJectsList.processName }}：{{item.process}}</div>
-            <div class="n2 space1">{{ proJectsList.processingScaleName }}：{{ item.processingScale }}</div>
-            <div class="n2 space1">{{ proJectsList.theAmountOfWaterReturnedName }}：{{ item.theAmountOfWaterReturned }}</div>
+            <div class="n2 space1">
+              {{ proJectsList.processName }}：{{ item.process }}
+            </div>
+            <div class="n2 space1">
+              {{ proJectsList.processingScaleName }}：{{ item.processingScale }}
+            </div>
+            <div class="n2 space1">
+              {{ proJectsList.theAmountOfWaterReturnedName }}：{{
+                item.theAmountOfWaterReturned
+              }}
+            </div>
             <div class="n3">
               <div class="c1">
                 <div class="d1">{{ proJectsList.responsibleName }}</div>
@@ -18,7 +32,7 @@
               </div>
               <div class="c1 c2">
                 <div class="d1">{{ proJectsList.contactNumberName }}</div>
-                <div class="d2"> {{ item.contactNumber }}</div>
+                <div class="d2">{{ item.contactNumber }}</div>
               </div>
             </div>
             <div class="n3">
@@ -28,17 +42,17 @@
               </div>
               <div class="c1 c2">
                 <div class="d1">{{ proJectsList.contactNumber2Name }}</div>
-                <div class="d2"> {{ item.contactNumber2 }}</div>
+                <div class="d2">{{ item.contactNumber2 }}</div>
               </div>
             </div>
           </div>
           <div class="ChartCustomize3-content-right">
             <div class="n1" v-if="item.realPictures.length">
-              <img :src="item.realPictures[0].imgUrl"/>
+              <img :src="item.realPictures[0].imgUrl" />
               <div>{{ item.realPictures[0].name }}</div>
             </div>
             <div class="n1 n2" v-if="item.realPictures.length">
-              <img :src="item.realPictures[1].imgUrl"/>
+              <img :src="item.realPictures[1].imgUrl" />
               <div>{{ item.realPictures[1].name }}</div>
             </div>
           </div>
@@ -63,10 +77,10 @@ const props = defineProps({
         contactNumberName: '',
         safetyOfficerName: '',
         contactNumber2Name: '',
-        listData: []
+        listData: [],
       };
-    }
-  }
+    },
+  },
 });
 
 // const imgUrl = new URL('@/assets/chart/images/1.png', import.meta.url).href;
@@ -76,43 +90,38 @@ const props = defineProps({
 .ChartCustomize3-css {
   height: calc(100% - 35px);
 
-
   .ChartCustomize3-content {
     display: flex;
-    flex-wrap: nowrap;
-    justify-content: space-between;
+    flex-flow: row nowrap;
     align-items: center;
-    flex-direction: row;
-    padding: 5px 25px 25px 25px;
+    justify-content: space-between;
+    padding: 5px 25px 25px;
 
     .ChartCustomize3-content-left {
       width: 60%;
 
-
       .space1 {
         width: 100%;
         height: 30px;
-        line-height: 30px;
         overflow: hidden;
-        white-space: nowrap;
         text-overflow: ellipsis;
+        line-height: 30px;
+        white-space: nowrap;
       }
 
-
       .n1 {
-        color: #fff;
-        font-size: 18px;
         display: flex;
-        flex-wrap: nowrap;
-        justify-content: flex-start;
+        flex-flow: row nowrap;
         align-items: center;
-        flex-direction: row;
+        justify-content: flex-start;
         width: 160%;
         height: 28px;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
         margin-bottom: 5px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 18px;
+        color: #fff;
+        white-space: nowrap;
 
         img {
           height: 28px;
@@ -121,41 +130,40 @@ const props = defineProps({
       }
 
       .n2 {
-        color: #b5b5b5;
         font-size: 16px;
+        color: #b5b5b5;
         //padding-top: 9px;
       }
 
       .n3 {
-        margin-top: 8px;
         display: flex;
-        flex-wrap: nowrap;
-        justify-content: flex-start;
+        flex-flow: row nowrap;
         align-items: center;
-        flex-direction: row;
+        justify-content: flex-start;
+        margin-top: 8px;
 
         .c1 {
           width: 175px;
           height: 43px;
-          background: url("../assets/images/dataV-03.jpg") no-repeat;
+          background: url('../assets/images/dataV-03.jpg') no-repeat;
           background-size: 100% 100%;
 
           .d1 {
-            color: #139aff;
             padding: 3px 0 3px 75px;
             font-size: 12px;
+            color: #139aff;
           }
 
           .d2 {
-            color: #fff;
             padding: 0 0 0 75px;
             font-size: 12px;
+            color: #fff;
           }
         }
 
         .c2 {
           margin-left: 12px;
-          background: url("../assets/images/dataV-04.jpg") no-repeat;
+          background: url('../assets/images/dataV-04.jpg') no-repeat;
           background-size: 100% 100%;
         }
       }
@@ -163,10 +171,9 @@ const props = defineProps({
 
     .ChartCustomize3-content-right {
       display: flex;
-      flex-wrap: nowrap;
-      justify-content: flex-start;
+      flex-flow: row nowrap;
       align-items: center;
-      flex-direction: row;
+      justify-content: flex-start;
       width: 40%;
       margin-left: 10px;
 
@@ -177,11 +184,11 @@ const props = defineProps({
         }
 
         div {
-          text-align: center;
-          color: #77d7ff;
-          font-size: 12px;
-          background: #071e61;
           padding: 5px 0;
+          font-size: 12px;
+          color: #77d7ff;
+          text-align: center;
+          background: #071e61;
         }
       }
 

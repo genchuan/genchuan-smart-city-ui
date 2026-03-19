@@ -2,28 +2,35 @@ import { requestClient } from '#/api/request';
 
 // 巡查任务 VO
 export type InspectionTaskAVO = {
-  id: number;
-  taskNumber: string;
-  task: string;
-  taskDescription: string;
-  startingTimeA: string;
   endTimeB: string;
+  id: number;
   inspectionItems: string;
   notes: string;
+  startingTimeA: string;
+  task: string;
+  taskDescription: string;
+  taskNumber: string;
 };
 
 // 巡查任务 API
 export const InspectionTaskAApi = {
   getInspectionTaskAPage: async (params: any) => {
-    return await requestClient.get(`/smartcity/inspection-task-a/page`, { params });
+    return await requestClient.get(`/smartcity/inspection-task-a/page`, {
+      params,
+    });
   },
 
   getInspectionTaskA: async (id: number) => {
-    return await requestClient.get(`/smartcity/inspection-task-a/get`, { params: { id } });
+    return await requestClient.get(`/smartcity/inspection-task-a/get`, {
+      params: { id },
+    });
   },
 
   createInspectionTaskA: async (data: any) => {
-    return await requestClient.post(`/smartcity/inspection-task-a/create`, data);
+    return await requestClient.post(
+      `/smartcity/inspection-task-a/create`,
+      data,
+    );
   },
 
   updateInspectionTaskA: async (data: any) => {
@@ -31,10 +38,15 @@ export const InspectionTaskAApi = {
   },
 
   deleteInspectionTaskA: async (id: number) => {
-    return await requestClient.delete(`/smartcity/inspection-task-a/delete`, { params: { id } });
+    return await requestClient.delete(`/smartcity/inspection-task-a/delete`, {
+      params: { id },
+    });
   },
 
   exportInspectionTaskA: async (params) => {
-    return await requestClient.download(`/smartcity/inspection-task-a/export-excel`, params);
+    return await requestClient.download(
+      `/smartcity/inspection-task-a/export-excel`,
+      params,
+    );
   },
 };

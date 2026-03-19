@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker, ElSelect, ElOption
+  ElMessage,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
+  ElSelect,
+  ElOption,
 } from 'element-plus';
-import {
-  ExperienceInformationInputApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/experienceinformationinput';
-import {
-  ClassificationOfExperienceInformationApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/classificationofexperienceinformation';
+import { ExperienceInformationInputApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/experienceinformationinput';
+import { ClassificationOfExperienceInformationApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/classificationofexperienceinformation';
 
 /** 经验信息录入 表单 */
 defineOptions({ name: 'ExperienceInformationInputForm' });
@@ -43,7 +47,10 @@ const initData = async () => {
     pageNo: 1,
     pageSize: 100,
   };
-  const data = await ClassificationOfExperienceInformationApi.getClassificationOfExperienceInformationPage(queryParams);
+  const data =
+    await ClassificationOfExperienceInformationApi.getClassificationOfExperienceInformationPage(
+      queryParams,
+    );
   sectorOptions.value = data.list.map((item) => ({
     label: item.sector,
     value: item.id,
@@ -53,7 +60,8 @@ const initData = async () => {
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增经验信息录入' : '编辑经验信息录入';
+  dialogTitle.value =
+    type === 'create' ? '新增经验信息录入' : '编辑经验信息录入';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -116,7 +124,12 @@ onMounted(() => {
 });
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -125,7 +138,10 @@ onMounted(() => {
       v-loading="formLoading"
     >
       <ElFormItem label="经验主题" prop="experienceTheme">
-        <ElInput v-model="formData.experienceTheme" placeholder="请输入经验主题" />
+        <ElInput
+          v-model="formData.experienceTheme"
+          placeholder="请输入经验主题"
+        />
       </ElFormItem>
       <ElFormItem label="所属行业" prop="isArea">
         <ElSelect v-model="formData.isArea" placeholder="请选择所属行业">
@@ -138,7 +154,10 @@ onMounted(() => {
         </ElSelect>
       </ElFormItem>
       <ElFormItem label="经验提供方" prop="experienceProvider">
-        <ElInput v-model="formData.experienceProvider" placeholder="请输入经验提供方" />
+        <ElInput
+          v-model="formData.experienceProvider"
+          placeholder="请输入经验提供方"
+        />
       </ElFormItem>
       <ElFormItem label="实施时间" prop="implementationTime">
         <ElDatePicker
@@ -150,16 +169,29 @@ onMounted(() => {
         />
       </ElFormItem>
       <ElFormItem label="实施地点" prop="implementationLocation">
-        <ElInput v-model="formData.implementationLocation" placeholder="请输入实施地点" />
+        <ElInput
+          v-model="formData.implementationLocation"
+          placeholder="请输入实施地点"
+        />
       </ElFormItem>
       <ElFormItem label="详细步骤" prop="detailSteps">
-        <ElInput v-model="formData.detailSteps" type="textarea" placeholder="请输入详细步骤" />
+        <ElInput
+          v-model="formData.detailSteps"
+          type="textarea"
+          placeholder="请输入详细步骤"
+        />
       </ElFormItem>
       <ElFormItem label="取得成效" prop="achieveResults">
-        <ElInput v-model="formData.achieveResults" placeholder="请输入取得成效" />
+        <ElInput
+          v-model="formData.achieveResults"
+          placeholder="请输入取得成效"
+        />
       </ElFormItem>
       <ElFormItem label="可借鉴要点" prop="keyPointsForReference">
-        <ElInput v-model="formData.keyPointsForReference" placeholder="请输入可借鉴要点" />
+        <ElInput
+          v-model="formData.keyPointsForReference"
+          placeholder="请输入可借鉴要点"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

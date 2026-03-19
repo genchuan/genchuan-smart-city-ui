@@ -26,7 +26,7 @@
         <div class="title">智能井盖异常事件清单</div>
         <ScrollBoard
           :config="leftData.CCDvScrollBoardConfig"
-          style="padding: 15px 25px 25px;  height: calc(100% - 35px - 40px);"
+          style=" height: calc(100% - 35px - 40px);padding: 15px 25px 25px"
         />
       </div>
     </div>
@@ -35,7 +35,7 @@
     <div class="content-center">
       <div class="s1">
         <chart-customize1 :paramsData="centerData.customizeParams" />
-        <map-common idName="chinaEcharts" :geometriesArray="geometriesArray"/>
+        <map-common idName="chinaEcharts" :geometriesArray="geometriesArray" />
       </div>
       <div class="s2 bg">
         <div class="title">智能井盖在线率趋势</div>
@@ -89,13 +89,13 @@ import ChartCustomize2 from './ChartCustomize2.vue';
 import ChartTypePolyLines from './ChartTypePolyLines.vue';
 import { ScrollBoard } from '@kjgl77/datav-vue3';
 
-const geometriesArray=[
-  {x:26.855227,y:117.680114},
-  {x:26.825227,y:117.720114},
-  {x:26.723227,y:117.920114},
-  {x:26.753227,y:117.890114},
-  {x:26.7233227,y:117.720114},
-  {x:26.823227,y:117.8020114},
+const geometriesArray = [
+  { x: 26.855227, y: 117.680114 },
+  { x: 26.825227, y: 117.720114 },
+  { x: 26.723227, y: 117.920114 },
+  { x: 26.753227, y: 117.890114 },
+  { x: 26.7233227, y: 117.720114 },
+  { x: 26.823227, y: 117.8020114 },
 ];
 
 const leftData = ref({
@@ -105,20 +105,20 @@ const leftData = ref({
     { title: '正常井盖数量', num: '1200', unit: '' },
     { title: '异常井盖数量', num: '20', unit: '' },
     { title: '在线井盖数量', num: '1180', unit: '' },
-    { title: '离线井盖数量', num: '40', unit: '' }
+    { title: '离线井盖数量', num: '40', unit: '' },
   ],
   picData: [
     { value: 1180, name: '在线正常' },
     { value: 20, name: '在线异常' },
     { value: 20, name: '离线异常' },
-    { value: 20, name: '离线正常' }
+    { value: 20, name: '离线正常' },
   ],
   lineAxisData: ['2-21', '2-22', '2-23', '2-24', '2-25', '2-26', '2-27'],
   picRightData2: [
     { title: '累计异常事件', num: '150', unit: '' },
     { title: '今日异常事件', num: '5', unit: '' },
     { title: '本周异常事件', num: '20', unit: '' },
-    { title: '本月异常事件', num: '60', unit: '' }
+    { title: '本月异常事件', num: '60', unit: '' },
   ],
   lineSeriesData: [5, 3, 7, 4, 6, 2, 8],
   CCDvScrollBoardConfig: {
@@ -138,25 +138,48 @@ const leftData = ref({
       ['文化街书店前', '井盖数据传输异常', '13:40', '已解决'],
       ['前进路工厂附近', '井盖周边有异味', '14:05', '处理中'],
       ['民主北路菜市场旁', '井盖周边有异物', '14:30', '已解决'],
-      ['团结路酒店门口', '井盖异常开启', '15:00', '处理中']
+      ['团结路酒店门口', '井盖异常开启', '15:00', '处理中'],
     ],
     rowNum: 4, // 表行数
-    align: ['center', 'center', 'center']
-  }
+    align: ['center', 'center', 'center'],
+  },
 });
 
 const centerData = ref({
   customizeParams: {
     name: '智能井盖安全运行天数：',
     runningDays: '26',
-    tail: '天'
+    tail: '天',
   },
   centerId: 'centerId',
-  lineAxisData: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+  lineAxisData: [
+    '1月',
+    '2月',
+    '3月',
+    '4月',
+    '5月',
+    '6月',
+    '7月',
+    '8月',
+    '9月',
+    '10月',
+    '11月',
+    '12月',
+  ],
   lineSeriesData: [
-    { data: [90, 92, 95, 96, 98, 99, 97, 96, 98, 99, 98, 99], name: '在线率', type: 'bar', color: ['#02a8f1', '#0c1e65'] },
-    { data: [85, 87, 89, 90, 92, 93, 91, 90, 92, 93, 92, 93], name: '正常率', type: 'bar', color: ['#ba97f9', '#4033f9'] }
-  ]
+    {
+      data: [90, 92, 95, 96, 98, 99, 97, 96, 98, 99, 98, 99],
+      name: '在线率',
+      type: 'bar',
+      color: ['#02a8f1', '#0c1e65'],
+    },
+    {
+      data: [85, 87, 89, 90, 92, 93, 91, 90, 92, 93, 92, 93],
+      name: '正常率',
+      type: 'bar',
+      color: ['#ba97f9', '#4033f9'],
+    },
+  ],
 });
 
 const rightData = ref({
@@ -165,11 +188,24 @@ const rightData = ref({
     { name: '蓝牙井盖数量', num: '300', unit: '' },
     { name: 'NB - IoT井盖数量', num: '1200', unit: '' },
     { name: '带倾角传感器井盖数量', num: '800', unit: '' },
-    { name: '带水位传感器井盖数量', num: '500', unit: '' }
+    { name: '带水位传感器井盖数量', num: '500', unit: '' },
   ],
   rightOne: {
     idName: 'rightOne',
-    xAxisData: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+    xAxisData: [
+      '1月',
+      '2月',
+      '3月',
+      '4月',
+      '5月',
+      '6月',
+      '7月',
+      '8月',
+      '9月',
+      '10月',
+      '11月',
+      '12月',
+    ],
     yAxisName: '',
     polyLinesData: [
       {
@@ -177,16 +213,16 @@ const rightData = ref({
         name: '今年',
         color: ['rgba(58,114,215,1)', 'rgba(58,114,215,0.1)'],
         type: 'line',
-        data: [10, 12, 15, 18, 20, 22, 25, 28, 26, 24, 22, 20]
+        data: [10, 12, 15, 18, 20, 22, 25, 28, 26, 24, 22, 20],
       },
       {
         lineColor: '#11e48a',
         name: '去年',
         color: ['rgba(9,114,95,1)', 'rgba(9,114,95,0.1)'],
         type: 'line',
-        data: [8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30]
-      }
-    ]
+        data: [8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30],
+      },
+    ],
   },
   rightTwo: {
     idName: 'rightTwo',
@@ -198,10 +234,10 @@ const rightData = ref({
         name: '平均倾斜角度',
         color: ['rgba(58,114,215,1)', 'rgba(58,114,215,0.1)'],
         type: 'line',
-        data: [0.5, 0.8, 1.2, 1.0, 1.5, 1.3, 1.1, 0.9, 0.8, 0.6, 0.7, 0.9]
-      }
-    ]
-  }
+        data: [0.5, 0.8, 1.2, 1.0, 1.5, 1.3, 1.1, 0.9, 0.8, 0.6, 0.7, 0.9],
+      },
+    ],
+  },
 });
 </script>
 

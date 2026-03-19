@@ -1,11 +1,22 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { confirm } from '@vben/common-ui';
-import {
-  EventStatisticalAnalysisApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/decisionSuggestion/componentEventSupervision/eventstatisticalanalysis';
+import { EventStatisticalAnalysisApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/decisionSuggestion/componentEventSupervision/eventstatisticalanalysis';
 import download from '#/utils/genchuan/download';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElPagination, ElSpace, ElSelect, ElOption } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElPagination,
+  ElSpace,
+  ElSelect,
+  ElOption,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 
 import EventStatisticalAnalysisForm from './EventStatisticalAnalysisForm.vue';
@@ -99,7 +110,8 @@ const handleExport = async () => {
         queryParams,
       );
     download.excel(data, '事件统计分析.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -163,10 +175,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -197,27 +206,112 @@ onMounted(() => {
           prop="statisticalCycle"
           min-width="120"
         />
-        <ElTableColumn label="事件类型" align="center" prop="eventType" min-width="120">
+        <ElTableColumn
+          label="事件类型"
+          align="center"
+          prop="eventType"
+          min-width="120"
+        >
           <template #default="scope">
             {{ getEventTypeLabel(scope.row.eventType) }}
           </template>
         </ElTableColumn>
-        <ElTableColumn label="事件数量" align="center" prop="numberOfEvents" min-width="100" />
-        <ElTableColumn label="发生地点" align="center" prop="place" min-width="150" />
-        <ElTableColumn label="高发时段" align="center" prop="highIncidencePeriod" min-width="100" />
-        <ElTableColumn label="平均处理时长" align="center" prop="aht" min-width="100" />
-        <ElTableColumn label="处理成功率" align="center" prop="processingSuccessRate" min-width="100" />
-        <ElTableColumn label="严重程度分布" align="center" prop="severityDistribution" min-width="120" />
-        <ElTableColumn label="涉及部门" align="center" prop="involvedDepartments" min-width="120" />
-        <ElTableColumn label="责任主体" align="center" prop="responsibleParty" min-width="120" />
-        <ElTableColumn label="处理方式占比" align="center" prop="proportionOfProcessing" min-width="120" />
-        <ElTableColumn label="资源消耗统计" align="center" prop="resourceConsumption" min-width="120" />
-        <ElTableColumn label="不同渠道上报占比" align="center" prop="proportionOfReporting" min-width="130" />
-        <ElTableColumn label="重复事件数量" align="center" prop="numberOfRepeatedEvents" min-width="120" />
-        <ElTableColumn label="时间序列趋势" align="center" prop="timeSeriesTrend" min-width="120" />
-        <ElTableColumn label="关联部件故障次数" align="center" prop="numberOfRelated" min-width="130" />
-        <ElTableColumn label="公众反馈满意度评分" align="center" prop="publicFeedbackSatisfaction" min-width="140" />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="150">
+        <ElTableColumn
+          label="事件数量"
+          align="center"
+          prop="numberOfEvents"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="发生地点"
+          align="center"
+          prop="place"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="高发时段"
+          align="center"
+          prop="highIncidencePeriod"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="平均处理时长"
+          align="center"
+          prop="aht"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="处理成功率"
+          align="center"
+          prop="processingSuccessRate"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="严重程度分布"
+          align="center"
+          prop="severityDistribution"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="涉及部门"
+          align="center"
+          prop="involvedDepartments"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="责任主体"
+          align="center"
+          prop="responsibleParty"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="处理方式占比"
+          align="center"
+          prop="proportionOfProcessing"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="资源消耗统计"
+          align="center"
+          prop="resourceConsumption"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="不同渠道上报占比"
+          align="center"
+          prop="proportionOfReporting"
+          min-width="130"
+        />
+        <ElTableColumn
+          label="重复事件数量"
+          align="center"
+          prop="numberOfRepeatedEvents"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="时间序列趋势"
+          align="center"
+          prop="timeSeriesTrend"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="关联部件故障次数"
+          align="center"
+          prop="numberOfRelated"
+          min-width="130"
+        />
+        <ElTableColumn
+          label="公众反馈满意度评分"
+          align="center"
+          prop="publicFeedbackSatisfaction"
+          min-width="140"
+        />
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="150"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -227,11 +321,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

@@ -3,12 +3,25 @@ import { ref, reactive, onMounted, computed } from 'vue';
 import { confirm } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictOptions, getDictLabel } from '@vben/hooks';
-import {
-  DrainagePermitApplyApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/waterConservancyAndWaterAffairs/drainageUserManagement/drainagePermitApply';
+import { DrainagePermitApplyApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/waterConservancyAndWaterAffairs/drainageUserManagement/drainagePermitApply';
 import download from '#/utils/genchuan/download';
 import { dateFormatter, dateFormatter2 } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElSelect, ElOption, ElPagination, ElSpace, ElTag, ElLink } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElSelect,
+  ElOption,
+  ElPagination,
+  ElSpace,
+  ElTag,
+  ElLink,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 
 import DrainagePermitApplyForm from './DrainagePermitApplyForm.vue';
@@ -30,7 +43,9 @@ const queryFormRef = ref(); // 搜索的表单
 const exportLoading = ref(false); // 导出的加载中
 
 // 字典选项 - 使用计算属性实时获取
-const applyStatusOptions = computed(() => getDictOptions(DICT_TYPE.CRM_AUDIT_STATUS, 'string'));
+const applyStatusOptions = computed(() =>
+  getDictOptions(DICT_TYPE.CRM_AUDIT_STATUS, 'string'),
+);
 
 // 获取字典标签方法
 const getApplyStatusLabel = (value: string) => {
@@ -40,10 +55,14 @@ const getApplyStatusLabel = (value: string) => {
 // 获取状态标签类型
 const getStatusTagType = (value: string) => {
   switch (value) {
-    case '20': return 'success'; // 审核通过
-    case '10': return 'warning'; // 待审核
-    case '30': return 'danger'; // 审核不通过
-    default: return 'info';
+    case '20':
+      return 'success'; // 审核通过
+    case '10':
+      return 'warning'; // 待审核
+    case '30':
+      return 'danger'; // 审核不通过
+    default:
+      return 'info';
   }
 };
 
@@ -51,7 +70,8 @@ const getStatusTagType = (value: string) => {
 const getList = async () => {
   loading.value = true;
   try {
-    const data = await DrainagePermitApplyApi.getDrainagePermitApplyPage(queryParams);
+    const data =
+      await DrainagePermitApplyApi.getDrainagePermitApplyPage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -97,9 +117,11 @@ const handleExport = async () => {
     await confirm('是否确认导出所有排水许可证申请数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
-    const data = await DrainagePermitApplyApi.exportDrainagePermitApply(queryParams);
+    const data =
+      await DrainagePermitApplyApi.exportDrainagePermitApply(queryParams);
     download.excel(data, '排水许可证申请.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -161,10 +183,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -201,25 +220,60 @@ onMounted(() => {
           prop="userName"
           min-width="150"
         />
-        <ElTableColumn label="排水水质检测报告文件" align="center" prop="waterQualityReport" min-width="180">
+        <ElTableColumn
+          label="排水水质检测报告文件"
+          align="center"
+          prop="waterQualityReport"
+          min-width="180"
+        >
           <template #default="scope">
-            <ElLink v-if="scope.row.waterQualityReport" :href="scope.row.waterQualityReport" target="_blank" type="primary">
+            <ElLink
+              v-if="scope.row.waterQualityReport"
+              :href="scope.row.waterQualityReport"
+              target="_blank"
+              type="primary"
+            >
               查看文件
             </ElLink>
             <span v-else>-</span>
           </template>
         </ElTableColumn>
-        <ElTableColumn label="日均排水量（吨）" align="center" prop="dailyDrainage" min-width="120" />
-        <ElTableColumn label="重点排污单位证明文件路径" align="center" prop="pollutionProof" min-width="180">
+        <ElTableColumn
+          label="日均排水量（吨）"
+          align="center"
+          prop="dailyDrainage"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="重点排污单位证明文件路径"
+          align="center"
+          prop="pollutionProof"
+          min-width="180"
+        >
           <template #default="scope">
-            <ElLink v-if="scope.row.pollutionProof" :href="scope.row.pollutionProof" target="_blank" type="primary">
+            <ElLink
+              v-if="scope.row.pollutionProof"
+              :href="scope.row.pollutionProof"
+              target="_blank"
+              type="primary"
+            >
               查看文件
             </ElLink>
             <span v-else>-</span>
           </template>
         </ElTableColumn>
-        <ElTableColumn label="历史违规记录" align="center" prop="violationHistory" min-width="150" />
-        <ElTableColumn label="申请状态" align="center" prop="applyStatus" min-width="100">
+        <ElTableColumn
+          label="历史违规记录"
+          align="center"
+          prop="violationHistory"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="申请状态"
+          align="center"
+          prop="applyStatus"
+          min-width="100"
+        >
           <template #default="scope">
             <ElTag
               v-if="scope.row.applyStatus"
@@ -231,7 +285,12 @@ onMounted(() => {
             <span v-else>-</span>
           </template>
         </ElTableColumn>
-        <ElTableColumn label="审核人" align="center" prop="approver" min-width="100" />
+        <ElTableColumn
+          label="审核人"
+          align="center"
+          prop="approver"
+          min-width="100"
+        />
         <ElTableColumn
           label="审核时间"
           align="center"
@@ -239,7 +298,12 @@ onMounted(() => {
           :formatter="dateFormatter2"
           min-width="120"
         />
-        <ElTableColumn label="审核意见" align="center" prop="approveComment" min-width="150" />
+        <ElTableColumn
+          label="审核意见"
+          align="center"
+          prop="approveComment"
+          min-width="150"
+        />
         <ElTableColumn
           label="创建时间"
           align="center"
@@ -247,7 +311,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="150"
         />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="150">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="150"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -257,11 +326,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

@@ -18,12 +18,16 @@ export type MaintenancePlotVO = {
 export const MaintenancePlotApi = {
   // 查询养护地块分页
   getMaintenancePlotPage: async (params: any) => {
-    return await requestClient.get(`/smartcity/maintenance-plot/page`, { params });
+    return await requestClient.get(`/smartcity/maintenance-plot/page`, {
+      params,
+    });
   },
 
   // 查询养护地块详情
   getMaintenancePlot: async (id: number) => {
-    return await requestClient.get(`/smartcity/maintenance-plot/get`, { params: { id } });
+    return await requestClient.get(`/smartcity/maintenance-plot/get`, {
+      params: { id },
+    });
   },
 
   // 新增养护地块
@@ -38,11 +42,16 @@ export const MaintenancePlotApi = {
 
   // 删除养护地块
   deleteMaintenancePlot: async (id: number) => {
-    return await requestClient.delete(`/smartcity/maintenance-plot/delete`, { params: { id } });
+    return await requestClient.delete(`/smartcity/maintenance-plot/delete`, {
+      params: { id },
+    });
   },
 
   // 导出养护地块 Excel
   exportMaintenancePlot: async (params) => {
-    return await requestClient.download(`/smartcity/maintenance-plot/export-excel`, params);
+    return await requestClient.download(
+      `/smartcity/maintenance-plot/export-excel`,
+      params,
+    );
   },
 };

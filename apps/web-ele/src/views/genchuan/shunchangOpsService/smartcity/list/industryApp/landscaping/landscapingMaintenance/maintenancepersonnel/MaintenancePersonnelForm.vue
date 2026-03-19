@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton
+  ElMessage,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
 } from 'element-plus';
-import {
-  MaintenancePersonnelApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingMaintenance/maintenancepersonnel';
+import { MaintenancePersonnelApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingMaintenance/maintenancepersonnel';
 
 /** 养护人员 表单 */
 defineOptions({ name: 'MaintenancePersonnelForm' });
@@ -30,7 +33,9 @@ const formData = ref({
 });
 const formRules = reactive({
   personnelId: [{ required: true, message: '请输入人员编号', trigger: 'blur' }],
-  personnelName: [{ required: true, message: '请输入人员姓名', trigger: 'blur' }],
+  personnelName: [
+    { required: true, message: '请输入人员姓名', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
@@ -44,7 +49,8 @@ const open = async (type: string, id?: number) => {
   if (id) {
     formLoading.value = true;
     try {
-      formData.value = await MaintenancePersonnelApi.getMaintenancePersonnel(id);
+      formData.value =
+        await MaintenancePersonnelApi.getMaintenancePersonnel(id);
     } finally {
       formLoading.value = false;
     }
@@ -90,7 +96,12 @@ const resetForm = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -102,19 +113,28 @@ const resetForm = () => {
         <ElInput v-model="formData.personnelId" placeholder="请输入人员编号" />
       </ElFormItem>
       <ElFormItem label="人员姓名" prop="personnelName">
-        <ElInput v-model="formData.personnelName" placeholder="请输入人员姓名" />
+        <ElInput
+          v-model="formData.personnelName"
+          placeholder="请输入人员姓名"
+        />
       </ElFormItem>
       <ElFormItem label="性别" prop="gender">
         <ElInput v-model="formData.gender" placeholder="请输入性别" />
       </ElFormItem>
       <ElFormItem label="联系方式" prop="contactInformation">
-        <ElInput v-model="formData.contactInformation" placeholder="请输入联系方式" />
+        <ElInput
+          v-model="formData.contactInformation"
+          placeholder="请输入联系方式"
+        />
       </ElFormItem>
       <ElFormItem label="身份证号" prop="idNumber">
         <ElInput v-model="formData.idNumber" placeholder="请输入身份证号" />
       </ElFormItem>
       <ElFormItem label="养护地块" prop="maintainTheLandParcel">
-        <ElInput v-model="formData.maintainTheLandParcel" placeholder="请输入养护地块" />
+        <ElInput
+          v-model="formData.maintainTheLandParcel"
+          placeholder="请输入养护地块"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

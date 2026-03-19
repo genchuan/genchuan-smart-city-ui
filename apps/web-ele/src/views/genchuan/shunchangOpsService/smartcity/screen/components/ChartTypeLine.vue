@@ -1,13 +1,18 @@
 <template>
   <div class="chart-type-line" :style="{ height: height }">
-    <div class="chart-type-line-left" :id="idName"
-         :style="{ height: lineHeight, width: lineWidth }"></div>
+    <div
+      class="chart-type-line-left"
+      :id="idName"
+      :style="{ height: lineHeight, width: lineWidth }"
+    ></div>
     <ul class="chart-type-line-right" v-if="rightData.length > 0">
       <li v-for="(item, key) in rightData" :key="key">
         <span class="c1"></span>
         <div class="c2">
           <span>{{ item.title }}</span>
-          <label><i>{{ item.num }}</i> {{ item.unit }}</label>
+          <label
+            ><i>{{ item.num }}</i> {{ item.unit }}</label
+          >
         </div>
       </li>
     </ul>
@@ -15,46 +20,46 @@
 </template>
 
 <script setup>
-import {onMounted, defineProps} from 'vue';
+import { onMounted, defineProps } from 'vue';
 import * as echarts from 'echarts';
 
 const props = defineProps({
   height: {
     type: String,
-    default: 'calc(100% - 35px)'
+    default: 'calc(100% - 35px)',
   },
   lineHeight: {
     type: String,
-    default: '100%'
+    default: '100%',
   },
   lineWidth: {
     type: String,
-    default: '300px'
+    default: '300px',
   },
   idName: {
     type: String,
-    default: 'picLeftId'
+    default: 'picLeftId',
   },
   rightData: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   xAxisData: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   yAxisName: {
     type: String,
-    default: ''
+    default: '',
   },
   seriesData: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   seriesName: {
     type: String,
-    default: ''
-  }
+    default: '',
+  },
 });
 
 const lineGraph = () => {
@@ -65,34 +70,34 @@ const lineGraph = () => {
     tooltip: {
       trigger: 'axis',
       axisPointer: {
-        type: 'shadow'
-      }
+        type: 'shadow',
+      },
     },
     grid: {
       top: '20',
       left: '0',
       right: '0',
       bottom: '15',
-      containLabel: true
+      containLabel: true,
     },
     xAxis: [
       {
         type: 'category',
         data: props.xAxisData,
         axisTick: {
-          show: false
+          show: false,
         },
         axisLabel: {
           margin: 20,
-          color: '#96a7c0'
+          color: '#96a7c0',
         },
         axisLine: {
           show: false,
           lineStyle: {
-            color: '#d2d2d2'
-          }
-        }
-      }
+            color: '#d2d2d2',
+          },
+        },
+      },
     ],
     yAxis: [
       {
@@ -102,24 +107,24 @@ const lineGraph = () => {
           fontSize: 16,
           color: '#ffffff',
           nameLocation: 'start',
-          align: 'right'
+          align: 'right',
         },
         splitLine: {
           show: true,
           lineStyle: {
-            color: '#001845'
-          }
+            color: '#001845',
+          },
         },
         axisLine: {
           show: true,
           lineStyle: {
-            color: '#001845'
-          }
+            color: '#001845',
+          },
         },
         axisLabel: {
-          color: '#96a7c0'
-        }
-      }
+          color: '#96a7c0',
+        },
+      },
     ],
     series: [
       {
@@ -139,18 +144,18 @@ const lineGraph = () => {
             colorStops: [
               {
                 offset: 0,
-                color: '#02a8f1'
+                color: '#02a8f1',
               },
               {
                 offset: 1,
-                color: '#0c1e65'
-              }
-            ]
-          }
+                color: '#0c1e65',
+              },
+            ],
+          },
         },
-        data: props.seriesData
-      }
-    ]
+        data: props.seriesData,
+      },
+    ],
   };
 
   option && myChart.setOption(option);
@@ -164,10 +169,9 @@ onMounted(() => {
 <style lang="scss" scoped>
 .chart-type-line {
   display: flex;
-  flex-wrap: nowrap;
-  justify-content: flex-start;
+  flex-flow: row nowrap;
   align-items: center;
-  flex-direction: row;
+  justify-content: flex-start;
   padding: 0 20px;
 
   .chart-type-line-right {
@@ -175,37 +179,35 @@ onMounted(() => {
 
     li {
       display: flex;
-      flex-wrap: nowrap;
-      justify-content: flex-start;
+      flex-flow: row nowrap;
       align-items: center;
-      flex-direction: row;
-      background: #001118;
+      justify-content: flex-start;
       padding: 5px 0;
+      background: #001118;
 
       .c1 {
-        background-image: linear-gradient(#03a0e9, #0f5fbf);
         width: 8px;
         height: 35px;
-        border-radius: 12px;
         margin-right: 15px;
+        background-image: linear-gradient(#03a0e9, #0f5fbf);
+        border-radius: 12px;
       }
 
       .c2 {
         span {
-          color: #ffffff;
-          font-size: 14px;
           display: block;
+          font-size: 14px;
+          color: #fff;
         }
 
         label {
-          color: #0eafff;
           font-size: 16px;
+          color: #0eafff;
 
           i {
             font-size: 22px;
             font-weight: bold;
           }
-
         }
       }
     }

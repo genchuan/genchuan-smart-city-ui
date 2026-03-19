@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton
+  ElMessage,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
 } from 'element-plus';
-import {
-  AssessmentAndEvaluationApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingMaintenance/assessmentandevaluation';
+import { AssessmentAndEvaluationApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingMaintenance/assessmentandevaluation';
 
 /** 养护考核评价 表单 */
 defineOptions({ name: 'AssessmentAndEvaluationForm' });
@@ -33,14 +36,16 @@ const formRef = ref(); // 表单 Ref
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增养护考核评价' : '编辑养护考核评价';
+  dialogTitle.value =
+    type === 'create' ? '新增养护考核评价' : '编辑养护考核评价';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
   if (id) {
     formLoading.value = true;
     try {
-      formData.value = await AssessmentAndEvaluationApi.getAssessmentAndEvaluation(id);
+      formData.value =
+        await AssessmentAndEvaluationApi.getAssessmentAndEvaluation(id);
     } finally {
       formLoading.value = false;
     }
@@ -87,7 +92,12 @@ const resetForm = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -96,25 +106,48 @@ const resetForm = () => {
       v-loading="formLoading"
     >
       <ElFormItem label="养护人员编号" prop="maintenancePersonnelNumber">
-        <ElInput v-model="formData.maintenancePersonnelNumber" placeholder="请输入养护人员编号" />
+        <ElInput
+          v-model="formData.maintenancePersonnelNumber"
+          placeholder="请输入养护人员编号"
+        />
       </ElFormItem>
       <ElFormItem label="养护任务编号" prop="maintenanceTaskNumber">
-        <ElInput v-model="formData.maintenanceTaskNumber" placeholder="请输入养护任务编号" />
+        <ElInput
+          v-model="formData.maintenanceTaskNumber"
+          placeholder="请输入养护任务编号"
+        />
       </ElFormItem>
       <ElFormItem label="考核周期" prop="assessmentCycle">
-        <ElInput v-model="formData.assessmentCycle" placeholder="请输入考核周期" />
+        <ElInput
+          v-model="formData.assessmentCycle"
+          placeholder="请输入考核周期"
+        />
       </ElFormItem>
       <ElFormItem label="考核得分" prop="assessmentScore">
-        <ElInput v-model="formData.assessmentScore" placeholder="请输入考核得分" />
+        <ElInput
+          v-model="formData.assessmentScore"
+          placeholder="请输入考核得分"
+        />
       </ElFormItem>
       <ElFormItem label="考核等级" prop="assessmentLevel">
-        <ElInput v-model="formData.assessmentLevel" placeholder="请输入考核等级" />
+        <ElInput
+          v-model="formData.assessmentLevel"
+          placeholder="请输入考核等级"
+        />
       </ElFormItem>
       <ElFormItem label="评价意见" prop="evaluationOpinion">
-        <ElInput v-model="formData.evaluationOpinion" type="textarea" placeholder="请输入评价意见" />
+        <ElInput
+          v-model="formData.evaluationOpinion"
+          type="textarea"
+          placeholder="请输入评价意见"
+        />
       </ElFormItem>
       <ElFormItem label="改进建议" prop="improvementSuggestions">
-        <ElInput v-model="formData.improvementSuggestions" type="textarea" placeholder="请输入改进建议" />
+        <ElInput
+          v-model="formData.improvementSuggestions"
+          type="textarea"
+          placeholder="请输入改进建议"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

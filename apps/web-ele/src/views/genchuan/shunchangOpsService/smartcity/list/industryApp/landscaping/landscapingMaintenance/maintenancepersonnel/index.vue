@@ -1,12 +1,22 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { confirm } from '@vben/common-ui';
-import {
-  MaintenancePersonnelApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingMaintenance/maintenancepersonnel';
+import { MaintenancePersonnelApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingMaintenance/maintenancepersonnel';
 import download from '#/utils/genchuan/download';
 import { dateFormatter } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker, ElPagination, ElSpace } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
+  ElPagination,
+  ElSpace,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 
 import MaintenancePersonnelForm from './MaintenancePersonnelForm.vue';
@@ -31,7 +41,8 @@ const exportLoading = ref(false); // 导出的加载中
 const getList = async () => {
   loading.value = true;
   try {
-    const data = await MaintenancePersonnelApi.getMaintenancePersonnelPage(queryParams);
+    const data =
+      await MaintenancePersonnelApi.getMaintenancePersonnelPage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -77,9 +88,11 @@ const handleExport = async () => {
     await confirm('是否确认导出所有养护人员数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
-    const data = await MaintenancePersonnelApi.exportMaintenancePersonnel(queryParams);
+    const data =
+      await MaintenancePersonnelApi.exportMaintenancePersonnel(queryParams);
     download.excel(data, '养护人员.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -137,10 +150,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -164,12 +174,42 @@ onMounted(() => {
         :show-overflow-tooltip="true"
         style="width: 100%"
       >
-        <ElTableColumn label="人员编号" align="center" prop="personnelId" min-width="120" />
-        <ElTableColumn label="人员姓名" align="center" prop="personnelName" min-width="100" />
-        <ElTableColumn label="性别" align="center" prop="gender" min-width="80" />
-        <ElTableColumn label="联系方式" align="center" prop="contactInformation" min-width="120" />
-        <ElTableColumn label="身份证号" align="center" prop="idNumber" min-width="150" />
-        <ElTableColumn label="养护地块" align="center" prop="maintainTheLandParcel" min-width="150" />
+        <ElTableColumn
+          label="人员编号"
+          align="center"
+          prop="personnelId"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="人员姓名"
+          align="center"
+          prop="personnelName"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="性别"
+          align="center"
+          prop="gender"
+          min-width="80"
+        />
+        <ElTableColumn
+          label="联系方式"
+          align="center"
+          prop="contactInformation"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="身份证号"
+          align="center"
+          prop="idNumber"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="养护地块"
+          align="center"
+          prop="maintainTheLandParcel"
+          min-width="150"
+        />
         <ElTableColumn
           label="创建时间"
           align="center"
@@ -177,7 +217,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="150"
         />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="150">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="150"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -187,11 +232,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

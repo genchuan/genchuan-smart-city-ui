@@ -1,11 +1,19 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { reactive, ref } from 'vue';
+
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker, ElSelect, ElOption
+  ElButton,
+  ElDatePicker,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElMessage,
+  ElOption,
+  ElSelect,
 } from 'element-plus';
-import {
-  ProblemInputApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/operationGuide/probleminput';
+
+import { ProblemInputApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/operationGuide/probleminput';
 
 /** 问题录入 表单 */
 defineOptions({ name: 'ProblemInputForm' });
@@ -42,8 +50,7 @@ const open = async (type: string, id?: number) => {
   if (id) {
     formLoading.value = true;
     try {
-      formData.value =
-        await ProblemInputApi.getProblemInput(id);
+      formData.value = await ProblemInputApi.getProblemInput(id);
     } finally {
       formLoading.value = false;
     }
@@ -58,14 +65,10 @@ const submitForm = async () => {
   try {
     const data = formData.value;
     if (formType.value === 'create') {
-      await ProblemInputApi.createProblemInput(
-        data,
-      );
+      await ProblemInputApi.createProblemInput(data);
       ElMessage.success('新增成功');
     } else {
-      await ProblemInputApi.updateProblemInput(
-        data,
-      );
+      await ProblemInputApi.updateProblemInput(data);
       ElMessage.success('修改成功');
     }
     dialogVisible.value = false;
@@ -92,7 +95,12 @@ const resetForm = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -101,10 +109,16 @@ const resetForm = () => {
       v-loading="formLoading"
     >
       <ElFormItem label="问题标题" prop="questionTitle">
-        <ElInput v-model="formData.questionTitle" placeholder="请输入问题标题" />
+        <ElInput
+          v-model="formData.questionTitle"
+          placeholder="请输入问题标题"
+        />
       </ElFormItem>
       <ElFormItem label="问题描述" prop="problemDescription">
-        <ElInput v-model="formData.problemDescription" placeholder="请输入问题描述" />
+        <ElInput
+          v-model="formData.problemDescription"
+          placeholder="请输入问题描述"
+        />
       </ElFormItem>
       <ElFormItem label="提问时间" prop="questionTime">
         <ElDatePicker

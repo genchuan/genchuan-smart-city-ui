@@ -1,12 +1,22 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { confirm } from '@vben/common-ui';
-import {
-  DynamicInformationClassificationApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/dynamicinformationclassification';
+import { DynamicInformationClassificationApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/dynamicinformationclassification';
 import download from '#/utils/genchuan/download';
 import { dateFormatter } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker, ElPagination, ElSpace } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
+  ElPagination,
+  ElSpace,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 import { $t } from '#/locales';
 
@@ -67,7 +77,9 @@ const handleDelete = async (id: number) => {
     // 删除的二次确认
     await confirm('是否确认删除该动态信息分类数据？', '系统提示');
     // 发起删除
-    await DynamicInformationClassificationApi.deleteDynamicInformationClassification(id);
+    await DynamicInformationClassificationApi.deleteDynamicInformationClassification(
+      id,
+    );
     ElMessage.success('删除成功');
     // 刷新列表
     await getList();
@@ -86,7 +98,8 @@ const handleExport = async () => {
         queryParams,
       );
     download.excel(data, '动态信息分类.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -133,10 +146,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -161,10 +171,30 @@ onMounted(() => {
         style="width: 100%"
       >
         <ElTableColumn label="主键" align="center" prop="id" min-width="50" />
-        <ElTableColumn label="信息主题" align="center" prop="messageSubject" min-width="120" />
-        <ElTableColumn label="行业领域" align="center" prop="industrySector" min-width="120" />
-        <ElTableColumn label="信息来源" align="center" prop="informationSources" min-width="120" />
-        <ElTableColumn label="紧急程度" align="center" prop="urgency" min-width="120" />
+        <ElTableColumn
+          label="信息主题"
+          align="center"
+          prop="messageSubject"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="行业领域"
+          align="center"
+          prop="industrySector"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="信息来源"
+          align="center"
+          prop="informationSources"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="紧急程度"
+          align="center"
+          prop="urgency"
+          min-width="120"
+        />
         <ElTableColumn
           label="创建时间"
           align="center"
@@ -172,7 +202,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="180"
         />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="120">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="120"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -182,11 +217,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

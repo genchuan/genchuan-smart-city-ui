@@ -1,12 +1,21 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { confirm } from '@vben/common-ui';
-import {
-  AssessmentAndEvaluationApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingMaintenance/assessmentandevaluation';
+import { AssessmentAndEvaluationApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingMaintenance/assessmentandevaluation';
 import download from '#/utils/genchuan/download';
 import { dateFormatter } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElPagination, ElSpace } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElPagination,
+  ElSpace,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 
 import AssessmentAndEvaluationForm from './AssessmentAndEvaluationForm.vue';
@@ -31,7 +40,10 @@ const exportLoading = ref(false); // 导出的加载中
 const getList = async () => {
   loading.value = true;
   try {
-    const data = await AssessmentAndEvaluationApi.getAssessmentAndEvaluationPage(queryParams);
+    const data =
+      await AssessmentAndEvaluationApi.getAssessmentAndEvaluationPage(
+        queryParams,
+      );
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -77,9 +89,13 @@ const handleExport = async () => {
     await confirm('是否确认导出所有养护考核评价数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
-    const data = await AssessmentAndEvaluationApi.exportAssessmentAndEvaluation(queryParams);
+    const data =
+      await AssessmentAndEvaluationApi.exportAssessmentAndEvaluation(
+        queryParams,
+      );
     download.excel(data, '养护考核评价.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -135,10 +151,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -163,13 +176,48 @@ onMounted(() => {
         style="width: 100%"
       >
         <ElTableColumn label="ID" align="center" prop="id" min-width="50" />
-        <ElTableColumn label="养护人员编号" align="center" prop="maintenancePersonnelNumber" min-width="120" />
-        <ElTableColumn label="养护任务编号" align="center" prop="maintenanceTaskNumber" min-width="120" />
-        <ElTableColumn label="考核周期" align="center" prop="assessmentCycle" min-width="100" />
-        <ElTableColumn label="考核得分" align="center" prop="assessmentScore" min-width="100" />
-        <ElTableColumn label="考核等级" align="center" prop="assessmentLevel" min-width="100" />
-        <ElTableColumn label="评价意见" align="center" prop="evaluationOpinion" min-width="150" />
-        <ElTableColumn label="改进建议" align="center" prop="improvementSuggestions" min-width="150" />
+        <ElTableColumn
+          label="养护人员编号"
+          align="center"
+          prop="maintenancePersonnelNumber"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="养护任务编号"
+          align="center"
+          prop="maintenanceTaskNumber"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="考核周期"
+          align="center"
+          prop="assessmentCycle"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="考核得分"
+          align="center"
+          prop="assessmentScore"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="考核等级"
+          align="center"
+          prop="assessmentLevel"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="评价意见"
+          align="center"
+          prop="evaluationOpinion"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="改进建议"
+          align="center"
+          prop="improvementSuggestions"
+          min-width="150"
+        />
         <ElTableColumn
           label="创建时间"
           align="center"
@@ -177,7 +225,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="150"
         />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="150">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="150"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -187,11 +240,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

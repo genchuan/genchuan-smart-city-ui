@@ -3,12 +3,24 @@ import { ref, reactive, computed, onMounted } from 'vue';
 import { confirm } from '@vben/common-ui';
 import { getDictOptions, getDictLabel } from '@vben/hooks';
 import { DICT_TYPE } from '@vben/constants';
-import {
-  ComponentInformationApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/decisionSuggestion/componentEventSupervision/componentinformation';
+import { ComponentInformationApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/decisionSuggestion/componentEventSupervision/componentinformation';
 import download from '#/utils/genchuan/download';
 import { dateFormatter } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker, ElPagination, ElSpace, ElSelect, ElOption } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
+  ElPagination,
+  ElSpace,
+  ElSelect,
+  ElOption,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 
 import ComponentInformationForm from './ComponentInformationForm.vue';
@@ -32,21 +44,25 @@ const queryFormRef = ref(); // 搜索的表单
 const exportLoading = ref(false); // 导出的加载中
 
 // 字典选项
-const partTypeOptions = computed(() => getDictOptions(DICT_TYPE.SM_PART_TYPE, 'string'));
-const componentStatusOptions = computed(() => getDictOptions(DICT_TYPE.SM_STATE, 'string'));
+const partTypeOptions = computed(() =>
+  getDictOptions(DICT_TYPE.SM_PART_TYPE, 'string'),
+);
+const componentStatusOptions = computed(() =>
+  getDictOptions(DICT_TYPE.SM_STATE, 'string'),
+);
 
 // 获取字典标签
-const getPartTypeLabel = (value: string) => getDictLabel(DICT_TYPE.SM_PART_TYPE, value) || value;
-const getComponentStatusLabel = (value: string) => getDictLabel(DICT_TYPE.SM_STATE, value) || value;
+const getPartTypeLabel = (value: string) =>
+  getDictLabel(DICT_TYPE.SM_PART_TYPE, value) || value;
+const getComponentStatusLabel = (value: string) =>
+  getDictLabel(DICT_TYPE.SM_STATE, value) || value;
 
 /** 查询列表 */
 const getList = async () => {
   loading.value = true;
   try {
     const data =
-      await ComponentInformationApi.getComponentInformationPage(
-        queryParams,
-      );
+      await ComponentInformationApi.getComponentInformationPage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -93,11 +109,10 @@ const handleExport = async () => {
     // 发起导出
     exportLoading.value = true;
     const data =
-      await ComponentInformationApi.exportComponentInformation(
-        queryParams,
-      );
+      await ComponentInformationApi.exportComponentInformation(queryParams);
     download.excel(data, '部件信息.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -183,10 +198,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -217,15 +229,40 @@ onMounted(() => {
           prop="partNumber"
           min-width="150"
         />
-        <ElTableColumn label="部件名称" align="center" prop="componentName" min-width="120" />
-        <ElTableColumn label="部件类型" align="center" prop="partType" min-width="100">
+        <ElTableColumn
+          label="部件名称"
+          align="center"
+          prop="componentName"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="部件类型"
+          align="center"
+          prop="partType"
+          min-width="100"
+        >
           <template #default="scope">
             {{ getPartTypeLabel(scope.row.partType) }}
           </template>
         </ElTableColumn>
-        <ElTableColumn label="所属区域" align="center" prop="belongingRegion" min-width="100" />
-        <ElTableColumn label="安装位置" align="center" prop="installationPosition" min-width="150" />
-        <ElTableColumn label="经纬度坐标" align="center" prop="latitudeLongitude" min-width="120" />
+        <ElTableColumn
+          label="所属区域"
+          align="center"
+          prop="belongingRegion"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="安装位置"
+          align="center"
+          prop="installationPosition"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="经纬度坐标"
+          align="center"
+          prop="latitudeLongitude"
+          min-width="120"
+        />
         <ElTableColumn
           label="建设日期"
           align="center"
@@ -233,16 +270,46 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="120"
         />
-        <ElTableColumn label="管理部门" align="center" prop="administrativeDepartment" min-width="120" />
-        <ElTableColumn label="维护单位" align="center" prop="maintenanceUnit" min-width="120" />
-        <ElTableColumn label="联系电话" align="center" prop="contactNumber" min-width="120" />
-        <ElTableColumn label="部件状态" align="center" prop="componentStatus" min-width="100">
+        <ElTableColumn
+          label="管理部门"
+          align="center"
+          prop="administrativeDepartment"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="维护单位"
+          align="center"
+          prop="maintenanceUnit"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="联系电话"
+          align="center"
+          prop="contactNumber"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="部件状态"
+          align="center"
+          prop="componentStatus"
+          min-width="100"
+        >
           <template #default="scope">
             {{ getComponentStatusLabel(scope.row.componentStatus) }}
           </template>
         </ElTableColumn>
-        <ElTableColumn label="使用寿命" align="center" prop="serviceLife" min-width="100" />
-        <ElTableColumn label="关联事件记录" align="center" prop="relatedEventRecords" min-width="150" />
+        <ElTableColumn
+          label="使用寿命"
+          align="center"
+          prop="serviceLife"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="关联事件记录"
+          align="center"
+          prop="relatedEventRecords"
+          min-width="150"
+        />
         <ElTableColumn
           label="创建时间"
           align="center"
@@ -250,7 +317,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="150"
         />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="150">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="150"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -260,11 +332,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

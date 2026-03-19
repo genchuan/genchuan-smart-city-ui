@@ -99,7 +99,8 @@ const handleExport = async () => {
         queryParams,
       );
     download.excel(data, '经验信息录入.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -118,7 +119,7 @@ const initData = async () => {
     label: item.sector,
     value: item.id,
   }));
-  console.log("sectorOptions=====")
+  console.log('sectorOptions=====');
   console.log(sectorOptions.value);
 };
 

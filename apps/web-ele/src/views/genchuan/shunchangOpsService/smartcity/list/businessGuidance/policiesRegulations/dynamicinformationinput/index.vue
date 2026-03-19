@@ -1,15 +1,23 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { confirm } from '@vben/common-ui';
-import {
-  DynamicInformationInputApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/dynamicinformationinput';
-import {
-  DynamicInformationClassificationApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/dynamicinformationclassification';
+import { DynamicInformationInputApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/dynamicinformationinput';
+import { DynamicInformationClassificationApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/dynamicinformationclassification';
 import download from '#/utils/genchuan/download';
 import { dateFormatter, dateFormatter2 } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker, ElPagination, ElSpace } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
+  ElPagination,
+  ElSpace,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 import { $t } from '#/locales';
 
@@ -89,7 +97,8 @@ const handleExport = async () => {
         queryParams,
       );
     download.excel(data, '动态信息录入.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -100,7 +109,10 @@ const initData = async () => {
     pageNo: 1,
     pageSize: 100,
   };
-  const data = await DynamicInformationClassificationApi.getDynamicInformationClassificationPage(queryParams);
+  const data =
+    await DynamicInformationClassificationApi.getDynamicInformationClassificationPage(
+      queryParams,
+    );
   publishingSubjectOptions.value = data.list.map((item) => ({
     label: item.messageSubject,
     value: item.id,
@@ -152,10 +164,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -180,7 +189,12 @@ onMounted(() => {
         style="width: 100%"
       >
         <ElTableColumn label="主键" align="center" prop="id" min-width="50" />
-        <ElTableColumn label="标题" align="center" prop="title" min-width="240" />
+        <ElTableColumn
+          label="标题"
+          align="center"
+          prop="title"
+          min-width="240"
+        />
         <ElTableColumn
           label="发布时间"
           align="center"
@@ -188,7 +202,12 @@ onMounted(() => {
           :formatter="dateFormatter2"
           min-width="120"
         />
-        <ElTableColumn label="信息类别" align="center" prop="publishingSubject" min-width="120">
+        <ElTableColumn
+          label="信息类别"
+          align="center"
+          prop="publishingSubject"
+          min-width="120"
+        >
           <template #default="scope">
             <span v-for="(item, key) in publishingSubjectOptions" :key="key">
               <span v-if="scope.row.publishingSubject == item.value">
@@ -197,7 +216,12 @@ onMounted(() => {
             </span>
           </template>
         </ElTableColumn>
-        <ElTableColumn label="内容概述" align="center" prop="contentOverview" min-width="300" />
+        <ElTableColumn
+          label="内容概述"
+          align="center"
+          prop="contentOverview"
+          min-width="300"
+        />
         <ElTableColumn
           label="创建时间"
           align="center"
@@ -205,7 +229,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="180"
         />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="120">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="120"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -215,11 +244,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

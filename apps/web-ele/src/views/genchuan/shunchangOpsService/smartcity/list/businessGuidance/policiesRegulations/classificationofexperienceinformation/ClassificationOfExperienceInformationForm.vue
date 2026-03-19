@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { reactive, ref } from 'vue';
+
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton
+  ElButton,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElMessage,
 } from 'element-plus';
-import {
-  ClassificationOfExperienceInformationApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/classificationofexperienceinformation';
+
+import { ClassificationOfExperienceInformationApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/classificationofexperienceinformation';
 
 /** 经验信息分类 表单 */
 defineOptions({ name: 'ClassificationOfExperienceInformationForm' });
@@ -33,7 +38,8 @@ const formRef = ref(); // 表单 Ref
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增经验信息分类' : '编辑经验信息分类';
+  dialogTitle.value =
+    type === 'create' ? '新增经验信息分类' : '编辑经验信息分类';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -41,7 +47,9 @@ const open = async (type: string, id?: number) => {
     formLoading.value = true;
     try {
       formData.value =
-        await ClassificationOfExperienceInformationApi.getClassificationOfExperienceInformation(id);
+        await ClassificationOfExperienceInformationApi.getClassificationOfExperienceInformation(
+          id,
+        );
     } finally {
       formLoading.value = false;
     }
@@ -88,7 +96,12 @@ const resetForm = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -100,16 +113,28 @@ const resetForm = () => {
         <ElInput v-model="formData.sector" placeholder="请输入所属行业" />
       </ElFormItem>
       <ElFormItem label="应用场景" prop="applicationScenarios">
-        <ElInput v-model="formData.applicationScenarios" placeholder="请输入应用场景" />
+        <ElInput
+          v-model="formData.applicationScenarios"
+          placeholder="请输入应用场景"
+        />
       </ElFormItem>
       <ElFormItem label="经验性质" prop="empiricalNature">
-        <ElInput v-model="formData.empiricalNature" placeholder="请输入经验性质" />
+        <ElInput
+          v-model="formData.empiricalNature"
+          placeholder="请输入经验性质"
+        />
       </ElFormItem>
       <ElFormItem label="适用对象" prop="applicableObjects">
-        <ElInput v-model="formData.applicableObjects" placeholder="请输入适用对象" />
+        <ElInput
+          v-model="formData.applicableObjects"
+          placeholder="请输入适用对象"
+        />
       </ElFormItem>
       <ElFormItem label="来源渠道" prop="sourceChannel">
-        <ElInput v-model="formData.sourceChannel" placeholder="请输入来源渠道" />
+        <ElInput
+          v-model="formData.sourceChannel"
+          placeholder="请输入来源渠道"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

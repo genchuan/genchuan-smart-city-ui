@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker
+  ElMessage,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
 } from 'element-plus';
-import {
-  MaintenancePlanApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingMaintenance/maintenanceplan';
+import { MaintenancePlanApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/landscaping/landscapingMaintenance/maintenanceplan';
 
 /** 养护计划 表单 */
 defineOptions({ name: 'MaintenancePlanForm' });
@@ -106,7 +110,12 @@ const resetForm = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -148,22 +157,41 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="负责养护人员" prop="maintenancePersonnel">
-        <ElInput v-model="formData.maintenancePersonnel" placeholder="请输入负责养护人员" />
+        <ElInput
+          v-model="formData.maintenancePersonnel"
+          placeholder="请输入负责养护人员"
+        />
       </ElFormItem>
       <ElFormItem label="养护地块" prop="maintainParcel">
-        <ElInput v-model="formData.maintainParcel" placeholder="请输入养护地块" />
+        <ElInput
+          v-model="formData.maintainParcel"
+          placeholder="请输入养护地块"
+        />
       </ElFormItem>
       <ElFormItem label="养护内容" prop="maintenanceContent">
-        <ElInput v-model="formData.maintenanceContent" type="textarea" placeholder="请输入养护内容" />
+        <ElInput
+          v-model="formData.maintenanceContent"
+          type="textarea"
+          placeholder="请输入养护内容"
+        />
       </ElFormItem>
       <ElFormItem label="养护频率" prop="maintenanceFrequency">
-        <ElInput v-model="formData.maintenanceFrequency" placeholder="请输入养护频率" />
+        <ElInput
+          v-model="formData.maintenanceFrequency"
+          placeholder="请输入养护频率"
+        />
       </ElFormItem>
       <ElFormItem label="养护资源需求" prop="maintenanceDemand">
-        <ElInput v-model="formData.maintenanceDemand" placeholder="请输入养护资源需求" />
+        <ElInput
+          v-model="formData.maintenanceDemand"
+          placeholder="请输入养护资源需求"
+        />
       </ElFormItem>
       <ElFormItem label="计划预算" prop="plannedBudget">
-        <ElInput v-model="formData.plannedBudget" placeholder="请输入计划预算" />
+        <ElInput
+          v-model="formData.plannedBudget"
+          placeholder="请输入计划预算"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

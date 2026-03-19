@@ -10,7 +10,10 @@
       <!--第二块-->
       <div class="two bg">
         <div class="title">排水防涝质量指标</div>
-        <CapsuleChart :config="rightData.rightTwo" style="width:100%;height:calc(100% - 35px)" />
+        <CapsuleChart
+          :config="rightData.rightTwo"
+          style="width: 100%; height: calc(100% - 35px)"
+        />
       </div>
       <!--第三块-->
       <div class="three bg">
@@ -18,7 +21,7 @@
         <div class="title">积水点监测/防涝事件</div>
         <ScrollBoard
           :config="leftData.CCDvScrollBoardConfig"
-          style="padding: 15px 25px 25px;  height: calc(100% - 35px - 40px);"
+          style=" height: calc(100% - 35px - 40px);padding: 15px 25px 25px"
         />
       </div>
     </div>
@@ -27,7 +30,7 @@
     <div class="content-center">
       <div class="s1">
         <chart-customize1 :paramsData="centerData.customizeParams" />
-        <map-common idName="chinaEcharts" :geometriesArray="geometriesArray"/>
+        <map-common idName="chinaEcharts" :geometriesArray="geometriesArray" />
       </div>
       <div class="s2 bg">
         <div class="title">排水防涝项目介绍</div>
@@ -82,12 +85,12 @@ import ChartTypePolyLines from './ChartTypePolyLines.vue';
 import ChartCustomize3 from './ChartCustomize3.vue';
 import { CapsuleChart, ScrollBoard } from '@kjgl77/datav-vue3';
 
-const geometriesArray=[
-  {x:26.825227,y:117.620114},
-  {x:26.805227,y:117.650114},
-  {x:26.733227,y:117.940114},
-  {x:26.7533227,y:117.680114},
-  {x:26.763227,y:117.7220114},
+const geometriesArray = [
+  { x: 26.825227, y: 117.620114 },
+  { x: 26.805227, y: 117.650114 },
+  { x: 26.733227, y: 117.940114 },
+  { x: 26.7533227, y: 117.680114 },
+  { x: 26.763227, y: 117.7220114 },
 ];
 
 const leftData = ref({
@@ -97,20 +100,20 @@ const leftData = ref({
     { title: '排水泵站', num: '15', unit: '座' },
     { title: '排水车辆', num: '20', unit: '辆' },
     { title: '日排水量', num: '5000', unit: '立方米' },
-    { title: '月排水量', num: '130000', unit: '立方米' }
+    { title: '月排水量', num: '130000', unit: '立方米' },
   ],
   picData: [
     { value: 20, name: '管道疏通' },
     { value: 30, name: '积水排除' },
     { value: 42, name: '泵站维护' },
-    { value: 32, name: '设备检修' }
+    { value: 32, name: '设备检修' },
   ],
   lineAxisData: ['2-21', '2-22', '2-23', '2-24', '2-25', '2-26', '2-27'],
   picRightData2: [
     { title: '排水站点数量', num: '50', unit: '个' },
     { title: '排水人员数量', num: '200', unit: '人' },
     { title: '日积水排除量', num: '1500', unit: '立方米' },
-    { title: '月积水排除总量', num: '45000', unit: '立方米' }
+    { title: '月积水排除总量', num: '45000', unit: '立方米' },
   ],
   lineSeriesData: [1500, 1450, 1520, 1480, 1530, 1430, 1500],
   CCDvScrollBoardConfig: {
@@ -130,18 +133,18 @@ const leftData = ref({
       ['西部排水泵站', '设备故障', '13:40', '已解决'],
       ['南郊街道', '积水排除不及时', '14:05', '处理中'],
       ['北郊公园', '排水清扫不到位', '14:30', '已解决'],
-      ['城中老街', '排水人员不足', '15:00', '处理中']
+      ['城中老街', '排水人员不足', '15:00', '处理中'],
     ],
     rowNum: 4,
-    align: ['center', 'center', 'center']
-  }
+    align: ['center', 'center', 'center'],
+  },
 });
 
 const centerData = ref({
   customizeParams: {
     name: '连续正常运行天数：',
     runningDays: '23',
-    tail: '天'
+    tail: '天',
   },
   proJectsList: {
     processName: '施工技术',
@@ -163,14 +166,16 @@ const centerData = ref({
         contactNumber2: '139-xxxx-3468',
         realPictures: [
           {
-            imgUrl: new URL('../assets/images/imgs/33.jpg', import.meta.url).href,
-            name: '管道更换施工'
+            imgUrl: new URL('../assets/images/imgs/33.jpg', import.meta.url)
+              .href,
+            name: '管道更换施工',
           },
           {
-            imgUrl: new URL('../assets/images/imgs/44.jpeg', import.meta.url).href,
-            name: '智能监测设备安装'
-          }
-        ]
+            imgUrl: new URL('../assets/images/imgs/44.jpeg', import.meta.url)
+              .href,
+            name: '智能监测设备安装',
+          },
+        ],
       },
       /*{
         name: '城乡排水一体化项目',
@@ -252,8 +257,8 @@ const centerData = ref({
           }
         ]
       }*/
-    ]
-  }
+    ],
+  },
 });
 
 const rightData = ref({
@@ -262,28 +267,47 @@ const rightData = ref({
     { name: '排水泵', num: '135', unit: '台' },
     { name: '排水车', num: '123', unit: '辆' },
     { name: '吸污车', num: '256', unit: '辆' },
-    { name: '雨水箅子', num: '338', unit: '个' }
+    { name: '雨水箅子', num: '338', unit: '个' },
   ],
   rightOne: {
     idName: 'rightOneId',
-    xAxisData: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+    xAxisData: [
+      '1月',
+      '2月',
+      '3月',
+      '4月',
+      '5月',
+      '6月',
+      '7月',
+      '8月',
+      '9月',
+      '10月',
+      '11月',
+      '12月',
+    ],
     polyLinesData: [
       {
         lineColor: '#3a72d7',
         name: '今年',
         color: ['rgba(58,114,215,1)', 'rgba(58,114,215,0.1)'],
         type: 'line',
-        data: [3800, 5100, 12000, 16000, 18000, 13500, 24000, 22000, 29100, 32000, 28000, 26000]
+        data: [
+          3800, 5100, 12000, 16000, 18000, 13500, 24000, 22000, 29100, 32000,
+          28000, 26000,
+        ],
       },
       {
         lineColor: '#11e48a',
         name: '去年',
         color: ['rgba(9,114,95,1)', 'rgba(9,114,95,0.1)'],
         type: 'line',
-        data: [16500, 18600, 23500, 26800, 22000, 23200, 28200, 26000, 22000, 20000, 18000, 14000]
-      }
+        data: [
+          16500, 18600, 23500, 26800, 22000, 23200, 28200, 26000, 22000, 20000,
+          18000, 14000,
+        ],
+      },
     ],
-    yAxisName: '排水量（立方米）'
+    yAxisName: '排水量（立方米）',
   },
   rightTwo: {
     data: [
@@ -291,10 +315,10 @@ const rightData = ref({
       { name: '泵站运行效率', value: 120 },
       { name: '雨水箅子完好率', value: 78 },
       { name: '排水设施完好率', value: 66 },
-      { name: '积水排除及时率', value: 80 }
+      { name: '积水排除及时率', value: 80 },
     ],
-    showValue: false
-  }
+    showValue: false,
+  },
 });
 </script>
 
@@ -302,7 +326,7 @@ const rightData = ref({
 .CityAppearanceAndSanitation-center-css {
   display: flex;
   flex-wrap: nowrap;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 </style>

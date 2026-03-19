@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton
+  ElMessage,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
 } from 'element-plus';
-import {
-  ClassificationOfPoliciesAndRegulationsApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/classificationofpoliciesandregulations';
+import { ClassificationOfPoliciesAndRegulationsApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/classificationofpoliciesandregulations';
 
 /** 政策法规分类 表单 */
 defineOptions({ name: 'ClassificationOfPoliciesAndRegulationsForm' });
@@ -36,7 +39,8 @@ const formRef = ref(); // 表单 Ref
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增政策法规分类' : '编辑政策法规分类';
+  dialogTitle.value =
+    type === 'create' ? '新增政策法规分类' : '编辑政策法规分类';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -44,7 +48,9 @@ const open = async (type: string, id?: number) => {
     formLoading.value = true;
     try {
       formData.value =
-        await ClassificationOfPoliciesAndRegulationsApi.getClassificationOfPoliciesAndRegulations(id);
+        await ClassificationOfPoliciesAndRegulationsApi.getClassificationOfPoliciesAndRegulations(
+          id,
+        );
     } finally {
       formLoading.value = false;
     }
@@ -94,7 +100,12 @@ const resetForm = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -103,7 +114,10 @@ const resetForm = () => {
       v-loading="formLoading"
     >
       <ElFormItem label="法规类别" prop="regulatoryCategory">
-        <ElInput v-model="formData.regulatoryCategory" placeholder="请输入法规类别" />
+        <ElInput
+          v-model="formData.regulatoryCategory"
+          placeholder="请输入法规类别"
+        />
       </ElFormItem>
       <ElFormItem label="所属领域" prop="isArea">
         <ElInput v-model="formData.isArea" placeholder="请输入所属领域" />

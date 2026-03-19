@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { reactive, ref } from 'vue';
+
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton
+  ElButton,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElMessage,
 } from 'element-plus';
-import {
-  ClassificationOfGuideInformationApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/operationGuide/classificationofguideinformation';
+
+import { ClassificationOfGuideInformationApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/operationGuide/classificationofguideinformation';
 
 /** 指南信息分类 表单 */
 defineOptions({ name: 'ClassificationOfGuideInformationForm' });
@@ -32,7 +37,8 @@ const formRef = ref(); // 表单 Ref
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增指南信息分类' : '编辑指南信息分类';
+  dialogTitle.value =
+    type === 'create' ? '新增指南信息分类' : '编辑指南信息分类';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -40,7 +46,9 @@ const open = async (type: string, id?: number) => {
     formLoading.value = true;
     try {
       formData.value =
-        await ClassificationOfGuideInformationApi.getClassificationOfGuideInformation(id);
+        await ClassificationOfGuideInformationApi.getClassificationOfGuideInformation(
+          id,
+        );
     } finally {
       formLoading.value = false;
     }
@@ -86,7 +94,12 @@ const resetForm = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -98,13 +111,22 @@ const resetForm = () => {
         <ElInput v-model="formData.applications" placeholder="请输入适用领域" />
       </ElFormItem>
       <ElFormItem label="应用场景" prop="applicationScenarios">
-        <ElInput v-model="formData.applicationScenarios" placeholder="请输入应用场景" />
+        <ElInput
+          v-model="formData.applicationScenarios"
+          placeholder="请输入应用场景"
+        />
       </ElFormItem>
       <ElFormItem label="受众群体" prop="targetAudience">
-        <ElInput v-model="formData.targetAudience" placeholder="请输入受众群体" />
+        <ElInput
+          v-model="formData.targetAudience"
+          placeholder="请输入受众群体"
+        />
       </ElFormItem>
       <ElFormItem label="指南性质" prop="natureOfTheGuide">
-        <ElInput v-model="formData.natureOfTheGuide" placeholder="请输入指南性质" />
+        <ElInput
+          v-model="formData.natureOfTheGuide"
+          placeholder="请输入指南性质"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

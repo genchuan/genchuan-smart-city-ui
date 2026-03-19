@@ -26,7 +26,7 @@
         <div class="title">事件清单</div>
         <ScrollBoard
           :config="leftData.CCDvScrollBoardConfig"
-          style="padding: 15px 25px 25px;  height: calc(100% - 35px - 40px);"
+          style=" height: calc(100% - 35px - 40px);padding: 15px 25px 25px"
         />
       </div>
     </div>
@@ -89,11 +89,11 @@ import ChartCustomize2 from './ChartCustomize2.vue';
 import ChartTypePolyLines from './ChartTypePolyLines.vue';
 import { ScrollBoard } from '@kjgl77/datav-vue3';
 
-const geometriesArray=[
-  {x:26.793227,y:117.810114},
-  {x:26.893227,y:117.860114},
-  {x:26.823227,y:117.850114},
-  {x:26.863227,y:117.920114},
+const geometriesArray = [
+  { x: 26.793227, y: 117.810114 },
+  { x: 26.893227, y: 117.860114 },
+  { x: 26.823227, y: 117.850114 },
+  { x: 26.863227, y: 117.920114 },
 ];
 
 // 使用 ref 创建响应式数据
@@ -104,20 +104,20 @@ const leftData = ref({
     { title: '中转站', num: '42', unit: '' },
     { title: '填埋场', num: '48', unit: '' },
     { title: '日处理垃圾', num: '32', unit: '' },
-    { title: '月处理垃圾', num: '780', unit: '' }
+    { title: '月处理垃圾', num: '780', unit: '' },
   ],
   picData: [
     { value: 16, name: '街道' },
     { value: 51, name: '社区' },
     { value: 164, name: '责任网格' },
-    { value: 320, name: '单元网格' }
+    { value: 320, name: '单元网格' },
   ],
   lineAxisData: ['2-21', '2-22', '2-23', '2-24', '2-25', '2-26', '2-27'],
   picRightData2: [
     { title: '灯杆数量', num: '1246', unit: '' },
     { title: '站点数量', num: '248', unit: '' },
     { title: '日电数量', num: '1562', unit: '' },
-    { title: '月用点数量', num: '54216', unit: '' }
+    { title: '月用点数量', num: '54216', unit: '' },
   ],
   lineSeriesData: [1562, 1480, 1580, 1520, 1540, 1490, 1540],
   CCDvScrollBoardConfig: {
@@ -137,25 +137,52 @@ const leftData = ref({
       ['文化街', '广告牌掉落', '13:40', '已解决'],
       ['前进路', '电缆外露', '14:05', '处理中'],
       ['民主北路', '窨井溢水', '14:30', '已解决'],
-      ['团结路', '消防栓漏水', '15:00', '处理中']
+      ['团结路', '消防栓漏水', '15:00', '处理中'],
     ],
     rowNum: 4, // 表行数
-    align: ['center', 'center', 'center']
-  }
+    align: ['center', 'center', 'center'],
+  },
 });
 
 const centerData = ref({
   customizeParams: {
     name: '安全运行天数：',
     runningDays: '27',
-    tail: '天'
+    tail: '天',
   },
   centerId: 'centerId',
-  lineAxisData: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+  lineAxisData: [
+    '1月',
+    '2月',
+    '3月',
+    '4月',
+    '5月',
+    '6月',
+    '7月',
+    '8月',
+    '9月',
+    '10月',
+    '11月',
+    '12月',
+  ],
   lineSeriesData: [
-    { data: [535, 852, 920, 1010, 1100, 1205, 1350, 1405, 1685, 2010, 2105, 2250], name: '交通设备', type: 'bar', color: ['#02a8f1', '#0c1e65'] },
-    { data: [505, 802, 900, 1000, 1000, 1105, 1250, 1305, 1485, 2000, 2005, 2200], name: '运行设备', type: 'bar', color: ['#ba97f9', '#4033f9'] }
-  ]
+    {
+      data: [
+        535, 852, 920, 1010, 1100, 1205, 1350, 1405, 1685, 2010, 2105, 2250,
+      ],
+      name: '交通设备',
+      type: 'bar',
+      color: ['#02a8f1', '#0c1e65'],
+    },
+    {
+      data: [
+        505, 802, 900, 1000, 1000, 1105, 1250, 1305, 1485, 2000, 2005, 2200,
+      ],
+      name: '运行设备',
+      type: 'bar',
+      color: ['#ba97f9', '#4033f9'],
+    },
+  ],
 });
 
 const rightData = ref({
@@ -164,11 +191,24 @@ const rightData = ref({
     { name: '视频摄像头', num: '14260', unit: '' },
     { name: '园林绿化类', num: '1423', unit: '' },
     { name: '市政施工类', num: '6562', unit: '' },
-    { name: '环卫监管类', num: '3381', unit: '' }
+    { name: '环卫监管类', num: '3381', unit: '' },
   ],
   rightOne: {
     idName: 'rightOne',
-    xAxisData: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+    xAxisData: [
+      '1月',
+      '2月',
+      '3月',
+      '4月',
+      '5月',
+      '6月',
+      '7月',
+      '8月',
+      '9月',
+      '10月',
+      '11月',
+      '12月',
+    ],
     yAxisName: '',
     polyLinesData: [
       {
@@ -176,16 +216,21 @@ const rightData = ref({
         name: '今年', // 提示的名称
         color: ['rgba(58,114,215,1)', 'rgba(58,114,215,0.1)'], // 渐变色0 - 1
         type: 'line',
-        data: [1650, 1860, 2350, 2680, 2200, 2320, 2820, 2600, 2200, 2000, 1800, 1400] // 纵坐标值
+        data: [
+          1650, 1860, 2350, 2680, 2200, 2320, 2820, 2600, 2200, 2000, 1800,
+          1400,
+        ], // 纵坐标值
       },
       {
         lineColor: '#11e48a',
         name: '去年',
         color: ['rgba(9,114,95,1)', 'rgba(9,114,95,0.1)'],
         type: 'line',
-        data: [388, 512, 1200, 1600, 1800, 1350, 2400, 2200, 2910, 3200, 2800, 2600] // 纵坐标值
-      }
-    ]
+        data: [
+          388, 512, 1200, 1600, 1800, 1350, 2400, 2200, 2910, 3200, 2800, 2600,
+        ], // 纵坐标值
+      },
+    ],
   },
   rightTwo: {
     idName: 'rightTwo',
@@ -197,10 +242,10 @@ const rightData = ref({
         name: '智慧供水', // 提示的名称
         color: ['rgba(58,114,215,1)', 'rgba(58,114,215,0.1)'], // 渐变色0 - 1
         type: 'line',
-        data: [12, 16, 20, 19, 22, 24, 22, 20, 18, 12, 20, 18, 16, 23] // 纵坐标值
-      }
-    ]
-  }
+        data: [12, 16, 20, 19, 22, 24, 22, 20, 18, 12, 20, 18, 16, 23], // 纵坐标值
+      },
+    ],
+  },
 });
 </script>
 

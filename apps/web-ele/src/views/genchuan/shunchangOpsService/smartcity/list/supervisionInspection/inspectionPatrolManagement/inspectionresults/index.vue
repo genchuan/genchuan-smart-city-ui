@@ -1,12 +1,22 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { confirm } from '@vben/common-ui';
-import {
-  InspectionResultsAApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/supervisionInspection/inspectionPatrolManagement/inspectionresults';
+import { InspectionResultsAApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/supervisionInspection/inspectionPatrolManagement/inspectionresults';
 import download from '#/utils/genchuan/download';
 import { dateFormatter } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker, ElPagination, ElSpace } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
+  ElPagination,
+  ElSpace,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 import { $t } from '#/locales';
 
@@ -33,9 +43,7 @@ const getList = async () => {
   loading.value = true;
   try {
     const data =
-      await InspectionResultsAApi.getInspectionResultsAPage(
-        queryParams,
-      );
+      await InspectionResultsAApi.getInspectionResultsAPage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -82,11 +90,10 @@ const handleExport = async () => {
     // 发起导出
     exportLoading.value = true;
     const data =
-      await InspectionResultsAApi.exportInspectionResultsA(
-        queryParams,
-      );
+      await InspectionResultsAApi.exportInspectionResultsA(queryParams);
     download.excel(data, '巡查结果.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -144,10 +151,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -172,8 +176,18 @@ onMounted(() => {
         style="width: 100%"
       >
         <ElTableColumn label="主键" align="center" prop="id" min-width="50" />
-        <ElTableColumn label="编号" align="center" prop="number" min-width="120" />
-        <ElTableColumn label="巡查人员" align="center" prop="patrolPersonnel" min-width="100" />
+        <ElTableColumn
+          label="编号"
+          align="center"
+          prop="number"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="巡查人员"
+          align="center"
+          prop="patrolPersonnel"
+          min-width="100"
+        />
         <ElTableColumn
           label="巡查时间"
           align="center"
@@ -181,11 +195,36 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="180"
         />
-        <ElTableColumn label="巡查地点" align="center" prop="patrolLocation" min-width="120" />
-        <ElTableColumn label="资源名称" align="center" prop="resourceName" min-width="120" />
-        <ElTableColumn label="资源编号" align="center" prop="resourceNumber" min-width="120" />
-        <ElTableColumn label="检查项目" align="center" prop="inspectionItems" min-width="120" />
-        <ElTableColumn label="检查结果" align="center" prop="inspectionResults" min-width="120" />
+        <ElTableColumn
+          label="巡查地点"
+          align="center"
+          prop="patrolLocation"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="资源名称"
+          align="center"
+          prop="resourceName"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="资源编号"
+          align="center"
+          prop="resourceNumber"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="检查项目"
+          align="center"
+          prop="inspectionItems"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="检查结果"
+          align="center"
+          prop="inspectionResults"
+          min-width="120"
+        />
         <ElTableColumn
           label="创建时间"
           align="center"
@@ -193,7 +232,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="180"
         />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="120">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="120"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -203,11 +247,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

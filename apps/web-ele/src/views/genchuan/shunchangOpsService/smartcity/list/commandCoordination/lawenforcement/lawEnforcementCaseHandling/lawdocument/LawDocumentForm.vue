@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import {
-  ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker
+  ElMessage,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
 } from 'element-plus';
-import {
-  LawDocumentApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/commandCoordination/lawenforcement/lawEnforcementCaseHandling/lawdocument';
+import { LawDocumentApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/commandCoordination/lawenforcement/lawEnforcementCaseHandling/lawdocument';
 
 /** 执法文书 表单 */
 defineOptions({ name: 'LawDocumentForm' });
@@ -50,8 +54,7 @@ const open = async (type: string, id?: number) => {
   if (id) {
     formLoading.value = true;
     try {
-      formData.value =
-        await LawDocumentApi.getLawDocument(id);
+      formData.value = await LawDocumentApi.getLawDocument(id);
     } finally {
       formLoading.value = false;
     }
@@ -66,14 +69,10 @@ const submitForm = async () => {
   try {
     const data = formData.value;
     if (formType.value === 'create') {
-      await LawDocumentApi.createLawDocument(
-        data,
-      );
+      await LawDocumentApi.createLawDocument(data);
       ElMessage.success('新增成功');
     } else {
-      await LawDocumentApi.updateLawDocument(
-        data,
-      );
+      await LawDocumentApi.updateLawDocument(data);
       ElMessage.success('修改成功');
     }
     dialogVisible.value = false;
@@ -108,7 +107,12 @@ const resetForm = () => {
 };
 </script>
 <template>
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="600px" append-to-body>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
     <ElForm
       ref="formRef"
       :model="formData"
@@ -126,13 +130,23 @@ const resetForm = () => {
         <ElInput v-model="formData.documentCode" placeholder="请输入文书编号" />
       </ElFormItem>
       <ElFormItem label="文书标题" prop="documentTitle">
-        <ElInput v-model="formData.documentTitle" placeholder="请输入文书标题" />
+        <ElInput
+          v-model="formData.documentTitle"
+          placeholder="请输入文书标题"
+        />
       </ElFormItem>
       <ElFormItem label="文书内容" prop="documentContent">
-        <ElInput v-model="formData.documentContent" type="textarea" placeholder="请输入文书内容" />
+        <ElInput
+          v-model="formData.documentContent"
+          type="textarea"
+          placeholder="请输入文书内容"
+        />
       </ElFormItem>
       <ElFormItem label="创建人" prop="documentCreator">
-        <ElInput v-model="formData.documentCreator" placeholder="请输入创建人" />
+        <ElInput
+          v-model="formData.documentCreator"
+          placeholder="请输入创建人"
+        />
       </ElFormItem>
       <ElFormItem label="审批人" prop="approver">
         <ElInput v-model="formData.approver" placeholder="请输入审批人" />
@@ -147,7 +161,10 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="审批状态" prop="approvalStatus">
-        <ElInput v-model="formData.approvalStatus" placeholder="请输入审批状态" />
+        <ElInput
+          v-model="formData.approvalStatus"
+          placeholder="请输入审批状态"
+        />
       </ElFormItem>
       <ElFormItem label="签署人" prop="signatory">
         <ElInput v-model="formData.signatory" placeholder="请输入签署人" />

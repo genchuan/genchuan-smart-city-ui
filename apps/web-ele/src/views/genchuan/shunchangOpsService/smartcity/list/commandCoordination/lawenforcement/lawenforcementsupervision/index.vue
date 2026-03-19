@@ -1,12 +1,23 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { confirm } from '@vben/common-ui';
-import {
-  LawEnforcementSupervisionApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/commandCoordination/lawenforcement/lawenforcementsupervision';
+import { LawEnforcementSupervisionApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/commandCoordination/lawenforcement/lawenforcementsupervision';
 import download from '#/utils/genchuan/download';
 import { dateFormatter, dateFormatter2 } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker, ElPagination, ElSpace, ElTag } from 'element-plus';
+import {
+  ElMessage,
+  ElCard,
+  ElTable,
+  ElTableColumn,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElDatePicker,
+  ElPagination,
+  ElSpace,
+  ElTag,
+} from 'element-plus';
 import { Icon } from '@iconify/vue';
 import { $t } from '#/locales';
 
@@ -87,7 +98,8 @@ const handleExport = async () => {
         queryParams,
       );
     download.excel(data, '执法监督.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -154,10 +166,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -182,47 +191,145 @@ onMounted(() => {
         style="width: 100%"
       >
         <ElTableColumn label="主键" align="center" prop="id" min-width="50" />
-        <ElTableColumn label="监督编号" align="center" prop="supervisionId" min-width="140" />
-        <ElTableColumn label="执法事件编号" align="center" prop="eventNumber" min-width="140" />
-        <ElTableColumn label="执法人员" align="center" prop="officials" min-width="100" />
-        <ElTableColumn label="监督人员" align="center" prop="personnel" min-width="100" />
-        <ElTableColumn label="监督时间" align="center" prop="time" :formatter="dateFormatter2" min-width="120" />
+        <ElTableColumn
+          label="监督编号"
+          align="center"
+          prop="supervisionId"
+          min-width="140"
+        />
+        <ElTableColumn
+          label="执法事件编号"
+          align="center"
+          prop="eventNumber"
+          min-width="140"
+        />
+        <ElTableColumn
+          label="执法人员"
+          align="center"
+          prop="officials"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="监督人员"
+          align="center"
+          prop="personnel"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="监督时间"
+          align="center"
+          prop="time"
+          :formatter="dateFormatter2"
+          min-width="120"
+        />
         <ElTableColumn label="监督类型" align="center" min-width="150">
           <template #default="scope">
-            <template v-if="scope.row.method === 'internal_recorder'">执法记录仪核查</template>
-            <template v-else-if="scope.row.method === 'internal_replay'">执法过程回放</template>
-            <template v-else-if="scope.row.method === 'internal_document'">执法文书审查</template>
-            <template v-else-if="scope.row.method === 'internal_case_review'">执法案件评查</template>
-            <template v-else-if="scope.row.method === 'internal_performance'">执法绩效考核</template>
-            <template v-else-if="scope.row.method === 'external_complaint'">投诉举报核查</template>
-            <template v-else-if="scope.row.method === 'external_satisfaction'">满意度调查</template>
-            <template v-else-if="scope.row.method === 'external_information'">信息公开检查</template>
+            <template v-if="scope.row.method === 'internal_recorder'"
+              >执法记录仪核查</template
+            >
+            <template v-else-if="scope.row.method === 'internal_replay'"
+              >执法过程回放</template
+            >
+            <template v-else-if="scope.row.method === 'internal_document'"
+              >执法文书审查</template
+            >
+            <template v-else-if="scope.row.method === 'internal_case_review'"
+              >执法案件评查</template
+            >
+            <template v-else-if="scope.row.method === 'internal_performance'"
+              >执法绩效考核</template
+            >
+            <template v-else-if="scope.row.method === 'external_complaint'"
+              >投诉举报核查</template
+            >
+            <template v-else-if="scope.row.method === 'external_satisfaction'"
+              >满意度调查</template
+            >
+            <template v-else-if="scope.row.method === 'external_information'"
+              >信息公开检查</template
+            >
             <template v-else>{{ scope.row.method }}</template>
           </template>
         </ElTableColumn>
         <ElTableColumn label="监督证据" min-width="120" align="center">
           <template #default="scope">
-            <template v-if="scope.row.integrityCollection === 'recorder_video'">执法记录仪视频</template>
-            <template v-else-if="scope.row.integrityCollection === 'law_document'">执法文书</template>
-            <template v-else-if="scope.row.integrityCollection === 'complaint_evidence'">投诉举报证据</template>
-            <template v-else-if="scope.row.integrityCollection === 'satisfaction_survey'">满意度调查问卷</template>
-            <template v-else-if="scope.row.integrityCollection === 'information_public'">信息公开材料</template>
-            <template v-else-if="scope.row.integrityCollection === 'no_evidence'">无监督证据</template>
+            <template v-if="scope.row.integrityCollection === 'recorder_video'"
+              >执法记录仪视频</template
+            >
+            <template
+              v-else-if="scope.row.integrityCollection === 'law_document'"
+              >执法文书</template
+            >
+            <template
+              v-else-if="scope.row.integrityCollection === 'complaint_evidence'"
+              >投诉举报证据</template
+            >
+            <template
+              v-else-if="
+                scope.row.integrityCollection === 'satisfaction_survey'
+              "
+              >满意度调查问卷</template
+            >
+            <template
+              v-else-if="scope.row.integrityCollection === 'information_public'"
+              >信息公开材料</template
+            >
+            <template
+              v-else-if="scope.row.integrityCollection === 'no_evidence'"
+              >无监督证据</template
+            >
             <template v-else>{{ scope.row.integrityCollection }}</template>
           </template>
         </ElTableColumn>
-        <ElTableColumn label="群众满意度" align="center" prop="satisfactionInvolved" min-width="120" />
+        <ElTableColumn
+          label="群众满意度"
+          align="center"
+          prop="satisfactionInvolved"
+          min-width="120"
+        />
         <ElTableColumn label="监督结果" align="center" min-width="120">
           <template #default="scope">
-            <ElTag type="success" effect="light" v-if="scope.row.resultEvaluation === 'qualified'">合格</ElTag>
-            <ElTag type="warning" effect="light" v-else-if="scope.row.resultEvaluation === 'minor_violation'">轻微违规</ElTag>
-            <ElTag type="danger" effect="light" v-else-if="scope.row.resultEvaluation === 'serious_violation'">严重违规</ElTag>
-            <ElTag type="info" effect="light" v-else-if="scope.row.resultEvaluation === 'rectified'">已完成整改</ElTag>
-            <ElTag type="info" effect="light" v-else-if="scope.row.resultEvaluation === 'no_need_rectify'">无需整改</ElTag>
-            <ElTag effect="light" v-else>{{ scope.row.resultEvaluation }}</ElTag>
+            <ElTag
+              type="success"
+              effect="light"
+              v-if="scope.row.resultEvaluation === 'qualified'"
+              >合格</ElTag
+            >
+            <ElTag
+              type="warning"
+              effect="light"
+              v-else-if="scope.row.resultEvaluation === 'minor_violation'"
+              >轻微违规</ElTag
+            >
+            <ElTag
+              type="danger"
+              effect="light"
+              v-else-if="scope.row.resultEvaluation === 'serious_violation'"
+              >严重违规</ElTag
+            >
+            <ElTag
+              type="info"
+              effect="light"
+              v-else-if="scope.row.resultEvaluation === 'rectified'"
+              >已完成整改</ElTag
+            >
+            <ElTag
+              type="info"
+              effect="light"
+              v-else-if="scope.row.resultEvaluation === 'no_need_rectify'"
+              >无需整改</ElTag
+            >
+            <ElTag effect="light" v-else>{{
+              scope.row.resultEvaluation
+            }}</ElTag>
           </template>
         </ElTableColumn>
-        <ElTableColumn label="监督问题描述" align="center" prop="violationDescription" min-width="150" />
+        <ElTableColumn
+          label="监督问题描述"
+          align="center"
+          prop="violationDescription"
+          min-width="150"
+        />
         <ElTableColumn
           label="创建时间"
           align="center"
@@ -230,7 +337,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="180"
         />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="120">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="120"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -240,11 +352,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>

@@ -94,7 +94,8 @@ const handleExport = async () => {
     const data =
       await InspectionAnalysisApi.exportInspectionAnalysis(queryParams);
     download.excel(data, '巡查分析统计.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };

@@ -10,14 +10,17 @@
       <!--第二块-->
       <div class="two bg">
         <div class="title">扬尘监测质量指标</div>
-        <CapsuleChart :config="rightData.rightTwo" style="width:100%;height:calc(100% - 35px)" />
+        <CapsuleChart
+          :config="rightData.rightTwo"
+          style="width: 100%; height: calc(100% - 35px)"
+        />
       </div>
       <!--第三块-->
       <div class="three bg">
         <div class="title">扬尘监测事件清单</div>
         <ScrollBoard
           :config="leftData.CCDvScrollBoardConfig"
-          style="padding: 15px 25px 25px;  height: calc(100% - 35px - 40px);"
+          style=" height: calc(100% - 35px - 40px);padding: 15px 25px 25px"
         />
       </div>
     </div>
@@ -26,7 +29,7 @@
     <div class="content-center">
       <div class="s1">
         <chart-customize1 :paramsData="centerData.customizeParams" />
-        <map-common idName="chinaEcharts" :geometriesArray="geometriesArray"/>
+        <map-common idName="chinaEcharts" :geometriesArray="geometriesArray" />
       </div>
       <div class="s2 bg">
         <div class="title">扬尘监测项目介绍</div>
@@ -81,12 +84,12 @@ import ChartTypePolyLines from './ChartTypePolyLines.vue';
 import ChartCustomize3 from './ChartCustomize3.vue';
 import { CapsuleChart, ScrollBoard } from '@kjgl77/datav-vue3';
 
-const geometriesArray=[
-  {x:26.825227,y:117.620114},
-  {x:26.753227,y:117.760114},
-  {x:26.7233227,y:117.600114},
-  {x:26.7233227,y:117.650114},
-  {x:26.843227,y:117.9220114},
+const geometriesArray = [
+  { x: 26.825227, y: 117.620114 },
+  { x: 26.753227, y: 117.760114 },
+  { x: 26.7233227, y: 117.600114 },
+  { x: 26.7233227, y: 117.650114 },
+  { x: 26.843227, y: 117.9220114 },
 ];
 
 const leftData = ref({
@@ -96,20 +99,20 @@ const leftData = ref({
     { title: '监测站点数量', num: '15', unit: '个' },
     { title: '维护车辆', num: '3', unit: '辆' },
     { title: '日超标次数', num: '5', unit: '次' },
-    { title: '月超标总次数', num: '120', unit: '次' }
+    { title: '月超标总次数', num: '120', unit: '次' },
   ],
   picData: [
     { value: 20, name: '工业区扬尘' },
     { value: 30, name: '建筑工地扬尘' },
     { value: 42, name: '道路扬尘' },
-    { value: 32, name: '其他区域扬尘' }
+    { value: 32, name: '其他区域扬尘' },
   ],
   lineAxisData: ['2-21', '2-22', '2-23', '2-24', '2-25', '2-26', '2-27'],
   picRightData2: [
     { title: '正常运行设备数', num: '80', unit: '台' },
     { title: '维护人员数量', num: '10', unit: '人' },
     { title: '日设备故障数', num: '2', unit: '台' },
-    { title: '月设备故障总数', num: '50', unit: '台' }
+    { title: '月设备故障总数', num: '50', unit: '台' },
   ],
   lineSeriesData: [2, 1, 2, 1, 2, 3, 2],
   CCDvScrollBoardConfig: {
@@ -129,18 +132,18 @@ const leftData = ref({
       ['L区码头', '设备软件故障', '13:40', '已解决'],
       ['M区景区', '扬尘数据异常波动', '14:05', '处理中'],
       ['N区农田', '设备被遮挡', '14:30', '已解决'],
-      ['O区矿区', '设备防雷设施损坏', '15:00', '处理中']
+      ['O区矿区', '设备防雷设施损坏', '15:00', '处理中'],
     ],
     rowNum: 4,
-    align: ['center', 'center', 'center']
-  }
+    align: ['center', 'center', 'center'],
+  },
 });
 
 const centerData = ref({
   customizeParams: {
     name: '系统连续正常运行天数：',
     runningDays: '28',
-    tail: '天'
+    tail: '天',
   },
   proJectsList: {
     processName: '监测技术',
@@ -162,16 +165,18 @@ const centerData = ref({
         contactNumber2: '139-xxxx-3468',
         realPictures: [
           {
-            imgUrl: new URL('../assets/images/imgs/66.png', import.meta.url).href,
-            name: '激光散射监测设备'
+            imgUrl: new URL('../assets/images/imgs/66.png', import.meta.url)
+              .href,
+            name: '激光散射监测设备',
           },
           {
-            imgUrl: new URL('../assets/images/imgs/66.jpg', import.meta.url).href,
-            name: '无线传输模块'
-          }
-        ]
+            imgUrl: new URL('../assets/images/imgs/66.jpg', import.meta.url)
+              .href,
+            name: '无线传输模块',
+          },
+        ],
       },
-     /* {
+      /* {
         name: '城乡扬尘一体化监测项目',
         process: 'β射线法 + 无线传输',
         processingScale: '120 平方公里',
@@ -251,8 +256,8 @@ const centerData = ref({
           }
         ]
       }*/
-    ]
-  }
+    ],
+  },
 });
 
 const rightData = ref({
@@ -261,27 +266,40 @@ const rightData = ref({
     { name: '激光散射仪', num: '135', unit: '台' },
     { name: 'β射线仪', num: '123', unit: '台' },
     { name: '光学粒子计数器', num: '256', unit: '台' },
-    { name: '多参数传感器', num: '338', unit: '个' }
+    { name: '多参数传感器', num: '338', unit: '个' },
   ],
   rightOne: {
     idName: 'rightOneId',
-    xAxisData: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+    xAxisData: [
+      '1月',
+      '2月',
+      '3月',
+      '4月',
+      '5月',
+      '6月',
+      '7月',
+      '8月',
+      '9月',
+      '10月',
+      '11月',
+      '12月',
+    ],
     polyLinesData: [
       {
         lineColor: '#3a72d7',
         name: '今年',
         color: ['rgba(58,114,215,1)', 'rgba(58,114,215,0.1)'],
         type: 'line',
-        data: [38, 51, 120, 160, 180, 135, 240, 220, 291, 320, 280, 260]
+        data: [38, 51, 120, 160, 180, 135, 240, 220, 291, 320, 280, 260],
       },
       {
         lineColor: '#11e48a',
         name: '去年',
         color: ['rgba(9,114,95,1)', 'rgba(9,114,95,0.1)'],
         type: 'line',
-        data: [165, 186, 235, 268, 220, 232, 282, 260, 220, 200, 180, 140]
-      }
-    ]
+        data: [165, 186, 235, 268, 220, 232, 282, 260, 220, 200, 180, 140],
+      },
+    ],
   },
   rightTwo: {
     data: [
@@ -289,10 +307,10 @@ const rightData = ref({
       { name: '数据传输及时率', value: 120 },
       { name: '超标预警准确率', value: 78 },
       { name: '设备运行稳定性', value: 66 },
-      { name: '监测数据完整性', value: 80 }
+      { name: '监测数据完整性', value: 80 },
     ],
-    showValue: false
-  }
+    showValue: false,
+  },
 });
 </script>
 
@@ -300,7 +318,7 @@ const rightData = ref({
 .CityAppearanceAndSanitation-center-css {
   display: flex;
   flex-wrap: nowrap;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 </style>

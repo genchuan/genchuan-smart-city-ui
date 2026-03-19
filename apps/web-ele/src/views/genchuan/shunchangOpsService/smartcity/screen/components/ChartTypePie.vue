@@ -1,12 +1,18 @@
 <template>
-  <div class="chart-type-pie" :style="{height:height}">
-    <div class="chart-type-pie-left" :id="idName" :style="{height:picHeight,width:picWidth}"></div>
-    <ul class="chart-type-pie-right" v-if="rightData.length>0">
-      <li v-for="(item,key) in rightData" :key="key">
+  <div class="chart-type-pie" :style="{ height: height }">
+    <div
+      class="chart-type-pie-left"
+      :id="idName"
+      :style="{ height: picHeight, width: picWidth }"
+    ></div>
+    <ul class="chart-type-pie-right" v-if="rightData.length > 0">
+      <li v-for="(item, key) in rightData" :key="key">
         <span class="c1"></span>
         <div class="c2">
           <span>{{ item.title }}</span>
-          <label><i>{{ item.num }}</i> {{ item.unit }}</label>
+          <label
+            ><i>{{ item.num }}</i> {{ item.unit }}</label
+          >
         </div>
       </li>
     </ul>
@@ -14,7 +20,7 @@
 </template>
 
 <script setup>
-import {onMounted, defineProps} from 'vue';
+import { onMounted, defineProps } from 'vue';
 import * as echarts from 'echarts';
 
 const props = defineProps({
@@ -46,8 +52,18 @@ const props = defineProps({
     type: Array,
     default: () => {
       // ['#0fc779', '#ffad14']
-      return ['#0fc779', '#ffad14', '#14a1ff', '#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272'];
-    }
+      return [
+        '#0fc779',
+        '#ffad14',
+        '#14a1ff',
+        '#5470c6',
+        '#91cc75',
+        '#fac858',
+        '#ee6666',
+        '#73c0de',
+        '#3ba272',
+      ];
+    },
   },
   // 设置是圆形还是中间镂空  array ['40%', '70%']  中间镂空   '80%'  这个就是圆形
   radius: {
@@ -65,8 +81,8 @@ const props = defineProps({
     default: () => {
       // { value: 20, name: '运营型项目数' },
       return [];
-    }
-  }
+    },
+  },
 });
 
 const pieGraph = () => {
@@ -79,7 +95,7 @@ const pieGraph = () => {
     // 提示框组件
     tooltip: {
       trigger: 'item',
-      formatter: '{b} : {d}%'
+      formatter: '{b} : {d}%',
     },
 
     //-------------------
@@ -89,7 +105,7 @@ const pieGraph = () => {
       // top: '0'
     },
     toolbox: {
-      show: false,//是否显示工具栏组件
+      show: false, //是否显示工具栏组件
     },
     series: [
       {
@@ -98,51 +114,54 @@ const pieGraph = () => {
         center: ['50%', '50%'],
         // hoverAnimation: true, //鼠标移入变大
         emphasis: {
-          scale: true // 使用 emphasis.scale 替代 hoverAnimation
+          scale: true, // 使用 emphasis.scale 替代 hoverAnimation
         },
         roseType: props.roseType,
-        labelLine: {    //图形外文字线
+        labelLine: {
+          //图形外文字线
           // normal: {
-            length: 15,
-            length2: 15,
+          length: 15,
+          length2: 15,
           // }
         },
         label: {
           // normal: {
-            show: false,
-            // formatter: '{c|{c}%}  \n  {b|{b}}',       //图形外文字上下显示
-            formatter: '{b|{b}} {c|{c}%}',       //图形外文字上下显示
-            borderWidth: 20,
-            borderRadius: 4,
-            padding: [0, -20],          //文字和图的边距
-            rich: {
-              a: {
-                color: '#c2c2c2',
-                fontSize: 16,
-                lineHeight: 30
-              },
-              b: {                        //name 文字样式
-                fontSize: 18,
-                lineHeight: 30,
-                color: '#c2c2c2',
-              },
-              c: {                   //value 文字样式
-                fontSize: 18,
-                lineHeight: 30,
-                color: '#fff',
-                align: "center"
-              },
+          show: false,
+          // formatter: '{c|{c}%}  \n  {b|{b}}',       //图形外文字上下显示
+          formatter: '{b|{b}} {c|{c}%}', //图形外文字上下显示
+          borderWidth: 20,
+          borderRadius: 4,
+          padding: [0, -20], //文字和图的边距
+          rich: {
+            a: {
+              color: '#c2c2c2',
+              fontSize: 16,
+              lineHeight: 30,
+            },
+            b: {
+              //name 文字样式
+              fontSize: 18,
+              lineHeight: 30,
+              color: '#c2c2c2',
+            },
+            c: {
+              //value 文字样式
+              fontSize: 18,
+              lineHeight: 30,
+              color: '#fff',
+              align: 'center',
+            },
             // }
-          }
+          },
         },
         itemStyle: {
           borderRadius: 3,
           borderColor: '#010032',
-          borderWidth: 3
+          borderWidth: 3,
         },
         data: props.resData,
-      }
-    ]
+      },
+    ],
   };
 
   option && myChart.setOption(option);
@@ -156,10 +175,9 @@ onMounted(() => {
 <style lang="scss" scoped>
 .chart-type-pie {
   display: flex;
-  flex-wrap: nowrap;
-  justify-content: flex-start;
+  flex-flow: row nowrap;
   align-items: center;
-  flex-direction: row;
+  justify-content: flex-start;
   padding: 0 20px;
 
   .chart-type-pie-right {
@@ -167,37 +185,35 @@ onMounted(() => {
 
     li {
       display: flex;
-      flex-wrap: nowrap;
-      justify-content: flex-start;
+      flex-flow: row nowrap;
       align-items: center;
-      flex-direction: row;
-      background: #001118;
+      justify-content: flex-start;
       padding: 5px 0;
+      background: #001118;
 
       .c1 {
-        background-image: linear-gradient(#03a0e9, #0f5fbf);
         width: 8px;
         height: 35px;
-        border-radius: 12px;
         margin-right: 15px;
+        background-image: linear-gradient(#03a0e9, #0f5fbf);
+        border-radius: 12px;
       }
 
       .c2 {
         span {
-          color: #ffffff;
-          font-size: 14px;
           display: block;
+          font-size: 14px;
+          color: #fff;
         }
 
         label {
-          color: #0eafff;
           font-size: 16px;
+          color: #0eafff;
 
           i {
             font-size: 22px;
             font-weight: bold;
           }
-
         }
       }
     }

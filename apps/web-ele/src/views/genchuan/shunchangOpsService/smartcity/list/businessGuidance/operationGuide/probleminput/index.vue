@@ -1,13 +1,26 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
+
 import { confirm } from '@vben/common-ui';
+
+import { Icon } from '@iconify/vue';
 import {
-  ProblemInputApi,
-} from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/operationGuide/probleminput';
+  ElButton,
+  ElCard,
+  ElDatePicker,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElMessage,
+  ElPagination,
+  ElSpace,
+  ElTable,
+  ElTableColumn,
+} from 'element-plus';
+
+import { ProblemInputApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/operationGuide/probleminput';
 import download from '#/utils/genchuan/download';
 import { dateFormatter, dateFormatter2 } from '#/utils/genchuan/formatTime';
-import { ElMessage, ElCard, ElTable, ElTableColumn, ElForm, ElFormItem, ElInput, ElButton, ElDatePicker, ElPagination, ElSpace } from 'element-plus';
-import { Icon } from '@iconify/vue';
 
 import ProblemInputForm from './ProblemInputForm.vue';
 
@@ -31,10 +44,7 @@ const exportLoading = ref(false); // 导出的加载中
 const getList = async () => {
   loading.value = true;
   try {
-    const data =
-      await ProblemInputApi.getProblemInputPage(
-        queryParams,
-      );
+    const data = await ProblemInputApi.getProblemInputPage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -80,12 +90,10 @@ const handleExport = async () => {
     await confirm('是否确认导出问题录入数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
-    const data =
-      await ProblemInputApi.exportProblemInput(
-        queryParams,
-      );
+    const data = await ProblemInputApi.exportProblemInput(queryParams);
     download.excel(data, '问题录入.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -143,10 +151,7 @@ onMounted(() => {
             <ElButton @click="resetQuery">
               <Icon icon="ep:refresh" style="margin-right: 4px" /> 重置
             </ElButton>
-            <ElButton
-              type="success"
-              @click="openForm('create')"
-            >
+            <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
             </ElButton>
             <ElButton
@@ -171,8 +176,18 @@ onMounted(() => {
         style="width: 100%"
       >
         <ElTableColumn label="主键" align="center" prop="id" min-width="80" />
-        <ElTableColumn label="问题标题" align="center" prop="questionTitle" min-width="120" />
-        <ElTableColumn label="问题描述" align="center" prop="problemDescription" min-width="120" />
+        <ElTableColumn
+          label="问题标题"
+          align="center"
+          prop="questionTitle"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="问题描述"
+          align="center"
+          prop="problemDescription"
+          min-width="120"
+        />
         <ElTableColumn
           label="提问时间"
           align="center"
@@ -180,17 +195,50 @@ onMounted(() => {
           :formatter="dateFormatter2"
           min-width="120"
         />
-        <ElTableColumn label="提问人" align="center" prop="questioner" min-width="100" />
-        <ElTableColumn label="所属领域" align="center" prop="isArea" min-width="120" />
-        <ElTableColumn label="紧急程度" align="center" prop="urgency" min-width="100" />
+        <ElTableColumn
+          label="提问人"
+          align="center"
+          prop="questioner"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="所属领域"
+          align="center"
+          prop="isArea"
+          min-width="120"
+        />
+        <ElTableColumn
+          label="紧急程度"
+          align="center"
+          prop="urgency"
+          min-width="100"
+        />
         <ElTableColumn label="问题类型" align="center" min-width="120">
           <template #default="scope">
-            <template v-if="scope.row.questionType === 'systemOperation'">系统操作类</template>
-            <template v-else-if="scope.row.questionType === 'onSiteOperation'">现场实操类</template>
-            <template v-else-if="scope.row.questionType === 'processManagement'">流程管理类</template>
-            <template v-else-if="scope.row.questionType === 'resourceRequirement'">资源需求类</template>
-            <template v-else-if="scope.row.questionType === 'policyConsultation'">政策咨询类</template>
-            <template v-else-if="scope.row.questionType === 'other'">其他问题</template>
+            <template v-if="scope.row.questionType === 'systemOperation'">
+              系统操作类
+            </template>
+            <template v-else-if="scope.row.questionType === 'onSiteOperation'">
+              现场实操类
+            </template>
+            <template
+              v-else-if="scope.row.questionType === 'processManagement'"
+            >
+              流程管理类
+            </template>
+            <template
+              v-else-if="scope.row.questionType === 'resourceRequirement'"
+            >
+              资源需求类
+            </template>
+            <template
+              v-else-if="scope.row.questionType === 'policyConsultation'"
+            >
+              政策咨询类
+            </template>
+            <template v-else-if="scope.row.questionType === 'other'">
+              其他问题
+            </template>
             <template v-else>未分类</template>
           </template>
         </ElTableColumn>
@@ -201,7 +249,12 @@ onMounted(() => {
           :formatter="dateFormatter"
           min-width="150"
         />
-        <ElTableColumn label="操作" align="center" fixed="right" min-width="150">
+        <ElTableColumn
+          label="操作"
+          align="center"
+          fixed="right"
+          min-width="150"
+        >
           <template #default="scope">
             <ElSpace>
               <ElButton
@@ -211,11 +264,7 @@ onMounted(() => {
               >
                 编辑
               </ElButton>
-              <ElButton
-                link
-                type="danger"
-                @click="handleDelete(scope.row.id)"
-              >
+              <ElButton link type="danger" @click="handleDelete(scope.row.id)">
                 删除
               </ElButton>
             </ElSpace>
