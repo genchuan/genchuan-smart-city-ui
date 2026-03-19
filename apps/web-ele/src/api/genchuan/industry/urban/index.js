@@ -198,3 +198,4 @@ export function deleteArchive(id) {
 export function deleteOrder(id) {
   return requestClient.delete(`/facility/work-order/delete?id=${id}`);
 } 
+ 

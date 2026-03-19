@@ -8,6 +8,7 @@ import {
   ElImage,
   ElLoading,
   ElMessage,
+  ElMessageBox,
   ElTable,
   ElTableColumn,
 } from 'element-plus';
@@ -21,7 +22,9 @@ import {
   exporReviewExcel,
   getRectifyEvidence,
   getRectifyList,
+  sendRectify,
   updateRectify,
+  uploadKitchenFile,
 } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
@@ -179,6 +182,7 @@ const getTableData = async (pageObj) => {
   dataObj.list = data.list.map((v) => {
     return {
       ...v,
+      draftTime: formatTimestamp(v.draftTime),
       alertCreateTime: formatTimestamp(v.alertCreateTime),
     };
   });
@@ -321,12 +325,6 @@ const uploadForm = reactive({
 });
 // 上传表单校验规则（匹配接口必填项）
 const uploadFormRules = reactive({
-  fileDesc: [
-    { required: true, message: '请输入资料文字说明', trigger: 'blur' },
-  ],
-  afterIndexValue: [
-    { required: true, message: '请输入处理后的指标数值', trigger: 'blur' },
-  ],
   file: [{ required: true, message: '请选择要上传的文件', trigger: 'change' }],
 });
 const uploadFormRef = ref(null);
@@ -369,7 +367,6 @@ const handleUploadSubmit = async () => {
   // 1. 表单整体校验
   const valid = await uploadFormRef.value.validate();
   if (!valid) return;
-
   // 2. 校验文件是否选择
   if (!uploadForm.file || fileList.value.length === 0) {
     ElMessage.warning('请选择要上传的文件');
@@ -383,14 +380,12 @@ const handleUploadSubmit = async () => {
     // 3. 构建FormData（仅传递文件）
     const formData = new FormData();
     formData.append('file', file.raw);
-    formData.append('workOrderId', currentUploadRow.value.id);
-    formData.append('fileDesc', uploadForm.fileDesc);
-    formData.append('afterIndexValue', uploadForm.afterIndexValue);
+    formData.append('rectifyReviewId', currentUploadRow.value.id);
 
     // 5. 调用上传接口：同时传递formData和query参数
-    await uploadWorkOrderFile(formData);
+    await uploadKitchenFile(formData);
 
-    ElMessage.success('工单资料上传成功！');
+    ElMessage.success('资料上传成功！');
     uploadModalApi.close();
     handleRefresh(); // 刷新工单列表
   } catch (error) {
@@ -399,6 +394,43 @@ const handleUploadSubmit = async () => {
   } finally {
     uploadLoading.value = false;
   }
+};
+
+// 文件选择事件
+const onChange = (file) => {
+  fileList.value = [];
+  fileList.value.push(file);
+  uploadForm.file = file;
+};
+/** 二次确认后执行下发 */
+const handleSendFileConfirm = async (row) => {
+  try {
+    // 弹出确认框
+    await ElMessageBox.confirm(
+      '确定要下发通知书吗？此操作不可撤销！',
+      '确认下发',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        type: 'warning',
+      },
+    );
+    // 用户确认后执行原逻辑
+    await handleSendFile(row);
+    ElMessageBox.success('通知书下发成功！');
+  } catch {
+    // 用户取消则不执行任何操作
+    ElMessageBox.info('已取消下发');
+  }
+};
+
+// 原下发逻辑（保留你的handleSendFile方法）
+const handleSendFile = async (row) => {
+  // 你的下发接口逻辑...
+  await sendRectify({
+    id: row.id,
+  });
+  await handleRefresh();
 };
 </script>
 
@@ -413,26 +445,6 @@ const handleUploadSubmit = async () => {
           :rules="uploadFormRules"
           label-width="120px"
         >
-          <!-- 资料文字说明 -->
-          <ElFormItem label="资料说明" prop="fileDesc" class="mb-4">
-            <ElInput
-              v-model="uploadForm.fileDesc"
-              placeholder="请输入资料文字说明（如：现场检测图片）"
-              maxlength="100"
-              show-word-limit
-            />
-          </ElFormItem>
-
-          <!-- 处理后的指标数值 -->
-          <ElFormItem label="指标数值" prop="afterIndexValue" class="mb-4">
-            <ElInputNumber
-              v-model="uploadForm.afterIndexValue"
-              placeholder="请输入处理后的指标数值"
-              :min="0"
-              style="width: 100%"
-            />
-          </ElFormItem>
-
           <!-- 文件上传区域 -->
           <ElFormItem label="选择文件" prop="file" class="mb-4">
             <ElUpload
@@ -641,6 +653,18 @@ const handleUploadSubmit = async () => {
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
+          <IconButton
+            content="撤销"
+            icon-name="back"
+            :disabled="!['待复审'].includes(row.reviewStatus)"
+            @click="handleBack(row)"
+          />
+          <IconButton
+            content="下发通知书"
+            icon-name="download"
+            :disabled="!['待复审'].includes(row.reviewStatus)"
+            @click="handleSendFileConfirm(row)"
+          />
           <IconButton
             content="上传复审证据"
             icon-name="Upload"

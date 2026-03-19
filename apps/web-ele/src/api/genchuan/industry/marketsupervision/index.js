@@ -93,3 +93,14 @@ export function createReviewLedger(data) {
 export function getReviewLedgerDetail(id) {
   return requestClient.get(`/kitchen/rectify-review/get?id=${id}`);
 }
+/** 上传资料 */
+export function uploadKitchenFile(data) {
+ return requestClient.post('/kitchen/rectify-review/upload-evidence-file', data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+} 
+
+/** 下发整改 */
+export function sendRectify(data) {
+  return requestClient.post(`/kitchen/rectify-review/review-issue`, data);
+}

@@ -311,25 +311,7 @@ export function useGridColumns() {
       minWidth: 200,
       sortable: true,
       slots: { default: 'ledgerCode' }, // 整改通知书复审台账唯一编号，预留钻取插槽
-    },
-    {
-      field: 'entId',
-      title: '企业ID',
-      minWidth: 120,
-      sortable: true,
-    },
-    {
-      field: 'illegalTypeId',
-      title: '违规类型ID',
-      minWidth: 120,
-      sortable: true,
-    },
-    {
-      field: 'illegalLevelId',
-      title: '违规等级ID',
-      minWidth: 120,
-      sortable: true,
-    },
+    }, 
     {
       field: 'evidenceUrl',
       title: '违规证据链接',
@@ -404,7 +386,7 @@ export function useGridColumns() {
     },
     {
       title: '操作',
-      width: 120,
+      width: 180,
       fixed: 'right',
       slots: { default: 'actions' }, // 操作列（编辑/删除/详情/复审）
     },
