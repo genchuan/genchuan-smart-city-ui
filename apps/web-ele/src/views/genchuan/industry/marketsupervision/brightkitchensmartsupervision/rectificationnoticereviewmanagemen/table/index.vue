@@ -1,7 +1,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 
-import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { confirm, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import {
@@ -309,10 +309,167 @@ const handleOpenData = async () => {
   // 3. 打开批量查看弹窗
   dataObj.batchViewVisible = true;
 };
+
+// 上传资料相关（核心改造：匹配接口所有query参数）
+const uploadLoading = ref(false);
+const currentUploadRow = ref({});
+// 新增接口要求的所有参数
+const uploadForm = reactive({
+  fileDesc: '', // 资料文字说明
+  afterIndexValue: 0, // 处理后的指标数值
+  file: null,
+});
+// 上传表单校验规则（匹配接口必填项）
+const uploadFormRules = reactive({
+  fileDesc: [
+    { required: true, message: '请输入资料文字说明', trigger: 'blur' },
+  ],
+  afterIndexValue: [
+    { required: true, message: '请输入处理后的指标数值', trigger: 'blur' },
+  ],
+  file: [{ required: true, message: '请选择要上传的文件', trigger: 'change' }],
+});
+const uploadFormRef = ref(null);
+const [UploadModal, uploadModalApi] = useVbenModal({
+  title: '上传复审证据',
+  width: 600,
+  modalProps: {
+    destroyOnClose: true,
+  },
+  onCancel() {
+    // 关闭弹窗清空所有数据
+    uploadForm.fileDesc = '';
+    uploadForm.afterIndexValue = 0;
+    uploadForm.file = null;
+    fileList.value = [];
+    uploadFormRef.value?.resetFields();
+  },
+  footer: false,
+});
+// 上传组件相关
+const upload = ref(null);
+const fileList = ref([]);
+const handleExceed = (files) => {
+  upload.value.clearFiles();
+  const file = files[0];
+  upload.value.handleStart(file);
+};
+// 打开上传资料弹窗
+const handleUpdateFile = (row) => {
+  // 初始化表单数据
+  uploadForm.fileDesc = '';
+  uploadForm.afterIndexValue = 0;
+  uploadForm.file = null;
+  fileList.value = [];
+  currentUploadRow.value = row;
+  uploadModalApi.open();
+};
+// 提交文件上传（核心改造：匹配接口query+form-data参数）
+const handleUploadSubmit = async () => {
+  // 1. 表单整体校验
+  const valid = await uploadFormRef.value.validate();
+  if (!valid) return;
+
+  // 2. 校验文件是否选择
+  if (!uploadForm.file || fileList.value.length === 0) {
+    ElMessage.warning('请选择要上传的文件');
+    return;
+  }
+
+  try {
+    uploadLoading.value = true;
+    const file = fileList.value[0];
+
+    // 3. 构建FormData（仅传递文件）
+    const formData = new FormData();
+    formData.append('file', file.raw);
+    formData.append('workOrderId', currentUploadRow.value.id);
+    formData.append('fileDesc', uploadForm.fileDesc);
+    formData.append('afterIndexValue', uploadForm.afterIndexValue);
+
+    // 5. 调用上传接口：同时传递formData和query参数
+    await uploadWorkOrderFile(formData);
+
+    ElMessage.success('工单资料上传成功！');
+    uploadModalApi.close();
+    handleRefresh(); // 刷新工单列表
+  } catch (error) {
+    ElMessage.error(`上传失败：${error.message || '服务器异常'}`);
+    console.error('上传错误详情：', error);
+  } finally {
+    uploadLoading.value = false;
+  }
+};
 </script>
 
 <template>
   <div class="park-lot-table-new">
+    <!-- 上传资料弹窗（核心改造：新增所有接口参数输入框） -->
+    <UploadModal>
+      <div class="upload-modal-content p-4">
+        <ElForm
+          ref="uploadFormRef"
+          :model="uploadForm"
+          :rules="uploadFormRules"
+          label-width="120px"
+        >
+          <!-- 资料文字说明 -->
+          <ElFormItem label="资料说明" prop="fileDesc" class="mb-4">
+            <ElInput
+              v-model="uploadForm.fileDesc"
+              placeholder="请输入资料文字说明（如：现场检测图片）"
+              maxlength="100"
+              show-word-limit
+            />
+          </ElFormItem>
+
+          <!-- 处理后的指标数值 -->
+          <ElFormItem label="指标数值" prop="afterIndexValue" class="mb-4">
+            <ElInputNumber
+              v-model="uploadForm.afterIndexValue"
+              placeholder="请输入处理后的指标数值"
+              :min="0"
+              style="width: 100%"
+            />
+          </ElFormItem>
+
+          <!-- 文件上传区域 -->
+          <ElFormItem label="选择文件" prop="file" class="mb-4">
+            <ElUpload
+              ref="upload"
+              v-model:file-list="fileList"
+              :on-change="onChange"
+              :on-exceed="handleExceed"
+              :auto-upload="false"
+              class="upload-demo"
+              drag
+              :limit="1"
+            >
+              <ElIcon class="el-icon--upload"><UploadFilled /></ElIcon>
+              <div class="el-upload__text">
+                拖拽文件到此处上传，或<em>点击选择文件</em>
+              </div>
+              <div class="el-upload__tip mt-2 text-sm text-gray-500">
+                支持jpg/jpeg/png/pdf/doc/docx/xls/xlsx格式，单个文件不超过5MB
+              </div>
+            </ElUpload>
+          </ElFormItem>
+        </ElForm>
+
+        <!-- 操作按钮 -->
+        <div class="mt-4 flex justify-end gap-2">
+          <ElButton @click="uploadModalApi.close()">取消</ElButton>
+          <ElButton
+            type="primary"
+            @click="handleUploadSubmit"
+            :loading="uploadLoading"
+          >
+            确认上传
+          </ElButton>
+        </div>
+      </div>
+    </UploadModal>
+
     <!-- 图片查看弹窗 -->
     <el-dialog v-model="dialogVisible">
       <div class="park-img-center">
@@ -484,6 +641,11 @@ const handleOpenData = async () => {
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
+          <IconButton
+            content="上传复审证据"
+            icon-name="Upload"
+            @click="handleUpdateFile(row)"
+          />
           <IconButton
             content="详情"
             icon-name="View"

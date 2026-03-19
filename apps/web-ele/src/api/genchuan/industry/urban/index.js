@@ -158,11 +158,21 @@ export function getSysUserPage(params) {
   });
 } 
 /** 已完成归档 */ 
-export function getRoadArchive(params) {
- return requestClient.get('/facility/road-archive/page',  {
-    params,
-  });
+export function getRoadArchive(data) {
+ return requestClient.get('/facility/road-archive/page', data);
 }
+
+
+/** 获得巡检巡查 */
+export function getInspectionList(data) {
+ return requestClient.get('/evaluate/patrol-inspection/page', data);
+} 
+
+
+/** 获得巡检巡查报表 */
+export function getStatisticList(data) {
+ return requestClient.get('/evaluate/comment-statistic/page', data);
+}  
 /** 完成归档导出 */
 export function exportRoadCompletedExcel() {
   return requestClient.download('/facility/sys-archive/export-excel');
@@ -187,4 +197,4 @@ export function deleteArchive(id) {
 /** 删除工单 */
 export function deleteOrder(id) {
   return requestClient.delete(`/facility/work-order/delete?id=${id}`);
-}
+} 
