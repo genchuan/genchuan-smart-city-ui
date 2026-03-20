@@ -187,7 +187,6 @@ const mockConfig = {
   .box-left-m {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
     min-width: 360px;
     max-width: 400px;
     margin-top: 10px !important;

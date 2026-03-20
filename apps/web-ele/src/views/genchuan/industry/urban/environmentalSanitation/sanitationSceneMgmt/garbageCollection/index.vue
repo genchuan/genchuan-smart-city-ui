@@ -1142,6 +1142,8 @@ const [BatchReviewDrawer, batchReviewDrawerApi] = useVbenDrawer({
 });
 
 // ---------- 复盘抽屉 ----------
+const reviewPostRow = ref(null);
+
 const [ReviewPostForm, reviewPostFormApi] = useVbenForm({
   commonConfig: {
     componentProps: { class: 'w-full' },
@@ -1160,12 +1162,43 @@ const [ReviewPostDrawer, reviewPostDrawerApi] = useVbenDrawer({
   onCancel: () => reviewPostDrawerApi.close(),
   async onConfirm() {
     const formValues = await reviewPostFormApi.getValues();
-    ElMessage.info('复盘功能待实现');
-    reviewPostDrawerApi.close();
+    const { reviewPostComment } = formValues;
+    if (!reviewPostComment) {
+      ElMessage.warning('请输入复盘意见');
+      return;
+    }
+    if (!reviewPostRow.value?.id) {
+      ElMessage.error('计划数据不存在');
+      return;
+    }
+
+    const loading = ElLoading.service({ text: '提交中...' });
+    try {
+      await updateGarbageCollection({
+        id: reviewPostRow.value.id,
+        reviewDesc: reviewPostComment, // 注意字段名映射
+      });
+      ElMessage.success('复盘意见保存成功');
+      reviewPostDrawerApi.close();
+      handleRefresh(); // 刷新列表以便更新显示
+    } catch (error) {
+      console.error('复盘失败', error);
+      ElMessage.error(error.message || '复盘失败，请重试');
+    } finally {
+      loading.close();
+    }
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
+      const rowData = reviewPostDrawerApi.getData();
+      reviewPostRow.value = rowData;
       reviewPostFormApi.resetForm();
+      // 可以预填已有复盘意见（如果之前已保存）
+      if (rowData?.reviewDesc) {
+        await reviewPostFormApi.setValues({ reviewPostComment: rowData.reviewDesc });
+      }
+    } else {
+      reviewPostRow.value = null;
     }
   },
 });
@@ -1522,6 +1555,7 @@ function convertItem(item) {
     updateTime: formatDateTime(item.updateTime),
     lastReportTime: formatDateTime(item.lastReportTime),
     completeTime: formatDateTime(item.completeTime),
+    reviewDesc: item.reviewDesc || '-',
   };
 }
 
@@ -2280,7 +2314,7 @@ onMounted(() => {
             <IconButton
               content="复盘"
               icon-name="DataAnalysis"
-              @click="reviewPostDrawerApi.open"
+              @click="reviewPostDrawerApi.setData(row).open()"
             />
             <IconButton
               content="删除"

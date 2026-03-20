@@ -15,6 +15,12 @@ import commercialStreet from '../sanitationSceneMgmt/commercialStreet/index.vue'
 import commercialStreetChart from './commercialStreet/components/chart.vue';
 import parkEnvironment from '../sanitationSceneMgmt/parkEnvironment/index.vue';
 import parkEnvironmentChart from './parkEnvironment/components/chart.vue';
+import urbanVillage from '../sanitationSceneMgmt/urbanVillage/index.vue';
+import urbanVillageChart from './urbanVillage/components/chart.vue';
+import marketEnvironment from '../sanitationSceneMgmt/marketEnvironment/index.vue';
+import marketEnvironmentChart from './marketEnvironment/components/chart.vue';
+import riverEnvironment from '../sanitationSceneMgmt/riverEnvironment/index.vue';
+import riverEnvironmentChart from './riverEnvironment/components/chart.vue';
 
 import '#/components/page/index.scss';
 
@@ -84,6 +90,33 @@ const tabArray = ref([
     label: '公园环境管理',
     components: parkEnvironment,
     chartComponent: parkEnvironmentChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false,
+  },
+  {
+    label: '城中村环境管理',
+    components: urbanVillage,
+    chartComponent: urbanVillageChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false,
+  },
+  {
+    label: '集贸市场环境管理',
+    components: marketEnvironment,
+    chartComponent: marketEnvironmentChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false,
+  },
+  {
+    label: '河道环境管理',
+    components: riverEnvironment,
+    chartComponent: riverEnvironmentChart,
     showSecondary: true,
     secondShow: false,
     arrowShow: true,
