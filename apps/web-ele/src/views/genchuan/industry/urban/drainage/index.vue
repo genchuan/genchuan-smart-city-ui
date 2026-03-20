@@ -17,7 +17,7 @@ const changeArrowStatus = () => {
 };
 const tabArray = ref([
   {
-    label: '道路设施监测',
+    label: '排水管网监测',
     components: monitor,
     showSecondary: false,
     secondShow: false,
@@ -25,7 +25,7 @@ const tabArray = ref([
     arrowState: false,
   },
   {
-    label: '道路设施监测报表',
+    label: '排水管网监测报表',
     components: report,
     showSecondary: false,
     secondShow: false,
@@ -43,13 +43,13 @@ const arrowChange = () => {
     v.arrowShow = secondShow.value;
   });
 };
-const activeName = ref('道路设施监测');
+const activeName = ref('排水管网监测');
 const secondShow = ref(true);
 const activeSubTab = ref('实时监测');
 
-// 初始化时设置道路设施监测标签页的 secondShow 为 true
+// 初始化时设置排水管网监测标签页的 secondShow 为 true
 const initTabState = () => {
-  const monitorTab = tabArray.value.find((v) => v.label === '道路设施监测');
+  const monitorTab = tabArray.value.find((v) => v.label === '排水管网监测');
   if (monitorTab) {
     monitorTab.showSecondary = true;
     monitorTab.secondShow = true;
@@ -74,13 +74,13 @@ const tabChange = (item) => {
 };
 
 const handleSubTabChange = (subTab) => {
-  if (activeName.value === '道路设施监测') {
+  if (activeName.value === '排水管网监测') {
     activeSubTab.value = subTab;
   }
 };
 
 const getCurrentGateChart = () => {
-  if (activeName.value === '道路设施监测') {
+  if (activeName.value === '排水管网监测') {
     switch (activeSubTab.value) {
       case '实时监测':
         return drainageChart;
