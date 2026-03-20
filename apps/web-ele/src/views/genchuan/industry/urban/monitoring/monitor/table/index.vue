@@ -16,6 +16,70 @@ import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
 
 
 import { dataList, useFormSchema, useFilterFormSchema, useGridColumns } from './data';
+
+// 触发预警
+const triggerWarning = (data, riskType) => {
+  // 生成预警ID
+  const warningId = Date.now().toString();
+  
+  // 构建预警信息
+  const warningInfo = {
+    id: warningId,
+    coverNo: data.coverNo,
+    roadName: data.roadName,
+    riskType: riskType,
+    riskLevel: '高风险',
+    timestamp: new Date().toISOString().slice(0, 19).replace('T', ' '),
+    status: '未处理'
+  };
+  
+  // 模拟预警触发
+  console.log('触发预警:', warningInfo);
+  
+  // 显示预警通知
+  ElMessage({
+    message: `【预警】${data.roadName} - ${riskType}`,
+    type: 'error',
+    duration: 5000,
+    showClose: true
+  });
+  
+  return warningInfo;
+};
+
+// 检测指标是否超标并触发预警
+const checkAndTriggerWarning = (data, shouldTrigger = true) => {
+  if (!shouldTrigger) {
+    return;
+  }
+  
+  // 开合状态异常检测
+  if (data.openStatus === '开启') {
+    triggerWarning(data, '井盖异常开启');
+  }
+  
+  // 倾斜角度超标检测
+  const tiltMatch = data.tiltAngleThreshold.match(/^(\d+)-(\d+)度$/);
+  if (tiltMatch) {
+    const tiltMax = parseFloat(tiltMatch[2]);
+    if (data.tiltAngle > tiltMax) {
+      triggerWarning(data, '倾斜角度超标');
+    }
+  }
+  
+  // 异常振动检测
+  if (data.abnormalVibrationFlag === '是') {
+    triggerWarning(data, '异常振动');
+  }
+  
+  // 设备离线检测
+  if (data.deviceStatus === '离线' || data.deviceStatus === '异常') {
+    triggerWarning(data, '设备状态异常');
+  }
+};
+
+// 初始加载标识
+const isInitialLoad = ref(true);
 // 引入封装后的详情抽屉组件
 import ParkDetailDrawer from './detail.vue';
 // 引入设备详情抽屉组件
@@ -226,7 +290,11 @@ const getTableData = (pageObj) => {
   
   // 直接使用 dataObj.apilist 的当前值（包含所有新增/编辑/删除后的数据）
   const filteredData = dataObj.apilist
-    .map((v) => v)
+    .map((v) => {
+      // 检测指标是否超标并触发预警，初始加载时触发，筛选时不触发
+      checkAndTriggerWarning(v, isInitialLoad.value);
+      return v;
+    })
     .filter((v) => {
       // 监测状态过滤
       if (activeName.value !== '全部' && v.monitorStatus !== activeName.value) {
@@ -272,6 +340,12 @@ const getTableData = (pageObj) => {
       (page.currentPage - 1) * page.pageSize,
       page.currentPage * page.pageSize,
     );
+  
+  // 初始加载完成后，设置为false，后续筛选操作不触发预警
+  if (isInitialLoad.value) {
+    isInitialLoad.value = false;
+  }
+  
   return dataObj;
 };
 
@@ -307,7 +381,7 @@ const [QueryForm, QueryFormApi] = useVbenForm({
 // 搜索表单查询
 function onSubmit() {
   filterFormData.value = QueryFormApi.form.values;
-  gridApi.reload();
+  gridApi.query();
   drawerApi.close();
 }
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -351,7 +425,10 @@ const handleOpenDetail = (row) => {
 const handleFilterByRoadName = (roadName) => {
   ElMessage.success(`筛选路段：${roadName}`);
   // 更新筛选条件
-  filterFormData.value.roadName = roadName;
+  filterFormData.value = {
+    ...filterFormData.value,
+    roadName: roadName
+  };
   // 刷新表格
   gridApi.query();
 };
@@ -360,7 +437,10 @@ const handleFilterByRoadName = (roadName) => {
 const handleFilterByOpenStatus = (openStatus) => {
   ElMessage.success(`筛选开合状态：${openStatus}`);
   // 更新筛选条件
-  filterFormData.value.openStatus = openStatus;
+  filterFormData.value = {
+    ...filterFormData.value,
+    openStatus: openStatus
+  };
   // 刷新表格
   gridApi.query();
 };
@@ -369,7 +449,10 @@ const handleFilterByOpenStatus = (openStatus) => {
 const handleFilterByDeviceStatus = (deviceStatus) => {
   ElMessage.success(`筛选设备状态：${deviceStatus}`);
   // 更新筛选条件
-  filterFormData.value.deviceStatus = deviceStatus;
+  filterFormData.value = {
+    ...filterFormData.value,
+    deviceStatus: deviceStatus
+  };
   // 刷新表格
   gridApi.query();
 };
@@ -401,7 +484,10 @@ const handleMonitorStatusChange = (row) => {
 const handleFilterByRiskLevel = (riskLevel) => {
   ElMessage.success(`筛选风险等级：${riskLevel}`);
   // 更新筛选条件
-  filterFormData.value.riskLevel = riskLevel;
+  filterFormData.value = {
+    ...filterFormData.value,
+    riskLevel: riskLevel
+  };
   // 刷新表格
   gridApi.query();
 };
@@ -410,7 +496,10 @@ const handleFilterByRiskLevel = (riskLevel) => {
 const handleFilterByAbnormalVibration = (flag) => {
   ElMessage.success(`筛选异常振动：${flag}`);
   // 更新筛选条件
-  filterFormData.value.abnormalVibrationFlag = flag;
+  filterFormData.value = {
+    ...filterFormData.value,
+    abnormalVibrationFlag: flag
+  };
   // 刷新表格
   gridApi.query();
 };
@@ -660,7 +749,7 @@ const arrowChange = () => {
       </template>
       <template #roadName="{ row }">
         <el-text
-          @click="handleOpenDetail(row)"
+          @click="handleFilterByRoadName(row.roadName)"
           class="common-align"
           type="primary"
         >
@@ -669,6 +758,7 @@ const arrowChange = () => {
       </template>
       <template #openStatus="{ row }">
         <el-text 
+          @click="handleFilterByOpenStatus(row.openStatus)"
           class="common-align"
           :type="row.openStatus === '关闭' ? 'success' : 'danger'"
         >
@@ -686,6 +776,7 @@ const arrowChange = () => {
       </template>
       <template #deviceStatus="{ row }">
         <el-text 
+          @click="handleFilterByDeviceStatus(row.deviceStatus)"
           class="common-align"
           :type="row.deviceStatus === '在线' ? 'success' : row.deviceStatus === '离线' ? 'danger' : 'warning'"
         >
@@ -694,6 +785,7 @@ const arrowChange = () => {
       </template>
       <template #riskLevel="{ row }">
         <el-text 
+          @click="handleFilterByRiskLevel(row.riskLevel)"
           class="common-align"
           :type="row.riskLevel === '低风险' ? 'success' : row.riskLevel === '中风险' ? 'warning' : 'danger'"
         >
@@ -702,6 +794,7 @@ const arrowChange = () => {
       </template>
       <template #abnormalVibrationFlag="{ row }">
         <el-text 
+          @click="handleFilterByAbnormalVibration(row.abnormalVibrationFlag)"
           class="common-align"
           :type="row.abnormalVibrationFlag === '否' ? 'success' : 'danger'"
         >

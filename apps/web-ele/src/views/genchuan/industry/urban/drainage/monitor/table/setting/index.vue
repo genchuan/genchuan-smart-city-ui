@@ -1,10 +1,19 @@
 <script setup>
-import { reactive, ref } from 'vue';
+import { reactive, ref, onMounted, watch } from 'vue';
 
 import { ElMessage } from 'element-plus';
 
 import { useVbenForm } from '#/adapter/form';
 import { useFormSchema } from './data';
+
+const props = defineProps({
+  selectedRows: {
+    type: Array,
+    default: () => []
+  }
+});
+
+const emit = defineEmits(['save']);
 
 const formData = ref({});
 const [Form, formApi] = useVbenForm({
@@ -20,9 +29,29 @@ const [Form, formApi] = useVbenForm({
   showDefaultActions: false,
 });
 
+// 监听selectedRows变化，更新表单数据
+watch(() => props.selectedRows, (newValue) => {
+  if (newValue && newValue.length > 0) {
+    const firstRow = newValue[0];
+    formData.value = { ...firstRow };
+    formApi.setValues({
+      pipe_road: firstRow.pipe_road,
+      code: firstRow.code,
+      normal_collect_frequency: '5分钟', // 默认值
+      rain_collect_frequency: '1分钟', // 默认值
+      pipe_level_threshold: firstRow.pipe_level_threshold,
+      pipe_flow_speed_threshold: firstRow.pipe_flow_speed_threshold,
+      rainfall_threshold: firstRow.rainfall_threshold,
+      user_name: firstRow.user_name,
+      rain_warn_switch: firstRow.rain_warn_switch
+    });
+  }
+}, { immediate: true });
+
 const handleSave = async () => {
   const values = await formApi.getValues();
-  // 这里可以添加API调用逻辑
+  // 触发保存事件，传递配置数据
+  emit('save', values);
   ElMessage.success('监测参数配置保存成功');
 };
 

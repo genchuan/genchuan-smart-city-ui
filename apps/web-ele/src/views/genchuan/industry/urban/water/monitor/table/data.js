@@ -186,7 +186,10 @@ export function useFormSchema() {
         precision: 2, // 保留2位小数
         addonAfter: 'MPa',
       },
-      rules: 'required', // 管网压力为必填项
+      rules: [
+        { required: true, message: '请输入管网压力' },
+        { type: 'number', min: 0.1, max: 1.0, message: '管网压力应在0.1-1.0 MPa之间' }
+      ], // 管网压力为必填项且有范围校验
     },
     {
       fieldName: 'pipeFlow',
@@ -199,7 +202,10 @@ export function useFormSchema() {
         precision: 0,
         addonAfter: 'm³/h',
       },
-      rules: 'required', // 管网流量为必填项
+      rules: [
+        { required: true, message: '请输入管网流量' },
+        { type: 'number', min: 10, max: 500, message: '管网流量应在10-500 m³/h之间' }
+      ], // 管网流量为必填项且有范围校验
     },
     {
       component: 'Select',
@@ -320,7 +326,21 @@ export function useFormSchema() {
           '请输入指标阈值范围（如：压力0.3-0.6MPa；流量80-150m³/h）',
         maxlength: 200, // 限制输入长度
       },
-      rules: 'required',
+      rules: [
+        { required: true, message: '请输入指标阈值范围' },
+        {
+          validator: (rule, value, callback) => {
+            // 简单的阈值格式校验
+            const pressureRegex = /压力\d+\.\d+-\d+\.\d+MPa/;
+            const flowRegex = /流量\d+-\d+m³\/h/;
+            if (pressureRegex.test(value) && flowRegex.test(value)) {
+              callback();
+            } else {
+              callback(new Error('指标阈值范围格式不正确，请按照示例格式输入'));
+            }
+          }
+        }
+      ],
     },
     {
       fieldName: 'warnPriorityRule',
@@ -352,18 +372,21 @@ export function useGridColumns() {
       title: '管网压力(MPa)',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'pipePressure' },
     },
     {
       field: 'pipeFlow',
       title: '管网流量(m³/h)',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'pipeFlow' },
     },
     {
       field: 'leakStatus',
       title: '泄漏状态',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'leakStatus' }, // 自定义slot适配泄漏状态渲染
     },
     {
       field: 'deviceCode',

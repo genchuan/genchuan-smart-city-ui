@@ -19,6 +19,8 @@ import { dataList, useFormSchema, useFilterFormSchema, useGridColumns } from './
 import ParkDetailDrawer from './detail.vue';
 // 引入设备详情抽屉组件
 import DeviceDetailDrawer from './deviceDetail.vue';
+// 引入标注泄漏范围组件
+import LeakageRangeDrawer from './leakageRange.vue';
 
 
 const props = defineProps({
@@ -197,6 +199,36 @@ const dataObj = reactive({
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
+// 检查数据是否超标并触发预警
+const checkAndTriggerWarning = (data) => {
+  // 定义阈值范围
+  const thresholds = {
+    pipePressure: { min: 0.3, max: 0.6 },
+    pipeFlow: { min: 80, max: 150 }
+  };
+  
+  // 检查每个数据项
+  data.forEach(item => {
+    // 检查压力是否超标
+    if (item.pipePressure < thresholds.pipePressure.min || item.pipePressure > thresholds.pipePressure.max) {
+      // 触发压力异常预警
+      ElMessage.warning(`【预警】${item.pipeArea} - 管网压力异常: ${item.pipePressure} MPa`);
+    }
+    
+    // 检查流量是否超标
+    if (item.pipeFlow < thresholds.pipeFlow.min || item.pipeFlow > thresholds.pipeFlow.max) {
+      // 触发流量异常预警
+      ElMessage.warning(`【预警】${item.pipeArea} - 管网流量异常: ${item.pipeFlow} m³/h`);
+    }
+    
+    // 检查泄漏状态
+    if (item.leakStatus !== '正常') {
+      // 触发泄漏预警（优先级高于压力/流量异常）
+      ElMessage.error(`【预警】${item.pipeArea} - ${item.leakStatus}`);
+    }
+  });
+};
+
 // 表格数据获取
 const getTableData = async (pageObj) => {
   const page = pageObj.page;
@@ -229,6 +261,9 @@ const getTableData = async (pageObj) => {
       
       return true;
     });
+    
+    // 检查数据并触发预警
+    checkAndTriggerWarning(filteredData);
     
     dataObj.total = filteredData.length;
     dataObj.list = filteredData.slice(
@@ -313,12 +348,45 @@ const handleOpenDetail = (row) => {
   console.log(row);
 };
 
-// 点击管网分区查看详细信息
+// 点击管网分区筛选同分区监测数据
 const handlePipeAreaClick = (row) => {
-  dataObj.detailObj = row;
-  // 通过 ref 调用组件的 open 方法
-  parkDetailDrawerRef.value.open();
-  console.log(row);
+  // 筛选同分区的数据
+  dataObj.serachObj.pipeArea = row.pipeArea;
+  // 刷新表格
+  gridApi.reload();
+  console.log('筛选同分区数据:', row.pipeArea);
+};
+
+// 点击泄漏状态筛选同状态监测数据
+const handleLeakStatusClick = (row) => {
+  // 筛选同状态的数据
+  dataObj.serachObj.leakStatus = row.leakStatus;
+  // 刷新表格
+  gridApi.reload();
+  console.log('筛选同泄漏状态数据:', row.leakStatus);
+};
+
+// 点击设备在线状态筛选同在线状态监测点
+const handleDeviceStatusClick = (row) => {
+  // 筛选同在线状态的数据
+  dataObj.serachObj.deviceStatus = row.deviceStatus;
+  // 刷新表格
+  gridApi.reload();
+  console.log('筛选同设备在线状态数据:', row.deviceStatus);
+};
+
+// 点击监测状态筛选同监测状态分区
+const handleMonitorStatusClick = (row) => {
+  // 筛选同监测状态的数据
+  dataObj.serachObj.monitorStatus = row.monitorStatus;
+  // 刷新表格
+  gridApi.reload();
+  console.log('筛选同监测状态数据:', row.monitorStatus);
+};
+
+// 打开标注泄漏范围抽屉
+const handleLeakageRange = () => {
+  leakageRangeDrawerRef.value.open();
 };
 
 // 设备详情
@@ -398,6 +466,7 @@ const handleFullShow = () => {
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
 const deviceDetailDrawerRef = ref(null);
+const leakageRangeDrawerRef = ref(null);
 
 const arrowChange = () => {
   emit('arrow-change');
@@ -453,6 +522,8 @@ const arrowChange = () => {
       ref="deviceDetailDrawerRef"
       :detail-obj="dataObj.deviceDetailObj"
     />
+    <!-- 使用标注泄漏范围抽屉组件 -->
+    <LeakageRangeDrawer ref="leakageRangeDrawerRef" :visible="false" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -472,6 +543,11 @@ const arrowChange = () => {
             @click="switchOpen"
           />
           <IconButton
+            content="标注泄漏范围"
+            icon-name="Location"
+            @click="handleLeakageRange"
+          />
+          <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
             :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
             @click="arrowChange"
@@ -479,6 +555,7 @@ const arrowChange = () => {
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
+      <!-- 管网分区 -->
       <template #pipeArea="{ row }">
         <el-text
           @click="handlePipeAreaClick(row)"
@@ -488,6 +565,35 @@ const arrowChange = () => {
           {{ row.pipeArea }}
         </el-text>
       </template>
+      <!-- 管网压力 -->
+      <template #pipePressure="{ row }">
+        <el-text 
+          class="common-align"
+          :type="row.pipePressure < 0.3 || row.pipePressure > 0.6 ? 'danger' : 'default'"
+        >
+          {{ row.pipePressure }}
+        </el-text>
+      </template>
+      <!-- 管网流量 -->
+      <template #pipeFlow="{ row }">
+        <el-text 
+          class="common-align"
+          :type="row.pipeFlow < 80 || row.pipeFlow > 150 ? 'danger' : 'default'"
+        >
+          {{ row.pipeFlow }}
+        </el-text>
+      </template>
+      <!-- 泄漏状态 -->
+      <template #leakStatus="{ row }">
+        <el-text 
+          class="common-align"
+          :type="row.leakStatus === '正常' ? 'success' : row.leakStatus === '疑似泄漏' ? 'warning' : 'danger'"
+          @click="handleLeakStatusClick(row)"
+        >
+          {{ row.leakStatus }}
+        </el-text>
+      </template>
+      <!-- 监测设备编号 -->
       <template #deviceCode="{ row }">
         <el-text
           @click="handleDeviceDetail(row)"
@@ -497,14 +603,17 @@ const arrowChange = () => {
           {{ row.deviceCode }}
         </el-text>
       </template>
+      <!-- 设备在线状态 -->
       <template #deviceStatus="{ row }">
         <el-text 
           class="common-align"
           :type="row.deviceStatus === '在线' ? 'success' : row.deviceStatus === '离线' ? 'danger' : 'warning'"
+          @click="handleDeviceStatusClick(row)"
         >
           {{ row.deviceStatus }}
         </el-text>
       </template>
+      <!-- 监测状态 -->
       <template #monitorStatus="{ row }">
         <el-switch
           v-model="row.monitorStatus"

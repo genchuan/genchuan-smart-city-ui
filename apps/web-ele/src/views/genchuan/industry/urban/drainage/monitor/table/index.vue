@@ -361,10 +361,21 @@ const [settingDrawer, settingdrawerApi] = useVbenDrawer({
     settingdrawerApi.close();
   },
   onConfirm() {},
-  async onOpenChange() {},
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      // 传递选中的行数据给设置组件
+      const selectedRows = recordsList.value.length > 0 ? recordsList.value[0] : null;
+      settingdrawerApi.setData(selectedRows);
+    }
+  },
 });
 
 const settingConfig = () => {
+  // 检查是否选择了数据
+  if (isEmpty(checkedIds.value)) {
+    ElMessage.warning('请先选择需要配置的路段！');
+    return;
+  }
   settingdrawerApi.open();
 };
 
@@ -451,7 +462,73 @@ const handleDeviceDetail = (row) => {
   parkDetailDrawerRef.value.open();
 };
 
+// 筛选同路段监测数据
+const handleFilterByPipeRoad = (pipeRoad) => {
+  ElMessage.success(`筛选路段：${pipeRoad}`);
+  // 更新筛选条件
+  dataObj.serachObj = {
+    ...dataObj.serachObj,
+    pipe_road: pipeRoad
+  };
+  // 刷新表格
+  gridApi.query();
+};
 
+// 筛选同在线状态监测点
+const handleFilterByDeviceStatus = (status) => {
+  ElMessage.success(`筛选设备状态：${status}`);
+  // 更新筛选条件
+  dataObj.serachObj = {
+    ...dataObj.serachObj,
+    status: status
+  };
+  // 刷新表格
+  gridApi.query();
+};
+
+// 筛选同频率类型路段
+const handleFilterByCollectFrequency = (collectFrequency) => {
+  ElMessage.success(`筛选采集频率类型：${collectFrequency}`);
+  // 更新筛选条件
+  dataObj.serachObj = {
+    ...dataObj.serachObj,
+    collect_frequency_type: collectFrequency
+  };
+  // 刷新表格
+  gridApi.query();
+};
+
+// 筛选同监测状态路段
+const handleFilterByMonitorStatus = (monitorStatus) => {
+  ElMessage.success(`筛选监测状态：${monitorStatus}`);
+  // 更新筛选条件
+  dataObj.serachObj = {
+    ...dataObj.serachObj,
+    monitor_status: monitorStatus
+  };
+  // 刷新表格
+  gridApi.query();
+};
+
+// 处理设置保存事件
+const handleSettingSave = (values) => {
+  // 更新选中行的预警方式相关数据
+  recordsList.value.forEach((row) => {
+    const index = dataObj.apilist.findIndex(item => item.id === row.id);
+    if (index !== -1) {
+      // 更新阈值和预警开关
+      dataObj.apilist[index].pipe_level_threshold = values.pipe_level_threshold;
+      dataObj.apilist[index].pipe_flow_speed_threshold = values.pipe_flow_speed_threshold;
+      dataObj.apilist[index].rainfall_threshold = values.rainfall_threshold;
+      dataObj.apilist[index].rain_warn_switch = values.rain_warn_switch;
+      dataObj.apilist[index].user_name = values.user_name;
+    }
+  });
+  // 刷新表格
+  gridApi.reload();
+  // 关闭设置抽屉
+  settingdrawerApi.close();
+};
 
 onMounted(() => {
   const schema = useFormSchema();
@@ -539,7 +616,10 @@ onMounted(() => {
       title="详情"
     />
     <settingDrawer title="配置监测参数" class="genchuan-detail-drawer">
-      <settingTable />
+      <settingTable 
+        :selected-rows="recordsList"
+        @save="handleSettingSave"
+      />
     </settingDrawer>
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -579,7 +659,7 @@ onMounted(() => {
       </template>
       <template #pipe_road="{ row }">
         <el-text
-          @click="handleOpenDetail(row)"
+          @click="handleFilterByPipeRoad(row.pipe_road)"
           class="common-align"
           type="primary"
         >
@@ -597,6 +677,7 @@ onMounted(() => {
       </template>
       <template #status="{ row }">
         <el-text
+          @click="handleFilterByDeviceStatus(row.status)"
           class="common-align"
           :type="row.status === '在线' ? 'success' : row.status === '离线' ? 'danger' : 'warning'"
         >
@@ -605,6 +686,7 @@ onMounted(() => {
       </template>
       <template #collect_frequency_type="{ row }">
         <el-text
+          @click="handleFilterByCollectFrequency(row.collect_frequency_type)"
           class="common-align"
           :type="row.collect_frequency_type === '降雨期' ? 'warning' : 'primary'"
         >
@@ -612,16 +694,26 @@ onMounted(() => {
         </el-text>
       </template>
       <template #monitor_status="{ row }">
-        <el-switch
-          v-model="row.monitor_status"
-          active-value="运行中"
-          inactive-value="已停止"
-          active-text="运行中"
-          inactive-text="已停止"
-          active-color="#10b981"
-          inactive-color="#ef4444"
-          @change="handleMonitorStatusChange(row)"
-        />
+        <div>
+          <el-switch
+            v-if="row.monitor_status === '运行中' || row.monitor_status === '已停止'"
+            v-model="row.monitor_status"
+            active-value="运行中"
+            inactive-value="已停止"
+            active-text="运行中"
+            inactive-text="已停止"
+            active-color="#10b981"
+            inactive-color="#ef4444"
+            @change="handleMonitorStatusChange(row)"
+          />
+          <el-text 
+            v-else 
+            class="common-align"
+            type="warning"
+          >
+            {{ row.monitor_status }}
+          </el-text>
+        </div>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">

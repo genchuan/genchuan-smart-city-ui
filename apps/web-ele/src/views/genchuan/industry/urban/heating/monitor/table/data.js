@@ -364,23 +364,7 @@ export function useFilterFormSchema() {
       fieldName: 'deviceStatus',
       label: '设备在线状态',
     },
-    {
-      component: 'Select',
-      labelWidth: '100',
-      componentProps: {
-        allowClear: true,
-        filterOption: true,
-        options: [
-          { label: '运行中', value: '运行中' },
-          { label: '已停止', value: '已停止' },
-          { label: '异常', value: '异常' },
-        ],
-        placeholder: '请选择监测状态',
-        showSearch: true,
-      },
-      fieldName: 'monitorStatus',
-      label: '监测状态',
-    },
+
   ];
 }
 

@@ -195,6 +195,23 @@ const dataObj = reactive({
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
+// 检查数据是否超标并触发预警
+const checkAndTriggerWarning = (data) => {
+  // 定义阈值范围
+  const thresholds = {
+    gasConcentration: { max: 1.0 } // 燃气浓度阈值
+  };
+  
+  // 检查每个数据项
+  data.forEach(item => {
+    // 检查燃气浓度是否超标
+    if (item.gasConcentration > thresholds.gasConcentration.max) {
+      // 触发燃气浓度超标预警
+      ElMessage.warning(`【预警】${item.pipeRoad} - 燃气浓度异常: ${item.gasConcentration}%`);
+    }
+  });
+};
+
 // 表格数据获取
 const getTableData = async (pageObj) => {
   const page = pageObj.page;
@@ -227,6 +244,9 @@ const getTableData = async (pageObj) => {
       
       return true;
     });
+    
+    // 检查数据并触发预警
+    checkAndTriggerWarning(filteredData);
     
     dataObj.total = filteredData.length;
     dataObj.list = filteredData.slice(
@@ -313,18 +333,20 @@ const handleOpenDetail = (row) => {
   console.log(row);
 };
 
-// 点击管网路段查看详细信息
+// 点击管网路段筛选同路段所有实时监测数据
 const handlePipeRoadClick = (row) => {
-  dataObj.detailObj = row;
-  // 通过 ref 调用组件的 open 方法
-  parkDetailDrawerRef.value.open();
-  console.log('查看管网路段详情:', row.pipeRoad);
+  // 筛选同路段的监测数据
+  dataObj.serachObj.pipeRoad = row.pipeRoad;
+  gridApi.reload();
+  console.log('筛选同路段数据:', row.pipeRoad);
 };
 
-// 点击所属区域不执行任何操作
+// 点击所属区域筛选同区域的监测数据
 const handleAreaNameClick = (row) => {
-  // 不执行任何操作
-  console.log('点击所属区域:', row.areaName);
+  // 筛选同区域的监测数据
+  dataObj.serachObj.areaName = row.areaName;
+  gridApi.reload();
+  console.log('筛选同区域数据:', row.areaName);
 };
 
 // 点击设备在线状态筛选同状态数据

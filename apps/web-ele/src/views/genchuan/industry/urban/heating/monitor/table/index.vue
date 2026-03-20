@@ -177,6 +177,87 @@ function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
   recordsList.value = records;
 }
+
+// 触发预警
+const triggerWarning = (data, riskType) => {
+  // 生成预警ID
+  const warningId = Date.now().toString();
+  
+  // 构建预警信息
+  const warningInfo = {
+    id: warningId,
+    heatArea: data.heatArea,
+    deviceCode: data.deviceCode,
+    riskType: riskType,
+    riskLevel: '高风险',
+    timestamp: new Date().toISOString().slice(0, 19).replace('T', ' '),
+    status: '未处理'
+  };
+  
+  // 模拟预警触发
+  console.log('触发预警:', warningInfo);
+  
+  // 显示预警通知
+  ElMessage({
+    message: `【预警】${data.heatArea} - ${riskType}`,
+    type: 'error',
+    duration: 5000,
+    showClose: true
+  });
+  
+  return warningInfo;
+};
+
+// 检测指标是否超标并触发预警
+const checkAndTriggerWarning = (data, shouldTrigger = true) => {
+  if (!shouldTrigger) {
+    return;
+  }
+  
+  // 温差超标检测
+  const tempDiffThreshold = data.seasonType === '冬季' ? data.winterTempDiffThreshold : data.nonWinterTempDiffThreshold;
+  const tempDiffMatch = tempDiffThreshold.match(/^(\d+)-(\d+)℃$/);
+  if (tempDiffMatch) {
+    const tempMin = parseFloat(tempDiffMatch[1]);
+    const tempMax = parseFloat(tempDiffMatch[2]);
+    if (data.tempDifference < tempMin || data.tempDifference > tempMax) {
+      triggerWarning(data, '供回水温差超标');
+      data.warnStatus = '异常';
+    }
+  }
+  
+  // 压力超标检测
+  const pressureMatch = data.pipePressureThreshold.match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)/);
+  if (pressureMatch) {
+    const pressureMin = parseFloat(pressureMatch[1]);
+    const pressureMax = parseFloat(pressureMatch[3]);
+    if (data.pipePressure < pressureMin || data.pipePressure > pressureMax) {
+      triggerWarning(data, '管网压力超标');
+      data.warnStatus = '异常';
+    }
+  }
+  
+  // 流量超标检测
+  const flowMatch = data.pipeFlowThreshold.match(/^(\d+)-(\d+)/);
+  if (flowMatch) {
+    const flowMin = parseFloat(flowMatch[1]);
+    const flowMax = parseFloat(flowMatch[2]);
+    if (data.pipeFlow < flowMin || data.pipeFlow > flowMax) {
+      triggerWarning(data, '管网流量超标');
+      data.warnStatus = '异常';
+    }
+  }
+  
+  // 设备离线检测
+  if (data.deviceStatus === '离线') {
+    triggerWarning(data, '设备离线');
+    data.warnStatus = '异常';
+  }
+};
+
+// 初始加载标识
+const isInitialLoad = ref(true);
+
 const dataObj = reactive({
   totalShow: false,
   detailObj: {}, // 保留详情对象用于传递给组件
@@ -198,37 +279,50 @@ const getTableData = (pageObj) => {
   const page = pageObj.page;
   
   // 使用本地数据模拟，实际应用应该从 API 获取
-  const filteredData = dataObj.apilist.filter((v) => {
-    // 监测状态过滤（tabs 筛选）
-    if (activeName.value !== '全部' && v.monitorStatus !== activeName.value) {
-      return false;
-    }
-    
-    // 搜索条件过滤
-    if (dataObj.serachObj.heatArea && !v.heatArea.includes(dataObj.serachObj.heatArea)) {
-      return false;
-    }
-    
-    if (dataObj.serachObj.seasonType && v.seasonType !== dataObj.serachObj.seasonType) {
-      return false;
-    }
-    
-    if (dataObj.serachObj.deviceStatus && v.deviceStatus !== dataObj.serachObj.deviceStatus) {
-      return false;
-    }
-    
-    if (dataObj.serachObj.monitorStatus && v.monitorStatus !== dataObj.serachObj.monitorStatus) {
-      return false;
-    }
-    
-    return true;
-  });
+  const filteredData = dataObj.apilist
+    .map((v) => {
+      // 检测指标是否超标并触发预警，初始加载时触发，筛选时不触发
+      checkAndTriggerWarning(v, isInitialLoad.value);
+      return v;
+    })
+    .filter((v) => {
+      // 监测状态过滤（tabs 筛选）
+      if (activeName.value !== '全部' && v.monitorStatus !== activeName.value) {
+        return false;
+      }
+      
+      // 搜索条件过滤
+      if (dataObj.serachObj.heatArea && !v.heatArea.includes(dataObj.serachObj.heatArea)) {
+        return false;
+      }
+      
+      if (dataObj.serachObj.seasonType && v.seasonType !== dataObj.serachObj.seasonType) {
+        return false;
+      }
+      
+      if (dataObj.serachObj.deviceStatus && v.deviceStatus !== dataObj.serachObj.deviceStatus) {
+        return false;
+      }
+      
+      // 预警状态过滤
+      if (dataObj.serachObj.warnStatus && v.warnStatus !== dataObj.serachObj.warnStatus) {
+        return false;
+      }
+      
+      return true;
+    });
   
   dataObj.total = filteredData.length;
   dataObj.list = filteredData.slice(
     (page.currentPage - 1) * page.pageSize,
     page.currentPage * page.pageSize,
   );
+  
+  // 初始加载完成后，设置为false，后续筛选操作不触发预警
+  if (isInitialLoad.value) {
+    isInitialLoad.value = false;
+  }
+  
   return dataObj;
 };
 
@@ -409,6 +503,35 @@ const handleDeviceDetail = (row) => {
   dataObj.deviceDetailObj = row;
   // 打开设备详情抽屉
   deviceDetailDrawerRef.value.open();
+};
+
+// 筛选同季节监测配置
+const handleFilterBySeasonType = (seasonType) => {
+  ElMessage.success(`筛选季节类型：${seasonType}`);
+  // 更新筛选条件
+  dataObj.serachObj.seasonType = seasonType;
+  // 刷新表格
+  gridApi.query();
+};
+
+// 筛选同在线状态监测点
+const handleFilterByDeviceStatus = (deviceStatus) => {
+  ElMessage.success(`筛选设备状态：${deviceStatus}`);
+  // 更新筛选条件
+  dataObj.serachObj.deviceStatus = deviceStatus;
+  // 刷新表格
+  gridApi.query();
+};
+
+
+
+// 筛选待预警区域
+const handleFilterByWarnStatus = (warnStatus) => {
+  ElMessage.success(`筛选预警状态：${warnStatus}`);
+  // 更新筛选条件
+  dataObj.serachObj.warnStatus = warnStatus;
+  // 刷新表格
+  gridApi.query();
 };
 const tabsData = ref([
   { label: '全部' },
@@ -624,7 +747,11 @@ const arrowChange = () => {
         </el-text>
       </template>
       <template #seasonType="{ row }">
-        <el-text class="common-align">
+        <el-text 
+          @click="handleFilterBySeasonType(row.seasonType)"
+          class="common-align"
+          type="primary"
+        >
           {{ row.seasonType }}
         </el-text>
       </template>
@@ -639,6 +766,7 @@ const arrowChange = () => {
       </template>
       <template #deviceStatus="{ row }">
         <el-text 
+          @click="handleFilterByDeviceStatus(row.deviceStatus)"
           class="common-align"
           :type="row.deviceStatus === '在线' ? 'success' : row.deviceStatus === '离线' ? 'danger' : 'warning'"
         >
@@ -646,19 +774,22 @@ const arrowChange = () => {
         </el-text>
       </template>
       <template #monitorStatus="{ row }">
-        <el-switch
-          v-model="row.monitorStatus"
-          active-value="运行中"
-          inactive-value="已停止"
-          active-text="运行中"
-          inactive-text="已停止"
-          active-color="#10b981"
-          inactive-color="#ef4444"
-          @change="handleMonitorStatusChange(row)"
-        />
+        <div>
+          <el-switch
+            v-model="row.monitorStatus"
+            active-value="运行中"
+            inactive-value="已停止"
+            active-text="运行中"
+            inactive-text="已停止"
+            active-color="#10b981"
+            inactive-color="#ef4444"
+            @change="handleMonitorStatusChange(row)"
+          />
+        </div>
       </template>
       <template #warnStatus="{ row }">
         <el-text 
+          @click="handleFilterByWarnStatus(row.warnStatus)"
           class="common-align"
           :type="row.warnStatus === '正常' ? 'success' : 'danger'"
         >
