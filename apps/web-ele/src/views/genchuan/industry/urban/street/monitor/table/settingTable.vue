@@ -11,7 +11,7 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import IconButton from '#/components/common/IconButton.vue';
 
-import { useFormSchema, useGridColumns } from './data';
+import { useFormSchema, useGridColumns, dataList } from './data';
 
 const emit = defineEmits(['close']);
 
@@ -151,7 +151,7 @@ const dataObj = reactive({
   total: 0,
   currentPage: 1,
   pageSize: 10,
-  apilist: [],
+  apilist: dataList(), // 使用现有数据作为配置数据
   list: [],
 });
 
