@@ -75,7 +75,9 @@ defineExpose({
 
       <div class="detail-section">
         <h3 class="section-title">事项描述</h3>
-        <div class="detail-desc">{{ matterDetail.matterDesc || '暂无描述' }}</div>
+        <div class="detail-desc">
+          {{ matterDetail.matterDesc || '暂无描述' }}
+        </div>
       </div>
 
       <div class="detail-section">
@@ -118,8 +120,8 @@ defineExpose({
 }
 
 .detail-section {
-  margin-bottom: 24px;
   padding-bottom: 16px;
+  margin-bottom: 24px;
   border-bottom: 1px solid #ebeef5;
 }
 
@@ -142,8 +144,8 @@ defineExpose({
 
 .detail-item label {
   width: 120px;
-  color: #606266;
   font-weight: 500;
+  color: #606266;
 }
 
 .detail-item span {
@@ -153,10 +155,10 @@ defineExpose({
 
 .detail-desc {
   padding: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #606266;
   background-color: #f5f7fa;
   border-radius: 4px;
-  font-size: 14px;
-  color: #606266;
-  line-height: 1.6;
 }
 </style>
