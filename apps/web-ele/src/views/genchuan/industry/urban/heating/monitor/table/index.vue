@@ -369,56 +369,47 @@ const handleSwitchConfirm = async () => {
   }
 };
 
+// 季节选择对话框状态
+const seasonDialogVisible = ref(false);
+const selectedSeason = ref('');
+const seasonLoading = ref(false); // 季节切换加载状态
+
 // 新增：切换季节阈值
-async function handleSeasonThreshold() {
-  // 打开季节阈值切换对话框
-  const { value } = await ElMessageBox.prompt(
-    '请选择目标季节类型',
-    '切换季节阈值',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      inputPlaceholder: '请输入季节类型（冬季/夏季/春季/秋季）',
-      inputValidator: (value) => {
-        if (!value) {
-          return '请输入季节类型';
-        }
-        if (!['冬季', '夏季', '春季', '秋季'].includes(value)) {
-          return '季节类型必须是：冬季/夏季/春季/秋季';
-        }
-        return true;
-      }
-    }
-  );
+function handleSeasonThreshold() {
+  // 重置选中状态
+  selectedSeason.value = '';
+  // 打开季节选择对话框
+  seasonDialogVisible.value = true;
+}
+
+// 确认季节选择
+async function confirmSeasonSelection() {
+  if (!selectedSeason.value) {
+    ElMessage.warning('请选择季节类型');
+    return;
+  }
   
-  if (value) {
-    // 显示确认对话框
-    const confirmed = await confirm(`确定将所有供热区域的季节阈值切换为 ${value} 吗？`);
-    if (confirmed) {
-      const loadingInstance = ElLoading.service({
-        text: '切换季节阈值中...',
-      });
-      
-      try {
-        // 模拟切换季节阈值 - 参考 street 批量开关路灯的实现
-        dataObj.apilist = dataObj.apilist.map(item => ({
-          ...item,
-          seasonType: value,
-          seasonSwitch: value === '冬季' ? '开启' : '关闭'
-        }));
-        
-        ElMessage.success(`季节阈值已切换为 ${value}`);
-        // 刷新表格 - 完全重新加载
-        setTimeout(() => {
-          gridApi.reload();
-        }, 100);
-      } catch (error) {
-        ElMessage.error('切换季节阈值失败，请重试');
-        console.error('切换季节阈值失败:', error);
-      } finally {
-        loadingInstance.close();
-      }
-    }
+  // 先关闭季节选择对话框
+  seasonDialogVisible.value = false;
+  
+  // 显示确认对话框
+  try {
+    await confirm(`确定将所有供热区域的季节阈值切换为 ${selectedSeason.value} 吗？`);
+    
+    seasonLoading.value = true;
+    
+    // 模拟切换季节阈值 - 参考 street 批量开关路灯的实现
+    dataObj.apilist.forEach(item => {
+      item.seasonType = selectedSeason.value;
+      item.seasonSwitch = selectedSeason.value === '冬季' ? '开启' : '关闭';
+    });
+    
+    ElMessage.success(`季节阈值已切换为 ${selectedSeason.value}`);
+    handleRefresh();
+  } catch (error) {
+    console.error('取消操作:', error);
+  } finally {
+    seasonLoading.value = false;
   }
 }
 
@@ -615,6 +606,22 @@ const arrowChange = () => {
   text-align: right;
 }
 
+// 季节对话框样式
+.season-dialog-content {
+  padding: 20px 0;
+
+  .form-item {
+    margin-bottom: 20px;
+
+    .label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #303133;
+    }
+  }
+}
+
 // 按钮禁用样式优化
 :deep(.common-toolbar-tools) {
   .el-button.is-disabled {
@@ -652,6 +659,39 @@ const arrowChange = () => {
             type="primary"
             @click="handleSwitchConfirm"
             :loading="statusLoading"
+          >
+            确认切换
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 季节阈值切换弹窗 -->
+    <el-dialog
+      v-model="seasonDialogVisible"
+      title="切换季节阈值"
+      width="400px"
+      :close-on-click-modal="false"
+      :before-close="() => (seasonLoading.value = false)"
+    >
+      <div class="season-dialog-content" v-loading="seasonLoading">
+        <div class="form-item">
+          <label class="label">目标季节类型：</label>
+          <el-select v-model="selectedSeason" class="w-full" placeholder="请选择季节类型">
+            <el-option label="冬季" value="冬季"></el-option>
+            <el-option label="夏季" value="夏季"></el-option>
+            <el-option label="春季" value="春季"></el-option>
+            <el-option label="秋季" value="秋季"></el-option>
+          </el-select>
+        </div>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="seasonDialogVisible = false">取消</el-button>
+          <el-button
+            type="primary"
+            @click="confirmSeasonSelection"
+            :loading="seasonLoading"
           >
             确认切换
           </el-button>

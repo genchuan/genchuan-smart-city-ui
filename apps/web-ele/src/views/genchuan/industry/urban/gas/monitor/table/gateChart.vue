@@ -1,9 +1,10 @@
 <script setup>
-import { reactive } from 'vue';
+import { reactive, ref, onMounted, onUnmounted, nextTick } from 'vue';
+import * as echarts from 'echarts';
+import { ElSelect, ElOption } from 'element-plus';
 
-import Card from '#/components/stats/card.vue';
-import Circle from '#/components/stats/circle.vue';
-import Columnar from '#/components/stats/columnar.vue';
+import IconButton from '#/components/common/IconButton.vue';
+import MapComponent from '#/components/Map/index.vue';
 
 const state = reactive({
   cardList: [
@@ -111,8 +112,24 @@ const secondChartData = [
   }
 ];
 
-// 所有柱状图的数据（已删除折线图）
+// 所有折线图和柱状图的数据
 const allChartsData = [
+  {
+    label: '单路段燃气浓度近24小时变化趋势',
+    type: 'line',
+    data: {
+      xAxis: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'],
+      series: [0.5, 0.45, 0.4, 0.6, 0.8, 0.9, 0.85, 0.7]
+    }
+  },
+  {
+    label: '单路段管网压力近24小时变化趋势',
+    type: 'line',
+    data: {
+      xAxis: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'],
+      series: [0.35, 0.33, 0.32, 0.34, 0.36, 0.38, 0.37, 0.35]
+    }
+  },
   {
     label: '不同区域管网压力对比',
     type: 'bar',
@@ -490,39 +507,277 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="park-chart-box">
-    <div class="chart-box-left">
-      <Card
-        class="left-card"
-        v-for="item in state.cardList"
-        :key="item.title"
-        v-bind="item"
-      />
+  <div class="stats-four-visualization">
+    <!-- 卡片区 - 2x3网格布局 -->
+    <div class="cards-section">
+      <div
+        v-for="(card, index) in state.cardList"
+        :key="`card-${index}`"
+        class="stat-card"
+        :style="{
+          borderLeftColor: card.color || '#4A90E2',
+        }"
+      >
+        <div class="card-header">
+          <span class="card-title">{{ card.title }}</span>
+          <div
+            class="card-indicator"
+            :style="{ backgroundColor: card.color || '#4A90E2' }"
+          ></div>
+        </div>
+        <div class="card-body">
+          <div class="card-value" :style="{ color: card.color || '#4A90E2' }">{{ card.value }}</div>
+        </div>
+      </div>
     </div>
-    <Circle
-      width="340px"
-      height="330px"
-      title-text="道路类型占比"
-      :data="[
-        { name: '正常运行', value: 4 },
-        { name: '数据异常', value: 5 },
-      ]"
-    />
-    <Circle
-      width="340px"
-      height="330px"
-      title-text="启用状态占比"
-      :data="[
-        { name: '启用', value: 4 },
-        { name: '禁用', value: 5 },
-      ]"
-      :colors="['#67C23A', '#E6A23C', '#F56C6C', '#909399']"
-    />
-    <Columnar
-      height="330px"
-      title="不同道路对比"
-      :x-data="['福州', '厦门', '泉州', '莆田', '漳州', '龙岩']"
-      :series-data="[{ name: '', data: [58, 42, 35, 15, 13, 33] }]"
-    />
+
+    <!-- 右侧展示区 -->
+    <div class="right-section">
+      <!-- 地图/图表切换按钮 -->
+      <div class="toggle-container">
+        <IconButton
+          :content="mapVisible ? '图表' : '地图'"
+          icon-name="Switch"
+          @click="toggleView"
+          class="toggle-button"
+        />
+      </div>
+
+      <!-- 地图视图 -->
+      <div v-if="mapVisible" class="map-wrapper">
+        <MapComponent
+          :data="state.mapData"
+          :marker-icons="state.mapConfig.markerIcons"
+          :status-icon-map="state.mapConfig.statusIconMap"
+          :status-key-map="state.mapConfig.statusKeyMap"
+          :info-window-config="state.mapConfig.infoWindowConfig"
+        />
+      </div>
+
+      <!-- 图表视图 - 两个圆环图 + 一个较宽图表 -->
+      <div v-else class="charts-section">
+        <!-- 第一个圆环图展示区（带切换） -->
+        <div class="pie-chart-area">
+          <!-- 下拉切换按钮 -->
+          <div v-if="firstChartData.length > 1" class="chart-select-wrapper">
+            <ElSelect
+              v-model="firstChartIndex"
+              size="small"
+              class="chart-select"
+              @change="handlePie1Change"
+            >
+              <ElOption
+                v-for="(option, idx) in firstChartData"
+                :key="idx"
+                :label="option.label"
+                :value="idx"
+              />
+            </ElSelect>
+          </div>
+          <div ref="pieChartRef1" class="chart-container"></div>
+        </div>
+
+        <!-- 第二个圆环图展示区（带切换） -->
+        <div class="pie-chart-area">
+          <!-- 下拉切换按钮 -->
+          <div v-if="secondChartData.length > 1" class="chart-select-wrapper">
+            <ElSelect
+              v-model="secondChartIndex"
+              size="small"
+              class="chart-select"
+              @change="handlePie2Change"
+            >
+              <ElOption
+                v-for="(option, idx) in secondChartData"
+                :key="idx"
+                :label="option.label"
+                :value="idx"
+              />
+            </ElSelect>
+          </div>
+          <div ref="pieChartRef2" class="chart-container"></div>
+        </div>
+
+        <!-- 柱状/折线图展示区（更宽） -->
+        <div class="bar-line-chart-area">
+          <!-- 下拉切换按钮 -->
+          <div v-if="allChartsData.length > 1" class="chart-select-wrapper bar-line-select">
+            <ElSelect
+              v-model="chartIndex"
+              size="small"
+              class="chart-select"
+              @change="handleBarLineChange"
+            >
+              <ElOption
+                v-for="(option, idx) in allChartsData"
+                :key="idx"
+                :label="option.label"
+                :value="idx"
+              />
+            </ElSelect>
+          </div>
+          <div ref="barLineChartRef" class="chart-container"></div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.stats-four-visualization {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 20px;
+  width: 100%;
+  height: auto;
+  min-height: 320px;
+  overflow: hidden;
+}
+
+/* 卡片区样式 - 2x3网格布局 */
+.cards-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  flex-shrink: 0;
+  gap: 12px;
+  width: 260px;
+  height: 320px;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 14px;
+  background: #ffffff;
+  border-radius: 8px;
+  border-left: 4px solid #4a90e2;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.card-title {
+  font-size: 13px;
+  color: #6e7e91;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: center;
+}
+
+.card-value {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+
+/* 右侧展示区样式 */
+.right-section {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 320px;
+}
+
+.toggle-container {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1999;
+}
+
+.toggle-button {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* 地图容器 */
+.map-wrapper {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* 图表区样式 */
+.charts-section {
+  display: flex;
+  flex: 1;
+  gap: 20px;
+  min-width: 0;
+}
+
+/* 圆环图区域 */
+.pie-chart-area {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 320px;
+}
+
+.chart-select-wrapper {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  z-index: 10;
+}
+
+.chart-select {
+  width: 90px;
+}
+
+.chart-select :deep(.el-input__wrapper) {
+  background-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.chart-select :deep(.el-input__inner) {
+  font-size: 12px;
+}
+
+.chart-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* 柱状/折线图区域 - 更宽 */
+.bar-line-chart-area {
+  position: relative;
+  flex: 1.5;
+  min-width: 0;
+  height: 320px;
+}
+
+.bar-line-select {
+  left: 10px;
+}
+</style>

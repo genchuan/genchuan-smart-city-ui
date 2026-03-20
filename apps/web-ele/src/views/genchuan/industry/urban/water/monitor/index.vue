@@ -35,6 +35,8 @@ const handleClick = (item) => {
   console.log(item);
   const nowObj = tabsData.value.find((v) => v.label === item);
   isComponent.value.now = nowObj.component;
+  // 触发子标签页切换事件，通知父组件更新图表
+  emit('sub-tab-change', item);
 };
 const isComponent = ref({
   now: MontiorTable,
