@@ -12,6 +12,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   addNotice,
   deleteNotice,
+  downLoadPdf,
   exporNoticeExcel,
   getNoticeList,
   sendRectificationNotice,
@@ -309,7 +310,7 @@ const confirmSend = async () => {
       type: 'success',
       message: '整改通知书送达成功！',
     });
-
+    await handleRefresh();
     // 关闭弹窗
     dialogVisibleSend.value = false;
 
@@ -321,6 +322,13 @@ const confirmSend = async () => {
       message: `送达失败：${error.message || '请稍后重试'}`,
     });
   }
+};
+const downLoad = async (row) => {
+  const data = await downLoadPdf(row.id);
+  downloadFileFromBlobPart({
+    fileName: '整改通知书.pdf',
+    source: data,
+  });
 };
 </script>
 
@@ -413,7 +421,9 @@ const confirmSend = async () => {
           {{ row.noticeCode }}
         </el-text>
       </template>
-
+      <template #noticeContent="{ row }">
+        <el-button type="primary" @click="downLoad(row)">下载pdf</el-button>
+      </template>
       <template #driveInPhoto="{ row }">
         <ElImage
           style="width: 100px; height: 100px"
@@ -435,6 +445,7 @@ const confirmSend = async () => {
           <IconButton
             content="送达整改通知书"
             icon-name="Plus"
+            :disabled="['已送达'].includes(row.receiveStatus)"
             @click="handleSend(row)"
           />
           <IconButton

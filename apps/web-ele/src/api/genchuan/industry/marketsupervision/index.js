@@ -120,4 +120,8 @@ export function getbatchEvidence(data) {
 
 export function sendRectificationNotice(data) {
   return requestClient.post(`/kitchen/ent-rectify-record/add`, data);
+} 
+/** 获取复审台账详情 */
+export function downLoadPdf(id) {
+  return requestClient.download(`/kitchen/rectify-notice/download-pdf?rectifyNoticeId=${id}`);
 }

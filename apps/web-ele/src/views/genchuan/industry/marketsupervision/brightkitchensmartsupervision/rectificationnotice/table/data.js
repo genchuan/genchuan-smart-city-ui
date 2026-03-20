@@ -185,6 +185,7 @@ export function useGridColumns() {
       minWidth: 200,
       sortable: false,
       ellipsis: true, // 内容过长省略
+      slots: { default: 'noticeContent' },
     },
     {
       field: 'createTime',
