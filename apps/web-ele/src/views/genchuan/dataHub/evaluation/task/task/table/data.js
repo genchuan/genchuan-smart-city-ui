@@ -50,7 +50,7 @@ export const dataList = () => {
     const collectType = collectTypeList[(i - 1) % collectTypeList.length];
     const cycleType = cycleTypeList[(i - 1) % cycleTypeList.length];
     const system = indexSystemList[(i - 1) % indexSystemList.length];
-    
+
     const now = new Date();
     const createTime = new Date(now.getTime() - i * 86400000);
     const startTime = new Date(createTime.getTime() + 3 * 86400000);
@@ -164,7 +164,7 @@ export function useTaskFormSchema() {
 /** 根据标签页获取表格列配置 */
 export function getGridColumnsByTab(tab) {
   const baseColumns = [
-    { type: 'checkbox', width: 40, visible: tab === '全部' }
+    { type: 'checkbox', width: 40, visible: true }
   ];
 
   const commonColumnsAll = [
@@ -397,7 +397,7 @@ export function getGridColumnsByTab(tab) {
   }
 
   const columns = [
-    ...(tab === '全部' ? baseColumns : []),
+    ...baseColumns,
     ...commonColumnsAll,
     ...dynamicColumns,
     {

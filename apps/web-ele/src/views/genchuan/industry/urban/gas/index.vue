@@ -1,19 +1,8 @@
 <script setup>
 import { ref } from 'vue';
 
-import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
-
 import monitor from './monitor/index.vue';
-import tableGateChart from './monitor/table/gateChart.vue';
-import completedGateChart from './monitor/completed/gateChart.vue';
 import report from './report/index.vue';
-import dayGateChart from './report/day/gateChart.vue';
-import weekGateChart from './report/week/gateChart.vue';
-import montlyGateChart from './report/montly/gateChart.vue';
-import seasonGateChart from './report/season/gateChart.vue';
-import halfGateChart from './report/half/gateChart.vue';
-import yearGateChart from './report/year/gateChart.vue';
-import customizeGateChart from './report/customize/gateChart.vue';
 
 import '#/components/page/index.scss';
 
@@ -25,7 +14,7 @@ const changeArrowStatus = () => {
 };
 const tabArray = ref([
   {
-    label: '燃气管网监测',
+    label: '桥梁设施监测',
     components: monitor,
     showSecondary: false,
     secondShow: false,
@@ -33,7 +22,7 @@ const tabArray = ref([
     arrowState: false,
   },
   {
-    label: '燃气管网监测报表',
+    label: '桥梁设施监测报表',
     components: report,
     showSecondary: false,
     secondShow: false,
@@ -43,32 +32,12 @@ const tabArray = ref([
 ]);
 
 const arrowChange = () => {
-  // 切换secondShow状态
-  secondShow.value = !secondShow.value;
-  // 更新tabArray中的secondShow属性
   tabArray.value.forEach((v) => {
-    v.secondShow = secondShow.value;
-    v.arrowShow = secondShow.value;
+    v.arrowShow = !v.arrowShow;
   });
 };
-const activeName = ref('燃气管网监测');
-const secondShow = ref(true);
-const activeSubTab = ref('实时监测');
-const activeReportTab = ref('日报');
-
-// 初始化时设置燃气管网监测标签页的 secondShow 为 true
-const initTabState = () => {
-  const monitorTab = tabArray.value.find((v) => v.label === '燃气管网监测');
-  if (monitorTab) {
-    monitorTab.showSecondary = true;
-    monitorTab.secondShow = true;
-    monitorTab.arrowShow = true;
-    monitorTab.arrowState = true;
-  }
-};
-
-// 调用初始化函数
-initTabState();
+const activeName = ref('桥梁设施监测');
+const secondShow = ref(false);
 const tabChange = (item) => {
   tabArray.value.forEach((v) => {
     v.showSecondary = false;
@@ -80,59 +49,33 @@ const tabChange = (item) => {
   nowObj.arrowShow = true;
   nowObj.arrowState = true;
   nowObj.secondShow = true;
-  
-  // 确保切换标签页时能正确显示对应图表
-  if (item === '燃气管网监测报表') {
-    // 触发一次报表子标签页的切换，确保图表更新
-    handleSubTabChange(activeReportTab.value);
-  }
 };
-
-const handleSubTabChange = (subTab) => {
-  if (activeName.value === '燃气管网监测') {
-    activeSubTab.value = subTab;
-  } else if (activeName.value === '燃气管网监测报表') {
-    activeReportTab.value = subTab;
-  }
-};
-
-const getCurrentGateChart = () => {
-  if (activeName.value === '燃气管网监测') {
-    switch (activeSubTab.value) {
-      case '实时监测':
-        return tableGateChart;
-      case '已完成归档':
-        return completedGateChart;
-      default:
-        return tableGateChart;
-    }
-  } else if (activeName.value === '燃气管网监测报表') {
-    switch (activeReportTab.value) {
-      case '日报':
-        return dayGateChart;
-      case '周报':
-        return weekGateChart;
-      case '月报':
-        return montlyGateChart;
-      case '季报':
-        return seasonGateChart;
-      case '半年报':
-        return halfGateChart;
-      case '年报':
-        return yearGateChart;
-      case '自定义报表':
-        return customizeGateChart;
-      default:
-        return dayGateChart;
-    }
-  }
-  return tableGateChart;
+const chartComponet = ref({
+  components: '',
+});
+const getComponent = (echart) => {
+  chartComponet.value.components = echart;
 };
 </script>
 <template>
   <div class="common-index">
-    <!-- 条件渲染图表组件 -->
-    <component v-if="secondShow" :is="getCurrentGateChart()" />
+    <component :is="chartComponet.components" v-if="tabArray[0].arrowShow" />
+    <div class="icon-change">
+      <el-icon
+        class="tabel-tab-icon"
+        v-if="secondShow"
+        @click="changeArrowStatus"
+      >
+        <ArrowDown />
+      </el-icon>
+      <el-icon
+        class="tabel-tab-icon"
+        v-if="!secondShow"
+        @click="changeArrowStatus"
+      >
+        <ArrowUp />
+      </el-icon>
+    </div>
     <el-tabs
       v-model="activeName"
       class="common-tabs"
@@ -155,7 +98,7 @@ const getCurrentGateChart = () => {
           :key="item.label"
           :arrow-show="item.arrowShow"
           @arrow-change="arrowChange"
-          @sub-tab-change="handleSubTabChange"
+          @get-component="getComponent"
         />
       </el-tab-pane>
     </el-tabs>

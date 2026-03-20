@@ -185,6 +185,16 @@ const DATA_DICT = {
   DATA_TYPE: 'data_type', // 数据类型
 } as const;
 
+/** ========== SHUNCAHNG - 顺昌迁移模块 ========== */
+const SHUNCHANG_DICT = {
+  // 排水户管理系统
+  SM_DRAINAGE_USER: 'sm_drainage_user',
+  SM_INDUSTRY_CATEGORY: 'sm_Industry_category',
+  SM_DRAINAGE_TYPE: 'sm_drainage_type',
+  SM_PART_TYPE: 'sm_part_type',
+  SM_STATE: 'sm_state',
+} as const;
+
 /** 字典类型枚举 - 统一导出 */
 const DICT_TYPE = {
   ...AI_DICT,
@@ -200,6 +210,7 @@ const DICT_TYPE = {
   ...SYSTEM_DICT,
   ...COMMON_DICT,
   ...DATA_DICT,
+  ...SHUNCHANG_DICT,
 } as const;
 
 export { DICT_TYPE };

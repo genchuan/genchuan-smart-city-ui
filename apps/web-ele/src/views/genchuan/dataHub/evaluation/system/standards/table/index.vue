@@ -25,12 +25,12 @@ const props = defineProps({
 });
 const emit = defineEmits(['arrow-change']);
 
-// 当前编辑的分类或标准项数据
+// 当前编辑的分类或指标数据
 const currentCategory = ref(null);
 const currentItem = ref(null);
-const activeTab = ref('全部'); // 用于决定批量操作文案等
+const activeTab = ref('全部');
 
-// 临时存储当前编辑分类下的标准项（用于分类抽屉内管理）
+// 临时存储当前编辑分类下的指标列表（用于分类抽屉内管理）
 const currentCategoryItems = ref([]);
 
 // 标准分类表单抽屉
@@ -83,7 +83,7 @@ const [CategoryDrawer, categoryDrawerApi] = useVbenDrawer({
         itemCount: currentCategoryItems.value.length,
         items: currentCategoryItems.value.map(item => ({
           ...item,
-          standardItemId: item.standardItemId || `item_${Date.now()}_${Math.random()}`
+          indicatorId: item.indicatorId || `ind_${Date.now()}_${Math.random()}`
         })),
         changeLog: '新建分类'
       };
@@ -116,7 +116,7 @@ const [CategoryDrawer, categoryDrawerApi] = useVbenDrawer({
       if (payload?.title === textObj.editText && payload?.category) {
         currentCategory.value = payload.category;
         await categoryFormApi.setValues(payload.category);
-        // 深拷贝标准项到临时列表
+        // 深拷贝指标列表到临时列表
         currentCategoryItems.value = payload.category.items ? JSON.parse(JSON.stringify(payload.category.items)) : [];
       } else {
         currentCategory.value = null;
@@ -127,7 +127,7 @@ const [CategoryDrawer, categoryDrawerApi] = useVbenDrawer({
   }
 });
 
-// 标准项表单抽屉
+// 指标项表单抽屉（用于在分类抽屉内新增/编辑指标）
 const [ItemForm, itemFormApi] = useVbenForm({
   commonConfig: {
     componentProps: { class: 'w-full' },
@@ -135,7 +135,45 @@ const [ItemForm, itemFormApi] = useVbenForm({
     labelWidth: 120,
   },
   layout: 'horizontal',
-  schema: useItemFormSchema(),
+  schema: [
+    {
+      fieldName: 'name',
+      label: '指标名称',
+      component: 'Input',
+      rules: 'required',
+      componentProps: { placeholder: '请输入指标名称' },
+    },
+    {
+      fieldName: 'weight',
+      label: '权重',
+      component: 'InputNumber',
+      rules: 'required',
+      componentProps: { placeholder: '请输入权重', min: 0, step: 0.1 },
+    },
+    {
+      fieldName: 'standards',
+      label: '标准档次',
+      component: 'Input',
+      componentProps: { type: 'textarea', placeholder: '每行一个档次，例如：\n没有\n有1-5处散落垃圾' },
+      autosize: { minRows: 5, maxRows: 10 },
+      rules: 'required',
+    },
+    {
+      fieldName: 'scores',
+      label: '对应分数',
+      component: 'Input',
+      componentProps: { type: 'textarea', placeholder: '每行一个分数，与档次一一对应，例如：\n100\n70' },
+      autosize: { minRows: 5, maxRows: 10 },
+      rules: 'required',
+    },
+    {
+      fieldName: 'sortNo',
+      label: '排序序号',
+      component: 'InputNumber',
+      componentProps: { placeholder: '请输入整数', min: 1, precision: 0 },
+      rules: 'required',
+    }
+  ],
   showDefaultActions: false,
 });
 
@@ -144,114 +182,69 @@ const [ItemDrawer, itemDrawerApi] = useVbenDrawer({
   modal: false,
   onCancel() { itemDrawerApi.close(); },
   onConfirm: async () => {
+    const valid = await itemFormApi.validate();
+    if (!valid.valid) return;
+
     const values = itemFormApi.form.values;
-    if (!values.grade || !values.scoreRange || !values.sortNo) {
-      ElMessage.warning('请填写完整');
+    // 将文本域中的行转换为数组
+    const standards = values.standands.split('\n').map(s => s.trim()).filter(s => s);
+    const scores = values.scores.split('\n').map(s => s.trim()).filter(s => s);
+    if (standards.length !== scores.length) {
+      ElMessage.error('标准档次与对应分数数量不一致');
       return;
     }
 
     const payload = itemDrawerApi.sharedData.payload;
-    const { categoryId, item, mode, onSave } = payload || {};
+    const { mode, onSave } = payload || {};
 
-    // 确定要操作的标准项列表（如果是分类抽屉内的临时管理，则操作 currentCategoryItems）
-    let targetItems = [];
-    let isTemp = false; // 是否临时列表（分类抽屉内）
-    if (categoryId === 'temp' || mode === 'temp') {
-      targetItems = currentCategoryItems.value;
-      isTemp = true;
-    } else {
-      const categoryIndex = dataObj.apilist.findIndex(c => c.standardCategoryId === categoryId);
-      if (categoryIndex === -1) return;
-      targetItems = dataObj.apilist[categoryIndex].items;
-    }
-
-    // 分数范围重叠校验
-    const newRange = values.scoreRange;
-    const overlap = targetItems.some(existingItem =>
-      existingItem.standardItemId !== item?.standardItemId && isRangeOverlap(existingItem.scoreRange, newRange)
-    );
-    if (overlap) {
-      ElMessage.error('分数范围与现有标准项重叠，请调整');
-      return;
-    }
-
-    if (item) {
-      // 编辑
-      const index = targetItems.findIndex(i => i.standardItemId === item.standardItemId);
-      if (index !== -1) {
-        targetItems[index] = { ...targetItems[index], ...values, updateTime: new Date().toLocaleString() };
+    if (mode === 'temp') {
+      // 临时列表（分类抽屉内）
+      if (currentItem.value) {
+        // 编辑
+        const index = currentCategoryItems.value.findIndex(i => i.indicatorId === currentItem.value.indicatorId);
+        if (index !== -1) {
+          currentCategoryItems.value[index] = {
+            ...currentCategoryItems.value[index],
+            ...values,
+            standards,
+            scores
+          };
+        }
+      } else {
+        // 新增
+        const newItem = {
+          indicatorId: `ind_${Date.now()}_${Math.random()}`,
+          ...values,
+          standards,
+          scores,
+          createTime: new Date().toLocaleString(),
+          updateTime: new Date().toLocaleString()
+        };
+        currentCategoryItems.value.push(newItem);
       }
-    } else {
-      // 新增
-      const newItem = {
-        standardItemId: `item_${Date.now()}_${Math.random()}`,
-        ...values,
-        createTime: new Date().toLocaleString(),
-        updateTime: new Date().toLocaleString()
-      };
-      targetItems.push(newItem);
+      // 排序
+      currentCategoryItems.value.sort((a,b) => a.sortNo - b.sortNo);
+      if (onSave) onSave();
     }
-
-    // 按sortNo排序
-    targetItems.sort((a, b) => a.sortNo - b.sortNo);
-
-    // 如果不是临时列表，需要更新分类的itemCount和changeLog
-    if (!isTemp) {
-      const categoryIndex = dataObj.apilist.findIndex(c => c.standardCategoryId === categoryId);
-      if (categoryIndex !== -1) {
-        const category = dataObj.apilist[categoryIndex];
-        category.items = targetItems;
-        category.itemCount = targetItems.length;
-        category.changeLog = (category.changeLog || '') + `；${item ? '编辑' : '新增'}标准项`;
-        category.updateTime = new Date().toLocaleString();
-      }
-    }
-
-    // 如果提供了onSave回调（用于分类抽屉内新增后更新临时列表）
-    if (onSave) onSave(values);
-
-    handleRefresh();
     itemDrawerApi.close();
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
       const payload = itemDrawerApi.sharedData.payload;
-      if (payload?.item) {
-        currentItem.value = payload.item;
-        await itemFormApi.setValues(payload.item);
+      currentItem.value = payload?.item || null;
+      if (currentItem.value) {
+        // 编辑时，将数组转换回文本域
+        await itemFormApi.setValues({
+          ...currentItem.value,
+          standards: currentItem.value.standards.join('\n'),
+          scores: currentItem.value.scores.join('\n')
+        });
       } else {
-        currentItem.value = null;
         itemFormApi.resetForm();
       }
     }
   }
 });
-
-// 分数范围重叠辅助函数（完整实现）
-function parseRange(rangeStr) {
-  const str = rangeStr.trim();
-  if (str.includes('-')) {
-    const [min, max] = str.split('-').map(Number);
-    return [min, max];
-  } else if (str.startsWith('≥')) {
-    const min = Number(str.slice(1));
-    return [min, Infinity];
-  } else if (str.startsWith('<=')) {
-    const max = Number(str.slice(2));
-    return [-Infinity, max];
-  } else if (str.startsWith('<')) {
-    const max = Number(str.slice(1)) - 1; // 小于 x 视为 ≤ x-1
-    return [-Infinity, max];
-  } else {
-    const val = Number(str);
-    return [val, val]; // 精确值
-  }
-}
-function isRangeOverlap(range1, range2) {
-  const [a1, a2] = parseRange(range1);
-  const [b1, b2] = parseRange(range2);
-  return !(a2 < b1 || a1 > b2);
-}
 
 // 搜索参数
 const searchParams = ref({});
@@ -266,7 +259,7 @@ const dataObj = reactive({
   list: [],
 });
 
-// 图表数据计算
+// 图表数据计算（可选，若不需要可移除）
 const chartData = computed(() => {
   const list = dataObj.apilist;
   const total = list.length;
@@ -276,34 +269,26 @@ const chartData = computed(() => {
   const cardList = [
     { title: '总分类数', value: total, color: '#13ce66' },
     { title: '启用分类数', value: enabled, color: '#4ECDC4' },
-    { title: '标准项总数', value: itemTotal, color: '#FFC107' }
+    { title: '指标总数', value: itemTotal, color: '#FFC107' }
   ];
 
-  // 适用体系占比
   const systemMap = {};
   list.forEach(v => { systemMap[v.systemName] = (systemMap[v.systemName] || 0) + 1; });
   const pieData1 = Object.entries(systemMap).map(([name, value]) => ({ name, value }));
 
-  // 标准等级分布（从items中统计）
   const gradeMap = {};
-  list.forEach(cat => {
-    cat.items?.forEach(item => {
-      gradeMap[item.grade] = (gradeMap[item.grade] || 0) + 1;
-    });
-  });
-  const pieData2 = Object.entries(gradeMap).map(([name, value]) => ({ name, value }));
+  // 由于不再有档次维度，此处饼图可能不再适用，可忽略或保持空
+  const pieData2 = [];
 
-  // 各分类标准项数量柱状图
   const topCategories = list.slice(0, 8);
   const barData = {
     xData: topCategories.map(v => v.name.length > 6 ? v.name.slice(0,6)+'...' : v.name),
-    series: [{ name: '标准项数量', data: topCategories.map(v => v.itemCount || 0) }]
+    series: [{ name: '指标数量', data: topCategories.map(v => v.itemCount || 0) }]
   };
-
   return { cardList, pieData1, pieData2, barData };
 });
 
-// 筛选相关（钻取）
+// 钻取筛选
 const filterSystem = ref('');
 const filterStatus = ref('');
 
@@ -320,8 +305,8 @@ const handleStatusClick = (statusName) => {
 const getTableData = (pageObj) => {
   const page = pageObj.page;
   let filtered = dataObj.apilist.filter(v => {
-    if (activeName.value === '全部') return true;
-    return v.statusName === activeName.value;
+    if (activeTab.value === '全部') return true;
+    return v.statusName === activeTab.value;
   });
 
   const params = searchParams.value;
@@ -331,16 +316,10 @@ const getTableData = (pageObj) => {
       if (params.name && !item.name.includes(params.name)) match = false;
       if (params.systemId && item.systemId !== params.systemId) match = false;
       if (params.statusId && item.statusId !== params.statusId) match = false;
-      if (params.grade) {
-        // 标准等级过滤：检查该分类下是否有任一标准项的grade包含关键字
-        const hasGrade = item.items?.some(it => it.grade.includes(params.grade));
-        if (!hasGrade) match = false;
-      }
       return match;
     });
   }
 
-  // 钻取筛选
   if (filterSystem.value) {
     filtered = filtered.filter(item => item.systemName === filterSystem.value);
   }
@@ -385,8 +364,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
       componentProps: {
         options: statusList.map(s => ({ label: s.name, value: s.id }))
       }
-    },
-    { fieldName: 'grade', label: '标准等级', component: 'Input', componentProps: { placeholder: '请输入等级关键字' } }
+    }
   ],
   showCollapseButton: true,
   submitButtonOptions: { content: '查询' },
@@ -447,25 +425,35 @@ function handleRefresh() {
 }
 
 function handleExport() {
-  // 导出分类及标准项明细（简化：将分类和标准项合并为扁平数组）
-  const flatData = [];
-  dataObj.apilist.forEach(cat => {
-    cat.items.forEach(item => {
-      flatData.push({
-        分类名称: cat.name,
-        适用体系: cat.systemName,
-        状态: cat.statusName,
-        创建人: cat.createByName,
-        创建时间: cat.createTime,
-        标准项等级: item.grade,
-        分数范围: item.scoreRange,
-        排序序号: item.sortNo,
-        标准项创建时间: item.createTime,
-        标准项更新时间: item.updateTime
-      });
-    });
-  });
-  exportToExcel(flatData, textObj.excelName, textObj.excelAllName);
+  // 导出分类及指标明细
+  const sheets = [
+    {
+      name: '标准分类',
+      data: dataObj.apilist.map(c => ({
+        '分类名称': c.name,
+        '适用体系': c.systemName,
+        '指标数量': c.itemCount,
+        '状态': c.statusName,
+        '创建人': c.createByName,
+        '创建时间': c.createTime,
+        '变更日志': c.changeLog
+      }))
+    },
+    {
+      name: '指标明细',
+      data: dataObj.apilist.flatMap(c =>
+        (c.items || []).map(item => ({
+          '所属分类': c.name,
+          '指标名称': item.name,
+          '标准档次': item.standards.join('；'),
+          '对应分数': item.scores.join('；'),
+          '权重': item.weight,
+          '排序': item.sortNo
+        }))
+      )
+    }
+  ];
+  exportToExcel(sheets, textObj.excelName, textObj.excelAllName);
 }
 
 function handleCreate() {
@@ -477,44 +465,34 @@ function handleEdit(row) {
 }
 
 function handleAddItem(row) {
-  // 从表格行直接新增标准项，属于直接操作数据库分类
-  itemDrawerApi.setData({ title: textObj.addItemText, categoryId: row.standardCategoryId }).open();
+  // 从表格行直接新增指标（暂未实现，可通过编辑分类内操作）
+  ElMessage.info('请点击编辑分类，在分类内添加指标');
 }
 
-// 在分类抽屉内新增标准项
+// 在分类抽屉内新增指标
 function addItemInDrawer() {
   itemDrawerApi.setData({
     title: textObj.addItemText,
-    categoryId: 'temp',
     mode: 'temp',
-    onSave: (newItem) => {
-      currentCategoryItems.value.push(newItem);
-      currentCategoryItems.value.sort((a,b) => a.sortNo - b.sortNo);
+    onSave: () => {
+      // 保存后已自动更新 currentCategoryItems
     }
   }).open();
 }
 
-// 在分类抽屉内编辑标准项
+// 在分类抽屉内编辑指标
 function editItemInDrawer(item) {
   itemDrawerApi.setData({
     title: textObj.editItemText,
     item,
-    categoryId: 'temp',
-    mode: 'temp',
-    onSave: (updatedItem) => {
-      const index = currentCategoryItems.value.findIndex(i => i.standardItemId === updatedItem.standardItemId);
-      if (index !== -1) {
-        currentCategoryItems.value[index] = updatedItem;
-        currentCategoryItems.value.sort((a,b) => a.sortNo - b.sortNo);
-      }
-    }
+    mode: 'temp'
   }).open();
 }
 
-// 在分类抽屉内删除标准项
+// 在分类抽屉内删除指标
 function removeItemFromDrawer(item) {
-  ElMessageBox.confirm('确定删除该标准项吗？', '提示', { type: 'warning' }).then(() => {
-    const index = currentCategoryItems.value.findIndex(i => i.standardItemId === item.standardItemId);
+  ElMessageBox.confirm('确定删除该指标吗？', '提示', { type: 'warning' }).then(() => {
+    const index = currentCategoryItems.value.findIndex(i => i.indicatorId === item.indicatorId);
     if (index !== -1) {
       currentCategoryItems.value.splice(index, 1);
     }
@@ -556,7 +534,7 @@ async function handleEnable(row) {
 }
 
 async function handleBatchStatusChange() {
-  const targetStatus = activeName.value === '停用' ? '启用' : '停用';
+  const targetStatus = activeTab.value === '停用' ? '启用' : '停用';
   const allowedCurrentStatus = targetStatus === '启用' ? '停用' : '启用';
   const invalidRows = dataObj.apilist.filter(item => checkedIds.value.includes(item.standardCategoryId) && item.statusName !== allowedCurrentStatus);
   if (invalidRows.length > 0) {
@@ -578,7 +556,6 @@ async function handleBatchStatusChange() {
 }
 
 // 标签页切换
-const activeName = ref('全部');
 const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '停用' }]);
 const createLabel = (item) => {
   let count = 0;
@@ -589,35 +566,16 @@ const createLabel = (item) => {
   }
   return `${item.label} (${count})`;
 };
-const handleClick = () => {
-  gridApi.setGridOptions({ columns: getGridColumnsByTab(activeName.value) });
+const handleTabChange = () => {
+  gridApi.setGridOptions({ columns: getGridColumnsByTab(activeTab.value) });
   gridApi.query();
 };
 
-// 其他UI控制
+// 详情抽屉
 const detailRef = ref(null);
 function handleGarageOpenDetail(row) {
   dataObj.garageDetail = row;
   detailRef.value.open();
-}
-
-// 处理详情内编辑标准项
-function handleDetailEditItem(category, item) {
-  // 打开ItemDrawer，传入分类ID和项
-  itemDrawerApi.setData({
-    title: textObj.editItemText,
-    categoryId: category.standardCategoryId,
-    item
-  }).open();
-}
-
-// 处理详情内标准项变更（删除后）
-function handleDetailItemChange(updatedCategory) {
-  const index = dataObj.apilist.findIndex(c => c.standardCategoryId === updatedCategory.standardCategoryId);
-  if (index !== -1) {
-    dataObj.apilist[index] = updatedCategory;
-    handleRefresh();
-  }
 }
 
 const handleSerachShow = () => drawerApi.open();
@@ -628,16 +586,19 @@ const changeTotalShow = () => dataObj.totalShow = !dataObj.totalShow;
 
 <template>
   <div class="park-lot-table-new">
-    <!-- 分类抽屉（含标准项管理） -->
-    <CategoryDrawer :title="categoryDrawerApi.sharedData.payload?.title">
+    <!-- 分类抽屉（含指标管理） -->
+    <CategoryDrawer :title="categoryDrawerApi.sharedData.payload?.title" class="genchuan-detail-drawer">
       <CategoryForm />
-      <!-- 标准项管理区域（仅在编辑/新增时显示） -->
+      <!-- 指标管理区域（仅在编辑/新增时显示） -->
       <div class="category-items-section" v-if="currentCategoryItems.length || categoryDrawerApi?.sharedData?.payload?.title === textObj.addText">
-        <h4>标准项列表</h4>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h4 style="margin: 0;">指标列表</h4>
+          <el-button type="primary" size="small" @click="addItemInDrawer">新增指标</el-button>
+        </div>
         <el-table :data="currentCategoryItems" border size="small">
-          <el-table-column prop="grade" label="等级" />
-          <el-table-column prop="scoreRange" label="分数范围" />
-          <el-table-column prop="sortNo" label="排序序号" width="80" />
+          <el-table-column prop="name" label="指标名称" min-width="150" />
+          <el-table-column prop="weight" label="权重" width="80" />
+          <el-table-column prop="sortNo" label="排序" width="80" />
           <el-table-column label="操作" width="150">
             <template #default="{ row }">
               <el-button size="small" @click="editItemInDrawer(row)">编辑</el-button>
@@ -645,11 +606,10 @@ const changeTotalShow = () => dataObj.totalShow = !dataObj.totalShow;
             </template>
           </el-table-column>
         </el-table>
-        <el-button class="mt-2" size="small" @click="addItemInDrawer">新增标准项</el-button>
       </div>
     </CategoryDrawer>
 
-    <!-- 标准项抽屉 -->
+    <!-- 指标项抽屉（用于新增/编辑指标） -->
     <ItemDrawer :title="itemDrawerApi.sharedData.payload?.title">
       <ItemForm />
     </ItemDrawer>
@@ -658,8 +618,6 @@ const changeTotalShow = () => dataObj.totalShow = !dataObj.totalShow;
     <detailDrawer
       ref="detailRef"
       :detail-obj="dataObj.garageDetail"
-      @edit-item="handleDetailEditItem"
-      @item-change="handleDetailItemChange"
     />
 
     <!-- 搜索抽屉 -->
@@ -672,7 +630,7 @@ const changeTotalShow = () => dataObj.totalShow = !dataObj.totalShow;
       <template #table-title>
         <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
           <div v-if="props.secondShow">
-            <el-tabs v-model="activeName" @tab-change="handleClick">
+            <el-tabs v-model="activeTab" @tab-change="handleTabChange">
               <el-tab-pane
                 v-for="item in tabsData"
                 :key="item.label"
@@ -693,10 +651,10 @@ const changeTotalShow = () => dataObj.totalShow = !dataObj.totalShow;
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton v-if="activeName === '全部'" content="新增分类" icon-name="Plus" @click="handleCreate" />
+          <IconButton v-if="activeTab === '全部'" content="新增分类" icon-name="Plus" @click="handleCreate" />
           <IconButton content="导出" icon-name="download" @click="handleExport" />
           <IconButton
-            v-if="activeName !== '停用'"
+            v-if="activeTab !== '停用'"
             content="批量停用"
             icon-name="close"
             color="#F56C6C"
@@ -704,7 +662,7 @@ const changeTotalShow = () => dataObj.totalShow = !dataObj.totalShow;
             @click="handleBatchStatusChange"
           />
           <IconButton
-            v-if="activeName === '停用'"
+            v-if="activeTab === '停用'"
             content="批量启用"
             icon-name="check"
             color="#67C23A"
@@ -745,7 +703,6 @@ const changeTotalShow = () => dataObj.totalShow = !dataObj.totalShow;
         <div class="table-toolbar-tools" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
           <IconButton content="详情" icon-name="View" @click="handleGarageOpenDetail(row)" />
           <IconButton content="编辑" icon-name="edit" @click="handleEdit(row)" />
-          <IconButton v-if="activeName === '全部'" content="新增标准项" icon-name="Plus" @click="handleAddItem(row)" />
           <IconButton
             v-if="row.statusName === '启用'"
             content="停用"
@@ -789,8 +746,5 @@ const changeTotalShow = () => dataObj.totalShow = !dataObj.totalShow;
   font-size: 14px;
   font-weight: 600;
   color: #303133;
-}
-.mt-2 {
-  margin-top: 8px;
 }
 </style>

@@ -1,8 +1,8 @@
 <script setup>
-import { computed, reactive, ref, onMounted, nextTick } from 'vue';
-import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { computed, reactive, ref, onMounted } from 'vue';
+import { useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
-import { ElLoading, ElMessage,ElMessageBox } from 'element-plus';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
 import dayjs from 'dayjs';
 import * as XLSX from 'xlsx';
@@ -12,15 +12,13 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   getAllPage,
   getStatusCount,
-  createIndexSystem,
   updateIndexSystem,
   deleteIndexSystem,
   getIndexSystemDetail,
-  exportIndexSystem,
-  saveFullIndexSystem,   // 新增的复合保存接口
+  saveFullIndexSystem,
   getObjectTypeSimpleList,
   getStatusSimpleList,
-} from '#/api/genchuan/dataHub/evaluation/system/indicators';
+} from '#/api/genchuan/dataHub/evaluation/system/indicators/index.js';
 import detailDrawer from './detail.vue';
 import CategoryManager from '#/views/genchuan/dataHub/evaluation/system/components/CategoryManager.vue'; // 新增组件
 import {
@@ -28,8 +26,6 @@ import {
   useFormSchema,
   useQuerySchema,
   getGridColumnsByTab,
-  objectTypeList,
-  statusList,
 } from './data';
 
 const props = defineProps({
@@ -69,6 +65,8 @@ const [Form, formApi] = useVbenForm({
 const categoryManagerRef = ref(null);
 // 分类数据
 const categoryData = ref([]);
+// 当前体系ID（用于规则下拉）
+const currentSystemId = ref(null);
 
 // 新增/编辑抽屉
 const formData = ref();
@@ -81,7 +79,6 @@ const loadFormOptions = async () => {
       getStatusSimpleList(),
     ]);
 
-    // 确保返回的是数组，否则置空
     const objectOpts = Array.isArray(objectTypeOptions) ? objectTypeOptions : [];
     const statusOpts = Array.isArray(statusOptions) ? statusOptions : [];
 
@@ -98,7 +95,6 @@ const loadFormOptions = async () => {
   } catch (error) {
     console.error('加载下拉选项失败', error);
     ElMessage.error('加载下拉选项失败，请重试');
-    // 失败时置空选项，避免显示旧数据
     await formApi.updateSchema([
       { fieldName: 'objectTypeId', componentProps: { options: [] } },
       { fieldName: 'statusId', componentProps: { options: [] } },
@@ -109,14 +105,12 @@ const loadFormOptions = async () => {
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
-  width: 1000, // 加宽以适应分类配置
+  width: 1000,
   onCancel() { formDrawerApi.close(); },
   async onConfirm() {
-    // 保存逻辑
     const basicValid = await formApi.validate();
     if (!basicValid.valid) return;
 
-    // 校验分类管理器
     if (!categoryManagerRef.value?.validate()) {
       return;
     }
@@ -125,16 +119,14 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     const drawerData = formDrawerApi.getData() || {};
     const id = drawerData.id;
 
-    // 组装完整数据
     const fullData = {
       ...basicValues,
-      systemId: drawerData.systemId, // 编辑时可能已有 systemId
+      systemId: drawerData.systemId,
       categories: categoryData.value,
     };
 
     const loadingInstance = ElLoading.service({ text: id ? '更新中...' : '创建中...' });
     try {
-      // 调用复合保存接口（若后端无此接口，请替换为分步保存逻辑）
       await saveFullIndexSystem(fullData);
       ElMessage.success(id ? '编辑成功' : '新增成功');
       emit('refresh-chart');
@@ -150,21 +142,19 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
-      // 先加载下拉选项
       await loadFormOptions();
 
       const data = formDrawerApi.getData();
       formData.value = data;
 
       if (data?.id) {
-        // 编辑模式：先设置基本信息
+        // 编辑模式
+        currentSystemId.value = data.id;
         await formApi.setValues(data);
-        // 如果有 systemId，则加载详情获取分类数据
-        if (data.systemId) {
+        if (data.id) {
           const loading = ElLoading.service({ text: '加载详情...', target: '.vben-drawer' });
           try {
-            const detail = await getIndexSystemDetail(data.systemId);
-            // 将 detail.categories 转换为分类管理器需要的格式
+            const detail = await getIndexSystemDetail(data.id);
             categoryData.value = (detail.categories || []).map(cat => ({
               categoryId: cat.categoryId,
               name: cat.name,
@@ -173,9 +163,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
               items: (cat.items || []).map(item => ({
                 itemId: item.itemId,
                 name: item.name,
-                indexType: item.indexTypeName,
-                calcWay: item.calcWayName,
-                threshold: item.threshold,
+                commentRuleId: item.commentRuleId,
                 weight: item.weight,
                 sortNo: item.sortNo,
               })),
@@ -190,40 +178,37 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
           categoryData.value = [];
         }
       } else {
-        // 新增模式：清空表单和分类数据
+        // 新增模式
+        currentSystemId.value = null;
         formApi.resetForm();
-        // 设置默认状态为启用
         await formApi.setValues({ statusId: 1 });
         categoryData.value = [];
 
-        // 如果是新增版本，需要处理从上一版本复制数据
+        // 新增版本复制
         if (formDrawerApi.sharedData?.payload?.title === textObj.versionText) {
           const source = formDrawerApi.sharedData.payload.source;
-          if (source && source.systemId) {
+          if (source && source.id) {
+            currentSystemId.value = source.id;
             const loading = ElLoading.service({ text: '加载源体系数据...', target: '.vben-drawer' });
             try {
-              const detail = await getIndexSystemDetail(source.systemId);
-              // 填充基本信息
+              const detail = await getIndexSystemDetail(source.id);
               await formApi.setValues({
                 name: detail.baseInfo.name,
                 code: detail.baseInfo.code,
-                objectTypeId: source.objectTypeId, // 从源行数据中取，因为 detail.baseInfo 可能没有ID
-                version: '', // 版本号清空，让用户重新输入
+                objectTypeId: source.objectTypeId,
+                version: '',
                 desc: detail.baseInfo.description,
                 statusId: 1,
               });
-              // 填充分类数据
               categoryData.value = (detail.categories || []).map(cat => ({
-                categoryId: `temp_${Date.now()}_${Math.random()}`, // 临时ID
+                categoryId: `temp_${Date.now()}_${Math.random()}`,
                 name: cat.name,
                 weight: cat.weight,
                 sortNo: cat.sortNo,
                 items: (cat.items || []).map(item => ({
                   itemId: `temp_${Date.now()}_${Math.random()}`,
                   name: item.name,
-                  indexType: item.indexTypeName,
-                  calcWay: item.calcWayName,
-                  threshold: item.threshold,
+                  commentRuleId: item.commentRuleId,
                   weight: item.weight,
                   sortNo: item.sortNo,
                 })),
@@ -269,9 +254,6 @@ function formatList(list) {
     itemCount: item.itemCount ?? 0,
     desc: item.desc || '-',
     changeLogShort: item.changeLogShort || '-',
-    threshold: item.threshold ?? '-',
-    categoryWeight: item.categoryWeight ?? '-',
-    itemWeight: item.itemWeight ?? '-',
   }));
 }
 
@@ -382,7 +364,6 @@ function handleCreate() {
 }
 
 function handleNewVersion(row) {
-  // 将源行数据通过 sharedData 传递给弹窗
   formDrawerApi.setData({ title: textObj.versionText }).open({
     payload: { title: textObj.versionText, source: row },
   });
@@ -497,11 +478,10 @@ function handleRowCheckboxChange({ records }) {
 async function handleExport() {
   const loadingInstance = ElLoading.service({ text: '正在获取数据...' });
   try {
-    // 构建查询参数（包含搜索条件 + 状态筛选）
     const params = {
       ...searchParams.value,
       pageNo: 1,
-      pageSize: 1000, // 每页大小，可根据后端限制调整
+      pageSize: 1000,
     };
     if (activeName.value !== '全部') {
       params.statusId = activeName.value === '启用' ? 1 : 2;
@@ -511,17 +491,14 @@ async function handleExport() {
     let pageNo = 1;
     let hasMore = true;
 
-    // 循环获取所有数据
     while (hasMore) {
       params.pageNo = pageNo;
       const res = await getAllPage(params);
-      const { list, total } = res;
+      const { list } = res;
       if (list && list.length > 0) {
-        // 格式化当前页数据
         const formattedList = formatList(list);
         allData = allData.concat(formattedList);
         pageNo++;
-        // 如果当前页数据小于 pageSize，说明是最后一页
         if (list.length < params.pageSize) {
           hasMore = false;
         }
@@ -535,17 +512,13 @@ async function handleExport() {
       return;
     }
 
-    // 获取当前标签页对应的表格列配置，并过滤掉不需要导出的列
     const allColumns = getGridColumnsByTab(activeName.value);
     const exportColumns = allColumns.filter(
       col => col.field && col.type !== 'checkbox' && col.title !== '操作'
     ).map(col => ({ field: col.field, title: col.title }));
 
-    // 构建 Excel 数据：表头 + 数据行
     const wsData = [];
-    // 添加表头（按表格列顺序）
     wsData.push(exportColumns.map(col => col.title));
-    // 添加数据行
     allData.forEach(item => {
       const row = exportColumns.map(col => item[col.field] ?? '-');
       wsData.push(row);
@@ -555,7 +528,6 @@ async function handleExport() {
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     XLSX.utils.book_append_sheet(wb, ws, '指标体系');
 
-    // 根据当前标签生成文件名（去除无关的 areaName 字段）
     let fileName;
     if (activeName.value === '全部') {
       fileName = `指标体系列表_${dayjs().format('YYYYMMDD')}.xlsx`;
@@ -591,7 +563,6 @@ async function handleBatchExport() {
   const loading = ElLoading.service({ text: '正在生成导出文件...' });
   const wb = XLSX.utils.book_new();
 
-  // 获取当前标签页对应的表格列配置
   const allColumns = getGridColumnsByTab(activeName.value);
   const exportColumns = allColumns.filter(
     col => col.field && col.type !== 'checkbox' && col.title !== '操作'
@@ -599,9 +570,7 @@ async function handleBatchExport() {
 
   try {
     for (const row of selectedRows) {
-      const formattedItem = row; // 已通过 formatList 处理
-
-      // 构建单条数据对象（key 为中文表头）
+      const formattedItem = row;
       const rowForSheet = {};
       exportColumns.forEach(col => {
         rowForSheet[col.title] = formattedItem[col.field] ?? '-';
@@ -609,7 +578,6 @@ async function handleBatchExport() {
 
       const ws = XLSX.utils.json_to_sheet([rowForSheet]);
 
-      // 生成 sheet 名称（避免重复和过长）
       let sheetName = (formattedItem.name || `体系_${formattedItem.id}`).replace(/[\\/:*?"<>|]/g, '_');
       if (sheetName.length > 31) sheetName = sheetName.substring(0, 28) + '...';
       let finalSheetName = sheetName;
@@ -638,18 +606,16 @@ async function handleBatchExport() {
   }
 }
 
-
 /** 详情抽屉 */
 const detailRef = ref(null);
 async function handleGarageOpenDetail(row) {
   const loadingInstance = ElLoading.service({ text: '加载详情中...' });
   try {
-    const res = await getIndexSystemDetail(row.systemId);
+    const res = await getIndexSystemDetail(row.id);
     console.log('详情接口返回:', res);
     const baseInfo = res.baseInfo || {};
     const categories = res.categories || [];
 
-    // 计算分类总数和指标项总数（优先从 categories 计算）
     const categoryCount = categories.length;
     const itemCount = categories.reduce((sum, cat) => sum + (cat.items?.length || 0), 0);
 
@@ -681,8 +647,8 @@ async function handleGarageOpenDetail(row) {
         items: (cat.items || []).map(item => ({
           name: item.name,
           indexTypeName: item.indexTypeName,
-          calcWayName: item.calcWayName,
-          threshold: item.threshold,
+          commentRuleId: item.commentRuleId,
+          ruleName: item.ruleName,
           weight: item.weight,
         })),
       })),
@@ -748,10 +714,13 @@ onMounted(() => {
 
 <template>
   <div class="park-lot-table-new">
-    <!-- 新增/编辑抽屉，宽度加大，包含分类管理器 -->
     <FormDrawer :title="getTitle" class="genchuan-detail-drawer">
       <Form />
-      <CategoryManager ref="categoryManagerRef" v-model="categoryData" />
+      <CategoryManager
+        ref="categoryManagerRef"
+        v-model="categoryData"
+        :system-id="currentSystemId"
+      />
     </FormDrawer>
 
     <detailDrawer

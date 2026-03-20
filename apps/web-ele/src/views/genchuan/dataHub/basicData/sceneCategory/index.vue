@@ -202,8 +202,7 @@ const statsData = computed(() => {
   list.forEach((item) => {
     // 使用字典获取状态的中文标签
     const dict = getDictObj(DICT_TYPE.DATA_ENABLE_STATUS, String(item.status));
-    const statusLabel =
-      dict?.label || `状态${item.status}` || '未知';
+    const statusLabel = dict?.label || `状态${item.status}` || '未知';
     statusMap[statusLabel] = (statusMap[statusLabel] || 0) + 1;
   });
   const statusPieData = Object.entries(statusMap).map(([name, value]) => ({

@@ -1,27 +1,39 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { confirm, useVbenDrawer, useVbenModal } from '@vben/common-ui';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { ElImage, ElLoading, ElMessage } from 'element-plus';
+import {
+  ElImage,
+  ElLoading,
+  ElMessage,
+  ElMessageBox,
+  ElTable,
+  ElTableColumn,
+} from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getRectifyList } from '#/api/genchuan/industry/marketsupervision/index.js';
 import {
-  createParkLot,
-  deleteParkLot,
-  updateParkLot,
-} from '#/api/genchuan/industry/park/index.js';
+  addRectify,
+  deleteRectifyEvidence,
+  exporReviewExcel,
+  getbatchEvidence,
+  getReasonList,
+  getRectifyList,
+  sendReason,
+  sendRectify,
+  updateRectify,
+  uploadKitchenFile,
+} from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
-import { exportToExcel } from '#/utils/excel.js';
-// 引入封装后的详情抽屉组件
-import ParkDetailDrawer from '#/views/genchuan/industry/page/vehicle/appear/table/detail.vue';
 
 import { useFormSchema, useGridColumns } from './data';
+// 引入封装后的详情抽屉组件
+import ParkDetailDrawer from './detail.vue';
 
 const props = defineProps({
   secondShow: {
@@ -54,7 +66,7 @@ const [Form, formApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useFormSchema(),
+  schema: useFormSchema().filter((v) => v.isEdit),
   showDefaultActions: false,
 });
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
@@ -66,8 +78,8 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   async onConfirm() {
     const obj = formApi.form.values;
     await (formDrawerApi.sharedData.payload.title === '增加'
-      ? createParkLot(obj)
-      : updateParkLot({ ...dataObj.editObj, ...obj }));
+      ? addRectify(obj)
+      : updateRectify({ ...dataObj.editObj, ...obj }));
     handleRefresh();
     formDrawerApi.close();
   },
@@ -89,7 +101,11 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  exportToExcel(dataObj.apilist, '数据导出', '数据导出');
+  const data = await exporReviewExcel();
+  downloadFileFromBlobPart({
+    fileName: '整改通知书复审台账.xls',
+    source: data,
+  });
 }
 
 /** 创建角色 */
@@ -116,7 +132,7 @@ async function handleDelete(row) {
     text: $t('ui.actionMessage.deleting'),
   });
   try {
-    await deleteParkLot(row.id);
+    await deleteRectifyEvidence(row.id);
     ElMessage.success($t('ui.actionMessage.deleteSuccess'));
     handleRefresh();
   } finally {
@@ -150,6 +166,8 @@ const dataObj = reactive({
   serachObj: {},
   list: [],
   editObj: {},
+  batchViewData: [], // 新增：批量查看的数据列表
+  batchViewVisible: false, // 新增：批量查看弹窗显示状态
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -166,6 +184,7 @@ const getTableData = async (pageObj) => {
   dataObj.list = data.list.map((v) => {
     return {
       ...v,
+      draftTime: formatTimestamp(v.draftTime),
       alertCreateTime: formatTimestamp(v.alertCreateTime),
     };
   });
@@ -190,7 +209,7 @@ const [QueryForm, QueryFormApi] = useVbenForm({
   // 水平布局，label和input在同一行
   layout: 'horizontal',
   schema: useFormSchema()
-    .filter((v) => !v.searchFilter)
+    .filter((v) => v.isSearch)
     .map((v) => {
       delete v.rules;
       return {
@@ -271,27 +290,361 @@ const openImg = (url) => {
   dataObj.imgUrl = url;
   dialogVisible.value = true;
 };
+
+// 查看全部证据图片
+const handleViewAllEvidence = (row) => {
+  if (!row.evidenceList || row.evidenceList.length === 0) {
+    ElMessage.warning('无证据图片可查看');
+    return;
+  }
+  ElMessage.info(`共${row.evidenceList.length}张证据图片，已打开第一张`);
+  openImg(row.evidenceList[0].url);
+};
+
+// 批量查看数据编号（使用el-table展示）
+const handleOpenData = async () => {
+  // 1. 检查是否有选中的数据
+  if (isEmpty(checkedIds.value)) {
+    ElMessage.warning($t('请先选择要查看的数据！') || '请先选择要查看的数据！');
+    return;
+  }
+  const res = await getbatchEvidence({
+    ledgerIdList: checkedIds.value,
+  });
+  dataObj.batchViewData = res.list;
+  // 3. 打开批量查看弹窗
+  dataObj.batchViewVisible = true;
+};
+
+// 上传资料相关（核心改造：匹配接口所有query参数）
+const uploadLoading = ref(false);
+const currentUploadRow = ref({});
+// 新增接口要求的所有参数
+const uploadForm = reactive({
+  fileDesc: '', // 资料文字说明
+  afterIndexValue: 0, // 处理后的指标数值
+  file: null,
+});
+// 上传表单校验规则（匹配接口必填项）
+const uploadFormRules = reactive({
+  file: [{ required: true, message: '请选择要上传的文件', trigger: 'change' }],
+});
+const uploadFormRef = ref(null);
+const [UploadModal, uploadModalApi] = useVbenModal({
+  title: '上传复审证据',
+  width: 600,
+  modalProps: {
+    destroyOnClose: true,
+  },
+  onCancel() {
+    // 关闭弹窗清空所有数据
+    uploadForm.fileDesc = '';
+    uploadForm.afterIndexValue = 0;
+    uploadForm.file = null;
+    fileList.value = [];
+    uploadFormRef.value?.resetFields();
+  },
+  footer: false,
+});
+// 上传组件相关
+const upload = ref(null);
+const fileList = ref([]);
+const handleExceed = (files) => {
+  upload.value.clearFiles();
+  const file = files[0];
+  upload.value.handleStart(file);
+};
+// 打开上传资料弹窗
+const handleUpdateFile = (row) => {
+  // 初始化表单数据
+  uploadForm.fileDesc = '';
+  uploadForm.afterIndexValue = 0;
+  uploadForm.file = null;
+  fileList.value = [];
+  currentUploadRow.value = row;
+  uploadModalApi.open();
+};
+// 提交文件上传（核心改造：匹配接口query+form-data参数）
+const handleUploadSubmit = async () => {
+  // 1. 表单整体校验
+  const valid = await uploadFormRef.value.validate();
+  if (!valid) return;
+  // 2. 校验文件是否选择
+  if (!uploadForm.file || fileList.value.length === 0) {
+    ElMessage.warning('请选择要上传的文件');
+    return;
+  }
+
+  try {
+    uploadLoading.value = true;
+    const file = fileList.value[0];
+    debugger;
+    // 3. 构建FormData（仅传递文件）
+    const formData = new FormData();
+    formData.append('file', file.raw);
+    formData.append('rectifyReviewId', currentUploadRow.value.id);
+
+    // 5. 调用上传接口：同时传递formData和query参数
+    await uploadKitchenFile(formData);
+
+    ElMessage.success('资料上传成功！');
+    uploadModalApi.close();
+    handleRefresh(); // 刷新工单列表
+  } catch (error) {
+    ElMessage.error(`上传失败：${error.message || '服务器异常'}`);
+    console.error('上传错误详情：', error);
+  } finally {
+    uploadLoading.value = false;
+  }
+};
+
+// 文件选择事件
+const onChange = (file) => {
+  fileList.value = [];
+  fileList.value.push(file);
+  uploadForm.file = file;
+};
+/** 二次确认后执行下发 */
+const handleSendFileConfirm = async (row) => {
+  try {
+    // 弹出确认框
+    await ElMessageBox.confirm(
+      '确定要下发通知书吗？此操作不可撤销！',
+      '确认下发',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        type: 'warning',
+      },
+    );
+    // 用户确认后执行原逻辑
+    await handleSendFile(row);
+    ElMessage.success('通知书下发成功！');
+  } catch {
+    // 用户取消则不执行任何操作
+    ElMessage.info('已取消下发');
+  }
+};
+
+// 原下发逻辑（保留你的handleSendFile方法）
+const handleSendFile = async (row) => {
+  // 你的下发接口逻辑...
+  await sendRectify({
+    id: row.id,
+  });
+  await handleRefresh();
+};
+const backDialogVisible = ref(false);
+const currentRow = ref(null);
+const reasonList = ref([]);
+// 撤销表单（原因+备注）
+const backForm = reactive({
+  reason: '', // 撤销原因（必选）
+  remark: '', // 补充说明（可选）
+});
+
+// 打开撤销弹窗
+const openBackDialog = async (row) => {
+  currentRow.value = row;
+  // 重置表单
+  backForm.reason = '';
+  backForm.remark = '';
+  backDialogVisible.value = true;
+  const res = await getReasonList();
+  reasonList.value = res.list;
+};
+
+// 确认撤销
+const confirmBack = async () => {
+  try {
+    // 传递行数据 + 撤销原因给原逻辑
+    await handleBack(currentRow.value, backForm);
+    // 关闭弹窗
+    backDialogVisible.value = false;
+    // 提示成功（按需调整）
+    ElMessage.success('撤销操作成功！');
+  } catch (error) {
+    ElMessage.error(`撤销失败：${error.message}`);
+  }
+};
+
+// 原撤销逻辑（接收行数据和撤销原因）
+const handleBack = async (row, formData) => {
+  await sendReason({
+    id: row.id,
+    cancelReasonId: backForm.reason,
+  });
+};
 </script>
 
 <template>
   <div class="park-lot-table-new">
+    <!-- 上传资料弹窗（核心改造：新增所有接口参数输入框） -->
+    <UploadModal>
+      <div class="upload-modal-content p-4">
+        <ElForm
+          ref="uploadFormRef"
+          :model="uploadForm"
+          :rules="uploadFormRules"
+          label-width="120px"
+        >
+          <!-- 文件上传区域 -->
+          <ElFormItem label="选择文件" prop="file" class="mb-4">
+            <ElUpload
+              ref="upload"
+              v-model:file-list="fileList"
+              :on-change="onChange"
+              :on-exceed="handleExceed"
+              :auto-upload="false"
+              class="upload-demo"
+              drag
+              :limit="1"
+            >
+              <ElIcon class="el-icon--upload"><UploadFilled /></ElIcon>
+              <div class="el-upload__text">
+                拖拽文件到此处上传，或<em>点击选择文件</em>
+              </div>
+              <div class="el-upload__tip mt-2 text-sm text-gray-500">
+                支持jpg/jpeg/png/pdf/doc/docx/xls/xlsx格式，单个文件不超过5MB
+              </div>
+            </ElUpload>
+          </ElFormItem>
+        </ElForm>
+
+        <!-- 操作按钮 -->
+        <div class="mt-4 flex justify-end gap-2">
+          <ElButton @click="uploadModalApi.close()">取消</ElButton>
+          <ElButton
+            type="primary"
+            @click="handleUploadSubmit"
+            :loading="uploadLoading"
+          >
+            确认上传
+          </ElButton>
+        </div>
+      </div>
+    </UploadModal>
+
+    <!-- 图片查看弹窗 -->
     <el-dialog v-model="dialogVisible">
       <div class="park-img-center">
         <img style="width: 100%; height: 100%" :src="dataObj.imgUrl" />
       </div>
     </el-dialog>
+    <!-- 撤销确认弹窗（带原因选择） -->
+    <el-dialog
+      title="撤销操作"
+      v-model="backDialogVisible"
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <!-- 撤销原因选择框 -->
+      <el-form :model="backForm" label-width="120px" required>
+        <el-form-item label="撤销原因：" prop="reason">
+          <el-select v-model="backForm.reason" placeholder="请选择撤销原因">
+            <el-option
+              v-for="item in reasonList"
+              :key="item.id"
+              :value="item.id"
+              :label="item.reasonName"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+
+      <!-- 弹窗底部按钮 -->
+      <template #footer>
+        <el-button @click="backDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          @click="confirmBack"
+          :disabled="!backForm.reason"
+        >
+          确认撤销
+        </el-button>
+      </template>
+    </el-dialog>
+    <!-- 批量查看编号弹窗（使用el-table） -->
+    <el-dialog
+      v-model="dataObj.batchViewVisible"
+      title="批量查看证据 - 编号列表"
+      width="1000px"
+      center
+      draggable
+    >
+      <ElTable
+        :data="dataObj.batchViewData"
+        border
+        stripe
+        size="small"
+        max-height="500px"
+        highlight-current-row
+      >
+        <ElTableColumn label="序号" type="index" width="60" align="center" />
+        <!-- 台账编号列 -->
+        <ElTableColumn
+          label="台账编号"
+          prop="ledgerCode"
+          min-width="200"
+          align="center"
+        />
+        <!-- 证据列表列 -->
+        <ElTableColumn
+          label="证据列表"
+          prop="evidenceList"
+          min-width="500"
+          align="center"
+        >
+          <template #default="{ row }">
+            <div
+              v-if="row.evidenceList && row.evidenceList.length > 0"
+              class="evidence-list"
+            >
+              <div
+                v-for="(item, idx) in row.evidenceList"
+                :key="idx"
+                class="evidence-item"
+              >
+                <!-- 图片预览 -->
+                <ElImage
+                  v-if="item.type === 'image'"
+                  style="width: 80px; height: 80px; margin-right: 8px"
+                  :src="item.url"
+                  @click="openImg(item.url)"
+                  fit="cover"
+                />
+                <!-- 文件名展示 -->
+                <div class="evidence-info">
+                  <div class="evidence-name">{{ item.name }}</div>
+                  <div class="evidence-type">{{ item.type }}</div>
+                </div>
+              </div>
+            </div>
+            <div v-else class="no-evidence">无证据</div>
+          </template>
+        </ElTableColumn>
+      </ElTable>
+
+      <template #footer>
+        <el-button @click="dataObj.batchViewVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
+
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
+
     <!-- 使用封装后的详情抽屉组件 -->
     <ParkDetailDrawer
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
       title="详情"
     />
+
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+
     <Grid>
       <!-- 三级状态 -->
       <template #table-title>
@@ -312,6 +665,7 @@ const openImg = (url) => {
           </div>
         </div>
       </template>
+
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
@@ -328,6 +682,12 @@ const openImg = (url) => {
             @click="handleDeleteBatch"
           />
           <IconButton
+            content="批量查看证据"
+            icon-name="Expand"
+            :disabled="isEmpty(checkedIds)"
+            @click="handleOpenData"
+          />
+          <IconButton
             content="搜索"
             icon-name="search"
             @click="handleSerachShow"
@@ -339,6 +699,7 @@ const openImg = (url) => {
           />
         </div>
       </template>
+
       <template #ledgerCode="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
@@ -348,6 +709,7 @@ const openImg = (url) => {
           {{ row.ledgerCode }}
         </el-text>
       </template>
+
       <template #driveInPhoto="{ row }">
         <ElImage
           style="width: 100px; height: 100px"
@@ -355,6 +717,7 @@ const openImg = (url) => {
           @click="openImg(row.driveInPhoto)"
         />
       </template>
+
       <template #driveOutPhoto="{ row }">
         <ElImage
           style="width: 100px; height: 100px"
@@ -365,6 +728,23 @@ const openImg = (url) => {
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
+          <IconButton
+            content="撤销"
+            icon-name="back"
+            :disabled="!['待复审'].includes(row.reviewStatus)"
+            @click="openBackDialog(row)"
+          />
+          <IconButton
+            content="下发通知书"
+            icon-name="download"
+            :disabled="!['待复审'].includes(row.reviewStatus)"
+            @click="handleSendFileConfirm(row)"
+          />
+          <IconButton
+            content="上传复审证据"
+            icon-name="Upload"
+            @click="handleUpdateFile(row)"
+          />
           <IconButton
             content="详情"
             icon-name="View"
@@ -383,12 +763,14 @@ const openImg = (url) => {
           />
         </div>
       </template>
+
       <template #bottom>
         <div class="common-total" @click="changeTotalShow"></div>
       </template>
     </Grid>
   </div>
 </template>
+
 <style scoped>
 .park-img-center {
   display: flex;
@@ -396,5 +778,57 @@ const openImg = (url) => {
   justify-content: center;
   width: 700px;
   height: 700px;
+}
+
+/* 批量查看表格样式优化 */
+:deep(.el-table) {
+  --el-table-header-text-color: #303133;
+  --el-table-row-hover-bg-color: #f5f7fa;
+}
+
+:deep(.el-dialog__body) {
+  padding: 20px;
+}
+
+/* 证据列表样式 */
+.evidence-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.evidence-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.evidence-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.evidence-name {
+  font-size: 12px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.evidence-type {
+  font-size: 11px;
+  color: #999;
+}
+
+.no-evidence {
+  color: #999;
+  font-size: 12px;
+  text-align: center;
+  padding: 8px 0;
 }
 </style>
