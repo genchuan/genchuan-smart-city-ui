@@ -32,7 +32,7 @@ build:
       else
         echo "当前分支不是开发分支，跳过Docker推送步骤"
       fi
-  
+
   retry:
     max: 2
     when:
