@@ -3,6 +3,8 @@ import {ref, computed} from 'vue';
 
 import sanitationVehicle from '../sanitationVehicleMgmt/sanitationVehicle/index.vue';
 import sanitationVehicleChart from './sanitationVehicle/components/chart.vue';
+import sanitationWorker from '../sanitationVehicleMgmt/sanitationWorker/index.vue';
+import sanitationWorkerChart from './sanitationWorker/components/chart.vue';
 
 import '#/components/page/index.scss';
 
@@ -18,6 +20,15 @@ const tabArray = ref([
     label: '环卫车辆管理',
     components: sanitationVehicle,
     chartComponent: sanitationVehicleChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false,
+  },
+  {
+    label: '环卫人员管理',
+    components: sanitationWorker,
+    chartComponent: sanitationWorkerChart,
     showSecondary: true,
     secondShow: false,
     arrowShow: true,

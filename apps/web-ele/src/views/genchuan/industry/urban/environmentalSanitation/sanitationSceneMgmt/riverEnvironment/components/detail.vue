@@ -372,14 +372,6 @@ const isApiData = computed(() => detailObj.value.name !== undefined);
     width: 130px;
     flex-shrink: 0;
     font-weight: 500;
-    color: #606266;
-  }
-
-  &:hover {
-    background: #f5f7fa;
-    border-radius: 4px;
-    padding-left: 8px;
-    margin-left: -8px;
   }
 }
 </style>
