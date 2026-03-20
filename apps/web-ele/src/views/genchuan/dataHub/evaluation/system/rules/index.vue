@@ -6,12 +6,15 @@ import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
 
+const chartRef = ref(null);
+
 const changeArrowStatus = () => {
   secondShow.value = !secondShow.value;
   tabArray.value.forEach((v) => {
     v.secondShow = secondShow.value;
   });
 };
+
 const tabArray = ref([
   {
     label: '评价规则管理',
@@ -22,17 +25,25 @@ const tabArray = ref([
     arrowState: false,
   },
 ]);
+
 const arrowChange = () => {
   tabArray.value.forEach((v) => {
     v.arrowShow = !v.arrowShow;
   });
 };
+
 const activeName = ref('评价规则管理');
 const secondShow = ref(false);
+
+// 当表格数据变化时刷新图表
+const handleDataChange = () => {
+  chartRef.value?.refreshOverview();
+};
 </script>
+
 <template>
   <div class="common-index">
-    <carchart v-if="tabArray[0].arrowShow" />
+    <carchart ref="chartRef" v-if="tabArray[0].arrowShow" />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -71,6 +82,7 @@ const secondShow = ref(false);
           :key="item.label"
           :arrow-show="item.arrowShow"
           @arrow-change="arrowChange"
+          @data-change="handleDataChange"
         />
       </el-tab-pane>
     </el-tabs>

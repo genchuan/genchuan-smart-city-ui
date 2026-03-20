@@ -1,4 +1,3 @@
-<!-- 文件路径：src/views/genchuan/dataHub/evaluation/system/components/CategoryManager.vue -->
 <template>
   <div class="category-manager">
     <div class="manager-header">
@@ -14,7 +13,7 @@
       <el-card shadow="hover" class="category-card">
         <template #header>
           <div>
-            <!-- 分类标题行（默认左对齐） -->
+            <!-- 分类标题行 -->
             <el-row :gutter="10" class="category-header-title">
               <el-col :span="8">分类名称</el-col>
               <el-col :span="5">权重(%)</el-col>
@@ -24,12 +23,7 @@
             <!-- 分类输入行 -->
             <el-row :gutter="10" align="middle">
               <el-col :span="8">
-                <el-input
-                  v-model="cat.name"
-                  placeholder="分类名称"
-                  size="small"
-                  clearable
-                />
+                <el-input v-model="cat.name" placeholder="分类名称" size="small" clearable />
               </el-col>
               <el-col :span="5">
                 <el-input-number
@@ -59,16 +53,14 @@
           </div>
         </template>
 
-        <!-- 指标项标题行（统一左对齐） -->
+        <!-- 指标项标题行（修正为单列“评价规则”） -->
         <div v-if="cat.items.length" class="item-header">
           <el-row :gutter="10" align="middle">
-            <el-col :span="5">指标项名称</el-col>
-            <el-col :span="4">指标类型</el-col>
-            <el-col :span="4">计算方式</el-col>
-            <el-col :span="3">达标阈值</el-col>
-            <el-col :span="3">权重(%)</el-col>
-            <el-col :span="2">排序</el-col>
-            <el-col :span="2">操作</el-col>
+            <el-col :span="6">指标项名称</el-col>
+            <el-col :span="8">评价规则</el-col>
+            <el-col :span="4">权重(%)</el-col>
+            <el-col :span="4">排序</el-col>
+            <el-col :span="2" style="text-align: right">操作</el-col>
           </el-row>
         </div>
 
@@ -76,56 +68,26 @@
         <div v-if="!cat.items.length" class="item-empty">暂无指标项，请添加</div>
         <div v-for="(item, itemIdx) in cat.items" :key="item.itemId" class="item-row">
           <el-row :gutter="10" align="middle">
-            <el-col :span="5">
-              <el-input
-                v-model="item.name"
-                placeholder="指标项名称"
-                size="small"
-                clearable
-              />
+            <el-col :span="6">
+              <el-input v-model="item.name" placeholder="指标项名称" size="small" clearable />
             </el-col>
-            <el-col :span="4">
+            <el-col :span="8">
               <el-select
-                v-model="item.indexType"
-                placeholder="指标类型"
+                v-model="item.commentRuleId"
+                placeholder="请选择评价规则"
                 size="small"
                 clearable
                 filterable
               >
                 <el-option
-                  v-for="type in indexTypeOptions"
-                  :key="type.value"
-                  :label="type.label"
-                  :value="type.value"
+                  v-for="rule in ruleOptions"
+                  :key="rule.value"
+                  :label="rule.label"
+                  :value="rule.value"
                 />
               </el-select>
             </el-col>
             <el-col :span="4">
-              <el-select
-                v-model="item.calcWay"
-                placeholder="计算方式"
-                size="small"
-                clearable
-                filterable
-              >
-                <el-option
-                  v-for="way in calcWayOptions"
-                  :key="way.value"
-                  :label="way.label"
-                  :value="way.value"
-                />
-              </el-select>
-            </el-col>
-            <el-col :span="3">
-              <el-input-number
-                v-model="item.threshold"
-                :min="0"
-                placeholder="达标阈值"
-                size="small"
-                controls-position="right"
-              />
-            </el-col>
-            <el-col :span="3">
               <el-input-number
                 v-model="item.weight"
                 :min="0"
@@ -136,7 +98,7 @@
                 controls-position="right"
               />
             </el-col>
-            <el-col :span="2">
+            <el-col :span="4">
               <el-input-number
                 v-model="item.sortNo"
                 :min="0"
@@ -150,12 +112,6 @@
             </el-col>
           </el-row>
         </div>
-
-        <!-- 当前分类下指标项权重合计提示 -->
-        <div class="item-weight-summary" :class="{ error: !isCategoryWeightValid(cat) }">
-          分类“{{ cat.name || '未命名' }}”下指标项权重合计：{{ getCategoryItemWeightSum(cat) }}%
-          <span v-if="!isCategoryWeightValid(cat)">（必须等于100%）</span>
-        </div>
       </el-card>
     </div>
 
@@ -168,24 +124,21 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { ElMessage } from 'element-plus';
-import { getIndexTypeList, getCalcWayList } from '#/api/genchuan/dataHub/evaluation/system/indicators/index.js';
+import { getRuleList } from '#/api/genchuan/dataHub/evaluation/system/indicators/index.js';
 
 const props = defineProps({
   modelValue: { type: Array, default: () => [] },
+  systemId: { type: [Number, String], default: null },
 });
 
 const emit = defineEmits(['update:modelValue']);
 
-// 内部数据，与 modelValue 同步
 const categories = ref([]);
+const ruleOptions = ref([]);
 
-// 字典选项
-const indexTypeOptions = ref([]);
-const calcWayOptions = ref([]);
-
-// 同步 modelValue 到内部
+// 同步 modelValue
 watch(
   () => props.modelValue,
   (val) => {
@@ -193,7 +146,6 @@ watch(
       ...cat,
       items: (cat.items || []).map(item => ({
         ...item,
-        // 确保每个项都有临时ID（用于key）
         itemId: item.itemId || `temp_${Date.now()}_${Math.random()}`
       })),
       categoryId: cat.categoryId || `temp_${Date.now()}_${Math.random()}`
@@ -207,31 +159,22 @@ watch(categories, (val) => {
   emit('update:modelValue', val);
 }, { deep: true });
 
-// 加载字典数据
-onMounted(async () => {
+// 加载规则列表（只获取启用状态的规则）
+const loadRuleOptions = async (id) => {
   try {
-    const indexRes = await getIndexTypeList();
-    // 假设返回格式为 { code:0, data: [{ value, label }] }
-    indexTypeOptions.value = indexRes || [];
+    const params = { systemId: id, status: 1 };
+    const rules = await getRuleList(params);
+    ruleOptions.value = rules || [];
   } catch (error) {
-    console.error('获取指标类型失败', error);
-    // 降级为静态数据
-    indexTypeOptions.value = [
-      { value: 'quantitative', label: '定量指标' },
-      { value: 'qualitative', label: '定性指标' },
-    ];
+    console.error('获取规则列表失败', error);
+    ruleOptions.value = [];
   }
-  try {
-    const calcRes = await getCalcWayList();
-    calcWayOptions.value = calcRes || [];
-  } catch (error) {
-    console.error('获取计算方式失败', error);
-    calcWayOptions.value = [
-      { value: 'percent', label: '百分比' },
-      { value: 'score', label: '分值' },
-    ];
-  }
-});
+};
+
+// 监听 systemId 变化
+watch(() => props.systemId, (newId) => {
+  loadRuleOptions(newId);
+}, { immediate: true });
 
 // 添加分类
 function addCategory() {
@@ -245,14 +188,12 @@ function addCategory() {
   categories.value.push(newCat);
 }
 
-// 添加指标项
+// 添加指标项（包含 weight 默认值）
 function addItem(catIdx) {
   const newItem = {
     itemId: `item_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`,
     name: '',
-    indexType: '',
-    calcWay: '',
-    threshold: 0,
+    commentRuleId: '',
     weight: 0,
     sortNo: categories.value[catIdx].items.length + 1,
   };
@@ -269,18 +210,6 @@ function removeItem(catIdx, itemIdx) {
   categories.value[catIdx].items.splice(itemIdx, 1);
 }
 
-// 计算指定分类下指标项权重总和
-function getCategoryItemWeightSum(cat) {
-  return cat.items.reduce((sum, item) => sum + (Number(item.weight) || 0), 0);
-}
-
-// 检查分类下指标项权重是否有效（总和=100）
-function isCategoryWeightValid(cat) {
-  if (!cat.items.length) return true; // 没有指标项时视为有效（暂不校验）
-  const sum = getCategoryItemWeightSum(cat);
-  return Math.abs(sum - 100) < 0.01;
-}
-
 // 计算所有分类权重总和
 const totalCategoryWeight = computed(() => {
   return categories.value.reduce((sum, cat) => sum + (Number(cat.weight) || 0), 0);
@@ -292,37 +221,24 @@ const isTotalWeightValid = computed(() => {
   return Math.abs(totalCategoryWeight.value - 100) < 0.01;
 });
 
-// 对外暴露校验方法
+// 校验
 function validate() {
-  // 1. 每个分类的名称不能为空
   for (const cat of categories.value) {
     if (!cat.name?.trim()) {
       ElMessage.error('请填写所有分类名称');
       return false;
     }
-    // 2. 每个分类下的指标项权重总和必须为100%（如果有指标项）
-    if (cat.items.length && !isCategoryWeightValid(cat)) {
-      ElMessage.error(`分类“${cat.name}”下的指标项权重总和必须为100%`);
-      return false;
-    }
-    // 3. 指标项名称不能为空
     for (const item of cat.items) {
       if (!item.name?.trim()) {
         ElMessage.error('请填写所有指标项名称');
         return false;
       }
-      // 指标类型和计算方式必须选择
-      if (!item.indexType) {
-        ElMessage.error('请选择指标类型');
-        return false;
-      }
-      if (!item.calcWay) {
-        ElMessage.error('请选择计算方式');
+      if (!item.commentRuleId) {
+        ElMessage.error('请为每个指标项选择评价规则');
         return false;
       }
     }
   }
-  // 4. 分类总权重必须为100%
   if (!isTotalWeightValid.value) {
     ElMessage.error('所有分类的权重总和必须为100%');
     return false;
@@ -367,7 +283,6 @@ defineExpose({ validate });
     background-color: #f5f7fa;
   }
 }
-/* 分类标题行样式 */
 .category-header-title {
   font-size: 12px;
   color: #909399;
@@ -377,7 +292,6 @@ defineExpose({ validate });
     white-space: nowrap;
   }
 }
-/* 指标项标题行样式 */
 .item-header {
   background-color: #fafafa;
   padding: 6px 0;
@@ -388,7 +302,6 @@ defineExpose({ validate });
     color: #606266;
     font-weight: 500;
   }
-  /* 统一左对齐 */
   .el-col {
     text-align: left;
   }
@@ -404,15 +317,6 @@ defineExpose({ validate });
   text-align: center;
   color: #c0c4cc;
   padding: 20px 0;
-}
-.item-weight-summary {
-  margin-top: 8px;
-  font-size: 13px;
-  color: #67c23a;
-  text-align: right;
-  &.error {
-    color: #f56c6c;
-  }
 }
 .total-weight-summary {
   margin-top: 16px;
