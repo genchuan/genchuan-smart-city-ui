@@ -197,6 +197,7 @@ const formatArray = (arr) => {
             detailObj.statPeriod || '-'
           }}
         </div>
+        <div class="detail-row"><span class="label">复盘意见：</span>{{ detailObj.reviewDesc || '-' }}</div>
       </template>
     </div>
   </DetailDrawer>

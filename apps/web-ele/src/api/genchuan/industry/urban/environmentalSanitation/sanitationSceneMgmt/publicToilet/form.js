@@ -1034,7 +1034,6 @@ export function getColumnsByStatus(status) {
         title: '所属区域',
         minWidth: 180,
         sortable: true,
-        slots: { default: 'area' },
       },
       { field: 'taskNo', title: '任务编号', minWidth: 150, sortable: true },
       {

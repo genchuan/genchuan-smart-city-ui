@@ -1,3 +1,47 @@
+import { baseRequestClient, requestClient } from '#/api/request';
+import { useAccessStore } from '@vben/stores';
+
+// 分页查询（全部）
+export function getCommercialStreetPage(params) {
+  return requestClient.get('/envirhealth/commercial-street/detail-page', { params });
+}
+
+// 新增
+export function createCommercialStreet(data) {
+  return requestClient.post('/envirhealth/commercial-street/create', data);
+}
+
+// 修改
+export function updateCommercialStreet(data) {
+  return requestClient.put('/envirhealth/commercial-street/update', data);
+}
+
+// 单个删除
+export function deleteCommercialStreet(id) {
+  return requestClient.delete(`/envirhealth/commercial-street/delete?id=${id}`);
+}
+
+// 批量删除
+export function deleteCommercialStreetBatch(ids) {
+  return requestClient.delete('/envirhealth/commercial-street/delete-batch', { data: ids });
+}
+
+// 导出 Excel
+export function exportCommercialStreetExcel(params) {
+  const accessStore = useAccessStore();
+  return baseRequestClient.get('/envirhealth/commercial-street/export-excel', {
+    params,
+    responseType: 'blob',
+    headers: {
+      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
+    },
+  });
+}
+
+export function getCommercialStreetChartAll() {
+  return requestClient.get('/envirhealth/commercial-street');
+}
+
 // 模拟商业街环境管理数据
 export const dataList = () => {
   return [

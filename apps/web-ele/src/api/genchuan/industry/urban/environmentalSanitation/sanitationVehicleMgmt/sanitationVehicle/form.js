@@ -1,0 +1,210 @@
+// 新增/编辑表单 schema（车辆基础信息）
+export function useFormSchema() {
+  return [
+    {
+      fieldName: 'toiletName',
+      label: '车辆牌照',
+      component: 'Input',
+      componentProps: { placeholder: '请输入车辆牌照' },
+      labelWidth: '120',
+      rules: 'required',
+    },
+    {
+      fieldName: 'location',
+      label: '车辆类型',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择车辆类型',
+        options: [
+          { label: '压缩车', value: '压缩车' },
+          { label: '洒水车', value: '洒水车' },
+          { label: '洗扫车', value: '洗扫车' },
+          { label: '垃圾运输车', value: '垃圾运输车' },
+        ],
+      },
+      labelWidth: '120',
+      rules: 'required',
+    },
+    {
+      fieldName: 'area',
+      label: '所属部门',
+      component: 'Input',
+      componentProps: { placeholder: '请输入所属部门' },
+      labelWidth: '120',
+      rules: 'required',
+    },
+    {
+      fieldName: 'openHours',
+      label: '车辆型号',
+      component: 'Input',
+      componentProps: { placeholder: '请输入车辆型号' },
+      labelWidth: '120',
+      rules: 'required',
+    },
+    {
+      fieldName: 'stallCount',
+      label: '作业路线',
+      component: 'Input',
+      componentProps: { placeholder: '请输入作业路线' },
+      labelWidth: '120',
+      rules: 'required',
+    },
+    {
+      fieldName: 'manager',
+      label: '驾驶员',
+      component: 'Input',
+      componentProps: { placeholder: '请输入驾驶员姓名' },
+      labelWidth: '120',
+      rules: 'required',
+    },
+    {
+      fieldName: 'status',
+      label: '车辆状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择车辆状态',
+        options: [
+          { label: '正常运营', value: '正常运营' },
+          { label: '维护中', value: '维护中' },
+          { label: '停运', value: '停运' },
+        ],
+      },
+      labelWidth: '120',
+      rules: 'required',
+    },
+    {
+      fieldName: 'createTime',
+      label: '创建时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择创建时间',
+        type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      labelWidth: '120',
+      rules: 'required',
+    },
+  ];
+}
+
+// 根据状态获取表格列定义
+export function getColumnsByStatus(status) {
+  const baseColumns = [{ type: 'checkbox', width: 40 }];
+
+  const statusColumnsMap = {
+    全部: [
+      { field: 'toiletName', title: '车辆牌照', minWidth: 150, sortable: true, slots: { default: 'toiletName' } },
+      { field: 'location', title: '车辆类型', minWidth: 120, slots: { default: 'location' } },
+      { field: 'area', title: '所属部门', minWidth: 180, slots: { default: 'area' } },
+      { field: 'openHours', title: '车辆型号', minWidth: 150 },
+      { field: 'stallCount', title: '作业路线', minWidth: 150, slots: { default: 'stallCount' } },
+      { field: 'manager', title: '驾驶员', minWidth: 120 },
+      { field: 'status', title: '车辆状态', minWidth: 120, slots: { default: 'status' } },
+      { field: 'lastSupplyTime', title: '最近维护时间', minWidth: 180 },
+      { field: 'cleaningRate', title: '累计作业时长(小时)', minWidth: 160 },
+      { field: 'complaintRate', title: '违规告警次数', minWidth: 120 },
+      { field: 'warningCount', title: '车辆完好率(%)', minWidth: 130 },
+      { field: 'facilityRate', title: '未完成任务数', minWidth: 120 },
+      { field: 'cleaningFrequency', title: '平均作业效率(吨/小时)', minWidth: 170 },
+    ],
+    车辆待作业: [
+      { field: 'toiletName', title: '车辆牌照', minWidth: 150, sortable: true, slots: { default: 'toiletName' } },
+      { field: 'location', title: '车辆类型', minWidth: 120, slots: { default: 'location' } },
+      { field: 'area', title: '所属部门', minWidth: 180 },
+      { field: 'stallCount', title: '作业路线', minWidth: 150, slots: { default: 'stallCount' } },
+      { field: 'threshold', title: '路线长度(公里)', minWidth: 140 },
+      { field: 'cleaningFrequency', title: '作业频次', minWidth: 120 },
+      { field: 'cleaningTime', title: '作业时段', minWidth: 180 },
+      { field: 'manager', title: '驾驶员', minWidth: 120 },
+      { field: 'warningStatus', title: '计划状态', minWidth: 100, slots: { default: 'warningStatus' } },
+      { field: 'cleaningRate', title: '计划完成率(%)', minWidth: 130 },
+      { field: 'complaintRate', title: '预计作业量(吨)', minWidth: 140 },
+      { field: 'createBy', title: '创建人', minWidth: 120 },
+      { field: 'createTime', title: '创建时间', minWidth: 180 },
+      { field: 'updateTime', title: '更新时间', minWidth: 180 },
+      { field: 'isEffective', title: '是否生效', minWidth: 100, formatter: ({ cellValue }) => (cellValue ? '是' : '否') },
+    ],
+    作业进行中: [
+      { field: 'toiletName', title: '车辆牌照', minWidth: 150, sortable: true, slots: { default: 'toiletName' } },
+      { field: 'location', title: '车辆类型', minWidth: 120 },
+      { field: 'stallCount', title: '作业路线', minWidth: 150, slots: { default: 'stallCount' } },
+      { field: 'manager', title: '驾驶员', minWidth: 120 },
+      { field: 'dispatchStatus', title: '作业状态', minWidth: 100, slots: { default: 'dispatchStatus' } },
+      { field: 'facilityLocation', title: '当前位置', minWidth: 200 },
+      { field: 'currentStock', title: '行驶速度(km/h)', minWidth: 140 },
+      { field: 'cleaningRate', title: '已作业量(吨)', minWidth: 130 },
+      { field: 'gap', title: '作业进度', minWidth: 100 },
+      { field: 'reportTime', title: '启动作业时间', minWidth: 180 },
+      { field: 'expectedCompleteTime', title: '预计完成时间', minWidth: 180 },
+      { field: 'warningStatus', title: '轨迹合规性', minWidth: 120 },
+      { field: 'complaintRate', title: '实时告警数', minWidth: 110 },
+    ],
+    违规待处理: [
+      { field: 'complaintId', title: '违规编号', minWidth: 150, slots: { default: 'complaintId' } },
+      { field: 'toiletName', title: '车辆牌照', minWidth: 150, slots: { default: 'toiletName' } },
+      { field: 'location', title: '车辆类型', minWidth: 120 },
+      { field: 'complaintType', title: '违规类型', minWidth: 120, slots: { default: 'complaintType' } },
+      { field: 'complaintTime', title: '违规时间', minWidth: 180 },
+      { field: 'facilityLocation', title: '违规地点', minWidth: 200 },
+      { field: 'complaintContent', title: '违规详情', minWidth: 200 },
+      { field: 'manager', title: '驾驶员', minWidth: 120 },
+      { field: 'photoUrl', title: '佐证材料', minWidth: 100, slots: { default: 'photoUrl' } },
+      { field: 'handleStatus', title: '违规状态', minWidth: 100, slots: { default: 'handleStatus' } },
+      { field: 'area', title: '责任部门', minWidth: 120 },
+      { field: 'handler', title: '整改责任人', minWidth: 120 },
+      { field: 'dispatchTime', title: '派单时间', minWidth: 180 },
+      { field: 'expectedCompleteTime', title: '整改期限', minWidth: 180 },
+      { field: 'cleaningRate', title: '整改完成率(%)', minWidth: 130 },
+    ],
+    车辆待维护: [
+      { field: 'repairId', title: '维护编号', minWidth: 150, slots: { default: 'repairId' } },
+      { field: 'toiletName', title: '车辆牌照', minWidth: 150, slots: { default: 'toiletName' } },
+      { field: 'location', title: '车辆类型', minWidth: 120 },
+      { field: 'facilityType', title: '维护类型', minWidth: 120, slots: { default: 'facilityType' } },
+      { field: 'threshold', title: '维护周期(天)', minWidth: 120 },
+      { field: 'lastSupplyTime', title: '上次维护时间', minWidth: 180 },
+      { field: 'status', title: '车辆状态', minWidth: 120, slots: { default: 'status' } },
+      { field: 'repairBy', title: '维护责任人', minWidth: 120 },
+      { field: 'damageDesc', title: '故障描述', minWidth: 200 },
+      { field: 'cleaningTime', title: '维护提醒时间', minWidth: 180 },
+      { field: 'currentStock', title: '预计维护时长(小时)', minWidth: 170 },
+      { field: 'repairStatus', title: '维护状态', minWidth: 100 },
+      { field: 'warningCount', title: '设备完好率(%)', minWidth: 130 },
+      { field: 'cleaningRate', title: '维护完成率(%)', minWidth: 130 },
+    ],
+    已完成: [
+      { field: 'taskType', title: '任务类型', minWidth: 120, slots: { default: 'taskType' } },
+      { field: 'toiletName', title: '车辆牌照', minWidth: 150, slots: { default: 'toiletName' } },
+      { field: 'location', title: '车辆类型', minWidth: 120 },
+      { field: 'area', title: '所属部门', minWidth: 180, slots: { default: 'area' } },
+      { field: 'completeTime', title: '完成时间', minWidth: 180 },
+      { field: 'handler', title: '处置人员', minWidth: 120 },
+      { field: 'handleResult', title: '处置结果', minWidth: 120 },
+      { field: 'proofUrl', title: '佐证材料', minWidth: 100, slots: { default: 'proofUrl' } },
+      { field: 'cleaningRate', title: '作业覆盖率(%)', minWidth: 130 },
+      { field: 'warningCount', title: '车辆完好率(%)', minWidth: 130 },
+      { field: 'complaintRate', title: '违规整改率(%)', minWidth: 130 },
+      { field: 'statPeriod', title: '统计周期', minWidth: 120 },
+      { field: 'satisfaction', title: '运营评分', minWidth: 100 },
+    ],
+  };
+
+  const columns = [...baseColumns, ...(statusColumnsMap[status] || statusColumnsMap.全部)];
+  columns.push({
+    title: '操作',
+    width: 160,
+    fixed: 'right',
+    slots: { default: 'actions' },
+  });
+  return columns;
+}
+
+// 文本常量
+export const textObj = {
+  editText: '编辑车辆信息',
+  addText: '新增车辆',
+  excelName: '环卫车辆管理任务列表',
+  excelAllName: '环卫车辆管理任务_部门_日期.xlsx',
+  total: '车辆总数18;车辆待作业3;作业进行中3;违规待处理3;车辆待维护3;已完成3',
+};

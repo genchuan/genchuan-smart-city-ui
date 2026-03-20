@@ -1596,9 +1596,11 @@ const [AcceptDrawer, acceptDrawerApi] = useVbenDrawer({
 });
 
 // 复盘弹窗（已完成）
+const reviewPostRow = ref(null);
+
 const [ReviewPostForm, reviewPostFormApi] = useVbenForm({
   commonConfig: {
-    componentProps: {class: 'w-full'},
+    componentProps: { class: 'w-full' },
     formItemClass: 'col-span-2',
     labelWidth: 80,
   },
@@ -1614,12 +1616,44 @@ const [ReviewPostDrawer, reviewPostDrawerApi] = useVbenDrawer({
   onCancel: () => reviewPostDrawerApi.close(),
   async onConfirm() {
     const formValues = await reviewPostFormApi.getValues();
-    ElMessage.info('复盘功能待实现');
-    reviewPostDrawerApi.close();
+    const { reviewPostComment } = formValues;
+    if (!reviewPostComment) {
+      ElMessage.warning('请输入复盘意见');
+      return;
+    }
+    if (!reviewPostRow.value?.id) {
+      ElMessage.error('任务数据不存在');
+      return;
+    }
+
+    const loading = ElLoading.service({ text: '提交中...' });
+    try {
+      // 调用更新接口，传递 reviewDesc 字段
+      await updateToiletCleaningTask({
+        id: reviewPostRow.value.id,
+        reviewDesc: reviewPostComment,
+      });
+      ElMessage.success('复盘意见保存成功');
+      reviewPostDrawerApi.close();
+      handleRefresh(); // 刷新列表
+    } catch (error) {
+      console.error('复盘失败', error);
+      ElMessage.error(error.message || '复盘失败，请重试');
+    } finally {
+      loading.close();
+    }
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
+      const rowData = reviewPostDrawerApi.getData();
+      reviewPostRow.value = rowData;
       reviewPostFormApi.resetForm();
+      // 如果已有复盘意见，预填到表单
+      if (rowData?.reviewDesc) {
+        await reviewPostFormApi.setValues({ reviewPostComment: rowData.reviewDesc });
+      }
+    } else {
+      reviewPostRow.value = null;
     }
   },
 });
@@ -1834,6 +1868,7 @@ function convertCleaningItem(item) {
 
   converted.proofUrlList = proofUrlList;
   converted.proofUrl = firstProof;
+  converted.reviewDesc = item.reviewDesc || '-';
 
   return converted;
 }
@@ -2946,7 +2981,7 @@ onMounted(async () => {
             v-if="isCompletedTab"
             content="复盘"
             icon-name="DataAnalysis"
-            @click="reviewPostDrawerApi.open"
+            @click="reviewPostDrawerApi.setData(row).open()"
           />
 
           <!-- 删除按钮始终显示 -->
