@@ -7,7 +7,7 @@ import Columnar from '#/components/stats/columnar.vue';
 
 const state = reactive({
   cardList: [
-    { title: '总占道次数', value: 15, color: '#13ce66' },
+    { title: '总违停次数', value: 15, color: '#13ce66' },
     { title: '已闭环工单数', value: 14, color: '#4ECDC4' },
     { title: '待处置工单数', value: 8, color: '#FF6B6B' },
     // { title: '已闭环工单数', value: 8, color: '#FF6B6B' },
@@ -38,19 +38,17 @@ const state = reactive({
     <Circle
       width="340px"
       height="330px"
-      title-text="占道类型占比"
+      title-text="违停类型占比"
       :data="[
-        { name: '施工占道', value: 4 },
-        { name: '经营占道', value: 5 },
-                { name: '活动占道', value: 5 },
-
+        { name: '占用消防通道', value: 4 },
+        { name: '人行道违停', value: 5 },
       ]"
       :colors="['#67C23A', '#E6A23C', '#F56C6C', '#909399']"
     />
     <Circle
       width="340px"
       height="330px"
-      title-text="处置结果占比"
+      title-text="复核结果占比"
       :data="[
         { name: '启用', value: 4 },
         { name: '禁用', value: 5 },
@@ -59,7 +57,7 @@ const state = reactive({
     />
     <Columnar
       height="330px"
-      title="不同网格占道经营次数对比"
+      title="不同片区违停次数对比"
       :x-data="['福州', '厦门', '泉州', '莆田', '漳州', '龙岩']"
       :series-data="[{ name: '', data: [58, 42, 35, 15, 13, 33] }]"
     />
