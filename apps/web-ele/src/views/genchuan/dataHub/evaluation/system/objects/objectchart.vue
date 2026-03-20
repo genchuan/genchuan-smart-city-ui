@@ -1,6 +1,6 @@
 <script setup>
 import { reactive, onMounted } from 'vue';
-import { getOverview } from '#/api/genchuan/dataHub/evaluation/system/objects.js';
+import { getOverview } from '#/api/genchuan/dataHub/evaluation/system/objects/index.js';
 
 import Card from '#/components/stats/card.vue';
 import Circle from '#/components/stats/circle.vue';

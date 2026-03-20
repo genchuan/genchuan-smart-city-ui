@@ -622,7 +622,9 @@ giveDrawerApi.value = giveDrawerApiRef;
         </div>
 
         <div class="mb-4">
-          <label class="mb-2 block text-sm font-medium">无效原因 <span class="text-red-500">*</span></label>
+          <label class="mb-2 block text-sm font-medium"
+            >无效原因 <span class="text-red-500">*</span></label
+          >
           <ElInput
             v-model="invalidReason"
             type="textarea"

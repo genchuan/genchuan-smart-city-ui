@@ -4,15 +4,15 @@ import { computed, defineProps, toRefs, ref, onMounted } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import * as echarts from 'echarts';
 
-// 定义组件接收的属性（排水管网监测数据）
+// 定义组件接收的属性（替换为道路监测数据）
 const props = defineProps({
-  // 详情数据对象（排水管网监测数据）
+  // 详情数据对象（道路监测数据）
   detailObj: {
     type: Object,
     required: true,
     default: () => ({}),
   },
-  // 抽屉标题（可选，默认使用详情对象的pipe_road）
+  // 抽屉标题（可选，默认使用详情对象的roadSectionName）
   title: {
     type: String,
     default: '',
@@ -220,11 +220,11 @@ const handleResize = () => {
 
 // 计算属性处理标题，优先用管网路段名称，兜底显示默认值
 const drawerTitle = computed(() => {
-  const pipeRoad = detailObj.value?.pipe_road || '排水管网监测';
-  return title.value || `${pipeRoad}详情`;
+  const roadSectionName = detailObj.value?.roadSectionName || '道路监测';
+  return title.value || `${roadSectionName}详情`;
 });
 
-// 初始化抽屉实例（加宽适配排水管网监测更多字段）
+// 初始化抽屉实例（加宽适配道路监测更多字段）
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -260,67 +260,73 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 排水管网监测基础信息 -->
+      <!-- 道路监测基础信息 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">管网路段:</div>
+        <div class="detail-row-left">路段名称:</div>
         <div class="detail-row-right">
-          {{ detailObj.pipe_road || '-' }}
+          {{ detailObj.roadSectionName || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">管网液位:</div>
+        <div class="detail-row-left">坑洼数量:</div>
         <div class="detail-row-right">
-          {{ detailObj.pipe_level || '-' }} 米
+          {{ detailObj.potholeCount || '-' }} 个
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">管网流速:</div>
+        <div class="detail-row-left">裂缝长度:</div>
         <div class="detail-row-right">
-          {{ detailObj.pipe_flow_speed || '-' }} 米/秒
+          {{ detailObj.crackLength || '-' }} 米
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">降雨量:</div>
+        <div class="detail-row-left">路面温度:</div>
         <div class="detail-row-right">
-          {{ detailObj.rainfall || '-' }} 毫米
+          {{ detailObj.roadSurfaceTemp || '-' }} ℃
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">交通流量:</div>
+        <div class="detail-row-right">
+          {{ detailObj.trafficFlow || '-' }} 辆/小时
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">监测设备编号:</div>
         <div class="detail-row-right">
-          {{ detailObj.code || '-' }}
+          {{ detailObj.monitorDeviceCode || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">设备在线状态:</div>
         <div class="detail-row-right">
-          {{ detailObj.status || '-' }}
+          {{ detailObj.deviceOnlineStatus || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">负责运维员:</div>
         <div class="detail-row-right">
-          {{ detailObj.user_name || '-' }}
+          {{ detailObj.maintenancePerson || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">采集频率类型:</div>
+        <div class="detail-row-left">数据采集频率:</div>
         <div class="detail-row-right">
-          {{ detailObj.collect_frequency_type || '-' }}
+          {{ detailObj.dataCollectionFreq || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">数据同步时长:</div>
         <div class="detail-row-right">
-          {{ detailObj.sync_duration || '-' }} 秒
+          {{ detailObj.dataSyncDuration || '-' }} 秒
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">监测状态:</div>
-        <div class="detail-row-right">{{ detailObj.monitor_status || '-' }}</div>
+        <div class="detail-row-right">{{ detailObj.monitorStatus || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">液位阈值:</div>
+        <div class="detail-row-left">指标阈值范围:</div>
         <div class="detail-row-right">
           {{ detailObj.pipe_level_threshold || '-' }}
         </div>

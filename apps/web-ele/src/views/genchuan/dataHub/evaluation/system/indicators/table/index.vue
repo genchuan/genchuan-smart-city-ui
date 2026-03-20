@@ -1,8 +1,8 @@
 <script setup>
-import { computed, reactive, ref, onMounted, nextTick } from 'vue';
-import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { computed, reactive, ref, onMounted } from 'vue';
+import { useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
 import dayjs from 'dayjs';
 import * as XLSX from 'xlsx';
@@ -12,15 +12,13 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   getAllPage,
   getStatusCount,
-  createIndexSystem,
   updateIndexSystem,
   deleteIndexSystem,
   getIndexSystemDetail,
-  exportIndexSystem,
-  saveFullIndexSystem,   // 新增的复合保存接口
+  saveFullIndexSystem,
   getObjectTypeSimpleList,
   getStatusSimpleList,
-} from '#/api/genchuan/dataHub/evaluation/system/indicators';
+} from '#/api/genchuan/dataHub/evaluation/system/indicators/index.js';
 import detailDrawer from './detail.vue';
 import CategoryManager from '#/views/genchuan/dataHub/evaluation/system/components/CategoryManager.vue'; // 新增组件
 import {
@@ -28,8 +26,6 @@ import {
   useFormSchema,
   useQuerySchema,
   getGridColumnsByTab,
-  objectTypeList,
-  statusList,
 } from './data';
 
 const props = defineProps({
@@ -69,6 +65,8 @@ const [Form, formApi] = useVbenForm({
 const categoryManagerRef = ref(null);
 // 分类数据
 const categoryData = ref([]);
+// 当前体系ID（用于规则下拉）
+const currentSystemId = ref(null);
 
 // 新增/编辑抽屉
 const formData = ref();
@@ -81,14 +79,17 @@ const loadFormOptions = async () => {
       getStatusSimpleList(),
     ]);
 
+    const objectOpts = Array.isArray(objectTypeOptions) ? objectTypeOptions : [];
+    const statusOpts = Array.isArray(statusOptions) ? statusOptions : [];
+
     await formApi.updateSchema([
       {
         fieldName: 'objectTypeId',
-        componentProps: { options: Array.isArray(objectTypeOptions) ? objectTypeOptions : [] },
+        componentProps: { options: objectOpts },
       },
       {
         fieldName: 'statusId',
-        componentProps: { options: Array.isArray(statusOptions) ? statusOptions : [] },
+        componentProps: { options: statusOpts },
       },
     ]);
   } catch (error) {
@@ -104,14 +105,12 @@ const loadFormOptions = async () => {
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
-  width: 1000, // 加宽以适应分类配置
+  width: 1000,
   onCancel() { formDrawerApi.close(); },
   async onConfirm() {
-    // 保存逻辑
     const basicValid = await formApi.validate();
     if (!basicValid.valid) return;
 
-    // 校验分类管理器
     if (!categoryManagerRef.value?.validate()) {
       return;
     }
@@ -120,16 +119,14 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     const drawerData = formDrawerApi.getData() || {};
     const id = drawerData.id;
 
-    // 组装完整数据
     const fullData = {
       ...basicValues,
-      systemId: drawerData.systemId, // 编辑时可能已有 systemId
+      systemId: drawerData.systemId,
       categories: categoryData.value,
     };
 
     const loadingInstance = ElLoading.service({ text: id ? '更新中...' : '创建中...' });
     try {
-      // 调用复合保存接口（若后端无此接口，请替换为分步保存逻辑）
       await saveFullIndexSystem(fullData);
       ElMessage.success(id ? '编辑成功' : '新增成功');
       emit('refresh-chart');
@@ -145,21 +142,19 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
-      // 先加载下拉选项
       await loadFormOptions();
 
       const data = formDrawerApi.getData();
       formData.value = data;
 
       if (data?.id) {
-        // 编辑模式：先设置基本信息
+        // 编辑模式
+        currentSystemId.value = data.id;
         await formApi.setValues(data);
-        // 如果有 systemId，则加载详情获取分类数据
-        if (data.systemId) {
+        if (data.id) {
           const loading = ElLoading.service({ text: '加载详情...', target: '.vben-drawer' });
           try {
-            const detail = await getIndexSystemDetail(data.systemId);
-            // 将 detail.categories 转换为分类管理器需要的格式
+            const detail = await getIndexSystemDetail(data.id);
             categoryData.value = (detail.categories || []).map(cat => ({
               categoryId: cat.categoryId,
               name: cat.name,
@@ -168,9 +163,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
               items: (cat.items || []).map(item => ({
                 itemId: item.itemId,
                 name: item.name,
-                indexType: item.indexTypeId, // 假设接口返回 indexTypeId
-                calcWay: item.calcWayId,      // 假设接口返回 calcWayId
-                threshold: item.threshold,
+                commentRuleId: item.commentRuleId,
                 weight: item.weight,
                 sortNo: item.sortNo,
               })),
@@ -185,40 +178,37 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
           categoryData.value = [];
         }
       } else {
-        // 新增模式：清空表单和分类数据
+        // 新增模式
+        currentSystemId.value = null;
         formApi.resetForm();
-        // 设置默认状态为启用
         await formApi.setValues({ statusId: 1 });
         categoryData.value = [];
 
-        // 如果是新增版本，需要处理从上一版本复制数据
+        // 新增版本复制
         if (formDrawerApi.sharedData?.payload?.title === textObj.versionText) {
           const source = formDrawerApi.sharedData.payload.source;
-          if (source && source.systemId) {
+          if (source && source.id) {
+            currentSystemId.value = source.id;
             const loading = ElLoading.service({ text: '加载源体系数据...', target: '.vben-drawer' });
             try {
-              const detail = await getIndexSystemDetail(source.systemId);
-              // 填充基本信息
+              const detail = await getIndexSystemDetail(source.id);
               await formApi.setValues({
                 name: detail.baseInfo.name,
                 code: detail.baseInfo.code,
-                objectTypeId: source.objectTypeId, // 从源行数据中取，因为 detail.baseInfo 可能没有ID
-                version: '', // 版本号清空，让用户重新输入
+                objectTypeId: source.objectTypeId,
+                version: '',
                 desc: detail.baseInfo.description,
                 statusId: 1,
               });
-              // 填充分类数据
               categoryData.value = (detail.categories || []).map(cat => ({
-                categoryId: `temp_${Date.now()}_${Math.random()}`, // 临时ID
+                categoryId: `temp_${Date.now()}_${Math.random()}`,
                 name: cat.name,
                 weight: cat.weight,
                 sortNo: cat.sortNo,
                 items: (cat.items || []).map(item => ({
                   itemId: `temp_${Date.now()}_${Math.random()}`,
                   name: item.name,
-                  indexType: item.indexTypeId,
-                  calcWay: item.calcWayId,
-                  threshold: item.threshold,
+                  commentRuleId: item.commentRuleId,
                   weight: item.weight,
                   sortNo: item.sortNo,
                 })),
@@ -256,7 +246,7 @@ async function fetchStatusCount() {
 function formatList(list) {
   return (list || []).map(item => ({
     ...item,
-    bizCreateTime: item.bizCreateTime ? dayjs(item.bizCreateTime).format('YYYY-MM-DD HH:mm:ss') : '-',
+    createTime: item.createTime ? dayjs(item.createTime).format('YYYY-MM-DD HH:mm:ss') : '-',
     updateTime: item.updateTime ? dayjs(item.updateTime).format('YYYY-MM-DD HH:mm:ss') : '-',
     lastUseTime: item.lastUseTime ? dayjs(item.lastUseTime).format('YYYY-MM-DD HH:mm:ss') : '-',
     useCount: item.useCount ?? 0,
@@ -264,9 +254,6 @@ function formatList(list) {
     itemCount: item.itemCount ?? 0,
     desc: item.desc || '-',
     changeLogShort: item.changeLogShort || '-',
-    threshold: item.threshold ?? '-',
-    categoryWeight: item.categoryWeight ?? '-',
-    itemWeight: item.itemWeight ?? '-',
   }));
 }
 
@@ -377,7 +364,6 @@ function handleCreate() {
 }
 
 function handleNewVersion(row) {
-  // 将源行数据通过 sharedData 传递给弹窗
   formDrawerApi.setData({ title: textObj.versionText }).open({
     payload: { title: textObj.versionText, source: row },
   });
@@ -392,7 +378,11 @@ async function handleDisable(row) {
     ElMessage.warning('当前状态不是启用，不能执行停用操作');
     return;
   }
-  await confirm('确定停用该指标体系吗？');
+  await ElMessageBox.confirm('确定停用该指标体系吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  });
   const loadingInstance = ElLoading.service({ text: '停用中...' });
   try {
     await updateIndexSystem({ id: row.id, statusId: 2 });
@@ -410,7 +400,11 @@ async function handleEnable(row) {
     ElMessage.warning('当前状态不是停用，不能执行启用操作');
     return;
   }
-  await confirm('确定启用该指标体系吗？');
+  await ElMessageBox.confirm('确定启用该指标体系吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  });
   const loadingInstance = ElLoading.service({ text: '启用中...' });
   try {
     await updateIndexSystem({ id: row.id, statusId: 1 });
@@ -424,7 +418,11 @@ async function handleEnable(row) {
 }
 
 async function handleDelete(row) {
-  await confirm('确定删除该指标体系吗？');
+  await ElMessageBox.confirm('确定删除该指标体系吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  });
   const loadingInstance = ElLoading.service({ text: '删除中...' });
   try {
     await deleteIndexSystem(row.id);
@@ -441,7 +439,11 @@ async function handleDelete(row) {
 async function handleBatchStatusChange() {
   const targetStatus = activeName.value === '停用' ? '启用' : '停用';
   const targetStatusId = targetStatus === '启用' ? 1 : 2;
-  await confirm(`确定将选中的对象${targetStatus}吗？`);
+  await ElMessageBox.confirm(`确定将选中的对象${targetStatus}吗？`, '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  });
 
   const validIds = checkedIds.value.filter(id => {
     const row = dataObj.list.find(item => item.id === id);
@@ -472,31 +474,80 @@ function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map(item => item.id);
 }
 
-/** 导出（后端接口） */
+/** 普通导出（按当前搜索条件，导出全部）- 前端生成 Excel */
 async function handleExport() {
-  const params = {
-    ...searchParams.value,
-    ...(activeName.value !== '全部' && { statusId: activeName.value === '启用' ? 1 : 2 }),
-  };
-  const loadingInstance = ElLoading.service({ text: '导出中...' });
+  const loadingInstance = ElLoading.service({ text: '正在获取数据...' });
   try {
-    const blob = await exportIndexSystem(params);
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `指标体系_${activeName.value}_${dayjs().format('YYYYMMDD')}.xlsx`;
-    link.click();
-    window.URL.revokeObjectURL(url);
+    const params = {
+      ...searchParams.value,
+      pageNo: 1,
+      pageSize: 1000,
+    };
+    if (activeName.value !== '全部') {
+      params.statusId = activeName.value === '启用' ? 1 : 2;
+    }
+
+    let allData = [];
+    let pageNo = 1;
+    let hasMore = true;
+
+    while (hasMore) {
+      params.pageNo = pageNo;
+      const res = await getAllPage(params);
+      const { list } = res;
+      if (list && list.length > 0) {
+        const formattedList = formatList(list);
+        allData = allData.concat(formattedList);
+        pageNo++;
+        if (list.length < params.pageSize) {
+          hasMore = false;
+        }
+      } else {
+        hasMore = false;
+      }
+    }
+
+    if (allData.length === 0) {
+      ElMessage.warning('没有数据可导出');
+      return;
+    }
+
+    const allColumns = getGridColumnsByTab(activeName.value);
+    const exportColumns = allColumns.filter(
+      col => col.field && col.type !== 'checkbox' && col.title !== '操作'
+    ).map(col => ({ field: col.field, title: col.title }));
+
+    const wsData = [];
+    wsData.push(exportColumns.map(col => col.title));
+    allData.forEach(item => {
+      const row = exportColumns.map(col => item[col.field] ?? '-');
+      wsData.push(row);
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, '指标体系');
+
+    let fileName;
+    if (activeName.value === '全部') {
+      fileName = `指标体系列表_${dayjs().format('YYYYMMDD')}.xlsx`;
+    } else if (activeName.value === '启用') {
+      fileName = `启用指标体系_${dayjs().format('YYYYMMDD')}.xlsx`;
+    } else if (activeName.value === '停用') {
+      fileName = `停用指标体系_${dayjs().format('YYYYMMDD')}.xlsx`;
+    }
+
+    XLSX.writeFile(wb, fileName);
     ElMessage.success('导出成功');
   } catch (error) {
-    ElMessage.error('导出失败');
-    console.error(error);
+    console.error('导出失败', error);
+    ElMessage.error(error.message || '导出失败');
   } finally {
     loadingInstance.close();
   }
 }
 
-/** 批量导出选中行（前端生成） */
+/** 批量导出选中行（前端生成多 sheet Excel） */
 async function handleBatchExport() {
   if (checkedIds.value.length === 0) {
     ElMessage.warning('请至少选择一条数据');
@@ -511,6 +562,7 @@ async function handleBatchExport() {
 
   const loading = ElLoading.service({ text: '正在生成导出文件...' });
   const wb = XLSX.utils.book_new();
+
   const allColumns = getGridColumnsByTab(activeName.value);
   const exportColumns = allColumns.filter(
     col => col.field && col.type !== 'checkbox' && col.title !== '操作'
@@ -518,12 +570,15 @@ async function handleBatchExport() {
 
   try {
     for (const row of selectedRows) {
+      const formattedItem = row;
       const rowForSheet = {};
       exportColumns.forEach(col => {
-        rowForSheet[col.title] = row[col.field] ?? '-';
+        rowForSheet[col.title] = formattedItem[col.field] ?? '-';
       });
+
       const ws = XLSX.utils.json_to_sheet([rowForSheet]);
-      let sheetName = (row.name || `体系_${row.id}`).replace(/[\\/:*?"<>|]/g, '_');
+
+      let sheetName = (formattedItem.name || `体系_${formattedItem.id}`).replace(/[\\/:*?"<>|]/g, '_');
       if (sheetName.length > 31) sheetName = sheetName.substring(0, 28) + '...';
       let finalSheetName = sheetName;
       let counter = 1;
@@ -531,6 +586,7 @@ async function handleBatchExport() {
         finalSheetName = `${sheetName}_${counter}`;
         counter++;
       }
+
       XLSX.utils.book_append_sheet(wb, ws, finalSheetName);
     }
 
@@ -555,12 +611,11 @@ const detailRef = ref(null);
 async function handleGarageOpenDetail(row) {
   const loadingInstance = ElLoading.service({ text: '加载详情中...' });
   try {
-    const res = await getIndexSystemDetail(row.systemId);
+    const res = await getIndexSystemDetail(row.id);
     console.log('详情接口返回:', res);
     const baseInfo = res.baseInfo || {};
     const categories = res.categories || [];
 
-    // 计算分类总数和指标项总数（优先从 categories 计算）
     const categoryCount = categories.length;
     const itemCount = categories.reduce((sum, cat) => sum + (cat.items?.length || 0), 0);
 
@@ -573,17 +628,17 @@ async function handleGarageOpenDetail(row) {
       statusName: baseInfo.statusName || row.statusName || '-',
       categoryCount: categoryCount || row.categoryCount || 0,
       itemCount: itemCount || row.itemCount || 0,
-      createUserName: baseInfo.createByName || row.createUserName || '-',
-      createTime: baseInfo.bizCreateTime
-        ? dayjs(baseInfo.bizCreateTime).format('YYYY-MM-DD HH:mm:ss')
-        : (row.bizCreateTime || '-'),
-      updateUserName: row.updateUserName || '-',
-      updateTime: baseInfo.bizUpdateTime
-        ? dayjs(baseInfo.bizUpdateTime).format('YYYY-MM-DD HH:mm:ss')
+      createUserName: baseInfo.createUserName || row.createUserName || '-',
+      createTime: baseInfo.createTime
+        ? dayjs(baseInfo.createTime).format('YYYY-MM-DD HH:mm:ss')
+        : (row.createTime || '-'),
+      updateUserName: baseInfo.updateUserName || row.updateUserName || '-',
+      updateTime: baseInfo.updateTime
+        ? dayjs(baseInfo.updateTime).format('YYYY-MM-DD HH:mm:ss')
         : (row.updateTime || '-'),
       lastUseTime: row.lastUseTime || undefined,
       useCount: row.useCount ?? 0,
-      changeLog: row.changeLog || '-',
+      changeLogShort: row.changeLogShort || '-',
       categories: categories.map(cat => ({
         categoryId: cat.categoryId,
         name: cat.name,
@@ -592,8 +647,8 @@ async function handleGarageOpenDetail(row) {
         items: (cat.items || []).map(item => ({
           name: item.name,
           indexTypeName: item.indexTypeName,
-          calcWayName: item.calcWayName,
-          threshold: item.threshold,
+          commentRuleId: item.commentRuleId,
+          ruleName: item.ruleName,
           weight: item.weight,
         })),
       })),
@@ -611,7 +666,7 @@ async function handleGarageOpenDetail(row) {
       itemCount: row.itemCount ?? 0,
       statusName: row.statusName,
       createUserName: row.createUserName,
-      createTime: row.bizCreateTime,
+      createTime: row.createTime,
       updateUserName: row.updateUserName,
       updateTime: row.updateTime,
       lastUseTime: row.lastUseTime,
@@ -659,10 +714,13 @@ onMounted(() => {
 
 <template>
   <div class="park-lot-table-new">
-    <!-- 新增/编辑抽屉，宽度加大，包含分类管理器 -->
     <FormDrawer :title="getTitle" class="genchuan-detail-drawer">
       <Form />
-      <CategoryManager ref="categoryManagerRef" v-model="categoryData" />
+      <CategoryManager
+        ref="categoryManagerRef"
+        v-model="categoryData"
+        :system-id="currentSystemId"
+      />
     </FormDrawer>
 
     <detailDrawer
@@ -724,6 +782,12 @@ onMounted(() => {
           <template v-if="activeName === '全部'">
             <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
             <IconButton content="导出" icon-name="download" @click="handleExport" />
+            <IconButton
+              content="批量导出"
+              icon-name="download"
+              :disabled="isEmpty(checkedIds)"
+              @click="handleBatchExport"
+            />
             <IconButton
               content="批量停用"
               icon-name="close"

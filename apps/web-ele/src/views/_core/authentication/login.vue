@@ -67,8 +67,20 @@ async function fetchTenantList() {
   }
 }
 
+/** 设置租户ID到请求头 - 如果租户列表为空则使用默认值1 */
+function setTenantIdForRequest(values: any) {
+  // 如果用户没有选中租户值或租户列表为空，设置默认值为1
+  if (!values.tenantId || tenantList.value.length === 0) {
+    accessStore.setTenantId(1);
+    return '1';
+  }
+  return values.tenantId;
+}
+
 /** 处理登录 */
 async function handleLogin(values: any) {
+  // 设置租户ID到请求头（如果租户列表为空则使用默认值1）
+  values.tenantId = setTenantIdForRequest(values);
   // 如果开启验证码，则先验证验证码
   if (captchaEnable) {
     verifyRef.value.show();
@@ -81,8 +93,11 @@ async function handleLogin(values: any) {
 /** 验证码通过，执行登录 */
 async function handleVerifySuccess({ captchaVerification }: any) {
   try {
+    const values = await loginRef.value.getFormApi().getValues();
+    // 设置租户ID到请求头（如果租户列表为空则使用默认值1）
+    values.tenantId = setTenantIdForRequest(values);
     await authStore.authLogin('username', {
-      ...(await loginRef.value.getFormApi().getValues()),
+      ...values,
       captchaVerification,
     });
   } catch (error) {
@@ -130,7 +145,8 @@ const formSchema = computed((): VbenFormSchema[] => {
       },
       fieldName: 'tenantId',
       label: $t('authentication.tenant'),
-      rules: z.string().min(1, { message: $t('authentication.tenantTip') }),
+      // 取消租户名必填验证
+      // rules: z.string().min(1, { message: $t('authentication.tenantTip') }),
       dependencies: {
         triggerFields: ['tenantId'],
         if: tenantEnable,

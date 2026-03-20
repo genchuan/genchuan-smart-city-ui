@@ -1,59 +1,71 @@
 <script setup>
-import { reactive, onMounted } from 'vue';
+import { reactive, onMounted, defineExpose } from 'vue';
+import { getRuleOverview } from '#/api/genchuan/dataHub/evaluation/system/rules/index.js';
+
 import Card from '#/components/stats/card.vue';
 import Circle from '#/components/stats/circle.vue';
 import Columnar from '#/components/stats/columnar.vue';
 
 const state = reactive({
   cardList: [],
-  pieData2: [],
-  pieData3: [],
+  pieData2: [],      // 适用对象类型占比（如后端有）
+  pieData3: [],      // 状态占比
   barXData: [],
   barSeriesData: [],
 });
 
-// 模拟获取数据（可替换为实际API调用）
-const fetchData = () => {
-  // 卡片数据
-  state.cardList = [
-    { title: '总分类数', value: 12, color: '#13ce66' },
-    { title: '规则项总数', value: 45, color: '#4ECDC4' },
-    { title: '否决项总数', value: 8, color: '#FF6B6B' },
-    { title: '启用规则数', value: 38, color: '#FFC107' },
-  ];
-
-  // 适用对象类型占比饼图
-  state.pieData2 = [
-    { name: '网格', value: 20 },
-    { name: '部门', value: 15 },
-    { name: '社区', value: 8 },
-    { name: '街道', value: 2 },
-  ];
-
-  // 状态占比饼图
-  state.pieData3 = [
-    { name: '启用', value: 38 },
-    { name: '停用', value: 15 },
-  ];
-
-  // 柱状图数据
-  state.barXData = ['规则分类1', '规则分类2', '规则分类3', '规则分类4', '规则分类5'];
-  state.barSeriesData = [
-    {
-      // name: '规则项数量',
-      data: [12, 8, 6, 9, 10],
-    },
-  ];
+const fetchOverview = async () => {
+  try {
+    const data = await getRuleOverview();
+    // 卡片数据（假设返回字段）
+    state.cardList = [
+      { title: '总分类数', value: data.totalCategoryCount || 0, color: '#13ce66' },
+      { title: '规则项总数', value: data.totalItemCount || 0, color: '#4ECDC4' },
+      { title: '启用规则数', value: data.enableCategoryCount || 0, color: '#FFC107' },
+    ];
+    // 状态占比饼图
+    state.pieData3 = (data.statusPieChart || []).map(item => ({
+      name: item.name,
+      value: item.value,
+    }));
+    // 适用对象类型占比（如果接口提供）
+    state.pieData2 = (data.objectTypePieChart || []).map(item => ({
+      name: item.name,
+      value: item.value,
+    }));
+    // 各分类规则项数量柱状图
+    const barData = data.categoryItemBarChart || [];
+    state.barXData = barData.map(item => item.categoryName);
+    state.barSeriesData = [
+      {
+        data: barData.map(item => item.itemCount),
+      },
+    ];
+  } catch (error) {
+    console.error('获取规则概览失败', error);
+    clearState();
+  }
 };
 
+const clearState = () => {
+  state.cardList = [];
+  state.pieData2 = [];
+  state.pieData3 = [];
+  state.barXData = [];
+  state.barSeriesData = [];
+};
+
+defineExpose({
+  refreshOverview: fetchOverview,
+});
+
 onMounted(() => {
-  fetchData();
+  fetchOverview();
 });
 </script>
 
 <template>
   <div class="park-chart-box park-subject-chart">
-    <!-- 卡片区域 -->
     <div class="chart-box-left">
       <Card
         class="left-card"
@@ -62,16 +74,12 @@ onMounted(() => {
         v-bind="item"
       />
     </div>
-
-    <!-- 饼图2：适用对象类型占比 -->
     <Circle
       width="340px"
       height="330px"
       title-text="适用对象类型占比"
       :data="state.pieData2"
     />
-
-    <!-- 饼图3：状态占比（自定义颜色） -->
     <Circle
       width="340px"
       height="330px"
@@ -79,8 +87,6 @@ onMounted(() => {
       :data="state.pieData3"
       :colors="['#67C23A', '#E6A23C', '#F56C6C']"
     />
-
-    <!-- 柱状图：各分类规则项数量对比 -->
     <Columnar
       class="district-columnar"
       height="330px"
@@ -103,9 +109,5 @@ onMounted(() => {
       height: 159px !important;
     }
   }
-  .subject-columnar {
-    min-width: 200px !important;
-  }
 }
 </style>
-

@@ -157,7 +157,7 @@ export function useTemplateFormSchema() {
 /** 根据标签页获取表格列配置 */
 export function getGridColumnsByTab(tab) {
   const baseColumns = [
-    { type: 'checkbox', width: 40, visible: tab === '全部' } // 仅在全部tab显示复选框
+    { type: 'checkbox', width: 40, visible:true } // 仅在全部tab显示复选框
   ];
 
   const commonColumns = [
@@ -362,7 +362,7 @@ export function getGridColumnsByTab(tab) {
   }
 
   const columns = [
-    ...(tab === '全部' ? baseColumns : []),
+    ...baseColumns,
     ...commonColumns,
     ...dynamicColumns,
     {

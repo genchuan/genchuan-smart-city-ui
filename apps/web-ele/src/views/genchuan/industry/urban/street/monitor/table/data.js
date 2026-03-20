@@ -410,7 +410,7 @@ export function useGridColumns() {
     {
       field: 'monitorStatus',
       title: '监测状态',
-      minWidth: 160,
+      minWidth: 120,
       sortable: true,
       slots: { default: 'monitorStatus' },
     },

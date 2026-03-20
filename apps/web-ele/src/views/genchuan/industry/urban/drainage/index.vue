@@ -1,11 +1,9 @@
 <script setup>
 import { ref } from 'vue';
 
-import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
-
 import monitor from './monitor/index.vue';
+import gateChart from './monitor/table/gateChart.vue';
 import report from './report/index.vue';
-import drainageChart from './monitor/table/drainageChart.vue';
 
 import '#/components/page/index.scss';
 
@@ -35,12 +33,8 @@ const tabArray = ref([
 ]);
 
 const arrowChange = () => {
-  // 切换secondShow状态
-  secondShow.value = !secondShow.value;
-  // 更新tabArray中的secondShow属性
   tabArray.value.forEach((v) => {
-    v.secondShow = secondShow.value;
-    v.arrowShow = secondShow.value;
+    v.arrowShow = !v.arrowShow;
   });
 };
 const activeName = ref('排水管网监测');
@@ -93,11 +87,23 @@ const getCurrentGateChart = () => {
 </script>
 <template>
   <div class="common-index">
-    <!-- 条件渲染图表组件 -->
-    <div class="drainage-chart-section" v-if="secondShow">
-      <component :is="getCurrentGateChart()" />
+    <gateChart />
+    <div class="icon-change">
+      <el-icon
+        class="tabel-tab-icon"
+        v-if="secondShow"
+        @click="changeArrowStatus"
+      >
+        <ArrowDown />
+      </el-icon>
+      <el-icon
+        class="tabel-tab-icon"
+        v-if="!secondShow"
+        @click="changeArrowStatus"
+      >
+        <ArrowUp />
+      </el-icon>
     </div>
-    
     <el-tabs
       v-model="activeName"
       class="common-tabs"
@@ -120,20 +126,8 @@ const getCurrentGateChart = () => {
           :key="item.label"
           :arrow-show="item.arrowShow"
           @arrow-change="arrowChange"
-          @sub-tab-change="handleSubTabChange"
         />
       </el-tab-pane>
     </el-tabs>
   </div>
 </template>
-
-<style scoped lang="scss">
-// 排水监测图表区域样式
-.drainage-chart-section {
-  margin-bottom: 20px;
-  padding: 20px;
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-</style>

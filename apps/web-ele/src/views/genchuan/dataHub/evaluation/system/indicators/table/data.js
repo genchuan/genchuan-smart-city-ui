@@ -123,18 +123,12 @@ export function getGridColumnsByTab(tab) {
       { field: 'objectTypeName', title: '适用对象类型', minWidth: 120, sortable: true, slots: { default: 'objectTypeName' } },
       { field: 'version', title: '版本号', minWidth: 100, sortable: true },
       { field: 'desc', title: '描述信息', minWidth: 200 },
-      { field: 'categoryName', title: '指标分类', minWidth: 120, sortable: true },
-      { field: 'itemName', title: '指标项名称', minWidth: 150, sortable: true },
-      { field: 'indexTypeName', title: '指标类型', minWidth: 100 },
-      { field: 'calcWayName', title: '计算方式', minWidth: 100 },
-      { field: 'threshold', title: '达标阈值', minWidth: 100 },
-      { field: 'categoryWeight', title: '分类权重', minWidth: 100 },
-      { field: 'itemWeight', title: '指标项权重', minWidth: 100 },
       { field: 'createUserName', title: '创建人', minWidth: 100 },
-      { field: 'bizCreateTime', title: '创建时间', minWidth: 160, sortable: true },
+      { field: 'createTime', title: '创建时间', minWidth: 160, sortable: true },
       { field: 'statusName', title: '状态', minWidth: 100, slots: { default: 'statusName' } },
       { field: 'categoryCount', title: '分类总数', minWidth: 100 },
       { field: 'itemCount', title: '指标项总数', minWidth: 120 },
+      { field: 'changeLogShort', title: '变更日志', minWidth: 200, sortable: false },
       {
         title: '操作',
         width: 180,
@@ -147,6 +141,7 @@ export function getGridColumnsByTab(tab) {
   // 启用标签列（体系级）
   if (tab === '启用') {
     return [
+      { type: 'checkbox', width: 40 },
       { field: 'name', title: '体系名称', minWidth: 150, sortable: true, slots: { default: 'name' } },
       { field: 'code', title: '体系编码', minWidth: 120, sortable: true, slots: { default: 'code' } },
       { field: 'objectTypeName', title: '适用对象类型', minWidth: 120, sortable: true, slots: { default: 'objectTypeName' } },
@@ -154,9 +149,11 @@ export function getGridColumnsByTab(tab) {
       { field: 'categoryCount', title: '分类总数', minWidth: 100 },
       { field: 'itemCount', title: '指标项总数', minWidth: 120 },
       { field: 'createUserName', title: '创建人', minWidth: 100 },
-      { field: 'bizCreateTime', title: '创建时间', minWidth: 160, sortable: true },
+      { field: 'createTime', title: '创建时间', minWidth: 160, sortable: true },
+      { field: 'statusName', title: '状态', minWidth: 100, slots: { default: 'statusName' } },
       { field: 'lastUseTime', title: '最近使用时间', minWidth: 160 },
       { field: 'useCount', title: '使用次数', minWidth: 100 },
+      { field: 'changeLogShort', title: '变更日志', minWidth: 200, sortable: false },
       {
         title: '操作',
         width: 160,
@@ -169,15 +166,17 @@ export function getGridColumnsByTab(tab) {
   // 停用标签列（体系级）
   if (tab === '停用') {
     return [
+      { type: 'checkbox', width: 40 },
       { field: 'name', title: '体系名称', minWidth: 150, sortable: true, slots: { default: 'name' } },
       { field: 'code', title: '体系编码', minWidth: 120, sortable: true, slots: { default: 'code' } },
       { field: 'objectTypeName', title: '适用对象类型', minWidth: 120, sortable: true, slots: { default: 'objectTypeName' } },
       { field: 'version', title: '版本号', minWidth: 100, sortable: true },
-      { field: 'changeLogShort', title: '停用原因', minWidth: 200 },
       { field: 'createUserName', title: '创建人', minWidth: 100 },
-      { field: 'bizCreateTime', title: '创建时间', minWidth: 160, sortable: true },
+      { field: 'createTime', title: '创建时间', minWidth: 160, sortable: true },
+      { field: 'statusName', title: '状态', minWidth: 100, slots: { default: 'statusName' } },
       { field: 'updateTime', title: '停用时间', minWidth: 160, sortable: true },
       { field: 'updateUserName', title: '停用操作人', minWidth: 120 },
+      { field: 'changeLogShort', title: '变更日志', minWidth: 200, sortable: false },
       {
         title: '操作',
         width: 120,
