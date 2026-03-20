@@ -99,7 +99,20 @@ export function uploadKitchenFile(data) {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 } 
-
+/**上传资料 */
+export function uploadRectifyFile(data) {
+ return requestClient.post('/kitchen/ent-rectify-record/upload-file', data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+} 
+/** 审核通过 */
+export function sendApprove(data) {
+  return requestClient.post(`/kitchen/ent-rectify-record/review-approve`, data);
+}
+/** 审核不通过 */
+export function sendNoApprove(data) {
+  return requestClient.post(`/kitchen/ent-rectify-record/review-reject`, data);
+}
 /** 下发整改 */
 export function sendRectify(data) {
   return requestClient.post(`/kitchen/rectify-review/review-issue`, data);
