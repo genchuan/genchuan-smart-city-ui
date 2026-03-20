@@ -20,7 +20,7 @@
         <div class="title">停车管理事件清单</div>
         <ScrollBoard
           :config="leftData.CCDvScrollBoardConfig"
-          style=" height: calc(100% - 35px - 40px);padding: 15px 25px 25px"
+          style="height: calc(100% - 35px - 40px); padding: 15px 25px 25px"
         />
       </div>
     </div>

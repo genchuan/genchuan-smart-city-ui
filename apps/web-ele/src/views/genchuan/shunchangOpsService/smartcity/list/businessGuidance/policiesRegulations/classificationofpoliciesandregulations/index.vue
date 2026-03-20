@@ -1,24 +1,25 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
+
 import { confirm } from '@vben/common-ui';
-import { ClassificationOfPoliciesAndRegulationsApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/classificationofpoliciesandregulations';
-import download from '#/utils/genchuan/download';
-import { dateFormatter, dateFormatter2 } from '#/utils/genchuan/formatTime';
+
+import { Icon } from '@iconify/vue';
 import {
-  ElMessage,
+  ElButton,
   ElCard,
-  ElTable,
-  ElTableColumn,
   ElForm,
   ElFormItem,
   ElInput,
-  ElButton,
-  ElDatePicker,
+  ElMessage,
   ElPagination,
   ElSpace,
+  ElTable,
+  ElTableColumn,
 } from 'element-plus';
-import { Icon } from '@iconify/vue';
-import { $t } from '#/locales';
+
+import { ClassificationOfPoliciesAndRegulationsApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/classificationofpoliciesandregulations';
+import download from '#/utils/genchuan/download';
+import { dateFormatter } from '#/utils/genchuan/formatTime';
 
 import ClassificationOfPoliciesAndRegulationsForm from './ClassificationOfPoliciesAndRegulationsForm.vue';
 
@@ -98,8 +99,7 @@ const handleExport = async () => {
         queryParams,
       );
     download.excel(data, '政策法规分类.xls');
-  } catch {
-  } finally {
+  } catch {} finally {
     exportLoading.value = false;
   }
 };

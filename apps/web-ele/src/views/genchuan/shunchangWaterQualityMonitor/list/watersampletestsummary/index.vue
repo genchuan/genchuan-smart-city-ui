@@ -7,6 +7,7 @@ import { Icon } from '@iconify/vue';
 import {
   ElButton,
   ElCard,
+  ElDatePicker,
   ElForm,
   ElFormItem,
   ElInput,
@@ -17,14 +18,16 @@ import {
   ElTableColumn,
 } from 'element-plus';
 
-import { ClassificationOfExperienceInformationApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/classificationofexperienceinformation';
+import { WaterSampleTestSummaryApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/watersampletestsummary';
 import download from '#/utils/genchuan/download';
 import { dateFormatter } from '#/utils/genchuan/formatTime';
 
-import ClassificationOfExperienceInformationForm from './ClassificationOfExperienceInformationForm.vue';
+import WaterSampleTestSummaryForm from './WaterSampleTestSummaryForm.vue';
+import WaterSampleTestSummaryImport from './WaterSampleTestSummaryImport.vue';
+import WaterSampleTestDetailDrawer from './WaterSampleTestDetailDrawer.vue';
 
-/** 经验信息分类 列表 */
-defineOptions({ name: 'ClassificationOfExperienceInformation' });
+/** 外检统计水质检测结果汇总 列表 */
+defineOptions({ name: 'WaterSampleTestSummary' });
 
 const loading = ref(true); // 列表的加载中
 const list = ref([]); // 列表的数据
@@ -32,8 +35,8 @@ const total = ref(0); // 列表的总页数
 const queryParams = reactive({
   pageNo: 1,
   pageSize: 10,
-  sector: undefined,
-  applicationScenarios: undefined,
+  sampleNo: undefined,
+  receiveDate: [],
   createTime: [],
 });
 const queryFormRef = ref(); // 搜索的表单
@@ -44,7 +47,7 @@ const getList = async () => {
   loading.value = true;
   try {
     const data =
-      await ClassificationOfExperienceInformationApi.getClassificationOfExperienceInformationPage(
+      await WaterSampleTestSummaryApi.getWaterSampleTestSummaryPage(
         queryParams,
       );
     list.value = data.list;
@@ -76,11 +79,9 @@ const openForm = (type: string, id?: number) => {
 const handleDelete = async (id: number) => {
   try {
     // 删除的二次确认
-    await confirm('是否确认删除该经验信息分类数据？', '系统提示');
+    await confirm('是否确认删除该外检统计水质检测结果汇总数据？', '系统提示');
     // 发起删除
-    await ClassificationOfExperienceInformationApi.deleteClassificationOfExperienceInformation(
-      id,
-    );
+    await WaterSampleTestSummaryApi.deleteWaterSampleTestSummary(id);
     ElMessage.success('删除成功');
     // 刷新列表
     await getList();
@@ -91,18 +92,29 @@ const handleDelete = async (id: number) => {
 const handleExport = async () => {
   try {
     // 导出的二次确认
-    await confirm('是否确认导出所有经验信息分类数据？', '系统提示');
+    await confirm('是否确认导出所有外检统计水质检测结果汇总数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
     const data =
-      await ClassificationOfExperienceInformationApi.exportClassificationOfExperienceInformation(
+      await WaterSampleTestSummaryApi.exportWaterSampleTestSummary(
         queryParams,
       );
-    download.excel(data, '经验信息分类.xls');
-  } catch {
-  } finally {
+    download.excel(data, '外检统计水质检测结果汇总.xls');
+  } catch {} finally {
     exportLoading.value = false;
   }
+};
+
+/** 详情抽屉操作 */
+const detailDrawerRef = ref();
+const openDetailDrawer = (id: number) => {
+  detailDrawerRef.value.open(id);
+};
+
+/** 导入操作 */
+const importRef = ref();
+const openImport = () => {
+  importRef.value.open();
 };
 
 /** 初始化 */
@@ -121,22 +133,35 @@ onMounted(() => {
         :inline="true"
         label-width="100px"
       >
-        <ElFormItem label="所属行业" prop="sector">
+        <ElFormItem label="样品编号" prop="sampleNo">
           <ElInput
-            v-model="queryParams.sector"
-            placeholder="请输入所属行业"
+            v-model="queryParams.sampleNo"
+            placeholder="请输入样品编号"
             clearable
             @keyup.enter="handleQuery"
             style="width: 240px"
           />
         </ElFormItem>
-        <ElFormItem label="应用场景" prop="applicationScenarios">
-          <ElInput
-            v-model="queryParams.applicationScenarios"
-            placeholder="请输入应用场景"
-            clearable
-            @keyup.enter="handleQuery"
-            style="width: 240px"
+        <ElFormItem label="收样日期" prop="receiveDate">
+          <ElDatePicker
+            v-model="queryParams.receiveDate"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            type="daterange"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            :default-time="[new Date('1 00:00:00'), new Date('1 23:59:59')]"
+            style="width: 220px"
+          />
+        </ElFormItem>
+        <ElFormItem label="检测日期" prop="createTime">
+          <ElDatePicker
+            v-model="queryParams.createTime"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            type="daterange"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            :default-time="[new Date('1 00:00:00'), new Date('1 23:59:59')]"
+            style="width: 220px"
           />
         </ElFormItem>
         <ElFormItem>
@@ -149,6 +174,9 @@ onMounted(() => {
             </ElButton>
             <ElButton type="success" @click="openForm('create')">
               <Icon icon="ep:plus" style="margin-right: 4px" /> 新增
+            </ElButton>
+            <ElButton type="info" @click="openImport">
+              <Icon icon="ep:upload" style="margin-right: 4px" /> 导入
             </ElButton>
             <ElButton
               type="warning"
@@ -171,52 +199,71 @@ onMounted(() => {
         :show-overflow-tooltip="true"
         style="width: 100%"
       >
-        <ElTableColumn label="主键" align="center" prop="id" min-width="50" />
         <ElTableColumn
-          label="所属行业"
+          label="序号"
           align="center"
-          prop="sector"
+          prop="id"
+          min-width="80"
+        />
+        <ElTableColumn
+          label="委托单位"
+          align="center"
+          prop="clientName"
           min-width="120"
         />
         <ElTableColumn
-          label="应用场景"
+          label="收样日期"
           align="center"
-          prop="applicationScenarios"
+          prop="receiveDate"
+          :formatter="dateFormatter"
           min-width="120"
         />
         <ElTableColumn
-          label="经验性质"
+          label="样品编号"
           align="center"
-          prop="empiricalNature"
+          prop="sampleNo"
           min-width="120"
         />
         <ElTableColumn
-          label="适用对象"
+          label="样品名称"
           align="center"
-          prop="applicableObjects"
+          prop="sampleName"
           min-width="120"
         />
         <ElTableColumn
-          label="来源渠道"
+          label="采样地点"
           align="center"
-          prop="sourceChannel"
+          prop="samplingLocation"
           min-width="120"
         />
         <ElTableColumn
-          label="创建时间"
+          label="pH值"
+          align="center"
+          prop="phValue"
+          min-width="80"
+        />
+        <ElTableColumn
+          label="检测日期"
           align="center"
           prop="createTime"
           :formatter="dateFormatter"
-          min-width="180"
+          min-width="150"
         />
         <ElTableColumn
           label="操作"
           align="center"
           fixed="right"
-          min-width="120"
+          min-width="200"
         >
           <template #default="scope">
             <ElSpace>
+              <ElButton
+                link
+                type="primary"
+                @click="openDetailDrawer(scope.row.id)"
+              >
+                详情
+              </ElButton>
               <ElButton
                 link
                 type="primary"
@@ -246,9 +293,10 @@ onMounted(() => {
     </ElCard>
 
     <!-- 表单弹窗：添加/修改 -->
-    <ClassificationOfExperienceInformationForm
-      ref="formRef"
-      @success="getList"
-    />
+    <WaterSampleTestSummaryForm ref="formRef" @success="getList" />
+    <!-- 导入弹窗 -->
+    <WaterSampleTestSummaryImport ref="importRef" @success="getList" />
+    <!-- 详情抽屉 -->
+    <WaterSampleTestDetailDrawer ref="detailDrawerRef" />
   </div>
 </template>

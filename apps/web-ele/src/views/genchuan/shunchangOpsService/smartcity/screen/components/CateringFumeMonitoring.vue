@@ -261,7 +261,7 @@ const rightData = ref({
         <div class="title">餐饮油烟监测事件清单</div>
         <ScrollBoard
           :config="leftData.CCDvScrollBoardConfig"
-          style=" height: calc(100% - 35px - 40px);padding: 15px 25px 25px"
+          style="height: calc(100% - 35px - 40px); padding: 15px 25px 25px"
         />
       </div>
     </div>

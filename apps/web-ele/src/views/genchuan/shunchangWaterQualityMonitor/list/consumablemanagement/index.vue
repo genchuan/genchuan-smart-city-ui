@@ -7,6 +7,7 @@ import { Icon } from '@iconify/vue';
 import {
   ElButton,
   ElCard,
+  ElDatePicker,
   ElForm,
   ElFormItem,
   ElInput,
@@ -17,14 +18,14 @@ import {
   ElTableColumn,
 } from 'element-plus';
 
-import { ClassificationOfExperienceInformationApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/classificationofexperienceinformation';
+import { ConsumableManagementApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/consumablemanagement';
 import download from '#/utils/genchuan/download';
 import { dateFormatter } from '#/utils/genchuan/formatTime';
 
-import ClassificationOfExperienceInformationForm from './ClassificationOfExperienceInformationForm.vue';
+import ConsumableManagementForm from './ConsumableManagementForm.vue';
 
-/** 经验信息分类 列表 */
-defineOptions({ name: 'ClassificationOfExperienceInformation' });
+/** 耗材库存与更换管理 列表 */
+defineOptions({ name: 'ConsumableManagement' });
 
 const loading = ref(true); // 列表的加载中
 const list = ref([]); // 列表的数据
@@ -32,9 +33,14 @@ const total = ref(0); // 列表的总页数
 const queryParams = reactive({
   pageNo: 1,
   pageSize: 10,
-  sector: undefined,
-  applicationScenarios: undefined,
-  createTime: [],
+  consumableId: undefined,
+  consumableType: undefined,
+  stockQuantity: undefined,
+  warningThreshold: undefined,
+  lastReplacementDate: [],
+  nextReplacementDate: [],
+  replacementQuantity: undefined,
+  relatedEquipmentId: undefined,
 });
 const queryFormRef = ref(); // 搜索的表单
 const exportLoading = ref(false); // 导出的加载中
@@ -44,7 +50,7 @@ const getList = async () => {
   loading.value = true;
   try {
     const data =
-      await ClassificationOfExperienceInformationApi.getClassificationOfExperienceInformationPage(
+      await ConsumableManagementApi.getConsumableManagementPage(
         queryParams,
       );
     list.value = data.list;
@@ -76,11 +82,9 @@ const openForm = (type: string, id?: number) => {
 const handleDelete = async (id: number) => {
   try {
     // 删除的二次确认
-    await confirm('是否确认删除该经验信息分类数据？', '系统提示');
+    await confirm('是否确认删除该耗材库存与更换管理数据？', '系统提示');
     // 发起删除
-    await ClassificationOfExperienceInformationApi.deleteClassificationOfExperienceInformation(
-      id,
-    );
+    await ConsumableManagementApi.deleteConsumableManagement(id);
     ElMessage.success('删除成功');
     // 刷新列表
     await getList();
@@ -91,16 +95,15 @@ const handleDelete = async (id: number) => {
 const handleExport = async () => {
   try {
     // 导出的二次确认
-    await confirm('是否确认导出所有经验信息分类数据？', '系统提示');
+    await confirm('是否确认导出所有耗材库存与更换管理数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
     const data =
-      await ClassificationOfExperienceInformationApi.exportClassificationOfExperienceInformation(
+      await ConsumableManagementApi.exportConsumableManagement(
         queryParams,
       );
-    download.excel(data, '经验信息分类.xls');
-  } catch {
-  } finally {
+    download.excel(data, '耗材库存与更换管理.xls');
+  } catch {} finally {
     exportLoading.value = false;
   }
 };
@@ -119,21 +122,79 @@ onMounted(() => {
         :model="queryParams"
         ref="queryFormRef"
         :inline="true"
-        label-width="100px"
+        label-width="130px"
       >
-        <ElFormItem label="所属行业" prop="sector">
+        <ElFormItem label="耗材ID" prop="consumableId">
           <ElInput
-            v-model="queryParams.sector"
-            placeholder="请输入所属行业"
+            v-model="queryParams.consumableId"
+            placeholder="请输入耗材ID"
             clearable
             @keyup.enter="handleQuery"
             style="width: 240px"
           />
         </ElFormItem>
-        <ElFormItem label="应用场景" prop="applicationScenarios">
+        <ElFormItem label="耗材类型" prop="consumableType">
           <ElInput
-            v-model="queryParams.applicationScenarios"
-            placeholder="请输入应用场景"
+            v-model="queryParams.consumableType"
+            placeholder="请输入耗材类型"
+            clearable
+            @keyup.enter="handleQuery"
+            style="width: 240px"
+          />
+        </ElFormItem>
+        <ElFormItem label="库存余量" prop="stockQuantity">
+          <ElInput
+            v-model="queryParams.stockQuantity"
+            placeholder="请输入库存余量"
+            clearable
+            @keyup.enter="handleQuery"
+            style="width: 240px"
+          />
+        </ElFormItem>
+        <ElFormItem label="预警阈值" prop="warningThreshold">
+          <ElInput
+            v-model="queryParams.warningThreshold"
+            placeholder="请输入预警阈值"
+            clearable
+            @keyup.enter="handleQuery"
+            style="width: 240px"
+          />
+        </ElFormItem>
+        <ElFormItem label="上次更换日期" prop="lastReplacementDate">
+          <ElDatePicker
+            v-model="queryParams.lastReplacementDate"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            type="daterange"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            :default-time="[new Date('1 00:00:00'), new Date('1 23:59:59')]"
+            style="width: 220px"
+          />
+        </ElFormItem>
+        <ElFormItem label="预计下次更换日期" prop="nextReplacementDate">
+          <ElDatePicker
+            v-model="queryParams.nextReplacementDate"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            type="daterange"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            :default-time="[new Date('1 00:00:00'), new Date('1 23:59:59')]"
+            style="width: 220px"
+          />
+        </ElFormItem>
+        <ElFormItem label="更换数量" prop="replacementQuantity">
+          <ElInput
+            v-model="queryParams.replacementQuantity"
+            placeholder="请输入更换数量"
+            clearable
+            @keyup.enter="handleQuery"
+            style="width: 240px"
+          />
+        </ElFormItem>
+        <ElFormItem label="关联设备ID" prop="relatedEquipmentId">
+          <ElInput
+            v-model="queryParams.relatedEquipmentId"
+            placeholder="请输入关联设备ID"
             clearable
             @keyup.enter="handleQuery"
             style="width: 240px"
@@ -171,35 +232,60 @@ onMounted(() => {
         :show-overflow-tooltip="true"
         style="width: 100%"
       >
-        <ElTableColumn label="主键" align="center" prop="id" min-width="50" />
         <ElTableColumn
-          label="所属行业"
+          label="序号"
           align="center"
-          prop="sector"
+          prop="id"
+          min-width="80"
+        />
+        <ElTableColumn
+          label="耗材ID"
+          align="center"
+          prop="consumableId"
           min-width="120"
         />
         <ElTableColumn
-          label="应用场景"
+          label="耗材类型"
           align="center"
-          prop="applicationScenarios"
+          prop="consumableType"
           min-width="120"
         />
         <ElTableColumn
-          label="经验性质"
+          label="库存余量"
           align="center"
-          prop="empiricalNature"
-          min-width="120"
+          prop="stockQuantity"
+          min-width="100"
         />
         <ElTableColumn
-          label="适用对象"
+          label="预警阈值"
           align="center"
-          prop="applicableObjects"
-          min-width="120"
+          prop="warningThreshold"
+          min-width="100"
         />
         <ElTableColumn
-          label="来源渠道"
+          label="上次更换日期"
           align="center"
-          prop="sourceChannel"
+          prop="lastReplacementDate"
+          :formatter="dateFormatter"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="预计下次更换日期"
+          align="center"
+          prop="nextReplacementDate"
+          :formatter="dateFormatter"
+          min-width="150"
+        />
+        <ElTableColumn
+          label="更换数量"
+          align="center"
+          prop="replacementQuantity"
+          min-width="100"
+        />
+        <ElTableColumn
+          label="关联设备ID"
+          align="center"
+          prop="relatedEquipmentId"
           min-width="120"
         />
         <ElTableColumn
@@ -207,13 +293,13 @@ onMounted(() => {
           align="center"
           prop="createTime"
           :formatter="dateFormatter"
-          min-width="180"
+          min-width="150"
         />
         <ElTableColumn
           label="操作"
           align="center"
           fixed="right"
-          min-width="120"
+          min-width="150"
         >
           <template #default="scope">
             <ElSpace>
@@ -246,9 +332,6 @@ onMounted(() => {
     </ElCard>
 
     <!-- 表单弹窗：添加/修改 -->
-    <ClassificationOfExperienceInformationForm
-      ref="formRef"
-      @success="getList"
-    />
+    <ConsumableManagementForm ref="formRef" @success="getList" />
   </div>
 </template>

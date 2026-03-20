@@ -21,7 +21,7 @@
         <div class="title">积水点监测/防涝事件</div>
         <ScrollBoard
           :config="leftData.CCDvScrollBoardConfig"
-          style=" height: calc(100% - 35px - 40px);padding: 15px 25px 25px"
+          style="height: calc(100% - 35px - 40px); padding: 15px 25px 25px"
         />
       </div>
     </div>

@@ -199,7 +199,7 @@ const resetForm = () => {
           "
           v-model="formData.evidenceDetail"
           placeholder="请补充证据详情（如设备编号、上传状态等）"
-          style=" width: 100%;margin-top: 10px"
+          style="width: 100%; margin-top: 10px"
         />
       </ElFormItem>
       <ElFormItem label="群众满意度" prop="satisfactionInvolved">
@@ -228,7 +228,7 @@ const resetForm = () => {
           "
           v-model="formData.rectifyRequirements"
           placeholder="请输入整改要求（如：3 日内补正执法文书）"
-          style=" width: 100%;margin-top: 10px"
+          style="width: 100%; margin-top: 10px"
         />
       </ElFormItem>
       <ElFormItem label="监督问题描述" prop="violationDescription">

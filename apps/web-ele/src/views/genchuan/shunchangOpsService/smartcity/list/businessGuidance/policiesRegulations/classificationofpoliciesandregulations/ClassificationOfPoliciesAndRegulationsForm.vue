@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { reactive, ref } from 'vue';
+
 import {
-  ElMessage,
+  ElButton,
   ElDialog,
   ElForm,
   ElFormItem,
   ElInput,
-  ElButton,
+  ElMessage,
 } from 'element-plus';
+
 import { ClassificationOfPoliciesAndRegulationsApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/businessGuidance/policiesRegulations/classificationofpoliciesandregulations';
 
 /** 政策法规分类 表单 */

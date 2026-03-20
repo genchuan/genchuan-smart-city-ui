@@ -203,10 +203,10 @@ const handleRemove = () => {
           </ElButton>
           <template #tip>
             <div class="el-upload__tip">
-              <div style=" margin-top: 4px; font-size: 12px;color: #f56c6c">
+              <div style="margin-top: 4px; font-size: 12px; color: #f56c6c">
                 大小不超过 5MB
               </div>
-              <div style=" margin-top: 4px; font-size: 12px;color: #f56c6c">
+              <div style="margin-top: 4px; font-size: 12px; color: #f56c6c">
                 格式为 doc/xls/ppt/txt/pdf 的文件
               </div>
             </div>
