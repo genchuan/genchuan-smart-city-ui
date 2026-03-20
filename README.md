@@ -3,8 +3,6 @@
 **「我喜欢写代码，乐此不疲」**  
 **「我喜欢做开源，以此为乐」**
 
-我 🐶 在上海艰苦奋斗，早中晚在 top3 大厂认真搬砖，夜里为开源做贡献。
-
 如果这个项目让你有所收获，记得 Star 关注哦，这对我是非常不错的鼓励与支持。
 
 ## 🐶 新手必读
@@ -18,7 +16,7 @@
 
 ## 🐯 平台简介
 
-**芋道**，以开发者为中心，打造中国第一流的快速开发平台，全部开源，个人与企业可 100% 免费使用。
+**亘川**
 
 - 采用最新 [vue-vben-admin](https://github.com/vbenjs/vue-vben-admin) v5 实现
 - 支持 [Ant Design Vue](https://www.antdv.com/) | [Element Plus](https://element-plus.org/zh-CN/) | [Naive UI](https://www.naiveui.com/) | [TDesign](https://tdesign.tencent.com/) 多种免费开源的中后台模版，具备如下特性：
