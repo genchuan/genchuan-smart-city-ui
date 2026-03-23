@@ -137,4 +137,14 @@ export function sendRectificationNotice(data) {
 /** 获取复审台账详情 */
 export function downLoadPdf(id) {
   return requestClient.download(`/kitchen/rectify-notice/download-pdf?rectifyNoticeId=${id}`);
+} 
+/** 整改台账分页 */
+export function getLedgerPage(params) {
+  return requestClient.get('kitchen/rectify-review/ledger-page', {
+    params,
+  });
+} 
+/** 获得企业详情接口 */
+export function getDetailEnObj(id) {
+ return requestClient.get(`/kitchen/enterprise-info/get?id=${id}`);
 }

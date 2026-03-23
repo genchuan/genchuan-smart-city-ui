@@ -313,6 +313,25 @@ export function useGridColumns() {
       slots: { default: 'ledgerCode' }, // 整改通知书复审台账唯一编号，预留钻取插槽
     }, 
     {
+      field: 'entName',
+      title: '企业名称',
+      minWidth: 200,
+      sortable: true,
+      slots: { default: 'entName' }, // 整改通知书复审台账唯一编号，预留钻取插槽
+    }, 
+    {
+      field: 'illegalTypeName',
+      title: '违规类型名称',
+      minWidth: 150,
+      sortable: true,
+    },
+    {
+      field: 'illegalLevelName',
+      title: '违规等级',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
       field: 'evidenceUrl',
       title: '违规证据链接',
       minWidth: 200,
@@ -325,14 +344,20 @@ export function useGridColumns() {
       sortable: true,
     },
     {
+      field: 'rectifyDeadlineTime',
+      title: '整改截止时间',
+      minWidth: 180,
+      sortable: true,
+    },
+    {
       field: 'reviewStatus',
       title: '复审状态',
       minWidth: 120,
       sortable: true,
     },
     {
-      field: 'reviewerId',
-      title: '复审人ID',
+      field: 'reviewUserName',
+      title: '复审人',
       minWidth: 120,
       sortable: true,
     },
@@ -343,20 +368,20 @@ export function useGridColumns() {
       sortable: true,
     },
     {
+      field: 'issueTime',
+      title: '下发时间',
+      minWidth: 180,
+      sortable: true,
+    },
+    {
       field: 'cancelTime',
       title: '撤销时间',
       minWidth: 180,
       sortable: true,
     },
     {
-      field: 'cancelReasonId',
-      title: '撤销原因ID',
-      minWidth: 120,
-      sortable: true,
-    },
-    {
-      field: 'lawLedgerCode',
-      title: '执法复审台账编号',
+      field: 'cancelReason',
+      title: '撤销原因',
       minWidth: 200,
       sortable: true,
     },
@@ -382,6 +407,24 @@ export function useGridColumns() {
       field: 'updater',
       title: '更新人',
       minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: 'rectifyStatus',
+      title: '整改反馈状态',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'lawReviewLedgerCode',
+      title: '执法复审台账编号',
+      minWidth: 200,
+      sortable: true,
+    },
+    {
+      field: 'rectifyNoticeCode',
+      title: '整改通知书编号',
+      minWidth: 200,
       sortable: true,
     },
     {

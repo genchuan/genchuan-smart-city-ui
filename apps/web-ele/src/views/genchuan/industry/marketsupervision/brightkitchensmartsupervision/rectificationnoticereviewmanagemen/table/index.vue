@@ -21,8 +21,9 @@ import {
   deleteRectifyEvidence,
   exporReviewExcel,
   getbatchEvidence,
+  getDetailEnObj,
+  getLedgerPage,
   getReasonList,
-  getRectifyList,
   sendReason,
   sendRectify,
   updateRectify,
@@ -34,6 +35,7 @@ import { formatTimestamp } from '#/utils';
 import { useFormSchema, useGridColumns } from './data';
 // 引入封装后的详情抽屉组件
 import ParkDetailDrawer from './detail.vue';
+import enDetailDrawer from './enDetail.vue';
 
 const props = defineProps({
   secondShow: {
@@ -179,7 +181,7 @@ const getTableData = async (pageObj) => {
     pageSize: pageObj.page.pageSize,
     ...dataObj.serachObj,
   };
-  const data = await getRectifyList(getParams);
+  const data = await getLedgerPage(getParams);
   dataObj.total = data.total;
   dataObj.list = data.list.map((v) => {
     return {
@@ -285,6 +287,7 @@ const handleFullShow = () => {
 
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
+const enDetailObjRef = ref(null);
 const dialogVisible = ref(false);
 const openImg = (url) => {
   dataObj.imgUrl = url;
@@ -474,6 +477,13 @@ const handleBack = async (row, formData) => {
     cancelReasonId: backForm.reason,
   });
 };
+const handleOpenEntName = async (row) => {
+  const res = await getDetailEnObj(row.entId);
+  dataObj.enDetailObj = res;
+  // 通过ref调用组件的open方法
+  enDetailObjRef.value.open();
+  console.log(row);
+};
 </script>
 
 <template>
@@ -639,6 +649,11 @@ const handleBack = async (row, formData) => {
       :detail-obj="dataObj.detailObj"
       title="详情"
     />
+    <enDetailDrawer
+      ref="enDetailObjRef"
+      :detail-obj="dataObj.enDetailObj"
+      title="详情"
+    />
 
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -699,6 +714,15 @@ const handleBack = async (row, formData) => {
         </div>
       </template>
 
+      <template #entName="{ row }">
+        <el-text
+          @click="handleOpenEntName(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.entName }}
+        </el-text>
+      </template>
       <template #ledgerCode="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
