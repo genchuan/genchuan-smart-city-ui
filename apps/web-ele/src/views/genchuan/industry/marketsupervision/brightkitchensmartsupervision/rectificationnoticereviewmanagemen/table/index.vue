@@ -20,6 +20,7 @@ import {
   addRectify,
   deleteRectifyEvidence,
   exporReviewExcel,
+  exporReviewPDF,
   getbatchEvidence,
   getDetailEnObj,
   getDetailillObj,
@@ -107,11 +108,17 @@ function handleRefresh() {
 async function handleExport() {
   const data = await exporReviewExcel();
   downloadFileFromBlobPart({
-    fileName: '整改通知书复审台账.xls',
+    fileName: '台账.xls',
     source: data,
   });
 }
-
+async function handlePDF() {
+  const data = await exporReviewPDF(checkedIds.value);
+  downloadFileFromBlobPart({
+    fileName: '台账pdf.zip',
+    source: data,
+  });
+}
 /** 创建角色 */
 function handleCreate() {
   formDrawerApi
@@ -189,8 +196,12 @@ const getTableData = async (pageObj) => {
   dataObj.list = data.list.map((v) => {
     return {
       ...v,
+      createTime: formatTimestamp(v.createTime),
       draftTime: formatTimestamp(v.draftTime),
-      alertCreateTime: formatTimestamp(v.alertCreateTime),
+      issueTime: formatTimestamp(v.issueTime),
+      rectifyDeadlineTime: formatTimestamp(v.rectifyDeadlineTime),
+      updateTime: formatTimestamp(v.updateTime),
+      reviewTime: formatTimestamp(v.reviewTime),
     };
   });
   isRedArray = [];
@@ -715,9 +726,14 @@ const gridRef = ref(null);
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
-            content="导出"
+            content="导出EXCEL"
             icon-name="download"
             @click="handleExport"
+          />
+          <IconButton
+            content="批量导出PDF"
+            icon-name="download"
+            @click="handlePDF"
           />
           <IconButton
             content="批量删除"

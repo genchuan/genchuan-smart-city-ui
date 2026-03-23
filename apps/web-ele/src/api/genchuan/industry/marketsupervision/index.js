@@ -11,6 +11,11 @@ export function exporReviewExcel() {
   return requestClient.download('/kitchen/rectify-review/export-excel');
 }
 
+/** pdf导出 */
+export function exporReviewPDF(id) {
+  return requestClient.download(`/kitchen/rectify-review/download-notice-pdf-batch?rectifyNoticeIds=${id}`);
+}
+
 /** 批量查看整改复审台账证据分页 */
 export function getRectifyEvidence(data) { 
   return requestClient.post('/kitchen/rectify-review/create', data);
