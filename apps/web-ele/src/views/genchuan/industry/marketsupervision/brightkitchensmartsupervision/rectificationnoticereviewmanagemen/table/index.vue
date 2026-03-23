@@ -21,6 +21,7 @@ import {
   deleteRectifyEvidence,
   exporReviewExcel,
   exporReviewPDF,
+  getAutoData,
   getbatchEvidence,
   getDetailEnObj,
   getDetailillObj,
@@ -196,6 +197,7 @@ const getTableData = async (pageObj) => {
   dataObj.list = data.list.map((v) => {
     return {
       ...v,
+      oldcreateTime: v.createTime,
       createTime: formatTimestamp(v.createTime),
       draftTime: formatTimestamp(v.draftTime),
       issueTime: formatTimestamp(v.issueTime),
@@ -207,7 +209,7 @@ const getTableData = async (pageObj) => {
   isRedArray = [];
   dataObj.list.forEach((v, i) => {
     if (
-      Date.now() - v.createTime > 24 * 60 * 60 * 1000 &&
+      Date.now() - v.oldcreateTime > 24 * 60 * 60 * 1000 &&
       v.reviewStatus === '待复审'
     ) {
       isRedArray.push(i);
@@ -522,6 +524,10 @@ const handleIllDetail = async (row) => {
   illDetailObjRef.value.open();
 };
 const gridRef = ref(null);
+const handleAuto = async () => {
+  const res = await getAutoData();
+  handleRefresh();
+};
 </script>
 
 <template>
@@ -724,6 +730,7 @@ const gridRef = ref(null);
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
+          <IconButton content="自动草拟" icon-name="sort" @click="handleAuto" />
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="导出EXCEL"
@@ -785,8 +792,13 @@ const gridRef = ref(null);
             {{ row.reviewStatus }}(逾期)
           </el-tag>
         </div>
-        <div v-else>
+        <div v-else-if="row.reviewStatus === '待复审'">
           <el-tag size="small" type="success" effect="plain">
+            {{ row.reviewStatus }}
+          </el-tag>
+        </div>
+        <div v-else>
+          <el-tag size="small" effect="plain">
             {{ row.reviewStatus }}
           </el-tag>
         </div>

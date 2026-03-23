@@ -157,3 +157,7 @@ export function getDetailEnObj(id) {
 export function getDetailillObj(id) {
  return requestClient.get(`/kitchen/illegal-type-dict/get?id=${id}`);
 }
+/** 自动草拟 */
+export function getAutoData(id) {
+ return requestClient.post(`/kitchen/rectify-review/review-add2`,{});
+}
