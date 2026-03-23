@@ -249,8 +249,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     rowStyle({ rowIndex }) {
       if (isRedArray.includes(rowIndex)) {
         return {
-          backgroundColor: 'red',
-          color: '#ffffff',
+          backgroundColor: '#F56C6C',
         };
       }
     },
@@ -763,6 +762,18 @@ const gridRef = ref(null);
         >
           {{ row.ledgerCode }}
         </el-text>
+      </template>
+      <template #reviewStatus="{ row }">
+        <div v-if="row.overdueFlag === 1">
+          <el-tag size="small" type="danger" effect="plain">
+            {{ row.reviewStatus }}(逾期)
+          </el-tag>
+        </div>
+        <div v-else>
+          <el-tag size="small" type="success" effect="plain">
+            {{ row.reviewStatus }}
+          </el-tag>
+        </div>
       </template>
       <template #illegalTypeName="{ row }">
         <el-text

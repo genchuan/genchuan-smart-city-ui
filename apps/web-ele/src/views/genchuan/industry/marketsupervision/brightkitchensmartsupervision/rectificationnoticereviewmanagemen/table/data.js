@@ -333,6 +333,13 @@ export function useGridColumns() {
       sortable: true,
     },
     {
+      field: 'reviewStatus',
+      title: '复审状态',
+      minWidth: 120,
+      sortable: true,
+      slots: { default: 'reviewStatus' },
+    },
+    {
       field: 'evidenceUrl',
       title: '违规证据链接',
       minWidth: 200,
@@ -344,18 +351,12 @@ export function useGridColumns() {
       minWidth: 180,
       sortable: true,
     },
-    {
-      field: 'rectifyDeadlineTime',
-      title: '整改截止时间',
-      minWidth: 180,
-      sortable: true,
-    },
-    {
-      field: 'reviewStatus',
-      title: '复审状态',
-      minWidth: 120,
-      sortable: true,
-    },
+    // {
+    //   field: 'rectifyDeadlineTime',
+    //   title: '整改截止时间',
+    //   minWidth: 180,
+    //   sortable: true,
+    // }, 
     {
       field: 'reviewUserName',
       title: '复审人',
