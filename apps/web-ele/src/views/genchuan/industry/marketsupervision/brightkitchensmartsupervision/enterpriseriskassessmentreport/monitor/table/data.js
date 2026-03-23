@@ -358,6 +358,7 @@ export function useGridColumns() {
       title: '企业名称',
       minWidth: 200,
       sortable: true,
+      slots: { default: 'companyName' },
     },
     {
       field: 'affiliatedArea',
