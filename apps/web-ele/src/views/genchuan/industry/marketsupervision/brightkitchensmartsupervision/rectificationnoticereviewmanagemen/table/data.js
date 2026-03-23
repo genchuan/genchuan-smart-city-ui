@@ -324,6 +324,7 @@ export function useGridColumns() {
       title: '违规类型名称',
       minWidth: 150,
       sortable: true,
+      slots: { default: 'illegalTypeName' },
     },
     {
       field: 'illegalLevelName',

@@ -148,3 +148,7 @@ export function getLedgerPage(params) {
 export function getDetailEnObj(id) {
  return requestClient.get(`/kitchen/enterprise-info/get?id=${id}`);
 }
+/** 获得违规类型详情接口 */
+export function getDetailillObj(id) {
+ return requestClient.get(`/kitchen/illegal-type-dict/get?id=${id}`);
+}

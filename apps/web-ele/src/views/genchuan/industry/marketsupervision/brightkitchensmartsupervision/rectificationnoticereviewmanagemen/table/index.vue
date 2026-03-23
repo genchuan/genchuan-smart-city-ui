@@ -22,6 +22,7 @@ import {
   exporReviewExcel,
   getbatchEvidence,
   getDetailEnObj,
+  getDetailillObj,
   getLedgerPage,
   getReasonList,
   sendReason,
@@ -36,6 +37,7 @@ import { useFormSchema, useGridColumns } from './data';
 // 引入封装后的详情抽屉组件
 import ParkDetailDrawer from './detail.vue';
 import enDetailDrawer from './enDetail.vue';
+import illDetailDrawer from './illDetail.vue';
 
 const props = defineProps({
   secondShow: {
@@ -288,6 +290,7 @@ const handleFullShow = () => {
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
 const enDetailObjRef = ref(null);
+const illDetailObjRef = ref(null);
 const dialogVisible = ref(false);
 const openImg = (url) => {
   dataObj.imgUrl = url;
@@ -484,6 +487,12 @@ const handleOpenEntName = async (row) => {
   enDetailObjRef.value.open();
   console.log(row);
 };
+const handleIllDetail = async (row) => {
+  const res = await getDetailillObj(row.illegalTypeId);
+  dataObj.illDetailObj = res;
+  // 通过ref调用组件的open方法
+  illDetailObjRef.value.open();
+};
 </script>
 
 <template>
@@ -654,7 +663,11 @@ const handleOpenEntName = async (row) => {
       :detail-obj="dataObj.enDetailObj"
       title="详情"
     />
-
+    <illDetailDrawer
+      ref="illDetailObjRef"
+      :detail-obj="dataObj.illDetailObj"
+      title="详情"
+    />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -730,6 +743,15 @@ const handleOpenEntName = async (row) => {
           type="primary"
         >
           {{ row.ledgerCode }}
+        </el-text>
+      </template>
+      <template #illegalTypeName="{ row }">
+        <el-text
+          @click="handleIllDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.illegalTypeName }}
         </el-text>
       </template>
 
