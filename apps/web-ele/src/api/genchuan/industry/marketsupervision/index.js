@@ -165,3 +165,7 @@ export function getAutoData(id) {
 export function getLogList(data) { 
  return requestClient.get(`/kitchen/sys-operation-log/page`,data);
 }
+/** 获取草拟详情 */
+export function getCaoNiDetail(id) {
+ return requestClient.get(`/kitchen/rectify-notice/get?id=${id}`);
+}

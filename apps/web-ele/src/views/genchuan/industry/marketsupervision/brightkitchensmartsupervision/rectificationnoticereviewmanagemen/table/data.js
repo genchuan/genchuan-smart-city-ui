@@ -76,7 +76,6 @@ export function useFormSchema() {
       labelWidth: '120',
       rules: 'required', // 台账编号为必填项
       isEdit: true,
-      isSearch: true
     }, 
     {
       fieldName: 'reviewUserName',
@@ -89,7 +88,6 @@ export function useFormSchema() {
       labelWidth: '120',
       rules: 'required', // 台账编号为必填项
       isEdit: true,
-      isSearch: true
     }, 
   ];
 }

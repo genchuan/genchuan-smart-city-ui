@@ -23,6 +23,7 @@ import {
   exporReviewPDF,
   getAutoData,
   getbatchEvidence,
+  getCaoNiDetail,
   getDetailEnObj,
   getDetailillObj,
   getLedgerPage,
@@ -35,6 +36,7 @@ import {
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
 
+import caoniDetailDrawer from './caoniDetail.vue';
 import { useFormSchema, useGridColumns } from './data';
 // 引入封装后的详情抽屉组件
 import ParkDetailDrawer from './detail.vue';
@@ -533,6 +535,12 @@ const handleAuto = async () => {
   const res = await getAutoData();
   handleRefresh();
 };
+const rectifyRef = ref(null);
+const handleAutoDetail = async (row) => {
+  const res = await getCaoNiDetail(row.rectifyNoticeId);
+  dataObj.rectifyObj = res;
+  rectifyRef.value.open();
+};
 </script>
 
 <template>
@@ -708,6 +716,11 @@ const handleAuto = async () => {
       :detail-obj="dataObj.illDetailObj"
       title="详情"
     />
+    <caoniDetailDrawer
+      ref="rectifyRef"
+      :detail-obj="dataObj.rectifyObj"
+      title="详情"
+    />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -856,6 +869,11 @@ const handleAuto = async () => {
             content="上传复审证据"
             icon-name="Upload"
             @click="handleUpdateFile(row)"
+          />
+          <IconButton
+            content="查看草拟通知书"
+            icon-name="View"
+            @click="handleAutoDetail(row)"
           />
           <IconButton
             content="详情"
