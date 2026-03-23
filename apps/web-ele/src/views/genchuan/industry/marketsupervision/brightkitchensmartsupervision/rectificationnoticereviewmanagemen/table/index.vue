@@ -176,6 +176,7 @@ const dataObj = reactive({
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
+let isRedArray = [];
 // 表格数据获取
 const getTableData = async (pageObj) => {
   const getParams = {
@@ -191,6 +192,15 @@ const getTableData = async (pageObj) => {
       draftTime: formatTimestamp(v.draftTime),
       alertCreateTime: formatTimestamp(v.alertCreateTime),
     };
+  });
+  isRedArray = [];
+  dataObj.list.forEach((v, i) => {
+    if (
+      Date.now() - v.createTime > 24 * 60 * 60 * 1000 &&
+      v.reviewStatus === '待复审'
+    ) {
+      isRedArray.push(i);
+    }
   });
   return dataObj;
 };
@@ -236,6 +246,14 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
     keepSource: true,
+    rowStyle({ rowIndex }) {
+      if (isRedArray.includes(rowIndex)) {
+        return {
+          backgroundColor: 'red',
+          color: '#ffffff',
+        };
+      }
+    },
     proxyConfig: {
       ajax: {
         query: async ({ page }) => getTableData({ page }),
@@ -493,6 +511,7 @@ const handleIllDetail = async (row) => {
   // 通过ref调用组件的open方法
   illDetailObjRef.value.open();
 };
+const gridRef = ref(null);
 </script>
 
 <template>
@@ -672,7 +691,7 @@ const handleIllDetail = async (row) => {
       <QueryForm class="query-form" />
     </Drawer>
 
-    <Grid>
+    <Grid ref="gridRef">
       <!-- 三级状态 -->
       <template #table-title>
         <div class="tabel-tabs">
