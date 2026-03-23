@@ -308,6 +308,7 @@ const arrowChange = () => {
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
+          <IconButton content="手动刷新月报" icon-name="refresh" />
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="导出"

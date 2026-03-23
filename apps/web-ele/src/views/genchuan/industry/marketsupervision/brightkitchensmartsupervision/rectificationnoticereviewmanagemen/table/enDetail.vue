@@ -91,15 +91,7 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">企业经营状态:</div>
         <div class="detail-row-right">
-          {{
-            detailObj.status === 2
-              ? '正常'
-              : detailObj.status === 0
-                ? '停业'
-                : detailObj.status === 1
-                  ? '注销'
-                  : '-'
-          }}
+          {{ detailObj.status }}
         </div>
       </div>
       <div class="detail-card-row">

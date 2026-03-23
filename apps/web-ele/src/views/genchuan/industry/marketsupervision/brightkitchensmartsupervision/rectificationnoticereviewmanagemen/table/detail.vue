@@ -218,22 +218,6 @@ defineExpose({
         <div class="detail-row-left">送达状态:</div>
         <div class="detail-row-right">{{ detailObj.receiveStatus || '-' }}</div>
       </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">企业整改反馈状态:</div>
-        <div class="detail-row-right">{{ detailObj.rectifyStatus || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">执法复审台账编号:</div>
-        <div class="detail-row-right">
-          {{ detailObj.lawReviewLedgerCode || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">整改通知书编号:</div>
-        <div class="detail-row-right">
-          {{ detailObj.rectifyNoticeCode || '-' }}
-        </div>
-      </div>
     </div>
   </DetailDrawer>
 </template>

@@ -185,6 +185,7 @@ export function useGridColumns() {
       title: '撤销原因',
       minWidth: 200,
       sortable: true,
+      slots: { default: 'cancelReason' },
     },
     {
       field: 'createTime',
@@ -198,36 +199,7 @@ export function useGridColumns() {
       minWidth: 180,
       sortable: true,
     },
-    {
-      field: 'creator',
-      title: '创建人',
-      minWidth: 100,
-      sortable: true,
-    },
-    {
-      field: 'updater',
-      title: '更新人',
-      minWidth: 100,
-      sortable: true,
-    },
-    {
-      field: 'rectifyStatus',
-      title: '整改反馈状态',
-      minWidth: 120,
-      sortable: true,
-    },
-    {
-      field: 'lawReviewLedgerCode',
-      title: '执法复审台账编号',
-      minWidth: 200,
-      sortable: true,
-    },
-    {
-      field: 'rectifyNoticeCode',
-      title: '整改通知书编号',
-      minWidth: 200,
-      sortable: true,
-    },
+     
     {
       title: '操作',
       width: 180,

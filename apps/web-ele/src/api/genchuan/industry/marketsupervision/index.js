@@ -7,8 +7,8 @@ export function getWarnList(params) {
  
 
 /** excel导出 */
-export function exporReviewExcel() {
-  return requestClient.download('/kitchen/rectify-review/export-excel');
+export function exporReviewExcel(id) {
+  return requestClient.download(`/kitchen/rectify-review/export-excel?idList=${id}`);
 }
 
 /** pdf导出 */
@@ -120,7 +120,7 @@ export function sendNoApprove(data) {
 }
 /** 下发整改 */
 export function sendRectify(data) {
-  return requestClient.post(`/kitchen/rectify-review/review-issue`, data);
+  return requestClient.post(`/kitchen/rectify-review/review-issue2`, data);
 }
 
 /** 获取撤销原因 */
@@ -160,4 +160,8 @@ export function getDetailillObj(id) {
 /** 自动草拟 */
 export function getAutoData(id) {
  return requestClient.post(`/kitchen/rectify-review/review-add2`,{});
+}
+/** 获取日志 */
+export function getLogList(data) { 
+ return requestClient.get(`/kitchen/sys-operation-log/page`,data);
 }

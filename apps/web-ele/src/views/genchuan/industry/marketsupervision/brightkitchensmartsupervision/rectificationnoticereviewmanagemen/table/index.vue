@@ -107,7 +107,7 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  const data = await exporReviewExcel();
+  const data = await exporReviewExcel(checkedIds.value);
   downloadFileFromBlobPart({
     fileName: '台账.xls',
     source: data,
@@ -201,6 +201,7 @@ const getTableData = async (pageObj) => {
       createTime: formatTimestamp(v.createTime),
       draftTime: formatTimestamp(v.draftTime),
       issueTime: formatTimestamp(v.issueTime),
+      cancelTime: formatTimestamp(v.cancelTime),
       rectifyDeadlineTime: formatTimestamp(v.rectifyDeadlineTime),
       updateTime: formatTimestamp(v.updateTime),
       reviewTime: formatTimestamp(v.reviewTime),
@@ -454,6 +455,8 @@ const handleSendFileConfirm = async (row) => {
     );
     // 用户确认后执行原逻辑
     await handleSendFile(row);
+
+    handleRefresh();
     ElMessage.success('通知书下发成功！');
   } catch {
     // 用户取消则不执行任何操作
@@ -509,6 +512,8 @@ const handleBack = async (row, formData) => {
     id: row.id,
     cancelReasonId: backForm.reason,
   });
+
+  handleRefresh();
 };
 const handleOpenEntName = async (row) => {
   const res = await getDetailEnObj(row.entId);
@@ -730,11 +735,12 @@ const handleAuto = async () => {
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="自动草拟" icon-name="sort" @click="handleAuto" />
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton content="新增" icon-name="Plus" @click="handleAuto" />
+          <!-- <IconButton content="新增" icon-name="Plus" @click="handleCreate" /> -->
           <IconButton
             content="导出EXCEL"
             icon-name="download"
+            :disabled="isEmpty(checkedIds)"
             @click="handleExport"
           />
           <IconButton
@@ -811,6 +817,9 @@ const handleAuto = async () => {
         >
           {{ row.illegalTypeName }}
         </el-text>
+      </template>
+      <template #cancelReason="{ row }">
+        {{ row.cancelReason || '--' }}
       </template>
 
       <template #driveInPhoto="{ row }">

@@ -3,17 +3,18 @@ import { computed, defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
+// 引入时间格式化工具（根据项目实际路径调整）
 import { formatTimestamp } from '#/utils';
 
 // 定义组件接收的属性
 const props = defineProps({
-  // AI场景告警详情数据对象
+  // 审计记录详情数据对象
   detailObj: {
     type: Object,
     required: true,
     default: () => ({}),
   },
-  // 抽屉标题（可选，默认使用分类编码）
+  // 抽屉标题（可选，默认使用审计记录ID）
   title: {
     type: String,
     default: '',
@@ -22,10 +23,10 @@ const props = defineProps({
 
 const { detailObj, title } = toRefs(props);
 
-// 计算属性处理标题，优先使用分类编码，兜底显示默认值
+// 计算属性处理标题，优先使用审计记录ID，兜底显示默认值
 const drawerTitle = computed(() => {
-  const alertCategory = detailObj.value?.alertCategory || 'AI场景告警';
-  return title.value || `${alertCategory}详情`;
+  const auditId = detailObj.value?.id || '审计记录';
+  return title.value || `${auditId}详情`;
 });
 
 // 初始化抽屉实例
@@ -33,13 +34,24 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 700, // 适配AI告警字段数量调整宽度
+  width: 700,
   onCancel() {
     detailDrawerApi.close();
   },
   onConfirm() {},
   async onOpenChange() {},
 });
+
+// 格式化批量操作信息（JSON字符串美化）
+const formatBatchSelectInfo = (info) => {
+  if (!info) return '-';
+  try {
+    const json = typeof info === 'string' ? JSON.parse(info) : info;
+    return JSON.stringify(json, null, 2);
+  } catch {
+    return info;
+  }
+};
 
 // 对外暴露打开/关闭抽屉的方法
 defineExpose({
@@ -51,41 +63,55 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- AI场景告警基础字段展示 -->
+      <!-- 审计记录基础信息 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">主键ID:</div>
+        <div class="detail-row-left">审计记录ID:</div>
         <div class="detail-row-right">{{ detailObj.id || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">分类编码:</div>
-        <div class="detail-row-right">{{ detailObj.typeCategory || '-' }}</div>
+        <div class="detail-row-left">操作人ID:</div>
+        <div class="detail-row-right">{{ detailObj.operUserId || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">违规类型编码:</div>
-        <div class="detail-row-right">{{ detailObj.typeCode || '-' }}</div>
+        <div class="detail-row-left">操作人姓名:</div>
+        <div class="detail-row-right">{{ detailObj.operUserName || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">违规类型名称:</div>
-        <div class="detail-row-right">{{ detailObj.typeName || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">违法行为说明:</div>
+        <div class="detail-row-left">操作时间:</div>
         <div class="detail-row-right">
-          {{ detailObj.illegalBehaviorDescription || '-' }}
+          {{ detailObj.operTime ? formatTimestamp(detailObj.operTime) : '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">告警设备说明:</div>
+        <div class="detail-row-left">操作类型:</div>
+        <div class="detail-row-right">{{ detailObj.operType || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">操作对象:</div>
+        <div class="detail-row-right">{{ detailObj.operObject || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">操作结果:</div>
+        <div class="detail-row-right">{{ detailObj.operResult || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">批量操作信息:</div>
         <div class="detail-row-right">
-          {{ detailObj.alarmDeviceDescription || '-' }}
+          <pre class="json-text">{{
+            formatBatchSelectInfo(detailObj.batchSelectInfo)
+          }}</pre>
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">排序序号:</div>
-        <div class="detail-row-right">{{ detailObj.sort || '-' }}</div>
+        <div class="detail-row-left">操作IP地址:</div>
+        <div class="detail-row-right">{{ detailObj.operIp || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">创建时间:</div>
+        <div class="detail-row-left">操作描述:</div>
+        <div class="detail-row-right">{{ detailObj.operDesc || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">记录创建时间:</div>
         <div class="detail-row-right">
           {{
             detailObj.createTime ? formatTimestamp(detailObj.createTime) : '-'
@@ -102,8 +128,8 @@ defineExpose({
   padding: 20px;
   background-color: #f9fafb;
   border-radius: 8px;
-  min-height: 300px;
-  max-height: 50vh;
+  min-height: 500px;
+  max-height: 70vh;
   overflow-y: auto;
 }
 
@@ -149,6 +175,19 @@ defineExpose({
   padding-right: 10px;
 }
 
+// JSON文本样式
+.json-text {
+  width: 100%;
+  padding: 8px 12px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #333;
+  overflow-x: auto;
+  margin: 4px 0 0 0;
+}
+
 // 响应式适配
 @media (max-width: 768px) {
   .detail-row-left {
@@ -156,7 +195,7 @@ defineExpose({
   }
   .detail-card {
     padding: 15px;
-    max-height: 40vh;
+    max-height: 60vh;
   }
 }
 
@@ -174,5 +213,18 @@ defineExpose({
 }
 .detail-card::-webkit-scrollbar-thumb:hover {
   background: #c0c4cc;
+}
+
+// JSON文本滚动条优化
+.json-text::-webkit-scrollbar {
+  height: 6px;
+}
+.json-text::-webkit-scrollbar-track {
+  background: #e9e9e9;
+  border-radius: 3px;
+}
+.json-text::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
 }
 </style>
