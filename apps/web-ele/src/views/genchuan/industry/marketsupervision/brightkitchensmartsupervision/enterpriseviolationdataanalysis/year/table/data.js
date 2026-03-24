@@ -334,6 +334,7 @@ export function useGridColumns() {
       title: '报告编号',
       minWidth: 200,
       sortable: true, 
+      slots: { default: 'reportNumber' },
     },
     {
       field: 'statYear',

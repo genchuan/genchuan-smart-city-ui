@@ -89,7 +89,7 @@ const arrowChange = () => {
     v.arrowShow = !v.arrowShow;
   });
 };
-const activeName = ref('月报');
+const activeName = ref('日报');
 const tabChange = (item) => {
   tabArray.value.forEach((v) => {
     v.showSecondary = false;
