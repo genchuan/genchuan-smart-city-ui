@@ -1,4 +1,35 @@
-// 新增/编辑表单 schema（公园基础信息）
+import { requestClient } from '#/api/request';
+
+// ========== 新增 options 接口 ==========
+export function getAreaOptions() {
+  return requestClient.get('/envirhealth/area/options');
+}
+
+export function getUserOptions() {
+  return requestClient.get('/envirhealth/user/options');
+}
+
+export function getOperationStatusOptions() {
+  return requestClient.get('/envirhealth/operation-status/options');
+}
+
+export function getGreenTypeOptions() {
+  return requestClient.get('/envirhealth/green-type/options');
+}
+
+export function getVehicleOptions() {
+  return requestClient.get('/envirhealth/vehicle/options');
+}
+
+export function getTimePeriodOptions() {
+  return requestClient.get('/envirhealth/collection-time-period/options');
+}
+
+export function getFacilityOptions() {
+  return requestClient.get('/envirhealth/facility/options');
+}
+
+// ========== 原有新增/编辑表单 schema（用于非“全部”标签页，字段名基于模拟数据） ==========
 export function useFormSchema() {
   return [
     {
@@ -88,25 +119,131 @@ export function useFormSchema() {
   ];
 }
 
-// 根据状态获取表格列定义
+// ========== 新增：用于“全部”标签页的编辑表单 schema（字段名与接口一致） ==========
+export function useParkEditSchema() {
+  return [
+    {
+      fieldName: 'name',
+      label: '公园名称',
+      component: 'Input',
+      componentProps: { placeholder: '请输入公园名称' },
+    },
+    {
+      fieldName: 'address',
+      label: '公园地址',
+      component: 'Input',
+      componentProps: { placeholder: '请输入详细地址' },
+    },
+    {
+      fieldName: 'areaCode',
+      label: '所属区域',
+      component: 'Select',
+      componentProps: { placeholder: '请选择区域', options: [] },
+    },
+    {
+      fieldName: 'cleaningFrequency',
+      label: '保洁频次',
+      component: 'Input',
+      componentProps: { placeholder: '请输入保洁频次，如每30分钟1次' },
+    },
+    {
+      fieldName: 'greenMaintenanceCycle',
+      label: '绿化养护周期',
+      component: 'Input',
+      componentProps: { placeholder: '请输入养护周期，如季度/月度' },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'managerId',
+      label: '负责人',
+      component: 'Select',
+      componentProps: { placeholder: '请选择负责人', options: [] },
+    },
+    {
+      fieldName: 'operationStatusId',
+      label: '运营状态',
+      component: 'Select',
+      componentProps: { placeholder: '请选择状态', options: [] },
+    },
+  ];
+}
+
+// ========== 新增：搜索表单 schema（用于“全部”标签页） ==========
+export function useParkSearchSchema() {
+  return [
+    {
+      fieldName: 'areaCode',
+      label: '所属区域',
+      component: 'Select',
+      componentProps: { placeholder: '请选择区域', options: [], clearable: true },
+    },
+    {
+      fieldName: 'operationStatusId',
+      label: '运营状态',
+      component: 'Select',
+      componentProps: { placeholder: '请选择状态', options: [], clearable: true },
+    },
+    {
+      fieldName: 'managerId',
+      label: '负责人',
+      component: 'Select',
+      componentProps: { placeholder: '请选择负责人', options: [], clearable: true },
+    },
+  ];
+}
+
+// ========== 表格列配置（按状态筛选）==========
+// ！！！仅修改“全部”标签页的列字段名为接口字段，其他状态列完全保留原样 ！！！
 export function getColumnsByStatus(status) {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const statusColumnsMap = {
+    // 【修改】全部标签页：使用接口返回的字段名
     全部: [
-      { field: 'toiletName', title: '公园名称', minWidth: 150, sortable: true, slots: { default: 'toiletName' } },
-      { field: 'location', title: '公园地址', minWidth: 200, sortable: true },
-      { field: 'area', title: '所属区域', minWidth: 180, sortable: true, slots: { default: 'area' } },
+      { field: 'name', title: '公园名称', minWidth: 160, sortable: true, slots: { default: 'name' } },
+      { field: 'address', title: '公园地址', minWidth: 200, sortable: true },
+      { field: 'areaName', title: '所属区域', minWidth: 180, sortable: true },
       { field: 'cleaningFrequency', title: '保洁频次', minWidth: 120, sortable: true },
-      { field: 'greenMaintenanceCycle', title: '绿化养护周期(天)', minWidth: 150, sortable: true },
-      { field: 'manager', title: '负责人', minWidth: 120, sortable: true },
-      { field: 'status', title: '运营状态', minWidth: 120, sortable: true, slots: { default: 'status' } },
-      { field: 'cleaningRate', title: '保洁达标率(%)', minWidth: 130, sortable: true, formatter: ({ cellValue }) => (cellValue !== undefined ? `${cellValue}%` : '-') },
-      { field: 'greenSurvivalRate', title: '绿化存活率(%)', minWidth: 130, sortable: true, formatter: ({ cellValue }) => (cellValue !== undefined ? `${cellValue}%` : '-') },
-      { field: 'facilityRate', title: '设施完好率(%)', minWidth: 130, sortable: true, formatter: ({ cellValue }) => (cellValue !== undefined ? `${cellValue}%` : '-') },
-      { field: 'environmentRate', title: '环境达标率(%)', minWidth: 130, sortable: true, formatter: ({ cellValue }) => (cellValue !== undefined ? `${cellValue}%` : '-') },
-      { field: 'wasteTransferCompleteRate', title: '清运完成率(%)', minWidth: 130, sortable: true, formatter: ({ cellValue }) => (cellValue !== undefined ? `${cellValue}%` : '-') },
+      { field: 'greenMaintenanceCycle', title: '绿化养护周期', minWidth: 150, sortable: true },
+      { field: 'managerName', title: '负责人', minWidth: 120, sortable: true },
+      { field: 'operationStatusName', title: '运营状态', minWidth: 120, sortable: true },
+      {
+        field: 'cleaningRate',
+        title: '保洁达标率(%)',
+        minWidth: 130,
+        sortable: true,
+        formatter: ({ cellValue }) => (cellValue != null ? `${cellValue}%` : '-'),
+      },
+      {
+        field: 'greenSurvivalRate',
+        title: '绿化存活率(%)',
+        minWidth: 130,
+        sortable: true,
+        formatter: ({ cellValue }) => (cellValue != null ? `${cellValue}%` : '-'),
+      },
+      {
+        field: 'facilityRate',
+        title: '设施完好率(%)',
+        minWidth: 130,
+        sortable: true,
+        formatter: ({ cellValue }) => (cellValue != null ? `${cellValue}%` : '-'),
+      },
+      {
+        field: 'environmentRate',
+        title: '环境达标率(%)',
+        minWidth: 130,
+        sortable: true,
+        formatter: ({ cellValue }) => (cellValue != null ? `${cellValue}%` : '-'),
+      },
+      {
+        field: 'wasteTransferCompleteRate',
+        title: '清运完成率(%)',
+        minWidth: 130,
+        sortable: true,
+        formatter: ({ cellValue }) => (cellValue != null ? `${cellValue}%` : '-'),
+      },
     ],
+    // 以下五个标签页的列配置完全保留原样（基于模拟数据字段）
     保洁待执行: [
       { field: 'toiletName', title: '公园名称', minWidth: 150, sortable: true, slots: { default: 'toiletName' } },
       { field: 'cleaningArea', title: '保洁区域', minWidth: 180, sortable: true },

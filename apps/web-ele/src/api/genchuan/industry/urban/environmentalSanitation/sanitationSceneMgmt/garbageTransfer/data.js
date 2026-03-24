@@ -1,3 +1,48 @@
+import { baseRequestClient, requestClient } from '#/api/request';
+import { useAccessStore } from '@vben/stores';
+
+// 分页查询（全部）
+export function getGarbageTransferPage(params) {
+  return requestClient.get('/envirhealth/garbage-transfer/detail-page', { params });
+}
+
+// 新增
+export function createGarbageTransfer(data) {
+  return requestClient.post('/envirhealth/garbage-transfer/create', data);
+}
+
+// 修改
+export function updateGarbageTransfer(data) {
+  return requestClient.put('/envirhealth/garbage-transfer/update', data);
+}
+
+// 单个删除
+export function deleteGarbageTransfer(id) {
+  return requestClient.delete(`/envirhealth/garbage-transfer/delete?id=${id}`);
+}
+
+// 批量删除
+export function deleteGarbageTransferBatch(ids) {
+  return requestClient.delete('/envirhealth/garbage-transfer/delete-batch', { data: ids });
+}
+
+// 导出 Excel
+export function exportGarbageTransferExcel(params) {
+  const accessStore = useAccessStore(); // 根据需要引入token
+  return baseRequestClient.get('/envirhealth/garbage-transfer/export-excel', {
+    params,
+    responseType: 'blob',
+    headers: {
+      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
+    },
+  });
+}
+
+// 获取垃圾转运站统计数据
+export function getGarbageTransferChartDashboard() {
+  return requestClient.get('/envirhealth/garbage-transfer/chart/dashboard');
+}
+
 // 模拟垃圾转运站运营管理数据
 export const dataList = () => {
   return [

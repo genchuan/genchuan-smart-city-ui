@@ -1,3 +1,48 @@
+import { baseRequestClient, requestClient } from '#/api/request';
+import { useAccessStore } from '@vben/stores';
+
+// 分页查询（全部）
+export function getPublicInstitutionPage(params) {
+  return requestClient.get('/envirhealth/public-institution/detail-page', { params });
+}
+
+// 新增
+export function createPublicInstitution(data) {
+  return requestClient.post('/envirhealth/public-institution/create', data);
+}
+
+// 修改
+export function updatePublicInstitution(data) {
+  return requestClient.put('/envirhealth/public-institution/update', data);
+}
+
+// 单个删除
+export function deletePublicInstitution(id) {
+  return requestClient.delete(`/envirhealth/public-institution/delete?id=${id}`);
+}
+
+// 批量删除
+export function deletePublicInstitutionBatch(ids) {
+  return requestClient.delete('/envirhealth/public-institution/delete-batch', { data: ids });
+}
+
+// 导出 Excel
+export function exportPublicInstitutionExcel(params) {
+  const accessStore = useAccessStore();
+  return baseRequestClient.get('/envirhealth/public-institution/export-excel', {
+    params,
+    responseType: 'blob',
+    headers: {
+      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
+    },
+  });
+}
+
+// 获取公共机构环境管理统计数据
+export function getPublicInstitutionChartDashboard() {
+  return requestClient.get('/envirhealth/public-institution/chart/dashboard');
+}
+
 // 模拟公共机构环境管理数据
 export const dataList = () => {
   return [

@@ -65,8 +65,6 @@ const proofList = computed(() => {
       <div class="detail-row"><span class="label">完成率：</span>{{ detailObj.completionRate ?? '-' }}%</div>
       <div class="detail-row"><span class="label">是否异常：</span>{{ detailObj.isAbnormal === 1 ? '是' : '否' }}</div>
       <div class="detail-row" v-if="detailObj.abnormalDesc"><span class="label">异常描述：</span>{{ detailObj.abnormalDesc }}</div>
-
-      <div class="detail-section" v-if="proofList.length">📎 佐证材料</div>
       <div class="detail-row" v-if="proofList.length">
         <span class="label">佐证材料：</span>
         <div class="photo-list">
@@ -81,8 +79,9 @@ const proofList = computed(() => {
           />
         </div>
       </div>
-
-      <div class="detail-section">📅 系统信息</div>
+      <div class="detail-row" v-if="detailObj.reviewDesc">
+        <span class="label">复盘意见：</span>{{ detailObj.reviewDesc }}
+      </div>
       <div class="detail-row"><span class="label">创建时间：</span>{{ detailObj.createTime || '-' }}</div>
     </div>
   </DetailDrawer>

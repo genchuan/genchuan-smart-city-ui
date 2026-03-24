@@ -1,95 +1,155 @@
-// 新增/编辑表单 schema（此处改为转运站基础信息）
-export function useFormSchema() {
+import { requestClient } from '#/api/request';
+
+// ---------- options 接口（新增） ----------
+export function getAreaOptions() {
+  return requestClient.get('/envirhealth/area/options');
+}
+
+export function getUserOptions() {
+  return requestClient.get('/envirhealth/user/options');
+}
+
+export function getOperationStatusOptions() {
+  return requestClient.get('/envirhealth/operation-status/options');
+}
+
+// 设备选项（如果后端有设备表则调用接口，否则用静态数据）
+export function getEquipmentOptions() {
+  // 若后端提供了设备选项接口，可替换为 requestClient.get('/envirhealth/equipment/options')
+  return Promise.resolve([
+    { label: '垃圾压缩机', value: 'uuid-equip-001' },
+    { label: '输送机', value: 'uuid-equip-002' },
+    { label: '除臭设备', value: 'uuid-equip-003' },
+    { label: '地磅', value: 'uuid-equip-004' },
+    { label: '监控设备', value: 'uuid-equip-005' },
+    { label: '喷淋设备', value: 'uuid-equip-006' },
+    { label: '叉车', value: 'uuid-equip-007' },
+    { label: '装载机', value: 'uuid-equip-008' },
+  ]);
+}
+
+// ---------- 新增/编辑表单 schema（更新，采用后端字段名） ----------
+export function useGarbageTransferFormSchema() {
   return [
     {
-      fieldName: 'toiletName',
+      fieldName: 'name',
       label: '转运站名称',
       component: 'Input',
       componentProps: { placeholder: '请输入转运站名称' },
-      labelWidth: '120',
-      rules: 'required',
     },
     {
       fieldName: 'location',
       label: '转运站位置',
       component: 'Input',
       componentProps: { placeholder: '请输入详细地址' },
-      labelWidth: '120',
-      rules: 'required',
     },
     {
-      fieldName: 'area',
+      fieldName: 'areaCode',
       label: '所属区域',
-      component: 'Input',
-      componentProps: { placeholder: '如：芗城区-巷口街道' },
-      labelWidth: '120',
-      rules: 'required',
+      component: 'Select',
+      componentProps: { placeholder: '请选择区域', options: [] },
     },
     {
-      fieldName: 'openHours',
-      label: '开放时段',
-      component: 'Input',
-      componentProps: { placeholder: '如 06:00-22:00' },
-      labelWidth: '120',
-      rules: 'required',
-    },
-    {
-      fieldName: 'stallCount',
-      label: '压缩机数量',
-      component: 'InputNumber',
-      componentProps: { placeholder: '请输入数量', min: 0 },
-      labelWidth: '120',
-      rules: 'required',
-    },
-    {
-      fieldName: 'manager',
-      label: '负责人',
-      component: 'Input',
-      componentProps: { placeholder: '请输入负责人姓名' },
-      labelWidth: '120',
-      rules: 'required',
-    },
-    {
-      fieldName: 'coreEquipment',
+      fieldName: 'equipmentIds',
       label: '核心设备',
-      component: 'Input',
-      componentProps: { placeholder: '多个设备用逗号分隔' },
-      labelWidth: '120',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择设备',
+        multiple: true,
+        valueFormat: 'array',
+        options: [],
+      },
     },
     {
-      fieldName: 'createTime',
-      label: '创建时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择创建时间',
-        type: 'datetime',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss',
-      },
-      labelWidth: '120',
-      rules: 'required',
+      fieldName: 'operationStatusId',
+      label: '运营状态',
+      component: 'Select',
+      componentProps: { placeholder: '请选择状态', options: [] },
+    },
+    {
+      fieldName: 'managerId',
+      label: '负责人',
+      component: 'Select',
+      componentProps: { placeholder: '请选择负责人', options: [] },
+    },
+    {
+      fieldName: 'dailyTransferVolume',
+      label: '日转运量(吨)',
+      component: 'InputNumber',
+      componentProps: { placeholder: '请输入', min: 0 },
     },
   ];
 }
 
-// 根据状态获取表格列定义
+// ---------- 搜索表单 schema（新增） ----------
+export function useGarbageTransferSearchSchema() {
+  return [
+    {
+      fieldName: 'areaCode',
+      label: '所属区域',
+      component: 'Select',
+      componentProps: { placeholder: '请选择区域', options: [], clearable: true },
+    },
+    {
+      fieldName: 'operationStatusId',
+      label: '运营状态',
+      component: 'Select',
+      componentProps: { placeholder: '请选择状态', options: [], clearable: true },
+    },
+    {
+      fieldName: 'managerId',
+      label: '负责人',
+      component: 'Select',
+      componentProps: { placeholder: '请选择负责人', options: [], clearable: true },
+    },
+  ];
+}
+
+// ---------- 表格列配置（按状态筛选）----------
+// ！！！原有其他状态列配置完全保留，仅更新“全部”标签页的列定义以适应接口字段 ！！！
 export function getColumnsByStatus(status) {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const statusColumnsMap = {
+    // 【修改】全部标签页：改用后端返回的字段名
     全部: [
-      { field: 'toiletName', title: '转运站名称', minWidth: 150, sortable: true, slots: { default: 'toiletName' } },
+      { field: 'name', title: '转运站名称', minWidth: 160, sortable: true, slots: { default: 'name' } },
       { field: 'location', title: '转运站位置', minWidth: 180, sortable: true },
-      { field: 'area', title: '所属区域', minWidth: 180, sortable: true, slots: { default: 'area' } },
-      { field: 'coreEquipment', title: '核心设备', minWidth: 200, sortable: true },
-      { field: 'status', title: '运营状态', minWidth: 120, sortable: true, slots: { default: 'status' } },
-      { field: 'manager', title: '负责人', minWidth: 120, sortable: true },
-      { field: 'dailyTransferVolume', title: '日转运量(吨)', minWidth: 120, sortable: true, formatter: ({ cellValue }) => (cellValue !== undefined ? `${cellValue}吨` : '-') },
-      { field: 'equipmentRate', title: '设备正常运行率(%)', minWidth: 140, sortable: true, formatter: ({ cellValue }) => (cellValue !== undefined ? `${cellValue}%` : '-') },
-      { field: 'environmentRate', title: '环境达标率(%)', minWidth: 130, sortable: true, formatter: ({ cellValue }) => (cellValue !== undefined ? `${cellValue}%` : '-') },
+      { field: 'areaName', title: '所属区域', minWidth: 150, sortable: true },
+      {
+        field: 'equipmentsName',
+        title: '核心设备',
+        minWidth: 200,
+        sortable: true,
+        formatter: ({ cellValue }) => (Array.isArray(cellValue) ? cellValue.join('、') : cellValue || '-'),
+      },
+      { field: 'operationStatusName', title: '运营状态', minWidth: 120, sortable: true },
+      { field: 'managerName', title: '负责人', minWidth: 120, sortable: true },
+      {
+        field: 'dailyTransferVolume',
+        title: '日转运量(吨)',
+        minWidth: 120,
+        sortable: true,
+        formatter: ({ cellValue }) => (cellValue != null ? `${cellValue}吨` : '-'),
+      },
+      {
+        field: 'equipmentRate',
+        title: '设备正常运行率',
+        minWidth: 140,
+        sortable: true,
+        formatter: ({ cellValue }) => (cellValue != null ? `${cellValue}%` : '-'),
+      },
+      {
+        field: 'environmentRate',
+        title: '环境达标率',
+        minWidth: 130,
+        sortable: true,
+        formatter: ({ cellValue }) => (cellValue != null ? `${cellValue}%` : '-'),
+      },
       { field: 'unhandledAlarmCount', title: '预警未处理数', minWidth: 120, sortable: true },
       { field: 'pendingMaintenanceCount', title: '设备待维护数', minWidth: 120, sortable: true },
     ],
+    // 以下五个标签页的列配置完全保留原样（基于模拟数据字段）
     车辆待进站: [
       { field: 'reserveId', title: '预约编号', minWidth: 150, sortable: true, slots: { default: 'reserveId' } },
       { field: 'licensePlate', title: '车辆牌照', minWidth: 130, sortable: true, slots: { default: 'licensePlate' } },
@@ -170,5 +230,4 @@ export const textObj = {
   addText: '新增转运站',
   excelName: '转运站运营任务列表',
   excelAllName: '转运站运营任务_区域_日期.xlsx',
-  total: '转运站总数3;车辆待进站3;作业进行中3;预警待处理3;设备待维护3;已完成3',
 };

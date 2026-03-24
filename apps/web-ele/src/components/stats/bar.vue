@@ -12,7 +12,7 @@ const props = defineProps({
   // 数据系列（[{name: '名称', data: [数值]}]）
   seriesData: { type: Array, required: true },
   // Y轴名称
-  yName: { type: String, default: '数量' },
+  yName: { type: String, default: '' },
 });
 
 const chartRef = ref(null);
@@ -65,7 +65,7 @@ const initChart = async () => {
     const option = {
       title: { text: props.title, left: 'center', textStyle: { fontSize: 15, fontWeight: 300, color: '#6E7E91' }, },
       tooltip: { trigger: 'axis' },
-      legend: { top: 40, left: 'center', textStyle: { fontSize: 12, color: '#6E7E91' }, },
+      legend: { top: 30, left: 'center', textStyle: { fontSize: 12, color: '#6E7E91' }, },
       grid: {
         left: '3%',
         right: '4%',
@@ -80,6 +80,7 @@ const initChart = async () => {
         axisLabel: {
           color: '#9AA8B7',
           fontSize: 11,
+          rotate: props.xData.length > 4 ? 30 : 0
         },
         axisLine: {
           lineStyle: {

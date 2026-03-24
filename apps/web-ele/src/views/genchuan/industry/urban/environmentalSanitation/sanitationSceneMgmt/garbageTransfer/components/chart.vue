@@ -1,48 +1,75 @@
 <script setup>
-import { reactive } from 'vue';
+import { reactive, onMounted } from 'vue';
+import { getGarbageTransferChartDashboard } from '#/api/genchuan/industry/urban/environmentalSanitation/sanitationSceneMgmt/garbageTransfer/data.js';
 import Indicator from '#/components/stats/indicator.vue';
 import Pie from '#/components/stats/pie.vue';
 import Bar from '#/components/stats/bar.vue';
 import LineChart from '#/components/stats/lineChart.vue';
 
 const state = reactive({
-  // 四个核心卡片
-  cardList: [
-    { title: '总转运站数', value: 24, color: '#409EFF' },
-    { title: '正常运营数', value: 18, color: '#67C23A' },
-    { title: '设备正常数', value: 42, color: '#E6A23C' },      // 设备总数维度
-    { title: '环境达标数', value: 20, color: '#F56C6C' },
-  ],
-  // 两个圆环图
+  loading: false,
+  cardList: [],
   pieData: {
-    status: [  // 运营状态占比
-      { name: '正常运营', value: 18 },
-      { name: '暂停运营', value: 4 },
-      { name: '在建中', value: 2 },
-    ],
-    area: [   // 区域分布占比
-      { name: '龙文区', value: 6 },
-      { name: '龙海区', value: 5 },
-      { name: '芗城区', value: 5 },
-      { name: '长泰区', value: 4 },
-      { name: '漳浦县', value: 4 },
-    ],
+    status: [],
+    area: [],
   },
-  // 基础柱状图：不同转运站日转运量对比
   barData: {
-    x: ['龙文站', '龙海站', '芗城站', '长泰站', '漳浦站'],
-    series: [120, 95, 110, 85, 70], // 日转运量（吨）
+    x: [],
+    series: [],
   },
-  // 基础折线图：近7日环境指标变化趋势（以异味浓度为例）
   lineData: {
-    x: ['02-22', '02-23', '02-24', '02-25', '02-26', '02-27', '02-28'],
-    series: [12, 15, 11, 13, 14, 10, 9], // 异味浓度（ppm）
+    x: [],
+    series: [],
   },
+});
+
+const toNumber = (val) => (val === null || val === undefined ? 0 : Number(val) || 0);
+
+// 获取数据
+const fetchData = async () => {
+  state.loading = true;
+  try {
+    const res = await getGarbageTransferChartDashboard();
+
+    // 接口返回已解包，直接使用 res（没有外层 code/data）
+    if (res && typeof res === 'object') {
+      // 卡片数据映射
+      state.cardList = [
+        { title: '总转运站数', value: toNumber(res.totalStations), color: '#409EFF' },
+        { title: '正常运营数', value: toNumber(res.normalOperationCount), color: '#67C23A' },
+        { title: '设备正常数', value: toNumber(res.equipmentNormalCount), color: '#E6A23C' },
+        { title: '环境达标数', value: toNumber(res.environmentStandardCount), color: '#F56C6C' },
+      ];
+
+      // 圆环图数据
+      state.pieData.status = Array.isArray(res.operationStatusDistribution) ? res.operationStatusDistribution : [];
+      state.pieData.area = Array.isArray(res.areaDistribution) ? res.areaDistribution : [];
+
+      // 柱状图数据：不同转运站日转运量对比
+      const volumeList = Array.isArray(res.dailyTransferVolumeComparison) ? res.dailyTransferVolumeComparison : [];
+      state.barData.x = volumeList.map(item => item.name || '');
+      state.barData.series = volumeList.map(item => toNumber(item.value));
+
+      // 折线图数据：近7日环境指标变化趋势（如果为 null，置空数组）
+      const trend = Array.isArray(res.environmentTrend7Days) ? res.environmentTrend7Days : [];
+      state.lineData.x = trend.map(item => item.date || item.timePoint || '');
+      state.lineData.series = trend.map(item => toNumber(item.value));
+    }
+  } catch (error) {
+    console.error('获取转运站仪表盘数据失败', error);
+    // 可根据需要添加用户提示
+  } finally {
+    state.loading = false;
+  }
+};
+
+onMounted(() => {
+  fetchData();
 });
 </script>
 
 <template>
-  <div class="chart-box">
+  <div class="chart-box" v-loading="state.loading" element-loading-text="加载中...">
     <!-- 左侧卡片区域：四个指标卡片，网格布局 -->
     <div class="box-left" style="flex: 1 !important;">
       <Indicator
@@ -75,7 +102,7 @@ const state = reactive({
       :series-data="[{ name: '日转运量(吨)', data: state.barData.series }]"
     />
 
-    <!-- 新增基础折线图：近7日环境指标变化趋势 -->
+    <!-- 基础折线图：近7日环境指标变化趋势 -->
     <LineChart
       style="flex: 1 !important;"
       title="近7日环境指标变化趋势"

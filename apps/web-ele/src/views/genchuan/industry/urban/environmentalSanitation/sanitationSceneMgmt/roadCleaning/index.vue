@@ -2,7 +2,7 @@
 import {computed, onMounted, reactive, ref, watch} from 'vue';
 import {confirm, useVbenDrawer} from '@vben/common-ui';
 import {isEmpty} from '@vben/utils';
-import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
+import {ElImage, ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
 import {useVbenForm} from '#/adapter/form';
 import {useVbenVxeGrid} from '#/adapter/vxe-table';
@@ -23,6 +23,9 @@ import {
   getRoadCleaningPage,
   updateCleaningProblem,
   updateRoadCleaning,
+  batchAdjustRoadCleaning,
+  batchProcessCleaningProblem,
+  getCleaningStatistics,
 } from '#/api/genchuan/industry/urban/environmentalSanitation/sanitationSceneMgmt/roadCleaning/data.js';
 import {
   getAreaOptions,
@@ -42,8 +45,12 @@ import {
   useProblemReportSchema,
   useReviewFormSchema,
   useRoadFormSchema,
-  useExecutingEditSchema
+  useExecutingEditSchema,
+  getHandleStatusOptions,
+  useBatchProblemSchema,
 } from '#/api/genchuan/industry/urban/environmentalSanitation/sanitationSceneMgmt/roadCleaning/form.js';
+// 新增：导入通用图片上传接口
+import { uploadImageBatch } from '#/api/genchuan/industry/urban/environmentalSanitation/sanitationSceneMgmt/roadCleaning/data.js';
 
 const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
 const emit = defineEmits(['arrow-change']);
@@ -102,6 +109,7 @@ const loadedOptions = reactive({
   tool: [],
   problemType: [],
   team: [],
+  handleStatus: [],
 });
 
 // 判断当前标签页是否使用接口数据
@@ -182,13 +190,95 @@ const [EditForm, editFormApi] = useVbenForm({
 const formData = ref();
 const getTitle = computed(() => (formData.value?.id ? textObj.editText : textObj.addText));
 
+// 图片列表（用于 EditDrawer）
+const editImageList = ref([]);
+
+// 通用图片上传处理函数（修改版）
+const handleImageUpload = async (event, imageListRef, updateFieldFunc) => {
+  const files = event.target.files;
+  if (files.length === 0) return;
+
+  const formData = new FormData();
+  for (const file of files) {
+    formData.append('files', file);
+  }
+
+  const loading = ElLoading.service({ text: '上传中...' });
+  try {
+    const res = await uploadImageBatch(formData);
+    let newUrls = [];
+    if (Array.isArray(res)) {
+      newUrls = res.map(item => item.url);
+    } else if (res?.code === 0 && Array.isArray(res.data)) {
+      newUrls = res.data.map(item => item.url);
+    } else {
+      ElMessage.error(res?.msg || '上传失败');
+      return;
+    }
+    // 确保 imageListRef.value 是数组
+    if (!Array.isArray(imageListRef.value)) {
+      imageListRef.value = [];
+    }
+    imageListRef.value = [...imageListRef.value, ...newUrls];
+    updateFieldFunc(imageListRef.value);
+    ElMessage.success('上传成功');
+  } catch (error) {
+    ElMessage.error(`上传图片失败：${error.message}`);
+  } finally {
+    loading.close();
+    event.target.value = '';
+  }
+};
+
+const handleImageDelete = (url, imageListRef, updateFieldFunc) => {
+  if (!Array.isArray(imageListRef.value)) {
+    imageListRef.value = [];
+  }
+  imageListRef.value = imageListRef.value.filter(item => item !== url);
+  updateFieldFunc(imageListRef.value);
+  ElMessage.success('删除成功');
+};
+
+// 更新 EditDrawer 中的图片字段
+const updateEditImageField = (list) => {
+  const value = list.length > 0 ? JSON.stringify(list) : '';
+  editFormApi.setValues({ checkPhotoUrl: value });
+};
+
+// 从行数据加载图片列表
+const loadImageListFromRow = (row, fieldName = 'checkPhotoUrl') => {
+  if (!row || !row[fieldName]) return [];
+  let list = [];
+  try {
+    const parsed = JSON.parse(row[fieldName]);
+    if (Array.isArray(parsed)) {
+      list = parsed;
+    } else {
+      list = [row[fieldName]];
+    }
+  } catch {
+    if (row[fieldName].includes(',')) {
+      list = row[fieldName].split(',').map(url => url.trim());
+    } else {
+      list = row[fieldName] ? [row[fieldName]] : [];
+    }
+  }
+  return list;
+};
+
 const [EditDrawer, editDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
-  onCancel: () => editDrawerApi.close(),
+  onCancel: () => {
+    editImageList.value = [];
+    editDrawerApi.close();
+  },
   async onConfirm() {
     const formValues = await editFormApi.getValues();
     const isAdd = !formData.value?.id;
+
+    // 确保图片字段已包含当前列表
+    formValues.checkPhotoUrl = editImageList.value.length > 0 ? JSON.stringify(editImageList.value) : '';
 
     // 处理数组字段转JSON字符串（表单值）
     const submitData = { ...formValues };
@@ -250,13 +340,20 @@ const [EditDrawer, editDrawerApi] = useVbenDrawer({
           }
         }
         await editFormApi.setValues(editData);
+        // 加载图片
+        editImageList.value = loadImageListFromRow(formData.value, 'checkPhotoUrl');
+        updateEditImageField(editImageList.value);
       } else {
         await editFormApi.resetForm();
-        const pendingStatus = loadedOptions.planStatus.find(item => item.label === '待执行');
+        const pendingStatus = loadedOptions.planStatus.find(item => item.label === '未开始');
         if (pendingStatus) {
           editFormApi.setValues({ planStatusId: pendingStatus.value });
         }
+        editImageList.value = [];
+        updateEditImageField([]);
       }
+    } else {
+      editImageList.value = [];
     }
   },
 });
@@ -306,26 +403,35 @@ const [ExecutingEditDrawer, executingEditDrawerApi] = useVbenDrawer({
     if (isOpen) {
       const row = currentExecutingRow.value;
       if (row && row.id) {
-        // 处理时间字段（表格中可能已转为字符串，需转回时间戳）
-        if (formData.checkinTime && typeof formData.checkinTime === 'string') {
-          const timestamp = new Date(formData.checkinTime).getTime();
-          formData.checkinTime = isNaN(timestamp) ? null : timestamp;
+        const formValues = { ...row };
+
+        if (formValues.checkinTime && typeof formValues.checkinTime === 'string') {
+          const timestamp = new Date(formValues.checkinTime).getTime();
+          formValues.checkinTime = isNaN(timestamp) ? null : timestamp;
         }
-        if (formData.lastReportTime && typeof formData.lastReportTime === 'string') {
-          const timestamp = new Date(formData.lastReportTime).getTime();
-          formData.lastReportTime = isNaN(timestamp) ? null : timestamp;
+        if (formValues.lastReportTime && typeof formValues.lastReportTime === 'string') {
+          const timestamp = new Date(formValues.lastReportTime).getTime();
+          formValues.lastReportTime = isNaN(timestamp) ? null : timestamp;
+        }
+        if (formValues.progress && typeof formValues.progress === 'string') {
+          formValues.progress = parseFloat(formValues.progress);
         }
 
-        // 处理进度（如果从字符串转数字）
-        if (formData.progress && typeof formData.progress === 'string') {
-          formData.progress = parseFloat(formData.progress);
+        // 确保计划状态有值（如果行数据中没有，则默认设为“进行中”）
+        if (!formValues.planStatusId) {
+          const executingStatus = loadedOptions.planStatus.find(item => item.label === '进行中');
+          if (executingStatus) {
+            formValues.planStatusId = executingStatus.value;
+          }
         }
-        await executingEditFormApi.setValues(formData);
+
+        // 修正：使用 formValues 设置表单值
+        await executingEditFormApi.setValues(formValues);
       } else {
         await executingEditFormApi.resetForm();
       }
     }
-  },
+  }
 });
 
 // 处理编辑按钮点击
@@ -343,11 +449,21 @@ const [ReviewForm, reviewFormApi] = useVbenForm({
 });
 
 const currentReviewRow = ref({});
+const reviewImageList = ref([]); // 核查照片列表
+
+const updateReviewImageField = (list) => {
+  const value = list.length > 0 ? JSON.stringify(list) : '';
+  reviewFormApi.setValues({ reviewPhotoUrl: value });
+};
+
 const [ReviewDrawer, reviewDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
   title: '质量核查',
-  onCancel: () => reviewDrawerApi.close(),
+  onCancel: () => {
+    reviewImageList.value = [];
+    reviewDrawerApi.close();
+  },
   async onConfirm() {
     const formValues = await reviewFormApi.getValues();
     if (!formValues.reviewStatus) {
@@ -361,7 +477,7 @@ const [ReviewDrawer, reviewDrawerApi] = useVbenDrawer({
         id: currentReviewRow.value.id,
         reviewStatus: formValues.reviewStatus,
         reformRequire: formValues.reformRequire,
-        reviewPhotoUrl: formValues.reviewPhotoUrl,
+        reviewPhotoUrl: reviewImageList.value.length > 0 ? JSON.stringify(reviewImageList.value) : '',
         reviewBy: currentUserId,
         reviewTime: Date.now(),
       });
@@ -372,6 +488,27 @@ const [ReviewDrawer, reviewDrawerApi] = useVbenDrawer({
       ElMessage.error('提交失败：' + (error.message || '未知错误'));
     } finally {
       loading.close();
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      const row = currentReviewRow.value;
+      if (row && row.id) {
+        // 加载已有核查照片
+        reviewImageList.value = loadImageListFromRow(row, 'reviewPhotoUrl');
+        // 回显表单
+        await reviewFormApi.setValues({
+          reviewStatus: row.reviewStatus || '',
+          reformRequire: row.reformRequire || '',
+          reviewPhotoUrl: reviewImageList.value.length > 0 ? JSON.stringify(reviewImageList.value) : '',
+        });
+      } else {
+        await reviewFormApi.resetForm();
+        reviewImageList.value = [];
+        updateReviewImageField([]);
+      }
+    } else {
+      reviewImageList.value = [];
     }
   },
 });
@@ -489,11 +626,23 @@ const [ReportForm, reportFormApi] = useVbenForm({
 });
 
 const currentReportRow = ref({});
+const reportImageList = ref([]); // 上报照片列表
+
+// 更新上报照片字段（假设问题表有 photoUrls 字段，需在后端接口中确认）
+const updateReportImageField = (list) => {
+  const value = list.length > 0 ? JSON.stringify(list) : '';
+  // 如果后端字段名为 photoUrls，则使用此字段；若为其他，请修改
+  reportFormApi.setValues({ photoUrls: value });
+};
+
 const [ReportDrawer, reportDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
   title: '问题上报',
-  onCancel: () => reportDrawerApi.close(),
+  onCancel: () => {
+    reportImageList.value = [];
+    reportDrawerApi.close();
+  },
   async onConfirm() {
     const formValues = await reportFormApi.getValues();
     if (!formValues.problemTypeId || !formValues.location || !formValues.problemDesc) {
@@ -504,7 +653,7 @@ const [ReportDrawer, reportDrawerApi] = useVbenDrawer({
     try {
       const currentUserId = 'admin'; // 示例，实际需替换
       await createCleaningProblem({
-        planId: currentReportRow.value.planNo, // 关联计划编号，注意字段名可能需要调整
+        planId: currentReportRow.value.planNo, // 关联计划编号
         problemTypeId: formValues.problemTypeId,
         location: formValues.location,
         problemDesc: formValues.problemDesc,
@@ -512,6 +661,7 @@ const [ReportDrawer, reportDrawerApi] = useVbenDrawer({
         reportTime: Date.now(),
         handleStatus: '待处置',
         isTimeout: '否',
+        photoUrls: reportImageList.value.length > 0 ? JSON.stringify(reportImageList.value) : '', // 添加照片
       });
       ElMessage.success('问题上报成功');
       reportDrawerApi.close();
@@ -520,6 +670,31 @@ const [ReportDrawer, reportDrawerApi] = useVbenDrawer({
       ElMessage.error('上报失败：' + error.message);
     } finally {
       loading.close();
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      const row = currentReportRow.value;
+      if (row && row.id) {
+        // 如果有已有照片（编辑场景），但上报一般是新增，所以通常为空
+        // 可以留空，或者从 row 中加载（如果有 photoUrls 字段）
+        reportImageList.value = loadImageListFromRow(row, 'photoUrls');
+        await reportFormApi.setValues({
+          problemTypeId: row.problemTypeId || '',
+          location: row.location || '',
+          problemDesc: row.problemDesc || '',
+          reportBy: row.reportBy || '',
+          reportTime: row.reportTime || Date.now(),
+          handleStatus: row.handleStatus || '待处置',
+        });
+        updateReportImageField(reportImageList.value);
+      } else {
+        await reportFormApi.resetForm();
+        reportImageList.value = [];
+        updateReportImageField([]);
+      }
+    } else {
+      reportImageList.value = [];
     }
   },
 });
@@ -542,8 +717,73 @@ const [BatchAdjustDrawer, batchAdjustDrawerApi] = useVbenDrawer({
   onCancel: () => batchAdjustDrawerApi.close(),
   async onConfirm() {
     const formValues = await batchAdjustFormApi.getValues();
-    ElMessage.info('批量调整功能待实现');
-    batchAdjustDrawerApi.close();
+    const { adjustType, newTimePeriod, newFrequency, newStaffIds } = formValues;
+
+    if (checkedIds.value.length === 0) {
+      ElMessage.warning('请至少选择一条保洁任务');
+      return;
+    }
+
+    // 构建请求参数
+    let adjustDimension = '';
+    let adjustValue = '';
+
+    switch (adjustType) {
+      case 'timePeriod':
+        if (!newTimePeriod) {
+          ElMessage.warning('请选择新清扫时段');
+          return;
+        }
+        adjustDimension = 'time_period';
+        adjustValue = newTimePeriod;
+        break;
+      case 'frequency':
+        if (!newFrequency) {
+          ElMessage.warning('请选择新清扫频次');
+          return;
+        }
+        adjustDimension = 'frequency';
+        adjustValue = newFrequency;
+        break;
+      case 'staffIds':
+        if (!newStaffIds || newStaffIds.length === 0) {
+          ElMessage.warning('请选择新负责人员');
+          return;
+        }
+        adjustDimension = 'staff';
+        // 将人员ID数组转换为JSON字符串（如果后端要求字符串格式）
+        adjustValue = JSON.stringify(newStaffIds);
+        // 如果后端要求逗号分隔，则改为：adjustValue = newStaffIds.join(',');
+        break;
+      default:
+        ElMessage.warning('请选择调整维度');
+        return;
+    }
+
+    const params = {
+      ids: checkedIds.value,
+      adjustDimension,
+      adjustValue,
+      // adjustRemark: formValues.adjustRemark, // 如果有备注字段可传
+    };
+
+    const loading = ElLoading.service({ text: '批量调整中...' });
+    try {
+      const res = await batchAdjustRoadCleaning(params);
+      // 判断响应是否成功（根据实际返回结构调整）
+      const isSuccess = res?.code === 0 || res === true;
+      if (isSuccess) {
+        ElMessage.success('批量调整成功');
+        batchAdjustDrawerApi.close();
+        handleRefresh();
+      } else {
+        ElMessage.error(res?.msg || '调整失败');
+      }
+    } catch (error) {
+      ElMessage.error(`调整失败：${error.message}`);
+    } finally {
+      loading.close();
+    }
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
@@ -571,12 +811,46 @@ const [BatchReviewDrawer, batchReviewDrawerApi] = useVbenDrawer({
   onCancel: () => batchReviewDrawerApi.close(),
   async onConfirm() {
     const formValues = await batchReviewFormApi.getValues();
-    ElMessage.info('批量核查功能待实现');
-    batchReviewDrawerApi.close();
+    const { reviewStatus, reformRequire } = formValues;
+
+    // 校验
+    if (checkedIds.value.length === 0) {
+      ElMessage.warning('请至少选择一条保洁任务');
+      return;
+    }
+    if (!reviewStatus) {
+      ElMessage.warning('请选择核查结果');
+      return;
+    }
+
+    // 构造请求参数
+    const params = {
+      ids: checkedIds.value,
+      adjustDimension: 'review_status',          // 约定核查维度
+      adjustValue: reviewStatus,          // 达标/不达标
+      adjustRemark: reformRequire || '',  // 核查意见（可选）
+    };
+
+    const loading = ElLoading.service({ text: '批量核查中...' });
+    try {
+      const res = await batchAdjustRoadCleaning(params);
+      const isSuccess = res?.code === 0 || res === true;
+      if (isSuccess) {
+        ElMessage.success('批量核查成功');
+        batchReviewDrawerApi.close();
+        handleRefresh();
+      } else {
+        ElMessage.error(res?.msg || '核查失败');
+      }
+    } catch (error) {
+      ElMessage.error(`核查失败：${error.message}`);
+    } finally {
+      loading.close();
+    }
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
-      await batchReviewFormApi.resetForm();
+      await batchReviewFormApi.resetForm(); // 打开时重置表单
     }
   },
 });
@@ -608,6 +882,8 @@ const [CommunicationDrawer, communicationDrawerApi] = useVbenDrawer({
 });
 
 // 复盘表单
+const aftermathRow = ref(null);
+
 const [AftermathForm, aftermathFormApi] = useVbenForm({
   commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   layout: 'horizontal',
@@ -615,7 +891,6 @@ const [AftermathForm, aftermathFormApi] = useVbenForm({
   showDefaultActions: false,
 });
 
-// 复盘抽屉
 const [AftermathDrawer, aftermathDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
@@ -623,12 +898,44 @@ const [AftermathDrawer, aftermathDrawerApi] = useVbenDrawer({
   onCancel: () => aftermathDrawerApi.close(),
   async onConfirm() {
     const formValues = await aftermathFormApi.getValues();
-    ElMessage.info('复盘功能待实现');
-    aftermathDrawerApi.close();
+    const { reviewOpinion } = formValues; // 表单字段名
+    if (!reviewOpinion) {
+      ElMessage.warning('请输入复盘意见');
+      return;
+    }
+    if (!aftermathRow.value?.id) {
+      ElMessage.error('任务数据不存在');
+      return;
+    }
+
+    const loading = ElLoading.service({ text: '提交中...' });
+    try {
+      // 调用更新接口，字段名映射为 reviewDesc
+      await updateRoadCleaning({
+        id: aftermathRow.value.id,
+        reviewDesc: reviewOpinion,
+      });
+      ElMessage.success('复盘意见保存成功');
+      aftermathDrawerApi.close();
+      handleRefresh(); // 刷新列表，使详情中显示最新意见
+    } catch (error) {
+      console.error('复盘失败', error);
+      ElMessage.error(error.message || '复盘失败，请重试');
+    } finally {
+      loading.close();
+    }
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
-      await aftermathFormApi.resetForm();
+      const rowData = aftermathDrawerApi.getData();
+      aftermathRow.value = rowData;
+      aftermathFormApi.resetForm();
+      // 如果已有复盘意见，预填到表单（可选）
+      if (rowData?.reviewDesc) {
+        await aftermathFormApi.setValues({ reviewOpinion: rowData.reviewDesc });
+      }
+    } else {
+      aftermathRow.value = null;
     }
   },
 });
@@ -648,25 +955,58 @@ const problemDetailDrawerRef = ref(null);
 
 // ---------- 数据转换函数（道路清扫计划） ----------
 function convertRoadCleaningItem(item) {
-  // 处理人员ID数组
+  // ---------- 处理人员 ----------
   let staffIds = item.staffIds;
   if (typeof staffIds === 'string') {
     try {
       staffIds = JSON.parse(staffIds);
     } catch {
-      staffIds = staffIds ? staffIds.split(',').map(s => s.trim()) : [];
+      staffIds = staffIds ? staffIds.split(',').map(s => s.trim()).filter(Boolean) : [];
     }
   }
-  // 处理工具ID数组
+  if (!Array.isArray(staffIds)) staffIds = staffIds ? [staffIds] : [];
+
+  // 生成 staffsName：强制通过 staffIds 映射，不再依赖后端返回的 staffsName
+  let staffsName = '-';
+  if (staffIds.length > 0) {
+    if (loadedOptions.user && loadedOptions.user.length) {
+      const names = staffIds.map(id => {
+        // 注意：value 可能是数字或字符串，使用 == 比较
+        const user = loadedOptions.user.find(u => u.value == id);
+        return user ? user.label : id;
+      }).filter(Boolean);
+      staffsName = names.join(', ');
+    } else {
+      // 如果选项还没加载好，至少显示 ID
+      staffsName = staffIds.join(', ');
+    }
+  }
+
+  // ---------- 处理工具 ----------
   let toolIds = item.toolIds;
   if (typeof toolIds === 'string') {
     try {
       toolIds = JSON.parse(toolIds);
     } catch {
-      toolIds = toolIds ? toolIds.split(',').map(s => s.trim()) : [];
+      toolIds = toolIds ? toolIds.split(',').map(s => s.trim()).filter(Boolean) : [];
     }
   }
-  // 处理照片URL数组
+  if (!Array.isArray(toolIds)) toolIds = toolIds ? [toolIds] : [];
+
+  let toolsName = '-';
+  if (toolIds.length > 0) {
+    if (loadedOptions.tool && loadedOptions.tool.length) {
+      const names = toolIds.map(id => {
+        const tool = loadedOptions.tool.find(t => t.value == id);
+        return tool ? tool.label : id;
+      }).filter(Boolean);
+      toolsName = names.join(', ');
+    } else {
+      toolsName = toolIds.join(', ');
+    }
+  }
+
+  // ---------- 处理照片 ----------
   let checkPhotoUrl = item.checkPhotoUrl;
   let photoList = [];
   if (typeof checkPhotoUrl === 'string') {
@@ -691,17 +1031,19 @@ function convertRoadCleaningItem(item) {
     checkPhotoUrl = photoList[0] || '';
   }
 
-  // 根据 reviewBy 映射 reviewByName
+  // ---------- 处理核查人 ----------
   let reviewByName = '-';
-  if (item.reviewBy && loadedOptions.user.length) {
-    const user = loadedOptions.user.find(u => u.value === item.reviewBy);
+  if (item.reviewBy && loadedOptions.user && loadedOptions.user.length) {
+    const user = loadedOptions.user.find(u => u.value == item.reviewBy);
     reviewByName = user ? user.label : item.reviewBy;
   }
 
   return {
     ...item,
     staffIds,
+    staffsName,          // 新生成的正确名称
     toolIds,
+    toolsName,           // 新生成的正确名称
     checkPhotoUrl,
     photoUrlList: photoList,
     reviewByName,
@@ -711,16 +1053,50 @@ function convertRoadCleaningItem(item) {
     lastReportTime: item.lastReportTime ? new Date(item.lastReportTime).toLocaleString() : '-',
     completeTime: item.completeTime ? new Date(item.completeTime).toLocaleString() : '-',
     reviewTime: item.reviewTime ? new Date(item.reviewTime).toLocaleString() : '-',
+    reviewDesc: item.reviewDesc || '-',
   };
 }
 
 // ---------- 数据转换函数（问题） ----------
 function convertProblemItem(item) {
+  // 将处置状态ID映射为文字标签
+  let handleStatusName = item.handleStatus;
+  if (item.handleStatus && loadedOptions.handleStatus.length) {
+    const found = loadedOptions.handleStatus.find(
+      opt => opt.value === item.handleStatus
+    );
+    handleStatusName = found ? found.label : item.handleStatus;
+  }
+
+  // 处理问题照片（如果有）
+  let photoUrlList = [];
+  let firstPhoto = '';
+  if (item.photoUrls) {
+    try {
+      const parsed = JSON.parse(item.photoUrls);
+      if (Array.isArray(parsed)) {
+        photoUrlList = parsed;
+        firstPhoto = parsed[0] || '';
+      }
+    } catch {
+      if (item.photoUrls.includes(',')) {
+        photoUrlList = item.photoUrls.split(',').map(url => url.trim());
+        firstPhoto = photoUrlList[0] || '';
+      } else {
+        photoUrlList = item.photoUrls ? [item.photoUrls] : [];
+        firstPhoto = item.photoUrls;
+      }
+    }
+  }
+
   return {
     ...item,
     reportTime: item.reportTime ? new Date(item.reportTime).toLocaleString() : '-',
     createTime: item.createTime ? new Date(item.createTime).toLocaleString() : '-',
     updateTime: item.updateTime ? new Date(item.updateTime).toLocaleString() : '-',
+    handleStatusName, // 新增显示字段
+    photoUrlList,     // 用于预览
+    firstPhoto,       // 首张缩略图
   };
 }
 
@@ -741,19 +1117,37 @@ const getTableData = async ({ page }) => {
     if (isProblemTab.value) {
       res = await getCleaningProblemPage(params);
     } else {
-      // 道路清扫计划相关接口
-      const tabToStatusLabel = {
-        '清扫待执行': '待执行',
-        '作业进行中': '执行中',
-        '已完成': '已完成',
-        '质量待核查': '待核查',
-      };
+      // 根据当前标签页动态添加过滤条件
       if (activeName.value !== '全部') {
-        const targetLabel = tabToStatusLabel[activeName.value];
-        if (targetLabel) {
-          const statusItem = loadedOptions.planStatus.find(item => item.label === targetLabel);
-          if (statusItem) {
-            params.planStatusId = statusItem.value;
+        switch (activeName.value) {
+          case '清扫待执行': {
+            const pendingValue = loadedOptions.planStatus.find(
+              (item) => item.label === '未开始'
+            )?.value;
+            if (pendingValue) params.planStatusId = pendingValue;
+
+            break;
+          }
+          case '作业进行中': {
+            const executingValue = loadedOptions.planStatus.find(
+              (item) => item.label === '进行中'
+            )?.value;
+            if (executingValue) params.planStatusId = executingValue;
+
+            break;
+          }
+          case '已完成': {
+            const completedValue = loadedOptions.planStatus.find(
+              (item) => item.label === '已完成'
+            )?.value;
+            if (completedValue) params.planStatusId = completedValue;
+
+            break;
+          }
+          case '质量待核查': {
+            params.reviewStatus = ['待核查', '不达标'];
+
+            break;
           }
         }
       }
@@ -882,63 +1276,116 @@ async function handleDeleteBatch() {
   }
 }
 
-// 批量处理（问题待处置）
-async function handleBatchProcess() {
-  if (isEmpty(checkedIds.value)) return;
-  try {
-    const { value } = await ElMessageBox.prompt('请选择操作', '批量处理', {
-      inputType: 'select',
-      inputOptions: [
-        { label: '派发', value: 'dispatch' },
-        { label: '标记为已办结', value: 'complete' },
-      ],
-      inputPlaceholder: '请选择',
-      confirmButtonText: '确认',
-    });
-    if (!value) return;
+// 批量问题处理表单
+const [BatchProblemForm, batchProblemFormApi] = useVbenForm({
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 80 },
+  layout: 'horizontal',
+  schema: useBatchProblemSchema(),
+  showDefaultActions: false,
+});
 
-    const loading = ElLoading.service({ text: '处理中...' });
-    try {
-      if (value === 'dispatch') {
-        const { value: teamId } = await ElMessageBox.prompt('请选择处置组', '批量派发', {
-          inputType: 'select',
-          inputOptions: loadedOptions.team.map(t => ({ label: t.label, value: t.value })),
-          inputPlaceholder: '请选择',
-        });
-        if (!teamId) return;
+// 批量问题处理抽屉
+const [BatchProblemDrawer, batchProblemDrawerApi] = useVbenDrawer({
+  title: '批量处理问题',
+  appendToMain: true,
+  modal: false,
+  onCancel: () => batchProblemDrawerApi.close(),
+  async onConfirm() {
+    const formValues = await batchProblemFormApi.getValues();
+    const { action, teamId, handleStatus } = formValues;
+
+    if (checkedIds.value.length === 0) {
+      ElMessage.warning('请至少选择一条问题记录');
+      return;
+    }
+
+    // 派发操作（逐个调用，因为接口不支持批量派发）
+    if (action === 'dispatch') {
+      if (!teamId) {
+        ElMessage.warning('请选择处置组');
+        return;
+      }
+      const loading = ElLoading.service({ text: '批量派发中...' });
+      try {
+        // 逐个更新（保持原有逻辑）
         await Promise.all(checkedIds.value.map(id =>
           updateCleaningProblem({ id, teamId, handleStatus: '处理中' })
         ));
-      } else {
-        await Promise.all(checkedIds.value.map(id =>
-          updateCleaningProblem({ id, handleStatus: '已办结' })
-        ));
+        ElMessage.success('批量派发成功');
+        checkedIds.value = [];
+        batchProblemDrawerApi.close();
+        handleRefresh();
+      } catch (error) {
+        ElMessage.error(`派发失败：${error.message}`);
+      } finally {
+        loading.close();
       }
-      ElMessage.success('批量处理成功');
-      checkedIds.value = [];
-      handleRefresh();
-    } catch (error) {
-      ElMessage.error('批量处理失败：' + error.message);
-    } finally {
-      loading.close();
     }
-  } catch (e) {
-    // 取消
-  }
-}
 
+    // 更新状态操作（使用批量接口）
+    if (action === 'updateStatus') {
+      if (!handleStatus) {
+        ElMessage.warning('请选择处置状态');
+        return;
+      }
+      const loading = ElLoading.service({ text: '批量更新状态中...' });
+      try {
+        const params = {
+          ids: checkedIds.value,
+          handleStatus,
+        };
+        const res = await batchProcessCleaningProblem(params);
+        const isSuccess = res?.code === 0 || res === true;
+        if (isSuccess) {
+          ElMessage.success('批量更新状态成功');
+          batchProblemDrawerApi.close();
+          handleRefresh();
+        } else {
+          ElMessage.error(res?.msg || '更新状态失败');
+        }
+      } catch (error) {
+        ElMessage.error(`更新状态失败：${error.message}`);
+      } finally {
+        loading.close();
+      }
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      await batchProblemFormApi.resetForm();
+      // 更新处置组选项（直接使用已加载的 loadedOptions.team，它包含 label/value）
+      // 处置状态选项从 loadedOptions.handleStatus 获取
+      await batchProblemFormApi.updateSchema([
+        {
+          fieldName: 'teamId',
+          componentProps: {
+            options: loadedOptions.team.map(item => ({ value: item.value, label: item.label }))
+          }
+        },
+        {
+          fieldName: 'handleStatus',
+          componentProps: {
+            options: loadedOptions.handleStatus.map(item => ({ value: item.value, label: item.label }))
+          }
+        },
+      ]);
+    }
+  },
+});
+function handleBatchProcess() {
+  if (isEmpty(checkedIds.value)) return;
+  batchProblemDrawerApi.open();
+}
 // 单条数据核查（质量待核查）
 function handleReview(row) {
   currentReviewRow.value = row;
   reviewFormApi.resetForm();
-  // 可选：回显已有数据（如编辑时）
-  // if (row.reviewStatus) {
-  //   reviewFormApi.setValues({
-  //     reviewStatus: row.reviewStatus,
-  //     reformRequire: row.reformRequire,
-  //     reviewPhotoUrl: row.reviewPhotoUrl
-  //   });
-  // }
+  reviewImageList.value = loadImageListFromRow(row, 'reviewPhotoUrl');
+  reviewFormApi.setValues({
+    reviewStatus: row.reviewStatus || '',
+    reformRequire: row.reformRequire || '',
+    reviewPhotoUrl: reviewImageList.value.length > 0 ? JSON.stringify(reviewImageList.value) : '',
+  });
   reviewDrawerApi.open();
 }
 
@@ -966,6 +1413,7 @@ function handleFeedback(row) {
 function handleReport(row) {
   currentReportRow.value = row;
   reportFormApi.resetForm();
+  reportImageList.value = []; // 上报一般无历史照片，如需编辑可加载
   reportDrawerApi.open();
 }
 
@@ -1031,15 +1479,14 @@ const toggleChart = () => {
 };
 
 async function loadStatistics() {
-  counts.value.total = 10;
-  counts.value.planStatusCounts = {
-    全部: 10,
-    清扫待执行: 2,
-    作业进行中: 2,
-    问题待处置: 2,
-    质量待核查: 2,
-    已完成: 2,
-  };
+  try {
+    const res = await getCleaningStatistics();
+    const data = res || {};
+    counts.value.total = data.total || 0;
+    counts.value.planStatusCounts = data.planStatusCounts || {};
+  } catch (error) {
+    console.error('加载统计数据失败', error);
+  }
 }
 
 async function loadOptions() {
@@ -1052,6 +1499,7 @@ async function loadOptions() {
       toolOptionsRes,
       problemTypeOptionsRes,
       teamOptionsRes,
+      handleStatusOptionsRes,
     ] = await Promise.all([
       getRoadOptions(),
       getAreaOptions(),
@@ -1060,6 +1508,7 @@ async function loadOptions() {
       getToolOptions(),
       getProblemTypeOptions(),
       getTeamOptions(),
+      getHandleStatusOptions(),
     ]);
 
     const extractData = (res) => {
@@ -1075,6 +1524,7 @@ async function loadOptions() {
     loadedOptions.tool = extractData(toolOptionsRes);
     loadedOptions.problemType = extractData(problemTypeOptionsRes);
     loadedOptions.team = extractData(teamOptionsRes);
+    loadedOptions.handleStatus = extractData(handleStatusOptionsRes);
 
     // 更新道路编辑表单
     await editFormApi.updateSchema([
@@ -1084,6 +1534,10 @@ async function loadOptions() {
       { fieldName: 'planStatusId', componentProps: { options: loadedOptions.planStatus } },
       { fieldName: 'toolIds', componentProps: { options: loadedOptions.tool } },
       { fieldName: 'reviewBy', componentProps: { options: loadedOptions.user } },
+    ]);
+    // 更新作业进行中编辑表单
+    await executingEditFormApi.updateSchema([
+      { fieldName: 'planStatusId', componentProps: { options: loadedOptions.planStatus } },
     ]);
 
     // 更新道路搜索表单
@@ -1137,15 +1591,50 @@ function handleTrack(row) {
   ElMessage.info('跟踪功能待实现');
   // 可打开 TrackDrawer 并加载日志
 }
-function handleStart(row) {
-  ElMessageBox.confirm('确定启动该清扫计划吗？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'info',
-  }).then(() => {
-    ElMessage.info('启动执行功能待实现');
-  }).catch(() => {});
+// 启动执行（清扫待执行）
+async function handleStart(row) {
+  try {
+    await ElMessageBox.confirm('确定启动该清扫计划吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'info',
+    });
+
+    const targetStatusId = loadedOptions.planStatus.find(
+      (item) => item.label === '进行中'
+    )?.value;
+    if (!targetStatusId) {
+      ElMessage.error('无法获取进行中状态ID，请稍后重试');
+      return;
+    }
+
+    const loading = ElLoading.service({ text: '启动中...' });
+    try {
+      // 构造更新数据：保留原有字段，尤其 staffIds
+      const updateData = {
+        id: row.id,
+        planStatusId: targetStatusId,
+        // 重点：把当前行的 staffIds（数组）转回 JSON 字符串
+        staffIds: row.staffIds ? JSON.stringify(row.staffIds) : '[]',
+        // 如果有 toolIds 也建议保留，避免工具丢失
+        toolIds: row.toolIds ? JSON.stringify(row.toolIds) : '[]',
+        // 如果还有其它业务字段（如 standard、frequency 等），根据情况保留
+        // 稳妥做法：复制 row 中所有非派生字段（参考下方注释）
+      };
+      await updateRoadCleaning(updateData);
+
+      ElMessage.success('启动成功');
+      handleRefresh();
+    } catch (error) {
+      ElMessage.error('启动失败：' + (error.message || '未知错误'));
+    } finally {
+      loading.close();
+    }
+  } catch (error) {
+    // 用户取消
+  }
 }
+
 function handleCommunicate(row) {
   communicationDrawerApi.setData(row).open();
 }
@@ -1168,6 +1657,37 @@ onMounted(async () => {
     <!-- 道路清扫计划编辑抽屉 -->
     <EditDrawer :title="getTitle">
       <EditForm />
+      <!-- 图片上传区域 -->
+      <div class="photo-upload-section">
+        <div class="photo-manager">
+          <div class="upload-area">
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              @change="handleImageUpload($event, editImageList, updateEditImageField)"
+            />
+            <span class="upload-tip">可多选图片</span>
+          </div>
+          <div class="photo-list" v-if="editImageList.length > 0">
+            <div
+              class="photo-item"
+              v-for="(url, index) in editImageList"
+              :key="index"
+            >
+              <ElImage
+                :src="url"
+                :preview-src-list="editImageList"
+                fit="cover"
+                style="width: 80px; height: 80px; cursor: pointer; border-radius: 4px"
+                :preview-teleported="true"
+              />
+              <span class="delete-btn" @click="handleImageDelete(url, editImageList, updateEditImageField)">✕</span>
+            </div>
+          </div>
+          <div v-else class="no-photo">暂无图片</div>
+        </div>
+      </div>
     </EditDrawer>
 
     <!-- 作业进行中编辑抽屉 -->
@@ -1178,6 +1698,37 @@ onMounted(async () => {
     <!-- 质量核查抽屉 -->
     <ReviewDrawer>
       <ReviewForm />
+      <!-- 图片上传区域 -->
+      <div class="photo-upload-section">
+        <div class="photo-manager">
+          <div class="upload-area">
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              @change="handleImageUpload($event, reviewImageList, updateReviewImageField)"
+            />
+            <span class="upload-tip">可多选图片</span>
+          </div>
+          <div class="photo-list" v-if="reviewImageList.length > 0">
+            <div
+              class="photo-item"
+              v-for="(url, index) in reviewImageList"
+              :key="index"
+            >
+              <ElImage
+                :src="url"
+                :preview-src-list="reviewImageList"
+                fit="cover"
+                style="width: 80px; height: 80px; cursor: pointer; border-radius: 4px"
+                :preview-teleported="true"
+              />
+              <span class="delete-btn" @click="handleImageDelete(url, reviewImageList, updateReviewImageField)">✕</span>
+            </div>
+          </div>
+          <div v-else class="no-photo">暂无图片</div>
+        </div>
+      </div>
     </ReviewDrawer>
 
     <!-- 问题派发抽屉 -->
@@ -1193,7 +1744,43 @@ onMounted(async () => {
     <!-- 问题上报抽屉（作业进行中） -->
     <ReportDrawer>
       <ReportForm />
+      <!-- 图片上传区域 -->
+      <div class="photo-upload-section">
+        <div class="photo-manager">
+          <div class="upload-area">
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              @change="handleImageUpload($event, reportImageList, updateReportImageField)"
+            />
+            <span class="upload-tip">可多选图片</span>
+          </div>
+          <div class="photo-list" v-if="reportImageList.length > 0">
+            <div
+              class="photo-item"
+              v-for="(url, index) in reportImageList"
+              :key="index"
+            >
+              <ElImage
+                :src="url"
+                :preview-src-list="reportImageList"
+                fit="cover"
+                style="width: 80px; height: 80px; cursor: pointer; border-radius: 4px"
+                :preview-teleported="true"
+              />
+              <span class="delete-btn" @click="handleImageDelete(url, reportImageList, updateReportImageField)">✕</span>
+            </div>
+          </div>
+          <div v-else class="no-photo">暂无图片</div>
+        </div>
+      </div>
     </ReportDrawer>
+
+    <!-- 批量问题处理抽屉 -->
+    <BatchProblemDrawer>
+      <BatchProblemForm />
+    </BatchProblemDrawer>
 
     <!-- 批量调整抽屉 -->
     <BatchAdjustDrawer>
@@ -1329,35 +1916,30 @@ onMounted(async () => {
             row.planNo || row.problemId
           }}</el-text>
       </template>
-      <template #roadName="{ row }">
-        <el-text v-if="!isProblemTab" @click="handleOpenAreaFilter(row.roadName)" type="primary">
-          {{ row.roadName }}
-        </el-text>
-      </template>
-      <template #area="{ row }">
-        <el-text v-if="!isProblemTab" @click="handleOpenAreaFilter(row.areaName)" type="primary">
-          {{ row.areaName }}
-        </el-text>
-      </template>
-      <template #status="{ row }">
-        <el-text v-if="!isProblemTab" @click="handleOpenStatusFilter(row.planStatusName)" type="primary">
-          {{ row.planStatusName }}
-        </el-text>
+      <template #handleStatus="{ row }">
+        {{ row.handleStatusName || row.handleStatus }}
       </template>
       <template #problemId="{ row }">
         <el-text v-if="isProblemTab" @click="handleOpenDetail(row)" type="primary">{{
             row.problemId
           }}</el-text>
       </template>
-      <template #problemType="{ row }">
-        <el-text v-if="isProblemTab" @click="handleOpenProblemDetail(row)" type="primary">
-          {{ row.problemTypeName }}
-        </el-text>
-      </template>
       <template #checkPhotoUrl="{ row }">
         <el-image
           v-if="!isProblemTab && row.checkPhotoUrl"
           :src="row.checkPhotoUrl"
+          :preview-src-list="row.photoUrlList"
+          fit="cover"
+          style="width: 40px; height: 40px; border-radius: 4px; cursor: pointer;"
+          :preview-teleported="true"
+        />
+        <span v-else>-</span>
+      </template>
+      <!-- 新增问题照片预览列（如果问题表有照片字段） -->
+      <template #photoUrls="{ row }" v-if="isProblemTab">
+        <el-image
+          v-if="row.firstPhoto"
+          :src="row.firstPhoto"
           :preview-src-list="row.photoUrlList"
           fit="cover"
           style="width: 40px; height: 40px; border-radius: 4px; cursor: pointer;"
@@ -1404,7 +1986,7 @@ onMounted(async () => {
 
           <!-- 已完成标签页 -->
           <template v-else-if="activeName === '已完成'">
-            <IconButton content="复盘" icon-name="DataAnalysis" @click="handleAftermath(row)" />
+            <IconButton content="复盘" icon-name="DataAnalysis" @click="aftermathDrawerApi.setData(row).open()" />
           </template>
 
           <IconButton content="删除" icon-name="delete" color="#F56C6C" @click="handleDelete(row)" />
@@ -1429,6 +2011,70 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+/* 强制显示底部容器，覆盖全局样式的 display: none */
+:deep(.vxe-grid--bottom-wrapper) {
+  display: block !important;
+}
+
+.photo-upload-section {
+  padding: 0 20px;
+}
+
+.photo-manager {
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.upload-area {
+  margin-bottom: 16px;
+
+  input[type='file'] {
+    margin-right: 8px;
+  }
+
+  .upload-tip {
+    font-size: 12px;
+    color: #999;
+  }
+}
+
+.photo-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.photo-item {
+  position: relative;
+
+  .delete-btn {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
+    color: #fff;
+    cursor: pointer;
+    background: rgb(0 0 0 / 60%);
+    border-radius: 50%;
+
+    &:hover {
+      background: #f56c6c;
+    }
+  }
+}
+
+.no-photo {
+  padding: 20px;
+  color: #999;
+  text-align: center;
+}
+
 .track-logs {
   padding: 16px;
 }

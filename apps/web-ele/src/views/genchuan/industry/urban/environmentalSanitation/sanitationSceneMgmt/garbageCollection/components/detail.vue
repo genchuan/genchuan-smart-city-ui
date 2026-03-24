@@ -43,13 +43,11 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       <div class="detail-row"><span class="label">总收运量：</span>{{ detailObj.totalVolume || '-' }} 吨</div>
       <div class="detail-row"><span class="label">异常处置结果：</span>{{ detailObj.abnormalResult || '-' }}</div>
       <div class="detail-row"><span class="name">创建人：</span>{{ detailObj.createByName || '-' }}</div>
-
-      <!-- 执行记录 -->
-      <div class="detail-section">📌 执行记录</div>
       <div class="detail-row"><span class="label">当前进度：</span>{{ detailObj.completionRate || 0 }}%</div>
       <div class="detail-row"><span class="label">已收运量：</span>{{ detailObj.collectedVolume || 0 }} 吨</div>
       <div class="detail-row"><span class="label">打卡状态：</span>{{ detailObj.checkinStatus || '未打卡' }}</div>
       <div class="detail-row"><span class="label">最新上报时间：</span>{{ detailObj.lastReportTime || '-' }}</div>
+      <div class="detail-row"><span class="label">复盘意见：</span>{{ detailObj.reviewDesc || '-' }}</div>
 
       <!-- 时间信息 -->
       <div class="detail-section">📅 时间信息</div>

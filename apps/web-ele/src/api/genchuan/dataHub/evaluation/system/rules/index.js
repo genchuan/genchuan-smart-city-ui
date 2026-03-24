@@ -26,8 +26,8 @@ export function deleteRuleCategory(id) {
 }
 
 /** 获取规则分类详情（包含规则项列表） */
-export function getRuleCategoryDetail(categoryId) {
-  return requestClient.get(`/evaluate/rule-category/category-detail?categoryId=${categoryId}`);
+export function getRuleCategoryDetail(id) {
+  return requestClient.get(`/evaluate/rule-category/get?id=${id}`);
 }
 
 /** 获取规则概览数据（用于图表） */
@@ -43,50 +43,48 @@ export function exportRuleCategory(params) {
   });
 }
 
-// ========== 规则项相关接口 ==========
-/** 创建规则项 */
-export function createRuleItem(data) {
-  return requestClient.post('/evaluate/rule-item/create', data);
+/** 完整保存规则分类（含评分规则和明细） */
+export function saveFullRuleCategory(data) {
+  return requestClient.post('/evaluate/rule-category/save-full', data);
 }
 
-/** 更新规则项 */
-export function updateRuleItem(data) {
-  return requestClient.put('/evaluate/rule-item/update', data);
-}
+// ---------- 下拉列表接口（全部数据，用于表单）----------
 
-/** 删除规则项 */
-export function deleteRuleItem(id) {
-  return requestClient.delete(`/evaluate/rule-item/delete?id=${id}`);
-}
-
-// ========== 字典接口 ==========
-/** 获取指标体系下拉列表（用于筛选/表单） */
-export function getIndexSystemSimpleList() {
-  return requestClient.get('/evaluate/index-system/simple-list');
-}
-
-/** 获取指标项下拉列表 */
-export function getIndexItemSimpleList() {
-  return requestClient.get('/evaluate/index-item/simple-list');
-}
-
-/** 获取规则类型字典列表 */
-export function getRuleTypeList() {
-  return requestClient.get('/evaluate/rule-type/page', { params: { pageNo: 1, pageSize: 100 } });
-}
-
-/** 获取对象类型字典列表 */
-export function getObjectTypeSimpleList() {
-  return requestClient.get('/evaluate/object-type/simple-list');
-}
-
-/** 获取状态字典列表 */
-export function getStatusSimpleList() {
-  return requestClient.get('/evaluate/status/page', { params: { pageNo: 1, pageSize: 100 } }).then(res => {
-    const list = res.list || res.data?.list || [];
-    return list.map(item => ({
-      value: item.statusId, // 字段名可能为 id、statusId 等，请按实际情况调整
-      label: item.name,
-    }));
+/** 获取指标体系下拉列表（全部） */
+export async function getIndexSystemSimpleList() {
+  const res = await requestClient.get('/evaluate/index-system/page', {
+    params: { pageNo: 1, pageSize: 200 }
   });
+  return (res.list || []).map(item => ({ label: item.name, value: Number(item.id) }));
+}
+
+/** 获取适用对象类型下拉列表（全部） */
+export async function getObjectTypeSimpleList() {
+  const res = await requestClient.get('/evaluate/object-type/page', {
+    params: { pageNo: 1, pageSize: 200 }
+  });
+  return (res.list || []).map(item => ({ label: item.name, value: item.typeId })); // 若后端要求数字，改为 Number(item.typeId)
+}
+
+/** 获取指标项下拉列表（全部），支持传入查询参数（如 systemId） */
+export async function getIndexItemSimpleList(params = {}) {
+  const mergedParams = { pageNo: 1, pageSize: 200, ...params };
+  const res = await requestClient.get('/evaluate/index-item/page', { params: mergedParams });
+  return (res.list || []).map(item => ({ label: item.name, value: Number(item.id) }));
+}
+
+/** 获取规则类型下拉列表（全部） */
+export async function getRuleTypeList() {
+  const res = await requestClient.get('/evaluate/rule-type/page', {
+    params: { pageNo: 1, pageSize: 200 }
+  });
+  return (res.list || []).map(item => ({ label: item.name, value: Number(item.typeId) }));
+}
+
+/** 获取状态下拉列表（全部） */
+export async function getStatusSimpleList() {
+  const res = await requestClient.get('/evaluate/status/page', {
+    params: { pageNo: 1, pageSize: 200 }
+  });
+  return (res.list || []).map(item => ({ label: item.name, value: Number(item.statusId) }));
 }

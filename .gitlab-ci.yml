@@ -1,13 +1,13 @@
 stages:
-  - build          # 所有分支执行：安装依赖 + 构建dist包
-  - push           # 仅dev-urban分支执行：迁移dist包
+  - build
+  - push
 
 variables:
-  DIST_PATH: "./dist"          # 项目构建后dist包的路径
+  DIST_PATH: "./apps/web-ele/dist"
   # TARGET_SERVER: "你的目标服务器IP/域名"  # 接收dist包的服务器
   # SSH_USER: "root"
   # SSH_PASSWORD: "你的密码" 或 使用SSH密钥
-  TARGET_PATH: "/home/gitlab-runner/vue/vue-vben"   # 目标服务器存储dist包的路径
+  TARGET_PATH: "/home/gitlab-runner/vue/vue-vben"
 
 build:
   stage: build
@@ -17,7 +17,7 @@ build:
     - pnpm install --no-frozen-lockfile
     - pnpm run build:ele
     - pwd
-    - ls -l $DIST_PATH  # 确认dist包生成成功
+    - ls -l $DIST_PATH
   artifacts:
     paths:
       - $DIST_PATH/
@@ -35,16 +35,14 @@ push:
   tags:
     - git-runner-01
   only:
-    - dev-urban        # 仅dev-urban分支触发此阶段
+    - dev-urban
   needs:
-    - build            # 依赖build阶段的产物（必须等build完成）
+    - build
   script:
     - echo "===== 开始迁移dist包到目标服务器 ====="
-    # 方式1：本地迁移（若目标路径在Runner本地）
     - mkdir -p $TARGET_PATH
     - cp -rf $DIST_PATH/* $TARGET_PATH/
     - echo "dist包已迁移到本地路径：$TARGET_PATH"
-
     # 验证迁移结果
     - ls -l $TARGET_PATH  # 本地迁移验证
     # - ssh $SSH_USER@$TARGET_SERVER "ls -l $TARGET_PATH"  # 远程迁移验证
