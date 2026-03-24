@@ -1,5 +1,6 @@
 <script setup>
 import { computed, defineProps, toRefs } from 'vue';
+
 import { useVbenDrawer } from '@vben/common-ui';
 
 const props = defineProps({
@@ -33,7 +34,6 @@ defineExpose({
 
 <template>
   <DetailDrawer :title="drawerTitle" class="genchuan-detail-drawer">
-    <!-- 整体滚动容器 -->
     <div class="detail-scroll-container">
       <!-- 基本信息卡片 -->
       <div class="detail-card">
@@ -56,7 +56,9 @@ defineExpose({
         </div>
         <div class="detail-card-row">
           <div class="detail-row-left">创建人：</div>
-          <div class="detail-row-right">{{ detailObj.createByName || '-' }}</div>
+          <div class="detail-row-right">
+            {{ detailObj.createByName || '-' }}
+          </div>
         </div>
         <div class="detail-card-row">
           <div class="detail-row-left">创建时间：</div>
@@ -68,21 +70,37 @@ defineExpose({
         </div>
       </div>
 
-      <!-- 规则项列表卡片 -->
+      <!-- 规则项列表卡片，移除了“关联指标项”和“规则类型”列 -->
       <div v-if="detailObj.ruleItems?.length" class="detail-card">
         <h3 class="detail-card-title">规则项列表</h3>
-        <el-table :data="detailObj.ruleItems" border size="small" style="width: 100%">
-          <el-table-column prop="ruleName" label="规则项名称" min-width="150" />
-          <el-table-column prop="itemName" label="关联指标项" min-width="150" />
-          <el-table-column prop="ruleTypeName" label="规则类型" width="100" />
+        <el-table
+          :data="detailObj.ruleItems"
+          border
+          size="small"
+          style="width: 100%"
+        >
+          <el-table-column prop="ruleName" label="规则项名称" min-width="200" />
           <el-table-column type="expand" label="评分细则">
             <template #default="{ row }">
-              <el-table :data="row.details || []" border size="small" style="width: 95%; margin: 10px auto;">
+              <el-table
+                :data="row.details || []"
+                border
+                size="small"
+                style="width: 95%; margin: 10px auto"
+              >
                 <el-table-column prop="remark" label="描述" min-width="150" />
                 <el-table-column prop="minValue" label="最小值" width="80" />
-                <el-table-column prop="operatorMin" label="运算符(小)" width="100" />
+                <el-table-column
+                  prop="operatorMin"
+                  label="运算符(小)"
+                  width="100"
+                />
                 <el-table-column prop="maxValue" label="最大值" width="80" />
-                <el-table-column prop="operatorMax" label="运算符(大)" width="100" />
+                <el-table-column
+                  prop="operatorMax"
+                  label="运算符(大)"
+                  width="100"
+                />
                 <el-table-column prop="score" label="分数" width="80" />
                 <el-table-column prop="sortOrder" label="排序" width="70" />
               </el-table>
@@ -95,7 +113,7 @@ defineExpose({
 </template>
 
 <style scoped lang="scss">
-/* 滚动容器 */
+/* 样式保持不变，仅移除了不需要的部分 */
 .detail-scroll-container {
   max-height: calc(70vh - 20px);
   overflow-y: auto;
@@ -159,37 +177,6 @@ defineExpose({
   line-height: 18px;
   word-break: break-all;
   padding-right: 10px;
-}
-
-.detail-table-wrapper {
-  margin-top: 10px;
-  overflow-x: auto;
-}
-
-.detail-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-  background-color: #ffffff;
-  border-radius: 6px;
-  overflow: hidden;
-
-  th,
-  td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #ebeef5;
-  }
-
-  th {
-    background-color: #f2f6fc;
-    font-weight: 500;
-    color: #1f2f3d;
-  }
-
-  tr:hover {
-    background-color: #f5f7fa;
-  }
 }
 
 .detail-scroll-container::-webkit-scrollbar {

@@ -1,32 +1,35 @@
 <script setup>
-import { computed, reactive, ref, onMounted } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
+
 import { useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
+
+import dayjs from 'dayjs';
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
-import dayjs from 'dayjs';
 import * as XLSX from 'xlsx';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  getAllPage,
-  getStatusCount,
-  updateIndexSystem,
   deleteIndexSystem,
+  getAllPage,
   getIndexSystemDetail,
-  saveFullIndexSystem,
   getObjectTypeSimpleList,
+  getStatusCount,
   getStatusSimpleList,
+  saveFullIndexSystem,
+  updateIndexSystem,
 } from '#/api/genchuan/dataHub/evaluation/system/indicators/index.js';
-import detailDrawer from './detail.vue';
 import CategoryManager from '#/views/genchuan/dataHub/evaluation/system/components/CategoryManager.vue'; // 新增组件
+
 import {
+  getGridColumnsByTab,
   textObj,
   useFormSchema,
   useQuerySchema,
-  getGridColumnsByTab,
 } from './data';
+import detailDrawer from './detail.vue';
 
 const props = defineProps({
   secondShow: { type: Boolean, default: false },
@@ -46,7 +49,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  onCancel() { drawerApi.close(); },
+  onCancel() {
+    drawerApi.close();
+  },
 });
 
 // 基本信息表单实例
@@ -79,7 +84,9 @@ const loadFormOptions = async () => {
       getStatusSimpleList(),
     ]);
 
-    const objectOpts = Array.isArray(objectTypeOptions) ? objectTypeOptions : [];
+    const objectOpts = Array.isArray(objectTypeOptions)
+      ? objectTypeOptions
+      : [];
     const statusOpts = Array.isArray(statusOptions) ? statusOptions : [];
 
     await formApi.updateSchema([
@@ -106,7 +113,9 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
   width: 1000,
-  onCancel() { formDrawerApi.close(); },
+  onCancel() {
+    formDrawerApi.close();
+  },
   async onConfirm() {
     const basicValid = await formApi.validate();
     if (!basicValid.valid) return;
@@ -125,7 +134,9 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       categories: categoryData.value,
     };
 
-    const loadingInstance = ElLoading.service({ text: id ? '更新中...' : '创建中...' });
+    const loadingInstance = ElLoading.service({
+      text: id ? '更新中...' : '创建中...',
+    });
     try {
       await saveFullIndexSystem(fullData);
       ElMessage.success(id ? '编辑成功' : '新增成功');
@@ -152,23 +163,27 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
         currentSystemId.value = data.id;
         await formApi.setValues(data);
         if (data.id) {
-          const loading = ElLoading.service({ text: '加载详情...', target: '.vben-drawer' });
+          const loading = ElLoading.service({
+            text: '加载详情...',
+            target: '.vben-drawer',
+          });
           try {
             const detail = await getIndexSystemDetail(data.id);
-            categoryData.value = (detail.categories || []).map(cat => ({
+            categoryData.value = (detail.categories || []).map((cat) => ({
               categoryId: cat.categoryId,
               name: cat.name,
               weight: cat.weight,
               sortNo: cat.sortNo,
-              items: (cat.items || []).map(item => ({
+              items: (cat.items || []).map((item) => ({
                 itemId: item.itemId,
                 name: item.name,
                 commentRuleId: item.commentRuleId,
+                ruleName: item.ruleName,
                 weight: item.weight,
                 sortNo: item.sortNo,
               })),
             }));
-          } catch (error) {
+          } catch {
             ElMessage.error('加载分类数据失败');
             categoryData.value = [];
           } finally {
@@ -189,7 +204,10 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
           const source = formDrawerApi.sharedData.payload.source;
           if (source && source.id) {
             currentSystemId.value = source.id;
-            const loading = ElLoading.service({ text: '加载源体系数据...', target: '.vben-drawer' });
+            const loading = ElLoading.service({
+              text: '加载源体系数据...',
+              target: '.vben-drawer',
+            });
             try {
               const detail = await getIndexSystemDetail(source.id);
               await formApi.setValues({
@@ -200,20 +218,21 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
                 desc: detail.baseInfo.description,
                 statusId: 1,
               });
-              categoryData.value = (detail.categories || []).map(cat => ({
+              categoryData.value = (detail.categories || []).map((cat) => ({
                 categoryId: `temp_${Date.now()}_${Math.random()}`,
                 name: cat.name,
                 weight: cat.weight,
                 sortNo: cat.sortNo,
-                items: (cat.items || []).map(item => ({
+                items: (cat.items || []).map((item) => ({
                   itemId: `temp_${Date.now()}_${Math.random()}`,
                   name: item.name,
                   commentRuleId: item.commentRuleId,
+                  ruleName: item.ruleName,
                   weight: item.weight,
                   sortNo: item.sortNo,
                 })),
               }));
-            } catch (error) {
+            } catch {
               ElMessage.error('加载源体系数据失败');
             } finally {
               loading.close();
@@ -244,11 +263,17 @@ async function fetchStatusCount() {
 
 /** 格式化列表数据 */
 function formatList(list) {
-  return (list || []).map(item => ({
+  return (list || []).map((item) => ({
     ...item,
-    createTime: item.createTime ? dayjs(item.createTime).format('YYYY-MM-DD HH:mm:ss') : '-',
-    updateTime: item.updateTime ? dayjs(item.updateTime).format('YYYY-MM-DD HH:mm:ss') : '-',
-    lastUseTime: item.lastUseTime ? dayjs(item.lastUseTime).format('YYYY-MM-DD HH:mm:ss') : '-',
+    createTime: item.createTime
+      ? dayjs(item.createTime).format('YYYY-MM-DD HH:mm:ss')
+      : '-',
+    updateTime: item.updateTime
+      ? dayjs(item.updateTime).format('YYYY-MM-DD HH:mm:ss')
+      : '-',
+    lastUseTime: item.lastUseTime
+      ? dayjs(item.lastUseTime).format('YYYY-MM-DD HH:mm:ss')
+      : '-',
     useCount: item.useCount ?? 0,
     categoryCount: item.categoryCount ?? 0,
     itemCount: item.itemCount ?? 0,
@@ -336,7 +361,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
 
 function onSubmit(values) {
   const cleaned = Object.fromEntries(
-    Object.entries(values).filter(([_, v]) => v !== '' && v != null)
+    Object.entries(values).filter(([_, v]) => v !== '' && v != null),
   );
   searchParams.value = cleaned;
   drawerApi.close();
@@ -445,10 +470,9 @@ async function handleBatchStatusChange() {
     type: 'warning',
   });
 
-  const validIds = checkedIds.value.filter(id => {
-    const row = dataObj.list.find(item => item.id === id);
-    if (targetStatus === '启用') return row?.statusId === 2;
-    else return row?.statusId === 1;
+  const validIds = checkedIds.value.filter((id) => {
+    const row = dataObj.list.find((item) => item.id === id);
+    return targetStatus === '启用' ? row?.statusId === 2 : row?.statusId === 1;
   });
   if (validIds.length === 0) {
     ElMessage.warning('选中的对象中没有可操作的数据');
@@ -457,7 +481,9 @@ async function handleBatchStatusChange() {
 
   const loadingInstance = ElLoading.service({ text: '处理中...' });
   try {
-    await Promise.all(validIds.map(id => updateIndexSystem({ id, statusId: targetStatusId })));
+    await Promise.all(
+      validIds.map((id) => updateIndexSystem({ id, statusId: targetStatusId })),
+    );
     ElMessage.success(`批量${targetStatus}成功`);
     emit('refresh-chart');
     checkedIds.value = [];
@@ -471,7 +497,7 @@ async function handleBatchStatusChange() {
 // 选中 ID
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map(item => item.id);
+  checkedIds.value = records.map((item) => item.id);
 }
 
 /** 普通导出（按当前搜索条件，导出全部）- 前端生成 Excel */
@@ -513,14 +539,16 @@ async function handleExport() {
     }
 
     const allColumns = getGridColumnsByTab(activeName.value);
-    const exportColumns = allColumns.filter(
-      col => col.field && col.type !== 'checkbox' && col.title !== '操作'
-    ).map(col => ({ field: col.field, title: col.title }));
+    const exportColumns = allColumns
+      .filter(
+        (col) => col.field && col.type !== 'checkbox' && col.title !== '操作',
+      )
+      .map((col) => ({ field: col.field, title: col.title }));
 
     const wsData = [];
-    wsData.push(exportColumns.map(col => col.title));
-    allData.forEach(item => {
-      const row = exportColumns.map(col => item[col.field] ?? '-');
+    wsData.push(exportColumns.map((col) => col.title));
+    allData.forEach((item) => {
+      const row = exportColumns.map((col) => item[col.field] ?? '-');
       wsData.push(row);
     });
 
@@ -529,12 +557,23 @@ async function handleExport() {
     XLSX.utils.book_append_sheet(wb, ws, '指标体系');
 
     let fileName;
-    if (activeName.value === '全部') {
-      fileName = `指标体系列表_${dayjs().format('YYYYMMDD')}.xlsx`;
-    } else if (activeName.value === '启用') {
-      fileName = `启用指标体系_${dayjs().format('YYYYMMDD')}.xlsx`;
-    } else if (activeName.value === '停用') {
-      fileName = `停用指标体系_${dayjs().format('YYYYMMDD')}.xlsx`;
+    switch (activeName.value) {
+      case '停用': {
+        fileName = `停用指标体系_${dayjs().format('YYYYMMDD')}.xlsx`;
+
+        break;
+      }
+      case '全部': {
+        fileName = `指标体系列表_${dayjs().format('YYYYMMDD')}.xlsx`;
+
+        break;
+      }
+      case '启用': {
+        fileName = `启用指标体系_${dayjs().format('YYYYMMDD')}.xlsx`;
+
+        break;
+      }
+      // No default
     }
 
     XLSX.writeFile(wb, fileName);
@@ -554,8 +593,10 @@ async function handleBatchExport() {
     return;
   }
 
-  const selectedRows = dataObj.list.filter(item => checkedIds.value.includes(item.id));
-  if (!selectedRows.length) {
+  const selectedRows = dataObj.list.filter((item) =>
+    checkedIds.value.includes(item.id),
+  );
+  if (selectedRows.length === 0) {
     ElMessage.warning('选中的数据不在当前页，请刷新后重试');
     return;
   }
@@ -564,22 +605,26 @@ async function handleBatchExport() {
   const wb = XLSX.utils.book_new();
 
   const allColumns = getGridColumnsByTab(activeName.value);
-  const exportColumns = allColumns.filter(
-    col => col.field && col.type !== 'checkbox' && col.title !== '操作'
-  ).map(col => ({ field: col.field, title: col.title }));
+  const exportColumns = allColumns
+    .filter(
+      (col) => col.field && col.type !== 'checkbox' && col.title !== '操作',
+    )
+    .map((col) => ({ field: col.field, title: col.title }));
 
   try {
     for (const row of selectedRows) {
       const formattedItem = row;
       const rowForSheet = {};
-      exportColumns.forEach(col => {
+      exportColumns.forEach((col) => {
         rowForSheet[col.title] = formattedItem[col.field] ?? '-';
       });
 
       const ws = XLSX.utils.json_to_sheet([rowForSheet]);
 
-      let sheetName = (formattedItem.name || `体系_${formattedItem.id}`).replace(/[\\/:*?"<>|]/g, '_');
-      if (sheetName.length > 31) sheetName = sheetName.substring(0, 28) + '...';
+      let sheetName = (
+        formattedItem.name || `体系_${formattedItem.id}`
+      ).replaceAll(/[\\/:*?"<>|]/g, '_');
+      if (sheetName.length > 31) sheetName = `${sheetName.slice(0, 28)}...`;
       let finalSheetName = sheetName;
       let counter = 1;
       while (wb.SheetNames.includes(finalSheetName)) {
@@ -590,7 +635,7 @@ async function handleBatchExport() {
       XLSX.utils.book_append_sheet(wb, ws, finalSheetName);
     }
 
-    if (!wb.SheetNames.length) {
+    if (wb.SheetNames.length === 0) {
       ElMessage.warning('没有有效数据可导出');
       return;
     }
@@ -617,7 +662,10 @@ async function handleGarageOpenDetail(row) {
     const categories = res.categories || [];
 
     const categoryCount = categories.length;
-    const itemCount = categories.reduce((sum, cat) => sum + (cat.items?.length || 0), 0);
+    const itemCount = categories.reduce(
+      (sum, cat) => sum + (cat.items?.length || 0),
+      0,
+    );
 
     dataObj.garageDetail = {
       name: baseInfo.name || row.name || '-',
@@ -631,20 +679,20 @@ async function handleGarageOpenDetail(row) {
       createUserName: baseInfo.createUserName || row.createUserName || '-',
       createTime: baseInfo.createTime
         ? dayjs(baseInfo.createTime).format('YYYY-MM-DD HH:mm:ss')
-        : (row.createTime || '-'),
+        : row.createTime || '-',
       updateUserName: baseInfo.updateUserName || row.updateUserName || '-',
       updateTime: baseInfo.updateTime
         ? dayjs(baseInfo.updateTime).format('YYYY-MM-DD HH:mm:ss')
-        : (row.updateTime || '-'),
+        : row.updateTime || '-',
       lastUseTime: row.lastUseTime || undefined,
       useCount: row.useCount ?? 0,
       changeLogShort: row.changeLogShort || '-',
-      categories: categories.map(cat => ({
+      categories: categories.map((cat) => ({
         categoryId: cat.categoryId,
         name: cat.name,
         weight: cat.weight,
         sortNo: cat.sortNo,
-        items: (cat.items || []).map(item => ({
+        items: (cat.items || []).map((item) => ({
           name: item.name,
           indexTypeName: item.indexTypeName,
           commentRuleId: item.commentRuleId,
@@ -684,8 +732,10 @@ async function handleGarageOpenDetail(row) {
 const handleFieldClick = (fieldName, value, displayValue) => {
   if (fieldName === 'objectTypeId' || fieldName === 'statusId') {
     searchParams.value = { ...searchParams.value, [fieldName]: value };
-    if (fieldName === 'objectTypeId') searchParams.value.objectTypeName_display = displayValue;
-    if (fieldName === 'statusId') searchParams.value.statusName_display = displayValue;
+    if (fieldName === 'objectTypeId')
+      searchParams.value.objectTypeName_display = displayValue;
+    if (fieldName === 'statusId')
+      searchParams.value.statusName_display = displayValue;
   } else {
     searchParams.value = { ...searchParams.value, [fieldName]: value };
   }
@@ -723,10 +773,7 @@ onMounted(() => {
       />
     </FormDrawer>
 
-    <detailDrawer
-      ref="detailRef"
-      :detail-obj="dataObj.garageDetail"
-    />
+    <detailDrawer ref="detailRef" :detail-obj="dataObj.garageDetail" />
 
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -734,9 +781,16 @@ onMounted(() => {
 
     <Grid>
       <template #table-title>
-        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
+        >
           <div v-if="props.secondShow">
-            <el-tabs v-model="activeName" class="demo-tabs" @tab-change="handleTabChange">
+            <el-tabs
+              v-model="activeName"
+              class="demo-tabs"
+              @tab-change="handleTabChange"
+            >
               <el-tab-pane
                 v-for="item in tabsData"
                 :key="item.label"
@@ -757,7 +811,9 @@ onMounted(() => {
             体系编码：{{ searchParams.code }}
           </el-tag>
           <el-tag
-            v-if="searchParams.objectTypeId && searchParams.objectTypeName_display"
+            v-if="
+              searchParams.objectTypeId && searchParams.objectTypeName_display
+            "
             type="success"
             closable
             @close="handleClearField('objectTypeId')"
@@ -781,7 +837,11 @@ onMounted(() => {
         <div class="common-toolbar-tools">
           <template v-if="activeName === '全部'">
             <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-            <IconButton content="导出" icon-name="download" @click="handleExport" />
+            <IconButton
+              content="导出"
+              icon-name="download"
+              @click="handleExport"
+            />
             <IconButton
               content="批量导出"
               icon-name="download"
@@ -798,7 +858,11 @@ onMounted(() => {
           </template>
 
           <template v-else>
-            <IconButton content="导出" icon-name="download" @click="handleExport" />
+            <IconButton
+              content="导出"
+              icon-name="download"
+              @click="handleExport"
+            />
             <IconButton
               content="批量导出"
               icon-name="download"
@@ -823,30 +887,52 @@ onMounted(() => {
             />
           </template>
 
-          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
             :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
             @click="arrowChange"
           />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="handleFullShow"
+          />
         </div>
       </template>
 
       <!-- 列插槽 -->
       <template #name="{ row }">
-        <el-text @click="handleGarageOpenDetail(row)" class="common-align" type="primary">
+        <el-text
+          @click="handleGarageOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
           {{ row.name }}
         </el-text>
       </template>
       <template #code="{ row }">
-        <el-text @click="handleFieldClick('code', row.code)" class="common-align" type="primary">
+        <el-text
+          @click="handleFieldClick('code', row.code)"
+          class="common-align"
+          type="primary"
+        >
           {{ row.code }}
         </el-text>
       </template>
       <template #objectTypeName="{ row }">
         <el-text
-          @click="handleFieldClick('objectTypeId', row.objectTypeId, row.objectTypeName)"
+          @click="
+            handleFieldClick(
+              'objectTypeId',
+              row.objectTypeId,
+              row.objectTypeName,
+            )
+          "
           class="common-align"
           type="primary"
         >
@@ -864,10 +950,31 @@ onMounted(() => {
       </template>
 
       <template #actions="{ row }">
-        <div class="table-toolbar-tools" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
-          <IconButton content="详情" icon-name="View" @click="handleGarageOpenDetail(row)" />
-          <IconButton content="编辑" icon-name="edit" @click="handleEdit(row)" />
-          <IconButton v-if="activeName !== '停用'" content="新增版本" icon-name="DocumentCopy" @click="handleNewVersion(row)" />
+        <div
+          class="table-toolbar-tools"
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+          "
+        >
+          <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleGarageOpenDetail(row)"
+          />
+          <IconButton
+            content="编辑"
+            icon-name="edit"
+            @click="handleEdit(row)"
+          />
+          <IconButton
+            v-if="activeName !== '停用'"
+            content="新增版本"
+            icon-name="DocumentCopy"
+            @click="handleNewVersion(row)"
+          />
           <IconButton
             v-if="row.statusId === 1"
             content="停用"
@@ -882,15 +989,31 @@ onMounted(() => {
             color="#67C23A"
             @click="handleEnable(row)"
           />
-          <IconButton content="删除" icon-name="delete" color="#F56C6C" @click="handleDelete(row)" />
+          <IconButton
+            content="删除"
+            icon-name="delete"
+            color="#F56C6C"
+            @click="handleDelete(row)"
+          />
         </div>
       </template>
 
       <template #bottom>
-        <div class="common-total" @click="dataObj.totalShow = !dataObj.totalShow">
-          <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow"><ArrowDown /></el-icon>
-          <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow"><ArrowUp /></el-icon>
-          <span>本页统计：指标项数量{{ dataObj.list.length }}，启用{{ dataObj.list.filter(v => v.statusId === 1).length }}，停用{{ dataObj.list.filter(v => v.statusId === 2).length }}</span>
+        <div
+          class="common-total"
+          @click="dataObj.totalShow = !dataObj.totalShow"
+        >
+          <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
+            <ArrowDown />
+          </el-icon>
+          <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
+            <ArrowUp />
+          </el-icon>
+          <span>本页统计：指标项数量{{ dataObj.list.length }}，启用{{
+              dataObj.list.filter((v) => v.statusId === 1).length
+            }}，停用{{
+              dataObj.list.filter((v) => v.statusId === 2).length
+            }}</span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span>全部统计：指标项总数{{ dataObj.total }}</span>

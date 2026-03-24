@@ -1,130 +1,5 @@
-<template>
-  <div class="category-manager">
-    <div class="manager-header">
-      <h3>分类与指标项配置</h3>
-      <el-button type="primary" @click="addCategory">+ 添加分类</el-button>
-    </div>
-
-    <div v-if="!categories.length" class="empty-tip">
-      暂无分类，请点击“添加分类”开始配置。
-    </div>
-
-    <div v-for="(cat, catIdx) in categories" :key="cat.categoryId" class="category-item">
-      <el-card shadow="hover" class="category-card">
-        <template #header>
-          <div>
-            <!-- 分类标题行 -->
-            <el-row :gutter="10" class="category-header-title">
-              <el-col :span="8">分类名称</el-col>
-              <el-col :span="5">权重(%)</el-col>
-              <el-col :span="5">排序</el-col>
-              <el-col :span="6" style="text-align: right">操作</el-col>
-            </el-row>
-            <!-- 分类输入行 -->
-            <el-row :gutter="10" align="middle">
-              <el-col :span="8">
-                <el-input v-model="cat.name" placeholder="分类名称" size="small" clearable />
-              </el-col>
-              <el-col :span="5">
-                <el-input-number
-                  v-model="cat.weight"
-                  :min="0"
-                  :max="100"
-                  :precision="2"
-                  placeholder="权重(%)"
-                  size="small"
-                  controls-position="right"
-                />
-              </el-col>
-              <el-col :span="5">
-                <el-input-number
-                  v-model="cat.sortNo"
-                  :min="0"
-                  placeholder="排序"
-                  size="small"
-                  controls-position="right"
-                />
-              </el-col>
-              <el-col :span="6" style="text-align: right">
-                <el-button type="success" size="small" @click="addItem(catIdx)">+ 指标项</el-button>
-                <el-button type="danger" size="small" @click="removeCategory(catIdx)">删除</el-button>
-              </el-col>
-            </el-row>
-          </div>
-        </template>
-
-        <!-- 指标项标题行（修正为单列“评价规则”） -->
-        <div v-if="cat.items.length" class="item-header">
-          <el-row :gutter="10" align="middle">
-            <el-col :span="6">指标项名称</el-col>
-            <el-col :span="8">评价规则</el-col>
-            <el-col :span="4">权重(%)</el-col>
-            <el-col :span="4">排序</el-col>
-            <el-col :span="2" style="text-align: right">操作</el-col>
-          </el-row>
-        </div>
-
-        <!-- 指标项列表 -->
-        <div v-if="!cat.items.length" class="item-empty">暂无指标项，请添加</div>
-        <div v-for="(item, itemIdx) in cat.items" :key="item.itemId" class="item-row">
-          <el-row :gutter="10" align="middle">
-            <el-col :span="6">
-              <el-input v-model="item.name" placeholder="指标项名称" size="small" clearable />
-            </el-col>
-            <el-col :span="8">
-              <el-select
-                v-model="item.commentRuleId"
-                placeholder="请选择评价规则"
-                size="small"
-                clearable
-                filterable
-              >
-                <el-option
-                  v-for="rule in ruleOptions"
-                  :key="rule.value"
-                  :label="rule.label"
-                  :value="rule.value"
-                />
-              </el-select>
-            </el-col>
-            <el-col :span="4">
-              <el-input-number
-                v-model="item.weight"
-                :min="0"
-                :max="100"
-                :precision="2"
-                placeholder="权重(%)"
-                size="small"
-                controls-position="right"
-              />
-            </el-col>
-            <el-col :span="4">
-              <el-input-number
-                v-model="item.sortNo"
-                :min="0"
-                placeholder="排序"
-                size="small"
-                controls-position="right"
-              />
-            </el-col>
-            <el-col :span="2" style="text-align: right">
-              <el-button type="danger" size="small" @click="removeItem(catIdx, itemIdx)">删除</el-button>
-            </el-col>
-          </el-row>
-        </div>
-      </el-card>
-    </div>
-
-    <!-- 分类总权重提示 -->
-    <div class="total-weight-summary" :class="{ error: !isTotalWeightValid }">
-      所有分类权重合计：{{ totalCategoryWeight }}%
-      <span v-if="!isTotalWeightValid">（必须等于100%）</span>
-    </div>
-  </div>
-</template>
-
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, nextTick } from 'vue';
 import { ElMessage } from 'element-plus';
 import { getRuleList } from '#/api/genchuan/dataHub/evaluation/system/indicators/index.js';
 
@@ -138,48 +13,82 @@ const emit = defineEmits(['update:modelValue']);
 const categories = ref([]);
 const ruleOptions = ref([]);
 
-// 同步 modelValue
+// 防递归标志
+let isUpdating = false;
+
+// 同步外部 modelValue 到内部 categories
 watch(
   () => props.modelValue,
   (val) => {
-    categories.value = val.map(cat => ({
+    if (isUpdating) return; // 避免循环
+    isUpdating = true;
+    categories.value = val.map((cat) => ({
       ...cat,
-      items: (cat.items || []).map(item => ({
+      categoryId: cat.categoryId || `temp_${Date.now()}_${Math.random()}`,
+      items: (cat.items || []).map((item) => ({
         ...item,
-        itemId: item.itemId || `temp_${Date.now()}_${Math.random()}`
+        itemId: item.itemId || `temp_${Date.now()}_${Math.random()}`,
       })),
-      categoryId: cat.categoryId || `temp_${Date.now()}_${Math.random()}`
     }));
+    nextTick(() => {
+      isUpdating = false;
+    });
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 );
 
-// 监听内部变化，向外 emit
-watch(categories, (val) => {
-  emit('update:modelValue', val);
-}, { deep: true });
+// 规则变更时同步 ruleName
+function onRuleChange(catIdx, itemIdx, ruleId) {
+  const item = categories.value[catIdx].items[itemIdx];
+  if (ruleId) {
+    const selectedRule = ruleOptions.value.find(rule => rule.value === ruleId);
+    item.ruleName = selectedRule ? selectedRule.label : '';
+  } else {
+    item.ruleName = '';
+  }
+}
 
-// 加载规则列表（只获取启用状态的规则）
-const loadRuleOptions = async (id) => {
+// 监听内部 categories 变化，向外 emit
+watch(
+  categories,
+  (val) => {
+    if (isUpdating) return;
+    emit('update:modelValue', val);
+  },
+  { deep: true },
+);
+
+// 加载规则列表
+const loadRuleOptions = async (params = {}) => {
   try {
-    const params = { systemId: id, status: 1 };
     const rules = await getRuleList(params);
-    ruleOptions.value = rules || [];
+    if (rules && rules.length > 0) {
+      ruleOptions.value = rules;
+    } else {
+      console.warn('未获取到规则数据，请检查接口或参数', params);
+      ruleOptions.value = [];
+    }
   } catch (error) {
     console.error('获取规则列表失败', error);
     ruleOptions.value = [];
   }
 };
 
-// 监听 systemId 变化
-watch(() => props.systemId, (newId) => {
-  loadRuleOptions(newId);
-}, { immediate: true });
+// 监听 systemId 变化，动态加载规则
+watch(
+  () => props.systemId,
+  (newId) => {
+    // 若 systemId 存在，则加载该体系下的启用规则；否则加载所有启用规则
+    const params = newId ? { systemId: newId, status: 1 } : { status: 1 };
+    loadRuleOptions(params);
+  },
+  { immediate: true },
+);
 
 // 添加分类
 function addCategory() {
   const newCat = {
-    categoryId: `cat_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`,
+    categoryId: `cat_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
     name: '',
     weight: 0,
     sortNo: categories.value.length + 1,
@@ -188,12 +97,13 @@ function addCategory() {
   categories.value.push(newCat);
 }
 
-// 添加指标项（包含 weight 默认值）
+// 添加指标项
 function addItem(catIdx) {
   const newItem = {
-    itemId: `item_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`,
+    itemId: `item_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
     name: '',
     commentRuleId: '',
+    ruleName: '',
     weight: 0,
     sortNo: categories.value[catIdx].items.length + 1,
   };
@@ -212,12 +122,15 @@ function removeItem(catIdx, itemIdx) {
 
 // 计算所有分类权重总和
 const totalCategoryWeight = computed(() => {
-  return categories.value.reduce((sum, cat) => sum + (Number(cat.weight) || 0), 0);
+  return categories.value.reduce(
+    (sum, cat) => sum + (Number(cat.weight) || 0),
+    0,
+  );
 });
 
 // 分类总权重是否有效
 const isTotalWeightValid = computed(() => {
-  if (!categories.value.length) return true;
+  if (categories.value.length === 0) return true;
   return Math.abs(totalCategoryWeight.value - 100) < 0.01;
 });
 
@@ -248,6 +161,166 @@ function validate() {
 
 defineExpose({ validate });
 </script>
+
+<template>
+  <div class="category-manager">
+    <div class="manager-header">
+      <h3>分类与指标项配置</h3>
+      <el-button type="primary" @click="addCategory">+ 添加分类</el-button>
+    </div>
+
+    <div v-if="categories.length === 0" class="empty-tip">
+      暂无分类，请点击“添加分类”开始配置。
+    </div>
+
+    <div
+      v-for="(cat, catIdx) in categories"
+      :key="cat.categoryId"
+      class="category-item"
+    >
+      <el-card shadow="hover" class="category-card">
+        <template #header>
+          <div>
+            <!-- 分类标题行 -->
+            <el-row :gutter="10" class="category-header-title">
+              <el-col :span="8">分类名称</el-col>
+              <el-col :span="5">权重(%)</el-col>
+              <el-col :span="5">排序</el-col>
+              <el-col :span="6" style="text-align: right">操作</el-col>
+            </el-row>
+            <!-- 分类输入行 -->
+            <el-row :gutter="10" align="middle">
+              <el-col :span="8">
+                <el-input
+                  v-model="cat.name"
+                  placeholder="分类名称"
+                  size="small"
+                  clearable
+                />
+              </el-col>
+              <el-col :span="5">
+                <el-input-number
+                  v-model="cat.weight"
+                  :min="0"
+                  :max="100"
+                  :precision="2"
+                  placeholder="权重(%)"
+                  size="small"
+                  controls-position="right"
+                />
+              </el-col>
+              <el-col :span="5">
+                <el-input-number
+                  v-model="cat.sortNo"
+                  :min="0"
+                  placeholder="排序"
+                  size="small"
+                  controls-position="right"
+                />
+              </el-col>
+              <el-col :span="6" style="text-align: right">
+                <el-button type="success" size="small" @click="addItem(catIdx)">
+                  + 指标项
+                </el-button>
+                <el-button
+                  type="danger"
+                  size="small"
+                  @click="removeCategory(catIdx)"
+                >
+                  删除
+                </el-button>
+              </el-col>
+            </el-row>
+          </div>
+        </template>
+
+        <!-- 指标项标题行 -->
+        <div v-if="cat.items.length > 0" class="item-header">
+          <el-row :gutter="10" align="middle">
+            <el-col :span="6">指标项名称</el-col>
+            <el-col :span="8">评价规则名称</el-col>
+            <el-col :span="4">权重(%)</el-col>
+            <el-col :span="4">排序</el-col>
+            <el-col :span="2" style="text-align: right">操作</el-col>
+          </el-row>
+        </div>
+
+        <!-- 指标项列表 -->
+        <div v-if="cat.items.length === 0" class="item-empty">
+          暂无指标项，请添加
+        </div>
+        <div
+          v-for="(item, itemIdx) in cat.items"
+          :key="item.itemId"
+          class="item-row"
+        >
+          <el-row :gutter="10" align="middle">
+            <el-col :span="6">
+              <el-input
+                v-model="item.name"
+                placeholder="指标项名称"
+                size="small"
+                clearable
+              />
+            </el-col>
+            <el-col :span="8">
+              <el-select
+                v-model="item.commentRuleId"
+                placeholder="请选择评价规则名称"
+                size="small"
+                clearable
+                filterable
+                @change="(val) => onRuleChange(catIdx, itemIdx, val)"
+              >
+                <el-option
+                  v-for="rule in ruleOptions"
+                  :key="rule.value"
+                  :label="rule.label"
+                  :value="rule.value"
+                />
+              </el-select>
+            </el-col>
+            <el-col :span="4">
+              <el-input-number
+                v-model="item.weight"
+                :min="0"
+                :max="100"
+                :precision="2"
+                placeholder="权重(%)"
+                size="small"
+                controls-position="right"
+              />
+            </el-col>
+            <el-col :span="4">
+              <el-input-number
+                v-model="item.sortNo"
+                :min="0"
+                placeholder="排序"
+                size="small"
+                controls-position="right"
+              />
+            </el-col>
+            <el-col :span="2" style="text-align: right">
+              <el-button
+                type="danger"
+                size="small"
+                @click="removeItem(catIdx, itemIdx)"
+              >
+                删除
+              </el-button>
+            </el-col>
+          </el-row>
+        </div>
+      </el-card>
+    </div>
+
+    <!-- 分类总权重提示 -->
+    <div class="total-weight-summary" :class="{ error: !isTotalWeightValid }">
+      所有分类权重合计：{{ totalCategoryWeight }}%
+      <span v-if="!isTotalWeightValid">（必须等于100%）</span>
+    </div>
+  </div>
+</template>
 
 <style scoped lang="scss">
 .category-manager {

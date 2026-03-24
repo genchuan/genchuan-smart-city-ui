@@ -11,11 +11,12 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   getRuleCategoryAllPage,
   getRuleStatusCount,
-  saveFullRuleCategory,
+  updateRuleCategory,           // 使用 update 接口（支持新增和编辑）
   getRuleCategoryDetail,
   exportRuleCategory,
   getIndexSystemSimpleList,
   getStatusSimpleList,
+  deleteRuleCategory,
 } from '#/api/genchuan/dataHub/evaluation/system/rules/index.js';
 import detailDrawer from './detail.vue';
 import RuleItemManager from '#/views/genchuan/dataHub/evaluation/system/components/RuleItemManager.vue';
@@ -41,11 +42,11 @@ const dataObj = reactive({
 
 const checkedIds = ref([]);
 const searchParams = ref({});
-const formData = ref();               // 当前编辑的分类基本信息
-const ruleItemList = ref([]);          // 当前编辑分类的规则项列表（双向绑定给 RuleItemManager）
-const ruleItemManagerRef = ref(null);  // 引用 RuleItemManager 组件
+const formData = ref();
+const ruleItemList = ref([]);
 const activeName = ref('全部');
 const detailRef = ref(null);
+const ruleItemManagerRef = ref(null);
 
 // ==================== computed ====================
 const getTitle = computed(() => {
@@ -68,7 +69,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel() { drawerApi.close(); },
 });
 
-// 搜索表单
 const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
@@ -114,7 +114,6 @@ const [Form, formApi] = useVbenForm({
   showDefaultActions: false,
 });
 
-// 动态加载表单下拉选项
 const loadFormOptions = async () => {
   try {
     const [systemOptions, statusOptions] = await Promise.all([
@@ -145,47 +144,79 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     const basicValid = await formApi.validate();
     if (!basicValid.valid) return;
 
-    // 调用规则项管理器的校验
-    if (!ruleItemManagerRef.value?.validate()) {
-      return;
-    }
-
     const basicValues = formApi.form.values;
     const drawerData = formDrawerApi.getData() || {};
     const id = drawerData.id;
 
-    // 构建完整 payload，确保数字字段为数字类型，仅传递数字 ID
-    const payload = {
-      id: id || undefined,
-      name: basicValues.name,
-      systemId: basicValues.systemId,
-      statusId: basicValues.statusId,
-      commentRules: ruleItemList.value.map(item => ({
-        // id: 只有数字才保留，字符串临时 ID 不传递（让后端生成）
-        id: item.id && typeof item.id === 'number' ? item.id : undefined,
+    // 从 RuleItemManager 获取最新规则项数据
+    const latestRuleItems = ruleItemManagerRef.value?.getItems() || ruleItemList.value;
+
+    // 清理临时ID，并补充必填字段
+    const cleanRuleItems = latestRuleItems.map(item => {
+      const cleanedItem = { ...item };
+      // 删除临时ID
+      if (cleanedItem.id && cleanedItem.id.toString().startsWith('temp_')) {
+        delete cleanedItem.id;
+      }
+      // 处理细则
+      cleanedItem.details = (cleanedItem.details || []).map(detail => {
+        const cleanedDetail = { ...detail };
+        if (cleanedDetail.id && cleanedDetail.id.toString().startsWith('temp_')) {
+          delete cleanedDetail.id;
+        }
+        if (item.id && !item.id.toString().startsWith('temp_')) {
+          cleanedDetail.ruleId = item.id;
+        } else {
+          delete cleanedDetail.ruleId;
+        }
+        return cleanedDetail;
+      });
+      return cleanedItem;
+    });
+
+    // 构建 commentRules，补充 systemId、ruleCategoryId
+    const commentRules = cleanRuleItems.map(item => {
+      const ruleData = {
+        id: item.id,
         ruleName: item.ruleName,
-        itemId: item.itemId ? Number(item.itemId) : undefined,
-        ruleType: item.ruleType ? Number(item.ruleType) : undefined,
-        status: item.status !== undefined ? Number(item.status) : undefined,
         applyObjectType: item.applyObjectType,
         effectiveStartTime: item.effectiveStartTime,
         effectiveEndTime: item.effectiveEndTime,
-        details: (item.details || []).map(d => ({
-          id: d.id && typeof d.id === 'number' ? d.id : undefined,
-          minValue: d.minValue,
-          maxValue: d.maxValue,
-          operatorMin: d.operatorMin,
-          operatorMax: d.operatorMax,
-          score: d.score !== undefined ? Number(d.score) : undefined,
-          sortOrder: d.sortOrder !== undefined ? Number(d.sortOrder) : undefined,
-          remark: d.remark,
-        })),
-      })),
+        details: item.details,
+        status: item.status !== undefined ? item.status : 1,
+        // 补充关联字段
+        systemId: basicValues.systemId,
+        ruleCategoryId: id,
+      };
+
+      // 对于已存在的规则项，保留原有的 itemId 和 ruleType（如果存在）
+      if (item.id && !item.id.toString().startsWith('temp_')) {
+        if (item.itemId) ruleData.itemId = item.itemId;
+        if (item.ruleType) ruleData.ruleType = item.ruleType;
+      } else {
+        // 新增规则项：若后端要求必填，可设置为默认值；否则删除这两个字段
+        // 这里假设后端已改为非必填，不传递
+        // 如需传递默认值，取消下面注释
+        // ruleData.itemId = 0;
+        // ruleData.ruleType = 2; // 默认扣分
+      }
+
+      return ruleData;
+    });
+
+    // 构建完整 payload
+    const payload = {
+      name: basicValues.name,
+      systemId: basicValues.systemId,
+      statusId: basicValues.statusId,
+      commentRules,
     };
+    // 如果有 id 则传入，否则不传（让后端处理新增）
+    if (id) payload.id = id;
 
     const loadingInstance = ElLoading.service({ text: id ? '更新中...' : '创建中...' });
     try {
-      await saveFullRuleCategory(payload);
+      await updateRuleCategory(payload);
       ElMessage.success(id ? '编辑成功' : '新增成功');
       emit('data-change');
       handleRefresh();
@@ -204,13 +235,13 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       const data = formDrawerApi.getData();
       formData.value = data;
       if (data?.id) {
-        // 编辑模式：加载分类详情，包括规则项
+        // 编辑模式
         await formApi.setValues(data);
         const loading = ElLoading.service({ text: '加载详情...', target: '.vben-drawer' });
         try {
           const detail = await getRuleCategoryDetail(data.id);
           ruleItemList.value = (detail.commentRules || []).map(rule => ({
-            id: rule.id, // 后端返回的数字 ID
+            id: rule.id,
             ruleName: rule.ruleName,
             itemId: rule.itemId,
             itemName: rule.itemName,
@@ -325,17 +356,24 @@ function handleRefresh() {
   gridApi.query();
 }
 
+// 修改导出函数，增加参数清理
 async function handleExport() {
   const loadingInstance = ElLoading.service({ text: '正在导出...' });
   try {
     const params = {
-      ...searchParams.value,
       pageNo: 1,
       pageSize: 10000,
+      ...searchParams.value,
     };
     if (activeName.value !== '全部') {
       params.statusId = activeName.value === '启用' ? 1 : 2;
     }
+    // 清理无效参数
+    Object.keys(params).forEach(key => {
+      if (params[key] === undefined || params[key] === null || params[key] === '') {
+        delete params[key];
+      }
+    });
     const blob = await exportRuleCategory(params);
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -507,7 +545,7 @@ const handleTabChange = () => {
   handleRefresh();
 };
 
-// 规则项刷新回调（由 RuleItemManager 触发）
+// 规则项刷新回调
 const handleRuleItemsRefresh = async () => {
   if (!formData.value?.id) return;
   const detail = await getRuleCategoryDetail(formData.value.id);
@@ -551,11 +589,12 @@ onMounted(() => {
     <!-- 新增/编辑抽屉 -->
     <FormDrawer :title="getTitle" class="genchuan-detail-drawer">
       <Form />
-      <!-- 规则项管理区域（添加 ref 以便调用 validate） -->
+      <!-- 规则项管理区域（始终显示，因为可能新增规则项） -->
       <RuleItemManager
         ref="ruleItemManagerRef"
+        v-if="formData?.id || ruleItemList.length > 0"
         v-model="ruleItemList"
-        :system-id="formApi?.form?.values?.systemId"
+        :category-id="formData?.id"
         @refresh="handleRuleItemsRefresh"
       />
     </FormDrawer>
@@ -586,7 +625,6 @@ onMounted(() => {
             </el-tabs>
           </div>
 
-          <!-- 钻取标签 -->
           <el-tag
             v-if="searchParams.systemId && searchParams.systemName"
             type="primary"

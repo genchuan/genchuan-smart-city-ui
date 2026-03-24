@@ -51,8 +51,6 @@ export function exportIndexSystem(params) {
 //   }));
 // }
 
-
-
 // ========== 完整保存接口 ==========
 /** 保存完整的指标体系（包含分类与指标项） */
 export function saveFullIndexSystem(data) {
@@ -66,13 +64,15 @@ export function getObjectTypeSimpleList() {
 
 /** 获取状态列表（返回下拉选项格式） */
 export function getStatusSimpleList() {
-  return requestClient.get('/evaluate/status/page', { params: { pageNo: 1, pageSize: 100 } }).then(res => {
-    const list = res.list || res.data?.list || [];
-    return list.map(item => ({
-      value: item.statusId,
-      label: item.name,
-    }));
-  });
+  return requestClient
+    .get('/evaluate/status/page', { params: { pageNo: 1, pageSize: 200 } })
+    .then((res) => {
+      const list = res.list || res.data?.list || [];
+      return list.map((item) => ({
+        value: item.statusId,
+        label: item.name,
+      }));
+    });
 }
 
 /** 获取评价规则列表（用于下拉选择），可传入查询参数，如 status、systemId 等 */
@@ -90,9 +90,10 @@ export async function getRuleList(params = {}) {
       ...params,
     };
     try {
-      const res = await requestClient.get('/evaluate/comment-rule/page', { params: queryParams });
-      const pageData = res.data || {};
-      const list = pageData.list || [];
+      const res = await requestClient.get('/evaluate/comment-rule/page', {
+        params: queryParams,
+      });
+      const list = res.list || [];
       allList = allList.concat(list);
       if (list.length < pageSize) {
         hasMore = false;
@@ -105,7 +106,7 @@ export async function getRuleList(params = {}) {
     }
   }
 
-  return allList.map(item => ({
+  return allList.map((item) => ({
     value: item.id,
     label: item.ruleName,
   }));
