@@ -1,38 +1,53 @@
-image: harbor.genchuan.cn/library/node:v20.15.0-alpine-docker-pnpm
-
-# 定义两个独立的阶段：先构建，后推送
 stages:
-  - buildAndPush
+  - build          # 所有分支执行：安装依赖 + 构建dist包
+  - push           # 仅dev-urban分支执行：迁移dist包
 
 variables:
-  DOCKER_IMAGE: "harbor.genchuan.cn/sccsgl/genchuan-ui"
-  HARBOR_USER: "guoyuanhong"
-  HARBOR_PASSWORD: "Gyh12345"
-  PIPELINE_TAG: "$CI_COMMIT_BRANCH"
+  DIST_PATH: "./dist"          # 项目构建后dist包的路径
+  # TARGET_SERVER: "你的目标服务器IP/域名"  # 接收dist包的服务器
+  # SSH_USER: "root"
+  # SSH_PASSWORD: "你的密码" 或 使用SSH密钥
+  TARGET_PATH: "/home/gitlab-runner/vue/vue-vben"   # 目标服务器存储dist包的路径
 
-# 第一阶段：构建（所有分支执行）
 build:
-  stage: buildAndPush
+  stage: build
   script:
-    - echo "安装依赖并构建项目..."
+    - echo "===== 开始安装依赖并构建项目 ====="
     - pnpm config set registry https://registry.npmjs.org/
-    - pnpm install
+    - pnpm install --no-frozen-lockfile
     - pnpm run build:ele
-        # 仅当分支是dev-urban时，才执行Docker推送逻辑
-    - |
-      if [ "$CI_COMMIT_BRANCH" == "dev-urban" ]; then
-        echo "登录 Harbor 仓库..."
-        docker login -u $HARBOR_USER -p $HARBOR_PASSWORD harbor.genchuan.cn
+    - pwd
+    - ls -l $DIST_PATH  # 确认dist包生成成功
+  artifacts:
+    paths:
+      - $DIST_PATH/
+    expire_in: 1h
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
+      - unknown_failure
 
-        echo "构建 Docker 镜像..."
-        docker build -t $DOCKER_IMAGE:$PIPELINE_TAG .
+# 第二阶段：迁移dist包（仅dev-urban分支执行）
+push:
+  stage: push
+  tags:
+    - git-runner-01
+  only:
+    - dev-urban        # 仅dev-urban分支触发此阶段
+  needs:
+    - build            # 依赖build阶段的产物（必须等build完成）
+  script:
+    - echo "===== 开始迁移dist包到目标服务器 ====="
+    # 方式1：本地迁移（若目标路径在Runner本地）
+    - mkdir -p $TARGET_PATH
+    - cp -rf $DIST_PATH/* $TARGET_PATH/
+    - echo "dist包已迁移到本地路径：$TARGET_PATH"
 
-        echo "推送 Docker 镜像..."
-        docker push $DOCKER_IMAGE:$PIPELINE_TAG
-      else
-        echo "当前分支不是开发分支，跳过Docker推送步骤"
-      fi
-  
+    # 验证迁移结果
+    - ls -l $TARGET_PATH  # 本地迁移验证
+    # - ssh $SSH_USER@$TARGET_SERVER "ls -l $TARGET_PATH"  # 远程迁移验证
   retry:
     max: 2
     when:

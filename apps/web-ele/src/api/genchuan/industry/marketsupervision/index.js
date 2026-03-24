@@ -162,8 +162,10 @@ export function getAutoData(id) {
  return requestClient.post(`/kitchen/rectify-review/review-add2`,{});
 }
 /** 获取日志 */
-export function getLogList(data) { 
- return requestClient.get(`/kitchen/sys-operation-log/page`,data);
+export function getLogList(params) { 
+ return requestClient.get(`/kitchen/sys-operation-log/page`, {
+    params,
+  })
 }
 /** 获取草拟详情 */
 export function getCaoNiDetail(id) {
