@@ -1,5 +1,6 @@
 <script setup>
 import { computed, defineProps, toRefs } from 'vue';
+
 import { useVbenDrawer } from '@vben/common-ui';
 
 const props = defineProps({
@@ -19,11 +20,16 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   appendToMain: true,
   footer: false,
   width: 900,
-  onCancel() { detailDrawerApi.close(); },
+  onCancel() {
+    detailDrawerApi.close();
+  },
   async onOpenChange() {},
 });
 
-defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.close() });
+defineExpose({
+  open: () => detailDrawerApi.open(),
+  close: () => detailDrawerApi.close(),
+});
 </script>
 
 <template>
@@ -41,7 +47,9 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">适用对象类型：</div>
-        <div class="detail-row-right">{{ detailObj.objectTypeName || '-' }}</div>
+        <div class="detail-row-right">
+          {{ detailObj.objectTypeName || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">版本号：</div>
@@ -65,7 +73,9 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">创建人：</div>
-        <div class="detail-row-right">{{ detailObj.createUserName || '-' }}</div>
+        <div class="detail-row-right">
+          {{ detailObj.createUserName || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">创建时间：</div>
@@ -73,7 +83,9 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">更新人：</div>
-        <div class="detail-row-right">{{ detailObj.updateUserName || '-' }}</div>
+        <div class="detail-row-right">
+          {{ detailObj.updateUserName || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">更新时间：</div>
@@ -81,13 +93,22 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">变更日志：</div>
-        <div class="detail-row-right">{{ detailObj.changeLogShort || '-' }}</div>
+        <div class="detail-row-right">
+          {{ detailObj.changeLogShort || '-' }}
+        </div>
       </div>
 
       <!-- 分类与指标项列表 -->
-      <div class="detail-section" v-if="detailObj.categories && detailObj.categories.length">
+      <div
+        class="detail-section"
+        v-if="detailObj.categories && detailObj.categories.length > 0"
+      >
         <h3>分类及指标项配置</h3>
-        <div v-for="cat in detailObj.categories" :key="cat.categoryId" class="category-block">
+        <div
+          v-for="cat in detailObj.categories"
+          :key="cat.categoryId"
+          class="category-block"
+        >
           <div class="category-header">
             <span class="cat-name">{{ cat.name }}</span>
             <span class="cat-weight">权重：{{ cat.weight }}%</span>
@@ -95,13 +116,21 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
           </div>
           <el-table :data="cat.items" border size="small" style="width: 100%">
             <el-table-column prop="name" label="指标项名称" min-width="150" />
-            <el-table-column prop="indexTypeName" label="指标类型" width="100" />
-            <el-table-column prop="commentRuleId" label="评价规则ID" width="100" />
-            <el-table-column prop="ruleName" label="规则名称" width="100">
-              <template #default="{ row }">
-                {{ row.ruleName || '-' }}
-              </template>
-            </el-table-column>
+            <el-table-column
+              prop="commentRuleId"
+              label="评价规则id"
+              width="100"
+            />
+            <el-table-column
+              prop="ruleName"
+              label="评价规则名称"
+              width="100"
+            />
+<!--            <el-table-column prop="ruleName" label="规则名称" width="100">-->
+<!--              <template #default="{ row }">-->
+<!--                {{ row.ruleName || '-' }}-->
+<!--              </template>-->
+<!--            </el-table-column>-->
             <el-table-column prop="weight" label="权重(%)" width="80">
               <template #default="{ row }">
                 {{ row.weight ?? '-' }}
@@ -133,7 +162,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
     padding-left: 12px;
   }
 }
-.detail-section{
+.detail-section {
   h3 {
     margin: 10px 0 0 0;
     font-size: 16px;

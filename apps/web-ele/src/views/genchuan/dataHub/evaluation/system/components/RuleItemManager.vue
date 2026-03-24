@@ -1,281 +1,66 @@
-<template>
-  <div class="rule-item-manager">
-    <div class="manager-header">
-      <h3>规则项配置</h3>
-      <el-button type="primary" @click="addItem">+ 添加规则项</el-button>
-    </div>
-
-    <div v-if="!items.length" class="empty-tip">
-      暂无规则项，请点击“添加规则项”开始配置。
-    </div>
-
-    <div v-for="(item, itemIdx) in items" :key="item.id" class="rule-item-card">
-      <el-card shadow="hover" class="rule-item-card-inner">
-        <template #header>
-          <div>
-            <!-- 规则项标题行（列提示） -->
-            <el-row :gutter="10" class="rule-item-header-title">
-              <el-col :span="4">规则项名称</el-col>
-              <el-col :span="4">规则类型</el-col>
-              <el-col :span="5">关联指标项</el-col>
-              <el-col :span="4">适用对象类型</el-col>
-              <el-col :span="3">权重</el-col>
-              <el-col :span="4" style="text-align: right">操作</el-col>
-            </el-row>
-            <!-- 规则项输入行 -->
-            <el-row :gutter="10" align="middle">
-              <el-col :span="4">
-                <el-input v-model="item.ruleName" placeholder="规则项名称" size="small" clearable />
-              </el-col>
-              <el-col :span="4">
-                <el-select v-model="item.ruleType" placeholder="规则类型" size="small" clearable filterable>
-                  <el-option
-                    v-for="opt in ruleTypeOptions"
-                    :key="opt.value"
-                    :label="opt.label"
-                    :value="opt.value"
-                  />
-                </el-select>
-              </el-col>
-              <el-col :span="5">
-                <el-select v-model="item.itemId" placeholder="关联指标项" size="small" clearable filterable>
-                  <el-option
-                    v-for="opt in itemOptions"
-                    :key="opt.value"
-                    :label="opt.label"
-                    :value="opt.value"
-                  />
-                </el-select>
-              </el-col>
-              <el-col :span="4">
-                <el-select v-model="item.applyObjectType" placeholder="适用对象类型" size="small" clearable filterable>
-                  <el-option
-                    v-for="opt in objectTypeOptions"
-                    :key="opt.value"
-                    :label="opt.label"
-                    :value="opt.value"
-                  />
-                </el-select>
-              </el-col>
-              <el-col :span="3">
-                <el-input-number
-                  v-model="item.weight"
-                  :min="0"
-                  :max="100"
-                  :precision="2"
-                  placeholder="权重"
-                  size="small"
-                  controls-position="right"
-                />
-              </el-col>
-              <el-col :span="4" style="text-align: right">
-                <el-button type="success" size="small" @click="addDetail(itemIdx)">+ 细则</el-button>
-                <el-button type="danger" size="small" @click="removeItem(itemIdx)">删除</el-button>
-              </el-col>
-            </el-row>
-          </div>
-        </template>
-
-        <!-- 细则标题行 -->
-        <div v-if="item.details.length" class="details-header">
-          <el-row :gutter="10" align="middle">
-            <el-col :span="3">最小值</el-col>
-            <el-col :span="3">运算符(小)</el-col>
-            <el-col :span="3">最大值</el-col>
-            <el-col :span="3">运算符(大)</el-col>
-            <el-col :span="2">分数</el-col>
-            <el-col :span="2">排序</el-col>
-            <el-col :span="5">描述</el-col>
-            <el-col :span="3" style="text-align: right">操作</el-col>
-          </el-row>
-        </div>
-
-        <!-- 细则列表 -->
-        <div v-if="!item.details.length" class="details-empty">暂无细则，请添加</div>
-        <div v-for="(detail, detailIdx) in item.details" :key="detail.id" class="detail-row">
-          <el-row :gutter="10" align="middle">
-            <el-col :span="3">
-              <el-input-number
-                v-model="detail.minValue"
-                :min="0"
-                :step="0.1"
-                placeholder="无下限"
-                size="small"
-                controls-position="right"
-              />
-            </el-col>
-            <el-col :span="3">
-              <el-select v-model="detail.operatorMin" placeholder="≥" size="small">
-                <el-option
-                  v-for="opt in operatorMinOptions"
-                  :key="opt.value"
-                  :label="opt.label"
-                  :value="opt.value"
-                />
-              </el-select>
-            </el-col>
-            <el-col :span="3">
-              <el-input-number
-                v-model="detail.maxValue"
-                :min="0"
-                :step="0.1"
-                placeholder="无上限"
-                size="small"
-                controls-position="right"
-              />
-            </el-col>
-            <el-col :span="3">
-              <el-select v-model="detail.operatorMax" placeholder="≤" size="small">
-                <el-option
-                  v-for="opt in operatorMaxOptions"
-                  :key="opt.value"
-                  :label="opt.label"
-                  :value="opt.value"
-                />
-              </el-select>
-            </el-col>
-            <el-col :span="2">
-              <el-input-number
-                v-model="detail.score"
-                :min="0"
-                :step="0.1"
-                placeholder="分数"
-                size="small"
-                controls-position="right"
-              />
-            </el-col>
-            <el-col :span="2">
-              <el-input-number
-                v-model="detail.sortOrder"
-                :min="1"
-                placeholder="排序"
-                size="small"
-                controls-position="right"
-              />
-            </el-col>
-            <el-col :span="5">
-              <el-input v-model="detail.remark" placeholder="描述" size="small" clearable />
-            </el-col>
-            <el-col :span="3" style="text-align: right">
-              <el-button type="danger" size="small" @click="removeDetail(itemIdx, detailIdx)">删除</el-button>
-            </el-col>
-          </el-row>
-        </div>
-      </el-card>
-    </div>
-  </div>
-</template>
-
+<!-- RuleItemManager.vue - 删除规则类型、关联指标项、权重 -->
 <script setup>
 import { ref, watch, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import {
-  getRuleTypeList,
   getObjectTypeSimpleList,
-  getIndexItemSimpleList,
 } from '#/api/genchuan/dataHub/evaluation/system/rules/index.js';
 
 const props = defineProps({
   modelValue: { type: Array, default: () => [] },
-  systemId: { type: [String, Number], default: null },
+  categoryId: { type: [String, Number], default: null },
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'refresh']);
 
 const items = ref([]);
-const ruleTypeOptions = ref([]);
+const optionsLoading = ref(true);
+
+// 只保留适用对象类型选项
 const objectTypeOptions = ref([]);
-const itemOptions = ref([]);
 
-const operatorMinOptions = [
-  { label: '>=', value: '>=' },
-  { label: '>', value: '>' },
-];
-const operatorMaxOptions = [
-  { label: '<=', value: '<=' },
-  { label: '<', value: '<' },
-];
-
-// 加载规则类型（确保 value 为数字）
-const loadRuleTypeOptions = async () => {
+const loadOptions = async () => {
+  optionsLoading.value = true;
   try {
-    const list = await getRuleTypeList();
-    ruleTypeOptions.value = Array.isArray(list) ? list : [];
+    const objectTypes = await getObjectTypeSimpleList().catch(() => []);
+    objectTypeOptions.value = (Array.isArray(objectTypes) ? objectTypes : []).map(o => ({
+      label: o.label,
+      value: String(o.value)
+    }));
+    if (objectTypeOptions.value.length === 0) console.warn('对象类型选项为空');
   } catch (error) {
-    console.error('加载规则类型失败', error);
-    ruleTypeOptions.value = [];
+    console.error('加载下拉选项失败', error);
+    ElMessage.error('加载选项失败，请刷新重试');
+  } finally {
+    optionsLoading.value = false;
   }
 };
-
-// 加载适用对象类型（若后端要求数字，需转换）
-const loadObjectTypeOptions = async () => {
-  try {
-    const list = await getObjectTypeSimpleList();
-    objectTypeOptions.value = Array.isArray(list) ? list : [];
-  } catch (error) {
-    console.error('加载适用对象类型失败', error);
-    objectTypeOptions.value = [];
-  }
-};
-
-// 加载指标项列表（依赖 systemId，返回数字 value）
-const loadItemOptions = async () => {
-  try {
-    const params = props.systemId ? { systemId: props.systemId } : {};
-    const list = await getIndexItemSimpleList(params);
-    itemOptions.value = Array.isArray(list) ? list : [];
-  } catch (error) {
-    console.error('加载指标项列表失败', error);
-    itemOptions.value = [];
-  }
-};
-
-watch(() => props.systemId, loadItemOptions);
 
 onMounted(() => {
-  loadRuleTypeOptions();
-  loadObjectTypeOptions();
-  loadItemOptions();
+  loadOptions();
 });
 
-// 同步外部 modelValue，保留数字 ID，为新增项生成临时字符串 ID
+// 同步 modelValue
 watch(
   () => props.modelValue,
   (val) => {
-    const newItems = val.map(item => ({
+    items.value = val.map(item => ({
       ...item,
-      id: item.id || `item_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`,
-      details: (item.details || []).map(d => ({
-        ...d,
-        id: d.id || `detail_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`,
-      })),
+      details: (item.details || []).map(d => ({ ...d })),
+      id: item.id
     }));
-    // 仅在数组内容发生变化时才更新，避免递归
-    if (JSON.stringify(newItems) !== JSON.stringify(items.value)) {
-      items.value = newItems;
-    }
   },
   { immediate: true, deep: true }
 );
 
-// 监听内部变化并向外 emit
-watch(items, (val) => {
-  emit('update:modelValue', val);
-}, { deep: true });
-
-// 添加规则项（生成临时字符串 ID）
+// 添加规则项（移除 ruleType, itemId, weight）
 function addItem() {
   const newItem = {
-    id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`,
+    id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`,
     ruleName: '',
-    ruleType: '',        // 待选择，保持字符串
-    itemId: '',          // 待选择，保持字符串（但保存时会转为数字）
-    applyObjectType: '', // 待选择，保持字符串
-    weight: 0,
-    status: 1,           // 数字
-    effectiveStartTime: null,
-    effectiveEndTime: null,
+    applyObjectType: '',
     details: [],
+    status: 1,          // 默认启用
   };
   items.value.push(newItem);
 }
@@ -286,13 +71,13 @@ function removeItem(index) {
 
 function addDetail(itemIndex) {
   const newDetail = {
-    id: `detail_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`,
+    id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`,
     minValue: null,
     maxValue: null,
     operatorMin: '>=',
     operatorMax: '<=',
     score: 0,
-    sortOrder: items.value[itemIndex].details.length + 1,
+    sortOrder: (items.value[itemIndex].details.length + 1),
     remark: '',
   };
   items.value[itemIndex].details.push(newDetail);
@@ -302,19 +87,21 @@ function removeDetail(itemIndex, detailIndex) {
   items.value[itemIndex].details.splice(detailIndex, 1);
 }
 
-// 校验（确保必填项不为空）
+// 运算符选项
+const operatorMinOptions = [
+  { label: '>=', value: '>=' },
+  { label: '>', value: '>' }
+];
+const operatorMaxOptions = [
+  { label: '<=', value: '<=' },
+  { label: '<', value: '<' }
+];
+
+// 校验函数（移除对 ruleType, itemId, weight 的校验）
 function validate() {
   for (const [idx, item] of items.value.entries()) {
     if (!item.ruleName?.trim()) {
       ElMessage.error(`第 ${idx + 1} 个规则项名称不能为空`);
-      return false;
-    }
-    if (!item.ruleType) {
-      ElMessage.error(`请为规则项“${item.ruleName || idx + 1}”选择规则类型`);
-      return false;
-    }
-    if (!item.itemId) {
-      ElMessage.error(`请为规则项“${item.ruleName || idx + 1}”选择关联指标项`);
       return false;
     }
     if (!item.applyObjectType) {
@@ -335,8 +122,162 @@ function validate() {
   return true;
 }
 
-defineExpose({ validate });
+function getItems() {
+  return items.value;
+}
+
+defineExpose({ validate, getItems });
 </script>
+
+<template>
+  <div v-loading="optionsLoading" class="rule-item-manager">
+    <div class="manager-header">
+      <h3>规则项配置</h3>
+      <el-button type="primary" @click="addItem">+ 添加规则项</el-button>
+    </div>
+
+    <div v-if="!items.length" class="empty-tip">
+      暂无规则项，请点击“添加规则项”开始配置。
+    </div>
+
+    <div v-for="(item, itemIdx) in items" :key="item.id" class="rule-item-card">
+      <el-card shadow="hover">
+        <template #header>
+          <div class="rule-item-header">
+            <!-- 标题行：只保留规则项名称、适用对象类型、操作 -->
+            <el-row :gutter="12" class="category-header-title">
+              <el-col :span="8">规则项名称</el-col>
+              <el-col :span="12">适用对象类型</el-col>
+              <el-col :span="4" style="text-align: right">操作</el-col>
+            </el-row>
+            <!-- 输入行 -->
+            <el-row :gutter="12" align="middle">
+              <el-col :span="8">
+                <el-input v-model="item.ruleName" placeholder="规则项名称" size="small" clearable />
+              </el-col>
+              <el-col :span="12">
+                <el-select
+                  v-model="item.applyObjectType"
+                  placeholder="适用对象类型"
+                  size="small"
+                  clearable
+                  :teleported="false"
+                  virtualized
+                  style="width: 100%"
+                >
+                  <el-option
+                    v-for="opt in objectTypeOptions"
+                    :key="opt.value"
+                    :label="opt.label"
+                    :value="opt.value"
+                  />
+                </el-select>
+              </el-col>
+              <el-col :span="4" style="text-align: right">
+                <el-button type="danger" size="small" @click="removeItem(itemIdx)">删除</el-button>
+              </el-col>
+            </el-row>
+          </div>
+        </template>
+
+        <!-- 细则表格标题行 -->
+        <div v-if="item.details.length" class="details-header">
+          <el-row :gutter="12" align="middle">
+            <el-col :span="2">最小值</el-col>
+            <el-col :span="2">运算符(小)</el-col>
+            <el-col :span="2">最大值</el-col>
+            <el-col :span="2">运算符(大)</el-col>
+            <el-col :span="2">分数</el-col>
+            <el-col :span="2">排序</el-col>
+            <el-col :span="5">描述</el-col>
+            <el-col :span="3" style="text-align: right">操作</el-col>
+          </el-row>
+        </div>
+
+        <!-- 细则列表 -->
+        <div v-if="!item.details.length" class="details-empty">暂无细则，请添加</div>
+        <div v-for="(detail, detailIdx) in item.details" :key="detail.id" class="detail-row">
+          <el-row :gutter="12" align="middle">
+            <el-col :span="2">
+              <el-input-number
+                v-model="detail.minValue"
+                :min="0"
+                :step="0.1"
+                placeholder="无下限"
+                size="small"
+                controls-position="right"
+                style="width: 100%"
+              />
+            </el-col>
+            <el-col :span="2">
+              <el-select v-model="detail.operatorMin" placeholder="≥" size="small" style="width: 100%" virtualized>
+                <el-option
+                  v-for="opt in operatorMinOptions"
+                  :key="opt.value"
+                  :label="opt.label"
+                  :value="opt.value"
+                />
+              </el-select>
+            </el-col>
+            <el-col :span="2">
+              <el-input-number
+                v-model="detail.maxValue"
+                :min="0"
+                :step="0.1"
+                placeholder="无上限"
+                size="small"
+                controls-position="right"
+                style="width: 100%"
+              />
+            </el-col>
+            <el-col :span="2">
+              <el-select v-model="detail.operatorMax" placeholder="≤" size="small" style="width: 100%" virtualized>
+                <el-option
+                  v-for="opt in operatorMaxOptions"
+                  :key="opt.value"
+                  :label="opt.label"
+                  :value="opt.value"
+                />
+              </el-select>
+            </el-col>
+            <el-col :span="2">
+              <el-input-number
+                v-model="detail.score"
+                :min="0"
+                :step="0.1"
+                placeholder="分数"
+                size="small"
+                controls-position="right"
+                style="width: 100%"
+              />
+            </el-col>
+            <el-col :span="2">
+              <el-input-number
+                v-model="detail.sortOrder"
+                :min="1"
+                placeholder="排序"
+                size="small"
+                controls-position="right"
+                style="width: 100%"
+              />
+            </el-col>
+            <el-col :span="5">
+              <el-input v-model="detail.remark" placeholder="描述" size="small" clearable style="width: 100%" />
+            </el-col>
+            <el-col :span="3" style="text-align: right">
+              <el-button type="danger" size="small" @click="removeDetail(itemIdx, detailIdx)">删除</el-button>
+            </el-col>
+          </el-row>
+        </div>
+
+        <!-- 添加细则按钮 -->
+        <div class="add-detail-btn">
+          <el-button type="primary" size="small" @click="addDetail(itemIdx)">+ 添加细则</el-button>
+        </div>
+      </el-card>
+    </div>
+  </div>
+</template>
 
 <style scoped lang="scss">
 .rule-item-manager {
@@ -366,20 +307,15 @@ defineExpose({ validate });
 .rule-item-card {
   margin-bottom: 16px;
 }
-.rule-item-card-inner {
-  :deep(.el-card__header) {
-    padding: 10px 15px;
-    background-color: #f5f7fa;
-  }
+.rule-item-header {
+  padding: 4px 0;
+  background-color: #f5f7fa;
 }
-.rule-item-header-title {
+.category-header-title {
   font-size: 12px;
   color: #909399;
   margin-bottom: 8px;
   font-weight: 500;
-  .el-col {
-    white-space: nowrap;
-  }
 }
 .details-header {
   background-color: #fafafa;
@@ -401,5 +337,9 @@ defineExpose({ validate });
   text-align: center;
   color: #c0c4cc;
   padding: 20px 0;
+}
+.add-detail-btn {
+  margin-top: 12px;
+  text-align: right;
 }
 </style>

@@ -1,14 +1,14 @@
 <script setup>
-import { reactive, onMounted, defineExpose } from 'vue';
-import { getRuleOverview } from '#/api/genchuan/dataHub/evaluation/system/rules/index.js';
+import { defineExpose, onMounted, reactive } from 'vue';
 
+import { getRuleStatistics } from '#/api/genchuan/dataHub/evaluation/system/rules/index.js';
 import Card from '#/components/stats/card.vue';
 import Circle from '#/components/stats/circle.vue';
 import Columnar from '#/components/stats/columnar.vue';
 
 const state = reactive({
   cardList: [],
-  pieData2: [],      // 适用对象类型占比（如后端有）
+  pieData2: [],      // 适用对象类型占比
   pieData3: [],      // 状态占比
   barXData: [],
   barSeriesData: [],
@@ -16,33 +16,48 @@ const state = reactive({
 
 const fetchOverview = async () => {
   try {
-    const data = await getRuleOverview();
-    // 卡片数据（假设返回字段）
+    const data = await getRuleStatistics();
+    // 卡片数据映射
     state.cardList = [
-      { title: '总分类数', value: data.totalCategoryCount || 0, color: '#13ce66' },
-      { title: '规则项总数', value: data.totalItemCount || 0, color: '#4ECDC4' },
-      { title: '启用规则数', value: data.enableCategoryCount || 0, color: '#FFC107' },
+      {
+        title: '总分类数',
+        value: data.cardData?.totalCategoryCount || 0,
+        color: '#13ce66',
+      },
+      {
+        title: '规则项总数',
+        value: data.cardData?.totalRuleCount || 0,
+        color: '#4ECDC4',
+      },
+      {
+        title: '启用规则数',
+        value: data.cardData?.enabledRuleCount || 0,
+        color: '#FFC107',
+      },
     ];
+
+    // 适用对象类型占比饼图（直接使用接口返回数据）
+    state.pieData2 = (data.applyObjectTypePieChart || []).map(item => ({
+      name: item.name,
+      value: item.value,
+    }));
+
     // 状态占比饼图
     state.pieData3 = (data.statusPieChart || []).map(item => ({
       name: item.name,
       value: item.value,
     }));
-    // 适用对象类型占比（如果接口提供）
-    state.pieData2 = (data.objectTypePieChart || []).map(item => ({
-      name: item.name,
-      value: item.value,
-    }));
-    // 各分类规则项数量柱状图
-    const barData = data.categoryItemBarChart || [];
+
+    // 各分类规则项数量对比柱状图
+    const barData = data.categoryBarChart || [];
     state.barXData = barData.map(item => item.categoryName);
     state.barSeriesData = [
       {
-        data: barData.map(item => item.itemCount),
+        data: barData.map(item => item.ruleCount),
       },
     ];
   } catch (error) {
-    console.error('获取规则概览失败', error);
+    console.error('获取规则统计失败', error);
     clearState();
   }
 };
@@ -97,17 +112,3 @@ onMounted(() => {
   </div>
 </template>
 
-<style lang="scss">
-.park-subject-chart {
-  .chart-box-left {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    max-width: 100%;
-    height: 100%;
-    .left-card {
-      height: 159px !important;
-    }
-  }
-}
-</style>

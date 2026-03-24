@@ -5,18 +5,18 @@ export const objectTypeList = [
   { id: '1', name: '网格' },
   { id: '2', name: '部门' },
   { id: '3', name: '社区' },
-  { id: '4', name: '街道' }
+  { id: '4', name: '街道' },
 ];
 
 // 规则类型（保持不变）
 export const ruleTypeList = [
   { id: 'rt1', name: '加分' },
-  { id: 'rt2', name: '扣分' }
+  { id: 'rt2', name: '扣分' },
 ];
 
 // 指标体系（用于表单默认值，实际从接口获取）
 export const indexSystemList = [
-  { id: 'is_hy', name: '环卫园林一体化考核体系' }
+  { id: 'is_hy', name: '环卫园林一体化考核体系' },
 ];
 
 // 指标项列表（仅用于表单默认值，实际从接口获取）
@@ -26,13 +26,13 @@ export const indexItemList = [];
 export const userList = [
   { id: 'u1', name: '张三' },
   { id: 'u2', name: '李四' },
-  { id: 'u3', name: '王五' }
+  { id: 'u3', name: '王五' },
 ];
 
 // 状态列表（保持不变）
 export const statusList = [
   { id: 's1', name: '启用' },
-  { id: 's2', name: '停用' }
+  { id: 's2', name: '停用' },
 ];
 
 /** 表单配置（新增/编辑规则分类） */
@@ -43,7 +43,7 @@ export function useFormSchema() {
       label: '规则分类名称',
       component: 'Input',
       componentProps: { placeholder: '请输入规则分类名称' },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'systemId',
@@ -51,9 +51,9 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择适用指标体系',
-        options: [] // 动态加载
+        options: [], // 动态加载
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'statusId',
@@ -61,12 +61,12 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
-        options: [] // 动态加载
+        options: [], // 动态加载
       },
       rules: '',
       defaultValue: 1,
-      hidden: true
-    }
+      hidden: true,
+    },
   ];
 }
 
@@ -78,7 +78,7 @@ export function useRuleItemFormSchema() {
       label: '规则项名称',
       component: 'Input',
       componentProps: { placeholder: '请输入规则项名称' },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'indexId',
@@ -86,30 +86,30 @@ export function useRuleItemFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择关联指标项',
-        options: [] // 动态加载
+        options: [], // 动态加载
       },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'scoreLogic',
       label: '评分逻辑',
       component: 'Input',
       componentProps: { type: 'textarea', placeholder: '请输入评分逻辑' },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'fullScore',
       label: '满分值',
       component: 'InputNumber',
       componentProps: { placeholder: '请输入满分值', min: 0, step: 0.1 },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'weight',
       label: '权重',
       component: 'InputNumber',
       componentProps: { placeholder: '请输入权重', min: 0, step: 0.1 },
-      rules: 'required'
+      rules: 'required',
     },
     {
       fieldName: 'ruleTypeId',
@@ -117,17 +117,17 @@ export function useRuleItemFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择规则类型',
-        options: [] // 动态加载
+        options: [], // 动态加载
       },
-      rules: 'required'
-    }
+      rules: 'required',
+    },
   ];
 }
 
 /** 根据标签页获取表格列配置 */
 export function getGridColumnsByTab(tab) {
   const baseColumns = [
-    { type: 'checkbox', width: 40, visible: tab === '全部' }
+    { type: 'checkbox', width: 40},
   ];
 
   const commonColumns = [
@@ -136,31 +136,42 @@ export function getGridColumnsByTab(tab) {
       title: '规则分类名称',
       minWidth: 150,
       sortable: true,
-      slots: { default: 'name' }
+      slots: { default: 'name' },
     },
     {
       field: 'systemName',
       title: '适用指标体系',
       minWidth: 180,
       sortable: true,
-      slots: { default: 'systemName' }
-    }
+      slots: { default: 'systemName' },
+    },
   ];
 
   const allExtraColumns = [
     { field: 'itemCount', title: '规则项数量', minWidth: 120, sortable: true },
-    { field: 'statusName', title: '状态', minWidth: 100, sortable: true, slots: { default: 'statusName' } },
+    {
+      field: 'statusName',
+      title: '状态',
+      minWidth: 100,
+      sortable: true,
+      slots: { default: 'statusName' },
+    },
     { field: 'createByName', title: '创建人', minWidth: 100, sortable: true },
     { field: 'createTime', title: '创建时间', minWidth: 160, sortable: true },
-    { field: 'changeLog', title: '变更日志', minWidth: 200, sortable: false }
+    { field: 'changeLog', title: '变更日志', minWidth: 200, sortable: false },
   ];
 
   const enableExtraColumns = [
     { field: 'itemCount', title: '规则项数量', minWidth: 120, sortable: true },
     { field: 'createByName', title: '创建人', minWidth: 100, sortable: true },
     { field: 'createTime', title: '创建时间', minWidth: 160, sortable: true },
-    { field: 'lastUseTime', title: '最近使用时间', minWidth: 160, sortable: true },
-    { field: 'useCount', title: '使用次数', minWidth: 100, sortable: true }
+    {
+      field: 'lastUseTime',
+      title: '最近使用时间',
+      minWidth: 160,
+      sortable: true,
+    },
+    { field: 'useCount', title: '使用次数', minWidth: 100, sortable: true },
   ];
 
   const disableExtraColumns = [
@@ -169,24 +180,43 @@ export function getGridColumnsByTab(tab) {
     { field: 'createByName', title: '创建人', minWidth: 100, sortable: true },
     { field: 'createTime', title: '创建时间', minWidth: 160, sortable: true },
     { field: 'updateTime', title: '停用时间', minWidth: 160, sortable: true },
-    { field: 'updateByName', title: '停用操作人', minWidth: 120, sortable: true }
+    {
+      field: 'updateByName',
+      title: '停用操作人',
+      minWidth: 120,
+      sortable: true,
+    },
   ];
 
   let dynamicColumns = [];
-  if (tab === '全部') dynamicColumns = allExtraColumns;
-  else if (tab === '启用') dynamicColumns = enableExtraColumns;
-  else if (tab === '停用') dynamicColumns = disableExtraColumns;
+  switch (tab) {
+    case '停用': {
+      {
+        dynamicColumns = disableExtraColumns;
+        // No default
+      }
+      break;
+    }
+    case '全部': {
+      dynamicColumns = allExtraColumns;
+      break;
+    }
+    case '启用': {
+      dynamicColumns = enableExtraColumns;
+      break;
+    }
+  }
 
   const columns = [
-    ...(tab === '全部' ? baseColumns : []),
+    ...baseColumns,
     ...commonColumns,
     ...dynamicColumns,
     {
       title: '操作',
       width: 150,
       fixed: 'right',
-      slots: { default: 'actions' }
-    }
+      slots: { default: 'actions' },
+    },
   ];
   return columns;
 }
