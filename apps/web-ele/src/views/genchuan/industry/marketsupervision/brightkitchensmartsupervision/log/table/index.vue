@@ -2,28 +2,39 @@
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { ElImage, ElLoading, ElMessage } from 'element-plus';
+import {
+  ElDialog,
+  ElImage,
+  ElLoading,
+  ElMessage,
+  ElOption,
+  ElSelect,
+} from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+// 新增：引入企业列表接口（需根据实际项目路径调整）
 import {
-  addNotice,
-  deleteNotice,
-  downLoadPdf,
-  exporNoticeExcel,
-  getNoticeList,
-  sendRectificationNotice,
-  updateNotice,
+  createReviewLedger,
+  getEnterpriseList,
+  getLogList,
+  // 新增：引入获取复审台账详情接口
+  getReviewLedgerDetail,
 } from '#/api/genchuan/industry/marketsupervision/index.js';
+import {
+  createParkLot,
+  deleteParkLot,
+  updateParkLot,
+} from '#/api/genchuan/industry/park/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
+import { exportToExcel } from '#/utils/excel.js';
 
 import { useFormSchema, useGridColumns } from './data';
 // 引入封装后的详情抽屉组件
-import ParkDetailDrawer from './detail.vue';
+import Detail from './detail.vue';
 
 const props = defineProps({
   secondShow: {
@@ -56,7 +67,7 @@ const [Form, formApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useFormSchema().filter((v) => v.isEdit),
+  schema: useFormSchema(),
   showDefaultActions: false,
 });
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
@@ -68,8 +79,8 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   async onConfirm() {
     const obj = formApi.form.values;
     await (formDrawerApi.sharedData.payload.title === '增加'
-      ? addNotice(obj)
-      : updateNotice({ ...dataObj.editObj, ...obj }));
+      ? createParkLot(obj)
+      : updateParkLot({ ...dataObj.editObj, ...obj }));
     handleRefresh();
     formDrawerApi.close();
   },
@@ -91,11 +102,7 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  const data = await exporNoticeExcel();
-  downloadFileFromBlobPart({
-    fileName: '整改通知书.xls',
-    source: data,
-  });
+  exportToExcel(dataObj.apilist, '数据导出', '数据导出');
 }
 
 /** 创建角色 */
@@ -122,7 +129,7 @@ async function handleDelete(row) {
     text: $t('ui.actionMessage.deleting'),
   });
   try {
-    await deleteNotice(row.id);
+    await deleteParkLot(row.id);
     ElMessage.success($t('ui.actionMessage.deleteSuccess'));
     handleRefresh();
   } finally {
@@ -148,6 +155,7 @@ function handleRowCheckboxChange({ records }) {
 const dataObj = reactive({
   totalShow: false,
   detailObj: {}, // 保留详情对象用于传递给组件
+  fuDetailObj: {}, // 新增：复审台账详情对象
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -156,8 +164,6 @@ const dataObj = reactive({
   serachObj: {},
   list: [],
   editObj: {},
-  batchViewData: [], // 新增：批量查看的数据列表
-  batchViewVisible: false, // 新增：批量查看弹窗显示状态
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -169,14 +175,13 @@ const getTableData = async (pageObj) => {
     pageSize: pageObj.page.pageSize,
     ...dataObj.serachObj,
   };
-  const data = await getNoticeList(getParams);
+  const data = await getLogList(getParams);
   dataObj.total = data.total;
   dataObj.list = data.list.map((v) => {
     return {
       ...v,
-      issueTime: formatTimestamp(v.issueTime),
-      receiveTime: formatTimestamp(v.receiveTime),
       createTime: formatTimestamp(v.createTime),
+      operTime: formatTimestamp(v.operTime),
     };
   });
   return dataObj;
@@ -200,7 +205,7 @@ const [QueryForm, QueryFormApi] = useVbenForm({
   // 水平布局，label和input在同一行
   layout: 'horizontal',
   schema: useFormSchema()
-    .filter((v) => v.isSearch)
+    .filter((v) => !v.searchFilter)
     .map((v) => {
       delete v.rules;
       return {
@@ -255,6 +260,38 @@ const handleOpenDetail = (row) => {
   parkDetailDrawerRef.value.open();
   console.log(row);
 };
+
+// ========== 新增：打开复审台账详情抽屉方法 ==========
+// 定义复审台账详情组件ref
+const fuDetailDrawerRef = ref(null);
+
+// 打开复审台账详情抽屉
+const handleOpenFuDetail = async (row) => {
+  try {
+    const loadingInstance = ElLoading.service({
+      text: '加载复审台账详情中...',
+    });
+
+    // 1. 调用接口获取复审台账详情数据
+    // 传入告警ID作为查询条件（根据实际接口参数调整）
+    const detailData = await getReviewLedgerDetail(
+      row.id, // 告警ID
+    );
+
+    // 2. 将详情数据赋值给fuDetailObj
+    dataObj.fuDetailObj = detailData || {};
+
+    // 3. 调用复审台账详情组件的open方法打开抽屉
+    fuDetailDrawerRef.value.open();
+
+    loadingInstance.close();
+  } catch (error) {
+    ElMessage.error('加载复审台账详情失败，请重试');
+    console.error('加载复审台账详情失败：', error);
+  }
+};
+// ========== 复审台账详情方法结束 ==========
+
 const tabsData = ref([
   { label: '全部', value: '' },
   { label: '月租车', value: '1' },
@@ -281,88 +318,159 @@ const openImg = (url) => {
   dataObj.imgUrl = url;
   dialogVisible.value = true;
 };
-// 控制弹窗显示/隐藏
-const dialogVisibleSend = ref(false);
-const rowObj = ref({});
-// 点击按钮触发弹窗显示
-const handleSend = (row) => {
-  dialogVisibleSend.value = true;
-  rowObj.value = row;
-};
 
-// 弹窗关闭前的回调（可选，用于处理强制关闭的情况）
-const handleClose = (done) => {
-  dialogVisibleSend.value = false;
-  done();
-};
+// ========== 新增：企业选择弹窗相关逻辑 ==========
+// 弹窗显示状态
+const enterpriseDialogVisible = ref(false);
+// 选中的企业ID
+const selectedEnterpriseId = ref('');
+// 企业列表数据
+const enterpriseList = ref([]);
+// 企业搜索关键词
+const enterpriseSearchKey = ref('');
+// 当前操作的行数据
+const currentRow = ref(null);
 
-// 确认送达的核心逻辑
-const confirmSend = async () => {
+// 获取企业列表
+const fetchEnterpriseList = async () => {
   try {
-    // 这里替换为你实际的送达接口调用逻辑
-    await sendRectificationNotice({
-      rectifyNoticeId: rowObj.value.id,
+    const loadingInstance = ElLoading.service({
+      text: '加载企业列表中...',
     });
-    console.log('整改通知书已送达');
-
-    // 提示操作成功
-    ElMessage({
-      type: 'success',
-      message: '整改通知书送达成功！',
+    // 调用企业列表接口（可传入搜索参数）
+    const res = await getEnterpriseList({
+      pageNo: 1,
+      pageSize: 100, // 加载足够多的企业数据
     });
-    await handleRefresh();
-    // 关闭弹窗
-    dialogVisibleSend.value = false;
-
-    // 可添加后续操作，比如刷新列表、跳转页面等
+    enterpriseList.value = res.list || [];
+    loadingInstance.close();
   } catch (error) {
-    // 异常处理
-    ElMessage({
-      type: 'error',
-      message: `送达失败：${error.message || '请稍后重试'}`,
-    });
+    ElMessage.error('企业列表加载失败，请重试');
+    console.error('加载企业列表失败：', error);
   }
 };
-const downLoad = async (row) => {
-  const data = await downLoadPdf(row.id);
-  downloadFileFromBlobPart({
-    fileName: '整改通知书.pdf',
-    source: data,
-  });
+
+// 打开企业选择弹窗
+const addDetail = (row) => {
+  // 保存当前行数据
+  currentRow.value = row;
+  // 重置选中状态和搜索关键词
+  selectedEnterpriseId.value = '';
+  enterpriseSearchKey.value = '';
+  // 打开弹窗
+  enterpriseDialogVisible.value = true;
+  // 加载企业列表
+  fetchEnterpriseList();
 };
+
+// 企业搜索
+const handleEnterpriseSearch = () => {
+  fetchEnterpriseList();
+};
+
+// 提交企业选择（生成复审台账）
+const submitEnterpriseSelect = async () => {
+  if (!selectedEnterpriseId.value) {
+    ElMessage.warning('请选择关联企业');
+    return;
+  }
+
+  try {
+    const loadingInstance = ElLoading.service({
+      text: '生成复审台账中...',
+    });
+
+    // ========== 核心逻辑：调用生成复审台账接口 ==========
+    const res = await createReviewLedger({
+      aiAlertMessageId: currentRow.value.id, // 告警ID
+      entId: selectedEnterpriseId.value, // 选中的企业ID
+    });
+
+    ElMessage.success('复审台账生成成功');
+    loadingInstance.close();
+    // 关闭弹窗
+    enterpriseDialogVisible.value = false;
+    // 刷新表格数据
+    handleRefresh();
+  } catch (error) {
+    ElMessage.error('复审台账生成失败，请重试');
+    console.error('生成复审台账失败：', error);
+  }
+};
+
+// 取消企业选择
+const cancelEnterpriseSelect = () => {
+  enterpriseDialogVisible.value = false;
+  selectedEnterpriseId.value = '';
+  enterpriseSearchKey.value = '';
+};
+// ========== 企业选择弹窗逻辑结束 ==========
 </script>
 
 <template>
   <div class="park-lot-table-new">
+    <ElDialog v-model="dialogVisible">
+      <div class="park-img-center">
+        <img style="width: 100%; height: 100%" :src="dataObj.imgUrl" />
+      </div>
+    </ElDialog>
+
+    <!-- ========== 新增：企业选择弹窗 ========== -->
+    <ElDialog
+      v-model="enterpriseDialogVisible"
+      title="生成复审台账 - 选择关联企业"
+      width="500px"
+      @close="cancelEnterpriseSelect"
+    >
+      <div class="enterprise-select-container">
+        <!-- 企业选择器 -->
+        <div class="enterprise-select">
+          <ElSelect
+            v-model="selectedEnterpriseId"
+            placeholder="请选择关联企业"
+            filterable
+            clearable
+            style="width: 100%"
+          >
+            <ElOption
+              v-for="item in enterpriseList"
+              :key="item.id"
+              :label="item.entName"
+              :value="item.id"
+            >
+              <!-- 可选：显示企业ID和名称 -->
+              <span>{{ item.entName }}</span>
+              <span style="float: right; color: #8492a6; font-size: 12px">
+                ID: {{ item.id }}
+              </span>
+            </ElOption>
+          </ElSelect>
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="cancelEnterpriseSelect">取消</el-button>
+          <el-button type="primary" @click="submitEnterpriseSelect">
+            确认生成
+          </el-button>
+        </div>
+      </template>
+    </ElDialog>
+    <!-- ========== 企业选择弹窗结束 ========== -->
+
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-
     <!-- 使用封装后的详情抽屉组件 -->
-    <ParkDetailDrawer
-      class="genchuan-detail-drawer"
+    <Detail
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
       title="详情"
     />
-
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
-    <el-dialog
-      title="确认送达整改通知书"
-      v-model="dialogVisibleSend"
-      width="400px"
-      :before-close="handleClose"
-    >
-      <span>你确定要送达整改通知书吗？此操作一经确认将无法撤回。</span>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="dialogVisibleSend = false">取消</el-button>
-          <el-button type="primary" @click="confirmSend">确认送达</el-button>
-        </span>
-      </template>
-    </el-dialog>
     <Grid>
       <!-- 三级状态 -->
       <template #table-title>
@@ -383,22 +491,8 @@ const downLoad = async (row) => {
           </div>
         </div>
       </template>
-
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <!-- <IconButton content="新增" icon-name="Plus" @click="handleCreate" /> -->
-          <IconButton
-            content="导出"
-            icon-name="download"
-            @click="handleExport"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
           <IconButton
             content="搜索"
             icon-name="search"
@@ -411,18 +505,14 @@ const downLoad = async (row) => {
           />
         </div>
       </template>
-
-      <template #noticeCode="{ row }">
+      <template #userIds="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.noticeCode }}
+          {{ row.userIds }}
         </el-text>
-      </template>
-      <template #noticeContent="{ row }">
-        <el-button type="primary" @click="downLoad(row)">下载pdf</el-button>
       </template>
       <template #driveInPhoto="{ row }">
         <ElImage
@@ -431,7 +521,6 @@ const downLoad = async (row) => {
           @click="openImg(row.driveInPhoto)"
         />
       </template>
-
       <template #driveOutPhoto="{ row }">
         <ElImage
           style="width: 100px; height: 100px"
@@ -443,37 +532,18 @@ const downLoad = async (row) => {
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            content="送达整改通知书"
-            icon-name="Plus"
-            :disabled="['已送达'].includes(row.receiveStatus)"
-            @click="handleSend(row)"
-          />
-          <IconButton
             content="详情"
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
-          <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
-          />
         </div>
       </template>
-
       <template #bottom>
         <div class="common-total" @click="changeTotalShow"></div>
       </template>
     </Grid>
   </div>
 </template>
-
 <style scoped>
 .park-img-center {
   display: flex;
@@ -483,55 +553,16 @@ const downLoad = async (row) => {
   height: 700px;
 }
 
-/* 批量查看表格样式优化 */
-:deep(.el-table) {
-  --el-table-header-text-color: #303133;
-  --el-table-row-hover-bg-color: #f5f7fa;
+/* 企业选择弹窗样式 */
+.enterprise-select-container {
+  padding: 10px 0;
 }
 
-:deep(.el-dialog__body) {
-  padding: 20px;
-}
-
-/* 证据列表样式 */
-.evidence-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: center;
-  padding: 8px 0;
-}
-
-.evidence-item {
-  display: flex;
-  align-items: center;
+.enterprise-search {
   margin-bottom: 8px;
 }
 
-.evidence-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.evidence-name {
-  font-size: 12px;
-  color: #333;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 200px;
-}
-
-.evidence-type {
-  font-size: 11px;
-  color: #999;
-}
-
-.no-evidence {
-  color: #999;
-  font-size: 12px;
-  text-align: center;
-  padding: 8px 0;
+.dialog-footer {
+  text-align: right;
 }
 </style>

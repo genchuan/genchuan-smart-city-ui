@@ -34,6 +34,7 @@ export const findIndex = <T = Recordable<any>>(
  * @returns {string} 格式化后的日期字符串
  */
 export function formatTimestamp(timestamp:string) {
+  if(!timestamp) {return '--'}
   // 1. 创建 Date 对象（处理无效时间戳）
   const date = new Date(timestamp);
   if (isNaN(date.getTime())) {

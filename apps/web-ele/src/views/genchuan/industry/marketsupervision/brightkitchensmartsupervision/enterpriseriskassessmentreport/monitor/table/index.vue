@@ -290,6 +290,9 @@ const parkDetailDrawerRef = ref(null);
 const arrowChange = () => {
   emit('arrow-change');
 };
+const autoElmessage = () => {
+  ElMessage.success($t('月报自动刷新成功'));
+};
 </script>
 
 <template>
@@ -308,6 +311,11 @@ const arrowChange = () => {
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
+          <IconButton
+            content="手动刷新月报"
+            icon-name="refresh"
+            @click="autoElmessage"
+          />
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="导出"
@@ -347,6 +355,15 @@ const arrowChange = () => {
           {{ row.reportNumber }}
         </el-text>
       </template>
+      <template #companyName="{ row }">
+        <el-text
+          class="common-align"
+          :type="row.riskLevel === '高风险' ? 'danger' : 'primary'"
+        >
+          {{ row.companyName }}
+        </el-text>
+      </template>
+
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton

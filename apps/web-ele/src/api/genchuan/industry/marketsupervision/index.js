@@ -7,8 +7,13 @@ export function getWarnList(params) {
  
 
 /** excel导出 */
-export function exporReviewExcel() {
-  return requestClient.download('/kitchen/rectify-review/export-excel');
+export function exporReviewExcel(id) {
+  return requestClient.download(`/kitchen/rectify-review/export-excel?idList=${id}`);
+}
+
+/** pdf导出 */
+export function exporReviewPDF(id) {
+  return requestClient.download(`/kitchen/rectify-review/download-notice-pdf-batch?rectifyNoticeIds=${id}`);
 }
 
 /** 批量查看整改复审台账证据分页 */
@@ -99,10 +104,23 @@ export function uploadKitchenFile(data) {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 } 
-
+/**上传资料 */
+export function uploadRectifyFile(data) {
+ return requestClient.post('/kitchen/ent-rectify-record/upload-file', data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+} 
+/** 审核通过 */
+export function sendApprove(data) {
+  return requestClient.post(`/kitchen/ent-rectify-record/review-approve`, data);
+}
+/** 审核不通过 */
+export function sendNoApprove(data) {
+  return requestClient.post(`/kitchen/ent-rectify-record/review-reject`, data);
+}
 /** 下发整改 */
 export function sendRectify(data) {
-  return requestClient.post(`/kitchen/rectify-review/review-issue`, data);
+  return requestClient.post(`/kitchen/rectify-review/review-issue2`, data);
 }
 
 /** 获取撤销原因 */
@@ -120,4 +138,36 @@ export function getbatchEvidence(data) {
 
 export function sendRectificationNotice(data) {
   return requestClient.post(`/kitchen/ent-rectify-record/add`, data);
+} 
+/** 获取复审台账详情 */
+export function downLoadPdf(id) {
+  return requestClient.download(`/kitchen/rectify-notice/download-pdf?rectifyNoticeId=${id}`);
+} 
+/** 整改台账分页 */
+export function getLedgerPage(params) {
+  return requestClient.get('kitchen/rectify-review/ledger-page', {
+    params,
+  });
+} 
+/** 获得企业详情接口 */
+export function getDetailEnObj(id) {
+ return requestClient.get(`/kitchen/enterprise-info/get?id=${id}`);
+}
+/** 获得违规类型详情接口 */
+export function getDetailillObj(id) {
+ return requestClient.get(`/kitchen/illegal-type-dict/get?id=${id}`);
+}
+/** 自动草拟 */
+export function getAutoData(id) {
+ return requestClient.post(`/kitchen/rectify-review/review-add2`,{});
+}
+/** 获取日志 */
+export function getLogList(params) { 
+ return requestClient.get(`/kitchen/sys-operation-log/page`, {
+    params,
+  })
+}
+/** 获取草拟详情 */
+export function getCaoNiDetail(id) {
+ return requestClient.get(`/kitchen/rectify-notice/get?id=${id}`);
 }
