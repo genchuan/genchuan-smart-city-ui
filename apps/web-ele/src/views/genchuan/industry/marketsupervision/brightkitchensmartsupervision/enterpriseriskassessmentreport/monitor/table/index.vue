@@ -9,8 +9,10 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
+import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
 
 import { dataList, useFormSchema, useGridColumns } from './data';
 // 引入封装后的详情抽屉组件
@@ -286,12 +288,18 @@ const handleFullShow = () => {
 
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
-
+const enDetailObjRef = ref(null);
 const arrowChange = () => {
   emit('arrow-change');
 };
 const autoElmessage = () => {
   ElMessage.success($t('月报自动刷新成功'));
+};
+const openEn = async () => {
+  const res = await getDetailEnObj(1);
+  dataObj.enDetailObj = res;
+  // 通过ref调用组件的open方法
+  enDetailObjRef.value.open();
 };
 </script>
 
@@ -305,6 +313,8 @@ const autoElmessage = () => {
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
     />
+    <!-- 使用封装后的详情抽屉组件 -->
+    <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -357,6 +367,7 @@ const autoElmessage = () => {
       </template>
       <template #companyName="{ row }">
         <el-text
+          @click="openEn(row)"
           class="common-align"
           :type="row.riskLevel === '高风险' ? 'danger' : 'primary'"
         >
