@@ -648,13 +648,13 @@ const confirmReject = async () => {
           <IconButton
             content="审核通过"
             icon-name="document"
-            :disabled="!['整改中'].includes(row.rectifyStatus)"
+            :disabled="!['未整改'].includes(row.rectifyStatus)"
             @click="handleDocument(row)"
           />
           <IconButton
             content="审核不通过"
             icon-name="document"
-            :disabled="!['整改中'].includes(row.rectifyStatus)"
+            :disabled="!['未整改'].includes(row.rectifyStatus)"
             @click="handleNoDocument(row)"
           />
           <IconButton

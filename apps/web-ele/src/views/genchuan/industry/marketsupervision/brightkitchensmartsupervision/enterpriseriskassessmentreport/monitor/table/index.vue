@@ -13,6 +13,7 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
+import { downloadLocalTemplate } from '#/utils/genchuan/down';
 import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
 
 import { dataList, useFormSchema, useGridColumns } from './data';
@@ -133,8 +134,10 @@ function handleExport() {
   }
 }
 
-// ====================== 导出 PDF ======================
-async function handlePDF() {}
+// ====================== 图片转PDF（终极零乱码） ======================
+async function handlePDF() {
+  downloadLocalTemplate('/static/test.pdf', '报表.pdf');
+}
 
 /** 创建角色 */
 function handleCreate() {
