@@ -11,7 +11,7 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
-import { exportToExcel } from '#/utils/excel.js';
+import { downloadLocalTemplate } from '#/utils/genchuan/down';
 import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
 
 import { dataList, useFormSchema, useGridColumns } from './data';
@@ -100,7 +100,10 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  exportToExcel(dataObj.apilist, '导出', 'excel');
+  downloadLocalTemplate('/static/test.xls', 'test.xls');
+}
+function handlePDF() {
+  downloadLocalTemplate('/static/test.pdf', 'test.pdf');
 }
 
 /** 创建角色 */
@@ -163,6 +166,7 @@ const dataObj = reactive({
   pageSize: 10,
   apilist: dataList(),
   list: [],
+  loading: false,
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -224,6 +228,10 @@ const [QueryForm] = useVbenForm({
 });
 // 搜索表单查询
 function onSubmit() {
+  dataObj.loading = true;
+  setTimeout(() => {
+    dataObj.loading = false;
+  }, 2000);
   drawerApi.close();
 }
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -304,7 +312,7 @@ const openEn = async () => {
 </script>
 
 <template>
-  <div class="park-lot-table-new">
+  <div class="park-lot-table-new" v-loading="dataObj.loading">
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
@@ -326,11 +334,16 @@ const openEn = async () => {
             icon-name="refresh"
             @click="autoElmessage"
           />
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <!-- <IconButton content="新增" icon-name="Plus" @click="handleCreate" /> -->
           <IconButton
-            content="导出"
+            content="导出EXCEL"
             icon-name="download"
             @click="handleExport"
+          />
+          <IconButton
+            content="导出PDF"
+            icon-name="download"
+            @click="handlePDF"
           />
           <IconButton
             content="批量删除"
@@ -382,11 +395,11 @@ const openEn = async () => {
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
-          <IconButton
+          <!-- <IconButton
             content="编辑"
             icon-name="edit"
             @click="handleEdit(row)"
-          />
+          /> -->
           <IconButton
             content="删除"
             icon-name="delete"
