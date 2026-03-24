@@ -6,16 +6,16 @@ import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
+// 导出插件
+import * as XLSX from 'xlsx';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
-import { downloadLocalTemplate } from '#/utils/genchuan/down';
 import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
 
 import { dataList, useFormSchema, useGridColumns } from './data';
-// 引入封装后的详情抽屉组件
 import ParkDetailDrawer from './detail.vue';
 
 const props = defineProps({
@@ -48,7 +48,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
-// 移除原 DetailDrawer 初始化逻辑
+
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -93,18 +93,48 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     }
   },
 });
+
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
 }
 
-/** 导出表格 */
-async function handleExport() {
-  downloadLocalTemplate('/static/test.xls', 'test.xls');
+// ====================== 导出 EXCEL ======================
+function handleExport() {
+  const records = gridApi.grid.getData();
+  if (!records || records.length === 0) {
+    ElMessage.warning('暂无数据可导出');
+    return;
+  }
+
+  const loading = ElLoading.service({ text: '正在导出Excel...' });
+  try {
+    const columns = useGridColumns().filter(
+      (col) => col.field && col.title && col.type !== 'checkbox',
+    );
+
+    const exportData = records.map((row) => {
+      const item = {};
+      columns.forEach((col) => {
+        item[col.title] = row[col.field] ?? '';
+      });
+      return item;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '报表数据');
+    XLSX.writeFile(wb, `企业违规报表_${Date.now()}.xlsx`);
+    ElMessage.success('导出成功！');
+  } catch (error) {
+    ElMessage.error(`导出失败：${error.message}`);
+  } finally {
+    loading.close();
+  }
 }
-function handlePDF() {
-  downloadLocalTemplate('/static/test.pdf', 'test.pdf');
-}
+
+// ====================== 导出 PDF ======================
+async function handlePDF() {}
 
 /** 创建角色 */
 function handleCreate() {
@@ -160,7 +190,8 @@ function handleRowCheckboxChange({ records }) {
 }
 const dataObj = reactive({
   totalShow: false,
-  detailObj: {}, // 保留详情对象用于传递给组件
+  detailObj: {},
+  enDetailObj: {},
   total: dataList().length,
   currentPage: 1,
   pageSize: 10,
@@ -171,69 +202,46 @@ const dataObj = reactive({
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
-// 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
-  dataObj.total = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    }).length;
-  dataObj.list = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    })
-    .slice(
-      (page.currentPage - 1) * page.pageSize,
-      page.currentPage * page.pageSize,
-    );
+  const filtered = dataObj.apilist.filter((v) => {
+    return activeName.value === '全部' || v.status === activeName.value;
+  });
+  dataObj.total = filtered.length;
+  dataObj.list = filtered.slice(
+    (page.currentPage - 1) * page.pageSize,
+    page.currentPage * page.pageSize,
+  );
   return dataObj;
 };
 
 const [QueryForm] = useVbenForm({
-  // 默认展开
   collapsed: false,
-  // 所有表单项共用，可单独在表单内覆盖
   commonConfig: {
-    // 所有表单项
     componentProps: {
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
-  // 提交函数
-  handleSubmit: onSubmit,
-  // 垂直布局，label和input在不同行，值为vertical
-  // 水平布局，label和input在同一行
+  handleSubmit: () => {
+    dataObj.loading = true;
+    setTimeout(() => {
+      dataObj.loading = false;
+    }, 2000);
+    drawerApi.close();
+  },
   layout: 'horizontal',
   schema: useFormSchema().map((v) => {
     delete v.rules;
-    return {
-      ...v,
-    };
+    return { ...v };
   }),
-  // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
   },
 });
-// 搜索表单查询
-function onSubmit() {
-  dataObj.loading = true;
-  setTimeout(() => {
-    dataObj.loading = false;
-  }, 2000);
-  drawerApi.close();
-}
+
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
@@ -263,12 +271,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const activeName = ref('全部');
-// 修改打开详情的方法，调用组件的open方法
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
-  // 通过ref调用组件的open方法
-  parkDetailDrawerRef.value.open();
-  console.log(row);
+  parkDetailDrawerRef.value?.open();
 };
 const tabsData = ref([
   { label: '全部' },
@@ -294,7 +299,6 @@ const handleFullShow = () => {
   screenfull.toggle();
 };
 
-// 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
 const enDetailObjRef = ref(null);
 const arrowChange = () => {
@@ -306,8 +310,7 @@ const autoElmessage = () => {
 const openEn = async () => {
   const res = await getDetailEnObj(1);
   dataObj.enDetailObj = res;
-  // 通过ref调用组件的open方法
-  enDetailObjRef.value.open();
+  enDetailObjRef.value?.open();
 };
 </script>
 
@@ -316,12 +319,10 @@ const openEn = async () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <!-- 使用封装后的详情抽屉组件 -->
     <ParkDetailDrawer
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
     />
-    <!-- 使用封装后的详情抽屉组件 -->
     <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -334,7 +335,6 @@ const openEn = async () => {
             icon-name="refresh"
             @click="autoElmessage"
           />
-          <!-- <IconButton content="新增" icon-name="Plus" @click="handleCreate" /> -->
           <IconButton
             content="导出EXCEL"
             icon-name="download"
@@ -395,11 +395,6 @@ const openEn = async () => {
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
-          <!-- <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          /> -->
           <IconButton
             content="删除"
             icon-name="delete"
