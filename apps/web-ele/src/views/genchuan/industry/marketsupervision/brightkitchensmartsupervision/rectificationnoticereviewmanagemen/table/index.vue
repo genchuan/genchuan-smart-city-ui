@@ -116,7 +116,13 @@ async function handleExport() {
   });
 }
 async function handlePDF() {
-  const data = await exporReviewPDF(checkedIds.value);
+  const newid = [];
+  dataObj.list.forEach((v) => {
+    if (checkedIds.value.includes(v.id)) {
+      newid.push(v.rectifyNoticeId);
+    }
+  });
+  const data = await exporReviewPDF(newid);
   downloadFileFromBlobPart({
     fileName: '台账pdf.zip',
     source: data,

@@ -226,6 +226,7 @@ export function useGridColumns() {
       title: '报表编号',
       minWidth: 220,
       sortable: true, 
+      slots: { default: 'reportCode' },
     },
     {
       field: 'filterCond',
