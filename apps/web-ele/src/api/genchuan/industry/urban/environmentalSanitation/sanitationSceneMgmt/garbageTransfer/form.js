@@ -17,6 +17,26 @@ export function getEquipmentOptions() {
   return requestClient.get('/envirhealth/equipment/options')
 }
 
+// 车辆相关选项（用于预约等）
+export function getVehicleOptions() {
+  return requestClient.get('/envirhealth/vehicle/options');
+}
+
+// 垃圾品类选项
+export function getGarbageTypeOptions() {
+  return requestClient.get('/envirhealth/garbage-type/options');
+}
+
+// 预警类型选项
+export function getAlarmTypeOptions() {
+  return requestClient.get('/envirhealth/alarm-type/options');
+}
+
+// 处置状态选项
+export function getHandleStatusOptions() {
+  return requestClient.get('/envirhealth/handle-status/options');
+}
+
 // ---------- 新增/编辑表单 schema（更新，采用后端字段名） ----------
 export function useGarbageTransferFormSchema() {
   return [
@@ -94,6 +114,481 @@ export function useGarbageTransferSearchSchema() {
   ];
 }
 
+// ---------- 新增弹窗表单 Schema（按需求补充） ----------
+
+// 批量预约弹窗
+export function useBatchReserveSchema() {
+  return [
+    {
+      fieldName: 'vehicleIds',
+      label: '选择车辆',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择车辆（可多选）',
+        multiple: true,
+        options: [],
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'garbageTypeId',
+      label: '垃圾品类',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择垃圾品类',
+        options: [],
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'expectedTime',
+      label: '预计进站时间',
+      component: 'DatePicker',
+      componentProps: {
+        type: 'datetime',
+        valueFormat: 'x',
+        placeholder: '选择预计进站时间',
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'remark',
+      label: '备注',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 2,
+        placeholder: '请输入备注',
+      },
+      labelWidth: '100',
+    },
+  ];
+}
+
+// 批量归档弹窗
+export function useBatchArchiveSchema() {
+  return [
+    {
+      fieldName: 'archiveRemark',
+      label: '归档备注',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 3,
+        placeholder: '请输入归档备注',
+      },
+    },
+  ];
+}
+
+// 预约排号弹窗
+export function useReserveNumberSchema() {
+  return [
+    {
+      fieldName: 'sortNo',
+      label: '排号序号',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入',
+        min: 1,
+      },
+    },
+    {
+      fieldName: 'remark',
+      label: '备注',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 2,
+        placeholder: '请输入备注',
+      },
+    },
+  ];
+}
+
+// 确认进站弹窗
+export function useConfirmEntrySchema() {
+  return [
+    {
+      fieldName: 'actualWeight',
+      label: '实际垃圾重量(吨)',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入',
+        min: 0,
+        step: 0.1,
+      },
+      labelWidth: '120',
+    },
+    {
+      fieldName: 'entryTime',
+      label: '进站时间',
+      component: 'DatePicker',
+      componentProps: {
+        type: 'datetime',
+        valueFormat: 'x',
+        placeholder: '选择进站时间',
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'remark',
+      label: '备注',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 2,
+        placeholder: '请输入备注',
+      },
+      labelWidth: '100',
+    },
+  ];
+}
+
+// 取消预约弹窗
+export function useCancelReserveSchema() {
+  return [
+    {
+      fieldName: 'cancelReason',
+      label: '取消原因',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 3,
+        placeholder: '请输入取消原因',
+      },
+    },
+  ];
+}
+
+// 暂停作业弹窗
+export function usePauseOperationSchema() {
+  return [
+    {
+      fieldName: 'pauseReason',
+      label: '暂停原因',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 3,
+        placeholder: '请输入暂停原因',
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'resumeTime',
+      label: '预计恢复时间',
+      component: 'DatePicker',
+      componentProps: {
+        type: 'datetime',
+        valueFormat: 'x',
+        placeholder: '选择预计恢复时间',
+      },
+      labelWidth: '100',
+    },
+  ];
+}
+
+// 上报预警弹窗
+export function useReportAlarmSchema() {
+  return [
+    {
+      fieldName: 'alarmTypeId',
+      label: '预警类型',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择预警类型',
+        options: [],
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'alarmContent',
+      label: '预警内容',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 3,
+        placeholder: '请输入预警内容',
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'relevantInfo',
+      label: '关联设备/区域',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入关联设备或区域信息',
+      },
+      labelWidth: '100',
+    },
+  ];
+}
+
+// 处理预警弹窗
+export function useHandleAlarmSchema() {
+  return [
+    {
+      fieldName: 'handleMeasure',
+      label: '处理措施',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 3,
+        placeholder: '请输入处理措施',
+      },
+    },
+    {
+      fieldName: 'handleResult',
+      label: '处理结果',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 2,
+        placeholder: '请输入处理结果',
+      },
+    },
+  ];
+}
+
+// 指派人员弹窗（通用）
+export function useAssignPersonSchema() {
+  return [
+    {
+      fieldName: 'handlerId',
+      label: '指派人员',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择人员',
+        options: [],
+      },
+    },
+    {
+      fieldName: 'remark',
+      label: '备注',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 2,
+        placeholder: '请输入备注',
+      },
+    },
+  ];
+}
+
+// 解除预警弹窗
+export function useReleaseAlarmSchema() {
+  return [
+    {
+      fieldName: 'releaseReason',
+      label: '解除原因',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 3,
+        placeholder: '请输入解除原因',
+      },
+    },
+    {
+      fieldName: 'verifyResult',
+      label: '复核结果',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 2,
+        placeholder: '请输入复核结果',
+      },
+    },
+  ];
+}
+
+// 指派维护弹窗
+export function useAssignMaintenanceSchema() {
+  return [
+    {
+      fieldName: 'repairBy',
+      label: '维修人员',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择维修人员',
+        options: [],
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'expectedCompleteTime',
+      label: '预计完成时间',
+      component: 'DatePicker',
+      componentProps: {
+        type: 'datetime',
+        valueFormat: 'x',
+        placeholder: '选择预计完成时间',
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'remark',
+      label: '备注',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 2,
+        placeholder: '请输入备注',
+      },
+      labelWidth: '100',
+    },
+  ];
+}
+
+// 维护处理弹窗
+export function useMaintenanceProcessSchema() {
+  return [
+    {
+      fieldName: 'maintenanceContent',
+      label: '维护内容',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 3,
+        placeholder: '请输入维护内容',
+      },
+    },
+    {
+      fieldName: 'handleResult',
+      label: '处理结果',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择处理结果',
+        options: [
+          { label: '已处理', value: '已处理' },
+          { label: '待验收', value: '待验收' },
+        ],
+      },
+    },
+  ];
+}
+
+// 验收维护弹窗
+export function useAcceptMaintenanceSchema() {
+  return [
+    {
+      fieldName: 'acceptResult',
+      label: '验收结果',
+      component: 'RadioGroup',
+      componentProps: {
+        options: [
+          { label: '合格', value: '合格' },
+          { label: '不合格', value: '不合格' },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'acceptOpinion',
+      label: '验收意见',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 3,
+        placeholder: '请输入验收意见',
+      },
+    },
+  ];
+}
+
+// 转运归档弹窗
+export function useTransferArchiveSchema() {
+  return [
+    {
+      fieldName: 'archiveRemark',
+      label: '归档备注',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 3,
+        placeholder: '请输入归档备注',
+      },
+      rules: 'required',
+    },
+  ];
+}
+
+// 重新预约弹窗
+export function useReReserveSchema() {
+  return [
+    {
+      fieldName: 'vehicleId',
+      label: '选择车辆',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择车辆',
+        options: [],
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'garbageTypeId',
+      label: '垃圾品类',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择垃圾品类',
+        options: [],
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'expectedTime',
+      label: '预计进站时间',
+      component: 'DatePicker',
+      componentProps: {
+        type: 'datetime',
+        valueFormat: 'x',
+        placeholder: '选择预计进站时间',
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'remark',
+      label: '备注',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 2,
+        placeholder: '请输入备注',
+      },
+      labelWidth: '100',
+    },
+  ];
+}
+
+// 复用建档信息弹窗
+export function useReuseProfileSchema() {
+  return [
+    {
+      fieldName: 'confirmAction',
+      label: '操作确认',
+      component: 'RadioGroup',
+      componentProps: {
+        options: [
+          { label: '覆盖现有信息', value: 'override' },
+          { label: '新建档案', value: 'new' },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'remark',
+      label: '备注',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        rows: 2,
+        placeholder: '请输入备注',
+      },
+    },
+  ];
+}
+
 // ---------- 表格列配置（按状态筛选）----------
 // ！！！原有其他状态列配置完全保留，仅更新“全部”标签页的列定义以适应接口字段 ！！！
 export function getColumnsByStatus(status) {
@@ -120,6 +615,13 @@ export function getColumnsByStatus(status) {
         minWidth: 120,
         sortable: true,
         formatter: ({ cellValue }) => (cellValue != null ? `${cellValue}吨` : '-'),
+      },
+      {
+        field: 'progressStatus',
+        title: '流程状态',
+        minWidth: 120,
+        sortable: true,
+        slots: { default: 'progressStatus' }
       },
       {
         field: 'equipmentRate',
