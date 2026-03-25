@@ -16,16 +16,76 @@ const state = reactive({
     { title: '高危井盖数', value: 1, color: '#FFD93D' },
   ],
   mapData: [
-    { id: 1, locationName: '福州路段窨井盖1', coordinateInfo: '119.2965,26.0753', statusName: '正常', riskLevel: '低风险' },
-    { id: 2, locationName: '福州路段窨井盖2', coordinateInfo: '119.3065,26.0853', statusName: '异常', riskLevel: '高风险' },
-    { id: 3, locationName: '厦门路段窨井盖1', coordinateInfo: '118.0889,24.4708', statusName: '正常', riskLevel: '低风险' },
-    { id: 4, locationName: '厦门路段窨井盖2', coordinateInfo: '118.0989,24.4808', statusName: '异常', riskLevel: '中风险' },
-    { id: 5, locationName: '泉州路段窨井盖1', coordinateInfo: '118.6880,24.8740', statusName: '异常', riskLevel: '高风险' },
-    { id: 6, locationName: '莆田路段窨井盖1', coordinateInfo: '119.0094,25.4311', statusName: '正常', riskLevel: '低风险' },
-    { id: 7, locationName: '宁德路段窨井盖1', coordinateInfo: '119.5295,26.6470', statusName: '正常', riskLevel: '低风险' },
-    { id: 8, locationName: '龙岩路段窨井盖1', coordinateInfo: '116.9139,25.1054', statusName: '异常', riskLevel: '中风险' },
-    { id: 9, locationName: '三明路段窨井盖1', coordinateInfo: '117.6393,26.2650', statusName: '正常', riskLevel: '低风险' },
-    { id: 10, locationName: '南平路段窨井盖1', coordinateInfo: '118.1755,26.6327', statusName: '正常', riskLevel: '低风险' },
+    {
+      id: 1,
+      locationName: '福州路段窨井盖1',
+      coordinateInfo: '119.2965,26.0753',
+      statusName: '正常',
+      riskLevel: '低风险',
+    },
+    {
+      id: 2,
+      locationName: '福州路段窨井盖2',
+      coordinateInfo: '119.3065,26.0853',
+      statusName: '异常',
+      riskLevel: '高风险',
+    },
+    {
+      id: 3,
+      locationName: '厦门路段窨井盖1',
+      coordinateInfo: '118.0889,24.4708',
+      statusName: '正常',
+      riskLevel: '低风险',
+    },
+    {
+      id: 4,
+      locationName: '厦门路段窨井盖2',
+      coordinateInfo: '118.0989,24.4808',
+      statusName: '异常',
+      riskLevel: '中风险',
+    },
+    {
+      id: 5,
+      locationName: '泉州路段窨井盖1',
+      coordinateInfo: '118.6880,24.8740',
+      statusName: '异常',
+      riskLevel: '高风险',
+    },
+    {
+      id: 6,
+      locationName: '莆田路段窨井盖1',
+      coordinateInfo: '119.0094,25.4311',
+      statusName: '正常',
+      riskLevel: '低风险',
+    },
+    {
+      id: 7,
+      locationName: '宁德路段窨井盖1',
+      coordinateInfo: '119.5295,26.6470',
+      statusName: '正常',
+      riskLevel: '低风险',
+    },
+    {
+      id: 8,
+      locationName: '龙岩路段窨井盖1',
+      coordinateInfo: '116.9139,25.1054',
+      statusName: '异常',
+      riskLevel: '中风险',
+    },
+    {
+      id: 9,
+      locationName: '三明路段窨井盖1',
+      coordinateInfo: '117.6393,26.2650',
+      statusName: '正常',
+      riskLevel: '低风险',
+    },
+    {
+      id: 10,
+      locationName: '南平路段窨井盖1',
+      coordinateInfo: '118.1755,26.6327',
+      statusName: '正常',
+      riskLevel: '低风险',
+    },
   ],
   mapConfig: {
     markerIcons: {
@@ -41,12 +101,12 @@ const state = reactive({
       gray: 'normal',
     },
     statusKeyMap: {
-      '正常': 'green',
-      '异常': 'red',
-      '离线': 'red',
-      '维护中': 'orange',
-      '停用': 'red',
-      '建设中': 'gray',
+      正常: 'green',
+      异常: 'red',
+      离线: 'red',
+      维护中: 'orange',
+      停用: 'red',
+      建设中: 'gray',
     },
     infoWindowConfig: {
       title: 'locationName',
@@ -82,15 +142,15 @@ const firstChartData = [
     data: [
       { name: '关闭', value: 7 },
       { name: '开启', value: 3 },
-    ]
+    ],
   },
   {
     label: '监测状态占比',
     data: [
       { name: '运行中', value: 8 },
       { name: '已停止', value: 2 },
-    ]
-  }
+    ],
+  },
 ];
 
 // 第二个饼图的数据
@@ -100,7 +160,7 @@ const secondChartData = [
     data: [
       { name: '在线', value: 8 },
       { name: '离线/异常', value: 2 },
-    ]
+    ],
   },
   {
     label: '安全风险等级占比',
@@ -108,8 +168,8 @@ const secondChartData = [
       { name: '低风险', value: 7 },
       { name: '中风险', value: 2 },
       { name: '高风险', value: 1 },
-    ]
-  }
+    ],
+  },
 ];
 
 // 所有折线图和柱状图的数据
@@ -118,42 +178,60 @@ const allChartsData = [
     label: '单窨井盖倾斜角度近24小时变化趋势',
     type: 'line',
     data: {
-      xAxis: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'],
-      series: [0, 0.2, 0.1, 0.3, 0.2, 0.4, 0.3, 0.2]
-    }
+      xAxis: [
+        '00:00',
+        '03:00',
+        '06:00',
+        '09:00',
+        '12:00',
+        '15:00',
+        '18:00',
+        '21:00',
+      ],
+      series: [0, 0.2, 0.1, 0.3, 0.2, 0.4, 0.3, 0.2],
+    },
   },
   {
     label: '振动数据波动趋势',
     type: 'line',
     data: {
-      xAxis: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'],
-      series: [10, 12, 11, 15, 13, 14, 12, 11]
-    }
+      xAxis: [
+        '00:00',
+        '03:00',
+        '06:00',
+        '09:00',
+        '12:00',
+        '15:00',
+        '18:00',
+        '21:00',
+      ],
+      series: [10, 12, 11, 15, 13, 14, 12, 11],
+    },
   },
   {
     label: '不同路段窨井盖数量对比',
     type: 'bar',
     data: {
       xAxis: ['福州', '厦门', '泉州', '莆田', '宁德', '龙岩'],
-      series: [1, 1, 1, 1, 1, 1]
-    }
+      series: [1, 1, 1, 1, 1, 1],
+    },
   },
   {
     label: '不同路段异常预警数对比',
     type: 'bar',
     data: {
       xAxis: ['福州', '厦门', '泉州', '莆田', '宁德', '龙岩'],
-      series: [0, 0, 1, 1, 0, 1]
-    }
+      series: [0, 0, 1, 1, 0, 1],
+    },
   },
   {
     label: '各运维员负责窨井盖数对比',
     type: 'bar',
     data: {
       xAxis: ['张三', '李四', '王五', '赵六', '钱七'],
-      series: [3, 2, 2, 2, 1]
-    }
-  }
+      series: [3, 2, 2, 2, 1],
+    },
+  },
 ];
 
 // 切换地图/图表视图
@@ -186,7 +264,14 @@ const handleBarLineChange = (index) => {
 
 // 获取圆环图配置
 const getPieOption = (chartData) => {
-  const freshColors = ['#4A90E2', '#50E3C2', '#FF9F40', '#A17FE0', '#FF6B8B', '#FFD93D'];
+  const freshColors = [
+    '#4A90E2',
+    '#50E3C2',
+    '#FF9F40',
+    '#A17FE0',
+    '#FF6B8B',
+    '#FFD93D',
+  ];
 
   return {
     backgroundColor: 'transparent',
@@ -237,7 +322,10 @@ const getPieOption = (chartData) => {
           show: true,
           position: 'outside',
           formatter(params) {
-            const name = params.name.length > 4 ? `${params.name.slice(0, 4)}...` : params.name;
+            const name =
+              params.name.length > 4
+                ? `${params.name.slice(0, 4)}...`
+                : params.name;
             return `{name|${name}}\n{percent|${params.percent}%}`;
           },
           rich: {
@@ -426,7 +514,10 @@ const initPieChart1 = () => {
         pieChartInstance1 = null;
       }
 
-      if (firstChartData[firstChartIndex.value].data && firstChartData[firstChartIndex.value].data.length > 0) {
+      if (
+        firstChartData[firstChartIndex.value].data &&
+        firstChartData[firstChartIndex.value].data.length > 0
+      ) {
         pieChartInstance1 = echarts.init(pieChartRef1.value);
         const option = getPieOption(firstChartData[firstChartIndex.value]);
         pieChartInstance1.setOption(option);
@@ -446,7 +537,10 @@ const initPieChart2 = () => {
         pieChartInstance2 = null;
       }
 
-      if (secondChartData[secondChartIndex.value].data && secondChartData[secondChartIndex.value].data.length > 0) {
+      if (
+        secondChartData[secondChartIndex.value].data &&
+        secondChartData[secondChartIndex.value].data.length > 0
+      ) {
         pieChartInstance2 = echarts.init(pieChartRef2.value);
         const option = getPieOption(secondChartData[secondChartIndex.value]);
         pieChartInstance2.setOption(option);
@@ -459,8 +553,17 @@ const initPieChart2 = () => {
 
 // 初始化柱状/折线图
 const initBarLineChart = () => {
-  if (!barLineChartRef.value || !allChartsData[chartIndex.value] || !allChartsData[chartIndex.value].data) return;
-  if (!allChartsData[chartIndex.value].data.xAxis || allChartsData[chartIndex.value].data.xAxis.length === 0) return;
+  if (
+    !barLineChartRef.value ||
+    !allChartsData[chartIndex.value] ||
+    !allChartsData[chartIndex.value].data
+  )
+    return;
+  if (
+    !allChartsData[chartIndex.value].data.xAxis ||
+    allChartsData[chartIndex.value].data.xAxis.length === 0
+  )
+    return;
 
   try {
     if (barLineChartInstance) {
@@ -534,7 +637,9 @@ onUnmounted(() => {
           ></div>
         </div>
         <div class="card-body">
-          <div class="card-value" :style="{ color: card.color || '#4A90E2' }">{{ card.value }}</div>
+          <div class="card-value" :style="{ color: card.color || '#4A90E2' }">
+            {{ card.value }}
+          </div>
         </div>
       </div>
     </div>
@@ -609,7 +714,10 @@ onUnmounted(() => {
         <!-- 柱状/折线图展示区（更宽） -->
         <div class="bar-line-chart-area">
           <!-- 下拉切换按钮 -->
-          <div v-if="allChartsData.length > 1" class="chart-select-wrapper bar-line-select">
+          <div
+            v-if="allChartsData.length > 1"
+            class="chart-select-wrapper bar-line-select"
+          >
             <ElSelect
               v-model="chartIndex"
               size="small"
@@ -645,9 +753,9 @@ onUnmounted(() => {
 /* 卡片区样式 - 2x3网格布局 */
 .cards-section {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr;
   flex-shrink: 0;
+  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
   width: 260px;
   height: 320px;
@@ -657,17 +765,17 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   padding: 12px 14px;
-  background: #ffffff;
-  border-radius: 8px;
-  border-left: 4px solid #4a90e2;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
   overflow: hidden;
+  background: #fff;
+  border-left: 4px solid #4a90e2;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+  transition: all 0.3s ease;
 }
 
 .stat-card:hover {
+  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .card-header {
@@ -678,34 +786,34 @@ onUnmounted(() => {
 }
 
 .card-title {
-  font-size: 13px;
-  color: #6e7e91;
-  font-weight: 600;
-  line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #6e7e91;
   white-space: nowrap;
 }
 
 .card-indicator {
+  flex-shrink: 0;
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  flex-shrink: 0;
 }
 
 .card-body {
   display: flex;
-  flex-direction: column;
   flex: 1;
+  flex-direction: column;
   justify-content: center;
 }
 
 .card-value {
+  margin-bottom: 4px;
   font-size: 22px;
   font-weight: 700;
   line-height: 1.3;
-  margin-bottom: 4px;
 }
 
 /* 右侧展示区样式 */
@@ -725,15 +833,15 @@ onUnmounted(() => {
 }
 
 .toggle-button {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
 }
 
 /* 地图容器 */
 .map-wrapper {
   width: 100%;
   height: 100%;
-  border-radius: 8px;
   overflow: hidden;
+  border-radius: 8px;
 }
 
 /* 图表区样式 */
@@ -764,8 +872,8 @@ onUnmounted(() => {
 }
 
 .chart-select :deep(.el-input__wrapper) {
-  background-color: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  background-color: rgb(255 255 255 / 95%);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 10%);
 }
 
 .chart-select :deep(.el-input__inner) {

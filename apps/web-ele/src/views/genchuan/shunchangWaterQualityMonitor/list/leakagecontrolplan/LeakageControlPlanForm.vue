@@ -33,15 +33,20 @@ const formData = ref({
 });
 const formRules = reactive({
   partitionId: [{ required: true, message: '分区ID不能为空', trigger: 'blur' }],
-  exceededLeakageRate: [{ required: true, message: '超标漏损率(%)不能为空', trigger: 'blur' }],
-  suggestedPlan: [{ required: true, message: '建议方案不能为空', trigger: 'blur' }],
+  exceededLeakageRate: [
+    { required: true, message: '超标漏损率(%)不能为空', trigger: 'blur' },
+  ],
+  suggestedPlan: [
+    { required: true, message: '建议方案不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增漏损控制方案建议' : '编辑漏损控制方案建议';
+  dialogTitle.value =
+    type === 'create' ? '新增漏损控制方案建议' : '编辑漏损控制方案建议';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -112,16 +117,26 @@ const resetForm = () => {
         <ElInput v-model="formData.partitionId" placeholder="请输入分区ID" />
       </ElFormItem>
       <ElFormItem label="超标漏损率(%)" prop="exceededLeakageRate">
-        <ElInput v-model="formData.exceededLeakageRate" placeholder="请输入超标漏损率(%)" />
+        <ElInput
+          v-model="formData.exceededLeakageRate"
+          placeholder="请输入超标漏损率(%)"
+        />
       </ElFormItem>
       <ElFormItem label="压力数据" prop="pressureData">
         <ElInput v-model="formData.pressureData" placeholder="请输入压力数据" />
       </ElFormItem>
       <ElFormItem label="管道平均使用年限(年)" prop="pipeAvgAge">
-        <ElInput v-model="formData.pipeAvgAge" placeholder="请输入管道平均使用年限(年)" />
+        <ElInput
+          v-model="formData.pipeAvgAge"
+          placeholder="请输入管道平均使用年限(年)"
+        />
       </ElFormItem>
       <ElFormItem label="建议方案" prop="suggestedPlan">
-        <ElInput v-model="formData.suggestedPlan" type="textarea" placeholder="请输入建议方案" />
+        <ElInput
+          v-model="formData.suggestedPlan"
+          type="textarea"
+          placeholder="请输入建议方案"
+        />
       </ElFormItem>
       <ElFormItem label="方案实施时间" prop="planImplementTime">
         <ElDatePicker
@@ -133,7 +148,10 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="实施后漏损率(%)" prop="postImplementRate">
-        <ElInput v-model="formData.postImplementRate" placeholder="请输入实施后漏损率(%)" />
+        <ElInput
+          v-model="formData.postImplementRate"
+          placeholder="请输入实施后漏损率(%)"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

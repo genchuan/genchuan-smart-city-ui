@@ -2,33 +2,31 @@ import { requestClient } from '#/api/request';
 
 // 工程基本信息管理 VO
 export type ProjectBasicInfoVO = {
+  administrativeRegion: string; // 所属行政区
+  commissioningDate: Date; // 投产日期
+  designCapacity: string; // 设计供水规模(吨/日)
   id: number; // 序号
+  managementUnit: string; // 管理单位
+  processType: string; // 工艺类型
   projectCode: string; // 工程编码
   projectName: string; // 工程名称
-  designCapacity: string; // 设计供水规模(吨/日)
-  processType: string; // 工艺类型
-  commissioningDate: Date; // 投产日期
-  managementUnit: string; // 管理单位
   projectStatus: string; // 工程状态
-  administrativeRegion: string; // 所属行政区
 };
 
 // 工程基本信息管理 API
 export const ProjectBasicInfoApi = {
   // 查询工程基本信息管理分页
   getProjectBasicInfoPage: async (params: any) => {
-    return await requestClient.get(
-      `/waterdetection/project-basic-info/page`,
-      { params },
-    );
+    return await requestClient.get(`/waterdetection/project-basic-info/page`, {
+      params,
+    });
   },
 
   // 查询工程基本信息管理详情
   getProjectBasicInfo: async (id: number) => {
-    return await requestClient.get(
-      `/waterdetection/project-basic-info/get`,
-      { params: { id } },
-    );
+    return await requestClient.get(`/waterdetection/project-basic-info/get`, {
+      params: { id },
+    });
   },
 
   // 新增工程基本信息管理

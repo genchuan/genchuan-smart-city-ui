@@ -2,12 +2,12 @@ import { requestClient } from '#/api/request';
 
 // 水源水文参数管理 VO
 export type WaterHydrologyParamVO = {
+  aquiferThickness: number; // 含水层厚度(米)
+  dataCollector: string; // 数据采集人
   id: number; // 序号
   monitorTime: Date; // 监测时间
-  waterLevel: number; // 水位值(米)
-  aquiferThickness: number; // 含水层厚度(米)
   permeabilityCoefficient: number; // 渗透系数(m/d)
-  dataCollector: string; // 数据采集人
+  waterLevel: number; // 水位值(米)
 };
 
 // 水源水文参数管理 API

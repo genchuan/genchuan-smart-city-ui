@@ -14,8 +14,6 @@ import {
 import { useAccessStore } from '@vben/stores';
 import { createApiEncrypt } from '@vben/utils';
 
-import { ElMessage } from 'element-plus';
-
 import { useAuthStore } from '#/store';
 
 import { refreshTokenApi } from './core';

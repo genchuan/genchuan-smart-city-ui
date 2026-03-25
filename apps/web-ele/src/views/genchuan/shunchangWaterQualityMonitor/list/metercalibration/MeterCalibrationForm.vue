@@ -36,15 +36,20 @@ const formData = ref({
 const formRules = reactive({
   meterId: [{ required: true, message: '仪表ID不能为空', trigger: 'blur' }],
   meterType: [{ required: true, message: '仪表类型不能为空', trigger: 'blur' }],
-  calibrationCycle: [{ required: true, message: '校准周期(天)不能为空', trigger: 'blur' }],
-  currentCalibrationDate: [{ required: true, message: '本次校准日期不能为空', trigger: 'blur' }],
+  calibrationCycle: [
+    { required: true, message: '校准周期(天)不能为空', trigger: 'blur' },
+  ],
+  currentCalibrationDate: [
+    { required: true, message: '本次校准日期不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增监测仪表校准' : '编辑监测仪表校准';
+  dialogTitle.value =
+    type === 'create' ? '新增监测仪表校准' : '编辑监测仪表校准';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -120,7 +125,10 @@ const resetForm = () => {
         <ElInput v-model="formData.meterType" placeholder="请输入仪表类型" />
       </ElFormItem>
       <ElFormItem label="校准周期(天)" prop="calibrationCycle">
-        <ElInput v-model="formData.calibrationCycle" placeholder="请输入校准周期(天)" />
+        <ElInput
+          v-model="formData.calibrationCycle"
+          placeholder="请输入校准周期(天)"
+        />
       </ElFormItem>
       <ElFormItem label="上次校准日期" prop="lastCalibrationDate">
         <ElDatePicker
@@ -141,13 +149,22 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="标准溶液浓度" prop="standardSolutionConc">
-        <ElInput v-model="formData.standardSolutionConc" placeholder="请输入标准溶液浓度" />
+        <ElInput
+          v-model="formData.standardSolutionConc"
+          placeholder="请输入标准溶液浓度"
+        />
       </ElFormItem>
       <ElFormItem label="校准前示值" prop="beforeCalibrationValue">
-        <ElInput v-model="formData.beforeCalibrationValue" placeholder="请输入校准前示值" />
+        <ElInput
+          v-model="formData.beforeCalibrationValue"
+          placeholder="请输入校准前示值"
+        />
       </ElFormItem>
       <ElFormItem label="校准后示值" prop="afterCalibrationValue">
-        <ElInput v-model="formData.afterCalibrationValue" placeholder="请输入校准后示值" />
+        <ElInput
+          v-model="formData.afterCalibrationValue"
+          placeholder="请输入校准后示值"
+        />
       </ElFormItem>
       <ElFormItem label="操作人员ID" prop="operatorId">
         <ElInput v-model="formData.operatorId" placeholder="请输入操作人员ID" />

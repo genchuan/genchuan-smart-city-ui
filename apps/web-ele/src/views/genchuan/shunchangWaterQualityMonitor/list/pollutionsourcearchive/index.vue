@@ -47,9 +47,10 @@ const exportLoading = ref(false); // 导出的加载中
 const getList = async () => {
   loading.value = true;
   try {
-    const data = await PollutionSourceArchiveApi.getPollutionSourceArchivePage(
-      queryParams,
-    );
+    const data =
+      await PollutionSourceArchiveApi.getPollutionSourceArchivePage(
+        queryParams,
+      );
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -95,9 +96,8 @@ const handleExport = async () => {
     await confirm('是否确认导出所有周边污染源档案数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
-    const data = await PollutionSourceArchiveApi.exportPollutionSourceArchive(
-      queryParams,
-    );
+    const data =
+      await PollutionSourceArchiveApi.exportPollutionSourceArchive(queryParams);
     download.excel(data, '周边污染源档案管理.xls');
   } catch {
   } finally {
@@ -238,12 +238,7 @@ onMounted(() => {
         :show-overflow-tooltip="true"
         style="width: 100%"
       >
-        <ElTableColumn
-          label="序号"
-          align="center"
-          prop="id"
-          min-width="80"
-        />
+        <ElTableColumn label="序号" align="center" prop="id" min-width="80" />
         <ElTableColumn
           label="污染源编号"
           align="center"

@@ -33,15 +33,20 @@ const formData = ref({
   maintenanceRecord: undefined,
 });
 const formRules = reactive({
-  equipmentCode: [{ required: true, message: '设备编号不能为空', trigger: 'blur' }],
-  equipmentName: [{ required: true, message: '设备名称不能为空', trigger: 'blur' }],
+  equipmentCode: [
+    { required: true, message: '设备编号不能为空', trigger: 'blur' },
+  ],
+  equipmentName: [
+    { required: true, message: '设备名称不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增设备资产台账' : '编辑设备资产台账';
+  dialogTitle.value =
+    type === 'create' ? '新增设备资产台账' : '编辑设备资产台账';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -110,10 +115,16 @@ const resetForm = () => {
       v-loading="formLoading"
     >
       <ElFormItem label="设备编号" prop="equipmentCode">
-        <ElInput v-model="formData.equipmentCode" placeholder="请输入设备编号" />
+        <ElInput
+          v-model="formData.equipmentCode"
+          placeholder="请输入设备编号"
+        />
       </ElFormItem>
       <ElFormItem label="设备名称" prop="equipmentName">
-        <ElInput v-model="formData.equipmentName" placeholder="请输入设备名称" />
+        <ElInput
+          v-model="formData.equipmentName"
+          placeholder="请输入设备名称"
+        />
       </ElFormItem>
       <ElFormItem label="型号" prop="model">
         <ElInput v-model="formData.model" placeholder="请输入型号" />
@@ -122,7 +133,10 @@ const resetForm = () => {
         <ElInput v-model="formData.specification" placeholder="请输入规格" />
       </ElFormItem>
       <ElFormItem label="安装位置" prop="installLocation">
-        <ElInput v-model="formData.installLocation" placeholder="请输入安装位置" />
+        <ElInput
+          v-model="formData.installLocation"
+          placeholder="请输入安装位置"
+        />
       </ElFormItem>
       <ElFormItem label="安装日期" prop="installDate">
         <ElDatePicker
@@ -137,7 +151,10 @@ const resetForm = () => {
         <ElInput v-model="formData.manufacturer" placeholder="请输入生产厂家" />
       </ElFormItem>
       <ElFormItem label="维护记录" prop="maintenanceRecord">
-        <ElInput v-model="formData.maintenanceRecord" placeholder="请输入维护记录" />
+        <ElInput
+          v-model="formData.maintenanceRecord"
+          placeholder="请输入维护记录"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

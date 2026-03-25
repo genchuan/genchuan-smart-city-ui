@@ -21,13 +21,22 @@
         />
       </ElFormItem>
       <ElFormItem label="监测点ID" prop="monitorPointId">
-        <ElInput v-model="formData.monitorPointId" placeholder="请输入监测点ID" />
+        <ElInput
+          v-model="formData.monitorPointId"
+          placeholder="请输入监测点ID"
+        />
       </ElFormItem>
       <ElFormItem label="仪器类型" prop="instrumentType">
-        <ElInput v-model="formData.instrumentType" placeholder="请输入仪器类型" />
+        <ElInput
+          v-model="formData.instrumentType"
+          placeholder="请输入仪器类型"
+        />
       </ElFormItem>
       <ElFormItem label="在线监测值" prop="onlineValue">
-        <ElInput v-model="formData.onlineValue" placeholder="请输入在线监测值" />
+        <ElInput
+          v-model="formData.onlineValue"
+          placeholder="请输入在线监测值"
+        />
       </ElFormItem>
       <ElFormItem label="实验室检测值" prop="labValue">
         <ElInput v-model="formData.labValue" placeholder="请输入实验室检测值" />
@@ -36,10 +45,16 @@
         <ElInput v-model="formData.deviationValue" placeholder="请输入偏差值" />
       </ElFormItem>
       <ElFormItem label="是否超标" prop="isExceeded">
-        <ElInput v-model="formData.isExceeded" placeholder="请输入是否超标(0否1是)" />
+        <ElInput
+          v-model="formData.isExceeded"
+          placeholder="请输入是否超标(0否1是)"
+        />
       </ElFormItem>
       <ElFormItem label="预警状态" prop="warningStatus">
-        <ElInput v-model="formData.warningStatus" placeholder="请输入预警状态" />
+        <ElInput
+          v-model="formData.warningStatus"
+          placeholder="请输入预警状态"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>
@@ -89,19 +104,32 @@ const formData = ref({
   warningStatus: undefined,
 });
 const formRules = reactive({
-  comparisonDate: [{ required: true, message: '比对日期不能为空', trigger: 'blur' }],
-  monitorPointId: [{ required: true, message: '监测点ID不能为空', trigger: 'blur' }],
-  instrumentType: [{ required: true, message: '仪器类型不能为空', trigger: 'blur' }],
-  onlineValue: [{ required: true, message: '在线监测值不能为空', trigger: 'blur' }],
-  labValue: [{ required: true, message: '实验室检测值不能为空', trigger: 'blur' }],
-  deviationValue: [{ required: true, message: '偏差值不能为空', trigger: 'blur' }],
+  comparisonDate: [
+    { required: true, message: '比对日期不能为空', trigger: 'blur' },
+  ],
+  monitorPointId: [
+    { required: true, message: '监测点ID不能为空', trigger: 'blur' },
+  ],
+  instrumentType: [
+    { required: true, message: '仪器类型不能为空', trigger: 'blur' },
+  ],
+  onlineValue: [
+    { required: true, message: '在线监测值不能为空', trigger: 'blur' },
+  ],
+  labValue: [
+    { required: true, message: '实验室检测值不能为空', trigger: 'blur' },
+  ],
+  deviationValue: [
+    { required: true, message: '偏差值不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增在线数据与实验室比对' : '编辑在线数据与实验室比对';
+  dialogTitle.value =
+    type === 'create' ? '新增在线数据与实验室比对' : '编辑在线数据与实验室比对';
   formType.value = type;
   resetForm();
   // 修改时，设置数据

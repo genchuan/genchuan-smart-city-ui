@@ -46,9 +46,8 @@ const exportLoading = ref(false); // 导出的加载中
 const getList = async () => {
   loading.value = true;
   try {
-    const data = await LeakageControlPlanApi.getLeakageControlPlanPage(
-      queryParams,
-    );
+    const data =
+      await LeakageControlPlanApi.getLeakageControlPlanPage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -94,9 +93,8 @@ const handleExport = async () => {
     await confirm('是否确认导出所有漏损控制方案建议数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
-    const data = await LeakageControlPlanApi.exportLeakageControlPlan(
-      queryParams,
-    );
+    const data =
+      await LeakageControlPlanApi.exportLeakageControlPlan(queryParams);
     download.excel(data, '漏损控制方案建议.xls');
   } catch {
   } finally {
@@ -217,12 +215,7 @@ onMounted(() => {
         :show-overflow-tooltip="true"
         style="width: 100%"
       >
-        <ElTableColumn
-          label="序号"
-          align="center"
-          prop="id"
-          min-width="80"
-        />
+        <ElTableColumn label="序号" align="center" prop="id" min-width="80" />
         <ElTableColumn
           label="分区ID"
           align="center"

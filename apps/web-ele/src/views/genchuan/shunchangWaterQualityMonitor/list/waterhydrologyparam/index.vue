@@ -44,9 +44,8 @@ const exportLoading = ref(false); // 导出的加载中
 const getList = async () => {
   loading.value = true;
   try {
-    const data = await WaterHydrologyParamApi.getWaterHydrologyParamPage(
-      queryParams,
-    );
+    const data =
+      await WaterHydrologyParamApi.getWaterHydrologyParamPage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -92,9 +91,8 @@ const handleExport = async () => {
     await confirm('是否确认导出所有水源水文参数数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
-    const data = await WaterHydrologyParamApi.exportWaterHydrologyParam(
-      queryParams,
-    );
+    const data =
+      await WaterHydrologyParamApi.exportWaterHydrologyParam(queryParams);
     download.excel(data, '水源水文参数管理.xls');
   } catch {
   } finally {
@@ -208,12 +206,7 @@ onMounted(() => {
         :show-overflow-tooltip="true"
         style="width: 100%"
       >
-        <ElTableColumn
-          label="序号"
-          align="center"
-          prop="id"
-          min-width="80"
-        />
+        <ElTableColumn label="序号" align="center" prop="id" min-width="80" />
         <ElTableColumn
           label="监测时间"
           align="center"

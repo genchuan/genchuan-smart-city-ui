@@ -35,15 +35,20 @@ const formData = ref({
   administrativeRegion: undefined,
 });
 const formRules = reactive({
-  projectCode: [{ required: true, message: '工程编码不能为空', trigger: 'blur' }],
-  projectName: [{ required: true, message: '工程名称不能为空', trigger: 'blur' }],
+  projectCode: [
+    { required: true, message: '工程编码不能为空', trigger: 'blur' },
+  ],
+  projectName: [
+    { required: true, message: '工程名称不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增工程基本信息' : '编辑工程基本信息';
+  dialogTitle.value =
+    type === 'create' ? '新增工程基本信息' : '编辑工程基本信息';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -116,7 +121,10 @@ const resetForm = () => {
         <ElInput v-model="formData.projectName" placeholder="请输入工程名称" />
       </ElFormItem>
       <ElFormItem label="设计供水规模(吨/日)" prop="designCapacity">
-        <ElInput v-model="formData.designCapacity" placeholder="请输入设计供水规模(吨/日)" />
+        <ElInput
+          v-model="formData.designCapacity"
+          placeholder="请输入设计供水规模(吨/日)"
+        />
       </ElFormItem>
       <ElFormItem label="工艺类型" prop="processType">
         <ElInput v-model="formData.processType" placeholder="请输入工艺类型" />
@@ -131,13 +139,22 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="管理单位" prop="managementUnit">
-        <ElInput v-model="formData.managementUnit" placeholder="请输入管理单位" />
+        <ElInput
+          v-model="formData.managementUnit"
+          placeholder="请输入管理单位"
+        />
       </ElFormItem>
       <ElFormItem label="工程状态" prop="projectStatus">
-        <ElInput v-model="formData.projectStatus" placeholder="请输入工程状态" />
+        <ElInput
+          v-model="formData.projectStatus"
+          placeholder="请输入工程状态"
+        />
       </ElFormItem>
       <ElFormItem label="所属行政区" prop="administrativeRegion">
-        <ElInput v-model="formData.administrativeRegion" placeholder="请输入所属行政区" />
+        <ElInput
+          v-model="formData.administrativeRegion"
+          placeholder="请输入所属行政区"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

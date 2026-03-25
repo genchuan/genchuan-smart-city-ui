@@ -2,14 +2,14 @@ import { requestClient } from '#/api/request';
 
 // 构建筑物参数管理 VO
 export type StructureParamManageVO = {
-  id: number; // 序号
-  structureName: string; // 构建筑物名称
-  structureType: string; // 类型(沉淀池/滤池/清水池等)
-  length: number; // 长度(米)
-  width: number; // 宽度(米)
+  constructionTime: Date; // 建设时间
   depth: number; // 深度(米)
   effectiveVolume: number; // 有效容积(立方米)
-  constructionTime: Date; // 建设时间
+  id: number; // 序号
+  length: number; // 长度(米)
+  structureName: string; // 构建筑物名称
+  structureType: string; // 类型(沉淀池/滤池/清水池等)
+  width: number; // 宽度(米)
 };
 
 // 构建筑物参数管理 API

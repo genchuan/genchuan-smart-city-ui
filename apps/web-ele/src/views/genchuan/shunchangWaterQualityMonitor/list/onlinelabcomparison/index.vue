@@ -129,7 +129,12 @@
 
   <!-- 列表 -->
   <ElCard class="mt-16px">
-    <ElTable v-loading="loading" :data="list" :stripe="true" :show-overflow-tooltip="true">
+    <ElTable
+      v-loading="loading"
+      :data="list"
+      :stripe="true"
+      :show-overflow-tooltip="true"
+    >
       <ElTableColumn label="序号" align="center" prop="id" min-width="80" />
       <ElTableColumn
         label="比对日期"
@@ -138,13 +143,48 @@
         :formatter="dateFormatter"
         min-width="180"
       />
-      <ElTableColumn label="监测点ID" align="center" prop="monitorPointId" min-width="120" />
-      <ElTableColumn label="仪器类型" align="center" prop="instrumentType" min-width="120" />
-      <ElTableColumn label="在线监测值" align="center" prop="onlineValue" min-width="120" />
-      <ElTableColumn label="实验室检测值" align="center" prop="labValue" min-width="120" />
-      <ElTableColumn label="偏差值" align="center" prop="deviationValue" min-width="100" />
-      <ElTableColumn label="是否超标(0否1是)" align="center" prop="isExceeded" min-width="140" />
-      <ElTableColumn label="预警状态" align="center" prop="warningStatus" min-width="100" />
+      <ElTableColumn
+        label="监测点ID"
+        align="center"
+        prop="monitorPointId"
+        min-width="120"
+      />
+      <ElTableColumn
+        label="仪器类型"
+        align="center"
+        prop="instrumentType"
+        min-width="120"
+      />
+      <ElTableColumn
+        label="在线监测值"
+        align="center"
+        prop="onlineValue"
+        min-width="120"
+      />
+      <ElTableColumn
+        label="实验室检测值"
+        align="center"
+        prop="labValue"
+        min-width="120"
+      />
+      <ElTableColumn
+        label="偏差值"
+        align="center"
+        prop="deviationValue"
+        min-width="100"
+      />
+      <ElTableColumn
+        label="是否超标(0否1是)"
+        align="center"
+        prop="isExceeded"
+        min-width="140"
+      />
+      <ElTableColumn
+        label="预警状态"
+        align="center"
+        prop="warningStatus"
+        min-width="100"
+      />
       <ElTableColumn
         label="创建时间"
         align="center"
@@ -152,7 +192,12 @@
         :formatter="dateFormatter"
         min-width="180"
       />
-      <ElTableColumn label="操作" align="center" min-width="120px" fixed="right">
+      <ElTableColumn
+        label="操作"
+        align="center"
+        min-width="120px"
+        fixed="right"
+      >
         <template #default="scope">
           <ElButton
             link
@@ -239,7 +284,8 @@ const exportLoading = ref(false); // 导出的加载中
 const getList = async () => {
   loading.value = true;
   try {
-    const data = await OnlineLabComparisonApi.getOnlineLabComparisonPage(queryParams);
+    const data =
+      await OnlineLabComparisonApi.getOnlineLabComparisonPage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -285,7 +331,8 @@ const handleExport = async () => {
     await confirm('是否导出数据？');
     // 发起导出
     exportLoading.value = true;
-    const data = await OnlineLabComparisonApi.exportOnlineLabComparison(queryParams);
+    const data =
+      await OnlineLabComparisonApi.exportOnlineLabComparison(queryParams);
     downloadFile(data, '在线数据与实验室比对.xls');
   } catch {
   } finally {

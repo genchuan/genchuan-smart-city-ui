@@ -2,12 +2,7 @@
 import { nextTick, ref } from 'vue';
 
 import { Icon } from '@iconify/vue';
-import {
-  ElButton,
-  ElDialog,
-  ElMessage,
-  ElUpload,
-} from 'element-plus';
+import { ElButton, ElDialog, ElMessage, ElUpload } from 'element-plus';
 import type { UploadFile } from 'element-plus';
 
 import { getAccessToken, getTenantId } from '#/utils/genchuan/auth';
@@ -20,7 +15,9 @@ const emit = defineEmits(['success']);
 const dialogVisible = ref(false);
 const formLoading = ref(false);
 const uploadRef = ref();
-const importUrl = import.meta.env.VITE_GLOB_API_URL + '/waterdetection/water-sample-test-summary/import';
+const importUrl =
+  import.meta.env.VITE_GLOB_API_URL +
+  '/waterdetection/water-sample-test-summary/import';
 const uploadHeaders = ref();
 const fileList = ref<UploadFile[]>([]);
 const updateSupport = ref(0);
@@ -66,7 +63,8 @@ const submitFormSuccess = (response: any) => {
   }
   text += '更新失败数量：' + Object.keys(data.failureSampleNames).length + ';';
   for (const sampleName in data.failureSampleNames) {
-    text += '< ' + sampleName + ': ' + data.failureSampleNames[sampleName] + ' >';
+    text +=
+      '< ' + sampleName + ': ' + data.failureSampleNames[sampleName] + ' >';
   }
   ElMessage.success(text);
   formLoading.value = false;
@@ -131,9 +129,9 @@ const handleExceed = (): void => {
 .upload-content {
   display: flex;
   flex-direction: column;
+  gap: 8px;
   align-items: center;
   justify-content: center;
-  gap: 8px;
 }
 
 .upload-icon {

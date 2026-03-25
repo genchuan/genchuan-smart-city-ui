@@ -34,19 +34,36 @@ const formData = ref({
 });
 const formRules = reactive({
   dataId: [{ required: true, message: '数据ID不能为空', trigger: 'blur' }],
-  instrumentId: [{ required: true, message: '仪器ID不能为空', trigger: 'blur' }],
-  monitorValue: [{ required: true, message: '监测值不能为空', trigger: 'blur' }],
-  collectionTime: [{ required: true, message: '采集时间不能为空', trigger: 'blur' }],
-  dataStatus: [{ required: true, message: '数据状态(有效/无效)不能为空', trigger: 'blur' }],
-  isExcluded: [{ required: true, message: '剔除标记(0未剔除1已剔除)不能为空', trigger: 'blur' }],
-  processorId: [{ required: true, message: '处理人员ID不能为空', trigger: 'blur' }],
+  instrumentId: [
+    { required: true, message: '仪器ID不能为空', trigger: 'blur' },
+  ],
+  monitorValue: [
+    { required: true, message: '监测值不能为空', trigger: 'blur' },
+  ],
+  collectionTime: [
+    { required: true, message: '采集时间不能为空', trigger: 'blur' },
+  ],
+  dataStatus: [
+    { required: true, message: '数据状态(有效/无效)不能为空', trigger: 'blur' },
+  ],
+  isExcluded: [
+    {
+      required: true,
+      message: '剔除标记(0未剔除1已剔除)不能为空',
+      trigger: 'blur',
+    },
+  ],
+  processorId: [
+    { required: true, message: '处理人员ID不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增不合格数据处理' : '编辑不合格数据处理';
+  dialogTitle.value =
+    type === 'create' ? '新增不合格数据处理' : '编辑不合格数据处理';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -133,16 +150,28 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="数据状态" prop="dataStatus">
-        <ElInput v-model="formData.dataStatus" placeholder="请输入数据状态(有效/无效)" />
+        <ElInput
+          v-model="formData.dataStatus"
+          placeholder="请输入数据状态(有效/无效)"
+        />
       </ElFormItem>
       <ElFormItem label="无效原因" prop="invalidReason">
-        <ElInput v-model="formData.invalidReason" placeholder="请输入无效原因" />
+        <ElInput
+          v-model="formData.invalidReason"
+          placeholder="请输入无效原因"
+        />
       </ElFormItem>
       <ElFormItem label="剔除标记" prop="isExcluded">
-        <ElInput v-model="formData.isExcluded" placeholder="请输入剔除标记(0未剔除1已剔除)" />
+        <ElInput
+          v-model="formData.isExcluded"
+          placeholder="请输入剔除标记(0未剔除1已剔除)"
+        />
       </ElFormItem>
       <ElFormItem label="处理人员ID" prop="processorId">
-        <ElInput v-model="formData.processorId" placeholder="请输入处理人员ID" />
+        <ElInput
+          v-model="formData.processorId"
+          placeholder="请输入处理人员ID"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

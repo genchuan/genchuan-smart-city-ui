@@ -33,14 +33,17 @@ const formData = ref({
 });
 const formRules = reactive({
   partitionId: [{ required: true, message: '分区ID不能为空', trigger: 'blur' }],
-  partitionName: [{ required: true, message: '分区名称不能为空', trigger: 'blur' }],
+  partitionName: [
+    { required: true, message: '分区名称不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增DMA分区划分与调整' : '编辑DMA分区划分与调整';
+  dialogTitle.value =
+    type === 'create' ? '新增DMA分区划分与调整' : '编辑DMA分区划分与调整';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -111,16 +114,28 @@ const resetForm = () => {
         <ElInput v-model="formData.partitionId" placeholder="请输入分区ID" />
       </ElFormItem>
       <ElFormItem label="分区名称" prop="partitionName">
-        <ElInput v-model="formData.partitionName" placeholder="请输入分区名称" />
+        <ElInput
+          v-model="formData.partitionName"
+          placeholder="请输入分区名称"
+        />
       </ElFormItem>
       <ElFormItem label="覆盖行政村" prop="coveredVillages">
-        <ElInput v-model="formData.coveredVillages" placeholder="请输入覆盖行政村" />
+        <ElInput
+          v-model="formData.coveredVillages"
+          placeholder="请输入覆盖行政村"
+        />
       </ElFormItem>
       <ElFormItem label="边界坐标" prop="boundaryCoordinates">
-        <ElInput v-model="formData.boundaryCoordinates" placeholder="请输入边界坐标" />
+        <ElInput
+          v-model="formData.boundaryCoordinates"
+          placeholder="请输入边界坐标"
+        />
       </ElFormItem>
       <ElFormItem label="包含监测点ID" prop="monitorPointIds">
-        <ElInput v-model="formData.monitorPointIds" placeholder="请输入包含监测点ID" />
+        <ElInput
+          v-model="formData.monitorPointIds"
+          placeholder="请输入包含监测点ID"
+        />
       </ElFormItem>
       <ElFormItem label="划分日期" prop="divisionDate">
         <ElDatePicker
@@ -132,7 +147,10 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="调整记录" prop="adjustmentRecords">
-        <ElInput v-model="formData.adjustmentRecords" placeholder="请输入调整记录" />
+        <ElInput
+          v-model="formData.adjustmentRecords"
+          placeholder="请输入调整记录"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

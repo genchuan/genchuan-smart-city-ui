@@ -2,14 +2,14 @@ import { requestClient } from '#/api/request';
 
 // 在线数据与实验室比对 VO
 export type OnlineLabComparisonVO = {
-  id: number; // 序号
   comparisonDate: Date; // 比对日期
-  monitorPointId: string; // 监测点ID
-  instrumentType: string; // 仪器类型
-  onlineValue: number; // 在线监测值
-  labValue: number; // 实验室检测值
   deviationValue: number; // 偏差值
+  id: number; // 序号
+  instrumentType: string; // 仪器类型
   isExceeded: boolean; // 是否超标(0否1是)
+  labValue: number; // 实验室检测值
+  monitorPointId: string; // 监测点ID
+  onlineValue: number; // 在线监测值
   warningStatus: string; // 预警状态
 };
 

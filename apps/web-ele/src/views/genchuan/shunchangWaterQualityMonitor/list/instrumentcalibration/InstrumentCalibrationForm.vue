@@ -33,28 +33,48 @@ const formData = ref({
   operatorId: undefined,
 });
 const formRules = reactive({
-  instrumentId: [{ required: true, message: '仪器ID不能为空', trigger: 'blur' }],
-  calibrationDate: [{ required: true, message: '校验日期不能为空', trigger: 'blur' }],
-  zeroPointConc: [{ required: true, message: '零点校正液浓度不能为空', trigger: 'blur' }],
-  zeroDrift: [{ required: true, message: '零点漂移值不能为空', trigger: 'blur' }],
-  spanConc: [{ required: true, message: '量程校正液浓度不能为空', trigger: 'blur' }],
-  spanDrift: [{ required: true, message: '量程漂移值不能为空', trigger: 'blur' }],
-  calibrationResult: [{ required: true, message: '校验结果不能为空', trigger: 'blur' }],
-  operatorId: [{ required: true, message: '操作人员ID不能为空', trigger: 'blur' }],
+  instrumentId: [
+    { required: true, message: '仪器ID不能为空', trigger: 'blur' },
+  ],
+  calibrationDate: [
+    { required: true, message: '校验日期不能为空', trigger: 'blur' },
+  ],
+  zeroPointConc: [
+    { required: true, message: '零点校正液浓度不能为空', trigger: 'blur' },
+  ],
+  zeroDrift: [
+    { required: true, message: '零点漂移值不能为空', trigger: 'blur' },
+  ],
+  spanConc: [
+    { required: true, message: '量程校正液浓度不能为空', trigger: 'blur' },
+  ],
+  spanDrift: [
+    { required: true, message: '量程漂移值不能为空', trigger: 'blur' },
+  ],
+  calibrationResult: [
+    { required: true, message: '校验结果不能为空', trigger: 'blur' },
+  ],
+  operatorId: [
+    { required: true, message: '操作人员ID不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增仪器零点/量程漂移校验' : '编辑仪器零点/量程漂移校验';
+  dialogTitle.value =
+    type === 'create'
+      ? '新增仪器零点/量程漂移校验'
+      : '编辑仪器零点/量程漂移校验';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
   if (id) {
     formLoading.value = true;
     try {
-      formData.value = await InstrumentCalibrationApi.getInstrumentCalibration(id);
+      formData.value =
+        await InstrumentCalibrationApi.getInstrumentCalibration(id);
     } finally {
       formLoading.value = false;
     }
@@ -128,19 +148,28 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="零点校正液浓度" prop="zeroPointConc">
-        <ElInput v-model="formData.zeroPointConc" placeholder="请输入零点校正液浓度" />
+        <ElInput
+          v-model="formData.zeroPointConc"
+          placeholder="请输入零点校正液浓度"
+        />
       </ElFormItem>
       <ElFormItem label="零点漂移值" prop="zeroDrift">
         <ElInput v-model="formData.zeroDrift" placeholder="请输入零点漂移值" />
       </ElFormItem>
       <ElFormItem label="量程校正液浓度" prop="spanConc">
-        <ElInput v-model="formData.spanConc" placeholder="请输入量程校正液浓度" />
+        <ElInput
+          v-model="formData.spanConc"
+          placeholder="请输入量程校正液浓度"
+        />
       </ElFormItem>
       <ElFormItem label="量程漂移值" prop="spanDrift">
         <ElInput v-model="formData.spanDrift" placeholder="请输入量程漂移值" />
       </ElFormItem>
       <ElFormItem label="校验结果" prop="calibrationResult">
-        <ElInput v-model="formData.calibrationResult" placeholder="请输入校验结果" />
+        <ElInput
+          v-model="formData.calibrationResult"
+          placeholder="请输入校验结果"
+        />
       </ElFormItem>
       <ElFormItem label="操作人员ID" prop="operatorId">
         <ElInput v-model="formData.operatorId" placeholder="请输入操作人员ID" />

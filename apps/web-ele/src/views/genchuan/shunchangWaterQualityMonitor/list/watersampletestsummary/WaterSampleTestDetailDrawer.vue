@@ -11,10 +11,8 @@ import {
 } from 'element-plus';
 import type { PropType } from 'vue';
 
-import {
-  WaterSampleTestSummaryApi
-} from '#/api/genchuan/shunchangWaterQualityMonitor/list/watersampletestsummary';
-import type { WaterSampleTestSummaryVO } from '#/api/genchuan/shunchangWaterQualityMonitor/list/watersampletestsummary'
+import { WaterSampleTestSummaryApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/watersampletestsummary';
+import type { WaterSampleTestSummaryVO } from '#/api/genchuan/shunchangWaterQualityMonitor/list/watersampletestsummary';
 /** 外检统计水质检测结果汇总 详情抽屉 */
 defineOptions({ name: 'WaterSampleTestDetailDrawer' });
 
@@ -161,7 +159,9 @@ const handleClose = () => {
                 <span class="form-value">{{ detailData.sampleName }}</span>
               </ElFormItem>
               <ElFormItem label="采样地点">
-                <span class="form-value">{{ detailData.samplingLocation }}</span>
+                <span class="form-value">{{
+                  detailData.samplingLocation
+                }}</span>
               </ElFormItem>
             </ElForm>
           </ElTabPane>
@@ -175,7 +175,10 @@ const handleClose = () => {
               >
                 <span class="indicator-label">{{ item.label }}</span>
                 <span class="indicator-value">
-                  {{ detailData[item.prop as keyof WaterSampleTestSummaryVO] || '-' }}
+                  {{
+                    detailData[item.prop as keyof WaterSampleTestSummaryVO] ||
+                    '-'
+                  }}
                 </span>
               </div>
             </div>
@@ -188,8 +191,8 @@ const handleClose = () => {
 <style scoped>
 .detail-container {
   height: calc(100vh - 200px);
-  overflow-y: auto;
   padding: 24px;
+  overflow-y: auto;
   background: #fff;
 }
 
@@ -201,6 +204,7 @@ const handleClose = () => {
 
 .basic-form {
   --el-form-item-margin-bottom: 12px;
+
   padding: 10px 0;
 }
 
@@ -219,34 +223,34 @@ const handleClose = () => {
 }
 
 .indicator-label {
-  font-size: 14px;
-  color: #606266;
-  line-height: 1.4;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #606266;
+  white-space: nowrap;
 }
 
 .indicator-value {
+  box-sizing: border-box;
   display: block;
+  min-height: 32px;
   padding: 6px 10px;
-  border-radius: 4px;
-  background: #f8f9fa;
-  color: #333;
   font-size: 14px;
   line-height: 1.5;
-  min-height: 32px;
-  box-sizing: border-box;
+  color: #333;
+  background: #f8f9fa;
+  border-radius: 4px;
 }
 
 .form-value {
   display: inline-block;
   width: 100%;
   padding: 4px 8px;
-  border-radius: 4px;
-  background: #f8f9fa;
-  color: #666;
   line-height: 1.6;
+  color: #666;
   word-break: break-word;
+  background: #f8f9fa;
+  border-radius: 4px;
 }
 </style>

@@ -5,7 +5,6 @@ import * as echarts from 'echarts';
 import { ElOption, ElSelect } from 'element-plus';
 
 import IconButton from '#/components/common/IconButton.vue';
-
 import MapComponent from '#/genchuan-components/Map/index.vue';
 
 const props = defineProps({

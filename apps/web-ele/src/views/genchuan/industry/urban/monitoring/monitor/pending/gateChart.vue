@@ -24,11 +24,41 @@ const state = reactive({
     { title: '未派单预警数', value: 3, color: '#E6A23C' },
   ],
   mapData: [
-    { id: 1, locationName: '福州路段预警1', coordinateInfo: '119.2965,26.0753', statusName: '异常', riskLevel: '高风险' },
-    { id: 2, locationName: '泉州路段预警1', coordinateInfo: '118.6880,24.8740', statusName: '异常', riskLevel: '中风险' },
-    { id: 3, locationName: '莆田路段预警1', coordinateInfo: '119.0094,25.4311', statusName: '异常', riskLevel: '中风险' },
-    { id: 4, locationName: '龙岩路段预警1', coordinateInfo: '116.9139,25.1054', statusName: '异常', riskLevel: '低风险' },
-    { id: 5, locationName: '南平路段预警1', coordinateInfo: '118.1755,26.6327', statusName: '异常', riskLevel: '低风险' },
+    {
+      id: 1,
+      locationName: '福州路段预警1',
+      coordinateInfo: '119.2965,26.0753',
+      statusName: '异常',
+      riskLevel: '高风险',
+    },
+    {
+      id: 2,
+      locationName: '泉州路段预警1',
+      coordinateInfo: '118.6880,24.8740',
+      statusName: '异常',
+      riskLevel: '中风险',
+    },
+    {
+      id: 3,
+      locationName: '莆田路段预警1',
+      coordinateInfo: '119.0094,25.4311',
+      statusName: '异常',
+      riskLevel: '中风险',
+    },
+    {
+      id: 4,
+      locationName: '龙岩路段预警1',
+      coordinateInfo: '116.9139,25.1054',
+      statusName: '异常',
+      riskLevel: '低风险',
+    },
+    {
+      id: 5,
+      locationName: '南平路段预警1',
+      coordinateInfo: '118.1755,26.6327',
+      statusName: '异常',
+      riskLevel: '低风险',
+    },
   ],
   mapConfig: {
     markerIcons: {
@@ -44,12 +74,12 @@ const state = reactive({
       gray: 'normal',
     },
     statusKeyMap: {
-      '正常': 'green',
-      '异常': 'red',
-      '离线': 'red',
-      '维护中': 'orange',
-      '停用': 'red',
-      '建设中': 'gray',
+      正常: 'green',
+      异常: 'red',
+      离线: 'red',
+      维护中: 'orange',
+      停用: 'red',
+      建设中: 'gray',
     },
     infoWindowConfig: {
       title: 'locationName',
@@ -71,7 +101,7 @@ const firstChartData = [
       { name: '中风险', value: 2 },
       { name: '高风险', value: 1 },
     ],
-    colors: ['#67C23A', '#E6A23C', '#F56C6C']
+    colors: ['#67C23A', '#E6A23C', '#F56C6C'],
   },
   {
     title: '异常类型分布占比',
@@ -82,8 +112,8 @@ const firstChartData = [
       { name: '设备异常', value: 1 },
       { name: '轻微倾斜', value: 1 },
     ],
-    colors: ['#F56C6C', '#E6A23C', '#4ECDC4', '#13ce66', '#67C23A']
-  }
+    colors: ['#F56C6C', '#E6A23C', '#4ECDC4', '#13ce66', '#67C23A'],
+  },
 ];
 
 // 第二个饼图的数据
@@ -94,7 +124,7 @@ const secondChartData = [
       { name: '未派单', value: 3 },
       { name: '已派单', value: 2 },
     ],
-    colors: ['#E6A23C', '#67C23A']
+    colors: ['#E6A23C', '#67C23A'],
   },
   {
     title: '开合状态预警占比',
@@ -102,8 +132,8 @@ const secondChartData = [
       { name: '关闭', value: 3 },
       { name: '开启', value: 2 },
     ],
-    colors: ['#67C23A', '#F56C6C']
-  }
+    colors: ['#67C23A', '#F56C6C'],
+  },
 ];
 
 // 所有折线图和柱状图的数据
@@ -112,45 +142,66 @@ const allChartsData = [
   {
     type: 'columnar',
     title: '不同路段预警次数对比',
-    xData: ['福州', '厦门', '泉州', '莆田', '宁德', '龙岩', '三明', '南平', '平潭'],
+    xData: [
+      '福州',
+      '厦门',
+      '泉州',
+      '莆田',
+      '宁德',
+      '龙岩',
+      '三明',
+      '南平',
+      '平潭',
+    ],
     seriesData: [{ name: '', data: [1, 0, 1, 1, 0, 1, 0, 1, 0] }],
-    height: '330px'
+    height: '330px',
   },
   {
     type: 'columnar',
     title: '不同异常类型预警数对比',
     xData: ['倾斜角度异常', '振动异常', '设备离线', '设备异常', '轻微倾斜'],
     seriesData: [{ name: '', data: [1, 1, 1, 1, 1] }],
-    height: '330px'
+    height: '330px',
   },
   {
     type: 'columnar',
     title: '近7天预警触发趋势',
     xData: ['1日', '2日', '3日', '4日', '5日', '6日', '7日'],
     seriesData: [{ name: '', data: [0, 1, 1, 0, 2, 0, 1] }],
-    height: '330px'
+    height: '330px',
   },
   // 折线图
   {
     type: 'line',
     title: '近24小时预警触发/派单/处置时效趋势',
-    xData: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'],
+    xData: [
+      '00:00',
+      '03:00',
+      '06:00',
+      '09:00',
+      '12:00',
+      '15:00',
+      '18:00',
+      '21:00',
+    ],
     seriesData: [
       { name: '预警触发', data: [0, 1, 0, 1, 1, 0, 1, 1], color: '#4a90e2' },
       { name: '已派单', data: [0, 0, 1, 1, 0, 1, 0, 1], color: '#06D6A0' },
-      { name: '已处置', data: [0, 0, 0, 1, 0, 0, 1, 0], color: '#FFD166' }
+      { name: '已处置', data: [0, 0, 0, 1, 0, 0, 1, 0], color: '#FFD166' },
     ],
     yName: '数量',
-    height: '330px'
+    height: '330px',
   },
   {
     type: 'line',
     title: '高风险预警处置时长趋势',
     xData: ['1日', '2日', '3日', '4日', '5日', '6日', '7日'],
-    seriesData: [{ name: '处置时长', data: [2, 3, 2.5, 1.5, 2, 3, 2], color: '#FF6B6B' }],
+    seriesData: [
+      { name: '处置时长', data: [2, 3, 2.5, 1.5, 2, 3, 2], color: '#FF6B6B' },
+    ],
     yName: '小时',
-    height: '330px'
-  }
+    height: '330px',
+  },
 ];
 
 // 切换第一个饼图
@@ -160,7 +211,8 @@ const toggleFirstChart = () => {
 
 // 切换第二个饼图
 const toggleSecondChart = () => {
-  secondChartIndex.value = (secondChartIndex.value + 1) % secondChartData.length;
+  secondChartIndex.value =
+    (secondChartIndex.value + 1) % secondChartData.length;
 };
 
 // 切换图表
@@ -179,7 +231,17 @@ const toggleMap = () => {
 
 <template>
   <div class="park-chart-box">
-    <div class="chart-box-left" style="display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 100px); gap: 15px; width: 100%; margin-bottom: 5px;">
+    <div
+      class="chart-box-left"
+      style="
+        display: grid;
+        grid-template-rows: repeat(3, 100px);
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        width: 100%;
+        margin-bottom: 5px;
+      "
+    >
       <Card
         class="left-card"
         v-for="item in state.cardList"
@@ -189,16 +251,24 @@ const toggleMap = () => {
       />
     </div>
     <!-- 饼图和动态图表布局 -->
-    <div style="display: flex; gap: 5px; margin-bottom: 5px; min-width: 1485px; height: 330px;">
+    <div
+      style="
+        display: flex;
+        gap: 5px;
+        min-width: 1485px;
+        height: 330px;
+        margin-bottom: 5px;
+      "
+    >
       <!-- 饼图容器 -->
-      <div style="display: flex; gap: 5px; flex-shrink: 0;">
+      <div style="display: flex; flex-shrink: 0; gap: 5px">
         <!-- 第一个饼图，带切换按钮 -->
-        <div style="position: relative; width: 380px; height: 100%;">
+        <div style="position: relative; width: 380px; height: 100%">
           <Circle
-              :title-text="firstChartData[firstChartIndex].title"
-              :data="firstChartData[firstChartIndex].data"
-              :colors="firstChartData[firstChartIndex].colors"
-            />
+            :title-text="firstChartData[firstChartIndex].title"
+            :data="firstChartData[firstChartIndex].data"
+            :colors="firstChartData[firstChartIndex].colors"
+          />
           <!-- 切换按钮 -->
           <div class="corner-button" @click="toggleFirstChart" title="切换图表">
             <span>→</span>
@@ -206,36 +276,40 @@ const toggleMap = () => {
         </div>
 
         <!-- 第二个饼图，带切换按钮 -->
-        <div style="position: relative; width: 380px; height: 100%;">
+        <div style="position: relative; width: 380px; height: 100%">
           <Circle
-              :title-text="secondChartData[secondChartIndex].title"
-              :data="secondChartData[secondChartIndex].data"
-              :colors="secondChartData[secondChartIndex].colors"
-            />
+            :title-text="secondChartData[secondChartIndex].title"
+            :data="secondChartData[secondChartIndex].data"
+            :colors="secondChartData[secondChartIndex].colors"
+          />
           <!-- 切换按钮 -->
-          <div class="corner-button" @click="toggleSecondChart" title="切换图表">
+          <div
+            class="corner-button"
+            @click="toggleSecondChart"
+            title="切换图表"
+          >
             <span>→</span>
           </div>
         </div>
       </div>
 
       <!-- 动态图表，带切换按钮 -->
-      <div style="position: relative; width: 715px; height: 100%;">
+      <div style="position: relative; width: 715px; height: 100%">
         <!-- 展开/隐藏地图按钮 -->
         <button
           style="
             position: absolute;
             top: 10px;
             right: 10px;
+            z-index: 20;
             padding: 6px 12px;
-            background-color: #4a90e2;
+            font-size: 12px;
             color: white;
+            cursor: pointer;
+            background-color: #4a90e2;
             border: none;
             border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
             transition: background-color 0.2s ease;
-            z-index: 20;
           "
           @click="toggleMap"
           :style="{ backgroundColor: mapVisible ? '#4a90e2' : '#6c757d' }"
@@ -243,7 +317,10 @@ const toggleMap = () => {
           {{ mapVisible ? '隐藏地图' : '展开地图' }}
         </button>
         <!-- 折线图 -->
-        <div v-if="allChartsData[chartIndex].type === 'line'" style="width: 100%; height: 100%;">
+        <div
+          v-if="allChartsData[chartIndex].type === 'line'"
+          style="width: 100%; height: 100%"
+        >
           <Line
             :title="allChartsData[chartIndex].title"
             :x-data="allChartsData[chartIndex].xData"
@@ -252,7 +329,10 @@ const toggleMap = () => {
           />
         </div>
         <!-- 柱状图 -->
-        <div v-else-if="allChartsData[chartIndex].type === 'columnar'" style="width: 100%; height: 100%;">
+        <div
+          v-else-if="allChartsData[chartIndex].type === 'columnar'"
+          style="width: 100%; height: 100%"
+        >
           <Columnar
             :title="allChartsData[chartIndex].title"
             :x-data="allChartsData[chartIndex].xData"
@@ -266,7 +346,11 @@ const toggleMap = () => {
       </div>
     </div>
     <!-- 地图容器 -->
-    <div v-if="mapVisible" class="map-container" style="width: 100%; height: 320px; margin-top: 0px;">
+    <div
+      v-if="mapVisible"
+      class="map-container"
+      style="width: 100%; height: 320px; margin-top: 0"
+    >
       <MapComponent
         :data="state.mapData"
         :marker-icons="state.mapConfig.markerIcons"
@@ -291,45 +375,45 @@ const toggleMap = () => {
 /* 切换按钮样式 */
 .corner-button {
   position: absolute;
-  bottom: 35px;
   right: 12px;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: rgba(20, 30, 40, 0.75);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  bottom: 35px;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: white;
+  width: 30px;
+  height: 30px;
   font-size: 16px;
   font-weight: 500;
   line-height: 1;
+  color: white;
+  cursor: pointer;
   user-select: none;
-  z-index: 10;
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgb(20 30 40 / 75%);
+  border: 1px solid rgb(255 255 255 / 70%);
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 30%);
+  backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
 }
 
 .corner-button:hover {
-  background: rgba(35, 50, 65, 0.9);
-  transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  background: rgb(35 50 65 / 90%);
   border-color: white;
+  box-shadow: 0 6px 16px rgb(0 0 0 / 40%);
+  transform: scale(1.1);
 }
 
 .corner-button:active {
+  background: rgb(10 20 30 / 90%);
   transform: scale(0.95);
-  background: rgba(10, 20, 30, 0.9);
 }
 
 /* 按钮中的箭头 */
 .corner-button span {
-  transform: translateY(-1px); /* 微调视觉 */
   display: inline-block;
+  transform: translateY(-1px); /* 微调视觉 */
 }
 
 /* 图表组件样式 */

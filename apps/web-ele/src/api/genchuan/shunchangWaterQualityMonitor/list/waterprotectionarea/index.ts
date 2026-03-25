@@ -2,14 +2,14 @@ import { requestClient } from '#/api/request';
 
 // 水源保护区管理 VO
 export type WaterProtectionAreaVO = {
-  id: number; // 序号
-  protectionLevel: string; // 保护区级别
   boundaryRange: string; // 边界经纬度范围
-  signboardNo: string; // 标识牌编号
-  signboardLocation: string; // 标识牌位置
+  id: number; // 序号
   installTime: Date; // 安装时间
   maintenanceRecord: string; // 维护记录
   pollutionStatus: string; // 污染源治理状态
+  protectionLevel: string; // 保护区级别
+  signboardLocation: string; // 标识牌位置
+  signboardNo: string; // 标识牌编号
 };
 
 // 水源保护区管理 API

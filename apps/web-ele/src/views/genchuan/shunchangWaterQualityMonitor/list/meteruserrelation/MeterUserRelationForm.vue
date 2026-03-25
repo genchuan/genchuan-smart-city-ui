@@ -16,10 +16,16 @@
         <ElInput v-model="formData.meterCode" placeholder="请输入户表编号" />
       </ElFormItem>
       <ElFormItem label="原用户编号" prop="oldUserCode">
-        <ElInput v-model="formData.oldUserCode" placeholder="请输入原用户编号" />
+        <ElInput
+          v-model="formData.oldUserCode"
+          placeholder="请输入原用户编号"
+        />
       </ElFormItem>
       <ElFormItem label="新用户编号" prop="newUserCode">
-        <ElInput v-model="formData.newUserCode" placeholder="请输入新用户编号" />
+        <ElInput
+          v-model="formData.newUserCode"
+          placeholder="请输入新用户编号"
+        />
       </ElFormItem>
       <ElFormItem label="变更原因" prop="changeReason">
         <ElInput v-model="formData.changeReason" placeholder="请输入变更原因" />
@@ -82,15 +88,20 @@ const formData = ref({
 });
 const formRules = reactive({
   meterCode: [{ required: true, message: '户表编号不能为空', trigger: 'blur' }],
-  oldUserCode: [{ required: true, message: '原用户编号不能为空', trigger: 'blur' }],
-  newUserCode: [{ required: true, message: '新用户编号不能为空', trigger: 'blur' }],
+  oldUserCode: [
+    { required: true, message: '原用户编号不能为空', trigger: 'blur' },
+  ],
+  newUserCode: [
+    { required: true, message: '新用户编号不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增户表关联及变更' : '编辑户表关联及变更';
+  dialogTitle.value =
+    type === 'create' ? '新增户表关联及变更' : '编辑户表关联及变更';
   formType.value = type;
   resetForm();
   // 修改时，设置数据

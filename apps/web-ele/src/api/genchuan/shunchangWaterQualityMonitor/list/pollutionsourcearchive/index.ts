@@ -3,14 +3,14 @@ import { requestClient } from '#/api/request';
 // 周边污染源档案管理 VO
 export type PollutionSourceArchiveVO = {
   id: number; // 序号
+  inspectionTime: Date; // 排查时间
+  latitude: number; // 纬度
+  longitude: number; // 经度
+  pollutionLevel: string; // 污染程度
   pollutionNo: string; // 污染源编号
   pollutionType: string; // 污染源类型
-  longitude: number; // 经度
-  latitude: number; // 纬度
-  pollutionLevel: string; // 污染程度
   treatmentMeasures: string; // 治理措施
   treatmentStatus: string; // 治理状态
-  inspectionTime: Date; // 排查时间
 };
 
 // 周边污染源档案管理 API

@@ -34,15 +34,24 @@ const formData = ref({
 });
 const formRules = reactive({
   issueId: [{ required: true, message: '问题ID不能为空', trigger: 'blur' }],
-  issueType: [{ required: true, message: '问题类型(漏点/设备故障/标识牌损坏)不能为空', trigger: 'blur' }],
-  reportTime: [{ required: true, message: '上报时间不能为空', trigger: 'blur' }],
+  issueType: [
+    {
+      required: true,
+      message: '问题类型(漏点/设备故障/标识牌损坏)不能为空',
+      trigger: 'blur',
+    },
+  ],
+  reportTime: [
+    { required: true, message: '上报时间不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增问题上报与闭环跟踪' : '编辑问题上报与闭环跟踪';
+  dialogTitle.value =
+    type === 'create' ? '新增问题上报与闭环跟踪' : '编辑问题上报与闭环跟踪';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -114,7 +123,10 @@ const resetForm = () => {
         <ElInput v-model="formData.issueId" placeholder="请输入问题ID" />
       </ElFormItem>
       <ElFormItem label="问题类型" prop="issueType">
-        <ElInput v-model="formData.issueType" placeholder="请输入问题类型(漏点/设备故障/标识牌损坏)" />
+        <ElInput
+          v-model="formData.issueType"
+          placeholder="请输入问题类型(漏点/设备故障/标识牌损坏)"
+        />
       </ElFormItem>
       <ElFormItem label="上报时间" prop="reportTime">
         <ElDatePicker
@@ -135,7 +147,10 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="维修人员ID" prop="repairStaffId">
-        <ElInput v-model="formData.repairStaffId" placeholder="请输入维修人员ID" />
+        <ElInput
+          v-model="formData.repairStaffId"
+          placeholder="请输入维修人员ID"
+        />
       </ElFormItem>
       <ElFormItem label="修复时间" prop="repairTime">
         <ElDatePicker
@@ -147,10 +162,16 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="验收结果" prop="inspectionResult">
-        <ElInput v-model="formData.inspectionResult" placeholder="请输入验收结果" />
+        <ElInput
+          v-model="formData.inspectionResult"
+          placeholder="请输入验收结果"
+        />
       </ElFormItem>
       <ElFormItem label="闭环状态" prop="closureStatus">
-        <ElInput v-model="formData.closureStatus" placeholder="请输入闭环状态" />
+        <ElInput
+          v-model="formData.closureStatus"
+          placeholder="请输入闭环状态"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

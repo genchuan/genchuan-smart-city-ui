@@ -35,25 +35,37 @@ const formData = ref({
 });
 const formRules = reactive({
   equipmentId: [{ required: true, message: '设备ID不能为空', trigger: 'blur' }],
-  equipmentType: [{ required: true, message: '设备类型不能为空', trigger: 'blur' }],
-  maintenanceCycle: [{ required: true, message: '保养周期(天)不能为空', trigger: 'blur' }],
-  planMaintenanceDate: [{ required: true, message: '计划保养日期不能为空', trigger: 'blur' }],
-  maintenanceContent: [{ required: true, message: '保养内容不能为空', trigger: 'blur' }],
-  maintenanceStaffId: [{ required: true, message: '维护人员ID不能为空', trigger: 'blur' }],
+  equipmentType: [
+    { required: true, message: '设备类型不能为空', trigger: 'blur' },
+  ],
+  maintenanceCycle: [
+    { required: true, message: '保养周期(天)不能为空', trigger: 'blur' },
+  ],
+  planMaintenanceDate: [
+    { required: true, message: '计划保养日期不能为空', trigger: 'blur' },
+  ],
+  maintenanceContent: [
+    { required: true, message: '保养内容不能为空', trigger: 'blur' },
+  ],
+  maintenanceStaffId: [
+    { required: true, message: '维护人员ID不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增设备保养计划' : '编辑设备保养计划';
+  dialogTitle.value =
+    type === 'create' ? '新增设备保养计划' : '编辑设备保养计划';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
   if (id) {
     formLoading.value = true;
     try {
-      formData.value = await EquipmentMaintenanceApi.getEquipmentMaintenance(id);
+      formData.value =
+        await EquipmentMaintenanceApi.getEquipmentMaintenance(id);
     } finally {
       formLoading.value = false;
     }
@@ -119,10 +131,16 @@ const resetForm = () => {
         <ElInput v-model="formData.equipmentId" placeholder="请输入设备ID" />
       </ElFormItem>
       <ElFormItem label="设备类型" prop="equipmentType">
-        <ElInput v-model="formData.equipmentType" placeholder="请输入设备类型" />
+        <ElInput
+          v-model="formData.equipmentType"
+          placeholder="请输入设备类型"
+        />
       </ElFormItem>
       <ElFormItem label="保养周期(天)" prop="maintenanceCycle">
-        <ElInput v-model="formData.maintenanceCycle" placeholder="请输入保养周期(天)" />
+        <ElInput
+          v-model="formData.maintenanceCycle"
+          placeholder="请输入保养周期(天)"
+        />
       </ElFormItem>
       <ElFormItem label="计划保养日期" prop="planMaintenanceDate">
         <ElDatePicker
@@ -143,16 +161,29 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="保养内容" prop="maintenanceContent">
-        <ElInput v-model="formData.maintenanceContent" type="textarea" placeholder="请输入保养内容" />
+        <ElInput
+          v-model="formData.maintenanceContent"
+          type="textarea"
+          placeholder="请输入保养内容"
+        />
       </ElFormItem>
       <ElFormItem label="更换部件名称" prop="replacedParts">
-        <ElInput v-model="formData.replacedParts" placeholder="请输入更换部件名称" />
+        <ElInput
+          v-model="formData.replacedParts"
+          placeholder="请输入更换部件名称"
+        />
       </ElFormItem>
       <ElFormItem label="保养后运行参数" prop="postMaintenanceParams">
-        <ElInput v-model="formData.postMaintenanceParams" placeholder="请输入保养后运行参数" />
+        <ElInput
+          v-model="formData.postMaintenanceParams"
+          placeholder="请输入保养后运行参数"
+        />
       </ElFormItem>
       <ElFormItem label="维护人员ID" prop="maintenanceStaffId">
-        <ElInput v-model="formData.maintenanceStaffId" placeholder="请输入维护人员ID" />
+        <ElInput
+          v-model="formData.maintenanceStaffId"
+          placeholder="请输入维护人员ID"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

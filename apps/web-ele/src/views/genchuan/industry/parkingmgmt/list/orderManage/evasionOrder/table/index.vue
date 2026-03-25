@@ -12,7 +12,13 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
-import { dataList, textObj, useFormSchema, useGridColumns, detailFields } from './data';
+import {
+  dataList,
+  textObj,
+  useFormSchema,
+  useGridColumns,
+  detailFields,
+} from './data';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 
 const props = defineProps({
@@ -115,9 +121,7 @@ async function handleDelete(row) {
   });
   try {
     dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success(
-      $t('ui.actionMessage.deleteSuccess', [row.garageName]),
-    );
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.garageName]));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -183,7 +187,10 @@ const getTableData = (pageObj) => {
     Object.keys(dataObj.searchParams).forEach((key) => {
       const value = dataObj.searchParams[key];
       if (value) {
-        searchMatch = typeof value === 'string' ? searchMatch && v[key]?.toString().includes(value) : searchMatch && v[key] === value;
+        searchMatch =
+          typeof value === 'string'
+            ? searchMatch && v[key]?.toString().includes(value)
+            : searchMatch && v[key] === value;
       }
     });
 

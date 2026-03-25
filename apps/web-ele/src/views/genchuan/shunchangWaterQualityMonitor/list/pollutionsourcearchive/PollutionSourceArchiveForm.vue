@@ -35,22 +35,28 @@ const formData = ref({
   inspectionTime: undefined,
 });
 const formRules = reactive({
-  pollutionNo: [{ required: true, message: '污染源编号不能为空', trigger: 'blur' }],
-  pollutionType: [{ required: true, message: '污染源类型不能为空', trigger: 'blur' }],
+  pollutionNo: [
+    { required: true, message: '污染源编号不能为空', trigger: 'blur' },
+  ],
+  pollutionType: [
+    { required: true, message: '污染源类型不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增周边污染源档案' : '编辑周边污染源档案';
+  dialogTitle.value =
+    type === 'create' ? '新增周边污染源档案' : '编辑周边污染源档案';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
   if (id) {
     formLoading.value = true;
     try {
-      formData.value = await PollutionSourceArchiveApi.getPollutionSourceArchive(id);
+      formData.value =
+        await PollutionSourceArchiveApi.getPollutionSourceArchive(id);
     } finally {
       formLoading.value = false;
     }
@@ -110,10 +116,16 @@ const resetForm = () => {
       v-loading="formLoading"
     >
       <ElFormItem label="污染源编号" prop="pollutionNo">
-        <ElInput v-model="formData.pollutionNo" placeholder="请输入污染源编号" />
+        <ElInput
+          v-model="formData.pollutionNo"
+          placeholder="请输入污染源编号"
+        />
       </ElFormItem>
       <ElFormItem label="污染源类型" prop="pollutionType">
-        <ElInput v-model="formData.pollutionType" placeholder="请输入污染源类型" />
+        <ElInput
+          v-model="formData.pollutionType"
+          placeholder="请输入污染源类型"
+        />
       </ElFormItem>
       <ElFormItem label="经度" prop="longitude">
         <ElInput v-model="formData.longitude" placeholder="请输入经度" />
@@ -122,13 +134,22 @@ const resetForm = () => {
         <ElInput v-model="formData.latitude" placeholder="请输入纬度" />
       </ElFormItem>
       <ElFormItem label="污染程度" prop="pollutionLevel">
-        <ElInput v-model="formData.pollutionLevel" placeholder="请输入污染程度" />
+        <ElInput
+          v-model="formData.pollutionLevel"
+          placeholder="请输入污染程度"
+        />
       </ElFormItem>
       <ElFormItem label="治理措施" prop="treatmentMeasures">
-        <ElInput v-model="formData.treatmentMeasures" placeholder="请输入治理措施" />
+        <ElInput
+          v-model="formData.treatmentMeasures"
+          placeholder="请输入治理措施"
+        />
       </ElFormItem>
       <ElFormItem label="治理状态" prop="treatmentStatus">
-        <ElInput v-model="formData.treatmentStatus" placeholder="请输入治理状态" />
+        <ElInput
+          v-model="formData.treatmentStatus"
+          placeholder="请输入治理状态"
+        />
       </ElFormItem>
       <ElFormItem label="排查时间" prop="inspectionTime">
         <ElDatePicker

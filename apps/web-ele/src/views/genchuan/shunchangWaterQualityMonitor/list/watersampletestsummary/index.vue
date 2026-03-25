@@ -254,9 +254,9 @@ const handleSortChange = (sort: {
     queryParams.sortOrder =
       sort.order === 'ascending'
         ? 'ASC'
-        : (sort.order === 'descending'
+        : sort.order === 'descending'
           ? 'DESC'
-          : undefined);
+          : undefined;
   } else {
     queryParams.sortField = undefined;
     queryParams.sortOrder = undefined;

@@ -19,21 +19,21 @@ const tabArray = ref([
     components: Table,
     showSecondary: true,
     secondShow: false,
-    type: 'arrears'
+    type: 'arrears',
   },
   {
     label: '追缴方式管理',
     components: Table,
     showSecondary: true,
     secondShow: false,
-    type: 'trace'
+    type: 'trace',
   },
   {
     label: '追缴结果管理',
     components: Table,
     showSecondary: true,
     secondShow: false,
-    type: 'result'
+    type: 'result',
   },
 ]);
 const activeName = ref('欠费记录管理');

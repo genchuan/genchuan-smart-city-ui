@@ -2,14 +2,14 @@ import { requestClient } from '#/api/request';
 
 // 漏损控制方案建议 VO
 export type LeakageControlPlanVO = {
+  exceededLeakageRate: number; // 超标漏损率(%)
   id: number; // 序号
   partitionId: string; // 分区ID
-  exceededLeakageRate: number; // 超标漏损率(%)
-  pressureData: string; // 压力数据
   pipeAvgAge: number; // 管道平均使用年限(年)
-  suggestedPlan: string; // 建议方案
   planImplementTime: Date; // 方案实施时间
   postImplementRate: number; // 实施后漏损率(%)
+  pressureData: string; // 压力数据
+  suggestedPlan: string; // 建议方案
 };
 
 // 漏损控制方案建议 API
@@ -24,10 +24,9 @@ export const LeakageControlPlanApi = {
 
   // 查询漏损控制方案建议详情
   getLeakageControlPlan: async (id: number) => {
-    return await requestClient.get(
-      `/waterdetection/leakage-control-plan/get`,
-      { params: { id } },
-    );
+    return await requestClient.get(`/waterdetection/leakage-control-plan/get`, {
+      params: { id },
+    });
   },
 
   // 新增漏损控制方案建议

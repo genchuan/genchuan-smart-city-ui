@@ -2,14 +2,14 @@ import { requestClient } from '#/api/request';
 
 // 水源类型及属性管理 VO
 export type WaterSourceManagementVO = {
+  administrativeRegion: string; // 所属行政区
   id: number; // 序号
+  latitude: number; // 纬度
+  longitude: number; // 经度
   sourceCode: string; // 水源编码
+  sourceDescription: string; // 水源描述
   sourceName: string; // 水源名称
   sourceType: string; // 水源类型
-  longitude: number; // 经度
-  latitude: number; // 纬度
-  administrativeRegion: string; // 所属行政区
-  sourceDescription: string; // 水源描述
 };
 
 // 水源类型及属性管理 API

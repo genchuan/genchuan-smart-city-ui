@@ -8,7 +8,11 @@
       :inline="true"
       label-width="68px"
     >
-      <el-form-item label="责任类型(主体责任/监管责任/运行管理责任)" label-width="auto" prop="responsibilityType">
+      <el-form-item
+        label="责任类型(主体责任/监管责任/运行管理责任)"
+        label-width="auto"
+        prop="responsibilityType"
+      >
         <el-input
           v-model="queryParams.responsibilityType"
           placeholder="请输入责任类型(主体责任/监管责任/运行管理责任)"
@@ -26,7 +30,11 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="责任人姓名" label-width="auto" prop="responsiblePerson">
+      <el-form-item
+        label="责任人姓名"
+        label-width="auto"
+        prop="responsiblePerson"
+      >
         <el-input
           v-model="queryParams.responsiblePerson"
           placeholder="请输入责任人姓名"
@@ -74,8 +82,12 @@
         />
       </el-form-item>
       <el-form-item>
-        <el-button @click="handleQuery"><Icon icon="ep:search" class="mr-5px" /> 搜索</el-button>
-        <el-button @click="resetQuery"><Icon icon="ep:refresh" class="mr-5px" /> 重置</el-button>
+        <el-button @click="handleQuery"
+          ><Icon icon="ep:search" class="mr-5px" /> 搜索</el-button
+        >
+        <el-button @click="resetQuery"
+          ><Icon icon="ep:refresh" class="mr-5px" /> 重置</el-button
+        >
         <el-button
           type="primary"
           plain
@@ -99,14 +111,31 @@
 
   <!-- 列表 -->
   <ContentWrap>
-    <el-table v-loading="loading" :data="list" :stripe="true" :show-overflow-tooltip="true">
+    <el-table
+      v-loading="loading"
+      :data="list"
+      :stripe="true"
+      :show-overflow-tooltip="true"
+    >
       <el-table-column label="序号" align="center" prop="id" />
-      <el-table-column label="责任类型(主体责任/监管责任/运行管理责任)" align="center" prop="responsibilityType" />
+      <el-table-column
+        label="责任类型(主体责任/监管责任/运行管理责任)"
+        align="center"
+        prop="responsibilityType"
+      />
       <el-table-column label="责任单位" align="center" prop="responsibleUnit" />
-      <el-table-column label="责任人姓名" align="center" prop="responsiblePerson" />
+      <el-table-column
+        label="责任人姓名"
+        align="center"
+        prop="responsiblePerson"
+      />
       <el-table-column label="职务" align="center" prop="position" />
       <el-table-column label="联系方式" align="center" prop="contactInfo" />
-      <el-table-column label="责任范围" align="center" prop="responsibilityScope" />
+      <el-table-column
+        label="责任范围"
+        align="center"
+        prop="responsibilityScope"
+      />
       <el-table-column
         label="创建时间"
         align="center"
@@ -149,20 +178,23 @@
 </template>
 
 <script setup lang="ts">
-import { dateFormatter } from '@/utils/formatTime'
-import download from '@/utils/download'
-import { ResponsibilityManagementApi, ResponsibilityManagementVO } from '@/api/waterdetection/responsibilitymanagement'
-import ResponsibilityManagementForm from './ResponsibilityManagementForm.vue'
+import { dateFormatter } from '@/utils/formatTime';
+import download from '@/utils/download';
+import {
+  ResponsibilityManagementApi,
+  ResponsibilityManagementVO,
+} from '@/api/waterdetection/responsibilitymanagement';
+import ResponsibilityManagementForm from './ResponsibilityManagementForm.vue';
 
 /** 责任单位及责任人管理 列表 */
-defineOptions({ name: 'ResponsibilityManagement' })
+defineOptions({ name: 'ResponsibilityManagement' });
 
-const message = useMessage() // 消息弹窗
-const { t } = useI18n() // 国际化
+const message = useMessage(); // 消息弹窗
+const { t } = useI18n(); // 国际化
 
-const loading = ref(true) // 列表的加载中
-const list = ref<ResponsibilityManagementVO[]>([]) // 列表的数据
-const total = ref(0) // 列表的总页数
+const loading = ref(true); // 列表的加载中
+const list = ref<ResponsibilityManagementVO[]>([]); // 列表的数据
+const total = ref(0); // 列表的总页数
 const queryParams = reactive({
   pageNo: 1,
   pageSize: 10,
@@ -173,70 +205,76 @@ const queryParams = reactive({
   contactInfo: undefined,
   responsibilityScope: undefined,
   createTime: [],
-})
-const queryFormRef = ref() // 搜索的表单
-const exportLoading = ref(false) // 导出的加载中
+});
+const queryFormRef = ref(); // 搜索的表单
+const exportLoading = ref(false); // 导出的加载中
 
 /** 查询列表 */
 const getList = async () => {
-  loading.value = true
+  loading.value = true;
   try {
-    const data = await ResponsibilityManagementApi.getResponsibilityManagementPage(queryParams)
-    list.value = data.list
-    total.value = data.total
+    const data =
+      await ResponsibilityManagementApi.getResponsibilityManagementPage(
+        queryParams,
+      );
+    list.value = data.list;
+    total.value = data.total;
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 /** 搜索按钮操作 */
 const handleQuery = () => {
-  queryParams.pageNo = 1
-  getList()
-}
+  queryParams.pageNo = 1;
+  getList();
+};
 
 /** 重置按钮操作 */
 const resetQuery = () => {
-  queryFormRef.value.resetFields()
-  handleQuery()
-}
+  queryFormRef.value.resetFields();
+  handleQuery();
+};
 
 /** 添加/修改操作 */
-const formRef = ref()
+const formRef = ref();
 const openForm = (type: string, id?: number) => {
-  formRef.value.open(type, id)
-}
+  formRef.value.open(type, id);
+};
 
 /** 删除按钮操作 */
 const handleDelete = async (id: number) => {
   try {
     // 删除的二次确认
-    await message.delConfirm()
+    await message.delConfirm();
     // 发起删除
-    await ResponsibilityManagementApi.deleteResponsibilityManagement(id)
-    message.success(t('common.delSuccess'))
+    await ResponsibilityManagementApi.deleteResponsibilityManagement(id);
+    message.success(t('common.delSuccess'));
     // 刷新列表
-    await getList()
+    await getList();
   } catch {}
-}
+};
 
 /** 导出按钮操作 */
 const handleExport = async () => {
   try {
     // 导出的二次确认
-    await message.exportConfirm()
+    await message.exportConfirm();
     // 发起导出
-    exportLoading.value = true
-    const data = await ResponsibilityManagementApi.exportResponsibilityManagement(queryParams)
-    download.excel(data, '责任单位及责任人管理.xls')
+    exportLoading.value = true;
+    const data =
+      await ResponsibilityManagementApi.exportResponsibilityManagement(
+        queryParams,
+      );
+    download.excel(data, '责任单位及责任人管理.xls');
   } catch {
   } finally {
-    exportLoading.value = false
+    exportLoading.value = false;
   }
-}
+};
 
 /** 初始化 **/
 onMounted(() => {
-  getList()
-})
+  getList();
+});
 </script>

@@ -32,14 +32,17 @@ const formData = ref({
   dataCollector: undefined,
 });
 const formRules = reactive({
-  monitorTime: [{ required: true, message: '监测时间不能为空', trigger: 'blur' }],
+  monitorTime: [
+    { required: true, message: '监测时间不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增水源水文参数' : '编辑水源水文参数';
+  dialogTitle.value =
+    type === 'create' ? '新增水源水文参数' : '编辑水源水文参数';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -115,13 +118,22 @@ const resetForm = () => {
         <ElInput v-model="formData.waterLevel" placeholder="请输入水位值(米)" />
       </ElFormItem>
       <ElFormItem label="含水层厚度(米)" prop="aquiferThickness">
-        <ElInput v-model="formData.aquiferThickness" placeholder="请输入含水层厚度(米)" />
+        <ElInput
+          v-model="formData.aquiferThickness"
+          placeholder="请输入含水层厚度(米)"
+        />
       </ElFormItem>
       <ElFormItem label="渗透系数(m/d)" prop="permeabilityCoefficient">
-        <ElInput v-model="formData.permeabilityCoefficient" placeholder="请输入渗透系数(m/d)" />
+        <ElInput
+          v-model="formData.permeabilityCoefficient"
+          placeholder="请输入渗透系数(m/d)"
+        />
       </ElFormItem>
       <ElFormItem label="数据采集人" prop="dataCollector">
-        <ElInput v-model="formData.dataCollector" placeholder="请输入数据采集人" />
+        <ElInput
+          v-model="formData.dataCollector"
+          placeholder="请输入数据采集人"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

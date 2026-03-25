@@ -34,7 +34,9 @@ const formData = ref({
   pollutionStatus: undefined,
 });
 const formRules = reactive({
-  protectionLevel: [{ required: true, message: '保护区级别不能为空', trigger: 'blur' }],
+  protectionLevel: [
+    { required: true, message: '保护区级别不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
@@ -107,16 +109,28 @@ const resetForm = () => {
       v-loading="formLoading"
     >
       <ElFormItem label="保护区级别" prop="protectionLevel">
-        <ElInput v-model="formData.protectionLevel" placeholder="请输入保护区级别" />
+        <ElInput
+          v-model="formData.protectionLevel"
+          placeholder="请输入保护区级别"
+        />
       </ElFormItem>
       <ElFormItem label="边界经纬度范围" prop="boundaryRange">
-        <ElInput v-model="formData.boundaryRange" placeholder="请输入边界经纬度范围" />
+        <ElInput
+          v-model="formData.boundaryRange"
+          placeholder="请输入边界经纬度范围"
+        />
       </ElFormItem>
       <ElFormItem label="标识牌编号" prop="signboardNo">
-        <ElInput v-model="formData.signboardNo" placeholder="请输入标识牌编号" />
+        <ElInput
+          v-model="formData.signboardNo"
+          placeholder="请输入标识牌编号"
+        />
       </ElFormItem>
       <ElFormItem label="标识牌位置" prop="signboardLocation">
-        <ElInput v-model="formData.signboardLocation" placeholder="请输入标识牌位置" />
+        <ElInput
+          v-model="formData.signboardLocation"
+          placeholder="请输入标识牌位置"
+        />
       </ElFormItem>
       <ElFormItem label="安装时间" prop="installTime">
         <ElDatePicker
@@ -128,10 +142,16 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="维护记录" prop="maintenanceRecord">
-        <ElInput v-model="formData.maintenanceRecord" placeholder="请输入维护记录" />
+        <ElInput
+          v-model="formData.maintenanceRecord"
+          placeholder="请输入维护记录"
+        />
       </ElFormItem>
       <ElFormItem label="污染源治理状态" prop="pollutionStatus">
-        <ElInput v-model="formData.pollutionStatus" placeholder="请输入污染源治理状态" />
+        <ElInput
+          v-model="formData.pollutionStatus"
+          placeholder="请输入污染源治理状态"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

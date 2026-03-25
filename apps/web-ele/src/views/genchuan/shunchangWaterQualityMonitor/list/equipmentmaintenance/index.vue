@@ -48,9 +48,8 @@ const exportLoading = ref(false); // 导出的加载中
 const getList = async () => {
   loading.value = true;
   try {
-    const data = await EquipmentMaintenanceApi.getEquipmentMaintenancePage(
-      queryParams,
-    );
+    const data =
+      await EquipmentMaintenanceApi.getEquipmentMaintenancePage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -96,9 +95,8 @@ const handleExport = async () => {
     await confirm('是否确认导出所有设备保养计划数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
-    const data = await EquipmentMaintenanceApi.exportEquipmentMaintenance(
-      queryParams,
-    );
+    const data =
+      await EquipmentMaintenanceApi.exportEquipmentMaintenance(queryParams);
     download.excel(data, '设备保养计划管理.xls');
   } catch {
   } finally {
@@ -250,12 +248,7 @@ onMounted(() => {
         :show-overflow-tooltip="true"
         style="width: 100%"
       >
-        <ElTableColumn
-          label="序号"
-          align="center"
-          prop="id"
-          min-width="80"
-        />
+        <ElTableColumn label="序号" align="center" prop="id" min-width="80" />
         <ElTableColumn
           label="设备ID"
           align="center"

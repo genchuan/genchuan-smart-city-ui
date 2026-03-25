@@ -2,12 +2,12 @@ import { requestClient } from '#/api/request';
 
 // 户表关联及变更管理 VO
 export type MeterUserRelationVO = {
-  id: number; // 序号
-  meterCode: string; // 户表编号
-  oldUserCode: string; // 原用户编号
-  newUserCode: string; // 新用户编号
   changeReason: string; // 变更原因
   changeTime: Date; // 变更时间
+  id: number; // 序号
+  meterCode: string; // 户表编号
+  newUserCode: string; // 新用户编号
+  oldUserCode: string; // 原用户编号
   operator: string; // 经办人
 };
 
@@ -15,18 +15,16 @@ export type MeterUserRelationVO = {
 export const MeterUserRelationApi = {
   // 查询户表关联及变更管理分页
   getMeterUserRelationPage: async (params: any) => {
-    return await requestClient.get(
-      `/waterdetection/meter-user-relation/page`,
-      { params },
-    );
+    return await requestClient.get(`/waterdetection/meter-user-relation/page`, {
+      params,
+    });
   },
 
   // 查询户表关联及变更管理详情
   getMeterUserRelation: async (id: number) => {
-    return await requestClient.get(
-      `/waterdetection/meter-user-relation/get`,
-      { params: { id } },
-    );
+    return await requestClient.get(`/waterdetection/meter-user-relation/get`, {
+      params: { id },
+    });
   },
 
   // 新增户表关联及变更管理

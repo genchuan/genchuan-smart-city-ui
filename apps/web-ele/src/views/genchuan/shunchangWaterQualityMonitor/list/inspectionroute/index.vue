@@ -47,9 +47,7 @@ const exportLoading = ref(false); // 导出的加载中
 const getList = async () => {
   loading.value = true;
   try {
-    const data = await InspectionRouteApi.getInspectionRoutePage(
-      queryParams,
-    );
+    const data = await InspectionRouteApi.getInspectionRoutePage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -95,9 +93,7 @@ const handleExport = async () => {
     await confirm('是否确认导出所有巡检路线规划与优化数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
-    const data = await InspectionRouteApi.exportInspectionRoute(
-      queryParams,
-    );
+    const data = await InspectionRouteApi.exportInspectionRoute(queryParams);
     download.excel(data, '巡检路线规划与优化.xls');
   } catch {
   } finally {
@@ -240,12 +236,7 @@ onMounted(() => {
         :show-overflow-tooltip="true"
         style="width: 100%"
       >
-        <ElTableColumn
-          label="序号"
-          align="center"
-          prop="id"
-          min-width="80"
-        />
+        <ElTableColumn label="序号" align="center" prop="id" min-width="80" />
         <ElTableColumn
           label="路线ID"
           align="center"

@@ -35,16 +35,23 @@ const formData = ref({
 });
 const formRules = reactive({
   taskId: [{ required: true, message: '任务ID不能为空', trigger: 'blur' }],
-  inspectorId: [{ required: true, message: '巡检人员ID不能为空', trigger: 'blur' }],
-  taskContent: [{ required: true, message: '任务内容不能为空', trigger: 'blur' }],
-  dispatchTime: [{ required: true, message: '派发时间不能为空', trigger: 'blur' }],
+  inspectorId: [
+    { required: true, message: '巡检人员ID不能为空', trigger: 'blur' },
+  ],
+  taskContent: [
+    { required: true, message: '任务内容不能为空', trigger: 'blur' },
+  ],
+  dispatchTime: [
+    { required: true, message: '派发时间不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增巡检任务派发与执行' : '编辑巡检任务派发与执行';
+  dialogTitle.value =
+    type === 'create' ? '新增巡检任务派发与执行' : '编辑巡检任务派发与执行';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -117,10 +124,17 @@ const resetForm = () => {
         <ElInput v-model="formData.taskId" placeholder="请输入任务ID" />
       </ElFormItem>
       <ElFormItem label="巡检人员ID" prop="inspectorId">
-        <ElInput v-model="formData.inspectorId" placeholder="请输入巡检人员ID" />
+        <ElInput
+          v-model="formData.inspectorId"
+          placeholder="请输入巡检人员ID"
+        />
       </ElFormItem>
       <ElFormItem label="任务内容" prop="taskContent">
-        <ElInput v-model="formData.taskContent" type="textarea" placeholder="请输入任务内容" />
+        <ElInput
+          v-model="formData.taskContent"
+          type="textarea"
+          placeholder="请输入任务内容"
+        />
       </ElFormItem>
       <ElFormItem label="派发时间" prop="dispatchTime">
         <ElDatePicker
@@ -150,7 +164,10 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="检查项结果" prop="inspectionResult">
-        <ElInput v-model="formData.inspectionResult" placeholder="请输入检查项结果(正常/异常)" />
+        <ElInput
+          v-model="formData.inspectionResult"
+          placeholder="请输入检查项结果(正常/异常)"
+        />
       </ElFormItem>
       <ElFormItem label="现场照片URL" prop="photoUrl">
         <ElInput v-model="formData.photoUrl" placeholder="请输入现场照片URL" />

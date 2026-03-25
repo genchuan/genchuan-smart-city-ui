@@ -33,22 +33,28 @@ const formData = ref({
   sourceDescription: undefined,
 });
 const formRules = reactive({
-  sourceCode: [{ required: true, message: '水源编码不能为空', trigger: 'blur' }],
-  sourceName: [{ required: true, message: '水源名称不能为空', trigger: 'blur' }],
+  sourceCode: [
+    { required: true, message: '水源编码不能为空', trigger: 'blur' },
+  ],
+  sourceName: [
+    { required: true, message: '水源名称不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增水源类型及属性' : '编辑水源类型及属性';
+  dialogTitle.value =
+    type === 'create' ? '新增水源类型及属性' : '编辑水源类型及属性';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
   if (id) {
     formLoading.value = true;
     try {
-      formData.value = await WaterSourceManagementApi.getWaterSourceManagement(id);
+      formData.value =
+        await WaterSourceManagementApi.getWaterSourceManagement(id);
     } finally {
       formLoading.value = false;
     }
@@ -122,10 +128,17 @@ const resetForm = () => {
         <ElInput v-model="formData.latitude" placeholder="请输入纬度" />
       </ElFormItem>
       <ElFormItem label="所属行政区" prop="administrativeRegion">
-        <ElInput v-model="formData.administrativeRegion" placeholder="请输入所属行政区" />
+        <ElInput
+          v-model="formData.administrativeRegion"
+          placeholder="请输入所属行政区"
+        />
       </ElFormItem>
       <ElFormItem label="水源描述" prop="sourceDescription">
-        <ElInput v-model="formData.sourceDescription" type="textarea" placeholder="请输入水源描述" />
+        <ElInput
+          v-model="formData.sourceDescription"
+          type="textarea"
+          placeholder="请输入水源描述"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

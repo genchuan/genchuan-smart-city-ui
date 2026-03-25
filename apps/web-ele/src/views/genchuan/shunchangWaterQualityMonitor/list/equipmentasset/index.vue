@@ -47,9 +47,7 @@ const exportLoading = ref(false); // 导出的加载中
 const getList = async () => {
   loading.value = true;
   try {
-    const data = await EquipmentAssetApi.getEquipmentAssetPage(
-      queryParams,
-    );
+    const data = await EquipmentAssetApi.getEquipmentAssetPage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -95,9 +93,7 @@ const handleExport = async () => {
     await confirm('是否确认导出所有设备资产台账数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
-    const data = await EquipmentAssetApi.exportEquipmentAsset(
-      queryParams,
-    );
+    const data = await EquipmentAssetApi.exportEquipmentAsset(queryParams);
     download.excel(data, '设备资产台账管理.xls');
   } catch {
   } finally {
@@ -238,12 +234,7 @@ onMounted(() => {
         :show-overflow-tooltip="true"
         style="width: 100%"
       >
-        <ElTableColumn
-          label="序号"
-          align="center"
-          prop="id"
-          min-width="80"
-        />
+        <ElTableColumn label="序号" align="center" prop="id" min-width="80" />
         <ElTableColumn
           label="设备编号"
           align="center"

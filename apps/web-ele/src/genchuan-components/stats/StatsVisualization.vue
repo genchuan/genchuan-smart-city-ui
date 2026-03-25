@@ -4,7 +4,6 @@ import { onMounted, onUnmounted, ref, watch } from 'vue';
 import * as echarts from 'echarts';
 
 import IconButton from '#/components/common/IconButton.vue';
-
 import MapComponent from '#/genchuan-components/Map/index.vue';
 
 const props = defineProps({

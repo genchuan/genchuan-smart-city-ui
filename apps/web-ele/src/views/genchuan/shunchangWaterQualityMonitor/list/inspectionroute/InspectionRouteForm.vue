@@ -34,8 +34,16 @@ const formData = ref({
 });
 const formRules = reactive({
   routeId: [{ required: true, message: '路线ID不能为空', trigger: 'blur' }],
-  inspectionPointId: [{ required: true, message: '巡检点ID不能为空', trigger: 'blur' }],
-  pointType: [{ required: true, message: '巡检点类型(水源地/水厂/管网节点)不能为空', trigger: 'blur' }],
+  inspectionPointId: [
+    { required: true, message: '巡检点ID不能为空', trigger: 'blur' },
+  ],
+  pointType: [
+    {
+      required: true,
+      message: '巡检点类型(水源地/水厂/管网节点)不能为空',
+      trigger: 'blur',
+    },
+  ],
   longitude: [{ required: true, message: '经度不能为空', trigger: 'blur' }],
   latitude: [{ required: true, message: '纬度不能为空', trigger: 'blur' }],
 });
@@ -44,7 +52,8 @@ const formRef = ref(); // 表单 Ref
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增巡检路线规划与优化' : '编辑巡检路线规划与优化';
+  dialogTitle.value =
+    type === 'create' ? '新增巡检路线规划与优化' : '编辑巡检路线规划与优化';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -116,10 +125,16 @@ const resetForm = () => {
         <ElInput v-model="formData.routeId" placeholder="请输入路线ID" />
       </ElFormItem>
       <ElFormItem label="巡检点ID" prop="inspectionPointId">
-        <ElInput v-model="formData.inspectionPointId" placeholder="请输入巡检点ID" />
+        <ElInput
+          v-model="formData.inspectionPointId"
+          placeholder="请输入巡检点ID"
+        />
       </ElFormItem>
       <ElFormItem label="巡检点类型" prop="pointType">
-        <ElInput v-model="formData.pointType" placeholder="请输入巡检点类型(水源地/水厂/管网节点)" />
+        <ElInput
+          v-model="formData.pointType"
+          placeholder="请输入巡检点类型(水源地/水厂/管网节点)"
+        />
       </ElFormItem>
       <ElFormItem label="经度" prop="longitude">
         <ElInput v-model="formData.longitude" placeholder="请输入经度" />
@@ -146,7 +161,10 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="路线调整原因" prop="routeAdjustReason">
-        <ElInput v-model="formData.routeAdjustReason" placeholder="请输入路线调整原因" />
+        <ElInput
+          v-model="formData.routeAdjustReason"
+          placeholder="请输入路线调整原因"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

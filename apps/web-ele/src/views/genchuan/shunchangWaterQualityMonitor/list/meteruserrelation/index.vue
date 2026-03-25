@@ -111,12 +111,37 @@
 
   <!-- 列表 -->
   <ElCard class="mt-16px">
-    <ElTable v-loading="loading" :data="list" :stripe="true" :show-overflow-tooltip="true">
+    <ElTable
+      v-loading="loading"
+      :data="list"
+      :stripe="true"
+      :show-overflow-tooltip="true"
+    >
       <ElTableColumn label="序号" align="center" prop="id" min-width="80" />
-      <ElTableColumn label="户表编号" align="center" prop="meterCode" min-width="120" />
-      <ElTableColumn label="原用户编号" align="center" prop="oldUserCode" min-width="120" />
-      <ElTableColumn label="新用户编号" align="center" prop="newUserCode" min-width="120" />
-      <ElTableColumn label="变更原因" align="center" prop="changeReason" min-width="150" />
+      <ElTableColumn
+        label="户表编号"
+        align="center"
+        prop="meterCode"
+        min-width="120"
+      />
+      <ElTableColumn
+        label="原用户编号"
+        align="center"
+        prop="oldUserCode"
+        min-width="120"
+      />
+      <ElTableColumn
+        label="新用户编号"
+        align="center"
+        prop="newUserCode"
+        min-width="120"
+      />
+      <ElTableColumn
+        label="变更原因"
+        align="center"
+        prop="changeReason"
+        min-width="150"
+      />
       <ElTableColumn
         label="变更时间"
         align="center"
@@ -124,7 +149,12 @@
         :formatter="dateFormatter"
         min-width="180"
       />
-      <ElTableColumn label="经办人" align="center" prop="operator" min-width="100" />
+      <ElTableColumn
+        label="经办人"
+        align="center"
+        prop="operator"
+        min-width="100"
+      />
       <ElTableColumn
         label="创建时间"
         align="center"
@@ -132,7 +162,12 @@
         :formatter="dateFormatter"
         min-width="180"
       />
-      <ElTableColumn label="操作" align="center" min-width="120px" fixed="right">
+      <ElTableColumn
+        label="操作"
+        align="center"
+        min-width="120px"
+        fixed="right"
+      >
         <template #default="scope">
           <ElButton
             link
@@ -217,7 +252,8 @@ const exportLoading = ref(false); // 导出的加载中
 const getList = async () => {
   loading.value = true;
   try {
-    const data = await MeterUserRelationApi.getMeterUserRelationPage(queryParams);
+    const data =
+      await MeterUserRelationApi.getMeterUserRelationPage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -263,7 +299,8 @@ const handleExport = async () => {
     await confirm('是否导出数据？');
     // 发起导出
     exportLoading.value = true;
-    const data = await MeterUserRelationApi.exportMeterUserRelation(queryParams);
+    const data =
+      await MeterUserRelationApi.exportMeterUserRelation(queryParams);
     downloadFile(data, '户表关联及变更管理.xls');
   } catch {
   } finally {

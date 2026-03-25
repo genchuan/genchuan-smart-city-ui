@@ -2,16 +2,16 @@ import { requestClient } from '#/api/request';
 
 // 设备保养计划管理 VO
 export type EquipmentMaintenanceVO = {
-  id: number; // 序号
+  actualMaintenanceDate: Date; // 实际保养日期
   equipmentId: string; // 设备ID
   equipmentType: string; // 设备类型
-  maintenanceCycle: number; // 保养周期(天)
-  planMaintenanceDate: Date; // 计划保养日期
-  actualMaintenanceDate: Date; // 实际保养日期
+  id: number; // 序号
   maintenanceContent: string; // 保养内容
-  replacedParts: string; // 更换部件名称
-  postMaintenanceParams: string; // 保养后运行参数
+  maintenanceCycle: number; // 保养周期(天)
   maintenanceStaffId: string; // 维护人员ID
+  planMaintenanceDate: Date; // 计划保养日期
+  postMaintenanceParams: string; // 保养后运行参数
+  replacedParts: string; // 更换部件名称
 };
 
 // 设备保养计划管理 API

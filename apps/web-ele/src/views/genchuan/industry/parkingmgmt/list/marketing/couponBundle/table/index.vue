@@ -206,9 +206,9 @@ function handleCreate() {
       title:
         props.activeTab === '定向发放管理'
           ? releaseTextObj.addText
-          : (props.activeTab === '使用记录'
+          : props.activeTab === '使用记录'
             ? useTextObj.addText
-            : textObj.addText),
+            : textObj.addText,
     })
     .open();
 }
@@ -220,9 +220,9 @@ function handleEdit(row) {
       title:
         props.activeTab === '定向发放管理'
           ? releaseTextObj.editText
-          : (props.activeTab === '使用记录'
+          : props.activeTab === '使用记录'
             ? useTextObj.editText
-            : textObj.editText),
+            : textObj.editText,
       ...row,
     })
     .open();

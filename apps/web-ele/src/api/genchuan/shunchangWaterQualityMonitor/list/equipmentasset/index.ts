@@ -2,33 +2,31 @@ import { requestClient } from '#/api/request';
 
 // 设备资产台账管理 VO
 export type EquipmentAssetVO = {
-  id: number; // 序号
   equipmentCode: string; // 设备编号
   equipmentName: string; // 设备名称
+  id: number; // 序号
+  installDate: Date; // 安装日期
+  installLocation: string; // 安装位置
+  maintenanceRecord: string; // 维护记录
+  manufacturer: string; // 生产厂家
   model: string; // 型号
   specification: string; // 规格
-  installLocation: string; // 安装位置
-  installDate: Date; // 安装日期
-  manufacturer: string; // 生产厂家
-  maintenanceRecord: string; // 维护记录
 };
 
 // 设备资产台账管理 API
 export const EquipmentAssetApi = {
   // 查询设备资产台账管理分页
   getEquipmentAssetPage: async (params: any) => {
-    return await requestClient.get(
-      `/waterdetection/equipment-asset/page`,
-      { params },
-    );
+    return await requestClient.get(`/waterdetection/equipment-asset/page`, {
+      params,
+    });
   },
 
   // 查询设备资产台账管理详情
   getEquipmentAsset: async (id: number) => {
-    return await requestClient.get(
-      `/waterdetection/equipment-asset/get`,
-      { params: { id } },
-    );
+    return await requestClient.get(`/waterdetection/equipment-asset/get`, {
+      params: { id },
+    });
   },
 
   // 新增设备资产台账管理

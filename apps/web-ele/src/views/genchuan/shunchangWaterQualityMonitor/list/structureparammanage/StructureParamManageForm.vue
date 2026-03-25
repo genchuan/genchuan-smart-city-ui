@@ -34,22 +34,32 @@ const formData = ref({
   constructionTime: undefined,
 });
 const formRules = reactive({
-  structureName: [{ required: true, message: '构建筑物名称不能为空', trigger: 'blur' }],
-  structureType: [{ required: true, message: '类型(沉淀池/滤池/清水池等)不能为空', trigger: 'blur' }],
+  structureName: [
+    { required: true, message: '构建筑物名称不能为空', trigger: 'blur' },
+  ],
+  structureType: [
+    {
+      required: true,
+      message: '类型(沉淀池/滤池/清水池等)不能为空',
+      trigger: 'blur',
+    },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增构建筑物参数' : '编辑构建筑物参数';
+  dialogTitle.value =
+    type === 'create' ? '新增构建筑物参数' : '编辑构建筑物参数';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
   if (id) {
     formLoading.value = true;
     try {
-      formData.value = await StructureParamManageApi.getStructureParamManage(id);
+      formData.value =
+        await StructureParamManageApi.getStructureParamManage(id);
     } finally {
       formLoading.value = false;
     }
@@ -108,10 +118,16 @@ const resetForm = () => {
       v-loading="formLoading"
     >
       <ElFormItem label="构建筑物名称" prop="structureName">
-        <ElInput v-model="formData.structureName" placeholder="请输入构建筑物名称" />
+        <ElInput
+          v-model="formData.structureName"
+          placeholder="请输入构建筑物名称"
+        />
       </ElFormItem>
       <ElFormItem label="类型(沉淀池/滤池/清水池等)" prop="structureType">
-        <ElInput v-model="formData.structureType" placeholder="请输入类型(沉淀池/滤池/清水池等)" />
+        <ElInput
+          v-model="formData.structureType"
+          placeholder="请输入类型(沉淀池/滤池/清水池等)"
+        />
       </ElFormItem>
       <ElFormItem label="长度(米)" prop="length">
         <ElInput v-model="formData.length" placeholder="请输入长度(米)" />
@@ -123,7 +139,10 @@ const resetForm = () => {
         <ElInput v-model="formData.depth" placeholder="请输入深度(米)" />
       </ElFormItem>
       <ElFormItem label="有效容积(立方米)" prop="effectiveVolume">
-        <ElInput v-model="formData.effectiveVolume" placeholder="请输入有效容积(立方米)" />
+        <ElInput
+          v-model="formData.effectiveVolume"
+          placeholder="请输入有效容积(立方米)"
+        />
       </ElFormItem>
       <ElFormItem label="建设时间" prop="constructionTime">
         <ElDatePicker

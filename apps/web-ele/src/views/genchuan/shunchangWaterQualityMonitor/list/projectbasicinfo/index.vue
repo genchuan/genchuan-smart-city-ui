@@ -47,9 +47,7 @@ const exportLoading = ref(false); // 导出的加载中
 const getList = async () => {
   loading.value = true;
   try {
-    const data = await ProjectBasicInfoApi.getProjectBasicInfoPage(
-      queryParams,
-    );
+    const data = await ProjectBasicInfoApi.getProjectBasicInfoPage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -95,9 +93,7 @@ const handleExport = async () => {
     await confirm('是否确认导出所有工程基本信息数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
-    const data = await ProjectBasicInfoApi.exportProjectBasicInfo(
-      queryParams,
-    );
+    const data = await ProjectBasicInfoApi.exportProjectBasicInfo(queryParams);
     download.excel(data, '工程基本信息管理.xls');
   } catch {
   } finally {
@@ -238,12 +234,7 @@ onMounted(() => {
         :show-overflow-tooltip="true"
         style="width: 100%"
       >
-        <ElTableColumn
-          label="序号"
-          align="center"
-          prop="id"
-          min-width="80"
-        />
+        <ElTableColumn label="序号" align="center" prop="id" min-width="80" />
         <ElTableColumn
           label="工程编码"
           align="center"

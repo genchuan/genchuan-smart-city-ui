@@ -2,15 +2,15 @@ import { requestClient } from '#/api/request';
 
 // 仪器零点/量程漂移校验 VO
 export type InstrumentCalibrationVO = {
+  calibrationDate: Date; // 校验日期
+  calibrationResult: string; // 校验结果
   id: number; // 序号
   instrumentId: string; // 仪器ID
-  calibrationDate: Date; // 校验日期
-  zeroPointConc: number; // 零点校正液浓度
-  zeroDrift: number; // 零点漂移值
+  operatorId: string; // 操作人员ID
   spanConc: number; // 量程校正液浓度
   spanDrift: number; // 量程漂移值
-  calibrationResult: string; // 校验结果
-  operatorId: string; // 操作人员ID
+  zeroDrift: number; // 零点漂移值
+  zeroPointConc: number; // 零点校正液浓度
 };
 
 // 仪器零点/量程漂移校验 API
