@@ -13,6 +13,9 @@ import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
+import ApproveDrawer from '../drawers/ApproveDrawer.vue';
+import CalculateDrawer from '../drawers/CalculateDrawer.vue';
+import TrackDrawer from '../drawers/TrackDrawer.vue';
 import {
   dataList,
   detailFields,
@@ -20,9 +23,6 @@ import {
   useFormSchema,
   useGridColumns,
 } from './data';
-import ApproveDrawer from '../drawers/ApproveDrawer.vue';
-import TrackDrawer from '../drawers/TrackDrawer.vue';
-import CalculateDrawer from '../drawers/CalculateDrawer.vue';
 
 const props = defineProps({
   secondShow: {
@@ -135,7 +135,7 @@ const [CalculateDrawerComp, calculateDrawerApi] = useVbenDrawer({
           usedAmount: values.usedAmount,
           serviceFee: values.serviceFee,
           discountShare: values.discountShare,
-          refundAmount: refundAmount,
+          refundAmount,
         });
         calculateDrawerApi.close();
       }
@@ -287,7 +287,7 @@ async function handleCancelRefund(row) {
     ElMessage.success('退款申请已取消');
     handleRefresh();
     loadingInstance.close();
-  } catch (error) {
+  } catch {
     // 用户取消确认
   }
 }
@@ -340,7 +340,7 @@ async function handleConfirmCalculate(row) {
     ElMessage.success('核算结果已确认，应退金额已锁定');
     handleRefresh();
     loadingInstance.close();
-  } catch (error) {
+  } catch {
     // 用户取消确认
   }
 }
@@ -411,12 +411,23 @@ const getTableData = (pageObj) => {
     // 状态筛选
     let statusMatch = true;
     if (activeName.value !== '全部') {
-      if (props.tabType === 'refundApply') {
-        statusMatch = v.approveStatusName === activeName.value;
-      } else if (props.tabType === 'refundRecord') {
-        statusMatch = v.refundStatusName === activeName.value;
-      } else if (props.tabType === 'amountCalculate') {
-        statusMatch = v.calculateResult === activeName.value;
+      switch (props.tabType) {
+        case 'amountCalculate': {
+          statusMatch = v.calculateResult === activeName.value;
+
+          break;
+        }
+        case 'refundApply': {
+          statusMatch = v.approveStatusName === activeName.value;
+
+          break;
+        }
+        case 'refundRecord': {
+          statusMatch = v.refundStatusName === activeName.value;
+
+          break;
+        }
+        // No default
       }
     }
 
@@ -536,23 +547,28 @@ const handleOpenDetail = (row) => {
 
 // 根据tabType动态生成状态标签
 const tabsData = computed(() => {
-  if (props.tabType === 'refundApply') {
-    return [
-      { label: '全部' },
-      { label: '待审批' },
-      { label: '已通过' },
-      { label: '已拒绝' },
-      { label: '已取消' },
-    ];
-  } else if (props.tabType === 'refundRecord') {
-    return [
-      { label: '全部' },
-      { label: '待退款' },
-      { label: '已退款' },
-      { label: '退款失败' },
-    ];
-  } else if (props.tabType === 'amountCalculate') {
-    return [{ label: '全部' }, { label: '核算通过' }, { label: '核算驳回' }];
+  switch (props.tabType) {
+    case 'amountCalculate': {
+      return [{ label: '全部' }, { label: '核算通过' }, { label: '核算驳回' }];
+    }
+    case 'refundApply': {
+      return [
+        { label: '全部' },
+        { label: '待审批' },
+        { label: '已通过' },
+        { label: '已拒绝' },
+        { label: '已取消' },
+      ];
+    }
+    case 'refundRecord': {
+      return [
+        { label: '全部' },
+        { label: '待退款' },
+        { label: '已退款' },
+        { label: '退款失败' },
+      ];
+    }
+    // No default
   }
   return [{ label: '全部' }];
 });
@@ -567,21 +583,32 @@ const createLabel = (item) => {
       break;
     }
     default: {
-      if (props.tabType === 'refundApply') {
-        // 退款申请标签页：统计approveStatusName
-        count = dataObj.apilist.filter(
-          (v) => v.approveStatusName === item.label,
-        ).length;
-      } else if (props.tabType === 'refundRecord') {
-        // 退款记录标签页：统计refundStatusName
-        count = dataObj.apilist.filter(
-          (v) => v.refundStatusName === item.label,
-        ).length;
-      } else if (props.tabType === 'amountCalculate') {
-        // 金额核算标签页：统计calculateResult
-        count = dataObj.apilist.filter(
-          (v) => v.calculateResult === item.label,
-        ).length;
+      switch (props.tabType) {
+        case 'amountCalculate': {
+          // 金额核算标签页：统计calculateResult
+          count = dataObj.apilist.filter(
+            (v) => v.calculateResult === item.label,
+          ).length;
+
+          break;
+        }
+        case 'refundApply': {
+          // 退款申请标签页：统计approveStatusName
+          count = dataObj.apilist.filter(
+            (v) => v.approveStatusName === item.label,
+          ).length;
+
+          break;
+        }
+        case 'refundRecord': {
+          // 退款记录标签页：统计refundStatusName
+          count = dataObj.apilist.filter(
+            (v) => v.refundStatusName === item.label,
+          ).length;
+
+          break;
+        }
+        // No default
       }
       break;
     }
@@ -603,22 +630,30 @@ const handleFullShow = () => {
 // 获取状态标签类型
 const getStatusType = (status) => {
   switch (status) {
-    case '待审批':
-      return 'info';
-    case '已通过':
-      return 'success';
-    case '已拒绝':
-      return 'danger';
-    case '已取消':
+    case '已取消': {
       return 'warning';
-    case '已退款':
-      return 'success';
-    case '待退款':
-      return 'info';
-    case '退款失败':
+    }
+    case '已拒绝': {
       return 'danger';
-    default:
+    }
+    case '已退款': {
+      return 'success';
+    }
+    case '已通过': {
+      return 'success';
+    }
+    case '待审批': {
+      return 'info';
+    }
+    case '待退款': {
+      return 'info';
+    }
+    case '退款失败': {
+      return 'danger';
+    }
+    default: {
       return 'default';
+    }
   }
 };
 

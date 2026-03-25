@@ -9,17 +9,17 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
 import {
   dataList,
+  detailFields,
   textObj,
   useFormSchema,
   useGridColumns,
-  detailFields,
 } from './data';
-import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 
 const props = defineProps({
   secondShow: {

@@ -1,7 +1,8 @@
 <script setup>
-import { reactive, ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
+
 import * as echarts from 'echarts';
-import { ElSelect, ElOption } from 'element-plus';
+import { ElOption, ElSelect } from 'element-plus';
 
 import IconButton from '#/components/common/IconButton.vue';
 import MapComponent from '#/genchuan-components/Map/index.vue';
@@ -179,7 +180,7 @@ const allChartsData = [
     type: 'bar',
     data: {
       xAxis: ['福州', '厦门', '泉州', '莆田', '宁德', '龙岩'],
-      series: [1.8, 1.5, 2.0, 1.2, 1.4, 1.6],
+      series: [1.8, 1.5, 2, 1.2, 1.4, 1.6],
     },
   },
   {
@@ -423,7 +424,7 @@ const getBarLineOption = (chartData) => {
     series: [
       {
         name: chartData?.label || '趋势统计',
-        type: type,
+        type,
         data: chartData?.data?.series || [],
         itemStyle: {
           borderRadius: type === 'bar' ? [4, 4, 0, 0] : undefined,

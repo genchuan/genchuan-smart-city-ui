@@ -1,7 +1,8 @@
 <script setup>
-import { reactive, ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
+
 import * as echarts from 'echarts';
-import { ElSelect, ElOption } from 'element-plus';
+import { ElOption, ElSelect } from 'element-plus';
 
 import IconButton from '#/components/common/IconButton.vue';
 import MapComponent from '#/genchuan-components/Map/index.vue';
@@ -187,7 +188,7 @@ const allChartsData = [
         '18:00',
         '21:00',
       ],
-      series: [15.2, 14.8, 14.5, 15.0, 15.5, 15.8, 16.0, 15.7],
+      series: [15.2, 14.8, 14.5, 15, 15.5, 15.8, 16, 15.7],
     },
   },
   {
@@ -448,7 +449,7 @@ const getBarLineOption = (chartData) => {
     series: [
       {
         name: chartData?.label || '趋势统计',
-        type: type,
+        type,
         data: chartData?.data?.series || [],
         itemStyle: {
           borderRadius: type === 'bar' ? [4, 4, 0, 0] : undefined,

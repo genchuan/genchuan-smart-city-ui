@@ -9,33 +9,30 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
 import {
   dataList,
+  detailFields,
+  resultDataList,
+  resultDetailFields,
+  resultStatusTagType,
+  resultTextObj,
+  statusTagType,
   textObj,
+  traceDataList,
+  traceDetailFields,
+  traceStatusTagType,
+  traceTextObj,
   useFormSchema,
   useGridColumns,
-  detailFields,
-  statusOptions,
-  statusTagType,
-  traceDataList,
-  traceTextObj,
-  useTraceFormSchema,
-  useTraceGridColumns,
-  traceDetailFields,
-  traceStatusOptions,
-  traceStatusTagType,
-  resultDataList,
-  resultTextObj,
   useResultFormSchema,
   useResultGridColumns,
-  resultDetailFields,
-  resultStatusOptions,
-  resultStatusTagType,
+  useTraceFormSchema,
+  useTraceGridColumns,
 } from './data';
-import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 
 const props = defineProps({
   secondShow: {
@@ -94,9 +91,9 @@ const [Form, formApi] = useVbenForm({
   schema:
     props.type === 'trace'
       ? useTraceFormSchema()
-      : props.type === 'result'
+      : (props.type === 'result'
         ? useResultFormSchema()
-        : useFormSchema(),
+        : useFormSchema()),
   showDefaultActions: false,
   watch: {
     'props.type': {
@@ -272,20 +269,20 @@ const getTableData = (pageObj) => {
           statusMatch = true;
           break;
         }
-        case '成功': {
-          statusMatch = v.traceResult === '成功';
-          break;
-        }
         case '失败': {
           statusMatch = v.traceResult === '失败';
+          break;
+        }
+        case '已结案': {
+          statusMatch = v.traceResult === '已结案';
           break;
         }
         case '待处理': {
           statusMatch = v.traceResult === '待处理';
           break;
         }
-        case '已结案': {
-          statusMatch = v.traceResult === '已结案';
+        case '成功': {
+          statusMatch = v.traceResult === '成功';
           break;
         }
         // No default
@@ -300,12 +297,12 @@ const getTableData = (pageObj) => {
           statusMatch = v.followStatus === '已完成';
           break;
         }
-        case '跟踪中': {
-          statusMatch = v.followStatus === '跟踪中';
-          break;
-        }
         case '待处理': {
           statusMatch = v.followStatus === '待处理';
+          break;
+        }
+        case '跟踪中': {
+          statusMatch = v.followStatus === '跟踪中';
           break;
         }
         // No default
@@ -316,20 +313,20 @@ const getTableData = (pageObj) => {
           statusMatch = true;
           break;
         }
-        case '未追缴': {
-          statusMatch = v.arrearsStatus === '未追缴';
+        case '已核销': {
+          statusMatch = v.arrearsStatus === '已核销';
           break;
         }
         case '已追缴': {
           statusMatch = v.arrearsStatus === '已追缴';
           break;
         }
-        case '追缴中': {
-          statusMatch = v.arrearsStatus === '追缴中';
+        case '未追缴': {
+          statusMatch = v.arrearsStatus === '未追缴';
           break;
         }
-        case '已核销': {
-          statusMatch = v.arrearsStatus === '已核销';
+        case '追缴中': {
+          statusMatch = v.arrearsStatus === '追缴中';
           break;
         }
         // No default
@@ -443,9 +440,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
     columns:
       props.type === 'trace'
         ? useTraceGridColumns()
-        : props.type === 'result'
+        : (props.type === 'result'
           ? useResultGridColumns()
-          : useGridColumns(),
+          : useGridColumns()),
     keepSource: true,
     proxyConfig: {
       ajax: {
@@ -544,14 +541,16 @@ const createLabel = (item) => {
         count = dataObj.apilist.length;
         break;
       }
-      case '成功': {
-        // 统计成功的数据
-        count = dataObj.apilist.filter((v) => v.traceResult === '成功').length;
-        break;
-      }
       case '失败': {
         // 统计失败的数据
         count = dataObj.apilist.filter((v) => v.traceResult === '失败').length;
+        break;
+      }
+      case '已结案': {
+        // 统计已结案的数据
+        count = dataObj.apilist.filter(
+          (v) => v.traceResult === '已结案',
+        ).length;
         break;
       }
       case '待处理': {
@@ -561,11 +560,9 @@ const createLabel = (item) => {
         ).length;
         break;
       }
-      case '已结案': {
-        // 统计已结案的数据
-        count = dataObj.apilist.filter(
-          (v) => v.traceResult === '已结案',
-        ).length;
+      case '成功': {
+        // 统计成功的数据
+        count = dataObj.apilist.filter((v) => v.traceResult === '成功').length;
         break;
       }
       // No default
@@ -583,17 +580,17 @@ const createLabel = (item) => {
         ).length;
         break;
       }
-      case '跟踪中': {
-        // 统计跟踪中的数据
-        count = dataObj.apilist.filter(
-          (v) => v.followStatus === '跟踪中',
-        ).length;
-        break;
-      }
       case '待处理': {
         // 统计待处理的数据
         count = dataObj.apilist.filter(
           (v) => v.followStatus === '待处理',
+        ).length;
+        break;
+      }
+      case '跟踪中': {
+        // 统计跟踪中的数据
+        count = dataObj.apilist.filter(
+          (v) => v.followStatus === '跟踪中',
         ).length;
         break;
       }
@@ -605,10 +602,10 @@ const createLabel = (item) => {
         count = dataObj.apilist.length;
         break;
       }
-      case '未追缴': {
-        // 统计未追缴的数据
+      case '已核销': {
+        // 统计已核销的数据
         count = dataObj.apilist.filter(
-          (v) => v.arrearsStatus === '未追缴',
+          (v) => v.arrearsStatus === '已核销',
         ).length;
         break;
       }
@@ -619,17 +616,17 @@ const createLabel = (item) => {
         ).length;
         break;
       }
+      case '未追缴': {
+        // 统计未追缴的数据
+        count = dataObj.apilist.filter(
+          (v) => v.arrearsStatus === '未追缴',
+        ).length;
+        break;
+      }
       case '追缴中': {
         // 统计追缴中的数据
         count = dataObj.apilist.filter(
           (v) => v.arrearsStatus === '追缴中',
-        ).length;
-        break;
-      }
-      case '已核销': {
-        // 统计已核销的数据
-        count = dataObj.apilist.filter(
-          (v) => v.arrearsStatus === '已核销',
         ).length;
         break;
       }
@@ -959,17 +956,17 @@ const handleRemoveLimit = (row) => {
     </Drawer>
 
     <!-- 追缴方式选择抽屉 -->
-    <TraceDrawer :title="'选择追缴方式'">
+    <TraceDrawer title="选择追缴方式">
       <TraceForm />
     </TraceDrawer>
 
     <!-- 追缴进度更新抽屉 -->
-    <TraceUpdateDrawer :title="'更新追缴进度'">
+    <TraceUpdateDrawer title="更新追缴进度">
       <TraceUpdateForm />
     </TraceUpdateDrawer>
 
     <!-- 跟踪备注弹窗 -->
-    <ResultTraceDialog :title="'填写跟踪备注'">
+    <ResultTraceDialog title="填写跟踪备注">
       <ResultTraceForm />
     </ResultTraceDialog>
     <Grid>

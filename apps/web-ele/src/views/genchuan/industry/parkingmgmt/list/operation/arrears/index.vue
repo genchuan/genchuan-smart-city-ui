@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 
-import Table from './table/index.vue';
 import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
+
 import { getStatsDataByType } from './table/data';
+import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
 
