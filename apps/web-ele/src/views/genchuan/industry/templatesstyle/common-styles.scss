@@ -1,0 +1,318 @@
+
+// 全屏/返回按钮通用样式
+.fullScreenBut, .back-button {
+  position: absolute;
+  top: 0.5vw;
+  cursor: pointer;
+  transition: transform 0.2s;
+  padding: 5px;
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  z-index: 1000;
+
+  &:hover {
+    transform: scale(1.05);
+    background: rgba(0, 30, 60, 0.8);
+    border-radius: 4px;
+  }
+}
+
+.back-button { left: 1vw; }
+.fullScreenBut { right: 1vw; }
+
+// 实时时间显示
+.showTime {
+  position: absolute;
+  right: 5vw;
+  font-size: 1vh;
+  color: rgba(255, 255, 255, 0.7);
+  overflow: hidden;
+}
+.h1_time {
+  height: 7vh;
+  font-size: 2vh;
+  line-height: 7vh;
+  color: #fff;
+}
+
+// 主容器样式
+.mainbox {
+  display: flex;
+  margin: 0 auto;
+  padding: 0.6vw 0;
+  flex: 1;
+  box-sizing: border-box;
+  gap: 0.6vw;
+  width: 100%;
+  overflow: hidden;
+}
+
+.panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1.2vh;
+  height: 1.2vh;
+  border-top: 0.3vh solid #02a6b5;
+  border-left: 0.3vh solid #02a6b5;
+}
+
+.panel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1.2vh;
+  height: 1.2vh;
+  border-top: 0.3vh solid #02a6b5;
+  border-right: 0.3vh solid #02a6b5;
+}
+
+.panel-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1vh;
+}
+
+.panel-footer::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 1.2vh;
+  height: 1.2vh;
+  border-bottom: 0.3vh solid #02a6b5;
+  border-left: 0.3vh solid #02a6b5;
+}
+
+.panel-footer::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 1.2vh;
+  height: 1.2vh;
+  border-bottom: 0.3vh solid #02a6b5;
+  border-right: 0.3vh solid #02a6b5;
+}
+
+// 面板全屏按钮
+.panel-fullscreen-btn {
+  cursor: pointer;
+  transition: transform 0.2s;
+  padding: 5px;
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  z-index: 1000;
+
+  &:hover {
+    transform: scale(1.05);
+    background: rgba(0, 30, 60, 0.8);
+    border-radius: 4px;
+  }
+}
+
+// 头部操作栏通用样式
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border-bottom: 1px solid rgba(0, 204, 255, 0.1);
+  box-sizing: border-box;
+  gap: 1vw;
+  margin-bottom: 0.5vw;
+
+  .actions-left p {
+    margin: 0;
+    color: #9fbdff;
+    font-size: 0.85vw;
+    font-weight: 600;
+  }
+
+  .actions-right {
+    display: flex;
+    align-items: center;
+    gap: 0.2vw;
+  }
+}
+
+// 时间范围单选框通用样式
+.time-range-radio-group {
+  display: flex;
+  align-items: center;
+  padding-right: 2vw;
+
+  :deep(.el-radio) {
+    color: #fff;
+    font-size: 0.8vw;
+    &:hover { color: #00ccff; }
+  }
+
+  :deep(.el-radio__input.is-checked .el-radio__inner) {
+    background-color: #00ccff;
+    border-color: #00ccff;
+  }
+
+  :deep(.el-radio__inner) {
+    border-color: rgba(0, 204, 255, 0.5);
+    background-color: transparent;
+  }
+
+  :deep(.el-radio__label) { color: #ccefff; }
+  :deep(.el-radio__input.is-checked + .el-radio__label) { color: #00ccff; font-weight: 500; }
+}
+
+// 滚动条通用样式
+.table-scroll {
+  overflow-y: auto;
+  height: 100%;
+  flex: 1;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+
+  &::-webkit-scrollbar { width: 6px; height: 6px; }
+  &::-webkit-scrollbar-track { background: rgba(0, 68, 102, 0.8); border-radius: 3px; }
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #00c6ff, #ec4899);
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #ec4899, #7e57c2);
+  }
+}
+
+// 通用标签样式
+.el-tag--danger {
+  --el-tag-bg-color: rgba(255, 77, 109, 0.2);
+  --el-tag-border-color: #ff4d6d;
+  --el-tag-text-color: #ff4d6d;
+}
+.el-tag--warning {
+  --el-tag-bg-color: rgba(247, 147, 30, 0.2);
+  --el-tag-border-color: #f7931e;
+  --el-tag-text-color: #f7931e;
+}
+.el-tag--success {
+  --el-tag-bg-color: rgba(56, 176, 0, 0.2);
+  --el-tag-border-color: #38b000;
+  --el-tag-text-color: #38b000;
+}
+.el-tag--info {
+  --el-tag-bg-color: rgba(0, 198, 255, 0.2);
+  --el-tag-border-color: #00c6ff;
+  --el-tag-text-color: #00c6ff;
+}
+
+// 通用表格基础样式
+:deep(.el-table) {
+  table-layout: fixed;
+  background-color: rgba(0, 47, 75, 0.4);
+  border-color: rgba(0, 198, 255, 0.3);
+
+  th {
+    background-color: rgba(0, 68, 102, 0.5);
+    color: #facc15;
+    font-size: 0.8vw;
+    padding: 0.5vw 0;
+    text-align: center;
+    border-color: rgba(0, 198, 255, 0.3);
+    font-weight: 500;
+    background: linear-gradient(90deg, rgba(0, 68, 102, 0.5), rgba(0, 47, 75, 0.5));
+  }
+
+  td {
+    background-color: transparent;
+    color: #ffffff;
+    font-size: 0.7vw;
+    border-bottom: 1px solid rgba(0, 198, 255, 0.3);
+    padding: 0.4vw 0;
+    text-align: center;
+    transition: all 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .el-table__row {
+    background-color: rgba(0, 47, 75, 0.3);
+    &:nth-child(even) { background-color: rgba(0, 68, 102, 0.3); }
+    &:hover > td {
+      background-color: rgba(0, 198, 255, 0.1) !important;
+      color: #facc15;
+    }
+  }
+
+  .el-table__row--current > td {
+    background-color: rgba(236, 72, 153, 0.1) !important;
+    color: #ec4899;
+  }
+
+  .el-table__empty-text {
+    color: #67e8f9;
+    background-color: rgba(0, 47, 75, 0.4);
+  }
+
+  &::before {
+    background-color: rgba(0, 198, 255, 0.3);
+  }
+
+  .el-table__fixed-right::before,
+  .el-table__fixed::before {
+    background-color: transparent;
+  }
+}
+
+// 通用选择器样式
+:deep(.el-select .el-input__inner) {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(0, 198, 255, 0.5);
+}
+:deep(.el-select .el-input__inner:focus) {
+  border-color: #00c6ff;
+  box-shadow: 0 0 4px rgba(0, 198, 255, 0.8);
+}
+:deep(.el-select-dropdown__item) {
+  color: #fff !important;
+}
+:deep(.el-select-dropdown__item.selected) {
+  background-color: rgba(0, 204, 255, 0.3) !important;
+}
+
+// 通用按钮样式
+:deep(.el-button--text.el-button--small) {
+  font-size: 0.7vw;
+}
+
+:deep(.el-tag) {
+  font-size: 0.7vw;
+}
+
+:deep(.el-button--small.el-button--primary) {
+  font-size: 0.7vw;
+  padding: 0.3vh 0.8vw;
+  height: auto;
+  line-height: 1.2;
+  border-radius: 0.3vw;
+}
+
+// 脉冲动画（通用）
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(255, 77, 109, 0.7); }
+  100% { box-shadow: 0 0 0 15px rgba(255, 77, 109, 0); }
+}
+
+@keyframes pulse-danger {
+  0% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.7); }
+  100% { box-shadow: 0 0 0 15px rgba(255, 77, 77, 0); }
+}
+.pulse-danger { animation: pulse-danger 1s infinite; }

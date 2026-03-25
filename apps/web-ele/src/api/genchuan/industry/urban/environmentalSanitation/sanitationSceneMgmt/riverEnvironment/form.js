@@ -192,10 +192,10 @@ export function getColumnsByStatus(status) {
     全部: [
       { field: 'name', title: '河道名称', minWidth: 160, sortable: true, slots: { default: 'name' } },
       { field: 'responsibilitySection', title: '责任河段', minWidth: 200 },
-      { field: 'areaName', title: '所属区域', minWidth: 180 },
+      { field: 'areaName', title: '所属区域', minWidth: 180, slots: { default: 'area' } },
       { field: 'length', title: '河道长度(公里)', minWidth: 130 },
       { field: 'managerName', title: '负责人', minWidth: 120 },
-      { field: 'operationStatusName', title: '运营状态', minWidth: 120 },
+      { field: 'operationStatusName', title: '运营状态', minWidth: 120, slots: { default: 'operationStatus' } },
       {
         field: 'cleaningCoverage',
         title: '保洁覆盖率(%)',

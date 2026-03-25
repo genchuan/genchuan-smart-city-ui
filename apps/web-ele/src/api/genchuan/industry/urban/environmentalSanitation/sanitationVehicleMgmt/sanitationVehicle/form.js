@@ -1,4 +1,56 @@
-// 新增/编辑表单 schema（车辆基础信息）
+import { requestClient } from '#/api/request';
+
+// ========== 新增 options 接口 ==========
+export function getVehicleTypeOptions() {
+  return requestClient.get('/envirhealth/vehicle-type/options');
+}
+
+export function getDeptOptions() {
+  return requestClient.get('/envirhealth/dept/options');
+}
+
+export function getRouteOptions() {
+  return requestClient.get('/envirhealth/route/options');
+}
+
+export function getUserOptions() {
+  return requestClient.get('/envirhealth/user/options');
+}
+
+export function getVehicleStatusOptions() {
+  return requestClient.get('/envirhealth/vehicle-status/options');
+}
+
+export function getPlanStatusOptions() {
+  return requestClient.get('/envirhealth/plan-status/options');
+}
+
+export function getWorkStatusOptions() {
+  return requestClient.get('/envirhealth/work-status/options');
+}
+
+export function getViolationTypeOptions() {
+  return requestClient.get('/envirhealth/violation-type/options');
+}
+
+export function getViolationStatusOptions() {
+  return requestClient.get('/envirhealth/violation-status/options');
+}
+
+export function getMaintenanceTypeOptions() {
+  return requestClient.get('/envirhealth/maintenance-type/options');
+}
+
+export function getTaskTypeOptions() {
+  // return requestClient.get('/envirhealth/task-type/options');
+  return Promise.resolve([
+    { label: '保洁任务', value: 'uuid-task-001' },
+    { label: '收运任务', value: 'uuid-task-002' },
+    { label: '设施维修任务', value: 'uuid-task-003' },
+  ]);
+}
+
+// ========== 原有新增/编辑表单 schema（用于非“全部”标签页，字段名基于模拟数据） ==========
 export function useFormSchema() {
   return [
     {
@@ -88,26 +140,144 @@ export function useFormSchema() {
   ];
 }
 
-// 根据状态获取表格列定义
+// ========== 新增：用于“全部”标签页的编辑表单 schema（字段名与接口一致） ==========
+export function useVehicleEditSchema() {
+  return [
+    {
+      fieldName: 'licensePlate',
+      label: '车辆牌照',
+      component: 'Input',
+      componentProps: { placeholder: '请输入车辆牌照' },
+    },
+    {
+      fieldName: 'vehicleTypeId',
+      label: '车辆类型',
+      component: 'Select',
+      componentProps: { placeholder: '请选择车辆类型', options: [] },
+    },
+    {
+      fieldName: 'deptId',
+      label: '所属部门',
+      component: 'Select',
+      componentProps: { placeholder: '请选择部门', options: [] },
+    },
+    {
+      fieldName: 'model',
+      label: '车辆型号',
+      component: 'Input',
+      componentProps: { placeholder: '请输入车辆型号' },
+    },
+    {
+      fieldName: 'routeId',
+      label: '作业路线',
+      component: 'Select',
+      componentProps: { placeholder: '请选择作业路线', options: [] },
+    },
+    {
+      fieldName: 'driverId',
+      label: '驾驶员',
+      component: 'Select',
+      componentProps: { placeholder: '请选择驾驶员', options: [] },
+    },
+    {
+      fieldName: 'vehicleStatusId',
+      label: '车辆状态',
+      component: 'Select',
+      componentProps: { placeholder: '请选择状态', options: [] },
+    },
+    {
+      fieldName: 'lastMaintenanceTime',
+      label: '最近维护时间',
+      component: 'DatePicker',
+      componentProps: { type: 'datetime', valueFormat: 'x', placeholder: '选择时间' },
+      labelWidth: '100',
+    },
+  ];
+}
+
+// ========== 新增：搜索表单 schema（用于“全部”标签页） ==========
+export function useVehicleSearchSchema() {
+  return [
+    {
+      fieldName: 'vehicleTypeId',
+      label: '车辆类型',
+      component: 'Select',
+      componentProps: { placeholder: '请选择车辆类型', options: [], clearable: true },
+    },
+    {
+      fieldName: 'deptId',
+      label: '所属部门',
+      component: 'Select',
+      componentProps: { placeholder: '请选择部门', options: [], clearable: true },
+    },
+    {
+      fieldName: 'vehicleStatusId',
+      label: '车辆状态',
+      component: 'Select',
+      componentProps: { placeholder: '请选择状态', options: [], clearable: true },
+    },
+    {
+      fieldName: 'driverId',
+      label: '驾驶员',
+      component: 'Select',
+      componentProps: { placeholder: '请选择驾驶员', options: [], clearable: true },
+    },
+  ];
+}
+
+// ========== 表格列配置（按状态筛选）==========
+// ！！！仅修改“全部”标签页的列字段名为接口字段，其他状态列完全保留原样 ！！！
 export function getColumnsByStatus(status) {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const statusColumnsMap = {
+    // 【修改】全部标签页：使用接口返回的字段名
     全部: [
-      { field: 'toiletName', title: '车辆牌照', minWidth: 150, sortable: true, slots: { default: 'toiletName' } },
-      { field: 'location', title: '车辆类型', minWidth: 120, slots: { default: 'location' } },
-      { field: 'area', title: '所属部门', minWidth: 180, slots: { default: 'area' } },
-      { field: 'openHours', title: '车辆型号', minWidth: 150 },
-      { field: 'stallCount', title: '作业路线', minWidth: 150, slots: { default: 'stallCount' } },
-      { field: 'manager', title: '驾驶员', minWidth: 120 },
-      { field: 'status', title: '车辆状态', minWidth: 120, slots: { default: 'status' } },
-      { field: 'lastSupplyTime', title: '最近维护时间', minWidth: 180 },
-      { field: 'cleaningRate', title: '累计作业时长(小时)', minWidth: 160 },
-      { field: 'complaintRate', title: '违规告警次数', minWidth: 120 },
-      { field: 'warningCount', title: '车辆完好率(%)', minWidth: 130 },
-      { field: 'facilityRate', title: '未完成任务数', minWidth: 120 },
-      { field: 'cleaningFrequency', title: '平均作业效率(吨/小时)', minWidth: 170 },
+      { field: 'licensePlate', title: '车辆牌照', minWidth: 150, sortable: true, slots: { default: 'licensePlate' } },
+      { field: 'vehicleTypeName', title: '车辆类型', minWidth: 120, slots: { default: 'vehicleType' } },
+      { field: 'deptName', title: '所属部门', minWidth: 180, slots: { default: 'dept' } },
+      { field: 'model', title: '车辆型号', minWidth: 150 },
+      { field: 'routeName', title: '作业路线', minWidth: 150 },
+      { field: 'driverName', title: '驾驶员', minWidth: 120 },
+      { field: 'vehicleStatusName', title: '车辆状态', minWidth: 120, slots: { default: 'vehicleStatus' } },
+      {
+        field: 'lastMaintenanceTime',
+        title: '最近维护时间',
+        minWidth: 180,
+        formatter: ({ cellValue }) => (cellValue ? new Date(cellValue).toLocaleString() : '-'),
+      },
+      {
+        field: 'totalWorkHours',
+        title: '累计作业时长(小时)',
+        minWidth: 160,
+        formatter: ({ cellValue }) => (cellValue != null ? cellValue : '-'),
+      },
+      {
+        field: 'alarmCount',
+        title: '违规告警次数',
+        minWidth: 120,
+        formatter: ({ cellValue }) => (cellValue != null ? cellValue : '-'),
+      },
+      {
+        field: 'intactRate',
+        title: '车辆完好率(%)',
+        minWidth: 130,
+        formatter: ({ cellValue }) => (cellValue != null ? `${cellValue}%` : '-'),
+      },
+      {
+        field: 'unfinishedTaskCount',
+        title: '未完成任务数',
+        minWidth: 120,
+        formatter: ({ cellValue }) => (cellValue != null ? cellValue : '-'),
+      },
+      {
+        field: 'averageEfficiency',
+        title: '平均作业效率(吨/小时)',
+        minWidth: 170,
+        formatter: ({ cellValue }) => (cellValue != null ? cellValue : '-'),
+      },
     ],
+    // 以下五个标签页的列配置完全保留原样（基于模拟数据字段）
     车辆待作业: [
       { field: 'toiletName', title: '车辆牌照', minWidth: 150, sortable: true, slots: { default: 'toiletName' } },
       { field: 'location', title: '车辆类型', minWidth: 120, slots: { default: 'location' } },

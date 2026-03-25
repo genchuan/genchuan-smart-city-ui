@@ -84,6 +84,53 @@ const loadedOptions = reactive({
 // 判断当前标签页是否使用接口数据（只有“全部”标签页用接口）
 const isApiTab = computed(() => activeName.value === '全部');
 
+// ---------- 标签筛选 ----------
+const tagFilters = ref({});
+
+// 点击字段添加/移除筛选条件
+function handleFilterTagClick(field, value) {
+  if (!field || value == null) return;
+  if (tagFilters.value[field] === value) {
+    delete tagFilters.value[field];
+  } else {
+    tagFilters.value[field] = value;
+  }
+  gridApi.reload(); // 刷新表格
+}
+
+// 删除单个筛选标签
+function removeFilterTag(field) {
+  delete tagFilters.value[field];
+  gridApi.reload();
+}
+
+// 根据字段名获取显示文本（用于标签头部）
+function getFieldLabel(field) {
+  const map = {
+    areaCode: '所属区域',
+    operationStatusId: '运营状态',
+  };
+  return map[field] || field;
+}
+
+// 根据字段和值获取显示文本（用于标签内容）
+function getTagDisplayText(field, id) {
+  if (id == null) return '';
+  let options = [];
+  switch (field) {
+    case 'areaCode':
+      options = loadedOptions.area;
+      break;
+    case 'operationStatusId':
+      options = loadedOptions.operationStatus;
+      break;
+    default:
+      return id;
+  }
+  const found = options.find(opt => opt.value === id);
+  return found ? found.label : id;
+}
+
 // 标签页计数（保持原有方式，但全部标签页总数动态更新）
 const counts = ref({
   total: mockDataList.length,
@@ -162,6 +209,7 @@ const getTableData = async ({ page }) => {
       pageNo: page.currentPage,
       pageSize: page.pageSize,
       ...dataObj.searchParams,
+      ...tagFilters.value,
     };
     try {
       const res = await getMarketPage(params);
@@ -210,6 +258,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 watch(activeName, (newVal) => {
+  tagFilters.value = {}; // 切换标签页时清空筛选
   gridColumns.value = getColumnsByStatus(newVal);
   if (gridApi && gridApi.xGrid) {
     gridApi.xGrid.refreshColumn();
@@ -505,18 +554,6 @@ function handleOpenDetail(row) {
   parkDetailDrawerRef.value?.open();
 }
 
-// 以下为原有各标签页特有的操作函数（完全保留）
-function handleOpenAreaFilter(area) {
-  activeName.value = '全部';
-  // 可以触发查询，这里简单刷新
-  gridApi.query();
-}
-
-function handleOpenStatusFilter(status) {
-  activeName.value = status;
-  gridApi.query();
-}
-
 function handleOpenComplaintDetail(row) {
   dataObj.detailObj = row;
   parkDetailDrawerRef.value?.open();
@@ -618,7 +655,7 @@ onMounted(async () => {
     </SearchDrawer>
 
     <Grid>
-<!--      <template #table-title>-->
+      <template #table-title>
 <!--        <div class="tabel-tabs" v-if="props.secondShow">-->
 <!--          <el-tabs v-model="activeName" @tab-change="handleClick">-->
 <!--            <el-tab-pane-->
@@ -629,7 +666,18 @@ onMounted(async () => {
 <!--            />-->
 <!--          </el-tabs>-->
 <!--        </div>-->
-<!--      </template>-->
+
+        <ElTag
+          v-for="(value, field) in tagFilters"
+          :key="field"
+          type="success"
+          closable
+          @close="removeFilterTag(field)"
+          style="height: 32px; margin: 4px 0; line-height: 32px"
+        >
+          {{ getFieldLabel(field) }}: {{ getTagDisplayText(field, value) }}
+        </ElTag>
+      </template>
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
@@ -662,6 +710,16 @@ onMounted(async () => {
         <el-text @click="handleOpenDetail(row)" type="primary">{{
             row.name || row.toiletName
           }}
+        </el-text>
+      </template>
+      <template #area="{ row }">
+        <el-text @click="handleFilterTagClick('areaCode', row.areaCode)" type="primary">
+          {{ row.areaName || row.area }}
+        </el-text>
+      </template>
+      <template #operationStatus="{ row }">
+        <el-text @click="handleFilterTagClick('operationStatusId', row.operationStatusId)" type="primary">
+          {{ row.operationStatusName || row.operationStatus }}
         </el-text>
       </template>
 

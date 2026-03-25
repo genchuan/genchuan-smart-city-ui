@@ -1,3 +1,47 @@
+import { baseRequestClient, requestClient } from '#/api/request';
+import { useAccessStore } from '@vben/stores';
+
+// 分页查询（全部）
+export function getUserPage(params) {
+  return requestClient.get('/envirhealth/user/detail-page', { params });
+}
+
+// 新增
+export function createUser(data) {
+  return requestClient.post('/envirhealth/user/create', data);
+}
+
+// 修改
+export function updateUser(data) {
+  return requestClient.put('/envirhealth/user/update', data);
+}
+
+// 单个删除
+export function deleteUser(id) {
+  return requestClient.delete(`/envirhealth/user/delete?id=${id}`);
+}
+
+// 批量删除
+export function deleteUserBatch(ids) {
+  return requestClient.delete('/envirhealth/user/delete-batch', { data: ids });
+}
+
+// 导出 Excel
+export function exportUserExcel(params) {
+  const accessStore = useAccessStore();
+  return baseRequestClient.get('/envirhealth/user/export-excel', {
+    params,
+    responseType: 'blob',
+    headers: {
+      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
+    },
+  });
+}
+
+export function getUserChartDashboard() {
+  return requestClient.get('/envirhealth/user/chart/dashboard');
+}
+
 // 模拟环卫人员管理数据
 export const dataList = () => {
   return [

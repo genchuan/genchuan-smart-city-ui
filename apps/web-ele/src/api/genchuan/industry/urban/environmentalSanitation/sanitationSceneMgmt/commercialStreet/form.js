@@ -190,11 +190,11 @@ export function getColumnsByStatus(status) {
     全部: [
       { field: 'name', title: '商业街名称', minWidth: 160, sortable: true, slots: { default: 'name' } },
       { field: 'address', title: '商业街地址', minWidth: 200, sortable: true },
-      { field: 'areaName', title: '所属区域', minWidth: 180, sortable: true },
+      { field: 'areaName', title: '所属区域', minWidth: 180, sortable: true, slots: { default: 'area' } },
       { field: 'cleaningFrequency', title: '保洁频次', minWidth: 120, sortable: true },
       { field: 'transferInterval', title: '清运间隔', minWidth: 120, sortable: true, formatter: ({ cellValue }) => (cellValue || '-') },
       { field: 'managerName', title: '负责人', minWidth: 120, sortable: true },
-      { field: 'operationStatusName', title: '运营状态', minWidth: 120, sortable: true },
+      { field: 'operationStatusName', title: '运营状态', minWidth: 120, sortable: true, slots: { default: 'operationStatus' } },
       {
         field: 'cleaningCoverage',
         title: '保洁覆盖率(%)',

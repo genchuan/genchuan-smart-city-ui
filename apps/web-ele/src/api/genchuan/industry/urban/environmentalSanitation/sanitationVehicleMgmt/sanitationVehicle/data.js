@@ -1,3 +1,50 @@
+import { baseRequestClient, requestClient } from '#/api/request';
+import { useAccessStore } from '@vben/stores';
+
+// 分页查询（全部）
+export function getVehiclePage(params) {
+  return requestClient.get('/envirhealth/vehicle/detail-page', { params });
+}
+
+// 新增
+export function createVehicle(data) {
+  return requestClient.post('/envirhealth/vehicle/create', data);
+}
+
+// 修改
+export function updateVehicle(data) {
+  return requestClient.put('/envirhealth/vehicle/update', data);
+}
+
+// 单个删除
+export function deleteVehicle(id) {
+  return requestClient.delete(`/envirhealth/vehicle/delete?id=${id}`);
+}
+
+// 批量删除
+export function deleteVehicleBatch(ids) {
+  return requestClient.delete('/envirhealth/vehicle/delete-batch', { data: ids });
+}
+
+// 导出 Excel
+export function exportVehicleExcel(params) {
+  const accessStore = useAccessStore();
+  return baseRequestClient.get('/envirhealth/vehicle/export-excel', {
+    params,
+    responseType: 'blob',
+    headers: {
+      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
+    },
+  });
+}
+
+/**
+ * 获取环卫车辆统计数据
+ */
+export function getVehicleChartDashboard() {
+  return requestClient.get('/envirhealth/vehicle/chart/dashboard');
+}
+
 // 模拟环卫车辆管理数据
 export const dataList = () => {
   return [

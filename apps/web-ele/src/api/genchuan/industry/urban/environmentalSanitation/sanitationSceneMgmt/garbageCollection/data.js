@@ -416,3 +416,12 @@ export function uploadImageBatch(formData) {
     headers: { 'Content-Type': undefined }
   });
 }
+
+/**
+ * 通用删除图片
+ */
+export function deleteFile(fileUrl) {
+  return requestClient.delete('/envirhealth/file/delete-file', {
+    params: { fileUrl },
+  });
+}

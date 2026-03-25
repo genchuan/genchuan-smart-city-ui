@@ -28,7 +28,8 @@ import {
   updateGarbageCollectionBatch,
   batchReviewGarbageAbnormal,
   batchHandleGarbageAbnormal,
-  uploadImageBatch
+  uploadImageBatch,
+  deleteFile
 } from '#/api/genchuan/industry/urban/environmentalSanitation/sanitationSceneMgmt/garbageCollection/data.js';
 import {
   getAbnormalTypeOptions,
@@ -177,7 +178,7 @@ const [EditDrawer, editDrawerApi] = useVbenDrawer({
     if (isOpen) {
       formData.value = editDrawerApi.getData();
 
-      // 更新表单选项
+      // 更新表单选项（保持不变）
       editFormApi.updateSchema([
         {
           fieldName: 'garbageTypeId',
@@ -203,19 +204,25 @@ const [EditDrawer, editDrawerApi] = useVbenDrawer({
         {
           fieldName: 'planStatusId',
           componentProps: {
-            options: Array.from(optionMaps.planStatusMap, ([value, label]) => ({
-              value,
-              label,
-            })),
+            options: Array.from(
+              optionMaps.planStatusMap,
+              ([value, label]) => ({
+                value,
+                label,
+              }),
+            ),
           },
         },
         {
           fieldName: 'frequency',
           componentProps: {
-            options: Array.from(optionMaps.frequencyMap, ([value, label]) => ({
-              value,
-              label,
-            })),
+            options: Array.from(
+              optionMaps.frequencyMap,
+              ([value, label]) => ({
+                value,
+                label,
+              }),
+            ),
           },
         },
         {
@@ -239,10 +246,13 @@ const [EditDrawer, editDrawerApi] = useVbenDrawer({
         {
           fieldName: 'timePeriod',
           componentProps: {
-            options: Array.from(optionMaps.timePeriodMap, ([value, label]) => ({
-              value,
-              label,
-            })),
+            options: Array.from(
+              optionMaps.timePeriodMap,
+              ([value, label]) => ({
+                value,
+                label,
+              }),
+            ),
           },
         },
         {
@@ -282,10 +292,16 @@ const [EditDrawer, editDrawerApi] = useVbenDrawer({
             createBy: detail.createBy ?? formData.value?.createBy,
             pointIds: detail.pointIds ? JSON.parse(detail.pointIds) : [],
             staffIds: detail.staffIds ? JSON.parse(detail.staffIds) : [],
+            // 关键修复：将时间字段转换为时间戳（毫秒），匹配 DatePicker 的 valueFormat: 'x'
+            lastReportTime: detail.lastReportTime ? new Date(detail.lastReportTime).getTime() : null,
+            completeTime: detail.completeTime ? new Date(detail.completeTime).getTime() : null,
           };
           await editFormApi.setValues(formValues);
         } catch (error) {
           console.warn('获取详情失败', error);
+          // 增加错误提示并关闭抽屉，避免使用不完整的数据
+          ElMessage.error('获取详情失败，请重试');
+          editDrawerApi.close();
         }
       } else {
         editFormApi.resetForm();
@@ -309,7 +325,7 @@ const [AbnormalReportForm, abnormalReportFormApi] = useVbenForm({
   showDefaultActions: false,
 });
 
-// 独立图片上传函数
+// 独立图片上传函数（修正 URL 解析）
 const handleReportImageUpload = async (event) => {
   const files = event.target.files;
   if (files.length === 0) return;
@@ -324,11 +340,13 @@ const handleReportImageUpload = async (event) => {
     const res = await uploadImageBatch(formData);
     let newUrls = [];
     if (Array.isArray(res)) {
-      newUrls = res.map(item => item.url);
+      // 直接是字符串数组
+      newUrls = res;
     } else if (res?.code === 0 && Array.isArray(res.data)) {
-      newUrls = res.data.map(item => item.url);
+      // 标准 CommonResult 结构，data 是字符串数组
+      newUrls = res.data;
     } else if (res?.data && Array.isArray(res.data)) {
-      newUrls = res.data.map(item => item.url);
+      newUrls = res.data;
     } else {
       ElMessage.error(res?.msg || '上传失败');
       return;
@@ -344,10 +362,26 @@ const handleReportImageUpload = async (event) => {
   }
 };
 
-// 独立图片删除函数
-const handleReportImageDelete = (url) => {
-  abnormalReportImageList.value = abnormalReportImageList.value.filter(item => item !== url);
-  ElMessage.success('删除成功');
+// ========== 修改：使用通用删除接口 ==========
+const handleReportImageDelete = async (url) => {
+  const loading = ElLoading.service({ text: '删除中...' });
+  try {
+    const res = await deleteFile(url);
+    const isSuccess = res === true || res?.code === 0 || res?.success === true || res === '';
+    if (isSuccess) {
+      abnormalReportImageList.value = abnormalReportImageList.value.filter(item => item !== url);
+      ElMessage.success('删除成功');
+    } else {
+      const errMsg = typeof res === 'string' ? res : JSON.stringify(res);
+      ElMessage.error(`删除失败：${errMsg}`);
+      console.error('删除失败，响应详情:', res);
+    }
+  } catch (error) {
+    console.error('删除图片异常', error);
+    ElMessage.error(`删除图片失败：${error.message}`);
+  } finally {
+    loading.close();
+  }
 };
 
 const [AbnormalReportDrawer, abnormalReportDrawerApi] = useVbenDrawer({
@@ -471,7 +505,7 @@ const [AbnormalHandleForm, abnormalHandleFormApi] = useVbenForm({
   showDefaultActions: false,
 });
 
-// 独立图片上传函数
+// 独立图片上传函数（修正 URL 解析）
 const handleHandleImageUpload = async (event) => {
   const files = event.target.files;
   if (files.length === 0) return;
@@ -486,11 +520,13 @@ const handleHandleImageUpload = async (event) => {
     const res = await uploadImageBatch(formData);
     let newUrls = [];
     if (Array.isArray(res)) {
-      newUrls = res.map(item => item.url);
+      // 直接是字符串数组
+      newUrls = res;
     } else if (res?.code === 0 && Array.isArray(res.data)) {
-      newUrls = res.data.map(item => item.url);
+      // 标准 CommonResult 结构，data 是字符串数组
+      newUrls = res.data;
     } else if (res?.data && Array.isArray(res.data)) {
-      newUrls = res.data.map(item => item.url);
+      newUrls = res.data;
     } else {
       ElMessage.error(res?.msg || '上传失败');
       return;
@@ -506,10 +542,26 @@ const handleHandleImageUpload = async (event) => {
   }
 };
 
-// 独立图片删除函数
-const handleHandleImageDelete = (url) => {
-  abnormalHandleImageList.value = abnormalHandleImageList.value.filter(item => item !== url);
-  ElMessage.success('删除成功');
+// ========== 修改：使用通用删除接口 ==========
+const handleHandleImageDelete = async (url) => {
+  const loading = ElLoading.service({ text: '删除中...' });
+  try {
+    const res = await deleteFile(url);
+    const isSuccess = res === true || res?.code === 0 || res?.success === true || res === '';
+    if (isSuccess) {
+      abnormalHandleImageList.value = abnormalHandleImageList.value.filter(item => item !== url);
+      ElMessage.success('删除成功');
+    } else {
+      const errMsg = typeof res === 'string' ? res : JSON.stringify(res);
+      ElMessage.error(`删除失败：${errMsg}`);
+      console.error('删除失败，响应详情:', res);
+    }
+  } catch (error) {
+    console.error('删除图片异常', error);
+    ElMessage.error(`删除图片失败：${error.message}`);
+  } finally {
+    loading.close();
+  }
 };
 
 const [AbnormalHandleDrawer, abnormalHandleDrawerApi] = useVbenDrawer({
@@ -880,13 +932,41 @@ const [DispatchDrawer, dispatchDrawerApi] = useVbenDrawer({
   modal: false,
   onCancel: () => dispatchDrawerApi.close(),
   async onConfirm() {
+    // 获取表单中选择的责任人
     const formValues = await dispatchFormApi.getValues();
-    ElMessage.info('派发功能待实现');
-    dispatchDrawerApi.close();
+    const { handlerId } = formValues;
+    if (!handlerId) {
+      ElMessage.warning('请选择责任人');
+      return;
+    }
+
+    // 获取传递过来的异常记录 ID
+    const data = dispatchDrawerApi.getData();
+    const abnormalId = data?.id;
+    if (!abnormalId) {
+      ElMessage.warning('未选择异常任务');
+      return;
+    }
+
+    const loading = ElLoading.service({ text: '派发中...' });
+    try {
+      // 调用更新接口，为该异常记录设置责任人
+      await updateGarbageAbnormal({ id: abnormalId, handlerId });
+      ElMessage.success('指派成功');
+      dispatchDrawerApi.close();
+      handleRefresh(); // 刷新列表
+    } catch (error) {
+      console.error('指派失败', error);
+      ElMessage.error(error.message || '指派失败，请重试');
+    } finally {
+      loading.close();
+    }
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
+      // 重置表单
       dispatchFormApi.resetForm();
+      // 更新责任人下拉选项
       dispatchFormApi.updateSchema([
         {
           fieldName: 'handlerId',
@@ -1291,7 +1371,7 @@ async function handleExport() {
     const day = String(today.getDate()).padStart(2, '0');
     const dateStr = `${year}-${month}-${day}`;
 
-    let fileName = '';
+    let fileName;
     let response;
 
     const isAbnormal =
@@ -1439,6 +1519,57 @@ const dataObj = reactive({
   searchParams: {},
 });
 
+// ---------- 标签筛选 ----------
+const tagFilters = ref({});
+
+// 点击字段添加/移除筛选条件
+function handleFilterTagClick(field, value) {
+  if (!field || value == null) return;
+  if (tagFilters.value[field] === value) {
+    delete tagFilters.value[field];
+  } else {
+    tagFilters.value[field] = value;
+  }
+  gridApi.reload(); // 刷新表格
+}
+
+// 删除单个筛选标签
+function removeFilterTag(field) {
+  delete tagFilters.value[field];
+  gridApi.reload();
+}
+
+// 根据字段名获取显示文本（用于标签头部）
+function getFieldLabel(field) {
+  const map = {
+    garbageTypeId: '收运品类',
+    areaCode: '收运区域',
+    planStatusId: '计划状态',
+  };
+  return map[field] || field;
+}
+
+// 根据字段和值获取显示文本（用于标签内容）
+function getTagDisplayText(field, id) {
+  if (id == null) return '';
+  let options = [];
+  switch (field) {
+    case 'garbageTypeId':
+      options = Array.from(optionMaps.garbageTypeMap.entries()).map(([value, label]) => ({ value, label }));
+      break;
+    case 'areaCode':
+      options = Array.from(optionMaps.areaMap.entries()).map(([value, label]) => ({ value, label }));
+      break;
+    case 'planStatusId':
+      options = Array.from(optionMaps.planStatusMap.entries()).map(([value, label]) => ({ value, label }));
+      break;
+    default:
+      return id;
+  }
+  const found = options.find(opt => opt.value === id);
+  return found ? found.label : id;
+}
+
 const counts = ref({
   total: 0,
   planStatusCounts: {
@@ -1548,7 +1679,8 @@ function convertItem(item) {
     createBy: item.createBy,
     frequency: item.frequency,
     timePeriod: item.timePeriod,
-    areaCode: optionMaps.areaMap.get(item.areaCode) || item.areaCode,
+    areaCode: item.areaCode,
+    areaName: optionMaps.areaMap.get(item.areaCode) || item.areaCode,
     pointsName,
     usersName,
     createTime: formatDateTime(item.createTime),
@@ -1602,6 +1734,7 @@ const getTableData = async ({ page }) => {
       pageNo: page.currentPage,
       pageSize: page.pageSize,
       ...dataObj.searchParams,
+      ...tagFilters.value,
     };
 
     if (activeName.value !== '全部') {
@@ -1685,6 +1818,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 watch(activeName, (newVal) => {
+  tagFilters.value = {}; // 切换标签页时清空筛选
   gridColumns.value = getColumnsByStatus(newVal);
   if (gridApi && gridApi.xGrid) {
     gridApi.xGrid.refreshColumn();
@@ -2092,6 +2226,17 @@ onMounted(() => {
             />
           </el-tabs>
         </div>
+
+        <ElTag
+          v-for="(value, field) in tagFilters"
+          :key="field"
+          type="success"
+          closable
+          @close="removeFilterTag(field)"
+          style="height: 32px; margin: 4px 0; line-height: 32px"
+        >
+          {{ getFieldLabel(field) }}: {{ getTagDisplayText(field, value) }}
+        </ElTag>
       </template>
 
       <template #toolbar-tools>
@@ -2195,6 +2340,21 @@ onMounted(() => {
           {{ row.planNo }}
         </el-text>
       </template>
+      <template #garbageType="{ row }">
+        <el-text @click="handleFilterTagClick('garbageTypeId', row.garbageTypeId)" type="primary">
+          {{ row.garbageTypeName || row.garbageTypeId }}
+        </el-text>
+      </template>
+      <template #area="{ row }">
+        <el-text @click="handleFilterTagClick('areaCode', row.areaCode)" type="primary">
+          {{ row.areaName || row.areaCode }}
+        </el-text>
+      </template>
+      <template #status="{ row }">
+        <el-text @click="handleFilterTagClick('planStatusId', row.planStatusId)" type="primary">
+          {{ row.planStatusName || row.planStatusId }}
+        </el-text>
+      </template>
 
       <template #abnormalId="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary">
@@ -2252,6 +2412,11 @@ onMounted(() => {
           <!-- 作业进行中：沟通、异常上报、删除 -->
           <template v-else-if="activeName === '作业进行中'">
             <IconButton
+              content="编辑"
+              icon-name="edit"
+              @click="handleEdit(row)"
+            />
+            <IconButton
               content="沟通"
               icon-name="ChatDotRound"
               @click="communicationDrawerApi.open"
@@ -2279,7 +2444,7 @@ onMounted(() => {
             <IconButton
               content="指派"
               icon-name="User"
-              @click="dispatchDrawerApi.open"
+              @click="dispatchDrawerApi.setData({ id: row.id }).open()"
             />
             <IconButton
               content="跟踪"
@@ -2311,6 +2476,11 @@ onMounted(() => {
 
           <!-- 已完成：复盘、删除 -->
           <template v-else-if="activeName === '已完成'">
+            <IconButton
+              content="编辑"
+              icon-name="edit"
+              @click="handleEdit(row)"
+            />
             <IconButton
               content="复盘"
               icon-name="DataAnalysis"

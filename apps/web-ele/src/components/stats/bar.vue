@@ -138,7 +138,7 @@ const initChart = async () => {
             shadowColor: 'rgba(74, 144, 226, 0.3)',
           },
         },
-        barWidth: 30,
+        barWidth: 25,
       })),
     };
 

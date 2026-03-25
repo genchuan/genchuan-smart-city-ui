@@ -1,55 +1,88 @@
 <script setup>
-import { reactive } from 'vue';
+import { reactive, onMounted } from 'vue';
+import { getVehicleChartDashboard } from '#/api/genchuan/industry/urban/environmentalSanitation/sanitationVehicleMgmt/sanitationVehicle/data.js';
 import Indicator from '#/components/stats/indicator.vue';
 import Pie from '#/components/stats/pie.vue';
 import Bar from '#/components/stats/bar.vue';
 
-// 符合 2.1.1 环卫车辆管理全部模块的模拟数据
 const state = reactive({
+  loading: false,
   // 五个核心卡片
-  cardList: [
-    { title: '总车辆数', value: 48, color: '#409EFF' },
-    { title: '正常运行数', value: 35, color: '#67C23A' },
-    { title: '维护中数', value: 8, color: '#E6A23C' },
-    { title: '违规告警数', value: 5, color: '#F56C6C' },
-    { title: '待作业车辆数', value: 12, color: '#909399' },
-  ],
+  cardList: [],
   // 三个圆环图
   pieData: {
-    vehicleType: [  // 车辆类型占比
-      { name: '压缩车', value: 20 },
-      { name: '洒水车', value: 12 },
-      { name: '清扫车', value: 10 },
-      { name: '转运车', value: 6 },
-    ],
-    vehicleStatus: [  // 车辆状态占比
-      { name: '正常运行', value: 35 },
-      { name: '维护中', value: 8 },
-      { name: '待作业', value: 5 },
-    ],
-    deptDistribution: [  // 所属部门分布占比
-      { name: '龙文车队', value: 18 },
-      { name: '龙海车队', value: 12 },
-      { name: '芗城车队', value: 10 },
-      { name: '长泰车队', value: 8 },
-    ],
+    vehicleType: [],      // 车辆类型占比
+    vehicleStatus: [],    // 车辆状态占比
+    deptDistribution: [], // 所属部门分布占比
   },
   // 两个柱状图
   barData: {
-    deptVehicleCount: {  // 不同部门车辆数量对比
-      x: ['龙文车队', '龙海车队', '芗城车队', '长泰车队'],
-      series: [18, 12, 10, 8],
+    deptVehicleCount: {    // 不同部门车辆数量对比
+      x: [],
+      series: [],
     },
-    vehicleTypeIntactRate: {  // 不同类型车辆完好率对比
-      x: ['压缩车', '洒水车', '清扫车', '转运车'],
-      series: [96, 98, 95, 97], // 完好率 %
+    vehicleTypeIntactRate: { // 不同类型车辆完好率对比
+      x: [],
+      series: [],
     },
   },
+});
+
+// 通用数值转换（处理字符串或数字）
+const toNumber = (val) => {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === 'string') return parseFloat(val) || 0;
+  return Number(val) || 0;
+};
+
+// 获取图表数据
+const fetchChartData = async () => {
+  state.loading = true;
+  try {
+    const res = await getVehicleChartDashboard();
+
+    // 接口返回已解包，直接使用 res（无外层 code/data）
+    if (res && typeof res === 'object') {
+      // 卡片数据映射
+      state.cardList = [
+        { title: '总车辆数', value: toNumber(res.totalVehicleCount), color: '#409EFF' },
+        { title: '正常运行数', value: toNumber(res.normalOperationCount), color: '#67C23A' },
+        { title: '维护中数', value: toNumber(res.maintenanceCount), color: '#E6A23C' },
+        { title: '违规告警数', value: toNumber(res.violationAlertCount), color: '#F56C6C' },
+        { title: '待作业车辆数', value: toNumber(res.pendingWorkCount), color: '#909399' },
+      ];
+
+      // 圆环图数据
+      state.pieData.vehicleType = Array.isArray(res.vehicleTypeDistribution) ? res.vehicleTypeDistribution : [];
+      state.pieData.vehicleStatus = Array.isArray(res.vehicleStatusDistribution) ? res.vehicleStatusDistribution : [];
+      state.pieData.deptDistribution = Array.isArray(res.deptDistribution) ? res.deptDistribution : [];
+
+      // 柱状图1：不同部门车辆数量对比
+      const deptCountList = Array.isArray(res.vehicleCountByDept) ? res.vehicleCountByDept : [];
+      state.barData.deptVehicleCount.x = deptCountList.map(item => item.name || '');
+      state.barData.deptVehicleCount.series = deptCountList.map(item => toNumber(item.value));
+
+      // 柱状图2：不同类型车辆完好率对比
+      const intactRateList = Array.isArray(res.vehicleIntegrityRateByType) ? res.vehicleIntegrityRateByType : [];
+      state.barData.vehicleTypeIntactRate.x = intactRateList.map(item => item.name || '');
+      state.barData.vehicleTypeIntactRate.series = intactRateList.map(item => toNumber(item.value));
+    } else {
+      console.error('接口返回数据格式异常', res);
+    }
+  } catch (error) {
+    console.error('请求环卫车辆仪表盘数据失败:', error);
+  } finally {
+    state.loading = false;
+  }
+};
+
+onMounted(() => {
+  fetchChartData();
 });
 </script>
 
 <template>
-  <div class="chart-box">
+  <div class="chart-box" v-loading="state.loading" element-loading-text="加载中...">
     <!-- 左侧卡片区域：五个指标卡片，网格布局 -->
     <div class="box-left-m" style="flex: 1 !important;">
       <Indicator

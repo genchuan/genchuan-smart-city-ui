@@ -13,19 +13,8 @@ export function getOperationStatusOptions() {
   return requestClient.get('/envirhealth/operation-status/options');
 }
 
-// 设备选项（如果后端有设备表则调用接口，否则用静态数据）
 export function getEquipmentOptions() {
-  // 若后端提供了设备选项接口，可替换为 requestClient.get('/envirhealth/equipment/options')
-  return Promise.resolve([
-    { label: '垃圾压缩机', value: 'uuid-equip-001' },
-    { label: '输送机', value: 'uuid-equip-002' },
-    { label: '除臭设备', value: 'uuid-equip-003' },
-    { label: '地磅', value: 'uuid-equip-004' },
-    { label: '监控设备', value: 'uuid-equip-005' },
-    { label: '喷淋设备', value: 'uuid-equip-006' },
-    { label: '叉车', value: 'uuid-equip-007' },
-    { label: '装载机', value: 'uuid-equip-008' },
-  ]);
+  return requestClient.get('/envirhealth/equipment/options')
 }
 
 // ---------- 新增/编辑表单 schema（更新，采用后端字段名） ----------
@@ -115,7 +104,7 @@ export function getColumnsByStatus(status) {
     全部: [
       { field: 'name', title: '转运站名称', minWidth: 160, sortable: true, slots: { default: 'name' } },
       { field: 'location', title: '转运站位置', minWidth: 180, sortable: true },
-      { field: 'areaName', title: '所属区域', minWidth: 150, sortable: true },
+      { field: 'areaName', title: '所属区域', minWidth: 150, sortable: true, slots: { default: 'area' } },
       {
         field: 'equipmentsName',
         title: '核心设备',
@@ -123,7 +112,7 @@ export function getColumnsByStatus(status) {
         sortable: true,
         formatter: ({ cellValue }) => (Array.isArray(cellValue) ? cellValue.join('、') : cellValue || '-'),
       },
-      { field: 'operationStatusName', title: '运营状态', minWidth: 120, sortable: true },
+      { field: 'operationStatusName', title: '运营状态', minWidth: 120, sortable: true, slots: { default: 'status' } },
       { field: 'managerName', title: '负责人', minWidth: 120, sortable: true },
       {
         field: 'dailyTransferVolume',

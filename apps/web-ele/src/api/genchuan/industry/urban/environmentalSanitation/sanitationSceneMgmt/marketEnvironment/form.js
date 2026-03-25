@@ -181,10 +181,10 @@ export function getColumnsByStatus(status) {
     全部: [
       { field: 'name', title: '市场名称', minWidth: 160, sortable: true, slots: { default: 'name' } },
       { field: 'address', title: '市场地址', minWidth: 200 },
-      { field: 'areaName', title: '所属区域', minWidth: 180 },
+      { field: 'areaName', title: '所属区域', minWidth: 180, slots: { default: 'area' } },
       { field: 'stallCount', title: '摊位数量', minWidth: 100 },
       { field: 'managerName', title: '负责人', minWidth: 120 },
-      { field: 'operationStatusName', title: '运营状态', minWidth: 120 },
+      { field: 'operationStatusName', title: '运营状态', minWidth: 120, slots: { default: 'operationStatus' } },
       {
         field: 'hygieneRate',
         title: '卫生达标率(%)',
