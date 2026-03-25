@@ -765,6 +765,7 @@ const handleAutoDetail = async (row) => {
           <IconButton
             content="批量导出PDF"
             icon-name="download"
+            :disabled="isEmpty(checkedIds)"
             @click="handlePDF"
           />
           <IconButton
@@ -871,11 +872,11 @@ const handleAutoDetail = async (row) => {
             :disabled="!['待复审'].includes(row.reviewStatus)"
             @click="handleSendFileConfirm(row)"
           />
-          <IconButton
+          <!-- <IconButton
             content="上传复审证据"
             icon-name="Upload"
             @click="handleUpdateFile(row)"
-          />
+          /> -->
           <IconButton
             content="查看草拟通知书"
             icon-name="View"
@@ -886,11 +887,11 @@ const handleAutoDetail = async (row) => {
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
-          <IconButton
+          <!-- <IconButton
             content="编辑"
             icon-name="edit"
             @click="handleEdit(row)"
-          />
+          /> -->
           <IconButton
             content="删除"
             icon-name="delete"

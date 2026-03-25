@@ -442,18 +442,18 @@ const downLoad = async (row) => {
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton
+          <!-- <IconButton
             content="送达整改通知书"
             icon-name="Plus"
             :disabled="['已送达'].includes(row.receiveStatus)"
             @click="handleSend(row)"
-          />
+          /> -->
           <IconButton
             content="详情"
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
-          <IconButton
+          <!-- <IconButton
             content="编辑"
             icon-name="edit"
             @click="handleEdit(row)"
@@ -463,7 +463,7 @@ const downLoad = async (row) => {
             icon-name="delete"
             color="#F56C6C"
             @click="handleDelete(row)"
-          />
+          /> -->
         </div>
       </template>
 
