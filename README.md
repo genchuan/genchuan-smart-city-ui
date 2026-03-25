@@ -7,6 +7,8 @@
 ### 📸 看看效果
 ![前端界面预览](images/【后台】城市生命线——城管住建.png)  
 
+**后端仓库地址*：https://gitee.com/genchuan/genchuan-smart-city
+
 # 亘川智慧城市管理后台
 
 基于 [vue-vben-admin](https://github.com/vbenjs/vue-vben-admin) v5 构建的智慧城市管理前端解决方案，采用 Vue 3 + Vite + Element Plus 技术栈。
