@@ -184,6 +184,10 @@ export function getLogList(params) {
 export function getCaoNiDetail(id) {
  return requestClient.get(`/kitchen/rectify-notice/get?id=${id}`);
 }
+/*** 处罚通知书详情 */
+export function getpunishDetail(id) {
+ return requestClient.get(`/kitchen/punish-notice/get?id=${id}`);
+}
 
 /** 处罚通知书复审台账分页 */
 export function getPunishPage(params) {

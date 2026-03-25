@@ -15,6 +15,7 @@ import {
   downLoadPdf,
   exporCFReviewPDF,
   exporpunishReviewExcel,
+  getpunishDetail,
   getPunishPage,
   getReasonList,
   punishFile,
@@ -537,6 +538,12 @@ function previewImage(url) {
   currentImage.value = url;
   previewVisible.value = true;
 }
+const rectifyRef = ref(null);
+const handleAutoDetail = async (row) => {
+  const res = await getpunishDetail(row.punishNoticeId);
+  dataObj.rectifyObj = res;
+  rectifyRef.value.open();
+};
 </script>
 
 <template>
@@ -761,6 +768,11 @@ function previewImage(url) {
             content="上传证据"
             icon-name="Upload"
             @click="handleUpdateFile(row)"
+          />
+          <IconButton
+            content="查看草拟通知书"
+            icon-name="View"
+            @click="handleAutoDetail(row)"
           />
           <IconButton
             content="详情"
