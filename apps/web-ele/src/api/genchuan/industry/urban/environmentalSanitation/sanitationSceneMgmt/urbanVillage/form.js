@@ -211,11 +211,11 @@ export function getColumnsByStatus(status) {
     全部: [
       { field: 'name', title: '城中村名称', minWidth: 160, sortable: true, slots: { default: 'name' } },
       { field: 'address', title: '城中村地址', minWidth: 200 },
-      { field: 'areaName', title: '所属区域', minWidth: 180 },
+      { field: 'areaName', title: '所属区域', minWidth: 180, slots: { default: 'area' } },
       { field: 'responsibilityAreas', title: '责任区域数', minWidth: 120 },
       { field: 'roadCleaningFrequency', title: '道路保洁频次', minWidth: 130 },
       { field: 'managerName', title: '负责人', minWidth: 120 },
-      { field: 'operationStatusName', title: '运营状态', minWidth: 120 },
+      { field: 'operationStatusName', title: '运营状态', minWidth: 120, slots: { default: 'operationStatus' } },
       {
         field: 'cleaningRate',
         title: '保洁达标率(%)',

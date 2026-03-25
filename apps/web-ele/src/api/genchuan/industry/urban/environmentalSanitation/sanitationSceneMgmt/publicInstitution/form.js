@@ -215,11 +215,11 @@ export function getColumnsByStatus(status) {
     // 【修改】全部标签页：使用接口返回的字段名
     全部: [
       { field: 'name', title: '机构名称', minWidth: 160, sortable: true, slots: { default: 'name' } },
-      { field: 'institutionTypeName', title: '机构类型', minWidth: 120, sortable: true },
+      { field: 'institutionTypeName', title: '机构类型', minWidth: 120, sortable: true, slots: { default: 'institutionType' } },
       { field: 'address', title: '机构地址', minWidth: 200, sortable: true },
-      { field: 'areaName', title: '所属区域', minWidth: 180, sortable: true },
+      { field: 'areaName', title: '所属区域', minWidth: 180, sortable: true, slots: { default: 'area' } },
       { field: 'managerName', title: '负责人', minWidth: 120, sortable: true },
-      { field: 'operationStatusName', title: '运营状态', minWidth: 120, sortable: true },
+      { field: 'operationStatusName', title: '运营状态', minWidth: 120, sortable: true, slots: { default: 'status' } },
       {
         field: 'cleaningRate',
         title: '保洁达标率(%)',

@@ -1,56 +1,89 @@
 <script setup>
-import { reactive } from 'vue';
+import { reactive, onMounted } from 'vue';
+import { getUserChartDashboard } from '#/api/genchuan/industry/urban/environmentalSanitation/sanitationVehicleMgmt/sanitationWorker/data.js';
 import Indicator from '#/components/stats/indicator.vue';
 import Pie from '#/components/stats/pie.vue';
 import Bar from '#/components/stats/bar.vue';
 
-// 符合 2.2.1 环卫人员管理全部模块的模拟数据
 const state = reactive({
+  loading: false,
   // 五个核心卡片
-  cardList: [
-    { title: '总人员数', value: 86, color: '#409EFF' },
-    { title: '在岗人数', value: 72, color: '#67C23A' },
-    { title: '全勤人数', value: 65, color: '#E6A23C' },
-    { title: '考核优秀人数', value: 28, color: '#F56C6C' },
-    { title: '待排班人数', value: 8, color: '#909399' },
-  ],
+  cardList: [],
   // 三个圆环图
   pieData: {
-    jobType: [  // 岗位类型占比
-      { name: '保洁员', value: 42 },
-      { name: '收运员', value: 24 },
-      { name: '驾驶员', value: 12 },
-      { name: '管理员', value: 8 },
-    ],
-    personStatus: [  // 人员状态占比
-      { name: '在岗', value: 72 },
-      { name: '休假', value: 8 },
-      { name: '培训', value: 4 },
-      { name: '离职', value: 2 },
-    ],
-    teamDistribution: [  // 所属班组分布占比
-      { name: '龙文班组', value: 28 },
-      { name: '龙海班组', value: 22 },
-      { name: '芗城班组', value: 20 },
-      { name: '长泰班组', value: 16 },
-    ],
+    jobType: [],           // 岗位类型占比
+    personStatus: [],      // 人员状态占比
+    teamDistribution: [],  // 所属班组分布占比
   },
   // 两个柱状图
   barData: {
-    teamCount: {  // 不同班组人员数量对比
-      x: ['龙文班组', '龙海班组', '芗城班组', '长泰班组'],
-      series: [28, 22, 20, 16],
+    teamCount: {           // 不同班组人员数量对比
+      x: [],
+      series: [],
     },
-    jobScore: {  // 不同岗位平均考核得分对比
-      x: ['保洁员', '收运员', '驾驶员', '管理员'],
-      series: [92, 88, 94, 96], // 考核得分
+    jobScore: {            // 不同岗位平均考核得分对比
+      x: [],
+      series: [],
     },
   },
+});
+
+// 通用数值转换（处理字符串或数字）
+const toNumber = (val) => {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === 'string') return parseFloat(val) || 0;
+  return Number(val) || 0;
+};
+
+// 获取图表数据
+const fetchChartData = async () => {
+  state.loading = true;
+  try {
+    const res = await getUserChartDashboard();
+    console.log('环卫人员仪表盘接口返回:', res);
+
+    // 接口返回已解包，直接使用 res（无外层 code/data）
+    if (res && typeof res === 'object') {
+      // 卡片数据映射
+      state.cardList = [
+        { title: '总人员数', value: toNumber(res.totalUserCount), color: '#409EFF' },
+        { title: '在岗人数', value: toNumber(res.onDutyCount), color: '#67C23A' },
+        { title: '全勤人数', value: toNumber(res.fullAttendanceCount), color: '#E6A23C' },
+        { title: '考核优秀人数', value: toNumber(res.excellentAssessmentCount), color: '#F56C6C' },
+        { title: '待排班人数', value: toNumber(res.pendingScheduleCount), color: '#909399' },
+      ];
+
+      // 圆环图数据
+      state.pieData.jobType = Array.isArray(res.positionTypeDistribution) ? res.positionTypeDistribution : [];
+      state.pieData.personStatus = Array.isArray(res.userStatusDistribution) ? res.userStatusDistribution : [];
+      state.pieData.teamDistribution = Array.isArray(res.teamDistribution) ? res.teamDistribution : [];
+
+      // 柱状图1：不同班组人员数量对比
+      const teamCountList = Array.isArray(res.userCountByTeam) ? res.userCountByTeam : [];
+      state.barData.teamCount.x = teamCountList.map(item => item.name || '');
+      state.barData.teamCount.series = teamCountList.map(item => toNumber(item.value));
+
+      // 柱状图2：不同岗位平均考核得分对比
+      const scoreList = Array.isArray(res.avgAssessmentScoreByPosition) ? res.avgAssessmentScoreByPosition : [];
+      state.barData.jobScore.x = scoreList.map(item => item.name || '');
+      state.barData.jobScore.series = scoreList.map(item => toNumber(item.value));
+    } else {
+      console.error('接口返回数据格式异常', res);
+    }
+  } catch (error) {
+    console.error('请求环卫人员仪表盘数据失败:', error);
+  } finally {
+    state.loading = false;
+  }
+};
+
+onMounted(() => {
+  fetchChartData();
 });
 </script>
 
 <template>
-  <div class="chart-box">
+  <div class="chart-box" v-loading="state.loading" element-loading-text="加载中...">
     <!-- 左侧卡片区域：五个指标卡片，网格布局 -->
     <div class="box-left-m" style="flex: 1 !important;">
       <Indicator

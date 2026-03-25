@@ -202,6 +202,12 @@ export function useExecutingEditSchema() {
       componentProps: { type: 'datetime', valueFormat: 'x', placeholder: '选择时间' },
       labelWidth: '120',
     },
+    {
+      fieldName: 'checkPhotoUrl',
+      label: '上报照片',
+      component: 'Input',
+      componentProps: { placeholder: '照片URL', style: { display: 'none' } },
+    },
   ];
 }
 
@@ -215,6 +221,7 @@ export function useProblemReportSchema() {
       componentProps: { placeholder: '请选择问题类型', options: [] },
       labelWidth: '120',
       searchFilter: true,
+      rules: 'required',
     },
     {
       fieldName: 'location',
@@ -223,6 +230,7 @@ export function useProblemReportSchema() {
       componentProps: { placeholder: '请输入问题位置' },
       labelWidth: '120',
       searchFilter: true,
+      rules: 'required',
     },
     {
       fieldName: 'problemDesc',
@@ -266,9 +274,8 @@ export function useProblemReportSchema() {
       labelWidth: '120',
       searchFilter: true,
     },
-    // 新增：照片字段（隐藏，通过上传组件管理）
     {
-      fieldName: 'photoUrls',
+      fieldName: 'localePhotoUrl',
       label: '现场照片',
       component: 'Input',
       componentProps: { placeholder: '照片URL', style: { display: 'none' } },
@@ -536,12 +543,12 @@ export function getColumnsByStatus(status) {
   const statusColumnsMap = {
     全部: [
       { field: 'planNo', title: '清扫计划编号', minWidth: 160, sortable: true, slots: { default: 'planNo' } },
-      { field: 'roadName', title: '清扫路段', minWidth: 150, sortable: true },
-      { field: 'areaName', title: '责任区域', minWidth: 180, sortable: true },
+      { field: 'roadName', title: '清扫路段', minWidth: 150, sortable: true, slots: { default: 'roadName' } },
+      { field: 'areaName', title: '责任区域', minWidth: 180, sortable: true, slots: { default: 'area' } },
       { field: 'frequency', title: '清扫频次', minWidth: 120, sortable: true },
       { field: 'timePeriod', title: '清扫时段', minWidth: 180, sortable: true },
       { field: 'staffsName', title: '负责人员', minWidth: 150, sortable: true, formatter: ({ cellValue }) => Array.isArray(cellValue) ? cellValue.join(', ') : cellValue },
-      { field: 'planStatusName', title: '计划状态', minWidth: 120, sortable: true },
+      { field: 'planStatusName', title: '计划状态', minWidth: 120, sortable: true, slots: { default: 'status' } },
       { field: 'qualityRate', title: '质量达标率(%)', minWidth: 120, sortable: true, formatter: ({ cellValue }) => (cellValue !== undefined && cellValue !== null ? `${cellValue}%` : '-') },
       { field: 'problemCount', title: '问题处置数', minWidth: 100, sortable: true },
       { field: 'attendanceRate', title: '考勤全勤率(%)', minWidth: 120, sortable: true, formatter: ({ cellValue }) => (cellValue !== undefined && cellValue !== null ? `${cellValue}%` : '-') },
@@ -579,8 +586,7 @@ export function getColumnsByStatus(status) {
       { field: 'reportName', title: '上报人员', minWidth: 120, sortable: true },
       { field: 'reportTime', title: '上报时间', minWidth: 160, sortable: true, formatter: ({ cellValue }) => (cellValue ? new Date(cellValue).toLocaleString() : '-') },
       { field: 'problemDesc', title: '问题描述', minWidth: 200, sortable: true },
-      // 新增照片列
-      { field: 'photoUrls', title: '现场照片', minWidth: 100, sortable: false, slots: { default: 'photoUrls' } },
+      { field: 'localePhotoUrl', title: '现场照片', minWidth: 100, sortable: false, slots: { default: 'localePhotoUrl' } },
       { field: 'teamName', title: '处置组', minWidth: 120, sortable: true },
       { field: 'handleStatus', title: '处置状态', minWidth: 100, sortable: true, slots: { default: 'handleStatus' } },
       { field: 'isTimeout', title: '超时提醒', minWidth: 100, sortable: true, formatter: ({ cellValue }) => (cellValue === '是' ? '超时' : '正常') },

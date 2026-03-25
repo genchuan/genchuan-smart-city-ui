@@ -18,11 +18,9 @@ import {
   createToiletComplaint,
   createToiletConsumable,
   createToiletFacilityRepair,
-  deleteCleaningPhoto,
-  deleteComplaintPhoto,
+  deleteFile, // 通用删除接口
   deletePublicToilet,
   deletePublicToiletBatch,
-  deleteRepairPhoto,
   deleteToiletCleaningTask,
   deleteToiletCleaningTaskBatch,
   deleteToiletComplaint,
@@ -36,11 +34,8 @@ import {
   exportToiletComplaintExcel,
   exportToiletConsumableExcel,
   exportToiletFacilityRepairExcel,
-  getCleaningPhotoList,
-  getComplaintPhotoList,
   getPublicToiletPage,
   getPublicToiletStatistics,
-  getRepairPhotoList,
   getToiletCleaningTaskPage,
   getToiletComplaintPage,
   getToiletConsumablePage,
@@ -51,10 +46,7 @@ import {
   updateToiletComplaint,
   updateToiletConsumable,
   updateToiletFacilityRepair,
-  uploadCleaningPhotos,
-  uploadComplaintPhotos,
   uploadImageBatch,
-  uploadRepairPhotos,
 } from '#/api/genchuan/industry/urban/environmentalSanitation/sanitationSceneMgmt/publicToilet/data.js';
 import {
   getAreaOptions,
@@ -120,7 +112,7 @@ const counts = ref({
 
 const createLabel = (item) => {
   const key = item.label;
-  let count = 0;
+  let count;
   count =
     key === '全部'
       ? counts.value.total || 0
@@ -149,17 +141,14 @@ const loadedOptions = reactive({
   user: [],
   planStatus: [],
   consumable: [],
-  handleStatus: [], // 用于投诉批量处理的状态
+  handleStatus: [],
 });
 
 const optionMaps = reactive({
   planStatusMap: new Map(),
 });
 
-// 获取处置状态选项（可复用投诉的处置状态，也可以从后端获取）
-// 这里假设从后端获取，但先静态定义，后面可以调用接口
 const fetchHandleStatusOptions = async () => {
-  // 模拟：实际应该调用接口
   return [
     {label: '待处置', value: '待处置'},
     {label: '处置中', value: '处置中'},
@@ -214,10 +203,9 @@ const [ComplaintSearchForm, complaintSearchFormApi] = useVbenForm({
   },
   handleSubmit: async () => {
     const rawValues = await complaintSearchFormApi.getValues();
-    const filteredParams = Object.fromEntries(
+    dataObj.searchParams = Object.fromEntries(
       Object.entries(rawValues).filter(([_, v]) => v != null && v !== ''),
     );
-    dataObj.searchParams = filteredParams;
     gridApi.reload();
     searchDrawerApi.close();
   },
@@ -236,10 +224,9 @@ const [RepairSearchForm, repairSearchFormApi] = useVbenForm({
   },
   handleSubmit: async () => {
     const rawValues = await repairSearchFormApi.getValues();
-    const filteredParams = Object.fromEntries(
+    dataObj.searchParams = Object.fromEntries(
       Object.entries(rawValues).filter(([_, v]) => v != null && v !== ''),
     );
-    dataObj.searchParams = filteredParams;
     gridApi.reload();
     searchDrawerApi.close();
   },
@@ -258,10 +245,9 @@ const [CleaningSearchForm, cleaningSearchFormApi] = useVbenForm({
   },
   handleSubmit: async () => {
     const rawValues = await cleaningSearchFormApi.getValues();
-    const filteredParams = Object.fromEntries(
+    dataObj.searchParams = Object.fromEntries(
       Object.entries(rawValues).filter(([_, v]) => v != null && v !== ''),
     );
-    dataObj.searchParams = filteredParams;
     gridApi.reload();
     searchDrawerApi.close();
   },
@@ -444,42 +430,7 @@ const updateFormImageField = (list) => {
   }
 };
 
-const fetchImageList = async (id) => {
-  if (!id) return [];
-  try {
-    let res;
-    if (isComplaintTab.value) {
-      res = await getComplaintPhotoList(id);
-    } else if (isCompletedTab.value || isCleaningTab.value) {
-      res = await getCleaningPhotoList(id);
-    } else if (isRepairTab.value) {
-      res = await getRepairPhotoList(id);
-    } else {
-      return [];
-    }
-    if (Array.isArray(res)) {
-      return res;
-    }
-    if (res && Array.isArray(res.data)) {
-      return res.data;
-    }
-    if (res && Array.isArray(res.result)) {
-      return res.result;
-    }
-    if (res && Array.isArray(res.photos)) {
-      return res.photos;
-    }
-    if (res && Array.isArray(res.list)) {
-      return res.list;
-    }
-    console.warn('获取图片列表返回未知格式', res);
-    return [];
-  } catch (error) {
-    console.error('获取图片列表出错', error);
-    return [];
-  }
-};
-
+// ========== 统一图片上传处理（使用通用接口） ==========
 const handleImageUpload = async (event) => {
   const files = event.target.files;
   if (files.length === 0) return;
@@ -491,56 +442,23 @@ const handleImageUpload = async (event) => {
 
   const loading = ElLoading.service({text: '上传中...'});
   try {
-    let res;
-    let newList = [];
+    const res = await uploadImageBatch(formData);
+    let newUrls = [];
 
-    if (currentId.value) {
-      if (isComplaintTab.value) {
-        res = await uploadComplaintPhotos(currentId.value, formData);
-      } else if (isCompletedTab.value || isCleaningTab.value) {
-        res = await uploadCleaningPhotos(currentId.value, formData);
-      } else if (isRepairTab.value) {
-        res = await uploadRepairPhotos(currentId.value, formData);
-      } else {
-        return;
-      }
-
-      const isSuccess =
-        Array.isArray(res) ||
-        res === true ||
-        res?.code === 0 ||
-        res?.success === true;
-
-      if (isSuccess) {
-        newList = await fetchImageList(currentId.value);
-        imageList.value = newList;
-        updateFormImageField(newList);
-        ElMessage.success('上传成功');
-      } else {
-        const errMsg = typeof res === 'string' ? res : JSON.stringify(res);
-        ElMessage.error(`上传失败：${errMsg}`);
-        console.error('上传失败，响应详情:', res);
-      }
+    if (Array.isArray(res)) {
+      newUrls = res;
+    } else if (res?.code === 0 && Array.isArray(res.data)) {
+      newUrls = res.data;
+    } else if (res?.data && Array.isArray(res.data)) {
+      newUrls = res.data;
     } else {
-      res = await uploadImageBatch(formData);
-
-      if (Array.isArray(res)) {
-        const uploadedUrls = res.map((item) => item.url);
-        newList = [...imageList.value, ...uploadedUrls];
-        imageList.value = newList;
-        updateFormImageField(newList);
-        ElMessage.success('上传成功');
-      } else if (res?.code === 0 && Array.isArray(res.data)) {
-        const uploadedUrls = res.data.map((item) => item.url);
-        newList = [...imageList.value, ...uploadedUrls];
-        imageList.value = newList;
-        updateFormImageField(newList);
-        ElMessage.success('上传成功');
-      } else {
-        const errMsg = res?.msg || '上传失败: 响应格式不正确';
-        ElMessage.error(`上传失败：${errMsg}`);
-      }
+      ElMessage.error(res?.msg || '上传失败，响应格式不正确');
+      return;
     }
+
+    imageList.value = [...imageList.value, ...newUrls];
+    updateFormImageField(imageList.value);
+    ElMessage.success('上传成功');
   } catch (error) {
     console.error('上传图片异常', error);
     ElMessage.error(`上传图片失败：${error.message}`);
@@ -550,41 +468,23 @@ const handleImageUpload = async (event) => {
   }
 };
 
+// ========== 统一图片删除处理（使用通用接口） ==========
 const handleImageDelete = async (url) => {
   const loading = ElLoading.service({text: '删除中...'});
   try {
-    if (currentId.value) {
-      let res;
-      if (isComplaintTab.value) {
-        res = await deleteComplaintPhoto(currentId.value, url);
-      } else if (isCompletedTab.value || isCleaningTab.value) {
-        res = await deleteCleaningPhoto(currentId.value, url);
-      } else if (isRepairTab.value) {
-        res = await deleteRepairPhoto(currentId.value, url);
-      } else {
-        return;
-      }
+    // 调用通用删除接口，只需图片URL
+    const res = await deleteFile(url);
+    const isSuccess = res === true || res?.code === 0 || res?.success === true || res === '';
 
-      console.log('删除响应:', res);
-
-      const isSuccess =
-        res === true || res?.code === 0 || res?.success === true || res === '';
-
-      if (isSuccess) {
-        const newList = await fetchImageList(currentId.value);
-        imageList.value = newList;
-        updateFormImageField(newList);
-        ElMessage.success('删除成功');
-      } else {
-        const errMsg = typeof res === 'string' ? res : JSON.stringify(res);
-        ElMessage.error(`删除失败：${errMsg}`);
-        console.error('删除失败，响应详情:', res);
-      }
-    } else {
-      const newList = imageList.value.filter((item) => item !== url);
-      imageList.value = newList;
-      updateFormImageField(newList);
+    if (isSuccess) {
+      // 删除成功后从前端列表中移除该图片
+      imageList.value = imageList.value.filter(item => item !== url);
+      updateFormImageField(imageList.value);
       ElMessage.success('删除成功');
+    } else {
+      const errMsg = typeof res === 'string' ? res : JSON.stringify(res);
+      ElMessage.error(`删除失败：${errMsg}`);
+      console.error('删除失败，响应详情:', res);
     }
   } catch (error) {
     console.error('删除图片异常', error);
@@ -698,17 +598,15 @@ const [EditDrawer, editDrawerApi] = useVbenDrawer({
           ]);
         }
 
-        let list = await fetchImageList(currentId.value);
-        if (list.length === 0) {
-          if (isComplaintTab.value) {
-            list = formatPhotos(formData.value.reformPhoto);
-          } else if (isCompletedTab.value || isCleaningTab.value) {
-            list = formatProofs(
-              formData.value.proofUrls || formData.value.proofUrl,
-            );
-          } else if (isRepairTab.value) {
-            list = formatPhotos(formData.value.photoUrl);
-          }
+        let list = [];
+        if (isComplaintTab.value) {
+          list = formatPhotos(formData.value.reformPhoto);
+        } else if (isCompletedTab.value || isCleaningTab.value) {
+          list = formatProofs(
+            formData.value.proofUrls || formData.value.proofUrl,
+          );
+        } else if (isRepairTab.value) {
+          list = formatPhotos(formData.value.photoUrl);
         }
         imageList.value = list;
         updateFormImageField(list);
@@ -759,7 +657,6 @@ const [EditDrawer, editDrawerApi] = useVbenDrawer({
 });
 
 // ---------- 新增功能抽屉 ----------
-
 // 批量调整抽屉（保洁待执行）
 const [AdjustForm, adjustFormApi] = useVbenForm({
   commonConfig: {
@@ -821,17 +718,14 @@ const [AdjustDrawer, adjustDrawerApi] = useVbenDrawer({
 
     const loading = ElLoading.service({text: '批量调整中...'});
     try {
-      // 使用 PUT 方法调用批量调整接口
       const res = await batchAdjustToiletCleaningTask(params);
-
-      // 兼容 Axios 包装和后端直接返回
       const responseData = res?.data ?? res;
       const isSuccess = responseData?.code === 0 || responseData === true;
 
       if (isSuccess) {
         ElMessage.success('批量调整成功');
         adjustDrawerApi.close();
-        handleRefresh(); // 刷新列表和统计
+        handleRefresh();
       } else {
         ElMessage.error(responseData?.msg || '调整失败');
       }
@@ -874,7 +768,7 @@ const [AdjustDrawer, adjustDrawerApi] = useVbenDrawer({
         {
           fieldName: 'newCleanerIds',
           componentProps: {
-            options: loadedOptions.user, // 从已加载的选项获取
+            options: loadedOptions.user,
             multiple: true,
           },
         },
@@ -914,7 +808,6 @@ const [BatchSupplyDrawer, batchSupplyDrawerApi] = useVbenDrawer({
       return;
     }
 
-    // 从当前列表数据中获取真实的 consumableId
     const supplyItems = [];
     for (const id of checkedIds.value) {
       const row = dataObj.list.find(item => item.id === id);
@@ -1000,7 +893,7 @@ const [SupplyDrawer, supplyDrawerApi] = useVbenDrawer({
     const params = {
       id: supplyCurrentId.value,
       supplyQuantity: Number(supplyQuantity),
-      photoUrls: supplyImageList.value, // 直接传数组
+      photoUrls: supplyImageList.value,
     };
 
     const loading = ElLoading.service({text: '提交中...'});
@@ -1012,7 +905,7 @@ const [SupplyDrawer, supplyDrawerApi] = useVbenDrawer({
       if (isSuccess) {
         ElMessage.success('补充成功');
         supplyDrawerApi.close();
-        handleRefresh(); // 刷新列表
+        handleRefresh();
       } else {
         ElMessage.error(responseData?.msg || '补充失败');
       }
@@ -1029,14 +922,13 @@ const [SupplyDrawer, supplyDrawerApi] = useVbenDrawer({
       if (rowData && rowData.id) {
         supplyCurrentId.value = rowData.id;
         await supplyFormApi.resetForm();
-        // 隐藏表单中的 photoUrls 字段（避免重复显示上传组件）
         supplyFormApi.updateSchema([
           {
             fieldName: 'photoUrls',
             componentProps: {style: {display: 'none'}},
           },
         ]);
-        supplyImageList.value = []; // 清空图片列表
+        supplyImageList.value = formatPhotos(rowData.photoUrls);
       } else {
         ElMessage.error('未获取到物资记录');
         supplyDrawerApi.close();
@@ -1048,7 +940,7 @@ const [SupplyDrawer, supplyDrawerApi] = useVbenDrawer({
   },
 });
 
-// 派单抽屉（通用，用于投诉和维修）
+// 派单抽屉
 const [DispatchForm, dispatchFormApi] = useVbenForm({
   commonConfig: {
     componentProps: {class: 'w-full'},
@@ -1087,7 +979,7 @@ const [DispatchDrawer, dispatchDrawerApi] = useVbenDrawer({
   },
 });
 
-// 批量处理投诉抽屉（可选派单或更新状态）
+// 批量处理投诉抽屉
 const batchHandleComplaintSchema = [
   {
     fieldName: 'action',
@@ -1109,8 +1001,8 @@ const batchHandleComplaintSchema = [
     dependencies: {show: (values) => values.action === 'dispatch'},
   },
   {
-    fieldName: 'dispatchStatus', // 字段名严格与后端一致
-    label: '处理状态',           // 按您的要求改为“处理状态”
+    fieldName: 'dispatchStatus',
+    label: '处理状态',
     component: 'Select',
     componentProps: {placeholder: '请选择处理状态', options: []},
     dependencies: {show: (values) => values.action === 'updateStatus'},
@@ -1143,13 +1035,11 @@ const [BatchHandleComplaintDrawer, batchHandleComplaintDrawerApi] =
         return;
       }
 
-      // 处理派单操作：当前后端接口不支持批量派单，给出提示
       if (action === 'dispatch') {
         ElMessage.info('批量派单功能暂未实现');
         return;
       }
 
-      // 更新状态操作
       if (action === 'updateStatus') {
         if (!dispatchStatus) {
           ElMessage.warning('请选择处理状态');
@@ -1158,12 +1048,11 @@ const [BatchHandleComplaintDrawer, batchHandleComplaintDrawerApi] =
 
         const params = {
           ids: checkedIds.value,
-          dispatchStatus: dispatchStatus, // 使用 dispatchStatus 字段
+          dispatchStatus: dispatchStatus,
         };
 
         const loading = ElLoading.service({text: '批量处理中...'});
         try {
-          // 假设导入的接口函数名为 batchHandleToiletComplaint
           const res = await batchHandleToiletComplaint(params);
           const responseData = res?.data ?? res;
           const isSuccess = responseData?.code === 0 || responseData === true;
@@ -1186,7 +1075,6 @@ const [BatchHandleComplaintDrawer, batchHandleComplaintDrawerApi] =
     async onOpenChange(isOpen) {
       if (isOpen) {
         batchHandleComplaintFormApi.resetForm();
-        // 更新责任人选项和处理状态选项
         const statusOptions = [
           {label: '待派单', value: '待派单'},
           {label: '已派单', value: '已派单'},
@@ -1225,7 +1113,6 @@ const disposeSchema = [
     componentProps: {type: 'textarea', rows: 3, placeholder: '请输入处置结果'},
     rules: 'required',
   },
-  // reformPhoto 字段不再使用，但保留用于隐藏，实际用图片上传组件
   {
     fieldName: 'reformPhoto',
     label: '整改照片',
@@ -1261,7 +1148,6 @@ const [DisposeDrawer, disposeDrawerApi] = useVbenDrawer({
       ElMessage.error('未找到投诉记录');
       return;
     }
-    // 将图片列表转为 JSON 字符串
     const reformPhoto = disposeImageList.value.length > 0
       ? JSON.stringify(disposeImageList.value)
       : '';
@@ -1276,7 +1162,7 @@ const [DisposeDrawer, disposeDrawerApi] = useVbenDrawer({
     try {
       await updateToiletComplaint(updateData);
       ElMessage.success('处置成功');
-      handleRefresh();          // 刷新表格数据
+      handleRefresh();
       disposeDrawerApi.close();
     } catch (error) {
       console.error('处置失败', error);
@@ -1290,14 +1176,11 @@ const [DisposeDrawer, disposeDrawerApi] = useVbenDrawer({
       const rowData = disposeDrawerApi.getData();
       if (rowData && rowData.id) {
         disposeCurrentId.value = rowData.id;
-        // 预填充表单
         await disposeFormApi.setValues({
           handleMeasure: rowData.handleMeasure || '',
           handleResult: rowData.handleResult || '',
         });
-        // 加载已有图片
-        const list = await getComplaintPhotoList(rowData.id);
-        disposeImageList.value = list;
+        disposeImageList.value = formatPhotos(rowData.reformPhoto);
       } else {
         disposeFormApi.resetForm();
         disposeImageList.value = [];
@@ -1312,7 +1195,7 @@ const [DisposeDrawer, disposeDrawerApi] = useVbenDrawer({
 const supplyCurrentId = ref(null);
 const supplyImageList = ref([]);
 
-// 图片上传
+// 补充登记图片上传
 const handleSupplyImageUpload = async (event) => {
   const files = event.target.files;
   if (files.length === 0) return;
@@ -1323,18 +1206,19 @@ const handleSupplyImageUpload = async (event) => {
   const loading = ElLoading.service({text: '上传中...'});
   try {
     const res = await uploadImageBatch(formData);
-    // 处理返回的图片 URL 数组
+    let newUrls = [];
     if (Array.isArray(res)) {
-      const newUrls = res.map(item => item.url);
-      supplyImageList.value = [...supplyImageList.value, ...newUrls];
-      ElMessage.success('上传成功');
+      newUrls = res;
     } else if (res?.code === 0 && Array.isArray(res.data)) {
-      const newUrls = res.data.map(item => item.url);
-      supplyImageList.value = [...supplyImageList.value, ...newUrls];
-      ElMessage.success('上传成功');
+      newUrls = res.data;
+    } else if (res?.data && Array.isArray(res.data)) {
+      newUrls = res.data;
     } else {
-      ElMessage.error(res?.msg || '上传失败');
+      ElMessage.error(res?.msg || '上传失败，响应格式不正确');
+      return;
     }
+    supplyImageList.value = [...supplyImageList.value, ...newUrls];
+    ElMessage.success('上传成功');
   } catch (error) {
     console.error('上传图片异常', error);
     ElMessage.error(`上传图片失败：${error.message}`);
@@ -1344,10 +1228,27 @@ const handleSupplyImageUpload = async (event) => {
   }
 };
 
-// 图片删除（仅前端移除）
+// 补充登记图片删除（使用通用删除接口）
 const handleSupplyImageDelete = async (url) => {
-  supplyImageList.value = supplyImageList.value.filter(item => item !== url);
-  ElMessage.success('删除成功');
+  const loading = ElLoading.service({text: '删除中...'});
+  try {
+    const res = await deleteFile(url);
+    const isSuccess = res === true || res?.code === 0 || res?.success === true || res === '';
+
+    if (isSuccess) {
+      supplyImageList.value = supplyImageList.value.filter(item => item !== url);
+      ElMessage.success('删除成功');
+    } else {
+      const errMsg = typeof res === 'string' ? res : JSON.stringify(res);
+      ElMessage.error(`删除失败：${errMsg}`);
+      console.error('删除失败，响应详情:', res);
+    }
+  } catch (error) {
+    console.error('删除图片异常', error);
+    ElMessage.error(`删除图片失败：${error.message}`);
+  } finally {
+    loading.close();
+  }
 };
 
 // 处置抽屉图片上传
@@ -1360,25 +1261,20 @@ const handleDisposeImageUpload = async (event) => {
   }
   const loading = ElLoading.service({text: '上传中...'});
   try {
-    if (disposeCurrentId.value) {
-      const res = await uploadComplaintPhotos(disposeCurrentId.value, formData);
-      // 判断成功（兼容不同返回格式）
-      const isSuccess =
-        Array.isArray(res) ||
-        res === true ||
-        res?.code === 0 ||
-        res?.success === true;
-      if (isSuccess) {
-        const newList = await getComplaintPhotoList(disposeCurrentId.value);
-        disposeImageList.value = newList;
-        ElMessage.success('上传成功');
-      } else {
-        const errMsg = typeof res === 'string' ? res : JSON.stringify(res);
-        ElMessage.error(`上传失败：${errMsg}`);
-      }
+    const res = await uploadImageBatch(formData);
+    let newUrls = [];
+    if (Array.isArray(res)) {
+      newUrls = res;
+    } else if (res?.code === 0 && Array.isArray(res.data)) {
+      newUrls = res.data;
+    } else if (res?.data && Array.isArray(res.data)) {
+      newUrls = res.data;
     } else {
-      ElMessage.error('未找到投诉记录');
+      ElMessage.error(res?.msg || '上传失败，响应格式不正确');
+      return;
     }
+    disposeImageList.value = [...disposeImageList.value, ...newUrls];
+    ElMessage.success('上传成功');
   } catch (error) {
     console.error('上传图片异常', error);
     ElMessage.error(`上传图片失败：${error.message}`);
@@ -1388,23 +1284,20 @@ const handleDisposeImageUpload = async (event) => {
   }
 };
 
-// 处置抽屉图片删除
+// 处置抽屉图片删除（使用通用删除接口）
 const handleDisposeImageDelete = async (url) => {
   const loading = ElLoading.service({text: '删除中...'});
   try {
-    if (disposeCurrentId.value) {
-      const res = await deleteComplaintPhoto(disposeCurrentId.value, url);
-      const isSuccess = res === true || res?.code === 0 || res?.success === true;
-      if (isSuccess) {
-        const newList = await getComplaintPhotoList(disposeCurrentId.value);
-        disposeImageList.value = newList;
-        ElMessage.success('删除成功');
-      } else {
-        const errMsg = typeof res === 'string' ? res : JSON.stringify(res);
-        ElMessage.error(`删除失败：${errMsg}`);
-      }
+    const res = await deleteFile(url);
+    const isSuccess = res === true || res?.code === 0 || res?.success === true || res === '';
+
+    if (isSuccess) {
+      disposeImageList.value = disposeImageList.value.filter(item => item !== url);
+      ElMessage.success('删除成功');
     } else {
-      ElMessage.error('未找到投诉记录');
+      const errMsg = typeof res === 'string' ? res : JSON.stringify(res);
+      ElMessage.error(`删除失败：${errMsg}`);
+      console.error('删除失败，响应详情:', res);
     }
   } catch (error) {
     console.error('删除图片异常', error);
@@ -1542,20 +1435,17 @@ const [AcceptDrawer, acceptDrawerApi] = useVbenDrawer({
       ElMessage.error('未找到维修记录');
       return;
     }
-    // 验收结果是必填项，手动验证
     if (!formValues.acceptResult) {
       ElMessage.warning('请选择验收结果');
       return;
     }
 
-    // 构建更新数据
     const updateData = {
       id,
       acceptResult: formValues.acceptResult,
       acceptOpinion: formValues.acceptOpinion,
     };
 
-    // 根据验收结果自动更新维修状态（业务逻辑可调整）
     if (formValues.acceptResult === '合格') {
       updateData.repairStatus = '合格';
     } else if (formValues.acceptResult === '不合格') {
@@ -1566,7 +1456,7 @@ const [AcceptDrawer, acceptDrawerApi] = useVbenDrawer({
     try {
       await updateToiletFacilityRepair(updateData);
       ElMessage.success('验收成功');
-      handleRefresh();       // 刷新表格数据
+      handleRefresh();
       acceptDrawerApi.close();
     } catch (error) {
       console.error('验收失败', error);
@@ -1580,7 +1470,6 @@ const [AcceptDrawer, acceptDrawerApi] = useVbenDrawer({
       const rowData = acceptDrawerApi.getData();
       if (rowData && rowData.id) {
         acceptCurrentId.value = rowData.id;
-        // 预填充表单（如果已有验收结果）
         await acceptFormApi.setValues({
           acceptResult: rowData.acceptResult || '',
           acceptOpinion: rowData.acceptOpinion || '',
@@ -1628,14 +1517,13 @@ const [ReviewPostDrawer, reviewPostDrawerApi] = useVbenDrawer({
 
     const loading = ElLoading.service({ text: '提交中...' });
     try {
-      // 调用更新接口，传递 reviewDesc 字段
       await updateToiletCleaningTask({
         id: reviewPostRow.value.id,
         reviewDesc: reviewPostComment,
       });
       ElMessage.success('复盘意见保存成功');
       reviewPostDrawerApi.close();
-      handleRefresh(); // 刷新列表
+      handleRefresh();
     } catch (error) {
       console.error('复盘失败', error);
       ElMessage.error(error.message || '复盘失败，请重试');
@@ -1648,7 +1536,6 @@ const [ReviewPostDrawer, reviewPostDrawerApi] = useVbenDrawer({
       const rowData = reviewPostDrawerApi.getData();
       reviewPostRow.value = rowData;
       reviewPostFormApi.resetForm();
-      // 如果已有复盘意见，预填到表单
       if (rowData?.reviewDesc) {
         await reviewPostFormApi.setValues({ reviewPostComment: rowData.reviewDesc });
       }
@@ -1679,8 +1566,8 @@ function convertToiletItem(item) {
     ...item,
     name: item.name || item.toiletName,
     areaName: item.areaName || item.areaCode,
-    areaCode: item.areaCode,                // 保留原始ID用于筛选
-    operationStatusId: item.operationStatusId, // 保留原始ID
+    areaCode: item.areaCode,
+    operationStatusId: item.operationStatusId,
     managerName: item.managerName || item.managerId,
     operationStatusName: item.operationStatusName || item.operationStatusId,
     cleanersName:
@@ -1701,7 +1588,6 @@ function convertToiletItem(item) {
 }
 
 function convertComplaintItem(item) {
-  // 解析 reformPhoto 字段用于表格预览
   let reformPhotoList = [];
   let reformPhoto = '';
   if (item.reformPhoto) {
@@ -1732,8 +1618,8 @@ function convertComplaintItem(item) {
 
   return {
     ...item,
-    toiletId: item.toiletId,                // 保留原始ID
-    complaintTypeId: item.complaintTypeId,   // 保留原始ID
+    toiletId: item.toiletId,
+    complaintTypeId: item.complaintTypeId,
     complaintTime: item.complaintTime
       ? new Date(item.complaintTime).toLocaleString()
       : '-',
@@ -1785,8 +1671,8 @@ function convertRepairItem(item) {
 
   return {
     ...item,
-    toiletId: item.toiletId,                // 保留原始ID
-    facilityId: item.facilityId,             // 保留原始ID
+    toiletId: item.toiletId,
+    facilityId: item.facilityId,
     reportTime: item.reportTime
       ? new Date(item.reportTime).toLocaleString()
       : '-',
@@ -1824,7 +1710,7 @@ function convertCleaningItem(item) {
 
   const converted = {
     ...item,
-    toiletId: item.toiletId,                // 保留原始ID
+    toiletId: item.toiletId,
     createTime: item.createTime
       ? new Date(item.createTime).toLocaleString()
       : '-',
@@ -1876,12 +1762,12 @@ function convertCleaningItem(item) {
 function convertConsumableItem(item) {
   return {
     ...item,
-    toiletId: item.toiletId,                // 保留原始ID
-    consumableId: item.consumableId,         // 保留原始ID
+    toiletId: item.toiletId,
+    consumableId: item.consumableId,
   };
 }
 
-// ---------- 新增：筛选标签相关 ----------
+// ---------- 筛选标签相关 ----------
 const tagFilters = ref({});
 
 function handleFilterTagClick(field, value) {
@@ -1912,14 +1798,12 @@ function getFieldLabel(field) {
   return map[field] || field;
 }
 
-// ---------- 结束：筛选标签相关 ----------
-
 const getTableData = async ({page}) => {
   const params = {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...dataObj.searchParams,
-    ...tagFilters.value,      // 合并标签筛选条件
+    ...tagFilters.value,
   };
 
   switch (activeName.value) {
@@ -1933,7 +1817,6 @@ const getTableData = async ({page}) => {
       if (pendingValue && executingValue) {
         params.planStatusId = [pendingValue, executingValue];
       }
-
       break;
     }
     case '已完成': {
@@ -1943,20 +1826,16 @@ const getTableData = async ({page}) => {
       if (completedValue) {
         params.planStatusId = completedValue;
       }
-
       break;
     }
     case '投诉待处置': {
       params.dispatchStatus = ['待派单', '已派单'];
-
       break;
     }
     case '设施待维修': {
       params.repairStatus = ['待维修', '维修中', '已完成', '不合格'];
-
       break;
     }
-    // No default
   }
 
   try {
@@ -1976,7 +1855,7 @@ const getTableData = async ({page}) => {
     const listData = res.data?.list || res.list || [];
     const total = res.data?.total || res.total || 0;
 
-    let convertedList = [];
+    let convertedList;
     if (isComplaintTab.value) {
       convertedList = listData.map(convertComplaintItem);
     } else if (isRepairTab.value) {
@@ -2023,7 +1902,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 watch(activeName, (newVal) => {
-  tagFilters.value = {};                     // 清空标签筛选
+  tagFilters.value = {};
   gridColumns.value = getColumnsByStatus(newVal);
   if (gridApi && gridApi.xGrid) {
     gridApi.xGrid.refreshColumn();
@@ -2181,7 +2060,6 @@ function handleOpenComplaintDetail(row) {
   complaintDetailDrawerRef.value?.open();
 }
 
-// 在 <script setup> 中添加
 function getTagDisplayText(field, id) {
   if (id == null) return '';
   let options = [];
@@ -2204,11 +2082,10 @@ function getTagDisplayText(field, id) {
     case 'consumableId':
       options = loadedOptions.consumable;
       break;
-    // 可根据需要补充其他字段
     default:
-      return id; // 无映射时返回ID
+      return id;
   }
-  const found = options.find(opt => opt.value == id); // 宽松比较
+  const found = options.find(opt => opt.value === id);
   return found ? found.label : id;
 }
 
@@ -2219,17 +2096,14 @@ const toggleChart = () => {
   showChart.value = !showChart.value;
 };
 
-// 启动执行（保洁待执行）
 const handleStartExecute = async (row) => {
   try {
-    // 弹出确认框
     await ElMessageBox.confirm('确定启动执行该保洁计划吗？', '提示', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'info',
     });
 
-    // 从已加载的选项中找到“进行中”对应的状态ID
     const targetStatusId = loadedOptions.planStatus.find(
       (item) => item.label === '进行中'
     )?.value;
@@ -2238,16 +2112,14 @@ const handleStartExecute = async (row) => {
       return;
     }
 
-    // 调用更新接口，只传递必要字段
     await updateToiletCleaningTask({
       id: row.id,
       planStatusId: targetStatusId,
     });
 
     ElMessage.success('启动成功');
-    handleRefresh(); // 刷新列表数据
+    handleRefresh();
   } catch (error) {
-    // 用户取消确认时不处理
     if (error !== 'cancel') {
       console.error('启动执行失败', error);
       ElMessage.error(`启动执行失败：${error.message || '未知错误'}`);
@@ -2304,178 +2176,74 @@ async function loadOptions() {
     loadedOptions.planStatus = extractData(planStatusOptionsRes);
     loadedOptions.consumable = extractData(consumableOptionsRes);
 
-    // 构建状态映射
     optionMaps.planStatusMap = new Map(
       loadedOptions.planStatus.map(item => [item.value, item.label])
     );
 
-    // 获取处置状态选项
     loadedOptions.handleStatus = await fetchHandleStatusOptions();
 
     await toiletEditFormApi.updateSchema([
-      {
-        fieldName: 'areaCode',
-        componentProps: {options: loadedOptions.area},
-      },
-      {
-        fieldName: 'operationStatusId',
-        componentProps: {options: loadedOptions.operationStatus},
-      },
-      {
-        fieldName: 'managerId',
-        componentProps: {options: loadedOptions.user},
-      },
-      {
-        fieldName: 'cleanerIds',
-        componentProps: {options: loadedOptions.user},
-      },
+      { fieldName: 'areaCode', componentProps: { options: loadedOptions.area } },
+      { fieldName: 'operationStatusId', componentProps: { options: loadedOptions.operationStatus } },
+      { fieldName: 'managerId', componentProps: { options: loadedOptions.user } },
+      { fieldName: 'cleanerIds', componentProps: { options: loadedOptions.user } },
     ]);
 
     await complaintEditFormApi.updateSchema([
-      {
-        fieldName: 'toiletId',
-        componentProps: {options: loadedOptions.toilet},
-      },
-      {
-        fieldName: 'complaintTypeId',
-        componentProps: {options: loadedOptions.complaintType},
-      },
-      {
-        fieldName: 'handlerId',
-        componentProps: {options: loadedOptions.user},
-      },
+      { fieldName: 'toiletId', componentProps: { options: loadedOptions.toilet } },
+      { fieldName: 'complaintTypeId', componentProps: { options: loadedOptions.complaintType } },
+      { fieldName: 'handlerId', componentProps: { options: loadedOptions.user } },
     ]);
 
     await repairEditFormApi.updateSchema([
-      {
-        fieldName: 'toiletId',
-        componentProps: {options: loadedOptions.toilet},
-      },
-      {
-        fieldName: 'facilityId',
-        componentProps: {options: loadedOptions.facility},
-      },
-      {
-        fieldName: 'reportBy',
-        componentProps: {options: loadedOptions.user},
-      },
-      {
-        fieldName: 'repairBy',
-        componentProps: {options: loadedOptions.user},
-      },
+      { fieldName: 'toiletId', componentProps: { options: loadedOptions.toilet } },
+      { fieldName: 'facilityId', componentProps: { options: loadedOptions.facility } },
+      { fieldName: 'reportBy', componentProps: { options: loadedOptions.user } },
+      { fieldName: 'repairBy', componentProps: { options: loadedOptions.user } },
     ]);
 
     await cleaningEditFormApi.updateSchema([
-      {
-        fieldName: 'toiletId',
-        componentProps: {options: loadedOptions.toilet},
-      },
-      {
-        fieldName: 'cleanerIds',
-        componentProps: {options: loadedOptions.user, multiple: true},
-      },
-      {
-        fieldName: 'planStatusId',
-        componentProps: {options: loadedOptions.planStatus},
-      },
+      { fieldName: 'toiletId', componentProps: { options: loadedOptions.toilet } },
+      { fieldName: 'cleanerIds', componentProps: { options: loadedOptions.user, multiple: true } },
+      { fieldName: 'planStatusId', componentProps: { options: loadedOptions.planStatus } },
     ]);
 
     await consumableEditFormApi.updateSchema([
-      {
-        fieldName: 'toiletId',
-        componentProps: {options: loadedOptions.toilet},
-      },
-      {
-        fieldName: 'consumableId',
-        componentProps: {options: loadedOptions.consumable},
-      },
-      {
-        fieldName: 'managerId',
-        componentProps: {options: loadedOptions.user},
-      },
+      { fieldName: 'toiletId', componentProps: { options: loadedOptions.toilet } },
+      { fieldName: 'consumableId', componentProps: { options: loadedOptions.consumable } },
+      { fieldName: 'managerId', componentProps: { options: loadedOptions.user } },
     ]);
 
     await toiletSearchFormApi.updateSchema([
-      {
-        fieldName: 'areaCode',
-        componentProps: {options: loadedOptions.area},
-      },
-      {
-        fieldName: 'operationStatusId',
-        componentProps: {options: loadedOptions.operationStatus},
-      },
-      {
-        fieldName: 'managerId',
-        componentProps: {options: loadedOptions.user},
-      },
-      {
-        fieldName: 'cleanerIds',
-        componentProps: {options: loadedOptions.user},
-      },
+      { fieldName: 'areaCode', componentProps: { options: loadedOptions.area } },
+      { fieldName: 'operationStatusId', componentProps: { options: loadedOptions.operationStatus } },
+      { fieldName: 'managerId', componentProps: { options: loadedOptions.user } },
+      { fieldName: 'cleanerIds', componentProps: { options: loadedOptions.user } },
     ]);
 
     await complaintSearchFormApi.updateSchema([
-      {
-        fieldName: 'toiletId',
-        componentProps: {options: loadedOptions.toilet},
-      },
-      {
-        fieldName: 'complaintTypeId',
-        componentProps: {options: loadedOptions.complaintType},
-      },
-      {
-        fieldName: 'handlerId',
-        componentProps: {options: loadedOptions.user},
-      },
+      { fieldName: 'toiletId', componentProps: { options: loadedOptions.toilet } },
+      { fieldName: 'complaintTypeId', componentProps: { options: loadedOptions.complaintType } },
+      { fieldName: 'handlerId', componentProps: { options: loadedOptions.user } },
     ]);
 
     await repairSearchFormApi.updateSchema([
-      {
-        fieldName: 'toiletId',
-        componentProps: {options: loadedOptions.toilet},
-      },
-      {
-        fieldName: 'facilityId',
-        componentProps: {options: loadedOptions.facility},
-      },
-      {
-        fieldName: 'reportBy',
-        componentProps: {options: loadedOptions.user},
-      },
-      {
-        fieldName: 'repairBy',
-        componentProps: {options: loadedOptions.user},
-      },
+      { fieldName: 'toiletId', componentProps: { options: loadedOptions.toilet } },
+      { fieldName: 'facilityId', componentProps: { options: loadedOptions.facility } },
+      { fieldName: 'reportBy', componentProps: { options: loadedOptions.user } },
+      { fieldName: 'repairBy', componentProps: { options: loadedOptions.user } },
     ]);
 
     await cleaningSearchFormApi.updateSchema([
-      {
-        fieldName: 'toiletId',
-        componentProps: {options: loadedOptions.toilet},
-      },
-      {
-        fieldName: 'cleanerIds',
-        componentProps: {options: loadedOptions.user, multiple: true},
-      },
-      {
-        fieldName: 'planStatusId',
-        componentProps: {options: loadedOptions.planStatus},
-      },
+      { fieldName: 'toiletId', componentProps: { options: loadedOptions.toilet } },
+      { fieldName: 'cleanerIds', componentProps: { options: loadedOptions.user, multiple: true } },
+      { fieldName: 'planStatusId', componentProps: { options: loadedOptions.planStatus } },
     ]);
 
     await consumableSearchFormApi.updateSchema([
-      {
-        fieldName: 'toiletId',
-        componentProps: {options: loadedOptions.toilet},
-      },
-      {
-        fieldName: 'consumableId',
-        componentProps: {options: loadedOptions.consumable},
-      },
-      {
-        fieldName: 'managerId',
-        componentProps: {options: loadedOptions.user},
-      },
+      { fieldName: 'toiletId', componentProps: { options: loadedOptions.toilet } },
+      { fieldName: 'consumableId', componentProps: { options: loadedOptions.consumable } },
+      { fieldName: 'managerId', componentProps: { options: loadedOptions.user } },
     ]);
 
     console.log('所有选项加载成功');
@@ -2497,7 +2265,6 @@ onMounted(async () => {
     <!-- 新增/编辑抽屉 -->
     <EditDrawer :title="getTitle">
       <component :is="currentFormComponent" ref="editFormRef"/>
-      <!-- 图片上传区域：投诉、保洁、维修相关标签页时显示 -->
       <div
         v-if="isCompletedTab || isCleaningTab || isRepairTab"
         class="photo-upload-section"
@@ -2522,12 +2289,7 @@ onMounted(async () => {
                 :src="url"
                 :preview-src-list="imageList"
                 fit="cover"
-                style="
-                  width: 80px;
-                  height: 80px;
-                  cursor: pointer;
-                  border-radius: 4px;
-                "
+                style="width: 80px; height: 80px; cursor: pointer; border-radius: 4px"
                 :preview-teleported="true"
               />
               <span class="delete-btn" @click="handleImageDelete(url)">✕</span>
@@ -2549,7 +2311,6 @@ onMounted(async () => {
 
     <SupplyDrawer title="补充登记">
       <SupplyForm/>
-      <!-- 图片上传区域 -->
       <div class="photo-upload-section">
         <div class="photo-manager">
           <div class="upload-area">
@@ -2571,12 +2332,7 @@ onMounted(async () => {
                 :src="url"
                 :preview-src-list="supplyImageList"
                 fit="cover"
-                style="
-              width: 80px;
-              height: 80px;
-              cursor: pointer;
-              border-radius: 4px;
-            "
+                style="width: 80px; height: 80px; cursor: pointer; border-radius: 4px"
                 :preview-teleported="true"
               />
               <span class="delete-btn" @click="handleSupplyImageDelete(url)">✕</span>
@@ -2598,7 +2354,6 @@ onMounted(async () => {
     <!-- 独立处置抽屉 -->
     <DisposeDrawer title="处置">
       <DisposeForm/>
-      <!-- 图片上传区域 -->
       <div class="photo-upload-section">
         <div class="photo-manager">
           <div class="upload-area">
@@ -2620,12 +2375,7 @@ onMounted(async () => {
                 :src="url"
                 :preview-src-list="disposeImageList"
                 fit="cover"
-                style="
-                  width: 80px;
-                  height: 80px;
-                  cursor: pointer;
-                  border-radius: 4px;
-                "
+                style="width: 80px; height: 80px; cursor: pointer; border-radius: 4px"
                 :preview-teleported="true"
               />
               <span class="delete-btn" @click="handleDisposeImageDelete(url)">✕</span>
@@ -2700,7 +2450,6 @@ onMounted(async () => {
           </el-tabs>
         </div>
 
-        <!-- 筛选标签区域 -->
         <ElTag
           v-for="(value, field) in tagFilters"
           :key="field"
@@ -2715,14 +2464,8 @@ onMounted(async () => {
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <!-- 通用按钮 -->
-          <IconButton
-            content="导出"
-            icon-name="download"
-            @click="handleExport"
-          />
+          <IconButton content="导出" icon-name="download" @click="handleExport"/>
 
-          <!-- 保洁待执行专用按钮 -->
           <template v-if="isCleaningTab">
             <IconButton content="新增" icon-name="Plus" @click="handleCreate"/>
             <IconButton
@@ -2733,7 +2476,6 @@ onMounted(async () => {
             />
           </template>
 
-          <!-- 物资待补充专用按钮 -->
           <template v-if="isConsumableTab">
             <IconButton content="新增" icon-name="Plus" @click="handleCreate"/>
             <IconButton
@@ -2744,7 +2486,6 @@ onMounted(async () => {
             />
           </template>
 
-          <!-- 投诉待处置专用按钮 -->
           <template v-if="isComplaintTab">
             <IconButton content="新增" icon-name="Plus" @click="handleCreate"/>
             <IconButton
@@ -2761,7 +2502,6 @@ onMounted(async () => {
             />
           </template>
 
-          <!-- 设施待维修专用按钮 -->
           <template v-if="isRepairTab">
             <IconButton content="新增" icon-name="Plus" @click="handleCreate"/>
             <IconButton
@@ -2772,7 +2512,6 @@ onMounted(async () => {
             />
           </template>
 
-          <!-- 通用：批量删除、搜索、展开/收缩、全屏、图表切换 -->
           <IconButton
             content="批量删除"
             icon-name="delete"
@@ -2780,21 +2519,13 @@ onMounted(async () => {
             :disabled="isEmpty(checkedIds)"
             @click="handleDeleteBatch"
           />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
-          />
+          <IconButton content="搜索" icon-name="search" @click="handleSerachShow"/>
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
             :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
             @click="arrowChange"
           />
-          <IconButton
-            content="全屏"
-            icon-name="FullScreen"
-            @click="handleFullShow"
-          />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
           <IconButton
             :content="showChart ? '隐藏图表' : '显示图表'"
             icon-name="PieChart"
@@ -2803,7 +2534,7 @@ onMounted(async () => {
         </div>
       </template>
 
-      <!-- 表格插槽：所有可点击字段改为筛选标签点击，详情仍通过按钮打开 -->
+      <!-- 表格插槽 -->
       <template #name="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary">
           {{ row.name || row.toiletName }}
@@ -2826,8 +2557,7 @@ onMounted(async () => {
         </el-text>
       </template>
       <template #status="{ row }">
-        <el-text @click="handleFilterTagClick('operationStatusId', row.operationStatusId)"
-                 type="primary">
+        <el-text @click="handleFilterTagClick('operationStatusId', row.operationStatusId)" type="primary">
           {{ row.operationStatusName }}
         </el-text>
       </template>
@@ -2837,8 +2567,7 @@ onMounted(async () => {
         </el-text>
       </template>
       <template #complaintType="{ row }">
-        <el-text @click="handleFilterTagClick('complaintTypeId', row.complaintTypeId)"
-                 type="primary">
+        <el-text @click="handleFilterTagClick('complaintTypeId', row.complaintTypeId)" type="primary">
           {{ row.complaintTypeName }}
         </el-text>
       </template>
@@ -2853,7 +2582,6 @@ onMounted(async () => {
         </el-text>
       </template>
 
-      <!-- 现场照片列（预览） -->
       <template #photoUrl="{ row }">
         <ElImage
           v-if="row.photoUrl"
@@ -2866,7 +2594,6 @@ onMounted(async () => {
         <span v-else>-</span>
       </template>
 
-      <!-- 佐证材料列（预览） -->
       <template #proofUrl="{ row }">
         <ElImage
           v-if="row.proofUrl"
@@ -2879,7 +2606,6 @@ onMounted(async () => {
         <span v-else>-</span>
       </template>
 
-      <!-- 整改照片列（预览） -->
       <template #reformPhoto="{ row }">
         <ElImage
           v-if="row.reformPhoto"
@@ -2898,10 +2624,8 @@ onMounted(async () => {
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <!-- 详情按钮始终显示 -->
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
 
-          <!-- 全部标签页：任务跟踪 -->
           <IconButton
             v-if="activeName === '全部'"
             content="任务跟踪"
@@ -2909,65 +2633,25 @@ onMounted(async () => {
             @click="handleTaskTrack(row)"
           />
 
-          <!-- 保洁待执行：编辑、启动执行 -->
           <template v-if="isCleaningTab">
-            <IconButton
-              content="编辑"
-              icon-name="edit"
-              @click="handleEdit(row)"
-            />
-            <IconButton
-              content="启动执行"
-              icon-name="VideoPlay"
-              @click="handleStartExecute(row)"
-            />
+            <IconButton content="编辑" icon-name="edit" @click="handleEdit(row)"/>
+            <IconButton content="启动执行" icon-name="VideoPlay" @click="handleStartExecute(row)"/>
           </template>
 
-          <!-- 物资待补充：补充登记 -->
           <template v-if="isConsumableTab">
-            <IconButton
-              content="编辑"
-              icon-name="edit"
-              @click="handleEdit(row)"
-            />
-            <IconButton
-              content="补充登记"
-              icon-name="EditPen"
-              @click="supplyDrawerApi.setData(row); supplyDrawerApi.open()"
-            />
+            <IconButton content="编辑" icon-name="edit" @click="handleEdit(row)"/>
+            <IconButton content="补充登记" icon-name="EditPen" @click="supplyDrawerApi.setData(row); supplyDrawerApi.open()"/>
           </template>
 
-          <!-- 投诉待处置：处置、反馈 -->
           <template v-if="isComplaintTab">
-            <IconButton
-              content="编辑"
-              icon-name="edit"
-              @click="handleEdit(row)"
-            />
-            <IconButton
-              content="处置"
-              icon-name="Tools"
-              @click="disposeDrawerApi.setData(row); disposeDrawerApi.open()"
-            />
-            <IconButton
-              content="反馈"
-              icon-name="ChatDotRound"
-              @click="feedbackDrawerApi.setData(row); feedbackDrawerApi.open()"
-            />
+            <IconButton content="编辑" icon-name="edit" @click="handleEdit(row)"/>
+            <IconButton content="处置" icon-name="Tools" @click="disposeDrawerApi.setData(row); disposeDrawerApi.open()"/>
+            <IconButton content="反馈" icon-name="ChatDotRound" @click="feedbackDrawerApi.setData(row); feedbackDrawerApi.open()"/>
           </template>
 
-          <!-- 设施待维修：跟踪、验收 -->
           <template v-if="isRepairTab">
-            <IconButton
-              content="编辑"
-              icon-name="edit"
-              @click="handleEdit(row)"
-            />
-            <IconButton
-              content="跟踪"
-              icon-name="Timer"
-              @click="communicationDrawerApi.open"
-            />
+            <IconButton content="编辑" icon-name="edit" @click="handleEdit(row)"/>
+            <IconButton content="跟踪" icon-name="Timer" @click="communicationDrawerApi.open"/>
             <IconButton
               content="验收"
               icon-name="Finished"
@@ -2976,7 +2660,6 @@ onMounted(async () => {
             />
           </template>
 
-          <!-- 已完成：复盘 -->
           <IconButton
             v-if="isCompletedTab"
             content="复盘"
@@ -2984,31 +2667,19 @@ onMounted(async () => {
             @click="reviewPostDrawerApi.setData(row).open()"
           />
 
-          <!-- 删除按钮始终显示 -->
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
-          />
+          <IconButton content="删除" icon-name="delete" color="#F56C6C" @click="handleDelete(row)"/>
         </div>
       </template>
 
       <template #bottom>
-        <div
-          class="common-total"
-          @click="dataObj.totalShow = !dataObj.totalShow"
-        >
+        <div class="common-total" @click="dataObj.totalShow = !dataObj.totalShow">
           <el-icon>
             <ArrowDown v-if="!dataObj.totalShow"/>
             <ArrowUp v-else/>
           </el-icon>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <div
-            v-if="dataObj.totalShow && showChart && activeName !== '全部'"
-            class="bottom-chart-wrapper"
-          >
+          <div v-if="dataObj.totalShow && showChart && activeName !== '全部'" class="bottom-chart-wrapper">
             <Chart2 :active-name="activeName" :data-list="dataObj.list"/>
           </div>
         </div>
@@ -3018,7 +2689,6 @@ onMounted(async () => {
 </template>
 
 <style scoped lang="scss">
-/* 强制显示底部容器，覆盖全局样式的 display: none */
 :deep(.vxe-grid--bottom-wrapper) {
   display: block !important;
 }
@@ -3035,11 +2705,9 @@ onMounted(async () => {
 
 .upload-area {
   margin-bottom: 16px;
-
   input[type='file'] {
     margin-right: 8px;
   }
-
   .upload-tip {
     font-size: 12px;
     color: #999;
@@ -3054,7 +2722,6 @@ onMounted(async () => {
 
 .photo-item {
   position: relative;
-
   .delete-btn {
     position: absolute;
     top: -6px;
@@ -3069,7 +2736,6 @@ onMounted(async () => {
     cursor: pointer;
     background: rgb(0 0 0 / 60%);
     border-radius: 50%;
-
     &:hover {
       background: #f56c6c;
     }

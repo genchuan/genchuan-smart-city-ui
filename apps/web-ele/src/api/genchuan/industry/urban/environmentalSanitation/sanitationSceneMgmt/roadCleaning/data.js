@@ -117,32 +117,32 @@ export function batchProcessCleaningProblem(data) {
 }
 
 
-// 1.3.1 全部视图
+// 全状态统计
 export function getRoadCleaningChartAll() {
   return requestClient.get('/envirhealth/road-cleaning/chart/all');
 }
 
-// 1.3.2 清扫待执行
+// 清扫待执行统计
 export function getRoadCleaningChartPending() {
   return requestClient.get('/envirhealth/road-cleaning/chart/pending');
 }
 
-// 1.3.3 作业进行中
+// 作业进行中统计
 export function getRoadCleaningChartExecuting() {
   return requestClient.get('/envirhealth/road-cleaning/chart/executing');
 }
 
-// 1.3.4 问题待处置（注意接口路径是 cleaning-problem）
+// 问题待处置统计
 export function getCleaningProblemChartPending() {
   return requestClient.get('/envirhealth/cleaning-problem/chart/pending');
 }
 
-// 1.3.5 质量待核查
+// 质量待核查统计
 export function getRoadCleaningChartCheck() {
   return requestClient.get('/envirhealth/road-cleaning/chart/check');
 }
 
-// 1.3.6 已完成
+// 已完成统计
 export function getRoadCleaningChartCompleted() {
   return requestClient.get('/envirhealth/road-cleaning/chart/completed');
 }
@@ -153,6 +153,15 @@ export function getRoadCleaningChartCompleted() {
 export function uploadImageBatch(formData) {
   return requestClient.post('/envirhealth/file/upload-multiple-images', formData, {
     headers: { 'Content-Type': undefined }
+  });
+}
+
+/**
+ * 通用删除图片
+ */
+export function deleteFile(fileUrl) {
+  return requestClient.delete('/envirhealth/file/delete-file', {
+    params: { fileUrl },
   });
 }
 

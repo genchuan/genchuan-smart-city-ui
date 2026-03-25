@@ -166,56 +166,80 @@ const mockConfig = {
   <div class="chart2-box">
     <!-- 待排班 -->
     <template v-if="activeName === '待排班'">
-      <div class="box-left">
-        <Indicator class="left-card" v-for="item in mockConfig['待排班'].cards" :key="item.title" v-bind="item" />
+      <div style="flex-direction: column; width: 100%;">
+        <div style="flex: 1; display: flex; width: 100%;">
+          <div class="box-left-m">
+            <Indicator class="left-card" v-for="item in mockConfig['待排班'].cards" :key="item.title" v-bind="item" />
+          </div>
+          <Pie style="flex:1" :title-text="mockConfig['待排班'].pies[0].title" :data="mockConfig['待排班'].pies[0].data" />
+          <Pie style="flex:1" :title-text="mockConfig['待排班'].pies[1].title" :data="mockConfig['待排班'].pies[1].data" />
+          <Pie style="flex:1" :title-text="mockConfig['待排班'].pies[2].title" :data="mockConfig['待排班'].pies[2].data" />
+        </div>
+        <div style="flex: 1; display: flex; width: 100%;">
+          <Bar style="flex:1" :title="mockConfig['待排班'].bars[0].title" :x-data="mockConfig['待排班'].bars[0].x" :series-data="[{ name: mockConfig['待排班'].bars[0].name, data: mockConfig['待排班'].bars[0].series }]" />
+          <Bar style="flex:1" :title="mockConfig['待排班'].bars[1].title" :x-data="mockConfig['待排班'].bars[1].x" :series-data="[{ name: mockConfig['待排班'].bars[1].name, data: mockConfig['待排班'].bars[1].series }]" />
+          <LineChart style="flex:1" :title="mockConfig['待排班'].lines[0].title" :x-data="mockConfig['待排班'].lines[0].x" :series-data="[{ name: mockConfig['待排班'].lines[0].name, data: mockConfig['待排班'].lines[0].series }]" :y-name="mockConfig['待排班'].lines[0].yName" :smooth="true" />
+        </div>
       </div>
-      <Pie style="flex:1" :title-text="mockConfig['待排班'].pies[0].title" :data="mockConfig['待排班'].pies[0].data" />
-      <Pie style="flex:1" :title-text="mockConfig['待排班'].pies[1].title" :data="mockConfig['待排班'].pies[1].data" />
-      <Pie style="flex:1" :title-text="mockConfig['待排班'].pies[2].title" :data="mockConfig['待排班'].pies[2].data" />
-      <Bar style="flex:1" :title="mockConfig['待排班'].bars[0].title" :x-data="mockConfig['待排班'].bars[0].x" :series-data="[{ name: mockConfig['待排班'].bars[0].name, data: mockConfig['待排班'].bars[0].series }]" />
-      <Bar style="flex:1" :title="mockConfig['待排班'].bars[1].title" :x-data="mockConfig['待排班'].bars[1].x" :series-data="[{ name: mockConfig['待排班'].bars[1].name, data: mockConfig['待排班'].bars[1].series }]" />
-      <LineChart style="flex:1" :title="mockConfig['待排班'].lines[0].title" :x-data="mockConfig['待排班'].lines[0].x" :series-data="[{ name: mockConfig['待排班'].lines[0].name, data: mockConfig['待排班'].lines[0].series }]" :y-name="mockConfig['待排班'].lines[0].yName" :smooth="true" />
     </template>
 
     <!-- 待考勤 -->
     <template v-else-if="activeName === '待考勤'">
-      <div class="box-left">
-        <Indicator class="left-card" v-for="item in mockConfig['待考勤'].cards" :key="item.title" v-bind="item" />
+      <div style="flex-direction: column; width: 100%;">
+        <div style="flex: 1; display: flex; width: 100%;">
+          <div class="box-left-m">
+            <Indicator class="left-card" v-for="item in mockConfig['待考勤'].cards" :key="item.title" v-bind="item" />
+          </div>
+          <Pie style="flex:1" :title-text="mockConfig['待考勤'].pies[0].title" :data="mockConfig['待考勤'].pies[0].data" />
+          <Pie style="flex:1" :title-text="mockConfig['待考勤'].pies[1].title" :data="mockConfig['待考勤'].pies[1].data" />
+          <Pie style="flex:1" :title-text="mockConfig['待考勤'].pies[2].title" :data="mockConfig['待考勤'].pies[2].data" />
+        </div>
+        <div style="flex: 1; display: flex; width: 100%;">
+          <Bar style="flex:1" :title="mockConfig['待考勤'].bars[0].title" :x-data="mockConfig['待考勤'].bars[0].x" :series-data="[{ name: mockConfig['待考勤'].bars[0].name, data: mockConfig['待考勤'].bars[0].series }]" />
+          <Bar style="flex:1" :title="mockConfig['待考勤'].bars[1].title" :x-data="mockConfig['待考勤'].bars[1].x" :series-data="[{ name: mockConfig['待考勤'].bars[1].name, data: mockConfig['待考勤'].bars[1].series }]" />
+          <LineChart style="flex:1" :title="mockConfig['待考勤'].lines[0].title" :x-data="mockConfig['待考勤'].lines[0].x" :series-data="[{ name: mockConfig['待考勤'].lines[0].name, data: mockConfig['待考勤'].lines[0].series }]" :y-name="mockConfig['待考勤'].lines[0].yName" :smooth="true" />
+        </div>
       </div>
-      <Pie style="flex:1" :title-text="mockConfig['待考勤'].pies[0].title" :data="mockConfig['待考勤'].pies[0].data" />
-      <Pie style="flex:1" :title-text="mockConfig['待考勤'].pies[1].title" :data="mockConfig['待考勤'].pies[1].data" />
-      <Pie style="flex:1" :title-text="mockConfig['待考勤'].pies[2].title" :data="mockConfig['待考勤'].pies[2].data" />
-      <Bar style="flex:1" :title="mockConfig['待考勤'].bars[0].title" :x-data="mockConfig['待考勤'].bars[0].x" :series-data="[{ name: mockConfig['待考勤'].bars[0].name, data: mockConfig['待考勤'].bars[0].series }]" />
-      <Bar style="flex:1" :title="mockConfig['待考勤'].bars[1].title" :x-data="mockConfig['待考勤'].bars[1].x" :series-data="[{ name: mockConfig['待考勤'].bars[1].name, data: mockConfig['待考勤'].bars[1].series }]" />
-      <LineChart style="flex:1" :title="mockConfig['待考勤'].lines[0].title" :x-data="mockConfig['待考勤'].lines[0].x" :series-data="[{ name: mockConfig['待考勤'].lines[0].name, data: mockConfig['待考勤'].lines[0].series }]" :y-name="mockConfig['待考勤'].lines[0].yName" :smooth="true" />
     </template>
 
     <!-- 考核待审核 -->
     <template v-else-if="activeName === '考核待审核'">
-      <div class="box-left">
-        <Indicator class="left-card" v-for="item in mockConfig['考核待审核'].cards" :key="item.title" v-bind="item" />
+      <div style="flex-direction: column; width: 100%;">
+        <div style="flex: 1; display: flex; width: 100%;">
+          <div class="box-left">
+            <Indicator class="left-card" v-for="item in mockConfig['考核待审核'].cards" :key="item.title" v-bind="item" />
+          </div>
+          <Pie style="flex:1" :title-text="mockConfig['考核待审核'].pies[0].title" :data="mockConfig['考核待审核'].pies[0].data" />
+          <Pie style="flex:1" :title-text="mockConfig['考核待审核'].pies[1].title" :data="mockConfig['考核待审核'].pies[1].data" />
+          <Pie style="flex:1" :title-text="mockConfig['考核待审核'].pies[2].title" :data="mockConfig['考核待审核'].pies[2].data" />
+        </div>
+        <div style="flex: 1; display: flex; width: 100%;">
+          <Bar style="flex:1" :title="mockConfig['考核待审核'].bars[0].title" :x-data="mockConfig['考核待审核'].bars[0].x" :series-data="[{ name: mockConfig['考核待审核'].bars[0].name, data: mockConfig['考核待审核'].bars[0].series }]" />
+          <Bar style="flex:1" :title="mockConfig['考核待审核'].bars[1].title" :x-data="mockConfig['考核待审核'].bars[1].x" :series-data="[{ name: mockConfig['考核待审核'].bars[1].name, data: mockConfig['考核待审核'].bars[1].series }]" />
+          <LineChart style="flex:1" :title="mockConfig['考核待审核'].lines[0].title" :x-data="mockConfig['考核待审核'].lines[0].x" :series-data="[{ name: mockConfig['考核待审核'].lines[0].name, data: mockConfig['考核待审核'].lines[0].series }]" :y-name="mockConfig['考核待审核'].lines[0].yName" :smooth="true" />
+          <LineChart style="flex:1" :title="mockConfig['考核待审核'].lines[1].title" :x-data="mockConfig['考核待审核'].lines[1].x" :series-data="[{ name: mockConfig['考核待审核'].lines[1].name, data: mockConfig['考核待审核'].lines[1].series }]" :y-name="mockConfig['考核待审核'].lines[1].yName" :smooth="true" />
+        </div>
       </div>
-      <Pie style="flex:1" :title-text="mockConfig['考核待审核'].pies[0].title" :data="mockConfig['考核待审核'].pies[0].data" />
-      <Pie style="flex:1" :title-text="mockConfig['考核待审核'].pies[1].title" :data="mockConfig['考核待审核'].pies[1].data" />
-      <Pie style="flex:1" :title-text="mockConfig['考核待审核'].pies[2].title" :data="mockConfig['考核待审核'].pies[2].data" />
-      <Bar style="flex:1" :title="mockConfig['考核待审核'].bars[0].title" :x-data="mockConfig['考核待审核'].bars[0].x" :series-data="[{ name: mockConfig['考核待审核'].bars[0].name, data: mockConfig['考核待审核'].bars[0].series }]" />
-      <Bar style="flex:1" :title="mockConfig['考核待审核'].bars[1].title" :x-data="mockConfig['考核待审核'].bars[1].x" :series-data="[{ name: mockConfig['考核待审核'].bars[1].name, data: mockConfig['考核待审核'].bars[1].series }]" />
-      <LineChart style="flex:1" :title="mockConfig['考核待审核'].lines[0].title" :x-data="mockConfig['考核待审核'].lines[0].x" :series-data="[{ name: mockConfig['考核待审核'].lines[0].name, data: mockConfig['考核待审核'].lines[0].series }]" :y-name="mockConfig['考核待审核'].lines[0].yName" :smooth="true" />
-      <LineChart style="flex:1" :title="mockConfig['考核待审核'].lines[1].title" :x-data="mockConfig['考核待审核'].lines[1].x" :series-data="[{ name: mockConfig['考核待审核'].lines[1].name, data: mockConfig['考核待审核'].lines[1].series }]" :y-name="mockConfig['考核待审核'].lines[1].yName" :smooth="true" />
     </template>
 
     <!-- 已完成 -->
     <template v-else-if="activeName === '已完成'">
-      <div class="box-left">
-        <Indicator class="left-card" v-for="item in mockConfig['已完成'].cards" :key="item.title" v-bind="item" />
+      <div style="flex-direction: column; width: 100%;">
+        <div style="flex: 1; display: flex; width: 100%;">
+          <div class="box-left-m">
+            <Indicator class="left-card" v-for="item in mockConfig['已完成'].cards" :key="item.title" v-bind="item" />
+          </div>
+          <Pie style="flex:1" :title-text="mockConfig['已完成'].pies[0].title" :data="mockConfig['已完成'].pies[0].data" />
+          <Pie style="flex:1" :title-text="mockConfig['已完成'].pies[1].title" :data="mockConfig['已完成'].pies[1].data" />
+          <Pie style="flex:1" :title-text="mockConfig['已完成'].pies[2].title" :data="mockConfig['已完成'].pies[2].data" />
+        </div>
+        <div style="flex: 1; display: flex; width: 100%;">
+          <Bar style="flex:1" :title="mockConfig['已完成'].bars[0].title" :x-data="mockConfig['已完成'].bars[0].x" :series-data="[{ name: mockConfig['已完成'].bars[0].name, data: mockConfig['已完成'].bars[0].series }]" />
+          <Bar style="flex:1" :title="mockConfig['已完成'].bars[1].title" :x-data="mockConfig['已完成'].bars[1].x" :series-data="[{ name: mockConfig['已完成'].bars[1].name, data: mockConfig['已完成'].bars[1].series }]" />
+          <LineChart style="flex:1" :title="mockConfig['已完成'].lines[0].title" :x-data="mockConfig['已完成'].lines[0].x" :series-data="[{ name: mockConfig['已完成'].lines[0].name, data: mockConfig['已完成'].lines[0].series }]" :y-name="mockConfig['已完成'].lines[0].yName" :smooth="true" />
+          <LineChart style="flex:1" :title="mockConfig['已完成'].lines[1].title" :x-data="mockConfig['已完成'].lines[1].x" :series-data="[{ name: mockConfig['已完成'].lines[1].name, data: mockConfig['已完成'].lines[1].series }]" :y-name="mockConfig['已完成'].lines[1].yName" :smooth="true" />
+        </div>
       </div>
-      <Pie style="flex:1" :title-text="mockConfig['已完成'].pies[0].title" :data="mockConfig['已完成'].pies[0].data" />
-      <Pie style="flex:1" :title-text="mockConfig['已完成'].pies[1].title" :data="mockConfig['已完成'].pies[1].data" />
-      <Pie style="flex:1" :title-text="mockConfig['已完成'].pies[2].title" :data="mockConfig['已完成'].pies[2].data" />
-      <Bar style="flex:1" :title="mockConfig['已完成'].bars[0].title" :x-data="mockConfig['已完成'].bars[0].x" :series-data="[{ name: mockConfig['已完成'].bars[0].name, data: mockConfig['已完成'].bars[0].series }]" />
-      <Bar style="flex:1" :title="mockConfig['已完成'].bars[1].title" :x-data="mockConfig['已完成'].bars[1].x" :series-data="[{ name: mockConfig['已完成'].bars[1].name, data: mockConfig['已完成'].bars[1].series }]" />
-      <LineChart style="flex:1" :title="mockConfig['已完成'].lines[0].title" :x-data="mockConfig['已完成'].lines[0].x" :series-data="[{ name: mockConfig['已完成'].lines[0].name, data: mockConfig['已完成'].lines[0].series }]" :y-name="mockConfig['已完成'].lines[0].yName" :smooth="true" />
-      <LineChart style="flex:1" :title="mockConfig['已完成'].lines[1].title" :x-data="mockConfig['已完成'].lines[1].x" :series-data="[{ name: mockConfig['已完成'].lines[1].name, data: mockConfig['已完成'].lines[1].series }]" :y-name="mockConfig['已完成'].lines[1].yName" :smooth="true" />
     </template>
   </div>
 </template>
@@ -227,6 +251,18 @@ const mockConfig = {
   gap: 12px;
   margin-bottom: 20px;
   width: 100%;
+
+  .box-left-m {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    min-width: 360px;
+    max-width: 400px;
+    margin-top: 10px !important;
+
+    .left-card {
+      height: 150px !important;
+    }
+  }
 
   .box-left {
     display: grid !important;

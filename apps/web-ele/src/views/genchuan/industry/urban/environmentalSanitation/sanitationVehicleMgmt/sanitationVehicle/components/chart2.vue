@@ -225,15 +225,21 @@ const mockConfig = {
 
     <!-- 已完成 -->
     <template v-else-if="activeName === '已完成'">
-      <div class="box-left-m">
-        <Indicator class="left-card" v-for="item in mockConfig['已完成'].cards" :key="item.title" v-bind="item" />
+      <div style="flex-direction: column; width: 100%;">
+        <div style="flex: 1; display: flex; width: 100%;">
+          <div class="box-left-m">
+            <Indicator class="left-card" v-for="item in mockConfig['已完成'].cards" :key="item.title" v-bind="item" />
+          </div>
+          <Pie style="flex:1" :title-text="mockConfig['已完成'].pies[0].title" :data="mockConfig['已完成'].pies[0].data" />
+          <Pie style="flex:1" :title-text="mockConfig['已完成'].pies[1].title" :data="mockConfig['已完成'].pies[1].data" />
+        </div>
+        <div style="flex: 1; display: flex; width: 100%;">
+          <Bar style="flex:1" :title="mockConfig['已完成'].bars[0].title" :x-data="mockConfig['已完成'].bars[0].x" :series-data="[{ name: mockConfig['已完成'].bars[0].name, data: mockConfig['已完成'].bars[0].series }]" />
+          <Bar style="flex:1" :title="mockConfig['已完成'].bars[1].title" :x-data="mockConfig['已完成'].bars[1].x" :series-data="[{ name: mockConfig['已完成'].bars[1].name, data: mockConfig['已完成'].bars[1].series }]" />
+          <LineChart style="flex:1" :title="mockConfig['已完成'].lines[0].title" :x-data="mockConfig['已完成'].lines[0].x" :series-data="[{ name: mockConfig['已完成'].lines[0].name, data: mockConfig['已完成'].lines[0].series }]" :y-name="mockConfig['已完成'].lines[0].yName" :smooth="true" />
+          <LineChart style="flex:1" :title="mockConfig['已完成'].lines[1].title" :x-data="mockConfig['已完成'].lines[1].x" :series-data="[{ name: mockConfig['已完成'].lines[1].name, data: mockConfig['已完成'].lines[1].series }]" :y-name="mockConfig['已完成'].lines[1].yName" :smooth="true" />
+        </div>
       </div>
-      <Pie style="flex:1" :title-text="mockConfig['已完成'].pies[0].title" :data="mockConfig['已完成'].pies[0].data" />
-      <Pie style="flex:1" :title-text="mockConfig['已完成'].pies[1].title" :data="mockConfig['已完成'].pies[1].data" />
-      <Bar style="flex:1" :title="mockConfig['已完成'].bars[0].title" :x-data="mockConfig['已完成'].bars[0].x" :series-data="[{ name: mockConfig['已完成'].bars[0].name, data: mockConfig['已完成'].bars[0].series }]" />
-      <Bar style="flex:1" :title="mockConfig['已完成'].bars[1].title" :x-data="mockConfig['已完成'].bars[1].x" :series-data="[{ name: mockConfig['已完成'].bars[1].name, data: mockConfig['已完成'].bars[1].series }]" />
-      <LineChart style="flex:1" :title="mockConfig['已完成'].lines[0].title" :x-data="mockConfig['已完成'].lines[0].x" :series-data="[{ name: mockConfig['已完成'].lines[0].name, data: mockConfig['已完成'].lines[0].series }]" :y-name="mockConfig['已完成'].lines[0].yName" :smooth="true" />
-      <LineChart style="flex:1" :title="mockConfig['已完成'].lines[1].title" :x-data="mockConfig['已完成'].lines[1].x" :series-data="[{ name: mockConfig['已完成'].lines[1].name, data: mockConfig['已完成'].lines[1].series }]" :y-name="mockConfig['已完成'].lines[1].yName" :smooth="true" />
     </template>
   </div>
 </template>
