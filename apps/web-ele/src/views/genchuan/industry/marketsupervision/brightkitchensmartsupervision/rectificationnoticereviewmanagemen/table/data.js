@@ -141,6 +141,7 @@ export function useGridColumns() {
       title: '违规证据链接',
       minWidth: 200,
       sortable: false,
+      slots: { default: 'evidenceUrl' },
     },
     {
       field: 'draftTime',

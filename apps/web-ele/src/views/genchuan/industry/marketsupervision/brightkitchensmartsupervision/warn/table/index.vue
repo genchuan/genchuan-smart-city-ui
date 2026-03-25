@@ -2,7 +2,6 @@
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
 
 import {
   ElDialog,
@@ -499,7 +498,7 @@ const cancelEnterpriseSelect = () => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton
+          <!-- <IconButton
             content="导出"
             icon-name="download"
             @click="handleExport"
@@ -515,7 +514,7 @@ const cancelEnterpriseSelect = () => {
             content="搜索"
             icon-name="search"
             @click="handleSerachShow"
-          />
+          /> -->
           <IconButton
             content="全屏"
             icon-name="FullScreen"
@@ -549,7 +548,7 @@ const cancelEnterpriseSelect = () => {
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton
+          <!-- <IconButton
             content="生成复审台账"
             icon-name="Plus"
             @click="addDetail(row)"
@@ -558,18 +557,18 @@ const cancelEnterpriseSelect = () => {
             content="查看复审台账记录"
             icon-name="View"
             @click="handleOpenFuDetail(row)"
-          />
+          /> -->
           <IconButton
             content="详情"
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
-          <IconButton
+          <!-- <IconButton
             content="删除"
             icon-name="delete"
             color="#F56C6C"
             @click="handleDelete(row)"
-          />
+          /> -->
         </div>
       </template>
       <template #bottom>

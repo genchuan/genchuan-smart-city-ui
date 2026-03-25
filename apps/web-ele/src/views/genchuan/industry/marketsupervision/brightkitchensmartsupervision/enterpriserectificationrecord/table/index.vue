@@ -94,7 +94,7 @@ function handleRefresh() {
 async function handleExport() {
   const data = await exporEntNoticeExcel();
   downloadFileFromBlobPart({
-    fileName: '整改通知书.xls',
+    fileName: '企业整改记录.xls',
     source: data,
   });
 }
@@ -662,11 +662,11 @@ const confirmReject = async () => {
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
-          <IconButton
+          <!-- <IconButton
             content="上传证据"
             icon-name="Upload"
             @click="handleUpdateFile(row)"
-          />
+          /> -->
           <IconButton
             content="删除"
             icon-name="delete"
