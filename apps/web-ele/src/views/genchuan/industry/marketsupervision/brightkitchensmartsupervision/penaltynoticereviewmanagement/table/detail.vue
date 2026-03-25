@@ -49,66 +49,61 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 出入口基础信息 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">出入口ID:</div>
+        <div class="detail-row-left">主键ID：</div>
         <div class="detail-row-right">{{ detailObj.id || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">出入口名称:</div>
-        <div class="detail-row-right">{{ detailObj.entranceName || '-' }}</div>
+        <div class="detail-row-left">台账编号：</div>
+        <div class="detail-row-right">{{ detailObj.ledgerCode || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">所属车场/车库:</div>
-        <div class="detail-row-right">{{ detailObj.parkingLot || '-' }}</div>
+        <div class="detail-row-left">逾期标识：</div>
+        <div class="detail-row-right">{{ detailObj.overdueFlag || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">出入口类型:</div>
-        <div class="detail-row-right">{{ detailObj.entranceType || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">车道数量:</div>
-        <div class="detail-row-right">{{ detailObj.laneCount || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">地址:</div>
-        <div class="detail-row-right">{{ detailObj.address || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">开放时间:</div>
-        <div class="detail-row-right">{{ detailObj.openTime || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">关闭时间:</div>
-        <div class="detail-row-right">{{ detailObj.closeTime || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">启用状态:</div>
-        <div class="detail-row-right">{{ detailObj.enableStatus || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">联系人:</div>
-        <div class="detail-row-right">{{ detailObj.contactPerson || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">联系电话:</div>
-        <div class="detail-row-right">{{ detailObj.contactPhone || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">当前状态:</div>
-        <div class="detail-row-right">{{ detailObj.currentStatus || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">关联设备数:</div>
+        <div class="detail-row-left">缴费截止时间：</div>
         <div class="detail-row-right">
-          {{ detailObj.relatedDeviceCount || '-' }}
+          {{ detailObj.paymentDeadlineTime || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">最后运营时间:</div>
+        <div class="detail-row-left">企业名称：</div>
+        <div class="detail-row-right">{{ detailObj.entName || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">草拟处罚金额(元)：</div>
         <div class="detail-row-right">
-          {{ detailObj.lastOperateTime || '-' }}
+          {{ detailObj.draftPunishAmt || '-' }}
         </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">处罚法律依据：</div>
+        <div class="detail-row-right">{{ detailObj.legalBasis || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">复审状态：</div>
+        <div class="detail-row-right">{{ detailObj.reviewStatus || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">复审人：</div>
+        <div class="detail-row-right">{{ detailObj.reviewBy || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">草拟时间：</div>
+        <div class="detail-row-right">{{ detailObj.draftTime || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">复审时间：</div>
+        <div class="detail-row-right">{{ detailObj.reviewTime || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">撤销时间：</div>
+        <div class="detail-row-right">{{ detailObj.cancelTime || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">创建时间：</div>
+        <div class="detail-row-right">{{ detailObj.createTime || '-' }}</div>
       </div>
     </div>
   </DetailDrawer>

@@ -527,6 +527,16 @@ const handleSendFileConfirm = async (row) => {
     ElMessage.info('已取消下发');
   }
 };
+
+// 预览相关
+const previewVisible = ref(false);
+const currentImage = ref('');
+
+// 预览图片
+function previewImage(url) {
+  currentImage.value = url;
+  previewVisible.value = true;
+}
 </script>
 
 <template>
@@ -612,10 +622,15 @@ const handleSendFileConfirm = async (row) => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-
+    <el-dialog v-model="previewVisible" title="图片预览" width="600px" center>
+      <img
+        v-if="currentImage"
+        :src="currentImage"
+        style="width: 100%; height: auto"
+      />
+    </el-dialog>
     <!-- 使用封装后的详情抽屉组件 -->
     <ParkDetailDrawer
-      class="genchuan-detail-drawer"
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
       title="详情"
@@ -701,6 +716,20 @@ const handleSendFileConfirm = async (row) => {
         <div v-else>
           <el-tag size="small" effect="plain"> (未逾期) </el-tag>
         </div>
+      </template>
+
+      <template #evidenceUrl="{ row }">
+        <div v-if="JSON.parse(row.evidenceUrl)?.length > 0" class="table-image">
+          <div
+            v-for="(item, index) in JSON.parse(row.evidenceUrl)"
+            :key="index"
+            class="image-item"
+            @click="previewImage(item.url)"
+          >
+            <img :src="item.url" :alt="item.name" />
+          </div>
+        </div>
+        <div v-else>--</div>
       </template>
       <template #ledgerCode="{ row }">
         <el-text

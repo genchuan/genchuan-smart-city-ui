@@ -296,6 +296,13 @@ export function useGridColumns() {
       minWidth: 200,
       sortable: true,
     },  
+     {
+      field: 'evidenceUrl',
+      title: '违规证据',
+      minWidth: 200,
+      sortable: true,
+      slots: { default: 'evidenceUrl' },
+    },  
     {
       field: 'draftPunishAmt',
       title: '草拟处罚金额(元)',

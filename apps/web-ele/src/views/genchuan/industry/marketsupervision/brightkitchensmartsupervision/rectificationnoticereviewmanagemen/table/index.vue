@@ -547,6 +547,15 @@ const handleAutoDetail = async (row) => {
   dataObj.rectifyObj = res;
   rectifyRef.value.open();
 };
+// 预览相关
+const previewVisible = ref(false);
+const currentImage = ref('');
+
+// 预览图片
+function previewImage(url) {
+  currentImage.value = url;
+  previewVisible.value = true;
+}
 </script>
 
 <template>
@@ -596,7 +605,14 @@ const handleAutoDetail = async (row) => {
         </div>
       </div>
     </UploadModal>
-
+    <!-- 图片预览弹窗 -->
+    <el-dialog v-model="previewVisible" title="图片预览" width="600px" center>
+      <img
+        v-if="currentImage"
+        :src="currentImage"
+        style="width: 100%; height: auto"
+      />
+    </el-dialog>
     <!-- 图片查看弹窗 -->
     <el-dialog v-model="dialogVisible">
       <div class="park-img-center">
@@ -723,6 +739,7 @@ const handleAutoDetail = async (row) => {
       title="详情"
     />
     <caoniDetailDrawer
+      class="cao-ni-test"
       ref="rectifyRef"
       :detail-obj="dataObj.rectifyObj"
       title="详情"
@@ -802,6 +819,20 @@ const handleAutoDetail = async (row) => {
         >
           {{ row.entName }}
         </el-text>
+      </template>
+
+      <template #evidenceUrl="{ row }">
+        <div v-if="JSON.parse(row.evidenceUrl)?.length > 0" class="table-image">
+          <div
+            v-for="(item, index) in JSON.parse(row.evidenceUrl)"
+            :key="index"
+            class="image-item"
+            @click="previewImage(item.url)"
+          >
+            <img :src="item.url" :alt="item.name" />
+          </div>
+        </div>
+        <div v-else>--</div>
       </template>
       <template #ledgerCode="{ row }">
         <el-text
@@ -967,5 +998,40 @@ const handleAutoDetail = async (row) => {
   font-size: 12px;
   text-align: center;
   padding: 8px 0;
+}
+.image-list {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.image-item {
+  width: 80px;
+  height: 80px;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid #eee;
+}
+.image-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.table-image {
+  display: flex;
+  justify-content: center;
+}
+.table-image img {
+  width: 150px;
+  height: 40px;
+  margin-right: 5px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+</style>
+<style>
+.cao-ni-test {
+  width: 80vw;
 }
 </style>
