@@ -4,7 +4,7 @@ import * as echarts from 'echarts';
 import { ElSelect, ElOption } from 'element-plus';
 
 import IconButton from '#/components/common/IconButton.vue';
-import MapComponent from '#/components/Map/index.vue';
+import MapComponent from '#/genchuan-components/Map/index.vue';
 
 const state = reactive({
   cardList: [

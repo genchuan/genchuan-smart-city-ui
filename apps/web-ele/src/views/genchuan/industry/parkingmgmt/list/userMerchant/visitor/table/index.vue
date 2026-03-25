@@ -10,9 +10,9 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 // 引入封装后的详情抽屉组件
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
-import { maskIdCard, maskPhone } from '#/utils/dataMask/index.js';
+import { maskIdCard, maskPhone } from '#/utils/genchuan/dataMask/index.js';
 import { exportToExcel } from '#/utils/excel.js';
 
 // 引入权限和记录抽屉组件

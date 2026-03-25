@@ -13,7 +13,7 @@ import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
 import { dataList, textObj, useFormSchema, useGridColumns, detailFields, statusOptions, statusTagType, traceDataList, traceTextObj, useTraceFormSchema, useTraceGridColumns, traceDetailFields, traceStatusOptions, traceStatusTagType, resultDataList, resultTextObj, useResultFormSchema, useResultGridColumns, resultDetailFields, resultStatusOptions, resultStatusTagType } from './data';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 
 const props = defineProps({
   secondShow: {

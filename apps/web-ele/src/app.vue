@@ -6,7 +6,7 @@ import { useElementPlusDesignTokens } from '@vben/hooks';
 
 import { ElConfigProvider } from 'element-plus';
 
-import { CozeChat } from '#/components/CozeChat';
+import { CozeChat } from '#/genchuan-components/CozeChat';
 import { elementLocale } from '#/locales';
 
 defineOptions({ name: 'App' });

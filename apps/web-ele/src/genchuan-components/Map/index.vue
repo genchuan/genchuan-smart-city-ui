@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 
-import { loadTMap } from '#/utils/useTMap.ts';
+import { loadTMap } from '#/utils/genchuan/useTMap.ts';
 
 const props = defineProps({
   data: {

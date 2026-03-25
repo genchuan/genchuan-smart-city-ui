@@ -1,95 +1,22 @@
-<template>
-  <div class="content-main">
-    <!--左边开始-->
-    <div class="content-left">
-      <!--第一块-->
-      <div class="one bg">
-        <div class="title">扬尘监测设备总数</div>
-        <chart-customize2 :paramsData="rightData.customize2Params" />
-      </div>
-      <!--第二块-->
-      <div class="two bg">
-        <div class="title">扬尘监测质量指标</div>
-        <CapsuleChart
-          :config="rightData.rightTwo"
-          style="width: 100%; height: calc(100% - 35px)"
-        />
-      </div>
-      <!--第三块-->
-      <div class="three bg">
-        <div class="title">扬尘监测事件清单</div>
-        <ScrollBoard
-          :config="leftData.CCDvScrollBoardConfig"
-          style="height: calc(100% - 35px - 40px); padding: 15px 25px 25px"
-        />
-      </div>
-    </div>
-
-    <!--中间开始-->
-    <div class="content-center">
-      <div class="s1">
-        <chart-customize1 :paramsData="centerData.customizeParams" />
-        <map-common idName="chinaEcharts" :geometriesArray="geometriesArray" />
-      </div>
-      <div class="s2 bg">
-        <div class="title">扬尘监测项目介绍</div>
-        <chart-customize3 :proJectsList="centerData.proJectsList" />
-      </div>
-    </div>
-
-    <!--右边开始-->
-    <div class="content-right">
-      <div class="s1 bg">
-        <div class="title">扬尘浓度变化情况</div>
-        <chart-type-poly-lines
-          :idName="rightData.rightOne.idName"
-          :xAxisData="rightData.rightOne.xAxisData"
-          :polyLinesData="rightData.rightOne.polyLinesData"
-          :yAxisName="rightData.rightOne.yAxisName"
-        />
-      </div>
-
-      <div class="s2 bg">
-        <div class="title">不同区域扬尘占比情况</div>
-        <chart-type-pie
-          :idName="leftData.oneId"
-          :rightData="leftData.picRightData"
-          :resData="leftData.picData"
-          :roseType="true"
-        />
-      </div>
-
-      <div class="s3 bg">
-        <div class="title">监测设备运行状态情况</div>
-        <chart-type-line
-          :idName="leftData.twoId"
-          :rightData="leftData.picRightData2"
-          :xAxisData="leftData.lineAxisData"
-          :seriesData="leftData.lineSeriesData"
-        />
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup>
 import { ref } from 'vue';
-import MapCommon from './MapCommon.vue';
-import ChartTypePie from './ChartTypePie.vue';
-import ChartTypeLine from './ChartTypeLine.vue';
-import ChartTypeLine2 from './ChartTypeLine2.vue';
-import ChartCustomize1 from './ChartCustomize1.vue';
-import ChartCustomize2 from './ChartCustomize2.vue';
-import ChartTypePolyLines from './ChartTypePolyLines.vue';
-import ChartCustomize3 from './ChartCustomize3.vue';
+
 import { CapsuleChart, ScrollBoard } from '@kjgl77/datav-vue3';
 
+import ChartCustomize1 from './ChartCustomize1.vue';
+import ChartCustomize2 from './ChartCustomize2.vue';
+import ChartCustomize3 from './ChartCustomize3.vue';
+import ChartTypeLine from './ChartTypeLine.vue';
+import ChartTypePie from './ChartTypePie.vue';
+import ChartTypePolyLines from './ChartTypePolyLines.vue';
+import MapCommon from './MapCommon.vue';
+
 const geometriesArray = [
-  { x: 26.825227, y: 117.620114 },
-  { x: 26.753227, y: 117.760114 },
-  { x: 26.7233227, y: 117.600114 },
-  { x: 26.7233227, y: 117.650114 },
-  { x: 26.843227, y: 117.9220114 },
+  { x: 26.825_227, y: 117.620_114 },
+  { x: 26.753_227, y: 117.760_114 },
+  { x: 26.723_322_7, y: 117.600_114 },
+  { x: 26.723_322_7, y: 117.650_114 },
+  { x: 26.843_227, y: 117.922_011_4 },
 ];
 
 const leftData = ref({
@@ -313,6 +240,80 @@ const rightData = ref({
   },
 });
 </script>
+
+<template>
+  <div class="content-main">
+    <!--左边开始-->
+    <div class="content-left">
+      <!--第一块-->
+      <div class="one bg">
+        <div class="title">扬尘监测设备总数</div>
+        <ChartCustomize2 :params-data="rightData.customize2Params" />
+      </div>
+      <!--第二块-->
+      <div class="two bg">
+        <div class="title">扬尘监测质量指标</div>
+        <CapsuleChart
+          :config="rightData.rightTwo"
+          style="width: 100%; height: calc(100% - 35px)"
+        />
+      </div>
+      <!--第三块-->
+      <div class="three bg">
+        <div class="title">扬尘监测事件清单</div>
+        <ScrollBoard
+          :config="leftData.CCDvScrollBoardConfig"
+          style="height: calc(100% - 35px - 40px); padding: 15px 25px 25px"
+        />
+      </div>
+    </div>
+
+    <!--中间开始-->
+    <div class="content-center">
+      <div class="s1">
+        <ChartCustomize1 :params-data="centerData.customizeParams" />
+        <MapCommon id-name="chinaEcharts" :geometries-array="geometriesArray" />
+      </div>
+      <div class="s2 bg">
+        <div class="title">扬尘监测项目介绍</div>
+        <ChartCustomize3 :pro-jects-list="centerData.proJectsList" />
+      </div>
+    </div>
+
+    <!--右边开始-->
+    <div class="content-right">
+      <div class="s1 bg">
+        <div class="title">扬尘浓度变化情况</div>
+        <ChartTypePolyLines
+          :id-name="rightData.rightOne.idName"
+          :x-axis-data="rightData.rightOne.xAxisData"
+          :poly-lines-data="rightData.rightOne.polyLinesData"
+          :y-axis-name="rightData.rightOne.yAxisName"
+        />
+      </div>
+
+      <div class="s2 bg">
+        <div class="title">不同区域扬尘占比情况</div>
+        <ChartTypePie
+          :id-name="leftData.oneId"
+          :right-data="leftData.picRightData"
+          :res-data="leftData.picData"
+          :rose-type="true"
+        />
+      </div>
+
+      <div class="s3 bg">
+        <div class="title">监测设备运行状态情况</div>
+        <ChartTypeLine
+          :id-name="leftData.twoId"
+          :right-data="leftData.picRightData2"
+          :x-axis-data="leftData.lineAxisData"
+          :series-data="leftData.lineSeriesData"
+        />
+      </div>
+    </div>
+  </div>
+</template>
 
 <style lang="scss" scoped>
 .CityAppearanceAndSanitation-center-css {

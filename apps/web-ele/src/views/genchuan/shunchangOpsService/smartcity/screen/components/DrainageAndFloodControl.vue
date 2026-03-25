@@ -1,96 +1,22 @@
-<template>
-  <div class="content-main">
-    <!--左边开始-->
-    <div class="content-left">
-      <!--第一块-->
-      <div class="one bg">
-        <div class="title">排水防涝设备总数</div>
-        <chart-customize2 :paramsData="rightData.customize2Params" />
-      </div>
-      <!--第二块-->
-      <div class="two bg">
-        <div class="title">排水防涝质量指标</div>
-        <CapsuleChart
-          :config="rightData.rightTwo"
-          style="width: 100%; height: calc(100% - 35px)"
-        />
-      </div>
-      <!--第三块-->
-      <div class="three bg">
-        <!--<div class="title">排水防涝事件清单</div>-->
-        <div class="title">积水点监测/防涝事件</div>
-        <ScrollBoard
-          :config="leftData.CCDvScrollBoardConfig"
-          style="height: calc(100% - 35px - 40px); padding: 15px 25px 25px"
-        />
-      </div>
-    </div>
-
-    <!--中间开始-->
-    <div class="content-center">
-      <div class="s1">
-        <chart-customize1 :paramsData="centerData.customizeParams" />
-        <map-common idName="chinaEcharts" :geometriesArray="geometriesArray" />
-      </div>
-      <div class="s2 bg">
-        <div class="title">排水防涝项目介绍</div>
-        <chart-customize3 :proJectsList="centerData.proJectsList" />
-      </div>
-    </div>
-
-    <!--右边开始-->
-    <div class="content-right">
-      <div class="s1 bg">
-        <div class="title">排水防涝积水排除情况</div>
-        <chart-type-poly-lines
-          :idName="rightData.rightOne.idName"
-          :xAxisData="rightData.rightOne.xAxisData"
-          :polyLinesData="rightData.rightOne.polyLinesData"
-          :yAxisName="rightData.rightOne.yAxisName"
-        />
-      </div>
-
-      <div class="s2 bg">
-        <div class="title">排水防涝设施维护情况</div>
-        <chart-type-pie
-          :idName="leftData.oneId"
-          :rightData="leftData.picRightData"
-          :resData="leftData.picData"
-          :roseType="true"
-        />
-      </div>
-
-      <div class="s3 bg">
-        <div class="title">排水防涝车辆运行情况</div>
-        <chart-type-line
-          :idName="leftData.twoId"
-          :rightData="leftData.picRightData2"
-          :xAxisData="leftData.lineAxisData"
-          :seriesData="leftData.lineSeriesData"
-        />
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup>
 import { ref } from 'vue';
-import MapCommon from './MapCommon.vue';
-import ChartTypePie from './ChartTypePie.vue';
-import ChartTypeLine from './ChartTypeLine.vue';
-import ChartTypeLine2 from './ChartTypeLine2.vue';
-import ChartCustomize1 from './ChartCustomize1.vue';
-import ChartCustomize2 from './ChartCustomize2.vue';
-import ChartTypePolyLines from './ChartTypePolyLines.vue';
-import ChartCustomize3 from './ChartCustomize3.vue';
+
 import { CapsuleChart, ScrollBoard } from '@kjgl77/datav-vue3';
 
+import ChartCustomize1 from './ChartCustomize1.vue';
+import ChartCustomize2 from './ChartCustomize2.vue';
+import ChartCustomize3 from './ChartCustomize3.vue';
+import ChartTypeLine from './ChartTypeLine.vue';
+import ChartTypePie from './ChartTypePie.vue';
+import ChartTypePolyLines from './ChartTypePolyLines.vue';
+import MapCommon from './MapCommon.vue';
+
 const geometriesArray = [
-  { x: 26.825227, y: 117.620114 },
-  { x: 26.805227, y: 117.650114 },
-  { x: 26.733227, y: 117.940114 },
-  { x: 26.7533227, y: 117.680114 },
-  { x: 26.763227, y: 117.7220114 },
+  { x: 26.825_227, y: 117.620_114 },
+  { x: 26.805_227, y: 117.650_114 },
+  { x: 26.733_227, y: 117.940_114 },
+  { x: 26.753_322_7, y: 117.680_114 },
+  { x: 26.763_227, y: 117.722_011_4 },
 ];
 
 const leftData = ref({
@@ -177,7 +103,7 @@ const centerData = ref({
           },
         ],
       },
-      /*{
+      /* {
         name: '城乡排水一体化项目',
         process: '泵站建设 + 雨水收集',
         processingScale: '1200公里/年',
@@ -292,8 +218,8 @@ const rightData = ref({
         color: ['rgba(58,114,215,1)', 'rgba(58,114,215,0.1)'],
         type: 'line',
         data: [
-          3800, 5100, 12000, 16000, 18000, 13500, 24000, 22000, 29100, 32000,
-          28000, 26000,
+          3800, 5100, 12_000, 16_000, 18_000, 13_500, 24_000, 22_000, 29_100,
+          32_000, 28_000, 26_000,
         ],
       },
       {
@@ -302,8 +228,8 @@ const rightData = ref({
         color: ['rgba(9,114,95,1)', 'rgba(9,114,95,0.1)'],
         type: 'line',
         data: [
-          16500, 18600, 23500, 26800, 22000, 23200, 28200, 26000, 22000, 20000,
-          18000, 14000,
+          16_500, 18_600, 23_500, 26_800, 22_000, 23_200, 28_200, 26_000,
+          22_000, 20_000, 18_000, 14_000,
         ],
       },
     ],
@@ -321,6 +247,81 @@ const rightData = ref({
   },
 });
 </script>
+
+<template>
+  <div class="content-main">
+    <!--左边开始-->
+    <div class="content-left">
+      <!--第一块-->
+      <div class="one bg">
+        <div class="title">排水防涝设备总数</div>
+        <ChartCustomize2 :params-data="rightData.customize2Params" />
+      </div>
+      <!--第二块-->
+      <div class="two bg">
+        <div class="title">排水防涝质量指标</div>
+        <CapsuleChart
+          :config="rightData.rightTwo"
+          style="width: 100%; height: calc(100% - 35px)"
+        />
+      </div>
+      <!--第三块-->
+      <div class="three bg">
+        <!--<div class="title">排水防涝事件清单</div>-->
+        <div class="title">积水点监测/防涝事件</div>
+        <ScrollBoard
+          :config="leftData.CCDvScrollBoardConfig"
+          style="height: calc(100% - 35px - 40px); padding: 15px 25px 25px"
+        />
+      </div>
+    </div>
+
+    <!--中间开始-->
+    <div class="content-center">
+      <div class="s1">
+        <ChartCustomize1 :params-data="centerData.customizeParams" />
+        <MapCommon id-name="chinaEcharts" :geometries-array="geometriesArray" />
+      </div>
+      <div class="s2 bg">
+        <div class="title">排水防涝项目介绍</div>
+        <ChartCustomize3 :pro-jects-list="centerData.proJectsList" />
+      </div>
+    </div>
+
+    <!--右边开始-->
+    <div class="content-right">
+      <div class="s1 bg">
+        <div class="title">排水防涝积水排除情况</div>
+        <ChartTypePolyLines
+          :id-name="rightData.rightOne.idName"
+          :x-axis-data="rightData.rightOne.xAxisData"
+          :poly-lines-data="rightData.rightOne.polyLinesData"
+          :y-axis-name="rightData.rightOne.yAxisName"
+        />
+      </div>
+
+      <div class="s2 bg">
+        <div class="title">排水防涝设施维护情况</div>
+        <ChartTypePie
+          :id-name="leftData.oneId"
+          :right-data="leftData.picRightData"
+          :res-data="leftData.picData"
+          :rose-type="true"
+        />
+      </div>
+
+      <div class="s3 bg">
+        <div class="title">排水防涝车辆运行情况</div>
+        <ChartTypeLine
+          :id-name="leftData.twoId"
+          :right-data="leftData.picRightData2"
+          :x-axis-data="leftData.lineAxisData"
+          :series-data="leftData.lineSeriesData"
+        />
+      </div>
+    </div>
+  </div>
+</template>
 
 <style lang="scss" scoped>
 .CityAppearanceAndSanitation-center-css {

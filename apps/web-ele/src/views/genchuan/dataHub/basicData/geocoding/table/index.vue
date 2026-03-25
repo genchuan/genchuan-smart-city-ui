@@ -9,7 +9,7 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
@@ -172,7 +172,7 @@ function handleEdit(row) {
 async function handleDelete(row) {
   const confirmResult = await confirm(`确定删除地理编码 "${row.locationName}" 吗？`);
   if (!confirmResult) return;
-  
+
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting', [row.locationName]),
   });

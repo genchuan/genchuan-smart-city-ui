@@ -3,7 +3,7 @@ import { computed, ref } from 'vue';
 
 import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
 
-import StatsVisualization from '#/components/stats/StatsVisualization.vue';
+import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
 // 导入获取统计数据的函数
 import { getStatsDataByTabName } from '#/views/genchuan/industry/parkingmgmt/list/operation/walletManage/table/data.js';
 import Table from '#/views/genchuan/industry/parkingmgmt/list/operation/walletManage/table/index.vue';

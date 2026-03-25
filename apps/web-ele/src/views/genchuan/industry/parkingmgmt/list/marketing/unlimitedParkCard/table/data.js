@@ -1,4 +1,4 @@
-import { maskPhone } from '#/utils/dataMask/index.js';
+import { maskPhone } from '#/utils/genchuan/dataMask/index.js';
 
 /** 统计数据生成函数 - 根据标签页类型生成对应统计数据 */
 export const getStatsDataByTabType = (tabType) => {

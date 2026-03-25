@@ -5,7 +5,7 @@ import { ArrowDown, ArrowUp, Search } from '@element-plus/icons-vue';
 import { ElInput, ElLoading, ElMessage, ElTree } from 'element-plus';
 
 import { getCategoryTree } from '#/api/genchuan/dataHub/basicData/managePart';
-import StatsVisualization from '#/components/stats/StatsVisualization.vue';
+import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
 import { useTreeExpandController } from '#/utils/useTreeExpandController';
 
 import Table from './table/index.vue';

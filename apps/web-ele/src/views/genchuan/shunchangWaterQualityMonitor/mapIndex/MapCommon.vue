@@ -199,65 +199,64 @@ onMounted(() => {
 <style lang="scss" scoped>
 // 地图容器基础样式
 .map-common-css {
-  border-radius: 8px;
-  overflow: hidden;
   position: relative; // 为信息窗口绝对定位提供上下文
   z-index: 1; // 确保地图在底层
+  overflow: hidden;
+  border-radius: 8px;
 }
 
 // 信息窗口样式：强调层级和交互体验
 .info-window {
   position: absolute;
-  width: 330px; // 固定宽度（适配内容）
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15); // 阴影增强层次感
-  padding: 12px;
   z-index: 1000; // 确保在地图和标记点之上
+  width: 330px; // 固定宽度（适配内容）
+  padding: 12px;
   font-size: 14px;
   line-height: 1.5;
   pointer-events: auto; // 确保内部元素可点击
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 15%); // 阴影增强层次感
 
   // 信息窗口标题
   .info-window-title {
+    padding-bottom: 8px;
+    margin-bottom: 10px;
     font-size: 16px;
     font-weight: 600;
-    color: #333333;
-    margin-bottom: 10px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #eeeeee;
+    color: #333;
     word-break: break-all; // 处理长名称换行
+    border-bottom: 1px solid #eee;
   }
 
   // 信息窗口内容
   .info-window-content {
     p {
       margin: 6px 0;
-      color: #666666;
+      color: #666;
 
       span {
-        color: #333333;
         font-weight: 500;
+        color: #333;
       }
     }
   }
 
   // 关闭按钮
   .info-window-close {
-    // 确保按钮在最上层
-    z-index: 1002 !important;
-
     position: absolute;
     top: 8px;
     right: 10px;
-    cursor: pointer;
-    color: #999999;
-    font-size: 18px;
-    width: 20px;
-    height: 20px;
+    // 确保按钮在最上层
+    z-index: 1002 !important;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 20px;
+    height: 20px;
+    font-size: 18px;
+    color: #999;
+    cursor: pointer;
     border-radius: 50%; // 圆形点击区域（提升点击体验）
 
     //  hover效果：增强交互反馈

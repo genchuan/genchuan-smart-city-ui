@@ -2,7 +2,7 @@
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
-import { useThingsBoardAuth } from '#/composables/useThingsBoardAuth';
+import { useThingsBoardAuth } from '#/genchuan-composables/useThingsBoardAuth';
 
 const route = useRoute();
 const { ensureThingsBoardLogin, reLogin } = useThingsBoardAuth();
@@ -51,8 +51,16 @@ const loadDashboard = async () => {
 
   // 构建完整的 ThingsBoard URL
   const baseUrl = import.meta.env.VITE_THINGS_BOARD_URL;
-  const routeName = route.name as string;
-  url.value = `${baseUrl}${routeName}`;
+  // 从路由 meta 中获取 componentName（ThingsBoard 仪表盘路径）
+  // const dashboardPath = route.meta.componentName as string;
+  const dashboardPath = route.name;
+  if (!dashboardPath) {
+    loading.value = false;
+    error.value = '未配置仪表盘路径';
+    return;
+  }
+
+  url.value = `${baseUrl}/${dashboardPath}`;
 };
 
 // 刷新 iframe

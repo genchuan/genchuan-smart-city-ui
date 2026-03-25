@@ -11,7 +11,7 @@ import {
   getCategoryTree,
   getInstancePage,
 } from '#/api/genchuan/dataHub/basicData/sceneCategory';
-import StatsFourVisualization from '#/components/stats/StatsFourVisualization.vue';
+import StatsFourVisualization from '#/genchuan-components/stats/StatsFourVisualization.vue';
 import { useTreeExpandController } from '#/utils/useTreeExpandController';
 
 import Table from './table/index.vue';

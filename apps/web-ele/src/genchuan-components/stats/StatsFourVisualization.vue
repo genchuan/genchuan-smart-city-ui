@@ -6,7 +6,7 @@ import { ElOption, ElSelect } from 'element-plus';
 
 import IconButton from '#/components/common/IconButton.vue';
 
-import MapComponent from '../Map/index.vue';
+import MapComponent from '#/genchuan-components/Map/index.vue';
 
 const props = defineProps({
   // 卡片数据

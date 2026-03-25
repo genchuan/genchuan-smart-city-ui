@@ -1,228 +1,252 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 import {
-  ElButton,
-  ElDescriptions,
-  ElDescriptionsItem,
   ElDrawer,
+  ElForm,
+  ElFormItem,
+  ElMessage,
+  ElTabs,
+  ElTabPane,
 } from 'element-plus';
+import type { PropType } from 'vue';
 
-import { WaterSampleTestSummaryApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/watersampletestsummary';
-import { dateFormatter } from '#/utils/genchuan/formatTime';
-
+import {
+  WaterSampleTestSummaryApi
+} from '#/api/genchuan/shunchangWaterQualityMonitor/list/watersampletestsummary';
+import type { WaterSampleTestSummaryVO } from '#/api/genchuan/shunchangWaterQualityMonitor/list/watersampletestsummary'
 /** 外检统计水质检测结果汇总 详情抽屉 */
 defineOptions({ name: 'WaterSampleTestDetailDrawer' });
 
-const drawerVisible = ref(false); // 抽屉是否展示
-const drawerTitle = ref(''); // 抽屉标题
-const detailLoading = ref(false); // 详情加载中
-const detailData = ref<any>({}); // 详情数据
+const props = defineProps({
+  visible: {
+    type: Boolean,
+    default: false,
+  },
+  rowId: {
+    type: [Number, null] as PropType<number | null>,
+    required: true,
+  },
+});
 
-/** 打开抽屉 */
-const open = async (id: number) => {
-  drawerVisible.value = true;
-  drawerTitle.value = '外检统计水质检测结果详情';
-  detailLoading.value = true;
+const emit = defineEmits(['close']);
+
+const loading = ref(false);
+const detailData = ref<WaterSampleTestSummaryVO | null>(null);
+const indicatorOptions = ref<{ label: string; prop: string }[]>([]);
+const activeTab = ref('basic');
+
+/** 请求详情数据 */
+const fetchDetailData = async (id: number) => {
+  if (id === null) {
+    ElMessage.warning('未获取到有效的行 ID');
+    return;
+  }
+  loading.value = true;
   try {
-    detailData.value = await WaterSampleTestSummaryApi.getWaterSampleTestSummary(id);
+    const data = await WaterSampleTestSummaryApi.getWaterSampleTestSummary(id);
+    detailData.value = data;
+
+    if (detailData.value) {
+      const fields = Object.keys(detailData.value).filter(
+        (field) =>
+          ![
+            'id',
+            'clientName',
+            'receiveDate',
+            'sampleNo',
+            'sampleName',
+            'samplingLocation',
+            'createTime',
+            'longitude',
+            'latitude',
+          ].includes(field),
+      );
+
+      const indicatorLabelMap: Record<string, string> = {
+        phValue: 'pH值',
+        ammoniaN: '氨(以N计)(mg/L)',
+        odourTaste: '臭和味',
+        escherichiaColi: '大肠埃希氏菌(CFU/100mL)',
+        dichlorobromomethane: '二氯一溴甲烷(mg/L)',
+        dichloroaceticAcid: '二氯乙酸(mg/L)',
+        chlorineDioxide: '二氧化氯(mg/L)',
+        fluoride: '氟化物(mg/L)',
+        permanganateIndex: '高锰酸盐指数(以O2计)(mg/L)',
+        cadmium: '镉(mg/L)',
+        chromium: '铬(六价)(mg/L)',
+        mercury: '汞(mg/L)',
+        turbidity: '浑浊度(NTU)',
+        totalBacteriaCount: '菌落总数(CFU/mL)',
+        sulfate: '硫酸盐(mg/L)',
+        aluminum: '铝(mg/L)',
+        chloride: '氯化物(mg/L)',
+        chlorate: '氯酸盐(mg/L)',
+        manganese: '锰(mg/L)',
+        lead: '铅(mg/L)',
+        cyanide: '氰化物(mg/L)',
+        dissolvedSolids: '溶解性总固体(mg/L)',
+        visibleObject: '肉眼可见物',
+        trihalomethanes: '三卤甲烷',
+        chloroform: '三氯甲烷(mg/L)',
+        trichloroaceticAcid: '三氯乙酸(mg/L)',
+        bromoform: '三溴甲烷(mg/L)',
+        colorDegree: '色度(度)',
+        arsenic: '砷(mg/L)',
+        iron: '铁(mg/L)',
+        copper: '铜(mg/L)',
+        nitrateN: '硝酸盐(以N计)(mg/L)',
+        zinc: '锌(mg/L)',
+        chlorite: '亚氯酸盐(mg/L)',
+        dibromochloromethane: '一氯二溴甲烷(mg/L)',
+        totalAlphaRadioactivity: '总α放射性(Bq/L)',
+        totalBetaRadioactivity: '总β放射性(Bq/L)',
+        totalColiform: '总大肠菌群(CFU/100mL)',
+        totalHardness: '总硬度(以CaCO3计)(mg/L)',
+      };
+
+      indicatorOptions.value = fields.map((prop) => ({
+        prop,
+        label: indicatorLabelMap[prop] || prop,
+      }));
+    }
+  } catch (error) {
+    console.error('获取详情失败:', error);
+    ElMessage.error('获取详情数据失败，请重试');
   } finally {
-    detailLoading.value = false;
+    loading.value = false;
   }
 };
-defineExpose({ open });
+
+/** 监听 visible 变化，触发数据加载 */
+watch(
+  () => props.visible,
+  (newVal) => {
+    if (newVal && props.rowId !== null) {
+      fetchDetailData(props.rowId);
+    }
+  },
+  { immediate: true },
+);
 
 /** 关闭抽屉 */
 const handleClose = () => {
-  drawerVisible.value = false;
-  detailData.value = {};
-};
-
-/** 打印报告 */
-const handlePrint = () => {
-  // 打印逻辑
-  window.print();
-};
-
-/** 导出报告 */
-const handleExportReport = async () => {
-  if (!detailData.value.sampleNo) {
-    return;
-  }
-  try {
-    const params = {
-      excelConfigId: '1072840627048804353', // 报表配置ID
-      queryParam: {
-        SAMPLE_NO: detailData.value.sampleNo,
-      },
-      base64Arry: [],
-      fileName: `${detailData.value.sampleNo}_检测报告.xlsx`,
-    };
-    const res = await WaterSampleTestSummaryApi.generateReportExcel(params);
-    // 处理文件下载
-    const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `${detailData.value.sampleNo}_检测报告.xlsx`;
-    link.click();
-    URL.revokeObjectURL(link.href);
-  } catch (error) {
-    console.error('导出报告失败:', error);
-  }
+  emit('close');
 };
 </script>
 <template>
   <ElDrawer
-    :title="drawerTitle"
-    v-model="drawerVisible"
-    size="800px"
-    :before-close="handleClose"
+    title="外检水质检测结果详情"
+    :model-value="visible"
+    :width="900"
+    @close="handleClose"
+    :close-on-click-modal="false"
+    size="66%"
   >
-    <ElDescriptions
-      :column="2"
-      border
-      v-loading="detailLoading"
-    >
-      <ElDescriptionsItem label="委托单位" :span="2">
-        {{ detailData.clientName }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="收样日期">
-        {{ detailData.receiveDate ? dateFormatter(null, null, detailData.receiveDate) : '-' }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="检测日期">
-        {{ detailData.createTime ? dateFormatter(null, null, detailData.createTime) : '-' }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="样品编号">
-        {{ detailData.sampleNo }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="样品名称">
-        {{ detailData.sampleName }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="采样地点" :span="2">
-        {{ detailData.samplingLocation }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="pH值">
-        {{ detailData.phValue }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="色度(度)">
-        {{ detailData.colorDegree }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="浑浊度(NTU)">
-        {{ detailData.turbidity }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="臭和味">
-        {{ detailData.odourTaste }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="肉眼可见物">
-        {{ detailData.visibleObject }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="氨(以N计)(mg/L)">
-        {{ detailData.ammoniaN }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="高锰酸盐指数(以O2计)(mg/L)">
-        {{ detailData.permanganateIndex }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="菌落总数(CFU/mL)">
-        {{ detailData.totalBacteriaCount }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="总大肠菌群(CFU/100mL)">
-        {{ detailData.totalColiform }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="大肠埃希氏菌(CFU/100mL)">
-        {{ detailData.escherichiaColi }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="溶解性总固体(mg/L)">
-        {{ detailData.dissolvedSolids }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="总硬度(以CaCO3计)(mg/L)">
-        {{ detailData.totalHardness }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="氟化物(mg/L)">
-        {{ detailData.fluoride }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="硝酸盐(以N计)(mg/L)">
-        {{ detailData.nitrateN }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="氯化物(mg/L)">
-        {{ detailData.chloride }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="硫酸盐(mg/L)">
-        {{ detailData.sulfate }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="铁(mg/L)">
-        {{ detailData.iron }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="锰(mg/L)">
-        {{ detailData.manganese }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="铜(mg/L)">
-        {{ detailData.copper }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="锌(mg/L)">
-        {{ detailData.zinc }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="铝(mg/L)">
-        {{ detailData.aluminum }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="镉(mg/L)">
-        {{ detailData.cadmium }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="铬(六价)(mg/L)">
-        {{ detailData.chromium }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="铅(mg/L)">
-        {{ detailData.lead }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="汞(mg/L)">
-        {{ detailData.mercury }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="砷(mg/L)">
-        {{ detailData.arsenic }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="氰化物(mg/L)">
-        {{ detailData.cyanide }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="二氧化氯(mg/L)">
-        {{ detailData.chlorineDioxide }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="氯酸盐(mg/L)">
-        {{ detailData.chlorate }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="亚氯酸盐(mg/L)">
-        {{ detailData.chlorite }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="三卤甲烷">
-        {{ detailData.trihalomethanes }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="三氯甲烷(mg/L)">
-        {{ detailData.chloroform }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="二氯一溴甲烷(mg/L)">
-        {{ detailData.dichlorobromomethane }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="一氯二溴甲烷(mg/L)">
-        {{ detailData.dibromochloromethane }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="三溴甲烷(mg/L)">
-        {{ detailData.bromoform }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="二氯乙酸(mg/L)">
-        {{ detailData.dichloroaceticAcid }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="三氯乙酸(mg/L)">
-        {{ detailData.trichloroaceticAcid }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="总α放射性(Bq/L)">
-        {{ detailData.totalAlphaRadioactivity }}
-      </ElDescriptionsItem>
-      <ElDescriptionsItem label="总β放射性(Bq/L)">
-        {{ detailData.totalBetaRadioactivity }}
-      </ElDescriptionsItem>
-    </ElDescriptions>
-    <template #footer>
-      <ElButton @click="handleClose">关 闭</ElButton>
-      <ElButton type="primary" @click="handlePrint">打 印</ElButton>
-      <ElButton type="success" @click="handleExportReport">导出报告</ElButton>
-    </template>
+    <div v-loading="loading" class="detail-container">
+      <template v-if="detailData">
+        <ElTabs v-model="activeTab" class="detail-tabs">
+          <ElTabPane label="基础信息" name="basic">
+            <ElForm label-width="120px" class="detail-form basic-form">
+              <ElFormItem label="委托单位">
+                <span class="form-value">{{ detailData.clientName }}</span>
+              </ElFormItem>
+              <ElFormItem label="收样日期">
+                <span class="form-value">{{ detailData.receiveDate }}</span>
+              </ElFormItem>
+              <ElFormItem label="样品编号">
+                <span class="form-value">{{ detailData.sampleNo }}</span>
+              </ElFormItem>
+              <ElFormItem label="样品名称">
+                <span class="form-value">{{ detailData.sampleName }}</span>
+              </ElFormItem>
+              <ElFormItem label="采样地点">
+                <span class="form-value">{{ detailData.samplingLocation }}</span>
+              </ElFormItem>
+            </ElForm>
+          </ElTabPane>
+
+          <ElTabPane label="指标数据" name="indicators">
+            <div class="indicator-grid">
+              <div
+                v-for="(item, idx) in indicatorOptions"
+                :key="idx"
+                class="indicator-item"
+              >
+                <span class="indicator-label">{{ item.label }}</span>
+                <span class="indicator-value">
+                  {{ detailData[item.prop as keyof WaterSampleTestSummaryVO] || '-' }}
+                </span>
+              </div>
+            </div>
+          </ElTabPane>
+        </ElTabs>
+      </template>
+    </div>
   </ElDrawer>
 </template>
+<style scoped>
+.detail-container {
+  height: calc(100vh - 200px);
+  overflow-y: auto;
+  padding: 24px;
+  background: #fff;
+}
+
+.detail-tabs {
+  --el-tabs-nav-height: 42px;
+  --el-tabs-tab-font-size: 15px;
+  --el-tabs-tab-active-color: #409eff;
+}
+
+.basic-form {
+  --el-form-item-margin-bottom: 12px;
+  padding: 10px 0;
+}
+
+.indicator-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px 12px;
+  padding: 10px 0;
+}
+
+.indicator-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.indicator-label {
+  font-size: 14px;
+  color: #606266;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.indicator-value {
+  display: block;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: #f8f9fa;
+  color: #333;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 32px;
+  box-sizing: border-box;
+}
+
+.form-value {
+  display: inline-block;
+  width: 100%;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: #f8f9fa;
+  color: #666;
+  line-height: 1.6;
+  word-break: break-word;
+}
+</style>

@@ -1,99 +1,21 @@
-<template>
-  <div class="content-main">
-    <!--左边开始-->
-    <div class="content-left">
-      <!--第一块-->
-      <div class="one bg">
-        <div class="title">智慧环卫</div>
-        <chart-type-pie
-          :idName="leftData.oneId"
-          :rightData="leftData.picRightData"
-          :resData="leftData.picData"
-        />
-      </div>
-      <!--第二块-->
-      <div class="two bg">
-        <div class="title">智慧市政</div>
-        <chart-type-line
-          :idName="leftData.twoId"
-          :rightData="leftData.picRightData2"
-          :xAxisData="leftData.lineAxisData"
-          :seriesData="leftData.lineSeriesData"
-        />
-      </div>
-      <!--第三块-->
-      <div class="three bg">
-        <div class="title">事件清单</div>
-        <ScrollBoard
-          :config="leftData.CCDvScrollBoardConfig"
-          style="height: calc(100% - 35px - 40px); padding: 15px 25px 25px"
-        />
-      </div>
-    </div>
-
-    <!--中间开始-->
-    <div class="content-center">
-      <div class="s1">
-        <chart-customize1 :paramsData="centerData.customizeParams" />
-        <map-common idName="chinaEcharts" :geometriesArray="geometriesArray" />
-      </div>
-      <div class="s2 bg">
-        <div class="title">智慧交通</div>
-        <chart-type-line2
-          :idName="centerData.centerId"
-          :xAxisData="centerData.lineAxisData"
-          :seriesData="centerData.lineSeriesData"
-          lineWidth="100%"
-        />
-      </div>
-    </div>
-
-    <!--右边开始-->
-    <div class="content-right">
-      <div class="s1 bg">
-        <div class="title">设备总数</div>
-        <chart-customize2 :paramsData="rightData.customize2Params" />
-      </div>
-
-      <div class="s2 bg">
-        <div class="title">处置事件</div>
-        <chart-type-poly-lines
-          :idName="rightData.rightOne.idName"
-          :xAxisData="rightData.rightOne.xAxisData"
-          :polyLinesData="rightData.rightOne.polyLinesData"
-          :yAxisName="rightData.rightOne.yAxisName"
-        />
-      </div>
-
-      <div class="s3 bg">
-        <div class="title">智慧供水</div>
-        <chart-type-poly-lines
-          :idName="rightData.rightTwo.idName"
-          :xAxisData="rightData.rightTwo.xAxisData"
-          :polyLinesData="rightData.rightTwo.polyLinesData"
-          :yAxisName="rightData.rightTwo.yAxisName"
-        />
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup>
 import { ref } from 'vue';
-import MapCommon from './MapCommon.vue';
-import ChartTypePie from './ChartTypePie.vue';
-import ChartTypeLine from './ChartTypeLine.vue';
-import ChartTypeLine2 from './ChartTypeLine2.vue';
-import ChartCustomize1 from './ChartCustomize1.vue';
-import ChartCustomize2 from './ChartCustomize2.vue';
-import ChartTypePolyLines from './ChartTypePolyLines.vue';
+
 import { ScrollBoard } from '@kjgl77/datav-vue3';
 
+import ChartCustomize1 from './ChartCustomize1.vue';
+import ChartCustomize2 from './ChartCustomize2.vue';
+import ChartTypeLine2 from './ChartTypeLine2.vue';
+import ChartTypeLine from './ChartTypeLine.vue';
+import ChartTypePie from './ChartTypePie.vue';
+import ChartTypePolyLines from './ChartTypePolyLines.vue';
+import MapCommon from './MapCommon.vue';
+
 const geometriesArray = [
-  { x: 26.793227, y: 117.810114 },
-  { x: 26.893227, y: 117.860114 },
-  { x: 26.823227, y: 117.850114 },
-  { x: 26.863227, y: 117.920114 },
+  { x: 26.793_227, y: 117.810_114 },
+  { x: 26.893_227, y: 117.860_114 },
+  { x: 26.823_227, y: 117.850_114 },
+  { x: 26.863_227, y: 117.920_114 },
 ];
 
 // 使用 ref 创建响应式数据
@@ -248,5 +170,85 @@ const rightData = ref({
   },
 });
 </script>
+
+<template>
+  <div class="content-main">
+    <!--左边开始-->
+    <div class="content-left">
+      <!--第一块-->
+      <div class="one bg">
+        <div class="title">智慧环卫</div>
+        <ChartTypePie
+          :id-name="leftData.oneId"
+          :right-data="leftData.picRightData"
+          :res-data="leftData.picData"
+        />
+      </div>
+      <!--第二块-->
+      <div class="two bg">
+        <div class="title">智慧市政</div>
+        <ChartTypeLine
+          :id-name="leftData.twoId"
+          :right-data="leftData.picRightData2"
+          :x-axis-data="leftData.lineAxisData"
+          :series-data="leftData.lineSeriesData"
+        />
+      </div>
+      <!--第三块-->
+      <div class="three bg">
+        <div class="title">事件清单</div>
+        <ScrollBoard
+          :config="leftData.CCDvScrollBoardConfig"
+          style="height: calc(100% - 35px - 40px); padding: 15px 25px 25px"
+        />
+      </div>
+    </div>
+
+    <!--中间开始-->
+    <div class="content-center">
+      <div class="s1">
+        <ChartCustomize1 :params-data="centerData.customizeParams" />
+        <MapCommon id-name="chinaEcharts" :geometries-array="geometriesArray" />
+      </div>
+      <div class="s2 bg">
+        <div class="title">智慧交通</div>
+        <ChartTypeLine2
+          :id-name="centerData.centerId"
+          :x-axis-data="centerData.lineAxisData"
+          :series-data="centerData.lineSeriesData"
+          line-width="100%"
+        />
+      </div>
+    </div>
+
+    <!--右边开始-->
+    <div class="content-right">
+      <div class="s1 bg">
+        <div class="title">设备总数</div>
+        <ChartCustomize2 :params-data="rightData.customize2Params" />
+      </div>
+
+      <div class="s2 bg">
+        <div class="title">处置事件</div>
+        <ChartTypePolyLines
+          :id-name="rightData.rightOne.idName"
+          :x-axis-data="rightData.rightOne.xAxisData"
+          :poly-lines-data="rightData.rightOne.polyLinesData"
+          :y-axis-name="rightData.rightOne.yAxisName"
+        />
+      </div>
+
+      <div class="s3 bg">
+        <div class="title">智慧供水</div>
+        <ChartTypePolyLines
+          :id-name="rightData.rightTwo.idName"
+          :x-axis-data="rightData.rightTwo.xAxisData"
+          :poly-lines-data="rightData.rightTwo.polyLinesData"
+          :y-axis-name="rightData.rightTwo.yAxisName"
+        />
+      </div>
+    </div>
+  </div>
+</template>
 
 <style lang="scss" scoped></style>

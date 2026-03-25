@@ -5,7 +5,7 @@ import Card from '#/components/stats/card.vue';
 import Circle from '#/components/stats/circle.vue';
 import Columnar from '#/components/stats/columnar.vue';
 import Line from '#/components/stats/line.vue';
-import MapComponent from '#/components/Map/index.vue';
+import MapComponent from '#/genchuan-components/Map/index.vue';
 
 // 饼图切换状态
 const firstChartIndex = ref(0);
@@ -204,7 +204,7 @@ const toggleMap = () => {
             <span>→</span>
           </div>
         </div>
-        
+
         <!-- 第二个饼图，带切换按钮 -->
         <div style="position: relative; width: 380px; height: 100%;">
           <Circle
@@ -218,11 +218,11 @@ const toggleMap = () => {
           </div>
         </div>
       </div>
-      
+
       <!-- 动态图表，带切换按钮 -->
       <div style="position: relative; width: 715px; height: 100%;">
         <!-- 展开/隐藏地图按钮 -->
-        <button 
+        <button
           style="
             position: absolute;
             top: 10px;

@@ -247,16 +247,16 @@ watch(
         @read="handleNotificationRead"
       />
     </template>
-    <template #header-right-1>
-      <div v-if="tenantEnable">
-        <TenantDropdown
-          class="mr-2"
-          :tenant-list="tenants"
-          :visit-tenant-id="accessStore.visitTenantId"
-          @success="handleTenantChange"
-        />
-      </div>
-    </template>
+<!--    <template #header-right-1>-->
+<!--      <div v-if="tenantEnable">-->
+<!--        <TenantDropdown-->
+<!--          class="mr-2"-->
+<!--          :tenant-list="tenants"-->
+<!--          :visit-tenant-id="accessStore.visitTenantId"-->
+<!--          @success="handleTenantChange"-->
+<!--        />-->
+<!--      </div>-->
+<!--    </template>-->
     <template #extra>
       <AuthenticationLoginExpiredModal
         v-model:open="accessStore.loginExpired"
