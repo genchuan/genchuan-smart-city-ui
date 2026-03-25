@@ -74,5 +74,24 @@ genchuan-smart-city-ui/
 MIT License
 
 ---
+联系我们
 
-**🌟 如果这个项目对你有帮助，欢迎 Star！**
+### 亘川智城官网
+
+**点击跳转**：http://genchuan.cn
+
+### 企业微信客服
+扫描下方二维码，联系我们，进群备注Gitee，获取技术支持与服务。
+
+![客服小何.jpg](images/%E5%AE%A2%E6%9C%8D%E5%B0%8F%E4%BD%95.jpg)
+
+### 亘川智城SaaS平台
+
+地址：http://cloud.genchuan.cn 
+账号密码：请联系我们获取吧
+
+### 公众号
+亘川科技
+
+![qrcode_for 公众号.jpg](images/qrcode_for%20%E5%85%AC%E4%BC%97%E5%8F%B7.jpg)
+
