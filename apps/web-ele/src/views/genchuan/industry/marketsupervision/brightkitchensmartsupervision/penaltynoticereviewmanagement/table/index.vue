@@ -26,6 +26,7 @@ import {
 } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
+import caoniDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/caoniDetail.vue';
 
 import { useFormSchema, useGridColumns } from './data';
 // 引入封装后的详情抽屉组件
@@ -542,6 +543,7 @@ const rectifyRef = ref(null);
 const handleAutoDetail = async (row) => {
   const res = await getpunishDetail(row.punishNoticeId);
   dataObj.rectifyObj = res;
+  dataObj.rectifyObj.noticeContent = res.decisionContent;
   rectifyRef.value.open();
 };
 </script>
@@ -626,6 +628,12 @@ const handleAutoDetail = async (row) => {
         </div>
       </div>
     </UploadModal>
+    <caoniDetailDrawer
+      class="cao-ni-test"
+      ref="rectifyRef"
+      :detail-obj="dataObj.rectifyObj"
+      title="详情"
+    />
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
