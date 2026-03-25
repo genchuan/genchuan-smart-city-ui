@@ -36,97 +36,123 @@ const formatCleaners = (cleaners) => {
     <div class="detail-card">
       <!-- 基础信息 -->
       <div class="detail-section">📋 公厕基础信息</div>
-      <div class="detail-row"><span class="label">公厕名称：</span>{{ detailObj.name || '-' }}</div>
-      <div class="detail-row"><span class="label">公厕位置：</span>{{ detailObj.location || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">公厕名称：</div>
+        <div class="detail-row-right">{{ detailObj.name || '-' }}</div>
       </div>
-      <div class="detail-row"><span class="label">所属区域：</span>{{ detailObj.areaName || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">公厕位置：</div>
+        <div class="detail-row-right">{{ detailObj.location || '-' }}</div>
       </div>
-      <div class="detail-row"><span class="label">开放时段：</span>{{ detailObj.openHours || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">所属区域：</div>
+        <div class="detail-row-right">{{ detailObj.areaName || '-' }}</div>
       </div>
-      <div class="detail-row"><span class="label">蹲位数量：</span>{{ detailObj.stallCount ?? '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">开放时段：</div>
+        <div class="detail-row-right">{{ detailObj.openHours || '-' }}</div>
       </div>
-      <div class="detail-row"><span
-        class="label">运营状态：</span>{{ detailObj.operationStatusName || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">蹲位数量：</div>
+        <div class="detail-row-right">{{ detailObj.stallCount ?? '-' }}</div>
       </div>
-      <div class="detail-row"><span class="label">负责人：</span>{{ detailObj.managerName || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">运营状态：</div>
+        <div class="detail-row-right">{{ detailObj.operationStatusName || '-' }}</div>
       </div>
-      <div class="detail-row"><span class="label">保洁达标率：</span>{{
-          detailObj.cleaningRate ?? '-'
-        }}%
+      <div class="detail-card-row">
+        <div class="detail-row-left">负责人：</div>
+        <div class="detail-row-right">{{ detailObj.managerName || '-' }}</div>
       </div>
-      <div class="detail-row"><span
-        class="label">投诉办结率：</span>{{ detailObj.complaintRate ?? '-' }}%
+      <div class="detail-card-row">
+        <div class="detail-row-left">保洁达标率：</div>
+        <div class="detail-row-right">{{ detailObj.cleaningRate ?? '-' }}%</div>
       </div>
-      <div class="detail-row"><span
-        class="label">耗材库存预警数：</span>{{ detailObj.warningCount ?? '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">投诉办结率：</div>
+        <div class="detail-row-right">{{ detailObj.complaintRate ?? '-' }}%</div>
       </div>
-      <div class="detail-row"><span class="label">设施完好率：</span>{{
-          detailObj.facilityRate ?? '-'
-        }}%
+      <div class="detail-card-row">
+        <div class="detail-row-left">耗材库存预警数：</div>
+        <div class="detail-row-right">{{ detailObj.warningCount ?? '-' }}</div>
       </div>
-
-      <!-- 保洁计划信息（如果存在） -->
-      <div class="detail-section"
-           v-if="detailObj.cleaningFrequency || detailObj.cleaningTime || detailObj.cleaningContent || detailObj.cleaningStandard || detailObj.cleanersName">
-        🧹 保洁计划信息
-      </div>
-      <div class="detail-row" v-if="detailObj.cleaningFrequency"><span
-        class="label">保洁频次：</span>{{ detailObj.cleaningFrequency }}
-      </div>
-      <div class="detail-row" v-if="detailObj.cleaningTime"><span
-        class="label">保洁时段：</span>{{ detailObj.cleaningTime }}
-      </div>
-      <div class="detail-row" v-if="detailObj.cleaningContent"><span class="label">保洁内容：</span>{{
-          detailObj.cleaningContent
-        }}
-      </div>
-      <div class="detail-row" v-if="detailObj.cleaningStandard"><span class="label">保洁标准：</span>{{
-          detailObj.cleaningStandard
-        }}
-      </div>
-      <div class="detail-row" v-if="detailObj.cleanersName"><span
-        class="label">保洁人员：</span>{{ formatCleaners(detailObj.cleanersName) }}
-      </div>
-
-      <!-- 物资库存信息（如果存在） -->
-      <div class="detail-section"
-           v-if="detailObj.consumableStock || detailObj.consumableThreshold || detailObj.consumableGap || detailObj.lastSupplyTime || detailObj.supplyCycle">
-        📦 物资库存信息
-      </div>
-      <div class="detail-row" v-if="detailObj.consumableStock"><span class="label">物资库存：</span>{{
-          detailObj.consumableStock
-        }}
-      </div>
-      <div class="detail-row" v-if="detailObj.consumableThreshold"><span
-        class="label">预警阈值：</span>{{ detailObj.consumableThreshold }}
-      </div>
-      <div class="detail-row" v-if="detailObj.consumableGap"><span
-        class="label">缺口数量：</span>{{ detailObj.consumableGap }}
-      </div>
-      <div class="detail-row" v-if="detailObj.lastSupplyTime"><span
-        class="label">上次补充时间：</span>{{ detailObj.lastSupplyTime }}
-      </div>
-      <div class="detail-row" v-if="detailObj.supplyCycle"><span
-        class="label">补充周期：</span>{{ detailObj.supplyCycle }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">设施完好率：</div>
+        <div class="detail-row-right">{{ detailObj.facilityRate ?? '-' }}%</div>
       </div>
 
       <!-- 时间信息（通用） -->
       <div class="detail-section">📅 时间信息</div>
-      <div class="detail-row"><span class="label">创建时间：</span>{{ detailObj.createTime || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">创建时间：</div>
+        <div class="detail-row-right">{{ detailObj.createTime || '-' }}</div>
       </div>
-      <div class="detail-row"><span class="label">更新时间：</span>{{ detailObj.updateTime || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">更新时间：</div>
+        <div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div>
       </div>
     </div>
   </DetailDrawer>
 </template>
 
 <style scoped lang="scss">
+@media (max-width: 768px) {
+  .detail-row-left {
+    width: 180px;
+  }
+  .detail-card {
+    min-height: 600px;
+    max-height: 80vh;
+    padding: 15px;
+  }
+}
+
 .detail-card {
+  min-height: 750px;
+  max-height: 85vh;
   padding: 20px;
-  background: #f9fafb;
-  border-radius: 8px;
-  max-height: 70vh;
   overflow-y: auto;
+  background-color: #f9fafb;
+  border-radius: 8px;
+}
+
+.detail-card-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    padding-right: 8px;
+    padding-left: 8px;
+    margin-right: -8px;
+    margin-left: -8px;
+    background-color: #f5f7fa;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+}
+
+.detail-row-left {
+  flex-shrink: 0;
+  width: 200px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 18px;
+  color: #606266;
+}
+
+.detail-row-right {
+  flex: 1;
+  padding-right: 10px;
+  font-size: 14px;
+  line-height: 18px;
+  color: #303133;
+  word-break: break-all;
 }
 
 .detail-section {
@@ -135,25 +161,28 @@ const formatCleaners = (cleaners) => {
   margin: 16px 0 8px;
   padding-bottom: 4px;
   border-bottom: 1px solid #e0e0e0;
+  color: #6E7E91;
+
+  &:first-child {
+    margin-top: 0;
+  }
 }
 
-.detail-row {
-  display: flex;
-  padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
+.detail-card::-webkit-scrollbar {
+  width: 6px;
+}
 
-  .label {
-    width: 130px;
-    flex-shrink: 0;
-    font-weight: 500;
-    color: #6E7E91;
-  }
+.detail-card::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
 
-  &:hover {
-    background: #f5f7fa;
-    border-radius: 4px;
-    padding-left: 8px;
-    margin-left: -8px;
-  }
+.detail-card::-webkit-scrollbar-thumb {
+  background: #dcdfe6;
+  border-radius: 3px;
+}
+
+.detail-card::-webkit-scrollbar-thumb:hover {
+  background: #c0c4cc;
 }
 </style>

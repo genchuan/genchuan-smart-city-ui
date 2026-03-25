@@ -1,5 +1,6 @@
 <script setup>
-import { reactive, onMounted } from 'vue';
+import { reactive, onMounted, ref, computed } from 'vue';
+import { ElSelect, ElOption } from 'element-plus';
 import { getGarbageTransferChartDashboard } from '#/api/genchuan/industry/urban/environmentalSanitation/sanitationSceneMgmt/garbageTransfer/data.js';
 import Indicator from '#/components/stats/indicator.vue';
 import Pie from '#/components/stats/pie.vue';
@@ -23,6 +24,54 @@ const state = reactive({
   },
 });
 
+// 圆环图选项（基于原始数据生成）
+const pieOptions = computed(() => [
+  {
+    title: '运营状态占比',
+    data: state.pieData.status,
+  },
+  {
+    title: '区域分布占比',
+    data: state.pieData.area,
+  },
+]);
+
+// 柱状图/折线图选项（基于原始数据生成）
+const chartOptions = computed(() => [
+  {
+    type: 'bar',
+    title: '不同转运站日转运量对比',
+    xData: state.barData.x,
+    seriesData: [{name: '日转运量(吨)', data: state.barData.series}],
+  },
+  {
+    type: 'line',
+    title: '近7日环境指标变化趋势',
+    xData: state.lineData.x,
+    seriesData: [{name: '异味浓度(ppm)', data: state.lineData.series}],
+    yName: 'ppm',
+    smooth: true,
+  },
+]);
+
+// 当前选中的圆环图索引和数据
+const activePieIndex = ref(0);
+const currentPieData = computed(() => pieOptions.value[activePieIndex.value] || pieOptions.value[0]);
+
+// 切换圆环图
+const handlePieChange = (index) => {
+  activePieIndex.value = index;
+};
+
+// 当前选中的柱状图/折线图索引和数据
+const activeChartIndex = ref(0);
+const currentChart = computed(() => chartOptions.value[activeChartIndex.value] || chartOptions.value[0]);
+
+// 切换图表
+const handleChartChange = (index) => {
+  activeChartIndex.value = index;
+};
+
 const toNumber = (val) => (val === null || val === undefined ? 0 : Number(val) || 0);
 
 // 获取数据
@@ -35,10 +84,10 @@ const fetchData = async () => {
     if (res && typeof res === 'object') {
       // 卡片数据映射
       state.cardList = [
-        { title: '总转运站数', value: toNumber(res.totalStations), color: '#409EFF' },
-        { title: '正常运营数', value: toNumber(res.normalOperationCount), color: '#67C23A' },
-        { title: '设备正常数', value: toNumber(res.equipmentNormalCount), color: '#E6A23C' },
-        { title: '环境达标数', value: toNumber(res.environmentStandardCount), color: '#F56C6C' },
+        {title: '总转运站数', value: toNumber(res.totalStations), color: '#409EFF'},
+        {title: '正常运营数', value: toNumber(res.normalOperationCount), color: '#67C23A'},
+        {title: '设备正常数', value: toNumber(res.equipmentNormalCount), color: '#E6A23C'},
+        {title: '环境达标数', value: toNumber(res.environmentStandardCount), color: '#F56C6C'},
       ];
 
       // 圆环图数据
@@ -80,37 +129,64 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 运营状态占比圆环图 -->
-    <Pie
-      style="flex: 1 !important;"
-      title-text="运营状态占比"
-      :data="state.pieData.status"
-    />
+    <!-- 圆环图区域（带下拉切换） -->
+    <div class="pie-chart-area">
+      <div class="pie-select-wrapper">
+        <el-select
+          v-model="activePieIndex"
+          size="small"
+          @change="handlePieChange"
+        >
+          <el-option
+            v-for="(opt, idx) in pieOptions"
+            :key="idx"
+            :label="opt.title"
+            :value="idx"
+          />
+        </el-select>
+      </div>
+      <Pie
+        style="flex: 1 !important;"
+        :title-text="currentPieData.title"
+        :data="currentPieData.data"
+      />
+    </div>
 
-    <!-- 区域分布占比圆环图 -->
-    <Pie
-      style="flex: 1 !important;"
-      title-text="区域分布占比"
-      :data="state.pieData.area"
-    />
+    <!-- 柱状图/折线图区域（带下拉切换） -->
+    <div class="chart-area">
+      <div class="chart-select-wrapper">
+        <el-select
+          v-model="activeChartIndex"
+          size="small"
+          @change="handleChartChange"
+        >
+          <el-option
+            v-for="(opt, idx) in chartOptions"
+            :key="idx"
+            :label="opt.title"
+            :value="idx"
+          />
+        </el-select>
+      </div>
 
-    <!-- 基础柱状图：转运站日转运量对比 -->
-    <Bar
-      style="flex: 1 !important;"
-      title="不同转运站日转运量对比"
-      :x-data="state.barData.x"
-      :series-data="[{ name: '日转运量(吨)', data: state.barData.series }]"
-    />
-
-    <!-- 基础折线图：近7日环境指标变化趋势 -->
-    <LineChart
-      style="flex: 1 !important;"
-      title="近7日环境指标变化趋势"
-      :x-data="state.lineData.x"
-      :series-data="[{ name: '异味浓度(ppm)', data: state.lineData.series }]"
-      y-name="ppm"
-      :smooth="true"
-    />
+      <!-- 根据当前图表类型渲染对应组件 -->
+      <Bar
+        style="flex: 1 !important;"
+        v-if="currentChart.type === 'bar'"
+        :title="currentChart.title"
+        :x-data="currentChart.xData"
+        :series-data="currentChart.seriesData"
+      />
+      <LineChart
+        style="flex: 1 !important;"
+        v-else
+        :title="currentChart.title"
+        :x-data="currentChart.xData"
+        :series-data="currentChart.seriesData"
+        :y-name="currentChart.yName"
+        :smooth="currentChart.smooth"
+      />
+    </div>
   </div>
 </template>
 
@@ -135,5 +211,37 @@ onMounted(() => {
       height: 150px !important;
     }
   }
+}
+
+/* 圆环图区域样式 */
+.pie-chart-area {
+  position: relative;
+  flex: 1;
+  min-width: 280px;
+  height: 100%;
+  margin-top: 10px;
+}
+
+.pie-select-wrapper {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 10;
+}
+
+/* 柱状图/折线图区域样式 */
+.chart-area {
+  position: relative;
+  flex: 1.5;
+  min-width: 300px;
+  height: 100%;
+  margin-top: 10px;
+}
+
+.chart-select-wrapper {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 10;
 }
 </style>

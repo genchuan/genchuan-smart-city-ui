@@ -69,22 +69,22 @@ const currentArrowShow = computed(() => {
       :is="currentChartComponent"
     />
 
-    <div class="icon-change">
-      <el-icon
-        class="tabel-tab-icon"
-        v-if="secondShow"
-        @click="changeArrowStatus"
-      >
-        <ArrowDown/>
-      </el-icon>
-      <el-icon
-        class="tabel-tab-icon"
-        v-if="!secondShow"
-        @click="changeArrowStatus"
-      >
-        <ArrowUp/>
-      </el-icon>
-    </div>
+<!--    <div class="icon-change">-->
+<!--      <el-icon-->
+<!--        class="tabel-tab-icon"-->
+<!--        v-if="secondShow"-->
+<!--        @click="changeArrowStatus"-->
+<!--      >-->
+<!--        <ArrowDown/>-->
+<!--      </el-icon>-->
+<!--      <el-icon-->
+<!--        class="tabel-tab-icon"-->
+<!--        v-if="!secondShow"-->
+<!--        @click="changeArrowStatus"-->
+<!--      >-->
+<!--        <ArrowUp/>-->
+<!--      </el-icon>-->
+<!--    </div>-->
 
     <el-tabs
       v-model="activeName"

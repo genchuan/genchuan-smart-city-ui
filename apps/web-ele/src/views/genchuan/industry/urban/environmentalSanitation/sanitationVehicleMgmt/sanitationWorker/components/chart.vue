@@ -1,6 +1,9 @@
 <script setup>
-import { reactive, onMounted } from 'vue';
-import { getUserChartDashboard } from '#/api/genchuan/industry/urban/environmentalSanitation/sanitationVehicleMgmt/sanitationWorker/data.js';
+import {reactive, onMounted, ref, computed} from 'vue';
+import {ElSelect, ElOption} from 'element-plus';
+import {
+  getUserChartDashboard
+} from '#/api/genchuan/industry/urban/environmentalSanitation/sanitationVehicleMgmt/sanitationWorker/data.js';
 import Indicator from '#/components/stats/indicator.vue';
 import Pie from '#/components/stats/pie.vue';
 import Bar from '#/components/stats/bar.vue';
@@ -9,13 +12,13 @@ const state = reactive({
   loading: false,
   // 五个核心卡片
   cardList: [],
-  // 三个圆环图
+  // 三个圆环图（原始数据，用于切换）
   pieData: {
     jobType: [],           // 岗位类型占比
     personStatus: [],      // 人员状态占比
     teamDistribution: [],  // 所属班组分布占比
   },
-  // 两个柱状图
+  // 两个柱状图（原始数据，用于切换）
   barData: {
     teamCount: {           // 不同班组人员数量对比
       x: [],
@@ -27,6 +30,54 @@ const state = reactive({
     },
   },
 });
+
+// 圆环图选项（基于原始数据生成）
+const pieOptions = computed(() => [
+  {
+    title: '岗位类型占比',
+    data: state.pieData.jobType,
+  },
+  {
+    title: '人员状态占比',
+    data: state.pieData.personStatus,
+  },
+  {
+    title: '所属班组分布占比',
+    data: state.pieData.teamDistribution,
+  },
+]);
+
+// 柱状图选项（基于原始数据生成）
+const barOptions = computed(() => [
+  {
+    title: '不同班组人员数量对比',
+    xData: state.barData.teamCount.x,
+    seriesData: [{name: '人员数量', data: state.barData.teamCount.series}],
+  },
+  {
+    title: '不同岗位平均考核得分对比',
+    xData: state.barData.jobScore.x,
+    seriesData: [{name: '考核得分', data: state.barData.jobScore.series}],
+  },
+]);
+
+// 当前选中的圆环图索引和数据
+const activePieIndex = ref(0);
+const currentPieData = computed(() => pieOptions.value[activePieIndex.value] || pieOptions.value[0]);
+
+// 切换圆环图
+const handlePieChange = (index) => {
+  activePieIndex.value = index;
+};
+
+// 当前选中的柱状图索引和数据
+const activeBarIndex = ref(0);
+const currentBar = computed(() => barOptions.value[activeBarIndex.value] || barOptions.value[0]);
+
+// 切换柱状图
+const handleBarChange = (index) => {
+  activeBarIndex.value = index;
+};
 
 // 通用数值转换（处理字符串或数字）
 const toNumber = (val) => {
@@ -46,11 +97,11 @@ const fetchChartData = async () => {
     if (res && typeof res === 'object') {
       // 卡片数据映射
       state.cardList = [
-        { title: '总人员数', value: toNumber(res.totalUserCount), color: '#409EFF' },
-        { title: '在岗人数', value: toNumber(res.onDutyCount), color: '#67C23A' },
-        { title: '全勤人数', value: toNumber(res.fullAttendanceCount), color: '#E6A23C' },
-        { title: '考核优秀人数', value: toNumber(res.excellentAssessmentCount), color: '#F56C6C' },
-        { title: '待排班人数', value: toNumber(res.pendingScheduleCount), color: '#909399' },
+        {title: '总人员数', value: toNumber(res.totalUserCount), color: '#409EFF'},
+        {title: '在岗人数', value: toNumber(res.onDutyCount), color: '#67C23A'},
+        {title: '全勤人数', value: toNumber(res.fullAttendanceCount), color: '#E6A23C'},
+        {title: '考核优秀人数', value: toNumber(res.excellentAssessmentCount), color: '#F56C6C'},
+        {title: '待排班人数', value: toNumber(res.pendingScheduleCount), color: '#909399'},
       ];
 
       // 圆环图数据
@@ -94,36 +145,52 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 三个圆环图 -->
-    <Pie
-      style="flex: 1 !important;"
-      title-text="岗位类型占比"
-      :data="state.pieData.jobType"
-    />
-    <Pie
-      style="flex: 1 !important;"
-      title-text="人员状态占比"
-      :data="state.pieData.personStatus"
-    />
-    <Pie
-      style="flex: 1 !important;"
-      title-text="所属班组分布占比"
-      :data="state.pieData.teamDistribution"
-    />
+    <!-- 圆环图区域（带下拉切换） -->
+    <div class="pie-chart-area">
+      <div class="pie-select-wrapper">
+        <el-select
+          v-model="activePieIndex"
+          size="small"
+          @change="handlePieChange"
+        >
+          <el-option
+            v-for="(opt, idx) in pieOptions"
+            :key="idx"
+            :label="opt.title"
+            :value="idx"
+          />
+        </el-select>
+      </div>
+      <Pie
+        style="flex: 1 !important;"
+        :title-text="currentPieData.title"
+        :data="currentPieData.data"
+      />
+    </div>
 
-    <!-- 两个柱状图 -->
-    <Bar
-      style="flex: 1 !important;"
-      title="不同班组人员数量对比"
-      :x-data="state.barData.teamCount.x"
-      :series-data="[{ name: '人员数量', data: state.barData.teamCount.series }]"
-    />
-    <Bar
-      style="flex: 1 !important;"
-      title="不同岗位平均考核得分对比"
-      :x-data="state.barData.jobScore.x"
-      :series-data="[{ name: '考核得分', data: state.barData.jobScore.series }]"
-    />
+    <!-- 柱状图区域（带下拉切换） -->
+    <div class="bar-chart-area">
+      <div class="bar-select-wrapper">
+        <el-select
+          v-model="activeBarIndex"
+          size="small"
+          @change="handleBarChange"
+        >
+          <el-option
+            v-for="(opt, idx) in barOptions"
+            :key="idx"
+            :label="opt.title"
+            :value="idx"
+          />
+        </el-select>
+      </div>
+      <Bar
+        style="flex: 1 !important;"
+        :title="currentBar.title"
+        :x-data="currentBar.xData"
+        :series-data="currentBar.seriesData"
+      />
+    </div>
   </div>
 </template>
 
@@ -160,5 +227,37 @@ onMounted(() => {
       height: 150px !important;
     }
   }
+}
+
+/* 圆环图区域样式 */
+.pie-chart-area {
+  position: relative;
+  flex: 1;
+  min-width: 280px;
+  height: 100%;
+  margin-top: 10px;
+}
+
+.pie-select-wrapper {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 10;
+}
+
+/* 柱状图区域样式 */
+.bar-chart-area {
+  position: relative;
+  flex: 1.5;
+  min-width: 300px;
+  height: 100%;
+  margin-top: 10px;
+}
+
+.bar-select-wrapper {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 10;
 }
 </style>
