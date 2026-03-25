@@ -3,6 +3,8 @@ import { ref } from 'vue';
 
 import monitor from './monitor/index.vue';
 import monitorchart from './monitor/table/chart.vue';
+import reportchart from './report/customize/chart.vue';
+import report from './report/index.vue';
 
 import '#/components/page/index.scss';
 
@@ -16,15 +18,15 @@ const tabArray = ref([
     arrowState: false,
     chartComponet: monitorchart,
   },
-  // {
-  //   label: '自定义报表',
-  //   components: report,
-  //   showSecondary: false,
-  //   secondShow: false,
-  //   arrowShow: false,
-  //   arrowState: false,
-  //   chartComponet: reportchart,
-  // },
+  {
+    label: '自定义报表',
+    components: report,
+    showSecondary: false,
+    secondShow: false,
+    arrowShow: false,
+    arrowState: false,
+    chartComponet: reportchart,
+  },
 ]);
 
 const arrowChange = () => {
