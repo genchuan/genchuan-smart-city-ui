@@ -269,7 +269,7 @@ export function useGridColumns() {
       title: '主键ID',
       minWidth: 80,
       sortable: true,
-    },
+    },  
     {
       field: 'ledgerCode',
       title: '台账编号',
@@ -277,13 +277,20 @@ export function useGridColumns() {
       sortable: true,
       slots: { default: 'ledgerCode' },
     },
-    {
-      field: 'overdueFlag',
-      title: '逾期标识',
-      minWidth: 100,
-      sortable: true, 
-      slots: { default: 'overdueFlag' },
+     {
+      field: 'reviewStatus',
+      title: '复审状态',
+      minWidth: 120,
+      sortable: true,
+      slots: { default: 'reviewStatus' },
     },
+    // {
+    //   field: 'overdueFlag',
+    //   title: '逾期标识',
+    //   minWidth: 100,
+    //   sortable: true, 
+    //   slots: { default: 'overdueFlag' },
+    // },
     {
       field: 'paymentDeadlineTime',
       title: '缴费截止时间',
@@ -314,13 +321,7 @@ export function useGridColumns() {
       title: '处罚法律依据',
       minWidth: 200,
       sortable: false,
-    },
-    {
-      field: 'reviewStatus',
-      title: '复审状态',
-      minWidth: 120,
-      sortable: true,
-    },
+    }, 
     {
       field: 'reviewBy',
       title: '复审人',

@@ -723,7 +723,23 @@ const handleAutoDetail = async (row) => {
           />
         </div>
       </template>
-
+      <template #reviewStatus="{ row }">
+        <div v-if="row.overdueFlag === 1">
+          <el-tag size="small" type="danger" effect="plain">
+            {{ row.reviewStatus }}(逾期)
+          </el-tag>
+        </div>
+        <div v-else-if="row.reviewStatus === '待复审'">
+          <el-tag size="small" type="success" effect="plain">
+            {{ row.reviewStatus }}
+          </el-tag>
+        </div>
+        <div v-else>
+          <el-tag size="small" effect="plain">
+            {{ row.reviewStatus }}
+          </el-tag>
+        </div>
+      </template>
       <template #overdueFlag="{ row }">
         <div v-if="row.overdueFlag === 1">
           <el-tag size="small" type="danger" effect="plain"> (逾期) </el-tag>
