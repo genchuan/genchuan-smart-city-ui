@@ -125,7 +125,7 @@ function handleExport() {
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, '报表数据');
-    XLSX.writeFile(wb, `企业违规报表_${Date.now()}.xlsx`);
+    XLSX.writeFile(wb, `企业风险评估报表_${Date.now()}.xlsx`);
     ElMessage.success('导出成功！');
   } catch (error) {
     ElMessage.error(`导出失败：${error.message}`);
@@ -136,7 +136,7 @@ function handleExport() {
 
 // ====================== 图片转PDF（终极零乱码） ======================
 async function handlePDF() {
-  downloadLocalTemplate('/static/test.pdf', '报表.pdf');
+  downloadLocalTemplate('/static/dan.pdf', '报表.pdf');
 }
 
 /** 创建角色 */
@@ -191,6 +191,7 @@ const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
+const state = reactive({});
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
@@ -308,6 +309,10 @@ const arrowChange = () => {
   emit('arrow-change');
 };
 const autoElmessage = () => {
+  state.loading = true;
+  setTimeout(() => {
+    state.loading = false;
+  }, 2000);
   ElMessage.success($t('月报自动刷新成功'));
 };
 const openEn = async () => {
@@ -318,7 +323,7 @@ const openEn = async () => {
 </script>
 
 <template>
-  <div class="park-lot-table-new" v-loading="dataObj.loading">
+  <div class="park-lot-table-new" v-loading="state.loading">
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
@@ -371,6 +376,22 @@ const openEn = async () => {
             @click="handleFullShow"
           />
         </div>
+      </template>
+      <template #riskLevel="{ row }">
+        <el-text
+          class="common-align"
+          :type="
+            row.riskLevel === '高风险'
+              ? 'danger'
+              : row.riskLevel === '中风险'
+                ? 'warning'
+                : row.riskLevel === '低风险'
+                  ? 'success'
+                  : 'primary'
+          "
+        >
+          {{ row.riskLevel }}
+        </el-text>
       </template>
       <template #reportNumber="{ row }">
         <el-text

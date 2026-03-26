@@ -1,30 +1,32 @@
 /** 表格初始数据 - 丰泽区学校食堂违规自定义分析报表数据 */
 export const dataList = () => [
   {
-    reportCode: 'CUSTOM-QZ-FZ-20260615-001', // 自定义报表编号：CUSTOM-泉州-丰泽-日期-序号
-    filterCond: '丰泽区-学校食堂-2026年1-6月-未戴工作帽/口罩', // 核心筛选条件
-    createTime: '2026-06-15 14:35:28', // 生成时间（精确至分秒）
-    entCount: 85, // 涉及食堂数量
-    createBy: '张三', // 生成人（关联系统用户表）
-    totalWarnCount: 328, // 筛选范围总告警次数
-    illegalEntCount: 68, // 筛选范围违规食堂数
-    avgIllegalCount: 3.86, // 平均违规频次（328/85，保留2位小数）
-    highIllegalType: '未戴工作帽/口罩:156,操作区卫生不达标:98,餐具消毒不及时:74', // 高频违规类型TOP3
-    areaIllegalDist: '东海街道:32.5%,丰泽街道:28.8%,北峰街道:18.2%,东湖街道:12.5%,华大街道:8.0%', // 区域违规分布（保留1位小数）
-    entTypeIllegalDist: '幼儿园食堂:45.2%,小学食堂:32.5%,中学食堂:22.3%', // 食堂类型违规占比（保留1位小数）
-    rectifyRate: 89.5, // 筛选范围整改完成率（保留1位小数）
-    illegalRankTop10: '丰泽区实验幼儿园食堂:12,丰泽区第一中心小学食堂:10,泉州第九中学食堂:9,泉州师院附小食堂:8,丰泽区第二实验小学食堂:7,东海中学食堂:6,华大附小食堂:5,东湖小学食堂:4,北峰中学食堂:3,湖心实验小学食堂:2', // 违规频次排名TOP10
+    reportCode: 'CUSTOM-QZ-FZ-20260615-001',
+    filterCond: '丰泽区-学校食堂-2026年1-6月-未戴工作帽/口罩',
+    canteenName: '泉州市丰泽区实验幼儿园食堂',
+    createTime: '2026-06-15 14:35:28',
+    entCount: 85,
+    createBy: '张三',
+    totalWarnCount: 328,
+    illegalEntCount: 68,
+    avgIllegalCount: 3.86,
+    highIllegalType: '未戴工作帽/口罩,操作区卫生不达标,餐具消毒不及时',
+    areaIllegalDist: '东海街道:32.5%,丰泽街道:28.8%,北峰街道:18.2%,东湖街道:12.5%,华大街道:8.0%',
+    entTypeIllegalDist: '幼儿园食堂:45.2%,小学食堂:32.5%,中学食堂:22.3%',
+    rectifyRate: 89.5,
+    illegalRankTop10: '丰泽区实验幼儿园食堂:12,丰泽区第一中心小学食堂:10,泉州第九中学食堂:9,泉州师院附小食堂:8,丰泽区第二实验小学食堂:7,东海中学食堂:6,华大附小食堂:5,东湖小学食堂:4,北峰中学食堂:3,湖心实验小学食堂:2',
   },
   {
     reportCode: 'CUSTOM-QZ-FZ-20260615-002',
     filterCond: '丰泽区-学校食堂-2026年4-6月-操作区卫生不达标',
+    canteenName: '泉州市丰泽区第三实验小学食堂',
     createTime: '2026-06-15 15:12:45',
     entCount: 78,
     createBy: '李四',
     totalWarnCount: 298,
     illegalEntCount: 62,
-    avgIllegalCount: 3.82, // 298/78≈3.82
-    highIllegalType: '操作区卫生不达标:145,未戴工作帽/口罩:88,食材留样不规范:65',
+    avgIllegalCount: 3.82,
+    highIllegalType: '操作区卫生不达标,未戴工作帽/口罩,食材留样不规范',
     areaIllegalDist: '泉秀街道:30.5%,城东街道:25.8%,东海街道:20.2%,丰泽街道:15.5%,北峰街道:8.0%',
     entTypeIllegalDist: '小学食堂:42.5%,幼儿园食堂:38.8%,中学食堂:18.7%',
     rectifyRate: 91.2,
@@ -32,18 +34,19 @@ export const dataList = () => [
   },
   {
     reportCode: 'CUSTOM-QZ-FZ-20260615-003',
-    filterCond: '丰泽区-幼儿园食堂-2026年1-6月-食材留样不规范',
-    createTime: '2026-06-15 10:08:32',
-    entCount: 45,
+    filterCond: '丰泽区-幼儿园食堂-2026年1-3月-餐具消毒不及时',
+    canteenName: '泉州市丰泽区泉秀中心幼儿园食堂',
+    createTime: '2026-06-15 16:05:18',
+    entCount: 56,
     createBy: '王五',
-    totalWarnCount: 185,
-    illegalEntCount: 38,
-    avgIllegalCount: 4.11, // 185/45≈4.11
-    highIllegalType: '食材留样不规范:98,未戴工作帽/口罩:55,操作区卫生不达标:32',
-    areaIllegalDist: '东海街道:35.2%,丰泽街道:28.5%,泉秀街道:18.8%,东湖街道:10.5%,华大街道:7.0%',
-    entTypeIllegalDist: '民办幼儿园食堂:65.8%,公办幼儿园食堂:34.2%',
+    totalWarnCount: 215,
+    illegalEntCount: 45,
+    avgIllegalCount: 3.84,
+    highIllegalType: '餐具消毒不及时,操作区卫生不达标,未戴工作帽/口罩',
+    areaIllegalDist: '东海街道:28.5%,泉秀街道:25.8%,丰泽街道:22.5%,北峰街道:15.2%,东湖街道:8.0%',
+    entTypeIllegalDist: '幼儿园食堂:85.5%,小学食堂:14.5%,中学食堂:0%',
     rectifyRate: 88.5,
-    illegalRankTop10: '丰泽区阳光幼儿园食堂:10,东海湾实验幼儿园食堂:9,丰泽区小星星幼儿园食堂:8,泉秀双语幼儿园食堂:7,东湖中心幼儿园食堂:6,北峰小精灵幼儿园食堂:5,华大附属幼儿园食堂:4,城东安琪幼儿园食堂:3,清源爱心幼儿园食堂:2,蟳埔育苗幼儿园食堂:1',
+    illegalRankTop10: '泉秀中心幼儿园食堂:10,丰泽区实验幼儿园食堂:9,东海幼儿园食堂:8,丰泽区第二实验幼儿园食堂:7,北峰幼儿园食堂:6,华大幼儿园食堂:5,城东幼儿园食堂:4,东湖幼儿园食堂:3,清源幼儿园食堂:2,蟳埔幼儿园食堂:1',
   },
   {
     reportCode: 'CUSTOM-QZ-FZ-20260615-004',
@@ -241,6 +244,13 @@ export function useGridColumns() {
       sortable: true,
     },
     {
+      field: 'canteenName',
+      title: '食堂名称',
+      minWidth: 200,
+      sortable: true,
+      slots: { default: 'canteenName' },
+    },
+    {
       field: 'entCount',
       title: '涉及企业数量',
       minWidth: 120,
@@ -256,7 +266,8 @@ export function useGridColumns() {
       field: 'totalWarnCount',
       title: '筛选范围总告警次数',
       minWidth: 140,
-      sortable: true, 
+      sortable: true,
+      slots: { default: 'totalWarnCount' },
     },
     {
       field: 'illegalEntCount',

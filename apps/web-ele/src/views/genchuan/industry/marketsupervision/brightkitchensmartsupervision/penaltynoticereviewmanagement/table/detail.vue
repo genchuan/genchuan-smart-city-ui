@@ -5,13 +5,11 @@ import { useVbenDrawer } from '@vben/common-ui';
 
 // 定义组件接收的属性
 const props = defineProps({
-  // 详情数据对象（出入口数据）
   detailObj: {
     type: Object,
     required: true,
     default: () => ({}),
   },
-  // 抽屉标题（可选，默认使用详情对象的entranceName）
   title: {
     type: String,
     default: '',
@@ -20,18 +18,16 @@ const props = defineProps({
 
 const { detailObj, title } = toRefs(props);
 
-// 计算属性处理标题，优先使用出入口名称，兜底显示默认值
 const drawerTitle = computed(() => {
   const entranceName = detailObj.value?.entranceName || '出入口';
   return title.value || `${entranceName}详情`;
 });
 
-// 初始化抽屉实例
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 750, // 加宽抽屉适配更多出入口字段
+  width: 900,
   onCancel() {
     detailDrawerApi.close();
   },
@@ -39,7 +35,17 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   async onOpenChange() {},
 });
 
-// 对外暴露打开/关闭抽屉的方法
+// 原生预览图片
+function previewImage(url) {
+  const img = new Image();
+  img.src = url;
+  const w = window.open('', '_blank', 'width=800,height=600');
+  w.document.write(
+    `<style>body{margin:0;background:#000;display:flex;justify-content:center;align-items:center;height:100vh;}</style><img src="${url}" style="max-width:100%;max-height:100%;">`,
+  );
+  w.document.close();
+}
+
 defineExpose({
   open: () => detailDrawerApi.open(),
   close: () => detailDrawerApi.close(),
@@ -59,7 +65,15 @@ defineExpose({
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">逾期标识：</div>
-        <div class="detail-row-right">{{ detailObj.overdueFlag || '-' }}</div>
+        <div class="detail-row-right">
+          {{
+            detailObj.overdueFlag === '1'
+              ? '是'
+              : detailObj.overdueFlag === '0'
+                ? '否'
+                : '-'
+          }}
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">缴费截止时间：</div>
@@ -68,9 +82,60 @@ defineExpose({
         </div>
       </div>
       <div class="detail-card-row">
+        <div class="detail-row-left">企业ID：</div>
+        <div class="detail-row-right">{{ detailObj.entId || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
         <div class="detail-row-left">企业名称：</div>
         <div class="detail-row-right">{{ detailObj.entName || '-' }}</div>
       </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">违规类型ID：</div>
+        <div class="detail-row-right">{{ detailObj.illegalTypeId || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">违规等级ID：</div>
+        <div class="detail-row-right">
+          {{ detailObj.illegalLevelId || '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">企业整改记录ID：</div>
+        <div class="detail-row-right">
+          {{ detailObj.entRectifyRecordId || '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">执法ID：</div>
+        <div class="detail-row-right">{{ detailObj.lawEnforceId || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">执法复审台账编号：</div>
+        <div class="detail-row-right">{{ detailObj.lawLedgerCode || '-' }}</div>
+      </div>
+
+      <!-- ====================== 原生 img 图片展示 ====================== -->
+      <div class="detail-card-row" v-if="detailObj.evidenceUrl">
+        <div class="detail-row-left">违规证据：</div>
+        <div class="detail-row-right evidence-list">
+          <div
+            class="evidence-item"
+            v-for="(item, index) in JSON.parse(detailObj.evidenceUrl) || []"
+            :key="index"
+            @click="previewImage(item.url)"
+          >
+            <img :src="item.url" class="evidence-img" />
+            <div class="evidence-name">{{ item.name }}</div>
+          </div>
+          <span
+            v-if="!detailObj.evidenceUrl || detailObj.evidenceUrl.length === 0"
+          >
+            -
+          </span>
+        </div>
+      </div>
+      <!-- ============================================================== -->
+
       <div class="detail-card-row">
         <div class="detail-row-left">草拟处罚金额(元)：</div>
         <div class="detail-row-right">
@@ -88,6 +153,12 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">复审人：</div>
         <div class="detail-row-right">{{ detailObj.reviewBy || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">撤销原因ID：</div>
+        <div class="detail-row-right">
+          {{ detailObj.cancelReasonId || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">草拟时间：</div>
@@ -110,29 +181,25 @@ defineExpose({
 </template>
 
 <style scoped lang="scss">
-// 详情卡片整体样式
 .detail-card {
   padding: 20px;
   background-color: #f9fafb;
   border-radius: 8px;
-  min-height: 450px; // 增加最小高度适配出入口字段数量
-  max-height: 70vh; // 限制最大高度，避免内容过多溢出
-  overflow-y: auto; // 内容过多时显示滚动条
+  min-height: 450px;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
-// 每行的布局
 .detail-card-row {
   display: flex;
-  align-items: flex-start; // 顶部对齐，适配多行文本
+  align-items: flex-start;
   padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0; // 分隔线增强可读性
+  border-bottom: 1px solid #f0f0f0;
 
-  // 最后一行去掉分隔线
   &:last-child {
     border-bottom: none;
   }
 
-  // 鼠标悬浮高亮
   &:hover {
     background-color: #f5f7fa;
     border-radius: 4px;
@@ -144,27 +211,61 @@ defineExpose({
   }
 }
 
-// 左侧标签样式
 .detail-row-left {
-  width: 120px; // 固定宽度，保证所有标签对齐
-  flex-shrink: 0; // 不收缩
-  font-weight: 500; // 加粗突出标签
-  color: #606266; // 灰色调，区分内容
-  font-size: 14px;
-  line-height: 18px; // 统一行高
-}
-
-// 右侧内容样式
-.detail-row-right {
-  flex: 1; // 剩余宽度自适应
-  color: #303133; // 主文本色
+  width: 120px;
+  flex-shrink: 0;
+  font-weight: 500;
+  color: #606266;
   font-size: 14px;
   line-height: 18px;
-  word-break: break-all; // 处理长文本换行（如地址）
+}
+
+.detail-row-right {
+  flex: 1;
+  color: #303133;
+  font-size: 14px;
+  line-height: 18px;
+  word-break: break-all;
   padding-right: 10px;
 }
 
-// 响应式适配
+// 证据图片样式（纯原生）
+.evidence-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.evidence-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.evidence-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  object-fit: cover;
+  transition: transform 0.2s;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+.evidence-name {
+  font-size: 12px;
+  color: #6b7280;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 768px) {
   .detail-row-left {
     width: 100px;
@@ -175,7 +276,6 @@ defineExpose({
   }
 }
 
-// 滚动条样式优化
 .detail-card::-webkit-scrollbar {
   width: 6px;
 }

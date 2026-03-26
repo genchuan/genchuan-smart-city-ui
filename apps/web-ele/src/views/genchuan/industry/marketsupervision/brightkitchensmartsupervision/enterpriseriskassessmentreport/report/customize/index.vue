@@ -6,11 +6,13 @@ import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
+// 导出插件
+import * as XLSX from 'xlsx';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
-import { exportToExcel } from '#/utils/excel.js';
+import { downloadLocalTemplate } from '#/utils/genchuan/down';
 
 import { dataList, useFormSchema, useGridColumns } from './data';
 // 引入封装后的详情抽屉组件
@@ -96,11 +98,6 @@ function handleRefresh() {
   gridApi.query();
 }
 
-/** 导出表格 */
-async function handleExport() {
-  exportToExcel(dataObj.apilist, '导出', 'excel');
-}
-
 /** 创建角色 */
 function handleCreate() {
   formDrawerApi
@@ -148,7 +145,44 @@ async function handleDeleteBatch() {
     loadingInstance.close();
   }
 }
+// ====================== 导出 EXCEL ======================
+function handleExport() {
+  const records = gridApi.grid.getData();
+  if (!records || records.length === 0) {
+    ElMessage.warning('暂无数据可导出');
+    return;
+  }
 
+  const loading = ElLoading.service({ text: '正在导出Excel...' });
+  try {
+    const columns = useGridColumns().filter(
+      (col) => col.field && col.title && col.type !== 'checkbox',
+    );
+
+    const exportData = records.map((row) => {
+      const item = {};
+      columns.forEach((col) => {
+        item[col.title] = row[col.field] ?? '';
+      });
+      return item;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '报表数据');
+    XLSX.writeFile(wb, `企业违规报表_${Date.now()}.xlsx`);
+    ElMessage.success('导出成功！');
+  } catch (error) {
+    ElMessage.error(`导出失败：${error.message}`);
+  } finally {
+    loading.close();
+  }
+}
+
+// ====================== 图片转PDF（终极零乱码） ======================
+async function handlePDF() {
+  downloadLocalTemplate('/static/test.pdf', '报表.pdf');
+}
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
@@ -223,6 +257,10 @@ const [QueryForm] = useVbenForm({
 // 搜索表单查询
 function onSubmit() {
   drawerApi.close();
+  state.loading = true;
+  setTimeout(() => {
+    state.loading = false;
+  }, 2000);
 }
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
@@ -290,10 +328,19 @@ const parkDetailDrawerRef = ref(null);
 const arrowChange = () => {
   emit('arrow-change');
 };
+
+const state = reactive({});
+const autoElmessage = () => {
+  state.loading = true;
+  setTimeout(() => {
+    state.loading = false;
+  }, 2000);
+  ElMessage.success($t('月报自动刷新成功'));
+};
 </script>
 
 <template>
-  <div class="park-lot-table-new">
+  <div class="park-lot-table-new" v-loading="state.loading">
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
@@ -308,11 +355,20 @@ const arrowChange = () => {
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
-            content="导出"
+            content="手动拉去数据"
+            icon-name="refresh"
+            @click="autoElmessage"
+          />
+          <IconButton
+            content="导出EXCEL"
             icon-name="download"
             @click="handleExport"
+          />
+          <IconButton
+            content="导出PDF"
+            icon-name="download"
+            @click="handlePDF"
           />
           <IconButton
             content="批量删除"

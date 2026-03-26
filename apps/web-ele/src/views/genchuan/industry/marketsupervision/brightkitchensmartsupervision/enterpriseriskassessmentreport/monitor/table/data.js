@@ -233,6 +233,7 @@ export function useGridColumns() {
       title: '风险等级',
       minWidth: 100,
       sortable: true,
+      slots: { default: 'riskLevel' },
     },
     {
       field: 'monthlyViolationCount',
