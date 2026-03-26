@@ -1,6 +1,8 @@
 <script setup>
 import { ref } from 'vue';
 
+import { CapsuleChart, ScrollBoard } from '@kjgl77/datav-vue3';
+
 import ChartCustomize1 from './ChartCustomize1.vue';
 import ChartCustomize2 from './ChartCustomize2.vue';
 import ChartCustomize3 from './ChartCustomize3.vue';
@@ -8,7 +10,6 @@ import ChartTypeLine from './ChartTypeLine.vue';
 import ChartTypePie from './ChartTypePie.vue';
 import ChartTypePolyLines from './ChartTypePolyLines.vue';
 import MapCommon from './MapCommon.vue';
-import { CapsuleChart, ScrollBoard } from '@kjgl77/datav-vue3';
 
 const geometriesArray = [
   { x: 26.855_227, y: 117.650_114 },

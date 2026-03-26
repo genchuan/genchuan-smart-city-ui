@@ -23,6 +23,6 @@ export const overridesPreferences = defineOverridesPreferences({
     // companySiteLink: 'https://gitee.com/yudaocode/yudao-ui-admin-vben',
     companyName: import.meta.env.VITE_COMPANY_NAME,
     companySiteLink: import.meta.env.VITE_COMPANY_SiteLink,
-    enable: true, // 设置隐藏登录页版权显示
+    enable: false, // 设置隐藏登录页版权显示
   },
 });

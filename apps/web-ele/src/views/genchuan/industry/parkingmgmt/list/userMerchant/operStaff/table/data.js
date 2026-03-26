@@ -1,4 +1,4 @@
-import { maskPhone } from '#/utils/dataMask/index.js';
+import { maskPhone } from '#/utils/genchuan/dataMask/index.js';
 
 /** 表格初始数据*/
 export const dataList = () => {

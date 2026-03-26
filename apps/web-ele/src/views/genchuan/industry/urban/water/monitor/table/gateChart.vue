@@ -1,10 +1,11 @@
 <script setup>
-import { reactive, ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
+
 import * as echarts from 'echarts';
-import { ElSelect, ElOption } from 'element-plus';
+import { ElOption, ElSelect } from 'element-plus';
 
 import IconButton from '#/components/common/IconButton.vue';
-import MapComponent from '#/components/Map/index.vue';
+import MapComponent from '#/genchuan-components/Map/index.vue';
 
 const state = reactive({
   cardList: [
@@ -16,16 +17,76 @@ const state = reactive({
     { title: '高危监测分区数', value: 1, color: '#FFD93D' },
   ],
   mapData: [
-    { id: 1, locationName: '福州市鼓楼区供水管网', coordinateInfo: '119.2965,26.0753', statusName: '正常', riskLevel: '低风险' },
-    { id: 2, locationName: '厦门市思明区供水管网', coordinateInfo: '118.0889,24.4708', statusName: '正常', riskLevel: '低风险' },
-    { id: 3, locationName: '泉州市丰泽区供水管网', coordinateInfo: '118.6880,24.8740', statusName: '异常', riskLevel: '高风险' },
-    { id: 4, locationName: '漳州市芗城区供水管网', coordinateInfo: '117.6505,24.5115', statusName: '正常', riskLevel: '低风险' },
-    { id: 5, locationName: '莆田市城厢区供水管网', coordinateInfo: '119.0071,25.4366', statusName: '已停止', riskLevel: '中风险' },
-    { id: 6, locationName: '宁德市蕉城区供水管网', coordinateInfo: '119.5268,26.6597', statusName: '正常', riskLevel: '低风险' },
-    { id: 7, locationName: '龙岩市新罗区供水管网', coordinateInfo: '117.0227,25.1054', statusName: '正常', riskLevel: '低风险' },
-    { id: 8, locationName: '三明市梅列区供水管网', coordinateInfo: '117.6333,26.2717', statusName: '正常', riskLevel: '低风险' },
-    { id: 9, locationName: '南平市延平区供水管网', coordinateInfo: '118.1972,26.6597', statusName: '已停止', riskLevel: '中风险' },
-    { id: 10, locationName: '平潭综合实验区供水管网', coordinateInfo: '119.7854,25.4615', statusName: '正常', riskLevel: '低风险' },
+    {
+      id: 1,
+      locationName: '福州市鼓楼区供水管网',
+      coordinateInfo: '119.2965,26.0753',
+      statusName: '正常',
+      riskLevel: '低风险',
+    },
+    {
+      id: 2,
+      locationName: '厦门市思明区供水管网',
+      coordinateInfo: '118.0889,24.4708',
+      statusName: '正常',
+      riskLevel: '低风险',
+    },
+    {
+      id: 3,
+      locationName: '泉州市丰泽区供水管网',
+      coordinateInfo: '118.6880,24.8740',
+      statusName: '异常',
+      riskLevel: '高风险',
+    },
+    {
+      id: 4,
+      locationName: '漳州市芗城区供水管网',
+      coordinateInfo: '117.6505,24.5115',
+      statusName: '正常',
+      riskLevel: '低风险',
+    },
+    {
+      id: 5,
+      locationName: '莆田市城厢区供水管网',
+      coordinateInfo: '119.0071,25.4366',
+      statusName: '已停止',
+      riskLevel: '中风险',
+    },
+    {
+      id: 6,
+      locationName: '宁德市蕉城区供水管网',
+      coordinateInfo: '119.5268,26.6597',
+      statusName: '正常',
+      riskLevel: '低风险',
+    },
+    {
+      id: 7,
+      locationName: '龙岩市新罗区供水管网',
+      coordinateInfo: '117.0227,25.1054',
+      statusName: '正常',
+      riskLevel: '低风险',
+    },
+    {
+      id: 8,
+      locationName: '三明市梅列区供水管网',
+      coordinateInfo: '117.6333,26.2717',
+      statusName: '正常',
+      riskLevel: '低风险',
+    },
+    {
+      id: 9,
+      locationName: '南平市延平区供水管网',
+      coordinateInfo: '118.1972,26.6597',
+      statusName: '已停止',
+      riskLevel: '中风险',
+    },
+    {
+      id: 10,
+      locationName: '平潭综合实验区供水管网',
+      coordinateInfo: '119.7854,25.4615',
+      statusName: '正常',
+      riskLevel: '低风险',
+    },
   ],
   mapConfig: {
     markerIcons: {
@@ -41,12 +102,12 @@ const state = reactive({
       gray: 'normal',
     },
     statusKeyMap: {
-      '正常': 'green',
-      '异常': 'red',
-      '离线': 'red',
-      '维护中': 'orange',
-      '停用': 'red',
-      '建设中': 'gray',
+      正常: 'green',
+      异常: 'red',
+      离线: 'red',
+      维护中: 'orange',
+      停用: 'red',
+      建设中: 'gray',
     },
     infoWindowConfig: {
       title: 'locationName',
@@ -82,7 +143,7 @@ const firstChartData = [
     data: [
       { name: '运行中', value: 8 },
       { name: '已停止', value: 2 },
-    ]
+    ],
   },
   {
     label: '泄漏状态占比',
@@ -90,8 +151,8 @@ const firstChartData = [
       { name: '正常', value: 9 },
       { name: '疑似泄漏', value: 1 },
       { name: '确认泄漏', value: 0 },
-    ]
-  }
+    ],
+  },
 ];
 
 // 第二个饼图的数据
@@ -101,15 +162,15 @@ const secondChartData = [
     data: [
       { name: '在线', value: 8 },
       { name: '离线/异常', value: 2 },
-    ]
+    ],
   },
   {
     label: '预警触发占比',
     data: [
       { name: '正常', value: 9 },
       { name: '异常', value: 1 },
-    ]
-  }
+    ],
+  },
 ];
 
 // 所有折线图和柱状图的数据
@@ -118,34 +179,52 @@ const allChartsData = [
     label: '单区域管网压力近24小时变化趋势',
     type: 'line',
     data: {
-      xAxis: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'],
-      series: [0.45, 0.43, 0.42, 0.44, 0.46, 0.48, 0.47, 0.45]
-    }
+      xAxis: [
+        '00:00',
+        '03:00',
+        '06:00',
+        '09:00',
+        '12:00',
+        '15:00',
+        '18:00',
+        '21:00',
+      ],
+      series: [0.45, 0.43, 0.42, 0.44, 0.46, 0.48, 0.47, 0.45],
+    },
   },
   {
     label: '单区域管网流量近24小时变化趋势',
     type: 'line',
     data: {
-      xAxis: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'],
-      series: [100, 95, 90, 110, 120, 115, 105, 100]
-    }
+      xAxis: [
+        '00:00',
+        '03:00',
+        '06:00',
+        '09:00',
+        '12:00',
+        '15:00',
+        '18:00',
+        '21:00',
+      ],
+      series: [100, 95, 90, 110, 120, 115, 105, 100],
+    },
   },
   {
     label: '不同分区压力对比',
     type: 'bar',
     data: {
       xAxis: ['福州', '厦门', '泉州', '漳州', '莆田', '宁德'],
-      series: [0.45, 0.52, 0.35, 0.48, 0.55, 0.42]
-    }
+      series: [0.45, 0.52, 0.35, 0.48, 0.55, 0.42],
+    },
   },
   {
     label: '各区域泄漏预警数对比',
     type: 'bar',
     data: {
       xAxis: ['福州', '厦门', '泉州', '漳州', '莆田', '宁德'],
-      series: [0, 0, 1, 0, 0, 0]
-    }
-  }
+      series: [0, 0, 1, 0, 0, 0],
+    },
+  },
 ];
 
 // 切换地图/图表视图
@@ -178,7 +257,14 @@ const handleBarLineChange = (index) => {
 
 // 获取圆环图配置
 const getPieOption = (chartData) => {
-  const freshColors = ['#4A90E2', '#50E3C2', '#FF9F40', '#A17FE0', '#FF6B8B', '#FFD93D'];
+  const freshColors = [
+    '#4A90E2',
+    '#50E3C2',
+    '#FF9F40',
+    '#A17FE0',
+    '#FF6B8B',
+    '#FFD93D',
+  ];
 
   return {
     backgroundColor: 'transparent',
@@ -229,7 +315,10 @@ const getPieOption = (chartData) => {
           show: true,
           position: 'outside',
           formatter(params) {
-            const name = params.name.length > 4 ? `${params.name.slice(0, 4)}...` : params.name;
+            const name =
+              params.name.length > 4
+                ? `${params.name.slice(0, 4)}...`
+                : params.name;
             return `{name|${name}}\n{percent|${params.percent}%}`;
           },
           rich: {
@@ -361,7 +450,7 @@ const getBarLineOption = (chartData) => {
     series: [
       {
         name: chartData?.label || '趋势统计',
-        type: type,
+        type,
         data: chartData?.data?.series || [],
         itemStyle: {
           borderRadius: type === 'bar' ? [4, 4, 0, 0] : undefined,
@@ -418,7 +507,10 @@ const initPieChart1 = () => {
         pieChartInstance1 = null;
       }
 
-      if (firstChartData[firstChartIndex.value].data && firstChartData[firstChartIndex.value].data.length > 0) {
+      if (
+        firstChartData[firstChartIndex.value].data &&
+        firstChartData[firstChartIndex.value].data.length > 0
+      ) {
         pieChartInstance1 = echarts.init(pieChartRef1.value);
         const option = getPieOption(firstChartData[firstChartIndex.value]);
         pieChartInstance1.setOption(option);
@@ -438,7 +530,10 @@ const initPieChart2 = () => {
         pieChartInstance2 = null;
       }
 
-      if (secondChartData[secondChartIndex.value].data && secondChartData[secondChartIndex.value].data.length > 0) {
+      if (
+        secondChartData[secondChartIndex.value].data &&
+        secondChartData[secondChartIndex.value].data.length > 0
+      ) {
         pieChartInstance2 = echarts.init(pieChartRef2.value);
         const option = getPieOption(secondChartData[secondChartIndex.value]);
         pieChartInstance2.setOption(option);
@@ -451,8 +546,17 @@ const initPieChart2 = () => {
 
 // 初始化柱状/折线图
 const initBarLineChart = () => {
-  if (!barLineChartRef.value || !allChartsData[chartIndex.value] || !allChartsData[chartIndex.value].data) return;
-  if (!allChartsData[chartIndex.value].data.xAxis || allChartsData[chartIndex.value].data.xAxis.length === 0) return;
+  if (
+    !barLineChartRef.value ||
+    !allChartsData[chartIndex.value] ||
+    !allChartsData[chartIndex.value].data
+  )
+    return;
+  if (
+    !allChartsData[chartIndex.value].data.xAxis ||
+    allChartsData[chartIndex.value].data.xAxis.length === 0
+  )
+    return;
 
   try {
     if (barLineChartInstance) {
@@ -526,7 +630,9 @@ onUnmounted(() => {
           ></div>
         </div>
         <div class="card-body">
-          <div class="card-value" :style="{ color: card.color || '#4A90E2' }">{{ card.value }}</div>
+          <div class="card-value" :style="{ color: card.color || '#4A90E2' }">
+            {{ card.value }}
+          </div>
         </div>
       </div>
     </div>
@@ -601,7 +707,10 @@ onUnmounted(() => {
         <!-- 柱状/折线图展示区（更宽） -->
         <div class="bar-line-chart-area">
           <!-- 下拉切换按钮 -->
-          <div v-if="allChartsData.length > 1" class="chart-select-wrapper bar-line-select">
+          <div
+            v-if="allChartsData.length > 1"
+            class="chart-select-wrapper bar-line-select"
+          >
             <ElSelect
               v-model="chartIndex"
               size="small"
@@ -637,9 +746,9 @@ onUnmounted(() => {
 /* 卡片区样式 - 2x3网格布局 */
 .cards-section {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr;
   flex-shrink: 0;
+  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
   width: 260px;
   height: 320px;
@@ -649,17 +758,17 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   padding: 12px 14px;
-  background: #ffffff;
-  border-radius: 8px;
-  border-left: 4px solid #4a90e2;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
   overflow: hidden;
+  background: #fff;
+  border-left: 4px solid #4a90e2;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+  transition: all 0.3s ease;
 }
 
 .stat-card:hover {
+  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .card-header {
@@ -670,34 +779,34 @@ onUnmounted(() => {
 }
 
 .card-title {
-  font-size: 13px;
-  color: #6e7e91;
-  font-weight: 600;
-  line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #6e7e91;
   white-space: nowrap;
 }
 
 .card-indicator {
+  flex-shrink: 0;
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  flex-shrink: 0;
 }
 
 .card-body {
   display: flex;
-  flex-direction: column;
   flex: 1;
+  flex-direction: column;
   justify-content: center;
 }
 
 .card-value {
+  margin-bottom: 4px;
   font-size: 22px;
   font-weight: 700;
   line-height: 1.3;
-  margin-bottom: 4px;
 }
 
 /* 右侧展示区样式 */
@@ -717,15 +826,15 @@ onUnmounted(() => {
 }
 
 .toggle-button {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
 }
 
 /* 地图容器 */
 .map-wrapper {
   width: 100%;
   height: 100%;
-  border-radius: 8px;
   overflow: hidden;
+  border-radius: 8px;
 }
 
 /* 图表区样式 */
@@ -756,8 +865,8 @@ onUnmounted(() => {
 }
 
 .chart-select :deep(.el-input__wrapper) {
-  background-color: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  background-color: rgb(255 255 255 / 95%);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 10%);
 }
 
 .chart-select :deep(.el-input__inner) {

@@ -1,21 +1,24 @@
 <script setup lang="ts">
-import { reactive, ref, computed } from 'vue';
+import { computed, reactive, ref } from 'vue';
+
+import { DICT_TYPE } from '@vben/constants';
+import { getDictOptions } from '@vben/hooks';
+
+import { Icon } from '@iconify/vue';
 import {
-  ElMessage,
+  ElButton,
+  ElDatePicker,
   ElDialog,
   ElForm,
   ElFormItem,
   ElInput,
-  ElButton,
-  ElSelect,
+  ElMessage,
   ElOption,
-  ElDatePicker,
+  ElSelect,
   ElUpload,
 } from 'element-plus';
-import { DICT_TYPE } from '@vben/constants';
-import { getDictOptions } from '@vben/hooks';
+
 import { DrainagePermitApplyApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/industryApp/waterConservancyAndWaterAffairs/drainageUserManagement/drainagePermitApply';
-import { Icon } from '@iconify/vue';
 
 /** 排水许可证申请 表单 */
 defineOptions({ name: 'DrainagePermitApplyForm' });
@@ -126,11 +129,11 @@ const resetForm = () => {
 /** 文件上传前 */
 const beforeUpload = (file: File) => {
   const isValidType = [
-    'application/pdf',
     'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/pdf',
     'application/vnd.ms-excel',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'text/plain',
   ].includes(file.type);
   const isLt5M = file.size / 1024 / 1024 < 5;

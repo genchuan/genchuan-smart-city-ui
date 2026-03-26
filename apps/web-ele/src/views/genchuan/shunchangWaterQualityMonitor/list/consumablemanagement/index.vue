@@ -50,9 +50,7 @@ const getList = async () => {
   loading.value = true;
   try {
     const data =
-      await ConsumableManagementApi.getConsumableManagementPage(
-        queryParams,
-      );
+      await ConsumableManagementApi.getConsumableManagementPage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -99,11 +97,10 @@ const handleExport = async () => {
     // 发起导出
     exportLoading.value = true;
     const data =
-      await ConsumableManagementApi.exportConsumableManagement(
-        queryParams,
-      );
+      await ConsumableManagementApi.exportConsumableManagement(queryParams);
     download.excel(data, '耗材库存与更换管理.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };
@@ -232,12 +229,7 @@ onMounted(() => {
         :show-overflow-tooltip="true"
         style="width: 100%"
       >
-        <ElTableColumn
-          label="序号"
-          align="center"
-          prop="id"
-          min-width="80"
-        />
+        <ElTableColumn label="序号" align="center" prop="id" min-width="80" />
         <ElTableColumn
           label="耗材ID"
           align="center"

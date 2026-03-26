@@ -37,17 +37,26 @@ const formData = ref({
   relatedEquipmentId: undefined,
 });
 const formRules = reactive({
-  consumableId: [{ required: true, message: '耗材ID不能为空', trigger: 'blur' }],
-  consumableType: [{ required: true, message: '耗材类型不能为空', trigger: 'blur' }],
-  stockQuantity: [{ required: true, message: '库存余量不能为空', trigger: 'blur' }],
-  warningThreshold: [{ required: true, message: '预警阈值不能为空', trigger: 'blur' }],
+  consumableId: [
+    { required: true, message: '耗材ID不能为空', trigger: 'blur' },
+  ],
+  consumableType: [
+    { required: true, message: '耗材类型不能为空', trigger: 'blur' },
+  ],
+  stockQuantity: [
+    { required: true, message: '库存余量不能为空', trigger: 'blur' },
+  ],
+  warningThreshold: [
+    { required: true, message: '预警阈值不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增耗材库存与更换管理' : '编辑耗材库存与更换管理';
+  dialogTitle.value =
+    type === 'create' ? '新增耗材库存与更换管理' : '编辑耗材库存与更换管理';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -70,14 +79,10 @@ const submitForm = async () => {
   try {
     const data = formData.value;
     if (formType.value === 'create') {
-      await ConsumableManagementApi.createConsumableManagement(
-        data,
-      );
+      await ConsumableManagementApi.createConsumableManagement(data);
       ElMessage.success('新增成功');
     } else {
-      await ConsumableManagementApi.updateConsumableManagement(
-        data,
-      );
+      await ConsumableManagementApi.updateConsumableManagement(data);
       ElMessage.success('修改成功');
     }
     dialogVisible.value = false;
@@ -122,13 +127,22 @@ const resetForm = () => {
         <ElInput v-model="formData.consumableId" placeholder="请输入耗材ID" />
       </ElFormItem>
       <ElFormItem label="耗材类型" prop="consumableType">
-        <ElInput v-model="formData.consumableType" placeholder="请输入耗材类型" />
+        <ElInput
+          v-model="formData.consumableType"
+          placeholder="请输入耗材类型"
+        />
       </ElFormItem>
       <ElFormItem label="库存余量" prop="stockQuantity">
-        <ElInput v-model="formData.stockQuantity" placeholder="请输入库存余量" />
+        <ElInput
+          v-model="formData.stockQuantity"
+          placeholder="请输入库存余量"
+        />
       </ElFormItem>
       <ElFormItem label="预警阈值" prop="warningThreshold">
-        <ElInput v-model="formData.warningThreshold" placeholder="请输入预警阈值" />
+        <ElInput
+          v-model="formData.warningThreshold"
+          placeholder="请输入预警阈值"
+        />
       </ElFormItem>
       <ElFormItem label="上次更换日期" prop="lastReplacementDate">
         <ElDatePicker
@@ -149,10 +163,16 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="更换数量" prop="replacementQuantity">
-        <ElInput v-model="formData.replacementQuantity" placeholder="请输入更换数量" />
+        <ElInput
+          v-model="formData.replacementQuantity"
+          placeholder="请输入更换数量"
+        />
       </ElFormItem>
       <ElFormItem label="关联设备ID" prop="relatedEquipmentId">
-        <ElInput v-model="formData.relatedEquipmentId" placeholder="请输入关联设备ID" />
+        <ElInput
+          v-model="formData.relatedEquipmentId"
+          placeholder="请输入关联设备ID"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

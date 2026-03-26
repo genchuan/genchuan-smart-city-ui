@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue';
 
-import StatsVisualization from '#/components/stats/StatsVisualization.vue';
+import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
 
 import { dataList, getStatsData } from './table/data';
 import Table from './table/index.vue';

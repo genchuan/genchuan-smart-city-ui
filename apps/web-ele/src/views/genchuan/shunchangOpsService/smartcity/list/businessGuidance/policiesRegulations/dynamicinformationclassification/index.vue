@@ -99,7 +99,8 @@ const handleExport = async () => {
         queryParams,
       );
     download.excel(data, '动态信息分类.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };

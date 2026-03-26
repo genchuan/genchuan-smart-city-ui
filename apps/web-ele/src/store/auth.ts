@@ -25,7 +25,7 @@ import { $t } from '#/locales';
 import {
   decryptThingsBoardCredentials,
   getEncryptedThingsBoardCredentials,
-} from '#/utils/encrypt';
+} from '#/utils/genchuan/encrypt';
 
 /**
  * ThingsBoard 登录响应类型

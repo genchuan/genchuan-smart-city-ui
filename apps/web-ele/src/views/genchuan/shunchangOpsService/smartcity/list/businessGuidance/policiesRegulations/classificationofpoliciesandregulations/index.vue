@@ -99,7 +99,8 @@ const handleExport = async () => {
         queryParams,
       );
     download.excel(data, '政策法规分类.xls');
-  } catch {} finally {
+  } catch {
+  } finally {
     exportLoading.value = false;
   }
 };

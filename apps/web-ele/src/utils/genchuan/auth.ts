@@ -1,6 +1,6 @@
 import { useAccessStore } from '@vben/stores';
 
-import { decryptData, encryptData } from '#/utils/encrypt';
+import { decryptData, encryptData } from '#/utils/genchuan/encrypt';
 
 const AccessTokenKey = 'ACCESS_TOKEN';
 const RefreshTokenKey = 'REFRESH_TOKEN';
@@ -18,7 +18,10 @@ export const getRefreshToken = () => {
 };
 
 // 设置token
-export const setToken = (token: { accessToken: string; refreshToken: string }) => {
+export const setToken = (token: {
+  accessToken: string;
+  refreshToken: string;
+}) => {
   const accessStore = useAccessStore();
   accessStore.setAccessToken(token.accessToken);
   accessStore.setRefreshToken(token.refreshToken);
@@ -33,16 +36,16 @@ export const removeToken = () => {
 
 /** 格式化token（jwt格式） */
 export const formatToken = (token: string): string => {
-  return 'Bearer ' + token;
+  return `Bearer ${token}`;
 };
 
 // ========== 账号相关 ==========
 
 export type LoginFormType = {
-  tenantName: string;
-  username: string;
   password: string;
   rememberMe: boolean;
+  tenantName: string;
+  username: string;
 };
 
 const LoginFormKey = 'LOGIN_FORM';

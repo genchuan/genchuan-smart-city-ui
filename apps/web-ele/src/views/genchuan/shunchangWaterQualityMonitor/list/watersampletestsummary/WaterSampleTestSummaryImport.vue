@@ -1,128 +1,141 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue';
+import { nextTick, ref } from 'vue';
 
-import {
-  ElButton,
-  ElDialog,
-  ElForm,
-  ElFormItem,
-  ElMessage,
-  ElUpload,
-} from 'element-plus';
+import { Icon } from '@iconify/vue';
+import { ElButton, ElDialog, ElMessage, ElUpload } from 'element-plus';
 import type { UploadFile } from 'element-plus';
 
-import { WaterSampleTestSummaryApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/watersampletestsummary';
+import { getAccessToken, getTenantId } from '#/utils/genchuan/auth';
 
 /** 外检统计水质检测结果汇总 导入 */
 defineOptions({ name: 'WaterSampleTestSummaryImport' });
 
 const emit = defineEmits(['success']);
 
-const dialogVisible = ref(false); // 弹窗的是否展示
-const formLoading = ref(false); // 表单的加载中
-const uploadRef = ref(); // 上传组件的引用
-
-const formData = reactive({
-  file: undefined as UploadFile | undefined,
-});
-const formRules = {
-  file: [{ required: true, message: '请选择文件', trigger: 'change' }],
-};
-const formRef = ref(); // 表单 Ref
+const dialogVisible = ref(false);
+const formLoading = ref(false);
+const uploadRef = ref();
+const importUrl =
+  import.meta.env.VITE_GLOB_API_URL +
+  '/waterdetection/water-sample-test-summary/import';
+const uploadHeaders = ref();
+const fileList = ref<UploadFile[]>([]);
+const updateSupport = ref(0);
 
 /** 打开弹窗 */
 const open = () => {
   dialogVisible.value = true;
+  updateSupport.value = 0;
+  fileList.value = [];
   resetForm();
 };
 defineExpose({ open });
 
 /** 提交表单 */
 const submitForm = async () => {
-  // 校验表单
-  const valid = await formRef.value.validate();
-  if (!valid) return;
-  if (!formData.file) {
-    ElMessage.error('请选择文件');
+  if (fileList.value.length === 0) {
+    ElMessage.error('请上传文件');
     return;
   }
-  // 提交请求
+  uploadHeaders.value = {
+    Authorization: 'Bearer ' + getAccessToken(),
+    'tenant-id': getTenantId(),
+  };
   formLoading.value = true;
-  try {
-    const fileObj = formData.file.raw;
-    if (!fileObj) {
-      ElMessage.error('文件对象为空');
-      return;
-    }
-    // 调用导入API
-    // await WaterSampleTestSummaryApi.importWaterSampleTestSummary(fileObj);
-    ElMessage.success('导入成功');
-    dialogVisible.value = false;
-    // 发送操作成功的事件
-    emit('success');
-  } catch (error) {
-    console.error('导入失败:', error);
-    ElMessage.error('导入失败');
-  } finally {
-    formLoading.value = false;
-  }
+  uploadRef.value?.submit();
 };
 
-/** 文件变更 */
-const handleFileChange = (file: UploadFile) => {
-  formData.file = file;
+/** 文件上传成功 */
+const submitFormSuccess = (response: any) => {
+  if (response.code !== 0) {
+    ElMessage.error(response.msg);
+    formLoading.value = false;
+    return;
+  }
+  const data = response.data;
+  let text = '上传成功数量：' + data.createSampleNames.length + ';';
+  for (const sampleName of data.createSampleNames) {
+    text += '< ' + sampleName + ' >';
+  }
+  text += '更新成功数量：' + data.updateSampleNames.length + ';';
+  for (const sampleName of data.updateSampleNames) {
+    text += '< ' + sampleName + ' >';
+  }
+  text += '更新失败数量：' + Object.keys(data.failureSampleNames).length + ';';
+  for (const sampleName in data.failureSampleNames) {
+    text +=
+      '< ' + sampleName + ': ' + data.failureSampleNames[sampleName] + ' >';
+  }
+  ElMessage.success(text);
+  formLoading.value = false;
+  dialogVisible.value = false;
+  emit('success');
+};
+
+/** 上传错误提示 */
+const submitFormError = (): void => {
+  ElMessage.error('上传失败，请您重新上传！');
+  formLoading.value = false;
 };
 
 /** 重置表单 */
-const resetForm = () => {
-  formData.file = undefined;
-  formRef.value?.resetFields();
-  uploadRef.value?.clearFiles?.();
+const resetForm = async (): Promise<void> => {
+  formLoading.value = false;
+  await nextTick();
+  uploadRef.value?.clearFiles();
 };
 
-/** 下载模板 */
-const downloadTemplate = () => {
-  // 模板下载逻辑
-  ElMessage.success('模板下载成功');
+/** 文件数超出提示 */
+const handleExceed = (): void => {
+  ElMessage.error('最多只能上传一个文件！');
 };
 </script>
 <template>
-  <ElDialog title="导入外检统计水质检测结果汇总" v-model="dialogVisible" width="500px" append-to-body>
-    <ElForm
-      ref="formRef"
-      :model="formData"
-      :rules="formRules"
-      label-width="100px"
-      v-loading="formLoading"
+  <ElDialog
+    v-model="dialogVisible"
+    title="水质检测结果导入"
+    width="400px"
+    append-to-body
+  >
+    <ElUpload
+      ref="uploadRef"
+      v-model:file-list="fileList"
+      :action="importUrl + '?updateSupport=' + updateSupport"
+      :auto-upload="false"
+      :disabled="formLoading"
+      :headers="uploadHeaders"
+      :limit="1"
+      :on-error="submitFormError"
+      :on-exceed="handleExceed"
+      :on-success="submitFormSuccess"
+      accept=".xlsx, .xls"
+      drag
     >
-      <ElFormItem label="选择文件" prop="file">
-        <ElUpload
-          ref="uploadRef"
-          action="#"
-          :auto-upload="false"
-          :on-change="handleFileChange"
-          :limit="1"
-          accept=".xlsx,.xls"
-        >
-          <ElButton type="primary">选择文件</ElButton>
-          <template #tip>
-            <div class="el-upload__tip">
-              请上传 .xlsx 或 .xls 格式的Excel文件
-            </div>
-          </template>
-        </ElUpload>
-      </ElFormItem>
-      <ElFormItem>
-        <ElButton link type="primary" @click="downloadTemplate">
-          下载导入模板
-        </ElButton>
-      </ElFormItem>
-    </ElForm>
+      <div class="upload-content">
+        <Icon icon="ep:upload" class="upload-icon" />
+        <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+      </div>
+    </ElUpload>
     <template #footer>
       <ElButton @click="dialogVisible = false">取 消</ElButton>
-      <ElButton @click="submitForm" type="primary" :disabled="formLoading">
+      <ElButton type="primary" @click="submitForm" :disabled="formLoading">
         确 定
       </ElButton>
     </template>
   </ElDialog>
 </template>
+
+<style scoped>
+.upload-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-icon {
+  font-size: 28px;
+  color: #909399;
+}
+</style>

@@ -24,7 +24,7 @@ import {
   updateCategory,
   updateInstance,
 } from '#/api/genchuan/dataHub/basicData/monitorPart';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 
 import BatchUpdateStatusDialog from '../components/BatchUpdateStatusDialog.vue';

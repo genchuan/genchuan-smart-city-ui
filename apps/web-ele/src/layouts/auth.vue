@@ -6,15 +6,18 @@ import logoImg from '../../public/static/imgs/logo/logo.png';
 const companySiteLink = import.meta.env.VITE_COMPANY_SiteLink;
 </script>
 <template>
+<!--  page-description="城市运行管理服务解决方案"-->
+<!--  page-title="智慧城市一网统管AI平台"-->
+<!--  :slogan-image="logoImg"-->
   <AuthPageLayout
     app-name=""
-    page-description="城市运行管理服务解决方案"
-    page-title="智慧城市一网统管AI平台"
-    :slogan-image="logoImg"
+    page-description=""
+    page-title=""
+    slogan-image=""
   >
     <!-- 自定义版权插槽，修改登录页面的版权信息 -->
     <template #copyright>
-      <div class="text-md flex-center">
+      <div v-if="false" class="text-md flex-center">
         Copyright © 2026
         <a
           :href="companySiteLink"

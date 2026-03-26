@@ -9,7 +9,7 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
@@ -141,9 +141,9 @@ const [Form, formApi] = useVbenForm({
   schema:
     props.activeTab === '发票申请'
       ? useFormSchema()
-      : (props.activeTab === '发票生成'
+      : props.activeTab === '发票生成'
         ? useGenerateFormSchema()
-        : useQueryFormSchema()),
+        : useQueryFormSchema(),
   showDefaultActions: false,
 });
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
@@ -406,17 +406,17 @@ const dataObj = reactive({
   total:
     props.activeTab === '发票申请'
       ? dataList().length
-      : (props.activeTab === '发票生成'
+      : props.activeTab === '发票生成'
         ? generateDataList().length
-        : queryDataList().length),
+        : queryDataList().length,
   currentPage: 1,
   pageSize: 10,
   apilist:
     props.activeTab === '发票申请'
       ? dataList()
-      : (props.activeTab === '发票生成'
+      : props.activeTab === '发票生成'
         ? generateDataList()
-        : queryDataList()),
+        : queryDataList(),
   list: [],
 });
 const changeTotalShow = () => {
@@ -524,9 +524,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
     columns:
       props.activeTab === '发票申请'
         ? useGridColumns()
-        : (props.activeTab === '发票生成'
+        : props.activeTab === '发票生成'
           ? useGenerateGridColumns()
-          : useQueryGridColumns()),
+          : useQueryGridColumns(),
     keepSource: true,
     proxyConfig: {
       ajax: {

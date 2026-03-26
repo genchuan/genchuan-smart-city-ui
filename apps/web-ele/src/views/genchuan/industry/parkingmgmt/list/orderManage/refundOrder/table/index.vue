@@ -9,10 +9,13 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
+import ApproveDrawer from '../drawers/ApproveDrawer.vue';
+import CalculateDrawer from '../drawers/CalculateDrawer.vue';
+import TrackDrawer from '../drawers/TrackDrawer.vue';
 import {
   dataList,
   detailFields,
@@ -20,9 +23,6 @@ import {
   useFormSchema,
   useGridColumns,
 } from './data';
-import ApproveDrawer from '../drawers/ApproveDrawer.vue';
-import TrackDrawer from '../drawers/TrackDrawer.vue';
-import CalculateDrawer from '../drawers/CalculateDrawer.vue';
 
 const props = defineProps({
   secondShow: {
@@ -135,7 +135,7 @@ const [CalculateDrawerComp, calculateDrawerApi] = useVbenDrawer({
           usedAmount: values.usedAmount,
           serviceFee: values.serviceFee,
           discountShare: values.discountShare,
-          refundAmount: refundAmount,
+          refundAmount,
         });
         calculateDrawerApi.close();
       }
@@ -287,7 +287,7 @@ async function handleCancelRefund(row) {
     ElMessage.success('退款申请已取消');
     handleRefresh();
     loadingInstance.close();
-  } catch (error) {
+  } catch {
     // 用户取消确认
   }
 }
@@ -311,7 +311,9 @@ function handleCalculate() {
   }
 
   // 获取选中的数据
-  const selectedRow = dataObj.apilist.find(item => item.id === checkedIds.value[0]);
+  const selectedRow = dataObj.apilist.find(
+    (item) => item.id === checkedIds.value[0],
+  );
   if (selectedRow) {
     calculateRow.value = selectedRow;
     isReCalculate.value = false;
@@ -338,7 +340,7 @@ async function handleConfirmCalculate(row) {
     ElMessage.success('核算结果已确认，应退金额已锁定');
     handleRefresh();
     loadingInstance.close();
-  } catch (error) {
+  } catch {
     // 用户取消确认
   }
 }
@@ -355,7 +357,8 @@ function handleApproveSubmit(data) {
   if (index !== -1) {
     dataObj.apilist[index].approveStatusName = data.approveResult;
     dataObj.apilist[index].approveOpinion = data.approveOpinion;
-    dataObj.apilist[index].refundStatusName = data.approveResult === '已通过' ? '待退款' : '退款失败';
+    dataObj.apilist[index].refundStatusName =
+      data.approveResult === '已通过' ? '待退款' : '退款失败';
   }
   ElMessage.success('审批完成');
   handleRefresh();
@@ -371,7 +374,10 @@ function handleCalculateSubmit(data) {
     dataObj.apilist[index].discountShare = data.discountShare;
     dataObj.apilist[index].refundAmount = data.refundAmount;
     dataObj.apilist[index].calculateResult = '核算通过';
-    dataObj.apilist[index].calculateTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    dataObj.apilist[index].calculateTime = new Date()
+      .toISOString()
+      .slice(0, 19)
+      .replace('T', ' ');
   }
   ElMessage.success('核算完成');
   handleRefresh();
@@ -405,24 +411,52 @@ const getTableData = (pageObj) => {
     // 状态筛选
     let statusMatch = true;
     if (activeName.value !== '全部') {
-      if (props.tabType === 'refundApply') {
-        statusMatch = v.approveStatusName === activeName.value;
-      } else if (props.tabType === 'refundRecord') {
-        statusMatch = v.refundStatusName === activeName.value;
-      } else if (props.tabType === 'amountCalculate') {
-        statusMatch = v.calculateResult === activeName.value;
+      switch (props.tabType) {
+        case 'amountCalculate': {
+          statusMatch = v.calculateResult === activeName.value;
+
+          break;
+        }
+        case 'refundApply': {
+          statusMatch = v.approveStatusName === activeName.value;
+
+          break;
+        }
+        case 'refundRecord': {
+          statusMatch = v.refundStatusName === activeName.value;
+
+          break;
+        }
+        // No default
       }
     }
 
     // 快捷筛选
-    const refundReasonMatch = !filterRefundReason.value || v.refundReasonName === filterRefundReason.value;
-    const refundStatusMatch = !filterRefundStatus.value || v.refundStatusName === filterRefundStatus.value;
-    const carNumberMatch = !filterCarNumber.value || v.carNumber === filterCarNumber.value;
-    const payTypeMatch = !filterPayType.value || v.payTypeName === filterPayType.value;
-    const orderTypeMatch = !filterOrderType.value || v.orderTypeName === filterOrderType.value;
-    const calculateResultMatch = !filterCalculateResult.value || v.calculateResult === filterCalculateResult.value;
+    const refundReasonMatch =
+      !filterRefundReason.value ||
+      v.refundReasonName === filterRefundReason.value;
+    const refundStatusMatch =
+      !filterRefundStatus.value ||
+      v.refundStatusName === filterRefundStatus.value;
+    const carNumberMatch =
+      !filterCarNumber.value || v.carNumber === filterCarNumber.value;
+    const payTypeMatch =
+      !filterPayType.value || v.payTypeName === filterPayType.value;
+    const orderTypeMatch =
+      !filterOrderType.value || v.orderTypeName === filterOrderType.value;
+    const calculateResultMatch =
+      !filterCalculateResult.value ||
+      v.calculateResult === filterCalculateResult.value;
 
-    return statusMatch && refundReasonMatch && refundStatusMatch && carNumberMatch && payTypeMatch && orderTypeMatch && calculateResultMatch;
+    return (
+      statusMatch &&
+      refundReasonMatch &&
+      refundStatusMatch &&
+      carNumberMatch &&
+      payTypeMatch &&
+      orderTypeMatch &&
+      calculateResultMatch
+    );
   });
 
   dataObj.total = filteredList.length;
@@ -513,12 +547,28 @@ const handleOpenDetail = (row) => {
 
 // 根据tabType动态生成状态标签
 const tabsData = computed(() => {
-  if (props.tabType === 'refundApply') {
-    return [{ label: '全部' }, { label: '待审批' }, { label: '已通过' }, { label: '已拒绝' }, { label: '已取消' }];
-  } else if (props.tabType === 'refundRecord') {
-    return [{ label: '全部' }, { label: '待退款' }, { label: '已退款' }, { label: '退款失败' }];
-  } else if (props.tabType === 'amountCalculate') {
-    return [{ label: '全部' }, { label: '核算通过' }, { label: '核算驳回' }];
+  switch (props.tabType) {
+    case 'amountCalculate': {
+      return [{ label: '全部' }, { label: '核算通过' }, { label: '核算驳回' }];
+    }
+    case 'refundApply': {
+      return [
+        { label: '全部' },
+        { label: '待审批' },
+        { label: '已通过' },
+        { label: '已拒绝' },
+        { label: '已取消' },
+      ];
+    }
+    case 'refundRecord': {
+      return [
+        { label: '全部' },
+        { label: '待退款' },
+        { label: '已退款' },
+        { label: '退款失败' },
+      ];
+    }
+    // No default
   }
   return [{ label: '全部' }];
 });
@@ -533,15 +583,32 @@ const createLabel = (item) => {
       break;
     }
     default: {
-      if (props.tabType === 'refundApply') {
-        // 退款申请标签页：统计approveStatusName
-        count = dataObj.apilist.filter((v) => v.approveStatusName === item.label).length;
-      } else if (props.tabType === 'refundRecord') {
-        // 退款记录标签页：统计refundStatusName
-        count = dataObj.apilist.filter((v) => v.refundStatusName === item.label).length;
-      } else if (props.tabType === 'amountCalculate') {
-        // 金额核算标签页：统计calculateResult
-        count = dataObj.apilist.filter((v) => v.calculateResult === item.label).length;
+      switch (props.tabType) {
+        case 'amountCalculate': {
+          // 金额核算标签页：统计calculateResult
+          count = dataObj.apilist.filter(
+            (v) => v.calculateResult === item.label,
+          ).length;
+
+          break;
+        }
+        case 'refundApply': {
+          // 退款申请标签页：统计approveStatusName
+          count = dataObj.apilist.filter(
+            (v) => v.approveStatusName === item.label,
+          ).length;
+
+          break;
+        }
+        case 'refundRecord': {
+          // 退款记录标签页：统计refundStatusName
+          count = dataObj.apilist.filter(
+            (v) => v.refundStatusName === item.label,
+          ).length;
+
+          break;
+        }
+        // No default
       }
       break;
     }
@@ -563,22 +630,30 @@ const handleFullShow = () => {
 // 获取状态标签类型
 const getStatusType = (status) => {
   switch (status) {
-    case '待审批':
-      return 'info';
-    case '已通过':
-      return 'success';
-    case '已拒绝':
-      return 'danger';
-    case '已取消':
+    case '已取消': {
       return 'warning';
-    case '已退款':
-      return 'success';
-    case '待退款':
-      return 'info';
-    case '退款失败':
+    }
+    case '已拒绝': {
       return 'danger';
-    default:
+    }
+    case '已退款': {
+      return 'success';
+    }
+    case '已通过': {
+      return 'success';
+    }
+    case '待审批': {
+      return 'info';
+    }
+    case '待退款': {
+      return 'info';
+    }
+    case '退款失败': {
+      return 'danger';
+    }
+    default: {
       return 'default';
+    }
   }
 };
 
@@ -586,7 +661,8 @@ const getStatusType = (status) => {
 
 // 处理退款原因点击
 const handleRefundReasonClick = (refundReason) => {
-  filterRefundReason.value = filterRefundReason.value === refundReason ? '' : refundReason;
+  filterRefundReason.value =
+    filterRefundReason.value === refundReason ? '' : refundReason;
   gridApi.query();
 };
 
@@ -598,7 +674,8 @@ const handleCancelRefundReasonFilter = () => {
 
 // 处理退款状态点击
 const handleRefundStatusClick = (refundStatus) => {
-  filterRefundStatus.value = filterRefundStatus.value === refundStatus ? '' : refundStatus;
+  filterRefundStatus.value =
+    filterRefundStatus.value === refundStatus ? '' : refundStatus;
   gridApi.query();
 };
 
@@ -646,7 +723,8 @@ const handleCancelOrderTypeFilter = () => {
 
 // 处理核算结果点击
 const handleCalculateResultClick = (calculateResult) => {
-  filterCalculateResult.value = filterCalculateResult.value === calculateResult ? '' : calculateResult;
+  filterCalculateResult.value =
+    filterCalculateResult.value === calculateResult ? '' : calculateResult;
   gridApi.query();
 };
 
@@ -665,23 +743,23 @@ const handleCancelCalculateResultFilter = () => {
     <!--   详情抽屉-->
     <DetailDrawer
       ref="detailDrawerRef"
-      :title="props.tabType === 'refundApply' ? `${dataObj.detailObj.refundNo}详情` : props.tabType === 'refundRecord' ? `${dataObj.detailObj.orderNo}详情` : `${dataObj.detailObj.refundNo}详情`"
+      :title="
+        props.tabType === 'refundApply'
+          ? `${dataObj.detailObj.refundNo}详情`
+          : props.tabType === 'refundRecord'
+            ? `${dataObj.detailObj.orderNo}详情`
+            : `${dataObj.detailObj.refundNo}详情`
+      "
       :data="dataObj.detailObj"
       :fields="detailFields(props.tabType)"
     />
     <!-- 审批抽屉 -->
     <ApproveDrawerComp>
-      <ApproveDrawer
-        ref="approveDrawerRef"
-        :row="approveRow"
-      />
+      <ApproveDrawer ref="approveDrawerRef" :row="approveRow" />
     </ApproveDrawerComp>
     <!-- 跟踪抽屉 -->
     <TrackDrawerComp>
-      <TrackDrawer
-        :row="trackRow"
-        @close="trackDrawerApi.close()"
-      />
+      <TrackDrawer :row="trackRow" @close="trackDrawerApi.close()" />
     </TrackDrawerComp>
     <!-- 核算抽屉 -->
     <CalculateDrawerComp>
@@ -960,7 +1038,15 @@ const handleCancelCalculateResultFilter = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> {{ props.tabType === 'refundApply' ? '本页统计：退款订单数量: ' : props.tabType === 'refundRecord' ? '本页统计：退款记录数量: ' : '本页统计：金额核算数量: ' }}{{ dataObj.list.length }} </span>
+          <span>
+            {{
+              props.tabType === 'refundApply'
+                ? '本页统计：退款订单数量: '
+                : props.tabType === 'refundRecord'
+                  ? '本页统计：退款记录数量: '
+                  : '本页统计：金额核算数量: '
+            }}{{ dataObj.list.length }}
+          </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span> 全部统计：{{ textObj(props.tabType).total }} </span>
