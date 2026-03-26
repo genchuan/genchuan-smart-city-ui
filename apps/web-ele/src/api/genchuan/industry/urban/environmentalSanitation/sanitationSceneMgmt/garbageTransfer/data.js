@@ -24,7 +24,7 @@ export function deleteGarbageTransfer(id) {
 // 导出 Excel
 export function exportGarbageTransferExcel(params) {
   const accessStore = useAccessStore(); // 根据需要引入token
-  return baseRequestClient.get('/envirhealth/garbage-transfer/export-excel', {
+  return baseRequestClient.get('/envirhealth/transfer-operation/export-excel', {
     params,
     responseType: 'blob',
     headers: {
@@ -56,6 +56,26 @@ export function getTransferMaintenanceDetail(params) {
 // 获取垃圾转运站统计数据
 export function getGarbageTransferChartDashboard() {
   return requestClient.get('/envirhealth/garbage-transfer/chart/dashboard');
+}
+
+// 确认进站和取消预约
+export function updateTransferReserve(data) {
+  return requestClient.put('/envirhealth/transfer-reserve/update', data);
+}
+
+// 上报预警（创建）
+export function createTransferAlarm(data) {
+  return requestClient.post('/envirhealth/transfer-alarm/create', data);
+}
+
+// 更新预警（用于处理预警、指派人员）
+export function updateTransferAlarm(data) {
+  return requestClient.put('/envirhealth/transfer-alarm/update', data);
+}
+
+// 解除预警
+export function relieveTransferAlarm(id) {
+  return requestClient.put('/envirhealth/transfer-alarm/relieve', null, { params: { id } });
 }
 
 // 模拟垃圾转运站运营管理数据
