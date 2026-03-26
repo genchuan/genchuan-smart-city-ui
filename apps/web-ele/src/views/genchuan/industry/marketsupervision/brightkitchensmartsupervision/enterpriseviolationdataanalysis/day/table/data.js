@@ -3,20 +3,20 @@ export const dataList = () => [
   {
     reportNumber: 'DLY-QZ-FZ-20240615-001', // 日度报告编号：DLY-泉州-丰泽FZ-日期-序号
     statisticsDate: '2024-06-15', // 统计日期（日维度）
-    statisticsArea: '丰泽区', // 统一为丰泽区
-    totalAlarmCount: 28, // 当日总告警次数（改为：当日食品安全问题总数）
-    violationCompanyCount: 8, // 改为：当日有问题的食堂数量
-    highFreqViolationType: '食品留样:12,餐具消毒:8,人员健康:5,食材储存:3', // 替换为食堂高频违规类型
+    canteenName: '泉州市丰泽区第一中学食堂', // 新增：具体食堂名称
+    totalAlarmCount: 28, // 当日食品安全问题总数
+    violationCompanyCount: 8, // 当日有问题的食堂数量
+    highFreqViolationType: '食品留样:12,餐具消毒:8,人员健康:5,食材储存:3', // 食堂高频违规类型
     areaViolationDistribution: '东海街道:3,丰泽街道:2,东湖街道:2,华大街道:1', // 丰泽区街道分布
     yoyAlarmChangeRate: 15.6, // 同比问题变化率（%）
     momAlarmChangeRate: 8.2, // 环比问题变化率（%）
-    deviceAlarmNormalRate: 92.5, // 改为：食堂设备合规率（%）
+    deviceAlarmNormalRate: 92.5, // 食堂设备合规率（%）
     dailyRectificationCompletionRate: 78.3, // 当日整改完成率（%）
   },
   {
     reportNumber: 'DLY-QZ-FZ-20240615-002',
     statisticsDate: '2024-06-15',
-    statisticsArea: '丰泽区',
+    canteenName: '泉州市丰泽区第二中学食堂',
     totalAlarmCount: 22,
     violationCompanyCount: 6,
     highFreqViolationType: '餐具消毒:9,食品留样:7,卫生管理:4,食材采购:2',
@@ -29,7 +29,7 @@ export const dataList = () => [
   {
     reportNumber: 'DLY-QZ-FZ-20240615-003',
     statisticsDate: '2024-06-15',
-    statisticsArea: '丰泽区',
+    canteenName: '泉州市丰泽区实验小学食堂',
     totalAlarmCount: 15,
     violationCompanyCount: 4,
     highFreqViolationType: '食材储存:6,操作规范:5,人员健康:3,台账记录:1',
@@ -42,7 +42,7 @@ export const dataList = () => [
   {
     reportNumber: 'DLY-QZ-FZ-20240615-004',
     statisticsDate: '2024-06-15',
-    statisticsArea: '丰泽区',
+    canteenName: '泉州市丰泽区第一中心小学食堂',
     totalAlarmCount: 18,
     violationCompanyCount: 5,
     highFreqViolationType: '卫生管理:7,食材储存:6,餐具消毒:4,台账记录:1',
@@ -55,7 +55,7 @@ export const dataList = () => [
   {
     reportNumber: 'DLY-QZ-FZ-20240615-005',
     statisticsDate: '2024-06-15',
-    statisticsArea: '丰泽区',
+    canteenName: '泉州市丰泽区城东中学食堂',
     totalAlarmCount: 35,
     violationCompanyCount: 12,
     highFreqViolationType: '食品留样:14,餐具消毒:10,卫生管理:7,食材采购:4',
@@ -68,7 +68,7 @@ export const dataList = () => [
   {
     reportNumber: 'DLY-QZ-FZ-20240615-006',
     statisticsDate: '2024-06-15',
-    statisticsArea: '丰泽区',
+    canteenName: '泉州市丰泽区华大街道实验幼儿园食堂',
     totalAlarmCount: 29,
     violationCompanyCount: 9,
     highFreqViolationType: '操作规范:11,食材储存:9,人员健康:6,台账记录:3',
@@ -79,7 +79,6 @@ export const dataList = () => [
     dailyRectificationCompletionRate: 80.5,
   },
 ];
-
 /** 新增/修改的表单/列表的搜索表单 - 企业风险报告管理表单 */
 export function useFormSchema() {
   return [
@@ -255,16 +254,18 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'statisticsArea',
-      title: '统计区域',
-      minWidth: 120,
+      field: 'canteenName',
+      title: '企业',
+      minWidth: 220,
       sortable: true,
+      slots: { default: 'canteenName' },
     },
     {
       field: 'totalAlarmCount',
       title: '当日总告警次数',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'totalAlarmCount' },
     },
     {
       field: 'violationCompanyCount',

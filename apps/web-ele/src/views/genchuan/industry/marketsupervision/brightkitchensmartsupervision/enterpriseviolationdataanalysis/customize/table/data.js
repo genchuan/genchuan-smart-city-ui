@@ -1,30 +1,32 @@
 /** 表格初始数据 - 丰泽区学校食堂违规自定义分析报表数据 */
 export const dataList = () => [
   {
-    reportCode: 'CUSTOM-QZ-FZ-20260615-001', // 自定义报表编号：CUSTOM-泉州-丰泽-日期-序号
-    filterCond: '丰泽区-学校食堂-2026年1-6月-未戴工作帽/口罩', // 核心筛选条件
-    createTime: '2026-06-15 14:35:28', // 生成时间（精确至分秒）
-    entCount: 85, // 涉及食堂数量
-    createBy: '张三', // 生成人（关联系统用户表）
-    totalWarnCount: 328, // 筛选范围总告警次数
-    illegalEntCount: 68, // 筛选范围违规食堂数
-    avgIllegalCount: 3.86, // 平均违规频次（328/85，保留2位小数）
-    highIllegalType: '未戴工作帽/口罩:156,操作区卫生不达标:98,餐具消毒不及时:74', // 高频违规类型TOP3
-    areaIllegalDist: '东海街道:32.5%,丰泽街道:28.8%,北峰街道:18.2%,东湖街道:12.5%,华大街道:8.0%', // 区域违规分布（保留1位小数）
-    entTypeIllegalDist: '幼儿园食堂:45.2%,小学食堂:32.5%,中学食堂:22.3%', // 食堂类型违规占比（保留1位小数）
-    rectifyRate: 89.5, // 筛选范围整改完成率（保留1位小数）
-    illegalRankTop10: '丰泽区实验幼儿园食堂:12,丰泽区第一中心小学食堂:10,泉州第九中学食堂:9,泉州师院附小食堂:8,丰泽区第二实验小学食堂:7,东海中学食堂:6,华大附小食堂:5,东湖小学食堂:4,北峰中学食堂:3,湖心实验小学食堂:2', // 违规频次排名TOP10
+    reportCode: 'CUSTOM-QZ-FZ-20260615-001',
+    filterCond: '丰泽区-学校食堂-2026年1-6月-未戴工作帽/口罩',
+    canteenName: '泉州市丰泽区实验幼儿园食堂',
+    createTime: '2026-06-15 14:35:28',
+    entCount: 85,
+    createBy: '张三',
+    totalWarnCount: 328,
+    illegalEntCount: 68,
+    avgIllegalCount: 3.86,
+    highIllegalType: '未戴工作帽/口罩,操作区卫生不达标,餐具消毒不及时',
+    areaIllegalDist: '东海街道:32.5%,丰泽街道:28.8%,北峰街道:18.2%,东湖街道:12.5%,华大街道:8.0%',
+    entTypeIllegalDist: '幼儿园食堂:45.2%,小学食堂:32.5%,中学食堂:22.3%',
+    rectifyRate: 89.5,
+    illegalRankTop10: '丰泽区实验幼儿园食堂:12,丰泽区第一中心小学食堂:10,泉州第九中学食堂:9,泉州师院附小食堂:8,丰泽区第二实验小学食堂:7,东海中学食堂:6,华大附小食堂:5,东湖小学食堂:4,北峰中学食堂:3,湖心实验小学食堂:2',
   },
   {
     reportCode: 'CUSTOM-QZ-FZ-20260615-002',
     filterCond: '丰泽区-学校食堂-2026年4-6月-操作区卫生不达标',
+    canteenName: '泉州市丰泽区第三实验小学食堂',
     createTime: '2026-06-15 15:12:45',
     entCount: 78,
     createBy: '李四',
     totalWarnCount: 298,
     illegalEntCount: 62,
-    avgIllegalCount: 3.82, // 298/78≈3.82
-    highIllegalType: '操作区卫生不达标:145,未戴工作帽/口罩:88,食材留样不规范:65',
+    avgIllegalCount: 3.82,
+    highIllegalType: '操作区卫生不达标,未戴工作帽/口罩,食材留样不规范',
     areaIllegalDist: '泉秀街道:30.5%,城东街道:25.8%,东海街道:20.2%,丰泽街道:15.5%,北峰街道:8.0%',
     entTypeIllegalDist: '小学食堂:42.5%,幼儿园食堂:38.8%,中学食堂:18.7%',
     rectifyRate: 91.2,
@@ -32,29 +34,31 @@ export const dataList = () => [
   },
   {
     reportCode: 'CUSTOM-QZ-FZ-20260615-003',
-    filterCond: '丰泽区-幼儿园食堂-2026年1-6月-食材留样不规范',
-    createTime: '2026-06-15 10:08:32',
-    entCount: 45,
+    filterCond: '丰泽区-幼儿园食堂-2026年1-3月-餐具消毒不及时',
+    canteenName: '泉州市丰泽区泉秀中心幼儿园食堂',
+    createTime: '2026-06-15 16:05:18',
+    entCount: 56,
     createBy: '王五',
-    totalWarnCount: 185,
-    illegalEntCount: 38,
-    avgIllegalCount: 4.11, // 185/45≈4.11
-    highIllegalType: '食材留样不规范:98,未戴工作帽/口罩:55,操作区卫生不达标:32',
-    areaIllegalDist: '东海街道:35.2%,丰泽街道:28.5%,泉秀街道:18.8%,东湖街道:10.5%,华大街道:7.0%',
-    entTypeIllegalDist: '民办幼儿园食堂:65.8%,公办幼儿园食堂:34.2%',
+    totalWarnCount: 215,
+    illegalEntCount: 45,
+    avgIllegalCount: 3.84,
+    highIllegalType: '餐具消毒不及时,操作区卫生不达标,未戴工作帽/口罩',
+    areaIllegalDist: '东海街道:28.5%,泉秀街道:25.8%,丰泽街道:22.5%,北峰街道:15.2%,东湖街道:8.0%',
+    entTypeIllegalDist: '幼儿园食堂:85.5%,小学食堂:14.5%,中学食堂:0%',
     rectifyRate: 88.5,
-    illegalRankTop10: '丰泽区阳光幼儿园食堂:10,东海湾实验幼儿园食堂:9,丰泽区小星星幼儿园食堂:8,泉秀双语幼儿园食堂:7,东湖中心幼儿园食堂:6,北峰小精灵幼儿园食堂:5,华大附属幼儿园食堂:4,城东安琪幼儿园食堂:3,清源爱心幼儿园食堂:2,蟳埔育苗幼儿园食堂:1',
+    illegalRankTop10: '泉秀中心幼儿园食堂:10,丰泽区实验幼儿园食堂:9,东海幼儿园食堂:8,丰泽区第二实验幼儿园食堂:7,北峰幼儿园食堂:6,华大幼儿园食堂:5,城东幼儿园食堂:4,东湖幼儿园食堂:3,清源幼儿园食堂:2,蟳埔幼儿园食堂:1',
   },
   {
     reportCode: 'CUSTOM-QZ-FZ-20260615-004',
     filterCond: '丰泽区-小学食堂-2026年3-6月-餐具消毒不达标',
+    canteenName: '泉州市丰泽区北峰小学食堂',
     createTime: '2026-06-15 11:25:18',
     entCount: 38,
     createBy: '赵六',
     totalWarnCount: 152,
     illegalEntCount: 30,
-    avgIllegalCount: 4.00, // 152/38=4.00
-    highIllegalType: '餐具消毒不达标:78,操作区卫生不达标:45,未戴工作帽/口罩:29',
+    avgIllegalCount: 4.00,
+    highIllegalType: '餐具消毒不达标,操作区卫生不达标,未戴工作帽/口罩',
     areaIllegalDist: '北峰街道:32.8%,东湖街道:26.5%,丰泽街道:20.8%,华大街道:12.5%,城东街道:7.4%',
     entTypeIllegalDist: '公办小学食堂:75.5%,民办小学食堂:24.5%',
     rectifyRate: 92.8,
@@ -63,13 +67,14 @@ export const dataList = () => [
   {
     reportCode: 'CUSTOM-QZ-FZ-20260615-005',
     filterCond: '丰泽区-中学食堂-2026年1-6月-从业人员健康证过期',
+    canteenName: '泉州市第九中学食堂',
     createTime: '2026-06-15 09:45:56',
     entCount: 22,
     createBy: '孙七',
     totalWarnCount: 85,
     illegalEntCount: 18,
-    avgIllegalCount: 3.86, // 85/22≈3.86
-    highIllegalType: '健康证过期:42,未戴工作帽/口罩:25,操作区卫生不达标:18',
+    avgIllegalCount: 3.86,
+    highIllegalType: '健康证过期,未戴工作帽/口罩,操作区卫生不达标',
     areaIllegalDist: '城东街道:40.5%,东海街道:30.2%,丰泽街道:18.8%,北峰街道:10.5%',
     entTypeIllegalDist: '公办中学食堂:85.5%,民办中学食堂:14.5%',
     rectifyRate: 90.5,
@@ -78,13 +83,14 @@ export const dataList = () => [
   {
     reportCode: 'CUSTOM-QZ-FZ-20260615-006',
     filterCond: '丰泽区-学校食堂-2026年5-6月-清洗池混用',
+    canteenName: '泉州市丰泽区蟳埔中心幼儿园食堂',
     createTime: '2026-06-15 16:22:48',
     entCount: 65,
     createBy: '周八',
     totalWarnCount: 245,
     illegalEntCount: 52,
-    avgIllegalCount: 3.77, // 245/65≈3.77
-    highIllegalType: '清洗池混用:115,操作区卫生不达标:78,未戴工作帽/口罩:52',
+    avgIllegalCount: 3.77,
+    highIllegalType: '清洗池混用,操作区卫生不达标,未戴工作帽/口罩',
     areaIllegalDist: '蟳埔街道:35.8%,清源街道:25.2%,泉秀街道:18.5%,东湖街道:12.8%,华大街道:7.7%',
     entTypeIllegalDist: '幼儿园食堂:48.5%,小学食堂:32.8%,中学食堂:18.7%',
     rectifyRate: 87.8,
@@ -93,13 +99,14 @@ export const dataList = () => [
   {
     reportCode: 'CUSTOM-QZ-FZ-20260615-007',
     filterCond: '丰泽区-民办学校食堂-2026年1-6月-垃圾桶未加盖',
+    canteenName: '泉州市丰泽区金色童年幼儿园食堂',
     createTime: '2026-06-15 14:10:15',
     entCount: 32,
     createBy: '吴九',
     totalWarnCount: 128,
     illegalEntCount: 26,
-    avgIllegalCount: 4.00, // 128/32=4.00
-    highIllegalType: '垃圾桶未加盖:65,未戴工作帽/口罩:35,操作区卫生不达标:28',
+    avgIllegalCount: 4.00,
+    highIllegalType: '垃圾桶未加盖,未戴工作帽/口罩,操作区卫生不达标',
     areaIllegalDist: '东海街道:38.5%,泉秀街道:28.8%,丰泽街道:18.2%,城东街道:10.5%,北峰街道:4.0%',
     entTypeIllegalDist: '民办幼儿园食堂:62.5%,民办小学食堂:28.8%,民办中学食堂:8.7%',
     rectifyRate: 86.5,
@@ -108,13 +115,14 @@ export const dataList = () => [
   {
     reportCode: 'CUSTOM-QZ-FZ-20260615-008',
     filterCond: '丰泽区-公办学校食堂-2026年2-6月-留样柜温度超标',
+    canteenName: '泉州市丰泽区机关幼儿园食堂',
     createTime: '2026-06-15 11:58:36',
     entCount: 58,
     createBy: '郑十',
     totalWarnCount: 215,
     illegalEntCount: 45,
-    avgIllegalCount: 3.71, // 215/58≈3.71
-    highIllegalType: '留样柜温度超标:98,操作区卫生不达标:65,未戴工作帽/口罩:52',
+    avgIllegalCount: 3.71,
+    highIllegalType: '留样柜温度超标,操作区卫生不达标,未戴工作帽/口罩',
     areaIllegalDist: '丰泽街道:32.5%,东海街道:29.8%,城东街道:18.2%,东湖街道:10.5%,北峰街道:9.0%',
     entTypeIllegalDist: '公办幼儿园食堂:42.5%,公办小学食堂:38.8%,公办中学食堂:18.7%',
     rectifyRate: 93.2,
@@ -123,13 +131,14 @@ export const dataList = () => [
   {
     reportCode: 'CUSTOM-QZ-FZ-20260615-009',
     filterCond: '丰泽区-高校食堂-2026年1-6月-食材采购索证不全',
+    canteenName: '华侨大学泉州校区第一食堂',
     createTime: '2026-06-15 08:45:22',
     entCount: 15,
     createBy: '钱十一',
     totalWarnCount: 78,
     illegalEntCount: 12,
-    avgIllegalCount: 5.20, // 78/15=5.20
-    highIllegalType: '索证不全:45,未戴工作帽/口罩:18,操作区卫生不达标:15',
+    avgIllegalCount: 5.20,
+    highIllegalType: '索证不全,未戴工作帽/口罩,操作区卫生不达标',
     areaIllegalDist: '华大街道:65.5%,东海街道:25.8%,城东街道:8.7%',
     entTypeIllegalDist: '本科院校食堂:75.8%,高职高专食堂:24.2%',
     rectifyRate: 88.2,
@@ -138,13 +147,14 @@ export const dataList = () => [
   {
     reportCode: 'CUSTOM-QZ-FZ-20260615-010',
     filterCond: '丰泽区-所有学校食堂-2026年1-6月-综合违规',
+    canteenName: '泉州市丰泽区实验幼儿园食堂',
     createTime: '2026-06-15 17:05:58',
     entCount: 128,
     createBy: '综合管理员',
     totalWarnCount: 485,
     illegalEntCount: 98,
-    avgIllegalCount: 3.79, // 485/128≈3.79
-    highIllegalType: '未戴工作帽/口罩:185,操作区卫生不达标:156,食材留样不规范:88,餐具消毒不达标:38,其他违规:18',
+    avgIllegalCount: 3.79,
+    highIllegalType: '未戴工作帽/口罩,操作区卫生不达标,食材留样不规范,餐具消毒不达标,其他违规',
     areaIllegalDist: '东海街道:28.5%,泉秀街道:22.8%,丰泽街道:18.5%,城东街道:15.2%,北峰街道:8.8%,东湖街道:5.2%,华大街道:1.0%',
     entTypeIllegalDist: '幼儿园食堂:42.5%,小学食堂:35.8%,中学食堂:15.2%,高校食堂:6.5%',
     rectifyRate: 90.2,
@@ -241,6 +251,13 @@ export function useGridColumns() {
       sortable: true,
     },
     {
+      field: 'canteenName',
+      title: '食堂名称',
+      minWidth: 200,
+      sortable: true,
+      slots: { default: 'canteenName' },
+    },
+    {
       field: 'entCount',
       title: '涉及企业数量',
       minWidth: 120,
@@ -256,7 +273,8 @@ export function useGridColumns() {
       field: 'totalWarnCount',
       title: '筛选范围总告警次数',
       minWidth: 140,
-      sortable: true, 
+      sortable: true,
+      slots: { default: 'totalWarnCount' },
     },
     {
       field: 'illegalEntCount',

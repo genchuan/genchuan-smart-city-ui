@@ -22,7 +22,7 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   onCancel: () => detailDrawerApi.close(),
 });
 
-defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.close() });
+defineExpose({open: () => detailDrawerApi.open(), close: () => detailDrawerApi.close()});
 
 // 环境数据字段中文映射
 const envLabelMap = {
@@ -60,7 +60,7 @@ const formattedEnvData = computed(() => {
       }
     } catch {
       // 解析失败，返回原始字符串
-      return [{ label: '环境数据', value: obj.environmentData }];
+      return [{label: '环境数据', value: obj.environmentData}];
     }
   }
 
@@ -81,39 +81,74 @@ const formattedEnvData = computed(() => {
     <div class="detail-card">
       <!-- 基础信息（兼容接口数据和模拟数据） -->
       <div class="detail-section">🏭 转运站基础信息</div>
-      <div class="detail-row"><span class="label">转运站名称：</span>{{ detailObj.name || detailObj.toiletName || '-' }}</div>
-      <div class="detail-row"><span class="label">转运站位置：</span>{{ detailObj.location || '-' }}</div>
-      <div class="detail-row"><span class="label">所属区域：</span>{{ detailObj.areaName || detailObj.area || '-' }}</div>
-<!--      <div class="detail-row"><span class="label">开放时段：</span>{{ detailObj.openHours || '-' }}</div>-->
-<!--      <div class="detail-row"><span class="label">压缩机数量：</span>{{ detailObj.stallCount ?? '-' }}</div>-->
-      <div class="detail-row"><span class="label">运营状态：</span>{{ detailObj.operationStatusName || detailObj.status || '-' }}</div>
-      <div class="detail-row"><span class="label">负责人：</span>{{ detailObj.managerName || detailObj.manager || '-' }}</div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">转运站名称：</div>
+        <div class="detail-row-right">{{ detailObj.name || detailObj.toiletName || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">转运站位置：</div>
+        <div class="detail-row-right">{{ detailObj.location || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">所属区域：</div>
+        <div class="detail-row-right">{{ detailObj.areaName || detailObj.area || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">运营状态：</div>
+        <div class="detail-row-right">{{
+            detailObj.operationStatusName || detailObj.status || '-'
+          }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">负责人：</div>
+        <div class="detail-row-right">{{ detailObj.managerName || detailObj.manager || '-' }}</div>
+      </div>
 
       <!-- 接口特有字段 -->
       <template v-if="detailObj.name !== undefined">
-        <div class="detail-row"><span class="label">日转运量：</span>{{ detailObj.dailyTransferVolume ?? '-' }}吨</div>
-        <div class="detail-row"><span class="label">设备正常运行率：</span>{{ detailObj.equipmentRate ?? '-' }}%</div>
-        <div class="detail-row"><span class="label">环境达标率：</span>{{ detailObj.environmentRate ?? '-' }}%</div>
-        <div class="detail-row"><span class="label">预警未处理数：</span>{{ detailObj.unhandledAlarmCount ?? '-' }}</div>
-        <div class="detail-row"><span class="label">设备待维护数：</span>{{ detailObj.pendingMaintenanceCount ?? '-' }}</div>
-        <div class="detail-row"><span class="label">核心设备：</span>
-          <span v-if="detailObj.equipmentsName && detailObj.equipmentsName.length">
-            {{ detailObj.equipmentsName.join('、') }}
-          </span>
-          <span v-else>-</span>
+        <div class="detail-card-row">
+          <div class="detail-row-left">日转运量：</div>
+          <div class="detail-row-right">{{ detailObj.dailyTransferVolume ?? '-' }}吨</div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">设备正常运行率：</div>
+          <div class="detail-row-right">{{ detailObj.equipmentRate ?? '-' }}%</div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">环境达标率：</div>
+          <div class="detail-row-right">{{ detailObj.environmentRate ?? '-' }}%</div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">预警未处理数：</div>
+          <div class="detail-row-right">{{ detailObj.unhandledAlarmCount ?? '-' }}</div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">设备待维护数：</div>
+          <div class="detail-row-right">{{ detailObj.pendingMaintenanceCount ?? '-' }}</div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">核心设备：</div>
+          <div class="detail-row-right">
+            <span v-if="detailObj.equipmentsName && detailObj.equipmentsName.length">
+              {{ detailObj.equipmentsName.join('、') }}
+            </span>
+            <span v-else>-</span>
+          </div>
         </div>
 
         <!-- 环境数据显示为中文键值对 -->
-        <div class="detail-row" v-if="formattedEnvData.length > 0">
-          <span class="label">环境数据：</span>
-          <div class="env-data">
+        <div class="detail-card-row" v-if="formattedEnvData.length > 0">
+          <div class="detail-row-left">环境数据：</div>
+          <div class="detail-row-right env-data">
             <div v-for="(item, index) in formattedEnvData" :key="index">
               {{ item.label }}: {{ item.value }}
             </div>
           </div>
         </div>
-        <div class="detail-row" v-else>
-          <span class="label">环境数据：</span>-
+        <div class="detail-card-row" v-else>
+          <div class="detail-row-left">环境数据：</div>
+          <div class="detail-row-right">-</div>
         </div>
       </template>
 
@@ -122,110 +157,315 @@ const formattedEnvData = computed(() => {
         <!-- 车辆待进站 -->
         <template v-if="detailObj.status === '车辆待进站'">
           <div class="detail-section">🚛 车辆预约信息</div>
-          <div class="detail-row"><span class="label">预约编号：</span>{{ detailObj.reserveId || '-' }}</div>
-          <div class="detail-row"><span class="label">车辆牌照：</span>{{ detailObj.licensePlate || '-' }}</div>
-          <div class="detail-row"><span class="label">垃圾品类：</span>{{ detailObj.garbageType || '-' }}</div>
-          <div class="detail-row"><span class="label">预计进站时间：</span>{{ detailObj.expectedTime || '-' }}</div>
-          <div class="detail-row"><span class="label">垃圾重量：</span>{{ detailObj.garbageWeight ?? '-' }}吨</div>
-          <div class="detail-row"><span class="label">预约状态：</span>{{ detailObj.reserveStatus || '-' }}</div>
-          <div class="detail-row"><span class="label">排序序号：</span>{{ detailObj.sortNo ?? '-' }}</div>
-          <div class="detail-row"><span class="label">创建时间：</span>{{ detailObj.createTime || '-' }}</div>
-          <div class="detail-row"><span class="label">处理人员：</span>{{ detailObj.handler || '-' }}</div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">预约编号：</div>
+            <div class="detail-row-right">{{ detailObj.reserveId || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">车辆牌照：</div>
+            <div class="detail-row-right">{{ detailObj.licensePlate || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">垃圾品类：</div>
+            <div class="detail-row-right">{{ detailObj.garbageType || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">预计进站时间：</div>
+            <div class="detail-row-right">{{ detailObj.expectedTime || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">垃圾重量：</div>
+            <div class="detail-row-right">{{ detailObj.garbageWeight ?? '-' }}吨</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">预约状态：</div>
+            <div class="detail-row-right">{{ detailObj.reserveStatus || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">排序序号：</div>
+            <div class="detail-row-right">{{ detailObj.sortNo ?? '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">创建时间：</div>
+            <div class="detail-row-right">{{ detailObj.createTime || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">处理人员：</div>
+            <div class="detail-row-right">{{ detailObj.handler || '-' }}</div>
+          </div>
         </template>
 
         <!-- 作业进行中 -->
         <template v-else-if="detailObj.status === '作业进行中'">
           <div class="detail-section">⚙️ 作业进行中信息</div>
-          <div class="detail-row"><span class="label">进站编号：</span>{{ detailObj.operationId || '-' }}</div>
-          <div class="detail-row"><span class="label">车辆牌照：</span>{{ detailObj.licensePlate || '-' }}</div>
-          <div class="detail-row"><span class="label">垃圾品类：</span>{{ detailObj.garbageType || '-' }}</div>
-          <div class="detail-row"><span class="label">进站时间：</span>{{ detailObj.entryTime || '-' }}</div>
-          <div class="detail-row"><span class="label">垃圾重量：</span>{{ detailObj.garbageWeight ?? '-' }}吨</div>
-          <div class="detail-row"><span class="label">关联点位：</span>{{ detailObj.relatedPoints || '-' }}</div>
-          <div class="detail-row"><span class="label">核心设备状态：</span>{{ detailObj.equipmentStatus || '-' }}</div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">进站编号：</div>
+            <div class="detail-row-right">{{ detailObj.operationId || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">车辆牌照：</div>
+            <div class="detail-row-right">{{ detailObj.licensePlate || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">垃圾品类：</div>
+            <div class="detail-row-right">{{ detailObj.garbageType || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">进站时间：</div>
+            <div class="detail-row-right">{{ detailObj.entryTime || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">垃圾重量：</div>
+            <div class="detail-row-right">{{ detailObj.garbageWeight ?? '-' }}吨</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">关联点位：</div>
+            <div class="detail-row-right">{{ detailObj.relatedPoints || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">核心设备状态：</div>
+            <div class="detail-row-right">{{ detailObj.equipmentStatus || '-' }}</div>
+          </div>
 
           <!-- 作业进行中的环境数据（也是 JSON 字符串，同样格式化） -->
-          <div class="detail-row" v-if="formattedEnvData.length > 0">
-            <span class="label">实时环境数据：</span>
-            <div class="env-data">
+          <div class="detail-card-row" v-if="formattedEnvData.length > 0">
+            <div class="detail-row-left">实时环境数据：</div>
+            <div class="detail-row-right env-data">
               <div v-for="(item, index) in formattedEnvData" :key="index">
                 {{ item.label }}: {{ item.value }}
               </div>
             </div>
           </div>
-          <div class="detail-row" v-else>
-            <span class="label">实时环境数据：</span>-
+          <div class="detail-card-row" v-else>
+            <div class="detail-row-left">实时环境数据：</div>
+            <div class="detail-row-right">-</div>
           </div>
 
-          <div class="detail-row"><span class="label">作业进度：</span>{{ detailObj.progress ?? '-' }}%</div>
-          <div class="detail-row"><span class="label">转运去向：</span>{{ detailObj.destination || '-' }}</div>
-          <div class="detail-row"><span class="label">异常标记：</span>{{ detailObj.isAbnormal ? '是' : '否' }}</div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">作业进度：</div>
+            <div class="detail-row-right">{{ detailObj.progress ?? '-' }}%</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">转运去向：</div>
+            <div class="detail-row-right">{{ detailObj.destination || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">异常标记：</div>
+            <div class="detail-row-right">{{ detailObj.isAbnormal ? '是' : '否' }}</div>
+          </div>
         </template>
 
         <!-- 预警待处理 -->
         <template v-else-if="detailObj.status === '预警待处理'">
           <div class="detail-section">⚠️ 预警信息</div>
-          <div class="detail-row"><span class="label">预警编号：</span>{{ detailObj.alarmId || '-' }}</div>
-          <div class="detail-row"><span class="label">关联转运站：</span>{{ detailObj.transferName || '-' }}</div>
-          <div class="detail-row"><span class="label">预警类型：</span>{{ detailObj.alarmType || '-' }}</div>
-          <div class="detail-row"><span class="label">发生时间：</span>{{ detailObj.alarmTime || '-' }}</div>
-          <div class="detail-row"><span class="label">预警内容：</span>{{ detailObj.alarmContent || '-' }}</div>
-          <div class="detail-row"><span class="label">关联设备/区域：</span>{{ detailObj.relevantInfo || '-' }}</div>
-          <div class="detail-row"><span class="label">处置状态：</span>{{ detailObj.handleStatus || '-' }}</div>
-          <div class="detail-row"><span class="label">责任人：</span>{{ detailObj.handler || '-' }}</div>
-          <div class="detail-row"><span class="label">超时提醒：</span>{{ detailObj.isTimeout ? '是' : '否' }}</div>
-          <div class="detail-row"><span class="label">处置进度：</span>{{ detailObj.handleProgress ?? '-' }}%</div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">预警编号：</div>
+            <div class="detail-row-right">{{ detailObj.alarmId || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">关联转运站：</div>
+            <div class="detail-row-right">{{ detailObj.transferName || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">预警类型：</div>
+            <div class="detail-row-right">{{ detailObj.alarmType || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">发生时间：</div>
+            <div class="detail-row-right">{{ detailObj.alarmTime || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">预警内容：</div>
+            <div class="detail-row-right">{{ detailObj.alarmContent || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">关联设备/区域：</div>
+            <div class="detail-row-right">{{ detailObj.relevantInfo || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">处置状态：</div>
+            <div class="detail-row-right">{{ detailObj.handleStatus || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">责任人：</div>
+            <div class="detail-row-right">{{ detailObj.handler || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">超时提醒：</div>
+            <div class="detail-row-right">{{ detailObj.isTimeout ? '是' : '否' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">处置进度：</div>
+            <div class="detail-row-right">{{ detailObj.handleProgress ?? '-' }}%</div>
+          </div>
         </template>
 
         <!-- 设备待维护 -->
         <template v-else-if="detailObj.status === '设备待维护'">
           <div class="detail-section">🔧 设备维护信息</div>
-          <div class="detail-row"><span class="label">维护编号：</span>{{ detailObj.maintenanceId || '-' }}</div>
-          <div class="detail-row"><span class="label">关联转运站：</span>{{ detailObj.transferName || '-' }}</div>
-          <div class="detail-row"><span class="label">设备名称：</span>{{ detailObj.equipmentName || '-' }}</div>
-          <div class="detail-row"><span class="label">维护周期：</span>{{ detailObj.maintenanceCycle || '-' }}</div>
-          <div class="detail-row"><span class="label">上次维护时间：</span>{{ detailObj.lastMaintenanceTime || '-' }}</div>
-          <div class="detail-row"><span class="label">维护内容：</span>{{ detailObj.maintenanceContent || '-' }}</div>
-          <div class="detail-row"><span class="label">责任人：</span>{{ detailObj.handler || '-' }}</div>
-          <div class="detail-row"><span class="label">维护状态：</span>{{ detailObj.maintenanceStatus || '-' }}</div>
-          <div class="detail-row"><span class="label">预计完成时间：</span>{{ detailObj.expectedCompleteTime || '-' }}</div>
-          <div class="detail-row"><span class="label">超时提醒：</span>{{ detailObj.isTimeout ? '是' : '否' }}</div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">维护编号：</div>
+            <div class="detail-row-right">{{ detailObj.maintenanceId || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">关联转运站：</div>
+            <div class="detail-row-right">{{ detailObj.transferName || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">设备名称：</div>
+            <div class="detail-row-right">{{ detailObj.equipmentName || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">维护周期：</div>
+            <div class="detail-row-right">{{ detailObj.maintenanceCycle || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">上次维护时间：</div>
+            <div class="detail-row-right">{{ detailObj.lastMaintenanceTime || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">维护内容：</div>
+            <div class="detail-row-right">{{ detailObj.maintenanceContent || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">责任人：</div>
+            <div class="detail-row-right">{{ detailObj.handler || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">维护状态：</div>
+            <div class="detail-row-right">{{ detailObj.maintenanceStatus || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">预计完成时间：</div>
+            <div class="detail-row-right">{{ detailObj.expectedCompleteTime || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">超时提醒：</div>
+            <div class="detail-row-right">{{ detailObj.isTimeout ? '是' : '否' }}</div>
+          </div>
         </template>
 
         <!-- 已完成 -->
         <template v-else-if="detailObj.status === '已完成'">
           <div class="detail-section">✅ 已完成任务信息</div>
-          <div class="detail-row"><span class="label">任务类型：</span>{{ detailObj.taskType || '-' }}</div>
-          <div class="detail-row"><span class="label">关联转运站：</span>{{ detailObj.transferName || '-' }}</div>
-          <div class="detail-row"><span class="label">完成时间：</span>{{ detailObj.completeTime || '-' }}</div>
-          <div class="detail-row"><span class="label">处置人员：</span>{{ detailObj.handler || '-' }}</div>
-          <div class="detail-row"><span class="label">处置结果：</span>{{ detailObj.handleResult || '-' }}</div>
-          <div class="detail-row"><span class="label">佐证材料：</span>
-            <a v-if="detailObj.proofUrl" :href="detailObj.proofUrl" target="_blank">查看</a>
-            <span v-else>-</span>
+          <div class="detail-card-row">
+            <div class="detail-row-left">任务类型：</div>
+            <div class="detail-row-right">{{ detailObj.taskType || '-' }}</div>
           </div>
-          <div class="detail-row"><span class="label">任务耗时：</span>{{ detailObj.handleDuration || '-' }}</div>
-          <div class="detail-row"><span class="label">进站总量：</span>{{ detailObj.totalEntryVolume ?? '-' }}吨</div>
-          <div class="detail-row"><span class="label">设备完好率：</span>{{ detailObj.equipmentIntactRate ?? '-' }}%</div>
-          <div class="detail-row"><span class="label">环境达标率：</span>{{ detailObj.environmentQualifiedRate ?? '-' }}%</div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">关联转运站：</div>
+            <div class="detail-row-right">{{ detailObj.transferName || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">完成时间：</div>
+            <div class="detail-row-right">{{ detailObj.completeTime || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">处置人员：</div>
+            <div class="detail-row-right">{{ detailObj.handler || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">处置结果：</div>
+            <div class="detail-row-right">{{ detailObj.handleResult || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">佐证材料：</div>
+            <div class="detail-row-right">
+              <a v-if="detailObj.proofUrl" :href="detailObj.proofUrl" target="_blank">查看</a>
+              <span v-else>-</span>
+            </div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">任务耗时：</div>
+            <div class="detail-row-right">{{ detailObj.handleDuration || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">进站总量：</div>
+            <div class="detail-row-right">{{ detailObj.totalEntryVolume ?? '-' }}吨</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">设备完好率：</div>
+            <div class="detail-row-right">{{ detailObj.equipmentIntactRate ?? '-' }}%</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">环境达标率：</div>
+            <div class="detail-row-right">{{ detailObj.environmentQualifiedRate ?? '-' }}%</div>
+          </div>
         </template>
       </template>
 
       <!-- 时间信息（通用） -->
       <div class="detail-section">📅 时间信息</div>
-      <div class="detail-row"><span class="label">创建时间：</span>{{ detailObj.createTime || '-' }}</div>
-      <div class="detail-row"><span class="label">更新时间：</span>{{ detailObj.updateTime || '-' }}</div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">创建时间：</div>
+        <div class="detail-row-right">{{ detailObj.createTime || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">更新时间：</div>
+        <div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div>
+      </div>
     </div>
   </DetailDrawer>
 </template>
 
 <style scoped lang="scss">
+@media (max-width: 768px) {
+  .detail-row-left {
+    width: 180px;
+  }
+  .detail-card {
+    min-height: 600px;
+    max-height: 80vh;
+    padding: 15px;
+  }
+}
+
 .detail-card {
+  min-height: 750px;
+  max-height: 85vh;
   padding: 20px;
-  background: #f9fafb;
-  border-radius: 8px;
-  max-height: 70vh;
   overflow-y: auto;
+  background-color: #f9fafb;
+  border-radius: 8px;
+}
+
+.detail-card-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    padding-right: 8px;
+    padding-left: 8px;
+    margin-right: -8px;
+    margin-left: -8px;
+    background-color: #f5f7fa;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+}
+
+.detail-row-left {
+  flex-shrink: 0;
+  width: 200px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 18px;
+  color: #606266;
+}
+
+.detail-row-right {
+  flex: 1;
+  padding-right: 10px;
+  font-size: 14px;
+  line-height: 18px;
+  color: #303133;
+  word-break: break-all;
 }
 
 .detail-section {
@@ -234,24 +474,36 @@ const formattedEnvData = computed(() => {
   margin: 16px 0 8px;
   padding-bottom: 4px;
   border-bottom: 1px solid #e0e0e0;
+  color: #6E7E91;
+
+  &:first-child {
+    margin-top: 0;
+  }
 }
 
-.detail-row {
-  display: flex;
-  padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
+.detail-card::-webkit-scrollbar {
+  width: 6px;
+}
 
-  .label {
-    width: 130px;
-    flex-shrink: 0;
-    font-weight: 500;
-  }
+.detail-card::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
 
-  .env-data {
-    flex: 1;
-    div {
-      margin-bottom: 2px;
-    }
+.detail-card::-webkit-scrollbar-thumb {
+  background: #dcdfe6;
+  border-radius: 3px;
+}
+
+.detail-card::-webkit-scrollbar-thumb:hover {
+  background: #c0c4cc;
+}
+
+.env-data {
+  flex: 1;
+
+  div {
+    margin-bottom: 2px;
   }
 }
 </style>

@@ -1,9 +1,9 @@
 <script setup>
-import { computed, defineProps, toRefs } from 'vue';
+import {computed, defineProps, toRefs} from 'vue';
 
-import { useVbenDrawer } from '@vben/common-ui';
+import {useVbenDrawer} from '@vben/common-ui';
 
-// 定义组件接收的属性（企业风险报告）
+// 定义组件接收的属性（环卫管理报表）
 const props = defineProps({
   detailObj: {
     type: Object,
@@ -16,12 +16,12 @@ const props = defineProps({
   },
 });
 
-const { detailObj, title } = toRefs(props);
+const {detailObj, title} = toRefs(props);
 
-// 标题：报表编号
+// 标题自动处理
 const drawerTitle = computed(() => {
-  const reportNumber = detailObj.value?.reportNumber || '企业风险报告';
-  return title.value || `${reportNumber} 详情`;
+  const reportName = detailObj.value?.reportName || '自定义报表';
+  return title.value || `${reportName} 详情`;
 });
 
 // 抽屉配置
@@ -33,10 +33,13 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   onCancel() {
     detailDrawerApi.close();
   },
-  onConfirm() {},
-  async onOpenChange() {},
+  onConfirm() {
+  },
+  async onOpenChange() {
+  },
 });
 
+// 暴露方法
 defineExpose({
   open: () => detailDrawerApi.open(),
   close: () => detailDrawerApi.close(),
@@ -47,65 +50,77 @@ defineExpose({
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
       <div class="detail-card-row">
-        <div class="detail-row-left">报表编号：</div>
-        <div class="detail-row-right">{{ detailObj.reportNumber || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">筛选条件：</div>
+        <div class="detail-row-left">报表名称:</div>
         <div class="detail-row-right">
-          {{ detailObj.filterConditions || '-' }}
+          {{ detailObj.reportName || '-' }}
         </div>
       </div>
+
       <div class="detail-card-row">
-        <div class="detail-row-left">生成时间：</div>
+        <div class="detail-row-left">统计时间范围:</div>
         <div class="detail-row-right">
-          {{ detailObj.generationTime || '-' }}
+          {{ detailObj.timeRange || '-' }}
         </div>
       </div>
+
       <div class="detail-card-row">
-        <div class="detail-row-left">涉及企业数量：</div>
+        <div class="detail-row-left">统计区域:</div>
         <div class="detail-row-right">
-          {{ detailObj.involvedCompanyCount || '-' }} 家
+          {{ detailObj.area || '-' }}
         </div>
       </div>
+
       <div class="detail-card-row">
-        <div class="detail-row-left">整体风险等级分布：</div>
+        <div class="detail-row-left">业务模块:</div>
         <div class="detail-row-right">
-          {{ detailObj.riskLevelDistribution || '-' }}
+          {{ detailObj.businessModule || '-' }}
         </div>
       </div>
+
       <div class="detail-card-row">
-        <div class="detail-row-left">平均违规频次：</div>
+        <div class="detail-row-left">统计指标:</div>
         <div class="detail-row-right">
-          {{ detailObj.averageViolationCount || '-' }}
+          {{ detailObj.indicators || '-' }}
         </div>
       </div>
+
       <div class="detail-card-row">
-        <div class="detail-row-left">平均整改完成率：</div>
+        <div class="detail-row-left">创建人:</div>
         <div class="detail-row-right">
-          <span
-            :class="{
-              'text-green-600': detailObj.averageRectificationRate >= 90,
-              'text-yellow-600':
-                detailObj.averageRectificationRate >= 70 &&
-                detailObj.averageRectificationRate < 90,
-              'text-red-600': detailObj.averageRectificationRate < 70,
-            }"
+          {{ detailObj.createBy || '-' }}
+        </div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">创建时间:</div>
+        <div class="detail-row-right">
+          {{ detailObj.createTime || '-' }}
+        </div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">报表状态:</div>
+        <div class="detail-row-right">
+          <el-tag
+            :type="detailObj.status === '已生成' ? 'success' : (detailObj.status === '生成中' ? 'warning' : (detailObj.status === '生成失败' ? 'danger' : 'info'))"
+            size="small"
           >
-            {{ detailObj.averageRectificationRate || '-' }} %
-          </span>
+            {{ detailObj.status || '-' }}
+          </el-tag>
         </div>
       </div>
+
       <div class="detail-card-row">
-        <div class="detail-row-left">高频风险点：</div>
+        <div class="detail-row-left">数据记录数:</div>
         <div class="detail-row-right">
-          {{ detailObj.highRiskPoints || '-' }}
+          {{ detailObj.dataCount ?? 0 }}
         </div>
       </div>
+
       <div class="detail-card-row">
-        <div class="detail-row-left">报表生成人：</div>
+        <div class="detail-row-left">核心指标汇总:</div>
         <div class="detail-row-right">
-          {{ detailObj.reportGenerator || '-' }}
+          {{ detailObj.coreIndicatorSummary || '-' }}
         </div>
       </div>
     </div>
@@ -113,8 +128,19 @@ defineExpose({
 </template>
 
 <style scoped lang="scss">
+@media (max-width: 768px) {
+  .detail-row-left {
+    width: 180px;
+  }
+  .detail-card {
+    min-height: 600px;
+    max-height: 80vh;
+    padding: 15px;
+  }
+}
+
 .detail-card {
-  min-height: 500px;
+  min-height: 750px;
   max-height: 85vh;
   padding: 20px;
   overflow-y: auto;
@@ -145,7 +171,7 @@ defineExpose({
 
 .detail-row-left {
   flex-shrink: 0;
-  width: 150px;
+  width: 200px;
   font-size: 14px;
   font-weight: 500;
   line-height: 18px;
@@ -156,21 +182,9 @@ defineExpose({
   flex: 1;
   padding-right: 10px;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 18px;
   color: #303133;
   word-break: break-all;
-}
-
-.text-green-600 {
-  color: #10b981 !important;
-}
-
-.text-yellow-600 {
-  color: #f59e0b !important;
-}
-
-.text-red-600 {
-  color: #ef4444 !important;
 }
 
 .detail-card::-webkit-scrollbar {
@@ -187,12 +201,7 @@ defineExpose({
   border-radius: 3px;
 }
 
-@media (max-width: 768px) {
-  .detail-row-left {
-    width: 130px;
-  }
-  .detail-card {
-    padding: 15px;
-  }
+.detail-card::-webkit-scrollbar-thumb:hover {
+  background: #c0c4cc;
 }
 </style>

@@ -21,11 +21,6 @@ export function deleteGarbageTransfer(id) {
   return requestClient.delete(`/envirhealth/garbage-transfer/delete?id=${id}`);
 }
 
-// 批量删除
-export function deleteGarbageTransferBatch(ids) {
-  return requestClient.delete('/envirhealth/garbage-transfer/delete-batch', { data: ids });
-}
-
 // 导出 Excel
 export function exportGarbageTransferExcel(params) {
   const accessStore = useAccessStore(); // 根据需要引入token
@@ -36,6 +31,26 @@ export function exportGarbageTransferExcel(params) {
       Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
     },
   });
+}
+
+// 获取车辆待进站详情
+export function getTransferReserveDetail(params) {
+  return requestClient.get('/envirhealth/transfer-reserve/detail-page', { params });
+}
+
+// 获取作业进行中/已完成/已归档详情
+export function getTransferOperationDetail(params) {
+  return requestClient.get('/envirhealth/transfer-operation/detail-page', { params });
+}
+
+// 获取预警待处理详情
+export function getTransferAlarmDetail(params) {
+  return requestClient.get('/envirhealth/transfer-alarm/detail-page', { params });
+}
+
+// 获取设备待维护详情
+export function getTransferMaintenanceDetail(params) {
+  return requestClient.get('/envirhealth/transfer-maintenance/detail-page', { params });
 }
 
 // 获取垃圾转运站统计数据

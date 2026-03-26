@@ -4,7 +4,7 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElDialog, ElLoading, ElMessage } from 'element-plus';
+import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 // 导出插件
 import * as XLSX from 'xlsx';
@@ -15,9 +15,14 @@ import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.
 import { $t } from '#/locales';
 import { downloadLocalTemplate } from '#/utils/genchuan/down';
 import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
+import ParkDetailDrawer from './components/detail.vue';
 
-import { dataList, useFormSchema, useGridColumns } from './data';
-import ParkDetailDrawer from './detail.vue';
+import { dataList } from '#/api/genchuan/industry/urban/environmentalSanitation/analyticalDecisionSupport/sanitationMgmtReport/data.js';
+import {
+  useFormSchema,
+  useGridColumns
+} from '#/api/genchuan/industry/urban/environmentalSanitation/analyticalDecisionSupport/sanitationMgmtReport/form.js';
+
 
 const props = defineProps({
   secondShow: {
@@ -46,8 +51,10 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel() {
     drawerApi.close();
   },
-  onConfirm() {},
-  async onOpenChange() {},
+  onConfirm() {
+  },
+  async onOpenChange() {
+  },
 });
 
 const formData = ref();
@@ -108,7 +115,7 @@ function handleExport() {
     return;
   }
 
-  const loading = ElLoading.service({ text: '正在导出Excel...' });
+  const loading = ElLoading.service({text: '正在导出Excel...'});
   try {
     const columns = useGridColumns().filter(
       (col) => col.field && col.title && col.type !== 'checkbox',
@@ -125,7 +132,7 @@ function handleExport() {
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, '报表数据');
-    XLSX.writeFile(wb, `企业违规报表_${Date.now()}.xlsx`);
+    XLSX.writeFile(wb, `环卫管理报表_${Date.now()}.xlsx`);
     ElMessage.success('导出成功！');
   } catch (error) {
     ElMessage.error(`导出失败：${error.message}`);
@@ -157,6 +164,7 @@ function handleEdit(row) {
     })
     .open();
 }
+
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting', [row.name]),
@@ -188,9 +196,11 @@ async function handleDeleteBatch() {
 }
 
 const checkedIds = ref([]);
-function handleRowCheckboxChange({ records }) {
+
+function handleRowCheckboxChange({records}) {
   checkedIds.value = records.map((item) => item.id);
 }
+
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
@@ -249,7 +259,7 @@ const [QueryForm] = useVbenForm({
   layout: 'horizontal',
   schema: useFormSchema().map((v) => {
     delete v.rules;
-    return { ...v };
+    return {...v};
   }),
   showCollapseButton: true,
   submitButtonOptions: {
@@ -263,7 +273,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     keepSource: true,
     proxyConfig: {
       ajax: {
-        query: async ({ page }) => getTableData({ page }),
+        query: async ({page}) => getTableData({page}),
       },
     },
     rowConfig: {
@@ -291,11 +301,11 @@ const handleOpenDetail = (row) => {
   parkDetailDrawerRef.value?.open();
 };
 const tabsData = ref([
-  { label: '全部' },
-  { label: '启用' },
-  { label: '禁用' },
-  { label: '暂停运营' },
-  { label: '维修中' },
+  {label: '全部'},
+  {label: '已生成'},
+  {label: '生成中'},
+  {label: '生成失败'},
+  {label: '草稿'},
 ]);
 const createLabel = (item) => {
   let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
@@ -327,85 +337,21 @@ const openEn = async () => {
   dataObj.enDetailObj = res;
   enDetailObjRef.value?.open();
 };
-
-// ====================== 告警明细弹窗 ======================
-const alarmDialogVisible = ref(false);
-const currentAlarmRow = ref({});
-const alarmList = ref([]);
-
-function generateAlarmData(row) {
-  const count = row.halfyearWarnCount || 0;
-  const typeItems = row.highIllegalType.split(',').map((item) => item.trim());
-  const avgCount = Math.ceil(count / typeItems.length);
-  const types = typeItems.map((name) => {
-    return { name, num: avgCount };
-  });
-
-  const list = [];
-  let id = 1;
-  types.forEach((type) => {
-    for (let i = 0; i < Math.min(type.num, 5); i++) {
-      list.push({
-        id: id++,
-        canteenName: row.canteenName,
-        alarmType: type.name,
-        alarmTime: `${row.statCycle.split('-')[0].trim()} ${String(Math.trunc(Math.random() * 24)).padStart(2, '0')}:${String(Math.trunc(Math.random() * 60)).padStart(2, '0')}`,
-        alarmLevel: ['一般', '较重', '严重'][Math.trunc(Math.random() * 3)],
-        status: ['未处理', '处理中', '已整改'][Math.trunc(Math.random() * 3)],
-      });
-    }
-  });
-  return list.slice(0, count);
-}
-
-function handleTotal(row) {
-  currentAlarmRow.value = row;
-  alarmList.value = generateAlarmData(row);
-  alarmDialogVisible.value = true;
-}
-
-const alarmColumns = [
-  { label: '序号', prop: 'id', width: 70 },
-  { label: '食堂名称', prop: 'canteenName' },
-  { label: '告警类型', prop: 'alarmType' },
-  { label: '告警时间', prop: 'alarmTime' },
-  { label: '告警等级', prop: 'alarmLevel' },
-  { label: '处理状态', prop: 'status' },
-];
 </script>
 
 <template>
   <div class="park-lot-table-new" v-loading="dataObj.loading">
     <FormDrawer :title="getTitle">
-      <Form />
+      <Form/>
     </FormDrawer>
     <ParkDetailDrawer
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
     />
-    <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" />
+    <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj"/>
     <Drawer title="搜索">
-      <QueryForm class="query-form" />
+      <QueryForm class="query-form"/>
     </Drawer>
-
-    <!-- 告警明细弹窗 -->
-    <ElDialog
-      v-model="alarmDialogVisible"
-      title="本半年食品安全问题明细"
-      width="900px"
-      append-to-body
-    >
-      <el-table :data="alarmList" border height="450">
-        <el-table-column
-          v-for="col in alarmColumns"
-          :key="col.prop"
-          :label="col.label"
-          :prop="col.prop"
-          :width="col.width"
-        />
-      </el-table>
-    </ElDialog>
-
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
@@ -448,38 +394,39 @@ const alarmColumns = [
           />
         </div>
       </template>
-      <template #reportNumber="{ row }">
+      <template #reportName="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.reportNumber }}
+          {{ row.reportName }}
         </el-text>
       </template>
-
-      <template #halfyearWarnCount="{ row }">
-        <el-text @click="handleTotal(row)" class="common-align" type="primary">
-          {{ row.halfyearWarnCount }}
-        </el-text>
-      </template>
-
-      <template #canteenName="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
+      <template #status="{ row }">
+        <el-tag
+          :type="row.status === '已生成' ? 'success' : (row.status === '生成中' ? 'warning' : (row.status === '生成失败' ? 'danger' : 'info'))"
+          size="small"
         >
-          {{ row.canteenName }}
-        </el-text>
+          {{ row.status }}
+        </el-tag>
       </template>
-
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
             content="详情"
             icon-name="View"
             @click="handleOpenDetail(row)"
+          />
+          <IconButton
+            content="编辑"
+            icon-name="edit"
+            @click="handleEdit(row)"
+          />
+          <IconButton
+            content="重新生成"
+            icon-name="refresh"
+            @click="() => { ElMessage.success(`重新生成成功：${row.reportName}`); handleRefresh(); }"
           />
           <IconButton
             content="删除"
@@ -492,12 +439,11 @@ const alarmColumns = [
       <template #bottom>
         <div class="common-total" @click="changeTotalShow">
           <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
-            <ArrowDown />
+            <ArrowDown/>
           </el-icon>
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
-            <ArrowUp />
+            <ArrowUp/>
           </el-icon>
-          <span> 全部统计：10条 </span>
         </div>
       </template>
     </Grid>

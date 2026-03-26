@@ -3,7 +3,7 @@ export const dataList = () => [
   {
     reportNumber: 'WLY-QZ-FZ-202424-001',
     statWeek: '2024年第24周',
-    statArea: '丰泽区',
+    canteenName: '泉州市丰泽区第一中学食堂',
     statCycle: '2024-06-10 至 2024-06-16',
     weekWarnCount: 156,
     weekIllegalEntCount: 28,
@@ -18,7 +18,7 @@ export const dataList = () => [
   {
     reportNumber: 'WLY-QZ-FZ-202424-002',
     statWeek: '2024年第24周',
-    statArea: '丰泽区',
+    canteenName: '泉州市丰泽区第一中学食堂',
     statCycle: '2024-06-10 至 2024-06-16',
     weekWarnCount: 132,
     weekIllegalEntCount: 22,
@@ -33,7 +33,7 @@ export const dataList = () => [
   {
     reportNumber: 'WLY-QZ-FZ-202424-003',
     statWeek: '2024年第24周',
-    statArea: '丰泽区',
+    canteenName: '泉州市丰泽区第一中学食堂',
     statCycle: '2024-06-10 至 2024-06-16',
     weekWarnCount: 185,
     weekIllegalEntCount: 35,
@@ -48,7 +48,7 @@ export const dataList = () => [
   {
     reportNumber: 'WLY-QZ-FZ-202424-004',
     statWeek: '2024年第24周',
-    statArea: '丰泽区',
+    canteenName: '泉州市丰泽区第一中学食堂',
     statCycle: '2024-06-10 至 2024-06-16',
     weekWarnCount: 118,
     weekIllegalEntCount: 19,
@@ -63,7 +63,7 @@ export const dataList = () => [
   {
     reportNumber: 'WLY-QZ-FZ-202424-005',
     statWeek: '2024年第24周',
-    statArea: '丰泽区',
+    canteenName: '泉州市丰泽区第一中学食堂',
     statCycle: '2024-06-10 至 2024-06-16',
     weekWarnCount: 203,
     weekIllegalEntCount: 41,
@@ -78,7 +78,7 @@ export const dataList = () => [
   {
     reportNumber: 'WLY-QZ-FZ-202424-006',
     statWeek: '2024年第24周',
-    statArea: '丰泽区',
+    canteenName: '泉州市丰泽区第一中学食堂',
     statCycle: '2024-06-10 至 2024-06-16',
     weekWarnCount: 97,
     weekIllegalEntCount: 16,
@@ -93,7 +93,7 @@ export const dataList = () => [
   {
     reportNumber: 'WLY-QZ-FZ-202424-007',
     statWeek: '2024年第24周',
-    statArea: '丰泽区',
+    canteenName: '泉州市丰泽区第一中学食堂',
     statCycle: '2024-06-10 至 2024-06-16',
     weekWarnCount: 169,
     weekIllegalEntCount: 31,
@@ -108,7 +108,7 @@ export const dataList = () => [
   {
     reportNumber: 'WLY-QZ-FZ-202424-008',
     statWeek: '2024年第24周',
-    statArea: '丰泽区',
+    canteenName: '泉州市丰泽区第一中学食堂',
     statCycle: '2024-06-10 至 2024-06-16',
     weekWarnCount: 144,
     weekIllegalEntCount: 25,
@@ -123,7 +123,7 @@ export const dataList = () => [
   {
     reportNumber: 'WLY-QZ-FZ-202424-009',
     statWeek: '2024年第24周',
-    statArea: '丰泽区',
+    canteenName: '泉州市丰泽区第一中学食堂',
     statCycle: '2024-06-10 至 2024-06-16',
     weekWarnCount: 221,
     weekIllegalEntCount: 44,
@@ -138,7 +138,7 @@ export const dataList = () => [
   {
     reportNumber: 'WLY-QZ-FZ-202424-010',
     statWeek: '2024年第24周',
-    statArea: '丰泽区',
+    canteenName: '泉州市丰泽区第一中学食堂',
     statCycle: '2024-06-10 至 2024-06-16',
     weekWarnCount: 109,
     weekIllegalEntCount: 18,
@@ -217,10 +217,11 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'statArea',
-      title: '统计区域',
-      minWidth: 120,
+      field: 'canteenName',
+      title: '食堂名称',
+      minWidth: 200,
       sortable: true,
+      slots: { default: 'canteenName' },
     },
     {
       field: 'statCycle',
@@ -232,6 +233,7 @@ export function useGridColumns() {
       title: '本周总告警次数',
       minWidth: 140,
       sortable: true,
+      slots: { default: 'weekWarnCount' },
     },
     {
       field: 'weekIllegalEntCount',

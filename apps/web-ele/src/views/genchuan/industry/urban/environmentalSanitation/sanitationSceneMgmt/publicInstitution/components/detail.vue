@@ -30,222 +30,340 @@ defineExpose({open: () => detailDrawerApi.open(), close: () => detailDrawerApi.c
     <div class="detail-card">
       <!-- 基础信息（兼容两种数据源） -->
       <div class="detail-section">🏢 机构基础信息</div>
-      <div class="detail-row"><span
-        class="label">机构名称：</span>{{ detailObj.name || detailObj.toiletName || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">机构名称：</div>
+        <div class="detail-row-right">{{ detailObj.name || detailObj.toiletName || '-' }}</div>
       </div>
-      <div class="detail-row"><span class="label">机构类型：</span>{{
-          detailObj.institutionTypeName || detailObj.institutionType || '-'
-        }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">机构类型：</div>
+        <div class="detail-row-right">
+          {{ detailObj.institutionTypeName || detailObj.institutionType || '-' }}
+        </div>
       </div>
-      <div class="detail-row"><span
-        class="label">机构地址：</span>{{ detailObj.address || detailObj.location || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">机构地址：</div>
+        <div class="detail-row-right">{{ detailObj.address || detailObj.location || '-' }}</div>
       </div>
-      <div class="detail-row"><span
-        class="label">所属区域：</span>{{ detailObj.areaName || detailObj.area || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">所属区域：</div>
+        <div class="detail-row-right">{{ detailObj.areaName || detailObj.area || '-' }}</div>
       </div>
-      <div class="detail-row"><span
-        class="label">负责人：</span>{{ detailObj.managerName || detailObj.manager || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">负责人：</div>
+        <div class="detail-row-right">{{ detailObj.managerName || detailObj.manager || '-' }}</div>
       </div>
-      <div class="detail-row"><span
-        class="label">运营状态：</span>{{ detailObj.operationStatusName || detailObj.status || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">运营状态：</div>
+        <div class="detail-row-right">{{
+            detailObj.operationStatusName || detailObj.status || '-'
+          }}
+        </div>
       </div>
 
       <!-- 接口数据特有字段（当有 name 字段时认为来自接口） -->
       <template v-if="detailObj.name !== undefined">
-        <div class="detail-row"><span
-          class="label">保洁达标率：</span>{{ detailObj.cleaningRate ?? '-' }}%
+        <div class="detail-card-row">
+          <div class="detail-row-left">保洁达标率：</div>
+          <div class="detail-row-right">{{ detailObj.cleaningRate ?? '-' }}%</div>
         </div>
-        <div class="detail-row"><span
-          class="label">问题办结率：</span>{{ detailObj.problemRate ?? '-' }}%
+        <div class="detail-card-row">
+          <div class="detail-row-left">问题办结率：</div>
+          <div class="detail-row-right">{{ detailObj.problemRate ?? '-' }}%</div>
         </div>
-        <div class="detail-row"><span
-          class="label">垃圾清运量：</span>{{ detailObj.wasteVolume ?? '-' }}kg
+        <div class="detail-card-row">
+          <div class="detail-row-left">垃圾清运量：</div>
+          <div class="detail-row-right">{{ detailObj.wasteVolume ?? '-' }}kg</div>
         </div>
-        <div class="detail-row"><span
-          class="label">核查通过率：</span>{{ detailObj.inspectionPassRate ?? '-' }}%
+        <div class="detail-card-row">
+          <div class="detail-row-left">核查通过率：</div>
+          <div class="detail-row-right">{{ detailObj.inspectionPassRate ?? '-' }}%</div>
         </div>
-        <div class="detail-row"><span
-          class="label">保洁标准：</span>{{ detailObj.cleaningStandard || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">保洁标准：</div>
+          <div class="detail-row-right">{{ detailObj.cleaningStandard || '-' }}</div>
         </div>
-        <div class="detail-row"><span
-          class="label">保洁频次：</span>{{ detailObj.cleaningFrequency || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">保洁频次：</div>
+          <div class="detail-row-right">{{ detailObj.cleaningFrequency || '-' }}</div>
         </div>
-        <div class="detail-row"><span class="label">保洁时段：</span>{{
-            detailObj.cleaningTime || '-'
-          }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">保洁时段：</div>
+          <div class="detail-row-right">{{ detailObj.cleaningTime || '-' }}</div>
         </div>
-        <div class="detail-row"><span class="label">保洁人员：</span>
-          <span v-if="detailObj.cleanersName && detailObj.cleanersName.length">
-            {{ detailObj.cleanersName.join(', ') }}
-          </span>
-          <span v-else>-</span>
+        <div class="detail-card-row">
+          <div class="detail-row-left">保洁人员：</div>
+          <div class="detail-row-right">
+            <span v-if="detailObj.cleanersName && detailObj.cleanersName.length">
+              {{ detailObj.cleanersName.join(', ') }}
+            </span>
+            <span v-else>-</span>
+          </div>
         </div>
-        <div class="detail-row"><span
-          class="label">责任区域：</span>{{ detailObj.responsibilityArea || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">责任区域：</div>
+          <div class="detail-row-right">{{ detailObj.responsibilityArea || '-' }}</div>
         </div>
       </template>
 
       <!-- 动态显示各状态特有信息（基于模拟数据） -->
       <template v-if="detailObj.status === '保洁待执行'">
         <div class="detail-section">🧹 保洁计划信息</div>
-        <div class="detail-row"><span
-          class="label">保洁标准：</span>{{ detailObj.cleaningStandard || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">保洁标准：</div>
+          <div class="detail-row-right">{{ detailObj.cleaningStandard || '-' }}</div>
         </div>
-        <div class="detail-row"><span
-          class="label">保洁频次：</span>{{ detailObj.cleaningFrequency || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">保洁频次：</div>
+          <div class="detail-row-right">{{ detailObj.cleaningFrequency || '-' }}</div>
         </div>
-        <div class="detail-row"><span class="label">保洁时段：</span>{{
-            detailObj.cleaningTime || '-'
-          }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">保洁时段：</div>
+          <div class="detail-row-right">{{ detailObj.cleaningTime || '-' }}</div>
         </div>
-        <div class="detail-row"><span
-          class="label">保洁内容：</span>{{ detailObj.cleaningContent || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">保洁内容：</div>
+          <div class="detail-row-right">{{ detailObj.cleaningContent || '-' }}</div>
         </div>
-        <div class="detail-row"><span class="label">保洁人员：</span>{{ detailObj.cleaner || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">保洁人员：</div>
+          <div class="detail-row-right">{{ detailObj.cleaner || '-' }}</div>
         </div>
-        <div class="detail-row"><span
-          class="label">责任区域：</span>{{ detailObj.responsibilityArea || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">责任区域：</div>
+          <div class="detail-row-right">{{ detailObj.responsibilityArea || '-' }}</div>
         </div>
-        <div class="detail-row"><span class="label">创建人：</span>{{ detailObj.createBy || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">创建人：</div>
+          <div class="detail-row-right">{{ detailObj.createBy || '-' }}</div>
         </div>
-        <div class="detail-row"><span class="label">创建时间：</span>{{
-            detailObj.createTime || '-'
-          }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">创建时间：</div>
+          <div class="detail-row-right">{{ detailObj.createTime || '-' }}</div>
         </div>
-        <div class="detail-row"><span class="label">更新时间：</span>{{
-            detailObj.updateTime || '-'
-          }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">更新时间：</div>
+          <div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div>
         </div>
-        <div class="detail-row"><span
-          class="label">是否生效：</span>{{ detailObj.isEffective ? '是' : '否' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">是否生效：</div>
+          <div class="detail-row-right">{{ detailObj.isEffective ? '是' : '否' }}</div>
         </div>
       </template>
 
       <template v-else-if="detailObj.status === '问题待处置'">
         <div class="detail-section">⚠️ 问题信息</div>
-        <div class="detail-row"><span class="label">问题编号：</span>{{
-            detailObj.complaintId || '-'
-          }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">问题编号：</div>
+          <div class="detail-row-right">{{ detailObj.complaintId || '-' }}</div>
         </div>
-        <div class="detail-row"><span
-          class="label">问题类型：</span>{{ detailObj.complaintType || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">问题类型：</div>
+          <div class="detail-row-right">{{ detailObj.complaintType || '-' }}</div>
         </div>
-        <div class="detail-row"><span
-          class="label">问题位置：</span>{{ detailObj.problemLocation || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">问题位置：</div>
+          <div class="detail-row-right">{{ detailObj.problemLocation || '-' }}</div>
         </div>
-        <div class="detail-row"><span
-          class="label">问题描述：</span>{{ detailObj.complaintContent || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">问题描述：</div>
+          <div class="detail-row-right">{{ detailObj.complaintContent || '-' }}</div>
         </div>
-        <div class="detail-row"><span
-          class="label">上报人员：</span>{{ detailObj.complaintName || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">上报人员：</div>
+          <div class="detail-row-right">{{ detailObj.complaintName || '-' }}</div>
         </div>
-        <div class="detail-row"><span
-          class="label">上报时间：</span>{{ detailObj.complaintTime || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">上报时间：</div>
+          <div class="detail-row-right">{{ detailObj.complaintTime || '-' }}</div>
         </div>
-        <div class="detail-row"><span class="label">联系电话：</span>{{ detailObj.phone || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">联系电话：</div>
+          <div class="detail-row-right">{{ detailObj.phone || '-' }}</div>
         </div>
-        <div class="detail-row"><span
-          class="label">派单状态：</span>{{ detailObj.dispatchStatus || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">派单状态：</div>
+          <div class="detail-row-right">{{ detailObj.dispatchStatus || '-' }}</div>
         </div>
-        <div class="detail-row"><span class="label">责任人：</span>{{ detailObj.handler || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">责任人：</div>
+          <div class="detail-row-right">{{ detailObj.handler || '-' }}</div>
         </div>
-        <div class="detail-row"><span
-          class="label">超时提醒：</span>{{ detailObj.isTimeout ? '是' : '否' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">超时提醒：</div>
+          <div class="detail-row-right">{{ detailObj.isTimeout ? '是' : '否' }}</div>
         </div>
       </template>
 
       <template v-else-if="detailObj.status === '核查待验收'">
         <div class="detail-section">🔍 核查信息</div>
-        <div class="detail-row"><span class="label">核查编号：</span>{{ detailObj.repairId || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">核查编号：</div>
+          <div class="detail-row-right">{{ detailObj.repairId || '-' }}</div>
         </div>
-        <div class="detail-row"><span class="label">关联任务：</span>{{ detailObj.taskId || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">关联任务：</div>
+          <div class="detail-row-right">{{ detailObj.taskId || '-' }}</div>
         </div>
-        <div class="detail-row"><span class="label">任务类型：</span>{{
-            detailObj.facilityType || '-'
-          }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">任务类型：</div>
+          <div class="detail-row-right">{{ detailObj.facilityType || '-' }}</div>
         </div>
-        <div class="detail-row"><span class="label">任务描述：</span>{{
-            detailObj.damageDesc || '-'
-          }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">任务描述：</div>
+          <div class="detail-row-right">{{ detailObj.damageDesc || '-' }}</div>
         </div>
-        <div class="detail-row"><span class="label">上报人员：</span>{{ detailObj.reportBy || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">上报人员：</div>
+          <div class="detail-row-right">{{ detailObj.reportBy || '-' }}</div>
         </div>
-        <div class="detail-row"><span class="label">上报时间：</span>{{
-            detailObj.reportTime || '-'
-          }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">上报时间：</div>
+          <div class="detail-row-right">{{ detailObj.reportTime || '-' }}</div>
         </div>
-        <div class="detail-row"><span class="label">上报结果：</span>{{
-            detailObj.reportResult || '-'
-          }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">上报结果：</div>
+          <div class="detail-row-right">{{ detailObj.reportResult || '-' }}</div>
         </div>
-        <div class="detail-row"><span class="label">现场照片：</span>
-          <a v-if="detailObj.photoUrl" :href="detailObj.photoUrl" target="_blank">查看</a>
-          <span v-else>-</span>
+        <div class="detail-card-row">
+          <div class="detail-row-left">现场照片：</div>
+          <div class="detail-row-right">
+            <a v-if="detailObj.photoUrl" :href="detailObj.photoUrl" target="_blank">查看</a>
+            <span v-else>-</span>
+          </div>
         </div>
-        <div class="detail-row"><span class="label">核查人员：</span>{{ detailObj.repairBy || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">核查人员：</div>
+          <div class="detail-row-right">{{ detailObj.repairBy || '-' }}</div>
         </div>
-        <div class="detail-row"><span class="label">核查状态：</span>{{
-            detailObj.repairStatus || '-'
-          }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">核查状态：</div>
+          <div class="detail-row-right">{{ detailObj.repairStatus || '-' }}</div>
         </div>
-        <div class="detail-row"><span
-          class="label">预计完成时间：</span>{{ detailObj.expectedCompleteTime || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">预计完成时间：</div>
+          <div class="detail-row-right">{{ detailObj.expectedCompleteTime || '-' }}</div>
         </div>
       </template>
 
       <template v-else-if="detailObj.status === '已完成'">
         <div class="detail-section">✅ 已完成任务信息</div>
-        <div class="detail-row"><span class="label">任务类型：</span>{{ detailObj.taskType || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">任务类型：</div>
+          <div class="detail-row-right">{{ detailObj.taskType || '-' }}</div>
         </div>
-        <div class="detail-row"><span class="label">完成时间：</span>{{
-            detailObj.completeTime || '-'
-          }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">完成时间：</div>
+          <div class="detail-row-right">{{ detailObj.completeTime || '-' }}</div>
         </div>
-        <div class="detail-row"><span class="label">处置人员：</span>{{ detailObj.handler || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">处置人员：</div>
+          <div class="detail-row-right">{{ detailObj.handler || '-' }}</div>
         </div>
-        <div class="detail-row"><span class="label">处置结果：</span>{{
-            detailObj.handleResult || '-'
-          }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">处置结果：</div>
+          <div class="detail-row-right">{{ detailObj.handleResult || '-' }}</div>
         </div>
-        <div class="detail-row"><span class="label">佐证材料：</span>
-          <a v-if="detailObj.proofUrl" :href="detailObj.proofUrl" target="_blank">查看</a>
-          <span v-else>-</span>
+        <div class="detail-card-row">
+          <div class="detail-row-left">佐证材料：</div>
+          <div class="detail-row-right">
+            <a v-if="detailObj.proofUrl" :href="detailObj.proofUrl" target="_blank">查看</a>
+            <span v-else>-</span>
+          </div>
         </div>
-        <div class="detail-row"><span
-          class="label">任务耗时：</span>{{ detailObj.handleDuration || '-' }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">任务耗时：</div>
+          <div class="detail-row-right">{{ detailObj.handleDuration || '-' }}</div>
         </div>
-        <div class="detail-row"><span
-          class="label">保洁达标率：</span>{{ detailObj.cleaningQualifiedRate ?? '-' }}%
+        <div class="detail-card-row">
+          <div class="detail-row-left">保洁达标率：</div>
+          <div class="detail-row-right">{{ detailObj.cleaningQualifiedRate ?? '-' }}%</div>
         </div>
-        <div class="detail-row"><span
-          class="label">问题办结率：</span>{{ detailObj.problemCompleteRate ?? '-' }}%
+        <div class="detail-card-row">
+          <div class="detail-row-left">问题办结率：</div>
+          <div class="detail-row-right">{{ detailObj.problemCompleteRate ?? '-' }}%</div>
         </div>
-        <div class="detail-row"><span
-          class="label">核查通过率：</span>{{ detailObj.inspectionPassRate ?? '-' }}%
+        <div class="detail-card-row">
+          <div class="detail-row-left">核查通过率：</div>
+          <div class="detail-row-right">{{ detailObj.inspectionPassRate ?? '-' }}%</div>
         </div>
-        <div class="detail-row"><span class="label">统计周期：</span>{{
-            detailObj.statPeriod || '-'
-          }}
+        <div class="detail-card-row">
+          <div class="detail-row-left">统计周期：</div>
+          <div class="detail-row-right">{{ detailObj.statPeriod || '-' }}</div>
         </div>
       </template>
 
       <!-- 时间信息（通用） -->
       <div class="detail-section">📅 时间信息</div>
-      <div class="detail-row"><span class="label">创建时间：</span>{{ detailObj.createTime || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">创建时间：</div>
+        <div class="detail-row-right">{{ detailObj.createTime || '-' }}</div>
       </div>
-      <div class="detail-row"><span class="label">更新时间：</span>{{ detailObj.updateTime || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">更新时间：</div>
+        <div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div>
       </div>
     </div>
   </DetailDrawer>
 </template>
 
 <style scoped lang="scss">
+@media (max-width: 768px) {
+  .detail-row-left {
+    width: 180px;
+  }
+  .detail-card {
+    min-height: 600px;
+    max-height: 80vh;
+    padding: 15px;
+  }
+}
+
 .detail-card {
+  min-height: 750px;
+  max-height: 85vh;
   padding: 20px;
-  background: #f9fafb;
-  border-radius: 8px;
-  max-height: 70vh;
   overflow-y: auto;
+  background-color: #f9fafb;
+  border-radius: 8px;
+}
+
+.detail-card-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    padding-right: 8px;
+    padding-left: 8px;
+    margin-right: -8px;
+    margin-left: -8px;
+    background-color: #f5f7fa;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+}
+
+.detail-row-left {
+  flex-shrink: 0;
+  width: 200px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 18px;
+  color: #606266;
+}
+
+.detail-row-right {
+  flex: 1;
+  padding-right: 10px;
+  font-size: 14px;
+  line-height: 18px;
+  color: #303133;
+  word-break: break-all;
 }
 
 .detail-section {
@@ -254,17 +372,28 @@ defineExpose({open: () => detailDrawerApi.open(), close: () => detailDrawerApi.c
   margin: 16px 0 8px;
   padding-bottom: 4px;
   border-bottom: 1px solid #e0e0e0;
+  color: #6E7E91;
+
+  &:first-child {
+    margin-top: 0;
+  }
 }
 
-.detail-row {
-  display: flex;
-  padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
+.detail-card::-webkit-scrollbar {
+  width: 6px;
+}
 
-  .label {
-    width: 130px;
-    flex-shrink: 0;
-    font-weight: 500;
-  }
+.detail-card::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.detail-card::-webkit-scrollbar-thumb {
+  background: #dcdfe6;
+  border-radius: 3px;
+}
+
+.detail-card::-webkit-scrollbar-thumb:hover {
+  background: #c0c4cc;
 }
 </style>

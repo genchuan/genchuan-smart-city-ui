@@ -55,14 +55,19 @@ export function useFormSchema() {
     {
       fieldName: 'reviewStatus',
       label: '复审状态',
-      component: 'Input',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入复审状态',
-        maxLength: 50,
+        allowClear: true,
+        placeholder: '请选择复审状态',
+        options: [
+          { label: '待复审', value: '待复审' },
+          { label: '已下发', value: '已下发' },
+          { label: '已撤销', value: '已撤销' },
+        ],
+        showSearch: true,
       },
       labelWidth: '120',
-      rules: 'required', // 台账编号为必填项
-      isEdit: true,
+      rules: 'required',
       isSearch: true
     },
     {
@@ -141,6 +146,7 @@ export function useGridColumns() {
       title: '违规证据链接',
       minWidth: 200,
       sortable: false,
+      slots: { default: 'evidenceUrl' },
     },
     {
       field: 'draftTime',

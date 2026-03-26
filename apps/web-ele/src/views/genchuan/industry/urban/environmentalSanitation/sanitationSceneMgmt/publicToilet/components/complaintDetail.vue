@@ -55,76 +55,149 @@ const photoList = computed(() => {
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
       <div class="detail-section">📋 投诉信息</div>
-      <div class="detail-row"><span class="label">投诉编号：</span>{{ detailObj.complaintId || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">投诉编号：</div>
+        <div class="detail-row-right">{{ detailObj.complaintId || '-' }}</div>
       </div>
-      <div class="detail-row"><span class="label">关联公厕：</span>{{ detailObj.toiletName || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">关联公厕：</div>
+        <div class="detail-row-right">{{ detailObj.toiletName || '-' }}</div>
       </div>
-      <div class="detail-row"><span
-        class="label">投诉类型：</span>{{ detailObj.complaintTypeName || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">投诉类型：</div>
+        <div class="detail-row-right">{{ detailObj.complaintTypeName || '-' }}</div>
       </div>
-      <div class="detail-row"><span class="label">投诉内容：</span>{{ detailObj.content || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">投诉内容：</div>
+        <div class="detail-row-right">{{ detailObj.content || '-' }}</div>
       </div>
-      <div class="detail-row"><span class="label">投诉人：</span>{{ detailObj.complaintName || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">投诉人：</div>
+        <div class="detail-row-right">{{ detailObj.complaintName || '-' }}</div>
       </div>
-      <div class="detail-row"><span class="label">联系电话：</span>{{ detailObj.phone || '-' }}</div>
-      <div class="detail-row"><span class="label">投诉时间：</span>{{
-          detailObj.complaintTime || '-'
-        }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">联系电话：</div>
+        <div class="detail-row-right">{{ detailObj.phone || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">投诉时间：</div>
+        <div class="detail-row-right">{{ detailObj.complaintTime || '-' }}</div>
       </div>
 
       <div class="detail-section">🔧 处置信息</div>
-      <div class="detail-row"><span class="label">派单状态：</span>{{
-          detailObj.dispatchStatus || '-'
-        }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">派单状态：</div>
+        <div class="detail-row-right">{{ detailObj.dispatchStatus || '-' }}</div>
       </div>
-      <div class="detail-row"><span class="label">责任人：</span>{{ detailObj.handlerName || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">责任人：</div>
+        <div class="detail-row-right">{{ detailObj.handlerName || '-' }}</div>
       </div>
-      <div class="detail-row"><span
-        class="label">是否超时：</span>{{ detailObj.isTimeout === '是' ? '是' : '否' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">是否超时：</div>
+        <div class="detail-row-right">{{ detailObj.isTimeout === '是' ? '是' : '否' }}</div>
       </div>
-      <div class="detail-row"><span class="label">处置措施：</span>{{
-          detailObj.handleMeasure || '-'
-        }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">处置措施：</div>
+        <div class="detail-row-right">{{ detailObj.handleMeasure || '-' }}</div>
       </div>
-      <div class="detail-row"><span class="label">处置结果：</span>{{
-          detailObj.handleResult || '-'
-        }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">处置结果：</div>
+        <div class="detail-row-right">{{ detailObj.handleResult || '-' }}</div>
       </div>
-      <div class="detail-row"><span
-        class="label">反馈内容：</span>{{ detailObj.feedbackContent || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">反馈内容：</div>
+        <div class="detail-row-right">{{ detailObj.feedbackContent || '-' }}</div>
       </div>
 
-      <div class="detail-row" v-if="photoList.length">
-        <span class="label">整改照片：</span>
-        <div class="photo-list">
-          <el-image
-            v-for="(url, index) in photoList"
-            :key="index"
-            :src="url"
-            :preview-src-list="photoList"
-            fit="cover"
-            style="width: 80px; height: 80px; margin-right: 8px; border-radius: 4px; cursor: pointer;"
-            :preview-teleported="true"
-          />
+      <div class="detail-card-row" v-if="photoList.length">
+        <div class="detail-row-left">整改照片：</div>
+        <div class="detail-row-right">
+          <div class="photo-list">
+            <el-image
+              v-for="(url, index) in photoList"
+              :key="index"
+              :src="url"
+              :preview-src-list="photoList"
+              fit="cover"
+              style="width: 80px; height: 80px; margin-right: 8px; border-radius: 4px; cursor: pointer;"
+              :preview-teleported="true"
+            />
+          </div>
         </div>
       </div>
 
       <div class="detail-section">📅 系统信息</div>
-      <div class="detail-row"><span class="label">创建时间：</span>{{ detailObj.createTime || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">创建时间：</div>
+        <div class="detail-row-right">{{ detailObj.createTime || '-' }}</div>
       </div>
-      <div class="detail-row"><span class="label">更新时间：</span>{{ detailObj.updateTime || '-' }}
+      <div class="detail-card-row">
+        <div class="detail-row-left">更新时间：</div>
+        <div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div>
       </div>
     </div>
   </DetailDrawer>
 </template>
 
 <style scoped lang="scss">
+@media (max-width: 768px) {
+  .detail-row-left {
+    width: 180px;
+  }
+  .detail-card {
+    min-height: 600px;
+    max-height: 80vh;
+    padding: 15px;
+  }
+}
+
 .detail-card {
+  min-height: 750px;
+  max-height: 85vh;
   padding: 20px;
-  background: #f9fafb;
-  border-radius: 8px;
-  max-height: 70vh;
   overflow-y: auto;
+  background-color: #f9fafb;
+  border-radius: 8px;
+}
+
+.detail-card-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    padding-right: 8px;
+    padding-left: 8px;
+    margin-right: -8px;
+    margin-left: -8px;
+    background-color: #f5f7fa;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+}
+
+.detail-row-left {
+  flex-shrink: 0;
+  width: 200px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 18px;
+  color: #606266;
+}
+
+.detail-row-right {
+  flex: 1;
+  padding-right: 10px;
+  font-size: 14px;
+  line-height: 18px;
+  color: #303133;
+  word-break: break-all;
 }
 
 .detail-section {
@@ -133,18 +206,29 @@ const photoList = computed(() => {
   margin: 16px 0 8px;
   padding-bottom: 4px;
   border-bottom: 1px solid #e0e0e0;
+  color: #6E7E91;
+
+  &:first-child {
+    margin-top: 0;
+  }
 }
 
-.detail-row {
-  display: flex;
-  padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
+.detail-card::-webkit-scrollbar {
+  width: 6px;
+}
 
-  .label {
-    width: 130px;
-    flex-shrink: 0;
-    font-weight: 500;
-  }
+.detail-card::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.detail-card::-webkit-scrollbar-thumb {
+  background: #dcdfe6;
+  border-radius: 3px;
+}
+
+.detail-card::-webkit-scrollbar-thumb:hover {
+  background: #c0c4cc;
 }
 
 .photo-list {

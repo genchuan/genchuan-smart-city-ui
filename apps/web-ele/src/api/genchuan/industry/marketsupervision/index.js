@@ -61,6 +61,10 @@ export function updateNotice(data) {
 export function exporNoticeExcel() {
   return requestClient.download('/kitchen/rectify-notice/export-excel');
 }
+/** excel导出 */
+export function exporpunishReviewExcel() {
+  return requestClient.download('/kitchen/punish-review-ledger/export-excel');
+}
 
 
 
@@ -122,6 +126,10 @@ export function sendNoApprove(data) {
 export function sendRectify(data) {
   return requestClient.post(`/kitchen/rectify-review/review-issue2`, data);
 }
+/** 下发处罚通知书整改 */
+export function sendIssue(data) {
+  return requestClient.post(`/kitchen/punish-review-ledger/review-issue`, data);
+}
 
 /** 获取撤销原因 */
 export function getReasonList( ) {
@@ -143,6 +151,11 @@ export function sendRectificationNotice(data) {
 export function downLoadPdf(id) {
   return requestClient.download(`/kitchen/rectify-notice/download-pdf?rectifyNoticeId=${id}`);
 } 
+
+/** 处罚通知书 */
+export function exporCFReviewPDF(id) {
+  return requestClient.download(`/kitchen/punish-review-ledger/download-notice-pdf-batch?punishNoticeIds=${id}`);
+}
 /** 整改台账分页 */
 export function getLedgerPage(params) {
   return requestClient.get('kitchen/rectify-review/ledger-page', {
@@ -170,4 +183,24 @@ export function getLogList(params) {
 /** 获取草拟详情 */
 export function getCaoNiDetail(id) {
  return requestClient.get(`/kitchen/rectify-notice/get?id=${id}`);
+}
+/*** 处罚通知书详情 */
+export function getpunishDetail(id) {
+ return requestClient.get(`/kitchen/punish-notice/get?id=${id}`);
+}
+
+/** 处罚通知书复审台账分页 */
+export function getPunishPage(params) {
+  return requestClient.get('/kitchen/punish-review-ledger/page', {
+    params,
+  });
+}  
+/** 上传资料 */
+export function  punishFile(data) {
+ return requestClient.post('/kitchen/punish-review-ledger/upload-file', data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+}  
+export function sendledgerReason(data) {
+  return requestClient.post(`/kitchen/punish-review-ledger/review-cancel`, data);
 }

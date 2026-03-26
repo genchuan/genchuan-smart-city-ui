@@ -1,6 +1,9 @@
 <script setup>
-import { reactive, onMounted } from 'vue';
-import { getVehicleChartDashboard } from '#/api/genchuan/industry/urban/environmentalSanitation/sanitationVehicleMgmt/sanitationVehicle/data.js';
+import {reactive, onMounted, ref, computed} from 'vue';
+import {ElSelect, ElOption} from 'element-plus';
+import {
+  getVehicleChartDashboard
+} from '#/api/genchuan/industry/urban/environmentalSanitation/sanitationVehicleMgmt/sanitationVehicle/data.js';
 import Indicator from '#/components/stats/indicator.vue';
 import Pie from '#/components/stats/pie.vue';
 import Bar from '#/components/stats/bar.vue';
@@ -9,13 +12,13 @@ const state = reactive({
   loading: false,
   // 五个核心卡片
   cardList: [],
-  // 三个圆环图
+  // 三个圆环图（原始数据，用于切换）
   pieData: {
     vehicleType: [],      // 车辆类型占比
     vehicleStatus: [],    // 车辆状态占比
     deptDistribution: [], // 所属部门分布占比
   },
-  // 两个柱状图
+  // 两个柱状图（原始数据，用于切换）
   barData: {
     deptVehicleCount: {    // 不同部门车辆数量对比
       x: [],
@@ -27,6 +30,54 @@ const state = reactive({
     },
   },
 });
+
+// 圆环图选项（基于原始数据生成）
+const pieOptions = computed(() => [
+  {
+    title: '车辆类型占比',
+    data: state.pieData.vehicleType,
+  },
+  {
+    title: '车辆状态占比',
+    data: state.pieData.vehicleStatus,
+  },
+  {
+    title: '所属部门分布占比',
+    data: state.pieData.deptDistribution,
+  },
+]);
+
+// 柱状图选项（基于原始数据生成）
+const barOptions = computed(() => [
+  {
+    title: '不同部门车辆数量对比',
+    xData: state.barData.deptVehicleCount.x,
+    seriesData: [{name: '车辆数', data: state.barData.deptVehicleCount.series}],
+  },
+  {
+    title: '不同类型车辆完好率对比',
+    xData: state.barData.vehicleTypeIntactRate.x,
+    seriesData: [{name: '完好率', data: state.barData.vehicleTypeIntactRate.series}],
+  },
+]);
+
+// 当前选中的圆环图索引和数据
+const activePieIndex = ref(0);
+const currentPieData = computed(() => pieOptions.value[activePieIndex.value] || pieOptions.value[0]);
+
+// 切换圆环图
+const handlePieChange = (index) => {
+  activePieIndex.value = index;
+};
+
+// 当前选中的柱状图索引和数据
+const activeBarIndex = ref(0);
+const currentBar = computed(() => barOptions.value[activeBarIndex.value] || barOptions.value[0]);
+
+// 切换柱状图
+const handleBarChange = (index) => {
+  activeBarIndex.value = index;
+};
 
 // 通用数值转换（处理字符串或数字）
 const toNumber = (val) => {
@@ -45,11 +96,11 @@ const fetchChartData = async () => {
     if (res && typeof res === 'object') {
       // 卡片数据映射
       state.cardList = [
-        { title: '总车辆数', value: toNumber(res.totalVehicleCount), color: '#409EFF' },
-        { title: '正常运行数', value: toNumber(res.normalOperationCount), color: '#67C23A' },
-        { title: '维护中数', value: toNumber(res.maintenanceCount), color: '#E6A23C' },
-        { title: '违规告警数', value: toNumber(res.violationAlertCount), color: '#F56C6C' },
-        { title: '待作业车辆数', value: toNumber(res.pendingWorkCount), color: '#909399' },
+        {title: '总车辆数', value: toNumber(res.totalVehicleCount), color: '#409EFF'},
+        {title: '正常运行数', value: toNumber(res.normalOperationCount), color: '#67C23A'},
+        {title: '维护中数', value: toNumber(res.maintenanceCount), color: '#E6A23C'},
+        {title: '违规告警数', value: toNumber(res.violationAlertCount), color: '#F56C6C'},
+        {title: '待作业车辆数', value: toNumber(res.pendingWorkCount), color: '#909399'},
       ];
 
       // 圆环图数据
@@ -93,36 +144,52 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 三个圆环图 -->
-    <Pie
-      style="flex: 1 !important;"
-      title-text="车辆类型占比"
-      :data="state.pieData.vehicleType"
-    />
-    <Pie
-      style="flex: 1 !important;"
-      title-text="车辆状态占比"
-      :data="state.pieData.vehicleStatus"
-    />
-    <Pie
-      style="flex: 1 !important;"
-      title-text="所属部门分布占比"
-      :data="state.pieData.deptDistribution"
-    />
+    <!-- 圆环图区域（带下拉切换） -->
+    <div class="pie-chart-area">
+      <div class="pie-select-wrapper">
+        <el-select
+          v-model="activePieIndex"
+          size="small"
+          @change="handlePieChange"
+        >
+          <el-option
+            v-for="(opt, idx) in pieOptions"
+            :key="idx"
+            :label="opt.title"
+            :value="idx"
+          />
+        </el-select>
+      </div>
+      <Pie
+        style="flex: 1 !important;"
+        :title-text="currentPieData.title"
+        :data="currentPieData.data"
+      />
+    </div>
 
-    <!-- 两个柱状图 -->
-    <Bar
-      style="flex: 1 !important;"
-      title="不同部门车辆数量对比"
-      :x-data="state.barData.deptVehicleCount.x"
-      :series-data="[{ name: '车辆数', data: state.barData.deptVehicleCount.series }]"
-    />
-    <Bar
-      style="flex: 1 !important;"
-      title="不同类型车辆完好率对比"
-      :x-data="state.barData.vehicleTypeIntactRate.x"
-      :series-data="[{ name: '完好率', data: state.barData.vehicleTypeIntactRate.series }]"
-    />
+    <!-- 柱状图区域（带下拉切换） -->
+    <div class="bar-chart-area">
+      <div class="bar-select-wrapper">
+        <el-select
+          v-model="activeBarIndex"
+          size="small"
+          @change="handleBarChange"
+        >
+          <el-option
+            v-for="(opt, idx) in barOptions"
+            :key="idx"
+            :label="opt.title"
+            :value="idx"
+          />
+        </el-select>
+      </div>
+      <Bar
+        style="flex: 1 !important;"
+        :title="currentBar.title"
+        :x-data="currentBar.xData"
+        :series-data="currentBar.seriesData"
+      />
+    </div>
   </div>
 </template>
 
@@ -159,5 +226,37 @@ onMounted(() => {
       height: 150px !important;
     }
   }
+}
+
+/* 圆环图区域样式 */
+.pie-chart-area {
+  position: relative;
+  flex: 1;
+  min-width: 280px;
+  height: 100%;
+  margin-top: 10px;
+}
+
+.pie-select-wrapper {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 10;
+}
+
+/* 柱状图区域样式 */
+.bar-chart-area {
+  position: relative;
+  flex: 1.5;
+  min-width: 300px;
+  height: 100%;
+  margin-top: 10px;
+}
+
+.bar-select-wrapper {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 10;
 }
 </style>
