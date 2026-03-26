@@ -1,47 +1,3 @@
-<template>
-  <ElDialog
-    :title="dialogTitle"
-    v-model="dialogVisible"
-    width="600px"
-    :close-on-click-modal="false"
-  >
-    <ElForm
-      ref="formRef"
-      :model="formData"
-      :rules="formRules"
-      label-width="100px"
-      v-loading="formLoading"
-    >
-      <ElFormItem label="责任类型" prop="responsibilityType">
-        <ElInput v-model="formData.responsibilityType" placeholder="请输入责任类型(主体责任/监管责任/运行管理责任)" />
-      </ElFormItem>
-      <ElFormItem label="责任单位" prop="responsibleUnit">
-        <ElInput v-model="formData.responsibleUnit" placeholder="请输入责任单位" />
-      </ElFormItem>
-      <ElFormItem label="责任人姓名" prop="responsiblePerson">
-        <ElInput v-model="formData.responsiblePerson" placeholder="请输入责任人姓名" />
-      </ElFormItem>
-      <ElFormItem label="职务" prop="position">
-        <ElInput v-model="formData.position" placeholder="请输入职务" />
-      </ElFormItem>
-      <ElFormItem label="联系方式" prop="contactInfo">
-        <ElInput v-model="formData.contactInfo" placeholder="请输入联系方式" />
-      </ElFormItem>
-      <ElFormItem label="责任范围" prop="responsibilityScope">
-        <ElInput v-model="formData.responsibilityScope" placeholder="请输入责任范围" />
-      </ElFormItem>
-    </ElForm>
-    <template #footer>
-      <ElSpace>
-        <ElButton @click="submitForm" type="primary" :disabled="formLoading">
-          确 定
-        </ElButton>
-        <ElButton @click="dialogVisible = false">取 消</ElButton>
-      </ElSpace>
-    </template>
-  </ElDialog>
-</template>
-
 <script setup lang="ts">
 import {
   ElButton,
@@ -50,16 +6,15 @@ import {
   ElFormItem,
   ElInput,
   ElMessage,
-  ElSpace,
 } from 'element-plus';
+import { reactive, ref } from 'vue';
 
-import {
-  ResponsibilityManagementApi,
-  ResponsibilityManagementVO,
-} from '#/api/genchuan/shunchangWaterQualityMonitor/list/responsibilitymanagement';
+import { ResponsibilityManagementApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/responsibilitymanagement';
 
 /** 责任单位及责任人管理 表单 */
 defineOptions({ name: 'ResponsibilityManagementForm' });
+
+const emit = defineEmits(['success']); // 定义 success 事件，用于操作成功后的回调
 
 const dialogVisible = ref(false); // 弹窗的是否展示
 const dialogTitle = ref(''); // 弹窗的标题
@@ -100,14 +55,13 @@ const open = async (type: string, id?: number) => {
 defineExpose({ open }); // 提供 open 方法，用于打开弹窗
 
 /** 提交表单 */
-const emit = defineEmits(['success']); // 定义 success 事件，用于操作成功后的回调
 const submitForm = async () => {
   // 校验表单
   await formRef.value.validate();
   // 提交请求
   formLoading.value = true;
   try {
-    const data = formData.value as unknown as ResponsibilityManagementVO;
+    const data = formData.value;
     if (formType.value === 'create') {
       await ResponsibilityManagementApi.createResponsibilityManagement(data);
       ElMessage.success('新增成功');
@@ -137,3 +91,45 @@ const resetForm = () => {
   formRef.value?.resetFields();
 };
 </script>
+
+<template>
+  <ElDialog
+    :title="dialogTitle"
+    v-model="dialogVisible"
+    width="600px"
+    append-to-body
+  >
+    <ElForm
+      ref="formRef"
+      :model="formData"
+      :rules="formRules"
+      label-width="120px"
+      v-loading="formLoading"
+    >
+      <ElFormItem label="责任类型" prop="responsibilityType">
+        <ElInput v-model="formData.responsibilityType" placeholder="请输入责任类型(主体责任/监管责任/运行管理责任)" />
+      </ElFormItem>
+      <ElFormItem label="责任单位" prop="responsibleUnit">
+        <ElInput v-model="formData.responsibleUnit" placeholder="请输入责任单位" />
+      </ElFormItem>
+      <ElFormItem label="责任人姓名" prop="responsiblePerson">
+        <ElInput v-model="formData.responsiblePerson" placeholder="请输入责任人姓名" />
+      </ElFormItem>
+      <ElFormItem label="职务" prop="position">
+        <ElInput v-model="formData.position" placeholder="请输入职务" />
+      </ElFormItem>
+      <ElFormItem label="联系方式" prop="contactInfo">
+        <ElInput v-model="formData.contactInfo" placeholder="请输入联系方式" />
+      </ElFormItem>
+      <ElFormItem label="责任范围" prop="responsibilityScope">
+        <ElInput v-model="formData.responsibilityScope" placeholder="请输入责任范围" />
+      </ElFormItem>
+    </ElForm>
+    <template #footer>
+      <ElButton @click="dialogVisible = false">取 消</ElButton>
+      <ElButton @click="submitForm" type="primary" :disabled="formLoading">
+        确 定
+      </ElButton>
+    </template>
+  </ElDialog>
+</template>

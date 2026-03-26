@@ -2,13 +2,13 @@ import { requestClient } from '#/api/request';
 
 // 责任单位及责任人管理 VO
 export type ResponsibilityManagementVO = {
-  id: number; // 序号
-  responsibilityType: string; // 责任类型(主体责任/监管责任/运行管理责任)
-  responsibleUnit: string; // 责任单位
-  responsiblePerson: string; // 责任人姓名
-  position: string; // 职务
   contactInfo: string; // 联系方式
+  id: number; // 序号
+  position: string; // 职务
   responsibilityScope: string; // 责任范围
+  responsibilityType: string; // 责任类型(主体责任/监管责任/运行管理责任)
+  responsiblePerson: string; // 责任人姓名
+  responsibleUnit: string; // 责任单位
 };
 
 // 责任单位及责任人管理 API

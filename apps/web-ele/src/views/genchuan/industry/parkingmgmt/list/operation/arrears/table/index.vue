@@ -91,9 +91,9 @@ const [Form, formApi] = useVbenForm({
   schema:
     props.type === 'trace'
       ? useTraceFormSchema()
-      : (props.type === 'result'
+      : props.type === 'result'
         ? useResultFormSchema()
-        : useFormSchema()),
+        : useFormSchema(),
   showDefaultActions: false,
   watch: {
     'props.type': {
@@ -440,9 +440,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
     columns:
       props.type === 'trace'
         ? useTraceGridColumns()
-        : (props.type === 'result'
+        : props.type === 'result'
           ? useResultGridColumns()
-          : useGridColumns()),
+          : useGridColumns(),
     keepSource: true,
     proxyConfig: {
       ajax: {

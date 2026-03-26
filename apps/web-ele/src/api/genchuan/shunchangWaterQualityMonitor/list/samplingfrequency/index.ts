@@ -2,11 +2,11 @@ import { requestClient } from '#/api/request';
 
 // 采样频率设置 VO
 export type SamplingFrequencyVO = {
-  id: number; // 序号
-  pointCode: string; // 采样点编号
-  indicatorName: string; // 指标名称
-  frequency: string; // 采样频率(次/月/季)
   executionCycle: string; // 执行周期
+  frequency: string; // 采样频率(次/月/季)
+  id: number; // 序号
+  indicatorName: string; // 指标名称
+  pointCode: string; // 采样点编号
   specialPeriodRule: string; // 特殊时段(如汛期)调整规则
 };
 
@@ -14,18 +14,16 @@ export type SamplingFrequencyVO = {
 export const SamplingFrequencyApi = {
   // 查询采样频率设置分页
   getSamplingFrequencyPage: async (params: any) => {
-    return await requestClient.get(
-      `/waterdetection/sampling-frequency/page`,
-      { params },
-    );
+    return await requestClient.get(`/waterdetection/sampling-frequency/page`, {
+      params,
+    });
   },
 
   // 查询采样频率设置详情
   getSamplingFrequency: async (id: number) => {
-    return await requestClient.get(
-      `/waterdetection/sampling-frequency/get`,
-      { params: { id } },
-    );
+    return await requestClient.get(`/waterdetection/sampling-frequency/get`, {
+      params: { id },
+    });
   },
 
   // 新增采样频率设置

@@ -116,7 +116,7 @@ onMounted(() => {
         :model="queryParams"
         ref="queryFormRef"
         :inline="true"
-        label-width="180px"
+        label-width="186px"
       >
         <ElFormItem label="构建筑物名称" prop="structureName">
           <ElInput
