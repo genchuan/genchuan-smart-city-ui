@@ -23,10 +23,10 @@ import {
   exporReviewPDF,
   getAutoData,
   getbatchEvidence,
+  getCaoNiDetail,
   getDetailEnObj,
   getDetailillObj,
   getLedgerPage,
-  getpunishDetail,
   getReasonList,
   sendReason,
   sendRectify,
@@ -543,7 +543,7 @@ const handleAuto = async () => {
 };
 const rectifyRef = ref(null);
 const handleAutoDetail = async (row) => {
-  const res = await getpunishDetail(row.rectifyNoticeId);
+  const res = await getCaoNiDetail(row.rectifyNoticeId);
   dataObj.rectifyObj = res;
   rectifyRef.value.open();
 };
