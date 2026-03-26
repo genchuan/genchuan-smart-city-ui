@@ -4,9 +4,8 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElDialog, ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
-// 导出插件
 import * as XLSX from 'xlsx';
 
 import { useVbenForm } from '#/adapter/form';
@@ -134,42 +133,38 @@ function handleExport() {
   }
 }
 
-// ====================== 图片转PDF（终极零乱码） ======================
+// ====================== 导出PDF ======================
 async function handlePDF() {
   downloadLocalTemplate('/static/test.pdf', '报表.pdf');
 }
 
-/** 创建角色 */
+/** 创建 */
 function handleCreate() {
-  formDrawerApi
-    .setData({
-      title: '新增',
-    })
-    .open();
+  formDrawerApi.setData({ title: '新增' }).open();
 }
 
-/** 编辑角色 */
+/** 编辑 */
 function handleEdit(row) {
-  formDrawerApi
-    .setData({
-      title: '编辑',
-      ...row,
-    })
-    .open();
+  formDrawerApi.setData({ title: '编辑', ...row }).open();
 }
+
+/** 删除 */
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.name]),
+    text: $t('ui.actionMessage.deleting', [row.name || '数据']),
   });
   try {
     dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
+    ElMessage.success(
+      $t('ui.actionMessage.deleteSuccess', [row.name || '数据']),
+    );
     handleRefresh();
   } finally {
     loadingInstance.close();
   }
 }
 
+/** 批量删除 */
 async function handleDeleteBatch() {
   await confirm($t('确定删除这些数据吗？'));
   const loadingInstance = ElLoading.service({
@@ -191,6 +186,7 @@ const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
+
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
@@ -202,40 +198,26 @@ const dataObj = reactive({
   list: [],
   loading: false,
 });
+
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
-// 表格数据获取
+
+// 表格数据
 const getTableData = (pageObj) => {
   const page = pageObj.page;
-  dataObj.total = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    }).length;
-  dataObj.list = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    })
-    .slice(
-      (page.currentPage - 1) * page.pageSize,
-      page.currentPage * page.pageSize,
-    );
+  dataObj.total = dataObj.apilist.length;
+  dataObj.list = dataObj.apilist.slice(
+    (page.currentPage - 1) * page.pageSize,
+    page.currentPage * page.pageSize,
+  );
   return dataObj;
 };
+
 const [QueryForm] = useVbenForm({
   collapsed: false,
   commonConfig: {
-    componentProps: {
-      class: 'w-full',
-    },
+    componentProps: { class: 'w-full' },
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
@@ -252,9 +234,7 @@ const [QueryForm] = useVbenForm({
     return { ...v };
   }),
   showCollapseButton: true,
-  submitButtonOptions: {
-    content: '查询',
-  },
+  submitButtonOptions: { content: '查询' },
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -262,14 +242,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
     columns: useGridColumns(),
     keepSource: true,
     proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getTableData({ page }),
-      },
+      ajax: { query: async ({ page }) => getTableData({ page }) },
     },
-    rowConfig: {
-      keyField: 'id',
-      isHover: true,
-    },
+    rowConfig: { keyField: 'id', isHover: true },
     pagerConfig: dataObj,
     toolbarConfig: {
       'class-name': 'common-tool-bar-config',
@@ -290,6 +265,7 @@ const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
   parkDetailDrawerRef.value?.open();
 };
+
 const tabsData = ref([
   { label: '全部' },
   { label: '启用' },
@@ -297,6 +273,7 @@ const tabsData = ref([
   { label: '暂停运营' },
   { label: '维修中' },
 ]);
+
 const createLabel = (item) => {
   let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
   if (item.label === '全部') {
@@ -304,6 +281,7 @@ const createLabel = (item) => {
   }
   return item.label + text;
 };
+
 const handleClick = () => {
   gridApi.query();
 };
@@ -327,6 +305,53 @@ const openEn = async () => {
   dataObj.enDetailObj = res;
   enDetailObjRef.value?.open();
 };
+
+// ====================== 告警明细弹窗 ======================
+const alarmDialogVisible = ref(false);
+const currentAlarmRow = ref({});
+const alarmList = ref([]);
+
+// 生成模拟告警明细
+function generateAlarmData(row) {
+  const count = row.totalAlarmCount || 0;
+  const types = row.highFreqViolationType.split(',').map((item) => {
+    const [name, num] = item.split(':');
+    return { name, num: Number(num) };
+  });
+
+  const list = [];
+  let id = 1;
+  types.forEach((type) => {
+    for (let i = 0; i < type.num; i++) {
+      list.push({
+        id: id++,
+        canteenName: row.canteenName,
+        alarmType: type.name,
+        alarmTime: `${row.statisticsDate} ${String(Math.trunc(Math.random() * 24)).padStart(2, '0')}:${String(Math.trunc(Math.random() * 60)).padStart(2, '0')}`,
+        alarmLevel: ['一般', '较重', '严重'][Math.trunc(Math.random() * 3)],
+        status: ['未处理', '处理中', '已整改'][Math.trunc(Math.random() * 3)],
+      });
+    }
+  });
+  return list.slice(0, count);
+}
+
+// 打开告警弹窗
+function handleTotal(row) {
+  currentAlarmRow.value = row;
+  alarmList.value = generateAlarmData(row);
+  alarmDialogVisible.value = true;
+}
+
+// 告警弹窗列
+const alarmColumns = [
+  { label: '序号', prop: 'id', width: 70 },
+  { label: '食堂名称', prop: 'canteenName' },
+  { label: '告警类型', prop: 'alarmType' },
+  { label: '告警时间', prop: 'alarmTime' },
+  { label: '告警等级', prop: 'alarmLevel' },
+  { label: '处理状态', prop: 'status' },
+];
 </script>
 
 <template>
@@ -334,14 +359,35 @@ const openEn = async () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
+
     <ParkDetailDrawer
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
     />
     <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" />
+
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+
+    <!-- 告警明细弹窗 -->
+    <ElDialog
+      v-model="alarmDialogVisible"
+      title="当日食品安全问题明细"
+      width="900px"
+      append-to-body
+    >
+      <el-table :data="alarmList" border height="450">
+        <el-table-column
+          v-for="col in alarmColumns"
+          :key="col.prop"
+          :label="col.label"
+          :prop="col.prop"
+          :width="col.width"
+        />
+      </el-table>
+    </ElDialog>
+
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
@@ -384,6 +430,23 @@ const openEn = async () => {
           />
         </div>
       </template>
+
+      <template #totalAlarmCount="{ row }">
+        <el-text @click="handleTotal(row)" class="common-align" type="primary">
+          {{ row.totalAlarmCount }}
+        </el-text>
+      </template>
+
+      <template #canteenName="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.canteenName }}
+        </el-text>
+      </template>
+
       <template #reportNumber="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
@@ -409,6 +472,7 @@ const openEn = async () => {
           />
         </div>
       </template>
+
       <template #bottom>
         <div class="common-total" @click="changeTotalShow">
           <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">

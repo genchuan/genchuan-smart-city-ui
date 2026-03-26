@@ -4,7 +4,7 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElDialog, ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 // 导出插件
 import * as XLSX from 'xlsx';
@@ -327,6 +327,51 @@ const openEn = async () => {
   dataObj.enDetailObj = res;
   enDetailObjRef.value?.open();
 };
+
+// ====================== 告警明细弹窗 ======================
+const alarmDialogVisible = ref(false);
+const currentAlarmRow = ref({});
+const alarmList = ref([]);
+
+function generateAlarmData(row) {
+  const count = row.totalWarnCount || 0;
+  const typeItems = row.highIllegalType.split(',').map((item) => item.trim());
+  const avgCount = Math.ceil(count / typeItems.length);
+  const types = typeItems.map((name) => {
+    return { name, num: avgCount };
+  });
+
+  const list = [];
+  let id = 1;
+  types.forEach((type) => {
+    for (let i = 0; i < Math.min(type.num, 5); i++) {
+      list.push({
+        id: id++,
+        canteenName: row.canteenName,
+        alarmType: type.name,
+        alarmTime: `${row.createTime}`,
+        alarmLevel: ['一般', '较重', '严重'][Math.trunc(Math.random() * 3)],
+        status: ['未处理', '处理中', '已整改'][Math.trunc(Math.random() * 3)],
+      });
+    }
+  });
+  return list.slice(0, count);
+}
+
+function handleTotal(row) {
+  currentAlarmRow.value = row;
+  alarmList.value = generateAlarmData(row);
+  alarmDialogVisible.value = true;
+}
+
+const alarmColumns = [
+  { label: '序号', prop: 'id', width: 70 },
+  { label: '食堂名称', prop: 'canteenName' },
+  { label: '告警类型', prop: 'alarmType' },
+  { label: '告警时间', prop: 'alarmTime' },
+  { label: '告警等级', prop: 'alarmLevel' },
+  { label: '处理状态', prop: 'status' },
+];
 </script>
 
 <template>
@@ -342,6 +387,25 @@ const openEn = async () => {
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+
+    <!-- 告警明细弹窗 -->
+    <ElDialog
+      v-model="alarmDialogVisible"
+      title="自定义分析食品安全问题明细"
+      width="900px"
+      append-to-body
+    >
+      <el-table :data="alarmList" border height="450">
+        <el-table-column
+          v-for="col in alarmColumns"
+          :key="col.prop"
+          :label="col.label"
+          :prop="col.prop"
+          :width="col.width"
+        />
+      </el-table>
+    </ElDialog>
+
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
@@ -391,6 +455,22 @@ const openEn = async () => {
           type="primary"
         >
           {{ row.reportCode }}
+        </el-text>
+      </template>
+
+      <template #totalWarnCount="{ row }">
+        <el-text @click="handleTotal(row)" class="common-align" type="primary">
+          {{ row.totalWarnCount }}
+        </el-text>
+      </template>
+
+      <template #canteenName="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.canteenName }}
         </el-text>
       </template>
 

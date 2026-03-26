@@ -1,29 +1,29 @@
 /** 表格初始数据 - 丰泽区学校食堂违规分析季报管理数据 */
 export const dataList = () => [
   {
-    reportNumber: 'JDY-QZ-FZ-2024Q2-001', // 季报编号：JDY-泉州-丰泽-2024Q2-序号
-    statQuarter: '2024年第2季度', // 统计季度
-    statArea: '丰泽区东海街道', // 统计区域
-    statCycle: '2024年04月-2024年06月', // 统计周期（季度月份范围）
-    quarterWarnCount: 528, // 本季度总告警次数
-    quarterIllegalEntCount: 45, // 本季度违规食堂数量
-    highIllegalType: '从业人员未戴工作帽/口罩:185,操作区卫生不达标:152,食材留样不规范:88', // 高频违规类型（前3）
-    areaIllegalRank: '东海社区:15,滨城社区:12,法石社区:9', // 区域违规排名（前3）
-    monthIllegalTrend: '4月:165,5月:178,6月:185', // 月度违规趋势（季度内各月告警）
-    entTypeIllegalRank: '幼儿园食堂:20,小学食堂:15,中学食堂:10', // 食堂类型违规排名（前3）
-    warnChangeYoy: 8.5, // 同比告警变化率（%）
-    warnChangeMom: 4.8, // 环比告警变化率（%）
-    quarterRectifyRate: 92.8, // 本季度整改完成率（%）
-    quarterDeviceNormalRate: 96.5, // 本季度设备正常率（消毒柜/留样柜等）
+    reportNumber: 'JDY-QZ-FZ-2024Q2-001',
+    statQuarter: '2024年第2季度',
+    canteenName: '泉州市丰泽区东海街道第一中心小学食堂',
+    statCycle: '2024年04月-2024年06月',
+    quarterWarnCount: 528,
+    quarterIllegalEntCount: 45,
+    highIllegalType: '从业人员未戴工作帽/口罩,操作区卫生不达标,食材留样不规范',
+    areaIllegalRank: '东海社区:15,滨城社区:12,法石社区:9',
+    monthIllegalTrend: '4月:165,5月:178,6月:185',
+    entTypeIllegalRank: '幼儿园食堂:20,小学食堂:15,中学食堂:10',
+    warnChangeYoy: 8.5,
+    warnChangeMom: 4.8,
+    quarterRectifyRate: 92.8,
+    quarterDeviceNormalRate: 96.5,
   },
   {
     reportNumber: 'JDY-QZ-FZ-2024Q2-002',
     statQuarter: '2024年第2季度',
-    statArea: '丰泽区丰泽街道',
+    canteenName: '泉州市丰泽区丰泽街道中心幼儿园食堂',
     statCycle: '2024年04月-2024年06月',
     quarterWarnCount: 465,
     quarterIllegalEntCount: 38,
-    highIllegalType: '操作区卫生不达标:148,从业人员未戴工作帽/口罩:132,餐具消毒不达标:78',
+    highIllegalType: '操作区卫生不达标,从业人员未戴工作帽/口罩,餐具消毒不达标',
     areaIllegalRank: '丰泽社区:12,迎津社区:10,东涂社区:8',
     monthIllegalTrend: '4月:145,5月:152,6月:168',
     entTypeIllegalRank: '幼儿园食堂:18,小学食堂:12,中学食堂:8',
@@ -35,11 +35,11 @@ export const dataList = () => [
   {
     reportNumber: 'JDY-QZ-FZ-2024Q2-003',
     statQuarter: '2024年第2季度',
-    statArea: '丰泽区北峰街道',
+    canteenName: '泉州市丰泽区北峰街道中学食堂',
     statCycle: '2024年04月-2024年06月',
     quarterWarnCount: 385,
     quarterIllegalEntCount: 32,
-    highIllegalType: '从业人员未戴工作帽/口罩:125,操作区卫生不达标:108,食材储存不当:65',
+    highIllegalType: '从业人员未戴工作帽/口罩,操作区卫生不达标,食材储存不当',
     areaIllegalRank: '北峰社区:10,招丰社区:8,拒洪社区:6',
     monthIllegalTrend: '4月:120,5月:128,6月:137',
     entTypeIllegalRank: '小学食堂:14,幼儿园食堂:12,中学食堂:6',
@@ -51,11 +51,11 @@ export const dataList = () => [
   {
     reportNumber: 'JDY-QZ-FZ-2024Q2-004',
     statQuarter: '2024年第2季度',
-    statArea: '丰泽区城东街道',
+    canteenName: '泉州市丰泽区城东街道小学食堂',
     statCycle: '2024年04月-2024年06月',
     quarterWarnCount: 508,
     quarterIllegalEntCount: 42,
-    highIllegalType: '操作区卫生不达标:165,从业人员未戴工作帽/口罩:142,留样柜温度超标:75',
+    highIllegalType: '操作区卫生不达标,从业人员未戴工作帽/口罩,留样柜温度超标',
     areaIllegalRank: '埭头社区:14,庄任社区:11,浔美社区:9',
     monthIllegalTrend: '4月:158,5月:165,6月:185',
     entTypeIllegalRank: '幼儿园食堂:22,小学食堂:14,中学食堂:6',
@@ -67,11 +67,11 @@ export const dataList = () => [
   {
     reportNumber: 'JDY-QZ-FZ-2024Q2-005',
     statQuarter: '2024年第2季度',
-    statArea: '丰泽区华大街道',
+    canteenName: '泉州市丰泽区华大街道高校食堂',
     statCycle: '2024年04月-2024年06月',
     quarterWarnCount: 426,
     quarterIllegalEntCount: 35,
-    highIllegalType: '从业人员未戴工作帽/口罩:138,操作区卫生不达标:115,从业人员健康证过期:68',
+    highIllegalType: '从业人员未戴工作帽/口罩,操作区卫生不达标,从业人员健康证过期',
     areaIllegalRank: '华大社区:11,南埔社区:9,法花美社区:7',
     monthIllegalTrend: '4月:130,5月:140,6月:156',
     entTypeIllegalRank: '高校食堂:12,幼儿园食堂:11,小学食堂:9',
@@ -83,11 +83,11 @@ export const dataList = () => [
   {
     reportNumber: 'JDY-QZ-FZ-2024Q2-006',
     statQuarter: '2024年第2季度',
-    statArea: '丰泽区清源街道',
+    canteenName: '泉州市丰泽区清源街道幼儿园食堂',
     statCycle: '2024年04月-2024年06月',
     quarterWarnCount: 325,
     quarterIllegalEntCount: 28,
-    highIllegalType: '操作区卫生不达标:98,从业人员未戴工作帽/口罩:85,餐具清洗不彻底:52',
+    highIllegalType: '操作区卫生不达标,从业人员未戴工作帽/口罩,餐具清洗不彻底',
     areaIllegalRank: '西门社区:8,清源社区:7,环山社区:6',
     monthIllegalTrend: '4月:100,5月:108,6月:117',
     entTypeIllegalRank: '小学食堂:12,幼儿园食堂:10,中学食堂:6',
@@ -99,11 +99,11 @@ export const dataList = () => [
   {
     reportNumber: 'JDY-QZ-FZ-2024Q2-007',
     statQuarter: '2024年第2季度',
-    statArea: '丰泽区泉秀街道',
+    canteenName: '泉州市丰泽区泉秀街道中心食堂',
     statCycle: '2024年04月-2024年06月',
     quarterWarnCount: 578,
     quarterIllegalEntCount: 48,
-    highIllegalType: '从业人员未戴工作帽/口罩:195,操作区卫生不达标:168,食材采购索证不全:85',
+    highIllegalType: '从业人员未戴工作帽/口罩,操作区卫生不达标,食材采购索证不全',
     areaIllegalRank: '泉淮社区:16,灯洲社区:13,成洲社区:10',
     monthIllegalTrend: '4月:180,5月:190,6月:208',
     entTypeIllegalRank: '幼儿园食堂:24,小学食堂:16,中学食堂:8',
@@ -115,11 +115,11 @@ export const dataList = () => [
   {
     reportNumber: 'JDY-QZ-FZ-2024Q2-008',
     statQuarter: '2024年第2季度',
-    statArea: '丰泽区东湖街道',
+    canteenName: '泉州市丰泽区东湖街道小学食堂',
     statCycle: '2024年04月-2024年06月',
     quarterWarnCount: 405,
     quarterIllegalEntCount: 36,
-    highIllegalType: '操作区卫生不达标:128,从业人员未戴工作帽/口罩:115,垃圾桶未加盖:62',
+    highIllegalType: '操作区卫生不达标,从业人员未戴工作帽/口罩,垃圾桶未加盖',
     areaIllegalRank: '东湖社区:10,少林社区:8,仁风社区:7',
     monthIllegalTrend: '4月:125,5月:132,6月:148',
     entTypeIllegalRank: '小学食堂:15,幼儿园食堂:13,中学食堂:8',
@@ -131,11 +131,11 @@ export const dataList = () => [
   {
     reportNumber: 'JDY-QZ-FZ-2024Q2-009',
     statQuarter: '2024年第2季度',
-    statArea: '丰泽区蟳埔街道',
+    canteenName: '泉州市丰泽区蟳埔街道幼儿园食堂',
     statCycle: '2024年04月-2024年06月',
     quarterWarnCount: 268,
     quarterIllegalEntCount: 22,
-    highIllegalType: '从业人员未戴工作帽/口罩:85,操作区卫生不达标:75,清洗池混用:45',
+    highIllegalType: '从业人员未戴工作帽/口罩,操作区卫生不达标,清洗池混用',
     areaIllegalRank: '蟳埔社区:7,金崎社区:6,东梅社区:5',
     monthIllegalTrend: '4月:80,5月:88,6月:100',
     entTypeIllegalRank: '幼儿园食堂:10,小学食堂:8,中学食堂:4',
@@ -147,18 +147,18 @@ export const dataList = () => [
   {
     reportNumber: 'JDY-QZ-FZ-2024Q2-010',
     statQuarter: '2024年第2季度',
-    statArea: '丰泽区全域汇总',
+    canteenName: '泉州市丰泽区全域汇总食堂',
     statCycle: '2024年04月-2024年06月',
-    quarterWarnCount: 4465, // 全域汇总告警数
-    quarterIllegalEntCount: 364, // 全域汇总违规食堂数
-    highIllegalType: '从业人员未戴工作帽/口罩:1456,操作区卫生不达标:1235,食材留样不规范:685', // 全域高频违规类型
-    areaIllegalRank: '东海街道:45,泉秀街道:42,城东街道:38', // 全域街道排名
-    monthIllegalTrend: '4月:1386,5月:1457,6月:1622', // 全域月度趋势
-    entTypeIllegalRank: '幼儿园食堂:163,小学食堂:123,中学食堂:58', // 全域食堂类型排名
-    warnChangeYoy: 8.3, // 全域同比
-    warnChangeMom: 4.7, // 全域环比
-    quarterRectifyRate: 92.0, // 全域整改完成率
-    quarterDeviceNormalRate: 96.5, // 全域设备正常率
+    quarterWarnCount: 4465,
+    quarterIllegalEntCount: 364,
+    highIllegalType: '从业人员未戴工作帽/口罩,操作区卫生不达标,食材留样不规范',
+    areaIllegalRank: '东海街道:45,泉秀街道:42,城东街道:38',
+    monthIllegalTrend: '4月:1386,5月:1457,6月:1622',
+    entTypeIllegalRank: '幼儿园食堂:163,小学食堂:123,中学食堂:58',
+    warnChangeYoy: 8.3,
+    warnChangeMom: 4.7,
+    quarterRectifyRate: 92.0,
+    quarterDeviceNormalRate: 96.5,
   },
 ];
 
@@ -322,10 +322,11 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'statArea',
-      title: '统计区域',
-      minWidth: 120,
+      field: 'canteenName',
+      title: '食堂名称',
+      minWidth: 200,
       sortable: true,
+      slots: { default: 'canteenName' },
     },
     {
       field: 'statCycle',
@@ -338,6 +339,7 @@ export function useGridColumns() {
       title: '本季度总告警次数',
       minWidth: 140,
       sortable: true,
+      slots: { default: 'quarterWarnCount' },
     },
     {
       field: 'quarterIllegalEntCount',

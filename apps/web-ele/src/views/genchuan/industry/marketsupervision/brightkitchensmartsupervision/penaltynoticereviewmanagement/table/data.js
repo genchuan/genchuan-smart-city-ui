@@ -323,7 +323,7 @@ export function useGridColumns() {
       sortable: false,
     }, 
     {
-      field: 'reviewBy',
+      field: 'reviewByName',
       title: '复审人',
       minWidth: 120,
       sortable: true,
