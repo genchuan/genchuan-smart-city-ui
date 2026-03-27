@@ -27,7 +27,8 @@ watch(
   () => route.fullPath,
   // 回调函数：newVal 新路由，oldVal 旧路由
   () => {
-    document.title = '智慧城市一网统管AI平台';
+    // document.title = '智慧城市一网统管AI平台';
+    document.title = import.meta.env.VITE_APP_TITLE;
   },
   // 可选配置：immediate 立即执行（组件挂载时触发一次）
   { immediate: true },

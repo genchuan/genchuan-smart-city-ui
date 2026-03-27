@@ -179,10 +179,7 @@ defineExpose({
 
     <!-- 第三方登录 -->
     <slot name="third-party-login">
-      <ThirdPartyLogin
-        v-if="false"
-        @third-login="handleThirdLogin"
-      />
+      <ThirdPartyLogin v-if="false" @third-login="handleThirdLogin" />
     </slot>
 
     <slot name="to-register">
