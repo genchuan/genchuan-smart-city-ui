@@ -210,17 +210,6 @@ export function useReserveNumberSchema() {
 export function useConfirmEntrySchema() {
   return [
     {
-      fieldName: 'actualWeight',
-      label: '实际垃圾重量(吨)',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入',
-        min: 0,
-        step: 0.1,
-      },
-      labelWidth: '120',
-    },
-    {
       fieldName: 'entryTime',
       label: '进站时间',
       component: 'DatePicker',
@@ -230,33 +219,6 @@ export function useConfirmEntrySchema() {
         placeholder: '选择进站时间',
       },
       labelWidth: '100',
-    },
-    {
-      fieldName: 'remark',
-      label: '备注',
-      component: 'Input',
-      componentProps: {
-        type: 'textarea',
-        rows: 2,
-        placeholder: '请输入备注',
-      },
-      labelWidth: '100',
-    },
-  ];
-}
-
-// 取消预约弹窗
-export function useCancelReserveSchema() {
-  return [
-    {
-      fieldName: 'cancelReason',
-      label: '取消原因',
-      component: 'Input',
-      componentProps: {
-        type: 'textarea',
-        rows: 3,
-        placeholder: '请输入取消原因',
-      },
     },
   ];
 }
@@ -325,32 +287,6 @@ export function useReportAlarmSchema() {
   ];
 }
 
-// 处理预警弹窗
-export function useHandleAlarmSchema() {
-  return [
-    {
-      fieldName: 'handleMeasure',
-      label: '处理措施',
-      component: 'Input',
-      componentProps: {
-        type: 'textarea',
-        rows: 3,
-        placeholder: '请输入处理措施',
-      },
-    },
-    {
-      fieldName: 'handleResult',
-      label: '处理结果',
-      component: 'Input',
-      componentProps: {
-        type: 'textarea',
-        rows: 2,
-        placeholder: '请输入处理结果',
-      },
-    },
-  ];
-}
-
 // 指派人员弹窗（通用）
 export function useAssignPersonSchema() {
   return [
@@ -371,32 +307,6 @@ export function useAssignPersonSchema() {
         type: 'textarea',
         rows: 2,
         placeholder: '请输入备注',
-      },
-    },
-  ];
-}
-
-// 解除预警弹窗
-export function useReleaseAlarmSchema() {
-  return [
-    {
-      fieldName: 'releaseReason',
-      label: '解除原因',
-      component: 'Input',
-      componentProps: {
-        type: 'textarea',
-        rows: 3,
-        placeholder: '请输入解除原因',
-      },
-    },
-    {
-      fieldName: 'verifyResult',
-      label: '复核结果',
-      component: 'Input',
-      componentProps: {
-        type: 'textarea',
-        rows: 2,
-        placeholder: '请输入复核结果',
       },
     },
   ];

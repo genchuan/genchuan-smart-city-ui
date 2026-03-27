@@ -6,14 +6,7 @@ import * as echarts from 'echarts';
 const props = defineProps({
   data: {
     type: Array,
-    default: () => [
-      { name: '商业停车场', value: 58 },
-      { name: '公共停车场', value: 42 },
-      { name: '小区停车场', value: 35 },
-      { name: '办公停车场', value: 18 },
-      { name: '文旅停车场', value: 15 },
-      { name: '医疗停车场', value: 8 },
-    ],
+    default: () => [],
   },
   showTitle: {
     type: Boolean,
@@ -21,7 +14,7 @@ const props = defineProps({
   },
   titleText: {
     type: String,
-    default: '漳州车场类型占比',
+    default: '',
   },
 });
 
@@ -99,7 +92,7 @@ const initChart = async () => {
           label: {
             show: true,
             position: 'outside',
-            formatter: '{c}',
+            formatter: '{d}%',
             fontSize: 12,
             color: '#6E7E91',
             lineHeight: 20,
