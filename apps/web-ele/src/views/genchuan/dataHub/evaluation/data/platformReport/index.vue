@@ -1,12 +1,9 @@
+<!-- platform-report/index.vue (外层入口，与实时监测结构一致) -->
 <script setup>
-import { ref } from 'vue';
-
-import Table from './table/index.vue';
-import Chart from './chart.vue';
-
+import { ref, computed } from 'vue';
+// import carchart from './chart.vue';
+// import Table from './table/index.vue'; // 表格组件
 import '#/components/page/index.scss';
-
-const chartDataFromTable = ref(null);
 
 const changeArrowStatus = () => {
   secondShow.value = !secondShow.value;
@@ -14,60 +11,43 @@ const changeArrowStatus = () => {
     v.secondShow = secondShow.value;
   });
 };
+
 const tabArray = ref([
   {
-    label: '评价任务管理',
+    label: '平台上报数据管理',
     components: Table,
     showSecondary: true,
     secondShow: false,
     arrowShow: true,
-    arrowState: false,
-  },
+    arrowState: false
+  }
 ]);
+
 const arrowChange = () => {
   tabArray.value.forEach((v) => {
     v.arrowShow = !v.arrowShow;
   });
 };
-const activeName = ref('评价任务管理');
+
+const activeName = ref('平台上报数据管理');
 const secondShow = ref(false);
-
-const updateChartData = (data) => {
-  chartDataFromTable.value = data;
-};
-
+const tableRef = ref(null);
+const chartActiveTab = computed(() => tableRef.value?.activeName || '全部');
 </script>
 
 <template>
   <div class="common-index">
-    <Chart v-if="tabArray[0].arrowShow" v-bind="chartDataFromTable" />
+    <carchart :active-tab="chartActiveTab" v-if="tabArray[0].arrowShow" />
     <div class="icon-change">
-      <el-icon
-        class="tabel-tab-icon"
-        v-if="secondShow"
-        @click="changeArrowStatus"
-      >
+      <el-icon class="tabel-tab-icon" v-if="secondShow" @click="changeArrowStatus">
         <ArrowDown />
       </el-icon>
-      <el-icon
-        class="tabel-tab-icon"
-        v-if="!secondShow"
-        @click="changeArrowStatus"
-      >
+      <el-icon class="tabel-tab-icon" v-if="!secondShow" @click="changeArrowStatus">
         <ArrowUp />
       </el-icon>
     </div>
-    <el-tabs
-      v-model="activeName"
-      class="common-tabs"
-      type="card"
-      @tab-change="tabChange"
-    >
-      <el-tab-pane
-        v-for="item in tabArray"
-        :key="item.label"
-        :name="item.label"
-      >
+    <el-tabs v-model="activeName" class="common-tabs" type="card" @tab-change="tabChange">
+      <el-tab-pane v-for="item in tabArray" :key="item.label" :name="item.label">
         <template #label>
           <div class="table-first">
             <span>{{ item.label }}</span>
@@ -75,11 +55,11 @@ const updateChartData = (data) => {
         </template>
         <component
           :is="item.components"
+          ref="tableRef"
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"
           @arrow-change="arrowChange"
-          @update-chart="updateChartData"
         />
       </el-tab-pane>
     </el-tabs>

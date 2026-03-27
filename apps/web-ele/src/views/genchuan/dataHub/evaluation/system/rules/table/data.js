@@ -1,39 +1,28 @@
 /** 评价规则管理 - 静态配置 */
 
-// 适用对象类型（若其他模块需要可保留）
-export const objectTypeList = [
-  { id: '1', name: '网格' },
-  { id: '2', name: '部门' },
-  { id: '3', name: '社区' },
-  { id: '4', name: '街道' },
-];
-
-// 规则类型（保持不变）
-export const ruleTypeList = [
-  { id: 'rt1', name: '加分' },
-  { id: 'rt2', name: '扣分' },
-];
-
-// 指标体系（用于表单默认值，实际从接口获取）
-export const indexSystemList = [
-  { id: 'is_hy', name: '环卫园林一体化考核体系' },
-];
-
-// 指标项列表（仅用于表单默认值，实际从接口获取）
-export const indexItemList = [];
-
-// 用户列表（保持不变）
-export const userList = [
-  { id: 'u1', name: '张三' },
-  { id: 'u2', name: '李四' },
-  { id: 'u3', name: '王五' },
-];
-
-// 状态列表（保持不变）
-export const statusList = [
-  { id: 's1', name: '启用' },
-  { id: 's2', name: '停用' },
-];
+/** 搜索表单配置（将适用指标体系、状态改为输入框） */
+export function useSearchFormSchema() {
+  return [
+    {
+      fieldName: 'name',
+      label: '规则分类名称',
+      component: 'Input',
+      componentProps: { placeholder: '请输入规则分类名称' },
+    },
+    {
+      fieldName: 'systemName',
+      label: '适用指标体系',
+      component: 'Input',
+      componentProps: { placeholder: '请输入适用指标体系名称' },
+    },
+    {
+      fieldName: 'statusId',
+      label: '状态',
+      component: 'Input',
+      componentProps: { placeholder: '请输入状态编码（1-启用/2-停用）' },
+    },
+  ];
+}
 
 /** 表单配置（新增/编辑规则分类） */
 export function useFormSchema() {
@@ -66,60 +55,6 @@ export function useFormSchema() {
       rules: '',
       defaultValue: 1,
       hidden: true,
-    },
-  ];
-}
-
-/** 规则项表单配置 */
-export function useRuleItemFormSchema() {
-  return [
-    {
-      fieldName: 'name',
-      label: '规则项名称',
-      component: 'Input',
-      componentProps: { placeholder: '请输入规则项名称' },
-      rules: 'required',
-    },
-    {
-      fieldName: 'indexId',
-      label: '关联指标项',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择关联指标项',
-        options: [], // 动态加载
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'scoreLogic',
-      label: '评分逻辑',
-      component: 'Input',
-      componentProps: { type: 'textarea', placeholder: '请输入评分逻辑' },
-      rules: 'required',
-    },
-    {
-      fieldName: 'fullScore',
-      label: '满分值',
-      component: 'InputNumber',
-      componentProps: { placeholder: '请输入满分值', min: 0, step: 0.1 },
-      rules: 'required',
-    },
-    {
-      fieldName: 'weight',
-      label: '权重',
-      component: 'InputNumber',
-      componentProps: { placeholder: '请输入权重', min: 0, step: 0.1 },
-      rules: 'required',
-    },
-    {
-      fieldName: 'ruleTypeId',
-      label: '规则类型',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择规则类型',
-        options: [], // 动态加载
-      },
-      rules: 'required',
     },
   ];
 }
