@@ -20,20 +20,7 @@ import {
   smsLogin,
   socialLogin,
 } from '#/api';
-import { thingsBoardLogin } from '#/api/genchuan/thingsBoard';
 import { $t } from '#/locales';
-import {
-  decryptThingsBoardCredentials,
-  getEncryptedThingsBoardCredentials,
-} from '#/utils/genchuan/encrypt';
-
-/**
- * ThingsBoard 登录响应类型
- */
-interface ThingsBoardLoginResponse {
-  refreshToken: string;
-  token: string;
-}
 
 export const useAuthStore = defineStore('auth', () => {
   const accessStore = useAccessStore();
@@ -82,29 +69,6 @@ export const useAuthStore = defineStore('auth', () => {
       if (accessToken) {
         accessStore.setAccessToken(accessToken);
         accessStore.setRefreshToken(refreshToken);
-        // ThingsBoard 登录（使用加密凭据，避免明文传输）
-        try {
-          const encryptedCreds = getEncryptedThingsBoardCredentials();
-          const decryptedCreds = decryptThingsBoardCredentials(encryptedCreds);
-          const thingsBoardRes = (await thingsBoardLogin({
-            username: decryptedCreds.username,
-            password: decryptedCreds.password,
-          })) as unknown as ThingsBoardLoginResponse;
-          window.localStorage.setItem(
-            'thingsBoardJwt_token',
-            thingsBoardRes.token,
-          );
-          window.localStorage.setItem(
-            'thingsBoardRefresh_token',
-            thingsBoardRes.refreshToken,
-          );
-          window.localStorage.setItem(
-            'thingsBoardJwt_time',
-            Date.now().toString(),
-          );
-        } catch (error) {
-          console.error('ThingsBoard 登录失败:', error);
-        }
 
         // 获取用户信息并存储到 userStore、accessStore 中
         // TODO @芋艿：清理掉 accessCodes 相关的逻辑

@@ -6,9 +6,9 @@ import logoImg from '../../public/static/imgs/logo/logo.png';
 const companySiteLink = import.meta.env.VITE_COMPANY_SiteLink;
 </script>
 <template>
-<!--  page-description="城市运行管理服务解决方案"-->
-<!--  page-title="智慧城市一网统管AI平台"-->
-<!--  :slogan-image="logoImg"-->
+  <!--  page-description="城市运行管理服务解决方案"-->
+  <!--  page-title="智慧城市一网统管AI平台"-->
+  <!--  :slogan-image="logoImg"-->
   <AuthPageLayout
     app-name=""
     page-description=""

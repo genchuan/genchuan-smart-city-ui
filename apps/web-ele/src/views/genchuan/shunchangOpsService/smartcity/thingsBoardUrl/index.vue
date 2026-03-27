@@ -2,10 +2,7 @@
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
-import { useThingsBoardAuth } from '#/genchuan-composables/useThingsBoardAuth';
-
 const route = useRoute();
-const { ensureThingsBoardLogin, reLogin } = useThingsBoardAuth();
 
 const url = ref('');
 const iframeRef = ref<HTMLIFrameElement | null>(null);
@@ -35,24 +32,13 @@ const handleIframeError = () => {
   error.value = '加载失败，请刷新页面重试';
 };
 
-// 加载仪表盘
-const loadDashboard = async () => {
+// 加载仪表盘（公开仪表盘不需要登录）
+const loadDashboard = () => {
   loading.value = true;
   error.value = '';
 
-  // 先确保 ThingsBoard 已登录
-  const isAuthenticated = await ensureThingsBoardLogin();
-
-  if (!isAuthenticated) {
-    loading.value = false;
-    error.value = 'ThingsBoard 登录失败，请检查配置';
-    return;
-  }
-
   // 构建完整的 ThingsBoard URL
   const baseUrl = import.meta.env.VITE_THINGS_BOARD_URL;
-  // 从路由 meta 中获取 componentName（ThingsBoard 仪表盘路径）
-  // const dashboardPath = route.meta.componentName as string;
   const dashboardPath = route.name;
   if (!dashboardPath) {
     loading.value = false;
@@ -64,18 +50,9 @@ const loadDashboard = async () => {
 };
 
 // 刷新 iframe
-const refreshIframe = async () => {
+const refreshIframe = () => {
   loading.value = true;
   error.value = '';
-
-  // 强制重新登录
-  const isAuthenticated = await reLogin();
-
-  if (!isAuthenticated) {
-    loading.value = false;
-    error.value = 'ThingsBoard 登录失败，请检查配置';
-    return;
-  }
 
   // 强制重新加载 iframe
   const currentSrc = url.value;
