@@ -5,15 +5,15 @@ import { isEmpty } from '@vben/utils';
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
 import dayjs from 'dayjs';
+import * as XLSX from 'xlsx';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   getRuleCategoryAllPage,
   getRuleStatusCount,
-  updateRuleCategory,           // 使用 update 接口（支持新增和编辑）
+  updateRuleCategory,
   getRuleCategoryDetail,
-  exportRuleCategory,
   getIndexSystemSimpleList,
   getStatusSimpleList,
   deleteRuleCategory,
@@ -23,6 +23,7 @@ import RuleItemManager from '#/views/genchuan/dataHub/evaluation/system/componen
 import {
   textObj,
   useFormSchema,
+  useSearchFormSchema,
   getGridColumnsByTab,
 } from './data';
 
@@ -61,6 +62,43 @@ const tabsData = ref([
 
 const createLabel = (item) => `${item.label} (${item.count})`;
 
+// ==================== 钻取筛选方法 ====================
+function handleFieldClick(field, value, displayValue) {
+  if (field === 'statusId') {
+    // 状态钻取：切换到全部标签，设置状态筛选
+    activeName.value = '全部';
+    searchParams.value = {
+      ...searchParams.value,
+      statusId: value,
+      statusName: displayValue,
+    };
+    // 清除可能存在的其他状态字段
+    delete searchParams.value.statusIdInput;
+  } else if (field === 'systemName') {
+    // 适用指标体系钻取
+    searchParams.value = {
+      ...searchParams.value,
+      systemName: value,
+    };
+    delete searchParams.value.systemId;
+  }
+  // 刷新表格
+  handleRefresh();
+}
+
+function handleClearField(field) {
+  const newParams = { ...searchParams.value };
+  if (field === 'systemName') {
+    delete newParams.systemName;
+    delete newParams.systemId;
+  } else if (field === 'status') {
+    delete newParams.statusId;
+    delete newParams.statusName;
+  }
+  searchParams.value = newParams;
+  handleRefresh();
+}
+
 // ==================== 搜索抽屉 ====================
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -78,10 +116,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useFormSchema().map(v => {
-    delete v.rules;
-    return { ...v };
-  }),
+  schema: useSearchFormSchema(),
   showCollapseButton: true,
   submitButtonOptions: { content: '查询' },
   resetButtonOptions: {
@@ -235,8 +270,10 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       const data = formDrawerApi.getData();
       formData.value = data;
       if (data?.id) {
-        // 编辑模式
-        await formApi.setValues(data);
+        // 编辑模式：确保 systemId 为数字，避免与选项 value 类型不匹配导致显示编码
+        const setData = { ...data };
+        if (setData.systemId) setData.systemId = Number(setData.systemId);
+        await formApi.setValues(setData);
         const loading = ElLoading.service({ text: '加载详情...', target: '.vben-drawer' });
         try {
           const detail = await getRuleCategoryDetail(data.id);
@@ -279,6 +316,21 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 });
 
 // ==================== 表格数据获取 ====================
+// 格式化列表数据（供表格和导出共用）
+function formatList(list) {
+  return (list || []).map(item => ({
+    ...item,
+    createTime: item.createTime ? dayjs(item.createTime).format('YYYY-MM-DD HH:mm:ss') : '-',
+    updateTime: item.updateTime ? dayjs(item.updateTime).format('YYYY-MM-DD HH:mm:ss') : '-',
+    lastUseTime: item.lastUseTime ? dayjs(item.lastUseTime).format('YYYY-MM-DD HH:mm:ss') : '-',
+    useCount: item.useCount ?? 0,
+    itemCount: item.itemCount ?? 0,
+    changeLog: item.changeLog || '-',
+    createByName: item.createUserName,
+    updateByName: item.updateUserName,
+  }));
+}
+
 const getTableData = async ({ page }) => {
   const params = {
     pageNo: page.currentPage,
@@ -291,18 +343,7 @@ const getTableData = async ({ page }) => {
   try {
     const res = await getRuleCategoryAllPage(params);
     const { list, total } = res;
-    const formattedList = (list || []).map(item => ({
-      ...item,
-      createTime: item.createTime ? dayjs(item.createTime).format('YYYY-MM-DD HH:mm:ss') : '-',
-      updateTime: item.updateTime ? dayjs(item.updateTime).format('YYYY-MM-DD HH:mm:ss') : '-',
-      lastUseTime: item.lastUseTime ? dayjs(item.lastUseTime).format('YYYY-MM-DD HH:mm:ss') : '-',
-      useCount: item.useCount ?? 0,
-      itemCount: item.itemCount ?? 0,
-      changeLog: item.changeLog || '-',
-      createByName: item.createUserName,
-      updateByName: item.updateUserName,
-    }));
-    dataObj.list = formattedList;
+    dataObj.list = formatList(list);
     dataObj.total = total;
     return dataObj;
   } catch (error) {
@@ -356,37 +397,145 @@ function handleRefresh() {
   gridApi.query();
 }
 
-// 修改导出函数，增加参数清理
+// 普通导出（按当前查询条件导出全部数据，前端生成 Excel）
 async function handleExport() {
-  const loadingInstance = ElLoading.service({ text: '正在导出...' });
+  const loadingInstance = ElLoading.service({ text: '正在获取数据...' });
   try {
-    const params = {
-      pageNo: 1,
-      pageSize: 10000,
-      ...searchParams.value,
-    };
+    // 构建查询参数（不含分页）
+    const baseParams = { ...searchParams.value };
     if (activeName.value !== '全部') {
-      params.statusId = activeName.value === '启用' ? 1 : 2;
+      baseParams.statusId = activeName.value === '启用' ? 1 : 2;
     }
-    // 清理无效参数
-    Object.keys(params).forEach(key => {
-      if (params[key] === undefined || params[key] === null || params[key] === '') {
-        delete params[key];
+    // 清理空值
+    Object.keys(baseParams).forEach(key => {
+      if (baseParams[key] === undefined || baseParams[key] === null || baseParams[key] === '') {
+        delete baseParams[key];
       }
     });
-    const blob = await exportRuleCategory(params);
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `规则分类列表_${dayjs().format('YYYYMMDD')}.xlsx`;
-    link.click();
-    window.URL.revokeObjectURL(url);
+
+    let allData = [];
+    let pageNo = 1;
+    const pageSize = 200; // 接口最大限制
+    let hasMore = true;
+
+    while (hasMore) {
+      const params = { ...baseParams, pageNo, pageSize };
+      const res = await getRuleCategoryAllPage(params);
+      const { list } = res;
+      if (list && list.length > 0) {
+        allData = allData.concat(formatList(list));
+        pageNo++;
+        if (list.length < pageSize) {
+          hasMore = false;
+        }
+      } else {
+        hasMore = false;
+      }
+    }
+
+    if (allData.length === 0) {
+      ElMessage.warning('没有数据可导出');
+      return;
+    }
+
+    // 获取当前标签页的列配置
+    const columns = getGridColumnsByTab(activeName.value);
+    // 过滤出需要导出的列（排除复选框和操作列）
+    const exportColumns = columns.filter(
+      col => col.field && col.type !== 'checkbox' && col.title !== '操作'
+    ).map(col => ({ field: col.field, title: col.title }));
+
+    // 构建工作表数据
+    const wsData = [];
+    wsData.push(exportColumns.map(col => col.title));
+    allData.forEach(row => {
+      const rowData = exportColumns.map(col => row[col.field] ?? '-');
+      wsData.push(rowData);
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, '规则分类');
+
+    let fileName;
+    switch (activeName.value) {
+      case '停用':
+        fileName = `停用规则分类列表_${dayjs().format('YYYYMMDD')}.xlsx`;
+        break;
+      case '启用':
+        fileName = `启用规则分类列表_${dayjs().format('YYYYMMDD')}.xlsx`;
+        break;
+      default:
+        fileName = `规则分类列表_${dayjs().format('YYYYMMDD')}.xlsx`;
+    }
+    XLSX.writeFile(wb, fileName);
     ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败', error);
     ElMessage.error(error.message || '导出失败');
   } finally {
     loadingInstance.close();
+  }
+}
+
+// 批量导出（选中的行，每个规则分类生成一个 sheet）
+async function handleBatchExport() {
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请至少选择一条数据');
+    return;
+  }
+
+  // 获取当前页中选中的数据
+  const selectedRows = dataObj.list.filter(item => checkedIds.value.includes(item.id));
+  if (selectedRows.length === 0) {
+    ElMessage.warning('选中的数据不在当前页，请刷新后重试');
+    return;
+  }
+
+  const loading = ElLoading.service({ text: '正在生成导出文件...' });
+  const wb = XLSX.utils.book_new();
+
+  // 获取当前标签页的列配置
+  const columns = getGridColumnsByTab(activeName.value);
+  const exportColumns = columns.filter(
+    col => col.field && col.type !== 'checkbox' && col.title !== '操作'
+  ).map(col => ({ field: col.field, title: col.title }));
+
+  try {
+    for (const row of selectedRows) {
+      // 构建单行数据对象
+      const rowForSheet = {};
+      exportColumns.forEach(col => {
+        rowForSheet[col.title] = row[col.field] ?? '-';
+      });
+      const ws = XLSX.utils.json_to_sheet([rowForSheet]);
+
+      // 处理 sheet 名称：使用规则分类名称，去除非法字符
+      let sheetName = (row.name || `规则分类_${row.id}`).replaceAll(/[\\/:*?"<>|]/g, '_');
+      if (sheetName.length > 31) sheetName = `${sheetName.slice(0, 28)}...`;
+      let finalSheetName = sheetName;
+      let counter = 1;
+      while (wb.SheetNames.includes(finalSheetName)) {
+        finalSheetName = `${sheetName}_${counter}`;
+        counter++;
+      }
+
+      XLSX.utils.book_append_sheet(wb, ws, finalSheetName);
+    }
+
+    if (wb.SheetNames.length === 0) {
+      ElMessage.warning('没有有效数据可导出');
+      return;
+    }
+
+    const fileName = `批量导出_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    ElMessage.success('导出成功');
+  } catch (error) {
+    console.error('批量导出失败', error);
+    ElMessage.error(error.message || '导出失败');
+  } finally {
+    loading.close();
   }
 }
 
@@ -520,24 +669,6 @@ async function handleGarageOpenDetail(row) {
   }
 }
 
-// 钻取筛选
-const handleFieldClick = (field, value, displayValue) => {
-  if (field === 'systemId' || field === 'statusId') {
-    searchParams.value = { ...searchParams.value, [field]: value, [`${field}Name`]: displayValue };
-  } else {
-    searchParams.value = { ...searchParams.value, [field]: value };
-  }
-  handleRefresh();
-};
-
-const handleClearField = (field) => {
-  const newParams = { ...searchParams.value };
-  delete newParams[field];
-  delete newParams[`${field}Name`];
-  searchParams.value = newParams;
-  handleRefresh();
-};
-
 // 标签页切换
 const handleTabChange = () => {
   gridColumns.value = getGridColumnsByTab(activeName.value);
@@ -605,7 +736,7 @@ onMounted(() => {
       :detail-obj="dataObj.garageDetail"
     />
 
-    <!-- 搜索抽屉 -->
+    <!-- 搜索抽屉（输入框版本，无需 open-change 事件） -->
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -625,20 +756,23 @@ onMounted(() => {
             </el-tabs>
           </div>
 
+          <!-- 钻取筛选标签：适用指标体系 -->
           <el-tag
-            v-if="searchParams.systemId && searchParams.systemName"
+            v-if="searchParams.systemName"
             type="primary"
             closable
-            @close="handleClearField('systemId')"
+            @close="handleClearField('systemName')"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
             适用指标体系：{{ searchParams.systemName }}
           </el-tag>
+
+          <!-- 钻取筛选标签：状态 -->
           <el-tag
-            v-if="searchParams.statusId && searchParams.statusName"
+            v-if="searchParams.statusName"
             type="warning"
             closable
-            @close="handleClearField('statusId')"
+            @close="handleClearField('status')"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
             状态：{{ searchParams.statusName }}
@@ -650,6 +784,12 @@ onMounted(() => {
         <div class="common-toolbar-tools">
           <IconButton v-if="activeName === '全部'" content="新增分类" icon-name="Plus" @click="handleCreate" />
           <IconButton content="导出" icon-name="download" @click="handleExport" />
+          <IconButton
+            content="批量导出"
+            icon-name="download"
+            :disabled="isEmpty(checkedIds)"
+            @click="handleBatchExport"
+          />
           <IconButton
             v-if="activeName !== '停用'"
             content="批量停用"
@@ -683,7 +823,7 @@ onMounted(() => {
         </el-text>
       </template>
       <template #systemName="{ row }">
-        <el-text @click="handleFieldClick('systemId', row.systemId, row.systemName)" class="common-align" type="primary">
+        <el-text @click="handleFieldClick('systemName', row.systemName, row.systemName)" class="common-align" type="primary">
           {{ row.systemName }}
         </el-text>
       </template>
