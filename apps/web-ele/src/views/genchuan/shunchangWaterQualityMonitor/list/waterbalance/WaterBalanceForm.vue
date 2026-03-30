@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { reactive, ref } from 'vue';
+
 import {
   ElButton,
   ElDatePicker,
@@ -8,7 +10,6 @@ import {
   ElInput,
   ElMessage,
 } from 'element-plus';
-import { reactive, ref } from 'vue';
 
 import { WaterBalanceApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/waterbalance';
 
@@ -35,9 +36,15 @@ const formData = ref({
 });
 const formRules = reactive({
   partitionId: [{ required: true, message: '分区ID不能为空', trigger: 'blur' }],
-  statisticsPeriod: [{ required: true, message: '统计周期不能为空', trigger: 'blur' }],
-  statisticsDate: [{ required: true, message: '统计日期不能为空', trigger: 'blur' }],
-  supplyVolume: [{ required: true, message: '供水量不能为空', trigger: 'blur' }],
+  statisticsPeriod: [
+    { required: true, message: '统计周期不能为空', trigger: 'blur' },
+  ],
+  statisticsDate: [
+    { required: true, message: '统计日期不能为空', trigger: 'blur' },
+  ],
+  supplyVolume: [
+    { required: true, message: '供水量不能为空', trigger: 'blur' },
+  ],
   salesVolume: [{ required: true, message: '售水量不能为空', trigger: 'blur' }],
 });
 const formRef = ref(); // 表单 Ref
@@ -45,7 +52,8 @@ const formRef = ref(); // 表单 Ref
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增水量平衡与漏损分析' : '编辑水量平衡与漏损分析';
+  dialogTitle.value =
+    type === 'create' ? '新增水量平衡与漏损分析' : '编辑水量平衡与漏损分析';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -119,7 +127,10 @@ const resetForm = () => {
         <ElInput v-model="formData.partitionId" placeholder="请输入分区ID" />
       </ElFormItem>
       <ElFormItem label="统计周期" prop="statisticsPeriod">
-        <ElInput v-model="formData.statisticsPeriod" placeholder="请输入统计周期(日/月/年)" />
+        <ElInput
+          v-model="formData.statisticsPeriod"
+          placeholder="请输入统计周期(日/月/年)"
+        />
       </ElFormItem>
       <ElFormItem label="统计日期" prop="statisticsDate">
         <ElDatePicker
@@ -131,22 +142,37 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="供水量" prop="supplyVolume">
-        <ElInput v-model="formData.supplyVolume" placeholder="请输入供水量(立方米)" />
+        <ElInput
+          v-model="formData.supplyVolume"
+          placeholder="请输入供水量(立方米)"
+        />
       </ElFormItem>
       <ElFormItem label="售水量" prop="salesVolume">
-        <ElInput v-model="formData.salesVolume" placeholder="请输入售水量(立方米)" />
+        <ElInput
+          v-model="formData.salesVolume"
+          placeholder="请输入售水量(立方米)"
+        />
       </ElFormItem>
       <ElFormItem label="合理损耗量" prop="reasonableLoss">
-        <ElInput v-model="formData.reasonableLoss" placeholder="请输入合理损耗量(立方米)" />
+        <ElInput
+          v-model="formData.reasonableLoss"
+          placeholder="请输入合理损耗量(立方米)"
+        />
       </ElFormItem>
       <ElFormItem label="漏损量" prop="leakageVolume">
-        <ElInput v-model="formData.leakageVolume" placeholder="请输入漏损量(立方米)" />
+        <ElInput
+          v-model="formData.leakageVolume"
+          placeholder="请输入漏损量(立方米)"
+        />
       </ElFormItem>
       <ElFormItem label="漏损率(%)" prop="leakageRate">
         <ElInput v-model="formData.leakageRate" placeholder="请输入漏损率(%)" />
       </ElFormItem>
       <ElFormItem label="是否超标" prop="isExceeded">
-        <ElInput v-model="formData.isExceeded" placeholder="请输入是否超标(0否1是)" />
+        <ElInput
+          v-model="formData.isExceeded"
+          placeholder="请输入是否超标(0否1是)"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

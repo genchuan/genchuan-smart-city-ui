@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { reactive, ref } from 'vue';
+
 import {
   ElButton,
   ElDialog,
@@ -7,7 +9,6 @@ import {
   ElInput,
   ElMessage,
 } from 'element-plus';
-import { reactive, ref } from 'vue';
 
 import { TestingCapabilityApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/testingcapability';
 
@@ -30,15 +31,20 @@ const formData = ref({
   equipmentStatus: undefined,
 });
 const formRules = reactive({
-  agencyCode: [{ required: true, message: '机构编号不能为空', trigger: 'blur' }],
-  equipmentNo: [{ required: true, message: '设备编号不能为空', trigger: 'blur' }],
+  agencyCode: [
+    { required: true, message: '机构编号不能为空', trigger: 'blur' },
+  ],
+  equipmentNo: [
+    { required: true, message: '设备编号不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增检测能力及设备' : '编辑检测能力及设备';
+  dialogTitle.value =
+    type === 'create' ? '新增检测能力及设备' : '编辑检测能力及设备';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -109,19 +115,31 @@ const resetForm = () => {
         <ElInput v-model="formData.agencyCode" placeholder="请输入机构编号" />
       </ElFormItem>
       <ElFormItem label="可检测指标" prop="testableIndicators">
-        <ElInput v-model="formData.testableIndicators" placeholder="请输入可检测指标" />
+        <ElInput
+          v-model="formData.testableIndicators"
+          placeholder="请输入可检测指标"
+        />
       </ElFormItem>
       <ElFormItem label="设备型号" prop="equipmentModel">
-        <ElInput v-model="formData.equipmentModel" placeholder="请输入设备型号" />
+        <ElInput
+          v-model="formData.equipmentModel"
+          placeholder="请输入设备型号"
+        />
       </ElFormItem>
       <ElFormItem label="设备编号" prop="equipmentNo">
         <ElInput v-model="formData.equipmentNo" placeholder="请输入设备编号" />
       </ElFormItem>
       <ElFormItem label="校准记录" prop="calibrationRecord">
-        <ElInput v-model="formData.calibrationRecord" placeholder="请输入校准记录" />
+        <ElInput
+          v-model="formData.calibrationRecord"
+          placeholder="请输入校准记录"
+        />
       </ElFormItem>
       <ElFormItem label="设备状态" prop="equipmentStatus">
-        <ElInput v-model="formData.equipmentStatus" placeholder="请输入设备状态(正常/维修中/停用)" />
+        <ElInput
+          v-model="formData.equipmentStatus"
+          placeholder="请输入设备状态(正常/维修中/停用)"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

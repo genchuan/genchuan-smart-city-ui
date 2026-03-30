@@ -30,14 +30,17 @@ const formData = ref({
 });
 const formRules = reactive({
   userCode: [{ required: true, message: '用户编号不能为空', trigger: 'blur' }],
-  waterUseType: [{ required: true, message: '用水性质不能为空', trigger: 'blur' }],
+  waterUseType: [
+    { required: true, message: '用水性质不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增用水性质分类管理' : '编辑用水性质分类管理';
+  dialogTitle.value =
+    type === 'create' ? '新增用水性质分类管理' : '编辑用水性质分类管理';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -109,7 +112,10 @@ const resetForm = () => {
         <ElInput v-model="formData.waterUseType" placeholder="请输入用水性质" />
       </ElFormItem>
       <ElFormItem label="用水定额" prop="waterQuota">
-        <ElInput v-model="formData.waterQuota" placeholder="请输入用水定额(立方米)" />
+        <ElInput
+          v-model="formData.waterQuota"
+          placeholder="请输入用水定额(立方米)"
+        />
       </ElFormItem>
       <ElFormItem label="分类日期" prop="categoryDate">
         <ElDatePicker

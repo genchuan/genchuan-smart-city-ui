@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { reactive, ref } from 'vue';
+
 import {
   ElButton,
   ElDialog,
@@ -7,7 +9,6 @@ import {
   ElInput,
   ElMessage,
 } from 'element-plus';
-import { reactive, ref } from 'vue';
 
 import { TestingPersonnelApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/testingpersonnel';
 
@@ -32,14 +33,17 @@ const formData = ref({
 const formRules = reactive({
   staffNo: [{ required: true, message: '人员编号不能为空', trigger: 'blur' }],
   staffName: [{ required: true, message: '姓名不能为空', trigger: 'blur' }],
-  agencyCode: [{ required: true, message: '所属机构编号不能为空', trigger: 'blur' }],
+  agencyCode: [
+    { required: true, message: '所属机构编号不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增检测人员信息' : '编辑检测人员信息';
+  dialogTitle.value =
+    type === 'create' ? '新增检测人员信息' : '编辑检测人员信息';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -116,13 +120,22 @@ const resetForm = () => {
         <ElInput v-model="formData.position" placeholder="请输入职称" />
       </ElFormItem>
       <ElFormItem label="资格证书编号" prop="certificateNo">
-        <ElInput v-model="formData.certificateNo" placeholder="请输入资格证书编号" />
+        <ElInput
+          v-model="formData.certificateNo"
+          placeholder="请输入资格证书编号"
+        />
       </ElFormItem>
       <ElFormItem label="培训记录" prop="trainingRecord">
-        <ElInput v-model="formData.trainingRecord" placeholder="请输入培训记录" />
+        <ElInput
+          v-model="formData.trainingRecord"
+          placeholder="请输入培训记录"
+        />
       </ElFormItem>
       <ElFormItem label="所属机构编号" prop="agencyCode">
-        <ElInput v-model="formData.agencyCode" placeholder="请输入所属机构编号" />
+        <ElInput
+          v-model="formData.agencyCode"
+          placeholder="请输入所属机构编号"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

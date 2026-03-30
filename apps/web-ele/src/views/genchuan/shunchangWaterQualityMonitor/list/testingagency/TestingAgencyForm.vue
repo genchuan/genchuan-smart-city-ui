@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { reactive, ref } from 'vue';
+
 import {
   ElButton,
   ElDatePicker,
@@ -8,7 +10,6 @@ import {
   ElInput,
   ElMessage,
 } from 'element-plus';
-import { reactive, ref } from 'vue';
 
 import { TestingAgencyApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/testingagency';
 
@@ -31,16 +32,23 @@ const formData = ref({
   issuingAuthority: undefined,
 });
 const formRules = reactive({
-  agencyCode: [{ required: true, message: '机构编号不能为空', trigger: 'blur' }],
-  agencyName: [{ required: true, message: '机构名称不能为空', trigger: 'blur' }],
-  certificateNo: [{ required: true, message: '资质证书编号不能为空', trigger: 'blur' }],
+  agencyCode: [
+    { required: true, message: '机构编号不能为空', trigger: 'blur' },
+  ],
+  agencyName: [
+    { required: true, message: '机构名称不能为空', trigger: 'blur' },
+  ],
+  certificateNo: [
+    { required: true, message: '资质证书编号不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增检测机构资质' : '编辑检测机构资质';
+  dialogTitle.value =
+    type === 'create' ? '新增检测机构资质' : '编辑检测机构资质';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -114,7 +122,10 @@ const resetForm = () => {
         <ElInput v-model="formData.agencyName" placeholder="请输入机构名称" />
       </ElFormItem>
       <ElFormItem label="资质证书编号" prop="certificateNo">
-        <ElInput v-model="formData.certificateNo" placeholder="请输入资质证书编号" />
+        <ElInput
+          v-model="formData.certificateNo"
+          placeholder="请输入资质证书编号"
+        />
       </ElFormItem>
       <ElFormItem label="检测范围" prop="testingScope">
         <ElInput v-model="formData.testingScope" placeholder="请输入检测范围" />
@@ -129,7 +140,10 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="发证单位" prop="issuingAuthority">
-        <ElInput v-model="formData.issuingAuthority" placeholder="请输入发证单位" />
+        <ElInput
+          v-model="formData.issuingAuthority"
+          placeholder="请输入发证单位"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

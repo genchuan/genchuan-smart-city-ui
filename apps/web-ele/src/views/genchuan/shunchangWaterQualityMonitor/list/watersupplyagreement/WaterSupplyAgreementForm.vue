@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { reactive, ref } from 'vue';
+
 import {
   ElButton,
   ElDatePicker,
@@ -8,7 +10,6 @@ import {
   ElInput,
   ElMessage,
 } from 'element-plus';
-import { reactive, ref } from 'vue';
 
 import { WaterSupplyAgreementApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/watersupplyagreement';
 
@@ -33,23 +34,31 @@ const formData = ref({
   validDate: undefined,
 });
 const formRules = reactive({
-  agreementNo: [{ required: true, message: '协议编号不能为空', trigger: 'blur' }],
-  supplierName: [{ required: true, message: '供水单位不能为空', trigger: 'blur' }],
-  consumerName: [{ required: true, message: '用水方不能为空', trigger: 'blur' }],
+  agreementNo: [
+    { required: true, message: '协议编号不能为空', trigger: 'blur' },
+  ],
+  supplierName: [
+    { required: true, message: '供水单位不能为空', trigger: 'blur' },
+  ],
+  consumerName: [
+    { required: true, message: '用水方不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增供水协议管理' : '编辑供水协议管理';
+  dialogTitle.value =
+    type === 'create' ? '新增供水协议管理' : '编辑供水协议管理';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
   if (id) {
     formLoading.value = true;
     try {
-      formData.value = await WaterSupplyAgreementApi.getWaterSupplyAgreement(id);
+      formData.value =
+        await WaterSupplyAgreementApi.getWaterSupplyAgreement(id);
     } finally {
       formLoading.value = false;
     }
@@ -124,10 +133,16 @@ const resetForm = () => {
         <ElInput v-model="formData.supplyScope" placeholder="请输入供水范围" />
       </ElFormItem>
       <ElFormItem label="水价标准" prop="waterPriceStandard">
-        <ElInput v-model="formData.waterPriceStandard" placeholder="请输入水价标准" />
+        <ElInput
+          v-model="formData.waterPriceStandard"
+          placeholder="请输入水价标准"
+        />
       </ElFormItem>
       <ElFormItem label="责任条款" prop="responsibilityTerms">
-        <ElInput v-model="formData.responsibilityTerms" placeholder="请输入责任条款" />
+        <ElInput
+          v-model="formData.responsibilityTerms"
+          placeholder="请输入责任条款"
+        />
       </ElFormItem>
       <ElFormItem label="签订日期" prop="signDate">
         <ElDatePicker

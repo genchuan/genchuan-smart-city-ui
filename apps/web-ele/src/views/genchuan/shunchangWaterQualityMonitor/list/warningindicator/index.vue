@@ -1,23 +1,26 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
+
 import { confirm } from '@vben/common-ui';
-import { WarningIndicatorApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/warningindicator';
-import download from '#/utils/genchuan/download';
-import { dateFormatter } from '#/utils/genchuan/formatTime';
+
+import { Icon } from '@iconify/vue';
 import {
-  ElMessage,
+  ElButton,
   ElCard,
-  ElTable,
-  ElTableColumn,
+  ElDatePicker,
   ElForm,
   ElFormItem,
   ElInput,
-  ElButton,
-  ElDatePicker,
+  ElMessage,
   ElPagination,
   ElSpace,
+  ElTable,
+  ElTableColumn,
 } from 'element-plus';
-import { Icon } from '@iconify/vue';
+
+import { WarningIndicatorApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/warningindicator';
+import download from '#/utils/genchuan/download';
+import { dateFormatter } from '#/utils/genchuan/formatTime';
 
 import WarningIndicatorForm from './WarningIndicatorForm.vue';
 

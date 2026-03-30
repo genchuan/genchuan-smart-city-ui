@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { reactive, ref } from 'vue';
+
 import {
   ElButton,
   ElDatePicker,
@@ -8,7 +10,6 @@ import {
   ElInput,
   ElMessage,
 } from 'element-plus';
-import { reactive, ref } from 'vue';
 
 import { UserBasicInfoApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/userbasicinfo';
 
@@ -39,7 +40,8 @@ const formRef = ref(); // 表单 Ref
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增用户基础信息' : '编辑用户基础信息';
+  dialogTitle.value =
+    type === 'create' ? '新增用户基础信息' : '编辑用户基础信息';
   formType.value = type;
   resetForm();
   // 修改时，设置数据

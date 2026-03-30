@@ -1,23 +1,26 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
+
 import { confirm } from '@vben/common-ui';
-import { WaterSupplyAgreementApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/watersupplyagreement';
-import download from '#/utils/genchuan/download';
-import { dateFormatter } from '#/utils/genchuan/formatTime';
+
+import { Icon } from '@iconify/vue';
 import {
-  ElMessage,
+  ElButton,
   ElCard,
-  ElTable,
-  ElTableColumn,
+  ElDatePicker,
   ElForm,
   ElFormItem,
   ElInput,
-  ElButton,
-  ElDatePicker,
+  ElMessage,
   ElPagination,
   ElSpace,
+  ElTable,
+  ElTableColumn,
 } from 'element-plus';
-import { Icon } from '@iconify/vue';
+
+import { WaterSupplyAgreementApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/watersupplyagreement';
+import download from '#/utils/genchuan/download';
+import { dateFormatter } from '#/utils/genchuan/formatTime';
 
 import WaterSupplyAgreementForm from './WaterSupplyAgreementForm.vue';
 
@@ -47,7 +50,8 @@ const exportLoading = ref(false); // 导出的加载中
 const getList = async () => {
   loading.value = true;
   try {
-    const data = await WaterSupplyAgreementApi.getWaterSupplyAgreementPage(queryParams);
+    const data =
+      await WaterSupplyAgreementApi.getWaterSupplyAgreementPage(queryParams);
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -93,7 +97,8 @@ const handleExport = async () => {
     await confirm('是否确认导出所有供水协议管理数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
-    const data = await WaterSupplyAgreementApi.exportWaterSupplyAgreement(queryParams);
+    const data =
+      await WaterSupplyAgreementApi.exportWaterSupplyAgreement(queryParams);
     download.excel(data, '供水协议管理.xls');
   } catch {
   } finally {

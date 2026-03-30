@@ -1,23 +1,26 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
+
 import { confirm } from '@vben/common-ui';
-import { WarningModelValidationApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/warningmodelvalidation';
-import download from '#/utils/genchuan/download';
-import { dateFormatter } from '#/utils/genchuan/formatTime';
+
+import { Icon } from '@iconify/vue';
 import {
-  ElMessage,
+  ElButton,
   ElCard,
-  ElTable,
-  ElTableColumn,
+  ElDatePicker,
   ElForm,
   ElFormItem,
   ElInput,
-  ElButton,
-  ElDatePicker,
+  ElMessage,
   ElPagination,
   ElSpace,
+  ElTable,
+  ElTableColumn,
 } from 'element-plus';
-import { Icon } from '@iconify/vue';
+
+import { WarningModelValidationApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/warningmodelvalidation';
+import download from '#/utils/genchuan/download';
+import { dateFormatter } from '#/utils/genchuan/formatTime';
 
 import WarningModelValidationForm from './WarningModelValidationForm.vue';
 
@@ -46,7 +49,10 @@ const exportLoading = ref(false); // 导出的加载中
 const getList = async () => {
   loading.value = true;
   try {
-    const data = await WarningModelValidationApi.getWarningModelValidationPage(queryParams);
+    const data =
+      await WarningModelValidationApi.getWarningModelValidationPage(
+        queryParams,
+      );
     list.value = data.list;
     total.value = data.total;
   } finally {
@@ -92,7 +98,8 @@ const handleExport = async () => {
     await confirm('是否确认导出所有预警模型校验数据？', '系统提示');
     // 发起导出
     exportLoading.value = true;
-    const data = await WarningModelValidationApi.exportWarningModelValidation(queryParams);
+    const data =
+      await WarningModelValidationApi.exportWarningModelValidation(queryParams);
     download.excel(data, '预警模型校验.xls');
   } catch {
   } finally {
