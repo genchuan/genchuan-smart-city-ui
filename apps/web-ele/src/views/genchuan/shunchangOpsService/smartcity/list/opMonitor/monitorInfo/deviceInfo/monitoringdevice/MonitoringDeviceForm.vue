@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { reactive, ref } from 'vue';
+
 import {
   ElButton,
   ElDatePicker,
@@ -8,7 +10,6 @@ import {
   ElInput,
   ElMessage,
 } from 'element-plus';
-import { reactive, ref } from 'vue';
 
 import { MonitoringDeviceApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/opMonitor/monitorInfo/deviceInfo/monitoringdevice';
 
@@ -31,8 +32,12 @@ const formData = ref({
   createTime: undefined,
 });
 const formRules = reactive({
-  deviceNumber: [{ required: true, message: '设备编号不能为空', trigger: 'blur' }],
-  deviceName: [{ required: true, message: '设备名称不能为空', trigger: 'blur' }],
+  deviceNumber: [
+    { required: true, message: '设备编号不能为空', trigger: 'blur' },
+  ],
+  deviceName: [
+    { required: true, message: '设备名称不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
@@ -119,7 +124,10 @@ const resetForm = () => {
         <ElInput v-model="formData.manufacturer" placeholder="请输入生产厂家" />
       </ElFormItem>
       <ElFormItem label="维护记录" prop="maintenanceRecord">
-        <ElInput v-model="formData.maintenanceRecord" placeholder="请输入维护记录" />
+        <ElInput
+          v-model="formData.maintenanceRecord"
+          placeholder="请输入维护记录"
+        />
       </ElFormItem>
       <ElFormItem label="安装时间" prop="createTime">
         <ElDatePicker

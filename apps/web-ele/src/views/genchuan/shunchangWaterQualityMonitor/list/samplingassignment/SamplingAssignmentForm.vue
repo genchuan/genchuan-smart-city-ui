@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
+
 import {
   ElButton,
   ElDatePicker,
@@ -31,18 +32,27 @@ const formData = ref({
   contactInfo: undefined,
 });
 const formRules = reactive({
-  planCode: [{ required: true, message: '采样计划编号不能为空', trigger: 'blur' }],
-  pointList: [{ required: true, message: '采样点清单不能为空', trigger: 'blur' }],
-  responsiblePerson: [{ required: true, message: '负责人员不能为空', trigger: 'blur' }],
+  planCode: [
+    { required: true, message: '采样计划编号不能为空', trigger: 'blur' },
+  ],
+  pointList: [
+    { required: true, message: '采样点清单不能为空', trigger: 'blur' },
+  ],
+  responsiblePerson: [
+    { required: true, message: '负责人员不能为空', trigger: 'blur' },
+  ],
   deadline: [{ required: true, message: '完成时限不能为空', trigger: 'blur' }],
-  contactInfo: [{ required: true, message: '联系方式不能为空', trigger: 'blur' }],
+  contactInfo: [
+    { required: true, message: '联系方式不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增采样人员分配' : '编辑采样人员分配';
+  dialogTitle.value =
+    type === 'create' ? '新增采样人员分配' : '编辑采样人员分配';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -116,7 +126,10 @@ const resetForm = () => {
         <ElInput v-model="formData.pointList" placeholder="请输入采样点清单" />
       </ElFormItem>
       <ElFormItem label="负责人员" prop="responsiblePerson">
-        <ElInput v-model="formData.responsiblePerson" placeholder="请输入负责人员" />
+        <ElInput
+          v-model="formData.responsiblePerson"
+          placeholder="请输入负责人员"
+        />
       </ElFormItem>
       <ElFormItem label="分配时间" prop="assignTime">
         <ElDatePicker

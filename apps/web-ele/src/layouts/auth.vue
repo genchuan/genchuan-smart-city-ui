@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { AuthPageLayout } from '@vben/layouts';
+
 import logoImg from '../../public/static/imgs/logo/logo.png';
 
 const companySiteLink = import.meta.env.VITE_COMPANY_SiteLink;
@@ -16,7 +17,7 @@ const companySiteLink = import.meta.env.VITE_COMPANY_SiteLink;
   >
     <!-- 自定义版权插槽，修改登录页面的版权信息 -->
     <template #copyright>
-      <div  class="text-md flex-center">
+      <div class="text-md flex-center">
         Copyright © 2026
         <a
           :href="companySiteLink"

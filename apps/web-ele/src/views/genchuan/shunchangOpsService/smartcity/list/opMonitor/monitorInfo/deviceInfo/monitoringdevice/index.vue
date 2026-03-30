@@ -1,23 +1,26 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
+
 import { confirm } from '@vben/common-ui';
-import { MonitoringDeviceApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/opMonitor/monitorInfo/deviceInfo/monitoringdevice';
-import download from '#/utils/genchuan/download';
-import { dateFormatter } from '#/utils/genchuan/formatTime';
+
+import { Icon } from '@iconify/vue';
 import {
-  ElMessage,
+  ElButton,
   ElCard,
-  ElTable,
-  ElTableColumn,
+  ElDatePicker,
   ElForm,
   ElFormItem,
   ElInput,
-  ElButton,
-  ElDatePicker,
+  ElMessage,
   ElPagination,
   ElSpace,
+  ElTable,
+  ElTableColumn,
 } from 'element-plus';
-import { Icon } from '@iconify/vue';
+
+import { MonitoringDeviceApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/opMonitor/monitorInfo/deviceInfo/monitoringdevice';
+import download from '#/utils/genchuan/download';
+import { dateFormatter } from '#/utils/genchuan/formatTime';
 
 import MonitoringDeviceForm from './MonitoringDeviceForm.vue';
 
@@ -177,7 +180,11 @@ onMounted(() => {
         <ElTableColumn label="设备名称" align="center" prop="deviceName" />
         <ElTableColumn label="设备类型" align="center" prop="deviceType" />
         <ElTableColumn label="生产厂家" align="center" prop="manufacturer" />
-        <ElTableColumn label="维护记录" align="center" prop="maintenanceRecord" />
+        <ElTableColumn
+          label="维护记录"
+          align="center"
+          prop="maintenanceRecord"
+        />
         <ElTableColumn
           label="安装时间"
           align="center"

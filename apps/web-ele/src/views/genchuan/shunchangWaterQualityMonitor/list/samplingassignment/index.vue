@@ -1,26 +1,29 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref, nextTick } from 'vue';
+import { nextTick, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { ElMessageBox, ElMessage } from 'element-plus';
-import { dateFormatter } from '#/utils/genchuan/formatTime';
+
+import { Icon } from '@iconify/vue';
+import {
+  ElButton,
+  ElCard,
+  ElForm,
+  ElFormItem,
+  ElMessage,
+  ElMessageBox,
+  ElPagination,
+  ElTable,
+  ElTableColumn,
+} from 'element-plus';
+
+import { getProcessDefinitionPage } from '#/api/bpm/definition';
 import {
   cancelProcessInstanceByAdmin,
   getProcessInstanceManagerPage,
 } from '#/api/bpm/processInstance';
-import { getProcessDefinitionPage } from '#/api/bpm/definition';
-import {
-  ElCard,
-  ElTable,
-  ElTableColumn,
-  ElForm,
-  ElFormItem,
-  ElButton,
-  ElPagination,
-} from 'element-plus';
-import { Icon } from '@iconify/vue';
+import { dateFormatter } from '#/utils/genchuan/formatTime';
+import ProcessDefinitionDetail from '#/views/bpm/processInstance/create/modules/form.vue';
 
 import SamplingAssignmentForm from './SamplingAssignmentForm.vue';
-import ProcessDefinitionDetail from '#/views/bpm/processInstance/create/modules/form.vue';
 
 /** 采样人员分配 列表 */
 defineOptions({ name: 'SamplingAssignment' });
@@ -37,7 +40,7 @@ const total = ref(0); // 列表的总页数
 const queryParams = reactive({
   pageNo: 1,
   pageSize: 10,
-  name: '采样人员分配'
+  name: '采样人员分配',
 });
 
 // 2. 是否保留 不再调用原业务接口 直接调用流程信息查询（分页）搜索表单绑定参数：与搜索表单字段一一对应，用于接收用户输入
@@ -48,7 +51,7 @@ const searchForm = reactive({
   assignTime: [],
   deadline: undefined,
   contactInfo: undefined,
-  createTime: []
+  createTime: [],
 });
 
 const queryFormRef = ref(); // 搜索的表单
@@ -72,21 +75,25 @@ const getList = async () => {
       const formVariables = item.formVariables || {};
       const tableRow = {
         id: item.id || 0,
-        status: item.status || '',//新增流程实例状态字段 便于取消按钮显示判断
+        status: item.status || '', // 新增流程实例状态字段 便于取消按钮显示判断
         planCode: formVariables.Fbqkmei8dsxragc || '', // 从formVariables取采样计划编号
         pointList: formVariables.Fuiqmei8gn4fajc || '', // 从formVariables取采样点清单
         responsiblePerson: formVariables.F3pgmei8j5framc || '', // 从formVariables取负责人员
         // 处理分配时间，转换为Date类型
-        assignTime: formVariables.Fcjmmei8muwhasc ? new Date(formVariables.Fcjmmei8muwhasc) : new Date(),
+        assignTime: formVariables.Fcjmmei8muwhasc
+          ? new Date(formVariables.Fcjmmei8muwhasc)
+          : new Date(),
         // 处理完成时限，转换为Date类型
-        deadline: formVariables.F5zdmei8pzf6avc ? new Date(formVariables.F5zdmei8pzf6avc) : new Date(),
+        deadline: formVariables.F5zdmei8pzf6avc
+          ? new Date(formVariables.F5zdmei8pzf6avc)
+          : new Date(),
         contactInfo: formVariables.Fsp0mei8mdpzapc || '', // 从formVariables取联系方式
       };
       list.value.push(tableRow); // 新增行，避免索引访问undefined
     });
     total.value = data.total; // 赋值总条数
   } catch (error) {
-    console.error("获取列表失败：", error);
+    console.error('获取列表失败：', error);
     ElMessage.error('获取列表失败');
   } finally {
     loading.value = false;
@@ -94,15 +101,16 @@ const getList = async () => {
 };
 
 /** 序号计算 */
-const indexMethod = (index: number) => (queryParams.pageNo - 1) * queryParams.pageSize + index + 1;
+const indexMethod = (index: number) =>
+  (queryParams.pageNo - 1) * queryParams.pageSize + index + 1;
 
 /** 查看流程实例详情 */
 const handleDetail = (row: any) => {
   router.push({
     name: 'BpmProcessInstanceDetail',
     query: {
-      id: row.id
-    }
+      id: row.id,
+    },
   });
 };
 
@@ -112,8 +120,8 @@ const handleCancel = async (row: any) => {
   const { value } = await ElMessageBox.prompt('请输入取消原因', '取消流程', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
-    inputPattern: /^[\s\S]*.*\S[\s\S]*$/, // 判断非空，且非空格
-    inputErrorMessage: '取消原因不能为空'
+    inputPattern: /^\s*\S[\s\S]*$/, // 判断非空，且非空格
+    inputErrorMessage: '取消原因不能为空',
   });
   // 发起取消
   await cancelProcessInstanceByAdmin(row.id, value);
@@ -128,19 +136,21 @@ const handleCreate = async () => {
     const processDefinitions = await getProcessDefinitionPage({
       pageNo: 1,
       pageSize: 10,
-      key: 'water_01'
+      key: 'water_01',
     });
 
     if (processDefinitions && processDefinitions.list.length > 0) {
       selectProcessDefinition.value = processDefinitions.list[0];
       isProcessDetailVisible.value = true;
       await nextTick();
-      processDefinitionDetailRef.value?.initProcessInfo(processDefinitions.list[0]);
+      processDefinitionDetailRef.value?.initProcessInfo(
+        processDefinitions.list[0],
+      );
     } else {
       ElMessage.error('未找到"分配采样人员"流程定义，请联系管理员配置');
     }
   } catch (error: any) {
-    ElMessage.error('获取流程信息失败：' + (error.message || '未知错误'));
+    ElMessage.error(`获取流程信息失败：${error.message || '未知错误'}`);
   }
 };
 
@@ -170,97 +180,94 @@ onMounted(() => {
           :inline="true"
           label-width="100px"
         >
-<!--          <el-form-item label="采样计划编号" prop="planCode">-->
-<!--            <el-input-->
-<!--              v-model="searchForm.planCode"-->
-<!--              placeholder="请输入采样计划编号"-->
-<!--              clearable-->
-<!--              @keyup.enter="handleQuery"-->
-<!--              style="width: 240px"-->
-<!--            />-->
-<!--          </el-form-item>-->
-<!--          <el-form-item label="采样点清单" prop="pointList">-->
-<!--            <el-input-->
-<!--              v-model="searchForm.pointList"-->
-<!--              placeholder="请输入采样点清单"-->
-<!--              clearable-->
-<!--              @keyup.enter="handleQuery"-->
-<!--              style="width: 240px"-->
-<!--            />-->
-<!--          </el-form-item>-->
-<!--          <el-form-item label="负责人员" prop="responsiblePerson">-->
-<!--            <el-input-->
-<!--              v-model="searchForm.responsiblePerson"-->
-<!--              placeholder="请输入负责人员"-->
-<!--              clearable-->
-<!--              @keyup.enter="handleQuery"-->
-<!--              style="width: 240px"-->
-<!--            />-->
-<!--          </el-form-item>-->
-<!--          <el-form-item label="分配时间" prop="assignTime">-->
-<!--            <el-date-picker-->
-<!--              v-model="searchForm.assignTime"-->
-<!--              value-format="YYYY-MM-DD HH:mm:ss"-->
-<!--              type="daterange"-->
-<!--              start-placeholder="开始日期"-->
-<!--              end-placeholder="结束日期"-->
-<!--              :default-time="[new Date('1 00:00:00'), new Date('1 23:59:59')]"-->
-<!--              style="width: 220px"-->
-<!--            />-->
-<!--          </el-form-item>-->
-<!--          <el-form-item label="完成时限" prop="deadline">-->
-<!--            <el-date-picker-->
-<!--              v-model="searchForm.deadline"-->
-<!--              value-format="YYYY-MM-DD"-->
-<!--              type="date"-->
-<!--              placeholder="选择完成时限"-->
-<!--              clearable-->
-<!--              style="width: 240px"-->
-<!--            />-->
-<!--          </el-form-item>-->
-<!--          <el-form-item label="联系方式" prop="contactInfo">-->
-<!--            <el-input-->
-<!--              v-model="searchForm.contactInfo"-->
-<!--              placeholder="请输入联系方式"-->
-<!--              clearable-->
-<!--              @keyup.enter="handleQuery"-->
-<!--              style="width: 240px"-->
-<!--            />-->
-<!--          </el-form-item>-->
-<!--          <el-form-item label="创建时间" prop="createTime">-->
-<!--            <el-date-picker-->
-<!--              v-model="searchForm.createTime"-->
-<!--              value-format="YYYY-MM-DD HH:mm:ss"-->
-<!--              type="daterange"-->
-<!--              start-placeholder="开始日期"-->
-<!--              end-placeholder="结束日期"-->
-<!--              :default-time="[new Date('1 00:00:00'), new Date('1 23:59:59')]"-->
-<!--              style="width: 220px"-->
-<!--            />-->
-<!--          </el-form-item>-->
+          <!--          <el-form-item label="采样计划编号" prop="planCode">-->
+          <!--            <el-input-->
+          <!--              v-model="searchForm.planCode"-->
+          <!--              placeholder="请输入采样计划编号"-->
+          <!--              clearable-->
+          <!--              @keyup.enter="handleQuery"-->
+          <!--              style="width: 240px"-->
+          <!--            />-->
+          <!--          </el-form-item>-->
+          <!--          <el-form-item label="采样点清单" prop="pointList">-->
+          <!--            <el-input-->
+          <!--              v-model="searchForm.pointList"-->
+          <!--              placeholder="请输入采样点清单"-->
+          <!--              clearable-->
+          <!--              @keyup.enter="handleQuery"-->
+          <!--              style="width: 240px"-->
+          <!--            />-->
+          <!--          </el-form-item>-->
+          <!--          <el-form-item label="负责人员" prop="responsiblePerson">-->
+          <!--            <el-input-->
+          <!--              v-model="searchForm.responsiblePerson"-->
+          <!--              placeholder="请输入负责人员"-->
+          <!--              clearable-->
+          <!--              @keyup.enter="handleQuery"-->
+          <!--              style="width: 240px"-->
+          <!--            />-->
+          <!--          </el-form-item>-->
+          <!--          <el-form-item label="分配时间" prop="assignTime">-->
+          <!--            <el-date-picker-->
+          <!--              v-model="searchForm.assignTime"-->
+          <!--              value-format="YYYY-MM-DD HH:mm:ss"-->
+          <!--              type="daterange"-->
+          <!--              start-placeholder="开始日期"-->
+          <!--              end-placeholder="结束日期"-->
+          <!--              :default-time="[new Date('1 00:00:00'), new Date('1 23:59:59')]"-->
+          <!--              style="width: 220px"-->
+          <!--            />-->
+          <!--          </el-form-item>-->
+          <!--          <el-form-item label="完成时限" prop="deadline">-->
+          <!--            <el-date-picker-->
+          <!--              v-model="searchForm.deadline"-->
+          <!--              value-format="YYYY-MM-DD"-->
+          <!--              type="date"-->
+          <!--              placeholder="选择完成时限"-->
+          <!--              clearable-->
+          <!--              style="width: 240px"-->
+          <!--            />-->
+          <!--          </el-form-item>-->
+          <!--          <el-form-item label="联系方式" prop="contactInfo">-->
+          <!--            <el-input-->
+          <!--              v-model="searchForm.contactInfo"-->
+          <!--              placeholder="请输入联系方式"-->
+          <!--              clearable-->
+          <!--              @keyup.enter="handleQuery"-->
+          <!--              style="width: 240px"-->
+          <!--            />-->
+          <!--          </el-form-item>-->
+          <!--          <el-form-item label="创建时间" prop="createTime">-->
+          <!--            <el-date-picker-->
+          <!--              v-model="searchForm.createTime"-->
+          <!--              value-format="YYYY-MM-DD HH:mm:ss"-->
+          <!--              type="daterange"-->
+          <!--              start-placeholder="开始日期"-->
+          <!--              end-placeholder="结束日期"-->
+          <!--              :default-time="[new Date('1 00:00:00'), new Date('1 23:59:59')]"-->
+          <!--              style="width: 220px"-->
+          <!--            />-->
+          <!--          </el-form-item>-->
           <ElFormItem>
-<!--            <el-button @click="handleQuery"><Icon icon="ep:search" style="margin-right: 4px" /> 搜索</el-button>-->
-<!--            <el-button @click="resetQuery"><Icon icon="ep:refresh" style="margin-right: 4px" /> 重置</el-button>-->
-<!--            <el-button-->
-<!--              type="success"-->
-<!--              @click="openForm('create')"-->
-<!--              v-hasPermi="['waterdetection:sampling-assignment:create']"-->
-<!--            >-->
-<!--              <Icon icon="ep:plus" style="margin-right: 4px" /> 新增-->
-<!--            </el-button>-->
-<!--            <el-button-->
-<!--              type="warning"-->
-<!--              @click="handleExport"-->
-<!--              :loading="exportLoading"-->
-<!--              v-hasPermi="['waterdetection:sampling-assignment:export']"-->
-<!--            >-->
-<!--              <Icon icon="ep:download" style="margin-right: 4px" /> 导出-->
-<!--            </el-button>-->
+            <!--            <el-button @click="handleQuery"><Icon icon="ep:search" style="margin-right: 4px" /> 搜索</el-button>-->
+            <!--            <el-button @click="resetQuery"><Icon icon="ep:refresh" style="margin-right: 4px" /> 重置</el-button>-->
+            <!--            <el-button-->
+            <!--              type="success"-->
+            <!--              @click="openForm('create')"-->
+            <!--              v-hasPermi="['waterdetection:sampling-assignment:create']"-->
+            <!--            >-->
+            <!--              <Icon icon="ep:plus" style="margin-right: 4px" /> 新增-->
+            <!--            </el-button>-->
+            <!--            <el-button-->
+            <!--              type="warning"-->
+            <!--              @click="handleExport"-->
+            <!--              :loading="exportLoading"-->
+            <!--              v-hasPermi="['waterdetection:sampling-assignment:export']"-->
+            <!--            >-->
+            <!--              <Icon icon="ep:download" style="margin-right: 4px" /> 导出-->
+            <!--            </el-button>-->
             <!--  v-hasPermi="['waterdetection:sampling-assignment:assignment']"-->
-            <ElButton
-              type="primary"
-              @click="handleCreate()"
-            >
+            <ElButton type="primary" @click="handleCreate()">
               <Icon icon="ep:plus" style="margin-right: 4px" />
               分配采样人员
             </ElButton>
@@ -270,12 +277,27 @@ onMounted(() => {
 
       <!-- 列表：数据绑定不变 -->
       <ElCard shadow="never">
-        <ElTable v-loading="loading" :data="list" :stripe="true" :show-overflow-tooltip="true">
-          <ElTableColumn label="序号" align="center" type="index" :index="indexMethod" width="80" />
-<!--          <el-table-column label="序号" align="center" prop="id" />-->
+        <ElTable
+          v-loading="loading"
+          :data="list"
+          :stripe="true"
+          :show-overflow-tooltip="true"
+        >
+          <ElTableColumn
+            label="序号"
+            align="center"
+            type="index"
+            :index="indexMethod"
+            width="80"
+          />
+          <!--          <el-table-column label="序号" align="center" prop="id" />-->
           <ElTableColumn label="采样计划编号" align="center" prop="planCode" />
           <ElTableColumn label="采样点清单" align="center" prop="pointList" />
-          <ElTableColumn label="负责人员" align="center" prop="responsiblePerson" />
+          <ElTableColumn
+            label="负责人员"
+            align="center"
+            prop="responsiblePerson"
+          />
           <ElTableColumn
             label="分配时间"
             align="center"
@@ -291,40 +313,36 @@ onMounted(() => {
             width="180px"
           />
           <ElTableColumn label="联系方式" align="center" prop="contactInfo" />
-<!--          <el-table-column-->
-<!--            label="创建时间"-->
-<!--            align="center"-->
-<!--            prop="createTime"-->
-<!--            :formatter="dateFormatter"-->
-<!--            width="180px"-->
-<!--          />-->
+          <!--          <el-table-column-->
+          <!--            label="创建时间"-->
+          <!--            align="center"-->
+          <!--            prop="createTime"-->
+          <!--            :formatter="dateFormatter"-->
+          <!--            width="180px"-->
+          <!--          />-->
           <ElTableColumn label="操作" align="center" min-width="120px">
             <template #default="scope">
-<!--              <el-button-->
-<!--                link-->
-<!--                type="primary"-->
-<!--                @click="openForm('update', scope.row.id)"-->
-<!--                v-hasPermi="['waterdetection:sampling-assignment:update']"-->
-<!--              >-->
-<!--                编辑-->
-<!--              </el-button>-->
-<!--              v-hasPermi="['waterdetection:sampling-assignment:detail']"-->
-              <ElButton
-                link
-                type="primary"
-                @click="handleDetail(scope.row)"
-              >
+              <!--              <el-button-->
+              <!--                link-->
+              <!--                type="primary"-->
+              <!--                @click="openForm('update', scope.row.id)"-->
+              <!--                v-hasPermi="['waterdetection:sampling-assignment:update']"-->
+              <!--              >-->
+              <!--                编辑-->
+              <!--              </el-button>-->
+              <!--              v-hasPermi="['waterdetection:sampling-assignment:detail']"-->
+              <ElButton link type="primary" @click="handleDetail(scope.row)">
                 详情
               </ElButton>
-<!--              <el-button-->
-<!--                link-->
-<!--                type="danger"-->
-<!--                @click="handleDelete(scope.row.id)"-->
-<!--                v-hasPermi="['waterdetection:sampling-assignment:delete']"-->
-<!--              >-->
-<!--                删除-->
-<!--              </el-button>-->
-<!--              v-hasPermi="['waterdetection:sampling-assignment:cancel']"-->
+              <!--              <el-button-->
+              <!--                link-->
+              <!--                type="danger"-->
+              <!--                @click="handleDelete(scope.row.id)"-->
+              <!--                v-hasPermi="['waterdetection:sampling-assignment:delete']"-->
+              <!--              >-->
+              <!--                删除-->
+              <!--              </el-button>-->
+              <!--              v-hasPermi="['waterdetection:sampling-assignment:cancel']"-->
               <ElButton
                 link
                 type="danger"
@@ -360,14 +378,13 @@ onMounted(() => {
       :select-process-definition="selectProcessDefinition"
       @cancel="handleProcessCancel"
     />
-
   </div>
 </template>
 
 <style scoped>
 .sampling-assignment-container {
+  box-sizing: border-box;
   min-height: 100vh;
   padding: 16px;
-  box-sizing: border-box;
 }
 </style>

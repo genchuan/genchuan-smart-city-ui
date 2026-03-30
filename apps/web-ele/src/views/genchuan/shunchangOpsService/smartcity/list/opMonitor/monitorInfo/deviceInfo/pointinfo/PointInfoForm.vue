@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { reactive, ref } from 'vue';
+
 import {
   ElButton,
   ElDialog,
@@ -7,7 +9,6 @@ import {
   ElInput,
   ElMessage,
 } from 'element-plus';
-import { reactive, ref } from 'vue';
 
 import { PointInfoApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/opMonitor/monitorInfo/deviceInfo/pointinfo';
 
@@ -31,7 +32,9 @@ const formData = ref({
   deviceInfo: undefined,
 });
 const formRules = reactive({
-  pointNumber: [{ required: true, message: '点位编号不能为空', trigger: 'blur' }],
+  pointNumber: [
+    { required: true, message: '点位编号不能为空', trigger: 'blur' },
+  ],
   pointName: [{ required: true, message: '点位名称不能为空', trigger: 'blur' }],
 });
 const formRef = ref(); // 表单 Ref
@@ -117,10 +120,16 @@ const resetForm = () => {
         <ElInput v-model="formData.pointType" placeholder="请输入点位类型" />
       </ElFormItem>
       <ElFormItem label="所属区域" prop="belongingArea">
-        <ElInput v-model="formData.belongingArea" placeholder="请输入所属区域" />
+        <ElInput
+          v-model="formData.belongingArea"
+          placeholder="请输入所属区域"
+        />
       </ElFormItem>
       <ElFormItem label="经纬度坐标" prop="latitudeLongitudeCoordinate">
-        <ElInput v-model="formData.latitudeLongitudeCoordinate" placeholder="请输入经纬度坐标" />
+        <ElInput
+          v-model="formData.latitudeLongitudeCoordinate"
+          placeholder="请输入经纬度坐标"
+        />
       </ElFormItem>
       <ElFormItem label="海拔高度" prop="altitude">
         <ElInput v-model="formData.altitude" placeholder="请输入海拔高度" />

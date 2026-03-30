@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { reactive, ref } from 'vue';
+
 import {
   ElButton,
   ElDatePicker,
@@ -8,7 +10,6 @@ import {
   ElInput,
   ElMessage,
 } from 'element-plus';
-import { reactive, ref } from 'vue';
 
 import { TaskDispatchApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/taskdispatch';
 
@@ -33,10 +34,16 @@ const formData = ref({
 const formRules = reactive({
   taskCode: [{ required: true, message: '任务编号不能为空', trigger: 'blur' }],
   taskType: [{ required: true, message: '任务类型不能为空', trigger: 'blur' }],
-  testPoints: [{ required: true, message: '检测点清单不能为空', trigger: 'blur' }],
-  indicators: [{ required: true, message: '指标清单不能为空', trigger: 'blur' }],
+  testPoints: [
+    { required: true, message: '检测点清单不能为空', trigger: 'blur' },
+  ],
+  indicators: [
+    { required: true, message: '指标清单不能为空', trigger: 'blur' },
+  ],
   deadline: [{ required: true, message: '截止日期不能为空', trigger: 'blur' }],
-  dispatchDept: [{ required: true, message: '派发部门不能为空', trigger: 'blur' }],
+  dispatchDept: [
+    { required: true, message: '派发部门不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
@@ -114,7 +121,10 @@ const resetForm = () => {
         <ElInput v-model="formData.taskCode" placeholder="请输入任务编号" />
       </ElFormItem>
       <ElFormItem label="任务类型" prop="taskType">
-        <ElInput v-model="formData.taskType" placeholder="请输入任务类型(常规/应急)" />
+        <ElInput
+          v-model="formData.taskType"
+          placeholder="请输入任务类型(常规/应急)"
+        />
       </ElFormItem>
       <ElFormItem label="检测点清单" prop="testPoints">
         <ElInput v-model="formData.testPoints" placeholder="请输入检测点清单" />

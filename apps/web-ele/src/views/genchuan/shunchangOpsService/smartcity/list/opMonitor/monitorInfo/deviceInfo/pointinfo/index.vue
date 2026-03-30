@@ -1,23 +1,26 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
+
 import { confirm } from '@vben/common-ui';
-import { PointInfoApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/opMonitor/monitorInfo/deviceInfo/pointinfo';
-import download from '#/utils/genchuan/download';
-import { dateFormatter } from '#/utils/genchuan/formatTime';
+
+import { Icon } from '@iconify/vue';
 import {
-  ElMessage,
+  ElButton,
   ElCard,
-  ElTable,
-  ElTableColumn,
+  ElDatePicker,
   ElForm,
   ElFormItem,
   ElInput,
-  ElButton,
-  ElDatePicker,
+  ElMessage,
   ElPagination,
   ElSpace,
+  ElTable,
+  ElTableColumn,
 } from 'element-plus';
-import { Icon } from '@iconify/vue';
+
+import { PointInfoApi } from '#/api/genchuan/shunchangOpsService/smartcity/list/opMonitor/monitorInfo/deviceInfo/pointinfo';
+import download from '#/utils/genchuan/download';
+import { dateFormatter } from '#/utils/genchuan/formatTime';
 
 import PointInfoForm from './PointInfoForm.vue';
 
@@ -177,7 +180,11 @@ onMounted(() => {
         <ElTableColumn label="点位名称" align="center" prop="pointName" />
         <ElTableColumn label="点位类型" align="center" prop="pointType" />
         <ElTableColumn label="所属区域" align="center" prop="belongingArea" />
-        <ElTableColumn label="经纬度坐标" align="center" prop="latitudeLongitudeCoordinate" />
+        <ElTableColumn
+          label="经纬度坐标"
+          align="center"
+          prop="latitudeLongitudeCoordinate"
+        />
         <ElTableColumn label="海拔高度" align="center" prop="altitude" />
         <ElTableColumn label="设备信息" align="center" prop="deviceInfo" />
         <ElTableColumn

@@ -179,11 +179,11 @@ defineExpose({
 
     <!-- 第三方登录 -->
     <slot name="third-party-login">
-      <ThirdPartyLogin  @third-login="handleThirdLogin" />
+      <ThirdPartyLogin @third-login="handleThirdLogin" />
     </slot>
 
     <slot name="to-register">
-      <div  class="mt-3 text-center text-sm">
+      <div class="mt-3 text-center text-sm">
         {{ $t('authentication.accountTip') }}
         <span
           class="vben-link text-sm font-normal"
@@ -195,6 +195,6 @@ defineExpose({
     </slot>
 
     <!-- 萌新必读 -->
-    <DocLink  />
+    <DocLink />
   </div>
 </template>
