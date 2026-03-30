@@ -58,9 +58,14 @@ export function getGarbageTransferChartDashboard() {
   return requestClient.get('/envirhealth/garbage-transfer/chart/dashboard');
 }
 
-// 确认进站和取消预约
-export function updateTransferReserve(data) {
-  return requestClient.put('/envirhealth/transfer-reserve/update', data);
+// 取消预约
+export function cancelTransferReserve(id) {
+  return requestClient.post('/envirhealth/transfer-reserve/cancel', null, { params: { id } });
+}
+
+// 确认进站
+export function confirmTransferReserve(data) {
+  return requestClient.post('/envirhealth/transfer-reserve/confirm', data);
 }
 
 // 上报预警（创建）
@@ -73,9 +78,58 @@ export function updateTransferAlarm(data) {
   return requestClient.put('/envirhealth/transfer-alarm/update', data);
 }
 
+// 维护处理
+export function updateTransferMaintenance(data) {
+  return requestClient.put('/envirhealth/transfer-maintenance/update', data);
+}
+
 // 解除预警
 export function relieveTransferAlarm(id) {
   return requestClient.put('/envirhealth/transfer-alarm/relieve', null, { params: { id } });
+}
+
+// 暂停作业
+export function pauseTransferOperation(id, pauseStatusId) {
+  return requestClient.put('/envirhealth/transfer-operation/pause', null, {
+    params: {
+      id,
+      pauseStatusId
+    }
+  });
+}
+
+// 启动作业
+export function startTransferOperation(id) {
+  return requestClient.put('/envirhealth/transfer-operation/start', null, { params: { id } });
+}
+
+// 验收维护
+export function reviewTransferMaintenance(id, result) {
+  return requestClient.put('/envirhealth/transfer-maintenance/review', null, {
+    params: { id, result }
+  });
+}
+
+// 单个预约排号
+export function sortTransferReserve(data) {
+  return requestClient.post('/envirhealth/transfer-reserve/sort', data);
+}
+
+// 批量预约排号
+export function batchSortTransferReserve(data) {
+  return requestClient.post('/envirhealth/transfer-reserve/batch-sort', data);
+}
+
+// 转运归档
+export function completeTransferOperation(operationId) {
+  return requestClient.put('/envirhealth/transfer-operation/complete', null, {
+    params: { operationId }
+  });
+}
+
+// data.js 中新增
+export function getTransferReservePage(params) {
+  return request({ url: '/envirhealth/transfer-reserve/detail-page', method: 'get', params });
 }
 
 // 模拟垃圾转运站运营管理数据

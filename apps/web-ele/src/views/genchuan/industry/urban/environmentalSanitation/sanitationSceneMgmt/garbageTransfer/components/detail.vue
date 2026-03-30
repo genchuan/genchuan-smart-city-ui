@@ -4,11 +4,13 @@ import { useVbenDrawer } from '@vben/common-ui';
 
 const props = defineProps({
   detailObj: { type: Object, required: true, default: () => ({}) },
-  alarmList: { type: Array, default: () => [] }, // 新增：预警列表
+  alarmList: { type: Array, default: () => [] },
+  reserveList: { type: Array, default: () => [] },
+  maintenanceList: { type: Array, default: () => [] },
   title: { type: String, default: '' },
 });
 
-const { detailObj, title, alarmList } = toRefs(props);
+const { detailObj, title, alarmList, reserveList, maintenanceList } = toRefs(props);
 
 const drawerTitle = computed(() => {
   const name = detailObj.value?.name || detailObj.value?.toiletName || '转运站';
@@ -76,48 +78,37 @@ const currentProgressStatus = computed(() => detailObj.value?.progressStatus || 
 </script>
 
 <template>
-  <DetailDrawer :title="drawerTitle">
+  <DetailDrawer :title="drawerTitle" class="genchuan-detail-drawer">
     <div class="detail-card">
       <!-- 车辆待进站 -->
       <template v-if="currentProgressStatus === '车辆待进站'">
-        <div class="detail-section">🚛 车辆预约信息</div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">预约编号：</div>
-          <div class="detail-row-right">{{ detailObj.reserveId || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">车辆牌照：</div>
-          <div class="detail-row-right">{{ detailObj.licensePlate || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">垃圾品类：</div>
-          <div class="detail-row-right">{{ detailObj.garbageType || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">预计进站时间：</div>
-          <div class="detail-row-right">{{ detailObj.expectedTime || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">垃圾重量：</div>
-          <div class="detail-row-right">{{ detailObj.garbageWeight ?? '-' }}吨</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">预约状态：</div>
-          <div class="detail-row-right">{{ detailObj.reserveStatus || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">排序序号：</div>
-          <div class="detail-row-right">{{ detailObj.sortNo ?? '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">处理人员：</div>
-          <div class="detail-row-right">{{ detailObj.handler || '-' }}</div>
+        <div class="detail-section">🚛 预约信息列表</div>
+        <el-table :data="reserveList" border stripe style="width: 100%">
+          <el-table-column prop="reserveId" label="预约编号" min-width="150" />
+          <el-table-column prop="vehicleName" label="车辆牌照" min-width="120" />
+          <el-table-column prop="garbageTypeName" label="垃圾品类" min-width="120" />
+          <el-table-column prop="expectedTime" label="预计进站时间" min-width="180">
+            <template #default="{ row }">
+              {{ row.expectedTime ? new Date(row.expectedTime).toLocaleString() : '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="garbageWeight" label="垃圾重量(吨)" min-width="120" />
+          <el-table-column prop="reserveStatus" label="预约状态" min-width="100" />
+          <el-table-column prop="sortNo" label="排序序号" min-width="100" />
+          <el-table-column prop="handleName" label="处理人员" min-width="120" />
+        </el-table>
+        <div v-if="!reserveList || reserveList.length === 0" class="empty-tip">
+          暂无预约信息
         </div>
       </template>
 
       <!-- 作业进行中 / 已完成 / 已归档 共用作业信息模板 -->
       <template v-else-if="['作业进行中', '已完成', '已归档'].includes(currentProgressStatus)">
         <div class="detail-section">⚙️ 作业信息</div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">作业状态：</div>
+          <div class="detail-row-right">{{ detailObj.operationStatus || '-' }}</div>
+        </div>
         <div class="detail-card-row">
           <div class="detail-row-left">进站编号：</div>
           <div class="detail-row-right">{{ detailObj.operationId || '-' }}</div>
@@ -235,7 +226,6 @@ const currentProgressStatus = computed(() => detailObj.value?.progressStatus || 
           <el-table-column prop="handleStatus" label="处置状态" min-width="100" />
           <el-table-column prop="handleName" label="责任人" min-width="120" />
         </el-table>
-        <!-- 如果没有预警数据，显示提示 -->
         <div v-if="!alarmList || alarmList.length === 0" class="empty-tip">
           暂无预警信息
         </div>
@@ -243,46 +233,16 @@ const currentProgressStatus = computed(() => detailObj.value?.progressStatus || 
 
       <!-- 设备待维护 -->
       <template v-else-if="currentProgressStatus === '设备待维护'">
-        <div class="detail-section">🔧 设备维护信息</div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">维护编号：</div>
-          <div class="detail-row-right">{{ detailObj.maintenanceId || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">关联转运站：</div>
-          <div class="detail-row-right">{{ detailObj.transferName || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">设备名称：</div>
-          <div class="detail-row-right">{{ detailObj.equipmentName || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">维护周期：</div>
-          <div class="detail-row-right">{{ detailObj.maintenanceCycle || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">上次维护时间：</div>
-          <div class="detail-row-right">{{ detailObj.lastMaintenanceTime || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">维护内容：</div>
-          <div class="detail-row-right">{{ detailObj.maintenanceContent || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">责任人：</div>
-          <div class="detail-row-right">{{ detailObj.handler || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">维护状态：</div>
-          <div class="detail-row-right">{{ detailObj.maintenanceStatus || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">预计完成时间：</div>
-          <div class="detail-row-right">{{ detailObj.expectedCompleteTime || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">超时提醒：</div>
-          <div class="detail-row-right">{{ detailObj.isTimeout ? '是' : '否' }}</div>
+        <div class="detail-section">🔧 设备信息列表</div>
+        <el-table :data="maintenanceList" border stripe style="width: 100%">
+          <el-table-column prop="maintenanceId" label="维护编号" min-width="150" />
+          <el-table-column prop="equipmentName" label="设备名称" min-width="120" />
+          <el-table-column prop="maintenanceContent" label="维护内容" min-width="200" />
+          <el-table-column prop="maintenanceStatus" label="维护状态" min-width="100" />
+          <el-table-column prop="handleName" label="责任人" min-width="120" />
+        </el-table>
+        <div v-if="!maintenanceList || maintenanceList.length === 0" class="empty-tip">
+          暂无设备维护信息
         </div>
       </template>
 

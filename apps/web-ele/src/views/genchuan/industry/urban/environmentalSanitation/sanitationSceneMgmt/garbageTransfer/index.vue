@@ -24,7 +24,15 @@ import {
   relieveTransferAlarm,
   updateGarbageTransfer,
   updateTransferAlarm,
-  updateTransferReserve,
+  cancelTransferReserve,
+  updateTransferMaintenance,
+  pauseTransferOperation,
+  reviewTransferMaintenance,
+  sortTransferReserve,
+  batchSortTransferReserve,
+  startTransferOperation,
+  confirmTransferReserve,
+  completeTransferOperation,
 } from '#/api/genchuan/industry/urban/environmentalSanitation/sanitationSceneMgmt/garbageTransfer/data.js';
 
 import {
@@ -42,7 +50,6 @@ import {
   useAssignMaintenanceSchema,
   useAssignPersonSchema,
   useBatchArchiveSchema,
-  useBatchReserveSchema,
   useConfirmEntrySchema,
   useGarbageTransferFormSchema,
   useGarbageTransferSearchSchema,
@@ -50,9 +57,9 @@ import {
   usePauseOperationSchema,
   useReportAlarmSchema,
   useReReserveSchema,
-  useReserveNumberSchema,
   useReuseProfileSchema,
   useTransferArchiveSchema,
+  useBatchReserveNumberSchema,
 } from '#/api/genchuan/industry/urban/environmentalSanitation/sanitationSceneMgmt/garbageTransfer/form.js';
 
 const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
@@ -139,6 +146,8 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   alarmList: [],
+  reserveList: [],
+  maintenanceList: [],
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -147,12 +156,17 @@ const dataObj = reactive({
 });
 
 const checkedIds = ref([]);
+const checkedReserveIds = ref([]);
 
 const loadedOptions = reactive({
   area: [],
   user: [],
   operationStatus: [],
   equipment: [],
+  vehicle: [],
+  garbageType: [],
+  alarmType: [],
+  handleStatus: [],
 });
 
 const isApiTab = computed(() => activeName.value === '全部');
@@ -251,30 +265,42 @@ const [EditDrawer, editDrawerApi] = useVbenDrawer({
 });
 
 // ---------- 新增功能抽屉 ----------
-// 批量预约
-const [BatchReserveForm, batchReserveFormApi] = useVbenForm({
+// 批量预约排号（原批量预约改为批量排号）
+const [BatchReserveNumberForm, batchReserveNumberFormApi] = useVbenForm({
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 80},
   layout: 'horizontal',
-  schema: useBatchReserveSchema(),
+  schema: useBatchReserveNumberSchema(),
   showDefaultActions: false,
 });
-const [BatchReserveDrawer, batchReserveDrawerApi] = useVbenDrawer({
-  title: '批量预约',
-  appendToMain: true,
-  modal: false,
-  onCancel: () => batchReserveDrawerApi.close(),
+const [BatchReserveNumberModal, batchReserveNumberModalApi] = useVbenModal({
+  title: '批量预约排号',
+  onCancel: () => batchReserveNumberModalApi.close(),
   async onConfirm() {
-    const formValues = await batchReserveFormApi.getValues();
-    ElMessage.info('批量预约功能待实现');
-    batchReserveDrawerApi.close();
+    const formValues = await batchReserveNumberFormApi.getValues();
+    const data = batchReserveNumberModalApi.getData();
+    const ids = data?.ids;
+    if (!ids || ids.length === 0) {
+      ElMessage.error('请选择需要排号的预约记录');
+      return;
+    }
+    try {
+      await batchSortTransferReserve({
+        ids,
+        sortType: formValues.sortType,
+      });
+      ElMessage.success('批量排号成功');
+      handleRefresh();
+      batchReserveNumberModalApi.close();
+    } catch (error) {
+      console.error('批量排号失败', error);
+      ElMessage.error('批量排号失败，请重试');
+    }
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
-      batchReserveFormApi.resetForm();
-      batchReserveFormApi.updateSchema([
-        {fieldName: 'vehicleIds', componentProps: {options: loadedOptions.vehicle || []}},
-        {fieldName: 'garbageTypeId', componentProps: {options: loadedOptions.garbageType || []}},
-      ]);
+      await batchReserveNumberFormApi.resetForm();
+      // 设置默认排序方式
+      await batchReserveNumberFormApi.setValues({sortType: 'EXPECTED_TIME'});
     }
   },
 });
@@ -298,25 +324,6 @@ const [BatchArchiveDrawer, batchArchiveDrawerApi] = useVbenDrawer({
   },
 });
 
-// 预约排号
-const [ReserveNumberForm, reserveNumberFormApi] = useVbenForm({
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 80},
-  layout: 'horizontal',
-  schema: useReserveNumberSchema(),
-  showDefaultActions: false,
-});
-const [ReserveNumberDrawer, reserveNumberDrawerApi] = useVbenDrawer({
-  title: '预约排号',
-  appendToMain: true,
-  modal: false,
-  onCancel: () => reserveNumberDrawerApi.close(),
-  async onConfirm() {
-    const formValues = await reserveNumberFormApi.getValues();
-    ElMessage.info('预约排号功能待实现');
-    reserveNumberDrawerApi.close();
-  },
-});
-
 // 确认进站
 const [ConfirmEntryForm, confirmEntryFormApi] = useVbenForm({
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 80},
@@ -329,7 +336,7 @@ const [ConfirmEntryModal, confirmEntryModalApi] = useVbenModal({
   onCancel: () => confirmEntryModalApi.close(),
   async onConfirm() {
     const formValues = await confirmEntryFormApi.getValues();
-    const rowData = confirmEntryModalApi.getData(); // 获取行数据
+    const rowData = confirmEntryModalApi.getData();
 
     if (!rowData || !rowData.reserveId || !rowData.id) {
       ElMessage.error('缺少必要参数，请重试');
@@ -368,7 +375,7 @@ const [RealTimeMonitorDrawer, realTimeMonitorDrawerApi] = useVbenDrawer({
   onCancel: () => realTimeMonitorDrawerApi.close(),
 });
 
-// 暂停作业
+// 暂停作业（已改为确认框，但保留抽屉以防其他地方使用，实际不再使用）
 const [PauseOperationForm, pauseOperationFormApi] = useVbenForm({
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 80},
   layout: 'horizontal',
@@ -382,7 +389,7 @@ const [PauseOperationDrawer, pauseOperationDrawerApi] = useVbenDrawer({
   onCancel: () => pauseOperationDrawerApi.close(),
   async onConfirm() {
     const formValues = await pauseOperationFormApi.getValues();
-    ElMessage.info('暂停作业功能待实现');
+    ElMessage.info('暂停作业功能已改用确认框');
     pauseOperationDrawerApi.close();
   },
 });
@@ -408,7 +415,7 @@ const [ReportAlarmDrawer, reportAlarmDrawerApi] = useVbenDrawer({
     }
     try {
       await createTransferAlarm({
-        transferId: row.transferId,        // 使用业务ID
+        transferId: row.transferId,
         alarmTypeId: formValues.alarmTypeId,
         alarmContent: formValues.alarmContent,
         relevantInfo: formValues.relevantInfo,
@@ -431,34 +438,35 @@ const [ReportAlarmDrawer, reportAlarmDrawerApi] = useVbenDrawer({
   },
 });
 
-// 指派人员（通用）
+// 指派人员
 const [AssignPersonForm, assignPersonFormApi] = useVbenForm({
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 80},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 80 },
   layout: 'horizontal',
   schema: useAssignPersonSchema(),
   showDefaultActions: false,
 });
-const [AssignPersonDrawer, assignPersonDrawerApi] = useVbenDrawer({
+
+const [AssignPersonModal, assignPersonModalApi] = useVbenModal({
   title: '指派人员',
-  appendToMain: true,
-  modal: false,
-  onCancel: () => assignPersonDrawerApi.close(),
+  onCancel: () => assignPersonModalApi.close(),
   async onConfirm() {
     const formValues = await assignPersonFormApi.getValues();
-    const row = assignPersonDrawerApi.getData();
+    const row = assignPersonModalApi.getData(); // 获取行数据
+
     if (!row || !row.alarmId || !row.transferId) {
       ElMessage.error('缺少必要参数，请重试');
       return;
     }
+
     try {
       await updateTransferAlarm({
-        id: row.alarmId,
+        id: row.alarmId,           // 预警自增主键
         transferId: row.transferId,
-        handleBy: formValues.handlerId,
+        handleBy: formValues.handleBy, // 使用 handleBy 字段
       });
       ElMessage.success('指派成功');
       handleRefresh();
-      assignPersonDrawerApi.close();
+      assignPersonModalApi.close();
     } catch (error) {
       console.error('指派人员失败', error);
       ElMessage.error('指派人员失败，请重试');
@@ -466,9 +474,10 @@ const [AssignPersonDrawer, assignPersonDrawerApi] = useVbenDrawer({
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
-      assignPersonFormApi.resetForm();
-      assignPersonFormApi.updateSchema([
-        {fieldName: 'handlerId', componentProps: {options: loadedOptions.user}},
+      await assignPersonFormApi.resetForm();
+      // 更新人员选项（从 loadedOptions.user 获取）
+      await assignPersonFormApi.updateSchema([
+        { fieldName: 'handleBy', componentProps: { options: loadedOptions.user } },
       ]);
     }
   },
@@ -481,27 +490,85 @@ const [AssignMaintenanceForm, assignMaintenanceFormApi] = useVbenForm({
   schema: useAssignMaintenanceSchema(),
   showDefaultActions: false,
 });
-const [AssignMaintenanceDrawer, assignMaintenanceDrawerApi] = useVbenDrawer({
+const [AssignMaintenanceModal, assignMaintenanceModalApi] = useVbenModal({
   title: '指派维护',
-  appendToMain: true,
-  modal: false,
-  onCancel: () => assignMaintenanceDrawerApi.close(),
+  onCancel: () => assignMaintenanceModalApi.close(),
   async onConfirm() {
     const formValues = await assignMaintenanceFormApi.getValues();
-    ElMessage.info('指派维护功能待实现');
-    assignMaintenanceDrawerApi.close();
+    const row = assignMaintenanceModalApi.getData();
+
+    if (!row || !row.transferId) {
+      ElMessage.error('缺少转运站信息，请重试');
+      return;
+    }
+
+    const params = {
+      transferId: row.transferId,
+      equipmentId: row.equipmentId,
+      handleBy: formValues.repairBy,
+      expectedCompleteTime: formValues.expectedCompleteTime,
+      maintenanceStatus: '待维护',
+    };
+
+    if (row.maintenanceId) {
+      params.id = row.id;
+      params.maintenanceId = row.maintenanceId;
+    }
+
+    const formatTimestamp = (timestamp) => {
+      return timestamp ? new Date(timestamp).toISOString() : null;
+    };
+    params.expectedCompleteTime = formatTimestamp(params.expectedCompleteTime);
+
+    try {
+      await updateTransferMaintenance(params);
+      ElMessage.success('指派成功');
+      handleRefresh();
+      assignMaintenanceModalApi.close();
+    } catch (error) {
+      console.error('指派失败', error);
+      ElMessage.error('指派失败，请重试');
+    }
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
-      assignMaintenanceFormApi.resetForm();
-      assignMaintenanceFormApi.updateSchema([
+      const row = assignMaintenanceModalApi.getData();
+      await assignMaintenanceFormApi.resetForm();
+      await assignMaintenanceFormApi.updateSchema([
         {fieldName: 'repairBy', componentProps: {options: loadedOptions.user}},
       ]);
+
+      if (row && row.maintenanceId) {
+        try {
+          const res = await getTransferMaintenanceDetail({id: row.maintenanceId});
+          const detail = res.list?.[0] || res.data?.list?.[0];
+          if (detail) {
+            await assignMaintenanceFormApi.setValues({
+              repairBy: detail.handleBy,
+              expectedCompleteTime: detail.expectedCompleteTime,
+            });
+            row.id = detail.id;
+            row.maintenanceId = detail.maintenanceId;
+          }
+        } catch (error) {
+          console.error('获取维护详情失败', error);
+        }
+      } else {
+        await assignMaintenanceFormApi.setValues({
+          expectedCompleteTime: Date.now() + 7 * 24 * 3600 * 1000,
+        });
+      }
     }
   },
 });
 
 // 维护处理
+const currentMaintenance = reactive({
+  id: null,
+  maintenanceId: null,
+  transferId: null,
+  equipmentId: null,
+});
 const [MaintenanceProcessForm, maintenanceProcessFormApi] = useVbenForm({
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 80},
   layout: 'horizontal',
@@ -513,29 +580,143 @@ const [MaintenanceProcessDrawer, maintenanceProcessDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
   onCancel: () => maintenanceProcessDrawerApi.close(),
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      const row = maintenanceProcessDrawerApi.getData();
+      await maintenanceProcessFormApi.resetForm();
+      await maintenanceProcessFormApi.updateSchema([
+        {fieldName: 'equipmentId', componentProps: {options: loadedOptions.equipment}},
+      ]);
+
+      currentMaintenance.id = null;
+      currentMaintenance.maintenanceId = null;
+      currentMaintenance.transferId = row.transferId;
+      currentMaintenance.equipmentId = row.equipmentId;
+
+      if (row && row.maintenanceId) {
+        try {
+          const res = await getTransferMaintenanceDetail({id: row.maintenanceId});
+          const detail = res.list?.[0] || res.data?.list?.[0];
+          if (detail) {
+            currentMaintenance.id = detail.id;
+            currentMaintenance.maintenanceId = detail.maintenanceId;
+
+            await maintenanceProcessFormApi.setValues({
+              equipmentId: detail.equipmentId,
+              maintenanceContent: detail.maintenanceContent,
+              maintenanceStatus: detail.maintenanceStatus,
+              maintenanceTime: detail.maintenanceTime,
+              replaceParts: detail.replaceParts,
+              maintenanceCost: detail.maintenanceCost,
+              abnormalIsTimeout: detail.abnormalIsTimeout,
+            });
+          }
+        } catch (error) {
+          console.error('获取维护详情失败', error);
+        }
+      } else {
+        await maintenanceProcessFormApi.setValues({
+          maintenanceStatus: '维护中',
+        });
+      }
+    }
+  },
   async onConfirm() {
     const formValues = await maintenanceProcessFormApi.getValues();
-    ElMessage.info('维护处理功能待实现');
-    maintenanceProcessDrawerApi.close();
+
+    if (!currentMaintenance.transferId) {
+      ElMessage.error('缺少转运站信息，请重试');
+      return;
+    }
+
+    const params = {
+      transferId: currentMaintenance.transferId,
+      equipmentId: formValues.equipmentId,
+      maintenanceContent: formValues.maintenanceContent,
+      maintenanceStatus: formValues.maintenanceStatus,
+      maintenanceTime: formValues.maintenanceTime,
+      replaceParts: formValues.replaceParts,
+      maintenanceCost: formValues.maintenanceCost,
+      abnormalIsTimeout: formValues.abnormalIsTimeout,
+    };
+
+    if (currentMaintenance.maintenanceId) {
+      params.id = currentMaintenance.id;
+      params.maintenanceId = currentMaintenance.maintenanceId;
+    }
+
+    const formatTimestamp = (timestamp) => {
+      return timestamp ? new Date(timestamp).toISOString() : null;
+    };
+    params.maintenanceTime = formatTimestamp(params.maintenanceTime);
+
+    try {
+      await updateTransferMaintenance(params);
+      ElMessage.success('保存成功');
+      handleRefresh();
+      maintenanceProcessDrawerApi.close();
+    } catch (error) {
+      console.error('保存失败', error);
+      ElMessage.error('保存失败，请重试');
+    }
   },
 });
 
 // 验收维护
+const currentAcceptMaintenanceId = ref(null);
+
 const [AcceptMaintenanceForm, acceptMaintenanceFormApi] = useVbenForm({
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 80},
   layout: 'horizontal',
   schema: useAcceptMaintenanceSchema(),
   showDefaultActions: false,
 });
-const [AcceptMaintenanceDrawer, acceptMaintenanceDrawerApi] = useVbenDrawer({
+
+const [AcceptMaintenanceModal, acceptMaintenanceModalApi] = useVbenModal({
   title: '验收维护',
-  appendToMain: true,
-  modal: false,
-  onCancel: () => acceptMaintenanceDrawerApi.close(),
+  onCancel: () => acceptMaintenanceModalApi.close(),
   async onConfirm() {
     const formValues = await acceptMaintenanceFormApi.getValues();
-    ElMessage.info('验收维护功能待实现');
-    acceptMaintenanceDrawerApi.close();
+    if (!currentAcceptMaintenanceId.value) {
+      ElMessage.error('维护记录ID缺失，请重新打开');
+      return;
+    }
+    try {
+      await reviewTransferMaintenance(currentAcceptMaintenanceId.value, formValues.result);
+      ElMessage.success('验收成功');
+      handleRefresh();
+      acceptMaintenanceModalApi.close();
+    } catch (error) {
+      console.error('验收失败', error);
+      ElMessage.error('验收失败，请重试');
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      const row = acceptMaintenanceModalApi.getData();
+      await acceptMaintenanceFormApi.resetForm();
+      currentAcceptMaintenanceId.value = null;
+
+      if (row && row.maintenanceId) {
+        try {
+          const res = await getTransferMaintenanceDetail({id: row.maintenanceId});
+          const detail = res.list?.[0] || res.data?.list?.[0];
+          if (detail && detail.id) {
+            currentAcceptMaintenanceId.value = detail.id;
+          } else {
+            ElMessage.error('未找到维护记录详情');
+            acceptMaintenanceModalApi.close();
+          }
+        } catch (error) {
+          console.error('获取维护详情失败', error);
+          ElMessage.error('获取维护详情失败，请重试');
+          acceptMaintenanceModalApi.close();
+        }
+      } else {
+        ElMessage.error('缺少维护记录标识');
+        acceptMaintenanceModalApi.close();
+      }
+    }
   },
 });
 
@@ -651,8 +832,19 @@ const getTableData = async ({page}) => {
       counts.value.total = total;
       dataObj.total = total;
 
-      dataObj.list = listData.map(item => {
+      // 1. 基础转换（保留所有原始字段）
+      let processedList = listData.map(item => {
         const converted = convertGarbageTransferItem(item);
+        // 保留关联ID
+        if (item.maintenanceId) converted.maintenanceId = item.maintenanceId;
+        if (item.reserveId) converted.reserveId = item.reserveId;
+        if (item.operationId) converted.operationId = item.operationId;
+        // 初始化状态字段
+        converted.maintenanceStatus = null;
+        converted.reserveStatus = null;
+        converted.operationStatus = null;
+        converted.operationSelfId = null; // 作业自增主键
+        // 设备名称映射
         if (converted.equipmentIds && Array.isArray(converted.equipmentIds)) {
           converted.equipmentsName = converted.equipmentIds.map(id => {
             const option = loadedOptions.equipment.find(opt => opt.value === id);
@@ -664,6 +856,77 @@ const getTableData = async ({page}) => {
         return converted;
       });
 
+      // 2. 并发获取维护状态（设备待维护）
+      const rowsWithMaintenance = processedList.filter(row => row.maintenanceId);
+      if (rowsWithMaintenance.length) {
+        const maintenancePromises = rowsWithMaintenance.map(row =>
+          getTransferMaintenanceDetail({ id: row.maintenanceId })
+            .then(res => {
+              const detail = res.list?.[0] || res.data?.list?.[0];
+              return { maintenanceId: row.maintenanceId, detail };
+            })
+            .catch(error => {
+              console.error(`获取维护详情失败 (maintenanceId: ${row.maintenanceId})`, error);
+              return { maintenanceId: row.maintenanceId, detail: null };
+            })
+        );
+        const maintenanceResults = await Promise.all(maintenancePromises);
+        maintenanceResults.forEach(({ maintenanceId, detail }) => {
+          const targetRow = processedList.find(row => row.maintenanceId === maintenanceId);
+          if (targetRow && detail) {
+            targetRow.maintenanceStatus = detail.maintenanceStatus;
+          }
+        });
+      }
+
+      // 3. 并发获取预约状态（车辆待进站）
+      const rowsWithReserve = processedList.filter(row => row.reserveId);
+      if (rowsWithReserve.length) {
+        const reservePromises = rowsWithReserve.map(row =>
+          getTransferReserveDetail({ id: row.reserveId })
+            .then(res => {
+              const detail = res.list?.[0] || res.data?.list?.[0];
+              return { reserveId: row.reserveId, detail };
+            })
+            .catch(error => {
+              console.error(`获取预约详情失败 (reserveId: ${row.reserveId})`, error);
+              return { reserveId: row.reserveId, detail: null };
+            })
+        );
+        const reserveResults = await Promise.all(reservePromises);
+        reserveResults.forEach(({ reserveId, detail }) => {
+          const targetRow = processedList.find(row => row.reserveId === reserveId);
+          if (targetRow && detail) {
+            targetRow.reserveStatus = detail.reserveStatus;
+          }
+        });
+      }
+
+      // 4. 并发获取作业状态（作业进行中）
+      const rowsWithOperation = processedList.filter(row => row.operationId);
+      if (rowsWithOperation.length) {
+        const operationPromises = rowsWithOperation.map(row =>
+          getTransferOperationDetail({ id: row.operationId })
+            .then(res => {
+              const detail = res.list?.[0] || res.data?.list?.[0];
+              return { operationId: row.operationId, detail };
+            })
+            .catch(error => {
+              console.error(`获取作业详情失败 (operationId: ${row.operationId})`, error);
+              return { operationId: row.operationId, detail: null };
+            })
+        );
+        const operationResults = await Promise.all(operationPromises);
+        operationResults.forEach(({ operationId, detail }) => {
+          const targetRow = processedList.find(row => row.operationId === operationId);
+          if (targetRow && detail) {
+            targetRow.operationStatus = detail.operationStatus;   // 运行/暂停
+            targetRow.operationSelfId = detail.id;               // 作业自增主键（用于启停接口）
+          }
+        });
+      }
+
+      dataObj.list = processedList;
       return dataObj;
     } catch (error) {
       console.error('获取数据失败', error);
@@ -673,6 +936,7 @@ const getTableData = async ({page}) => {
       return dataObj;
     }
   } else {
+    // 非全部标签页的模拟逻辑保持不变
     const allData = dataList();
     const filtered = allData.filter(v => v.status === activeName.value);
     dataObj.total = filtered.length;
@@ -695,9 +959,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridEvents: {
     checkboxAll: ({records}) => {
       checkedIds.value = records.map(item => item.id);
+      checkedReserveIds.value = records.map(item => item.reserveId).filter(id => id);
     },
     checkboxChange: ({records}) => {
       checkedIds.value = records.map(item => item.id);
+      checkedReserveIds.value = records.map(item => item.reserveId).filter(id => id);
     },
   },
   showSearchForm: false,
@@ -782,7 +1048,7 @@ async function handleExport() {
   }
 }
 
-// ---------- 详情数据转换函数（格式化时间、字段映射） ----------
+// ---------- 详情数据转换函数 ----------
 function transformReserveData(data) {
   if (!data) return null;
   return {
@@ -802,7 +1068,6 @@ function transformReserveData(data) {
 function transformOperationData(data, status) {
   if (!data) return null;
 
-  // 解析 equipmentStatus JSON 字符串为对象
   let equipmentStatusObj = {};
   if (data.equipmentStatus && typeof data.equipmentStatus === 'string') {
     try {
@@ -811,7 +1076,6 @@ function transformOperationData(data, status) {
     }
   }
 
-  // 将设备 ID 映射为设备名称
   const mappedEquipmentStatus = {};
   if (loadedOptions.equipment && loadedOptions.equipment.length) {
     Object.entries(equipmentStatusObj).forEach(([deviceId, status]) => {
@@ -820,7 +1084,6 @@ function transformOperationData(data, status) {
       mappedEquipmentStatus[deviceName] = status;
     });
   } else {
-    // 若选项未加载，则直接使用原始对象
     Object.assign(mappedEquipmentStatus, equipmentStatusObj);
   }
 
@@ -829,7 +1092,7 @@ function transformOperationData(data, status) {
     licensePlate: data.vehicleName,
     garbageType: data.garbageTypeName,
     relatedPoints: data.pointsName?.join('、') || '-',
-    equipmentStatus: mappedEquipmentStatus, // 使用映射后的对象
+    equipmentStatus: mappedEquipmentStatus,
     status: status,
     progressStatus: status,
     entryTime: data.entryTime ? new Date(data.entryTime).toLocaleString() : '-',
@@ -856,7 +1119,6 @@ function transformAlarmData(data) {
 function transformMaintenanceData(data) {
   if (!data) return null;
 
-  // 设备名称映射
   let equipmentName = data.equipmentName;
   if (equipmentName && loadedOptions.equipment.length) {
     const found = loadedOptions.equipment.find(opt => opt.value === equipmentName);
@@ -880,38 +1142,50 @@ function transformMaintenanceData(data) {
 const parkDetailDrawerRef = ref(null);
 
 async function handleOpenDetail(row) {
-  const loading = ElLoading.service({text: '加载详情中...'});
+  const loading = ElLoading.service({ text: '加载详情中...' });
   try {
     let detailData = null;
+    dataObj.alarmList = [];
+    dataObj.reserveList = [];
+    dataObj.maintenanceList = [];
 
     if (activeName.value === '全部') {
       const progressStatus = row.progressStatus;
 
-      if (progressStatus === '车辆待进站' && row.reserveId) {
-        const res = await getTransferReserveDetail({id: row.reserveId});
-        const rawData = res.list?.[0] || res.data?.list?.[0]; // 兼容两种结构
-        detailData = transformReserveData(rawData);
-      } else if (['作业进行中', '已完成', '已归档'].includes(progressStatus) && row.operationId) {
-        const res = await getTransferOperationDetail({id: row.operationId});
-        const rawData = res.list?.[0] || res.data?.list?.[0];
-        detailData = transformOperationData(rawData, progressStatus);
-      } else if (progressStatus === '预警待处理' && row.transferId) {
-        // 获取该转运站的所有预警列表
+      // 车辆待进站
+      if (progressStatus === '车辆待进站') {
+        const res = await getTransferReserveDetail({ transferId: row.transferId });
+        dataObj.reserveList = res.data?.list || res.list || [];
+        dataObj.detailObj = { ...row, progressStatus: '车辆待进站' };
+        parkDetailDrawerRef.value?.open();
+        loading.close();
+        return;
+      }
+      // 预警待处理
+      else if (progressStatus === '预警待处理') {
         const res = await getTransferAlarmDetail({ transferId: row.transferId });
         dataObj.alarmList = res.data?.list || res.list || [];
-        dataObj.detailObj = {
-          ...row,
-          progressStatus: '预警待处理',
-        };
+        dataObj.detailObj = { ...row, progressStatus: '预警待处理' };
         parkDetailDrawerRef.value?.open();
-        loading.close();   // 关闭加载提示
-        return;            // 直接返回，不再执行后续代码
-      } else if (progressStatus === '设备待维护' && row.maintenanceId) {
-        const res = await getTransferMaintenanceDetail({id: row.maintenanceId});
+        loading.close();
+        return;
+      }
+      // 作业进行中 / 已完成 / 已归档
+      else if (['作业进行中', '已完成', '已归档'].includes(progressStatus) && row.operationId) {
+        const res = await getTransferOperationDetail({ id: row.operationId });
         const rawData = res.list?.[0] || res.data?.list?.[0];
-        detailData = transformMaintenanceData(rawData);
-      } else {
-        console.warn('⚠️ 未匹配到任何状态或缺少ID，使用行数据作为详情');
+        detailData = transformOperationData(rawData, progressStatus);
+      }
+      // 设备待维护
+      else if (progressStatus === '设备待维护') {
+        const res = await getTransferMaintenanceDetail({ transferId: row.transferId });
+        dataObj.maintenanceList = res.data?.list || res.list || [];
+        dataObj.detailObj = { ...row, progressStatus: '设备待维护' };
+        parkDetailDrawerRef.value?.open();
+        loading.close();
+        return;
+      }
+      else {
         detailData = row;
       }
     } else {
@@ -940,31 +1214,60 @@ const toggleChart = () => {
 
 // 处理行内按钮（根据进度状态）
 function handleRowAction(row, action) {
-  const data = {...row};
   switch (action) {
     case 'reserveNumber':
-      reserveNumberDrawerApi.open();
+      confirm({
+        title: '预约排号',
+        content: '确定要对该预约进行排号吗？',
+      }).then(async () => {
+        if (!row.id) {
+          ElMessage.error('缺少预约记录标识');
+          return;
+        }
+        try {
+          await sortTransferReserve({ id: row.id });
+          ElMessage.success('排号成功');
+          handleRefresh();
+        } catch (error) {
+          console.error('排号失败', error);
+          ElMessage.error('排号失败，请重试');
+        }
+      }).catch(() => {
+        // 用户取消，不做任何操作
+      });
       break;
     case 'confirmEntry':
-      confirmEntryModalApi.setData(row).open();
+      confirm({
+        title: '确认进站',
+        content: '确定要确认进站吗？',
+      }).then(async () => {
+        if (!row.reserveId) {
+          ElMessage.error('缺少预约记录标识，请重试');
+          return;
+        }
+        try {
+          await confirmTransferReserve({ id: row.reserveId });
+          ElMessage.success('确认进站成功');
+          handleRefresh();
+        } catch (error) {
+          console.error('确认进站失败', error);
+          ElMessage.error('确认进站失败，请重试');
+        }
+      }).catch(() => {
+        // 用户取消，无需额外操作
+      });
       break;
     case 'cancelReserve':
-      // 弹出确认框
       confirm({
         title: '确认取消预约',
         content: '确定要取消预约吗？',
       }).then(async () => {
-        // 确认后的逻辑
-        if (!row.reserveId || !row.id) {
-          ElMessage.error('缺少必要参数，请重试');
+        if (!row.reserveId) {
+          ElMessage.error('缺少预约记录标识，请重试');
           return;
         }
         try {
-          await updateTransferReserve({
-            id: row.id,
-            reserveId: row.reserveId,
-            reserveStatus: '已取消',
-          });
+          await cancelTransferReserve(row.reserveId);
           ElMessage.success('取消预约成功');
           handleRefresh();
         } catch (error) {
@@ -977,7 +1280,36 @@ function handleRowAction(row, action) {
       realTimeMonitorDrawerApi.open();
       break;
     case 'pauseOperation':
-      pauseOperationDrawerApi.open();
+      confirm({
+        title: '确认暂停作业',
+        content: '确定要暂停当前作业吗？暂停后作业将无法继续，请谨慎操作。',
+      }).then(async () => {
+        try {
+          // 使用作业自增主键
+          await pauseTransferOperation(row.operationSelfId, 'uuid-plan-status-004');
+          ElMessage.success('作业已暂停');
+          handleRefresh();
+        } catch (error) {
+          console.error('暂停作业失败', error);
+          ElMessage.error('暂停作业失败，请重试');
+        }
+      }).catch(() => {});
+      break;
+    case 'resumeOperation':
+      confirm({
+        title: '确认启动作业',
+        content: '确定要恢复该作业吗？',
+      }).then(async () => {
+        try {
+          // 使用作业自增主键
+          await startTransferOperation(row.operationSelfId);
+          ElMessage.success('作业已启动');
+          handleRefresh();
+        } catch (error) {
+          console.error('启动作业失败', error);
+          ElMessage.error('启动作业失败，请重试');
+        }
+      });
       break;
     case 'reportAlarm':
       reportAlarmDrawerApi.setData(row).open();
@@ -1006,7 +1338,7 @@ function handleRowAction(row, action) {
       });
       break;
     case 'assignPerson':
-      assignPersonDrawerApi.setData(row).open();
+      assignPersonModalApi.setData(row).open();
       break;
     case 'releaseAlarm':
       confirm({
@@ -1028,16 +1360,32 @@ function handleRowAction(row, action) {
       });
       break;
     case 'assignMaintenance':
-      assignMaintenanceDrawerApi.open();
+      assignMaintenanceModalApi.setData(row).open();
       break;
     case 'maintenanceProcess':
-      maintenanceProcessDrawerApi.open();
+      maintenanceProcessDrawerApi.setData(row).open();
       break;
     case 'acceptMaintenance':
-      acceptMaintenanceDrawerApi.open();
+      acceptMaintenanceModalApi.setData(row).open();
       break;
     case 'transferArchive':
-      transferArchiveDrawerApi.open();
+      confirm({
+        title: '确认转运归档',
+        content: '确定要将该作业归档吗？归档后不可恢复。',
+      }).then(async () => {
+        if (!row.operationId) {
+          ElMessage.error('缺少作业ID，无法归档');
+          return;
+        }
+        try {
+          await completeTransferOperation(row.operationId);
+          ElMessage.success('转运归档成功');
+          handleRefresh();
+        } catch (error) {
+          console.error('转运归档失败', error);
+          ElMessage.error('转运归档失败，请重试');
+        }
+      });
       break;
     case 'exportRecord':
       exportToExcel([row], '作业记录', '作业记录.xlsx');
@@ -1128,6 +1476,8 @@ onMounted(async () => {
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
       :alarm-list="dataObj.alarmList"
+      :reserve-list="dataObj.reserveList"
+      :maintenance-list="dataObj.maintenanceList"
     />
 
     <!-- 搜索抽屉 -->
@@ -1136,15 +1486,12 @@ onMounted(async () => {
     </SearchDrawer>
 
     <!-- 新增功能抽屉 -->
-    <BatchReserveDrawer title="批量预约">
-      <BatchReserveForm/>
-    </BatchReserveDrawer>
+    <BatchReserveNumberModal title="批量预约排号">
+      <BatchReserveNumberForm/>
+    </BatchReserveNumberModal>
     <BatchArchiveDrawer title="批量归档">
       <BatchArchiveForm/>
     </BatchArchiveDrawer>
-    <ReserveNumberDrawer title="预约排号">
-      <ReserveNumberForm/>
-    </ReserveNumberDrawer>
     <ConfirmEntryModal title="确认进站">
       <ConfirmEntryForm/>
     </ConfirmEntryModal>
@@ -1157,18 +1504,18 @@ onMounted(async () => {
     <ReportAlarmDrawer title="上报预警">
       <ReportAlarmForm/>
     </ReportAlarmDrawer>
-    <AssignPersonDrawer title="指派人员">
+    <AssignPersonModal title="指派人员">
       <AssignPersonForm/>
-    </AssignPersonDrawer>
-    <AssignMaintenanceDrawer title="指派维护">
+    </AssignPersonModal>
+    <AssignMaintenanceModal title="指派维护">
       <AssignMaintenanceForm/>
-    </AssignMaintenanceDrawer>
+    </AssignMaintenanceModal>
     <MaintenanceProcessDrawer title="维护处理">
       <MaintenanceProcessForm/>
     </MaintenanceProcessDrawer>
-    <AcceptMaintenanceDrawer title="验收维护">
+    <AcceptMaintenanceModal title="验收维护">
       <AcceptMaintenanceForm/>
-    </AcceptMaintenanceDrawer>
+    </AcceptMaintenanceModal>
     <TransferArchiveDrawer title="转运归档">
       <TransferArchiveForm/>
     </TransferArchiveDrawer>
@@ -1198,9 +1545,8 @@ onMounted(async () => {
           <!-- 全部标签页：新增按钮 -->
           <IconButton v-if="activeName === '全部'" content="新增" icon-name="Plus"
                       @click="handleCreate"/>
-          <!-- 批量预约和批量归档按钮（全部标签页） -->
-          <IconButton v-if="activeName === '全部'" content="批量预约" icon-name="DocumentAdd"
-                      @click="batchReserveDrawerApi.open"/>
+          <IconButton v-if="activeName === '全部'" content="批量预约排号" icon-name="Sort"
+                      @click="batchReserveNumberModalApi.setData({ ids: checkedReserveIds.value }).open()"/>
           <IconButton v-if="activeName === '全部'" content="批量归档" icon-name="FolderOpened"
                       @click="batchArchiveDrawerApi.open"/>
           <IconButton content="导出" icon-name="download" @click="handleExport"/>
@@ -1243,7 +1589,7 @@ onMounted(async () => {
         </el-text>
       </template>
 
-      <!-- 其他状态钻取插槽（原样保留） -->
+      <!-- 其他状态钻取插槽 -->
       <template #reserveId="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary">{{ row.reserveId }}</el-text>
       </template>
@@ -1286,14 +1632,16 @@ onMounted(async () => {
       <!-- 操作列 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <!-- 详情按钮始终显示 -->
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
 
-          <!-- 全部标签页：根据流程状态显示不同按钮 -->
           <template v-if="activeName === '全部'">
             <template v-if="row.progressStatus === '车辆待进站'">
-              <IconButton content="预约排号" icon-name="Sort"
-                          @click="handleRowAction(row, 'reserveNumber')"/>
+              <IconButton
+                content="预约排号"
+                icon-name="Sort"
+                :disabled="row.reserveStatus !== '待排序'"
+                @click="handleRowAction(row, 'reserveNumber')"
+              />
               <IconButton content="确认进站" icon-name="Check"
                           @click="handleRowAction(row, 'confirmEntry')"/>
               <IconButton content="取消预约" icon-name="Close"
@@ -1302,8 +1650,15 @@ onMounted(async () => {
             <template v-else-if="row.progressStatus === '作业进行中'">
               <IconButton content="实时监控" icon-name="Monitor"
                           @click="handleRowAction(row, 'realTimeMonitor')"/>
-              <IconButton content="暂停作业" icon-name="VideoPause"
-                          @click="handleRowAction(row, 'pauseOperation')"/>
+              <!-- 根据作业状态显示不同按钮 -->
+              <template v-if="row.operationStatus === '运行'">
+                <IconButton content="暂停作业" icon-name="VideoPause"
+                            @click="handleRowAction(row, 'pauseOperation')"/>
+              </template>
+              <template v-else-if="row.operationStatus === '暂停'">
+                <IconButton content="启动作业" icon-name="VideoPlay"
+                            @click="handleRowAction(row, 'resumeOperation')"/>
+              </template>
               <IconButton content="上报预警" icon-name="Warning"
                           @click="handleRowAction(row, 'reportAlarm')"/>
             </template>
@@ -1321,11 +1676,16 @@ onMounted(async () => {
               <IconButton content="维护处理" icon-name="Edit"
                           @click="handleRowAction(row, 'maintenanceProcess')"/>
               <IconButton content="验收维护" icon-name="Finished"
+                          :disabled="row.maintenanceStatus !== '维护中'"
                           @click="handleRowAction(row, 'acceptMaintenance')"/>
             </template>
             <template v-else-if="row.progressStatus === '已完成'">
-              <IconButton content="转运归档" icon-name="FolderOpened"
-                          @click="handleRowAction(row, 'transferArchive')"/>
+              <IconButton
+                content="转运归档"
+                icon-name="FolderOpened"
+                :disabled="row.operationStatus === '归档'"
+                @click="handleRowAction(row, 'transferArchive')"
+              />
               <IconButton content="导出作业记录" icon-name="download"
                           @click="handleRowAction(row, 'exportRecord')"/>
               <IconButton content="重新预约" icon-name="Refresh"
@@ -1337,11 +1697,8 @@ onMounted(async () => {
               <IconButton content="删除归档" icon-name="delete" color="#F56C6C"
                           @click="handleDelete(row)"/>
             </template>
-
-            <!--            <IconButton content="编辑" icon-name="edit" @click="handleEdit(row)"/>-->
           </template>
 
-          <!-- 其他标签页：显示处理按钮（原样保留） -->
           <template v-else>
             <IconButton content="处理" icon-name="Checked" @click="handleProcess(row)"/>
           </template>

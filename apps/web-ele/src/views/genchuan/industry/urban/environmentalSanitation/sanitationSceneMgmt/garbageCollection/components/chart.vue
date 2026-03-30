@@ -1,5 +1,6 @@
 <script setup>
-import { reactive, onMounted } from 'vue';
+import { reactive, onMounted, ref, computed } from 'vue';
+import { ElSelect, ElOption } from 'element-plus';
 import {
   getGarbageCollectionStats,
   getGarbageTypeCircle,
@@ -31,6 +32,31 @@ const state = reactive({
     series: [],      // 完成率数值数组
   },
 });
+
+// 圆环图选项（基于原始数据生成）
+const pieOptions = computed(() => [
+  {
+    title: '收运品类占比',
+    data: state.pieData.type,
+  },
+  {
+    title: '计划状态占比',
+    data: state.pieData.status,
+  },
+  {
+    title: '区域分布占比',
+    data: state.pieData.area,
+  },
+]);
+
+// 当前选中的圆环图索引和数据
+const activePieIndex = ref(0);
+const currentPieData = computed(() => pieOptions.value[activePieIndex.value] || pieOptions.value[0]);
+
+// 切换圆环图
+const handlePieChange = (index) => {
+  activePieIndex.value = index;
+};
 
 // ----- 卡片数据（原逻辑，接口返回对象）-----
 const fetchStats = async () => {
@@ -147,30 +173,32 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 垃圾类型占比饼图 -->
-    <Pie
-      style="flex: 1 !important;"
-      title-text="收运品类占比"
-      :data="state.pieData.type"
-    />
+    <!-- 圆环图区域（带下拉切换） -->
+    <div class="pie-chart-area">
+      <div class="pie-select-wrapper">
+        <el-select
+          v-model="activePieIndex"
+          size="small"
+          @change="handlePieChange"
+        >
+          <el-option
+            v-for="(opt, idx) in pieOptions"
+            :key="idx"
+            :label="opt.title"
+            :value="idx"
+          />
+        </el-select>
+      </div>
+      <Pie
+        style="flex: 1 !important;"
+        :title-text="currentPieData.title"
+        :data="currentPieData.data"
+      />
+    </div>
 
-    <!-- 计划状态占比饼图 -->
-    <Pie
-      style="flex: 1 !important;"
-      title-text="计划状态占比"
-      :data="state.pieData.status"
-    />
-
-    <!-- 区域分布占比饼图 -->
-    <Pie
-      style="flex: 1 !important;"
-      title-text="区域分布占比"
-      :data="state.pieData.area"
-    />
-
-    <!-- 区域完成率柱状图 -->
+    <!-- 区域完成率柱状图（保持不变） -->
     <Bar
-      style="flex: 1 !important;"
+      style="flex: 1.5 !important;"
       title="不同区域收运完成率对比"
       :x-data="state.barData.x"
       :series-data="[{ name: '完成率', data: state.barData.series }]"
@@ -199,5 +227,20 @@ onMounted(() => {
       height: 150px !important;
     }
   }
+}
+
+/* 圆环图区域样式 */
+.pie-chart-area {
+  position: relative;
+  flex: 1;
+  min-width: 280px;
+  height: 100%;
+}
+
+.pie-select-wrapper {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 10;
 }
 </style>
