@@ -115,50 +115,19 @@ export function useGarbageTransferSearchSchema() {
 }
 
 // ---------- 新增弹窗表单 Schema（按需求补充） ----------
-
 // 批量预约弹窗
-export function useBatchReserveSchema() {
+export function useBatchReserveNumberSchema() {
   return [
     {
-      fieldName: 'vehicleIds',
-      label: '选择车辆',
+      fieldName: 'sortType',
+      label: '排序方式',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择车辆（可多选）',
-        multiple: true,
-        options: [],
-      },
-      labelWidth: '100',
-    },
-    {
-      fieldName: 'garbageTypeId',
-      label: '垃圾品类',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择垃圾品类',
-        options: [],
-      },
-      labelWidth: '100',
-    },
-    {
-      fieldName: 'expectedTime',
-      label: '预计进站时间',
-      component: 'DatePicker',
-      componentProps: {
-        type: 'datetime',
-        valueFormat: 'x',
-        placeholder: '选择预计进站时间',
-      },
-      labelWidth: '100',
-    },
-    {
-      fieldName: 'remark',
-      label: '备注',
-      component: 'Input',
-      componentProps: {
-        type: 'textarea',
-        rows: 2,
-        placeholder: '请输入备注',
+        options: [
+          { label: '按预计进站时间', value: 'EXPECTED_TIME' },
+          { label: '按垃圾品类+时间', value: 'GARBAGE_TYPE_TIME' },
+        ],
+        placeholder: '请选择排序方式',
       },
       labelWidth: '100',
     },
@@ -176,31 +145,6 @@ export function useBatchArchiveSchema() {
         type: 'textarea',
         rows: 3,
         placeholder: '请输入归档备注',
-      },
-    },
-  ];
-}
-
-// 预约排号弹窗
-export function useReserveNumberSchema() {
-  return [
-    {
-      fieldName: 'sortNo',
-      label: '排号序号',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入',
-        min: 1,
-      },
-    },
-    {
-      fieldName: 'remark',
-      label: '备注',
-      component: 'Input',
-      componentProps: {
-        type: 'textarea',
-        rows: 2,
-        placeholder: '请输入备注',
       },
     },
   ];
@@ -287,26 +231,16 @@ export function useReportAlarmSchema() {
   ];
 }
 
-// 指派人员弹窗（通用）
+// 指派人员弹窗
 export function useAssignPersonSchema() {
   return [
     {
-      fieldName: 'handlerId',
+      fieldName: 'handleBy',
       label: '指派人员',
       component: 'Select',
       componentProps: {
         placeholder: '请选择人员',
         options: [],
-      },
-    },
-    {
-      fieldName: 'remark',
-      label: '备注',
-      component: 'Input',
-      componentProps: {
-        type: 'textarea',
-        rows: 2,
-        placeholder: '请输入备注',
       },
     },
   ];
@@ -325,34 +259,33 @@ export function useAssignMaintenanceSchema() {
       },
       labelWidth: '100',
     },
-    {
-      fieldName: 'expectedCompleteTime',
-      label: '预计完成时间',
-      component: 'DatePicker',
-      componentProps: {
-        type: 'datetime',
-        valueFormat: 'x',
-        placeholder: '选择预计完成时间',
-      },
-      labelWidth: '100',
-    },
-    {
-      fieldName: 'remark',
-      label: '备注',
-      component: 'Input',
-      componentProps: {
-        type: 'textarea',
-        rows: 2,
-        placeholder: '请输入备注',
-      },
-      labelWidth: '100',
-    },
+    // {
+    //   fieldName: 'expectedCompleteTime',
+    //   label: '预计完成时间',
+    //   component: 'DatePicker',
+    //   componentProps: {
+    //     type: 'datetime',
+    //     valueFormat: 'x',
+    //     placeholder: '选择预计完成时间',
+    //   },
+    //   labelWidth: '100',
+    // },
   ];
 }
 
 // 维护处理弹窗
 export function useMaintenanceProcessSchema() {
   return [
+    {
+      fieldName: 'equipmentId',
+      label: '设备',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择设备',
+        options: [], // 动态从 loadedOptions.equipment 获取
+      },
+      labelWidth: '100',
+    },
     {
       fieldName: 'maintenanceContent',
       label: '维护内容',
@@ -362,19 +295,69 @@ export function useMaintenanceProcessSchema() {
         rows: 3,
         placeholder: '请输入维护内容',
       },
+      labelWidth: '100',
     },
     {
-      fieldName: 'handleResult',
-      label: '处理结果',
+      fieldName: 'maintenanceStatus',
+      label: '维护状态',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择处理结果',
+        placeholder: '请选择维护状态',
         options: [
-          { label: '已处理', value: '已处理' },
-          { label: '待验收', value: '待验收' },
+          { label: '待维护', value: '待维护' },
+          { label: '维护中', value: '维护中' },
+          { label: '已完成', value: '已完成' },
         ],
       },
+      labelWidth: '100',
     },
+    // {
+    //   fieldName: 'replaceParts',
+    //   label: '更换配件',
+    //   component: 'Input',
+    //   componentProps: {
+    //     placeholder: '请输入更换配件',
+    //   },
+    //   labelWidth: '100',
+    // },
+    // {
+    //   fieldName: 'maintenanceCost',
+    //   label: '维护费用（元）',
+    //   component: 'InputNumber',
+    //   componentProps: {
+    //     placeholder: '请输入费用',
+    //     min: 0,
+    //     precision: 2,
+    //   },
+    //   labelWidth: '100',
+    // },
+    // {
+    //   fieldName: 'maintenancePhoto',
+    //   label: '维护照片',
+    //   component: 'Upload',
+    //   componentProps: {
+    //     // 根据项目中的上传组件配置
+    //     action: '/api/upload',
+    //     listType: 'picture-card',
+    //     multiple: true,
+    //     // 处理返回值，存储为 JSON 数组
+    //   },
+    //   labelWidth: '100',
+    // },
+    {
+      fieldName: 'abnormalIsTimeout',
+      label: '超时提醒',
+      component: 'Select',
+      componentProps: {
+        placeholder: '是否超时',
+        options: [
+          { label: '是', value: '是' },
+          { label: '否', value: '否' },
+        ],
+      },
+      labelWidth: '100',
+    },
+    // maintenanceCycle 和 lastMaintenanceTime 通常由系统维护，可不展示
   ];
 }
 
@@ -382,7 +365,7 @@ export function useMaintenanceProcessSchema() {
 export function useAcceptMaintenanceSchema() {
   return [
     {
-      fieldName: 'acceptResult',
+      fieldName: 'result',
       label: '验收结果',
       component: 'RadioGroup',
       componentProps: {
@@ -392,16 +375,6 @@ export function useAcceptMaintenanceSchema() {
         ],
       },
       rules: 'required',
-    },
-    {
-      fieldName: 'acceptOpinion',
-      label: '验收意见',
-      component: 'Input',
-      componentProps: {
-        type: 'textarea',
-        rows: 3,
-        placeholder: '请输入验收意见',
-      },
     },
   ];
 }
