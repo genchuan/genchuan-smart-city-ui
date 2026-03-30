@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { reactive, ref } from 'vue';
+
 import {
   ElButton,
   ElDialog,
@@ -7,7 +9,6 @@ import {
   ElInput,
   ElMessage,
 } from 'element-plus';
-import { reactive, ref } from 'vue';
 
 import { WarningModelValidationApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/warningmodelvalidation';
 
@@ -32,25 +33,37 @@ const formData = ref({
 });
 const formRules = reactive({
   modelName: [{ required: true, message: '模型名称不能为空', trigger: 'blur' }],
-  validationPeriod: [{ required: true, message: '校验时间段不能为空', trigger: 'blur' }],
-  warningCount: [{ required: true, message: '预警次数不能为空', trigger: 'blur' }],
-  accurateWarningCount: [{ required: true, message: '准确预警次数不能为空', trigger: 'blur' }],
-  falseAlarmCount: [{ required: true, message: '误报次数不能为空', trigger: 'blur' }],
-  accuracyRate: [{ required: true, message: '准确率(%)不能为空', trigger: 'blur' }],
+  validationPeriod: [
+    { required: true, message: '校验时间段不能为空', trigger: 'blur' },
+  ],
+  warningCount: [
+    { required: true, message: '预警次数不能为空', trigger: 'blur' },
+  ],
+  accurateWarningCount: [
+    { required: true, message: '准确预警次数不能为空', trigger: 'blur' },
+  ],
+  falseAlarmCount: [
+    { required: true, message: '误报次数不能为空', trigger: 'blur' },
+  ],
+  accuracyRate: [
+    { required: true, message: '准确率(%)不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增预警模型校验' : '编辑预警模型校验';
+  dialogTitle.value =
+    type === 'create' ? '新增预警模型校验' : '编辑预警模型校验';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
   if (id) {
     formLoading.value = true;
     try {
-      formData.value = await WarningModelValidationApi.getWarningModelValidation(id);
+      formData.value =
+        await WarningModelValidationApi.getWarningModelValidation(id);
     } finally {
       formLoading.value = false;
     }
@@ -115,22 +128,37 @@ const resetForm = () => {
         <ElInput v-model="formData.modelName" placeholder="请输入模型名称" />
       </ElFormItem>
       <ElFormItem label="校验时间段" prop="validationPeriod">
-        <ElInput v-model="formData.validationPeriod" placeholder="请输入校验时间段" />
+        <ElInput
+          v-model="formData.validationPeriod"
+          placeholder="请输入校验时间段"
+        />
       </ElFormItem>
       <ElFormItem label="预警次数" prop="warningCount">
         <ElInput v-model="formData.warningCount" placeholder="请输入预警次数" />
       </ElFormItem>
       <ElFormItem label="准确预警次数" prop="accurateWarningCount">
-        <ElInput v-model="formData.accurateWarningCount" placeholder="请输入准确预警次数" />
+        <ElInput
+          v-model="formData.accurateWarningCount"
+          placeholder="请输入准确预警次数"
+        />
       </ElFormItem>
       <ElFormItem label="误报次数" prop="falseAlarmCount">
-        <ElInput v-model="formData.falseAlarmCount" placeholder="请输入误报次数" />
+        <ElInput
+          v-model="formData.falseAlarmCount"
+          placeholder="请输入误报次数"
+        />
       </ElFormItem>
       <ElFormItem label="准确率(%)" prop="accuracyRate">
-        <ElInput v-model="formData.accuracyRate" placeholder="请输入准确率(%)" />
+        <ElInput
+          v-model="formData.accuracyRate"
+          placeholder="请输入准确率(%)"
+        />
       </ElFormItem>
       <ElFormItem label="调整建议" prop="adjustmentSuggestion">
-        <ElInput v-model="formData.adjustmentSuggestion" placeholder="请输入调整建议" />
+        <ElInput
+          v-model="formData.adjustmentSuggestion"
+          placeholder="请输入调整建议"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

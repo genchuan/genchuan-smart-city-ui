@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { reactive, ref } from 'vue';
+
 import {
   ElButton,
   ElDatePicker,
@@ -8,7 +10,6 @@ import {
   ElInput,
   ElMessage,
 } from 'element-plus';
-import { reactive, ref } from 'vue';
 
 import { TestResultApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/testresult';
 
@@ -33,18 +34,25 @@ const formData = ref({
   equipmentCode: undefined,
 });
 const formRules = reactive({
-  sampleCode: [{ required: true, message: '样本编号不能为空', trigger: 'blur' }],
-  testIndicator: [{ required: true, message: '检测指标不能为空', trigger: 'blur' }],
+  sampleCode: [
+    { required: true, message: '样本编号不能为空', trigger: 'blur' },
+  ],
+  testIndicator: [
+    { required: true, message: '检测指标不能为空', trigger: 'blur' },
+  ],
   testValue: [{ required: true, message: '检测值不能为空', trigger: 'blur' }],
   unit: [{ required: true, message: '单位不能为空', trigger: 'blur' }],
-  testOperator: [{ required: true, message: '检测人员不能为空', trigger: 'blur' }],
+  testOperator: [
+    { required: true, message: '检测人员不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增检测结果录入' : '编辑检测结果录入';
+  dialogTitle.value =
+    type === 'create' ? '新增检测结果录入' : '编辑检测结果录入';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -117,7 +125,10 @@ const resetForm = () => {
         <ElInput v-model="formData.sampleCode" placeholder="请输入样本编号" />
       </ElFormItem>
       <ElFormItem label="检测指标" prop="testIndicator">
-        <ElInput v-model="formData.testIndicator" placeholder="请输入检测指标" />
+        <ElInput
+          v-model="formData.testIndicator"
+          placeholder="请输入检测指标"
+        />
       </ElFormItem>
       <ElFormItem label="检测值" prop="testValue">
         <ElInput v-model="formData.testValue" placeholder="请输入检测值" />
@@ -141,7 +152,10 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="设备编号" prop="equipmentCode">
-        <ElInput v-model="formData.equipmentCode" placeholder="请输入设备编号" />
+        <ElInput
+          v-model="formData.equipmentCode"
+          placeholder="请输入设备编号"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

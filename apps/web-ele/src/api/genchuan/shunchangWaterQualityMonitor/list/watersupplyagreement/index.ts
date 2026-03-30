@@ -2,15 +2,15 @@ import { requestClient } from '#/api/request';
 
 // 供水协议管理 VO
 export type WaterSupplyAgreementVO = {
-  id: number; // 序号
   agreementNo: string; // 协议编号
-  supplierName: string; // 供水单位
   consumerName: string; // 用水方
-  supplyScope: string; // 供水范围
-  waterPriceStandard: string; // 水价标准
+  id: number; // 序号
   responsibilityTerms: string; // 责任条款
   signDate: Date; // 签订日期
+  supplierName: string; // 供水单位
+  supplyScope: string; // 供水范围
   validDate: Date; // 有效期至
+  waterPriceStandard: string; // 水价标准
 };
 
 // 供水协议管理 API

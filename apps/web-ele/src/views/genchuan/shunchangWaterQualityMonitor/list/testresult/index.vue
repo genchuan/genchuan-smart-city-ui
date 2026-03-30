@@ -1,23 +1,26 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
+
 import { confirm } from '@vben/common-ui';
-import { TestResultApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/testresult';
-import download from '#/utils/genchuan/download';
-import { dateFormatter } from '#/utils/genchuan/formatTime';
+
+import { Icon } from '@iconify/vue';
 import {
-  ElMessage,
+  ElButton,
   ElCard,
-  ElTable,
-  ElTableColumn,
+  ElDatePicker,
   ElForm,
   ElFormItem,
   ElInput,
-  ElButton,
-  ElDatePicker,
+  ElMessage,
   ElPagination,
   ElSpace,
+  ElTable,
+  ElTableColumn,
 } from 'element-plus';
-import { Icon } from '@iconify/vue';
+
+import { TestResultApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/testresult';
+import download from '#/utils/genchuan/download';
+import { dateFormatter } from '#/utils/genchuan/formatTime';
 
 import TestResultForm from './TestResultForm.vue';
 
@@ -253,12 +256,7 @@ onMounted(() => {
           prop="testValue"
           min-width="100"
         />
-        <ElTableColumn
-          label="单位"
-          align="center"
-          prop="unit"
-          min-width="80"
-        />
+        <ElTableColumn label="单位" align="center" prop="unit" min-width="80" />
         <ElTableColumn
           label="检测方法"
           align="center"

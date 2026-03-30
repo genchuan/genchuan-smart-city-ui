@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { reactive, ref } from 'vue';
+
 import {
   ElButton,
   ElDatePicker,
@@ -8,7 +10,6 @@ import {
   ElInput,
   ElMessage,
 } from 'element-plus';
-import { reactive, ref } from 'vue';
 
 import { TestProgressApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/testprogress';
 
@@ -32,14 +33,17 @@ const formData = ref({
 });
 const formRules = reactive({
   taskCode: [{ required: true, message: '任务编号不能为空', trigger: 'blur' }],
-  progressPercent: [{ required: true, message: '当前进度(%)不能为空', trigger: 'blur' }],
+  progressPercent: [
+    { required: true, message: '当前进度(%)不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增检测进度跟踪' : '编辑检测进度跟踪';
+  dialogTitle.value =
+    type === 'create' ? '新增检测进度跟踪' : '编辑检测进度跟踪';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -110,13 +114,22 @@ const resetForm = () => {
         <ElInput v-model="formData.taskCode" placeholder="请输入任务编号" />
       </ElFormItem>
       <ElFormItem label="当前进度(%)" prop="progressPercent">
-        <ElInput v-model="formData.progressPercent" placeholder="请输入当前进度(%)" />
+        <ElInput
+          v-model="formData.progressPercent"
+          placeholder="请输入当前进度(%)"
+        />
       </ElFormItem>
       <ElFormItem label="已完成指标" prop="completedIndicators">
-        <ElInput v-model="formData.completedIndicators" placeholder="请输入已完成指标" />
+        <ElInput
+          v-model="formData.completedIndicators"
+          placeholder="请输入已完成指标"
+        />
       </ElFormItem>
       <ElFormItem label="未完成指标" prop="pendingIndicators">
-        <ElInput v-model="formData.pendingIndicators" placeholder="请输入未完成指标" />
+        <ElInput
+          v-model="formData.pendingIndicators"
+          placeholder="请输入未完成指标"
+        />
       </ElFormItem>
       <ElFormItem label="预计完成时间" prop="estimatedCompletion">
         <ElDatePicker
@@ -128,7 +141,10 @@ const resetForm = () => {
         />
       </ElFormItem>
       <ElFormItem label="延迟原因" prop="delayReason">
-        <ElInput v-model="formData.delayReason" placeholder="请输入延迟原因(如有)" />
+        <ElInput
+          v-model="formData.delayReason"
+          placeholder="请输入延迟原因(如有)"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

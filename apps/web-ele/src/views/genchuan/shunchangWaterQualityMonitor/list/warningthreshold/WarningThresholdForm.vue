@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { reactive, ref } from 'vue';
+
 import {
   ElButton,
   ElDatePicker,
@@ -8,7 +10,6 @@ import {
   ElInput,
   ElMessage,
 } from 'element-plus';
-import { reactive, ref } from 'vue';
 
 import { WarningThresholdApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/warningthreshold';
 
@@ -31,9 +32,15 @@ const formData = ref({
   effectiveTime: undefined,
 });
 const formRules = reactive({
-  indicatorName: [{ required: true, message: '指标名称不能为空', trigger: 'blur' }],
-  thresholdType: [{ required: true, message: '阈值类型不能为空', trigger: 'blur' }],
-  thresholdValue: [{ required: true, message: '阈值数值不能为空', trigger: 'blur' }],
+  indicatorName: [
+    { required: true, message: '指标名称不能为空', trigger: 'blur' },
+  ],
+  thresholdType: [
+    { required: true, message: '阈值类型不能为空', trigger: 'blur' },
+  ],
+  thresholdValue: [
+    { required: true, message: '阈值数值不能为空', trigger: 'blur' },
+  ],
   unit: [{ required: true, message: '单位不能为空', trigger: 'blur' }],
 });
 const formRef = ref(); // 表单 Ref
@@ -41,7 +48,8 @@ const formRef = ref(); // 表单 Ref
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增预警阈值管理' : '编辑预警阈值管理';
+  dialogTitle.value =
+    type === 'create' ? '新增预警阈值管理' : '编辑预警阈值管理';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -109,19 +117,31 @@ const resetForm = () => {
       v-loading="formLoading"
     >
       <ElFormItem label="指标名称" prop="indicatorName">
-        <ElInput v-model="formData.indicatorName" placeholder="请输入指标名称" />
+        <ElInput
+          v-model="formData.indicatorName"
+          placeholder="请输入指标名称"
+        />
       </ElFormItem>
       <ElFormItem label="阈值类型" prop="thresholdType">
-        <ElInput v-model="formData.thresholdType" placeholder="请输入阈值类型(上限/下限)" />
+        <ElInput
+          v-model="formData.thresholdType"
+          placeholder="请输入阈值类型(上限/下限)"
+        />
       </ElFormItem>
       <ElFormItem label="阈值数值" prop="thresholdValue">
-        <ElInput v-model="formData.thresholdValue" placeholder="请输入阈值数值" />
+        <ElInput
+          v-model="formData.thresholdValue"
+          placeholder="请输入阈值数值"
+        />
       </ElFormItem>
       <ElFormItem label="单位" prop="unit">
         <ElInput v-model="formData.unit" placeholder="请输入单位" />
       </ElFormItem>
       <ElFormItem label="适用场景" prop="applicableScene">
-        <ElInput v-model="formData.applicableScene" placeholder="请输入适用场景(如管网末梢)" />
+        <ElInput
+          v-model="formData.applicableScene"
+          placeholder="请输入适用场景(如管网末梢)"
+        />
       </ElFormItem>
       <ElFormItem label="生效时间" prop="effectiveTime">
         <ElDatePicker

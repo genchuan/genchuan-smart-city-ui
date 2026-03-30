@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { reactive, ref } from 'vue';
+
 import {
   ElButton,
   ElDialog,
@@ -7,7 +9,6 @@ import {
   ElInput,
   ElMessage,
 } from 'element-plus';
-import { reactive, ref } from 'vue';
 
 import { WarningIndicatorApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/warningindicator';
 
@@ -28,17 +29,26 @@ const formData = ref({
   dataSource: undefined,
 });
 const formRules = reactive({
-  indicatorName: [{ required: true, message: '预警指标名称不能为空', trigger: 'blur' }],
-  indicatorType: [{ required: true, message: '指标类型不能为空', trigger: 'blur' }],
-  relatedPointType: [{ required: true, message: '关联监测点类型不能为空', trigger: 'blur' }],
-  dataSource: [{ required: true, message: '数据来源不能为空', trigger: 'blur' }],
+  indicatorName: [
+    { required: true, message: '预警指标名称不能为空', trigger: 'blur' },
+  ],
+  indicatorType: [
+    { required: true, message: '指标类型不能为空', trigger: 'blur' },
+  ],
+  relatedPointType: [
+    { required: true, message: '关联监测点类型不能为空', trigger: 'blur' },
+  ],
+  dataSource: [
+    { required: true, message: '数据来源不能为空', trigger: 'blur' },
+  ],
 });
 const formRef = ref(); // 表单 Ref
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
   dialogVisible.value = true;
-  dialogTitle.value = type === 'create' ? '新增预警指标配置' : '编辑预警指标配置';
+  dialogTitle.value =
+    type === 'create' ? '新增预警指标配置' : '编辑预警指标配置';
   formType.value = type;
   resetForm();
   // 修改时，设置数据
@@ -104,16 +114,28 @@ const resetForm = () => {
       v-loading="formLoading"
     >
       <ElFormItem label="预警指标名称" prop="indicatorName">
-        <ElInput v-model="formData.indicatorName" placeholder="请输入预警指标名称" />
+        <ElInput
+          v-model="formData.indicatorName"
+          placeholder="请输入预警指标名称"
+        />
       </ElFormItem>
       <ElFormItem label="指标类型" prop="indicatorType">
-        <ElInput v-model="formData.indicatorType" placeholder="请输入指标类型(水质/设备)" />
+        <ElInput
+          v-model="formData.indicatorType"
+          placeholder="请输入指标类型(水质/设备)"
+        />
       </ElFormItem>
       <ElFormItem label="关联监测点类型" prop="relatedPointType">
-        <ElInput v-model="formData.relatedPointType" placeholder="请输入关联监测点类型(水源/水厂/管网)" />
+        <ElInput
+          v-model="formData.relatedPointType"
+          placeholder="请输入关联监测点类型(水源/水厂/管网)"
+        />
       </ElFormItem>
       <ElFormItem label="数据来源" prop="dataSource">
-        <ElInput v-model="formData.dataSource" placeholder="请输入数据来源(在线监测/人工检测)" />
+        <ElInput
+          v-model="formData.dataSource"
+          placeholder="请输入数据来源(在线监测/人工检测)"
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>

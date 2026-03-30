@@ -2,31 +2,29 @@ import { requestClient } from '#/api/request';
 
 // 检测人员信息管理 VO
 export type TestingPersonnelVO = {
-  id: number; // 序号
-  staffNo: string; // 人员编号
-  staffName: string; // 姓名
-  position: string; // 职称
-  certificateNo: string; // 资格证书编号
-  trainingRecord: string; // 培训记录
   agencyCode: string; // 所属机构编号
+  certificateNo: string; // 资格证书编号
+  id: number; // 序号
+  position: string; // 职称
+  staffName: string; // 姓名
+  staffNo: string; // 人员编号
+  trainingRecord: string; // 培训记录
 };
 
 // 检测人员信息管理 API
 export const TestingPersonnelApi = {
   // 查询检测人员信息管理分页
   getTestingPersonnelPage: async (params: any) => {
-    return await requestClient.get(
-      `/waterdetection/testing-personnel/page`,
-      { params },
-    );
+    return await requestClient.get(`/waterdetection/testing-personnel/page`, {
+      params,
+    });
   },
 
   // 查询检测人员信息管理详情
   getTestingPersonnel: async (id: number) => {
-    return await requestClient.get(
-      `/waterdetection/testing-personnel/get`,
-      { params: { id } },
-    );
+    return await requestClient.get(`/waterdetection/testing-personnel/get`, {
+      params: { id },
+    });
   },
 
   // 新增检测人员信息管理

@@ -1,23 +1,26 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
+
 import { confirm } from '@vben/common-ui';
-import { WarningThresholdApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/warningthreshold';
-import download from '#/utils/genchuan/download';
-import { dateFormatter } from '#/utils/genchuan/formatTime';
+
+import { Icon } from '@iconify/vue';
 import {
-  ElMessage,
+  ElButton,
   ElCard,
-  ElTable,
-  ElTableColumn,
+  ElDatePicker,
   ElForm,
   ElFormItem,
   ElInput,
-  ElButton,
-  ElDatePicker,
+  ElMessage,
   ElPagination,
   ElSpace,
+  ElTable,
+  ElTableColumn,
 } from 'element-plus';
-import { Icon } from '@iconify/vue';
+
+import { WarningThresholdApi } from '#/api/genchuan/shunchangWaterQualityMonitor/list/warningthreshold';
+import download from '#/utils/genchuan/download';
+import { dateFormatter } from '#/utils/genchuan/formatTime';
 
 import WarningThresholdForm from './WarningThresholdForm.vue';
 
@@ -233,12 +236,7 @@ onMounted(() => {
           prop="thresholdValue"
           min-width="100"
         />
-        <ElTableColumn
-          label="单位"
-          align="center"
-          prop="unit"
-          min-width="80"
-        />
+        <ElTableColumn label="单位" align="center" prop="unit" min-width="80" />
         <ElTableColumn
           label="适用场景"
           align="center"

@@ -2,14 +2,14 @@ import { requestClient } from '#/api/request';
 
 // 预警模型校验 VO
 export type WarningModelValidationVO = {
+  accuracyRate: number; // 准确率(%)
+  accurateWarningCount: number; // 准确预警次数
+  adjustmentSuggestion: string; // 调整建议
+  falseAlarmCount: number; // 误报次数
   id: number; // 序号
   modelName: string; // 模型名称
   validationPeriod: string; // 校验时间段
   warningCount: number; // 预警次数
-  accurateWarningCount: number; // 准确预警次数
-  falseAlarmCount: number; // 误报次数
-  accuracyRate: number; // 准确率(%)
-  adjustmentSuggestion: string; // 调整建议
 };
 
 // 预警模型校验 API
