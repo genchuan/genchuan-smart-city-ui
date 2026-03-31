@@ -154,4 +154,8 @@ export function exporStatusExcel() {
 /** 异常处置 */
 export function handleAbnormal(data) {
   return requestClient.put(`/vehiclecharging/status_monitor/handleAbnormal`, data);
+} 
+/** 处置 */
+export function dispose(data) {
+  return requestClient.put(`/vehiclecharging/status_monitor/handle`, data);
 }

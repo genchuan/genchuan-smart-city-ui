@@ -9,7 +9,7 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getDriveinList, exporStatusExcel, handleAbnormal } from '#/api/genchuan/industry/energyCharging/carCharging/statusMonitor/index.js';
+import { getDriveinList, exporStatusExcel, handleAbnormal,dispose } from '#/api/genchuan/industry/energyCharging/carCharging/statusMonitor/index.js';
 import {
   addEntNotice,
   deleteEntNotice,
@@ -527,6 +527,59 @@ const confirmAbnormalHandle = async () => {
     ElMessage.error(`提交失败：${error.message || '请稍后重试'}`);
   }
 };
+
+// 单个设备处置弹窗相关
+const disposeDialogVisible = ref(false);
+const disposeForm = reactive({
+  dispose_measure: '', // 处置措施
+});
+
+const disposeFormRules = reactive({
+  dispose_measure: [
+    { required: true, message: '请输入处置措施', trigger: 'blur' },
+    { min: 5, message: '处置措施长度不少于5个字', trigger: 'blur' },
+  ],
+});
+
+const disposeFormRef = ref(null);
+const currentDisposeRow = ref(null);
+
+const handelOpenDisposeDrawer = (row) => {
+  // 重置表单
+  disposeForm.dispose_measure = '';
+  disposeFormRef.value?.resetFields();
+  // 记录当前操作的行数据
+  currentDisposeRow.value = row;
+  // 打开弹窗
+  disposeDialogVisible.value = true;
+};
+
+const confirmDisposeHandle = async () => {
+  // 先校验表单
+  try {
+    await disposeFormRef.value.validate();
+  } catch {
+    // 表单校验失败，终止操作
+    ElMessage.warning('请完善处置措施后提交');
+    return;
+  }
+
+  try {
+    // 调用处置接口
+    await dispose({
+      id: currentDisposeRow.value.id,
+      dispose_measure: disposeForm.dispose_measure,
+    });
+    // 提示成功
+    ElMessage.success('处置操作已提交！');
+    // 关闭弹窗
+    disposeDialogVisible.value = false;
+    await handleRefresh();
+  } catch (error) {
+    // 接口调用失败处理
+    ElMessage.error(`提交失败：${error.message || '请稍后重试'}`);
+  }
+};
 </script>
 
 <template>
@@ -584,6 +637,34 @@ const confirmAbnormalHandle = async () => {
         <span class="dialog-footer">
           <el-button @click="abnormalDialogVisible = false">取消</el-button>
           <el-button type="primary" @click="confirmAbnormalHandle">确认提交</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 单个设备处置弹窗（包含处置措施输入） -->
+    <el-dialog
+      title="设备处置"
+      v-model="disposeDialogVisible"
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="disposeForm" :rules="disposeFormRules" ref="disposeFormRef" label-width="100px">
+        <el-form-item label="处置措施" prop="dispose_measure">
+          <el-input
+            type="textarea"
+            v-model="disposeForm.dispose_measure"
+            placeholder="请输入设备处置的具体措施（必填）"
+            rows="4"
+            maxlength="500"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="disposeDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="confirmDisposeHandle">确认提交</el-button>
         </span>
       </template>
     </el-dialog>
@@ -730,6 +811,11 @@ const confirmAbnormalHandle = async () => {
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools"> 
+          <IconButton
+            content="处置"
+            icon-name="bell"
+            @click="handelOpenDisposeDrawer(row)"
+          /> 
           <IconButton
             content="详情"
             icon-name="View"
