@@ -22,7 +22,7 @@ const { detailObj, title } = toRefs(props);
 
 // 计算属性处理标题，优先使用自定义标题，兜底显示设备编号
 const drawerTitle = computed(() => {
-  const deviceCode = detailObj.value?.device_code || '设备监测';
+  const deviceCode = detailObj.value?.deviceCode || '设备监测';
   return title.value || `${deviceCode}详情`;
 });
 
@@ -56,19 +56,19 @@ defineExpose({
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">设备编号:</div>
-        <div class="detail-row-right">{{ detailObj.device_code || '-' }}</div>
+        <div class="detail-row-right">{{ detailObj.deviceCode || '-' }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">所属场站:</div>
-        <div class="detail-row-right">{{ detailObj.station_name || '-' }}</div>
+        <div class="detail-row-right">{{ detailObj.stationName || '-' }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">所属车位:</div>
-        <div class="detail-row-right">{{ detailObj.lot_code || '-' }}</div>
+        <div class="detail-row-right">{{ detailObj.lotCode || '-' }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">设备类型:</div>
-        <div class="detail-row-right">{{ detailObj.device_type_name || '-' }}</div>
+        <div class="detail-row-right">{{ detailObj.deviceType || '-' }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">电压:</div>
@@ -84,35 +84,27 @@ defineExpose({
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">告警等级:</div>
-        <div class="detail-row-right">{{ detailObj.alarm_level_name || '-' }}</div>
+        <div class="detail-row-right">{{ detailObj.alarmLevel || '-' }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">监测状态:</div>
-        <div class="detail-row-right">{{ detailObj.monitor_status_name || '-' }}</div>
+        <div class="detail-row-right">{{ detailObj.monitorStatus || '-' }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">处置人员:</div>
-        <div class="detail-row-right">{{ detailObj.disposeUserName || '-' }}</div>
+        <div class="detail-row-right">{{ detailObj.disposeUser || '-' }}</div>
       </div>  
       <div class="detail-card-row">
         <div class="detail-row-left">处置时间:</div>
-        <div class="detail-row-right">{{ detailObj.dispose_time || '-' }}</div>
+        <div class="detail-row-right">{{ detailObj.disposeTime || '-' }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">监测时间:</div>
-        <div class="detail-row-right">{{ detailObj.monitor_time || '-' }}</div>
+        <div class="detail-row-right">{{ detailObj.monitorTime || '-' }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">创建人:</div>
         <div class="detail-row-right">{{ detailObj.createByName || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">创建时间:</div>
-        <div class="detail-row-right">{{ detailObj.create_time || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">更新时间:</div>
-        <div class="detail-row-right">{{ detailObj.update_time || '-' }}</div>
       </div>
     </div>
   </DetailDrawer>

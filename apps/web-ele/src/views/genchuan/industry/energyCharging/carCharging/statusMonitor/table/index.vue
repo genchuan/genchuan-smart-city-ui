@@ -10,7 +10,7 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getDriveinList, exporStatusExcel, handleAbnormal,dispose } from '#/api/genchuan/industry/energyCharging/carCharging/statusMonitor/index.js';
+import { getDriveinList, exporStatusExcel, handleAbnormal } from '#/api/genchuan/industry/energyCharging/carCharging/statusMonitor/index.js';
  
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
@@ -92,6 +92,8 @@ const getTableData = async (pageObj) => {
       ...v,
       auditTime: formatTimestamp(v.auditTime),
       createTime: formatTimestamp(v.createTime),
+      disposeTime: formatTimestamp(v.disposeTime),
+      monitorTime: formatTimestamp(v.monitorTime),
     };
   });
   return dataObj;
@@ -228,7 +230,7 @@ const confirmAbnormalHandle = async () => {
     // 调用异常处置接口
     await handleAbnormal({
       ids: checkedIds.value,
-      dispose_measure: abnormalForm.dispose_measure,
+      disposeMeasure: abnormalForm.dispose_measure,
     });
     // 提示成功
     ElMessage.success('异常处置操作已提交！');
@@ -279,20 +281,20 @@ const confirmDisposeHandle = async () => {
 
   try {
     // 调用处置接口
-    await dispose({
-      id: currentDisposeRow.value.id,
-      dispose_measure: disposeForm.dispose_measure,
+    await handleAbnormal({
+      ids: [currentDisposeRow.value.id],
+      disposeMeasure: disposeForm.dispose_measure,
     });
     // 提示成功
     ElMessage.success('处置操作已提交！');
     // 关闭弹窗
     disposeDialogVisible.value = false;
     await handleRefresh();
-  } catch (error) {
+  } catch (error) { 
     // 接口调用失败处理
-    ElMessage.error(`提交失败：${error.message || '请稍后重试'}`);
+    ElMessage.error(`提交失败：${error.msg || '请稍后重试'}`);
   }
-};
+}; 
 </script>
 
 <template>
@@ -404,7 +406,7 @@ const confirmDisposeHandle = async () => {
           class="common-align"
           type="primary"
         >
-          {{ row.device_code }}
+          {{ row.deviceCode }}
         </el-text>
       </template>
 
@@ -426,6 +428,11 @@ const confirmDisposeHandle = async () => {
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools"> 
+             <IconButton
+            content="刷新"
+            icon-name="refresh"
+            @click="handleRefresh(row)"
+          /> 
           <IconButton
             content="处置"
             icon-name="bell"

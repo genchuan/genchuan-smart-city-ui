@@ -2,7 +2,7 @@
 export function useFormSchema() {
   return [
     {
-      fieldName: 'device_code',
+      fieldName: 'deviceCode',
       label: '设备编号',
       component: 'Input',
       componentProps: {
@@ -11,7 +11,7 @@ export function useFormSchema() {
       rules: 'required'
     },
     {
-      fieldName: 'station_name',
+      fieldName: 'stationName',
       label: '所属场站',
       component: 'Input',
       componentProps: {
@@ -20,7 +20,7 @@ export function useFormSchema() {
       rules: 'required'
     },
     {
-      fieldName: 'lot_code',
+      fieldName: 'lotCode',
       label: '所属车位',
       component: 'Input',
       componentProps: {
@@ -29,7 +29,7 @@ export function useFormSchema() {
       rules: 'required'
     },
     {
-      fieldName: 'device_type',
+      fieldName: 'deviceType',
       label: '设备类型',
       component: 'Select',
       componentProps: {
@@ -69,7 +69,7 @@ export function useFormSchema() {
       rules: 'required'
     },
     {
-      fieldName: 'alarm_level',
+      fieldName: 'alarmLevel',
       label: '告警等级',
       component: 'Select',
       componentProps: {
@@ -83,7 +83,7 @@ export function useFormSchema() {
       rules: 'required'
     },
     {
-      fieldName: 'monitor_status',
+      fieldName: 'monitorStatus',
       label: '监测状态',
       component: 'Select',
       componentProps: {
@@ -98,7 +98,7 @@ export function useFormSchema() {
       rules: 'required'
     },
     {
-      fieldName: 'dispose_user',
+      fieldName: 'disposeUser',
       label: '处置人员',
       component: 'Input',
       componentProps: {
@@ -115,7 +115,7 @@ export function useFormSchema() {
       }
     },
     {
-      fieldName: 'dispose_measure',
+      fieldName: 'disposeMeasure',
       label: '处置措施',
       component: 'Input',
       componentProps: {
@@ -123,7 +123,7 @@ export function useFormSchema() {
       }
     },
     {
-      fieldName: 'dispose_time',
+      fieldName: 'disposeTime',
       label: '处置时间',
       component: 'DatePicker',
       componentProps: {
@@ -134,7 +134,7 @@ export function useFormSchema() {
       rules: 'required'
     },
     {
-      fieldName: 'monitor_time',
+      fieldName: 'monitorTime',
       label: '监测时间',
       component: 'DatePicker',
       componentProps: {
@@ -152,26 +152,26 @@ export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
     {
-      field: 'device_code',
+      field: 'deviceCode',
       title: '设备编号',
       minWidth: 120,
       sortable: true, 
       slots: { default: 'device_code' }
     },
     {
-      field: 'station_name',
+      field: 'stationName',
       title: '所属场站',
       minWidth: 200,
       sortable: true, 
     },
     {
-      field: 'lot_code',
+      field: 'lotCode',
       title: '所属车位',
       minWidth: 120,
       sortable: true, 
     },
     {
-      field: 'device_type_name',
+      field: 'deviceType',
       title: '设备类型',
       minWidth: 120,
       sortable: true, 
@@ -195,19 +195,19 @@ export function useGridColumns() {
       sortable: true // 无钻取
     },
     {
-      field: 'alarm_level_name',
+      field: 'alarmLevel',
       title: '告警等级',
       minWidth: 120,
       sortable: true, 
     },
     {
-      field: 'monitor_status_name',
+      field: 'monitorStatus',
       title: '监测状态',
       minWidth: 120,
       sortable: true, 
     },
     {
-      field: 'disposeUserName',
+      field: 'disposeUser',
       title: '处置人员',
       minWidth: 120,
       sortable: true, 
@@ -219,19 +219,19 @@ export function useGridColumns() {
       sortable: true // 无钻取
     },
     {
-      field: 'dispose_measure',
+      field: 'disposeMeasure',
       title: '处置措施',
       minWidth: 150,
       sortable: true // 无钻取
     },
     {
-      field: 'dispose_time',
+      field: 'disposeTime',
       title: '处置时间',
       minWidth: 180,
       sortable: true, 
     },
     {
-      field: 'monitor_time',
+      field: 'monitorTime',
       title: '监测时间',
       minWidth: 180,
       sortable: true, 
