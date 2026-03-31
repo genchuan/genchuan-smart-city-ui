@@ -5,6 +5,7 @@ import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
 
+import carchart from './table/chart.vue';
 const changeArrowStatus = () => {
   secondShow.value = !secondShow.value;
   tabArray.value.forEach((v) => {
@@ -24,6 +25,7 @@ const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
+    <carchart /> 
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
