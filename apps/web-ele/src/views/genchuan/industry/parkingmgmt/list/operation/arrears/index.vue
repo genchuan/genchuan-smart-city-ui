@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 
-import Table from './table/index.vue';
-import StatsVisualization from '#/components/stats/StatsVisualization.vue';
+import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
+
 import { getStatsDataByType } from './table/data';
+import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
 
@@ -19,21 +20,21 @@ const tabArray = ref([
     components: Table,
     showSecondary: true,
     secondShow: false,
-    type: 'arrears'
+    type: 'arrears',
   },
   {
     label: '追缴方式管理',
     components: Table,
     showSecondary: true,
     secondShow: false,
-    type: 'trace'
+    type: 'trace',
   },
   {
     label: '追缴结果管理',
     components: Table,
     showSecondary: true,
     secondShow: false,
-    type: 'result'
+    type: 'result',
   },
 ]);
 const activeName = ref('欠费记录管理');

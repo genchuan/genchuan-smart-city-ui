@@ -21,7 +21,7 @@ import {
   getUserSimpleList,
   getSubjectTypeSimpleList,
   getStatusSimpleList,
-} from '#/api/genchuan/dataHub/evaluation/system/subject.js';
+} from '#/api/genchuan/dataHub/evaluation/system/subjects/index.js';
 
 import subjectDetailDrawer from './detail.vue';
 import {
@@ -37,7 +37,9 @@ const props = defineProps({
   arrowShow: { type: Boolean, default: false },
   arrowState: { type: Boolean, default: false },
 });
-const emit = defineEmits(['arrow-change']);
+
+// 新增 refresh-chart 事件
+const emit = defineEmits(['arrow-change', 'refresh-chart']);
 
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
@@ -163,6 +165,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       }
       handleRefresh();
       fetchStatusCount();
+      emit('refresh-chart'); // 刷新图表
       formDrawerApi.close();
     } catch (error) {
       console.error('保存失败', error);
@@ -181,6 +184,7 @@ function handleRefresh() {
 
 /** 普通导出（按当前搜索条件，导出全部）- 前端生成 Excel */
 async function handleExport() {
+  // ... 原有代码保持不变 ...
   const loadingInstance = ElLoading.service({ text: '正在获取数据...' });
   try {
     // 构建查询参数（包含搜索条件 + 状态筛选）
@@ -263,6 +267,7 @@ async function handleExport() {
 
 /** 批量导出选中行（按列表字段导出，多 sheet Excel）- 直接从当前表格数据获取 */
 async function handleBatchExport() {
+  // ... 原有代码保持不变 ...
   if (checkedIds.value.length === 0) {
     ElMessage.warning('请至少选择一条数据');
     return;
@@ -346,6 +351,7 @@ async function handleDelete(row) {
     ElMessage.success($t('ui.actionMessage.deleteSuccess'));
     handleRefresh();
     fetchStatusCount();
+    emit('refresh-chart'); // 刷新图表
   } finally {
     loadingInstance.close();
   }
@@ -364,6 +370,7 @@ async function handleDisable(row) {
     ElMessage.success('已停用');
     handleRefresh();
     fetchStatusCount();
+    emit('refresh-chart'); // 刷新图表
   } finally {
     loadingInstance.close();
   }
@@ -382,6 +389,7 @@ async function handleEnable(row) {
     ElMessage.success('已启用');
     handleRefresh();
     fetchStatusCount();
+    emit('refresh-chart'); // 刷新图表
   } finally {
     loadingInstance.close();
   }
@@ -410,6 +418,7 @@ async function handleBatchStatusChange() {
     checkedIds.value = [];
     handleRefresh();
     fetchStatusCount();
+    emit('refresh-chart'); // 刷新图表
   } finally {
     loadingInstance.close();
   }
@@ -451,6 +460,7 @@ const changeTotalShow = () => {
 
 // 通用的列表格式化函数
 function formatList(list) {
+  // ... 原有代码保持不变 ...
   return (list || []).map(item => {
     try {
       let createTime = '-';
@@ -503,7 +513,7 @@ function formatList(list) {
       return {
         id: item.id,
         name: item.name || '数据异常',
-        statusId: item.statusId !== undefined ? Number(item.statusId) : undefined, // 同样处理
+        statusId: item.statusId !== undefined ? Number(item.statusId) : undefined,
         code: '-',
         subjectTypeName: '-',
         contactName: '-',
@@ -523,6 +533,7 @@ function formatList(list) {
 
 // 获取表格数据
 const getTableData = async ({ page }) => {
+  // ... 原有代码保持不变 ...
   const params = {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
@@ -667,6 +678,7 @@ function handleFileChange(file) {
 
 /** 前端生成导入模板 */
 async function handleDownloadTemplate() {
+  // ... 原有代码保持不变 ...
   const loadingInstance = ElLoading.service({ text: '生成模板中...' });
   try {
     const headers = importFields.map(field => field.label);
@@ -684,6 +696,7 @@ async function handleDownloadTemplate() {
       contactName: '张三',
       contactPhone: '13900139000',
       memberCount: 5,
+      memberNames: '王五、赵六、孙七',
       statusId: 1,
     };
     const exampleRow = importFields.map(field => {
@@ -755,6 +768,7 @@ async function submitImport() {
     importDialogVisible.value = false;
     handleRefresh();
     fetchStatusCount();
+    emit('refresh-chart'); // 刷新图表
     if (uploadRef.value) {
       uploadRef.value.clearFiles();
     }
@@ -769,7 +783,7 @@ async function submitImport() {
 // ---------- 钻取筛选功能 ----------
 /** 点击字段进行筛选 */
 function handleFieldClick(fieldName, value) {
-  // 如果是状态筛选，同时将标签页切换为“全部”，避免与状态标签页冲突
+  // ... 原有代码保持不变 ...
   if (fieldName === 'statusName') {
     activeName.value = '全部';
   }
@@ -801,6 +815,7 @@ onMounted(() => {
 </script>
 
 <template>
+  <!-- 模板内容完全保持不变，仅增加 @refresh-chart 的触发，模板无需修改 -->
   <div class="park-lot-table-new">
     <FormDrawer :title="getTitle">
       <Form />

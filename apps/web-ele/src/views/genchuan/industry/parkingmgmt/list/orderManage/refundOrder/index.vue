@@ -3,7 +3,7 @@ import { computed, ref } from 'vue';
 
 import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
 
-import StatsVisualization from '#/components/stats/StatsVisualization.vue';
+import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
 import Table from './table/index.vue';
 import { getStatsDataByTabType } from './table/data';
 

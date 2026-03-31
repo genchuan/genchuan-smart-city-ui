@@ -1,4 +1,4 @@
-import { maskPhone } from '#/utils/dataMask/index.js';
+import { maskPhone } from '#/utils/genchuan/dataMask/index.js';
 
 /** 区域数据映射 */
 export const regionMap = {

@@ -1,8 +1,8 @@
 <script setup>
 import { ref } from 'vue';
 
-// import standechart from './standechart.vue';
-// import Table from './table/index.vue';
+import standechart from './standechart.vue';
+import Table from './table/index.vue';
 import { ArrowUp, ArrowDown } from '@element-plus/icons-vue';
 
 import '#/components/page/index.scss';

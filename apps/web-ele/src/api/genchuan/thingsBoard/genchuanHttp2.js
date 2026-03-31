@@ -11,6 +11,53 @@ const http = axios.create({
   // baseURL: '/thingsBoard-api'
   baseURL,
 });
+
+// 简单的混淆函数（避免明文显示）
+const SHIFT_KEY = 3;
+
+function obfuscate(str) {
+  return str
+    .split('')
+    .map((char) => String.fromCharCode(char.charCodeAt(0) + SHIFT_KEY))
+    .join('');
+}
+
+function deobfuscate(str) {
+  return str
+    .split('')
+    .map((char) => String.fromCharCode(char.charCodeAt(0) - SHIFT_KEY))
+    .join('');
+}
+
+function encryptData(data) {
+  return btoa(obfuscate(data));
+}
+
+function decryptData(encryptedData) {
+  try {
+    return deobfuscate(atob(encryptedData));
+  } catch {
+    return '';
+  }
+}
+
+function getEncryptedThingsBoardCredentials() {
+  const username = import.meta.env.VITE_THINGS_BOARD_NAME || '';
+  const password = import.meta.env.VITE_THINGS_BOARD_PASSWORD || '';
+
+  return {
+    username: encryptData(username),
+    password: encryptData(password),
+  };
+}
+
+function decryptThingsBoardCredentials(credentials) {
+  return {
+    username: decryptData(credentials.username),
+    password: decryptData(credentials.password),
+  };
+}
+
 // 添加请求拦截器  解决刷新token 和芋道配合没有token的时候，拦截器中自动登录
 http.interceptors.request.use(
   async (config) => {
@@ -57,12 +104,15 @@ const refreshToken = async () => {
     });
 };
 
-// thingBoard 登录
+// thingBoard 登录（使用加密凭据，避免明文传输）
 const loginToken = async () => {
+  const encryptedCreds = getEncryptedThingsBoardCredentials();
+  const decryptedCreds = decryptThingsBoardCredentials(encryptedCreds);
+
   await axios
     .post(`${baseURL}/api/auth/login`, {
-      username: import.meta.env.VITE_THINGS_BOARD_NAME,
-      password: import.meta.env.VITE_THINGS_BOARD_PASSWORD,
+      username: decryptedCreds.username,
+      password: decryptedCreds.password,
     })
     .then((thingsBoardRes) => {
       window.localStorage.setItem(

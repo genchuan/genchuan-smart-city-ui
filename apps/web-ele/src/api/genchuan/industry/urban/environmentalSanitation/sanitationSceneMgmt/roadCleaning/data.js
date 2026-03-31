@@ -1,0 +1,571 @@
+import { baseRequestClient, requestClient } from '#/api/request';
+import { useAccessStore } from '@vben/stores';
+
+// 获取统计数据（用于头部 tab 计数）
+export function getCleaningStatistics() {
+  return requestClient.get('/envirhealth/road-cleaning/chart/statistics');
+}
+
+/**
+ * 分页查询道路清扫计划列表
+ */
+export function getRoadCleaningPage(params) {
+  return requestClient.get('/envirhealth/road-cleaning/detail-page', { params });
+}
+
+/**
+ * 创建道路清扫计划
+ */
+export function createRoadCleaning(data) {
+  return requestClient.post('/envirhealth/road-cleaning/create', data);
+}
+
+/**
+ * 更新道路清扫计划
+ */
+export function updateRoadCleaning(data) {
+  return requestClient.put('/envirhealth/road-cleaning/update', data);
+}
+
+/**
+ * 删除单个清扫计划
+ */
+export function deleteRoadCleaning(id) {
+  return requestClient.delete(`/envirhealth/road-cleaning/delete?id=${id}`);
+}
+
+/**
+ * 批量删除清扫计划
+ */
+export function deleteRoadCleaningBatch(ids) {
+  return requestClient.delete('/envirhealth/road-cleaning/delete-batch', { data: ids });
+}
+
+/**
+ * 导出清扫计划 Excel
+ */
+export async function exportRoadCleaningExcel(params) {
+  const accessStore = useAccessStore();
+  return await baseRequestClient.get('/envirhealth/road-cleaning/export-excel', {
+    params,
+    responseType: 'blob',
+    validateStatus: () => true,
+    headers: {
+      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
+    },
+  });
+}
+
+/**
+ * 分页查询问题列表
+ */
+export function getCleaningProblemPage(params) {
+  return requestClient.get('/envirhealth/cleaning-problem/detail-page', { params });
+}
+
+/**
+ * 创建问题
+ */
+export function createCleaningProblem(data) {
+  return requestClient.post('/envirhealth/cleaning-problem/create', data);
+}
+
+/**
+ * 更新问题
+ */
+export function updateCleaningProblem(data) {
+  return requestClient.put('/envirhealth/cleaning-problem/update', data);
+}
+
+/**
+ * 删除单个问题
+ */
+export function deleteCleaningProblem(id) {
+  return requestClient.delete(`/envirhealth/cleaning-problem/delete?id=${id}`);
+}
+
+/**
+ * 批量删除问题
+ */
+export function deleteCleaningProblemBatch(ids) {
+  return requestClient.delete('/envirhealth/cleaning-problem/delete-batch', { data: ids });
+}
+
+/**
+ * 导出问题 Excel
+ */
+export async function exportCleaningProblemExcel(params) {
+  const accessStore = useAccessStore();
+  return await baseRequestClient.get('/envirhealth/cleaning-problem/export-excel', {
+    params,
+    responseType: 'blob',
+    validateStatus: () => true,
+    headers: {
+      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
+    },
+  });
+}
+
+// 批量调整道路清扫计划
+export function batchAdjustRoadCleaning(data) {
+  return requestClient.put('/envirhealth/road-cleaning/batch-adjust', data);
+}
+
+// 批量处理道路清扫问题
+export function batchProcessCleaningProblem(data) {
+  return requestClient.post('/envirhealth/cleaning-problem/batch-process', data);
+}
+
+
+// 全状态统计
+export function getRoadCleaningChartAll() {
+  return requestClient.get('/envirhealth/road-cleaning/chart/all');
+}
+
+// 清扫待执行统计
+export function getRoadCleaningChartPending() {
+  return requestClient.get('/envirhealth/road-cleaning/chart/pending');
+}
+
+// 作业进行中统计
+export function getRoadCleaningChartExecuting() {
+  return requestClient.get('/envirhealth/road-cleaning/chart/executing');
+}
+
+// 问题待处置统计
+export function getCleaningProblemChartPending() {
+  return requestClient.get('/envirhealth/cleaning-problem/chart/pending');
+}
+
+// 质量待核查统计
+export function getRoadCleaningChartCheck() {
+  return requestClient.get('/envirhealth/road-cleaning/chart/check');
+}
+
+// 已完成统计
+export function getRoadCleaningChartCompleted() {
+  return requestClient.get('/envirhealth/road-cleaning/chart/completed');
+}
+
+/**
+ * 通用批量上传图片
+ */
+export function uploadImageBatch(formData) {
+  return requestClient.post('/envirhealth/file/upload-multiple-images', formData, {
+    headers: { 'Content-Type': undefined }
+  });
+}
+
+/**
+ * 通用删除图片
+ */
+export function deleteFile(fileUrl) {
+  return requestClient.delete('/envirhealth/file/delete-file', {
+    params: { fileUrl },
+  });
+}
+
+// 模拟道路清扫管理数据
+export const dataList = () => {
+  return [
+    // 全部状态下的示例数据，包含各个状态
+    {
+      id: '1',
+      planNo: 'QL-20250224-001',
+      roadName: '中山路',
+      area: '芗城区-巷口街道',
+      frequency: '每日两次',
+      timePeriod: '05:00-07:00,13:00-15:00',
+      staff: '张三、李四',
+      status: '清扫待执行',
+      qualityRate: null,
+      problemCount: 0,
+      attendanceRate: null,
+      // 清扫待执行特有字段
+      tool: '洗扫车、高压冲洗车',
+      standard: '一级道路清扫标准',
+      createBy: 'admin',
+      createTime: '2026-02-24 08:00:00',
+      updateTime: '2026-02-24 08:00:00',
+      isEffective: true,
+    },
+    {
+      id: '2',
+      planNo: 'QL-20250224-002',
+      roadName: '胜利路',
+      area: '龙文区-碧湖街道',
+      frequency: '每日一次',
+      timePeriod: '06:00-08:00',
+      staff: '王五',
+      status: '作业进行中',
+      qualityRate: null,
+      problemCount: 1,
+      attendanceRate: null,
+      // 作业进行中特有字段
+      checkinTime: '2026-02-24 06:05:00',
+      progress: 65,
+      operationStatus: '运行',
+      trackCoverage: '85%',
+      lastReportTime: '2026-02-24 09:30:00',
+      isAbnormal: false,
+    },
+    {
+      id: '3',
+      planNo: 'QL-20250224-003',
+      roadName: '迎宾大道',
+      area: '龙海区-石码镇',
+      frequency: '每日一次',
+      timePeriod: '07:00-09:00',
+      staff: '赵六',
+      status: '问题待处置',
+      qualityRate: null,
+      problemCount: 2,
+      attendanceRate: null,
+      // 问题待处置特有字段
+      problemId: 'WT001',
+      problemType: '路面污染',
+      location: '迎宾大道与人民路交叉口',
+      reportBy: '赵六',
+      reportTime: '2026-02-24 08:30:00',
+      desc: '路面有大量泥土，需紧急清理',
+      team: '应急处置组',
+      handleStatus: '待派发',
+      isTimeout: false,
+    },
+    {
+      id: '4',
+      planNo: 'QL-20250224-004',
+      roadName: '江滨路',
+      area: '长泰区-武安镇',
+      frequency: '每日两次',
+      timePeriod: '08:00-10:00,15:00-17:00',
+      staff: '陈七',
+      status: '质量待核查',
+      qualityRate: null,
+      problemCount: 0,
+      attendanceRate: null,
+      // 质量待核查特有字段
+      completeTime: '2026-02-24 17:30:00',
+      checkPhotoUrl: 'http://example.com/photo1.jpg,http://example.com/photo2.jpg',
+      tool: '洗扫车',
+      reviewStatus: '待核查',
+      reviewBy: null,
+      reviewTime: null,
+      reformRequire: null,
+    },
+    {
+      id: '5',
+      planNo: 'QL-20250223-001',
+      roadName: '腾飞路',
+      area: '漳浦县-绥安镇',
+      frequency: '每日一次',
+      timePeriod: '09:00-11:00',
+      staff: '刘八',
+      status: '已完成',
+      qualityRate: 98.5,
+      problemCount: 0,
+      attendanceRate: 100,
+      // 已完成特有字段
+      completeTime: '2026-02-23 11:30:00',
+      reviewResult: '达标',
+      problemHandleDesc: '无问题',
+      completionRate: 100,
+      problemHandleRate: 100,
+      statPeriod: '2026-02-23',
+    },
+    // 补充更多数据以覆盖各状态
+    {
+      id: '6',
+      planNo: 'QL-20250225-001',
+      roadName: '延安路',
+      area: '芗城区-南坑街道',
+      frequency: '每周三次',
+      timePeriod: '10:00-12:00',
+      staff: '郑九',
+      status: '清扫待执行',
+      qualityRate: null,
+      problemCount: 0,
+      attendanceRate: null,
+      tool: '清扫车',
+      standard: '二级道路清扫标准',
+      createBy: 'admin',
+      createTime: '2026-02-25 08:00:00',
+      updateTime: '2026-02-25 08:00:00',
+      isEffective: true,
+    },
+    {
+      id: '7',
+      planNo: 'QL-20250225-002',
+      roadName: '水仙大街',
+      area: '龙文区-步文街道',
+      frequency: '每日两次',
+      timePeriod: '05:30-07:30,14:00-16:00',
+      staff: '周十',
+      status: '作业进行中',
+      qualityRate: null,
+      problemCount: 0,
+      attendanceRate: null,
+      checkinTime: '2026-02-25 05:35:00',
+      progress: 40,
+      operationStatus: '运行',
+      trackCoverage: '70%',
+      lastReportTime: '2026-02-25 08:20:00',
+      isAbnormal: false,
+    },
+    {
+      id: '8',
+      planNo: 'QL-20250225-003',
+      roadName: '九龙大道',
+      area: '龙海区-海澄镇',
+      frequency: '每日一次',
+      timePeriod: '06:00-08:00',
+      staff: '吴一',
+      status: '问题待处置',
+      qualityRate: null,
+      problemCount: 1,
+      attendanceRate: null,
+      problemId: 'WT002',
+      problemType: '设备故障',
+      location: '九龙大道与迎宾路交叉口',
+      reportBy: '吴一',
+      reportTime: '2026-02-25 07:15:00',
+      desc: '洗扫车故障，无法作业',
+      team: '设备维修组',
+      handleStatus: '处置中',
+      isTimeout: true,
+    },
+    {
+      id: '9',
+      planNo: 'QL-20250225-004',
+      roadName: '金峰路',
+      area: '长泰区-武安镇',
+      frequency: '每日一次',
+      timePeriod: '08:00-10:00',
+      staff: '郑二',
+      status: '质量待核查',
+      qualityRate: null,
+      problemCount: 0,
+      attendanceRate: null,
+      completeTime: '2026-02-25 10:15:00',
+      checkPhotoUrl: 'http://example.com/photo3.jpg',
+      tool: '清扫车',
+      reviewStatus: '不达标',
+      reviewBy: '质检员',
+      reviewTime: '2026-02-25 10:30:00',
+      reformRequire: '路面有残留垃圾，需重新清扫',
+    },
+    {
+      id: '10',
+      planNo: 'QL-20250225-005',
+      roadName: '新华路',
+      area: '漳浦县-绥安镇',
+      frequency: '每周两次',
+      timePeriod: '13:00-15:00',
+      staff: '张三',
+      status: '已完成',
+      qualityRate: 100,
+      problemCount: 0,
+      attendanceRate: 100,
+      completeTime: '2026-02-25 15:10:00',
+      reviewResult: '达标',
+      problemHandleDesc: '无问题',
+      completionRate: 100,
+      problemHandleRate: 100,
+      statPeriod: '2026-02-25',
+    },
+    {
+      id: '11',
+      planNo: 'QL-20250226-001',
+      roadName: '北环路',
+      area: '龙文区-蓝田街道',
+      frequency: '每日一次',
+      timePeriod: '04:00-06:00',
+      staff: '李雷',
+      status: '清扫待执行',
+      qualityRate: null,
+      problemCount: 0,
+      attendanceRate: null,
+      tool: '洗扫车',
+      standard: '二级道路清扫标准',
+      createBy: 'admin',
+      createTime: '2026-02-26 08:00:00',
+      updateTime: '2026-02-26 08:00:00',
+      isEffective: true,
+      roadType: '主干道',
+      staffIds: ['011'],
+    },
+    {
+      id: '12',
+      planNo: 'QL-20250226-002',
+      roadName: '南环路',
+      area: '龙海区-东园镇',
+      frequency: '每周三次',
+      timePeriod: '09:00-11:00',
+      staff: '韩梅',
+      status: '清扫待执行',
+      qualityRate: null,
+      problemCount: 0,
+      attendanceRate: null,
+      tool: '清扫车',
+      standard: '三级道路清扫标准',
+      createBy: 'admin',
+      createTime: '2026-02-26 09:00:00',
+      updateTime: '2026-02-26 09:00:00',
+      isEffective: true,
+      roadType: '支路',
+      staffIds: ['012'],
+    },
+    {
+      id: '13',
+      planNo: 'QL-20250226-003',
+      roadName: '东环路',
+      area: '芗城区-通北街道',
+      frequency: '每日两次',
+      timePeriod: '05:00-07:00,16:00-18:00',
+      staff: '赵岩',
+      status: '作业进行中',
+      qualityRate: null,
+      problemCount: 0,
+      attendanceRate: null,
+      checkinTime: '2026-02-26 05:10:00',
+      progress: 55,
+      operationStatus: '运行',
+      trackCoverage: '90%',
+      lastReportTime: '2026-02-26 09:45:00',
+      isAbnormal: false,
+      staffIds: ['013'],
+    },
+    {
+      id: '14',
+      planNo: 'QL-20250226-004',
+      roadName: '西环路',
+      area: '长泰区-陈巷镇',
+      frequency: '每日一次',
+      timePeriod: '08:00-10:00',
+      staff: '孙丽',
+      status: '问题待处置',
+      qualityRate: null,
+      problemCount: 1,
+      attendanceRate: null,
+      problemId: 'WT003',
+      problemType: '绿化带垃圾',
+      location: '西环路与人民路交叉口',
+      reportBy: '孙丽',
+      reportTime: '2026-02-26 08:45:00',
+      desc: '绿化带有大量白色垃圾',
+      team: '绿化养护组',
+      handleStatus: '待派发',
+      isTimeout: false,
+      staffIds: ['014'],
+    },
+    {
+      id: '15',
+      planNo: 'QL-20250226-005',
+      roadName: '漳华路',
+      area: '漳浦县-石榴镇',
+      frequency: '每日一次',
+      timePeriod: '06:00-08:00',
+      staff: '周华',
+      status: '问题待处置',
+      qualityRate: null,
+      problemCount: 2,
+      attendanceRate: null,
+      problemId: 'WT004',
+      problemType: '路面污染',
+      location: '漳华路与迎宾路交叉口',
+      reportBy: '周华',
+      reportTime: '2026-02-26 07:30:00',
+      desc: '路面有油污',
+      team: '应急处置组',
+      handleStatus: '处置中',
+      isTimeout: true,
+      staffIds: ['015'],
+    },
+    {
+      id: '16',
+      planNo: 'QL-20250226-006',
+      roadName: '瑞京路',
+      area: '芗城区-西桥街道',
+      frequency: '每日一次',
+      timePeriod: '09:00-11:00',
+      staff: '吴迪',
+      status: '质量待核查',
+      qualityRate: null,
+      problemCount: 0,
+      attendanceRate: null,
+      completeTime: '2026-02-26 11:30:00',
+      checkPhotoUrl: 'http://example.com/photo4.jpg',
+      tool: '洗扫车',
+      reviewStatus: '待核查',
+      reviewBy: null,
+      reviewTime: null,
+      reformRequire: null,
+      reviewResult: '待核查',
+      staffIds: ['016'],
+    },
+    {
+      id: '17',
+      planNo: 'QL-20250226-007',
+      roadName: '钟法路',
+      area: '芗城区-东铺头街道',
+      frequency: '每日一次',
+      timePeriod: '08:00-10:00',
+      staff: '许晴',
+      status: '质量待核查',
+      qualityRate: null,
+      problemCount: 0,
+      attendanceRate: null,
+      completeTime: '2026-02-26 10:30:00',
+      checkPhotoUrl: 'http://example.com/photo5.jpg',
+      tool: '清扫车',
+      reviewStatus: '达标',
+      reviewBy: '质检员',
+      reviewTime: '2026-02-26 11:00:00',
+      reformRequire: null,
+      reviewResult: '达标',
+      staffIds: ['017'],
+    },
+    {
+      id: '18',
+      planNo: 'QL-20250226-008',
+      roadName: '元光路',
+      area: '龙文区-步文街道',
+      frequency: '每周两次',
+      timePeriod: '14:00-16:00',
+      staff: '郑爽',
+      status: '已完成',
+      qualityRate: 99.0,
+      problemCount: 0,
+      attendanceRate: 100,
+      completeTime: '2026-02-26 16:30:00',
+      reviewResult: '达标',
+      problemHandleDesc: '无问题',
+      completionRate: 100,
+      problemHandleRate: 100,
+      statPeriod: '2026-02-26',
+      mileage: 10.2,
+      staffIds: ['018'],
+    },
+    {
+      id: '19',
+      planNo: 'QL-20250226-009',
+      roadName: '丹霞路',
+      area: '龙海区-石码镇',
+      frequency: '每日一次',
+      timePeriod: '07:00-09:00',
+      staff: '林欣',
+      status: '已完成',
+      qualityRate: 96.5,
+      problemCount: 1,
+      attendanceRate: 100,
+      completeTime: '2026-02-26 09:30:00',
+      reviewResult: '达标',
+      problemHandleDesc: '已及时处理',
+      completionRate: 100,
+      problemHandleRate: 100,
+      statPeriod: '2026-02-26',
+      mileage: 6.7,
+      staffIds: ['019'],
+    },
+  ];
+};

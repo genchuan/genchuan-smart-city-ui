@@ -1,4 +1,4 @@
-import { maskPhone } from '#/utils/dataMask/index.js';
+import { maskPhone } from '#/utils/genchuan/dataMask/index.js';
 
 /** 充值套餐表格初始数据 - 按指定字段生成 */
 export const dataList = () => {

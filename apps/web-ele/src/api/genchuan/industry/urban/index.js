@@ -108,3 +108,94 @@ export function confirmInvalid(params) {
 export function exportwarnExcel() {
   return requestClient.download('/facility/road-warn/export-excel');
 }
+/** 获得设备分页 */
+export function getSysDevicePage(params) {
+  return requestClient.get('/facility/sys-device/page', {
+    params,
+  });
+}
+
+/** 获得道路工单分页 */
+export function getRoadWorkOrder(params) {
+  return requestClient.get('/facility/road-work-order/page', {
+    params,
+  });
+}
+
+/** 批量提醒 */
+export function batchConfirmRemind(params) {
+  return requestClient.post(`/facility/work-order/batch-remind`, params);
+}
+/** 处置中预警创建 */
+export function createWorkOrder(params) {
+  return requestClient.post(`/facility/work-order/create`, params);
+}
+/** 更新派单对象 */
+export function batchUpdateAssignStaff(params) {
+  return requestClient.post(`/facility/work-order/reassign-work-order`, params);
+}
+/** 更新进度 */
+export function updateWorkOrderProgress(params) {
+  return requestClient.post(`/facility/work-order/update-process-status`, params);
+}
+/** 超时督办 */
+ 
+export function superviseWorkOrder(params) {
+  return requestClient.post(`/facility/work-order/supervise-overtime`, params);
+}
+
+/** 上传资料 */
+export function uploadWorkOrderFile(data) {
+ return requestClient.post('/facility/work-order/upload-work-order-file', data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+} 
+
+/** 获得人员统计 */
+export function getSysUserPage(params) {
+ return requestClient.get('/facility/sys-user/page',  {
+    params,
+  });
+} 
+/** 已完成归档 */ 
+export function getRoadArchive(data) {
+ return requestClient.get('/facility/road-archive/page', data);
+}
+
+
+/** 获得巡检巡查 */
+export function getInspectionList(data) {
+ return requestClient.get('/evaluate/patrol-inspection/page', data);
+} 
+
+
+/** 获得巡检巡查报表 */
+export function getStatisticList(data) {
+ return requestClient.get('/evaluate/comment-statistic/page', data);
+}  
+/** 完成归档导出 */
+export function exportRoadCompletedExcel() {
+  return requestClient.download('/facility/sys-archive/export-excel');
+}
+
+/** 查看全部流程 */
+export function getRoadWorkOrderAllProcess(params) {
+  return requestClient.get('/facility/sys-archive/flow-records', {
+    params,
+  });
+}
+/** 下载归档资料 */
+export function downLoadComplete(params) {
+  return requestClient.download(`/facility/sys-archive/download-archive-files`, {
+    params,
+  });
+}
+/** 删除归档资料 */
+export function deleteArchive(id) {
+  return requestClient.delete(`/facility/sys-archive/delete?id=${id}`);
+}
+/** 删除工单 */
+export function deleteOrder(id) {
+  return requestClient.delete(`/facility/work-order/delete?id=${id}`);
+} 
+ 

@@ -179,14 +179,11 @@ defineExpose({
 
     <!-- 第三方登录 -->
     <slot name="third-party-login">
-      <ThirdPartyLogin
-        v-if="showThirdPartyLogin"
-        @third-login="handleThirdLogin"
-      />
+      <ThirdPartyLogin @third-login="handleThirdLogin" />
     </slot>
 
     <slot name="to-register">
-      <div v-if="showRegister" class="mt-3 text-center text-sm">
+      <div class="mt-3 text-center text-sm">
         {{ $t('authentication.accountTip') }}
         <span
           class="vben-link text-sm font-normal"

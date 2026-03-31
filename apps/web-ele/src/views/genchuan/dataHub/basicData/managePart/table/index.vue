@@ -24,9 +24,8 @@ import {
   updateCategory,
   updateInstance,
 } from '#/api/genchuan/dataHub/basicData/managePart';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
-import { exportToExcel } from '#/utils/excel.js';
 
 import BatchUpdateStatusDialog from '../components/BatchUpdateStatusDialog.vue';
 import BindMonitorDrawer from '../components/BindMonitorDrawer.vue';
@@ -184,14 +183,20 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
             return null;
           };
 
-          const selectedNode = findNode(props.treeData, submitData.categoryName);
+          const selectedNode = findNode(
+            props.treeData,
+            submitData.categoryName,
+          );
           if (selectedNode) {
             submitData.parentCategoryId = selectedNode.id;
-            submitData.categoryName = selectedNode.label || selectedNode.categoryName;
+            submitData.categoryName =
+              selectedNode.label || selectedNode.categoryName;
           }
         }
 
-        if (formDrawerApi.sharedData.payload.title === instanceTextObj.addText) {
+        if (
+          formDrawerApi.sharedData.payload.title === instanceTextObj.addText
+        ) {
           // 新增部件实例
           await createInstance(submitData);
         } else {
@@ -302,7 +307,11 @@ async function refreshMapData() {
     // 添加搜索参数
     if (dataObj.searchParams) {
       Object.keys(dataObj.searchParams).forEach((key) => {
-        if (dataObj.searchParams[key] !== undefined && dataObj.searchParams[key] !== null && dataObj.searchParams[key] !== '') {
+        if (
+          dataObj.searchParams[key] !== undefined &&
+          dataObj.searchParams[key] !== null &&
+          dataObj.searchParams[key] !== ''
+        ) {
           allDataQueryParams[key] = dataObj.searchParams[key];
         }
       });
@@ -477,15 +486,15 @@ async function handleDelete(row) {
     text: $t('ui.actionMessage.deleting', [deleteName]),
   });
   try {
-      if (props.tabType === 'instance') {
-        // 部件实例删除 - 调用接口
-        const id = Number(row.id);
-        await deleteInstance(id);
-        ElMessage.success($t('ui.actionMessage.deleteSuccess', [deleteName]));
-        handleRefresh();
-        // 刷新地图数据
-        await refreshMapData();
-      } else {
+    if (props.tabType === 'instance') {
+      // 部件实例删除 - 调用接口
+      const id = Number(row.id);
+      await deleteInstance(id);
+      ElMessage.success($t('ui.actionMessage.deleteSuccess', [deleteName]));
+      handleRefresh();
+      // 刷新地图数据
+      await refreshMapData();
+    } else {
       // 分类删除
       // 将id转换为数字类型
       const id = Number(row.id);
@@ -707,73 +716,77 @@ const getTableData = async (pageObj) => {
           emit('update:tableData', dataObj.list);
 
           // 获取全部数据用于统计和地图（不带runStatus筛选）
-        const allDataQueryParams = {
-          pageNo: 1,
-          pageSize: 100, // 获取足够多的数据
-        };
+          const allDataQueryParams = {
+            pageNo: 1,
+            pageSize: 100, // 获取足够多的数据
+          };
 
-        // 添加搜索参数
-        if (dataObj.searchParams) {
-          Object.keys(dataObj.searchParams).forEach((key) => {
-            if (dataObj.searchParams[key] !== undefined && dataObj.searchParams[key] !== null && dataObj.searchParams[key] !== '') {
-              allDataQueryParams[key] = dataObj.searchParams[key];
-            }
-          });
-        }
-
-        // 添加快捷筛选参数（保留其他筛选条件）
-        if (filterUniqueCode.value) {
-          allDataQueryParams.uniqueCode = filterUniqueCode.value;
-        }
-        if (filterInstanceCategoryName.value) {
-          allDataQueryParams.categoryName = filterInstanceCategoryName.value;
-        }
-        if (filterGridName.value) {
-          allDataQueryParams.gridName = filterGridName.value;
-        }
-        if (filterDeptName.value) {
-          allDataQueryParams.deptName = filterDeptName.value;
-        }
-
-        // 添加树形查询参数
-        if (props.filterCategoryId) {
-          allDataQueryParams.treeParentId = props.filterCategoryId;
-          allDataQueryParams.includeSelf = true;
-        }
-
-        try {
-          const allDataResponse = await getInstancePage(allDataQueryParams);
-          if (allDataResponse && allDataResponse.list) {
-            const allDataList = allDataResponse.list.map((item) => {
-              // 解析coordinate字段为longitude和latitude
-              let longitude = item.longitude || '';
-              let latitude = item.latitude || '';
-              if (!longitude && !latitude && item.coordinate) {
-                const coords = item.coordinate.split(',');
-                if (coords.length === 2) {
-                  longitude = coords[0].trim();
-                  latitude = coords[1].trim();
-                }
+          // 添加搜索参数
+          if (dataObj.searchParams) {
+            Object.keys(dataObj.searchParams).forEach((key) => {
+              if (
+                dataObj.searchParams[key] !== undefined &&
+                dataObj.searchParams[key] !== null &&
+                dataObj.searchParams[key] !== ''
+              ) {
+                allDataQueryParams[key] = dataObj.searchParams[key];
               }
-              return {
-                ...item,
-                id: String(item.id),
-                monitorCount: String(item.monitorCount || 0),
-                createTime: item.createTime
-                  ? new Date(item.createTime).toLocaleString('zh-CN')
-                  : '',
-                creator: item.creator || '',
-                // 确保经纬度字段存在，用于地图显示
-                longitude,
-                latitude,
-              };
             });
-            // 传递全部数据给父组件用于统计和地图
-            emit('update:tableData', allDataList);
           }
-        } catch (error) {
-          console.error('获取全部数据失败:', error);
-        }
+
+          // 添加快捷筛选参数（保留其他筛选条件）
+          if (filterUniqueCode.value) {
+            allDataQueryParams.uniqueCode = filterUniqueCode.value;
+          }
+          if (filterInstanceCategoryName.value) {
+            allDataQueryParams.categoryName = filterInstanceCategoryName.value;
+          }
+          if (filterGridName.value) {
+            allDataQueryParams.gridName = filterGridName.value;
+          }
+          if (filterDeptName.value) {
+            allDataQueryParams.deptName = filterDeptName.value;
+          }
+
+          // 添加树形查询参数
+          if (props.filterCategoryId) {
+            allDataQueryParams.treeParentId = props.filterCategoryId;
+            allDataQueryParams.includeSelf = true;
+          }
+
+          try {
+            const allDataResponse = await getInstancePage(allDataQueryParams);
+            if (allDataResponse && allDataResponse.list) {
+              const allDataList = allDataResponse.list.map((item) => {
+                // 解析coordinate字段为longitude和latitude
+                let longitude = item.longitude || '';
+                let latitude = item.latitude || '';
+                if (!longitude && !latitude && item.coordinate) {
+                  const coords = item.coordinate.split(',');
+                  if (coords.length === 2) {
+                    longitude = coords[0].trim();
+                    latitude = coords[1].trim();
+                  }
+                }
+                return {
+                  ...item,
+                  id: String(item.id),
+                  monitorCount: String(item.monitorCount || 0),
+                  createTime: item.createTime
+                    ? new Date(item.createTime).toLocaleString('zh-CN')
+                    : '',
+                  creator: item.creator || '',
+                  // 确保经纬度字段存在，用于地图显示
+                  longitude,
+                  latitude,
+                };
+              });
+              // 传递全部数据给父组件用于统计和地图
+              emit('update:tableData', allDataList);
+            }
+          } catch (error) {
+            console.error('获取全部数据失败:', error);
+          }
         }
       } else {
         ElMessage.error(response.message || '获取数据失败');
@@ -946,7 +959,8 @@ function onSubmit(values) {
 
     const selectedNode = findNode(props.treeData, searchParams.categoryId);
     if (selectedNode) {
-      searchParams.categoryName = selectedNode.label || selectedNode.categoryName;
+      searchParams.categoryName =
+        selectedNode.label || selectedNode.categoryName;
     }
     delete searchParams.categoryId;
   }

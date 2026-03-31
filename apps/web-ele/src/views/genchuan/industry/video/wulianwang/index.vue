@@ -16,7 +16,7 @@ export default {
     // 跳转视频播放地址的方法
     jumpToVideoPlayUrl() {
       // 目标跳转地址
-      const targetUrl = 'http://127.0.0.1:81/';
+      const targetUrl = 'http://112.47.127.21:81/';
 
       // 方式1：在当前窗口跳转（默认）
       window.location.href = targetUrl;

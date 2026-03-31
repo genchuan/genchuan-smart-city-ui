@@ -4,6 +4,9 @@ import { ref } from 'vue';
 import { useVbenModal } from '@vben/common-ui';
 
 import { ElButton, ElMessage, ElUpload } from 'element-plus';
+import * as XLSX from 'xlsx';
+
+import { importInstance } from '#/api/genchuan/dataHub/basicData/managePart';
 
 const emit = defineEmits(['success']);
 
@@ -50,8 +53,8 @@ const downloadTemplate = () => {
       'LD20250301000001',
       '道路设施',
       '中山路网格A区',
-      '116.4074,39.9042',
-      '正常',
+      '118.596000,24.915000',
+      '2',
       '市政管理局',
       '张三',
       '3',
@@ -62,8 +65,8 @@ const downloadTemplate = () => {
       'LJ20250301000002',
       '环境卫生',
       '公园路网格B区',
-      '116.4156,39.9123',
-      '正常',
+      '118.595000,24.925000',
+      '2',
       '环卫管理处',
       '李四',
       '1',
@@ -71,14 +74,19 @@ const downloadTemplate = () => {
     ],
   ];
 
-  // 创建CSV内容
-  const csvContent = templateData.map((row) => row.join(',')).join('\n');
-  const blob = new Blob([`\uFEFF${csvContent}`], {
-    type: 'text/csv;charset=utf-8;',
+  // 使用xlsx库创建Excel文件
+  const worksheet = XLSX.utils.aoa_to_sheet(templateData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, '导入模板');
+
+  // 生成Excel文件并下载
+  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([excelBuffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = '部件实例导入模板.csv';
+  link.download = '部件实例导入模板.xlsx';
   document.body.append(link);
   link.click();
   link.remove();
@@ -92,10 +100,9 @@ const beforeUpload = (file: File) => {
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
     file.type === 'application/vnd.ms-excel' ||
     file.name.endsWith('.xlsx') ||
-    file.name.endsWith('.xls') ||
-    file.name.endsWith('.csv');
+    file.name.endsWith('.xls');
   if (!isExcel) {
-    ElMessage.error('请上传Excel文件(.xlsx, .xls)或CSV文件!');
+    ElMessage.error('请上传Excel文件(.xlsx, .xls)!');
     return false;
   }
   return true;
@@ -116,22 +123,54 @@ const handleImport = async () => {
 
   validating.value = true;
 
-  // 模拟校验过程
-  setTimeout(() => {
-    // 模拟校验结果
+  try {
+    // 获取文件对象
+    const file = fileList.value[0].raw;
+    if (!file) {
+      ElMessage.warning('文件对象无效');
+      validating.value = false;
+      return;
+    }
+
+    // 调用导入接口
+    const response = await importInstance(file);
+
+    // 根据接口返回结果处理
+    if (response) {
+      validationResult.value = {
+        success: true,
+        message: response.message || '导入成功',
+        total: response.total || 0,
+        successCount: response.successCount || 0,
+        failCount: response.failCount || 0,
+      };
+
+      ElMessage.success(response.message || '导入成功');
+      emit('success');
+      modalApi.close();
+    } else {
+      validationResult.value = {
+        success: false,
+        message: '导入失败',
+        total: 0,
+        successCount: 0,
+        failCount: 0,
+      };
+      ElMessage.error('导入失败');
+    }
+  } catch (error: any) {
+    console.error('导入失败:', error);
     validationResult.value = {
-      success: true,
-      message: '数据校验通过',
-      total: 10,
-      successCount: 10,
+      success: false,
+      message: error?.message || '导入失败，请检查文件格式',
+      total: 0,
+      successCount: 0,
       failCount: 0,
     };
-
+    ElMessage.error(error?.message || '导入失败，请检查文件格式');
+  } finally {
     validating.value = false;
-    ElMessage.success('导入成功');
-    emit('success');
-    modalApi.close();
-  }, 1500);
+  }
 };
 
 const open = () => {
@@ -177,7 +216,7 @@ defineExpose({
             :auto-upload="false"
             :before-upload="beforeUpload"
             :on-change="handleFileChange"
-            accept=".xlsx,.xls,.csv"
+            accept=".xlsx,.xls"
             :limit="1"
           >
             <i class="el-icon-upload"></i>
@@ -186,7 +225,7 @@ defineExpose({
             </div>
             <template #tip>
               <div class="el-upload__tip">
-                支持 .xlsx, .xls, .csv 格式文件，文件大小不超过10MB
+                支持 .xlsx, .xls 格式文件，文件大小不超过10MB
               </div>
             </template>
           </ElUpload>

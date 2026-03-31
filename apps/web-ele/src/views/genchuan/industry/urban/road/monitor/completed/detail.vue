@@ -3,15 +3,15 @@ import { computed, defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 定义组件接收的属性（替换为道路预警工单处置数据）
+// 定义组件接收的属性
 const props = defineProps({
-  // 详情数据对象（道路预警工单处置数据）
+  // 详情数据对象（与后端字段1:1对应）
   detailObj: {
     type: Object,
     required: true,
     default: () => ({}),
   },
-  // 抽屉标题（可选，默认使用详情对象的workOrderCode）
+  // 抽屉标题（可选）
   title: {
     type: String,
     default: '',
@@ -20,18 +20,21 @@ const props = defineProps({
 
 const { detailObj, title } = toRefs(props);
 
-// 计算属性处理标题，优先用工单编号，兜底显示默认值
+// 计算属性处理标题
 const drawerTitle = computed(() => {
-  const workOrderCode = detailObj.value?.workOrderCode || '道路预警工单';
+  const workOrderCode =
+    detailObj.value?.workOrderCode ||
+    detailObj.value?.orderNo ||
+    '设施预警工单';
   return title.value || `${workOrderCode}详情`;
 });
 
-// 初始化抽屉实例（加宽适配工单处置字段）
+// 初始化抽屉实例
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 900, // 加宽到900px适配工单处置更多字段
+  width: 950, // 适当加宽以容纳更多字段
   onCancel() {
     detailDrawerApi.close();
   },
@@ -39,7 +42,7 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   async onOpenChange() {},
 });
 
-// 对外暴露打开/关闭抽屉的方法
+// 对外暴露方法
 defineExpose({
   open: () => detailDrawerApi.open(),
   close: () => detailDrawerApi.close(),
@@ -49,86 +52,126 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 道路预警工单处置基础信息 -->
+      <!-- 1. 基础标识信息 -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">归档唯一标识ID:</div>
+        <div class="detail-row-right">{{ detailObj.id || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">归档编号:</div>
+        <div class="detail-row-right">{{ detailObj.archiveNo || '-' }}</div>
+      </div>
       <div class="detail-card-row">
         <div class="detail-row-left">工单编号:</div>
-        <div class="detail-row-right">{{ detailObj.workOrderCode || '-' }}</div>
+        <div class="detail-row-right">{{ detailObj.orderNo || '-' }}</div>
+      </div>
+
+      <!-- 2. 类型与时间 -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">工单类型:</div>
+        <div class="detail-row-right">{{ detailObj.orderType || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">关联预警编号:</div>
+        <div class="detail-row-left">工单处置类型:</div>
+        <div class="detail-row-right">{{ detailObj.bizType || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">工单完成时间:</div>
+        <div class="detail-row-right">{{ detailObj.completeTime || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">预警编号:</div>
+        <div class="detail-row-right">{{ detailObj.warnNo || '-' }}</div>
+      </div>
+
+      <!-- 3. 设施与人员 -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">设施编码:</div>
+        <div class="detail-row-right">{{ detailObj.facilityCode || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">设施名称:</div>
+        <div class="detail-row-right">{{ detailObj.facilityName || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">设施类型:</div>
+        <div class="detail-row-right">{{ detailObj.facilityType || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">指派运维员ID:</div>
+        <div class="detail-row-right">{{ detailObj.assignStaffId || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">指派运维员姓名:</div>
         <div class="detail-row-right">
-          {{ detailObj.relatedWarningCode || '-' }}
+          {{ detailObj.assignStaffName || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">处置路段:</div>
+        <div class="detail-row-left">核查人ID:</div>
+        <div class="detail-row-right">{{ detailObj.checkStaffId || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">核查人姓名:</div>
         <div class="detail-row-right">
-          {{ detailObj.disposalRoadSection || '-' }}
+          {{ detailObj.checkStaffName || '-' }}
+        </div>
+      </div>
+
+      <!-- 4. 区域与时空 -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">所属区域ID:</div>
+        <div class="detail-row-right">{{ detailObj.areaId || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">所属区域名称:</div>
+        <div class="detail-row-right">{{ detailObj.areaFullName || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">处理时间:</div>
+        <div class="detail-row-right">{{ detailObj.handleTime || '-' }}</div>
+      </div>
+
+      <!-- 5. 结果与状态 -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">核查结果:</div>
+        <div class="detail-row-right">{{ detailObj.checkResult || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">核查意见:</div>
+        <div class="detail-row-right">{{ detailObj.checkSuggest || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">归档资料数:</div>
+        <div class="detail-row-right">{{ detailObj.fileNum || '-' }}</div>
+      </div>
+
+      <!-- 6. 指标与阈值 -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">处置前指标值:</div>
+        <div class="detail-row-right">
+          {{ detailObj.beforeIndexValue || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">处置类型:</div>
-        <div class="detail-row-right">{{ detailObj.disposalType || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">指派运维员:</div>
+        <div class="detail-row-left">处置后指标值:</div>
         <div class="detail-row-right">
-          {{ detailObj.assignedMaintenancePerson || '-' }}
+          {{ detailObj.afterIndexValue || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">工单创建时间:</div>
-        <div class="detail-row-right">
-          {{ detailObj.workOrderCreateTime || '-' }}
-        </div>
+        <div class="detail-row-left">恢复值:</div>
+        <div class="detail-row-right">{{ detailObj.recoverValue || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">处置时限:</div>
-        <div class="detail-row-right">
-          {{ detailObj.disposalTimeLimit || '-' }} 小时
-        </div>
+        <div class="detail-row-left">指标阈值:</div>
+        <div class="detail-row-right">{{ detailObj.threshold || '-' }}</div>
       </div>
+
+      <!-- 7. 其他 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">当前处置进度:</div>
-        <div class="detail-row-right">
-          {{ detailObj.currentDisposalProgress || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">抵达现场时间:</div>
-        <div class="detail-row-right">
-          {{ detailObj.arriveSceneTime || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">剩余处置时间:</div>
-        <div class="detail-row-right">
-          {{ detailObj.remainingDisposalTime || '-' }} 小时
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">处置进度更新时间:</div>
-        <div class="detail-row-right">
-          {{ detailObj.disposalProgressUpdateTime || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">已完成处置内容:</div>
-        <div class="detail-row-right">
-          {{ detailObj.completedDisposalContent || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">现场检测数据:</div>
-        <div class="detail-row-right">
-          {{ detailObj.sceneDetectionData || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">超时提醒标识:</div>
-        <div class="detail-row-right">
-          {{ detailObj.timeoutReminderFlag || '-' }}
-        </div>
+        <div class="detail-row-left">创建时间:</div>
+        <div class="detail-row-right">{{ detailObj.createTime || '-' }}</div>
       </div>
     </div>
   </DetailDrawer>
@@ -138,9 +181,8 @@ defineExpose({
 // 响应式适配
 @media (max-width: 768px) {
   .detail-row-left {
-    width: 130px; // 小屏适配工单字段标签宽度
+    width: 160px; // 适配较长字段标签
   }
-
   .detail-card {
     min-height: 520px;
     max-height: 70vh;
@@ -149,27 +191,24 @@ defineExpose({
 }
 
 .detail-card {
-  min-height: 600px; // 适配工单处置14个字段，提升最小高度
-  max-height: 85vh; // 提高最大高度，容纳更多工单字段
+  min-height: 600px;
+  max-height: 85vh;
   padding: 20px;
-  overflow-y: auto; // 内容过多时显示滚动条
+  overflow-y: auto;
   background-color: #f9fafb;
   border-radius: 8px;
 }
 
-// 每行的布局
 .detail-card-row {
   display: flex;
-  align-items: flex-start; // 顶部对齐，适配多行文本（处置内容/检测数据）
+  align-items: flex-start;
   padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0; // 分隔线增强可读性
+  border-bottom: 1px solid #f0f0f0;
 
-  // 最后一行去掉分隔线
   &:last-child {
     border-bottom: none;
   }
 
-  // 鼠标悬浮高亮
   &:hover {
     padding-right: 8px;
     padding-left: 8px;
@@ -181,41 +220,36 @@ defineExpose({
   }
 }
 
-// 左侧标签样式
 .detail-row-left {
-  flex-shrink: 0; // 不收缩
-  width: 150px; // 加宽标签宽度，适配"处置进度更新时间"等长标签
+  flex-shrink: 0;
+  width: 180px; // 统一加宽标签宽度，适配长字段
   font-size: 14px;
-  font-weight: 500; // 加粗突出标签
-  line-height: 18px; // 统一行高
-  color: #606266; // 灰色调，区分内容
+  font-weight: 500;
+  line-height: 1.6;
+  color: #606266;
 }
 
-// 右侧内容样式
 .detail-row-right {
-  flex: 1; // 剩余宽度自适应
+  flex: 1;
   padding-right: 10px;
   font-size: 14px;
-  line-height: 18px;
-  color: #303133; // 主文本色
-  word-break: break-all; // 处理长文本换行（如现场检测数据、处置内容）
+  line-height: 1.6;
+  color: #303133;
+  word-break: break-all;
 }
 
-// 滚动条样式优化
+// 滚动条优化
 .detail-card::-webkit-scrollbar {
   width: 6px;
 }
-
 .detail-card::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 3px;
 }
-
 .detail-card::-webkit-scrollbar-thumb {
   background: #dcdfe6;
   border-radius: 3px;
 }
-
 .detail-card::-webkit-scrollbar-thumb:hover {
   background: #c0c4cc;
 }

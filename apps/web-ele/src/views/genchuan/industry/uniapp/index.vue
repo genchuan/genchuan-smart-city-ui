@@ -21,7 +21,7 @@ export default {
      */
     handleRedirect() {
       // 目标地址，第二个参数 _blank 表示新标签页打开
-      window.open("http://127.0.0.1:9000/", "_blank");
+      window.open("http://112.47.127.21:9000/", "_blank");
     }
   }
 };

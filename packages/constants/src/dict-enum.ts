@@ -175,8 +175,24 @@ const IOT_DICT = {
 
 /** ========== DATA - 数据中枢模块 ========== */
 const DATA_DICT = {
-  DATA_MANAGEPART_CATEGORYTYPE: 'category_type', // 管理部件分类类型
-  DATA_MANAGEPART_RUNSTATUS: 'run_status', // 管理部件实例运行状态
+  DATA_CATEGORY_TYPE: 'category_type', // 分类类型
+  DATA_RUN_STATUS: 'run_status', // 运行状态
+  DATA_MATTER_STATUS: 'matter_status', // 事项状态
+  DATA_AUDIT_STATUS: 'audit_status', // 审核状态
+  DATA_ENABLE_STATUS: 'status_name', // 启用状态
+  DATA_CORE_INDICATORS: 'sys_index', // 核心监测指标
+  DATA_EVENT_LEVEL: 'sys_event_level', // 事件等级
+  DATA_TYPE: 'data_type', // 数据类型
+} as const;
+
+/** ========== SHUNCAHNG - 顺昌迁移模块 ========== */
+const SHUNCHANG_DICT = {
+  // 排水户管理系统
+  SM_DRAINAGE_USER: 'sm_drainage_user',
+  SM_INDUSTRY_CATEGORY: 'sm_Industry_category',
+  SM_DRAINAGE_TYPE: 'sm_drainage_type',
+  SM_PART_TYPE: 'sm_part_type',
+  SM_STATE: 'sm_state',
 } as const;
 
 /** 字典类型枚举 - 统一导出 */
@@ -194,6 +210,7 @@ const DICT_TYPE = {
   ...SYSTEM_DICT,
   ...COMMON_DICT,
   ...DATA_DICT,
+  ...SHUNCHANG_DICT,
 } as const;
 
 export { DICT_TYPE };

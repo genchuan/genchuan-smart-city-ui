@@ -334,10 +334,7 @@ export function useFormSchema(treeData = []) {
       component: 'Select',
       componentProps: {
         placeholder: '请选择分类类型',
-        options: getDictOptions(
-          DICT_TYPE.DATA_MANAGEPART_CATEGORYTYPE,
-          'string',
-        ),
+        options: getDictOptions(DICT_TYPE.DATA_CATEGORY_TYPE, 'string'),
       },
       rules: 'required',
     },
@@ -441,7 +438,7 @@ export function useGridColumns() {
       sortable: true,
       cellRender: {
         name: 'CellDict',
-        props: { type: DICT_TYPE.DATA_MANAGEPART_CATEGORYTYPE },
+        props: { type: DICT_TYPE.DATA_CATEGORY_TYPE },
       },
     },
     {
@@ -504,17 +501,11 @@ export const detailFields = [
     label: '分类类型',
     type: 'tag',
     formatter: (value) => {
-      const dict = getDictObj(
-        DICT_TYPE.DATA_MANAGEPART_CATEGORYTYPE,
-        String(value),
-      );
+      const dict = getDictObj(DICT_TYPE.DATA_CATEGORY_TYPE, String(value));
       return dict ? dict.label : value;
     },
     tagType: (value) => {
-      const dict = getDictObj(
-        DICT_TYPE.DATA_MANAGEPART_CATEGORYTYPE,
-        String(value),
-      );
+      const dict = getDictObj(DICT_TYPE.DATA_CATEGORY_TYPE, String(value));
       return dict ? dict.colorType : 'primary';
     },
   },
@@ -849,7 +840,8 @@ export function useInstanceFormSchema(treeData = []) {
           if (selectedNode) {
             // 存储id到parentCategoryId，存储label到categoryName
             formModel.parentCategoryId = selectedNode.id;
-            formModel.categoryName = selectedNode.label || selectedNode.categoryName;
+            formModel.categoryName =
+              selectedNode.label || selectedNode.categoryName;
           }
         },
       },
@@ -879,7 +871,7 @@ export function useInstanceFormSchema(treeData = []) {
       component: 'Select',
       componentProps: {
         placeholder: '请选择运行状态',
-        options: getDictOptions(DICT_TYPE.DATA_MANAGEPART_RUNSTATUS, 'string'),
+        options: getDictOptions(DICT_TYPE.DATA_RUN_STATUS, 'string'),
       },
       rules: 'required',
     },
@@ -979,7 +971,7 @@ export function useInstanceGridColumns() {
       sortable: true,
       cellRender: {
         name: 'CellDict',
-        props: { type: DICT_TYPE.DATA_MANAGEPART_RUNSTATUS },
+        props: { type: DICT_TYPE.DATA_RUN_STATUS },
       },
     },
     {
@@ -1042,17 +1034,11 @@ export const instanceDetailFields = [
     label: '运行状态',
     type: 'tag',
     formatter: (value) => {
-      const dict = getDictObj(
-        DICT_TYPE.DATA_MANAGEPART_RUNSTATUS,
-        String(value),
-      );
+      const dict = getDictObj(DICT_TYPE.DATA_RUN_STATUS, String(value));
       return dict ? dict.label : value;
     },
     tagType: (value) => {
-      const dict = getDictObj(
-        DICT_TYPE.DATA_MANAGEPART_RUNSTATUS,
-        String(value),
-      );
+      const dict = getDictObj(DICT_TYPE.DATA_RUN_STATUS, String(value));
       return dict ? dict.colorType : 'primary';
     },
   },
@@ -1294,7 +1280,7 @@ export function useInstanceSearchFormSchema(treeData = []) {
       component: 'Select',
       componentProps: {
         placeholder: '请选择运行状态',
-        options: getDictOptions(DICT_TYPE.DATA_MANAGEPART_RUNSTATUS, 'string'),
+        options: getDictOptions(DICT_TYPE.DATA_RUN_STATUS, 'string'),
       },
     },
     {

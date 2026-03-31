@@ -20,7 +20,6 @@ import {
   Help,
   LockScreen,
   Notification,
-  TenantDropdown,
   UserDropdown,
 } from '@vben/layouts';
 import { preferences } from '@vben/preferences';
@@ -47,7 +46,7 @@ const accessStore = useAccessStore();
 const { hasAccessByCodes } = useAccess();
 const { destroyWatermark, updateWatermark } = useWatermark();
 const { closeOtherTabs, refreshTab } = useTabs();
-
+const logoText = import.meta.env.VITE_APP_TITLE;
 const notifications = ref<NotificationItem[]>([]);
 const unreadCount = ref(0);
 const showDot = computed(() => unreadCount.value > 0);
@@ -225,7 +224,7 @@ watch(
 
 <template>
   <BasicLayout @clear-preferences-and-logout="handleLogout">
-    <template #logo-text>智慧城市一网统管AI平台</template>
+    <template #logo-text>{{ logoText }}</template>
     <template #user-dropdown>
       <UserDropdown
         :avatar
@@ -247,16 +246,16 @@ watch(
         @read="handleNotificationRead"
       />
     </template>
-    <template #header-right-1>
-      <div v-if="tenantEnable">
-        <TenantDropdown
-          class="mr-2"
-          :tenant-list="tenants"
-          :visit-tenant-id="accessStore.visitTenantId"
-          @success="handleTenantChange"
-        />
-      </div>
-    </template>
+    <!--    <template #header-right-1>-->
+    <!--      <div v-if="tenantEnable">-->
+    <!--        <TenantDropdown-->
+    <!--          class="mr-2"-->
+    <!--          :tenant-list="tenants"-->
+    <!--          :visit-tenant-id="accessStore.visitTenantId"-->
+    <!--          @success="handleTenantChange"-->
+    <!--        />-->
+    <!--      </div>-->
+    <!--    </template>-->
     <template #extra>
       <AuthenticationLoginExpiredModal
         v-model:open="accessStore.loginExpired"

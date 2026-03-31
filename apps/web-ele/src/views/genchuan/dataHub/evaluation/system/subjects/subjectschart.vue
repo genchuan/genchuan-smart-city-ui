@@ -1,6 +1,6 @@
 <script setup>
-import { reactive, onMounted } from 'vue';
-import { getOverview } from '#/api/genchuan/dataHub/evaluation/system/subject.js';
+import { reactive, onMounted, defineExpose } from 'vue';
+import { getOverview } from '#/api/genchuan/dataHub/evaluation/system/subjects/index.js';
 
 import Card from '#/components/stats/card.vue';
 import Circle from '#/components/stats/circle.vue';
@@ -59,6 +59,11 @@ const fetchOverview = async () => {
     state.memberCountBarSeriesData = [];
   }
 };
+
+// 暴露刷新方法给父组件
+defineExpose({
+  refreshOverview: fetchOverview,
+});
 
 onMounted(() => {
   fetchOverview();

@@ -14,8 +14,6 @@ import {
 import { useAccessStore } from '@vben/stores';
 import { createApiEncrypt } from '@vben/utils';
 
-import { ElMessage } from 'element-plus';
-
 import { useAuthStore } from '#/store';
 
 import { refreshTokenApi } from './core';
@@ -86,7 +84,6 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
       config.headers['visit-tenant-id'] = tenantEnable
         ? accessStore.visitTenantId
         : undefined;
-
       // 是否 API 加密
       if ((config.headers || {}).isEncrypt) {
         try {
@@ -159,7 +156,9 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
         return;
       }
       // 如果没有错误信息，则会根据状态码进行提示
-      ElMessage.error(errorMessage || msg);
+      // ElMessage.error(errorMessage || msg);
+      // 将错误信息输出到控制台，不在页面上显示弹窗，避免影响用户访问体验
+      console.log('[Request Error]', errorMessage || msg, error);
     }),
   );
 

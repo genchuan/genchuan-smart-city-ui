@@ -3,15 +3,15 @@ import { computed, defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 定义组件接收的属性（替换为道路预警工单处置数据）
+// 定义组件接收的属性
 const props = defineProps({
-  // 详情数据对象（道路预警工单处置数据）
+  // 详情数据对象
   detailObj: {
     type: Object,
     required: true,
     default: () => ({}),
   },
-  // 抽屉标题（可选，默认使用详情对象的workOrderCode）
+  // 抽屉标题
   title: {
     type: String,
     default: '',
@@ -20,18 +20,18 @@ const props = defineProps({
 
 const { detailObj, title } = toRefs(props);
 
-// 计算属性处理标题，优先用工单编号，兜底显示默认值
+// 计算属性处理标题
 const drawerTitle = computed(() => {
-  const workOrderCode = detailObj.value?.workOrderCode || '道路预警工单';
-  return title.value || `${workOrderCode}详情`;
+  const archiveNo = detailObj.value?.archiveNo || '归档';
+  return title.value || `${archiveNo}详情`;
 });
 
-// 初始化抽屉实例（加宽适配工单处置字段）
+// 初始化抽屉实例
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 900, // 加宽到900px适配工单处置更多字段
+  width: 900,
   onCancel() {
     detailDrawerApi.close();
   },
@@ -41,7 +41,9 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
 
 // 对外暴露打开/关闭抽屉的方法
 defineExpose({
-  open: () => detailDrawerApi.open(),
+  open: (tab = '1') => {
+    detailDrawerApi.open();
+  },
   close: () => detailDrawerApi.close(),
 });
 </script>
@@ -49,85 +51,89 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 道路预警工单处置基础信息 -->
+      <!-- 归档基础信息 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">工单编号:</div>
-        <div class="detail-row-right">{{ detailObj.workOrderCode || '-' }}</div>
+        <div class="detail-row-left">归档编号:</div>
+        <div class="detail-row-right">{{ detailObj.archiveNo || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">关联处置工单编号:</div>
+        <div class="detail-row-right">
+          {{ detailObj.orderNo || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">关联预警编号:</div>
         <div class="detail-row-right">
-          {{ detailObj.relatedWarningCode || '-' }}
+          {{ detailObj.warnNo || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">处置路段:</div>
+        <div class="detail-row-left">井盖编号:</div>
         <div class="detail-row-right">
-          {{ detailObj.disposalRoadSection || '-' }}
+          {{ detailObj.coverNo || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">处置类型:</div>
-        <div class="detail-row-right">{{ detailObj.disposalType || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">指派运维员:</div>
+        <div class="detail-row-left">路段名称:</div>
         <div class="detail-row-right">
-          {{ detailObj.assignedMaintenancePerson || '-' }}
+          {{ detailObj.roadName || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">工单创建时间:</div>
+        <div class="detail-row-left">异常类型:</div>
+        <div class="detail-row-right">{{ detailObj.abnormalType || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">核查结果:</div>
+        <div class="detail-row-right">{{ detailObj.checkResult || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">处置完成时间:</div>
         <div class="detail-row-right">
-          {{ detailObj.workOrderCreateTime || '-' }}
+          {{ detailObj.completeTime || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">处置时限:</div>
+        <div class="detail-row-left">归档时间:</div>
         <div class="detail-row-right">
-          {{ detailObj.disposalTimeLimit || '-' }} 小时
+          {{ detailObj.archiveTime || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">当前处置进度:</div>
+        <div class="detail-row-left">预警处置总时长:</div>
         <div class="detail-row-right">
-          {{ detailObj.currentDisposalProgress || '-' }}
+          {{ detailObj.dealDuration || '-' }} 小时
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">抵达现场时间:</div>
+        <div class="detail-row-left">窨井盖指标恢复值:</div>
         <div class="detail-row-right">
-          {{ detailObj.arriveSceneTime || '-' }}
+          {{ detailObj.recoverValue || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">剩余处置时间:</div>
+        <div class="detail-row-left">核查员:</div>
         <div class="detail-row-right">
-          {{ detailObj.remainingDisposalTime || '-' }} 小时
+          {{ detailObj.checkStaff || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">处置进度更新时间:</div>
+        <div class="detail-row-left">安全风险消除状态:</div>
         <div class="detail-row-right">
-          {{ detailObj.disposalProgressUpdateTime || '-' }}
+          {{ detailObj.riskStatus || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">已完成处置内容:</div>
+        <div class="detail-row-left">归档资料数:</div>
         <div class="detail-row-right">
-          {{ detailObj.completedDisposalContent || '-' }}
+          {{ detailObj.fileNum || '-' }} 份
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">现场检测数据:</div>
+        <div class="detail-row-left">处置前后指标对比:</div>
         <div class="detail-row-right">
-          {{ detailObj.sceneDetectionData || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">超时提醒标识:</div>
-        <div class="detail-row-right">
-          {{ detailObj.timeoutReminderFlag || '-' }}
+          {{ detailObj.beforeAfter || '-' }}
         </div>
       </div>
     </div>
@@ -149,7 +155,7 @@ defineExpose({
 }
 
 .detail-card {
-  min-height: 600px; // 适配工单处置14个字段，提升最小高度
+  min-height: 600px; // 适配工单处置 14 个字段，提升最小高度
   max-height: 85vh; // 提高最大高度，容纳更多工单字段
   padding: 20px;
   overflow-y: auto; // 内容过多时显示滚动条

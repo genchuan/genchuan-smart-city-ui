@@ -10,8 +10,8 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
 import IconButton from '#/components/common/IconButton.vue';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
@@ -206,9 +206,9 @@ function handleCreate() {
       title:
         props.activeTab === '定向发放管理'
           ? releaseTextObj.addText
-          : (props.activeTab === '使用记录'
+          : props.activeTab === '使用记录'
             ? useTextObj.addText
-            : textObj.addText),
+            : textObj.addText,
     })
     .open();
 }
@@ -220,9 +220,9 @@ function handleEdit(row) {
       title:
         props.activeTab === '定向发放管理'
           ? releaseTextObj.editText
-          : (props.activeTab === '使用记录'
+          : props.activeTab === '使用记录'
             ? useTextObj.editText
-            : textObj.editText),
+            : textObj.editText,
       ...row,
     })
     .open();
