@@ -8,7 +8,8 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入设备编号',
       },
-      rules: 'required'
+      rules: 'required',
+      isSearch: true
     },
     {
       fieldName: 'stationName',
@@ -17,7 +18,8 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入所属场站'
       },
-      rules: 'required'
+      rules: 'required',
+      isSearch: true
     },
     {
       fieldName: 'lotCode',
@@ -31,15 +33,12 @@ export function useFormSchema() {
     {
       fieldName: 'deviceType',
       label: '设备类型',
-      component: 'Select',
+      component: 'Input',
       componentProps: {
-        placeholder: '请选择设备类型',
-        options: [
-          { label: '充电桩', value: '充电桩' },
-          { label: '车位', value: '车位' }
-        ]
+        placeholder: '请输入设备类型'
       },
-      rules: 'required'
+      rules: 'required',
+      isSearch: true
     },
     {
       fieldName: 'voltage',
@@ -80,7 +79,8 @@ export function useFormSchema() {
           { label: '严重', value: '严重' }
         ]
       },
-      rules: 'required'
+      rules: 'required',
+      isSearch: true
     },
     {
       fieldName: 'monitorStatus',
@@ -95,7 +95,8 @@ export function useFormSchema() {
           { label: '已恢复', value: '已恢复' }
         ]
       },
-      rules: 'required'
+      rules: 'required',
+      isSearch: true
     },
     {
       fieldName: 'disposeUser',
