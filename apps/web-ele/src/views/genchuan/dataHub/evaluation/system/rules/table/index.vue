@@ -318,17 +318,26 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 // ==================== 表格数据获取 ====================
 // 格式化列表数据（供表格和导出共用）
 function formatList(list) {
-  return (list || []).map(item => ({
-    ...item,
-    createTime: item.createTime ? dayjs(item.createTime).format('YYYY-MM-DD HH:mm:ss') : '-',
-    updateTime: item.updateTime ? dayjs(item.updateTime).format('YYYY-MM-DD HH:mm:ss') : '-',
-    lastUseTime: item.lastUseTime ? dayjs(item.lastUseTime).format('YYYY-MM-DD HH:mm:ss') : '-',
-    useCount: item.useCount ?? 0,
-    itemCount: item.itemCount ?? 0,
-    changeLog: item.changeLog || '-',
-    createByName: item.createUserName,
-    updateByName: item.updateUserName,
-  }));
+  return (list || []).map(item => {
+    // 处理变更日志截断
+    let changeLogShort = '-';
+    if (item.changeLog != null) {
+      const logStr = String(item.changeLog);
+      changeLogShort = logStr.length > 100 ? logStr.substring(0, 100) + '...' : logStr;
+    }
+
+    return {
+      ...item,
+      createTime: item.createTime ? dayjs(item.createTime).format('YYYY-MM-DD HH:mm:ss') : '-',
+      updateTime: item.updateTime ? dayjs(item.updateTime).format('YYYY-MM-DD HH:mm:ss') : '-',
+      lastUseTime: item.lastUseTime ? dayjs(item.lastUseTime).format('YYYY-MM-DD HH:mm:ss') : '-',
+      useCount: item.useCount ?? 0,
+      itemCount: item.itemCount ?? 0,
+      changeLogShort, // 新增截断字段
+      createByName: item.createUserName,
+      updateByName: item.updateUserName,
+    };
+  });
 }
 
 const getTableData = async ({ page }) => {
