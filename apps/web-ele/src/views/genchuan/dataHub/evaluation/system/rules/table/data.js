@@ -93,7 +93,7 @@ export function getGridColumnsByTab(tab) {
     },
     { field: 'createByName', title: '创建人', minWidth: 100, sortable: true },
     { field: 'createTime', title: '创建时间', minWidth: 160, sortable: true },
-    { field: 'changeLog', title: '变更日志', minWidth: 200, sortable: false },
+    { field: 'changeLogShort', title: '变更日志', minWidth: 200, sortable: false },
   ];
 
   const enableExtraColumns = [
@@ -110,7 +110,7 @@ export function getGridColumnsByTab(tab) {
   ];
 
   const disableExtraColumns = [
-    { field: 'changeLog', title: '停用原因', minWidth: 200, sortable: false },
+    { field: 'changeLogShort', title: '停用原因', minWidth: 200, sortable: false },
     { field: 'itemCount', title: '规则项数量', minWidth: 120, sortable: true },
     { field: 'createByName', title: '创建人', minWidth: 100, sortable: true },
     { field: 'createTime', title: '创建时间', minWidth: 160, sortable: true },

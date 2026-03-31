@@ -66,7 +66,7 @@ defineExpose({
         </div>
         <div class="detail-card-row">
           <div class="detail-row-left">变更日志：</div>
-          <div class="detail-row-right">{{ detailObj.changeLog || '-' }}</div>
+          <div class="detail-row-right">{{ detailObj.changeLogShort || '-' }}</div>
         </div>
       </div>
 

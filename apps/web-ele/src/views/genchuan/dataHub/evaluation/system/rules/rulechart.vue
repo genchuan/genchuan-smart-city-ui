@@ -80,7 +80,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="park-chart-box park-subject-chart">
+  <div class="park-chart-box ">
     <div class="chart-box-left">
       <Card
         class="left-card"
