@@ -1,28 +1,29 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { confirm, useVbenDrawer, useVbenModal } from '@vben/common-ui';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElImage, ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import { UploadFilled } from '@element-plus/icons-vue';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getDriveinList, exporStatusExcel, handleAbnormal,dispose } from '#/api/genchuan/industry/energyCharging/carCharging/statusMonitor/index.js';
+ 
 import { $t } from '#/locales';
-import { exportToExcel } from '#/utils/excel.js';
+import { formatTimestamp } from '#/utils';
 
-import { dataList, textObj, useFormSchema, useGridColumns, detailFields } from './data';
-import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import { useFormSchema, useGridColumns } from './data';
+// 引入封装后的详情抽屉组件
+import ParkDetailDrawer from './detail.vue';
 
 const props = defineProps({
   secondShow: {
     type: Boolean,
     default: false,
   },
-});
-const getTitle = computed(() => {
-  return formData.value?.id ? textObj.editText : textObj.addText;
 });
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -35,51 +36,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
-const detailDrawerRef = ref(null);
-const formData = ref();
-const [Form, formApi] = useVbenForm({
-  commonConfig: {
-    componentProps: {
-      class: 'w-full',
-    },
-    formItemClass: 'col-span-2',
-    labelWidth: 80,
-  },
-  layout: 'horizontal',
-  schema: useFormSchema(),
-  showDefaultActions: false,
-});
-const [FormDrawer, formDrawerApi] = useVbenDrawer({
-  appendToMain: true,
-  modal: false,
-  onCancel() {
-    formDrawerApi.close();
-  },
-  onConfirm() {
-    const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-      dataObj.apilist.push(obj);
-    } else {
-      dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
-        }
-      });
-    }
-    handleRefresh();
-    formDrawerApi.close();
-  },
-  async onOpenChange(isOpen) {
-    if (isOpen) {
-      formData.value = formDrawerApi.getData();
-      if (formData.value?.id) {
-        await formApi.setValues(formData.value);
-      } else {
-        formApi.resetForm();
-      }
-    }
-  },
-});
 
 /** 刷新表格 */
 function handleRefresh() {
@@ -88,57 +44,21 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
-}
-
-/** 创建角色 */
-function handleCreate() {
-  formDrawerApi
-    .setData({
-      title: textObj.addText,
-    })
-    .open();
-}
-
-/** 编辑角色 */
-function handleEdit(row) {
-  formDrawerApi
-    .setData({
-      title: textObj.editText,
-      ...row,
-    })
-    .open();
-}
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.garageName]),
+  const data = await exporStatusExcel();
+  downloadFileFromBlobPart({
+    fileName: '车辆状态监控记录.xls',
+    source: data,
   });
-  try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success(
-      $t('ui.actionMessage.deleteSuccess', [row.garageName]),
-    );
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
 }
 
 async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
+  await confirm($t('确定删除这些数据吗？')).then(() => {
+    checkedIds.value.forEach(async (v) => {
+      // 这里需要实现删除逻辑
+      console.log('删除数据', v);
+    });
   });
-  try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
+  handleRefresh();
 }
 
 const checkedIds = ref([]);
@@ -147,58 +67,37 @@ function handleRowCheckboxChange({ records }) {
 }
 const dataObj = reactive({
   totalShow: false,
-  detailObj: {},
-  total: dataList().length,
+  detailObj: {}, // 保留详情对象用于传递给组件
+  total: 0,
   currentPage: 1,
   pageSize: 10,
-  apilist: dataList(),
+  imgUrl: '',
+  serachObj: {},
   list: [],
-  searchParams: {},
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
-
 // 表格数据获取
-const getTableData = (pageObj) => {
-  const page = pageObj.page;
-
-  // 根据activeName和searchParams筛选数据
-  const filteredList = dataObj.apilist.filter((v) => {
-    // 状态筛选
-    let statusMatch = true;
-    switch (activeName.value) {
-      case '启用': {
-        statusMatch = v.status === '1';
-        break;
-      }
-      case '禁用': {
-        statusMatch = v.status === '0';
-        break;
-      }
-    }
-
-    // 搜索条件筛选
-    let searchMatch = true;
-    Object.keys(dataObj.searchParams).forEach((key) => {
-      const value = dataObj.searchParams[key];
-      if (value) {
-        searchMatch = typeof value === 'string' ? searchMatch && v[key]?.toString().includes(value) : searchMatch && v[key] === value;
-      }
-    });
-
-    return statusMatch && searchMatch;
+const getTableData = async (pageObj) => {
+  const getParams = {
+    pageNo: pageObj.page.currentPage,
+    pageSize: pageObj.page.pageSize,
+    ...dataObj.serachObj,
+  };
+  const data = await getDriveinList(getParams); 
+  dataObj.total = data.total;
+  dataObj.list = data.list.map((v) => {
+    return {
+      ...v,
+      auditTime: formatTimestamp(v.auditTime),
+      createTime: formatTimestamp(v.createTime),
+    };
   });
-
-  dataObj.total = filteredList.length;
-  dataObj.list = filteredList.slice(
-    (page.currentPage - 1) * page.pageSize,
-    page.currentPage * page.pageSize,
-  );
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [QueryForm, QueryFormApi] = useVbenForm({
   // 默认展开
   collapsed: false,
   // 所有表单项共用，可单独在表单内覆盖
@@ -215,26 +114,26 @@ const [QueryForm] = useVbenForm({
   // 垂直布局，label和input在不同行，值为vertical
   // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
-  }),
+  schema: useFormSchema()
+    .filter((v) => v.isSearch)
+    .map((v) => {
+      delete v.rules;
+      return {
+        ...v,
+      };
+    }),
   // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
   },
 });
-
 // 搜索表单查询
-function onSubmit(values) {
-  dataObj.searchParams = values;
-  handleRefresh();
+async function onSubmit() {
+  dataObj.serachObj = await QueryFormApi.getValues();
+  gridApi.reload();
   drawerApi.close();
 }
-
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
@@ -263,45 +162,16 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-const activeName = ref('全部');
-
+const activeName = ref('');
+// 修改打开详情的方法，调用组件的open方法
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
-  detailDrawerRef.value.open();
+  // 通过ref调用组件的open方法
+  parkDetailDrawerRef.value.open();
+  console.log(row);
 };
-
-// 修改tabsData为三个标签：全部、启用、禁用
-const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用' }]);
-
-// 创建标签文本，显示数量统计
-const createLabel = (item) => {
-  let count = 0;
-
-  switch (item.label) {
-    case '全部': {
-      count = dataObj.apilist.length;
-
-      break;
-    }
-    case '启用': {
-      // 统计status为'1'的数据
-      count = dataObj.apilist.filter((v) => v.status === '1').length;
-
-      break;
-    }
-    case '禁用': {
-      // 统计status为'0'的数据
-      count = dataObj.apilist.filter((v) => v.status === '0').length;
-
-      break;
-    }
-    // No default
-  }
-
-  return `${item.label}(${count})`;
-};
-
 const handleClick = () => {
+  dataObj.serachObj.plateType = activeName.value;
   gridApi.query();
 };
 const handleSerachShow = () => {
@@ -310,46 +180,199 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
+// 定义组件ref，用于调用组件方法
+const parkDetailDrawerRef = ref(null);
+const dialogVisible = ref(false);
+const openImg = (url) => {
+  dataObj.imgUrl = url;
+  dialogVisible.value = true;
+};
+// 异常处置弹窗相关
+const abnormalDialogVisible = ref(false);
+const abnormalForm = reactive({
+  dispose_measure: '', // 处置措施
+});
+
+const abnormalFormRules = reactive({
+  dispose_measure: [
+    { required: true, message: '请输入处置措施', trigger: 'blur' },
+    { min: 5, message: '处置措施长度不少于5个字', trigger: 'blur' },
+  ],
+});
+
+const abnormalFormRef = ref(null);
+const currentAbnormalRow = ref(null);
+
+const openAbnormalDrawer = () => {
+  // 重置表单
+  abnormalForm.dispose_measure = '';
+  abnormalFormRef.value?.resetFields();
+  // 记录当前选中的行数据
+  currentAbnormalRow.value = checkedIds.value.length > 0 ? checkedIds.value : null;
+  // 打开弹窗
+  abnormalDialogVisible.value = true;
+};
+
+const confirmAbnormalHandle = async () => {
+  // 先校验表单
+  try {
+    await abnormalFormRef.value.validate();
+  } catch {
+    // 表单校验失败，终止操作
+    ElMessage.warning('请完善处置措施后提交');
+    return;
+  }
+
+  try {
+    // 调用异常处置接口
+    await handleAbnormal({
+      ids: checkedIds.value,
+      dispose_measure: abnormalForm.dispose_measure,
+    });
+    // 提示成功
+    ElMessage.success('异常处置操作已提交！');
+    // 关闭弹窗
+    abnormalDialogVisible.value = false;
+    await handleRefresh();
+  } catch (error) {
+    // 接口调用失败处理
+    ElMessage.error(`提交失败：${error.message || '请稍后重试'}`);
+  }
+};
+
+// 单个设备处置弹窗相关
+const disposeDialogVisible = ref(false);
+const disposeForm = reactive({
+  dispose_measure: '', // 处置措施
+});
+
+const disposeFormRules = reactive({
+  dispose_measure: [
+    { required: true, message: '请输入处置措施', trigger: 'blur' },
+    { min: 5, message: '处置措施长度不少于5个字', trigger: 'blur' },
+  ],
+});
+
+const disposeFormRef = ref(null);
+const currentDisposeRow = ref(null);
+
+const handelOpenDisposeDrawer = (row) => {
+  // 重置表单
+  disposeForm.dispose_measure = '';
+  disposeFormRef.value?.resetFields();
+  // 记录当前操作的行数据
+  currentDisposeRow.value = row;
+  // 打开弹窗
+  disposeDialogVisible.value = true;
+};
+
+const confirmDisposeHandle = async () => {
+  // 先校验表单
+  try {
+    await disposeFormRef.value.validate();
+  } catch {
+    // 表单校验失败，终止操作
+    ElMessage.warning('请完善处置措施后提交');
+    return;
+  }
+
+  try {
+    // 调用处置接口
+    await dispose({
+      id: currentDisposeRow.value.id,
+      dispose_measure: disposeForm.dispose_measure,
+    });
+    // 提示成功
+    ElMessage.success('处置操作已提交！');
+    // 关闭弹窗
+    disposeDialogVisible.value = false;
+    await handleRefresh();
+  } catch (error) {
+    // 接口调用失败处理
+    ElMessage.error(`提交失败：${error.message || '请稍后重试'}`);
+  }
+};
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <FormDrawer :title="getTitle">
-      <Form />
-    </FormDrawer>
-<!--   详情抽屉-->
-    <DetailDrawer
-      ref="detailDrawerRef"
-      :title="`${dataObj.detailObj.garageName}详情`"
-      :data="dataObj.detailObj"
-      :fields="detailFields"
+    <!-- 异常处置弹窗（包含处置措施输入） -->
+    <el-dialog
+      title="异常处置"
+      v-model="abnormalDialogVisible"
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="abnormalForm" :rules="abnormalFormRules" ref="abnormalFormRef" label-width="100px">
+        <el-form-item label="处置措施" prop="dispose_measure">
+          <el-input
+            type="textarea"
+            v-model="abnormalForm.dispose_measure"
+            placeholder="请输入异常处置的具体措施（必填）"
+            rows="4"
+            maxlength="500"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="abnormalDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="confirmAbnormalHandle">确认提交</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 单个设备处置弹窗（包含处置措施输入） -->
+    <el-dialog
+      title="设备处置"
+      v-model="disposeDialogVisible"
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="disposeForm" :rules="disposeFormRules" ref="disposeFormRef" label-width="100px">
+        <el-form-item label="处置措施" prop="dispose_measure">
+          <el-input
+            type="textarea"
+            v-model="disposeForm.dispose_measure"
+            placeholder="请输入设备处置的具体措施（必填）"
+            rows="4"
+            maxlength="500"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="disposeDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="confirmDisposeHandle">确认提交</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 使用封装后的详情抽屉组件 -->
+    <ParkDetailDrawer 
+      ref="parkDetailDrawerRef"
+      :detail-obj="dataObj.detailObj"
+      title="详情"
     />
+
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
-    <Grid>
-      <!-- 三级状态 -->
-      <template #table-title>
-        <div class="tabel-tabs">
-          <div v-if="props.secondShow">
-            <el-tabs
-              v-model="activeName"
-              class="demo-tabs"
-              @tab-change="handleClick"
-            >
-              <el-tab-pane
-                v-for="item in tabsData"
-                :key="item.label"
-                :label="createLabel(item)"
-                :name="item.label"
-              />
-            </el-tabs>
-          </div>
-        </div>
-      </template>
+
+    <Grid> 
+
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+         <IconButton content="异常处置" 
+            :disabled="isEmpty(checkedIds)"
+             icon-name="bell" 
+             @click="openAbnormalDrawer" 
+          /> 
           <IconButton
             content="导出"
             icon-name="download"
@@ -374,49 +397,113 @@ const handleFullShow = () => {
           />
         </div>
       </template>
-      <template #id="{ row }">
+
+      <template #device_code="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.id }}
+          {{ row.device_code }}
         </el-text>
       </template>
+
+      <template #driveInPhoto="{ row }">
+        <ElImage
+          style="width: 100px; height: 100px"
+          :src="row.driveInPhoto"
+          @click="openImg(row.driveInPhoto)"
+        />
+      </template>
+
+      <template #driveOutPhoto="{ row }">
+        <ElImage
+          style="width: 100px; height: 100px"
+          :src="row.driveOutPhoto"
+          @click="openImg(row.driveOutPhoto)"
+        />
+      </template>
+
       <template #actions="{ row }">
-        <div class="table-toolbar-tools">
+        <div class="table-toolbar-tools"> 
+          <IconButton
+            content="处置"
+            icon-name="bell"
+            @click="handelOpenDisposeDrawer(row)"
+          /> 
           <IconButton
             content="详情"
             icon-name="View"
             @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
-          />
+          />  
         </div>
       </template>
+
       <template #bottom>
-        <div class="common-total" @click="changeTotalShow">
-          <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
-            <ArrowDown />
-          </el-icon>
-          <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
-            <ArrowUp />
-          </el-icon>
-          <span> 本页统计：诱导屏数量: 10; 启用: 8; 禁用: 2 </span>
-        </div>
-        <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span> 全部统计：{{ textObj.total }} </span>
-        </div>
+        <div class="common-total" @click="changeTotalShow"></div>
       </template>
     </Grid>
   </div>
 </template>
+
+<style scoped>
+.park-img-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 700px;
+  height: 700px;
+}
+
+/* 批量查看表格样式优化 */
+:deep(.el-table) {
+  --el-table-header-text-color: #303133;
+  --el-table-row-hover-bg-color: #f5f7fa;
+}
+
+:deep(.el-dialog__body) {
+  padding: 20px;
+}
+
+/* 证据列表样式 */
+.evidence-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.evidence-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.evidence-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.evidence-name {
+  font-size: 12px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.evidence-type {
+  font-size: 11px;
+  color: #999;
+}
+
+.no-evidence {
+  color: #999;
+  font-size: 12px;
+  text-align: center;
+  padding: 8px 0;
+}
+</style>
