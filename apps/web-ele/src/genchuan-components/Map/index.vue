@@ -195,7 +195,20 @@ const renderMarkers = () => {
     }
   });
 
-  if (!bounds.isEmpty()) {
+  // 如果有数据，将地图中心点定位到第一个点
+  if (props.data.length > 0) {
+    const firstItem = props.data[0];
+    if (firstItem.coordinate) {
+      const [lng, lat] = firstItem.coordinate.split(',').map(Number);
+      if (!isNaN(lng) && !isNaN(lat)) {
+        const position = new TMapInstance.LatLng(lat, lng);
+        map.setCenter(position);
+        map.setZoom(15); // 设置合适的缩放级别
+      }
+    }
+  }
+  // 否则使用默认的边界适配
+  else if (!bounds.isEmpty()) {
     map.fitBounds(bounds, { padding: 100 });
   }
 };

@@ -17,7 +17,7 @@ export function handleAbnormal(data) {
 
 /** 获得场站设备实时运行监测图 */
 export function getStationDeviceRealTimeMonitor(data) {
-  return requestClient.get(`/vehiclecharging/status_monitor/chart`, data).catch(() => {
+  return requestClient.get(`/vehiclecharging/status-monitor/chart`, data).catch(() => {
     return {
       totalCount: 1024,
       normalCount: 980,
@@ -103,7 +103,7 @@ export function getStationDeviceRealTimeMonitor(data) {
 }
 /** 设备运行参数实时趋势（折线图钻取） */
 export function getParamTrend(data) {
-  return requestClient.get(`/vehiclecharging/status_monitor/chart/paramTrend`, data).catch(() => {
+  return requestClient.get(`/vehiclecharging/status-monitor/chart/paramTrend`, data).catch(() => {
     return [
       {
         "time": "08:00",

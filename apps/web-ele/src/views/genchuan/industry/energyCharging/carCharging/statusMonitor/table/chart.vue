@@ -38,7 +38,7 @@ const state = reactive({
       title: 'deviceName',
       fields: [
         { key: 'id', label: '设备编号' },
-        { key: 'alarmLevelName', label: '告警等级', bold: true },
+        { key: 'alarmLevel', label: '告警等级', bold: true },
       ],
     },
   },
@@ -489,19 +489,33 @@ const fetchMonitorData = async () => {
       state.cardList[2].value = response.abnormalCount || 0;
       state.cardList[3].value = response.handlingCount || 0;
       state.cardList[4].value = response.recoveredCount || 0;
-      
-      // 处理异常点数据，转换为地图组件需要的格式
-      if (response.abnormalPoints && Array.isArray(response.abnormalPoints)) {
-        state.mapData = response.abnormalPoints.map(point => ({
+      // 处理异常点数据，转换为地图组件需要的格式 
+      if (response.abnormalPointList && Array.isArray(response.abnormalPointList)) {
+        state.mapData = response.abnormalPointList.map(point => ({
           id: point.id,
           deviceName: point.deviceName,
           coordinate: `${point.lon},${point.lat}`,
           statusName: '异常',
-          alarmLevel: point.alarmLevel,
-          alarmLevelName: point.alarmLevelName
+          alarmLevel: point.alarmLevel, 
         }));
       } else {
         state.mapData = [];
+      }
+
+      if (response.paramTrendList && Array.isArray(response.paramTrendList)) {
+        const xAxis = response.paramTrendList.map(item => item.time);
+        const voltageData = response.paramTrendList.map(item => item.voltage);
+        const currentData = response.paramTrendList.map(item => item.current);
+        const powerData = response.paramTrendList.map(item => item.power);
+
+
+        allChartsData.value[0].data.xAxis = xAxis;
+        allChartsData.value[0].data.series[0].data = voltageData;
+        allChartsData.value[0].data.series[1].data = currentData;
+        allChartsData.value[0].data.series[2].data = powerData;
+
+        // 更新折线图
+        initBarLineChart();
       }
     }
   } catch (error) {
@@ -509,28 +523,6 @@ const fetchMonitorData = async () => {
   }
 };
 
-// 获取参数趋势数据并更新折线图
-const fetchParamTrend = async () => {
-  try {
-    const response = await getParamTrend();
-    if (response && Array.isArray(response)) {
-      const xAxis = response.map(item => item.time);
-      const voltageData = response.map(item => item.voltage);
-      const currentData = response.map(item => item.current);
-      const powerData = response.map(item => item.power);
-
-      allChartsData.value[0].data.xAxis = xAxis;
-      allChartsData.value[0].data.series[0].data = voltageData;
-      allChartsData.value[0].data.series[1].data = currentData;
-      allChartsData.value[0].data.series[2].data = powerData;
-
-      // 更新折线图
-      initBarLineChart();
-    }
-  } catch (error) {
-    console.error('获取参数趋势数据失败:', error);
-  }
-};
 
 onMounted(() => {
   nextTick(() => {
@@ -539,8 +531,7 @@ onMounted(() => {
   window.addEventListener('resize', handleResize);
   // 初始加载监测数据
   fetchMonitorData();
-  // 初始加载参数趋势数据
-  fetchParamTrend();
+  // 初始加载参数趋势数据 
 });
 
 onUnmounted(() => {
