@@ -19,7 +19,6 @@ const props = defineProps({
 });
 
 const { detailObj, title } = toRefs(props);
-
 // 计算属性处理标题，优先用路段名称，兜底显示默认值
 const drawerTitle = computed(() => {
   const roadSectionName = detailObj.value?.roadSectionName || '互联互通';
