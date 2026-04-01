@@ -350,47 +350,6 @@ const arrowChange = () => {
         </div>
       </template>
 
-      <template #name="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.name }}
-        </el-text>
-      </template>
-
-      <template #areaCode="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.areaCode }}
-        </el-text>
-      </template>
-
-
-      <template #adStatus="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.adStatus }}
-        </el-text>
-      </template>
-
-      <template #damageStatus="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.damageStatus }}
-        </el-text>
-      </template>
-
       <template #location="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
@@ -398,6 +357,26 @@ const arrowChange = () => {
           type="primary"
         >
           {{ row.location }}
+        </el-text>
+      </template>
+
+      <template #occupation_type="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.occupation_type }}
+        </el-text>
+      </template>
+
+      <template #grid_name="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.grid_name }}
         </el-text>
       </template>
 
