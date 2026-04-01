@@ -10,7 +10,7 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getDriveinList, exporStatusExcel, handleAbnormal } from '#/api/genchuan/industry/energyCharging/carCharging/statusMonitor/index.js';
+import { getDriveinList, exporStatusExcel, handleAbnormal } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/statusMonitor/index.js';
  
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
