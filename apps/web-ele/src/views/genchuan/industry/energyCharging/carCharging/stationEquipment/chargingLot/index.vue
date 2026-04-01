@@ -1,8 +1,9 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
+
+import { ElMessage } from 'element-plus';
 
 import { getChargingLotChart } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingLot';
-import { ElMessage } from 'element-plus';
 
 import ChargingLotStats from './components/ChargingLotStats.vue';
 import Table from './table/index.vue';
@@ -31,7 +32,7 @@ const statsData = ref({
 const fetchStatsData = async () => {
   try {
     const response = await getChargingLotChart();
-    if (response ) {
+    if (response) {
       const data = response;
 
       // 组装卡片数据
@@ -64,6 +65,7 @@ const fetchStatsData = async () => {
 
       // 组装柱状图数据
       statsData.value.barData = (data.stationLotList || []).map((item) => ({
+        stationId: item.stationId,
         stationName: item.stationName,
         totalCount: item.totalCount,
         idleCount: item.idleCount,
@@ -78,24 +80,33 @@ const fetchStatsData = async () => {
 };
 
 // 处理卡片点击 - 钻取筛选
-const handleCardClick = (status) => {
+const handleCardClick = async (status) => {
   // 通过ref调用table组件的方法进行筛选
-  if (tableRef.value) {
+  await nextTick();
+  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
     tableRef.value.handleStatsFilter('status', status);
+  } else {
+    console.warn('tableRef not ready or handleStatsFilter not available');
   }
 };
 
 // 处理饼图点击 - 钻取筛选
-const handlePieClick = (statusName) => {
-  if (tableRef.value) {
+const handlePieClick = async (statusName) => {
+  await nextTick();
+  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
     tableRef.value.handleStatsFilter('status', statusName);
+  } else {
+    console.warn('tableRef not ready or handleStatsFilter not available');
   }
 };
 
 // 处理柱状图点击 - 钻取筛选
-const handleBarClick = (stationId) => {
-  if (tableRef.value) {
+const handleBarClick = async (stationId) => {
+  await nextTick();
+  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
     tableRef.value.handleStatsFilter('station', stationId);
+  } else {
+    console.warn('tableRef not ready or handleStatsFilter not available');
   }
 };
 
@@ -156,28 +167,13 @@ onMounted(() => {
       </el-icon>
     </div>
     -->
-    <el-tabs
-      v-model="activeName"
-      class="common-tabs"
-      type="card"
-    >
-      <el-tab-pane
-        v-for="item in tabArray"
-        :key="item.label"
-        :name="item.label"
-      >
-        <template #label>
-          <div class="table-first">
-            <span>{{ item.label }}</span>
-          </div>
-        </template>
-        <component
-          :is="item.components"
+    <el-tabs v-model="activeName" class="common-tabs" type="card">
+      <el-tab-pane label="充电车位" name="充电车位">
+        <Table
           ref="tableRef"
-          :second-show="item.secondShow"
+          :second-show="false"
           :show-stats="showStatsValue"
           :toggle-stats="toggleStats"
-          :key="item.label"
         />
       </el-tab-pane>
     </el-tabs>

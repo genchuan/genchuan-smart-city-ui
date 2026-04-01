@@ -22,11 +22,6 @@ export function exportChargingLot() {
   return requestClient.download('/vehiclecharging/charging-lot/export-excel');
 }
 
-/** 刷新充电车位数据 */
-export function refreshChargingLot(params) {
-  return requestClient.get('/vehiclecharging/charging-lot/refresh', { params });
-}
-
 // ==================== 列表行交互操作接口 ====================
 
 /** 获取充电车位详情 */
@@ -37,7 +32,7 @@ export function getChargingLotDetail(id, tenantId) {
 }
 
 /** 更新充电车位状态
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {number} data.id - 车位主键ID
  * @param {string} data.lotStatus - 车位状态（0-空闲，1-占用，2-维护中）
  * @param {number} data.occupyTime - 占用时长（分钟），状态为"占用"时必填
@@ -55,5 +50,7 @@ export function getChargingLotChart() {
 
 /** 车位状态占比（饼图钻取） */
 export function getChargingLotStatusRatio(params) {
-  return requestClient.get('/vehiclecharging/charging-lot/chart/statusRatio', { params });
+  return requestClient.get('/vehiclecharging/charging-lot/chart/statusRatio', {
+    params,
+  });
 }
