@@ -2,10 +2,10 @@
 import { reactive, onMounted, ref, computed } from 'vue';
 import { ElSelect, ElOption } from 'element-plus';
 import { getGarbageTransferChartDashboard } from '#/api/genchuan/industry/urban/environmentalSanitation/sanitationSceneMgmt/garbageTransfer/data.js';
-import Indicator from '#/components/stats/indicator.vue';
-import Pie from '#/components/stats/pie.vue';
-import Bar from '#/components/stats/bar.vue';
-import LineChart from '#/components/stats/lineChart.vue';
+import Indicator from '#/genchuan-components/stats/indicator.vue';
+import Pie from '#/genchuan-components/stats/pie.vue';
+import Bar from '#/genchuan-components/stats/bar.vue';
+import LineChart from '#/genchuan-components/stats/lineChart.vue';
 
 const state = reactive({
   loading: false,
