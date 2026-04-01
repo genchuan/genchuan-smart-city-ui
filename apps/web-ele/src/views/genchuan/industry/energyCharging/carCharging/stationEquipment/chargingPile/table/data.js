@@ -1,4 +1,4 @@
-import { stationList } from '#/api/genchuan/industry/energyCharging/carCharging/chargingPile/index.js';
+import { stationList } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingPile/index.js';
 
 export function useFormSchema() {
   return [

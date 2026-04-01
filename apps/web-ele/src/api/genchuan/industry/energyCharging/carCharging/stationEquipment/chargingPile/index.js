@@ -79,7 +79,7 @@
 
 
 // src/api/genchuan/industry/energyCharging/carCharging/chargingPile/index.js
-import { requestClient } from '#/api/request';
+import { requestClient } from '#/api/request.js';
 
 // ==================== 模拟数据 ====================
 export const stationList = [
@@ -161,7 +161,6 @@ export function getChargingPilePage(params) {
   const filtered = filterList(params);
   const start = (pageNo - 1) * pageSize;
   const pageList = filtered.slice(start, start + pageSize);
-  // 直接返回列表数据，不额外包装 code/data
   return Promise.resolve({
     list: pageList,
     total: filtered.length,

@@ -1,38 +1,12 @@
-<!-- chargingPile/chargingPileChart.vue -->
 <script setup>
 import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 import * as echarts from 'echarts';
 import { ElDialog, ElTable, ElTableColumn } from 'element-plus';
-import dayjs from 'dayjs';
+import { getChartData, getRunTimeTrend } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingPile/index.js';
 
 const props = defineProps({
   stationId: { type: Number, default: null },
 });
-
-// 模拟图表数据
-const generateMockChartData = () => {
-  const runTimeTrend = [];
-  for (let i = 6; i >= 0; i--) {
-    runTimeTrend.push({
-      time: dayjs().subtract(i, 'day').format('MM-DD'),
-      runTime: Math.floor(Math.random() * 500) + 1000,
-    });
-  }
-  const typeCount = [
-    { type: 'DC-60kW', count: 25 },
-    { type: 'AC-7kW', count: 40 },
-    { type: 'DC-120kW', count: 15 },
-    { type: 'AC-22kW', count: 18 },
-    { type: 'DC-150kW', count: 12 },
-  ];
-  const statusCount = {
-    total: 110,
-    running: 52,
-    fault: 8,
-    disabled: 50,
-  };
-  return { runTimeTrend, typeCount, statusCount };
-};
 
 const state = reactive({
   cardList: [
@@ -59,8 +33,8 @@ const detailData = ref([]);
 const detailTitle = ref('');
 
 async function loadChartData() {
-  const mockData = generateMockChartData();
-  state.chartData = mockData;
+  const res = await getChartData({ stationId: props.stationId, tenantId: 1 });
+  state.chartData = res.data;
   state.cardList.forEach(card => {
     card.value = state.chartData.statusCount[card.key] || 0;
   });
@@ -93,13 +67,8 @@ function initLineChart() {
     if (params.componentType === 'series') {
       const time = state.chartData.runTimeTrend[params.dataIndex].time;
       detailTitle.value = `${time} 运行时长明细`;
-      // 模拟钻取明细数据
-      const mockDetail = [
-        { pileCode: 'CP-001', pileName: '直流桩-60kW', runTime: 180 },
-        { pileCode: 'CP-002', pileName: '交流桩-7kW', runTime: 210 },
-        { pileCode: 'CP-003', pileName: '直流桩-120kW', runTime: 195 },
-      ];
-      detailData.value = mockDetail;
+      const res = await getRunTimeTrend({ timeType: 'day', startTime: time, endTime: time, tenantId: 1 });
+      detailData.value = res.data;
       detailDialogVisible.value = true;
     }
   });
