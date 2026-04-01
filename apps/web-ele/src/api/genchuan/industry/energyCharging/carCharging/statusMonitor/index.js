@@ -64,6 +64,38 @@ export function getStationDeviceRealTimeMonitor(data) {
           lat: 24.907856,
           alarmLevel: "serious",
           alarmLevelName: "严重"
+        },
+        {
+          id: 5002,
+          deviceName: "CP20250301002 -慢充桩",
+          lon: 118.590123,
+          lat: 24.908156,
+          alarmLevel: "serious",
+          alarmLevelName: "严重"
+        },
+        {
+          id: 5003,
+          deviceName: "CP20250301003 -快充桩",
+          lon: 118.590823,
+          lat: 24.908456,
+          alarmLevel: "serious",
+          alarmLevelName: "严重"
+        },
+        {
+          id: 5004,
+          deviceName: "CP20250301004 -慢充桩",
+          lon: 118.591523,
+          lat: 24.908756,
+          alarmLevel: "serious",
+          alarmLevelName: "严重"
+        },
+        {
+          id: 5005,
+          deviceName: "CP20250301005 -快充桩",
+          lon: 118.592223,
+          lat: 24.909056,
+          alarmLevel: "serious",
+          alarmLevelName: "严重"
         }
       ]
     };
