@@ -164,60 +164,66 @@ export function useGridColumns() {
       title: '所属场站',
       minWidth: 200,
       sortable: true, 
+      slots: { default: 'station_name' }, // 点击筛选同场站监测数据
     },
     {
       field: 'lotCode',
       title: '所属车位',
       minWidth: 120,
       sortable: true, 
+      slots: { default: 'lot_code' }, // 点击筛选同车位监测数据
     },
     {
       field: 'deviceType',
       title: '设备类型',
       minWidth: 120,
       sortable: true, 
+      slots: { default: 'device_type' }, // 点击筛选同类型设备
     },
     {
       field: 'voltage',
       title: '电压',
       minWidth: 100,
-      sortable: true // 无钻取
+      sortable: true // 无钻取交互
     },
     {
       field: 'current',
       title: '电流',
       minWidth: 100,
-      sortable: true // 无钻取
+      sortable: true // 无钻取交互
     },
     {
       field: 'power',
       title: '功率',
       minWidth: 100,
-      sortable: true // 无钻取
+      sortable: true // 无钻取交互
     },
     {
       field: 'alarmLevel',
       title: '告警等级',
       minWidth: 120,
       sortable: true, 
+      slots: { default: 'alarm_level' }, // 点击筛选同等级告警
     },
     {
       field: 'monitorStatus',
       title: '监测状态',
       minWidth: 120,
       sortable: true, 
+      slots: { default: 'monitor_status' }, // 点击筛选同状态监测数据
     },
     {
       field: 'disposeUser',
       title: '处置人员',
       minWidth: 120,
       sortable: true, 
+      slots: { default: 'dispose_user' }, // 点击筛选同处置人员记录
     },
     {
       field: 'remark',
       title: '备注',
       minWidth: 150,
-      sortable: true // 无钻取
+      sortable: true // 无钻取交互
     },
     {
       field: 'disposeMeasure',
