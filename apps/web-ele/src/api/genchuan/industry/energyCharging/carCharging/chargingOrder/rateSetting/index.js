@@ -1,23 +1,34 @@
 import { requestClient } from '#/api/request';  
-export function getDriveinList(params) {
-  return requestClient.get('/vehiclecharging/status-monitor/page', {
+export function getRateSettingList(params) {
+  return requestClient.get('/vehiclecharging/rate-setting/page', {
     params,   
 })
 }
 /** excel导出 */
-export function exporStatusExcel() {
-  return requestClient.download(`/vehiclecharging/status-monitor/export-excel`);
+export function exporRateSettingExcel() {
+  return requestClient.download(`/vehiclecharging/rate-setting/export-excel`);
+}
+/** 删除 */
+export function deleteRateSetting(id) {
+  return requestClient.delete(`/vehiclecharging/rate-setting/delete?id=${id}`);
 }
 
-/** 异常处置 */
-export function handleAbnormal(data) {
-  return requestClient.put(`/vehiclecharging/status-monitor/handleAbnormal`, data);
-} 
+/** 创建 */
+export function createRateSetting(data) {
+  return requestClient.post(`/vehiclecharging/rate-setting/create`, data);
+}
+/** 编辑 */
+export function updateRateSetting(data) {
+  return requestClient.put(`/vehiclecharging/rate-setting/update`, data);
+}
+
+
+ 
  
 
 /** 获得场站设备实时运行监测图 */
 export function getStationDeviceRealTimeMonitor(data) {
-  return requestClient.get(`/vehiclecharging/status_monitor/chart`, data).catch(() => {
+  return requestClient.get(`/vehiclecharging/status-monitor/chart`, data).catch(() => {
     return {
       totalCount: 1024,
       normalCount: 980,
@@ -103,7 +114,7 @@ export function getStationDeviceRealTimeMonitor(data) {
 }
 /** 设备运行参数实时趋势（折线图钻取） */
 export function getParamTrend(data) {
-  return requestClient.get(`/vehiclecharging/status_monitor/chart/paramTrend`, data).catch(() => {
+  return requestClient.get(`/vehiclecharging/status-monitor/chart/paramTrend`, data).catch(() => {
     return [
       {
         "time": "08:00",

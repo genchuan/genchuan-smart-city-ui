@@ -10,7 +10,7 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getDriveinList, exporStatusExcel, handleAbnormal } from '#/api/genchuan/industry/energyCharging/carCharging/statusMonitor/index.js';
+import { getDriveinList, exporStatusExcel, handleAbnormal } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/statusMonitor/index.js';
  
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
@@ -65,6 +65,14 @@ const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
+// 快捷筛选变量
+const filterStationName = ref('');
+const filterLotCode = ref('');
+const filterDeviceType = ref('');
+const filterAlarmLevel = ref('');
+const filterMonitorStatus = ref('');
+const filterDisposeUser = ref('');
+
 const dataObj = reactive({
   totalShow: false,
   detailObj: {}, // 保留详情对象用于传递给组件
@@ -85,6 +93,27 @@ const getTableData = async (pageObj) => {
     pageSize: pageObj.page.pageSize,
     ...dataObj.serachObj,
   };
+
+  // 有值才传，没值不传递key
+  if (filterStationName.value) {
+    getParams.stationName = filterStationName.value;
+  }
+  if (filterLotCode.value) {
+    getParams.lotCode = filterLotCode.value;
+  }
+  if (filterDeviceType.value) {
+    getParams.deviceType = filterDeviceType.value;
+  }
+  if (filterAlarmLevel.value) {
+    getParams.alarmLevel = filterAlarmLevel.value;
+  }
+  if (filterMonitorStatus.value) {
+    getParams.monitorStatus = filterMonitorStatus.value;
+  }
+  if (filterDisposeUser.value) {
+    getParams.disposeUser = filterDisposeUser.value;
+  }
+
   const data = await getDriveinList(getParams); 
   dataObj.total = data.total;
   dataObj.list = data.list.map((v) => {
@@ -176,6 +205,76 @@ const handleClick = () => {
   dataObj.serachObj.plateType = activeName.value;
   gridApi.query();
 };
+
+// ==================== 快捷筛选处理 ====================
+
+// 处理所属场站点击
+const handleStationClick = (stationName) => {
+  filterStationName.value = filterStationName.value === stationName ? '' : stationName;
+  gridApi.query();
+};
+
+// 处理所属车位点击
+const handleLotClick = (lotCode) => {
+  filterLotCode.value = filterLotCode.value === lotCode ? '' : lotCode;
+  gridApi.query();
+};
+
+// 处理设备类型点击
+const handleDeviceTypeClick = (deviceType) => {
+  filterDeviceType.value = filterDeviceType.value === deviceType ? '' : deviceType;
+  gridApi.query();
+};
+
+// 处理告警等级点击
+const handleAlarmLevelClick = (alarmLevel) => {
+  filterAlarmLevel.value = filterAlarmLevel.value === alarmLevel ? '' : alarmLevel;
+  gridApi.query();
+};
+
+// 处理监测状态点击
+const handleMonitorStatusClick = (monitorStatus) => {
+  filterMonitorStatus.value = filterMonitorStatus.value === monitorStatus ? '' : monitorStatus;
+  gridApi.query();
+};
+
+// 处理处置人员点击
+const handleDisposeUserClick = (disposeUser) => {
+  filterDisposeUser.value = filterDisposeUser.value === disposeUser ? '' : disposeUser;
+  gridApi.query();
+};
+
+// 取消筛选
+const handleCancelStationFilter = () => {
+  filterStationName.value = '';
+  gridApi.query();
+};
+
+const handleCancelLotFilter = () => {
+  filterLotCode.value = '';
+  gridApi.query();
+};
+
+const handleCancelDeviceTypeFilter = () => {
+  filterDeviceType.value = '';
+  gridApi.query();
+};
+
+const handleCancelAlarmLevelFilter = () => {
+  filterAlarmLevel.value = '';
+  gridApi.query();
+};
+
+const handleCancelMonitorStatusFilter = () => {
+  filterMonitorStatus.value = '';
+  gridApi.query();
+};
+
+const handleCancelDisposeUserFilter = () => {
+  filterDisposeUser.value = '';
+  gridApi.query();
+};
+
 const handleSerachShow = () => {
   drawerApi.open();
 };
@@ -368,6 +467,75 @@ const confirmDisposeHandle = async () => {
 
     <Grid> 
 
+      <!-- 快捷筛选标签 -->
+      <template #table-title>
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
+        >
+          <!-- 所属场站筛选标签 -->
+          <ElTag
+            v-if="filterStationName"
+            type="primary"
+            closable
+            @close="handleCancelStationFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            所属场站：{{ filterStationName }}
+          </ElTag>
+          <!-- 所属车位筛选标签 -->
+          <ElTag
+            v-if="filterLotCode"
+            type="success"
+            closable
+            @close="handleCancelLotFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            所属车位：{{ filterLotCode }}
+          </ElTag>
+          <!-- 设备类型筛选标签 -->
+          <ElTag
+            v-if="filterDeviceType"
+            type="warning"
+            closable
+            @close="handleCancelDeviceTypeFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            设备类型：{{ filterDeviceType }}
+          </ElTag>
+          <!-- 告警等级筛选标签 -->
+          <ElTag
+            v-if="filterAlarmLevel"
+            type="info"
+            closable
+            @close="handleCancelAlarmLevelFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            告警等级：{{ filterAlarmLevel }}
+          </ElTag>
+          <!-- 监测状态筛选标签 -->
+          <ElTag
+            v-if="filterMonitorStatus"
+            type="primary"
+            closable
+            @close="handleCancelMonitorStatusFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            监测状态：{{ filterMonitorStatus }}
+          </ElTag>
+          <!-- 处置人员筛选标签 -->
+          <ElTag
+            v-if="filterDisposeUser"
+            type="success"
+            closable
+            @close="handleCancelDisposeUserFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            处置人员：{{ filterDisposeUser }}
+          </ElTag>
+        </div>
+      </template>
+
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
          <IconButton content="异常处置" 
@@ -407,6 +575,78 @@ const confirmDisposeHandle = async () => {
           type="primary"
         >
           {{ row.deviceCode }}
+        </el-text>
+      </template>
+
+      <!-- 所属场站插槽 - 点击筛选 -->
+      <template #station_name="{ row }">
+        <el-text
+          @click="handleStationClick(row.stationName)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.stationName }}
+        </el-text>
+      </template>
+
+      <!-- 所属车位插槽 - 点击筛选 -->
+      <template #lot_code="{ row }">
+        <el-text
+          @click="handleLotClick(row.lotCode)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.lotCode }}
+        </el-text>
+      </template>
+
+      <!-- 设备类型插槽 - 点击筛选 -->
+      <template #device_type="{ row }">
+        <el-text
+          @click="handleDeviceTypeClick(row.deviceType)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.deviceType }}
+        </el-text>
+      </template>
+
+      <!-- 告警等级插槽 - 点击筛选 -->
+      <template #alarm_level="{ row }">
+        <el-text
+          @click="handleAlarmLevelClick(row.alarmLevel)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.alarmLevelName || row.alarmLevel }}
+        </el-text>
+      </template>
+
+      <!-- 监测状态插槽 - 点击筛选 -->
+      <template #monitor_status="{ row }">
+        <el-text
+          @click="handleMonitorStatusClick(row.monitorStatus)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.monitorStatusName || row.monitorStatus }}
+        </el-text>
+      </template>
+
+      <!-- 处置人员插槽 - 点击筛选 -->
+      <template #dispose_user="{ row }">
+        <el-text
+          @click="handleDisposeUserClick(row.disposeUser)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.disposeUser || '-' }}
         </el-text>
       </template>
 
