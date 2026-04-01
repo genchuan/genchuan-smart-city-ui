@@ -3,9 +3,17 @@ import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import { ElButton, ElForm, ElFormItem, ElInputNumber, ElMessage } from 'element-plus';
+import {
+  ElButton,
+  ElForm,
+  ElFormItem,
+  ElInputNumber,
+  ElMessage,
+} from 'element-plus';
 
 import { updateChargingLotStatus } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingLot';
+
+const emit = defineEmits(['success']);
 
 const [Modal, modalApi] = useVbenModal({
   title: '占用标记',
@@ -61,8 +69,6 @@ const handleSubmit = async () => {
     }
   }
 };
-
-const emit = defineEmits(['success']);
 
 defineExpose({
   open,
