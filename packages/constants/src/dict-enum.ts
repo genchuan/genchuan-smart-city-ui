@@ -195,6 +195,13 @@ const SHUNCHANG_DICT = {
   SM_STATE: 'sm_state',
 } as const;
 
+/** ========== ENERGYCHARGE - 能源充电模块 ========== */
+const ENERGYCHARGE_DICT = {
+  // 充电车位
+  CHARGE_LOT_LOT_STATUS: 'charging_lot_lot_status',
+  CHARGE_LOT_LOT_TYPE: 'charging_lot_lot_type',
+} as const;
+
 /** 字典类型枚举 - 统一导出 */
 const DICT_TYPE = {
   ...AI_DICT,
@@ -211,6 +218,7 @@ const DICT_TYPE = {
   ...COMMON_DICT,
   ...DATA_DICT,
   ...SHUNCHANG_DICT,
+  ...ENERGYCHARGE_DICT,
 } as const;
 
 export { DICT_TYPE };
