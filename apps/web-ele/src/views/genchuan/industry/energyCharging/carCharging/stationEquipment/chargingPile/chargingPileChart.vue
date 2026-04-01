@@ -1,12 +1,38 @@
+<!-- chargingPile/chargingPileChart.vue -->
 <script setup>
 import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 import * as echarts from 'echarts';
-import { ElOption, ElSelect } from 'element-plus';
-import { getChartData, getRunTimeTrend } from '#/api/genchuan/industry/energyCharging/carCharging/chargingPile/index.js';
+import { ElDialog, ElTable, ElTableColumn } from 'element-plus';
+import dayjs from 'dayjs';
 
 const props = defineProps({
-  stationId: { type: Number, default: null }
+  stationId: { type: Number, default: null },
 });
+
+// 模拟图表数据
+const generateMockChartData = () => {
+  const runTimeTrend = [];
+  for (let i = 6; i >= 0; i--) {
+    runTimeTrend.push({
+      time: dayjs().subtract(i, 'day').format('MM-DD'),
+      runTime: Math.floor(Math.random() * 500) + 1000,
+    });
+  }
+  const typeCount = [
+    { type: 'DC-60kW', count: 25 },
+    { type: 'AC-7kW', count: 40 },
+    { type: 'DC-120kW', count: 15 },
+    { type: 'AC-22kW', count: 18 },
+    { type: 'DC-150kW', count: 12 },
+  ];
+  const statusCount = {
+    total: 110,
+    running: 52,
+    fault: 8,
+    disabled: 50,
+  };
+  return { runTimeTrend, typeCount, statusCount };
+};
 
 const state = reactive({
   cardList: [
@@ -16,10 +42,10 @@ const state = reactive({
     { title: '停用数量', value: 0, color: '#FF9F40', key: 'disabled' },
   ],
   chartData: {
-    runTimeTrend: [],  // 折线图数据
-    typeCount: [],     // 柱状图数据
-    statusCount: { total: 0, running: 0, fault: 0, disabled: 0 }
-  }
+    runTimeTrend: [],
+    typeCount: [],
+    statusCount: { total: 0, running: 0, fault: 0, disabled: 0 },
+  },
 });
 
 const lineChartRef = ref(null);
@@ -27,9 +53,14 @@ const barChartRef = ref(null);
 let lineChartInstance = null;
 let barChartInstance = null;
 
+// 钻取明细弹窗
+const detailDialogVisible = ref(false);
+const detailData = ref([]);
+const detailTitle = ref('');
+
 async function loadChartData() {
-  const res = await getChartData({ stationId: props.stationId, tenantId: 1 });
-  state.chartData = res.data;
+  const mockData = generateMockChartData();
+  state.chartData = mockData;
   state.cardList.forEach(card => {
     card.value = state.chartData.statusCount[card.key] || 0;
   });
@@ -53,16 +84,23 @@ function initLineChart() {
       lineStyle: { width: 3, color: '#4A90E2' },
       areaStyle: { color: 'rgba(74,144,226,0.1)' },
       symbol: 'circle',
-      symbolSize: 6
-    }]
+      symbolSize: 6,
+    }],
   };
   lineChartInstance.setOption(option);
   lineChartInstance.off('click');
   lineChartInstance.on('click', async (params) => {
     if (params.componentType === 'series') {
       const time = state.chartData.runTimeTrend[params.dataIndex].time;
-      const res = await getRunTimeTrend({ timeType: 'day', startTime: time, endTime: time, tenantId: 1 });
-      alert(JSON.stringify(res.data));
+      detailTitle.value = `${time} 运行时长明细`;
+      // 模拟钻取明细数据
+      const mockDetail = [
+        { pileCode: 'CP-001', pileName: '直流桩-60kW', runTime: 180 },
+        { pileCode: 'CP-002', pileName: '交流桩-7kW', runTime: 210 },
+        { pileCode: 'CP-003', pileName: '直流桩-120kW', runTime: 195 },
+      ];
+      detailData.value = mockDetail;
+      detailDialogVisible.value = true;
     }
   });
 }
@@ -79,9 +117,9 @@ function initBarChart() {
     series: [{
       type: 'bar',
       data: state.chartData.typeCount.map(item => item.count),
-      itemStyle: { borderRadius: [4,4,0,0], color: '#4A90E2' },
-      label: { show: true, position: 'top' }
-    }]
+      itemStyle: { borderRadius: [4, 4, 0, 0], color: '#4A90E2' },
+      label: { show: true, position: 'top' },
+    }],
   };
   barChartInstance.setOption(option);
   barChartInstance.off('click');
@@ -99,21 +137,38 @@ function initCharts() {
 }
 
 function handleCardClick(key) {
-  let status = '';
-  if (key === 'running') status = '已启用';
-  else if (key === 'fault') status = '已启用';
-  else if (key === 'disabled') status = '已停用';
-  window.dispatchEvent(new CustomEvent('filterByStatus', { detail: { pileStatus: status, faultFlag: key === 'fault' ? 1 : null } }));
+  let params = {};
+  if (key === 'total') {
+    params = { pileStatus: undefined, faultFlag: undefined };
+  } else if (key === 'running') {
+    params = { pileStatus: '已启用', faultFlag: undefined };
+  } else if (key === 'fault') {
+    params = { pileStatus: undefined, faultFlag: 1 };
+  } else if (key === 'disabled') {
+    params = { pileStatus: '已停用', faultFlag: undefined };
+  }
+  window.dispatchEvent(new CustomEvent('filterByStatus', { detail: params }));
+}
+
+function handleResize() {
+  lineChartInstance?.resize();
+  barChartInstance?.resize();
+}
+
+function handleRefreshChart() {
+  loadChartData();
 }
 
 onMounted(() => {
-  loadChartData();
-  window.addEventListener('resize', () => {
-    lineChartInstance?.resize();
-    barChartInstance?.resize();
+  nextTick(() => {
+    loadChartData();
   });
+  window.addEventListener('resize', handleResize);
+  window.addEventListener('refreshChart', handleRefreshChart);
 });
 onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
+  window.removeEventListener('refreshChart', handleRefreshChart);
   lineChartInstance?.dispose();
   barChartInstance?.dispose();
 });
@@ -121,7 +176,6 @@ onUnmounted(() => {
 
 <template>
   <div class="stats-four-visualization">
-    <!-- 卡片区 - 2x2网格布局 -->
     <div class="cards-section">
       <div
         v-for="card in state.cardList"
@@ -140,7 +194,6 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- 右侧图表区 -->
     <div class="right-section">
       <div class="charts-section">
         <div class="pie-chart-area">
@@ -149,9 +202,16 @@ onUnmounted(() => {
         <div class="pie-chart-area">
           <div ref="barChartRef" class="chart-container"></div>
         </div>
-        <div class="bar-line-chart-area" style="display: none;"></div>
       </div>
     </div>
+
+    <el-dialog v-model="detailDialogVisible" :title="detailTitle" width="800px">
+      <el-table :data="detailData" border>
+        <el-table-column prop="pileCode" label="设备编号" />
+        <el-table-column prop="pileName" label="型号" />
+        <el-table-column prop="runTime" label="运行时长(分钟)" />
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
@@ -224,8 +284,5 @@ onUnmounted(() => {
 .chart-container {
   width: 100%;
   height: 100%;
-}
-.bar-line-chart-area {
-  flex: 1.5;
 }
 </style>
