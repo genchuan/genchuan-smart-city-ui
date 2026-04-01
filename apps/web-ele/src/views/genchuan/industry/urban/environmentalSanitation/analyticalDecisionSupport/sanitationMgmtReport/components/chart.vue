@@ -1,10 +1,10 @@
 <script setup>
 import { reactive, ref } from 'vue';
 import { ElSelect, ElOption } from 'element-plus';
-import Indicator from '#/components/stats/indicator.vue';
-import Pie from '#/components/stats/pie.vue';
-import Bar from '#/components/stats/bar.vue';
-import LineChart from '#/components/stats/lineChart.vue';
+import Indicator from '#/genchuan-components/stats/indicator.vue';
+import Pie from '#/genchuan-components/stats/pie.vue';
+import Bar from '#/genchuan-components/stats/bar.vue';
+import LineChart from '#/genchuan-components/stats/lineChart.vue';
 
 // 卡片数据（四个核心指标）
 const state = reactive({
