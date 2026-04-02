@@ -1,79 +1,37 @@
 <script setup>
 import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
-import { getStationDeviceRealTimeMonitor, getParamTrend } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/statusMonitor/index.js';
+import { getRateSettingChart, getRateSettingList } from '#/api/genchuan/industry/energyCharging/carCharging/chargingOrder/rateSetting/index.js';
 import * as echarts from 'echarts';
-import { ElOption, ElSelect } from 'element-plus';
-import MapComponent from '#/genchuan-components/Map/index.vue';
 const state = reactive({
   cardList: [
-    { title: '监测设备总数量', value: 0, color: '#4A90E2' },
-    { title: '正常设备数量', value: 0, color: '#50E3C2' },
-    { title: '异常设备数量', value: 0, color: '#FF9F40' },
-    { title: '处置中设备数量', value: 0, color: '#A17FE0' },
-    { title: '已恢复设备数量', value: 0, color: '#FF6B8B' },
+    { title: '总费率方案数', value: 0, color: '#4A90E2' },
+    { title: '已生效方案数', value: 0, color: '#50E3C2' },
+    { title: '未生效方案数', value: 0, color: '#FF9F40' },
+    { title: '已失效方案数', value: 0, color: '#A17FE0' },
+    { title: '生效占比', value: 0, color: '#FF6B8B' },
   ],
-  mapData: [],
-  mapConfig: {
-    markerIcons: {
-      normal: '/static/imgs/dataHub/map/marker-blue.png',
-      yellow: '/static/imgs/dataHub/map/marker-yellow.png',
-      red: '/static/imgs/dataHub/map/marker-red.png',
-    },
-    statusIconMap: {
-      green: 'normal',
-      orange: 'yellow',
-      red: 'red',
-      blue: 'normal',
-      gray: 'normal',
-    },
-    statusKeyMap: {
-      正常: 'green',
-      异常: 'red',
-      离线: 'red',
-      维护中: 'orange',
-      停用: 'red',
-      建设中: 'gray',
-    },
-    infoWindowConfig: {
-      title: 'deviceName',
-      fields: [
-        { key: 'id', label: '设备编号' },
-        { key: 'alarmLevel', label: '告警等级', bold: true },
-      ],
-    },
-  },
+  barData: [],
 });
 
 // 图表引用
-const barLineChartRef = ref(null);
-let barLineChartInstance = null;
+const barChartRef = ref(null);
+let barChartInstance = null;
 
-// 图表切换状态
-const chartIndex = ref(0);
-
-// 所有折线图和柱状图的数据
-const allChartsData = ref([
-  {
-    label: '设备运行参数实时趋势',
-    type: 'line',
-    data: {
-      xAxis: [],
-      series: [
-        { name: '电压(V)', data: [] },
-        { name: '电流(A)', data: [] },
-        { name: '功率(kW)', data: [] },
-      ],
-    },
+// 柱状图数据
+const barChartData = ref({
+  label: '场站费率数量统计',
+  type: 'bar',
+  data: {
+    xAxis: [],
+    series: [
+      { name: '费率数量', data: [] },
+    ],
   },
-]);
+});
 
 
 
-// 切换图表
-const handleBarLineChange = (index) => {
-  chartIndex.value = index;
-  initBarLineChart();
-};
+
 
 // 获取圆环图配置
 const getPieOption = (chartData) => {
@@ -441,85 +399,72 @@ function hexToRgb(hex) {
 
 
 
-// 初始化柱状/折线图
-const initBarLineChart = () => {
+// 初始化柱状图
+const initBarChart = () => {
   if (
-    !barLineChartRef.value ||
-    !allChartsData.value[chartIndex.value] ||
-    !allChartsData.value[chartIndex.value].data
+    !barChartRef.value ||
+    !barChartData.value ||
+    !barChartData.value.data
   )
     return;
   if (
-    !allChartsData.value[chartIndex.value].data.xAxis ||
-    allChartsData.value[chartIndex.value].data.xAxis.length === 0
+    !barChartData.value.data.xAxis ||
+    barChartData.value.data.xAxis.length === 0
   )
     return;
 
   try {
-    if (barLineChartInstance) {
-      barLineChartInstance.dispose();
-      barLineChartInstance = null;
+    if (barChartInstance) {
+      barChartInstance.dispose();
+      barChartInstance = null;
     }
 
-    barLineChartInstance = echarts.init(barLineChartRef.value);
-    const option = getBarLineOption(allChartsData.value[chartIndex.value]);
-    barLineChartInstance.setOption(option);
+    barChartInstance = echarts.init(barChartRef.value);
+    const option = getBarLineOption(barChartData.value);
+    barChartInstance.setOption(option);
   } catch (error) {
-    console.error('初始化柱状/折线图失败:', error);
+    console.error('初始化柱状图失败:', error);
   }
 };
 
 // 初始化所有图表
 const initCharts = () => {
-  initBarLineChart();
+  initBarChart();
 };
 
 // 处理窗口大小变化
 const handleResize = () => {
-  barLineChartInstance?.resize();
+  barChartInstance?.resize();
 };
 
-// 获取监测数据并更新卡片
-const fetchMonitorData = async () => {
+// 获取费率图表数据并更新卡片
+const fetchRateChartData = async () => {
   try {
-    const response = await getStationDeviceRealTimeMonitor();
+    const response = await getRateSettingChart();
     if (response) {
-      state.cardList[0].value = response.totalCount || 0;
-      state.cardList[1].value = response.normalCount || 0;
-      state.cardList[2].value = response.abnormalCount || 0;
-      state.cardList[3].value = response.handlingCount || 0;
-      state.cardList[4].value = response.recoveredCount || 0;
-      // 处理异常点数据，转换为地图组件需要的格式 
-      if (response.abnormalPointList && Array.isArray(response.abnormalPointList)) {
-        state.mapData = response.abnormalPointList.map(point => ({
-          id: point.id,
-          deviceName: point.deviceName,
-          coordinate: `${point.lon},${point.lat}`,
-          statusName: '异常',
-          alarmLevel: point.alarmLevel, 
-        }));
-      } else {
-        state.mapData = [];
+      // 更新卡片数据
+      if (response.cardData) {
+        state.cardList[0].value = response.cardData.totalRateCount || 0;
+        state.cardList[1].value = response.cardData.enableCount || 0;
+        state.cardList[2].value = response.cardData.unEnableCount || 0;
+        state.cardList[3].value = response.cardData.disableCount || 0;
+        state.cardList[4].value = `${response.cardData.enableRatio || 0}%`;
       }
 
-      if (response.paramTrendList && Array.isArray(response.paramTrendList)) {
-        const xAxis = response.paramTrendList.map(item => item.time);
-        const voltageData = response.paramTrendList.map(item => item.voltage);
-        const currentData = response.paramTrendList.map(item => item.current);
-        const powerData = response.paramTrendList.map(item => item.power);
+      // 更新柱状图数据
+      if (response.barData && Array.isArray(response.barData)) {
+        const xAxis = response.barData.map(item => item.stationName);
+        const rateCountData = response.barData.map(item => item.rateCount);
 
+        barChartData.value.data.xAxis = xAxis;
+        barChartData.value.data.series[0].data = rateCountData;
 
-        allChartsData.value[0].data.xAxis = xAxis;
-        allChartsData.value[0].data.series[0].data = voltageData;
-        allChartsData.value[0].data.series[1].data = currentData;
-        allChartsData.value[0].data.series[2].data = powerData;
-
-        // 更新折线图
-        initBarLineChart();
+        // 更新柱状图
+        initBarChart();
       }
     }
   } catch (error) {
-    console.error('获取监测数据失败:', error);
+    console.error('获取费率图表数据失败:', error);
   }
 };
 
@@ -529,16 +474,15 @@ onMounted(() => {
     initCharts();
   });
   window.addEventListener('resize', handleResize);
-  // 初始加载监测数据
-  fetchMonitorData();
-  // 初始加载参数趋势数据 
+  // 初始加载费率图表数据
+  fetchRateChartData();
 });
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
-  if (barLineChartInstance) {
-    barLineChartInstance.dispose();
-    barLineChartInstance = null;
+  if (barChartInstance) {
+    barChartInstance.dispose();
+    barChartInstance = null;
   }
 });
 </script>
@@ -564,16 +508,11 @@ onUnmounted(() => {
 
     <!-- 右侧展示区 -->
     <div class="right-section">
-      <div class="map-wrapper">
-        <MapComponent :data="state.mapData" :marker-icons="state.mapConfig.markerIcons"
-          :status-icon-map="state.mapConfig.statusIconMap" :status-key-map="state.mapConfig.statusKeyMap"
-          :info-window-config="state.mapConfig.infoWindowConfig" />
-      </div>
-      <!-- 图表视图 - 两个圆环图 + 一个较宽图表 -->
+      <!-- 图表视图 - 柱状图 -->
       <div class="charts-section">
-        <!-- 柱状/折线图展示区（更宽） -->
-        <div class="bar-line-chart-area">
-          <div ref="barLineChartRef" class="chart-container"></div>
+        <!-- 柱状图展示区 -->
+        <div class="bar-chart-area">
+          <div ref="barChartRef" class="chart-container"></div>
         </div>
       </div>
     </div>
@@ -676,13 +615,7 @@ onUnmounted(() => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* 地图容器 */
-.map-wrapper {
-  width: 50%;
-  height: 100%;
-  border-radius: 8px;
-  overflow: hidden;
-}
+
 
 /* 图表区样式 */
 .charts-section {
@@ -725,10 +658,10 @@ onUnmounted(() => {
   height: 100%;
 }
 
-/* 柱状/折线图区域 - 更宽 */
-.bar-line-chart-area {
+/* 柱状图区域 */
+.bar-chart-area {
   position: relative;
-  flex: 1.5;
+  flex: 1;
   min-width: 0;
   height: 320px;
 }
