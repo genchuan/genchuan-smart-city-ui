@@ -7,10 +7,10 @@ export const dataList = () => [
     approvedSize: '20m×10m',
     actualSize: '20m×10m',
     tiltAngle: 0.5,
-    damageStatus: '完好', // 破损状态 - 中文
-    adStatus: '正常',     // 广告状态 - 中文
+    damageStatusId: 'd3e4f5a6-b7c8-4d5e-9f6a-7b8c9d0e1f2a',
+    adStatusId: 'e5f6a7b8-c9d0-4e1f-8a2b-3c4d5e6f7a8b',
     areaCode: '350102',
-    supervisor: '张明',   // 监管员 - 中文
+    supervisorId: 'f7a8b9c0-d1e2-4f3a-8b4c-5d6e7f8a9b0c',
     warningTypeId: 'g8b9c0d1-e2f3-4a5b-9c6d-7e8f9a0b1c2d',
     warningTime: '2025-02-27 14:30:00',
     createTime: '2025-02-27 14:30:00',
@@ -24,10 +24,10 @@ export const dataList = () => [
     approvedSize: '15m×8m',
     actualSize: '15.2m×8.1m',
     tiltAngle: 1.2,
-    damageStatus: '完好', // 破损状态 - 中文
-    adStatus: '正常',     // 广告状态 - 中文
+    damageStatusId: 'd3e4f5a6-b7c8-4d5e-9f6a-7b8c9d0e1f2a',
+    adStatusId: 'e5f6a7b8-c9d0-4e1f-8a2b-3c4d5e6f7a8b',
     areaCode: '350102',
-    supervisor: '张明',   // 监管员 - 中文
+    supervisorId: 'f7a8b9c0-d1e2-4f3a-8b4c-5d6e7f8a9b0c',
     warningTypeId: 'h9c0d1e2-f3a4-4b5c-8d6e-7f8a9b0c1d2e',
     warningTime: '2025-02-27 15:00:00',
     createTime: '2025-02-27 15:00:00',
@@ -41,10 +41,10 @@ export const dataList = () => [
     approvedSize: '12m×6m',
     actualSize: '12m×6m',
     tiltAngle: 0.0,
-    damageStatus: '轻微破损', // 破损状态 - 中文
-    adStatus: '待审批',       // 广告状态 - 中文
+    damageStatusId: 'i0d1e2f3-a4b5-4c6d-8e7f-9a0b1c2d3e4f',
+    adStatusId: 'j1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a',
     areaCode: '350203',
-    supervisor: '李华',       // 监管员 - 中文
+    supervisorId: 'k2f3a4b5-c6d7-4e8f-9a0b-1c2d3e4f5a6b',
     warningTypeId: 'l3a4b5c6-d7e8-4f9a-0b1c-2d3e4f5a6b7c',
     warningTime: '2025-02-27 16:20:00',
     createTime: '2025-02-27 16:20:00',
@@ -58,10 +58,10 @@ export const dataList = () => [
     approvedSize: '25m×12m',
     actualSize: '24.8m×11.9m',
     tiltAngle: 2.3,
-    damageStatus: '中度破损', // 破损状态 - 中文
-    adStatus: '已过期',       // 广告状态 - 中文
+    damageStatusId: 'm4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d',
+    adStatusId: 'n5c6d7e8-f9a0-4b1c-2d3e-4f5a6b7c8d9e',
     areaCode: '350503',
-    supervisor: '王伟',       // 监管员 - 中文
+    supervisorId: 'o6d7e8f9-a0b1-4c2d-3e4f-5a6b7c8d9e0f',
     warningTypeId: 'p7e8f9a0-b1c2-4d3e-4f5a-6b7c8d9e0f1a',
     warningTime: '2025-02-28 09:10:00',
     createTime: '2025-02-28 09:10:00',
@@ -75,10 +75,10 @@ export const dataList = () => [
     approvedSize: '3m×1.5m',
     actualSize: '3m×1.5m',
     tiltAngle: 0.0,
-    damageStatus: '严重破损', // 破损状态 - 中文
-    adStatus: '违规',         // 广告状态 - 中文
+    damageStatusId: 'q8f9a0b1-c2d3-4e4f-5a6b-7c8d9e0f1a2b',
+    adStatusId: 'r9a0b1c2-d3e4-4f5a-6b7c-8d9e0f1a2b3c',
     areaCode: '350602',
-    supervisor: '陈芳',       // 监管员 - 中文
+    supervisorId: 's0b1c2d3-e4f5-4a6b-7c8d-9e0f1a2b3c4d',
     warningTypeId: 't1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e',
     warningTime: '2025-02-28 10:30:00',
     createTime: '2025-02-28 10:30:00',
@@ -92,10 +92,10 @@ export const dataList = () => [
     approvedSize: '18m×6m',
     actualSize: '18m×6m',
     tiltAngle: 0.8,
-    damageStatus: '严重破损', // 破损状态 - 中文
-    adStatus: '违规',         // 广告状态 - 中文
+    damageStatusId: 'u2d3e4f5-a6b7-4c8d-9e0f-1a2b3c4d5e6f',
+    adStatusId: 'v3e4f5a6-b7c8-4d9e-0f1a-2b3c4d5e6f7a',
     areaCode: '350802',
-    supervisor: '陈芳',       // 监管员 - 中文
+    supervisorId: 'w4f5a6b7-c8d9-4e0f-1a2b-3c4d5e6f7a8b',
     warningTypeId: 'x5a6b7c8-d9e0-4f1a-2b3c-4d5e6f7a8b9c',
     warningTime: '2025-02-28 11:45:00',
     createTime: '2025-02-28 11:45:00',
@@ -109,10 +109,10 @@ export const dataList = () => [
     approvedSize: '10m×5m',
     actualSize: '10m×5m',
     tiltAngle: 0.2,
-    damageStatus: '严重破损', // 破损状态 - 中文
-    adStatus: '违规',         // 广告状态 - 中文
+    damageStatusId: 'y6b7c8d9-e0f1-4a2b-3c4d-5e6f7a8b9c0d',
+    adStatusId: 'z7c8d9e0-f1a2-4b3c-4d5e-6f7a8b9c0d1e',
     areaCode: '350402',
-    supervisor: '陈芳',       // 监管员 - 中文
+    supervisorId: 'a8d9e0f1-a2b3-4c4d-5e6f-7a8b9c0d1e2f',
     warningTypeId: 'b9e0f1a2-b3c4-4d5e-6f7a-8b9c0d1e2f3a',
     warningTime: '2025-02-28 13:20:00',
     createTime: '2025-02-28 13:20:00',
@@ -195,17 +195,17 @@ export function useFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'damageStatus', // 字段名同步修改
+      fieldName: 'damageStatusId',
       label: '破损状态',
       component: 'Select',
       componentProps: {
         allowClear: true,
         filterOption: true,
         options: [
-          { label: '完好', value: '完好' },
-          { label: '轻微破损', value: '轻微破损' },
-          { label: '中度破损', value: '中度破损' },
-          { label: '严重破损', value: '严重破损' },
+          { label: '完好', value: 'd3e4f5a6-b7c8-4d5e-9f6a-7b8c9d0e1f2a' },
+          { label: '轻微破损', value: 'i0d1e2f3-a4b5-4c6d-8e7f-9a0b1c2d3e4f' },
+          { label: '中度破损', value: 'm4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d' },
+          { label: '严重破损', value: 'u2d3e4f5-a6b7-4c8d-9e0f-1a2b3c4d5e6f' },
         ],
         placeholder: '请选择破损状态',
         showSearch: true,
@@ -214,17 +214,17 @@ export function useFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'adStatus', // 字段名同步修改
+      fieldName: 'adStatusId',
       label: '广告状态',
       component: 'Select',
       componentProps: {
         allowClear: true,
         filterOption: true,
         options: [
-          { label: '正常', value: '正常' },
-          { label: '待审批', value: '待审批' },
-          { label: '已过期', value: '已过期' },
-          { label: '违规', value: '违规' },
+          { label: '正常', value: 'e5f6a7b8-c9d0-4e1f-8a2b-3c4d5e6f7a8b' },
+          { label: '待审批', value: 'j1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a' },
+          { label: '已过期', value: 'n5c6d7e8-f9a0-4b1c-2d3e-4f5a6b7c8d9e' },
+          { label: '违规', value: 'r9a0b1c2-d3e4-4f5a-6b7c-8d9e0f1a2b3c' },
         ],
         placeholder: '请选择广告状态',
         showSearch: true,
@@ -254,17 +254,17 @@ export function useFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'supervisor', // 字段名同步修改
+      fieldName: 'supervisorId',
       label: '监管员',
       component: 'Select',
       componentProps: {
         allowClear: true,
         filterOption: true,
         options: [
-          { label: '张明', value: '张明' },
-          { label: '李华', value: '李华' },
-          { label: '王伟', value: '王伟' },
-          { label: '陈芳', value: '陈芳' },
+          { label: '张明', value: 'f7a8b9c0-d1e2-4f3a-8b4c-5d6e7f8a9b0c' },
+          { label: '李华', value: 'k2f3a4b5-c6d7-4e8f-9a0b-1c2d3e4f5a6b' },
+          { label: '王伟', value: 's0b1c2d3-e4f5-4a6b-7c8d-9e0f1a2b3c4d' },
+          { label: '陈芳', value: 'a8d9e0f1-a2b3-4c4d-5e6f-7a8b9c0d1e2f' },
         ],
         placeholder: '请选择监管员',
         showSearch: true,
@@ -356,18 +356,23 @@ export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
     {
+      field: 'outdoorAdId',
+      title: '广告ID',
+      minWidth: 280,
+      sortable: true,
+      slots: { default: 'outdoorAdId' },
+    },
+    {
       field: 'name',
       title: '广告名称',
       minWidth: 150,
       sortable: true,
-      slots: { default: 'name' },
     },
     {
       field: 'location',
       title: '广告位置',
       minWidth: 200,
       sortable: true,
-      slots: { default: 'location' },
     },
     {
       field: 'approvedSize',
@@ -388,30 +393,25 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'damageStatus', // 同步字段
+      field: 'damageStatusId',
       title: '破损状态',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'damageStatus' },
-
     },
     {
-      field: 'adStatus', // 同步字段
+      field: 'adStatusId',
       title: '广告状态',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'adStatus' },
-
     },
     {
       field: 'areaCode',
       title: '所属区域',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'areaCode' },
     },
     {
-      field: 'supervisor', // 同步字段
+      field: 'supervisorId',
       title: '监管员',
       minWidth: 100,
       sortable: true,
