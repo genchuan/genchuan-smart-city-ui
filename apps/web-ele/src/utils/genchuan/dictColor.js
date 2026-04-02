@@ -75,7 +75,7 @@ export function getDictTagType(colorType, defaultType = 'primary') {
 
 /**
  * 根据字典对象获取 Tag 颜色类型
- * @param {Object} dict - 字典对象，包含 colorType 属性
+ * @param {object} dict - 字典对象，包含 colorType 属性
  * @param {string} defaultType - 默认颜色类型
  * @returns {string} Element Plus Tag 支持的颜色类型
  *
@@ -109,7 +109,7 @@ export function batchGetDictTagTypes(dictList, defaultType = 'primary') {
 
 /**
  * 获取颜色类型映射配置（用于需要显示颜色选项的场景）
- * @returns {Object} 颜色类型映射配置
+ * @returns {object} 颜色类型映射配置
  */
 export function getColorTypeMap() {
   return { ...COLOR_TYPE_MAP };
@@ -131,14 +131,16 @@ export function getValidTagTypes() {
 export function isValidTagType(colorType) {
   if (!colorType) return false;
   const normalizedType = String(colorType).toLowerCase().trim();
-  return VALID_TAG_TYPES.includes(normalizedType) || !!COLOR_TYPE_MAP[normalizedType];
+  return (
+    VALID_TAG_TYPES.includes(normalizedType) || !!COLOR_TYPE_MAP[normalizedType]
+  );
 }
 
 /**
  * 获取字典 Tag 显示配置（包含标签文本和颜色类型）
- * @param {Object} dict - 字典对象
+ * @param {object} dict - 字典对象
  * @param {string} defaultType - 默认颜色类型
- * @returns {Object} { label: string, type: string }
+ * @returns {object} { label: string, type: string }
  */
 export function getDictTagConfig(dict, defaultType = 'primary') {
   if (!dict || typeof dict !== 'object') {
