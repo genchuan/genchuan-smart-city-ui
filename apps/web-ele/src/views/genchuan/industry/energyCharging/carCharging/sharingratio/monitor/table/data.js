@@ -181,6 +181,7 @@ export function useGridColumns() {
       slots: { default: 'plan_code' },
 
     },
+
     {
       field: 'plan_name',
       title: '方案名称',
