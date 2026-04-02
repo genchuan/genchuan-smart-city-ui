@@ -604,38 +604,35 @@ const confirmDisposeHandle = async () => {
 
       <!-- 设备类型插槽 - 点击筛选 -->
       <template #device_type="{ row }">
-        <el-text
+        <el-tag
+          :type="row.deviceType === '充电桩' ? 'primary' : 'info'"
           @click="handleDeviceTypeClick(row.deviceType)"
-          class="common-align"
-          type="primary"
           style="cursor: pointer"
         >
           {{ row.deviceType }}
-        </el-text>
+        </el-tag>
       </template>
 
       <!-- 告警等级插槽 - 点击筛选 -->
       <template #alarm_level="{ row }">
-        <el-text
+        <el-tag
+          :type="row.alarmLevel === '严重' ? 'danger' : row.alarmLevel === '一般' ? 'warning' : 'success'"
           @click="handleAlarmLevelClick(row.alarmLevel)"
-          class="common-align"
-          type="primary"
           style="cursor: pointer"
         >
-          {{ row.alarmLevelName || row.alarmLevel }}
-        </el-text>
+          {{ row.alarmLevel }}
+        </el-tag>
       </template>
 
       <!-- 监测状态插槽 - 点击筛选 -->
       <template #monitor_status="{ row }">
-        <el-text
+        <el-tag
+          :type="row.monitorStatus === '异常' ? 'danger' : row.monitorStatus === '处置中' ? 'warning' : 'success'"
           @click="handleMonitorStatusClick(row.monitorStatus)"
-          class="common-align"
-          type="primary"
           style="cursor: pointer"
         >
           {{ row.monitorStatusName || row.monitorStatus }}
-        </el-text>
+        </el-tag>
       </template>
 
       <!-- 处置人员插槽 - 点击筛选 -->

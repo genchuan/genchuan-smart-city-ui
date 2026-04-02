@@ -22,9 +22,18 @@ export function updateRateSetting(data) {
   return requestClient.put(`/vehiclecharging/rate-setting/update`, data);
 }
 
-
- 
- 
+/** 生效 */
+export function enableRateSetting(data) {
+  return requestClient.put(`/vehiclecharging/rate-setting/enable`, data);
+}
+/** 失效 */
+export function disableRateSetting(data) {
+  return requestClient.put(`/vehiclecharging/rate-setting/disable`, data);
+}
+/** 复制 */
+export function copyRateSetting(data) {
+  return requestClient.post(`/vehiclecharging/rate-setting/copy`, data);
+}
 
 /** 获得场站设备实时运行监测图 */
 export function getStationDeviceRealTimeMonitor(data) {

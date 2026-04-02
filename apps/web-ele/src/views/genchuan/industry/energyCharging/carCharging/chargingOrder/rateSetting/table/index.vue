@@ -9,7 +9,7 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getRateSettingList, exporRateSettingExcel, deleteRateSetting, createRateSetting, updateRateSetting } from '#/api/genchuan/industry/energyCharging/carCharging/chargingOrder/rateSetting/index.js'; 
+import { getRateSettingList, exporRateSettingExcel, deleteRateSetting, createRateSetting, updateRateSetting, enableRateSetting, disableRateSetting, copyRateSetting } from '#/api/genchuan/industry/energyCharging/carCharging/chargingOrder/rateSetting/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
 
@@ -31,8 +31,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel() {
     drawerApi.close();
   },
-  onConfirm() {},
-  async onOpenChange() {},
+  onConfirm() { },
+  async onOpenChange() { },
 });
 
 /** 刷新表格 */
@@ -50,13 +50,17 @@ async function handleExport() {
 }
 
 async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？')).then(() => {
-    checkedIds.value.forEach(async (v) => {
-      // 这里需要实现删除逻辑
-      console.log('删除数据', v);
-    });
-  });
-  handleRefresh();
+  try {
+    await confirm('确定删除这些费率方案吗？');
+    for (const id of checkedIds.value) {
+      // 调用单行删除方法
+      await handleDeleteSingle({ id });
+    }
+    ElMessage.success('批量删除成功');
+    handleRefresh();
+  } catch (error) {
+    ElMessage.error(`批量删除失败：${error.msg || '请稍后重试'}`);
+  }
 }
 
 const checkedIds = ref([]);
@@ -87,13 +91,13 @@ const getTableData = async (pageObj) => {
 
 
 
-  const data = await getRateSettingList(getParams); 
+  const data = await getRateSettingList(getParams);
   dataObj.total = data.total;
   dataObj.list = data.list.map((v) => {
     return {
       ...v,
       effectTime: formatTimestamp(v.effectTime),
-      expireTime: formatTimestamp(v.expireTime), 
+      expireTime: formatTimestamp(v.expireTime),
       createTime: formatTimestamp(v.createTime),
     };
   });
@@ -258,6 +262,168 @@ const handleUpdate = (row) => {
     .open();
 };
 
+// 批量生效方法
+const handleEnable = async () => {
+  try {
+    await confirm('确定生效这些费率方案吗？');
+    await enableRateSetting({ idList: checkedIds.value });
+    ElMessage.success('生效成功');
+    handleRefresh();
+  } catch (error) {
+    ElMessage.error(`生效失败：${error.msg || '请稍后重试'}`);
+  }
+};
+
+// 批量失效方法
+const handleDisable = async () => {
+  try {
+    await confirm('确定失效这些费率方案吗？');
+    await disableRateSetting({ idList: checkedIds.value });
+    ElMessage.success('失效成功');
+    handleRefresh();
+  } catch (error) {
+    ElMessage.error(`失效失败：${error.msg || '请稍后重试'}`);
+  }
+};
+
+// 单行生效方法
+const handleRowEnable = async (row) => {
+  try {
+    await confirm('确定生效该费率方案吗？');
+    await enableRateSetting({ idList: [row.id] });
+    ElMessage.success('生效成功');
+    handleRefresh();
+  } catch (error) {
+    ElMessage.error(`生效失败：${error.msg || '请稍后重试'}`);
+  }
+};
+
+// 单行失效方法
+const handleRowDisable = async (row) => {
+  try {
+    await confirm('确定失效该费率方案吗？');
+    await disableRateSetting({ idList: [row.id] });
+    ElMessage.success('失效成功');
+    handleRefresh();
+  } catch (error) {
+    ElMessage.error(`失效失败：${error.msg || '请稍后重试'}`);
+  }
+};
+
+// 复制抽屉相关
+const [CopyDrawer, copyDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    copyDrawerApi.close();
+  },
+  async onConfirm() {
+    try {
+      // 获取表单数据
+      const formData = await copyFormApi.getValues();
+      // 转换时间格式为时间戳
+      const timestampFormData = {
+        ...formData,
+        newStartTime: new Date(formData.newStartTime).getTime(),
+        newEndTime: new Date(formData.newEndTime).getTime(),
+      };
+      // 调用复制接口
+      await copyRateSetting(timestampFormData);
+      // 提示成功
+      ElMessage.success('复制成功');
+      // 关闭抽屉
+      copyDrawerApi.close();
+      // 刷新表格
+      handleRefresh();
+    } catch (error) {
+      // 接口调用失败处理
+      ElMessage.error(`复制失败：${error.msg || '请稍后重试'}`);
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      // 重置表单
+      copyFormApi.resetForm();
+    }
+  },
+});
+
+// 复制表单配置
+const [CopyForm, copyFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 120,
+  },
+  layout: 'horizontal',
+  schema: [
+    {
+      fieldName: 'id',
+      label: '原方案ID',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入原方案ID',
+        disabled: true,
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'newRateCode',
+      label: '新方案编号',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入新方案编号',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'newRateName',
+      label: '新方案名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入新方案名称',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'newStartTime',
+      label: '生效开始时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择生效开始时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'newEndTime',
+      label: '生效结束时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择生效结束时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      rules: 'required',
+    },
+  ],
+  showDefaultActions: false,
+});
+
+// 复制方法
+const handleCopy = (row) => {
+  copyDrawerApi
+    .setData({
+      title: '复制费率方案',
+    })
+    .open();
+  // 填充原方案ID
+  copyFormApi.setValues({ id: row.id });
+};
+
 const handleSerachShow = () => {
   drawerApi.open();
 };
@@ -268,7 +434,7 @@ const handleFullShow = () => {
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
 
- 
+
 const handleDeleteSingle = async (row) => {
   try {
     // 调用删除接口
@@ -277,7 +443,7 @@ const handleDeleteSingle = async (row) => {
     ElMessage.success('删除成功操作已提交！');
     // 刷新表格
     await handleRefresh();
-  } catch (error) { 
+  } catch (error) {
     // 接口调用失败处理
     ElMessage.error(`删除失败：${error.msg || '请稍后重试'}`);
   }
@@ -288,11 +454,7 @@ const handleDeleteSingle = async (row) => {
   <div class="park-lot-table-new">
 
     <!-- 使用封装后的详情抽屉组件 -->
-    <ParkDetailDrawer 
-      ref="parkDetailDrawerRef"
-      :detail-obj="dataObj.detailObj"
-      title="详情"
-    />
+    <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" title="详情" />
 
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -302,68 +464,45 @@ const handleDeleteSingle = async (row) => {
       <CreateForm />
     </CreateDrawer>
 
-    <Grid> 
+    <CopyDrawer title="复制费率方案">
+      <CopyForm />
+    </CopyDrawer>
+
+    <Grid>
 
 
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton
-            content="导出"
-            icon-name="download"
-            @click="handleExport"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
-          />
-          <IconButton
-            content="全屏"
-            icon-name="FullScreen"
-            @click="handleFullShow"
-          />
+          <IconButton content="生效" icon-name="Check" @click="handleEnable" :disabled="isEmpty(checkedIds)" />
+          <IconButton content="失效" icon-name="Close" @click="handleDisable" :disabled="isEmpty(checkedIds)" />
+          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton content="导出" icon-name="download" @click="handleExport" />
+          <IconButton content="批量删除" icon-name="delete" color="#F56C6C" :disabled="isEmpty(checkedIds)"
+            @click="handleDeleteBatch" />
+          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
 
       <template #rateCode="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
+        <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">
           {{ row.rateCode }}
         </el-text>
       </template>
 
-      
+
 
       <template #actions="{ row }">
-        <div class="table-toolbar-tools">  
-          <IconButton
-            content="详情"
-            icon-name="View"
-            @click="handleOpenDetail(row)"
-          />  
-          <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleUpdate(row)"
-          />  
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDeleteSingle(row)"
-          />  
+        <div class="table-toolbar-tools">
+          <IconButton content="复制" icon-name="paper" @click="handleCopy(row)" />
+          <IconButton content="生效" icon-name="Check" @click="handleRowEnable(row)"
+            :disabled="row.rateStatus === '已生效'" />
+          <IconButton content="失效" icon-name="Close" @click="handleRowDisable(row)"
+            :disabled="row.rateStatus === '已失效'" />
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
+          <IconButton content="编辑" icon-name="edit" @click="handleUpdate(row)" />
+          <IconButton content="删除" icon-name="delete" color="#F56C6C" @click="handleDeleteSingle(row)" />
         </div>
       </template>
 
