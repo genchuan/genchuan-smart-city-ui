@@ -1,6 +1,6 @@
 <script setup>
 import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
-import { getRateSettingChart } from '#/api/genchuan/industry/energyCharging/carCharging/chargingOrder/rateSetting/index.js';
+import { getRateSettingChart, getRateSettingList } from '#/api/genchuan/industry/energyCharging/carCharging/chargingOrder/rateSetting/index.js';
 import * as echarts from 'echarts';
 const state = reactive({
   cardList: [
