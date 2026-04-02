@@ -13,9 +13,9 @@ import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
 import { dataList, useFormSchema, useGridColumns } from './data';
+// 引入封装后的详情抽屉组件
 import ParkDetailDrawer from './detail.vue';
 
-// 接收父组件传递的props
 const props = defineProps({
   secondShow: {
     type: Boolean,
@@ -30,8 +30,6 @@ const props = defineProps({
     default: false,
   },
 });
-
-// 定义事件，向父组件传递箭头切换动作
 const emit = defineEmits(['arrow-change']);
 
 const getTitle = computed(() => {
@@ -48,7 +46,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
-
+// 移除原 DetailDrawer 初始化逻辑
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -62,7 +60,6 @@ const [Form, formApi] = useVbenForm({
   schema: useFormSchema(),
   showDefaultActions: false,
 });
-
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
@@ -94,7 +91,6 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     }
   },
 });
-
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
@@ -123,7 +119,6 @@ function handleEdit(row) {
     })
     .open();
 }
-
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting', [row.name]),
@@ -158,21 +153,18 @@ const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
-
 const dataObj = reactive({
   totalShow: false,
-  detailObj: {},
+  detailObj: {}, // 保留详情对象用于传递给组件
   total: dataList().length,
   currentPage: 1,
   pageSize: 10,
   apilist: dataList(),
   list: [],
 });
-
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
-
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
@@ -200,15 +192,21 @@ const getTableData = (pageObj) => {
 };
 
 const [QueryForm] = useVbenForm({
+  // 默认展开
   collapsed: false,
+  // 所有表单项共用，可单独在表单内覆盖
   commonConfig: {
+    // 所有表单项
     componentProps: {
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
+  // 提交函数
   handleSubmit: onSubmit,
+  // 垂直布局，label和input在不同行，值为vertical
+  // 水平布局，label和input在同一行
   layout: 'horizontal',
   schema: useFormSchema().map((v) => {
     delete v.rules;
@@ -216,17 +214,16 @@ const [QueryForm] = useVbenForm({
       ...v,
     };
   }),
+  // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
   },
 });
-
 // 搜索表单查询
 function onSubmit() {
   drawerApi.close();
 }
-
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
@@ -256,19 +253,20 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const activeName = ref('全部');
-
-// 打开详情抽屉
+// 修改打开详情的方法，调用组件的open方法
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
+  // 通过ref调用组件的open方法
   parkDetailDrawerRef.value.open();
+  console.log(row);
 };
-
 const tabsData = ref([
   { label: '全部' },
-  { label: '已支付' },
-  { label: '已取消' },
+  { label: '启用' },
+  { label: '禁用' },
+  { label: '暂停运营' },
+  { label: '维修中' },
 ]);
-
 const createLabel = (item) => {
   let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
   if (item.label === '全部') {
@@ -276,23 +274,19 @@ const createLabel = (item) => {
   }
   return item.label + text;
 };
-
 const handleClick = () => {
   gridApi.query();
 };
-
 const handleSerachShow = () => {
   drawerApi.open();
 };
-
 const handleFullShow = () => {
   screenfull.toggle();
 };
 
-// 详情抽屉ref
+// 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
 
-// 点击展开/收缩按钮时，向父组件触发事件
 const arrowChange = () => {
   emit('arrow-change');
 };
@@ -303,16 +297,14 @@ const arrowChange = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-
+    <!-- 使用封装后的详情抽屉组件 -->
     <ParkDetailDrawer
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
     />
-
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
-
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
@@ -334,9 +326,8 @@ const arrowChange = () => {
             icon-name="search"
             @click="handleSerachShow"
           />
-          <!-- 展开/收缩按钮：点击触发事件传递给父组件 -->
           <IconButton
-            :content="props.arrowShow ? '收缩' : '展开'"
+            :content="props.arrowShow ? '展开' : '收缩'"
             :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
             @click="arrowChange"
           />
@@ -347,89 +338,15 @@ const arrowChange = () => {
           />
         </div>
       </template>
-
-
-      <template #code="{ row }">
+      <template #outdoorAdId="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.code }}
+          {{ row.outdoorAdId }}
         </el-text>
       </template>
-
-      <template #plat_name="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.plat_name }}
-        </el-text>
-      </template>
-
-      <template #type="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.type }}
-        </el-text>
-      </template>
-
-      <template #sync_freq="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.sync_freq }}
-        </el-text>
-      </template>
-
-      <template #sync_rate="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.sync_rate }}
-        </el-text>
-      </template>
-
-      <template #sync_error="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.sync_error }}
-        </el-text>
-      </template>
-
-      <template #status="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.status }}
-        </el-text>
-      </template>
-
-      <template #create_time="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.create_time }}
-        </el-text>
-      </template>
-
-
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
@@ -450,7 +367,6 @@ const arrowChange = () => {
           />
         </div>
       </template>
-
       <template #bottom>
         <div class="common-total" @click="changeTotalShow">
           <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
