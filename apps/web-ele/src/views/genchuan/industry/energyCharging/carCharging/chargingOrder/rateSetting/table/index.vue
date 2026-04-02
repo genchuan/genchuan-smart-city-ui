@@ -495,7 +495,7 @@ const handleDeleteSingle = async (row) => {
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="复制" icon-name="paper" @click="handleCopy(row)" />
+          <IconButton content="复制" icon-name="document" @click="handleCopy(row)" />
           <IconButton content="生效" icon-name="Check" @click="handleRowEnable(row)"
             :disabled="row.rateStatus === '已生效'" />
           <IconButton content="失效" icon-name="Close" @click="handleRowDisable(row)"
