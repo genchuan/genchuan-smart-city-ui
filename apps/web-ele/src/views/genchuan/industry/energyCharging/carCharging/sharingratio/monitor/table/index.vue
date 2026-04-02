@@ -265,8 +265,10 @@ const handleOpenDetail = (row) => {
 
 const tabsData = ref([
   { label: '全部' },
-  { label: '已支付' },
-  { label: '已取消' },
+  { label: '启用' },
+  { label: '禁用' },
+  { label: '暂停运营' },
+  { label: '维修中' },
 ]);
 
 const createLabel = (item) => {
@@ -348,84 +350,23 @@ const arrowChange = () => {
         </div>
       </template>
 
-
-      <template #code="{ row }">
+      <template #plan_code="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.code }}
+          {{ row.plan_code }}
         </el-text>
       </template>
 
-      <template #plat_name="{ row }">
+      <template #partner_name="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.plat_name }}
-        </el-text>
-      </template>
-
-      <template #type="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.type }}
-        </el-text>
-      </template>
-
-      <template #sync_freq="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.sync_freq }}
-        </el-text>
-      </template>
-
-      <template #sync_rate="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.sync_rate }}
-        </el-text>
-      </template>
-
-      <template #sync_error="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.sync_error }}
-        </el-text>
-      </template>
-
-      <template #status="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.status }}
-        </el-text>
-      </template>
-
-      <template #create_time="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.create_time }}
+          {{ row.partner_name }}
         </el-text>
       </template>
 

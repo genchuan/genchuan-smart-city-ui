@@ -7,9 +7,9 @@ import Columnar from '#/components/stats/columnar.vue';
 
 const state = reactive({
   cardList: [
-    { title: '总对接平台数', value: 3, color: '#13ce66' },
-    { title: '已启用平台数', value: 3, color: '#4ECDC4' },
-    { title: '数据同步成功率', value: 8, color: '#FF6B6B' },
+    { title: '总订单数', value: 15, color: '#13ce66' },
+    { title: '完成订单数', value: 14, color: '#4ECDC4' },
+    { title: '交易总金额', value: 8, color: '#FF6B6B' },
     // { title: '已闭环工单数', value: 8, color: '#FF6B6B' },
     // { title: '整改达标率', value: 8, color: '#FF6B6B' },
   ],
@@ -38,30 +38,21 @@ const state = reactive({
     <Circle
       width="340px"
       height="330px"
-      title-text="对接平台启用/停用状态占比"
+      title-text="订单状态"
       :data="[
-        { name: '启用', value: 4 },
-        { name: '停用', value: 5 },
-
+        { name: '待支付', value: 4 },
+        { name: '已取消', value: 5 },
+                { name: '已完成', value: 5 },
 
       ]"
       :colors="['#67C23A', '#E6A23C', '#F56C6C', '#909399']"
     />
-<!--    <Circle-->
-<!--      width="340px"-->
-<!--      height="330px"-->
-<!--      title-text="处置结果占比"-->
-<!--      :data="[-->
-<!--        { name: '启用', value: 4 },-->
-<!--        { name: '禁用', value: 5 },-->
-<!--      ]"-->
-<!--      :colors="['#67C23A', '#E6A23C', '#F56C6C', '#909399']"-->
-<!--    />-->
+
     <Columnar
       height="330px"
-      title="各对接平台数据同步频次"
-      :x-data="['国家电网', '星星', '特来']"
-      :series-data="[{ name: '', data: [58, 42, 35, ] }]"
+      title="各场站订单数量对比"
+      :x-data="['星星', '国家电网', '特来电']"
+      :series-data="[{ name: '', data: [58, 42, 33] }]"
     />
   </div>
 </template>

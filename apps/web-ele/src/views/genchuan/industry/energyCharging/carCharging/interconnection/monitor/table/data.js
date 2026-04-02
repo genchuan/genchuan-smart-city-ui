@@ -242,18 +242,24 @@ export function useGridColumns() {
       title: '对接编码',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'code' },
+
     },
     {
       field: 'plat_name',
       title: '平台名称',
       minWidth: 150,
       sortable: true,
+      slots: { default: 'plat_name' },
+
     },
     {
       field: 'type',
       title: '对接类型',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'type' },
+
     },
     {
       field: 'api_param',
@@ -266,24 +272,32 @@ export function useGridColumns() {
       title: '同步频率',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'sync_freq' },
+
     },
     {
       field: 'sync_rate',
       title: '同步成功率(%)',
       minWidth: 150,
       sortable: true,
+      slots: { default: 'sync_rate' },
+
     },
     {
       field: 'sync_error',
       title: '同步异常次数',
       minWidth: 150,
       sortable: true,
+      slots: { default: 'sync_error' },
+
     },
     {
       field: 'status',
       title: '对接状态',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'status' },
+
       render: (text) => {
         const colorMap = {
           '正常': 'green',
@@ -298,6 +312,8 @@ export function useGridColumns() {
       title: '创建时间',
       minWidth: 200,
       sortable: true,
+      slots: { default: 'create_time' },
+
     },
     {
       title: '操作',
