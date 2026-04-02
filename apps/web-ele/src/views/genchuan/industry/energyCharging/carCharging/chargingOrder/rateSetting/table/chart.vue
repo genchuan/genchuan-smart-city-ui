@@ -1,7 +1,8 @@
 <script setup>
 import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
-import { getRateSettingChart, getRateSettingList } from '#/api/genchuan/industry/energyCharging/carCharging/chargingOrder/rateSetting/index.js';
-import * as echarts from 'echarts';
+import { getRateSettingChart, getRateSettingList,getRateSettingGradeCount } from '#/api/genchuan/industry/energyCharging/carCharging/chargingOrder/rateSetting/index.js';
+import { ElDialog, ElMessage } from 'element-plus'; 
+import * as echarts from 'echarts'; 
 const state = reactive({
   cardList: [
     { title: '总费率方案数', value: 0, color: '#4A90E2' },
@@ -12,6 +13,43 @@ const state = reactive({
   ],
   barData: [],
 });
+
+// 详情弹窗相关
+const dialogVisible = ref(false);
+const dialogTitle = ref('费率等级统计');
+
+// 详情数据
+const detailData = ref({
+  stationId: '',
+  stationName: '',
+  gradeCount: [],
+});
+
+// 点击柱状图查询详情
+const handleBarClick = async (params) => { 
+  try {
+    console.log('点击参数:', params); // 调试日志
+    const stationId = params.dataIndex;
+    const stationName = params.name;
+
+    console.log('调用接口参数:', { stationId }); // 调试日志
+    // 调用详情接口
+    const response = await getRateSettingGradeCount({ stationId });
+    console.log('接口返回数据:', response); // 调试日志
+  
+    if (response) {
+      detailData.value.stationId = stationId;
+      detailData.value.stationName = stationName;
+      // 确保response是数组
+      detailData.value.gradeCount = Array.isArray(response) ? response : [];
+      // 打开弹窗
+      dialogTitle.value = `${stationName}费率等级统计`;
+      dialogVisible.value = true;
+    }
+  } catch (error) {
+    ElMessage.error(`查询失败：${error.msg || '请稍后重试'}`);
+  }
+};
 
 // 图表引用
 const barChartRef = ref(null);
@@ -33,116 +71,7 @@ const barChartData = ref({
 
 
 
-// 获取圆环图配置
-const getPieOption = (chartData) => {
-  const freshColors = [
-    '#4A90E2',
-    '#50E3C2',
-    '#FF9F40',
-    '#A17FE0',
-    '#FF6B8B',
-    '#FFD93D',
-  ];
 
-  return {
-    backgroundColor: 'transparent',
-    title: {
-      text: chartData?.label || '分布统计',
-      left: 'center',
-      top: 10,
-      textStyle: {
-        color: '#6E7E91',
-        fontSize: 14,
-        fontWeight: 500,
-      },
-    },
-    tooltip: {
-      trigger: 'item',
-      backgroundColor: 'rgba(255, 255, 255, 0.95)',
-      borderColor: '#E8F4FD',
-      borderWidth: 1,
-      textStyle: {
-        color: '#6E7E91',
-      },
-    },
-    color: freshColors,
-    legend: {
-      orient: 'horizontal',
-      bottom: 5,
-      type: 'scroll',
-      left: 'center',
-      textStyle: {
-        color: '#6E7E91',
-        fontSize: 10,
-      },
-      itemWidth: 10,
-      itemHeight: 10,
-      formatter(name) {
-        return name.length > 4 ? `${name.slice(0, 4)}...` : name;
-      },
-    },
-    series: [
-      {
-        name: chartData?.label || '分布统计',
-        type: 'pie',
-        radius: ['35%', '55%'],
-        center: ['50%', '52%'],
-        avoidLabelOverlap: true,
-        minShowLabelAngle: 5,
-        label: {
-          show: true,
-          position: 'outside',
-          formatter(params) {
-            const name =
-              params.name.length > 4
-                ? `${params.name.slice(0, 4)}...`
-                : params.name;
-            return `{name|${name}}\n{percent|${params.percent}%}`;
-          },
-          rich: {
-            name: {
-              color: '#6E7E91',
-              fontSize: 11,
-              lineHeight: 16,
-              align: 'center',
-            },
-            percent: {
-              color: '#4A90E2',
-              fontSize: 12,
-              fontWeight: 'bold',
-              lineHeight: 16,
-              align: 'center',
-            },
-          },
-        },
-        emphasis: {
-          label: {
-            show: true,
-            fontSize: 13,
-            fontWeight: 'bold',
-          },
-          scale: true,
-          scaleSize: 5,
-        },
-        labelLine: {
-          show: true,
-          length: 12,
-          length2: 8,
-          smooth: true,
-          lineStyle: {
-            color: '#9AA8B7',
-            width: 1,
-          },
-        },
-        itemStyle: {
-          borderWidth: 2,
-          borderColor: '#fff',
-        },
-        data: chartData?.data || [],
-      },
-    ],
-  };
-};
 
 // 获取柱状/折线图配置 - 修改后的版本
 const getBarLineOption = (chartData) => {
@@ -243,20 +172,20 @@ const getBarLineOption = (chartData) => {
           },
         },
         areaStyle:
-          type === 'line'
-            ? {
-              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                {
-                  offset: 0,
-                  color: `rgba(${hexToRgb(freshColors[index % freshColors.length])}, 0.3)`,
-                },
-                {
-                  offset: 1,
-                  color: `rgba(${hexToRgb(freshColors[index % freshColors.length])}, 0.05)`,
-                },
-              ]),
-            }
-            : undefined,
+              type === 'line'
+                ? {
+                  color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    {
+                      offset: 0,
+                      color: 'rgba(74, 144, 226, 0.3)',
+                    },
+                    {
+                      offset: 1,
+                      color: 'rgba(74, 144, 226, 0.05)',
+                    },
+                  ]),
+                }
+                : undefined,
       };
     })
     : [
@@ -389,13 +318,7 @@ const getBarLineOption = (chartData) => {
   };
 };
 
-// 辅助函数：将十六进制颜色转换为RGB
-function hexToRgb(hex) {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? `${Number.parseInt(result[1], 16)}, ${Number.parseInt(result[2], 16)}, ${Number.parseInt(result[3], 16)}`
-    : '74, 144, 226';
-}
+
 
 
 
@@ -422,6 +345,14 @@ const initBarChart = () => {
     barChartInstance = echarts.init(barChartRef.value);
     const option = getBarLineOption(barChartData.value);
     barChartInstance.setOption(option);
+
+    // 绑定点击事件
+    barChartInstance.on('click', (params) => {
+      console.log('点击事件参数:', params); // 调试日志
+      if (params.seriesName === '费率数量') {
+        handleBarClick(params);
+      }
+    });
   } catch (error) {
     console.error('初始化柱状图失败:', error);
   }
@@ -517,6 +448,25 @@ onUnmounted(() => {
       </div>
     </div>
   </div>
+
+  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="800px">
+    <div class="detail-content">
+      <table class="detail-table">
+        <thead>
+          <tr>
+            <th>费率类型</th>
+            <th>数量</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(item, index) in detailData?.gradeCount || []" :key="index">
+            <td>{{ item.gradeType }}</td>
+            <td>{{ item.count }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </ElDialog>
 </template>
 
 <style scoped>
@@ -625,33 +575,7 @@ onUnmounted(() => {
   min-width: 0;
 }
 
-/* 圆环图区域 */
-.pie-chart-area {
-  position: relative;
-  flex: 1;
-  min-width: 0;
-  height: 320px;
-}
 
-.chart-select-wrapper {
-  position: absolute;
-  top: 8px;
-  left: 10px;
-  z-index: 10;
-}
-
-.chart-select {
-  width: 90px;
-}
-
-.chart-select :deep(.el-input__wrapper) {
-  background-color: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-}
-
-.chart-select :deep(.el-input__inner) {
-  font-size: 12px;
-}
 
 .chart-container {
   width: 100%;
@@ -666,7 +590,41 @@ onUnmounted(() => {
   height: 320px;
 }
 
-.bar-line-select {
-  left: 10px;
+/* 详情内容样式 */
+.detail-content {
+  padding: 20px;
 }
+
+.detail-content h3 {
+  margin-bottom: 20px;
+  color: #6E7E91;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.detail-table th {
+  background-color: #F0F6FC;
+  color: #6E7E91;
+  font-weight: 600;
+  padding: 12px;
+  text-align: left;
+  border-bottom: 2px solid #E8F4FD;
+}
+
+.detail-table td {
+  padding: 12px;
+  border-bottom: 1px solid #E8F4FD;
+  color: #6E7E91;
+}
+
+.detail-table tr:hover {
+  background-color: #F5F7FA;
+}
+
+
 </style>
