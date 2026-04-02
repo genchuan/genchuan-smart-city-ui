@@ -20,12 +20,30 @@ export function createChargingStation(data) {
 }
 
 /**
+ * 批量编辑充电场站
+ * @param {Object} data - 包含 ids 数组及要更新的字段
+ * @returns {Promise}
+ */
+export function batchUpdateChargingStation(data) {
+  return requestClient.put('/vehiclecharging/charging_station/batch-update', data);
+}
+
+/**
  * 编辑充电场站
  * @param {Object} data - 编辑数据
  * @returns {Promise}
  */
 export function updateChargingStation(data) {
   return requestClient.put('/vehiclecharging/charging_station/update', data);
+}
+
+/**
+ * 批量停用充电场站
+ * @param {Object} data - { ids: [], stopReason: "" }
+ * @returns {Promise}
+ */
+export function batchDisableChargingStation(data) {
+  return requestClient.put('/vehiclecharging/charging_station/batch-disable', data);
 }
 
 /**

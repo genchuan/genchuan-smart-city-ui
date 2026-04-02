@@ -6,7 +6,7 @@ import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import MapCommon from './MapCommon.vue';
 
-// 引入图表API
+// 引入图表API（已自动解包，直接返回数据体）
 import {
   getChargingStationChartData,
   getAreaCountChart,
@@ -14,12 +14,11 @@ import {
 } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingStation/data.js';
 
 // ==================== 模拟数据定义 ====================
-// 总览模拟数据
 const mockOverviewData = {
   totalCount: 120,
   enableCount: 98,
   disableCount: 12,
-  waitCount: 10,
+  waitCount: 10,               // 新增未启用场站数
   areaList: [
     {areaName: '丰泽区', count: 45},
     {areaName: '鲤城区', count: 32},
@@ -57,27 +56,26 @@ const mockOverviewData = {
   ],
 };
 
-// 柱状图下钻模拟数据（根据父区域返回子区域数据）
 const mockAreaDrillData = {
-  '丰泽区': [
+  丰泽区: [
     {areaName: '东湖街道', count: 12},
     {areaName: '丰泽街道', count: 15},
     {areaName: '泉秀街道', count: 10},
     {areaName: '北峰街道', count: 8},
   ],
-  '鲤城区': [
+  鲤城区: [
     {areaName: '鲤中街道', count: 9},
     {areaName: '开元街道', count: 11},
     {areaName: '海滨街道', count: 7},
     {areaName: '临江街道', count: 5},
   ],
-  '洛江区': [
+  洛江区: [
     {areaName: '万安街道', count: 10},
     {areaName: '双阳街道', count: 8},
     {areaName: '河市镇', count: 6},
     {areaName: '马甲镇', count: 4},
   ],
-  '泉港区': [
+  泉港区: [
     {areaName: '山腰街道', count: 5},
     {areaName: '后龙镇', count: 4},
     {areaName: '峰尾镇', count: 3},
@@ -85,9 +83,7 @@ const mockAreaDrillData = {
   ],
 };
 
-// 状态钻取模拟数据（根据状态返回各区域的数量）
 const mockStatusDrillData = {
-  // 总场站（status = ''）
   '': [
     {areaName: '丰泽区', count: 45},
     {areaName: '鲤城区', count: 32},
@@ -106,7 +102,7 @@ const mockStatusDrillData = {
     {areaName: '洛江区', count: 3},
     {areaName: '泉港区', count: 2},
   ],
-  wait: [
+  wait: [  // 新增 wait 状态的模拟数据
     {areaName: '丰泽区', count: 3},
     {areaName: '鲤城区', count: 2},
     {areaName: '洛江区', count: 2},
@@ -118,10 +114,9 @@ const mockStatusDrillData = {
 const chartData = ref({...mockOverviewData});
 const loading = ref(false);
 const barLoading = ref(false);
-const drillStack = ref([]); // 钻取栈，存储区域名称
-const currentMode = ref('overview'); // overview: 总览, statusDrill: 状态钻取
+const drillStack = ref([]);
+const currentMode = ref('overview');
 
-// 柱状图状态
 const barState = reactive({
   title: '各区域充电场站数量统计',
   xData: [],
@@ -129,18 +124,17 @@ const barState = reactive({
   yName: '',
 });
 
-// 卡片数据（添加 status 字段，用于钻取）
+// ========== 卡片数据（新增第四个卡片） ==========
 const cardList = computed(() => [
   {title: '总场站数', value: chartData.value.totalCount, color: '#409EFF', status: ''},
   {title: '启用场站数', value: chartData.value.enableCount, color: '#67C23A', status: 'enabled'},
   {title: '停用场站数', value: chartData.value.disableCount, color: '#F56C6C', status: 'disabled'},
+  {title: '未启用场站数', value: chartData.value.waitCount, color: '#E6A23C', status: 'wait'}, // 新增
 ]);
 
-// 地图标记点数据
 const geometriesArray = computed(() => chartData.value.stationPoints);
 
 // ==================== 辅助函数 ====================
-// 更新柱状图数据
 const updateBarChart = (title, xData, seriesData, yName = '') => {
   barState.title = title;
   barState.xData = xData;
@@ -148,7 +142,6 @@ const updateBarChart = (title, xData, seriesData, yName = '') => {
   barState.yName = yName;
 };
 
-// 重置到总览视图
 const resetToOverview = () => {
   currentMode.value = 'overview';
   drillStack.value = [];
@@ -162,28 +155,23 @@ const resetToOverview = () => {
   updateBarChart('各区域充电场站数量统计', xData, seriesData);
 };
 
-// ==================== 钻取接口（使用统一 API，带模拟数据降级） ====================
-// 获取子区域数据（柱状图下钻）
+// ==================== 钻取接口 ====================
 const fetchAreaCount = async (parentArea) => {
   barLoading.value = true;
   try {
     const result = await getAreaCountChart(parentArea);
-    if (result.code === 200 && Array.isArray(result.data)) {
-      if (result.data.length === 0) {
-        ElMessage.warning('该区域暂无子区域数据');
-        return false;
-      }
-      const xData = result.data.map((item) => item.areaName);
+    if (Array.isArray(result) && result.length > 0) {
+      const xData = result.map((item) => item.areaName);
       const seriesData = [
         {
           name: '场站数量',
-          data: result.data.map((item) => item.count),
+          data: result.map((item) => item.count),
         },
       ];
       updateBarChart(`${parentArea} - 子区域场站数量统计`, xData, seriesData);
       return true;
     } else {
-      throw new Error(result.msg || '接口返回异常');
+      throw new Error('返回数据为空或格式错误');
     }
   } catch (error) {
     console.warn('接口调用失败，使用模拟数据：', error.message);
@@ -208,31 +196,29 @@ const fetchAreaCount = async (parentArea) => {
   }
 };
 
-// 获取状态分布数据（卡片钻取）
 const fetchStatusCount = async (status) => {
   barLoading.value = true;
   try {
     const result = await getStatusCountChart(status);
-    if (result.code === 200 && Array.isArray(result.data)) {
-      if (result.data.length === 0) {
-        ElMessage.warning('暂无该状态下的场站数据');
-        return;
-      }
-      const xData = result.data.map((item) => item.areaName);
+    if (Array.isArray(result) && result.length > 0) {
+      const xData = result.map((item) => item.areaName);
       const seriesData = [
         {
           name: '场站数量',
-          data: result.data.map((item) => item.count),
+          data: result.map((item) => item.count),
         },
       ];
-      const title = status
-        ? `${status === 'enabled' ? '启用' : status === 'disabled' ? '停用' : '未启用'}场站区域分布`
-        : '各状态场站区域分布';
+      let title = '';
+      if (status === 'enabled') title = '启用场站区域分布';
+      else if (status === 'disabled') title = '停用场站区域分布';
+      else if (status === 'wait') title = '未启用场站区域分布'; // 新增标题
+      else title = '各状态场站区域分布';
       updateBarChart(title, xData, seriesData);
       currentMode.value = 'statusDrill';
       drillStack.value = [];
+      return;
     } else {
-      throw new Error(result.msg || '接口返回异常');
+      throw new Error('返回数据为空或格式错误');
     }
   } catch (error) {
     console.warn('接口调用失败，使用模拟数据：', error.message);
@@ -249,6 +235,7 @@ const fetchStatusCount = async (status) => {
       let title = '';
       if (status === 'enabled') title = '启用场站区域分布（模拟数据）';
       else if (status === 'disabled') title = '停用场站区域分布（模拟数据）';
+      else if (status === 'wait') title = '未启用场站区域分布（模拟数据）'; // 新增
       else title = '各状态场站区域分布（模拟数据）';
       updateBarChart(title, xData, seriesData);
       currentMode.value = 'statusDrill';
@@ -263,12 +250,10 @@ const fetchStatusCount = async (status) => {
 };
 
 // ==================== 事件处理 ====================
-// 卡片点击
 const handleCardClick = (cardInfo) => {
   fetchStatusCount(cardInfo.status);
 };
 
-// 柱状图点击（钻取）
 const handleBarClick = async (areaName) => {
   if (currentMode.value === 'statusDrill') {
     ElMessage.info('当前为状态分布视图，请点击"返回总览"后再进行区域钻取');
@@ -282,7 +267,6 @@ const handleBarClick = async (areaName) => {
   }
 };
 
-// 返回上一级
 const goBack = () => {
   if (drillStack.value.length > 0) {
     drillStack.value.pop();
@@ -300,17 +284,16 @@ const goBack = () => {
 };
 
 // ==================== 初始化 ====================
-// 获取充电场站图表数据（总览）
 const fetchChartData = async () => {
   loading.value = true;
   try {
     const result = await getChargingStationChartData();
-    if (result.code === 200 && result.data) {
-      chartData.value = result.data;
+    if (result && typeof result === 'object') {
+      chartData.value = result;
       resetToOverview();
       console.log('使用接口数据');
     } else {
-      throw new Error(result.msg || '接口返回异常');
+      throw new Error('接口返回数据格式异常');
     }
   } catch (error) {
     console.warn('接口调用失败，使用模拟数据：', error.message);
@@ -330,7 +313,7 @@ onMounted(() => {
 <template>
   <div v-loading="loading" class="chart-box">
     <!-- 左侧卡片区域 -->
-    <div class="chart-box-left" style="flex: 1 !important;">
+    <div class="box-left" style="flex: 1 !important;">
       <Indicator
         class="left-card"
         v-for="item in cardList"
@@ -342,7 +325,6 @@ onMounted(() => {
 
     <!-- 柱状图容器 -->
     <div class="chart-wrapper" style="flex: 1.5 !important;">
-      <!-- 钻取工具栏 -->
       <div class="chart-toolbar" v-if="drillStack.length > 0 || currentMode === 'statusDrill'">
         <el-button type="primary" size="small" @click="goBack">
           <el-icon>
@@ -388,6 +370,19 @@ onMounted(() => {
   gap: 12px;
   margin-bottom: 20px;
   width: 100%;
+
+  .box-left {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    min-width: 280px;
+    max-width: 320px;
+    margin-top: 10px !important;
+
+    .left-card {
+      height: 150px !important;
+    }
+  }
 
   .chart-box-left {
     display: flex;

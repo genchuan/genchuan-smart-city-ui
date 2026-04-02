@@ -88,6 +88,37 @@ export function useFormSchema() {
   ];
 }
 
+// ---------- 批量编辑表单 schema ----------
+export function useBatchUpdateSchema() {
+  return [
+    {
+      fieldName: 'coopMode',
+      label: '合作模式',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择合作模式（可选）',
+        options: [
+          { label: '自营', value: 'self' },
+          { label: '联营', value: 'joint' },
+          { label: '加盟', value: 'franchise' },
+        ],
+        clearable: true,
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'manager',
+      label: '负责人',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入负责人姓名（可选）',
+        clearable: true,
+      },
+      labelWidth: '100',
+    },
+  ];
+}
+
 // ---------- 搜索表单 schema ----------
 export function useSearchSchema() {
   return [
@@ -134,9 +165,9 @@ export function useSearchSchema() {
       componentProps: {
         placeholder: '请选择',
         options: [
-          { label: '未启用', value: 'disabled' },
+          { label: '未启用', value: 'wait' },
           { label: '已启用', value: 'enabled' },
-          { label: '已停用', value: 'stopped' },
+          { label: '已停用', value: 'disabled' },
         ],
         clearable: true,
       },
@@ -183,11 +214,11 @@ export function getColumnsByStatus(status) {
       { field: 'stationCode', title: '场站编号', minWidth: 130, sortable: true, slots: { default: 'stationCode' } },
       { field: 'stationName', title: '场站名称', minWidth: 150, sortable: true, slots: { default: 'stationName' } },
       { field: 'address', title: '场站地址', minWidth: 200, slots: { default: 'address' } },
-      { field: 'coopModeName', title: '合作模式', minWidth: 120, slots: { default: 'coopMode' } },
+      { field: 'coopMode', title: '合作模式', minWidth: 120, slots: { default: 'coopMode' } },
       { field: 'openTime', title: '开放时间', minWidth: 150 },
       { field: 'priceService', title: '电价服务费(元/度)', minWidth: 150 },
       { field: 'manager', title: '负责人', minWidth: 120, slots: { default: 'manager' } },
-      { field: 'stationStatusName', title: '场站状态', minWidth: 120, slots: { default: 'status' } },
+      { field: 'stationStatus', title: '场站状态', minWidth: 120, slots: { default: 'status' } },
       { field: 'stopReason', title: '停用原因', minWidth: 150 },
       { field: 'remark', title: '备注', minWidth: 180 },
       // 新增创建时间和更新时间列，并添加时间戳格式化

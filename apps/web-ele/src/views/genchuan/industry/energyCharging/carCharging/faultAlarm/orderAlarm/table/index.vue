@@ -4,28 +4,26 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
-import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
+import { isEmpty } from '@vben/utils';
+
 import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  createChargingLot,
-  exportChargingLot,
-  getChargingLotPage,
-  updateChargingLot,
-  updateChargingLotStatus,
-} from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingLot';
+  exportOrderAlarm,
+  getOrderAlarmPage,
+} from '#/api/genchuan/industry/energyCharging/carCharging/faultAlarm/orderAlarm';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 
-import MarkOccupyDialog from '../components/MarkOccupyDialog.vue';
 import {
   detailFields,
   formatTimestamp,
-  getLotStatusTagType,
-  getLotTypeTagType,
+  getAbnormalTypeTagType,
+  getAlarmStatusTagType,
+  getVerifyResultTagType,
   textObj,
   useFormSchema,
   useGridColumns,
@@ -36,14 +34,6 @@ const props = defineProps({
   secondShow: {
     type: Boolean,
     default: false,
-  },
-  showStats: {
-    type: Boolean,
-    default: false,
-  },
-  toggleStats: {
-    type: Function,
-    default: () => {},
   },
 });
 
@@ -63,7 +53,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
 });
 
 const detailDrawerRef = ref(null);
-const markOccupyDialogRef = ref(null);
 const formData = ref();
 
 const [Form, formApi] = useVbenForm({
@@ -72,7 +61,7 @@ const [Form, formApi] = useVbenForm({
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
-    labelWidth: 100,
+    labelWidth: 80,
   },
   layout: 'horizontal',
   schema: useFormSchema(),
@@ -85,24 +74,8 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onCancel() {
     formDrawerApi.close();
   },
-  async onConfirm() {
-    const obj = formApi.form.values;
-    try {
-      const submitData = { ...obj };
-
-      if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-        await createChargingLot(submitData);
-        ElMessage.success('新增成功');
-      } else {
-        await updateChargingLot({ ...submitData, id: formData.value.id });
-        ElMessage.success('编辑成功');
-      }
-      handleRefresh();
-      formDrawerApi.close();
-    } catch (error) {
-      ElMessage.error('操作失败');
-      console.error(error);
-    }
+  onConfirm() {
+    formDrawerApi.close();
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
@@ -124,8 +97,7 @@ function handleRefresh() {
 /** 导出表格 */
 async function handleExport() {
   try {
-    const data = await exportChargingLot();
-    downloadFileFromBlobPart({ fileName: '充电车位表.xls', source: data });
+    await exportOrderAlarm();
     ElMessage.success('导出成功');
   } catch (error) {
     ElMessage.error('导出失败');
@@ -155,17 +127,16 @@ function handleEdit(row) {
 /** 删除 */
 async function handleDelete(row) {
   try {
-    await confirm(`确定删除 "${row.lotCode}" 吗？`);
+    await confirm(`确定删除 "${row.alarmCode}" 吗？`);
   } catch {
     return;
   }
 
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.lotCode]),
+    text: $t('ui.actionMessage.deleting', [row.alarmCode]),
   });
   try {
-    // 调用删除接口（如果有的话，这里用更新状态模拟）
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.lotCode]));
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.alarmCode]));
     handleRefresh();
   } catch (error) {
     ElMessage.error('删除失败');
@@ -187,7 +158,6 @@ async function handleDeleteBatch() {
     text: $t('ui.actionMessage.deletingBatch'),
   });
   try {
-    // 批量删除逻辑
     checkedIds.value = [];
     ElMessage.success($t('删除成功'));
     handleRefresh();
@@ -199,58 +169,20 @@ async function handleDeleteBatch() {
   }
 }
 
-/** 占用标记 */
-function handleMarkOccupy(row) {
-  if (markOccupyDialogRef.value) {
-    markOccupyDialogRef.value.open(row);
-  }
-}
-
-/** 空闲标记 */
-async function handleMarkIdle(row) {
-  try {
-    await confirm(`确定将车位 "${row.lotCode}" 标记为空闲吗？`);
-  } catch {
-    return;
-  }
-
-  const loadingInstance = ElLoading.service({
-    text: '正在标记空闲...',
-  });
-  try {
-    const params = {
-      id: Number(row.id),
-      lotStatus: '0', // 0-空闲
-    };
-    await updateChargingLotStatus(params);
-    ElMessage.success('空闲标记成功');
-    handleRefresh();
-  } catch (error) {
-    ElMessage.error('空闲标记失败');
-    console.error(error);
-  } finally {
-    loadingInstance.close();
-  }
-}
-
-/** 获取状态标签文本 */
-function getLotStatusLabel(status) {
-  const dict = getDictObj(DICT_TYPE.CHARGE_LOT_LOT_STATUS, String(status));
-  return dict ? dict.label : status;
-}
-
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
 
 // 快捷筛选变量
-const filterStationId = ref('');
-const filterLotType = ref('');
-const filterLotStatus = ref('');
-const filterCreator = ref('');
-const filterCreateTimeStart = ref('');
-const filterCreateTimeEnd = ref('');
+const filterPlateNo = ref('');
+const filterAbnormalType = ref('');
+const filterAlarmStatus = ref('');
+const filterCreatorName = ref('');
+const filterAlarmTimeStart = ref('');
+const filterAlarmTimeEnd = ref('');
+const filterHandleTimeStart = ref('');
+const filterHandleTimeEnd = ref('');
 
 const dataObj = reactive({
   totalShow: false,
@@ -277,23 +209,25 @@ const getTableData = async (pageObj) => {
     const queryParams = {
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      stationId: filterStationId.value,
-      lotType: filterLotType.value,
-      lotStatus: filterLotStatus.value,
-      creator: filterCreator.value,
-      startCreateTime: filterCreateTimeStart.value,
-      endCreateTime: filterCreateTimeEnd.value,
+      plateNo: filterPlateNo.value,
+      abnormalType: filterAbnormalType.value,
+      alarmStatus: filterAlarmStatus.value,
+      creatorName: filterCreatorName.value,
+      startAlarmTime: filterAlarmTimeStart.value,
+      endAlarmTime: filterAlarmTimeEnd.value,
+      startHandleTime: filterHandleTimeStart.value,
+      endHandleTime: filterHandleTimeEnd.value,
       ...dataObj.searchParams,
     };
 
-    const response = await getChargingLotPage(queryParams);
+    const response = await getOrderAlarmPage(queryParams);
     if (response) {
       dataObj.total = response.total;
       dataObj.list = response.list.map((item) => ({
         ...item,
         id: String(item.id),
-        createTime: item.createTime ? formatTimestamp(item.createTime) : '',
-        updateTime: item.updateTime ? formatTimestamp(item.updateTime) : '',
+        alarmTime: item.alarmTime ? formatTimestamp(item.alarmTime) : '',
+        handleTime: item.handleTime ? formatTimestamp(item.handleTime) : '',
       }));
     }
   } catch (error) {
@@ -329,10 +263,10 @@ const [QueryForm] = useVbenForm({
 function onSubmit(values) {
   const searchParams = { ...values };
   // 处理时间范围
-  if (values.createTime && Array.isArray(values.createTime)) {
-    searchParams.startCreateTime = values.createTime[0];
-    searchParams.endCreateTime = values.createTime[1];
-    delete searchParams.createTime;
+  if (values.alarmTime && Array.isArray(values.alarmTime)) {
+    searchParams.startAlarmTime = values.alarmTime[0];
+    searchParams.endAlarmTime = values.alarmTime[1];
+    delete searchParams.alarmTime;
   }
   dataObj.searchParams = searchParams;
   handleRefresh();
@@ -367,14 +301,15 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
+const openOrderDetail = () => {
+  ElMessage.info('打开订单详情');
+};
+
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
   if (detailDrawerRef.value) {
     detailDrawerRef.value.open();
   }
-};
-const openPileDetail = () => {
-  ElMessage.info('打开对应充电桩详情');
 };
 
 const handleSerachShow = () => {
@@ -387,62 +322,74 @@ const handleFullShow = () => {
 
 // ==================== 快捷筛选处理 ====================
 
-// 处理所属场站点击
-const handleStationClick = (stationId) => {
-  filterStationId.value = filterStationId.value === stationId ? '' : stationId;
+// 处理用户ID/车牌号点击
+const handleUserInfoClick = (plateNo) => {
+  filterPlateNo.value = filterPlateNo.value === plateNo ? '' : plateNo;
   gridApi.query();
 };
 
-// 处理车位类型点击
-const handleLotTypeClick = (lotType) => {
-  filterLotType.value = filterLotType.value === lotType ? '' : lotType;
+// 处理异常类型点击
+const handleAbnormalTypeClick = (abnormalType) => {
+  filterAbnormalType.value = filterAbnormalType.value === abnormalType ? '' : abnormalType;
   gridApi.query();
 };
 
-// 处理车位状态点击
-const handleLotStatusClick = (lotStatus) => {
-  filterLotStatus.value = filterLotStatus.value === lotStatus ? '' : lotStatus;
+// 处理告警状态点击
+const handleAlarmStatusClick = (alarmStatus) => {
+  filterAlarmStatus.value = filterAlarmStatus.value === alarmStatus ? '' : alarmStatus;
   gridApi.query();
 };
 
 // 处理操作人点击
-const handleCreatorClick = (creator) => {
-  filterCreator.value = filterCreator.value === creator ? '' : creator;
+const handleCreatorClick = (creatorName) => {
+  filterCreatorName.value = filterCreatorName.value === creatorName ? '' : creatorName;
   gridApi.query();
 };
 
-// 处理创建时间点击
-const handleCreateTimeClick = (createTime) => {
-  // 这里简化处理，实际可能需要更复杂的时间筛选逻辑
-  filterCreateTimeStart.value = createTime;
-  filterCreateTimeEnd.value = createTime;
+// 处理告警时间点击
+const handleAlarmTimeClick = (alarmTime) => {
+  filterAlarmTimeStart.value = alarmTime;
+  filterAlarmTimeEnd.value = alarmTime;
+  gridApi.query();
+};
+
+// 处理处理时间点击
+const handleHandleTimeClick = (handleTime) => {
+  filterHandleTimeStart.value = handleTime;
+  filterHandleTimeEnd.value = handleTime;
   gridApi.query();
 };
 
 // 取消筛选
-const handleCancelStationFilter = () => {
-  filterStationId.value = '';
+const handleCancelPlateNoFilter = () => {
+  filterPlateNo.value = '';
   gridApi.query();
 };
 
-const handleCancelLotTypeFilter = () => {
-  filterLotType.value = '';
+const handleCancelAbnormalTypeFilter = () => {
+  filterAbnormalType.value = '';
   gridApi.query();
 };
 
-const handleCancelLotStatusFilter = () => {
-  filterLotStatus.value = '';
+const handleCancelAlarmStatusFilter = () => {
+  filterAlarmStatus.value = '';
   gridApi.query();
 };
 
 const handleCancelCreatorFilter = () => {
-  filterCreator.value = '';
+  filterCreatorName.value = '';
   gridApi.query();
 };
 
-const handleCancelCreateTimeFilter = () => {
-  filterCreateTimeStart.value = '';
-  filterCreateTimeEnd.value = '';
+const handleCancelAlarmTimeFilter = () => {
+  filterAlarmTimeStart.value = '';
+  filterAlarmTimeEnd.value = '';
+  gridApi.query();
+};
+
+const handleCancelHandleTimeFilter = () => {
+  filterHandleTimeStart.value = '';
+  filterHandleTimeEnd.value = '';
   gridApi.query();
 };
 
@@ -450,21 +397,16 @@ const handleCancelCreateTimeFilter = () => {
 const handleStatsFilter = (type, value) => {
   if (type === 'status') {
     if (value === 'all') {
-      // 总车位数，清空状态筛选
-      filterLotStatus.value = '';
+      filterAlarmStatus.value = '';
     } else {
-      // 根据状态名称获取字典值
-      const dictOptions = getDictOptions(
-        DICT_TYPE.CHARGE_LOT_LOT_STATUS,
-        'string',
-      );
+      const dictOptions = getDictOptions(DICT_TYPE.ORDER_ALARM_ALARM_STATUS, 'string');
       const dictItem = dictOptions.find((item) => item.label === value);
-      filterLotStatus.value = dictItem ? dictItem.value : value;
+      filterAlarmStatus.value = dictItem ? dictItem.value : value;
     }
-  } else if (type === 'station') {
-    console.log("======")
-    console.log(value);
-    filterStationId.value = value;
+  } else if (type === 'abnormalType') {
+    const dictOptions = getDictOptions(DICT_TYPE.ORDER_ALARM_ABNORMAL_TYPE, 'string');
+    const dictItem = dictOptions.find((item) => item.label === value);
+    filterAbnormalType.value = dictItem ? dictItem.value : value;
   }
   gridApi.query();
 };
@@ -483,12 +425,10 @@ defineExpose({
     <!--   详情抽屉-->
     <DetailDrawer
       ref="detailDrawerRef"
-      :title="`${dataObj.detailObj.lotCode}详情`"
+      :title="`${dataObj.detailObj.alarmCode}详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
-    <!--   占用标记弹窗-->
-    <MarkOccupyDialog ref="markOccupyDialogRef" @success="handleRefresh" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -499,63 +439,65 @@ defineExpose({
           class="tabel-tabs"
           style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
         >
-          <!-- 所属场站筛选标签 -->
+          <!-- 车牌号筛选标签 -->
           <ElTag
-            v-if="filterStationId"
+            v-if="filterPlateNo"
             type="primary"
             closable
-            @close="handleCancelStationFilter"
+            @close="handleCancelPlateNoFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
-            所属场站：{{ filterStationId }}
+            车牌号：{{ filterPlateNo }}
           </ElTag>
-          <!-- 车位类型筛选标签 -->
+          <!-- 异常类型筛选标签 -->
           <ElTag
-            v-if="filterLotType"
+            v-if="filterAbnormalType"
             type="success"
             closable
-            @close="handleCancelLotTypeFilter"
+            @close="handleCancelAbnormalTypeFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
-            车位类型：{{
-              getDictObj(DICT_TYPE.CHARGE_LOT_LOT_TYPE, String(filterLotType))
-                ?.label || filterLotType
-            }}
+            异常类型：{{ getDictObj(DICT_TYPE.ORDER_ALARM_ABNORMAL_TYPE, String(filterAbnormalType))?.label || filterAbnormalType }}
           </ElTag>
-          <!-- 车位状态筛选标签 -->
+          <!-- 告警状态筛选标签 -->
           <ElTag
-            v-if="filterLotStatus"
+            v-if="filterAlarmStatus"
             type="warning"
             closable
-            @close="handleCancelLotStatusFilter"
+            @close="handleCancelAlarmStatusFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
-            车位状态：{{
-              getDictObj(
-                DICT_TYPE.CHARGE_LOT_LOT_STATUS,
-                String(filterLotStatus),
-              )?.label || filterLotStatus
-            }}
+            告警状态：{{ getDictObj(DICT_TYPE.ORDER_ALARM_ALARM_STATUS, String(filterAlarmStatus))?.label || filterAlarmStatus }}
           </ElTag>
           <!-- 操作人筛选标签 -->
           <ElTag
-            v-if="filterCreator"
+            v-if="filterCreatorName"
             type="info"
             closable
             @close="handleCancelCreatorFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
-            操作人：{{ filterCreator }}
+            操作人：{{ filterCreatorName }}
           </ElTag>
-          <!-- 创建时间筛选标签 -->
+          <!-- 告警时间筛选标签 -->
           <ElTag
-            v-if="filterCreateTimeStart"
+            v-if="filterAlarmTimeStart"
             type="primary"
             closable
-            @close="handleCancelCreateTimeFilter"
+            @close="handleCancelAlarmTimeFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
-            创建时间：{{ filterCreateTimeStart }} 至 {{ filterCreateTimeEnd }}
+            告警时间：{{ filterAlarmTimeStart }} 至 {{ filterAlarmTimeEnd }}
+          </ElTag>
+          <!-- 处理时间筛选标签 -->
+          <ElTag
+            v-if="filterHandleTimeStart"
+            type="primary"
+            closable
+            @close="handleCancelHandleTimeFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            处理时间：{{ filterHandleTimeStart }} 至 {{ filterHandleTimeEnd }}
           </ElTag>
         </div>
       </template>
@@ -580,56 +522,70 @@ defineExpose({
             @click="handleSerachShow"
           />
           <IconButton
-            :content="props.showStats ? '隐藏统计' : '显示统计'"
-            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
-            @click="props.toggleStats"
-          />
-          <IconButton
             content="全屏"
             icon-name="FullScreen"
             @click="handleFullShow"
           />
         </div>
       </template>
-      <!-- 车位编号插槽 - 点击跳转详情 -->
-      <template #lotCode="{ row }">
+      <!-- 告警编号插槽 - 点击跳转详情 -->
+      <template #alarmCode="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
         >
-          {{ row.lotCode }}
+          {{ row.alarmCode }}
         </el-text>
       </template>
-      <!-- 所属场站插槽 - 点击筛选 -->
-      <template #stationName="{ row }">
+      <!-- 订单编号插槽 - 点击跳转订单详情 -->
+      <template #orderCode="{ row }">
         <el-text
-          @click="handleStationClick(row.stationId)"
+          @click="openOrderDetail()"
           class="common-align"
           type="primary"
           style="cursor: pointer"
         >
-          {{ row.stationName }}
+          {{ row.orderCode }}
         </el-text>
       </template>
-      <!-- 车位类型插槽 - 点击筛选 -->
-      <template #lotType="{ row }">
-        <ElTag
-          @click="handleLotTypeClick(row.lotType)"
-          :type="getLotTypeTagType(row.lotType)"
+      <!-- 用户ID/车牌号插槽 - 点击筛选 -->
+      <template #userInfo="{ row }">
+        <el-text
+          @click="handleUserInfoClick(row.plateNo)"
+          class="common-align"
+          type="primary"
           style="cursor: pointer"
         >
-          {{
-            getDictObj(DICT_TYPE.CHARGE_LOT_LOT_TYPE, String(row.lotType))
-              ?.label || row.lotType
-          }}
+          {{ row.userId }}/{{ row.plateNo }}
+        </el-text>
+      </template>
+      <!-- 异常类型插槽 - 点击筛选 -->
+      <template #abnormalType="{ row }">
+        <ElTag
+          @click="handleAbnormalTypeClick(row.abnormalType)"
+          :type="getAbnormalTypeTagType(row.abnormalType)"
+          style="cursor: pointer"
+        >
+          {{ getDictObj(DICT_TYPE.ORDER_ALARM_ABNORMAL_TYPE, String(row.abnormalType))?.label || row.abnormalType }}
         </ElTag>
       </template>
-      <!-- 关联充电桩插槽 - 点击提示预留后续拓展 -->
+      <!-- 告警时间插槽 - 点击筛选 -->
+      <template #alarmTime="{ row }">
+        <el-text
+          @click="handleAlarmTimeClick(row.alarmTime)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.alarmTime }}
+        </el-text>
+      </template>
+      <!-- 关联充电桩插槽 - 点击跳转充电桩详情 -->
       <template #pileName="{ row }">
         <el-text
-          @click="openPileDetail()"
+          @click="$message.info('打开充电桩详情')"
           class="common-align"
           type="primary"
           style="cursor: pointer"
@@ -637,68 +593,61 @@ defineExpose({
           {{ row.pileName }}
         </el-text>
       </template>
-      <!-- 车位状态插槽 - 点击筛选 -->
-      <template #lotStatus="{ row }">
+      <!-- 告警状态插槽 - 点击筛选 -->
+      <template #alarmStatus="{ row }">
         <ElTag
-          @click="handleLotStatusClick(row.lotStatus)"
-          :type="getLotStatusTagType(row.lotStatus)"
+          @click="handleAlarmStatusClick(row.alarmStatus)"
+          :type="getAlarmStatusTagType(row.alarmStatus)"
           style="cursor: pointer"
         >
-          {{
-            getDictObj(DICT_TYPE.CHARGE_LOT_LOT_STATUS, String(row.lotStatus))
-              ?.label || row.lotStatus
-          }}
+          {{ getDictObj(DICT_TYPE.ORDER_ALARM_ALARM_STATUS, String(row.alarmStatus))?.label || row.alarmStatus }}
         </ElTag>
       </template>
-      <!-- 创建时间插槽 - 点击筛选 -->
-      <template #createTime="{ row }">
+      <!-- 核实结果插槽 - 无钻取交互，仅显示字典标签 -->
+      <template #verifyResult="{ row }">
+        <ElTag :type="getVerifyResultTagType(row.verifyResult)">
+          {{ getDictObj(DICT_TYPE.ORDER_ALARM_VERIFY_RESULT, String(row.verifyResult))?.label || row.verifyResult }}
+        </ElTag>
+      </template>
+      <!-- 处理时间插槽 - 点击筛选 -->
+      <template #handleTime="{ row }">
         <el-text
-          @click="handleCreateTimeClick(row.createTime)"
+          @click="handleHandleTimeClick(row.handleTime)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
         >
-          {{ row.createTime }}
+          {{ row.handleTime }}
         </el-text>
       </template>
       <!-- 操作人插槽 - 点击筛选 -->
-      <template #creator="{ row }">
+      <template #creatorName="{ row }">
         <el-text
-          @click="handleCreatorClick(row.creator)"
+          @click="handleCreatorClick(row.creatorName)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
         >
-          {{ row.creator }}
+          {{ row.creatorName }}
         </el-text>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <!-- 查看按钮 - 所有状态都显示 -->
           <IconButton
-            content="查看"
+            content="详情"
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
-          <!-- 编辑按钮 - 所有状态都显示 -->
           <IconButton
             content="编辑"
             icon-name="edit"
             @click="handleEdit(row)"
           />
-          <!-- 占用标记按钮 - 仅空闲状态显示 -->
           <IconButton
-            v-if="getLotStatusLabel(row.lotStatus) === '空闲'"
-            content="占用标记"
-            icon-name="Coordinate"
-            @click="handleMarkOccupy(row)"
-          />
-          <!-- 空闲标记按钮 - 仅占用状态显示 -->
-          <IconButton
-            v-if="getLotStatusLabel(row.lotStatus) === '占用'"
-            content="空闲标记"
-            icon-name="MagicStick"
-            @click="handleMarkIdle(row)"
+            content="删除"
+            icon-name="delete"
+            color="#F56C6C"
+            @click="handleDelete(row)"
           />
         </div>
       </template>
@@ -710,7 +659,7 @@ defineExpose({
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：充电车位数量: {{ dataObj.list.length }} </span>
+          <span> 本页统计：订单告警数量: {{ dataObj.list.length }} </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span> 全部统计：{{ textObj.total }} </span>
