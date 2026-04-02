@@ -1,26 +1,4 @@
-<script setup>
-import { computed, defineProps, toRefs } from 'vue';
-import { useVbenDrawer } from '@vben/common-ui';
-
-const props = defineProps({
-  detailObj: { type: Object, required: true, default: () => ({}) },
-  title: { type: String, default: '' },
-});
-const { detailObj, title } = toRefs(props);
-
-const drawerTitle = computed(() => {
-  const code = detailObj.value?.pileCode || '充电桩';
-  return title.value || `${code}详情`;
-});
-
-const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
-  modal: false, appendToMain: true, footer: false, width: 800,
-  onCancel: () => detailDrawerApi.close(),
-});
-
-defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.close() });
-</script>
-
+<!-- charging-pile/detail.vue -->
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
@@ -29,27 +7,66 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       <div class="detail-card-row"><div class="detail-row-left">功率(kW)：</div><div class="detail-row-right">{{ detailObj.power || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">生产厂家：</div><div class="detail-row-right">{{ detailObj.manufacturer || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">所属场站：</div><div class="detail-row-right">{{ detailObj.stationName || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">绑定车位：</div><div class="detail-row-right">{{ detailObj.lotCode || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">充电模式：</div><div class="detail-row-right">{{ detailObj.chargeMode || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">设备状态：</div><div class="detail-row-right">{{ detailObj.pileStatus || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">绑定车位：</div><div class="detail-row-right">{{ detailObj.lotName || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">充电模式：</div><div class="detail-row-right">{{ detailObj.chargeModeName || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">设备状态：</div><div class="detail-row-right">{{ detailObj.pileStatusName || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">故障标记：</div><div class="detail-row-right">{{ detailObj.faultFlag ? '有故障' : '无故障' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">运行时长(h)：</div><div class="detail-row-right">{{ detailObj.runTime || 0 }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">充电枪二维码：</div><div class="detail-row-right"><img v-if="detailObj.qrcode" :src="detailObj.qrcode" style="width:100px;height:100px;" /></div></div>
+      <div class="detail-card-row"><div class="detail-row-left">运行时长(小时)：</div><div class="detail-row-right">{{ detailObj.runTime || 0 }}</div></div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">充电枪二维码：</div>
+        <div class="detail-row-right">
+          <el-image
+            v-if="detailObj.qrcodeBase64"
+            :src="detailObj.qrcodeBase64"
+            :preview-src-list="[detailObj.qrcodeBase64]"
+            style="width: 60px; height: 60px; cursor: pointer"
+            fit="contain"
+          />
+          <span v-else>-</span>
+        </div>
+      </div>
       <div class="detail-card-row"><div class="detail-row-left">备注：</div><div class="detail-row-right">{{ detailObj.remark || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">创建者：</div><div class="detail-row-right">{{ detailObj.creator || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">创建人：</div><div class="detail-row-right">{{ detailObj.creator || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">创建时间：</div><div class="detail-row-right">{{ detailObj.createTime || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">更新者：</div><div class="detail-row-right">{{ detailObj.updater || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">更新人：</div><div class="detail-row-right">{{ detailObj.updater || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">更新时间：</div><div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div></div>
     </div>
   </DetailDrawer>
 </template>
+
+<script setup>
+import { computed, defineProps, toRefs } from 'vue';
+import { useVbenDrawer } from '@vben/common-ui';
+
+const props = defineProps({
+  detailObj: { type: Object, required: true, default: () => ({}) },
+  title: { type: String, default: '' },
+});
+
+const { detailObj, title } = toRefs(props);
+
+const drawerTitle = computed(() => {
+  const objName = detailObj.value?.pileCode || '充电桩';
+  return title.value || `${objName}详情`;
+});
+
+const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  width: 800,
+  onCancel() { detailDrawerApi.close(); },
+});
+
+defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.close() });
+</script>
 
 <style scoped lang="scss">
 .detail-card {
   padding: 20px;
   background-color: #f9fafb;
   border-radius: 8px;
-  min-height: 450px;
+  min-height: 400px;
   max-height: 70vh;
   overflow-y: auto;
 }
@@ -58,21 +75,19 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
   align-items: flex-start;
   padding: 12px 0;
   border-bottom: 1px solid #f0f0f0;
-}
-.detail-card-row:last-child {
-  border-bottom: none;
-}
-.detail-card-row:hover {
-  background-color: #f5f7fa;
-  border-radius: 4px;
-  padding-left: 8px;
-  padding-right: 8px;
-  margin-left: -8px;
-  margin-right: -8px;
-  transition: all 0.2s ease;
+  &:last-child { border-bottom: none; }
+  &:hover {
+    background-color: #f5f7fa;
+    border-radius: 4px;
+    padding-left: 8px;
+    padding-right: 8px;
+    margin-left: -8px;
+    margin-right: -8px;
+    transition: all 0.2s ease;
+  }
 }
 .detail-row-left {
-  width: 120px;
+  width: 140px !important;
   flex-shrink: 0;
   font-weight: 500;
   color: #606266;
@@ -88,7 +103,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
   padding-right: 10px;
 }
 @media (max-width: 768px) {
-  .detail-row-left { width: 100px; }
+  .detail-row-left { width: 120px; }
   .detail-card { padding: 15px; max-height: 60vh; }
 }
 .detail-card::-webkit-scrollbar { width: 6px; }
