@@ -24,6 +24,33 @@ const debounce = (fn, delay = 300) => {
   };
 };
 
+// 动态生成颜色数组，确保多系列时每个系列有不同的颜色
+const generateColors = (seriesCount) => {
+  // 预设优雅配色方案（可根据需要扩展）
+  const defaultColors = [
+    '#50c48a', // 绿色
+    '#f5a623', // 橙色
+    '#f15a6e', // 粉色
+    '#8b5cf6', // 紫色
+    '#34b7eb', // 天蓝
+    '#ff9a9e', // 浅粉
+    '#6c5ce7'  // 深紫
+  ];
+
+  if (seriesCount <= defaultColors.length) {
+    return defaultColors.slice(0, seriesCount);
+  }
+
+  // 如果系列数量超出预设颜色，动态生成互补色
+  const colors = [...defaultColors];
+  for (let i = defaultColors.length; i < seriesCount; i++) {
+    // 使用HSL生成差异化颜色
+    const hue = (i * 35) % 360;
+    colors.push(`hsl(${hue}, 70%, 60%)`);
+  }
+  return colors;
+};
+
 // 检查容器尺寸是否有效
 const checkContainerValid = () => {
   if (!chartRef.value) return false;
@@ -52,6 +79,10 @@ const initChart = async () => {
 
   try {
     chartInstance = echarts.init(chartRef.value);
+
+    // 动态生成与系列数量匹配的颜色数组
+    const seriesCount = props.seriesData.length;
+    const colorPalette = generateColors(seriesCount);
 
     const option = {
       title: {
@@ -95,7 +126,8 @@ const initChart = async () => {
           lineStyle: { color: '#F0F6FC', type: 'dashed' },
         },
       },
-      color: ['#4a90e2'],
+      // 关键修改：使用动态生成的调色板，确保多系列时每个系列颜色不同
+      color: colorPalette,
       series: props.seriesData.map((seriesItem) => ({
         name: seriesItem.name,
         type: 'bar',

@@ -6,112 +6,117 @@ import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import MapCommon from './MapCommon.vue';
 
-// 引入图表API（已自动解包，直接返回数据体）
 import {
   getChargingStationChartData,
   getAreaCountChart,
   getStatusCountChart
 } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingStation/data.js';
 
-// ==================== 模拟数据定义 ====================
-const mockOverviewData = {
-  totalCount: 120,
-  enableCount: 98,
-  disableCount: 12,
-  waitCount: 10,               // 新增未启用场站数
-  areaList: [
-    {areaName: '丰泽区', count: 45},
-    {areaName: '鲤城区', count: 32},
-    {areaName: '洛江区', count: 28},
-    {areaName: '泉港区', count: 15},
+// ==================== 模拟数据（仅用于接口异常降级，字段与后端保持一致） ====================
+const mockBackendData = {
+  stationMapList: [
+    { id: 1001, stationName: '泉州丰泽万达广场充电站', lon: 118.589423, lat: 24.907856, stationStatus: '已启用' },
+    { id: 1002, stationName: '泉州鲤城新华路充电站', lon: 118.567812, lat: 24.912345, stationStatus: '已停用' },
+    { id: 1003, stationName: '泉州洛江双阳充电站', lon: 118.645678, lat: 24.923456, stationStatus: '未启用' },
+    { id: 1004, stationName: '泉州丰泽东海充电站', lon: 118.612345, lat: 24.887654, stationStatus: '已启用' },
+    { id: 1005, stationName: '泉州鲤城江南充电站', lon: 118.578901, lat: 24.909876, stationStatus: '已启用' },
   ],
-  stationPoints: [
-    {
-      id: 1001,
-      stationName: '泉州丰泽万达广场充电站',
-      lon: 118.589423,
-      lat: 24.907856,
-      status: 'enabled',
-      statusName: '已启用',
-      address: '泉州市丰泽区宝洲路689号万达广场地下停车场B2层',
-    },
-    {
-      id: 1002,
-      stationName: '泉州鲤城新华路充电站',
-      lon: 118.567812,
-      lat: 24.912345,
-      status: 'disabled',
-      statusName: '已停用',
-      address: '泉州市鲤城区新华南路123号',
-    },
-    {
-      id: 1003,
-      stationName: '泉州洛江双阳充电站',
-      lon: 118.645678,
-      lat: 24.923456,
-      status: 'wait',
-      statusName: '未启用',
-      address: '泉州市洛江区双阳街道阳新街',
-    },
+  areaBarList: [   // 后端未提供详细的区域分布，这里仅作示意，实际会从 stationMapList 聚合
+    { areaName: '丰泽区', totalCount: 2, enableCount: 2 },
+    { areaName: '鲤城区', totalCount: 2, enableCount: 1 },
+    { areaName: '洛江区', totalCount: 1, enableCount: 0 },
   ],
+  cardInfo: {
+    totalCount: 5,
+    enableCount: 3,
+    disableCount: 1,
+    unEnableCount: 1,
+  }
 };
 
+// 从站点列表聚合区域统计（后端未直接提供 areaList，前端自行聚合）
+const aggregateAreaList = (stationMapList) => {
+  const areaMap = new Map();
+  stationMapList.forEach(station => {
+    let areaName = '其他区域';
+    const match = station.stationName?.match(/泉州(.*?)充电站/);
+    if (match && match[1]) {
+      const raw = match[1];
+      if (raw.includes('丰泽')) areaName = '丰泽区';
+      else if (raw.includes('鲤城')) areaName = '鲤城区';
+      else if (raw.includes('洛江')) areaName = '洛江区';
+      else if (raw.includes('泉港')) areaName = '泉港区';
+      else if (raw.includes('晋江')) areaName = '晋江市';
+      else if (raw.includes('石狮')) areaName = '石狮市';
+      else areaName = raw + '区';
+    }
+    areaMap.set(areaName, (areaMap.get(areaName) || 0) + 1);
+  });
+  return Array.from(areaMap.entries())
+    .map(([areaName, count]) => ({ areaName, count }))
+    .sort((a, b) => b.count - a.count);
+};
+
+// 转换后端数据为前端所需结构（仅使用后端提供的字段）
+const transformBackendData = (backendData) => {
+  const stationPoints = (backendData.stationMapList || [])
+    .filter(point => point.lon && point.lat && Math.abs(point.lon) > 0.0001 && Math.abs(point.lat) > 0.0001)
+    .map(point => ({
+      id: point.id,
+      stationName: point.stationName,
+      lon: point.lon,
+      lat: point.lat,
+      stationStatus: point.stationStatus,
+    }));
+
+  const areaList = aggregateAreaList(backendData.stationMapList || []);
+  const cardInfo = backendData.cardInfo || {};
+
+  return {
+    totalCount: cardInfo.totalCount ?? 0,
+    enableCount: cardInfo.enableCount ?? 0,
+    disableCount: cardInfo.disableCount ?? 0,
+    waitCount: cardInfo.unEnableCount ?? 0,   // 后端字段 unEnableCount
+    areaList: areaList.length ? areaList : [{ areaName: '暂无数据', count: 0 }],
+    stationPoints: stationPoints,
+  };
+};
+
+// ==================== 钻取模拟数据（降级用，字段与后端可能返回的一致） ====================
 const mockAreaDrillData = {
   丰泽区: [
-    {areaName: '东湖街道', count: 12},
-    {areaName: '丰泽街道', count: 15},
-    {areaName: '泉秀街道', count: 10},
-    {areaName: '北峰街道', count: 8},
+    { areaName: '东湖街道', count: 2 },
+    { areaName: '丰泽街道', count: 1 },
   ],
   鲤城区: [
-    {areaName: '鲤中街道', count: 9},
-    {areaName: '开元街道', count: 11},
-    {areaName: '海滨街道', count: 7},
-    {areaName: '临江街道', count: 5},
+    { areaName: '鲤中街道', count: 1 },
+    { areaName: '开元街道', count: 1 },
   ],
   洛江区: [
-    {areaName: '万安街道', count: 10},
-    {areaName: '双阳街道', count: 8},
-    {areaName: '河市镇', count: 6},
-    {areaName: '马甲镇', count: 4},
-  ],
-  泉港区: [
-    {areaName: '山腰街道', count: 5},
-    {areaName: '后龙镇', count: 4},
-    {areaName: '峰尾镇', count: 3},
-    {areaName: '前黄镇', count: 3},
+    { areaName: '万安街道', count: 1 },
   ],
 };
 
 const mockStatusDrillData = {
   '': [
-    {areaName: '丰泽区', count: 45},
-    {areaName: '鲤城区', count: 32},
-    {areaName: '洛江区', count: 28},
-    {areaName: '泉港区', count: 15},
+    { areaName: '丰泽区', count: 2 },
+    { areaName: '鲤城区', count: 2 },
+    { areaName: '洛江区', count: 1 },
   ],
   enabled: [
-    {areaName: '丰泽区', count: 38},
-    {areaName: '鲤城区', count: 27},
-    {areaName: '洛江区', count: 23},
-    {areaName: '泉港区', count: 10},
+    { areaName: '丰泽区', count: 2 },
+    { areaName: '鲤城区', count: 1 },
   ],
   disabled: [
-    {areaName: '丰泽区', count: 4},
-    {areaName: '鲤城区', count: 3},
-    {areaName: '洛江区', count: 3},
-    {areaName: '泉港区', count: 2},
+    { areaName: '鲤城区', count: 1 },
   ],
-  wait: [  // 新增 wait 状态的模拟数据
-    {areaName: '丰泽区', count: 3},
-    {areaName: '鲤城区', count: 2},
-    {areaName: '洛江区', count: 2},
-    {areaName: '泉港区', count: 3},
+  wait: [
+    { areaName: '洛江区', count: 1 },
   ],
 };
 
 // ==================== 状态管理 ====================
-const chartData = ref({...mockOverviewData});
+const chartData = ref({ ...transformBackendData(mockBackendData) });
 const loading = ref(false);
 const barLoading = ref(false);
 const drillStack = ref([]);
@@ -124,12 +129,11 @@ const barState = reactive({
   yName: '',
 });
 
-// ========== 卡片数据（新增第四个卡片） ==========
 const cardList = computed(() => [
-  {title: '总场站数', value: chartData.value.totalCount, color: '#409EFF', status: ''},
-  {title: '启用场站数', value: chartData.value.enableCount, color: '#67C23A', status: 'enabled'},
-  {title: '停用场站数', value: chartData.value.disableCount, color: '#F56C6C', status: 'disabled'},
-  {title: '未启用场站数', value: chartData.value.waitCount, color: '#E6A23C', status: 'wait'}, // 新增
+  { title: '总场站数', value: chartData.value.totalCount, color: '#409EFF', status: '' },
+  { title: '启用场站数', value: chartData.value.enableCount, color: '#67C23A', status: 'enabled' },
+  { title: '停用场站数', value: chartData.value.disableCount, color: '#F56C6C', status: 'disabled' },
+  { title: '未启用场站数', value: chartData.value.waitCount, color: '#E6A23C', status: 'wait' },
 ]);
 
 const geometriesArray = computed(() => chartData.value.stationPoints);
@@ -145,50 +149,35 @@ const updateBarChart = (title, xData, seriesData, yName = '') => {
 const resetToOverview = () => {
   currentMode.value = 'overview';
   drillStack.value = [];
-  const xData = chartData.value.areaList.map((item) => item.areaName);
-  const seriesData = [
-    {
-      name: '场站数量',
-      data: chartData.value.areaList.map((item) => item.count),
-    },
-  ];
+  const xData = chartData.value.areaList.map(item => item.areaName);
+  const seriesData = [{ name: '场站数量', data: chartData.value.areaList.map(item => item.count) }];
   updateBarChart('各区域充电场站数量统计', xData, seriesData);
 };
 
-// ==================== 钻取接口 ====================
+// ==================== 钻取接口（模拟降级） ====================
 const fetchAreaCount = async (parentArea) => {
   barLoading.value = true;
   try {
     const result = await getAreaCountChart(parentArea);
-    if (Array.isArray(result) && result.length > 0) {
-      const xData = result.map((item) => item.areaName);
-      const seriesData = [
-        {
-          name: '场站数量',
-          data: result.map((item) => item.count),
-        },
-      ];
+    if (Array.isArray(result) && result.length) {
+      const xData = result.map(item => item.areaName);
+      const seriesData = [{ name: '场站数量', data: result.map(item => item.count) }];
       updateBarChart(`${parentArea} - 子区域场站数量统计`, xData, seriesData);
       return true;
     } else {
-      throw new Error('返回数据为空或格式错误');
+      throw new Error('接口返回数据为空');
     }
   } catch (error) {
-    console.warn('接口调用失败，使用模拟数据：', error.message);
+    console.warn('接口失败，使用模拟数据', error);
     const mockData = mockAreaDrillData[parentArea];
-    if (mockData && mockData.length > 0) {
-      const xData = mockData.map((item) => item.areaName);
-      const seriesData = [
-        {
-          name: '场站数量',
-          data: mockData.map((item) => item.count),
-        },
-      ];
-      updateBarChart(`${parentArea} - 子区域场站数量统计（模拟数据）`, xData, seriesData);
-      ElMessage.info(`当前使用模拟数据，展示${parentArea}的子区域分布`);
+    if (mockData?.length) {
+      const xData = mockData.map(item => item.areaName);
+      const seriesData = [{ name: '场站数量', data: mockData.map(item => item.count) }];
+      updateBarChart(`${parentArea} - 子区域场站数量统计（模拟）`, xData, seriesData);
+      ElMessage.info(`使用模拟数据：${parentArea}的子区域分布`);
       return true;
     } else {
-      ElMessage.warning(`没有找到${parentArea}的子区域模拟数据`);
+      ElMessage.warning(`无${parentArea}的子区域数据`);
       return false;
     }
   } finally {
@@ -200,49 +189,39 @@ const fetchStatusCount = async (status) => {
   barLoading.value = true;
   try {
     const result = await getStatusCountChart(status);
-    if (Array.isArray(result) && result.length > 0) {
-      const xData = result.map((item) => item.areaName);
-      const seriesData = [
-        {
-          name: '场站数量',
-          data: result.map((item) => item.count),
-        },
-      ];
+    if (Array.isArray(result) && result.length) {
+      const xData = result.map(item => item.areaName);
+      const seriesData = [{ name: '场站数量', data: result.map(item => item.count) }];
       let title = '';
       if (status === 'enabled') title = '启用场站区域分布';
       else if (status === 'disabled') title = '停用场站区域分布';
-      else if (status === 'wait') title = '未启用场站区域分布'; // 新增标题
+      else if (status === 'wait') title = '未启用场站区域分布';
       else title = '各状态场站区域分布';
       updateBarChart(title, xData, seriesData);
       currentMode.value = 'statusDrill';
       drillStack.value = [];
       return;
     } else {
-      throw new Error('返回数据为空或格式错误');
+      throw new Error('接口返回数据为空');
     }
   } catch (error) {
-    console.warn('接口调用失败，使用模拟数据：', error.message);
+    console.warn('接口失败，使用模拟数据', error);
     const key = status === undefined ? '' : status;
     const mockData = mockStatusDrillData[key];
-    if (mockData && mockData.length > 0) {
-      const xData = mockData.map((item) => item.areaName);
-      const seriesData = [
-        {
-          name: '场站数量',
-          data: mockData.map((item) => item.count),
-        },
-      ];
+    if (mockData?.length) {
+      const xData = mockData.map(item => item.areaName);
+      const seriesData = [{ name: '场站数量', data: mockData.map(item => item.count) }];
       let title = '';
-      if (status === 'enabled') title = '启用场站区域分布（模拟数据）';
-      else if (status === 'disabled') title = '停用场站区域分布（模拟数据）';
-      else if (status === 'wait') title = '未启用场站区域分布（模拟数据）'; // 新增
-      else title = '各状态场站区域分布（模拟数据）';
+      if (status === 'enabled') title = '启用场站区域分布（模拟）';
+      else if (status === 'disabled') title = '停用场站区域分布（模拟）';
+      else if (status === 'wait') title = '未启用场站区域分布（模拟）';
+      else title = '各状态场站区域分布（模拟）';
       updateBarChart(title, xData, seriesData);
       currentMode.value = 'statusDrill';
       drillStack.value = [];
-      ElMessage.info('当前使用模拟数据，展示状态分布');
+      ElMessage.info('使用模拟数据展示状态分布');
     } else {
-      ElMessage.error('获取状态分布数据失败，且无模拟数据');
+      ElMessage.error('获取状态分布失败');
     }
   } finally {
     barLoading.value = false;
@@ -256,10 +235,9 @@ const handleCardClick = (cardInfo) => {
 
 const handleBarClick = async (areaName) => {
   if (currentMode.value === 'statusDrill') {
-    ElMessage.info('当前为状态分布视图，请点击"返回总览"后再进行区域钻取');
+    ElMessage.info('当前为状态分布视图，请点击返回总览后再进行区域钻取');
     return;
   }
-
   const success = await fetchAreaCount(areaName);
   if (success) {
     drillStack.value.push(areaName);
@@ -283,21 +261,22 @@ const goBack = () => {
   }
 };
 
-// ==================== 初始化 ====================
+// ==================== 初始化加载真实数据 ====================
 const fetchChartData = async () => {
   loading.value = true;
   try {
     const result = await getChargingStationChartData();
-    if (result && typeof result === 'object') {
-      chartData.value = result;
+    // 假设 result 直接就是后端返回的对象（已解包）
+    if (result && typeof result === 'object' && result.stationMapList) {
+      chartData.value = transformBackendData(result);
       resetToOverview();
-      console.log('使用接口数据');
+      console.log('使用真实接口数据');
     } else {
       throw new Error('接口返回数据格式异常');
     }
   } catch (error) {
-    console.warn('接口调用失败，使用模拟数据：', error.message);
-    chartData.value = {...mockOverviewData};
+    console.warn('接口调用失败，使用模拟数据：', error);
+    chartData.value = transformBackendData(mockBackendData);
     resetToOverview();
     ElMessage.info('当前使用模拟数据，展示总览信息');
   } finally {
@@ -312,7 +291,6 @@ onMounted(() => {
 
 <template>
   <div v-loading="loading" class="chart-box">
-    <!-- 左侧卡片区域 -->
     <div class="box-left" style="flex: 1 !important;">
       <Indicator
         class="left-card"
@@ -323,24 +301,15 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 柱状图容器 -->
     <div class="chart-wrapper" style="flex: 1.5 !important;">
       <div class="chart-toolbar" v-if="drillStack.length > 0 || currentMode === 'statusDrill'">
         <el-button type="primary" size="small" @click="goBack">
-          <el-icon>
-            <ArrowLeft/>
-          </el-icon>
-          返回上一级
+          <el-icon><ArrowLeft /></el-icon> 返回上一级
         </el-button>
         <el-button type="info" size="small" @click="resetToOverview">
-          <el-icon>
-            <RefreshRight/>
-          </el-icon>
-          重置总览
+          <el-icon><RefreshRight /></el-icon> 重置总览
         </el-button>
-        <div class="drill-path" v-if="drillStack.length > 0">
-          当前路径：{{ drillStack.join(' > ') }}
-        </div>
+        <div class="drill-path" v-if="drillStack.length > 0">当前路径：{{ drillStack.join(' > ') }}</div>
       </div>
       <Bar
         :title="barState.title"
@@ -352,7 +321,6 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 地图容器 -->
     <div class="chart-wrapper" style="flex: 2 !important;">
       <MapCommon
         ref="mapComponent"
@@ -382,16 +350,6 @@ onMounted(() => {
     .left-card {
       height: 150px !important;
     }
-  }
-
-  .chart-box-left {
-    display: flex;
-    flex: 0 0 max(180px, min(25vw, 220px));
-    flex-direction: column;
-    gap: 12px;
-    min-width: 180px;
-    max-width: 220px;
-    margin: 0;
   }
 
   .chart-wrapper {
