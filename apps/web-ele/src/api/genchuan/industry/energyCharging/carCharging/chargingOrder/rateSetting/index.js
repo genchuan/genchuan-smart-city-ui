@@ -34,6 +34,10 @@ export function disableRateSetting(data) {
 export function copyRateSetting(data) {
   return requestClient.post(`/vehiclecharging/rate-setting/copy`, data);
 }
+/** 费率设置分布图表（柱状图 + 卡片） */
+export function getRateSettingChart(data) {
+  return requestClient.get(`/vehiclecharging/rate-setting/chart`, data);
+}
 
 /** 获得场站设备实时运行监测图 */
 export function getStationDeviceRealTimeMonitor(data) {
