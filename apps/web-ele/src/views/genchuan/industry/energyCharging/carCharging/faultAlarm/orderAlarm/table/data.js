@@ -70,9 +70,10 @@ export function useFormSchema() {
     {
       fieldName: 'handleMeasure',
       label: '处理措施',
-      component: 'Input',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入处理措施',
+        placeholder: '请选择处理措施',
+        options: getDictOptions(DICT_TYPE.ORDER_ALARM_HANDLE_MEASURE, 'string'),
       },
     },
     {
@@ -86,7 +87,7 @@ export function useFormSchema() {
   ];
 }
 
-/** 订单告警搜索表单配置 */
+/** 订单告警搜索表单配置 - 覆盖所有表格展示字段 */
 export function useSearchFormSchema() {
   return [
     {
@@ -95,30 +96,55 @@ export function useSearchFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入告警编号',
+        clearable: true,
       },
     },
     {
       fieldName: 'orderCode',
       label: '订单编号',
-      component: 'Input',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入订单编号',
+        placeholder: '请选择订单编号',
+        options: [],
+        clearable: true,
+        filterable: true,
+        remote: true,
+      },
+    },
+    {
+      fieldName: 'userName',
+      label: '用户名称',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择用户名称',
+        options: [],
+        clearable: true,
+        filterable: true,
+        remote: true,
       },
     },
     {
       fieldName: 'plateNo',
       label: '车牌号',
-      component: 'Input',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入车牌号',
+        placeholder: '请选择车牌号',
+        options: [],
+        clearable: true,
+        filterable: true,
+        remote: true,
       },
     },
     {
-      fieldName: 'pileCode',
-      label: '充电桩编号',
-      component: 'Input',
+      fieldName: 'pileName',
+      label: '关联充电桩',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入充电桩编号',
+        placeholder: '请选择关联充电桩',
+        options: [],
+        clearable: true,
+        filterable: true,
+        remote: true,
       },
     },
     {
@@ -128,6 +154,7 @@ export function useSearchFormSchema() {
       componentProps: {
         placeholder: '请选择异常类型',
         options: getDictOptions(DICT_TYPE.ORDER_ALARM_ABNORMAL_TYPE, 'string'),
+        clearable: true,
       },
     },
     {
@@ -137,6 +164,45 @@ export function useSearchFormSchema() {
       componentProps: {
         placeholder: '请选择告警状态',
         options: getDictOptions(DICT_TYPE.ORDER_ALARM_ALARM_STATUS, 'string'),
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'verifyResult',
+      label: '核实结果',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择核实结果',
+        options: getDictOptions(DICT_TYPE.ORDER_ALARM_VERIFY_RESULT, 'string'),
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'handleMeasure',
+      label: '处理措施',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择处理措施',
+        options: getDictOptions(DICT_TYPE.ORDER_ALARM_HANDLE_MEASURE, 'string'),
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'remark',
+      label: '备注',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入备注',
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'creatorName',
+      label: '操作人',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入操作人',
+        clearable: true,
       },
     },
     {
@@ -148,6 +214,19 @@ export function useSearchFormSchema() {
         format: 'YYYY-MM-DD HH:mm:ss',
         valueFormat: 'timestamp',
         type: 'datetimerange',
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'handleTime',
+      label: '处理时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择处理时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'timestamp',
+        type: 'datetimerange',
+        clearable: true,
       },
     },
   ];
@@ -171,6 +250,12 @@ export function useGridColumns() {
       sortable: true,
       slots: { default: 'orderCode' },
     },
+    // {
+    //   field: 'userName',
+    //   title: '用户名称',
+    //   minWidth: 120,
+    //   sortable: true,
+    // },
     {
       field: 'userInfo',
       title: '用户ID/车牌号',
@@ -218,6 +303,7 @@ export function useGridColumns() {
       title: '处理措施',
       minWidth: 200,
       sortable: true,
+      slots: { default: 'handleMeasure' },
     },
     {
       field: 'remark',
@@ -233,11 +319,11 @@ export function useGridColumns() {
       slots: { default: 'handleTime' },
     },
     {
-      field: 'creatorName',
+      field: 'creator',
       title: '操作人',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'creatorName' },
+      slots: { default: 'creator' },
     },
     {
       title: '操作',
@@ -263,6 +349,12 @@ export const getAlarmStatusTagType = (alarmStatus) => {
 /** 获取核实结果Tag类型 - 使用封装的字典颜色工具 */
 export const getVerifyResultTagType = (verifyResult) => {
   const dict = getDictObj(DICT_TYPE.ORDER_ALARM_VERIFY_RESULT, String(verifyResult));
+  return getDictTagTypeFromDict(dict, 'primary');
+};
+
+/** 获取处理措施Tag类型 - 使用封装的字典颜色工具 */
+export const getHandleMeasureTagType = (handleMeasure) => {
+  const dict = getDictObj(DICT_TYPE.ORDER_ALARM_HANDLE_MEASURE, String(handleMeasure));
   return getDictTagTypeFromDict(dict, 'primary');
 };
 
@@ -326,8 +418,17 @@ export const detailFields = [
     },
     tagType: (value) => getVerifyResultTagType(value),
   },
-  { key: 'handleMeasure', label: '处理措施' },
+  {
+    key: 'handleMeasure',
+    label: '处理措施',
+    type: 'tag',
+    formatter: (value) => {
+      const dict = getDictObj(DICT_TYPE.ORDER_ALARM_HANDLE_MEASURE, String(value));
+      return dict ? dict.label : value;
+    },
+    tagType: (value) => getHandleMeasureTagType(value),
+  },
   { key: 'remark', label: '备注' },
   { key: 'handleTime', label: '处理时间' },
-  { key: 'creatorName', label: '操作人' },
+  { key: 'creator', label: '操作人' },
 ];

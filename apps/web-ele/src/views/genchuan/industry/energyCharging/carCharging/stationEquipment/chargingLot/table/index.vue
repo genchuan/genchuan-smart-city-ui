@@ -5,6 +5,7 @@ import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
+
 import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
@@ -249,8 +250,7 @@ const filterStationId = ref('');
 const filterLotType = ref('');
 const filterLotStatus = ref('');
 const filterCreator = ref('');
-const filterCreateTimeStart = ref('');
-const filterCreateTimeEnd = ref('');
+const filterCreateTime = ref(''); // 创建时间筛选（显示用，格式：yyyy-MM-dd HH:mm:ss）
 
 const dataObj = reactive({
   totalShow: false,
@@ -274,6 +274,12 @@ const getTableData = async (pageObj) => {
   dataObj.pageSize = page.pageSize;
 
   try {
+    // 构建时间范围数组参数
+    // 取日期部分（前10个字符：yyyy-MM-dd），避免重复追加时间
+    const createTimeParam = filterCreateTime.value
+      ? [filterCreateTime.value.substring(0, 10) + ' 00:00:00', filterCreateTime.value.substring(0, 10) + ' 23:59:59']
+      : undefined;
+
     const queryParams = {
       pageNo: page.currentPage,
       pageSize: page.pageSize,
@@ -281,8 +287,8 @@ const getTableData = async (pageObj) => {
       lotType: filterLotType.value,
       lotStatus: filterLotStatus.value,
       creator: filterCreator.value,
-      startCreateTime: filterCreateTimeStart.value,
-      endCreateTime: filterCreateTimeEnd.value,
+      // 创建时间使用createTime参数（数组格式：[开始时间, 结束时间]）
+      createTime: createTimeParam,
       ...dataObj.searchParams,
     };
 
@@ -411,11 +417,11 @@ const handleCreatorClick = (creator) => {
   gridApi.query();
 };
 
-// 处理创建时间点击
-const handleCreateTimeClick = (createTime) => {
-  // 这里简化处理，实际可能需要更复杂的时间筛选逻辑
-  filterCreateTimeStart.value = createTime;
-  filterCreateTimeEnd.value = createTime;
+// 处理创建时间点击 - 直接使用时间字符串（格式：yyyy-MM-dd HH:mm:ss）
+const handleCreateTimeClick = (createTimeStr) => {
+  if (!createTimeStr) return;
+  // 保存显示用的时间字符串，同时作为参数使用
+  filterCreateTime.value = createTimeStr;
   gridApi.query();
 };
 
@@ -441,8 +447,7 @@ const handleCancelCreatorFilter = () => {
 };
 
 const handleCancelCreateTimeFilter = () => {
-  filterCreateTimeStart.value = '';
-  filterCreateTimeEnd.value = '';
+  filterCreateTime.value = '';
   gridApi.query();
 };
 
@@ -462,7 +467,7 @@ const handleStatsFilter = (type, value) => {
       filterLotStatus.value = dictItem ? dictItem.value : value;
     }
   } else if (type === 'station') {
-    console.log("======")
+    console.log('======');
     console.log(value);
     filterStationId.value = value;
   }
@@ -547,15 +552,15 @@ defineExpose({
           >
             操作人：{{ filterCreator }}
           </ElTag>
-          <!-- 创建时间筛选标签 -->
+          <!-- 创建时间筛选标签 - 只显示具体时间 -->
           <ElTag
-            v-if="filterCreateTimeStart"
+            v-if="filterCreateTime"
             type="primary"
             closable
             @close="handleCancelCreateTimeFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
-            创建时间：{{ filterCreateTimeStart }} 至 {{ filterCreateTimeEnd }}
+            创建时间：{{ filterCreateTime }}
           </ElTag>
         </div>
       </template>

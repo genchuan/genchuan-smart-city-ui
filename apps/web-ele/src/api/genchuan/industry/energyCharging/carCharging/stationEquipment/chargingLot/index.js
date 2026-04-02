@@ -54,3 +54,4 @@ export function getChargingLotStatusRatio(params) {
     params,
   });
 }
+// ==================== 联表关联详情接口 ====================
