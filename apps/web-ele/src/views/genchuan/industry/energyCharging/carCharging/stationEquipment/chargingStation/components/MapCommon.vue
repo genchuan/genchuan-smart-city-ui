@@ -74,9 +74,9 @@ const createMarkers = (map) => {
       const { lon, lat, status, id, stationName, address } = item;
       if (typeof lon === 'number' && typeof lat === 'number') {
         let styleId = 'default';
-        if (status === 'enabled') styleId = 'enabled';
-        else if (status === 'disabled') styleId = 'disabled';
-        else if (status === 'wait') styleId = 'wait';
+        if (status === 'enabled' || status === '已启用') styleId = 'enabled';
+        else if (status === 'disabled' || status === '已停用') styleId = 'disabled';
+        else if (status === 'wait' || status === '未启用') styleId = 'wait';
 
         geometriesData.push({
           id: `marker-${id}`,
