@@ -22,7 +22,6 @@ import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 
 import MarkOccupyDialog from '../components/MarkOccupyDialog.vue';
-
 import {
   detailFields,
   formatTimestamp,
@@ -126,7 +125,8 @@ function handleRefresh() {
 /** 导出表格 */
 async function handleExport() {
   try {
-    await exportChargingLot();
+    const data = await exportChargingLot();
+    downloadFileFromBlobPart({ fileName: '充电车位表.xls', source: data });
     ElMessage.success('导出成功');
   } catch (error) {
     ElMessage.error('导出失败');
@@ -250,8 +250,7 @@ const filterStationId = ref('');
 const filterLotType = ref('');
 const filterLotStatus = ref('');
 const filterCreator = ref('');
-const filterCreateTimeStart = ref('');
-const filterCreateTimeEnd = ref('');
+const filterCreateTime = ref(''); // 创建时间筛选（显示用，格式：yyyy-MM-dd HH:mm:ss）
 
 const dataObj = reactive({
   totalShow: false,
@@ -275,6 +274,12 @@ const getTableData = async (pageObj) => {
   dataObj.pageSize = page.pageSize;
 
   try {
+    // 构建时间范围数组参数
+    // 取日期部分（前10个字符：yyyy-MM-dd），避免重复追加时间
+    const createTimeParam = filterCreateTime.value
+      ? [filterCreateTime.value.substring(0, 10) + ' 00:00:00', filterCreateTime.value.substring(0, 10) + ' 23:59:59']
+      : undefined;
+
     const queryParams = {
       pageNo: page.currentPage,
       pageSize: page.pageSize,
@@ -282,8 +287,8 @@ const getTableData = async (pageObj) => {
       lotType: filterLotType.value,
       lotStatus: filterLotStatus.value,
       creator: filterCreator.value,
-      startCreateTime: filterCreateTimeStart.value,
-      endCreateTime: filterCreateTimeEnd.value,
+      // 创建时间使用createTime参数（数组格式：[开始时间, 结束时间]）
+      createTime: createTimeParam,
       ...dataObj.searchParams,
     };
 
@@ -375,8 +380,8 @@ const handleOpenDetail = (row) => {
   }
 };
 const openPileDetail = () => {
-  ElMessage.info('打开对应充电桩详情')
-}
+  ElMessage.info('打开对应充电桩详情');
+};
 
 const handleSerachShow = () => {
   drawerApi.open();
@@ -412,11 +417,11 @@ const handleCreatorClick = (creator) => {
   gridApi.query();
 };
 
-// 处理创建时间点击
-const handleCreateTimeClick = (createTime) => {
-  // 这里简化处理，实际可能需要更复杂的时间筛选逻辑
-  filterCreateTimeStart.value = createTime;
-  filterCreateTimeEnd.value = createTime;
+// 处理创建时间点击 - 直接使用时间字符串（格式：yyyy-MM-dd HH:mm:ss）
+const handleCreateTimeClick = (createTimeStr) => {
+  if (!createTimeStr) return;
+  // 保存显示用的时间字符串，同时作为参数使用
+  filterCreateTime.value = createTimeStr;
   gridApi.query();
 };
 
@@ -442,8 +447,7 @@ const handleCancelCreatorFilter = () => {
 };
 
 const handleCancelCreateTimeFilter = () => {
-  filterCreateTimeStart.value = '';
-  filterCreateTimeEnd.value = '';
+  filterCreateTime.value = '';
   gridApi.query();
 };
 
@@ -455,11 +459,16 @@ const handleStatsFilter = (type, value) => {
       filterLotStatus.value = '';
     } else {
       // 根据状态名称获取字典值
-      const dictOptions = getDictOptions(DICT_TYPE.CHARGE_LOT_LOT_STATUS, 'string');
+      const dictOptions = getDictOptions(
+        DICT_TYPE.CHARGE_LOT_LOT_STATUS,
+        'string',
+      );
       const dictItem = dictOptions.find((item) => item.label === value);
       filterLotStatus.value = dictItem ? dictItem.value : value;
     }
   } else if (type === 'station') {
+    console.log('======');
+    console.log(value);
     filterStationId.value = value;
   }
   gridApi.query();
@@ -484,10 +493,7 @@ defineExpose({
       :fields="detailFields"
     />
     <!--   占用标记弹窗-->
-    <MarkOccupyDialog
-      ref="markOccupyDialogRef"
-      @success="handleRefresh"
-    />
+    <MarkOccupyDialog ref="markOccupyDialogRef" @success="handleRefresh" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -516,7 +522,10 @@ defineExpose({
             @close="handleCancelLotTypeFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
-            车位类型：{{ getDictObj(DICT_TYPE.CHARGE_LOT_LOT_TYPE, String(filterLotType))?.label || filterLotType }}
+            车位类型：{{
+              getDictObj(DICT_TYPE.CHARGE_LOT_LOT_TYPE, String(filterLotType))
+                ?.label || filterLotType
+            }}
           </ElTag>
           <!-- 车位状态筛选标签 -->
           <ElTag
@@ -526,7 +535,12 @@ defineExpose({
             @close="handleCancelLotStatusFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
-            车位状态：{{ getDictObj(DICT_TYPE.CHARGE_LOT_LOT_STATUS, String(filterLotStatus))?.label || filterLotStatus }}
+            车位状态：{{
+              getDictObj(
+                DICT_TYPE.CHARGE_LOT_LOT_STATUS,
+                String(filterLotStatus),
+              )?.label || filterLotStatus
+            }}
           </ElTag>
           <!-- 操作人筛选标签 -->
           <ElTag
@@ -538,15 +552,15 @@ defineExpose({
           >
             操作人：{{ filterCreator }}
           </ElTag>
-          <!-- 创建时间筛选标签 -->
+          <!-- 创建时间筛选标签 - 只显示具体时间 -->
           <ElTag
-            v-if="filterCreateTimeStart"
+            v-if="filterCreateTime"
             type="primary"
             closable
             @close="handleCancelCreateTimeFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
-            创建时间：{{ filterCreateTimeStart }} 至 {{ filterCreateTimeEnd }}
+            创建时间：{{ filterCreateTime }}
           </ElTag>
         </div>
       </template>
@@ -611,7 +625,10 @@ defineExpose({
           :type="getLotTypeTagType(row.lotType)"
           style="cursor: pointer"
         >
-          {{ getDictObj(DICT_TYPE.CHARGE_LOT_LOT_TYPE, String(row.lotType))?.label || row.lotType }}
+          {{
+            getDictObj(DICT_TYPE.CHARGE_LOT_LOT_TYPE, String(row.lotType))
+              ?.label || row.lotType
+          }}
         </ElTag>
       </template>
       <!-- 关联充电桩插槽 - 点击提示预留后续拓展 -->
@@ -632,7 +649,10 @@ defineExpose({
           :type="getLotStatusTagType(row.lotStatus)"
           style="cursor: pointer"
         >
-          {{ getDictObj(DICT_TYPE.CHARGE_LOT_LOT_STATUS, String(row.lotStatus))?.label || row.lotStatus }}
+          {{
+            getDictObj(DICT_TYPE.CHARGE_LOT_LOT_STATUS, String(row.lotStatus))
+              ?.label || row.lotStatus
+          }}
         </ElTag>
       </template>
       <!-- 创建时间插槽 - 点击筛选 -->

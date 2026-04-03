@@ -350,13 +350,54 @@ const arrowChange = () => {
         </div>
       </template>
 
-      <template #outdoorAdId="{ row }">
+      <template #name="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.outdoorAdId }}
+          {{ row.name }}
+        </el-text>
+      </template>
+
+      <template #areaCode="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.areaCode }}
+        </el-text>
+      </template>
+
+
+      <template #adStatus="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.adStatus }}
+        </el-text>
+      </template>
+
+      <template #damageStatus="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.damageStatus }}
+        </el-text>
+      </template>
+
+      <template #location="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.location }}
         </el-text>
       </template>
 

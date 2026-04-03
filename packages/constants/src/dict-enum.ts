@@ -197,9 +197,18 @@ const SHUNCHANG_DICT = {
 
 /** ========== ENERGYCHARGE - 能源充电模块 ========== */
 const ENERGYCHARGE_DICT = {
+  // 汽车充电
   // 充电车位
-  CHARGE_LOT_LOT_STATUS: 'charging_lot_lot_status',
-  CHARGE_LOT_LOT_TYPE: 'charging_lot_lot_type',
+  CHARGE_LOT_LOT_STATUS: 'charging_lot_lot_status', // 车位状态
+  CHARGE_LOT_LOT_TYPE: 'charging_lot_lot_type', // 车位类型
+  // 订单告警
+  ORDER_ALARM_ABNORMAL_TYPE: 'order_alarm_abnormal_type', // 订单异常类型
+  ORDER_ALARM_ALARM_STATUS: 'order_alarm_alarm_status', // 订单告警状态
+  ORDER_ALARM_VERIFY_RESULT: 'order_alarm_verify_result', // 订单告警核实结果
+  ORDER_ALARM_HANDLE_MEASURE: 'order_alarm_handle_measure', // 订单告警处理措施
+  // 订单退款
+  ORDER_REFUND_CHANNEL: 'order_refund_refund_channel', // 订单退款渠道
+  ORDER_REFUND_STATUS: 'order_refund_refund_status', // 订单退款状态
 } as const;
 
 /** 字典类型枚举 - 统一导出 */

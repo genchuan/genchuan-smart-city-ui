@@ -1,0 +1,102 @@
+<script setup>
+import { ref } from 'vue';
+
+import { useVbenModal } from '@vben/common-ui';
+import { DICT_TYPE } from '@vben/constants';
+import { getDictOptions } from '@vben/hooks';
+
+import { ElMessage } from 'element-plus';
+
+import { useVbenForm } from '#/adapter/form';
+import { handleOrderAlarm } from '#/api/genchuan/industry/energyCharging/carCharging/faultAlarm/orderAlarm';
+
+const emit = defineEmits(['success']);
+
+const selectedIds = ref([]);
+
+const [Form, formApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  layout: 'horizontal',
+  schema: [
+    {
+      fieldName: 'handleMeasure',
+      label: '处理措施',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择处理措施',
+        options: getDictOptions(DICT_TYPE.ORDER_ALARM_HANDLE_MEASURE, 'string'),
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'remark',
+      label: '备注说明',
+      component: 'Textarea',
+      componentProps: {
+        placeholder: '请输入备注说明',
+        rows: 4,
+      },
+    },
+  ],
+  showDefaultActions: false,
+});
+
+const [Modal, modalApi] = useVbenModal({
+  async onConfirm() {
+    const { valid } = await formApi.validate();
+    if (!valid) {
+      return;
+    }
+    const values = await formApi.getValues();
+    modalApi.lock();
+    try {
+      await handleOrderAlarm({
+        ids: selectedIds.value,
+        handleMeasure: values.handleMeasure,
+        remark: values.remark,
+      });
+      ElMessage.success('处理成功');
+      modalApi.close();
+      emit('success');
+    } catch (error) {
+      console.error(error);
+      ElMessage.error('处理失败');
+    } finally {
+      modalApi.unlock();
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (!isOpen) {
+      selectedIds.value = [];
+      formApi.resetForm();
+      return;
+    }
+    const data = modalApi.getData();
+    if (data?.ids) {
+      selectedIds.value = data.ids;
+    }
+  },
+});
+
+defineExpose({
+  open: (ids) => {
+    modalApi.setData({ ids });
+    modalApi.open();
+  },
+});
+</script>
+
+<template>
+  <Modal title="处理告警">
+    <div class="mb-4 text-gray-600">
+      已选择 <span class="font-bold text-primary">{{ selectedIds.length }}</span> 条待处理告警
+    </div>
+    <Form />
+  </Modal>
+</template>

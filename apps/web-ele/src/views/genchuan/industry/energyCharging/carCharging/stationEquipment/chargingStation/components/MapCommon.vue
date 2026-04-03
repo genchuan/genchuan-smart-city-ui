@@ -5,7 +5,7 @@ import markerEnabled from '#/views/genchuan/industry/energyCharging/images/marke
 import markerDisabled from '#/views/genchuan/industry/energyCharging/images/marker-disabled.png'; // 已停用图标
 import markerWait from '#/views/genchuan/industry/energyCharging/images/marker-wait.png';         // 未启用图标
 
-// Props 定义（只保留两个必需的）
+// Props 定义
 const props = defineProps({
   idName: {
     type: String,
@@ -17,14 +17,55 @@ const props = defineProps({
   },
 });
 
-// 响应式变量
+const emit = defineEmits(['markerClick']);
+
 let mapInstance = null;
 let infoWindow = null;
 let markerLayer = null;
 let mapInitialized = false;
 
+// 辅助函数：根据 status 或 stationStatus 获取显示用的状态名称
+const getDisplayStatusName = (properties) => {
+  if (properties.statusName) return properties.statusName;
+  // 优先使用 properties.status（英文），其次使用 stationStatus（中文）
+  const rawStatus = properties.status || properties.stationStatus;
+  if (rawStatus === 'enabled' || rawStatus === '已启用') return '已启用';
+  if (rawStatus === 'disabled' || rawStatus === '已停用') return '已停用';
+  if (rawStatus === 'wait' || rawStatus === '未启用') return '未启用';
+  return '未知';
+};
+
+// 信息窗内容（兼容无 statusName 的情况）
+const getTooltipContent = (properties) => {
+  const { stationName, address, id } = properties;
+  const statusName = getDisplayStatusName(properties);
+  const statusColor =
+    statusName === '已启用'
+      ? 'green'
+      : statusName === '已停用'
+        ? 'red'
+        : 'orange';
+
+  return `
+    <div style="padding: 12px; font-size: 14px; color: #333; background: white; border: 1px solid #ddd; border-radius: 6px; min-width: 240px;">
+      <div style="margin-bottom: 8px; font-weight: bold; color: #409EFF; border-bottom: 1px solid #eee; padding-bottom: 4px;">充电场站信息</div>
+      <div style="margin: 6px 0; display: flex;">
+        <span style="font-weight: bold; width: 80px; text-align: right; margin-right: 8px;">场站名称：</span>
+        <span style="flex: 1;">${stationName || '未知'}</span>
+      </div>
+      <div style="margin: 6px 0; display: flex;">
+        <span style="font-weight: bold; width: 80px; text-align: right; margin-right: 8px;">场站ID：</span>
+        <span style="flex: 1;">${id || '未知'}</span>
+      </div>
+      <div style="margin: 6px 0; display: flex;">
+        <span style="font-weight: bold; width: 80px; text-align: right; margin-right: 8px;">运行状态：</span>
+        <span style="flex: 1; color: ${statusColor};">${statusName}</span>
+      </div>
+    </div>
+  `;
+};
+
 // 标记点击事件
-const emit = defineEmits(['markerClick']);
 const handleMarkerClick = (e) => {
   const { properties } = e.geometry;
   if (properties && infoWindow) {
@@ -56,87 +97,7 @@ const initMap = () => {
   document.head.appendChild(script);
 };
 
-// 创建地图标记
-const createMarkers = (map) => {
-  if (markerLayer) {
-    try {
-      markerLayer.off('click', handleMarkerClick);
-      markerLayer.destroy();
-    } catch (error) {
-      console.warn('销毁标记层失败：', error);
-    }
-    markerLayer = null;
-  }
-
-  const geometriesData = [];
-  if (Array.isArray(props.geometriesArray)) {
-    props.geometriesArray.forEach((item) => {
-      const { lon, lat, status, id, stationName, address } = item;
-      if (typeof lon === 'number' && typeof lat === 'number') {
-        let styleId = 'default';
-        if (status === 'enabled') styleId = 'enabled';
-        else if (status === 'disabled') styleId = 'disabled';
-        else if (status === 'wait') styleId = 'wait';
-
-        geometriesData.push({
-          id: `marker-${id}`,
-          styleId: styleId,
-          position: new TMap.LatLng(lat, lon),
-          properties: { id, stationName, address, status, statusName: item.statusName },
-        });
-      } else {
-        console.warn('坐标无效', item);
-      }
-    });
-  }
-
-  if (geometriesData.length > 0) {
-    markerLayer = new TMap.MultiMarker({
-      map: map,
-      styles: getMarkerStyles(),
-      geometries: geometriesData,
-    });
-    markerLayer.on('click', handleMarkerClick);
-    console.log('地图标记生成成功，数量：', geometriesData.length);
-  } else {
-    console.warn('无有效标记数据');
-  }
-};
-
-// 信息窗内容（充电场站专用）
-const getTooltipContent = (properties) => {
-  const { stationName, address, statusName, id } = properties;
-  const statusColor =
-    statusName === '已启用'
-      ? 'green'
-      : statusName === '已停用'
-        ? 'red'
-        : 'orange';
-
-  return `
-    <div style="padding: 12px; font-size: 14px; color: #333; background: white; border: 1px solid #ddd; border-radius: 6px; min-width: 240px;">
-      <div style="margin-bottom: 8px; font-weight: bold; color: #409EFF; border-bottom: 1px solid #eee; padding-bottom: 4px;">充电场站信息</div>
-      <div style="margin: 6px 0; display: flex;">
-        <span style="font-weight: bold; width: 80px; text-align: right; margin-right: 8px;">场站名称：</span>
-        <span style="flex: 1;">${stationName || '未知'}</span>
-      </div>
-      <div style="margin: 6px 0; display: flex;">
-        <span style="font-weight: bold; width: 80px; text-align: right; margin-right: 8px;">场站ID：</span>
-        <span style="flex: 1;">${id || '未知'}</span>
-      </div>
-      <div style="margin: 6px 0; display: flex;">
-        <span style="font-weight: bold; width: 80px; text-align: right; margin-right: 8px;">场站地址：</span>
-        <span style="flex: 1;">${address || '暂无地址'}</span>
-      </div>
-      <div style="margin: 6px 0; display: flex;">
-        <span style="font-weight: bold; width: 80px; text-align: right; margin-right: 8px;">运行状态：</span>
-        <span style="flex: 1; color: ${statusColor};">${statusName || '未知'}</span>
-      </div>
-    </div>
-  `;
-};
-
-// 标记样式定义（充电场站专用）
+// 标记样式定义
 const getMarkerStyles = () => {
   return {
     enabled: new TMap.MarkerStyle({
@@ -166,6 +127,62 @@ const getMarkerStyles = () => {
   };
 };
 
+// 创建地图标记
+const createMarkers = (map) => {
+  if (markerLayer) {
+    try {
+      markerLayer.off('click', handleMarkerClick);
+      markerLayer.destroy();
+    } catch (error) {
+      console.warn('销毁标记层失败：', error);
+    }
+    markerLayer = null;
+  }
+
+  const geometriesData = [];
+  if (Array.isArray(props.geometriesArray)) {
+    props.geometriesArray.forEach((item) => {
+      const { lon, lat, status, id, stationName, address, stationStatus } = item;
+      if (typeof lon === 'number' && typeof lat === 'number') {
+        // 确定样式ID：优先使用 status，其次使用 stationStatus 映射
+        let styleId = 'default';
+        const rawStatus = status || stationStatus;
+        if (rawStatus === 'enabled' || rawStatus === '已启用') styleId = 'enabled';
+        else if (rawStatus === 'disabled' || rawStatus === '已停用') styleId = 'disabled';
+        else if (rawStatus === 'wait' || rawStatus === '未启用') styleId = 'wait';
+
+        geometriesData.push({
+          id: `marker-${id}`,
+          styleId: styleId,
+          position: new TMap.LatLng(lat, lon),
+          properties: {
+            id,
+            stationName,
+            address,
+            status,
+            stationStatus,  // 保留原始字段
+            statusName: item.statusName  // 可能有也可能没有
+          },
+        });
+      } else {
+        console.warn('坐标无效', item);
+      }
+    });
+  }
+
+  if (geometriesData.length > 0) {
+    markerLayer = new TMap.MultiMarker({
+      map: map,
+      styles: getMarkerStyles(),
+      geometries: geometriesData,
+    });
+    markerLayer.on('click', handleMarkerClick);
+    console.log('地图标记生成成功，数量：', geometriesData.length);
+  } else {
+    console.warn('无有效标记数据');
+  }
+};
+
 // 地图初始化回调
 const mapCallback = () => {
   const mapContainer = document.getElementById(props.idName);
@@ -174,7 +191,6 @@ const mapCallback = () => {
     return;
   }
 
-  // 使用泉州中心坐标（与参考代码一致）
   const map = new TMap.Map(mapContainer, {
     center: new TMap.LatLng(26.0753, 119.3062),
     zoom: 12,
@@ -247,14 +263,13 @@ onUnmounted(() => {
   mapInitialized = false;
 });
 
-// 暴露方法给父组件
 defineExpose({ refreshMap });
 </script>
 
 <template>
   <div class="map-container">
     <div :id="idName" class="map-common-css"></div>
-    <!-- 图例（充电场站专用） -->
+    <!-- 图例 -->
     <div class="legend">
       <div class="legend-items">
         <div class="legend-item">
@@ -291,8 +306,7 @@ defineExpose({ refreshMap });
 .legend {
   position: absolute;
   bottom: 10px;
-  right: 10px;      /* 改为右对齐 */
-  left: auto;       /* 清除左定位 */
+  right: 10px;
   background: rgba(0, 0, 0, 0.6);
   padding: 6px 12px;
   border-radius: 4px;

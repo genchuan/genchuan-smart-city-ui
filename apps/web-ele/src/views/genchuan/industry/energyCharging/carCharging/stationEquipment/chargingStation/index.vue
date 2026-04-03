@@ -1,12 +1,12 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {computed, reactive, ref, watch} from 'vue';
+import {confirm, useVbenDrawer} from '@vben/common-ui';
+import {isEmpty} from '@vben/utils';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { $t } from '#/locales';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {$t} from '#/locales';
 import detailDrawer from './components/detail.vue';
 
 // 导入真实接口
@@ -18,6 +18,8 @@ import {
   enableChargingStation,
   exportChargingStation,
   getChargingStationDetail,
+  batchUpdateChargingStation,
+  batchDisableChargingStation,
 } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingStation/data.js';
 
 // 导入表单配置
@@ -27,9 +29,10 @@ import {
   useSearchSchema,
   useDisableSchema,
   getColumnsByStatus,
+  useBatchUpdateSchema,
 } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingStation/form.js';
 
-const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
+const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
 // ---------- 时间格式化工具 ----------
@@ -44,6 +47,38 @@ const formatTimestamp = (timestamp) => {
   const minutes = String(date.getMinutes()).padStart(2, '0');
   const seconds = String(date.getSeconds()).padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
+
+// ---------- 合作模式标签类型 ----------
+const getCoopModeTagType = (coopMode) => {
+  const map = {
+    self: 'primary',      // 自营 -> 蓝色
+    joint: 'success',     // 联营 -> 绿色
+    franchise: 'warning', // 加盟 -> 橙色
+  };
+  return map[coopMode] || 'info';
+};
+
+// ---------- 场站状态标签类型 ----------
+const getStatusTagType = (stationStatus) => {
+  const status = stationStatus?.toLowerCase?.() || '';
+  if (status === 'enabled' || status === '已启用') return 'success';
+  if (status === 'disabled' || status === '已停用') return 'danger';
+  if (status === 'wait' || status === '未启用') return 'warning';
+  return 'info';
+};
+
+// ---------- 场站状态显示文本 ----------
+const getStatusLabel = (stationStatus) => {
+  const map = {
+    enabled: '已启用',
+    disabled: '已停用',
+    wait: '未启用',
+    '已启用': '已启用',
+    '已停用': '已停用',
+    '未启用': '未启用',
+  };
+  return map[stationStatus] || stationStatus;
 };
 
 // ---------- 状态管理 ----------
@@ -69,7 +104,7 @@ const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
 
 const [SearchForm, searchFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async () => {
     const rawValues = await searchFormApi.getValues();
     dataObj.searchParams = Object.fromEntries(
@@ -81,7 +116,7 @@ const [SearchForm, searchFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useSearchSchema(),
   showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
+  submitButtonOptions: {content: '查询'},
 });
 
 // ---------- 新增/编辑抽屉 ----------
@@ -89,7 +124,7 @@ const formData = ref();
 const getTitle = computed(() => (formData.value?.id ? textObj.editText : textObj.addText));
 
 const [EditForm, editFormApi] = useVbenForm({
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 80 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 80},
   layout: 'horizontal',
   schema: useFormSchema(),
   showDefaultActions: false,
@@ -102,15 +137,14 @@ const [EditDrawer, editDrawerApi] = useVbenDrawer({
   async onConfirm() {
     const formValues = await editFormApi.getValues();
     const isAdd = !formData.value?.id;
-    // 删除 createTime 字段，由后端自动生成
     delete formValues.createTime;
-    const loading = ElLoading.service({ text: isAdd ? '新增中...' : '保存中...' });
+    const loading = ElLoading.service({text: isAdd ? '新增中...' : '保存中...'});
     try {
       if (isAdd) {
         await createChargingStation(formValues);
         ElMessage.success('新增成功');
       } else {
-        await updateChargingStation({ ...formValues, id: formData.value.id });
+        await updateChargingStation({...formValues, id: formData.value.id});
         ElMessage.success('编辑成功');
       }
       handleRefresh();
@@ -127,25 +161,83 @@ const [EditDrawer, editDrawerApi] = useVbenDrawer({
     if (isOpen) {
       formData.value = editDrawerApi.getData();
       if (formData.value?.id) {
-        // 编辑模式：直接使用传入的 row 数据回填，避免额外请求
-        const editData = { ...formData.value };
-        // 删除可能多余的字段，避免覆盖表单默认值
+        const editData = {...formData.value};
         delete editData.createByName;
         delete editData.updateTime;
-        delete editData.createTime; // 创建时间不参与编辑
+        delete editData.createTime;
         await editFormApi.setValues(editData);
       } else {
         await editFormApi.resetForm();
-        // 新增时不需要设置创建时间
       }
     }
   },
 });
 
-// ---------- 停用弹窗（单条/批量共用） ----------
-const disableData = ref({ ids: [], stopReason: '' });
+// ---------- 批量编辑抽屉 ----------
+const batchUpdateData = ref({ids: []});
+const [BatchUpdateForm, batchUpdateFormApi] = useVbenForm({
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 80},
+  layout: 'horizontal',
+  schema: useBatchUpdateSchema(),
+  showDefaultActions: false,
+});
+
+const [BatchUpdateDrawer, batchUpdateDrawerApi] = useVbenDrawer({
+  title: '批量编辑场站',
+  appendToMain: true,
+  modal: false,
+  onCancel: () => batchUpdateDrawerApi.close(),
+  async onConfirm() {
+    const formValues = await batchUpdateFormApi.getValues();
+    const updateData = {};
+    if (formValues.coopMode !== undefined && formValues.coopMode !== '') {
+      updateData.coopMode = formValues.coopMode;
+    }
+    if (formValues.manager !== undefined && formValues.manager !== '') {
+      updateData.manager = formValues.manager;
+    }
+    if (Object.keys(updateData).length === 0) {
+      ElMessage.warning('请至少填写一个要修改的字段');
+      return;
+    }
+
+    const loading = ElLoading.service({text: '批量编辑中...'});
+    try {
+      await batchUpdateChargingStation({
+        ids: batchUpdateData.value.ids,
+        ...updateData,
+      });
+      ElMessage.success('批量编辑成功');
+      handleRefresh();
+      batchUpdateDrawerApi.close();
+    } catch (error) {
+      console.error('批量编辑失败', error);
+      const errMsg = error?.response?.data?.msg || error?.message || '批量编辑失败，请重试';
+      ElMessage.error(errMsg);
+    } finally {
+      loading.close();
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      await batchUpdateFormApi.resetForm();
+    }
+  },
+});
+
+const handleBatchUpdate = () => {
+  if (isEmpty(checkedIds.value)) {
+    ElMessage.warning('请至少选择一条数据');
+    return;
+  }
+  batchUpdateData.value.ids = [...checkedIds.value];
+  batchUpdateDrawerApi.open();
+};
+
+// ---------- 单条停用抽屉（仅用于行内停用） ----------
+const disableData = ref({ids: [], stopReason: ''});
 const [DisableForm, disableFormApi] = useVbenForm({
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 80 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 80},
   layout: 'horizontal',
   schema: useDisableSchema(),
   showDefaultActions: false,
@@ -158,21 +250,15 @@ const [DisableDrawer, disableDrawerApi] = useVbenDrawer({
   onCancel: () => disableDrawerApi.close(),
   async onConfirm() {
     const formValues = await disableFormApi.getValues();
-    const { stopReason } = formValues;
+    const {stopReason} = formValues;
     if (!stopReason) {
       ElMessage.warning('请填写停用原因');
       return;
     }
-    const loading = ElLoading.service({ text: '停用中...' });
+    const loading = ElLoading.service({text: '停用中...'});
     try {
-      const ids = disableData.value.ids;
-      if (ids.length === 1) {
-        await disableChargingStation({ id: ids[0], stopReason });
-      } else {
-        for (const id of ids) {
-          await disableChargingStation({ id, stopReason });
-        }
-      }
+      const id = disableData.value.ids[0];
+      await disableChargingStation({id, stopReason});
       ElMessage.success('停用成功');
       handleRefresh();
       disableDrawerApi.close();
@@ -185,7 +271,51 @@ const [DisableDrawer, disableDrawerApi] = useVbenDrawer({
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
-      disableFormApi.resetForm();
+      await disableFormApi.resetForm();
+    }
+  },
+});
+
+// ---------- 批量停用抽屉 ----------
+const batchDisableData = ref({ids: [], stopReason: ''});
+const [BatchDisableForm, batchDisableFormApi] = useVbenForm({
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 80},
+  layout: 'horizontal',
+  schema: useDisableSchema(),
+  showDefaultActions: false,
+});
+
+const [BatchDisableDrawer, batchDisableDrawerApi] = useVbenDrawer({
+  title: '批量停用场站',
+  appendToMain: true,
+  modal: false,
+  onCancel: () => batchDisableDrawerApi.close(),
+  async onConfirm() {
+    const formValues = await batchDisableFormApi.getValues();
+    const {stopReason} = formValues;
+    if (!stopReason) {
+      ElMessage.warning('请填写停用原因');
+      return;
+    }
+    const loading = ElLoading.service({text: '批量停用中...'});
+    try {
+      await batchDisableChargingStation({
+        ids: batchDisableData.value.ids,
+        stopReason,
+      });
+      ElMessage.success('批量停用成功');
+      handleRefresh();
+      batchDisableDrawerApi.close();
+    } catch (error) {
+      console.error('批量停用失败', error);
+      ElMessage.error(error?.response?.data?.msg || error?.message || '批量停用失败');
+    } finally {
+      loading.close();
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      await batchDisableFormApi.resetForm();
     }
   },
 });
@@ -198,9 +328,9 @@ const handleEnable = async (row) => {
       cancelButtonText: '取消',
       type: 'info',
     });
-    const loading = ElLoading.service({ text: '启用中...' });
+    const loading = ElLoading.service({text: '启用中...'});
     try {
-      await enableChargingStation({ id: row.id });
+      await enableChargingStation({id: row.id});
       ElMessage.success('启用成功');
       handleRefresh();
     } catch (error) {
@@ -220,28 +350,18 @@ const handleBatchDisable = () => {
     ElMessage.warning('请至少选择一条数据');
     return;
   }
-  const selectedRows = dataObj.list.filter(item => checkedIds.value.includes(item.id));
-  const hasInvalid = selectedRows.some(row => row.stationStatus !== 'enabled');
-  if (hasInvalid) {
-    ElMessage.warning('只能停用状态为“已启用”的场站');
-    return;
-  }
-  disableData.value.ids = [...checkedIds.value];
-  disableDrawerApi.open();
+  batchDisableData.value.ids = [...checkedIds.value];
+  batchDisableDrawerApi.open();
 };
 
 // ---------- 行内停用 ----------
 const handleRowDisable = (row) => {
-  if (row.stationStatus !== 'enabled') {
-    ElMessage.warning('只能停用已启用的场站');
-    return;
-  }
   disableData.value.ids = [row.id];
   disableDrawerApi.open();
 };
 
 // ---------- 获取表格数据 ----------
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   const params = {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
@@ -253,7 +373,7 @@ const getTableData = async ({ page }) => {
     const listData = res.data?.list || res.list || [];
     const total = res.data?.total || res.total || 0;
     dataObj.total = total;
-    dataObj.list = listData; // 原始数据，时间戳在模板中格式化
+    dataObj.list = listData;
     return dataObj;
   } catch (error) {
     console.error('获取数据失败', error);
@@ -271,15 +391,19 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
+    proxyConfig: {ajax: {query: getTableData}},
+    rowConfig: {keyField: 'id', isHover: true},
     pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
+    toolbarConfig: {refresh: true, search: true},
     showOverflow: true,
   },
   gridEvents: {
-    checkboxAll: ({ records }) => { checkedIds.value = records.map(item => item.id); },
-    checkboxChange: ({ records }) => { checkedIds.value = records.map(item => item.id); },
+    checkboxAll: ({records}) => {
+      checkedIds.value = records.map(item => item.id);
+    },
+    checkboxChange: ({records}) => {
+      checkedIds.value = records.map(item => item.id);
+    },
   },
   showSearchForm: false,
 });
@@ -289,7 +413,7 @@ watch(activeName, () => {
   if (gridApi && gridApi.xGrid) {
     gridApi.xGrid.refreshColumn();
   } else {
-    gridApi.setGridOptions?.({ columns: gridColumns.value });
+    gridApi.setGridOptions?.({columns: gridColumns.value});
   }
   dataObj.searchParams = {};
   tagFilters.value = {};
@@ -317,20 +441,26 @@ function getFieldLabel(field) {
   const map = {
     stationName: '场站名称',
     address: '场站地址',
-    coopModeName: '合作模式',
+    coopMode: '合作模式',
     manager: '负责人',
-    stationStatusName: '场站状态',
+    stationStatus: '场站状态',
   };
   return map[field] || field;
 }
 
 function getTagDisplayText(field, value) {
+  if (field === 'coopMode') {
+    return getCoopModeLabel(value);
+  }
+  if (field === 'stationStatus') {
+    return getStatusLabel(value);
+  }
   return value;
 }
 
 // ---------- 导出 ----------
 async function handleExport() {
-  const params = { ...dataObj.searchParams, ...tagFilters.value };
+  const params = {...dataObj.searchParams, ...tagFilters.value};
   try {
     const res = await exportChargingStation(params);
     const blob = res.data || res;
@@ -375,9 +505,8 @@ const detailDrawerRef = ref(null);
 
 async function handleOpenDetail(row) {
   try {
-    const res = await getChargingStationDetail({ id: row.id });
+    const res = await getChargingStationDetail({id: row.id});
     const detail = res.data || res;
-    // 格式化详情中的时间字段
     if (detail.createTime) detail.createTime = formatTimestamp(detail.createTime);
     if (detail.updateTime) detail.updateTime = formatTimestamp(detail.updateTime);
     dataObj.detailObj = detail;
@@ -393,6 +522,16 @@ const showChart = ref(true);
 const toggleChart = () => {
   showChart.value = !showChart.value;
 };
+
+// 合作模式映射
+const coopModeMap = {
+  self: '自营',
+  joint: '联营',
+  franchise: '加盟',
+};
+
+// 转换函数
+const getCoopModeLabel = (value) => coopModeMap[value] || value;
 </script>
 
 <template>
@@ -402,10 +541,20 @@ const toggleChart = () => {
       <EditForm/>
     </EditDrawer>
 
-    <!-- 停用抽屉 -->
+    <!-- 批量编辑抽屉 -->
+    <BatchUpdateDrawer title="批量编辑场站">
+      <BatchUpdateForm/>
+    </BatchUpdateDrawer>
+
+    <!-- 单条停用抽屉 -->
     <DisableDrawer title="停用场站">
       <DisableForm/>
     </DisableDrawer>
+
+    <!-- 批量停用抽屉 -->
+    <BatchDisableDrawer title="批量停用场站">
+      <BatchDisableForm/>
+    </BatchDisableDrawer>
 
     <!-- 详情抽屉 -->
     <detailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj"/>
@@ -432,6 +581,12 @@ const toggleChart = () => {
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate"/>
+          <IconButton
+            content="批量编辑"
+            icon-name="Edit"
+            :disabled="isEmpty(checkedIds)"
+            @click="handleBatchUpdate"
+          />
           <IconButton content="导出" icon-name="download" @click="handleExport"/>
           <IconButton
             content="停用"
@@ -472,10 +627,15 @@ const toggleChart = () => {
         </el-text>
       </template>
 
+      <!-- 合作模式 - 使用 el-tag -->
       <template #coopMode="{ row }">
-        <el-text @click="handleFilterTagClick('coopModeName', row.coopModeName)" type="primary">
-          {{ row.coopModeName }}
-        </el-text>
+        <el-tag
+          :type="getCoopModeTagType(row.coopMode)"
+          @click="handleFilterTagClick('coopMode', row.coopMode)"
+          style="cursor: pointer;"
+        >
+          {{ getCoopModeLabel(row.coopMode) }}
+        </el-tag>
       </template>
 
       <template #manager="{ row }">
@@ -484,10 +644,15 @@ const toggleChart = () => {
         </el-text>
       </template>
 
+      <!-- 场站状态 - 使用 el-tag -->
       <template #status="{ row }">
-        <el-text @click="handleFilterTagClick('stationStatusName', row.stationStatusName)" type="primary">
-          {{ row.stationStatusName }}
-        </el-text>
+        <el-tag
+          :type="getStatusTagType(row.stationStatus)"
+          @click="handleFilterTagClick('stationStatus', row.stationStatus)"
+          style="cursor: pointer;"
+        >
+          {{ getStatusLabel(row.stationStatus) }}
+        </el-tag>
       </template>
 
       <!-- 时间列格式化 -->
@@ -504,13 +669,14 @@ const toggleChart = () => {
         <div class="table-toolbar-tools">
           <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)"/>
           <IconButton content="编辑" icon-name="edit" @click="handleEdit(row)"/>
-          <template v-if="row.stationStatus === 'disabled'">
+          <template v-if="row.stationStatus === 'wait' || row.stationStatus === '未启用'">
             <IconButton content="启用" icon-name="CircleCheck" @click="handleEnable(row)"/>
           </template>
-          <template v-else-if="row.stationStatus === 'enabled'">
-            <IconButton content="停用" icon-name="CircleClose" color="#E6A23C" @click="handleRowDisable(row)"/>
+          <template v-else-if="row.stationStatus === 'enabled' || row.stationStatus === '已启用'">
+            <IconButton content="停用" icon-name="CircleClose" color="#E6A23C"
+                        @click="handleRowDisable(row)"/>
           </template>
-          <template v-else-if="row.stationStatus === 'stopped'">
+          <template v-else-if="row.stationStatus === 'disabled' || row.stationStatus === '已停用'">
             <IconButton content="启用" icon-name="CircleCheck" @click="handleEnable(row)"/>
           </template>
         </div>
@@ -524,7 +690,8 @@ const toggleChart = () => {
           </el-icon>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <div v-if="dataObj.totalShow && showChart && activeName !== '全部'" class="bottom-chart-wrapper">
+          <div v-if="dataObj.totalShow && showChart && activeName !== '全部'"
+               class="bottom-chart-wrapper">
             <!-- 图表组件可后续扩展 -->
           </div>
         </div>
