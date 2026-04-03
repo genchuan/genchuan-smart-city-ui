@@ -1,12 +1,12 @@
 <script setup>
-import {computed, reactive, ref, watch} from 'vue';
-import {confirm, useVbenDrawer} from '@vben/common-ui';
-import {isEmpty} from '@vben/utils';
-import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
+import { computed, reactive, ref, watch } from 'vue';
+import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { isEmpty } from '@vben/utils';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
-import {useVbenForm} from '#/adapter/form';
-import {useVbenVxeGrid} from '#/adapter/vxe-table';
-import {$t} from '#/locales';
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { $t } from '#/locales';
 import detailDrawer from './components/detail.vue';
 
 // 导入真实接口
@@ -32,7 +32,7 @@ import {
   useBatchUpdateSchema,
 } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingStation/form.js';
 
-const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
+const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
 const emit = defineEmits(['arrow-change']);
 
 // ---------- 时间格式化工具 ----------
@@ -81,9 +81,87 @@ const getStatusLabel = (stationStatus) => {
   return map[stationStatus] || stationStatus;
 };
 
-// ---------- 状态管理 ----------
-const activeName = ref('全部');
+// ---------- 合作模式显示文本 ----------
+const getCoopModeLabel = (coopMode) => {
+  const map = {
+    self: '自营',
+    joint: '联营',
+    franchise: '加盟',
+  };
+  return map[coopMode] || coopMode;
+};
+
+// ---------- 辅助：标准化状态（用于筛选比较） ----------
+const normalizeStatus = (status) => {
+  if (!status) return '';
+  const lower = status.toLowerCase();
+  if (lower === 'enabled' || lower === '已启用') return 'enabled';
+  if (lower === 'disabled' || lower === '已停用') return 'disabled';
+  if (lower === 'wait' || lower === '未启用') return 'wait';
+  return lower;
+};
+
+// ---------- 辅助：从场站名称提取区域（示例，实际请根据真实字段调整） ----------
+const extractAreaName = (item) => {
+  const name = item.stationName || '';
+  // 匹配“泉州丰泽充电站” -> “丰泽区”
+  const match = name.match(/([^泉州]+)充电站/);
+  if (match && match[1]) {
+    return match[1] + '区';
+  }
+  return '未知区域';
+};
+
+// ---------- 标签筛选相关 ----------
 const tagFilters = ref({});
+
+function handleFilterTagClick(field, value) {
+  if (!field || value == null) return;
+  if (tagFilters.value[field] === value) {
+    delete tagFilters.value[field];
+  } else {
+    tagFilters.value[field] = value;
+  }
+  gridApi.reload();
+}
+
+function removeFilterTag(field) {
+  delete tagFilters.value[field];
+  gridApi.reload();
+}
+
+function clearFilters() {
+  tagFilters.value = {};
+  gridApi.reload();
+}
+
+function getFieldLabel(field) {
+  const map = {
+    stationName: '场站名称',
+    areaName: '区域',
+    stationStatus: '场站状态',
+    address: '场站地址',
+    coopMode: '合作模式',
+    manager: '负责人',
+  };
+  return map[field] || field;
+}
+
+function getTagDisplayText(field, value) {
+  if (field === 'stationStatus') {
+    if (value === 'enabled') return '已启用';
+    if (value === 'disabled') return '已停用';
+    if (value === 'wait') return '未启用';
+    return value;
+  }
+  if (field === 'coopMode') {
+    return getCoopModeLabel(value);
+  }
+  return value;
+}
+
+// ---------- 原有状态管理 ----------
+const activeName = ref('全部');
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
@@ -104,7 +182,7 @@ const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
 
 const [SearchForm, searchFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: async () => {
     const rawValues = await searchFormApi.getValues();
     dataObj.searchParams = Object.fromEntries(
@@ -116,7 +194,7 @@ const [SearchForm, searchFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useSearchSchema(),
   showCollapseButton: true,
-  submitButtonOptions: {content: '查询'},
+  submitButtonOptions: { content: '查询' },
 });
 
 // ---------- 新增/编辑抽屉 ----------
@@ -124,7 +202,7 @@ const formData = ref();
 const getTitle = computed(() => (formData.value?.id ? textObj.editText : textObj.addText));
 
 const [EditForm, editFormApi] = useVbenForm({
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 80},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 80 },
   layout: 'horizontal',
   schema: useFormSchema(),
   showDefaultActions: false,
@@ -138,13 +216,13 @@ const [EditDrawer, editDrawerApi] = useVbenDrawer({
     const formValues = await editFormApi.getValues();
     const isAdd = !formData.value?.id;
     delete formValues.createTime;
-    const loading = ElLoading.service({text: isAdd ? '新增中...' : '保存中...'});
+    const loading = ElLoading.service({ text: isAdd ? '新增中...' : '保存中...' });
     try {
       if (isAdd) {
         await createChargingStation(formValues);
         ElMessage.success('新增成功');
       } else {
-        await updateChargingStation({...formValues, id: formData.value.id});
+        await updateChargingStation({ ...formValues, id: formData.value.id });
         ElMessage.success('编辑成功');
       }
       handleRefresh();
@@ -161,7 +239,7 @@ const [EditDrawer, editDrawerApi] = useVbenDrawer({
     if (isOpen) {
       formData.value = editDrawerApi.getData();
       if (formData.value?.id) {
-        const editData = {...formData.value};
+        const editData = { ...formData.value };
         delete editData.createByName;
         delete editData.updateTime;
         delete editData.createTime;
@@ -174,9 +252,9 @@ const [EditDrawer, editDrawerApi] = useVbenDrawer({
 });
 
 // ---------- 批量编辑抽屉 ----------
-const batchUpdateData = ref({ids: []});
+const batchUpdateData = ref({ ids: [] });
 const [BatchUpdateForm, batchUpdateFormApi] = useVbenForm({
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 80},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 80 },
   layout: 'horizontal',
   schema: useBatchUpdateSchema(),
   showDefaultActions: false,
@@ -201,7 +279,7 @@ const [BatchUpdateDrawer, batchUpdateDrawerApi] = useVbenDrawer({
       return;
     }
 
-    const loading = ElLoading.service({text: '批量编辑中...'});
+    const loading = ElLoading.service({ text: '批量编辑中...' });
     try {
       await batchUpdateChargingStation({
         ids: batchUpdateData.value.ids,
@@ -234,10 +312,10 @@ const handleBatchUpdate = () => {
   batchUpdateDrawerApi.open();
 };
 
-// ---------- 单条停用抽屉（仅用于行内停用） ----------
-const disableData = ref({ids: [], stopReason: ''});
+// ---------- 单条停用抽屉 ----------
+const disableData = ref({ ids: [], stopReason: '' });
 const [DisableForm, disableFormApi] = useVbenForm({
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 80},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 80 },
   layout: 'horizontal',
   schema: useDisableSchema(),
   showDefaultActions: false,
@@ -250,15 +328,15 @@ const [DisableDrawer, disableDrawerApi] = useVbenDrawer({
   onCancel: () => disableDrawerApi.close(),
   async onConfirm() {
     const formValues = await disableFormApi.getValues();
-    const {stopReason} = formValues;
+    const { stopReason } = formValues;
     if (!stopReason) {
       ElMessage.warning('请填写停用原因');
       return;
     }
-    const loading = ElLoading.service({text: '停用中...'});
+    const loading = ElLoading.service({ text: '停用中...' });
     try {
       const id = disableData.value.ids[0];
-      await disableChargingStation({id, stopReason});
+      await disableChargingStation({ id, stopReason });
       ElMessage.success('停用成功');
       handleRefresh();
       disableDrawerApi.close();
@@ -277,9 +355,9 @@ const [DisableDrawer, disableDrawerApi] = useVbenDrawer({
 });
 
 // ---------- 批量停用抽屉 ----------
-const batchDisableData = ref({ids: [], stopReason: ''});
+const batchDisableData = ref({ ids: [], stopReason: '' });
 const [BatchDisableForm, batchDisableFormApi] = useVbenForm({
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 80},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 80 },
   layout: 'horizontal',
   schema: useDisableSchema(),
   showDefaultActions: false,
@@ -292,12 +370,12 @@ const [BatchDisableDrawer, batchDisableDrawerApi] = useVbenDrawer({
   onCancel: () => batchDisableDrawerApi.close(),
   async onConfirm() {
     const formValues = await batchDisableFormApi.getValues();
-    const {stopReason} = formValues;
+    const { stopReason } = formValues;
     if (!stopReason) {
       ElMessage.warning('请填写停用原因');
       return;
     }
-    const loading = ElLoading.service({text: '批量停用中...'});
+    const loading = ElLoading.service({ text: '批量停用中...' });
     try {
       await batchDisableChargingStation({
         ids: batchDisableData.value.ids,
@@ -328,9 +406,9 @@ const handleEnable = async (row) => {
       cancelButtonText: '取消',
       type: 'info',
     });
-    const loading = ElLoading.service({text: '启用中...'});
+    const loading = ElLoading.service({ text: '启用中...' });
     try {
-      await enableChargingStation({id: row.id});
+      await enableChargingStation({ id: row.id });
       ElMessage.success('启用成功');
       handleRefresh();
     } catch (error) {
@@ -360,18 +438,52 @@ const handleRowDisable = (row) => {
   disableDrawerApi.open();
 };
 
-// ---------- 获取表格数据 ----------
-const getTableData = async ({page}) => {
+// ---------- 获取表格数据（支持前端筛选） ----------
+const getTableData = async ({ page }) => {
   const params = {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...dataObj.searchParams,
-    ...tagFilters.value,
   };
   try {
     const res = await getChargingStationPage(params);
-    const listData = res.data?.list || res.list || [];
-    const total = res.data?.total || res.total || 0;
+    let listData = res.data?.list || res.list || [];
+    let total = res.data?.total || res.total || 0;
+
+    // 应用标签筛选（前端过滤）
+    if (Object.keys(tagFilters.value).length > 0) {
+      listData = listData.filter(item => {
+        for (const [field, filterValue] of Object.entries(tagFilters.value)) {
+          let itemValue;
+          switch (field) {
+            case 'stationName':
+              itemValue = item.stationName;
+              break;
+            case 'areaName':
+              // 从场站名称或地址中提取区域（示例）
+              itemValue = extractAreaName(item);
+              break;
+            case 'stationStatus':
+              itemValue = normalizeStatus(item.stationStatus);
+              break;
+            default:
+              itemValue = item[field];
+          }
+          if (Array.isArray(filterValue)) {
+            if (!filterValue.includes(String(itemValue))) return false;
+          } else {
+            if (String(itemValue) !== String(filterValue)) return false;
+          }
+        }
+        return true;
+      });
+      total = listData.length;
+      // 前端分页
+      const start = (page.currentPage - 1) * page.pageSize;
+      const end = start + page.pageSize;
+      listData = listData.slice(start, end);
+    }
+
     dataObj.total = total;
     dataObj.list = listData;
     return dataObj;
@@ -391,17 +503,17 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: {ajax: {query: getTableData}},
-    rowConfig: {keyField: 'id', isHover: true},
+    proxyConfig: { ajax: { query: getTableData } },
+    rowConfig: { keyField: 'id', isHover: true },
     pagerConfig: dataObj,
-    toolbarConfig: {refresh: true, search: true},
+    toolbarConfig: { refresh: true, search: true },
     showOverflow: true,
   },
   gridEvents: {
-    checkboxAll: ({records}) => {
+    checkboxAll: ({ records }) => {
       checkedIds.value = records.map(item => item.id);
     },
-    checkboxChange: ({records}) => {
+    checkboxChange: ({ records }) => {
       checkedIds.value = records.map(item => item.id);
     },
   },
@@ -413,7 +525,7 @@ watch(activeName, () => {
   if (gridApi && gridApi.xGrid) {
     gridApi.xGrid.refreshColumn();
   } else {
-    gridApi.setGridOptions?.({columns: gridColumns.value});
+    gridApi.setGridOptions?.({ columns: gridColumns.value });
   }
   dataObj.searchParams = {};
   tagFilters.value = {};
@@ -421,46 +533,9 @@ watch(activeName, () => {
   handleRefresh();
 });
 
-// ---------- 标签筛选 ----------
-function handleFilterTagClick(field, value) {
-  if (!field || value == null) return;
-  if (tagFilters.value[field] === value) {
-    delete tagFilters.value[field];
-  } else {
-    tagFilters.value[field] = value;
-  }
-  gridApi.reload();
-}
-
-function removeFilterTag(field) {
-  delete tagFilters.value[field];
-  gridApi.reload();
-}
-
-function getFieldLabel(field) {
-  const map = {
-    stationName: '场站名称',
-    address: '场站地址',
-    coopMode: '合作模式',
-    manager: '负责人',
-    stationStatus: '场站状态',
-  };
-  return map[field] || field;
-}
-
-function getTagDisplayText(field, value) {
-  if (field === 'coopMode') {
-    return getCoopModeLabel(value);
-  }
-  if (field === 'stationStatus') {
-    return getStatusLabel(value);
-  }
-  return value;
-}
-
 // ---------- 导出 ----------
 async function handleExport() {
-  const params = {...dataObj.searchParams, ...tagFilters.value};
+  const params = { ...dataObj.searchParams, ...tagFilters.value };
   try {
     const res = await exportChargingStation(params);
     const blob = res.data || res;
@@ -505,7 +580,7 @@ const detailDrawerRef = ref(null);
 
 async function handleOpenDetail(row) {
   try {
-    const res = await getChargingStationDetail({id: row.id});
+    const res = await getChargingStationDetail({ id: row.id });
     const detail = res.data || res;
     if (detail.createTime) detail.createTime = formatTimestamp(detail.createTime);
     if (detail.updateTime) detail.updateTime = formatTimestamp(detail.updateTime);
@@ -523,56 +598,50 @@ const toggleChart = () => {
   showChart.value = !showChart.value;
 };
 
-// 合作模式映射
-const coopModeMap = {
-  self: '自营',
-  joint: '联营',
-  franchise: '加盟',
-};
-
-// 转换函数
-const getCoopModeLabel = (value) => coopModeMap[value] || value;
+// 暴露方法给父组件
+defineExpose({ handleFilterTagClick, clearFilters });
 </script>
 
 <template>
   <div class="park-lot-table-new">
     <!-- 新增/编辑抽屉 -->
     <EditDrawer :title="getTitle">
-      <EditForm/>
+      <EditForm />
     </EditDrawer>
 
     <!-- 批量编辑抽屉 -->
     <BatchUpdateDrawer title="批量编辑场站">
-      <BatchUpdateForm/>
+      <BatchUpdateForm />
     </BatchUpdateDrawer>
 
     <!-- 单条停用抽屉 -->
     <DisableDrawer title="停用场站">
-      <DisableForm/>
+      <DisableForm />
     </DisableDrawer>
 
     <!-- 批量停用抽屉 -->
     <BatchDisableDrawer title="批量停用场站">
-      <BatchDisableForm/>
+      <BatchDisableForm />
     </BatchDisableDrawer>
 
     <!-- 详情抽屉 -->
-    <detailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj"/>
+    <detailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj" />
 
     <!-- 搜索抽屉 -->
     <SearchDrawer title="搜索">
-      <SearchForm/>
+      <SearchForm />
     </SearchDrawer>
 
     <Grid>
       <template #table-title>
+        <!-- 筛选标签区域 -->
         <ElTag
           v-for="(value, field) in tagFilters"
           :key="field"
           type="success"
           closable
           @close="removeFilterTag(field)"
-          style="height: 32px; margin: 4px 0; line-height: 32px"
+          style="height: 32px; margin: 4px 8px 4px 0; line-height: 32px"
         >
           {{ getFieldLabel(field) }}: {{ getTagDisplayText(field, value) }}
         </ElTag>
@@ -580,14 +649,14 @@ const getCoopModeLabel = (value) => coopModeMap[value] || value;
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate"/>
+          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="批量编辑"
             icon-name="Edit"
             :disabled="isEmpty(checkedIds)"
             @click="handleBatchUpdate"
           />
-          <IconButton content="导出" icon-name="download" @click="handleExport"/>
+          <IconButton content="导出" icon-name="download" @click="handleExport" />
           <IconButton
             content="停用"
             icon-name="CircleClose"
@@ -595,13 +664,13 @@ const getCoopModeLabel = (value) => coopModeMap[value] || value;
             :disabled="isEmpty(checkedIds)"
             @click="handleBatchDisable"
           />
-          <IconButton content="搜索" icon-name="search" @click="handleSerachShow"/>
+          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
             :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
             @click="arrowChange"
           />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
           <IconButton
             :content="showChart ? '隐藏图表' : '显示图表'"
             icon-name="PieChart"
@@ -610,7 +679,7 @@ const getCoopModeLabel = (value) => coopModeMap[value] || value;
         </div>
       </template>
 
-      <!-- 钻取列自定义渲染 -->
+      <!-- 钻取列自定义渲染（带标签筛选） -->
       <template #stationCode="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary">{{ row.stationCode }}</el-text>
       </template>
@@ -627,7 +696,7 @@ const getCoopModeLabel = (value) => coopModeMap[value] || value;
         </el-text>
       </template>
 
-      <!-- 合作模式 - 使用 el-tag -->
+      <!-- 合作模式 -->
       <template #coopMode="{ row }">
         <el-tag
           :type="getCoopModeTagType(row.coopMode)"
@@ -644,11 +713,11 @@ const getCoopModeLabel = (value) => coopModeMap[value] || value;
         </el-text>
       </template>
 
-      <!-- 场站状态 - 使用 el-tag -->
+      <!-- 场站状态 -->
       <template #status="{ row }">
         <el-tag
           :type="getStatusTagType(row.stationStatus)"
-          @click="handleFilterTagClick('stationStatus', row.stationStatus)"
+          @click="handleFilterTagClick('stationStatus', normalizeStatus(row.stationStatus))"
           style="cursor: pointer;"
         >
           {{ getStatusLabel(row.stationStatus) }}
@@ -667,17 +736,16 @@ const getCoopModeLabel = (value) => coopModeMap[value] || value;
       <!-- 操作列 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton content="编辑" icon-name="edit" @click="handleEdit(row)"/>
+          <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
+          <IconButton content="编辑" icon-name="edit" @click="handleEdit(row)" />
           <template v-if="row.stationStatus === 'wait' || row.stationStatus === '未启用'">
-            <IconButton content="启用" icon-name="CircleCheck" @click="handleEnable(row)"/>
+            <IconButton content="启用" icon-name="CircleCheck" @click="handleEnable(row)" />
           </template>
           <template v-else-if="row.stationStatus === 'enabled' || row.stationStatus === '已启用'">
-            <IconButton content="停用" icon-name="CircleClose" color="#E6A23C"
-                        @click="handleRowDisable(row)"/>
+            <IconButton content="停用" icon-name="CircleClose" color="#E6A23C" @click="handleRowDisable(row)" />
           </template>
           <template v-else-if="row.stationStatus === 'disabled' || row.stationStatus === '已停用'">
-            <IconButton content="启用" icon-name="CircleCheck" @click="handleEnable(row)"/>
+            <IconButton content="启用" icon-name="CircleCheck" @click="handleEnable(row)" />
           </template>
         </div>
       </template>
@@ -685,13 +753,12 @@ const getCoopModeLabel = (value) => coopModeMap[value] || value;
       <template #bottom>
         <div class="common-total" @click="dataObj.totalShow = !dataObj.totalShow">
           <el-icon>
-            <ArrowDown v-if="!dataObj.totalShow"/>
-            <ArrowUp v-else/>
+            <ArrowDown v-if="!dataObj.totalShow" />
+            <ArrowUp v-else />
           </el-icon>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <div v-if="dataObj.totalShow && showChart && activeName !== '全部'"
-               class="bottom-chart-wrapper">
+          <div v-if="dataObj.totalShow && showChart && activeName !== '全部'" class="bottom-chart-wrapper">
             <!-- 图表组件可后续扩展 -->
           </div>
         </div>

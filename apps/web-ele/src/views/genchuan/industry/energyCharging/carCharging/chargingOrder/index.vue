@@ -1,8 +1,8 @@
 <script setup>
 import { ref, computed, nextTick } from 'vue';
 import { ElMessage } from 'element-plus';
-import pileAlarm from './pileAlarm/index.vue';
-import pileAlarmChart from './pileAlarm/components/chart.vue';
+import abnormalOrder from './abnormalOrder/index.vue';
+import abnormalOrderChart from './abnormalOrder/components/chart.vue';
 import '#/components/page/index.scss';
 
 const changeArrowStatus = () => {
@@ -12,9 +12,9 @@ const changeArrowStatus = () => {
 
 const tabArray = ref([
   {
-    label: '充电桩告警管理',
-    components: pileAlarm,
-    chartComponent: pileAlarmChart,
+    label: '异常订单管理',
+    components: abnormalOrder,
+    chartComponent: abnormalOrderChart,
     showSecondary: true,
     secondShow: false,
     arrowShow: true,
@@ -28,56 +28,54 @@ const arrowChange = () => {
   });
 };
 
-const activeName = ref('充电桩告警管理');
+const activeName = ref('异常订单管理');
 const secondShow = ref(false);
 
-const pileAlarmRef = ref(null);
-const setPileAlarmRef = (el) => {
-  if (el) pileAlarmRef.value = el;
+const abnormalOrderRef = ref(null);
+const setAbnormalOrderRef = (el) => {
+  if (el) abnormalOrderRef.value = el;
 };
 
-// 饼图点击筛选（故障类型）
-const onPieSelect = async (faultType) => {
+// 饼图点击筛选（异常类型）
+const onPieSelect = async (abnormalType) => {
   await nextTick();
-  if (!pileAlarmRef.value) {
+  if (!abnormalOrderRef.value) {
     ElMessage.warning('列表组件未就绪，请稍后重试');
     return;
   }
-  pileAlarmRef.value.handleFilterTagClick('faultType', faultType);
+  abnormalOrderRef.value.handleFilterTagClick('abnormalType', abnormalType);
 };
 
 // 柱状图点击筛选（日期）
 const onBarSelect = async (date) => {
   await nextTick();
-  if (!pileAlarmRef.value) {
+  if (!abnormalOrderRef.value) {
     ElMessage.warning('列表组件未就绪，请稍后重试');
     return;
   }
-  pileAlarmRef.value.handleFilterTagClick('alarmTime', date);
+  abnormalOrderRef.value.handleFilterTagClick('createTime', date);
 };
 
 // 卡片点击筛选
 const onCardSelect = async (status) => {
   await nextTick();
-  if (!pileAlarmRef.value) {
+  if (!abnormalOrderRef.value) {
     ElMessage.warning('列表组件未就绪，请稍后重试');
     return;
   }
-  // 先清除所有现有筛选
-  pileAlarmRef.value.clearFilters();
-  // 根据卡片类型添加相应筛选
+  abnormalOrderRef.value.clearFilters();
   switch (status) {
     case 'total':
-      // 总告警数：不添加任何筛选，即显示全部
+      // 总异常订单数：不添加筛选
       break;
     case 'unhandled':
-      // 未处置数：筛选状态为未派单、已派单、处置中
-      pileAlarmRef.value.handleFilterTagClick('alarmStatus', ['未派单', '已派单', '处置中']);
+      // 未处理数：筛选状态为未核实、已核实、处理中
+      abnormalOrderRef.value.handleFilterTagClick('abnormalStatus', ['未核实', '已核实', '处理中']);
       break;
     case 'handled':
     case 'rate':
-      // 已处置数 或 处置完成率：筛选状态为已销单
-      pileAlarmRef.value.handleFilterTagClick('alarmStatus', '已销单');
+      // 已处理数 / 处理完成率：筛选状态为已完结
+      abnormalOrderRef.value.handleFilterTagClick('abnormalStatus', '已完结');
       break;
     default:
       break;
@@ -107,7 +105,7 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
         </template>
         <component
           :is="item.components"
-          :ref="setPileAlarmRef"
+          :ref="setAbnormalOrderRef"
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"
