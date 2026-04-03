@@ -10,8 +10,8 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getDriveinList, exporStatusExcel, handleAbnormal } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/statusMonitor/index.js';
- 
+import { getDriveinList, exporStatusExcel, handleAbnormal, getStationDetail } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/statusMonitor/index.js';
+import stationDetail from '#/views/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingStation/components/detail.vue';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
 
@@ -209,10 +209,30 @@ const handleClick = () => {
 // ==================== 快捷筛选处理 ====================
 
 // 处理所属场站点击
-const handleStationClick = (stationName) => {
-  filterStationName.value = filterStationName.value === stationName ? '' : stationName;
-  gridApi.query();
+const handleStationClick = async (stationName, stationId) => {
+  try {
+    // 调用场站详情接口
+    const response = await getStationDetail({ id: stationId });
+    if (response) {
+      // 转换时间戳
+      const formattedResponse = {
+        ...response,
+        createTime: formatTimestamp(response.createTime),
+        updateTime: formatTimestamp(response.updateTime)
+      };
+      
+      // 打开场站详情抽屉
+      stationDetailData.value = formattedResponse;
+      stationDetailRef.value?.open();
+    }
+  } catch (error) {
+    ElMessage.error(`获取场站详情失败：${error.msg || '请稍后重试'}`);
+  }
 };
+
+// 场站详情抽屉相关
+const stationDetailRef = ref(null);
+const stationDetailData = ref({});
 
 // 处理所属车位点击
 const handleLotClick = (lotCode) => {
@@ -461,6 +481,9 @@ const confirmDisposeHandle = async () => {
       title="详情"
     />
 
+    <!-- 场站详情抽屉 -->
+    <stationDetail ref="stationDetailRef" :detail-obj="stationDetailData" />
+
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -578,10 +601,10 @@ const confirmDisposeHandle = async () => {
         </el-text>
       </template>
 
-      <!-- 所属场站插槽 - 点击筛选 -->
+      <!-- 所属场站插槽 - 点击查看详情 -->
       <template #station_name="{ row }">
         <el-text
-          @click="handleStationClick(row.stationName)"
+          @click="handleStationClick(row.stationName, row.stationId)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
