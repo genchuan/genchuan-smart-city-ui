@@ -1,12 +1,13 @@
 <script setup>
 import { ref } from 'vue';
 
-import CompletedTable from './completed/index.vue';
-import DisposalTable from './disposal/index.vue';
-import PendingTable from './pending/index.vue';
-import MontiorTable from './table/index.vue';
-import Yibihuan from './table/index.vue';
-
+import CustomizeTable from './customize/index.vue';
+import Daytable from './day/index.vue';
+import Halftable from './half/index.vue';
+import Montlytable from './montly/index.vue';
+import Seasontable from './season/index.vue';
+import Weektable from './week/index.vue';
+import Yeartable from './year/index.vue';
 
 const props = defineProps({
   secondShow: {
@@ -22,27 +23,23 @@ const props = defineProps({
     default: false,
   },
 });
-const emit = defineEmits(['arrow-change']);
-const activeName = ref('全部');
-const arrowChange = () => {
-  emit('arrow-change');
-};
+const activeName = ref('日报');
+
 const tabsData = ref([
-  { label: '全部', component: MontiorTable },
-  { label: '待处置', component: PendingTable },
-  { label: '处置中', component: DisposalTable },
-  { label: '待核查', component: CompletedTable },
-  { label: '已闭环', component: Yibihuan },
-
-
+  { label: '日报', component: Daytable },
+  { label: '周报', component: Weektable },
+  { label: '月报', component: Montlytable },
+  { label: '季报', component: Seasontable },
+  { label: '半年报', component: Halftable },
+  { label: '年报', component: Yeartable },
+  { label: '自定义报表', component: CustomizeTable },
 ]);
 const handleClick = (item) => {
-  console.log(item);
   const nowObj = tabsData.value.find((v) => v.label === item);
   isComponent.value.now = nowObj.component;
 };
 const isComponent = ref({
-  now: MontiorTable,
+  now: Daytable,
 });
 </script>
 <template>
@@ -69,7 +66,6 @@ const isComponent = ref({
       :is="isComponent.now"
       :class="props.secondShow ? 'second-show-table' : 'second-table'"
     />
-
   </div>
 </template>
 <style lang="scss">
