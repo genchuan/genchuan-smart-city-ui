@@ -43,7 +43,7 @@ const onPieSelect = async (faultType) => {
     ElMessage.warning('列表组件未就绪，请稍后重试');
     return;
   }
-  pileAlarmRef.value.handleFilterTagClick('fault_type', faultType);
+  pileAlarmRef.value.handleFilterTagClick('faultType', faultType);
 };
 
 // 柱状图点击筛选（日期）
@@ -53,7 +53,7 @@ const onBarSelect = async (date) => {
     ElMessage.warning('列表组件未就绪，请稍后重试');
     return;
   }
-  pileAlarmRef.value.handleFilterTagClick('alarm_time', date);
+  pileAlarmRef.value.handleFilterTagClick('alarmTime', date);
 };
 
 // 卡片点击筛选
@@ -72,12 +72,12 @@ const onCardSelect = async (status) => {
       break;
     case 'unhandled':
       // 未处置数：筛选状态为未派单、已派单、处置中
-      pileAlarmRef.value.handleFilterTagClick('alarm_status', ['未派单', '已派单', '处置中']);
+      pileAlarmRef.value.handleFilterTagClick('alarmStatus', ['未派单', '已派单', '处置中']);
       break;
     case 'handled':
     case 'rate':
       // 已处置数 或 处置完成率：筛选状态为已销单
-      pileAlarmRef.value.handleFilterTagClick('alarm_status', '已销单');
+      pileAlarmRef.value.handleFilterTagClick('alarmStatus', '已销单');
       break;
     default:
       break;
