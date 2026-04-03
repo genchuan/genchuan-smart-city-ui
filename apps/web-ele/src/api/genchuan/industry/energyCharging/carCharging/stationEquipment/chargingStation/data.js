@@ -91,36 +91,12 @@ export function getChargingStationDetail(params) {
 }
 
 // ==================== 图表相关接口 ====================
-
 /**
  * 获取充电场站总览图表数据
  * @returns {Promise}
  */
 export function getChargingStationChartData() {
   return requestClient.get('/vehiclecharging/charging_station/chart');
-}
-
-/**
- * 获取子区域场站数量统计（柱状图下钻）
- * @param {string} parentArea - 父区域名称
- * @returns {Promise}
- */
-export function getAreaCountChart(parentArea) {
-  return requestClient.get('/vehiclecharging/charging_station/chart/areaCount', {
-    params: { parentArea }
-  });
-}
-
-/**
- * 获取场站状态分布统计（卡片钻取）
- * @param {string} status - 场站状态（enabled/disabled/wait），为空则返回所有状态统计
- * @returns {Promise}
- */
-export function getStatusCountChart(status) {
-  const params = status ? { status } : {};
-  return requestClient.get('/vehiclecharging/charging_station/chart/statusCount', {
-    params
-  });
 }
 
 // 模拟充电场站管理数据
