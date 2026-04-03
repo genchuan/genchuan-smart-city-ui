@@ -49,6 +49,38 @@ const formatTimestamp = (timestamp) => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
+// ---------- 合作模式标签类型 ----------
+const getCoopModeTagType = (coopMode) => {
+  const map = {
+    self: 'primary',      // 自营 -> 蓝色
+    joint: 'success',     // 联营 -> 绿色
+    franchise: 'warning', // 加盟 -> 橙色
+  };
+  return map[coopMode] || 'info';
+};
+
+// ---------- 场站状态标签类型 ----------
+const getStatusTagType = (stationStatus) => {
+  const status = stationStatus?.toLowerCase?.() || '';
+  if (status === 'enabled' || status === '已启用') return 'success';
+  if (status === 'disabled' || status === '已停用') return 'danger';
+  if (status === 'wait' || status === '未启用') return 'warning';
+  return 'info';
+};
+
+// ---------- 场站状态显示文本 ----------
+const getStatusLabel = (stationStatus) => {
+  const map = {
+    enabled: '已启用',
+    disabled: '已停用',
+    wait: '未启用',
+    '已启用': '已启用',
+    '已停用': '已停用',
+    '未启用': '未启用',
+  };
+  return map[stationStatus] || stationStatus;
+};
+
 // ---------- 状态管理 ----------
 const activeName = ref('全部');
 const tagFilters = ref({});
@@ -225,7 +257,6 @@ const [DisableDrawer, disableDrawerApi] = useVbenDrawer({
     }
     const loading = ElLoading.service({text: '停用中...'});
     try {
-      // 单条停用，直接调用 disableChargingStation
       const id = disableData.value.ids[0];
       await disableChargingStation({id, stopReason});
       ElMessage.success('停用成功');
@@ -245,7 +276,7 @@ const [DisableDrawer, disableDrawerApi] = useVbenDrawer({
   },
 });
 
-// ---------- 批量停用抽屉（新增） ----------
+// ---------- 批量停用抽屉 ----------
 const batchDisableData = ref({ids: [], stopReason: ''});
 const [BatchDisableForm, batchDisableFormApi] = useVbenForm({
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 80},
@@ -313,19 +344,17 @@ const handleEnable = async (row) => {
   }
 };
 
-// ---------- 批量停用（修改：打开新抽屉） ----------
+// ---------- 批量停用 ----------
 const handleBatchDisable = () => {
   if (isEmpty(checkedIds.value)) {
     ElMessage.warning('请至少选择一条数据');
     return;
   }
-  const selectedRows = dataObj.list.filter(item => checkedIds.value.includes(item.id));
-  const hasInvalid = selectedRows.some(row => row.stationStatus !== 'enabled');
   batchDisableData.value.ids = [...checkedIds.value];
-  batchDisableDrawerApi.open(); // 打开新的批量停用抽屉
+  batchDisableDrawerApi.open();
 };
 
-// ---------- 行内停用（使用原有单条抽屉） ----------
+// ---------- 行内停用 ----------
 const handleRowDisable = (row) => {
   disableData.value.ids = [row.id];
   disableDrawerApi.open();
@@ -420,6 +449,12 @@ function getFieldLabel(field) {
 }
 
 function getTagDisplayText(field, value) {
+  if (field === 'coopMode') {
+    return getCoopModeLabel(value);
+  }
+  if (field === 'stationStatus') {
+    return getStatusLabel(value);
+  }
   return value;
 }
 
@@ -516,7 +551,7 @@ const getCoopModeLabel = (value) => coopModeMap[value] || value;
       <DisableForm/>
     </DisableDrawer>
 
-    <!-- 批量停用抽屉（新增） -->
+    <!-- 批量停用抽屉 -->
     <BatchDisableDrawer title="批量停用场站">
       <BatchDisableForm/>
     </BatchDisableDrawer>
@@ -553,7 +588,6 @@ const getCoopModeLabel = (value) => coopModeMap[value] || value;
             @click="handleBatchUpdate"
           />
           <IconButton content="导出" icon-name="download" @click="handleExport"/>
-          <!-- 停用按钮现在打开新的批量停用抽屉 -->
           <IconButton
             content="停用"
             icon-name="CircleClose"
@@ -593,10 +627,15 @@ const getCoopModeLabel = (value) => coopModeMap[value] || value;
         </el-text>
       </template>
 
+      <!-- 合作模式 - 使用 el-tag -->
       <template #coopMode="{ row }">
-        <el-text @click="handleFilterTagClick('coopMode', row.coopMode)" type="primary">
+        <el-tag
+          :type="getCoopModeTagType(row.coopMode)"
+          @click="handleFilterTagClick('coopMode', row.coopMode)"
+          style="cursor: pointer;"
+        >
           {{ getCoopModeLabel(row.coopMode) }}
-        </el-text>
+        </el-tag>
       </template>
 
       <template #manager="{ row }">
@@ -605,10 +644,15 @@ const getCoopModeLabel = (value) => coopModeMap[value] || value;
         </el-text>
       </template>
 
+      <!-- 场站状态 - 使用 el-tag -->
       <template #status="{ row }">
-        <el-text @click="handleFilterTagClick('stationStatus', row.stationStatus)" type="primary">
-          {{ row.stationStatus }}
-        </el-text>
+        <el-tag
+          :type="getStatusTagType(row.stationStatus)"
+          @click="handleFilterTagClick('stationStatus', row.stationStatus)"
+          style="cursor: pointer;"
+        >
+          {{ getStatusLabel(row.stationStatus) }}
+        </el-tag>
       </template>
 
       <!-- 时间列格式化 -->
