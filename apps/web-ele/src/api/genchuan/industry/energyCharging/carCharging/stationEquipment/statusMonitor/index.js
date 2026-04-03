@@ -13,7 +13,14 @@ export function exporStatusExcel() {
 export function handleAbnormal(data) {
   return requestClient.put(`/vehiclecharging/status-monitor/handleAbnormal`, data);
 } 
- 
+/** 获得场站详情 */
+export function getStationDetail(params) {
+  return requestClient.get(`/vehiclecharging/charging_station/get`, {params});
+}
+/** 获得车位详情 */
+export function getChargingLotDetail(params) {
+  return requestClient.get(`/vehiclecharging/charging-lot/get`, {params});
+}
 
 /** 获得场站设备实时运行监测图 */
 export function getStationDeviceRealTimeMonitor(data) {

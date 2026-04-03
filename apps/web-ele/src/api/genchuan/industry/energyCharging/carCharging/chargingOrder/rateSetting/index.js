@@ -39,9 +39,11 @@ export function getRateSettingChart(data) {
   return requestClient.get(`/vehiclecharging/rate-setting/chart`, data);
 }
 /** 柱状图钻取 */
-export function getRateSettingGradeCount(data) {
-  return requestClient.get(`/vehiclecharging/rate-setting/chart/gradeCount`, data);
+export function getRateSettingGradeCount(params) {
+  return requestClient.get(`/vehiclecharging/rate-setting/chart/gradeCount`, {params});
 }
+
+
 
 /** 获得场站设备实时运行监测图 */
 export function getStationDeviceRealTimeMonitor(data) {

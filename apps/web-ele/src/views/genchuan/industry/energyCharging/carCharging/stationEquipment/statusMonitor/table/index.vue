@@ -7,11 +7,12 @@ import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 import { ElImage, ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import { UploadFilled } from '@element-plus/icons-vue';
 import screenfull from 'screenfull';
-
+import {detailFields} from '#/views/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingLot/table/data.js'
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getDriveinList, exporStatusExcel, handleAbnormal } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/statusMonitor/index.js';
- 
+import { getDriveinList, exporStatusExcel, handleAbnormal, getStationDetail, getChargingLotDetail } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/statusMonitor/index.js';
+import stationDetail from '#/views/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingStation/components/detail.vue';
+import chargingLotDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
 
@@ -209,16 +210,48 @@ const handleClick = () => {
 // ==================== 快捷筛选处理 ====================
 
 // 处理所属场站点击
-const handleStationClick = (stationName) => {
-  filterStationName.value = filterStationName.value === stationName ? '' : stationName;
-  gridApi.query();
+const handleStationClick = async (stationName, stationId) => {
+  try {
+    // 调用场站详情接口
+    const response = await getStationDetail({ id: stationId });
+    if (response) {
+      // 转换时间戳
+      const formattedResponse = {
+        ...response,
+        createTime: formatTimestamp(response.createTime),
+        updateTime: formatTimestamp(response.updateTime)
+      };
+      
+      // 打开场站详情抽屉
+      stationDetailData.value = formattedResponse;
+      stationDetailRef.value?.open();
+    }
+  } catch (error) {
+    ElMessage.error(`获取场站详情失败：${error.msg || '请稍后重试'}`);
+  }
 };
 
+// 场站详情抽屉相关
+const stationDetailRef = ref(null);
+const stationDetailData = ref({});
+
 // 处理所属车位点击
-const handleLotClick = (lotCode) => {
-  filterLotCode.value = filterLotCode.value === lotCode ? '' : lotCode;
-  gridApi.query();
+const handleLotClick = async (lotCode, lotId) => {
+  try {
+    // 调用车位详情接口
+    const response = await getChargingLotDetail({ id: lotId });
+    if (response) {
+      // 打开车位详情抽屉
+      dataObj.chargingdetailObj = response;
+      chargingLotRef.value?.open();
+    }
+  } catch (error) {
+    ElMessage.error(`获取车位详情失败：${error.msg || '请稍后重试'}`);
+  }
 };
+
+// 车位详情抽屉相关
+const chargingLotRef = ref(null);
 
 // 处理设备类型点击
 const handleDeviceTypeClick = (deviceType) => {
@@ -398,6 +431,12 @@ const confirmDisposeHandle = async () => {
 
 <template>
   <div class="park-lot-table-new">
+    <chargingLotDrawer
+      ref="chargingLotRef"
+      :title="`车位详情`"
+      :data="dataObj.chargingdetailObj"
+      :fields="detailFields"
+    />
     <!-- 异常处置弹窗（包含处置措施输入） -->
     <el-dialog
       title="异常处置"
@@ -460,6 +499,9 @@ const confirmDisposeHandle = async () => {
       :detail-obj="dataObj.detailObj"
       title="详情"
     />
+
+    <!-- 场站详情抽屉 -->
+    <stationDetail ref="stationDetailRef" :detail-obj="stationDetailData" />
 
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -578,10 +620,10 @@ const confirmDisposeHandle = async () => {
         </el-text>
       </template>
 
-      <!-- 所属场站插槽 - 点击筛选 -->
+      <!-- 所属场站插槽 - 点击查看详情 -->
       <template #station_name="{ row }">
         <el-text
-          @click="handleStationClick(row.stationName)"
+          @click="handleStationClick(row.stationName, row.stationId)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
@@ -590,10 +632,10 @@ const confirmDisposeHandle = async () => {
         </el-text>
       </template>
 
-      <!-- 所属车位插槽 - 点击筛选 -->
+      <!-- 所属车位插槽 - 点击查看详情 -->
       <template #lot_code="{ row }">
         <el-text
-          @click="handleLotClick(row.lotCode)"
+          @click="handleLotClick(row.lotCode, row.lotId)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
