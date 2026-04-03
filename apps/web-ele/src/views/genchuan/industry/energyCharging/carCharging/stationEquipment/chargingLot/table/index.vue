@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
@@ -15,15 +15,22 @@ import {
   createChargingLot,
   exportChargingLot,
   getChargingLotPage,
+  getChargingPileDetail,
+  getChargingStationDetail,
   updateChargingLot,
   updateChargingLotStatus,
 } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingLot';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
+import StationDetailDrawer from '#/views/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingStation/components/detail.vue';
+import PileDetailDrawer from '#/views/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingPile/table/detail.vue';
+
+import { formatDate } from '#/utils/genchuan/formatTime';
 
 import MarkOccupyDialog from '../components/MarkOccupyDialog.vue';
 import {
   detailFields,
+  fetchStationOptions,
   formatTimestamp,
   getLotStatusTagType,
   getLotTypeTagType,
@@ -65,7 +72,39 @@ const [Drawer, drawerApi] = useVbenDrawer({
 
 const detailDrawerRef = ref(null);
 const markOccupyDialogRef = ref(null);
+const stationDetailRef = ref(null);
+const pileDetailRef = ref(null);
 const formData = ref();
+
+// 场站详情数据
+const stationDetailData = ref({});
+// 充电桩详情数据
+const pileDetailData = ref({});
+
+// 场站下拉选项
+const stationOptions = ref([]);
+// 当前选中的场站名称（用于表单提交）
+const selectedStationName = ref('');
+
+// 加载场站列表
+const loadStationOptions = async () => {
+  stationOptions.value = await fetchStationOptions();
+};
+
+// 初始化时加载场站列表
+onMounted(() => {
+  loadStationOptions();
+});
+
+// 处理场站选择变化
+const handleStationChange = (value) => {
+  const selectedStation = stationOptions.value.find(
+    (item) => item.value === value,
+  );
+  if (selectedStation) {
+    selectedStationName.value = selectedStation.label;
+  }
+};
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -76,9 +115,42 @@ const [Form, formApi] = useVbenForm({
     labelWidth: 100,
   },
   layout: 'horizontal',
-  schema: useFormSchema(),
+  schema: computed(() => {
+    const schema = useFormSchema(stationOptions.value);
+    // 找到所属场站字段，添加onChange事件
+    const stationField = schema.find((item) => item.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps = {
+        ...stationField.componentProps,
+        onChange: handleStationChange,
+      };
+    }
+    return schema;
+  }),
   showDefaultActions: false,
 });
+
+// 监听场站选项变化，更新表单schema
+watch(
+  stationOptions,
+  (newOptions) => {
+    formApi.setState((prev) => ({
+      ...prev,
+      schema: computed(() => {
+        const schema = useFormSchema(newOptions);
+        const stationField = schema.find((item) => item.fieldName === 'stationId');
+        if (stationField) {
+          stationField.componentProps = {
+            ...stationField.componentProps,
+            onChange: handleStationChange,
+          };
+        }
+        return schema;
+      }),
+    }));
+  },
+  { deep: true },
+);
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   appendToMain: true,
@@ -91,6 +163,21 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     try {
       const submitData = { ...obj };
 
+      // 如果选择了场站，使用记录的stationName
+      if (submitData.stationId) {
+        // 优先使用selectedStationName，如果没有则根据stationId查找
+        if (selectedStationName.value) {
+          submitData.stationName = selectedStationName.value;
+        } else {
+          const selectedStation = stationOptions.value.find(
+            (item) => item.value === submitData.stationId,
+          );
+          if (selectedStation) {
+            submitData.stationName = selectedStation.label;
+          }
+        }
+      }
+
       if (formDrawerApi.sharedData.payload.title === textObj.addText) {
         await createChargingLot(submitData);
         ElMessage.success('新增成功');
@@ -100,25 +187,46 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       }
       handleRefresh();
       formDrawerApi.close();
+      // 重置选中的场站名称
+      selectedStationName.value = '';
     } catch (error) {
       ElMessage.error('操作失败');
       console.error(error);
     }
   },
   async onOpenChange(isOpen) {
-    if (isOpen) {
-      formData.value = formDrawerApi.getData();
-      if (formData.value?.id) {
-        await formApi.setValues(formData.value);
-      } else {
-        formApi.resetForm();
+    if (!isOpen) {
+      // 关闭抽屉时重置选中的场站名称
+      selectedStationName.value = '';
+      return;
+    }
+    formData.value = formDrawerApi.getData();
+    if (formData.value?.id) {
+      // 编辑时，设置当前选中的场站名称
+      if (formData.value.stationId) {
+        const selectedStation = stationOptions.value.find(
+          (item) => item.value === formData.value.stationId,
+        );
+        if (selectedStation) {
+          selectedStationName.value = selectedStation.label;
+        }
       }
+      await formApi.setValues(formData.value);
+    } else {
+      formApi.resetForm();
+      selectedStationName.value = '';
     }
   },
 });
 
-/** 刷新表格 */
+/** 刷新表格 - 同时清除所有快捷筛选 */
 function handleRefresh() {
+  // 清除所有快捷筛选变量
+  filterStationId.value = '';
+  filterLotType.value = '';
+  filterLotStatus.value = '';
+  filterCreator.value = '';
+  filterCreateTime.value = '';
   gridApi.query();
 }
 
@@ -277,7 +385,10 @@ const getTableData = async (pageObj) => {
     // 构建时间范围数组参数
     // 取日期部分（前10个字符：yyyy-MM-dd），避免重复追加时间
     const createTimeParam = filterCreateTime.value
-      ? [filterCreateTime.value.substring(0, 10) + ' 00:00:00', filterCreateTime.value.substring(0, 10) + ' 23:59:59']
+      ? [
+          filterCreateTime.value.substring(0, 10) + ' 00:00:00',
+          filterCreateTime.value.substring(0, 10) + ' 23:59:59',
+        ]
       : undefined;
 
     const queryParams = {
@@ -321,15 +432,30 @@ const [QueryForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema().map((v) => {
+  schema: computed(() => useSearchFormSchema(stationOptions.value).map((v) => {
     delete v.rules;
     return { ...v };
-  }),
+  })),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
   },
 });
+
+// 监听场站选项变化，更新搜索表单schema
+watch(
+  stationOptions,
+  (newOptions) => {
+    QueryForm.setState((prev) => ({
+      ...prev,
+      schema: computed(() => useSearchFormSchema(newOptions).map((v) => {
+        delete v.rules;
+        return { ...v };
+      })),
+    }));
+  },
+  { deep: true },
+);
 
 // 搜索表单查询
 function onSubmit(values) {
@@ -379,8 +505,59 @@ const handleOpenDetail = (row) => {
     detailDrawerRef.value.open();
   }
 };
-const openPileDetail = () => {
-  ElMessage.info('打开对应充电桩详情');
+
+// 打开场站详情抽屉
+const openStationDetail = async (stationId) => {
+  if (!stationId) {
+    ElMessage.warning('场站ID不能为空');
+    return;
+  }
+  try {
+    const response = await getChargingStationDetail({ id: stationId });
+    if (response) {
+      // 处理时间戳转换
+      if (response.createTime) {
+        response.createTime = formatDate(new Date(response.createTime));
+      }
+      if (response.updateTime) {
+        response.updateTime = formatDate(new Date(response.updateTime));
+      }
+      stationDetailData.value = response;
+      if (stationDetailRef.value) {
+        stationDetailRef.value.open();
+      }
+    }
+  } catch (error) {
+    ElMessage.error('获取场站详情失败');
+    console.error(error);
+  }
+};
+
+// 打开充电桩详情抽屉
+const openPileDetail = async (pileId) => {
+  if (!pileId) {
+    ElMessage.warning('充电桩ID不能为空');
+    return;
+  }
+  try {
+    const response = await getChargingPileDetail({ id: pileId });
+    if (response) {
+      // 处理时间戳转换
+      if (response.createTime) {
+        response.createTime = formatDate(new Date(response.createTime));
+      }
+      if (response.updateTime) {
+        response.updateTime = formatDate(new Date(response.updateTime));
+      }
+      pileDetailData.value = response;
+      if (pileDetailRef.value) {
+        pileDetailRef.value.open();
+      }
+    }
+  } catch (error) {
+    ElMessage.error('获取充电桩详情失败');
+    console.error(error);
+  }
 };
 
 const handleSerachShow = () => {
@@ -393,10 +570,11 @@ const handleFullShow = () => {
 
 // ==================== 快捷筛选处理 ====================
 
-// 处理所属场站点击
-const handleStationClick = (stationId) => {
-  filterStationId.value = filterStationId.value === stationId ? '' : stationId;
-  gridApi.query();
+// 处理所属场站点击 - 改为打开详情
+const handleStationClick = (row) => {
+  if (row.stationId) {
+    openStationDetail(row.stationId);
+  }
 };
 
 // 处理车位类型点击
@@ -491,6 +669,18 @@ defineExpose({
       :title="`${dataObj.detailObj.lotCode}详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
+    />
+    <!--   场站详情抽屉-->
+    <StationDetailDrawer
+      ref="stationDetailRef"
+      :detail-obj="stationDetailData"
+      title="场站详情"
+    />
+    <!--   充电桩详情抽屉-->
+    <PileDetailDrawer
+      ref="pileDetailRef"
+      :detail-obj="pileDetailData"
+      title="充电桩详情"
     />
     <!--   占用标记弹窗-->
     <MarkOccupyDialog ref="markOccupyDialogRef" @success="handleRefresh" />
@@ -607,10 +797,10 @@ defineExpose({
           {{ row.lotCode }}
         </el-text>
       </template>
-      <!-- 所属场站插槽 - 点击筛选 -->
+      <!-- 所属场站插槽 - 点击打开场站详情 -->
       <template #stationName="{ row }">
         <el-text
-          @click="handleStationClick(row.stationId)"
+          @click="handleStationClick(row)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
@@ -631,10 +821,10 @@ defineExpose({
           }}
         </ElTag>
       </template>
-      <!-- 关联充电桩插槽 - 点击提示预留后续拓展 -->
+      <!-- 关联充电桩插槽 - 点击打开充电桩详情 -->
       <template #pileName="{ row }">
         <el-text
-          @click="openPileDetail()"
+          @click="openPileDetail(row.pileId)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
