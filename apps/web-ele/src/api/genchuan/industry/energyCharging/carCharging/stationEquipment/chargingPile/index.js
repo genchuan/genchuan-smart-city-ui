@@ -3,8 +3,8 @@ import { requestClient } from '#/api/request.js';
 
 /**
  * 分页查询充电桩列表（支持筛选和刷新）
- * @param {Object} params
- * @returns {Promise}
+ * @param {Object} params - 查询参数（pageNo, pageSize, 以及其他筛选字段）
+ * @returns {Promise<{list: Array, total: number}>}
  */
 export function getPageList(params) {
   return requestClient.get('/vehiclecharging/charging-pile/page', { params });
@@ -12,7 +12,7 @@ export function getPageList(params) {
 
 /**
  * 新增充电桩
- * @param {Object} data
+ * @param {Object} data - 充电桩数据（pileCode, model, power, manufacturer, stationId, lotId, chargeMode, remark）
  * @returns {Promise}
  */
 export function createPile(data) {
@@ -21,7 +21,7 @@ export function createPile(data) {
 
 /**
  * 编辑充电桩
- * @param {Object} data
+ * @param {Object} data - 充电桩数据（需包含 id）
  * @returns {Promise}
  */
 export function updatePile(data) {
@@ -30,7 +30,7 @@ export function updatePile(data) {
 
 /**
  * 删除充电桩
- * @param {number} id
+ * @param {number} id - 充电桩ID
  * @returns {Promise}
  */
 export function deletePile(id) {
@@ -38,12 +38,12 @@ export function deletePile(id) {
 }
 
 /**
- * 调试充电桩（支持批量，id用逗号分隔）
- * @param {Object} data - { id, debugResult }
+ * 调试充电桩（批量调试时 id 用逗号分隔）
+ * @param {Object} data - { id, debugResult? }
  * @returns {Promise}
  */
 export function debugPile(data) {
-  return requestClient.put('/vehiclecharging/charging-pile/debug', data);
+  return requestClient.post('/vehiclecharging/charging-pile/debug', data);
 }
 
 /**
@@ -52,16 +52,16 @@ export function debugPile(data) {
  * @returns {Promise}
  */
 export function enablePile(data) {
-  return requestClient.put('/vehiclecharging/charging-pile/enable', data);
+  return requestClient.post('/vehiclecharging/charging-pile/enable', data);
 }
 
 /**
  * 停用充电桩
- * @param {Object} data - { id, stopReason }
+ * @param {Object} data - { id, remark? }
  * @returns {Promise}
  */
 export function disablePile(data) {
-  return requestClient.put('/vehiclecharging/charging-pile/disable', data);
+  return requestClient.post('/vehiclecharging/charging-pile/disable', data);
 }
 
 /**
@@ -74,21 +74,22 @@ export function restartPile(data) {
 }
 
 /**
- * 获取充电枪二维码（Base64）
- * @param {number} id
- * @returns {Promise<string>}
+ * 获取充电枪二维码图片URL
+ * @param {number} id - 充电桩ID
+ * @returns {Promise<string>} 二维码图片URL
  */
-export function getQrcode(id) {
-  return requestClient.get(`/vehiclecharging/charging-pile/qrcode?id=${id}`);
+export async function getQrcode(id) {
+  const res = await requestClient.get(`/vehiclecharging/charging-pile/qrcode?id=${id}`);
+  // 兼容 {code,data} 格式或直接字符串
+  return res?.data ?? res;
 }
 
 /**
- * 导出充电桩数据（支持 Excel/PDF，目前仅Excel有效）
- * @param {Object} params - 包含 exportType, 以及筛选条件
+ * 导出充电桩数据（Excel）
+ * @param {Object} params - 筛选参数及 exportType
  * @returns {Promise<Blob>}
  */
 export function exportPile(params) {
-  // 实际后端可能只支持Excel，这里统一调用导出Excel接口
   return requestClient.get('/vehiclecharging/charging-pile/export-excel', {
     params,
     responseType: 'blob',
@@ -96,7 +97,7 @@ export function exportPile(params) {
 }
 
 /**
- * 获取各状态充电桩数量（返回数组）
+ * 获取各状态充电桩数量（用于图表卡片）
  * @returns {Promise<Array<{pileStatus: string, count: number}>>}
  */
 export function getStatusCount() {
@@ -104,7 +105,7 @@ export function getStatusCount() {
 }
 
 /**
- * 获取图表数据
+ * 获取图表数据（运行时长趋势、类型统计）
  * @param {Object} params - stationId, startTime, endTime
  * @returns {Promise}
  */
@@ -113,21 +114,23 @@ export function getChartData(params) {
 }
 
 /**
- * 获取场站简易列表 (适配新路径)
+ * 获取场站简易列表（用于下拉选择）
+ * @returns {Promise<Array<{value: number, label: string}>>}
  */
 export function getStationSimpleList() {
   return requestClient.get('/vehiclecharging/charging-pile/station-simple-list');
 }
 
 /**
- * 获取车位简易列表 (适配新路径)
+ * 获取车位简易列表（用于下拉选择）
+ * @returns {Promise<Array<{value: number, label: string}>>}
  */
 export function getLotSimpleList() {
   return requestClient.get('/vehiclecharging/charging-pile/simple-list');
 }
 
 /**
- * 获取充电模式字典 (适配新接口)
+ * 获取充电模式字典
  * @returns {Promise<Array<{value: string, label: string}>>}
  */
 export function getChargeModeDict() {
@@ -135,7 +138,7 @@ export function getChargeModeDict() {
 }
 
 /**
- * 获取设备状态字典 (适配新接口)
+ * 获取设备状态字典
  * @returns {Promise<Array<{value: string, label: string}>>}
  */
 export function getPileStatusDict() {
@@ -144,7 +147,7 @@ export function getPileStatusDict() {
 
 /**
  * 获取车位详情
- * @param {number} id
+ * @param {number} id - 车位ID
  * @returns {Promise}
  */
 export function getLotDetail(id) {

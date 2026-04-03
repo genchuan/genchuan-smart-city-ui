@@ -1,86 +1,70 @@
-<!-- charging-pile/table/index.vue -->
 <template>
   <div class="park-lot-table-new">
-    <!-- 抽屉：新增/编辑 -->
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
 
-    <!-- 抽屉：详情 -->
     <PileDetailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj" />
-
-    <!-- 抽屉：车位详情 -->
     <LotDetailDrawer ref="lotDetailDrawerRef" />
+    <DebugDrawer ref="debugDrawerRef" @success="handleDebugSuccess" />
 
-    <!-- 抽屉：搜索 -->
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
 
-    <!-- 调试弹窗（带结果和二维码） -->
-    <el-dialog v-model="debugDialogVisible" title="调试充电桩" width="30%">
-      <el-form :model="debugForm">
-        <el-form-item label="调试结果">
-          <el-input v-model="debugForm.result" type="textarea" rows="3" placeholder="请输入调试结果" />
-        </el-form-item>
-        <el-form-item label="充电枪二维码" v-if="debugQrcode">
-          <img :src="debugQrcode" style="width: 100px; height: 100px;" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="debugDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmDebug">确认调试</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 二维码预览弹窗 -->
+    <!-- 二维码大图预览弹窗 -->
     <el-dialog v-model="qrcodePreviewVisible" title="二维码预览" width="400px" center>
       <div style="text-align: center;">
-        <img :src="qrcodePreviewSrc" style="max-width: 100%;" />
+        <img :src="qrcodePreviewSrc" style="width: 100%" referrerpolicy="no-referrer" />
       </div>
     </el-dialog>
 
-    <!-- 表格 -->
     <Grid>
-      <!-- 顶部 tabs 和筛选标签 -->
       <template #table-title>
         <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
-          <div v-if="props.secondShow">
-            <el-tabs v-model="activeName" class="demo-tabs" @tab-change="handleClick">
-              <el-tab-pane v-for="item in tabsData" :key="item.label" :label="createLabel(item)" :name="item.name" />
-            </el-tabs>
-          </div>
+          <!-- 设备编号筛选标签 -->
           <el-tag v-if="searchParams.pileCode" type="primary" closable @close="handleClearField('pileCode')">
             设备编号：{{ searchParams.pileCode }}
           </el-tag>
+          <!-- 型号筛选标签 -->
           <el-tag v-if="searchParams.model" type="primary" closable @close="handleClearField('model')">
             型号：{{ searchParams.model }}
           </el-tag>
+          <!-- 生产厂家筛选标签 -->
           <el-tag v-if="searchParams.manufacturer" type="primary" closable @close="handleClearField('manufacturer')">
             生产厂家：{{ searchParams.manufacturer }}
           </el-tag>
+          <!-- 所属场站筛选标签 -->
           <el-tag v-if="searchParams.stationName" type="primary" closable @close="handleClearField('stationName')">
             所属场站：{{ searchParams.stationName }}
           </el-tag>
+          <!-- 充电模式筛选标签 -->
           <el-tag v-if="searchParams.chargeMode" type="primary" closable @close="handleClearField('chargeMode')">
             充电模式：{{ chargeModeMap.get(String(searchParams.chargeMode)) || searchParams.chargeMode }}
           </el-tag>
+          <!-- 设备状态筛选标签 -->
           <el-tag v-if="searchParams.pileStatus" type="primary" closable @close="handleClearField('pileStatus')">
             设备状态：{{ pileStatusMap.get(String(searchParams.pileStatus)) || searchParams.pileStatus }}
           </el-tag>
-          <el-tag v-if="searchParams.faultFlag !== undefined" type="primary" closable @close="handleClearField('faultFlag')">
-            故障标记：{{ searchParams.faultFlag ? '有故障' : '无故障' }}
+          <!-- 故障标记筛选标签 -->
+          <el-tag v-if="searchParams.faultFlag !== undefined && searchParams.faultFlag !== null && searchParams.faultFlag !== ''" type="primary" closable @close="handleClearField('faultFlag')">
+            故障标记：{{ searchParams.faultFlag === true || searchParams.faultFlag === 'true' ? '有故障' : '无故障' }}
           </el-tag>
+          <!-- 创建时间筛选标签 -->
           <el-tag v-if="searchParams.createTimeBegin" type="primary" closable @close="handleClearField('createTimeBegin')">
             创建时间：{{ searchParams.createTimeBegin }} 至 {{ searchParams.createTimeEnd }}
           </el-tag>
+          <!-- 创建人筛选标签 -->
           <el-tag v-if="searchParams.creator" type="primary" closable @close="handleClearField('creator')">
             创建人：{{ searchParams.creator }}
+          </el-tag>
+          <!-- 运行时长筛选标签（图表钻取用） -->
+          <el-tag v-if="searchParams.runTime !== undefined && searchParams.runTime !== null && searchParams.runTime !== ''" type="primary" closable @close="handleClearField('runTime')">
+            运行时长：{{ searchParams.runTime }} 小时
           </el-tag>
         </div>
       </template>
 
-      <!-- 工具栏按钮 -->
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
@@ -103,87 +87,71 @@
         </div>
       </template>
 
-      <!-- 自定义列模板 -->
+      <!-- 自定义列模板（钻取交互） -->
       <template #pileCode="{ row }">
-        <el-text @click="handleGarageOpenDetail(row)" class="common-align" type="primary">
-          {{ row.pileCode }}
-        </el-text>
+        <el-text @click="handleGarageOpenDetail(row)" type="primary">{{ row.pileCode }}</el-text>
       </template>
       <template #model="{ row }">
-        <el-text @click="handleFieldClick('model', row.model)" class="common-align" type="primary">
-          {{ row.model }}
-        </el-text>
+        <el-text @click="handleFieldClick('model', row.model)" type="primary">{{ row.model }}</el-text>
       </template>
       <template #manufacturer="{ row }">
-        <el-text @click="handleFieldClick('manufacturer', row.manufacturer)" class="common-align" type="primary">
-          {{ row.manufacturer }}
-        </el-text>
+        <el-text @click="handleFieldClick('manufacturer', row.manufacturer)" type="primary">{{ row.manufacturer }}</el-text>
       </template>
       <template #stationName="{ row }">
-        <el-text @click="handleFieldClick('stationName', row.stationName)" class="common-align" type="primary">
-          {{ row.stationName }}
-        </el-text>
+        <el-text @click="handleFieldClick('stationName', row.stationName)" type="primary">{{ row.stationName }}</el-text>
       </template>
       <template #lotName="{ row }">
-        <el-text @click="handleLotDetail(row)" class="common-align" type="primary">
-          {{ row.lotName || '-' }}
-        </el-text>
+        <el-text @click="handleLotDetail(row)" type="primary">{{ row.lotName || '-' }}</el-text>
       </template>
       <template #chargeMode="{ row }">
-        <el-text @click="handleFieldClick('chargeMode', row.chargeMode)" class="common-align" type="primary">
-          {{ row.chargeModeName }}
-        </el-text>
+        <el-text @click="handleFieldClick('chargeMode', row.chargeMode)" type="primary">{{ row.chargeModeName }}</el-text>
       </template>
       <template #pileStatus="{ row }">
-        <el-text @click="handleFieldClick('pileStatus', row.pileStatus)" class="common-align" type="primary">
-          {{ row.pileStatusName }}
-        </el-text>
+        <el-text @click="handleFieldClick('pileStatus', row.pileStatus)" type="primary">{{ row.pileStatusName }}</el-text>
       </template>
       <template #faultFlag="{ row }">
-        <el-text @click="handleFieldClick('faultFlag', row.faultFlag)" class="common-align" :type="row.faultFlag ? 'danger' : 'success'">
+        <el-text @click="handleFieldClick('faultFlag', row.faultFlag)" :type="row.faultFlag ? 'danger' : 'success'">
           {{ row.faultFlag ? '有故障' : '无故障' }}
         </el-text>
       </template>
+
+      <!-- 二维码列 -->
       <template #qrcode="{ row }">
-        <el-image
-          v-if="row.qrcodeBase64"
-          :src="row.qrcodeBase64"
-          style="width: 40px; height: 40px; cursor: pointer"
-          fit="contain"
-          @click="previewQrcode(row)"
+        <div v-if="row.qrcodeLoading" class="qrcode-loading">加载中...</div>
+        <img
+          v-else-if="row.qrcodeUrl"
+          :src="row.qrcodeUrl"
+          class="qrcode-img"
+          referrerpolicy="no-referrer"
+          @click="previewQrcode(row.id)"
+          @error="() => handleImageError(row)"
         />
-        <span v-else>-</span>
+        <span v-else class="qrcode-placeholder">暂无</span>
       </template>
+
       <template #createTime="{ row }">
-        <el-text @click="handleFieldClick('createTime', row.createTime)" class="common-align" type="primary">
-          {{ row.createTime }}
-        </el-text>
+        <el-text @click="handleFieldClick('createTime', row.createTime)" type="primary">{{ row.createTime }}</el-text>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFieldClick('creator', row.creator)" class="common-align" type="primary">
-          {{ row.creator }}
-        </el-text>
+        <el-text @click="handleFieldClick('creator', row.creator)" type="primary">{{ row.creator }}</el-text>
       </template>
-      <!-- 行内操作按钮 - 根据状态动态展示 -->
+
       <template #actions="{ row }">
-        <div class="table-toolbar-tools" style="display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap;">
+        <div class="table-toolbar-tools" style="display: flex; gap: 4px; flex-wrap: wrap;justify-content: center;">
           <IconButton content="编辑" icon-name="edit" @click="handleEdit(row)" />
           <IconButton content="查看" icon-name="View" @click="handleGarageOpenDetail(row)" />
 
           <template v-if="row.pileStatusName === '未调试'">
             <IconButton content="调试" icon-name="Operation" @click="handleDebug(row)" />
           </template>
-
           <template v-else-if="row.pileStatusName === '已调试'">
             <IconButton content="启用" icon-name="Check" @click="handleEnable(row)" />
             <IconButton content="停用" icon-name="Close" @click="handleDisable(row)" />
           </template>
-
           <template v-else-if="row.pileStatusName === '已启用'">
             <IconButton content="停用" icon-name="Close" @click="handleDisable(row)" />
             <IconButton content="重启" icon-name="Refresh" @click="handleRestart(row)" />
           </template>
-
           <template v-else-if="row.pileStatusName === '已停用'">
             <IconButton content="启用" icon-name="Check" @click="handleEnable(row)" />
             <IconButton content="重启" icon-name="Refresh" @click="handleRestart(row)" />
@@ -193,7 +161,6 @@
         </div>
       </template>
 
-      <!-- 底部统计 -->
       <template #bottom>
         <div class="common-total" @click="changeTotalShow">
           <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow"><ArrowDown /></el-icon>
@@ -234,11 +201,11 @@ import {
   getLotSimpleList,
   getChargeModeDict,
   getPileStatusDict,
-  getLotDetail,
 } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingPile/index.js';
 
 import PileDetailDrawer from './detail.vue';
 import LotDetailDrawer from './lotDetail.vue';
+import DebugDrawer from './debugDrawer.vue';
 import {
   textObj,
   useFormSchema,
@@ -252,10 +219,7 @@ const props = defineProps({
 });
 const emit = defineEmits(['arrow-change', 'refresh-chart']);
 
-// ==================== 基础数据 ====================
-const getTitle = computed(() => {
-  return formData.value?.id ? textObj.editText : textObj.addText;
-});
+const getTitle = computed(() => (formData.value?.id ? textObj.editText : textObj.addText));
 const searchParams = ref({});
 const formData = ref();
 const checkedIds = ref([]);
@@ -269,74 +233,63 @@ const dataObj = reactive({
   list: [],
 });
 
-// 字典映射
 const chargeModeMap = ref(new Map());
 const pileStatusMap = ref(new Map());
 const defaultStatusId = ref(null);
 
-// 调试弹窗
-const debugDialogVisible = ref(false);
-const debugForm = ref({ id: null, result: '' });
-const debugQrcode = ref('');
-
-// 二维码预览弹窗
+// 二维码相关
 const qrcodePreviewVisible = ref(false);
 const qrcodePreviewSrc = ref('');
+const qrcodeUrlMap = ref(new Map());
 
-// 详情抽屉
 const detailDrawerRef = ref(null);
 const lotDetailDrawerRef = ref(null);
+const debugDrawerRef = ref(null);
 
-// ==================== 辅助函数 ====================
-const createLabel = (item) => `${item.label} (${item.count})`;
-
-async function formatList(list) {
-  // 为每一行异步获取二维码 Base64（如果后端未直接返回）
-  const formatted = [];
-  for (const item of (list || [])) {
-    let qrcodeBase64 = null;
-    if (item.qrcode) {
-      // 如果后端返回了 qrcode 字段（可能是 URL），则尝试获取 Base64
-      // 这里假设后端返回的 qrcode 字段是 Base64 字符串，直接使用
-      qrcodeBase64 = item.qrcode;
-    } else if (item.id) {
-      // 如果没有，则主动请求（注意性能，可改为批量请求或懒加载）
-      try {
-        qrcodeBase64 = await getQrcode(item.id);
-      } catch (e) {
-        console.warn(`获取二维码失败 id=${item.id}`, e);
-      }
-    }
-    formatted.push({
-      ...item,
-      createTime: item.createTime ? dayjs(item.createTime).format('YYYY-MM-DD HH:mm:ss') : '-',
-      updateTime: item.updateTime ? dayjs(item.updateTime).format('YYYY-MM-DD HH:mm:ss') : '-',
-      faultFlagText: item.faultFlag ? '有故障' : '无故障',
-      pileStatusName: pileStatusMap.value.get(String(item.pileStatus)) || item.pileStatusName || '未知',
-      chargeModeName: chargeModeMap.value.get(String(item.chargeMode)) || item.chargeModeName || '未知',
-      qrcodeBase64,
-    });
-  }
-  return formatted;
+function formatList(list) {
+  return (list || []).map(item => ({
+    ...item,
+    createTime: item.createTime ? dayjs(item.createTime).format('YYYY-MM-DD HH:mm:ss') : '-',
+    updateTime: item.updateTime ? dayjs(item.updateTime).format('YYYY-MM-DD HH:mm:ss') : '-',
+    pileStatusName: pileStatusMap.value.get(String(item.pileStatus)) || item.pileStatusName || '未知',
+    chargeModeName: chargeModeMap.value.get(String(item.chargeMode)) || item.chargeModeName || '未知',
+    qrcodeUrl: qrcodeUrlMap.value.get(item.id) || null,
+    qrcodeLoading: !qrcodeUrlMap.value.has(item.id),
+  }));
 }
 
-// 获取表格数据
+// 批量加载当前页二维码
+async function loadQrcodesForCurrentPage() {
+  const pendingItems = dataObj.list.filter(item => !item.qrcodeUrl && item.qrcodeLoading === true);
+  if (pendingItems.length === 0) return;
+  const promises = pendingItems.map(async (item) => {
+    try {
+      const url = await getQrcode(item.id);
+      const finalUrl = url + (url.includes('?') ? '&' : '?') + '_t=' + Date.now();
+      qrcodeUrlMap.value.set(item.id, finalUrl);
+      item.qrcodeUrl = finalUrl;
+    } catch (error) {
+      console.error(`获取充电桩 ${item.id} 二维码失败`, error);
+      item.qrcodeUrl = null;
+    } finally {
+      item.qrcodeLoading = false;
+    }
+  });
+  await Promise.allSettled(promises);
+}
+
 const getTableData = async ({ page }) => {
   const params = {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...searchParams.value,
   };
-  if (activeName.value !== '全部') {
-    const statusId = getStatusIdByName(activeName.value);
-    if (statusId) params.pileStatus = statusId;
-  }
   try {
     const res = await getPageList(params);
     const { list, total } = res;
-    const formattedList = await formatList(list);
-    dataObj.list = formattedList;
+    dataObj.list = formatList(list);
     dataObj.total = total;
+    loadQrcodesForCurrentPage();
     return dataObj;
   } catch (error) {
     console.error('表格数据获取失败', error);
@@ -346,6 +299,7 @@ const getTableData = async ({ page }) => {
   }
 };
 
+// 工具函数：根据状态名称获取ID
 const getStatusIdByName = (name) => {
   for (let [id, label] of pileStatusMap.value.entries()) {
     if (label === name) return id;
@@ -353,6 +307,7 @@ const getStatusIdByName = (name) => {
   return null;
 };
 
+// 工具函数：根据充电模式名称获取ID
 const getChargeModeIdByName = (name) => {
   for (let [id, label] of chargeModeMap.value.entries()) {
     if (label === name) return id;
@@ -364,6 +319,12 @@ function handleRefresh() {
   gridApi.query();
 }
 
+const handleImageError = (row) => {
+  console.warn('二维码加载失败', row.qrcodeUrl);
+  row.qrcodeUrl = null;
+  row.qrcodeLoading = false;
+};
+
 const handleClearField = (fieldName) => {
   const newParams = { ...searchParams.value };
   delete newParams[fieldName];
@@ -371,7 +332,17 @@ const handleClearField = (fieldName) => {
     delete newParams.createTimeEnd;
   }
   searchParams.value = newParams;
-  queryFormApi.setValues({ [fieldName]: '' });
+
+  // 同步清空查询表单中的值
+  const formValues = { ...queryFormApi.getValues() };
+  delete formValues[fieldName];
+  if (fieldName === 'createTimeBegin') {
+    delete formValues.createTimeEnd;
+  }
+  queryFormApi.setValues(formValues, false);
+
+  // 重置到第一页
+  dataObj.currentPage = 1;
   handleRefresh();
 };
 
@@ -381,51 +352,148 @@ const handleFieldClick = (fieldName, value) => {
     const createTimeBegin = `${dayStr} 00:00:00`;
     const createTimeEnd = `${dayStr} 23:59:59`;
     searchParams.value = { ...searchParams.value, createTimeBegin, createTimeEnd };
-    queryFormApi.setValues({ createTimeBegin, createTimeEnd });
-  } else if (fieldName === 'creator') {
-    searchParams.value = { ...searchParams.value, creator: value };
-    queryFormApi.setValues({ creator: value });
+    queryFormApi.setValues({ createTimeBegin, createTimeEnd }, false);
+  } else if (fieldName === 'runTime') {
+    // 运行时长筛选 - 使用精确匹配
+    searchParams.value = { ...searchParams.value, runTime: value };
+    queryFormApi.setValues({ runTime: value }, false);
+  } else if (fieldName === 'faultFlag') {
+    // 故障标记筛选 - 确保是布尔值或字符串
+    const boolValue = value === true || value === 'true' || value === 1;
+    searchParams.value = { ...searchParams.value, faultFlag: boolValue };
+    queryFormApi.setValues({ faultFlag: boolValue }, false);
   } else {
     searchParams.value = { ...searchParams.value, [fieldName]: value };
-    queryFormApi.setValues({ [fieldName]: value });
+    queryFormApi.setValues({ [fieldName]: value }, false);
   }
+  // 重置到第一页
+  dataObj.currentPage = 1;
   handleRefresh();
 };
 
-const previewQrcode = (row) => {
-  if (row.qrcodeBase64) {
-    qrcodePreviewSrc.value = row.qrcodeBase64;
-    qrcodePreviewVisible.value = true;
-  } else {
-    ElMessage.warning('暂无二维码');
-  }
-};
+// 重置所有筛选条件
+function resetFilter() {
+  searchParams.value = {};
+  queryFormApi.resetForm();
+  dataObj.currentPage = 1;
+  handleRefresh();
+}
 
-async function handleExportWithType(exportType) {
-  if (exportType === 'PDF') {
-    ElMessage.info('PDF导出功能开发中，敬请期待');
+// 设置筛选条件（供图表钻取调用）- 完善版本，支持显示筛选标签
+function setFilter(filters) {
+  if (!filters || Object.keys(filters).length === 0) {
+    resetFilter();
     return;
   }
+
+  const newFilters = { ...filters };
+
+  // 充电模式名称 -> ID 转换
+  if (newFilters.chargeMode && typeof newFilters.chargeMode === 'string' && !chargeModeMap.value.has(newFilters.chargeMode)) {
+    const id = getChargeModeIdByName(newFilters.chargeMode);
+    if (id) newFilters.chargeMode = id;
+  }
+
+  // 设备状态名称 -> ID 转换
+  if (newFilters.pileStatus && typeof newFilters.pileStatus === 'string' && !pileStatusMap.value.has(newFilters.pileStatus)) {
+    const id = getStatusIdByName(newFilters.pileStatus);
+    if (id) newFilters.pileStatus = id;
+  }
+
+  // 故障标记转换 - 确保是布尔类型
+  if (newFilters.faultFlag !== undefined && newFilters.faultFlag !== null) {
+    newFilters.faultFlag = newFilters.faultFlag === true || newFilters.faultFlag === 'true' || newFilters.faultFlag === 1;
+  }
+
+  // 合并筛选条件（保留原有其他条件）
+  Object.assign(searchParams.value, newFilters);
+
+  // 同步到查询表单，以便显示筛选标签
+  queryFormApi.setValues(newFilters, false);
+
+  // 重置到第一页
+  dataObj.currentPage = 1;
+  handleRefresh();
+}
+
+const previewQrcode = async (id) => {
+  let url = qrcodeUrlMap.value.get(id);
+  if (!url) {
+    try {
+      url = await getQrcode(id);
+      const finalUrl = url + (url.includes('?') ? '&' : '?') + '_t=' + Date.now();
+      qrcodeUrlMap.value.set(id, finalUrl);
+      const row = dataObj.list.find(item => item.id === id);
+      if (row) row.qrcodeUrl = finalUrl;
+      url = finalUrl;
+    } catch (error) {
+      ElMessage.error('获取二维码失败');
+      return;
+    }
+  }
+  qrcodePreviewSrc.value = url;
+  qrcodePreviewVisible.value = true;
+};
+
+// 完善导出Excel功能
+async function handleExportWithType(exportType) {
+  if (exportType === 'PDF') {
+    ElMessage.info('PDF导出功能开发中');
+    return;
+  }
+
   const loadingInstance = ElLoading.service({ text: '正在导出...' });
   try {
-    const params = { ...searchParams.value, exportType };
-    const blob = await exportPile(params);
+    // 传递当前筛选条件（不包含分页参数），导出全部符合条件的数据
+    const params = { ...searchParams.value, exportType: 'Excel' };
+
+    const response = await exportPile(params);
+
+    // 处理响应，支持多种返回格式
+    let blob;
+    if (response instanceof Blob) {
+      blob = response;
+    } else if (response?.data instanceof Blob) {
+      blob = response.data;
+    } else if (typeof response === 'string') {
+      // 如果是base64字符串，转换为blob
+      const byteCharacters = atob(response);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    } else {
+      throw new Error('导出数据格式不正确');
+    }
+
+    // 创建下载链接
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `充电桩列表_${dayjs().format('YYYYMMDD')}.xlsx`;
+
+    // 设置文件名
+    const timestamp = dayjs().format('YYYYMMDDHHmmss');
+    link.download = `充电桩列表_${timestamp}.xlsx`;
+
+    // 触发下载
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
+
+    // 释放URL对象
     window.URL.revokeObjectURL(url);
     ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败', error);
-    ElMessage.error(error.message || '导出失败');
+    ElMessage.error(error.message || '导出失败，请重试');
   } finally {
     loadingInstance.close();
   }
 }
 
-const handleLotDetail = async (row) => {
+const handleLotDetail = (row) => {
   if (!row.lotId) {
     ElMessage.warning('该充电桩未绑定车位');
     return;
@@ -433,7 +501,6 @@ const handleLotDetail = async (row) => {
   lotDetailDrawerRef.value?.open(row.lotId);
 };
 
-// ==================== 增删改查操作 ====================
 function handleCreate() {
   formDrawerApi.setData({ title: textObj.addText }).open();
 }
@@ -464,33 +531,9 @@ async function handleDelete(row) {
   }
 }
 
-async function handleDebug(row) {
-  debugForm.value = { id: row.id, result: '' };
-  debugQrcode.value = row.qrcodeBase64 || '';
-  debugDialogVisible.value = true;
-}
-
-async function confirmDebug() {
-  const { id, result } = debugForm.value;
-  const loadingInstance = ElLoading.service({ text: '调试中...' });
-  try {
-    // 注意：调试接口可能需要传递 debugResult，但文档中没有，只传 id
-    await debugPile({ id, debugResult: result });
-    ElMessage.success('调试成功，状态已更新为已调试');
-    // 重新获取二维码
-    const base64 = await getQrcode(id);
-    debugQrcode.value = base64;
-    setTimeout(() => {
-      debugDialogVisible.value = false;
-      emit('refresh-chart');
-      handleRefresh();
-    }, 1500);
-  } catch (error) {
-    ElMessage.error(error.message || '调试失败');
-  } finally {
-    loadingInstance.close();
-  }
-}
+const handleDebug = (row) => {
+  debugDrawerRef.value?.open(row);
+};
 
 async function handleEnable(row) {
   await confirm('确定启用该充电桩吗？');
@@ -511,7 +554,6 @@ async function handleDisable(row) {
   await confirm('确定停用该充电桩吗？');
   const loadingInstance = ElLoading.service({ text: '停用中...' });
   try {
-    // 停用接口需要 remark 字段，可选
     await disablePile({ id: row.id, remark: '管理员停用' });
     ElMessage.success('已停用');
     emit('refresh-chart');
@@ -550,8 +592,8 @@ async function handleBatchDebug() {
   try {
     await Promise.all(validIds.map(id => debugPile({ id, debugResult: '批量调试通过' })));
     ElMessage.success('批量调试成功');
-    emit('refresh-chart');
     checkedIds.value = [];
+    emit('refresh-chart');
     handleRefresh();
   } catch (error) {
     ElMessage.error(error.message || '批量调试失败');
@@ -574,8 +616,8 @@ async function handleBatchDisable() {
   try {
     await Promise.all(validIds.map(id => disablePile({ id, remark: '批量停用' })));
     ElMessage.success('批量停用成功');
-    emit('refresh-chart');
     checkedIds.value = [];
+    emit('refresh-chart');
     handleRefresh();
   } catch (error) {
     ElMessage.error(error.message || '批量停用失败');
@@ -602,57 +644,21 @@ function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map(item => item.id);
 }
 
-function resetFilter() {
-  searchParams.value = {};
-  queryFormApi.resetForm();
-  handleRefresh();
-}
-
-function setFilter(filters) {
-  if (Object.keys(filters).length === 0) {
-    resetFilter();
-  } else {
-    const newFilters = { ...filters };
-    if (newFilters.chargeMode && typeof newFilters.chargeMode === 'string' && !chargeModeMap.value.has(newFilters.chargeMode)) {
-      const id = getChargeModeIdByName(newFilters.chargeMode);
-      if (id) newFilters.chargeMode = id;
-    }
-    if (newFilters.pileStatus && typeof newFilters.pileStatus === 'string' && !pileStatusMap.value.has(newFilters.pileStatus)) {
-      const id = getStatusIdByName(newFilters.pileStatus);
-      if (id) newFilters.pileStatus = id;
-    }
-    Object.assign(searchParams.value, newFilters);
-    queryFormApi.setValues(newFilters);
-    handleRefresh();
-  }
-}
-
-const changeTotalShow = () => {
-  dataObj.totalShow = !dataObj.totalShow;
-};
-
-const handleClick = () => {
+const handleDebugSuccess = () => {
+  emit('refresh-chart');
   handleRefresh();
 };
 
-const handleSerachShow = () => {
-  drawerApi.open();
-};
-
-const handleFullShow = () => {
-  screenfull.toggle();
-};
-
-const arrowChange = () => {
-  emit('arrow-change');
-};
-
+const changeTotalShow = () => (dataObj.totalShow = !dataObj.totalShow);
+const handleSerachShow = () => drawerApi.open();
+const handleFullShow = () => screenfull.toggle();
+const arrowChange = () => emit('arrow-change');
 const handleGarageOpenDetail = (row) => {
   dataObj.detailObj = row;
   detailDrawerRef.value.open();
 };
 
-// ==================== 表单相关 ====================
+// 表单相关
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -661,11 +667,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
 });
 
 const [Form, formApi] = useVbenForm({
-  commonConfig: {
-    componentProps: { class: 'w-full' },
-    formItemClass: 'col-span-2',
-    labelWidth: 100,
-  },
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   layout: 'horizontal',
   schema: useFormSchema(),
   showDefaultActions: false,
@@ -690,8 +692,6 @@ const loadFormOptions = async () => {
       { fieldName: 'stationId', componentProps: { options: Array.isArray(stationList) ? stationList : [] } },
       { fieldName: 'lotId', componentProps: { options: Array.isArray(lotList) ? lotList : [] } },
       { fieldName: 'chargeMode', componentProps: { options: Array.isArray(chargeModes) ? chargeModes : [] } },
-      // 编辑时设备状态隐藏，不允许修改
-      { fieldName: 'pileStatus', componentProps: { hidden: true } },
     ]);
 
     await queryFormApi.updateSchema([
@@ -721,7 +721,6 @@ const onOpenChange = async (isOpen) => {
     const drawerData = formDrawerApi.getData() || {};
     formData.value = drawerData;
     if (drawerData.id) {
-      // 编辑时，注意后端可能要求 pileStatus 字段，但不可编辑，直接使用原值
       await formApi.setValues(drawerData);
     } else {
       formApi.resetForm();
@@ -755,7 +754,6 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
         await createPile(values);
         ElMessage.success($t('ui.actionMessage.addSuccess'));
       } else {
-        // 编辑时移除 pileStatus，防止后端校验
         delete values.pileStatus;
         await updatePile({ id, ...values });
         ElMessage.success($t('ui.actionMessage.editSuccess'));
@@ -775,11 +773,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 
 const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: {
-    componentProps: { class: 'w-full' },
-    formItemClass: 'col-span-2',
-    labelWidth: 100,
-  },
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: onSubmit,
   layout: 'horizontal',
   schema: useQuerySchema(),
@@ -796,6 +790,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
 
 function onSubmit(values) {
   searchParams.value = values;
+  dataObj.currentPage = 1;
   drawerApi.close();
   handleRefresh();
 }
@@ -804,16 +799,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
     keepSource: true,
-    proxyConfig: {
-      ajax: { query: async ({ page }) => getTableData({ page }) },
-    },
+    proxyConfig: { ajax: { query: async ({ page }) => getTableData({ page }) } },
     rowConfig: { keyField: 'id', isHover: true },
     pagerConfig: dataObj,
-    toolbarConfig: {
-      'class-name': 'common-tool-bar-config',
-      refresh: true,
-      search: true,
-    },
+    toolbarConfig: { 'class-name': 'common-tool-bar-config', refresh: true, search: true },
     showOverflow: true,
   },
   gridEvents: {
@@ -823,14 +812,36 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
+// 暴露方法给父组件（图表钻取调用）
 defineExpose({
   setFilter,
   resetFilter,
+  handleGarageOpenDetail,
+  handleLotDetail,
+  handleFieldClick
 });
 
 onMounted(() => {
-  loadFormOptions().then(() => {
-    handleRefresh();
-  });
+  loadFormOptions().then(() => handleRefresh());
 });
 </script>
+
+<style scoped>
+.qrcode-loading, .qrcode-placeholder {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  font-size: 12px;
+  color: #999;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+.qrcode-img {
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  object-fit: contain;
+}
+</style>
