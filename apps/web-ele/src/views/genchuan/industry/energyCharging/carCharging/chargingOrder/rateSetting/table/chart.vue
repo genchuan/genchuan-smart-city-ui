@@ -30,11 +30,10 @@ const handleBarClick = async (params) => {
   try {
     console.log('点击参数:', params); // 调试日志
     const stationId = params.dataIndex;
-    const stationName = params.name;
-
+    const stationName = params.name; 
     console.log('调用接口参数:', { stationId }); // 调试日志
     // 调用详情接口
-    const response = await getRateSettingGradeCount({ stationId });
+    const response = await getRateSettingGradeCount({ stationId: stationId.toString() });
     console.log('接口返回数据:', response); // 调试日志
   
     if (response) {
