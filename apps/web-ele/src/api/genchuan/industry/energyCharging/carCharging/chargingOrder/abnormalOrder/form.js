@@ -9,13 +9,6 @@ export function useFormSchema() {
       labelWidth: '100',
     },
     {
-      fieldName: 'plateNo',
-      label: '车牌号',
-      component: 'Input',
-      componentProps: { placeholder: '请输入车牌号' },
-      labelWidth: '100',
-    },
-    {
       fieldName: 'abnormalType',
       label: '异常类型',
       component: 'Select',
@@ -65,19 +58,13 @@ export function getColumnsByStatus(status = '全部') {
 
   const columns = [
     { field: 'orderCode', title: '订单编号', minWidth: 150, sortable: true, slots: { default: 'orderCode' } },
-    { field: 'plateNo', title: '车牌号', minWidth: 120, slots: { default: 'plateNo' } },
-    { field: 'stationName', title: '所属场站', minWidth: 150 },
     { field: 'abnormalType', title: '异常类型', minWidth: 120, slots: { default: 'abnormalType' } },
     { field: 'abnormalReason', title: '异常原因', minWidth: 180 },
-    { field: 'abnormalTime', title: '异常时间', minWidth: 180, slots: { default: 'abnormalTime' } },
     { field: 'checkUser', title: '排查人员', minWidth: 120, slots: { default: 'checkUser' } },
     { field: 'handleMeasure', title: '处理措施', minWidth: 150 },
     { field: 'handleTime', title: '处理时间', minWidth: 180, slots: { default: 'handleTime' } },
     { field: 'abnormalStatus', title: '异常状态', minWidth: 100, slots: { default: 'abnormalStatus' } },
-    { field: 'refundAmount', title: '退款金额', minWidth: 120, slots: { default: 'refundAmount' } },
     { field: 'remark', title: '备注', minWidth: 150 },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'creator', title: '操作人', minWidth: 120, slots: { default: 'creator' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];
