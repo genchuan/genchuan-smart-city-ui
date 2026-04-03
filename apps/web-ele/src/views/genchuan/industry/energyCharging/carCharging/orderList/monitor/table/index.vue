@@ -350,33 +350,34 @@ const arrowChange = () => {
         </div>
       </template>
 
-      <template #location="{ row }">
+      <template #order_code="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.location }}
+          {{ row.order_code }}
         </el-text>
       </template>
 
-      <template #occupation_type="{ row }">
+      <template #station_id="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.occupation_type }}
+          {{ row.station_id }}
         </el-text>
       </template>
 
-      <template #grid_name="{ row }">
+
+      <template #pile_id="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.grid_name }}
+          {{ row.pile_id }}
         </el-text>
       </template>
 

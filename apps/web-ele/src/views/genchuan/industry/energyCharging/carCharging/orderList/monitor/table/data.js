@@ -306,6 +306,8 @@ export function useGridColumns() {
       title: '订单编号',
       minWidth: 150,
       sortable: true,
+      slots: { default: 'order_code' },
+
     },
     {
       field: 'user_id',
@@ -324,12 +326,16 @@ export function useGridColumns() {
       title: '充电桩编号',
       minWidth: 150,
       sortable: true,
+      slots: { default: 'pile_id' },
+
     },
     {
       field: 'station_id',
       title: '所属场站',
       minWidth: 180,
       sortable: true,
+      slots: { default: 'station_id' },
+
     },
     {
       field: 'charge_hour',

@@ -1,9 +1,5 @@
 <script setup>
 import { ref } from 'vue';
-
-import CompletedTable from './completed/index.vue';
-import DisposalTable from './disposal/index.vue';
-import PendingTable from './pending/index.vue';
 import MontiorTable from './table/index.vue';
 import Yibihuan from './table/index.vue';
 
