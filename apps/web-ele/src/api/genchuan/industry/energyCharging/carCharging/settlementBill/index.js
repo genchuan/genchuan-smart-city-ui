@@ -35,3 +35,8 @@ export function reAuditSettlementBill(data) {
 export function updateRemarkSettlementBill(data) {
   return requestClient.put('/vehiclecharging/settlement-bill/remark', data)
 }
+
+/** 图标展示 */
+export function getSettlementBillChart(data) {
+  return requestClient.get('/vehiclecharging/settlement-bill/chart', data)
+}

@@ -1,67 +1,49 @@
 <script setup>
 import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
-import { getRateSettingChart, getRateSettingList,getRateSettingGradeCount } from '#/api/genchuan/industry/energyCharging/carCharging/chargingOrder/rateSetting/index.js';
+import { getSettlementBillChart} from '#/api/genchuan/industry/energyCharging/carCharging/settlementBill/index.js';
 import { ElDialog, ElMessage } from 'element-plus'; 
 import * as echarts from 'echarts'; 
 const state = reactive({
   cardList: [
-    { title: '总费率方案数', value: 0, color: '#4A90E2' },
-    { title: '已生效方案数', value: 0, color: '#50E3C2' },
-    { title: '未生效方案数', value: 0, color: '#FF9F40' },
-    { title: '已失效方案数', value: 0, color: '#A17FE0' },
-    { title: '生效占比', value: 0, color: '#FF6B8B' },
+    { title: '结算单总数', value: 0, color: '#4A90E2' },
+    { title: '待审核数量', value: 0, color: '#50E3C2' },
+    { title: '已完成数量', value: 0, color: '#FF9F40' },
+    { title: '总结算金额', value: 0, color: '#A17FE0' },
   ],
   barData: [],
 });
 
-// 详情弹窗相关
-const dialogVisible = ref(false);
-const dialogTitle = ref('费率等级统计');
 
-// 详情数据
-const detailData = ref({
-  stationId: '',
-  stationName: '',
-  gradeCount: [],
-});
 
-// 点击柱状图查询详情
-const handleBarClick = async (params) => { 
-  try {
-    console.log('点击参数:', params); // 调试日志
-    const stationId = params.dataIndex;
-    const stationName = params.name; 
-    console.log('调用接口参数:', { stationId }); // 调试日志
-    // 调用详情接口
-    const response = await getRateSettingGradeCount({ stationId: stationId.toString() });
-    console.log('接口返回数据:', response); // 调试日志
-  
-    if (response) {
-      detailData.value.stationId = stationId;
-      detailData.value.stationName = stationName;
-      // 确保response是数组
-      detailData.value.gradeCount = Array.isArray(response) ? response : [];
-      // 打开弹窗
-      dialogTitle.value = `${stationName}费率等级统计`;
-      dialogVisible.value = true;
-    }
-  } catch (error) {
-    ElMessage.error(`查询失败：${error.msg || '请稍后重试'}`);
-  }
-};
+
 
 // 图表引用
 const barChartRef = ref(null);
 let barChartInstance = null;
 
+const lineChartRef = ref(null);
+let lineChartInstance = null;
+
+// 折线图数据
+const lineChartData = ref({
+  label: '每日结算单趋势',
+  type: 'line',
+  data: {
+    xAxis: [],
+    series: [
+      { name: '结算单数量', data: [] },
+    ],
+  },
+});
+
 // 柱状图数据
 const barChartData = ref({
-  label: '场站费率数量统计',
+  label: '合作方结算金额统计',
   type: 'bar',
   data: {
     xAxis: [],
     series: [
-      { name: '费率数量', data: [] },
+      { name: '结算金额', data: [] },
     ],
   },
 });
@@ -344,57 +326,88 @@ const initBarChart = () => {
     barChartInstance = echarts.init(barChartRef.value);
     const option = getBarLineOption(barChartData.value);
     barChartInstance.setOption(option);
-
-    // 绑定点击事件
-    barChartInstance.on('click', (params) => {
-      console.log('点击事件参数:', params); // 调试日志
-      if (params.seriesName === '费率数量') {
-        handleBarClick(params);
-      }
-    });
   } catch (error) {
     console.error('初始化柱状图失败:', error);
+  }
+};
+
+// 初始化折线图
+const initLineChart = () => {
+  if (
+    !lineChartRef.value ||
+    !lineChartData.value ||
+    !lineChartData.value.data
+  )
+    return;
+  if (
+    !lineChartData.value.data.xAxis ||
+    lineChartData.value.data.xAxis.length === 0
+  )
+    return;
+
+  try {
+    if (lineChartInstance) {
+      lineChartInstance.dispose();
+      lineChartInstance = null;
+    }
+
+    lineChartInstance = echarts.init(lineChartRef.value);
+    const option = getBarLineOption(lineChartData.value);
+    lineChartInstance.setOption(option);
+  } catch (error) {
+    console.error('初始化折线图失败:', error);
   }
 };
 
 // 初始化所有图表
 const initCharts = () => {
   initBarChart();
+  initLineChart();
 };
 
 // 处理窗口大小变化
 const handleResize = () => {
   barChartInstance?.resize();
+  lineChartInstance?.resize();
 };
 
-// 获取费率图表数据并更新卡片
-const fetchRateChartData = async () => {
+// 获取结算单图表数据并更新卡片
+const fetchSettlementChartData = async () => {
   try {
-    const response = await getRateSettingChart();
+    const response = await getSettlementBillChart();
     if (response) {
       // 更新卡片数据
-      if (response.cardData) {
-        state.cardList[0].value = response.cardData.totalRateCount || 0;
-        state.cardList[1].value = response.cardData.enableCount || 0;
-        state.cardList[2].value = response.cardData.unEnableCount || 0;
-        state.cardList[3].value = response.cardData.disableCount || 0;
-        state.cardList[4].value = `${response.cardData.enableRatio || 0}%`;
-      }
+      state.cardList[0].value = response.totalBillCount || 0;
+      state.cardList[1].value = response.pendingAuditCount || 0;
+      state.cardList[2].value = response.completedCount || 0;
+      state.cardList[3].value = response.totalSettlementAmount || 0;
 
       // 更新柱状图数据
       if (response.barData && Array.isArray(response.barData)) {
-        const xAxis = response.barData.map(item => item.stationName);
-        const rateCountData = response.barData.map(item => item.rateCount);
+        const xAxis = response.barData.map(item => item.name);
+        const amountData = response.barData.map(item => item.amount);
 
         barChartData.value.data.xAxis = xAxis;
-        barChartData.value.data.series[0].data = rateCountData;
+        barChartData.value.data.series[0].data = amountData;
 
         // 更新柱状图
         initBarChart();
       }
+
+      // 更新折线图数据
+      if (response.lineData && Array.isArray(response.lineData)) {
+        const xAxis = response.lineData.map(item => item.date);
+        const countData = response.lineData.map(item => item.count);
+
+        lineChartData.value.data.xAxis = xAxis;
+        lineChartData.value.data.series[0].data = countData;
+
+        // 更新折线图
+        initLineChart();
+      }
     }
   } catch (error) {
-    console.error('获取费率图表数据失败:', error);
+    console.error('获取结算单图表数据失败:', error);
   }
 };
 
@@ -404,8 +417,8 @@ onMounted(() => {
     initCharts();
   });
   window.addEventListener('resize', handleResize);
-  // 初始加载费率图表数据
-  fetchRateChartData();
+  // 初始加载结算单图表数据
+  fetchSettlementChartData();
 });
 
 onUnmounted(() => {
@@ -413,6 +426,10 @@ onUnmounted(() => {
   if (barChartInstance) {
     barChartInstance.dispose();
     barChartInstance = null;
+  }
+  if (lineChartInstance) {
+    lineChartInstance.dispose();
+    lineChartInstance = null;
   }
 });
 </script>
@@ -429,43 +446,30 @@ onUnmounted(() => {
           <div class="card-indicator" :style="{ backgroundColor: card.color || '#4A90E2' }"></div>
         </div>
         <div class="card-body">
-          <div class="card-value" :style="{ color: card.color || '#4A90E2' }">
-            {{ card.value }}
-          </div>
+          <div class="card-value" :style="{ color: card.color || '#4A90E2' }" :data-unit="card.title === '总结算金额' ? 'yuan' : ''">
+          {{ card.value }}
+        </div>
         </div>
       </div>
     </div>
 
     <!-- 右侧展示区 -->
     <div class="right-section">
-      <!-- 图表视图 - 柱状图 -->
+      <!-- 图表视图 - 柱状图和折线图 -->
       <div class="charts-section">
         <!-- 柱状图展示区 -->
         <div class="bar-chart-area">
           <div ref="barChartRef" class="chart-container"></div>
         </div>
+        <!-- 折线图展示区 -->
+        <div class="line-chart-area">
+          <div ref="lineChartRef" class="chart-container"></div>
+        </div>
       </div>
     </div>
   </div>
 
-  <ElDialog :title="dialogTitle" v-model="dialogVisible" width="800px">
-    <div class="detail-content">
-      <table class="detail-table">
-        <thead>
-          <tr>
-            <th>费率类型</th>
-            <th>数量</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(item, index) in detailData?.gradeCount || []" :key="index">
-            <td>{{ item.gradeType }}</td>
-            <td>{{ item.count }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </ElDialog>
+
 </template>
 
 <style scoped>
@@ -482,8 +486,7 @@ onUnmounted(() => {
 /* 卡片区样式 - 2x3网格布局 */
 .cards-section {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr; 
   flex-shrink: 0;
   gap: 12px;
   width: 260px;
@@ -544,6 +547,21 @@ onUnmounted(() => {
   margin-bottom: 4px;
 }
 
+.card-value {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+
+.card-value[data-unit="yuan"]::after {
+  content: '元';
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 14px;
+  color: #9AA8B7;
+}
+
 /* 右侧展示区样式 */
 .right-section {
   position: relative;
@@ -583,6 +601,13 @@ onUnmounted(() => {
 
 /* 柱状图区域 */
 .bar-chart-area {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 320px;
+}
+
+.line-chart-area {
   position: relative;
   flex: 1;
   min-width: 0;
