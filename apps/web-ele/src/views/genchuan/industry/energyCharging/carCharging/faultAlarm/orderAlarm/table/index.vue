@@ -1,19 +1,18 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 
-import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { useVbenDrawer } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage, ElTag } from 'element-plus';
+import { ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   exportOrderAlarm,
-  getOrderAlarmDetail,
   getOrderAlarmPage,
   updateOrderAlarm,
 } from '#/api/genchuan/industry/energyCharging/carCharging/faultAlarm/orderAlarm';
@@ -216,13 +215,22 @@ const getTableData = async (pageObj) => {
     // 构建时间范围数组参数
     // 取日期部分（前10个字符：yyyy-MM-dd），避免重复追加时间
     const alarmTimeParam = filterAlarmTime.value
-      ? [filterAlarmTime.value.substring(0, 10) + ' 00:00:00', filterAlarmTime.value.substring(0, 10) + ' 23:59:59']
+      ? [
+          `${filterAlarmTime.value.slice(0, 10)} 00:00:00`,
+          `${filterAlarmTime.value.slice(0, 10)} 23:59:59`,
+        ]
       : undefined;
     const handleTimeParam = filterHandleTime.value
-      ? [filterHandleTime.value.substring(0, 10) + ' 00:00:00', filterHandleTime.value.substring(0, 10) + ' 23:59:59']
+      ? [
+          `${filterHandleTime.value.slice(0, 10)} 00:00:00`,
+          `${filterHandleTime.value.slice(0, 10)} 23:59:59`,
+        ]
       : undefined;
     const createTimeParam = filterCreateTime.value
-      ? [filterCreateTime.value.substring(0, 10) + ' 00:00:00', filterCreateTime.value.substring(0, 10) + ' 23:59:59']
+      ? [
+          `${filterCreateTime.value.slice(0, 10)} 00:00:00`,
+          `${filterCreateTime.value.slice(0, 10)} 23:59:59`,
+        ]
       : undefined;
 
     const queryParams = {
@@ -285,14 +293,22 @@ function onSubmit(values) {
   const searchParams = { ...values };
 
   // 处理告警时间范围
-  if (values.alarmTime && Array.isArray(values.alarmTime) && values.alarmTime.length === 2) {
+  if (
+    values.alarmTime &&
+    Array.isArray(values.alarmTime) &&
+    values.alarmTime.length === 2
+  ) {
     searchParams.startAlarmTime = values.alarmTime[0];
     searchParams.endAlarmTime = values.alarmTime[1];
     delete searchParams.alarmTime;
   }
 
   // 处理处理时间范围
-  if (values.handleTime && Array.isArray(values.handleTime) && values.handleTime.length === 2) {
+  if (
+    values.handleTime &&
+    Array.isArray(values.handleTime) &&
+    values.handleTime.length === 2
+  ) {
     searchParams.startHandleTime = values.handleTime[0];
     searchParams.endHandleTime = values.handleTime[1];
     delete searchParams.handleTime;
@@ -360,7 +376,7 @@ const handleBatchVerify = () => {
   }
   // 检查是否都是未核实状态
   const invalidRows = checkedRows.value.filter(
-    (row) => row.alarmStatus !== '0' && row.alarmStatus !== '未核实'
+    (row) => !canVerify(row)
   );
   if (invalidRows.length > 0) {
     ElMessage.warning('只能核实状态为"未核实"的告警');
@@ -379,7 +395,7 @@ const handleBatchHandle = () => {
   }
   // 检查是否都是已核实状态
   const invalidRows = checkedRows.value.filter(
-    (row) => row.alarmStatus !== '1' && row.alarmStatus !== '已核实'
+    (row) => !canHandle(row)
   );
   if (invalidRows.length > 0) {
     ElMessage.warning('只能处理状态为"已核实"的告警');
@@ -398,7 +414,7 @@ const handleBatchComplete = () => {
   }
   // 检查是否都是处理中状态
   const invalidRows = checkedRows.value.filter(
-    (row) => row.alarmStatus !== '2' && row.alarmStatus !== '处理中'
+    (row) => !canComplete(row)
   );
   if (invalidRows.length > 0) {
     ElMessage.warning('只能完结状态为"处理中"的告警');
@@ -413,7 +429,7 @@ const handleBatchComplete = () => {
 
 // 行内核实按钮
 const handleRowVerify = (row) => {
-  if (row.alarmStatus !== '0' && row.alarmStatus !== '未核实') {
+  if (!canVerify(row)) {
     ElMessage.warning('只能核实状态为"未核实"的告警');
     return;
   }
@@ -424,7 +440,7 @@ const handleRowVerify = (row) => {
 
 // 行内处理按钮
 const handleRowHandle = (row) => {
-  if (row.alarmStatus !== '1' && row.alarmStatus !== '已核实') {
+  if (!canHandle(row)) {
     ElMessage.warning('只能处理状态为"已核实"的告警');
     return;
   }
@@ -435,7 +451,7 @@ const handleRowHandle = (row) => {
 
 // 行内完结按钮
 const handleRowComplete = (row) => {
-  if (row.alarmStatus !== '2' && row.alarmStatus !== '处理中') {
+  if (!canComplete(row)) {
     ElMessage.warning('只能完结状态为"处理中"的告警');
     return;
   }
@@ -451,17 +467,26 @@ const handleRowRemark = (row) => {
   }
 };
 
+/** 获取告警状态标签文本 */
+function getAlarmStatusLabel(alarmStatus) {
+  const dict = getDictObj(DICT_TYPE.ORDER_ALARM_ALARM_STATUS, String(alarmStatus));
+  return dict ? dict.label : alarmStatus;
+}
+
 // 根据状态判断是否显示操作按钮
 const canVerify = (row) => {
-  return row.alarmStatus === '0' || row.alarmStatus === '未核实';
+  const statusLabel = getAlarmStatusLabel(row.alarmStatus);
+  return statusLabel === '未核实' || row.alarmStatus === '0';
 };
 
 const canHandle = (row) => {
-  return row.alarmStatus === '1' || row.alarmStatus === '已核实';
+  const statusLabel = getAlarmStatusLabel(row.alarmStatus);
+  return statusLabel === '已核实' || row.alarmStatus === '1';
 };
 
 const canComplete = (row) => {
-  return row.alarmStatus === '2' || row.alarmStatus === '处理中';
+  const statusLabel = getAlarmStatusLabel(row.alarmStatus);
+  return statusLabel === '处理中' || row.alarmStatus === '2';
 };
 
 // ==================== 快捷筛选处理 ====================
@@ -547,43 +572,64 @@ const handleCancelCreateTimeFilter = () => {
 
 // 处理统计组件的钻取筛选
 const handleStatsFilter = (type, value) => {
-  if (type === 'status') {
-    if (value === 'all') {
-      // 总订单告警数 - 清空状态筛选
-      filterAlarmStatus.value = '';
-    } else if (value === 'unhandled') {
-      // 未处理数 - 筛选未核实、已核实、处理中状态
-      // 这里需要特殊处理，可能需要多个状态筛选
-      filterAlarmStatus.value = '';
-    } else if (value === 'completed') {
-      // 处理完成数 - 筛选已完结状态
+  switch (type) {
+    case 'abnormalType': {
+      // 饼图钻取 - 根据异常类型名称获取字典值
       const dictOptions = getDictOptions(
-        DICT_TYPE.ORDER_ALARM_ALARM_STATUS,
-        'string',
-      );
-      const dictItem = dictOptions.find((item) => item.label === '已完结');
-      filterAlarmStatus.value = dictItem ? dictItem.value : '3';
-    } else {
-      // 根据状态名称获取字典值
-      const dictOptions = getDictOptions(
-        DICT_TYPE.ORDER_ALARM_ALARM_STATUS,
+        DICT_TYPE.ORDER_ALARM_ABNORMAL_TYPE,
         'string',
       );
       const dictItem = dictOptions.find((item) => item.label === value);
-      filterAlarmStatus.value = dictItem ? dictItem.value : value;
+      filterAbnormalType.value = dictItem ? dictItem.value : value;
+
+      break;
     }
-  } else if (type === 'abnormalType') {
-    // 饼图钻取 - 根据异常类型名称获取字典值
-    const dictOptions = getDictOptions(
-      DICT_TYPE.ORDER_ALARM_ABNORMAL_TYPE,
-      'string',
-    );
-    const dictItem = dictOptions.find((item) => item.label === value);
-    filterAbnormalType.value = dictItem ? dictItem.value : value;
-  } else if (type === 'date') {
-    // 折线图钻取 - 根据日期筛选，使用createTime参数
-    // 保存日期部分（yyyy-MM-dd），查询时会构建成数组格式
-    filterCreateTime.value = value;
+    case 'date': {
+      // 折线图钻取 - 根据日期筛选，使用createTime参数
+      // 保存日期部分（yyyy-MM-dd），查询时会构建成数组格式
+      filterCreateTime.value = value;
+
+      break;
+    }
+    case 'status': {
+      switch (value) {
+        case 'all': {
+          // 总订单告警数 - 清空状态筛选
+          filterAlarmStatus.value = '';
+
+          break;
+        }
+        case 'completed': {
+          // 处理完成数 - 筛选已完结状态
+          const dictOptions = getDictOptions(
+            DICT_TYPE.ORDER_ALARM_ALARM_STATUS,
+            'string',
+          );
+          const dictItem = dictOptions.find((item) => item.label === '已完结');
+          filterAlarmStatus.value = dictItem ? dictItem.value : '3';
+
+          break;
+        }
+        case 'unhandled': {
+          // 未处理数 - 筛选未核实、已核实、处理中状态
+          // 这里需要特殊处理，可能需要多个状态筛选
+          filterAlarmStatus.value = '';
+
+          break;
+        }
+        default: {
+          // 根据状态名称获取字典值
+          const dictOptions = getDictOptions(
+            DICT_TYPE.ORDER_ALARM_ALARM_STATUS,
+            'string',
+          );
+          const dictItem = dictOptions.find((item) => item.label === value);
+          filterAlarmStatus.value = dictItem ? dictItem.value : value;
+        }
+      }
+      break;
+    }
+    // No default
   }
   gridApi.query();
 };
@@ -877,11 +923,11 @@ defineExpose({
             @click="handleOpenDetail(row)"
           />
           <!-- 编辑 - 所有状态都显示 -->
-<!--          <IconButton-->
-<!--            content="编辑"-->
-<!--            icon-name="Edit"-->
-<!--            @click="handleEdit(row)"-->
-<!--          />-->
+          <!--          <IconButton-->
+          <!--            content="编辑"-->
+          <!--            icon-name="Edit"-->
+          <!--            @click="handleEdit(row)"-->
+          <!--          />-->
           <!-- 核实 - 未核实状态显示 -->
           <IconButton
             v-if="canVerify(row)"

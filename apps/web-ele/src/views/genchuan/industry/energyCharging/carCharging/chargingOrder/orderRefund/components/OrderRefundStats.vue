@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 
 import * as echarts from 'echarts';
 
@@ -10,17 +10,17 @@ const props = defineProps({
     default: () => ({
       cards: [],
       pieData: [],
-      barData: [],
+      lineData: [],
     }),
   },
 });
 
-const emit = defineEmits(['cardClick', 'pieClick', 'barClick']);
+const emit = defineEmits(['cardClick', 'pieClick', 'lineClick']);
 
 const pieChartRef = ref(null);
-const barChartRef = ref(null);
+const lineChartRef = ref(null);
 const pieChartInstance = ref(null);
-const barChartInstance = ref(null);
+const lineChartInstance = ref(null);
 
 const freshColors = ['#4A90E2', '#50E3C2', '#FF9F40', '#A17FE0', '#FF6B8B'];
 
@@ -37,7 +37,7 @@ const initPieChart = () => {
   const option = {
     backgroundColor: 'transparent',
     title: {
-      text: '车位状态占比',
+      text: '退款状态占比',
       left: 'center',
       top: 10,
       textStyle: {
@@ -69,13 +69,12 @@ const initPieChart = () => {
       itemWidth: 12,
       itemHeight: 12,
       formatter(name) {
-        // 名称过长时截断
         return name.length > 5 ? `${name.slice(0, 5)}...` : name;
       },
     },
     series: [
       {
-        name: '车位状态',
+        name: '退款状态',
         type: 'pie',
         radius: ['35%', '55%'],
         center: ['50%', '52%'],
@@ -143,27 +142,25 @@ const initPieChart = () => {
   });
 };
 
-const initBarChart = () => {
-  if (!barChartRef.value) return;
+const initLineChart = () => {
+  if (!lineChartRef.value) return;
 
-  if (barChartInstance.value) {
-    barChartInstance.value.dispose();
+  if (lineChartInstance.value) {
+    lineChartInstance.value.dispose();
   }
 
-  const chartInstance = echarts.init(barChartRef.value);
-  barChartInstance.value = chartInstance;
+  const chartInstance = echarts.init(lineChartRef.value);
+  lineChartInstance.value = chartInstance;
 
-  const barData = props.data.barData || [];
-  const xAxisData = barData.map((item) => item.stationName);
-  const totalData = barData.map((item) => item.totalCount);
-  const idleData = barData.map((item) => item.idleCount);
-  const occupyData = barData.map((item) => item.occupyCount);
-  const maintainData = barData.map((item) => item.maintainCount);
+  const lineData = props.data.lineData || [];
+  const xAxisData = lineData.map((item) => item.date);
+  const applyData = lineData.map((item) => item.applyCount);
+  const completeData = lineData.map((item) => item.completeCount);
 
   const option = {
     backgroundColor: 'transparent',
     title: {
-      text: '各场站车位数量及占用情况',
+      text: '每日退款申请及完成数量趋势',
       left: 'center',
       top: 10,
       textStyle: {
@@ -180,12 +177,9 @@ const initBarChart = () => {
       textStyle: {
         color: '#6E7E91',
       },
-      axisPointer: {
-        type: 'shadow',
-      },
     },
     legend: {
-      data: ['总车位', '空闲', '占用', '维护中'],
+      data: ['退款申请数', '退款完成数'],
       bottom: 0,
       textStyle: {
         color: '#6E7E91',
@@ -198,18 +192,18 @@ const initBarChart = () => {
       left: '3%',
       right: '4%',
       bottom: '15%',
+      top: '50px',
       containLabel: true,
       backgroundColor: 'transparent',
     },
     xAxis: {
       type: 'category',
-      boundaryGap: true,
+      boundaryGap: false,
       data: xAxisData,
       axisLabel: {
         color: '#9AA8B7',
         fontSize: 11,
-        rotate: 30,
-        interval: 0,
+        rotate: xAxisData.length > 8 ? 30 : 0,
       },
       axisLine: {
         lineStyle: {
@@ -250,114 +244,56 @@ const initBarChart = () => {
     },
     series: [
       {
-        name: '总车位',
-        type: 'bar',
-        data: totalData,
+        name: '退款申请数',
+        type: 'line',
+        data: applyData,
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 6,
+        lineStyle: {
+          width: 3,
+          color: '#4A90E2',
+        },
         itemStyle: {
           color: '#4A90E2',
-          borderRadius: [4, 4, 0, 0],
         },
-        barWidth: '15%',
-        label: {
-          show: true,
-          position: 'top',
-          color: '#6E7E91',
-          fontSize: 12,
-          formatter: '{c}',
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(74, 144, 226, 0.3)' },
+            { offset: 1, color: 'rgba(74, 144, 226, 0.05)' },
+          ]),
         },
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
             shadowColor: 'rgba(74, 144, 226, 0.3)',
           },
-          label: {
-            show: true,
-            fontSize: 14,
-            fontWeight: 'bold',
-          },
         },
       },
       {
-        name: '空闲',
-        type: 'bar',
-        data: idleData,
+        name: '退款完成数',
+        type: 'line',
+        data: completeData,
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 6,
+        lineStyle: {
+          width: 3,
+          color: '#50E3C2',
+        },
         itemStyle: {
           color: '#50E3C2',
-          borderRadius: [4, 4, 0, 0],
         },
-        barWidth: '15%',
-        label: {
-          show: true,
-          position: 'top',
-          color: '#6E7E91',
-          fontSize: 12,
-          formatter: '{c}',
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(80, 227, 194, 0.3)' },
+            { offset: 1, color: 'rgba(80, 227, 194, 0.05)' },
+          ]),
         },
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
             shadowColor: 'rgba(80, 227, 194, 0.3)',
-          },
-          label: {
-            show: true,
-            fontSize: 14,
-            fontWeight: 'bold',
-          },
-        },
-      },
-      {
-        name: '占用',
-        type: 'bar',
-        data: occupyData,
-        itemStyle: {
-          color: '#FF9F40',
-          borderRadius: [4, 4, 0, 0],
-        },
-        barWidth: '15%',
-        label: {
-          show: true,
-          position: 'top',
-          color: '#6E7E91',
-          fontSize: 12,
-          formatter: '{c}',
-        },
-        emphasis: {
-          itemStyle: {
-            shadowBlur: 10,
-            shadowColor: 'rgba(255, 159, 64, 0.3)',
-          },
-          label: {
-            show: true,
-            fontSize: 14,
-            fontWeight: 'bold',
-          },
-        },
-      },
-      {
-        name: '维护中',
-        type: 'bar',
-        data: maintainData,
-        itemStyle: {
-          color: '#A17FE0',
-          borderRadius: [4, 4, 0, 0],
-        },
-        barWidth: '15%',
-        label: {
-          show: true,
-          position: 'top',
-          color: '#6E7E91',
-          fontSize: 12,
-          formatter: '{c}',
-        },
-        emphasis: {
-          itemStyle: {
-            shadowBlur: 10,
-            shadowColor: 'rgba(161, 127, 224, 0.3)',
-          },
-          label: {
-            show: true,
-            fontSize: 14,
-            fontWeight: 'bold',
           },
         },
       },
@@ -368,26 +304,28 @@ const initBarChart = () => {
 
   // 点击事件
   chartInstance.on('click', (params) => {
-    emit('barClick', barData[params.dataIndex]?.stationId);
+    emit('lineClick', xAxisData[params.dataIndex]);
   });
 };
 
 const initCharts = () => {
-  initPieChart();
-  initBarChart();
+  nextTick(() => {
+    initPieChart();
+    initLineChart();
+  });
 };
 
 const handleResize = () => {
   if (pieChartInstance.value) {
     pieChartInstance.value.resize();
   }
-  if (barChartInstance.value) {
-    barChartInstance.value.resize();
+  if (lineChartInstance.value) {
+    lineChartInstance.value.resize();
   }
 };
 
 const handleCardClick = (card) => {
-  emit('cardClick', card.status);
+  emit('cardClick', card.type);
 };
 
 watch(
@@ -408,72 +346,82 @@ onUnmounted(() => {
   if (pieChartInstance.value) {
     pieChartInstance.value.dispose();
   }
-  if (barChartInstance.value) {
-    barChartInstance.value.dispose();
+  if (lineChartInstance.value) {
+    lineChartInstance.value.dispose();
   }
 });
 </script>
 
 <template>
-  <div class="park-chart-box">
+  <div class="order-refund-stats">
     <!-- 卡片区域 -->
-    <div class="chart-box-left">
+    <div class="stats-cards">
       <div
         v-for="(card, index) in data.cards"
         :key="`card-${index}`"
         class="stat-card"
-        :style="{ borderLeftColor: card.color || '#13ce66' }"
+        :style="{ borderLeftColor: card.color || '#4A90E2' }"
         @click="handleCardClick(card)"
       >
         <div class="card-header">
           <h3 class="card-title">{{ card.title }}</h3>
           <div
             class="card-indicator"
-            :style="{ backgroundColor: card.color || '#13ce66' }"
+            :style="{ backgroundColor: card.color || '#4A90E2' }"
           ></div>
         </div>
         <div class="card-body">
-          <div class="card-value">{{ card.value }}</div>
+          <div class="card-value" :style="{ color: card.color || '#4A90E2' }">
+            {{ card.value }}
+          </div>
           <div class="card-desc" v-if="card.desc">{{ card.desc }}</div>
         </div>
       </div>
     </div>
 
     <!-- 图表区域 -->
-    <div class="charts-wrapper">
+    <div class="stats-charts">
       <!-- 饼图区域 -->
-      <div class="park-type-chart" ref="pieChartRef"></div>
-      <!-- 柱状图区域 -->
-      <div class="simple-bar-chart" ref="barChartRef"></div>
+      <div class="chart-item pie-chart" ref="pieChartRef"></div>
+      <!-- 折线图区域 -->
+      <div class="chart-item line-chart" ref="lineChartRef"></div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.park-chart-box {
+.order-refund-stats {
   display: flex;
   flex-wrap: nowrap;
   width: 100%;
   height: auto;
   min-height: 300px;
   overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
 }
 
-.chart-box-left {
-  display: flex;
+/* 卡片区域样式 */
+.stats-cards {
+  display: grid;
   flex-shrink: 0;
-  flex-direction: column;
-  //gap: 16px;
-  width: 200px;
+  grid-template-rows: 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 260px;
+  height: 300px;
+  padding-bottom: 8px;
 }
 
 .stat-card {
-  flex: 1;
-  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 14px;
+  overflow: hidden;
   cursor: pointer;
-  background-color: #fff;
-  border-left: 4px solid;
-  border-radius: 4px;
+  background: #fff;
+  border-left: 4px solid #4a90e2;
+  border-radius: 8px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
   transition: all 0.3s ease;
 }
@@ -487,17 +435,22 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .card-title {
   margin: 0;
-  font-size: 14px;
-  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
   color: #6e7e91;
+  white-space: nowrap;
 }
 
 .card-indicator {
+  flex-shrink: 0;
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -505,38 +458,46 @@ onUnmounted(() => {
 
 .card-body {
   display: flex;
+  flex: 1;
   flex-direction: column;
+  justify-content: center;
 }
 
 .card-value {
-  font-size: 28px;
-  font-weight: 600;
-  color: #303133;
+  margin-bottom: 4px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
 }
 
 .card-desc {
-  margin-top: 4px;
-  font-size: 12px;
-  color: #909399;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  line-height: 1.3;
+  color: #9aa8b7;
+  white-space: nowrap;
 }
 
-.charts-wrapper {
-  position: relative;
+/* 图表区域样式 */
+.stats-charts {
   display: flex;
-  flex: 1 1 0;
-  min-width: 0;
-}
-
-.park-type-chart {
-  flex: 0 0 35%;
-  min-width: 0;
-  height: 280px;
-}
-
-.simple-bar-chart {
   flex: 1;
   min-width: 0;
-  height: 280px;
-  margin-left: 0 !important;
+  height: 300px;
+}
+
+.chart-item {
+  height: 100%;
+}
+
+.pie-chart {
+  flex: 0 0 40%;
+  min-width: 0;
+}
+
+.line-chart {
+  flex: 1;
+  min-width: 0;
 }
 </style>
