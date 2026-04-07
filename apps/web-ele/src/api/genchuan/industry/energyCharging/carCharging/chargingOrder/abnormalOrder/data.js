@@ -60,16 +60,7 @@ export function refundAbnormalOrder(data) {
  * @returns {Promise}
  */
 export function exportAbnormalOrder(params) {
-  return requestClient.download('/vehiclecharging/abnormal-order/export', params);
-}
-
-/**
- * 获取异常订单详情
- * @param {Object} params - { id }
- * @returns {Promise}
- */
-export function getAbnormalOrderDetail(params) {
-  return requestClient.get('/vehiclecharging/abnormal-order/get', { params });
+  return requestClient.download('/vehiclecharging/abnormal-order/export-excel', params);
 }
 
 /**

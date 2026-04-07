@@ -9,7 +9,6 @@ import { $t } from '#/locales';
 import { downloadFileFromBlobPart } from '@vben/utils';
 import AbnormalOrderDetailDrawer from './components/detail.vue';
 import {
-  dataList,
   getAbnormalOrderPage,
   verifyAbnormalOrder,
   handleAbnormalOrder,
@@ -24,7 +23,37 @@ import {
   getColumnsByStatus,
 } from '#/api/genchuan/industry/energyCharging/carCharging/chargingOrder/abnormalOrder/form.js';
 
-// 辅助函数：状态标签类型
+// 辅助函数：时间戳格式化（兼容秒和毫秒）
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return '-';
+  let ts = parseInt(timestamp);
+  // 如果是10位数（秒级），转为毫秒
+  if (ts.toString().length === 10) ts *= 1000;
+  const date = new Date(ts);
+  if (isNaN(date.getTime())) return timestamp;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
+
+// 提取日期部分
+const getDateFromTimestamp = (timestamp) => {
+  if (!timestamp) return '';
+  let ts = parseInt(timestamp);
+  if (ts.toString().length === 10) ts *= 1000;
+  const date = new Date(ts);
+  if (isNaN(date.getTime())) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// 状态标签类型
 const getStatusType = (status) => {
   const map = {
     '未核实': 'warning',
@@ -41,35 +70,10 @@ const formatMoney = (amount) => {
   return `¥${parseFloat(amount).toFixed(2)}`;
 };
 
-// 时间戳格式化
-const formatTimestamp = (timestamp) => {
-  if (!timestamp) return '-';
-  const date = new Date(parseInt(timestamp));
-  if (isNaN(date.getTime())) return timestamp;
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-};
-
-// 提取日期部分
-const getDateFromTimestamp = (timestamp) => {
-  if (!timestamp) return '';
-  const date = new Date(parseInt(timestamp));
-  if (isNaN(date.getTime())) return '';
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
 const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
 const emit = defineEmits(['arrow-change']);
 
-// ---------- 标签筛选（支持数组多值） ----------
+// ---------- 标签筛选（直接作为后端查询参数） ----------
 const tagFilters = ref({});
 
 function handleFilterTagClick(field, value) {
@@ -86,6 +90,7 @@ function handleFilterTagClick(field, value) {
   } else {
     tagFilters.value[field] = value;
   }
+  // 重新加载表格（会将tagFilters合并到请求参数）
   gridApi.reload();
 }
 
@@ -145,74 +150,62 @@ function handleRowCheckboxChange({ records }) {
 
 const searchParams = ref({});
 
+// 构建后端查询参数（将activeName和tagFilters转换为后端支持的字段）
+const buildQueryParams = (pageParams = {}) => {
+  const params = {
+    ...searchParams.value,
+    pageNo: pageParams.currentPage || dataObj.currentPage,
+    pageSize: pageParams.pageSize || dataObj.pageSize,
+  };
+
+  // 处理时间范围
+  if (params.abnormalTime && Array.isArray(params.abnormalTime) && params.abnormalTime.length === 2) {
+    params.startTime = params.abnormalTime[0];
+    params.endTime = params.abnormalTime[1];
+    delete params.abnormalTime;
+  }
+
+  // 状态筛选（标签页）
+  if (activeName.value !== '全部') {
+    params.abnormalStatus = activeName.value;
+  }
+
+  // 标签筛选
+  Object.entries(tagFilters.value).forEach(([field, value]) => {
+    if (field === 'createTime') {
+      // 创建时间按日期筛选，后端可能需要日期范围，这里简单传递日期字符串
+      params.createTime = value;
+    } else if (field === 'abnormalType') {
+      params.abnormalType = value;
+    } else if (field === 'abnormalStatus') {
+      params.abnormalStatus = value;
+    } else if (field === 'checkUser') {
+      params.checkUser = value;
+    } else if (field === 'creator') {
+      params.creator = value;
+    } else if (field === 'orderCode') {
+      params.orderCode = value;
+    } else {
+      params[field] = value;
+    }
+  });
+
+  return params;
+};
+
 const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
-    const params = {
-      ...searchParams.value,
-      pageNo: page.currentPage,
-      pageSize: page.pageSize,
-    };
-    if (params.abnormalTime && Array.isArray(params.abnormalTime) && params.abnormalTime.length === 2) {
-      params.startTime = params.abnormalTime[0];
-      params.endTime = params.abnormalTime[1];
-      delete params.abnormalTime;
-    }
+    const params = buildQueryParams({ currentPage: page.currentPage, pageSize: page.pageSize });
     const res = await getAbnormalOrderPage(params);
-    let filtered = res.list.filter(v => activeName.value === '全部' || v.abnormalStatus === activeName.value);
-    // 应用标签筛选
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'abnormalType': itemValue = item.abnormalType; break;
-          case 'abnormalStatus': itemValue = item.abnormalStatus; break;
-          case 'checkUser': itemValue = item.checkUser; break;
-          case 'creator': itemValue = item.creator; break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          case 'orderCode': itemValue = item.orderCode; break;
-          default: itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 假设 requestClient 已经解包，res 直接是 { total, list }
+    dataObj.total = res.total || 0;
+    dataObj.list = res.list || [];
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = dataList();
-    let filtered = mockData.filter(v => activeName.value === '全部' || v.abnormalStatus === activeName.value);
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'abnormalType': itemValue = item.abnormalType; break;
-          case 'abnormalStatus': itemValue = item.abnormalStatus; break;
-          case 'checkUser': itemValue = item.checkUser; break;
-          case 'creator': itemValue = item.creator; break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          case 'orderCode': itemValue = item.orderCode; break;
-          default: itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('加载数据失败');
   } finally {
     dataObj.loading = false;
   }
@@ -225,7 +218,10 @@ async function handleExport() {
   try {
     const loading = ElLoading.service({ text: '正在导出...' });
     try {
-      const data = await exportAbnormalOrder(searchParams.value);
+      const params = buildQueryParams({});
+      delete params.pageNo;
+      delete params.pageSize;
+      const data = await exportAbnormalOrder(params);
       downloadFileFromBlobPart({ fileName: '异常订单列表.xls', source: data });
       ElMessage.success('导出成功');
     } finally { loading.close(); }
@@ -235,7 +231,7 @@ async function handleExport() {
   }
 }
 
-// 批量核实
+// 批量核实（使用批量接口）
 async function handleBatchVerify() {
   if (checkedIds.value.length === 0) { ElMessage.warning('请至少选择一条异常订单'); return; }
   const selectedRows = checkedRows.value.filter(row => row.abnormalStatus === '未核实');
@@ -261,20 +257,14 @@ async function handleBatchVerify() {
       });
       const loading = ElLoading.service({ text: '核实中...' });
       try {
-        const promises = selectedRows.map(row => verifyAbnormalOrder({ id: row.id, verifyResult: result, verifyRemark: remark || '' }));
-        const results = await Promise.all(promises);
-        const allSuccess = results.every(res => res === true);
-        if (allSuccess) {
-          selectedRows.forEach(row => {
-            row.abnormalStatus = '已核实';
-            row.verifyUser = '当前用户'; // 实际应从登录信息获取
-            row.verifyTime = Date.now().toString();
-            row.verifyResult = result;
-            row.checkUser = '当前用户';
-            row.checkTime = Date.now().toString();
-          });
-          ElMessage.success('核实成功'); handleRefresh();
-        } else { ElMessage.error('部分核实失败'); }
+        const ids = selectedRows.map(row => row.id);
+        const res = await verifyAbnormalOrder({ ids, verifyResult: result, verifyRemark: remark || '' });
+        if (res === true) {
+          ElMessage.success('核实成功');
+          handleRefresh();
+        } else {
+          ElMessage.error('核实失败');
+        }
       } finally { loading.close(); }
     }
   } catch {}
@@ -295,19 +285,14 @@ async function handleBatchHandle() {
     if (measure) {
       const loading = ElLoading.service({ text: '处理中...' });
       try {
-        const promises = selectedRows.map(row => handleAbnormalOrder({ id: row.id, handleMeasure: measure }));
-        const results = await Promise.all(promises);
-        const allSuccess = results.every(res => res === true);
-        if (allSuccess) {
-          const now = Date.now().toString();
-          selectedRows.forEach(row => {
-            row.abnormalStatus = '处理中';
-            row.handleUser = '当前用户';
-            row.handleTime = now;
-            row.handleMeasure = measure;
-          });
-          ElMessage.success('处理成功'); handleRefresh();
-        } else { ElMessage.error('部分处理失败'); }
+        const ids = selectedRows.map(row => row.id);
+        const res = await handleAbnormalOrder({ ids, handleMeasure: measure });
+        if (res === true) {
+          ElMessage.success('处理成功');
+          handleRefresh();
+        } else {
+          ElMessage.error('处理失败');
+        }
       } finally { loading.close(); }
     }
   } catch {}
@@ -320,6 +305,13 @@ async function handleBatchComplete() {
   if (selectedRows.length === 0) { ElMessage.warning('请选择状态为【处理中】的订单'); return; }
 
   try {
+    // 可选：让用户输入完结备注
+    const { value: completeRemark } = await ElMessageBox.prompt('请输入完结备注（可选）', '完结备注', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      inputPlaceholder: '请输入备注',
+      inputValue: '',
+    });
     await ElMessageBox.confirm('确认完结？完结后异常订单状态将变为"已完结"。', '完结确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
@@ -327,17 +319,14 @@ async function handleBatchComplete() {
     });
     const loading = ElLoading.service({ text: '完结中...' });
     try {
-      const promises = selectedRows.map(row => completeAbnormalOrder({ id: row.id }));
-      const results = await Promise.all(promises);
-      const allSuccess = results.every(res => res === true);
-      if (allSuccess) {
-        const now = Date.now().toString();
-        selectedRows.forEach(row => {
-          row.abnormalStatus = '已完结';
-          row.completeTime = now;
-        });
-        ElMessage.success('完结成功'); handleRefresh();
-      } else { ElMessage.error('部分完结失败'); }
+      const ids = selectedRows.map(row => row.id);
+      const res = await completeAbnormalOrder({ ids, completeRemark: completeRemark || '' });
+      if (res === true) {
+        ElMessage.success('完结成功');
+        handleRefresh();
+      } else {
+        ElMessage.error('完结失败');
+      }
     } finally { loading.close(); }
   } catch {}
 }
@@ -368,16 +357,13 @@ async function handleRowVerify(row) {
       });
       const loading = ElLoading.service({ text: '核实中...' });
       try {
-        const res = await verifyAbnormalOrder({ id: row.id, verifyResult: result, verifyRemark: remark || '' });
+        const res = await verifyAbnormalOrder({ ids: [row.id], verifyResult: result, verifyRemark: remark || '' });
         if (res === true) {
-          row.abnormalStatus = '已核实';
-          row.verifyUser = '当前用户';
-          row.verifyTime = Date.now().toString();
-          row.verifyResult = result;
-          row.checkUser = '当前用户';
-          row.checkTime = Date.now().toString();
-          ElMessage.success('核实成功'); handleRefresh();
-        } else { ElMessage.error('核实失败'); }
+          ElMessage.success('核实成功');
+          handleRefresh();
+        } else {
+          ElMessage.error('核实失败');
+        }
       } finally { loading.close(); }
     }
   } catch {}
@@ -398,14 +384,13 @@ async function handleRowHandle(row) {
     if (measure) {
       const loading = ElLoading.service({ text: '处理中...' });
       try {
-        const res = await handleAbnormalOrder({ id: row.id, handleMeasure: measure });
+        const res = await handleAbnormalOrder({ ids: [row.id], handleMeasure: measure });
         if (res === true) {
-          row.abnormalStatus = '处理中';
-          row.handleUser = '当前用户';
-          row.handleTime = Date.now().toString();
-          row.handleMeasure = measure;
-          ElMessage.success('处理成功'); handleRefresh();
-        } else { ElMessage.error('处理失败'); }
+          ElMessage.success('处理成功');
+          handleRefresh();
+        } else {
+          ElMessage.error('处理失败');
+        }
       } finally { loading.close(); }
     }
   } catch {}
@@ -436,9 +421,11 @@ async function handleRowRefund(row) {
         try {
           const res = await refundAbnormalOrder({ id: row.id, refundAmount: parseFloat(amount), refundReason: reason });
           if (res === true) {
-            row.refundAmount = parseFloat(amount);
-            ElMessage.success('退款成功'); handleRefresh();
-          } else { ElMessage.error('退款失败'); }
+            ElMessage.success('退款成功');
+            handleRefresh();
+          } else {
+            ElMessage.error('退款失败');
+          }
         } finally { loading.close(); }
       }
     }
@@ -452,6 +439,11 @@ async function handleRowComplete(row) {
     return;
   }
   try {
+    const { value: completeRemark } = await ElMessageBox.prompt('请输入完结备注（可选）', '完结备注', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      inputPlaceholder: '请输入备注',
+    });
     await ElMessageBox.confirm('确认完结？完结后异常订单状态将变为"已完结"。', '完结确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
@@ -459,12 +451,13 @@ async function handleRowComplete(row) {
     });
     const loading = ElLoading.service({ text: '完结中...' });
     try {
-      const res = await completeAbnormalOrder({ id: row.id });
+      const res = await completeAbnormalOrder({ ids: [row.id], completeRemark: completeRemark || '' });
       if (res === true) {
-        row.abnormalStatus = '已完结';
-        row.completeTime = Date.now().toString();
-        ElMessage.success('完结成功'); handleRefresh();
-      } else { ElMessage.error('完结失败'); }
+        ElMessage.success('完结成功');
+        handleRefresh();
+      } else {
+        ElMessage.error('完结失败');
+      }
     } finally { loading.close(); }
   } catch {}
 }
@@ -482,10 +475,11 @@ async function handleRowRemark(row) {
       try {
         const res = await remarkAbnormalOrder({ id: row.id, remark });
         if (res === true) {
-          row.remark = remark;
           ElMessage.success('备注添加成功');
           handleRefresh();
-        } else { ElMessage.error('备注添加失败'); }
+        } else {
+          ElMessage.error('备注添加失败');
+        }
       } finally { loading.close(); }
     }
   } catch {}
