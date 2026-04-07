@@ -79,6 +79,7 @@ defineExpose({
         <div class="detail-row-left">生成人:</div>
         <div class="detail-row-right">
           {{ detailObj.createBy || '-' }}
+          
         </div>
       </div>
 
