@@ -2,7 +2,7 @@
 import { reactive, onMounted, ref, computed } from 'vue';
 import { ElMessage, ElSelect, ElOption } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
-import Radar from '#/genchuan-components/stats/RadarClick.vue';
+import Radar from '#/genchuan-components/stats/radarClick.vue';
 import lineChart from '#/genchuan-components/stats/lineChartClick.vue';
 import {
   getAssessMgmtChart,
