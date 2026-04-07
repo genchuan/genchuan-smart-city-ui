@@ -1,6 +1,6 @@
 // charging-pile/data.js
 
-/** 新增/编辑表单配置 */
+/** 新增/编辑表单配置（不含 pileStatus，状态由后端流程控制） */
 export function useFormSchema() {
   return [
     {
@@ -67,18 +67,6 @@ export function useFormSchema() {
       },
     },
     {
-      fieldName: 'pileStatus',
-      label: '设备状态',
-      component: 'Select',
-      rules: 'required',
-      componentProps: {
-        placeholder: '请选择设备状态',
-        options: [],
-        valueField: 'value',
-        labelField: 'label',
-      },
-    },
-    {
       fieldName: 'remark',
       label: '备注',
       component: 'Input',
@@ -117,7 +105,7 @@ export function useQuerySchema() {
     {
       fieldName: 'chargeMode',
       label: '充电模式',
-      component: 'Select',   // 改为下拉选择
+      component: 'Select',
       componentProps: {
         placeholder: '请选择充电模式',
         options: [],
@@ -128,7 +116,7 @@ export function useQuerySchema() {
     {
       fieldName: 'pileStatus',
       label: '设备状态',
-      component: 'Select',   // 改为下拉选择
+      component: 'Select',
       componentProps: {
         placeholder: '请选择设备状态',
         options: [],
@@ -145,6 +133,16 @@ export function useQuerySchema() {
         options: [{ label: '有故障', value: true }, { label: '无故障', value: false }],
       },
     },
+    {
+      fieldName: 'runTime',
+      label: '运行时长(小时)',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入运行时长',
+        min: 0,
+        precision: 2,
+      },
+    },
   ];
 }
 
@@ -158,9 +156,7 @@ export function useGridColumns() {
     { field: 'manufacturer', title: '生产厂家', minWidth: 150, sortable: true, slots: { default: 'manufacturer' } },
     { field: 'stationName', title: '所属场站', minWidth: 150, sortable: true, slots: { default: 'stationName' } },
     { field: 'lotName', title: '绑定车位', minWidth: 120, sortable: true, slots: { default: 'lotName' } },
-    // 使用 chargeModeName 显示名称
     { field: 'chargeModeName', title: '充电模式', minWidth: 100, sortable: true, slots: { default: 'chargeMode' } },
-    // 使用 pileStatusName 显示名称
     { field: 'pileStatusName', title: '设备状态', minWidth: 100, sortable: true, slots: { default: 'pileStatus' } },
     { field: 'faultFlag', title: '故障标记', minWidth: 100, sortable: true, slots: { default: 'faultFlag' } },
     { field: 'runTime', title: '运行时长(小时)', minWidth: 120, sortable: true },
@@ -170,22 +166,9 @@ export function useGridColumns() {
     { field: 'createTime', title: '创建时间', minWidth: 160, sortable: true },
     { field: 'updater', title: '更新人', minWidth: 100, sortable: true },
     { field: 'updateTime', title: '更新时间', minWidth: 160, sortable: true },
-    { title: '操作', width: 320, fixed: 'right', slots: { default: 'actions' } },
+    { title: '操作', width: 220, fixed: 'right', align: 'center',slots: { default: 'actions' } },
   ];
 }
-
-/** 导入字段映射（用于批量导入模板） */
-export const importFields = [
-  { label: '设备编号', key: 'pileCode', required: true },
-  { label: '型号', key: 'model', required: true },
-  { label: '功率(kW)', key: 'power', required: true },
-  { label: '生产厂家', key: 'manufacturer', required: true },
-  { label: '所属场站ID', key: 'stationId', required: true },
-  { label: '绑定车位ID', key: 'lotId', required: false },
-  { label: '充电模式', key: 'chargeMode', required: true },
-  { label: '设备状态', key: 'pileStatus', required: true, defaultValue: '未调试' },
-  { label: '备注', key: 'remark', required: false },
-];
 
 /** 页面文案配置 */
 export const textObj = {

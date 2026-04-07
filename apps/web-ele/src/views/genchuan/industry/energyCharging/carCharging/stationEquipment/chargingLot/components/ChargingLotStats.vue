@@ -453,7 +453,6 @@ onUnmounted(() => {
 .park-chart-box {
   display: flex;
   flex-wrap: nowrap;
-  gap: 20px;
   width: 100%;
   height: auto;
   min-height: 300px;
@@ -525,14 +524,19 @@ onUnmounted(() => {
   position: relative;
   display: flex;
   flex: 1 1 0;
-  //gap: 16px;
   min-width: 0;
 }
 
-.park-type-chart,
+.park-type-chart {
+  flex: 0 0 35%;
+  min-width: 0;
+  height: 280px;
+}
+
 .simple-bar-chart {
   flex: 1;
   min-width: 0;
   height: 280px;
+  margin-left: 0 !important;
 }
 </style>

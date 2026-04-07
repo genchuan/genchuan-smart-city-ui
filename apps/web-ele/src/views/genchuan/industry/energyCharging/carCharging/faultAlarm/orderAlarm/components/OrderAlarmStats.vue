@@ -189,9 +189,9 @@ const initLineChart = () => {
       itemHeight: 12,
     },
     grid: {
-      left: '3%',
+      left: '8%',
       right: '4%',
-      bottom: '12%',
+      bottom: '18%',
       containLabel: true,
       backgroundColor: 'transparent',
     },
@@ -204,6 +204,10 @@ const initLineChart = () => {
         fontSize: 11,
         rotate: 30,
         interval: 0,
+        formatter(value) {
+          // 只显示年月日，去掉时间部分
+          return value.slice(0, 10);
+        },
       },
       axisLine: {
         lineStyle: {
@@ -378,7 +382,6 @@ onUnmounted(() => {
 .park-chart-box {
   display: flex;
   flex-wrap: nowrap;
-  gap: 20px;
   width: 100%;
   height: auto;
   min-height: 300px;
@@ -452,10 +455,16 @@ onUnmounted(() => {
   min-width: 0;
 }
 
-.park-type-chart,
+.park-type-chart {
+  flex: 0 0 35%;
+  min-width: 0;
+  height: 280px;
+}
+
 .simple-bar-chart {
   flex: 1;
   min-width: 0;
   height: 280px;
+  margin-left: 0 !important;
 }
 </style>

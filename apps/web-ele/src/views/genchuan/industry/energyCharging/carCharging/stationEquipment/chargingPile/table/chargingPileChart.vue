@@ -1,7 +1,5 @@
-<!-- charging-pile/table/chargingPileChart.vue -->
 <template>
   <div class="charging-pile-visualization">
-    <!-- 左侧卡片区 2x2 网格 -->
     <div class="cards-section">
       <div
         v-for="card in cards"
@@ -22,7 +20,6 @@
       </div>
     </div>
 
-    <!-- 右侧图表区 -->
     <div class="charts-section">
       <div class="chart-item">
         <div ref="lineChartRef" class="chart-container"></div>
@@ -53,10 +50,10 @@ const state = reactive({
 });
 
 const cards = ref([
-  { title: '总充电桩数', key: 'totalCount', color: '#4A90E2' },
-  { title: '运行中数量', key: 'enableCount', color: '#67C23A' },
-  { title: '故障数量', key: 'faultCount', color: '#F56C6C' },
-  { title: '停用数量', key: 'disabledCount', color: '#E6A23C' },
+  { title: '总充电桩数', key: 'totalCount', color: '#4A90E2', statusValue: 'total' },
+  { title: '运行中数量', key: 'enableCount', color: '#67C23A', statusValue: 'enable' },
+  { title: '故障数量', key: 'faultCount', color: '#F56C6C', statusValue: 'fault' },
+  { title: '停用数量', key: 'disabledCount', color: '#E6A23C', statusValue: 'disabled' },
 ]);
 
 const lineChartRef = ref(null);
@@ -64,12 +61,10 @@ const barChartRef = ref(null);
 let lineChartInstance = null;
 let barChartInstance = null;
 
-// 获取数据并更新视图
 const fetchOverview = async () => {
   try {
     const [chartData, statusCounts] = await Promise.all([getChartData(), getStatusCount()]);
     const { totalCount = 0, faultCount = 0 } = chartData.cardInfo || {};
-    // 从状态统计中获取已启用和已停用数量
     const statusMap = new Map((statusCounts || []).map(item => [item.pileStatus, item.count]));
     const enableCount = statusMap.get('已启用') || 0;
     const disabledCount = statusMap.get('已停用') || 0;
@@ -82,7 +77,7 @@ const fetchOverview = async () => {
 
     state.runTimeTrend = (chartData.runTimeTrendList || []).map(item => ({
       time: item.time,
-      runTime: item.runTime,
+      runTime: typeof item.runTime === 'number' && item.runTime > 1000 ? item.runTime / 3600000 : item.runTime,
     }));
 
     state.typeBarList = (chartData.typeBarList || []).map(item => ({
@@ -122,7 +117,10 @@ const getLineOption = () => {
       textStyle: { color: '#6E7E91' },
       formatter: (params) => {
         const point = params[0];
-        return `${point.axisValue}<br/>运行时长: ${point.value} 小时`;
+        if (!point || point.value === undefined || point.value === null) {
+          return `${point?.axisValue || ''}<br/>运行时长: -`;
+        }
+        return `${point.axisValue}<br/>运行时长: ${Number(point.value).toFixed(2)} 小时`;
       },
     },
     grid: { left: '8%', right: '5%', top: '18%', bottom: '8%', containLabel: true },
@@ -207,9 +205,9 @@ const getBarOption = () => {
       name: '充电桩数量',
       type: 'bar',
       data: seriesData,
-      itemStyle: { borderRadius: [4, 4, 0, 0], color: '#50E3C2' },
-      label: { show: true, position: 'top', color: '#6E7E91', fontSize: 12, formatter: '{c}' },
-      emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(80, 227, 194, 0.3)' } },
+      itemStyle: { borderRadius: [4, 4, 0, 0], color: '#3cb9e6' },
+      label: { show: true, position: 'top', color: '#4584cf', fontSize: 12, formatter: '{c}' },
+      emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgb(48,179,227)' } },
     }],
   };
 };
@@ -218,19 +216,22 @@ const updateLineChart = () => {
   if (!lineChartRef.value) return;
   if (!lineChartInstance) {
     lineChartInstance = echarts.init(lineChartRef.value);
-    lineChartInstance.off('click');
-    lineChartInstance.on('click', (params) => {
-      if (params.componentType === 'series' && params.dataIndex !== undefined) {
-        const point = state.runTimeTrend[params.dataIndex];
-        if (point) {
-          emit('drill-down', {
-            type: 'trend',
-            data: { time: point.time, runTime: point.runTime },
-          });
-        }
-      }
-    });
   }
+  lineChartInstance.off('click');
+  lineChartInstance.on('click', (params) => {
+    if (params.componentType === 'series' && params.dataIndex !== undefined) {
+      const point = state.runTimeTrend[params.dataIndex];
+      if (point && point.runTime !== undefined) {
+        emit('drill-down', {
+          type: 'trend',  // 修改为 trend 与外层 case 匹配
+          data: {
+            runTime: point.runTime,
+            time: point.time
+          },
+        });
+      }
+    }
+  });
   lineChartInstance.setOption(getLineOption(), true);
   lineChartInstance.resize();
 };
@@ -239,35 +240,33 @@ const updateBarChart = () => {
   if (!barChartRef.value) return;
   if (!barChartInstance) {
     barChartInstance = echarts.init(barChartRef.value);
-    barChartInstance.off('click');
-    barChartInstance.on('click', (params) => {
-      if (params.componentType === 'series' && params.dataIndex !== undefined) {
-        const typeItem = state.typeBarList[params.dataIndex];
-        if (typeItem) {
-          emit('drill-down', {
-            type: 'type',
-            data: { typeName: typeItem.typeName },
-          });
-        }
-      }
-    });
   }
+  barChartInstance.off('click');
+  barChartInstance.on('click', (params) => {
+    if (params.componentType === 'series' && params.dataIndex !== undefined) {
+      const typeItem = state.typeBarList[params.dataIndex];
+      if (typeItem) {
+        emit('drill-down', {
+          type: 'type',  // 修改为 type 与外层 case 匹配
+          data: { typeName: typeItem.typeName },
+        });
+      }
+    }
+  });
   barChartInstance.setOption(getBarOption(), true);
   barChartInstance.resize();
 };
 
 const handleCardClick = (key) => {
-  let statusType = '';
-  switch (key) {
-    case 'totalCount': statusType = 'total'; break;
-    case 'enableCount': statusType = 'enable'; break;
-    case 'faultCount': statusType = 'fault'; break;
-    case 'disabledCount': statusType = 'disabled'; break;
-    default: return;
-  }
+  const card = cards.value.find(c => c.key === key);
+  if (!card) return;
+
   emit('drill-down', {
     type: 'status',
-    data: { statusType },
+    data: {
+      statusType: card.statusValue,
+      statusName: card.title
+    },
   });
 };
 
@@ -299,7 +298,6 @@ defineExpose({ fetchOverview });
 </script>
 
 <style scoped lang="scss">
-/* 样式保持不变 */
 .charging-pile-visualization {
   display: flex;
   flex-wrap: nowrap;

@@ -55,3 +55,32 @@ export function getChargingLotStatusRatio(params) {
   });
 }
 // ==================== 联表关联详情接口 ====================
+/**
+ * 查询充电场站详情
+ * @param {Object} params - { id }
+ * @returns {Promise}
+ */
+export function getChargingStationDetail(params) {
+  return requestClient.get('/vehiclecharging/charging_station/get', { params });
+}
+// export function getChargingPileDetail(id) {
+//   return requestClient.get(`/vehiclecharging/charging_pile/get?id=${id}`);
+// }
+/**
+ * 查询充电桩详情
+ * @param {Object} params - { id }
+ * @returns {Promise}
+ */
+export function getChargingPileDetail(params) {
+  return requestClient.get('/vehiclecharging/charging-pile/get', { params });
+}
+/**
+ * 获取场站简易列表
+ * 获取场站简易列表（用于下拉选择）
+ * @returns {Promise<Array<{value: number, label: string}>>}
+ */
+export function getStationSimpleList() {
+  return requestClient.get(
+    '/vehiclecharging/charging-pile/station-simple-list',
+  );
+}

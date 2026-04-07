@@ -17,6 +17,7 @@ const changeArrowStatus = () => {
   });
 };
 
+
 const tabArray = ref([
   {
     label: '互联互通',
@@ -26,14 +27,6 @@ const tabArray = ref([
     arrowShow: true,
     arrowState: false,
   },
-  // {
-  //   label: '占道经营监管报表',
-  //   components: report,
-  //   showSecondary: false,
-  //   secondShow: false,
-  //   arrowShow: false,
-  //   arrowState: false,
-  // },
 ]);
 
 // 接收子组件的箭头切换事件，修改gateChart显示状态

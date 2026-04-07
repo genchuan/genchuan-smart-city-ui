@@ -1,8 +1,10 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
+import { getStationSimpleList } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingLot';
+
 /** 充电车位表单配置 */
-export function useFormSchema() {
+export function useFormSchema(stationOptions = []) {
   return [
     {
       fieldName: 'lotCode',
@@ -19,7 +21,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择所属场站',
-        options: [],
+        options: stationOptions,
       },
       rules: 'required',
     },
@@ -81,7 +83,7 @@ export function useFormSchema() {
 }
 
 /** 充电车位搜索表单配置 */
-export function useSearchFormSchema() {
+export function useSearchFormSchema(stationOptions = []) {
   return [
     {
       fieldName: 'lotCode',
@@ -97,7 +99,7 @@ export function useSearchFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择所属场站',
-        options: [],
+        options: stationOptions,
       },
     },
     {
@@ -130,6 +132,16 @@ export function useSearchFormSchema() {
       },
     },
   ];
+}
+
+/** 获取场站下拉选项 */
+export async function fetchStationOptions() {
+  try {
+    return await getStationSimpleList();
+  } catch (error) {
+    console.error('获取场站列表失败', error);
+    return [];
+  }
 }
 
 /** 充电车位表格列配置 */
@@ -211,7 +223,7 @@ export function useGridColumns() {
     },
     {
       title: '操作',
-      width: 130,
+      width: 100,
       fixed: 'right',
       slots: { default: 'actions' },
     },
