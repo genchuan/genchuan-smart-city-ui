@@ -3,16 +3,20 @@
 export function useFormSchema() {
   return [
     {
-      fieldName: 'rank',
-      label: '统计周期',
-      component: 'InputNumber',
+      fieldName: 'statisticPeriod',
+      label: '统计周期(日/周/月)',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入企业违规频次排名',
-        min: 1,
-        precision: 0,
+        placeholder: '请选择统计周期',
+        options: [
+          { label: '日', value: '日' },
+          { label: '周', value: '周' },
+          { label: '月', value: '月' },
+        ],
       },
       labelWidth: '180',
       rules: 'required',
+      isSearch: true,
     }, 
   ];
 }
