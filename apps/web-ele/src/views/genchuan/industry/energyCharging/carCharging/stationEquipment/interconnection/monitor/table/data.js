@@ -275,6 +275,7 @@ export function useGridColumns() {
       slots: { default: 'sync_freq' },
 
     },
+
     // {
     //   field: 'sync_rate',
     //   title: '同步成功率(%)',
