@@ -343,16 +343,61 @@ const alarmColumns = [
 const alarmDrillVisible = ref(false);
 const alarmDrillList = ref([]);
 
+// 整改复审台账弹窗
+const rectifyReviewVisible = ref(false);
+const rectifyReviewList = ref([]);
+
+// 设备正常率弹窗
+const deviceNormalVisible = ref(false);
+const deviceNormalList = ref([]);
+
+// 整改完成率弹窗
+const rectifyFinishVisible = ref(false);
+const rectifyFinishList = ref([]);
+
 // 打开告警明细弹窗
-const oepnalarmCount = async (row) => {
+const oepnalarmCount = async (row, type) => {
   const data = await getViolationAnalyticsDrill({ entId: row.entId });
-  alarmDrillList.value = data.alarmList || [];
-  alarmDrillList.value = alarmDrillList.value.map((item) => ({
-    ...item,
-    createTime: formatTimestamp(item.createTime),
-    updateTime: formatTimestamp(item.updateTime),
-  }));
-  alarmDrillVisible.value = true;
+
+  if (type === 'noAi') {
+    rectifyReviewList.value = data.rectifyReviewDOList.map((item) => ({
+      ...item,
+      createTime: formatTimestamp(item.createTime),
+      updateTime: formatTimestamp(item.updateTime),
+      draftTime: formatTimestamp(item.draftTime),
+      rectifyDeadlineTime: formatTimestamp(item.rectifyDeadlineTime),
+      reviewTime: formatTimestamp(item.reviewTime),
+      cancelTime: formatTimestamp(item.cancelTime),
+    }));
+    rectifyReviewVisible.value = true;
+  } else if(type === 'rectifyFinishRate') {
+    rectifyFinishList.value = data.rectifyFinishList.map((item) => ({
+      ...item,
+      createTime: formatTimestamp(item.createTime),
+      updateTime: formatTimestamp(item.updateTime),
+      draftTime: formatTimestamp(item.draftTime),
+      rectifyDeadlineTime: formatTimestamp(item.rectifyDeadlineTime),
+      reviewTime: formatTimestamp(item.reviewTime),
+      cancelTime: formatTimestamp(item.cancelTime),
+    }));
+    rectifyFinishVisible.value = true;
+  } else if(type === 'deviceNormalRate') {
+    deviceNormalList.value = data.deviceNormalList.map((item) => ({
+      ...item,
+      createTime: formatTimestamp(item.createTime),
+      updateTime: formatTimestamp(item.updateTime),
+    }));
+    deviceNormalVisible.value = true;
+  } else {
+    alarmDrillList.value = data.alarmList || [];
+    alarmDrillList.value = alarmDrillList.value.map((item) => ({
+      ...item,
+      createTime: formatTimestamp(item.createTime),
+      updateTime: formatTimestamp(item.updateTime),
+    }));
+
+    alarmDrillVisible.value = true;
+  }
 };
 
 // 告警钻取列
@@ -362,10 +407,61 @@ const alarmDrillColumns = [
   { label: '更新时间', prop: 'updateTime', width: 180 },
   { label: '告警类型', prop: 'alertType', width: 120 },
   { label: '设备编码', prop: 'deviceCode', width: 180 },
-  { label: '告警来源', prop: 'alertSource', width: 120 }, 
+  { label: '告警来源', prop: 'alertSource', width: 120 },
   { label: '设备手机号', prop: 'deviceAccount', width: 150 },
   { label: '告警ID', prop: 'alertId', width: 120 },
   { label: 'AI平台消息ID', prop: 'aiPlatformMsgId', width: 180 },
+];
+
+// 整改复审台账列
+const rectifyReviewColumns = [
+  { label: 'ID', prop: 'id', width: 80 },
+  { label: '整改通知书id', prop: 'rectifyNoticeId', width: 150 },
+  { label: '台账编号', prop: 'ledgerCode', width: 200 },
+  { label: '企业ID', prop: 'entId', width: 120 },
+  { label: '违规类型ID', prop: 'illegalTypeId', width: 150 },
+  { label: '违规等级ID', prop: 'illegalLevelId', width: 150 },
+  { label: '违规证据链接', prop: 'evidenceUrl', width: 400 },
+  { label: '草拟时间', prop: 'draftTime', width: 180 },
+  { label: '整改截至时间', prop: 'rectifyDeadlineTime', width: 180 },
+  { label: '复审状态', prop: 'reviewStatus', width: 120 },
+  { label: '复审人ID', prop: 'reviewBy', width: 120 },
+  { label: '复审时间', prop: 'reviewTime', width: 180 },
+  { label: '撤销时间', prop: 'cancelTime', width: 180 },
+  { label: '撤销原因ID', prop: 'cancelReasonId', width: 150 },
+  { label: '执法复审台账编号', prop: 'lawLedgerCode', width: 200 },
+  { label: '整改通知书编号', prop: 'rectifyNoticeCode', width: 200 }, 
+];
+
+// 设备正常率列
+const deviceNormalColumns = [
+  { label: 'ID', prop: 'id', width: 80 },
+  { label: '设备编号', prop: 'deviceCode', width: 180 },
+  { label: '设备名称', prop: 'deviceName', width: 200 },
+  { label: '设备类型', prop: 'deviceType', width: 150 },
+  { label: '所属企业ID', prop: 'entId', width: 120 },
+  { label: '所属区域ID', prop: 'areaId', width: 120 },
+  { label: '状态', prop: 'status', width: 120 },
+];
+
+// 整改完成率列
+const rectifyFinishColumns = [
+  { label: 'ID', prop: 'id', width: 80 },
+  { label: '整改通知书id', prop: 'rectifyNoticeId', width: 150 },
+  { label: '台账编号', prop: 'ledgerCode', width: 200 },
+  { label: '企业ID', prop: 'entId', width: 120 },
+  { label: '违规类型ID', prop: 'illegalTypeId', width: 150 },
+  { label: '违规等级ID', prop: 'illegalLevelId', width: 150 },
+  { label: '违规证据链接', prop: 'evidenceUrl', width: 400 },
+  { label: '草拟时间', prop: 'draftTime', width: 180 },
+  { label: '整改截至时间', prop: 'rectifyDeadlineTime', width: 180 },
+  { label: '复审状态', prop: 'reviewStatus', width: 120 },
+  { label: '复审人ID', prop: 'reviewBy', width: 120 },
+  { label: '复审时间', prop: 'reviewTime', width: 180 },
+  { label: '撤销时间', prop: 'cancelTime', width: 180 },
+  { label: '撤销原因ID', prop: 'cancelReasonId', width: 150 },
+  { label: '执法复审台账编号', prop: 'lawLedgerCode', width: 200 },
+  { label: '整改通知书编号', prop: 'rectifyNoticeCode', width: 200 }, 
 ];
 </script>
 
@@ -407,6 +503,33 @@ const alarmDrillColumns = [
       </el-table>
     </ElDialog>
 
+    <!-- 整改复审台账弹窗 -->
+    <ElDialog v-model="rectifyReviewVisible" title="整改复审台账" width="1200px" append-to-body>
+      <el-table :data="rectifyReviewList" border height="450">
+        <el-table-column v-for="col in rectifyReviewColumns" :key="col.prop" :label="col.label" :prop="col.prop"
+          :width="col.width">
+        </el-table-column>
+      </el-table>
+    </ElDialog>
+
+    <!-- 设备正常率弹窗 -->
+    <ElDialog v-model="deviceNormalVisible" title="设备正常率" width="1200px" append-to-body>
+      <el-table :data="deviceNormalList" border height="450">
+        <el-table-column v-for="col in deviceNormalColumns" :key="col.prop" :label="col.label" :prop="col.prop"
+          :width="col.width">
+        </el-table-column>
+      </el-table>
+    </ElDialog>
+
+    <!-- 整改完成率弹窗 -->
+    <ElDialog v-model="rectifyFinishVisible" title="整改完成率" width="1200px" append-to-body>
+      <el-table :data="rectifyFinishList" border height="450">
+        <el-table-column v-for="col in rectifyFinishColumns" :key="col.prop" :label="col.label" :prop="col.prop"
+          :width="col.width">
+        </el-table-column>
+      </el-table>
+    </ElDialog>
+
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
@@ -438,7 +561,21 @@ const alarmDrillColumns = [
           {{ row.alarmCount }}
         </el-text>
       </template>
-
+      <template #violationCount="{ row }">
+        <el-text class="common-align" @click="oepnalarmCount(row, 'noAi')" type="primary">
+          {{ row.violationCount }}
+        </el-text>
+      </template>
+      <template #deviceNormalRate="{ row }">
+        <el-text @click="oepnalarmCount(row, 'deviceNormalRate')" class="common-align" type="primary">
+          {{ row.deviceNormalRate }}
+        </el-text>
+      </template> 
+      <template #rectifyFinishRate="{ row }">
+        <el-text @click="oepnalarmCount(row, 'rectifyFinishRate')" class="common-align" type="primary">
+          {{ row.rectifyFinishRate }}
+        </el-text>
+      </template>
 
 
       <template #actions="{ row }">
