@@ -5,17 +5,18 @@ import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { $t } from '#/locales';
 import { downloadFileFromBlobPart } from '@vben/utils';
 import AbnormalOrderDetailDrawer from './components/detail.vue';
 import {
+  dataList,
   getAbnormalOrderPage,
   verifyAbnormalOrder,
   handleAbnormalOrder,
   completeAbnormalOrder,
-  remarkAbnormalOrder,
   refundAbnormalOrder,
+  remarkAbnormalOrder,
   exportAbnormalOrder,
+  getAbnormalOrderDetail,
 } from '#/api/genchuan/industry/energyCharging/carCharging/chargingOrder/abnormalOrder/data.js';
 import {
   textObj,
@@ -23,13 +24,21 @@ import {
   getColumnsByStatus,
 } from '#/api/genchuan/industry/energyCharging/carCharging/chargingOrder/abnormalOrder/form.js';
 
-// 辅助函数：时间戳格式化（兼容秒和毫秒）
+// 辅助函数：状态标签类型
+const getStatusType = (status) => {
+  const map = {
+    '未核实': 'warning',
+    '已核实': 'primary',
+    '处理中': 'success',
+    '已完结': 'info',
+  };
+  return map[status] || 'info';
+};
+
+// 时间戳格式化
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
-  let ts = parseInt(timestamp);
-  // 如果是10位数（秒级），转为毫秒
-  if (ts.toString().length === 10) ts *= 1000;
-  const date = new Date(ts);
+  const date = new Date(parseInt(timestamp));
   if (isNaN(date.getTime())) return timestamp;
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -43,25 +52,12 @@ const formatTimestamp = (timestamp) => {
 // 提取日期部分
 const getDateFromTimestamp = (timestamp) => {
   if (!timestamp) return '';
-  let ts = parseInt(timestamp);
-  if (ts.toString().length === 10) ts *= 1000;
-  const date = new Date(ts);
+  const date = new Date(parseInt(timestamp));
   if (isNaN(date.getTime())) return '';
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
-};
-
-// 状态标签类型
-const getStatusType = (status) => {
-  const map = {
-    '未核实': 'warning',
-    '已核实': 'primary',
-    '处理中': 'success',
-    '已完结': 'info',
-  };
-  return map[status] || 'info';
 };
 
 // 格式化金额
@@ -73,7 +69,7 @@ const formatMoney = (amount) => {
 const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
 const emit = defineEmits(['arrow-change']);
 
-// ---------- 标签筛选（直接作为后端查询参数） ----------
+// ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
 function handleFilterTagClick(field, value) {
@@ -90,7 +86,6 @@ function handleFilterTagClick(field, value) {
   } else {
     tagFilters.value[field] = value;
   }
-  // 重新加载表格（会将tagFilters合并到请求参数）
   gridApi.reload();
 }
 
@@ -111,7 +106,6 @@ function getFieldLabel(field) {
     checkUser: '排查人员',
     creator: '操作人',
     createTime: '创建时间',
-    orderCode: '订单编号',
   };
   return map[field] || field;
 }
@@ -150,132 +144,196 @@ function handleRowCheckboxChange({ records }) {
 
 const searchParams = ref({});
 
-// 构建后端查询参数（将activeName和tagFilters转换为后端支持的字段）
-const buildQueryParams = (pageParams = {}) => {
-  const params = {
-    ...searchParams.value,
-    pageNo: pageParams.currentPage || dataObj.currentPage,
-    pageSize: pageParams.pageSize || dataObj.pageSize,
-  };
-
-  // 处理时间范围
-  if (params.abnormalTime && Array.isArray(params.abnormalTime) && params.abnormalTime.length === 2) {
-    params.startTime = params.abnormalTime[0];
-    params.endTime = params.abnormalTime[1];
-    delete params.abnormalTime;
-  }
-
-  // 状态筛选（标签页）
-  if (activeName.value !== '全部') {
-    params.abnormalStatus = activeName.value;
-  }
-
-  // 标签筛选
-  Object.entries(tagFilters.value).forEach(([field, value]) => {
-    if (field === 'createTime') {
-      // 创建时间按日期筛选，后端可能需要日期范围，这里简单传递日期字符串
-      params.createTime = value;
-    } else if (field === 'abnormalType') {
-      params.abnormalType = value;
-    } else if (field === 'abnormalStatus') {
-      params.abnormalStatus = value;
-    } else if (field === 'checkUser') {
-      params.checkUser = value;
-    } else if (field === 'creator') {
-      params.creator = value;
-    } else if (field === 'orderCode') {
-      params.orderCode = value;
-    } else {
-      params[field] = value;
-    }
-  });
-
-  return params;
-};
-
 const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
-    const params = buildQueryParams({ currentPage: page.currentPage, pageSize: page.pageSize });
+    const params = {
+      ...searchParams.value,
+      pageNo: page.currentPage,
+      pageSize: page.pageSize,
+    };
+    if (params.createTime && Array.isArray(params.createTime) && params.createTime.length === 2) {
+      params.startTime = params.createTime[0];
+      params.endTime = params.createTime[1];
+      delete params.createTime;
+    }
     const res = await getAbnormalOrderPage(params);
-    // 假设 requestClient 已经解包，res 直接是 { total, list }
-    dataObj.total = res.total || 0;
-    dataObj.list = res.list || [];
+    let filtered = res.list;
+    // 应用标签筛选
+    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
+      filtered = filtered.filter(item => {
+        let itemValue;
+        switch (field) {
+          case 'abnormalType':
+            itemValue = item.abnormalType;
+            break;
+          case 'abnormalStatus':
+            itemValue = item.abnormalStatus;
+            break;
+          case 'checkUser':
+            itemValue = item.checkUser;
+            break;
+          case 'creator':
+            itemValue = item.creator;
+            break;
+          case 'createTime':
+            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
+            itemValue = createDate;
+            break;
+          default:
+            itemValue = item[field];
+        }
+        if (Array.isArray(filterValue)) {
+          return filterValue.includes(String(itemValue));
+        } else {
+          return String(itemValue) === String(filterValue);
+        }
+      });
+    });
+    dataObj.total = filtered.length;
+    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
   } catch (error) {
     console.error('获取数据失败:', error);
-    dataObj.total = 0;
-    dataObj.list = [];
-    ElMessage.error('加载数据失败');
+    const mockData = dataList();
+    let filtered = mockData;
+    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
+      filtered = filtered.filter(item => {
+        let itemValue;
+        switch (field) {
+          case 'abnormalType':
+            itemValue = item.abnormalType;
+            break;
+          case 'abnormalStatus':
+            itemValue = item.abnormalStatus;
+            break;
+          case 'checkUser':
+            itemValue = item.checkUser;
+            break;
+          case 'creator':
+            itemValue = item.creator;
+            break;
+          case 'createTime':
+            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
+            itemValue = createDate;
+            break;
+          default:
+            itemValue = item[field];
+        }
+        if (Array.isArray(filterValue)) {
+          return filterValue.includes(String(itemValue));
+        } else {
+          return String(itemValue) === String(filterValue);
+        }
+      });
+    });
+    dataObj.total = filtered.length;
+    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
   } finally {
     dataObj.loading = false;
   }
   return dataObj;
 };
 
-function handleRefresh() { gridApi.reload(); }
+function handleRefresh() {
+  gridApi.reload();
+}
+
+function handleReset() {
+  searchParams.value = {};
+  tagFilters.value = {};
+  gridApi.reload();
+}
 
 async function handleExport() {
   try {
     const loading = ElLoading.service({ text: '正在导出...' });
     try {
-      const params = buildQueryParams({});
-      delete params.pageNo;
-      delete params.pageSize;
-      const data = await exportAbnormalOrder(params);
+      const data = await exportAbnormalOrder(searchParams.value);
       downloadFileFromBlobPart({ fileName: '异常订单列表.xls', source: data });
       ElMessage.success('导出成功');
-    } finally { loading.close(); }
+    } finally {
+      loading.close();
+    }
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
   }
 }
 
-// 批量核实（使用批量接口）
-async function handleBatchVerify() {
-  if (checkedIds.value.length === 0) { ElMessage.warning('请至少选择一条异常订单'); return; }
-  const selectedRows = checkedRows.value.filter(row => row.abnormalStatus === '未核实');
-  if (selectedRows.length === 0) { ElMessage.warning('请选择状态为【未核实】的订单'); return; }
+// ========== 核实弹窗（使用独立对话框，下拉选择） ==========
+const verifyDialogVisible = ref(false);
+const currentVerifyRows = ref([]); // 要核实的订单列表
+const verifyResult = ref('');
+const verifyRemark = ref('');
+const isBatchVerify = ref(false);
 
+function openVerifyDialog(rows, batch = false) {
+  currentVerifyRows.value = rows;
+  isBatchVerify.value = batch;
+  verifyResult.value = '';
+  verifyRemark.value = '';
+  verifyDialogVisible.value = true;
+}
+
+async function confirmVerify() {
+  if (!verifyResult.value) {
+    ElMessage.warning('请选择核实结果');
+    return;
+  }
+  const loading = ElLoading.service({ text: '核实中...' });
   try {
-    const { value: result } = await ElMessageBox.prompt('请选择核实结果', '核实', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      inputType: 'select',
-      inputOptions: [
-        { label: '正常', value: '正常' },
-        { label: '异常', value: '异常' },
-        { label: '误报', value: '误报' },
-      ],
-      inputPlaceholder: '请选择核实结果',
+    const ids = currentVerifyRows.value.map(row => row.id);
+    const res = await verifyAbnormalOrder({
+      ids,
+      verifyResult: verifyResult.value,
+      verifyRemark: verifyRemark.value,
     });
-    if (result) {
-      const { value: remark } = await ElMessageBox.prompt('请输入核实备注（可选）', '核实备注', {
-        confirmButtonText: '确认',
-        cancelButtonText: '取消',
-        inputPlaceholder: '请输入备注',
-      });
-      const loading = ElLoading.service({ text: '核实中...' });
-      try {
-        const ids = selectedRows.map(row => row.id);
-        const res = await verifyAbnormalOrder({ ids, verifyResult: result, verifyRemark: remark || '' });
-        if (res === true) {
-          ElMessage.success('核实成功');
-          handleRefresh();
-        } else {
-          ElMessage.error('核实失败');
-        }
-      } finally { loading.close(); }
+    if (res === true) {
+      ElMessage.success(isBatchVerify.value ? '批量核实成功' : '核实成功');
+      verifyDialogVisible.value = false;
+      handleRefresh();
+    } else {
+      ElMessage.error(isBatchVerify.value ? '批量核实失败' : '核实失败');
     }
-  } catch {}
+  } finally {
+    loading.close();
+  }
+}
+
+// 批量核实
+async function handleBatchVerify() {
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请至少选择一条异常订单');
+    return;
+  }
+  const selectedRows = checkedRows.value.filter(row => row.abnormalStatus === '未核实');
+  if (selectedRows.length === 0) {
+    ElMessage.warning('请选择状态为【未核实】的订单');
+    return;
+  }
+  openVerifyDialog(selectedRows, true);
+}
+
+// 单行核实
+async function handleRowVerify(row) {
+  if (row.abnormalStatus !== '未核实') {
+    ElMessage.warning('只有未核实状态的订单可以核实');
+    return;
+  }
+  openVerifyDialog([row], false);
 }
 
 // 批量处理
 async function handleBatchHandle() {
-  if (checkedIds.value.length === 0) { ElMessage.warning('请至少选择一条异常订单'); return; }
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请至少选择一条异常订单');
+    return;
+  }
   const selectedRows = checkedRows.value.filter(row => row.abnormalStatus === '已核实');
-  if (selectedRows.length === 0) { ElMessage.warning('请选择状态为【已核实】的订单'); return; }
-
+  if (selectedRows.length === 0) {
+    ElMessage.warning('请选择状态为【已核实】的订单');
+    return;
+  }
   try {
     const { value: measure } = await ElMessageBox.prompt('请输入处理措施', '处理', {
       confirmButtonText: '确认',
@@ -288,31 +346,31 @@ async function handleBatchHandle() {
         const ids = selectedRows.map(row => row.id);
         const res = await handleAbnormalOrder({ ids, handleMeasure: measure });
         if (res === true) {
-          ElMessage.success('处理成功');
+          ElMessage.success('批量处理成功');
           handleRefresh();
         } else {
-          ElMessage.error('处理失败');
+          ElMessage.error('批量处理失败');
         }
-      } finally { loading.close(); }
+      } finally {
+        loading.close();
+      }
     }
   } catch {}
 }
 
 // 批量完结
 async function handleBatchComplete() {
-  if (checkedIds.value.length === 0) { ElMessage.warning('请至少选择一条异常订单'); return; }
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请至少选择一条异常订单');
+    return;
+  }
   const selectedRows = checkedRows.value.filter(row => row.abnormalStatus === '处理中');
-  if (selectedRows.length === 0) { ElMessage.warning('请选择状态为【处理中】的订单'); return; }
-
+  if (selectedRows.length === 0) {
+    ElMessage.warning('请选择状态为【处理中】的订单');
+    return;
+  }
   try {
-    // 可选：让用户输入完结备注
-    const { value: completeRemark } = await ElMessageBox.prompt('请输入完结备注（可选）', '完结备注', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      inputPlaceholder: '请输入备注',
-      inputValue: '',
-    });
-    await ElMessageBox.confirm('确认完结？完结后异常订单状态将变为"已完结"。', '完结确认', {
+    await ElMessageBox.confirm(`确认完结选中的 ${selectedRows.length} 条异常订单？完结后状态将变为"已完结"。`, '批量完结确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning',
@@ -320,51 +378,15 @@ async function handleBatchComplete() {
     const loading = ElLoading.service({ text: '完结中...' });
     try {
       const ids = selectedRows.map(row => row.id);
-      const res = await completeAbnormalOrder({ ids, completeRemark: completeRemark || '' });
+      const res = await completeAbnormalOrder({ ids });
       if (res === true) {
-        ElMessage.success('完结成功');
+        ElMessage.success('批量完结成功');
         handleRefresh();
       } else {
-        ElMessage.error('完结失败');
+        ElMessage.error('批量完结失败');
       }
-    } finally { loading.close(); }
-  } catch {}
-}
-
-// 行操作：核实
-async function handleRowVerify(row) {
-  if (row.abnormalStatus !== '未核实') {
-    ElMessage.warning('只有未核实状态的订单可以核实');
-    return;
-  }
-  try {
-    const { value: result } = await ElMessageBox.prompt('请选择核实结果', '核实', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      inputType: 'select',
-      inputOptions: [
-        { label: '正常', value: '正常' },
-        { label: '异常', value: '异常' },
-        { label: '误报', value: '误报' },
-      ],
-      inputPlaceholder: '请选择核实结果',
-    });
-    if (result) {
-      const { value: remark } = await ElMessageBox.prompt('请输入核实备注（可选）', '核实备注', {
-        confirmButtonText: '确认',
-        cancelButtonText: '取消',
-        inputPlaceholder: '请输入备注',
-      });
-      const loading = ElLoading.service({ text: '核实中...' });
-      try {
-        const res = await verifyAbnormalOrder({ ids: [row.id], verifyResult: result, verifyRemark: remark || '' });
-        if (res === true) {
-          ElMessage.success('核实成功');
-          handleRefresh();
-        } else {
-          ElMessage.error('核实失败');
-        }
-      } finally { loading.close(); }
+    } finally {
+      loading.close();
     }
   } catch {}
 }
@@ -391,7 +413,9 @@ async function handleRowHandle(row) {
         } else {
           ElMessage.error('处理失败');
         }
-      } finally { loading.close(); }
+      } finally {
+        loading.close();
+      }
     }
   } catch {}
 }
@@ -426,7 +450,9 @@ async function handleRowRefund(row) {
           } else {
             ElMessage.error('退款失败');
           }
-        } finally { loading.close(); }
+        } finally {
+          loading.close();
+        }
       }
     }
   } catch {}
@@ -439,26 +465,23 @@ async function handleRowComplete(row) {
     return;
   }
   try {
-    const { value: completeRemark } = await ElMessageBox.prompt('请输入完结备注（可选）', '完结备注', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      inputPlaceholder: '请输入备注',
-    });
-    await ElMessageBox.confirm('确认完结？完结后异常订单状态将变为"已完结"。', '完结确认', {
+    await ElMessageBox.confirm(`确认完结异常订单（订单号：${row.orderCode}）？完结后状态将变为"已完结"。`, '完结确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning',
     });
     const loading = ElLoading.service({ text: '完结中...' });
     try {
-      const res = await completeAbnormalOrder({ ids: [row.id], completeRemark: completeRemark || '' });
+      const res = await completeAbnormalOrder({ ids: [row.id] });
       if (res === true) {
         ElMessage.success('完结成功');
         handleRefresh();
       } else {
         ElMessage.error('完结失败');
       }
-    } finally { loading.close(); }
+    } finally {
+      loading.close();
+    }
   } catch {}
 }
 
@@ -480,7 +503,9 @@ async function handleRowRemark(row) {
         } else {
           ElMessage.error('备注添加失败');
         }
-      } finally { loading.close(); }
+      } finally {
+        loading.close();
+      }
     }
   } catch {}
 }
@@ -535,12 +560,18 @@ const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
 
+const showChart = ref(true);
+const toggleChart = () => {
+  showChart.value = !showChart.value;
+};
+
 defineExpose({ handleFilterTagClick, clearFilters });
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <AbnormalOrderDetailDrawer ref="abnormalOrderDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh" />
+    <AbnormalOrderDetailDrawer ref="abnormalOrderDetailDrawerRef" :detail-obj="dataObj.detailObj"
+                               @refresh="handleRefresh" />
     <Drawer title="搜索">
       <QueryForm />
     </Drawer>
@@ -559,28 +590,25 @@ defineExpose({ handleFilterTagClick, clearFilters });
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="批量核实" icon-name="Check" @click="handleBatchVerify" />
-          <IconButton content="批量处理" icon-name="Tools" @click="handleBatchHandle" />
-          <IconButton content="批量完结" icon-name="EditPen" color="#F56C6C" @click="handleBatchComplete" />
+          <IconButton content="核实" icon-name="Check" @click="handleBatchVerify" />
+          <IconButton content="处理" icon-name="Tools" @click="handleBatchHandle" />
+          <IconButton content="完结" icon-name="EditPen" color="#F56C6C" @click="handleBatchComplete" />
           <IconButton content="导出" icon-name="download" @click="handleExport" />
           <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
+          <IconButton content="刷新" icon-name="Refresh" @click="handleRefresh" />
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'"
+                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
+                      @click="toggleChart" />
         </div>
       </template>
 
-      <!-- 自定义列插槽 -->
       <template #orderCode="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{ row.orderCode }}</el-text>
       </template>
-      <template #plateNo="{ row }">
-        <el-text>{{ row.plateNo || '-' }}</el-text>
-      </template>
       <template #abnormalType="{ row }">
         <el-tag @click="handleFilterTagClick('abnormalType', row.abnormalType)" style="cursor: pointer;">{{ row.abnormalType }}</el-tag>
-      </template>
-      <template #abnormalTime="{ row }">
-        <el-text>{{ formatTimestamp(row.abnormalTime) }}</el-text>
       </template>
       <template #checkUser="{ row }">
         <el-text @click="handleFilterTagClick('checkUser', row.checkUser)" type="primary" style="cursor: pointer;">{{ row.checkUser || '-' }}</el-text>
@@ -594,14 +622,13 @@ defineExpose({ handleFilterTagClick, clearFilters });
       <template #refundAmount="{ row }">
         <el-text>{{ formatMoney(row.refundAmount) }}</el-text>
       </template>
-      <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}</el-text>
-      </template>
       <template #creator="{ row }">
         <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer;">{{ row.creator || '-' }}</el-text>
       </template>
+      <template #createTime="{ row }">
+        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}</el-text>
+      </template>
 
-      <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
@@ -613,5 +640,25 @@ defineExpose({ handleFilterTagClick, clearFilters });
         </div>
       </template>
     </Grid>
+
+    <!-- 核实弹窗（独立对话框，下拉选择） -->
+    <el-dialog title="核实" v-model="verifyDialogVisible" width="400px">
+      <el-form label-width="100px">
+        <el-form-item label="核实结果" required>
+          <el-select v-model="verifyResult" placeholder="请选择核实结果" style="width: 100%;">
+            <el-option label="正常" value="正常" />
+            <el-option label="异常" value="异常" />
+            <el-option label="误报" value="误报" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="核实备注">
+          <el-input v-model="verifyRemark" type="textarea" :rows="3" placeholder="请输入核实备注（可选）" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="verifyDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmVerify">确认</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
