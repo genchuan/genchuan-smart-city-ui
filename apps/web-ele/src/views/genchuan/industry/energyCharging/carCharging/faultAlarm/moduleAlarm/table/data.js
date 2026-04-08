@@ -1,4 +1,4 @@
-// module-alarm/data.js
+// module-alarm/table/data.js
 
 // 字典映射
 export const abnormalTypeMap = {
@@ -104,22 +104,22 @@ export function useQuerySchema() {
   ];
 }
 
-/** 表格列配置 */
+/** 表格列配置（使用映射后的文本字段） */
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
     { field: 'alarmCode', title: '告警编号', minWidth: 160, sortable: true, slots: { default: 'alarmCode' } },
     { field: 'moduleName', title: '模块名称', minWidth: 120, sortable: true, slots: { default: 'moduleName' } },
-    { field: 'abnormalType', title: '异常类型', minWidth: 100, sortable: true, slots: { default: 'abnormalType' } },
-    { field: 'alarmLevel', title: '告警等级', minWidth: 80, sortable: true, slots: { default: 'alarmLevel' } },
+    { field: 'abnormalTypeName', title: '异常类型', minWidth: 100, sortable: true, slots: { default: 'abnormalType' } },
+    { field: 'alarmLevelName', title: '告警等级', minWidth: 100, sortable: true, slots: { default: 'alarmLevel' } },
     { field: 'alarmTime', title: '告警时间', minWidth: 160, sortable: true, slots: { default: 'alarmTime' } },
     { field: 'serverInfo', title: '服务器信息', minWidth: 180, showOverflow: true },
-    { field: 'alarmStatus', title: '告警状态', minWidth: 100, sortable: true, slots: { default: 'alarmStatus' } },
+    { field: 'alarmStatusName', title: '告警状态', minWidth: 100, sortable: true, slots: { default: 'alarmStatus' } },
     { field: 'checkReason', title: '排查原因', minWidth: 150, showOverflow: true },
     { field: 'repairVoucher', title: '修复凭证', minWidth: 100, slots: { default: 'repairVoucher' } },
     { field: 'remark', title: '备注', minWidth: 150, showOverflow: true },
     { field: 'repairTime', title: '修复时间', minWidth: 160, sortable: true, slots: { default: 'repairTime' } },
     { field: 'operator', title: '操作人', minWidth: 100, sortable: true, slots: { default: 'operator' } },
-    { title: '操作', width: 220, fixed: 'right', align: 'center', slots: { default: 'actions' } },
+    { title: '操作', width: 300, fixed: 'right', align: 'center', slots: { default: 'actions' } },
   ];
 }

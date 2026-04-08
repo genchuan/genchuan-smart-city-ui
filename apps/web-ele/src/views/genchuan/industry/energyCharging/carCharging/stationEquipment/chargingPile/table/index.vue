@@ -22,6 +22,18 @@
     <Grid>
       <template #table-title>
         <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+          <!-- 状态标签页 -->
+          <div v-if="props.secondShow">
+            <el-tabs v-model="activeName" class="demo-tabs" @tab-change="handleTabChange">
+              <el-tab-pane
+                v-for="item in tabsData"
+                :key="item.label"
+                :label="`${item.label} (${item.count})`"
+                :name="item.label"
+              />
+            </el-tabs>
+          </div>
+
           <!-- 设备编号筛选标签 -->
           <el-tag v-if="searchParams.pileCode" type="primary" closable @close="handleClearField('pileCode')">
             设备编号：{{ searchParams.pileCode }}
@@ -67,20 +79,23 @@
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton content="编辑" icon-name="edit" :disabled="checkedIds.length !== 1" @click="handleEditSelected" />
-          <IconButton content="停用" icon-name="Close" :disabled="!hasDisableableSelected" @click="handleBatchDisable" />
-          <IconButton content="调试" icon-name="Operation" :disabled="!hasDebugableSelected" @click="handleBatchDebug" />
+          <!-- 全部标签下的按钮 -->
+          <template v-if="activeName === '全部'">
+            <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+            <IconButton content="编辑" icon-name="edit" :disabled="checkedIds.length !== 1" @click="handleEditSelected" />
+            <IconButton content="停用" icon-name="Close" :disabled="!hasDisableableSelected" @click="handleBatchDisable" />
+            <IconButton content="调试" icon-name="Operation" :disabled="!hasDebugableSelected" @click="handleBatchDebug" />
+            <IconButton content="导出" icon-name="download" @click="handleExport" />
+            <IconButton content="批量导出" icon-name="download" :disabled="checkedIds.length === 0" @click="handleBatchExport" />
+          </template>
+
+          <!-- 启用/停用标签下的按钮 -->
+          <template v-else>
+            <IconButton content="导出" icon-name="download" @click="handleExport" />
+            <IconButton content="批量导出" icon-name="download" :disabled="checkedIds.length === 0" @click="handleBatchExport" />
+          </template>
+
           <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
-          <el-dropdown @command="handleExportWithType">
-            <IconButton content="导出" icon-name="download" />
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="Excel">Excel</el-dropdown-item>
-                <el-dropdown-item command="PDF">PDF</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
           <IconButton content="刷新" icon-name="Refresh" @click="handleRefresh" />
           <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
@@ -181,6 +196,7 @@ import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 import dayjs from 'dayjs';
+import * as XLSX from 'xlsx';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
@@ -201,6 +217,7 @@ import {
   getLotSimpleList,
   getChargeModeDict,
   getPileStatusDict,
+  getStatusCount,  // 新增：获取状态计数
 } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingPile/index.js';
 
 import PileDetailDrawer from './detail.vue';
@@ -223,7 +240,6 @@ const getTitle = computed(() => (formData.value?.id ? textObj.editText : textObj
 const searchParams = ref({});
 const formData = ref();
 const checkedIds = ref([]);
-const activeName = ref('全部');
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
@@ -246,6 +262,38 @@ const detailDrawerRef = ref(null);
 const lotDetailDrawerRef = ref(null);
 const debugDrawerRef = ref(null);
 
+// ==================== 状态标签页相关 ====================
+const activeName = ref('全部');   // '全部'、'已启用'、'已停用'
+// const tabsData = ref([
+//   { label: '全部', name: '全部', count: 0 },
+//   { label: '已启用', name: '已启用', count: 0 },
+//   { label: '已停用', name: '已停用', count: 0 },
+// ]);
+
+/** 获取各状态数量用于标签页计数 */
+async function fetchStatusCount() {
+  try {
+    const res = await getStatusCount();   // 返回 [{ pileStatus, count }]
+    const statusMap = new Map(res.map(item => [item.pileStatus, item.count]));
+    // 根据实际状态值汇总
+    const enableCount = statusMap.get('已启用') || 0;
+    const disableCount = statusMap.get('已停用') || 0;
+    const otherCount = (statusMap.get('未调试') || 0) + (statusMap.get('已调试') || 0);
+    tabsData.value[0].count = enableCount + disableCount + otherCount;
+    tabsData.value[1].count = enableCount;
+    tabsData.value[2].count = disableCount;
+  } catch (error) {
+    console.error('获取状态计数失败', error);
+  }
+}
+
+/** 标签页切换时重新加载表格 */
+function handleTabChange() {
+  dataObj.currentPage = 1;
+  handleRefresh();
+}
+
+// ==================== 原有工具函数 ====================
 function formatList(list) {
   return (list || []).map(item => ({
     ...item,
@@ -278,12 +326,20 @@ async function loadQrcodesForCurrentPage() {
   await Promise.allSettled(promises);
 }
 
+// 获取表格数据（根据 activeName 添加状态筛选）
 const getTableData = async ({ page }) => {
   const params = {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...searchParams.value,
   };
+  // 根据标签页添加状态筛选（后端可能用 pileStatus 字段，值为 '已启用' 或 '已停用'）
+  if (activeName.value === '已启用') {
+    params.pileStatus = '已启用';
+  } else if (activeName.value === '已停用') {
+    params.pileStatus = '已停用';
+  }
+
   try {
     const res = await getPageList(params);
     const { list, total } = res;
@@ -333,7 +389,6 @@ const handleClearField = (fieldName) => {
   }
   searchParams.value = newParams;
 
-  // 同步清空查询表单中的值
   const formValues = { ...queryFormApi.getValues() };
   delete formValues[fieldName];
   if (fieldName === 'createTimeBegin') {
@@ -341,7 +396,6 @@ const handleClearField = (fieldName) => {
   }
   queryFormApi.setValues(formValues, false);
 
-  // 重置到第一页
   dataObj.currentPage = 1;
   handleRefresh();
 };
@@ -354,11 +408,9 @@ const handleFieldClick = (fieldName, value) => {
     searchParams.value = { ...searchParams.value, createTimeBegin, createTimeEnd };
     queryFormApi.setValues({ createTimeBegin, createTimeEnd }, false);
   } else if (fieldName === 'runTime') {
-    // 运行时长筛选 - 使用精确匹配
     searchParams.value = { ...searchParams.value, runTime: value };
     queryFormApi.setValues({ runTime: value }, false);
   } else if (fieldName === 'faultFlag') {
-    // 故障标记筛选 - 确保是布尔值或字符串
     const boolValue = value === true || value === 'true' || value === 1;
     searchParams.value = { ...searchParams.value, faultFlag: boolValue };
     queryFormApi.setValues({ faultFlag: boolValue }, false);
@@ -366,12 +418,11 @@ const handleFieldClick = (fieldName, value) => {
     searchParams.value = { ...searchParams.value, [fieldName]: value };
     queryFormApi.setValues({ [fieldName]: value }, false);
   }
-  // 重置到第一页
   dataObj.currentPage = 1;
   handleRefresh();
 };
 
-// 重置所有筛选条件
+// 重置所有筛选条件（保留标签页状态）
 function resetFilter() {
   searchParams.value = {};
   queryFormApi.resetForm();
@@ -379,7 +430,7 @@ function resetFilter() {
   handleRefresh();
 }
 
-// 设置筛选条件（供图表钻取调用）- 完善版本，支持显示筛选标签
+// 设置筛选条件（供图表钻取调用）
 function setFilter(filters) {
   if (!filters || Object.keys(filters).length === 0) {
     resetFilter();
@@ -388,30 +439,23 @@ function setFilter(filters) {
 
   const newFilters = { ...filters };
 
-  // 充电模式名称 -> ID 转换
   if (newFilters.chargeMode && typeof newFilters.chargeMode === 'string' && !chargeModeMap.value.has(newFilters.chargeMode)) {
     const id = getChargeModeIdByName(newFilters.chargeMode);
     if (id) newFilters.chargeMode = id;
   }
 
-  // 设备状态名称 -> ID 转换
   if (newFilters.pileStatus && typeof newFilters.pileStatus === 'string' && !pileStatusMap.value.has(newFilters.pileStatus)) {
     const id = getStatusIdByName(newFilters.pileStatus);
     if (id) newFilters.pileStatus = id;
   }
 
-  // 故障标记转换 - 确保是布尔类型
   if (newFilters.faultFlag !== undefined && newFilters.faultFlag !== null) {
     newFilters.faultFlag = newFilters.faultFlag === true || newFilters.faultFlag === 'true' || newFilters.faultFlag === 1;
   }
 
-  // 合并筛选条件（保留原有其他条件）
   Object.assign(searchParams.value, newFilters);
-
-  // 同步到查询表单，以便显示筛选标签
   queryFormApi.setValues(newFilters, false);
 
-  // 重置到第一页
   dataObj.currentPage = 1;
   handleRefresh();
 }
@@ -435,63 +479,127 @@ const previewQrcode = async (id) => {
   qrcodePreviewVisible.value = true;
 };
 
-// 完善导出Excel功能
-async function handleExportWithType(exportType) {
-  if (exportType === 'PDF') {
-    ElMessage.info('PDF导出功能开发中');
-    return;
-  }
-
-  const loadingInstance = ElLoading.service({ text: '正在导出...' });
+// ==================== 导出功能（改造） ====================
+/** 普通导出：按当前搜索条件 + 标签页状态，导出全部数据为单 sheet Excel */
+async function handleExport() {
+  const loadingInstance = ElLoading.service({ text: '正在获取数据...' });
   try {
-    // 传递当前筛选条件（不包含分页参数），导出全部符合条件的数据
-    const params = { ...searchParams.value, exportType: 'Excel' };
-
-    const response = await exportPile(params);
-
-    // 处理响应，支持多种返回格式
-    let blob;
-    if (response instanceof Blob) {
-      blob = response;
-    } else if (response?.data instanceof Blob) {
-      blob = response.data;
-    } else if (typeof response === 'string') {
-      // 如果是base64字符串，转换为blob
-      const byteCharacters = atob(response);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    } else {
-      throw new Error('导出数据格式不正确');
+    const params = {
+      ...searchParams.value,
+      pageNo: 1,
+      pageSize: 200,
+    };
+    if (activeName.value === '已启用') {
+      params.pileStatus = '已启用';
+    } else if (activeName.value === '已停用') {
+      params.pileStatus = '已停用';
     }
 
-    // 创建下载链接
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
+    let allData = [];
+    let pageNo = 1;
+    let hasMore = true;
+    while (hasMore) {
+      params.pageNo = pageNo;
+      const res = await getPageList(params);
+      const { list, total } = res;
+      if (list && list.length > 0) {
+        const formattedList = formatList(list);
+        allData = allData.concat(formattedList);
+        pageNo++;
+        if (list.length < params.pageSize) hasMore = false;
+      } else {
+        hasMore = false;
+      }
+    }
 
-    // 设置文件名
-    const timestamp = dayjs().format('YYYYMMDDHHmmss');
-    link.download = `充电桩列表_${timestamp}.xlsx`;
+    if (allData.length === 0) {
+      ElMessage.warning('没有数据可导出');
+      return;
+    }
 
-    // 触发下载
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const allColumns = useGridColumns();
+    const exportColumns = allColumns.filter(
+      col => col.field && col.type !== 'checkbox' && col.title !== '操作'
+    ).map(col => ({ field: col.field, title: col.title }));
 
-    // 释放URL对象
-    window.URL.revokeObjectURL(url);
+    const wsData = [exportColumns.map(col => col.title)];
+    allData.forEach(item => {
+      const row = exportColumns.map(col => item[col.field] ?? '-');
+      wsData.push(row);
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, '充电桩');
+
+    let fileName = `充电桩列表_${dayjs().format('YYYYMMDDHHmmss')}.xlsx`;
+    if (activeName.value !== '全部') {
+      fileName = `${activeName.value}充电桩_${dayjs().format('YYYYMMDDHHmmss')}.xlsx`;
+    }
+    XLSX.writeFile(wb, fileName);
     ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败', error);
-    ElMessage.error(error.message || '导出失败，请重试');
+    ElMessage.error(error.message || '导出失败');
   } finally {
     loadingInstance.close();
   }
 }
+
+/** 批量导出：将当前页选中的行分别导出为多个 sheet 的 Excel 文件 */
+async function handleBatchExport() {
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请至少选择一条数据');
+    return;
+  }
+
+  const selectedRows = dataObj.list.filter(item => checkedIds.value.includes(item.id));
+  if (selectedRows.length === 0) {
+    ElMessage.warning('选中的数据不在当前页，请刷新后重试');
+    return;
+  }
+
+  const loading = ElLoading.service({ text: '正在生成导出文件...' });
+  const wb = XLSX.utils.book_new();
+  const allColumns = useGridColumns();
+  const exportColumns = allColumns.filter(
+    col => col.field && col.type !== 'checkbox' && col.title !== '操作'
+  ).map(col => ({ field: col.field, title: col.title }));
+
+  try {
+    for (const row of selectedRows) {
+      const rowForSheet = {};
+      exportColumns.forEach(col => {
+        rowForSheet[col.title] = row[col.field] ?? '-';
+      });
+
+      const ws = XLSX.utils.json_to_sheet([rowForSheet]);
+      let sheetName = (row.pileCode || `桩_${row.id}`).replace(/[\\/:*?"<>|]/g, '_');
+      if (sheetName.length > 31) sheetName = sheetName.substring(0, 28) + '...';
+      let finalSheetName = sheetName;
+      let counter = 1;
+      while (wb.SheetNames.includes(finalSheetName)) {
+        finalSheetName = `${sheetName}_${counter++}`;
+      }
+      XLSX.utils.book_append_sheet(wb, ws, finalSheetName);
+    }
+
+    if (wb.SheetNames.length === 0) {
+      ElMessage.warning('没有有效数据可导出');
+      return;
+    }
+
+    const fileName = `充电桩批量导出_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    ElMessage.success('导出成功');
+  } catch (error) {
+    console.error('批量导出失败', error);
+    ElMessage.error(error.message || '导出失败');
+  } finally {
+    loading.close();
+  }
+}
+// ================================================================
 
 const handleLotDetail = (row) => {
   if (!row.lotId) {
@@ -526,6 +634,7 @@ async function handleDelete(row) {
     ElMessage.success($t('ui.actionMessage.deleteSuccess'));
     emit('refresh-chart');
     handleRefresh();
+    fetchStatusCount();  // 刷新计数
   } finally {
     loadingInstance.close();
   }
@@ -543,6 +652,7 @@ async function handleEnable(row) {
     ElMessage.success('已启用');
     emit('refresh-chart');
     handleRefresh();
+    fetchStatusCount();
   } catch (error) {
     ElMessage.error(error.message || '启用失败');
   } finally {
@@ -558,6 +668,7 @@ async function handleDisable(row) {
     ElMessage.success('已停用');
     emit('refresh-chart');
     handleRefresh();
+    fetchStatusCount();
   } catch (error) {
     ElMessage.error(error.message || '停用失败');
   } finally {
@@ -595,6 +706,7 @@ async function handleBatchDebug() {
     checkedIds.value = [];
     emit('refresh-chart');
     handleRefresh();
+    fetchStatusCount();
   } catch (error) {
     ElMessage.error(error.message || '批量调试失败');
   } finally {
@@ -619,6 +731,7 @@ async function handleBatchDisable() {
     checkedIds.value = [];
     emit('refresh-chart');
     handleRefresh();
+    fetchStatusCount();
   } catch (error) {
     ElMessage.error(error.message || '批量停用失败');
   } finally {
@@ -647,6 +760,7 @@ function handleRowCheckboxChange({ records }) {
 const handleDebugSuccess = () => {
   emit('refresh-chart');
   handleRefresh();
+  fetchStatusCount();
 };
 
 const changeTotalShow = () => (dataObj.totalShow = !dataObj.totalShow);
@@ -760,6 +874,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       }
       emit('refresh-chart');
       handleRefresh();
+      fetchStatusCount();
       formDrawerApi.close();
     } catch (error) {
       console.error('保存失败', error);
@@ -822,7 +937,10 @@ defineExpose({
 });
 
 onMounted(() => {
-  loadFormOptions().then(() => handleRefresh());
+  loadFormOptions().then(() => {
+    handleRefresh();
+    fetchStatusCount();
+  });
 });
 </script>
 

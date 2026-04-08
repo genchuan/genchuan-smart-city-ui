@@ -1,4 +1,3 @@
-<!-- module-alarm/chart.vue -->
 <template>
   <div class="charging-pile-visualization">
     <div class="cards-section">
@@ -23,10 +22,10 @@
 
     <div class="charts-section">
       <div class="chart-item">
-        <div ref="barChartRef" class="chart-container"></div>
+        <div ref="lineChartRef" class="chart-container"></div>
       </div>
       <div class="chart-item">
-        <div ref="lineChartRef" class="chart-container"></div>
+        <div ref="barChartRef" class="chart-container"></div>
       </div>
     </div>
   </div>
@@ -43,16 +42,19 @@ const cardData = reactive({
   totalCount: 0,
   unrepairedCount: 0,
   repairedCount: 0,
+  repairingCount: 0,     // 新增：修复中数量
 });
 
+// 卡片配置：与充电桩管理完全一致的数量（4个），颜色风格保持一致
 const cards = ref([
-  { title: '总告警数', key: 'totalCount', color: '#4A90E2' },
-  { title: '未修复告警数', key: 'unrepairedCount', color: '#F56C6C' },
-  { title: '已修复告警数', key: 'repairedCount', color: '#67C23A' },
+  { title: '总告警数', key: 'totalCount', color: '#4A90E2', statusType: 'total' },
+  { title: '未修复告警数', key: 'unrepairedCount', color: '#F56C6C', statusType: 'unrepaired' },
+  { title: '已修复告警数', key: 'repairedCount', color: '#67C23A', statusType: 'repaired' },
+  { title: '修复中数量', key: 'repairingCount', color: '#E6A23C', statusType: 'repairing' },
 ]);
 
-const barData = ref([]);      // { name: 模块名, value: 数量 }
-const lineData = ref([]);     // { date, repairTime }
+const barData = ref([]);   // 各模块告警数量 (柱状图)
+const lineData = ref([]);  // 修复时长趋势 (折线图)
 
 const barChartRef = ref(null);
 const lineChartRef = ref(null);
@@ -62,10 +64,12 @@ let lineChartInstance = null;
 const fetchChartData = async () => {
   try {
     const res = await getChartData({});
-    const { totalCount, unrepairedCount, repairedCount, barData: bar, lineData: line } = res;
+    const { totalCount, repairedCount, cardData: card, barData: bar, lineData: line } = res;
     cardData.totalCount = totalCount || 0;
-    cardData.unrepairedCount = unrepairedCount || 0;
-    cardData.repairedCount = repairedCount || 0;
+    // 未修复 = 未排查 + 已排查 + 修复中
+    cardData.unrepairedCount = (card?.unCheckCount || 0) + (card?.checkedCount || 0) + (card?.repairingCount || 0);
+    cardData.repairedCount = card?.closedCount || 0;
+    cardData.repairingCount = card?.repairingCount || 0;   // 赋值修复中数量
     barData.value = bar || [];
     lineData.value = line || [];
     updateBarChart();
@@ -75,9 +79,19 @@ const fetchChartData = async () => {
   }
 };
 
+// 柱状图配置（完全复用充电桩样式）
 const getBarOption = () => {
   const xAxisData = barData.value.map(item => item.name);
   const seriesData = barData.value.map(item => item.value);
+  if (xAxisData.length === 0) {
+    return {
+      backgroundColor: 'transparent',
+      title: { text: '暂无数据', left: 'center', top: 'center', textStyle: { color: '#999' } },
+      xAxis: { show: false },
+      yAxis: { show: false },
+      series: [],
+    };
+  }
   return {
     backgroundColor: 'transparent',
     title: {
@@ -111,9 +125,19 @@ const getBarOption = () => {
   };
 };
 
+// 折线图配置（完全复用充电桩样式）
 const getLineOption = () => {
   const xAxisData = lineData.value.map(item => item.date);
   const seriesData = lineData.value.map(item => item.repairTime);
+  if (xAxisData.length === 0) {
+    return {
+      backgroundColor: 'transparent',
+      title: { text: '暂无数据', left: 'center', top: 'center', textStyle: { color: '#999' } },
+      xAxis: { show: false },
+      yAxis: { show: false },
+      series: [],
+    };
+  }
   return {
     backgroundColor: 'transparent',
     title: {
@@ -164,7 +188,7 @@ const updateBarChart = () => {
       if (params.componentType === 'series' && params.dataIndex !== undefined) {
         const item = barData.value[params.dataIndex];
         if (item) {
-          emit('drill-down', { type: 'bar', data: { moduleName: item.name } });
+          emit('drill-down', { type: 'type', data: { typeName: item.name } });
         }
       }
     });
@@ -182,7 +206,7 @@ const updateLineChart = () => {
       if (params.componentType === 'series' && params.dataIndex !== undefined) {
         const point = lineData.value[params.dataIndex];
         if (point) {
-          emit('drill-down', { type: 'line', data: { date: point.date } });
+          emit('drill-down', { type: 'trend', data: { date: point.date } });
         }
       }
     });
@@ -196,13 +220,18 @@ const handleCardClick = (key) => {
   if (key === 'totalCount') statusType = 'total';
   else if (key === 'unrepairedCount') statusType = 'unrepaired';
   else if (key === 'repairedCount') statusType = 'repaired';
+  else if (key === 'repairingCount') statusType = 'repairing';   // 新增修复中
   else return;
-  emit('drill-down', { type: 'card', data: { statusType } });
+  emit('drill-down', { type: 'status', data: { statusType } });
 };
 
+let resizeTimer = null;
 const handleResize = () => {
-  barChartInstance?.resize();
-  lineChartInstance?.resize();
+  if (resizeTimer) clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    barChartInstance?.resize();
+    lineChartInstance?.resize();
+  }, 100);
 };
 
 onMounted(() => {
@@ -216,13 +245,14 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
   barChartInstance?.dispose();
   lineChartInstance?.dispose();
+  if (resizeTimer) clearTimeout(resizeTimer);
 });
 
 defineExpose({ fetchChartData });
 </script>
 
 <style scoped lang="scss">
-/* 完全复用充电桩图表的样式 */
+/* 完全复用充电桩图表样式，无任何额外自定义 */
 .charging-pile-visualization {
   display: flex;
   flex-wrap: nowrap;
@@ -266,10 +296,27 @@ defineExpose({ fetchChartData });
   font-size: 13px;
   color: #6e7e91;
   font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: center;
 }
 .card-value {
   font-size: 24px;
   font-weight: 700;
+  line-height: 1.2;
 }
 .charts-section {
   flex: 1;

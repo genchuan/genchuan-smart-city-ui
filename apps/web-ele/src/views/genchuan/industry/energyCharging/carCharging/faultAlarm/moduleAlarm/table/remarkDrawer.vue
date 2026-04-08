@@ -1,4 +1,4 @@
-<!-- module-alarm/remarkDrawer.vue -->
+<!-- module-alarm/table/remarkDrawer.vue -->
 <template>
   <DetailDrawer :title="`备注告警 - ${alarmCode}`">
     <el-form :model="form" label-width="100px">
