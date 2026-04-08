@@ -98,3 +98,18 @@ export function getOrderAlarmReasonRatio(params) {
 export function getOrderAlarmCount(params) {
   return requestClient.get('/vehiclecharging/order-alarm/chart/count', { params });
 }
+//   =============================关联字段钻取==========================
+/** 获取订单详情 */
+export function getOrderDetail(id) {
+  return requestClient.get('/vehiclecharging/order-list/get', {
+    params: { id },
+  });
+}
+/**
+ * 查询充电桩详情
+ * @param {Object} params - { id }
+ * @returns {Promise}
+ */
+export function getChargingPileDetail(params) {
+  return requestClient.get('/vehiclecharging/charging-pile/get', { params });
+}

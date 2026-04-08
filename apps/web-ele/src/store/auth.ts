@@ -128,6 +128,7 @@ export const useAuthStore = defineStore('auth', () => {
           }
         : {},
     });
+    window.location.reload();
   }
 
   async function fetchUserInfo() {
