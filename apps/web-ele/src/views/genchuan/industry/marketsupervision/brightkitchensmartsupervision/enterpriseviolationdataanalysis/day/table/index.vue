@@ -2,7 +2,7 @@
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import { ElDialog, ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
@@ -13,9 +13,10 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
 import { downloadLocalTemplate } from '#/utils/genchuan/down';
-import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
 
-import { dataList, useFormSchema, useGridColumns } from './data';
+import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
+import { getViolationAnalyticsPage, exporViolationAnalyticsExcel, exporViolationAnalyticsPDF } from '#/api/genchuan/industry/marketsupervision/index.js';
+import {  useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
 
 const props = defineProps({
@@ -100,42 +101,21 @@ function handleRefresh() {
 }
 
 // ====================== 导出 EXCEL ======================
-function handleExport() {
-  const records = gridApi.grid.getData();
-  if (!records || records.length === 0) {
-    ElMessage.warning('暂无数据可导出');
-    return;
-  }
-
-  const loading = ElLoading.service({ text: '正在导出Excel...' });
-  try {
-    const columns = useGridColumns().filter(
-      (col) => col.field && col.title && col.type !== 'checkbox',
-    );
-
-    const exportData = records.map((row) => {
-      const item = {};
-      columns.forEach((col) => {
-        item[col.title] = row[col.field] ?? '';
-      });
-      return item;
-    });
-
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, '报表数据');
-    XLSX.writeFile(wb, `企业违规报表_${Date.now()}.xlsx`);
-    ElMessage.success('导出成功！');
-  } catch (error) {
-    ElMessage.error(`导出失败：${error.message}`);
-  } finally {
-    loading.close();
-  }
+async function handleExport() {
+  const data = await exporViolationAnalyticsExcel();
+  downloadFileFromBlobPart({
+    fileName: '企业违规数据分析.xls',
+    source: data,
+  });
 }
 
 // ====================== 导出PDF ======================
 async function handlePDF() {
-  downloadLocalTemplate('/static/test.pdf', '报表.pdf');
+  const data = await exporViolationAnalyticsPDF();
+  downloadFileFromBlobPart({
+    fileName: '企业违规数据分析.pdf',
+    source: data,
+  });
 }
 
 /** 创建 */
@@ -151,13 +131,12 @@ function handleEdit(row) {
 /** 删除 */
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.name || '数据']),
+    text: $t('ui.actionMessage.deleting'),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success(
-      $t('ui.actionMessage.deleteSuccess', [row.name || '数据']),
-    );
+    // 调用删除接口
+    // await deleteViolation(row.id);
+    ElMessage.success($t('ui.actionMessage.deleteSuccess'));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -166,20 +145,14 @@ async function handleDelete(row) {
 
 /** 批量删除 */
 async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
+  await confirm($t('确定删除这些数据吗？')).then(() => {
+    checkedIds.value.forEach(async (v) => {
+      await handleDelete({
+        id: v,
+      });
+    });
   });
-  try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
+  handleRefresh();
 }
 
 const checkedIds = ref([]);
@@ -191,12 +164,13 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
-  total: dataList().length,
+  total: 0,
   currentPage: 1,
   pageSize: 10,
-  apilist: dataList(),
+  apilist: [],
   list: [],
   loading: false,
+  serachObj: {},
 });
 
 const changeTotalShow = () => {
@@ -204,38 +178,55 @@ const changeTotalShow = () => {
 };
 
 // 表格数据
-const getTableData = (pageObj) => {
-  const page = pageObj.page;
-  dataObj.total = dataObj.apilist.length;
-  dataObj.list = dataObj.apilist.slice(
-    (page.currentPage - 1) * page.pageSize,
-    page.currentPage * page.pageSize,
-  );
+const getTableData = async (pageObj) => {
+  const getParams = {
+    pageNo: pageObj.page.currentPage,
+    pageSize: pageObj.page.pageSize,
+    ...dataObj.serachObj,
+  };
+  const data = await getViolationAnalyticsPage(getParams);
+  dataObj.total = data.total;
+  dataObj.list = data.list;
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [QueryForm, QueryFormApi] = useVbenForm({
+  // 默认展开
   collapsed: false,
+  // 所有表单项共用，可单独在表单内覆盖
   commonConfig: {
-    componentProps: { class: 'w-full' },
+    // 所有表单项
+    componentProps: {
+      class: 'w-full',
+    },
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
-  handleSubmit: () => {
-    dataObj.loading = true;
-    setTimeout(() => {
-      dataObj.loading = false;
-    }, 2000);
-    drawerApi.close();
-  },
+  // 提交函数
+  handleSubmit: onSubmit,
+  // 垂直布局，label和input在不同行，值为vertical
+  // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
-    delete v.rules;
-    return { ...v };
-  }),
+  schema: useFormSchema()
+    .filter((v) => v.isSearch)
+    .map((v) => {
+      delete v.rules;
+      return {
+        ...v,
+      };
+    }),
+  // 是否可展开
   showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
+  submitButtonOptions: {
+    content: '查询',
+  },
 });
+// 搜索表单查询
+async function onSubmit() {
+  dataObj.serachObj = await QueryFormApi.getValues();
+  gridApi.reload();
+  drawerApi.close();
+}
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
@@ -260,29 +251,24 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-const activeName = ref('全部');
+const activeName = ref('');
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
   parkDetailDrawerRef.value?.open();
 };
 
 const tabsData = ref([
-  { label: '全部' },
-  { label: '启用' },
-  { label: '禁用' },
-  { label: '暂停运营' },
-  { label: '维修中' },
+  { label: '全部', value: '' },
+  { label: '月租车', value: '1' },
+  { label: '临时车', value: '0' },
 ]);
 
 const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
-  if (item.label === '全部') {
-    text = `(${dataObj.apilist.length})`;
-  }
-  return item.label + text;
+  return item.label;
 };
 
 const handleClick = () => {
+  dataObj.serachObj.plateType = activeName.value;
   gridApi.query();
 };
 const handleSerachShow = () => {
@@ -300,8 +286,8 @@ const arrowChange = () => {
 const autoElmessage = () => {
   ElMessage.success($t('月报自动刷新成功'));
 };
-const openEn = async () => {
-  const res = await getDetailEnObj(1);
+const openEn = async (row) => {
+  const res = await getDetailEnObj(row.entId);
   dataObj.enDetailObj = res;
   enDetailObjRef.value?.open();
 };
@@ -437,25 +423,16 @@ const alarmColumns = [
         </el-text>
       </template>
 
-      <template #canteenName="{ row }">
+      <template #entName="{ row }">
         <el-text
-          @click="handleOpenDetail(row)"
+          @click="openEn(row)"
           class="common-align"
-          type="primary"
+          type="primary" 
         >
-          {{ row.canteenName }}
+          {{ row.entName }}
         </el-text>
       </template>
-
-      <template #reportNumber="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.reportNumber }}
-        </el-text>
-      </template>
+ 
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
