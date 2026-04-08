@@ -8,11 +8,9 @@ import { useRouter } from 'vue-router';
 import { Page } from '@vben/common-ui';
 
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import {
-  getDeviceList,
-} from '#/api/genchuan/shunchangOpsService/smartcity/onlineData';
+import { getDeviceList } from '#/api/genchuan/shunchangOpsService/smartcity/onlineData';
 
-import { useGridColumns, useGridFormSchema } from './data';
+import { useGridColumns } from './data';
 
 const router = useRouter();
 
@@ -42,9 +40,7 @@ function handleRowCheckboxChange({
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: {
-    schema: useGridFormSchema(),
-  },
+  // 设备列表接口不支持查询参数，不显示搜索表单
   gridOptions: {
     columns: useGridColumns(),
     height: 'auto',

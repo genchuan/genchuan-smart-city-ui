@@ -19,10 +19,10 @@ export namespace OnlineDataApi {
     message?: string;
     count?: number;
     data?: {
-      id: number;
-      name: string;
       account: string;
+      id: number;
       lastOnline?: string;
+      name: string;
       token: string;
       type?: number;
     };
@@ -91,7 +91,7 @@ export namespace OnlineDataApi {
 }
 
 // 存储token，用于后续的请求
-let cachedToken: string | null = null;
+let cachedToken: null | string = null;
 
 /** 登录接口 */
 export async function loginApi(data: OnlineDataApi.LoginParams) {
@@ -99,11 +99,15 @@ export async function loginApi(data: OnlineDataApi.LoginParams) {
   formData.append('account', data.account);
   formData.append('password', data.password);
 
-  const result = await collectClient.post<OnlineDataApi.LoginResult>('/user/login', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
+  const result = await collectClient.post<OnlineDataApi.LoginResult>(
+    '/user/login',
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     },
-  });
+  );
 
   // 缓存token - 根据实际响应结构：result.data.data.token
   const token = result.data?.data?.token;
@@ -117,17 +121,17 @@ export async function loginApi(data: OnlineDataApi.LoginParams) {
 }
 
 /** 获取缓存的token */
-export function getCachedToken(): string | null {
+export function getCachedToken(): null | string {
   return cachedToken;
 }
 
 /** 设置token */
-export function setCachedToken(token: string | null) {
+export function setCachedToken(token: null | string) {
   cachedToken = token;
 }
 
 /** 确保已登录并获取有效token */
-async function ensureLoggedIn(): Promise<string | null> {
+async function ensureLoggedIn(): Promise<null | string> {
   let token = getCachedToken();
   if (!token) {
     const result = await loginApi({
@@ -140,7 +144,9 @@ async function ensureLoggedIn(): Promise<string | null> {
 }
 
 /** 查询设备列表 */
-export async function getDeviceList(params: OnlineDataApi.DeviceListParams): Promise<OnlineDataApi.PageResult<OnlineDataApi.Device>> {
+export async function getDeviceList(
+  params: OnlineDataApi.DeviceListParams,
+): Promise<OnlineDataApi.PageResult<OnlineDataApi.Device>> {
   // 确保已登录
   const token = await ensureLoggedIn();
 
@@ -151,7 +157,6 @@ export async function getDeviceList(params: OnlineDataApi.DeviceListParams): Pro
       total: 0,
     };
   }
-
 
   const response = await collectClient.get<any>('/monitor_list', {
     params: {
@@ -173,7 +178,7 @@ export async function getDeviceList(params: OnlineDataApi.DeviceListParams): Pro
   if (data && Array.isArray(data.data)) {
     return {
       list: data.data,
-      total:data.data.length,
+      total: data.data.length,
     };
   }
   console.error('[OnlineDataApi] 无法解析设备列表数据:', data);
@@ -184,7 +189,9 @@ export async function getDeviceList(params: OnlineDataApi.DeviceListParams): Pro
 }
 
 /** 查询液位计设备数据 */
-export async function getDeviceData(params: OnlineDataApi.DeviceDataParams): Promise<OnlineDataApi.PageResult<OnlineDataApi.DeviceData>> {
+export async function getDeviceData(
+  params: OnlineDataApi.DeviceDataParams,
+): Promise<OnlineDataApi.PageResult<OnlineDataApi.DeviceData>> {
   // 确保已登录
   const token = await ensureLoggedIn();
 
@@ -196,21 +203,27 @@ export async function getDeviceData(params: OnlineDataApi.DeviceDataParams): Pro
     };
   }
 
-  console.log('[OnlineDataApi] 请求设备数据，token:', token.substring(0, 20) + '...');
+  console.log(
+    '[OnlineDataApi] 请求设备数据，token:',
+    `${token.slice(0, 20)}...`,
+  );
 
-  const response = await collectClient.get<any>('/water_monitor/data_condition', {
-    params: {
-      page: params.pageNo?.toString(),
-      limit: params.pageSize?.toString(),
-      type: params.type || 'YW01',
-      sn: params.sn,
-      start: params.start,
-      end: params.end,
+  const response = await collectClient.get<any>(
+    '/water_monitor/data_condition',
+    {
+      params: {
+        page: params.pageNo?.toString(),
+        limit: params.pageSize?.toString(),
+        type: params.type || 'YW01',
+        sn: params.sn,
+        start: params.start,
+        end: params.end,
+      },
+      headers: {
+        token,
+      },
     },
-    headers: {
-      token: token,
-    },
-  });
+  );
 
   console.log('[OnlineDataApi] 设备数据响应:', response);
 

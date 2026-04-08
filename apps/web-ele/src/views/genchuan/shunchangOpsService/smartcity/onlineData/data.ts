@@ -1,54 +1,14 @@
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { OnlineDataApi } from '#/api/genchuan/shunchangOpsService/smartcity/onlineData';
 
 import { DICT_TYPE } from '@vben/constants';
-import { getDictOptions } from '@vben/hooks';
 
-/** 列表的搜索表单 */
+/** 列表的搜索表单 - 设备列表接口只支持type参数，且固定为YW01，所以不需要搜索表单 */
 export function useGridFormSchema(): VbenFormSchema[] {
-  return [
-    {
-      fieldName: 'name',
-      label: '设备名称',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入设备名称',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'sn',
-      label: '设备SN码',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入设备SN码',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'type',
-      label: '设备类型',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择设备类型',
-        clearable: true,
-        options: [
-          { label: '液位计', value: 'YW01' },
-        ],
-      },
-    },
-    {
-      fieldName: 'status',
-      label: '设备状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择设备状态',
-        clearable: true,
-        options: getDictOptions(DICT_TYPE.SC_OP_SERVICE_DEVICE_STATUS, 'number'),
-      },
-    },
-  ];
+  // 根据接口文档，/monitor_list 只支持 page、limit、type 参数
+  // type 固定为 YW01，page 和 limit 由表格组件自动处理
+  // 因此不需要额外的搜索字段
+  return [];
 }
 
 /** 列表的字段 */
@@ -149,7 +109,7 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       title: '液位高度',
       minWidth: 100,
       formatter: ({ cellValue }) => {
-        return cellValue !== undefined ? `${cellValue} m` : '-';
+        return cellValue === undefined ? '-' : `${cellValue} m`;
       },
     },
     {
@@ -157,7 +117,7 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       title: '流速',
       minWidth: 100,
       formatter: ({ cellValue }) => {
-        return cellValue !== undefined ? `${cellValue} m/s` : '-';
+        return cellValue === undefined ? '-' : `${cellValue} m/s`;
       },
     },
     {
@@ -165,7 +125,7 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       title: '当前流量',
       minWidth: 100,
       formatter: ({ cellValue }) => {
-        return cellValue !== undefined ? `${cellValue} m³/s` : '-';
+        return cellValue === undefined ? '-' : `${cellValue} m³/s`;
       },
     },
     {
@@ -173,7 +133,7 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       title: '总流量',
       minWidth: 100,
       formatter: ({ cellValue }) => {
-        return cellValue !== undefined ? `${cellValue} m³` : '-';
+        return cellValue === undefined ? '-' : `${cellValue} m³`;
       },
     },
     {
@@ -186,7 +146,7 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       title: '井深',
       minWidth: 100,
       formatter: ({ cellValue }) => {
-        return cellValue !== undefined ? `${cellValue} m` : '-';
+        return cellValue === undefined ? '-' : `${cellValue} m`;
       },
     },
     {
@@ -238,14 +198,14 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
     },
     {
       title: '操作',
-      width: 150,
+      width: 100,
       fixed: 'right',
       slots: { default: 'actions' },
     },
   ];
 }
 
-/** 设备数据页面的搜索表单 */
+/** 设备数据页面的搜索表单 - 根据接口文档支持 sn、start、end 参数 */
 export function useDeviceDataFormSchema(): VbenFormSchema[] {
   return [
     {
@@ -258,23 +218,15 @@ export function useDeviceDataFormSchema(): VbenFormSchema[] {
       },
     },
     {
-      fieldName: 'name',
-      label: '设备名称',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入设备名称',
-        clearable: true,
-      },
-    },
-    {
       fieldName: 'timeRange',
       label: '时间范围',
       component: 'RangePicker',
       componentProps: {
         placeholder: ['开始时间', '结束时间'],
         clearable: true,
-        type: 'datetime',
+        type: 'datetimerange',
         valueFormat: 'YYYY-MM-DD HH:mm:ss',
+        format: 'YYYY-MM-DD HH:mm:ss',
       },
     },
   ];
@@ -323,7 +275,7 @@ export function useDeviceDataColumns(): VxeTableGridOptions['columns'] {
       title: '当前流量',
       minWidth: 120,
       formatter: ({ cellValue }) => {
-        return cellValue !== undefined ? `${cellValue} m³/s` : '-';
+        return cellValue === undefined ? '-' : `${cellValue} m³/s`;
       },
     },
     {
@@ -331,7 +283,7 @@ export function useDeviceDataColumns(): VxeTableGridOptions['columns'] {
       title: '总流量',
       minWidth: 120,
       formatter: ({ cellValue }) => {
-        return cellValue !== undefined ? `${cellValue} m³` : '-';
+        return cellValue === undefined ? '-' : `${cellValue} m³`;
       },
     },
     {
@@ -339,7 +291,7 @@ export function useDeviceDataColumns(): VxeTableGridOptions['columns'] {
       title: '液位高度',
       minWidth: 120,
       formatter: ({ cellValue }) => {
-        return cellValue !== undefined ? `${cellValue} m` : '-';
+        return cellValue === undefined ? '-' : `${cellValue} m`;
       },
     },
     {
@@ -347,7 +299,7 @@ export function useDeviceDataColumns(): VxeTableGridOptions['columns'] {
       title: '流速',
       minWidth: 100,
       formatter: ({ cellValue }) => {
-        return cellValue !== undefined ? `${cellValue} m/s` : '-';
+        return cellValue === undefined ? '-' : `${cellValue} m/s`;
       },
     },
     {
