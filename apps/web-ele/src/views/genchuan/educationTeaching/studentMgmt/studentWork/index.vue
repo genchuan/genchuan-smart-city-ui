@@ -1,4 +1,3 @@
-<!-- 文件6: 父组件 (仅修正资助系统事件，其他模块事件保留原样) -->
 <script setup>
 import { ref, computed, nextTick } from 'vue';
 import { ElMessage } from 'element-plus';

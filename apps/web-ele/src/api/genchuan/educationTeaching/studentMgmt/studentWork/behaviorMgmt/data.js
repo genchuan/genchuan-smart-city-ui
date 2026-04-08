@@ -1,4 +1,3 @@
-// 文件1: data.js (API 接口定义与模拟数据)
 import { requestClient } from '#/api/request';
 
 // ==================== 行为管理接口 ====================
@@ -55,7 +54,7 @@ export function getBehaviorMgmtDetail(params) {
 
 // 获取学生选项（用于申请下拉框）
 export function getStudentOptions(params) {
-  return requestClient.get('/envirhealth/user/options', { params }).catch(err => {
+  return requestClient.get('/studentmgmt/student/options', { params }).catch(err => {
     console.warn('获取学生选项失败，使用模拟数据', err);
     return Promise.resolve([
       { label: '张三', value: 1 },

@@ -1,4 +1,3 @@
-<!-- 文件3: index.vue (主列表组件) - 修正版，审批弹窗改为下拉选择 -->
 <script setup>
 import { computed, reactive, ref, watch, nextTick, onMounted } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
@@ -157,17 +156,6 @@ const searchParams = ref({});
 const isEditMode = ref(false);
 const currentEditId = ref(null);
 
-// 学生选项
-const studentOptions = ref([]);
-const loadStudentOptions = async () => {
-  const res = await getStudentOptions();
-  studentOptions.value = res;
-  // 更新表单中学生下拉框的选项
-  if (createFormApi && createFormApi.setFieldProps) {
-    createFormApi.setFieldProps('studentId', { options: studentOptions.value });
-  }
-};
-
 const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
@@ -275,11 +263,10 @@ async function handleExport() {
 
 // ---------- 审批弹窗相关 ----------
 const auditDialogVisible = ref(false);
-const currentAuditRows = ref([]); // 批量审批时存储待审批的记录列表
-const auditStatus = ref('');       // 审批结果：已通过 / 已驳回
-const auditRemark = ref('');       // 审批备注
+const currentAuditRows = ref([]);
+const auditStatus = ref('');
+const auditRemark = ref('');
 
-// 打开批量审批弹窗
 function handleBatchAudit() {
   if (checkedIds.value.length === 0) {
     ElMessage.warning('请至少选择一条请假记录');
@@ -296,7 +283,6 @@ function handleBatchAudit() {
   auditDialogVisible.value = true;
 }
 
-// 打开单行审批弹窗
 function handleAudit(row) {
   if (row.status !== '待审批') {
     ElMessage.warning('只有待审批状态的请假记录可以审批');
@@ -308,7 +294,6 @@ function handleAudit(row) {
   auditDialogVisible.value = true;
 }
 
-// 确认审批
 async function confirmAudit() {
   if (!auditStatus.value) {
     ElMessage.warning('请选择审批结果');
@@ -337,7 +322,6 @@ async function confirmAudit() {
   }
 }
 
-// 撤销
 async function handleCancel(row) {
   if (row.status !== '已通过') {
     ElMessage.warning('只有已通过状态的请假记录可以撤销');
@@ -364,55 +348,11 @@ async function handleCancel(row) {
   } catch {}
 }
 
-function handleCreate() {
-  isEditMode.value = false;
-  currentEditId.value = null;
-  // 重置表单并设置学生选项
-  createFormApi.resetForm();
-  if (studentOptions.value.length > 0 && createFormApi.setFieldProps) {
-    createFormApi.setFieldProps('studentId', { options: studentOptions.value });
-  }
-  createDrawerApi.open();
-}
-
-async function handleEdit(row) {
-  if (row.status !== '待审批') {
-    ElMessage.warning('只有待审批状态的请假记录可以编辑');
-    return;
-  }
-  isEditMode.value = true;
-  currentEditId.value = row.id;
-  try {
-    const detail = await getBehaviorMgmtDetail({ id: row.id });
-    // 先确保学生选项已加载
-    if (studentOptions.value.length === 0) {
-      await loadStudentOptions();
-    }
-    createFormApi.setValues({
-      studentId: detail.studentId,
-      leaveType: detail.leaveType,
-      startTime: detail.startTime,
-      endTime: detail.endTime,
-      leaveReason: detail.leaveReason,
-      auditLevel: detail.auditLevel,
-      remark: detail.remark,
-    });
-    if (createFormApi.setFieldProps) {
-      createFormApi.setFieldProps('studentId', { options: studentOptions.value });
-    }
-    createDrawerApi.open();
-  } catch (error) {
-    console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败');
-  }
-}
-
-// 申请/编辑表单
+// ---------- 申请/编辑表单 ----------
 const [CreateForm, createFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: async (values) => {
-    // 校验时间范围
     if (values.startTime && values.endTime && values.startTime >= values.endTime) {
       ElMessage.error('结束时间必须大于开始时间');
       return;
@@ -442,6 +382,59 @@ const [CreateForm, createFormApi] = useVbenForm({
   submitButtonOptions: { content: isEditMode.value ? '保存' : '申请' },
 });
 
+// ---------- 加载学生选项 ----------
+const loadStudentOptions = async () => {
+  try {
+    const res = await getStudentOptions();
+    // 兼容返回格式：可能是数组或 { data: [...] }
+    let options = Array.isArray(res) ? res : (res.data || []);
+    // 使用 updateSchema 更新 studentId 字段的 options
+    createFormApi.updateSchema([
+      { fieldName: 'studentId', componentProps: { options } }
+    ]);
+    console.log('学生选项加载成功', options);
+  } catch (error) {
+    console.error('加载学生选项失败', error);
+    ElMessage.error('加载学生列表失败，请刷新重试');
+  }
+};
+
+// ---------- 操作函数 ----------
+function handleCreate() {
+  isEditMode.value = false;
+  currentEditId.value = null;
+  createFormApi.resetForm();
+  createDrawerApi.open();
+}
+
+async function handleEdit(row) {
+  if (row.status !== '待审批') {
+    ElMessage.warning('只有待审批状态的请假记录可以编辑');
+    return;
+  }
+  isEditMode.value = true;
+  currentEditId.value = row.id;
+  try {
+    const detail = await getBehaviorMgmtDetail({ id: row.id });
+    // 确保学生选项已加载（如果尚未加载，先加载）
+    // 由于 loadStudentOptions 在 onMounted 中调用，通常已加载，但以防万一
+    // 直接设置表单值，studentId 对应的下拉框 options 已在 loadStudentOptions 中设置
+    createFormApi.setValues({
+      studentId: detail.studentId,
+      leaveType: detail.leaveType,
+      startTime: detail.startTime,
+      endTime: detail.endTime,
+      leaveReason: detail.leaveReason,
+      auditLevel: detail.auditLevel,
+      remark: detail.remark,
+    });
+    createDrawerApi.open();
+  } catch (error) {
+    console.error('加载详情失败', error);
+    ElMessage.error('加载详情失败');
+  }
+}
+
 // 查看详情
 const behaviorDetailDrawerRef = ref(null);
 function handleOpenDetail(row) {
@@ -449,6 +442,7 @@ function handleOpenDetail(row) {
   behaviorDetailDrawerRef.value.open();
 }
 
+// ---------- 搜索表单 ----------
 const [QueryForm] = useVbenForm({
   collapsed: false,
   commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
@@ -466,6 +460,7 @@ const [QueryForm] = useVbenForm({
   submitButtonOptions: { content: '查询' },
 });
 
+// ---------- 表格 ----------
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
@@ -582,7 +577,7 @@ onMounted(() => {
       </template>
     </Grid>
 
-    <!-- 审批弹窗（下拉选择结果 + 备注输入） -->
+    <!-- 审批弹窗 -->
     <el-dialog title="审批" v-model="auditDialogVisible" width="400px">
       <el-form label-width="100px">
         <el-form-item label="审批结果" required>

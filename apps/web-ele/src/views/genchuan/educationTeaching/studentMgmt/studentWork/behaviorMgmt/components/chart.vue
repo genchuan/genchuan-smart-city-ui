@@ -1,4 +1,3 @@
-<!-- 文件5: components/chart.vue (图表组件：看板卡片 + 请假类型分布饼图 + 图表切换区域) -->
 <script setup>
 import { reactive, onMounted, ref, computed } from 'vue';
 import { ElMessage, ElSelect, ElOption } from 'element-plus';

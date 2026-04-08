@@ -1,4 +1,3 @@
-<!-- 文件5: components/chart.vue (修正柱状图点击，兼容不同参数格式) -->
 <script setup>
 import { reactive, onMounted, ref, computed } from 'vue';
 import { ElMessage } from 'element-plus';

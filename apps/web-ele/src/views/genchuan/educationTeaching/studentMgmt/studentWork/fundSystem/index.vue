@@ -1,4 +1,3 @@
-<!-- 文件3: index.vue (主列表组件) - 修正版 -->
 <script setup>
 import { computed, reactive, ref, watch, nextTick, onMounted } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
