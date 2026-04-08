@@ -1,11 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-
-import CompletedTable from './completed/index.vue';
-import DisposalTable from './disposal/index.vue';
-import PendingTable from './pending/index.vue';
 import MontiorTable from './table/index.vue';
-import Yibihuan from './table/index.vue';
 
 
 const props = defineProps({
@@ -29,12 +24,6 @@ const arrowChange = () => {
 };
 const tabsData = ref([
   { label: '全部', component: MontiorTable },
-  { label: '待处置', component: PendingTable },
-  { label: '处置中', component: DisposalTable },
-  { label: '待核查', component: CompletedTable },
-  { label: '已闭环', component: Yibihuan },
-
-
 ]);
 const handleClick = (item) => {
   console.log(item);

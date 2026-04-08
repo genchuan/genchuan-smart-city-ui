@@ -3,8 +3,6 @@ import { ref } from 'vue';
 
 import monitor from './monitor/index.vue';
 import gateChart from './monitor/table/gateChart.vue';
-import report from './report/index.vue';
-
 import '#/components/page/index.scss';
 
 // 控制gateChart显示/隐藏的核心状态

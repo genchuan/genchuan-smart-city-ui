@@ -12,49 +12,44 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
-import { dataList, useFormSchema, useGridColumns } from './data';
+import { useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
 
-// 接收父组件传递的props
+import {
+  getInterconnectionPage,
+  applyInterconnection,
+  auditInterconnection,
+  closeInterconnection,
+  exportInterconnectionExcel,
+  getInterconnectionDetail,
+  reapplyInterconnection,
+  getInterconnectionChart,
+  getInterconnectionStatusRatio,
+  getInterconnectionCooperatorCount,
+  getInterconnectionApplyCount,
+} from '#/api/genchuan/industry/energyCharging/carCharging/interconnection/index';
+
 const props = defineProps({
-  secondShow: {
-    type: Boolean,
-    default: false,
-  },
-  arrowShow: {
-    type: Boolean,
-    default: false,
-  },
-  arrowState: {
-    type: Boolean,
-    default: false,
-  },
+  secondShow: { type: Boolean, default: false },
+  arrowShow: { type: Boolean, default: false },
+  arrowState: { type: Boolean, default: false },
 });
 
-// 定义事件，向父组件传递箭头切换动作
 const emit = defineEmits(['arrow-change']);
 
-const getTitle = computed(() => {
-  return formData.value?.id ? '编辑' : '新增';
-});
+const getTitle = computed(() => (formData.value?.id ? '编辑' : '新增'));
 
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  onCancel() {
-    drawerApi.close();
-  },
-  onConfirm() {},
-  async onOpenChange() {},
+  onCancel() { drawerApi.close(); },
 });
 
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
-    componentProps: {
-      class: 'w-full',
-    },
+    componentProps: { class: 'w-full' },
     formItemClass: 'col-span-2',
     labelWidth: 80,
   },
@@ -66,28 +61,54 @@ const [Form, formApi] = useVbenForm({
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
-  onCancel() {
-    formDrawerApi.close();
-  },
-  onConfirm() {
-    const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === '新增') {
-      dataObj.apilist.push(obj);
-    } else {
-      dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
-        }
-      });
+  onCancel() { formDrawerApi.close(); },
+  async onConfirm() {
+    const valid = await formApi.validate();
+    if (!valid) return;
+
+    const params = formApi.form.values;
+
+    // 必传字段校验：connectType
+    if (!params.connectType) {
+      ElMessage.warning('请选择连接类型');
+      return;
     }
-    handleRefresh();
-    formDrawerApi.close();
+
+    // 提交参数统一格式
+    const submitParams = {
+      ...params,
+      connect_code: params.connectCode,
+      connect_type: params.connectType,
+    };
+
+    const loading = ElLoading.service({ text: '提交中...' });
+
+    try {
+      if (formDrawerApi.sharedData.payload.title === '新增') {
+        await applyInterconnection(submitParams);
+        ElMessage.success('新增成功');
+      } else {
+        await reapplyInterconnection(submitParams);
+        ElMessage.success('编辑成功');
+      }
+      handleRefresh();
+      formDrawerApi.close();
+    } catch (err) {
+      ElMessage.error(err.message || '提交失败');
+    } finally {
+      loading.close();
+    }
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
       formData.value = formDrawerApi.getData();
       if (formData.value?.id) {
-        await formApi.setValues(formData.value);
+        try {
+          const detail = await getInterconnectionDetail({ id: formData.value.id });
+          formApi.setValues(detail || {});
+        } catch {
+          formApi.setValues(formData.value);
+        }
       } else {
         formApi.resetForm();
       }
@@ -95,157 +116,139 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
 });
 
-/** 刷新表格 */
+// 刷新
 function handleRefresh() {
   gridApi.query();
 }
 
-/** 导出表格 */
+// 导出
 async function handleExport() {
-  exportToExcel(dataObj.apilist, '导出', 'excel');
-}
-
-/** 创建角色 */
-function handleCreate() {
-  formDrawerApi
-    .setData({
-      title: '新增',
-    })
-    .open();
-}
-
-/** 编辑角色 */
-function handleEdit(row) {
-  formDrawerApi
-    .setData({
-      title: '编辑',
-      ...row,
-    })
-    .open();
-}
-
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.name]),
-  });
+  const loading = ElLoading.service({ text: '导出中...' });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
-    handleRefresh();
+    const blob = await exportInterconnectionExcel();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `互联互通列表_${new Date().getTime()}.xlsx`;
+    link.click();
+    window.URL.revokeObjectURL(url);
+    ElMessage.success('导出成功');
+  } catch (err) {
+    ElMessage.error(err.message || '导出失败');
   } finally {
-    loadingInstance.close();
+    loading.close();
   }
 }
 
-async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
-  });
+// 新增
+function handleCreate() {
+  formDrawerApi.setData({ title: '新增' }).open();
+}
+
+// 编辑
+function handleEdit(row) {
+  formDrawerApi.setData({ title: '编辑', ...row }).open();
+}
+
+// 关闭
+async function handleDelete(row) {
+  await confirm($t('确定关闭【{name}】吗？', { name: row.thirdPlatform || row.name }));
+  const loading = ElLoading.service({ text: '关闭中...' });
   try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
+    await closeInterconnection({ id: row.id });
+    ElMessage.success('关闭成功');
     handleRefresh();
+  } catch (err) {
+    ElMessage.error(err.message || '关闭失败');
   } finally {
-    loadingInstance.close();
+    loading.close();
+  }
+}
+
+// 批量关闭
+async function handleDeleteBatch() {
+  if (isEmpty(checkedIds.value)) {
+    ElMessage.warning('请选择数据');
+    return;
+  }
+  await confirm($t('确定关闭选中的数据吗？'));
+  const loading = ElLoading.service({ text: '批量关闭中...' });
+  try {
+    const promiseList = checkedIds.value.map(id => closeInterconnection({ id }));
+    await Promise.all(promiseList);
+    checkedIds.value = [];
+    ElMessage.success('批量关闭成功');
+    handleRefresh();
+  } catch (err) {
+    ElMessage.error(err.message || '批量关闭失败');
+  } finally {
+    loading.close();
   }
 }
 
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map((item) => item.id);
+  checkedIds.value = records.map(item => item.id);
 }
 
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
-  total: dataList().length,
-  currentPage: 1,
-  pageSize: 10,
-  apilist: dataList(),
-  list: [],
 });
 
-const changeTotalShow = () => {
-  dataObj.totalShow = !dataObj.totalShow;
+// 获取表格数据
+const getTableData = async (pageObj) => {
+  try {
+    const { page } = pageObj;
+    const formValues = formQueryApi?.form?.values || {};
+    const queryParams = {
+      current: page.currentPage,
+      size: page.pageSize,
+      ...formValues,
+      connect_code: formValues.connectCode,
+      connect_type: formValues.connectType,
+    };
+    const res = await getInterconnectionPage(queryParams);
+    return {
+      total: res?.total || 0,
+      list: res?.list || [],
+    };
+  } catch {
+    return { total: 0, list: [] };
+  }
 };
 
-// 表格数据获取
-const getTableData = (pageObj) => {
-  const page = pageObj.page;
-  dataObj.total = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    }).length;
-  dataObj.list = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    })
-    .slice(
-      (page.currentPage - 1) * page.pageSize,
-      page.currentPage * page.pageSize,
-    );
-  return dataObj;
-};
-
-const [QueryForm] = useVbenForm({
+// 查询表单
+const [QueryForm, formQueryApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
-    componentProps: {
-      class: 'w-full',
-    },
+    componentProps: { class: 'w-full' },
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
-  handleSubmit: onSubmit,
+  handleSubmit: () => {
+    drawerApi.close();
+    handleRefresh();
+  },
   layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
+  schema: useFormSchema().map(v => {
     delete v.rules;
-    return {
-      ...v,
-    };
+    return v;
   }),
   showCollapseButton: true,
-  submitButtonOptions: {
-    content: '查询',
-  },
+  submitButtonOptions: { content: '查询' },
 });
 
-// 搜索表单查询
-function onSubmit() {
-  drawerApi.close();
-}
-
+// 表格
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
     keepSource: true,
     proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getTableData({ page }),
-      },
+      ajax: { query: getTableData },
     },
-    rowConfig: {
-      keyField: 'id',
-      isHover: true,
-    },
-    pagerConfig: dataObj,
-    toolbarConfig: {
-      'class-name': 'common-tool-bar-config',
-      refresh: true,
-      search: true,
-    },
+    rowConfig: { keyField: 'id', isHover: true },
+    toolbarConfig: { refresh: true, search: true },
     showOverflow: true,
   },
   gridEvents: {
@@ -255,47 +258,22 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-const activeName = ref('全部');
-
-// 打开详情抽屉
-const handleOpenDetail = (row) => {
-  dataObj.detailObj = row;
-  parkDetailDrawerRef.value.open();
-};
-
-const tabsData = ref([
-  { label: '全部' },
-  { label: '已支付' },
-  { label: '已取消' },
-]);
-
-const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
-  if (item.label === '全部') {
-    text = `(${dataObj.apilist.length})`;
-  }
-  return item.label + text;
-};
-
-const handleClick = () => {
-  gridApi.query();
-};
-
-const handleSerachShow = () => {
-  drawerApi.open();
-};
-
-const handleFullShow = () => {
-  screenfull.toggle();
-};
-
-// 详情抽屉ref
 const parkDetailDrawerRef = ref(null);
 
-// 点击展开/收缩按钮时，向父组件触发事件
-const arrowChange = () => {
-  emit('arrow-change');
-};
+// 详情
+async function handleOpenDetail(row) {
+  try {
+    const detail = await getInterconnectionDetail({ id: row.id });
+    dataObj.detailObj = detail || row;
+  } catch {
+    dataObj.detailObj = row;
+  }
+  parkDetailDrawerRef.value?.open();
+}
+
+function arrowChange() { emit('arrow-change'); }
+function handleSerachShow() { drawerApi.open(); }
+function handleFullShow() { screenfull.toggle(); }
 </script>
 
 <template>
@@ -304,10 +282,7 @@ const arrowChange = () => {
       <Form />
     </FormDrawer>
 
-    <ParkDetailDrawer
-      ref="parkDetailDrawerRef"
-      :detail-obj="dataObj.detailObj"
-    />
+    <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" />
 
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -317,151 +292,94 @@ const arrowChange = () => {
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton content="导出" icon-name="download" @click="handleExport" />
           <IconButton
-            content="导出"
-            icon-name="download"
-            @click="handleExport"
-          />
-          <IconButton
-            content="批量删除"
+            content="批量关闭"
             icon-name="delete"
             color="#F56C6C"
             :disabled="isEmpty(checkedIds)"
             @click="handleDeleteBatch"
           />
+          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
           <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
-          />
-          <!-- 展开/收缩按钮：点击触发事件传递给父组件 -->
-          <IconButton
-            :content="props.arrowShow ? '收缩' : '展开'"
-            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            :content="arrowShow ? '收缩' : '展开'"
+            :icon-name="arrowShow ? 'ArrowUp' : 'ArrowDown'"
             @click="arrowChange"
           />
-          <IconButton
-            content="全屏"
-            icon-name="FullScreen"
-            @click="handleFullShow"
-          />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
 
-
       <template #code="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.code }}
-        </el-text>
+        <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">{{ row.connectCode }}</el-text>
       </template>
-
       <template #plat_name="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.plat_name }}
-        </el-text>
+        <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">{{ row.thirdPlatform }}</el-text>
       </template>
-
       <template #type="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.type }}
-        </el-text>
+        <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">{{ row.connectType }}</el-text>
       </template>
-
       <template #sync_freq="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.sync_freq }}
-        </el-text>
+        <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">{{ row.syncFreq }}</el-text>
       </template>
-
       <template #sync_rate="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.sync_rate }}
-        </el-text>
+        <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">{{ row.syncSuccessRate }}</el-text>
       </template>
-
       <template #sync_error="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.sync_error }}
-        </el-text>
+        <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">{{ row.syncError }}</el-text>
       </template>
-
       <template #status="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.status }}
-        </el-text>
+        <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">{{ row.connectStatus }}</el-text>
       </template>
-
       <template #create_time="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.create_time }}
-        </el-text>
+        <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">{{ row.createTime }}</el-text>
       </template>
-
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton
-            content="详情"
-            icon-name="View"
-            @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
-          />
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
+          <IconButton content="编辑" icon-name="edit" @click="handleEdit(row)" />
+          <IconButton content="关闭" icon-name="delete" color="#F56C6C" @click="handleDelete(row)" />
         </div>
       </template>
 
       <template #bottom>
-        <div class="common-total" @click="changeTotalShow">
-          <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
-            <ArrowDown />
+        <div class="common-total" @click="() => dataObj.totalShow = !dataObj.totalShow">
+          <el-icon class="tabel-tab-icon">
+            <ArrowDown v-if="!dataObj.totalShow" />
+            <ArrowUp v-else />
           </el-icon>
-          <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
-            <ArrowUp />
-          </el-icon>
-          <span> 全部统计：10条 </span>
+          <span>全部统计：{{ gridApi?.gridProps?.total || 0 }}条</span>
         </div>
       </template>
     </Grid>
   </div>
 </template>
+
+<style scoped>
+.park-lot-table-new {
+  width: 100%;
+  height: 100%;
+}
+.common-toolbar-tools {
+  display: flex;
+  gap: 8px;
+}
+.table-toolbar-tools {
+  display: flex;
+  gap: 4px;
+}
+.common-align {
+  cursor: pointer;
+}
+.common-total {
+  padding: 8px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.query-form {
+  padding: 16px;
+}
+</style>
