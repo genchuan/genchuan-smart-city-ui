@@ -2,101 +2,91 @@
 import { reactive, onMounted, ref, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
-import Pie from '#/genchuan-components/stats/pieClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
-import { getAbnormalOrderChart } from '#/api/genchuan/industry/energyCharging/carCharging/chargingOrder/abnormalOrder/data.js';
+import Pie from '#/genchuan-components/stats/pieClick.vue';
+import {
+  getAbnormalOrderChart,
+} from '#/api/genchuan/industry/energyCharging/carCharging/chargingOrder/abnormalOrder/data.js';
 
-// 模拟数据
-const mockOverviewData = {
+const mockChartData = {
   barData: [
-    { date: '2026-03-25', abnormalCount: 12, handleCount: 8 },
-    { date: '2026-03-26', abnormalCount: 15, handleCount: 10 },
-    { date: '2026-03-27', abnormalCount: 18, handleCount: 14 },
-    { date: '2026-03-28', abnormalCount: 14, handleCount: 12 },
-    { date: '2026-03-29', abnormalCount: 20, handleCount: 16 },
-    { date: '2026-03-30', abnormalCount: 22, handleCount: 18 },
-    { date: '2026-03-31', abnormalCount: 25, handleCount: 22 },
+    { date: '2026-04-01', abnormalCount: 5, handleCount: 4 },
+    { date: '2026-04-02', abnormalCount: 3, handleCount: 3 },
+    { date: '2026-04-03', abnormalCount: 7, handleCount: 5 },
+    { date: '2026-04-04', abnormalCount: 4, handleCount: 4 },
+    { date: '2026-04-05', abnormalCount: 6, handleCount: 5 },
+    { date: '2026-04-06', abnormalCount: 8, handleCount: 6 },
+    { date: '2026-04-07', abnormalCount: 2, handleCount: 2 },
   ],
   pieData: [
-    { name: '支付异常', value: 35 },
-    { name: '充电中断', value: 52 },
-    { name: '设备故障', value: 28 },
+    { name: '充电中断', value: 15 },
+    { name: '支付异常', value: 8 },
+    { name: '设备故障', value: 9 },
   ],
   cardData: {
-    totalAbnormalCount: 126,
-    unHandleCount: 18,
-    handleCount: 108,
-    handleRatio: 85.71,
+    totalAbnormalCount: 32,
+    unHandleCount: 5,
+    handleCount: 27,
+    handleRatio: 84.38,
   },
 };
 
-const loading = ref(false);
-const overviewData = ref({ ...mockOverviewData });
-
-const barState = reactive({
-  title: '每日异常订单数量及处理完成数量',
-  xData: [],
-  seriesData: [],
-  yName: '数量',
-});
+const loading = ref(true);
+const chartData = ref({ ...mockChartData });
 
 const cardList = computed(() => {
-  const total = overviewData.value.cardData?.totalAbnormalCount || 0;
-  const unHandled = overviewData.value.cardData?.unHandleCount || 0;
-  const handled = overviewData.value.cardData?.handleCount || 0;
-  const rate = overviewData.value.cardData?.handleRatio || 0;
+  const total = chartData.value.cardData?.totalAbnormalCount || 0;
+  const unHandle = chartData.value.cardData?.unHandleCount || 0;
+  const handle = chartData.value.cardData?.handleCount || 0;
+  const rate = chartData.value.cardData?.handleRatio || 0;
   return [
     { title: '总异常订单数', value: total, color: '#409EFF', status: 'total' },
-    { title: '未处理数', value: unHandled, color: '#E6A23C', status: 'unhandled' },
-    { title: '已处理数', value: handled, color: '#67C23A', status: 'handled' },
+    { title: '未处理数', value: unHandle, color: '#E6A23C', status: 'unHandle' },
+    { title: '已处理数', value: handle, color: '#67C23A', status: 'handle' },
     { title: '处理完成率', value: `${rate}%`, color: '#F56C6C', status: 'rate' },
   ];
 });
 
-const updateBarToTrend = () => {
-  const barData = overviewData.value.barData || [];
-  if (barData.length === 0) return;
-  barState.xData = barData.map((item) => item.date);
-  barState.seriesData = [
-    { name: '异常订单数量', data: barData.map((item) => item.abnormalCount) },
-    { name: '处理完成数量', data: barData.map((item) => item.handleCount) },
-  ];
-  barState.title = '每日异常订单数量及处理完成数量';
+// 柱状图数据
+const barXData = computed(() => chartData.value.barData?.map(item => item.date) || []);
+const barSeriesData = computed(() => [
+  { name: '异常订单数量', data: chartData.value.barData?.map(item => item.abnormalCount) || [] },
+  { name: '处理完成数量', data: chartData.value.barData?.map(item => item.handleCount) || [] },
+]);
+
+// 饼图数据
+const pieData = computed(() => chartData.value.pieData || []);
+
+const emit = defineEmits(['barSelect', 'pieSelect', 'cardSelect']);
+
+const handleCardClick = (cardInfo) => {
+  emit('cardSelect', cardInfo.status);
 };
 
-const fetchOverviewData = async () => {
+const handleBarClick = (params) => {
+  emit('barSelect', params.name);
+};
+
+const handlePieClick = (item) => {
+  emit('pieSelect', item.name);
+};
+
+const fetchChartData = async () => {
   loading.value = true;
   try {
-    const data = await getAbnormalOrderChart({});
-    overviewData.value = data;
-    updateBarToTrend();
-    console.log('使用接口数据');
+    const res = await getAbnormalOrderChart({});
+    chartData.value = res;
   } catch (error) {
-    console.warn('接口调用失败，使用模拟数据：', error.message);
-    overviewData.value = { ...mockOverviewData };
-    updateBarToTrend();
+    console.warn('图表接口失败，使用模拟数据', error);
+    chartData.value = mockChartData;
     ElMessage.info('当前使用模拟数据，展示总览信息');
   } finally {
     loading.value = false;
   }
 };
 
-const emit = defineEmits(['pieSelect', 'barSelect', 'cardSelect']);
-
-const handleCardClick = (cardInfo) => {
-  emit('cardSelect', cardInfo.status);
-};
-
-const handleBarClick = (date) => {
-  emit('barSelect', date);
-};
-
-const handlePieClick = (pieItem) => {
-  emit('pieSelect', pieItem.name);
-};
-
 onMounted(() => {
-  fetchOverviewData();
+  fetchChartData();
 });
 </script>
 
@@ -111,20 +101,20 @@ onMounted(() => {
         @click="handleCardClick"
       />
     </div>
-    <div class="chart-wrapper" style="flex: 1 !important;">
-      <Pie
-        title-text="异常订单类型占比"
-        :data="overviewData.pieData"
-        @pie-click="handlePieClick"
+    <div class="chart-wrapper" style="flex: 1.5 !important;">
+      <Bar
+        :title="'每日异常订单数量及处理完成数量'"
+        :x-data="barXData"
+        :series-data="barSeriesData"
+        y-name="数量"
+        @bar-click="handleBarClick"
       />
     </div>
     <div class="chart-wrapper" style="flex: 1 !important;">
-      <Bar
-        :title="barState.title"
-        :x-data="barState.xData"
-        :series-data="barState.seriesData"
-        :y-name="barState.yName"
-        @bar-click="handleBarClick"
+      <Pie
+        :title-text="'异常订单类型占比'"
+        :data="pieData"
+        @pie-click="handlePieClick"
       />
     </div>
   </div>
@@ -138,6 +128,7 @@ onMounted(() => {
   padding-left: 15px;
   padding-right: 15px;
   width: 100% !important;
+
   .box-left {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr);
@@ -145,15 +136,19 @@ onMounted(() => {
     min-width: 280px;
     max-width: 320px;
     margin-top: 10px !important;
+
     .left-card {
       height: 150px !important;
     }
   }
+
   .chart-wrapper {
     display: flex;
     flex-direction: column;
-    min-width: 280px;
-    position: relative;
+    min-width: 300px;
+    flex: 1;
+    margin-left: 12px;
+    margin-bottom: 12px;
   }
 }
 </style>

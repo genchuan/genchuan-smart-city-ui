@@ -66,13 +66,12 @@ const onCardSelect = async (status) => {
   abnormalOrderRef.value.clearFilters();
   switch (status) {
     case 'total':
-      // 总异常订单数：不添加筛选
       break;
-    case 'unhandled':
+    case 'unHandle':
       // 未处理数：筛选状态为未核实、已核实、处理中
       abnormalOrderRef.value.handleFilterTagClick('abnormalStatus', ['未核实', '已核实', '处理中']);
       break;
-    case 'handled':
+    case 'handle':
     case 'rate':
       // 已处理数 / 处理完成率：筛选状态为已完结
       abnormalOrderRef.value.handleFilterTagClick('abnormalStatus', '已完结');

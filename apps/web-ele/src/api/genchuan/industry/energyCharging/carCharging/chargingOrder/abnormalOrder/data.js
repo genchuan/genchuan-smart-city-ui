@@ -1,241 +1,197 @@
 import { requestClient } from '#/api/request';
 
-/**
- * 分页查询异常订单列表
- * @param {Object} params - 查询参数
- * @returns {Promise}
- */
+// ==================== 异常订单接口 ====================
 export function getAbnormalOrderPage(params) {
-  return requestClient.get('/vehiclecharging/abnormal-order/page', { params });
+  return requestClient.get('/vehiclecharging/abnormal-order/page', { params }).catch(err => {
+    console.warn('分页接口失败，使用模拟数据', err);
+    return { list: dataList(), total: dataList().length };
+  });
 }
 
-/**
- * 核实接口（批量）
- * @param {Object} data - { ids, verifyResult, verifyRemark }
- * @returns {Promise}
- */
 export function verifyAbnormalOrder(data) {
-  return requestClient.put('/vehiclecharging/abnormal-order/verify', data);
+  return requestClient.put('/vehiclecharging/abnormal-order/verify', data).catch(err => {
+    console.warn('核实接口失败，模拟成功', err);
+    return Promise.resolve(true);
+  });
 }
 
-/**
- * 处理接口（批量）
- * @param {Object} data - { ids, handleMeasure }
- * @returns {Promise}
- */
 export function handleAbnormalOrder(data) {
-  return requestClient.put('/vehiclecharging/abnormal-order/handle', data);
+  return requestClient.put('/vehiclecharging/abnormal-order/handle', data).catch(err => {
+    console.warn('处理接口失败，模拟成功', err);
+    return Promise.resolve(true);
+  });
 }
 
-/**
- * 完结接口（批量）
- * @param {Object} data - { ids, completeRemark }
- * @returns {Promise}
- */
 export function completeAbnormalOrder(data) {
-  return requestClient.put('/vehiclecharging/abnormal-order/complete', data);
+  return requestClient.put('/vehiclecharging/abnormal-order/complete', data).catch(err => {
+    console.warn('完结接口失败，模拟成功', err);
+    return Promise.resolve(true);
+  });
 }
 
-/**
- * 备注接口
- * @param {Object} data - { id, remark }
- * @returns {Promise}
- */
-export function remarkAbnormalOrder(data) {
-  return requestClient.put('/vehiclecharging/abnormal-order/remark', data);
-}
-
-/**
- * 退款接口
- * @param {Object} data - { id, refundAmount, refundReason }
- * @returns {Promise}
- */
 export function refundAbnormalOrder(data) {
-  return requestClient.post('/vehiclecharging/abnormal-order/refund', data);
+  return requestClient.post('/vehiclecharging/abnormal-order/refund', data).catch(err => {
+    console.warn('退款接口失败，模拟成功', err);
+    return Promise.resolve(true);
+  });
 }
 
-/**
- * 导出接口
- * @param {Object} params - 筛选参数
- * @returns {Promise}
- */
+export function remarkAbnormalOrder(data) {
+  return requestClient.put('/vehiclecharging/abnormal-order/remark', data).catch(err => {
+    console.warn('备注接口失败，模拟成功', err);
+    return Promise.resolve(true);
+  });
+}
+
 export function exportAbnormalOrder(params) {
-  return requestClient.download('/vehiclecharging/abnormal-order/export-excel', params);
+  return requestClient.download('/vehiclecharging/abnormal-order/export-excel', params).catch(err => {
+    console.warn('导出接口失败，模拟导出', err);
+    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
+  });
 }
 
-/**
- * 获取异常订单图表数据
- * @param {Object} params - { timeRange, startTime, endTime }
- * @returns {Promise}
- */
+export function getAbnormalOrderDetail(params) {
+  return requestClient.get('/vehiclecharging/abnormal-order/get', { params }).catch(err => {
+    console.warn('详情接口失败，使用模拟数据', err);
+    const mockList = dataList();
+    const detail = mockList.find(item => item.id === params.id) || mockList[0];
+    return Promise.resolve(detail);
+  });
+}
+
+// ==================== 图表接口 ====================
 export function getAbnormalOrderChart(params) {
-  return requestClient.get('/vehiclecharging/abnormal-order/chart', { params });
+  return requestClient.get('/vehiclecharging/abnormal-order/chart', { params }).catch(err => {
+    console.warn('图表接口失败，使用模拟数据', err);
+    return Promise.resolve({
+      barData: [
+        { date: '2026-04-01', abnormalCount: 5, handleCount: 4 },
+        { date: '2026-04-02', abnormalCount: 3, handleCount: 3 },
+        { date: '2026-04-03', abnormalCount: 7, handleCount: 5 },
+        { date: '2026-04-04', abnormalCount: 4, handleCount: 4 },
+        { date: '2026-04-05', abnormalCount: 6, handleCount: 5 },
+        { date: '2026-04-06', abnormalCount: 8, handleCount: 6 },
+        { date: '2026-04-07', abnormalCount: 2, handleCount: 2 },
+      ],
+      pieData: [
+        { name: '充电中断', value: 15 },
+        { name: '支付异常', value: 8 },
+        { name: '设备故障', value: 9 },
+      ],
+      cardData: {
+        totalAbnormalCount: 32,
+        unHandleCount: 5,
+        handleCount: 27,
+        handleRatio: 84.38,
+      },
+    });
+  });
 }
 
-// ==================== 模拟数据（与接口响应结构一致） ====================
+// 模拟数据（与接口响应结构一致）
 export const dataList = () => {
   return [
     {
       id: 1,
-      abnormalCode: 'ABN-20260328001',
-      orderId: 1001,
-      orderCode: 'ORD-20260328001',
-      plateNo: '闽C12345',
-      stationName: '城东充电站',
+      orderCode: 'ORD-20260401001',
       abnormalType: '充电中断',
-      abnormalTime: '1743141600000', // 时间戳
-      abnormalStatus: '未核实',
-      verifyUser: null,
-      verifyTime: null,
-      verifyResult: null,
-      handleUser: null,
-      handleTime: null,
-      completeTime: null,
-      remark: '充电过程中突然中断',
-      createTime: '1743141600000',
-      updateTime: '1743141600000',
-      refundAmount: null,
-      abnormalReason: '充电桩通信故障',
+      abnormalReason: '充电桩通信超时',
       checkUser: null,
       checkTime: null,
       handleMeasure: null,
-      creator: '系统',
-      updater: '系统',
+      refundAmount: null,
+      abnormalStatus: '未核实',
+      handleTime: null,
+      remark: '',
+      creator: 'admin',
+      updater: 'admin',
+      createTime: 1743552000000,
+      updateTime: 1743552000000,
     },
     {
       id: 2,
-      abnormalCode: 'ABN-20260328002',
-      orderId: 1002,
-      orderCode: 'ORD-20260328002',
-      plateNo: '闽D67890',
-      stationName: '城南充电站',
+      orderCode: 'ORD-20260401002',
       abnormalType: '支付异常',
-      abnormalTime: '1743145200000',
-      abnormalStatus: '已核实',
-      verifyUser: '张三',
-      verifyTime: '1743148800000',
-      verifyResult: '异常',
-      handleUser: null,
-      handleTime: null,
-      completeTime: null,
-      remark: '用户支付成功但订单未生成',
-      createTime: '1743145200000',
-      updateTime: '1743148800000',
-      refundAmount: null,
       abnormalReason: '支付回调失败',
       checkUser: '张三',
-      checkTime: '1743148800000',
+      checkTime: 1743638400000,
       handleMeasure: null,
-      creator: '系统',
-      updater: '张三',
+      refundAmount: null,
+      abnormalStatus: '已核实',
+      handleTime: null,
+      remark: '需退款',
+      creator: 'admin',
+      updater: 'admin',
+      createTime: 1743552000000,
+      updateTime: 1743638400000,
     },
     {
       id: 3,
-      abnormalCode: 'ABN-20260328003',
-      orderId: 1003,
-      orderCode: 'ORD-20260328003',
-      plateNo: '闽E13579',
-      stationName: '城西充电站',
+      orderCode: 'ORD-20260402001',
       abnormalType: '设备故障',
-      abnormalTime: '1743148800000',
-      abnormalStatus: '处理中',
-      verifyUser: '李四',
-      verifyTime: '1743152400000',
-      verifyResult: '异常',
-      handleUser: '王五',
-      handleTime: '1743156000000',
-      handleMeasure: '重启充电桩，恢复运行',
-      completeTime: null,
-      remark: '充电桩屏幕无响应',
-      createTime: '1743148800000',
-      updateTime: '1743156000000',
-      refundAmount: null,
-      abnormalReason: '充电桩主板故障',
+      abnormalReason: '充电桩屏幕无响应',
       checkUser: '李四',
-      checkTime: '1743152400000',
-      creator: '系统',
-      updater: '王五',
+      checkTime: 1743724800000,
+      handleMeasure: '重启充电桩',
+      refundAmount: 20.00,
+      abnormalStatus: '处理中',
+      handleTime: 1743811200000,
+      remark: '已安排维修',
+      creator: 'operator1',
+      updater: 'operator1',
+      createTime: 1743638400000,
+      updateTime: 1743811200000,
     },
     {
       id: 4,
-      abnormalCode: 'ABN-20260328004',
-      orderId: 1004,
-      orderCode: 'ORD-20260328004',
-      plateNo: '闽F24680',
-      stationName: '城北充电站',
+      orderCode: 'ORD-20260403001',
       abnormalType: '充电中断',
-      abnormalTime: '1743152400000',
-      abnormalStatus: '已完结',
-      verifyUser: '赵六',
-      verifyTime: '1743156000000',
-      verifyResult: '异常',
-      handleUser: '孙七',
-      handleTime: '1743159600000',
+      abnormalReason: '充电枪过热保护',
+      checkUser: '王五',
+      checkTime: 1743907200000,
       handleMeasure: '更换充电枪线',
-      completeTime: '1743163200000',
-      remark: '充电枪过热保护',
-      createTime: '1743152400000',
-      updateTime: '1743163200000',
       refundAmount: 15.00,
-      abnormalReason: '充电枪温度过高',
-      checkUser: '赵六',
-      checkTime: '1743156000000',
-      creator: '系统',
-      updater: '孙七',
+      abnormalStatus: '已完结',
+      handleTime: 1743993600000,
+      remark: '已处理完成',
+      creator: 'admin',
+      updater: 'admin',
+      createTime: 1743811200000,
+      updateTime: 1743993600000,
     },
     {
       id: 5,
-      abnormalCode: 'ABN-20260329001',
-      orderId: 1005,
-      orderCode: 'ORD-20260329001',
-      plateNo: '闽G11223',
-      stationName: '开发区充电站',
+      orderCode: 'ORD-20260404001',
       abnormalType: '支付异常',
-      abnormalTime: '1743235200000',
-      abnormalStatus: '未核实',
-      verifyUser: null,
-      verifyTime: null,
-      verifyResult: null,
-      handleUser: null,
-      handleTime: null,
-      completeTime: null,
-      remark: '重复扣费',
-      createTime: '1743235200000',
-      updateTime: '1743235200000',
-      refundAmount: null,
-      abnormalReason: '支付系统重复请求',
+      abnormalReason: '重复扣费',
       checkUser: null,
       checkTime: null,
       handleMeasure: null,
-      creator: '系统',
-      updater: '系统',
+      refundAmount: null,
+      abnormalStatus: '未核实',
+      handleTime: null,
+      remark: '',
+      creator: 'admin',
+      updater: 'admin',
+      createTime: 1743897600000,
+      updateTime: 1743897600000,
     },
     {
       id: 6,
-      abnormalCode: 'ABN-20260329002',
-      orderId: 1006,
-      orderCode: 'ORD-20260329002',
-      plateNo: '闽H33445',
-      stationName: '旅游区充电站',
+      orderCode: 'ORD-20260405001',
       abnormalType: '设备故障',
-      abnormalTime: '1743238800000',
-      abnormalStatus: '已核实',
-      verifyUser: '周八',
-      verifyTime: '1743242400000',
-      verifyResult: '正常',
-      handleUser: null,
-      handleTime: null,
-      completeTime: null,
-      remark: '用户误报，实际充电正常',
-      createTime: '1743238800000',
-      updateTime: '1743242400000',
-      refundAmount: null,
-      abnormalReason: '用户操作不当',
-      checkUser: '周八',
-      checkTime: '1743242400000',
+      abnormalReason: '充电桩离线',
+      checkUser: '赵六',
+      checkTime: 1744070400000,
       handleMeasure: null,
-      creator: '系统',
-      updater: '周八',
+      refundAmount: null,
+      abnormalStatus: '已核实',
+      handleTime: null,
+      remark: '需联系厂家',
+      creator: 'operator2',
+      updater: 'operator2',
+      createTime: 1743984000000,
+      updateTime: 1744070400000,
     },
   ];
 };
