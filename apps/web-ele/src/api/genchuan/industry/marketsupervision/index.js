@@ -241,3 +241,10 @@ export function exporViolationAnalyticsExcel() {
 export function exporViolationAnalyticsPDF() {
   return requestClient.download('/kitchen/violation-analytics/export-list-pdf');
 }
+
+/** 钻取企业违规数据分析 */
+export function getViolationAnalyticsDrill(params) {
+  return requestClient.get('/kitchen/violation-analytics/drill', {
+    params,
+  });
+}

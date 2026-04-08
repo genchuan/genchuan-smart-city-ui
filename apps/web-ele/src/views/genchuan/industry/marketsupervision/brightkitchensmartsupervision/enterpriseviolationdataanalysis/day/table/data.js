@@ -153,24 +153,25 @@ export function useGridColumns() {
       title: '总告警次数（AI预警按企业分组统计）',
       minWidth: 180,
       sortable: true,
+      slots: { default: 'alarmCount' },  
     },
     {
       field: 'violationCount',
       title: '违规次数（整改复审计数）',
       minWidth: 160,
-      sortable: true,
+      sortable: true, 
     },
     {
       field: 'deviceNormalRate',
       title: '设备正常率（去重设备计算）',
       minWidth: 160,
-      sortable: true,
+      sortable: true, 
     },
     {
       field: 'rectifyFinishRate',
       title: '整改完成率（整改复审计数）',
       minWidth: 160,
-      sortable: true,
+      sortable: true, 
     },
     {
       field: 'beginTime',

@@ -14,9 +14,10 @@ import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.
 import { $t } from '#/locales';
 import { downloadLocalTemplate } from '#/utils/genchuan/down';
 
+import { formatTimestamp } from '#/utils';
 import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
-import { getViolationAnalyticsPage, exporViolationAnalyticsExcel, exporViolationAnalyticsPDF } from '#/api/genchuan/industry/marketsupervision/index.js';
-import {  useFormSchema, useGridColumns } from './data';
+import { getViolationAnalyticsPage, exporViolationAnalyticsExcel, exporViolationAnalyticsPDF, getViolationAnalyticsDrill } from '#/api/genchuan/industry/marketsupervision/index.js';
+import { useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
 
 const props = defineProps({
@@ -46,8 +47,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel() {
     drawerApi.close();
   },
-  onConfirm() {},
-  async onOpenChange() {},
+  onConfirm() { },
+  async onOpenChange() { },
 });
 
 const formData = ref();
@@ -338,6 +339,34 @@ const alarmColumns = [
   { label: '告警等级', prop: 'alarmLevel' },
   { label: '处理状态', prop: 'status' },
 ];
+// 告警明细弹窗
+const alarmDrillVisible = ref(false);
+const alarmDrillList = ref([]);
+
+// 打开告警明细弹窗
+const oepnalarmCount = async (row) => {
+  const data = await getViolationAnalyticsDrill({ entId: row.entId });
+  alarmDrillList.value = data.alarmList || [];
+  alarmDrillList.value = alarmDrillList.value.map((item) => ({
+    ...item,
+    createTime: formatTimestamp(item.createTime),
+    updateTime: formatTimestamp(item.updateTime),
+  }));
+  alarmDrillVisible.value = true;
+};
+
+// 告警钻取列
+const alarmDrillColumns = [
+  { label: 'ID', prop: 'id', width: 80 },
+  { label: '创建时间', prop: 'createTime', width: 180 },
+  { label: '更新时间', prop: 'updateTime', width: 180 },
+  { label: '告警类型', prop: 'alertType', width: 120 },
+  { label: '设备编码', prop: 'deviceCode', width: 180 },
+  { label: '告警来源', prop: 'alertSource', width: 120 }, 
+  { label: '设备手机号', prop: 'deviceAccount', width: 150 },
+  { label: '告警ID', prop: 'alertId', width: 120 },
+  { label: 'AI平台消息ID', prop: 'aiPlatformMsgId', width: 180 },
+];
 </script>
 
 <template>
@@ -346,10 +375,7 @@ const alarmColumns = [
       <Form />
     </FormDrawer>
 
-    <ParkDetailDrawer
-      ref="parkDetailDrawerRef"
-      :detail-obj="dataObj.detailObj"
-    />
+    <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" />
     <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" />
 
     <Drawer title="搜索">
@@ -357,63 +383,42 @@ const alarmColumns = [
     </Drawer>
 
     <!-- 告警明细弹窗 -->
-    <ElDialog
-      v-model="alarmDialogVisible"
-      title="当日食品安全问题明细"
-      width="900px"
-      append-to-body
-    >
+    <ElDialog v-model="alarmDialogVisible" title="当日食品安全问题明细" width="900px" append-to-body>
       <el-table :data="alarmList" border height="450">
-        <el-table-column
-          v-for="col in alarmColumns"
-          :key="col.prop"
-          :label="col.label"
-          :prop="col.prop"
-          :width="col.width"
-        />
+        <el-table-column v-for="col in alarmColumns" :key="col.prop" :label="col.label" :prop="col.prop"
+          :width="col.width" />
+      </el-table>
+    </ElDialog>
+
+    <!-- 告警钻取明细弹窗 -->
+    <ElDialog v-model="alarmDrillVisible" title="告警明细" width="1200px" append-to-body>
+      <el-table :data="alarmDrillList" border height="450">
+        <el-table-column label="图片地址" width="100">
+          <template #default="scope">
+            <div style="display: flex; align-items: center">
+              <img :src="scope.row.srcUrl" alt="" style="width: 80px; height: 80px;">
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column v-for="col in alarmDrillColumns" :key="col.prop" :label="col.label" :prop="col.prop"
+          :width="col.width">
+
+        </el-table-column>
       </el-table>
     </ElDialog>
 
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton
-            content="刷新"
-            icon-name="refresh"
-            @click="autoElmessage"
-          />
-          <IconButton
-            content="导出EXCEL"
-            icon-name="download"
-            @click="handleExport"
-          />
-          <IconButton
-            content="导出PDF"
-            icon-name="download"
-            @click="handlePDF"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
-          />
-          <IconButton
-            :content="props.arrowShow ? '展开' : '收缩'"
-            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
-            @click="arrowChange"
-          />
-          <IconButton
-            content="全屏"
-            icon-name="FullScreen"
-            @click="handleFullShow"
-          />
+          <IconButton content="刷新" icon-name="refresh" @click="autoElmessage" />
+          <IconButton content="导出EXCEL" icon-name="download" @click="handleExport" />
+          <IconButton content="导出PDF" icon-name="download" @click="handlePDF" />
+          <IconButton content="批量删除" icon-name="delete" color="#F56C6C" :disabled="isEmpty(checkedIds)"
+            @click="handleDeleteBatch" />
+          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange" />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
 
@@ -424,29 +429,22 @@ const alarmColumns = [
       </template>
 
       <template #entName="{ row }">
-        <el-text
-          @click="openEn(row)"
-          class="common-align"
-          type="primary" 
-        >
+        <el-text @click="openEn(row)" class="common-align" type="primary">
           {{ row.entName }}
         </el-text>
       </template>
- 
+      <template #alarmCount="{ row }">
+        <el-text @click="oepnalarmCount(row)" class="common-align" type="primary">
+          {{ row.alarmCount }}
+        </el-text>
+      </template>
+
+
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton
-            content="详情"
-            icon-name="View"
-            @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
-          />
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
+          <IconButton content="删除" icon-name="delete" color="#F56C6C" @click="handleDelete(row)" />
         </div>
       </template>
 
