@@ -261,12 +261,12 @@ export function useGridColumns() {
       slots: { default: 'type' },
 
     },
-    {
-      field: 'api_param',
-      title: '接口参数',
-      minWidth: 250,
-      sortable: false,
-    },
+    // {
+    //   field: 'api_param',
+    //   title: '接口参数',
+    //   minWidth: 250,
+    //   sortable: false,
+    // },
     {
       field: 'sync_freq',
       title: '同步频率',
@@ -275,22 +275,23 @@ export function useGridColumns() {
       slots: { default: 'sync_freq' },
 
     },
-    {
-      field: 'sync_rate',
-      title: '同步成功率(%)',
-      minWidth: 150,
-      sortable: true,
-      slots: { default: 'sync_rate' },
 
-    },
-    {
-      field: 'sync_error',
-      title: '同步异常次数',
-      minWidth: 150,
-      sortable: true,
-      slots: { default: 'sync_error' },
-
-    },
+    // {
+    //   field: 'sync_rate',
+    //   title: '同步成功率(%)',
+    //   minWidth: 150,
+    //   sortable: true,
+    //   slots: { default: 'sync_rate' },
+    //
+    // },
+    // {
+    //   field: 'sync_error',
+    //   title: '同步异常次数',
+    //   minWidth: 150,
+    //   sortable: true,
+    //   slots: { default: 'sync_error' },
+    //
+    // },
     {
       field: 'status',
       title: '对接状态',
@@ -317,7 +318,7 @@ export function useGridColumns() {
     },
     {
       title: '操作',
-      width: 80,
+      width: 90,
       fixed: 'right',
       slots: { default: 'actions' },
     },

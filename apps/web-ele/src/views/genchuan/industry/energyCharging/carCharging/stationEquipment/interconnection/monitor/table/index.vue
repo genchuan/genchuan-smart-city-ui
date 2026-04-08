@@ -27,7 +27,7 @@ import {
   getInterconnectionStatusRatio,
   getInterconnectionCooperatorCount,
   getInterconnectionApplyCount,
-} from '#/api/genchuan/industry/energyCharging/carCharging/interconnection/index';
+} from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/interconnection/index';
 
 const props = defineProps({
   secondShow: { type: Boolean, default: false },
