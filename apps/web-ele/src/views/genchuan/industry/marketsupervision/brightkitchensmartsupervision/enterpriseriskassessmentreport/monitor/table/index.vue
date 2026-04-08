@@ -1,22 +1,22 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { confirm, useVbenDrawer } from '@vben/common-ui'; 
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 // 导出插件
 import * as XLSX from 'xlsx';
-
+ 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
+import { getDetailEnObj, getRiskReportPage, exporRiskReportExcel, exporRiskReportPDF, exporRiskReportPDFSinglePDF } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
 import { downloadLocalTemplate } from '#/utils/genchuan/down';
 import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
 
-import { dataList, useFormSchema, useGridColumns } from './data';
+import {   useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
 
 const props = defineProps({
@@ -101,42 +101,30 @@ function handleRefresh() {
 }
 
 // ====================== 导出 EXCEL ======================
-function handleExport() {
-  const records = gridApi.grid.getData();
-  if (!records || records.length === 0) {
-    ElMessage.warning('暂无数据可导出');
-    return;
-  }
-
-  const loading = ElLoading.service({ text: '正在导出Excel...' });
-  try {
-    const columns = useGridColumns().filter(
-      (col) => col.field && col.title && col.type !== 'checkbox',
-    );
-
-    const exportData = records.map((row) => {
-      const item = {};
-      columns.forEach((col) => {
-        item[col.title] = row[col.field] ?? '';
-      });
-      return item;
-    });
-
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, '报表数据');
-    XLSX.writeFile(wb, `企业风险评估报表_${Date.now()}.xlsx`);
-    ElMessage.success('导出成功！');
-  } catch (error) {
-    ElMessage.error(`导出失败：${error.message}`);
-  } finally {
-    loading.close();
-  }
+async function handleExport() {
+   const data = await exporRiskReportExcel();
+  downloadFileFromBlobPart({
+    fileName: '企业风险评估报表.xls',
+    source: data,
+  });
 }
 
 // ====================== 图片转PDF（终极零乱码） ======================
 async function handlePDF() {
-  downloadLocalTemplate('/static/dan.pdf', '报表.pdf');
+  const data = await exporRiskReportPDF();
+  downloadFileFromBlobPart({
+    fileName: '企业风险评估报表.pdf',
+    source: data,
+  });
+}
+
+// 导出单条PDF
+async function handleExportSinglePDF(row) {
+  const data = await exporRiskReportPDFSinglePDF(row);
+  downloadFileFromBlobPart({
+    fileName: `企业风险评估报表_${row.entName}.pdf`,
+    source: data,
+  });
 }
 
 /** 创建角色 */
@@ -159,11 +147,12 @@ function handleEdit(row) {
 }
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.name]),
+    text: $t('ui.actionMessage.deleting'),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
+    // 调用删除接口
+    // await deleteRiskReport(row.id);
+    ElMessage.success($t('ui.actionMessage.deleteSuccess'));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -171,20 +160,14 @@ async function handleDelete(row) {
 }
 
 async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
+  await confirm($t('确定删除这些数据吗？')).then(() => {
+    checkedIds.value.forEach(async (v) => {
+      await handleDelete({
+        id: v,
+      });
+    });
   });
-  try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
+  handleRefresh();
 }
 
 const checkedIds = ref([]);
@@ -196,55 +179,77 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
-  total: dataList().length,
+  total: 0,
   currentPage: 1,
   pageSize: 10,
-  apilist: dataList(),
+  apilist: [],
   list: [],
   loading: false,
+  serachObj: {},
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
-const getTableData = (pageObj) => {
-  const page = pageObj.page;
-  const filtered = dataObj.apilist.filter((v) => {
-    return activeName.value === '全部' || v.status === activeName.value;
-  });
-  dataObj.total = filtered.length;
-  dataObj.list = filtered.slice(
-    (page.currentPage - 1) * page.pageSize,
-    page.currentPage * page.pageSize,
-  );
+// 表格数据获取
+const getTableData = async (pageObj) => {
+  // 处理时间格式转换
+  const searchParams = { ...dataObj.serachObj };
+  if (searchParams.beginTime) {
+    // 将ISO时间格式转换为字符串格式
+    searchParams.beginTime = new Date(searchParams.beginTime).toISOString().slice(0, 10);
+  }
+  if (searchParams.endTime) {
+    // 将ISO时间格式转换为字符串格式
+    searchParams.endTime = new Date(searchParams.endTime).toISOString().slice(0, 10);
+  }
+  const getParams = {
+    pageNo: pageObj.page.currentPage,
+    pageSize: pageObj.page.pageSize,
+    ...searchParams,
+  };
+  const data = await getRiskReportPage(getParams);
+  dataObj.total = data.total;
+  dataObj.list = data.list;
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [QueryForm, QueryFormApi] = useVbenForm({
+  // 默认展开
   collapsed: false,
+  // 所有表单项共用，可单独在表单内覆盖
   commonConfig: {
+    // 所有表单项
     componentProps: {
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
-  handleSubmit: () => {
-    dataObj.loading = true;
-    setTimeout(() => {
-      dataObj.loading = false;
-    }, 2000);
-    drawerApi.close();
-  },
+  // 提交函数
+  handleSubmit: onSubmit,
+  // 垂直布局，label和input在不同行，值为vertical
+  // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
-    delete v.rules;
-    return { ...v };
-  }),
+  schema: useFormSchema()
+    .filter((v) => v.isSearch)
+    .map((v) => {
+      delete v.rules;
+      return {
+        ...v,
+      };
+    }),
+  // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
   },
 });
+// 搜索表单查询
+async function onSubmit() {
+  dataObj.serachObj = await QueryFormApi.getValues();
+  gridApi.reload();
+  drawerApi.close();
+}
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
@@ -274,26 +279,21 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-const activeName = ref('全部');
+const activeName = ref('');
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
   parkDetailDrawerRef.value?.open();
 };
 const tabsData = ref([
-  { label: '全部' },
-  { label: '启用' },
-  { label: '禁用' },
-  { label: '暂停运营' },
-  { label: '维修中' },
+  { label: '全部', value: '' },
+  { label: '月租车', value: '1' },
+  { label: '临时车', value: '0' },
 ]);
 const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
-  if (item.label === '全部') {
-    text = `(${dataObj.apilist.length})`;
-  }
-  return item.label + text;
+  return item.label;
 };
 const handleClick = () => {
+  dataObj.serachObj.plateType = activeName.value;
   gridApi.query();
 };
 const handleSerachShow = () => {
@@ -315,8 +315,8 @@ const autoElmessage = () => {
   }, 2000);
   ElMessage.success($t('月报自动刷新成功'));
 };
-const openEn = async () => {
-  const res = await getDetailEnObj(1);
+const openEn = async (row) => {
+  const res = await getDetailEnObj(row.entId);
   dataObj.enDetailObj = res;
   enDetailObjRef.value?.open();
 };
@@ -352,14 +352,7 @@ const openEn = async () => {
             content="导出PDF"
             icon-name="download"
             @click="handlePDF"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
+          /> 
           <IconButton
             content="搜索"
             icon-name="search"
@@ -393,22 +386,22 @@ const openEn = async () => {
           {{ row.riskLevel }}
         </el-text>
       </template>
-      <template #reportNumber="{ row }">
+      <template #reportNo="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.reportNumber }}
+          {{ row.reportNo }}
         </el-text>
       </template>
-      <template #companyName="{ row }">
+      <template #entName="{ row }">
         <el-text
           @click="openEn(row)"
           class="common-align"
           :type="row.riskLevel === '高风险' ? 'danger' : 'primary'"
         >
-          {{ row.companyName }}
+          {{ row.entName }}
         </el-text>
       </template>
 
@@ -418,12 +411,11 @@ const openEn = async () => {
             content="详情"
             icon-name="View"
             @click="handleOpenDetail(row)"
-          />
+          /> 
           <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
+            content="导出PDF"
+            icon-name="download"
+            @click="handleExportSinglePDF(row)"
           />
         </div>
       </template>

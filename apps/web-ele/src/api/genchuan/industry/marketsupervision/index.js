@@ -204,3 +204,24 @@ export function  punishFile(data) {
 export function sendledgerReason(data) {
   return requestClient.post(`/kitchen/punish-review-ledger/review-cancel`, data);
 }
+
+
+/*** 获得分页企业风险报表 */
+export function getRiskReportPage(params) {
+  return requestClient.get('/kitchen/risk-report/page', {
+    params,
+  });
+}
+/**导出excel */
+export function exporRiskReportExcel() {
+  return requestClient.download('/kitchen/risk-report/export-excel');
+}
+/** 导出PDF */
+export function exporRiskReportPDF() {
+  return requestClient.download('/kitchen/risk-report/export-list-pdf');
+}
+
+/** 单独月份导出PDF */
+export function exporRiskReportPDFSinglePDF(data) {
+  return requestClient.download('/kitchen/risk-report/export-single-enterprise-pdf', data);
+}

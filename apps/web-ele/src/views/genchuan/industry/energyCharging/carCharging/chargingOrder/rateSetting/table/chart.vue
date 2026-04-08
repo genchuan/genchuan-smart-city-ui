@@ -29,7 +29,7 @@ const detailData = ref({
 const handleBarClick = async (params) => { 
   try {
     console.log('点击参数:', params); // 调试日志
-    const stationId = params.dataIndex;
+    const stationId = state.barData[params.dataIndex].stationId;
     const stationName = params.name; 
     console.log('调用接口参数:', { stationId }); // 调试日志
     // 调用详情接口
@@ -385,7 +385,7 @@ const fetchRateChartData = async () => {
       if (response.barData && Array.isArray(response.barData)) {
         const xAxis = response.barData.map(item => item.stationName);
         const rateCountData = response.barData.map(item => item.rateCount);
-
+        state.barData = response.barData
         barChartData.value.data.xAxis = xAxis;
         barChartData.value.data.series[0].data = rateCountData;
 

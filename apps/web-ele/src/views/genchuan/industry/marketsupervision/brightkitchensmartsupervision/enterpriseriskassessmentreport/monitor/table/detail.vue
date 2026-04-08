@@ -20,7 +20,7 @@ const { detailObj, title } = toRefs(props);
 
 // 标题计算
 const drawerTitle = computed(() => {
-  const reportNo = detailObj.value?.reportNumber || '风险报告';
+  const reportNo = detailObj.value?.reportNo || '风险报告';
   return title.value || `${reportNo} 详情`;
 });
 
@@ -46,33 +46,21 @@ defineExpose({
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
       <div class="detail-card-row">
+        <div class="detail-row-left">统计周期:</div>
+        <div class="detail-row-right">{{ detailObj.statisticPeriod || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
         <div class="detail-row-left">报告编号:</div>
-        <div class="detail-row-right">{{ detailObj.reportNumber || '-' }}</div>
+        <div class="detail-row-right">{{ detailObj.reportNo || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">企业ID:</div>
+        <div class="detail-row-right">{{ detailObj.entId || '-' }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">企业名称:</div>
-        <div class="detail-row-right">{{ detailObj.companyName || '-' }}</div>
+        <div class="detail-row-right">{{ detailObj.entName || '-' }}</div>
       </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">所属区域:</div>
-        <div class="detail-row-right">
-          {{ detailObj.affiliatedArea || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">所属类型:</div>
-        <div class="detail-row-right">
-          {{ detailObj.affiliatedType || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">统计月份:</div>
-        <div class="detail-row-right">
-          {{ detailObj.statisticsMonth || '-' }}
-        </div>
-      </div>
-
-      <!-- 风险等级（带颜色标签） -->
       <div class="detail-card-row">
         <div class="detail-row-left">风险等级:</div>
         <div class="detail-row-right">
@@ -87,44 +75,25 @@ defineExpose({
           </span>
         </div>
       </div>
-
       <div class="detail-card-row">
-        <div class="detail-row-left">月度违规频次:</div>
-        <div class="detail-row-right">
-          {{ detailObj.monthlyViolationCount || '-' }}
-        </div>
+        <div class="detail-row-left">区域:</div>
+        <div class="detail-row-right">{{ detailObj.area || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">违规类型分布:</div>
-        <div class="detail-row-right">
-          {{ detailObj.violationTypeDistribution || '-' }}
-        </div>
+        <div class="detail-row-left">企业类型:</div>
+        <div class="detail-row-right">{{ detailObj.entType || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">整改完成率(%):</div>
-        <div class="detail-row-right">
-          {{ detailObj.rectificationCompletionRate || '-' }} %
-        </div>
+        <div class="detail-row-left">统计开始时间:</div>
+        <div class="detail-row-right">{{ detailObj.beginTime || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">风险等级判定依据:</div>
-        <div class="detail-row-right">
-          {{ detailObj.riskLevelBasis || '-' }}
-        </div>
+        <div class="detail-row-left">统计结束时间:</div>
+        <div class="detail-row-right">{{ detailObj.endTime || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">上月风险等级:</div>
-        <div class="detail-row-right">
-          {{ detailObj.lastMonthRiskLevel || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">同比风险变化:</div>
-        <div class="detail-row-right">{{ detailObj.yoyRiskChange || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">环比风险变化:</div>
-        <div class="detail-row-right">{{ detailObj.momRiskChange || '-' }}</div>
+        <div class="detail-row-left">违规次数:</div>
+        <div class="detail-row-right">{{ detailObj.violationCount || '-' }}</div>
       </div>
     </div>
   </DetailDrawer>
