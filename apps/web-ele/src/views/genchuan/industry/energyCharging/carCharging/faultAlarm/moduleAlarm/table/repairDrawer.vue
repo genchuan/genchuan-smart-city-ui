@@ -1,4 +1,4 @@
-<!-- module-alarm/repairDrawer.vue -->
+<!-- module-alarm/table/repairDrawer.vue -->
 <template>
   <DetailDrawer :title="`修复告警 - ${alarmCode}`">
     <el-form :model="form" label-width="100px">
@@ -28,7 +28,10 @@
   </DetailDrawer>
 
   <el-dialog v-model="previewVisible" title="修复凭证预览" width="600px" center>
-    <div style="text-align: center"><img :src="previewUrl" style="max-width: 100%" /></div>
+    <div style="text-align: center">
+      <iframe v-if="isPdf(previewUrl)" :src="previewUrl" width="100%" height="500px" />
+      <img v-else :src="previewUrl" style="max-width: 100%" />
+    </div>
   </el-dialog>
 </template>
 
@@ -46,6 +49,8 @@ const form = ref({ repairVoucherUrl: '' });
 const loading = ref(false);
 const previewVisible = ref(false);
 const previewUrl = ref('');
+
+const isPdf = (url) => url?.toLowerCase().endsWith('.pdf');
 
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,

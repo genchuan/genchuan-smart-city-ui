@@ -1,4 +1,4 @@
-<!-- module-alarm/debugDrawer.vue -->
+<!-- module-alarm/table/debugDrawer.vue -->
 <template>
   <DetailDrawer :title="`排查告警 - ${alarmCode}`">
     <el-form :model="form" label-width="100px">
