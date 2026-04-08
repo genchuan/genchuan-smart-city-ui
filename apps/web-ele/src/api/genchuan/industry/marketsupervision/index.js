@@ -225,3 +225,26 @@ export function exporRiskReportPDF() {
 export function exporRiskReportPDFSinglePDF(data) {
   return requestClient.download('/kitchen/risk-report/export-single-enterprise-pdf', data);
 }
+
+/** 企业违规数据分析 */
+export function getViolationAnalyticsPage(params) {
+  return requestClient.get('/kitchen/violation-analytics/page', {
+    params,
+  });
+}
+
+/** 导出excel */
+export function exporViolationAnalyticsExcel() {
+  return requestClient.download('/kitchen/violation-analytics/export-excel');
+}
+/** 导出pdf */
+export function exporViolationAnalyticsPDF() {
+  return requestClient.download('/kitchen/violation-analytics/export-list-pdf');
+}
+
+/** 钻取企业违规数据分析 */
+export function getViolationAnalyticsDrill(params) {
+  return requestClient.get('/kitchen/violation-analytics/drill', {
+    params,
+  });
+}
