@@ -48,10 +48,10 @@ const fetchStatsData = async () => {
           status: 'all',
         },
         {
-          title: '未处理数',
-          value: (data.cardData?.unVerifyCount || 0) + (data.cardData?.verifiedCount || 0) + (data.cardData?.handlingCount || 0),
-          color: '#FF9F40',
-          status: 'unhandled',
+          title: '处理中',
+          value: data.cardData?.handlingCount || 0,
+          color: '#A17FE0',
+          status: 'handling',
         },
         {
           title: '处理完成数',

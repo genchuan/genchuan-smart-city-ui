@@ -610,10 +610,14 @@ const handleStatsFilter = (type, value) => {
 
           break;
         }
-        case 'unhandled': {
-          // 未处理数 - 筛选未核实、已核实、处理中状态
-          // 这里需要特殊处理，可能需要多个状态筛选
-          filterAlarmStatus.value = '';
+        case 'handling': {
+          // 处理中 - 筛选处理中状态
+          const dictOptions = getDictOptions(
+            DICT_TYPE.ORDER_ALARM_ALARM_STATUS,
+            'string',
+          );
+          const dictItem = dictOptions.find((item) => item.label === '处理中');
+          filterAlarmStatus.value = dictItem ? dictItem.value : '2';
 
           break;
         }

@@ -193,6 +193,8 @@ const SHUNCHANG_DICT = {
   SM_DRAINAGE_TYPE: 'sm_drainage_type',
   SM_PART_TYPE: 'sm_part_type',
   SM_STATE: 'sm_state',
+  // 顺昌物联网设备状态
+  SC_OP_SERVICE_DEVICE_STATUS: 'sc_op_service_device_status',
 } as const;
 
 /** ========== ENERGYCHARGE - 能源充电模块 ========== */

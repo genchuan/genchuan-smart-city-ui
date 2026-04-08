@@ -3,7 +3,7 @@ import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import { ElMessage, ElRadioGroup } from 'element-plus';
+import { ElMessage } from 'element-plus';
 
 import { useVbenForm } from '#/adapter/form';
 import {
@@ -62,13 +62,13 @@ const [Modal, modalApi] = useVbenModal({
       return;
     }
     const values = await formApi.getValues();
-    
+
     // 手动验证：如果选择驳回，必须填写审核备注
     if (values.auditAction === 'reject' && !values.auditRemark) {
       ElMessage.warning('驳回时必须填写原因');
       return;
     }
-    
+
     modalApi.lock();
     try {
       if (values.auditAction === 'pass') {
@@ -82,7 +82,7 @@ const [Modal, modalApi] = useVbenModal({
         // 驳回 - 批量驳回
         for (const id of selectedIds.value) {
           await rejectOrderRefund({
-            id: id,
+            id,
             rejectReason: values.auditRemark,
           });
         }
@@ -123,7 +123,9 @@ defineExpose({
 <template>
   <Modal title="审核退款申请">
     <div class="mb-4 text-gray-600">
-      已选择 <span class="font-bold text-primary">{{ selectedIds.length }}</span> 条待审核退款申请
+      已选择
+      <span class="font-bold text-primary">{{ selectedIds.length }}</span>
+      条待审核退款申请
     </div>
     <Form />
   </Modal>
