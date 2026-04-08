@@ -1,0 +1,167 @@
+// 文件2: form.js (筛选表单 Schema 与表格列定义)
+// 筛选表单 schema（用于列表页搜索）
+export function useFormSchema() {
+  return [
+    {
+      fieldName: 'studentName',
+      label: '学生姓名',
+      component: 'Input',
+      componentProps: { placeholder: '请输入学生姓名' },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'leaveType',
+      label: '请假类型',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择请假类型',
+        options: [
+          { label: '事假', value: '事假' },
+          { label: '病假', value: '病假' },
+          { label: '其他', value: '其他' },
+        ],
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'status',
+      label: '状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择状态',
+        options: [
+          { label: '待审批', value: '待审批' },
+          { label: '已通过', value: '已通过' },
+          { label: '已驳回', value: '已驳回' },
+        ],
+      },
+      labelWidth: '100',
+    },
+  ];
+}
+
+// 表格列定义
+export function getColumnsByStatus(status) {
+  const baseColumns = [{ type: 'checkbox', width: 40 }];
+
+  const columns = [
+    { field: 'studentName', title: '学生姓名', minWidth: 100, slots: { default: 'studentName' } },
+    { field: 'className', title: '班级', minWidth: 150 },
+    { field: 'leaveType', title: '请假类型', minWidth: 100, slots: { default: 'leaveType' } },
+    { field: 'startTime', title: '开始时间', minWidth: 180, slots: { default: 'startTime' } },
+    { field: 'endTime', title: '结束时间', minWidth: 180, slots: { default: 'endTime' } },
+    { field: 'leaveReason', title: '请假原因', minWidth: 150 },
+    { field: 'auditLevel', title: '审批级别', minWidth: 100 },
+    { field: 'auditUser', title: '审批人', minWidth: 120 },
+    { field: 'auditTime', title: '审批时间', minWidth: 180, slots: { default: 'auditTime' } },
+    { field: 'attendanceSync', title: '考勤同步状态', minWidth: 120 },
+    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
+    { field: 'creator', title: '创建人', minWidth: 120, slots: { default: 'creator' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
+    { field: 'updater', title: '更新人', minWidth: 120 },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+  ];
+
+  const allColumns = [...baseColumns, ...columns];
+  allColumns.push({
+    title: '操作',
+    width: 200,
+    fixed: 'right',
+    slots: { default: 'actions' },
+  });
+  return allColumns;
+}
+
+// 申请表单 schema
+export function useCreateFormSchema() {
+  return [
+    {
+      fieldName: 'studentId',
+      label: '学生',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择学生',
+        filterable: true,
+        remote: true,
+        options: [], // 动态加载
+      },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'leaveType',
+      label: '请假类型',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择请假类型',
+        options: [
+          { label: '事假', value: '事假' },
+          { label: '病假', value: '病假' },
+          { label: '其他', value: '其他' },
+        ],
+      },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'startTime',
+      label: '开始时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择开始时间',
+        type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'x',
+      },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'endTime',
+      label: '结束时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择结束时间',
+        type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'x',
+      },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'leaveReason',
+      label: '请假原因',
+      component: 'Input',
+      componentProps: { placeholder: '请输入请假原因', type: 'textarea', rows: 2 },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'auditLevel',
+      label: '审批级别',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择审批级别',
+        options: [
+          { label: '班主任', value: '班主任' },
+          { label: '辅导员', value: '辅导员' },
+        ],
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'remark',
+      label: '备注',
+      component: 'Input',
+      componentProps: { placeholder: '请输入备注', type: 'textarea', rows: 3 },
+      labelWidth: '100',
+    },
+  ];
+}
+
+// 文本常量
+export const textObj = {
+  editText: '编辑请假申请',
+  addText: '请假申请',
+  excelName: '行为管理列表',
+};

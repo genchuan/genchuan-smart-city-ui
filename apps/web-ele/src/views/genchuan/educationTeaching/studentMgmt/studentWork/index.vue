@@ -1,6 +1,7 @@
+<!-- 文件6: 父组件 (仅修正资助系统事件，其他模块事件保留原样) -->
 <script setup>
-import {ref, computed, nextTick} from 'vue';
-import {ElMessage} from 'element-plus';
+import { ref, computed, nextTick } from 'vue';
+import { ElMessage } from 'element-plus';
 import studentInfo from './studentInfo/index.vue';
 import studentInfoChart from './studentInfo/components/chart.vue';
 import honorMgmt from './honorMgmt/index.vue';
@@ -11,6 +12,10 @@ import violateMgmt from './violateMgmt/index.vue';
 import violateMgmtChart from './violateMgmt/components/chart.vue';
 import mentalMgmt from './mentalMgmt/index.vue';
 import mentalMgmtChart from './mentalMgmt/components/chart.vue';
+import behaviorMgmt from './behaviorMgmt/index.vue';
+import behaviorMgmtChart from './behaviorMgmt/components/chart.vue';
+import fundSystem from './fundSystem/index.vue';
+import fundSystemChart from './fundSystem/components/chart.vue';
 import '#/components/page/index.scss';
 
 const changeArrowStatus = () => {
@@ -66,6 +71,24 @@ const tabArray = ref([
     arrowShow: true,
     arrowState: false,
   },
+  {
+    label: '行为管理',
+    components: behaviorMgmt,
+    chartComponent: behaviorMgmtChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false,
+  },
+  {
+    label: '资助系统',
+    components: fundSystem,
+    chartComponent: fundSystemChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false,
+  },
 ]);
 
 const arrowChange = () => {
@@ -103,8 +126,18 @@ const setMentalMgmtRef = (el) => {
   if (el) mentalMgmtRef.value = el;
 };
 
+const behaviorMgmtRef = ref(null);
+const setBehaviorMgmtRef = (el) => {
+  if (el) behaviorMgmtRef.value = el;
+};
+
+const fundSystemRef = ref(null);
+const setFundSystemRef = (el) => {
+  if (el) fundSystemRef.value = el;
+};
+
 // ==================== 学生信息图表事件 ====================
-const onStudentPieSelect = async ({field, value}) => {
+const onStudentPieSelect = async ({ field, value }) => {
   await nextTick();
   if (!studentInfoRef.value) {
     ElMessage.warning('学生信息列表组件未就绪');
@@ -144,7 +177,7 @@ const onStudentCardSelect = async (status) => {
 };
 
 // ==================== 荣誉管理图表事件 ====================
-const onHonorBarSelect = async ({field, value}) => {
+const onHonorBarSelect = async ({ field, value }) => {
   await nextTick();
   if (!honorMgmtRef.value) {
     ElMessage.warning('荣誉管理列表组件未就绪');
@@ -177,7 +210,7 @@ const onHonorCardSelect = async (status) => {
 };
 
 // ==================== 考评管理图表事件 ====================
-const onAssessRadarClick = async ({className}) => {
+const onAssessRadarClick = async ({ className }) => {
   await nextTick();
   if (!assessMgmtRef.value) {
     ElMessage.warning('考评管理列表组件未就绪');
@@ -185,7 +218,7 @@ const onAssessRadarClick = async ({className}) => {
   }
   assessMgmtRef.value.handleFilterTagClick('className', className);
 };
-const onAssessLineClick = async ({cycleName}) => {
+const onAssessLineClick = async ({ cycleName }) => {
   await nextTick();
   if (!assessMgmtRef.value) {
     ElMessage.warning('考评管理列表组件未就绪');
@@ -216,7 +249,7 @@ const onAssessCardSelect = async (status) => {
 };
 
 // ==================== 违纪管理图表事件 ====================
-const onViolateBarClick = async ({type, value}) => {
+const onViolateBarClick = async ({ type, value }) => {
   await nextTick();
   if (!violateMgmtRef.value) {
     ElMessage.warning('违纪管理列表组件未就绪');
@@ -226,7 +259,7 @@ const onViolateBarClick = async ({type, value}) => {
     violateMgmtRef.value.handleFilterTagClick('className', value);
   }
 };
-const onViolatePieClick = async ({type, value}) => {
+const onViolatePieClick = async ({ type, value }) => {
   await nextTick();
   if (!violateMgmtRef.value) {
     ElMessage.warning('违纪管理列表组件未就绪');
@@ -260,7 +293,7 @@ const onViolateCardSelect = async (status) => {
 };
 
 // ==================== 心理管理图表事件 ====================
-const onMentalPieSelect = async ({type, value}) => {
+const onMentalPieSelect = async ({ type, value }) => {
   await nextTick();
   if (!mentalMgmtRef.value) {
     ElMessage.warning('心理管理列表组件未就绪');
@@ -270,6 +303,95 @@ const onMentalPieSelect = async ({type, value}) => {
     mentalMgmtRef.value.handleFilterTagClick('mentalStatus', value);
   } else if (type === 'riskLevel') {
     mentalMgmtRef.value.handleFilterTagClick('riskLevel', value);
+  }
+};
+
+// ==================== 行为管理图表事件 ====================
+const onBehaviorBarClick = async ({ className }) => {
+  await nextTick();
+  if (!behaviorMgmtRef.value) {
+    ElMessage.warning('行为管理列表组件未就绪');
+    return;
+  }
+  behaviorMgmtRef.value.handleFilterTagClick('className', className);
+};
+const onBehaviorCardSelect = async (status) => {
+  await nextTick();
+  if (!behaviorMgmtRef.value) {
+    ElMessage.warning('行为管理列表组件未就绪');
+    return;
+  }
+  behaviorMgmtRef.value.clearFilters();
+  switch (status) {
+    case 'totalLeave':
+      break;
+    case 'pending':
+      behaviorMgmtRef.value.handleFilterTagClick('status', '待审批');
+      break;
+    case 'abnormal':
+      behaviorMgmtRef.value.handleFilterTagClick('attendanceSync', '未同步');
+      break;
+    case 'synced':
+      behaviorMgmtRef.value.handleFilterTagClick('attendanceSync', '已同步');
+      break;
+    default:
+      break;
+  }
+};
+const onBehaviorPieClick = async ({ type, value }) => {
+  await nextTick();
+  if (!behaviorMgmtRef.value) {
+    ElMessage.warning('行为管理列表组件未就绪');
+    return;
+  }
+  if (type === 'leaveType') {
+    behaviorMgmtRef.value.handleFilterTagClick('leaveType', value);
+  }
+};
+const onBehaviorLineClick = async ({ date }) => {
+  await nextTick();
+  if (!behaviorMgmtRef.value) {
+    ElMessage.warning('行为管理列表组件未就绪');
+    return;
+  }
+  const currentYear = new Date().getFullYear();
+  const fullDate = `${currentYear}-${date}`;
+  behaviorMgmtRef.value.handleFilterTagClick('createTime', fullDate);
+};
+
+// ==================== 资助系统图表事件 ====================
+// 柱状图点击筛选（年级）
+const onFundBarClick = async ({ type, value }) => {
+  await nextTick();
+  if (!fundSystemRef.value) {
+    ElMessage.warning('资助系统列表组件未就绪');
+    return;
+  }
+  if (type === 'grade' && value) {
+    fundSystemRef.value.handleFilterTagClick('grade', value);
+  } else {
+    console.warn('无效的柱状图点击参数', { type, value });
+  }
+};
+
+// 卡片点击筛选
+const onFundCardSelect = async (status) => {
+  await nextTick();
+  if (!fundSystemRef.value) {
+    ElMessage.warning('资助系统列表组件未就绪');
+    return;
+  }
+  fundSystemRef.value.clearFilters();
+  switch (status) {
+    case 'pending':
+      fundSystemRef.value.handleFilterTagClick('status', '待审核');
+      break;
+    case 'approved':
+      fundSystemRef.value.handleFilterTagClick('status', '已汇总');
+      break;
+    default:
+      // total 或 amount 不筛选
+      break;
   }
 };
 
@@ -317,12 +439,28 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
       :is="currentChartComponent"
       @pieSelect="onMentalPieSelect"
     />
+    <!-- 行为管理图表 -->
+    <component
+      v-if="currentArrowShow && activeName === '行为管理'"
+      :is="currentChartComponent"
+      @barClick="onBehaviorBarClick"
+      @cardClick="onBehaviorCardSelect"
+      @pieClick="onBehaviorPieClick"
+      @lineClick="onBehaviorLineClick"
+    />
+    <!-- 资助系统图表 -->
+    <component
+      v-if="currentArrowShow && activeName === '资助系统'"
+      :is="currentChartComponent"
+      @barClick="onFundBarClick"
+      @cardSelect="onFundCardSelect"
+    />
     <el-tabs v-model="activeName" class="common-tabs" type="card">
       <el-tab-pane v-for="item in tabArray" :key="item.label" :name="item.label">
         <template #label>
           <div class="table-first"><span>{{ item.label }}</span></div>
         </template>
-        <!-- 学生信息组件 -->
+        <!-- 各模块组件渲染 -->
         <component
           v-if="item.label === '学生信息'"
           :is="item.components"
@@ -332,7 +470,6 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
           :arrow-show="item.arrowShow"
           @arrow-change="arrowChange"
         />
-        <!-- 荣誉管理组件 -->
         <component
           v-else-if="item.label === '荣誉管理'"
           :is="item.components"
@@ -342,7 +479,6 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
           :arrow-show="item.arrowShow"
           @arrow-change="arrowChange"
         />
-        <!-- 考评管理组件 -->
         <component
           v-else-if="item.label === '考评管理'"
           :is="item.components"
@@ -352,7 +488,6 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
           :arrow-show="item.arrowShow"
           @arrow-change="arrowChange"
         />
-        <!-- 违纪管理组件 -->
         <component
           v-else-if="item.label === '违纪管理'"
           :is="item.components"
@@ -362,11 +497,28 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
           :arrow-show="item.arrowShow"
           @arrow-change="arrowChange"
         />
-        <!-- 心理管理组件 -->
         <component
-          v-else
+          v-else-if="item.label === '心理管理'"
           :is="item.components"
           :ref="setMentalMgmtRef"
+          :second-show="item.secondShow"
+          :key="item.label"
+          :arrow-show="item.arrowShow"
+          @arrow-change="arrowChange"
+        />
+        <component
+          v-else-if="item.label === '行为管理'"
+          :is="item.components"
+          :ref="setBehaviorMgmtRef"
+          :second-show="item.secondShow"
+          :key="item.label"
+          :arrow-show="item.arrowShow"
+          @arrow-change="arrowChange"
+        />
+        <component
+          v-else-if="item.label === '资助系统'"
+          :is="item.components"
+          :ref="setFundSystemRef"
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"
