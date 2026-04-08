@@ -6,14 +6,19 @@ import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
-
-import { ElButton, ElCard, ElDescriptions, ElDescriptionsItem, ElMessage, ElTag } from 'element-plus';
 import { IconifyIcon } from '@vben/icons';
 
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  getDeviceData,
-} from '#/api/genchuan/shunchangOpsService/smartcity/onlineData';
+  ElButton,
+  ElCard,
+  ElDescriptions,
+  ElDescriptionsItem,
+  ElTag,
+} from 'element-plus';
+
+import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getDeviceData } from '#/api/genchuan/shunchangOpsService/smartcity/onlineData';
+import { formatDate } from '#/utils/genchuan/formatTime';
 
 import { useDeviceDataColumns, useDeviceDataFormSchema } from './data';
 
@@ -54,13 +59,31 @@ const [Grid, gridApi] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
+          console.log('[deviceData] formValues:', formValues);
+
           // 处理时间范围
           let startTime = '';
           let endTime = '';
-          if (formValues.timeRange && formValues.timeRange.length === 2) {
-            startTime = formValues.timeRange[0];
-            endTime = formValues.timeRange[1];
+
+          // 检查 timeRange 字段
+          const timeRange = formValues.timeRange;
+          if (timeRange) {
+            console.log('[deviceData] timeRange:', timeRange, 'type:', typeof timeRange, 'isArray:', Array.isArray(timeRange));
+
+            if (Array.isArray(timeRange) && timeRange.length === 2) {
+              // 如果已经是格式化的字符串，直接使用
+              if (typeof timeRange[0] === 'string') {
+                startTime = timeRange[0];
+                endTime = timeRange[1];
+              } else if (timeRange[0] instanceof Date) {
+                // 如果是 Date 对象，格式化为字符串
+                startTime = formatDate(timeRange[0]);
+                endTime = formatDate(timeRange[1]);
+              }
+            }
           }
+
+          console.log('[deviceData] startTime:', startTime, 'endTime:', endTime);
 
           return await getDeviceData({
             pageNo: page.currentPage,
