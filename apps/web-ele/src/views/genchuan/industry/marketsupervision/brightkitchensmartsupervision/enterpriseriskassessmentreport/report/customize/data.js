@@ -10,8 +10,7 @@ export function useFormSchema() {
         maxLength: 7,
       },
       labelWidth: '120',
-      rules: '', // 仅月报使用，非必填
-      isSearch: true, // 新增搜索标识
+      rules: '', // 仅月报使用，非必填 
     },
     {
       fieldName: 'reportNo',
@@ -44,8 +43,7 @@ export function useFormSchema() {
         maxLength: 100,
       },
       labelWidth: '120',
-      rules: '',
-      isSearch: true, // 新增搜索标识
+      rules: '', 
     },
     {
       fieldName: 'riskLevel',

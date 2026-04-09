@@ -23,6 +23,7 @@ export function useFormSchema() {
       },
       labelWidth: '120',
       rules: '',
+      isSearch: true, // 新增搜索标识
     },
     {
       fieldName: 'entId',
@@ -66,8 +67,7 @@ export function useFormSchema() {
         maxLength: 50,
       },
       labelWidth: '120',
-      rules: '',
-      isSearch: true, // 新增搜索标识
+      rules: '', 
     },
     {
       fieldName: 'entType',
@@ -78,8 +78,7 @@ export function useFormSchema() {
         maxLength: 50,
       },
       labelWidth: '120',
-      rules: '',
-      isSearch: true, // 新增搜索标识
+      rules: '', 
     },
     {
       fieldName: 'beginTime',

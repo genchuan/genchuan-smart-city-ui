@@ -48,14 +48,17 @@ const state = reactive({
 // 图表引用
 const barChartRef = ref(null);
 const lineChartRef = ref(null);
+const pieChartRef = ref(null);
 let barChartInstance = null;
 let lineChartInstance = null;
+let pieChartInstance = null;
 
 // 图表数据
 const chartData = ref({
   xAxis: [],
   barData: [],
   lineData: [],
+  pieData: [],
 });
 
 // 获取接口数据
@@ -66,13 +69,18 @@ const fetchData = async () => {
   
   // 处理数据
   const xAxis = list.map(item => item.entName);
-  const barData = list.map(item => item.alarmCount);
-  const lineData = list.map(item => item.rank);
+  const barData = list.map(item => item.violationCount);
+  const lineData = list.map(item => item.violationCount);
+  const pieData = list.map(item => ({
+    name: item.entName,
+    value: item.violationCount,
+  }));
   
   chartData.value = {
     xAxis,
     barData,
     lineData,
+    pieData,
   };
   
   // 更新图表
@@ -90,7 +98,7 @@ const updateCharts = () => {
         },
       ],
       series: [
-        { name: '总告警次数', data: chartData.value.barData },
+        { name: '违规次数', data: chartData.value.barData },
       ],
     });
   }
@@ -107,6 +115,16 @@ const updateCharts = () => {
       ],
     });
   }
+  // 更新圆环图
+  if (pieChartInstance) {
+    pieChartInstance.setOption({
+      series: [
+        {
+          data: chartData.value.pieData,
+        },
+      ],
+    });
+  }
 };
 
 
@@ -115,97 +133,6 @@ const updateCharts = () => {
 
 // 获取柱状图配置
 const getBarOption = () => {
-  const freshColors = ['#4A90E2', '#50E3C2', '#FF9F40', '#A17FE0', '#FF6B8B'];
-
-  return {
-    backgroundColor: 'transparent',
-    title: {
-      text: '企业总告警次数',
-      left: 'center',
-      top: 5,
-      textStyle: { color: '#6E7E91', fontSize: 14, fontWeight: 500 },
-    },
-    tooltip: {
-      trigger: 'axis',
-      backgroundColor: 'rgba(255, 255, 255, 0.95)',
-      borderColor: '#E8F4FD',
-      borderWidth: 1,
-      textStyle: { color: '#6E7E91' },
-    },
-    color: freshColors,
-    legend: {
-      data: ['总告警次数'],
-      bottom: 10,
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '15%',
-      top: '40px',
-      containLabel: true,
-      backgroundColor: 'transparent',
-    },
-    xAxis: [
-      {
-        type: 'category',
-        boundaryGap: true,
-        data: chartData.value.xAxis,
-        axisLabel: {
-          color: '#9AA8B7',
-          fontSize: 11,
-          rotate: chartData.value.xAxis.length > 8 ? 30 : 0,
-        },
-        axisLine: { lineStyle: { color: '#E8F4FD' } },
-        axisTick: { lineStyle: { color: '#E8F4FD' } },
-        splitLine: { show: false },
-      },
-    ],
-    yAxis: [
-      {
-        type: 'value',
-        name: '总告警次数',
-        position: 'left',
-        axisLabel: {
-          color: '#9AA8B7',
-          fontSize: 11,
-          formatter: '{value}',
-        },
-        axisLine: { lineStyle: { color: '#E8F4FD' } },
-        axisTick: { lineStyle: { color: '#E8F4FD' } },
-        splitLine: { lineStyle: { color: '#F0F6FC', type: 'dashed' } },
-      },
-    ],
-    series: [
-      {
-        name: '总告警次数',
-        type: 'bar',
-        data: chartData.value.barData,
-        yAxisIndex: 0,
-        itemStyle: {
-          borderRadius: [4, 4, 0, 0],
-          color: freshColors[0],
-        },
-        label: {
-          show: true,
-          position: 'top',
-          color: '#6E7E91',
-          fontSize: 12,
-          formatter: '{c}',
-        },
-        emphasis: {
-          itemStyle: {
-            shadowBlur: 10,
-            shadowColor: 'rgba(74, 144, 226, 0.3)',
-          },
-          label: { show: true, fontSize: 14, fontWeight: 'bold' },
-        },
-      },
-    ],
-  };
-};
-
-// 获取折线图配置
-const getLineOption = () => {
   const freshColors = ['#4A90E2', '#50E3C2', '#FF9F40', '#A17FE0', '#FF6B8B'];
 
   return {
@@ -268,6 +195,97 @@ const getLineOption = () => {
     ],
     series: [
       {
+        name: '违规次数',
+        type: 'bar',
+        data: chartData.value.barData,
+        yAxisIndex: 0,
+        itemStyle: {
+          borderRadius: [4, 4, 0, 0],
+          color: freshColors[0],
+        },
+        label: {
+          show: true,
+          position: 'top',
+          color: '#6E7E91',
+          fontSize: 12,
+          formatter: '{c}',
+        },
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(74, 144, 226, 0.3)',
+          },
+          label: { show: true, fontSize: 14, fontWeight: 'bold' },
+        },
+      },
+    ],
+  };
+};
+
+// 获取折线图配置
+const getLineOption = () => {
+  const freshColors = ['#4A90E2', '#50E3C2', '#FF9F40', '#A17FE0', '#FF6B8B'];
+
+  return {
+    backgroundColor: 'transparent',
+    title: {
+      text: '企业违规次数',
+      left: 'center',
+      top: 5,
+      textStyle: { color: '#6E7E91', fontSize: 14, fontWeight: 500 },
+    },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#E8F4FD',
+      borderWidth: 1,
+      textStyle: { color: '#6E7E91' },
+    },
+    color: freshColors,
+    legend: {
+      data: ['违规次数'],
+      bottom: 10,
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '15%',
+      top: '40px',
+      containLabel: true,
+      backgroundColor: 'transparent',
+    },
+    xAxis: [
+      {
+        type: 'category',
+        boundaryGap: true,
+        data: chartData.value.xAxis,
+        axisLabel: {
+          color: '#9AA8B7',
+          fontSize: 11,
+          rotate: chartData.value.xAxis.length > 8 ? 30 : 0,
+        },
+        axisLine: { lineStyle: { color: '#E8F4FD' } },
+        axisTick: { lineStyle: { color: '#E8F4FD' } },
+        splitLine: { show: false },
+      },
+    ],
+    yAxis: [
+      {
+        type: 'value',
+        name: '违规次数',
+        position: 'left',
+        axisLabel: {
+          color: '#9AA8B7',
+          fontSize: 11,
+          formatter: '{value}',
+        },
+        axisLine: { lineStyle: { color: '#E8F4FD' } },
+        axisTick: { lineStyle: { color: '#E8F4FD' } },
+        splitLine: { lineStyle: { color: '#F0F6FC', type: 'dashed' } },
+      },
+    ],
+    series: [
+      {
         name: '排名',
         type: 'line',
         data: chartData.value.lineData,
@@ -291,6 +309,61 @@ const getLineOption = () => {
             { offset: 0, color: 'rgba(74, 144, 226, 0.3)' },
             { offset: 1, color: 'rgba(74, 144, 226, 0.05)' },
           ]),
+        },
+      },
+    ],
+  };
+};
+
+// 获取圆环图配置
+const getPieOption = () => {
+  const freshColors = ['#4A90E2', '#50E3C2', '#FF9F40', '#A17FE0', '#FF6B8B', '#FFD93D', '#FF6B8B', '#A17FE0', '#FF9F40', '#50E3C2'];
+
+  return {
+    backgroundColor: 'transparent',
+    title: {
+      text: '企业违规次数占比',
+      left: 'center',
+      top: 5,
+      textStyle: { color: '#6E7E91', fontSize: 14, fontWeight: 500 },
+    },
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#E8F4FD',
+      borderWidth: 1,
+      textStyle: { color: '#6E7E91' },
+      formatter: '{b}: {c} 次 ({d}%)',
+    },
+    color: freshColors,
+    legend: {
+      data: chartData.value.pieData.map(item => item.name),
+      bottom: 10,
+      orient: 'horizontal',
+      textStyle: {
+        fontSize: 11,
+        color: '#6E7E91',
+      },
+    },
+    series: [
+      {
+        name: '违规次数占比',
+        type: 'pie',
+        radius: ['40%', '70%'],
+        center: ['50%', '50%'],
+        data: chartData.value.pieData,
+        label: {
+          show: true,
+          position: 'outside',
+          formatter: '{b}: {d}%',
+          color: '#6E7E91',
+          fontSize: 11,
+        },
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(0, 0, 0, 0.3)',
+          },
         },
       },
     ],
@@ -335,12 +408,32 @@ const initLineChart = async () => {
   }
 };
 
+// 初始化圆环图
+const initPieChart = async () => {
+  if (!pieChartRef.value) return;
+  try {
+    if (pieChartInstance) {
+      pieChartInstance.dispose();
+      pieChartInstance = null;
+    }
+    // 先获取数据
+    await fetchData();
+    // 再初始化图表
+    pieChartInstance = echarts.init(pieChartRef.value);
+    const option = getPieOption();
+    pieChartInstance.setOption(option, true);
+  } catch (error) {
+    console.error('初始化圆环图失败:', error);
+  }
+};
+
 // 初始化所有图表（增加延迟确保DOM挂载）
 const initCharts = () => {
   // 增加少量延迟，确保DOM完全渲染
   setTimeout(() => {
     initBarChart();
     initLineChart();
+    initPieChart();
   }, 100);
 };
 
@@ -350,6 +443,7 @@ const handleResize = () => {
     // 防抖
     barChartInstance?.resize();
     lineChartInstance?.resize();
+    pieChartInstance?.resize();
   }, 100);
 };
 
@@ -365,6 +459,9 @@ onUnmounted(() => {
   }
   if (lineChartInstance) {
     lineChartInstance.dispose();
+  }
+  if (pieChartInstance) {
+    pieChartInstance.dispose();
   }
 });
 </script>
@@ -404,6 +501,10 @@ onUnmounted(() => {
         <!-- 折线图 -->
         <div class="line-chart-area">
           <div ref="lineChartRef" class="chart-container"></div>
+        </div>
+        <!-- 圆环图 -->
+        <div class="pie-chart-area">
+          <div ref="pieChartRef" class="chart-container"></div>
         </div>
       </div>
     </div>
@@ -551,6 +652,14 @@ onUnmounted(() => {
   position: relative;
   flex: 1;
   min-width: 300px; /* 给最小宽度 */
+  height: 100%;
+}
+
+/* 圆环图区域 */
+.pie-chart-area {
+  position: relative;
+  flex: 1;
+  min-width: 200px; /* 给最小宽度 */
   height: 100%;
 }
 </style>

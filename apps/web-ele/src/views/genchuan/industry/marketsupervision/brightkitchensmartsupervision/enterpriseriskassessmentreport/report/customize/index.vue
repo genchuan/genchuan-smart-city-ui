@@ -102,7 +102,7 @@ function handleRefresh() {
 
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
-   const data = await exporRiskReportExcel();
+   const data = await exporRiskReportExcel(dataObj.getParams);
   downloadFileFromBlobPart({
     fileName: '企业风险评估报表.xls',
     source: data,
@@ -111,7 +111,7 @@ async function handleExport() {
 
 // ====================== 图片转PDF（终极零乱码） ======================
 async function handlePDF() {
-  const data = await exporRiskReportPDF();
+  const data = await exporRiskReportPDF(dataObj.getParams);
   downloadFileFromBlobPart({
     fileName: '企业风险评估报表.pdf',
     source: data,
@@ -120,7 +120,20 @@ async function handlePDF() {
 
 // 导出单条PDF
 async function handleExportSinglePDF(row) {
-  const data = await exporRiskReportPDFSinglePDF(row);
+  // 删除row.riskLevelDrill 对象
+  const { riskLevelDrill, beginTime, endTime, ...exportRow } = row;
+  
+  // 拼接beginTime数组为字符串
+  if (Array.isArray(beginTime)) {
+    exportRow.beginTime = `${beginTime[0]}-${String(beginTime[1] + 1).padStart(2, '0')}-${String(beginTime[2]).padStart(2, '0')}`;
+  }
+  
+  // 拼接endTime数组为字符串
+  if (Array.isArray(endTime)) {
+    exportRow.endTime = `${endTime[0]}-${String(endTime[1] + 1).padStart(2, '0')}-${String(endTime[2]).padStart(2, '0')}`;
+  }
+  
+  const data = await exporRiskReportPDFSinglePDF(exportRow);
   downloadFileFromBlobPart({
     fileName: `企业风险评估报表_${row.entName}.pdf`,
     source: data,
@@ -195,18 +208,37 @@ const getTableData = async (pageObj) => {
   // 处理时间格式转换
   const searchParams = { ...dataObj.serachObj };
   if (searchParams.beginTime) {
-    // 将ISO时间格式转换为字符串格式
-    searchParams.beginTime = new Date(searchParams.beginTime).toISOString().slice(0, 10);
+    // 开始月份的第一天00:00:00
+    const beginDate = new Date(searchParams.beginTime);
+    beginDate.setDate(1);
+    beginDate.setHours(0, 0, 0, 0);
+    const year = beginDate.getFullYear();
+    const month = String(beginDate.getMonth() + 1).padStart(2, '0');
+    const day = String(beginDate.getDate()).padStart(2, '0');
+    const hours = String(beginDate.getHours()).padStart(2, '0');
+    const minutes = String(beginDate.getMinutes()).padStart(2, '0');
+    const seconds = String(beginDate.getSeconds()).padStart(2, '0');
+    searchParams.beginTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   }
   if (searchParams.endTime) {
-    // 将ISO时间格式转换为字符串格式
-    searchParams.endTime = new Date(searchParams.endTime).toISOString().slice(0, 10);
+    // 结束月份的最后一天23:59:59
+    const endDate = new Date(searchParams.endTime);
+    const lastDay = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0);
+    lastDay.setHours(23, 59, 59, 999);
+    const year = lastDay.getFullYear();
+    const month = String(lastDay.getMonth() + 1).padStart(2, '0');
+    const day = String(lastDay.getDate()).padStart(2, '0');
+    const hours = String(lastDay.getHours()).padStart(2, '0');
+    const minutes = String(lastDay.getMinutes()).padStart(2, '0');
+    const seconds = String(lastDay.getSeconds()).padStart(2, '0');
+    searchParams.endTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   }
   const getParams = {
     pageNo: pageObj.page.currentPage,
     pageSize: pageObj.page.pageSize,
     ...searchParams,
   };
+  dataObj.getParams = getParams;
   const data = await getRiskReportPage(getParams);
   dataObj.total = data.total;
   dataObj.list = data.list;

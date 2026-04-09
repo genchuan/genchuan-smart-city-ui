@@ -213,17 +213,17 @@ export function getRiskReportPage(params) {
   });
 }
 /**导出excel */
-export function exporRiskReportExcel() {
-  return requestClient.download('/kitchen/risk-report/export-excel');
+export function exporRiskReportExcel(params) {
+  return requestClient.download('/kitchen/risk-report/export-excel', {params});
 }
 /** 导出PDF */
-export function exporRiskReportPDF() {
-  return requestClient.download('/kitchen/risk-report/export-list-pdf');
+export function exporRiskReportPDF(params) {
+  return requestClient.download('/kitchen/risk-report/export-list-pdf', {params});
 }
 
 /** 单独月份导出PDF */
-export function exporRiskReportPDFSinglePDF(data) {
-  return requestClient.download('/kitchen/risk-report/export-single-enterprise-pdf', data);
+export function exporRiskReportPDFSinglePDF(params) {
+  return requestClient.download('/kitchen/risk-report/export-single-enterprise-pdf', {params});
 }
 
 /** 企业违规数据分析 */

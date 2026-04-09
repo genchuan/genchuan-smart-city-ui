@@ -102,7 +102,7 @@ function handleRefresh() {
 
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
-   const data = await exporRiskReportExcel();
+   const data = await exporRiskReportExcel(dataObj.getParams);
   downloadFileFromBlobPart({
     fileName: '企业风险评估报表.xls',
     source: data,
@@ -111,7 +111,7 @@ async function handleExport() {
 
 // ====================== 图片转PDF（终极零乱码） ======================
 async function handlePDF() {
-  const data = await exporRiskReportPDF();
+  const data = await exporRiskReportPDF(dataObj.getParams);
   downloadFileFromBlobPart({
     fileName: '企业风险评估报表.pdf',
     source: data,
@@ -120,7 +120,20 @@ async function handlePDF() {
 
 // 导出单条PDF
 async function handleExportSinglePDF(row) {
-  const data = await exporRiskReportPDFSinglePDF(row);
+  // 删除row.riskLevelDrill 对象
+  const { riskLevelDrill, beginTime, endTime, ...exportRow } = row;
+  
+  // 拼接beginTime数组为字符串
+  if (Array.isArray(beginTime)) {
+    exportRow.beginTime = `${beginTime[0]}-${String(beginTime[1] + 1).padStart(2, '0')}-${String(beginTime[2]).padStart(2, '0')}`;
+  }
+  
+  // 拼接endTime数组为字符串
+  if (Array.isArray(endTime)) {
+    exportRow.endTime = `${endTime[0]}-${String(endTime[1] + 1).padStart(2, '0')}-${String(endTime[2]).padStart(2, '0')}`;
+  }
+  
+  const data = await exporRiskReportPDFSinglePDF(exportRow);
   downloadFileFromBlobPart({
     fileName: `企业风险评估报表_${row.entName}.pdf`,
     source: data,
@@ -186,6 +199,7 @@ const dataObj = reactive({
   list: [],
   loading: false,
   serachObj: {},
+  getParams: {},
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -207,6 +221,7 @@ const getTableData = async (pageObj) => {
     pageSize: pageObj.page.pageSize,
     ...searchParams,
   };
+  dataObj.getParams = getParams;
   const data = await getRiskReportPage(getParams);
   dataObj.total = data.total;
   dataObj.list = data.list;
