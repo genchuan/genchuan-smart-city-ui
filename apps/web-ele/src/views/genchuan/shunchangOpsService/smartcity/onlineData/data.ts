@@ -1,8 +1,6 @@
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 
-import { DICT_TYPE } from '@vben/constants';
-
 /** 列表的搜索表单 - 设备列表接口只支持type参数，且固定为YW01，所以不需要搜索表单 */
 export function useGridFormSchema(): VbenFormSchema[] {
   // 根据接口文档，/monitor_list 只支持 page、limit、type 参数
@@ -45,37 +43,28 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       title: '设备状态',
       minWidth: 100,
       align: 'center',
-      cellRender: {
-        name: 'CellDict',
-        props: { type: DICT_TYPE.SC_OP_SERVICE_DEVICE_STATUS },
-      },
+      slots: { default: 'status' },
     },
     {
       field: 'enable',
       title: '启用状态',
       minWidth: 100,
       align: 'center',
-      formatter: ({ cellValue }) => {
-        return cellValue === 1 ? '启用' : '禁用';
-      },
+      slots: { default: 'enable' },
     },
     {
       field: 'warmStatus',
       title: '告警状态',
       minWidth: 100,
       align: 'center',
-      formatter: ({ cellValue }) => {
-        return cellValue === 1 ? '告警' : '正常';
-      },
+      slots: { default: 'warmStatus' },
     },
     {
       field: 'onlineStatus',
       title: '在线状态',
       minWidth: 100,
       align: 'center',
-      formatter: ({ cellValue }) => {
-        return cellValue === 1 ? '在线' : '离线';
-      },
+      slots: { default: 'onlineStatus' },
     },
     {
       field: 'lastOnline',
@@ -100,9 +89,7 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       title: '电量告警',
       minWidth: 100,
       align: 'center',
-      formatter: ({ cellValue }) => {
-        return cellValue === 1 ? '告警' : '正常';
-      },
+      slots: { default: 'voltageWarm' },
     },
     {
       field: 'waterHeight',
@@ -162,11 +149,11 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       title: '序列号',
       minWidth: 150,
     },
-    {
-      field: 'address',
-      title: '地址',
-      minWidth: 200,
-    },
+    // {
+    //   field: 'address',
+    //   title: '地址',
+    //   minWidth: 200,
+    // },
     {
       field: 'longitude',
       title: '经度',
