@@ -1,6 +1,6 @@
 <script setup>
 import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
-
+import { getViolationAnalyticsPage } from '#/api/genchuan/industry/marketsupervision/index.js';
 import * as echarts from 'echarts';
 import { ElOption, ElSelect } from 'element-plus';
 
@@ -46,421 +46,81 @@ const state = reactive({
 });
 
 // 图表引用
-const pieChartRef1 = ref(null);
-const pieChartRef2 = ref(null);
-const barLineChartRef = ref(null);
-let pieChartInstance1 = null;
-let pieChartInstance2 = null;
-let barLineChartInstance = null;
+const barChartRef = ref(null);
+const lineChartRef = ref(null);
+let barChartInstance = null;
+let lineChartInstance = null;
 
-// 饼图切换状态
-const firstChartIndex = ref(0);
-const secondChartIndex = ref(0); // 修正初始值为0
-const chartIndex = ref(0);
+// 图表数据
+const chartData = ref({
+  xAxis: [],
+  barData: [],
+  lineData: [],
+});
 
-// 第一个饼图的数据（全区域风险占比）
-const firstChartData = [
-  {
-    label: '全区域企业风险等级占比',
-    data: [
-      { name: '低风险', value: 98 },
-      { name: '中风险', value: 42 },
-      { name: '高风险', value: 16 },
-    ],
-  },
-];
-
-// 第二个饼图的数据（泉州区域风险占比，差异化数据）
-const secondChartData = [
-  {
-    label: '泉州企业风险等级占比',
-    data: [
-      { name: '低风险', value: 65 },
-      { name: '中风险', value: 28 },
-      { name: '高风险', value: 12 },
-    ],
-  },
-  // 新增一条数据，让下拉选择器显示（可选）
-  {
-    label: '泉州整改完成率分布',
-    data: [
-      { name: '90%以上', value: 45 },
-      { name: '80%-90%', value: 30 },
-      { name: '80%以下', value: 15 },
-    ],
-  },
-];
-
-// 所有折线图和柱状图的数据（保留原有）
-const allChartsData = [
-  {
-    label: '不同月份复审台账新增数量及复审完成数量对比',
-    type: 'bar',
-    stack: 'total',
-    data: {
-      xAxis: ['1月', '2月', '3月', '4月', '5月', '6月'],
-      series: [
-        { name: '新增数量', data: [12, 15, 18, 14, 16, 20] },
-        { name: '完成数量', data: [10, 13, 15, 12, 14, 18] },
-      ],
-    },
-  },
-  {
-    label: '不同区域/复审人的复审完成数量及整改完成率对比',
-    type: 'bar',
-    data: {
-      xAxis: ['福州', '厦门', '泉州', '莆田', '宁德', '龙岩'],
-      series: [
-        { name: '复审完成数量', data: [15, 18, 25, 14, 16, 13] },
-        { name: '整改完成率(%)', data: [85, 92, 95, 88, 90, 82] },
-      ],
-    },
-  },
-  {
-    label: '近3个月泉州复审台账企业整改完成率趋势',
-    type: 'line',
-    data: {
-      xAxis: [
-        '第1周',
-        '第2周',
-        '第3周',
-        '第4周',
-        '第5周',
-        '第6周',
-        '第7周',
-        '第8周',
-        '第9周',
-        '第10周',
-        '第11周',
-        '第12周',
-      ],
-      series: [80, 82, 85, 87, 89, 91, 92, 93, 94, 95, 96, 97],
-    },
-  },
-  {
-    label: '泉州各区县企业风险等级数量对比',
-    type: 'bar',
-    data: {
-      xAxis: [
-        '鲤城区',
-        '丰泽区',
-        '洛江区',
-        '泉港区',
-        '晋江市',
-        '石狮市',
-        '南安市',
-      ],
-      series: [
-        { name: '高风险', data: [12, 15, 8, 6, 20, 9, 18] },
-        { name: '中风险', data: [25, 30, 18, 15, 35, 20, 28] },
-        { name: '低风险', data: [45, 50, 35, 30, 60, 40, 55] },
-      ],
-    },
-  },
-  {
-    label: '泉州各区县企业平均整改完成率对比',
-    type: 'bar',
-    data: {
-      xAxis: [
-        '鲤城区',
-        '丰泽区',
-        '洛江区',
-        '泉港区',
-        '晋江市',
-        '石狮市',
-        '南安市',
-      ],
-      series: [{ name: '整改完成率(%)', data: [92, 94, 88, 85, 96, 90, 91] }],
-    },
-  },
-  {
-    label: '泉州企业月度违规频次TOP10排名',
-    type: 'bar',
-    data: {
-      xAxis: [
-        '企业A',
-        '企业B',
-        '企业C',
-        '企业D',
-        '企业E',
-        '企业F',
-        '企业G',
-        '企业H',
-        '企业I',
-        '企业J',
-      ],
-      series: [
-        { name: '违规频次', data: [35, 32, 28, 25, 22, 18, 15, 12, 10, 8] },
-      ],
-    },
-  },
-  {
-    label: '泉州近6个月企业整体风险等级变化趋势',
-    type: 'line',
-    data: {
-      xAxis: ['1月', '2月', '3月', '4月', '5月', '6月'],
-      series: [8.5, 8.2, 7.8, 7.5, 7.2, 6.8],
-    },
-  },
-  {
-    label: '泉州近6个月整体整改完成率变化趋势',
-    type: 'line',
-    data: {
-      xAxis: ['1月', '2月', '3月', '4月', '5月', '6月'],
-      series: [85, 88, 90, 92, 94, 95],
-    },
-  },
-];
-
-// 切换第一个饼图
-const handlePie1Change = (index) => {
-  firstChartIndex.value = index;
-  initPieChart1();
-};
-
-// 切换第二个饼图
-const handlePie2Change = (index) => {
-  secondChartIndex.value = index;
-  initPieChart2();
-};
-
-// 切换图表
-const handleBarLineChange = (index) => {
-  chartIndex.value = index;
-  initBarLineChart();
-};
-
-// 获取圆环图配置
-const getPieOption = (chartData) => {
-  const freshColors = [
-    '#4A90E2',
-    '#50E3C2',
-    '#FF9F40',
-    '#A17FE0',
-    '#FF6B8B',
-    '#FFD93D',
-  ];
-
-  return {
-    backgroundColor: 'transparent',
-    title: {
-      text: chartData?.label || '分布统计',
-      left: 'center',
-      top: 10,
-      textStyle: { color: '#6E7E91', fontSize: 14, fontWeight: 500 },
-    },
-    tooltip: {
-      trigger: 'item',
-      backgroundColor: 'rgba(255, 255, 255, 0.95)',
-      borderColor: '#E8F4FD',
-      borderWidth: 1,
-      textStyle: { color: '#6E7E91' },
-    },
-    color: freshColors,
-    legend: {
-      orient: 'horizontal',
-      bottom: 5,
-      type: 'scroll',
-      left: 'center',
-      textStyle: { color: '#6E7E91', fontSize: 10 },
-      itemWidth: 10,
-      itemHeight: 10,
-      formatter(name) {
-        return name.length > 4 ? `${name.slice(0, 4)}...` : name;
-      },
-    },
-    series: [
-      {
-        name: chartData?.label || '分布统计',
-        type: 'pie',
-        radius: ['35%', '55%'],
-        center: ['50%', '52%'],
-        avoidLabelOverlap: true,
-        minShowLabelAngle: 5,
-        label: {
-          show: true,
-          position: 'outside',
-          formatter(params) {
-            const name =
-              params.name.length > 4
-                ? `${params.name.slice(0, 4)}...`
-                : params.name;
-            return `{name|${name}}\n{percent|${params.percent}%}`;
-          },
-          rich: {
-            name: {
-              color: '#6E7E91',
-              fontSize: 11,
-              lineHeight: 16,
-              align: 'center',
-            },
-            percent: {
-              color: '#4A90E2',
-              fontSize: 12,
-              fontWeight: 'bold',
-              lineHeight: 16,
-              align: 'center',
-            },
-          },
-        },
-        emphasis: {
-          label: { show: true, fontSize: 13, fontWeight: 'bold' },
-          scale: true,
-          scaleSize: 5,
-        },
-        labelLine: {
-          show: true,
-          length: 12,
-          length2: 8,
-          smooth: true,
-          lineStyle: { color: '#9AA8B7', width: 1 },
-        },
-        itemStyle: { borderWidth: 2, borderColor: '#fff' },
-        data: chartData?.data || [],
-      },
-    ],
+// 获取接口数据
+const fetchData = async () => {
+  const data = await getViolationAnalyticsPage({ pageNo: 1, pageSize: 10 });
+ 
+  const list = data.list;
+  
+  // 处理数据
+  const xAxis = list.map(item => item.entName);
+  const barData = list.map(item => item.alarmCount);
+  const lineData = list.map(item => item.rank);
+  
+  chartData.value = {
+    xAxis,
+    barData,
+    lineData,
   };
+  
+  // 更新图表
+  updateCharts();
 };
 
-// 获取柱状/折线图配置
-const getBarLineOption = (chartData) => {
-  const freshColors = ['#4A90E2', '#50E3C2', '#FF9F40', '#A17FE0', '#FF6B8B'];
-  const type = chartData?.type || 'bar';
-  const isStack = chartData?.stack === 'total';
-  const seriesData = chartData?.data?.series || [];
-
-  const series = Array.isArray(seriesData)
-    ? seriesData.map((item, index) => {
-        if (typeof item !== 'object') {
-          return {
-            name: chartData?.label || '趋势统计',
-            type,
-            data: seriesData,
-            itemStyle: {
-              borderRadius: type === 'bar' ? [4, 4, 0, 0] : undefined,
-              color: freshColors[0],
-            },
-            smooth: type === 'line',
-            lineStyle:
-              type === 'line' ? { width: 3, color: freshColors[0] } : undefined,
-            symbol: type === 'line' ? 'circle' : undefined,
-            symbolSize: type === 'line' ? 6 : undefined,
-            label: {
-              show: type === 'bar',
-              position: 'top',
-              color: '#6E7E91',
-              fontSize: 12,
-              formatter: '{c}',
-            },
-            emphasis: {
-              itemStyle: {
-                shadowBlur: 10,
-                shadowColor: 'rgba(74, 144, 226, 0.3)',
-              },
-              label: { show: type === 'bar', fontSize: 14, fontWeight: 'bold' },
-            },
-            areaStyle:
-              type === 'line'
-                ? {
-                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                      { offset: 0, color: 'rgba(74, 144, 226, 0.3)' },
-                      { offset: 1, color: 'rgba(74, 144, 226, 0.05)' },
-                    ]),
-                  }
-                : undefined,
-          };
-        }
-        return {
-          name: item.name || chartData?.label || '趋势统计',
-          type,
-          data: item.data || [],
-          stack: isStack ? 'total' : undefined,
-          itemStyle: {
-            borderRadius: type === 'bar' ? [4, 4, 0, 0] : undefined,
-            color: freshColors[index % freshColors.length],
-          },
-          smooth: type === 'line',
-          lineStyle:
-            type === 'line'
-              ? { width: 3, color: freshColors[index % freshColors.length] }
-              : undefined,
-          symbol: type === 'line' ? 'circle' : undefined,
-          symbolSize: type === 'line' ? 6 : undefined,
-          label: {
-            show: type === 'bar',
-            position: 'top',
-            color: '#6E7E91',
-            fontSize: 12,
-            formatter: '{c}',
-          },
-          emphasis: {
-            itemStyle: {
-              shadowBlur: 10,
-              shadowColor: 'rgba(74, 144, 226, 0.3)',
-            },
-            label: { show: type === 'bar', fontSize: 14, fontWeight: 'bold' },
-          },
-          areaStyle:
-            type === 'line'
-              ? {
-                  color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                    {
-                      offset: 0,
-                      color: `rgba(${hexToRgb(freshColors[index % freshColors.length])}, 0.3)`,
-                    },
-                    {
-                      offset: 1,
-                      color: `rgba(${hexToRgb(freshColors[index % freshColors.length])}, 0.05)`,
-                    },
-                  ]),
-                }
-              : undefined,
-        };
-      })
-    : [
+// 更新图表
+const updateCharts = () => {
+  // 更新柱状图
+  if (barChartInstance) {
+    barChartInstance.setOption({
+      xAxis: [
         {
-          name: chartData?.label || '趋势统计',
-          type,
-          data: [],
-          itemStyle: {
-            borderRadius: type === 'bar' ? [4, 4, 0, 0] : undefined,
-            color: freshColors[0],
-          },
-          smooth: type === 'line',
-          lineStyle:
-            type === 'line' ? { width: 3, color: freshColors[0] } : undefined,
-          symbol: type === 'line' ? 'circle' : undefined,
-          symbolSize: type === 'line' ? 6 : undefined,
-          label: {
-            show: type === 'bar',
-            position: 'top',
-            color: '#6E7E91',
-            fontSize: 12,
-            formatter: '{c}',
-          },
-          emphasis: {
-            itemStyle: {
-              shadowBlur: 10,
-              shadowColor: 'rgba(74, 144, 226, 0.3)',
-            },
-            label: { show: type === 'bar', fontSize: 14, fontWeight: 'bold' },
-          },
-          areaStyle:
-            type === 'line'
-              ? {
-                  color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                    { offset: 0, color: 'rgba(74, 144, 226, 0.3)' },
-                    { offset: 1, color: 'rgba(74, 144, 226, 0.05)' },
-                  ]),
-                }
-              : undefined,
+          data: chartData.value.xAxis,
         },
-      ];
+      ],
+      series: [
+        { name: '总告警次数', data: chartData.value.barData },
+      ],
+    });
+  }
+  // 更新折线图
+  if (lineChartInstance) {
+    lineChartInstance.setOption({
+      xAxis: [
+        {
+          data: chartData.value.xAxis,
+        },
+      ],
+      series: [
+        { name: '排名', data: chartData.value.lineData },
+      ],
+    });
+  }
+};
+
+
+
+
+
+// 获取柱状图配置
+const getBarOption = () => {
+  const freshColors = ['#4A90E2', '#50E3C2', '#FF9F40', '#A17FE0', '#FF6B8B'];
 
   return {
     backgroundColor: 'transparent',
     title: {
-      text: chartData?.label || '趋势统计',
+      text: '企业总告警次数',
       left: 'center',
       top: 5,
       textStyle: { color: '#6E7E91', fontSize: 14, fontWeight: 500 },
@@ -473,102 +133,205 @@ const getBarLineOption = (chartData) => {
       textStyle: { color: '#6E7E91' },
     },
     color: freshColors,
+    legend: {
+      data: ['总告警次数'],
+      bottom: 10,
+    },
     grid: {
       left: '3%',
       right: '4%',
-      bottom: '3%',
+      bottom: '15%',
       top: '40px',
       containLabel: true,
       backgroundColor: 'transparent',
     },
-    xAxis: {
-      type: 'category',
-      boundaryGap: type === 'bar',
-      data: chartData?.data?.xAxis || [],
-      axisLabel: {
-        color: '#9AA8B7',
-        fontSize: 11,
-        rotate: chartData?.data?.xAxis?.length > 8 ? 30 : 0,
+    xAxis: [
+      {
+        type: 'category',
+        boundaryGap: true,
+        data: chartData.value.xAxis,
+        axisLabel: {
+          color: '#9AA8B7',
+          fontSize: 11,
+          rotate: chartData.value.xAxis.length > 8 ? 30 : 0,
+        },
+        axisLine: { lineStyle: { color: '#E8F4FD' } },
+        axisTick: { lineStyle: { color: '#E8F4FD' } },
+        splitLine: { show: false },
       },
-      axisLine: { lineStyle: { color: '#E8F4FD' } },
-      axisTick: { lineStyle: { color: '#E8F4FD' } },
-      splitLine: { show: false },
-    },
-    yAxis: {
-      type: 'value',
-      axisLabel: { color: '#9AA8B7', fontSize: 11 },
-      axisLine: { lineStyle: { color: '#E8F4FD' } },
-      axisTick: { lineStyle: { color: '#E8F4FD' } },
-      splitLine: { lineStyle: { color: '#F0F6FC', type: 'dashed' } },
-    },
-    series,
+    ],
+    yAxis: [
+      {
+        type: 'value',
+        name: '总告警次数',
+        position: 'left',
+        axisLabel: {
+          color: '#9AA8B7',
+          fontSize: 11,
+          formatter: '{value}',
+        },
+        axisLine: { lineStyle: { color: '#E8F4FD' } },
+        axisTick: { lineStyle: { color: '#E8F4FD' } },
+        splitLine: { lineStyle: { color: '#F0F6FC', type: 'dashed' } },
+      },
+    ],
+    series: [
+      {
+        name: '总告警次数',
+        type: 'bar',
+        data: chartData.value.barData,
+        yAxisIndex: 0,
+        itemStyle: {
+          borderRadius: [4, 4, 0, 0],
+          color: freshColors[0],
+        },
+        label: {
+          show: true,
+          position: 'top',
+          color: '#6E7E91',
+          fontSize: 12,
+          formatter: '{c}',
+        },
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(74, 144, 226, 0.3)',
+          },
+          label: { show: true, fontSize: 14, fontWeight: 'bold' },
+        },
+      },
+    ],
   };
 };
 
-// 辅助函数：将十六进制颜色转换为RGB
-function hexToRgb(hex) {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? `${Number.parseInt(result[1], 16)}, ${Number.parseInt(result[2], 16)}, ${Number.parseInt(result[3], 16)}`
-    : '74, 144, 226';
-}
+// 获取折线图配置
+const getLineOption = () => {
+  const freshColors = ['#4A90E2', '#50E3C2', '#FF9F40', '#A17FE0', '#FF6B8B'];
 
-// 初始化第一个圆环图（增强容错）
-const initPieChart1 = () => {
-  if (!pieChartRef1.value) return; // 先判断DOM是否存在
+  return {
+    backgroundColor: 'transparent',
+    title: {
+      text: '企业排名',
+      left: 'center',
+      top: 5,
+      textStyle: { color: '#6E7E91', fontSize: 14, fontWeight: 500 },
+    },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#E8F4FD',
+      borderWidth: 1,
+      textStyle: { color: '#6E7E91' },
+    },
+    color: freshColors,
+    legend: {
+      data: ['排名'],
+      bottom: 10,
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '15%',
+      top: '40px',
+      containLabel: true,
+      backgroundColor: 'transparent',
+    },
+    xAxis: [
+      {
+        type: 'category',
+        boundaryGap: true,
+        data: chartData.value.xAxis,
+        axisLabel: {
+          color: '#9AA8B7',
+          fontSize: 11,
+          rotate: chartData.value.xAxis.length > 8 ? 30 : 0,
+        },
+        axisLine: { lineStyle: { color: '#E8F4FD' } },
+        axisTick: { lineStyle: { color: '#E8F4FD' } },
+        splitLine: { show: false },
+      },
+    ],
+    yAxis: [
+      {
+        type: 'value',
+        name: '排名',
+        position: 'left',
+        axisLabel: {
+          color: '#9AA8B7',
+          fontSize: 11,
+          formatter: '{value}',
+        },
+        axisLine: { lineStyle: { color: '#E8F4FD' } },
+        axisTick: { lineStyle: { color: '#E8F4FD' } },
+        splitLine: { lineStyle: { color: '#F0F6FC', type: 'dashed' } },
+      },
+    ],
+    series: [
+      {
+        name: '排名',
+        type: 'line',
+        data: chartData.value.lineData,
+        yAxisIndex: 0,
+        itemStyle: {
+          color: freshColors[1],
+        },
+        smooth: true,
+        lineStyle: { width: 3, color: freshColors[1] },
+        symbol: 'circle',
+        symbolSize: 6,
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(74, 144, 226, 0.3)',
+          },
+          label: { show: true, fontSize: 14, fontWeight: 'bold' },
+        },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(74, 144, 226, 0.3)' },
+            { offset: 1, color: 'rgba(74, 144, 226, 0.05)' },
+          ]),
+        },
+      },
+    ],
+  };
+};
+
+// 初始化柱状图
+const initBarChart = async () => {
+  if (!barChartRef.value) return;
   try {
-    if (pieChartInstance1) {
-      pieChartInstance1.dispose();
-      pieChartInstance1 = null;
+    if (barChartInstance) {
+      barChartInstance.dispose();
+      barChartInstance = null;
     }
-    const currentData =
-      firstChartData[firstChartIndex.value] || firstChartData[0]; // 兜底取第一条
-    if (currentData?.data?.length > 0) {
-      pieChartInstance1 = echarts.init(pieChartRef1.value);
-      const option = getPieOption(currentData);
-      pieChartInstance1.setOption(option, true); // 加true强制更新
-    }
+    // 先获取数据
+    await fetchData();
+    // 再初始化图表
+    barChartInstance = echarts.init(barChartRef.value);
+    const option = getBarOption();
+    barChartInstance.setOption(option, true);
   } catch (error) {
-    console.error('初始化第一个圆环图失败:', error);
+    console.error('初始化柱状图失败:', error);
   }
 };
 
-// 初始化第二个圆环图（增强容错）
-const initPieChart2 = () => {
-  if (!pieChartRef2.value) return; // 先判断DOM是否存在
+// 初始化折线图
+const initLineChart = async () => {
+  if (!lineChartRef.value) return;
   try {
-    if (pieChartInstance2) {
-      pieChartInstance2.dispose();
-      pieChartInstance2 = null;
+    if (lineChartInstance) {
+      lineChartInstance.dispose();
+      lineChartInstance = null;
     }
-    const currentData =
-      secondChartData[secondChartIndex.value] || secondChartData[0]; // 兜底取第一条
-    if (currentData?.data?.length > 0) {
-      pieChartInstance2 = echarts.init(pieChartRef2.value);
-      const option = getPieOption(currentData);
-      pieChartInstance2.setOption(option, true); // 加true强制更新
-    }
+    // 先获取数据
+    await fetchData();
+    // 再初始化图表
+    lineChartInstance = echarts.init(lineChartRef.value);
+    const option = getLineOption();
+    lineChartInstance.setOption(option, true);
   } catch (error) {
-    console.error('初始化第二个圆环图失败:', error);
-  }
-};
-
-// 初始化柱状/折线图
-const initBarLineChart = () => {
-  if (!barLineChartRef.value || !allChartsData[chartIndex.value]) return;
-  try {
-    if (barLineChartInstance) {
-      barLineChartInstance.dispose();
-      barLineChartInstance = null;
-    }
-    const currentData = allChartsData[chartIndex.value];
-    if (currentData?.data?.xAxis?.length > 0) {
-      barLineChartInstance = echarts.init(barLineChartRef.value);
-      const option = getBarLineOption(currentData);
-      barLineChartInstance.setOption(option, true);
-    }
-  } catch (error) {
-    console.error('初始化柱状/折线图失败:', error);
+    console.error('初始化折线图失败:', error);
   }
 };
 
@@ -576,9 +339,8 @@ const initBarLineChart = () => {
 const initCharts = () => {
   // 增加少量延迟，确保DOM完全渲染
   setTimeout(() => {
-    initPieChart1();
-    initPieChart2();
-    initBarLineChart();
+    initBarChart();
+    initLineChart();
   }, 100);
 };
 
@@ -586,28 +348,24 @@ const initCharts = () => {
 const handleResize = () => {
   setTimeout(() => {
     // 防抖
-    pieChartInstance1?.resize();
-    pieChartInstance2?.resize();
-    barLineChartInstance?.resize();
+    barChartInstance?.resize();
+    lineChartInstance?.resize();
   }, 100);
 };
 
 onMounted(() => {
-  nextTick(() => {
-    initCharts();
-  });
+  initCharts();
   window.addEventListener('resize', handleResize);
 });
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
-  [pieChartInstance1, pieChartInstance2, barLineChartInstance].forEach(
-    (instance) => {
-      if (instance) {
-        instance.dispose();
-      }
-    },
-  );
+  if (barChartInstance) {
+    barChartInstance.dispose();
+  }
+  if (lineChartInstance) {
+    lineChartInstance.dispose();
+  }
 });
 </script>
 
@@ -639,67 +397,13 @@ onUnmounted(() => {
     <!-- 右侧展示区 -->
     <div class="right-section">
       <div class="charts-section">
-        <!-- 第一个圆环图 -->
-        <div class="pie-chart-area">
-          <div v-if="firstChartData.length > 1" class="chart-select-wrapper">
-            <ElSelect
-              v-model="firstChartIndex"
-              size="small"
-              class="chart-select"
-              @change="handlePie1Change"
-            >
-              <ElOption
-                v-for="(option, idx) in firstChartData"
-                :key="idx"
-                :label="option.label"
-                :value="idx"
-              />
-            </ElSelect>
-          </div>
-          <div ref="pieChartRef1" class="chart-container"></div>
+        <!-- 柱状图 -->
+        <div class="bar-chart-area">
+          <div ref="barChartRef" class="chart-container"></div>
         </div>
-
-        <!-- 第二个圆环图 -->
-        <div class="pie-chart-area">
-          <div v-if="secondChartData.length > 1" class="chart-select-wrapper">
-            <ElSelect
-              v-model="secondChartIndex"
-              size="small"
-              class="chart-select"
-              @change="handlePie2Change"
-            >
-              <ElOption
-                v-for="(option, idx) in secondChartData"
-                :key="idx"
-                :label="option.label"
-                :value="idx"
-              />
-            </ElSelect>
-          </div>
-          <div ref="pieChartRef2" class="chart-container"></div>
-        </div>
-
-        <!-- 柱状/折线图 -->
-        <div class="bar-line-chart-area">
-          <div
-            v-if="allChartsData.length > 1"
-            class="chart-select-wrapper bar-line-select"
-          >
-            <ElSelect
-              v-model="chartIndex"
-              size="small"
-              class="chart-select"
-              @change="handleBarLineChange"
-            >
-              <ElOption
-                v-for="(option, idx) in allChartsData"
-                :key="idx"
-                :label="option.label"
-                :value="idx"
-              />
-            </ElSelect>
-          </div>
-          <div ref="barLineChartRef" class="chart-container"></div>
+        <!-- 折线图 -->
+        <div class="line-chart-area">
+          <div ref="lineChartRef" class="chart-container"></div>
         </div>
       </div>
     </div>
@@ -834,15 +538,19 @@ onUnmounted(() => {
   box-sizing: border-box; /* 包含内边距 */
 }
 
-/* 柱状/折线图区域 */
-.bar-line-chart-area {
+/* 柱状图区域 */
+.bar-chart-area {
   position: relative;
-  flex: 1.5;
+  flex: 1;
   min-width: 300px; /* 给最小宽度 */
   height: 100%;
 }
 
-.bar-line-select {
-  left: 10px;
+/* 折线图区域 */
+.line-chart-area {
+  position: relative;
+  flex: 1;
+  min-width: 300px; /* 给最小宽度 */
+  height: 100%;
 }
 </style>
