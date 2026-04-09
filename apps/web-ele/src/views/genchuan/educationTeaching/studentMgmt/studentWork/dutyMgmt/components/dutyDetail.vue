@@ -24,8 +24,8 @@ const formatTimestamp = (timestamp) => {
 };
 
 const drawerTitle = computed(() => {
-  const name = detailObj.value?.studentName || '入团申请';
-  return title.value || `${name}入团详情`;
+  const name = detailObj.value?.dutyUser || '值班';
+  return title.value || `${name}值班详情`;
 });
 
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
@@ -42,22 +42,21 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <div class="detail-section">🏫 入团申请信息</div>
-      <div class="detail-card-row"><div class="detail-row-left">社团名称：</div><div class="detail-row-right">{{ detailObj.clubName || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">社团类型：</div><div class="detail-row-right">{{ detailObj.clubType || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">学生姓名：</div><div class="detail-row-right">{{ detailObj.studentName || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">班级：</div><div class="detail-row-right">{{ detailObj.className || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">申请时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.applyTime) }}</div></div>
+      <div class="detail-section">📅 值班基础信息</div>
+      <div class="detail-card-row"><div class="detail-row-left">值班日期：</div><div class="detail-row-right">{{ detailObj.dutyDate || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">值班人：</div><div class="detail-row-right">{{ detailObj.dutyUser || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">打卡时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.checkInTime) }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">打卡状态：</div><div class="detail-row-right">{{ detailObj.checkInStatus || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">调班原因：</div><div class="detail-row-right">{{ detailObj.transferReason || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">调班替代人：</div><div class="detail-row-right">{{ detailObj.transferUser || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">调班状态：</div><div class="detail-row-right">{{ detailObj.transferStatus || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">出车事由：</div><div class="detail-row-right">{{ detailObj.carReason || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">出车目的地：</div><div class="detail-row-right">{{ detailObj.carDestination || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">出车状态：</div><div class="detail-row-right">{{ detailObj.carStatus || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">值班记录：</div><div class="detail-row-right">{{ detailObj.recordContent || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">记录上传时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.recordUploadTime) }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">状态：</div><div class="detail-row-right">{{ detailObj.status || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">场馆申请状态：</div><div class="detail-row-right">{{ detailObj.venueApplyStatus || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">备注：</div><div class="detail-row-right">{{ detailObj.remark || '-' }}</div></div>
-
-      <div class="detail-section">📝 审核记录</div>
-      <div class="detail-card-row"><div class="detail-row-left">审核人：</div><div class="detail-row-right">{{ detailObj.auditUser || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">审核时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.auditTime) }}</div></div>
-
-      <div class="detail-section">📂 建档记录</div>
-      <div class="detail-card-row"><div class="detail-row-left">建档时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.archiveTime) }}</div></div>
 
       <div class="detail-section">📝 操作日志</div>
       <div class="detail-card-row"><div class="detail-row-left">创建人：</div><div class="detail-row-right">{{ detailObj.creator || '-' }}</div></div>

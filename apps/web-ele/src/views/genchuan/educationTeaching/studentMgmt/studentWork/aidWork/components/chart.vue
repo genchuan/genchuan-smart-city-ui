@@ -1,4 +1,3 @@
-<!-- 文件5: components/chart.vue (图表组件：卡片 + 饼图切换 + 柱状图切换) -->
 <script setup>
 import { reactive, onMounted, ref, computed } from 'vue';
 import { ElMessage, ElSelect, ElOption } from 'element-plus';

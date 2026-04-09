@@ -1,4 +1,3 @@
-// 文件2: form.js (筛选表单 Schema 与表格列定义)
 // 筛选表单 schema（用于列表页搜索）
 export function useFormSchema() {
   return [

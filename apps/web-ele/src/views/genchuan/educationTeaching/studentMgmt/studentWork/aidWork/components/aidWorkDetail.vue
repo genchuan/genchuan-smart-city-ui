@@ -1,4 +1,3 @@
-<!-- 文件4: components/aidWorkDetail.vue (详情抽屉) -->
 <script setup>
 import { computed, defineProps, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';

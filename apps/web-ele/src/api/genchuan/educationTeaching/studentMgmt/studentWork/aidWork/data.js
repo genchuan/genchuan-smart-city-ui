@@ -1,4 +1,3 @@
-// 文件1: data.js (API 接口定义与模拟数据)
 import { requestClient } from '#/api/request';
 
 // ==================== 奖助勤贷接口 ====================
