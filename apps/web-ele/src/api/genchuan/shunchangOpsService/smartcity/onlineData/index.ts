@@ -169,7 +169,7 @@ export async function getDeviceList(
     },
   });
 
-  console.log('[OnlineDataApi] 设备列表响应:', response);
+  // console.log('[OnlineDataApi] 设备列表响应:', response);
 
   // 实际返回格式: { code: 200, message: "请求成功", count: 8, data: [...] }
   const data = response.data;
@@ -203,10 +203,10 @@ export async function getDeviceData(
     };
   }
 
-  console.log(
-    '[OnlineDataApi] 请求设备数据，token:',
-    `${token.slice(0, 20)}...`,
-  );
+  // console.log(
+  //   '[OnlineDataApi] 请求设备数据，token:',
+  //   `${token.slice(0, 20)}...`,
+  // );
 
   const response = await collectClient.get<any>(
     '/water_monitor/data_condition',
@@ -225,7 +225,7 @@ export async function getDeviceData(
     },
   );
 
-  console.log('[OnlineDataApi] 设备数据响应:', response);
+  // console.log('[OnlineDataApi] 设备数据响应:', response);
 
   // 适配第三方接口返回格式
   // 实际返回格式: { code: 200, message: "请求成功", count: X, data: [...] }
@@ -235,7 +235,7 @@ export async function getDeviceData(
   if (data && Array.isArray(data.data)) {
     return {
       list: data.data,
-      total: data.count || data.data.length,
+      total: data.data.length,
     };
   }
 

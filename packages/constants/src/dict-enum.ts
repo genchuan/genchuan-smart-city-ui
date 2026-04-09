@@ -175,14 +175,14 @@ const IOT_DICT = {
 
 /** ========== DATA - 数据中枢模块 ========== */
 const DATA_DICT = {
-  DATA_CATEGORY_TYPE: 'category_type', // 分类类型
-  DATA_RUN_STATUS: 'run_status', // 运行状态
-  DATA_MATTER_STATUS: 'matter_status', // 事项状态
-  DATA_AUDIT_STATUS: 'audit_status', // 审核状态
-  DATA_ENABLE_STATUS: 'status_name', // 启用状态
-  DATA_CORE_INDICATORS: 'sys_index', // 核心监测指标
-  DATA_EVENT_LEVEL: 'sys_event_level', // 事件等级
-  DATA_TYPE: 'data_type', // 数据类型
+  DATA_CATEGORY_TYPE: 'op_data_category_type', // 分类类型
+  DATA_RUN_STATUS: 'op_data_run_status', // 运行状态
+  DATA_MATTER_STATUS: 'op_data_matter_status', // 事项状态
+  DATA_AUDIT_STATUS: 'op_data_audit_status', // 审核状态
+  DATA_ENABLE_STATUS: 'op_data_open_status', // 启用状态
+  DATA_CORE_INDICATORS: 'op_data_sys_index', // 核心监测指标
+  DATA_EVENT_LEVEL: 'op_data_event_level', // 事件等级
+  DATA_TYPE: 'op_data_type', // 数据类型
 } as const;
 
 /** ========== SHUNCAHNG - 顺昌迁移模块 ========== */

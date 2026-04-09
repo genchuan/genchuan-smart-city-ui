@@ -59,7 +59,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
-          console.log('[deviceData] formValues:', formValues);
+          // console.log('[deviceData] formValues:', formValues);
 
           // 处理时间范围
           let startTime = '';
@@ -68,7 +68,14 @@ const [Grid, gridApi] = useVbenVxeGrid({
           // 检查 timeRange 字段
           const timeRange = formValues.timeRange;
           if (timeRange) {
-            console.log('[deviceData] timeRange:', timeRange, 'type:', typeof timeRange, 'isArray:', Array.isArray(timeRange));
+            // console.log(
+            //   '[deviceData] timeRange:',
+            //   timeRange,
+            //   'type:',
+            //   typeof timeRange,
+            //   'isArray:',
+            //   Array.isArray(timeRange),
+            // );
 
             if (Array.isArray(timeRange) && timeRange.length === 2) {
               // 如果已经是格式化的字符串，直接使用
@@ -83,7 +90,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
             }
           }
 
-          console.log('[deviceData] startTime:', startTime, 'endTime:', endTime);
+          // console.log(
+          //   '[deviceData] startTime:',
+          //   startTime,
+          //   'endTime:',
+          //   endTime,
+          // );
 
           return await getDeviceData({
             pageNo: page.currentPage,
@@ -151,24 +163,24 @@ onMounted(() => {
 
     <!-- 数据列表 -->
     <Grid :table-title="`${deviceName || '设备'} - 采集数据列表`">
-      <template #toolbar-tools>
-        <TableAction
-          :actions="[
-            {
-              label: '返回',
-              type: 'default',
-              icon: ACTION_ICON.CLOSE,
-              onClick: handleBack,
-            },
-            {
-              label: '刷新',
-              type: 'primary',
-              icon: ACTION_ICON.REFRESH,
-              onClick: handleRefresh,
-            },
-          ]"
-        />
-      </template>
+<!--      <template #toolbar-tools>-->
+<!--        <TableAction-->
+<!--          :actions="[-->
+<!--            {-->
+<!--              label: '返回',-->
+<!--              type: 'default',-->
+<!--              icon: ACTION_ICON.CLOSE,-->
+<!--              onClick: handleBack,-->
+<!--            },-->
+<!--            {-->
+<!--              label: '刷新',-->
+<!--              type: 'primary',-->
+<!--              icon: ACTION_ICON.REFRESH,-->
+<!--              onClick: handleRefresh,-->
+<!--            },-->
+<!--          ]"-->
+<!--        />-->
+<!--      </template>-->
     </Grid>
   </Page>
 </template>

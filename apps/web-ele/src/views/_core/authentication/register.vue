@@ -10,12 +10,7 @@ import { isCaptchaEnable, isTenantEnable } from '@vben/hooks';
 import { $t } from '@vben/locales';
 import { useAccessStore } from '@vben/stores';
 
-import {
-  checkCaptcha,
-  getCaptcha,
-  getTenantByWebsite,
-  getTenantSimpleList,
-} from '#/api/core/auth';
+import { checkCaptcha, getCaptcha, getTenantSimpleList } from '#/api/core/auth';
 import { useAuthStore } from '#/store';
 
 defineOptions({ name: 'Register' });
@@ -34,7 +29,7 @@ const captchaType = 'blockPuzzle'; // 验证码类型：'blockPuzzle' | 'clickWo
 
 /** 获取租户列表，并默认选中"普通会员"租户 */
 const tenantList = ref<AuthApi.TenantResult[]>([]); // 租户列表
-const normalMemberTenantId = ref<number | null>(null); // 普通会员租户ID
+const normalMemberTenantId = ref<null | number>(null); // 普通会员租户ID
 async function fetchTenantList() {
   if (!tenantEnable) {
     return;
@@ -49,7 +44,8 @@ async function fetchTenantList() {
     );
 
     // 如果找到"普通会员"租户，则使用它，否则使用列表中的第一个
-    const tenantId = normalMemberTenant?.id ?? tenantList.value?.[0]?.id ?? null;
+    const tenantId =
+      normalMemberTenant?.id ?? tenantList.value?.[0]?.id ?? null;
     normalMemberTenantId.value = tenantId;
 
     // 设置选中的租户编号
