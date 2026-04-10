@@ -418,7 +418,7 @@ const [CreateForm, createFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useCreateFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: isEditMode.value ? '保存' : '建档' },
+  submitButtonOptions: { content: '保存' },
 });
 
 // 查看详情

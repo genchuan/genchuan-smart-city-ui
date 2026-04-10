@@ -382,7 +382,7 @@ const [CreateForm, createFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useCreateFormSchema(isEditMode.value),
   showCollapseButton: false,
-  submitButtonOptions: {content: isEditMode.value ? '保存' : '新增'},
+  submitButtonOptions: {content: '保存'},
 });
 
 // 查看详情
