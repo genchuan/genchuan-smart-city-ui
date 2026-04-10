@@ -16,7 +16,7 @@ import {
   ElTag,
 } from 'element-plus';
 
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getDeviceData } from '#/api/genchuan/shunchangOpsService/smartcity/onlineData';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
@@ -67,8 +67,8 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
           // 检查 timeRange 字段
           const timeRange = formValues.timeRange;
-          if (timeRange) {
-            // console.log(
+          if (
+            timeRange && // console.log(
             //   '[deviceData] timeRange:',
             //   timeRange,
             //   'type:',
@@ -77,16 +77,17 @@ const [Grid, gridApi] = useVbenVxeGrid({
             //   Array.isArray(timeRange),
             // );
 
-            if (Array.isArray(timeRange) && timeRange.length === 2) {
-              // 如果已经是格式化的字符串，直接使用
-              if (typeof timeRange[0] === 'string') {
-                startTime = timeRange[0];
-                endTime = timeRange[1];
-              } else if (timeRange[0] instanceof Date) {
-                // 如果是 Date 对象，格式化为字符串
-                startTime = formatDate(timeRange[0]);
-                endTime = formatDate(timeRange[1]);
-              }
+            Array.isArray(timeRange) &&
+            timeRange.length === 2
+          ) {
+            // 如果已经是格式化的字符串，直接使用
+            if (typeof timeRange[0] === 'string') {
+              startTime = timeRange[0];
+              endTime = timeRange[1];
+            } else if (timeRange[0] instanceof Date) {
+              // 如果是 Date 对象，格式化为字符串
+              startTime = formatDate(timeRange[0]);
+              endTime = formatDate(timeRange[1]);
             }
           }
 
@@ -163,24 +164,24 @@ onMounted(() => {
 
     <!-- 数据列表 -->
     <Grid :table-title="`${deviceName || '设备'} - 采集数据列表`">
-<!--      <template #toolbar-tools>-->
-<!--        <TableAction-->
-<!--          :actions="[-->
-<!--            {-->
-<!--              label: '返回',-->
-<!--              type: 'default',-->
-<!--              icon: ACTION_ICON.CLOSE,-->
-<!--              onClick: handleBack,-->
-<!--            },-->
-<!--            {-->
-<!--              label: '刷新',-->
-<!--              type: 'primary',-->
-<!--              icon: ACTION_ICON.REFRESH,-->
-<!--              onClick: handleRefresh,-->
-<!--            },-->
-<!--          ]"-->
-<!--        />-->
-<!--      </template>-->
+      <!--      <template #toolbar-tools>-->
+      <!--        <TableAction-->
+      <!--          :actions="[-->
+      <!--            {-->
+      <!--              label: '返回',-->
+      <!--              type: 'default',-->
+      <!--              icon: ACTION_ICON.CLOSE,-->
+      <!--              onClick: handleBack,-->
+      <!--            },-->
+      <!--            {-->
+      <!--              label: '刷新',-->
+      <!--              type: 'primary',-->
+      <!--              icon: ACTION_ICON.REFRESH,-->
+      <!--              onClick: handleRefresh,-->
+      <!--            },-->
+      <!--          ]"-->
+      <!--        />-->
+      <!--      </template>-->
     </Grid>
   </Page>
 </template>

@@ -132,6 +132,19 @@ const formSchema = computed((): VbenFormSchema[] => {
       label: $t('authentication.nickname'),
       rules: z.string().min(1, { message: $t('authentication.nicknameTip') }),
     },
+    // 新增手机号输入
+    {
+      component: 'VbenInput',
+      componentProps: {
+        placeholder: '请输入手机号',
+      },
+      fieldName: 'mobile',
+      label: '手机号',
+      rules: z
+        .string()
+        .min(1, { message: '请输入手机号' })
+        .regex(/^1[3-9]\d{9}$/, { message: '手机号格式不正确' }),
+    },
     {
       component: 'VbenInputPassword',
       componentProps: {
