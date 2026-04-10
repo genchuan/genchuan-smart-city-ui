@@ -2,11 +2,14 @@
 import { computed, useSlots } from 'vue';
 
 import { useRefresh } from '@vben/hooks';
-import { RotateCw } from '@vben/icons';
+import { RotateCw, createIconifyIcon } from '@vben/icons';
 import { preferences, usePreferences } from '@vben/preferences';
 import { useAccessStore } from '@vben/stores';
 
 import { VbenFullScreen, VbenIconButton } from '@vben-core/shadcn-ui';
+
+// 创建商城图标
+const ShoppingCartIcon = createIconifyIcon('mdi:cart-outline');
 
 import {
   GlobalSearch,
@@ -48,6 +51,12 @@ const rightSlots = computed(() => {
       name: 'global-search',
     });
   }
+
+  // 商城图标
+  list.push({
+    index: REFERENCE_VALUE + 5,
+    name: 'mall',
+  });
 
   if (preferencesButtonPosition.value.header) {
     list.push({
@@ -117,6 +126,21 @@ const leftSlots = computed(() => {
 function clearPreferencesAndLogout() {
   emit('clearPreferencesAndLogout');
 }
+
+/** 打开商城页面，实现单点登录 */
+function openMall() {
+  // 获取当前用户的 token
+  const accessToken = accessStore.accessToken;
+  if (!accessToken) {
+    // 未登录，直接跳转到商城登录页
+    window.open('http://192.168.8.12:3000/pages/index/cart', '_blank');
+    return;
+  }
+  // 已登录，携带 token 跳转到商城实现单点登录
+  // 方式1：通过 URL 参数传递 token（需要商城端支持）
+  const mallUrl = `http://192.168.8.12:3000/pages/index/cart?token=${encodeURIComponent(accessToken)}`;
+  window.open(mallUrl, '_blank');
+}
 </script>
 
 <template>
@@ -156,6 +180,15 @@ function clearPreferencesAndLogout() {
             :menus="accessStore.accessMenus"
             class="mr-1 sm:mr-4"
           />
+        </template>
+
+        <template v-else-if="slot.name === 'mall'">
+          <VbenIconButton
+            class="mr-1"
+            @click="openMall"
+          >
+            <ShoppingCartIcon class="size-4" />
+          </VbenIconButton>
         </template>
 
         <template v-else-if="slot.name === 'preferences'">

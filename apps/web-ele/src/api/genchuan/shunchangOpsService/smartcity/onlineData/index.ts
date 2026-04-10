@@ -169,12 +169,8 @@ export async function getDeviceList(
     },
   });
 
-  // console.log('[OnlineDataApi] 设备列表响应:', response);
-
-  // 实际返回格式: { code: 200, message: "请求成功", count: 8, data: [...] }
+  // console.log('[OnlineDataApi] 设备列表响应:', response)
   const data = response.data;
-
-  // 格式1: { code: 200, data: [...], count: 8 }
   if (data && Array.isArray(data.data)) {
     return {
       list: data.data,
