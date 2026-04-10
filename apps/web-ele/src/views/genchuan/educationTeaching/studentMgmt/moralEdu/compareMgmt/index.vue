@@ -1,35 +1,37 @@
 <script setup>
-import { computed, reactive, ref, watch, nextTick } from 'vue';
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {computed, reactive, ref, watch, nextTick} from 'vue';
+import {confirm, useVbenDrawer} from '@vben/common-ui';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
-import HonorDetailDrawer from './components/honorDetail.vue';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {downloadFileFromBlobPart} from '@vben/utils';
+import CompareDetailDrawer from './components/compareDetail.vue';
 import {
-  dataList,
-  getHonorMgmtPage,
-  createHonorMgmt,
-  updateHonorMgmt,
-  auditHonorMgmt,
-  pushHonorMgmt,
-  exportHonorMgmt,
-  getHonorMgmtDetail,
-} from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/honorMgmt/data.js';
+  getMockList,
+  getCompareMgmtPage,
+  createCompareMgmt,
+  updateCompareMgmt,
+  scoreCompareMgmt,
+  awardCompareMgmt,
+  exportCompareMgmt,
+  getCompareMgmtDetail,
+} from '#/api/genchuan/educationTeaching/studentMgmt/moralEdu/compareMgmt/data.js';
 import {
   textObj,
   useFormSchema,
-  getColumnsByStatus,
+  getColumns,
   useCreateFormSchema,
-} from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/honorMgmt/form.js';
+  useEditFormSchema,
+  useScoreFormSchema,
+  useAwardFormSchema,
+} from '#/api/genchuan/educationTeaching/studentMgmt/moralEdu/compareMgmt/form.js';
 
 // 辅助函数：状态标签类型
 const getStatusType = (status) => {
   const map = {
-    '待审核': 'warning',
-    '已通过': 'success',
-    '已推送': 'info',
+    '打分中': 'warning',
+    '已汇总': 'success',
   };
   return map[status] || 'info';
 };
@@ -48,7 +50,7 @@ const formatTimestamp = (timestamp) => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
-// 提取日期部分
+// 提取日期部分（用于筛选）
 const getDateFromTimestamp = (timestamp) => {
   if (!timestamp) return '';
   const date = new Date(parseInt(timestamp));
@@ -94,7 +96,6 @@ function removeFilterTag(field) {
 
 function getFieldLabel(field) {
   const map = {
-    honorType: '荣誉类型',
     className: '班级',
     status: '状态',
     creator: '创建人',
@@ -108,7 +109,7 @@ function getTagDisplayText(field, value) {
   return value || '-';
 }
 
-// ---------- 原有变量 ----------
+// ---------- 抽屉组件 ----------
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
@@ -121,6 +122,18 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
   onCancel: () => createDrawerApi.close(),
 });
 
+const [ScoreDrawer, scoreDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => scoreDrawerApi.close(),
+});
+
+const [AwardDrawer, awardDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => awardDrawerApi.close(),
+});
+
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
@@ -131,8 +144,7 @@ const dataObj = reactive({
   loading: false,
 });
 
-const activeName = ref('全部');
-const gridColumns = ref(getColumnsByStatus(activeName.value));
+const gridColumns = ref(getColumns());
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
@@ -144,6 +156,8 @@ function handleRowCheckboxChange({records}) {
 const searchParams = ref({});
 const isEditMode = ref(false);
 const currentEditId = ref(null);
+const scoreIds = ref([]);
+const awardIds = ref([]);
 
 const getTableData = async ({page}) => {
   dataObj.loading = true;
@@ -153,15 +167,15 @@ const getTableData = async ({page}) => {
       pageNo: page.currentPage,
       pageSize: page.pageSize,
     };
-    const res = await getHonorMgmtPage(params);
+    const res = await getCompareMgmtPage(params);
     let filtered = res.list;
     // 应用标签筛选
     Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
       filtered = filtered.filter(item => {
         let itemValue;
         switch (field) {
-          case 'honorType':
-            itemValue = item.honorType;
+          case 'className':
+            itemValue = item.className;
             break;
           case 'status':
             itemValue = item.status;
@@ -187,14 +201,14 @@ const getTableData = async ({page}) => {
     dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = dataList();
+    const mockData = getMockList();
     let filtered = mockData;
     Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
       filtered = filtered.filter(item => {
         let itemValue;
         switch (field) {
-          case 'honorType':
-            itemValue = item.honorType;
+          case 'className':
+            itemValue = item.className;
             break;
           case 'status':
             itemValue = item.status;
@@ -238,8 +252,8 @@ async function handleExport() {
   try {
     const loading = ElLoading.service({text: '正在导出...'});
     try {
-      const data = await exportHonorMgmt(searchParams.value);
-      downloadFileFromBlobPart({fileName: '荣誉管理列表.xls', source: data});
+      const data = await exportCompareMgmt(searchParams.value);
+      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
       ElMessage.success('导出成功');
     } finally {
       loading.close();
@@ -250,37 +264,36 @@ async function handleExport() {
   }
 }
 
-// 批量审核
-async function handleBatchAudit() {
+// 批量打分
+async function handleBatchScore() {
   if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一条荣誉记录');
+    ElMessage.warning('请至少选择一个评比记录');
     return;
   }
-  const selectedRows = checkedRows.value.filter(row => row.status === '待审核');
-  if (selectedRows.length === 0) {
-    ElMessage.warning('请选择状态为【待审核】的荣誉记录');
+  const scoringRows = checkedRows.value.filter(row => row.status === '打分中');
+  if (scoringRows.length === 0) {
+    ElMessage.warning('请选择状态为【打分中】的记录进行打分');
     return;
   }
-  try {
-    await ElMessageBox.confirm(`确认审核选中的 ${selectedRows.length} 条荣誉记录？审核后状态将变为"已通过"。`, '批量审核确认', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'warning',
-    });
-    const loading = ElLoading.service({text: '审核中...'});
-    try {
-      const ids = selectedRows.map(row => row.id);
-      const res = await auditHonorMgmt({ids, auditRemark: '批量审核通过'});
-      if (res === true) {
-        ElMessage.success('批量审核成功');
-        handleRefresh();
-      } else {
-        ElMessage.error('批量审核失败');
-      }
-    } finally {
-      loading.close();
-    }
-  } catch {}
+  scoreIds.value = scoringRows.map(row => row.id);
+  scoreFormApi.resetForm();
+  scoreDrawerApi.open();
+}
+
+// 批量授予
+async function handleBatchAward() {
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请至少选择一个评比记录');
+    return;
+  }
+  const finishedRows = checkedRows.value.filter(row => row.status === '已汇总');
+  if (finishedRows.length === 0) {
+    ElMessage.warning('请选择状态为【已汇总】的记录进行授予');
+    return;
+  }
+  awardIds.value = finishedRows.map(row => row.id);
+  awardFormApi.resetForm();
+  awardDrawerApi.open();
 }
 
 function handleCreate() {
@@ -291,124 +304,134 @@ function handleCreate() {
 }
 
 async function handleEdit(row) {
-  if (row.status !== '待审核') {
-    ElMessage.warning('只有待审核状态的荣誉可以编辑');
+  if (row.status !== '打分中') {
+    ElMessage.warning('只有打分中的记录可以编辑');
     return;
   }
   isEditMode.value = true;
   currentEditId.value = row.id;
   try {
-    const detail = await getHonorMgmtDetail({id: row.id});
+    const detail = await getCompareMgmtDetail({id: row.id});
     createFormApi.setValues({
-      studentId: detail.studentId,
-      honorType: detail.honorType,
-      honorName: detail.honorName,
-      getTime: detail.getTime,
+      className: detail.className,
+      cycle: detail.cycle,
       remark: detail.remark,
     });
     createDrawerApi.open();
   } catch (error) {
     console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败，请检查网络或联系管理员');
+    ElMessage.error('加载详情失败');
   }
 }
 
-async function handleDelete(row) {
-  // 荣誉管理没有删除按钮，但若需要可加，按需求不提供删除
-}
-
-// 单行审核
-async function handleAudit(row) {
-  if (row.status !== '待审核') {
-    ElMessage.warning('只有待审核状态的荣誉可以审核');
+// 单行打分
+async function handleScore(row) {
+  if (row.status !== '打分中') {
+    ElMessage.warning('只有打分中的记录可以打分');
     return;
   }
-  try {
-    await ElMessageBox.confirm(`确认审核荣誉"${row.honorName}"？审核后状态将变为"已通过"。`, '审核确认', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'warning',
-    });
-    const loading = ElLoading.service({text: '审核中...'});
-    try {
-      const res = await auditHonorMgmt({ids: [row.id], auditRemark: ''});
-      if (res === true) {
-        ElMessage.success('审核成功');
-        handleRefresh();
-      } else {
-        ElMessage.error('审核失败');
-      }
-    } finally {
-      loading.close();
-    }
-  } catch {}
+  scoreIds.value = [row.id];
+  scoreFormApi.resetForm();
+  scoreDrawerApi.open();
 }
 
-// 推送
-async function handlePush(row) {
-  if (row.status !== '已通过') {
-    ElMessage.warning('只有已通过状态的荣誉可以推送');
+// 单行授予
+async function handleAward(row) {
+  if (row.status !== '已汇总') {
+    ElMessage.warning('只有已汇总的记录可以授予称号');
     return;
   }
-  try {
-    await ElMessageBox.confirm(`确认推送荣誉"${row.honorName}"给学生及家长？推送后状态将变为"已推送"。`, '推送确认', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'warning',
-    });
-    const loading = ElLoading.service({text: '推送中...'});
-    try {
-      const res = await pushHonorMgmt({id: row.id});
-      if (res === true) {
-        ElMessage.success('推送成功');
-        handleRefresh();
-      } else {
-        ElMessage.error('推送失败');
-      }
-    } finally {
-      loading.close();
-    }
-  } catch {}
+  awardIds.value = [row.id];
+  awardFormApi.resetForm();
+  awardDrawerApi.open();
 }
 
-// 新增/编辑表单
+// 发起/编辑表单
 const [CreateForm, createFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '保存中...'});
+    const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '发起中...'});
     try {
       let res;
-      // 新增或编辑时均携带 status 字段（后端要求必填）
-      const submitData = { ...values, status: '待审核' };
       if (isEditMode.value) {
-        res = await updateHonorMgmt({ ...submitData, id: currentEditId.value });
+        res = await updateCompareMgmt({...values, id: currentEditId.value});
       } else {
-        res = await createHonorMgmt(submitData);
+        res = await createCompareMgmt(values);
       }
       if (res === true) {
-        ElMessage.success(isEditMode.value ? '更新成功' : '新增成功');
+        ElMessage.success(isEditMode.value ? '更新成功' : '发起成功');
         createDrawerApi.close();
         handleRefresh();
       } else {
-        ElMessage.error(isEditMode.value ? '更新失败' : '新增失败');
+        ElMessage.error(isEditMode.value ? '更新失败' : '发起失败');
       }
     } finally {
       loading.close();
     }
   },
   layout: 'horizontal',
-  schema: useCreateFormSchema(isEditMode.value),
+  schema: isEditMode.value ? useEditFormSchema() : useCreateFormSchema(),
   showCollapseButton: false,
   submitButtonOptions: {content: '保存'},
 });
 
+// 打分表单
+const [ScoreForm, scoreFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  handleSubmit: async (values) => {
+    const loading = ElLoading.service({text: '提交打分...'});
+    try {
+      const res = await scoreCompareMgmt({ids: scoreIds.value, ...values});
+      if (res === true) {
+        ElMessage.success('打分成功，已自动汇总并计算排名');
+        scoreDrawerApi.close();
+        handleRefresh();
+      } else {
+        ElMessage.error('打分失败');
+      }
+    } finally {
+      loading.close();
+    }
+  },
+  layout: 'horizontal',
+  schema: useScoreFormSchema(),
+  showCollapseButton: false,
+  submitButtonOptions: {content: '提交'},
+});
+
+// 授予表单
+const [AwardForm, awardFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  handleSubmit: async (values) => {
+    const loading = ElLoading.service({text: '授予中...'});
+    try {
+      const res = await awardCompareMgmt({ids: awardIds.value, ...values});
+      if (res === true) {
+        ElMessage.success('授予成功，已生成操行评定');
+        awardDrawerApi.close();
+        handleRefresh();
+      } else {
+        ElMessage.error('授予失败');
+      }
+    } finally {
+      loading.close();
+    }
+  },
+  layout: 'horizontal',
+  schema: useAwardFormSchema(),
+  showCollapseButton: false,
+  submitButtonOptions: {content: '确认'},
+});
+
 // 查看详情
-const honorDetailDrawerRef = ref(null);
+const compareDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
   dataObj.detailObj = row;
-  honorDetailDrawerRef.value.open();
+  compareDetailDrawerRef.value.open();
 }
 
 const [QueryForm] = useVbenForm({
@@ -442,14 +465,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-watch(activeName, (newVal) => {
-  tagFilters.value = {};
-  gridColumns.value = getColumnsByStatus(newVal);
-  if (gridApi && gridApi.xGrid) gridApi.xGrid.refreshColumn();
-  else gridApi.setGridOptions?.({columns: gridColumns.value});
-  gridApi.reload();
-});
-
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
@@ -464,14 +479,20 @@ defineExpose({handleFilterTagClick, clearFilters});
 
 <template>
   <div class="park-lot-table-new">
-    <HonorDetailDrawer ref="honorDetailDrawerRef" :detail-obj="dataObj.detailObj"
-                       @refresh="handleRefresh"/>
+    <CompareDetailDrawer ref="compareDetailDrawerRef" :detail-obj="dataObj.detailObj"
+                         @refresh="handleRefresh"/>
     <Drawer title="搜索">
       <QueryForm/>
     </Drawer>
-    <CreateDrawer :title="isEditMode ? '编辑荣誉信息' : '新增荣誉信息'">
+    <CreateDrawer :title="isEditMode ? textObj.editText : textObj.addText">
       <CreateForm/>
     </CreateDrawer>
+    <ScoreDrawer :title="textObj.scoreText">
+      <ScoreForm/>
+    </ScoreDrawer>
+    <AwardDrawer :title="textObj.awardText">
+      <AwardForm/>
+    </AwardDrawer>
     <Grid>
       <template #table-title>
         <ElTag
@@ -487,8 +508,9 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate"/>
-          <IconButton content="审核" icon-name="Check" @click="handleBatchAudit"/>
+          <IconButton content="发起" icon-name="Plus" @click="handleCreate"/>
+          <IconButton content="打分" icon-name="EditPen" @click="handleBatchScore"/>
+          <IconButton content="授予" icon-name="Trophy" @click="handleBatchAward"/>
           <IconButton content="导出" icon-name="download" @click="handleExport"/>
           <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
@@ -500,25 +522,12 @@ defineExpose({handleFilterTagClick, clearFilters});
         </div>
       </template>
 
-      <template #studentName="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{
-            row.studentName
-          }}
+      <!-- 钻取列 -->
+      <template #className="{ row }">
+        <el-text @click="handleFilterTagClick('className', row.className)" type="primary"
+                 style="cursor: pointer;">
+          {{ row.className }}
         </el-text>
-      </template>
-      <template #honorType="{ row }">
-        <el-text @click="handleFilterTagClick('honorType', row.honorType)" type="primary"
-                 style="cursor: pointer;">{{ row.honorType }}
-        </el-text>
-      </template>
-      <template #getTime="{ row }">
-        <el-text>{{ formatTimestamp(row.getTime) }}</el-text>
-      </template>
-      <template #auditTime="{ row }">
-        <el-text>{{ formatTimestamp(row.auditTime) }}</el-text>
-      </template>
-      <template #pushTime="{ row }">
-        <el-text>{{ formatTimestamp(row.pushTime) }}</el-text>
       </template>
       <template #status="{ row }">
         <el-tag :type="getStatusType(row.status)"
@@ -528,24 +537,35 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #creator="{ row }">
         <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
-                 style="cursor: pointer;">{{ row.creator || '-' }}
+                 style="cursor: pointer;">
+          {{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
         <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
-                 type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}
+                 type="primary" style="cursor: pointer;">
+          {{ formatTimestamp(row.createTime) }}
         </el-text>
+      </template>
+
+      <!-- 时间格式化 -->
+      <template #awardTime="{ row }">
+        <el-text>{{ formatTimestamp(row.awardTime) }}</el-text>
       </template>
       <template #updateTime="{ row }">
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
       </template>
 
+      <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton v-if="row.status === '待审核'" content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
-          <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Check" @click="handleAudit(row)"/>
-          <IconButton v-if="row.status === '已通过'" content="推送" icon-name="Promotion" @click="handlePush(row)"/>
+          <IconButton v-if="row.status === '打分中'" content="编辑" icon-name="Edit"
+                      @click="handleEdit(row)"/>
+          <IconButton v-if="row.status === '打分中'" content="打分" icon-name="EditPen"
+                      @click="handleScore(row)"/>
+          <IconButton v-if="row.status === '已汇总'" content="授予" icon-name="Trophy"
+                      @click="handleAward(row)"/>
         </div>
       </template>
     </Grid>

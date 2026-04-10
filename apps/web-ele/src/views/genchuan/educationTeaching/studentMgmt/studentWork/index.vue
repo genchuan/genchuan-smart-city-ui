@@ -1,6 +1,9 @@
+<!-- 文件5: 父组件 (包装所有 tabs，添加学工首页的联动) -->
 <script setup>
 import { ref, computed, nextTick } from 'vue';
 import { ElMessage } from 'element-plus';
+import workHome from './workHome/index.vue';
+import workHomeChart from './workHome/components/chart.vue';
 import studentInfo from './studentInfo/index.vue';
 import studentInfoChart from './studentInfo/components/chart.vue';
 import honorMgmt from './honorMgmt/index.vue';
@@ -31,6 +34,15 @@ const changeArrowStatus = () => {
 };
 
 const tabArray = ref([
+  {
+    label: '学工首页',
+    components: workHome,
+    chartComponent: workHomeChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false,
+  },
   { label: '学生信息', components: studentInfo, chartComponent: studentInfoChart, showSecondary: true, secondShow: false, arrowShow: true, arrowState: false },
   { label: '荣誉管理', components: honorMgmt, chartComponent: honorMgmtChart, showSecondary: true, secondShow: false, arrowShow: true, arrowState: false },
   { label: '考评管理', components: assessMgmt, chartComponent: assessMgmtChart, showSecondary: true, secondShow: false, arrowShow: true, arrowState: false },
@@ -49,10 +61,12 @@ const arrowChange = () => {
   });
 };
 
-const activeName = ref('学生信息');
+const activeName = ref('学工首页');
 const secondShow = ref(false);
 
 // ==================== 各模块组件引用 ====================
+const workHomeRef = ref(null);
+const setWorkHomeRef = (el) => { if (el) workHomeRef.value = el; };
 const studentInfoRef = ref(null);
 const setStudentInfoRef = (el) => { if (el) studentInfoRef.value = el; };
 const honorMgmtRef = ref(null);
@@ -74,13 +88,84 @@ const setAidWorkRef = (el) => { if (el) aidWorkRef.value = el; };
 const dutyMgmtRef = ref(null);
 const setDutyMgmtRef = (el) => { if (el) dutyMgmtRef.value = el; };
 
+// ==================== 学工首页图表事件 ====================
+const onWorkHomeCardClick = async (status) => {
+  await nextTick();
+  if (!workHomeRef.value) { ElMessage.warning('学工首页列表组件未就绪'); return; }
+  // 根据卡片状态跳转对应模块
+  switch (status) {
+    case 'totalStudent':
+      activeName.value = '学生信息';
+      return;
+    case 'totalHonor':
+      activeName.value = '荣誉管理';
+      return;
+    case 'totalAssess':
+      activeName.value = '考评管理';
+      return;
+    case 'totalViolate':
+      activeName.value = '违纪管理';
+      return;
+    case 'totalMental':
+      activeName.value = '心理管理';
+      return;
+    case 'totalFund':
+      activeName.value = '资助系统';
+      return;
+    case 'unhandledViolate':
+      // 待处理违纪：跳转违纪管理，并筛选待审批状态
+      activeName.value = '违纪管理';
+      // 延迟一下等待组件加载完成再设置筛选条件
+      setTimeout(() => {
+        if (violateMgmtRef.value) {
+          violateMgmtRef.value.clearFilters();
+          violateMgmtRef.value.handleFilterTagClick('status', '待审批');
+        }
+      }, 100);
+      return;
+    case 'unhandledWarn':
+      // 待处理预警：跳转违纪管理，并筛选已预警状态
+      activeName.value = '违纪管理';
+      setTimeout(() => {
+        if (violateMgmtRef.value) {
+          violateMgmtRef.value.clearFilters();
+          violateMgmtRef.value.handleFilterTagClick('status', '已预警');
+        }
+      }, 100);
+      return;
+    default:
+      // 其他卡片（如待处理违纪/预警已在上面处理）不做额外操作
+      break;
+  }
+};
+
+const onWorkHomePieClick = async ({ dimension }) => {
+  await nextTick();
+  if (!workHomeRef.value) { ElMessage.warning('学工首页列表组件未就绪'); return; }
+  // 饼图点击筛选对应维度的记录
+  workHomeRef.value.setExternalFilters({ type: dimension });
+};
+
+const onWorkHomeRadarClick = async ({ className }) => {
+  await nextTick();
+  if (!workHomeRef.value) { ElMessage.warning('学工首页列表组件未就绪'); return; }
+  // 雷达图点击筛选对应班级的记录
+  workHomeRef.value.setExternalFilters({ className });
+};
+
+const onWorkHomeLineClick = async ({ date }) => {
+  await nextTick();
+  if (!workHomeRef.value) { ElMessage.warning('学工首页列表组件未就绪'); return; }
+  // 折线图点击筛选该日期范围
+  workHomeRef.value.setExternalFilters({ startTime: `${date} 00:00:00`, endTime: `${date} 23:59:59` });
+};
+
 // ==================== 学生信息图表事件 ====================
 const onStudentPieSelect = async ({ field, value }) => {
   await nextTick();
   if (!studentInfoRef.value) { ElMessage.warning('学生信息列表组件未就绪'); return; }
   if (field === 'major') studentInfoRef.value.handleFilterTagClick('major', value);
   else if (field === 'className') studentInfoRef.value.handleFilterTagClick('className', value);
-  // 年级筛选不支持，不做任何操作
 };
 const onStudentBarSelect = async (date) => {
   await nextTick();
@@ -126,7 +211,7 @@ const onAssessRadarClick = async ({ className }) => {
 const onAssessLineClick = async ({ cycleName }) => {
   await nextTick();
   if (!assessMgmtRef.value) { ElMessage.warning('考评管理列表组件未就绪'); return; }
-  // 周期筛选不支持，不做任何操作
+  // 周期筛选不支持
 };
 const onAssessCardSelect = async (status) => {
   await nextTick();
@@ -202,7 +287,7 @@ const onBehaviorLineClick = async ({ date }) => {
 const onFundBarClick = async ({ type, value }) => {
   await nextTick();
   if (!fundSystemRef.value) { ElMessage.warning('资助系统列表组件未就绪'); return; }
-  // 年级筛选不支持，不做任何操作
+  // 年级筛选不支持
 };
 const onFundCardSelect = async (status) => {
   await nextTick();
@@ -245,7 +330,7 @@ const onAidWorkBarClick = async ({ type, value }) => {
   if (type === 'aidType') aidWorkRef.value.handleFilterTagClick('aidType', value);
 };
 
-// ==================== 值班管理图表事件（卡片无筛选，柱状图和折线图支持筛选） ====================
+// ==================== 值班管理图表事件 ====================
 const onDutyBarClick = async ({ type, value }) => {
   await nextTick();
   if (!dutyMgmtRef.value) { ElMessage.warning('值班管理列表组件未就绪'); return; }
@@ -254,7 +339,7 @@ const onDutyBarClick = async ({ type, value }) => {
 const onDutyLineClick = async ({ month }) => {
   await nextTick();
   if (!dutyMgmtRef.value) { ElMessage.warning('值班管理列表组件未就绪'); return; }
-  // 月份筛选不支持，不做任何操作
+  // 月份筛选不支持
 };
 
 // ==================== 当前激活的 Tab 相关 ====================
@@ -265,6 +350,15 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
 
 <template>
   <div class="common-index">
+    <!-- 学工首页图表 -->
+    <component
+      v-if="currentArrowShow && activeName === '学工首页'"
+      :is="currentChartComponent"
+      @cardClick="onWorkHomeCardClick"
+      @pieClick="onWorkHomePieClick"
+      @radarClick="onWorkHomeRadarClick"
+      @lineClick="onWorkHomeLineClick"
+    />
     <!-- 学生信息图表 -->
     <component
       v-if="currentArrowShow && activeName === '学生信息'"
@@ -332,7 +426,7 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
       @pieClick="onAidWorkPieClick"
       @barClick="onAidWorkBarClick"
     />
-    <!-- 值班管理图表（卡片无筛选事件，仅柱状图和折线图支持筛选） -->
+    <!-- 值班管理图表 -->
     <component
       v-if="currentArrowShow && activeName === '值班管理'"
       :is="currentChartComponent"
@@ -345,9 +439,19 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
         <template #label>
           <div class="table-first"><span>{{ item.label }}</span></div>
         </template>
+        <!-- 学工首页组件 -->
+        <component
+          v-if="item.label === '学工首页'"
+          :is="item.components"
+          :ref="setWorkHomeRef"
+          :second-show="item.secondShow"
+          :key="item.label"
+          :arrow-show="item.arrowShow"
+          @arrow-change="arrowChange"
+        />
         <!-- 学生信息组件 -->
         <component
-          v-if="item.label === '学生信息'"
+          v-else-if="item.label === '学生信息'"
           :is="item.components"
           :ref="setStudentInfoRef"
           :second-show="item.secondShow"

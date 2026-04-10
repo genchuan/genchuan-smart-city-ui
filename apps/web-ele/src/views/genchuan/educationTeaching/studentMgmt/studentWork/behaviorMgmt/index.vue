@@ -379,7 +379,7 @@ const [CreateForm, createFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useCreateFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: isEditMode.value ? '保存' : '申请' },
+  submitButtonOptions: { content: '保存' },
 });
 
 // ---------- 加载学生选项 ----------
