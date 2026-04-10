@@ -73,20 +73,31 @@ const arrowChange = () => {
 
 const activeName = ref('充电桩管理');
 
+// 获取表格组件实例（兼容数组情况）
+const getTableInstance = () => {
+  let instance = tableRef.value;
+  if (Array.isArray(instance)) {
+    instance = instance[0];
+  }
+  return instance;
+};
+
 // 图表钻取处理 - 完善版本，增加空值检查和错误处理
 const handleDrillDown = async (payload) => {
   const { type, data } = payload;
 
   await nextTick();
 
-  if (!tableRef.value) {
+  const tableInstance = getTableInstance();
+  if (!tableInstance) {
     console.error('表格组件引用未找到');
     ElMessage?.error('表格组件未加载完成，请重试');
     return;
   }
 
-  if (typeof tableRef.value.setFilter !== 'function') {
-    console.error('表格组件未暴露 setFilter 方法', tableRef.value);
+  if (typeof tableInstance.setFilter !== 'function') {
+    console.error('表格组件未暴露 setFilter 方法', tableInstance);
+    ElMessage?.error('表格组件方法缺失，请刷新页面重试');
     return;
   }
 
@@ -101,20 +112,20 @@ const handleDrillDown = async (payload) => {
       } else if (data.statusType === 'disabled') {
         filters = { pileStatus: '已停用' };
       } else if (data.statusType === 'total') {
-        if (typeof tableRef.value.resetFilter === 'function') {
-          tableRef.value.resetFilter();
+        if (typeof tableInstance.resetFilter === 'function') {
+          tableInstance.resetFilter();
         } else {
-          tableRef.value.setFilter({});
+          tableInstance.setFilter({});
         }
         return;
       }
-      tableRef.value.setFilter(filters);
+      tableInstance.setFilter(filters);
       break;
 
     case 'type':
       // 柱状图点击：各类型充电桩数量统计 -> 筛选对应充电模式
       if (data.typeName) {
-        tableRef.value.setFilter({ chargeMode: data.typeName });
+        tableInstance.setFilter({ chargeMode: data.typeName });
       }
       break;
 
@@ -123,7 +134,7 @@ const handleDrillDown = async (payload) => {
       if (data.runTime !== undefined && data.runTime !== null) {
         const runTimeValue = parseFloat(data.runTime);
         if (!isNaN(runTimeValue)) {
-          tableRef.value.setFilter({ runTime: runTimeValue });
+          tableInstance.setFilter({ runTime: runTimeValue });
         }
       }
       break;

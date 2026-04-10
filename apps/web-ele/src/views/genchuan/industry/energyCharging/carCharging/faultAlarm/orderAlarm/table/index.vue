@@ -375,9 +375,7 @@ const handleBatchVerify = () => {
     return;
   }
   // 检查是否都是未核实状态
-  const invalidRows = checkedRows.value.filter(
-    (row) => !canVerify(row)
-  );
+  const invalidRows = checkedRows.value.filter((row) => !canVerify(row));
   if (invalidRows.length > 0) {
     ElMessage.warning('只能核实状态为"未核实"的告警');
     return;
@@ -394,9 +392,7 @@ const handleBatchHandle = () => {
     return;
   }
   // 检查是否都是已核实状态
-  const invalidRows = checkedRows.value.filter(
-    (row) => !canHandle(row)
-  );
+  const invalidRows = checkedRows.value.filter((row) => !canHandle(row));
   if (invalidRows.length > 0) {
     ElMessage.warning('只能处理状态为"已核实"的告警');
     return;
@@ -413,9 +409,7 @@ const handleBatchComplete = () => {
     return;
   }
   // 检查是否都是处理中状态
-  const invalidRows = checkedRows.value.filter(
-    (row) => !canComplete(row)
-  );
+  const invalidRows = checkedRows.value.filter((row) => !canComplete(row));
   if (invalidRows.length > 0) {
     ElMessage.warning('只能完结状态为"处理中"的告警');
     return;
@@ -469,7 +463,10 @@ const handleRowRemark = (row) => {
 
 /** 获取告警状态标签文本 */
 function getAlarmStatusLabel(alarmStatus) {
-  const dict = getDictObj(DICT_TYPE.ORDER_ALARM_ALARM_STATUS, String(alarmStatus));
+  const dict = getDictObj(
+    DICT_TYPE.ORDER_ALARM_ALARM_STATUS,
+    String(alarmStatus),
+  );
   return dict ? dict.label : alarmStatus;
 }
 
@@ -610,10 +607,14 @@ const handleStatsFilter = (type, value) => {
 
           break;
         }
-        case 'unhandled': {
-          // 未处理数 - 筛选未核实、已核实、处理中状态
-          // 这里需要特殊处理，可能需要多个状态筛选
-          filterAlarmStatus.value = '';
+        case 'handling': {
+          // 处理中 - 筛选处理中状态
+          const dictOptions = getDictOptions(
+            DICT_TYPE.ORDER_ALARM_ALARM_STATUS,
+            'string',
+          );
+          const dictItem = dictOptions.find((item) => item.label === '处理中');
+          filterAlarmStatus.value = dictItem ? dictItem.value : '2';
 
           break;
         }

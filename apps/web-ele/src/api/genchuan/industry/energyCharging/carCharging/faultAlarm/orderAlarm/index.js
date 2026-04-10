@@ -61,7 +61,7 @@ export function getOrderAlarmDetail(id) {
 }
 
 /** 更新订单告警备注
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {number} data.id - 告警 ID
  * @param {string} data.remark - 备注内容
  * @returns {Promise<boolean>} 操作结果，true 为成功，false 为失败
@@ -86,15 +86,36 @@ export function getOrderAlarmChart(params) {
 
 /** 订单告警数量及处理完成趋势（折线图钻取） */
 export function getOrderAlarmTrend(params) {
-  return requestClient.get('/vehiclecharging/order-alarm/chart/trend', { params });
+  return requestClient.get('/vehiclecharging/order-alarm/chart/trend', {
+    params,
+  });
 }
 
 /** 告警原因占比（饼图钻取） */
 export function getOrderAlarmReasonRatio(params) {
-  return requestClient.get('/vehiclecharging/order-alarm/chart/reasonRatio', { params });
+  return requestClient.get('/vehiclecharging/order-alarm/chart/reasonRatio', {
+    params,
+  });
 }
 
 /** 订单告警统计（卡片钻取） */
 export function getOrderAlarmCount(params) {
-  return requestClient.get('/vehiclecharging/order-alarm/chart/count', { params });
+  return requestClient.get('/vehiclecharging/order-alarm/chart/count', {
+    params,
+  });
+}
+//   =============================关联字段钻取==========================
+/** 获取订单详情 */
+export function getOrderDetail(id) {
+  return requestClient.get('/vehiclecharging/order-list/get', {
+    params: { id },
+  });
+}
+/**
+ * 查询充电桩详情
+ * @param {object} params - { id }
+ * @returns {Promise}
+ */
+export function getChargingPileDetail(params) {
+  return requestClient.get('/vehiclecharging/charging-pile/get', { params });
 }

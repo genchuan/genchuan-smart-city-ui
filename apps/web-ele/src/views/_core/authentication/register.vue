@@ -10,12 +10,7 @@ import { isCaptchaEnable, isTenantEnable } from '@vben/hooks';
 import { $t } from '@vben/locales';
 import { useAccessStore } from '@vben/stores';
 
-import {
-  checkCaptcha,
-  getCaptcha,
-  getTenantByWebsite,
-  getTenantSimpleList,
-} from '#/api/core/auth';
+import { checkCaptcha, getCaptcha, getTenantSimpleList } from '#/api/core/auth';
 import { useAuthStore } from '#/store';
 
 defineOptions({ name: 'Register' });
@@ -32,37 +27,34 @@ const verifyRef = ref();
 
 const captchaType = 'blockPuzzle'; // 验证码类型：'blockPuzzle' | 'clickWord'
 
-/** 获取租户列表，并默认选中 */
+/** 获取租户列表，并默认选中"普通会员"租户 */
 const tenantList = ref<AuthApi.TenantResult[]>([]); // 租户列表
+const normalMemberTenantId = ref<null | number>(null); // 普通会员租户ID
 async function fetchTenantList() {
   if (!tenantEnable) {
     return;
   }
   try {
-    // 获取租户列表、域名对应租户
-    const websiteTenantPromise = getTenantByWebsite(window.location.hostname);
+    // 获取租户列表
     tenantList.value = await getTenantSimpleList();
 
-    // 选中租户：域名 > store 中的租户 > 首个租户
-    let tenantId: null | number = null;
-    const websiteTenant = await websiteTenantPromise;
-    if (websiteTenant?.id) {
-      tenantId = websiteTenant.id;
-    }
-    // 如果没有从域名获取到租户，尝试从 store 中获取
-    if (!tenantId && accessStore.tenantId) {
-      tenantId = accessStore.tenantId;
-    }
-    // 如果还是没有租户，使用列表中的第一个
-    if (!tenantId && tenantList.value?.[0]?.id) {
-      tenantId = tenantList.value[0].id;
-    }
+    // 查找租户名为"普通会员"的租户
+    const normalMemberTenant = tenantList.value.find(
+      (item) => item.name === '普通会员',
+    );
+
+    // 如果找到"普通会员"租户，则使用它，否则使用列表中的第一个
+    const tenantId =
+      normalMemberTenant?.id ?? tenantList.value?.[0]?.id ?? null;
+    normalMemberTenantId.value = tenantId;
 
     // 设置选中的租户编号
-    accessStore.setTenantId(tenantId);
-    registerRef.value
-      .getFormApi()
-      .setFieldValue('tenantId', tenantId?.toString());
+    if (tenantId) {
+      accessStore.setTenantId(tenantId);
+      registerRef.value
+        .getFormApi()
+        .setFieldValue('tenantId', tenantId.toString());
+    }
   } catch (error) {
     console.error('获取租户列表失败:', error);
   }
@@ -107,6 +99,7 @@ const formSchema = computed((): VbenFormSchema[] => {
           value: item.id.toString(),
         })),
         placeholder: $t('authentication.tenantTip'),
+        disabled: true,
       },
       fieldName: 'tenantId',
       label: $t('authentication.tenant'),

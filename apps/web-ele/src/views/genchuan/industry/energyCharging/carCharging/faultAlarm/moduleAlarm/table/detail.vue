@@ -1,4 +1,4 @@
-<!-- module-alarm/detail.vue -->
+<!-- module-alarm/table/detail.vue -->
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
@@ -26,7 +26,10 @@
   </DetailDrawer>
 
   <el-dialog v-model="voucherPreviewVisible" title="修复凭证预览" width="600px" center>
-    <div style="text-align: center"><img :src="voucherPreviewUrl" style="max-width: 100%" /></div>
+    <div style="text-align: center">
+      <iframe v-if="isPdf(voucherPreviewUrl)" :src="voucherPreviewUrl" width="100%" height="500px" />
+      <img v-else :src="voucherPreviewUrl" style="max-width: 100%" />
+    </div>
   </el-dialog>
 </template>
 
@@ -46,6 +49,8 @@ const drawerTitle = computed(() => {
 
 const voucherPreviewVisible = ref(false);
 const voucherPreviewUrl = ref('');
+
+const isPdf = (url) => url?.toLowerCase().endsWith('.pdf');
 
 const previewVoucher = (url) => {
   voucherPreviewUrl.value = url;

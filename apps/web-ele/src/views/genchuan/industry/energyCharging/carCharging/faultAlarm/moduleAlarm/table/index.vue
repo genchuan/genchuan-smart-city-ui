@@ -1,17 +1,45 @@
-<!-- module-alarm/table/index.vue -->
 <template>
   <div class="park-lot-table-new">
     <!-- 详情抽屉 -->
     <DetailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj" />
-
     <!-- 排查弹窗 -->
     <DebugDrawer ref="debugDrawerRef" @success="handleRefresh" />
-
     <!-- 修复弹窗 -->
     <RepairDrawer ref="repairDrawerRef" @success="handleRefresh" />
-
     <!-- 备注弹窗 -->
     <RemarkDrawer ref="remarkDrawerRef" @success="handleRefresh" />
+
+    <!-- 批量排查弹窗 -->
+    <el-dialog v-model="batchCheckVisible" title="批量排查" width="500px" :close-on-click-modal="false">
+      <el-form :model="batchCheckForm" label-width="100px">
+        <el-form-item label="排查原因" required>
+          <el-input v-model="batchCheckForm.checkReason" type="textarea" rows="4" placeholder="请输入排查原因" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="batchCheckVisible = false">取消</el-button>
+        <el-button type="primary" :loading="batchCheckLoading" @click="submitBatchCheck">确认排查</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 批量修复弹窗 -->
+    <el-dialog v-model="batchRepairVisible" title="批量修复" width="500px" :close-on-click-modal="false">
+      <el-form :model="batchRepairForm" label-width="100px">
+        <el-form-item label="修复凭证" required>
+          <el-upload ref="batchUploadRef" action="#" :auto-upload="false" :on-change="handleBatchFileChange" :limit="1" accept="image/*,application/pdf">
+            <el-button type="primary">选择文件</el-button>
+            <template #tip><div class="el-upload__tip">支持 jpg/png/pdf，不超过10MB</div></template>
+          </el-upload>
+          <div v-if="batchRepairForm.repairVoucherUrl" class="voucher-preview">
+            <el-link type="primary" @click="previewBatchVoucher">查看凭证</el-link>
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="batchRepairVisible = false">取消</el-button>
+        <el-button type="primary" :loading="batchRepairLoading" @click="submitBatchRepair">确认修复</el-button>
+      </template>
+    </el-dialog>
 
     <!-- 筛选抽屉 -->
     <Drawer title="筛选告警">
@@ -21,46 +49,44 @@
     <!-- 修复凭证预览弹窗 -->
     <el-dialog v-model="voucherPreviewVisible" title="修复凭证预览" width="600px" center>
       <div style="text-align: center">
-        <img :src="voucherPreviewUrl" style="max-width: 100%" referrerpolicy="no-referrer" />
+        <iframe v-if="isPdf(voucherPreviewUrl)" :src="voucherPreviewUrl" width="100%" height="500px" />
+        <img v-else :src="voucherPreviewUrl" style="max-width: 100%" referrerpolicy="no-referrer" />
       </div>
     </el-dialog>
 
     <Grid>
+      <!-- 筛选标签区域 -->
       <template #table-title>
         <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
           <el-tag v-if="searchParams.alarmCode" type="primary" closable @close="handleClearField('alarmCode')">告警编号：{{ searchParams.alarmCode }}</el-tag>
           <el-tag v-if="searchParams.moduleName" type="primary" closable @close="handleClearField('moduleName')">模块名称：{{ searchParams.moduleName }}</el-tag>
           <el-tag v-if="searchParams.abnormalType" type="primary" closable @close="handleClearField('abnormalType')">异常类型：{{ abnormalTypeMap[searchParams.abnormalType] || searchParams.abnormalType }}</el-tag>
           <el-tag v-if="searchParams.alarmLevel" type="primary" closable @close="handleClearField('alarmLevel')">告警等级：{{ alarmLevelMap[searchParams.alarmLevel] || searchParams.alarmLevel }}</el-tag>
-          <el-tag v-if="searchParams.alarmStatus" type="primary" closable @close="handleClearField('alarmStatus')">告警状态：{{ alarmStatusMap[searchParams.alarmStatus] || searchParams.alarmStatus }}</el-tag>
+          <el-tag v-if="searchParams.alarmStatus" type="primary" closable @close="handleClearField('alarmStatus')">
+            告警状态：{{ Array.isArray(searchParams.alarmStatus) ? searchParams.alarmStatus.map(s => alarmStatusMap[s] || s).join('、') : (alarmStatusMap[searchParams.alarmStatus] || searchParams.alarmStatus) }}
+          </el-tag>
           <el-tag v-if="searchParams.alarmTimeBegin" type="primary" closable @close="handleClearField('alarmTimeBegin')">告警时间：{{ searchParams.alarmTimeBegin }} 至 {{ searchParams.alarmTimeEnd }}</el-tag>
           <el-tag v-if="searchParams.repairTimeBegin" type="primary" closable @close="handleClearField('repairTimeBegin')">修复时间：{{ searchParams.repairTimeBegin }} 至 {{ searchParams.repairTimeEnd }}</el-tag>
           <el-tag v-if="searchParams.operator" type="primary" closable @close="handleClearField('operator')">操作人：{{ searchParams.operator }}</el-tag>
         </div>
       </template>
 
+      <!-- 工具栏按钮 -->
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="排查" icon-name="Edit" :disabled="!canBatchCheck" @click="handleBatchCheck" />
           <IconButton content="修复" icon-name="Tools" :disabled="!canBatchRepair" @click="handleBatchRepair" />
           <IconButton content="销账" icon-name="Finished" :disabled="!canBatchClose" @click="handleBatchClose" />
+          <IconButton content="导出" icon-name="download" @click="handleNormalExport" />
+<!--          <IconButton content="批量导出" icon-name="download" :disabled="checkedIds.length === 0" @click="handleBatchExport" />-->
+<!--          <IconButton content="打印" icon-name="Printer" @click="handlePrintAsPDF" />-->
           <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
-          <el-dropdown @command="handleExportWithType">
-            <IconButton content="导出" icon-name="download" />
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="Excel">Excel</el-dropdown-item>
-                <el-dropdown-item command="PDF">PDF</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-          <IconButton content="刷新" icon-name="Refresh" @click="handleRefresh" />
           <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
 
-      <!-- 自定义列模板（钻取交互） -->
+      <!-- 自定义列模板 -->
       <template #alarmCode="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary">{{ row.alarmCode }}</el-text>
       </template>
@@ -68,11 +94,11 @@
         <el-text @click="handleFieldClick('moduleName', row.moduleName)" type="primary">{{ row.moduleName }}</el-text>
       </template>
       <template #abnormalType="{ row }">
-        <el-text @click="handleFieldClick('abnormalType', row.abnormalType)" type="primary">{{ abnormalTypeMap[row.abnormalType] || row.abnormalType }}</el-text>
+        <el-text @click="handleFieldClick('abnormalType', row.abnormalType)" type="primary">{{ row.abnormalTypeName }}</el-text>
       </template>
       <template #alarmLevel="{ row }">
         <el-tag :type="row.alarmLevel === '严重' ? 'danger' : 'info'" @click="handleFieldClick('alarmLevel', row.alarmLevel)" style="cursor: pointer">
-          {{ alarmLevelMap[row.alarmLevel] || row.alarmLevel }}
+          {{ row.alarmLevelName }}
         </el-tag>
       </template>
       <template #alarmTime="{ row }">
@@ -80,7 +106,7 @@
       </template>
       <template #alarmStatus="{ row }">
         <el-tag :type="alarmStatusTagType(row.alarmStatus)" @click="handleFieldClick('alarmStatus', row.alarmStatus)" style="cursor: pointer">
-          {{ alarmStatusMap[row.alarmStatus] || row.alarmStatus }}
+          {{ row.alarmStatusName }}
         </el-tag>
       </template>
       <template #repairTime="{ row }">
@@ -100,25 +126,14 @@
       <template #actions="{ row }">
         <div class="table-toolbar-tools" style="display: flex; gap: 4px; flex-wrap: wrap; justify-content: center;">
           <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
-
-          <template v-if="row.alarmStatus === '未排查'">
-            <IconButton content="排查" icon-name="Edit" @click="handleCheck(row)" />
-            <IconButton content="备注" icon-name="Document" @click="handleRemark(row)" />
-          </template>
-          <template v-else-if="row.alarmStatus === '已排查'">
-            <IconButton content="修复" icon-name="Tools" @click="handleRepair(row)" />
-            <IconButton content="备注" icon-name="Document" @click="handleRemark(row)" />
-          </template>
-          <template v-else-if="row.alarmStatus === '修复中'">
-            <IconButton content="销账" icon-name="Finished" @click="handleClose(row)" />
-            <IconButton content="备注" icon-name="Document" @click="handleRemark(row)" />
-          </template>
-          <template v-else-if="row.alarmStatus === '已销账'">
-            <IconButton content="备注" icon-name="Document" @click="handleRemark(row)" />
-          </template>
+          <IconButton content="排查" icon-name="Edit" :disabled="row.alarmStatus !== '未排查'" @click="handleCheck(row)" />
+          <IconButton content="修复" icon-name="Tools" :disabled="row.alarmStatus !== '已排查'" @click="handleRepair(row)" />
+          <IconButton content="销账" icon-name="Finished" :disabled="row.alarmStatus !== '修复中'" @click="handleClose(row)" />
+          <IconButton content="备注" icon-name="Document" @click="handleRemark(row)" />
         </div>
       </template>
 
+      <!-- 底部统计 -->
       <template #bottom>
         <div class="common-total" @click="changeTotalShow">
           <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow"><ArrowDown /></el-icon>
@@ -139,9 +154,11 @@ import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 import dayjs from 'dayjs';
+import * as XLSX from 'xlsx';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import {
   getPageList,
@@ -150,6 +167,7 @@ import {
   closeAlarm,
   remarkAlarm,
   exportAlarm,
+  uploadRepairVoucher,
 } from '#/api/genchuan/industry/energyCharging/carCharging/faultAlarm/moduleAlarm/index.js';
 import DetailDrawer from './detail.vue';
 import DebugDrawer from './debugDrawer.vue';
@@ -168,11 +186,23 @@ const checkedIds = ref([]);
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
+  list: [],
   total: 0,
   currentPage: 1,
   pageSize: 10,
-  list: [],
 });
+
+// 批量排查相关
+const batchCheckVisible = ref(false);
+const batchCheckLoading = ref(false);
+const batchCheckForm = ref({ checkReason: '' });
+let batchCheckTargetIds = [];
+
+// 批量修复相关
+const batchRepairVisible = ref(false);
+const batchRepairLoading = ref(false);
+const batchRepairForm = ref({ repairVoucherUrl: '' });
+let batchRepairTargetIds = [];
 
 const detailDrawerRef = ref(null);
 const debugDrawerRef = ref(null);
@@ -180,33 +210,55 @@ const repairDrawerRef = ref(null);
 const remarkDrawerRef = ref(null);
 const voucherPreviewVisible = ref(false);
 const voucherPreviewUrl = ref('');
+const batchPreviewVisible = ref(false);
+const batchPreviewUrl = ref('');
+
+const isPdf = (url) => url?.toLowerCase().endsWith('.pdf');
+
+const convertSearchParams = (params) => {
+  const converted = { ...params };
+  if (Array.isArray(converted.alarmStatus)) {
+    converted.alarmStatus = converted.alarmStatus.join(',');
+  }
+  return converted;
+};
+
+function formatList(list) {
+  return (list || []).map(item => ({
+    ...item,
+    alarmTime: item.alarmTime ? dayjs(item.alarmTime).format('YYYY-MM-DD HH:mm:ss') : '-',
+    repairTime: item.repairTime ? dayjs(item.repairTime).format('YYYY-MM-DD HH:mm:ss') : null,
+    abnormalTypeName: abnormalTypeMap[item.abnormalType] || item.abnormalType || '-',
+    alarmLevelName: alarmLevelMap[item.alarmLevel] || item.alarmLevel || '-',
+    alarmStatusName: alarmStatusMap[item.alarmStatus] || item.alarmStatus || '-',
+  }));
+}
 
 const getTableData = async ({ page }) => {
   const params = {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
-    ...searchParams.value,
+    ...convertSearchParams(searchParams.value),
   };
   try {
     const res = await getPageList(params);
     const { list, total } = res;
-    dataObj.list = list.map(item => ({
-      ...item,
-      alarmTime: item.alarmTime ? dayjs(item.alarmTime).format('YYYY-MM-DD HH:mm:ss') : '-',
-      repairTime: item.repairTime ? dayjs(item.repairTime).format('YYYY-MM-DD HH:mm:ss') : null,
-    }));
+    dataObj.list = formatList(list);
     dataObj.total = total;
-    return dataObj;
+    dataObj.currentPage = page.currentPage;
+    dataObj.pageSize = page.pageSize;
+    return { list: dataObj.list, total };
   } catch (error) {
     console.error('表格数据获取失败', error);
     dataObj.list = [];
     dataObj.total = 0;
-    return dataObj;
+    return { list: [], total: 0 };
   }
 };
 
 function handleRefresh() {
   gridApi.query();
+  emit('refresh-chart');
 }
 
 function getStatusCount(status) {
@@ -253,11 +305,13 @@ function previewVoucher(url) {
   voucherPreviewVisible.value = true;
 }
 
-// 排查
+// 单条排查
 function handleCheck(row) {
-  debugDrawerRef.value.open(row.id);
+  debugDrawerRef.value.open(row.id, row.alarmCode);
 }
-async function handleBatchCheck() {
+
+// 批量排查
+function handleBatchCheck() {
   const validIds = checkedIds.value.filter(id => {
     const row = dataObj.list.find(item => item.id === id);
     return row?.alarmStatus === '未排查';
@@ -266,29 +320,42 @@ async function handleBatchCheck() {
     ElMessage.warning('请选择未排查状态的告警');
     return;
   }
-  await confirm(`确定对选中的 ${validIds.length} 条告警进行排查吗？`);
-  const loadingInstance = ElLoading.service({ text: '批量排查中...' });
+  batchCheckTargetIds = validIds;
+  batchCheckForm.value.checkReason = '';
+  batchCheckVisible.value = true;
+}
+
+async function submitBatchCheck() {
+  if (!batchCheckForm.value.checkReason.trim()) {
+    ElMessage.warning('请输入排查原因');
+    return;
+  }
+  batchCheckLoading.value = true;
   try {
-    // 批量排查需要逐条调用（或后端支持批量），此处循环调用
-    for (const id of validIds) {
-      await checkAlarm({ id, checkReason: '批量排查' });
-    }
-    ElMessage.success('批量排查成功');
+    const results = await Promise.allSettled(
+      batchCheckTargetIds.map(id => checkAlarm({ id, checkReason: batchCheckForm.value.checkReason }))
+    );
+    const succeeded = results.filter(r => r.status === 'fulfilled').length;
+    const failed = results.filter(r => r.status === 'rejected').length;
+    if (succeeded) ElMessage.success(`成功排查 ${succeeded} 条告警`);
+    if (failed) ElMessage.warning(`失败 ${failed} 条，请手动处理`);
     checkedIds.value = [];
-    emit('refresh-chart');
+    batchCheckVisible.value = false;
     handleRefresh();
   } catch (error) {
-    ElMessage.error(error.message || '批量排查失败');
+    ElMessage.error('批量排查失败');
   } finally {
-    loadingInstance.close();
+    batchCheckLoading.value = false;
   }
 }
 
-// 修复
+// 单条修复
 function handleRepair(row) {
-  repairDrawerRef.value.open(row.id);
+  repairDrawerRef.value.open(row.id, row.alarmCode);
 }
-async function handleBatchRepair() {
+
+// 批量修复
+function handleBatchRepair() {
   const validIds = checkedIds.value.filter(id => {
     const row = dataObj.list.find(item => item.id === id);
     return row?.alarmStatus === '已排查';
@@ -297,20 +364,50 @@ async function handleBatchRepair() {
     ElMessage.warning('请选择已排查状态的告警');
     return;
   }
-  await confirm(`确定对选中的 ${validIds.length} 条告警进行修复吗？`);
-  const loadingInstance = ElLoading.service({ text: '批量修复中...' });
+  batchRepairTargetIds = validIds;
+  batchRepairForm.value.repairVoucherUrl = '';
+  batchRepairVisible.value = true;
+}
+
+function handleBatchFileChange(file) {
+  const formData = new FormData();
+  formData.append('file', file.raw);
+  uploadRepairVoucher(formData).then(url => {
+    batchRepairForm.value.repairVoucherUrl = url;
+    ElMessage.success('凭证上传成功');
+  }).catch(() => {
+    ElMessage.error('凭证上传失败');
+  });
+}
+
+function previewBatchVoucher() {
+  if (batchRepairForm.value.repairVoucherUrl) {
+    batchPreviewUrl.value = batchRepairForm.value.repairVoucherUrl;
+    batchPreviewVisible.value = true;
+  }
+}
+
+async function submitBatchRepair() {
+  if (!batchRepairForm.value.repairVoucherUrl) {
+    ElMessage.warning('请上传修复凭证');
+    return;
+  }
+  batchRepairLoading.value = true;
   try {
-    for (const id of validIds) {
-      await repairAlarm({ id, repairVoucher: '批量修复凭证' });
-    }
-    ElMessage.success('批量修复成功');
+    const results = await Promise.allSettled(
+      batchRepairTargetIds.map(id => repairAlarm({ id, repairVoucher: batchRepairForm.value.repairVoucherUrl }))
+    );
+    const succeeded = results.filter(r => r.status === 'fulfilled').length;
+    const failed = results.filter(r => r.status === 'rejected').length;
+    if (succeeded) ElMessage.success(`成功修复 ${succeeded} 条告警`);
+    if (failed) ElMessage.warning(`失败 ${failed} 条，请手动处理`);
     checkedIds.value = [];
-    emit('refresh-chart');
+    batchRepairVisible.value = false;
     handleRefresh();
   } catch (error) {
-    ElMessage.error(error.message || '批量修复失败');
+    ElMessage.error('批量修复失败');
   } finally {
-    loadingInstance.close();
+    batchRepairLoading.value = false;
   }
 }
 
@@ -321,7 +418,6 @@ function handleClose(row) {
     try {
       await closeAlarm({ id: row.id });
       ElMessage.success('销账成功');
-      emit('refresh-chart');
       handleRefresh();
     } catch (error) {
       ElMessage.error(error.message || '销账失败');
@@ -330,6 +426,7 @@ function handleClose(row) {
     }
   });
 }
+
 async function handleBatchClose() {
   const validIds = checkedIds.value.filter(id => {
     const row = dataObj.list.find(item => item.id === id);
@@ -342,15 +439,15 @@ async function handleBatchClose() {
   await confirm(`确定对选中的 ${validIds.length} 条告警进行销账吗？`);
   const loadingInstance = ElLoading.service({ text: '批量销账中...' });
   try {
-    for (const id of validIds) {
-      await closeAlarm({ id });
-    }
-    ElMessage.success('批量销账成功');
+    const results = await Promise.allSettled(validIds.map(id => closeAlarm({ id })));
+    const succeeded = results.filter(r => r.status === 'fulfilled').length;
+    const failed = results.filter(r => r.status === 'rejected').length;
+    if (succeeded) ElMessage.success(`成功销账 ${succeeded} 条告警`);
+    if (failed) ElMessage.warning(`失败 ${failed} 条，请手动处理`);
     checkedIds.value = [];
-    emit('refresh-chart');
     handleRefresh();
   } catch (error) {
-    ElMessage.error(error.message || '批量销账失败');
+    ElMessage.error('批量销账失败');
   } finally {
     loadingInstance.close();
   }
@@ -358,29 +455,131 @@ async function handleBatchClose() {
 
 // 备注
 function handleRemark(row) {
-  remarkDrawerRef.value.open(row.id, row.remark);
+  remarkDrawerRef.value.open(row.id, row.alarmCode, row.remark);
 }
 
-async function handleExportWithType(exportType) {
-  if (exportType === 'PDF') {
-    ElMessage.info('PDF导出功能开发中');
-    return;
-  }
-  const loadingInstance = ElLoading.service({ text: '正在导出...' });
+// ==================== 导出功能 ====================
+async function handleNormalExport() {
+  const loadingInstance = ElLoading.service({ text: '正在获取数据...' });
   try {
-    const params = { ...searchParams.value, exportType };
-    const blob = await exportAlarm(params);
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `模块告警列表_${dayjs().format('YYYYMMDD')}.xlsx`;
-    link.click();
-    window.URL.revokeObjectURL(url);
+    const params = {
+      ...convertSearchParams(searchParams.value),
+      pageNo: 1,
+      pageSize: 200,
+    };
+    let allData = [];
+    let hasMore = true;
+    while (hasMore) {
+      const res = await getPageList(params);
+      const { list, total } = res;
+      if (list && list.length > 0) {
+        const formatted = formatList(list);
+        allData = allData.concat(formatted);
+        params.pageNo++;
+        if (list.length < params.pageSize) hasMore = false;
+      } else {
+        hasMore = false;
+      }
+    }
+    if (allData.length === 0) {
+      ElMessage.warning('没有数据可导出');
+      return;
+    }
+    const allColumns = useGridColumns();
+    const exportColumns = allColumns.filter(
+      col => col.field && col.type !== 'checkbox' && col.title !== '操作'
+    ).map(col => ({ field: col.field, title: col.title }));
+    const wsData = [exportColumns.map(col => col.title)];
+    allData.forEach(row => {
+      const rowData = exportColumns.map(col => {
+        let val = row[col.field];
+        if (col.field === 'repairVoucher') val = val || '-';
+        return val ?? '-';
+      });
+      wsData.push(rowData);
+    });
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, '模块告警');
+    XLSX.writeFile(wb, `模块告警列表_${dayjs().format('YYYYMMDDHHmmss')}.xlsx`);
     ElMessage.success('导出成功');
   } catch (error) {
+    console.error('导出失败', error);
     ElMessage.error(error.message || '导出失败');
   } finally {
     loadingInstance.close();
+  }
+}
+
+async function handleBatchExport() {
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请至少选择一条告警');
+    return;
+  }
+  const selectedRows = dataObj.list.filter(item => checkedIds.value.includes(item.id));
+  if (selectedRows.length === 0) {
+    ElMessage.warning('选中的数据不在当前页，请刷新后重试');
+    return;
+  }
+  const loading = ElLoading.service({ text: '正在生成批量导出文件...' });
+  const wb = XLSX.utils.book_new();
+  const allColumns = useGridColumns();
+  const exportColumns = allColumns.filter(
+    col => col.field && col.type !== 'checkbox' && col.title !== '操作'
+  ).map(col => ({ field: col.field, title: col.title }));
+  try {
+    for (const row of selectedRows) {
+      const rowForSheet = {};
+      exportColumns.forEach(col => {
+        let val = row[col.field];
+        if (col.field === 'repairVoucher') val = val || '-';
+        rowForSheet[col.title] = val ?? '-';
+      });
+      const ws = XLSX.utils.json_to_sheet([rowForSheet]);
+      let sheetName = (row.alarmCode || `告警_${row.id}`).replace(/[\\/:*?"<>|]/g, '_');
+      if (sheetName.length > 31) sheetName = sheetName.substring(0, 28) + '...';
+      let finalSheetName = sheetName;
+      let counter = 1;
+      while (wb.SheetNames.includes(finalSheetName)) {
+        finalSheetName = `${sheetName}_${counter++}`;
+      }
+      XLSX.utils.book_append_sheet(wb, ws, finalSheetName);
+    }
+    if (wb.SheetNames.length === 0) {
+      ElMessage.warning('没有有效数据可导出');
+      return;
+    }
+    const fileName = `模块告警批量导出_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    ElMessage.success('批量导出成功');
+  } catch (error) {
+    console.error('批量导出失败', error);
+    ElMessage.error(error.message || '批量导出失败');
+  } finally {
+    loading.close();
+  }
+}
+
+function handlePrintAsPDF() {
+  const printContent = document.querySelector('.vxe-table');
+  if (printContent) {
+    const originalTitle = document.title;
+    document.title = '模块告警列表';
+    const win = window.open('', '_blank');
+    win.document.write(`
+      <html>
+        <head><title>模块告警列表</title>
+        <style>body { font-family: sans-serif; } table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }</style>
+        </head>
+        <body>${printContent.outerHTML}</body>
+      </html>
+    `);
+    win.document.close();
+    win.print();
+    win.close();
+    document.title = originalTitle;
+  } else {
+    ElMessage.warning('无法获取表格内容');
   }
 }
 
@@ -395,13 +594,21 @@ function resetFilter() {
 }
 
 function setFilter(filters) {
-  if (Object.keys(filters).length === 0) {
+  if (!filters || Object.keys(filters).length === 0) {
     resetFilter();
-  } else {
-    Object.assign(searchParams.value, filters);
-    queryFormApi.setValues(filters);
-    handleRefresh();
+    return;
   }
+  const processedFilters = { ...filters };
+  if (Array.isArray(processedFilters.alarmStatus)) {
+    if (processedFilters.alarmStatus.length === 0) {
+      delete processedFilters.alarmStatus;
+    } else {
+      processedFilters.alarmStatus = processedFilters.alarmStatus.join(',');
+    }
+  }
+  Object.assign(searchParams.value, processedFilters);
+  queryFormApi.setValues(processedFilters);
+  handleRefresh();
 }
 
 const canBatchCheck = computed(() => {
@@ -478,5 +685,3 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 defineExpose({ setFilter, resetFilter });
 </script>
-
-

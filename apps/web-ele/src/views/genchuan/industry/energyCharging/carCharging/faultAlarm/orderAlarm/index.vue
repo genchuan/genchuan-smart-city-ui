@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 
 import { ElMessage } from 'element-plus';
 
@@ -48,10 +48,10 @@ const fetchStatsData = async () => {
           status: 'all',
         },
         {
-          title: '未处理数',
-          value: (data.cardData?.unVerifyCount || 0) + (data.cardData?.verifiedCount || 0) + (data.cardData?.handlingCount || 0),
-          color: '#FF9F40',
-          status: 'unhandled',
+          title: '处理中',
+          value: data.cardData?.handlingCount || 0,
+          color: '#A17FE0',
+          status: 'handling',
         },
         {
           title: '处理完成数',
@@ -86,7 +86,10 @@ const handleCardClick = async (status) => {
   await nextTick();
   // 使用setTimeout确保表格组件已完全挂载
   setTimeout(() => {
-    if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
+    if (
+      tableRef.value &&
+      typeof tableRef.value.handleStatsFilter === 'function'
+    ) {
       tableRef.value.handleStatsFilter('status', status);
     } else {
       console.warn('tableRef not ready or handleStatsFilter not available');
@@ -98,7 +101,10 @@ const handleCardClick = async (status) => {
 const handlePieClick = async (abnormalTypeName) => {
   await nextTick();
   setTimeout(() => {
-    if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
+    if (
+      tableRef.value &&
+      typeof tableRef.value.handleStatsFilter === 'function'
+    ) {
       tableRef.value.handleStatsFilter('abnormalType', abnormalTypeName);
     } else {
       console.warn('tableRef not ready or handleStatsFilter not available');
@@ -110,7 +116,10 @@ const handlePieClick = async (abnormalTypeName) => {
 const handleLineClick = async (date) => {
   await nextTick();
   setTimeout(() => {
-    if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
+    if (
+      tableRef.value &&
+      typeof tableRef.value.handleStatsFilter === 'function'
+    ) {
       tableRef.value.handleStatsFilter('date', date);
     } else {
       console.warn('tableRef not ready or handleStatsFilter not available');

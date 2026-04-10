@@ -379,10 +379,12 @@ const [CreateForm, createFormApi] = useVbenForm({
     const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '保存中...'});
     try {
       let res;
+      // 新增或编辑时均携带 status 字段（后端要求必填）
+      const submitData = { ...values, status: '待审核' };
       if (isEditMode.value) {
-        res = await updateHonorMgmt({...values, id: currentEditId.value});
+        res = await updateHonorMgmt({ ...submitData, id: currentEditId.value });
       } else {
-        res = await createHonorMgmt(values);
+        res = await createHonorMgmt(submitData);
       }
       if (res === true) {
         ElMessage.success(isEditMode.value ? '更新成功' : '新增成功');
@@ -398,7 +400,7 @@ const [CreateForm, createFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useCreateFormSchema(isEditMode.value),
   showCollapseButton: false,
-  submitButtonOptions: {content: isEditMode.value ? '保存' : '新增'},
+  submitButtonOptions: {content: '保存'},
 });
 
 // 查看详情
