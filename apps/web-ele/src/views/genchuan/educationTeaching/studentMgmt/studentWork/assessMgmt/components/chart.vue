@@ -143,7 +143,7 @@ onMounted(() => {
     <!-- 雷达图：班级多维度考评得分 -->
     <div class="chart-wrapper" style="flex: 1 !important;">
       <Radar
-        title="班级多维度考评得分"
+        title-text="班级多维度考评得分"
         :indicator="radarIndicator"
         :series="radarSeries"
         @radar-click="handleRadarClick"
