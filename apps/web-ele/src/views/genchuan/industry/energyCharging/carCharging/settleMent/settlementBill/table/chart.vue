@@ -1,6 +1,6 @@
 <script setup>
 import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
-import { getSettlementBillChart} from '#/api/genchuan/industry/energyCharging/carCharging/settlementBill/index.js';
+import { getSettlementBillChart} from '#/api/genchuan/industry/energyCharging/carCharging/settlement/settlementBill/index.js';
 import { ElDialog, ElMessage } from 'element-plus'; 
 import * as echarts from 'echarts'; 
 const state = reactive({
