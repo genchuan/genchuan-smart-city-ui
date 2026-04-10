@@ -385,9 +385,9 @@ const openEn = async (row) => {
             icon-name="download"
             @click="handlePDF"
           /> 
-          <IconButton
-            content="搜索"
-            icon-name="search"
+        <IconButton
+            content="配置"
+            icon-name="setting"
             @click="handleSerachShow"
           />
           <IconButton

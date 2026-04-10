@@ -234,12 +234,12 @@ export function getViolationAnalyticsPage(params) {
 }
 
 /** 导出excel */
-export function exporViolationAnalyticsExcel() {
-  return requestClient.download('/kitchen/violation-analytics/export-excel');
+export function exporViolationAnalyticsExcel(params) {
+  return requestClient.download('/kitchen/violation-analytics/export-excel', {params});
 }
 /** 导出pdf */
-export function exporViolationAnalyticsPDF() {
-  return requestClient.download('/kitchen/violation-analytics/export-list-pdf');
+export function exporViolationAnalyticsPDF(params) {
+  return requestClient.download('/kitchen/violation-analytics/export-list-pdf', {params});
 }
 
 /** 钻取企业违规数据分析 */

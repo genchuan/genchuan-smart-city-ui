@@ -111,7 +111,7 @@ const updateCharts = () => {
         },
       ],
       series: [
-        { name: '排名', data: chartData.value.lineData },
+        { name: '违规次数', data: chartData.value.lineData },
       ],
     });
   }
@@ -138,7 +138,7 @@ const getBarOption = () => {
   return {
     backgroundColor: 'transparent',
     title: {
-      text: '企业排名',
+      text: '违规次数',
       left: 'center',
       top: 5,
       textStyle: { color: '#6E7E91', fontSize: 14, fontWeight: 500 },
@@ -152,7 +152,7 @@ const getBarOption = () => {
     },
     color: freshColors,
     legend: {
-      data: ['排名'],
+      data: ['违规次数'],
       bottom: 10,
     },
     grid: {
@@ -181,7 +181,7 @@ const getBarOption = () => {
     yAxis: [
       {
         type: 'value',
-        name: '排名',
+        name: '违规次数',
         position: 'left',
         axisLabel: {
           color: '#9AA8B7',
@@ -286,7 +286,7 @@ const getLineOption = () => {
     ],
     series: [
       {
-        name: '排名',
+        name: '违规次数',
         type: 'line',
         data: chartData.value.lineData,
         yAxisIndex: 0,
