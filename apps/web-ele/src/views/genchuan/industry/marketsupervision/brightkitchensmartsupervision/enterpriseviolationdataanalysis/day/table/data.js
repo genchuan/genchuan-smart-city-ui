@@ -33,7 +33,7 @@ export function useGridColumns() {
     },
     {
       field: 'timeLabel',
-      title: '图表展示格式',
+      title: '时间纬度',
       minWidth: 200,
       sortable: true,
     }, 

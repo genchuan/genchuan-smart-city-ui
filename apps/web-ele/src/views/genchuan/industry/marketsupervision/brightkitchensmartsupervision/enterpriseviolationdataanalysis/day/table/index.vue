@@ -103,7 +103,7 @@ function handleRefresh() {
 
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
-  const data = await exporViolationAnalyticsExcel();
+  const data = await exporViolationAnalyticsExcel(dataObj.getParams);
   downloadFileFromBlobPart({
     fileName: '企业违规数据分析.xls',
     source: data,
@@ -112,7 +112,7 @@ async function handleExport() {
 
 // ====================== 导出PDF ======================
 async function handlePDF() {
-  const data = await exporViolationAnalyticsPDF();
+  const data = await exporViolationAnalyticsPDF(dataObj.getParams);
   downloadFileFromBlobPart({
     fileName: '企业违规数据分析.pdf',
     source: data,
@@ -185,6 +185,7 @@ const getTableData = async (pageObj) => {
     pageSize: pageObj.page.pageSize,
     ...dataObj.serachObj,
   };
+  dataObj.getParams = getParams;
   const data = await getViolationAnalyticsPage(getParams);
   dataObj.total = data.total;
   dataObj.list = data.list;
@@ -357,7 +358,7 @@ const rectifyFinishList = ref([]);
 
 // 打开告警明细弹窗
 const oepnalarmCount = async (row, type) => {
-  const data = await getViolationAnalyticsDrill({ entId: row.entId });
+  const data = await getViolationAnalyticsDrill({ entId: row.entId ,...dataObj.getParams});
 
   if (type === 'noAi') {
     rectifyReviewList.value = data.rectifyReviewDOList.map((item) => ({
@@ -414,21 +415,18 @@ const alarmDrillColumns = [
 ];
 
 // 整改复审台账列
-const rectifyReviewColumns = [
-  { label: 'ID', prop: 'id', width: 80 },
+const rectifyReviewColumns = [ 
   { label: '整改通知书id', prop: 'rectifyNoticeId', width: 150 },
   { label: '台账编号', prop: 'ledgerCode', width: 200 },
-  { label: '企业ID', prop: 'entId', width: 120 },
-  { label: '违规类型ID', prop: 'illegalTypeId', width: 150 },
-  { label: '违规等级ID', prop: 'illegalLevelId', width: 150 },
-  { label: '违规证据链接', prop: 'evidenceUrl', width: 400 },
+  { label: '违规类型', prop: 'illegalTypeName', width: 120 },
+  { label: '违规等级', prop: 'illegalLevelName', width: 150 }, 
+  { label: '违规证据链接', prop: 'evidenceUrl', width: 400, slot: 'evidenceUrl' },
   { label: '草拟时间', prop: 'draftTime', width: 180 },
   { label: '整改截至时间', prop: 'rectifyDeadlineTime', width: 180 },
   { label: '复审状态', prop: 'reviewStatus', width: 120 },
   { label: '复审人ID', prop: 'reviewBy', width: 120 },
   { label: '复审时间', prop: 'reviewTime', width: 180 },
-  { label: '撤销时间', prop: 'cancelTime', width: 180 },
-  { label: '撤销原因ID', prop: 'cancelReasonId', width: 150 },
+  { label: '撤销时间', prop: 'cancelTime', width: 180 }, 
   { label: '执法复审台账编号', prop: 'lawLedgerCode', width: 200 },
   { label: '整改通知书编号', prop: 'rectifyNoticeCode', width: 200 }, 
 ];
@@ -448,18 +446,13 @@ const deviceNormalColumns = [
 const rectifyFinishColumns = [
   { label: 'ID', prop: 'id', width: 80 },
   { label: '整改通知书id', prop: 'rectifyNoticeId', width: 150 },
-  { label: '台账编号', prop: 'ledgerCode', width: 200 },
-  { label: '企业ID', prop: 'entId', width: 120 },
-  { label: '违规类型ID', prop: 'illegalTypeId', width: 150 },
-  { label: '违规等级ID', prop: 'illegalLevelId', width: 150 },
-  { label: '违规证据链接', prop: 'evidenceUrl', width: 400 },
+  { label: '台账编号', prop: 'ledgerCode', width: 200 }, 
+  { label: '违规证据链接', prop: 'evidenceUrl', width: 400, slot: 'evidenceUrl' },
   { label: '草拟时间', prop: 'draftTime', width: 180 },
   { label: '整改截至时间', prop: 'rectifyDeadlineTime', width: 180 },
-  { label: '复审状态', prop: 'reviewStatus', width: 120 },
-  { label: '复审人ID', prop: 'reviewBy', width: 120 },
+  { label: '复审状态', prop: 'reviewStatus', width: 120 }, 
   { label: '复审时间', prop: 'reviewTime', width: 180 },
-  { label: '撤销时间', prop: 'cancelTime', width: 180 },
-  { label: '撤销原因ID', prop: 'cancelReasonId', width: 150 },
+  { label: '撤销时间', prop: 'cancelTime', width: 180 }, 
   { label: '执法复审台账编号', prop: 'lawLedgerCode', width: 200 },
   { label: '整改通知书编号', prop: 'rectifyNoticeCode', width: 200 }, 
 ];
@@ -504,16 +497,27 @@ const rectifyFinishColumns = [
     </ElDialog>
 
     <!-- 整改复审台账弹窗 -->
-    <ElDialog v-model="rectifyReviewVisible" title="整改复审台账" width="1200px" append-to-body>
+    <ElDialog v-model="rectifyReviewVisible" title="违规详情" width="1200px" append-to-body>
       <el-table :data="rectifyReviewList" border height="450">
         <el-table-column v-for="col in rectifyReviewColumns" :key="col.prop" :label="col.label" :prop="col.prop"
           :width="col.width">
+          <template #default="{ row }" v-if="col.slot === 'evidenceUrl'">
+            <div v-if="row.evidenceUrl">
+              <img
+                v-for="(item, index) in JSON.parse(row.evidenceUrl)"
+                :key="index"
+                :src="item.url"
+                style="width: 80px; height: 80px; margin-right: 10px;"
+                alt="违规证据"
+              />
+            </div>
+          </template>
         </el-table-column>
       </el-table>
     </ElDialog>
 
     <!-- 设备正常率弹窗 -->
-    <ElDialog v-model="deviceNormalVisible" title="设备正常率" width="1200px" append-to-body>
+    <ElDialog v-model="deviceNormalVisible" title="正常设备列表" width="1200px" append-to-body>
       <el-table :data="deviceNormalList" border height="450">
         <el-table-column v-for="col in deviceNormalColumns" :key="col.prop" :label="col.label" :prop="col.prop"
           :width="col.width">
@@ -522,10 +526,21 @@ const rectifyFinishColumns = [
     </ElDialog>
 
     <!-- 整改完成率弹窗 -->
-    <ElDialog v-model="rectifyFinishVisible" title="整改完成率" width="1200px" append-to-body>
+    <ElDialog v-model="rectifyFinishVisible" title="已完成的整改" width="1200px" append-to-body>
       <el-table :data="rectifyFinishList" border height="450">
         <el-table-column v-for="col in rectifyFinishColumns" :key="col.prop" :label="col.label" :prop="col.prop"
           :width="col.width">
+          <template #default="{ row }" v-if="col.slot === 'evidenceUrl'">
+            <div v-if="row.evidenceUrl">
+              <img
+                v-for="(item, index) in JSON.parse(row.evidenceUrl)"
+                :key="index"
+                :src="item.url"
+                style="width: 80px; height: 80px; margin-right: 10px;"
+                alt="违规证据"
+              />
+            </div>
+          </template>
         </el-table-column>
       </el-table>
     </ElDialog>
@@ -580,8 +595,7 @@ const rectifyFinishColumns = [
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton content="删除" icon-name="delete" color="#F56C6C" @click="handleDelete(row)" />
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" /> 
         </div>
       </template>
 
