@@ -364,7 +364,7 @@ const openEn = async (row) => {
       :detail-obj="dataObj.detailObj"
     />
     <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" />
-    <Drawer title="搜索">
+    <Drawer title="配置">
       <QueryForm class="query-form" />
     </Drawer>
     <Grid>
