@@ -3,6 +3,9 @@ import { ref } from 'vue';
 
 import { Tinyflow } from '@tinyflow-ai/vue';
 
+// 先导入 Tailwind 基础样式，再导入 tinyflow 样式
+// 避免 '@layer base' is used but no matching '@tailwind base' directive 错误
+import '@vben/styles/global';
 import '@tinyflow-ai/vue/dist/index.css';
 
 defineProps<{
