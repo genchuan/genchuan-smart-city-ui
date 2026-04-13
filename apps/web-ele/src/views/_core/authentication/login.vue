@@ -193,13 +193,13 @@ const formSchema = computed((): VbenFormSchema[] => {
       @submit="handleLogin"
       @third-login="handleThirdLogin"
     />
-    <!--    <AuthenticationLogin-->
-    <!--      ref="loginRef"-->
-    <!--      :form-schema="formSchema"-->
-    <!--      :loading="authStore.loginLoading"-->
-    <!--      @submit="handleLogin"-->
-    <!--      @third-login="handleThirdLogin"-->
-    <!--    />-->
+<!--    <AuthenticationLogin-->
+<!--      ref="loginRef"-->
+<!--      :form-schema="formSchema"-->
+<!--      :loading="authStore.loginLoading"-->
+<!--      @submit="handleLogin"-->
+<!--      @third-login="handleThirdLogin"-->
+<!--    />-->
     <Verification
       ref="verifyRef"
       v-if="captchaEnable"
