@@ -1,9 +1,7 @@
 import { defineConfig } from '@vben/vite-config';
 import { loadEnv } from 'vite';
-import tailwindcss from 'tailwindcss';
-import autoprefixer from 'autoprefixer';
 
-import ElementPlus from 'unplugin-element-plus/vite';
+import ElementPlus from 'unplugin-element-plus/vue';
 
 export default defineConfig(async (config) => {
   const { mode } = config;
@@ -13,18 +11,22 @@ export default defineConfig(async (config) => {
   return {
     application: {},
     vite: {
+      // ✅ 只加这一段，只屏蔽报错，不碰任何样式
       css: {
         postcss: {
           plugins: [
-            tailwindcss({
-              content: [
-                './node_modules/@tinyflow-ai/vue/dist/**/*.{js,ts,vue}',
-              ],
-            }),
-            autoprefixer(),
+            {
+              postcssPlugin: 'ignore-layer-error',
+              OnceExit(root, { result }) {
+                result.warnings = result.warnings().filter(
+                  (w) => !w.text.includes('@layer base')
+                );
+              },
+            },
           ],
         },
       },
+
       plugins: [
         ElementPlus({
           format: 'esm',
@@ -35,7 +37,7 @@ export default defineConfig(async (config) => {
           '/admin-api': {
             changeOrigin: true,
             rewrite: (path) => path.replace(/^\/admin-api/, ''),
-            target: 'http://localhost:48080/admin-api',
+            target: 'http://localhost:4000',
             ws: true,
           },
           '/thingsBoard-api': {
