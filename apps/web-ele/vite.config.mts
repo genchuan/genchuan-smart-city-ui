@@ -9,6 +9,26 @@ export default defineConfig(async (config) => {
   return {
     application: {},
     vite: {
+      
+      // ✅ 只加这一小段！只屏蔽报错，不修改任何样式！
+      css: {
+        postcss: {
+          plugins: [
+            {
+              postcssPlugin: 'ignore-warning',
+              OnceExit(_, result) {
+                const warnings = result.warnings();
+                for (const w of warnings) {
+                  if (w.text.includes('@layer base')) {
+                    result.messages = result.messages.filter(m => m !== w);
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+
       server: {
         proxy: {
           '/admin-api': {
