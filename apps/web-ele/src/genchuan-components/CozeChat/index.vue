@@ -35,7 +35,7 @@ onMounted(() => {
     },
     ui: {
       base: {
-        icon: 'http://112.47.127.21:9000/shunchang/20260303/aiLogo_1772526483764.png',
+        icon: 'http://112.47.127.21:9000/genchuan/20260413/aiLogo_1776040158423.png',
       },
     },
   });
