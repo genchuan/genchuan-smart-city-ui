@@ -1,6 +1,8 @@
 import { defineConfig } from '@vben/vite-config';
 import { loadEnv } from 'vite';
 
+import ElementPlus from 'unplugin-element-plus/vite';
+
 export default defineConfig(async (config) => {
   const { mode } = config;
   const root = process.cwd();
@@ -9,32 +11,18 @@ export default defineConfig(async (config) => {
   return {
     application: {},
     vite: {
-      
-      // ✅ 只加这一小段！只屏蔽报错，不修改任何样式！
-      css: {
-        postcss: {
-          plugins: [
-            {
-              postcssPlugin: 'ignore-warning',
-              OnceExit(_, result) {
-                const warnings = result.warnings();
-                for (const w of warnings) {
-                  if (w.text.includes('@layer base')) {
-                    result.messages = result.messages.filter(m => m !== w);
-                  }
-                }
-              }
-            }
-          ]
-        }
-      },
-
+      plugins: [
+        ElementPlus({
+          format: 'esm',
+        }),
+      ],
       server: {
         proxy: {
           '/admin-api': {
             changeOrigin: true,
             rewrite: (path) => path.replace(/^\/admin-api/, ''),
-            target: 'http://localhost:4000',
+            // mock代理目标地址
+            target: 'http://localhost:48080/admin-api',
             ws: true,
           },
           '/thingsBoard-api': {
