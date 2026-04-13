@@ -1,268 +1,236 @@
-<!-- index.vue 内部-->
+<!-- dashboard/todo/task/table/index.vue -->
 <script setup>
-import { computed, reactive, ref } from 'vue';
-
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
-
+import { ref, reactive, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { useVbenDrawer } from '@vben/common-ui';
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
-
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
-// 引入封装后的详情抽屉组件
-import TaskDetailDrawer from '#/views/dashboard/todo/task/table/detail.vue';
 
-import { dataList, textObj, useFormSchema, useGridColumns } from './data';
+// BPM 任务接口
+import {
+  getTaskTodoPage,
+  getTaskDonePage,
+  getTaskManagerPage,
+} from '#/api/bpm/task';
+import { getProcessInstanceMyPage } from '#/api/bpm/processInstance';
+
+import { textObj, useGridColumns } from './data';
 
 const props = defineProps({
-  secondShow: {
-    type: Boolean,
-    default: false,
-  },
-  arrowShow: {
-    type: Boolean,
-    default: false,
-  },
-  arrowState: {
-    type: Boolean,
-    default: false,
-  },
+  secondShow: { type: Boolean, default: false },
+  arrowShow: { type: Boolean, default: false },
+  arrowState: { type: Boolean, default: false },
 });
 const emit = defineEmits(['arrow-change']);
-const getTitle = computed(() => {
-  return formData.value?.id ? textObj.editText : textObj.addText;
-});
+const router = useRouter();
 
-const [Drawer, drawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  onCancel() {
-    drawerApi.close();
-  },
-  onConfirm() {},
-  async onOpenChange() {},
-});
-// 移除原 DetailDrawer 初始化逻辑
-const formData = ref();
-const [Form, formApi] = useVbenForm({
-  commonConfig: {
-    componentProps: {
-      class: 'w-full',
-    },
-    formItemClass: 'col-span-2',
-    labelWidth: 80,
-  },
-  layout: 'horizontal',
-  schema: useFormSchema(),
-  showDefaultActions: false,
-});
-const [FormDrawer, formDrawerApi] = useVbenDrawer({
-  appendToMain: true,
-  modal: false,
-  onCancel() {
-    formDrawerApi.close();
-  },
-  onConfirm() {
-    const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-      taskObj.apilist.push(obj);
-    } else {
-      taskObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          taskObj.apilist[i] = obj;
-        }
-      });
-    }
-    handleRefresh();
-    formDrawerApi.close();
-  },
-  async onOpenChange(isOpen) {
-    if (isOpen) {
-      formData.value = formDrawerApi.getData();
-      if (formData.value?.id) {
-        await formApi.setValues(formData.value);
-      } else {
-        formApi.resetForm();
-      }
-    }
-  },
-});
-/** 刷新表格 */
-function handleRefresh() {
-  gridApi.query();
-}
-
-/** 导出表格 */
-async function handleExport() {
-  exportToExcel(taskObj.apilist, textObj.excelName, textObj.excelAllName);
-}
-
-/** 创建任务 */
-function handleCreate() {
-  formDrawerApi
-    .setData({
-      title: textObj.addText,
-    })
-    .open();
-}
-
-/** 编辑任务 */
-function handleEdit(row) {
-  formDrawerApi
-    .setData({
-      title: textObj.editText,
-      ...row,
-    })
-    .open();
-}
-
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.taskName]),
-  });
-  try {
-    taskObj.apilist = taskObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.taskName]));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
-}
-
-async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
-  });
-  try {
-    taskObj.apilist = taskObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
-}
-
+// 状态
+const activeName = ref('待处理');
+const searchParams = ref({});
 const checkedIds = ref([]);
-function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map((item) => item.id);
-}
 
-const taskObj = reactive({
-  totalShow: false,
-  detailObj: {}, // 保留详情对象用于传递给组件
-  total: dataList().length,
+// 分页及数据容器（仿充电桩模块写法）
+const dataObj = reactive({
+  list: [],
+  total: 0,
   currentPage: 1,
   pageSize: 10,
-  apilist: dataList(),
-  list: [],
 });
 
-const changeTotalShow = () => {
-  taskObj.totalShow = !taskObj.totalShow;
-};
-
-// 表格数据获取
-const getTableData = (pageObj) => {
-  const page = pageObj.page;
-
-  let filteredList = taskObj.apilist;
-  if (activeName.value === '待处理') {
-    filteredList = taskObj.apilist.filter(v => v.taskStatus === '待处理');
-  } else if (activeName.value === '处理中') {
-    filteredList = taskObj.apilist.filter(v => v.taskStatus === '处理中');
-  } else if (activeName.value === '已完成') {
-    filteredList = taskObj.apilist.filter(v => v.taskStatus === '已完成');
-  } else if (activeName.value === '我发起的') {
-    filteredList = taskObj.apilist.filter(v => v.taskStatus !== '我发起的');
+// ==================== 表格数据获取 ====================
+const getTableData = async ({ page }) => {
+  console.log('🚀 获取任务数据，模块：', activeName.value, 'page:', page);
+  const params = {
+    pageNo: page.currentPage,
+    pageSize: page.pageSize,
+    ...searchParams.value,
+  };
+  try {
+    let res;
+    switch (activeName.value) {
+      case '待处理':
+        res = await getTaskTodoPage(params);
+        dataObj.total = res.total;
+        dataObj.list = (res.list || []).map(item => ({
+          id: item.id,
+          taskName: item.name,
+          taskType: item.processInstance?.processDefinition?.categoryName || '通用',
+          priority: item.processInstance?.variables?.emergencyDegree || '中',
+          assigner: item.processInstance?.startUser?.nickname || item.ownerUser?.nickname || '-',
+          deadline: item.processInstance?.variables?.deadline || '-',
+          taskStatus: item.status === 0 ? '待处理' : (item.status === 1 ? '处理中' : '已完成'),
+          currentProgress: item.status === 2 ? '100%' : (item.status === 1 ? '50%' : '0%'),
+          processInstanceId: item.processInstanceId,
+        }));
+        break;
+      case '处理中':
+        res = await getTaskDonePage(params);
+        dataObj.total = res.total;
+        dataObj.list = (res.list || []).map(item => ({
+          id: item.id,
+          taskName: item.name,
+          taskType: item.processInstance?.processDefinition?.categoryName || '通用',
+          priority: item.processInstance?.variables?.emergencyDegree || '中',
+          assigner: item.processInstance?.startUser?.nickname || '-',
+          deadline: item.processInstance?.variables?.deadline || '-',
+          taskStatus: item.status === 2 ? '已完成' : (item.status === 1 ? '处理中' : '待处理'),
+          currentProgress: item.status === 2 ? '100%' : (item.status === 1 ? '50%' : '0%'),
+          processInstanceId: item.processInstanceId,
+        }));
+        break;
+      case '已完成':
+        // 已完成任务可以通过已办接口过滤 status=2 来实现，但接口不支持单独筛选，暂用全部任务过滤
+        res = await getTaskManagerPage(params);
+        const completedList = (res.list || []).filter(item => item.status === 2);
+        dataObj.total = completedList.length;
+        dataObj.list = completedList.map(item => ({
+          id: item.id,
+          taskName: item.name,
+          taskType: item.processInstance?.processDefinition?.categoryName || '通用',
+          priority: item.processInstance?.variables?.emergencyDegree || '中',
+          assigner: item.processInstance?.startUser?.nickname || '-',
+          deadline: item.processInstance?.variables?.deadline || '-',
+          taskStatus: '已完成',
+          currentProgress: '100%',
+          processInstanceId: item.processInstanceId,
+        }));
+        break;
+      case '我发起的':
+        res = await getProcessInstanceMyPage(params);
+        dataObj.total = res.total;
+        dataObj.list = (res.list || []).map(item => ({
+          id: item.id,
+          taskName: item.name,
+          taskType: item.categoryName || '通用',
+          priority: item.variables?.emergencyDegree || '中',
+          assigner: item.startUser?.nickname || '-',
+          deadline: item.variables?.deadline || '-',
+          taskStatus: item.status === 1 ? '处理中' : (item.status === 2 ? '已完成' : '已取消'),
+          currentProgress: item.status === 2 ? '100%' : (item.status === 1 ? '50%' : '0%'),
+          processInstanceId: item.id,
+        }));
+        break;
+      case '全部任务':
+        res = await getTaskManagerPage(params);
+        dataObj.total = res.total;
+        dataObj.list = (res.list || []).map(item => ({
+          id: item.id,
+          taskName: item.name,
+          taskType: item.processInstance?.processDefinition?.categoryName || '通用',
+          priority: item.processInstance?.variables?.emergencyDegree || '中',
+          assigner: item.assigneeUser?.nickname || '-',
+          deadline: item.processInstance?.variables?.deadline || '-',
+          taskStatus: item.status === 0 ? '待处理' : (item.status === 1 ? '处理中' : '已完成'),
+          currentProgress: item.status === 2 ? '100%' : (item.status === 1 ? '50%' : '0%'),
+          processInstanceId: item.processInstanceId,
+        }));
+        break;
+      default:
+        dataObj.list = [];
+        dataObj.total = 0;
+    }
+    return dataObj;
+  } catch (error) {
+    console.error('获取任务数据失败', error);
+    ElMessage.error('获取数据失败：' + (error.message || '未知错误'));
+    dataObj.list = [];
+    dataObj.total = 0;
+    return dataObj;
   }
-
-  taskObj.total = filteredList.length;
-  taskObj.list = filteredList.slice(
-    (page.currentPage - 1) * page.pageSize,
-    page.currentPage * page.pageSize,
-  );
-
-  return taskObj;
 };
 
-const [QueryForm] = useVbenForm({
-  // 默认展开
-  collapsed: false,
-  // 所有表单项共用，可单独在表单内覆盖
-  commonConfig: {
-    // 所有表单项
-    componentProps: {
-      class: 'w-full',
-    },
-    formItemClass: 'col-span-2',
-    labelWidth: 100,
-  },
-  // 提交函数
-  handleSubmit: onSubmit,
-  // 垂直布局，label和input在不同行，值为vertical
-  // 水平布局，label和input在同一行
-  layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
-  }),
-  // 是否可展开
-  showCollapseButton: true,
-  submitButtonOptions: {
-    content: '查询',
-  },
-});
-
-// 搜索表单查询
-function onSubmit() {
-  drawerApi.close();
-}
-
+// ==================== 表格配置 ====================
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
     keepSource: true,
     proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getTableData({ page }),
-      },
+      ajax: { query: async ({ page }) => getTableData({ page }) },
     },
-    rowConfig: {
-      keyField: 'id',
-      isHover: true,
-    },
-    pagerConfig: taskObj,
-    toolbarConfig: {
-      'class-name': 'common-tool-bar-config',
-      refresh: true,
-      search: true,
-    },
+    rowConfig: { keyField: 'id', isHover: true },
+    pagerConfig: dataObj,
+    toolbarConfig: { refresh: true, zoom: true },
     showOverflow: true,
   },
   gridEvents: {
-    checkboxAll: handleRowCheckboxChange,
-    checkboxChange: handleRowCheckboxChange,
+    checkboxChange: ({ records }) => { checkedIds.value = records.map(r => r.id); },
+    checkboxAll: ({ records }) => { checkedIds.value = records.map(r => r.id); },
   },
-  showSearchForm: false,
 });
 
-const activeName = ref('待处理');
-// 修改打开详情的方法，调用组件的open方法
-const handleOpenDetail = (row) => {
-  taskObj.detailObj = row;
-  // 通过ref调用组件的open方法
-  taskDetailDrawerRef.value.open();
-  console.log(row);
+// ==================== 搜索表单（简化为任务名称搜索） ====================
+const [QueryForm, queryFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  handleSubmit: (values) => {
+    searchParams.value = values;
+    dataObj.currentPage = 1;
+    drawerApi.close();
+    gridApi.query();
+  },
+  layout: 'horizontal',
+  schema: [
+    {
+      fieldName: 'name',
+      label: '任务名称',
+      component: 'Input',
+      componentProps: { placeholder: '请输入任务名称' },
+    },
+  ],
+  showCollapseButton: true,
+  submitButtonOptions: { content: '查询' },
+  resetButtonOptions: {
+    content: '重置',
+    onClick: () => {
+      queryFormApi.resetForm();
+      searchParams.value = {};
+      dataObj.currentPage = 1;
+      gridApi.query();
+    },
+  },
+});
+
+// ==================== 抽屉（搜索抽屉） ====================
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel: () => drawerApi.close(),
+});
+
+// ==================== 操作函数 ====================
+// 刷新表格
+function handleRefresh() {
+  gridApi.query();
+}
+
+// 导出当前列表数据
+function handleExport() {
+  exportToExcel(dataObj.list, textObj.excelName, textObj.excelAllName);
+}
+
+// 查看详情：跳转到流程实例详情页
+function handleOpenDetail(row) {
+  router.push({
+    name: 'BpmProcessInstanceDetail',
+    query: { id: row.processInstanceId },
+  });
+}
+
+// 筛选工具栏
+const handleSerachShow = () => drawerApi.open();
+const handleFullShow = () => screenfull.toggle();
+const arrowChange = () => emit('arrow-change');
+
+// 标签页切换
+const handleTabChange = () => {
+  queryFormApi.resetForm();
+  searchParams.value = {};
+  dataObj.currentPage = 1;
+  gridApi.query();
 };
 
 const tabsData = ref([
@@ -273,65 +241,32 @@ const tabsData = ref([
   { label: '全部任务' },
 ]);
 
+// 动态计算标签页数量（可选，从接口获取总数会更准确，这里简化）
 const createLabel = (item) => {
-  let count = 0;
-  if (item.label === '待处理') {
-    count = taskObj.apilist.filter((v) => v.taskStatus === '待处理').length;
-  } else if (item.label === '处理中') {
-    count = taskObj.apilist.filter((v) => v.taskStatus === '处理中').length;
-  } else if (item.label === '已完成') {
-    count = taskObj.apilist.filter((v) => v.taskStatus === '已完成').length;
-  } else if (item.label === '我发起的') {
-    count = taskObj.apilist.filter((v) => v.initiator !== '我发起的').length;
-  } else if (item.label === '全部任务') {
-    count = taskObj.apilist.length;
-  }
-  return `${item.label}(${count})`;
+  // 可以调用接口获取各状态数量，但为了简单，先不显示数量
+  return `${item.label}`;
 };
 
-const handleClick = () => {
+onMounted(() => {
+  console.log('任务模块已挂载，加载数据...');
   gridApi.query();
-};
-
-const handleSerachShow = () => {
-  drawerApi.open();
-};
-
-const handleFullShow = () => {
-  screenfull.toggle();
-};
-
-const arrowChange = () => {
-  emit('arrow-change');
-};
-
-// 定义组件ref，用于调用组件方法
-const taskDetailDrawerRef = ref(null);
+});
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <FormDrawer :title="getTitle">
-      <Form />
-    </FormDrawer>
-    <!-- 使用封装后的详情抽屉组件 -->
-    <TaskDetailDrawer
-      ref="taskDetailDrawerRef"
-      :detail-obj="taskObj.detailObj"
-      :title="`任务详情 - ${taskObj.detailObj.taskName}`"
-    />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+
     <Grid>
-      <!-- 三级状态 -->
       <template #table-title>
         <div class="tabel-tabs">
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
               class="demo-tabs"
-              @tab-change="handleClick"
+              @tab-change="handleTabChange"
             >
               <el-tab-pane
                 v-for="item in tabsData"
@@ -343,47 +278,29 @@ const taskDetailDrawerRef = ref(null);
           </div>
         </div>
       </template>
+
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton
-            content="导出"
-            icon-name="download"
-            @click="handleExport"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
-          />
+          <IconButton content="导出" icon-name="download" @click="handleExport" />
+          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
             :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
             @click="arrowChange"
           />
-          <IconButton
-            content="全屏"
-            icon-name="FullScreen"
-            @click="handleFullShow"
-          />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+          <IconButton content="刷新" icon-name="refresh" @click="handleRefresh" />
         </div>
       </template>
+
+      <!-- 任务名称列（点击跳转详情） -->
       <template #taskName="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
+        <el-text @click="handleOpenDetail(row)" type="primary">
           {{ row.taskName }}
         </el-text>
       </template>
+
+      <!-- 优先级标签 -->
       <template #priority="{ row }">
         <el-tag
           :type="row.priority === '紧急' ? 'danger' :
@@ -394,8 +311,10 @@ const taskDetailDrawerRef = ref(null);
           {{ row.priority }}
         </el-tag>
       </template>
+
+      <!-- 进度条 -->
       <template #progress="{ row }">
-        <div v-if="row.currentProgress && row.currentProgress !== '待处理'">
+        <div v-if="row.currentProgress && row.currentProgress !== '0%'">
           <el-progress
             :percentage="parseInt(row.currentProgress)"
             :show-text="false"
@@ -405,54 +324,44 @@ const taskDetailDrawerRef = ref(null);
         </div>
         <span v-else>{{ row.currentProgress || '-' }}</span>
       </template>
+
+      <!-- 任务状态标签 -->
       <template #taskStatus="{ row }">
         <el-tag
           :type="row.taskStatus === '待处理' ? 'info' :
                  row.taskStatus === '处理中' ? 'primary' :
-                 row.taskStatus === '已完成' ? 'success' :
-                 row.taskStatus === '已撤回' ? 'danger' : 'warning'"
+                 row.taskStatus === '已完成' ? 'success' : 'danger'"
           size="small"
         >
           {{ row.taskStatus }}
         </el-tag>
       </template>
+
+      <!-- 操作列（仅保留详情） -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton
-            content="详情"
-            icon-name="View"
-            @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
-          />
-        </div>
-      </template>
-      <template #bottom>
-        <div class="common-total" @click="changeTotalShow">
-          <el-icon class="tabel-tab-icon" v-if="!taskObj.totalShow">
-            <ArrowDown />
-          </el-icon>
-          <el-icon class="tabel-tab-icon" v-if="taskObj.totalShow">
-            <ArrowUp />
-          </el-icon>
-          <span> 本页统计：任务数量{{ taskObj.list.length }};
-            待处理: {{ taskObj.list.filter(v => v.taskStatus === '待处理').length }};
-            处理中: {{ taskObj.list.filter(v => v.taskStatus === '处理中').length }};
-            </span>
-        </div>
-        <div class="common-total-bottom" v-if="taskObj.totalShow">
-          <span> 全部统计：{{ textObj.total }} </span>
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
         </div>
       </template>
     </Grid>
   </div>
 </template>
+
+<style scoped lang="scss">
+.park-lot-table-new {
+  width: 100%;
+}
+.tabel-tabs {
+  margin-bottom: 16px;
+}
+.common-toolbar-tools {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.table-toolbar-tools {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+</style>

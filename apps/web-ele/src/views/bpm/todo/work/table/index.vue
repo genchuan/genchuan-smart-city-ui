@@ -1,325 +1,237 @@
-<!-- index.vue -->
+<!-- dashboard/todo/work/table/index.vue -->
 <script setup>
-import { computed, reactive, ref } from 'vue';
-
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
-
-import { ElLoading, ElMessage } from 'element-plus';
+import { ref, reactive, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { useVbenDrawer } from '@vben/common-ui';
+import { ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
-
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
-// 引入封装后的详情抽屉组件
-import WorkorderDetailDrawer from '#/views/dashboard/todo/work/table/detail.vue';
 
-import { dataList, textObj, useFormSchema, useGridColumns } from './data';
+// BPM 任务接口
+import {
+  getTaskTodoPage,
+  getTaskDonePage,
+  getTaskManagerPage,
+} from '#/api/bpm/task';
+import { getProcessInstanceMyPage } from '#/api/bpm/processInstance';
+
+import { textObj, useGridColumns } from './data';
 
 const props = defineProps({
-  secondShow: {
-    type: Boolean,
-    default: false,
-  },
-  arrowShow: {
-    type: Boolean,
-    default: false,
-  },
-  arrowState: {
-    type: Boolean,
-    default: false,
-  },
+  secondShow: { type: Boolean, default: false },
+  arrowShow: { type: Boolean, default: false },
+  arrowState: { type: Boolean, default: false },
 });
 const emit = defineEmits(['arrow-change']);
-const getTitle = computed(() => {
-  return formData.value?.id ? textObj.editText : textObj.addText;
-});
+const router = useRouter();
 
-const [Drawer, drawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  onCancel() {
-    drawerApi.close();
-  },
-  onConfirm() {},
-  async onOpenChange() {},
-});
-
-const formData = ref();
-const [Form, formApi] = useVbenForm({
-  commonConfig: {
-    componentProps: {
-      class: 'w-full',
-    },
-    formItemClass: 'col-span-2',
-    labelWidth: 80,
-  },
-  layout: 'horizontal',
-  schema: useFormSchema(),
-  showDefaultActions: false,
-});
-
-const [FormDrawer, formDrawerApi] = useVbenDrawer({
-  appendToMain: true,
-  modal: false,
-  onCancel() {
-    formDrawerApi.close();
-  },
-  onConfirm() {
-    const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-      workorderObj.apilist.push(obj);
-    } else {
-      workorderObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          workorderObj.apilist[i] = obj;
-        }
-      });
-    }
-    handleRefresh();
-    formDrawerApi.close();
-  },
-  async onOpenChange(isOpen) {
-    if (isOpen) {
-      formData.value = formDrawerApi.getData();
-      if (formData.value?.id) {
-        await formApi.setValues(formData.value);
-      } else {
-        formApi.resetForm();
-      }
-    }
-  },
-});
-
-/** 刷新表格 */
-function handleRefresh() {
-  gridApi.query();
-}
-
-/** 导出表格 */
-async function handleExport() {
-  exportToExcel(workorderObj.apilist, textObj.excelName, textObj.excelAllName);
-}
-
-/** 创建工单 */
-function handleCreate() {
-  formDrawerApi
-    .setData({
-      title: textObj.addText,
-    })
-    .open();
-}
-
-/** 编辑工单 */
-function handleEdit(row) {
-  formDrawerApi
-    .setData({
-      title: textObj.editText,
-      ...row,
-    })
-    .open();
-}
-
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.workorderNo]),
-  });
-  try {
-    workorderObj.apilist = workorderObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.workorderNo]));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
-}
-
-async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
-  });
-  try {
-    workorderObj.apilist = workorderObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
-}
-
+// 状态
+const activeName = ref('待处理');
+const searchParams = ref({});
 const checkedIds = ref([]);
-function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map((item) => item.id);
-}
 
-const workorderObj = reactive({
-  totalShow: false,
-  detailObj: {}, // 保留详情对象用于传递给组件
-  total: dataList().length,
+// 分页及数据容器（仿充电桩模块写法）
+const dataObj = reactive({
+  list: [],
+  total: 0,
   currentPage: 1,
   pageSize: 10,
-  apilist: dataList(),
-  list: [],
 });
 
-const changeTotalShow = () => {
-  workorderObj.totalShow = !workorderObj.totalShow;
-};
-
-// 表格数据获取
-const getTableData = (pageObj) => {
-  const page = pageObj.page;
-
-  let filteredList = workorderObj.apilist;
-  if (activeName.value === '待处理') {
-    filteredList = workorderObj.apilist.filter(v => v.status === '待处理');
-  } else if (activeName.value === '处理中') {
-    filteredList = workorderObj.apilist.filter(v => v.status === '处理中' || v.status === '已认领');
-  } else if (activeName.value === '待评价') {
-    filteredList = workorderObj.apilist.filter(v => v.status === '已完成' || v.evaluateStatus === '待评价');
-  } else if (activeName.value === '已完成') {
-    filteredList = workorderObj.apilist.filter(v => v.status === '已评价' || v.status === '已完成');
+// ==================== 表格数据获取 ====================
+const getTableData = async ({ page }) => {
+  console.log('🚀 获取工单数据，模块：', activeName.value, 'page:', page);
+  const params = {
+    pageNo: page.currentPage,
+    pageSize: page.pageSize,
+    ...searchParams.value,
+  };
+  try {
+    let res;
+    switch (activeName.value) {
+      case '待处理':
+        res = await getTaskTodoPage(params);
+        dataObj.total = res.total;
+        dataObj.list = (res.list || []).map(item => ({
+          id: item.id,
+          workorderNo: item.name || `TASK-${item.id}`,
+          workorderType: item.processInstance?.processDefinition?.categoryName || '通用',
+          source: '系统',
+          emergencyDegree: item.processInstance?.variables?.emergencyDegree || '中',
+          location: item.processInstance?.variables?.location || '-',
+          submitTime: item.createTime,
+          deadline: item.processInstance?.variables?.deadline || '-',
+          submitBy: item.processInstance?.startUser?.nickname || item.ownerUser?.nickname || '-',
+          status: '待处理',
+          currentProgress: '0%',
+          processInstanceId: item.processInstanceId,
+        }));
+        break;
+      case '处理中':
+        // 已办任务中包含处理中和已完成，需要过滤 status === 1 的
+        res = await getTaskDonePage(params);
+        const processingList = (res.list || []).filter(item => item.status === 1);
+        dataObj.total = processingList.length;
+        dataObj.list = processingList.map(item => ({
+          id: item.id,
+          workorderNo: item.name || `TASK-${item.id}`,
+          workorderType: item.processInstance?.processDefinition?.categoryName || '通用',
+          source: '系统',
+          emergencyDegree: item.processInstance?.variables?.emergencyDegree || '中',
+          location: item.processInstance?.variables?.location || '-',
+          submitTime: item.createTime,
+          deadline: item.processInstance?.variables?.deadline || '-',
+          submitBy: item.processInstance?.startUser?.nickname || '-',
+          status: '处理中',
+          currentProgress: '50%',
+          processInstanceId: item.processInstanceId,
+        }));
+        break;
+      case '待评价':
+        // 已完成任务（status === 2），待评价可以理解为已完成的流程实例
+        res = await getTaskManagerPage(params);
+        const completedList = (res.list || []).filter(item => item.status === 2);
+        dataObj.total = completedList.length;
+        dataObj.list = completedList.map(item => ({
+          id: item.id,
+          workorderNo: item.name || `TASK-${item.id}`,
+          workorderType: item.processInstance?.processDefinition?.categoryName || '通用',
+          source: '系统',
+          emergencyDegree: item.processInstance?.variables?.emergencyDegree || '中',
+          location: item.processInstance?.variables?.location || '-',
+          submitTime: item.createTime,
+          deadline: item.processInstance?.variables?.deadline || '-',
+          submitBy: item.processInstance?.startUser?.nickname || '-',
+          status: '待评价',
+          currentProgress: '100%',
+          processInstanceId: item.processInstanceId,
+        }));
+        break;
+      case '已完成':
+        // 已完成的任务（包括已办中的已完成和管理员任务中的已完成）
+        res = await getTaskManagerPage(params);
+        const finishedList = (res.list || []).filter(item => item.status === 2);
+        dataObj.total = finishedList.length;
+        dataObj.list = finishedList.map(item => ({
+          id: item.id,
+          workorderNo: item.name || `TASK-${item.id}`,
+          workorderType: item.processInstance?.processDefinition?.categoryName || '通用',
+          source: '系统',
+          emergencyDegree: item.processInstance?.variables?.emergencyDegree || '中',
+          location: item.processInstance?.variables?.location || '-',
+          submitTime: item.createTime,
+          deadline: item.processInstance?.variables?.deadline || '-',
+          submitBy: item.processInstance?.startUser?.nickname || '-',
+          status: '已完成',
+          currentProgress: '100%',
+          processInstanceId: item.processInstanceId,
+        }));
+        break;
+      default:
+        dataObj.list = [];
+        dataObj.total = 0;
+    }
+    return dataObj;
+  } catch (error) {
+    console.error('获取工单数据失败', error);
+    ElMessage.error('获取数据失败：' + (error.message || '未知错误'));
+    dataObj.list = [];
+    dataObj.total = 0;
+    return dataObj;
   }
-
-  workorderObj.total = filteredList.length;
-  workorderObj.list = filteredList.slice(
-    (page.currentPage - 1) * page.pageSize,
-    page.currentPage * page.pageSize,
-  );
-
-  return workorderObj;
 };
 
-const [QueryForm] = useVbenForm({
-  // 默认展开
-  collapsed: false,
-  // 所有表单项共用，可单独在表单内覆盖
-  commonConfig: {
-    // 所有表单项
-    componentProps: {
-      class: 'w-full',
-    },
-    formItemClass: 'col-span-2',
-    labelWidth: 100,
-  },
-  // 提交函数
-  handleSubmit: onSubmit,
-  // 垂直布局，label和input在不同行，值为vertical
-  // 水平布局，label和input在同一行
-  layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
-  }),
-  // 是否可展开
-  showCollapseButton: true,
-  submitButtonOptions: {
-    content: '查询',
-  },
-});
-
-// 搜索表单查询
-function onSubmit() {
-  drawerApi.close();
-}
-
+// ==================== 表格配置 ====================
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
     keepSource: true,
     proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getTableData({ page }),
-      },
+      ajax: { query: async ({ page }) => getTableData({ page }) },
     },
-    rowConfig: {
-      keyField: 'id',
-      isHover: true,
-    },
-    pagerConfig: workorderObj,
-    toolbarConfig: {
-      'class-name': 'common-tool-bar-config',
-      refresh: true,
-      search: true,
-    },
+    rowConfig: { keyField: 'id', isHover: true },
+    pagerConfig: dataObj,
+    toolbarConfig: { refresh: true, zoom: true },
     showOverflow: true,
   },
   gridEvents: {
-    checkboxAll: handleRowCheckboxChange,
-    checkboxChange: handleRowCheckboxChange,
+    checkboxChange: ({ records }) => { checkedIds.value = records.map(r => r.id); },
+    checkboxAll: ({ records }) => { checkedIds.value = records.map(r => r.id); },
   },
-  showSearchForm: false,
 });
 
-const activeName = ref('待处理');
+// ==================== 搜索表单（简化为工单编号/名称搜索） ====================
+const [QueryForm, queryFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  handleSubmit: (values) => {
+    searchParams.value = values;
+    dataObj.currentPage = 1;
+    drawerApi.close();
+    gridApi.query();
+  },
+  layout: 'horizontal',
+  schema: [
+    {
+      fieldName: 'name',
+      label: '工单名称',
+      component: 'Input',
+      componentProps: { placeholder: '请输入工单名称' },
+    },
+  ],
+  showCollapseButton: true,
+  submitButtonOptions: { content: '查询' },
+  resetButtonOptions: {
+    content: '重置',
+    onClick: () => {
+      queryFormApi.resetForm();
+      searchParams.value = {};
+      dataObj.currentPage = 1;
+      gridApi.query();
+    },
+  },
+});
 
-// 打开详情的方法
-const handleOpenDetail = (row) => {
-  workorderObj.detailObj = row;
-  // 通过ref调用组件的open方法
-  workorderDetailDrawerRef.value.open();
-};
+// ==================== 抽屉（搜索抽屉） ====================
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel: () => drawerApi.close(),
+});
 
-// 认领工单方法
-const handleClaim = (row) => {
-  const index = workorderObj.apilist.findIndex(v => v.id === row.id);
-  if (index !== -1) {
-    workorderObj.apilist[index].status = '已认领';
-    workorderObj.apilist[index].receiveTime = new Date().toISOString().slice(0, 16).replace('T', ' ');
-    workorderObj.apilist[index].executor = '当前用户';
-    workorderObj.apilist[index].receiveStatus = '已认领';
-    workorderObj.apilist[index].disposalProgress = '待开始';
-    workorderObj.apilist[index].currentProgress = '0%';
-    ElMessage.success('工单认领成功');
-    handleRefresh();
-  }
-};
+// ==================== 操作函数 ====================
+// 刷新表格
+function handleRefresh() {
+  gridApi.query();
+}
 
-// 开始处理工单方法
-const handleProcess = (row) => {
-  const index = workorderObj.apilist.findIndex(v => v.id === row.id);
-  if (index !== -1) {
-    workorderObj.apilist[index].status = '处理中';
-    workorderObj.apilist[index].disposalProgress = '处理中';
-    workorderObj.apilist[index].currentProgress = '20%';
-    ElMessage.success('开始处理工单');
-    handleRefresh();
-  }
-};
+// 导出当前列表数据
+function handleExport() {
+  exportToExcel(dataObj.list, textObj.excelName, textObj.excelAllName);
+}
 
-// 完成工单方法
-const handleComplete = (row) => {
-  const index = workorderObj.apilist.findIndex(v => v.id === row.id);
-  if (index !== -1) {
-    workorderObj.apilist[index].status = '已完成';
-    workorderObj.apilist[index].finishTime = new Date().toISOString().slice(0, 16).replace('T', ' ');
-    workorderObj.apilist[index].evaluateStatus = '待评价';
-    workorderObj.apilist[index].disposalProgress = '已完成';
-    workorderObj.apilist[index].currentProgress = '100%';
-    workorderObj.apilist[index].acceptResult = '已完成';
-    ElMessage.success('工单已完成，等待评价');
-    handleRefresh();
-  }
-};
+// 查看详情：跳转到流程实例详情页
+function handleOpenDetail(row) {
+  router.push({
+    name: 'BpmProcessInstanceDetail',
+    query: { id: row.processInstanceId },
+  });
+}
 
-// 评价工单方法
-const handleEvaluate = (row) => {
-  const index = workorderObj.apilist.findIndex(v => v.id === row.id);
-  if (index !== -1) {
-    workorderObj.apilist[index].evaluateStatus = '已评价';
-    workorderObj.apilist[index].satisfaction = '满意';
-    workorderObj.apilist[index].status = '已评价';
-    workorderObj.apilist[index].archiveTime = new Date().toISOString().slice(0, 16).replace('T', ' ');
-    ElMessage.success('工单评价完成');
-    handleRefresh();
-  }
+// 筛选工具栏
+const handleSerachShow = () => drawerApi.open();
+const handleFullShow = () => screenfull.toggle();
+const arrowChange = () => emit('arrow-change');
+
+// 标签页切换
+const handleTabChange = () => {
+  queryFormApi.resetForm();
+  searchParams.value = {};
+  dataObj.currentPage = 1;
+  gridApi.query();
 };
 
 const tabsData = ref([
@@ -329,63 +241,49 @@ const tabsData = ref([
   { label: '已完成' },
 ]);
 
+// 动态计算标签页数量（可选，从接口获取总数会更准确，这里简化）
 const createLabel = (item) => {
-  let count = 0;
-  if (item.label === '待处理') {
-    count = workorderObj.apilist.filter((v) => v.status === '待处理').length;
-  } else if (item.label === '处理中') {
-    count = workorderObj.apilist.filter((v) => v.status === '处理中' || v.status === '已认领').length;
-  } else if (item.label === '待评价') {
-    count = workorderObj.apilist.filter((v) => v.status === '已完成' || v.evaluateStatus === '待评价').length;
-  } else if (item.label === '已完成') {
-    count = workorderObj.apilist.filter((v) => v.status === '已评价' || v.status === '已完成').length;
-  }
-  return `${item.label}(${count})`;
+  // 可以调用接口获取各状态数量，但为了简单，先不显示数量
+  return `${item.label}`;
 };
 
-const handleClick = () => {
+// 移除原有的增删改操作，仅保留查看
+const handleDeleteBatch = () => {
+  ElMessage.warning('BPM 工单不支持批量删除');
+};
+const handleClaim = () => {
+  ElMessage.warning('BPM 工单认领请通过流程审批操作');
+};
+const handleProcess = () => {
+  ElMessage.warning('BPM 工单处理请通过流程审批操作');
+};
+const handleComplete = () => {
+  ElMessage.warning('BPM 工单完成请通过流程审批操作');
+};
+const handleEvaluate = () => {
+  ElMessage.warning('BPM 工单评价请通过流程审批操作');
+};
+
+onMounted(() => {
+  console.log('工单模块已挂载，加载数据...');
   gridApi.query();
-};
-
-const handleSerachShow = () => {
-  drawerApi.open();
-};
-
-const handleFullShow = () => {
-  screenfull.toggle();
-};
-
-const arrowChange = () => {
-  emit('arrow-change');
-};
-
-// 定义组件ref，用于调用组件方法
-const workorderDetailDrawerRef = ref(null);
+});
 </script>
 
 <template>
-                                    <div class="park-lot-table-new">
-    <FormDrawer :title="getTitle">
-      <Form />
-    </FormDrawer>
-    <!-- 使用封装后的详情抽屉组件 -->
-    <WorkorderDetailDrawer
-      ref="workorderDetailDrawerRef"
-      :detail-obj="workorderObj.detailObj"
-      :title="`工单详情 - ${workorderObj.detailObj.workorderNo}`"
-    />
+  <div class="park-lot-table-new">
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+
     <Grid>
-      <!-- 三级状态 -->
       <template #table-title>
         <div class="tabel-tabs">
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
               class="demo-tabs"
-              @tab-change="handleClick"
+              @tab-change="handleTabChange"
             >
               <el-tab-pane
                 v-for="item in tabsData"
@@ -397,55 +295,29 @@ const workorderDetailDrawerRef = ref(null);
           </div>
         </div>
       </template>
+
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新建工单" icon-name="Plus" @click="handleCreate" />
-          <IconButton
-            content="导出"
-            icon-name="download"
-            @click="handleExport"
-          />
-          <IconButton
-            v-if="activeName === '待处理'"
-            content="批量认领"
-            icon-name="check"
-            color="#67C23A"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleClaim"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
-          />
+          <IconButton content="导出" icon-name="download" @click="handleExport" />
+          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
             :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
             @click="arrowChange"
           />
-          <IconButton
-            content="全屏"
-            icon-name="FullScreen"
-            @click="handleFullShow"
-          />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+          <IconButton content="刷新" icon-name="refresh" @click="handleRefresh" />
         </div>
       </template>
+
+      <!-- 工单编号列（点击跳转详情） -->
       <template #workorderNo="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
+        <el-text @click="handleOpenDetail(row)" type="primary">
           {{ row.workorderNo }}
         </el-text>
       </template>
+
+      <!-- 紧急程度标签 -->
       <template #emergencyDegree="{ row }">
         <el-tag
           :type="row.emergencyDegree === '紧急' ? 'danger' :
@@ -456,10 +328,12 @@ const workorderDetailDrawerRef = ref(null);
           {{ row.emergencyDegree }}
         </el-tag>
       </template>
+
+      <!-- 进度条 -->
       <template #progress="{ row }">
-        <div v-if="row.currentProgress && row.currentProgress !== '待处理'">
+        <div v-if="row.currentProgress && row.currentProgress !== '0%'">
           <el-progress
-            :percentage="row.currentProgress.includes('%') ? parseInt(row.currentProgress) : 0"
+            :percentage="parseInt(row.currentProgress)"
             :show-text="false"
             :stroke-width="6"
           />
@@ -467,86 +341,45 @@ const workorderDetailDrawerRef = ref(null);
         </div>
         <span v-else>{{ row.currentProgress || '-' }}</span>
       </template>
+
+      <!-- 工单状态标签 -->
       <template #status="{ row }">
         <el-tag
           :type="row.status === '待处理' ? 'info' :
-                 row.status === '已认领' ? 'primary' :
-                 row.status === '处理中' ? 'warning' :
-                 row.status === '已完成' ? 'success' :
-                 row.status === '已评价' ? 'success' :
-                 row.status === '已撤回' ? 'danger' : 'warning'"
+                 row.status === '处理中' ? 'primary' :
+                 row.status === '待评价' ? 'warning' :
+                 row.status === '已完成' ? 'success' : 'danger'"
           size="small"
         >
           {{ row.status }}
         </el-tag>
       </template>
+
+      <!-- 操作列（仅保留查看详情） -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton
-            content="详情"
-            icon-name="View"
-            @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            v-if="activeName === '待处理' && row.status === '待处理'"
-            content="认领"
-            icon-name="check"
-            color="#67C23A"
-            @click="handleClaim(row)"
-          />
-          <IconButton
-            v-if="activeName === '待处理' && row.status === '已认领'"
-            content="处理"
-            icon-name="play-circle"
-            color="#409EFF"
-            @click="handleProcess(row)"
-          />
-          <IconButton
-            v-if="(activeName === '处理中') && row.status === '处理中'"
-            content="完成"
-            icon-name="check-circle"
-            color="#67C23A"
-            @click="handleComplete(row)"
-          />
-          <IconButton
-            v-if="activeName === '待评价' && row.evaluateStatus === '待评价'"
-            content="评价"
-            icon-name="star"
-            color="#E6A23C"
-            @click="handleEvaluate(row)"
-          />
-          <IconButton
-            v-if="row.status === '待处理' || row.status === '已认领'"
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            v-if="row.status === '待处理'"
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
-          />
-        </div>
-      </template>
-      <template #bottom>
-        <div class="common-total" @click="changeTotalShow">
-          <el-icon class="tabel-tab-icon" v-if="!workorderObj.totalShow">
-            <ArrowDown />
-          </el-icon>
-          <el-icon class="tabel-tab-icon" v-if="workorderObj.totalShow">
-            <ArrowUp />
-          </el-icon>
-          <span> 本页统计：工单数量{{ workorderObj.list.length }};
-            待处理: {{ workorderObj.list.filter(v => v.status === '待处理').length }};
-            处理中: {{ workorderObj.list.filter(v => v.status === '处理中' || v.status === '已认领').length }};
-            </span>
-        </div>
-        <div class="common-total-bottom" v-if="workorderObj.totalShow">
-          <span> 全部统计：{{ textObj.total }} </span>
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
         </div>
       </template>
     </Grid>
   </div>
 </template>
+
+<style scoped lang="scss">
+.park-lot-table-new {
+  width: 100%;
+}
+.tabel-tabs {
+  margin-bottom: 16px;
+}
+.common-toolbar-tools {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.table-toolbar-tools {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+</style>
