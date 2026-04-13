@@ -11,6 +11,27 @@ export default defineConfig(async (config) => {
   return {
     application: {},
     vite: {
+      css: {
+        postcss: {
+          plugins: [
+            {
+              postcssPlugin: 'fix-tinyflow-layer',
+              Once(root, { result }) {
+                result.messages = result.messages.filter(
+                  (m) =>
+                    !(
+                      m.type === 'warning' &&
+                      m.text &&
+                      m.text.includes('@layer base') &&
+                      m.text.includes('no matching @tailwind base')
+                    )
+                );
+              },
+            },
+          ],
+        },
+      },
+
       plugins: [
         ElementPlus({
           format: 'esm',
@@ -21,7 +42,6 @@ export default defineConfig(async (config) => {
           '/admin-api': {
             changeOrigin: true,
             rewrite: (path) => path.replace(/^\/admin-api/, ''),
-            // mock代理目标地址
             target: 'http://localhost:48080/admin-api',
             ws: true,
           },
