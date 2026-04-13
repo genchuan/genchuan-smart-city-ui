@@ -1,1 +1,11 @@
-export { default } from '@vben/tailwind-config';
+import baseConfig from '@vben/tailwind-config';
+
+export default {
+  ...baseConfig,
+  future: {
+    respectDefaultLayers: false,
+  },
+  corePlugins: {
+    preflight: false,
+  },
+};
