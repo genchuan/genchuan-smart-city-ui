@@ -1,6 +1,6 @@
 /** 表格初始数据*/
 
-import { maskIdCard, maskPhone } from '#/utils/dataMask';
+import { maskIdCard, maskPhone } from '#/utils/genchuan/dataMask';
 
 // 个人用户数据列表
 export const personalUserList = () => {

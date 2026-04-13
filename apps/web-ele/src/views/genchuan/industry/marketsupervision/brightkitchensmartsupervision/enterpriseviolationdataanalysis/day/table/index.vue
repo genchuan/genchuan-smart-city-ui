@@ -2,18 +2,22 @@
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElDialog, ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
+import * as XLSX from 'xlsx';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
-import { exportToExcel } from '#/utils/excel.js';
+import { downloadLocalTemplate } from '#/utils/genchuan/down';
 
-import { dataList, useFormSchema, useGridColumns } from './data';
-// 引入封装后的详情抽屉组件
+import { formatTimestamp } from '#/utils';
+import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
+import { getViolationAnalyticsPage, exporViolationAnalyticsExcel, exporViolationAnalyticsPDF, getViolationAnalyticsDrill } from '#/api/genchuan/industry/marketsupervision/index.js';
+import { useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
 
 const props = defineProps({
@@ -43,10 +47,10 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel() {
     drawerApi.close();
   },
-  onConfirm() {},
-  async onOpenChange() {},
+  onConfirm() { },
+  async onOpenChange() { },
 });
-// 移除原 DetailDrawer 初始化逻辑
+
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -91,107 +95,104 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     }
   },
 });
+
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
 }
 
-/** 导出表格 */
+// ====================== 导出 EXCEL ======================
 async function handleExport() {
-  exportToExcel(dataObj.apilist, '导出', 'excel');
+  const data = await exporViolationAnalyticsExcel(dataObj.getParams);
+  downloadFileFromBlobPart({
+    fileName: '企业违规数据分析.xls',
+    source: data,
+  });
 }
 
-/** 创建角色 */
+// ====================== 导出PDF ======================
+async function handlePDF() {
+  const data = await exporViolationAnalyticsPDF(dataObj.getParams);
+  downloadFileFromBlobPart({
+    fileName: '企业违规数据分析.pdf',
+    source: data,
+  });
+}
+
+/** 创建 */
 function handleCreate() {
-  formDrawerApi
-    .setData({
-      title: '新增',
-    })
-    .open();
+  formDrawerApi.setData({ title: '新增' }).open();
 }
 
-/** 编辑角色 */
+/** 编辑 */
 function handleEdit(row) {
-  formDrawerApi
-    .setData({
-      title: '编辑',
-      ...row,
-    })
-    .open();
+  formDrawerApi.setData({ title: '编辑', ...row }).open();
 }
+
+/** 删除 */
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.name]),
+    text: $t('ui.actionMessage.deleting'),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
+    // 调用删除接口
+    // await deleteViolation(row.id);
+    ElMessage.success($t('ui.actionMessage.deleteSuccess'));
     handleRefresh();
   } finally {
     loadingInstance.close();
   }
 }
 
+/** 批量删除 */
 async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
+  await confirm($t('确定删除这些数据吗？')).then(() => {
+    checkedIds.value.forEach(async (v) => {
+      await handleDelete({
+        id: v,
+      });
+    });
   });
-  try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
+  handleRefresh();
 }
 
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
+
 const dataObj = reactive({
   totalShow: false,
-  detailObj: {}, // 保留详情对象用于传递给组件
-  total: dataList().length,
+  detailObj: {},
+  enDetailObj: {},
+  total: 0,
   currentPage: 1,
   pageSize: 10,
-  apilist: dataList(),
+  apilist: [],
   list: [],
+  loading: false,
+  serachObj: {},
 });
+
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
-// 表格数据获取
-const getTableData = (pageObj) => {
-  const page = pageObj.page;
-  dataObj.total = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    }).length;
-  dataObj.list = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    })
-    .slice(
-      (page.currentPage - 1) * page.pageSize,
-      page.currentPage * page.pageSize,
-    );
+
+// 表格数据
+const getTableData = async (pageObj) => {
+  const getParams = {
+    pageNo: pageObj.page.currentPage,
+    pageSize: pageObj.page.pageSize,
+    ...dataObj.serachObj,
+  };
+  dataObj.getParams = getParams;
+  const data = await getViolationAnalyticsPage(getParams);
+  dataObj.total = data.total;
+  dataObj.list = data.list;
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [QueryForm, QueryFormApi] = useVbenForm({
   // 默认展开
   collapsed: false,
   // 所有表单项共用，可单独在表单内覆盖
@@ -208,12 +209,14 @@ const [QueryForm] = useVbenForm({
   // 垂直布局，label和input在不同行，值为vertical
   // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
-  }),
+  schema: useFormSchema()
+    .filter((v) => v.isSearch)
+    .map((v) => {
+      delete v.rules;
+      return {
+        ...v,
+      };
+    }),
   // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
@@ -221,22 +224,20 @@ const [QueryForm] = useVbenForm({
   },
 });
 // 搜索表单查询
-function onSubmit() {
+async function onSubmit() {
+  dataObj.serachObj = await QueryFormApi.getValues();
+  gridApi.reload();
   drawerApi.close();
 }
+
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
     keepSource: true,
     proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getTableData({ page }),
-      },
+      ajax: { query: async ({ page }) => getTableData({ page }) },
     },
-    rowConfig: {
-      keyField: 'id',
-      isHover: true,
-    },
+    rowConfig: { keyField: 'id', isHover: true },
     pagerConfig: dataObj,
     toolbarConfig: {
       'class-name': 'common-tool-bar-config',
@@ -252,29 +253,24 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-const activeName = ref('全部');
-// 修改打开详情的方法，调用组件的open方法
+const activeName = ref('');
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
-  // 通过ref调用组件的open方法
-  parkDetailDrawerRef.value.open();
-  console.log(row);
+  parkDetailDrawerRef.value?.open();
 };
+
 const tabsData = ref([
-  { label: '全部' },
-  { label: '启用' },
-  { label: '禁用' },
-  { label: '暂停运营' },
-  { label: '维修中' },
+  { label: '全部', value: '' },
+  { label: '月租车', value: '1' },
+  { label: '临时车', value: '0' },
 ]);
+
 const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
-  if (item.label === '全部') {
-    text = `(${dataObj.apilist.length})`;
-  }
-  return item.label + text;
+  return item.label;
 };
+
 const handleClick = () => {
+  dataObj.serachObj.plateType = activeName.value;
   gridApi.query();
 };
 const handleSerachShow = () => {
@@ -284,89 +280,325 @@ const handleFullShow = () => {
   screenfull.toggle();
 };
 
-// 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
-
+const enDetailObjRef = ref(null);
 const arrowChange = () => {
   emit('arrow-change');
 };
+const autoElmessage = () => {
+  ElMessage.success($t('月报自动刷新成功'));
+};
+const openEn = async (row) => {
+  const res = await getDetailEnObj(row.entId);
+  dataObj.enDetailObj = res;
+  enDetailObjRef.value?.open();
+};
+
+// ====================== 告警明细弹窗 ======================
+const alarmDialogVisible = ref(false);
+const currentAlarmRow = ref({});
+const alarmList = ref([]);
+
+// 生成模拟告警明细
+function generateAlarmData(row) {
+  const count = row.totalAlarmCount || 0;
+  const types = row.highFreqViolationType.split(',').map((item) => {
+    const [name, num] = item.split(':');
+    return { name, num: Number(num) };
+  });
+
+  const list = [];
+  let id = 1;
+  types.forEach((type) => {
+    for (let i = 0; i < type.num; i++) {
+      list.push({
+        id: id++,
+        canteenName: row.canteenName,
+        alarmType: type.name,
+        alarmTime: `${row.statisticsDate} ${String(Math.trunc(Math.random() * 24)).padStart(2, '0')}:${String(Math.trunc(Math.random() * 60)).padStart(2, '0')}`,
+        alarmLevel: ['一般', '较重', '严重'][Math.trunc(Math.random() * 3)],
+        status: ['未处理', '处理中', '已整改'][Math.trunc(Math.random() * 3)],
+      });
+    }
+  });
+  return list.slice(0, count);
+}
+
+// 打开告警弹窗
+function handleTotal(row) {
+  currentAlarmRow.value = row;
+  alarmList.value = generateAlarmData(row);
+  alarmDialogVisible.value = true;
+}
+
+// 告警弹窗列
+const alarmColumns = [
+  { label: '序号', prop: 'id', width: 70 },
+  { label: '食堂名称', prop: 'canteenName' },
+  { label: '告警类型', prop: 'alarmType' },
+  { label: '告警时间', prop: 'alarmTime' },
+  { label: '告警等级', prop: 'alarmLevel' },
+  { label: '处理状态', prop: 'status' },
+];
+// 告警明细弹窗
+const alarmDrillVisible = ref(false);
+const alarmDrillList = ref([]);
+
+// 整改复审台账弹窗
+const rectifyReviewVisible = ref(false);
+const rectifyReviewList = ref([]);
+
+// 设备正常率弹窗
+const deviceNormalVisible = ref(false);
+const deviceNormalList = ref([]);
+
+// 整改完成率弹窗
+const rectifyFinishVisible = ref(false);
+const rectifyFinishList = ref([]);
+
+// 打开告警明细弹窗
+const oepnalarmCount = async (row, type) => {
+  const data = await getViolationAnalyticsDrill({ entId: row.entId ,...dataObj.getParams});
+
+  if (type === 'noAi') {
+    rectifyReviewList.value = data.rectifyReviewDOList.map((item) => ({
+      ...item,
+      createTime: formatTimestamp(item.createTime),
+      updateTime: formatTimestamp(item.updateTime),
+      draftTime: formatTimestamp(item.draftTime),
+      rectifyDeadlineTime: formatTimestamp(item.rectifyDeadlineTime),
+      reviewTime: formatTimestamp(item.reviewTime),
+      cancelTime: formatTimestamp(item.cancelTime),
+    }));
+    rectifyReviewVisible.value = true;
+  } else if(type === 'rectifyFinishRate') {
+    rectifyFinishList.value = data.rectifyFinishList.map((item) => ({
+      ...item,
+      createTime: formatTimestamp(item.createTime),
+      updateTime: formatTimestamp(item.updateTime),
+      draftTime: formatTimestamp(item.draftTime),
+      rectifyDeadlineTime: formatTimestamp(item.rectifyDeadlineTime),
+      reviewTime: formatTimestamp(item.reviewTime),
+      cancelTime: formatTimestamp(item.cancelTime),
+    }));
+    rectifyFinishVisible.value = true;
+  } else if(type === 'deviceNormalRate') {
+    deviceNormalList.value = data.deviceNormalList.map((item) => ({
+      ...item,
+      createTime: formatTimestamp(item.createTime),
+      updateTime: formatTimestamp(item.updateTime),
+    }));
+    deviceNormalVisible.value = true;
+  } else {
+    alarmDrillList.value = data.alarmList || [];
+    alarmDrillList.value = alarmDrillList.value.map((item) => ({
+      ...item,
+      createTime: formatTimestamp(item.createTime),
+      updateTime: formatTimestamp(item.updateTime),
+    }));
+
+    alarmDrillVisible.value = true;
+  }
+};
+
+// 告警钻取列
+const alarmDrillColumns = [
+  { label: 'ID', prop: 'id', width: 80 },
+  { label: '创建时间', prop: 'createTime', width: 180 },
+  { label: '更新时间', prop: 'updateTime', width: 180 },
+  { label: '告警类型', prop: 'alertType', width: 120 },
+  { label: '设备编码', prop: 'deviceCode', width: 180 },
+  { label: '告警来源', prop: 'alertSource', width: 120 },
+  { label: '设备手机号', prop: 'deviceAccount', width: 150 },
+  { label: '告警ID', prop: 'alertId', width: 120 },
+  { label: 'AI平台消息ID', prop: 'aiPlatformMsgId', width: 180 },
+];
+
+// 整改复审台账列
+const rectifyReviewColumns = [ 
+  { label: '整改通知书id', prop: 'rectifyNoticeId', width: 150 },
+  { label: '台账编号', prop: 'ledgerCode', width: 200 },
+  { label: '违规类型', prop: 'illegalTypeName', width: 120 },
+  { label: '违规等级', prop: 'illegalLevelName', width: 150 }, 
+  { label: '违规证据链接', prop: 'evidenceUrl', width: 400, slot: 'evidenceUrl' },
+  { label: '草拟时间', prop: 'draftTime', width: 180 },
+  { label: '整改截至时间', prop: 'rectifyDeadlineTime', width: 180 },
+  { label: '复审状态', prop: 'reviewStatus', width: 120 },
+  { label: '复审人ID', prop: 'reviewBy', width: 120 },
+  { label: '复审时间', prop: 'reviewTime', width: 180 },
+  { label: '撤销时间', prop: 'cancelTime', width: 180 }, 
+  { label: '执法复审台账编号', prop: 'lawLedgerCode', width: 200 },
+  { label: '整改通知书编号', prop: 'rectifyNoticeCode', width: 200 }, 
+];
+
+// 设备正常率列
+const deviceNormalColumns = [
+  { label: 'ID', prop: 'id', width: 80 },
+  { label: '设备编号', prop: 'deviceCode', width: 180 },
+  { label: '设备名称', prop: 'deviceName', width: 200 },
+  { label: '设备类型', prop: 'deviceType', width: 150 },
+  { label: '所属企业ID', prop: 'entId', width: 120 },
+  { label: '所属区域ID', prop: 'areaId', width: 120 },
+  { label: '状态', prop: 'status', width: 120 },
+];
+
+// 整改完成率列
+const rectifyFinishColumns = [
+  { label: 'ID', prop: 'id', width: 80 },
+  { label: '整改通知书id', prop: 'rectifyNoticeId', width: 150 },
+  { label: '台账编号', prop: 'ledgerCode', width: 200 }, 
+  { label: '违规证据链接', prop: 'evidenceUrl', width: 400, slot: 'evidenceUrl' },
+  { label: '草拟时间', prop: 'draftTime', width: 180 },
+  { label: '整改截至时间', prop: 'rectifyDeadlineTime', width: 180 },
+  { label: '复审状态', prop: 'reviewStatus', width: 120 }, 
+  { label: '复审时间', prop: 'reviewTime', width: 180 },
+  { label: '撤销时间', prop: 'cancelTime', width: 180 }, 
+  { label: '执法复审台账编号', prop: 'lawLedgerCode', width: 200 },
+  { label: '整改通知书编号', prop: 'rectifyNoticeCode', width: 200 }, 
+];
 </script>
 
 <template>
-  <div class="park-lot-table-new">
+  <div class="park-lot-table-new" v-loading="dataObj.loading">
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <!-- 使用封装后的详情抽屉组件 -->
-    <ParkDetailDrawer
-      ref="parkDetailDrawerRef"
-      :detail-obj="dataObj.detailObj"
-    />
+
+    <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" />
+    <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" />
+
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+
+    <!-- 告警明细弹窗 -->
+    <ElDialog v-model="alarmDialogVisible" title="当日食品安全问题明细" width="900px" append-to-body>
+      <el-table :data="alarmList" border height="450">
+        <el-table-column v-for="col in alarmColumns" :key="col.prop" :label="col.label" :prop="col.prop"
+          :width="col.width" />
+      </el-table>
+    </ElDialog>
+
+    <!-- 告警钻取明细弹窗 -->
+    <ElDialog v-model="alarmDrillVisible" title="告警明细" width="1200px" append-to-body>
+      <el-table :data="alarmDrillList" border height="450">
+        <el-table-column label="图片地址" width="100">
+          <template #default="scope">
+            <div style="display: flex; align-items: center">
+              <img :src="scope.row.srcUrl" alt="" style="width: 80px; height: 80px;">
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column v-for="col in alarmDrillColumns" :key="col.prop" :label="col.label" :prop="col.prop"
+          :width="col.width">
+
+        </el-table-column>
+      </el-table>
+    </ElDialog>
+
+    <!-- 整改复审台账弹窗 -->
+    <ElDialog v-model="rectifyReviewVisible" title="违规详情" width="1200px" append-to-body>
+      <el-table :data="rectifyReviewList" border height="450">
+        <el-table-column v-for="col in rectifyReviewColumns" :key="col.prop" :label="col.label" :prop="col.prop"
+          :width="col.width">
+          <template #default="{ row }" v-if="col.slot === 'evidenceUrl'">
+            <div v-if="row.evidenceUrl">
+              <img
+                v-for="(item, index) in JSON.parse(row.evidenceUrl)"
+                :key="index"
+                :src="item.url"
+                style="width: 80px; height: 80px; margin-right: 10px;"
+                alt="违规证据"
+              />
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+    </ElDialog>
+
+    <!-- 设备正常率弹窗 -->
+    <ElDialog v-model="deviceNormalVisible" title="正常设备列表" width="1200px" append-to-body>
+      <el-table :data="deviceNormalList" border height="450">
+        <el-table-column v-for="col in deviceNormalColumns" :key="col.prop" :label="col.label" :prop="col.prop"
+          :width="col.width">
+        </el-table-column>
+      </el-table>
+    </ElDialog>
+
+    <!-- 整改完成率弹窗 -->
+    <ElDialog v-model="rectifyFinishVisible" title="已完成的整改" width="1200px" append-to-body>
+      <el-table :data="rectifyFinishList" border height="450">
+        <el-table-column v-for="col in rectifyFinishColumns" :key="col.prop" :label="col.label" :prop="col.prop"
+          :width="col.width">
+          <template #default="{ row }" v-if="col.slot === 'evidenceUrl'">
+            <div v-if="row.evidenceUrl">
+              <img
+                v-for="(item, index) in JSON.parse(row.evidenceUrl)"
+                :key="index"
+                :src="item.url"
+                style="width: 80px; height: 80px; margin-right: 10px;"
+                alt="违规证据"
+              />
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+    </ElDialog>
+
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton
-            content="导出"
-            icon-name="download"
-            @click="handleExport"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
-          />
-          <IconButton
-            :content="props.arrowShow ? '展开' : '收缩'"
-            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
-            @click="arrowChange"
-          />
-          <IconButton
-            content="全屏"
-            icon-name="FullScreen"
-            @click="handleFullShow"
-          />
+          <IconButton content="刷新" icon-name="refresh" @click="autoElmessage" />
+          <IconButton content="导出EXCEL" icon-name="download" @click="handleExport" />
+          <IconButton content="导出PDF" icon-name="download" @click="handlePDF" />
+          <IconButton content="批量删除" icon-name="delete" color="#F56C6C" :disabled="isEmpty(checkedIds)"
+            @click="handleDeleteBatch" />
+          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange" />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
-      <template #reportNumber="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.reportNumber }}
+
+      <template #totalAlarmCount="{ row }">
+        <el-text @click="handleTotal(row)" class="common-align" type="primary">
+          {{ row.totalAlarmCount }}
         </el-text>
       </template>
+
+      <template #entName="{ row }">
+        <el-text @click="openEn(row)" class="common-align" type="primary">
+          {{ row.entName }}
+        </el-text>
+      </template>
+      <template #alarmCount="{ row }">
+        <el-text @click="oepnalarmCount(row)" class="common-align" type="primary">
+          {{ row.alarmCount }}
+        </el-text>
+      </template>
+      <template #violationCount="{ row }">
+        <el-text class="common-align" @click="oepnalarmCount(row, 'noAi')" type="primary">
+          {{ row.violationCount }}
+        </el-text>
+      </template>
+      <template #deviceNormalRate="{ row }">
+        <el-text @click="oepnalarmCount(row, 'deviceNormalRate')" class="common-align" type="primary">
+          {{ row.deviceNormalRate }}
+        </el-text>
+      </template> 
+      <template #rectifyFinishRate="{ row }">
+        <el-text @click="oepnalarmCount(row, 'rectifyFinishRate')" class="common-align" type="primary">
+          {{ row.rectifyFinishRate }}
+        </el-text>
+      </template>
+
+
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton
-            content="详情"
-            icon-name="View"
-            @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
-          />
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" /> 
         </div>
       </template>
+
       <template #bottom>
         <div class="common-total" @click="changeTotalShow">
           <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">

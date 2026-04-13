@@ -22,7 +22,7 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   onCancel: () => detailDrawerApi.close(),
 });
 
-defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.close() });
+defineExpose({open: () => detailDrawerApi.open(), close: () => detailDrawerApi.close()});
 </script>
 
 <template>
@@ -30,43 +30,157 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
     <div class="detail-card">
       <!-- 计划信息 -->
       <div class="detail-section">📋 计划信息</div>
-      <div class="detail-row"><span class="label">计划单编号：</span>{{ detailObj.planNo || '-' }}</div>
-      <div class="detail-row"><span class="label">收运品类：</span>{{ detailObj.garbageTypeName || '-' }}</div>
-      <div class="detail-row"><span class="label">收运区域：</span>{{ detailObj.areaName || '-' }}</div>
-      <div class="detail-row"><span class="label">收运频次：</span>{{ detailObj.frequency || '-' }}</div>
-      <div class="detail-row"><span class="label">收运时段：</span>{{ detailObj.timePeriod || '-' }}</div>
-      <div class="detail-row"><span class="label">负责车辆：</span>{{ detailObj.vehicleLicensePlate || '-' }}</div>
-      <div class="detail-row"><span class="label">负责人员：</span>{{ detailObj.usersName || '-' }}</div>
-      <div class="detail-row"><span class="label">计划状态：</span>{{ detailObj.planStatusName || '-' }}</div>
-      <div class="detail-row"><span class="label">完成率：</span>{{ detailObj.completionRate !== undefined ? detailObj.completionRate + '%' : '-' }}</div>
-      <div class="detail-row"><span class="label">异常记录数：</span>{{ detailObj.abnormalCount ?? '-' }}</div>
-      <div class="detail-row"><span class="label">总收运量：</span>{{ detailObj.totalVolume || '-' }} 吨</div>
-      <div class="detail-row"><span class="label">异常处置结果：</span>{{ detailObj.abnormalResult || '-' }}</div>
-      <div class="detail-row"><span class="name">创建人：</span>{{ detailObj.createByName || '-' }}</div>
-
-      <!-- 执行记录 -->
-      <div class="detail-section">📌 执行记录</div>
-      <div class="detail-row"><span class="label">当前进度：</span>{{ detailObj.completionRate || 0 }}%</div>
-      <div class="detail-row"><span class="label">已收运量：</span>{{ detailObj.collectedVolume || 0 }} 吨</div>
-      <div class="detail-row"><span class="label">打卡状态：</span>{{ detailObj.checkinStatus || '未打卡' }}</div>
-      <div class="detail-row"><span class="label">最新上报时间：</span>{{ detailObj.lastReportTime || '-' }}</div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">计划单编号：</div>
+        <div class="detail-row-right">{{ detailObj.planNo || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">收运品类：</div>
+        <div class="detail-row-right">{{ detailObj.garbageTypeName || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">收运区域：</div>
+        <div class="detail-row-right">{{ detailObj.areaName || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">收运频次：</div>
+        <div class="detail-row-right">{{ detailObj.frequency || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">收运时段：</div>
+        <div class="detail-row-right">{{ detailObj.timePeriod || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">负责车辆：</div>
+        <div class="detail-row-right">{{ detailObj.vehicleLicensePlate || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">负责人员：</div>
+        <div class="detail-row-right">{{ detailObj.usersName || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">计划状态：</div>
+        <div class="detail-row-right">{{ detailObj.planStatusName || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">完成率：</div>
+        <div class="detail-row-right">
+          {{ detailObj.completionRate !== undefined ? detailObj.completionRate + '%' : '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">异常记录数：</div>
+        <div class="detail-row-right">{{ detailObj.abnormalCount ?? '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">总收运量：</div>
+        <div class="detail-row-right">{{ detailObj.totalVolume || '-' }} 吨</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">异常处置结果：</div>
+        <div class="detail-row-right">{{ detailObj.abnormalResult || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">创建人：</div>
+        <div class="detail-row-right">{{ detailObj.createByName || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">当前进度：</div>
+        <div class="detail-row-right">{{ detailObj.completionRate || 0 }}%</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">已收运量：</div>
+        <div class="detail-row-right">{{ detailObj.collectedVolume || 0 }} 吨</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">打卡状态：</div>
+        <div class="detail-row-right">{{ detailObj.checkinStatus || '未打卡' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">最新上报时间：</div>
+        <div class="detail-row-right">{{ detailObj.lastReportTime || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">复盘意见：</div>
+        <div class="detail-row-right">{{ detailObj.reviewDesc || '-' }}</div>
+      </div>
 
       <!-- 时间信息 -->
       <div class="detail-section">📅 时间信息</div>
-      <div class="detail-row"><span class="label">创建时间：</span>{{ detailObj.createTime || '-' }}</div>
-      <div class="detail-row"><span class="label">更新时间：</span>{{ detailObj.updateTime || '-' }}</div>
-      <div class="detail-row"><span class="label">完成时间：</span>{{ detailObj.completeTime }}</div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">创建时间：</div>
+        <div class="detail-row-right">{{ detailObj.createTime || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">更新时间：</div>
+        <div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">完成时间：</div>
+        <div class="detail-row-right">{{ detailObj.completeTime || '-' }}</div>
+      </div>
     </div>
   </DetailDrawer>
 </template>
 
 <style scoped lang="scss">
+@media (max-width: 768px) {
+  .detail-row-left {
+    width: 180px;
+  }
+  .detail-card {
+    min-height: 600px;
+    max-height: 80vh;
+    padding: 15px;
+  }
+}
+
 .detail-card {
+  min-height: 750px;
+  max-height: 85vh;
   padding: 20px;
-  background: #f9fafb;
-  border-radius: 8px;
-  max-height: 70vh;
   overflow-y: auto;
+  background-color: #f9fafb;
+  border-radius: 8px;
+}
+
+.detail-card-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    padding-right: 8px;
+    padding-left: 8px;
+    margin-right: -8px;
+    margin-left: -8px;
+    background-color: #f5f7fa;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+}
+
+.detail-row-left {
+  flex-shrink: 0;
+  width: 200px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 18px;
+  color: #606266;
+}
+
+.detail-row-right {
+  flex: 1;
+  padding-right: 10px;
+  font-size: 14px;
+  line-height: 18px;
+  color: #303133;
+  word-break: break-all;
 }
 
 .detail-section {
@@ -75,17 +189,28 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
   margin: 16px 0 8px;
   padding-bottom: 4px;
   border-bottom: 1px solid #e0e0e0;
+  color: #6E7E91;
+
+  &:first-child {
+    margin-top: 0;
+  }
 }
 
-.detail-row {
-  display: flex;
-  padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
+.detail-card::-webkit-scrollbar {
+  width: 6px;
+}
 
-  .label {
-    width: 130px;
-    flex-shrink: 0;
-    font-weight: 500;
-  }
+.detail-card::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.detail-card::-webkit-scrollbar-thumb {
+  background: #dcdfe6;
+  border-radius: 3px;
+}
+
+.detail-card::-webkit-scrollbar-thumb:hover {
+  background: #c0c4cc;
 }
 </style>

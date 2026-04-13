@@ -5,14 +5,21 @@ export function getRuleCategoryAllPage(params) {
   return requestClient.get('/evaluate/rule-category/allpage', { params });
 }
 
-/** 获取状态统计数据（用于 tabs 计数） */
-export function getRuleStatusCount() {
-  return requestClient.get('/evaluate/rule-category/status-count');
-}
-
-/** 创建规则分类（仅基本信息） */
-export function createRuleCategory(data) {
-  return requestClient.post('/evaluate/rule-category/create', data);
+// 获取状态统计数据（用于 tabs 计数）
+export async function getRuleStatusCount() {
+  try {
+    const allRes = await getRuleCategoryAllPage({ pageNo: 1, pageSize: 1 });
+    const enableRes = await getRuleCategoryAllPage({ pageNo: 1, pageSize: 1, statusId: 1 });
+    const disableRes = await getRuleCategoryAllPage({ pageNo: 1, pageSize: 1, statusId: 2 });
+    return {
+      totalCount: allRes.total || 0,
+      status1Count: enableRes.total || 0,
+      status2Count: disableRes.total || 0,
+    };
+  } catch (error) {
+    console.error('获取状态统计失败', error);
+    return { totalCount: 0, status1Count: 0, status2Count: 0 };
+  }
 }
 
 /** 更新规则分类（仅基本信息） */
@@ -26,13 +33,13 @@ export function deleteRuleCategory(id) {
 }
 
 /** 获取规则分类详情（包含规则项列表） */
-export function getRuleCategoryDetail(categoryId) {
-  return requestClient.get(`/evaluate/rule-category/category-detail?categoryId=${categoryId}`);
+export function getRuleCategoryDetail(id) {
+  return requestClient.get(`/evaluate/rule-category/get?id=${id}`);
 }
 
-/** 获取规则概览数据（用于图表） */
-export function getRuleOverview() {
-  return requestClient.get('/evaluate/rule-category/overview');
+/** 获取规则分类统计数据（卡片、饼图、柱状图） */
+export function getRuleStatistics() {
+  return requestClient.get('/evaluate/rule-category/statistics');
 }
 
 /** 导出 Excel（后端生成） */
@@ -43,50 +50,37 @@ export function exportRuleCategory(params) {
   });
 }
 
-// ========== 规则项相关接口 ==========
-/** 创建规则项 */
-export function createRuleItem(data) {
-  return requestClient.post('/evaluate/rule-item/create', data);
-}
+// ---------- 下拉列表接口（全部数据，用于表单）----------
 
-/** 更新规则项 */
-export function updateRuleItem(data) {
-  return requestClient.put('/evaluate/rule-item/update', data);
-}
-
-/** 删除规则项 */
-export function deleteRuleItem(id) {
-  return requestClient.delete(`/evaluate/rule-item/delete?id=${id}`);
-}
-
-// ========== 字典接口 ==========
-/** 获取指标体系下拉列表（用于筛选/表单） */
-export function getIndexSystemSimpleList() {
-  return requestClient.get('/evaluate/index-system/simple-list');
-}
-
-/** 获取指标项下拉列表 */
-export function getIndexItemSimpleList() {
-  return requestClient.get('/evaluate/index-item/simple-list');
-}
-
-/** 获取规则类型字典列表 */
-export function getRuleTypeList() {
-  return requestClient.get('/evaluate/rule-type/page', { params: { pageNo: 1, pageSize: 100 } });
-}
-
-/** 获取对象类型字典列表 */
-export function getObjectTypeSimpleList() {
-  return requestClient.get('/evaluate/object-type/simple-list');
-}
-
-/** 获取状态字典列表 */
-export function getStatusSimpleList() {
-  return requestClient.get('/evaluate/status/page', { params: { pageNo: 1, pageSize: 100 } }).then(res => {
-    const list = res.list || res.data?.list || [];
-    return list.map(item => ({
-      value: item.statusId, // 字段名可能为 id、statusId 等，请按实际情况调整
-      label: item.name,
-    }));
+/** 获取指标体系下拉列表（全部） */
+export async function getIndexSystemSimpleList() {
+  const res = await requestClient.get('/evaluate/index-system/page', {
+    params: { pageNo: 1, pageSize: 200 },
   });
+  return (res.list || []).map((item) => ({
+    label: item.name,
+    value: Number(item.id),
+  }));
+}
+
+/** 获取适用对象类型下拉列表（全部） */
+export async function getObjectTypeSimpleList() {
+  const res = await requestClient.get('/evaluate/object-type/page', {
+    params: { pageNo: 1, pageSize: 200 },
+  });
+  return (res.list || []).map((item) => ({
+    label: item.name,
+    value: item.typeId,
+  }));
+}
+
+/** 获取状态下拉列表（全部） */
+export async function getStatusSimpleList() {
+  const res = await requestClient.get('/evaluate/status/page', {
+    params: { pageNo: 1, pageSize: 200 },
+  });
+  return (res.list || []).map((item) => ({
+    label: item.name,
+    value: Number(item.statusId),
+  }));
 }

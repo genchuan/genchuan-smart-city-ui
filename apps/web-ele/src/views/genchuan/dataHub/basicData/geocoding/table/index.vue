@@ -9,7 +9,7 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
@@ -170,9 +170,11 @@ function handleEdit(row) {
     .open();
 }
 async function handleDelete(row) {
-  const confirmResult = await confirm(`确定删除地理编码 "${row.locationName}" 吗？`);
+  const confirmResult = await confirm(
+    `确定删除地理编码 "${row.locationName}" 吗？`,
+  );
   if (!confirmResult) return;
-  
+
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting', [row.locationName]),
   });
@@ -595,12 +597,7 @@ const handleCancelCheckResultNameFilter = () => {
       <template #table-title>
         <div
           class="tabel-tabs"
-          style="
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            align-items: center;
-          "
+          style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
         >
           <div v-if="props.secondShow">
             <el-tabs
@@ -664,22 +661,18 @@ const handleCancelCheckResultNameFilter = () => {
             @close="emit('clearFilter')"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
-            地理编码：{{ dataObj.apilist.find(item => item.geoCode === props.filterGeoCode)?.locationName }}
+            地理编码：{{
+              dataObj.apilist.find(
+                (item) => item.geoCode === props.filterGeoCode,
+              )?.locationName
+            }}
           </ElTag>
         </div>
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton
-            content="新增"
-            icon-name="Plus"
-            @click="handleCreate"
-          />
-          <IconButton
-            content="导入"
-            icon-name="Upload"
-            @click="handleImport"
-          />
+          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton content="导入" icon-name="Upload" @click="handleImport" />
           <IconButton
             content="导出"
             icon-name="download"

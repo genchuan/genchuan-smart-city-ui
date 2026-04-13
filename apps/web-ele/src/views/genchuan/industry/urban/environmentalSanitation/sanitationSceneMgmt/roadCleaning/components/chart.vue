@@ -1,39 +1,66 @@
 <script setup>
-import {reactive} from 'vue';
-import Indicator from '#/components/stats/indicator.vue';
-import Pie from '#/components/stats/pie.vue';
-import Bar from '#/components/stats/bar.vue';
+import { reactive, onMounted } from 'vue';
+import { getRoadCleaningChartAll } from '#/api/genchuan/industry/urban/environmentalSanitation/sanitationSceneMgmt/roadCleaning/data.js';
+import Indicator from '#/genchuan-components/stats/indicator.vue';
+import Pie from '#/genchuan-components/stats/pie.vue';
+import Bar from '#/genchuan-components/stats/bar.vue';
 
 const state = reactive({
-  cardList: [
-    {title: '总计划数', value: 10, color: '#409EFF'},
-    {title: '执行中计划数', value: 2, color: '#c8ce13'},
-    {title: '质量达标数', value: 7, color: '#67C23A'},
-    {title: '全勤人员数', value: 8, color: '#F56C6C'},
-  ],
-  pieData: {
-    status: [
-      {name: '清扫待执行', value: 2},
-      {name: '作业进行中', value: 2},
-      {name: '问题待处置', value: 2},
-      {name: '质量待核查', value: 2},
-      {name: '已完成', value: 2},
-    ],
-    roadType: [
-      {name: '主干道', value: 5},
-      {name: '次干道', value: 3},
-      {name: '支路', value: 2},
-    ],
+  loading: false,
+  cardList: [],          // 卡片数据
+  pieData: {             // 饼图数据
+    status: [],
+    roadType: [],
   },
-  barData: {
-    x: ['龙文区', '龙海区', '芗城区', '长泰区', '漳浦县'],
-    series: [98, 95, 92, 96, 100], // 清扫质量达标率
+  barData: {             // 柱状图数据
+    x: [],
+    series: [],
   },
+});
+
+// 数值安全转换
+const toNumber = (val) => (val === null || val === undefined ? 0 : Number(val) || 0);
+
+const fetchData = async () => {
+  state.loading = true;
+  try {
+    const res = await getRoadCleaningChartAll();
+    console.log('全部视图接口返回:', res); // 调试用
+
+    // 直接使用返回的对象（无外层code/data包裹）
+    if (res && typeof res === 'object') {
+      // 卡片数据
+      state.cardList = [
+        { title: '总计划数', value: toNumber(res.totalPlanCount), color: '#409EFF' },
+        { title: '执行中计划数', value: toNumber(res.executingPlanCount), color: '#c8ce13' },
+        { title: '质量达标数', value: toNumber(res.qualityQualifiedCount), color: '#67C23A' },
+        { title: '全勤人员数', value: toNumber(res.fullAttendanceStaffCount), color: '#F56C6C' },
+      ];
+
+      // 饼图数据（确保是数组）
+      state.pieData.status = Array.isArray(res.planStatusDistribution) ? res.planStatusDistribution : [];
+      state.pieData.roadType = Array.isArray(res.roadSectionTypeDistribution) ? res.roadSectionTypeDistribution : [];
+
+      // 柱状图数据（不同区域质量达标率）
+      const areaRates = Array.isArray(res.qualityQualifiedRateByArea) ? res.qualityQualifiedRateByArea : [];
+      state.barData.x = areaRates.map(item => item.name);
+      state.barData.series = areaRates.map(item => toNumber(item.value));
+    }
+  } catch (error) {
+    console.error('获取全部视图图表数据失败', error);
+  } finally {
+    state.loading = false;
+  }
+};
+
+onMounted(() => {
+  fetchData();
 });
 </script>
 
 <template>
-  <div class="chart-box">
+  <div class="chart-box" v-loading="state.loading" element-loading-text="加载中...">
+    <!-- 卡片区域 -->
     <div class="box-left" style="flex: 1 !important;">
       <Indicator
         class="left-card"
@@ -42,16 +69,22 @@ const state = reactive({
         v-bind="item"
       />
     </div>
+
+    <!-- 计划状态占比圆环图 -->
     <Pie
       style="flex: 1 !important;"
       title-text="计划状态占比"
       :data="state.pieData.status"
     />
+
+    <!-- 路段类型占比圆环图 -->
     <Pie
       style="flex: 1 !important;"
       title-text="路段类型占比"
       :data="state.pieData.roadType"
     />
+
+    <!-- 不同区域清扫质量达标率柱状图 -->
     <Bar
       style="flex: 1 !important;"
       title="不同区域清扫质量达标率对比"

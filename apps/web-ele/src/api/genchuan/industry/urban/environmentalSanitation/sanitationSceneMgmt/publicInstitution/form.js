@@ -1,4 +1,23 @@
-// 新增/编辑表单 schema（机构基础信息）
+import { requestClient } from '#/api/request';
+
+// ========== 新增 options 接口 ==========
+export function getAreaOptions() {
+  return requestClient.get('/envirhealth/area/options');
+}
+
+export function getUserOptions() {
+  return requestClient.get('/envirhealth/user/options');
+}
+
+export function getOperationStatusOptions() {
+  return requestClient.get('/envirhealth/operation-status/options');
+}
+
+export function getInstitutionTypeOptions() {
+  return requestClient.get('/envirhealth/institution-type/options');
+}
+
+// ========== 原有新增/编辑表单 schema（用于非“全部”标签页，字段名基于模拟数据） ==========
 export function useFormSchema() {
   return [
     {
@@ -80,23 +99,157 @@ export function useFormSchema() {
   ];
 }
 
-// 根据状态获取表格列定义
+// ========== 新增：用于“全部”标签页的编辑表单 schema（字段名与接口一致） ==========
+export function usePublicInstitutionEditSchema() {
+  return [
+    {
+      fieldName: 'name',
+      label: '机构名称',
+      component: 'Input',
+      componentProps: { placeholder: '请输入机构名称' },
+    },
+    {
+      fieldName: 'institutionTypeId',
+      label: '机构类型',
+      component: 'Select',
+      componentProps: { placeholder: '请选择机构类型', options: [] },
+    },
+    {
+      fieldName: 'address',
+      label: '机构地址',
+      component: 'Input',
+      componentProps: { placeholder: '请输入详细地址' },
+    },
+    {
+      fieldName: 'areaCode',
+      label: '所属区域',
+      component: 'Select',
+      componentProps: { placeholder: '请选择区域', options: [] },
+    },
+    {
+      fieldName: 'managerId',
+      label: '负责人',
+      component: 'Select',
+      componentProps: { placeholder: '请选择负责人', options: [] },
+    },
+    {
+      fieldName: 'operationStatusId',
+      label: '运营状态',
+      component: 'Select',
+      componentProps: { placeholder: '请选择状态', options: [] },
+    },
+    {
+      fieldName: 'cleaningStandard',
+      label: '保洁标准',
+      component: 'Input',
+      componentProps: { placeholder: '请输入保洁标准' },
+    },
+    {
+      fieldName: 'cleaningFrequency',
+      label: '保洁频次',
+      component: 'Input',
+      componentProps: { placeholder: '请输入保洁频次' },
+    },
+    {
+      fieldName: 'cleaningTime',
+      label: '保洁时段',
+      component: 'Input',
+      componentProps: { placeholder: '请输入保洁时段' },
+    },
+    {
+      fieldName: 'cleanerIds',
+      label: '保洁人员',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择保洁人员',
+        multiple: true,
+        valueFormat: 'array',
+        options: [],
+      },
+    },
+    {
+      fieldName: 'responsibilityArea',
+      label: '责任区域',
+      component: 'Input',
+      componentProps: { placeholder: '请输入责任区域' },
+    },
+  ];
+}
+
+// ========== 新增：搜索表单 schema（用于“全部”标签页） ==========
+export function usePublicInstitutionSearchSchema() {
+  return [
+    {
+      fieldName: 'institutionTypeId',
+      label: '机构类型',
+      component: 'Select',
+      componentProps: { placeholder: '请选择机构类型', options: [], clearable: true },
+    },
+    {
+      fieldName: 'areaCode',
+      label: '所属区域',
+      component: 'Select',
+      componentProps: { placeholder: '请选择区域', options: [], clearable: true },
+    },
+    {
+      fieldName: 'operationStatusId',
+      label: '运营状态',
+      component: 'Select',
+      componentProps: { placeholder: '请选择状态', options: [], clearable: true },
+    },
+    {
+      fieldName: 'managerId',
+      label: '负责人',
+      component: 'Select',
+      componentProps: { placeholder: '请选择负责人', options: [], clearable: true },
+    },
+  ];
+}
+
+// ========== 表格列配置（按状态筛选）==========
+// ！！！仅修改“全部”标签页的列字段名为接口字段，其他状态列完全保留原样 ！！！
 export function getColumnsByStatus(status) {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const statusColumnsMap = {
+    // 【修改】全部标签页：使用接口返回的字段名
     全部: [
-      { field: 'toiletName', title: '机构名称', minWidth: 150, sortable: true, slots: { default: 'toiletName' } },
-      { field: 'institutionType', title: '机构类型', minWidth: 120, sortable: true, slots: { default: 'institutionType' } },
-      { field: 'location', title: '机构地址', minWidth: 200, sortable: true },
-      { field: 'area', title: '所属区域', minWidth: 180, sortable: true, slots: { default: 'area' } },
-      { field: 'manager', title: '负责人', minWidth: 120, sortable: true },
-      { field: 'status', title: '运营状态', minWidth: 120, sortable: true, slots: { default: 'status' } },
-      { field: 'cleaningRate', title: '保洁达标率(%)', minWidth: 120, sortable: true, formatter: ({ cellValue }) => (cellValue !== undefined ? `${cellValue}%` : '-') },
-      { field: 'problemRate', title: '问题办结率(%)', minWidth: 120, sortable: true, formatter: ({ cellValue }) => (cellValue !== undefined ? `${cellValue}%` : '-') },
-      { field: 'wasteVolume', title: '垃圾清运量(kg)', minWidth: 130, sortable: true, formatter: ({ cellValue }) => (cellValue !== undefined ? `${cellValue}kg` : '-') },
-      { field: 'inspectionPassRate', title: '核查通过率(%)', minWidth: 130, sortable: true, formatter: ({ cellValue }) => (cellValue !== undefined ? `${cellValue}%` : '-') },
+      { field: 'name', title: '机构名称', minWidth: 160, sortable: true, slots: { default: 'name' } },
+      { field: 'institutionTypeName', title: '机构类型', minWidth: 120, sortable: true, slots: { default: 'institutionType' } },
+      { field: 'address', title: '机构地址', minWidth: 200, sortable: true },
+      { field: 'areaName', title: '所属区域', minWidth: 180, sortable: true, slots: { default: 'area' } },
+      { field: 'managerName', title: '负责人', minWidth: 120, sortable: true },
+      { field: 'operationStatusName', title: '运营状态', minWidth: 120, sortable: true, slots: { default: 'status' } },
+      {
+        field: 'cleaningRate',
+        title: '保洁达标率(%)',
+        minWidth: 120,
+        sortable: true,
+        formatter: ({ cellValue }) => (cellValue != null ? `${cellValue}%` : '-'),
+      },
+      {
+        field: 'problemRate',
+        title: '问题办结率(%)',
+        minWidth: 120,
+        sortable: true,
+        formatter: ({ cellValue }) => (cellValue != null ? `${cellValue}%` : '-'),
+      },
+      {
+        field: 'wasteVolume',
+        title: '垃圾清运量(kg)',
+        minWidth: 130,
+        sortable: true,
+        formatter: ({ cellValue }) => (cellValue != null ? `${cellValue}kg` : '-'),
+      },
+      {
+        field: 'inspectionPassRate',
+        title: '核查通过率(%)',
+        minWidth: 130,
+        sortable: true,
+        formatter: ({ cellValue }) => (cellValue != null ? `${cellValue}%` : '-'),
+      },
     ],
+    // 以下五个标签页的列配置完全保留原样（基于模拟数据字段）
     保洁待执行: [
       { field: 'toiletName', title: '机构名称', minWidth: 150, sortable: true, slots: { default: 'toiletName' } },
       { field: 'area', title: '所属区域', minWidth: 180, sortable: true },

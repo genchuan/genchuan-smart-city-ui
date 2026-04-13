@@ -175,14 +175,42 @@ const IOT_DICT = {
 
 /** ========== DATA - 数据中枢模块 ========== */
 const DATA_DICT = {
-  DATA_CATEGORY_TYPE: 'category_type', // 分类类型
-  DATA_RUN_STATUS: 'run_status', // 运行状态
-  DATA_MATTER_STATUS: 'matter_status', // 事项状态
-  DATA_AUDIT_STATUS: 'audit_status', // 审核状态
-  DATA_ENABLE_STATUS: 'status_name', // 启用状态
-  DATA_CORE_INDICATORS: 'sys_index', // 核心监测指标
-  DATA_EVENT_LEVEL: 'sys_event_level', // 事件等级
-  DATA_TYPE: 'data_type', // 数据类型
+  DATA_CATEGORY_TYPE: 'op_data_category_type', // 分类类型
+  DATA_RUN_STATUS: 'op_data_run_status', // 运行状态
+  DATA_MATTER_STATUS: 'op_data_matter_status', // 事项状态
+  DATA_AUDIT_STATUS: 'op_data_audit_status', // 审核状态
+  DATA_ENABLE_STATUS: 'op_data_open_status', // 启用状态
+  DATA_CORE_INDICATORS: 'op_data_sys_index', // 核心监测指标
+  DATA_EVENT_LEVEL: 'op_data_event_level', // 事件等级
+  DATA_TYPE: 'op_data_type', // 数据类型
+} as const;
+
+/** ========== SHUNCAHNG - 顺昌迁移模块 ========== */
+const SHUNCHANG_DICT = {
+  // 排水户管理系统
+  SM_DRAINAGE_USER: 'sm_drainage_user',
+  SM_INDUSTRY_CATEGORY: 'sm_Industry_category',
+  SM_DRAINAGE_TYPE: 'sm_drainage_type',
+  SM_PART_TYPE: 'sm_part_type',
+  SM_STATE: 'sm_state',
+  // 顺昌物联网设备状态
+  SC_OP_SERVICE_DEVICE_STATUS: 'sc_op_service_device_status',
+} as const;
+
+/** ========== ENERGYCHARGE - 能源充电模块 ========== */
+const ENERGYCHARGE_DICT = {
+  // 汽车充电
+  // 充电车位
+  CHARGE_LOT_LOT_STATUS: 'charging_lot_lot_status', // 车位状态
+  CHARGE_LOT_LOT_TYPE: 'charging_lot_lot_type', // 车位类型
+  // 订单告警
+  ORDER_ALARM_ABNORMAL_TYPE: 'order_alarm_abnormal_type', // 订单异常类型
+  ORDER_ALARM_ALARM_STATUS: 'order_alarm_alarm_status', // 订单告警状态
+  ORDER_ALARM_VERIFY_RESULT: 'order_alarm_verify_result', // 订单告警核实结果
+  ORDER_ALARM_HANDLE_MEASURE: 'order_alarm_handle_measure', // 订单告警处理措施
+  // 订单退款
+  ORDER_REFUND_CHANNEL: 'order_refund_refund_channel', // 订单退款渠道
+  ORDER_REFUND_STATUS: 'order_refund_refund_status', // 订单退款状态
 } as const;
 
 /** 字典类型枚举 - 统一导出 */
@@ -200,6 +228,8 @@ const DICT_TYPE = {
   ...SYSTEM_DICT,
   ...COMMON_DICT,
   ...DATA_DICT,
+  ...SHUNCHANG_DICT,
+  ...ENERGYCHARGE_DICT,
 } as const;
 
 export { DICT_TYPE };

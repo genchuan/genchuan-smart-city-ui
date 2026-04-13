@@ -279,89 +279,7 @@ export function getPublicToiletStatistics() {
   return requestClient.get('/envirhealth/public-toilet/chart/statistics');
 }
 
-/**
- * 通用批量上传图片
- * @param {FormData} formData - 包含 files 字段的 FormData
- * @returns 返回上传后的图片信息数组
- */
-export function uploadImageBatch(formData) {
-  return requestClient.post('/envirhealth/image/upload/batch', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
-}
 
-// ---------- 图片上传接口 ----------
-/**
- * 维修设施 - 上传照片
- * @param {string} id - 记录ID
- * @param {FormData} formData - 包含 files 字段的 FormData
- */
-export function uploadRepairPhotos(id, formData) {
-  return requestClient.post(
-    '/envirhealth/toilet-facility-repair/upload-photos',
-    formData,
-    {
-      params: { id },
-      headers: { 'Content-Type': 'multipart/form-data' },
-    },
-  );
-}
-
-/**
- * 保洁任务 - 上传照片
- * @param {string} id - 记录ID
- * @param {FormData} formData - 包含 files 字段的 FormData
- */
-export function uploadCleaningPhotos(id, formData) {
-  return requestClient.post(
-    '/envirhealth/toilet-cleaning-task/upload-photos',
-    formData,
-    {
-      params: { id },
-      headers: { 'Content-Type': 'multipart/form-data' },
-    },
-  );
-}
-
-// ---------- 图片删除接口 ----------
-/**
- * 维修设施 - 删除照片
- * @param {string} id - 记录ID
- * @param {string} photoUrl - 图片URL
- */
-export function deleteRepairPhoto(id, photoUrl) {
-  return requestClient.delete('/envirhealth/toilet-facility-repair/photo', {
-    params: { id, photoUrl },
-  });
-}
-
-/**
- * 保洁任务 - 删除照片
- * @param {string} id - 记录ID
- * @param {string} photoUrl - 图片URL
- */
-export function deleteCleaningPhoto(id, photoUrl) {
-  return requestClient.delete('/envirhealth/toilet-cleaning-task/photo', {
-    params: { id, photoUrl },
-  });
-}
-
-// ---------- 获取图片列表接口 ----------
-/**
- * 维修设施 - 获取照片列表
- * @param {string} id - 记录ID
- */
-export function getRepairPhotoList(id) {
-  return requestClient.get(`/envirhealth/toilet-facility-repair/photos/${id}`);
-}
-
-/**
- * 保洁任务 - 获取照片列表
- * @param {string} id - 记录ID
- */
-export function getCleaningPhotoList(id) {
-  return requestClient.get(`/envirhealth/toilet-cleaning-task/photos/${id}`);
-}
 
 // 批量调整保洁计划
 export function batchAdjustToiletCleaningTask(data) {
@@ -383,28 +301,7 @@ export function batchHandleToiletComplaint(data) {
   return requestClient.post('/envirhealth/toilet-complaint/batch-handle', data);
 }
 
-// 上传投诉整改照片
-export function uploadComplaintPhotos(id, formData) {
-  return requestClient.post('/envirhealth/toilet-complaint/upload-photos', formData, {
-    params: { id },
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
-}
-
-// 删除投诉整改照片
-export function deleteComplaintPhoto(id, photoUrl) {
-  return requestClient.delete('/envirhealth/toilet-complaint/photo', {
-    params: { id, photoUrl },
-  });
-}
-
-// 获取投诉整改照片列表
-export function getComplaintPhotoList(id) {
-  return requestClient.get(`/envirhealth/toilet-complaint/photos/${id}`);
-}
-
-
-// 获取公厕运营全状态监控看板数据
+// 全状态统计
 export function getPublicToiletChartAll() {
   return requestClient.get('/envirhealth/public-toilet/chart/all');
 }
@@ -424,12 +321,30 @@ export function getComplaintPendingChart() {
   return requestClient.get('/envirhealth/toilet-complaint/chart/pending');
 }
 
+// 设施待维修统计
+export function getFacilityRepairPendingChart() {
+  return requestClient.get('/envirhealth/toilet-facility-repair/chart/pending');
+}
+
 // 已完成统计
 export function getCleaningSummaryChart() {
   return requestClient.get('/envirhealth/toilet-cleaning-task/chart/summary');
 }
 
-// 设施待维修统计
-export function getFacilityRepairPendingChart() {
-  return requestClient.get('/envirhealth/toilet-facility-repair/chart/pending');
+/**
+ * 通用批量上传图片
+ */
+export function uploadImageBatch(formData) {
+  return requestClient.post('/envirhealth/file/upload-multiple-images', formData, {
+    headers: { 'Content-Type': undefined }
+  });
+}
+
+/**
+ * 通用删除图片
+ */
+export function deleteFile(fileUrl) {
+  return requestClient.delete('/envirhealth/file/delete-file', {
+    params: { fileUrl },
+  });
 }

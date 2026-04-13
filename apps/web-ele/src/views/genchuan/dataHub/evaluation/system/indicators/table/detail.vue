@@ -1,5 +1,6 @@
 <script setup>
 import { computed, defineProps, toRefs } from 'vue';
+
 import { useVbenDrawer } from '@vben/common-ui';
 
 const props = defineProps({
@@ -18,18 +19,23 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 900, // 保持900px宽度，适应表格展示
-  onCancel() { detailDrawerApi.close(); },
+  width: 900,
+  onCancel() {
+    detailDrawerApi.close();
+  },
   async onOpenChange() {},
 });
 
-defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.close() });
+defineExpose({
+  open: () => detailDrawerApi.open(),
+  close: () => detailDrawerApi.close(),
+});
 </script>
 
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 体系基本信息 - 单列行布局（仿评价主体） -->
+      <!-- 体系基本信息 -->
       <h3>基本信息</h3>
       <div class="detail-card-row">
         <div class="detail-row-left">体系名称：</div>
@@ -41,7 +47,9 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">适用对象类型：</div>
-        <div class="detail-row-right">{{ detailObj.objectTypeName || '-' }}</div>
+        <div class="detail-row-right">
+          {{ detailObj.objectTypeName || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">版本号：</div>
@@ -65,7 +73,9 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">创建人：</div>
-        <div class="detail-row-right">{{ detailObj.createUserName || '-' }}</div>
+        <div class="detail-row-right">
+          {{ detailObj.createUserName || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">创建时间：</div>
@@ -73,30 +83,32 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">更新人：</div>
-        <div class="detail-row-right">{{ detailObj.updateUserName || '-' }}</div>
+        <div class="detail-row-right">
+          {{ detailObj.updateUserName || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">更新时间：</div>
         <div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div>
       </div>
-      <!-- 新增字段：最近使用时间 & 使用次数（若存在） -->
-<!--      <div class="detail-card-row" v-if="detailObj.lastUseTime">-->
-<!--        <div class="detail-row-left">最近使用时间：</div>-->
-<!--        <div class="detail-row-right">{{ detailObj.lastUseTime }}</div>-->
-<!--      </div>-->
-<!--      <div class="detail-card-row" v-if="detailObj.useCount !== undefined">-->
-<!--        <div class="detail-row-left">使用次数：</div>-->
-<!--        <div class="detail-row-right">{{ detailObj.useCount }}</div>-->
-<!--      </div>-->
       <div class="detail-card-row">
         <div class="detail-row-left">变更日志：</div>
-        <div class="detail-row-right">{{ detailObj.changeLogShort || '-' }}</div>
+        <div class="detail-row-right">
+          {{ detailObj.changeLogShort || '-' }}
+        </div>
       </div>
 
-      <!-- 分类与指标项列表（保留原有结构，稍作样式微调） -->
-      <div class="detail-section" v-if="detailObj.categories && detailObj.categories.length">
+      <!-- 分类与指标项列表 -->
+      <div
+        class="detail-section"
+        v-if="detailObj.categories && detailObj.categories.length > 0"
+      >
         <h3>分类及指标项配置</h3>
-        <div v-for="cat in detailObj.categories" :key="cat.categoryId" class="category-block">
+        <div
+          v-for="cat in detailObj.categories"
+          :key="cat.categoryId"
+          class="category-block"
+        >
           <div class="category-header">
             <span class="cat-name">{{ cat.name }}</span>
             <span class="cat-weight">权重：{{ cat.weight }}%</span>
@@ -104,10 +116,26 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
           </div>
           <el-table :data="cat.items" border size="small" style="width: 100%">
             <el-table-column prop="name" label="指标项名称" min-width="150" />
-            <el-table-column prop="indexTypeName" label="指标类型" width="100" />
-            <el-table-column prop="calcWayName" label="计算方式" width="100" />
-            <el-table-column prop="threshold" label="达标阈值" width="100" />
-            <el-table-column prop="weight" label="权重(%)" width="100" />
+            <el-table-column
+              prop="commentRuleId"
+              label="评价规则id"
+              width="100"
+            />
+            <el-table-column
+              prop="ruleName"
+              label="评价规则名称"
+              width="100"
+            />
+<!--            <el-table-column prop="ruleName" label="规则名称" width="100">-->
+<!--              <template #default="{ row }">-->
+<!--                {{ row.ruleName || '-' }}-->
+<!--              </template>-->
+<!--            </el-table-column>-->
+            <el-table-column prop="weight" label="权重(%)" width="80">
+              <template #default="{ row }">
+                {{ row.weight ?? '-' }}
+              </template>
+            </el-table-column>
           </el-table>
         </div>
       </div>
@@ -134,7 +162,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
     padding-left: 12px;
   }
 }
-.detail-section{
+.detail-section {
   h3 {
     margin: 10px 0 0 0;
     font-size: 16px;
@@ -145,13 +173,12 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
   }
 }
 
-/* 单列行布局（完全复用评价主体样式） */
 .detail-card-row {
   display: flex;
   align-items: flex-start;
   padding: 12px 0;
   border-bottom: 1px solid #f0f0f0;
-  background: white; /* 与评价主体一致，白色背景 */
+  background: white;
   padding-left: 20px;
   padding-right: 20px;
 
@@ -162,7 +189,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
   &:hover {
     background-color: #f5f7fa;
     border-radius: 4px;
-    padding-left: 28px; /* 保持左右内边距一致 */
+    padding-left: 28px;
     padding-right: 20px;
     margin-left: -8px;
     margin-right: -8px;
@@ -188,7 +215,6 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
   padding-right: 10px;
 }
 
-/* 分类区块（微调，与整体背景融合） */
 .category-block {
   background: white;
   border-radius: 8px;
@@ -224,7 +250,6 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
   border-radius: 8px;
 }
 
-/* 滚动条样式 */
 .detail-card::-webkit-scrollbar {
   width: 6px;
 }
@@ -240,7 +265,6 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
   background: #c0c4cc;
 }
 
-/* 移动端适配 */
 @media (max-width: 768px) {
   .detail-row-left {
     width: 120px;

@@ -1,3 +1,137 @@
+import { baseRequestClient, requestClient } from '#/api/request';
+import { useAccessStore } from '@vben/stores';
+
+// 分页查询（全部）
+export function getGarbageTransferPage(params) {
+  return requestClient.get('/envirhealth/garbage-transfer/detail-page', { params });
+}
+
+// 新增
+export function createGarbageTransfer(data) {
+  return requestClient.post('/envirhealth/garbage-transfer/create', data);
+}
+
+// 修改
+export function updateGarbageTransfer(data) {
+  return requestClient.put('/envirhealth/garbage-transfer/update', data);
+}
+
+// 单个删除
+export function deleteGarbageTransfer(id) {
+  return requestClient.delete(`/envirhealth/garbage-transfer/delete?id=${id}`);
+}
+
+// 导出 Excel
+export function exportGarbageTransferExcel(params) {
+  const accessStore = useAccessStore(); // 根据需要引入token
+  return baseRequestClient.get('/envirhealth/transfer-operation/export-excel', {
+    params,
+    responseType: 'blob',
+    headers: {
+      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
+    },
+  });
+}
+
+// 获取车辆待进站详情
+export function getTransferReserveDetail(params) {
+  return requestClient.get('/envirhealth/transfer-reserve/detail-page', { params });
+}
+
+// 获取作业进行中/已完成/已归档详情
+export function getTransferOperationDetail(params) {
+  return requestClient.get('/envirhealth/transfer-operation/detail-page', { params });
+}
+
+// 获取预警待处理详情
+export function getTransferAlarmDetail(params) {
+  return requestClient.get('/envirhealth/transfer-alarm/detail-page', { params });
+}
+
+// 获取设备待维护详情
+export function getTransferMaintenanceDetail(params) {
+  return requestClient.get('/envirhealth/transfer-maintenance/detail-page', { params });
+}
+
+// 获取垃圾转运站统计数据
+export function getGarbageTransferChartDashboard() {
+  return requestClient.get('/envirhealth/garbage-transfer/chart/dashboard');
+}
+
+// 取消预约
+export function cancelTransferReserve(id) {
+  return requestClient.post('/envirhealth/transfer-reserve/cancel', null, { params: { id } });
+}
+
+// 确认进站
+export function confirmTransferReserve(data) {
+  return requestClient.post('/envirhealth/transfer-reserve/confirm', data);
+}
+
+// 上报预警（创建）
+export function createTransferAlarm(data) {
+  return requestClient.post('/envirhealth/transfer-alarm/create', data);
+}
+
+// 更新预警（用于处理预警、指派人员）
+export function updateTransferAlarm(data) {
+  return requestClient.put('/envirhealth/transfer-alarm/update', data);
+}
+
+// 维护处理
+export function updateTransferMaintenance(data) {
+  return requestClient.put('/envirhealth/transfer-maintenance/update', data);
+}
+
+// 解除预警
+export function relieveTransferAlarm(id) {
+  return requestClient.put('/envirhealth/transfer-alarm/relieve', null, { params: { id } });
+}
+
+// 暂停作业
+export function pauseTransferOperation(id, pauseStatusId) {
+  return requestClient.put('/envirhealth/transfer-operation/pause', null, {
+    params: {
+      id,
+      pauseStatusId
+    }
+  });
+}
+
+// 启动作业
+export function startTransferOperation(id) {
+  return requestClient.put('/envirhealth/transfer-operation/start', null, { params: { id } });
+}
+
+// 验收维护
+export function reviewTransferMaintenance(id, result) {
+  return requestClient.put('/envirhealth/transfer-maintenance/review', null, {
+    params: { id, result }
+  });
+}
+
+// 单个预约排号
+export function sortTransferReserve(data) {
+  return requestClient.post('/envirhealth/transfer-reserve/sort', data);
+}
+
+// 批量预约排号
+export function batchSortTransferReserve(data) {
+  return requestClient.post('/envirhealth/transfer-reserve/batch-sort', data);
+}
+
+// 转运归档
+export function completeTransferOperation(operationId) {
+  return requestClient.put('/envirhealth/transfer-operation/complete', null, {
+    params: { operationId }
+  });
+}
+
+// data.js 中新增
+export function getTransferReservePage(params) {
+  return request({ url: '/envirhealth/transfer-reserve/detail-page', method: 'get', params });
+}
+
 // 模拟垃圾转运站运营管理数据
 export const dataList = () => {
   return [

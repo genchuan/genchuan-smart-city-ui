@@ -9,7 +9,7 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
@@ -1193,27 +1193,27 @@ const handleCancelPayTypeFilter = () => {
 }
 
 .track-header {
-  margin-bottom: 24px;
   padding-bottom: 16px;
+  margin-bottom: 24px;
   border-bottom: 1px solid #e4e7ed;
 }
 
 .order-info-item {
-  margin-bottom: 12px;
   display: flex;
   align-items: center;
+  margin-bottom: 12px;
 }
 
 .order-info-item .label {
-  font-weight: 500;
-  margin-right: 8px;
-  color: #606266;
   min-width: 80px;
+  margin-right: 8px;
+  font-weight: 500;
+  color: #606266;
 }
 
 .order-info-item .value {
-  color: #303133;
   font-weight: 400;
+  color: #303133;
 }
 
 .track-timeline {
@@ -1225,20 +1225,20 @@ const handleCancelPayTypeFilter = () => {
 }
 
 .timeline-item-content .status {
-  font-weight: 500;
   margin-bottom: 4px;
+  font-weight: 500;
   color: #303133;
 }
 
 .timeline-item-content .description {
   font-size: 13px;
-  color: #606266;
   line-height: 1.4;
+  color: #606266;
 }
 
 .el-timeline-item__timestamp {
+  margin-top: 4px;
   font-size: 12px;
   color: #909399;
-  margin-top: 4px;
 }
 </style>

@@ -4,16 +4,19 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElDialog, ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
+// 导出插件
+import * as XLSX from 'xlsx';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
-import { exportToExcel } from '#/utils/excel.js';
+import { downloadLocalTemplate } from '#/utils/genchuan/down';
+import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
 
 import { dataList, useFormSchema, useGridColumns } from './data';
-// 引入封装后的详情抽屉组件
 import ParkDetailDrawer from './detail.vue';
 
 const props = defineProps({
@@ -46,7 +49,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
-// 移除原 DetailDrawer 初始化逻辑
+
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -91,14 +94,49 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     }
   },
 });
+
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
 }
 
-/** 导出表格 */
-async function handleExport() {
-  exportToExcel(dataObj.apilist, '导出', 'excel');
+// ====================== 导出 EXCEL ======================
+function handleExport() {
+  const records = gridApi.grid.getData();
+  if (!records || records.length === 0) {
+    ElMessage.warning('暂无数据可导出');
+    return;
+  }
+
+  const loading = ElLoading.service({ text: '正在导出Excel...' });
+  try {
+    const columns = useGridColumns().filter(
+      (col) => col.field && col.title && col.type !== 'checkbox',
+    );
+
+    const exportData = records.map((row) => {
+      const item = {};
+      columns.forEach((col) => {
+        item[col.title] = row[col.field] ?? '';
+      });
+      return item;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '报表数据');
+    XLSX.writeFile(wb, `企业违规报表_${Date.now()}.xlsx`);
+    ElMessage.success('导出成功！');
+  } catch (error) {
+    ElMessage.error(`导出失败：${error.message}`);
+  } finally {
+    loading.close();
+  }
+}
+
+// ====================== 图片转PDF（终极零乱码） ======================
+async function handlePDF() {
+  downloadLocalTemplate('/static/test.pdf', '报表.pdf');
 }
 
 /** 创建角色 */
@@ -155,12 +193,14 @@ function handleRowCheckboxChange({ records }) {
 }
 const dataObj = reactive({
   totalShow: false,
-  detailObj: {}, // 保留详情对象用于传递给组件
+  detailObj: {},
+  enDetailObj: {},
   total: dataList().length,
   currentPage: 1,
   pageSize: 10,
   apilist: dataList(),
   list: [],
+  loading: false,
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -190,40 +230,33 @@ const getTableData = (pageObj) => {
     );
   return dataObj;
 };
-
 const [QueryForm] = useVbenForm({
-  // 默认展开
   collapsed: false,
-  // 所有表单项共用，可单独在表单内覆盖
   commonConfig: {
-    // 所有表单项
     componentProps: {
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
-  // 提交函数
-  handleSubmit: onSubmit,
-  // 垂直布局，label和input在不同行，值为vertical
-  // 水平布局，label和input在同一行
+  handleSubmit: () => {
+    dataObj.loading = true;
+    setTimeout(() => {
+      dataObj.loading = false;
+    }, 2000);
+    drawerApi.close();
+  },
   layout: 'horizontal',
   schema: useFormSchema().map((v) => {
     delete v.rules;
-    return {
-      ...v,
-    };
+    return { ...v };
   }),
-  // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
   },
 });
-// 搜索表单查询
-function onSubmit() {
-  drawerApi.close();
-}
+
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
@@ -253,12 +286,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 const activeName = ref('全部');
-// 修改打开详情的方法，调用组件的open方法
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
-  // 通过ref调用组件的open方法
-  parkDetailDrawerRef.value.open();
-  console.log(row);
+  parkDetailDrawerRef.value?.open();
 };
 const tabsData = ref([
   { label: '全部' },
@@ -284,35 +314,115 @@ const handleFullShow = () => {
   screenfull.toggle();
 };
 
-// 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
-
+const enDetailObjRef = ref(null);
 const arrowChange = () => {
   emit('arrow-change');
 };
+const autoElmessage = () => {
+  ElMessage.success($t('月报自动刷新成功'));
+};
+const openEn = async () => {
+  const res = await getDetailEnObj(1);
+  dataObj.enDetailObj = res;
+  enDetailObjRef.value?.open();
+};
+
+// ====================== 告警明细弹窗 ======================
+const alarmDialogVisible = ref(false);
+const currentAlarmRow = ref({});
+const alarmList = ref([]);
+
+function generateAlarmData(row) {
+  const count = row.totalWarnCount || 0;
+  const typeItems = row.highIllegalType.split(',').map((item) => item.trim());
+  const avgCount = Math.ceil(count / typeItems.length);
+  const types = typeItems.map((name) => {
+    return { name, num: avgCount };
+  });
+
+  const list = [];
+  let id = 1;
+  types.forEach((type) => {
+    for (let i = 0; i < Math.min(type.num, 5); i++) {
+      list.push({
+        id: id++,
+        canteenName: row.canteenName,
+        alarmType: type.name,
+        alarmTime: `${row.createTime}`,
+        alarmLevel: ['一般', '较重', '严重'][Math.trunc(Math.random() * 3)],
+        status: ['未处理', '处理中', '已整改'][Math.trunc(Math.random() * 3)],
+      });
+    }
+  });
+  return list.slice(0, count);
+}
+
+function handleTotal(row) {
+  currentAlarmRow.value = row;
+  alarmList.value = generateAlarmData(row);
+  alarmDialogVisible.value = true;
+}
+
+const alarmColumns = [
+  { label: '序号', prop: 'id', width: 70 },
+  { label: '食堂名称', prop: 'canteenName' },
+  { label: '告警类型', prop: 'alarmType' },
+  { label: '告警时间', prop: 'alarmTime' },
+  { label: '告警等级', prop: 'alarmLevel' },
+  { label: '处理状态', prop: 'status' },
+];
 </script>
 
 <template>
-  <div class="park-lot-table-new">
+  <div class="park-lot-table-new" v-loading="dataObj.loading">
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <!-- 使用封装后的详情抽屉组件 -->
     <ParkDetailDrawer
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
     />
+    <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+
+    <!-- 告警明细弹窗 -->
+    <ElDialog
+      v-model="alarmDialogVisible"
+      title="自定义分析食品安全问题明细"
+      width="900px"
+      append-to-body
+    >
+      <el-table :data="alarmList" border height="450">
+        <el-table-column
+          v-for="col in alarmColumns"
+          :key="col.prop"
+          :label="col.label"
+          :prop="col.prop"
+          :width="col.width"
+        />
+      </el-table>
+    </ElDialog>
+
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
-            content="导出"
+            content="刷新"
+            icon-name="refresh"
+            @click="autoElmessage"
+          />
+          <IconButton
+            content="导出EXCEL"
             icon-name="download"
             @click="handleExport"
+          />
+          <IconButton
+            content="导出PDF"
+            icon-name="download"
+            @click="handlePDF"
           />
           <IconButton
             content="批量删除"
@@ -338,26 +448,38 @@ const arrowChange = () => {
           />
         </div>
       </template>
-      <template #reportNumber="{ row }">
+      <template #reportCode="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.reportNumber }}
+          {{ row.reportCode }}
         </el-text>
       </template>
+
+      <template #totalWarnCount="{ row }">
+        <el-text @click="handleTotal(row)" class="common-align" type="primary">
+          {{ row.totalWarnCount }}
+        </el-text>
+      </template>
+
+      <template #canteenName="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.canteenName }}
+        </el-text>
+      </template>
+
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
             content="详情"
             icon-name="View"
             @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
           />
           <IconButton
             content="删除"

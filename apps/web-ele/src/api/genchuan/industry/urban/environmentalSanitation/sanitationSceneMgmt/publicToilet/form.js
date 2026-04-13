@@ -1,5 +1,5 @@
 // ---------- options 接口 ----------
-import { requestClient } from '#/api/request';
+import {requestClient} from '#/api/request';
 
 /**
  * 获取任务状态下拉选项
@@ -1034,7 +1034,6 @@ export function getColumnsByStatus(status) {
         title: '所属区域',
         minWidth: 180,
         sortable: true,
-        slots: { default: 'area' },
       },
       { field: 'taskNo', title: '任务编号', minWidth: 150, sortable: true },
       {
@@ -1320,17 +1319,16 @@ export function getColumnsByStatus(status) {
     ],
   };
 
-  const columns = [
+  return [
     ...baseColumns,
     ...(statusColumnsMap[status] || statusColumnsMap.全部),
     {
       title: '操作',
       width: 160,
       fixed: 'right',
-      slots: { default: 'actions' },
+      slots: {default: 'actions'},
     },
   ];
-  return columns;
 }
 
 // 文本常量

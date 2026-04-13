@@ -1,8 +1,8 @@
 <script setup>
-import Indicator from '#/components/stats/indicator.vue';
-import Pie from '#/components/stats/pie.vue';
-import Bar from '#/components/stats/bar.vue';
-import LineChart from '#/components/stats/lineChart.vue';
+import Indicator from '#/genchuan-components/stats/indicator.vue';
+import Pie from '#/genchuan-components/stats/pie.vue';
+import Bar from '#/genchuan-components/stats/bar.vue';
+import LineChart from '#/genchuan-components/stats/lineChart.vue';
 
 const props = defineProps({
   activeName: { type: String, required: true },
@@ -187,7 +187,6 @@ const mockConfig = {
   .box-left-m {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
     min-width: 360px;
     max-width: 400px;
     margin-top: 10px !important;

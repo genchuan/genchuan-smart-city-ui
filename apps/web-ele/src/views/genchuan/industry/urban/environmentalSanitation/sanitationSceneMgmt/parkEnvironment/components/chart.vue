@@ -1,43 +1,79 @@
 <script setup>
-import { reactive } from 'vue';
-import Indicator from '#/components/stats/indicator.vue';
-import Pie from '#/components/stats/pie.vue';
-import Bar from '#/components/stats/bar.vue';
+import { reactive, onMounted } from 'vue';
+import { getParkChartDashboard } from '#/api/genchuan/industry/urban/environmentalSanitation/sanitationSceneMgmt/parkEnvironment/data.js';
+import Indicator from '#/genchuan-components/stats/indicator.vue';
+import Pie from '#/genchuan-components/stats/pie.vue';
+import Bar from '#/genchuan-components/stats/bar.vue';
 
 const state = reactive({
-  // 五个核心卡片（严格按需求）
-  cardList: [
-    { title: '总公园数', value: 25, color: '#409EFF' },
-    { title: '正常运营数', value: 22, color: '#67C23A' },
-    { title: '保洁达标数', value: 20, color: '#E6A23C' },
-    { title: '绿化存活达标数', value: 23, color: '#F56C6C' },
-    { title: '设施完好数', value: 21, color: '#909399' },
-  ],
+  loading: false,
+  // 五个核心卡片
+  cardList: [],
   // 两个圆环图
   pieData: {
-    status: [  // 运营状态占比
-      { name: '正常运营', value: 22 },
-      { name: '维修改造', value: 2 },
-      { name: '暂停开放', value: 1 },
-    ],
-    area: [   // 所属区域分布占比
-      { name: '龙文区', value: 7 },
-      { name: '龙海区', value: 6 },
-      { name: '芗城区', value: 5 },
-      { name: '长泰区', value: 4 },
-      { name: '漳浦县', value: 3 },
-    ],
+    status: [],   // 运营状态占比
+    area: [],     // 所属区域分布占比
   },
   // 基础柱状图：不同公园环境达标率对比
   barData: {
-    x: ['龙文公园', '龙海公园', '芗城公园', '长泰公园', '漳浦公园'],
-    series: [96, 92, 88, 94, 90], // 达标率 %
+    x: [],
+    series: [],
   },
+});
+
+// 通用数值转换（处理字符串或数字）
+const toNumber = (val) => {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === 'string') return parseFloat(val) || 0;
+  return Number(val) || 0;
+};
+
+// 获取图表数据
+const fetchChartData = async () => {
+  state.loading = true;
+  try {
+    const res = await getParkChartDashboard();
+
+    // 接口返回已解包，直接使用 res（无外层 code/data）
+    if (res && typeof res === 'object') {
+      // 卡片数据映射
+      state.cardList = [
+        {title: '总公园数', value: toNumber(res.totalParkCount), color: '#409EFF'},
+        {title: '正常运营数', value: toNumber(res.normalOperationCount), color: '#67C23A'},
+        {title: '保洁达标数', value: toNumber(res.cleaningStandardMetCount), color: '#E6A23C'},
+        {
+          title: '绿化存活达标数',
+          value: toNumber(res.greeningSurvivalStandardMetCount),
+          color: '#F56C6C'
+        },
+        {title: '设施完好数', value: toNumber(res.facilityIntactCount), color: '#909399'},
+      ];
+
+      // 圆环图数据
+      state.pieData.status = Array.isArray(res.operationStatusDistribution) ? res.operationStatusDistribution : [];
+      state.pieData.area = Array.isArray(res.areaDistribution) ? res.areaDistribution : [];
+
+      // 柱状图数据：不同公园环境达标率
+      const rateList = Array.isArray(res.environmentComplianceRateByPark) ? res.environmentComplianceRateByPark : [];
+      state.barData.x = rateList.map(item => item.name || '');
+      state.barData.series = rateList.map(item => toNumber(item.value));
+    } else {
+      console.error('接口返回数据格式异常', res);
+    }
+  } catch (error) {
+    console.error('请求公园仪表盘数据失败:', error);
+  } finally {
+    state.loading = false;
+  }
+};
+
+onMounted(() => {
+  fetchChartData();
 });
 </script>
 
 <template>
-  <div class="chart-box">
+  <div class="chart-box" v-loading="state.loading" element-loading-text="加载中...">
     <div class="box-left-m" style="flex: 1 !important;">
       <Indicator
         class="left-card"
@@ -83,7 +119,6 @@ const state = reactive({
   .box-left-m {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
     min-width: 360px;
     max-width: 400px;
     margin-top: 10px !important;

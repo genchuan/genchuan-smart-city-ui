@@ -7,8 +7,11 @@ import { getDictObj } from '@vben/hooks';
 import { ArrowDown, ArrowUp, Search } from '@element-plus/icons-vue';
 import { ElInput, ElLoading, ElMessage, ElTree } from 'element-plus';
 
-import { getCategoryTree, getInstancePage } from '#/api/genchuan/dataHub/basicData/monitorEvent';
-import StatsFourVisualization from '#/components/stats/StatsFourVisualization.vue';
+import {
+  getCategoryTree,
+  getInstancePage,
+} from '#/api/genchuan/dataHub/basicData/monitorEvent';
+import StatsFourVisualization from '#/genchuan-components/stats/StatsFourVisualization.vue';
 import { useTreeExpandController } from '#/utils/useTreeExpandController';
 
 import Table from './table/index.vue';
@@ -175,9 +178,7 @@ const statsData = computed(() => {
   const totalCount = list.length;
 
   // 各等级事件数（按事件等级统计不重复等级数）
-  const levelSet = new Set(
-    list.map((item) => item.eventLevel).filter(Boolean),
-  );
+  const levelSet = new Set(list.map((item) => item.eventLevel).filter(Boolean));
   const levelCount = levelSet.size;
 
   // 待处置事件数（状态为待处置的）
@@ -221,7 +222,10 @@ const statsData = computed(() => {
   const levelMap = {};
   list.forEach((item) => {
     // 使用字典获取等级的中文标签
-    const dict = getDictObj(DICT_TYPE.DATA_EVENT_LEVEL, String(item.eventLevel));
+    const dict = getDictObj(
+      DICT_TYPE.DATA_EVENT_LEVEL,
+      String(item.eventLevel),
+    );
     const levelLabel =
       dict?.label || item.eventLevelName || `等级${item.eventLevel}` || '未知';
     levelMap[levelLabel] = (levelMap[levelLabel] || 0) + 1;

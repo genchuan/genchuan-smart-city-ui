@@ -93,8 +93,8 @@ defineExpose({
 }
 
 .info {
-  margin-bottom: 20px;
   padding: 10px;
+  margin-bottom: 20px;
   background-color: #f5f5f5;
   border-radius: 4px;
 }
@@ -114,14 +114,14 @@ defineExpose({
 }
 
 .form-item label.required::before {
-  content: '*';
-  color: #f56c6c;
   margin-right: 4px;
+  color: #f56c6c;
+  content: '*';
 }
 
 .tip {
-  color: #999;
-  font-size: 12px;
   margin-top: 10px;
+  font-size: 12px;
+  color: #999;
 }
 </style>

@@ -1,8 +1,8 @@
 <script setup>
 import { ref } from 'vue';
 
-// import Table from './table/index.vue';
-// import Chart from './chart.vue';
+import Table from './table/index.vue';
+import Chart from './chart.vue';
 
 import '#/components/page/index.scss';
 

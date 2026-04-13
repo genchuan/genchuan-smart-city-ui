@@ -114,6 +114,7 @@
       "jiti": "catalog:",
       "pinia": "catalog:",
       "@tinyflow-ai/vue>@tinyflow-ai/ui": "npm:noop@1.0.0",
+      "@tinyflow-ai/vue": "1.2.0",
       "vue": "catalog:"
     },
     "neverBuiltDependencies": [

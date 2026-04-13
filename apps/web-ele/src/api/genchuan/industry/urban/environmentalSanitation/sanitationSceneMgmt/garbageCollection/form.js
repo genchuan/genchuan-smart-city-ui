@@ -1,5 +1,5 @@
 // ---------- options 接口 ----------
-import { requestClient } from '#/api/request';
+import {requestClient} from '#/api/request';
 
 export function getGarbageTypeOptions() {
   return requestClient.get('/envirhealth/garbage-type/options');
@@ -149,14 +149,50 @@ export function useFormSchema() {
       searchFilter: true,
     },
     {
-      fieldName: 'totalVolume',
-      label: '总收运量',
+      fieldName: 'checkinStatus',
+      label: '打卡状态',
+      component: 'Select',
+      labelWidth: '120',
+      componentProps: {
+        placeholder: '请选择打卡状态',
+        options: [
+          { label: '到岗', value: '到岗' },
+          { label: '离岗', value: '离岗' },
+        ],
+      },
+    },
+    {
+      fieldName: 'collectedVolume',
+      label: '已收运量',
       component: 'Input',
       labelWidth: '120',
       componentProps: {
-        placeholder: '请输入总收运量',
+        placeholder: '请输入已收运量',
         type: 'number',
         step: 0.1,
+      },
+    },
+    {
+      fieldName: 'lastReportTime',
+      label: '最新上报时间',
+      component: 'DatePicker',
+      labelWidth: '120',
+      componentProps: {
+        placeholder: '请选择最新上报时间',
+        type: 'datetime',
+        valueFormat: 'x',
+        format: 'YYYY-MM-DD HH:mm',
+      },
+    },
+    {
+      fieldName: 'completeTime',
+      label: '完成时间',
+      component: 'DatePicker',
+      labelWidth: '120',
+      componentProps: {
+        placeholder: '请选择完成时间',
+        type: 'datetime',
+        valueFormat: 'x',
       },
     },
     {
@@ -181,17 +217,6 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择创建人',
         options: [],
-      },
-    },
-    {
-      fieldName: 'completeTime',
-      label: '完成时间',
-      component: 'DatePicker',
-      labelWidth: '120',
-      componentProps: {
-        placeholder: '请选择完成时间',
-        type: 'datetime',
-        valueFormat: 'x',
       },
     },
   ];
@@ -605,8 +630,9 @@ export function getColumnsByStatus(status) {
         title: '收运品类',
         minWidth: 120,
         sortable: true,
+        slots: { default: 'garbageType' }
       },
-      { field: 'areaCode', title: '收运区域', minWidth: 180, sortable: true },
+      { field: 'areaCode', title: '收运区域', minWidth: 180, sortable: true, slots: { default: 'area' } },
       { field: 'frequency', title: '收运频次', minWidth: 120, sortable: true },
       { field: 'timePeriod', title: '收运时段', minWidth: 180, sortable: true },
       {
@@ -621,6 +647,7 @@ export function getColumnsByStatus(status) {
         title: '计划状态',
         minWidth: 120,
         sortable: true,
+        slots: { default: 'status' }
       },
       {
         field: 'completionRate',
@@ -792,8 +819,6 @@ export function getColumnsByStatus(status) {
         minWidth: 120,
         sortable: true,
       },
-      { field: 'reviewBy', title: '复核人员', minWidth: 120, sortable: true },
-      { field: 'reviewTime', title: '复核时间', minWidth: 180, sortable: true },
     ],
     已完成: [
       {
@@ -808,6 +833,12 @@ export function getColumnsByStatus(status) {
         field: 'garbageTypeName',
         title: '收运品类',
         minWidth: 120,
+        sortable: true,
+      },
+      {
+        field: 'completeTime',
+        title: '完成时间',
+        minWidth: 180,
         sortable: true,
       },
       {
@@ -844,26 +875,19 @@ export function getColumnsByStatus(status) {
         formatter: ({ cellValue }) => (cellValue ? `${cellValue}%` : '-'),
       },
       { field: 'createByName', title: '创建人', minWidth: 120, sortable: true },
-      {
-        field: 'completeTime',
-        title: '完成时间',
-        minWidth: 180,
-        sortable: true,
-      },
     ],
   };
 
-  const columns = [
+  return [
     ...baseColumns,
     ...(statusColumnsMap[status] || statusColumnsMap.全部),
     {
       title: '操作',
       width: 180,
       fixed: 'right',
-      slots: { default: 'actions' },
+      slots: {default: 'actions'},
     },
   ];
-  return columns;
 }
 
 export const textObj = {

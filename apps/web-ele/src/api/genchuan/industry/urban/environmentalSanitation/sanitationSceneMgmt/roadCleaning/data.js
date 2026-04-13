@@ -1,6 +1,11 @@
 import { baseRequestClient, requestClient } from '#/api/request';
 import { useAccessStore } from '@vben/stores';
 
+// 获取统计数据（用于头部 tab 计数）
+export function getCleaningStatistics() {
+  return requestClient.get('/envirhealth/road-cleaning/chart/statistics');
+}
+
 /**
  * 分页查询道路清扫计划列表
  */
@@ -101,6 +106,64 @@ export async function exportCleaningProblemExcel(params) {
   });
 }
 
+// 批量调整道路清扫计划
+export function batchAdjustRoadCleaning(data) {
+  return requestClient.put('/envirhealth/road-cleaning/batch-adjust', data);
+}
+
+// 批量处理道路清扫问题
+export function batchProcessCleaningProblem(data) {
+  return requestClient.post('/envirhealth/cleaning-problem/batch-process', data);
+}
+
+
+// 全状态统计
+export function getRoadCleaningChartAll() {
+  return requestClient.get('/envirhealth/road-cleaning/chart/all');
+}
+
+// 清扫待执行统计
+export function getRoadCleaningChartPending() {
+  return requestClient.get('/envirhealth/road-cleaning/chart/pending');
+}
+
+// 作业进行中统计
+export function getRoadCleaningChartExecuting() {
+  return requestClient.get('/envirhealth/road-cleaning/chart/executing');
+}
+
+// 问题待处置统计
+export function getCleaningProblemChartPending() {
+  return requestClient.get('/envirhealth/cleaning-problem/chart/pending');
+}
+
+// 质量待核查统计
+export function getRoadCleaningChartCheck() {
+  return requestClient.get('/envirhealth/road-cleaning/chart/check');
+}
+
+// 已完成统计
+export function getRoadCleaningChartCompleted() {
+  return requestClient.get('/envirhealth/road-cleaning/chart/completed');
+}
+
+/**
+ * 通用批量上传图片
+ */
+export function uploadImageBatch(formData) {
+  return requestClient.post('/envirhealth/file/upload-multiple-images', formData, {
+    headers: { 'Content-Type': undefined }
+  });
+}
+
+/**
+ * 通用删除图片
+ */
+export function deleteFile(fileUrl) {
+  return requestClient.delete('/envirhealth/file/delete-file', {
+    params: { fileUrl },
+  });
+}
 
 // 模拟道路清扫管理数据
 export const dataList = () => {

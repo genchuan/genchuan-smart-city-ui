@@ -10,7 +10,7 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import IconButton from '#/components/common/IconButton.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';

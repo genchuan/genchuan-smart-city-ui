@@ -688,6 +688,14 @@ const arrowChange = () => {
     opacity: 0.6;
   }
 }
+
+// 可点击文本样式
+.cursor-pointer {
+  cursor: pointer;
+  &:hover {
+    text-decoration: underline;
+  }
+}
 </style>
 
 <template>
@@ -804,7 +812,11 @@ const arrowChange = () => {
         </el-text>
       </template>
       <template #switchStatus="{ row }">
-        <el-text class="common-align">
+        <el-text 
+          @click="handleFilterBySwitchStatus(row.switchStatus)"
+          class="common-align cursor-pointer"
+          :type="row.switchStatus === '开' ? 'success' : 'danger'"
+        >
           {{ row.switchStatus }}
         </el-text>
       </template>
@@ -818,17 +830,29 @@ const arrowChange = () => {
         </el-text>
       </template>
       <template #deviceStatus="{ row }">
-        <el-text class="common-align">
+        <el-text 
+          @click="handleFilterByDeviceStatus(row.deviceStatus)"
+          class="common-align cursor-pointer"
+          :type="row.deviceStatus === '在线' ? 'success' : row.deviceStatus === '离线' ? 'danger' : 'warning'"
+        >
           {{ row.deviceStatus }}
         </el-text>
       </template>
       <template #controlStatus="{ row }">
-        <el-text class="common-align">
+        <el-text 
+          @click="handleFilterByControlStatus(row.controlStatus)"
+          class="common-align cursor-pointer"
+          :type="row.controlStatus === '可控制' ? 'success' : 'danger'"
+        >
           {{ row.controlStatus }}
         </el-text>
       </template>
       <template #warnStatusId="{ row }">
-        <el-text class="common-align">
+        <el-text 
+          @click="handleFilterByWarnStatus(row.warnStatusId)"
+          class="common-align cursor-pointer"
+          :type="row.warnStatusId === '正常' ? 'success' : 'danger'"
+        >
           {{ row.warnStatusId }}
         </el-text>
       </template>

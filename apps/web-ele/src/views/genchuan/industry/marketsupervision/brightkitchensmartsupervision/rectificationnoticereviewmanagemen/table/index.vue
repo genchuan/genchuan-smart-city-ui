@@ -20,9 +20,14 @@ import {
   addRectify,
   deleteRectifyEvidence,
   exporReviewExcel,
+  exporReviewPDF,
+  getAutoData,
   getbatchEvidence,
+  getCaoNiDetail,
+  getDetailEnObj,
+  getDetailillObj,
+  getLedgerPage,
   getReasonList,
-  getRectifyList,
   sendReason,
   sendRectify,
   updateRectify,
@@ -31,9 +36,12 @@ import {
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
 
+import caoniDetailDrawer from './caoniDetail.vue';
 import { useFormSchema, useGridColumns } from './data';
 // 引入封装后的详情抽屉组件
 import ParkDetailDrawer from './detail.vue';
+import enDetailDrawer from './enDetail.vue';
+import illDetailDrawer from './illDetail.vue';
 
 const props = defineProps({
   secondShow: {
@@ -101,13 +109,25 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  const data = await exporReviewExcel();
+  const data = await exporReviewExcel(checkedIds.value);
   downloadFileFromBlobPart({
-    fileName: '整改通知书复审台账.xls',
+    fileName: '台账.xls',
     source: data,
   });
 }
-
+async function handlePDF() {
+  const newid = [];
+  dataObj.list.forEach((v) => {
+    if (checkedIds.value.includes(v.id)) {
+      newid.push(v.rectifyNoticeId);
+    }
+  });
+  const data = await exporReviewPDF(newid);
+  downloadFileFromBlobPart({
+    fileName: '台账pdf.zip',
+    source: data,
+  });
+}
 /** 创建角色 */
 function handleCreate() {
   formDrawerApi
@@ -172,6 +192,7 @@ const dataObj = reactive({
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
+let isRedArray = [];
 // 表格数据获取
 const getTableData = async (pageObj) => {
   const getParams = {
@@ -179,14 +200,29 @@ const getTableData = async (pageObj) => {
     pageSize: pageObj.page.pageSize,
     ...dataObj.serachObj,
   };
-  const data = await getRectifyList(getParams);
+  const data = await getLedgerPage(getParams);
   dataObj.total = data.total;
   dataObj.list = data.list.map((v) => {
     return {
       ...v,
+      oldcreateTime: v.createTime,
+      createTime: formatTimestamp(v.createTime),
       draftTime: formatTimestamp(v.draftTime),
-      alertCreateTime: formatTimestamp(v.alertCreateTime),
+      issueTime: formatTimestamp(v.issueTime),
+      cancelTime: formatTimestamp(v.cancelTime),
+      rectifyDeadlineTime: formatTimestamp(v.rectifyDeadlineTime),
+      updateTime: formatTimestamp(v.updateTime),
+      reviewTime: formatTimestamp(v.reviewTime),
     };
+  });
+  isRedArray = [];
+  dataObj.list.forEach((v, i) => {
+    if (
+      Date.now() - v.oldcreateTime > 24 * 60 * 60 * 1000 &&
+      v.reviewStatus === '待复审'
+    ) {
+      isRedArray.push(i);
+    }
   });
   return dataObj;
 };
@@ -232,6 +268,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
     keepSource: true,
+    rowStyle({ rowIndex }) {
+      if (isRedArray.includes(rowIndex)) {
+        return {
+          backgroundColor: '#F56C6C',
+        };
+      }
+    },
     proxyConfig: {
       ajax: {
         query: async ({ page }) => getTableData({ page }),
@@ -285,6 +328,8 @@ const handleFullShow = () => {
 
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
+const enDetailObjRef = ref(null);
+const illDetailObjRef = ref(null);
 const dialogVisible = ref(false);
 const openImg = (url) => {
   dataObj.imgUrl = url;
@@ -378,7 +423,6 @@ const handleUploadSubmit = async () => {
   try {
     uploadLoading.value = true;
     const file = fileList.value[0];
-    debugger;
     // 3. 构建FormData（仅传递文件）
     const formData = new FormData();
     formData.append('file', file.raw);
@@ -419,6 +463,8 @@ const handleSendFileConfirm = async (row) => {
     );
     // 用户确认后执行原逻辑
     await handleSendFile(row);
+
+    handleRefresh();
     ElMessage.success('通知书下发成功！');
   } catch {
     // 用户取消则不执行任何操作
@@ -474,7 +520,42 @@ const handleBack = async (row, formData) => {
     id: row.id,
     cancelReasonId: backForm.reason,
   });
+
+  handleRefresh();
 };
+const handleOpenEntName = async (row) => {
+  const res = await getDetailEnObj(row.entId);
+  dataObj.enDetailObj = res;
+  // 通过ref调用组件的open方法
+  enDetailObjRef.value.open();
+  console.log(row);
+};
+const handleIllDetail = async (row) => {
+  const res = await getDetailillObj(row.illegalTypeId);
+  dataObj.illDetailObj = res;
+  // 通过ref调用组件的open方法
+  illDetailObjRef.value.open();
+};
+const gridRef = ref(null);
+const handleAuto = async () => {
+  const res = await getAutoData();
+  handleRefresh();
+};
+const rectifyRef = ref(null);
+const handleAutoDetail = async (row) => {
+  const res = await getCaoNiDetail(row.rectifyNoticeId);
+  dataObj.rectifyObj = res;
+  rectifyRef.value.open();
+};
+// 预览相关
+const previewVisible = ref(false);
+const currentImage = ref('');
+
+// 预览图片
+function previewImage(url) {
+  currentImage.value = url;
+  previewVisible.value = true;
+}
 </script>
 
 <template>
@@ -524,7 +605,14 @@ const handleBack = async (row, formData) => {
         </div>
       </div>
     </UploadModal>
-
+    <!-- 图片预览弹窗 -->
+    <el-dialog v-model="previewVisible" title="图片预览" width="600px" center>
+      <img
+        v-if="currentImage"
+        :src="currentImage"
+        style="width: 100%; height: auto"
+      />
+    </el-dialog>
     <!-- 图片查看弹窗 -->
     <el-dialog v-model="dialogVisible">
       <div class="park-img-center">
@@ -640,12 +728,27 @@ const handleBack = async (row, formData) => {
       :detail-obj="dataObj.detailObj"
       title="详情"
     />
-
+    <enDetailDrawer
+      ref="enDetailObjRef"
+      :detail-obj="dataObj.enDetailObj"
+      title="详情"
+    />
+    <illDetailDrawer
+      ref="illDetailObjRef"
+      :detail-obj="dataObj.illDetailObj"
+      title="详情"
+    />
+    <caoniDetailDrawer
+      class="cao-ni-test"
+      ref="rectifyRef"
+      :detail-obj="dataObj.rectifyObj"
+      title="详情"
+    />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
 
-    <Grid>
+    <Grid ref="gridRef">
       <!-- 三级状态 -->
       <template #table-title>
         <div class="tabel-tabs">
@@ -668,11 +771,19 @@ const handleBack = async (row, formData) => {
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton content="新增" icon-name="Plus" @click="handleAuto" />
+          <!-- <IconButton content="新增" icon-name="Plus" @click="handleCreate" /> -->
           <IconButton
-            content="导出"
+            content="导出EXCEL"
             icon-name="download"
+            :disabled="isEmpty(checkedIds)"
             @click="handleExport"
+          />
+          <IconButton
+            content="批量导出PDF"
+            icon-name="download"
+            :disabled="isEmpty(checkedIds)"
+            @click="handlePDF"
           />
           <IconButton
             content="批量删除"
@@ -700,6 +811,29 @@ const handleBack = async (row, formData) => {
         </div>
       </template>
 
+      <template #entName="{ row }">
+        <el-text
+          @click="handleOpenEntName(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.entName }}
+        </el-text>
+      </template>
+
+      <template #evidenceUrl="{ row }">
+        <div v-if="JSON.parse(row.evidenceUrl)?.length > 0" class="table-image">
+          <div
+            v-for="(item, index) in JSON.parse(row.evidenceUrl)"
+            :key="index"
+            class="image-item"
+            @click="previewImage(item.url)"
+          >
+            <img :src="item.url" :alt="item.name" />
+          </div>
+        </div>
+        <div v-else>--</div>
+      </template>
       <template #ledgerCode="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
@@ -708,6 +842,35 @@ const handleBack = async (row, formData) => {
         >
           {{ row.ledgerCode }}
         </el-text>
+      </template>
+      <template #reviewStatus="{ row }">
+        <div v-if="row.overdueFlag === 1">
+          <el-tag size="small" type="danger" effect="plain">
+            {{ row.reviewStatus }}(逾期)
+          </el-tag>
+        </div>
+        <div v-else-if="row.reviewStatus === '待复审'">
+          <el-tag size="small" type="success" effect="plain">
+            {{ row.reviewStatus }}
+          </el-tag>
+        </div>
+        <div v-else>
+          <el-tag size="small" effect="plain">
+            {{ row.reviewStatus }}
+          </el-tag>
+        </div>
+      </template>
+      <template #illegalTypeName="{ row }">
+        <el-text
+          @click="handleIllDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.illegalTypeName }}
+        </el-text>
+      </template>
+      <template #cancelReason="{ row }">
+        {{ row.cancelReason || '--' }}
       </template>
 
       <template #driveInPhoto="{ row }">
@@ -740,21 +903,26 @@ const handleBack = async (row, formData) => {
             :disabled="!['待复审'].includes(row.reviewStatus)"
             @click="handleSendFileConfirm(row)"
           />
-          <IconButton
+          <!-- <IconButton
             content="上传复审证据"
             icon-name="Upload"
             @click="handleUpdateFile(row)"
+          /> -->
+          <IconButton
+            content="查看草拟通知书"
+            icon-name="View"
+            @click="handleAutoDetail(row)"
           />
           <IconButton
             content="详情"
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
-          <IconButton
+          <!-- <IconButton
             content="编辑"
             icon-name="edit"
             @click="handleEdit(row)"
-          />
+          /> -->
           <IconButton
             content="删除"
             icon-name="delete"
@@ -830,5 +998,40 @@ const handleBack = async (row, formData) => {
   font-size: 12px;
   text-align: center;
   padding: 8px 0;
+}
+.image-list {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.image-item {
+  width: 80px;
+  height: 80px;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid #eee;
+}
+.image-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.table-image {
+  display: flex;
+  justify-content: center;
+}
+.table-image img {
+  width: 150px;
+  height: 40px;
+  margin-right: 5px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+</style>
+<style>
+.cao-ni-test {
+  width: 80vw;
 }
 </style>

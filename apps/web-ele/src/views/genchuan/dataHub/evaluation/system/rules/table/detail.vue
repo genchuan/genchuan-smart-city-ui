@@ -1,5 +1,6 @@
 <script setup>
 import { computed, defineProps, toRefs } from 'vue';
+
 import { useVbenDrawer } from '@vben/common-ui';
 
 const props = defineProps({
@@ -33,7 +34,6 @@ defineExpose({
 
 <template>
   <DetailDrawer :title="drawerTitle" class="genchuan-detail-drawer">
-    <!-- 整体滚动容器（避免多个卡片各自滚动） -->
     <div class="detail-scroll-container">
       <!-- 基本信息卡片 -->
       <div class="detail-card">
@@ -56,7 +56,9 @@ defineExpose({
         </div>
         <div class="detail-card-row">
           <div class="detail-row-left">创建人：</div>
-          <div class="detail-row-right">{{ detailObj.createByName || '-' }}</div>
+          <div class="detail-row-right">
+            {{ detailObj.createByName || '-' }}
+          </div>
         </div>
         <div class="detail-card-row">
           <div class="detail-row-left">创建时间：</div>
@@ -64,51 +66,60 @@ defineExpose({
         </div>
         <div class="detail-card-row">
           <div class="detail-row-left">变更日志：</div>
-          <div class="detail-row-right">{{ detailObj.changeLog || '-' }}</div>
+          <div class="detail-row-right">{{ detailObj.changeLogShort || '-' }}</div>
         </div>
       </div>
 
-      <!-- 规则项列表卡片（增加权重列） -->
+      <!-- 规则项列表卡片，移除了“关联指标项”和“规则类型”列 -->
       <div v-if="detailObj.ruleItems?.length" class="detail-card">
         <h3 class="detail-card-title">规则项列表</h3>
-        <div class="detail-table-wrapper">
-          <table class="detail-table">
-            <thead>
-            <tr>
-              <th>规则项名称</th>
-              <th>关联指标项</th>
-              <th>评分逻辑</th>
-              <th>满分值</th>
-              <th>权重</th>
-              <th>规则类型</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr v-for="item in detailObj.ruleItems" :key="item.ruleItemId">
-              <td>{{ item.name || '-' }}</td>
-              <td>{{ item.indexName || '-' }}</td>
-              <td>{{ item.scoreLogic || '-' }}</td>
-              <td>{{ item.fullScore || '-' }}</td>
-              <td>{{ item.weight || '-' }}</td>
-              <td>{{ item.ruleTypeName || '-' }}</td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
+        <el-table
+          :data="detailObj.ruleItems"
+          border
+          size="small"
+          style="width: 100%"
+        >
+          <el-table-column prop="ruleName" label="规则项名称" min-width="200" />
+          <el-table-column type="expand" label="评分细则">
+            <template #default="{ row }">
+              <el-table
+                :data="row.details || []"
+                border
+                size="small"
+                style="width: 95%; margin: 10px auto"
+              >
+                <el-table-column prop="remark" label="描述" min-width="150" />
+                <el-table-column prop="minValue" label="最小值" width="80" />
+                <el-table-column
+                  prop="operatorMin"
+                  label="运算符(小)"
+                  width="100"
+                />
+                <el-table-column prop="maxValue" label="最大值" width="80" />
+                <el-table-column
+                  prop="operatorMax"
+                  label="运算符(大)"
+                  width="100"
+                />
+                <el-table-column prop="score" label="分数" width="80" />
+                <el-table-column prop="sortOrder" label="排序" width="70" />
+              </el-table>
+            </template>
+          </el-table-column>
+        </el-table>
       </div>
     </div>
   </DetailDrawer>
 </template>
 
 <style scoped lang="scss">
-/* 滚动容器：使所有卡片统一滚动，避免每个卡片独立滚动条 */
+/* 样式保持不变，仅移除了不需要的部分 */
 .detail-scroll-container {
   max-height: calc(70vh - 20px);
   overflow-y: auto;
-  padding: 4px; /* 为滚动条留出一点空间，避免 hover 时被遮挡 */
+  padding: 4px;
 }
 
-/* 卡片样式（完全复用评价对象示例） */
 .detail-card {
   padding: 20px;
   background-color: #f9fafb;
@@ -120,7 +131,6 @@ defineExpose({
   }
 }
 
-/* 卡片标题（新增，保持简洁） */
 .detail-card-title {
   font-size: 16px;
   font-weight: 600;
@@ -169,39 +179,6 @@ defineExpose({
   padding-right: 10px;
 }
 
-/* 表格包装器：使表格在卡片内也有适当间距 */
-.detail-table-wrapper {
-  margin-top: 10px;
-  overflow-x: auto;
-}
-
-.detail-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-  background-color: #ffffff;
-  border-radius: 6px;
-  overflow: hidden;
-
-  th,
-  td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #ebeef5;
-  }
-
-  th {
-    background-color: #f2f6fc;
-    font-weight: 500;
-    color: #1f2f3d;
-  }
-
-  tr:hover {
-    background-color: #f5f7fa;
-  }
-}
-
-/* 滚动条样式（同评价对象示例） */
 .detail-scroll-container::-webkit-scrollbar {
   width: 6px;
 }
@@ -217,7 +194,6 @@ defineExpose({
   background: #c0c4cc;
 }
 
-/* 响应式调整 */
 @media (max-width: 768px) {
   .detail-row-left {
     width: 120px;

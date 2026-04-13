@@ -230,7 +230,7 @@ export function useGridColumns() {
     },
     {
       title: '操作',
-      width: 120,
+      width: 180,
       fixed: 'right',
       slots: { default: 'actions' },
     },

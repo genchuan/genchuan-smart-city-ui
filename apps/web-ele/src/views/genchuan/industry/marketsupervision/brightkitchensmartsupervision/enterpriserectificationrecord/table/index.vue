@@ -1,10 +1,10 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 
-import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { confirm, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { ElImage, ElLoading, ElMessage } from 'element-plus';
+import { ElImage, ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -14,7 +14,10 @@ import {
   deleteEntNotice,
   exporEntNoticeExcel,
   getEntRectifyRecord,
+  sendApprove,
+  sendNoApprove,
   updateEntNotice,
+  uploadRectifyFile,
 } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
@@ -91,7 +94,7 @@ function handleRefresh() {
 async function handleExport() {
   const data = await exporEntNoticeExcel();
   downloadFileFromBlobPart({
-    fileName: '整改通知书.xls',
+    fileName: '企业整改记录.xls',
     source: data,
   });
 }
@@ -278,7 +281,93 @@ const openImg = (url) => {
   dataObj.imgUrl = url;
   dialogVisible.value = true;
 };
+// 上传资料相关（核心改造：匹配接口所有query参数）
+const uploadLoading = ref(false);
+const currentUploadRow = ref({});
+// 新增接口要求的所有参数
+const uploadForm = reactive({
+  fileDesc: '', // 资料文字说明
+  afterIndexValue: 0, // 处理后的指标数值
+  file: null,
+});
+// 上传表单校验规则（匹配接口必填项）
+const uploadFormRules = reactive({
+  file: [{ required: true, message: '请选择要上传的文件', trigger: 'change' }],
+});
+const uploadFormRef = ref(null);
+const [UploadModal, uploadModalApi] = useVbenModal({
+  title: '上传证据',
+  width: 600,
+  modalProps: {
+    destroyOnClose: true,
+  },
+  onCancel() {
+    // 关闭弹窗清空所有数据
+    uploadForm.fileDesc = '';
+    uploadForm.afterIndexValue = 0;
+    uploadForm.file = null;
+    fileList.value = [];
+    uploadFormRef.value?.resetFields();
+  },
+  footer: false,
+});
+// 上传组件相关
+const upload = ref(null);
+const fileList = ref([]);
+const handleExceed = (files) => {
+  upload.value.clearFiles();
+  const file = files[0];
+  upload.value.handleStart(file);
+};
+// 打开上传资料弹窗
+const handleUpdateFile = (row) => {
+  // 初始化表单数据
+  uploadForm.fileDesc = '';
+  uploadForm.afterIndexValue = 0;
+  uploadForm.file = null;
+  fileList.value = [];
+  currentUploadRow.value = row;
+  uploadModalApi.open();
+};
+// 提交文件上传（核心改造：匹配接口query+form-data参数）
+const handleUploadSubmit = async () => {
+  // 1. 表单整体校验
+  const valid = await uploadFormRef.value.validate();
+  if (!valid) return;
+  // 2. 校验文件是否选择
+  if (!uploadForm.file || fileList.value.length === 0) {
+    ElMessage.warning('请选择要上传的文件');
+    return;
+  }
 
+  try {
+    uploadLoading.value = true;
+    const file = fileList.value[0];
+    // 3. 构建FormData（仅传递文件）
+    const formData = new FormData();
+    formData.append('file', file.raw);
+    formData.append('entRectifyRecordId', currentUploadRow.value.id);
+
+    // 5. 调用上传接口：同时传递formData和query参数
+    await uploadRectifyFile(formData);
+
+    ElMessage.success('资料上传成功！');
+    uploadModalApi.close();
+    handleRefresh(); // 刷新工单列表
+  } catch (error) {
+    ElMessage.error(`上传失败：${error.message || '服务器异常'}`);
+    console.error('上传错误详情：', error);
+  } finally {
+    uploadLoading.value = false;
+  }
+};
+
+// 文件选择事件
+const onChange = (file) => {
+  fileList.value = [];
+  fileList.value.push(file);
+  uploadForm.file = file;
+};
 // 查看全部证据图片
 const handleViewAllEvidence = (row) => {
   if (!row.evidenceList || row.evidenceList.length === 0) {
@@ -289,24 +378,180 @@ const handleViewAllEvidence = (row) => {
   openImg(row.evidenceList[0].url);
 };
 
-// 批量查看数据编号（使用el-table展示）
-const handleOpenData = async () => {
-  // 1. 检查是否有选中的数据
-  if (isEmpty(checkedIds.value)) {
-    ElMessage.warning($t('请先选择要查看的数据！') || '请先选择要查看的数据！');
+/** 二次确认后执行下发 */
+const handleDocument = async (row) => {
+  try {
+    // 弹出确认框
+    await ElMessageBox.confirm('确定审核通过吗？此操作不可撤销！', '确认下发', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'warning',
+    });
+    // 用户确认后执行原逻辑
+    await handleSendFile(row);
+    ElMessage.success('审核通过！');
+  } catch {
+    // 用户取消则不执行任何操作
+  }
+};
+
+// 原下发逻辑（保留你的handleSendFile方法）
+const handleSendFile = async (row) => {
+  // 你的下发接口逻辑...
+  await sendApprove({
+    entRectifyRecordId: row.id,
+  });
+  await handleRefresh();
+};
+
+// 弹窗显示状态
+const dialogSendVisible = ref(false);
+// 当前操作的行数据（存储审核不通过的目标数据）
+const currentRow = ref(null);
+// 表单实例（用于表单校验）
+const formRef = ref(null);
+
+// 表单数据：存储不通过原因
+const form = reactive({
+  rejectReason: '', // 不通过原因
+});
+
+// 表单校验规则：不通过原因必填
+const rules = reactive({
+  rejectReason: [
+    { required: true, message: '请填写审核不通过的原因', trigger: 'blur' },
+    { min: 5, message: '原因长度不少于5个字', trigger: 'blur' },
+  ],
+});
+
+// 点击审核不通过按钮：打开弹窗并记录当前行数据
+const handleNoDocument = (row) => {
+  // 重置表单
+  form.rejectReason = '';
+  formRef.value?.resetFields();
+  // 记录当前操作的行数据
+  currentRow.value = row;
+  // 打开弹窗
+  dialogSendVisible.value = true;
+};
+
+// 弹窗关闭前的回调（可选）
+const handleDialogClose = (done) => {
+  dialogSendVisible.value = false;
+  done();
+};
+
+// 确认提交审核不通过
+const confirmReject = async () => {
+  // 先校验表单
+  try {
+    await formRef.value.validate();
+  } catch {
+    // 表单校验失败，终止操作
+    ElMessage.warning('请完善审核不通过原因后提交');
     return;
   }
-  const res = await getRectifyEvidence({
-    ledgerIdList: checkedIds.value,
-  });
-  dataObj.batchViewData = res.list;
-  // 3. 打开批量查看弹窗
-  dataObj.batchViewVisible = true;
+
+  try {
+    // 这里替换为你的实际接口调用逻辑
+    // 示例：await api.auditReject({ id: currentRow.value.id, rejectReason: form.rejectReason });
+    console.log('审核不通过提交成功', {
+      rowId: currentRow.value.id, // 假设行数据有id字段
+      rejectReason: form.rejectReason,
+    });
+
+    await sendNoApprove({
+      entRectifyRecordId: currentRow.value.id, // 假设行数据有id字段
+      rejectReason: form.rejectReason,
+    });
+    // 提示成功
+    ElMessage.success('审核不通过操作已提交！');
+    // 关闭弹窗
+    dialogSendVisible.value = false;
+    await handleRefresh();
+  } catch (error) {
+    // 接口调用失败处理
+    ElMessage.error(`提交失败：${error.message || '请稍后重试'}`);
+  }
 };
 </script>
 
 <template>
   <div class="park-lot-table-new">
+    <!-- 审核不通过确认弹窗（包含原因输入） -->
+    <el-dialog
+      title="审核不通过确认"
+      v-model="dialogSendVisible"
+      width="500px"
+      :close-on-click-modal="false"
+      :before-close="handleDialogClose"
+    >
+      <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
+        <el-form-item label="不通过原因" prop="rejectReason">
+          <el-input
+            type="textarea"
+            v-model="form.rejectReason"
+            placeholder="请输入审核不通过的具体原因（必填）"
+            rows="4"
+            maxlength="500"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogSendVisible = false">取消</el-button>
+          <el-button type="primary" @click="confirmReject">确认提交</el-button>
+        </span>
+      </template>
+    </el-dialog>
+    <!-- 上传资料弹窗（核心改造：新增所有接口参数输入框） -->
+    <UploadModal>
+      <div class="upload-modal-content p-4">
+        <ElForm
+          ref="uploadFormRef"
+          :model="uploadForm"
+          :rules="uploadFormRules"
+          label-width="120px"
+        >
+          <!-- 文件上传区域 -->
+          <ElFormItem label="选择文件" prop="file" class="mb-4">
+            <ElUpload
+              ref="upload"
+              v-model:file-list="fileList"
+              :on-change="onChange"
+              :on-exceed="handleExceed"
+              :auto-upload="false"
+              class="upload-demo"
+              drag
+              :limit="1"
+            >
+              <ElIcon class="el-icon--upload"><UploadFilled /></ElIcon>
+              <div class="el-upload__text">
+                拖拽文件到此处上传，或<em>点击选择文件</em>
+              </div>
+              <div class="el-upload__tip mt-2 text-sm text-gray-500">
+                支持jpg/jpeg/png/pdf/doc/docx/xls/xlsx格式，单个文件不超过5MB
+              </div>
+            </ElUpload>
+          </ElFormItem>
+        </ElForm>
+
+        <!-- 操作按钮 -->
+        <div class="mt-4 flex justify-end gap-2">
+          <ElButton @click="uploadModalApi.close()">取消</ElButton>
+          <ElButton
+            type="primary"
+            @click="handleUploadSubmit"
+            :loading="uploadLoading"
+          >
+            确认上传
+          </ElButton>
+        </div>
+      </div>
+    </UploadModal>
+
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
@@ -360,12 +605,6 @@ const handleOpenData = async () => {
             @click="handleDeleteBatch"
           />
           <IconButton
-            content="批量查看证据"
-            icon-name="Expand"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleOpenData"
-          />
-          <IconButton
             content="搜索"
             icon-name="search"
             @click="handleSerachShow"
@@ -407,14 +646,26 @@ const handleOpenData = async () => {
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
+            content="审核通过"
+            icon-name="document"
+            :disabled="!['未整改'].includes(row.rectifyStatus)"
+            @click="handleDocument(row)"
+          />
+          <IconButton
+            content="审核不通过"
+            icon-name="document"
+            :disabled="!['未整改'].includes(row.rectifyStatus)"
+            @click="handleNoDocument(row)"
+          />
+          <IconButton
             content="详情"
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
           <!-- <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
+            content="上传证据"
+            icon-name="Upload"
+            @click="handleUpdateFile(row)"
           /> -->
           <IconButton
             content="删除"

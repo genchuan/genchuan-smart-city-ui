@@ -44,15 +44,11 @@ async function fetchTenantList() {
     const websiteTenantPromise = getTenantByWebsite(window.location.hostname);
     tenantList.value = await getTenantSimpleList();
 
-    // 选中租户：域名 > store 中的租户 > 首个租户
+    // 选中租户：域名 > 首个租户（登录页不依赖 store 中的租户，避免与注册页互相影响）
     let tenantId: null | number = null;
     const websiteTenant = await websiteTenantPromise;
     if (websiteTenant?.id) {
       tenantId = websiteTenant.id;
-    }
-    // 如果没有从域名获取到租户，尝试从 store 中获取
-    if (!tenantId && accessStore.tenantId) {
-      tenantId = accessStore.tenantId;
     }
     // 如果还是没有租户，使用列表中的第一个
     if (!tenantId && tenantList.value?.[0]?.id) {
@@ -67,8 +63,20 @@ async function fetchTenantList() {
   }
 }
 
+/** 设置租户ID到请求头 - 如果租户列表为空则使用默认值1 */
+function setTenantIdForRequest(values: any) {
+  // 如果用户没有选中租户值或租户列表为空，设置默认值为1
+  if (!values.tenantId || tenantList.value.length === 0) {
+    accessStore.setTenantId(1);
+    return '1';
+  }
+  return values.tenantId;
+}
+
 /** 处理登录 */
 async function handleLogin(values: any) {
+  // 设置租户ID到请求头（如果租户列表为空则使用默认值1）
+  values.tenantId = setTenantIdForRequest(values);
   // 如果开启验证码，则先验证验证码
   if (captchaEnable) {
     verifyRef.value.show();
@@ -81,8 +89,11 @@ async function handleLogin(values: any) {
 /** 验证码通过，执行登录 */
 async function handleVerifySuccess({ captchaVerification }: any) {
   try {
+    const values = await loginRef.value.getFormApi().getValues();
+    // 设置租户ID到请求头（如果租户列表为空则使用默认值1）
+    values.tenantId = setTenantIdForRequest(values);
     await authStore.authLogin('username', {
-      ...(await loginRef.value.getFormApi().getValues()),
+      ...values,
       captchaVerification,
     });
   } catch (error) {
@@ -130,7 +141,8 @@ const formSchema = computed((): VbenFormSchema[] => {
       },
       fieldName: 'tenantId',
       label: $t('authentication.tenant'),
-      rules: z.string().min(1, { message: $t('authentication.tenantTip') }),
+      // 取消租户名必填验证
+      // rules: z.string().min(1, { message: $t('authentication.tenantTip') }),
       dependencies: {
         triggerFields: ['tenantId'],
         if: tenantEnable,
@@ -175,9 +187,19 @@ const formSchema = computed((): VbenFormSchema[] => {
       ref="loginRef"
       :form-schema="formSchema"
       :loading="authStore.loginLoading"
+      :show-code-login="false"
+      :show-qrcode-login="false"
+      :show-third-party-login="false"
       @submit="handleLogin"
       @third-login="handleThirdLogin"
     />
+    <!--    <AuthenticationLogin-->
+    <!--      ref="loginRef"-->
+    <!--      :form-schema="formSchema"-->
+    <!--      :loading="authStore.loginLoading"-->
+    <!--      @submit="handleLogin"-->
+    <!--      @third-login="handleThirdLogin"-->
+    <!--    />-->
     <Verification
       ref="verifyRef"
       v-if="captchaEnable"

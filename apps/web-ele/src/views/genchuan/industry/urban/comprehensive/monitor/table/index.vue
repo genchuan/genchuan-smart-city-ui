@@ -83,6 +83,70 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
   onConfirm() {
     const obj = formApi.form.values;
+    
+    // 1. 设备编号唯一性校验
+    if (formDrawerApi.sharedData.payload.title === '新增') {
+      const existingDeviceCode = dataObj.apilist.find(item => item.deviceCode === obj.deviceCode);
+      if (existingDeviceCode) {
+        ElMessage.error('设备编号已存在，请使用其他编号');
+        return;
+      }
+    } else {
+      const existingDeviceCode = dataObj.apilist.find(item => item.deviceCode === obj.deviceCode && item.id !== formData.value?.id);
+      if (existingDeviceCode) {
+        ElMessage.error('设备编号已存在，请使用其他编号');
+        return;
+      }
+    }
+    
+    // 2. 阈值合理性校验
+    // 温度阈值校验
+    const tempMatch = obj.tempThreshold.match(/^(\d+)-(\d+)℃$/);
+    if (!tempMatch) {
+      ElMessage.error('温度阈值格式不正确，请使用如：20-30℃ 的格式');
+      return;
+    }
+    const tempMin = parseFloat(tempMatch[1]);
+    const tempMax = parseFloat(tempMatch[2]);
+    if (tempMin >= tempMax) {
+      ElMessage.error('温度阈值最小值必须小于最大值');
+      return;
+    }
+    
+    // 湿度阈值校验
+    const humidityMatch = obj.humidityThreshold.match(/^(\d+)-(\d+)%$/);
+    if (!humidityMatch) {
+      ElMessage.error('湿度阈值格式不正确，请使用如：40-70% 的格式');
+      return;
+    }
+    const humidityMin = parseFloat(humidityMatch[1]);
+    const humidityMax = parseFloat(humidityMatch[2]);
+    if (humidityMin >= humidityMax) {
+      ElMessage.error('湿度阈值最小值必须小于最大值');
+      return;
+    }
+    if (humidityMin < 0 || humidityMax > 100) {
+      ElMessage.error('湿度阈值范围必须在0-100%之间');
+      return;
+    }
+    
+    // 燃气浓度阈值校验
+    const gasMatch = obj.gasThreshold.match(/^(\d+(\.\d+)?)-(\d+(\.\d+)?)$/);
+    if (!gasMatch) {
+      ElMessage.error('燃气浓度阈值格式不正确，请使用如：0-0.5 的格式');
+      return;
+    }
+    const gasMin = parseFloat(gasMatch[1]);
+    const gasMax = parseFloat(gasMatch[3]);
+    if (gasMin >= gasMax) {
+      ElMessage.error('燃气浓度阈值最小值必须小于最大值');
+      return;
+    }
+    if (gasMin < 0) {
+      ElMessage.error('燃气浓度阈值最小值不能小于0');
+      return;
+    }
+    
     if (formDrawerApi.sharedData.payload.title === '新增') {
       // 为新增数据生成唯一ID
       obj.id = String(dataObj.apilist.length + 1);
@@ -209,13 +273,133 @@ const filterFormData = ref({});
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
+// 计算数据同步时长
+const calculateSyncDuration = (updateTime) => {
+  if (!updateTime) return 0;
+  const now = new Date();
+  const updateDate = new Date(updateTime);
+  const diffSeconds = Math.floor((now - updateDate) / 1000);
+  return diffSeconds;
+};
+
+// 触发预警
+const triggerWarning = (data, riskType, shouldTrigger = true) => {
+  if (!shouldTrigger) {
+    return;
+  }
+  
+  // 生成预警ID
+  const warningId = Date.now().toString();
+  
+  // 构建预警信息
+  const warningInfo = {
+    id: warningId,
+    gallerySection: data.gallerySection,
+    deviceCode: data.deviceCode,
+    riskType: riskType,
+    riskLevel: '高风险',
+    warnWay: data.warnWay || '平台弹窗',
+    timestamp: new Date().toISOString().slice(0, 19).replace('T', ' '),
+    status: '未处理'
+  };
+  
+  // 模拟预警触发
+  console.log('触发预警:', warningInfo);
+  
+  // 显示预警通知
+  ElMessage({
+    message: `【预警】${data.gallerySection} - ${riskType}`,
+    type: 'error',
+    duration: 5000,
+    showClose: true
+  });
+  
+  // 这里可以添加实际的预警处理逻辑，如发送短信、声光报警等
+  if (data.warnWay === '短信') {
+    console.log('发送短信预警:', warningInfo);
+  } else if (data.warnWay === '声光') {
+    console.log('触发声光预警:', warningInfo);
+  }
+  
+  return warningInfo;
+};
+
+// 计算安全风险等级
+const calculateRiskLevel = (data, shouldTriggerWarning = true) => {
+  let riskLevel = '低风险';
+  
+  // 燃气浓度风险判断
+  if (data.gasConcentration > 0.5) {
+    // 触发燃气浓度超标预警
+    triggerWarning(data, '燃气浓度超标', shouldTriggerWarning);
+    return '高风险';
+  } else if (data.gasConcentration > 0.3) {
+    riskLevel = '中风险';
+  }
+  
+  // 烟感状态风险判断
+  if (data.smokeStatus === '报警') {
+    // 触发烟感报警预警
+    triggerWarning(data, '烟感报警', shouldTriggerWarning);
+    return '高风险';
+  }
+  
+  // 温度风险判断
+  if (data.galleryTemp > 35 || data.galleryTemp < 0) {
+    // 触发温度异常预警
+    triggerWarning(data, '温度异常', shouldTriggerWarning);
+    return '高风险';
+  } else if (data.galleryTemp > 30 || data.galleryTemp < 5) {
+    riskLevel = '中风险';
+  }
+  
+  // 湿度风险判断
+  if (data.galleryHumidity > 80 || data.galleryHumidity < 20) {
+    // 触发湿度异常预警
+    triggerWarning(data, '湿度异常', shouldTriggerWarning);
+    return '高风险';
+  } else if (data.galleryHumidity > 70 || data.galleryHumidity < 30) {
+    riskLevel = '中风险';
+  }
+  
+  // 设备状态风险判断
+  if (data.deviceStatus === '离线') {
+    riskLevel = '中风险';
+  }
+  
+  // 数据同步时长风险判断
+  const syncDuration = calculateSyncDuration(data.updateTime);
+  if (syncDuration > 3600) { // 超过1小时未更新
+    // 触发数据同步异常预警
+    triggerWarning(data, '数据同步异常', shouldTriggerWarning);
+    return '高风险';
+  } else if (syncDuration > 1800) { // 超过30分钟未更新
+    riskLevel = '中风险';
+  }
+  
+  return riskLevel;
+};
+
+// 初始加载标识
+const isInitialLoad = ref(true);
+
 // 表格数据获取
 const getTableData = (pageObj) => {
   const page = pageObj.page;
   
-  // 过滤数据
+  // 过滤数据并计算同步时长和风险等级
   const filteredData = dataObj.apilist
-    .map((v) => v)
+    .map((v) => {
+      // 自动计算同步时长
+      const syncDuration = calculateSyncDuration(v.updateTime);
+      // 自动计算安全风险等级，初始加载时触发预警，筛选时不触发
+      const riskLevel = calculateRiskLevel({ ...v, syncDuration }, isInitialLoad.value);
+      return {
+        ...v,
+        syncDuration,
+        riskLevel
+      };
+    })
     .filter((v) => {
       // 监测状态过滤
       if (activeName.value !== '全部' && v.monitorStatus !== activeName.value) {
@@ -266,6 +450,12 @@ const getTableData = (pageObj) => {
       (page.currentPage - 1) * page.pageSize,
       page.currentPage * page.pageSize,
     );
+  
+  // 初始加载完成后，设置为false，后续筛选操作不触发预警
+  if (isInitialLoad.value) {
+    isInitialLoad.value = false;
+  }
+  
   return dataObj;
 };
 
@@ -316,6 +506,15 @@ const [Grid, gridApi] = useVbenVxeGrid({
     rowConfig: {
       keyField: 'id',
       isHover: true,
+      // 行样式，根据安全风险等级高亮显示
+      rowClass: ({ row }) => {
+        if (row.riskLevel === '高风险') {
+          return 'high-risk-row';
+        } else if (row.riskLevel === '中风险') {
+          return 'medium-risk-row';
+        }
+        return '';
+      },
     },
     pagerConfig: dataObj,
     toolbarConfig: {
@@ -456,14 +655,22 @@ const switchOpen = () => {
 const handleSwitchConfirm = async () => {
   statusLoading.value = true;
   try {
-    // 模拟批量更新状态
+    // 模拟批量更新状态并同步设备状态
     dataObj.apilist.forEach(item => {
       if (recordsList.value.map(r => r.id).includes(item.id)) {
         item.monitorStatus = switchStatus.value;
+        // 同步设备状态：运行中时设备在线，已停止时设备离线
+        if (switchStatus.value === '运行中') {
+          item.deviceStatus = '在线';
+        } else if (switchStatus.value === '已停止') {
+          item.deviceStatus = '离线';
+        }
+        // 更新最近更新时间
+        item.updateTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
       }
     });
     
-    ElMessage.success(`批量切换状态成功`);
+    ElMessage.success(`批量切换状态成功，已同步设备状态`);
     statusLoading.value = false;
     switchDialogVisible.value = false;
     handleRefresh();
@@ -482,11 +689,24 @@ function handleWarnConfig() {
 
 // 处理预警方式配置保存
 function handleWarnConfigSave(values) {
-  // 模拟保存操作
-  ElMessage.success('预警方式配置成功');
-  // 这里可以添加更新数据的逻辑
-  // 例如，根据选择的管廊区段更新对应的数据
-  console.log('预警方式配置:', values);
+  // 实现预警方式与监测数据的实际关联
+  const { gallerySection, warnWay } = values;
+  
+  // 更新对应管廊区段的预警方式
+  let updated = false;
+  dataObj.apilist.forEach((item) => {
+    if (item.gallerySection === gallerySection) {
+      item.warnWay = warnWay;
+      updated = true;
+    }
+  });
+  
+  if (updated) {
+    ElMessage.success('预警方式配置成功，已更新对应管廊区段的预警方式');
+  } else {
+    ElMessage.warning('未找到对应管廊区段的数据');
+  }
+  
   // 刷新表格
   handleRefresh();
 }
@@ -569,6 +789,18 @@ const arrowChange = () => {
     text-align: center;
     line-height: 1.5;
   }
+}
+
+// 高风险行高亮样式
+:deep(.high-risk-row) {
+  background-color: #fef2f2 !important;
+  border-left: 4px solid #ef4444 !important;
+}
+
+// 中风险行高亮样式
+:deep(.medium-risk-row) {
+  background-color: #fffbeb !important;
+  border-left: 4px solid #f59e0b !important;
 }
 </style>
 
@@ -678,7 +910,11 @@ const arrowChange = () => {
         </el-text>
       </template>
       <template #smokeStatus="{ row }">
-        <el-text class="common-align">
+        <el-text 
+          @click="handleFilterBySmokeStatus(row.smokeStatus)"
+          class="common-align"
+          :type="row.smokeStatus === '正常' ? 'success' : 'danger'"
+        >
           {{ row.smokeStatus }}
         </el-text>
       </template>
@@ -692,17 +928,29 @@ const arrowChange = () => {
         </el-text>
       </template>
       <template #deviceStatus="{ row }">
-        <el-text class="common-align">
+        <el-text 
+          @click="handleFilterByDeviceStatus(row.deviceStatus)"
+          class="common-align"
+          :type="row.deviceStatus === '在线' ? 'success' : row.deviceStatus === '离线' ? 'danger' : 'warning'"
+        >
           {{ row.deviceStatus }}
         </el-text>
       </template>
       <template #warnWay="{ row }">
-        <el-text class="common-align">
+        <el-text 
+          @click="handleFilterByWarnWay(row.warnWay)"
+          class="common-align"
+          :type="row.warnWay === '平台弹窗' ? 'primary' : row.warnWay === '短信' ? 'warning' : 'danger'"
+        >
           {{ row.warnWay }}
         </el-text>
       </template>
       <template #riskLevel="{ row }">
-        <el-text class="common-align">
+        <el-text 
+          @click="handleFilterByRiskLevel(row.riskLevel)"
+          class="common-align"
+          :type="row.riskLevel === '低风险' ? 'success' : row.riskLevel === '中风险' ? 'warning' : 'danger'"
+        >
           {{ row.riskLevel }}
         </el-text>
       </template>

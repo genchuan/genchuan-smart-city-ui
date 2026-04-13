@@ -410,11 +410,18 @@ export function batchHandleGarbageAbnormal(data) {
 
 /**
  * 通用批量上传图片
- * @param {FormData} formData - 包含 files 字段的 FormData
- * @returns 返回上传后的图片信息数组
  */
 export function uploadImageBatch(formData) {
-  return requestClient.post('/envirhealth/image/upload/batch', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+  return requestClient.post('/envirhealth/file/upload-multiple-images', formData, {
+    headers: { 'Content-Type': undefined }
+  });
+}
+
+/**
+ * 通用删除图片
+ */
+export function deleteFile(fileUrl) {
+  return requestClient.delete('/envirhealth/file/delete-file', {
+    params: { fileUrl },
   });
 }

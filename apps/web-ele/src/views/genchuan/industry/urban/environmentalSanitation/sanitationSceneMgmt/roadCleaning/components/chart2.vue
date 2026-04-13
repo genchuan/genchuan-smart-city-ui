@@ -1,102 +1,206 @@
 <script setup>
-import { computed } from 'vue';
-import Indicator from '#/components/stats/indicator.vue';
-import Pie from '#/components/stats/pie.vue';
-import Bar from '#/components/stats/bar.vue';
-import LineChart from '#/components/stats/lineChart.vue';
+import { computed, watch, onMounted, reactive } from 'vue';
+import {
+  getRoadCleaningChartPending,
+  getRoadCleaningChartExecuting,
+  getCleaningProblemChartPending,
+  getRoadCleaningChartCheck,
+  getRoadCleaningChartCompleted,
+} from '#/api/genchuan/industry/urban/environmentalSanitation/sanitationSceneMgmt/roadCleaning/data.js';
+import Indicator from '#/genchuan-components/stats/indicator.vue';
+import Pie from '#/genchuan-components/stats/pie.vue';
+import Bar from '#/genchuan-components/stats/bar.vue';
+import LineChart from '#/genchuan-components/stats/lineChart.vue';
 
 const props = defineProps({
   activeName: { type: String, required: true },
-  dataList: { type: Array, required: true }
+  // 注意：如果父组件不再需要传递 dataList，可以移除该 prop
+  // dataList: { type: Array, required: true }
 });
 
-// 过滤当前状态的数据
-const filteredList = computed(() => {
-  return props.dataList.filter(item => item.status === props.activeName);
+// 各状态的数据存储
+const state = reactive({
+  loading: false,
+  pending: null,      // 清扫待执行数据
+  executing: null,    // 作业进行中数据
+  problem: null,      // 问题待处置数据
+  review: null,       // 质量待核查数据
+  completed: null,    // 已完成数据
 });
 
-// 辅助函数：对象转数组（用于Pie组件）
-const toPieArray = (obj) => Object.entries(obj).map(([name, value]) => ({ name, value }));
+// 数值安全转换
+const toNumber = (val) => (val === null || val === undefined ? 0 : Number(val) || 0);
 
-// ---------- 卡片数据 ----------
-// 清扫待执行
-const pendingCards = computed(() => [
-  { title: '待执行计划总数', value: filteredList.value.length, color: '#409EFF' },
-  { title: '按区域待执行数', value: new Set(filteredList.value.map(v => v.area)).size, color: '#13ce66' },
-  { title: '按人员分配数', value: new Set(filteredList.value.flatMap(v => v.staffIds || [])).size, color: '#67C23A' },
-]);
+// 根据 activeName 获取对应的数据（方便模板中使用）
+const currentData = computed(() => {
+  switch (props.activeName) {
+    case '清扫待执行': return state.pending;
+    case '作业进行中': return state.executing;
+    case '问题待处置': return state.problem;
+    case '质量待核查': return state.review;
+    case '已完成': return state.completed;
+    default: return null;
+  }
+});
 
-// 作业进行中
-const ongoingCards = computed(() => [
-  { title: '当前作业任务数', value: filteredList.value.length, color: '#409EFF' },
-  { title: '正常运行数', value: filteredList.value.filter(v => v.operationStatus === '运行').length, color: '#13ce66' },
-  { title: '异常标记数', value: filteredList.value.filter(v => v.isAbnormal).length, color: '#F56C6C' },
-]);
+// 加载当前状态的数据
+const fetchCurrentData = async () => {
+  state.loading = true;
+  try {
+    let res = null;
+    switch (props.activeName) {
+      case '清扫待执行':
+        res = await getRoadCleaningChartPending();
+        state.pending = res;
+        break;
+      case '作业进行中':
+        res = await getRoadCleaningChartExecuting();
+        state.executing = res;
+        break;
+      case '问题待处置':
+        res = await getCleaningProblemChartPending();
+        state.problem = res;
+        break;
+      case '质量待核查':
+        res = await getRoadCleaningChartCheck();
+        state.review = res;
+        break;
+      case '已完成':
+        res = await getRoadCleaningChartCompleted();
+        state.completed = res;
+        break;
+    }
+    console.log(`${props.activeName} 接口返回:`, res);
+  } catch (error) {
+    console.error(`获取 ${props.activeName} 图表数据失败`, error);
+  } finally {
+    state.loading = false;
+  }
+};
 
-// 问题待处置
-const problemCards = computed(() => [
-  { title: '待处置问题总数', value: filteredList.value.length, color: '#409EFF' },
-  { title: '高优先级数', value: filteredList.value.filter(v => v.priority === '高').length, color: '#E6A23C' },
-  { title: '超时未处理数', value: filteredList.value.filter(v => v.isTimeout).length, color: '#F56C6C' },
-]);
+// 监听 activeName 变化，重新加载数据
+watch(() => props.activeName, fetchCurrentData, { immediate: true });
 
-// 质量待核查
-const reviewCards = computed(() => [
-  { title: '待核查任务数', value: filteredList.value.filter(v => v.reviewStatus === '待核查').length, color: '#409EFF' },
-  { title: '已达标数', value: filteredList.value.filter(v => v.reviewStatus === '达标').length, color: '#13ce66' },
-  { title: '需整改数', value: filteredList.value.filter(v => v.reviewStatus === '不达标').length, color: '#F56C6C' },
-]);
+// ---------- 以下是各状态模板中需要的数据计算（根据接口字段映射）----------
 
-// 已完成
-const completedCards = computed(() => [
-  { title: '已完成任务数', value: filteredList.value.length, color: '#409EFF' },
-  { title: '总清扫里程', value: filteredList.value.reduce((acc, v) => acc + (v.mileage || 0), 0).toFixed(1) + 'km', color: '#13ce66' },
-  { title: '平均质量达标率', value: (filteredList.value.reduce((acc, v) => acc + (v.qualityRate || 0), 0) / (filteredList.value.length || 1)).toFixed(0) + '%', color: '#67C23A' },
-  { title: '问题处置及时率', value: (filteredList.value.filter(v => v.problemHandleRate >= 90).length / (filteredList.value.length || 1) * 100).toFixed(0) + '%', color: '#F56C6C' },
-]);
-
-// ---------- 圆环图数据 ----------
-// 清扫待执行
+// 清扫待执行数据映射
+const pendingCards = computed(() => {
+  const d = state.pending;
+  if (!d) return [];
+  return [
+    { title: '待执行计划总数', value: toNumber(d.pendingPlanCount), color: '#409EFF' },
+    { title: '按区域待执行数', value: toNumber(d.pendingAreaCount), color: '#13ce66' },
+    { title: '按人员分配数', value: toNumber(d.pendingStaffCount), color: '#67C23A' },
+  ];
+});
 const pendingPie = computed(() => ({
-  frequency: toPieArray(filteredList.value.reduce((acc, v) => { acc[v.frequency] = (acc[v.frequency] || 0) + 1; return acc; }, {})),
-  roadType: toPieArray(filteredList.value.reduce((acc, v) => { acc[v.roadType] = (acc[v.roadType] || 0) + 1; return acc; }, {})),
+  frequency: Array.isArray(state.pending?.frequencyDistribution) ? state.pending.frequencyDistribution : [],
+  roadType: Array.isArray(state.pending?.roadSectionTypeDistribution) ? state.pending.roadSectionTypeDistribution : [],
 }));
+const pendingBar = computed(() => {
+  const list = Array.isArray(state.pending?.planCountByTimePeriod) ? state.pending.planCountByTimePeriod : [];
+  return {
+    x: list.map(item => item.name),
+    series: list.map(item => toNumber(item.value)),
+  };
+});
 
-// 问题待处置
+// 作业进行中数据映射
+const ongoingCards = computed(() => {
+  const d = state.executing;
+  if (!d) return [];
+  return [
+    { title: '当前作业任务数', value: toNumber(d.currentTaskCount), color: '#409EFF' },
+    { title: '正常运行数', value: toNumber(d.normalRunningCount), color: '#13ce66' },
+    { title: '异常标记数', value: toNumber(d.abnormalCount), color: '#F56C6C' },
+  ];
+});
+const ongoingLine = computed(() => {
+  const trend = Array.isArray(state.executing?.completionRateTrend) ? state.executing.completionRateTrend : [];
+  return {
+    x: trend.map(item => item.timePoint),
+    series: trend.map(item => toNumber(item.completionRate)),
+  };
+});
+
+// 问题待处置数据映射
+const problemCards = computed(() => {
+  const d = state.problem;
+  if (!d) return [];
+  return [
+    { title: '待处置问题总数', value: toNumber(d.pendingProblemCount), color: '#409EFF' },
+    { title: '高优先级数', value: toNumber(d.highPriorityCount), color: '#E6A23C' },
+    { title: '超时未处理数', value: toNumber(d.timeoutCount), color: '#F56C6C' },
+  ];
+});
 const problemPie = computed(() => ({
-  type: toPieArray(filteredList.value.reduce((acc, v) => { acc[v.problemType] = (acc[v.problemType] || 0) + 1; return acc; }, {})),
-  area: toPieArray(filteredList.value.reduce((acc, v) => { acc[v.area] = (acc[v.area] || 0) + 1; return acc; }, {})),
+  type: Array.isArray(state.problem?.problemTypeDistribution) ? state.problem.problemTypeDistribution : [],
+  area: Array.isArray(state.problem?.areaDistribution) ? state.problem.areaDistribution : [],
 }));
+const problemBar = computed(() => {
+  const list = Array.isArray(state.problem?.teamPendingDistribution) ? state.problem.teamPendingDistribution : [];
+  return {
+    x: list.map(item => item.name),
+    series: list.map(item => toNumber(item.value)),
+  };
+});
 
-// 质量待核查
+// 质量待核查数据映射
+const reviewCards = computed(() => {
+  const d = state.review;
+  if (!d) return [];
+  return [
+    { title: '待核查任务数', value: toNumber(d.pendingCheckCount), color: '#409EFF' },
+    { title: '已达标数', value: toNumber(d.qualifiedCount), color: '#13ce66' },
+    { title: '需整改数', value: toNumber(d.needReformCount), color: '#F56C6C' },
+  ];
+});
 const reviewPie = computed(() => ({
-  result: toPieArray(filteredList.value.reduce((acc, v) => { acc[v.reviewResult || '待核查'] = (acc[v.reviewResult || '待核查'] || 0) + 1; return acc; }, {})),
-  area: toPieArray(filteredList.value.reduce((acc, v) => { acc[v.area] = (acc[v.area] || 0) + 1; return acc; }, {})),
+  result: Array.isArray(state.review?.checkResultDistribution) ? state.review.checkResultDistribution : [],
+  area: Array.isArray(state.review?.areaDistribution) ? state.review.areaDistribution : [],
 }));
+const reviewBar = computed(() => {
+  const list = Array.isArray(state.review?.areaQualityRateList) ? state.review.areaQualityRateList : [];
+  return {
+    x: list.map(item => item.name),
+    series: list.map(item => toNumber(item.value)),
+  };
+});
 
-// 已完成
+// 已完成数据映射
+const completedCards = computed(() => {
+  const d = state.completed;
+  if (!d) return [];
+  return [
+    { title: '已完成任务总数', value: toNumber(d.completedTaskCount), color: '#409EFF' },
+    { title: '总清扫里程', value: d.totalCleaningMileage ? d.totalCleaningMileage + 'km' : '0km', color: '#13ce66' },
+    { title: '平均质量达标率', value: (toNumber(d.avgQualityRate) || 0).toFixed(0) + '%', color: '#67C23A' },
+    { title: '问题处置及时率', value: (toNumber(d.problemHandleRate) || 0).toFixed(0) + '%', color: '#F56C6C' },
+  ];
+});
 const completedPie = computed(() => ({
-  area: toPieArray(filteredList.value.reduce((acc, v) => { acc[v.area] = (acc[v.area] || 0) + (v.mileage || 0); return acc; }, {})),
-  staff: toPieArray(filteredList.value.reduce((acc, v) => { acc[v.staff] = (acc[v.staff] || 0) + 1; return acc; }, {})),
+  area: Array.isArray(state.completed?.areaCompletionDistribution) ? state.completed.areaCompletionDistribution : [],
+  staff: Array.isArray(state.completed?.staffWorkloadDistribution) ? state.completed.staffWorkloadDistribution : [],
 }));
-
-// ---------- 示例柱状图/折线图数据 ----------
-// 清扫待执行时段对比
-const pendingBar = { x: ['凌晨', '上午', '下午', '夜间'], series: [1, 5, 3, 2] };
-// 问题处置组对比
-const problemBar = { x: ['一组', '二组', '三组'], series: [2, 3, 1] };
-// 质量达标率区域对比
-const reviewBar = { x: ['龙文区', '龙海区', '芗城区', '长泰区', '漳浦县'], series: [98, 95, 92, 96, 100] };
-// 已完成任务量对比（按日）
-const completedBar = { x: ['02-22', '02-23', '02-24'], series: [5.2, 3.8, 2.3] };
-// 已完成质量达标率趋势
-const completedLine = { x: ['周一', '周二', '周三', '周四'], series: [98, 95, 92, 96] };
-// 作业进行中完成率趋势
-const ongoingLine = { x: ['08:00', '10:00', '12:00', '14:00'], series: [20, 45, 70, 85] };
+const completedBar = computed(() => {
+  const list = Array.isArray(state.completed?.taskCompletionComparison) ? state.completed.taskCompletionComparison : [];
+  // 如果接口返回空数组，可提供一个默认占位数据或隐藏图表
+  return {
+    x: list.map(item => item.timePoint || item.name),
+    series: list.map(item => toNumber(item.value)),
+  };
+});
+const completedLine = computed(() => {
+  const trend = Array.isArray(state.completed?.qualityRateTrend) ? state.completed.qualityRateTrend : [];
+  return {
+    x: trend.map(item => item.timePoint),
+    series: trend.map(item => toNumber(item.value)),
+  };
+});
 </script>
 
 <template>
-  <div class="chart2-box">
+  <div class="chart2-box" v-loading="state.loading" element-loading-text="加载中...">
     <!-- 清扫待执行 -->
     <template v-if="activeName === '清扫待执行'">
       <div class="chart-box-left">
@@ -112,7 +216,6 @@ const ongoingLine = { x: ['08:00', '10:00', '12:00', '14:00'], series: [20, 45, 
       <div class="chart-box-left">
         <Indicator class="left-card" v-for="item in ongoingCards" :key="item.title" v-bind="item" />
       </div>
-      <!-- 地图组件暂缺，用折线图代替趋势 -->
       <LineChart style="flex:1" title="清扫路段完成率趋势" :x-data="ongoingLine.x" :series-data="[{ name: '完成率', data: ongoingLine.series }]" y-name="%" :smooth="true" />
     </template>
 

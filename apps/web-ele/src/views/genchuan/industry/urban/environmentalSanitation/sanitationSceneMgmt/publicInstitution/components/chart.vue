@@ -1,43 +1,75 @@
 <script setup>
-import { reactive } from 'vue';
-import Indicator from '#/components/stats/indicator.vue';
-import Pie from '#/components/stats/pie.vue';
-import Bar from '#/components/stats/bar.vue';
+import { reactive, onMounted } from 'vue';
+import { getPublicInstitutionChartDashboard } from '#/api/genchuan/industry/urban/environmentalSanitation/sanitationSceneMgmt/publicInstitution/data.js';
+import Indicator from '#/genchuan-components/stats/indicator.vue';
+import Pie from '#/genchuan-components/stats/pie.vue';
+import Bar from '#/genchuan-components/stats/bar.vue';
 
 const state = reactive({
+  loading: false,
   // 四个核心卡片
-  cardList: [
-    { title: '总机构数', value: 32, color: '#409EFF' },
-    { title: '保洁达标数', value: 28, color: '#67C23A' },
-    { title: '问题办结数', value: 24, color: '#E6A23C' },
-    { title: '核查通过数', value: 26, color: '#F56C6C' },
-  ],
+  cardList: [],
   // 两个圆环图
   pieData: {
-    type: [  // 机构类型占比
-      { name: '学校', value: 12 },
-      { name: '医院', value: 8 },
-      { name: '机关单位', value: 7 },
-      { name: '商场', value: 5 },
-    ],
-    area: [  // 区域分布占比
-      { name: '龙文区', value: 9 },
-      { name: '龙海区', value: 7 },
-      { name: '芗城区', value: 6 },
-      { name: '长泰区', value: 5 },
-      { name: '漳浦县', value: 5 },
-    ],
+    type: [],   // 机构类型占比
+    area: [],   // 区域分布占比
   },
   // 基础柱状图：不同类型机构保洁达标率对比
   barData: {
-    x: ['学校', '医院', '机关单位', '商场'],
-    series: [96, 92, 88, 94], // 达标率 %
+    x: [],
+    series: [],
   },
+});
+
+// 通用数值转换（处理字符串或数字）
+const toNumber = (val) => {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === 'string') return parseFloat(val) || 0;
+  return Number(val) || 0;
+};
+
+// 获取图表数据
+const fetchChartData = async () => {
+  state.loading = true;
+  try {
+    const res = await getPublicInstitutionChartDashboard();
+
+    // 根据接口实际返回结构调整判断条件
+    // 假设请求库已解包，res 直接是 data 对象（包含 totalInstitutions 等字段）
+    if (res && typeof res === 'object') {
+      // 卡片数据映射
+      state.cardList = [
+        {title: '总机构数', value: toNumber(res.totalInstitutions), color: '#409EFF'},
+        {title: '保洁达标数', value: toNumber(res.cleaningStandardMetCount), color: '#67C23A'},
+        {title: '问题办结数', value: toNumber(res.problemClosedCount), color: '#E6A23C'},
+        {title: '核查通过数', value: toNumber(res.inspectionPassCount), color: '#F56C6C'},
+      ];
+
+      // 圆环图数据
+      state.pieData.type = Array.isArray(res.institutionTypeDistribution) ? res.institutionTypeDistribution : [];
+      state.pieData.area = Array.isArray(res.areaDistribution) ? res.areaDistribution : [];
+
+      // 柱状图数据：不同类型机构保洁达标率
+      const rateList = Array.isArray(res.cleaningRateByType) ? res.cleaningRateByType : [];
+      state.barData.x = rateList.map(item => item.name || '');
+      state.barData.series = rateList.map(item => toNumber(item.value));
+    } else {
+      console.error('接口返回数据格式异常', res);
+    }
+  } catch (error) {
+    console.error('请求公共机构仪表盘数据失败:', error);
+  } finally {
+    state.loading = false;
+  }
+};
+
+onMounted(() => {
+  fetchChartData();
 });
 </script>
 
 <template>
-  <div class="chart-box">
+  <div class="chart-box" v-loading="state.loading" element-loading-text="加载中...">
     <!-- 左侧卡片区域：四个指标卡片，网格布局 -->
     <div class="box-left" style="flex: 1 !important;">
       <Indicator

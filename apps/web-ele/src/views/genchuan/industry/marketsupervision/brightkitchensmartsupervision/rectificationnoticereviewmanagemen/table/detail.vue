@@ -3,12 +3,11 @@ import { computed, defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 引入时间格式化工具（根据项目实际路径调整）
 import { formatTimestamp } from '#/utils';
 
 // 定义组件接收的属性
 const props = defineProps({
-  // 详情数据对象（整改通知书复审台账数据）
+  // 整改通知书复审台账详情数据对象
   detailObj: {
     type: Object,
     required: true,
@@ -40,12 +39,20 @@ const evidenceList = computed(() => {
   }
 });
 
+// 计算整改逾期状态
+const isOverdue = computed(() => {
+  if (!detailObj.value?.rectifyDeadlineTime) return false;
+  const deadline = new Date(detailObj.value.rectifyDeadlineTime).getTime();
+  const now = Date.now();
+  return now > deadline;
+});
+
 // 初始化抽屉实例
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 750, // 加宽抽屉适配更多台账字段
+  width: 750,
   onCancel() {
     detailDrawerApi.close();
   },
@@ -77,26 +84,30 @@ defineExpose({
         <div class="detail-row-right">{{ detailObj.entId || '-' }}</div>
       </div>
       <div class="detail-card-row">
+        <div class="detail-row-left">企业名称:</div>
+        <div class="detail-row-right">{{ detailObj.entName || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
         <div class="detail-row-left">违规类型ID:</div>
         <div class="detail-row-right">{{ detailObj.illegalTypeId || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">违规等级ID:</div>
+        <div class="detail-row-left">违规类型名称:</div>
         <div class="detail-row-right">
-          {{ detailObj.illegalLevelId || '-' }}
+          {{ detailObj.illegalTypeName || '-' }}
         </div>
       </div>
-
-      <!-- 核心修改：违规证据链接（图片展示+文件打开新窗口） -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">违规等级:</div>
+        <div class="detail-row-right">
+          {{ detailObj.illegalLevelName || '-' }}
+        </div>
+      </div>
       <div class="detail-card-row">
         <div class="detail-row-left">违规证据链接:</div>
         <div class="detail-row-right">
-          <!-- 无证据时显示 -->
           <span v-if="evidenceList.length === 0">-</span>
-
-          <!-- 有证据时：图片+文件分开展示 -->
           <div v-else class="evidence-container">
-            <!-- 图片直接展示 -->
             <div
               class="evidence-image-item"
               v-for="(item, index) in evidenceList.filter(
@@ -113,8 +124,6 @@ defineExpose({
               />
               <span class="evidence-name">{{ item.name }}</span>
             </div>
-
-            <!-- 文件点击打开新窗口（修改后的逻辑） -->
             <a
               class="evidence-file-item"
               v-for="(item, index) in evidenceList.filter(
@@ -137,12 +146,31 @@ defineExpose({
         </div>
       </div>
       <div class="detail-card-row">
+        <div class="detail-row-left">整改截止时间:</div>
+        <div class="detail-row-right">
+          {{
+            detailObj.rectifyDeadlineTime
+              ? formatTimestamp(detailObj.rectifyDeadlineTime)
+              : '-'
+          }}
+          <el-tag
+            size="mini"
+            :type="isOverdue ? 'danger' : 'success'"
+            class="overdue-tag"
+          >
+            {{ isOverdue ? '已逾期' : '未逾期' }}
+          </el-tag>
+        </div>
+      </div>
+      <div class="detail-card-row">
         <div class="detail-row-left">复审状态:</div>
         <div class="detail-row-right">{{ detailObj.reviewStatus || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">复审人ID:</div>
-        <div class="detail-row-right">{{ detailObj.reviewerId || '-' }}</div>
+        <div class="detail-row-left">复审人:</div>
+        <div class="detail-row-right">
+          {{ detailObj.reviewUserName || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">复审时间:</div>
@@ -153,22 +181,18 @@ defineExpose({
         </div>
       </div>
       <div class="detail-card-row">
+        <div class="detail-row-left">下发时间:</div>
+        <div class="detail-row-right">
+          {{ detailObj.issueTime ? formatTimestamp(detailObj.issueTime) : '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
         <div class="detail-row-left">撤销时间:</div>
         <div class="detail-row-right">
           {{
             detailObj.cancelTime ? formatTimestamp(detailObj.cancelTime) : '-'
           }}
         </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">撤销原因ID:</div>
-        <div class="detail-row-right">
-          {{ detailObj.cancelReasonId || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">执法复审台账编号:</div>
-        <div class="detail-row-right">{{ detailObj.lawLedgerCode || '-' }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">创建时间:</div>
@@ -187,12 +211,12 @@ defineExpose({
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">创建人:</div>
-        <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>
+        <div class="detail-row-left">撤销原因:</div>
+        <div class="detail-row-right">{{ detailObj.cancelReason || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">更新人:</div>
-        <div class="detail-row-right">{{ detailObj.updater || '-' }}</div>
+        <div class="detail-row-left">送达状态:</div>
+        <div class="detail-row-right">{{ detailObj.receiveStatus || '-' }}</div>
       </div>
     </div>
   </DetailDrawer>
@@ -204,24 +228,22 @@ defineExpose({
   padding: 20px;
   background-color: #f9fafb;
   border-radius: 8px;
-  min-height: 450px; // 增加最小高度适配台账字段数量
-  max-height: 70vh; // 限制最大高度，避免内容过多溢出
-  overflow-y: auto; // 内容过多时显示滚动条
+  min-height: 500px;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 // 每行的布局
 .detail-card-row {
   display: flex;
-  align-items: flex-start; // 顶部对齐，适配多行文本
+  align-items: flex-start;
   padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0; // 分隔线增强可读性
+  border-bottom: 1px solid #f0f0f0;
 
-  // 最后一行去掉分隔线
   &:last-child {
     border-bottom: none;
   }
 
-  // 鼠标悬浮高亮
   &:hover {
     background-color: #f5f7fa;
     border-radius: 4px;
@@ -235,25 +257,32 @@ defineExpose({
 
 // 左侧标签样式
 .detail-row-left {
-  width: 120px; // 固定宽度，保证所有标签对齐
-  flex-shrink: 0; // 不收缩
-  font-weight: 500; // 加粗突出标签
-  color: #606266; // 灰色调，区分内容
+  width: 120px;
+  flex-shrink: 0;
+  font-weight: 500;
+  color: #606266;
   font-size: 14px;
-  line-height: 18px; // 统一行高
+  line-height: 18px;
 }
 
 // 右侧内容样式
 .detail-row-right {
-  flex: 1; // 剩余宽度自适应
-  color: #303133; // 主文本色
+  flex: 1;
+  color: #303133;
   font-size: 14px;
   line-height: 18px;
-  word-break: break-all; // 处理长文本换行（如链接）
+  word-break: break-all;
   padding-right: 10px;
+  position: relative;
 }
 
-// 新增：违规证据容器样式
+// 逾期标签样式
+.overdue-tag {
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+// 违规证据容器样式
 .evidence-container {
   display: flex;
   flex-direction: column;
@@ -261,7 +290,7 @@ defineExpose({
   margin-top: 4px;
 }
 
-// 新增：图片项样式
+// 图片项样式
 .evidence-image-item {
   display: flex;
   align-items: center;
@@ -289,7 +318,7 @@ defineExpose({
   }
 }
 
-// 新增：文件项样式
+// 文件项样式
 .evidence-file-item {
   display: inline-block;
   color: #409eff;

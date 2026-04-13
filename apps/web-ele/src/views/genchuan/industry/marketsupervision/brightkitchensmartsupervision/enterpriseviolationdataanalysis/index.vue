@@ -20,7 +20,7 @@ import '#/components/page/index.scss';
 
 const tabArray = ref([
   {
-    label: '日报',
+    label: '企业违规数据分析',
     components: monitor,
     showSecondary: false,
     secondShow: false,
@@ -28,60 +28,60 @@ const tabArray = ref([
     arrowState: false,
     chartComponet: monitorchart,
   },
-  {
-    label: '周报',
-    components: week,
-    showSecondary: false,
-    secondShow: false,
-    arrowShow: false,
-    arrowState: false,
-    chartComponet: weekchart,
-  },
-  {
-    label: '月报',
-    components: month,
-    showSecondary: false,
-    secondShow: false,
-    arrowShow: false,
-    arrowState: false,
-    chartComponet: monthchart,
-  },
-  {
-    label: '季报',
-    components: season,
-    showSecondary: false,
-    secondShow: false,
-    arrowShow: false,
-    arrowState: false,
-    chartComponet: seasonchart,
-  },
-  {
-    label: '半年报',
-    components: half,
-    showSecondary: false,
-    secondShow: false,
-    arrowShow: false,
-    arrowState: false,
-    chartComponet: halfchart,
-  },
-  {
-    label: '年报',
-    components: year,
-    showSecondary: false,
-    secondShow: false,
-    arrowShow: false,
-    arrowState: false,
-    chartComponet: yearchart,
-  },
-  {
-    label: '自定义报表',
-    components: customize,
-    showSecondary: false,
-    secondShow: false,
-    arrowShow: false,
-    arrowState: false,
-    chartComponet: customizechart,
-  },
+  // {
+  //   label: '周报',
+  //   components: week,
+  //   showSecondary: false,
+  //   secondShow: false,
+  //   arrowShow: false,
+  //   arrowState: false,
+  //   chartComponet: weekchart,
+  // },
+  // {
+  //   label: '月报',
+  //   components: month,
+  //   showSecondary: false,
+  //   secondShow: false,
+  //   arrowShow: false,
+  //   arrowState: false,
+  //   chartComponet: monthchart,
+  // },
+  // {
+  //   label: '季报',
+  //   components: season,
+  //   showSecondary: false,
+  //   secondShow: false,
+  //   arrowShow: false,
+  //   arrowState: false,
+  //   chartComponet: seasonchart,
+  // },
+  // {
+  //   label: '半年报',
+  //   components: half,
+  //   showSecondary: false,
+  //   secondShow: false,
+  //   arrowShow: false,
+  //   arrowState: false,
+  //   chartComponet: halfchart,
+  // },
+  // {
+  //   label: '年报',
+  //   components: year,
+  //   showSecondary: false,
+  //   secondShow: false,
+  //   arrowShow: false,
+  //   arrowState: false,
+  //   chartComponet: yearchart,
+  // },
+  // {
+  //   label: '自定义报表',
+  //   components: customize,
+  //   showSecondary: false,
+  //   secondShow: false,
+  //   arrowShow: false,
+  //   arrowState: false,
+  //   chartComponet: customizechart,
+  // },
 ]);
 
 const arrowChange = () => {
@@ -89,7 +89,7 @@ const arrowChange = () => {
     v.arrowShow = !v.arrowShow;
   });
 };
-const activeName = ref('月报');
+const activeName = ref('企业违规数据分析');
 const tabChange = (item) => {
   tabArray.value.forEach((v) => {
     v.showSecondary = false;

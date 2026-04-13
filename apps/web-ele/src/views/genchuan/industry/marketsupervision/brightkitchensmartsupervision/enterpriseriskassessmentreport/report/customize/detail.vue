@@ -3,15 +3,13 @@ import { computed, defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 定义组件接收的属性（出入口管理数据）
+// 定义组件接收的属性
 const props = defineProps({
-  // 详情数据对象（出入口管理数据）
   detailObj: {
     type: Object,
     required: true,
     default: () => ({}),
   },
-  // 抽屉标题（可选，默认使用详情对象的roadSectionName）
   title: {
     type: String,
     default: '',
@@ -20,26 +18,24 @@ const props = defineProps({
 
 const { detailObj, title } = toRefs(props);
 
-// 计算属性处理标题，优先用路段名称，兜底显示默认值
+// 标题计算
 const drawerTitle = computed(() => {
-  const roadSectionName = detailObj.value?.roadSectionName || '出入口管理';
-  return title.value || `${roadSectionName}详情`;
+  const reportNo = detailObj.value?.reportNo || '风险报告';
+  return title.value || `${reportNo} 详情`;
 });
 
-// 初始化抽屉实例（加宽适配出入口管理更多长字段）
+// 抽屉配置
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 1000, // 加宽到1000px适配指标变化趋势等超长文本
+  width: 850,
   onCancel() {
     detailDrawerApi.close();
   },
-  onConfirm() {},
-  async onOpenChange() {},
 });
 
-// 对外暴露打开/关闭抽屉的方法
+// 暴露方法给父组件调用
 defineExpose({
   open: () => detailDrawerApi.open(),
   close: () => detailDrawerApi.close(),
@@ -49,239 +45,136 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 出入口管理基础信息 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">区域名称:</div>
-        <div class="detail-row-right">
-          {{ detailObj.areaName || '-' }}
-        </div>
+        <div class="detail-row-left">统计周期:</div>
+        <div class="detail-row-right">{{ detailObj.statisticPeriod || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">路段名称:</div>
-        <div class="detail-row-right">
-          {{ detailObj.roadSectionName || '-' }}
-        </div>
+        <div class="detail-row-left">报告编号:</div>
+        <div class="detail-row-right">{{ detailObj.reportNo || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">设备编号:</div>
-        <div class="detail-row-right">
-          {{ detailObj.deviceCode || '-' }}
-        </div>
+        <div class="detail-row-left">企业ID:</div>
+        <div class="detail-row-right">{{ detailObj.entId || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">坑洼数量:</div>
-        <div class="detail-row-right">
-          {{ detailObj.potholeCount || '-' }} 个
-        </div>
+        <div class="detail-row-left">企业名称:</div>
+        <div class="detail-row-right">{{ detailObj.entName || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">裂缝长度:</div>
-        <div class="detail-row-right">
-          {{ detailObj.crackLength || '-' }} 米
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">路面温度:</div>
-        <div class="detail-row-right">
-          {{ detailObj.roadSurfaceTemp || '-' }} ℃
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">交通流量:</div>
-        <div class="detail-row-right">
-          {{ detailObj.trafficFlow || '-' }} 辆/小时
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">预警数:</div>
-        <div class="detail-row-right">
-          {{ detailObj.warningCount || '-' }} 条
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">工单数:</div>
-        <div class="detail-row-right">
-          {{ detailObj.workOrderCount || '-' }} 个
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">处置完成数:</div>
-        <div class="detail-row-right">
-          {{ detailObj.disposalCompleteCount || '-' }} 个
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">核查通过率:</div>
+        <div class="detail-row-left">风险等级:</div>
         <div class="detail-row-right">
           <span
             :class="{
-              'text-green-600': detailObj.verificationPassRate >= 90,
-              'text-yellow-600':
-                detailObj.verificationPassRate >= 70 &&
-                detailObj.verificationPassRate < 90,
-              'text-red-600': detailObj.verificationPassRate < 70,
+              'text-green-600': detailObj.riskLevel === '低风险',
+              'text-yellow-600': detailObj.riskLevel === '中风险',
+              'text-red-600': detailObj.riskLevel === '高风险',
             }"
           >
-            {{ detailObj.verificationPassRate || '-' }} %
+            {{ detailObj.riskLevel || '-' }}
           </span>
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">设备在线率:</div>
-        <div class="detail-row-right">
-          <span
-            :class="{
-              'text-green-600': detailObj.deviceOnlineRate >= 95,
-              'text-yellow-600':
-                detailObj.deviceOnlineRate >= 85 &&
-                detailObj.deviceOnlineRate < 95,
-              'text-red-600': detailObj.deviceOnlineRate < 85,
-            }"
-          >
-            {{ detailObj.deviceOnlineRate || '-' }} %
-          </span>
-        </div>
+        <div class="detail-row-left">区域:</div>
+        <div class="detail-row-right">{{ detailObj.area || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">统计时间范围:</div>
-        <div class="detail-row-right">
-          {{ detailObj.statisticsTimeRange || '-' }}
-        </div>
+        <div class="detail-row-left">企业类型:</div>
+        <div class="detail-row-right">{{ detailObj.entType || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">环比变化率:</div>
-        <div class="detail-row-right">
-          <span
-            :class="{
-              'text-red-600': detailObj.momChangeRate > 0,
-              'text-green-600': detailObj.momChangeRate < 0,
-            }"
-          >
-            {{ detailObj.momChangeRate || '-' }} %
-          </span>
-        </div>
+        <div class="detail-row-left">统计开始时间:</div>
+        <div class="detail-row-right">{{ detailObj.beginTime || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">同比变化率:</div>
-        <div class="detail-row-right">
-          <span
-            :class="{
-              'text-red-600': detailObj.yoYChangeRate > 0,
-              'text-green-600': detailObj.yoYChangeRate < 0,
-            }"
-          >
-            {{ detailObj.yoYChangeRate || '-' }} %
-          </span>
-        </div>
+        <div class="detail-row-left">统计结束时间:</div>
+        <div class="detail-row-right">{{ detailObj.endTime || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">指标变化趋势:</div>
-        <div class="detail-row-right">
-          <div class="break-words">
-            {{ detailObj.indexChangeTrend || '-' }}
-          </div>
-        </div>
+        <div class="detail-row-left">违规次数:</div>
+        <div class="detail-row-right">{{ detailObj.violationCount || '-' }}</div>
       </div>
     </div>
   </DetailDrawer>
 </template>
 
 <style scoped lang="scss">
-// 响应式适配
 @media (max-width: 768px) {
   .detail-row-left {
-    width: 130px; // 小屏适配"指标变化趋势"等长标签
+    width: 140px;
   }
-
   .detail-card {
-    min-height: 700px;
+    min-height: 600px;
     max-height: 80vh;
     padding: 15px;
   }
 }
 
 .detail-card {
-  min-height: 750px; // 适配16个出入口管理字段
-  max-height: 90vh; // 提高最大高度，容纳更多内容
+  min-height: 650px;
+  max-height: 85vh;
   padding: 20px;
-  overflow-y: auto; // 内容过多时显示滚动条
+  overflow-y: auto;
   background-color: #f9fafb;
   border-radius: 8px;
 }
 
-// 每行的布局
 .detail-card-row {
   display: flex;
-  align-items: flex-start; // 顶部对齐，适配多行文本（指标变化趋势）
+  align-items: flex-start;
   padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0; // 分隔线增强可读性
+  border-bottom: 1px solid #f0f0f0;
 
-  // 最后一行去掉分隔线
   &:last-child {
     border-bottom: none;
   }
 
-  // 鼠标悬浮高亮
   &:hover {
-    padding-right: 8px;
-    padding-left: 8px;
-    margin-right: -8px;
-    margin-left: -8px;
+    padding: 12px 8px;
+    margin: 0 -8px;
     background-color: #f5f7fa;
     border-radius: 4px;
     transition: all 0.2s ease;
   }
 }
 
-// 左侧标签样式
 .detail-row-left {
-  flex-shrink: 0; // 不收缩
-  width: 150px; // 加宽到150px，适配"指标变化趋势"等超长标签
+  flex-shrink: 0;
+  width: 160px;
   font-size: 14px;
-  font-weight: 500; // 加粗突出标签
-  line-height: 18px; // 统一行高
-  color: #606266; // 灰色调，区分内容
+  font-weight: 500;
+  color: #606266;
 }
 
-// 右侧内容样式
 .detail-row-right {
-  flex: 1; // 剩余宽度自适应
-  padding-right: 10px;
+  flex: 1;
   font-size: 14px;
-  line-height: 18px;
-  color: #303133; // 主文本色
-  word-break: break-all; // 处理长文本换行（如指标变化趋势）
+  color: #303133;
+  word-break: break-all;
 }
 
-// 状态颜色样式
+/* 风险等级颜色 */
 .text-green-600 {
   color: #10b981 !important;
 }
-
 .text-yellow-600 {
   color: #f59e0b !important;
 }
-
 .text-red-600 {
   color: #ef4444 !important;
 }
 
-// 滚动条样式优化
+/* 滚动条优化 */
 .detail-card::-webkit-scrollbar {
   width: 6px;
 }
-
 .detail-card::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 3px;
 }
-
 .detail-card::-webkit-scrollbar-thumb {
   background: #dcdfe6;
   border-radius: 3px;
-}
-
-.detail-card::-webkit-scrollbar-thumb:hover {
-  background: #c0c4cc;
 }
 </style>

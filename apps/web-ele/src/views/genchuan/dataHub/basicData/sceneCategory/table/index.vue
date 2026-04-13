@@ -24,7 +24,7 @@ import {
   updateCategory,
   updateInstance,
 } from '#/api/genchuan/dataHub/basicData/sceneCategory';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 
 import BatchUpdateStatusDialog from '../components/BatchUpdateStatusDialog.vue';
@@ -70,7 +70,12 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['clearFilter', 'refreshTree', 'update:tableData', 'status-change']);
+const emit = defineEmits([
+  'clearFilter',
+  'refreshTree',
+  'update:tableData',
+  'status-change',
+]);
 
 const getTitle = computed(() => {
   const textObjCurrent =

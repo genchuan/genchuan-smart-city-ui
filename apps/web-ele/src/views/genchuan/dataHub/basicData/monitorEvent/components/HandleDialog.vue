@@ -55,7 +55,7 @@ const handleConfirm = async () => {
       status: '2', // 已办结
       handleContent: formData.value.handleContent,
       handleResult: formData.value.handleResult,
-      dealTime: new Date().getTime().toString(),
+      dealTime: Date.now().toString(),
     });
     ElMessage.success('处置成功');
     drawerApi.close();

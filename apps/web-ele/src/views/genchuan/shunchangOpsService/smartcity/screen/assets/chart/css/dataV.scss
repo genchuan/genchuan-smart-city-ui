@@ -1,0 +1,210 @@
+html,
+body {
+  height: 100%;
+}
+
+#app {
+  height: 100%;
+}
+
+img {
+  vertical-align: top;
+  border: 0;
+}
+
+ul,
+ol,
+li {
+  list-style: none;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+b {
+  font-weight: normal;
+}
+
+i,
+em {
+  font-style: normal;
+}
+
+a {
+  color: #303133;
+  text-decoration: none;
+  outline: none;
+}
+
+.dv-full-screen-container-main {
+  height: 100%;
+  background: url('../../images/dadaV-bg.jpg') no-repeat;
+  background-size: 100% 100%;
+}
+
+.leadershipCockpit-main {
+  height: 100%;
+
+  /* 小于 1900px */
+  @media (max-width: 1450px) {
+    .content-left,
+    .content-right {
+      width: 400px;
+    }
+
+    .chart-type-pie-left,
+    .chart-type-line-left {
+      width: 260px !important;
+    }
+
+    .chart-type-line-left2 {
+      width: 100% !important;
+    }
+
+    .chart-type-pie .chart-type-pie-right li,
+    .chart-type-line .chart-type-line-right li {
+      padding: 0;
+
+      .c1 {
+        height: 28px;
+      }
+
+      .c2 {
+        label i {
+          font-size: 16px;
+        }
+
+        span {
+          font-size: 12px;
+        }
+      }
+    }
+
+    .chart-customize2-css {
+      margin: 0 15px;
+
+      .f1 {
+        padding-top: 5px;
+      }
+
+      .f2 {
+        padding-top: 12px;
+      }
+    }
+
+    .ChartCustomize3-css
+      .ChartCustomize3-content
+      .ChartCustomize3-content-right
+      .n1
+      img {
+      width: 90px;
+      height: 110px;
+    }
+  }
+
+  //内容
+  .content-main {
+    display: flex;
+    flex-flow: row nowrap;
+    gap: 15px;
+    align-items: flex-start;
+    justify-content: flex-start;
+    height: calc(100% - 93px);
+    padding: 15px;
+    background-color: rgb(0 0 0);
+    //标题
+    .title {
+      height: 35px;
+      margin-bottom: 5px;
+      font-size: 18px;
+      font-weight: bold;
+      line-height: 35px;
+      color: #40d9ff;
+      text-align: center;
+    }
+
+    //公用布局
+    .bg {
+      background: url('../../images/dataV-br.jpg') no-repeat;
+      background-size: 100% 100%;
+    }
+
+    .bg1 {
+      background: url('../../images/dataV-br1.jpg') no-repeat;
+      background-size: 100% 100%;
+    }
+  }
+
+  .content-left {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 15px;
+    //width: 28%;
+    width: 500px;
+    height: 100%;
+
+    //第一块 厂站总览
+    .one {
+      flex: 1;
+    }
+
+    //第二块
+    .two {
+      flex: 1;
+    }
+
+    //第三块
+    .three {
+      flex: 1;
+    }
+  }
+
+  //中间
+  .content-center {
+    position: relative;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 15px;
+    height: 100%;
+    padding: 0 15px;
+
+    .s1 {
+      flex: 2;
+    }
+
+    .s2 {
+      flex: 1;
+    }
+  }
+
+  //右边
+  .content-right {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 15px;
+    //width: 28%;
+    width: 500px;
+    height: 100%;
+
+    .s1 {
+      flex: 1;
+    }
+
+    .s2 {
+      position: relative;
+      flex: 1;
+    }
+
+    //第三块
+    .s3 {
+      position: relative;
+      flex: 1;
+    }
+  }
+}

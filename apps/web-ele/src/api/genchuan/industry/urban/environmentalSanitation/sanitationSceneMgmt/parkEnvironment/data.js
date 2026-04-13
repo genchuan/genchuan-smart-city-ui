@@ -1,3 +1,47 @@
+import { baseRequestClient, requestClient } from '#/api/request';
+import { useAccessStore } from '@vben/stores';
+
+// 分页查询（全部）
+export function getParkPage(params) {
+  return requestClient.get('/envirhealth/park/detail-page', { params });
+}
+
+// 新增
+export function createPark(data) {
+  return requestClient.post('/envirhealth/park/create', data);
+}
+
+// 修改
+export function updatePark(data) {
+  return requestClient.put('/envirhealth/park/update', data);
+}
+
+// 单个删除
+export function deletePark(id) {
+  return requestClient.delete(`/envirhealth/park/delete?id=${id}`);
+}
+
+// 批量删除
+export function deleteParkBatch(ids) {
+  return requestClient.delete('/envirhealth/park/delete-batch', { data: ids });
+}
+
+// 导出 Excel
+export function exportParkExcel(params) {
+  const accessStore = useAccessStore();
+  return baseRequestClient.get('/envirhealth/park/export-excel', {
+    params,
+    responseType: 'blob',
+    headers: {
+      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
+    },
+  });
+}
+
+export function getParkChartDashboard() {
+  return requestClient.get('/envirhealth/park/chart/dashboard');
+}
+
 // 模拟公园环境管理数据
 export const dataList = () => {
   return [

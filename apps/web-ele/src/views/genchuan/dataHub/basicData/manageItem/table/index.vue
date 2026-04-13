@@ -24,7 +24,7 @@ import {
   updateCategory,
   updateInstance,
 } from '#/api/genchuan/dataHub/basicData/manageItem';
-import DetailDrawer from '#/components/common/DetailDrawer.vue';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 
 import AttachmentDrawer from '../components/AttachmentDrawer.vue';
