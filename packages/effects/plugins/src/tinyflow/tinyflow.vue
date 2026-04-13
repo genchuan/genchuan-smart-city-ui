@@ -3,9 +3,6 @@ import { ref } from 'vue';
 
 import { Tinyflow } from '@tinyflow-ai/vue';
 
-// 先导入 Tailwind 基础样式，再导入 tinyflow 样式
-// 避免 '@layer base' is used but no matching '@tailwind base' directive 错误
-import '@vben/styles/global';
 import '@tinyflow-ai/vue/dist/index.css';
 
 defineProps<{
@@ -27,6 +24,13 @@ defineExpose({
     :provider="provider"
   />
 </template>
+<style>
+/* 添加 Tailwind 基础指令，避免 tinyflow CSS 中的 @layer base 报错 */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+</style>
+
 <style scoped>
 :deep(.custom-tinyflow) {
   select {
