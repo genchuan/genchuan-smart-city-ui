@@ -1,5 +1,7 @@
 import { defineConfig } from '@vben/vite-config';
 import { loadEnv } from 'vite';
+import tailwindcss from 'tailwindcss';
+import autoprefixer from 'autoprefixer';
 
 import ElementPlus from 'unplugin-element-plus/vite';
 
@@ -14,24 +16,15 @@ export default defineConfig(async (config) => {
       css: {
         postcss: {
           plugins: [
-            {
-              postcssPlugin: 'fix-tinyflow-layer',
-              Once(root, { result }) {
-                result.messages = result.messages.filter(
-                  (m) =>
-                    !(
-                      m.type === 'warning' &&
-                      m.text &&
-                      m.text.includes('@layer base') &&
-                      m.text.includes('no matching @tailwind base')
-                    )
-                );
-              },
-            },
+            tailwindcss({
+              content: [
+                './node_modules/@tinyflow-ai/vue/dist/**/*.{js,ts,vue}',
+              ],
+            }),
+            autoprefixer(),
           ],
         },
       },
-
       plugins: [
         ElementPlus({
           format: 'esm',
