@@ -1,13 +1,13 @@
 stages:
   - build
   - push
+  - deploy
 
 variables:
   DIST_PATH: "./apps/web-ele/dist"
-  # TARGET_SERVER: "你的目标服务器IP/域名"  # 接收dist包的服务器
-  # SSH_USER: "root"
-  # SSH_PASSWORD: "你的密码" 或 使用SSH密钥
   TARGET_PATH: "/home/gitlab-runner/vue/vue-vben"
+  DOCKER_IMAGE: "192.168.8.14/genchuan/genchuan-ui"
+  PIPELINE_TAG: "$CI_COMMIT_BRANCH"
 
 build:
   stage: build
@@ -15,9 +15,14 @@ build:
     - echo "===== 开始安装依赖并构建项目 ====="
     - pnpm config set registry https://registry.npmjs.org/
     - pnpm install --no-frozen-lockfile
-    - pnpm run build:ele
-    - pwd
-    - ls -l $DIST_PATH
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "dev-urban" ]; then
+        echo "===== dev-urban 分支：执行构建 ele-dev ====="
+        pnpm run build:ele-dev
+      else
+        echo "===== 其他分支：执行构建 ele ====="
+        pnpm run build:ele
+      fi
   artifacts:
     paths:
       - $DIST_PATH/
@@ -28,8 +33,6 @@ build:
       - runner_system_failure
       - stuck_or_timeout_failure
       - unknown_failure
-
-# 第二阶段：迁移dist包（仅dev-urban分支执行）
 push:
   stage: push
   tags:
@@ -46,6 +49,25 @@ push:
     # 验证迁移结果
     - ls -l $TARGET_PATH  # 本地迁移验证
     # - ssh $SSH_USER@$TARGET_SERVER "ls -l $TARGET_PATH"  # 远程迁移验证
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
+      - unknown_failure
+deploy:
+  stage: deploy
+  tags:
+    - git-runner-01
+  only:
+    - master
+  needs:
+    - build
+  script:
+    - echo "===== 构建镜像====="
+    - docker build -t $DOCKER_IMAGE:$PIPELINE_TAG .
+    - echo "===== 推送镜像====="
+    - docker push $DOCKER_IMAGE:$PIPELINE_TAG
   retry:
     max: 2
     when:

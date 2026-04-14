@@ -1,0 +1,497 @@
+// 新增/编辑表单 schema（商业街基础信息）
+export function useFormSchema() {
+  return [
+    {
+      fieldName: 'toiletName',
+      label: '商业街名称',
+      component: 'Input',
+      componentProps: { placeholder: '请输入商业街名称' },
+      labelWidth: '120',
+      rules: 'required',
+    },
+    {
+      fieldName: 'location',
+      label: '商业街地址',
+      component: 'Input',
+      componentProps: { placeholder: '请输入详细地址' },
+      labelWidth: '120',
+      rules: 'required',
+    },
+    {
+      fieldName: 'area',
+      label: '所属区域',
+      component: 'Input',
+      componentProps: { placeholder: '如：芗城区-巷口街道' },
+      labelWidth: '120',
+      rules: 'required',
+    },
+    {
+      fieldName: 'cleaningFrequency',
+      label: '保洁频次',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择保洁频次',
+        options: [
+          { label: '每日两次', value: '每日两次' },
+          { label: '每日四次', value: '每日四次' },
+          { label: '每日六次', value: '每日六次' },
+          { label: '每日八次', value: '每日八次' },
+        ],
+      },
+      labelWidth: '120',
+      rules: 'required',
+    },
+    {
+      fieldName: 'transferInterval',
+      label: '垃圾清运间隔(小时)',
+      component: 'InputNumber',
+      componentProps: { placeholder: '请输入间隔小时数', min: 0.5, step: 0.5 },
+      labelWidth: '120',
+      rules: 'required',
+    },
+    {
+      fieldName: 'manager',
+      label: '负责人',
+      component: 'Input',
+      componentProps: { placeholder: '请输入负责人姓名' },
+      labelWidth: '120',
+      rules: 'required',
+    },
+    {
+      fieldName: 'status',
+      label: '运营状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择运营状态',
+        options: [
+          { label: '正常运营', value: '正常运营' },
+          { label: '部分停运', value: '部分停运' },
+          { label: '停运', value: '停运' },
+        ],
+      },
+      labelWidth: '120',
+      rules: 'required',
+    },
+    {
+      fieldName: 'createTime',
+      label: '创建时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择创建时间',
+        type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      labelWidth: '120',
+      rules: 'required',
+    },
+  ];
+}
+
+// 根据状态获取表格列定义
+export function getColumnsByStatus(status) {
+  const baseColumns = [{ type: 'checkbox', width: 40 }];
+
+  const statusColumnsMap = {
+    全部: [
+      {
+        field: 'toiletName',
+        title: '商业街名称',
+        minWidth: 150,
+        sortable: true,
+        slots: { default: 'toiletName' },
+      },
+      { field: 'location', title: '商业街地址', minWidth: 200, sortable: true },
+      {
+        field: 'area',
+        title: '所属区域',
+        minWidth: 180,
+        sortable: true,
+        slots: { default: 'area' },
+      },
+      {
+        field: 'cleaningFrequency',
+        title: '保洁频次',
+        minWidth: 120,
+        sortable: true,
+      },
+      {
+        field: 'transferInterval',
+        title: '清运间隔(小时)',
+        minWidth: 120,
+        sortable: true,
+        formatter: ({ cellValue }) => (cellValue ? `${cellValue}小时` : '-'),
+      },
+      { field: 'manager', title: '负责人', minWidth: 120, sortable: true },
+      {
+        field: 'status',
+        title: '运营状态',
+        minWidth: 120,
+        sortable: true,
+        slots: { default: 'status' },
+      },
+      {
+        field: 'cleaningRate',
+        title: '保洁覆盖率(%)',
+        minWidth: 130,
+        sortable: true,
+        formatter: ({ cellValue }) =>
+          cellValue !== undefined ? `${cellValue}%` : '-',
+      },
+      {
+        field: 'facilityRate',
+        title: '设施完好率(%)',
+        minWidth: 130,
+        sortable: true,
+        formatter: ({ cellValue }) =>
+          cellValue !== undefined ? `${cellValue}%` : '-',
+      },
+      {
+        field: 'disposalDuration',
+        title: '问题平均处置时长(分)',
+        minWidth: 160,
+        sortable: true,
+        formatter: ({ cellValue }) => (cellValue ? `${cellValue}分钟` : '-'),
+      },
+      {
+        field: 'collectionCompleteRate',
+        title: '收运完成率(%)',
+        minWidth: 130,
+        sortable: true,
+        formatter: ({ cellValue }) =>
+          cellValue !== undefined ? `${cellValue}%` : '-',
+      },
+    ],
+    保洁待执行: [
+      {
+        field: 'toiletName',
+        title: '商业街名称',
+        minWidth: 150,
+        sortable: true,
+        slots: { default: 'toiletName' },
+      },
+      { field: 'area', title: '所属区域', minWidth: 180, sortable: true },
+      {
+        field: 'cleaningFrequency',
+        title: '保洁频次',
+        minWidth: 120,
+        sortable: true,
+      },
+      {
+        field: 'patrolInterval',
+        title: '巡回保洁间隔(分)',
+        minWidth: 150,
+        sortable: true,
+        formatter: ({ cellValue }) => (cellValue ? `${cellValue}分钟` : '-'),
+      },
+      {
+        field: 'cleaningTime',
+        title: '保洁时段',
+        minWidth: 200,
+        sortable: true,
+      },
+      { field: 'cleaner', title: '保洁人员', minWidth: 150, sortable: true },
+      {
+        field: 'responsibilityArea',
+        title: '责任区域',
+        minWidth: 200,
+        sortable: true,
+      },
+      { field: 'createBy', title: '创建人', minWidth: 120, sortable: true },
+      { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true },
+      { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true },
+      {
+        field: 'isEffective',
+        title: '是否生效',
+        minWidth: 100,
+        sortable: true,
+        formatter: ({ cellValue }) => (cellValue ? '是' : '否'),
+      },
+    ],
+    收运待执行: [
+      {
+        field: 'toiletName',
+        title: '商业街名称',
+        minWidth: 150,
+        sortable: true,
+        slots: { default: 'toiletName' },
+      },
+      { field: 'area', title: '所属区域', minWidth: 180, sortable: true },
+      {
+        field: 'collectionPoints',
+        title: '垃圾收集点位',
+        minWidth: 140,
+        sortable: true,
+      },
+      {
+        field: 'transferInterval',
+        title: '清运间隔(小时)',
+        minWidth: 120,
+        sortable: true,
+        formatter: ({ cellValue }) => (cellValue ? `${cellValue}小时` : '-'),
+      },
+      {
+        field: 'collectionTime',
+        title: '收运时段',
+        minWidth: 180,
+        sortable: true,
+      },
+      {
+        field: 'vehicle',
+        title: '负责车辆',
+        minWidth: 130,
+        sortable: true,
+        slots: { default: 'vehicle' },
+      },
+      { field: 'staff', title: '负责人员', minWidth: 150, sortable: true },
+      {
+        field: 'planStatus',
+        title: '计划状态',
+        minWidth: 100,
+        sortable: true,
+        slots: { default: 'planStatus' },
+      },
+      { field: 'createBy', title: '创建人', minWidth: 120, sortable: true },
+      { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true },
+      { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true },
+      {
+        field: 'collectionCompleteRate',
+        title: '收运完成率(%)',
+        minWidth: 130,
+        sortable: true,
+      },
+      {
+        field: 'abnormalCount',
+        title: '异常记录数',
+        minWidth: 100,
+        sortable: true,
+      },
+    ],
+    设施待维护: [
+      {
+        field: 'repairId',
+        title: '维护编号',
+        minWidth: 150,
+        sortable: true,
+        slots: { default: 'repairId' },
+      },
+      {
+        field: 'toiletName',
+        title: '商业街名称',
+        minWidth: 150,
+        sortable: true,
+        slots: { default: 'toiletName' },
+      },
+      {
+        field: 'facilityType',
+        title: '设施类型',
+        minWidth: 120,
+        sortable: true,
+        slots: { default: 'facilityType' },
+      },
+      {
+        field: 'facilityLocation',
+        title: '设施位置',
+        minWidth: 180,
+        sortable: true,
+      },
+      { field: 'damageDesc', title: '损坏描述', minWidth: 200, sortable: true },
+      { field: 'reportBy', title: '上报人员', minWidth: 120, sortable: true },
+      { field: 'reportTime', title: '上报时间', minWidth: 180, sortable: true },
+      {
+        field: 'photoUrl',
+        title: '上报照片',
+        minWidth: 100,
+        sortable: true,
+        slots: { default: 'photoUrl' },
+      },
+      { field: 'repairBy', title: '维护责任人', minWidth: 120, sortable: true },
+      {
+        field: 'dispatchTime',
+        title: '派单时间',
+        minWidth: 180,
+        sortable: true,
+      },
+      {
+        field: 'repairStatus',
+        title: '维护状态',
+        minWidth: 100,
+        sortable: true,
+      },
+      {
+        field: 'expectedCompleteTime',
+        title: '预计完成时间',
+        minWidth: 180,
+        sortable: true,
+      },
+    ],
+    问题待处置: [
+      {
+        field: 'complaintId',
+        title: '问题编号',
+        minWidth: 150,
+        sortable: true,
+        slots: { default: 'complaintId' },
+      },
+      {
+        field: 'toiletName',
+        title: '商业街名称',
+        minWidth: 150,
+        sortable: true,
+        slots: { default: 'toiletName' },
+      },
+      {
+        field: 'complaintType',
+        title: '问题类型',
+        minWidth: 120,
+        sortable: true,
+        slots: { default: 'complaintType' },
+      },
+      {
+        field: 'problemLocation',
+        title: '问题位置',
+        minWidth: 180,
+        sortable: true,
+      },
+      {
+        field: 'complaintContent',
+        title: '问题描述',
+        minWidth: 200,
+        sortable: true,
+      },
+      {
+        field: 'complaintName',
+        title: '上报人员',
+        minWidth: 120,
+        sortable: true,
+      },
+      {
+        field: 'complaintTime',
+        title: '上报时间',
+        minWidth: 180,
+        sortable: true,
+      },
+      {
+        field: 'photoUrl',
+        title: '现场照片',
+        minWidth: 100,
+        sortable: true,
+        slots: { default: 'photoUrl' },
+      },
+      { field: 'handler', title: '处置责任人', minWidth: 120, sortable: true },
+      {
+        field: 'dispatchTime',
+        title: '派单时间',
+        minWidth: 180,
+        sortable: true,
+      },
+      {
+        field: 'handleStatus',
+        title: '处置状态',
+        minWidth: 100,
+        sortable: true,
+      },
+      {
+        field: 'disposalDuration',
+        title: '处置时长(分)',
+        minWidth: 120,
+        sortable: true,
+      },
+      {
+        field: 'handleResult',
+        title: '处置结果',
+        minWidth: 120,
+        sortable: true,
+      },
+    ],
+    已完成: [
+      {
+        field: 'taskType',
+        title: '任务类型',
+        minWidth: 120,
+        sortable: true,
+        slots: { default: 'taskType' },
+      },
+      {
+        field: 'toiletName',
+        title: '商业街名称',
+        minWidth: 150,
+        sortable: true,
+        slots: { default: 'toiletName' },
+      },
+      {
+        field: 'area',
+        title: '所属区域',
+        minWidth: 180,
+        sortable: true,
+        slots: { default: 'area' },
+      },
+      {
+        field: 'completeTime',
+        title: '完成时间',
+        minWidth: 180,
+        sortable: true,
+      },
+      { field: 'handler', title: '处置人员', minWidth: 120, sortable: true },
+      {
+        field: 'handleResult',
+        title: '处置结果',
+        minWidth: 120,
+        sortable: true,
+      },
+      {
+        field: 'proofUrl',
+        title: '佐证材料',
+        minWidth: 100,
+        sortable: true,
+        slots: { default: 'proofUrl' },
+      },
+      {
+        field: 'cleaningCoverage',
+        title: '保洁覆盖率(%)',
+        minWidth: 130,
+        sortable: true,
+      },
+      {
+        field: 'facilityRate',
+        title: '设施完好率(%)',
+        minWidth: 130,
+        sortable: true,
+      },
+      {
+        field: 'collectionCompleteRate',
+        title: '收运完成率(%)',
+        minWidth: 130,
+        sortable: true,
+      },
+      { field: 'statPeriod', title: '统计周期', minWidth: 120, sortable: true },
+      {
+        field: 'manageScore',
+        title: '综合管理评分',
+        minWidth: 120,
+        sortable: true,
+      },
+    ],
+  };
+
+  const columns = [
+    ...baseColumns,
+    ...(statusColumnsMap[status] || statusColumnsMap.全部),
+  ];
+  columns.push({
+    title: '操作',
+    width: 160,
+    fixed: 'right',
+    slots: { default: 'actions' },
+  });
+  return columns;
+}
+
+// 文本常量
+export const textObj = {
+  editText: '编辑商业街信息',
+  addText: '新增商业街',
+  excelName: '商业街环境管理任务列表',
+  excelAllName: '商业街环境管理任务_区域_日期.xlsx',
+  total: '商业街总数3;保洁待执行3;收运待执行3;设施待维护3;问题待处置3;已完成3',
+};
