@@ -58,7 +58,7 @@ export function uploadRecordDutyMgmt(data) {
 }
 
 export function exportDutyMgmt(params) {
-  return requestClient.download('/studentmgmt/duty-mgmt/export', params).catch(err => {
+  return requestClient.download('/studentmgmt/duty-mgmt/export-excel', params).catch(err => {
     console.warn('导出接口失败，模拟导出', err);
     return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
   });
@@ -70,6 +70,14 @@ export function getDutyMgmtDetail(params) {
     const mockList = dataList();
     const detail = mockList.find(item => item.id === params.id) || mockList[0];
     return Promise.resolve(detail);
+  });
+}
+
+// ==================== 新增：编辑值班记录 ====================
+export function updateDutyMgmt(data) {
+  return requestClient.put('/studentmgmt/duty-mgmt/update', data).catch(err => {
+    console.warn('编辑接口失败，模拟成功', err);
+    return Promise.resolve(true);
   });
 }
 

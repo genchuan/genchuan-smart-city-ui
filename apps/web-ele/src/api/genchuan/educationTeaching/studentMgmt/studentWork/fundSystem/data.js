@@ -30,7 +30,7 @@ export function auditFundSystem(data) {
 }
 
 export function exportFundSystem(params) {
-  return requestClient.download('/studentmgmt/fund-system/export', params).catch(err => {
+  return requestClient.download('/studentmgmt/fund-system/export-excel', params).catch(err => {
     console.warn('导出接口失败，模拟导出', err);
     return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
   });

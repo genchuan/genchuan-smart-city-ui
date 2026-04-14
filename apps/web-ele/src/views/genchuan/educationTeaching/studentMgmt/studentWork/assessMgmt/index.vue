@@ -153,7 +153,7 @@ const getTableData = async ({ page }) => {
     };
     const res = await getAssessMgmtPage(params);
     let filtered = res.list;
-    // 应用标签筛选
+    // 应用标签筛选（仅对当前页数据筛选）
     Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
       filtered = filtered.filter(item => {
         let itemValue;
@@ -184,8 +184,8 @@ const getTableData = async ({ page }) => {
         }
       });
     });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    dataObj.total = res.total;
+    dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
     const mockData = dataList();
@@ -275,7 +275,7 @@ async function handleBatchPublish() {
     try {
       const ids = selectedRows.map(row => row.id);
       const res = await publishAssessMgmt({ ids });
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('批量发布成功');
         handleRefresh();
       } else {
@@ -291,6 +291,8 @@ function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
   createFormApi.resetForm();
+  // 新增时设置默认状态为“未发布”
+  createFormApi.setValues({ status: '未发布' });
   createDrawerApi.open();
 }
 
@@ -309,6 +311,7 @@ async function handleEdit(row) {
       cycle: detail.cycle,
       score: detail.score,
       assessUser: detail.assessUser,
+      status: detail.status,     // 补充状态赋值
       remark: detail.remark,
     });
     createDrawerApi.open();
@@ -333,7 +336,7 @@ async function handlePublish(row) {
     const loading = ElLoading.service({ text: '发布中...' });
     try {
       const res = await publishAssessMgmt({ ids: [row.id] });
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('发布成功');
         handleRefresh();
       } else {
@@ -348,7 +351,7 @@ async function handlePublish(row) {
 // 新增/编辑表单
 const [CreateForm, createFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
     // 校验唯一性（模拟：同班级+周期+类型不能重复）
     if (!isEditMode.value) {
@@ -364,15 +367,18 @@ const [CreateForm, createFormApi] = useVbenForm({
         return;
       }
     }
-    const loading = ElLoading.service({ text: isEditMode.value ? '更新中...' : '保存中...' });
+    const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '保存中...'});
     try {
       let res;
       if (isEditMode.value) {
-        res = await updateAssessMgmt({ ...values, id: currentEditId.value });
+        // 编辑时传递 status（虽然禁用，但值已存在）
+        res = await updateAssessMgmt({...values, id: currentEditId.value});
       } else {
-        res = await createAssessMgmt(values);
+        // 新增时确保 status 字段存在（默认未发布）
+        const submitData = {...values, status: values.status || '未发布'};
+        res = await createAssessMgmt(submitData);
       }
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '更新成功' : '录入成功');
         createDrawerApi.close();
         handleRefresh();
@@ -386,7 +392,7 @@ const [CreateForm, createFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useCreateFormSchema(isEditMode.value),
   showCollapseButton: false,
-  submitButtonOptions: { content: '保存' },
+  submitButtonOptions: {content: '保存'},
 });
 
 // 查看详情
@@ -399,9 +405,9 @@ function handleOpenDetail(row) {
 
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
-    searchParams.value = { ...values };
+    searchParams.value = {...values};
     drawerApi.close();
     gridApi.reload();
   },
@@ -411,20 +417,20 @@ const [QueryForm] = useVbenForm({
     return v;
   }),
   showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
+  submitButtonOptions: {content: '查询'},
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
+    proxyConfig: {ajax: {query: getTableData}},
+    rowConfig: {keyField: 'id', isHover: true},
     pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
+    toolbarConfig: {refresh: true, search: true},
     showOverflow: true,
   },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
   showSearchForm: false,
 });
 
@@ -432,7 +438,7 @@ watch(activeName, (newVal) => {
   tagFilters.value = {};
   gridColumns.value = getColumnsByStatus(newVal);
   if (gridApi && gridApi.xGrid) gridApi.xGrid.refreshColumn();
-  else gridApi.setGridOptions?.({ columns: gridColumns.value });
+  else gridApi.setGridOptions?.({columns: gridColumns.value});
   gridApi.reload();
 });
 
@@ -445,18 +451,18 @@ const toggleChart = () => {
   showChart.value = !showChart.value;
 };
 
-defineExpose({ handleFilterTagClick, clearFilters });
+defineExpose({handleFilterTagClick, clearFilters});
 </script>
 
 <template>
   <div class="park-lot-table-new">
     <AssessDetailDrawer ref="assessDetailDrawerRef" :detail-obj="dataObj.detailObj"
-                        @refresh="handleRefresh" />
+                        @refresh="handleRefresh"/>
     <Drawer title="搜索">
-      <QueryForm />
+      <QueryForm/>
     </Drawer>
     <CreateDrawer :title="isEditMode ? '编辑考评记录' : '录入考评'">
-      <CreateForm />
+      <CreateForm/>
     </CreateDrawer>
     <Grid>
       <template #table-title>
@@ -473,26 +479,28 @@ defineExpose({ handleFilterTagClick, clearFilters });
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="录入" icon-name="Plus" @click="handleCreate" />
-          <IconButton content="发布" icon-name="Promotion" @click="handleBatchPublish" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
+          <IconButton content="录入" icon-name="Plus" @click="handleCreate"/>
+          <IconButton content="发布" icon-name="Promotion" @click="handleBatchPublish"/>
+          <IconButton content="导出" icon-name="download" @click="handleExport"/>
+          <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
+          <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
           <IconButton :content="props.arrowShow ? '展开' : '收缩'"
-                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
           <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
-                      @click="toggleChart" />
+                      @click="toggleChart"/>
         </div>
       </template>
 
       <template #className="{ row }">
         <el-text @click="handleFilterTagClick('className', row.className)" type="primary"
-                 style="cursor: pointer;">{{ row.className }}</el-text>
+                 style="cursor: pointer;">{{ row.className }}
+        </el-text>
       </template>
       <template #assessType="{ row }">
         <el-text @click="handleFilterTagClick('assessType', row.assessType)" type="primary"
-                 style="cursor: pointer;">{{ row.assessType }}</el-text>
+                 style="cursor: pointer;">{{ row.assessType }}
+        </el-text>
       </template>
       <template #publishTime="{ row }">
         <el-text>{{ formatTimestamp(row.publishTime) }}</el-text>
@@ -505,11 +513,13 @@ defineExpose({ handleFilterTagClick, clearFilters });
       </template>
       <template #creator="{ row }">
         <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
-                 style="cursor: pointer;">{{ row.creator || '-' }}</el-text>
+                 style="cursor: pointer;">{{ row.creator || '-' }}
+        </el-text>
       </template>
       <template #createTime="{ row }">
         <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
-                 type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}</el-text>
+                 type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}
+        </el-text>
       </template>
       <template #updateTime="{ row }">
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
@@ -517,9 +527,11 @@ defineExpose({ handleFilterTagClick, clearFilters });
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton v-if="row.status === '未发布'" content="编辑" icon-name="Edit" @click="handleEdit(row)" />
-          <IconButton v-if="row.status === '未发布'" content="发布" icon-name="Promotion" @click="handlePublish(row)" />
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
+          <IconButton v-if="row.status === '未发布'" content="编辑" icon-name="Edit"
+                      @click="handleEdit(row)"/>
+          <IconButton v-if="row.status === '未发布'" content="发布" icon-name="Promotion"
+                      @click="handlePublish(row)"/>
         </div>
       </template>
     </Grid>

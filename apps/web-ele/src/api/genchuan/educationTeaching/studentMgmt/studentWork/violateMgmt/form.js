@@ -54,7 +54,7 @@ export function useFormSchema() {
   ];
 }
 
-// 表格列定义
+// 表格列定义（未修改，但为完整展示保留）
 export function getColumnsByStatus(status) {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
@@ -70,9 +70,7 @@ export function getColumnsByStatus(status) {
     { field: 'pushTime', title: '推送时间', minWidth: 180, slots: { default: 'pushTime' } },
     { field: 'warnTime', title: '预警时间', minWidth: 180, slots: { default: 'warnTime' } },
     { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'creator', title: '创建人', minWidth: 120, slots: { default: 'creator' } },
     { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updater', title: '更新人', minWidth: 120 },
     { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
   ];
 
@@ -86,7 +84,7 @@ export function getColumnsByStatus(status) {
   return allColumns;
 }
 
-// 新增/编辑表单 schema
+// 新增/编辑表单 schema（添加 status 字段）
 export function useCreateFormSchema(isEdit = false) {
   return [
     {
@@ -157,6 +155,22 @@ export function useCreateFormSchema(isEdit = false) {
       label: '违纪原因',
       component: 'Input',
       componentProps: { placeholder: '请输入违纪原因', type: 'textarea', rows: 2 },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'status',                     // 新增状态字段
+      label: '状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择状态',
+        disabled: isEdit,                      // 编辑时状态不可修改（业务上通常审批后才改变状态）
+        options: [
+          { label: '待审批', value: '待审批' },
+          { label: '已执行', value: '已执行' },
+          { label: '已预警', value: '已预警' },
+        ],
+      },
+      rules: 'required',
       labelWidth: '100',
     },
     {

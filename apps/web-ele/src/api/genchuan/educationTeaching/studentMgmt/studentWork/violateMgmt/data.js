@@ -23,7 +23,8 @@ export function updateViolateMgmt(data) {
 }
 
 export function auditViolateMgmt(data) {
-  return requestClient.put('/studentmgmt/violate-mgmt/audit', data).catch(err => {
+  const idsParam = data.ids ? data.ids.join(',') : '';
+  return requestClient.put('/studentmgmt/violate-mgmt/audit', null, { params: { ids: idsParam } }).catch(err => {
     console.warn('审批接口失败，模拟成功', err);
     return Promise.resolve(true);
   });

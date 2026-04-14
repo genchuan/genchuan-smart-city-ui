@@ -29,8 +29,7 @@ const formatMoney = (amount) => {
 };
 
 const drawerTitle = computed(() => {
-  const name = detailObj.value?.studentName || '奖助申请';
-  return title.value || `${name}奖助详情`;
+  return title.value || `奖助详情`;
 });
 
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
@@ -48,8 +47,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
       <div class="detail-section">💰 奖助申请信息</div>
-      <div class="detail-card-row"><div class="detail-row-left">学生姓名：</div><div class="detail-row-right">{{ detailObj.studentName || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">班级：</div><div class="detail-row-right">{{ detailObj.className || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">学号：</div><div class="detail-row-right">{{ detailObj.studentId || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">资助类型：</div><div class="detail-row-right">{{ detailObj.aidType || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">申请金额：</div><div class="detail-row-right">{{ formatMoney(detailObj.applyAmount) }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">申报时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.applyTime) }}</div></div>

@@ -22,8 +22,8 @@ export function updateMentalMgmt(data) {
   });
 }
 
-export function consultMentalMgmt(params) {
-  return requestClient.put('/studentmgmt/mental-mgmt/consult', null, { params }).catch(err => {
+export function consultMentalMgmt(data) {
+  return requestClient.put('/studentmgmt/mental-mgmt/consult', data).catch(err => {
     console.warn('预约接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
@@ -44,7 +44,7 @@ export function updateStatusMentalMgmt(data) {
 }
 
 export function exportMentalMgmt(params) {
-  return requestClient.download('/studentmgmt/mental-mgmt/export', params).catch(err => {
+  return requestClient.download('/studentmgmt/mental-mgmt/export-excel', params).catch(err => {
     console.warn('导出接口失败，模拟导出', err);
     return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
   });
