@@ -22,8 +22,8 @@ const { detailObj, title } = toRefs(props);
 
 // 计算属性处理标题
 const drawerTitle = computed(() => {
-  const reportNo = detailObj.value?.reportNumber || '告警统计报告';
-  return title.value || `${reportNo} 详情`;
+  const entName = detailObj.value?.entName || '企业违规数据分析';
+  return title.value || `${entName} 详情`;
 });
 
 // 初始化抽屉
@@ -51,79 +51,51 @@ defineExpose({
     <div class="detail-card">
       <!-- 告警统计详情字段 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">报告编号:</div>
+        <div class="detail-row-left">企业违规频次排名:</div>
         <div class="detail-row-right">
-          {{ detailObj.reportNumber || '-' }}
+          {{ detailObj.rank || '-' }}
         </div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">统计日期:</div>
+        <div class="detail-row-left">时间纬度:</div>
         <div class="detail-row-right">
-          {{ detailObj.statisticsDate || '-' }}
+          {{ detailObj.timeLabel || '-' }}
         </div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">统计区域:</div>
+        <div class="detail-row-left">企业名称:</div>
         <div class="detail-row-right">
-          {{ detailObj.statisticsArea || '-' }}
+          {{ detailObj.entName || '-' }}
         </div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">当日总告警次数:</div>
+        <div class="detail-row-left">总告警次数:</div>
         <div class="detail-row-right">
-          {{ detailObj.totalAlarmCount || 0 }}
+          {{ detailObj.alarmCount || 0 }}
         </div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">当日违规企业数量:</div>
+        <div class="detail-row-left">违规次数:</div>
         <div class="detail-row-right">
-          {{ detailObj.violationCompanyCount || 0 }}
+          {{ detailObj.violationCount || 0 }}
         </div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">高频违规类型:</div>
+        <div class="detail-row-left">设备正常率:</div>
         <div class="detail-row-right">
-          {{ detailObj.highFreqViolationType || '-' }}
+          {{ detailObj.deviceNormalRate || 0 }} %
         </div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">区域违规分布:</div>
+        <div class="detail-row-left">整改完成率:</div>
         <div class="detail-row-right">
-          {{ detailObj.areaViolationDistribution || '-' }}
-        </div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">同比告警变化率:</div>
-        <div class="detail-row-right">
-          {{ detailObj.yoyAlarmChangeRate || 0 }} %
-        </div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">环比告警变化率:</div>
-        <div class="detail-row-right">
-          {{ detailObj.momAlarmChangeRate || 0 }} %
-        </div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">设备告警正常率:</div>
-        <div class="detail-row-right">
-          {{ detailObj.deviceAlarmNormalRate || 0 }} %
-        </div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">当日整改完成率:</div>
-        <div class="detail-row-right">
-          {{ detailObj.dailyRectificationCompletionRate || 0 }} %
+          {{ detailObj.rectifyFinishRate || 0 }} %
         </div>
       </div>
     </div>

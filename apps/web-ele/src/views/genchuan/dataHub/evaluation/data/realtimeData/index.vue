@@ -1,8 +1,8 @@
 <script setup>
 import { ref, computed } from 'vue';
 
-// import carchart from './chart.vue';
-// import Table from './table/index.vue';
+import carchart from './chart.vue';
+import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
 

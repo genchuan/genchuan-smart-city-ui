@@ -393,7 +393,7 @@ export function useFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'coordinateInfo',
+      fieldName: 'coordinate',
       label: '坐标信息',
       component: 'Input',
       componentProps: {
@@ -520,7 +520,7 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'coordinateInfo',
+      field: 'coordinate',
       title: '坐标信息',
       minWidth: 150,
       sortable: true,
@@ -596,7 +596,7 @@ export const detailFields = [
   { key: 'areaName', label: '所属区域' },
   { key: 'layerTypeName', label: '图层类型' },
   { key: 'beidouGridCode', label: '北斗网格码' },
-  { key: 'coordinateInfo', label: '坐标信息' },
+  { key: 'coordinate', label: '坐标信息' },
   { key: 'adminCode', label: '行政区划代码' },
   { key: 'statusName', label: '状态' },
   { key: 'uniqueCode', label: '15位标识码' },

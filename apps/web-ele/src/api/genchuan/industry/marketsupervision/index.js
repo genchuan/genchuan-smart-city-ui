@@ -204,3 +204,47 @@ export function  punishFile(data) {
 export function sendledgerReason(data) {
   return requestClient.post(`/kitchen/punish-review-ledger/review-cancel`, data);
 }
+
+
+/*** 获得分页企业风险报表 */
+export function getRiskReportPage(params) {
+  return requestClient.get('/kitchen/risk-report/page', {
+    params,
+  });
+}
+/**导出excel */
+export function exporRiskReportExcel(params) {
+  return requestClient.download('/kitchen/risk-report/export-excel', {params});
+}
+/** 导出PDF */
+export function exporRiskReportPDF(params) {
+  return requestClient.download('/kitchen/risk-report/export-list-pdf', {params});
+}
+
+/** 单独月份导出PDF */
+export function exporRiskReportPDFSinglePDF(params) {
+  return requestClient.download('/kitchen/risk-report/export-single-enterprise-pdf', {params});
+}
+
+/** 企业违规数据分析 */
+export function getViolationAnalyticsPage(params) {
+  return requestClient.get('/kitchen/violation-analytics/page', {
+    params,
+  });
+}
+
+/** 导出excel */
+export function exporViolationAnalyticsExcel(params) {
+  return requestClient.download('/kitchen/violation-analytics/export-excel', {params});
+}
+/** 导出pdf */
+export function exporViolationAnalyticsPDF(params) {
+  return requestClient.download('/kitchen/violation-analytics/export-list-pdf', {params});
+}
+
+/** 钻取企业违规数据分析 */
+export function getViolationAnalyticsDrill(params) {
+  return requestClient.get('/kitchen/violation-analytics/drill', {
+    params,
+  });
+}

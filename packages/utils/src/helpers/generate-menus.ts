@@ -32,7 +32,11 @@ function generateMenus(
 
   let menus = mapTree<ExRouteRecordRaw, MenuRecordRaw>(routes, (route) => {
     // 获取最终的路由路径
-    const path = finalRoutesMap[route.name as string] ?? route.path ?? '';
+    // 如果是外部链接，直接使用 route.path，避免被 Vue Router 处理后的路径拼接
+    const rawPath = route.path ?? '';
+    const path = isHttpUrl(rawPath)
+      ? rawPath
+      : (finalRoutesMap[route.name as string] ?? rawPath);
 
     const {
       meta = {} as RouteMeta,
@@ -61,7 +65,8 @@ function generateMenus(
       : ((children as MenuRecordRaw[]) ?? []);
 
     // 设置子菜单的父子关系
-    if (resultChildren.length > 0) {
+    // 如果当前路径是外部链接，不将其加入子菜单的 parent 链，避免路径被污染
+    if (resultChildren.length > 0 && !isHttpUrl(path)) {
       resultChildren.forEach((child) => {
         child.parents = [...(route.parents ?? []), path];
         child.parent = path;
@@ -138,12 +143,15 @@ function convertServerMenuToRouteRecordStringComponent(
     }
 
     // path
-    if (parent) {
-      menu.path = `${parent}/${menu.path}`;
-    }
+    // 如果是外部链接（http/https 开头），不进行路径拼接，保持原样
+    if (!isHttpUrl(menu.path)) {
+      if (parent) {
+        menu.path = `${parent}/${menu.path}`;
+      }
 
-    if (!menu.path.startsWith('/')) {
-      menu.path = `/${menu.path}`;
+      if (!menu.path.startsWith('/')) {
+        menu.path = `/${menu.path}`;
+      }
     }
 
     // add by 芋艿：防止 name 重复，只有在 name 重复时，才自动添加 id
@@ -170,7 +178,8 @@ function convertServerMenuToRouteRecordStringComponent(
     if (menu.children && menu.children.length > 0) {
       buildMenu.children = convertServerMenuToRouteRecordStringComponent(
         menu.children,
-        menu.path,
+        // 如果当前路径是外部链接，传递空字符串作为 parent，避免子菜单路径被污染
+        isHttpUrl(menu.path) ? '' : menu.path,
         nameSet,
       );
     }

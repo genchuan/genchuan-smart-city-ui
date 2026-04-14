@@ -3,7 +3,7 @@ import { computed, defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 定义组件接收的属性（企业风险报告）
+// 定义组件接收的属性
 const props = defineProps({
   detailObj: {
     type: Object,
@@ -18,10 +18,10 @@ const props = defineProps({
 
 const { detailObj, title } = toRefs(props);
 
-// 标题：报表编号
+// 标题计算
 const drawerTitle = computed(() => {
-  const reportNumber = detailObj.value?.reportNumber || '企业风险报告';
-  return title.value || `${reportNumber} 详情`;
+  const reportNo = detailObj.value?.reportNo || '风险报告';
+  return title.value || `${reportNo} 详情`;
 });
 
 // 抽屉配置
@@ -29,14 +29,13 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 1000,
+  width: 850,
   onCancel() {
     detailDrawerApi.close();
   },
-  onConfirm() {},
-  async onOpenChange() {},
 });
 
+// 暴露方法给父组件调用
 defineExpose({
   open: () => detailDrawerApi.open(),
   close: () => detailDrawerApi.close(),
@@ -47,74 +46,73 @@ defineExpose({
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
       <div class="detail-card-row">
-        <div class="detail-row-left">报表编号：</div>
-        <div class="detail-row-right">{{ detailObj.reportNumber || '-' }}</div>
+        <div class="detail-row-left">统计周期:</div>
+        <div class="detail-row-right">{{ detailObj.statisticPeriod || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">筛选条件：</div>
-        <div class="detail-row-right">
-          {{ detailObj.filterConditions || '-' }}
-        </div>
+        <div class="detail-row-left">报告编号:</div>
+        <div class="detail-row-right">{{ detailObj.reportNo || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">生成时间：</div>
-        <div class="detail-row-right">
-          {{ detailObj.generationTime || '-' }}
-        </div>
+        <div class="detail-row-left">企业ID:</div>
+        <div class="detail-row-right">{{ detailObj.entId || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">涉及企业数量：</div>
-        <div class="detail-row-right">
-          {{ detailObj.involvedCompanyCount || '-' }} 家
-        </div>
+        <div class="detail-row-left">企业名称:</div>
+        <div class="detail-row-right">{{ detailObj.entName || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">整体风险等级分布：</div>
-        <div class="detail-row-right">
-          {{ detailObj.riskLevelDistribution || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">平均违规频次：</div>
-        <div class="detail-row-right">
-          {{ detailObj.averageViolationCount || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">平均整改完成率：</div>
+        <div class="detail-row-left">风险等级:</div>
         <div class="detail-row-right">
           <span
             :class="{
-              'text-green-600': detailObj.averageRectificationRate >= 90,
-              'text-yellow-600':
-                detailObj.averageRectificationRate >= 70 &&
-                detailObj.averageRectificationRate < 90,
-              'text-red-600': detailObj.averageRectificationRate < 70,
+              'text-green-600': detailObj.riskLevel === '低风险',
+              'text-yellow-600': detailObj.riskLevel === '中风险',
+              'text-red-600': detailObj.riskLevel === '高风险',
             }"
           >
-            {{ detailObj.averageRectificationRate || '-' }} %
+            {{ detailObj.riskLevel || '-' }}
           </span>
         </div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">高频风险点：</div>
-        <div class="detail-row-right">
-          {{ detailObj.highRiskPoints || '-' }}
-        </div>
+        <div class="detail-row-left">区域:</div>
+        <div class="detail-row-right">{{ detailObj.area || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">报表生成人：</div>
-        <div class="detail-row-right">
-          {{ detailObj.reportGenerator || '-' }}
-        </div>
+        <div class="detail-row-left">企业类型:</div>
+        <div class="detail-row-right">{{ detailObj.entType || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">统计开始时间:</div>
+        <div class="detail-row-right">{{ detailObj.beginTime || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">统计结束时间:</div>
+        <div class="detail-row-right">{{ detailObj.endTime || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">违规次数:</div>
+        <div class="detail-row-right">{{ detailObj.violationCount || '-' }}</div>
       </div>
     </div>
   </DetailDrawer>
 </template>
 
 <style scoped lang="scss">
+@media (max-width: 768px) {
+  .detail-row-left {
+    width: 140px;
+  }
+  .detail-card {
+    min-height: 600px;
+    max-height: 80vh;
+    padding: 15px;
+  }
+}
+
 .detail-card {
-  min-height: 500px;
+  min-height: 650px;
   max-height: 85vh;
   padding: 20px;
   overflow-y: auto;
@@ -133,10 +131,8 @@ defineExpose({
   }
 
   &:hover {
-    padding-right: 8px;
-    padding-left: 8px;
-    margin-right: -8px;
-    margin-left: -8px;
+    padding: 12px 8px;
+    margin: 0 -8px;
     background-color: #f5f7fa;
     border-radius: 4px;
     transition: all 0.2s ease;
@@ -145,54 +141,40 @@ defineExpose({
 
 .detail-row-left {
   flex-shrink: 0;
-  width: 150px;
+  width: 160px;
   font-size: 14px;
   font-weight: 500;
-  line-height: 18px;
   color: #606266;
 }
 
 .detail-row-right {
   flex: 1;
-  padding-right: 10px;
   font-size: 14px;
-  line-height: 1.6;
   color: #303133;
   word-break: break-all;
 }
 
+/* 风险等级颜色 */
 .text-green-600 {
   color: #10b981 !important;
 }
-
 .text-yellow-600 {
   color: #f59e0b !important;
 }
-
 .text-red-600 {
   color: #ef4444 !important;
 }
 
+/* 滚动条优化 */
 .detail-card::-webkit-scrollbar {
   width: 6px;
 }
-
 .detail-card::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 3px;
 }
-
 .detail-card::-webkit-scrollbar-thumb {
   background: #dcdfe6;
   border-radius: 3px;
-}
-
-@media (max-width: 768px) {
-  .detail-row-left {
-    width: 130px;
-  }
-  .detail-card {
-    padding: 15px;
-  }
 }
 </style>

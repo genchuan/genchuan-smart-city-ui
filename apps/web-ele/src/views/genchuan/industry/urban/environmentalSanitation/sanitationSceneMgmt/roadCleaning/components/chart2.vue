@@ -7,10 +7,10 @@ import {
   getRoadCleaningChartCheck,
   getRoadCleaningChartCompleted,
 } from '#/api/genchuan/industry/urban/environmentalSanitation/sanitationSceneMgmt/roadCleaning/data.js';
-import Indicator from '#/components/stats/indicator.vue';
-import Pie from '#/components/stats/pie.vue';
-import Bar from '#/components/stats/bar.vue';
-import LineChart from '#/components/stats/lineChart.vue';
+import Indicator from '#/genchuan-components/stats/indicator.vue';
+import Pie from '#/genchuan-components/stats/pie.vue';
+import Bar from '#/genchuan-components/stats/bar.vue';
+import LineChart from '#/genchuan-components/stats/lineChart.vue';
 
 const props = defineProps({
   activeName: { type: String, required: true },
