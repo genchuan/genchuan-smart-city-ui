@@ -51,9 +51,15 @@ defineExpose({
         <div class="detail-row-left">预警等级:</div>
         <div class="detail-row-right">
           <el-tag
-            :type="detailObj.alarmLevel === '严重' ? 'danger' :
-                   detailObj.alarmLevel === '高' ? 'warning' :
-                   detailObj.alarmLevel === '中' ? 'primary' : 'info'"
+            :type="
+              detailObj.alarmLevel === '严重'
+                ? 'danger'
+                : detailObj.alarmLevel === '高'
+                  ? 'warning'
+                  : detailObj.alarmLevel === '中'
+                    ? 'primary'
+                    : 'info'
+            "
             size="small"
           >
             {{ detailObj.alarmLevel }}
@@ -92,10 +98,17 @@ defineExpose({
         <div class="detail-row-left">处置状态:</div>
         <div class="detail-row-right">
           <el-tag
-            :type="detailObj.dealStatus === '待处置' ? 'info' :
-                   detailObj.dealStatus === '处置中' ? 'primary' :
-                   detailObj.dealStatus === '已处理' ? 'success' :
-                   detailObj.dealStatus === '已忽略' ? 'warning' : 'info'"
+            :type="
+              detailObj.dealStatus === '待处置'
+                ? 'info'
+                : detailObj.dealStatus === '处置中'
+                  ? 'primary'
+                  : detailObj.dealStatus === '已处理'
+                    ? 'success'
+                    : detailObj.dealStatus === '已忽略'
+                      ? 'warning'
+                      : 'info'
+            "
             size="small"
           >
             {{ detailObj.dealStatus }}
@@ -104,11 +117,15 @@ defineExpose({
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">责任人:</div>
-        <div class="detail-row-right">{{ detailObj.responsiblePerson || '-' }}</div>
+        <div class="detail-row-right">
+          {{ detailObj.responsiblePerson || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">当前处置状态:</div>
-        <div class="detail-row-right">{{ detailObj.currentDealStatus || '-' }}</div>
+        <div class="detail-row-right">
+          {{ detailObj.currentDealStatus || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">开始处置时间:</div>
@@ -121,7 +138,7 @@ defineExpose({
             v-if="detailObj.dealProgress"
             :percentage="parseInt(detailObj.dealProgress)"
             :status="detailObj.dealProgress === '100%' ? 'success' : ''"
-            style="width: 200px;"
+            style="width: 200px"
           />
           <span v-else>-</span>
         </div>
@@ -136,7 +153,9 @@ defineExpose({
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">处置日志摘要:</div>
-        <div class="detail-row-right">{{ detailObj.dealLogSummary || '-' }}</div>
+        <div class="detail-row-right">
+          {{ detailObj.dealLogSummary || '-' }}
+        </div>
       </div>
       <div class="detail-card-row" v-if="detailObj.dealSummary">
         <div class="detail-row-left">处置总结:</div>
@@ -146,9 +165,15 @@ defineExpose({
         <div class="detail-row-left">处置结果:</div>
         <div class="detail-row-right">
           <el-tag
-            :type="detailObj.disposalResult === '已解决' ? 'success' :
-                   detailObj.disposalResult === '已忽略' ? 'warning' :
-                   detailObj.disposalResult === '误报' ? 'info' : 'danger'"
+            :type="
+              detailObj.disposalResult === '已解决'
+                ? 'success'
+                : detailObj.disposalResult === '已忽略'
+                  ? 'warning'
+                  : detailObj.disposalResult === '误报'
+                    ? 'info'
+                    : 'danger'
+            "
             size="small"
           >
             {{ detailObj.disposalResult }}

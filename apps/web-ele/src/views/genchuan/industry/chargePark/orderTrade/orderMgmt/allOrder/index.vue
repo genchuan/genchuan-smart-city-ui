@@ -1,14 +1,24 @@
 <script setup>
 import { ref } from 'vue';
 
-import gateChart from './gateChart.vue';
 import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
 
+const changeArrowStatus = () => {
+  secondShow.value = !secondShow.value;
+  tabArray.value.forEach((v) => {
+    v.secondShow = secondShow.value;
+  });
+};
+const arrowChange = () => {
+  tabArray.value.forEach((v) => {
+    v.arrowShow = !v.arrowShow;
+  });
+};
 const tabArray = ref([
   {
-    label: '处罚通知书复审管理',
+    label: '全部订单',
     components: Table,
     showSecondary: true,
     secondShow: false,
@@ -16,21 +26,31 @@ const tabArray = ref([
     arrowState: false,
   },
 ]);
-
-const arrowChange = () => {
-  tabArray.value.forEach((v) => {
-    v.arrowShow = !v.arrowShow;
-  });
-};
-const activeName = ref('处罚通知书复审管理');
+const activeName = ref('全部订单');
 const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <!-- <gateChart v-if="tabArray[0].arrowShow" /> -->
+    <!-- <Parkchart v-if="tabArray[0].arrowShow" /> -->
+    <div class="icon-change">
+      <el-icon
+        class="tabel-tab-icon"
+        v-if="secondShow"
+        @click="changeArrowStatus"
+      >
+        <ArrowDown />
+      </el-icon>
+      <el-icon
+        class="tabel-tab-icon"
+        v-if="!secondShow"
+        @click="changeArrowStatus"
+      >
+        <ArrowUp />
+      </el-icon>
+    </div>
     <el-tabs
       v-model="activeName"
-      class="common-tabs mark-tabs"
+      class="common-tabs"
       type="card"
       @tab-change="tabChange"
     >
@@ -55,15 +75,3 @@ const secondShow = ref(false);
     </el-tabs>
   </div>
 </template>
-<style scoped lang="scss">
-.common-index {
-  .common-tabs {
-    :deep(.el-tabs__nav) {
-      margin-left: 0px !important;
-    }
-    :deep(.el-tabs__item) {
-      padding-right: 5px !important;
-    }
-  }
-}
-</style>

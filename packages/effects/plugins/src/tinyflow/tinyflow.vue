@@ -24,13 +24,6 @@ defineExpose({
     :provider="provider"
   />
 </template>
-<style>
-/* 添加 Tailwind 基础指令，避免 tinyflow CSS 中的 @layer base 报错 */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-</style>
-
 <style scoped>
 :deep(.custom-tinyflow) {
   select {

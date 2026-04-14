@@ -67,9 +67,15 @@ defineExpose({
         <div class="detail-row-left">紧急程度:</div>
         <div class="detail-row-right">
           <el-tag
-            :type="detailObj.emergencyDegree === '紧急' ? 'danger' :
-                   detailObj.emergencyDegree === '高' ? 'warning' :
-                   detailObj.emergencyDegree === '中' ? 'primary' : 'info'"
+            :type="
+              detailObj.emergencyDegree === '紧急'
+                ? 'danger'
+                : detailObj.emergencyDegree === '高'
+                  ? 'warning'
+                  : detailObj.emergencyDegree === '中'
+                    ? 'primary'
+                    : 'info'
+            "
             size="small"
           >
             {{ detailObj.emergencyDegree }}
@@ -84,11 +90,19 @@ defineExpose({
         <div class="detail-row-left">审批状态:</div>
         <div class="detail-row-right">
           <el-tag
-            :type="detailObj.approveStatus === '待审批' ? 'info' :
-                   detailObj.approveStatus === '处理中' ? 'primary' :
-                   detailObj.approveStatus === '已完成' ? 'success' :
-                   detailObj.approveStatus === '已驳回' ? 'danger' :
-                   detailObj.approveStatus === '已撤回' ? 'warning' : 'info'"
+            :type="
+              detailObj.approveStatus === '待审批'
+                ? 'info'
+                : detailObj.approveStatus === '处理中'
+                  ? 'primary'
+                  : detailObj.approveStatus === '已完成'
+                    ? 'success'
+                    : detailObj.approveStatus === '已驳回'
+                      ? 'danger'
+                      : detailObj.approveStatus === '已撤回'
+                        ? 'warning'
+                        : 'info'
+            "
             size="small"
           >
             {{ detailObj.approveStatus }}
@@ -135,7 +149,9 @@ defineExpose({
       </div>
       <div class="detail-card-row" v-if="detailObj.rejectReason">
         <div class="detail-row-left">驳回理由:</div>
-        <div class="detail-row-right" style="color: #f56c6c;">{{ detailObj.rejectReason }}</div>
+        <div class="detail-row-right" style="color: #f56c6c">
+          {{ detailObj.rejectReason }}
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">审批描述:</div>
@@ -155,7 +171,9 @@ defineExpose({
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">业务状态:</div>
-        <div class="detail-row-right">{{ detailObj.businessStatus || '-' }}</div>
+        <div class="detail-row-right">
+          {{ detailObj.businessStatus || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">审批流程:</div>

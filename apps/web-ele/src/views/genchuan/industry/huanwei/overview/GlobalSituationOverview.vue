@@ -30,64 +30,66 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { FullScreen } from '@element-plus/icons-vue'
-import screenFull from 'screenfull'
-import { ElMessage } from 'element-plus'
+import { ref, onMounted, onUnmounted } from 'vue';
+import { FullScreen } from '@element-plus/icons-vue';
+import screenFull from 'screenfull';
+import { ElMessage } from 'element-plus';
 
 // 导入子组件（根据实际路径调整）
-import GlobalOverview from './GlobalOverview.vue'
-import IndexAnalysis from './IndexAnalysis.vue'   // 需要创建
-import RiskWarning from './RiskWarning.vue'       // 需要创建
+import GlobalOverview from './GlobalOverview.vue';
+import IndexAnalysis from './IndexAnalysis.vue'; // 需要创建
+import RiskWarning from './RiskWarning.vue'; // 需要创建
 
-const pageContainerRef = ref(null)
-const currentTime = ref('')
-let timeTimer = null
+const pageContainerRef = ref(null);
+const currentTime = ref('');
+let timeTimer = null;
 
 // 顶部导航数据
 const navItems = ref([
   { name: '全局态势', tag: 'global' },
   { name: '指标分析', tag: 'indicators' },
-  { name: '风险预警', tag: 'risks' }
-])
-const currentNav = ref('global') // 当前选中的导航项
+  { name: '风险预警', tag: 'risks' },
+]);
+const currentNav = ref('global'); // 当前选中的导航项
 
 // 导航点击处理
 const handleNavClick = (item) => {
-  currentNav.value = item.tag
-}
+  currentNav.value = item.tag;
+};
 
 // 工具函数：格式化时间
 const formatTime = (date) => {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  const h = String(date.getHours()).padStart(2, '0')
-  const min = String(date.getMinutes()).padStart(2, '0')
-  const s = String(date.getSeconds()).padStart(2, '0')
-  return `${y}年${m}月${d}日 ${h}时${min}分${s}秒`
-}
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  const h = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  const s = String(date.getSeconds()).padStart(2, '0');
+  return `${y}年${m}月${d}日 ${h}时${min}分${s}秒`;
+};
 
 // 全屏功能
 const clickFullscreen = () => {
   if (!screenFull.isEnabled) {
-    ElMessage.warning('您的浏览器不支持全屏功能')
-    return
+    ElMessage.warning('您的浏览器不支持全屏功能');
+    return;
   }
-  screenFull.isFullscreen ? screenFull.exit() : screenFull.request(pageContainerRef.value)
-}
+  screenFull.isFullscreen
+    ? screenFull.exit()
+    : screenFull.request(pageContainerRef.value);
+};
 
 // 初始化
 onMounted(() => {
-  currentTime.value = formatTime(new Date())
+  currentTime.value = formatTime(new Date());
   timeTimer = setInterval(() => {
-    currentTime.value = formatTime(new Date())
-  }, 1000)
-})
+    currentTime.value = formatTime(new Date());
+  }, 1000);
+});
 
 onUnmounted(() => {
-  if (timeTimer) clearInterval(timeTimer)
-})
+  if (timeTimer) clearInterval(timeTimer);
+});
 </script>
 
 <style lang="scss" scoped>
@@ -99,7 +101,7 @@ onUnmounted(() => {
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  background: url("../images/bg.jpg");
+  background: url('../images/bg.jpg');
   background-size: 100% 100%;
   color: #fff;
   padding: 0 1vw;
@@ -111,7 +113,7 @@ onUnmounted(() => {
 .header-box {
   width: 100%;
   height: 10vh;
-  background: url("../images/head_bg.png");
+  background: url('../images/head_bg.png');
   background-size: 100% 100%;
   color: #00ccff;
   font-size: 2.1vw;

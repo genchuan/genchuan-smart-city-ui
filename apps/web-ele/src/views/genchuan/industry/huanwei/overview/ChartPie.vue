@@ -12,33 +12,33 @@ const props = defineProps({
   data: {
     type: Array,
     required: true,
-    default: () => []
+    default: () => [],
   },
   // 名称字段的键名（对应数据中的名称属性）
   nameField: {
     type: String,
-    required: true
+    required: true,
   },
   // 值字段的键名（对应数据中的数值属性）
   valueField: {
     type: String,
-    required: true
+    required: true,
   },
   // 图表标题（可选）
   title: {
     type: String,
-    default: ''
+    default: '',
   },
   // 是否显示图例
   showLegend: {
     type: Boolean,
-    default: true
+    default: true,
   },
   // 新增：基础字体缩放比例，统一控制文本大小
   baseFontScale: {
     type: Number,
-    default: 1
-  }
+    default: 1,
+  },
 });
 
 // 图表实例和DOM引用
@@ -69,49 +69,49 @@ const initChart = () => {
   chartInstance = echarts.init(chartRef.value);
 
   // 处理图表数据
-  const chartData = props.data.map(item => ({
+  const chartData = props.data.map((item) => ({
     name: item[props.nameField],
     value: item[props.valueField],
-    itemStyle: item.itemStyle || {} // 支持自定义单个扇形样式
+    itemStyle: item.itemStyle || {}, // 支持自定义单个扇形样式
   }));
 
   // 配置项
   const option = {
     title: props.title
       ? {
-        text: props.title,
-        left: 'center',
-        top: '5%',
-        textStyle: {
-          color: 'rgba(255, 255, 255, 0.9)',
-          fontSize: titleFontSize // 标题自适应
+          text: props.title,
+          left: 'center',
+          top: '5%',
+          textStyle: {
+            color: 'rgba(255, 255, 255, 0.9)',
+            fontSize: titleFontSize, // 标题自适应
+          },
         }
-      }
       : null,
     tooltip: {
       trigger: 'item',
       formatter: '{a} <br/>{b}: {c} ({d}%)',
       textStyle: {
         color: '#000',
-        fontSize: tooltipFontSize // 提示框文字自适应
+        fontSize: tooltipFontSize, // 提示框文字自适应
       },
       backgroundColor: 'rgba(255, 255, 255, 0.9)', // 优化背景与文字对比度
       borderColor: 'rgba(0, 0, 0, 0.1)',
-      borderWidth: 1
+      borderWidth: 1,
     },
     legend: props.showLegend
       ? {
-        orient: 'vertical',
-        left: 30,
-        top: 30,
-        textStyle: {
-          color: '#ccc',
-          fontSize: legendFontSize // 图例字体自适应
-        },
-        data: chartData.map(item => item.name),
-        itemWidth: vwToPx(0.5), // 图例图标大小自适应
-        itemHeight: vwToPx(0.5)
-      }
+          orient: 'vertical',
+          left: 30,
+          top: 30,
+          textStyle: {
+            color: '#ccc',
+            fontSize: legendFontSize, // 图例字体自适应
+          },
+          data: chartData.map((item) => item.name),
+          itemWidth: vwToPx(0.5), // 图例图标大小自适应
+          itemHeight: vwToPx(0.5),
+        }
       : null,
     series: [
       {
@@ -123,19 +123,19 @@ const initChart = () => {
         itemStyle: {
           borderRadius: 4,
           borderColor: 'rgba(255,255,255,0.99)',
-          borderWidth: 2
+          borderWidth: 2,
         },
         label: {
           show: false, // 如需显示可开启并设置fontSize
           position: 'center',
-          fontSize: labelFontSize // 预留标签字号
+          fontSize: labelFontSize, // 预留标签字号
         },
         labelLine: {
-          show: false
+          show: false,
         },
-        data: chartData
-      }
-    ]
+        data: chartData,
+      },
+    ],
   };
 
   // 设置配置项
@@ -148,7 +148,7 @@ watch(
   () => {
     initChart();
   },
-  { deep: true }
+  { deep: true },
 );
 
 // 窗口大小变化时更新所有文本字号并刷新图表
@@ -167,13 +167,13 @@ const handleResize = () => {
   // 更新标题
   if (props.title) {
     updateOption.title = {
-      textStyle: { fontSize: titleFontSize }
+      textStyle: { fontSize: titleFontSize },
     };
   }
 
   // 更新提示框
   updateOption.tooltip = {
-    textStyle: { fontSize: tooltipFontSize }
+    textStyle: { fontSize: tooltipFontSize },
   };
 
   // 更新图例
@@ -181,16 +181,18 @@ const handleResize = () => {
     updateOption.legend = {
       textStyle: { fontSize: legendFontSize },
       itemWidth: vwToPx(0.5),
-      itemHeight: vwToPx(0.5)
+      itemHeight: vwToPx(0.5),
     };
   }
 
   // 更新标签（如需显示）
-  updateOption.series = [{
-    label: {
-      fontSize: labelFontSize
-    }
-  }];
+  updateOption.series = [
+    {
+      label: {
+        fontSize: labelFontSize,
+      },
+    },
+  ];
 
   chartInstance.setOption(updateOption);
   chartInstance.resize();

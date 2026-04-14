@@ -54,11 +54,13 @@ export function getSubjectTypeSimpleList() {
 
 /** 获取状态列表（使用分页接口） */
 export function getStatusSimpleList() {
-  return requestClient.get('/evaluate/status/page', { params: { pageNo: 1, pageSize: 100 } }).then(res => {
-    // 转换为下拉选项格式
-    return (res.list || []).map(item => ({
-      value: item.statusId,
-      label: item.name
-    }));
-  });
+  return requestClient
+    .get('/evaluate/status/page', { params: { pageNo: 1, pageSize: 100 } })
+    .then((res) => {
+      // 转换为下拉选项格式
+      return (res.list || []).map((item) => ({
+        value: item.statusId,
+        label: item.name,
+      }));
+    });
 }

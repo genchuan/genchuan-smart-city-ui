@@ -121,7 +121,7 @@ export const dataList = () => {
       manager: '张校长',
       // 问题待处置特有字段
       complaintId: 'PB20250301001', // 问题编号
-      complaintType: '卫生差',       // 问题类型
+      complaintType: '卫生差', // 问题类型
       complaintContent: '教学楼B栋三楼卫生间积水严重，异味重',
       complaintName: '陈老师',
       complaintTime: '2026-03-01 09:15:00',
@@ -182,7 +182,7 @@ export const dataList = () => {
       manager: '张校长',
       // 核查待验收特有字段（复用 repairId 等）
       repairId: 'INSP20250301001', // 核查编号
-      facilityType: '保洁任务',      // 关联任务类型
+      facilityType: '保洁任务', // 关联任务类型
       damageDesc: '教学楼A栋保洁完成，待核查', // 任务描述
       reportBy: '李阿姨',
       reportTime: '2026-03-01 14:00:00',

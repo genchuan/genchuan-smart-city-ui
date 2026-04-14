@@ -28,30 +28,30 @@ const state = reactive({
     <Circle
       title-text="待审批业务类型占比"
       :data="[
-          { name: '采购审批', value: 35 },
-          { name: '费用报销', value: 28 },
-          { name: '请假申请', value: 22 },
-          { name: '项目立项', value: 15 },
-          { name: '其他', value: 10 },
-        ]"
+        { name: '采购审批', value: 35 },
+        { name: '费用报销', value: 28 },
+        { name: '请假申请', value: 22 },
+        { name: '项目立项', value: 15 },
+        { name: '其他', value: 10 },
+      ]"
     />
     <Circle
       title-text="紧急程度分布占比"
       :data="[
-          { name: '高', value: 15 },
-          { name: '中', value: 45 },
-          { name: '低', value: 30 },
-          { name: '紧急', value: 10 },
-        ]"
+        { name: '高', value: 15 },
+        { name: '中', value: 45 },
+        { name: '低', value: 30 },
+        { name: '紧急', value: 10 },
+      ]"
       :colors="['#F56C6C', '#E6A23C', '#13ce66', '#FF0000']"
     />
     <Columnar
       title="近7日审批事项趋势"
       :x-data="['周一', '周二', '周三', '周四', '周五', '周六', '周日']"
       :series-data="[
-          { name: '新增待审批', data: [12, 15, 8, 10, 18, 5, 7] },
-          { name: '审批完成', data: [10, 12, 7, 9, 14, 4, 6] },
-        ]"
+        { name: '新增待审批', data: [12, 15, 8, 10, 18, 5, 7] },
+        { name: '审批完成', data: [10, 12, 7, 9, 14, 4, 6] },
+      ]"
     />
   </div>
 </template>

@@ -57,15 +57,23 @@ defineExpose({
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">巡检范围:</div>
-        <div class="detail-row-right">{{ detailObj.inspectionRange || '-' }}</div>
+        <div class="detail-row-right">
+          {{ detailObj.inspectionRange || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">巡检频次:</div>
         <div class="detail-row-right">
           <el-tag
-            :type="detailObj.frequency === '日' ? 'danger' :
-                   detailObj.frequency === '周' ? 'warning' :
-                   detailObj.frequency === '月' ? 'primary' : 'info'"
+            :type="
+              detailObj.frequency === '日'
+                ? 'danger'
+                : detailObj.frequency === '周'
+                  ? 'warning'
+                  : detailObj.frequency === '月'
+                    ? 'primary'
+                    : 'info'
+            "
             size="small"
           >
             {{ detailObj.frequency }}
@@ -84,10 +92,17 @@ defineExpose({
         <div class="detail-row-left">计划状态:</div>
         <div class="detail-row-right">
           <el-tag
-            :type="detailObj.planStatus === '未开始' ? 'info' :
-                   detailObj.planStatus === '执行中' ? 'primary' :
-                   detailObj.planStatus === '已完成' ? 'success' :
-                   detailObj.planStatus === '已取消' ? 'warning' : 'info'"
+            :type="
+              detailObj.planStatus === '未开始'
+                ? 'info'
+                : detailObj.planStatus === '执行中'
+                  ? 'primary'
+                  : detailObj.planStatus === '已完成'
+                    ? 'success'
+                    : detailObj.planStatus === '已取消'
+                      ? 'warning'
+                      : 'info'
+            "
             size="small"
           >
             {{ detailObj.planStatus }}
@@ -96,7 +111,9 @@ defineExpose({
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">当前进度:</div>
-        <div class="detail-row-right">{{ detailObj.currentProgress || '-' }}</div>
+        <div class="detail-row-right">
+          {{ detailObj.currentProgress || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">创建时间:</div>
@@ -136,7 +153,9 @@ defineExpose({
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">问题已处置:</div>
-        <div class="detail-row-right">{{ detailObj.problemFinishCount || '0' }}</div>
+        <div class="detail-row-right">
+          {{ detailObj.problemFinishCount || '0' }}
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">巡检地点:</div>

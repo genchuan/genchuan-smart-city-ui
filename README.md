@@ -1,13 +1,14 @@
-
 ## 🚀 重大更新：前端 UI 上线！（2025年3月25日）
 
 > 从“能跑”到“好看”——我们把前端界面交到你手中，为你提供一些思路！
 
 此前本项目以后端服务为主，许多开发者下载后无法看到实际界面。**本次更新正式发布前端 UI 系统**。
-### 📸 看看效果
-![前端界面预览](images/【后台】城市生命线——城管住建.png)  
 
-**后端仓库地址*：https://gitee.com/genchuan/genchuan-smart-city
+### 📸 看看效果
+
+![前端界面预览](images/【后台】城市生命线——城管住建.png)
+
+\*_后端仓库地址_：https://gitee.com/genchuan/genchuan-smart-city
 
 # 亘川智慧城市管理后台
 
@@ -29,15 +30,15 @@
 
 ## 技术栈
 
-| 技术 | 说明 | 版本 |
-|------|------|------|
-| Vue | 渐进式前端框架 | 3.5.24 |
-| Vite | 下一代前端构建工具 | 7.2.2 |
-| Element Plus | Vue 3 组件库 | 2.10.2 |
-| TypeScript | JavaScript 超集 | 5.9.3 |
-| Pinia | 状态管理 | 3.0.3 |
-| Vue Router | 路由管理 | 4.5.1 |
-| Vue I18n | 国际化 | 11.1.7 |
+| 技术         | 说明               | 版本   |
+| ------------ | ------------------ | ------ |
+| Vue          | 渐进式前端框架     | 3.5.24 |
+| Vite         | 下一代前端构建工具 | 7.2.2  |
+| Element Plus | Vue 3 组件库       | 2.10.2 |
+| TypeScript   | JavaScript 超集    | 5.9.3  |
+| Pinia        | 状态管理           | 3.0.3  |
+| Vue Router   | 路由管理           | 4.5.1  |
+| Vue I18n     | 国际化             | 11.1.7 |
 
 ## 环境要求
 
@@ -83,6 +84,7 @@ genchuan-smart-city-ui/
 MIT License
 
 ---
+
 联系我们
 
 ### 亘川智城官网
@@ -90,17 +92,17 @@ MIT License
 **点击跳转**：http://genchuan.cn
 
 ### 企业微信客服
+
 扫描下方二维码，联系我们，进群备注Gitee，获取技术支持与服务。
 
 ![客服小何.jpg](images/%E5%AE%A2%E6%9C%8D%E5%B0%8F%E4%BD%95.jpg)
 
 ### 亘川智城SaaS平台
 
-地址：http://cloud.genchuan.cn 
-账号密码：请联系我们获取吧
+地址：http://cloud.genchuan.cn 账号密码：请联系我们获取吧
 
 ### 公众号
+
 亘川科技
 
 ![qrcode_for 公众号.jpg](images/qrcode_for%20%E5%85%AC%E4%BC%97%E5%8F%B7.jpg)
-

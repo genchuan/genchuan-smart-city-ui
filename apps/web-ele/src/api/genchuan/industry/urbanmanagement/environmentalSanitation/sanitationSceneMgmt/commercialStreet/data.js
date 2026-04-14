@@ -84,7 +84,8 @@ export const dataList = () => {
       manager: '李华',
       cleaningFrequency: '每日六次',
       patrolInterval: 20,
-      cleaningTime: '07:00-09:00,11:00-13:00,15:00-17:00,19:00-21:00,22:00-24:00',
+      cleaningTime:
+        '07:00-09:00,11:00-13:00,15:00-17:00,19:00-21:00,22:00-24:00',
       cleaner: '赵叔、钱婶',
       responsibilityArea: '南段、北段',
       createBy: 'admin',

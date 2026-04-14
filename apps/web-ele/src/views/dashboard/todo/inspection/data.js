@@ -3,197 +3,197 @@
 export const dataList = () => {
   return [
     {
-      "id": 1,
-      "planId": "PLAN-202601-001",
-      "planName": "服务器设备日常巡检",
-      "taskType": "设备巡检",
-      "inspectionRange": "服务器集群-A,服务器集群-B",
-      "frequency": "日",
-      "planCycle": "2026-01-01 至 2026-12-31",
-      "startDate": "2026-01-01",
-      "endDate": "2026-12-31",
-      "chargeBy": "张三",
-      "currentProgress": "未开始",
-      "progressName": "未开始",
-      "planStatus": "未开始",
-      "createTime": "2026-01-10 09:00:00",
-      "taskCount": 365,
-      "finishCount": 0,
-      "executeTime": "",
-      "executeBy": "",
-      "executeDuration": "",
-      "submitTime": "",
-      "problemCount": 0,
-      "problemFinishCount": 0,
-      "location": "机房A区,B区",
-      "updateTime": "2026-01-10 09:00:00",
-      "description": "服务器设备日常巡检计划",
-      "moduleType": "pending", // 待开始
-      "attachmentCount": 0,
-      "latestDynamic": "计划已创建",
-      "relatedResource": "",
-      "reviewOpinion": ""
+      id: 1,
+      planId: 'PLAN-202601-001',
+      planName: '服务器设备日常巡检',
+      taskType: '设备巡检',
+      inspectionRange: '服务器集群-A,服务器集群-B',
+      frequency: '日',
+      planCycle: '2026-01-01 至 2026-12-31',
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      chargeBy: '张三',
+      currentProgress: '未开始',
+      progressName: '未开始',
+      planStatus: '未开始',
+      createTime: '2026-01-10 09:00:00',
+      taskCount: 365,
+      finishCount: 0,
+      executeTime: '',
+      executeBy: '',
+      executeDuration: '',
+      submitTime: '',
+      problemCount: 0,
+      problemFinishCount: 0,
+      location: '机房A区,B区',
+      updateTime: '2026-01-10 09:00:00',
+      description: '服务器设备日常巡检计划',
+      moduleType: 'pending', // 待开始
+      attachmentCount: 0,
+      latestDynamic: '计划已创建',
+      relatedResource: '',
+      reviewOpinion: '',
     },
     {
-      "id": 2,
-      "planId": "PLAN-202601-002",
-      "planName": "网络安全周检",
-      "taskType": "安全巡检",
-      "inspectionRange": "核心交换机,防火墙",
-      "frequency": "周",
-      "planCycle": "2026-01-01 至 2026-03-31",
-      "startDate": "2026-01-01",
-      "endDate": "2026-03-31",
-      "chargeBy": "李四",
-      "currentProgress": "执行中",
-      "progressName": "执行中",
-      "planStatus": "执行中",
-      "createTime": "2026-01-05 14:30:00",
-      "taskCount": 12,
-      "finishCount": 4,
-      "executeTime": "2026-01-22 09:00:00",
-      "executeBy": "李四",
-      "executeDuration": "2小时",
-      "submitTime": "2026-01-22 11:00:00",
-      "problemCount": 2,
-      "problemFinishCount": 1,
-      "location": "网络机房",
-      "updateTime": "2026-01-22 11:00:00",
-      "description": "网络安全设备每周巡检",
-      "moduleType": "dealing", // 执行中
-      "attachmentCount": 2,
-      "latestDynamic": "本周巡检已完成，发现2个问题",
-      "relatedResource": "巡检报告",
-      "reviewOpinion": "巡检流程执行规范"
+      id: 2,
+      planId: 'PLAN-202601-002',
+      planName: '网络安全周检',
+      taskType: '安全巡检',
+      inspectionRange: '核心交换机,防火墙',
+      frequency: '周',
+      planCycle: '2026-01-01 至 2026-03-31',
+      startDate: '2026-01-01',
+      endDate: '2026-03-31',
+      chargeBy: '李四',
+      currentProgress: '执行中',
+      progressName: '执行中',
+      planStatus: '执行中',
+      createTime: '2026-01-05 14:30:00',
+      taskCount: 12,
+      finishCount: 4,
+      executeTime: '2026-01-22 09:00:00',
+      executeBy: '李四',
+      executeDuration: '2小时',
+      submitTime: '2026-01-22 11:00:00',
+      problemCount: 2,
+      problemFinishCount: 1,
+      location: '网络机房',
+      updateTime: '2026-01-22 11:00:00',
+      description: '网络安全设备每周巡检',
+      moduleType: 'dealing', // 执行中
+      attachmentCount: 2,
+      latestDynamic: '本周巡检已完成，发现2个问题',
+      relatedResource: '巡检报告',
+      reviewOpinion: '巡检流程执行规范',
     },
     {
-      "id": 3,
-      "planId": "PLAN-202512-003",
-      "planName": "存储设备月检",
-      "taskType": "存储巡检",
-      "inspectionRange": "存储阵列,备份服务器",
-      "frequency": "月",
-      "planCycle": "2025-12-01 至 2026-05-31",
-      "startDate": "2025-12-01",
-      "endDate": "2026-05-31",
-      "chargeBy": "王五",
-      "currentProgress": "已完成",
-      "progressName": "已完成",
-      "planStatus": "已完成",
-      "createTime": "2025-11-25 10:00:00",
-      "taskCount": 6,
-      "finishCount": 6,
-      "executeTime": "2026-01-20 14:00:00",
-      "executeBy": "王五",
-      "executeDuration": "3小时",
-      "submitTime": "2026-01-20 17:00:00",
-      "problemCount": 3,
-      "problemFinishCount": 3,
-      "location": "机房存储区",
-      "updateTime": "2026-01-21 09:00:00",
-      "description": "存储设备月度巡检",
-      "moduleType": "archived", // 已归档
-      "attachmentCount": 3,
-      "latestDynamic": "本月巡检已完成，所有问题已解决",
-      "relatedResource": "存储巡检报告",
-      "reviewOpinion": "存储空间不足问题需要长期关注"
+      id: 3,
+      planId: 'PLAN-202512-003',
+      planName: '存储设备月检',
+      taskType: '存储巡检',
+      inspectionRange: '存储阵列,备份服务器',
+      frequency: '月',
+      planCycle: '2025-12-01 至 2026-05-31',
+      startDate: '2025-12-01',
+      endDate: '2026-05-31',
+      chargeBy: '王五',
+      currentProgress: '已完成',
+      progressName: '已完成',
+      planStatus: '已完成',
+      createTime: '2025-11-25 10:00:00',
+      taskCount: 6,
+      finishCount: 6,
+      executeTime: '2026-01-20 14:00:00',
+      executeBy: '王五',
+      executeDuration: '3小时',
+      submitTime: '2026-01-20 17:00:00',
+      problemCount: 3,
+      problemFinishCount: 3,
+      location: '机房存储区',
+      updateTime: '2026-01-21 09:00:00',
+      description: '存储设备月度巡检',
+      moduleType: 'archived', // 已归档
+      attachmentCount: 3,
+      latestDynamic: '本月巡检已完成，所有问题已解决',
+      relatedResource: '存储巡检报告',
+      reviewOpinion: '存储空间不足问题需要长期关注',
     },
     {
-      "id": 4,
-      "planId": "PLAN-202601-004",
-      "planName": "空调系统季度巡检",
-      "taskType": "环境巡检",
-      "inspectionRange": "机房空调,温湿度传感器",
-      "frequency": "月",
-      "planCycle": "2026-01-01 至 2026-06-30",
-      "startDate": "2026-01-01",
-      "endDate": "2026-06-30",
-      "chargeBy": "赵六",
-      "currentProgress": "未开始",
-      "progressName": "未开始",
-      "planStatus": "未开始",
-      "createTime": "2026-01-15 11:00:00",
-      "taskCount": 6,
-      "finishCount": 0,
-      "executeTime": "",
-      "executeBy": "",
-      "executeDuration": "",
-      "submitTime": "",
-      "problemCount": 0,
-      "problemFinishCount": 0,
-      "location": "机房空调房",
-      "updateTime": "2026-01-15 11:00:00",
-      "description": "空调系统季度巡检维护",
-      "moduleType": "pending", // 待开始
-      "attachmentCount": 1,
-      "latestDynamic": "计划已创建",
-      "relatedResource": "维护手册",
-      "reviewOpinion": ""
+      id: 4,
+      planId: 'PLAN-202601-004',
+      planName: '空调系统季度巡检',
+      taskType: '环境巡检',
+      inspectionRange: '机房空调,温湿度传感器',
+      frequency: '月',
+      planCycle: '2026-01-01 至 2026-06-30',
+      startDate: '2026-01-01',
+      endDate: '2026-06-30',
+      chargeBy: '赵六',
+      currentProgress: '未开始',
+      progressName: '未开始',
+      planStatus: '未开始',
+      createTime: '2026-01-15 11:00:00',
+      taskCount: 6,
+      finishCount: 0,
+      executeTime: '',
+      executeBy: '',
+      executeDuration: '',
+      submitTime: '',
+      problemCount: 0,
+      problemFinishCount: 0,
+      location: '机房空调房',
+      updateTime: '2026-01-15 11:00:00',
+      description: '空调系统季度巡检维护',
+      moduleType: 'pending', // 待开始
+      attachmentCount: 1,
+      latestDynamic: '计划已创建',
+      relatedResource: '维护手册',
+      reviewOpinion: '',
     },
     {
-      "id": 5,
-      "planId": "PLAN-202512-005",
-      "planName": "应用服务器巡检",
-      "taskType": "应用巡检",
-      "inspectionRange": "应用服务器集群",
-      "frequency": "周",
-      "planCycle": "2025-12-01 至 2026-02-28",
-      "startDate": "2025-12-01",
-      "endDate": "2026-02-28",
-      "chargeBy": "孙七",
-      "currentProgress": "执行中",
-      "progressName": "执行中",
-      "planStatus": "执行中",
-      "createTime": "2025-11-20 09:30:00",
-      "taskCount": 12,
-      "finishCount": 8,
-      "executeTime": "2026-01-22 10:00:00",
-      "executeBy": "孙七",
-      "executeDuration": "1.5小时",
-      "submitTime": "2026-01-22 11:30:00",
-      "problemCount": 1,
-      "problemFinishCount": 1,
-      "location": "机房A区-应用区",
-      "updateTime": "2026-01-22 11:30:00",
-      "description": "应用服务器性能与稳定性巡检",
-      "moduleType": "dealing", // 执行中
-      "attachmentCount": 0,
-      "latestDynamic": "本周巡检完成，发现1个性能问题",
-      "relatedResource": "性能监控图",
-      "reviewOpinion": "性能优化需要持续跟进"
+      id: 5,
+      planId: 'PLAN-202512-005',
+      planName: '应用服务器巡检',
+      taskType: '应用巡检',
+      inspectionRange: '应用服务器集群',
+      frequency: '周',
+      planCycle: '2025-12-01 至 2026-02-28',
+      startDate: '2025-12-01',
+      endDate: '2026-02-28',
+      chargeBy: '孙七',
+      currentProgress: '执行中',
+      progressName: '执行中',
+      planStatus: '执行中',
+      createTime: '2025-11-20 09:30:00',
+      taskCount: 12,
+      finishCount: 8,
+      executeTime: '2026-01-22 10:00:00',
+      executeBy: '孙七',
+      executeDuration: '1.5小时',
+      submitTime: '2026-01-22 11:30:00',
+      problemCount: 1,
+      problemFinishCount: 1,
+      location: '机房A区-应用区',
+      updateTime: '2026-01-22 11:30:00',
+      description: '应用服务器性能与稳定性巡检',
+      moduleType: 'dealing', // 执行中
+      attachmentCount: 0,
+      latestDynamic: '本周巡检完成，发现1个性能问题',
+      relatedResource: '性能监控图',
+      reviewOpinion: '性能优化需要持续跟进',
     },
     {
-      "id": 6,
-      "planId": "PLAN-202511-006",
-      "planName": "电源设备年检",
-      "taskType": "电源巡检",
-      "inspectionRange": "UPS电源,配电柜",
-      "frequency": "年",
-      "planCycle": "2025-11-01 至 2026-10-31",
-      "startDate": "2025-11-01",
-      "endDate": "2026-10-31",
-      "chargeBy": "周八",
-      "currentProgress": "已完成",
-      "progressName": "已完成",
-      "planStatus": "已完成",
-      "createTime": "2025-10-20 14:00:00",
-      "taskCount": 1,
-      "finishCount": 1,
-      "executeTime": "2025-12-10 09:00:00",
-      "executeBy": "周八",
-      "executeDuration": "4小时",
-      "submitTime": "2025-12-10 13:00:00",
-      "problemCount": 0,
-      "problemFinishCount": 0,
-      "location": "配电室",
-      "updateTime": "2025-12-11 09:00:00",
-      "description": "电源设备年度全面检查",
-      "moduleType": "archived", // 已归档
-      "attachmentCount": 5,
-      "latestDynamic": "年检完成，设备运行正常",
-      "relatedResource": "年检报告",
-      "reviewOpinion": "设备维护良好，建议明年继续"
-    }
+      id: 6,
+      planId: 'PLAN-202511-006',
+      planName: '电源设备年检',
+      taskType: '电源巡检',
+      inspectionRange: 'UPS电源,配电柜',
+      frequency: '年',
+      planCycle: '2025-11-01 至 2026-10-31',
+      startDate: '2025-11-01',
+      endDate: '2026-10-31',
+      chargeBy: '周八',
+      currentProgress: '已完成',
+      progressName: '已完成',
+      planStatus: '已完成',
+      createTime: '2025-10-20 14:00:00',
+      taskCount: 1,
+      finishCount: 1,
+      executeTime: '2025-12-10 09:00:00',
+      executeBy: '周八',
+      executeDuration: '4小时',
+      submitTime: '2025-12-10 13:00:00',
+      problemCount: 0,
+      problemFinishCount: 0,
+      location: '配电室',
+      updateTime: '2025-12-11 09:00:00',
+      description: '电源设备年度全面检查',
+      moduleType: 'archived', // 已归档
+      attachmentCount: 5,
+      latestDynamic: '年检完成，设备运行正常',
+      relatedResource: '年检报告',
+      reviewOpinion: '设备维护良好，建议明年继续',
+    },
   ];
 };
 
@@ -208,10 +208,10 @@ export function useFormSchema(moduleType = 'pending') {
       componentProps: {
         placeholder: '请输入计划ID',
       },
-    }
+    },
   ];
 
-  switch(moduleType) {
+  switch (moduleType) {
     case 'pending': // 待开始
       return [
         ...baseSchema,
@@ -283,7 +283,7 @@ export function useFormSchema(moduleType = 'pending') {
           componentProps: {
             placeholder: '请输入巡检范围',
           },
-        }
+        },
       ];
 
     case 'dealing': // 执行中
@@ -352,7 +352,7 @@ export function useFormSchema(moduleType = 'pending') {
           componentProps: {
             placeholder: '请输入执行人',
           },
-        }
+        },
       ];
 
     case 'archived': // 已归档
@@ -431,7 +431,7 @@ export function useFormSchema(moduleType = 'pending') {
           componentProps: {
             placeholder: '请输入负责人',
           },
-        }
+        },
       ];
 
     default:
@@ -449,10 +449,10 @@ export function useGridColumns(moduleType = 'pending') {
       minWidth: 180,
       sortable: true,
       slots: { default: 'planId' },
-    }
+    },
   ];
 
-  switch(moduleType) {
+  switch (moduleType) {
     case 'pending': // 待开始
       return [
         ...baseColumns,
@@ -474,7 +474,12 @@ export function useGridColumns(moduleType = 'pending') {
           field: 'inspectionRange',
           title: '巡检范围',
           minWidth: 180,
-          formatter: ({ cellValue }) => cellValue ? (cellValue.length > 30 ? cellValue.substring(0, 30) + '...' : cellValue) : '-',
+          formatter: ({ cellValue }) =>
+            cellValue
+              ? cellValue.length > 30
+                ? cellValue.substring(0, 30) + '...'
+                : cellValue
+              : '-',
         },
         {
           field: 'frequency',
@@ -531,7 +536,12 @@ export function useGridColumns(moduleType = 'pending') {
           field: 'inspectionRange',
           title: '巡检范围',
           minWidth: 180,
-          formatter: ({ cellValue }) => cellValue ? (cellValue.length > 30 ? cellValue.substring(0, 30) + '...' : cellValue) : '-',
+          formatter: ({ cellValue }) =>
+            cellValue
+              ? cellValue.length > 30
+                ? cellValue.substring(0, 30) + '...'
+                : cellValue
+              : '-',
         },
         {
           field: 'chargeBy',
@@ -559,7 +569,10 @@ export function useGridColumns(moduleType = 'pending') {
           minWidth: 100,
           sortable: true,
           formatter: ({ row }) => {
-            const percentage = row.taskCount > 0 ? Math.round((row.finishCount / row.taskCount) * 100) : 0;
+            const percentage =
+              row.taskCount > 0
+                ? Math.round((row.finishCount / row.taskCount) * 100)
+                : 0;
             return `${row.finishCount}/${row.taskCount} (${percentage}%)`;
           },
         },
@@ -607,7 +620,10 @@ export function useGridColumns(moduleType = 'pending') {
           minWidth: 100,
           sortable: true,
           formatter: ({ row }) => {
-            const finishRate = row.problemCount > 0 ? Math.round((row.problemFinishCount / row.problemCount) * 100) : 0;
+            const finishRate =
+              row.problemCount > 0
+                ? Math.round((row.problemFinishCount / row.problemCount) * 100)
+                : 0;
             return `${row.problemFinishCount}/${row.problemCount} (${finishRate}%)`;
           },
         },
