@@ -444,7 +444,7 @@ const handleUploadSubmit = async () => {
     uploadModalApi.close();
     handleRefresh(); // 刷新工单列表
   } catch (error) {
-    ElMessage.error(`上传失败：${error.message || '服务器异常'}`);
+    ElMessage.error(`上传失败：${error.msg || '服务器异常'}`);
     console.error('上传错误详情：', error);
   } finally {
     uploadLoading.value = false;
@@ -603,13 +603,14 @@ const handleAutoDetail = async (row) => {
               class="upload-demo"
               drag
               :limit="1"
+              :accept="'.jpg,.jpeg,.png,.xls,.xlsx,.doc,.docx'"
             >
               <ElIcon class="el-icon--upload"><UploadFilled /></ElIcon>
               <div class="el-upload__text">
                 拖拽文件到此处上传，或<em>点击选择文件</em>
               </div>
               <div class="el-upload__tip mt-2 text-sm text-gray-500">
-                支持jpg/jpeg/png/pdf/doc/docx/xls/xlsx格式，单个文件不超过5MB
+                支持jpg/jpeg/png/excel/doc/docx格式，单个文件不超过5MB
               </div>
             </ElUpload>
           </ElFormItem>
