@@ -31,7 +31,7 @@
     "build:docker": "./scripts/deploy/build-local-docker-image.sh",
     "build:docs": "pnpm run build --filter=@vben/docs",
     "build:ele": "pnpm run build --filter=@vben/web-ele",
-    "build:ele-dev": "pnpm run build --filter=@vben/web-ele -- --mode development",
+    "build:ele-dev": "pnpm --filter=@vben/web-ele run build:dev",
     "build:naive": "pnpm run build --filter=@vben/web-naive",
     "build:tdesign": "pnpm run build --filter=@vben/web-tdesign",
     "changeset": "pnpm exec changeset",
