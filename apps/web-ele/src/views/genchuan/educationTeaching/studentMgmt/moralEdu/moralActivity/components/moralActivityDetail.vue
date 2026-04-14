@@ -1,6 +1,7 @@
 <script setup>
 import { computed, defineProps, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
+import { ElImage } from 'element-plus';
 
 const props = defineProps({
   detailObj: { type: Object, required: true, default: () => ({}) },
@@ -10,6 +11,7 @@ const emit = defineEmits(['refresh']);
 
 const { detailObj, title } = toRefs(props);
 
+// 时间戳格式化
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
   const date = new Date(parseInt(timestamp));
@@ -24,7 +26,8 @@ const formatTimestamp = (timestamp) => {
 };
 
 const drawerTitle = computed(() => {
-  return title.value || `请假详情`;
+  const name = detailObj.value?.activityName || '活动';
+  return title.value || `${name}详情`;
 });
 
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
@@ -36,27 +39,61 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
 });
 
 defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.close() });
+
+// 从 detailObj 中读取报名记录、过程记录、活动照片（后端需返回这些字段）
+const joinRecords = computed(() => detailObj.value.joinRecords || []);
+const processRecords = computed(() => detailObj.value.processRecords || []);
+const photoUrl = computed(() => detailObj.value.photo || '');
 </script>
 
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <div class="detail-section">📋 请假基础信息</div>
-      <div class="detail-card-row"><div class="detail-row-left">学号：</div><div class="detail-row-right">{{ detailObj.studentId || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">请假类型：</div><div class="detail-row-right">{{ detailObj.leaveType || '-' }}</div></div>
+      <!-- 基础信息 -->
+      <div class="detail-section">🎯 活动基础信息</div>
+      <div class="detail-card-row"><div class="detail-row-left">活动名称：</div><div class="detail-row-right">{{ detailObj.activityName || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">活动类型：</div><div class="detail-row-right">{{ detailObj.activityType || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">主办部门：</div><div class="detail-row-right">{{ detailObj.hostDeptName || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">开始时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.startTime) }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">结束时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.endTime) }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">请假原因：</div><div class="detail-row-right">{{ detailObj.leaveReason || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">审批级别：</div><div class="detail-row-right">{{ detailObj.auditLevel || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">参与人数：</div><div class="detail-row-right">{{ detailObj.joinNum || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">发布时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.publishTime) }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">状态：</div><div class="detail-row-right">{{ detailObj.status || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">考勤同步状态：</div><div class="detail-row-right">{{ detailObj.attendanceSync || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">活动详情：</div><div class="detail-row-right">{{ detailObj.content || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">备注：</div><div class="detail-row-right">{{ detailObj.remark || '-' }}</div></div>
 
-      <div class="detail-section">📝 审批记录</div>
-      <div class="detail-card-row"><div class="detail-row-left">审批人：</div><div class="detail-row-right">{{ detailObj.auditUser || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">审批时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.auditTime) }}</div></div>
+      <div class="detail-section">📷 活动照片</div>
+      <div class="photo-list">
+        <el-image
+          v-if="photoUrl"
+          :src="photoUrl"
+          :preview-src-list="[photoUrl]"
+          fit="cover"
+          style="width: 200px; height: 150px; border-radius: 4px;"
+        />
+        <div v-else>暂无照片</div>
+      </div>
 
-      <div class="detail-section">📝 操作日志</div>
+      <!-- 报名记录 -->
+      <div class="detail-section">📝 报名记录</div>
+      <el-table :data="joinRecords" border size="small">
+        <el-table-column prop="studentName" label="学生姓名" />
+        <el-table-column prop="joinTime" label="报名时间">
+          <template #default="{ row }">{{ formatTimestamp(row.joinTime) }}</template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 过程记录 -->
+      <div class="detail-section">📋 过程记录</div>
+      <el-table :data="processRecords" border size="small">
+        <el-table-column prop="content" label="记录内容" />
+        <el-table-column prop="recordTime" label="记录时间">
+          <template #default="{ row }">{{ formatTimestamp(row.recordTime) }}</template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 操作日志 -->
+      <div class="detail-section">📋 操作日志</div>
       <div class="detail-card-row"><div class="detail-row-left">创建人：</div><div class="detail-row-right">{{ detailObj.creator || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">创建时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.createTime) }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">更新人：</div><div class="detail-row-right">{{ detailObj.updater || '-' }}</div></div>
@@ -114,5 +151,11 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
   border-bottom: 1px solid #e0e0e0;
   color: #6E7E91;
   &:first-child { margin-top: 0; }
+}
+.photo-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 </style>

@@ -10,6 +10,7 @@ const emit = defineEmits(['refresh']);
 
 const { detailObj, title } = toRefs(props);
 
+// 时间戳格式化
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
   const date = new Date(parseInt(timestamp));
@@ -24,7 +25,8 @@ const formatTimestamp = (timestamp) => {
 };
 
 const drawerTitle = computed(() => {
-  return title.value || `请假详情`;
+  const name = detailObj.value?.resourceName || '资源';
+  return title.value || `${name}详情`;
 });
 
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
@@ -41,22 +43,20 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <div class="detail-section">📋 请假基础信息</div>
-      <div class="detail-card-row"><div class="detail-row-left">学号：</div><div class="detail-row-right">{{ detailObj.studentId || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">请假类型：</div><div class="detail-row-right">{{ detailObj.leaveType || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">开始时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.startTime) }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">结束时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.endTime) }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">请假原因：</div><div class="detail-row-right">{{ detailObj.leaveReason || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">审批级别：</div><div class="detail-row-right">{{ detailObj.auditLevel || '-' }}</div></div>
+      <!-- 基础信息 -->
+      <div class="detail-section">📚 资源基础信息</div>
+      <div class="detail-card-row"><div class="detail-row-left">资源名称：</div><div class="detail-row-right">{{ detailObj.resourceName || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">资源类型：</div><div class="detail-row-right">{{ detailObj.resourceType || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">资源地址：</div><div class="detail-row-right"><a :href="detailObj.resourceUrl" target="_blank">{{ detailObj.resourceUrl || '-' }}</a></div></div>
+      <div class="detail-card-row"><div class="detail-row-left">学习人数：</div><div class="detail-row-right">{{ detailObj.learnNum || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">学习完成率：</div><div class="detail-row-right">{{ detailObj.learnRate ? detailObj.learnRate + '%' : '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">上架时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.publishTime) }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">下架时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.offTime) }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">状态：</div><div class="detail-row-right">{{ detailObj.status || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">考勤同步状态：</div><div class="detail-row-right">{{ detailObj.attendanceSync || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">备注：</div><div class="detail-row-right">{{ detailObj.remark || '-' }}</div></div>
 
-      <div class="detail-section">📝 审批记录</div>
-      <div class="detail-card-row"><div class="detail-row-left">审批人：</div><div class="detail-row-right">{{ detailObj.auditUser || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">审批时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.auditTime) }}</div></div>
-
-      <div class="detail-section">📝 操作日志</div>
+      <!-- 操作日志 -->
+      <div class="detail-section">📋 操作日志</div>
       <div class="detail-card-row"><div class="detail-row-left">创建人：</div><div class="detail-row-right">{{ detailObj.creator || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">创建时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.createTime) }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">更新人：</div><div class="detail-row-right">{{ detailObj.updater || '-' }}</div></div>

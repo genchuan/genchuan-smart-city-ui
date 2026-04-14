@@ -216,8 +216,8 @@ const getTableData = async ({ page }) => {
         }
       });
     });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    dataObj.total = res.total;
+    dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
     const mockData = dataList();
@@ -244,6 +244,7 @@ const getTableData = async ({ page }) => {
       });
     });
     dataObj.total = filtered.length;
+    // 模拟数据时仍需要前端分页
     dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
   } finally {
     dataObj.loading = false;
@@ -273,6 +274,8 @@ function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
   createFormApi.resetForm();
+  // 新增时设置默认状态为“待评估”
+  createFormApi.setValues({ status: '待评估' });
   createDrawerApi.open();
 }
 
@@ -291,6 +294,7 @@ async function handleEdit(row) {
       mentalStatus: detail.mentalStatus,
       riskLevel: detail.riskLevel,
       evaluateTime: detail.evaluateTime,
+      status: detail.status,     // 补充状态赋值
       remark: detail.remark,
     });
     createDrawerApi.open();
@@ -318,7 +322,7 @@ async function handleConsult(row) {
       const loading = ElLoading.service({ text: '预约中...' });
       try {
         const res = await consultMentalMgmt({ id: row.id, consultTime: timestamp });
-        if (res === true) {
+        if (res && res !== false) {
           ElMessage.success('预约成功');
           handleRefresh();
         } else { ElMessage.error('预约失败'); }
@@ -352,7 +356,7 @@ async function handleSubmitIntervene() {
       interveneTime: new Date(interveneForm.interveneTime).getTime(),
       interveneContent: interveneForm.interveneContent,
     });
-    if (res === true) {
+    if (res && res !== false) {
       ElMessage.success('干预跟进成功');
       interveneDrawerApi.close();
       handleRefresh();
@@ -381,7 +385,7 @@ async function confirmUpdateStatus() {
   const loading = ElLoading.service({ text: '更新中...' });
   try {
     const res = await updateMentalMgmt({ id: currentUpdateRow.value.id, mentalStatus: newMentalStatus.value, riskLevel: newRiskLevel.value });
-    if (res === true) {
+    if (res && res !== false) {
       ElMessage.success('状态更新成功');
       updateStatusDialogVisible.value = false;
       handleRefresh();
@@ -402,11 +406,14 @@ const [CreateForm, createFormApi] = useVbenForm({
     try {
       let res;
       if (isEditMode.value) {
+        // 编辑时传递 status（表单中已包含）
         res = await updateMentalMgmt({ ...values, id: currentEditId.value });
       } else {
-        res = await createMentalMgmt(values);
+        // 新增时确保 status 字段存在（默认待评估）
+        const submitData = { ...values, status: values.status || '待评估' };
+        res = await createMentalMgmt(submitData);
       }
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '更新成功' : '建档成功');
         createDrawerApi.close();
         handleRefresh();
