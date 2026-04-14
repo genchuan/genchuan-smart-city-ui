@@ -124,7 +124,7 @@ async function handlePDF() {
   });
   const data = await exporReviewPDF(newid);
   downloadFileFromBlobPart({
-    fileName: '台账pdf.zip',
+    fileName: '整改通知书pdf.zip',
     source: data,
   });
 }
@@ -1006,16 +1006,16 @@ function previewImage(url) {
   flex-wrap: wrap;
 }
 .image-item {
-  width: 80px;
-  height: 80px;
+  width: 30px;
+  height: 30px;
   border-radius: 4px;
   overflow: hidden;
   cursor: pointer;
   border: 1px solid #eee;
 }
 .image-item img {
-  width: 100%;
-  height: 100%;
+  width: 80%;
+  height: 80%;
   object-fit: cover;
 }
 .table-image {
@@ -1023,10 +1023,8 @@ function previewImage(url) {
   justify-content: center;
 }
 .table-image img {
-  width: 150px;
-  height: 40px;
-  margin-right: 5px;
-  border-radius: 4px;
+  width: 40px;
+  height: 40px; 
   cursor: pointer;
 }
 </style>
