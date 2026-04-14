@@ -11,26 +11,6 @@ export default defineConfig(async (config) => {
   return {
     application: {},
     vite: {
-      css: {
-        postcss: {
-          plugins: [
-            {
-              postcssPlugin: 'fix-tinyflow',
-              Once(root) {
-                // 强制移除 @tinyflow-ai/vue 里的 @layer 报错代码
-                root.walkAtRules((rule) => {
-                  if (
-                    rule.source?.input?.file?.includes('@tinyflow-ai/vue') &&
-                    (rule.name === 'layer' || rule.name === 'tailwind')
-                  ) {
-                    rule.remove();
-                  }
-                });
-              },
-            },
-          ],
-        },
-      },
       plugins: [
         ElementPlus({
           format: 'esm',
@@ -41,6 +21,7 @@ export default defineConfig(async (config) => {
           '/admin-api': {
             changeOrigin: true,
             rewrite: (path) => path.replace(/^\/admin-api/, ''),
+            // mock代理目标地址
             target: 'http://localhost:48080/admin-api',
             ws: true,
           },
