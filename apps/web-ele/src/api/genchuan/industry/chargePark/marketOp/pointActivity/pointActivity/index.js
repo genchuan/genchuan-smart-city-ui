@@ -19,7 +19,7 @@ export function importPointActivity(data) {
 
 /** 导出积分活动数据 */
 export function exportPointActivity() {
-  return requestClient.download('/marketop/point-activity/export');
+  return requestClient.download('/marketop/point-activity/export-excel');
 }
 
 // ==================== 列表行交互操作接口 ====================
@@ -30,6 +30,11 @@ export function getPointActivityDetail(id) {
 }
 
 /** 生效积分活动 */
+export function activatePointActivity(data) {
+  return requestClient.put('/marketop/point-activity/activate', data);
+}
+
+/** 启用积分活动 */
 export function enablePointActivity(data) {
   return requestClient.put('/marketop/point-activity/enable', data);
 }
