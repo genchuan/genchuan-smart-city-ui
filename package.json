@@ -31,7 +31,7 @@
     "build:docker": "./scripts/deploy/build-local-docker-image.sh",
     "build:docs": "pnpm run build --filter=@vben/docs",
     "build:ele": "pnpm run build --filter=@vben/web-ele",
-    "build:ele-dev": "cd apps/web-ele && cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build --mode development",
+    "build:ele-dev": "pnpm --filter=@vben/web-ele run build -- --mode development",
     "build:naive": "pnpm run build --filter=@vben/web-naive",
     "build:tdesign": "pnpm run build --filter=@vben/web-tdesign",
     "changeset": "pnpm exec changeset",
