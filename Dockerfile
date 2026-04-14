@@ -1,4 +1,4 @@
-FROM harbor.genchuan.cn/library/nginx:1.28.0-alpine3.21-slim
+FROM 192.168.8.14/library/nginx:1.28.0-alpine3.21-slim
 
 ENV LANG=zh_CN.UTF-8 \
     TZ=Asia/Shanghai
