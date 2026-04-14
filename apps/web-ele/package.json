@@ -17,6 +17,7 @@
   "type": "module",
   "scripts": {
     "build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 pnpm vite build --mode production",
+    "build:dev": "cross-env NODE_OPTIONS=--max-old-space-size=8192 pnpm vite build --mode development",
     "build:analyze": "cross-env NODE_OPTIONS=--max-old-space-size=8192 pnpm vite build --mode analyze",
     "dev": "pnpm vite --mode development",
     "preview": "vite preview",
