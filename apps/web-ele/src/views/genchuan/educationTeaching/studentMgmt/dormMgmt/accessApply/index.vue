@@ -1,35 +1,34 @@
 <script setup>
-import { computed, reactive, ref, watch, nextTick } from 'vue';
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {computed, reactive, ref, watch, nextTick} from 'vue';
+import {confirm, useVbenDrawer} from '@vben/common-ui';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
-import HonorDetailDrawer from './components/honorDetail.vue';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {downloadFileFromBlobPart} from '@vben/utils';
+import AccessApplyDetailDrawer from './components/accessApplyDetail.vue';
 import {
-  dataList,
-  getHonorMgmtPage,
-  createHonorMgmt,
-  updateHonorMgmt,
-  auditHonorMgmt,
-  pushHonorMgmt,
-  exportHonorMgmt,
-  getHonorMgmtDetail,
-} from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/honorMgmt/data.js';
+  getMockList,
+  getAccessApplyPage,
+  createAccessApply,
+  auditAccessApply,
+  updateAccessApply,
+  exportAccessApply,
+  getAccessApplyDetail,
+  getStudentOptions,
+} from '#/api/genchuan/educationTeaching/studentMgmt/dormMgmt/accessApply/data.js';
 import {
   textObj,
   useFormSchema,
-  getColumnsByStatus,
-  useCreateFormSchema,
-} from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/honorMgmt/form.js';
+  getColumns,
+  useApplyFormSchema,
+} from '#/api/genchuan/educationTeaching/studentMgmt/dormMgmt/accessApply/form.js';
 
 // 辅助函数：状态标签类型
 const getStatusType = (status) => {
   const map = {
     '待审核': 'warning',
     '已通过': 'success',
-    '已推送': 'info',
   };
   return map[status] || 'info';
 };
@@ -48,7 +47,7 @@ const formatTimestamp = (timestamp) => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
-// 提取日期部分
+// 提取日期部分（用于筛选）
 const getDateFromTimestamp = (timestamp) => {
   if (!timestamp) return '';
   const date = new Date(parseInt(timestamp));
@@ -94,11 +93,12 @@ function removeFilterTag(field) {
 
 function getFieldLabel(field) {
   const map = {
-    honorType: '荣誉类型',
+    applyType: '申请类型',
     className: '班级',
     status: '状态',
     creator: '创建人',
     createTime: '创建时间',
+    studentId: '学号',
   };
   return map[field] || field;
 }
@@ -108,17 +108,17 @@ function getTagDisplayText(field, value) {
   return value || '-';
 }
 
-// ---------- 原有变量 ----------
+// ---------- 抽屉组件 ----------
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
   onCancel: () => drawerApi.close(),
 });
 
-const [CreateDrawer, createDrawerApi] = useVbenDrawer({
+const [ApplyDrawer, applyDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => createDrawerApi.close(),
+  onCancel: () => applyDrawerApi.close(),
 });
 
 const dataObj = reactive({
@@ -131,8 +131,7 @@ const dataObj = reactive({
   loading: false,
 });
 
-const activeName = ref('全部');
-const gridColumns = ref(getColumnsByStatus(activeName.value));
+const gridColumns = ref(getColumns());
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
@@ -144,6 +143,7 @@ function handleRowCheckboxChange({records}) {
 const searchParams = ref({});
 const isEditMode = ref(false);
 const currentEditId = ref(null);
+const auditIds = ref([]);      // 待审核的ID列表
 
 const getTableData = async ({page}) => {
   dataObj.loading = true;
@@ -153,15 +153,15 @@ const getTableData = async ({page}) => {
       pageNo: page.currentPage,
       pageSize: page.pageSize,
     };
-    const res = await getHonorMgmtPage(params);
+    const res = await getAccessApplyPage(params);
     let filtered = res.list;
     // 应用标签筛选
     Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
       filtered = filtered.filter(item => {
         let itemValue;
         switch (field) {
-          case 'honorType':
-            itemValue = item.honorType;
+          case 'applyType':
+            itemValue = item.applyType;
             break;
           case 'status':
             itemValue = item.status;
@@ -172,6 +172,9 @@ const getTableData = async ({page}) => {
           case 'createTime':
             const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
             itemValue = createDate;
+            break;
+          case 'studentId':
+            itemValue = item.studentId;
             break;
           default:
             itemValue = item[field];
@@ -183,18 +186,18 @@ const getTableData = async ({page}) => {
         }
       });
     });
-    dataObj.total = res.total;
+    dataObj.total = res.total || filtered.length;
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = dataList();
+    const mockData = getMockList();
     let filtered = mockData;
     Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
       filtered = filtered.filter(item => {
         let itemValue;
         switch (field) {
-          case 'honorType':
-            itemValue = item.honorType;
+          case 'applyType':
+            itemValue = item.applyType;
             break;
           case 'status':
             itemValue = item.status;
@@ -205,6 +208,9 @@ const getTableData = async ({page}) => {
           case 'createTime':
             const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
             itemValue = createDate;
+            break;
+          case 'studentId':
+            itemValue = item.studentId;
             break;
           default:
             itemValue = item[field];
@@ -217,7 +223,6 @@ const getTableData = async ({page}) => {
       });
     });
     dataObj.total = filtered.length;
-    // 模拟数据时仍需要前端分页
     dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
   } finally {
     dataObj.loading = false;
@@ -239,8 +244,8 @@ async function handleExport() {
   try {
     const loading = ElLoading.service({text: '正在导出...'});
     try {
-      const data = await exportHonorMgmt(searchParams.value);
-      downloadFileFromBlobPart({fileName: '荣誉管理列表.xls', source: data});
+      const data = await exportAccessApply(searchParams.value);
+      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
       ElMessage.success('导出成功');
     } finally {
       loading.close();
@@ -254,24 +259,24 @@ async function handleExport() {
 // 批量审核
 async function handleBatchAudit() {
   if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一条荣誉记录');
+    ElMessage.warning('请至少选择一个申请记录');
     return;
   }
-  const selectedRows = checkedRows.value.filter(row => row.status === '待审核');
-  if (selectedRows.length === 0) {
-    ElMessage.warning('请选择状态为【待审核】的荣誉记录');
+  const pendingRows = checkedRows.value.filter(row => row.status === '待审核');
+  if (pendingRows.length === 0) {
+    ElMessage.warning('请选择状态为【待审核】的记录进行审核');
     return;
   }
   try {
-    await ElMessageBox.confirm(`确认审核选中的 ${selectedRows.length} 条荣誉记录？审核后状态将变为"已通过"。`, '批量审核确认', {
+    await ElMessageBox.confirm(`确认审核选中的 ${pendingRows.length} 条申请？审核后状态将变为“已通过”。`, '批量审核确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning',
     });
     const loading = ElLoading.service({text: '审核中...'});
     try {
-      const ids = selectedRows.map(row => row.id);
-      const res = await auditHonorMgmt({ids, auditRemark: '批量审核通过', status: '已通过' });
+      const ids = pendingRows.map(row => row.id);
+      const res = await auditAccessApply({ids});
       if (res && res !== false) {
         ElMessage.success('批量审核成功');
         handleRefresh();
@@ -281,54 +286,55 @@ async function handleBatchAudit() {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
+// 新增申请
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  createFormApi.resetForm();
-  createDrawerApi.open();
+  applyFormApi.resetForm();
+  // 设置默认申请时间为当前时间，默认状态为“待审核”
+  applyFormApi.setValues({applyTime: Date.now(), status: '待审核'});
+  applyDrawerApi.open();
 }
 
 async function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
   try {
-    const detail = await getHonorMgmtDetail({id: row.id});
-    createFormApi.setValues({
+    const detail = await getAccessApplyDetail({id: row.id});
+    applyFormApi.setValues({
       studentId: detail.studentId,
-      honorType: detail.honorType,
-      honorName: detail.honorName,
-      getTime: detail.getTime,
+      applyType: detail.applyType,
+      applyReason: detail.applyReason,
+      applyTime: detail.applyTime,
+      status: detail.status,
       remark: detail.remark,
     });
-    createDrawerApi.open();
+    applyDrawerApi.open();
   } catch (error) {
     console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败，请检查网络或联系管理员');
+    ElMessage.error('加载详情失败');
   }
-}
-
-async function handleDelete(row) {
-  // 荣誉管理没有删除按钮，但若需要可加，按需求不提供删除
 }
 
 // 单行审核
 async function handleAudit(row) {
   if (row.status !== '待审核') {
-    ElMessage.warning('只有待审核状态的荣誉可以审核');
+    ElMessage.warning('只有待审核状态的申请可以审核');
     return;
   }
   try {
-    await ElMessageBox.confirm(`确认审核荣誉"${row.honorName}"？审核后状态将变为"已通过"。`, '审核确认', {
+    await ElMessageBox.confirm(`确认审核学号"${row.studentId}"的出入申请？审核后状态将变为“已通过”。`, '审核确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning',
     });
     const loading = ElLoading.service({text: '审核中...'});
     try {
-      const res = await auditHonorMgmt({ids: [row.id], auditRemark: '', status: '已通过' });
+      const res = await auditAccessApply({ids: [row.id]});
       if (res && res !== false) {
         ElMessage.success('审核成功');
         handleRefresh();
@@ -338,74 +344,67 @@ async function handleAudit(row) {
     } finally {
       loading.close();
     }
-  } catch {}
-}
-
-// 推送
-async function handlePush(row) {
-  if (row.status !== '已通过') {
-    ElMessage.warning('只有已通过状态的荣誉可以推送');
-    return;
+  } catch {
   }
-  try {
-    await ElMessageBox.confirm(`确认推送荣誉"${row.honorName}"给学生及家长？推送后状态将变为"已推送"。`, '推送确认', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'warning',
-    });
-    const loading = ElLoading.service({text: '推送中...'});
-    try {
-      const res = await pushHonorMgmt({id: row.id});
-      if (res && res !== false) {
-        ElMessage.success('推送成功');
-        handleRefresh();
-      } else {
-        ElMessage.error('推送失败');
-      }
-    } finally {
-      loading.close();
-    }
-  } catch {}
 }
 
-// 新增/编辑表单
-const [CreateForm, createFormApi] = useVbenForm({
+// 申请表单
+const [ApplyForm, applyFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '保存中...'});
+    const loading = ElLoading.service({text: isEditMode.value ? '保存中...' : '提交中...'});
     try {
       let res;
-      // 新增或编辑时均携带 status 字段（后端要求必填）
-      const submitData = { ...values, status: '待审核' };
       if (isEditMode.value) {
-        res = await updateHonorMgmt({ ...submitData, id: currentEditId.value });
+        // 编辑时传递 status（表单中已包含）
+        res = await updateAccessApply({...values, id: currentEditId.value});
       } else {
-        res = await createHonorMgmt(submitData);
+        // 新增时确保 status 字段存在（默认待审核）
+        const submitData = {...values, status: values.status || '待审核'};
+        res = await createAccessApply(submitData);
       }
       if (res && res !== false) {
-        ElMessage.success(isEditMode.value ? '更新成功' : '新增成功');
-        createDrawerApi.close();
+        ElMessage.success(isEditMode.value ? '编辑成功' : '申请成功');
+        applyDrawerApi.close();
         handleRefresh();
       } else {
-        ElMessage.error(isEditMode.value ? '更新失败' : '新增失败');
+        ElMessage.error(isEditMode.value ? '编辑失败' : '申请失败');
       }
     } finally {
       loading.close();
     }
   },
   layout: 'horizontal',
-  schema: useCreateFormSchema(isEditMode.value),
+  schema: useApplyFormSchema(isEditMode.value),
   showCollapseButton: false,
   submitButtonOptions: {content: '保存'},
 });
 
-// 查看详情
-const honorDetailDrawerRef = ref(null);
+// 动态注入学生选项
+const studentOptions = ref([]);
+const loadStudentOptions = async () => {
+  const res = await getStudentOptions();
+  studentOptions.value = res;
+};
+loadStudentOptions();
+
+watch(applyFormApi, (api) => {
+  if (api && studentOptions.value.length) {
+    const schema = api.getSchema();
+    const studentField = schema.find(f => f.fieldName === 'studentId');
+    if (studentField) {
+      studentField.componentProps.options = studentOptions.value;
+    }
+  }
+}, {immediate: true});
+
+// 详情抽屉
+const accessApplyDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
   dataObj.detailObj = row;
-  honorDetailDrawerRef.value.open();
+  accessApplyDetailDrawerRef.value.open();
 }
 
 const [QueryForm] = useVbenForm({
@@ -439,14 +438,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-watch(activeName, (newVal) => {
-  tagFilters.value = {};
-  gridColumns.value = getColumnsByStatus(newVal);
-  if (gridApi && gridApi.xGrid) gridApi.xGrid.refreshColumn();
-  else gridApi.setGridOptions?.({columns: gridColumns.value});
-  gridApi.reload();
-});
-
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
@@ -461,14 +452,14 @@ defineExpose({handleFilterTagClick, clearFilters});
 
 <template>
   <div class="park-lot-table-new">
-    <HonorDetailDrawer ref="honorDetailDrawerRef" :detail-obj="dataObj.detailObj"
-                       @refresh="handleRefresh"/>
+    <AccessApplyDetailDrawer ref="accessApplyDetailDrawerRef" :detail-obj="dataObj.detailObj"
+                             @refresh="handleRefresh"/>
     <Drawer title="搜索">
       <QueryForm/>
     </Drawer>
-    <CreateDrawer :title="isEditMode ? '编辑荣誉信息' : '新增荣誉信息'">
-      <CreateForm/>
-    </CreateDrawer>
+    <ApplyDrawer :title="isEditMode ? textObj.editText : textObj.applyText">
+      <ApplyForm/>
+    </ApplyDrawer>
     <Grid>
       <template #table-title>
         <ElTag
@@ -484,7 +475,7 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate"/>
+          <IconButton content="申请" icon-name="Plus" @click="handleCreate"/>
           <IconButton content="审核" icon-name="Check" @click="handleBatchAudit"/>
           <IconButton content="导出" icon-name="download" @click="handleExport"/>
           <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
@@ -497,25 +488,17 @@ defineExpose({handleFilterTagClick, clearFilters});
         </div>
       </template>
 
-      <template #studentName="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{
-            row.studentName
-          }}
+      <!-- 钻取列 -->
+      <template #studentId="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
+          {{ row.studentId }}
         </el-text>
       </template>
-      <template #honorType="{ row }">
-        <el-text @click="handleFilterTagClick('honorType', row.honorType)" type="primary"
-                 style="cursor: pointer;">{{ row.honorType }}
+      <template #applyType="{ row }">
+        <el-text @click="handleFilterTagClick('applyType', row.applyType)" type="primary"
+                 style="cursor: pointer;">
+          {{ row.applyType }}
         </el-text>
-      </template>
-      <template #getTime="{ row }">
-        <el-text>{{ formatTimestamp(row.getTime) }}</el-text>
-      </template>
-      <template #auditTime="{ row }">
-        <el-text>{{ formatTimestamp(row.auditTime) }}</el-text>
-      </template>
-      <template #pushTime="{ row }">
-        <el-text>{{ formatTimestamp(row.pushTime) }}</el-text>
       </template>
       <template #status="{ row }">
         <el-tag :type="getStatusType(row.status)"
@@ -525,24 +508,36 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #creator="{ row }">
         <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
-                 style="cursor: pointer;">{{ row.creator || '-' }}
+                 style="cursor: pointer;">
+          {{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
         <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
-                 type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}
+                 type="primary" style="cursor: pointer;">
+          {{ formatTimestamp(row.createTime) }}
         </el-text>
+      </template>
+
+      <!-- 时间格式化 -->
+      <template #applyTime="{ row }">
+        <el-text>{{ formatTimestamp(row.applyTime) }}</el-text>
+      </template>
+      <template #auditTime="{ row }">
+        <el-text>{{ formatTimestamp(row.auditTime) }}</el-text>
       </template>
       <template #updateTime="{ row }">
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
       </template>
 
+      <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton v-if="row.status === '待审核'" content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
-          <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Check" @click="handleAudit(row)"/>
-          <IconButton v-if="row.status === '已通过'" content="推送" icon-name="Promotion" @click="handlePush(row)"/>
+          <IconButton v-if="row.status === '待审核'" content="编辑" icon-name="Edit"
+                      @click="handleEdit(row)"/>
+          <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Check"
+                      @click="handleAudit(row)"/>
         </div>
       </template>
     </Grid>

@@ -24,12 +24,17 @@ export function updateHonorMgmt(data) {
 
 export function auditHonorMgmt(data) {
   const idsParam = data.ids ? data.ids.join(',') : '';
-  return requestClient.put('/studentmgmt/honor-mgmt/audit', null, { params: { ids: idsParam } }).catch(err => {
+  return requestClient.put('/studentmgmt/honor-mgmt/audit', null, {
+    params: {
+      ids: idsParam,
+      status: data.status,
+      auditRemark: data.auditRemark,
+    },
+  }).catch(err => {
     console.warn('审核接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
-
 export function pushHonorMgmt(data) {
   return requestClient.put('/studentmgmt/honor-mgmt/push', data).catch(err => {
     console.warn('推送接口失败，模拟成功', err);

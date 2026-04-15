@@ -9,16 +9,14 @@ export function useFormSchema() {
       labelWidth: '100',
     },
     {
-      fieldName: 'aidType',
-      label: '资助类型',
+      fieldName: 'applyType',
+      label: '申请类型',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择资助类型',
+        placeholder: '请选择申请类型',
         options: [
-          { label: '奖学金', value: '奖学金' },
-          { label: '助学金', value: '助学金' },
-          { label: '助学贷款', value: '助学贷款' },
-          { label: '勤工俭学', value: '勤工俭学' },
+          { label: '应急出入', value: '应急出入' },
+          { label: '其他', value: '其他' },
         ],
       },
       labelWidth: '100',
@@ -32,7 +30,6 @@ export function useFormSchema() {
         options: [
           { label: '待审核', value: '待审核' },
           { label: '已通过', value: '已通过' },
-          { label: '已完成', value: '已完成' },
         ],
       },
       labelWidth: '100',
@@ -40,18 +37,17 @@ export function useFormSchema() {
   ];
 }
 
-// 表格列定义（未修改，但为完整展示保留）
-export function getColumnsByStatus(status) {
+// 表格列定义
+export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
     { field: 'studentId', title: '学号', minWidth: 100, slots: { default: 'studentId' } },
-    { field: 'aidType', title: '资助类型', minWidth: 120, slots: { default: 'aidType' } },
-    { field: 'applyAmount', title: '申请金额', minWidth: 120, slots: { default: 'applyAmount' } },
-    { field: 'applyTime', title: '申报时间', minWidth: 180, slots: { default: 'applyTime' } },
-    { field: 'auditUser', title: '审核人', minWidth: 120 },
+    { field: 'applyType', title: '申请类型', minWidth: 100, slots: { default: 'applyType' } },
+    { field: 'applyReason', title: '申请原因', minWidth: 150 },
+    { field: 'applyTime', title: '申请时间', minWidth: 180, slots: { default: 'applyTime' } },
+    { field: 'auditUser', title: '审核人', minWidth: 100 },
     { field: 'auditTime', title: '审核时间', minWidth: 180, slots: { default: 'auditTime' } },
-    { field: 'processStatus', title: '流程状态', minWidth: 100 },
     { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
     { field: 'creator', title: '创建人', minWidth: 120, slots: { default: 'creator' } },
     { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
@@ -68,8 +64,8 @@ export function getColumnsByStatus(status) {
   return allColumns;
 }
 
-// 申报表单 schema（添加 status 字段）
-export function useCreateFormSchema() {
+// 申请表单 schema（新增/编辑）- 添加 status 字段
+export function useApplyFormSchema(isEdit = false) {
   return [
     {
       fieldName: 'studentId',
@@ -80,34 +76,33 @@ export function useCreateFormSchema() {
       labelWidth: '100',
     },
     {
-      fieldName: 'aidType',
-      label: '资助类型',
+      fieldName: 'applyType',
+      label: '申请类型',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择资助类型',
+        placeholder: '请选择申请类型',
         options: [
-          { label: '奖学金', value: '奖学金' },
-          { label: '助学金', value: '助学金' },
-          { label: '助学贷款', value: '助学贷款' },
-          { label: '勤工俭学', value: '勤工俭学' },
+          { label: '应急出入', value: '应急出入' },
+          { label: '其他', value: '其他' },
         ],
       },
       rules: 'required',
       labelWidth: '100',
     },
     {
-      fieldName: 'applyAmount',
-      label: '申请金额',
-      component: 'InputNumber',
-      componentProps: { placeholder: '请输入申请金额', min: 0, precision: 2, style: 'width: 100%' },
+      fieldName: 'applyReason',
+      label: '申请原因',
+      component: 'Input',
+      componentProps: { placeholder: '请输入申请原因', type: 'textarea', rows: 3 },
+      rules: 'required',
       labelWidth: '100',
     },
     {
       fieldName: 'applyTime',
-      label: '申报时间',
+      label: '申请时间',
       component: 'DatePicker',
       componentProps: {
-        placeholder: '请选择申报时间',
+        placeholder: '请选择申请时间',
         type: 'datetime',
         format: 'YYYY-MM-DD HH:mm:ss',
         valueFormat: 'x',
@@ -124,7 +119,6 @@ export function useCreateFormSchema() {
         options: [
           { label: '待审核', value: '待审核' },
           { label: '已通过', value: '已通过' },
-          { label: '已完成', value: '已完成' },
         ],
       },
       rules: 'required',
@@ -134,34 +128,7 @@ export function useCreateFormSchema() {
       fieldName: 'remark',
       label: '备注',
       component: 'Input',
-      componentProps: { placeholder: '请输入备注', type: 'textarea', rows: 3 },
-      labelWidth: '100',
-    },
-  ];
-}
-
-// 跟进表单 schema（未修改）
-export function useFollowFormSchema() {
-  return [
-    {
-      fieldName: 'processStatus',
-      label: '流程状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择流程状态',
-        options: [
-          { label: '跟进中', value: '跟进中' },
-          { label: '已完成', value: '已完成' },
-        ],
-      },
-      rules: 'required',
-      labelWidth: '100',
-    },
-    {
-      fieldName: 'remark',
-      label: '跟进备注',
-      component: 'Input',
-      componentProps: { placeholder: '请输入跟进备注', type: 'textarea', rows: 3 },
+      componentProps: { placeholder: '请输入备注', type: 'textarea', rows: 2 },
       labelWidth: '100',
     },
   ];
@@ -169,7 +136,8 @@ export function useFollowFormSchema() {
 
 // 文本常量
 export const textObj = {
-  editText: '编辑奖助申请',
-  addText: '奖助申报',
-  excelName: '奖助勤贷列表',
+  applyText: '申请',
+  auditText: '审核',
+  editText: '编辑申请',
+  excelName: '出入申请列表',
 };

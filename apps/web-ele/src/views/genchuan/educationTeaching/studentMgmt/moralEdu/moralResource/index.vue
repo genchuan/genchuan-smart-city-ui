@@ -576,7 +576,7 @@ defineExpose({handleFilterTagClick, clearFilters});
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
+          <IconButton v-if="row.status === '未上架'" content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
           <IconButton v-if="row.status === '未上架'" content="上架" icon-name="Top"
                       @click="handleOnline(row)"/>
           <IconButton v-if="row.status === '已上架'" content="下架" icon-name="Bottom"
