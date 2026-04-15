@@ -30,7 +30,7 @@ export function deleteStudentInfo(params) {
 }
 
 export function deleteStudentInfoList(data) {
-  return requestClient.delete('/studentmgmt/student-info/delete-list', { data }).catch(err => {
+  return requestClient.delete('/studentmgmt/student-info/delete-list', { params: data }).catch(err => {
     console.warn('批量删除接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
@@ -39,7 +39,6 @@ export function deleteStudentInfoList(data) {
 export function exportStudentInfo(params) {
   return requestClient.download('/studentmgmt/student-info/export', params).catch(err => {
     console.warn('导出接口失败，模拟导出', err);
-    // 模拟返回一个空 blob
     return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
   });
 }
@@ -108,7 +107,7 @@ export function getStudentInfoCoreIndex(params) {
   });
 }
 
-// 模拟数据（与接口响应结构一致）
+// 模拟数据（添加 grade 字段）
 export const dataList = () => {
   return [
     {
@@ -117,6 +116,7 @@ export const dataList = () => {
       name: '张三',
       idCard: '41010119900307663X',
       photo: '',
+      grade: '2021级',        // 新增年级
       educationLevel: '本科',
       studyForm: '全日制',
       major: '计算机科学与技术',
@@ -139,6 +139,7 @@ export const dataList = () => {
       name: '李四',
       idCard: '410101199003076631',
       photo: '',
+      grade: '2021级',
       educationLevel: '本科',
       studyForm: '全日制',
       major: '软件工程',
@@ -161,6 +162,7 @@ export const dataList = () => {
       name: '王五',
       idCard: '410101199003076632',
       photo: '',
+      grade: '2021级',
       educationLevel: '本科',
       studyForm: '非全日制',
       major: '计算机科学与技术',
@@ -183,6 +185,7 @@ export const dataList = () => {
       name: '赵六',
       idCard: '410101199003076633',
       photo: '',
+      grade: '2021级',
       educationLevel: '大专',
       studyForm: '函授',
       major: '电子信息工程',
@@ -205,6 +208,7 @@ export const dataList = () => {
       name: '孙七',
       idCard: '410101199003076634',
       photo: '',
+      grade: '2021级',
       educationLevel: '研究生',
       studyForm: '全日制',
       major: '数据科学与大数据技术',
@@ -227,6 +231,7 @@ export const dataList = () => {
       name: '周八',
       idCard: '410101199003076635',
       photo: '',
+      grade: '2021级',
       educationLevel: '本科',
       studyForm: '全日制',
       major: '软件工程',

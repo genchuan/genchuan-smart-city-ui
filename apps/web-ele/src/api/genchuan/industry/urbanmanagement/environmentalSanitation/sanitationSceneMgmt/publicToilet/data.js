@@ -431,7 +431,9 @@ import { useAccessStore } from '@vben/stores';
  * 分页查询公厕列表
  */
 export function getPublicToiletPage(params) {
-  return requestClient.get('/envirhealth/public-toilet/detail-page', { params });
+  return requestClient.get('/envirhealth/public-toilet/detail-page', {
+    params,
+  });
 }
 
 /**
@@ -459,7 +461,9 @@ export function deletePublicToilet(id) {
  * 批量删除公厕
  */
 export function deletePublicToiletBatch(ids) {
-  return requestClient.delete('/envirhealth/public-toilet/delete-batch', { data: ids });
+  return requestClient.delete('/envirhealth/public-toilet/delete-batch', {
+    data: ids,
+  });
 }
 
 /**
@@ -467,19 +471,26 @@ export function deletePublicToiletBatch(ids) {
  */
 export async function exportPublicToiletExcel(params) {
   const accessStore = useAccessStore();
-  return await baseRequestClient.get('/envirhealth/public-toilet/export-excel', {
-    params,
-    responseType: 'blob',
-    validateStatus: () => true,
-    headers: {
-      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
+  return await baseRequestClient.get(
+    '/envirhealth/public-toilet/export-excel',
+    {
+      params,
+      responseType: 'blob',
+      validateStatus: () => true,
+      headers: {
+        Authorization: accessStore.accessToken
+          ? `Bearer ${accessStore.accessToken}`
+          : undefined,
+      },
     },
-  });
+  );
 }
 
 // ---------- 投诉记录 ----------
 export function getToiletComplaintPage(params) {
-  return requestClient.get('/envirhealth/toilet-complaint/detail-page', { params });
+  return requestClient.get('/envirhealth/toilet-complaint/detail-page', {
+    params,
+  });
 }
 
 export function createToiletComplaint(data) {
@@ -495,24 +506,33 @@ export function deleteToiletComplaint(id) {
 }
 
 export function deleteToiletComplaintBatch(ids) {
-  return requestClient.delete('/envirhealth/toilet-complaint/delete-batch', { data: ids });
+  return requestClient.delete('/envirhealth/toilet-complaint/delete-batch', {
+    data: ids,
+  });
 }
 
 export async function exportToiletComplaintExcel(params) {
   const accessStore = useAccessStore();
-  return await baseRequestClient.get('/envirhealth/toilet-complaint/export-excel', {
-    params,
-    responseType: 'blob',
-    validateStatus: () => true,
-    headers: {
-      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
+  return await baseRequestClient.get(
+    '/envirhealth/toilet-complaint/export-excel',
+    {
+      params,
+      responseType: 'blob',
+      validateStatus: () => true,
+      headers: {
+        Authorization: accessStore.accessToken
+          ? `Bearer ${accessStore.accessToken}`
+          : undefined,
+      },
     },
-  });
+  );
 }
 
 // ---------- 设施维修记录 ----------
 export function getToiletFacilityRepairPage(params) {
-  return requestClient.get('/envirhealth/toilet-facility-repair/detail-page', { params });
+  return requestClient.get('/envirhealth/toilet-facility-repair/detail-page', {
+    params,
+  });
 }
 
 export function createToiletFacilityRepair(data) {
@@ -524,23 +544,33 @@ export function updateToiletFacilityRepair(data) {
 }
 
 export function deleteToiletFacilityRepair(id) {
-  return requestClient.delete(`/envirhealth/toilet-facility-repair/delete?id=${id}`);
+  return requestClient.delete(
+    `/envirhealth/toilet-facility-repair/delete?id=${id}`,
+  );
 }
 
 export function deleteToiletFacilityRepairBatch(ids) {
-  return requestClient.delete('/envirhealth/toilet-facility-repair/delete-batch', { data: ids });
+  return requestClient.delete(
+    '/envirhealth/toilet-facility-repair/delete-batch',
+    { data: ids },
+  );
 }
 
 export async function exportToiletFacilityRepairExcel(params) {
   const accessStore = useAccessStore();
-  return await baseRequestClient.get('/envirhealth/toilet-facility-repair/export-excel', {
-    params,
-    responseType: 'blob',
-    validateStatus: () => true,
-    headers: {
-      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
+  return await baseRequestClient.get(
+    '/envirhealth/toilet-facility-repair/export-excel',
+    {
+      params,
+      responseType: 'blob',
+      validateStatus: () => true,
+      headers: {
+        Authorization: accessStore.accessToken
+          ? `Bearer ${accessStore.accessToken}`
+          : undefined,
+      },
     },
-  });
+  );
 }
 
 // ---------- 保洁任务 ----------
@@ -548,7 +578,9 @@ export async function exportToiletFacilityRepairExcel(params) {
  * 分页查询保洁任务列表
  */
 export function getToiletCleaningTaskPage(params) {
-  return requestClient.get('/envirhealth/toilet-cleaning-task/detail-page', { params });
+  return requestClient.get('/envirhealth/toilet-cleaning-task/detail-page', {
+    params,
+  });
 }
 
 /**
@@ -569,14 +601,19 @@ export function updateToiletCleaningTask(data) {
  * 删除单个保洁任务
  */
 export function deleteToiletCleaningTask(id) {
-  return requestClient.delete(`/envirhealth/toilet-cleaning-task/delete?id=${id}`);
+  return requestClient.delete(
+    `/envirhealth/toilet-cleaning-task/delete?id=${id}`,
+  );
 }
 
 /**
  * 批量删除保洁任务
  */
 export function deleteToiletCleaningTaskBatch(ids) {
-  return requestClient.delete('/envirhealth/toilet-cleaning-task/delete-batch', { data: ids });
+  return requestClient.delete(
+    '/envirhealth/toilet-cleaning-task/delete-batch',
+    { data: ids },
+  );
 }
 
 /**
@@ -584,14 +621,19 @@ export function deleteToiletCleaningTaskBatch(ids) {
  */
 export async function exportToiletCleaningTaskExcel(params) {
   const accessStore = useAccessStore();
-  return await baseRequestClient.get('/envirhealth/toilet-cleaning-task/export-excel', {
-    params,
-    responseType: 'blob',
-    validateStatus: () => true,
-    headers: {
-      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
+  return await baseRequestClient.get(
+    '/envirhealth/toilet-cleaning-task/export-excel',
+    {
+      params,
+      responseType: 'blob',
+      validateStatus: () => true,
+      headers: {
+        Authorization: accessStore.accessToken
+          ? `Bearer ${accessStore.accessToken}`
+          : undefined,
+      },
     },
-  });
+  );
 }
 
 // ---------- 物资待补充（消耗品）接口 ----------
@@ -599,7 +641,9 @@ export async function exportToiletCleaningTaskExcel(params) {
  * 分页查询物资待补充列表
  */
 export function getToiletConsumablePage(params) {
-  return requestClient.get('/envirhealth/toilet-consumable/detail-page', { params });
+  return requestClient.get('/envirhealth/toilet-consumable/detail-page', {
+    params,
+  });
 }
 
 /**
@@ -627,7 +671,9 @@ export function deleteToiletConsumable(id) {
  * 批量删除物资待补充记录
  */
 export function deleteToiletConsumableBatch(ids) {
-  return requestClient.delete('/envirhealth/toilet-consumable/delete-batch', { data: ids });
+  return requestClient.delete('/envirhealth/toilet-consumable/delete-batch', {
+    data: ids,
+  });
 }
 
 /**
@@ -635,14 +681,19 @@ export function deleteToiletConsumableBatch(ids) {
  */
 export async function exportToiletConsumableExcel(params) {
   const accessStore = useAccessStore();
-  return await baseRequestClient.get('/envirhealth/toilet-consumable/export-excel', {
-    params,
-    responseType: 'blob',
-    validateStatus: () => true,
-    headers: {
-      Authorization: accessStore.accessToken ? `Bearer ${accessStore.accessToken}` : undefined,
+  return await baseRequestClient.get(
+    '/envirhealth/toilet-consumable/export-excel',
+    {
+      params,
+      responseType: 'blob',
+      validateStatus: () => true,
+      headers: {
+        Authorization: accessStore.accessToken
+          ? `Bearer ${accessStore.accessToken}`
+          : undefined,
+      },
     },
-  });
+  );
 }
 
 // ---------- 统计接口（用于选项卡数字）----------

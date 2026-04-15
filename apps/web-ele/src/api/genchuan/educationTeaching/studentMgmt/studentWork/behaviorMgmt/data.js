@@ -37,7 +37,7 @@ export function cancelBehaviorMgmt(params) {
 }
 
 export function exportBehaviorMgmt(params) {
-  return requestClient.download('/studentmgmt/behavior-mgmt/export', params).catch(err => {
+  return requestClient.download('/studentmgmt/behavior-mgmt/export-excel', params).catch(err => {
     console.warn('导出接口失败，模拟导出', err);
     return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
   });

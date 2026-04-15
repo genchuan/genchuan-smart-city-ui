@@ -469,6 +469,7 @@ onUnmounted(() => {
 <template>
   <div class="stats-four-visualization">
     <!-- 卡片区 -->
+    <!--  
     <div class="cards-section">
       <div
         v-for="(card, index) in state.cardList"
@@ -490,7 +491,7 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
-
+    -->
     <!-- 右侧展示区 -->
     <div class="right-section">
       <div class="charts-section">

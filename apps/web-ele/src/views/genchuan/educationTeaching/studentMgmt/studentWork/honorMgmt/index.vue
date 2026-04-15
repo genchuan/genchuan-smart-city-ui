@@ -183,8 +183,8 @@ const getTableData = async ({page}) => {
         }
       });
     });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    dataObj.total = res.total;
+    dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
     const mockData = dataList();
@@ -217,6 +217,7 @@ const getTableData = async ({page}) => {
       });
     });
     dataObj.total = filtered.length;
+    // 模拟数据时仍需要前端分页
     dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
   } finally {
     dataObj.loading = false;
@@ -270,8 +271,8 @@ async function handleBatchAudit() {
     const loading = ElLoading.service({text: '审核中...'});
     try {
       const ids = selectedRows.map(row => row.id);
-      const res = await auditHonorMgmt({ids, auditRemark: '批量审核通过'});
-      if (res === true) {
+      const res = await auditHonorMgmt({ids, auditRemark: '批量审核通过', status: '已通过' });
+      if (res && res !== false) {
         ElMessage.success('批量审核成功');
         handleRefresh();
       } else {
@@ -291,10 +292,6 @@ function handleCreate() {
 }
 
 async function handleEdit(row) {
-  if (row.status !== '待审核') {
-    ElMessage.warning('只有待审核状态的荣誉可以编辑');
-    return;
-  }
   isEditMode.value = true;
   currentEditId.value = row.id;
   try {
@@ -331,8 +328,8 @@ async function handleAudit(row) {
     });
     const loading = ElLoading.service({text: '审核中...'});
     try {
-      const res = await auditHonorMgmt({ids: [row.id], auditRemark: ''});
-      if (res === true) {
+      const res = await auditHonorMgmt({ids: [row.id], auditRemark: '', status: '已通过' });
+      if (res && res !== false) {
         ElMessage.success('审核成功');
         handleRefresh();
       } else {
@@ -359,7 +356,7 @@ async function handlePush(row) {
     const loading = ElLoading.service({text: '推送中...'});
     try {
       const res = await pushHonorMgmt({id: row.id});
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('推送成功');
         handleRefresh();
       } else {
@@ -386,7 +383,7 @@ const [CreateForm, createFormApi] = useVbenForm({
       } else {
         res = await createHonorMgmt(submitData);
       }
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '更新成功' : '新增成功');
         createDrawerApi.close();
         handleRefresh();
@@ -543,7 +540,7 @@ defineExpose({handleFilterTagClick, clearFilters});
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton v-if="row.status === '待审核'" content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
+          <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
           <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Check" @click="handleAudit(row)"/>
           <IconButton v-if="row.status === '已通过'" content="推送" icon-name="Promotion" @click="handlePush(row)"/>
         </div>

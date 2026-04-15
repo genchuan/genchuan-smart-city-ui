@@ -55,9 +55,15 @@ defineExpose({
         <div class="detail-row-left">优先级:</div>
         <div class="detail-row-right">
           <el-tag
-            :type="detailObj.priority === '紧急' ? 'danger' :
-                   detailObj.priority === '高' ? 'warning' :
-                   detailObj.priority === '中' ? 'primary' : 'info'"
+            :type="
+              detailObj.priority === '紧急'
+                ? 'danger'
+                : detailObj.priority === '高'
+                  ? 'warning'
+                  : detailObj.priority === '中'
+                    ? 'primary'
+                    : 'info'
+            "
             size="small"
           >
             {{ detailObj.priority }}
@@ -76,10 +82,17 @@ defineExpose({
         <div class="detail-row-left">任务状态:</div>
         <div class="detail-row-right">
           <el-tag
-            :type="detailObj.taskStatus === '待处理' ? 'info' :
-                   detailObj.taskStatus === '处理中' ? 'primary' :
-                   detailObj.taskStatus === '已完成' ? 'success' :
-                   detailObj.taskStatus === '已撤回' ? 'danger' : 'warning'"
+            :type="
+              detailObj.taskStatus === '待处理'
+                ? 'info'
+                : detailObj.taskStatus === '处理中'
+                  ? 'primary'
+                  : detailObj.taskStatus === '已完成'
+                    ? 'success'
+                    : detailObj.taskStatus === '已撤回'
+                      ? 'danger'
+                      : 'warning'
+            "
             size="small"
           >
             {{ detailObj.taskStatus }}
@@ -88,7 +101,9 @@ defineExpose({
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">当前进度:</div>
-        <div class="detail-row-right">{{ detailObj.currentProgress || '-' }}</div>
+        <div class="detail-row-right">
+          {{ detailObj.currentProgress || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">任务描述:</div>

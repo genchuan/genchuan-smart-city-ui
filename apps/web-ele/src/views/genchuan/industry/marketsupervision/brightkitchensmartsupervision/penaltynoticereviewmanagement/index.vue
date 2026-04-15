@@ -27,7 +27,7 @@ const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <gateChart v-if="tabArray[0].arrowShow" />
+    <!-- <gateChart v-if="tabArray[0].arrowShow" /> -->
     <el-tabs
       v-model="activeName"
       class="common-tabs mark-tabs"

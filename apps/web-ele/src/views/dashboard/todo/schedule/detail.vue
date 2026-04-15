@@ -71,9 +71,15 @@ defineExpose({
         <div class="detail-row-left">排班状态:</div>
         <div class="detail-row-right">
           <el-tag
-            :type="detailObj.scheduleStatus === '正常' ? 'success' :
-                   detailObj.scheduleStatus === '换班中' ? 'warning' :
-                   detailObj.scheduleStatus === '已换班' ? 'primary' : 'info'"
+            :type="
+              detailObj.scheduleStatus === '正常'
+                ? 'success'
+                : detailObj.scheduleStatus === '换班中'
+                  ? 'warning'
+                  : detailObj.scheduleStatus === '已换班'
+                    ? 'primary'
+                    : 'info'
+            "
             size="small"
           >
             {{ detailObj.scheduleStatus }}
@@ -84,8 +90,13 @@ defineExpose({
         <div class="detail-row-left">交接状态:</div>
         <div class="detail-row-right">
           <el-tag
-            :type="detailObj.handoverStatus === '已交接' ? 'success' :
-                   detailObj.handoverStatus === '未交接' ? 'info' : 'warning'"
+            :type="
+              detailObj.handoverStatus === '已交接'
+                ? 'success'
+                : detailObj.handoverStatus === '未交接'
+                  ? 'info'
+                  : 'warning'
+            "
             size="small"
           >
             {{ detailObj.handoverStatus }}
@@ -94,7 +105,9 @@ defineExpose({
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">值班要求:</div>
-        <div class="detail-row-right">{{ detailObj.dutyRequirement || '-' }}</div>
+        <div class="detail-row-right">
+          {{ detailObj.dutyRequirement || '-' }}
+        </div>
       </div>
       <div class="detail-card-row" v-if="detailObj.handoverTime">
         <div class="detail-row-left">交接时间:</div>

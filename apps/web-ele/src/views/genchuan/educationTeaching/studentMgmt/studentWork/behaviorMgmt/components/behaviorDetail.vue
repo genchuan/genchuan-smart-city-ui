@@ -24,8 +24,7 @@ const formatTimestamp = (timestamp) => {
 };
 
 const drawerTitle = computed(() => {
-  const name = detailObj.value?.studentName || '请假';
-  return title.value || `${name}请假详情`;
+  return title.value || `请假详情`;
 });
 
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
@@ -43,8 +42,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
       <div class="detail-section">📋 请假基础信息</div>
-      <div class="detail-card-row"><div class="detail-row-left">学生姓名：</div><div class="detail-row-right">{{ detailObj.studentName || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">班级：</div><div class="detail-row-right">{{ detailObj.className || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">学号：</div><div class="detail-row-right">{{ detailObj.studentId || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">请假类型：</div><div class="detail-row-right">{{ detailObj.leaveType || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">开始时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.startTime) }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">结束时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.endTime) }}</div></div>
