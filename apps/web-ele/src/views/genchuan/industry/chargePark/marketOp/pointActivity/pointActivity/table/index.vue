@@ -3,7 +3,7 @@ import { computed, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
-import { getDictObj, getDictOptions } from '@vben/hooks';
+import { getDictObj } from '@vben/hooks';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import { ElMessage, ElTag } from 'element-plus';
@@ -21,8 +21,8 @@ import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
-import ImportExcelDialog from '../components/ImportExcelDialog.vue';
-import StatusConfirmDialog from '../components/StatusConfirmDialog.vue';
+import ImportExcelDialog from '#/views/genchuan/industry/chargePark/marketOp/pointActivity/pointActivity/components/ImportExcelDialog.vue';
+import StatusConfirmDialog from '#/views/genchuan/industry/chargePark/marketOp/pointActivity/pointActivity/components/StatusConfirmDialog.vue';
 import {
   dataList,
   detailFields,
@@ -504,11 +504,7 @@ function getStationLabel(stationId) {
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton
-            content="导入"
-            icon-name="Upload"
-            @click="handleImport"
-          />
+          <IconButton content="导入" icon-name="Upload" @click="handleImport" />
           <IconButton
             content="导出"
             icon-name="download"
@@ -654,16 +650,19 @@ function getStationLabel(stationId) {
           <span>
             本页统计：积分活动数量: {{ dataObj.list.length }}; 进行中:
             {{
-              dataObj.list.filter((v) => v.status === '1' || v.statusName === '进行中')
-                .length
+              dataObj.list.filter(
+                (v) => v.status === '1' || v.statusName === '进行中',
+              ).length
             }}; 已结束:
             {{
-              dataObj.list.filter((v) => v.status === '2' || v.statusName === '已结束')
-                .length
+              dataObj.list.filter(
+                (v) => v.status === '2' || v.statusName === '已结束',
+              ).length
             }}; 已暂停:
             {{
-              dataObj.list.filter((v) => v.status === '3' || v.statusName === '已暂停')
-                .length
+              dataObj.list.filter(
+                (v) => v.status === '3' || v.statusName === '已暂停',
+              ).length
             }}
           </span>
         </div>
@@ -677,6 +676,9 @@ function getStationLabel(stationId) {
     <ImportExcelDialog ref="importExcelDialogRef" @success="handleRefresh" />
 
     <!-- 状态操作确认弹窗 -->
-    <StatusConfirmDialog ref="statusConfirmDialogRef" @success="handleRefresh" />
+    <StatusConfirmDialog
+      ref="statusConfirmDialogRef"
+      @success="handleRefresh"
+    />
   </div>
 </template>

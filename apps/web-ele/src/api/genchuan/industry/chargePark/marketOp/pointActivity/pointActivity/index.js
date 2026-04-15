@@ -13,8 +13,17 @@ export function createPointActivity(data) {
 }
 
 /** 导入积分活动 */
-export function importPointActivity(data) {
-  return requestClient.upload('/marketop/point-activity/import', data);
+// export function importPointActivity(data) {
+//   return requestClient.upload('/marketop/point-activity/import', data);
+// }
+export function importPointActivity(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return requestClient.post('/marketop/point-activity/import', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
 }
 
 /** 导出积分活动数据 */
