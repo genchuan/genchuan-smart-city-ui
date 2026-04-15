@@ -12,11 +12,13 @@ import * as XLSX from 'xlsx';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
+import { getOrderPage } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import { $t } from '#/locales';
 import { downloadLocalTemplate } from '#/utils/genchuan/down';
 import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
 
-import { dataList, useFormSchema, useGridColumns } from './data';
+import { formatTimestamp } from '#/utils';
+import {  useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
 
 const props = defineProps({
@@ -195,42 +197,48 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
-  total: dataList().length,
+  total: 0,
   currentPage: 1,
   pageSize: 10,
-  apilist: dataList(),
+  apilist: [],
   list: [],
   loading: false,
+  searchObj: {},
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
 // 表格数据获取
-const getTableData = (pageObj) => {
+const getTableData = async (pageObj) => {
   const page = pageObj.page;
-  dataObj.total = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    }).length;
-  dataObj.list = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    })
-    .slice(
-      (page.currentPage - 1) * page.pageSize,
-      page.currentPage * page.pageSize,
-    );
-  return dataObj;
+  const params = {
+    pageNo: page.currentPage,
+    pageSize: page.pageSize,
+    ...dataObj.searchObj,
+  };
+  
+  try {
+    dataObj.loading = true;
+    const res = await getOrderPage(params);
+    dataObj.total = res.total;
+    dataObj.list = res.list.map((v) => {
+        return {
+          ...v, 
+          payTime: formatTimestamp(v.payTime),
+          updateTime: formatTimestamp(v.updateTime),
+          createTime: formatTimestamp(v.createTime),
+        };
+      });;
+    return dataObj;
+  } catch (error) {
+    console.error('获取订单数据失败:', error);
+    ElMessage.error('获取订单数据失败');
+    return dataObj;
+  } finally {
+    dataObj.loading = false;
+  }
 };
-const [QueryForm] = useVbenForm({
+const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -239,11 +247,11 @@ const [QueryForm] = useVbenForm({
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
-  handleSubmit: () => {
-    dataObj.loading = true;
-    setTimeout(() => {
-      dataObj.loading = false;
-    }, 2000);
+  handleSubmit: async () => {
+    const values = await queryFormApi.getValues();
+    dataObj.searchObj = values;
+    dataObj.currentPage = 1;
+    gridApi.query();
     drawerApi.close();
   },
   layout: 'horizontal',
@@ -272,10 +280,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     pagerConfig: dataObj,
     toolbarConfig: {
-      'class-name': 'common-tool-bar-config',
-      refresh: true,
-      search: true,
-    },
+        'class-name': 'common-tool-bar-config',
+        refresh: true,
+        search: true,
+      },
     showOverflow: true,
   },
   gridEvents: {
@@ -464,13 +472,13 @@ const alarmColumns = [
         </el-text>
       </template>
 
-      <template #orderNumber="{ row }">
+      <template #orderNo="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.orderNumber }}
+          {{ row.orderNo }}
         </el-text>
       </template>
 
