@@ -59,7 +59,7 @@ export function getColumns() {
   const allColumns = [...baseColumns, ...columns];
   allColumns.push({
     title: '操作',
-    width: 260,
+    width: 200,
     fixed: 'right',
     slots: { default: 'actions' },
   });
