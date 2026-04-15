@@ -35,6 +35,22 @@ export const findIndex = <T = Recordable<any>>(
  */
 export function formatTimestamp(timestamp:string) {
   if(!timestamp) {return '--'}
+  
+  // 处理数组格式的日期 [2026, 4, 10]
+  if (timestamp.startsWith('[') && timestamp.endsWith(']')) {
+    try {
+      const dateArray = JSON.parse(timestamp);
+      if (Array.isArray(dateArray) && dateArray.length >= 3) {
+        const year = dateArray[0];
+        const month = String(dateArray[1]).padStart(2, '0');
+        const day = String(dateArray[2]).padStart(2, '0');
+        return `${year}-${month}-${day} 00:00:00`;
+      }
+    } catch (e) {
+      // 解析失败，继续按原逻辑处理
+    }
+  }
+  
   // 1. 创建 Date 对象（处理无效时间戳）
   const date = new Date(timestamp);
   if (isNaN(date.getTime())) {
