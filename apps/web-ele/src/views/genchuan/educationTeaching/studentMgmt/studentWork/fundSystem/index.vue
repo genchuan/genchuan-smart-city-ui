@@ -209,8 +209,8 @@ const getTableData = async ({ page }) => {
         }
       });
     });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    dataObj.total = res.total;
+    dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
     const mockData = dataList();
@@ -246,6 +246,7 @@ const getTableData = async ({ page }) => {
       });
     });
     dataObj.total = filtered.length;
+    // 模拟数据时仍需要前端分页
     dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
   } finally {
     dataObj.loading = false;
@@ -300,7 +301,7 @@ async function handleBatchAudit() {
     try {
       const ids = selectedRows.map(row => row.id);
       const res = await auditFundSystem({ ids, status: '已汇总' });
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('批量审核成功');
         handleRefresh();
       } else {
@@ -319,6 +320,8 @@ function handleCreate() {
     currentEditId.value = null;
     // 重置表单
     createFormApi.resetForm();
+    // 新增时设置默认状态为“待审核”
+    createFormApi.setValues({ status: '待审核' });
     // 打开抽屉
     createDrawerApi.open();
   } catch (error) {
@@ -328,10 +331,6 @@ function handleCreate() {
 }
 
 async function handleEdit(row) {
-  if (row.status !== '待审核') {
-    ElMessage.warning('只有待审核状态的资助申请可以编辑');
-    return;
-  }
   isEditMode.value = true;
   currentEditId.value = row.id;
   try {
@@ -341,6 +340,7 @@ async function handleEdit(row) {
       fundType: detail.fundType,
       applyAmount: detail.applyAmount,
       applyTime: detail.applyTime,
+      status: detail.status,     // 补充状态赋值
       remark: detail.remark,
     });
     createDrawerApi.open();
@@ -357,7 +357,7 @@ async function handleAudit(row) {
     return;
   }
   try {
-    await ElMessageBox.confirm(`确认审核资助申请（学生：${row.studentName}，类型：${row.fundType}）？审核后状态将变为"已汇总"。`, '审核确认', {
+    await ElMessageBox.confirm(`确认审核资助申请（学生：${row.studentId}，类型：${row.fundType}）？审核后状态将变为"已汇总"。`, '审核确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning',
@@ -365,7 +365,7 @@ async function handleAudit(row) {
     const loading = ElLoading.service({ text: '审核中...' });
     try {
       const res = await auditFundSystem({ ids: [row.id], status: '已汇总' });
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('审核成功');
         handleRefresh();
       } else {
@@ -386,11 +386,14 @@ const [CreateForm, createFormApi] = useVbenForm({
     try {
       let res;
       if (isEditMode.value) {
+        // 编辑时传递 status（表单中已包含）
         res = await updateFundSystem({ ...values, id: currentEditId.value });
       } else {
-        res = await createFundSystem(values);
+        // 新增时确保 status 字段存在（默认待审核）
+        const submitData = { ...values, status: values.status || '待审核' };
+        res = await createFundSystem(submitData);
       }
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '更新成功' : '申请成功');
         createDrawerApi.close();
         handleRefresh();
@@ -506,8 +509,8 @@ onMounted(() => {
         </div>
       </template>
 
-      <template #studentName="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{ row.studentName }}</el-text>
+      <template #studentId="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{ row.studentId }}</el-text>
       </template>
       <template #grade="{ row }">
         <el-text @click="handleFilterTagClick('grade', row.grade)" type="primary" style="cursor: pointer;">{{ row.grade }}</el-text>
@@ -540,7 +543,7 @@ onMounted(() => {
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton v-if="row.status === '待审核'" content="编辑" icon-name="Edit" @click="handleEdit(row)" />
+          <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)" />
           <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Check" @click="handleAudit(row)" />
         </div>
       </template>

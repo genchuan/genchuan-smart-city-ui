@@ -2,10 +2,10 @@
 export function useFormSchema() {
   return [
     {
-      fieldName: 'studentName',
-      label: '学生姓名',
+      fieldName: 'studentId',
+      label: '学号',
       component: 'Input',
-      componentProps: { placeholder: '请输入学生姓名' },
+      componentProps: { placeholder: '请输入学号' },
       labelWidth: '100',
     },
     {
@@ -40,13 +40,12 @@ export function useFormSchema() {
   ];
 }
 
-// 表格列定义
+// 表格列定义（未修改，但为完整展示保留）
 export function getColumnsByStatus(status) {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'studentName', title: '学生姓名', minWidth: 100, slots: { default: 'studentName' } },
-    { field: 'className', title: '班级', minWidth: 150 },
+    { field: 'studentId', title: '学号', minWidth: 100, slots: { default: 'studentId' } },
     { field: 'aidType', title: '资助类型', minWidth: 120, slots: { default: 'aidType' } },
     { field: 'applyAmount', title: '申请金额', minWidth: 120, slots: { default: 'applyAmount' } },
     { field: 'applyTime', title: '申报时间', minWidth: 180, slots: { default: 'applyTime' } },
@@ -54,9 +53,7 @@ export function getColumnsByStatus(status) {
     { field: 'auditTime', title: '审核时间', minWidth: 180, slots: { default: 'auditTime' } },
     { field: 'processStatus', title: '流程状态', minWidth: 100 },
     { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'creator', title: '创建人', minWidth: 120, slots: { default: 'creator' } },
     { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updater', title: '更新人', minWidth: 120 },
     { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
   ];
 
@@ -70,19 +67,14 @@ export function getColumnsByStatus(status) {
   return allColumns;
 }
 
-// 申报表单 schema
+// 申报表单 schema（添加 status 字段）
 export function useCreateFormSchema() {
   return [
     {
       fieldName: 'studentId',
-      label: '学生',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择学生',
-        filterable: true,
-        remote: true,
-        options: [], // 动态加载
-      },
+      label: '学号',
+      component: 'Input',
+      componentProps: { placeholder: '请输入学号' },
       rules: 'required',
       labelWidth: '100',
     },
@@ -123,6 +115,21 @@ export function useCreateFormSchema() {
       labelWidth: '100',
     },
     {
+      fieldName: 'status',
+      label: '状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择状态',
+        options: [
+          { label: '待审核', value: '待审核' },
+          { label: '已通过', value: '已通过' },
+          { label: '已完成', value: '已完成' },
+        ],
+      },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
       fieldName: 'remark',
       label: '备注',
       component: 'Input',
@@ -132,7 +139,7 @@ export function useCreateFormSchema() {
   ];
 }
 
-// 跟进表单 schema
+// 跟进表单 schema（未修改）
 export function useFollowFormSchema() {
   return [
     {

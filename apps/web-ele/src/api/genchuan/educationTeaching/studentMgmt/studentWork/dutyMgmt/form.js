@@ -55,9 +55,7 @@ export function getColumnsByStatus(status) {
     { field: 'recordContent', title: '值班记录', minWidth: 200 },
     { field: 'recordUploadTime', title: '记录上传时间', minWidth: 180, slots: { default: 'recordUploadTime' } },
     { field: 'status', title: '状态', minWidth: 120, slots: { default: 'status' } },
-    { field: 'creator', title: '创建人', minWidth: 120, slots: { default: 'creator' } },
     { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updater', title: '更新人', minWidth: 120 },
     { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
   ];
 
@@ -95,6 +93,60 @@ export function useScheduleFormSchema() {
         placeholder: '请选择值班人',
         filterable: true,
         options: [], // 动态加载
+      },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'remark',
+      label: '备注',
+      component: 'Input',
+      componentProps: { placeholder: '请输入备注', type: 'textarea', rows: 3 },
+      labelWidth: '100',
+    },
+  ];
+}
+
+// 编辑值班记录表单 schema
+export function useEditFormSchema() {
+  return [
+    {
+      fieldName: 'dutyDate',
+      label: '值班日期',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择值班日期',
+        type: 'date',
+        format: 'YYYY-MM-DD',
+        valueFormat: 'YYYY-MM-DD',
+      },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'dutyUser',
+      label: '值班人',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择值班人',
+        filterable: true,
+        options: [], // 动态加载
+      },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'status',
+      label: '状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择状态',
+        options: [
+          { label: '待打卡', value: '待打卡' },
+          { label: '待调班审批', value: '待调班审批' },
+          { label: '待出车审批', value: '待出车审批' },
+          { label: '已完成', value: '已完成' },
+        ],
       },
       rules: 'required',
       labelWidth: '100',

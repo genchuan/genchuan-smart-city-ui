@@ -111,7 +111,7 @@ export function getCycleTrend(params) {
   });
 }
 
-// 模拟数据（与接口响应结构一致）
+// 模拟数据（rank → classRank）
 export const dataList = () => {
   return [
     {
@@ -120,7 +120,7 @@ export const dataList = () => {
       assessType: '教室卫生',
       cycle: '周',
       score: 95.00,
-      rank: 1,
+      classRank: 1,           // 原 rank 改为 classRank
       assessUser: '张老师',
       publishTime: null,
       status: '未发布',
@@ -136,7 +136,7 @@ export const dataList = () => {
       assessType: '早操',
       cycle: '周',
       score: 88.00,
-      rank: 3,
+      classRank: 3,
       assessUser: '李老师',
       publishTime: 1672617600000,
       status: '已发布',
@@ -152,7 +152,7 @@ export const dataList = () => {
       assessType: '文明班级',
       cycle: '月',
       score: 92.00,
-      rank: 2,
+      classRank: 2,
       assessUser: '王老师',
       publishTime: null,
       status: '未发布',
@@ -168,7 +168,7 @@ export const dataList = () => {
       assessType: '黑板报',
       cycle: '月',
       score: 87.00,
-      rank: 4,
+      classRank: 4,
       assessUser: '赵老师',
       publishTime: 1672790400000,
       status: '已发布',
@@ -184,7 +184,7 @@ export const dataList = () => {
       assessType: '教室卫生',
       cycle: '学期',
       score: 90.00,
-      rank: 2,
+      classRank: 2,
       assessUser: '孙老师',
       publishTime: 1672876800000,
       status: '已发布',
@@ -200,7 +200,7 @@ export const dataList = () => {
       assessType: '早操',
       cycle: '学期',
       score: 85.00,
-      rank: 3,
+      classRank: 3,
       assessUser: '周老师',
       publishTime: null,
       status: '未发布',
