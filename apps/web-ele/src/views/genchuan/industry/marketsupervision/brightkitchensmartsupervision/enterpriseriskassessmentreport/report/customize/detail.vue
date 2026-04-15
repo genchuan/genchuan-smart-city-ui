@@ -1,4 +1,5 @@
 <script setup>
+import { formatArrayDate } from '#/utils/genchuan/formatTime.ts';
 import { computed, defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
@@ -52,11 +53,7 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">报告编号:</div>
         <div class="detail-row-right">{{ detailObj.reportNo || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">企业ID:</div>
-        <div class="detail-row-right">{{ detailObj.entId || '-' }}</div>
-      </div>
+      </div> 
       <div class="detail-card-row">
         <div class="detail-row-left">企业名称:</div>
         <div class="detail-row-right">{{ detailObj.entName || '-' }}</div>
@@ -85,11 +82,11 @@ defineExpose({
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">统计开始时间:</div>
-        <div class="detail-row-right">{{ detailObj.beginTime || '-' }}</div>
+        <div class="detail-row-right">{{ formatArrayDate(detailObj.beginTime || [2026,1,1]) }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">统计结束时间:</div>
-        <div class="detail-row-right">{{ detailObj.endTime || '-' }}</div>
+        <div class="detail-row-right">{{ formatArrayDate(detailObj.endTime || [2026,1,1]) }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">违规次数:</div>

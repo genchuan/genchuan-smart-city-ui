@@ -20,7 +20,8 @@ const rowData = ref({});
 const actionConfig = {
   activate: {
     title: '确认生效',
-    message: (name) => `确定要将活动 "${name}" 生效吗？生效后活动状态将变为"进行中"。`,
+    message: (name) =>
+      `确定要将活动 "${name}" 生效吗？生效后活动状态将变为"进行中"。`,
     successMessage: '活动生效成功',
     loadingMessage: '正在生效活动...',
     api: activatePointActivity,
@@ -34,7 +35,8 @@ const actionConfig = {
   },
   enable: {
     title: '确认启用',
-    message: (name) => `确定要启用活动 "${name}" 吗？启用后活动状态将变为"进行中"。`,
+    message: (name) =>
+      `确定要启用活动 "${name}" 吗？启用后活动状态将变为"进行中"。`,
     successMessage: '活动启用成功',
     loadingMessage: '正在启用活动...',
     api: enablePointActivity,
@@ -97,9 +99,7 @@ defineExpose({
       <div class="confirm-message">
         {{ currentAction.message ? currentAction.message(rowData.name) : '' }}
       </div>
-      <div class="confirm-tip">
-        此操作不可撤销，请谨慎操作。
-      </div>
+      <div class="confirm-tip">此操作不可撤销，请谨慎操作。</div>
     </div>
   </Modal>
 </template>

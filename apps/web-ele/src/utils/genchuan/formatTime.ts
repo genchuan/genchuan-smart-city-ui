@@ -371,3 +371,20 @@ export async function delay(time) {
     }, time);
   });
 }
+
+/**
+ * 将数组格式的日期 [2026, 4, 10] 转换为年-月-日格式字符串
+ * @param {Array} dateArray - 数组格式的日期
+ * @returns {string} 格式化后的日期字符串
+ */
+export function formatArrayDate(dateArray) {
+  if (!dateArray || !Array.isArray(dateArray) || dateArray.length < 3) return '--';
+  
+  const year = dateArray[0];
+  const month = String(dateArray[1]).padStart(2, '0');
+  const day = String(dateArray[2]).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+
+  

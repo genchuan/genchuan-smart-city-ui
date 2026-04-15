@@ -168,12 +168,14 @@ export function useGridColumns() {
       title: '统计开始时间',
       minWidth: 160,
       sortable: true,
+      slots: { default: 'beginTime' },
     },
     {
       field: 'endTime',
       title: '统计结束时间',
       minWidth: 160,
       sortable: true,
+      slots: { default: 'endTime' },
     },
     {
       field: 'violationCount',
