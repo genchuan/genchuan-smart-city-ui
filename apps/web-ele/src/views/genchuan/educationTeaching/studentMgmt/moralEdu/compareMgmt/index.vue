@@ -197,8 +197,8 @@ const getTableData = async ({page}) => {
         }
       });
     });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    dataObj.total = res.total;
+    dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
     const mockData = getMockList();
@@ -231,6 +231,7 @@ const getTableData = async ({page}) => {
       });
     });
     dataObj.total = filtered.length;
+    // 模拟数据时仍需要前端分页
     dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
   } finally {
     dataObj.loading = false;
@@ -359,7 +360,7 @@ const [CreateForm, createFormApi] = useVbenForm({
       } else {
         res = await createCompareMgmt(values);
       }
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '更新成功' : '发起成功');
         createDrawerApi.close();
         handleRefresh();
@@ -384,7 +385,7 @@ const [ScoreForm, scoreFormApi] = useVbenForm({
     const loading = ElLoading.service({text: '提交打分...'});
     try {
       const res = await scoreCompareMgmt({ids: scoreIds.value, ...values});
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('打分成功，已自动汇总并计算排名');
         scoreDrawerApi.close();
         handleRefresh();
@@ -409,7 +410,7 @@ const [AwardForm, awardFormApi] = useVbenForm({
     const loading = ElLoading.service({text: '授予中...'});
     try {
       const res = await awardCompareMgmt({ids: awardIds.value, ...values});
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('授予成功，已生成操行评定');
         awardDrawerApi.close();
         handleRefresh();

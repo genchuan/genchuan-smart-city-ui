@@ -31,8 +31,19 @@ const getStatusType = (status) => {
     '待审批': 'warning',
     '已执行': 'success',
     '已预警': 'danger',
+    'warn': 'danger',
   };
   return map[status] || 'info';
+};
+
+const getStatusText = (status) => {
+  const map = {
+    '待审批': '待审批',
+    '已执行': '已执行',
+    '已预警': '已预警',
+    'warn': '已预警',
+  };
+  return map[status] || status;
 };
 
 // 时间戳格式化
@@ -107,6 +118,11 @@ function getFieldLabel(field) {
 
 function getTagDisplayText(field, value) {
   if (Array.isArray(value)) return value.join('、');
+  // 状态字段特殊转换
+  if (field === 'status') {
+    const map = { 'warn': '已预警' };
+    return map[value] || value || '-';
+  }
   return value || '-';
 }
 
@@ -188,8 +204,8 @@ const getTableData = async ({ page }) => {
         }
       });
     });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    dataObj.total = res.total;
+    dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
     const mockData = dataList();
@@ -225,6 +241,7 @@ const getTableData = async ({ page }) => {
       });
     });
     dataObj.total = filtered.length;
+    // 模拟数据时仍需要前端分页
     dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
   } finally {
     dataObj.loading = false;
@@ -279,7 +296,7 @@ async function handleBatchAudit() {
     try {
       const ids = selectedRows.map(row => row.id);
       const res = await auditViolateMgmt({ ids });
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('批量审批成功');
         handleRefresh();
       } else {
@@ -295,14 +312,12 @@ function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
   createFormApi.resetForm();
+  // 新增时设置默认状态为“待审批”
+  createFormApi.setValues({ status: '待审批' });
   createDrawerApi.open();
 }
 
 async function handleEdit(row) {
-  if (row.status !== '待审批') {
-    ElMessage.warning('只有待审批状态的违纪记录可以编辑');
-    return;
-  }
   isEditMode.value = true;
   currentEditId.value = row.id;
   try {
@@ -313,6 +328,7 @@ async function handleEdit(row) {
       punishType: detail.punishType,
       violateTime: detail.violateTime,
       violateReason: detail.violateReason,
+      status: detail.status,     // 补充状态赋值
       remark: detail.remark,
     });
     createDrawerApi.open();
@@ -337,7 +353,7 @@ async function handleAudit(row) {
     const loading = ElLoading.service({ text: '审批中...' });
     try {
       const res = await auditViolateMgmt({ ids: [row.id] });
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('审批成功');
         handleRefresh();
       } else {
@@ -364,7 +380,7 @@ async function handlePush(row) {
     const loading = ElLoading.service({ text: '推送中...' });
     try {
       const res = await pushViolateMgmt({ id: row.id });
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('推送成功');
         handleRefresh();
       } else {
@@ -391,7 +407,7 @@ async function handleWarn(row) {
     const loading = ElLoading.service({ text: '预警中...' });
     try {
       const res = await warnViolateMgmt({ id: row.id });
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('预警成功');
         handleRefresh();
       } else {
@@ -412,11 +428,14 @@ const [CreateForm, createFormApi] = useVbenForm({
     try {
       let res;
       if (isEditMode.value) {
+        // 编辑时传递 status（虽然表单中 disabled，但值已存在）
         res = await updateViolateMgmt({ ...values, id: currentEditId.value });
       } else {
-        res = await createViolateMgmt(values);
+        // 新增时确保 status 字段存在（默认待审批）
+        const submitData = { ...values, status: values.status || '待审批' };
+        res = await createViolateMgmt(submitData);
       }
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '更新成功' : '登记成功');
         createDrawerApi.close();
         handleRefresh();
@@ -559,7 +578,7 @@ defineExpose({ handleFilterTagClick, clearFilters });
       <template #status="{ row }">
         <el-tag :type="getStatusType(row.status)"
                 @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">
-          {{ row.status }}
+          {{ getStatusText(row.status) }}
         </el-tag>
       </template>
       <template #creator="{ row }">
@@ -577,7 +596,7 @@ defineExpose({ handleFilterTagClick, clearFilters });
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton v-if="row.status === '待审批'" content="编辑" icon-name="Edit" @click="handleEdit(row)" />
+          <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)" />
           <IconButton v-if="row.status === '待审批'" content="审批" icon-name="Check" @click="handleAudit(row)" />
           <IconButton v-if="row.status === '已执行'" content="推送" icon-name="Promotion" @click="handlePush(row)" />
           <IconButton v-if="row.status === '已执行'" content="预警" icon-name="Warning" @click="handleWarn(row)" />

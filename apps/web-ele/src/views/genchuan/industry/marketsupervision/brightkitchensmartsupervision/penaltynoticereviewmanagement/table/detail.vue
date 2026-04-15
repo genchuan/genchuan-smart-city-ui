@@ -45,6 +45,16 @@ function previewImage(url) {
   );
   w.document.close();
 }
+// 下载文件（修复乱码 + 自定义文件名）
+function downloadFile(url, fileName) { 
+  const link = document.createElement('a');
+  link.href = url;
+  // 编码文件名，防止中文乱码
+  link.download = encodeURIComponent(fileName);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
 
 defineExpose({
   open: () => detailDrawerApi.open(),
@@ -80,41 +90,17 @@ defineExpose({
         <div class="detail-row-right">
           {{ detailObj.paymentDeadlineTime || '-' }}
         </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">企业ID：</div>
-        <div class="detail-row-right">{{ detailObj.entId || '-' }}</div>
-      </div>
+      </div> 
       <div class="detail-card-row">
         <div class="detail-row-left">企业名称：</div>
         <div class="detail-row-right">{{ detailObj.entName || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">违规类型ID：</div>
-        <div class="detail-row-right">{{ detailObj.illegalTypeId || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">违规等级ID：</div>
-        <div class="detail-row-right">
-          {{ detailObj.illegalLevelId || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">企业整改记录ID：</div>
-        <div class="detail-row-right">
-          {{ detailObj.entRectifyRecordId || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">执法ID：</div>
-        <div class="detail-row-right">{{ detailObj.lawEnforceId || '-' }}</div>
-      </div>
+      </div>   
       <div class="detail-card-row">
         <div class="detail-row-left">执法复审台账编号：</div>
         <div class="detail-row-right">{{ detailObj.lawLedgerCode || '-' }}</div>
       </div>
 
-      <!-- ====================== 原生 img 图片展示 ====================== -->
+      <!-- ====================== 多类型文件展示 ====================== -->
       <div class="detail-card-row" v-if="detailObj.evidenceUrl">
         <div class="detail-row-left">违规证据：</div>
         <div class="detail-row-right evidence-list">
@@ -122,10 +108,16 @@ defineExpose({
             class="evidence-item"
             v-for="(item, index) in JSON.parse(detailObj.evidenceUrl) || []"
             :key="index"
-            @click="previewImage(item.url)"
           >
-            <img :src="item.url" class="evidence-img" />
-            <div class="evidence-name">{{ item.name }}</div>
+            <!-- 图片类型 -->
+            <div v-if="item.type === 'image'" @click="previewImage(item.url)">
+              <img :src="item.url" class="evidence-img" /> 
+            </div>
+            <!-- 文档类型 -->
+            <div v-else class="document-item" @click="downloadFile(item.url, item.name)">
+              <div class="document-icon">📄</div>
+              <div class="document-name">{{ item.name }}</div>
+            </div>
           </div>
           <span
             v-if="!detailObj.evidenceUrl || detailObj.evidenceUrl.length === 0"
@@ -153,13 +145,7 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">复审人：</div>
         <div class="detail-row-right">{{ detailObj.reviewBy || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">撤销原因ID：</div>
-        <div class="detail-row-right">
-          {{ detailObj.cancelReasonId || '-' }}
-        </div>
-      </div>
+      </div> 
       <div class="detail-card-row">
         <div class="detail-row-left">草拟时间：</div>
         <div class="detail-row-right">{{ detailObj.draftTime || '-' }}</div>
@@ -264,6 +250,35 @@ defineExpose({
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.document-item {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  transition: all 0.3s;
+
+  &:hover {
+    border-color: #1890ff;
+    box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+  }
+}
+
+.document-icon {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+
+.document-name {
+  font-size: 12px;
+  text-align: center;
+  color: #6b7280;
+  word-break: break-all;
+  max-width: 80px;
 }
 
 @media (max-width: 768px) {

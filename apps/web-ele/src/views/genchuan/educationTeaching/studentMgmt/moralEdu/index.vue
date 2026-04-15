@@ -5,6 +5,10 @@ import targetMgmt from './targetMgmt/index.vue';
 import targetMgmtChart from './targetMgmt/components/chart.vue';
 import compareMgmt from './compareMgmt/index.vue';
 import compareMgmtChart from './compareMgmt/components/chart.vue';
+import moralActivity from './moralActivity/index.vue';
+import moralActivityChart from './moralActivity/components/chart.vue';
+import moralResource from './moralResource/index.vue';
+import moralResourceChart from './moralResource/components/chart.vue';
 import '#/components/page/index.scss';
 
 const changeArrowStatus = () => {
@@ -33,6 +37,24 @@ const tabArray = ref([
     arrowShow: true,
     arrowState: false,
   },
+  {
+    label: '德育活动',
+    components: moralActivity,
+    chartComponent: moralActivityChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false,
+  },
+  {
+    label: '德育资源',
+    components: moralResource,
+    chartComponent: moralResourceChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false,
+  },
 ]);
 
 const arrowChange = () => {
@@ -54,6 +76,18 @@ const setTargetMgmtRef = (el) => {
 const compareMgmtRef = ref(null);
 const setCompareMgmtRef = (el) => {
   if (el) compareMgmtRef.value = el;
+};
+
+// 德育活动组件引用
+const moralActivityRef = ref(null);
+const setMoralActivityRef = (el) => {
+  if (el) moralActivityRef.value = el;
+};
+
+// 德育资源组件引用
+const moralResourceRef = ref(null);
+const setMoralResourceRef = (el) => {
+  if (el) moralResourceRef.value = el;
 };
 
 // ========== 指标管理图表事件 ==========
@@ -111,6 +145,35 @@ const onCompareCardSelect = async (status) => {
   }
 };
 
+// ========== 德育活动图表事件 ==========
+const onMoralBarSelect = async ({field, value}) => {
+  await nextTick();
+  if (!moralActivityRef.value) {
+    ElMessage.warning('德育活动列表组件未就绪');
+    return;
+  }
+  moralActivityRef.value.handleFilterTagClick(field, value);
+};
+
+// ========== 德育资源图表事件 ==========
+const onMoralResourceBarSelect = async ({field, value}) => {
+  await nextTick();
+  if (!moralResourceRef.value) {
+    ElMessage.warning('德育资源列表组件未就绪');
+    return;
+  }
+  moralResourceRef.value.handleFilterTagClick(field, value);
+};
+
+const onMoralResourcePieSelect = async ({field, value}) => {
+  await nextTick();
+  if (!moralResourceRef.value) {
+    ElMessage.warning('德育资源列表组件未就绪');
+    return;
+  }
+  moralResourceRef.value.handleFilterTagClick(field, value);
+};
+
 // 当前激活的Tab
 const currentTab = computed(() => tabArray.value.find(item => item.label === activeName.value) || tabArray.value[0]);
 const currentChartComponent = computed(() => currentTab.value.chartComponent);
@@ -119,18 +182,32 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
 
 <template>
   <div class="common-index">
-    <!-- 当前Tab对应的图表组件 -->
+    <!-- 指标管理图表 -->
     <component
       v-if="currentArrowShow && activeName === '指标管理'"
       :is="currentChartComponent"
       @barSelect="onTargetBarSelect"
       @cardSelect="onTargetCardSelect"
     />
+    <!-- 评比管理图表 -->
     <component
       v-if="currentArrowShow && activeName === '评比管理'"
       :is="currentChartComponent"
       @barSelect="onCompareBarSelect"
       @cardSelect="onCompareCardSelect"
+    />
+    <!-- 德育活动图表 -->
+    <component
+      v-if="currentArrowShow && activeName === '德育活动'"
+      :is="currentChartComponent"
+      @barSelect="onMoralBarSelect"
+    />
+    <!-- 德育资源图表 -->
+    <component
+      v-if="currentArrowShow && activeName === '德育资源'"
+      :is="currentChartComponent"
+      @barSelect="onMoralResourceBarSelect"
+      @pieSelect="onMoralResourcePieSelect"
     />
     <el-tabs v-model="activeName" class="common-tabs" type="card">
       <el-tab-pane v-for="item in tabArray" :key="item.label" :name="item.label">
@@ -152,6 +229,26 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
           v-else-if="item.label === '评比管理'"
           :is="item.components"
           :ref="setCompareMgmtRef"
+          :second-show="item.secondShow"
+          :key="item.label"
+          :arrow-show="item.arrowShow"
+          @arrow-change="arrowChange"
+        />
+        <!-- 德育活动组件 -->
+        <component
+          v-else-if="item.label === '德育活动'"
+          :is="item.components"
+          :ref="setMoralActivityRef"
+          :second-show="item.secondShow"
+          :key="item.label"
+          :arrow-show="item.arrowShow"
+          @arrow-change="arrowChange"
+        />
+        <!-- 德育资源组件 -->
+        <component
+          v-else
+          :is="item.components"
+          :ref="setMoralResourceRef"
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"

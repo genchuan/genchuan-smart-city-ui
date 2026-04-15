@@ -230,8 +230,8 @@ const getTableData = async ({page}) => {
         }
       });
     });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    dataObj.total = res.total;
+    dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
     const mockData = dataList();
@@ -267,6 +267,7 @@ const getTableData = async ({page}) => {
       });
     });
     dataObj.total = filtered.length;
+    // 模拟数据时仍需要前端分页
     dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
   } finally {
     dataObj.loading = false;
@@ -321,7 +322,7 @@ async function handleBatchAudit() {
     try {
       const ids = selectedRows.map(row => row.id);
       const res = await auditClubMgmt({ids, status: '已通过'});
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('批量审核成功');
         handleRefresh();
       } else {
@@ -355,7 +356,7 @@ async function handleBatchArchive() {
     try {
       const ids = selectedRows.map(row => row.id);
       const res = await archiveClubMgmt({ids});
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('批量建档成功');
         handleRefresh();
       } else {
@@ -419,7 +420,7 @@ async function handleAudit(row) {
     const loading = ElLoading.service({text: '审核中...'});
     try {
       const res = await auditClubMgmt({ids: [row.id], status: '已通过'});
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('审核成功');
         handleRefresh();
       } else {
@@ -447,7 +448,7 @@ async function handleArchive(row) {
     const loading = ElLoading.service({text: '建档中...'});
     try {
       const res = await archiveClubMgmt({ids: [row.id]});
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('建档成功');
         handleRefresh();
       } else {
@@ -484,7 +485,7 @@ const [CreateForm, createFormApi] = useVbenForm({
       } else {
         res = await createClubMgmt(values);
       }
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '更新成功' : '申请成功');
         createDrawerApi.close();
         handleRefresh();
@@ -514,7 +515,7 @@ const [VenueForm, venueFormApi] = useVbenForm({
         applyTime: values.applyTime,
         applyReason: values.applyReason,
       });
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('场馆申请提交成功');
         venueDrawerApi.close();
         handleRefresh();

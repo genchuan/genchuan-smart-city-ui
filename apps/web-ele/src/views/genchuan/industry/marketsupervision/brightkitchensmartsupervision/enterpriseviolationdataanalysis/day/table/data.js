@@ -60,14 +60,14 @@ export function useGridColumns() {
     },
     {
       field: 'deviceNormalRate',
-      title: '设备正常率',
+      title: '设备正常率(%)',
       minWidth: 160,
       sortable: true, 
       slots: { default: 'deviceNormalRate' },  
     },
     {
       field: 'rectifyFinishRate',
-      title: '整改完成率',
+      title: '整改完成率(%)',
       minWidth: 160,
       sortable: true, 
       slots: { default: 'rectifyFinishRate' },  

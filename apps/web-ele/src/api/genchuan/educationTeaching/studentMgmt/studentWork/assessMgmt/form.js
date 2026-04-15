@@ -39,7 +39,7 @@ export function useFormSchema() {
   ];
 }
 
-// 表格列定义
+// 表格列定义（修改排名字段）
 export function getColumnsByStatus(status) {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
@@ -48,13 +48,11 @@ export function getColumnsByStatus(status) {
     { field: 'assessType', title: '考评类型', minWidth: 120, slots: { default: 'assessType' } },
     { field: 'cycle', title: '统计周期', minWidth: 100 },
     { field: 'score', title: '考评得分', minWidth: 100 },
-    { field: 'rank', title: '班级排名', minWidth: 100 },
+    { field: 'classRank', title: '班级排名', minWidth: 100 },   // rank → classRank
     { field: 'assessUser', title: '考评人', minWidth: 120 },
     { field: 'publishTime', title: '发布时间', minWidth: 180, slots: { default: 'publishTime' } },
     { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'creator', title: '创建人', minWidth: 120, slots: { default: 'creator' } },
     { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updater', title: '更新人', minWidth: 120 },
     { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
   ];
 
@@ -123,6 +121,21 @@ export function useCreateFormSchema(isEdit = false) {
       label: '考评人',
       component: 'Input',
       componentProps: { placeholder: '请输入考评人' },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'status',
+      label: '状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择状态',
+        disabled: isEdit,
+        options: [
+          { label: '未发布', value: '未发布' },
+          { label: '已发布', value: '已发布' },
+        ],
+      },
+      rules: 'required',
       labelWidth: '100',
     },
     {

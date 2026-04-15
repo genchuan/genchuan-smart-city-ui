@@ -336,15 +336,6 @@ const getPieOption = () => {
       formatter: '{b}: {c} 次 ({d}%)',
     },
     color: freshColors,
-    legend: {
-      data: chartData.value.pieData.map(item => item.name),
-      bottom: 10,
-      orient: 'horizontal',
-      textStyle: {
-        fontSize: 11,
-        color: '#6E7E91',
-      },
-    },
     series: [
       {
         name: '违规次数占比',
@@ -469,6 +460,7 @@ onUnmounted(() => {
 <template>
   <div class="stats-four-visualization">
     <!-- 卡片区 -->
+    <!--  
     <div class="cards-section">
       <div
         v-for="(card, index) in state.cardList"
@@ -490,7 +482,7 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
-
+    -->
     <!-- 右侧展示区 -->
     <div class="right-section">
       <div class="charts-section">

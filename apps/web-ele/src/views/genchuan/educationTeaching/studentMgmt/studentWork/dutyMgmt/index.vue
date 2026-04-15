@@ -20,6 +20,7 @@ import {
   exportDutyMgmt,
   getDutyMgmtDetail,
   getUserOptions,
+  updateDutyMgmt,
 } from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/dutyMgmt/data.js';
 import {
   textObj,
@@ -29,6 +30,7 @@ import {
   useShiftApplyFormSchema,
   useVehicleApplyFormSchema,
   useUploadRecordFormSchema,
+  useEditFormSchema,
 } from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/dutyMgmt/form.js';
 
 // 辅助函数：状态标签类型
@@ -176,6 +178,14 @@ const [UploadRecordDrawer, uploadRecordDrawerApi] = useVbenDrawer({
   onCancel: () => uploadRecordDrawerApi.close(),
 });
 
+// 编辑抽屉
+const [EditDrawer, editDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => editDrawerApi.close(),
+});
+const currentEditRow = ref(null);
+
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
@@ -248,8 +258,8 @@ const getTableData = async ({ page }) => {
         }
       });
     });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    dataObj.total = res.total;
+    dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
     const mockData = dataList();
@@ -282,6 +292,7 @@ const getTableData = async ({ page }) => {
       });
     });
     dataObj.total = filtered.length;
+    // 模拟数据时仍需要前端分页
     dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
   } finally {
     dataObj.loading = false;
@@ -315,8 +326,7 @@ async function handleExport() {
   }
 }
 
-// ---------- 排班（修复） ----------
-// 动态生成排班表单 schema（包含实时值班人选项）
+// ---------- 排班 ----------
 const scheduleFormSchema = computed(() => {
   const schema = useScheduleFormSchema();
   const dutyUserField = schema.find(item => item.fieldName === 'dutyUser');
@@ -331,8 +341,64 @@ function handleSchedule() {
   scheduleDrawerApi.open();
 }
 
+// ---------- 编辑 ----------
+// 动态注入值班人选项到编辑表单
+const editFormSchema = computed(() => {
+  const schema = useEditFormSchema();
+  const dutyUserField = schema.find(item => item.fieldName === 'dutyUser');
+  if (dutyUserField) {
+    dutyUserField.componentProps.options = userOptions.value;
+  }
+  return schema;
+});
+
+const [EditForm, editFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  handleSubmit: async (values) => {
+    const loading = ElLoading.service({text: '保存中...'});
+    try {
+      const res = await updateDutyMgmt({
+        id: currentEditRow.value.id,
+        dutyDate: values.dutyDate,
+        dutyUser: values.dutyUser,
+        status: values.status,        // 新增状态字段
+        remark: values.remark || '',
+      });
+      if (res && res !== false) {
+        ElMessage.success('编辑成功');
+        editDrawerApi.close();
+        handleRefresh();
+      } else {
+        ElMessage.error('编辑失败');
+      }
+    } catch (error) {
+      console.error('编辑失败', error);
+      ElMessage.error('编辑失败');
+    } finally {
+      loading.close();
+    }
+  },
+  layout: 'horizontal',
+  schema: editFormSchema,
+  showCollapseButton: false,
+  submitButtonOptions: {content: '保存修改'},
+});
+
+function handleEdit(row) {
+  currentEditRow.value = row;
+  editFormApi.setValues({
+    dutyDate: row.dutyDate,
+    dutyUser: row.dutyUser,
+    status: row.status,
+    remark: row.remark || '',
+  });
+  editDrawerApi.open();
+}
+
 // ---------- 调班申请（批量） ----------
 const currentShiftRows = ref([]);
+
 function handleBatchShiftApply() {
   if (checkedIds.value.length === 0) {
     ElMessage.warning('请至少选择一条值班记录');
@@ -350,6 +416,7 @@ function handleBatchShiftApply() {
 
 // ---------- 出车申请（批量） ----------
 const currentVehicleRows = ref([]);
+
 function handleBatchVehicleApply() {
   if (checkedIds.value.length === 0) {
     ElMessage.warning('请至少选择一条值班记录');
@@ -377,10 +444,10 @@ async function handleCheckin(row) {
       cancelButtonText: '取消',
       type: 'warning',
     });
-    const loading = ElLoading.service({ text: '打卡中...' });
+    const loading = ElLoading.service({text: '打卡中...'});
     try {
-      const res = await checkinDutyMgmt({ ids: [row.id] });
-      if (res === true) {
+      const res = await checkinDutyMgmt({ids: [row.id]});
+      if (res && res !== false) {
         ElMessage.success('打卡成功');
         handleRefresh();
       } else {
@@ -389,7 +456,8 @@ async function handleCheckin(row) {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
 // ---------- 批量打卡 ----------
@@ -409,11 +477,11 @@ async function handleBatchCheckin() {
       cancelButtonText: '取消',
       type: 'warning',
     });
-    const loading = ElLoading.service({ text: '打卡中...' });
+    const loading = ElLoading.service({text: '打卡中...'});
     try {
       const ids = selectedRows.map(row => row.id);
-      const res = await checkinDutyMgmt({ ids });
-      if (res === true) {
+      const res = await checkinDutyMgmt({ids});
+      if (res && res !== false) {
         ElMessage.success('批量打卡成功');
         handleRefresh();
       } else {
@@ -422,7 +490,8 @@ async function handleBatchCheckin() {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
 // ---------- 调班审批弹窗相关 ----------
@@ -447,14 +516,14 @@ async function confirmShiftAudit() {
     ElMessage.warning('请选择审批结果');
     return;
   }
-  const loading = ElLoading.service({ text: '审批中...' });
+  const loading = ElLoading.service({text: '审批中...'});
   try {
     const res = await shiftAuditDutyMgmt({
       id: currentShiftAuditRow.value.id,
       auditResult: shiftAuditResult.value,
       remark: shiftAuditRemark.value || '',
     });
-    if (res === true) {
+    if (res && res !== false) {
       ElMessage.success('调班审批成功');
       shiftAuditDialogVisible.value = false;
       handleRefresh();
@@ -491,14 +560,14 @@ async function confirmVehicleAudit() {
     ElMessage.warning('请选择审批结果');
     return;
   }
-  const loading = ElLoading.service({ text: '审批中...' });
+  const loading = ElLoading.service({text: '审批中...'});
   try {
     const res = await vehicleAuditDutyMgmt({
       id: currentVehicleAuditRow.value.id,
       auditResult: vehicleAuditResult.value,
       remark: vehicleAuditRemark.value || '',
     });
-    if (res === true) {
+    if (res && res !== false) {
       ElMessage.success('出车审批成功');
       vehicleAuditDialogVisible.value = false;
       handleRefresh();
@@ -515,6 +584,7 @@ async function confirmVehicleAudit() {
 
 // 上传记录
 const currentUploadRow = ref(null);
+
 function handleUploadRecord(row) {
   currentUploadRow.value = row;
   uploadRecordFormApi.resetForm();
@@ -524,9 +594,9 @@ function handleUploadRecord(row) {
 // 排班表单
 const [ScheduleForm, scheduleFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '排班中...' });
+    const loading = ElLoading.service({text: '排班中...'});
     try {
       const dutyDateList = values.dutyDateList;
       const res = await scheduleDutyMgmt({
@@ -534,7 +604,7 @@ const [ScheduleForm, scheduleFormApi] = useVbenForm({
         dutyUser: values.dutyUser,
         remark: values.remark || '',
       });
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('排班成功');
         scheduleDrawerApi.close();
         handleRefresh();
@@ -546,17 +616,17 @@ const [ScheduleForm, scheduleFormApi] = useVbenForm({
     }
   },
   layout: 'horizontal',
-  schema: scheduleFormSchema,  // 使用计算属性动态注入值班人选项
+  schema: scheduleFormSchema,
   showCollapseButton: false,
-  submitButtonOptions: { content: '提交排班' },
+  submitButtonOptions: {content: '提交排班'},
 });
 
 // 调班申请表单
 const [ShiftApplyForm, shiftApplyFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '提交调班申请中...' });
+    const loading = ElLoading.service({text: '提交调班申请中...'});
     try {
       const ids = currentShiftRows.value.map(row => row.id);
       const res = await shiftApplyDutyMgmt({
@@ -564,7 +634,7 @@ const [ShiftApplyForm, shiftApplyFormApi] = useVbenForm({
         transferReason: values.transferReason,
         transferUser: values.transferUser,
       });
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('调班申请提交成功');
         shiftApplyDrawerApi.close();
         handleRefresh();
@@ -578,15 +648,15 @@ const [ShiftApplyForm, shiftApplyFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useShiftApplyFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '提交申请' },
+  submitButtonOptions: {content: '提交申请'},
 });
 
 // 出车申请表单
 const [VehicleApplyForm, vehicleApplyFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '提交出车申请中...' });
+    const loading = ElLoading.service({text: '提交出车申请中...'});
     try {
       const ids = currentVehicleRows.value.map(row => row.id);
       const res = await vehicleApplyDutyMgmt({
@@ -594,7 +664,7 @@ const [VehicleApplyForm, vehicleApplyFormApi] = useVbenForm({
         carReason: values.carReason,
         carDestination: values.carDestination,
       });
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('出车申请提交成功');
         vehicleApplyDrawerApi.close();
         handleRefresh();
@@ -608,21 +678,21 @@ const [VehicleApplyForm, vehicleApplyFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useVehicleApplyFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '提交申请' },
+  submitButtonOptions: {content: '提交申请'},
 });
 
 // 上传记录表单
 const [UploadRecordForm, uploadRecordFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '上传记录中...' });
+    const loading = ElLoading.service({text: '上传记录中...'});
     try {
       const res = await uploadRecordDutyMgmt({
         id: currentUploadRow.value.id,
         recordContent: values.recordContent,
       });
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('值班记录上传成功');
         uploadRecordDrawerApi.close();
         handleRefresh();
@@ -636,11 +706,12 @@ const [UploadRecordForm, uploadRecordFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useUploadRecordFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '提交记录' },
+  submitButtonOptions: {content: '提交记录'},
 });
 
 // 查看详情
 const dutyDetailDrawerRef = ref(null);
+
 function handleOpenDetail(row) {
   dataObj.detailObj = row;
   dutyDetailDrawerRef.value.open();
@@ -648,9 +719,9 @@ function handleOpenDetail(row) {
 
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
-    searchParams.value = { ...values };
+    searchParams.value = {...values};
     drawerApi.close();
     gridApi.reload();
   },
@@ -660,20 +731,20 @@ const [QueryForm] = useVbenForm({
     return v;
   }),
   showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
+  submitButtonOptions: {content: '查询'},
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
+    proxyConfig: {ajax: {query: getTableData}},
+    rowConfig: {keyField: 'id', isHover: true},
     pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
+    toolbarConfig: {refresh: true, search: true},
     showOverflow: true,
   },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
   showSearchForm: false,
 });
 
@@ -681,7 +752,7 @@ watch(activeName, (newVal) => {
   tagFilters.value = {};
   gridColumns.value = getColumnsByStatus(newVal);
   if (gridApi && gridApi.xGrid) gridApi.xGrid.refreshColumn();
-  else gridApi.setGridOptions?.({ columns: gridColumns.value });
+  else gridApi.setGridOptions?.({columns: gridColumns.value});
   gridApi.reload();
 });
 
@@ -694,7 +765,7 @@ const toggleChart = () => {
   showChart.value = !showChart.value;
 };
 
-defineExpose({ handleFilterTagClick, clearFilters });
+defineExpose({handleFilterTagClick, clearFilters});
 
 onMounted(() => {
   loadUserOptions();
@@ -703,22 +774,27 @@ onMounted(() => {
 
 <template>
   <div class="park-lot-table-new">
-    <DutyDetailDrawer ref="dutyDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh" />
+    <DutyDetailDrawer ref="dutyDetailDrawerRef" :detail-obj="dataObj.detailObj"
+                      @refresh="handleRefresh"/>
     <Drawer title="搜索">
-      <QueryForm />
+      <QueryForm/>
     </Drawer>
     <ScheduleDrawer title="排班">
-      <ScheduleForm />
+      <ScheduleForm/>
     </ScheduleDrawer>
     <ShiftApplyDrawer title="调班申请">
-      <ShiftApplyForm />
+      <ShiftApplyForm/>
     </ShiftApplyDrawer>
     <VehicleApplyDrawer title="出车申请">
-      <VehicleApplyForm />
+      <VehicleApplyForm/>
     </VehicleApplyDrawer>
     <UploadRecordDrawer title="上传值班记录">
-      <UploadRecordForm />
+      <UploadRecordForm/>
     </UploadRecordDrawer>
+    <EditDrawer title="编辑值班记录">
+      <EditForm/>
+    </EditDrawer>
+
     <Grid>
       <template #table-title>
         <ElTag
@@ -734,23 +810,25 @@ onMounted(() => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="排班" icon-name="Plus" @click="handleSchedule" />
-          <IconButton content="打卡" icon-name="Check" @click="handleBatchCheckin" />
-          <IconButton content="调班" icon-name="Switch" @click="handleBatchShiftApply" />
-          <IconButton content="出车申请" icon-name="Van" @click="handleBatchVehicleApply" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
+          <IconButton content="排班" icon-name="Plus" @click="handleSchedule"/>
+          <IconButton content="打卡" icon-name="Check" @click="handleBatchCheckin"/>
+          <IconButton content="调班" icon-name="Switch" @click="handleBatchShiftApply"/>
+          <IconButton content="出车申请" icon-name="Van" @click="handleBatchVehicleApply"/>
+          <IconButton content="导出" icon-name="download" @click="handleExport"/>
+          <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
+          <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
           <IconButton :content="props.arrowShow ? '展开' : '收缩'"
-                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
           <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
-                      @click="toggleChart" />
+                      @click="toggleChart"/>
         </div>
       </template>
 
       <template #dutyUser="{ row }">
-        <el-text @click="handleFilterTagClick('dutyUser', row.dutyUser)" type="primary" style="cursor: pointer;">{{ row.dutyUser }}</el-text>
+        <el-text @click="handleFilterTagClick('dutyUser', row.dutyUser)" type="primary"
+                 style="cursor: pointer;">{{ row.dutyUser }}
+        </el-text>
       </template>
       <template #checkInStatus="{ row }">
         <el-tag :type="getCheckInStatusType(row.checkInStatus)">{{ row.checkInStatus }}</el-tag>
@@ -765,13 +843,20 @@ onMounted(() => {
         <el-text>{{ formatTimestamp(row.recordUploadTime) }}</el-text>
       </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)" @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">{{ row.status }}</el-tag>
+        <el-tag :type="getStatusType(row.status)"
+                @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">
+          {{ row.status }}
+        </el-tag>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer;">{{ row.creator || '-' }}</el-text>
+        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
+                 style="cursor: pointer;">{{ row.creator || '-' }}
+        </el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}</el-text>
+        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
+                 type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}
+        </el-text>
       </template>
       <template #updateTime="{ row }">
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
@@ -779,11 +864,17 @@ onMounted(() => {
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton v-if="row.status === '待打卡'" content="打卡" icon-name="Check" @click="handleCheckin(row)" />
-          <IconButton v-if="row.status === '待调班审批'" content="调班审批" icon-name="Checked" @click="handleShiftAudit(row)" />
-          <IconButton v-if="row.status === '待出车审批'" content="出车审批" icon-name="Checked" @click="handleVehicleAudit(row)" />
-          <IconButton v-if="row.status === '已完成'" content="上传记录" icon-name="Upload" @click="handleUploadRecord(row)" />
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
+          <!-- 编辑按钮对所有状态开放 -->
+          <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
+          <IconButton v-if="row.status === '待打卡'" content="打卡" icon-name="Check"
+                      @click="handleCheckin(row)"/>
+          <IconButton v-if="row.status === '待调班审批'" content="调班审批" icon-name="Checked"
+                      @click="handleShiftAudit(row)"/>
+          <IconButton v-if="row.status === '待出车审批'" content="出车审批" icon-name="Checked"
+                      @click="handleVehicleAudit(row)"/>
+          <IconButton v-if="row.status === '已完成'" content="上传记录" icon-name="Upload"
+                      @click="handleUploadRecord(row)"/>
         </div>
       </template>
     </Grid>
@@ -793,12 +884,13 @@ onMounted(() => {
       <el-form label-width="100px">
         <el-form-item label="审批结果" required>
           <el-select v-model="shiftAuditResult" placeholder="请选择审批结果" style="width: 100%;">
-            <el-option label="通过" value="通过" />
-            <el-option label="驳回" value="驳回" />
+            <el-option label="通过" value="通过"/>
+            <el-option label="驳回" value="驳回"/>
           </el-select>
         </el-form-item>
         <el-form-item label="审批备注">
-          <el-input v-model="shiftAuditRemark" type="textarea" :rows="3" placeholder="请输入备注（可选）" />
+          <el-input v-model="shiftAuditRemark" type="textarea" :rows="3"
+                    placeholder="请输入备注（可选）"/>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -812,12 +904,13 @@ onMounted(() => {
       <el-form label-width="100px">
         <el-form-item label="审批结果" required>
           <el-select v-model="vehicleAuditResult" placeholder="请选择审批结果" style="width: 100%;">
-            <el-option label="通过" value="通过" />
-            <el-option label="驳回" value="驳回" />
+            <el-option label="通过" value="通过"/>
+            <el-option label="驳回" value="驳回"/>
           </el-select>
         </el-form-item>
         <el-form-item label="审批备注">
-          <el-input v-model="vehicleAuditRemark" type="textarea" :rows="3" placeholder="请输入备注（可选）" />
+          <el-input v-model="vehicleAuditRemark" type="textarea" :rows="3"
+                    placeholder="请输入备注（可选）"/>
         </el-form-item>
       </el-form>
       <template #footer>
