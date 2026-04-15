@@ -336,15 +336,6 @@ const getPieOption = () => {
       formatter: '{b}: {c} 次 ({d}%)',
     },
     color: freshColors,
-    legend: {
-      data: chartData.value.pieData.map(item => item.name),
-      bottom: 10,
-      orient: 'horizontal',
-      textStyle: {
-        fontSize: 11,
-        color: '#6E7E91',
-      },
-    },
     series: [
       {
         name: '违规次数占比',

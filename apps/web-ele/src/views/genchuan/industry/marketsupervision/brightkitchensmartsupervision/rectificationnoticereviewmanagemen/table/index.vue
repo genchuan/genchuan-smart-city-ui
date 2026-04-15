@@ -774,13 +774,13 @@ function previewImage(url) {
           <IconButton content="新增" icon-name="Plus" @click="handleAuto" />
           <!-- <IconButton content="新增" icon-name="Plus" @click="handleCreate" /> -->
           <IconButton
-            content="导出EXCEL"
+            content="导出台账EXCEL"
             icon-name="download"
             :disabled="isEmpty(checkedIds)"
             @click="handleExport"
           />
           <IconButton
-            content="批量导出PDF"
+            content="批量导出整改通知书PDF"
             icon-name="download"
             :disabled="isEmpty(checkedIds)"
             @click="handlePDF"

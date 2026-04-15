@@ -90,35 +90,11 @@ defineExpose({
         <div class="detail-row-right">
           {{ detailObj.paymentDeadlineTime || '-' }}
         </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">企业ID：</div>
-        <div class="detail-row-right">{{ detailObj.entId || '-' }}</div>
-      </div>
+      </div> 
       <div class="detail-card-row">
         <div class="detail-row-left">企业名称：</div>
         <div class="detail-row-right">{{ detailObj.entName || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">违规类型ID：</div>
-        <div class="detail-row-right">{{ detailObj.illegalTypeId || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">违规等级ID：</div>
-        <div class="detail-row-right">
-          {{ detailObj.illegalLevelId || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">企业整改记录ID：</div>
-        <div class="detail-row-right">
-          {{ detailObj.entRectifyRecordId || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">执法ID：</div>
-        <div class="detail-row-right">{{ detailObj.lawEnforceId || '-' }}</div>
-      </div>
+      </div>   
       <div class="detail-card-row">
         <div class="detail-row-left">执法复审台账编号：</div>
         <div class="detail-row-right">{{ detailObj.lawLedgerCode || '-' }}</div>
@@ -135,8 +111,7 @@ defineExpose({
           >
             <!-- 图片类型 -->
             <div v-if="item.type === 'image'" @click="previewImage(item.url)">
-              <img :src="item.url" class="evidence-img" />
-              <div class="evidence-name">{{ item.name }}</div>
+              <img :src="item.url" class="evidence-img" /> 
             </div>
             <!-- 文档类型 -->
             <div v-else class="document-item" @click="downloadFile(item.url, item.name)">
@@ -170,13 +145,7 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">复审人：</div>
         <div class="detail-row-right">{{ detailObj.reviewBy || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">撤销原因ID：</div>
-        <div class="detail-row-right">
-          {{ detailObj.cancelReasonId || '-' }}
-        </div>
-      </div>
+      </div> 
       <div class="detail-card-row">
         <div class="detail-row-left">草拟时间：</div>
         <div class="detail-row-right">{{ detailObj.draftTime || '-' }}</div>

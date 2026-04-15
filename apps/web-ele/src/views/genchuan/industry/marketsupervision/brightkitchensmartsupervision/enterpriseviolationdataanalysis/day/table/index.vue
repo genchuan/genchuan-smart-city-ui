@@ -157,8 +157,10 @@ async function handleDeleteBatch() {
 }
 
 const checkedIds = ref([]);
+const checkArray = ref([])
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
+  checkArray.value = records
 }
 
 const dataObj = reactive({
@@ -548,8 +550,8 @@ const rectifyFinishColumns = [
           <IconButton content="刷新" icon-name="refresh" @click="autoElmessage" />
           <IconButton content="导出EXCEL" icon-name="download" @click="handleExport" />
           <IconButton content="导出PDF" icon-name="download" @click="handlePDF" />
-          <IconButton content="批量删除" icon-name="delete" color="#F56C6C" :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch" />
+          <!-- <IconButton content="批量删除" icon-name="delete" color="#F56C6C" :disabled="isEmpty(checkedIds)"
+            @click="handleDeleteBatch" /> -->
           <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
           <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
             @click="arrowChange" />
