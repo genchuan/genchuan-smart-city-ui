@@ -1,0 +1,384 @@
+<script setup>
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  reactive,
+  ref,
+  watch,
+} from 'vue';
+
+import * as echarts from 'echarts';
+
+import { getSpaceMonitorChart } from '#/api/genchuan/industry/chargePark/inspectOp/deviceMonitor/spaceMonitor';
+import MapComponent from '#/genchuan-components/Map/index.vue';
+
+import { getMockChartData } from './data';
+
+const props = defineProps({
+  locatedSpace: {
+    type: Object,
+    default: null,
+  },
+});
+
+const emit = defineEmits(['statusFilter', 'trendFilter']);
+
+const state = reactive({
+  cardList: [
+    { title: '正常车位', value: 0, status: '正常', color: '#2fbf71' },
+    { title: '异常车位', value: 0, status: '异常', color: '#e95f5f' },
+  ],
+  mapData: [],
+  trendData: [],
+  mapConfig: {
+    markerIcons: {
+      normal: '/static/imgs/dataHub/map/marker-blue.png',
+      yellow: '/static/imgs/dataHub/map/marker-yellow.png',
+      red: '/static/imgs/dataHub/map/marker-red.png',
+    },
+    statusIconMap: {
+      green: 'normal',
+      orange: 'yellow',
+      red: 'red',
+      blue: 'normal',
+      gray: 'normal',
+    },
+    statusKeyMap: {
+      正常: 'green',
+      异常: 'red',
+      定位: 'orange',
+    },
+    infoWindowConfig: {
+      title: 'spaceCode',
+      fields: [
+        { key: 'stationName', label: '所属场站' },
+        { key: 'regionName', label: '所属区域' },
+        { key: 'monitorStatus', label: '监测状态', bold: true },
+      ],
+    },
+  },
+});
+
+const trendChartRef = ref(null);
+let trendChartInstance = null;
+
+const mapData = computed(() => {
+  const baseData = state.mapData.map((item) => ({
+    id: item.id,
+    spaceCode: item.name || item.spaceCode,
+    stationName: item.stationName || '-',
+    regionName: item.regionName || '-',
+    monitorStatus: item.status || item.monitorStatus,
+    statusName: item.status || item.monitorStatus,
+    coordinate: `${item.lon ?? item.longitude},${item.lat ?? item.latitude}`,
+  }));
+
+  if (!props.locatedSpace?.longitude || !props.locatedSpace?.latitude) {
+    return baseData;
+  }
+
+  const located = {
+    id: props.locatedSpace.id || props.locatedSpace.spaceCode,
+    spaceCode: props.locatedSpace.spaceCode || '目标车位',
+    stationName: props.locatedSpace.stationName || '-',
+    regionName: props.locatedSpace.regionName || '-',
+    monitorStatus: props.locatedSpace.monitorStatus || '定位',
+    statusName: '定位',
+    coordinate: `${props.locatedSpace.longitude},${props.locatedSpace.latitude}`,
+  };
+
+  return [located, ...baseData.filter((item) => item.id !== located.id)];
+});
+
+function normalizeChartData(data) {
+  const chartData =
+    data?.mapData || data?.trendData || data?.cardData
+      ? data
+      : getMockChartData();
+  const cardData = chartData.cardData || {};
+
+  state.cardList[0].value = cardData.normalSpace ?? cardData.normalCount ?? 0;
+  state.cardList[1].value =
+    cardData.abnormalSpace ?? cardData.abnormalCount ?? 0;
+  state.mapData = Array.isArray(chartData.mapData) ? chartData.mapData : [];
+  state.trendData = Array.isArray(chartData.trendData)
+    ? chartData.trendData
+    : [];
+}
+
+function getTrendOption() {
+  return {
+    backgroundColor: 'transparent',
+    title: {
+      text: '状态更新趋势',
+      left: 'center',
+      top: 5,
+      textStyle: {
+        color: '#596678',
+        fontSize: 14,
+        fontWeight: 500,
+      },
+    },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(255,255,255,0.96)',
+      borderColor: '#dbe7f3',
+      borderWidth: 1,
+      textStyle: {
+        color: '#596678',
+      },
+    },
+    legend: {
+      top: 32,
+      textStyle: {
+        color: '#6e7e91',
+      },
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '4%',
+      top: 70,
+      containLabel: true,
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: state.trendData.map((item) => item.time),
+      axisLine: {
+        lineStyle: {
+          color: '#dbe7f3',
+        },
+      },
+      axisLabel: {
+        color: '#7b8794',
+      },
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: {
+        color: '#7b8794',
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#eef3f8',
+          type: 'dashed',
+        },
+      },
+    },
+    series: [
+      {
+        name: '正常车位',
+        type: 'line',
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 7,
+        data: state.trendData.map((item) => item.normalCount),
+        itemStyle: {
+          color: '#2fbf71',
+        },
+        lineStyle: {
+          width: 3,
+          color: '#2fbf71',
+        },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(47,191,113,0.22)' },
+            { offset: 1, color: 'rgba(47,191,113,0.04)' },
+          ]),
+        },
+      },
+      {
+        name: '异常车位',
+        type: 'line',
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 7,
+        data: state.trendData.map((item) => item.abnormalCount),
+        itemStyle: {
+          color: '#e95f5f',
+        },
+        lineStyle: {
+          width: 3,
+          color: '#e95f5f',
+        },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(233,95,95,0.22)' },
+            { offset: 1, color: 'rgba(233,95,95,0.04)' },
+          ]),
+        },
+      },
+    ],
+  };
+}
+function initTrendChart() {
+  if (!trendChartRef.value || state.trendData.length === 0) return;
+
+  if (trendChartInstance) {
+    trendChartInstance.dispose();
+  }
+
+  trendChartInstance = echarts.init(trendChartRef.value);
+  trendChartInstance.setOption(getTrendOption());
+  trendChartInstance.on('click', (params) => {
+    if (params?.name) {
+      emit('trendFilter', params.name);
+    }
+  });
+}
+
+function handleResize() {
+  trendChartInstance?.resize();
+}
+
+async function fetchChartData() {
+  try {
+    const response = await getSpaceMonitorChart();
+    normalizeChartData(response);
+  } catch (error) {
+    console.error('获取车位状态监控看板失败，使用静态数据:', error);
+    normalizeChartData(getMockChartData());
+  }
+
+  await nextTick();
+  initTrendChart();
+}
+
+function handleCardClick(card) {
+  emit('statusFilter', card.status);
+}
+
+watch(
+  () => state.trendData,
+  () => nextTick(initTrendChart),
+  { deep: true },
+);
+
+onMounted(() => {
+  fetchChartData();
+  window.addEventListener('resize', handleResize);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
+  if (trendChartInstance) {
+    trendChartInstance.dispose();
+    trendChartInstance = null;
+  }
+});
+</script>
+
+<template>
+  <div class="space-monitor-visualization">
+    <div class="cards-section">
+      <button
+        v-for="card in state.cardList"
+        :key="card.title"
+        class="stat-card"
+        :style="{ borderLeftColor: card.color }"
+        type="button"
+        @click="handleCardClick(card)"
+      >
+        <span class="card-title">{{ card.title }}</span>
+        <span class="card-value" :style="{ color: card.color }">
+          {{ card.value }}
+        </span>
+      </button>
+    </div>
+
+    <div class="right-section">
+      <div class="map-wrapper">
+        <MapComponent
+          :data="mapData"
+          :info-window-config="state.mapConfig.infoWindowConfig"
+          :marker-icons="state.mapConfig.markerIcons"
+          :status-icon-map="state.mapConfig.statusIconMap"
+          :status-key-map="state.mapConfig.statusKeyMap"
+        />
+      </div>
+      <div class="trend-wrapper">
+        <div ref="trendChartRef" class="chart-container"></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.space-monitor-visualization {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 20px;
+  width: 100%;
+  min-height: 320px;
+  overflow: hidden;
+}
+
+.cards-section {
+  display: grid;
+  flex-shrink: 0;
+  grid-template-rows: repeat(2, 1fr);
+  gap: 12px;
+  width: 240px;
+  height: 320px;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 18px;
+  text-align: left;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #edf1f5;
+  border-left: 4px solid #2fbf71;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
+}
+
+.card-title {
+  margin-bottom: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #596678;
+}
+
+.card-value {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.right-section {
+  display: flex;
+  flex: 1 1 0;
+  gap: 20px;
+  min-width: 0;
+  height: 320px;
+}
+
+.map-wrapper {
+  width: 50%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.trend-wrapper {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+.chart-container {
+  width: 100%;
+  height: 100%;
+}
+</style>
