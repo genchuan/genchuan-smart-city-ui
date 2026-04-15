@@ -20,6 +20,7 @@
     "build:dev": "cross-env NODE_OPTIONS=--max-old-space-size=8192 pnpm vite build --mode development",
     "build:analyze": "cross-env NODE_OPTIONS=--max-old-space-size=8192 pnpm vite build --mode analyze",
     "dev": "pnpm vite --mode development",
+    "dev:test": "pnpm vite --mode test",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit --skipLibCheck"
   },
