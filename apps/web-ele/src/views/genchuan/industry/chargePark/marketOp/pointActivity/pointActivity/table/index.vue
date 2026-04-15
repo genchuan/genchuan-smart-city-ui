@@ -457,7 +457,7 @@ function getStationLabel(stationId) {
       <template #table-title>
         <div
           class="tabel-tabs"
-          style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
+          style="display: flex; flex-wrap: wrap;  align-items: center"
         >
           <!-- 活动类型筛选标签 -->
           <ElTag
@@ -682,3 +682,8 @@ function getStationLabel(stationId) {
     />
   </div>
 </template>
+<style scoped>
+.vxe-buttons--wrapper:not(:empty), .vxe-tools--operate:not(:empty), .vxe-tools--wrapper:not(:empty) {
+  padding-bottom: 0 !important;
+}
+</style>
