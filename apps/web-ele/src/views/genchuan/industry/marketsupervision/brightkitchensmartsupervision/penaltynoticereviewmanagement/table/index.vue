@@ -804,12 +804,12 @@ const handleAutoDetail = async (row) => {
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
-          <IconButton
+          <!-- <IconButton
             content="删除"
             icon-name="delete"
             color="#F56C6C"
             @click="handleDelete(row)"
-          />
+          /> -->
         </div>
       </template>
 
