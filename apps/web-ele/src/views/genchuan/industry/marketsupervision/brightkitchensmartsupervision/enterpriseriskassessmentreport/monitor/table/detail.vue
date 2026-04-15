@@ -53,11 +53,7 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">报告编号:</div>
         <div class="detail-row-right">{{ detailObj.reportNo || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">企业ID:</div>
-        <div class="detail-row-right">{{ detailObj.entId || '-' }}</div>
-      </div>
+      </div> 
       <div class="detail-card-row">
         <div class="detail-row-left">企业名称:</div>
         <div class="detail-row-right">{{ detailObj.entName || '-' }}</div>

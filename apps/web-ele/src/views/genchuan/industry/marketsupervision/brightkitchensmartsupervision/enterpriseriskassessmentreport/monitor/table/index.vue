@@ -103,7 +103,9 @@ function handleRefresh() {
 
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
-   const data = await exporRiskReportExcel(dataObj.getParams);
+
+  const reportNoList = checkArray.value.map((item) => item.reportNo).join(',')
+   const data = await exporRiskReportExcel({...dataObj.getParams, reportNoList});
   downloadFileFromBlobPart({
     fileName: '企业风险评估报表.xls',
     source: data,
@@ -112,7 +114,9 @@ async function handleExport() {
 
 // ====================== 图片转PDF（终极零乱码） ======================
 async function handlePDF() {
-  const data = await exporRiskReportPDF(dataObj.getParams);
+  
+  const reportNoList = checkArray.value.map((item) => item.reportNo).join(',')
+  const data = await exporRiskReportPDF({...dataObj.getParams, reportNoList});
   downloadFileFromBlobPart({
     fileName: '企业风险评估报表.pdf',
     source: data,
@@ -185,8 +189,10 @@ async function handleDeleteBatch() {
 }
 
 const checkedIds = ref([]);
+const checkArray = ref([])
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
+  checkArray.value = records
 }
 const state = reactive({});
 const dataObj = reactive({
