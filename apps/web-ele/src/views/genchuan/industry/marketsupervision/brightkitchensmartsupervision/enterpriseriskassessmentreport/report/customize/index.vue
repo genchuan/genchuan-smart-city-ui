@@ -14,6 +14,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getDetailEnObj, getRiskReportPage, exporRiskReportExcel, exporRiskReportPDF, exporRiskReportPDFSinglePDF } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
 import { downloadLocalTemplate } from '#/utils/genchuan/down';
+import { formatArrayDate } from '#/utils/genchuan/formatTime.ts';
 import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
 
 import {   useFormSchema, useGridColumns } from './data';
@@ -125,12 +126,12 @@ async function handleExportSinglePDF(row) {
   
   // 拼接beginTime数组为字符串
   if (Array.isArray(beginTime)) {
-    exportRow.beginTime = `${beginTime[0]}-${String(beginTime[1] + 1).padStart(2, '0')}-${String(beginTime[2]).padStart(2, '0')}`;
+    exportRow.beginTime = `${beginTime[0]}-${String(beginTime[1] ).padStart(2, '0')}-${String(beginTime[2]).padStart(2, '0')}`;
   }
   
   // 拼接endTime数组为字符串
   if (Array.isArray(endTime)) {
-    exportRow.endTime = `${endTime[0]}-${String(endTime[1] + 1).padStart(2, '0')}-${String(endTime[2]).padStart(2, '0')}`;
+    exportRow.endTime = `${endTime[0]}-${String(endTime[1]).padStart(2, '0')}-${String(endTime[2]).padStart(2, '0')}`;
   }
   
   const data = await exporRiskReportPDFSinglePDF(exportRow);
@@ -199,6 +200,7 @@ const dataObj = reactive({
   list: [],
   loading: false,
   serachObj: {},
+  getParams: {},
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -208,7 +210,7 @@ const getTableData = async (pageObj) => {
   // 处理时间格式转换
   const searchParams = { ...dataObj.serachObj };
   if (searchParams.beginTime) {
-    // 开始月份的第一天00:00:00
+       // 开始月份的第一天00:00:00
     const beginDate = new Date(searchParams.beginTime);
     beginDate.setDate(1);
     beginDate.setHours(0, 0, 0, 0);
@@ -221,7 +223,7 @@ const getTableData = async (pageObj) => {
     searchParams.beginTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   }
   if (searchParams.endTime) {
-    // 结束月份的最后一天23:59:59
+// 结束月份的最后一天23:59:59
     const endDate = new Date(searchParams.endTime);
     const lastDay = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0);
     lastDay.setHours(23, 59, 59, 999);
@@ -364,7 +366,7 @@ const openEn = async (row) => {
       :detail-obj="dataObj.detailObj"
     />
     <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" />
-    <Drawer title="配置">
+     <Drawer title="配置">  
       <QueryForm class="query-form" />
     </Drawer>
     <Grid>
@@ -385,7 +387,7 @@ const openEn = async (row) => {
             icon-name="download"
             @click="handlePDF"
           /> 
-        <IconButton
+          <IconButton
             content="配置"
             icon-name="setting"
             @click="handleSerachShow"
@@ -418,7 +420,7 @@ const openEn = async (row) => {
           {{ row.riskLevel }}
         </el-text>
       </template>
-      <template #reportNo="{ row }">
+       <template #reportNo="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
@@ -426,6 +428,13 @@ const openEn = async (row) => {
         >
           {{ row.reportNo }}
         </el-text>
+      </template>
+      <template #beginTime="{ row }">
+        {{ formatArrayDate(row.beginTime) }}
+      </template>
+      
+      <template #endTime="{ row }">
+        {{ formatArrayDate(row.endTime) }}
       </template>
       <template #entName="{ row }">
         <el-text

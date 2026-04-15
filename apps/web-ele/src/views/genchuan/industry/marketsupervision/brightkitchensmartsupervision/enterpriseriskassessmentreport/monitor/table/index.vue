@@ -14,6 +14,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getDetailEnObj, getRiskReportPage, exporRiskReportExcel, exporRiskReportPDF, exporRiskReportPDFSinglePDF } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
 import { downloadLocalTemplate } from '#/utils/genchuan/down';
+import { formatArrayDate } from '#/utils/genchuan/formatTime.ts';
 import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
 
 import {   useFormSchema, useGridColumns } from './data';
@@ -125,12 +126,12 @@ async function handleExportSinglePDF(row) {
   
   // 拼接beginTime数组为字符串
   if (Array.isArray(beginTime)) {
-    exportRow.beginTime = `${beginTime[0]}-${String(beginTime[1] + 1).padStart(2, '0')}-${String(beginTime[2]).padStart(2, '0')}`;
+    exportRow.beginTime = `${beginTime[0]}-${String(beginTime[1] ).padStart(2, '0')}-${String(beginTime[2]).padStart(2, '0')}`;
   }
   
   // 拼接endTime数组为字符串
   if (Array.isArray(endTime)) {
-    exportRow.endTime = `${endTime[0]}-${String(endTime[1] + 1).padStart(2, '0')}-${String(endTime[2]).padStart(2, '0')}`;
+    exportRow.endTime = `${endTime[0]}-${String(endTime[1]).padStart(2, '0')}-${String(endTime[2]).padStart(2, '0')}`;
   }
   
   const data = await exporRiskReportPDFSinglePDF(exportRow);
@@ -401,7 +402,7 @@ const openEn = async (row) => {
           {{ row.riskLevel }}
         </el-text>
       </template>
-      <template #reportNo="{ row }">
+       <template #reportNo="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
@@ -409,6 +410,13 @@ const openEn = async (row) => {
         >
           {{ row.reportNo }}
         </el-text>
+      </template>
+      <template #beginTime="{ row }">
+        {{ formatArrayDate(row.beginTime) }}
+      </template>
+      
+      <template #endTime="{ row }">
+        {{ formatArrayDate(row.endTime) }}
       </template>
       <template #entName="{ row }">
         <el-text
