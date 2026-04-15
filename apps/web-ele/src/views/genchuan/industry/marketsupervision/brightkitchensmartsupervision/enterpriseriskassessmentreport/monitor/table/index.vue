@@ -126,12 +126,12 @@ async function handleExportSinglePDF(row) {
   
   // 拼接beginTime数组为字符串
   if (Array.isArray(beginTime)) {
-    exportRow.beginTime = `${beginTime[0]}-${String(beginTime[1] + 1).padStart(2, '0')}-${String(beginTime[2]).padStart(2, '0')}`;
+    exportRow.beginTime = `${beginTime[0]}-${String(beginTime[1] ).padStart(2, '0')}-${String(beginTime[2]).padStart(2, '0')}`;
   }
   
   // 拼接endTime数组为字符串
   if (Array.isArray(endTime)) {
-    exportRow.endTime = `${endTime[0]}-${String(endTime[1] + 1).padStart(2, '0')}-${String(endTime[2]).padStart(2, '0')}`;
+    exportRow.endTime = `${endTime[0]}-${String(endTime[1]).padStart(2, '0')}-${String(endTime[2]).padStart(2, '0')}`;
   }
   
   const data = await exporRiskReportPDFSinglePDF(exportRow);
