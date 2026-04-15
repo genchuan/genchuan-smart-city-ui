@@ -9,10 +9,17 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
-import { dataList, textObj, useFormSchema, useGridColumns } from './data';
+import {
+  dataList,
+  detailFields,
+  textObj,
+  useFormSchema,
+  useGridColumns,
+} from './data';
 
 const props = defineProps({
   secondShow: {
@@ -34,16 +41,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
-const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  onCancel() {
-    detailDrawerApi.close();
-  },
-  onConfirm() {},
-  async onOpenChange() {},
-});
+const detailDrawerRef = ref(null);
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -119,13 +117,11 @@ function handleEdit(row) {
 }
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.induction_name]), // 修复：使用正确的字段名
+    text: $t('ui.actionMessage.deleting', [row.garageName]),
   });
   try {
     dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success(
-      $t('ui.actionMessage.deleteSuccess', [row.induction_name]),
-    ); // 修复：使用正确的字段名
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.garageName]));
     handleRefresh();
   } finally {
     loadingInstance.close();
@@ -161,6 +157,7 @@ const dataObj = reactive({
   pageSize: 10,
   apilist: dataList(),
   list: [],
+  searchParams: {},
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -170,21 +167,21 @@ const changeTotalShow = () => {
 const getTableData = (pageObj) => {
   const page = pageObj.page;
 
-  // 根据activeName筛选数据
+  // 根据searchParams筛选数据（已移除activeName状态筛选逻辑）
   const filteredList = dataObj.apilist.filter((v) => {
-    switch (activeName.value) {
-      case '全部': {
-        return true;
+    // 搜索条件筛选
+    let searchMatch = true;
+    Object.keys(dataObj.searchParams).forEach((key) => {
+      const value = dataObj.searchParams[key];
+      if (value) {
+        searchMatch =
+          typeof value === 'string'
+            ? searchMatch && v[key]?.toString().includes(value)
+            : searchMatch && v[key] === value;
       }
-      case '启用': {
-        return v.status === '1';
-      }
-      case '禁用': {
-        return v.status === '0';
-      }
-      // No default
-    }
-    return false;
+    });
+
+    return searchMatch;
   });
 
   dataObj.total = filteredList.length;
@@ -226,7 +223,9 @@ const [QueryForm] = useVbenForm({
 });
 
 // 搜索表单查询
-function onSubmit() {
+function onSubmit(values) {
+  dataObj.searchParams = values;
+  handleRefresh();
   drawerApi.close();
 }
 
@@ -258,47 +257,48 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-const activeName = ref('全部');
+// 三级状态相关逻辑 - 已屏蔽
+// const activeName = ref('全部');
 
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
-  detailDrawerApi.open();
+  detailDrawerRef.value.open();
 };
 
-// 修改tabsData为三个标签：全部、启用、禁用
-const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用' }]);
+// 修改tabsData为三个标签：全部、启用、禁用 - 已屏蔽
+// const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用' }]);
 
-// 创建标签文本，显示数量统计
-const createLabel = (item) => {
-  let count = 0;
+// 创建标签文本，显示数量统计 - 已屏蔽
+// const createLabel = (item) => {
+//   let count = 0;
+//
+//   switch (item.label) {
+//     case '全部': {
+//       count = dataObj.apilist.length;
+//
+//       break;
+//     }
+//     case '启用': {
+//       // 统计status为'1'的数据
+//       count = dataObj.apilist.filter((v) => v.status === '1').length;
+//
+//       break;
+//     }
+//     case '禁用': {
+//       // 统计status为'0'的数据
+//       count = dataObj.apilist.filter((v) => v.status === '0').length;
+//
+//       break;
+//     }
+//     // No default
+//   }
+//
+//   return `${item.label}(${count})`;
+// };
 
-  switch (item.label) {
-    case '全部': {
-      count = dataObj.apilist.length;
-
-      break;
-    }
-    case '启用': {
-      // 统计status为'1'的数据
-      count = dataObj.apilist.filter((v) => v.status === '1').length;
-
-      break;
-    }
-    case '禁用': {
-      // 统计status为'0'的数据
-      count = dataObj.apilist.filter((v) => v.status === '0').length;
-
-      break;
-    }
-    // No default
-  }
-
-  return `${item.label}(${count})`;
-};
-
-const handleClick = () => {
-  gridApi.query();
-};
+// const handleClick = () => {
+//   gridApi.query();
+// };
 const handleSerachShow = () => {
   drawerApi.open();
 };
@@ -312,77 +312,19 @@ const handleFullShow = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <DetailDrawer :title="`${dataObj.detailObj.induction_name}详情`">
-      <div class="detail-card">
-        <div class="detail-card-row">
-          <div class="detail-row-left">诱导屏ID:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.induction_id }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">诱导屏名称:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.induction_name }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">覆盖区域:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.region }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">关联车场:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.related_lot_ids }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">推送策略:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.push_strategy }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">状态:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.status === '1' ? '启用' : '禁用' }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">创建时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.create_time }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">更新时间:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.update_time }}
-          </div>
-        </div>
-
-        <div class="detail-card-row">
-          <div class="detail-row-left">备注:</div>
-          <div class="detail-row-right">
-            {{ dataObj.detailObj.remark }}
-          </div>
-        </div>
-      </div>
-    </DetailDrawer>
+    <!--   详情抽屉-->
+    <DetailDrawer
+      ref="detailDrawerRef"
+      :title="`${dataObj.detailObj.garageName}详情`"
+      :data="dataObj.detailObj"
+      :fields="detailFields"
+    />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
     <Grid>
-      <!-- 三级状态 -->
+      <!-- 三级状态 - 已屏蔽 -->
+      <!--
       <template #table-title>
         <div class="tabel-tabs">
           <div v-if="props.secondShow">
@@ -401,6 +343,7 @@ const handleFullShow = () => {
           </div>
         </div>
       </template>
+      -->
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
@@ -428,21 +371,20 @@ const handleFullShow = () => {
           />
         </div>
       </template>
-      <!-- 修复：使用正确的字段名'induction_name' -->
-      <template #induction_name="{ row }">
+      <template #id="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.induction_name }}
+          {{ row.id }}
         </el-text>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
             content="详情"
-            icon-name="Document"
+            icon-name="View"
             @click="handleOpenDetail(row)"
           />
           <IconButton

@@ -3,7 +3,7 @@ import { ref } from 'vue';
 
 import Table from './table/index.vue';
 
-import '#/components/page/index.scss';
+import '#/genchuan-components/page/index.scss';
 
 const changeArrowStatus = () => {
   secondShow.value = !secondShow.value;
@@ -13,17 +13,19 @@ const changeArrowStatus = () => {
 };
 const tabArray = ref([
   {
-    label: '车辆信息管理',
+    label: '充电车位',
     components: Table,
     showSecondary: true,
     secondShow: false,
   },
 ]);
-const activeName = ref('车辆信息管理');
+const activeName = ref('充电车位');
 const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
+    <!-- 箭头图标已屏蔽 -->
+    <!--
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -40,6 +42,7 @@ const secondShow = ref(false);
         <ArrowUp />
       </el-icon>
     </div>
+    -->
     <el-tabs
       v-model="activeName"
       class="common-tabs"
