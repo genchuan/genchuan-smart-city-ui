@@ -1,8 +1,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { confirm, useVbenDrawer } from '@vben/common-ui'; 
 
 import { ElDialog, ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
@@ -12,11 +11,14 @@ import * as XLSX from 'xlsx';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
+import { getOrderPage , exportOrderExcel, payOrder, cancelOrder , refundOrder, invoiceOrder} from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import { $t } from '#/locales';
 import { downloadLocalTemplate } from '#/utils/genchuan/down';
 import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
 
-import { dataList, useFormSchema, useGridColumns } from './data';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
+import { formatTimestamp } from '#/utils';
+import {  useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
 
 const props = defineProps({
@@ -101,37 +103,9 @@ function handleRefresh() {
 }
 
 // ====================== 导出 EXCEL ======================
-function handleExport() {
-  const records = gridApi.grid.getData();
-  if (!records || records.length === 0) {
-    ElMessage.warning('暂无数据可导出');
-    return;
-  }
-
-  const loading = ElLoading.service({ text: '正在导出Excel...' });
-  try {
-    const columns = useGridColumns().filter(
-      (col) => col.field && col.title && col.type !== 'checkbox',
-    );
-
-    const exportData = records.map((row) => {
-      const item = {};
-      columns.forEach((col) => {
-        item[col.title] = row[col.field] ?? '';
-      });
-      return item;
-    });
-
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, '报表数据');
-    XLSX.writeFile(wb, `企业违规报表_${Date.now()}.xlsx`);
-    ElMessage.success('导出成功！');
-  } catch (error) {
-    ElMessage.error(`导出失败：${error.message}`);
-  } finally {
-    loading.close();
-  }
+async function handleExport() { 
+    const data = await exportOrderExcel();
+    downloadFileFromBlobPart({ fileName: '订单报表.xls', source: data });
 }
 
 // ====================== 图片转PDF（终极零乱码） ======================
@@ -195,42 +169,48 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
-  total: dataList().length,
+  total: 0,
   currentPage: 1,
   pageSize: 10,
-  apilist: dataList(),
+  apilist: [],
   list: [],
   loading: false,
+  searchObj: {},
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
 // 表格数据获取
-const getTableData = (pageObj) => {
+const getTableData = async (pageObj) => {
   const page = pageObj.page;
-  dataObj.total = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    }).length;
-  dataObj.list = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    })
-    .slice(
-      (page.currentPage - 1) * page.pageSize,
-      page.currentPage * page.pageSize,
-    );
-  return dataObj;
+  const params = {
+    pageNo: page.currentPage,
+    pageSize: page.pageSize,
+    ...dataObj.searchObj,
+  };
+  
+  try {
+    dataObj.loading = true;
+    const res = await getOrderPage(params);
+    dataObj.total = res.total;
+    dataObj.list = res.list.map((v) => {
+        return {
+          ...v, 
+          payTime: formatTimestamp(v.payTime),
+          updateTime: formatTimestamp(v.updateTime),
+          createTime: formatTimestamp(v.createTime),
+        };
+      });;
+    return dataObj;
+  } catch (error) {
+    console.error('获取订单数据失败:', error);
+    ElMessage.error('获取订单数据失败');
+    return dataObj;
+  } finally {
+    dataObj.loading = false;
+  }
 };
-const [QueryForm] = useVbenForm({
+const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -239,11 +219,11 @@ const [QueryForm] = useVbenForm({
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
-  handleSubmit: () => {
-    dataObj.loading = true;
-    setTimeout(() => {
-      dataObj.loading = false;
-    }, 2000);
+  handleSubmit: async () => {
+    const values = await queryFormApi.getValues();
+    dataObj.searchObj = values;
+    dataObj.currentPage = 1;
+    gridApi.query();
     drawerApi.close();
   },
   layout: 'horizontal',
@@ -272,10 +252,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     pagerConfig: dataObj,
     toolbarConfig: {
-      'class-name': 'common-tool-bar-config',
-      refresh: true,
-      search: true,
-    },
+        'class-name': 'common-tool-bar-config',
+        refresh: true,
+        search: true,
+      },
     showOverflow: true,
   },
   gridEvents: {
@@ -326,6 +306,130 @@ const openEn = async () => {
   const res = await getDetailEnObj(1);
   dataObj.enDetailObj = res;
   enDetailObjRef.value?.open();
+};
+
+// 订单状态映射
+const statusMap = {
+  'charging': { label: '充电中', type: 'primary' },
+  'pending_pay': { label: '待支付', type: 'warning' },
+  'paid': { label: '已支付', type: 'success' },
+  'completed': { label: '已完成', type: 'success' },
+  'cancelled': { label: '已取消', type: 'info' },
+  'refunding': { label: '退款中', type: 'danger' },
+};
+
+// 获取状态标签
+const getStatusLabel = (status) => {
+  return statusMap[status]?.label || status;
+};
+
+// 获取状态类型
+const getStatusType = (status) => {
+  return statusMap[status]?.type || 'default';
+};
+
+// 支付弹窗
+const payDialogVisible = ref(false);
+const payForm = reactive({
+  id: '',
+  remark: '',
+});
+
+// 打开支付弹窗
+const handlePay = (row) => {
+  payForm.id = row.id;
+  payForm.remark = '';
+  payDialogVisible.value = true;
+};
+
+// 提交支付
+const handlePaySubmit = async () => {
+  try {
+    await payOrder(payForm);
+    ElMessage.success('支付成功');
+    payDialogVisible.value = false;
+    handleRefresh();
+  } catch (error) {
+    ElMessage.error('支付失败');
+  }
+};
+
+// 取消弹窗
+const cancelDialogVisible = ref(false);
+const cancelForm = reactive({
+  id: '',
+  remark: '',
+});
+
+// 打开取消弹窗
+const handleCancel = (row) => {
+  cancelForm.id = row.id;
+  cancelForm.remark = '';
+  cancelDialogVisible.value = true;
+};
+
+// 提交取消
+const handleCancelSubmit = async () => {
+  try {
+    await cancelOrder(cancelForm);
+    ElMessage.success('取消成功');
+    cancelDialogVisible.value = false;
+    handleRefresh();
+  } catch (error) {
+    ElMessage.error('取消失败');
+  }
+};
+
+// 退款弹窗
+const refundDialogVisible = ref(false);
+const refundForm = reactive({
+  id: '',
+  remark: '',
+});
+
+// 打开退款弹窗
+const handleRefund = (row) => {
+  refundForm.id = row.id;
+  refundForm.remark = '';
+  refundDialogVisible.value = true;
+};
+
+// 提交退款
+const handleRefundSubmit = async () => {
+  try {
+    await refundOrder(refundForm);
+    ElMessage.success('退款申请已提交');
+    refundDialogVisible.value = false;
+    handleRefresh();
+  } catch (error) {
+    ElMessage.error('退款申请失败');
+  }
+};
+
+// 开票弹窗
+const invoiceDialogVisible = ref(false);
+const invoiceForm = reactive({
+  id: '',
+  remark: '',
+});
+
+// 打开开票弹窗
+const handleInvoice = (row) => {
+  invoiceForm.id = row.id;
+  invoiceForm.remark = '';
+  invoiceDialogVisible.value = true;
+};
+
+// 提交开票
+const handleInvoiceSubmit = async () => {
+  try {
+    await invoiceOrder(invoiceForm);
+    ElMessage.success('开票申请已提交');
+    invoiceDialogVisible.value = false;
+    handleRefresh();
+  } catch (error) {
+    ElMessage.error('开票申请失败');
+  }
 };
 
 // ====================== 告警明细弹窗 ======================
@@ -406,24 +510,106 @@ const alarmColumns = [
       </el-table>
     </ElDialog>
 
+    <!-- 支付弹窗 -->
+    <ElDialog
+      v-model="payDialogVisible"
+      title="订单支付"
+      width="500px"
+      append-to-body
+    >
+      <el-form :model="payForm" label-width="80px">
+        <el-form-item label="订单ID">
+          <el-input v-model="payForm.id" disabled />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="payForm.remark" type="textarea" rows="3" placeholder="请输入支付备注" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="payDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handlePaySubmit">确认支付</el-button>
+        </div>
+      </template>
+    </ElDialog>
+
+    <!-- 取消弹窗 -->
+    <ElDialog
+      v-model="cancelDialogVisible"
+      title="取消订单"
+      width="500px"
+      append-to-body
+    >
+      <el-form :model="cancelForm" label-width="80px">
+        <el-form-item label="订单ID">
+          <el-input v-model="cancelForm.id" disabled />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="cancelForm.remark" type="textarea" rows="3" placeholder="请输入取消备注" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="cancelDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleCancelSubmit">确认取消</el-button>
+        </div>
+      </template>
+    </ElDialog>
+
+    <!-- 退款弹窗 -->
+    <ElDialog
+      v-model="refundDialogVisible"
+      title="退款申请"
+      width="500px"
+      append-to-body
+    >
+      <el-form :model="refundForm" label-width="80px">
+        <el-form-item label="订单ID">
+          <el-input v-model="refundForm.id" disabled />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="refundForm.remark" type="textarea" rows="3" placeholder="请输入退款备注" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="refundDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleRefundSubmit">确认退款</el-button>
+        </div>
+      </template>
+    </ElDialog>
+
+    <!-- 开票弹窗 -->
+    <ElDialog
+      v-model="invoiceDialogVisible"
+      title="开票申请"
+      width="500px"
+      append-to-body
+    >
+      <el-form :model="invoiceForm" label-width="80px">
+        <el-form-item label="订单ID">
+          <el-input v-model="invoiceForm.id" disabled />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="invoiceForm.remark" type="textarea" rows="3" placeholder="请输入开票备注" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="invoiceDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleInvoiceSubmit">确认开票</el-button>
+        </div>
+      </template>
+    </ElDialog>
+
     <Grid>
       <template #toolbar-tools>
-        <div class="common-toolbar-tools">
-          <IconButton
-            content="刷新"
-            icon-name="refresh"
-            @click="autoElmessage"
-          />
+        <div class="common-toolbar-tools"> 
           <IconButton
             content="导出EXCEL"
             icon-name="download"
             @click="handleExport"
-          />
-          <IconButton
-            content="导出PDF"
-            icon-name="download"
-            @click="handlePDF"
-          />
+          /> 
           <IconButton
             content="批量删除"
             icon-name="delete"
@@ -448,6 +634,12 @@ const alarmColumns = [
           />
         </div>
       </template>
+
+      <template #status="{ row }">
+        <el-tag :type="getStatusType(row.status)">
+          {{ getStatusLabel(row.status) }}
+        </el-tag>
+      </template>
       <template #reportNumber="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
@@ -464,28 +656,47 @@ const alarmColumns = [
         </el-text>
       </template>
 
-      <template #orderNumber="{ row }">
+      <template #orderNo="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.orderNumber }}
+          {{ row.orderNo }}
         </el-text>
       </template>
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            content="详情"
+            content="查看"
             icon-name="View"
             @click="handleOpenDetail(row)"
+          /> 
+          <IconButton
+            content="支付"
+            icon-name="Money"
+            @click="handlePay(row)"
+            v-if="row.status === 'pending_pay'"
           />
           <IconButton
-            content="删除"
+            content="取消"
             icon-name="delete"
             color="#F56C6C"
-            @click="handleDelete(row)"
+            @click="handleCancel(row)"
+            v-if="row.status === 'pending_pay'"
+          />
+          <IconButton
+            content="退款"
+            icon-name="back"
+            @click="handleRefund(row)"
+            v-if="row.status === 'paid'"
+          />
+          <IconButton
+            content="开票"
+            icon-name="Document"
+            @click="handleInvoice(row)"
+            v-if="row.status === 'completed'"
           />
         </div>
       </template>
