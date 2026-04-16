@@ -31,3 +31,7 @@ export function refundOrder(data) {
 export function invoiceOrder(data) {
   return requestClient.put('/ordertrade/all-order/invoice', data);
 }
+/** 订单图表 */
+export function getOrderChart() {
+  return requestClient.get('/ordertrade/all-order/chart');
+}

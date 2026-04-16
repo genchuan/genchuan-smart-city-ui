@@ -604,22 +604,12 @@ const alarmColumns = [
 
     <Grid>
       <template #toolbar-tools>
-        <div class="common-toolbar-tools">
-          <IconButton
-            content="刷新"
-            icon-name="refresh"
-            @click="autoElmessage"
-          />
+        <div class="common-toolbar-tools"> 
           <IconButton
             content="导出EXCEL"
             icon-name="download"
             @click="handleExport"
-          />
-          <IconButton
-            content="导出PDF"
-            icon-name="download"
-            @click="handlePDF"
-          />
+          /> 
           <IconButton
             content="批量删除"
             icon-name="delete"
@@ -698,7 +688,7 @@ const alarmColumns = [
           />
           <IconButton
             content="退款"
-            icon-name="Refresh"
+            icon-name="back"
             @click="handleRefund(row)"
             v-if="row.status === 'paid'"
           />
