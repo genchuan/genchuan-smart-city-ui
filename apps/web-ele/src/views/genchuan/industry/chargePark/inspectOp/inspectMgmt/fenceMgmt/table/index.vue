@@ -22,8 +22,10 @@ import {
   detailFields,
   filterFenceRows,
   filterMockList,
+  getFenceStatusLabel,
   getFenceStatusTagType,
   getUserName,
+  isFenceStatusLabel,
   normalizeFenceMgmtRow,
   textObj,
   useGridColumns,
@@ -78,8 +80,8 @@ const currentPageStats = computed(() => {
   let alarmCount = 0;
 
   for (const item of dataObj.list) {
-    if (item.status === '已生效') enabledCount += 1;
-    if (item.status === '未生效') disabledCount += 1;
+    if (isFenceStatusLabel(item.status, '已生效')) enabledCount += 1;
+    if (isFenceStatusLabel(item.status, '未生效')) disabledCount += 1;
     alarmCount += Number(item.alarmCount || 0);
   }
 
@@ -376,7 +378,7 @@ watch(
             :type="getFenceStatusTagType(filterStatus)"
             @close="cancelFilter('status')"
           >
-            围栏状态：{{ filterStatus }}
+            围栏状态：{{ getFenceStatusLabel(filterStatus) }}
           </ElTag>
           <ElTag
             v-if="filterAlarmed"
@@ -461,7 +463,7 @@ watch(
           :type="getFenceStatusTagType(row.status)"
           @click="handleStatusClick(row.status)"
         >
-          {{ row.status }}
+          {{ getFenceStatusLabel(row.status) }}
         </ElTag>
       </template>
 
@@ -479,13 +481,13 @@ watch(
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            v-if="row.status === '未生效'"
+            v-if="isFenceStatusLabel(row.status, '未生效')"
             content="生效"
             icon-name="CircleCheckFilled"
             @click="handleEnable(row)"
           />
           <IconButton
-            v-if="row.status === '已生效'"
+            v-if="isFenceStatusLabel(row.status, '已生效')"
             content="禁用"
             icon-name="VideoPause"
             @click="handleDisable(row)"

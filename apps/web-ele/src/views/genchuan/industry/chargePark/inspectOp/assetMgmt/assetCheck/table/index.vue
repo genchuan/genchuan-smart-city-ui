@@ -23,10 +23,13 @@ import StatusConfirmDialog from '../components/StatusConfirmDialog.vue';
 import {
   detailFields,
   filterMockList,
+  getCheckStatusLabel,
   getCheckStatusTagType,
+  getCheckTypeLabel,
   getCheckTypeTagType,
   getProgressStatus,
   getUserName,
+  isCheckStatusLabel,
   normalizeAssetCheckRow,
   textObj,
   useFormSchema,
@@ -80,14 +83,14 @@ const dataObj = reactive({
 });
 
 const currentPageStats = computed(() => {
-  const waitingCount = dataObj.list.filter(
-    (item) => item.status === '待盘点',
+  const waitingCount = dataObj.list.filter((item) =>
+    isCheckStatusLabel(item.status, '待盘点'),
   ).length;
-  const runningCount = dataObj.list.filter(
-    (item) => item.status === '盘点中',
+  const runningCount = dataObj.list.filter((item) =>
+    isCheckStatusLabel(item.status, '盘点中'),
   ).length;
-  const finishedCount = dataObj.list.filter(
-    (item) => item.status === '已完成',
+  const finishedCount = dataObj.list.filter((item) =>
+    isCheckStatusLabel(item.status, '已完成'),
   ).length;
 
   return {
@@ -409,7 +412,7 @@ watch(
             type="success"
             @close="cancelFilter('type')"
           >
-            盘点类型：{{ filterType }}
+            盘点类型：{{ getCheckTypeLabel(filterType) }}
           </ElTag>
           <ElTag
             v-if="filterStatus"
@@ -417,7 +420,7 @@ watch(
             type="warning"
             @close="cancelFilter('status')"
           >
-            盘点状态：{{ filterStatus }}
+            盘点状态：{{ getCheckStatusLabel(filterStatus) }}
           </ElTag>
           <ElTag
             v-if="filterCreator"
@@ -473,7 +476,7 @@ watch(
           :type="getCheckTypeTagType(row.type)"
           @click="handleTypeClick(row.type)"
         >
-          {{ row.type }}
+          {{ getCheckTypeLabel(row.type) }}
         </ElTag>
       </template>
 
@@ -492,7 +495,7 @@ watch(
           :type="getCheckStatusTagType(row.status)"
           @click="handleStatusClick(row.status)"
         >
-          {{ row.status }}
+          {{ getCheckStatusLabel(row.status) }}
         </ElTag>
       </template>
 
@@ -534,19 +537,19 @@ watch(
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            v-if="row.status === '待盘点'"
+            v-if="isCheckStatusLabel(row.status, '待盘点')"
             content="执行"
             icon-name="CircleCheckFilled"
             @click="handleExecute(row)"
           />
           <IconButton
-            v-if="row.status === '盘点中'"
+            v-if="isCheckStatusLabel(row.status, '盘点中')"
             content="更新进度"
             icon-name="Edit"
             @click="handleUpdateProgress(row)"
           />
           <IconButton
-            v-if="row.status === '已完成'"
+            v-if="isCheckStatusLabel(row.status, '已完成')"
             content="确认"
             icon-name="Select"
             @click="handleConfirm(row)"

@@ -1,24 +1,95 @@
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
+
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
-export const inspectTypeOptions = [
+export const INSPECT_PLAN_TYPE_DICT = DICT_TYPE.INSPECT_PLAN_TYPE;
+export const INSPECT_PLAN_CYCLE_DICT = DICT_TYPE.INSPECT_PLAN_CYCLE;
+export const INSPECT_PLAN_STATUS_DICT = DICT_TYPE.INSPECT_PLAN_STATUS;
+
+function getDictOptionsWithFallback(dictType, fallbackOptions) {
+  const options = getDictOptions(dictType, 'string');
+  return options.length > 0 ? options : fallbackOptions;
+}
+
+function getDictLabel(dictType, value) {
+  if (value === undefined || value === null || value === '') return '-';
+  const dict = getDictObj(dictType, String(value));
+  return dict?.label || value;
+}
+
+function isDictLabel(dictType, value, label) {
+  return (
+    String(value) === String(label) || getDictLabel(dictType, value) === label
+  );
+}
+
+function isSameDictValue(dictType, current, target) {
+  if (!target) return true;
+  return (
+    String(current) === String(target) ||
+    getDictLabel(dictType, current) === getDictLabel(dictType, target)
+  );
+}
+
+export function getPlanTypeLabel(value) {
+  return getDictLabel(INSPECT_PLAN_TYPE_DICT, value);
+}
+
+export function isPlanTypeLabel(value, label) {
+  return isDictLabel(INSPECT_PLAN_TYPE_DICT, value, label);
+}
+
+export function getPlanCycleLabel(value) {
+  return getDictLabel(INSPECT_PLAN_CYCLE_DICT, value);
+}
+
+export function isPlanCycleLabel(value, label) {
+  return isDictLabel(INSPECT_PLAN_CYCLE_DICT, value, label);
+}
+
+export function getPlanStatusLabel(value) {
+  return getDictLabel(INSPECT_PLAN_STATUS_DICT, value);
+}
+
+export function isPlanStatusLabel(value, label) {
+  return isDictLabel(INSPECT_PLAN_STATUS_DICT, value, label);
+}
+const fallbackInspectTypeOptions = [
   { label: '日常', value: '日常' },
   { label: '专项', value: '专项' },
   { label: '临时', value: '临时' },
 ];
 
-export const cycleOptions = [
+export const inspectTypeOptions = getDictOptionsWithFallback(
+  INSPECT_PLAN_TYPE_DICT,
+  fallbackInspectTypeOptions,
+);
+
+const fallbackCycleOptions = [
   { label: '日', value: '日' },
   { label: '周', value: '周' },
   { label: '月', value: '月' },
   { label: '季', value: '季' },
 ];
 
-export const statusOptions = [
+export const cycleOptions = getDictOptionsWithFallback(
+  INSPECT_PLAN_CYCLE_DICT,
+  fallbackCycleOptions,
+);
+
+const fallbackStatusOptions = [
   { label: '待生效', value: '待生效' },
   { label: '进行中', value: '进行中' },
   { label: '已完成', value: '已完成' },
   { label: '已暂停', value: '已暂停' },
 ];
+
+export const statusOptions = getDictOptionsWithFallback(
+  INSPECT_PLAN_STATUS_DICT,
+  fallbackStatusOptions,
+);
 
 export const auditorOptions = [
   { label: '张三', value: 1 },
@@ -73,7 +144,10 @@ export function getPlanTypeTagType(type) {
     专项: 'warning',
     临时: 'danger',
   };
-  return tagMap[type] || 'info';
+  return getDictTagTypeFromDict(
+    getDictObj(INSPECT_PLAN_TYPE_DICT, String(type)),
+    tagMap[getPlanTypeLabel(type)] || 'info',
+  );
 }
 
 export function getPlanStatusTagType(status) {
@@ -83,7 +157,10 @@ export function getPlanStatusTagType(status) {
     已完成: 'primary',
     已暂停: 'warning',
   };
-  return tagMap[status] || 'info';
+  return getDictTagTypeFromDict(
+    getDictObj(INSPECT_PLAN_STATUS_DICT, String(status)),
+    tagMap[getPlanStatusLabel(status)] || 'info',
+  );
 }
 
 export function getProgressStatus(progress) {
@@ -177,11 +254,23 @@ export function filterMockList(params = {}) {
 
   return list.filter((item) => {
     const matchName = !params.name || item.name.includes(String(params.name));
-    const matchType = !params.type || item.type === params.type;
+    const matchType = isSameDictValue(
+      INSPECT_PLAN_TYPE_DICT,
+      item.type,
+      params.type,
+    );
     const matchScope =
       !params.scope || item.scope.includes(String(params.scope));
-    const matchCycle = !params.cycle || item.cycle === params.cycle;
-    const matchStatus = !params.status || item.status === params.status;
+    const matchCycle = isSameDictValue(
+      INSPECT_PLAN_CYCLE_DICT,
+      item.cycle,
+      params.cycle,
+    );
+    const matchStatus = isSameDictValue(
+      INSPECT_PLAN_TYPE_DICT,
+      item.status,
+      params.status,
+    );
     const matchAuditor =
       !params.auditUserId ||
       Number(item.auditUserId) === Number(params.auditUserId);
@@ -444,6 +533,7 @@ export const detailFields = [
     label: '巡检类型',
     type: 'tag',
     tagType: getPlanTypeTagType,
+    formatter: getPlanTypeLabel,
   },
   { key: 'scope', label: '巡检范围' },
   { key: 'cycle', label: '执行周期' },
@@ -453,6 +543,7 @@ export const detailFields = [
     label: '计划状态',
     type: 'tag',
     tagType: getPlanStatusTagType,
+    formatter: getPlanStatusLabel,
   },
   { key: 'progressText', label: '执行进度' },
   { key: 'auditUserName', label: '审核人' },

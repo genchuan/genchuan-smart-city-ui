@@ -1,15 +1,72 @@
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
+
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
-export const checkTypeOptions = [
+export const ASSET_CHECK_TYPE_DICT = DICT_TYPE.ASSET_CHECK_TYPE;
+export const ASSET_CHECK_STATUS_DICT = DICT_TYPE.ASSET_CHECK_STATUS;
+
+function getDictOptionsWithFallback(dictType, fallbackOptions) {
+  const options = getDictOptions(dictType, 'string');
+  return options.length > 0 ? options : fallbackOptions;
+}
+
+function getDictLabel(dictType, value) {
+  if (value === undefined || value === null || value === '') return '-';
+  const dict = getDictObj(dictType, String(value));
+  return dict?.label || value;
+}
+
+function isDictLabel(dictType, value, label) {
+  return (
+    String(value) === String(label) || getDictLabel(dictType, value) === label
+  );
+}
+
+function isSameDictValue(dictType, current, target) {
+  if (!target) return true;
+  return (
+    String(current) === String(target) ||
+    getDictLabel(dictType, current) === getDictLabel(dictType, target)
+  );
+}
+
+export function getCheckTypeLabel(value) {
+  return getDictLabel(ASSET_CHECK_TYPE_DICT, value);
+}
+
+export function isCheckTypeLabel(value, label) {
+  return isDictLabel(ASSET_CHECK_TYPE_DICT, value, label);
+}
+
+export function getCheckStatusLabel(value) {
+  return getDictLabel(ASSET_CHECK_STATUS_DICT, value);
+}
+
+export function isCheckStatusLabel(value, label) {
+  return isDictLabel(ASSET_CHECK_STATUS_DICT, value, label);
+}
+const fallbackCheckTypeOptions = [
   { label: '定期', value: '定期' },
   { label: '临时', value: '临时' },
 ];
 
-export const checkStatusOptions = [
+export const checkTypeOptions = getDictOptionsWithFallback(
+  ASSET_CHECK_TYPE_DICT,
+  fallbackCheckTypeOptions,
+);
+
+const fallbackCheckStatusOptions = [
   { label: '待盘点', value: '待盘点' },
   { label: '盘点中', value: '盘点中' },
   { label: '已完成', value: '已完成' },
 ];
+
+export const checkStatusOptions = getDictOptionsWithFallback(
+  ASSET_CHECK_STATUS_DICT,
+  fallbackCheckStatusOptions,
+);
 
 export const userOptions = [
   { label: '张三', value: 1 },
@@ -56,7 +113,10 @@ export function getCheckTypeTagType(type) {
     定期: 'success',
     临时: 'warning',
   };
-  return tagMap[type] || 'info';
+  return getDictTagTypeFromDict(
+    getDictObj(ASSET_CHECK_TYPE_DICT, String(type)),
+    tagMap[getCheckTypeLabel(type)] || 'info',
+  );
 }
 
 export function getCheckStatusTagType(status) {
@@ -65,7 +125,10 @@ export function getCheckStatusTagType(status) {
     盘点中: 'warning',
     已完成: 'success',
   };
-  return tagMap[status] || 'info';
+  return getDictTagTypeFromDict(
+    getDictObj(ASSET_CHECK_STATUS_DICT, String(status)),
+    tagMap[getCheckStatusLabel(status)] || 'info',
+  );
 }
 
 export function getProgressStatus(progress) {
@@ -169,8 +232,16 @@ export function filterMockList(params = {}) {
   const confirmTimeRange = params.confirmTimeRange || params.confirmTime;
 
   return list.filter((item) => {
-    const matchType = !params.type || item.type === params.type;
-    const matchStatus = !params.status || item.status === params.status;
+    const matchType = isSameDictValue(
+      ASSET_CHECK_TYPE_DICT,
+      item.type,
+      params.type,
+    );
+    const matchStatus = isSameDictValue(
+      ASSET_CHECK_TYPE_DICT,
+      item.status,
+      params.status,
+    );
     const matchCreator =
       !params.creator || item.creator.includes(String(params.creator));
     const matchExecutor =
@@ -399,6 +470,7 @@ export const detailFields = [
     label: '盘点类型',
     type: 'tag',
     tagType: getCheckTypeTagType,
+    formatter: getCheckTypeLabel,
   },
   { key: 'checkTimeStr', label: '盘点时间' },
   { key: 'checkScope', label: '盘点范围' },
@@ -408,6 +480,7 @@ export const detailFields = [
     label: '盘点状态',
     type: 'tag',
     tagType: getCheckStatusTagType,
+    formatter: getCheckStatusLabel,
   },
   { key: 'creator', label: '发起人员' },
   { key: 'executeUserName', label: '执行人员' },

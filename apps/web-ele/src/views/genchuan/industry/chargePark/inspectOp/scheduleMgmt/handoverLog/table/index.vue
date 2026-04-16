@@ -22,8 +22,10 @@ import StatusConfirmDialog from '../components/StatusConfirmDialog.vue';
 import {
   detailFields,
   filterMockList,
+  getStatusLabel,
   getStatusTagType,
   getUserName,
+  isStatusLabel,
   normalizeHandoverLogRow,
   textObj,
   useFormSchema,
@@ -76,11 +78,11 @@ const dataObj = reactive({
 });
 
 const currentPageStats = computed(() => {
-  const pendingCount = dataObj.list.filter(
-    (item) => item.status === '待确认',
+  const pendingCount = dataObj.list.filter((item) =>
+    isStatusLabel(item.status, '待确认'),
   ).length;
-  const confirmedCount = dataObj.list.filter(
-    (item) => item.status === '已确认',
+  const confirmedCount = dataObj.list.filter((item) =>
+    isStatusLabel(item.status, '已确认'),
   ).length;
 
   return {
@@ -401,7 +403,7 @@ watch(
             type="warning"
             @close="cancelFilter('status')"
           >
-            日志状态：{{ filterStatus }}
+            日志状态：{{ getStatusLabel(filterStatus) }}
           </ElTag>
           <ElTag
             v-if="filterConfirmUserId"
@@ -471,7 +473,7 @@ watch(
           :type="getStatusTagType(row.status)"
           @click="handleStatusClick(row.status)"
         >
-          {{ row.status }}
+          {{ getStatusLabel(row.status) }}
         </ElTag>
       </template>
 
@@ -491,7 +493,7 @@ watch(
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            v-if="row.status === '待确认'"
+            v-if="isStatusLabel(row.status, '待确认')"
             content="确认"
             icon-name="Select"
             @click="handleConfirm(row)"

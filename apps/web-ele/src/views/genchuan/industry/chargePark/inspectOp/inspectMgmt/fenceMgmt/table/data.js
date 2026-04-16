@@ -1,5 +1,43 @@
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
+
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
+export const FENCE_MGMT_STATUS_DICT = DICT_TYPE.FENCE_MGMT_STATUS;
+
+function getDictOptionsWithFallback(dictType, fallbackOptions) {
+  const options = getDictOptions(dictType, 'string');
+  return options.length > 0 ? options : fallbackOptions;
+}
+
+function getDictLabel(dictType, value) {
+  if (value === undefined || value === null || value === '') return '-';
+  const dict = getDictObj(dictType, String(value));
+  return dict?.label || value;
+}
+
+function isDictLabel(dictType, value, label) {
+  return (
+    String(value) === String(label) || getDictLabel(dictType, value) === label
+  );
+}
+
+function isSameDictValue(dictType, current, target) {
+  if (!target) return true;
+  return (
+    String(current) === String(target) ||
+    getDictLabel(dictType, current) === getDictLabel(dictType, target)
+  );
+}
+
+export function getFenceStatusLabel(value) {
+  return getDictLabel(FENCE_MGMT_STATUS_DICT, value);
+}
+
+export function isFenceStatusLabel(value, label) {
+  return isDictLabel(FENCE_MGMT_STATUS_DICT, value, label);
+}
 export const userOptions = [
   { label: '张三', value: 1 },
   { label: '李四', value: 2 },
@@ -7,10 +45,15 @@ export const userOptions = [
   { label: '赵六', value: 4 },
 ];
 
-export const statusOptions = [
+const fallbackStatusOptions = [
   { label: '未生效', value: '未生效' },
   { label: '已生效', value: '已生效' },
 ];
+
+export const statusOptions = getDictOptionsWithFallback(
+  FENCE_MGMT_STATUS_DICT,
+  fallbackStatusOptions,
+);
 
 const baseTime = 1_775_011_986_000;
 const fenceNames = [
@@ -83,7 +126,10 @@ export function getFenceStatusTagType(status) {
     未生效: 'info',
     已生效: 'success',
   };
-  return tagMap[status] || 'info';
+  return getDictTagTypeFromDict(
+    getDictObj(FENCE_MGMT_STATUS_DICT, String(status)),
+    tagMap[getFenceStatusLabel(status)] || 'info',
+  );
 }
 
 export function parseFenceArea(area) {
@@ -234,7 +280,11 @@ export function filterFenceRows(list = [], params = {}) {
     const matchName = !params.name || item.name.includes(String(params.name));
     const matchUser =
       !params.userId || Number(item.userId) === Number(params.userId);
-    const matchStatus = !params.status || item.status === params.status;
+    const matchStatus = isSameDictValue(
+      FENCE_MGMT_STATUS_DICT,
+      item.status,
+      params.status,
+    );
     const matchArea =
       !params.areaLabel || item.areaLabel === String(params.areaLabel);
     const matchAlarmed = !params.alarmed || item.alarmCount > 0;
@@ -384,6 +434,7 @@ export const detailFields = [
     label: '围栏状态',
     type: 'tag',
     tagType: getFenceStatusTagType,
+    formatter: getFenceStatusLabel,
   },
   { key: 'alarmText', label: '告警触发数' },
   { key: 'effectTimeStr', label: '生效时间' },

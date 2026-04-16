@@ -1,5 +1,61 @@
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
+
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
+export const SCHEDULE_VIEW_SHIFT_TYPE_DICT = DICT_TYPE.SCHEDULE_VIEW_SHIFT_TYPE;
+export const SCHEDULE_VIEW_STATUS_DICT = DICT_TYPE.SCHEDULE_VIEW_STATUS;
+export const SHIFT_APPLY_STATUS_DICT = DICT_TYPE.SHIFT_APPLY_STATUS;
+
+function getDictOptionsWithFallback(dictType, fallbackOptions) {
+  const options = getDictOptions(dictType, 'string');
+  return options.length > 0 ? options : fallbackOptions;
+}
+
+function getDictLabel(dictType, value) {
+  if (value === undefined || value === null || value === '') return '-';
+  const dict = getDictObj(dictType, String(value));
+  return dict?.label || value;
+}
+
+function isDictLabel(dictType, value, label) {
+  return (
+    String(value) === String(label) || getDictLabel(dictType, value) === label
+  );
+}
+
+function isSameDictValue(dictType, current, target) {
+  if (!target) return true;
+  return (
+    String(current) === String(target) ||
+    getDictLabel(dictType, current) === getDictLabel(dictType, target)
+  );
+}
+
+export function getShiftTypeLabel(value) {
+  return getDictLabel(SCHEDULE_VIEW_SHIFT_TYPE_DICT, value);
+}
+
+export function isShiftTypeLabel(value, label) {
+  return isDictLabel(SCHEDULE_VIEW_SHIFT_TYPE_DICT, value, label);
+}
+
+export function getScheduleStatusLabel(value) {
+  return getDictLabel(SCHEDULE_VIEW_STATUS_DICT, value);
+}
+
+export function isScheduleStatusLabel(value, label) {
+  return isDictLabel(SCHEDULE_VIEW_STATUS_DICT, value, label);
+}
+
+export function getApplyStatusLabel(value) {
+  return getDictLabel(SHIFT_APPLY_STATUS_DICT, value);
+}
+
+export function isApplyStatusLabel(value, label) {
+  return isDictLabel(SHIFT_APPLY_STATUS_DICT, value, label);
+}
 export const userOptions = [
   { label: '张三', position: '巡检员', value: 1 },
   { label: '李四', position: '值班长', value: 2 },
@@ -8,23 +64,38 @@ export const userOptions = [
   { label: '陈七', position: '运维专员', value: 5 },
 ];
 
-export const shiftTypeOptions = [
+const fallbackShiftTypeOptions = [
   { label: '早班', value: '早班' },
   { label: '中班', value: '中班' },
   { label: '晚班', value: '晚班' },
 ];
 
-export const scheduleStatusOptions = [
+export const shiftTypeOptions = getDictOptionsWithFallback(
+  SCHEDULE_VIEW_SHIFT_TYPE_DICT,
+  fallbackShiftTypeOptions,
+);
+
+const fallbackScheduleStatusOptions = [
   { label: '正常', value: '正常' },
   { label: '已换班', value: '已换班' },
 ];
 
-export const shiftApplyStatusOptions = [
+export const scheduleStatusOptions = getDictOptionsWithFallback(
+  SCHEDULE_VIEW_STATUS_DICT,
+  fallbackScheduleStatusOptions,
+);
+
+const fallbackShiftApplyStatusOptions = [
   { label: '未申请', value: '未申请' },
   { label: '申请中', value: '申请中' },
   { label: '已通过', value: '已通过' },
   { label: '已驳回', value: '已驳回' },
 ];
+
+export const shiftApplyStatusOptions = getDictOptionsWithFallback(
+  SHIFT_APPLY_STATUS_DICT,
+  fallbackShiftApplyStatusOptions,
+);
 
 export const positionOptions = [
   { label: '巡检员', value: '巡检员' },
@@ -68,29 +139,38 @@ export function getPositionName(userId) {
 
 export function getShiftTypeTagType(shiftType) {
   const tagMap = {
-    中班: 'warning',
     早班: 'success',
+    中班: 'warning',
     晚班: 'info',
   };
-  return tagMap[shiftType] || 'info';
+  return getDictTagTypeFromDict(
+    getDictObj(SCHEDULE_VIEW_SHIFT_TYPE_DICT, String(shiftType)),
+    tagMap[getShiftTypeLabel(shiftType)] || 'info',
+  );
 }
 
 export function getScheduleStatusTagType(status) {
   const tagMap = {
-    已换班: 'primary',
     正常: 'success',
+    已换班: 'primary',
   };
-  return tagMap[status] || 'info';
+  return getDictTagTypeFromDict(
+    getDictObj(SCHEDULE_VIEW_STATUS_DICT, String(status)),
+    tagMap[getScheduleStatusLabel(status)] || 'info',
+  );
 }
 
 export function getApplyStatusTagType(status) {
   const tagMap = {
-    已通过: 'success',
-    已驳回: 'danger',
     未申请: 'info',
     申请中: 'warning',
+    已通过: 'success',
+    已驳回: 'danger',
   };
-  return tagMap[status] || 'info';
+  return getDictTagTypeFromDict(
+    getDictObj(SHIFT_APPLY_STATUS_DICT, String(status)),
+    tagMap[getApplyStatusLabel(status)] || 'info',
+  );
 }
 
 function toScheduleDate(offset) {
@@ -194,11 +274,18 @@ export function filterMockList(params = {}) {
       !params.scheduleDate || Array.isArray(params.scheduleDate)
         ? isDateInRange(item.scheduleDate, dateRange)
         : item.scheduleDate === params.scheduleDate;
-    const matchShiftType =
-      !params.shiftType || item.shiftType === params.shiftType;
+    const matchShiftType = isSameDictValue(
+      SCHEDULE_VIEW_SHIFT_TYPE_DICT,
+      item.shiftType,
+      params.shiftType,
+    );
     const matchPosition =
       !params.positionName || item.positionName === params.positionName;
-    const matchStatus = !params.status || item.status === params.status;
+    const matchStatus = isSameDictValue(
+      SCHEDULE_VIEW_SHIFT_TYPE_DICT,
+      item.status,
+      params.status,
+    );
     const matchApplyStatus =
       !params.shiftApplyStatus ||
       item.shiftApplyStatus === params.shiftApplyStatus;
@@ -431,6 +518,7 @@ export const detailFields = [
     label: '排班时段',
     type: 'tag',
     tagType: getShiftTypeTagType,
+    formatter: getShiftTypeLabel,
   },
   { key: 'positionName', label: '所属岗位' },
   {
@@ -438,12 +526,14 @@ export const detailFields = [
     label: '排班状态',
     type: 'tag',
     tagType: getScheduleStatusTagType,
+    formatter: getScheduleStatusLabel,
   },
   {
     key: 'shiftApplyStatus',
     label: '换班状态',
     type: 'tag',
     tagType: getApplyStatusTagType,
+    formatter: getApplyStatusLabel,
   },
   { key: 'applyRecord', label: '申请记录' },
   { key: 'creator', label: '创建者' },

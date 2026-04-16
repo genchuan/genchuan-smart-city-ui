@@ -24,7 +24,9 @@ import {
   filterMockList,
   getStationName,
   getStockProgressStatus,
+  getStockStatusLabel,
   getStockStatusTagType,
+  isStockStatusLabel,
   normalizeAssetStockRow,
   textObj,
   useAllocateFormSchema,
@@ -89,11 +91,11 @@ const currentPageStats = computed(() => {
     (sum, item) => sum + Number(item.currentStock || 0),
     0,
   );
-  const lowCount = dataObj.list.filter(
-    (item) => item.status === '低库存',
+  const lowCount = dataObj.list.filter((item) =>
+    isStockStatusLabel(item.status, '低库存'),
   ).length;
-  const warnCount = dataObj.list.filter(
-    (item) => item.status === '预警库存',
+  const warnCount = dataObj.list.filter((item) =>
+    isStockStatusLabel(item.status, '预警库存'),
   ).length;
 
   return {
@@ -437,7 +439,7 @@ watch(
             type="warning"
             @close="cancelFilter('status')"
           >
-            库存状态：{{ filterStatus }}
+            库存状态：{{ getStockStatusLabel(filterStatus) }}
           </ElTag>
           <ElTag
             v-if="filterStationId"
@@ -514,7 +516,7 @@ watch(
           :type="getStockStatusTagType(row.status)"
           @click="handleStatusClick(row.status)"
         >
-          {{ row.status }}
+          {{ getStockStatusLabel(row.status) }}
         </ElTag>
       </template>
 
@@ -554,13 +556,13 @@ watch(
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            v-if="row.status !== '正常'"
+            v-if="!isStockStatusLabel(row.status, '正常')"
             content="补货"
             icon-name="Plus"
             @click="handleReplenish(row)"
           />
           <IconButton
-            v-if="row.status === '预警库存'"
+            v-if="isStockStatusLabel(row.status, '预警库存')"
             content="告警"
             icon-name="WarningFilled"
             @click="handleAlarm(row)"

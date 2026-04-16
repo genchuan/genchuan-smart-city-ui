@@ -23,9 +23,11 @@ import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import {
   detailFields,
   filterMockList,
+  getProcessStatusLabel,
   getProcessStatusTagType,
   getProcessUserName,
   getStationName,
+  isProcessStatusLabel,
   normalizeOilMonitorRow,
   processMethodOptions,
   processUserOptions,
@@ -123,12 +125,15 @@ const dataObj = reactive({
 });
 
 const currentPageStats = computed(() => ({
-  waitCount: dataObj.list.filter((item) => item.processStatus === '未处理')
-    .length,
-  handlingCount: dataObj.list.filter((item) => item.processStatus === '处理中')
-    .length,
-  closedCount: dataObj.list.filter((item) => item.processStatus === '已关闭')
-    .length,
+  waitCount: dataObj.list.filter((item) =>
+    isProcessStatusLabel(item.processStatus, '未处理'),
+  ).length,
+  handlingCount: dataObj.list.filter((item) =>
+    isProcessStatusLabel(item.processStatus, '处理中'),
+  ).length,
+  closedCount: dataObj.list.filter((item) =>
+    isProcessStatusLabel(item.processStatus, '已关闭'),
+  ).length,
 }));
 
 const processDrawerTitle = computed(() => {
@@ -318,8 +323,8 @@ function openProcessDrawer(row) {
 }
 
 function openBatchProcessDrawer() {
-  const rows = checkedRows.value.filter(
-    (item) => item.processStatus === '未处理',
+  const rows = checkedRows.value.filter((item) =>
+    isProcessStatusLabel(item.processStatus, '未处理'),
   );
   if (rows.length === 0) {
     ElMessage.warning('请先勾选未处理的占位数据');
@@ -646,7 +651,7 @@ watch(
             :type="getProcessStatusTagType(filterProcessStatus)"
             @close="cancelFilter('processStatus')"
           >
-            处置状态：{{ filterProcessStatus }}
+            处置状态：{{ getProcessStatusLabel(filterProcessStatus) }}
           </ElTag>
           <ElTag
             v-if="filterProcessUserId"
@@ -725,7 +730,7 @@ watch(
           style="cursor: pointer"
           @click="handleStatusClick(row.processStatus)"
         >
-          {{ row.processStatus }}
+          {{ getProcessStatusLabel(row.processStatus) }}
         </ElTag>
       </template>
 
@@ -767,19 +772,19 @@ watch(
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            v-if="row.processStatus === '未处理'"
+            v-if="isProcessStatusLabel(row.processStatus, '未处理')"
             content="处置"
             icon-name="Tools"
             @click="openProcessDrawer(row)"
           />
           <IconButton
-            v-if="row.processStatus === '未处理'"
+            v-if="isProcessStatusLabel(row.processStatus, '未处理')"
             content="忽略"
             icon-name="Close"
             @click="openIgnoreDialog(row)"
           />
           <IconButton
-            v-if="row.processStatus === '处理中'"
+            v-if="isProcessStatusLabel(row.processStatus, '处理中')"
             content="更新进度"
             icon-name="Edit"
             @click="openProgressDialog(row)"

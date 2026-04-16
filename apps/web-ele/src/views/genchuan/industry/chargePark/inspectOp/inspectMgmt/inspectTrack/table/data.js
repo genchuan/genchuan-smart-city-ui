@@ -1,5 +1,43 @@
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
+
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
+export const INSPECT_TRACK_STATUS_DICT = DICT_TYPE.INSPECT_TRACK_STATUS;
+
+function getDictOptionsWithFallback(dictType, fallbackOptions) {
+  const options = getDictOptions(dictType, 'string');
+  return options.length > 0 ? options : fallbackOptions;
+}
+
+function getDictLabel(dictType, value) {
+  if (value === undefined || value === null || value === '') return '-';
+  const dict = getDictObj(dictType, String(value));
+  return dict?.label || value;
+}
+
+function isDictLabel(dictType, value, label) {
+  return (
+    String(value) === String(label) || getDictLabel(dictType, value) === label
+  );
+}
+
+function isSameDictValue(dictType, current, target) {
+  if (!target) return true;
+  return (
+    String(current) === String(target) ||
+    getDictLabel(dictType, current) === getDictLabel(dictType, target)
+  );
+}
+
+export function getTrackStatusLabel(value) {
+  return getDictLabel(INSPECT_TRACK_STATUS_DICT, value);
+}
+
+export function isTrackStatusLabel(value, label) {
+  return isDictLabel(INSPECT_TRACK_STATUS_DICT, value, label);
+}
 export const userOptions = [
   { label: '张三', value: 1 },
   { label: '李四', value: 2 },
@@ -16,10 +54,15 @@ export const areaOptions = [
   { label: '南安市', value: '南安市' },
 ];
 
-export const trackStatusOptions = [
+const fallbackTrackStatusOptions = [
   { label: '正常', value: '正常' },
   { label: '异常', value: '异常' },
 ];
+
+export const trackStatusOptions = getDictOptionsWithFallback(
+  INSPECT_TRACK_STATUS_DICT,
+  fallbackTrackStatusOptions,
+);
 
 export const syncStatusOptions = [
   { label: '已同步', value: '已同步' },
@@ -98,7 +141,10 @@ export function getTrackStatusTagType(status) {
     正常: 'success',
     异常: 'danger',
   };
-  return tagMap[status] || 'info';
+  return getDictTagTypeFromDict(
+    getDictObj(INSPECT_TRACK_STATUS_DICT, String(status)),
+    tagMap[getTrackStatusLabel(status)] || 'info',
+  );
 }
 
 export function getSyncStatusTagType(status) {
@@ -344,7 +390,11 @@ export function filterInspectTrackRows(list = [], params = {}) {
       !params.userId || Number(item.userId) === Number(params.userId);
     const matchArea =
       !params.area || String(item.area).includes(String(params.area));
-    const matchStatus = !params.status || item.status === params.status;
+    const matchStatus = isSameDictValue(
+      INSPECT_TRACK_STATUS_DICT,
+      item.status,
+      params.status,
+    );
     const matchSyncStatus =
       !params.syncStatus || item.syncStatus === params.syncStatus;
     const matchTrackTime = isInRange(item.trackTime, trackTimeRange);
@@ -551,6 +601,7 @@ export const detailFields = [
     label: '轨迹状态',
     type: 'tag',
     tagType: getTrackStatusTagType,
+    formatter: getTrackStatusLabel,
   },
   {
     key: 'syncStatus',

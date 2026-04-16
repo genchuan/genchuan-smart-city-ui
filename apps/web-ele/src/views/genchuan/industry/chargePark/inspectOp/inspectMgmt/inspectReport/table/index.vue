@@ -29,10 +29,13 @@ import {
   detailFields,
   filterInspectReportRows,
   filterMockList,
+  getReportStatusLabel,
   getReportStatusTagType,
+  getReportTypeLabel,
   getReportTypeTagType,
   getTaskName,
   getUserName,
+  isReportStatusLabel,
   normalizeInspectReportRow,
   textObj,
   useGridColumns,
@@ -89,14 +92,14 @@ const dataObj = reactive({
 });
 
 const currentPageStats = computed(() => {
-  const waitAuditCount = dataObj.list.filter(
-    (item) => item.status === '待审核',
+  const waitAuditCount = dataObj.list.filter((item) =>
+    isReportStatusLabel(item.status, '待审核'),
   ).length;
-  const waitProcessCount = dataObj.list.filter(
-    (item) => item.status === '待处置',
+  const waitProcessCount = dataObj.list.filter((item) =>
+    isReportStatusLabel(item.status, '待处置'),
   ).length;
-  const finishedCount = dataObj.list.filter(
-    (item) => item.status === '已完成',
+  const finishedCount = dataObj.list.filter((item) =>
+    isReportStatusLabel(item.status, '已完成'),
   ).length;
 
   return {
@@ -249,7 +252,9 @@ function handleBatchAudit() {
     ElMessage.warning('请先勾选待审核上报');
     return;
   }
-  const invalidRows = rows.filter((item) => item.status !== '待审核');
+  const invalidRows = rows.filter(
+    (item) => !isReportStatusLabel(item.status, '待审核'),
+  );
   if (invalidRows.length > 0) {
     ElMessage.warning('批量审核只支持待审核上报');
     return;
@@ -437,7 +442,7 @@ watch(
             :type="getReportTypeTagType(filterType)"
             @close="cancelFilter('type')"
           >
-            问题类型：{{ filterType }}
+            问题类型：{{ getReportTypeLabel(filterType) }}
           </ElTag>
           <ElTag
             v-if="filterStatus"
@@ -445,7 +450,7 @@ watch(
             :type="getReportStatusTagType(filterStatus)"
             @close="cancelFilter('status')"
           >
-            上报状态：{{ filterStatus }}
+            上报状态：{{ getReportStatusLabel(filterStatus) }}
           </ElTag>
           <ElTag
             v-if="filterCreator"
@@ -530,7 +535,7 @@ watch(
           :type="getReportTypeTagType(row.type)"
           @click="handleTypeClick(row.type)"
         >
-          {{ row.type }}
+          {{ getReportTypeLabel(row.type) }}
         </ElTag>
       </template>
 
@@ -540,7 +545,7 @@ watch(
           :type="getReportStatusTagType(row.status)"
           @click="handleStatusClick(row.status)"
         >
-          {{ row.status }}
+          {{ getReportStatusLabel(row.status) }}
         </ElTag>
       </template>
 
@@ -597,19 +602,19 @@ watch(
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            v-if="row.status === '待审核'"
+            v-if="isReportStatusLabel(row.status, '待审核')"
             content="通过"
             icon-name="Check"
             @click="handleApprove(row)"
           />
           <IconButton
-            v-if="row.status === '待审核'"
+            v-if="isReportStatusLabel(row.status, '待审核')"
             content="驳回"
             icon-name="Close"
             @click="handleReject(row)"
           />
           <IconButton
-            v-if="row.status === '待处置'"
+            v-if="isReportStatusLabel(row.status, '待处置')"
             content="执行"
             icon-name="EditPen"
             @click="handleProcess(row)"

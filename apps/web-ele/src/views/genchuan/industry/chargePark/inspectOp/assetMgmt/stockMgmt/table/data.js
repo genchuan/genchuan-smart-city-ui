@@ -1,10 +1,53 @@
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
+
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
-export const stockStatusOptions = [
+export const ASSET_STOCK_STATUS_DICT = DICT_TYPE.ASSET_STOCK_STATUS;
+
+function getDictOptionsWithFallback(dictType, fallbackOptions) {
+  const options = getDictOptions(dictType, 'string');
+  return options.length > 0 ? options : fallbackOptions;
+}
+
+function getDictLabel(dictType, value) {
+  if (value === undefined || value === null || value === '') return '-';
+  const dict = getDictObj(dictType, String(value));
+  return dict?.label || value;
+}
+
+function isDictLabel(dictType, value, label) {
+  return (
+    String(value) === String(label) || getDictLabel(dictType, value) === label
+  );
+}
+
+function isSameDictValue(dictType, current, target) {
+  if (!target) return true;
+  return (
+    String(current) === String(target) ||
+    getDictLabel(dictType, current) === getDictLabel(dictType, target)
+  );
+}
+
+export function getStockStatusLabel(value) {
+  return getDictLabel(ASSET_STOCK_STATUS_DICT, value);
+}
+
+export function isStockStatusLabel(value, label) {
+  return isDictLabel(ASSET_STOCK_STATUS_DICT, value, label);
+}
+const fallbackStockStatusOptions = [
   { label: '正常', value: '正常' },
   { label: '低库存', value: '低库存' },
   { label: '预警库存', value: '预警库存' },
 ];
+
+export const stockStatusOptions = getDictOptionsWithFallback(
+  ASSET_STOCK_STATUS_DICT,
+  fallbackStockStatusOptions,
+);
 
 export const assetOptions = [
   { label: '车位监测摄像头', type: '监测设备', value: 1 },
@@ -70,11 +113,14 @@ export function getStationName(stationId) {
 
 export function getStockStatusTagType(status) {
   const tagMap = {
-    低库存: 'warning',
     正常: 'success',
+    低库存: 'warning',
     预警库存: 'danger',
   };
-  return tagMap[status] || 'info';
+  return getDictTagTypeFromDict(
+    getDictObj(ASSET_STOCK_STATUS_DICT, String(status)),
+    tagMap[getStockStatusLabel(status)] || 'info',
+  );
 }
 
 export function getStockProgressStatus(row) {
@@ -185,7 +231,11 @@ export function filterMockList(params = {}) {
       !params.assetId || Number(item.assetId) === Number(params.assetId);
     const matchAssetName =
       !params.assetName || item.assetName.includes(String(params.assetName));
-    const matchStatus = !params.status || item.status === params.status;
+    const matchStatus = isSameDictValue(
+      ASSET_STOCK_STATUS_DICT,
+      item.status,
+      params.status,
+    );
     const matchStation =
       !params.stationId || Number(item.stationId) === Number(params.stationId);
     const matchTrendTime =
@@ -429,6 +479,7 @@ export const detailFields = [
     label: '库存状态',
     type: 'tag',
     tagType: getStockStatusTagType,
+    formatter: getStockStatusLabel,
   },
   { key: 'stationName', label: '所属仓库' },
   { key: 'lastUpdateTimeStr', label: '最后更新时间' },

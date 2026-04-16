@@ -30,9 +30,11 @@ import {
   getArchiveTagType,
   getPlanName,
   getProgressStatus,
+  getTaskStatusLabel,
   getTaskStatusTagType,
   getTaskTypeTagType,
   getUserName,
+  isTaskStatusLabel,
   normalizeInspectTaskRow,
   textObj,
   useGridColumns,
@@ -90,10 +92,10 @@ const dataObj = reactive({
 
 const currentPageStats = computed(() => {
   const pendingCount = dataObj.list.filter(
-    (item) => item.status !== '已完成',
+    (item) => !isTaskStatusLabel(item.status, '已完成'),
   ).length;
-  const finishedCount = dataObj.list.filter(
-    (item) => item.status === '已完成',
+  const finishedCount = dataObj.list.filter((item) =>
+    isTaskStatusLabel(item.status, '已完成'),
   ).length;
   const archiveCount = dataObj.list.filter((item) => item.isArchive).length;
 
@@ -311,7 +313,9 @@ function handleBatchDispatch() {
     ElMessage.warning('请先勾选待派发任务');
     return;
   }
-  const invalidRows = rows.filter((item) => item.status !== '待派发');
+  const invalidRows = rows.filter(
+    (item) => !isTaskStatusLabel(item.status, '待派发'),
+  );
   if (invalidRows.length > 0) {
     ElMessage.warning('批量派发只支持待派发任务');
     return;
@@ -617,7 +621,7 @@ watch(
           :type="getTaskStatusTagType(row.status)"
           @click="handleStatusClick(row.status)"
         >
-          {{ row.status }}
+          {{ getTaskStatusLabel(row.status) }}
         </ElTag>
       </template>
 
@@ -643,31 +647,31 @@ watch(
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            v-if="row.status === '待派发'"
+            v-if="isTaskStatusLabel(row.status, '待派发')"
             content="派发"
             icon-name="Promotion"
             @click="handleDispatch(row)"
           />
           <IconButton
-            v-if="row.status === '待认领'"
+            v-if="isTaskStatusLabel(row.status, '待认领')"
             content="认领"
             icon-name="CircleCheckFilled"
             @click="handleClaim(row)"
           />
           <IconButton
-            v-if="row.status === '处理中'"
+            v-if="isTaskStatusLabel(row.status, '处理中')"
             content="更新进度"
             icon-name="EditPen"
             @click="handleProgress(row)"
           />
           <IconButton
-            v-if="row.status === '处理中'"
+            v-if="isTaskStatusLabel(row.status, '处理中')"
             content="转派"
             icon-name="Switch"
             @click="handleTransfer(row)"
           />
           <IconButton
-            v-if="row.status === '已完成'"
+            v-if="isTaskStatusLabel(row.status, '已完成')"
             content="归档"
             icon-name="FolderChecked"
             @click="handleArchive(row)"

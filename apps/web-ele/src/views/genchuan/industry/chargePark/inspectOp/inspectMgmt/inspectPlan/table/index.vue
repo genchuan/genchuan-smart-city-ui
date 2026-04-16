@@ -25,9 +25,12 @@ import {
   auditorOptions,
   detailFields,
   filterMockList,
+  getPlanStatusLabel,
   getPlanStatusTagType,
+  getPlanTypeLabel,
   getPlanTypeTagType,
   getProgressStatus,
+  isPlanStatusLabel,
   normalizeInspectPlanRow,
   textObj,
   useEditFormSchema,
@@ -86,14 +89,14 @@ const dataObj = reactive({
 });
 
 const currentPageStats = computed(() => {
-  const runningCount = dataObj.list.filter(
-    (item) => item.status === '进行中',
+  const runningCount = dataObj.list.filter((item) =>
+    isPlanStatusLabel(item.status, '进行中'),
   ).length;
-  const finishedCount = dataObj.list.filter(
-    (item) => item.status === '已完成',
+  const finishedCount = dataObj.list.filter((item) =>
+    isPlanStatusLabel(item.status, '已完成'),
   ).length;
-  const pausedCount = dataObj.list.filter(
-    (item) => item.status === '已暂停',
+  const pausedCount = dataObj.list.filter((item) =>
+    isPlanStatusLabel(item.status, '已暂停'),
   ).length;
 
   return {
@@ -432,7 +435,7 @@ watch(
             type="success"
             @close="cancelFilter('type')"
           >
-            巡检类型：{{ filterType }}
+            巡检类型：{{ getPlanTypeLabel(filterType) }}
           </ElTag>
           <ElTag
             v-if="filterScope"
@@ -448,7 +451,7 @@ watch(
             type="warning"
             @close="cancelFilter('status')"
           >
-            计划状态：{{ filterStatus }}
+            计划状态：{{ getPlanStatusLabel(filterStatus) }}
           </ElTag>
           <ElTag
             v-if="filterAuditUserId"
@@ -508,7 +511,7 @@ watch(
           :type="getPlanTypeTagType(row.type)"
           @click="handleTypeClick(row.type)"
         >
-          {{ row.type }}
+          {{ getPlanTypeLabel(row.type) }}
         </ElTag>
       </template>
 
@@ -529,7 +532,7 @@ watch(
           :type="getPlanStatusTagType(row.status)"
           @click="handleStatusClick(row.status)"
         >
-          {{ row.status }}
+          {{ getPlanStatusLabel(row.status) }}
         </ElTag>
       </template>
 
@@ -558,25 +561,28 @@ watch(
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            v-if="row.status === '待生效'"
+            v-if="isPlanStatusLabel(row.status, '待生效')"
             content="生效"
             icon-name="CircleCheckFilled"
             @click="handleActivate(row)"
           />
           <IconButton
-            v-if="row.status === '进行中'"
+            v-if="isPlanStatusLabel(row.status, '进行中')"
             content="暂停"
             icon-name="VideoPause"
             @click="handlePause(row)"
           />
           <IconButton
-            v-if="row.status === '已暂停'"
+            v-if="isPlanStatusLabel(row.status, '已暂停')"
             content="启用"
             icon-name="SwitchButton"
             @click="handleEnable(row)"
           />
           <IconButton
-            v-if="['待生效', '进行中'].includes(row.status)"
+            v-if="
+              isPlanStatusLabel(row.status, '待生效') ||
+              isPlanStatusLabel(row.status, '进行中')
+            "
             content="编辑"
             icon-name="Edit"
             @click="handleEdit(row)"

@@ -23,8 +23,10 @@ import {
   detailFields,
   filterMockList,
   getSpareProgressStatus,
+  getSpareStatusLabel,
   getSpareStatusTagType,
   getWarehouseName,
+  isSpareStatusLabel,
   normalizeSpareStockRow,
   textObj,
   useGridColumns,
@@ -91,11 +93,11 @@ const currentPageStats = computed(() => {
     (sum, item) => sum + Number(item.currentStock || 0),
     0,
   );
-  const lowCount = dataObj.list.filter(
-    (item) => item.status === '低库存',
+  const lowCount = dataObj.list.filter((item) =>
+    isSpareStatusLabel(item.status, '低库存'),
   ).length;
-  const normalCount = dataObj.list.filter(
-    (item) => item.status === '正常',
+  const normalCount = dataObj.list.filter((item) =>
+    isSpareStatusLabel(item.status, '正常'),
   ).length;
 
   return {
@@ -458,7 +460,7 @@ watch(
             type="warning"
             @close="cancelFilter('status')"
           >
-            库存状态：{{ filterStatus }}
+            库存状态：{{ getSpareStatusLabel(filterStatus) }}
           </ElTag>
           <ElTag
             v-if="filterWarehouseId"
@@ -539,7 +541,7 @@ watch(
           :type="getSpareStatusTagType(row.status)"
           @click="handleStatusClick(row.status)"
         >
-          {{ row.status }}
+          {{ getSpareStatusLabel(row.status) }}
         </ElTag>
       </template>
 
@@ -579,19 +581,19 @@ watch(
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            v-if="row.status === '正常'"
+            v-if="isSpareStatusLabel(row.status, '正常')"
             content="入库"
             icon-name="Plus"
             @click="handleRowIn(row)"
           />
           <IconButton
-            v-if="row.status === '正常'"
+            v-if="isSpareStatusLabel(row.status, '正常')"
             content="出库"
             icon-name="Remove"
             @click="handleRowOut(row)"
           />
           <IconButton
-            v-if="row.status === '低库存'"
+            v-if="isSpareStatusLabel(row.status, '低库存')"
             content="补货"
             icon-name="Plus"
             @click="handleReplenish(row)"

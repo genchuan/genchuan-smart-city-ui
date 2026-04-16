@@ -1,9 +1,52 @@
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
+
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
-export const stockStatusOptions = [
+export const SPARE_STOCK_STATUS_DICT = DICT_TYPE.SPARE_STOCK_STATUS;
+
+function getDictOptionsWithFallback(dictType, fallbackOptions) {
+  const options = getDictOptions(dictType, 'string');
+  return options.length > 0 ? options : fallbackOptions;
+}
+
+function getDictLabel(dictType, value) {
+  if (value === undefined || value === null || value === '') return '-';
+  const dict = getDictObj(dictType, String(value));
+  return dict?.label || value;
+}
+
+function isDictLabel(dictType, value, label) {
+  return (
+    String(value) === String(label) || getDictLabel(dictType, value) === label
+  );
+}
+
+function isSameDictValue(dictType, current, target) {
+  if (!target) return true;
+  return (
+    String(current) === String(target) ||
+    getDictLabel(dictType, current) === getDictLabel(dictType, target)
+  );
+}
+
+export function getSpareStatusLabel(value) {
+  return getDictLabel(SPARE_STOCK_STATUS_DICT, value);
+}
+
+export function isSpareStatusLabel(value, label) {
+  return isDictLabel(SPARE_STOCK_STATUS_DICT, value, label);
+}
+const fallbackStockStatusOptions = [
   { label: '正常', value: '正常' },
   { label: '低库存', value: '低库存' },
 ];
+
+export const stockStatusOptions = getDictOptionsWithFallback(
+  SPARE_STOCK_STATUS_DICT,
+  fallbackStockStatusOptions,
+);
 
 export const spareOptions = [
   { label: '充电枪密封圈', type: '充电备件', value: 1 },
@@ -73,10 +116,13 @@ export function getWarehouseName(warehouseId) {
 
 export function getSpareStatusTagType(status) {
   const tagMap = {
-    低库存: 'warning',
     正常: 'success',
+    低库存: 'warning',
   };
-  return tagMap[status] || 'info';
+  return getDictTagTypeFromDict(
+    getDictObj(SPARE_STOCK_STATUS_DICT, String(status)),
+    tagMap[getSpareStatusLabel(status)] || 'info',
+  );
 }
 
 export function getSpareProgressStatus(row) {
@@ -197,7 +243,11 @@ export function filterMockList(params = {}) {
       !params.spareId || Number(item.spareId) === Number(params.spareId);
     const matchSpareName =
       !params.spareName || item.spareName.includes(String(params.spareName));
-    const matchStatus = !params.status || item.status === params.status;
+    const matchStatus = isSameDictValue(
+      SPARE_STOCK_STATUS_DICT,
+      item.status,
+      params.status,
+    );
     const matchWarehouse =
       !params.warehouseId ||
       Number(item.warehouseId) === Number(params.warehouseId);
@@ -494,6 +544,7 @@ export const detailFields = [
     label: '库存状态',
     type: 'tag',
     tagType: getSpareStatusTagType,
+    formatter: getSpareStatusLabel,
   },
   { key: 'warehouseName', label: '所属仓库' },
   { key: 'inTimeStr', label: '入库时间' },

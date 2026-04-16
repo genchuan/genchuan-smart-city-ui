@@ -1,5 +1,43 @@
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
+
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
+export const SHIFT_APPLY_STATUS_DICT = DICT_TYPE.SHIFT_APPLY_STATUS;
+
+function getDictOptionsWithFallback(dictType, fallbackOptions) {
+  const options = getDictOptions(dictType, 'string');
+  return options.length > 0 ? options : fallbackOptions;
+}
+
+function getDictLabel(dictType, value) {
+  if (value === undefined || value === null || value === '') return '-';
+  const dict = getDictObj(dictType, String(value));
+  return dict?.label || value;
+}
+
+function isDictLabel(dictType, value, label) {
+  return (
+    String(value) === String(label) || getDictLabel(dictType, value) === label
+  );
+}
+
+function isSameDictValue(dictType, current, target) {
+  if (!target) return true;
+  return (
+    String(current) === String(target) ||
+    getDictLabel(dictType, current) === getDictLabel(dictType, target)
+  );
+}
+
+export function getStatusLabel(value) {
+  return getDictLabel(SHIFT_APPLY_STATUS_DICT, value);
+}
+
+export function isStatusLabel(value, label) {
+  return isDictLabel(SHIFT_APPLY_STATUS_DICT, value, label);
+}
 export const userOptions = [
   { label: '张三', position: '巡检员', value: 1 },
   { label: '李四', position: '值班长', value: 2 },
@@ -8,11 +46,16 @@ export const userOptions = [
   { label: '陈七', position: '运维专员', value: 5 },
 ];
 
-export const statusOptions = [
+const fallbackStatusOptions = [
   { label: '待审核', value: '待审核' },
   { label: '已通过', value: '已通过' },
   { label: '已驳回', value: '已驳回' },
 ];
+
+export const statusOptions = getDictOptionsWithFallback(
+  SHIFT_APPLY_STATUS_DICT,
+  fallbackStatusOptions,
+);
 
 export const auditResultOptions = [
   { label: '通过', value: '通过' },
@@ -44,8 +87,15 @@ export function getUserName(userId) {
 }
 
 export function getStatusTagType(status) {
-  const tagMap = { 已通过: 'success', 已驳回: 'danger', 待审核: 'warning' };
-  return tagMap[status] || 'info';
+  const tagMap = {
+    待审核: 'warning',
+    已通过: 'success',
+    已驳回: 'danger',
+  };
+  return getDictTagTypeFromDict(
+    getDictObj(SHIFT_APPLY_STATUS_DICT, String(status)),
+    tagMap[getStatusLabel(status)] || 'info',
+  );
 }
 
 function toDate(offset) {
@@ -177,7 +227,11 @@ export function filterMockList(params = {}) {
     if (Array.isArray(newDateRange))
       matchNewDate = isDateInRange(item.newDate, newDateRange);
     else if (params.newDate) matchNewDate = item.newDate === params.newDate;
-    const matchStatus = !params.status || item.status === params.status;
+    const matchStatus = isSameDictValue(
+      SHIFT_APPLY_STATUS_DICT,
+      item.status,
+      params.status,
+    );
     const matchAuditUser =
       !params.auditUserId ||
       Number(item.auditUserId) === Number(params.auditUserId);

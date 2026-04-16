@@ -22,8 +22,10 @@ import StatusConfirmDialog from '../components/StatusConfirmDialog.vue';
 import {
   detailFields,
   filterMockList,
+  getStatusLabel,
   getStatusTagType,
   getUserName,
+  isStatusLabel,
   normalizeShiftApplyRow,
   textObj,
   useBatchAuditFormSchema,
@@ -70,9 +72,15 @@ const dataObj = reactive({
   useStaticData: false,
 });
 const currentPageStats = computed(() => ({
-  pendingCount: dataObj.list.filter((item) => item.status === '待审核').length,
-  passedCount: dataObj.list.filter((item) => item.status === '已通过').length,
-  rejectedCount: dataObj.list.filter((item) => item.status === '已驳回').length,
+  pendingCount: dataObj.list.filter((item) =>
+    isStatusLabel(item.status, '待审核'),
+  ).length,
+  passedCount: dataObj.list.filter((item) =>
+    isStatusLabel(item.status, '已通过'),
+  ).length,
+  rejectedCount: dataObj.list.filter((item) =>
+    isStatusLabel(item.status, '已驳回'),
+  ).length,
 }));
 const actionTitle = computed(() =>
   actionType.value === 'reapply' ? textObj.reapplyText : textObj.batchAuditText,
@@ -214,8 +222,8 @@ async function handleExport() {
   }
 }
 async function handleBatchAudit() {
-  const pendingRows = checkedRows.value.filter(
-    (item) => item.status === '待审核',
+  const pendingRows = checkedRows.value.filter((item) =>
+    isStatusLabel(item.status, '待审核'),
   );
   if (pendingRows.length === 0) {
     ElMessage.warning('请选择待审核的申请数据');
@@ -435,7 +443,7 @@ watch(
             type="danger"
             @close="cancelFilter('status')"
           >
-            申请状态：{{ filterStatus }}
+            申请状态：{{ getStatusLabel(filterStatus) }}
           </ElTag>
           <ElTag
             v-if="filterAuditUserId"
@@ -522,7 +530,7 @@ watch(
           :type="getStatusTagType(row.status)"
           @click="handleStatusClick(row.status)"
         >
-          {{ row.status }}
+          {{ getStatusLabel(row.status) }}
         </ElTag>
       </template>
       <template #auditUserName="{ row }">
@@ -540,25 +548,25 @@ watch(
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            v-if="row.status === '待审核'"
+            v-if="isStatusLabel(row.status, '待审核')"
             content="通过"
             icon-name="Select"
             @click="handleApprove(row)"
           />
           <IconButton
-            v-if="row.status === '待审核'"
+            v-if="isStatusLabel(row.status, '待审核')"
             content="驳回"
             icon-name="CloseBold"
             @click="handleReject(row)"
           />
           <IconButton
-            v-if="row.status === '已通过'"
+            v-if="isStatusLabel(row.status, '已通过')"
             content="确认"
             icon-name="Check"
             @click="handleConfirm(row)"
           />
           <IconButton
-            v-if="row.status === '已驳回'"
+            v-if="isStatusLabel(row.status, '已驳回')"
             content="重新申请"
             icon-name="RefreshRight"
             @click="handleReapply(row)"

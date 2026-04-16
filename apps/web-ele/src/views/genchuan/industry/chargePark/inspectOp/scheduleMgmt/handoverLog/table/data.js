@@ -1,5 +1,43 @@
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
+
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
+export const HANDOVER_LOG_STATUS_DICT = DICT_TYPE.HANDOVER_LOG_STATUS;
+
+function getDictOptionsWithFallback(dictType, fallbackOptions) {
+  const options = getDictOptions(dictType, 'string');
+  return options.length > 0 ? options : fallbackOptions;
+}
+
+function getDictLabel(dictType, value) {
+  if (value === undefined || value === null || value === '') return '-';
+  const dict = getDictObj(dictType, String(value));
+  return dict?.label || value;
+}
+
+function isDictLabel(dictType, value, label) {
+  return (
+    String(value) === String(label) || getDictLabel(dictType, value) === label
+  );
+}
+
+function isSameDictValue(dictType, current, target) {
+  if (!target) return true;
+  return (
+    String(current) === String(target) ||
+    getDictLabel(dictType, current) === getDictLabel(dictType, target)
+  );
+}
+
+export function getStatusLabel(value) {
+  return getDictLabel(HANDOVER_LOG_STATUS_DICT, value);
+}
+
+export function isStatusLabel(value, label) {
+  return isDictLabel(HANDOVER_LOG_STATUS_DICT, value, label);
+}
 export const userOptions = [
   { label: '张三', value: 1 },
   { label: '李四', value: 2 },
@@ -8,10 +46,15 @@ export const userOptions = [
   { label: '陈七', value: 5 },
 ];
 
-export const statusOptions = [
+const fallbackStatusOptions = [
   { label: '待确认', value: '待确认' },
   { label: '已确认', value: '已确认' },
 ];
+
+export const statusOptions = getDictOptionsWithFallback(
+  HANDOVER_LOG_STATUS_DICT,
+  fallbackStatusOptions,
+);
 
 const handoverContents = [
   '今日场站设备运行正常，无异常情况。',
@@ -41,10 +84,13 @@ export function getUserName(userId) {
 
 export function getStatusTagType(status) {
   const tagMap = {
-    已确认: 'success',
     待确认: 'warning',
+    已确认: 'success',
   };
-  return tagMap[status] || 'info';
+  return getDictTagTypeFromDict(
+    getDictObj(HANDOVER_LOG_STATUS_DICT, String(status)),
+    tagMap[getStatusLabel(status)] || 'info',
+  );
 }
 
 function toHandoverDate(offset) {
@@ -149,7 +195,11 @@ export function filterMockList(params = {}) {
     } else if (params.handoverDate) {
       matchDate = item.handoverDate === params.handoverDate;
     }
-    const matchStatus = !params.status || item.status === params.status;
+    const matchStatus = isSameDictValue(
+      HANDOVER_LOG_STATUS_DICT,
+      item.status,
+      params.status,
+    );
     const matchConfirmUser =
       !params.confirmUserId ||
       Number(item.confirmUserId) === Number(params.confirmUserId);
@@ -331,6 +381,7 @@ export const detailFields = [
     label: '日志状态',
     type: 'tag',
     tagType: getStatusTagType,
+    formatter: getStatusLabel,
   },
   { key: 'confirmUserName', label: '确认人员' },
   { key: 'confirmTimeStr', label: '确认时间' },

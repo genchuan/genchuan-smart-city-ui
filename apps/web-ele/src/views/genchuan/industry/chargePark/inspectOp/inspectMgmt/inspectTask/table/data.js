@@ -1,5 +1,43 @@
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
+
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
+export const INSPECT_TASK_STATUS_DICT = DICT_TYPE.INSPECT_TASK_STATUS;
+
+function getDictOptionsWithFallback(dictType, fallbackOptions) {
+  const options = getDictOptions(dictType, 'string');
+  return options.length > 0 ? options : fallbackOptions;
+}
+
+function getDictLabel(dictType, value) {
+  if (value === undefined || value === null || value === '') return '-';
+  const dict = getDictObj(dictType, String(value));
+  return dict?.label || value;
+}
+
+function isDictLabel(dictType, value, label) {
+  return (
+    String(value) === String(label) || getDictLabel(dictType, value) === label
+  );
+}
+
+function isSameDictValue(dictType, current, target) {
+  if (!target) return true;
+  return (
+    String(current) === String(target) ||
+    getDictLabel(dictType, current) === getDictLabel(dictType, target)
+  );
+}
+
+export function getTaskStatusLabel(value) {
+  return getDictLabel(INSPECT_TASK_STATUS_DICT, value);
+}
+
+export function isTaskStatusLabel(value, label) {
+  return isDictLabel(INSPECT_TASK_STATUS_DICT, value, label);
+}
 export const planOptions = [
   { label: '丰泽站日常巡检计划', value: 1 },
   { label: '鲤城停车场专项巡检计划', value: 2 },
@@ -16,12 +54,17 @@ export const userOptions = [
   { label: '赵六', value: 4 },
 ];
 
-export const taskStatusOptions = [
+const fallbackTaskStatusOptions = [
   { label: '待派发', value: '待派发' },
   { label: '待认领', value: '待认领' },
   { label: '处理中', value: '处理中' },
   { label: '已完成', value: '已完成' },
 ];
+
+export const taskStatusOptions = getDictOptionsWithFallback(
+  INSPECT_TASK_STATUS_DICT,
+  fallbackTaskStatusOptions,
+);
 
 export const archiveOptions = [
   { label: '否', value: false },
@@ -73,7 +116,10 @@ export function getTaskStatusTagType(status) {
     处理中: 'primary',
     已完成: 'success',
   };
-  return tagMap[status] || 'info';
+  return getDictTagTypeFromDict(
+    getDictObj(INSPECT_TASK_STATUS_DICT, String(status)),
+    tagMap[getTaskStatusLabel(status)] || 'info',
+  );
 }
 
 export function getArchiveTagType(isArchive) {
@@ -194,7 +240,11 @@ export function filterMockList(params = {}) {
     const matchType = !params.taskType || item.taskType === params.taskType;
     const matchStatusGroup =
       params.statusGroup !== '???' || item.status !== '???';
-    const matchStatus = !params.status || item.status === params.status;
+    const matchStatus = isSameDictValue(
+      INSPECT_TASK_STATUS_DICT,
+      item.status,
+      params.status,
+    );
     const matchArchive =
       params.isArchive === undefined ||
       params.isArchive === '' ||
@@ -398,6 +448,7 @@ export const detailFields = [
     label: '任务状态',
     type: 'tag',
     tagType: getTaskStatusTagType,
+    formatter: getTaskStatusLabel,
   },
   { key: 'progressText', label: '执行进度' },
   { key: 'dispatchTimeStr', label: '派发时间' },

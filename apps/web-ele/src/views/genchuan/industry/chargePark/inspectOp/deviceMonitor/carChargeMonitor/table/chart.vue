@@ -6,7 +6,11 @@ import MapComponent from '#/genchuan-components/Map/index.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
-import { getMockChartData } from './data';
+import {
+  getMockChartData,
+  getMonitorStatusLabel,
+  getMonitorStatusValueByLabel,
+} from './data';
 
 const props = defineProps({
   locatedDevice: {
@@ -23,14 +27,14 @@ const state = reactive({
       title: '正常设备',
       value: 0,
       desc: '运行稳定',
-      status: '正常',
+      status: getMonitorStatusValueByLabel('正常'),
       color: '#2fbf71',
     },
     {
       title: '异常设备',
       value: 0,
       desc: '待关注',
-      status: '异常',
+      status: getMonitorStatusValueByLabel('异常'),
       color: '#e95f5f',
     },
   ],
@@ -71,8 +75,8 @@ const mapData = computed(() => {
     deviceCode: item.name || item.deviceCode,
     stationName: item.stationName || '-',
     regionName: item.regionName || '-',
-    monitorStatus: item.status || item.monitorStatus,
-    statusName: item.status || item.monitorStatus,
+    monitorStatus: getMonitorStatusLabel(item.status || item.monitorStatus),
+    statusName: getMonitorStatusLabel(item.status || item.monitorStatus),
     coordinate: `${item.lon ?? item.longitude},${item.lat ?? item.latitude}`,
   }));
 

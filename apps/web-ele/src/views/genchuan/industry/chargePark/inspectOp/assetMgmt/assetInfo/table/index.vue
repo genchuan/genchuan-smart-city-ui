@@ -24,9 +24,12 @@ import StatusConfirmDialog from '../components/StatusConfirmDialog.vue';
 import {
   detailFields,
   filterMockList,
+  getAssetStatusLabel,
   getAssetStatusTagType,
+  getAssetTypeLabel,
   getAssetTypeTagType,
   getStationName,
+  isAssetStatusLabel,
   normalizeAssetInfoRow,
   textObj,
   useEditFormSchema,
@@ -83,14 +86,14 @@ const dataObj = reactive({
 });
 
 const currentPageStats = computed(() => {
-  const normalCount = dataObj.list.filter(
-    (item) => item.status === '正常',
+  const normalCount = dataObj.list.filter((item) =>
+    isAssetStatusLabel(item.status, '正常'),
   ).length;
-  const disabledCount = dataObj.list.filter(
-    (item) => item.status === '禁用',
+  const disabledCount = dataObj.list.filter((item) =>
+    isAssetStatusLabel(item.status, '禁用'),
   ).length;
-  const scrapCount = dataObj.list.filter(
-    (item) => item.status === '报废',
+  const scrapCount = dataObj.list.filter((item) =>
+    isAssetStatusLabel(item.status, '报废'),
   ).length;
 
   return {
@@ -405,7 +408,7 @@ watch(
             type="success"
             @close="cancelFilter('type')"
           >
-            资产类型：{{ filterType }}
+            资产类型：{{ getAssetTypeLabel(filterType) }}
           </ElTag>
           <ElTag
             v-if="filterStatus"
@@ -413,7 +416,7 @@ watch(
             type="warning"
             @close="cancelFilter('status')"
           >
-            资产状态：{{ filterStatus }}
+            资产状态：{{ getAssetStatusLabel(filterStatus) }}
           </ElTag>
           <ElTag
             v-if="filterStationId"
@@ -465,7 +468,7 @@ watch(
           :type="getAssetTypeTagType(row.type)"
           @click="handleTypeClick(row.type)"
         >
-          {{ row.type }}
+          {{ getAssetTypeLabel(row.type) }}
         </ElTag>
       </template>
 
@@ -475,7 +478,7 @@ watch(
           :type="getAssetStatusTagType(row.status)"
           @click="handleStatusClick(row.status)"
         >
-          {{ row.status }}
+          {{ getAssetStatusLabel(row.status) }}
         </ElTag>
       </template>
 
@@ -515,19 +518,19 @@ watch(
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            v-if="row.status !== '报废'"
+            v-if="!isAssetStatusLabel(row.status, '报废')"
             content="编辑"
             icon-name="Edit"
             @click="handleEdit(row)"
           />
           <IconButton
-            v-if="row.status === '正常'"
+            v-if="isAssetStatusLabel(row.status, '正常')"
             content="禁用"
             icon-name="SwitchButton"
             @click="handleDisable(row)"
           />
           <IconButton
-            v-if="row.status !== '报废'"
+            v-if="!isAssetStatusLabel(row.status, '报废')"
             content="报废"
             icon-name="DeleteFilled"
             @click="handleScrap(row)"

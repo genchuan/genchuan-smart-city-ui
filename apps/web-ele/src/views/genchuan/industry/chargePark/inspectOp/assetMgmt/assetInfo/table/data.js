@@ -1,16 +1,73 @@
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
+
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
-export const assetTypeOptions = [
+export const ASSET_INFO_TYPE_DICT = DICT_TYPE.ASSET_INFO_TYPE;
+export const ASSET_INFO_STATUS_DICT = DICT_TYPE.ASSET_INFO_STATUS;
+
+function getDictOptionsWithFallback(dictType, fallbackOptions) {
+  const options = getDictOptions(dictType, 'string');
+  return options.length > 0 ? options : fallbackOptions;
+}
+
+function getDictLabel(dictType, value) {
+  if (value === undefined || value === null || value === '') return '-';
+  const dict = getDictObj(dictType, String(value));
+  return dict?.label || value;
+}
+
+function isDictLabel(dictType, value, label) {
+  return (
+    String(value) === String(label) || getDictLabel(dictType, value) === label
+  );
+}
+
+function isSameDictValue(dictType, current, target) {
+  if (!target) return true;
+  return (
+    String(current) === String(target) ||
+    getDictLabel(dictType, current) === getDictLabel(dictType, target)
+  );
+}
+
+export function getAssetTypeLabel(value) {
+  return getDictLabel(ASSET_INFO_TYPE_DICT, value);
+}
+
+export function isAssetTypeLabel(value, label) {
+  return isDictLabel(ASSET_INFO_TYPE_DICT, value, label);
+}
+
+export function getAssetStatusLabel(value) {
+  return getDictLabel(ASSET_INFO_STATUS_DICT, value);
+}
+
+export function isAssetStatusLabel(value, label) {
+  return isDictLabel(ASSET_INFO_STATUS_DICT, value, label);
+}
+const fallbackAssetTypeOptions = [
   { label: '监测设备', value: '监测设备' },
   { label: '充电设备', value: '充电设备' },
   { label: '巡检工具', value: '巡检工具' },
 ];
 
-export const assetStatusOptions = [
+export const assetTypeOptions = getDictOptionsWithFallback(
+  ASSET_INFO_TYPE_DICT,
+  fallbackAssetTypeOptions,
+);
+
+const fallbackAssetStatusOptions = [
   { label: '正常', value: '正常' },
   { label: '禁用', value: '禁用' },
   { label: '报废', value: '报废' },
 ];
+
+export const assetStatusOptions = getDictOptionsWithFallback(
+  ASSET_INFO_STATUS_DICT,
+  fallbackAssetStatusOptions,
+);
 
 export const stationOptions = [
   { label: '泉州丰泽充电站', value: 1 },
@@ -78,11 +135,14 @@ export function getStationName(stationId) {
 
 export function getAssetTypeTagType(type) {
   const tagMap = {
+    监测设备: 'success',
     充电设备: 'primary',
     巡检工具: 'warning',
-    监测设备: 'success',
   };
-  return tagMap[type] || 'info';
+  return getDictTagTypeFromDict(
+    getDictObj(ASSET_INFO_TYPE_DICT, String(type)),
+    tagMap[getAssetTypeLabel(type)] || 'info',
+  );
 }
 
 export function getAssetStatusTagType(status) {
@@ -91,7 +151,10 @@ export function getAssetStatusTagType(status) {
     禁用: 'warning',
     报废: 'danger',
   };
-  return tagMap[status] || 'info';
+  return getDictTagTypeFromDict(
+    getDictObj(ASSET_INFO_STATUS_DICT, String(status)),
+    tagMap[getAssetStatusLabel(status)] || 'info',
+  );
 }
 
 export function dataList() {
@@ -174,8 +237,16 @@ export function filterMockList(params = {}) {
 
   return list.filter((item) => {
     const matchName = !params.name || item.name.includes(String(params.name));
-    const matchType = !params.type || item.type === params.type;
-    const matchStatus = !params.status || item.status === params.status;
+    const matchType = isSameDictValue(
+      ASSET_INFO_TYPE_DICT,
+      item.type,
+      params.type,
+    );
+    const matchStatus = isSameDictValue(
+      ASSET_INFO_TYPE_DICT,
+      item.status,
+      params.status,
+    );
     const matchStation =
       !params.stationId || Number(item.stationId) === Number(params.stationId);
     const matchPurchaseTime = isInRange(item.purchaseTime, purchaseTimeRange);
@@ -392,6 +463,7 @@ export const detailFields = [
     label: '资产类型',
     type: 'tag',
     tagType: getAssetTypeTagType,
+    formatter: getAssetTypeLabel,
   },
   { key: 'purchaseTimeStr', label: '采购时间' },
   {
@@ -399,6 +471,7 @@ export const detailFields = [
     label: '资产状态',
     type: 'tag',
     tagType: getAssetStatusTagType,
+    formatter: getAssetStatusLabel,
   },
   { key: 'stationName', label: '所属场站' },
   { key: 'deviceName', label: '绑定设备' },

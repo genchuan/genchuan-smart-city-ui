@@ -20,9 +20,14 @@ import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import {
   detailFields,
   filterMockList,
+  getApplyStatusLabel,
   getApplyStatusTagType,
+  getScheduleStatusLabel,
   getScheduleStatusTagType,
+  getShiftTypeLabel,
   getShiftTypeTagType,
+  isApplyStatusLabel,
+  isScheduleStatusLabel,
   normalizeScheduleViewRow,
   textObj,
   useGridColumns,
@@ -75,14 +80,14 @@ const dataObj = reactive({
 });
 
 const currentPageStats = computed(() => {
-  const normalCount = dataObj.list.filter(
-    (item) => item.status === '正常',
+  const normalCount = dataObj.list.filter((item) =>
+    isScheduleStatusLabel(item.status, '正常'),
   ).length;
-  const changedCount = dataObj.list.filter(
-    (item) => item.status === '已换班',
+  const changedCount = dataObj.list.filter((item) =>
+    isScheduleStatusLabel(item.status, '已换班'),
   ).length;
-  const applyingCount = dataObj.list.filter(
-    (item) => item.shiftApplyStatus === '申请中',
+  const applyingCount = dataObj.list.filter((item) =>
+    isApplyStatusLabel(item.shiftApplyStatus, '申请中'),
   ).length;
 
   return {
@@ -426,7 +431,7 @@ watch(
             type="warning"
             @close="cancelFilter('shiftType')"
           >
-            排班时段：{{ filterShiftType }}
+            排班时段：{{ getShiftTypeLabel(filterShiftType) }}
           </ElTag>
           <ElTag
             v-if="filterPositionName"
@@ -442,7 +447,7 @@ watch(
             type="danger"
             @close="cancelFilter('status')"
           >
-            排班状态：{{ filterStatus }}
+            排班状态：{{ getScheduleStatusLabel(filterStatus) }}
           </ElTag>
           <ElTag
             v-if="filterApplyStatus"
@@ -450,7 +455,7 @@ watch(
             type="warning"
             @close="cancelFilter('applyStatus')"
           >
-            换班状态：{{ filterApplyStatus }}
+            换班状态：{{ getApplyStatusLabel(filterApplyStatus) }}
           </ElTag>
         </div>
       </template>
@@ -503,7 +508,7 @@ watch(
           :type="getShiftTypeTagType(row.shiftType)"
           @click="handleShiftTypeClick(row.shiftType)"
         >
-          {{ row.shiftType }}
+          {{ getShiftTypeLabel(row.shiftType) }}
         </ElTag>
       </template>
 
@@ -524,7 +529,7 @@ watch(
           :type="getScheduleStatusTagType(row.status)"
           @click="handleStatusClick(row.status)"
         >
-          {{ row.status }}
+          {{ getScheduleStatusLabel(row.status) }}
         </ElTag>
       </template>
 
@@ -534,7 +539,7 @@ watch(
           :type="getApplyStatusTagType(row.shiftApplyStatus)"
           @click="handleApplyStatusClick(row.shiftApplyStatus)"
         >
-          {{ row.shiftApplyStatus }}
+          {{ getApplyStatusLabel(row.shiftApplyStatus) }}
         </ElTag>
       </template>
 
@@ -552,7 +557,10 @@ watch(
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            v-if="row.status === '正常' && row.shiftApplyStatus !== '申请中'"
+            v-if="
+              isScheduleStatusLabel(row.status, '正常') &&
+              !isApplyStatusLabel(row.shiftApplyStatus, '申请中')
+            "
             content="申请换班"
             icon-name="Switch"
             @click="handleApplyShift(row)"
