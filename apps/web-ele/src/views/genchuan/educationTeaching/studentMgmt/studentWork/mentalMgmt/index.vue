@@ -384,7 +384,11 @@ async function confirmUpdateStatus() {
   }
   const loading = ElLoading.service({ text: '更新中...' });
   try {
-    const res = await updateMentalMgmt({ id: currentUpdateRow.value.id, mentalStatus: newMentalStatus.value, riskLevel: newRiskLevel.value });
+    const res = await updateStatusMentalMgmt({
+      id: currentUpdateRow.value.id,
+      mentalStatus: newMentalStatus.value,
+      riskLevel: newRiskLevel.value
+    });
     if (res && res !== false) {
       ElMessage.success('状态更新成功');
       updateStatusDialogVisible.value = false;

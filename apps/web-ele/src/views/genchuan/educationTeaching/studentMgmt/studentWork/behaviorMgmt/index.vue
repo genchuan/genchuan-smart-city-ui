@@ -570,7 +570,7 @@ onMounted(() => {
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)" />
+          <IconButton v-if="row.status !== '已通过'" content="编辑" icon-name="Edit" @click="handleEdit(row)" />
           <IconButton v-if="row.status === '待审批'" content="审批" icon-name="Check" @click="handleAudit(row)" />
           <IconButton v-if="row.status === '已通过'" content="撤销" icon-name="Refresh" color="#F56C6C" @click="handleCancel(row)" />
         </div>
