@@ -128,6 +128,7 @@ export function useGridColumns() {
       title: '订单状态',
       minWidth: 150,
       sortable: true,
+      slots: { default: 'status' },
     },
     {
       field: 'payTime',
@@ -167,7 +168,7 @@ export function useGridColumns() {
     },
     {
       title: '操作',
-      width: 80,
+      width: 120,
       fixed: 'right',
       slots: { default: 'actions' },
     },
