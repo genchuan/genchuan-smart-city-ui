@@ -185,7 +185,7 @@ function openMall() {
 
         <template v-else-if="slot.name === 'mall'">
           <div
-            class="mr-2 flex cursor-pointer items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-primary transition-colors hover:bg-primary/20"
+            class="bg-primary/10 text-primary hover:bg-primary/20 mr-2 flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 transition-colors"
             @click="openMall"
           >
             <ShoppingCartIcon class="size-4" />

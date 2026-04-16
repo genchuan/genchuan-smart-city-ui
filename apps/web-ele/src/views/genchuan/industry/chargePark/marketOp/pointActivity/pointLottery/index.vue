@@ -3,10 +3,10 @@ import { computed, nextTick, onMounted, ref } from 'vue';
 
 import { ElMessage } from 'element-plus';
 
-import PointActivityStats from './components/PointActivityStats.vue';
+import PointLotteryStats from './components/PointLotteryStats.vue';
 import Table from './table/index.vue';
 
-import '#/components/page/index.scss';
+import '#/genchuan-components/page/index.scss';
 
 // 控制统计组件显示/隐藏的状态
 const showStats = ref(false);
@@ -22,100 +22,72 @@ const toggleStats = () => {
 // 统计数据
 const statsData = ref({
   cards: [],
-  barData: [],
   lineData: [],
 });
 
-// 获取统计数据 - 模拟数据
+// 获取统计数据（模拟数据，实际应从API获取）
 const fetchStatsData = async () => {
   try {
+    // TODO: 替换为实际API调用
+    // const response = await getPointLotteryStats();
+
     // 模拟统计数据
-    // 实际项目中应该从API获取数据
     const mockData = {
-      // 总活动数和累计参与用户数
-      totalActivityCount: 12,
-      totalJoinUserCount: 2045,
-      // 活动类型分布
-      typeDistribution: [
-        { type: '0', typeName: '签到', count: 4 },
-        { type: '1', typeName: '消费', count: 4 },
-        { type: '2', typeName: '邀请', count: 4 },
-      ],
-      // 近30天参与趋势
-      dailyTrend: generateDailyTrendData(),
+      totalLotteryCount: 12580,
+      winRate: '23.5%',
+      trendData: [],
     };
+
+    // 生成近30天的模拟数据
+    const today = new Date();
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      mockData.trendData.push({
+        date: date.toISOString().split('T')[0],
+        count: Math.floor(Math.random() * 200) + 300,
+      });
+    }
 
     // 组装卡片数据
     statsData.value.cards = [
       {
-        title: '总活动数',
-        value: mockData.totalActivityCount,
+        title: '总抽奖量',
+        value: mockData.totalLotteryCount,
         color: '#4A90E2',
-        type: 'all',
+        type: 'total',
       },
       {
-        title: '累计参与用户数',
-        value: mockData.totalJoinUserCount,
+        title: '累计中奖率',
+        value: mockData.winRate,
         color: '#50E3C2',
-        type: 'users',
+        type: 'winRate',
       },
     ];
 
-    // 组装柱状图数据 - 活动类型分布
-    statsData.value.barData = mockData.typeDistribution;
-
-    // 组装折线图数据 - 活动参与趋势
-    statsData.value.lineData = mockData.dailyTrend;
+    // 组装折线图数据
+    statsData.value.lineData = mockData.trendData;
   } catch (error) {
     ElMessage.error('获取统计数据失败');
     console.error(error);
   }
 };
 
-// 生成近30天的模拟数据
-const generateDailyTrendData = () => {
-  const data = [];
-  const today = new Date();
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
-    // 随机生成参与用户数 (50-200之间)
-    const userCount = Math.floor(Math.random() * 150) + 50;
-    data.push({
-      date: dateStr,
-      fullDate: date.toISOString().split('T')[0],
-      userCount,
-    });
-  }
-  return data;
-};
-
 // 处理卡片点击 - 钻取筛选
-const handleCardClick = async (cardType) => {
+const handleCardClick = async (type, value) => {
   await nextTick();
   if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('card', cardType);
+    tableRef.value.handleStatsFilter('card', type, value);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
 };
 
-// 处理柱状图点击 - 钻取筛选活动类型
-const handleBarClick = async (type) => {
-  await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('type', type);
-  } else {
-    console.warn('tableRef not ready or handleStatsFilter not available');
-  }
-};
-
-// 处理折线图点击 - 钻取跳转对应日期的参与用户明细
+// 处理折线图点击 - 钻取筛选
 const handleLineClick = async (date) => {
   await nextTick();
   if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('date', date);
+    tableRef.value.handleStatsFilter('date', null, date);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
@@ -135,13 +107,13 @@ const showStatsValue = computed(() => showStats.value);
 
 const tabArray = ref([
   {
-    label: '积分活动',
+    label: '积分抽奖',
     components: Table,
     showSecondary: true,
     secondShow: false,
   },
 ]);
-const activeName = ref('积分活动');
+const activeName = ref('积分抽奖');
 const secondShow = ref(false);
 
 // 组件挂载时获取统计数据
@@ -152,11 +124,10 @@ onMounted(() => {
 <template>
   <div class="common-index">
     <!-- 统计可视化组件，根据showStats状态显示/隐藏 -->
-    <PointActivityStats
+    <PointLotteryStats
       v-if="showStats"
       :data="statsData"
       @card-click="handleCardClick"
-      @bar-click="handleBarClick"
       @line-click="handleLineClick"
     />
     <!-- 箭头图标已屏蔽 -->
@@ -182,6 +153,7 @@ onMounted(() => {
       v-model="activeName"
       class="common-tabs"
       type="card"
+      @tab-change="tabChange"
     >
       <el-tab-pane
         v-for="item in tabArray"
