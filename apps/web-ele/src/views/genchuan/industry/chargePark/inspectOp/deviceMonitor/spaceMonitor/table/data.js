@@ -1,3 +1,7 @@
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
+
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
 export const stationOptions = [
@@ -9,21 +13,24 @@ export const stationOptions = [
   { label: '南安水头交通枢纽站', value: 6 },
 ];
 
-export const monitorStatusOptions = [
-  { label: '正常', value: '正常' },
-  { label: '异常', value: '异常' },
-];
+export const SPACE_MONITOR_STATUS_DICT = DICT_TYPE.SPACE_MONITOR_STATUS;
+export const SPACE_MONITOR_ALARM_STATUS_DICT =
+  DICT_TYPE.SPACE_MONITOR_ALARM_STATUS;
+export const SPACE_MONITOR_PROCESS_STATUS_DICT =
+  DICT_TYPE.SPACE_MONITOR_PROCESS_STATUS;
 
-export const alarmStatusOptions = [
-  { label: '未告警', value: '未告警' },
-  { label: '已告警', value: '已告警' },
-];
-
-export const processStatusOptions = [
-  { label: '未处理', value: '未处理' },
-  { label: '处理中', value: '处理中' },
-  { label: '已处理', value: '已处理' },
-];
+export const monitorStatusOptions = getDictOptions(
+  SPACE_MONITOR_STATUS_DICT,
+  'string',
+);
+export const alarmStatusOptions = getDictOptions(
+  SPACE_MONITOR_ALARM_STATUS_DICT,
+  'string',
+);
+export const processStatusOptions = getDictOptions(
+  SPACE_MONITOR_PROCESS_STATUS_DICT,
+  'string',
+);
 
 const spaceCodes = [
   'A-01',
@@ -56,17 +63,100 @@ export function getStationName(stationId) {
   );
 }
 
+function getDictLabel(dictType, value) {
+  if (value === undefined || value === null || value === '') return '-';
+  const dict = getDictObj(dictType, String(value));
+  return dict?.label || value;
+}
+
+function getDictValueByLabel(dictType, label, fallback = label) {
+  const options = getDictOptions(dictType, 'string');
+  const option = options.find(
+    (item) => item.label === label || String(item.value) === String(label),
+  );
+  return option?.value ?? fallback;
+}
+
+function isDictLabel(dictType, value, label) {
+  return (
+    String(value) === String(label) || getDictLabel(dictType, value) === label
+  );
+}
+
+function isSameDictValue(dictType, current, target) {
+  if (!target) return true;
+  return (
+    String(current) === String(target) ||
+    getDictLabel(dictType, current) === getDictLabel(dictType, target)
+  );
+}
+
+export function getMonitorStatusLabel(status) {
+  return getDictLabel(SPACE_MONITOR_STATUS_DICT, status);
+}
+
+export function getAlarmStatusLabel(status) {
+  return getDictLabel(SPACE_MONITOR_ALARM_STATUS_DICT, status);
+}
+
+export function getProcessStatusLabel(status) {
+  return getDictLabel(SPACE_MONITOR_PROCESS_STATUS_DICT, status);
+}
+
+export function getMonitorStatusValueByLabel(label) {
+  return getDictValueByLabel(SPACE_MONITOR_STATUS_DICT, label);
+}
+
+export function isMonitorNormal(status) {
+  return isDictLabel(SPACE_MONITOR_STATUS_DICT, status, '正常');
+}
+
+export function isMonitorAbnormal(status) {
+  return isDictLabel(SPACE_MONITOR_STATUS_DICT, status, '异常');
+}
+
+export function isAlarmedStatus(status) {
+  return isDictLabel(SPACE_MONITOR_ALARM_STATUS_DICT, status, '已告警');
+}
+
 export function getMonitorStatusTagType(status) {
-  return status === '异常' ? 'danger' : 'success';
+  const dict = getDictObj(SPACE_MONITOR_STATUS_DICT, String(status));
+  if (dict) {
+    return getDictTagTypeFromDict(
+      dict,
+      isMonitorAbnormal(status) ? 'danger' : 'success',
+    );
+  }
+  return isMonitorAbnormal(status) ? 'danger' : 'success';
 }
 
 export function getAlarmStatusTagType(status) {
-  return status === '已告警' ? 'warning' : 'info';
+  const dict = getDictObj(SPACE_MONITOR_ALARM_STATUS_DICT, String(status));
+  if (dict) {
+    return getDictTagTypeFromDict(
+      dict,
+      isAlarmedStatus(status) ? 'warning' : 'info',
+    );
+  }
+  return isAlarmedStatus(status) ? 'warning' : 'info';
 }
 
 export function getProcessStatusTagType(status) {
-  if (status === '已处理') return 'success';
-  if (status === '处理中') return 'warning';
+  const dict = getDictObj(SPACE_MONITOR_PROCESS_STATUS_DICT, String(status));
+  if (dict) {
+    return getDictTagTypeFromDict(
+      dict,
+      isDictLabel(SPACE_MONITOR_PROCESS_STATUS_DICT, status, '已处理')
+        ? 'success'
+        : 'warning',
+    );
+  }
+  if (isDictLabel(SPACE_MONITOR_PROCESS_STATUS_DICT, status, '已处理')) {
+    return 'success';
+  }
+  if (isDictLabel(SPACE_MONITOR_PROCESS_STATUS_DICT, status, '处理中')) {
+    return 'warning';
+  }
   return 'info';
 }
 
@@ -108,13 +198,13 @@ export function normalizeSpaceMonitorRow(row) {
   const stationId = row.stationId ?? row.station_id;
   const spaceId = row.spaceId ?? row.space_id;
   const monitorStatus =
-    row.monitorStatusName || row.monitorStatus || row.monitor_status;
+    row.monitorStatus ?? row.monitor_status ?? row.monitorStatusName;
   const alarmStatus =
-    row.alarmStatusName || row.alarmStatus || row.alarm_status || '未告警';
+    row.alarmStatus ?? row.alarm_status ?? row.alarmStatusName ?? '未告警';
   const processStatus =
-    row.processStatusName ||
-    row.processStatus ||
-    row.process_status ||
+    row.processStatus ??
+    row.process_status ??
+    row.processStatusName ??
     '未处理';
   const monitorTime = row.monitorTime ?? row.monitor_time;
   const alarmTime = row.alarmTime ?? row.alarm_time;
@@ -164,12 +254,21 @@ export function filterMockList(params = {}) {
       item.spaceCode.includes(String(params.spaceId));
     const matchStation =
       !params.stationId || Number(item.stationId) === Number(params.stationId);
-    const matchMonitorStatus =
-      !params.monitorStatus || item.monitorStatus === params.monitorStatus;
-    const matchAlarmStatus =
-      !params.alarmStatus || item.alarmStatus === params.alarmStatus;
-    const matchProcessStatus =
-      !params.processStatus || item.processStatus === params.processStatus;
+    const matchMonitorStatus = isSameDictValue(
+      SPACE_MONITOR_STATUS_DICT,
+      item.monitorStatus,
+      params.monitorStatus,
+    );
+    const matchAlarmStatus = isSameDictValue(
+      SPACE_MONITOR_ALARM_STATUS_DICT,
+      item.alarmStatus,
+      params.alarmStatus,
+    );
+    const matchProcessStatus = isSameDictValue(
+      SPACE_MONITOR_PROCESS_STATUS_DICT,
+      item.processStatus,
+      params.processStatus,
+    );
     const matchTrendTime =
       !params.trendTime ||
       item.monitorTimeStr.includes(String(params.trendTime));
@@ -193,11 +292,11 @@ export function filterMockList(params = {}) {
 
 export function getMockChartData() {
   const list = dataList().map((item) => normalizeSpaceMonitorRow(item));
-  const normalSpace = list.filter(
-    (item) => item.monitorStatus === '正常',
+  const normalSpace = list.filter((item) =>
+    isMonitorNormal(item.monitorStatus),
   ).length;
-  const abnormalSpace = list.filter(
-    (item) => item.monitorStatus === '异常',
+  const abnormalSpace = list.filter((item) =>
+    isMonitorAbnormal(item.monitorStatus),
   ).length;
   const trendData = ['08', '09', '10', '11', '12', '13'].map((time, index) => ({
     time,
@@ -209,7 +308,7 @@ export function getMockChartData() {
     mapData: list.map((item) => ({
       id: item.id,
       name: item.spaceCode,
-      status: item.monitorStatus,
+      status: getMonitorStatusLabel(item.monitorStatus),
       lon: item.longitude,
       lat: item.latitude,
       stationName: item.stationName,
@@ -250,7 +349,7 @@ export function useSearchFormSchema() {
       componentProps: {
         placeholder: '请选择监测状态',
         clearable: true,
-        options: monitorStatusOptions,
+        options: getDictOptions(SPACE_MONITOR_STATUS_DICT, 'string'),
       },
     },
     {
@@ -272,7 +371,7 @@ export function useSearchFormSchema() {
       componentProps: {
         placeholder: '请选择告警状态',
         clearable: true,
-        options: alarmStatusOptions,
+        options: getDictOptions(SPACE_MONITOR_ALARM_STATUS_DICT, 'string'),
       },
     },
     {
@@ -282,7 +381,7 @@ export function useSearchFormSchema() {
       componentProps: {
         placeholder: '请选择处理状态',
         clearable: true,
-        options: processStatusOptions,
+        options: getDictOptions(SPACE_MONITOR_PROCESS_STATUS_DICT, 'string'),
       },
     },
   ];
@@ -372,6 +471,7 @@ export const detailFields = [
     label: '监测状态',
     type: 'tag',
     tagType: getMonitorStatusTagType,
+    formatter: getMonitorStatusLabel,
   },
   { key: 'monitorTimeStr', label: '更新时间' },
   {
@@ -379,6 +479,7 @@ export const detailFields = [
     label: '告警状态',
     type: 'tag',
     tagType: getAlarmStatusTagType,
+    formatter: getAlarmStatusLabel,
   },
   { key: 'alarmTimeStr', label: '告警时间' },
   { key: 'alarmRemark', label: '告警备注' },
@@ -387,6 +488,7 @@ export const detailFields = [
     label: '处理状态',
     type: 'tag',
     tagType: getProcessStatusTagType,
+    formatter: getProcessStatusLabel,
   },
   { key: 'longitude', label: '经度' },
   { key: 'latitude', label: '纬度' },

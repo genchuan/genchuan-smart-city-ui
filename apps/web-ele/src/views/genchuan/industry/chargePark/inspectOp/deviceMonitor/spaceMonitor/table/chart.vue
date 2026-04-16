@@ -14,7 +14,11 @@ import * as echarts from 'echarts';
 import { getSpaceMonitorChart } from '#/api/genchuan/industry/chargePark/inspectOp/deviceMonitor/spaceMonitor';
 import MapComponent from '#/genchuan-components/Map/index.vue';
 
-import { getMockChartData } from './data';
+import {
+  getMockChartData,
+  getMonitorStatusLabel,
+  getMonitorStatusValueByLabel,
+} from './data';
 
 const props = defineProps({
   locatedSpace: {
@@ -27,8 +31,18 @@ const emit = defineEmits(['statusFilter', 'trendFilter']);
 
 const state = reactive({
   cardList: [
-    { title: '正常车位', value: 0, status: '正常', color: '#2fbf71' },
-    { title: '异常车位', value: 0, status: '异常', color: '#e95f5f' },
+    {
+      title: '正常车位',
+      value: 0,
+      status: getMonitorStatusValueByLabel('正常'),
+      color: '#2fbf71',
+    },
+    {
+      title: '异常车位',
+      value: 0,
+      status: getMonitorStatusValueByLabel('异常'),
+      color: '#e95f5f',
+    },
   ],
   mapData: [],
   trendData: [],
@@ -46,6 +60,8 @@ const state = reactive({
       gray: 'normal',
     },
     statusKeyMap: {
+      [getMonitorStatusValueByLabel('正常')]: 'green',
+      [getMonitorStatusValueByLabel('异常')]: 'red',
       正常: 'green',
       异常: 'red',
       定位: 'orange',
@@ -65,15 +81,19 @@ const trendChartRef = ref(null);
 let trendChartInstance = null;
 
 const mapData = computed(() => {
-  const baseData = state.mapData.map((item) => ({
-    id: item.id,
-    spaceCode: item.name || item.spaceCode,
-    stationName: item.stationName || '-',
-    regionName: item.regionName || '-',
-    monitorStatus: item.status || item.monitorStatus,
-    statusName: item.status || item.monitorStatus,
-    coordinate: `${item.lon ?? item.longitude},${item.lat ?? item.latitude}`,
-  }));
+  const baseData = state.mapData.map((item) => {
+    const status = item.status ?? item.monitorStatus;
+
+    return {
+      id: item.id,
+      spaceCode: item.name || item.spaceCode,
+      stationName: item.stationName || '-',
+      regionName: item.regionName || '-',
+      monitorStatus: getMonitorStatusLabel(status),
+      statusName: getMonitorStatusLabel(status),
+      coordinate: `${item.lon ?? item.longitude},${item.lat ?? item.latitude}`,
+    };
+  });
 
   if (!props.locatedSpace?.longitude || !props.locatedSpace?.latitude) {
     return baseData;
@@ -84,7 +104,9 @@ const mapData = computed(() => {
     spaceCode: props.locatedSpace.spaceCode || '目标车位',
     stationName: props.locatedSpace.stationName || '-',
     regionName: props.locatedSpace.regionName || '-',
-    monitorStatus: props.locatedSpace.monitorStatus || '定位',
+    monitorStatus: props.locatedSpace.monitorStatus
+      ? getMonitorStatusLabel(props.locatedSpace.monitorStatus)
+      : '定位',
     statusName: '定位',
     coordinate: `${props.locatedSpace.longitude},${props.locatedSpace.latitude}`,
   };
