@@ -1,8 +1,8 @@
 <!-- platform-report/index.vue (外层入口，与实时监测结构一致) -->
 <script setup>
 import { ref, computed } from 'vue';
-// import carchart from './chart.vue';
-// import Table from './table/index.vue'; // 表格组件
+import carchart from './chart.vue';
+import Table from './table/index.vue'; // 表格组件
 import '#/components/page/index.scss';
 
 const changeArrowStatus = () => {
