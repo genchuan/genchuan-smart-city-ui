@@ -20,9 +20,9 @@ import {
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { formatDate } from '#/utils/genchuan/formatTime';
-
 import ImportExcelDialog from '#/views/genchuan/industry/chargePark/marketOp/pointActivity/pointActivity/components/ImportExcelDialog.vue';
 import StatusConfirmDialog from '#/views/genchuan/industry/chargePark/marketOp/pointActivity/pointActivity/components/StatusConfirmDialog.vue';
+
 import {
   dataList,
   detailFields,
@@ -41,6 +41,14 @@ const props = defineProps({
   secondShow: {
     type: Boolean,
     default: false,
+  },
+  showStats: {
+    type: Boolean,
+    default: false,
+  },
+  toggleStats: {
+    type: Function,
+    default: () => {},
   },
 });
 
@@ -434,6 +442,34 @@ function getStationLabel(stationId) {
   const station = stationOptions.find((s) => s.value === stationId);
   return station ? station.label : stationId;
 }
+
+// 处理统计组件的钻取筛选
+const handleStatsFilter = (type, value) => {
+  if (type === 'card') {
+    if (value === 'all') {
+      // 总活动数，清空所有筛选
+      filterType.value = '';
+      filterStatus.value = '';
+    } else if (value === 'users') {
+      // 累计参与用户数，可以跳转到用户明细页面
+      ElMessage.info('查看累计参与用户明细');
+      return;
+    }
+  } else if (type === 'type') {
+    // 按活动类型筛选
+    filterType.value = value;
+  } else if (type === 'date') {
+    // 按日期筛选，可以跳转到该日期的参与用户明细
+    ElMessage.info(`查看 ${value} 的参与用户明细`);
+    return;
+  }
+  gridApi.query();
+};
+
+// 暴露方法给父组件
+defineExpose({
+  handleStatsFilter,
+});
 </script>
 
 <template>
@@ -457,7 +493,7 @@ function getStationLabel(stationId) {
       <template #table-title>
         <div
           class="tabel-tabs"
-          style="display: flex; flex-wrap: wrap;  align-items: center"
+          style="display: flex; flex-wrap: wrap; align-items: center"
         >
           <!-- 活动类型筛选标签 -->
           <ElTag
@@ -521,6 +557,11 @@ function getStationLabel(stationId) {
             content="搜索"
             icon-name="search"
             @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
           />
           <IconButton
             content="全屏"
@@ -683,7 +724,4 @@ function getStationLabel(stationId) {
   </div>
 </template>
 <style scoped>
-.vxe-buttons--wrapper:not(:empty), .vxe-tools--operate:not(:empty), .vxe-tools--wrapper:not(:empty) {
-  padding-bottom: 0 !important;
-}
 </style>
