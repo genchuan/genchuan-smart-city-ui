@@ -95,8 +95,8 @@ export function useGridColumns() {
       slots: { default: 'orderNo' },
     },
     {
-      field: 'userId',
-      title: '用户ID',
+      field: 'plateNo',
+      title: '车牌',
       minWidth: 100,
       sortable: true,
     },
@@ -107,10 +107,11 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'type',
+      field: 'orderType',
       title: '订单类型',
       minWidth: 150,
       sortable: true,
+      slots: { default: 'orderType' },
     },
     {
       field: 'totalAmount',
