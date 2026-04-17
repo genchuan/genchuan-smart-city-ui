@@ -634,7 +634,14 @@ const alarmColumns = [
           />
         </div>
       </template>
-
+      <template #orderType="{ row }">
+        <span v-if="row.orderType === 'temp_park'">临时停车</span>
+        <span v-else-if="row.orderType === 'offtime_park'">错时停车</span>
+        <span v-else-if="row.orderType === 'car_charge'">汽车充电</span>
+        <span v-else-if="row.orderType === 'bike_charge'">两轮充电</span>
+        <span v-else-if="row.orderType === 'share_charge'">共享充电</span>
+        <span v-else>{{ row.orderType }}</span>
+      </template>
       <template #status="{ row }">
         <el-tag :type="getStatusType(row.status)">
           {{ getStatusLabel(row.status) }}

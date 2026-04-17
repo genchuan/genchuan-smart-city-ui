@@ -54,7 +54,7 @@ const chartComponet = ref({
 </script>
 <template>
   <div class="common-index">
-    <!-- <component :is="chartComponet.components" /> -->
+    <component :is="chartComponet.components" />
     <el-tabs
       v-model="activeName"
       class="common-tabs"

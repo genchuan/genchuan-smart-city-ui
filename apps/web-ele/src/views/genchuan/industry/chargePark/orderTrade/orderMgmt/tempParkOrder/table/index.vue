@@ -196,7 +196,7 @@ const getTableData = async (pageObj) => {
     dataObj.list = res.list.map((v) => {
       return {
         ...v,
-        payTime: formatTimestamp(v.payTime),
+        createOrderTime: formatTimestamp(v.createOrderTime),
         updateTime: formatTimestamp(v.updateTime),
         createTime: formatTimestamp(v.createTime),
       };
@@ -587,12 +587,18 @@ const alarmColumns = [
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
-      <template #reportNumber="{ row }">
+      <template #orderNo="{ row }">
         <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">
-          {{ row.reportNumber }}
+          {{ row.orderNo }}
         </el-text>
       </template>
-
+      <template #payMethod="{ row }">
+        <span v-if="row.payMethod === 'wechat'">微信</span>
+        <span v-else-if="row.payMethod === 'alipay'">支付宝</span>
+        <span v-else-if="row.payMethod === 'bank'">银行卡</span>
+        <span v-else-if="row.payMethod === 'cash'">现金</span>
+        <span v-else>{{ row.payMethod }}</span>
+      </template>
       <template #halfyearWarnCount="{ row }">
         <el-text @click="handleTotal(row)" class="common-align" type="primary">
           {{ row.halfyearWarnCount }}
