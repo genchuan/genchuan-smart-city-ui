@@ -251,7 +251,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     rowStyle({ rowIndex }) {
       if (isRedArray.includes(rowIndex)) {
         return {
-          backgroundColor: '#F56C6C',
+          backgroundColor: '#fed7d7',
         };
       }
     },
