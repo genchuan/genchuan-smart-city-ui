@@ -1,17 +1,79 @@
 import { requestClient } from '#/api/request';
 
+// ==================== 映射表 ====================
+// 申请类型映射
+const applyTypeMap = {
+  '应急出入': 'emergency',
+  '其他': 'other'
+};
+const applyTypeReverse = {
+  'emergency': '应急出入',
+  'other': '其他'
+};
+
+// 状态映射
+const statusMap = {
+  '待审核': 'pending',
+  '已通过': 'approved'
+};
+const statusReverse = {
+  'pending': '待审核',
+  'approved': '已通过'
+};
+
+// 通用转换函数：后端 → 前端（将英文转为中文）
+function convertEnToZh(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.applyType && applyTypeReverse[result.applyType]) {
+    result.applyType = applyTypeReverse[result.applyType];
+  }
+  if (result.status && statusReverse[result.status]) {
+    result.status = statusReverse[result.status];
+  }
+  return result;
+}
+
+// 通用转换函数：前端 → 后端（将中文转为英文）
+function convertZhToEn(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.applyType && applyTypeMap[result.applyType]) {
+    result.applyType = applyTypeMap[result.applyType];
+  }
+  if (result.status && statusMap[result.status]) {
+    result.status = statusMap[result.status];
+  }
+  return result;
+}
+
+// 转换列表数据
+function convertList(list) {
+  if (!Array.isArray(list)) return list;
+  return list.map(item => convertEnToZh(item));
+}
+
 // ==================== 出入申请接口 ====================
 export function getAccessApplyPage(params) {
-  return requestClient.get('/studentmgmt/access-apply/page', { params }).catch(err => {
-    console.warn('分页接口失败，使用模拟数据', err);
-    const mock = getMockList();
-    return { list: mock, total: mock.length };
-  });
+  const convertedParams = convertZhToEn(params);
+  return requestClient.get('/studentmgmt/access-apply/page', { params: convertedParams })
+    .then(res => {
+      if (res && res.list) {
+        res.list = convertList(res.list);
+      }
+      return res;
+    })
+    .catch(err => {
+      console.warn('分页接口失败，使用模拟数据', err);
+      const mock = getMockList();
+      return { list: convertList(mock), total: mock.length };
+    });
 }
 
 // 新增申请
 export function createAccessApply(data) {
-  return requestClient.post('/studentmgmt/access-apply/create', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.post('/studentmgmt/access-apply/create', convertedData).catch(err => {
     console.warn('申请接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
@@ -19,6 +81,7 @@ export function createAccessApply(data) {
 
 // 审核（批量）
 export function auditAccessApply(data) {
+  // 审核接口只传 ids，无需转换
   return requestClient.put('/studentmgmt/access-apply/audit', data).catch(err => {
     console.warn('审核接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -27,7 +90,8 @@ export function auditAccessApply(data) {
 
 // 编辑申请
 export function updateAccessApply(data) {
-  return requestClient.put('/studentmgmt/access-apply/update', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.put('/studentmgmt/access-apply/update', convertedData).catch(err => {
     console.warn('编辑接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
@@ -35,7 +99,8 @@ export function updateAccessApply(data) {
 
 // 导出
 export function exportAccessApply(params) {
-  return requestClient.download('/studentmgmt/access-apply/export-excel', params).catch(err => {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.download('/studentmgmt/access-apply/export-excel', convertedParams).catch(err => {
     console.warn('导出接口失败，模拟导出', err);
     return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
   });
@@ -43,12 +108,14 @@ export function exportAccessApply(params) {
 
 // 详情
 export function getAccessApplyDetail(params) {
-  return requestClient.get('/studentmgmt/access-apply/get', { params }).catch(err => {
-    console.warn('详情接口失败，使用模拟数据', err);
-    const mockList = getMockList();
-    const detail = mockList.find(item => item.id === params.id) || mockList[0];
-    return Promise.resolve(detail);
-  });
+  return requestClient.get('/studentmgmt/access-apply/get', { params })
+    .then(res => convertEnToZh(res))
+    .catch(err => {
+      console.warn('详情接口失败，使用模拟数据', err);
+      const mockList = getMockList();
+      const detail = mockList.find(item => item.id === params.id) || mockList[0];
+      return Promise.resolve(convertEnToZh(detail));
+    });
 }
 
 // 获取学生列表
@@ -66,9 +133,9 @@ export function getStudentOptions(params) {
 }
 
 // ==================== 图表接口 ====================
-// 出入申请统计看板（卡片 + 折线图 + 类型分布）
 export function getAccessApplyChart(params) {
-  return requestClient.get('/studentmgmt/access-apply/chart', { params }).catch(err => {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.get('/studentmgmt/access-apply/chart', { params: convertedParams }).catch(err => {
     console.warn('看板接口失败，使用模拟数据', err);
     return Promise.resolve({
       totalApplyCount: 128,
@@ -91,9 +158,9 @@ export function getAccessApplyChart(params) {
   });
 }
 
-// 各班级申请次数 / 类型分布统计（柱状图）
 export function getAccessApplyCount(params) {
-  return requestClient.get('/studentmgmt/access-apply/chart/applyCount', { params }).catch(err => {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.get('/studentmgmt/access-apply/chart/applyCount', { params: convertedParams }).catch(err => {
     console.warn('班级统计接口失败，使用模拟数据', err);
     return Promise.resolve({
       classStatistics: [
@@ -105,7 +172,7 @@ export function getAccessApplyCount(params) {
   });
 }
 
-// 模拟数据（包含班级字段 className，使用 reserve1）
+// 模拟数据（原始值使用英文，通过转换函数对外提供中文）
 export const getMockList = () => {
   return [
     {
@@ -113,12 +180,12 @@ export const getMockList = () => {
       studentId: 202301,
       studentName: '张三',
       className: '高一1班',
-      applyType: '应急出入',
+      applyType: 'emergency',
       applyReason: '家中有急事',
       applyTime: 1767225600000,
       auditUser: '张老师',
       auditTime: 1767312000000,
-      status: '已通过',
+      status: 'approved',
       remark: '',
       creator: 'admin',
       updater: 'admin',
@@ -130,12 +197,12 @@ export const getMockList = () => {
       studentId: 202302,
       studentName: '李四',
       className: '高一1班',
-      applyType: '其他',
+      applyType: 'other',
       applyReason: '外出就医',
       applyTime: 1767225600000,
       auditUser: null,
       auditTime: null,
-      status: '待审核',
+      status: 'pending',
       remark: '',
       creator: 'teacher_li',
       updater: 'teacher_li',
@@ -147,12 +214,12 @@ export const getMockList = () => {
       studentId: 202403,
       studentName: '王五',
       className: '高一2班',
-      applyType: '应急出入',
+      applyType: 'emergency',
       applyReason: '家里突发情况',
       applyTime: 1769904000000,
       auditUser: '王老师',
       auditTime: 1769990400000,
-      status: '已通过',
+      status: 'approved',
       remark: '',
       creator: 'admin',
       updater: 'admin',
@@ -164,12 +231,12 @@ export const getMockList = () => {
       studentId: 202404,
       studentName: '赵六',
       className: '高一2班',
-      applyType: '应急出入',
+      applyType: 'emergency',
       applyReason: '急需外出',
       applyTime: 1769904000000,
       auditUser: null,
       auditTime: null,
-      status: '待审核',
+      status: 'pending',
       remark: '',
       creator: 'teacher_zhang',
       updater: 'teacher_zhang',
@@ -181,12 +248,12 @@ export const getMockList = () => {
       studentId: 202505,
       studentName: '孙七',
       className: '高一3班',
-      applyType: '其他',
+      applyType: 'other',
       applyReason: '参加比赛',
       applyTime: 1775088000000,
       auditUser: '李老师',
       auditTime: 1775174400000,
-      status: '已通过',
+      status: 'approved',
       remark: '',
       creator: 'admin',
       updater: 'admin',
