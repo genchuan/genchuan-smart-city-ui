@@ -870,7 +870,7 @@ const handleAutoDetail = async (row) => {
             @click="openBackDialog(row)"
           />
           <IconButton
-            content="下发出发通知书"
+            content="下发处罚通知书"
             icon-name="download"
             :disabled="!['待复审'].includes(row.reviewStatus)"
             @click="handleSendFileConfirm(row)"

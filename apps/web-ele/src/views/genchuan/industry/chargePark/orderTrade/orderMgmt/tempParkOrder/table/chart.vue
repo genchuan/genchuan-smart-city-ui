@@ -5,6 +5,16 @@ import Card from '#/components/stats/card.vue';
 import Columnar from '#/components/stats/columnar.vue';
 import * as echarts from 'echarts';
 
+// 订单状态映射
+const statusMap = {
+  'charging': { label: '充电中', type: 'primary' },
+  'pending_pay': { label: '待支付', type: 'warning' },
+  'paid': { label: '已支付', type: 'success' },
+  'completed': { label: '已完成', type: 'success' },
+  'cancelled': { label: '已取消', type: 'info' },
+  'refunding': { label: '退款中', type: 'danger' },
+};
+
 const state = reactive({
   cardList: [
     { title: '今日订单量', value: 0, color: '#13ce66' },
@@ -12,7 +22,7 @@ const state = reactive({
     { title: '今日支付率（%）', value: 0, color: '#FF6B6B' },
   ],
   trendData: [],
-  stationData: [],
+  typeData: [],
 });
 
 const lineChartRef = ref(null);
@@ -21,44 +31,39 @@ let lineChartInstance = null;
 // 获取订单图表数据
 const fetchOrderChartData = async () => {
   try {
-    const res = await getTempParkOrderChart();
-    state.cardList[0].value = res.cardData?.todayOrderCount || 0;
-    state.cardList[1].value = res.cardData?.todayRevenue || 0;
-    state.cardList[2].value = res.cardData?.payRate || 0;
+    const res = await getOrderChart();
+    state.cardList[0].value = res.todayOrderCount;
+    state.cardList[1].value = res.todayRevenue;
+    state.cardList[2].value = res.payRate;
     // 如果trendData为空，使用假数据
     state.trendData = res.trendData && res.trendData.length > 0 ? res.trendData : [
-      { date: '2025-04-01', count: 8 },
-      { date: '2025-04-02', count: 10 },
-      { date: '2025-04-03', count: 12 },
-      { date: '2025-04-04', count: 9 },
-      { date: '2025-04-05', count: 15 },
+      { date: '2025-04-01', count: 12 },
+      { date: '2025-04-02', count: 15 },
+      { date: '2025-04-03', count: 8 },
+      { date: '2025-04-04', count: 20 },
+      { date: '2025-04-05', count: 14 },
     ];
-    state.stationData = res.stationData && res.stationData.length > 0 ? res.stationData : [
-      { name: '丰泽站', value: 20 },
-      { name: '鲤城站', value: 15 },
-      { name: '晋江站', value: 12 },
-      { name: '石狮站', value: 8 },
-    ];
+    state.typeData = res.typeData;
     // 更新折线图
     updateLineChart();
   } catch (error) {
     console.error('获取订单图表数据失败:', error);
     // 接口调用失败时使用假数据
-    state.cardList[0].value = 12;
-    state.cardList[1].value = 180.0;
-    state.cardList[2].value = 99.0;
+    state.cardList[0].value = 50;
+    state.cardList[1].value = 1500;
+    state.cardList[2].value = 85;
     state.trendData = [
-      { date: '2025-04-01', count: 8 },
-      { date: '2025-04-02', count: 10 },
-      { date: '2025-04-03', count: 12 },
-      { date: '2025-04-04', count: 9 },
-      { date: '2025-04-05', count: 15 },
+      { date: '2025-04-01', count: 12 },
+      { date: '2025-04-02', count: 15 },
+      { date: '2025-04-03', count: 8 },
+      { date: '2025-04-04', count: 20 },
+      { date: '2025-04-05', count: 14 },
     ];
-    state.stationData = [
-      { name: '丰泽站', value: 20 },
-      { name: '鲤城站', value: 15 },
-      { name: '晋江站', value: 12 },
-      { name: '石狮站', value: 8 },
+    state.typeData = [
+      { count: 2, status: 'completed' },
+      { count: 4, status: 'paid' },
+      { count: 1, status: 'charging' },
+      { count: 1, status: 'cancelled' },
     ];
     // 更新折线图
     updateLineChart();
@@ -174,9 +179,9 @@ onMounted(() => {
     <Columnar
        width="500px"
         height="330px"
-        title="各场站订单量"
-        :x-data="state.stationData.map(item => item.name)"
-        :series-data="[{ name: '订单数', data: state.stationData.map(item => item.value) }]"
+        title="订单类型分布"
+        :x-data="state.typeData.map(item => statusMap[item.status]?.label || item.status)"
+        :series-data="[{ name: '订单数', data: state.typeData.map(item => item.count) }]"
       />
   </div>
 </template>
