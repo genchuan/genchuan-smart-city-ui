@@ -6,29 +6,31 @@ import screenfull from 'screenfull';
 import {useVbenForm} from '#/adapter/form';
 import {useVbenVxeGrid} from '#/adapter/vxe-table';
 import {downloadFileFromBlobPart} from '@vben/utils';
-import DormCompareDetailDrawer from './components/dormCompareDetail.vue';
+import CommunicateDetailDrawer from './components/communicateDetail.vue';
 import {
   getMockList,
-  getDormComparePage,
-  scoreDormCompare,
-  summaryDormCompare,
-  pushDormCompare,
-  updateDormCompare,
-  exportDormCompare,
-  getDormCompareDetail,
-} from '#/api/genchuan/educationTeaching/studentMgmt/dormMgmt/dormCompare/data.js';
+  getCommunicateMgmtPage,
+  createCommunicateMgmt,        // 新增接口
+  publishCommunicateMgmt,
+  feedbackCommunicateMgmt,
+  replyCommunicateMgmt,
+  updateCommunicateMgmt,
+  exportCommunicateMgmt,
+  getCommunicateMgmtDetail,
+} from '#/api/genchuan/educationTeaching/studentMgmt/homeSchool/communicateMgmt/data.js';
 import {
   textObj,
   useFormSchema,
   getColumns,
-  useEditFormSchema,
-} from '#/api/genchuan/educationTeaching/studentMgmt/dormMgmt/dormCompare/form.js';
+  usePublishFormSchema,
+  useReplyFormSchema,
+} from '#/api/genchuan/educationTeaching/studentMgmt/homeSchool/communicateMgmt/form.js';
 
 // 辅助函数：状态标签类型
 const getStatusType = (status) => {
   const map = {
-    '打分中': 'warning',
-    '已汇总': 'success',
+    '未发布': 'warning',
+    '已发布': 'success',
   };
   return map[status] || 'info';
 };
@@ -93,10 +95,10 @@ function removeFilterTag(field) {
 
 function getFieldLabel(field) {
   const map = {
-    dormNum: '宿舍号',
     status: '状态',
     creator: '创建人',
     createTime: '创建时间',
+    title: '消息标题',
   };
   return map[field] || field;
 }
@@ -113,10 +115,16 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel: () => drawerApi.close(),
 });
 
-const [EditDrawer, editDrawerApi] = useVbenDrawer({
+const [PublishDrawer, publishDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => editDrawerApi.close(),
+  onCancel: () => publishDrawerApi.close(),
+});
+
+const [ReplyDrawer, replyDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => replyDrawerApi.close(),
 });
 
 const dataObj = reactive({
@@ -139,49 +147,10 @@ function handleRowCheckboxChange({records}) {
 }
 
 const searchParams = ref({});
+const isEditMode = ref(false);
 const currentEditId = ref(null);
-const scoreIds = ref([]);       // 待打分的ID列表（批量）
-
-// 打分模态框相关
-const scoreDialogVisible = ref(false);
-const batchScoreValue = ref(null);
-
-// 打开打分模态框
-async function handleBatchScore() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个评比记录');
-    return;
-  }
-  const scoringRows = checkedRows.value.filter(row => row.status === '打分中');
-  if (scoringRows.length === 0) {
-    ElMessage.warning('请选择状态为【打分中】的记录进行打分');
-    return;
-  }
-  scoreIds.value = scoringRows.map(row => row.id);
-  batchScoreValue.value = null; // 重置输入
-  scoreDialogVisible.value = true;
-}
-
-// 提交批量打分
-async function submitBatchScore() {
-  if (batchScoreValue.value === null || batchScoreValue.value === '') {
-    ElMessage.warning('请输入得分');
-    return;
-  }
-  const loading = ElLoading.service({text: '打分中...'});
-  try {
-    const res = await scoreDormCompare({ids: scoreIds.value, score: batchScoreValue.value});
-    if (res && res !== false) {
-      ElMessage.success('打分成功');
-      scoreDialogVisible.value = false;
-      handleRefresh();
-    } else {
-      ElMessage.error('打分失败');
-    }
-  } finally {
-    loading.close();
-  }
-}
+const publishIds = ref([]);      // 待发布的ID列表
+const replyId = ref(null);       // 待回复的ID
 
 const getTableData = async ({page}) => {
   dataObj.loading = true;
@@ -191,16 +160,13 @@ const getTableData = async ({page}) => {
       pageNo: page.currentPage,
       pageSize: page.pageSize,
     };
-    const res = await getDormComparePage(params);
+    const res = await getCommunicateMgmtPage(params);
     let filtered = res.list;
     // 应用标签筛选
     Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
       filtered = filtered.filter(item => {
         let itemValue;
         switch (field) {
-          case 'dormNum':
-            itemValue = item.dormNum;
-            break;
           case 'status':
             itemValue = item.status;
             break;
@@ -210,6 +176,9 @@ const getTableData = async ({page}) => {
           case 'createTime':
             const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
             itemValue = createDate;
+            break;
+          case 'title':
+            itemValue = item.title;
             break;
           default:
             itemValue = item[field];
@@ -231,9 +200,6 @@ const getTableData = async ({page}) => {
       filtered = filtered.filter(item => {
         let itemValue;
         switch (field) {
-          case 'dormNum':
-            itemValue = item.dormNum;
-            break;
           case 'status':
             itemValue = item.status;
             break;
@@ -243,6 +209,9 @@ const getTableData = async ({page}) => {
           case 'createTime':
             const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
             itemValue = createDate;
+            break;
+          case 'title':
+            itemValue = item.title;
             break;
           default:
             itemValue = item[field];
@@ -276,7 +245,7 @@ async function handleExport() {
   try {
     const loading = ElLoading.service({text: '正在导出...'});
     try {
-      const data = await exportDormCompare(searchParams.value);
+      const data = await exportCommunicateMgmt(searchParams.value);
       downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
       ElMessage.success('导出成功');
     } finally {
@@ -288,32 +257,32 @@ async function handleExport() {
   }
 }
 
-// 批量汇总
-async function handleBatchSummary() {
+// 批量发布
+async function handleBatchPublish() {
   if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个评比记录');
+    ElMessage.warning('请至少选择一个消息');
     return;
   }
-  const scoringRows = checkedRows.value.filter(row => row.status === '打分中');
-  if (scoringRows.length === 0) {
-    ElMessage.warning('请选择状态为【打分中】的记录进行汇总');
+  const unpublishedRows = checkedRows.value.filter(row => row.status === '未发布');
+  if (unpublishedRows.length === 0) {
+    ElMessage.warning('请选择状态为【未发布】的消息进行发布');
     return;
   }
   try {
-    await ElMessageBox.confirm(`确认汇总选中的 ${scoringRows.length} 个宿舍评比？汇总后将自动计算排名。`, '批量汇总确认', {
+    await ElMessageBox.confirm(`确认发布选中的 ${unpublishedRows.length} 条消息？发布后状态将变为“已发布”。`, '批量发布确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning',
     });
-    const loading = ElLoading.service({text: '汇总中...'});
+    const loading = ElLoading.service({text: '发布中...'});
     try {
-      const ids = scoringRows.map(row => row.id);
-      const res = await summaryDormCompare({ids});
+      const ids = unpublishedRows.map(row => row.id);
+      const res = await publishCommunicateMgmt({ids, sendTime: Date.now()});
       if (res && res !== false) {
-        ElMessage.success('批量汇总成功');
+        ElMessage.success('批量发布成功');
         handleRefresh();
       } else {
-        ElMessage.error('批量汇总失败');
+        ElMessage.error('批量发布失败');
       }
     } finally {
       loading.close();
@@ -322,83 +291,96 @@ async function handleBatchSummary() {
   }
 }
 
-// 批量推送
-async function handleBatchPush() {
+// 批量反馈（家长反馈，实际业务中可能需要单独界面，这里简化）
+async function handleBatchFeedback() {
   if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个评比记录');
+    ElMessage.warning('请至少选择一个消息');
     return;
   }
-  const summarizedRows = checkedRows.value.filter(row => row.status === '已汇总');
-  if (summarizedRows.length === 0) {
-    ElMessage.warning('请选择状态为【已汇总】的记录进行推送');
+  const publishedRows = checkedRows.value.filter(row => row.status === '已发布');
+  if (publishedRows.length === 0) {
+    ElMessage.warning('请选择状态为【已发布】的消息进行反馈');
     return;
   }
+  // 模拟家长反馈内容（实际应弹窗收集）
   try {
-    await ElMessageBox.confirm(`确认推送选中的 ${summarizedRows.length} 个宿舍评比结果？推送后学生家长可见。`, '批量推送确认', {
+    await ElMessageBox.prompt('请输入家长反馈内容', '家长反馈', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
-    });
-    const loading = ElLoading.service({text: '推送中...'});
-    try {
-      const ids = summarizedRows.map(row => row.id);
-      const res = await pushDormCompare({ids});
-      if (res && res !== false) {
-        ElMessage.success('批量推送成功');
-        handleRefresh();
-      } else {
-        ElMessage.error('批量推送失败');
+      inputType: 'textarea',
+    }).then(async ({value}) => {
+      const loading = ElLoading.service({text: '提交反馈...'});
+      try {
+        const ids = publishedRows.map(row => row.id);
+        const res = await feedbackCommunicateMgmt({
+          ids,
+          replyContent: value,
+          replyTime: Date.now()
+        });
+        if (res && res !== false) {
+          ElMessage.success('反馈成功');
+          handleRefresh();
+        } else {
+          ElMessage.error('反馈失败');
+        }
+      } finally {
+        loading.close();
       }
-    } finally {
-      loading.close();
-    }
+    }).catch(() => {
+    });
   } catch {
   }
 }
 
-// 编辑（单行）
+// 新增消息
+function handleCreate() {
+  isEditMode.value = false;
+  currentEditId.value = null;
+  publishFormApi.resetForm();
+  // 新增时默认状态为“未发布”
+  publishFormApi.setValues({status: '未发布'});
+  publishDrawerApi.open();
+}
+
+// 编辑消息
 async function handleEdit(row) {
-  if (row.status !== '打分中') {
-    ElMessage.warning('只有打分中的记录可以编辑');
-    return;
-  }
+  isEditMode.value = true;
   currentEditId.value = row.id;
   try {
-    const detail = await getDormCompareDetail({id: row.id});
-    editFormApi.setValues({
-      dormNum: detail.dormNum,
-      cycle: detail.cycle,
-      score: detail.score,
-      status: detail.status,     // 补充状态赋值
+    const detail = await getCommunicateMgmtDetail({id: row.id});
+    publishFormApi.setValues({
+      title: detail.title,
+      content: detail.content,
+      status: detail.status,
       remark: detail.remark,
     });
-    editDrawerApi.open();
+    publishDrawerApi.open();
   } catch (error) {
     console.error('加载详情失败', error);
     ElMessage.error('加载详情失败');
   }
 }
 
-// 单行推送
-async function handlePush(row) {
-  if (row.status !== '已汇总') {
-    ElMessage.warning('只有已汇总的记录可以推送');
+// 单行发布（仅改变状态）
+async function handlePublish(row) {
+  if (row.status !== '未发布') {
+    ElMessage.warning('只有未发布的消息可以发布');
     return;
   }
   try {
-    await ElMessageBox.confirm(`确认推送宿舍 ${row.dormNum} 的评比结果？`, '推送确认', {
+    await ElMessageBox.confirm(`确认发布消息"${row.title}"？发布后状态将变为“已发布”。`, '发布确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning',
     });
-    const loading = ElLoading.service({text: '推送中...'});
+    const loading = ElLoading.service({text: '发布中...'});
     try {
-      const res = await pushDormCompare({ids: [row.id]});
+      const res = await publishCommunicateMgmt({ids: [row.id], sendTime: Date.now()});
       if (res && res !== false) {
-        ElMessage.success('推送成功');
+        ElMessage.success('发布成功');
         handleRefresh();
       } else {
-        ElMessage.error('推送失败');
+        ElMessage.error('发布失败');
       }
     } finally {
       loading.close();
@@ -407,38 +389,82 @@ async function handlePush(row) {
   }
 }
 
-// 编辑表单（可修改得分和备注，状态只读但需提交）
-const [EditForm, editFormApi] = useVbenForm({
+// 单行回复（老师回复）
+async function handleReply(row) {
+  if (row.status !== '已发布') {
+    ElMessage.warning('只有已发布的消息可以回复');
+    return;
+  }
+  replyId.value = row.id;
+  replyFormApi.resetForm();
+  replyDrawerApi.open();
+}
+
+// 新增/编辑表单（共用）
+const [PublishForm, publishFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({text: '更新中...'});
+    const loading = ElLoading.service({text: isEditMode.value ? '保存中...' : '新增中...'});
     try {
-      // 确保 status 字段被传递（从表单中获取，实际是只读但值已存在）
-      const res = await updateDormCompare({...values, id: currentEditId.value});
+      let res;
+      if (isEditMode.value) {
+        res = await updateCommunicateMgmt({...values, id: currentEditId.value});
+      } else {
+        res = await createCommunicateMgmt(values);
+      }
       if (res && res !== false) {
-        ElMessage.success('更新成功');
-        editDrawerApi.close();
+        ElMessage.success(isEditMode.value ? '编辑成功' : '新增成功');
+        publishDrawerApi.close();
         handleRefresh();
       } else {
-        ElMessage.error('更新失败');
+        ElMessage.error(isEditMode.value ? '编辑失败' : '新增失败');
       }
     } finally {
       loading.close();
     }
   },
   layout: 'horizontal',
-  schema: useEditFormSchema(),
+  schema: usePublishFormSchema(isEditMode.value),
+  showCollapseButton: false,
+  submitButtonOptions: {content: '保存'},
+});
+
+// 回复表单
+const [ReplyForm, replyFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  handleSubmit: async (values) => {
+    const loading = ElLoading.service({text: '回复中...'});
+    try {
+      const res = await replyCommunicateMgmt({
+        id: replyId.value,
+        replyContent: values.replyContent,
+        replyTime: Date.now()
+      });
+      if (res && res !== false) {
+        ElMessage.success('回复成功');
+        replyDrawerApi.close();
+        handleRefresh();
+      } else {
+        ElMessage.error('回复失败');
+      }
+    } finally {
+      loading.close();
+    }
+  },
+  layout: 'horizontal',
+  schema: useReplyFormSchema(),
   showCollapseButton: false,
   submitButtonOptions: {content: '保存'},
 });
 
 // 详情抽屉
-const dormCompareDetailDrawerRef = ref(null);
+const communicateDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
   dataObj.detailObj = row;
-  dormCompareDetailDrawerRef.value.open();
+  communicateDetailDrawerRef.value.open();
 }
 
 const [QueryForm] = useVbenForm({
@@ -486,37 +512,17 @@ defineExpose({handleFilterTagClick, clearFilters});
 
 <template>
   <div class="park-lot-table-new">
-    <DormCompareDetailDrawer ref="dormCompareDetailDrawerRef" :detail-obj="dataObj.detailObj"
+    <CommunicateDetailDrawer ref="communicateDetailDrawerRef" :detail-obj="dataObj.detailObj"
                              @refresh="handleRefresh"/>
     <Drawer title="搜索">
       <QueryForm/>
     </Drawer>
-    <!-- 原来的 ScoreDrawer 已替换为 el-dialog 模态框 -->
-    <EditDrawer :title="textObj.editText">
-      <EditForm/>
-    </EditDrawer>
-
-    <!-- 打分模态框 -->
-    <el-dialog v-model="scoreDialogVisible" title="批量打分" width="400px">
-      <el-form label-width="80px">
-        <el-form-item label="得分">
-          <el-input-number
-            v-model="batchScoreValue"
-            :min="0"
-            :max="100"
-            :precision="2"
-            :step="1"
-            placeholder="请输入得分"
-            style="width: 100%"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="scoreDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitBatchScore">确认</el-button>
-      </template>
-    </el-dialog>
-
+    <PublishDrawer :title="isEditMode ? textObj.editText : textObj.createText">
+      <PublishForm/>
+    </PublishDrawer>
+    <ReplyDrawer :title="textObj.replyText">
+      <ReplyForm/>
+    </ReplyDrawer>
     <Grid>
       <template #table-title>
         <ElTag
@@ -532,9 +538,9 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="打分" icon-name="EditPen" @click="handleBatchScore"/>
-          <IconButton content="汇总" icon-name="Check" @click="handleBatchSummary"/>
-          <IconButton content="推送" icon-name="Promotion" @click="handleBatchPush"/>
+          <IconButton content="新增" icon-name="Plus" @click="handleCreate"/>
+          <IconButton content="批量发布" icon-name="Upload" @click="handleBatchPublish"/>
+          <IconButton content="反馈" icon-name="ChatLineSquare" @click="handleBatchFeedback"/>
           <IconButton content="导出" icon-name="download" @click="handleExport"/>
           <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
@@ -547,10 +553,9 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
 
       <!-- 钻取列 -->
-      <template #dormNum="{ row }">
-        <el-text @click="handleFilterTagClick('dormNum', row.dormNum)" type="primary"
-                 style="cursor: pointer;">
-          {{ row.dormNum }}
+      <template #title="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
+          {{ row.title }}
         </el-text>
       </template>
       <template #status="{ row }">
@@ -573,11 +578,11 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
 
       <!-- 时间格式化 -->
-      <template #sumTime="{ row }">
-        <el-text>{{ formatTimestamp(row.sumTime) }}</el-text>
+      <template #sendTime="{ row }">
+        <el-text>{{ formatTimestamp(row.sendTime) }}</el-text>
       </template>
-      <template #pushTime="{ row }">
-        <el-text>{{ formatTimestamp(row.pushTime) }}</el-text>
+      <template #replyTime="{ row }">
+        <el-text>{{ formatTimestamp(row.replyTime) }}</el-text>
       </template>
       <template #updateTime="{ row }">
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
@@ -587,10 +592,12 @@ defineExpose({handleFilterTagClick, clearFilters});
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton v-if="row.status === '打分中'" content="编辑" icon-name="Edit"
+          <IconButton v-if="row.status === '未发布'" content="编辑" icon-name="Edit"
                       @click="handleEdit(row)"/>
-          <IconButton v-if="row.status === '已汇总'" content="推送" icon-name="Promotion"
-                      @click="handlePush(row)"/>
+          <IconButton v-if="row.status === '未发布'" content="发布" icon-name="Upload"
+                      @click="handlePublish(row)"/>
+          <IconButton v-if="row.status === '已发布'" content="回复" icon-name="ChatLineSquare"
+                      @click="handleReply(row)"/>
         </div>
       </template>
     </Grid>

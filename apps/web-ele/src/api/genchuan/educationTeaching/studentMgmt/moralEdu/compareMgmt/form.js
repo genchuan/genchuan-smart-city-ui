@@ -46,7 +46,7 @@ export function getColumns() {
     { field: 'className', title: '班级', minWidth: 120, slots: { default: 'className' } },
     { field: 'cycle', title: '评比周期', minWidth: 100 },
     { field: 'totalScore', title: '总得分', minWidth: 100 },
-    { field: 'rank', title: '排名', minWidth: 80 },
+    { field: 'rankNo', title: '排名', minWidth: 80 },
     { field: 'awardName', title: '授予称号', minWidth: 120 },
     { field: 'awardTime', title: '授予时间', minWidth: 180, slots: { default: 'awardTime' } },
     { field: 'scoreUser', title: '打分人', minWidth: 100 },
@@ -66,7 +66,7 @@ export function getColumns() {
   return allColumns;
 }
 
-// 发起表单 schema
+// 发起表单 schema（添加 status 和 totalScore）
 export function useCreateFormSchema() {
   return [
     {
@@ -93,6 +93,37 @@ export function useCreateFormSchema() {
       labelWidth: '100',
     },
     {
+      fieldName: 'totalScore',               // 新增总得分字段（默认为0，后端要求非空）
+      label: '总得分',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '总得分（默认0）',
+        min: 0,
+        max: 100,
+        precision: 2,
+        disabled: true,                      // 发起时不可修改，由后续打分确定
+        style: 'width: 100%',
+      },
+      defaultValue: 0,
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'status',                   // 新增状态字段
+      label: '状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '状态',
+        disabled: true,                      // 发起时固定为“打分中”
+        options: [
+          { label: '打分中', value: '打分中' },
+          { label: '已汇总', value: '已汇总' },
+        ],
+      },
+      defaultValue: '打分中',
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
       fieldName: 'remark',
       label: '备注',
       component: 'Input',
@@ -102,7 +133,7 @@ export function useCreateFormSchema() {
   ];
 }
 
-// 编辑表单 schema（与发起类似，但不可修改周期？根据需求仅可编辑非核心字段，这里允许修改班级和备注）
+// 编辑表单 schema（添加 status 和 totalScore，且设为只读）
 export function useEditFormSchema() {
   return [
     {
@@ -119,11 +150,40 @@ export function useEditFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择评比周期',
-        disabled: true, // 周期不可修改
+        disabled: true,
         options: [
           { label: '周', value: '周' },
           { label: '月', value: '月' },
           { label: '学期', value: '学期' },
+        ],
+      },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'totalScore',
+      label: '总得分',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '总得分',
+        disabled: true,                      // 编辑时不可修改得分
+        min: 0,
+        max: 100,
+        precision: 2,
+        style: 'width: 100%',
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'status',
+      label: '状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '状态',
+        disabled: true,
+        options: [
+          { label: '打分中', value: '打分中' },
+          { label: '已汇总', value: '已汇总' },
         ],
       },
       rules: 'required',

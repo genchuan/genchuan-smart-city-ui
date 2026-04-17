@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { ElSelect, ElOption } from 'element-plus';
+import {ref, computed, onMounted} from 'vue';
+import {ElSelect, ElOption} from 'element-plus';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import BarHorizontal from '#/genchuan-components/stats/barHorizontal.vue';
 import Pie from '#/genchuan-components/stats/pieClick.vue';
@@ -107,10 +107,10 @@ const loadData = async () => {
       console.warn('图表总览接口失败，使用模拟数据');
       chartData.value = {
         rankList: [
-          {className: '高一(1)班', totalScore: 92.5, rank: 1},
-          {className: '高一(3)班', totalScore: 90.0, rank: 2},
-          {className: '高一(2)班', totalScore: 88.0, rank: 3},
-          {className: '高二(1)班', totalScore: 85.5, rank: 4},
+          {className: '高一(1)班', totalScore: 92.5, rankNo: 1},
+          {className: '高一(3)班', totalScore: 90.0, rankNo: 2},
+          {className: '高一(2)班', totalScore: 88.0, rankNo: 3},
+          {className: '高二(1)班', totalScore: 85.5, rankNo: 4},
         ],
         statusCount: {scoringCount: 5, finishedCount: 15},
         cycleCount: {weekCount: 8, monthCount: 10, termCount: 2},

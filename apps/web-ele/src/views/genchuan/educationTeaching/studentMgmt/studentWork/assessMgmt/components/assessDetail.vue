@@ -1,14 +1,14 @@
 <script setup>
-import { computed, defineProps, toRefs } from 'vue';
-import { useVbenDrawer } from '@vben/common-ui';
+import {computed, defineProps, toRefs} from 'vue';
+import {useVbenDrawer} from '@vben/common-ui';
 
 const props = defineProps({
-  detailObj: { type: Object, required: true, default: () => ({}) },
-  title: { type: String, default: '' },
+  detailObj: {type: Object, required: true, default: () => ({})},
+  title: {type: String, default: ''},
 });
 const emit = defineEmits(['refresh']);
 
-const { detailObj, title } = toRefs(props);
+const {detailObj, title} = toRefs(props);
 
 // 时间戳格式化
 const formatTimestamp = (timestamp) => {
@@ -63,8 +63,8 @@ defineExpose({open: () => detailDrawerApi.open(), close: () => detailDrawerApi.c
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">班级排名：</div>
-        <div class="detail-row-right">{{ detailObj.classRank || '-' }}</div>
-      </div>   <!-- rank → classRank -->
+        <div class="detail-row-right">{{ detailObj.rankNo || '-' }}</div>
+      </div>   <!-- rank → rankNo -->
       <div class="detail-card-row">
         <div class="detail-row-left">考评人：</div>
         <div class="detail-row-right">{{ detailObj.assessUser || '-' }}</div>
@@ -105,8 +105,8 @@ defineExpose({open: () => detailDrawerApi.open(), close: () => detailDrawerApi.c
       <div class="detail-section">🏆 排名数据</div>
       <div class="detail-card-row">
         <div class="detail-row-left">本期总排名：</div>
-        <div class="detail-row-right">{{ detailObj.classRank || '-' }}</div>
-      </div>   <!-- rank → classRank -->
+        <div class="detail-row-right">{{ detailObj.rankNo || '-' }}</div>
+      </div>   <!-- rank → rankNo -->
       <div class="detail-card-row">
         <div class="detail-row-left">较上期变化：</div>
         <div class="detail-row-right">{{ detailObj.rankChange || '-' }}</div>

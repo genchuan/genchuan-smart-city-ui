@@ -66,7 +66,7 @@ export function getColumns() {
   return allColumns;
 }
 
-// 编辑表单 schema
+// 编辑表单 schema（添加 status 字段）
 export function useEditFormSchema() {
   return [
     {
@@ -109,6 +109,21 @@ export function useEditFormSchema() {
       label: '得分',
       component: 'InputNumber',
       componentProps: { placeholder: '请输入得分', min: 0, max: 100, precision: 2, step: 1, style: 'width: 100%' },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'status',                     // 新增状态字段（只读，不可修改）
+      label: '状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '状态',
+        disabled: true,
+        options: [
+          { label: '打分中', value: '打分中' },
+          { label: '已汇总', value: '已汇总' },
+        ],
+      },
       rules: 'required',
       labelWidth: '100',
     },

@@ -31,21 +31,12 @@ const getStatusType = (status) => {
     '待审批': 'warning',
     '已执行': 'success',
     '已预警': 'danger',
-    'warn': 'danger',
-    'approve': 'success',    // 后端返回 approve 时映射为已执行样式
   };
   return map[status] || 'info';
 };
 
 const getStatusText = (status) => {
-  const map = {
-    '待审批': '待审批',
-    '已执行': '已执行',
-    '已预警': '已预警',
-    'warn': '已预警',
-    'approve': '已执行',     // 后端返回 approve 时显示为“已执行”
-  };
-  return map[status] || status;
+  return status || '-';
 };
 
 // 时间戳格式化
@@ -120,14 +111,6 @@ function getFieldLabel(field) {
 
 function getTagDisplayText(field, value) {
   if (Array.isArray(value)) return value.join('、');
-  // 状态字段特殊转换
-  if (field === 'status') {
-    const map = {
-      'warn': '已预警',
-      'approve': '已执行'   // 标签上显示已执行
-    };
-    return map[value] || value || '-';
-  }
   return value || '-';
 }
 
@@ -334,7 +317,7 @@ async function handleEdit(row) {
       punishType: detail.punishType,
       violateTime: detail.violateTime,
       violateReason: detail.violateReason,
-      status: detail.status,     // 补充状态赋值
+      status: detail.status,
       remark: detail.remark,
     });
     createDrawerApi.open();
@@ -374,7 +357,7 @@ async function handleAudit(row) {
 
 // 推送
 async function handlePush(row) {
-  if (row.status !== '已执行' && row.status !== 'approve') {  // 同时兼容后端返回approve
+  if (row.status !== '已执行') {
     ElMessage.warning('只有已执行状态的违纪记录可以推送');
     return;
   }
@@ -402,7 +385,7 @@ async function handlePush(row) {
 
 // 预警
 async function handleWarn(row) {
-  if (row.status !== '已执行' && row.status !== 'approve') {  // 同时兼容后端返回approve
+  if (row.status !== '已执行') {
     ElMessage.warning('只有已执行状态的违纪记录可以触发预警');
     return;
   }
@@ -437,10 +420,8 @@ const [CreateForm, createFormApi] = useVbenForm({
     try {
       let res;
       if (isEditMode.value) {
-        // 编辑时传递 status（虽然表单中 disabled，但值已存在）
         res = await updateViolateMgmt({...values, id: currentEditId.value});
       } else {
-        // 新增时确保 status 字段存在（默认待审批）
         const submitData = {...values, status: values.status || '待审批'};
         res = await createViolateMgmt(submitData);
       }
@@ -612,9 +593,9 @@ defineExpose({handleFilterTagClick, clearFilters});
           <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
           <IconButton v-if="row.status === '待审批'" content="审批" icon-name="Check"
                       @click="handleAudit(row)"/>
-          <IconButton v-if="row.status === '已执行' || row.status === 'approve'" content="推送"
+          <IconButton v-if="row.status === '已执行'" content="推送"
                       icon-name="Promotion" @click="handlePush(row)"/>
-          <IconButton v-if="row.status === '已执行' || row.status === 'approve'" content="预警"
+          <IconButton v-if="row.status === '已执行'" content="预警"
                       icon-name="Warning" @click="handleWarn(row)"/>
         </div>
       </template>

@@ -1,16 +1,64 @@
 import { requestClient } from '#/api/request';
 
+// ==================== 映射表 ====================
+// 评比周期映射
+const cycleMap = {
+  '周': 'week',
+  '月': 'month',
+  '学期': 'semester'
+};
+const cycleReverse = {
+  'week': '周',
+  'month': '月',
+  'semester': '学期'
+};
+
+// 通用转换函数：后端 → 前端（将英文转为中文）
+function convertEnToZh(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.cycle && cycleReverse[result.cycle]) {
+    result.cycle = cycleReverse[result.cycle];
+  }
+  return result;
+}
+
+// 通用转换函数：前端 → 后端（将中文转为英文）
+function convertZhToEn(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.cycle && cycleMap[result.cycle]) {
+    result.cycle = cycleMap[result.cycle];
+  }
+  return result;
+}
+
+// 转换列表数据
+function convertList(list) {
+  if (!Array.isArray(list)) return list;
+  return list.map(item => convertEnToZh(item));
+}
+
 // ==================== 宿舍评比接口 ====================
 export function getDormComparePage(params) {
-  return requestClient.get('/studentmgmt/dorm-compare/page', { params }).catch(err => {
-    console.warn('分页接口失败，使用模拟数据', err);
-    const mock = getMockList();
-    return { list: mock, total: mock.length };
-  });
+  const convertedParams = convertZhToEn(params);
+  return requestClient.get('/studentmgmt/dorm-compare/page', { params: convertedParams })
+    .then(res => {
+      if (res && res.list) {
+        res.list = convertList(res.list);
+      }
+      return res;
+    })
+    .catch(err => {
+      console.warn('分页接口失败，使用模拟数据', err);
+      const mock = getMockList();
+      return { list: convertList(mock), total: mock.length };
+    });
 }
 
 // 打分（批量）
 export function scoreDormCompare(data) {
+  // 打分接口只传 ids 和 score，无需转换
   return requestClient.put('/studentmgmt/dorm-compare/score', data).catch(err => {
     console.warn('打分接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -19,6 +67,7 @@ export function scoreDormCompare(data) {
 
 // 汇总（批量，自动计算排名）
 export function summaryDormCompare(data) {
+  // 汇总接口只传 ids，无需转换
   return requestClient.put('/studentmgmt/dorm-compare/summary', data).catch(err => {
     console.warn('汇总接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -27,6 +76,7 @@ export function summaryDormCompare(data) {
 
 // 推送（批量）
 export function pushDormCompare(data) {
+  // 推送接口只传 ids，无需转换
   return requestClient.put('/studentmgmt/dorm-compare/push', data).catch(err => {
     console.warn('推送接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -35,7 +85,8 @@ export function pushDormCompare(data) {
 
 // 更新（编辑）
 export function updateDormCompare(data) {
-  return requestClient.put('/studentmgmt/dorm-compare/update', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.put('/studentmgmt/dorm-compare/update', convertedData).catch(err => {
     console.warn('编辑接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
@@ -43,7 +94,8 @@ export function updateDormCompare(data) {
 
 // 导出
 export function exportDormCompare(params) {
-  return requestClient.download('/studentmgmt/dorm-compare/export-excel', params).catch(err => {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.download('/studentmgmt/dorm-compare/export-excel', convertedParams).catch(err => {
     console.warn('导出接口失败，模拟导出', err);
     return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
   });
@@ -51,18 +103,21 @@ export function exportDormCompare(params) {
 
 // 详情
 export function getDormCompareDetail(params) {
-  return requestClient.get('/studentmgmt/dorm-compare/get', { params }).catch(err => {
-    console.warn('详情接口失败，使用模拟数据', err);
-    const mockList = getMockList();
-    const detail = mockList.find(item => item.id === params.id) || mockList[0];
-    return Promise.resolve(detail);
-  });
+  return requestClient.get('/studentmgmt/dorm-compare/get', { params })
+    .then(res => convertEnToZh(res))
+    .catch(err => {
+      console.warn('详情接口失败，使用模拟数据', err);
+      const mockList = getMockList();
+      const detail = mockList.find(item => item.id === params.id) || mockList[0];
+      return Promise.resolve(convertEnToZh(detail));
+    });
 }
 
 // ==================== 图表接口 ====================
 // 宿舍评比得分看板（卡片 + 柱状图数据）
 export function getDormCompareChart(params) {
-  return requestClient.get('/studentmgmt/dorm-compare/chart', { params }).catch(err => {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.get('/studentmgmt/dorm-compare/chart', { params: convertedParams }).catch(err => {
     console.warn('得分看板接口失败，使用模拟数据', err);
     return Promise.resolve({
       totalCompare: 86,
@@ -82,7 +137,8 @@ export function getDormCompareChart(params) {
 
 // 宿舍得分排名统计（柱状图专用）
 export function getDormCompareScoreRank(params) {
-  return requestClient.get('/studentmgmt/dorm-compare/chart/scoreRank', { params }).catch(err => {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.get('/studentmgmt/dorm-compare/chart/scoreRank', { params: convertedParams }).catch(err => {
     console.warn('得分排名接口失败，使用模拟数据', err);
     return Promise.resolve({
       labels: ['302', '301', '201', '202', '101'],
@@ -91,14 +147,14 @@ export function getDormCompareScoreRank(params) {
   });
 }
 
-// 模拟数据（与接口响应结构一致）
+// 模拟数据（原始值使用英文，通过转换函数对外提供中文）
 export const getMockList = () => {
   return [
     {
       id: 1,
       dormId: 101,
       dormNum: '101',
-      cycle: '月',
+      cycle: 'month',
       score: 85.5,
       rankNo: 5,
       scoreUser: '张老师',
@@ -115,7 +171,7 @@ export const getMockList = () => {
       id: 2,
       dormId: 201,
       dormNum: '201',
-      cycle: '月',
+      cycle: 'month',
       score: 90.5,
       rankNo: 3,
       scoreUser: '李老师',
@@ -132,7 +188,7 @@ export const getMockList = () => {
       id: 3,
       dormId: 202,
       dormNum: '202',
-      cycle: '月',
+      cycle: 'month',
       score: 88.0,
       rankNo: 4,
       scoreUser: '王老师',
@@ -149,7 +205,7 @@ export const getMockList = () => {
       id: 4,
       dormId: 301,
       dormNum: '301',
-      cycle: '月',
+      cycle: 'month',
       score: 92.0,
       rankNo: 2,
       scoreUser: null,
@@ -166,7 +222,7 @@ export const getMockList = () => {
       id: 5,
       dormId: 302,
       dormNum: '302',
-      cycle: '月',
+      cycle: 'month',
       score: 95.5,
       rankNo: 1,
       scoreUser: '陈老师',
@@ -183,7 +239,7 @@ export const getMockList = () => {
       id: 6,
       dormId: 401,
       dormNum: '401',
-      cycle: '周',
+      cycle: 'week',
       score: 78.0,
       rankNo: null,
       scoreUser: null,

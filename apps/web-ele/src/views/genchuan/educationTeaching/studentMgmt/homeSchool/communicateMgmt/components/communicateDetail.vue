@@ -1,7 +1,7 @@
 <script setup>
-import { computed, defineProps, toRefs } from 'vue';
+import { computed, defineProps, toRefs, ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
-import { ElImage } from 'element-plus';
+import { ElTable, ElTableColumn } from 'element-plus';
 
 const props = defineProps({
   detailObj: { type: Object, required: true, default: () => ({}) },
@@ -26,8 +26,8 @@ const formatTimestamp = (timestamp) => {
 };
 
 const drawerTitle = computed(() => {
-  const name = detailObj.value?.activityName || '活动';
-  return title.value || `${name}详情`;
+  const name = detailObj.value?.title ? `${detailObj.value.title}` : '消息详情';
+  return title.value || name;
 });
 
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
@@ -39,37 +39,22 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
 });
 
 defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.close() });
-
-const photoUrl = computed(() => detailObj.value.photo || '');
 </script>
 
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
       <!-- 基础信息 -->
-      <div class="detail-section">🎯 活动基础信息</div>
-      <div class="detail-card-row"><div class="detail-row-left">活动名称：</div><div class="detail-row-right">{{ detailObj.activityName || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">活动类型：</div><div class="detail-row-right">{{ detailObj.activityType || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">主办部门：</div><div class="detail-row-right">{{ detailObj.hostDept || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">开始时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.startTime) }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">结束时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.endTime) }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">参与人数：</div><div class="detail-row-right">{{ detailObj.joinNum || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">发布时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.publishTime) }}</div></div>
+      <div class="detail-section">📢 消息基础信息</div>
+      <div class="detail-card-row"><div class="detail-row-left">消息标题：</div><div class="detail-row-right">{{ detailObj.title || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">消息内容：</div><div class="detail-row-right">{{ detailObj.content || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">发布人：</div><div class="detail-row-right">{{ detailObj.sendUser || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">发布时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.sendTime) }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">家长反馈内容：</div><div class="detail-row-right">{{ detailObj.replyContent || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">反馈时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.replyTime) }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">互动率：</div><div class="detail-row-right">{{ detailObj.interactRate ? detailObj.interactRate + '%' : '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">状态：</div><div class="detail-row-right">{{ detailObj.status || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">活动详情：</div><div class="detail-row-right">{{ detailObj.content || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">备注：</div><div class="detail-row-right">{{ detailObj.remark || '-' }}</div></div>
-
-      <div class="detail-section">📷 活动照片</div>
-      <div class="photo-list">
-        <el-image
-          v-if="photoUrl"
-          :src="photoUrl"
-          :preview-src-list="[photoUrl]"
-          fit="cover"
-          style="width: 200px; height: 150px; border-radius: 4px;"
-        />
-        <div v-else>暂无照片</div>
-      </div>
 
       <!-- 操作日志 -->
       <div class="detail-section">📋 操作日志</div>
@@ -130,11 +115,5 @@ const photoUrl = computed(() => detailObj.value.photo || '');
   border-bottom: 1px solid #e0e0e0;
   color: #6E7E91;
   &:first-child { margin-top: 0; }
-}
-.photo-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 16px;
 }
 </style>

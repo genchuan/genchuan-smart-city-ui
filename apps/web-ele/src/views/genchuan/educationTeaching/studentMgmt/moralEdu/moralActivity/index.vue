@@ -164,7 +164,7 @@ const currentEditId = ref(null);
 const joinActivityId = ref(null);
 const recordActivityId = ref(null);
 
-// 加载部门选项
+// 加载部门选项（value 为部门名称）
 const deptOptions = ref([]);
 const loadDeptOptions = async () => {
   const res = await getDeptOptions();
@@ -199,7 +199,7 @@ const getTableData = async ({page}) => {
             itemValue = item.activityType;
             break;
           case 'hostDept':
-            itemValue = item.hostDeptName;
+            itemValue = item.hostDept;   // 现在 hostDept 直接是名称
             break;
           case 'status':
             itemValue = item.status;
@@ -302,7 +302,7 @@ function handleCreate() {
   currentEditId.value = null;
   createFormApi.resetForm();
   // 新增时设置默认状态为“未发布”
-  createFormApi.setValues({ status: '未发布' });
+  createFormApi.setValues({status: '未发布'});
   createDrawerApi.open();
 }
 
@@ -314,10 +314,10 @@ async function handleEdit(row) {
     createFormApi.setValues({
       activityName: detail.activityName,
       activityType: detail.activityType,
-      hostDept: detail.hostDept,
+      hostDept: detail.hostDept,   // 直接使用部门名称
       startTime: detail.startTime,
       endTime: detail.endTime,
-      status: detail.status,     // 补充状态赋值
+      status: detail.status,
       content: detail.content,
       remark: detail.remark,
     });
@@ -387,11 +387,9 @@ const [CreateForm, createFormApi] = useVbenForm({
     try {
       let res;
       if (isEditMode.value) {
-        // 编辑时传递 status（表单中已包含）
         res = await updateMoralActivity({...values, id: currentEditId.value});
       } else {
-        // 新增时确保 status 字段存在（默认未发布）
-        const submitData = { ...values, status: values.status || '未发布' };
+        const submitData = {...values, status: values.status || '未发布'};
         res = await createMoralActivity(submitData);
       }
       if (res && res !== false) {
@@ -411,7 +409,7 @@ const [CreateForm, createFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// 动态注入部门选项
+// 动态注入部门选项（value 为部门名称）
 watch(createFormApi, (api) => {
   if (api && deptOptions.value.length) {
     const schema = api.getSchema();
@@ -432,7 +430,7 @@ const [JoinForm, joinFormApi] = useVbenForm({
       const res = await joinMoralActivity({id: joinActivityId.value, studentId: values.studentId});
       if (res && res !== false) {
         ElMessage.success('报名成功');
-        joinModalApi.close();   // 关闭模态框
+        joinModalApi.close();
         handleRefresh();
       } else {
         ElMessage.error('报名失败');
@@ -580,7 +578,7 @@ defineExpose({handleFilterTagClick, clearFilters});
         </div>
       </template>
 
-      <!-- 钻取列 -->
+      <!-- 钻取列 - 将 hostDeptName 改为 hostDept -->
       <template #activityName="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
           {{ row.activityName }}
@@ -592,10 +590,10 @@ defineExpose({handleFilterTagClick, clearFilters});
           {{ row.activityType }}
         </el-text>
       </template>
-      <template #hostDeptName="{ row }">
-        <el-text @click="handleFilterTagClick('hostDept', row.hostDeptName)" type="primary"
+      <template #hostDept="{ row }">
+        <el-text @click="handleFilterTagClick('hostDept', row.hostDept)" type="primary"
                  style="cursor: pointer;">
-          {{ row.hostDeptName }}
+          {{ row.hostDept }}
         </el-text>
       </template>
       <template #status="{ row }">
@@ -635,7 +633,8 @@ defineExpose({handleFilterTagClick, clearFilters});
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton v-if="row.status === '未发布'" content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
+          <IconButton v-if="row.status === '未发布'" content="编辑" icon-name="Edit"
+                      @click="handleEdit(row)"/>
           <IconButton v-if="row.status === '未发布'" content="发布" icon-name="Upload"
                       @click="handlePublish(row)"/>
           <IconButton v-if="row.status === '进行中'" content="报名" icon-name="User"

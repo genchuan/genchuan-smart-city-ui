@@ -11,6 +11,8 @@ import accessApply from './accessApply/index.vue';
 import accessApplyChart from './accessApply/components/chart.vue';
 import repairMgmt from './repairMgmt/index.vue';
 import repairMgmtChart from './repairMgmt/components/chart.vue';
+import stayMgmt from './stayMgmt/index.vue';
+import stayMgmtChart from './stayMgmt/components/chart.vue';
 import '#/components/page/index.scss';
 
 const changeArrowStatus = () => {
@@ -66,6 +68,15 @@ const tabArray = ref([
     arrowShow: true,
     arrowState: false,
   },
+  {
+    label: '留宿管理',
+    components: stayMgmt,
+    chartComponent: stayMgmtChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false,
+  },
 ]);
 
 const arrowChange = () => {
@@ -105,6 +116,12 @@ const setAccessApplyRef = (el) => {
 const repairMgmtRef = ref(null);
 const setRepairMgmtRef = (el) => {
   if (el) repairMgmtRef.value = el;
+};
+
+// 留宿管理组件引用
+const stayMgmtRef = ref(null);
+const setStayMgmtRef = (el) => {
+  if (el) stayMgmtRef.value = el;
 };
 
 // ========== 床位管理图表事件 ==========
@@ -252,6 +269,45 @@ const onRepairLineSelect = async ({ field, value }) => {
   ElMessage.info(`点击日期：${value}，可按日期筛选报修记录`);
 };
 
+// ========== 留宿管理图表事件 ==========
+const onStayCardSelect = async (status) => {
+  await nextTick();
+  if (!stayMgmtRef.value) {
+    ElMessage.warning('留宿管理列表组件未就绪');
+    return;
+  }
+  stayMgmtRef.value.clearFilters();
+  if (status === 'pendingConfirm') {
+    stayMgmtRef.value.handleFilterTagClick('status', '待确认');
+  } else if (status === 'pendingAudit') {
+    stayMgmtRef.value.handleFilterTagClick('status', '待审核');
+  } else if (status === 'passed') {
+    stayMgmtRef.value.handleFilterTagClick('status', '已通过');
+  }
+};
+
+const onStayPieSelect = async ({ field, value }) => {
+  await nextTick();
+  if (!stayMgmtRef.value) {
+    ElMessage.warning('留宿管理列表组件未就绪');
+    return;
+  }
+  stayMgmtRef.value.handleFilterTagClick('status', value);
+};
+
+const onStayBarSelect = async ({ field, value }) => {
+  await nextTick();
+  if (!stayMgmtRef.value) {
+    ElMessage.warning('留宿管理列表组件未就绪');
+    return;
+  }
+  stayMgmtRef.value.handleFilterTagClick('className', value);
+};
+
+const onStayLineSelect = async ({ field, value }) => {
+  ElMessage.info(`点击日期：${value}，可按日期筛选留宿记录`);
+};
+
 const currentTab = computed(() => tabArray.value.find(item => item.label === activeName.value) || tabArray.value[0]);
 const currentChartComponent = computed(() => currentTab.value.chartComponent);
 const currentArrowShow = computed(() => currentTab.value.arrowShow);
@@ -292,6 +348,14 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
       @cardSelect="onRepairCardSelect"
       @pieSelect="onRepairPieSelect"
       @lineSelect="onRepairLineSelect"
+    />
+    <component
+      v-if="currentArrowShow && activeName === '留宿管理'"
+      :is="currentChartComponent"
+      @cardSelect="onStayCardSelect"
+      @pieSelect="onStayPieSelect"
+      @barSelect="onStayBarSelect"
+      @lineSelect="onStayLineSelect"
     />
     <el-tabs v-model="activeName" class="common-tabs" type="card">
       <el-tab-pane v-for="item in tabArray" :key="item.label" :name="item.label">
@@ -335,9 +399,18 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
           @arrow-change="arrowChange"
         />
         <component
-          v-else
+          v-else-if="item.label === '报修管理'"
           :is="item.components"
           :ref="setRepairMgmtRef"
+          :second-show="item.secondShow"
+          :key="item.label"
+          :arrow-show="item.arrowShow"
+          @arrow-change="arrowChange"
+        />
+        <component
+          v-else
+          :is="item.components"
+          :ref="setStayMgmtRef"
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"
