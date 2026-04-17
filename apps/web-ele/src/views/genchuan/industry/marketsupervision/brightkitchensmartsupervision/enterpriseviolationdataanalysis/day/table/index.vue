@@ -407,22 +407,22 @@ const oepnalarmCount = async (row, type) => {
 const alarmDrillColumns = [
   { label: 'ID', prop: 'id', width: 80 },
   { label: '创建时间', prop: 'createTime', width: 180 }, 
-  { label: '告警类型', prop: 'alertTypeName', width: 120 },
-  { label: '设备编码', prop: 'deviceCode', width: 180 },
+  { label: '告警类型', prop: 'alertTypeName', width: 0 },
+  { label: '设备编码', prop: 'deviceCode', width: 0 },
   { label: '告警来源', prop: 'alertSourceName', width: 120 },
-  { label: '设备手机号', prop: 'deviceAccount', width: 150 }, 
+  { label: '设备手机号', prop: 'deviceAccount', width: 0 }, 
 ];
 
 // 整改复审台账列
 const rectifyReviewColumns = [ 
   { label: '整改通知书id', prop: 'rectifyNoticeId', width: 150 },
-  { label: '台账编号', prop: 'ledgerCode', width: 200 },
+  { label: '台账编号', prop: 'ledgerCode', width: 0 },
   { label: '违规类型', prop: 'illegalTypeName', width: 120 },
   { label: '违规等级', prop: 'illegalLevelName', width: 150 }, 
   { label: '违规证据链接', prop: 'evidenceUrl', width: 400, slot: 'evidenceUrl' },
   { label: '草拟时间', prop: 'draftTime', width: 180 },
   { label: '整改截至时间', prop: 'rectifyDeadlineTime', width: 180 },
-  { label: '复审状态', prop: 'reviewStatus', width: 120 },
+  { label: '复审状态', prop: 'reviewStatus', width: 0 },
   { label: '复审人', prop: 'reviewUserName', width: 120 },
   { label: '复审时间', prop: 'reviewTime', width: 180 },
   { label: '撤销时间', prop: 'cancelTime', width: 180 }, 
@@ -434,9 +434,9 @@ const rectifyReviewColumns = [
 const deviceNormalColumns = [
   { label: 'ID', prop: 'id', width: 80 },
   { label: '设备编号', prop: 'deviceCode', width: 180 },
-  { label: '设备名称', prop: 'deviceName', width: 200 },
+  { label: '设备名称', prop: 'deviceName', width: 0 },
   { label: '设备类型', prop: 'deviceType', width: 150 },
-  { label: '所属企业ID', prop: 'entId', width: 120 },
+  { label: '所属企业ID', prop: 'entId', width: 0 },
   { label: '所属区域ID', prop: 'areaId', width: 120 },
   { label: '状态', prop: 'status', width: 120 },
 ];
@@ -445,12 +445,12 @@ const deviceNormalColumns = [
 const rectifyFinishColumns = [
   { label: 'ID', prop: 'id', width: 80 },
   { label: '整改通知书id', prop: 'rectifyNoticeId', width: 150 },
-  { label: '台账编号', prop: 'ledgerCode', width: 200 }, 
+  { label: '台账编号', prop: 'ledgerCode', width: 0 }, 
   { label: '违规证据链接', prop: 'evidenceUrl', width: 400, slot: 'evidenceUrl' },
   { label: '草拟时间', prop: 'draftTime', width: 180 },
   { label: '整改截至时间', prop: 'rectifyDeadlineTime', width: 180 },
   { label: '复审状态', prop: 'reviewStatus', width: 120 }, 
-  { label: '复审时间', prop: 'reviewTime', width: 180 },
+  { label: '复审时间', prop: 'reviewTime', width: 0 },
   { label: '撤销时间', prop: 'cancelTime', width: 180 }, 
   { label: '执法复审台账编号', prop: 'lawLedgerCode', width: 200 },
   { label: '整改通知书编号', prop: 'rectifyNoticeCode', width: 200 }, 

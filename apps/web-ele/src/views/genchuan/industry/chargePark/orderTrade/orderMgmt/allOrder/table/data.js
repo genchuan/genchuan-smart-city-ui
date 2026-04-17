@@ -10,6 +10,7 @@ export function useFormSchema() {
         maxLength: 50,
       },
       labelWidth: 120,
+      isSearch: true,
     },
     {
       fieldName: 'userId',

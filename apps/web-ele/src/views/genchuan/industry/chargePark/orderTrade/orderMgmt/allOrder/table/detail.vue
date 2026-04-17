@@ -22,7 +22,7 @@ const { detailObj, title } = toRefs(props);
 
 // 计算属性处理标题
 const drawerTitle = computed(() => {
-  const orderNo = detailObj.value?.orderNumber || '充电停车订单';
+  const orderNo = detailObj.value?.orderNo || '充电停车订单';
   return title.value || `${orderNo} 详情`;
 });
 
@@ -53,28 +53,28 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">订单编号:</div>
         <div class="detail-row-right">
-          {{ detailObj.orderNumber || '-' }}
+          {{ detailObj.orderNo || '-' }}
         </div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">用户名称:</div>
+        <div class="detail-row-left">用户ID:</div>
         <div class="detail-row-right">
-          {{ detailObj.userName || '-' }}
+          {{ detailObj.userId || '-' }}
         </div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">所属场站:</div>
+        <div class="detail-row-left">场站ID:</div>
         <div class="detail-row-right">
-          {{ detailObj.stationName || '-' }}
+          {{ detailObj.stationId || '-' }}
         </div>
       </div>
 
       <div class="detail-card-row">
         <div class="detail-row-left">订单类型:</div>
         <div class="detail-row-right">
-          {{ detailObj.orderType || '-' }}
+          {{ detailObj.type || '-' }}
         </div>
       </div>
 
@@ -88,14 +88,14 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">实付金额:</div>
         <div class="detail-row-right">
-          {{ detailObj.actualAmount || 0 }} 元
+          {{ detailObj.payAmount || 0 }} 元
         </div>
       </div>
 
       <div class="detail-card-row">
         <div class="detail-row-left">订单状态:</div>
         <div class="detail-row-right">
-          {{ detailObj.orderStatus || '-' }}
+          {{ detailObj.status || '-' }}
         </div>
       </div>
 
@@ -107,30 +107,30 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
+        <div class="detail-row-left">备注:</div>
+        <div class="detail-row-right">
+          {{ detailObj.remark || '-' }}
+        </div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">创建者:</div>
+        <div class="detail-row-right">
+          {{ detailObj.creator || '-' }}
+        </div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">更新者:</div>
+        <div class="detail-row-right">
+          {{ detailObj.updater || '-' }}
+        </div>
+      </div>
+
+      <div class="detail-card-row">
         <div class="detail-row-left">创建时间:</div>
         <div class="detail-row-right">
           {{ detailObj.createTime || '-' }}
-        </div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">支付渠道:</div>
-        <div class="detail-row-right">
-          {{ detailObj.payChannel || '-' }}
-        </div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">优惠金额:</div>
-        <div class="detail-row-right">
-          {{ detailObj.discountAmount || 0 }} 元
-        </div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">更新人:</div>
-        <div class="detail-row-right">
-          {{ detailObj.updateUser || '-' }}
         </div>
       </div>
 

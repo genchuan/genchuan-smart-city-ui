@@ -35,3 +35,37 @@ export function invoiceOrder(data) {
 export function getOrderChart() {
   return requestClient.get('/ordertrade/all-order/chart');
 }
+
+
+/** 临时停车订单分页 */
+export function getTempParkOrderPage(params) {
+  return requestClient.get('/ordertrade/temp-park-order/page', {
+    params,
+  });
+}
+/** 临时停车订单导出 */
+export function exportTempParkOrderExcel() {
+  return requestClient.download('/ordertrade/temp-park-order/export');
+}
+/** 临时停车订单发票 */
+export function invoiceTempParkOrder(data) {
+  return requestClient.put('/ordertrade/temp-park-order/invoice', data);
+}
+/** 临时停车订单退款 */
+export function refundTempParkOrder(data) {
+  return requestClient.put('/ordertrade/temp-park-order/refund', data);
+}
+
+/** 临时停车订单支付 */
+export function payTempParkOrder(data) {
+  return requestClient.put('/ordertrade/temp-park-order/pay', data);
+}
+
+/** 临时停车订单取消 */
+export function cancelTempParkOrder(data) {
+  return requestClient.put('/ordertrade/temp-park-order/cancel', data);
+}
+/** 临时停车订单图表 */
+export function getTempParkOrderChart() {
+  return requestClient.get('/ordertrade/temp-park-order/chart');
+}

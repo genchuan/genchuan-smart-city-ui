@@ -229,8 +229,8 @@ const [QueryForm, queryFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useFormSchema().map((v) => {
     delete v.rules;
-    return { ...v };
-  }),
+    return { ...v }  
+  }).filter((v) => v.isSearch),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
