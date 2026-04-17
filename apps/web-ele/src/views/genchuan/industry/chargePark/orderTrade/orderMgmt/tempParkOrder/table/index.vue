@@ -11,7 +11,7 @@ import * as XLSX from 'xlsx';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
-import { getTempParkOrderPage, exportTempParkOrderExcel, invoiceTempParkOrder, cancelTempParkOrder, payTempParkOrder, invoiceOrder } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
+import { getTempParkOrderPage, exportTempParkOrderExcel, refundTempParkOrder, invoiceTempParkOrder, cancelTempParkOrder, payTempParkOrder, invoiceOrder } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import { $t } from '#/locales';
 import { downloadLocalTemplate } from '#/utils/genchuan/down';
 import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
@@ -199,6 +199,7 @@ const getTableData = async (pageObj) => {
         createOrderTime: formatTimestamp(v.createOrderTime),
         updateTime: formatTimestamp(v.updateTime),
         createTime: formatTimestamp(v.createTime),
+        payTime: formatTimestamp(v.payTime),
       };
     });;
     return dataObj;
@@ -614,10 +615,11 @@ const alarmColumns = [
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton content="支付" icon-name="Money" @click="handlePay(row)" />
-          <IconButton content="退款" icon-name="back" @click="handleRefund(row)" />
-          <IconButton content="取消" icon-name="delete" color="#F56C6C" @click="handleCancel(row)" />
-          <IconButton content="开票" icon-name="Document" @click="handleInvoice(row)" />
+          <IconButton content="支付" v-if="row.status === 'pending_pay'" icon-name="Money" @click="handlePay(row)" />
+          <IconButton content="退款" icon-name="back" v-if="row.status === 'paid'" @click="handleRefund(row)" />
+          <IconButton content="取消" v-if="row.status === 'pending_pay'" icon-name="delete" color="#F56C6C"
+            @click="handleCancel(row)" />
+          <IconButton content="开票" v-if="row.status === 'completed'" icon-name="Document" @click="handleInvoice(row)" />
         </div>
       </template>
       <template #bottom>
