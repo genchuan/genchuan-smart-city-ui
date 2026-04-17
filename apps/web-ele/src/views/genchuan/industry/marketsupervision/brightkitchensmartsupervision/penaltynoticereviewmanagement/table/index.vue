@@ -785,14 +785,7 @@ const handleAutoDetail = async (row) => {
             icon-name="download"
             :disabled="isEmpty(checkedIds)"
             @click="handlePDF"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
+          /> 
           <IconButton
             content="搜索"
             icon-name="search"
