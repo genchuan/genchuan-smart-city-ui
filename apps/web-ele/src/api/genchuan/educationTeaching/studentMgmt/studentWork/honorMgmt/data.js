@@ -1,41 +1,119 @@
 import { requestClient } from '#/api/request';
 
+// ==================== 映射表 ====================
+// 荣誉类型映射（前端中文 ↔ 后端数字）
+const honorTypeMap = {
+  '优秀学生': '1',
+  '奖学金': '2',
+  '竞赛获奖': '3',
+  '其他': '4'
+};
+const honorTypeReverse = {
+  '1': '优秀学生',
+  '2': '奖学金',
+  '3': '竞赛获奖',
+  '4': '其他'
+};
+
+// 状态映射（前端中文 ↔ 后端数字）
+// 注：根据前端业务逻辑，待审核→1，已通过→2，已推送→3
+const statusMap = {
+  '待审核': '1',
+  '已通过': '2',
+  '已推送': '3'
+};
+const statusReverse = {
+  '1': '待审核',
+  '2': '已通过',
+  '3': '已推送'
+};
+
+// 通用转换函数：后端 → 前端（将数字转为中文）
+function convertEnToZh(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.honorType && honorTypeReverse[result.honorType]) {
+    result.honorType = honorTypeReverse[result.honorType];
+  }
+  if (result.status && statusReverse[result.status]) {
+    result.status = statusReverse[result.status];
+  }
+  return result;
+}
+
+// 通用转换函数：前端 → 后端（将中文转为数字）
+function convertZhToEn(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.honorType && honorTypeMap[result.honorType]) {
+    result.honorType = honorTypeMap[result.honorType];
+  }
+  if (result.status && statusMap[result.status]) {
+    result.status = statusMap[result.status];
+  }
+  return result;
+}
+
+// 转换列表数据
+function convertList(list) {
+  if (!Array.isArray(list)) return list;
+  return list.map(item => convertEnToZh(item));
+}
+
 // ==================== 荣誉管理接口 ====================
 export function getHonorMgmtPage(params) {
-  return requestClient.get('/studentmgmt/honor-mgmt/page', { params }).catch(err => {
-    console.warn('分页接口失败，使用模拟数据', err);
-    return { list: dataList(), total: dataList().length };
-  });
+  const convertedParams = convertZhToEn(params);
+  return requestClient.get('/studentmgmt/honor-mgmt/page', { params: convertedParams })
+    .then(res => {
+      if (res && res.list) {
+        res.list = convertList(res.list);
+      }
+      return res;
+    })
+    .catch(err => {
+      console.warn('分页接口失败，使用模拟数据', err);
+      const mockData = convertList(dataList());
+      return { list: mockData, total: mockData.length };
+    });
 }
 
 export function createHonorMgmt(data) {
-  return requestClient.post('/studentmgmt/honor-mgmt/create', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.post('/studentmgmt/honor-mgmt/create', convertedData).catch(err => {
     console.warn('新增接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
 export function updateHonorMgmt(data) {
-  return requestClient.put('/studentmgmt/honor-mgmt/update', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.put('/studentmgmt/honor-mgmt/update', convertedData).catch(err => {
     console.warn('编辑接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
 export function auditHonorMgmt(data) {
-  const idsParam = data.ids ? data.ids.join(',') : '';
+  // 审核接口：需要转换 status 字段（前端中文 → 后端数字）
+  const convertedData = { ...data };
+  if (convertedData.status && statusMap[convertedData.status]) {
+    convertedData.status = statusMap[convertedData.status];
+  }
+  const idsParam = convertedData.ids ? convertedData.ids.join(',') : '';
   return requestClient.put('/studentmgmt/honor-mgmt/audit', null, {
     params: {
       ids: idsParam,
-      status: data.status,
-      auditRemark: data.auditRemark,
+      status: convertedData.status,
+      auditRemark: convertedData.auditRemark || '',
     },
   }).catch(err => {
     console.warn('审核接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
+
 export function pushHonorMgmt(data) {
+  // 推送接口只传 id，无需转换
   return requestClient.put('/studentmgmt/honor-mgmt/push', data).catch(err => {
     console.warn('推送接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -43,22 +121,26 @@ export function pushHonorMgmt(data) {
 }
 
 export function exportHonorMgmt(params) {
-  return requestClient.download('/studentmgmt/honor-mgmt/export', params).catch(err => {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.download('/studentmgmt/honor-mgmt/export', convertedParams).catch(err => {
     console.warn('导出接口失败，模拟导出', err);
     return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
   });
 }
 
 export function getHonorMgmtDetail(params) {
-  return requestClient.get('/studentmgmt/honor-mgmt/get', { params }).catch(err => {
-    console.warn('详情接口失败，使用模拟数据', err);
-    const mockList = dataList();
-    const detail = mockList.find(item => item.id === params.id) || mockList[0];
-    return Promise.resolve(detail);
-  });
+  return requestClient.get('/studentmgmt/honor-mgmt/get', { params })
+    .then(res => convertEnToZh(res))
+    .catch(err => {
+      console.warn('详情接口失败，使用模拟数据', err);
+      const mockList = dataList();
+      const detail = mockList.find(item => item.id === params.id) || mockList[0];
+      return Promise.resolve(convertEnToZh(detail));
+    });
 }
 
 // ==================== 图表接口 ====================
+// 图表接口返回的数据结构中没有 honorType 和 status 字段，无需转换
 export function getHonorMgmtChart(params) {
   return requestClient.get('/studentmgmt/honor-mgmt/chart', { params }).catch(err => {
     console.warn('图表总览接口失败，使用模拟数据', err);
@@ -94,7 +176,7 @@ export function getHonorCount(params) {
   });
 }
 
-// 模拟数据（与接口响应结构一致）
+// 模拟数据（原始值使用数字，通过转换函数对外提供中文）
 export const dataList = () => {
   return [
     {
@@ -102,13 +184,13 @@ export const dataList = () => {
       studentId: 1,
       studentName: '张三',
       className: '计算机1班',
-      honorType: '优秀学生',
+      honorType: '1',
       honorName: '校级优秀学生',
       getTime: 1672531200000,
       auditUser: 'admin',
       auditTime: 1672617600000,
       pushTime: null,
-      status: '待审核',
+      status: '1',
       remark: '',
       creator: 'admin',
       updater: 'admin',
@@ -120,13 +202,13 @@ export const dataList = () => {
       studentId: 2,
       studentName: '李四',
       className: '软件1班',
-      honorType: '奖学金',
+      honorType: '2',
       honorName: '国家励志奖学金',
       getTime: 1672617600000,
       auditUser: 'admin',
       auditTime: 1672704000000,
       pushTime: 1672790400000,
-      status: '已推送',
+      status: '3',
       remark: '',
       creator: 'admin',
       updater: 'admin',
@@ -138,13 +220,13 @@ export const dataList = () => {
       studentId: 3,
       studentName: '王五',
       className: '计算机2班',
-      honorType: '竞赛获奖',
+      honorType: '3',
       honorName: '全国大学生数学竞赛一等奖',
       getTime: 1672704000000,
       auditUser: null,
       auditTime: null,
       pushTime: null,
-      status: '待审核',
+      status: '1',
       remark: '',
       creator: 'teacher_zhang',
       updater: 'teacher_zhang',
@@ -156,13 +238,13 @@ export const dataList = () => {
       studentId: 4,
       studentName: '赵六',
       className: '电子1班',
-      honorType: '其他',
+      honorType: '4',
       honorName: '优秀志愿者',
       getTime: 1672790400000,
       auditUser: 'admin',
       auditTime: 1672876800000,
       pushTime: 1672963200000,
-      status: '已推送',
+      status: '3',
       remark: '',
       creator: 'admin',
       updater: 'admin',
@@ -174,13 +256,13 @@ export const dataList = () => {
       studentId: 5,
       studentName: '孙七',
       className: '大数据1班',
-      honorType: '优秀学生',
+      honorType: '1',
       honorName: '院级优秀学生干部',
       getTime: 1672876800000,
       auditUser: 'admin',
       auditTime: 1672963200000,
       pushTime: null,
-      status: '已通过',
+      status: '2',
       remark: '',
       creator: 'teacher_li',
       updater: 'teacher_li',
@@ -192,13 +274,13 @@ export const dataList = () => {
       studentId: 6,
       studentName: '周八',
       className: '软件2班',
-      honorType: '奖学金',
+      honorType: '2',
       honorName: '校级一等奖学金',
       getTime: 1672963200000,
       auditUser: null,
       auditTime: null,
       pushTime: null,
-      status: '待审核',
+      status: '1',
       remark: '',
       creator: 'admin',
       updater: 'admin',

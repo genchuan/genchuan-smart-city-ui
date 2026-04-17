@@ -31,7 +31,7 @@ export function useFormSchema() {
         filterable: true,
         remote: true,
         remoteMethod: () => {},
-        options: [], // 实际从接口加载
+        options: [], // 实际从接口加载，value 为部门名称
       },
       labelWidth: '100',
     },
@@ -52,14 +52,14 @@ export function useFormSchema() {
   ];
 }
 
-// 表格列定义
+// 表格列定义 - 将 hostDeptName 改为 hostDept
 export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
     { field: 'activityName', title: '活动名称', minWidth: 180, slots: { default: 'activityName' } },
     { field: 'activityType', title: '活动类型', minWidth: 100, slots: { default: 'activityType' } },
-    { field: 'hostDeptName', title: '主办部门', minWidth: 120, slots: { default: 'hostDeptName' } },
+    { field: 'hostDept', title: '主办部门', minWidth: 120, slots: { default: 'hostDept' } },
     { field: 'startTime', title: '开始时间', minWidth: 180, slots: { default: 'startTime' } },
     { field: 'endTime', title: '结束时间', minWidth: 180, slots: { default: 'endTime' } },
     { field: 'joinNum', title: '参与人数', minWidth: 100 },
@@ -115,7 +115,7 @@ export function useCreateFormSchema(isEdit = false) {
         filterable: true,
         remote: true,
         remoteMethod: () => {},
-        options: [], // 动态加载
+        options: [], // 动态加载，value 为部门名称
       },
       rules: 'required',
       labelWidth: '100',
@@ -147,7 +147,7 @@ export function useCreateFormSchema(isEdit = false) {
       labelWidth: '100',
     },
     {
-      fieldName: 'status',                     // 新增状态字段
+      fieldName: 'status',
       label: '状态',
       component: 'Select',
       componentProps: {

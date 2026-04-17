@@ -1,22 +1,107 @@
 import { requestClient } from '#/api/request';
 
+// ==================== 映射表 ====================
+const assessTypeMap = {
+  '教室卫生': 'class_clean',
+  '早操': 'morning_exercise',
+  '文明班级': 'civilized_class',
+  '黑板报': 'blackboard'
+};
+const assessTypeReverseMap = {
+  'class_clean': '教室卫生',
+  'morning_exercise': '早操',
+  'civilized_class': '文明班级',
+  'blackboard': '黑板报'
+};
+
+const cycleMap = {
+  '周': 'week',
+  '月': 'month',
+  '学期': 'semester'
+};
+const cycleReverseMap = {
+  'week': '周',
+  'month': '月',
+  'semester': '学期'
+};
+
+const statusMap = {
+  '未发布': 'un_publish',
+  '已发布': 'published'
+};
+const statusReverseMap = {
+  'un_publish': '未发布',
+  'published': '已发布'
+};
+
+// 通用转换函数：将对象中的英文字段值转为中文（用于响应数据）
+function convertEnToZh(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.assessType && assessTypeReverseMap[result.assessType]) {
+    result.assessType = assessTypeReverseMap[result.assessType];
+  }
+  if (result.cycle && cycleReverseMap[result.cycle]) {
+    result.cycle = cycleReverseMap[result.cycle];
+  }
+  if (result.status && statusReverseMap[result.status]) {
+    result.status = statusReverseMap[result.status];
+  }
+  return result;
+}
+
+// 通用转换函数：将对象中的中文字段值转为英文（用于请求参数）
+function convertZhToEn(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.assessType && assessTypeMap[result.assessType]) {
+    result.assessType = assessTypeMap[result.assessType];
+  }
+  if (result.cycle && cycleMap[result.cycle]) {
+    result.cycle = cycleMap[result.cycle];
+  }
+  if (result.status && statusMap[result.status]) {
+    result.status = statusMap[result.status];
+  }
+  return result;
+}
+
+// 转换列表数据
+function convertList(list) {
+  if (!Array.isArray(list)) return list;
+  return list.map(item => convertEnToZh(item));
+}
+
 // ==================== 考评管理接口 ====================
 export function getAssessMgmtPage(params) {
-  return requestClient.get('/studentmgmt/assess-mgmt/page', { params }).catch(err => {
-    console.warn('分页接口失败，使用模拟数据', err);
-    return { list: dataList(), total: dataList().length };
-  });
+  // 将查询参数中的中文字段转为英文
+  const convertedParams = convertZhToEn(params);
+  return requestClient.get('/studentmgmt/assess-mgmt/page', { params: convertedParams })
+    .then(res => {
+      // 响应数据转换：将 list 中的英文转为中文
+      if (res && res.list) {
+        res.list = convertList(res.list);
+      }
+      return res;
+    })
+    .catch(err => {
+      console.warn('分页接口失败，使用模拟数据', err);
+      const mockData = convertList(dataList()); // 模拟数据也转为中文
+      return { list: mockData, total: mockData.length };
+    });
 }
 
 export function createAssessMgmt(data) {
-  return requestClient.post('/studentmgmt/assess-mgmt/create', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.post('/studentmgmt/assess-mgmt/create', convertedData).catch(err => {
     console.warn('录入接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
 export function updateAssessMgmt(data) {
-  return requestClient.put('/studentmgmt/assess-mgmt/update', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.put('/studentmgmt/assess-mgmt/update', convertedData).catch(err => {
     console.warn('编辑接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
@@ -30,7 +115,8 @@ export function publishAssessMgmt(data) {
 }
 
 export function exportAssessMgmt(params) {
-  return requestClient.download('/studentmgmt/assess-mgmt/export', params).catch(err => {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.download('/studentmgmt/assess-mgmt/export', convertedParams).catch(err => {
     console.warn('导出接口失败，模拟导出', err);
     return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
   });
@@ -41,11 +127,12 @@ export function getAssessMgmtDetail(params) {
     console.warn('详情接口失败，使用模拟数据', err);
     const mockList = dataList();
     const detail = mockList.find(item => item.id === params.id) || mockList[0];
-    return Promise.resolve(detail);
-  });
+    return Promise.resolve(convertEnToZh(detail));
+  }).then(res => convertEnToZh(res));
 }
 
 // ==================== 图表接口 ====================
+// 图表接口暂不处理映射，如有需要可类似添加
 export function getAssessMgmtChart(params) {
   return requestClient.get('/studentmgmt/assess-mgmt/chart', { params }).catch(err => {
     console.warn('考评态势看板接口失败，使用模拟数据', err);
@@ -111,19 +198,19 @@ export function getCycleTrend(params) {
   });
 }
 
-// 模拟数据（rank → classRank）
+// 模拟数据（原始值使用英文，通过转换函数对外提供中文）
 export const dataList = () => {
   return [
     {
       id: 1,
       className: '高一(1)班',
-      assessType: '教室卫生',
-      cycle: '周',
+      assessType: 'class_clean',
+      cycle: 'week',
       score: 95.00,
-      classRank: 1,           // 原 rank 改为 classRank
+      rankNo: 1,
       assessUser: '张老师',
       publishTime: null,
-      status: '未发布',
+      status: 'un_publish',
       remark: '',
       creator: 'admin',
       updater: 'admin',
@@ -133,13 +220,13 @@ export const dataList = () => {
     {
       id: 2,
       className: '高一(2)班',
-      assessType: '早操',
-      cycle: '周',
+      assessType: 'morning_exercise',
+      cycle: 'week',
       score: 88.00,
-      classRank: 3,
+      rankNo: 3,
       assessUser: '李老师',
       publishTime: 1672617600000,
-      status: '已发布',
+      status: 'published',
       remark: '',
       creator: 'admin',
       updater: 'admin',
@@ -149,13 +236,13 @@ export const dataList = () => {
     {
       id: 3,
       className: '高二(1)班',
-      assessType: '文明班级',
-      cycle: '月',
+      assessType: 'civilized_class',
+      cycle: 'month',
       score: 92.00,
-      classRank: 2,
+      rankNo: 2,
       assessUser: '王老师',
       publishTime: null,
-      status: '未发布',
+      status: 'un_publish',
       remark: '',
       creator: 'teacher_zhang',
       updater: 'teacher_zhang',
@@ -165,13 +252,13 @@ export const dataList = () => {
     {
       id: 4,
       className: '高二(2)班',
-      assessType: '黑板报',
-      cycle: '月',
+      assessType: 'blackboard',
+      cycle: 'month',
       score: 87.00,
-      classRank: 4,
+      rankNo: 4,
       assessUser: '赵老师',
       publishTime: 1672790400000,
-      status: '已发布',
+      status: 'published',
       remark: '',
       creator: 'admin',
       updater: 'admin',
@@ -181,13 +268,13 @@ export const dataList = () => {
     {
       id: 5,
       className: '高三(1)班',
-      assessType: '教室卫生',
-      cycle: '学期',
+      assessType: 'class_clean',
+      cycle: 'semester',
       score: 90.00,
-      classRank: 2,
+      rankNo: 2,
       assessUser: '孙老师',
       publishTime: 1672876800000,
-      status: '已发布',
+      status: 'published',
       remark: '',
       creator: 'teacher_li',
       updater: 'teacher_li',
@@ -197,13 +284,13 @@ export const dataList = () => {
     {
       id: 6,
       className: '高三(2)班',
-      assessType: '早操',
-      cycle: '学期',
+      assessType: 'morning_exercise',
+      cycle: 'semester',
       score: 85.00,
-      classRank: 3,
+      rankNo: 3,
       assessUser: '周老师',
       publishTime: null,
-      status: '未发布',
+      status: 'un_publish',
       remark: '',
       creator: 'admin',
       updater: 'admin',

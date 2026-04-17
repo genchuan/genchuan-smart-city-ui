@@ -60,7 +60,6 @@ export function getColumnsByStatus(status) {
 
   const columns = [
     { field: 'studentName', title: '学生姓名', minWidth: 100, slots: { default: 'studentName' } },
-    { field: 'className', title: '班级', minWidth: 150 },
     { field: 'violateType', title: '违纪类型', minWidth: 120, slots: { default: 'violateType' } },
     { field: 'punishType', title: '处分类型', minWidth: 120, slots: { default: 'punishType' } },
     { field: 'violateTime', title: '违纪时间', minWidth: 180, slots: { default: 'violateTime' } },

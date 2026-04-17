@@ -301,6 +301,8 @@ function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
   createFormApi.resetForm();
+  // 设置默认值：总分0，状态打分中
+  createFormApi.setValues({ totalScore: 0, status: '打分中' });
   createDrawerApi.open();
 }
 
@@ -316,6 +318,8 @@ async function handleEdit(row) {
     createFormApi.setValues({
       className: detail.className,
       cycle: detail.cycle,
+      totalScore: detail.totalScore !== undefined ? detail.totalScore : 0,
+      status: detail.status,
       remark: detail.remark,
     });
     createDrawerApi.open();
@@ -355,10 +359,16 @@ const [CreateForm, createFormApi] = useVbenForm({
     const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '发起中...'});
     try {
       let res;
+      // 确保 totalScore 和 status 存在
+      const submitData = {
+        ...values,
+        totalScore: values.totalScore !== undefined ? values.totalScore : 0,
+        status: values.status || '打分中',
+      };
       if (isEditMode.value) {
-        res = await updateCompareMgmt({...values, id: currentEditId.value});
+        res = await updateCompareMgmt({...submitData, id: currentEditId.value});
       } else {
-        res = await createCompareMgmt(values);
+        res = await createCompareMgmt(submitData);
       }
       if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '更新成功' : '发起成功');

@@ -1,35 +1,138 @@
 import { requestClient } from '#/api/request';
 
+// ==================== 映射表 ====================
+// 请假类型映射
+const leaveTypeMap = {
+  '事假': '1',
+  '病假': '2',
+  '其他': '3'
+};
+const leaveTypeReverse = {
+  '1': '事假',
+  '2': '病假',
+  '3': '其他'
+};
+
+// 审批级别映射
+const auditLevelMap = {
+  '班主任': '1',
+  '辅导员': '2'
+};
+const auditLevelReverse = {
+  '1': '班主任',
+  '2': '辅导员'
+};
+
+// 考勤同步状态映射
+const attendanceSyncMap = {
+  '未同步': '0',
+  '已同步': '1'
+};
+const attendanceSyncReverse = {
+  '0': '未同步',
+  '1': '已同步'
+};
+
+// 状态映射（待审批、已通过、已驳回）
+const statusMap = {
+  '待审批': '0',
+  '已通过': '1',
+  '已驳回': '2'
+};
+const statusReverse = {
+  '0': '待审批',
+  '1': '已通过',
+  '2': '已驳回'
+};
+
+// 通用转换函数：后端 → 前端（将数字/代码转为中文）
+function convertEnToZh(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.leaveType && leaveTypeReverse[result.leaveType]) {
+    result.leaveType = leaveTypeReverse[result.leaveType];
+  }
+  if (result.auditLevel && auditLevelReverse[result.auditLevel]) {
+    result.auditLevel = auditLevelReverse[result.auditLevel];
+  }
+  if (result.attendanceSync && attendanceSyncReverse[result.attendanceSync]) {
+    result.attendanceSync = attendanceSyncReverse[result.attendanceSync];
+  }
+  if (result.status && statusReverse[result.status]) {
+    result.status = statusReverse[result.status];
+  }
+  return result;
+}
+
+// 通用转换函数：前端 → 后端（将中文转为数字/代码）
+function convertZhToEn(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.leaveType && leaveTypeMap[result.leaveType]) {
+    result.leaveType = leaveTypeMap[result.leaveType];
+  }
+  if (result.auditLevel && auditLevelMap[result.auditLevel]) {
+    result.auditLevel = auditLevelMap[result.auditLevel];
+  }
+  if (result.attendanceSync && attendanceSyncMap[result.attendanceSync]) {
+    result.attendanceSync = attendanceSyncMap[result.attendanceSync];
+  }
+  if (result.status && statusMap[result.status]) {
+    result.status = statusMap[result.status];
+  }
+  return result;
+}
+
+// 转换列表数据
+function convertList(list) {
+  if (!Array.isArray(list)) return list;
+  return list.map(item => convertEnToZh(item));
+}
+
 // ==================== 行为管理接口 ====================
 export function getBehaviorMgmtPage(params) {
-  return requestClient.get('/studentmgmt/behavior-mgmt/page', { params }).catch(err => {
-    console.warn('分页接口失败，使用模拟数据', err);
-    return { list: dataList(), total: dataList().length };
-  });
+  const convertedParams = convertZhToEn(params);
+  return requestClient.get('/studentmgmt/behavior-mgmt/page', { params: convertedParams })
+    .then(res => {
+      if (res && res.list) {
+        res.list = convertList(res.list);
+      }
+      return res;
+    })
+    .catch(err => {
+      console.warn('分页接口失败，使用模拟数据', err);
+      const mockData = convertList(dataList());
+      return { list: mockData, total: mockData.length };
+    });
 }
 
 export function createBehaviorMgmt(data) {
-  return requestClient.post('/studentmgmt/behavior-mgmt/create', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.post('/studentmgmt/behavior-mgmt/create', convertedData).catch(err => {
     console.warn('申请接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
 export function updateBehaviorMgmt(data) {
-  return requestClient.put('/studentmgmt/behavior-mgmt/update', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.put('/studentmgmt/behavior-mgmt/update', convertedData).catch(err => {
     console.warn('编辑接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
 export function auditBehaviorMgmt(data) {
-  return requestClient.put('/studentmgmt/behavior-mgmt/audit', data).catch(err => {
+  // 审批接口需要转换 status 字段（前端传“已通过”/“已驳回”转为后端数字）
+  const convertedData = convertZhToEn(data);
+  return requestClient.put('/studentmgmt/behavior-mgmt/audit', convertedData).catch(err => {
     console.warn('审批接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
 export function cancelBehaviorMgmt(params) {
+  // 撤销接口只传 id，无需转换
   return requestClient.put('/studentmgmt/behavior-mgmt/cancel', null, { params }).catch(err => {
     console.warn('撤销接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -37,22 +140,25 @@ export function cancelBehaviorMgmt(params) {
 }
 
 export function exportBehaviorMgmt(params) {
-  return requestClient.download('/studentmgmt/behavior-mgmt/export-excel', params).catch(err => {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.download('/studentmgmt/behavior-mgmt/export-excel', convertedParams).catch(err => {
     console.warn('导出接口失败，模拟导出', err);
     return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
   });
 }
 
 export function getBehaviorMgmtDetail(params) {
-  return requestClient.get('/studentmgmt/behavior-mgmt/get', { params }).catch(err => {
-    console.warn('详情接口失败，使用模拟数据', err);
-    const mockList = dataList();
-    const detail = mockList.find(item => item.id === params.id) || mockList[0];
-    return Promise.resolve(detail);
-  });
+  return requestClient.get('/studentmgmt/behavior-mgmt/get', { params })
+    .then(res => convertEnToZh(res))
+    .catch(err => {
+      console.warn('详情接口失败，使用模拟数据', err);
+      const mockList = dataList();
+      const detail = mockList.find(item => item.id === params.id) || mockList[0];
+      return Promise.resolve(convertEnToZh(detail));
+    });
 }
 
-// 获取学生选项（用于申请下拉框）
+// 获取学生选项（无需转换）
 export function getStudentOptions(params) {
   return requestClient.get('/studentmgmt/student/options', { params }).catch(err => {
     console.warn('获取学生选项失败，使用模拟数据', err);
@@ -68,6 +174,7 @@ export function getStudentOptions(params) {
 }
 
 // ==================== 图表接口 ====================
+// 图表接口暂不处理映射（因未提供后端数据结构），如有需要可参照添加
 export function getBehaviorMgmtChart(params) {
   return requestClient.get('/studentmgmt/behavior-mgmt/chart', { params }).catch(err => {
     console.warn('行为考勤看板接口失败，使用模拟数据', err);
@@ -105,7 +212,7 @@ export function getAttendanceCount(params) {
   });
 }
 
-// 模拟数据（与接口响应结构一致）
+// 模拟数据（原始值使用数字/代码，通过转换函数对外提供中文）
 export const dataList = () => {
   return [
     {
@@ -113,15 +220,15 @@ export const dataList = () => {
       studentId: 1,
       studentName: '张三',
       className: '计算机1班',
-      leaveType: '事假',
+      leaveType: '1',
       startTime: 1672531200000,
       endTime: 1672617600000,
       leaveReason: '家里有事',
-      auditLevel: '班主任',
+      auditLevel: '1',
       auditUser: null,
       auditTime: null,
-      attendanceSync: '未同步',
-      status: '待审批',
+      attendanceSync: '0',
+      status: '0',
       remark: '',
       creator: 'admin',
       updater: 'admin',
@@ -133,15 +240,15 @@ export const dataList = () => {
       studentId: 2,
       studentName: '李四',
       className: '软件1班',
-      leaveType: '病假',
+      leaveType: '2',
       startTime: 1672617600000,
       endTime: 1672704000000,
       leaveReason: '感冒发烧',
-      auditLevel: '班主任',
+      auditLevel: '1',
       auditUser: '王老师',
       auditTime: 1672650000000,
-      attendanceSync: '已同步',
-      status: '已通过',
+      attendanceSync: '1',
+      status: '1',
       remark: '',
       creator: 'admin',
       updater: 'admin',
@@ -153,15 +260,15 @@ export const dataList = () => {
       studentId: 3,
       studentName: '王五',
       className: '计算机2班',
-      leaveType: '其他',
+      leaveType: '3',
       startTime: 1672704000000,
       endTime: 1672790400000,
       leaveReason: '参加比赛',
-      auditLevel: '辅导员',
+      auditLevel: '2',
       auditUser: '李老师',
       auditTime: 1672720000000,
-      attendanceSync: '未同步',
-      status: '已驳回',
+      attendanceSync: '0',
+      status: '2',
       remark: '',
       creator: 'teacher_zhang',
       updater: 'teacher_zhang',
@@ -173,15 +280,15 @@ export const dataList = () => {
       studentId: 4,
       studentName: '赵六',
       className: '电子1班',
-      leaveType: '事假',
+      leaveType: '1',
       startTime: 1672790400000,
       endTime: 1672876800000,
       leaveReason: '探亲',
-      auditLevel: '班主任',
+      auditLevel: '1',
       auditUser: null,
       auditTime: null,
-      attendanceSync: '未同步',
-      status: '待审批',
+      attendanceSync: '0',
+      status: '0',
       remark: '',
       creator: 'admin',
       updater: 'admin',
@@ -193,15 +300,15 @@ export const dataList = () => {
       studentId: 5,
       studentName: '孙七',
       className: '大数据1班',
-      leaveType: '病假',
+      leaveType: '2',
       startTime: 1672876800000,
       endTime: 1672963200000,
       leaveReason: '牙痛',
-      auditLevel: '班主任',
+      auditLevel: '1',
       auditUser: '王老师',
       auditTime: 1672900000000,
-      attendanceSync: '已同步',
-      status: '已通过',
+      attendanceSync: '1',
+      status: '1',
       remark: '',
       creator: 'teacher_li',
       updater: 'teacher_li',
@@ -213,15 +320,15 @@ export const dataList = () => {
       studentId: 6,
       studentName: '周八',
       className: '软件2班',
-      leaveType: '事假',
+      leaveType: '1',
       startTime: 1672963200000,
       endTime: 1673049600000,
       leaveReason: '婚礼',
-      auditLevel: '辅导员',
+      auditLevel: '2',
       auditUser: null,
       auditTime: null,
-      attendanceSync: '未同步',
-      status: '待审批',
+      attendanceSync: '0',
+      status: '0',
       remark: '',
       creator: 'admin',
       updater: 'admin',
