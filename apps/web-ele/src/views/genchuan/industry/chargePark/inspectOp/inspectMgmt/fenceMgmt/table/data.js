@@ -6,11 +6,6 @@ import { formatDate } from '#/utils/genchuan/formatTime';
 
 export const FENCE_MGMT_STATUS_DICT = DICT_TYPE.FENCE_MGMT_STATUS;
 
-function getDictOptionsWithFallback(dictType, fallbackOptions) {
-  const options = getDictOptions(dictType, 'string');
-  return options.length > 0 ? options : fallbackOptions;
-}
-
 function getDictLabel(dictType, value) {
   if (value === undefined || value === null || value === '') return '-';
   const dict = getDictObj(dictType, String(value));
@@ -45,15 +40,7 @@ export const userOptions = [
   { label: '赵六', value: 4 },
 ];
 
-const fallbackStatusOptions = [
-  { label: '未生效', value: '未生效' },
-  { label: '已生效', value: '已生效' },
-];
-
-export const statusOptions = getDictOptionsWithFallback(
-  FENCE_MGMT_STATUS_DICT,
-  fallbackStatusOptions,
-);
+export const statusOptions = getDictOptions(FENCE_MGMT_STATUS_DICT, 'string');
 
 const baseTime = 1_775_011_986_000;
 const fenceNames = [

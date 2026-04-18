@@ -6,11 +6,6 @@ import { formatDate } from '#/utils/genchuan/formatTime';
 
 export const SPARE_STOCK_STATUS_DICT = DICT_TYPE.SPARE_STOCK_STATUS;
 
-function getDictOptionsWithFallback(dictType, fallbackOptions) {
-  const options = getDictOptions(dictType, 'string');
-  return options.length > 0 ? options : fallbackOptions;
-}
-
 function getDictLabel(dictType, value) {
   if (value === undefined || value === null || value === '') return '-';
   const dict = getDictObj(dictType, String(value));
@@ -38,15 +33,7 @@ export function getSpareStatusLabel(value) {
 export function isSpareStatusLabel(value, label) {
   return isDictLabel(SPARE_STOCK_STATUS_DICT, value, label);
 }
-const fallbackStockStatusOptions = [
-  { label: '正常', value: '正常' },
-  { label: '低库存', value: '低库存' },
-];
-
-export const stockStatusOptions = getDictOptionsWithFallback(
-  SPARE_STOCK_STATUS_DICT,
-  fallbackStockStatusOptions,
-);
+export const stockStatusOptions = getDictOptions(SPARE_STOCK_STATUS_DICT, 'string');
 
 export const spareOptions = [
   { label: '充电枪密封圈', type: '充电备件', value: 1 },

@@ -526,11 +526,11 @@ watch(
             icon-name="search"
             @click="handleSerachShow"
           />
-          <IconButton
+          <!-- <IconButton
             content="刷新"
             icon-name="refresh"
             @click="handleRefresh"
-          />
+          /> -->
           <IconButton
             content="全屏"
             icon-name="FullScreen"

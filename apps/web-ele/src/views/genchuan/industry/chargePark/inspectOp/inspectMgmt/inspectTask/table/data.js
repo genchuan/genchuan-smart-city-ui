@@ -6,11 +6,6 @@ import { formatDate } from '#/utils/genchuan/formatTime';
 
 export const INSPECT_TASK_STATUS_DICT = DICT_TYPE.INSPECT_TASK_STATUS;
 
-function getDictOptionsWithFallback(dictType, fallbackOptions) {
-  const options = getDictOptions(dictType, 'string');
-  return options.length > 0 ? options : fallbackOptions;
-}
-
 function getDictLabel(dictType, value) {
   if (value === undefined || value === null || value === '') return '-';
   const dict = getDictObj(dictType, String(value));
@@ -54,17 +49,9 @@ export const userOptions = [
   { label: '赵六', value: 4 },
 ];
 
-const fallbackTaskStatusOptions = [
-  { label: '待派发', value: '待派发' },
-  { label: '待认领', value: '待认领' },
-  { label: '处理中', value: '处理中' },
-  { label: '已完成', value: '已完成' },
-];
+export const taskStatusOptions = getDictOptions(INSPECT_TASK_STATUS_DICT, 'string');
 
-export const taskStatusOptions = getDictOptionsWithFallback(
-  INSPECT_TASK_STATUS_DICT,
-  fallbackTaskStatusOptions,
-);
+const MOCK_TASK_STATUS_VALUES = ['待派发', '待认领', '处理中', '已完成'];
 
 export const archiveOptions = [
   { label: '否', value: false },
@@ -135,7 +122,7 @@ export function getProgressStatus(progress) {
 
 export function dataList() {
   return Array.from({ length: 16 }, (_, index) => {
-    const status = taskStatusOptions[index % taskStatusOptions.length].value;
+    const status = MOCK_TASK_STATUS_VALUES[index % MOCK_TASK_STATUS_VALUES.length];
     const taskType = taskTypeOptions[index % taskTypeOptions.length].value;
     const plan = planOptions[index % planOptions.length];
     const user = userOptions[index % userOptions.length];

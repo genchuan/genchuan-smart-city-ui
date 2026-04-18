@@ -6,11 +6,6 @@ import { formatDate } from '#/utils/genchuan/formatTime';
 
 export const HANDOVER_LOG_STATUS_DICT = DICT_TYPE.HANDOVER_LOG_STATUS;
 
-function getDictOptionsWithFallback(dictType, fallbackOptions) {
-  const options = getDictOptions(dictType, 'string');
-  return options.length > 0 ? options : fallbackOptions;
-}
-
 function getDictLabel(dictType, value) {
   if (value === undefined || value === null || value === '') return '-';
   const dict = getDictObj(dictType, String(value));
@@ -46,15 +41,7 @@ export const userOptions = [
   { label: '陈七', value: 5 },
 ];
 
-const fallbackStatusOptions = [
-  { label: '待确认', value: '待确认' },
-  { label: '已确认', value: '已确认' },
-];
-
-export const statusOptions = getDictOptionsWithFallback(
-  HANDOVER_LOG_STATUS_DICT,
-  fallbackStatusOptions,
-);
+export const statusOptions = getDictOptions(HANDOVER_LOG_STATUS_DICT, 'string');
 
 const handoverContents = [
   '今日场站设备运行正常，无异常情况。',

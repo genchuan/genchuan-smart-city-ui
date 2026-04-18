@@ -7,11 +7,6 @@ import { formatDate } from '#/utils/genchuan/formatTime';
 export const ASSET_CHECK_TYPE_DICT = DICT_TYPE.ASSET_CHECK_TYPE;
 export const ASSET_CHECK_STATUS_DICT = DICT_TYPE.ASSET_CHECK_STATUS;
 
-function getDictOptionsWithFallback(dictType, fallbackOptions) {
-  const options = getDictOptions(dictType, 'string');
-  return options.length > 0 ? options : fallbackOptions;
-}
-
 function getDictLabel(dictType, value) {
   if (value === undefined || value === null || value === '') return '-';
   const dict = getDictObj(dictType, String(value));
@@ -47,26 +42,12 @@ export function getCheckStatusLabel(value) {
 export function isCheckStatusLabel(value, label) {
   return isDictLabel(ASSET_CHECK_STATUS_DICT, value, label);
 }
-const fallbackCheckTypeOptions = [
-  { label: '定期', value: '定期' },
-  { label: '临时', value: '临时' },
-];
+export const checkTypeOptions = getDictOptions(ASSET_CHECK_TYPE_DICT, 'string');
 
-export const checkTypeOptions = getDictOptionsWithFallback(
-  ASSET_CHECK_TYPE_DICT,
-  fallbackCheckTypeOptions,
-);
+export const checkStatusOptions = getDictOptions(ASSET_CHECK_STATUS_DICT, 'string');
 
-const fallbackCheckStatusOptions = [
-  { label: '待盘点', value: '待盘点' },
-  { label: '盘点中', value: '盘点中' },
-  { label: '已完成', value: '已完成' },
-];
-
-export const checkStatusOptions = getDictOptionsWithFallback(
-  ASSET_CHECK_STATUS_DICT,
-  fallbackCheckStatusOptions,
-);
+const MOCK_CHECK_TYPE_VALUES = ['定期', '临时'];
+const MOCK_CHECK_STATUS_VALUES = ['待盘点', '盘点中', '已完成'];
 
 export const userOptions = [
   { label: '张三', value: 1 },
@@ -140,8 +121,8 @@ export function getProgressStatus(progress) {
 
 export function dataList() {
   return Array.from({ length: 14 }, (_, index) => {
-    const type = checkTypeOptions[index % checkTypeOptions.length].value;
-    const status = checkStatusOptions[index % checkStatusOptions.length].value;
+    const type = MOCK_CHECK_TYPE_VALUES[index % MOCK_CHECK_TYPE_VALUES.length];
+    const status = MOCK_CHECK_STATUS_VALUES[index % MOCK_CHECK_STATUS_VALUES.length];
     const checkTime = baseTime - index * 7 * 86_400_000;
     const progressMap = {
       待盘点: 0,
@@ -238,7 +219,7 @@ export function filterMockList(params = {}) {
       params.type,
     );
     const matchStatus = isSameDictValue(
-      ASSET_CHECK_TYPE_DICT,
+      ASSET_CHECK_STATUS_DICT,
       item.status,
       params.status,
     );

@@ -8,11 +8,6 @@ export const SCHEDULE_VIEW_SHIFT_TYPE_DICT = DICT_TYPE.SCHEDULE_VIEW_SHIFT_TYPE;
 export const SCHEDULE_VIEW_STATUS_DICT = DICT_TYPE.SCHEDULE_VIEW_STATUS;
 export const SHIFT_APPLY_STATUS_DICT = DICT_TYPE.SHIFT_APPLY_STATUS;
 
-function getDictOptionsWithFallback(dictType, fallbackOptions) {
-  const options = getDictOptions(dictType, 'string');
-  return options.length > 0 ? options : fallbackOptions;
-}
-
 function getDictLabel(dictType, value) {
   if (value === undefined || value === null || value === '') return '-';
   const dict = getDictObj(dictType, String(value));
@@ -64,38 +59,13 @@ export const userOptions = [
   { label: '陈七', position: '运维专员', value: 5 },
 ];
 
-const fallbackShiftTypeOptions = [
-  { label: '早班', value: '早班' },
-  { label: '中班', value: '中班' },
-  { label: '晚班', value: '晚班' },
-];
+export const shiftTypeOptions = getDictOptions(SCHEDULE_VIEW_SHIFT_TYPE_DICT, 'string');
 
-export const shiftTypeOptions = getDictOptionsWithFallback(
-  SCHEDULE_VIEW_SHIFT_TYPE_DICT,
-  fallbackShiftTypeOptions,
-);
+export const scheduleStatusOptions = getDictOptions(SCHEDULE_VIEW_STATUS_DICT, 'string');
 
-const fallbackScheduleStatusOptions = [
-  { label: '正常', value: '正常' },
-  { label: '已换班', value: '已换班' },
-];
+export const shiftApplyStatusOptions = getDictOptions(SHIFT_APPLY_STATUS_DICT, 'string');
 
-export const scheduleStatusOptions = getDictOptionsWithFallback(
-  SCHEDULE_VIEW_STATUS_DICT,
-  fallbackScheduleStatusOptions,
-);
-
-const fallbackShiftApplyStatusOptions = [
-  { label: '未申请', value: '未申请' },
-  { label: '申请中', value: '申请中' },
-  { label: '已通过', value: '已通过' },
-  { label: '已驳回', value: '已驳回' },
-];
-
-export const shiftApplyStatusOptions = getDictOptionsWithFallback(
-  SHIFT_APPLY_STATUS_DICT,
-  fallbackShiftApplyStatusOptions,
-);
+const MOCK_SHIFT_TYPE_VALUES = ['早班', '中班', '晚班'];
 
 export const positionOptions = [
   { label: '巡检员', value: '巡检员' },
@@ -190,7 +160,7 @@ export function getMockApplyStatus(status, index) {
 export function dataList() {
   return Array.from({ length: 36 }, (_, index) => {
     const user = userOptions[index % userOptions.length];
-    const shiftType = shiftTypeOptions[index % shiftTypeOptions.length].value;
+    const shiftType = MOCK_SHIFT_TYPE_VALUES[index % MOCK_SHIFT_TYPE_VALUES.length];
     const scheduleDate = toScheduleDate(index % 18);
     const status = index % 9 === 0 ? '已换班' : '正常';
     const shiftApplyStatus = getMockApplyStatus(status, index);
@@ -282,7 +252,7 @@ export function filterMockList(params = {}) {
     const matchPosition =
       !params.positionName || item.positionName === params.positionName;
     const matchStatus = isSameDictValue(
-      SCHEDULE_VIEW_SHIFT_TYPE_DICT,
+      SCHEDULE_VIEW_STATUS_DICT,
       item.status,
       params.status,
     );

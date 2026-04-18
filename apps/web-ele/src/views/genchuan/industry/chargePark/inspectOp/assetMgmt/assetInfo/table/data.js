@@ -7,11 +7,6 @@ import { formatDate } from '#/utils/genchuan/formatTime';
 export const ASSET_INFO_TYPE_DICT = DICT_TYPE.ASSET_INFO_TYPE;
 export const ASSET_INFO_STATUS_DICT = DICT_TYPE.ASSET_INFO_STATUS;
 
-function getDictOptionsWithFallback(dictType, fallbackOptions) {
-  const options = getDictOptions(dictType, 'string');
-  return options.length > 0 ? options : fallbackOptions;
-}
-
 function getDictLabel(dictType, value) {
   if (value === undefined || value === null || value === '') return '-';
   const dict = getDictObj(dictType, String(value));
@@ -47,27 +42,12 @@ export function getAssetStatusLabel(value) {
 export function isAssetStatusLabel(value, label) {
   return isDictLabel(ASSET_INFO_STATUS_DICT, value, label);
 }
-const fallbackAssetTypeOptions = [
-  { label: '监测设备', value: '监测设备' },
-  { label: '充电设备', value: '充电设备' },
-  { label: '巡检工具', value: '巡检工具' },
-];
+export const assetTypeOptions = getDictOptions(ASSET_INFO_TYPE_DICT, 'string');
 
-export const assetTypeOptions = getDictOptionsWithFallback(
-  ASSET_INFO_TYPE_DICT,
-  fallbackAssetTypeOptions,
-);
+export const assetStatusOptions = getDictOptions(ASSET_INFO_STATUS_DICT, 'string');
 
-const fallbackAssetStatusOptions = [
-  { label: '正常', value: '正常' },
-  { label: '禁用', value: '禁用' },
-  { label: '报废', value: '报废' },
-];
-
-export const assetStatusOptions = getDictOptionsWithFallback(
-  ASSET_INFO_STATUS_DICT,
-  fallbackAssetStatusOptions,
-);
+const MOCK_ASSET_TYPE_VALUES = ['监测设备', '充电设备', '巡检工具'];
+const MOCK_ASSET_STATUS_VALUES = ['正常', '禁用', '报废'];
 
 export const stationOptions = [
   { label: '泉州丰泽充电站', value: 1 },
@@ -159,8 +139,8 @@ export function getAssetStatusTagType(status) {
 
 export function dataList() {
   return assetNames.map((name, index) => {
-    const type = assetTypeOptions[index % assetTypeOptions.length].value;
-    const status = assetStatusOptions[index % assetStatusOptions.length].value;
+    const type = MOCK_ASSET_TYPE_VALUES[index % MOCK_ASSET_TYPE_VALUES.length];
+    const status = MOCK_ASSET_STATUS_VALUES[index % MOCK_ASSET_STATUS_VALUES.length];
     const stationId = stationOptions[index % stationOptions.length].value;
     const purchaseTime = baseTime - index * 12 * 86_400_000;
     const effectTime = purchaseTime + 2 * 86_400_000;
@@ -243,7 +223,7 @@ export function filterMockList(params = {}) {
       params.type,
     );
     const matchStatus = isSameDictValue(
-      ASSET_INFO_TYPE_DICT,
+      ASSET_INFO_STATUS_DICT,
       item.status,
       params.status,
     );

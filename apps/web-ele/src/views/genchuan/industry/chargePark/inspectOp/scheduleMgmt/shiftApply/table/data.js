@@ -6,11 +6,6 @@ import { formatDate } from '#/utils/genchuan/formatTime';
 
 export const SHIFT_APPLY_STATUS_DICT = DICT_TYPE.SHIFT_APPLY_STATUS;
 
-function getDictOptionsWithFallback(dictType, fallbackOptions) {
-  const options = getDictOptions(dictType, 'string');
-  return options.length > 0 ? options : fallbackOptions;
-}
-
 function getDictLabel(dictType, value) {
   if (value === undefined || value === null || value === '') return '-';
   const dict = getDictObj(dictType, String(value));
@@ -46,16 +41,7 @@ export const userOptions = [
   { label: '陈七', position: '运维专员', value: 5 },
 ];
 
-const fallbackStatusOptions = [
-  { label: '待审核', value: '待审核' },
-  { label: '已通过', value: '已通过' },
-  { label: '已驳回', value: '已驳回' },
-];
-
-export const statusOptions = getDictOptionsWithFallback(
-  SHIFT_APPLY_STATUS_DICT,
-  fallbackStatusOptions,
-);
+export const statusOptions = getDictOptions(SHIFT_APPLY_STATUS_DICT, 'string');
 
 export const auditResultOptions = [
   { label: '通过', value: '通过' },

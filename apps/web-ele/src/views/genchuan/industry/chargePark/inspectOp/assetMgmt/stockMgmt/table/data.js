@@ -6,11 +6,6 @@ import { formatDate } from '#/utils/genchuan/formatTime';
 
 export const ASSET_STOCK_STATUS_DICT = DICT_TYPE.ASSET_STOCK_STATUS;
 
-function getDictOptionsWithFallback(dictType, fallbackOptions) {
-  const options = getDictOptions(dictType, 'string');
-  return options.length > 0 ? options : fallbackOptions;
-}
-
 function getDictLabel(dictType, value) {
   if (value === undefined || value === null || value === '') return '-';
   const dict = getDictObj(dictType, String(value));
@@ -38,16 +33,7 @@ export function getStockStatusLabel(value) {
 export function isStockStatusLabel(value, label) {
   return isDictLabel(ASSET_STOCK_STATUS_DICT, value, label);
 }
-const fallbackStockStatusOptions = [
-  { label: '正常', value: '正常' },
-  { label: '低库存', value: '低库存' },
-  { label: '预警库存', value: '预警库存' },
-];
-
-export const stockStatusOptions = getDictOptionsWithFallback(
-  ASSET_STOCK_STATUS_DICT,
-  fallbackStockStatusOptions,
-);
+export const stockStatusOptions = getDictOptions(ASSET_STOCK_STATUS_DICT, 'string');
 
 export const assetOptions = [
   { label: '车位监测摄像头', type: '监测设备', value: 1 },

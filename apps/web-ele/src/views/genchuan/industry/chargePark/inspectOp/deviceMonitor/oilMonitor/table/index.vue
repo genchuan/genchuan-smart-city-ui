@@ -29,8 +29,6 @@ import {
   getStationName,
   isProcessStatusLabel,
   normalizeOilMonitorRow,
-  processMethodOptions,
-  processUserOptions,
   textObj,
   useGridColumns,
   useSearchFormSchema,
@@ -80,9 +78,7 @@ const processRules = {
   processMethod: [
     { required: false, message: '请输入处置方式', trigger: 'blur' },
   ],
-  processUserId: [
-    { required: true, message: '请选择处置人', trigger: 'blur' },
-  ],
+  processUserId: [{ required: true, message: '请选择处置人', trigger: 'blur' }],
   // processProgress: [
   //   { required: true, message: '请输入处置进度', trigger: 'change' },
   // ],
@@ -548,7 +544,11 @@ watch(
               :value="item.value"
             />
           </el-select> -->
-          <el-input v-model="processForm.processMethod" class="w-full" placeholder="请输入处置方式" />
+          <el-input
+            v-model="processForm.processMethod"
+            class="w-full"
+            placeholder="请输入处置方式"
+          />
         </el-form-item>
         <el-form-item label="处置人" prop="processUserId">
           <!-- <el-select
@@ -563,7 +563,11 @@ watch(
               :value="item.value"
             />
           </el-select> -->
-          <el-input v-model="processForm.processUserId" class="w-full" placeholder="请输入处置人" />
+          <el-input
+            v-model="processForm.processUserId"
+            class="w-full"
+            placeholder="请输入处置人"
+          />
         </el-form-item>
         <!-- <el-form-item label="处置人" prop="processUserId">
           <el-select

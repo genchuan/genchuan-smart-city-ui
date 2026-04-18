@@ -8,11 +8,6 @@ export const INSPECT_PLAN_TYPE_DICT = DICT_TYPE.INSPECT_PLAN_TYPE;
 export const INSPECT_PLAN_CYCLE_DICT = DICT_TYPE.INSPECT_PLAN_CYCLE;
 export const INSPECT_PLAN_STATUS_DICT = DICT_TYPE.INSPECT_PLAN_STATUS;
 
-function getDictOptionsWithFallback(dictType, fallbackOptions) {
-  const options = getDictOptions(dictType, 'string');
-  return options.length > 0 ? options : fallbackOptions;
-}
-
 function getDictLabel(dictType, value) {
   if (value === undefined || value === null || value === '') return '-';
   const dict = getDictObj(dictType, String(value));
@@ -56,40 +51,15 @@ export function getPlanStatusLabel(value) {
 export function isPlanStatusLabel(value, label) {
   return isDictLabel(INSPECT_PLAN_STATUS_DICT, value, label);
 }
-const fallbackInspectTypeOptions = [
-  { label: '日常', value: '日常' },
-  { label: '专项', value: '专项' },
-  { label: '临时', value: '临时' },
-];
+export const inspectTypeOptions = getDictOptions(INSPECT_PLAN_TYPE_DICT, 'string');
 
-export const inspectTypeOptions = getDictOptionsWithFallback(
-  INSPECT_PLAN_TYPE_DICT,
-  fallbackInspectTypeOptions,
-);
+export const cycleOptions = getDictOptions(INSPECT_PLAN_CYCLE_DICT, 'string');
 
-const fallbackCycleOptions = [
-  { label: '日', value: '日' },
-  { label: '周', value: '周' },
-  { label: '月', value: '月' },
-  { label: '季', value: '季' },
-];
+export const statusOptions = getDictOptions(INSPECT_PLAN_STATUS_DICT, 'string');
 
-export const cycleOptions = getDictOptionsWithFallback(
-  INSPECT_PLAN_CYCLE_DICT,
-  fallbackCycleOptions,
-);
-
-const fallbackStatusOptions = [
-  { label: '待生效', value: '待生效' },
-  { label: '进行中', value: '进行中' },
-  { label: '已完成', value: '已完成' },
-  { label: '已暂停', value: '已暂停' },
-];
-
-export const statusOptions = getDictOptionsWithFallback(
-  INSPECT_PLAN_STATUS_DICT,
-  fallbackStatusOptions,
-);
+const MOCK_PLAN_TYPE_VALUES = ['日常', '专项', '临时'];
+const MOCK_PLAN_CYCLE_VALUES = ['日', '周', '月', '季'];
+const MOCK_PLAN_STATUS_VALUES = ['待生效', '进行中', '已完成', '已暂停'];
 
 export const auditorOptions = [
   { label: '张三', value: 1 },
@@ -172,9 +142,9 @@ export function getProgressStatus(progress) {
 
 export function dataList() {
   return planNames.map((name, index) => {
-    const type = inspectTypeOptions[index % inspectTypeOptions.length].value;
-    const cycle = cycleOptions[index % cycleOptions.length].value;
-    const status = statusOptions[index % statusOptions.length].value;
+    const type = MOCK_PLAN_TYPE_VALUES[index % MOCK_PLAN_TYPE_VALUES.length];
+    const cycle = MOCK_PLAN_CYCLE_VALUES[index % MOCK_PLAN_CYCLE_VALUES.length];
+    const status = MOCK_PLAN_STATUS_VALUES[index % MOCK_PLAN_STATUS_VALUES.length];
     const createTime = baseTime + index * 86_400_000;
     const effectTime = ['已完成', '已暂停', '进行中'].includes(status)
       ? createTime + 3_600_000
@@ -267,7 +237,7 @@ export function filterMockList(params = {}) {
       params.cycle,
     );
     const matchStatus = isSameDictValue(
-      INSPECT_PLAN_TYPE_DICT,
+      INSPECT_PLAN_STATUS_DICT,
       item.status,
       params.status,
     );

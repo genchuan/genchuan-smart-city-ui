@@ -8,11 +8,6 @@ export const INSPECT_USER_STATUS_DICT = DICT_TYPE.INSPECT_USER_STATUS;
 export const INSPECT_USER_ONLINE_STATUS_DICT =
   DICT_TYPE.INSPECT_USER_ONLINE_STATUS;
 
-function getDictOptionsWithFallback(dictType, fallbackOptions) {
-  const options = getDictOptions(dictType, 'string');
-  return options.length > 0 ? options : fallbackOptions;
-}
-
 function getDictLabel(dictType, value) {
   if (value === undefined || value === null || value === '') return '-';
   const dict = getDictObj(dictType, String(value));
@@ -57,25 +52,9 @@ export const areaOptions = [
   { label: '南安市', value: '南安市' },
 ];
 
-const fallbackStatusOptions = [
-  { label: '正常', value: '正常' },
-  { label: '禁用', value: '禁用' },
-];
+export const statusOptions = getDictOptions(INSPECT_USER_STATUS_DICT, 'string');
 
-export const statusOptions = getDictOptionsWithFallback(
-  INSPECT_USER_STATUS_DICT,
-  fallbackStatusOptions,
-);
-
-const fallbackOnlineStatusOptions = [
-  { label: '在线', value: '在线' },
-  { label: '离线', value: '离线' },
-];
-
-export const onlineStatusOptions = getDictOptionsWithFallback(
-  INSPECT_USER_ONLINE_STATUS_DICT,
-  fallbackOnlineStatusOptions,
-);
+export const onlineStatusOptions = getDictOptions(INSPECT_USER_ONLINE_STATUS_DICT, 'string');
 
 export const deviceOptions = [
   { label: '巡检终端 A101', value: 101, area: '丰泽区' },

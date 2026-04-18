@@ -7,11 +7,6 @@ import { formatDate } from '#/utils/genchuan/formatTime';
 export const INSPECT_REPORT_TYPE_DICT = DICT_TYPE.INSPECT_REPORT_TYPE;
 export const INSPECT_REPORT_STATUS_DICT = DICT_TYPE.INSPECT_REPORT_STATUS;
 
-function getDictOptionsWithFallback(dictType, fallbackOptions) {
-  const options = getDictOptions(dictType, 'string');
-  return options.length > 0 ? options : fallbackOptions;
-}
-
 function getDictLabel(dictType, value) {
   if (value === undefined || value === null || value === '') return '-';
   const dict = getDictObj(dictType, String(value));
@@ -56,28 +51,12 @@ export const taskOptions = [
   { label: '南安水头交通枢纽日检任务', value: 6 },
 ];
 
-const fallbackReportTypeOptions = [
-  { label: '设备故障', value: '设备故障' },
-  { label: '占位异常', value: '占位异常' },
-  { label: '其他', value: '其他' },
-];
+export const reportTypeOptions = getDictOptions(INSPECT_REPORT_TYPE_DICT, 'string');
 
-export const reportTypeOptions = getDictOptionsWithFallback(
-  INSPECT_REPORT_TYPE_DICT,
-  fallbackReportTypeOptions,
-);
+export const statusOptions = getDictOptions(INSPECT_REPORT_STATUS_DICT, 'string');
 
-const fallbackStatusOptions = [
-  { label: '待审核', value: '待审核' },
-  { label: '待处置', value: '待处置' },
-  { label: '已完成', value: '已完成' },
-  { label: '已驳回', value: '已驳回' },
-];
-
-export const statusOptions = getDictOptionsWithFallback(
-  INSPECT_REPORT_STATUS_DICT,
-  fallbackStatusOptions,
-);
+const MOCK_REPORT_TYPE_VALUES = ['设备故障', '占位异常', '其他'];
+const MOCK_REPORT_STATUS_VALUES = ['待审核', '待处置', '已完成', '已驳回'];
 
 export const auditorOptions = [
   { label: '张三', value: 1 },
@@ -170,8 +149,8 @@ export function getReportStatusTagType(status) {
 
 export function dataList() {
   return Array.from({ length: 18 }, (_, index) => {
-    const status = statusOptions[index % statusOptions.length].value;
-    const type = reportTypeOptions[index % reportTypeOptions.length].value;
+    const status = MOCK_REPORT_STATUS_VALUES[index % MOCK_REPORT_STATUS_VALUES.length];
+    const type = MOCK_REPORT_TYPE_VALUES[index % MOCK_REPORT_TYPE_VALUES.length];
     const task = taskOptions[index % taskOptions.length];
     const auditUser = auditorOptions[index % auditorOptions.length];
     const processUser = auditorOptions[(index + 1) % auditorOptions.length];
@@ -345,7 +324,7 @@ export function filterInspectReportRows(list = [], params = {}) {
       params.type,
     );
     const matchStatus = isSameDictValue(
-      INSPECT_REPORT_TYPE_DICT,
+      INSPECT_REPORT_STATUS_DICT,
       item.status,
       params.status,
     );

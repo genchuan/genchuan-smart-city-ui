@@ -6,11 +6,6 @@ import { formatDate } from '#/utils/genchuan/formatTime';
 
 export const INSPECT_TRACK_STATUS_DICT = DICT_TYPE.INSPECT_TRACK_STATUS;
 
-function getDictOptionsWithFallback(dictType, fallbackOptions) {
-  const options = getDictOptions(dictType, 'string');
-  return options.length > 0 ? options : fallbackOptions;
-}
-
 function getDictLabel(dictType, value) {
   if (value === undefined || value === null || value === '') return '-';
   const dict = getDictObj(dictType, String(value));
@@ -54,15 +49,7 @@ export const areaOptions = [
   { label: '南安市', value: '南安市' },
 ];
 
-const fallbackTrackStatusOptions = [
-  { label: '正常', value: '正常' },
-  { label: '异常', value: '异常' },
-];
-
-export const trackStatusOptions = getDictOptionsWithFallback(
-  INSPECT_TRACK_STATUS_DICT,
-  fallbackTrackStatusOptions,
-);
+export const trackStatusOptions = getDictOptions(INSPECT_TRACK_STATUS_DICT, 'string');
 
 export const syncStatusOptions = [
   { label: '已同步', value: '已同步' },
