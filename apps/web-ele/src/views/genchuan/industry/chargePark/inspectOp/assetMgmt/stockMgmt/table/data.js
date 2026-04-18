@@ -33,7 +33,10 @@ export function getStockStatusLabel(value) {
 export function isStockStatusLabel(value, label) {
   return isDictLabel(ASSET_STOCK_STATUS_DICT, value, label);
 }
-export const stockStatusOptions = getDictOptions(ASSET_STOCK_STATUS_DICT, 'string');
+export const stockStatusOptions = getDictOptions(
+  ASSET_STOCK_STATUS_DICT,
+  'string',
+);
 
 export const assetOptions = [
   { label: '车位监测摄像头', type: '监测设备', value: 1 },

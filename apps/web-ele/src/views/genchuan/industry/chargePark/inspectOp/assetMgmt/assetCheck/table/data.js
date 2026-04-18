@@ -44,7 +44,10 @@ export function isCheckStatusLabel(value, label) {
 }
 export const checkTypeOptions = getDictOptions(ASSET_CHECK_TYPE_DICT, 'string');
 
-export const checkStatusOptions = getDictOptions(ASSET_CHECK_STATUS_DICT, 'string');
+export const checkStatusOptions = getDictOptions(
+  ASSET_CHECK_STATUS_DICT,
+  'string',
+);
 
 const MOCK_CHECK_TYPE_VALUES = ['定期', '临时'];
 const MOCK_CHECK_STATUS_VALUES = ['待盘点', '盘点中', '已完成'];
@@ -122,7 +125,8 @@ export function getProgressStatus(progress) {
 export function dataList() {
   return Array.from({ length: 14 }, (_, index) => {
     const type = MOCK_CHECK_TYPE_VALUES[index % MOCK_CHECK_TYPE_VALUES.length];
-    const status = MOCK_CHECK_STATUS_VALUES[index % MOCK_CHECK_STATUS_VALUES.length];
+    const status =
+      MOCK_CHECK_STATUS_VALUES[index % MOCK_CHECK_STATUS_VALUES.length];
     const checkTime = baseTime - index * 7 * 86_400_000;
     const progressMap = {
       待盘点: 0,

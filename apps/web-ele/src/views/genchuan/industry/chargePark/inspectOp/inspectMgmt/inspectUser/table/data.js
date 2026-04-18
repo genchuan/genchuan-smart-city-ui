@@ -54,7 +54,10 @@ export const areaOptions = [
 
 export const statusOptions = getDictOptions(INSPECT_USER_STATUS_DICT, 'string');
 
-export const onlineStatusOptions = getDictOptions(INSPECT_USER_ONLINE_STATUS_DICT, 'string');
+export const onlineStatusOptions = getDictOptions(
+  INSPECT_USER_ONLINE_STATUS_DICT,
+  'string',
+);
 
 export const deviceOptions = [
   { label: '巡检终端 A101', value: 101, area: '丰泽区' },

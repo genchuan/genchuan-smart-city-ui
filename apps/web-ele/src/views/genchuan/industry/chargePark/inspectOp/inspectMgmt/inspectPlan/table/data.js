@@ -51,7 +51,10 @@ export function getPlanStatusLabel(value) {
 export function isPlanStatusLabel(value, label) {
   return isDictLabel(INSPECT_PLAN_STATUS_DICT, value, label);
 }
-export const inspectTypeOptions = getDictOptions(INSPECT_PLAN_TYPE_DICT, 'string');
+export const inspectTypeOptions = getDictOptions(
+  INSPECT_PLAN_TYPE_DICT,
+  'string',
+);
 
 export const cycleOptions = getDictOptions(INSPECT_PLAN_CYCLE_DICT, 'string');
 
@@ -144,7 +147,8 @@ export function dataList() {
   return planNames.map((name, index) => {
     const type = MOCK_PLAN_TYPE_VALUES[index % MOCK_PLAN_TYPE_VALUES.length];
     const cycle = MOCK_PLAN_CYCLE_VALUES[index % MOCK_PLAN_CYCLE_VALUES.length];
-    const status = MOCK_PLAN_STATUS_VALUES[index % MOCK_PLAN_STATUS_VALUES.length];
+    const status =
+      MOCK_PLAN_STATUS_VALUES[index % MOCK_PLAN_STATUS_VALUES.length];
     const createTime = baseTime + index * 86_400_000;
     const effectTime = ['已完成', '已暂停', '进行中'].includes(status)
       ? createTime + 3_600_000

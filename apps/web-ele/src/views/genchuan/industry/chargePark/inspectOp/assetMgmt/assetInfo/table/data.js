@@ -44,7 +44,10 @@ export function isAssetStatusLabel(value, label) {
 }
 export const assetTypeOptions = getDictOptions(ASSET_INFO_TYPE_DICT, 'string');
 
-export const assetStatusOptions = getDictOptions(ASSET_INFO_STATUS_DICT, 'string');
+export const assetStatusOptions = getDictOptions(
+  ASSET_INFO_STATUS_DICT,
+  'string',
+);
 
 const MOCK_ASSET_TYPE_VALUES = ['监测设备', '充电设备', '巡检工具'];
 const MOCK_ASSET_STATUS_VALUES = ['正常', '禁用', '报废'];
@@ -140,7 +143,8 @@ export function getAssetStatusTagType(status) {
 export function dataList() {
   return assetNames.map((name, index) => {
     const type = MOCK_ASSET_TYPE_VALUES[index % MOCK_ASSET_TYPE_VALUES.length];
-    const status = MOCK_ASSET_STATUS_VALUES[index % MOCK_ASSET_STATUS_VALUES.length];
+    const status =
+      MOCK_ASSET_STATUS_VALUES[index % MOCK_ASSET_STATUS_VALUES.length];
     const stationId = stationOptions[index % stationOptions.length].value;
     const purchaseTime = baseTime - index * 12 * 86_400_000;
     const effectTime = purchaseTime + 2 * 86_400_000;

@@ -33,7 +33,10 @@ export function getSpareStatusLabel(value) {
 export function isSpareStatusLabel(value, label) {
   return isDictLabel(SPARE_STOCK_STATUS_DICT, value, label);
 }
-export const stockStatusOptions = getDictOptions(SPARE_STOCK_STATUS_DICT, 'string');
+export const stockStatusOptions = getDictOptions(
+  SPARE_STOCK_STATUS_DICT,
+  'string',
+);
 
 export const spareOptions = [
   { label: '充电枪密封圈', type: '充电备件', value: 1 },

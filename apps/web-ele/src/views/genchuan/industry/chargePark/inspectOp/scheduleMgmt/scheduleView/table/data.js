@@ -59,11 +59,20 @@ export const userOptions = [
   { label: '陈七', position: '运维专员', value: 5 },
 ];
 
-export const shiftTypeOptions = getDictOptions(SCHEDULE_VIEW_SHIFT_TYPE_DICT, 'string');
+export const shiftTypeOptions = getDictOptions(
+  SCHEDULE_VIEW_SHIFT_TYPE_DICT,
+  'string',
+);
 
-export const scheduleStatusOptions = getDictOptions(SCHEDULE_VIEW_STATUS_DICT, 'string');
+export const scheduleStatusOptions = getDictOptions(
+  SCHEDULE_VIEW_STATUS_DICT,
+  'string',
+);
 
-export const shiftApplyStatusOptions = getDictOptions(SHIFT_APPLY_STATUS_DICT, 'string');
+export const shiftApplyStatusOptions = getDictOptions(
+  SHIFT_APPLY_STATUS_DICT,
+  'string',
+);
 
 const MOCK_SHIFT_TYPE_VALUES = ['早班', '中班', '晚班'];
 
@@ -160,7 +169,8 @@ export function getMockApplyStatus(status, index) {
 export function dataList() {
   return Array.from({ length: 36 }, (_, index) => {
     const user = userOptions[index % userOptions.length];
-    const shiftType = MOCK_SHIFT_TYPE_VALUES[index % MOCK_SHIFT_TYPE_VALUES.length];
+    const shiftType =
+      MOCK_SHIFT_TYPE_VALUES[index % MOCK_SHIFT_TYPE_VALUES.length];
     const scheduleDate = toScheduleDate(index % 18);
     const status = index % 9 === 0 ? '已换班' : '正常';
     const shiftApplyStatus = getMockApplyStatus(status, index);
