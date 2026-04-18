@@ -5,7 +5,7 @@ export function getInspectOpReportPage(params) {
 }
 
 export function exportInspectOpReport(params) {
-  return requestClient.download('/inspectop/inspect-op-report/export', {
+  return requestClient.download('/inspectop/inspect-op-report/export-excel', {
     params,
   });
 }

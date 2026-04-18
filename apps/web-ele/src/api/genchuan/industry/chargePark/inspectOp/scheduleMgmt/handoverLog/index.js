@@ -7,7 +7,9 @@ export function getHandoverLogPage(params) {
 
 /** 导出交接日志数据 */
 export function exportHandoverLog(params) {
-  return requestClient.download('/inspectop/handover-log/export', { params });
+  return requestClient.download('/inspectop/handover-log/export-excel', {
+    params,
+  });
 }
 
 /** 新增交接日志 */

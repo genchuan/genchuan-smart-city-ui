@@ -7,7 +7,9 @@ export function getScheduleViewPage(params) {
 
 /** 导出排班查看数据 */
 export function exportScheduleView(params) {
-  return requestClient.download('/inspectop/schedule-view/export', { params });
+  return requestClient.download('/inspectop/schedule-view/export-excel', {
+    params,
+  });
 }
 
 /** 获取排班详情 */

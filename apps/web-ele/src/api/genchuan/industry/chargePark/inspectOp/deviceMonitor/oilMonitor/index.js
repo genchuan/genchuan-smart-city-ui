@@ -7,7 +7,9 @@ export function getOilMonitorPage(params) {
 
 /** 导出油车占位监测数据 */
 export function exportOilMonitor(params) {
-  return requestClient.download('/inspectop/oil-monitor/export', { params });
+  return requestClient.download('/inspectop/oil-monitor/export-excel', {
+    params,
+  });
 }
 
 /** 批量处置油车占位 */

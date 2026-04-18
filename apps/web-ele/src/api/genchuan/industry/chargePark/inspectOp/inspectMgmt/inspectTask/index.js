@@ -7,7 +7,9 @@ export function getInspectTaskPage(params) {
 
 /** 导出巡检任务数据 */
 export function exportInspectTask(params) {
-  return requestClient.download('/inspectop/inspect-task/export', { params });
+  return requestClient.download('/inspectop/inspect-task/export-excel', {
+    params,
+  });
 }
 
 /** 批量派发巡检任务 */

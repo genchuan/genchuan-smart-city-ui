@@ -5,7 +5,9 @@ export function getShiftApplyPage(params) {
 }
 
 export function exportShiftApply(params) {
-  return requestClient.download('/inspectop/shift-apply/export', { params });
+  return requestClient.download('/inspectop/shift-apply/export-excel', {
+    params,
+  });
 }
 
 export function batchAuditShiftApply(data) {

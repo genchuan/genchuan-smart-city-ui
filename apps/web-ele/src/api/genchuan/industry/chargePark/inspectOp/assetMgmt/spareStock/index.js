@@ -7,7 +7,9 @@ export function getSpareStockPage(params) {
 
 /** 导出备件仓储数据 */
 export function exportSpareStock(params) {
-  return requestClient.download('/inspectop/spare-stock/export', { params });
+  return requestClient.download('/inspectop/spare-stock/export-excel', {
+    params,
+  });
 }
 
 /** 备件入库 */

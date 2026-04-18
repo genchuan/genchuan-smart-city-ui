@@ -7,7 +7,7 @@ export function getCarChargeMonitorPage(params) {
 
 /** 导出汽车充电监测数据 */
 export function exportCarChargeMonitor(params) {
-  return requestClient.download('/inspectop/car-charge-monitor/export', {
+  return requestClient.download('/inspectop/car-charge-monitor/export-excel', {
     params,
   });
 }

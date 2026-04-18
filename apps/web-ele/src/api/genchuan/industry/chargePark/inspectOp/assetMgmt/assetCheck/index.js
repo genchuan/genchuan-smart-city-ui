@@ -7,7 +7,9 @@ export function getAssetCheckPage(params) {
 
 /** 导出资产盘点数据 */
 export function exportAssetCheck(params) {
-  return requestClient.download('/inspectop/asset-check/export', { params });
+  return requestClient.download('/inspectop/asset-check/export-excel', {
+    params,
+  });
 }
 
 /** 发起资产盘点 */

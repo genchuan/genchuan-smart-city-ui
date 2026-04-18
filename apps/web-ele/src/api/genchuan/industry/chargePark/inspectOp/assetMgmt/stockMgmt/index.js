@@ -7,7 +7,9 @@ export function getAssetStockPage(params) {
 
 /** 导出库存管理数据 */
 export function exportAssetStock(params) {
-  return requestClient.download('/inspectop/asset-stock/export', { params });
+  return requestClient.download('/inspectop/asset-stock/export-excel', {
+    params,
+  });
 }
 
 /** 调配库存 */

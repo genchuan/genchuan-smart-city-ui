@@ -23,7 +23,9 @@ export function importAssetInfo(file) {
 
 /** 导出资产信息数据 */
 export function exportAssetInfo(params) {
-  return requestClient.download('/inspectop/asset-info/export', { params });
+  return requestClient.download('/inspectop/asset-info/export-excel', {
+    params,
+  });
 }
 
 /** 获取资产信息详情 */
