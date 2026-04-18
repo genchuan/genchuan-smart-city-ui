@@ -229,17 +229,17 @@ const CHGPARKMGT_DICT = {
   OIL_MONITOR_PROCESS_STATUS: 'oil_monitor_process_status', // 油车占位处置状态
 
   // 设备监控 - 汽车充电监测
-  CAR_CHARGE_MONITOR_STATUS: 'car_charge_monitor_monitor_status', // 汽车充电监测状态
+  CAR_CHARGE_MONITOR_STATUS: 'car_charge_monitor_status', // 汽车充电监测状态
   CAR_CHARGE_MONITOR_ALARM_STATUS: 'car_charge_monitor_alarm_status', // 汽车充电告警状态
   CAR_CHARGE_MONITOR_PROCESS_STATUS: 'car_charge_monitor_process_status', // 汽车充电处理状态
 
   // 设备监控 - 两轮充电监测
-  BIKE_CHARGE_MONITOR_STATUS: 'bike_charge_monitor_monitor_status', // 两轮充电监测状态
+  BIKE_CHARGE_MONITOR_STATUS: 'bike_charge_monitor_status', // 两轮充电监测状态
   BIKE_CHARGE_MONITOR_ALARM_STATUS: 'bike_charge_monitor_alarm_status', // 两轮充电告警状态
   BIKE_CHARGE_MONITOR_PROCESS_STATUS: 'bike_charge_monitor_process_status', // 两轮充电处理状态
 
   // 设备监控 - 共享充电监测
-  SHARE_CHARGE_MONITOR_STATUS: 'share_charge_monitor_monitor_status', // 共享充电监测状态
+  SHARE_CHARGE_MONITOR_STATUS: 'share_charge_monitor_status', // 共享充电监测状态
   SHARE_CHARGE_MONITOR_ALARM_STATUS: 'share_charge_monitor_alarm_status', // 共享充电告警状态
   SHARE_CHARGE_MONITOR_PROCESS_STATUS: 'share_charge_monitor_process_status', // 共享充电处理状态
 

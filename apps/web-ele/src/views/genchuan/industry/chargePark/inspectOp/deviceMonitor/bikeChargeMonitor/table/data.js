@@ -215,7 +215,7 @@ export function normalizeBikeChargeMonitorRow(row) {
       row.deviceCode ||
       row.deviceName ||
       row.device_code ||
-      `BC-${deviceId || row.id}`,
+      `${deviceId || row.id}`,
     deviceName:
       row.deviceName ||
       row.device_name ||
@@ -366,26 +366,26 @@ export function useSearchFormSchema() {
         clearable: true,
       },
     },
-    {
-      fieldName: 'alarmStatus',
-      label: '告警状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择告警状态',
-        clearable: true,
-        options: alarmStatusOptions,
-      },
-    },
-    {
-      fieldName: 'processStatus',
-      label: '处理状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择处理状态',
-        clearable: true,
-        options: processStatusOptions,
-      },
-    },
+    // {
+    //   fieldName: 'alarmStatus',
+    //   label: '告警状态',
+    //   component: 'Select',
+    //   componentProps: {
+    //     placeholder: '请选择告警状态',
+    //     clearable: true,
+    //     options: alarmStatusOptions,
+    //   },
+    // },
+    // {
+    //   fieldName: 'processStatus',
+    //   label: '处理状态',
+    //   component: 'Select',
+    //   componentProps: {
+    //     placeholder: '请选择处理状态',
+    //     clearable: true,
+    //     options: processStatusOptions,
+    //   },
+    // },
   ];
 }
 
@@ -407,7 +407,7 @@ export function useGridColumns() {
       sortable: true,
       slots: { default: 'station_name' },
     },
-    { field: 'regionName', title: '所属区域', minWidth: 110, sortable: true },
+    // { field: 'regionName', title: '所属区域', minWidth: 110, sortable: true },
     {
       field: 'monitorStatus',
       title: '监测状态',
@@ -458,7 +458,7 @@ export const detailFields = [
   { key: 'deviceId', label: '设备ID' },
   { key: 'stationName', label: '所属场站' },
   { key: 'stationId', label: '场站ID' },
-  { key: 'regionName', label: '所属区域' },
+  // { key: 'regionName', label: '所属区域' },
   {
     key: 'monitorStatus',
     label: '监测状态',
