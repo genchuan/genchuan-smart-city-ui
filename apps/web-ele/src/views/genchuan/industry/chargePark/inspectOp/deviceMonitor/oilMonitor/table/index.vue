@@ -72,20 +72,20 @@ const processDrawerMode = shallowRef('single');
 const processRows = ref([]);
 const processFormRef = ref(null);
 const processForm = reactive({
-  processMethod: '现场劝离',
+  processMethod: '',
   processUserId: null,
   processProgress: 50,
 });
 const processRules = {
   processMethod: [
-    { required: true, message: '请选择处置方式', trigger: 'change' },
+    { required: false, message: '请输入处置方式', trigger: 'blur' },
   ],
   processUserId: [
-    { required: true, message: '请选择处置人', trigger: 'change' },
+    { required: true, message: '请选择处置人', trigger: 'blur' },
   ],
-  processProgress: [
-    { required: true, message: '请输入处置进度', trigger: 'change' },
-  ],
+  // processProgress: [
+  //   { required: true, message: '请输入处置进度', trigger: 'change' },
+  // ],
 };
 
 const ignoreDialogVisible = shallowRef(false);
@@ -421,7 +421,7 @@ async function confirmProgress() {
 
   try {
     await updateOilMonitorProgress({
-      id: currentProgressRow.value.id,
+      ids: [currentProgressRow.value.id],
       processProgress: progressForm.processProgress,
     });
     ElMessage.success('处置进度已更新');
@@ -536,7 +536,7 @@ watch(
         label-width="100px"
       >
         <el-form-item label="处置方式" prop="processMethod">
-          <el-select
+          <!-- <el-select
             v-model="processForm.processMethod"
             class="w-full"
             placeholder="请选择处置方式"
@@ -547,9 +547,25 @@ watch(
               :label="item.label"
               :value="item.value"
             />
-          </el-select>
+          </el-select> -->
+          <el-input v-model="processForm.processMethod" class="w-full" placeholder="请输入处置方式" />
         </el-form-item>
         <el-form-item label="处置人" prop="processUserId">
+          <!-- <el-select
+            v-model="processForm.processMethod"
+            class="w-full"
+            placeholder="请选择处置方式"
+          >
+            <el-option
+              v-for="item in processMethodOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select> -->
+          <el-input v-model="processForm.processUserId" class="w-full" placeholder="请输入处置人" />
+        </el-form-item>
+        <!-- <el-form-item label="处置人" prop="processUserId">
           <el-select
             v-model="processForm.processUserId"
             class="w-full"
@@ -571,7 +587,7 @@ watch(
             :min="0"
             show-input
           />
-        </el-form-item>
+        </el-form-item> -->
         <div class="process-tip">
           本次将处置 {{ processRows.length }} 条油车占位记录。
         </div>
@@ -689,11 +705,11 @@ watch(
             icon-name="search"
             @click="handleSearchShow"
           />
-          <IconButton
+          <!-- <IconButton
             content="刷新"
             icon-name="refresh"
             @click="handleRefresh"
-          />
+          /> -->
           <IconButton
             content="全屏"
             icon-name="FullScreen"
@@ -840,5 +856,19 @@ watch(
 .progress-cell {
   width: 120px;
   cursor: pointer;
+}
+
+/*
+  页面样式里 .el-tabs__header 为 absolute，且工具栏按钮被 .vxe-tools--operate { top: -30px }
+  顶到标签区域；未提升 z-index 时，点击会落在标签头上，表现为「搜索点了没反应」。
+*/
+.park-lot-table-new :deep(.vxe-grid--toolbar-wrapper) {
+  position: relative;
+  z-index: 20;
+}
+
+.park-lot-table-new :deep(.vxe-tools--wrapper),
+.park-lot-table-new :deep(.vxe-tools--operate) {
+  z-index: 21;
 }
 </style>

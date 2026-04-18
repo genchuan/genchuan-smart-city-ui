@@ -34,7 +34,7 @@ export function ignoreOilMonitor(data) {
 
 /** 更新油车占位处置进度 */
 export function updateOilMonitorProgress(data) {
-  return requestClient.put('/inspectop/oil-monitor/update-progress', data);
+  return requestClient.put('/inspectop/oil-monitor/update-process', data);
 }
 
 /** 获取油车占位监测看板 */
