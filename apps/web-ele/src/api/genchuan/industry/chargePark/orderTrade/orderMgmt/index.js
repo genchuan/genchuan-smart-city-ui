@@ -106,3 +106,39 @@ export function getOfftimeParkOrderChart() {
   return requestClient.get('/ordertrade/offtime-park-order/chart');
 }
  
+/** 汽车充电订单分页 */
+export function getCarChargeOrderPage(params) {
+  return requestClient.get('/ordertrade/car-charge-order/page', {
+    params,
+  });
+}
+/** 汽车充电订单导出 */
+export function exportCarChargeOrderExcel() {
+  return requestClient.download('/ordertrade/car-charge-order/export');
+}
+/** 汽车充电订单停止 */
+export function stopCarChargeOrder(data) {
+  return requestClient.put('/ordertrade/car-charge-order/stop', data);
+}
+/** 汽车充电订单支付 */
+export function payCarChargeOrder(data) {
+  return requestClient.put('/ordertrade/car-charge-order/pay', data);
+}   
+
+/** 汽车充电订单取消 */
+export function cancelCarChargeOrder(data) {
+  return requestClient.put('/ordertrade/car-charge-order/cancel', data);
+}
+/** 汽车充电订单退款 */
+export function refundCarChargeOrder(data) {
+  return requestClient.put('/ordertrade/car-charge-order/refund', data);
+}
+/** 汽车充电订单发票 */
+export function invoiceCarChargeOrder(data) {
+  return requestClient.put('/ordertrade/car-charge-order/invoice', data);
+}
+
+/** 汽车充电订单图表 */
+export function getCarChargeOrderChart() {
+  return requestClient.get('/ordertrade/car-charge-order/chart');
+}
