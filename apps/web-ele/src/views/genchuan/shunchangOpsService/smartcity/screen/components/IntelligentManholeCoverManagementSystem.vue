@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 
 import { ScrollBoard } from '@kjgl77/datav-vue3';
+import { getRunningDaysConfig } from '../utils/dateUtils';
 
 import ChartCustomize1 from './ChartCustomize1.vue';
 import ChartCustomize2 from './ChartCustomize2.vue';
@@ -68,11 +69,7 @@ const leftData = ref({
 });
 
 const centerData = ref({
-  customizeParams: {
-    name: '智能井盖安全运行天数：',
-    runningDays: '26',
-    tail: '天',
-  },
+  customizeParams: getRunningDaysConfig('智能井盖安全运行天数：'),
   centerId: 'centerId',
   lineAxisData: [
     '1月',

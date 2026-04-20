@@ -189,7 +189,7 @@ function openMall() {
             @click="openMall"
           >
             <ShoppingCartIcon class="size-4" />
-            <span class="text-xs font-medium">商城</span>
+            <span class="text-xs font-medium">软件商城</span>
           </div>
         </template>
 

@@ -222,6 +222,13 @@ const CHGPARKMGT_DICT = {
   // 积分抽奖
   POINT_LOTTERY_SYNC_STATUS: 'point_lottery_sync_status', // 同步状态
   POINT_LOTTERY_STATUS: 'point_lottery_status', // 记录状态
+  // 规则配置
+  RULE_CONFIG_TYPE: 'rule_config_type', // 规则类型
+  RULE_CONFIG_STATUS: 'rule_config_status', // 规则状态
+  RULE_CONFIG_SCENE: 'rule_config_scene', // 适用场景
+  // 奖品管理
+  PRIZE_MGMT_TYPE: 'prize_mgmt_type', // 奖品类型
+  PRIZE_MGMT_STATUS: 'prize_mgmt_status', // 奖品状态
 } as const;
 
 /** 字典类型枚举 - 统一导出 */

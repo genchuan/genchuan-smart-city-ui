@@ -71,6 +71,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import { getRunningDaysConfig } from '../utils/dateUtils';
 import MapCommon from './MapCommon.vue';
 import ChartTypePie from './ChartTypePie.vue';
 import ChartTypeLine from './ChartTypeLine.vue';
@@ -136,11 +137,7 @@ const leftData = ref({
 });
 
 const centerData = ref({
-  customizeParams: {
-    name: '系统连续稳定运行天数：',
-    runningDays: '21',
-    tail: '天'
-  },
+  customizeParams: getRunningDaysConfig('系统连续稳定运行天数：'),
   proJectsList: {
     processName: '监管模式',
     processingScaleName: '监管范围',

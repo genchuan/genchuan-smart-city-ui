@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 
 import { CapsuleChart, ScrollBoard } from '@kjgl77/datav-vue3';
+import { getRunningDaysConfig } from '../utils/dateUtils';
 
 import ChartCustomize1 from './ChartCustomize1.vue';
 import ChartCustomize2 from './ChartCustomize2.vue';
@@ -66,11 +67,7 @@ const leftData = ref({
 });
 
 const centerData = ref({
-  customizeParams: {
-    name: '系统连续正常运行天数：',
-    runningDays: '24',
-    tail: '天',
-  },
+  customizeParams: getRunningDaysConfig('系统连续正常运行天数：'),
   proJectsList: {
     processName: '监测技术',
     processingScaleName: '监测范围',
