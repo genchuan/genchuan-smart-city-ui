@@ -69,3 +69,40 @@ export function cancelTempParkOrder(data) {
 export function getTempParkOrderChart() {
   return requestClient.get('/ordertrade/temp-park-order/chart');
 }
+/** 错时停车订单分页 */
+export function getOfftimeParkOrderPage(params) {
+  return requestClient.get('/ordertrade/offtime-park-order/page', {
+    params,
+  });
+}
+/** 错时停车订单导出 */
+export function exportOfftimeParkOrderExcel() {
+  return requestClient.download('/ordertrade/offtime-park-order/export');
+}
+/** 错时停车订单发票 */
+export function invoiceOfftimeParkOrder(data) {
+  return requestClient.put('/ordertrade/offtime-park-order/page', {
+    params,
+  });
+}
+/** 错时停车订单退款 */
+export function refundOfftimeParkOrder(data) {
+  return requestClient.put('/ordertrade/offtime-park-order/refund', data);
+}
+/** 错时停车订单支付 */
+export function payOfftimeParkOrder(data) {
+  return requestClient.put('/ordertrade/offtime-park-order/pay', data);
+}
+/** 错时停车订单取消 */
+export function cancelOfftimeParkOrder(data) {
+  return requestClient.put('/ordertrade/offtime-park-order/cancel', data);
+}
+/** 错时停车订单发票 */
+export function invoiceOfftimNewParkOrder(data) {
+  return requestClient.put('/ordertrade/offtime-park-order/invoice', data);
+}
+/** 错时停车订单图表 */
+export function getOfftimeParkOrderChart() {
+  return requestClient.get('/ordertrade/offtime-park-order/chart');
+}
+ 
