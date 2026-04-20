@@ -248,13 +248,14 @@ const [Grid, gridApi] = useVbenVxeGrid({
         query: async ({ page }) => getTableData({ page }),
       },
     },
-    rowStyle({ rowIndex }) {
-      if (isRedArray.includes(rowIndex)) {
-        return {
-          backgroundColor: '#fed7d7',
-        };
+    cellClassName({ row, column }) {
+      const isTime = Date.now() - row.oldcreateTime > 24 * 60 * 60 * 1000 && row.reviewStatus === '待复审'
+      if (column.field === 'reviewStatus' && isTime) {
+        return 'reviewStatus-cell'
+      } else {
+        return null
       }
-    },
+    }, 
     rowConfig: {
       keyField: 'id',
       isHover: true,
