@@ -60,8 +60,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel() {
     drawerApi.close();
   },
-  onConfirm() {},
-  async onOpenChange() {},
+  onConfirm() { },
+  async onOpenChange() { },
 });
 // 移除原 DetailDrawer 初始化逻辑
 const formData = ref();
@@ -268,11 +268,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
     keepSource: true,
-    rowStyle({ rowIndex }) {
-      if (isRedArray.includes(rowIndex)) {
-        return {
-          backgroundColor: '#fed7d7',
-        };
+    cellClassName({ row, column }) {
+      console.log(row)
+      const isTime = Date.now() - row.oldcreateTime > 24 * 60 * 60 * 1000 && row.reviewStatus === '待复审'
+      if (column.field === 'reviewStatus' && isTime) {
+        return 'reviewStatus-cell'
+      } else {
+        return null
       }
     },
     proxyConfig: {
@@ -563,25 +565,14 @@ function previewImage(url) {
     <!-- 上传资料弹窗（核心改造：新增所有接口参数输入框） -->
     <UploadModal>
       <div class="upload-modal-content p-4">
-        <ElForm
-          ref="uploadFormRef"
-          :model="uploadForm"
-          :rules="uploadFormRules"
-          label-width="120px"
-        >
+        <ElForm ref="uploadFormRef" :model="uploadForm" :rules="uploadFormRules" label-width="120px">
           <!-- 文件上传区域 -->
           <ElFormItem label="选择文件" prop="file" class="mb-4">
-            <ElUpload
-              ref="upload"
-              v-model:file-list="fileList"
-              :on-change="onChange"
-              :on-exceed="handleExceed"
-              :auto-upload="false"
-              class="upload-demo"
-              drag
-              :limit="1"
-            >
-              <ElIcon class="el-icon--upload"><UploadFilled /></ElIcon>
+            <ElUpload ref="upload" v-model:file-list="fileList" :on-change="onChange" :on-exceed="handleExceed"
+              :auto-upload="false" class="upload-demo" drag :limit="1">
+              <ElIcon class="el-icon--upload">
+                <UploadFilled />
+              </ElIcon>
               <div class="el-upload__text">
                 拖拽文件到此处上传，或<em>点击选择文件</em>
               </div>
@@ -595,11 +586,7 @@ function previewImage(url) {
         <!-- 操作按钮 -->
         <div class="mt-4 flex justify-end gap-2">
           <ElButton @click="uploadModalApi.close()">取消</ElButton>
-          <ElButton
-            type="primary"
-            @click="handleUploadSubmit"
-            :loading="uploadLoading"
-          >
+          <ElButton type="primary" @click="handleUploadSubmit" :loading="uploadLoading">
             确认上传
           </ElButton>
         </div>
@@ -607,11 +594,7 @@ function previewImage(url) {
     </UploadModal>
     <!-- 图片预览弹窗 -->
     <el-dialog v-model="previewVisible" title="图片预览" width="600px" center>
-      <img
-        v-if="currentImage"
-        :src="currentImage"
-        style="width: 100%; height: auto"
-      />
+      <img v-if="currentImage" :src="currentImage" style="width: 100%; height: auto" />
     </el-dialog>
     <!-- 图片查看弹窗 -->
     <el-dialog v-model="dialogVisible">
@@ -620,22 +603,12 @@ function previewImage(url) {
       </div>
     </el-dialog>
     <!-- 撤销确认弹窗（带原因选择） -->
-    <el-dialog
-      title="撤销操作"
-      v-model="backDialogVisible"
-      width="500px"
-      :close-on-click-modal="false"
-    >
+    <el-dialog title="撤销操作" v-model="backDialogVisible" width="500px" :close-on-click-modal="false">
       <!-- 撤销原因选择框 -->
       <el-form :model="backForm" label-width="120px" required>
         <el-form-item label="撤销原因：" prop="reason">
           <el-select v-model="backForm.reason" placeholder="请选择撤销原因">
-            <el-option
-              v-for="item in reasonList"
-              :key="item.id"
-              :value="item.id"
-              :label="item.reasonName"
-            />
+            <el-option v-for="item in reasonList" :key="item.id" :value="item.id" :label="item.reasonName" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -643,64 +616,25 @@ function previewImage(url) {
       <!-- 弹窗底部按钮 -->
       <template #footer>
         <el-button @click="backDialogVisible = false">取消</el-button>
-        <el-button
-          type="primary"
-          @click="confirmBack"
-          :disabled="!backForm.reason"
-        >
+        <el-button type="primary" @click="confirmBack" :disabled="!backForm.reason">
           确认撤销
         </el-button>
       </template>
     </el-dialog>
     <!-- 批量查看编号弹窗（使用el-table） -->
-    <el-dialog
-      v-model="dataObj.batchViewVisible"
-      title="批量查看证据 - 编号列表"
-      width="1000px"
-      center
-      draggable
-    >
-      <ElTable
-        :data="dataObj.batchViewData"
-        border
-        stripe
-        size="small"
-        max-height="500px"
-        highlight-current-row
-      >
+    <el-dialog v-model="dataObj.batchViewVisible" title="批量查看证据 - 编号列表" width="1000px" center draggable>
+      <ElTable :data="dataObj.batchViewData" border stripe size="small" max-height="500px" highlight-current-row>
         <ElTableColumn label="序号" type="index" width="60" align="center" />
         <!-- 台账编号列 -->
-        <ElTableColumn
-          label="台账编号"
-          prop="ledgerCode"
-          min-width="200"
-          align="center"
-        />
+        <ElTableColumn label="台账编号" prop="ledgerCode" min-width="200" align="center" />
         <!-- 证据列表列 -->
-        <ElTableColumn
-          label="证据列表"
-          prop="evidenceList"
-          min-width="500"
-          align="center"
-        >
+        <ElTableColumn label="证据列表" prop="evidenceList" min-width="500" align="center">
           <template #default="{ row }">
-            <div
-              v-if="row.evidenceList && row.evidenceList.length > 0"
-              class="evidence-list"
-            >
-              <div
-                v-for="(item, idx) in row.evidenceList"
-                :key="idx"
-                class="evidence-item"
-              >
+            <div v-if="row.evidenceList && row.evidenceList.length > 0" class="evidence-list">
+              <div v-for="(item, idx) in row.evidenceList" :key="idx" class="evidence-item">
                 <!-- 图片预览 -->
-                <ElImage
-                  v-if="item.type === 'image'"
-                  style="width: 80px; height: 80px; margin-right: 8px"
-                  :src="item.url"
-                  @click="openImg(item.url)"
-                  fit="cover"
-                />
+                <ElImage v-if="item.type === 'image'" style="width: 80px; height: 80px; margin-right: 8px"
+                  :src="item.url" @click="openImg(item.url)" fit="cover" />
                 <!-- 文件名展示 -->
                 <div class="evidence-info">
                   <div class="evidence-name">{{ item.name }}</div>
@@ -723,27 +657,10 @@ function previewImage(url) {
     </FormDrawer>
 
     <!-- 使用封装后的详情抽屉组件 -->
-    <ParkDetailDrawer
-      ref="parkDetailDrawerRef"
-      :detail-obj="dataObj.detailObj"
-      title="详情"
-    />
-    <enDetailDrawer
-      ref="enDetailObjRef"
-      :detail-obj="dataObj.enDetailObj"
-      title="详情"
-    />
-    <illDetailDrawer
-      ref="illDetailObjRef"
-      :detail-obj="dataObj.illDetailObj"
-      title="详情"
-    />
-    <caoniDetailDrawer
-      class="cao-ni-test"
-      ref="rectifyRef"
-      :detail-obj="dataObj.rectifyObj"
-      title="详情"
-    />
+    <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" title="详情" />
+    <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" title="详情" />
+    <illDetailDrawer ref="illDetailObjRef" :detail-obj="dataObj.illDetailObj" title="详情" />
+    <caoniDetailDrawer class="cao-ni-test" ref="rectifyRef" :detail-obj="dataObj.rectifyObj" title="详情" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -753,17 +670,8 @@ function previewImage(url) {
       <template #table-title>
         <div class="tabel-tabs">
           <div v-if="props.secondShow">
-            <el-tabs
-              v-model="activeName"
-              class="demo-tabs"
-              @tab-change="handleClick"
-            >
-              <el-tab-pane
-                v-for="item in tabsData"
-                :key="item.label"
-                :label="createLabel(item)"
-                :name="item.value"
-              />
+            <el-tabs v-model="activeName" class="demo-tabs" @tab-change="handleClick">
+              <el-tab-pane v-for="item in tabsData" :key="item.label" :label="createLabel(item)" :name="item.value" />
             </el-tabs>
           </div>
         </div>
@@ -773,73 +681,33 @@ function previewImage(url) {
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleAuto" />
           <!-- <IconButton content="新增" icon-name="Plus" @click="handleCreate" /> -->
-          <IconButton
-            content="导出台账EXCEL"
-            icon-name="download"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleExport"
-          />
-          <IconButton
-            content="批量导出整改通知书PDF"
-            icon-name="download"
-            :disabled="isEmpty(checkedIds)"
-            @click="handlePDF"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
-          <IconButton
-            content="批量查看证据"
-            icon-name="Expand"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleOpenData"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
-          />
-          <IconButton
-            content="全屏"
-            icon-name="FullScreen"
-            @click="handleFullShow"
-          />
+          <IconButton content="导出台账EXCEL" icon-name="download" :disabled="isEmpty(checkedIds)" @click="handleExport" />
+          <IconButton content="批量导出整改通知书PDF" icon-name="download" :disabled="isEmpty(checkedIds)" @click="handlePDF" />
+          <IconButton content="批量删除" icon-name="delete" color="#F56C6C" :disabled="isEmpty(checkedIds)"
+            @click="handleDeleteBatch" />
+          <IconButton content="批量查看证据" icon-name="Expand" :disabled="isEmpty(checkedIds)" @click="handleOpenData" />
+          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
 
       <template #entName="{ row }">
-        <el-text
-          @click="handleOpenEntName(row)"
-          class="common-align"
-          type="primary"
-        >
+        <el-text @click="handleOpenEntName(row)" class="common-align" type="primary">
           {{ row.entName }}
         </el-text>
       </template>
 
       <template #evidenceUrl="{ row }">
         <div v-if="JSON.parse(row.evidenceUrl)?.length > 0" class="table-image">
-          <div
-            v-for="(item, index) in JSON.parse(row.evidenceUrl)"
-            :key="index"
-            class="image-item"
-            @click="previewImage(item.url)"
-          >
+          <div v-for="(item, index) in JSON.parse(row.evidenceUrl)" :key="index" class="image-item"
+            @click="previewImage(item.url)">
             <img :src="item.url" :alt="item.name" />
           </div>
         </div>
         <div v-else>--</div>
       </template>
       <template #ledgerCode="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
+        <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">
           {{ row.ledgerCode }}
         </el-text>
       </template>
@@ -861,11 +729,7 @@ function previewImage(url) {
         </div>
       </template>
       <template #illegalTypeName="{ row }">
-        <el-text
-          @click="handleIllDetail(row)"
-          class="common-align"
-          type="primary"
-        >
+        <el-text @click="handleIllDetail(row)" class="common-align" type="primary">
           {{ row.illegalTypeName }}
         </el-text>
       </template>
@@ -874,61 +738,32 @@ function previewImage(url) {
       </template>
 
       <template #driveInPhoto="{ row }">
-        <ElImage
-          style="width: 100px; height: 100px"
-          :src="row.driveInPhoto"
-          @click="openImg(row.driveInPhoto)"
-        />
+        <ElImage style="width: 100px; height: 100px" :src="row.driveInPhoto" @click="openImg(row.driveInPhoto)" />
       </template>
 
       <template #driveOutPhoto="{ row }">
-        <ElImage
-          style="width: 100px; height: 100px"
-          :src="row.driveOutPhoto"
-          @click="openImg(row.driveOutPhoto)"
-        />
+        <ElImage style="width: 100px; height: 100px" :src="row.driveOutPhoto" @click="openImg(row.driveOutPhoto)" />
       </template>
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton
-            content="撤销"
-            icon-name="back"
-            :disabled="!['待复审'].includes(row.reviewStatus)"
-            @click="openBackDialog(row)"
-          />
-          <IconButton
-            content="下发通知书"
-            icon-name="download"
-            :disabled="!['待复审'].includes(row.reviewStatus)"
-            @click="handleSendFileConfirm(row)"
-          />
+          <IconButton content="撤销" icon-name="back" :disabled="!['待复审'].includes(row.reviewStatus)"
+            @click="openBackDialog(row)" />
+          <IconButton content="下发通知书" icon-name="download" :disabled="!['待复审'].includes(row.reviewStatus)"
+            @click="handleSendFileConfirm(row)" />
           <!-- <IconButton
             content="上传复审证据"
             icon-name="Upload"
             @click="handleUpdateFile(row)"
           /> -->
-          <IconButton
-            content="查看草拟通知书"
-            icon-name="View"
-            @click="handleAutoDetail(row)"
-          />
-          <IconButton
-            content="详情"
-            icon-name="View"
-            @click="handleOpenDetail(row)"
-          />
+          <IconButton content="查看草拟通知书" icon-name="View" @click="handleAutoDetail(row)" />
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
           <!-- <IconButton
             content="编辑"
             icon-name="edit"
             @click="handleEdit(row)"
           /> -->
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
-          />
+          <IconButton content="删除" icon-name="delete" color="#F56C6C" @click="handleDelete(row)" />
         </div>
       </template>
 
@@ -999,12 +834,14 @@ function previewImage(url) {
   text-align: center;
   padding: 8px 0;
 }
+
 .image-list {
   display: flex;
   gap: 10px;
   margin-top: 10px;
   flex-wrap: wrap;
 }
+
 .image-item {
   width: 30px;
   height: 30px;
@@ -1013,18 +850,21 @@ function previewImage(url) {
   cursor: pointer;
   border: 1px solid #eee;
 }
+
 .image-item img {
   width: 80%;
   height: 80%;
   object-fit: cover;
 }
+
 .table-image {
   display: flex;
   justify-content: center;
 }
+
 .table-image img {
   width: 40px;
-  height: 40px; 
+  height: 40px;
   cursor: pointer;
 }
 </style>
