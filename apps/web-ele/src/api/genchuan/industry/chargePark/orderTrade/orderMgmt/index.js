@@ -142,3 +142,33 @@ export function invoiceCarChargeOrder(data) {
 export function getCarChargeOrderChart() {
   return requestClient.get('/ordertrade/car-charge-order/chart');
 }
+/** 两轮充电订单分页 */
+export function getBikeChargeOrderPage(params) {
+  return requestClient.get('/ordertrade/bike-charge-order/page', {
+    params,
+  });
+}
+/** 两轮充电订单导出 */
+export function exportBikeChargeOrderExcel() {
+  return requestClient.download('/ordertrade/bike-charge-order/export');
+}
+/** 两轮充电订单停止 */
+export function stopBikeChargeOrder(data) {
+  return requestClient.put('/ordertrade/bike-charge-order/stop', data);
+}
+/** 两轮充电订单支付 */
+export function payBikeChargeOrder(data) {
+  return requestClient.put('/ordertrade/bike-charge-order/pay', data);
+}
+/** 两轮充电订单取消 */
+export function cancelBikeChargeOrder(data) {
+  return requestClient.put('/ordertrade/bike-charge-order/cancel', data);
+}
+/** 两轮充电订单退款 */
+export function refundBikeChargeOrder(data) {
+  return requestClient.put('/ordertrade/bike-charge-order/refund', data);
+}
+/** 两轮充电订单发票 */
+export function invoiceBikeChargeOrder(data) {
+  return requestClient.put('/ordertrade/bike-charge-order/invoice', data);
+}
