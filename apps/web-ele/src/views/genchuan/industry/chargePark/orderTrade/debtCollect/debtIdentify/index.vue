@@ -19,7 +19,7 @@ const arrowChange = () => {
 };
 const tabArray = ref([
   {
-    label: '联合追缴',
+    label: '逃费识别',
     components: Table,
     showSecondary: true,
     secondShow: false,
@@ -27,7 +27,7 @@ const tabArray = ref([
     arrowState: false,
   },
 ]);
-const activeName = ref('联合追缴');
+const activeName = ref('逃费识别');
 const secondShow = ref(false);
 </script>
 <template>

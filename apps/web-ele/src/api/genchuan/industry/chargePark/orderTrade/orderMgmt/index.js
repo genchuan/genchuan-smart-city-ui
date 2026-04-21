@@ -240,9 +240,4 @@ export function getAbnormalOrderChart() {
 export function batchHandleAbnormalOrder(data) {
   return requestClient.post('/ordertrade/abnormal-order/batch-handle', data);
 }
-/** 联合追缴分页 */
-export function getDebtIdentifyPage(params) {
-  return requestClient.get('/ordertrade/debt-identify/page', {
-    params,
-  });
-}
+ 

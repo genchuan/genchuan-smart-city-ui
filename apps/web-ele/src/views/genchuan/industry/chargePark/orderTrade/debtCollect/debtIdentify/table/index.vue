@@ -11,14 +11,12 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { 
-  cancelShareChargeOrder,
-  exportShareChargeOrderExcel,
-  getShareChargeOrderPage,
-  invoiceShareChargeOrder,
-  payShareChargeOrder,
-  refundShareChargeOrder,
-  returnShareChargeOrder,
-} from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
+  batchIdentifyDebtIdentify,
+  exportDebtIdentifyExcel,
+  getDebtIdentifyPage,
+  identifyDebtIdentify,
+  markDebtIdentify,
+} from '#/api/genchuan/industry/chargePark/orderTrade/debtCollect/index.js';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
@@ -111,8 +109,8 @@ function handleRefresh() {
 
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
-  const data = await exportShareChargeOrderExcel();
-  downloadFileFromBlobPart({ fileName: '共享充电订单报表.xls', source: data });
+  const data = await exportDebtIdentifyExcel();
+  downloadFileFromBlobPart({ fileName: '逃费识别报表.xls', source: data });
 }
 
 // ====================== 图片转PDF（终极零乱码） ======================
@@ -198,18 +196,15 @@ const getTableData = async (pageObj) => {
 
   try {
     dataObj.loading = true;
-    const res = await getShareChargeOrderPage(params);
+    const res = await getDebtIdentifyPage(params);
     dataObj.total = res.total;
     dataObj.list = res.list.map((v) => {
       return {
         ...v,
-        lendTime:  formatTimestamp(v.lendTime),
-        returnTime: formatTimestamp(v.returnTime),
-        archiveTime: formatTimestamp(v.archiveTime),
-        createOrderTime: formatTimestamp(v.createOrderTime),
-        updateTime: formatTimestamp(v.updateTime),
+        identifyTime: formatTimestamp(v.identifyTime),
+        markTime: formatTimestamp(v.markTime),
         createTime: formatTimestamp(v.createTime),
-        payTime: formatTimestamp(v.payTime),
+        updateTime: formatTimestamp(v.updateTime),
       };
     });
     return dataObj;
@@ -321,14 +316,11 @@ const openEn = async () => {
   enDetailObjRef.value?.open();
 };
 
-// 订单状态映射
+// 逃费识别状态映射
 const statusMap = {
-  lending: { label: '借出中', type: 'primary' },
-  pending_pay: { label: '待支付', type: 'warning' },
-  paid: { label: '已支付', type: 'success' },
-  completed: { label: '已完成', type: 'success' },
-  cancelled: { label: '已取消', type: 'info' },
-  refunding: { label: '退款中', type: 'danger' },
+  pending: { label: '待识别', type: 'warning' },
+  identified: { label: '已识别', type: 'success' },
+  marked: { label: '已标记（非逃费）', type: 'info' },
 };
 
 // 获取状态标签
@@ -341,133 +333,81 @@ const getStatusType = (status) => {
   return statusMap[status]?.type || 'default';
 };
 
-// 支付弹窗
-const payDialogVisible = ref(false);
-const payForm = reactive({
+// 标记弹窗
+const markDialogVisible = ref(false);
+const markForm = reactive({
   id: '',
   remark: '',
 });
 
-// 打开支付弹窗
-const handlePay = (row) => {
-  payForm.id = row.id;
-  payForm.remark = '';
-  payDialogVisible.value = true;
+// 打开标记弹窗
+const handleMark = (row) => {
+  markForm.id = row.id;
+  markForm.remark = '';
+  markDialogVisible.value = true;
 };
 
-// 提交支付
-const handlePaySubmit = async () => {
+// 提交标记
+const handleMarkSubmit = async () => {
   try {
-    await payShareChargeOrder(payForm);
-    ElMessage.success('支付成功');
-    payDialogVisible.value = false;
+    await markDebtIdentify(markForm);
+    ElMessage.success('标记成功');
+    markDialogVisible.value = false;
     handleRefresh();
   } catch {
-    ElMessage.error('支付失败');
+    ElMessage.error('标记失败');
   }
 };
 
-// 取消弹窗
-const cancelDialogVisible = ref(false);
-const cancelForm = reactive({
+// 识别弹窗
+const identifyDialogVisible = ref(false);
+const identifyForm = reactive({
   id: '',
   remark: '',
 });
 
-// 打开取消弹窗
-const handleCancel = (row) => {
-  cancelForm.id = row.id;
-  cancelForm.remark = '';
-  cancelDialogVisible.value = true;
+// 打开识别弹窗
+const handleIdentify = (row) => {
+  identifyForm.id = row.id;
+  identifyForm.remark = '';
+  identifyDialogVisible.value = true;
 };
 
-// 提交取消
-const handleCancelSubmit = async () => {
+// 提交识别
+const handleIdentifySubmit = async () => {
   try {
-    await cancelShareChargeOrder(cancelForm);
-    ElMessage.success('取消成功');
-    cancelDialogVisible.value = false;
+    await identifyDebtIdentify(identifyForm);
+    ElMessage.success('识别成功');
+    identifyDialogVisible.value = false;
     handleRefresh();
   } catch {
-    ElMessage.error('取消失败');
+    ElMessage.error('识别失败');
   }
 };
 
-// 退款弹窗
-const refundDialogVisible = ref(false);
-const refundForm = reactive({
-  id: '',
+// 批量识别弹窗
+const batchIdentifyDialogVisible = ref(false);
+const batchIdentifyForm = reactive({
+  ids: [],
   remark: '',
 });
 
-// 打开退款弹窗
-const handleRefund = (row) => {
-  refundForm.id = row.id;
-  refundForm.remark = '';
-  refundDialogVisible.value = true;
+// 打开批量识别弹窗
+const handleBatchIdentifySubmit = () => {
+  batchIdentifyForm.ids = checkedIds.value;
+  batchIdentifyForm.remark = '';
+  batchIdentifyDialogVisible.value = true;
 };
 
-// 提交退款
-const handleRefundSubmit = async () => {
+// 提交批量识别
+const handleBatchIdentify = async () => {
   try {
-    await refundShareChargeOrder(refundForm);
-    ElMessage.success('退款申请已提交');
-    refundDialogVisible.value = false;
+    await batchIdentifyDebtIdentify(batchIdentifyForm);
+    ElMessage.success('批量识别成功');
+    batchIdentifyDialogVisible.value = false;
     handleRefresh();
   } catch {
-    ElMessage.error('退款申请失败');
-  }
-};
-
-// 开票弹窗
-const invoiceDialogVisible = ref(false);
-const invoiceForm = reactive({
-  id: '',
-  remark: '',
-});
-
-// 打开开票弹窗
-const handleInvoice = (row) => {
-  invoiceForm.id = row.id;
-  invoiceForm.remark = '';
-  invoiceDialogVisible.value = true;
-};
-
-// 提交开票
-const handleInvoiceSubmit = async () => {
-  try {
-    await invoiceShareChargeOrder(invoiceForm);
-    ElMessage.success('开票申请已提交');
-    invoiceDialogVisible.value = false;
-    handleRefresh();
-  } catch {
-    ElMessage.error('开票申请失败');
-  }
-};
-
-// 归还弹窗
-const returnDialogVisible = ref(false);
-const returnForm = reactive({
-  id: '',
-  remark: '',
-});
-
-// 打开归还弹窗
-const handleReturn = (row) => {
-  returnForm.id = row.id;
-  returnForm.remark = '';
-  returnDialogVisible.value = true;
-};
-
-// 提交归还
-const handleReturnSubmit = async () => {
-  try {
-    await returnShareChargeOrder(returnForm);
-    ElMessage.success('归还成功');
-    returnDialogVisible.value = false;
-    handleRefresh();
-  } catch {
-    ElMessage.error('归还失败');
+    ElMessage.error('批量识别失败');
   }
 };
 
@@ -549,151 +489,91 @@ const alarmColumns = [
       </el-table>
     </ElDialog>
 
-    <!-- 支付弹窗 -->
+    <!-- 标记弹窗 -->
     <ElDialog
-      v-model="payDialogVisible"
-      title="订单支付"
+      v-model="markDialogVisible"
+      title="标记逃费识别"
       width="500px"
       append-to-body
     >
-      <el-form :model="payForm" label-width="80px">
-        <el-form-item label="订单ID">
-          <el-input v-model="payForm.id" disabled />
+      <el-form :model="markForm" label-width="80px">
+        <el-form-item label="识别ID">
+          <el-input v-model="markForm.id" disabled />
         </el-form-item>
         <el-form-item label="备注">
           <el-input
-            v-model="payForm.remark"
+            v-model="markForm.remark"
             type="textarea"
             rows="3"
-            placeholder="请输入支付备注"
+            placeholder="请输入标记备注"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="payDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handlePaySubmit">
-            确认支付
+          <el-button @click="markDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleMarkSubmit">
+            确认标记
           </el-button>
         </div>
       </template>
     </ElDialog>
 
-    <!-- 取消弹窗 -->
+    <!-- 识别弹窗 -->
     <ElDialog
-      v-model="cancelDialogVisible"
-      title="取消订单"
+      v-model="identifyDialogVisible"
+      title="逃费识别"
       width="500px"
       append-to-body
     >
-      <el-form :model="cancelForm" label-width="80px">
-        <el-form-item label="订单ID">
-          <el-input v-model="cancelForm.id" disabled />
+      <el-form :model="identifyForm" label-width="80px">
+        <el-form-item label="识别ID">
+          <el-input v-model="identifyForm.id" disabled />
         </el-form-item>
         <el-form-item label="备注">
           <el-input
-            v-model="cancelForm.remark"
+            v-model="identifyForm.remark"
             type="textarea"
             rows="3"
-            placeholder="请输入取消备注"
+            placeholder="请输入识别备注"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="cancelDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleCancelSubmit">
-            确认取消
+          <el-button @click="identifyDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleIdentifySubmit">
+            确认识别
           </el-button>
         </div>
       </template>
     </ElDialog>
 
-    <!-- 退款弹窗 -->
+    <!-- 批量识别弹窗 -->
     <ElDialog
-      v-model="refundDialogVisible"
-      title="退款申请"
+      v-model="batchIdentifyDialogVisible"
+      title="批量逃费识别"
       width="500px"
       append-to-body
     >
-      <el-form :model="refundForm" label-width="80px">
-        <el-form-item label="订单ID">
-          <el-input v-model="refundForm.id" disabled />
+      <el-form :model="batchIdentifyForm" label-width="80px">
+        <el-form-item label="识别ID列表">
+          <el-input :value="batchIdentifyForm.ids.join(',')" disabled />
         </el-form-item>
         <el-form-item label="备注">
           <el-input
-            v-model="refundForm.remark"
+            v-model="batchIdentifyForm.remark"
             type="textarea"
             rows="3"
-            placeholder="请输入退款备注"
+            placeholder="请输入识别备注"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="refundDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleRefundSubmit">
-            确认退款
-          </el-button>
-        </div>
-      </template>
-    </ElDialog>
-
-    <!-- 开票弹窗 -->
-    <ElDialog
-      v-model="invoiceDialogVisible"
-      title="开票申请"
-      width="500px"
-      append-to-body
-    >
-      <el-form :model="invoiceForm" label-width="80px">
-        <el-form-item label="订单ID">
-          <el-input v-model="invoiceForm.id" disabled />
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input
-            v-model="invoiceForm.remark"
-            type="textarea"
-            rows="3"
-            placeholder="请输入开票备注"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="invoiceDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleInvoiceSubmit">
-            确认开票
-          </el-button>
-        </div>
-      </template>
-    </ElDialog>
-
-    <!-- 归还弹窗 -->
-    <ElDialog
-      v-model="returnDialogVisible"
-      title="归还"
-      width="500px"
-      append-to-body
-    >
-      <el-form :model="returnForm" label-width="80px">
-        <el-form-item label="订单ID">
-          <el-input v-model="returnForm.id" disabled />
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input
-            v-model="returnForm.remark"
-            type="textarea"
-            rows="3"
-            placeholder="请输入归还备注"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="returnDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleReturnSubmit">
-            确认归还
+          <el-button @click="batchIdentifyDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleBatchIdentify">
+            确认批量识别
           </el-button>
         </div>
       </template>
@@ -708,11 +588,11 @@ const alarmColumns = [
             @click="handleExport"
           />
           <IconButton
-            content="批量删除"
-            icon-name="delete"
+            content="批量识别"
+            icon-name="Search"
             color="#F56C6C"
             :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
+            @click="handleBatchIdentifySubmit"
           />
           <IconButton
             content="搜索"
@@ -737,13 +617,13 @@ const alarmColumns = [
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
-      <template #orderNo="{ row }">
+      <template #identifyNo="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.orderNo }}
+          {{ row.identifyNo }}
         </el-text>
       </template>
       <template #payMethod="{ row }">
@@ -777,35 +657,14 @@ const alarmColumns = [
             @click="handleOpenDetail(row)"
           />
           <IconButton
-            content="归还"
-            v-if="row.status === 'lending'"
-            icon-name="video-pause"
-            @click="handleReturn(row)"
+            content="标记"
+            icon-name="edit"
+            @click="handleMark(row)"
           />
           <IconButton
-            content="支付"
-            v-if="row.status === 'pending_pay'"
-            icon-name="Money"
-            @click="handlePay(row)"
-          />
-          <IconButton
-            content="退款"
-            icon-name="back"
-            v-if="row.status === 'paid'"
-            @click="handleRefund(row)"
-          />
-          <IconButton
-            content="取消"
-            v-if="row.status === 'pending_pay'"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleCancel(row)"
-          />
-          <IconButton
-            content="开票"
-            v-if="row.status === 'completed'"
-            icon-name="Document"
-            @click="handleInvoice(row)"
+            content="识别"
+            icon-name="Search"
+            @click="handleIdentify(row)"
           />
         </div>
       </template>
