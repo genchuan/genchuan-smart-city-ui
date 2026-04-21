@@ -172,3 +172,7 @@ export function refundBikeChargeOrder(data) {
 export function invoiceBikeChargeOrder(data) {
   return requestClient.put('/ordertrade/bike-charge-order/invoice', data);
 }
+/** 两轮充电订单图表 */
+export function getBikeChargeOrderChart() {
+  return requestClient.get('/ordertrade/bike-charge-order/chart');
+}
