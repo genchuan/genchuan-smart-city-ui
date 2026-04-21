@@ -15,7 +15,7 @@ import {
   exportAbnormalOrderExcel,
   getAbnormalOrderPage,
   ignoreAbnormalOrder,
-  updateAbnormalOrderProgress,
+  updateAbnormalOrderProgress,batchHandleAbnormalOrder
 } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
@@ -440,6 +440,32 @@ const handleUpdateProgressSubmit = async () => {
   }
 };
 
+// 批量处置弹窗
+const batchHandleDialogVisible = ref(false);
+const batchHandleForm = reactive({
+  ids: [],
+  remark: '',
+});
+
+// 打开批量处置弹窗
+const handleHandleBatchSubmit = () => {
+  batchHandleForm.ids = checkedIds.value;
+  batchHandleForm.remark = '';
+  batchHandleDialogVisible.value = true;
+};
+
+// 提交批量处置
+const handleBatchHandleSubmit = async () => {
+  try {
+    await batchHandleAbnormalOrder(batchHandleForm);
+    ElMessage.success('批量处置成功');
+    batchHandleDialogVisible.value = false;
+    handleRefresh();
+  } catch {
+    ElMessage.error('批量处置失败');
+  }
+};
+
 // ====================== 告警明细弹窗 ======================
 const alarmDialogVisible = ref(false);
 const currentAlarmRow = ref({});
@@ -608,6 +634,36 @@ const alarmColumns = [
       </template>
     </ElDialog>
 
+    <!-- 批量处置弹窗 -->
+    <ElDialog
+      v-model="batchHandleDialogVisible"
+      title="批量处置异常订单"
+      width="500px"
+      append-to-body
+    >
+      <el-form :model="batchHandleForm" label-width="80px">
+        <el-form-item label="订单ID列表">
+          <el-input :value="batchHandleForm.ids.join(',')" disabled />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input
+            v-model="batchHandleForm.remark"
+            type="textarea"
+            rows="3"
+            placeholder="请输入处置备注"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="batchHandleDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleBatchHandleSubmit">
+            确认处置
+          </el-button>
+        </div>
+      </template>
+    </ElDialog>
+
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
@@ -617,11 +673,11 @@ const alarmColumns = [
             @click="handleExport"
           />
           <IconButton
-            content="批量删除"
+            content="批量处置异常订单"
             icon-name="delete"
             color="#F56C6C"
             :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
+            @click="handleHandleBatchSubmit"
           />
           <IconButton
             content="搜索"

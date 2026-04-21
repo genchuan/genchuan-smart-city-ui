@@ -236,3 +236,13 @@ export function checkAbnormalOrder(data) {
 export function getAbnormalOrderChart() {
   return requestClient.get('/ordertrade/abnormal-order/chart');
 }
+/** 异常订单批量处理 */
+export function batchHandleAbnormalOrder(data) {
+  return requestClient.post('/ordertrade/abnormal-order/batch-handle', data);
+}
+/** 联合追缴分页 */
+export function getDebtIdentifyPage(params) {
+  return requestClient.get('/ordertrade/debt-identify/page', {
+    params,
+  });
+}
