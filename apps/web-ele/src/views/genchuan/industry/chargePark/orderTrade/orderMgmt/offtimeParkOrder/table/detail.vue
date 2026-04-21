@@ -1,17 +1,14 @@
 <script setup>
 import { computed, defineProps, toRefs } from 'vue';
-
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 定义组件接收的属性（充电停车订单详情）
+// 定义组件接收的属性（临时停车订单详情）
 const props = defineProps({
-  // 详情数据对象
   detailObj: {
     type: Object,
     required: true,
     default: () => ({}),
   },
-  // 抽屉标题
   title: {
     type: String,
     default: '',
@@ -20,13 +17,13 @@ const props = defineProps({
 
 const { detailObj, title } = toRefs(props);
 
-// 计算属性处理标题
+// 标题
 const drawerTitle = computed(() => {
-  const orderNo = detailObj.value?.orderNumber || '充电停车订单';
+  const orderNo = detailObj.value?.orderNo || '临时停车订单';
   return title.value || `${orderNo} 详情`;
 });
 
-// 初始化抽屉实例
+// 抽屉初始化
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -39,7 +36,6 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   async onOpenChange() {},
 });
 
-// 对外暴露打开/关闭抽屉的方法
 defineExpose({
   open: () => detailDrawerApi.open(),
   close: () => detailDrawerApi.close(),
@@ -49,99 +45,106 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 充电停车订单 详情字段 -->
+      <!-- 临时停车订单 标准字段 -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">订单ID:</div>
+        <div class="detail-row-right">{{ detailObj.id || '-' }}</div>
+      </div>
+
       <div class="detail-card-row">
         <div class="detail-row-left">订单编号:</div>
-        <div class="detail-row-right">
-          {{ detailObj.orderNumber || '-' }}
-        </div>
+        <div class="detail-row-right">{{ detailObj.orderNo || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">用户名称:</div>
-        <div class="detail-row-right">
-          {{ detailObj.userName || '-' }}
-        </div>
+        <div class="detail-row-left">车牌:</div>
+        <div class="detail-row-right">{{ detailObj.plateNo || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">所属场站:</div>
-        <div class="detail-row-right">
-          {{ detailObj.stationName || '-' }}
-        </div>
+        <div class="detail-row-left">预约开始时间:</div>
+        <div class="detail-row-right">{{ detailObj.reserveStartTime || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">订单类型:</div>
-        <div class="detail-row-right">
-          {{ detailObj.orderType || '-' }}
-        </div>
+        <div class="detail-row-left">预约结束时间:</div>
+        <div class="detail-row-right">{{ detailObj.reserveEndTime || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">总金额:</div>
-        <div class="detail-row-right">{{ detailObj.totalAmount || 0 }} 元</div>
+        <div class="detail-row-left">实际使用开始时间:</div>
+        <div class="detail-row-right">{{ detailObj.actualStartTime || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">实付金额:</div>
-        <div class="detail-row-right">{{ detailObj.actualAmount || 0 }} 元</div>
+        <div class="detail-row-left">实际使用结束时间:</div>
+        <div class="detail-row-right">{{ detailObj.actualEndTime || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">订单状态:</div>
-        <div class="detail-row-right">
-          {{ detailObj.orderStatus || '-' }}
-        </div>
+        <div class="detail-row-left">订单金额:</div>
+        <div class="detail-row-right">{{ detailObj.amount || '0.00' }} 元</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">支付状态:</div>
+        <div class="detail-row-right">{{ detailObj.status || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">订单生成时间:</div>
+        <div class="detail-row-right">{{ detailObj.createOrderTime || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">所属场站ID:</div>
+        <div class="detail-row-right">{{ detailObj.stationId || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
         <div class="detail-row-left">支付时间:</div>
-        <div class="detail-row-right">
-          {{ detailObj.payTime || '-' }}
-        </div>
+        <div class="detail-row-right">{{ detailObj.payTime || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">支付方式:</div>
+        <div class="detail-row-right">{{ detailObj.payMethod || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">归档时间:</div>
+        <div class="detail-row-right">{{ detailObj.archiveTime || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">操作人ID:</div>
+        <div class="detail-row-right">{{ detailObj.operatorId || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">创建者:</div>
+        <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">更新者:</div>
+        <div class="detail-row-right">{{ detailObj.updater || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
         <div class="detail-row-left">创建时间:</div>
-        <div class="detail-row-right">
-          {{ detailObj.createTime || '-' }}
-        </div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">支付渠道:</div>
-        <div class="detail-row-right">
-          {{ detailObj.payChannel || '-' }}
-        </div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">优惠金额:</div>
-        <div class="detail-row-right">
-          {{ detailObj.discountAmount || 0 }} 元
-        </div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">更新人:</div>
-        <div class="detail-row-right">
-          {{ detailObj.updateUser || '-' }}
-        </div>
+        <div class="detail-row-right">{{ detailObj.createTime || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
         <div class="detail-row-left">更新时间:</div>
-        <div class="detail-row-right">
-          {{ detailObj.updateTime || '-' }}
-        </div>
+        <div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div>
       </div>
     </div>
   </DetailDrawer>
 </template>
 
 <style scoped lang="scss">
-// 响应式适配
 @media (max-width: 768px) {
   .detail-row-left {
     width: 150px;
@@ -163,7 +166,6 @@ defineExpose({
   border-radius: 8px;
 }
 
-// 每行的布局
 .detail-card-row {
   display: flex;
   align-items: flex-start;
@@ -185,7 +187,6 @@ defineExpose({
   }
 }
 
-// 左侧标签样式
 .detail-row-left {
   flex-shrink: 0;
   width: 160px;
@@ -195,7 +196,6 @@ defineExpose({
   color: #606266;
 }
 
-// 右侧内容样式
 .detail-row-right {
   flex: 1;
   padding-right: 10px;
@@ -205,7 +205,6 @@ defineExpose({
   word-break: break-all;
 }
 
-// 滚动条样式优化
 .detail-card::-webkit-scrollbar {
   width: 6px;
 }

@@ -3,7 +3,7 @@ import { onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
-import { getOrderChart } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
+import { getCarChargeOrderChart } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import Card from '#/components/stats/card.vue';
 import Columnar from '#/components/stats/columnar.vue';
 
@@ -21,10 +21,10 @@ const state = reactive({
   cardList: [
     { title: '今日订单量', value: 0, color: '#13ce66' },
     { title: '今日营收', value: 0, color: '#4ECDC4' },
-    { title: '今日支付率（%）', value: 0, color: '#FF6B6B' },
+    { title: '今日充电量', value: 0, color: '#FF6B6B' },
   ],
   trendData: [],
-  typeData: [],
+  stationData: [],
 });
 
 const lineChartRef = ref(null);
@@ -33,10 +33,10 @@ let lineChartInstance = null;
 // 获取订单图表数据
 const fetchOrderChartData = async () => {
   try {
-    const res = await getOrderChart();
+    const res = await getCarChargeOrderChart();
     state.cardList[0].value = res.todayOrderCount;
     state.cardList[1].value = res.todayRevenue;
-    state.cardList[2].value = res.payRate;
+    state.cardList[2].value = res.todayChargeQuantity;
     // 如果trendData为空，使用假数据
     state.trendData =
       res.trendData && res.trendData.length > 0
@@ -48,7 +48,13 @@ const fetchOrderChartData = async () => {
             { date: '2025-04-04', count: 20 },
             { date: '2025-04-05', count: 14 },
           ];
-    state.typeData = res.typeData;
+    state.stationData =
+      res.stationData && res.stationData.length > 0
+        ? res.stationData
+        : [
+            { name: '丰泽站', count: 25 },
+            { name: '鲤城站', count: 18 },
+          ];
     // 更新折线图
     updateLineChart();
   } catch (error) {
@@ -56,7 +62,7 @@ const fetchOrderChartData = async () => {
     // 接口调用失败时使用假数据
     state.cardList[0].value = 50;
     state.cardList[1].value = 1500;
-    state.cardList[2].value = 85;
+    state.cardList[2].value = 120;
     state.trendData = [
       { date: '2025-04-01', count: 12 },
       { date: '2025-04-02', count: 15 },
@@ -64,11 +70,9 @@ const fetchOrderChartData = async () => {
       { date: '2025-04-04', count: 20 },
       { date: '2025-04-05', count: 14 },
     ];
-    state.typeData = [
-      { count: 2, status: 'completed' },
-      { count: 4, status: 'paid' },
-      { count: 1, status: 'charging' },
-      { count: 1, status: 'cancelled' },
+    state.stationData = [
+      { name: '丰泽站', value: 25 },
+      { name: '鲤城站', value: 18 },
     ];
     // 更新折线图
     updateLineChart();
@@ -181,14 +185,14 @@ onMounted(() => {
     <Columnar
       width="500px"
       height="330px"
-      title="订单类型分布"
+      title="站点订单分布"
       :x-data="
-        state.typeData.map(
+        state.stationData.map(
           (item) => statusMap[item.status]?.label || item.status,
         )
       "
       :series-data="[
-        { name: '订单数', data: state.typeData.map((item) => item.count) },
+        { name: '订单数', data: state.stationData.map((item) => item.count) },
       ]"
     />
   </div>

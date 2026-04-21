@@ -69,3 +69,76 @@ export function cancelTempParkOrder(data) {
 export function getTempParkOrderChart() {
   return requestClient.get('/ordertrade/temp-park-order/chart');
 }
+/** 错时停车订单分页 */
+export function getOfftimeParkOrderPage(params) {
+  return requestClient.get('/ordertrade/offtime-park-order/page', {
+    params,
+  });
+}
+/** 错时停车订单导出 */
+export function exportOfftimeParkOrderExcel() {
+  return requestClient.download('/ordertrade/offtime-park-order/export');
+}
+/** 错时停车订单发票 */
+export function invoiceOfftimeParkOrder(data) {
+  return requestClient.put('/ordertrade/offtime-park-order/page', {
+    params,
+  });
+}
+/** 错时停车订单退款 */
+export function refundOfftimeParkOrder(data) {
+  return requestClient.put('/ordertrade/offtime-park-order/refund', data);
+}
+/** 错时停车订单支付 */
+export function payOfftimeParkOrder(data) {
+  return requestClient.put('/ordertrade/offtime-park-order/pay', data);
+}
+/** 错时停车订单取消 */
+export function cancelOfftimeParkOrder(data) {
+  return requestClient.put('/ordertrade/offtime-park-order/cancel', data);
+}
+/** 错时停车订单发票 */
+export function invoiceOfftimNewParkOrder(data) {
+  return requestClient.put('/ordertrade/offtime-park-order/invoice', data);
+}
+/** 错时停车订单图表 */
+export function getOfftimeParkOrderChart() {
+  return requestClient.get('/ordertrade/offtime-park-order/chart');
+}
+ 
+/** 汽车充电订单分页 */
+export function getCarChargeOrderPage(params) {
+  return requestClient.get('/ordertrade/car-charge-order/page', {
+    params,
+  });
+}
+/** 汽车充电订单导出 */
+export function exportCarChargeOrderExcel() {
+  return requestClient.download('/ordertrade/car-charge-order/export');
+}
+/** 汽车充电订单停止 */
+export function stopCarChargeOrder(data) {
+  return requestClient.put('/ordertrade/car-charge-order/stop', data);
+}
+/** 汽车充电订单支付 */
+export function payCarChargeOrder(data) {
+  return requestClient.put('/ordertrade/car-charge-order/pay', data);
+}   
+
+/** 汽车充电订单取消 */
+export function cancelCarChargeOrder(data) {
+  return requestClient.put('/ordertrade/car-charge-order/cancel', data);
+}
+/** 汽车充电订单退款 */
+export function refundCarChargeOrder(data) {
+  return requestClient.put('/ordertrade/car-charge-order/refund', data);
+}
+/** 汽车充电订单发票 */
+export function invoiceCarChargeOrder(data) {
+  return requestClient.put('/ordertrade/car-charge-order/invoice', data);
+}
+
+/** 汽车充电订单图表 */
+export function getCarChargeOrderChart() {
+  return requestClient.get('/ordertrade/car-charge-order/chart');
+}

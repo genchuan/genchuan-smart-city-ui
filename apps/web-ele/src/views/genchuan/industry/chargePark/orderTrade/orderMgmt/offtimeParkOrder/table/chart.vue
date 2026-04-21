@@ -3,7 +3,7 @@ import { onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
-import { getOrderChart } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
+import { getOfftimeParkOrderChart } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import Card from '#/components/stats/card.vue';
 import Columnar from '#/components/stats/columnar.vue';
 
@@ -33,7 +33,7 @@ let lineChartInstance = null;
 // 获取订单图表数据
 const fetchOrderChartData = async () => {
   try {
-    const res = await getOrderChart();
+    const res = await getOfftimeParkOrderChart();
     state.cardList[0].value = res.todayOrderCount;
     state.cardList[1].value = res.todayRevenue;
     state.cardList[2].value = res.payRate;
@@ -48,7 +48,16 @@ const fetchOrderChartData = async () => {
             { date: '2025-04-04', count: 20 },
             { date: '2025-04-05', count: 14 },
           ];
-    state.typeData = res.typeData;
+    // 如果typeData为空，使用假数据
+    state.typeData =
+      res.stationData && res.stationData.length > 0
+        ? res.stationData
+        : [
+            { count: 2, status: 'completed' },
+            { count: 4, status: 'paid' },
+            { count: 1, status: 'charging' },
+            { count: 1, status: 'cancelled' },
+          ];
     // 更新折线图
     updateLineChart();
   } catch (error) {

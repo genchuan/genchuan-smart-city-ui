@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 
 import Table from './table/index.vue';
-
+import Chart from './table/chart.vue'
 import '#/components/page/index.scss';
 
 const changeArrowStatus = () => {
@@ -18,7 +18,7 @@ const arrowChange = () => {
 };
 const tabArray = ref([
   {
-    label: '错时停车订单',
+    label: '临时停车订单',
     components: Table,
     showSecondary: true,
     secondShow: false,
@@ -26,12 +26,12 @@ const tabArray = ref([
     arrowState: false,
   },
 ]);
-const activeName = ref('错时停车订单');
+const activeName = ref('临时停车订单');
 const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <!-- <Parkchart v-if="tabArray[0].arrowShow" /> -->
+    <Chart />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
