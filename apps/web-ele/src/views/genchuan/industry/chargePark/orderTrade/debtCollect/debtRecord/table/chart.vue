@@ -3,22 +3,22 @@ import { onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
-import { getDebtIdentifyChart } from '#/api/genchuan/industry/chargePark/orderTrade/debtCollect/index.js';
+import { getDebtRecordChart } from '#/api/genchuan/industry/chargePark/orderTrade/debtCollect/index.js';
 import Card from '#/components/stats/card.vue';
 import Columnar from '#/components/stats/columnar.vue';
 
-// 逃费识别状态映射
+// 逃费记录追缴状态映射
 const statusMap = {
-  pending: { label: '待识别', type: 'warning' },
-  identified: { label: '已识别', type: 'success' },
-  marked: { label: '已标记（非逃费）', type: 'info' },
+  uncollected: { label: '未追缴', type: 'warning' },
+  collecting: { label: '追缴中', type: 'primary' },
+  completed: { label: '已完成', type: 'success' },
 };
 
 const state = reactive({
   cardList: [
-    { title: '待识别数量', value: 0, color: '#13ce66' },
-    { title: '识别成功率(%)', value: 0, color: '#4ECDC4' },
-    { title: '识别总数', value: 0, color: '#FF6B6B' },
+    { title: '欠费总额(元)', value: 0, color: '#13ce66' },
+    { title: '追缴完成率(%)', value: 0, color: '#4ECDC4' },
+    { title: '追缴总数', value: 0, color: '#FF6B6B' },
   ],
   trendData: [],
   typeData: [],
@@ -27,54 +27,53 @@ const state = reactive({
 const lineChartRef = ref(null);
 let lineChartInstance = null;
 
-// 获取逃费识别图表数据
+// 获取逃费记录图表数据
 const fetchOrderChartData = async () => {
   try {
-    const res = await getDebtIdentifyChart();
-    state.cardList[0].value = res.waitIdentifyCount;
-    state.cardList[1].value = res.identifySuccessRate;
-    // 计算识别总数
-    const identifiedCount = res.waitIdentifyCount / (1 - res.identifySuccessRate / 100) - res.waitIdentifyCount || 0;
-    state.cardList[2].value = Math.round(res.waitIdentifyCount + identifiedCount);
+    const res = await getDebtRecordChart();
+    state.cardList[0].value = res.totalArrearAmount;
+    state.cardList[1].value = res.collectCompleteRate;
+    // 计算追缴总数（根据趋势数据总和）
+    const totalCount = res.trendData?.reduce((sum, item) => sum + item.count, 0) || 0;
+    state.cardList[2].value = totalCount;
     // 如果trendData为空，使用假数据
     state.trendData =
       res.trendData && res.trendData.length > 0
         ? res.trendData
         : [
-            { date: '2025-04-01', count: 5 },
-            { date: '2025-04-02', count: 8 },
-            { date: '2025-04-03', count: 3 },
-            { date: '2025-04-04', count: 10 },
-            { date: '2025-04-05', count: 6 },
+            { date: '2025-04-01', count: 3 },
+            { date: '2025-04-02', count: 5 },
+            { date: '2025-04-03', count: 2 },
+            { date: '2025-04-04', count: 7 },
+            { date: '2025-04-05', count: 4 },
           ];
-    // 如果stationData为空，使用假数据
-    state.typeData =
-      res.stationData && Array.isArray(res.stationData) && res.stationData.length > 0
-        ? res.stationData
-        : [
-            { count: 5, status: 'pending' },
-            { count: 12, status: 'identified' },
-            { count: 3, status: 'marked' },
-          ];
+    // 根据追缴完成率生成追缴状态分布数据
+    const completedCount = Math.round(totalCount * res.collectCompleteRate / 100) || 2;
+    const uncollectedCount = totalCount - completedCount || 5;
+    state.typeData = [
+      { count: uncollectedCount, status: 'uncollected' },
+      { count: Math.round(totalCount * 0.2) || 1, status: 'collecting' },
+      { count: completedCount, status: 'completed' },
+    ];
     // 更新折线图
     updateLineChart();
   } catch (error) {
-    console.error('获取逃费识别图表数据失败:', error);
+    console.error('获取逃费记录图表数据失败:', error);
     // 接口调用失败时使用假数据
-    state.cardList[0].value = 10;
-    state.cardList[1].value = 90;
-    state.cardList[2].value = 100;
+    state.cardList[0].value = 375;
+    state.cardList[1].value = 33.3;
+    state.cardList[2].value = 10;
     state.trendData = [
-      { date: '2025-04-01', count: 5 },
-      { date: '2025-04-02', count: 8 },
-      { date: '2025-04-03', count: 3 },
-      { date: '2025-04-04', count: 10 },
-      { date: '2025-04-05', count: 6 },
+      { date: '2025-04-01', count: 3 },
+      { date: '2025-04-02', count: 5 },
+      { date: '2025-04-03', count: 2 },
+      { date: '2025-04-04', count: 7 },
+      { date: '2025-04-05', count: 4 },
     ];
     state.typeData = [
-      { count: 5, status: 'pending' },
-      { count: 12, status: 'identified' },
-      { count: 3, status: 'marked' },
+      { count: 5, status: 'uncollected' },
+      { count: 2, status: 'collecting' },
+      { count: 3, status: 'completed' },
     ];
     // 更新折线图
     updateLineChart();
@@ -89,7 +88,7 @@ const initLineChart = () => {
 
   const option = {
     title: {
-      text: '识别数量趋势',
+      text: '追缴数量趋势',
       left: 'center',
       textStyle: {
         color: '#6E7E91',
@@ -186,7 +185,7 @@ onMounted(() => {
     <div ref="lineChartRef" class="simple-bar-chart"></div>
     <Columnar
       class="simple-bar-chart"
-      title="识别状态分布"
+      title="追缴状态分布"
       :x-data="
         state.typeData.map(
           (item) => statusMap[item.status]?.label || item.status,

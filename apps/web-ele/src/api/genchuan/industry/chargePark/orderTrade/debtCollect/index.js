@@ -44,3 +44,7 @@ export function updateCollectProgress(data) {
 export function exportDebtRecordExcel() {
   return requestClient.download('/ordertrade/debt-record/export');
 }
+/** 逃费记录图表 */
+export function getDebtRecordChart() {
+  return requestClient.get('/ordertrade/debt-record/chart');
+}
