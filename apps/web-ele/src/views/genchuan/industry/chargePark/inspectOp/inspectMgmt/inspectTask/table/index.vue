@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
@@ -35,6 +35,7 @@ import {
   getTaskTypeTagType,
   getUserName,
   isTaskStatusLabel,
+  loadTaskUserOptions,
   normalizeInspectTaskRow,
   textObj,
   useGridColumns,
@@ -349,13 +350,13 @@ function handleProgress(row) {
 //   statusConfirmDialogRef.value?.open('archive', row);
 // }
 
-// function onSubmit(values) {
-//   dataObj.searchParams = { ...values };
-//   filterTrendTime.value = '';
-//   filterStatusGroup.value = '';
-//   gridApi.reload();
-//   drawerApi.close();
-// }
+function onSubmit(values) {
+  dataObj.searchParams = { ...values };
+  filterTrendTime.value = '';
+  filterStatusGroup.value = '';
+  gridApi.reload();
+  drawerApi.close();
+}
 
 async function handleOpenDetail(row) {
   try {
@@ -476,6 +477,10 @@ watch(
   },
   { deep: true },
 );
+
+onMounted(() => {
+  loadTaskUserOptions();
+});
 </script>
 
 <template>
