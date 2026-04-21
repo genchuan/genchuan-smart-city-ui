@@ -75,13 +75,13 @@ const processForm = reactive({
   processProgress: 50,
 });
 const processRules = {
-  processMethod: [
-    { required: false, message: '请输入处置方式', trigger: 'blur' },
-  ],
-  processUserId: [{ required: true, message: '请选择处置人', trigger: 'blur' }],
-  // processProgress: [
-  //   { required: true, message: '请输入处置进度', trigger: 'change' },
+  // processMethod: [
+  //   { required: false, message: '请输入处置方式', trigger: 'blur' },
   // ],
+  // processUserId: [{ required: true, message: '请选择处置人', trigger: 'blur' }],
+  processProgress: [
+    { required: true, message: '请输入处置进度', trigger: 'change' },
+  ],
 };
 
 const ignoreDialogVisible = shallowRef(false);
@@ -312,15 +312,16 @@ function resetProcessForm() {
 }
 
 function openProcessDrawer(row) {
+  resetProcessForm();
   processDrawerMode.value = 'single';
   processRows.value = [row];
-  resetProcessForm();
+  processForm.processProgress = row.processProgress;
   processDrawerApi.open();
 }
 
 function openBatchProcessDrawer() {
   const rows = checkedRows.value.filter((item) =>
-    isProcessStatusLabel(item.processStatus, '未处理'),
+    !isProcessStatusLabel(item.processStatus, '已处理'),
   );
   if (rows.length === 0) {
     ElMessage.warning('请先勾选未处理的占位数据');
@@ -345,8 +346,8 @@ async function saveProcess() {
 
   try {
     const payload = {
-      processMethod: processForm.processMethod,
-      processUserId: processForm.processUserId,
+      // processMethod: processForm.processMethod,
+      // processUserId: processForm.processUserId,
       processProgress: processForm.processProgress,
     };
 
@@ -402,8 +403,8 @@ async function confirmIgnore() {
 
 function openProgressDialog(row) {
   currentProgressRow.value = row;
-  progressForm.processProgress = row.processProgress || 0;
   progressFormRef.value?.resetFields();
+  progressForm.processProgress = row.processProgress || 0;
   progressDialogVisible.value = true;
 }
 
@@ -531,8 +532,8 @@ watch(
         :rules="processRules"
         label-width="100px"
       >
-        <el-form-item label="处置方式" prop="processMethod">
-          <!-- <el-select
+        <!-- <el-form-item label="处置方式" prop="processMethod">
+          <el-select
             v-model="processForm.processMethod"
             class="w-full"
             placeholder="请选择处置方式"
@@ -543,7 +544,7 @@ watch(
               :label="item.label"
               :value="item.value"
             />
-          </el-select> -->
+          </el-select>
           <el-input
             v-model="processForm.processMethod"
             class="w-full"
@@ -551,7 +552,7 @@ watch(
           />
         </el-form-item>
         <el-form-item label="处置人" prop="processUserId">
-          <!-- <el-select
+          <el-select
             v-model="processForm.processMethod"
             class="w-full"
             placeholder="请选择处置方式"
@@ -562,14 +563,14 @@ watch(
               :label="item.label"
               :value="item.value"
             />
-          </el-select> -->
+          </el-select>
           <el-input
             v-model="processForm.processUserId"
             class="w-full"
             placeholder="请输入处置人"
           />
         </el-form-item>
-        <!-- <el-form-item label="处置人" prop="processUserId">
+        <el-form-item label="处置人" prop="processUserId">
           <el-select
             v-model="processForm.processUserId"
             class="w-full"
@@ -583,7 +584,7 @@ watch(
               :value="item.value"
             />
           </el-select>
-        </el-form-item>
+        </el-form-item> -->
         <el-form-item label="处置进度" prop="processProgress">
           <el-slider
             v-model="processForm.processProgress"
@@ -591,7 +592,7 @@ watch(
             :min="0"
             show-input
           />
-        </el-form-item> -->
+        </el-form-item>
         <div class="process-tip">
           本次将处置 {{ processRows.length }} 条油车占位记录。
         </div>
