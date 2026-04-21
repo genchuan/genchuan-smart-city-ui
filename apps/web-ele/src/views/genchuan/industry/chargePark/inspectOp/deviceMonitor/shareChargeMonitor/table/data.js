@@ -11,11 +11,6 @@ export const SHARE_CHARGE_MONITOR_ALARM_STATUS_DICT =
 export const SHARE_CHARGE_MONITOR_PROCESS_STATUS_DICT =
   DICT_TYPE.SHARE_CHARGE_MONITOR_PROCESS_STATUS;
 
-function getDictOptionsWithFallback(dictType, fallbackOptions) {
-  const options = getDictOptions(dictType, 'string');
-  return options.length > 0 ? options : fallbackOptions;
-}
-
 function getDictLabel(dictType, value) {
   if (value === undefined || value === null || value === '') return '-';
   const dict = getDictObj(dictType, String(value));
@@ -23,7 +18,7 @@ function getDictLabel(dictType, value) {
 }
 
 function getDictValueByLabel(dictType, label, fallback = label) {
-  const options = getDictOptionsWithFallback(dictType, []);
+  const options = getDictOptions(dictType, 'string');
   const option = options.find(
     (item) => item.label === label || String(item.value) === String(label),
   );
@@ -80,36 +75,11 @@ export const stationOptions = [
   { label: '南安水头交通枢纽站', value: 6 },
 ];
 
-const fallbackMonitorStatusOptions = [
-  { label: '正常', value: '正常' },
-  { label: '异常', value: '异常' },
-];
+export const monitorStatusOptions = getDictOptions(SHARE_CHARGE_MONITOR_STATUS_DICT, 'string');
 
-export const monitorStatusOptions = getDictOptionsWithFallback(
-  SHARE_CHARGE_MONITOR_STATUS_DICT,
-  fallbackMonitorStatusOptions,
-);
+export const alarmStatusOptions = getDictOptions(SHARE_CHARGE_MONITOR_ALARM_STATUS_DICT, 'string');
 
-const fallbackAlarmStatusOptions = [
-  { label: '未告警', value: '未告警' },
-  { label: '已告警', value: '已告警' },
-];
-
-export const alarmStatusOptions = getDictOptionsWithFallback(
-  SHARE_CHARGE_MONITOR_ALARM_STATUS_DICT,
-  fallbackAlarmStatusOptions,
-);
-
-const fallbackProcessStatusOptions = [
-  { label: '未处理', value: '未处理' },
-  { label: '处理中', value: '处理中' },
-  { label: '已处理', value: '已处理' },
-];
-
-export const processStatusOptions = getDictOptionsWithFallback(
-  SHARE_CHARGE_MONITOR_PROCESS_STATUS_DICT,
-  fallbackProcessStatusOptions,
-);
+export const processStatusOptions = getDictOptions(SHARE_CHARGE_MONITOR_PROCESS_STATUS_DICT, 'string');
 
 const deviceCodes = [
   'SC-01',
