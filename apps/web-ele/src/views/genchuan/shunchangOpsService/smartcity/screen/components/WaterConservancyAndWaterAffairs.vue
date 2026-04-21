@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue';
+import { getRunningDaysConfig } from '../utils/dateUtils';
 import MapCommon from './MapCommon.vue';
 import ChartTypePie from './ChartTypePie.vue';
 import ChartTypeLine from './ChartTypeLine.vue';
@@ -65,11 +66,7 @@ const leftData = ref({
 });
 
 const centerData = ref({
-  customizeParams: {
-    name: '安全运行天数：',
-    runningDays: '25',
-    tail: '天'
-  },
+  customizeParams: getRunningDaysConfig('安全运行天数：'),
   option2: {
     data: [
       { name: '泵站耗电', value: 120 },

@@ -1,4 +1,3 @@
-// 文件2: form.js (筛选表单 Schema 与表格列定义)
 // 筛选表单 schema（用于列表页搜索）
 export function useFormSchema() {
   return [
@@ -48,7 +47,7 @@ export function useFormSchema() {
   ];
 }
 
-// 表格列定义
+// 表格列定义（未修改，如需显示年级可自行添加）
 export function getColumnsByStatus(status) {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
@@ -65,7 +64,6 @@ export function getColumnsByStatus(status) {
     { field: 'parentPhone', title: '家长联系电话', minWidth: 150 },
     { field: 'creator', title: '创建人', minWidth: 120, slots: { default: 'creator' } },
     { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updater', title: '更新人', minWidth: 120 },
     { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
   ];
 
@@ -79,7 +77,7 @@ export function getColumnsByStatus(status) {
   return allColumns;
 }
 
-// 新增/编辑表单 schema
+// 新增/编辑表单 schema（添加年级字段）
 export function useCreateFormSchema(isEdit = false) {
   return [
     {
@@ -103,6 +101,24 @@ export function useCreateFormSchema(isEdit = false) {
       label: '身份证号',
       component: 'Input',
       componentProps: { placeholder: '请输入身份证号', disabled: isEdit },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'grade',                     // 新增年级字段
+      label: '年级',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择年级',
+        disabled: isEdit,                    // 编辑时不可修改年级（根据业务调整）
+        options: [
+          { label: '2021级', value: '2021级' },
+          { label: '2022级', value: '2022级' },
+          { label: '2023级', value: '2023级' },
+          { label: '2024级', value: '2024级' },
+          { label: '2025级', value: '2025级' },
+        ],
+      },
       rules: 'required',
       labelWidth: '100',
     },

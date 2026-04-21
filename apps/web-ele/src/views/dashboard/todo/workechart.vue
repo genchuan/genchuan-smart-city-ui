@@ -28,33 +28,33 @@ const state = reactive({
     <Circle
       title-text="工单类型分布"
       :data="[
-          { name: '设备故障', value: 1 },
-          { name: '网络问题', value: 1 },
-          { name: '软件问题', value: 1 },
-          { name: '硬件维修', value: 1 },
-          { name: '安全漏洞', value: 1 },
-          { name: '日常维护', value: 1 },
-          { name: '巡检任务', value: 1 },
-          { name: '日常运维', value: 1 },
-        ]"
+        { name: '设备故障', value: 1 },
+        { name: '网络问题', value: 1 },
+        { name: '软件问题', value: 1 },
+        { name: '硬件维修', value: 1 },
+        { name: '安全漏洞', value: 1 },
+        { name: '日常维护', value: 1 },
+        { name: '巡检任务', value: 1 },
+        { name: '日常运维', value: 1 },
+      ]"
     />
     <Circle
       title-text="紧急程度分布"
       :data="[
-          { name: '紧急', value: 2 },
-          { name: '高', value: 2 },
-          { name: '中', value: 3 },
-          { name: '低', value: 1 },
-        ]"
+        { name: '紧急', value: 2 },
+        { name: '高', value: 2 },
+        { name: '中', value: 3 },
+        { name: '低', value: 1 },
+      ]"
       :colors="['#FF0000', '#F56C6C', '#E6A23C', '#13ce66']"
     />
     <Columnar
       title="近7日工单趋势"
       :x-data="['周一', '周二', '周三', '周四', '周五', '周六', '周日']"
       :series-data="[
-          { name: '新增工单', data: [2, 1, 1, 0, 3, 0, 1] },
-          { name: '完成工单', data: [0, 0, 1, 0, 2, 1, 1] },
-        ]"
+        { name: '新增工单', data: [2, 1, 1, 0, 3, 0, 1] },
+        { name: '完成工单', data: [0, 0, 1, 0, 2, 1, 1] },
+      ]"
     />
   </div>
 </template>

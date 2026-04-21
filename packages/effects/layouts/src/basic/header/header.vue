@@ -184,9 +184,13 @@ function openMall() {
         </template>
 
         <template v-else-if="slot.name === 'mall'">
-          <VbenIconButton class="mr-1" @click="openMall">
+          <div
+            class="bg-primary/10 text-primary hover:bg-primary/20 mr-2 flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 transition-colors"
+            @click="openMall"
+          >
             <ShoppingCartIcon class="size-4" />
-          </VbenIconButton>
+            <span class="text-xs font-medium">软件商城</span>
+          </div>
         </template>
 
         <template v-else-if="slot.name === 'preferences'">

@@ -101,7 +101,7 @@ function handleRefresh() {
 async function handleExport() {
   const data = await exporpunishReviewExcel();
   downloadFileFromBlobPart({
-    fileName: '处罚通知书.xls',
+    fileName: '处罚台账列表.xls',
     source: data,
   });
 }
@@ -248,13 +248,14 @@ const [Grid, gridApi] = useVbenVxeGrid({
         query: async ({ page }) => getTableData({ page }),
       },
     },
-    rowStyle({ rowIndex }) {
-      if (isRedArray.includes(rowIndex)) {
-        return {
-          backgroundColor: '#F56C6C',
-        };
+    cellClassName({ row, column }) {
+      const isTime = Date.now() - row.oldcreateTime > 24 * 60 * 60 * 1000 && row.reviewStatus === '待复审'
+      if (column.field === 'reviewStatus' && isTime) {
+        return 'reviewStatus-cell'
+      } else {
+        return null
       }
-    },
+    }, 
     rowConfig: {
       keyField: 'id',
       isHover: true,
@@ -444,7 +445,7 @@ const handleUploadSubmit = async () => {
     uploadModalApi.close();
     handleRefresh(); // 刷新工单列表
   } catch (error) {
-    ElMessage.error(`上传失败：${error.message || '服务器异常'}`);
+    ElMessage.error(`上传失败：${error.msg || '服务器异常'}`);
     console.error('上传错误详情：', error);
   } finally {
     uploadLoading.value = false;
@@ -532,12 +533,51 @@ const handleSendFileConfirm = async (row) => {
 
 // 预览相关
 const previewVisible = ref(false);
-const currentImage = ref('');
+const currentFile = ref('');
+const currentFileType = ref('');
+const currentFileIndex = ref(0);
+const currentFileList = ref([]);
 
-// 预览图片
-function previewImage(url) {
-  currentImage.value = url;
+// 预览文件
+function previewImage(url, row) {
+  // 解析当前行的所有文件
+  const evidenceList = JSON.parse(row.evidenceUrl) || [];
+  currentFileList.value = evidenceList.map(item => ({ url: item.url, type: item.type, name: item.name }));
+  
+  // 找到当前点击文件的索引
+  currentFileIndex.value = currentFileList.value.findIndex(file => file.url === url);
+  const currentFileData = currentFileList.value[currentFileIndex.value];
+  currentFile.value = currentFileData.url;
+  currentFileType.value = currentFileData.type;
   previewVisible.value = true;
+}
+
+// 上一个文件
+function previewPreviousImage() {
+  if (currentFileList.value.length === 0) return;
+  currentFileIndex.value = (currentFileIndex.value - 1 + currentFileList.value.length) % currentFileList.value.length;
+  const currentFileData = currentFileList.value[currentFileIndex.value];
+  currentFile.value = currentFileData.url;
+  currentFileType.value = currentFileData.type;
+}
+
+// 下一个文件
+function previewNextImage() {
+  if (currentFileList.value.length === 0) return;
+  currentFileIndex.value = (currentFileIndex.value + 1) % currentFileList.value.length;
+  const currentFileData = currentFileList.value[currentFileIndex.value];
+  currentFile.value = currentFileData.url;
+  currentFileType.value = currentFileData.type;
+}
+
+// 下载文件
+function downloadFile(url, fileName) {
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = encodeURIComponent(fileName);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 const rectifyRef = ref(null);
 const handleAutoDetail = async (row) => {
@@ -603,13 +643,14 @@ const handleAutoDetail = async (row) => {
               class="upload-demo"
               drag
               :limit="1"
+              :accept="'.jpg,.jpeg,.png,.xls,.xlsx,.doc,.docx'"
             >
               <ElIcon class="el-icon--upload"><UploadFilled /></ElIcon>
               <div class="el-upload__text">
                 拖拽文件到此处上传，或<em>点击选择文件</em>
               </div>
               <div class="el-upload__tip mt-2 text-sm text-gray-500">
-                支持jpg/jpeg/png/pdf/doc/docx/xls/xlsx格式，单个文件不超过5MB
+                支持jpg/jpeg/png/excel/doc/docx格式，单个文件不超过5MB
               </div>
             </ElUpload>
           </ElFormItem>
@@ -637,12 +678,54 @@ const handleAutoDetail = async (row) => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <el-dialog v-model="previewVisible" title="图片预览" width="600px" center>
-      <img
-        v-if="currentImage"
-        :src="currentImage"
-        style="width: 100%; height: auto"
-      />
+    <el-dialog v-model="previewVisible" title="文件预览" width="800px" center>
+      <div class="image-preview-container">
+        <button
+          class="preview-btn prev-btn"
+          @click="previewPreviousImage"
+          :disabled="currentFileList.length <= 1"
+        >
+          ←
+        </button>
+        
+        <!-- 图片预览 -->
+        <img
+          v-if="currentFileType === 'image'"
+          :src="currentFile"
+          style="max-width: 100%; max-height: 600px; object-fit: contain"
+        />
+        
+        <!-- 文档预览 -->
+        <div v-else class="document-preview">
+          <div class="document-icon">
+            <span v-if="currentFileType === 'excel'">📊</span>
+            <span v-else-if="currentFileType === 'word'">📄</span>
+            <span v-else>📁</span>
+          </div>
+          <div class="document-info">
+            <div class="document-name">
+              {{ currentFileList[currentFileIndex].name }}
+            </div>
+            <div class="document-type">
+              {{ currentFileType === 'excel' ? 'Excel文件' : currentFileType === 'word' ? 'Word文件' : '文档' }}
+            </div>
+            <button class="download-btn" @click="downloadFile(currentFile, currentFileList[currentFileIndex].name)">
+              下载文件
+            </button>
+          </div>
+        </div>
+        
+        <button
+          class="preview-btn next-btn"
+          @click="previewNextImage"
+          :disabled="currentFileList.length <= 1"
+        >
+          →
+        </button>
+      </div>
+      <div class="image-count">
+        {{ currentFileIndex + 1 }} / {{ currentFileList.length }}
+      </div>
     </el-dialog>
     <!-- 使用封装后的详情抽屉组件 -->
     <ParkDetailDrawer
@@ -703,14 +786,7 @@ const handleAutoDetail = async (row) => {
             icon-name="download"
             :disabled="isEmpty(checkedIds)"
             @click="handlePDF"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
+          /> 
           <IconButton
             content="搜索"
             icon-name="search"
@@ -755,9 +831,14 @@ const handleAutoDetail = async (row) => {
             v-for="(item, index) in JSON.parse(row.evidenceUrl)"
             :key="index"
             class="image-item"
-            @click="previewImage(item.url)"
+            @click="previewImage(item.url, row)"
           >
-            <img :src="item.url" :alt="item.name" />
+            <img v-if="item.type === 'image'" :src="item.url" :alt="item.name" />
+            <div v-else class="document-thumbnail">
+              <span v-if="item.type === 'excel'">📊</span>
+              <span v-else-if="item.type === 'word'">📄</span>
+              <span v-else>📁</span>
+            </div>
           </div>
         </div>
         <div v-else>--</div>
@@ -783,7 +864,7 @@ const handleAutoDetail = async (row) => {
             @click="openBackDialog(row)"
           />
           <IconButton
-            content="下发出发通知书"
+            content="下发处罚通知书"
             icon-name="download"
             :disabled="!['待复审'].includes(row.reviewStatus)"
             @click="handleSendFileConfirm(row)"
@@ -803,12 +884,12 @@ const handleAutoDetail = async (row) => {
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
-          <IconButton
+          <!-- <IconButton
             content="删除"
             icon-name="delete"
             color="#F56C6C"
             @click="handleDelete(row)"
-          />
+          /> -->
         </div>
       </template>
 
@@ -826,6 +907,125 @@ const handleAutoDetail = async (row) => {
   justify-content: center;
   width: 700px;
   height: 700px;
+}
+
+/* 表格文件缩略图样式 */
+.table-image {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.image-item {
+  cursor: pointer;
+}
+
+.image-item img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.document-thumbnail {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border-radius: 4px;
+  font-size: 24px;
+}
+
+/* 图片预览样式 */
+.image-preview-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+  position: relative;
+}
+
+.preview-btn {
+  width: 50px;
+  height: 50px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+.preview-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.7);
+  transform: scale(1.1);
+}
+
+.preview-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.image-count {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 14px;
+  color: #666;
+}
+
+/* 文档预览样式 */
+.document-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 40px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  min-height: 400px;
+}
+
+.document-icon {
+  font-size: 80px;
+}
+
+.document-info {
+  text-align: center;
+}
+
+.document-name {
+  font-size: 18px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.document-type {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.download-btn {
+  padding: 10px 20px;
+  background: #1890ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.download-btn:hover {
+  background: #40a9ff;
 }
 
 /* 批量查看表格样式优化 */

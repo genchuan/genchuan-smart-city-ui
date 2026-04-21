@@ -157,8 +157,10 @@ async function handleDeleteBatch() {
 }
 
 const checkedIds = ref([]);
+const checkArray = ref([])
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
+  checkArray.value = records
 }
 
 const dataObj = reactive({
@@ -404,27 +406,24 @@ const oepnalarmCount = async (row, type) => {
 // 告警钻取列
 const alarmDrillColumns = [
   { label: 'ID', prop: 'id', width: 80 },
-  { label: '创建时间', prop: 'createTime', width: 180 },
-  { label: '更新时间', prop: 'updateTime', width: 180 },
-  { label: '告警类型', prop: 'alertType', width: 120 },
-  { label: '设备编码', prop: 'deviceCode', width: 180 },
-  { label: '告警来源', prop: 'alertSource', width: 120 },
-  { label: '设备手机号', prop: 'deviceAccount', width: 150 },
-  { label: '告警ID', prop: 'alertId', width: 120 },
-  { label: 'AI平台消息ID', prop: 'aiPlatformMsgId', width: 180 },
+  { label: '创建时间', prop: 'createTime', width: 180 }, 
+  { label: '告警类型', prop: 'alertTypeName', width: 0 },
+  { label: '设备编码', prop: 'deviceCode', width: 0 },
+  { label: '告警来源', prop: 'alertSourceName', width: 120 },
+  { label: '设备手机号', prop: 'deviceAccount', width: 0 }, 
 ];
 
 // 整改复审台账列
 const rectifyReviewColumns = [ 
   { label: '整改通知书id', prop: 'rectifyNoticeId', width: 150 },
-  { label: '台账编号', prop: 'ledgerCode', width: 200 },
+  { label: '台账编号', prop: 'ledgerCode', width: 0 },
   { label: '违规类型', prop: 'illegalTypeName', width: 120 },
   { label: '违规等级', prop: 'illegalLevelName', width: 150 }, 
   { label: '违规证据链接', prop: 'evidenceUrl', width: 400, slot: 'evidenceUrl' },
   { label: '草拟时间', prop: 'draftTime', width: 180 },
   { label: '整改截至时间', prop: 'rectifyDeadlineTime', width: 180 },
-  { label: '复审状态', prop: 'reviewStatus', width: 120 },
-  { label: '复审人ID', prop: 'reviewBy', width: 120 },
+  { label: '复审状态', prop: 'reviewStatus', width: 0 },
+  { label: '复审人', prop: 'reviewUserName', width: 120 },
   { label: '复审时间', prop: 'reviewTime', width: 180 },
   { label: '撤销时间', prop: 'cancelTime', width: 180 }, 
   { label: '执法复审台账编号', prop: 'lawLedgerCode', width: 200 },
@@ -435,9 +434,9 @@ const rectifyReviewColumns = [
 const deviceNormalColumns = [
   { label: 'ID', prop: 'id', width: 80 },
   { label: '设备编号', prop: 'deviceCode', width: 180 },
-  { label: '设备名称', prop: 'deviceName', width: 200 },
+  { label: '设备名称', prop: 'deviceName', width: 0 },
   { label: '设备类型', prop: 'deviceType', width: 150 },
-  { label: '所属企业ID', prop: 'entId', width: 120 },
+  { label: '所属企业ID', prop: 'entId', width: 0 },
   { label: '所属区域ID', prop: 'areaId', width: 120 },
   { label: '状态', prop: 'status', width: 120 },
 ];
@@ -446,12 +445,12 @@ const deviceNormalColumns = [
 const rectifyFinishColumns = [
   { label: 'ID', prop: 'id', width: 80 },
   { label: '整改通知书id', prop: 'rectifyNoticeId', width: 150 },
-  { label: '台账编号', prop: 'ledgerCode', width: 200 }, 
+  { label: '台账编号', prop: 'ledgerCode', width: 0 }, 
   { label: '违规证据链接', prop: 'evidenceUrl', width: 400, slot: 'evidenceUrl' },
   { label: '草拟时间', prop: 'draftTime', width: 180 },
   { label: '整改截至时间', prop: 'rectifyDeadlineTime', width: 180 },
   { label: '复审状态', prop: 'reviewStatus', width: 120 }, 
-  { label: '复审时间', prop: 'reviewTime', width: 180 },
+  { label: '复审时间', prop: 'reviewTime', width: 0 },
   { label: '撤销时间', prop: 'cancelTime', width: 180 }, 
   { label: '执法复审台账编号', prop: 'lawLedgerCode', width: 200 },
   { label: '整改通知书编号', prop: 'rectifyNoticeCode', width: 200 }, 
@@ -551,8 +550,8 @@ const rectifyFinishColumns = [
           <IconButton content="刷新" icon-name="refresh" @click="autoElmessage" />
           <IconButton content="导出EXCEL" icon-name="download" @click="handleExport" />
           <IconButton content="导出PDF" icon-name="download" @click="handlePDF" />
-          <IconButton content="批量删除" icon-name="delete" color="#F56C6C" :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch" />
+          <!-- <IconButton content="批量删除" icon-name="delete" color="#F56C6C" :disabled="isEmpty(checkedIds)"
+            @click="handleDeleteBatch" /> -->
           <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
           <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
             @click="arrowChange" />

@@ -1,35 +1,130 @@
 import { requestClient } from '#/api/request';
 
+// ==================== 映射表 ====================
+// 违纪类型映射
+const violateTypeMap = {
+  '仪容仪表': 'appearance',
+  '行为违规': 'behavior',
+  '其他': 'other'
+};
+const violateTypeReverse = {
+  'appearance': '仪容仪表',
+  'behavior': '行为违规',
+  'other': '其他'
+};
+
+// 处分类型映射
+const punishTypeMap = {
+  '警告': 'warn',
+  '记过': 'demerit',
+  '留校察看': 'probation',
+  '开除': 'expel'
+};
+const punishTypeReverse = {
+  'warn': '警告',
+  'demerit': '记过',
+  'probation': '留校察看',
+  'expel': '开除'
+};
+
+// 状态映射（后端返回多种格式，统一转为前端三种状态）
+const statusReverse = {
+  '3': '待审批',        // 根据样例，status:"3" 视为待审批
+  'executed': '已执行',
+  'warned': '已预警',
+  'warn': '已预警'
+};
+const statusMap = {
+  '待审批': '3',        // 提交时映射为后端期望的值（需后端确认，暂用 "3"）
+  '已执行': 'executed',
+  '已预警': 'warned'
+};
+
+// 通用转换函数：后端 → 前端（将对象中的英文字段值转为中文）
+function convertEnToZh(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.violateType && violateTypeReverse[result.violateType]) {
+    result.violateType = violateTypeReverse[result.violateType];
+  }
+  if (result.punishType && punishTypeReverse[result.punishType]) {
+    result.punishType = punishTypeReverse[result.punishType];
+  }
+  if (result.status && statusReverse[result.status]) {
+    result.status = statusReverse[result.status];
+  } else if (result.status && !statusReverse[result.status]) {
+    // 未知状态默认映射为“待审批”
+    result.status = '待审批';
+  }
+  return result;
+}
+
+// 通用转换函数：前端 → 后端（将对象中的中文字段值转为英文）
+function convertZhToEn(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.violateType && violateTypeMap[result.violateType]) {
+    result.violateType = violateTypeMap[result.violateType];
+  }
+  if (result.punishType && punishTypeMap[result.punishType]) {
+    result.punishType = punishTypeMap[result.punishType];
+  }
+  if (result.status && statusMap[result.status]) {
+    result.status = statusMap[result.status];
+  }
+  return result;
+}
+
+// 转换列表数据
+function convertList(list) {
+  if (!Array.isArray(list)) return list;
+  return list.map(item => convertEnToZh(item));
+}
+
 // ==================== 违纪管理接口 ====================
 export function getViolateMgmtPage(params) {
-  return requestClient.get('/studentmgmt/violate-mgmt/page', { params }).catch(err => {
-    console.warn('分页接口失败，使用模拟数据', err);
-    return { list: dataList(), total: dataList().length };
-  });
+  const convertedParams = convertZhToEn(params);
+  return requestClient.get('/studentmgmt/violate-mgmt/page', { params: convertedParams })
+    .then(res => {
+      if (res && res.list) {
+        res.list = convertList(res.list);
+      }
+      return res;
+    })
+    .catch(err => {
+      console.warn('分页接口失败，使用模拟数据', err);
+      const mockData = convertList(dataList()); // 模拟数据也转为中文
+      return { list: mockData, total: mockData.length };
+    });
 }
 
 export function createViolateMgmt(data) {
-  return requestClient.post('/studentmgmt/violate-mgmt/create', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.post('/studentmgmt/violate-mgmt/create', convertedData).catch(err => {
     console.warn('登记接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
 export function updateViolateMgmt(data) {
-  return requestClient.put('/studentmgmt/violate-mgmt/update', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.put('/studentmgmt/violate-mgmt/update', convertedData).catch(err => {
     console.warn('编辑接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
 export function auditViolateMgmt(data) {
-  return requestClient.put('/studentmgmt/violate-mgmt/audit', data).catch(err => {
+  // 审批接口只传 ids，无需转换字段值
+  const idsParam = data.ids ? data.ids.join(',') : '';
+  return requestClient.put('/studentmgmt/violate-mgmt/audit', null, { params: { ids: idsParam } }).catch(err => {
     console.warn('审批接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
 export function pushViolateMgmt(params) {
+  // 推送接口只传 id，无需转换
   return requestClient.put('/studentmgmt/violate-mgmt/push', null, { params }).catch(err => {
     console.warn('推送接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -44,22 +139,26 @@ export function warnViolateMgmt(params) {
 }
 
 export function exportViolateMgmt(params) {
-  return requestClient.download('/studentmgmt/violate-mgmt/export', params).catch(err => {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.download('/studentmgmt/violate-mgmt/export', convertedParams).catch(err => {
     console.warn('导出接口失败，模拟导出', err);
     return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
   });
 }
 
 export function getViolateMgmtDetail(params) {
-  return requestClient.get('/studentmgmt/violate-mgmt/get', { params }).catch(err => {
-    console.warn('详情接口失败，使用模拟数据', err);
-    const mockList = dataList();
-    const detail = mockList.find(item => item.id === params.id) || mockList[0];
-    return Promise.resolve(detail);
-  });
+  return requestClient.get('/studentmgmt/violate-mgmt/get', { params })
+    .then(res => convertEnToZh(res))
+    .catch(err => {
+      console.warn('详情接口失败，使用模拟数据', err);
+      const mockList = dataList();
+      const detail = mockList.find(item => item.id === params.id) || mockList[0];
+      return Promise.resolve(convertEnToZh(detail));
+    });
 }
 
 // ==================== 图表接口 ====================
+// 图表接口暂不处理映射（因未提供后端数据结构），如有需要可类似添加
 export function getViolateMgmtChart(params) {
   return requestClient.get('/studentmgmt/violate-mgmt/chart', { params }).catch(err => {
     console.warn('预警看板接口失败，使用模拟数据', err);
@@ -109,7 +208,7 @@ export function getWarnIndex(params) {
   });
 }
 
-// 模拟数据（与接口响应结构一致）
+// 模拟数据（原始值使用英文，通过转换函数对外提供中文）
 export const dataList = () => {
   return [
     {
@@ -117,15 +216,15 @@ export const dataList = () => {
       studentId: 1,
       studentName: '张三',
       className: '高一(1)班',
-      violateType: '行为违规',
-      punishType: '警告',
+      violateType: 'behavior',
+      punishType: 'warn',
       violateTime: 1672531200000,
       violateReason: '上课玩手机',
       auditUser: 'admin',
       auditTime: 1672617600000,
       pushTime: null,
       warnTime: null,
-      status: '待审批',
+      status: '3',
       remark: '',
       creator: 'admin',
       updater: 'admin',
@@ -137,15 +236,15 @@ export const dataList = () => {
       studentId: 2,
       studentName: '李四',
       className: '高一(2)班',
-      violateType: '仪容仪表',
-      punishType: '警告',
+      violateType: 'appearance',
+      punishType: 'warn',
       violateTime: 1672617600000,
       violateReason: '未穿校服',
       auditUser: 'admin',
       auditTime: 1672704000000,
       pushTime: 1672790400000,
       warnTime: null,
-      status: '已执行',
+      status: 'executed',
       remark: '',
       creator: 'admin',
       updater: 'admin',
@@ -157,15 +256,15 @@ export const dataList = () => {
       studentId: 3,
       studentName: '王五',
       className: '高一(3)班',
-      violateType: '行为违规',
-      punishType: '记过',
+      violateType: 'behavior',
+      punishType: 'demerit',
       violateTime: 1672704000000,
       violateReason: '打架斗殴',
       auditUser: null,
       auditTime: null,
       pushTime: null,
       warnTime: 1672876800000,
-      status: '已预警',
+      status: 'warned',
       remark: '',
       creator: 'teacher_zhang',
       updater: 'teacher_zhang',
@@ -177,15 +276,15 @@ export const dataList = () => {
       studentId: 4,
       studentName: '赵六',
       className: '高二(1)班',
-      violateType: '其他',
-      punishType: '留校察看',
+      violateType: 'other',
+      punishType: 'probation',
       violateTime: 1672790400000,
       violateReason: '考试作弊',
       auditUser: 'admin',
       auditTime: 1672876800000,
       pushTime: 1672963200000,
       warnTime: null,
-      status: '已执行',
+      status: 'executed',
       remark: '',
       creator: 'admin',
       updater: 'admin',
@@ -197,15 +296,15 @@ export const dataList = () => {
       studentId: 5,
       studentName: '孙七',
       className: '高二(2)班',
-      violateType: '仪容仪表',
-      punishType: '警告',
+      violateType: 'appearance',
+      punishType: 'warn',
       violateTime: 1672876800000,
       violateReason: '染发',
       auditUser: 'admin',
       auditTime: 1672963200000,
       pushTime: null,
       warnTime: null,
-      status: '待审批',
+      status: '3',
       remark: '',
       creator: 'teacher_li',
       updater: 'teacher_li',
@@ -217,15 +316,15 @@ export const dataList = () => {
       studentId: 6,
       studentName: '周八',
       className: '高二(1)班',
-      violateType: '行为违规',
-      punishType: '记过',
+      violateType: 'behavior',
+      punishType: 'demerit',
       violateTime: 1672963200000,
       violateReason: '旷课',
       auditUser: null,
       auditTime: null,
       pushTime: null,
       warnTime: null,
-      status: '待审批',
+      status: '3',
       remark: '',
       creator: 'admin',
       updater: 'admin',

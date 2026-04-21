@@ -2,7 +2,7 @@
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { MallSpuApi } from '#/api/mall/product/spu';
 
-import { onMounted, ref } from 'vue';
+import { onActivated, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { confirm, DocAlert, Page } from '@vben/common-ui';
@@ -199,6 +199,19 @@ onMounted(async () => {
   }
   // 获得每个 Tab 的数量
   await getTabCount();
+});
+
+// 当页面被激活时（从添加/编辑页返回），检查是否需要刷新
+onActivated(async () => {
+  if (route.query.refresh === 'true') {
+    // 清除刷新标记
+    await router.replace({
+      name: 'ProductSpu',
+      query: { ...route.query, refresh: undefined },
+    });
+    // 刷新列表数据
+    await handleRefresh();
+  }
 });
 </script>
 

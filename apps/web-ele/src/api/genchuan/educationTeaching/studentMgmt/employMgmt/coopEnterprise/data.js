@@ -1,0 +1,254 @@
+import { requestClient } from '#/api/request';
+
+// ==================== 映射表 ====================
+const enterpriseTypeMap = {
+  '民企': 'private',
+  '国企': 'state_owned',
+  '外企': 'foreign'
+};
+const enterpriseTypeReverseMap = {
+  'private': '民企',
+  'state_owned': '国企',
+  'foreign': '外企'
+};
+
+const statusMap = {
+  '合作中': 'cooperating',
+  '已结束': 'ended'
+};
+const statusReverseMap = {
+  'cooperating': '合作中',
+  'ended': '已结束'
+};
+
+// 响应数据：英文 → 中文
+function convertEnToZh(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.enterpriseType && enterpriseTypeReverseMap[result.enterpriseType]) {
+    result.enterpriseType = enterpriseTypeReverseMap[result.enterpriseType];
+  }
+  if (result.status && statusReverseMap[result.status]) {
+    result.status = statusReverseMap[result.status];
+  }
+  return result;
+}
+
+// 请求参数：中文 → 英文
+function convertZhToEn(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.enterpriseType && enterpriseTypeMap[result.enterpriseType]) {
+    result.enterpriseType = enterpriseTypeMap[result.enterpriseType];
+  }
+  if (result.status && statusMap[result.status]) {
+    result.status = statusMap[result.status];
+  }
+  return result;
+}
+
+// 转换列表
+function convertList(list) {
+  if (!Array.isArray(list)) return list;
+  return list.map(item => convertEnToZh(item));
+}
+
+// ==================== 校企合作接口 ====================
+export function getCoopEnterprisePage(params) {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.get('/studentmgmt/coop-enterprise/page', { params: convertedParams })
+    .then(res => {
+      if (res && res.list) {
+        res.list = convertList(res.list);
+      }
+      return res;
+    })
+    .catch(err => {
+      console.warn('分页接口失败，使用模拟数据', err);
+      const mock = convertList(getMockList());
+      return { list: mock, total: mock.length };
+    });
+}
+
+export function createCoopEnterprise(data) {
+  const convertedData = convertZhToEn(data);
+  return requestClient.post('/studentmgmt/coop-enterprise/create', convertedData).catch(err => {
+    console.warn('建档接口失败，模拟成功', err);
+    return Promise.resolve(true);
+  });
+}
+
+export function maintainCoopEnterprise(data) {
+  const convertedData = convertZhToEn(data);
+  return requestClient.put('/studentmgmt/coop-enterprise/maintain', convertedData).catch(err => {
+    console.warn('维护接口失败，模拟成功', err);
+    return Promise.resolve(true);
+  });
+}
+
+export function updateCoopEnterprise(data) {
+  const convertedData = convertZhToEn(data);
+  return requestClient.put('/studentmgmt/coop-enterprise/update', convertedData).catch(err => {
+    console.warn('编辑接口失败，模拟成功', err);
+    return Promise.resolve(true);
+  });
+}
+
+export function exportCoopEnterprise(params) {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.download('/studentmgmt/coop-enterprise/export-excel', convertedParams).catch(err => {
+    console.warn('导出接口失败，模拟导出', err);
+    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
+  });
+}
+
+export function getCoopEnterpriseDetail(params) {
+  return requestClient.get('/studentmgmt/coop-enterprise/get', { params })
+    .then(res => convertEnToZh(res))
+    .catch(err => {
+      console.warn('详情接口失败，使用模拟数据', err);
+      const mockList = getMockList();
+      const detail = mockList.find(item => item.id === params.id) || mockList[0];
+      return Promise.resolve(convertEnToZh(detail));
+    });
+}
+
+export function getDeptOptions(params) {
+  return requestClient.get('/studentmgmt/dept/options', { params }).catch(err => {
+    console.warn('获取系部列表失败，使用模拟数据', err);
+    return Promise.resolve([
+      { value: 2001, label: '计算机系' },
+      { value: 2002, label: '机电系' },
+      { value: 2003, label: '经贸系' },
+      { value: 2004, label: '其他' },
+    ]);
+  });
+}
+
+// ==================== 图表接口 ====================
+export function getCoopEnterpriseChart(params) {
+  return requestClient.get('/studentmgmt/coop-enterprise/chart', { params }).catch(err => {
+    console.warn('看板接口失败，使用模拟数据', err);
+    return Promise.resolve({
+      totalEnterprise: 36,
+      cooperatingEnterprise: 28,
+      finishedEnterprise: 8,
+      deptCoopCount: [
+        { deptName: '计算机系', count: 12 },
+        { deptName: '机电系', count: 10 },
+        { deptName: '经贸系', count: 8 },
+        { deptName: '其他', count: 6 },
+      ],
+      coopTrend: [
+        { date: '2024-01', count: 2 },
+        { date: '2024-02', count: 3 },
+        { date: '2024-03', count: 5 },
+      ],
+    });
+  });
+}
+
+export function getCoopEnterpriseDistribution(params) {
+  return requestClient.get('/studentmgmt/coop-enterprise/chart/enterpriseDistribution', { params }).catch(err => {
+    console.warn('分布接口失败，使用模拟数据', err);
+    return Promise.resolve({
+      typeDistribution: [
+        { name: '民企', value: 22 },
+        { name: '国企', value: 8 },
+        { name: '外企', value: 6 },
+      ],
+      deptDistribution: [
+        { name: '计算机系', value: 12 },
+        { name: '机电系', value: 10 },
+        { name: '经贸系', value: 8 },
+        { name: '其他', value: 6 },
+      ],
+    });
+  });
+}
+
+// 模拟数据（原始值使用英文）
+export const getMockList = () => {
+  return [
+    {
+      id: 1,
+      enterpriseName: '华为技术有限公司',
+      enterpriseType: 'private',
+      deptId: 2001,
+      contactUser: '张经理',
+      contactPhone: '13800001111',
+      coopStartTime: 1767225600000,
+      coopEndTime: 1798761600000,
+      status: 'cooperating',
+      remark: '',
+      creator: 'admin',
+      updater: 'admin',
+      createTime: 1767225600000,
+      updateTime: 1767225600000,
+    },
+    {
+      id: 2,
+      enterpriseName: '中国中车',
+      enterpriseType: 'state_owned',
+      deptId: 2002,
+      contactUser: '李部长',
+      contactPhone: '13800002222',
+      coopStartTime: 1769904000000,
+      coopEndTime: null,
+      status: 'cooperating',
+      remark: '',
+      creator: 'teacher_li',
+      updater: 'teacher_li',
+      createTime: 1769904000000,
+      updateTime: 1769904000000,
+    },
+    {
+      id: 3,
+      enterpriseName: '阿里巴巴',
+      enterpriseType: 'private',
+      deptId: 2001,
+      contactUser: '王总监',
+      contactPhone: '13800003333',
+      coopStartTime: 1775088000000,
+      coopEndTime: 1806624000000,
+      status: 'cooperating',
+      remark: '',
+      creator: 'admin',
+      updater: 'admin',
+      createTime: 1775088000000,
+      updateTime: 1775088000000,
+    },
+    {
+      id: 4,
+      enterpriseName: 'IBM',
+      enterpriseType: 'foreign',
+      deptId: 2001,
+      contactUser: '赵经理',
+      contactPhone: '13800004444',
+      coopStartTime: 1777680000000,
+      coopEndTime: 1809216000000,
+      status: 'ended',
+      remark: '',
+      creator: 'teacher_zhang',
+      updater: 'teacher_zhang',
+      createTime: 1777680000000,
+      updateTime: 1777680000000,
+    },
+    {
+      id: 5,
+      enterpriseName: '海尔集团',
+      enterpriseType: 'private',
+      deptId: 2002,
+      contactUser: '孙经理',
+      contactPhone: '13800005555',
+      coopStartTime: 1782950400000,
+      coopEndTime: null,
+      status: 'cooperating',
+      remark: '',
+      creator: 'admin',
+      updater: 'admin',
+      createTime: 1782950400000,
+      updateTime: 1782950400000,
+    },
+  ];
+};

@@ -175,13 +175,13 @@ const getTableData = (pageObj) => {
 
   let filteredList = taskObj.apilist;
   if (activeName.value === '待处理') {
-    filteredList = taskObj.apilist.filter(v => v.taskStatus === '待处理');
+    filteredList = taskObj.apilist.filter((v) => v.taskStatus === '待处理');
   } else if (activeName.value === '处理中') {
-    filteredList = taskObj.apilist.filter(v => v.taskStatus === '处理中');
+    filteredList = taskObj.apilist.filter((v) => v.taskStatus === '处理中');
   } else if (activeName.value === '已完成') {
-    filteredList = taskObj.apilist.filter(v => v.taskStatus === '已完成');
+    filteredList = taskObj.apilist.filter((v) => v.taskStatus === '已完成');
   } else if (activeName.value === '我发起的') {
-    filteredList = taskObj.apilist.filter(v => v.taskStatus !== '我发起的');
+    filteredList = taskObj.apilist.filter((v) => v.taskStatus !== '我发起的');
   }
 
   taskObj.total = filteredList.length;
@@ -386,9 +386,15 @@ const taskDetailDrawerRef = ref(null);
       </template>
       <template #priority="{ row }">
         <el-tag
-          :type="row.priority === '紧急' ? 'danger' :
-                 row.priority === '高' ? 'warning' :
-                 row.priority === '中' ? 'primary' : 'info'"
+          :type="
+            row.priority === '紧急'
+              ? 'danger'
+              : row.priority === '高'
+                ? 'warning'
+                : row.priority === '中'
+                  ? 'primary'
+                  : 'info'
+          "
           size="small"
         >
           {{ row.priority }}
@@ -401,16 +407,23 @@ const taskDetailDrawerRef = ref(null);
             :show-text="false"
             :stroke-width="6"
           />
-          <span style="font-size: 12px;">{{ row.currentProgress }}</span>
+          <span style="font-size: 12px">{{ row.currentProgress }}</span>
         </div>
         <span v-else>{{ row.currentProgress || '-' }}</span>
       </template>
       <template #taskStatus="{ row }">
         <el-tag
-          :type="row.taskStatus === '待处理' ? 'info' :
-                 row.taskStatus === '处理中' ? 'primary' :
-                 row.taskStatus === '已完成' ? 'success' :
-                 row.taskStatus === '已撤回' ? 'danger' : 'warning'"
+          :type="
+            row.taskStatus === '待处理'
+              ? 'info'
+              : row.taskStatus === '处理中'
+                ? 'primary'
+                : row.taskStatus === '已完成'
+                  ? 'success'
+                  : row.taskStatus === '已撤回'
+                    ? 'danger'
+                    : 'warning'
+          "
           size="small"
         >
           {{ row.taskStatus }}
@@ -444,10 +457,12 @@ const taskDetailDrawerRef = ref(null);
           <el-icon class="tabel-tab-icon" v-if="taskObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：任务数量{{ taskObj.list.length }};
-            待处理: {{ taskObj.list.filter(v => v.taskStatus === '待处理').length }};
-            处理中: {{ taskObj.list.filter(v => v.taskStatus === '处理中').length }};
-            </span>
+          <span>
+            本页统计：任务数量{{ taskObj.list.length }}; 待处理:
+            {{ taskObj.list.filter((v) => v.taskStatus === '待处理').length }};
+            处理中:
+            {{ taskObj.list.filter((v) => v.taskStatus === '处理中').length }};
+          </span>
         </div>
         <div class="common-total-bottom" v-if="taskObj.totalShow">
           <span> 全部统计：{{ textObj.total }} </span>

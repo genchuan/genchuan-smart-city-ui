@@ -79,7 +79,8 @@ export const dataList = () => {
       attendanceRate: null,
       // 质量待核查特有字段
       completeTime: '2026-02-24 17:30:00',
-      checkPhotoUrl: 'http://example.com/photo1.jpg,http://example.com/photo2.jpg',
+      checkPhotoUrl:
+        'http://example.com/photo1.jpg,http://example.com/photo2.jpg',
       tool: '洗扫车',
       reviewStatus: '待核查',
       reviewBy: null,

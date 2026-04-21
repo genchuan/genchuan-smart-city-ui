@@ -53,13 +53,12 @@ export function useFormSchema() {
   ];
 }
 
-// 表格列定义
+// 表格列定义（未修改，但为完整展示保留）
 export function getColumnsByStatus(status) {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
     { field: 'studentName', title: '学生姓名', minWidth: 100, slots: { default: 'studentName' } },
-    { field: 'className', title: '班级', minWidth: 150 },
     { field: 'mentalStatus', title: '心理状态', minWidth: 100, slots: { default: 'mentalStatus' } },
     { field: 'riskLevel', title: '风险等级', minWidth: 100, slots: { default: 'riskLevel' } },
     { field: 'evaluateTime', title: '评估时间', minWidth: 180, slots: { default: 'evaluateTime' } },
@@ -69,7 +68,6 @@ export function getColumnsByStatus(status) {
     { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
     { field: 'creator', title: '创建人', minWidth: 120, slots: { default: 'creator' } },
     { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updater', title: '更新人', minWidth: 120 },
     { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
   ];
 
@@ -83,7 +81,7 @@ export function getColumnsByStatus(status) {
   return allColumns;
 }
 
-// 建档表单 schema
+// 建档表单 schema（添加 status 字段）
 export function useCreateFormSchema() {
   return [
     {
@@ -139,6 +137,21 @@ export function useCreateFormSchema() {
         type: 'datetime',
         format: 'YYYY-MM-DD HH:mm:ss',
         valueFormat: 'x',
+      },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'status',                     // 新增状态字段
+      label: '状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择状态',
+        options: [
+          { label: '待评估', value: '待评估' },
+          { label: '咨询中', value: '咨询中' },
+          { label: '已干预', value: '已干预' },
+        ],
       },
       rules: 'required',
       labelWidth: '100',

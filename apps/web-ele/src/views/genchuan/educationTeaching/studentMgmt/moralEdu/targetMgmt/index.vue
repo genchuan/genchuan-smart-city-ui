@@ -198,8 +198,8 @@ const getTableData = async ({page}) => {
         }
       });
     });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    dataObj.total = res.total;
+    dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
     const mockData = getMockList();
@@ -238,6 +238,7 @@ const getTableData = async ({page}) => {
       });
     });
     dataObj.total = filtered.length;
+    // 模拟数据时仍需要前端分页
     dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
   } finally {
     dataObj.loading = false;
@@ -287,14 +288,12 @@ function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
   createFormApi.resetForm();
+  // 新增时设置默认状态为“未启用”
+  createFormApi.setValues({ status: '未启用' });
   createDrawerApi.open();
 }
 
 async function handleEdit(row) {
-  if (row.status !== '未启用') {
-    ElMessage.warning('只有未启用状态的指标可以编辑');
-    return;
-  }
   isEditMode.value = true;
   currentEditId.value = row.id;
   try {
@@ -305,6 +304,7 @@ async function handleEdit(row) {
       warnThreshold: detail.warnThreshold,
       evaluatorType: detail.evaluatorType,
       scoreType: detail.scoreType,
+      status: detail.status,     // 补充状态赋值
       remark: detail.remark,
     });
     createDrawerApi.open();
@@ -329,7 +329,7 @@ async function handleEnable(row) {
     const loading = ElLoading.service({text: '启用中...'});
     try {
       const res = await enableTargetMgmt([row.id]);
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('启用成功');
         handleRefresh();
       } else {
@@ -357,7 +357,7 @@ async function handleDisable(row) {
     const loading = ElLoading.service({text: '停用中...'});
     try {
       const res = await disableTargetMgmt([row.id]);
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('停用成功');
         handleRefresh();
       } else {
@@ -379,11 +379,14 @@ const [CreateForm, createFormApi] = useVbenForm({
     try {
       let res;
       if (isEditMode.value) {
+        // 编辑时传递 status（表单中已包含）
         res = await updateTargetMgmt({...values, id: currentEditId.value});
       } else {
-        res = await createTargetMgmt(values);
+        // 新增时确保 status 字段存在（默认未启用）
+        const submitData = { ...values, status: values.status || '未启用' };
+        res = await createTargetMgmt(submitData);
       }
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '更新成功' : '新增成功');
         createDrawerApi.close();
         handleRefresh();
@@ -408,7 +411,7 @@ const [ConfigForm, configFormApi] = useVbenForm({
     const loading = ElLoading.service({text: '配置中...'});
     try {
       const res = await configTargetMgmt({ids: configIds.value, ...values});
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('配置成功');
         configDrawerApi.close();
         handleRefresh();
@@ -565,8 +568,7 @@ defineExpose({handleFilterTagClick, clearFilters});
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton v-if="row.status === '未启用'" content="编辑" icon-name="Edit"
-                      @click="handleEdit(row)"/>
+          <IconButton v-if="row.status === '未启用'" content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
           <IconButton v-if="row.status === '未启用'" content="启用" icon-name="Check"
                       @click="handleEnable(row)"/>
           <IconButton v-if="row.status === '已启用'" content="停用" icon-name="CircleClose"

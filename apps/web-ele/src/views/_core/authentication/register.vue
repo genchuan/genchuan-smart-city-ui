@@ -27,7 +27,7 @@ const verifyRef = ref();
 
 const captchaType = 'blockPuzzle'; // 验证码类型：'blockPuzzle' | 'clickWord'
 
-/** 获取租户列表，并默认选中"普通会员"租户 */
+/** 获取租户列表，并默认选中"普通用户"租户 租户id为165 */
 const tenantList = ref<AuthApi.TenantResult[]>([]); // 租户列表
 const normalMemberTenantId = ref<null | number>(null); // 普通会员租户ID
 async function fetchTenantList() {
@@ -40,14 +40,12 @@ async function fetchTenantList() {
 
     // 查找租户名为"普通会员"的租户
     const normalMemberTenant = tenantList.value.find(
-      (item) => item.name === '普通会员',
+      (item) => item.id === 165,
     );
-
-    // 如果找到"普通会员"租户，则使用它，否则使用列表中的第一个
+    // 如果找到"普通用户"租户，则使用它，否则使用列表中的第一个
     const tenantId =
       normalMemberTenant?.id ?? tenantList.value?.[0]?.id ?? null;
     normalMemberTenantId.value = tenantId;
-
     // 设置选中的租户编号
     if (tenantId) {
       accessStore.setTenantId(tenantId);

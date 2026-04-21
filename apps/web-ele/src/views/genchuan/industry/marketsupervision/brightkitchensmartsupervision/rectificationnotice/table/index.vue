@@ -20,7 +20,7 @@ import {
 } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
-
+import {  formatArrayDate } from '#/utils/genchuan/formatTime.ts'
 import { useFormSchema, useGridColumns } from './data';
 // 引入封装后的详情抽屉组件
 import ParkDetailDrawer from './detail.vue';
@@ -177,6 +177,7 @@ const getTableData = async (pageObj) => {
       issueTime: formatTimestamp(v.issueTime),
       receiveTime: formatTimestamp(v.receiveTime),
       createTime: formatTimestamp(v.createTime),
+      rectifyDeadline: formatArrayDate(v.rectifyDeadline),
     };
   });
   return dataObj;

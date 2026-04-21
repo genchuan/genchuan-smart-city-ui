@@ -133,7 +133,7 @@ export const dataList = () => {
       manager: '张园长',
       // 绿化待养护特有字段（复用 repairId 等）
       repairId: 'GR20250301001', // 养护编号
-      facilityType: '乔木',       // 绿化品类
+      facilityType: '乔木', // 绿化品类
       greenArea: '中央草坪区',
       greenMaintenanceCycle: 15,
       maintenanceContent: '修剪、浇灌、施肥',
