@@ -11,13 +11,13 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { 
-  cancelBikeChargeOrder,
+  cancelShareChargeOrder,
   exportShareChargeOrderExcel,
   getShareChargeOrderPage,
-  invoiceBikeChargeOrder,
-  payBikeChargeOrder,
-  refundBikeChargeOrder,
-  stopBikeChargeOrder,
+  invoiceShareChargeOrder,
+  payShareChargeOrder,
+  refundShareChargeOrder,
+  returnShareChargeOrder,
 } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
@@ -358,7 +358,7 @@ const handlePay = (row) => {
 // 提交支付
 const handlePaySubmit = async () => {
   try {
-    await payBikeChargeOrder(payForm);
+    await payShareChargeOrder(payForm);
     ElMessage.success('支付成功');
     payDialogVisible.value = false;
     handleRefresh();
@@ -384,7 +384,7 @@ const handleCancel = (row) => {
 // 提交取消
 const handleCancelSubmit = async () => {
   try {
-    await cancelBikeChargeOrder(cancelForm);
+    await cancelShareChargeOrder(cancelForm);
     ElMessage.success('取消成功');
     cancelDialogVisible.value = false;
     handleRefresh();
@@ -410,7 +410,7 @@ const handleRefund = (row) => {
 // 提交退款
 const handleRefundSubmit = async () => {
   try {
-    await refundBikeChargeOrder(refundForm);
+    await refundShareChargeOrder(refundForm);
     ElMessage.success('退款申请已提交');
     refundDialogVisible.value = false;
     handleRefresh();
@@ -436,7 +436,7 @@ const handleInvoice = (row) => {
 // 提交开票
 const handleInvoiceSubmit = async () => {
   try {
-    await invoiceBikeChargeOrder(invoiceForm);
+    await invoiceShareChargeOrder(invoiceForm);
     ElMessage.success('开票申请已提交');
     invoiceDialogVisible.value = false;
     handleRefresh();
@@ -445,29 +445,29 @@ const handleInvoiceSubmit = async () => {
   }
 };
 
-// 停止充电弹窗
-const stopDialogVisible = ref(false);
-const stopForm = reactive({
+// 归还弹窗
+const returnDialogVisible = ref(false);
+const returnForm = reactive({
   id: '',
   remark: '',
 });
 
-// 打开停止充电弹窗
-const handleStop = (row) => {
-  stopForm.id = row.id;
-  stopForm.remark = '';
-  stopDialogVisible.value = true;
+// 打开归还弹窗
+const handleReturn = (row) => {
+  returnForm.id = row.id;
+  returnForm.remark = '';
+  returnDialogVisible.value = true;
 };
 
-// 提交停止充电
-const handleStopSubmit = async () => {
+// 提交归还
+const handleReturnSubmit = async () => {
   try {
-    await stopBikeChargeOrder(stopForm);
-    ElMessage.success('停止充电成功');
-    stopDialogVisible.value = false;
+    await returnShareChargeOrder(returnForm);
+    ElMessage.success('归还成功');
+    returnDialogVisible.value = false;
     handleRefresh();
   } catch {
-    ElMessage.error('停止充电失败');
+    ElMessage.error('归还失败');
   }
 };
 
@@ -669,31 +669,31 @@ const alarmColumns = [
       </template>
     </ElDialog>
 
-    <!-- 停止充电弹窗 -->
+    <!-- 归还弹窗 -->
     <ElDialog
-      v-model="stopDialogVisible"
-      title="停止充电"
+      v-model="returnDialogVisible"
+      title="归还"
       width="500px"
       append-to-body
     >
-      <el-form :model="stopForm" label-width="80px">
+      <el-form :model="returnForm" label-width="80px">
         <el-form-item label="订单ID">
-          <el-input v-model="stopForm.id" disabled />
+          <el-input v-model="returnForm.id" disabled />
         </el-form-item>
         <el-form-item label="备注">
           <el-input
-            v-model="stopForm.remark"
+            v-model="returnForm.remark"
             type="textarea"
             rows="3"
-            placeholder="请输入停止充电备注"
+            placeholder="请输入归还备注"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="stopDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleStopSubmit">
-            确认停止
+          <el-button @click="returnDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleReturnSubmit">
+            确认归还
           </el-button>
         </div>
       </template>
@@ -777,10 +777,10 @@ const alarmColumns = [
             @click="handleOpenDetail(row)"
           />
           <IconButton
-            content="停止"
-            v-if="row.status === 'charging'"
+            content="归还"
+            v-if="row.status === 'lending'"
             icon-name="video-pause"
-            @click="handleStop(row)"
+            @click="handleReturn(row)"
           />
           <IconButton
             content="支付"

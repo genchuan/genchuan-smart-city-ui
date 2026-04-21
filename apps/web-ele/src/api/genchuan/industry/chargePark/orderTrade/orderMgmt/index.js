@@ -186,3 +186,27 @@ export function getShareChargeOrderPage(params) {
 export function exportShareChargeOrderExcel() {
   return requestClient.download('/ordertrade/share-charge-order/export');
 }
+/** 分享充电订单归还 */
+export function returnShareChargeOrder(data) {
+  return requestClient.put('/ordertrade/share-charge-order/return', data);
+}
+/** 分享充电订单退款 */
+export function refundShareChargeOrder(data) {
+  return requestClient.put('/ordertrade/share-charge-order/refund', data);
+}
+/** 分享充电订单支付 */
+export function payShareChargeOrder(data) {
+  return requestClient.put('/ordertrade/share-charge-order/pay', data);
+}
+/** 分享充电订单发票 */
+export function invoiceShareChargeOrder(data) {
+  return requestClient.put('/ordertrade/share-charge-order/invoice', data);
+}
+/** 分享充电订单取消 */
+export function cancelShareChargeOrder(data) {
+  return requestClient.put('/ordertrade/share-charge-order/cancel', data);
+}
+/** 分享充电订单图表 */
+export function getShareChargeOrderChart() {
+  return requestClient.get('/ordertrade/share-charge-order/chart');
+}
