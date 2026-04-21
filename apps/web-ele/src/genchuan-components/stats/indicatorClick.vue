@@ -71,7 +71,7 @@ const handleClick = () => {
 
 <style scoped lang="scss">
 .stat-card {
-  height: 102px;
+  //height: 102px;
   position: relative;
   background-color: hsl(var(--card));
   border-radius: 8px;
