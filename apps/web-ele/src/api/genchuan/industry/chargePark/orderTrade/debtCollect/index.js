@@ -48,3 +48,21 @@ export function exportDebtRecordExcel() {
 export function getDebtRecordChart() {
   return requestClient.get('/ordertrade/debt-record/chart');
 }
+/** 欠费记录分页 */
+export function getDebtRecordCollectPage(params) {
+  return requestClient.get('/ordertrade/arrear-record/page', {
+    params,
+  });
+}
+/** 催缴 */
+export function remindDebtRecordCollect(data) {
+  return requestClient.put('/ordertrade/arrear-record/remind', data);
+}
+/** 催缴导出 */
+export function exportDebtRecordCollectExcel() {
+  return requestClient.download('/ordertrade/arrear-record/export');
+}
+/** 催缴图表 */
+export function getDebtRecordCollectChart() {
+  return requestClient.get('/ordertrade/arrear-record/chart');
+}

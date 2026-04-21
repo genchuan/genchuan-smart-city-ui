@@ -19,7 +19,7 @@ const arrowChange = () => {
 };
 const tabArray = ref([
   {
-    label: '共享充电车订单',
+    label: '欠费记录',
     components: Table,
     showSecondary: true,
     secondShow: false,
@@ -27,7 +27,7 @@ const tabArray = ref([
     arrowState: false,
   },
 ]);
-const activeName = ref('共享充电车订单');
+const activeName = ref('欠费记录');
 const secondShow = ref(false);
 </script>
 <template>
