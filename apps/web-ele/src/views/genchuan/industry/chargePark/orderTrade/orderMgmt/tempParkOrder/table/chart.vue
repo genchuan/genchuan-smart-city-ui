@@ -177,10 +177,9 @@ onMounted(() => {
         v-bind="item"
       />
     </div>
-    <div ref="lineChartRef" style="width: 500px; height: 330px"></div>
+    <div ref="lineChartRef" class="simple-bar-chart"></div>
     <Columnar
-      width="500px"
-      height="330px"
+       class="simple-bar-chart"
       title="订单类型分布"
       :x-data="
         state.typeData.map(

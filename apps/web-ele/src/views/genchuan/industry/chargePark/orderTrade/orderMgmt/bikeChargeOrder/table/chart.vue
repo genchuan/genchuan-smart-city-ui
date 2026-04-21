@@ -263,7 +263,7 @@ onMounted(() => {
         v-bind="item"
       />
     </div>
-    <div ref="lineChartRef" style="width: 500px; height: 330px"></div>
-    <div ref="barChartRef" style="width: 500px; height: 330px"></div>
+    <div ref="lineChartRef" class="simple-bar-chart"></div>
+    <div ref="barChartRef"  class="simple-bar-chart"></div>
   </div>
 </template>

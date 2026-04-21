@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 
+import Chart from './table/chart.vue';
 import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
@@ -31,7 +32,7 @@ const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <!-- <Parkchart v-if="tabArray[0].arrowShow" /> -->
+    <Chart />
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
