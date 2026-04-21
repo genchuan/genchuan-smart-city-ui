@@ -23,7 +23,9 @@ export function importInspectPlan(file) {
 
 /** 导出巡检计划数据 */
 export function exportInspectPlan(params) {
-  return requestClient.download('/inspectop/inspect-plan/export-excel', { params });
+  return requestClient.download('/inspectop/inspect-plan/export-excel', {
+    params,
+  });
 }
 
 /** 获取巡检计划详情 */
