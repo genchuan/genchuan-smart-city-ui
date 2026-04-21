@@ -320,8 +320,8 @@ function openProcessDrawer(row) {
 }
 
 function openBatchProcessDrawer() {
-  const rows = checkedRows.value.filter((item) =>
-    !isProcessStatusLabel(item.processStatus, '已处理'),
+  const rows = checkedRows.value.filter(
+    (item) => !isProcessStatusLabel(item.processStatus, '已处理'),
   );
   if (rows.length === 0) {
     ElMessage.warning('请先勾选未处理的占位数据');

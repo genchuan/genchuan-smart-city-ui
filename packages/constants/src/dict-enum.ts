@@ -221,7 +221,7 @@ const CHGPARKMGT_DICT = {
   POINT_ACTIVITY_STATUS: 'point_activity_status', // 车位类型
 
   // 设备监控 - 车位状态监测
-  SPACE_MONITOR_STATUS: 'space_monitor_monitor_status', // 车位监测状态
+  SPACE_MONITOR_STATUS: 'space_monitor_status', // 车位监测状态
   SPACE_MONITOR_ALARM_STATUS: 'space_monitor_alarm_status', // 车位告警状态
   SPACE_MONITOR_PROCESS_STATUS: 'space_monitor_process_status', // 车位处理状态
 
