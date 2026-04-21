@@ -25,3 +25,22 @@ export function batchIdentifyDebtIdentify(data) {
 export function getDebtIdentifyChart() {
   return requestClient.get('/ordertrade/debt-identify/chart');
 } 
+/*逃费记录分页 */
+export function getDebtRecordPage(params) {
+  return requestClient.get('/ordertrade/debt-record/page', {
+    params,
+  });
+}
+
+/** 逃费记录追缴 */
+export function startCollectDebtRecord(data) {
+  return requestClient.put('/ordertrade/debt-record/start-collect', data);
+}
+/** 逃费记录追缴进度 */
+export function updateCollectProgress(data) {
+  return requestClient.put('/ordertrade/debt-record/update-progress', data);
+}
+/** 逃费记录导出 */
+export function exportDebtRecordExcel() {
+  return requestClient.download('/ordertrade/debt-record/export');
+}

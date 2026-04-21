@@ -3,25 +3,22 @@ import { onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
-import { getShareChargeOrderChart } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
+import { getDebtIdentifyChart } from '#/api/genchuan/industry/chargePark/orderTrade/debtCollect/index.js';
 import Card from '#/components/stats/card.vue';
 import Columnar from '#/components/stats/columnar.vue';
 
-// 订单状态映射
+// 逃费识别状态映射
 const statusMap = {
-  lending: { label: '借出中', type: 'primary' },
-  pending_pay: { label: '待支付', type: 'warning' },
-  paid: { label: '已支付', type: 'success' },
-  completed: { label: '已完成', type: 'success' },
-  cancelled: { label: '已取消', type: 'info' },
-  refunding: { label: '退款中', type: 'danger' },
+  pending: { label: '待识别', type: 'warning' },
+  identified: { label: '已识别', type: 'success' },
+  marked: { label: '已标记（非逃费）', type: 'info' },
 };
 
 const state = reactive({
   cardList: [
-    { title: '今日订单量', value: 0, color: '#13ce66' },
-    { title: '今日营收', value: 0, color: '#4ECDC4' },
-    { title: '今日借出数', value: 0, color: '#FF6B6B' },
+    { title: '待识别数量', value: 0, color: '#13ce66' },
+    { title: '识别成功率(%)', value: 0, color: '#4ECDC4' },
+    { title: '识别总数', value: 0, color: '#FF6B6B' },
   ],
   trendData: [],
   typeData: [],
@@ -30,54 +27,54 @@ const state = reactive({
 const lineChartRef = ref(null);
 let lineChartInstance = null;
 
-// 获取订单图表数据
+// 获取逃费识别图表数据
 const fetchOrderChartData = async () => {
   try {
-    const res = await getShareChargeOrderChart();
-    state.cardList[0].value = res.todayOrderCount;
-    state.cardList[1].value = res.todayRevenue;
-    state.cardList[2].value = res.todayLendCount;
+    const res = await getDebtIdentifyChart();
+    state.cardList[0].value = res.waitIdentifyCount;
+    state.cardList[1].value = res.identifySuccessRate;
+    // 计算识别总数
+    const identifiedCount = res.waitIdentifyCount / (1 - res.identifySuccessRate / 100) - res.waitIdentifyCount || 0;
+    state.cardList[2].value = Math.round(res.waitIdentifyCount + identifiedCount);
     // 如果trendData为空，使用假数据
     state.trendData =
       res.trendData && res.trendData.length > 0
         ? res.trendData
         : [
-            { date: '2025-04-01', count: 12 },
-            { date: '2025-04-02', count: 15 },
-            { date: '2025-04-03', count: 8 },
-            { date: '2025-04-04', count: 20 },
-            { date: '2025-04-05', count: 14 },
+            { date: '2025-04-01', count: 5 },
+            { date: '2025-04-02', count: 8 },
+            { date: '2025-04-03', count: 3 },
+            { date: '2025-04-04', count: 10 },
+            { date: '2025-04-05', count: 6 },
           ];
     // 如果stationData为空，使用假数据
     state.typeData =
       res.stationData && Array.isArray(res.stationData) && res.stationData.length > 0
         ? res.stationData
         : [
-            { count: 2, status: 'completed' },
-            { count: 4, status: 'paid' },
-            { count: 1, status: 'lending' },
-            { count: 1, status: 'cancelled' },
+            { count: 5, status: 'pending' },
+            { count: 12, status: 'identified' },
+            { count: 3, status: 'marked' },
           ];
     // 更新折线图
     updateLineChart();
   } catch (error) {
-    console.error('获取订单图表数据失败:', error);
+    console.error('获取逃费识别图表数据失败:', error);
     // 接口调用失败时使用假数据
-    state.cardList[0].value = 50;
-    state.cardList[1].value = 1500;
-    state.cardList[2].value = 30;
+    state.cardList[0].value = 10;
+    state.cardList[1].value = 90;
+    state.cardList[2].value = 100;
     state.trendData = [
-      { date: '2025-04-01', count: 12 },
-      { date: '2025-04-02', count: 15 },
-      { date: '2025-04-03', count: 8 },
-      { date: '2025-04-04', count: 20 },
-      { date: '2025-04-05', count: 14 },
+      { date: '2025-04-01', count: 5 },
+      { date: '2025-04-02', count: 8 },
+      { date: '2025-04-03', count: 3 },
+      { date: '2025-04-04', count: 10 },
+      { date: '2025-04-05', count: 6 },
     ];
     state.typeData = [
-      { count: 2, status: 'completed' },
-      { count: 4, status: 'paid' },
-      { count: 1, status: 'lending' },
-      { count: 1, status: 'cancelled' },
+      { count: 5, status: 'pending' },
+      { count: 12, status: 'identified' },
+      { count: 3, status: 'marked' },
     ];
     // 更新折线图
     updateLineChart();
@@ -92,7 +89,7 @@ const initLineChart = () => {
 
   const option = {
     title: {
-      text: '订单量趋势',
+      text: '识别数量趋势',
       left: 'center',
       textStyle: {
         color: '#6E7E91',
@@ -188,8 +185,8 @@ onMounted(() => {
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>
     <Columnar
-     class="simple-bar-chart"
-      title="订单类型分布"
+      class="simple-bar-chart"
+      title="识别状态分布"
       :x-data="
         state.typeData.map(
           (item) => statusMap[item.status]?.label || item.status,
