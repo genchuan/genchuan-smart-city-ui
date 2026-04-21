@@ -49,14 +49,13 @@ export function getColumnsByStatus(status) {
     { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
     { field: 'creator', title: '创建人', minWidth: 120, slots: { default: 'creator' } },
     { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updater', title: '更新人', minWidth: 120 },
     { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];
   allColumns.push({
     title: '操作',
-    width: 240,
+    width: 200,
     fixed: 'right',
     slots: { default: 'actions' },
   });

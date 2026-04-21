@@ -1,14 +1,14 @@
 <script setup>
-import { computed, defineProps, toRefs } from 'vue';
-import { useVbenDrawer } from '@vben/common-ui';
+import {computed, defineProps, toRefs} from 'vue';
+import {useVbenDrawer} from '@vben/common-ui';
 
 const props = defineProps({
-  detailObj: { type: Object, required: true, default: () => ({}) },
-  title: { type: String, default: '' },
+  detailObj: {type: Object, required: true, default: () => ({})},
+  title: {type: String, default: ''},
 });
 const emit = defineEmits(['refresh']);
 
-const { detailObj, title } = toRefs(props);
+const {detailObj, title} = toRefs(props);
 
 // 时间戳格式化
 const formatTimestamp = (timestamp) => {
@@ -37,7 +37,7 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   onCancel: () => detailDrawerApi.close(),
 });
 
-defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.close() });
+defineExpose({open: () => detailDrawerApi.open(), close: () => detailDrawerApi.close()});
 </script>
 
 <template>
@@ -45,34 +45,91 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
     <div class="detail-card">
       <!-- 基础信息 -->
       <div class="detail-section">📊 考评基础信息</div>
-      <div class="detail-card-row"><div class="detail-row-left">班级：</div><div class="detail-row-right">{{ detailObj.className || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">考评类型：</div><div class="detail-row-right">{{ detailObj.assessType || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">统计周期：</div><div class="detail-row-right">{{ detailObj.cycle || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">考评得分：</div><div class="detail-row-right">{{ detailObj.score || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">班级排名：</div><div class="detail-row-right">{{ detailObj.rank || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">考评人：</div><div class="detail-row-right">{{ detailObj.assessUser || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">发布时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.publishTime) }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">状态：</div><div class="detail-row-right">{{ detailObj.status || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">备注：</div><div class="detail-row-right">{{ detailObj.remark || '-' }}</div></div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">班级：</div>
+        <div class="detail-row-right">{{ detailObj.className || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">考评类型：</div>
+        <div class="detail-row-right">{{ detailObj.assessType || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">统计周期：</div>
+        <div class="detail-row-right">{{ detailObj.cycle || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">考评得分：</div>
+        <div class="detail-row-right">{{ detailObj.score || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">班级排名：</div>
+        <div class="detail-row-right">{{ detailObj.rankNo || '-' }}</div>
+      </div>   <!-- rank → rankNo -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">考评人：</div>
+        <div class="detail-row-right">{{ detailObj.assessUser || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">发布时间：</div>
+        <div class="detail-row-right">{{ formatTimestamp(detailObj.publishTime) }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">状态：</div>
+        <div class="detail-row-right">{{ detailObj.status || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">备注：</div>
+        <div class="detail-row-right">{{ detailObj.remark || '-' }}</div>
+      </div>
 
       <!-- 得分明细（模拟） -->
       <div class="detail-section">📈 得分明细</div>
-      <div class="detail-card-row"><div class="detail-row-left">教室卫生得分：</div><div class="detail-row-right">{{ detailObj.classCleanScore || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">早操得分：</div><div class="detail-row-right">{{ detailObj.morningExerciseScore || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">文明班级得分：</div><div class="detail-row-right">{{ detailObj.civilClassScore || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">黑板报得分：</div><div class="detail-row-right">{{ detailObj.blackboardScore || '-' }}</div></div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">教室卫生得分：</div>
+        <div class="detail-row-right">{{ detailObj.classCleanScore || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">早操得分：</div>
+        <div class="detail-row-right">{{ detailObj.morningExerciseScore || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">文明班级得分：</div>
+        <div class="detail-row-right">{{ detailObj.civilClassScore || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">黑板报得分：</div>
+        <div class="detail-row-right">{{ detailObj.blackboardScore || '-' }}</div>
+      </div>
 
       <!-- 排名数据 -->
       <div class="detail-section">🏆 排名数据</div>
-      <div class="detail-card-row"><div class="detail-row-left">本期总排名：</div><div class="detail-row-right">{{ detailObj.rank || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">较上期变化：</div><div class="detail-row-right">{{ detailObj.rankChange || '-' }}</div></div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">本期总排名：</div>
+        <div class="detail-row-right">{{ detailObj.rankNo || '-' }}</div>
+      </div>   <!-- rank → rankNo -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">较上期变化：</div>
+        <div class="detail-row-right">{{ detailObj.rankChange || '-' }}</div>
+      </div>
 
       <!-- 操作日志 -->
       <div class="detail-section">📝 操作日志</div>
-      <div class="detail-card-row"><div class="detail-row-left">创建人：</div><div class="detail-row-right">{{ detailObj.creator || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">创建时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.createTime) }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">更新人：</div><div class="detail-row-right">{{ detailObj.updater || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">更新时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.updateTime) }}</div></div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">创建人：</div>
+        <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">创建时间：</div>
+        <div class="detail-row-right">{{ formatTimestamp(detailObj.createTime) }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">更新人：</div>
+        <div class="detail-row-right">{{ detailObj.updater || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">更新时间：</div>
+        <div class="detail-row-right">{{ formatTimestamp(detailObj.updateTime) }}</div>
+      </div>
     </div>
   </DetailDrawer>
 </template>
@@ -86,12 +143,17 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
   background-color: #f9fafb;
   border-radius: 8px;
 }
+
 .detail-card-row {
   display: flex;
   align-items: flex-start;
   padding: 12px 0;
   border-bottom: 1px solid #f0f0f0;
-  &:last-child { border-bottom: none; }
+
+  &:last-child {
+    border-bottom: none;
+  }
+
   &:hover {
     padding-right: 8px;
     padding-left: 8px;
@@ -102,6 +164,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
     transition: all 0.2s ease;
   }
 }
+
 .detail-row-left {
   flex-shrink: 0;
   width: 200px;
@@ -110,6 +173,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
   line-height: 18px;
   color: #606266;
 }
+
 .detail-row-right {
   flex: 1;
   padding-right: 10px;
@@ -118,6 +182,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
   color: #303133;
   word-break: break-all;
 }
+
 .detail-section {
   font-weight: 600;
   font-size: 16px;
@@ -125,6 +190,9 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
   padding-bottom: 4px;
   border-bottom: 1px solid #e0e0e0;
   color: #6E7E91;
-  &:first-child { margin-top: 0; }
+
+  &:first-child {
+    margin-top: 0;
+  }
 }
 </style>

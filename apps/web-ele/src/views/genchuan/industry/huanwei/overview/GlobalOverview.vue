@@ -1,7 +1,7 @@
 <template>
   <div class="mainbox-content">
     <!-- 左侧考核得分 -->
-    <div class="panel left" style="min-width: 20vw;">
+    <div class="panel left" style="min-width: 20vw">
       <div class="panel-header">
         <h3>考核得分</h3>
         <div class="filter-controls">
@@ -25,7 +25,9 @@
         <div class="average-value">{{ averageScore }}</div>
         <div class="average-range">
           <span class="range-label">得分范围：</span>
-          <span class="range-value">{{ scoreRange.min }} - {{ scoreRange.max }}</span>
+          <span class="range-value"
+            >{{ scoreRange.min }} - {{ scoreRange.max }}</span
+          >
         </div>
       </div>
       <div class="scores-list">
@@ -41,32 +43,59 @@
             :key="item.region"
             :class="['score-item', `rank-${item.rank}`]"
           >
-            <div class="item-rank"><span class="rank-number">{{ item.rank }}</span></div>
+            <div class="item-rank">
+              <span class="rank-number">{{ item.rank }}</span>
+            </div>
             <div class="item-region">{{ item.region }}</div>
-            <div class="item-score" :style="{ color: getScoreColor(item.score) }">{{ item.score }}</div>
-            <div class="item-trend" :class="{
-              'trend-up': getTrendIcon(item.region) === '↑',
-              'trend-down': getTrendIcon(item.region) === '↓',
-              'trend-equal': getTrendIcon(item.region) === '→'
-            }">{{ getTrendIcon(item.region) }}</div>
+            <div
+              class="item-score"
+              :style="{ color: getScoreColor(item.score) }"
+            >
+              {{ item.score }}
+            </div>
+            <div
+              class="item-trend"
+              :class="{
+                'trend-up': getTrendIcon(item.region) === '↑',
+                'trend-down': getTrendIcon(item.region) === '↓',
+                'trend-equal': getTrendIcon(item.region) === '→',
+              }"
+            >
+              {{ getTrendIcon(item.region) }}
+            </div>
           </div>
         </div>
       </div>
       <div class="legend">
-        <div class="legend-item"><span class="legend-color" style="background:#00ff99;"></span><span class="legend-text">优秀(≥90)</span></div>
-        <div class="legend-item"><span class="legend-color" style="background:#00ccff;"></span><span class="legend-text">良好(≥85)</span></div>
-        <div class="legend-item"><span class="legend-color" style="background:#ffcc00;"></span><span class="legend-text">合格(≥80)</span></div>
-        <div class="legend-item"><span class="legend-color" style="background:#ff3333;"></span><span class="legend-text">不合格(<80)</span></div>
+        <div class="legend-item">
+          <span class="legend-color" style="background: #00ff99"></span
+          ><span class="legend-text">优秀(≥90)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color" style="background: #00ccff"></span
+          ><span class="legend-text">良好(≥85)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color" style="background: #ffcc00"></span
+          ><span class="legend-text">合格(≥80)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color" style="background: #ff3333"></span
+          ><span class="legend-text">不合格(<80)</span>
+        </div>
       </div>
       <div class="panel-footer"></div>
     </div>
 
     <!-- 中间地图 -->
-    <div class="panel middle" style="min-width: 20vw;" ref="middle">
+    <div class="panel middle" style="min-width: 20vw" ref="middle">
       <div class="header-actions">
         <div class="actions-left"><p>地图</p></div>
         <div class="actions-right">
-          <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('middle')">
+          <button
+            class="panel-fullscreen-btn"
+            @click="togglePanelFullscreen('middle')"
+          >
             <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
           </button>
         </div>
@@ -76,21 +105,42 @@
     </div>
 
     <!-- 右侧事件汇总 -->
-    <div class="panel right" ref="rightBottomPanel" style="min-width: 20vw;">
+    <div class="panel right" ref="rightBottomPanel" style="min-width: 20vw">
       <div class="header-actions">
         <div class="actions-left"><p>处理事件汇总</p></div>
         <div class="actions-right">
-          <button class="panel-fullscreen-btn" @click="togglePanelFullscreen('rightBottomPanel')">
+          <button
+            class="panel-fullscreen-btn"
+            @click="togglePanelFullscreen('rightBottomPanel')"
+          >
             <el-icon color="#00ccff" size="16"><FullScreen /></el-icon>
           </button>
         </div>
       </div>
       <div class="table-box1">
-        <ElTable class="table1" :data="eventList" border size="small" width="100%" height="100%"
-                 table-layout="fixed" highlight-current-row>
-          <ElTableColumn prop="region" label="区域" align="center" min-width="100px" />
+        <ElTable
+          class="table1"
+          :data="eventList"
+          border
+          size="small"
+          width="100%"
+          height="100%"
+          table-layout="fixed"
+          highlight-current-row
+        >
+          <ElTableColumn
+            prop="region"
+            label="区域"
+            align="center"
+            min-width="100px"
+          />
           <ElTableColumn prop="type" label="类型" align="center" />
-          <ElTableColumn prop="time" label="时间" align="center" min-width="100px" />
+          <ElTableColumn
+            prop="time"
+            label="时间"
+            align="center"
+            min-width="100px"
+          />
           <ElTableColumn prop="status" label="状态" align="center">
             <template #default="scope">
               <ElTag :type="getStatusTagType(scope.row.status)" size="small">
@@ -99,9 +149,16 @@
             </template>
           </ElTableColumn>
           <ElTableColumn prop="person" label="负责人" align="center" />
-          <ElTableColumn prop="completionRate" label="处理完成率" align="center" min-width="100px">
+          <ElTableColumn
+            prop="completionRate"
+            label="处理完成率"
+            align="center"
+            min-width="100px"
+          >
             <template #default="scope">
-              <span v-if="scope.row.status === '已完成'">{{ scope.row.completionRate }}%</span>
+              <span v-if="scope.row.status === '已完成'"
+                >{{ scope.row.completionRate }}%</span
+              >
               <span v-else>-</span>
             </template>
           </ElTableColumn>
@@ -113,142 +170,158 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, getCurrentInstance } from 'vue'
-import { FullScreen } from "@element-plus/icons-vue"
-import screenFull from 'screenfull'
-import { ElMessage, ElTable, ElTableColumn, ElTag } from 'element-plus'
-import MapCommom from '#/views/genchuan/industry/huanwei/overview/MapCommon.vue'
+import { ref, computed, nextTick, getCurrentInstance } from 'vue';
+import { FullScreen } from '@element-plus/icons-vue';
+import screenFull from 'screenfull';
+import { ElMessage, ElTable, ElTableColumn, ElTag } from 'element-plus';
+import MapCommom from '#/views/genchuan/industry/huanwei/overview/MapCommon.vue';
 // 导入模拟数据
 import {
   mockAssessmentData,
   eventList as mockEventList,
-  deviceIndicatorsMock
-} from './mockData'  // 根据实际路径调整
+  deviceIndicatorsMock,
+} from './mockData'; // 根据实际路径调整
 
 // 获取当前组件实例（用于面板全屏）
-const instance = getCurrentInstance()
+const instance = getCurrentInstance();
 
 // 考核得分相关
-const timeDimension = ref('日')
-const assessmentScores = ref([])
-const regions = ['东埔街道','源西街道','上城街道','新江街道','源南镇','高埔岗街道','埔前镇','转运站']
+const timeDimension = ref('日');
+const assessmentScores = ref([]);
+const regions = [
+  '东埔街道',
+  '源西街道',
+  '上城街道',
+  '新江街道',
+  '源南镇',
+  '高埔岗街道',
+  '埔前镇',
+  '转运站',
+];
 
 // 维度映射
 const dimensionMap = {
-  '日': 'day',
-  '月': 'month',
-  '季': 'quarter',
-  '年': 'year'
-}
+  日: 'day',
+  月: 'month',
+  季: 'quarter',
+  年: 'year',
+};
 
 // 设备指标
-const deviceIndicators = ref(deviceIndicatorsMock)
+const deviceIndicators = ref(deviceIndicatorsMock);
 
 // 事件列表
-const eventList = ref(mockEventList)
+const eventList = ref(mockEventList);
 
 // 获取当前维度数据
 const getCurrentDimensionData = () => {
-  const dimKey = dimensionMap[timeDimension.value]
-  return mockAssessmentData[dimKey]
-}
+  const dimKey = dimensionMap[timeDimension.value];
+  return mockAssessmentData[dimKey];
+};
 
 // 排名得分
 const getRankedScores = () => {
-  const data = getCurrentDimensionData()
-  return regions.map(r => ({
-    region: r,
-    score: data[r].current,
-    rank: 0
-  }))
-    .sort((a,b) => b.score - a.score)
-    .map((item,i) => ({ ...item, rank: i+1 }))
-}
+  const data = getCurrentDimensionData();
+  return regions
+    .map((r) => ({
+      region: r,
+      score: data[r].current,
+      rank: 0,
+    }))
+    .sort((a, b) => b.score - a.score)
+    .map((item, i) => ({ ...item, rank: i + 1 }));
+};
 
 // 平均分
 const averageScore = computed(() => {
-  const data = getCurrentDimensionData()
-  const sum = regions.reduce((acc, region) => acc + data[region].current, 0)
-  return parseFloat((sum / regions.length).toFixed(1))
-})
+  const data = getCurrentDimensionData();
+  const sum = regions.reduce((acc, region) => acc + data[region].current, 0);
+  return parseFloat((sum / regions.length).toFixed(1));
+});
 
 // 得分范围
 const scoreRange = computed(() => {
-  const data = getCurrentDimensionData()
-  const scores = regions.map(r => data[r].current)
+  const data = getCurrentDimensionData();
+  const scores = regions.map((r) => data[r].current);
   return {
     min: Math.min(...scores).toFixed(1),
-    max: Math.max(...scores).toFixed(1)
-  }
-})
+    max: Math.max(...scores).toFixed(1),
+  };
+});
 
 // 趋势图标
 const getTrendIcon = (region) => {
-  const data = getCurrentDimensionData()
-  const current = data[region].current
-  const previous = data[region].previous
-  if (current > previous) return '↑'
-  if (current < previous) return '↓'
-  return '→'
-}
+  const data = getCurrentDimensionData();
+  const current = data[region].current;
+  const previous = data[region].previous;
+  if (current > previous) return '↑';
+  if (current < previous) return '↓';
+  return '→';
+};
 
 // 得分颜色
 const getScoreColor = (score) => {
-  if (score >= 90) return '#00ff99'
-  if (score >= 85) return '#00ccff'
-  if (score >= 80) return '#ffcc00'
-  return '#ff3333'
-}
+  if (score >= 90) return '#00ff99';
+  if (score >= 85) return '#00ccff';
+  if (score >= 80) return '#ffcc00';
+  return '#ff3333';
+};
 
 // 状态标签类型
 const getStatusTagType = (status) => {
   switch (status) {
-    case '已完成': return 'success'
-    case '处理中': return 'warning'
-    case '待处理': return 'danger'
-    default: return 'info'
+    case '已完成':
+      return 'success';
+    case '处理中':
+      return 'warning';
+    case '待处理':
+      return 'danger';
+    default:
+      return 'info';
   }
-}
+};
 
 // 更新得分
 const updateAssessmentScores = () => {
-  assessmentScores.value = getRankedScores()
-}
+  assessmentScores.value = getRankedScores();
+};
 
 // 时间维度变化
 const handleTimeDimensionChange = (val) => {
-  timeDimension.value = val
-  updateAssessmentScores()
-}
+  timeDimension.value = val;
+  updateAssessmentScores();
+};
 
 // 地图图例数据
 const deviceStatsForMap = computed(() => ({
   total: deviceIndicators.value.tbDeviceTotalCount,
   online: deviceIndicators.value.tbDeviceOnlineCount,
-  offline: deviceIndicators.value.tbDeviceTotalCount - deviceIndicators.value.tbDeviceOnlineCount,
-  fault: deviceIndicators.value.tbDeviceFaultCount
-}))
+  offline:
+    deviceIndicators.value.tbDeviceTotalCount -
+    deviceIndicators.value.tbDeviceOnlineCount,
+  fault: deviceIndicators.value.tbDeviceFaultCount,
+}));
 
 // 面板全屏功能
 const togglePanelFullscreen = (panelRefName) => {
   if (!screenFull.isEnabled) {
-    ElMessage.warning('您的浏览器不支持全屏功能')
-    return
+    ElMessage.warning('您的浏览器不支持全屏功能');
+    return;
   }
-  const panel = instance.refs[panelRefName]
+  const panel = instance.refs[panelRefName];
   if (!panel) {
-    ElMessage.error('未找到面板元素')
-    return
+    ElMessage.error('未找到面板元素');
+    return;
   }
   if (screenFull.isFullscreen && document.fullscreenElement === panel) {
-    screenFull.exit()
+    screenFull.exit();
   } else {
-    screenFull.request(panel)
+    screenFull.request(panel);
   }
-}
+};
 
 // 初始化
-updateAssessmentScores()
+updateAssessmentScores();
 </script>
 
 <style lang="scss" scoped>
@@ -266,7 +339,7 @@ updateAssessmentScores()
 .panel {
   position: relative;
   border: 0.2vh solid rgba(25, 186, 139, 0.17);
-  background: url("../images/line(1).png") rgba(255, 255, 255, .04);
+  background: url('../images/line(1).png') rgba(255, 255, 255, 0.04);
   display: flex;
   flex-direction: column;
   min-height: 0;

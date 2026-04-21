@@ -219,7 +219,16 @@ const CHGPARKMGT_DICT = {
   // 积分活动
   POINT_ACTIVITY_TYPE: 'point_activity_type', // 活动类型
   POINT_ACTIVITY_STATUS: 'point_activity_status', // 车位类型
-
+  // 积分抽奖
+  POINT_LOTTERY_SYNC_STATUS: 'point_lottery_sync_status', // 同步状态
+  POINT_LOTTERY_STATUS: 'point_lottery_status', // 记录状态
+  // 规则配置
+  RULE_CONFIG_TYPE: 'rule_config_type', // 规则类型
+  RULE_CONFIG_STATUS: 'rule_config_status', // 规则状态
+  RULE_CONFIG_SCENE: 'rule_config_scene', // 适用场景
+  // 奖品管理
+  PRIZE_MGMT_TYPE: 'prize_mgmt_type', // 奖品类型
+  PRIZE_MGMT_STATUS: 'prize_mgmt_status', // 奖品状态
   // 设备监控 - 车位状态监测
   SPACE_MONITOR_STATUS: 'space_monitor_status', // 车位监测状态
   SPACE_MONITOR_ALARM_STATUS: 'space_monitor_alarm_status', // 车位告警状态
@@ -287,6 +296,7 @@ const DICT_TYPE = {
   ...DATA_DICT,
   ...SHUNCHANG_DICT,
   ...ENERGYCHARGE_DICT,
+  ...CHGPARKMGT_DICT,
 } as const;
 
 export { DICT_TYPE };

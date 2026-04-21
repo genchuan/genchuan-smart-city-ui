@@ -10,7 +10,7 @@ import {
   getCycleTrend,
 } from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/assessMgmt/data.js';
 
-// 模拟数据
+// 模拟数据（保持原样，格式为对象）
 const mockOverview = {
   totalCount: 12,
   avgScore: 89.50,
@@ -28,16 +28,37 @@ const mockOverview = {
 };
 
 const mockDimensionScore = [
-  { className: '高一(1)班', classCleanScore: 95, morningExerciseScore: 92, civilClassScore: 98, blackboardScore: 90, totalScore: 93.75 },
-  { className: '高一(2)班', classCleanScore: 88, morningExerciseScore: 85, civilClassScore: 90, blackboardScore: 87, totalScore: 87.5 },
-  { className: '高二(1)班', classCleanScore: 92, morningExerciseScore: 94, civilClassScore: 91, blackboardScore: 93, totalScore: 92.5 },
+  {
+    className: '高一(1)班',
+    classCleanScore: 95,
+    morningExerciseScore: 92,
+    civilClassScore: 98,
+    blackboardScore: 90,
+    totalScore: 93.75
+  },
+  {
+    className: '高一(2)班',
+    classCleanScore: 88,
+    morningExerciseScore: 85,
+    civilClassScore: 90,
+    blackboardScore: 87,
+    totalScore: 87.5
+  },
+  {
+    className: '高二(1)班',
+    classCleanScore: 92,
+    morningExerciseScore: 94,
+    civilClassScore: 91,
+    blackboardScore: 93,
+    totalScore: 92.5
+  },
 ];
 
 const mockTrend = [
-  { cycleName: '第1周', avgScore: 90.5, rank: 2 },
-  { cycleName: '第2周', avgScore: 92, rank: 1 },
-  { cycleName: '第3周', avgScore: 93.5, rank: 1 },
-  { cycleName: '第4周', avgScore: 95, rank: 1 },
+  {cycleName: '第1周', avgScore: 90.5, rank: 2},
+  {cycleName: '第2周', avgScore: 92, rank: 1},
+  {cycleName: '第3周', avgScore: 93.5, rank: 1},
+  {cycleName: '第4周', avgScore: 95, rank: 1},
 ];
 
 const loading = ref(true);
@@ -52,19 +73,19 @@ const cardList = computed(() => {
   const topRankClass = overviewData.value.topRankClass || '-';
   const published = overviewData.value.statusCount?.published || 0;
   return [
-    { title: '本期考评总数', value: total, color: '#409EFF', status: 'total' },
-    { title: '平均得分', value: avgScore, color: '#67C23A', status: 'avgScore' },
-    { title: '排名第一班级', value: topRankClass, color: '#E6A23C', status: 'topRank' },
-    { title: '已发布数', value: published, color: '#F56C6C', status: 'published' },
+    {title: '本期考评总数', value: total, color: '#409EFF', status: 'total'},
+    {title: '平均得分', value: avgScore, color: '#67C23A', status: 'avgScore'},
+    {title: '排名第一班级', value: topRankClass, color: '#E6A23C', status: 'topRank'},
+    {title: '已发布数', value: published, color: '#F56C6C', status: 'published'},
   ];
 });
 
 // 雷达图数据：将 dimensionData 转换为雷达图需要的格式（每个班级一个系列）
 const radarIndicator = [
-  { name: '教室卫生', max: 100 },
-  { name: '早操', max: 100 },
-  { name: '文明班级', max: 100 },
-  { name: '黑板报', max: 100 },
+  {name: '教室卫生', max: 100},
+  {name: '早操', max: 100},
+  {name: '文明班级', max: 100},
+  {name: '黑板报', max: 100},
 ];
 const radarSeries = computed(() => {
   return dimensionData.value.map(item => ({
@@ -81,8 +102,8 @@ const radarSeries = computed(() => {
 // 折线图数据
 const lineXData = computed(() => trendData.value.map(item => item.cycleName));
 const lineSeriesData = computed(() => [
-  { name: '平均得分', data: trendData.value.map(item => item.avgScore) },
-  { name: '班级排名', data: trendData.value.map(item => item.rank) },
+  {name: '平均得分', data: trendData.value.map(item => item.avgScore)},
+  {name: '班级排名', data: trendData.value.map(item => item.rank)},
 ]);
 
 const emit = defineEmits(['radarClick', 'lineClick', 'cardSelect']);
@@ -92,24 +113,66 @@ const handleCardClick = (cardInfo) => {
 };
 
 const handleRadarClick = (params) => {
-  // params 包含班级名称
-  emit('radarClick', { className: params.name });
+  emit('radarClick', {className: params.name});
 };
 
 const handleLineClick = (params) => {
-  // params 包含周期名称
-  emit('lineClick', { cycleName: params.name });
+  emit('lineClick', {cycleName: params.name});
+};
+
+// 转换后端返回的数组格式为对象格式
+const transformOverviewData = (data) => {
+  if (!data) return mockOverview;
+
+  // 转换 assessTypeCount：数组 → 对象
+  let assessTypeCountObj = {};
+  if (Array.isArray(data.assessTypeCount)) {
+    data.assessTypeCount.forEach(item => {
+      // 后端字段名可能是 assess_type 或 assessType，兼容处理
+      const key = item.assess_type || item.assessType;
+      if (key) assessTypeCountObj[key] = item.count;
+    });
+  } else {
+    assessTypeCountObj = data.assessTypeCount || {};
+  }
+
+  // 转换 statusCount：数组 → 对象，并统一状态值
+  let statusCountObj = {};
+  if (Array.isArray(data.statusCount)) {
+    data.statusCount.forEach(item => {
+      let key = item.status;
+      // 将后端可能返回的 "1" 映射为 published
+      if (key === '1') key = 'published';
+      if (key) statusCountObj[key] = item.count;
+    });
+  } else {
+    statusCountObj = data.statusCount || {};
+  }
+
+  return {
+    totalCount: data.totalCount ?? 0,
+    avgScore: data.avgScore ?? 0,
+    topRankClass: data.topRankClass || '-',
+    assessTypeCount: assessTypeCountObj,
+    statusCount: statusCountObj,
+  };
 };
 
 const loadChartData = async () => {
   loading.value = true;
   try {
     const [overviewRes, dimensionRes, trendRes] = await Promise.allSettled([
-      getAssessMgmtChart({ cycle: 'month' }),
-      getDimensionScore({ cycle: 'month' }),
-      getCycleTrend({ startTime: '', endTime: '' }),
+      getAssessMgmtChart({cycle: 'month'}),
+      getDimensionScore({cycle: 'month'}),
+      getCycleTrend({startTime: '', endTime: ''}),
     ]);
-    overviewData.value = overviewRes.status === 'fulfilled' ? overviewRes.value : mockOverview;
+
+    if (overviewRes.status === 'fulfilled') {
+      overviewData.value = transformOverviewData(overviewRes.value);
+    } else {
+      overviewData.value = mockOverview;
+    }
+
     dimensionData.value = dimensionRes.status === 'fulfilled' ? dimensionRes.value : mockDimensionScore;
     trendData.value = trendRes.status === 'fulfilled' ? trendRes.value : mockTrend;
   } catch (error) {

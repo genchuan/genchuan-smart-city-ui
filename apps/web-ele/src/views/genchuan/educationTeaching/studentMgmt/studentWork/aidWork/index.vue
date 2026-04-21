@@ -159,7 +159,7 @@ const gridColumns = ref(getColumnsByStatus(activeName.value));
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({ records }) {
+function handleRowCheckboxChange({records}) {
   checkedIds.value = records.map(item => item.id);
   checkedRows.value = records;
 }
@@ -187,7 +187,7 @@ const createFormSchema = computed(() => {
   return schema;
 });
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const params = {
@@ -197,7 +197,6 @@ const getTableData = async ({ page }) => {
     };
     const res = await getAidWorkPage(params);
     let filtered = res.list;
-    // 应用标签筛选
     Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
       filtered = filtered.filter(item => {
         let itemValue;
@@ -225,8 +224,8 @@ const getTableData = async ({ page }) => {
         }
       });
     });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    dataObj.total = res.total;
+    dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
     const mockData = dataList();
@@ -278,10 +277,10 @@ function handleReset() {
 
 async function handleExport() {
   try {
-    const loading = ElLoading.service({ text: '正在导出...' });
+    const loading = ElLoading.service({text: '正在导出...'});
     try {
       const data = await exportAidWork(searchParams.value);
-      downloadFileFromBlobPart({ fileName: '奖助勤贷列表.xls', source: data });
+      downloadFileFromBlobPart({fileName: '奖助勤贷列表.xls', source: data});
       ElMessage.success('导出成功');
     } finally {
       loading.close();
@@ -333,7 +332,7 @@ async function confirmAudit() {
     ElMessage.warning('请选择审核结果');
     return;
   }
-  const loading = ElLoading.service({ text: '审核中...' });
+  const loading = ElLoading.service({text: '审核中...'});
   try {
     const ids = currentAuditRows.value.map(row => row.id);
     const res = await auditAidWork({
@@ -341,7 +340,7 @@ async function confirmAudit() {
       auditResult: auditResult.value,
       remark: auditRemark.value || '',
     });
-    if (res === true) {
+    if (res && res !== false) {
       ElMessage.success('审核成功');
       auditDialogVisible.value = false;
       handleRefresh();
@@ -362,6 +361,8 @@ function handleCreate() {
     isEditMode.value = false;
     currentEditId.value = null;
     createFormApi.resetForm();
+    // 新增时设置默认状态为“待审核”
+    createFormApi.setValues({status: '待审核'});
     createDrawerApi.open();
   } catch (error) {
     console.error('打开申请抽屉失败:', error);
@@ -370,19 +371,16 @@ function handleCreate() {
 }
 
 async function handleEdit(row) {
-  if (row.status !== '待审核') {
-    ElMessage.warning('只有待审核状态的奖助申请可以编辑');
-    return;
-  }
   isEditMode.value = true;
   currentEditId.value = row.id;
   try {
-    const detail = await getAidWorkDetail({ id: row.id });
+    const detail = await getAidWorkDetail({id: row.id});
     createFormApi.setValues({
       studentId: detail.studentId,
       aidType: detail.aidType,
       applyAmount: detail.applyAmount,
       applyTime: detail.applyTime,
+      status: detail.status,     // 补充状态赋值
       remark: detail.remark,
     });
     createDrawerApi.open();
@@ -410,17 +408,20 @@ function handleFollow(row) {
 // 申请/编辑表单
 const [CreateForm, createFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: isEditMode.value ? '更新中...' : '申报中...' });
+    const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '申报中...'});
     try {
       let res;
       if (isEditMode.value) {
-        res = await updateAidWork({ ...values, id: currentEditId.value });
+        // 编辑时传递 status（表单中已包含）
+        res = await updateAidWork({...values, id: currentEditId.value});
       } else {
-        res = await createAidWork(values);
+        // 新增时确保 status 字段存在（默认待审核）
+        const submitData = {...values, status: values.status || '待审核'};
+        res = await createAidWork(submitData);
       }
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '更新成功' : '申报成功');
         createDrawerApi.close();
         handleRefresh();
@@ -434,22 +435,22 @@ const [CreateForm, createFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: createFormSchema,
   showCollapseButton: false,
-  submitButtonOptions: { content: computed(() => isEditMode.value ? '保存' : '申报') },
+  submitButtonOptions: {content: computed(() => isEditMode.value ? '保存' : '申报')},
 });
 
 // 跟进表单
 const [FollowForm, followFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '提交跟进中...' });
+    const loading = ElLoading.service({text: '提交跟进中...'});
     try {
       const res = await followAidWork({
         id: currentFollowRow.value.id,
         processStatus: values.processStatus,
         remark: values.remark,
       });
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('跟进成功');
         followDrawerApi.close();
         handleRefresh();
@@ -463,11 +464,12 @@ const [FollowForm, followFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useFollowFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '提交跟进' },
+  submitButtonOptions: {content: '提交跟进'},
 });
 
 // 查看详情
 const aidWorkDetailDrawerRef = ref(null);
+
 function handleOpenDetail(row) {
   dataObj.detailObj = row;
   aidWorkDetailDrawerRef.value.open();
@@ -475,9 +477,9 @@ function handleOpenDetail(row) {
 
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
-    searchParams.value = { ...values };
+    searchParams.value = {...values};
     drawerApi.close();
     gridApi.reload();
   },
@@ -487,20 +489,20 @@ const [QueryForm] = useVbenForm({
     return v;
   }),
   showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
+  submitButtonOptions: {content: '查询'},
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
+    proxyConfig: {ajax: {query: getTableData}},
+    rowConfig: {keyField: 'id', isHover: true},
     pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
+    toolbarConfig: {refresh: true, search: true},
     showOverflow: true,
   },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
   showSearchForm: false,
 });
 
@@ -508,7 +510,7 @@ watch(activeName, (newVal) => {
   tagFilters.value = {};
   gridColumns.value = getColumnsByStatus(newVal);
   if (gridApi && gridApi.xGrid) gridApi.xGrid.refreshColumn();
-  else gridApi.setGridOptions?.({ columns: gridColumns.value });
+  else gridApi.setGridOptions?.({columns: gridColumns.value});
   gridApi.reload();
 });
 
@@ -521,7 +523,7 @@ const toggleChart = () => {
   showChart.value = !showChart.value;
 };
 
-defineExpose({ handleFilterTagClick, clearFilters });
+defineExpose({handleFilterTagClick, clearFilters});
 
 onMounted(() => {
   loadStudentOptions();
@@ -530,15 +532,16 @@ onMounted(() => {
 
 <template>
   <div class="park-lot-table-new">
-    <AidWorkDetailDrawer ref="aidWorkDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh" />
+    <AidWorkDetailDrawer ref="aidWorkDetailDrawerRef" :detail-obj="dataObj.detailObj"
+                         @refresh="handleRefresh"/>
     <Drawer title="搜索">
-      <QueryForm />
+      <QueryForm/>
     </Drawer>
     <CreateDrawer :title="isEditMode ? '编辑奖助申请' : '奖助申报'">
-      <CreateForm />
+      <CreateForm/>
     </CreateDrawer>
     <FollowDrawer title="流程跟进">
-      <FollowForm />
+      <FollowForm/>
     </FollowDrawer>
     <Grid>
       <template #table-title>
@@ -555,24 +558,28 @@ onMounted(() => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="申报" icon-name="Plus" @click="handleCreate" />
-          <IconButton content="审核" icon-name="Check" @click="handleBatchAudit" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
+          <IconButton content="申报" icon-name="Plus" @click="handleCreate"/>
+          <IconButton content="审核" icon-name="Check" @click="handleBatchAudit"/>
+          <IconButton content="导出" icon-name="download" @click="handleExport"/>
+          <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
+          <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
           <IconButton :content="props.arrowShow ? '展开' : '收缩'"
-                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
           <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
-                      @click="toggleChart" />
+                      @click="toggleChart"/>
         </div>
       </template>
 
-      <template #studentName="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{ row.studentName }}</el-text>
+      <template #studentId="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
+          {{ row.studentId }}
+        </el-text>
       </template>
       <template #aidType="{ row }">
-        <el-text @click="handleFilterTagClick('aidType', row.aidType)" type="primary" style="cursor: pointer;">{{ row.aidType }}</el-text>
+        <el-text @click="handleFilterTagClick('aidType', row.aidType)" type="primary"
+                 style="cursor: pointer;">{{ row.aidType }}
+        </el-text>
       </template>
       <template #applyAmount="{ row }">
         <el-text>{{ formatMoney(row.applyAmount) }}</el-text>
@@ -587,13 +594,20 @@ onMounted(() => {
         <el-tag :type="getProcessStatusType(row.processStatus)">{{ row.processStatus }}</el-tag>
       </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)" @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">{{ row.status }}</el-tag>
+        <el-tag :type="getStatusType(row.status)"
+                @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">
+          {{ row.status }}
+        </el-tag>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer;">{{ row.creator || '-' }}</el-text>
+        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
+                 style="cursor: pointer;">{{ row.creator || '-' }}
+        </el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}</el-text>
+        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
+                 type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}
+        </el-text>
       </template>
       <template #updateTime="{ row }">
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
@@ -601,10 +615,13 @@ onMounted(() => {
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton v-if="row.status === '待审核'" content="编辑" icon-name="Edit" @click="handleEdit(row)" />
-          <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Check" @click="handleAudit(row)" />
-          <IconButton v-if="row.status === '已通过' || row.status === '已完成'" content="跟进" icon-name="EditPen" @click="handleFollow(row)" />
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
+          <IconButton v-if="row.status === '待审核'" content="编辑" icon-name="Edit"
+                      @click="handleEdit(row)"/>
+          <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Check"
+                      @click="handleAudit(row)"/>
+          <IconButton v-if="row.status === '已通过' || row.status === '已完成'" content="跟进"
+                      icon-name="EditPen" @click="handleFollow(row)"/>
         </div>
       </template>
     </Grid>
@@ -614,12 +631,12 @@ onMounted(() => {
       <el-form label-width="100px">
         <el-form-item label="审核结果" required>
           <el-select v-model="auditResult" placeholder="请选择审核结果" style="width: 100%;">
-            <el-option label="通过" value="通过" />
-            <el-option label="驳回" value="驳回" />
+            <el-option label="通过" value="通过"/>
+            <el-option label="驳回" value="驳回"/>
           </el-select>
         </el-form-item>
         <el-form-item label="审核备注">
-          <el-input v-model="auditRemark" type="textarea" :rows="3" placeholder="请输入备注（可选）" />
+          <el-input v-model="auditRemark" type="textarea" :rows="3" placeholder="请输入备注（可选）"/>
         </el-form-item>
       </el-form>
       <template #footer>

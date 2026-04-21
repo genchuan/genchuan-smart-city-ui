@@ -197,8 +197,8 @@ const getTableData = async ({page}) => {
         }
       });
     });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    dataObj.total = res.total;
+    dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
     const mockData = getMockList();
@@ -231,6 +231,7 @@ const getTableData = async ({page}) => {
       });
     });
     dataObj.total = filtered.length;
+    // 模拟数据时仍需要前端分页
     dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
   } finally {
     dataObj.loading = false;
@@ -300,6 +301,8 @@ function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
   createFormApi.resetForm();
+  // 设置默认值：总分0，状态打分中
+  createFormApi.setValues({ totalScore: 0, status: '打分中' });
   createDrawerApi.open();
 }
 
@@ -315,6 +318,8 @@ async function handleEdit(row) {
     createFormApi.setValues({
       className: detail.className,
       cycle: detail.cycle,
+      totalScore: detail.totalScore !== undefined ? detail.totalScore : 0,
+      status: detail.status,
       remark: detail.remark,
     });
     createDrawerApi.open();
@@ -354,12 +359,18 @@ const [CreateForm, createFormApi] = useVbenForm({
     const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '发起中...'});
     try {
       let res;
+      // 确保 totalScore 和 status 存在
+      const submitData = {
+        ...values,
+        totalScore: values.totalScore !== undefined ? values.totalScore : 0,
+        status: values.status || '打分中',
+      };
       if (isEditMode.value) {
-        res = await updateCompareMgmt({...values, id: currentEditId.value});
+        res = await updateCompareMgmt({...submitData, id: currentEditId.value});
       } else {
-        res = await createCompareMgmt(values);
+        res = await createCompareMgmt(submitData);
       }
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '更新成功' : '发起成功');
         createDrawerApi.close();
         handleRefresh();
@@ -384,7 +395,7 @@ const [ScoreForm, scoreFormApi] = useVbenForm({
     const loading = ElLoading.service({text: '提交打分...'});
     try {
       const res = await scoreCompareMgmt({ids: scoreIds.value, ...values});
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('打分成功，已自动汇总并计算排名');
         scoreDrawerApi.close();
         handleRefresh();
@@ -409,7 +420,7 @@ const [AwardForm, awardFormApi] = useVbenForm({
     const loading = ElLoading.service({text: '授予中...'});
     try {
       const res = await awardCompareMgmt({ids: awardIds.value, ...values});
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('授予成功，已生成操行评定');
         awardDrawerApi.close();
         handleRefresh();

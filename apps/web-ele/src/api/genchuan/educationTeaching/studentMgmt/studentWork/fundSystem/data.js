@@ -1,51 +1,122 @@
 import { requestClient } from '#/api/request';
 
+// ==================== 映射表 ====================
+// 资助类型映射
+const fundTypeMap = {
+  '助学金': '1',
+  '勤工俭学': '2',
+  '其他': '3'
+};
+const fundTypeReverse = {
+  '1': '助学金',
+  '2': '勤工俭学',
+  '3': '其他'
+};
+
+// 状态映射（待审核、已汇总）
+const statusMap = {
+  '待审核': '0',
+  '已汇总': '1'
+};
+const statusReverse = {
+  '0': '待审核',
+  '1': '已汇总'
+};
+
+// 通用转换函数：后端 → 前端（将数字/代码转为中文）
+function convertEnToZh(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.fundType && fundTypeReverse[result.fundType]) {
+    result.fundType = fundTypeReverse[result.fundType];
+  }
+  if (result.status && statusReverse[result.status]) {
+    result.status = statusReverse[result.status];
+  }
+  return result;
+}
+
+// 通用转换函数：前端 → 后端（将中文转为数字/代码）
+function convertZhToEn(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.fundType && fundTypeMap[result.fundType]) {
+    result.fundType = fundTypeMap[result.fundType];
+  }
+  if (result.status && statusMap[result.status]) {
+    result.status = statusMap[result.status];
+  }
+  return result;
+}
+
+// 转换列表数据
+function convertList(list) {
+  if (!Array.isArray(list)) return list;
+  return list.map(item => convertEnToZh(item));
+}
+
 // ==================== 资助系统接口 ====================
 export function getFundSystemPage(params) {
-  return requestClient.get('/studentmgmt/fund-system/page', { params }).catch(err => {
-    console.warn('分页接口失败，使用模拟数据', err);
-    return { list: dataList(), total: dataList().length };
-  });
+  const convertedParams = convertZhToEn(params);
+  return requestClient.get('/studentmgmt/fund-system/page', { params: convertedParams })
+    .then(res => {
+      if (res && res.list) {
+        res.list = convertList(res.list);
+      }
+      return res;
+    })
+    .catch(err => {
+      console.warn('分页接口失败，使用模拟数据', err);
+      const mockData = convertList(dataList());
+      return { list: mockData, total: mockData.length };
+    });
 }
 
 export function createFundSystem(data) {
-  return requestClient.post('/studentmgmt/fund-system/create', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.post('/studentmgmt/fund-system/create', convertedData).catch(err => {
     console.warn('申请接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
 export function updateFundSystem(data) {
-  return requestClient.put('/studentmgmt/fund-system/update', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.put('/studentmgmt/fund-system/update', convertedData).catch(err => {
     console.warn('编辑接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
 export function auditFundSystem(data) {
-  return requestClient.put('/studentmgmt/fund-system/audit', data).catch(err => {
+  // 审核接口需要转换 status 字段（前端传“已汇总”转为后端数字“1”）
+  const convertedData = convertZhToEn(data);
+  return requestClient.put('/studentmgmt/fund-system/audit', convertedData).catch(err => {
     console.warn('审核接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
 export function exportFundSystem(params) {
-  return requestClient.download('/studentmgmt/fund-system/export', params).catch(err => {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.download('/studentmgmt/fund-system/export-excel', convertedParams).catch(err => {
     console.warn('导出接口失败，模拟导出', err);
     return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
   });
 }
 
 export function getFundSystemDetail(params) {
-  return requestClient.get('/studentmgmt/fund-system/get', { params }).catch(err => {
-    console.warn('详情接口失败，使用模拟数据', err);
-    const mockList = dataList();
-    const detail = mockList.find(item => item.id === params.id) || mockList[0];
-    return Promise.resolve(detail);
-  });
+  return requestClient.get('/studentmgmt/fund-system/get', { params })
+    .then(res => convertEnToZh(res))
+    .catch(err => {
+      console.warn('详情接口失败，使用模拟数据', err);
+      const mockList = dataList();
+      const detail = mockList.find(item => item.id === params.id) || mockList[0];
+      return Promise.resolve(convertEnToZh(detail));
+    });
 }
 
-// 获取学生选项（用于申请下拉框）
+// 获取学生选项（无需转换）
 export function getStudentOptions(params) {
   return requestClient.get('/studentmgmt/student/options', { params }).catch(err => {
     console.warn('获取学生选项失败，使用模拟数据', err);
@@ -61,6 +132,7 @@ export function getStudentOptions(params) {
 }
 
 // ==================== 图表接口 ====================
+// 图表接口暂不处理映射（因未提供后端数据结构），如有需要可参照添加
 export function getFundSystemChart(params) {
   return requestClient.get('/studentmgmt/fund-system/chart', { params }).catch(err => {
     console.warn('资助看板接口失败，使用模拟数据', err);
@@ -140,7 +212,7 @@ export function getFundCount(params) {
   });
 }
 
-// 模拟数据（与接口响应结构一致）
+// 模拟数据（原始值使用数字/代码，通过转换函数对外提供中文）
 export const dataList = () => {
   return [
     {
@@ -149,12 +221,12 @@ export const dataList = () => {
       studentName: '张三',
       className: '计算机科学与技术1班',
       grade: '2022级',
-      fundType: '助学金',
+      fundType: '1',
       applyAmount: 3000.00,
       applyTime: 1672531200000,
       auditUser: null,
       auditTime: null,
-      status: '待审核',
+      status: '0',
       remark: '',
       creator: 'admin',
       updater: 'admin',
@@ -167,12 +239,12 @@ export const dataList = () => {
       studentName: '李四',
       className: '软件工程1班',
       grade: '2023级',
-      fundType: '勤工俭学',
+      fundType: '2',
       applyAmount: 1500.00,
       applyTime: 1672617600000,
       auditUser: '王老师',
       auditTime: 1672650000000,
-      status: '已汇总',
+      status: '1',
       remark: '',
       creator: 'admin',
       updater: 'admin',
@@ -185,12 +257,12 @@ export const dataList = () => {
       studentName: '王五',
       className: '计算机科学与技术2班',
       grade: '2022级',
-      fundType: '其他',
+      fundType: '3',
       applyAmount: 500.00,
       applyTime: 1672704000000,
       auditUser: null,
       auditTime: null,
-      status: '待审核',
+      status: '0',
       remark: '',
       creator: 'teacher_zhang',
       updater: 'teacher_zhang',
@@ -203,12 +275,12 @@ export const dataList = () => {
       studentName: '赵六',
       className: '电子信息工程1班',
       grade: '2024级',
-      fundType: '助学金',
+      fundType: '1',
       applyAmount: 2500.00,
       applyTime: 1672790400000,
       auditUser: '李老师',
       auditTime: 1672820000000,
-      status: '已汇总',
+      status: '1',
       remark: '',
       creator: 'admin',
       updater: 'admin',
@@ -221,12 +293,12 @@ export const dataList = () => {
       studentName: '孙七',
       className: '大数据1班',
       grade: '2025级',
-      fundType: '勤工俭学',
+      fundType: '2',
       applyAmount: 1800.00,
       applyTime: 1672876800000,
       auditUser: null,
       auditTime: null,
-      status: '待审核',
+      status: '0',
       remark: '',
       creator: 'teacher_li',
       updater: 'teacher_li',
@@ -239,12 +311,12 @@ export const dataList = () => {
       studentName: '周八',
       className: '软件工程2班',
       grade: '2026级',
-      fundType: '助学金',
+      fundType: '1',
       applyAmount: 3000.00,
       applyTime: 1672963200000,
       auditUser: '王老师',
       auditTime: 1673000000000,
-      status: '已汇总',
+      status: '1',
       remark: '',
       creator: 'admin',
       updater: 'admin',

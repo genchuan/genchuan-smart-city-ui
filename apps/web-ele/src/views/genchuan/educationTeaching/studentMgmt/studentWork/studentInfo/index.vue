@@ -1,11 +1,11 @@
 <script setup>
-import { computed, reactive, ref, watch, nextTick } from 'vue';
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {computed, reactive, ref, watch, nextTick} from 'vue';
+import {confirm, useVbenDrawer} from '@vben/common-ui';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {downloadFileFromBlobPart} from '@vben/utils';
 import StudentDetailDrawer from './components/studentDetail.vue';
 import {
   dataList,
@@ -187,8 +187,8 @@ const getTableData = async ({page}) => {
         }
       });
     });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    dataObj.total = res.total;
+    dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
     const mockData = dataList();
@@ -224,6 +224,7 @@ const getTableData = async ({page}) => {
       });
     });
     dataObj.total = filtered.length;
+    // 模拟数据时仍需要前端分页
     dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
   } finally {
     dataObj.loading = false;
@@ -271,7 +272,7 @@ async function handleBatchDelete() {
     const loading = ElLoading.service({text: '删除中...'});
     try {
       const res = await deleteStudentInfoList({ids: checkedIds.value});
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('批量删除成功');
         handleRefresh();
       } else {
@@ -295,12 +296,12 @@ async function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
   try {
-    // 依赖 data.js 中的 fallback，即使接口失败也会返回模拟数据
     const detail = await getStudentInfoDetail({id: row.id});
     createFormApi.setValues({
       studentNo: detail.studentNo,
       name: detail.name,
       idCard: detail.idCard,
+      grade: detail.grade,               // 新增年级赋值
       educationLevel: detail.educationLevel,
       studyForm: detail.studyForm,
       major: detail.major,
@@ -328,7 +329,7 @@ async function handleDelete(row) {
     const loading = ElLoading.service({text: '删除中...'});
     try {
       const res = await deleteStudentInfo({id: row.id});
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('删除成功');
         handleRefresh();
       } else {
@@ -368,7 +369,7 @@ const [CreateForm, createFormApi] = useVbenForm({
       } else {
         res = await createStudentInfo(values);
       }
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '更新成功' : '新增成功');
         createDrawerApi.close();
         handleRefresh();

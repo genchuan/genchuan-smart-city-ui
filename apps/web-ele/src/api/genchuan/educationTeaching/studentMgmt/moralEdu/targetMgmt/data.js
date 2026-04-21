@@ -1,36 +1,89 @@
 import { requestClient } from '#/api/request';
 
+// ==================== 映射表 ====================
+// 评价人类型映射
+const evaluatorTypeMap = {
+  '教职工': 'teacher',
+  '家长': 'parent',
+  '领导': 'leader'
+};
+const evaluatorTypeReverse = {
+  'teacher': '教职工',
+  'parent': '家长',
+  'leader': '领导'
+};
+
+// 通用转换函数：后端 → 前端（将英文转为中文）
+function convertEnToZh(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.evaluatorType && evaluatorTypeReverse[result.evaluatorType]) {
+    result.evaluatorType = evaluatorTypeReverse[result.evaluatorType];
+  }
+  return result;
+}
+
+// 通用转换函数：前端 → 后端（将中文转为英文）
+function convertZhToEn(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.evaluatorType && evaluatorTypeMap[result.evaluatorType]) {
+    result.evaluatorType = evaluatorTypeMap[result.evaluatorType];
+  }
+  return result;
+}
+
+// 转换列表数据
+function convertList(list) {
+  if (!Array.isArray(list)) return list;
+  return list.map(item => convertEnToZh(item));
+}
+
 // ==================== 指标管理接口 ====================
 export function getTargetMgmtPage(params) {
-  return requestClient.get('/studentmgmt/target-mgmt/page', { params }).catch(err => {
-    console.warn('分页接口失败，使用模拟数据', err);
-    const mock = getMockList();
-    return { list: mock, total: mock.length };
-  });
+  const convertedParams = convertZhToEn(params);
+  return requestClient.get('/studentmgmt/target-mgmt/page', { params: convertedParams })
+    .then(res => {
+      if (res && res.list) {
+        res.list = convertList(res.list);
+      }
+      return res;
+    })
+    .catch(err => {
+      console.warn('分页接口失败，使用模拟数据', err);
+      const mock = getMockList();
+      // 模拟数据已经是中文，无需额外转换，但为了保持一致，也调用转换（幂等）
+      return { list: convertList(mock), total: mock.length };
+    });
 }
 
 export function createTargetMgmt(data) {
-  return requestClient.post('/studentmgmt/target-mgmt/create', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.post('/studentmgmt/target-mgmt/create', convertedData).catch(err => {
     console.warn('新增接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
 export function updateTargetMgmt(data) {
-  return requestClient.put('/studentmgmt/target-mgmt/update', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.put('/studentmgmt/target-mgmt/update', convertedData).catch(err => {
     console.warn('编辑接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
 export function configTargetMgmt(data) {
-  return requestClient.put('/studentmgmt/target-mgmt/config', data).catch(err => {
+  // 配置接口可能包含 evaluatorType，需要转换
+  const convertedData = convertZhToEn(data);
+  return requestClient.put('/studentmgmt/target-mgmt/config', convertedData).catch(err => {
     console.warn('配置接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
 export function enableTargetMgmt(ids) {
+  // 启用接口只传 ids，无需转换
   return requestClient.put('/studentmgmt/target-mgmt/enable', { ids }).catch(err => {
     console.warn('启用接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -38,6 +91,7 @@ export function enableTargetMgmt(ids) {
 }
 
 export function disableTargetMgmt(ids) {
+  // 停用接口只传 ids，无需转换
   return requestClient.put('/studentmgmt/target-mgmt/disable', { ids }).catch(err => {
     console.warn('停用接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -45,22 +99,26 @@ export function disableTargetMgmt(ids) {
 }
 
 export function exportTargetMgmt(params) {
-  return requestClient.download('/studentmgmt/target-mgmt/export', params).catch(err => {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.download('/studentmgmt/target-mgmt/export-excel', convertedParams).catch(err => {
     console.warn('导出接口失败，模拟导出', err);
     return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
   });
 }
 
 export function getTargetMgmtDetail(params) {
-  return requestClient.get('/studentmgmt/target-mgmt/get', { params }).catch(err => {
-    console.warn('详情接口失败，使用模拟数据', err);
-    const mockList = getMockList();
-    const detail = mockList.find(item => item.id === params.id) || mockList[0];
-    return Promise.resolve(detail);
-  });
+  return requestClient.get('/studentmgmt/target-mgmt/get', { params })
+    .then(res => convertEnToZh(res))
+    .catch(err => {
+      console.warn('详情接口失败，使用模拟数据', err);
+      const mockList = getMockList();
+      const detail = mockList.find(item => item.id === params.id) || mockList[0];
+      return Promise.resolve(convertEnToZh(detail));
+    });
 }
 
 // ==================== 图表接口 ====================
+// 图表接口暂不处理映射（因未提供后端数据结构），如有需要可参照添加
 export function getTargetMgmtChart(params) {
   return requestClient.get('/studentmgmt/target-mgmt/chart', { params }).catch(err => {
     console.warn('图表总览接口失败，使用模拟数据', err);
@@ -91,7 +149,7 @@ export function getTargetIndex() {
   });
 }
 
-// 模拟数据（与接口响应结构一致）
+// 模拟数据（原始值使用中文，保持与前端一致）
 export const getMockList = () => {
   return [
     {

@@ -59,9 +59,15 @@ defineExpose({
         <div class="detail-row-left">紧急程度:</div>
         <div class="detail-row-right">
           <el-tag
-            :type="detailObj.emergencyDegree === '紧急' ? 'danger' :
-                   detailObj.emergencyDegree === '高' ? 'warning' :
-                   detailObj.emergencyDegree === '中' ? 'primary' : 'info'"
+            :type="
+              detailObj.emergencyDegree === '紧急'
+                ? 'danger'
+                : detailObj.emergencyDegree === '高'
+                  ? 'warning'
+                  : detailObj.emergencyDegree === '中'
+                    ? 'primary'
+                    : 'info'
+            "
             size="small"
           >
             {{ detailObj.emergencyDegree }}
@@ -88,12 +94,21 @@ defineExpose({
         <div class="detail-row-left">工单状态:</div>
         <div class="detail-row-right">
           <el-tag
-            :type="detailObj.status === '待处理' ? 'info' :
-                   detailObj.status === '已认领' ? 'primary' :
-                   detailObj.status === '处理中' ? 'warning' :
-                   detailObj.status === '已完成' ? 'success' :
-                   detailObj.status === '已评价' ? 'success' :
-                   detailObj.status === '已撤回' ? 'danger' : 'warning'"
+            :type="
+              detailObj.status === '待处理'
+                ? 'info'
+                : detailObj.status === '已认领'
+                  ? 'primary'
+                  : detailObj.status === '处理中'
+                    ? 'warning'
+                    : detailObj.status === '已完成'
+                      ? 'success'
+                      : detailObj.status === '已评价'
+                        ? 'success'
+                        : detailObj.status === '已撤回'
+                          ? 'danger'
+                          : 'warning'
+            "
             size="small"
           >
             {{ detailObj.status }}
@@ -102,11 +117,15 @@ defineExpose({
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">处置进度:</div>
-        <div class="detail-row-right">{{ detailObj.currentProgress || '-' }}</div>
+        <div class="detail-row-right">
+          {{ detailObj.currentProgress || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">关联资源:</div>
-        <div class="detail-row-right">{{ detailObj.relatedResource || '-' }}</div>
+        <div class="detail-row-right">
+          {{ detailObj.relatedResource || '-' }}
+        </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">问题描述:</div>

@@ -13,13 +13,22 @@ export function createPointActivity(data) {
 }
 
 /** 导入积分活动 */
-export function importPointActivity(data) {
-  return requestClient.upload('/marketop/point-activity/import', data);
+// export function importPointActivity(data) {
+//   return requestClient.upload('/marketop/point-activity/import', data);
+// }
+export function importPointActivity(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return requestClient.post('/marketop/point-activity/import', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
 }
 
 /** 导出积分活动数据 */
 export function exportPointActivity() {
-  return requestClient.download('/marketop/point-activity/export');
+  return requestClient.download('/marketop/point-activity/export-excel');
 }
 
 // ==================== 列表行交互操作接口 ====================
@@ -30,6 +39,11 @@ export function getPointActivityDetail(id) {
 }
 
 /** 生效积分活动 */
+export function activatePointActivity(data) {
+  return requestClient.put('/marketop/point-activity/activate', data);
+}
+
+/** 启用积分活动 */
 export function enablePointActivity(data) {
   return requestClient.put('/marketop/point-activity/enable', data);
 }

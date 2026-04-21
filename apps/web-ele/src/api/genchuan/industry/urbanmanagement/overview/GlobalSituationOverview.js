@@ -17,32 +17,32 @@ export const fetchUrbanDataMap = async () => {
     return [
       {
         coord_x: 26.855237, // 纬度
-        coord_y: 118.000000, // 经度
-        mng_comp_id: "C001", // 部件ID
-        comp_name: "温度传感器-广场A", // 部件名称
-        comp_status: "破损" // 状态
+        coord_y: 118.0, // 经度
+        mng_comp_id: 'C001', // 部件ID
+        comp_name: '温度传感器-广场A', // 部件名称
+        comp_status: '破损', // 状态
       },
       {
         coord_x: 26.783237,
         coord_y: 117.720114,
-        mng_comp_id: "C002",
-        comp_name: "湿度传感器-街道B",
-        comp_status: "维护"
+        mng_comp_id: 'C002',
+        comp_name: '湿度传感器-街道B',
+        comp_status: '维护',
       },
       {
         coord_x: 26.9333327,
         coord_y: 117.650114,
-        mng_comp_id: "C003",
-        comp_name: "压力传感器-路口C",
-        comp_status: "完好"
+        mng_comp_id: 'C003',
+        comp_name: '压力传感器-路口C',
+        comp_status: '完好',
       },
       {
         coord_x: 26.823237,
         coord_y: 117.8220114,
-        mng_comp_id: "C004",
-        comp_name: "振动传感器-桥梁D",
-        comp_status: "完好"
-      }
+        mng_comp_id: 'C004',
+        comp_name: '振动传感器-桥梁D',
+        comp_status: '完好',
+      },
     ];
   }
 };
@@ -50,91 +50,96 @@ export const fetchUrbanDataMap = async () => {
 // 部件列表接口
 export const fetchPartsList = () => {
   try {
-    return requestClient.get(`${BASE_URL}/urbanParts`).then(response => {
-      if (Array.isArray(response.data) && response.data.length > 0) {
-        return response.data;
-      }
-      throw new Error('真实接口返回空数据，使用模拟数据兜底');
-    }).catch(error => {
-      console.warn('部件列表接口调用失败，使用模拟数据:', error.message);
-      return new Promise(resolve => {
-        setTimeout(() => {
-          resolve([
-            {
-              part_id: 'P001', // 部件ID
-              part_name: '人行道地砖', // 部件名称
-              part_type: '市政', // 部件类型（市政/市容/环卫）
-              status: '完好', // 状态（完好/破损/维护）
-              manager: '张三', // 负责人
-              related_event: '无', // 关联事件
-              location: '解放路东段', // 位置
-              install_time: '2023-05-10', // 安装时间
-              last_check: '2025-10-12' // 最后检查时间
-            },
-            {
-              part_id: 'P002',
-              part_name: '果皮箱',
-              part_type: '环卫',
-              status: '破损',
-              manager: '李四',
-              related_event: 'EVT20251013001', // 关联事件ID
-              location: '中山路中段',
-              install_time: '2024-01-20',
-              last_check: '2025-10-10'
-            },
-            {
-              part_id: 'P003',
-              part_name: '交通隔离栏',
-              part_type: '市政',
-              status: '维护',
-              manager: '王五',
-              related_event: 'EVT20251012005',
-              location: '人民路西段',
-              install_time: '2023-11-05',
-              last_check: '2025-10-13'
-            },
-            {
-              part_id: 'P004',
-              part_name: '路灯',
-              part_type: '市政',
-              status: '完好',
-              manager: '赵六',
-              related_event: '无',
-              location: '公园路全段',
-              install_time: '2022-08-15',
-              last_check: '2025-10-09'
-            },
-            {
-              part_id: 'P005',
-              part_name: '广告牌',
-              part_type: '市容',
-              status: '破损',
-              manager: '孙七',
-              related_event: 'EVT20251011003',
-              location: '商业广场外墙',
-              install_time: '2024-03-30',
-              last_check: '2025-10-11'
-            },
-            {
-              part_id: 'P006',
-              part_name: '垃圾桶',
-              part_type: '环卫',
-              status: '维护',
-              manager: '周八',
-              related_event: '无',
-              location: '菜市场入口',
-              install_time: '2024-05-20',
-              last_check: '2025-10-13'
-            }
-          ]);
-        }, 500);
+    return requestClient
+      .get(`${BASE_URL}/urbanParts`)
+      .then((response) => {
+        if (Array.isArray(response.data) && response.data.length > 0) {
+          return response.data;
+        }
+        throw new Error('真实接口返回空数据，使用模拟数据兜底');
+      })
+      .catch((error) => {
+        console.warn('部件列表接口调用失败，使用模拟数据:', error.message);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve([
+              {
+                part_id: 'P001', // 部件ID
+                part_name: '人行道地砖', // 部件名称
+                part_type: '市政', // 部件类型（市政/市容/环卫）
+                status: '完好', // 状态（完好/破损/维护）
+                manager: '张三', // 负责人
+                related_event: '无', // 关联事件
+                location: '解放路东段', // 位置
+                install_time: '2023-05-10', // 安装时间
+                last_check: '2025-10-12', // 最后检查时间
+              },
+              {
+                part_id: 'P002',
+                part_name: '果皮箱',
+                part_type: '环卫',
+                status: '破损',
+                manager: '李四',
+                related_event: 'EVT20251013001', // 关联事件ID
+                location: '中山路中段',
+                install_time: '2024-01-20',
+                last_check: '2025-10-10',
+              },
+              {
+                part_id: 'P003',
+                part_name: '交通隔离栏',
+                part_type: '市政',
+                status: '维护',
+                manager: '王五',
+                related_event: 'EVT20251012005',
+                location: '人民路西段',
+                install_time: '2023-11-05',
+                last_check: '2025-10-13',
+              },
+              {
+                part_id: 'P004',
+                part_name: '路灯',
+                part_type: '市政',
+                status: '完好',
+                manager: '赵六',
+                related_event: '无',
+                location: '公园路全段',
+                install_time: '2022-08-15',
+                last_check: '2025-10-09',
+              },
+              {
+                part_id: 'P005',
+                part_name: '广告牌',
+                part_type: '市容',
+                status: '破损',
+                manager: '孙七',
+                related_event: 'EVT20251011003',
+                location: '商业广场外墙',
+                install_time: '2024-03-30',
+                last_check: '2025-10-11',
+              },
+              {
+                part_id: 'P006',
+                part_name: '垃圾桶',
+                part_type: '环卫',
+                status: '维护',
+                manager: '周八',
+                related_event: '无',
+                location: '菜市场入口',
+                install_time: '2024-05-20',
+                last_check: '2025-10-13',
+              },
+            ]);
+          }, 500);
+        });
       });
-    });
   } catch (error) {
     console.error('fetchPartsList初始化错误:', error);
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       setTimeout(() => {
-        resolve([/* 同上模拟数据 */]);
+        resolve([
+          /* 同上模拟数据 */
+        ]);
       }, 500);
     });
   }
@@ -144,7 +149,9 @@ export const fetchPartsList = () => {
 export const fetchUrbanFacilityDistribution = async () => {
   try {
     // 1. 优先调用真实接口
-    const response = await requestClient.get(`${BASE_URL}/facilityDistribution`);
+    const response = await requestClient.get(
+      `${BASE_URL}/facilityDistribution`,
+    );
     // 验证接口返回数据有效性
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data; // 返回真实数据
@@ -171,7 +178,7 @@ export const fetchUrbanFacilityDistribution = async () => {
         create_user: 'system',
         create_time: '2025-01-15 08:00:00',
         ext1: 'LED-200W',
-        ext2: '每季度维护' // 去掉表来源
+        ext2: '每季度维护', // 去掉表来源
       },
       {
         dist_id: 'dist1002',
@@ -190,7 +197,7 @@ export const fetchUrbanFacilityDistribution = async () => {
         create_user: 'system',
         create_time: '2025-01-15 08:00:00',
         ext1: '分类垃圾桶',
-        ext2: '每月维护'
+        ext2: '每月维护',
       },
       {
         dist_id: 'dist1003',
@@ -209,7 +216,7 @@ export const fetchUrbanFacilityDistribution = async () => {
         create_user: 'system',
         create_time: '2025-01-15 08:00:00',
         ext1: '三星级',
-        ext2: '每周维护'
+        ext2: '每周维护',
       },
       {
         dist_id: 'dist1004',
@@ -228,7 +235,7 @@ export const fetchUrbanFacilityDistribution = async () => {
         create_user: 'system',
         create_time: '2025-01-15 08:00:00',
         ext1: '智能交通灯',
-        ext2: '每半年维护'
+        ext2: '每半年维护',
       },
       {
         dist_id: 'dist1005',
@@ -247,7 +254,7 @@ export const fetchUrbanFacilityDistribution = async () => {
         create_user: 'system',
         create_time: '2025-01-15 08:00:00',
         ext1: '不锈钢',
-        ext2: '每月维护'
+        ext2: '每月维护',
       },
       {
         dist_id: 'dist1006',
@@ -266,7 +273,7 @@ export const fetchUrbanFacilityDistribution = async () => {
         create_user: 'system',
         create_time: '2025-01-15 08:00:00',
         ext1: 'LED-300W',
-        ext2: '每季度维护'
+        ext2: '每季度维护',
       },
       // 新增“市容设施”类型
       {
@@ -286,8 +293,8 @@ export const fetchUrbanFacilityDistribution = async () => {
         create_user: 'system',
         create_time: '2025-01-15 08:00:00',
         ext1: '户外广告',
-        ext2: '每季度维护'
-      }
+        ext2: '每季度维护',
+      },
     ];
   }
 };
@@ -297,7 +304,7 @@ export const fetchUrbanCoreIndicators = async (timeRange = 'day') => {
   try {
     // 1. 优先调用真实接口
     const response = await requestClient.get(`${BASE_URL}/coreIndicators`, {
-      params: { timeRange }
+      params: { timeRange },
     });
     // 验证接口返回数据有效性
     if (Array.isArray(response.data) && response.data.length > 0) {
@@ -326,7 +333,7 @@ export const fetchUrbanCoreIndicators = async (timeRange = 'day') => {
         supervise_order_id: '',
         leader_id: 'user3001',
         ext1: '直接统计总数',
-        ext2: 'stat_mng_comp_rpt' // 来源管理部件统计表
+        ext2: 'stat_mng_comp_rpt', // 来源管理部件统计表
       },
       {
         index_id: 'ind1002',
@@ -344,7 +351,7 @@ export const fetchUrbanCoreIndicators = async (timeRange = 'day') => {
         total_count: 586, // 部件总数（关联）
         intact_count: 566, // 完好数
         ext1: '完好部件数/部件总数',
-        ext2: 'stat_mng_comp_rpt'
+        ext2: 'stat_mng_comp_rpt',
       },
       {
         index_id: 'ind1003',
@@ -362,7 +369,7 @@ export const fetchUrbanCoreIndicators = async (timeRange = 'day') => {
         total_count: 126, // 事件总数
         rejected_count: 8, // 关联驳回数（辅助展示）
         ext1: '直接统计总数',
-        ext2: 'stat_mng_matter_rpt' // 来源管理事项统计表
+        ext2: 'stat_mng_matter_rpt', // 来源管理事项统计表
       },
       {
         index_id: 'ind1004',
@@ -381,7 +388,7 @@ export const fetchUrbanCoreIndicators = async (timeRange = 'day') => {
         completed_count: 98,
         rejected_count: 8,
         ext1: '已办结数/(总数-驳回数)',
-        ext2: 'stat_mng_matter_rpt'
+        ext2: 'stat_mng_matter_rpt',
       },
       {
         index_id: 'ind1005',
@@ -399,7 +406,7 @@ export const fetchUrbanCoreIndicators = async (timeRange = 'day') => {
         total_disposed_count: 98,
         total_handle_duration: 12250,
         ext1: '总时长/已处置数',
-        ext2: 'stat_mng_matter_rpt'
+        ext2: 'stat_mng_matter_rpt',
       },
       {
         index_id: 'ind1006',
@@ -417,8 +424,8 @@ export const fetchUrbanCoreIndicators = async (timeRange = 'day') => {
         total_count: 126, // 事件总数（关联）
         pend_count: 20, // 未处置数
         ext1: '事件总数-已办结数-驳回数',
-        ext2: 'stat_mng_matter_rpt'
-      }
+        ext2: 'stat_mng_matter_rpt',
+      },
     ];
   }
 };
@@ -428,7 +435,7 @@ export const fetchIndicatorTrend = async (indexId) => {
   try {
     // 优先调用真实接口
     const response = await requestClient.get(`${BASE_URL}/indicatorTrend`, {
-      params: { indexId, days: 7 } // 明确传入7天参数
+      params: { indexId, days: 7 }, // 明确传入7天参数
     });
     if (response.data && response.data.xAxis && response.data.series) {
       return response.data; // 真实接口返回格式：{xAxis: [], series: [{name, data}, ...]}
@@ -443,12 +450,12 @@ export const fetchIndicatorTrend = async (indexId) => {
     const today = new Date();
     // 匹配现有指标的基础值
     const baseValues = {
-      'ind1001': 586, // 部件总数
-      'ind1002': 96.5, // 完好率
-      'ind1003': 126, // 事件总数
-      'ind1004': 78.0, // 办结率
-      'ind1005': 20, // 未处置数
-      'ind1006': 125  // 平均时长
+      ind1001: 586, // 部件总数
+      ind1002: 96.5, // 完好率
+      ind1003: 126, // 事件总数
+      ind1004: 78.0, // 办结率
+      ind1005: 20, // 未处置数
+      ind1006: 125, // 平均时长
     };
     const baseValue = baseValues[indexId] || 90; // 默认基础值
     // 根据指标类型设置目标值
@@ -477,17 +484,19 @@ export const fetchIndicatorTrend = async (indexId) => {
     return {
       xAxis,
       series: [
-        { name: indexId === 'ind1005' ? '平均时长(分钟)' : '实际值(%)',
+        {
+          name: indexId === 'ind1005' ? '平均时长(分钟)' : '实际值(%)',
           data,
           type: 'line',
-          lineStyle: { width: 2 }
+          lineStyle: { width: 2 },
         },
-        { name: indexId === 'ind1005' ? '目标时长(分钟)' : '目标值(%)',
+        {
+          name: indexId === 'ind1005' ? '目标时长(分钟)' : '目标值(%)',
           data: targetData,
           type: 'line',
-          lineStyle: { type: 'dashed', width: 2 }
-        }
-      ]
+          lineStyle: { type: 'dashed', width: 2 },
+        },
+      ],
     };
   }
 };
@@ -522,7 +531,7 @@ export const fetchEventDisposalStatus = async () => {
         create_user: 'system',
         create_time: '2025-01-15 09:30:00',
         ext1: '2名摊贩',
-        ext2: '无冲突'
+        ext2: '无冲突',
       },
       {
         event_id: 'event1002',
@@ -540,7 +549,7 @@ export const fetchEventDisposalStatus = async () => {
         create_user: 'system',
         create_time: '2025-01-15 07:30:00',
         ext1: '约50平米',
-        ext2: '正在调查'
+        ext2: '正在调查',
       },
       {
         event_id: 'event1003',
@@ -558,7 +567,7 @@ export const fetchEventDisposalStatus = async () => {
         create_user: 'system',
         create_time: '2025-01-14 16:45:00',
         ext1: '居民区',
-        ext2: '已清理'
+        ext2: '已清理',
       },
       {
         event_id: 'event1004',
@@ -576,7 +585,7 @@ export const fetchEventDisposalStatus = async () => {
         create_user: 'system',
         create_time: '2025-01-15 10:20:00',
         ext1: '无施工许可',
-        ext2: '占用半幅路面'
+        ext2: '占用半幅路面',
       },
       {
         event_id: 'event1005',
@@ -594,7 +603,7 @@ export const fetchEventDisposalStatus = async () => {
         create_user: 'system',
         create_time: '2025-01-15 08:10:00',
         ext1: '3辆货车',
-        ext2: '堵塞消防通道'
+        ext2: '堵塞消防通道',
       },
       {
         event_id: 'event1006',
@@ -612,7 +621,7 @@ export const fetchEventDisposalStatus = async () => {
         create_user: 'system',
         create_time: '2025-01-14 14:20:00',
         ext1: '墙面张贴',
-        ext2: '已清理20余处'
+        ext2: '已清理20余处',
       },
       {
         event_id: 'event1007',
@@ -630,7 +639,7 @@ export const fetchEventDisposalStatus = async () => {
         create_user: 'system',
         create_time: '2025-01-15 22:15:00',
         ext1: '居民区旁工地',
-        ext2: '多次投诉'
+        ext2: '多次投诉',
       },
       {
         event_id: 'event1008',
@@ -648,7 +657,7 @@ export const fetchEventDisposalStatus = async () => {
         create_user: 'system',
         create_time: '2025-01-15 15:40:00',
         ext1: '售卖小商品',
-        ext2: '人流量大'
+        ext2: '人流量大',
       },
       {
         event_id: 'event1009',
@@ -666,8 +675,8 @@ export const fetchEventDisposalStatus = async () => {
         create_user: 'system',
         create_time: '2025-01-14 10:00:00',
         ext1: '违规设置',
-        ext2: '不属于城管管辖范围'
-      }
+        ext2: '不属于城管管辖范围',
+      },
     ];
   }
 };
@@ -692,7 +701,7 @@ export const fetchWarningData = async () => {
       ['高新区', '路灯故障', '10:15', '待维修'],
       ['城东区', '设施完好率低', '09:30', '已督办'],
       ['主城区', '事件办结率低', '10:00', '已督办'],
-      ['全区域', '平均处置时长长', '11:00', '预警中']
+      ['全区域', '平均处置时长长', '11:00', '预警中'],
     ];
   }
 };
@@ -701,7 +710,10 @@ export const fetchWarningData = async () => {
 export const dispatchEvent = async (params) => {
   try {
     // 1. 优先调用真实接口
-    const response = await requestClient.post(`${BASE_URL}/dispatchEvent`, params);
+    const response = await requestClient.post(
+      `${BASE_URL}/dispatchEvent`,
+      params,
+    );
     // 验证接口返回数据有效性
     if (response.data && response.data.success) {
       return response.data; // 返回真实结果
@@ -715,8 +727,8 @@ export const dispatchEvent = async (params) => {
       message: '派单成功',
       data: {
         dispatchOrderId: 'order' + Math.random().toString(36).substr(2, 9),
-        dispatchTime: new Date().toLocaleString()
-      }
+        dispatchTime: new Date().toLocaleString(),
+      },
     };
   }
 };
@@ -725,7 +737,10 @@ export const dispatchEvent = async (params) => {
 export const handleEvent = async (params) => {
   try {
     // 1. 优先调用真实接口
-    const response = await requestClient.post(`${BASE_URL}/handleEvent`, params);
+    const response = await requestClient.post(
+      `${BASE_URL}/handleEvent`,
+      params,
+    );
     // 验证接口返回数据有效性
     if (response.data && response.data.success) {
       return response.data; // 返回真实结果
@@ -738,8 +753,8 @@ export const handleEvent = async (params) => {
       success: true,
       message: '事件处理成功',
       data: {
-        handleTime: new Date().toLocaleString()
-      }
+        handleTime: new Date().toLocaleString(),
+      },
     };
   }
 };
@@ -748,7 +763,10 @@ export const handleEvent = async (params) => {
 export const createSuperviseOrder = async (params) => {
   try {
     // 1. 优先调用真实接口
-    const response = await requestClient.post(`${BASE_URL}/createSuperviseOrder`, params);
+    const response = await requestClient.post(
+      `${BASE_URL}/createSuperviseOrder`,
+      params,
+    );
     // 验证接口返回数据有效性
     if (response.data && response.data.success) {
       return response.data; // 返回真实结果
@@ -762,8 +780,8 @@ export const createSuperviseOrder = async (params) => {
       message: '督办工单生成成功',
       data: {
         superviseOrderId: 'supervise' + Math.random().toString(36).substr(2, 9),
-        createTime: new Date().toLocaleString()
-      }
+        createTime: new Date().toLocaleString(),
+      },
     };
   }
 };
@@ -772,7 +790,10 @@ export const createSuperviseOrder = async (params) => {
 export const createRepairOrder = async (params) => {
   try {
     // 1. 优先调用真实接口
-    const response = await requestClient.post(`${BASE_URL}/createRepairOrder`, params);
+    const response = await requestClient.post(
+      `${BASE_URL}/createRepairOrder`,
+      params,
+    );
     // 验证接口返回数据有效性
     if (response.data && response.data.success) {
       return response.data; // 返回真实结果
@@ -786,8 +807,8 @@ export const createRepairOrder = async (params) => {
       message: '维修工单生成成功',
       data: {
         repairOrderId: 'repair' + Math.random().toString(36).substr(2, 9),
-        createTime: new Date().toLocaleString()
-      }
+        createTime: new Date().toLocaleString(),
+      },
     };
   }
 };

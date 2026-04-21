@@ -1,5 +1,10 @@
 stages:
   - build
+  - push
+variables:
+  DIST_PATH: "./apps/web-ele/dist"
+  TARGET_PATH: "/data/vue/"
+  PIPELINE_TAG: "$CI_COMMIT_BRANCH"
 
 build:
   stage: build
@@ -10,10 +15,35 @@ build:
     - pnpm config set registry https://registry.npmjs.org/
     - pnpm install --no-frozen-lockfile
     - pnpm run build:ele
+  artifacts:
+    paths:
+      - $DIST_PATH/
+    expire_in: 1h
   retry:
     max: 2
     when:
       - runner_system_failure
       - stuck_or_timeout_failure
       - unknown_failure
-
+push:
+  stage: push
+  tags:
+    - genchuan-ui-runner
+  only:
+    - master
+  needs:
+    - build
+  script:
+    - echo "===== 开始迁移dist包到目标服务器 ====="
+    - mkdir -p $TARGET_PATH
+    - cp -rf $DIST_PATH/* $TARGET_PATH/
+    - echo "dist包已迁移到本地路径：$TARGET_PATH"
+    # 验证迁移结果
+    - ls -l $TARGET_PATH  # 本地迁移验证
+    # - ssh $SSH_USER@$TARGET_SERVER "ls -l $TARGET_PATH"  # 远程迁移验证
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
+      - unknown_failure

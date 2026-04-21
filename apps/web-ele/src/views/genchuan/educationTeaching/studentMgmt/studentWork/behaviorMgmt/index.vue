@@ -166,7 +166,7 @@ const getTableData = async ({ page }) => {
     };
     const res = await getBehaviorMgmtPage(params);
     let filtered = res.list;
-    // 应用标签筛选
+    // 应用标签筛选（仅对当前页数据筛选）
     Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
       filtered = filtered.filter(item => {
         let itemValue;
@@ -194,8 +194,8 @@ const getTableData = async ({ page }) => {
         }
       });
     });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    dataObj.total = res.total;
+    dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
     const mockData = dataList();
@@ -228,6 +228,7 @@ const getTableData = async ({ page }) => {
       });
     });
     dataObj.total = filtered.length;
+    // 模拟数据时仍需要前端分页
     dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
   } finally {
     dataObj.loading = false;
@@ -307,7 +308,7 @@ async function confirmAudit() {
       status: auditStatus.value,
       auditRemark: auditRemark.value || '',
     });
-    if (res === true) {
+    if (res && res !== false) {
       ElMessage.success('审批成功');
       auditDialogVisible.value = false;
       handleRefresh();
@@ -336,7 +337,7 @@ async function handleCancel(row) {
     const loading = ElLoading.service({ text: '撤销中...' });
     try {
       const res = await cancelBehaviorMgmt({ id: row.id });
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success('撤销成功');
         handleRefresh();
       } else {
@@ -361,11 +362,14 @@ const [CreateForm, createFormApi] = useVbenForm({
     try {
       let res;
       if (isEditMode.value) {
+        // 编辑时传递 status（表单中已包含）
         res = await updateBehaviorMgmt({ ...values, id: currentEditId.value });
       } else {
-        res = await createBehaviorMgmt(values);
+        // 新增时确保 status 字段存在（默认待审批）
+        const submitData = { ...values, status: values.status || '待审批' };
+        res = await createBehaviorMgmt(submitData);
       }
-      if (res === true) {
+      if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '更新成功' : '申请成功');
         createDrawerApi.close();
         handleRefresh();
@@ -404,21 +408,16 @@ function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
   createFormApi.resetForm();
+  // 新增时设置默认状态为“待审批”
+  createFormApi.setValues({ status: '待审批' });
   createDrawerApi.open();
 }
 
 async function handleEdit(row) {
-  if (row.status !== '待审批') {
-    ElMessage.warning('只有待审批状态的请假记录可以编辑');
-    return;
-  }
   isEditMode.value = true;
   currentEditId.value = row.id;
   try {
     const detail = await getBehaviorMgmtDetail({ id: row.id });
-    // 确保学生选项已加载（如果尚未加载，先加载）
-    // 由于 loadStudentOptions 在 onMounted 中调用，通常已加载，但以防万一
-    // 直接设置表单值，studentId 对应的下拉框 options 已在 loadStudentOptions 中设置
     createFormApi.setValues({
       studentId: detail.studentId,
       leaveType: detail.leaveType,
@@ -426,6 +425,7 @@ async function handleEdit(row) {
       endTime: detail.endTime,
       leaveReason: detail.leaveReason,
       auditLevel: detail.auditLevel,
+      status: detail.status,     // 补充状态赋值
       remark: detail.remark,
     });
     createDrawerApi.open();
@@ -536,8 +536,8 @@ onMounted(() => {
         </div>
       </template>
 
-      <template #studentName="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{ row.studentName }}</el-text>
+      <template #studentId="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{ row.studentId }}</el-text>
       </template>
       <template #leaveType="{ row }">
         <el-text @click="handleFilterTagClick('leaveType', row.leaveType)" type="primary" style="cursor: pointer;">{{ row.leaveType }}</el-text>
@@ -570,7 +570,7 @@ onMounted(() => {
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton v-if="row.status === '待审批'" content="编辑" icon-name="Edit" @click="handleEdit(row)" />
+          <IconButton v-if="row.status !== '已通过'" content="编辑" icon-name="Edit" @click="handleEdit(row)" />
           <IconButton v-if="row.status === '待审批'" content="审批" icon-name="Check" @click="handleAudit(row)" />
           <IconButton v-if="row.status === '已通过'" content="撤销" icon-name="Refresh" color="#F56C6C" @click="handleCancel(row)" />
         </div>

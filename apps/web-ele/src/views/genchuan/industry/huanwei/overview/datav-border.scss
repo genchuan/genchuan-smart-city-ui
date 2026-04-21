@@ -25,10 +25,10 @@
     width: 200%;
     height: 200%;
     background: linear-gradient(
-        45deg,
-        transparent 30%,
-        rgba($color, 0.1) 50%,
-        transparent 70%
+      45deg,
+      transparent 30%,
+      rgba($color, 0.1) 50%,
+      transparent 70%
     );
     animation: datav-light 1.5s linear infinite;
     pointer-events: none;
@@ -124,7 +124,8 @@
 }
 
 @keyframes datav-corner {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     box-shadow: 0 0 5px currentColor;
   }

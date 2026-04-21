@@ -78,19 +78,11 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">台账编号:</div>
         <div class="detail-row-right">{{ detailObj.ledgerCode || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">企业ID:</div>
-        <div class="detail-row-right">{{ detailObj.entId || '-' }}</div>
-      </div>
+      </div> 
       <div class="detail-card-row">
         <div class="detail-row-left">企业名称:</div>
         <div class="detail-row-right">{{ detailObj.entName || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">违规类型ID:</div>
-        <div class="detail-row-right">{{ detailObj.illegalTypeId || '-' }}</div>
-      </div>
+      </div> 
       <div class="detail-card-row">
         <div class="detail-row-left">违规类型名称:</div>
         <div class="detail-row-right">
@@ -121,8 +113,7 @@ defineExpose({
                 class="evidence-img"
                 title="点击查看原图"
                 @click="window.open(item.url, '_blank')"
-              />
-              <span class="evidence-name">{{ item.name }}</span>
+              /> 
             </div>
             <a
               class="evidence-file-item"

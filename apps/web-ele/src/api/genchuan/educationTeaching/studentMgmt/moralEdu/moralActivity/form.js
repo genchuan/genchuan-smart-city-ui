@@ -1,0 +1,229 @@
+// 筛选表单 schema（用于列表页搜索）
+export function useFormSchema() {
+  return [
+    {
+      fieldName: 'activityName',
+      label: '活动名称',
+      component: 'Input',
+      componentProps: { placeholder: '请输入活动名称' },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'activityType',
+      label: '活动类型',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择活动类型',
+        options: [
+          { label: '党团活动', value: '党团活动' },
+          { label: '志愿活动', value: '志愿活动' },
+          { label: '其他', value: '其他' },
+        ],
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'hostDept',
+      label: '主办部门',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择主办部门',
+        filterable: true,
+        remote: true,
+        remoteMethod: () => {},
+        options: [], // 实际从接口加载，value 为部门名称
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'status',
+      label: '状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择状态',
+        options: [
+          { label: '未发布', value: '未发布' },
+          { label: '进行中', value: '进行中' },
+          { label: '已结束', value: '已结束' },
+        ],
+      },
+      labelWidth: '100',
+    },
+  ];
+}
+
+// 表格列定义 - 将 hostDeptName 改为 hostDept
+export function getColumns() {
+  const baseColumns = [{ type: 'checkbox', width: 40 }];
+
+  const columns = [
+    { field: 'activityName', title: '活动名称', minWidth: 180, slots: { default: 'activityName' } },
+    { field: 'activityType', title: '活动类型', minWidth: 100, slots: { default: 'activityType' } },
+    { field: 'hostDept', title: '主办部门', minWidth: 120, slots: { default: 'hostDept' } },
+    { field: 'startTime', title: '开始时间', minWidth: 180, slots: { default: 'startTime' } },
+    { field: 'endTime', title: '结束时间', minWidth: 180, slots: { default: 'endTime' } },
+    { field: 'joinNum', title: '参与人数', minWidth: 100 },
+    { field: 'publishTime', title: '发布时间', minWidth: 180, slots: { default: 'publishTime' } },
+    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
+    { field: 'creator', title: '创建人', minWidth: 120, slots: { default: 'creator' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+  ];
+
+  const allColumns = [...baseColumns, ...columns];
+  allColumns.push({
+    title: '操作',
+    width: 200,
+    fixed: 'right',
+    slots: { default: 'actions' },
+  });
+  return allColumns;
+}
+
+// 发布/编辑表单 schema（新增/编辑）- 添加 status 字段
+export function useCreateFormSchema(isEdit = false) {
+  return [
+    {
+      fieldName: 'activityName',
+      label: '活动名称',
+      component: 'Input',
+      componentProps: { placeholder: '请输入活动名称' },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'activityType',
+      label: '活动类型',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择活动类型',
+        options: [
+          { label: '党团活动', value: '党团活动' },
+          { label: '志愿活动', value: '志愿活动' },
+          { label: '其他', value: '其他' },
+        ],
+      },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'hostDept',
+      label: '主办部门',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择主办部门',
+        filterable: true,
+        remote: true,
+        remoteMethod: () => {},
+        options: [], // 动态加载，value 为部门名称
+      },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'startTime',
+      label: '开始时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择开始时间',
+        type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'x',
+      },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'endTime',
+      label: '结束时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择结束时间',
+        type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'x',
+      },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'status',
+      label: '状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择状态',
+        options: [
+          { label: '未发布', value: '未发布' },
+          { label: '进行中', value: '进行中' },
+          { label: '已结束', value: '已结束' },
+        ],
+      },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'content',
+      label: '活动详情',
+      component: 'Input',
+      componentProps: { placeholder: '请输入活动详情', type: 'textarea', rows: 4 },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'remark',
+      label: '备注',
+      component: 'Input',
+      componentProps: { placeholder: '请输入备注', type: 'textarea', rows: 2 },
+      labelWidth: '100',
+    },
+  ];
+}
+
+// 报名表单 schema
+export function useJoinFormSchema() {
+  return [
+    {
+      fieldName: 'studentId',
+      label: '选择学生',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择学生',
+        filterable: true,
+        remote: true,
+        remoteMethod: () => {},
+        options: [],
+      },
+      rules: 'required',
+      labelWidth: '100',
+    },
+  ];
+}
+
+// 记录表单 schema
+export function useRecordFormSchema() {
+  return [
+    {
+      fieldName: 'content',
+      label: '活动记录',
+      component: 'Input',
+      componentProps: { placeholder: '请输入活动过程记录', type: 'textarea', rows: 4 },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'joinNum',
+      label: '实际参与人数',
+      component: 'InputNumber',
+      componentProps: { placeholder: '请输入实际参与人数', min: 0, step: 1, style: 'width: 100%' },
+      labelWidth: '100',
+    },
+  ];
+}
+
+// 文本常量
+export const textObj = {
+  editText: '编辑活动',
+  addText: '新增活动',
+  joinText: '报名',
+  recordText: '活动记录',
+  excelName: '德育活动列表',
+};

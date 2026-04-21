@@ -85,8 +85,8 @@ const initChart = async () => {
         textStyle: { fontSize: 12, color: '#6E7E91' },
       },
       grid: {
-        left: '3%',
-        right: '4%',
+        left: '4%',
+        right: '8%',
         bottom: '3%',
         containLabel: true,
         backgroundColor: 'transparent',

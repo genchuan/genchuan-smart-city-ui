@@ -107,7 +107,9 @@ export function useGridColumns(
       field: 'price',
       title: '价格',
       minWidth: 100,
-      formatter: 'formatAmount2',
+      formatter: ({ row }) => {
+        return `${fenToYuan(row.price)} 元`;
+      },
     },
     {
       field: 'marketPrice',

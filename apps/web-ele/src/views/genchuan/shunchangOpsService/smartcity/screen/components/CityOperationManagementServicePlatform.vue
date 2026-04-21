@@ -10,6 +10,7 @@ import ChartTypeLine from './ChartTypeLine.vue';
 import ChartTypePie from './ChartTypePie.vue';
 import ChartTypePolyLines from './ChartTypePolyLines.vue';
 import MapCommon from './MapCommon.vue';
+import { getRunningDaysConfig } from '../utils/dateUtils';
 
 const geometriesArray = [
   { x: 26.793_227, y: 117.810_114 },
@@ -67,11 +68,7 @@ const leftData = ref({
 });
 
 const centerData = ref({
-  customizeParams: {
-    name: '安全运行天数：',
-    runningDays: '27',
-    tail: '天',
-  },
+  customizeParams: getRunningDaysConfig(),
   centerId: 'centerId',
   lineAxisData: [
     '1月',
