@@ -210,3 +210,29 @@ export function cancelShareChargeOrder(data) {
 export function getShareChargeOrderChart() {
   return requestClient.get('/ordertrade/share-charge-order/chart');
 }
+/** 异常订单分页 */
+export function getAbnormalOrderPage(params) {
+  return requestClient.get('/ordertrade/abnormal-order/page', {
+    params,
+  });
+}
+/** 异常订单导出 */
+export function exportAbnormalOrderExcel() {
+  return requestClient.download('/ordertrade/abnormal-order/export');
+}
+/** 异常订单更新进度 */
+export function updateAbnormalOrderProgress(data) {
+  return requestClient.put('/ordertrade/abnormal-order/update-progress', data);
+}
+/** 异常订单忽略 */
+export function ignoreAbnormalOrder(data) {
+  return requestClient.put('/ordertrade/abnormal-order/ignore', data);
+}
+/** 异常订单检查 */
+export function checkAbnormalOrder(data) {
+  return requestClient.put('/ordertrade/abnormal-order/check', data);
+}
+/** 异常订单图表 */
+export function getAbnormalOrderChart() {
+  return requestClient.get('/ordertrade/abnormal-order/chart');
+}

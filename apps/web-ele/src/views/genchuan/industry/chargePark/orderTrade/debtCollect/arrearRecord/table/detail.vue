@@ -2,45 +2,7 @@
 import { computed, defineProps, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 订单类型映射
-const orderTypeMap = {
-  temp_park: '临时停车',
-  offtime_park: '错时停车',
-  car_charge: '汽车充电',
-  bike_charge: '两轮充电',
-  share_charge: '共享充电',
-};
-
-// 异常类型映射
-const abnormalTypeMap = {
-  payment_error: '支付异常',
-  billing_error: '计费异常',
-  status_error: '状态异常',
-};
-
-// 处置状态映射
-const statusMap = {
-  unhandled: '未处理',
-  handling: '处理中',
-  closed: '已关闭',
-};
-
-// 获取订单类型标签
-const getOrderTypeLabel = (orderType) => {
-  return orderTypeMap[orderType] || orderType || '-';
-};
-
-// 获取异常类型标签
-const getAbnormalTypeLabel = (abnormalType) => {
-  return abnormalTypeMap[abnormalType] || abnormalType || '-';
-};
-
-// 获取状态标签
-const getStatusLabel = (status) => {
-  return statusMap[status] || status || '-';
-};
-
-// 异常订单详情
+// 设备借出订单详情
 const props = defineProps({
   detailObj: {
     type: Object,
@@ -57,8 +19,8 @@ const { detailObj, title } = toRefs(props);
 
 // 标题
 const drawerTitle = computed(() => {
-  const id = detailObj.value?.id || '异常订单';
-  return title.value || `异常订单【${id}】详情`;
+  const orderNo = detailObj.value?.orderNo || '设备借出订单';
+  return title.value || `${orderNo} 详情`;
 });
 
 // 抽屉
@@ -89,28 +51,48 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">关联订单ID:</div>
-        <div class="detail-row-right">{{ detailObj.orderId || '-' }}</div>
+        <div class="detail-row-left">订单编号:</div>
+        <div class="detail-row-right">{{ detailObj.orderNo || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">订单类型:</div>
-        <div class="detail-row-right">{{ getOrderTypeLabel(detailObj.orderType) }}</div>
+        <div class="detail-row-left">用户ID:</div>
+        <div class="detail-row-right">{{ detailObj.userId || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">异常类型:</div>
-        <div class="detail-row-right">{{ getAbnormalTypeLabel(detailObj.abnormalType) }}</div>
+        <div class="detail-row-left">用户昵称:</div>
+        <div class="detail-row-right">{{ detailObj.userNickname || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">异常识别时间:</div>
-        <div class="detail-row-right">{{ detailObj.identifyTime || '-' }}</div>
+        <div class="detail-row-left">借出时间:</div>
+        <div class="detail-row-right">{{ detailObj.lendTime || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">处置状态:</div>
-        <div class="detail-row-right">{{ getStatusLabel(detailObj.status) }}</div>
+        <div class="detail-row-left">归还时间:</div>
+        <div class="detail-row-right">{{ detailObj.returnTime || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">实际使用时长（分钟）:</div>
+        <div class="detail-row-right">{{ detailObj.actualDuration || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">订单金额:</div>
+        <div class="detail-row-right">{{ detailObj.amount || '0.00' }} 元</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">订单状态:</div>
+        <div class="detail-row-right">{{ detailObj.status || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">订单生成时间:</div>
+        <div class="detail-row-right">{{ detailObj.createOrderTime || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
@@ -119,13 +101,18 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">忽略理由:</div>
-        <div class="detail-row-right">{{ detailObj.ignoreReason || '-' }}</div>
+        <div class="detail-row-left">支付方式:</div>
+        <div class="detail-row-right">{{ detailObj.payMethod || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">处置进度:</div>
-        <div class="detail-row-right">{{ detailObj.processProgress || '-' }}</div>
+        <div class="detail-row-left">优惠抵扣金额:</div>
+        <div class="detail-row-right">{{ detailObj.discountAmount || '0.00' }} 元</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">归档时间:</div>
+        <div class="detail-row-right">{{ detailObj.archiveTime || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
