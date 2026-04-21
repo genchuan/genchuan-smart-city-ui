@@ -213,6 +213,63 @@ const ENERGYCHARGE_DICT = {
   ORDER_REFUND_STATUS: 'order_refund_refund_status', // 订单退款状态
 } as const;
 
+/** ========== CHGPARKMGT  - 充电停车一体化管理模块 ========== */
+const CHGPARKMGT_DICT = {
+  // 营销运营管理
+  // 积分活动
+  POINT_ACTIVITY_TYPE: 'point_activity_type', // 活动类型
+  POINT_ACTIVITY_STATUS: 'point_activity_status', // 车位类型
+
+  // 设备监控 - 车位状态监测
+  SPACE_MONITOR_STATUS: 'space_monitor_monitor_status', // 车位监测状态
+  SPACE_MONITOR_ALARM_STATUS: 'space_monitor_alarm_status', // 车位告警状态
+  SPACE_MONITOR_PROCESS_STATUS: 'space_monitor_process_status', // 车位处理状态
+
+  // 设备监控 - 油车占位监测
+  OIL_MONITOR_PROCESS_STATUS: 'oil_monitor_process_status', // 油车占位处置状态
+
+  // 设备监控 - 汽车充电监测
+  CAR_CHARGE_MONITOR_STATUS: 'car_charge_monitor_monitor_status', // 汽车充电监测状态
+  CAR_CHARGE_MONITOR_ALARM_STATUS: 'car_charge_monitor_alarm_status', // 汽车充电告警状态
+  CAR_CHARGE_MONITOR_PROCESS_STATUS: 'car_charge_monitor_process_status', // 汽车充电处理状态
+
+  // 设备监控 - 两轮充电监测
+  BIKE_CHARGE_MONITOR_STATUS: 'bike_charge_monitor_monitor_status', // 两轮充电监测状态
+  BIKE_CHARGE_MONITOR_ALARM_STATUS: 'bike_charge_monitor_alarm_status', // 两轮充电告警状态
+  BIKE_CHARGE_MONITOR_PROCESS_STATUS: 'bike_charge_monitor_process_status', // 两轮充电处理状态
+
+  // 设备监控 - 共享充电监测
+  SHARE_CHARGE_MONITOR_STATUS: 'share_charge_monitor_monitor_status', // 共享充电监测状态
+  SHARE_CHARGE_MONITOR_ALARM_STATUS: 'share_charge_monitor_alarm_status', // 共享充电告警状态
+  SHARE_CHARGE_MONITOR_PROCESS_STATUS: 'share_charge_monitor_process_status', // 共享充电处理状态
+
+  // 巡检管理
+  INSPECT_PLAN_TYPE: 'inspect_plan_type', // 巡检计划类型
+  INSPECT_PLAN_CYCLE: 'inspect_plan_cycle', // 巡检计划执行周期
+  INSPECT_PLAN_STATUS: 'inspect_plan_status', // 巡检计划状态
+  INSPECT_TASK_STATUS: 'inspect_task_status', // 巡检任务状态
+  INSPECT_REPORT_TYPE: 'inspect_report_type', // 巡检上报问题类型
+  INSPECT_REPORT_STATUS: 'inspect_report_status', // 巡检上报状态
+  INSPECT_TRACK_STATUS: 'inspect_track_status', // 巡检轨迹状态
+  INSPECT_USER_STATUS: 'inspect_user_status', // 巡检人员状态
+  INSPECT_USER_ONLINE_STATUS: 'inspect_user_online_status', // 巡检人员在线状态
+  FENCE_MGMT_STATUS: 'fence_mgmt_status', // 围栏状态
+
+  // 资产管理
+  ASSET_INFO_TYPE: 'asset_info_type', // 资产类型
+  ASSET_INFO_STATUS: 'asset_info_status', // 资产状态
+  ASSET_CHECK_TYPE: 'asset_check_type', // 资产盘点类型
+  ASSET_CHECK_STATUS: 'asset_check_status', // 资产盘点状态
+  ASSET_STOCK_STATUS: 'asset_stock_status', // 资产库存状态
+  SPARE_STOCK_STATUS: 'spare_stock_status', // 备件库存状态
+
+  // 排班管理
+  SCHEDULE_VIEW_SHIFT_TYPE: 'schedule_view_shift_type', // 排班班次类型
+  SCHEDULE_VIEW_STATUS: 'schedule_view_status', // 排班状态
+  HANDOVER_LOG_STATUS: 'handover_log_status', // 交接日志状态
+  SHIFT_APPLY_STATUS: 'shift_apply_status', // 换班申请状态
+} as const;
+
 /** 字典类型枚举 - 统一导出 */
 const DICT_TYPE = {
   ...AI_DICT,

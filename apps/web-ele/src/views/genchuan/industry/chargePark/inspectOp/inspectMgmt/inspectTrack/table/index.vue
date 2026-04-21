@@ -32,8 +32,10 @@ import {
   filterMockList,
   formatTrendTime,
   getSyncStatusTagType,
+  getTrackStatusLabel,
   getTrackStatusTagType,
   getUserName,
+  isTrackStatusLabel,
   normalizeInspectTrackRow,
   textObj,
   useGridColumns,
@@ -84,11 +86,11 @@ const dataObj = reactive({
 });
 
 const currentPageStats = computed(() => {
-  const normalCount = dataObj.list.filter(
-    (item) => item.status === '正常',
+  const normalCount = dataObj.list.filter((item) =>
+    isTrackStatusLabel(item.status, '正常'),
   ).length;
-  const exceptionCount = dataObj.list.filter(
-    (item) => item.status === '异常',
+  const exceptionCount = dataObj.list.filter((item) =>
+    isTrackStatusLabel(item.status, '异常'),
   ).length;
   const totalMileage = dataObj.list
     .reduce((total, item) => total + Number(item.mileage || 0), 0)
@@ -399,7 +401,7 @@ watch(
             :type="getTrackStatusTagType(filterStatus)"
             @close="cancelFilter('status')"
           >
-            轨迹状态：{{ filterStatus }}
+            轨迹状态：{{ getTrackStatusLabel(filterStatus) }}
           </ElTag>
           <ElTag
             v-if="filterSyncStatus"
@@ -483,7 +485,7 @@ watch(
           :type="getTrackStatusTagType(row.status)"
           @click="handleStatusClick(row.status)"
         >
-          {{ row.status }}
+          {{ getTrackStatusLabel(row.status) }}
         </ElTag>
       </template>
 
@@ -513,13 +515,13 @@ watch(
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            v-if="row.status === '正常'"
+            v-if="isTrackStatusLabel(row.status, '正常')"
             content="回放"
             icon-name="VideoPlay"
             @click="handleReplay(row)"
           />
           <IconButton
-            v-if="row.status === '异常'"
+            v-if="isTrackStatusLabel(row.status, '异常')"
             content="核查"
             icon-name="CircleCheck"
             @click="handleCheck(row)"

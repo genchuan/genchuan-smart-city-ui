@@ -1,5 +1,52 @@
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
+
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
+export const INSPECT_REPORT_TYPE_DICT = DICT_TYPE.INSPECT_REPORT_TYPE;
+export const INSPECT_REPORT_STATUS_DICT = DICT_TYPE.INSPECT_REPORT_STATUS;
+
+function getDictOptionsWithFallback(dictType, fallbackOptions) {
+  const options = getDictOptions(dictType, 'string');
+  return options.length > 0 ? options : fallbackOptions;
+}
+
+function getDictLabel(dictType, value) {
+  if (value === undefined || value === null || value === '') return '-';
+  const dict = getDictObj(dictType, String(value));
+  return dict?.label || value;
+}
+
+function isDictLabel(dictType, value, label) {
+  return (
+    String(value) === String(label) || getDictLabel(dictType, value) === label
+  );
+}
+
+function isSameDictValue(dictType, current, target) {
+  if (!target) return true;
+  return (
+    String(current) === String(target) ||
+    getDictLabel(dictType, current) === getDictLabel(dictType, target)
+  );
+}
+
+export function getReportTypeLabel(value) {
+  return getDictLabel(INSPECT_REPORT_TYPE_DICT, value);
+}
+
+export function isReportTypeLabel(value, label) {
+  return isDictLabel(INSPECT_REPORT_TYPE_DICT, value, label);
+}
+
+export function getReportStatusLabel(value) {
+  return getDictLabel(INSPECT_REPORT_STATUS_DICT, value);
+}
+
+export function isReportStatusLabel(value, label) {
+  return isDictLabel(INSPECT_REPORT_STATUS_DICT, value, label);
+}
 export const taskOptions = [
   { label: '丰泽站日常巡检任务', value: 1 },
   { label: '鲤城停车场专项巡检任务', value: 2 },
@@ -9,18 +56,28 @@ export const taskOptions = [
   { label: '南安水头交通枢纽日检任务', value: 6 },
 ];
 
-export const reportTypeOptions = [
+const fallbackReportTypeOptions = [
   { label: '设备故障', value: '设备故障' },
   { label: '占位异常', value: '占位异常' },
   { label: '其他', value: '其他' },
 ];
 
-export const statusOptions = [
+export const reportTypeOptions = getDictOptionsWithFallback(
+  INSPECT_REPORT_TYPE_DICT,
+  fallbackReportTypeOptions,
+);
+
+const fallbackStatusOptions = [
   { label: '待审核', value: '待审核' },
   { label: '待处置', value: '待处置' },
   { label: '已完成', value: '已完成' },
   { label: '已驳回', value: '已驳回' },
 ];
+
+export const statusOptions = getDictOptionsWithFallback(
+  INSPECT_REPORT_STATUS_DICT,
+  fallbackStatusOptions,
+);
 
 export const auditorOptions = [
   { label: '张三', value: 1 },
@@ -92,7 +149,10 @@ export function getReportTypeTagType(type) {
     占位异常: 'warning',
     其他: 'info',
   };
-  return tagMap[type] || 'info';
+  return getDictTagTypeFromDict(
+    getDictObj(INSPECT_REPORT_TYPE_DICT, String(type)),
+    tagMap[getReportTypeLabel(type)] || 'info',
+  );
 }
 
 export function getReportStatusTagType(status) {
@@ -102,7 +162,10 @@ export function getReportStatusTagType(status) {
     已完成: 'success',
     已驳回: 'danger',
   };
-  return tagMap[status] || 'info';
+  return getDictTagTypeFromDict(
+    getDictObj(INSPECT_REPORT_STATUS_DICT, String(status)),
+    tagMap[getReportStatusLabel(status)] || 'info',
+  );
 }
 
 export function dataList() {
@@ -276,8 +339,16 @@ export function filterInspectReportRows(list = [], params = {}) {
   return list.filter((item) => {
     const matchTask =
       !params.taskId || Number(item.taskId) === Number(params.taskId);
-    const matchType = !params.type || item.type === params.type;
-    const matchStatus = !params.status || item.status === params.status;
+    const matchType = isSameDictValue(
+      INSPECT_REPORT_TYPE_DICT,
+      item.type,
+      params.type,
+    );
+    const matchStatus = isSameDictValue(
+      INSPECT_REPORT_TYPE_DICT,
+      item.status,
+      params.status,
+    );
     const matchAuditUser =
       !params.auditUserId ||
       Number(item.auditUserId) === Number(params.auditUserId);
@@ -490,6 +561,7 @@ export const detailFields = [
     label: '问题类型',
     type: 'tag',
     tagType: getReportTypeTagType,
+    formatter: getReportTypeLabel,
   },
   { key: 'reportTimeStr', label: '上报时间' },
   {
@@ -497,6 +569,7 @@ export const detailFields = [
     label: '上报状态',
     type: 'tag',
     tagType: getReportStatusTagType,
+    formatter: getReportStatusLabel,
   },
   { key: 'creator', label: '上报人' },
   { key: 'content', label: '上报内容' },

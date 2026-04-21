@@ -25,8 +25,12 @@ import {
   filterInspectUserRows,
   filterMockList,
   getDeviceDetail,
+  getOnlineStatusLabel,
   getOnlineStatusTagType,
+  getUserStatusLabel,
   getUserStatusTagType,
+  isOnlineStatusLabel,
+  isUserStatusLabel,
   normalizeInspectUserRow,
   textObj,
   useGridColumns,
@@ -81,9 +85,9 @@ const currentPageStats = computed(() => {
   let onlineCount = 0;
 
   for (const item of dataObj.list) {
-    if (item.status === '正常') normalCount += 1;
-    if (item.status === '禁用') disabledCount += 1;
-    if (item.onlineStatus === '在线') onlineCount += 1;
+    if (isUserStatusLabel(item.status, '正常')) normalCount += 1;
+    if (isUserStatusLabel(item.status, '禁用')) disabledCount += 1;
+    if (isOnlineStatusLabel(item.onlineStatus, '在线')) onlineCount += 1;
   }
 
   return {
@@ -360,7 +364,7 @@ watch(
             :type="getUserStatusTagType(filterStatus)"
             @close="cancelFilter('status')"
           >
-            人员状态：{{ filterStatus }}
+            人员状态：{{ getUserStatusLabel(filterStatus) }}
           </ElTag>
           <ElTag
             v-if="filterOnlineStatus"
@@ -368,7 +372,7 @@ watch(
             :type="getOnlineStatusTagType(filterOnlineStatus)"
             @close="cancelFilter('onlineStatus')"
           >
-            在线状态：{{ filterOnlineStatus }}
+            在线状态：{{ getOnlineStatusLabel(filterOnlineStatus) }}
           </ElTag>
         </div>
       </template>
@@ -441,7 +445,7 @@ watch(
           :type="getUserStatusTagType(row.status)"
           @click="handleStatusClick(row.status)"
         >
-          {{ row.status }}
+          {{ getUserStatusLabel(row.status) }}
         </ElTag>
       </template>
 
@@ -451,26 +455,26 @@ watch(
           :type="getOnlineStatusTagType(row.onlineStatus)"
           @click="handleOnlineStatusClick(row.onlineStatus)"
         >
-          {{ row.onlineStatus }}
+          {{ getOnlineStatusLabel(row.onlineStatus) }}
         </ElTag>
       </template>
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            v-if="row.status === '正常'"
+            v-if="isUserStatusLabel(row.status, '正常')"
             content="编辑"
             icon-name="Edit"
             @click="handleEdit(row)"
           />
           <IconButton
-            v-if="row.status === '正常'"
+            v-if="isUserStatusLabel(row.status, '正常')"
             content="禁用"
             icon-name="VideoPause"
             @click="handleDisable(row)"
           />
           <IconButton
-            v-if="row.status === '禁用'"
+            v-if="isUserStatusLabel(row.status, '禁用')"
             content="启用"
             icon-name="CircleCheckFilled"
             @click="handleEnable(row)"

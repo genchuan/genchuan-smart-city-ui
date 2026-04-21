@@ -1,5 +1,44 @@
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
+
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
+export const OIL_MONITOR_PROCESS_STATUS_DICT =
+  DICT_TYPE.OIL_MONITOR_PROCESS_STATUS;
+
+function getDictOptionsWithFallback(dictType, fallbackOptions) {
+  const options = getDictOptions(dictType, 'string');
+  return options.length > 0 ? options : fallbackOptions;
+}
+
+function getDictLabel(dictType, value) {
+  if (value === undefined || value === null || value === '') return '-';
+  const dict = getDictObj(dictType, String(value));
+  return dict?.label || value;
+}
+
+function isDictLabel(dictType, value, label) {
+  return (
+    String(value) === String(label) || getDictLabel(dictType, value) === label
+  );
+}
+
+function isSameDictValue(dictType, current, target) {
+  if (!target) return true;
+  return (
+    String(current) === String(target) ||
+    getDictLabel(dictType, current) === getDictLabel(dictType, target)
+  );
+}
+
+export function getProcessStatusLabel(value) {
+  return getDictLabel(OIL_MONITOR_PROCESS_STATUS_DICT, value);
+}
+
+export function isProcessStatusLabel(value, label) {
+  return isDictLabel(OIL_MONITOR_PROCESS_STATUS_DICT, value, label);
+}
 export const stationOptions = [
   { label: '泉州丰泽充电站', value: 1 },
   { label: '泉州鲤城公共停车场', value: 2 },
@@ -16,11 +55,16 @@ export const processUserOptions = [
   { label: '陈运维', value: 1004 },
 ];
 
-export const processStatusOptions = [
+const fallbackProcessStatusOptions = [
   { label: '未处理', value: '未处理' },
   { label: '处理中', value: '处理中' },
   { label: '已关闭', value: '已关闭' },
 ];
+
+export const processStatusOptions = getDictOptionsWithFallback(
+  OIL_MONITOR_PROCESS_STATUS_DICT,
+  fallbackProcessStatusOptions,
+);
 
 export const processMethodOptions = [
   { label: '现场劝离', value: '现场劝离' },
@@ -68,10 +112,15 @@ export function getProcessUserName(processUserId) {
 }
 
 export function getProcessStatusTagType(status) {
-  if (status === '未处理') return 'danger';
-  if (status === '处理中') return 'warning';
-  if (status === '已关闭') return 'success';
-  return 'info';
+  const tagMap = {
+    未处理: 'danger',
+    处理中: 'warning',
+    已关闭: 'success',
+  };
+  return getDictTagTypeFromDict(
+    getDictObj(OIL_MONITOR_PROCESS_STATUS_DICT, String(status)),
+    tagMap[getProcessStatusLabel(status)] || 'info',
+  );
 }
 
 export function dataList() {
@@ -182,8 +231,11 @@ export function filterMockList(params = {}) {
       item.spaceCode.includes(String(params.spaceId));
     const matchStation =
       !params.stationId || Number(item.stationId) === Number(params.stationId);
-    const matchStatus =
-      !params.processStatus || item.processStatus === params.processStatus;
+    const matchStatus = isSameDictValue(
+      OIL_MONITOR_PROCESS_STATUS_DICT,
+      item.processStatus,
+      params.processStatus,
+    );
     const matchUser =
       !params.processUserId ||
       Number(item.processUserId) === Number(params.processUserId);
@@ -379,6 +431,7 @@ export const detailFields = [
     label: '处置状态',
     type: 'tag',
     tagType: getProcessStatusTagType,
+    formatter: getProcessStatusLabel,
   },
   { key: 'processUserName', label: '处置人' },
   { key: 'processMethod', label: '处置方式' },

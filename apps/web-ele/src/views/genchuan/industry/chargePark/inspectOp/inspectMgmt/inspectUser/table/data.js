@@ -1,5 +1,53 @@
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
+
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
+export const INSPECT_USER_STATUS_DICT = DICT_TYPE.INSPECT_USER_STATUS;
+export const INSPECT_USER_ONLINE_STATUS_DICT =
+  DICT_TYPE.INSPECT_USER_ONLINE_STATUS;
+
+function getDictOptionsWithFallback(dictType, fallbackOptions) {
+  const options = getDictOptions(dictType, 'string');
+  return options.length > 0 ? options : fallbackOptions;
+}
+
+function getDictLabel(dictType, value) {
+  if (value === undefined || value === null || value === '') return '-';
+  const dict = getDictObj(dictType, String(value));
+  return dict?.label || value;
+}
+
+function isDictLabel(dictType, value, label) {
+  return (
+    String(value) === String(label) || getDictLabel(dictType, value) === label
+  );
+}
+
+function isSameDictValue(dictType, current, target) {
+  if (!target) return true;
+  return (
+    String(current) === String(target) ||
+    getDictLabel(dictType, current) === getDictLabel(dictType, target)
+  );
+}
+
+export function getUserStatusLabel(value) {
+  return getDictLabel(INSPECT_USER_STATUS_DICT, value);
+}
+
+export function isUserStatusLabel(value, label) {
+  return isDictLabel(INSPECT_USER_STATUS_DICT, value, label);
+}
+
+export function getOnlineStatusLabel(value) {
+  return getDictLabel(INSPECT_USER_ONLINE_STATUS_DICT, value);
+}
+
+export function isOnlineStatusLabel(value, label) {
+  return isDictLabel(INSPECT_USER_ONLINE_STATUS_DICT, value, label);
+}
 export const areaOptions = [
   { label: '丰泽区', value: '丰泽区' },
   { label: '鲤城区', value: '鲤城区' },
@@ -9,15 +57,25 @@ export const areaOptions = [
   { label: '南安市', value: '南安市' },
 ];
 
-export const statusOptions = [
+const fallbackStatusOptions = [
   { label: '正常', value: '正常' },
   { label: '禁用', value: '禁用' },
 ];
 
-export const onlineStatusOptions = [
+export const statusOptions = getDictOptionsWithFallback(
+  INSPECT_USER_STATUS_DICT,
+  fallbackStatusOptions,
+);
+
+const fallbackOnlineStatusOptions = [
   { label: '在线', value: '在线' },
   { label: '离线', value: '离线' },
 ];
+
+export const onlineStatusOptions = getDictOptionsWithFallback(
+  INSPECT_USER_ONLINE_STATUS_DICT,
+  fallbackOnlineStatusOptions,
+);
 
 export const deviceOptions = [
   { label: '巡检终端 A101', value: 101, area: '丰泽区' },
@@ -81,7 +139,10 @@ export function getUserStatusTagType(status) {
     正常: 'success',
     禁用: 'danger',
   };
-  return tagMap[status] || 'info';
+  return getDictTagTypeFromDict(
+    getDictObj(INSPECT_USER_STATUS_DICT, String(status)),
+    tagMap[getUserStatusLabel(status)] || 'info',
+  );
 }
 
 export function getOnlineStatusTagType(status) {
@@ -89,7 +150,10 @@ export function getOnlineStatusTagType(status) {
     在线: 'success',
     离线: 'info',
   };
-  return tagMap[status] || 'info';
+  return getDictTagTypeFromDict(
+    getDictObj(INSPECT_USER_ONLINE_STATUS_DICT, String(status)),
+    tagMap[getOnlineStatusLabel(status)] || 'info',
+  );
 }
 
 export function getDeviceDetail(row = {}) {
@@ -215,7 +279,11 @@ export function filterInspectUserRows(list = [], params = {}) {
       String(item.phone).includes(String(params.phone)) ||
       String(item.phoneText).includes(String(params.phone));
     const matchArea = !params.area || item.area === params.area;
-    const matchStatus = !params.status || item.status === params.status;
+    const matchStatus = isSameDictValue(
+      INSPECT_USER_STATUS_DICT,
+      item.status,
+      params.status,
+    );
     const matchOnline =
       !params.onlineStatus || item.onlineStatus === params.onlineStatus;
     const matchLoginTime = isInRange(item.lastLoginTime, lastLoginTimeRange);
@@ -393,12 +461,14 @@ export const detailFields = [
     label: '人员状态',
     type: 'tag',
     tagType: getUserStatusTagType,
+    formatter: getUserStatusLabel,
   },
   {
     key: 'onlineStatus',
     label: '在线状态',
     type: 'tag',
     tagType: getOnlineStatusTagType,
+    formatter: getOnlineStatusLabel,
   },
   { key: 'lastLoginTimeStr', label: '最后登录时间' },
   { key: 'taskRecordText', label: '任务记录' },

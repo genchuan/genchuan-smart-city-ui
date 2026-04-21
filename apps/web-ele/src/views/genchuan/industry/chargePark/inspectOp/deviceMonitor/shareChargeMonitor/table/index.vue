@@ -21,10 +21,15 @@ import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import {
   detailFields,
   filterMockList,
+  getAlarmStatusLabel,
   getAlarmStatusTagType,
+  getMonitorStatusLabel,
   getMonitorStatusTagType,
+  getProcessStatusLabel,
   getProcessStatusTagType,
   getStationName,
+  isAlarmStatusLabel,
+  isMonitorStatusLabel,
   normalizeShareChargeMonitorRow,
   textObj,
   useGridColumns,
@@ -92,14 +97,14 @@ const dataObj = reactive({
 });
 
 const currentPageStats = computed(() => {
-  const normalCount = dataObj.list.filter(
-    (item) => item.monitorStatus === '正常',
+  const normalCount = dataObj.list.filter((item) =>
+    isMonitorStatusLabel(item.monitorStatus, '正常'),
   ).length;
-  const abnormalCount = dataObj.list.filter(
-    (item) => item.monitorStatus === '异常',
+  const abnormalCount = dataObj.list.filter((item) =>
+    isMonitorStatusLabel(item.monitorStatus, '异常'),
   ).length;
-  const alarmCount = dataObj.list.filter(
-    (item) => item.alarmStatus === '已告警',
+  const alarmCount = dataObj.list.filter((item) =>
+    isAlarmStatusLabel(item.alarmStatus, '已告警'),
   ).length;
 
   return {
@@ -472,7 +477,7 @@ watch(
             :type="getMonitorStatusTagType(filterMonitorStatus)"
             @close="cancelFilter('monitorStatus')"
           >
-            监测状态：{{ filterMonitorStatus }}
+            监测状态：{{ getMonitorStatusLabel(filterMonitorStatus) }}
           </ElTag>
           <ElTag
             v-if="filterAlarmStatus"
@@ -480,7 +485,7 @@ watch(
             :type="getAlarmStatusTagType(filterAlarmStatus)"
             @close="cancelFilter('alarmStatus')"
           >
-            告警状态：{{ filterAlarmStatus }}
+            告警状态：{{ getAlarmStatusLabel(filterAlarmStatus) }}
           </ElTag>
           <ElTag
             v-if="filterProcessStatus"
@@ -488,7 +493,7 @@ watch(
             :type="getProcessStatusTagType(filterProcessStatus)"
             @close="cancelFilter('processStatus')"
           >
-            处理状态：{{ filterProcessStatus }}
+            处理状态：{{ getProcessStatusLabel(filterProcessStatus) }}
           </ElTag>
           <ElTag
             v-if="filterTrendTime"
@@ -559,7 +564,7 @@ watch(
           style="cursor: pointer"
           @click="handleMonitorStatusClick(row.monitorStatus)"
         >
-          {{ row.monitorStatus }}
+          {{ getMonitorStatusLabel(row.monitorStatus) }}
         </ElTag>
       </template>
 
@@ -569,7 +574,7 @@ watch(
           style="cursor: pointer"
           @click="handleAlarmStatusClick(row.alarmStatus)"
         >
-          {{ row.alarmStatus }}
+          {{ getAlarmStatusLabel(row.alarmStatus) }}
         </ElTag>
       </template>
 
@@ -592,14 +597,14 @@ watch(
           style="cursor: pointer"
           @click="handleProcessStatusClick(row.processStatus)"
         >
-          {{ row.processStatus }}
+          {{ getProcessStatusLabel(row.processStatus) }}
         </ElTag>
       </template>
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            v-if="row.monitorStatus === '异常'"
+            v-if="isMonitorStatusLabel(row.monitorStatus, '异常')"
             content="告警"
             icon-name="Bell"
             @click="openAlarmDialog(row)"
