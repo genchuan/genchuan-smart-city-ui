@@ -52,8 +52,8 @@ const fetchOrderChartData = async () => {
       res.stationData && res.stationData.length > 0
         ? res.stationData
         : [
-            { name: '丰泽站', value: 25 },
-            { name: '鲤城站', value: 18 },
+            { name: '丰泽站', count: 25 },
+            { name: '鲤城站', count: 18 },
           ];
     // 更新折线图
     updateLineChart();
@@ -186,9 +186,13 @@ onMounted(() => {
       width="500px"
       height="330px"
       title="站点订单分布"
-      :x-data="state.stationData.map((item) => item.name)"
+      :x-data="
+        state.stationData.map(
+          (item) => statusMap[item.status]?.label || item.status,
+        )
+      "
       :series-data="[
-        { name: '订单数', data: state.stationData.map((item) => item.value) },
+        { name: '订单数', data: state.stationData.map((item) => item.count) },
       ]"
     />
   </div>

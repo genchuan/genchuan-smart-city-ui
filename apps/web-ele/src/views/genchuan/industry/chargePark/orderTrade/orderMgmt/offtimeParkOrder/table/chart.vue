@@ -48,7 +48,16 @@ const fetchOrderChartData = async () => {
             { date: '2025-04-04', count: 20 },
             { date: '2025-04-05', count: 14 },
           ];
-    state.typeData = res.typeData;
+    // 如果typeData为空，使用假数据
+    state.typeData =
+      res.stationData && res.stationData.length > 0
+        ? res.stationData
+        : [
+            { count: 2, status: 'completed' },
+            { count: 4, status: 'paid' },
+            { count: 1, status: 'charging' },
+            { count: 1, status: 'cancelled' },
+          ];
     // 更新折线图
     updateLineChart();
   } catch (error) {

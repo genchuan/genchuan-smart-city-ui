@@ -1,18 +1,20 @@
 <script setup>
-import { reactive, onMounted, ref } from 'vue';
-import { getOrderChart } from  '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
+import { onMounted, reactive, ref } from 'vue';
+
+import * as echarts from 'echarts';
+
+import { getOrderChart } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import Card from '#/components/stats/card.vue';
 import Columnar from '#/components/stats/columnar.vue';
-import * as echarts from 'echarts';
 
 // 订单状态映射
 const statusMap = {
-  'charging': { label: '充电中', type: 'primary' },
-  'pending_pay': { label: '待支付', type: 'warning' },
-  'paid': { label: '已支付', type: 'success' },
-  'completed': { label: '已完成', type: 'success' },
-  'cancelled': { label: '已取消', type: 'info' },
-  'refunding': { label: '退款中', type: 'danger' },
+  charging: { label: '充电中', type: 'primary' },
+  pending_pay: { label: '待支付', type: 'warning' },
+  paid: { label: '已支付', type: 'success' },
+  completed: { label: '已完成', type: 'success' },
+  cancelled: { label: '已取消', type: 'info' },
+  refunding: { label: '退款中', type: 'danger' },
 };
 
 const state = reactive({
@@ -36,13 +38,16 @@ const fetchOrderChartData = async () => {
     state.cardList[1].value = res.todayRevenue;
     state.cardList[2].value = res.payRate;
     // 如果trendData为空，使用假数据
-    state.trendData = res.trendData && res.trendData.length > 0 ? res.trendData : [
-      { date: '2025-04-01', count: 12 },
-      { date: '2025-04-02', count: 15 },
-      { date: '2025-04-03', count: 8 },
-      { date: '2025-04-04', count: 20 },
-      { date: '2025-04-05', count: 14 },
-    ];
+    state.trendData =
+      res.trendData && res.trendData.length > 0
+        ? res.trendData
+        : [
+            { date: '2025-04-01', count: 12 },
+            { date: '2025-04-02', count: 15 },
+            { date: '2025-04-03', count: 8 },
+            { date: '2025-04-04', count: 20 },
+            { date: '2025-04-05', count: 14 },
+          ];
     state.typeData = res.typeData;
     // 更新折线图
     updateLineChart();
@@ -73,9 +78,9 @@ const fetchOrderChartData = async () => {
 // 初始化折线图
 const initLineChart = () => {
   if (!lineChartRef.value) return;
-  
+
   lineChartInstance = echarts.init(lineChartRef.value);
-  
+
   const option = {
     title: {
       text: '订单量趋势',
@@ -102,7 +107,7 @@ const initLineChart = () => {
     xAxis: {
       type: 'category',
       boundaryGap: false,
-      data: state.trendData.map(item => item.date),
+      data: state.trendData.map((item) => item.date),
       axisLabel: { color: '#6E7E91', fontSize: 12 },
       axisLine: { lineStyle: { color: '#E5E7EB' } },
     },
@@ -116,7 +121,7 @@ const initLineChart = () => {
       {
         name: '订单量',
         type: 'line',
-        data: state.trendData.map(item => item.count),
+        data: state.trendData.map((item) => item.count),
         smooth: true,
         symbol: 'circle',
         symbolSize: 6,
@@ -131,21 +136,21 @@ const initLineChart = () => {
       },
     ],
   };
-  
+
   lineChartInstance.setOption(option);
 };
 
 // 更新折线图
 const updateLineChart = () => {
   if (!lineChartInstance) return;
-  
+
   lineChartInstance.setOption({
     xAxis: {
-      data: state.trendData.map(item => item.date),
+      data: state.trendData.map((item) => item.date),
     },
     series: [
       {
-        data: state.trendData.map(item => item.count),
+        data: state.trendData.map((item) => item.count),
       },
     ],
   });
@@ -155,7 +160,7 @@ onMounted(() => {
   fetchOrderChartData().then(() => {
     initLineChart();
   });
-  
+
   window.addEventListener('resize', () => {
     lineChartInstance?.resize();
   });
@@ -172,16 +177,19 @@ onMounted(() => {
         v-bind="item"
       />
     </div>
-    <div
-      ref="lineChartRef"
-      style="width: 500px; height: 330px;"
-    />
+    <div ref="lineChartRef" style="width: 500px; height: 330px"></div>
     <Columnar
-       width="500px"
-        height="330px"
-        title="订单类型分布"
-        :x-data="state.typeData.map(item => statusMap[item.status]?.label || item.status)"
-        :series-data="[{ name: '订单数', data: state.typeData.map(item => item.count) }]"
-      />
+      width="500px"
+      height="330px"
+      title="订单类型分布"
+      :x-data="
+        state.typeData.map(
+          (item) => statusMap[item.status]?.label || item.status,
+        )
+      "
+      :series-data="[
+        { name: '订单数', data: state.typeData.map((item) => item.count) },
+      ]"
+    />
   </div>
 </template>
