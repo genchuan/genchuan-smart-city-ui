@@ -23,7 +23,9 @@ export function importInspectUser(file) {
 
 /** 导出巡检人员数据 */
 export function exportInspectUser(params) {
-  return requestClient.download('/inspectop/inspect-user/export', { params });
+  return requestClient.download('/inspectop/inspect-user/export-excel', {
+    params,
+  });
 }
 
 /** 获取巡检人员详情 */

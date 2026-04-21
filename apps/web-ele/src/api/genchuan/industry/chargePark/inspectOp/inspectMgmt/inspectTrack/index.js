@@ -7,7 +7,9 @@ export function getInspectTrackPage(params) {
 
 /** 导出巡检轨迹数据 */
 export function exportInspectTrack(params) {
-  return requestClient.download('/inspectop/inspect-track/export', { params });
+  return requestClient.download('/inspectop/inspect-track/export-excel', {
+    params,
+  });
 }
 
 /** 获取巡检轨迹详情 */

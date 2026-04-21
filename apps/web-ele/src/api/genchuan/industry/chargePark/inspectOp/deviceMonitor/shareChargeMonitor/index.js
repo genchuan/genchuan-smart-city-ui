@@ -7,9 +7,12 @@ export function getShareChargeMonitorPage(params) {
 
 /** 导出共享充电监测数据 */
 export function exportShareChargeMonitor(params) {
-  return requestClient.download('/inspectop/share-charge-monitor/export', {
-    params,
-  });
+  return requestClient.download(
+    '/inspectop/share-charge-monitor/export-excel',
+    {
+      params,
+    },
+  );
 }
 
 /** 获取共享充电监测定位 */

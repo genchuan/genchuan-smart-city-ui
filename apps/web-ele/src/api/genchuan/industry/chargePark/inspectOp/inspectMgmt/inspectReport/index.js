@@ -7,7 +7,7 @@ export function getInspectReportPage(params) {
 
 /** 导出巡检上报数据 */
 export function exportInspectReport(params) {
-  return requestClient.download('/inspectop/inspect-report/export', {
+  return requestClient.download('/inspectop/inspect-report/export-excel', {
     params,
   });
 }

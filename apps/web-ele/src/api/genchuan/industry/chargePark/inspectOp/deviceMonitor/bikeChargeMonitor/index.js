@@ -7,7 +7,7 @@ export function getBikeChargeMonitorPage(params) {
 
 /** 导出两轮充电监测数据 */
 export function exportBikeChargeMonitor(params) {
-  return requestClient.download('/inspectop/bike-charge-monitor/export', {
+  return requestClient.download('/inspectop/bike-charge-monitor/export-excel', {
     params,
   });
 }
