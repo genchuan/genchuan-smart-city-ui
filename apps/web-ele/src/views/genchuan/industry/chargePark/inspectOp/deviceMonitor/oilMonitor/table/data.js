@@ -7,11 +7,6 @@ import { formatDate } from '#/utils/genchuan/formatTime';
 export const OIL_MONITOR_PROCESS_STATUS_DICT =
   DICT_TYPE.OIL_MONITOR_PROCESS_STATUS;
 
-function getDictOptionsWithFallback(dictType, fallbackOptions) {
-  const options = getDictOptions(dictType, 'string');
-  return options.length > 0 ? options : fallbackOptions;
-}
-
 function getDictLabel(dictType, value) {
   if (value === undefined || value === null || value === '') return '-';
   const dict = getDictObj(dictType, String(value));
@@ -55,15 +50,9 @@ export const processUserOptions = [
   { label: '陈运维', value: 1004 },
 ];
 
-const fallbackProcessStatusOptions = [
-  { label: '未处理', value: '未处理' },
-  { label: '处理中', value: '处理中' },
-  { label: '已关闭', value: '已关闭' },
-];
-
-export const processStatusOptions = getDictOptionsWithFallback(
+export const processStatusOptions = getDictOptions(
   OIL_MONITOR_PROCESS_STATUS_DICT,
-  fallbackProcessStatusOptions,
+  'string',
 );
 
 export const processMethodOptions = [
@@ -333,16 +322,16 @@ export function useSearchFormSchema() {
         clearable: true,
       },
     },
-    {
-      fieldName: 'processUserId',
-      label: '处置人',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择处置人',
-        clearable: true,
-        options: processUserOptions,
-      },
-    },
+    // {
+    //   fieldName: 'processUserId',
+    //   label: '处置人',
+    //   component: 'Select',
+    //   componentProps: {
+    //     placeholder: '请选择处置人',
+    //     clearable: true,
+    //     options: processUserOptions,
+    //   },
+    // },
   ];
 }
 
