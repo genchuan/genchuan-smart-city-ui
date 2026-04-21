@@ -7,7 +7,7 @@ export function getSpaceMonitorPage(params) {
 
 /** 导出车位状态监测数据 */
 export function exportSpaceMonitor(params) {
-  return requestClient.download('/inspectop/space-monitor/export', { params });
+  return requestClient.download('/inspectop/space-monitor/export-excel', { params });
 }
 
 /** 获取车位状态监测定位 */
