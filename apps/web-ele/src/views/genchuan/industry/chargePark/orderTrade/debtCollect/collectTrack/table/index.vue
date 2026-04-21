@@ -11,14 +11,14 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { 
-  cancelBikeChargeOrder,
-  exportBikeChargeOrderExcel,
-  getBikeChargeOrderPage,
-  invoiceBikeChargeOrder,
-  payBikeChargeOrder,
-  refundBikeChargeOrder,
-  stopBikeChargeOrder,
-} from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
+  getDebtRecordCollectTrackPage,
+  pushDebtRecordCollectTrack,
+  transferDebtRecordCollectTrack,
+  updateProgressDebtRecordCollectTrack,
+  exportDebtRecordCollectTrackExcel,
+  batchPushDebtRecordCollectTrack,
+  archiveDebtRecordCollectTrack,
+} from '#/api/genchuan/industry/chargePark/orderTrade/debtCollect/index.js';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
@@ -111,8 +111,8 @@ function handleRefresh() {
 
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
-  const data = await exportBikeChargeOrderExcel();
-  downloadFileFromBlobPart({ fileName: '两轮充电订单报表.xls', source: data });
+  const data = await exportDebtRecordCollectTrackExcel();
+  downloadFileFromBlobPart({ fileName: '追缴跟踪报表.xls', source: data });
 }
 
 // ====================== 图片转PDF（终极零乱码） ======================
@@ -198,22 +198,21 @@ const getTableData = async (pageObj) => {
 
   try {
     dataObj.loading = true;
-    const res = await getBikeChargeOrderPage(params);
+    const res = await getDebtRecordCollectTrackPage(params);
     dataObj.total = res.total;
     dataObj.list = res.list.map((v) => {
       return {
         ...v,
-        archiveTime: formatTimestamp(v.archiveTime),
-        createOrderTime: formatTimestamp(v.createOrderTime),
-        updateTime: formatTimestamp(v.updateTime),
+        collectTime: formatTimestamp(v.collectTime),
         createTime: formatTimestamp(v.createTime),
-        payTime: formatTimestamp(v.payTime),
+        updateTime: formatTimestamp(v.updateTime),
+        pushTime: formatTimestamp(v.pushTime),
       };
     });
     return dataObj;
   } catch (error) {
-    console.error('获取订单数据失败:', error);
-    ElMessage.error('获取订单数据失败');
+    console.error('获取追缴跟踪数据失败:', error);
+    ElMessage.error('获取追缴跟踪数据失败');
     return dataObj;
   } finally {
     dataObj.loading = false;
@@ -320,13 +319,28 @@ const openEn = async () => {
 };
 
 // 订单状态映射
+// 追缴跟踪状态映射
 const statusMap = {
-  charging: { label: '充电中', type: 'primary' },
-  pending_pay: { label: '待支付', type: 'warning' },
-  paid: { label: '已支付', type: 'success' },
+  pending: { label: '待推送', type: 'warning' },
+  collecting: { label: '追缴中', type: 'primary' },
   completed: { label: '已完成', type: 'success' },
-  cancelled: { label: '已取消', type: 'info' },
-  refunding: { label: '退款中', type: 'danger' },
+};
+
+// 追缴方式映射
+const collectMethodMap = {
+  sms: { label: '短信', type: 'primary' },
+  notify: { label: '站内信', type: 'info' },
+  phone: { label: '电话', type: 'warning' },
+};
+
+// 获取追缴方式标签
+const getCollectMethodLabel = (method) => {
+  return collectMethodMap[method]?.label || method;
+};
+
+// 获取追缴方式类型
+const getCollectMethodType = (method) => {
+  return collectMethodMap[method]?.type || 'default';
 };
 
 // 获取状态标签
@@ -339,133 +353,132 @@ const getStatusType = (status) => {
   return statusMap[status]?.type || 'default';
 };
 
-// 支付弹窗
-const payDialogVisible = ref(false);
-const payForm = reactive({
+// 推送弹窗
+const pushDialogVisible = ref(false);
+const pushForm = reactive({
   id: '',
   remark: '',
 });
 
-// 打开支付弹窗
-const handlePay = (row) => {
-  payForm.id = row.id;
-  payForm.remark = '';
-  payDialogVisible.value = true;
+// 打开推送弹窗
+const handlePush = (row) => {
+  pushForm.id = row.id;
+  pushForm.remark = '';
+  pushDialogVisible.value = true;
 };
 
-// 提交支付
-const handlePaySubmit = async () => {
+// 提交推送
+const handlePushSubmit = async () => {
   try {
-    await payBikeChargeOrder(payForm);
-    ElMessage.success('支付成功');
-    payDialogVisible.value = false;
+    await pushDebtRecordCollectTrack(pushForm);
+    ElMessage.success('推送成功');
+    pushDialogVisible.value = false;
     handleRefresh();
   } catch {
-    ElMessage.error('支付失败');
+    ElMessage.error('推送失败');
   }
 };
 
-// 取消弹窗
-const cancelDialogVisible = ref(false);
-const cancelForm = reactive({
+// 转移弹窗
+const transferDialogVisible = ref(false);
+const transferForm = reactive({
   id: '',
   remark: '',
 });
 
-// 打开取消弹窗
-const handleCancel = (row) => {
-  cancelForm.id = row.id;
-  cancelForm.remark = '';
-  cancelDialogVisible.value = true;
+// 打开转移弹窗
+const handleTransfer = (row) => {
+  transferForm.id = row.id;
+  transferForm.remark = '';
+  transferDialogVisible.value = true;
 };
 
-// 提交取消
-const handleCancelSubmit = async () => {
+// 提交转移
+const handleTransferSubmit = async () => {
   try {
-    await cancelBikeChargeOrder(cancelForm);
-    ElMessage.success('取消成功');
-    cancelDialogVisible.value = false;
+    await transferDebtRecordCollectTrack(transferForm);
+    ElMessage.success('转移成功');
+    transferDialogVisible.value = false;
     handleRefresh();
   } catch {
-    ElMessage.error('取消失败');
+    ElMessage.error('转移失败');
   }
 };
 
-// 退款弹窗
-const refundDialogVisible = ref(false);
-const refundForm = reactive({
+// 更新进度弹窗
+const updateProgressDialogVisible = ref(false);
+const updateProgressForm = reactive({
   id: '',
   remark: '',
 });
 
-// 打开退款弹窗
-const handleRefund = (row) => {
-  refundForm.id = row.id;
-  refundForm.remark = '';
-  refundDialogVisible.value = true;
+// 打开更新进度弹窗
+const handleUpdateProgress = (row) => {
+  updateProgressForm.id = row.id;
+  updateProgressForm.remark = '';
+  updateProgressDialogVisible.value = true;
 };
 
-// 提交退款
-const handleRefundSubmit = async () => {
+// 提交更新进度
+const handleUpdateProgressSubmit = async () => {
   try {
-    await refundBikeChargeOrder(refundForm);
-    ElMessage.success('退款申请已提交');
-    refundDialogVisible.value = false;
+    await updateProgressDebtRecordCollectTrack(updateProgressForm);
+    ElMessage.success('进度更新成功');
+    updateProgressDialogVisible.value = false;
     handleRefresh();
   } catch {
-    ElMessage.error('退款申请失败');
+    ElMessage.error('进度更新失败');
   }
 };
 
-// 开票弹窗
-const invoiceDialogVisible = ref(false);
-const invoiceForm = reactive({
+// 归档弹窗
+const archiveDialogVisible = ref(false);
+const archiveForm = reactive({
   id: '',
   remark: '',
 });
 
-// 打开开票弹窗
-const handleInvoice = (row) => {
-  invoiceForm.id = row.id;
-  invoiceForm.remark = '';
-  invoiceDialogVisible.value = true;
+// 打开归档弹窗
+const handleArchive = (row) => {
+  archiveForm.id = row.id;
+  archiveForm.remark = '';
+  archiveDialogVisible.value = true;
 };
 
-// 提交开票
-const handleInvoiceSubmit = async () => {
+// 提交归档
+const handleArchiveSubmit = async () => {
   try {
-    await invoiceBikeChargeOrder(invoiceForm);
-    ElMessage.success('开票申请已提交');
-    invoiceDialogVisible.value = false;
+    await archiveDebtRecordCollectTrack(archiveForm);
+    ElMessage.success('归档成功');
+    archiveDialogVisible.value = false;
     handleRefresh();
   } catch {
-    ElMessage.error('开票申请失败');
+    ElMessage.error('归档失败');
   }
 };
 
-// 停止充电弹窗
-const stopDialogVisible = ref(false);
-const stopForm = reactive({
-  id: '',
+// 批量推送弹窗
+const batchPushDialogVisible = ref(false);
+const batchPushForm = reactive({
   remark: '',
 });
 
-// 打开停止充电弹窗
-const handleStop = (row) => {
-  stopForm.id = row.id;
-  stopForm.remark = '';
-  stopDialogVisible.value = true;
+// 打开批量推送弹窗
+const handleBatchPush = () => {
+  batchPushForm.remark = '';
+  batchPushDialogVisible.value = true;
 };
 
-// 提交停止充电
-const handleStopSubmit = async () => {
+// 提交批量推送
+const handleBatchPushSubmit = async () => {
   try {
-    await stopBikeChargeOrder(stopForm);
-    ElMessage.success('停止充电成功');
-    stopDialogVisible.value = false;
+    await batchPushDebtRecordCollectTrack({ ids: checkedIds.value, remark: batchPushForm.remark });
+    ElMessage.success('批量推送成功');
+    batchPushDialogVisible.value = false;
+    checkedIds.value = [];
     handleRefresh();
   } catch {
-    ElMessage.error('停止充电失败');
+    ElMessage.error('批量推送失败');
   }
 };
 
@@ -547,151 +560,151 @@ const alarmColumns = [
       </el-table>
     </ElDialog>
 
-    <!-- 支付弹窗 -->
+    <!-- 推送弹窗 -->
     <ElDialog
-      v-model="payDialogVisible"
-      title="订单支付"
+      v-model="pushDialogVisible"
+      title="推送"
       width="500px"
       append-to-body
     >
-      <el-form :model="payForm" label-width="80px">
-        <el-form-item label="订单ID">
-          <el-input v-model="payForm.id" disabled />
+      <el-form :model="pushForm" label-width="80px">
+        <el-form-item label="记录ID">
+          <el-input v-model="pushForm.id" disabled />
         </el-form-item>
         <el-form-item label="备注">
           <el-input
-            v-model="payForm.remark"
+            v-model="pushForm.remark"
             type="textarea"
             rows="3"
-            placeholder="请输入支付备注"
+            placeholder="请输入推送备注"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="payDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handlePaySubmit">
-            确认支付
+          <el-button @click="pushDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handlePushSubmit">
+            确认推送
           </el-button>
         </div>
       </template>
     </ElDialog>
 
-    <!-- 取消弹窗 -->
+    <!-- 转移弹窗 -->
     <ElDialog
-      v-model="cancelDialogVisible"
-      title="取消订单"
+      v-model="transferDialogVisible"
+      title="转移"
       width="500px"
       append-to-body
     >
-      <el-form :model="cancelForm" label-width="80px">
-        <el-form-item label="订单ID">
-          <el-input v-model="cancelForm.id" disabled />
+      <el-form :model="transferForm" label-width="80px">
+        <el-form-item label="记录ID">
+          <el-input v-model="transferForm.id" disabled />
         </el-form-item>
         <el-form-item label="备注">
           <el-input
-            v-model="cancelForm.remark"
+            v-model="transferForm.remark"
             type="textarea"
             rows="3"
-            placeholder="请输入取消备注"
+            placeholder="请输入转移备注"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="cancelDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleCancelSubmit">
-            确认取消
+          <el-button @click="transferDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleTransferSubmit">
+            确认转移
           </el-button>
         </div>
       </template>
     </ElDialog>
 
-    <!-- 退款弹窗 -->
+    <!-- 更新进度弹窗 -->
     <ElDialog
-      v-model="refundDialogVisible"
-      title="退款申请"
+      v-model="updateProgressDialogVisible"
+      title="更新进度"
       width="500px"
       append-to-body
     >
-      <el-form :model="refundForm" label-width="80px">
-        <el-form-item label="订单ID">
-          <el-input v-model="refundForm.id" disabled />
+      <el-form :model="updateProgressForm" label-width="80px">
+        <el-form-item label="记录ID">
+          <el-input v-model="updateProgressForm.id" disabled />
         </el-form-item>
         <el-form-item label="备注">
           <el-input
-            v-model="refundForm.remark"
+            v-model="updateProgressForm.remark"
             type="textarea"
             rows="3"
-            placeholder="请输入退款备注"
+            placeholder="请输入进度备注"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="refundDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleRefundSubmit">
-            确认退款
+          <el-button @click="updateProgressDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleUpdateProgressSubmit">
+            确认更新
           </el-button>
         </div>
       </template>
     </ElDialog>
 
-    <!-- 开票弹窗 -->
+    <!-- 归档弹窗 -->
     <ElDialog
-      v-model="invoiceDialogVisible"
-      title="开票申请"
+      v-model="archiveDialogVisible"
+      title="归档"
       width="500px"
       append-to-body
     >
-      <el-form :model="invoiceForm" label-width="80px">
-        <el-form-item label="订单ID">
-          <el-input v-model="invoiceForm.id" disabled />
+      <el-form :model="archiveForm" label-width="80px">
+        <el-form-item label="记录ID">
+          <el-input v-model="archiveForm.id" disabled />
         </el-form-item>
         <el-form-item label="备注">
           <el-input
-            v-model="invoiceForm.remark"
+            v-model="archiveForm.remark"
             type="textarea"
             rows="3"
-            placeholder="请输入开票备注"
+            placeholder="请输入归档备注"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="invoiceDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleInvoiceSubmit">
-            确认开票
+          <el-button @click="archiveDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleArchiveSubmit">
+            确认归档
           </el-button>
         </div>
       </template>
     </ElDialog>
 
-    <!-- 停止充电弹窗 -->
+    <!-- 批量推送弹窗 -->
     <ElDialog
-      v-model="stopDialogVisible"
-      title="停止充电"
+      v-model="batchPushDialogVisible"
+      title="批量推送"
       width="500px"
       append-to-body
     >
-      <el-form :model="stopForm" label-width="80px">
-        <el-form-item label="订单ID">
-          <el-input v-model="stopForm.id" disabled />
+      <el-form :model="batchPushForm" label-width="80px">
+        <el-form-item label="选中数量">
+          <el-input :value="checkedIds.length" disabled />
         </el-form-item>
         <el-form-item label="备注">
           <el-input
-            v-model="stopForm.remark"
+            v-model="batchPushForm.remark"
             type="textarea"
             rows="3"
-            placeholder="请输入停止充电备注"
+            placeholder="请输入推送备注"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="stopDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleStopSubmit">
-            确认停止
+          <el-button @click="batchPushDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleBatchPushSubmit">
+            确认推送
           </el-button>
         </div>
       </template>
@@ -706,11 +719,10 @@ const alarmColumns = [
             @click="handleExport"
           />
           <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
+            content="批量推送"
+            icon-name="top"
             :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
+            @click="handleBatchPush"
           />
           <IconButton
             content="搜索"
@@ -729,7 +741,11 @@ const alarmColumns = [
           />
         </div>
       </template>
-
+      <template #collectMethod="{ row }">
+        <el-tag :type="getCollectMethodType(row.collectMethod)">
+          {{ getCollectMethodLabel(row.collectMethod) }}
+        </el-tag>
+      </template>
       <template #status="{ row }">
         <el-tag :type="getStatusType(row.status)">
           {{ getStatusLabel(row.status) }}
@@ -775,35 +791,24 @@ const alarmColumns = [
             @click="handleOpenDetail(row)"
           />
           <IconButton
-            content="停止"
-            v-if="row.status === 'charging'"
-            icon-name="video-pause"
-            @click="handleStop(row)"
+            content="推送"
+            icon-name="top"
+            @click="handlePush(row)"
           />
           <IconButton
-            content="支付"
-            v-if="row.status === 'pending_pay'"
-            icon-name="Money"
-            @click="handlePay(row)"
+            content="转移"
+            icon-name="right"
+            @click="handleTransfer(row)"
           />
           <IconButton
-            content="退款"
-            icon-name="back"
-            v-if="row.status === 'paid'"
-            @click="handleRefund(row)"
+            content="更新进度"
+            icon-name="sort"
+            @click="handleUpdateProgress(row)"
           />
           <IconButton
-            content="取消"
-            v-if="row.status === 'pending_pay'"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleCancel(row)"
-          />
-          <IconButton
-            content="开票"
-            v-if="row.status === 'completed'"
-            icon-name="Document"
-            @click="handleInvoice(row)"
+            content="归档"
+            icon-name="check"
+            @click="handleArchive(row)"
           />
         </div>
       </template>

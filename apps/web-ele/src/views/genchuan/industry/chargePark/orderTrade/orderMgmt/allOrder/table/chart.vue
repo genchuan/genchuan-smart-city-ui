@@ -1,6 +1,6 @@
 <script setup>
 import { reactive, onMounted, ref } from 'vue';
-import { getOrderChart } from  '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
+import { getOrderChart } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import Card from '#/components/stats/card.vue';
 import Columnar from '#/components/stats/columnar.vue';
 import * as echarts from 'echarts';
@@ -68,9 +68,9 @@ const fetchOrderChartData = async () => {
 // 初始化折线图
 const initLineChart = () => {
   if (!lineChartRef.value) return;
-  
+
   lineChartInstance = echarts.init(lineChartRef.value);
-  
+
   const option = {
     title: {
       text: '订单量趋势',
@@ -126,14 +126,14 @@ const initLineChart = () => {
       },
     ],
   };
-  
+
   lineChartInstance.setOption(option);
 };
 
 // 更新折线图
 const updateLineChart = () => {
   if (!lineChartInstance) return;
-  
+
   lineChartInstance.setOption({
     xAxis: {
       data: state.trendData.map(item => item.date),
@@ -150,7 +150,7 @@ onMounted(() => {
   fetchOrderChartData().then(() => {
     initLineChart();
   });
-  
+
   window.addEventListener('resize', () => {
     lineChartInstance?.resize();
   });
@@ -160,23 +160,10 @@ onMounted(() => {
 <template>
   <div class="park-chart-box">
     <div class="chart-box-left">
-      <Card
-        class="left-card"
-        v-for="item in state.cardList"
-        :key="item.title"
-        v-bind="item"
-      />
+      <Card class="left-card" v-for="item in state.cardList" :key="item.title" v-bind="item" />
     </div>
-    <div
-      ref="lineChartRef"
-      style="width: 500px; height: 330px;"
-    />
-    <Columnar
-       width="500px"
-        height="330px"
-        title="各场站订单量"
-        :x-data="state.stationData.map(item => item.name)"
-        :series-data="[{ name: '订单数', data: state.stationData.map(item => item.value) }]"
-      />
+    <div ref="lineChartRef" class="simple-bar-chart" />
+    <Columnar title="各场站订单量" :x-data="state.stationData.map(item => item.name)"
+      :series-data="[{ name: '订单数', data: state.stationData.map(item => item.value) }]" />
   </div>
 </template>

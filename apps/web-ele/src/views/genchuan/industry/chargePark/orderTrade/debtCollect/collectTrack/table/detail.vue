@@ -2,7 +2,7 @@
 import { computed, defineProps, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 定义组件接收的属性（充电订单详情）
+// 追缴记录详情
 const props = defineProps({
   detailObj: {
     type: Object,
@@ -19,11 +19,11 @@ const { detailObj, title } = toRefs(props);
 
 // 标题
 const drawerTitle = computed(() => {
-  const orderNo = detailObj.value?.orderNo || '充电订单';
-  return title.value || `${orderNo} 详情`;
+  const trackNo = detailObj.value?.trackNo || '追缴记录';
+  return title.value || `${trackNo} 详情`;
 });
 
-// 抽屉初始化
+// 抽屉
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -45,82 +45,65 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 充电订单 完整字段 -->
       <div class="detail-card-row">
         <div class="detail-row-left">主键ID:</div>
         <div class="detail-row-right">{{ detailObj.id || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">订单编号:</div>
-        <div class="detail-row-right">{{ detailObj.orderNo || '-' }}</div>
+        <div class="detail-row-left">追缴编号:</div>
+        <div class="detail-row-right">{{ detailObj.trackNo || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">用户ID:</div>
-        <div class="detail-row-right">{{ detailObj.userId || '-' }}</div>
+        <div class="detail-row-left">车牌:</div>
+        <div class="detail-row-right">{{ detailObj.plateNo || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">用户昵称:</div>
-        <div class="detail-row-right">{{ detailObj.userNickname || '-' }}</div>
+        <div class="detail-row-left">追缴方式:</div>
+        <div class="detail-row-right">{{ detailObj.collectMethod || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">充电时长（分钟）:</div>
-        <div class="detail-row-right">{{ detailObj.chargeDuration || '-' }}</div>
+        <div class="detail-row-left">追缴时间:</div>
+        <div class="detail-row-right">{{ detailObj.collectTime || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">充电量（度）:</div>
-        <div class="detail-row-right">{{ detailObj.chargeQuantity || '0.00' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">订单金额:</div>
-        <div class="detail-row-right">{{ detailObj.amount || '0.00' }} 元</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">订单状态:</div>
+        <div class="detail-row-left">状态:</div>
         <div class="detail-row-right">{{ detailObj.status || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">订单生成时间:</div>
-        <div class="detail-row-right">{{ detailObj.createOrderTime || '-' }}</div>
+        <div class="detail-row-left">片区ID:</div>
+        <div class="detail-row-right">{{ detailObj.areaId || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">所属场站ID:</div>
-        <div class="detail-row-right">{{ detailObj.stationId || '-' }}</div>
+        <div class="detail-row-left">转派用户ID:</div>
+        <div class="detail-row-right">{{ detailObj.transferUserId || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">支付时间:</div>
-        <div class="detail-row-right">{{ detailObj.payTime || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">支付方式:</div>
-        <div class="detail-row-right">{{ detailObj.payMethod || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">优惠抵扣金额:</div>
-        <div class="detail-row-right">{{ detailObj.discountAmount || '0.00' }} 元</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">归档时间:</div>
-        <div class="detail-row-right">{{ detailObj.archiveTime || '-' }}</div>
+        <div class="detail-row-left">追缴进度:</div>
+        <div class="detail-row-right">{{ detailObj.collectProgress || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
         <div class="detail-row-left">操作人ID:</div>
         <div class="detail-row-right">{{ detailObj.operatorId || '-' }}</div>
       </div>
- 
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">备用字段1:</div>
+        <div class="detail-row-right">{{ detailObj.reserve1 || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">备用字段2:</div>
+        <div class="detail-row-right">{{ detailObj.reserve2 || '-' }}</div>
+      </div>
 
       <div class="detail-card-row">
         <div class="detail-row-left">创建者:</div>
@@ -150,7 +133,6 @@ defineExpose({
   .detail-row-left {
     width: 150px;
   }
-
   .detail-card {
     min-height: 600px;
     max-height: 80vh;
@@ -176,12 +158,9 @@ defineExpose({
   &:last-child {
     border-bottom: none;
   }
-
   &:hover {
-    padding-right: 8px;
-    padding-left: 8px;
-    margin-right: -8px;
-    margin-left: -8px;
+    padding: 12px 8px;
+    margin: 0 -8px;
     background-color: #f5f7fa;
     border-radius: 4px;
     transition: all 0.2s ease;
@@ -193,15 +172,12 @@ defineExpose({
   width: 160px;
   font-size: 14px;
   font-weight: 500;
-  line-height: 18px;
   color: #606266;
 }
 
 .detail-row-right {
   flex: 1;
-  padding-right: 10px;
   font-size: 14px;
-  line-height: 18px;
   color: #303133;
   word-break: break-all;
 }
@@ -209,17 +185,14 @@ defineExpose({
 .detail-card::-webkit-scrollbar {
   width: 6px;
 }
-
 .detail-card::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 3px;
 }
-
 .detail-card::-webkit-scrollbar-thumb {
   background: #dcdfe6;
   border-radius: 3px;
 }
-
 .detail-card::-webkit-scrollbar-thumb:hover {
   background: #c0c4cc;
 }

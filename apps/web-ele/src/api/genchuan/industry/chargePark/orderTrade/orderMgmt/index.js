@@ -142,3 +142,102 @@ export function invoiceCarChargeOrder(data) {
 export function getCarChargeOrderChart() {
   return requestClient.get('/ordertrade/car-charge-order/chart');
 }
+/** 两轮充电订单分页 */
+export function getBikeChargeOrderPage(params) {
+  return requestClient.get('/ordertrade/bike-charge-order/page', {
+    params,
+  });
+}
+/** 两轮充电订单导出 */
+export function exportBikeChargeOrderExcel() {
+  return requestClient.download('/ordertrade/bike-charge-order/export');
+}
+/** 两轮充电订单停止 */
+export function stopBikeChargeOrder(data) {
+  return requestClient.put('/ordertrade/bike-charge-order/stop', data);
+}
+/** 两轮充电订单支付 */
+export function payBikeChargeOrder(data) {
+  return requestClient.put('/ordertrade/bike-charge-order/pay', data);
+}
+/** 两轮充电订单取消 */
+export function cancelBikeChargeOrder(data) {
+  return requestClient.put('/ordertrade/bike-charge-order/cancel', data);
+}
+/** 两轮充电订单退款 */
+export function refundBikeChargeOrder(data) {
+  return requestClient.put('/ordertrade/bike-charge-order/refund', data);
+}
+/** 两轮充电订单发票 */
+export function invoiceBikeChargeOrder(data) {
+  return requestClient.put('/ordertrade/bike-charge-order/invoice', data);
+}
+/** 两轮充电订单图表 */
+export function getBikeChargeOrderChart() {
+  return requestClient.get('/ordertrade/bike-charge-order/chart');
+}
+/** 分享充电订单分页 */
+export function getShareChargeOrderPage(params) {
+  return requestClient.get('/ordertrade/share-charge-order/page', {
+    params,
+  });
+}
+/** 分享充电订单导出 */
+export function exportShareChargeOrderExcel() {
+  return requestClient.download('/ordertrade/share-charge-order/export');
+}
+/** 分享充电订单归还 */
+export function returnShareChargeOrder(data) {
+  return requestClient.put('/ordertrade/share-charge-order/return', data);
+}
+/** 分享充电订单退款 */
+export function refundShareChargeOrder(data) {
+  return requestClient.put('/ordertrade/share-charge-order/refund', data);
+}
+/** 分享充电订单支付 */
+export function payShareChargeOrder(data) {
+  return requestClient.put('/ordertrade/share-charge-order/pay', data);
+}
+/** 分享充电订单发票 */
+export function invoiceShareChargeOrder(data) {
+  return requestClient.put('/ordertrade/share-charge-order/invoice', data);
+}
+/** 分享充电订单取消 */
+export function cancelShareChargeOrder(data) {
+  return requestClient.put('/ordertrade/share-charge-order/cancel', data);
+}
+/** 分享充电订单图表 */
+export function getShareChargeOrderChart() {
+  return requestClient.get('/ordertrade/share-charge-order/chart');
+}
+/** 异常订单分页 */
+export function getAbnormalOrderPage(params) {
+  return requestClient.get('/ordertrade/abnormal-order/page', {
+    params,
+  });
+}
+/** 异常订单导出 */
+export function exportAbnormalOrderExcel() {
+  return requestClient.download('/ordertrade/abnormal-order/export');
+}
+/** 异常订单更新进度 */
+export function updateAbnormalOrderProgress(data) {
+  return requestClient.put('/ordertrade/abnormal-order/update-progress', data);
+}
+/** 异常订单忽略 */
+export function ignoreAbnormalOrder(data) {
+  return requestClient.put('/ordertrade/abnormal-order/ignore', data);
+}
+/** 异常订单检查 */
+export function checkAbnormalOrder(data) {
+  return requestClient.put('/ordertrade/abnormal-order/check', data);
+}
+/** 异常订单图表 */
+export function getAbnormalOrderChart() {
+  return requestClient.get('/ordertrade/abnormal-order/chart');
+}
+/** 异常订单批量处理 */
+export function batchHandleAbnormalOrder(data) {
+  return requestClient.post('/ordertrade/abnormal-order/batch-handle', data);
+}
+ 

@@ -3,13 +3,13 @@ import { onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
-import { getOfftimeParkOrderChart } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
+import { getShareChargeOrderChart } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import Card from '#/components/stats/card.vue';
 import Columnar from '#/components/stats/columnar.vue';
 
 // 订单状态映射
 const statusMap = {
-  charging: { label: '充电中', type: 'primary' },
+  lending: { label: '借出中', type: 'primary' },
   pending_pay: { label: '待支付', type: 'warning' },
   paid: { label: '已支付', type: 'success' },
   completed: { label: '已完成', type: 'success' },
@@ -21,7 +21,7 @@ const state = reactive({
   cardList: [
     { title: '今日订单量', value: 0, color: '#13ce66' },
     { title: '今日营收', value: 0, color: '#4ECDC4' },
-    { title: '今日支付率（%）', value: 0, color: '#FF6B6B' },
+    { title: '今日借出数', value: 0, color: '#FF6B6B' },
   ],
   trendData: [],
   typeData: [],
@@ -33,10 +33,10 @@ let lineChartInstance = null;
 // 获取订单图表数据
 const fetchOrderChartData = async () => {
   try {
-    const res = await getOfftimeParkOrderChart();
+    const res = await getShareChargeOrderChart();
     state.cardList[0].value = res.todayOrderCount;
     state.cardList[1].value = res.todayRevenue;
-    state.cardList[2].value = res.payRate;
+    state.cardList[2].value = res.todayLendCount;
     // 如果trendData为空，使用假数据
     state.trendData =
       res.trendData && res.trendData.length > 0
@@ -48,14 +48,14 @@ const fetchOrderChartData = async () => {
             { date: '2025-04-04', count: 20 },
             { date: '2025-04-05', count: 14 },
           ];
-    // 如果typeData为空，使用假数据
+    // 如果stationData为空，使用假数据
     state.typeData =
-      res.stationData && res.stationData.length > 0
+      res.stationData && Array.isArray(res.stationData) && res.stationData.length > 0
         ? res.stationData
         : [
             { count: 2, status: 'completed' },
             { count: 4, status: 'paid' },
-            { count: 1, status: 'charging' },
+            { count: 1, status: 'lending' },
             { count: 1, status: 'cancelled' },
           ];
     // 更新折线图
@@ -65,7 +65,7 @@ const fetchOrderChartData = async () => {
     // 接口调用失败时使用假数据
     state.cardList[0].value = 50;
     state.cardList[1].value = 1500;
-    state.cardList[2].value = 85;
+    state.cardList[2].value = 30;
     state.trendData = [
       { date: '2025-04-01', count: 12 },
       { date: '2025-04-02', count: 15 },
@@ -76,7 +76,7 @@ const fetchOrderChartData = async () => {
     state.typeData = [
       { count: 2, status: 'completed' },
       { count: 4, status: 'paid' },
-      { count: 1, status: 'charging' },
+      { count: 1, status: 'lending' },
       { count: 1, status: 'cancelled' },
     ];
     // 更新折线图

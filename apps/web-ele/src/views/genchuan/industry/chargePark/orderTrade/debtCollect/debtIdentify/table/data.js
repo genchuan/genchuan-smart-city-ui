@@ -1,4 +1,4 @@
-/** 异常订单搜索表单配置 */
+/** 欠费识别记录搜索表单配置 */
 export function useFormSchema() {
   return [
     {
@@ -14,67 +14,57 @@ export function useFormSchema() {
       isSearch: true,
     },
     {
-      fieldName: 'orderId',
-      label: '关联订单ID',
+      fieldName: 'identifyNo',
+      label: '识别编号',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入识别编号',
+        maxLength: 50,
+      },
+      labelWidth: 120,
+      isSearch: true,
+    },
+    {
+      fieldName: 'plateNo',
+      label: '车牌',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入车牌',
+        maxLength: 20,
+      },
+      labelWidth: 120,
+      isSearch: true,
+    },
+    {
+      fieldName: 'arrearAmount',
+      label: '欠费金额',
       component: 'InputNumber',
       componentProps: {
-        placeholder: '请输入关联订单ID',
-        precision: 0,
+        placeholder: '请输入欠费金额',
+        precision: 2,
         min: 0,
       },
       labelWidth: 120,
-      isSearch: true,
-    },
-    {
-      fieldName: 'orderType',
-      label: '订单类型',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择订单类型',
-        options: [
-          { label: '充电订单', value: 'charge' },
-          { label: '停车订单', value: 'park' },
-          { label: '设备借出订单', value: 'lend' },
-        ],
-      },
-      labelWidth: 120,
-      isSearch: true,
-    },
-    {
-      fieldName: 'abnormalType',
-      label: '异常类型',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择异常类型',
-        options: [
-          { label: '设备故障', value: 'device_fault' },
-          { label: '订单超时', value: 'order_timeout' },
-          { label: '支付异常', value: 'pay_error' },
-        ],
-      },
-      labelWidth: 120,
-      isSearch: true,
     },
     {
       fieldName: 'identifyTime',
-      label: '异常识别时间',
+      label: '识别时间',
       component: 'DateTimePicker',
       componentProps: {
-        placeholder: '请选择异常识别时间',
+        placeholder: '请选择识别时间',
         format: 'YYYY-MM-DD HH:mm:ss',
       },
       labelWidth: 120,
     },
     {
       fieldName: 'status',
-      label: '处置状态',
+      label: '状态',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择处置状态',
+        placeholder: '请选择状态',
         options: [
           { label: '待处理', value: 'pending' },
-          { label: '处理中', value: 'processing' },
-          { label: '已完成', value: 'completed' },
+          { label: '已处理', value: 'processed' },
           { label: '已忽略', value: 'ignored' },
         ],
       },
@@ -89,26 +79,6 @@ export function useFormSchema() {
         placeholder: '请输入所属场站ID',
         precision: 0,
         min: 0,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'ignoreReason',
-      label: '忽略理由',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入忽略理由',
-        maxLength: 200,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'processProgress',
-      label: '处置进度',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入处置进度',
-        maxLength: 100,
       },
       labelWidth: 120,
     },
@@ -185,7 +155,7 @@ export function useFormSchema() {
     },
   ];
 }
-/** 异常订单表格列配置 */
+/** 欠费识别记录表格列配置 */
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
@@ -194,32 +164,37 @@ export function useGridColumns() {
       title: '主键ID',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'id' },
-    }, 
-    {
-      field: 'orderType',
-      title: '订单类型',
-      minWidth: 120,
-      sortable: true,
-      slots: { default: 'orderType' },
     },
     {
-      field: 'abnormalType',
-      title: '异常类型',
+      field: 'identifyNo',
+      title: '识别编号',
+      minWidth: 160,
+      sortable: true,
+      slots: { default: 'identifyNo' },
+    },
+    {
+      field: 'plateNo',
+      title: '车牌',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'arrearAmount',
+      title: '欠费金额',
       minWidth: 140,
       sortable: true,
-      slots: { default: 'abnormalType' },
+      customRender: ({ text }) => text ? `¥${text.toFixed(2)}` : '¥0.00',
     },
     {
       field: 'identifyTime',
-      title: '异常识别时间',
+      title: '识别时间',
       minWidth: 220,
       sortable: true,
       customRender: ({ text }) => text || '-',
     },
     {
       field: 'status',
-      title: '处置状态',
+      title: '状态',
       minWidth: 120,
       sortable: true,
       slots: { default: 'status' },
@@ -231,35 +206,11 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'ignoreReason',
-      title: '忽略理由',
-      minWidth: 200,
-      sortable: true,
-    },
-    {
-      field: 'processProgress',
-      title: '处置进度',
-      minWidth: 140,
-      sortable: true,
-    },
-    {
       field: 'operatorId',
       title: '操作人ID',
       minWidth: 120,
       sortable: true,
-    },
-    {
-      field: 'reserve1',
-      title: '备用字段1',
-      minWidth: 120,
-      sortable: true,
-    },
-    {
-      field: 'reserve2',
-      title: '备用字段2',
-      minWidth: 120,
-      sortable: true,
-    },
+    }, 
     {
       field: 'creator',
       title: '创建者',

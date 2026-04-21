@@ -2,21 +2,28 @@
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import { ElDialog, ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 // 导出插件
-import * as XLSX from 'xlsx';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { 
+  checkAbnormalOrder,
+  exportAbnormalOrderExcel,
+  getAbnormalOrderPage,
+  ignoreAbnormalOrder,
+  updateAbnormalOrderProgress,batchHandleAbnormalOrder
+} from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
+import { formatTimestamp } from '#/utils';
 import { downloadLocalTemplate } from '#/utils/genchuan/down';
 import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
 
-import { dataList, useFormSchema, useGridColumns } from './data';
+import { useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
 
 const props = defineProps({
@@ -101,37 +108,9 @@ function handleRefresh() {
 }
 
 // ====================== 导出 EXCEL ======================
-function handleExport() {
-  const records = gridApi.grid.getData();
-  if (!records || records.length === 0) {
-    ElMessage.warning('暂无数据可导出');
-    return;
-  }
-
-  const loading = ElLoading.service({ text: '正在导出Excel...' });
-  try {
-    const columns = useGridColumns().filter(
-      (col) => col.field && col.title && col.type !== 'checkbox',
-    );
-
-    const exportData = records.map((row) => {
-      const item = {};
-      columns.forEach((col) => {
-        item[col.title] = row[col.field] ?? '';
-      });
-      return item;
-    });
-
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, '报表数据');
-    XLSX.writeFile(wb, `企业违规报表_${Date.now()}.xlsx`);
-    ElMessage.success('导出成功！');
-  } catch (error) {
-    ElMessage.error(`导出失败：${error.message}`);
-  } finally {
-    loading.close();
-  }
+async function handleExport() {
+  const data = await exportAbnormalOrderExcel();
+  downloadFileFromBlobPart({ fileName: '异常订单报表.xls', source: data });
 }
 
 // ====================== 图片转PDF（终极零乱码） ======================
@@ -195,42 +174,52 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
-  total: dataList().length,
+  total: 0,
   currentPage: 1,
   pageSize: 10,
-  apilist: dataList(),
+  apilist: [],
   list: [],
   loading: false,
+  searchObj: {},
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
 // 表格数据获取
-const getTableData = (pageObj) => {
+const getTableData = async (pageObj) => {
   const page = pageObj.page;
-  dataObj.total = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    }).length;
-  dataObj.list = dataObj.apilist
-    .map((v) => v)
-    .filter((v) => {
-      if (activeName.value === '全部') {
-        return true;
-      }
-      return v.status === activeName.value;
-    })
-    .slice(
-      (page.currentPage - 1) * page.pageSize,
-      page.currentPage * page.pageSize,
-    );
-  return dataObj;
+  const params = {
+    pageNo: page.currentPage,
+    pageSize: page.pageSize,
+    ...dataObj.searchObj,
+  };
+
+  try {
+    dataObj.loading = true;
+    const res = await getAbnormalOrderPage(params);
+    dataObj.total = res.total;
+    dataObj.list = res.list.map((v) => {
+      return {
+        ...v,
+        identifyTime:  formatTimestamp(v.identifyTime),
+        returnTime: formatTimestamp(v.returnTime),
+        archiveTime: formatTimestamp(v.archiveTime),
+        createOrderTime: formatTimestamp(v.createOrderTime),
+        updateTime: formatTimestamp(v.updateTime),
+        createTime: formatTimestamp(v.createTime),
+        payTime: formatTimestamp(v.payTime),
+      };
+    });
+    return dataObj;
+  } catch (error) {
+    console.error('获取订单数据失败:', error);
+    ElMessage.error('获取订单数据失败');
+    return dataObj;
+  } finally {
+    dataObj.loading = false;
+  }
 };
-const [QueryForm] = useVbenForm({
+const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -239,18 +228,20 @@ const [QueryForm] = useVbenForm({
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
-  handleSubmit: () => {
-    dataObj.loading = true;
-    setTimeout(() => {
-      dataObj.loading = false;
-    }, 2000);
+  handleSubmit: async () => {
+    const values = await queryFormApi.getValues();
+    dataObj.searchObj = values;
+    dataObj.currentPage = 1;
+    gridApi.query();
     drawerApi.close();
   },
   layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
-    delete v.rules;
-    return { ...v };
-  }),
+  schema: useFormSchema()
+    .map((v) => {
+      delete v.rules;
+      return { ...v };
+    })
+    .filter((v) => v.isSearch),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -326,6 +317,153 @@ const openEn = async () => {
   const res = await getDetailEnObj(1);
   dataObj.enDetailObj = res;
   enDetailObjRef.value?.open();
+};
+
+// 处置状态映射
+const statusMap = {
+  unhandled: { label: '未处理', type: 'danger' },
+  handling: { label: '处理中', type: 'warning' },
+  closed: { label: '已关闭', type: 'info' },
+};
+
+// 获取状态标签
+const getStatusLabel = (status) => {
+  return statusMap[status]?.label || status;
+};
+
+// 获取状态类型
+const getStatusType = (status) => {
+  return statusMap[status]?.type || 'default';
+};
+
+// 订单类型映射
+const orderTypeMap = {
+  temp_park: { label: '临时停车' },
+  offtime_park: { label: '错时停车' },
+  car_charge: { label: '汽车充电' },
+  bike_charge: { label: '两轮充电' },
+  share_charge: { label: '共享充电' },
+};
+
+// 获取订单类型标签
+const getOrderTypeLabel = (orderType) => {
+  return orderTypeMap[orderType]?.label || orderType;
+};
+
+// 异常类型映射
+const abnormalTypeMap = {
+  payment_error: { label: '支付异常' },
+  billing_error: { label: '计费异常' },
+  status_error: { label: '状态异常' },
+};
+
+// 获取异常类型标签
+const getAbnormalTypeLabel = (abnormalType) => {
+  return abnormalTypeMap[abnormalType]?.label || abnormalType;
+};
+
+// 检查弹窗
+const checkDialogVisible = ref(false);
+const checkForm = reactive({
+  id: '',
+  remark: '',
+});
+
+// 打开检查弹窗
+const handleCheck = (row) => {
+  checkForm.id = row.id;
+  checkForm.remark = '';
+  checkDialogVisible.value = true;
+};
+
+// 提交检查
+const handleCheckSubmit = async () => {
+  try {
+    await checkAbnormalOrder(checkForm);
+    ElMessage.success('检查成功');
+    checkDialogVisible.value = false;
+    handleRefresh();
+  } catch {
+    ElMessage.error('检查失败');
+  }
+};
+
+// 忽略弹窗
+const ignoreDialogVisible = ref(false);
+const ignoreForm = reactive({
+  id: '',
+  remark: '',
+});
+
+// 打开忽略弹窗
+const handleIgnore = (row) => {
+  ignoreForm.id = row.id;
+  ignoreForm.remark = '';
+  ignoreDialogVisible.value = true;
+};
+
+// 提交忽略
+const handleIgnoreSubmit = async () => {
+  try {
+    await ignoreAbnormalOrder(ignoreForm);
+    ElMessage.success('忽略成功');
+    ignoreDialogVisible.value = false;
+    handleRefresh();
+  } catch {
+    ElMessage.error('忽略失败');
+  }
+};
+
+// 更新进度弹窗
+const updateProgressDialogVisible = ref(false);
+const updateProgressForm = reactive({
+  id: '',
+  remark: '',
+});
+
+// 打开更新进度弹窗
+const handleUpdateProgress = (row) => {
+  updateProgressForm.id = row.id;
+  updateProgressForm.remark = '';
+  updateProgressDialogVisible.value = true;
+};
+
+// 提交更新进度
+const handleUpdateProgressSubmit = async () => {
+  try {
+    await updateAbnormalOrderProgress(updateProgressForm);
+    ElMessage.success('进度更新成功');
+    updateProgressDialogVisible.value = false;
+    handleRefresh();
+  } catch {
+    ElMessage.error('进度更新失败');
+  }
+};
+
+// 批量处置弹窗
+const batchHandleDialogVisible = ref(false);
+const batchHandleForm = reactive({
+  ids: [],
+  remark: '',
+});
+
+// 打开批量处置弹窗
+const handleHandleBatchSubmit = () => {
+  batchHandleForm.ids = checkedIds.value;
+  batchHandleForm.remark = '';
+  batchHandleDialogVisible.value = true;
+};
+
+// 提交批量处置
+const handleBatchHandleSubmit = async () => {
+  try {
+    await batchHandleAbnormalOrder(batchHandleForm);
+    ElMessage.success('批量处置成功');
+    batchHandleDialogVisible.value = false;
+    handleRefresh();
+  } catch {
+    ElMessage.error('批量处置失败');
+  }
 };
 
 // ====================== 告警明细弹窗 ======================
@@ -406,30 +544,140 @@ const alarmColumns = [
       </el-table>
     </ElDialog>
 
+    <!-- 检查弹窗 -->
+    <ElDialog
+      v-model="checkDialogVisible"
+      title="异常订单检查"
+      width="500px"
+      append-to-body
+    >
+      <el-form :model="checkForm" label-width="80px">
+        <el-form-item label="订单ID">
+          <el-input v-model="checkForm.id" disabled />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input
+            v-model="checkForm.remark"
+            type="textarea"
+            rows="3"
+            placeholder="请输入检查备注"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="checkDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleCheckSubmit">
+            确认检查
+          </el-button>
+        </div>
+      </template>
+    </ElDialog>
+
+    <!-- 忽略弹窗 -->
+    <ElDialog
+      v-model="ignoreDialogVisible"
+      title="忽略异常订单"
+      width="500px"
+      append-to-body
+    >
+      <el-form :model="ignoreForm" label-width="80px">
+        <el-form-item label="订单ID">
+          <el-input v-model="ignoreForm.id" disabled />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input
+            v-model="ignoreForm.remark"
+            type="textarea"
+            rows="3"
+            placeholder="请输入忽略备注"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="ignoreDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleIgnoreSubmit">
+            确认忽略
+          </el-button>
+        </div>
+      </template>
+    </ElDialog>
+
+    <!-- 更新进度弹窗 -->
+    <ElDialog
+      v-model="updateProgressDialogVisible"
+      title="更新进度"
+      width="500px"
+      append-to-body
+    >
+      <el-form :model="updateProgressForm" label-width="80px">
+        <el-form-item label="订单ID">
+          <el-input v-model="updateProgressForm.id" disabled />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input
+            v-model="updateProgressForm.remark"
+            type="textarea"
+            rows="3"
+            placeholder="请输入进度更新备注"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="updateProgressDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleUpdateProgressSubmit">
+            确认更新
+          </el-button>
+        </div>
+      </template>
+    </ElDialog>
+
+    <!-- 批量处置弹窗 -->
+    <ElDialog
+      v-model="batchHandleDialogVisible"
+      title="批量处置异常订单"
+      width="500px"
+      append-to-body
+    >
+      <el-form :model="batchHandleForm" label-width="80px">
+        <el-form-item label="订单ID列表">
+          <el-input :value="batchHandleForm.ids.join(',')" disabled />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input
+            v-model="batchHandleForm.remark"
+            type="textarea"
+            rows="3"
+            placeholder="请输入处置备注"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="batchHandleDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleBatchHandleSubmit">
+            确认处置
+          </el-button>
+        </div>
+      </template>
+    </ElDialog>
+
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton
-            content="刷新"
-            icon-name="refresh"
-            @click="autoElmessage"
-          />
           <IconButton
             content="导出EXCEL"
             icon-name="download"
             @click="handleExport"
           />
           <IconButton
-            content="导出PDF"
-            icon-name="download"
-            @click="handlePDF"
-          />
-          <IconButton
-            content="批量删除"
+            content="批量处置异常订单"
             icon-name="delete"
             color="#F56C6C"
             :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
+            @click="handleHandleBatchSubmit"
           />
           <IconButton
             content="搜索"
@@ -448,44 +696,71 @@ const alarmColumns = [
           />
         </div>
       </template>
-      <template #reportNumber="{ row }">
+      <template #orderType="{ row }">
+        <el-tag type="primary">{{ getOrderTypeLabel(row.orderType) }}</el-tag>
+      </template>
+      <template #abnormalType="{ row }">
+        <el-tag type="danger">{{ getAbnormalTypeLabel(row.abnormalType) }}</el-tag>
+      </template>
+      <template #status="{ row }">
+        <el-tag :type="getStatusType(row.status)">
+          {{ getStatusLabel(row.status) }}
+        </el-tag>
+      </template>
+      <template #id="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.reportNumber }}
+          {{ row.id }}
         </el-text>
       </template>
-
+      <template #payMethod="{ row }">
+        <span v-if="row.payMethod === 'wechat'">微信</span>
+        <span v-else-if="row.payMethod === 'alipay'">支付宝</span>
+        <span v-else-if="row.payMethod === 'bank'">银行卡</span>
+        <span v-else-if="row.payMethod === 'cash'">现金</span>
+        <span v-else>{{ row.payMethod }}</span>
+      </template>
       <template #halfyearWarnCount="{ row }">
         <el-text @click="handleTotal(row)" class="common-align" type="primary">
           {{ row.halfyearWarnCount }}
         </el-text>
       </template>
 
-      <template #orderNumber="{ row }">
+      <template #orderId="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.orderNumber }}
+          {{ row.orderId }}
         </el-text>
       </template>
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            content="详情"
+            content="查看"
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
           <IconButton
-            content="删除"
+            content="检查"
+            icon-name="Search"
+            @click="handleCheck(row)"
+          />
+          <IconButton
+            content="忽略"
             icon-name="delete"
             color="#F56C6C"
-            @click="handleDelete(row)"
+            @click="handleIgnore(row)"
+          />
+          <IconButton
+            content="更新进度"
+            icon-name="Refresh"
+            @click="handleUpdateProgress(row)"
           />
         </div>
       </template>

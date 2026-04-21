@@ -3,25 +3,21 @@ import { onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
-import { getOfftimeParkOrderChart } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
+import { getDebtRecordCollectChart } from '#/api/genchuan/industry/chargePark/orderTrade/debtCollect/index.js';
 import Card from '#/components/stats/card.vue';
 import Columnar from '#/components/stats/columnar.vue';
 
-// 订单状态映射
+// 结清状态映射
 const statusMap = {
-  charging: { label: '充电中', type: 'primary' },
-  pending_pay: { label: '待支付', type: 'warning' },
-  paid: { label: '已支付', type: 'success' },
-  completed: { label: '已完成', type: 'success' },
-  cancelled: { label: '已取消', type: 'info' },
-  refunding: { label: '退款中', type: 'danger' },
+  unpaid: { label: '未结清', type: 'warning' },
+  cleared: { label: '已结清', type: 'success' },
 };
 
 const state = reactive({
   cardList: [
-    { title: '今日订单量', value: 0, color: '#13ce66' },
-    { title: '今日营收', value: 0, color: '#4ECDC4' },
-    { title: '今日支付率（%）', value: 0, color: '#FF6B6B' },
+    { title: '欠费总额', value: 0, color: '#FF6B6B' },
+    { title: '结清率', value: 0, color: '#4ECDC4', suffix: '%' },
+    { title: '记录总数', value: 0, color: '#13ce66' },
   ],
   trendData: [],
   typeData: [],
@@ -30,54 +26,39 @@ const state = reactive({
 const lineChartRef = ref(null);
 let lineChartInstance = null;
 
-// 获取订单图表数据
+// 获取欠费记录图表数据
 const fetchOrderChartData = async () => {
   try {
-    const res = await getOfftimeParkOrderChart();
-    state.cardList[0].value = res.todayOrderCount;
-    state.cardList[1].value = res.todayRevenue;
-    state.cardList[2].value = res.payRate;
+    const res = await getDebtRecordCollectChart();
+    state.cardList[0].value = res.totalArrearAmount;
+    state.cardList[1].value = res.clearRate;
+    // 记录总数通过趋势数据计算
+    state.cardList[2].value = res.trendData?.reduce((sum, item) => sum + item.count, 0) || 0;
     // 如果trendData为空，使用假数据
     state.trendData =
       res.trendData && res.trendData.length > 0
         ? res.trendData
         : [
-            { date: '2025-04-01', count: 12 },
-            { date: '2025-04-02', count: 15 },
-            { date: '2025-04-03', count: 8 },
-            { date: '2025-04-04', count: 20 },
-            { date: '2025-04-05', count: 14 },
-          ];
-    // 如果typeData为空，使用假数据
-    state.typeData =
-      res.stationData && res.stationData.length > 0
-        ? res.stationData
-        : [
-            { count: 2, status: 'completed' },
-            { count: 4, status: 'paid' },
-            { count: 1, status: 'charging' },
-            { count: 1, status: 'cancelled' },
+            { date: '2025-04-01', count: 5 },
+            { date: '2025-04-02', count: 8 },
+            { date: '2025-04-03', count: 3 },
+            { date: '2025-04-04', count: 12 },
+            { date: '2025-04-05', count: 6 },
           ];
     // 更新折线图
     updateLineChart();
   } catch (error) {
-    console.error('获取订单图表数据失败:', error);
+    console.error('获取欠费记录图表数据失败:', error);
     // 接口调用失败时使用假数据
-    state.cardList[0].value = 50;
-    state.cardList[1].value = 1500;
-    state.cardList[2].value = 85;
+    state.cardList[0].value = 375;
+    state.cardList[1].value = 33.3;
+    state.cardList[2].value = 10;
     state.trendData = [
-      { date: '2025-04-01', count: 12 },
-      { date: '2025-04-02', count: 15 },
-      { date: '2025-04-03', count: 8 },
-      { date: '2025-04-04', count: 20 },
-      { date: '2025-04-05', count: 14 },
-    ];
-    state.typeData = [
-      { count: 2, status: 'completed' },
-      { count: 4, status: 'paid' },
-      { count: 1, status: 'charging' },
-      { count: 1, status: 'cancelled' },
+      { date: '2025-04-01', count: 5 },
+      { date: '2025-04-02', count: 8 },
+      { date: '2025-04-03', count: 3 },
+      { date: '2025-04-04', count: 12 },
+      { date: '2025-04-05', count: 6 },
     ];
     // 更新折线图
     updateLineChart();
@@ -92,7 +73,7 @@ const initLineChart = () => {
 
   const option = {
     title: {
-      text: '订单量趋势',
+      text: '欠费记录趋势',
       left: 'center',
       textStyle: {
         color: '#6E7E91',
@@ -187,17 +168,5 @@ onMounted(() => {
       />
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>
-    <Columnar
-     class="simple-bar-chart"
-      title="订单类型分布"
-      :x-data="
-        state.typeData.map(
-          (item) => statusMap[item.status]?.label || item.status,
-        )
-      "
-      :series-data="[
-        { name: '订单数', data: state.typeData.map((item) => item.count) },
-      ]"
-    />
   </div>
 </template>
