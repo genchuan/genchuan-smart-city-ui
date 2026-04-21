@@ -18,7 +18,7 @@ import {
   updateFenceMgmt,
 } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/fenceMgmt';
 
-import { parseFenceArea, userOptions, statusOptions } from '../table/data';
+import { parseFenceArea, statusOptions, userOptions } from '../table/data';
 import FenceMapEditor from './FenceMapEditor.vue';
 
 const props = defineProps({

@@ -4,16 +4,16 @@ import { computed, reactive, ref, watch } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
 
-import { ElMessage, ElTag, ElLoading, ElMessageBox } from 'element-plus';
+import { ElLoading, ElMessage, ElMessageBox, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
+  deleteInspectUser,
   exportInspectUser,
   getInspectUserDetail,
   getInspectUserPage,
-  deleteInspectUser
 } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectUser';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 
