@@ -17,7 +17,6 @@ import {
   updateInspectPlan,
 } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectPlan';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { $t } from '#/locales';
 
 import ImportExcelDialog from '../components/ImportExcelDialog.vue';
 import StatusConfirmDialog from '../components/StatusConfirmDialog.vue';
@@ -25,6 +24,8 @@ import {
   auditorOptions,
   detailFields,
   filterMockList,
+  getPlanCycleLabel,
+  getPlanCycleTagType,
   getPlanStatusLabel,
   getPlanStatusTagType,
   getPlanTypeLabel,
@@ -37,8 +38,6 @@ import {
   useFormSchema,
   useGridColumns,
   useSearchFormSchema,
-  getPlanCycleLabel,
-  getPlanCycleTagType,
 } from './data';
 
 const props = defineProps({
