@@ -18,7 +18,7 @@ import {
   updateInspectUser,
 } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectUser';
 
-import { areaOptions, deviceOptions, statusOptions } from '../table/data';
+import { statusOptions } from '../table/data';
 
 const emit = defineEmits(['success']);
 
@@ -173,7 +173,12 @@ defineExpose({
         <ElInput v-model="form.deviceId" placeholder="请输入绑定设备Id" />
       </ElFormItem>
       <ElFormItem label="人员状态" prop="status">
-        <ElSelect v-model="form.status" clearable placeholder="请选择人员状态" :disabled="isEdit">
+        <ElSelect
+          v-model="form.status"
+          clearable
+          placeholder="请选择人员状态"
+          :disabled="isEdit"
+        >
           <ElOption
             v-for="item in statusOptions"
             :key="item.value"
