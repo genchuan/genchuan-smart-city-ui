@@ -49,7 +49,10 @@ export const areaOptions = [
   { label: '南安市', value: '南安市' },
 ];
 
-export const trackStatusOptions = getDictOptions(INSPECT_TRACK_STATUS_DICT, 'string');
+export const trackStatusOptions = getDictOptions(
+  INSPECT_TRACK_STATUS_DICT,
+  'string',
+);
 
 export const syncStatusOptions = [
   { label: '已同步', value: '已同步' },

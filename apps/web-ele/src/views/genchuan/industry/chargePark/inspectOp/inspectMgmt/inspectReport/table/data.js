@@ -51,9 +51,15 @@ export const taskOptions = [
   { label: '南安水头交通枢纽日检任务', value: 6 },
 ];
 
-export const reportTypeOptions = getDictOptions(INSPECT_REPORT_TYPE_DICT, 'string');
+export const reportTypeOptions = getDictOptions(
+  INSPECT_REPORT_TYPE_DICT,
+  'string',
+);
 
-export const statusOptions = getDictOptions(INSPECT_REPORT_STATUS_DICT, 'string');
+export const statusOptions = getDictOptions(
+  INSPECT_REPORT_STATUS_DICT,
+  'string',
+);
 
 const MOCK_REPORT_TYPE_VALUES = ['设备故障', '占位异常', '其他'];
 const MOCK_REPORT_STATUS_VALUES = ['待审核', '待处置', '已完成', '已驳回'];
@@ -149,8 +155,10 @@ export function getReportStatusTagType(status) {
 
 export function dataList() {
   return Array.from({ length: 18 }, (_, index) => {
-    const status = MOCK_REPORT_STATUS_VALUES[index % MOCK_REPORT_STATUS_VALUES.length];
-    const type = MOCK_REPORT_TYPE_VALUES[index % MOCK_REPORT_TYPE_VALUES.length];
+    const status =
+      MOCK_REPORT_STATUS_VALUES[index % MOCK_REPORT_STATUS_VALUES.length];
+    const type =
+      MOCK_REPORT_TYPE_VALUES[index % MOCK_REPORT_TYPE_VALUES.length];
     const task = taskOptions[index % taskOptions.length];
     const auditUser = auditorOptions[index % auditorOptions.length];
     const processUser = auditorOptions[(index + 1) % auditorOptions.length];

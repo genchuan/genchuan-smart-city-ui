@@ -49,7 +49,10 @@ export const userOptions = [
   { label: '赵六', value: 4 },
 ];
 
-export const taskStatusOptions = getDictOptions(INSPECT_TASK_STATUS_DICT, 'string');
+export const taskStatusOptions = getDictOptions(
+  INSPECT_TASK_STATUS_DICT,
+  'string',
+);
 
 const MOCK_TASK_STATUS_VALUES = ['待派发', '待认领', '处理中', '已完成'];
 
@@ -122,7 +125,8 @@ export function getProgressStatus(progress) {
 
 export function dataList() {
   return Array.from({ length: 16 }, (_, index) => {
-    const status = MOCK_TASK_STATUS_VALUES[index % MOCK_TASK_STATUS_VALUES.length];
+    const status =
+      MOCK_TASK_STATUS_VALUES[index % MOCK_TASK_STATUS_VALUES.length];
     const taskType = taskTypeOptions[index % taskTypeOptions.length].value;
     const plan = planOptions[index % planOptions.length];
     const user = userOptions[index % userOptions.length];

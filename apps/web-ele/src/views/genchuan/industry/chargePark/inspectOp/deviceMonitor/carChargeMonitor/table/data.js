@@ -75,11 +75,20 @@ export const stationOptions = [
   { label: '南安水头交通枢纽站', value: 6 },
 ];
 
-export const monitorStatusOptions = getDictOptions(CAR_CHARGE_MONITOR_STATUS_DICT, 'string');
+export const monitorStatusOptions = getDictOptions(
+  CAR_CHARGE_MONITOR_STATUS_DICT,
+  'string',
+);
 
-export const alarmStatusOptions = getDictOptions(CAR_CHARGE_MONITOR_ALARM_STATUS_DICT, 'string');
+export const alarmStatusOptions = getDictOptions(
+  CAR_CHARGE_MONITOR_ALARM_STATUS_DICT,
+  'string',
+);
 
-export const processStatusOptions = getDictOptions(CAR_CHARGE_MONITOR_PROCESS_STATUS_DICT, 'string');
+export const processStatusOptions = getDictOptions(
+  CAR_CHARGE_MONITOR_PROCESS_STATUS_DICT,
+  'string',
+);
 
 const deviceCodes = [
   'CC-01',
