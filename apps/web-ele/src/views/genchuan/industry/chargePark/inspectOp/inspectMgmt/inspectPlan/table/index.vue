@@ -37,6 +37,8 @@ import {
   useFormSchema,
   useGridColumns,
   useSearchFormSchema,
+  getPlanCycleLabel,
+  getPlanCycleTagType,
 } from './data';
 
 const props = defineProps({
@@ -74,6 +76,7 @@ const checkedRows = ref([]);
 const filterType = ref('');
 const filterScope = ref('');
 const filterStatus = ref('');
+const filterCycle = ref('');
 const filterAuditUserId = ref('');
 const filterTrendTime = ref('');
 
@@ -137,10 +140,10 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
           ...values,
           id: formData.value.id,
         });
-        ElMessage.success($t('ui.actionMessage.editSuccess'));
+        ElMessage.success('编辑成功');
       } else {
         await createInspectPlan(values);
-        ElMessage.success($t('ui.actionMessage.addSuccess'));
+        ElMessage.success('新增成功');
       }
       formDrawerApi.close();
       handleRefresh();
@@ -165,6 +168,7 @@ function buildQueryParams(page) {
     pageSize: page.pageSize,
     ...dataObj.searchParams,
     type: filterType.value || dataObj.searchParams.type,
+    cycle: filterCycle.value || dataObj.searchParams.cycle,
     scope: filterScope.value || dataObj.searchParams.scope,
     status: filterStatus.value || dataObj.searchParams.status,
     auditUserId: filterAuditUserId.value || dataObj.searchParams.auditUserId,
@@ -353,6 +357,11 @@ function handleStatusClick(status) {
   gridApi.query();
 }
 
+function handleCycleClick(cycle) {
+  filterCycle.value = filterCycle.value === cycle ? '' : cycle;
+  gridApi.query();
+}
+
 function handleAuditorClick(auditUserId) {
   filterAuditUserId.value =
     Number(filterAuditUserId.value) === Number(auditUserId) ? '' : auditUserId;
@@ -383,6 +392,9 @@ function cancelFilter(type) {
     type: () => {
       filterType.value = '';
     },
+    cycle: () => {
+      filterCycle.value = '';
+    },
   };
 
   clearMap[type]?.();
@@ -402,6 +414,9 @@ watch(
     }
     if (filter.type === 'trendTime') {
       filterTrendTime.value = filter.value;
+    }
+    if (filter.type === 'cycle') {
+      filterCycle.value = filter.value;
     }
     gridApi.query();
   },
@@ -452,6 +467,14 @@ watch(
             @close="cancelFilter('status')"
           >
             计划状态：{{ getPlanStatusLabel(filterStatus) }}
+          </ElTag>
+          <ElTag
+            v-if="filterCycle"
+            closable
+            type="info"
+            @close="cancelFilter('cycle')"
+          >
+            执行周期：{{ getPlanCycleLabel(filterCycle) }}
           </ElTag>
           <ElTag
             v-if="filterAuditUserId"
@@ -533,6 +556,16 @@ watch(
           @click="handleStatusClick(row.status)"
         >
           {{ getPlanStatusLabel(row.status) }}
+        </ElTag>
+      </template>
+
+      <template #cycle="{ row }">
+        <ElTag
+          style="cursor: pointer"
+          :type="getPlanCycleTagType(row.cycle)"
+          @click="handleCycleClick(row.cycle)"
+        >
+          {{ getPlanCycleLabel(row.cycle) }}
         </ElTag>
       </template>
 
