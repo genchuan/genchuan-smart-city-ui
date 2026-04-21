@@ -12,8 +12,8 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { 
   cancelBikeChargeOrder,
-  exportBikeChargeOrderExcel,
-  getBikeChargeOrderPage,
+  exportShareChargeOrderExcel,
+  getShareChargeOrderPage,
   invoiceBikeChargeOrder,
   payBikeChargeOrder,
   refundBikeChargeOrder,
@@ -111,8 +111,8 @@ function handleRefresh() {
 
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
-  const data = await exportBikeChargeOrderExcel();
-  downloadFileFromBlobPart({ fileName: '两轮充电订单报表.xls', source: data });
+  const data = await exportShareChargeOrderExcel();
+  downloadFileFromBlobPart({ fileName: '共享充电订单报表.xls', source: data });
 }
 
 // ====================== 图片转PDF（终极零乱码） ======================
@@ -198,11 +198,13 @@ const getTableData = async (pageObj) => {
 
   try {
     dataObj.loading = true;
-    const res = await getBikeChargeOrderPage(params);
+    const res = await getShareChargeOrderPage(params);
     dataObj.total = res.total;
     dataObj.list = res.list.map((v) => {
       return {
         ...v,
+        lendTime:  formatTimestamp(v.lendTime),
+        returnTime: formatTimestamp(v.returnTime),
         archiveTime: formatTimestamp(v.archiveTime),
         createOrderTime: formatTimestamp(v.createOrderTime),
         updateTime: formatTimestamp(v.updateTime),
@@ -321,7 +323,7 @@ const openEn = async () => {
 
 // 订单状态映射
 const statusMap = {
-  charging: { label: '充电中', type: 'primary' },
+  lending: { label: '借出中', type: 'primary' },
   pending_pay: { label: '待支付', type: 'warning' },
   paid: { label: '已支付', type: 'success' },
   completed: { label: '已完成', type: 'success' },

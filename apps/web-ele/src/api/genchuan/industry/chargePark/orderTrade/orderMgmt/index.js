@@ -176,3 +176,13 @@ export function invoiceBikeChargeOrder(data) {
 export function getBikeChargeOrderChart() {
   return requestClient.get('/ordertrade/bike-charge-order/chart');
 }
+/** 分享充电订单分页 */
+export function getShareChargeOrderPage(params) {
+  return requestClient.get('/ordertrade/share-charge-order/page', {
+    params,
+  });
+}
+/** 分享充电订单导出 */
+export function exportShareChargeOrderExcel() {
+  return requestClient.download('/ordertrade/share-charge-order/export');
+}

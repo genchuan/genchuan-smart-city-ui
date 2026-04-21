@@ -1,4 +1,4 @@
-/** 充电订单搜索表单配置 */
+/** 设备借出订单搜索表单配置 */
 export function useFormSchema() {
   return [
     {
@@ -48,23 +48,32 @@ export function useFormSchema() {
       isSearch: true,
     },
     {
-      fieldName: 'chargeDuration',
-      label: '充电时长（分钟）',
-      component: 'InputNumber',
+      fieldName: 'lendTime',
+      label: '借出时间',
+      component: 'DateTimePicker',
       componentProps: {
-        placeholder: '请输入充电时长',
-        precision: 0,
-        min: 0,
+        placeholder: '请选择借出时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
       },
       labelWidth: 120,
     },
     {
-      fieldName: 'chargeQuantity',
-      label: '充电量（度）',
+      fieldName: 'returnTime',
+      label: '归还时间',
+      component: 'DateTimePicker',
+      componentProps: {
+        placeholder: '请选择归还时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
+      },
+      labelWidth: 120,
+    },
+    {
+      fieldName: 'actualDuration',
+      label: '实际使用时长（分钟）',
       component: 'InputNumber',
       componentProps: {
-        placeholder: '请输入充电量',
-        precision: 2,
+        placeholder: '请输入实际使用时长',
+        precision: 0,
         min: 0,
       },
       labelWidth: 120,
@@ -113,16 +122,6 @@ export function useFormSchema() {
         placeholder: '请输入所属场站ID',
         precision: 0,
         min: 0,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'payTime',
-      label: '支付时间',
-      component: 'DateTimePicker',
-      componentProps: {
-        placeholder: '请选择支付时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
       },
       labelWidth: 120,
     },
@@ -234,7 +233,7 @@ export function useFormSchema() {
     },
   ];
 }
-/** 充电订单表格列配置 */
+/** 设备借出订单表格列配置 */
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
@@ -264,17 +263,24 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'chargeDuration',
-      title: '充电时长（分钟）',
-      minWidth: 160,
+      field: 'lendTime',
+      title: '借出时间',
+      minWidth: 220,
       sortable: true,
+      customRender: ({ text }) => text || '-',
     },
     {
-      field: 'chargeQuantity',
-      title: '充电量（度）',
-      minWidth: 140,
+      field: 'returnTime',
+      title: '归还时间',
+      minWidth: 220,
       sortable: true,
-      customRender: ({ text }) => text ? `${text.toFixed(2)} 度` : '0.00 度',
+      customRender: ({ text }) => text || '-',
+    },
+    {
+      field: 'actualDuration',
+      title: '实际使用时长（分钟）',
+      minWidth: 180,
+      sortable: true,
     },
     {
       field: 'amount',
@@ -295,20 +301,13 @@ export function useGridColumns() {
       title: '订单生成时间',
       minWidth: 220,
       sortable: true,
-      customRender: ({ text }) => text ? new Date(Number(text)).toLocaleString() : '-',
+      customRender: ({ text }) => text || '-',
     },
     {
       field: 'stationId',
       title: '所属场站ID',
       minWidth: 140,
       sortable: true,
-    },
-    {
-      field: 'payTime',
-      title: '支付时间',
-      minWidth: 220,
-      sortable: true,
-      customRender: ({ text }) => text ? new Date(Number(text)).toLocaleString() : '-',
     },
     {
       field: 'payMethod',
@@ -329,7 +328,7 @@ export function useGridColumns() {
       title: '归档时间',
       minWidth: 220,
       sortable: true,
-      customRender: ({ text }) => text ? new Date(Number(text)).toLocaleString() : '-',
+      customRender: ({ text }) => text || '-',
     },
     {
       field: 'operatorId',
@@ -366,14 +365,14 @@ export function useGridColumns() {
       title: '创建时间',
       minWidth: 220,
       sortable: true,
-      customRender: ({ text }) => text ? new Date(Number(text)).toLocaleString() : '-',
+      customRender: ({ text }) => text || '-',
     },
     {
       field: 'updateTime',
       title: '更新时间',
       minWidth: 220,
       sortable: true,
-      customRender: ({ text }) => text ? new Date(Number(text)).toLocaleString() : '-',
+      customRender: ({ text }) => text || '-',
     },
     {
       title: '操作',
