@@ -435,7 +435,7 @@ export function useFormSchema() {
 
 export function useEditFormSchema() {
   return useFormSchema().map((item) => {
-    if (['name', 'scope', 'type', 'status'].includes(item.fieldName)) {
+    if (['name', 'scope', 'status', 'type'].includes(item.fieldName)) {
       return {
         ...item,
         componentProps: {
@@ -539,11 +539,13 @@ export const detailFields = [
     formatter: getPlanTypeLabel,
   },
   { key: 'scope', label: '巡检范围' },
-  { key: 'cycle', label: '执行周期',
+  {
+    key: 'cycle',
+    label: '执行周期',
     type: 'tag',
     tagType: getPlanCycleTagType,
     formatter: getPlanCycleLabel,
-   },
+  },
   { key: 'description', label: '计划描述' },
   {
     key: 'status',
