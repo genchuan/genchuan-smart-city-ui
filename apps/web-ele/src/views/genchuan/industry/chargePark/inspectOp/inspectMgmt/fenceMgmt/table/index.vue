@@ -1,15 +1,15 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
 
-import { ElMessage, ElTag } from 'element-plus';
+import { ElLoading, ElMessage, ElMessageBox, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
+  deleteFenceMgmt,
   getFenceMgmtDetail,
   getFenceMgmtPage,
 } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/fenceMgmt';
@@ -26,6 +26,7 @@ import {
   getFenceStatusTagType,
   getUserName,
   isFenceStatusLabel,
+  loadFenceUserOptions,
   normalizeFenceMgmtRow,
   textObj,
   useGridColumns,
@@ -210,26 +211,41 @@ function handleCreate() {
   formDrawerRef.value?.open();
 }
 
-function getSingleCheckedRow(tip) {
-  if (checkedRows.value.length !== 1) {
-    ElMessage.warning(tip);
-    return null;
+// function getSingleCheckedRow(tip) {
+//   if (checkedRows.value.length !== 1) {
+//     ElMessage.warning(tip);
+//     return null;
+//   }
+//   return checkedRows.value[0];
+// }
+
+// function handleEditSelected() {
+//   const row = getSingleCheckedRow('请选择一条电子围栏进行编辑');
+//   if (!row) return;
+//   formDrawerRef.value?.open(row);
+// }
+
+// function handleSaveSelected() {
+//   const row = getSingleCheckedRow('请选择一条电子围栏进行保存');
+//   if (!row) return;
+//   formDrawerRef.value?.open(row);
+// }
+
+async function handleDelete(row) {
+  await ElMessageBox.confirm('确定删除该电子围栏吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  });
+  const loadingInstance = ElLoading.service({ text: '删除中...' });
+  try {
+    await deleteFenceMgmt(row.id);
+    ElMessage.success('删除成功');
+    handleRefresh();
+  } finally {
+    loadingInstance.close();
   }
-  return checkedRows.value[0];
 }
-
-function handleEditSelected() {
-  const row = getSingleCheckedRow('请选择一条电子围栏进行编辑');
-  if (!row) return;
-  formDrawerRef.value?.open(row);
-}
-
-function handleSaveSelected() {
-  const row = getSingleCheckedRow('请选择一条电子围栏进行保存');
-  if (!row) return;
-  formDrawerRef.value?.open(row);
-}
-
 function onSubmit(values) {
   dataObj.searchParams = { ...values };
   filterAlarmed.value = false;
@@ -248,13 +264,13 @@ async function handleOpenDetail(row) {
   detailDrawerRef.value?.open();
 }
 
-function handleEnable(row) {
-  statusConfirmDialogRef.value?.open('enable', row);
-}
+// function handleEnable(row) {
+//   statusConfirmDialogRef.value?.open('enable', row);
+// }
 
-function handleDisable(row) {
-  statusConfirmDialogRef.value?.open('disable', row);
-}
+// function handleDisable(row) {
+//   statusConfirmDialogRef.value?.open('disable', row);
+// }
 
 function handleEdit(row) {
   formDrawerRef.value?.open(row);
@@ -338,6 +354,10 @@ watch(
   },
   { deep: true },
 );
+
+onMounted(() => {
+  loadFenceUserOptions();
+});
 </script>
 
 <template>
@@ -394,7 +414,7 @@ watch(
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton
+          <!-- <IconButton
             content="编辑"
             icon-name="Edit"
             :disabled="isEmpty(checkedIds)"
@@ -405,7 +425,7 @@ watch(
             icon-name="Check"
             :disabled="isEmpty(checkedIds)"
             @click="handleSaveSelected"
-          />
+          /> -->
           <IconButton
             content="搜索"
             icon-name="search"
@@ -480,7 +500,7 @@ watch(
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton
+          <!-- <IconButton
             v-if="isFenceStatusLabel(row.status, '未生效')"
             content="生效"
             icon-name="CircleCheckFilled"
@@ -491,7 +511,7 @@ watch(
             content="禁用"
             icon-name="VideoPause"
             @click="handleDisable(row)"
-          />
+          /> -->
           <IconButton
             content="编辑"
             icon-name="Edit"
@@ -501,6 +521,12 @@ watch(
             content="查看"
             icon-name="View"
             @click="handleOpenDetail(row)"
+          />
+          <IconButton
+            content="删除"
+            icon-name="delete"
+            color="#F56C6C"
+            @click="handleDelete(row)"
           />
         </div>
       </template>
