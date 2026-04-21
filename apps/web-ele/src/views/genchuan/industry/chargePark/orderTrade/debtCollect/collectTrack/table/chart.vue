@@ -3,81 +3,78 @@ import { onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
-import { getShareChargeOrderChart } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
+import { getDebtRecordCollectTrackChart } from '#/api/genchuan/industry/chargePark/orderTrade/debtCollect/index.js';
 import Card from '#/components/stats/card.vue';
 import Columnar from '#/components/stats/columnar.vue';
 
-// 订单状态映射
-const statusMap = {
-  lending: { label: '借出中', type: 'primary' },
-  pending_pay: { label: '待支付', type: 'warning' },
-  paid: { label: '已支付', type: 'success' },
-  completed: { label: '已完成', type: 'success' },
-  cancelled: { label: '已取消', type: 'info' },
-  refunding: { label: '退款中', type: 'danger' },
+// 追缴方式映射
+const methodMap = {
+  sms: { label: '短信', type: 'primary' },
+  phone: { label: '电话', type: 'warning' },
+  wechat: { label: '微信', type: 'success' },
+  mail: { label: '邮件', type: 'info' },
 };
 
 const state = reactive({
   cardList: [
-    { title: '今日订单量', value: 0, color: '#13ce66' },
-    { title: '今日营收', value: 0, color: '#4ECDC4' },
-    { title: '今日借出数', value: 0, color: '#FF6B6B' },
+    { title: '待追缴数', value: 0, color: '#FF6B6B' },
+    { title: '追缴完成率', value: 0, color: '#4ECDC4', suffix: '%' },
+    { title: '追缴总数', value: 0, color: '#13ce66' },
   ],
   trendData: [],
-  typeData: [],
+  methodData: [],
 });
 
 const lineChartRef = ref(null);
 let lineChartInstance = null;
 
-// 获取订单图表数据
+// 获取追缴跟踪图表数据
 const fetchOrderChartData = async () => {
   try {
-    const res = await getShareChargeOrderChart();
-    state.cardList[0].value = res.todayOrderCount;
-    state.cardList[1].value = res.todayRevenue;
-    state.cardList[2].value = res.todayLendCount;
+    const res = await getDebtRecordCollectTrackChart();
+    state.cardList[0].value = res.waitCollectCount;
+    state.cardList[1].value = res.collectCompleteRate;
+    // 追缴总数通过趋势数据计算
+    state.cardList[2].value = res.trendData?.reduce((sum, item) => sum + item.count, 0) || 0;
     // 如果trendData为空，使用假数据
     state.trendData =
       res.trendData && res.trendData.length > 0
         ? res.trendData
         : [
-            { date: '2025-04-01', count: 12 },
-            { date: '2025-04-02', count: 15 },
-            { date: '2025-04-03', count: 8 },
-            { date: '2025-04-04', count: 20 },
-            { date: '2025-04-05', count: 14 },
+            { date: '2025-04-01', count: 5 },
+            { date: '2025-04-02', count: 8 },
+            { date: '2025-04-03', count: 3 },
+            { date: '2025-04-04', count: 12 },
+            { date: '2025-04-05', count: 6 },
           ];
-    // 如果stationData为空，使用假数据
-    state.typeData =
-      res.stationData && Array.isArray(res.stationData) && res.stationData.length > 0
-        ? res.stationData
+    // 如果methodData为空，使用假数据
+    state.methodData =
+      res.methodData && Array.isArray(res.methodData) && res.methodData.length > 0
+        ? res.methodData
         : [
-            { count: 2, status: 'completed' },
-            { count: 4, status: 'paid' },
-            { count: 1, status: 'lending' },
-            { count: 1, status: 'cancelled' },
+            { method: 'sms', count: 4 },
+            { method: 'phone', count: 1 },
+            { method: 'wechat', count: 2 },
           ];
     // 更新折线图
     updateLineChart();
   } catch (error) {
-    console.error('获取订单图表数据失败:', error);
+    console.error('获取追缴跟踪图表数据失败:', error);
     // 接口调用失败时使用假数据
-    state.cardList[0].value = 50;
-    state.cardList[1].value = 1500;
-    state.cardList[2].value = 30;
+    state.cardList[0].value = 2;
+    state.cardList[1].value = 20;
+    state.cardList[2].value = 10;
     state.trendData = [
-      { date: '2025-04-01', count: 12 },
-      { date: '2025-04-02', count: 15 },
-      { date: '2025-04-03', count: 8 },
-      { date: '2025-04-04', count: 20 },
-      { date: '2025-04-05', count: 14 },
+      { date: '2025-04-01', count: 5 },
+      { date: '2025-04-02', count: 8 },
+      { date: '2025-04-03', count: 3 },
+      { date: '2025-04-04', count: 12 },
+      { date: '2025-04-05', count: 6 },
     ];
-    state.typeData = [
-      { count: 2, status: 'completed' },
-      { count: 4, status: 'paid' },
-      { count: 1, status: 'lending' },
-      { count: 1, status: 'cancelled' },
+    state.methodData = [
+      { method: 'sms', count: 4 },
+      { method: 'phone', count: 1 },
+      { method: 'wechat', count: 2 },
     ];
     // 更新折线图
     updateLineChart();
@@ -92,7 +89,7 @@ const initLineChart = () => {
 
   const option = {
     title: {
-      text: '订单量趋势',
+      text: '追缴数量趋势',
       left: 'center',
       textStyle: {
         color: '#6E7E91',
@@ -189,14 +186,14 @@ onMounted(() => {
     <div ref="lineChartRef" class="simple-bar-chart"></div>
     <Columnar
      class="simple-bar-chart"
-      title="订单类型分布"
+      title="追缴方式分布"
       :x-data="
-        state.typeData.map(
-          (item) => statusMap[item.status]?.label || item.status,
+        state.methodData.map(
+          (item) => methodMap[item.method]?.label || item.method,
         )
       "
       :series-data="[
-        { name: '订单数', data: state.typeData.map((item) => item.count) },
+        { name: '追缴数', data: state.methodData.map((item) => item.count) },
       ]"
     />
   </div>

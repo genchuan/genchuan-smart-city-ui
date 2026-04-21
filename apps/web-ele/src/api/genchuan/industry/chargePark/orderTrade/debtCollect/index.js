@@ -66,3 +66,39 @@ export function exportDebtRecordCollectExcel() {
 export function getDebtRecordCollectChart() {
   return requestClient.get('/ordertrade/arrear-record/chart');
 }
+
+/** 追缴跟踪分页 */
+export function getDebtRecordCollectTrackPage(params) {
+  return requestClient.get('/ordertrade/collect-track/page', {
+    params,
+  });
+}
+
+/** 追缴跟踪推送 */
+export function pushDebtRecordCollectTrack(data) {
+  return requestClient.put('/ordertrade/collect-track/push', data);
+}
+/** 追缴跟踪转移 */
+export function transferDebtRecordCollectTrack(data) {
+  return requestClient.put('/ordertrade/collect-track/transfer', data);
+}
+/** 追缴跟踪更新进度 */
+export function updateProgressDebtRecordCollectTrack(data) {
+  return requestClient.put('/ordertrade/collect-track/update-progress', data);
+}
+/** 追缴跟踪导出 */
+export function exportDebtRecordCollectTrackExcel() {
+  return requestClient.download('/ordertrade/collect-track/export');
+}
+/** 追缴跟踪批量推送 */
+export function batchPushDebtRecordCollectTrack(data) {
+  return requestClient.post('/ordertrade/collect-track/batch-push', data);
+}
+/** 追缴跟踪归档 */
+export function archiveDebtRecordCollectTrack(data) {
+  return requestClient.put('/ordertrade/collect-track/archive', data);
+}
+/** 追缴跟踪图表 */
+export function getDebtRecordCollectTrackChart() {
+  return requestClient.get('/ordertrade/collect-track/chart');
+}
