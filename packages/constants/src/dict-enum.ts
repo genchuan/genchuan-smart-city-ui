@@ -229,6 +229,42 @@ const CHGPARKMGT_DICT = {
   // 奖品管理
   PRIZE_MGMT_TYPE: 'prize_mgmt_type', // 奖品类型
   PRIZE_MGMT_STATUS: 'prize_mgmt_status', // 奖品状态
+  // 优惠活动
+  // 优惠券管理
+  COUPON_MGMT_TYPE: 'coupon_mgmt_type', // 优惠券类型
+  COUPON_MGMT_STATUS: 'coupon_mgmt_status', // 优惠券状态
+  // 活动配置
+  ACTIVITY_CONFIG_TYPE: 'activity_config_type', // 配置类型
+  ACTIVITY_CONFIG_USER_GROUP: 'activity_config_user_group', // 配置适用人群
+  ACTIVITY_CONFIG_STATUS: 'activity_config_status', // 配置状态
+  // 券包配置
+  PACKAGE_CONFIG_TYPE: 'package_config_type', // 券包类型
+  PACKAGE_CONFIG_STATUS: 'package_config_status', // 券包配置状态
+  PACKAGE_CONFIG_SCOPE: 'package_config_scope', // 券包适用范围
+  // 领用记录
+  RECEIVE_RECORD_STATUS: 'receive_record_status', // 状态
+  RECEIVE_RECORD_SYNC_STATUS: 'receive_record_sync_status', // 同步状态
+  // 卡种管理
+  // 卡种订单
+  CARD_ORDER_PAY_STATUS: 'card_order_pay_status', // 卡种订单支付状态
+  CARD_ORDER_INVOICE_STATUS: 'card_order_invoice_status', // 卡种订单开票状态
+  // 卡种配置
+  CARD_CONFIG_TYPE: 'card_config_type', // 卡种类型
+  CARD_CONFIG_SCOPE: 'card_config_scope', // 适用范围
+  CARD_CONFIG_STATUS: 'card_config_status', // 配置状态
+  // 库存管控
+  STOCK_CONTROL_STATUS: 'stock_control_status', // 库存状态
+  STOCK_CONTROL_WARN_STATUS: 'stock_control_warn_status', // 告警状态
+  // 兑换管理
+  // 兑换类目
+  EXCHANGE_CATEGORY_STATUS: 'exchange_category_status', // 类目状态
+  EXCHANGE_CATEGORY_SCOPE: 'exchange_category_scope', // 适用范围
+  // 兑换订单
+  EXCHANGE_ORDER_PAY_STATUS: 'exchange_order_pay_status', // 支付状态
+  // 分析决策
+  // 营销运营报表
+  MARKET_OP_REPORT_TYPE: 'market_op_report_type', // 报表类型
+  MARKET_OP_REPORT_STATUS: 'market_op_report_status', // 报表状态
   // 设备监控 - 车位状态监测
   SPACE_MONITOR_STATUS: 'space_monitor_status', // 车位监测状态
   SPACE_MONITOR_ALARM_STATUS: 'space_monitor_alarm_status', // 车位告警状态
