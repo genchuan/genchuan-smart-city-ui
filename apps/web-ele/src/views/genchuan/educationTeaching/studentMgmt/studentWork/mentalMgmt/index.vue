@@ -77,7 +77,7 @@ const getDateFromTimestamp = (timestamp) => {
   return `${year}-${month}-${day}`;
 };
 
-const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
+const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
 // ---------- 标签筛选 ----------
@@ -133,12 +133,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel: () => drawerApi.close(),
 });
 
-const [CreateDrawer, createDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => createDrawerApi.close(),
-});
-
 const [InterveneDrawer, interveneDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
@@ -160,7 +154,7 @@ const gridColumns = ref(getColumnsByStatus(activeName.value));
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({ records }) {
+function handleRowCheckboxChange({records}) {
   checkedIds.value = records.map(item => item.id);
   checkedRows.value = records;
 }
@@ -178,14 +172,14 @@ const loadStudentOptions = async () => {
   const currentSchema = createFormApi.getSchema();
   const newSchema = currentSchema.map(item => {
     if (item.fieldName === 'studentId') {
-      return { ...item, componentProps: { ...item.componentProps, options: studentOptions.value } };
+      return {...item, componentProps: {...item.componentProps, options: studentOptions.value}};
     }
     return item;
   });
   createFormApi.setSchema(newSchema);
 };
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const params = {
@@ -199,15 +193,24 @@ const getTableData = async ({ page }) => {
       filtered = filtered.filter(item => {
         let itemValue;
         switch (field) {
-          case 'mentalStatus': itemValue = item.mentalStatus; break;
-          case 'riskLevel': itemValue = item.riskLevel; break;
-          case 'status': itemValue = item.status; break;
-          case 'creator': itemValue = item.creator; break;
+          case 'mentalStatus':
+            itemValue = item.mentalStatus;
+            break;
+          case 'riskLevel':
+            itemValue = item.riskLevel;
+            break;
+          case 'status':
+            itemValue = item.status;
+            break;
+          case 'creator':
+            itemValue = item.creator;
+            break;
           case 'createTime':
             const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
             itemValue = createDate;
             break;
-          default: itemValue = item[field];
+          default:
+            itemValue = item[field];
         }
         if (Array.isArray(filterValue)) {
           return filterValue.includes(String(itemValue));
@@ -226,15 +229,24 @@ const getTableData = async ({ page }) => {
       filtered = filtered.filter(item => {
         let itemValue;
         switch (field) {
-          case 'mentalStatus': itemValue = item.mentalStatus; break;
-          case 'riskLevel': itemValue = item.riskLevel; break;
-          case 'status': itemValue = item.status; break;
-          case 'creator': itemValue = item.creator; break;
+          case 'mentalStatus':
+            itemValue = item.mentalStatus;
+            break;
+          case 'riskLevel':
+            itemValue = item.riskLevel;
+            break;
+          case 'status':
+            itemValue = item.status;
+            break;
+          case 'creator':
+            itemValue = item.creator;
+            break;
           case 'createTime':
             const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
             itemValue = createDate;
             break;
-          default: itemValue = item[field];
+          default:
+            itemValue = item[field];
         }
         if (Array.isArray(filterValue)) {
           return filterValue.includes(String(itemValue));
@@ -252,17 +264,26 @@ const getTableData = async ({ page }) => {
   return dataObj;
 };
 
-function handleRefresh() { gridApi.reload(); }
-function handleReset() { searchParams.value = {}; tagFilters.value = {}; gridApi.reload(); }
+function handleRefresh() {
+  gridApi.reload();
+}
+
+function handleReset() {
+  searchParams.value = {};
+  tagFilters.value = {};
+  gridApi.reload();
+}
 
 async function handleExport() {
   try {
-    const loading = ElLoading.service({ text: '正在导出...' });
+    const loading = ElLoading.service({text: '正在导出...'});
     try {
       const data = await exportMentalMgmt(searchParams.value);
-      downloadFileFromBlobPart({ fileName: '心理管理列表.xls', source: data });
+      downloadFileFromBlobPart({fileName: '心理管理列表.xls', source: data});
       ElMessage.success('导出成功');
-    } finally { loading.close(); }
+    } finally {
+      loading.close();
+    }
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
@@ -273,35 +294,18 @@ async function handleExport() {
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  createFormApi.resetForm();
-  // 新增时设置默认状态为“待评估”
-  createFormApi.setValues({ status: '待评估' });
-  createDrawerApi.open();
+  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
 // 编辑
-async function handleEdit(row) {
+function handleEdit(row) {
   if (row.status !== '待评估') {
     ElMessage.warning('只有待评估状态的档案可以编辑');
     return;
   }
   isEditMode.value = true;
   currentEditId.value = row.id;
-  try {
-    const detail = await getMentalMgmtDetail({ id: row.id });
-    createFormApi.setValues({
-      studentId: detail.studentId,
-      mentalStatus: detail.mentalStatus,
-      riskLevel: detail.riskLevel,
-      evaluateTime: detail.evaluateTime,
-      status: detail.status,     // 补充状态赋值
-      remark: detail.remark,
-    });
-    createDrawerApi.open();
-  } catch (error) {
-    console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败');
-  }
+  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
 // 预约
@@ -311,7 +315,7 @@ async function handleConsult(row) {
     return;
   }
   try {
-    const { value: consultTime } = await ElMessageBox.prompt('请选择咨询预约时间', '预约', {
+    const {value: consultTime} = await ElMessageBox.prompt('请选择咨询预约时间', '预约', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       inputType: 'datetime-local',
@@ -319,21 +323,27 @@ async function handleConsult(row) {
     });
     if (consultTime) {
       const timestamp = new Date(consultTime).getTime();
-      const loading = ElLoading.service({ text: '预约中...' });
+      const loading = ElLoading.service({text: '预约中...'});
       try {
-        const res = await consultMentalMgmt({ id: row.id, consultTime: timestamp });
+        const res = await consultMentalMgmt({id: row.id, consultTime: timestamp});
         if (res && res !== false) {
           ElMessage.success('预约成功');
           handleRefresh();
-        } else { ElMessage.error('预约失败'); }
-      } finally { loading.close(); }
+        } else {
+          ElMessage.error('预约失败');
+        }
+      } finally {
+        loading.close();
+      }
     }
-  } catch {}
+  } catch {
+  }
 }
 
 // 跟进
 const currentInterveneRow = ref(null);
-const interveneForm = reactive({ interveneTime: '', interveneContent: '' });
+const interveneForm = reactive({interveneTime: '', interveneContent: ''});
+
 function handleOpenIntervene(row) {
   if (row.status !== '咨询中') {
     ElMessage.warning('只有咨询中状态的档案可以进行干预跟进');
@@ -344,12 +354,13 @@ function handleOpenIntervene(row) {
   interveneForm.interveneContent = '';
   interveneDrawerApi.open();
 }
+
 async function handleSubmitIntervene() {
   if (!interveneForm.interveneContent) {
     ElMessage.warning('请填写干预内容');
     return;
   }
-  const loading = ElLoading.service({ text: '提交中...' });
+  const loading = ElLoading.service({text: '提交中...'});
   try {
     const res = await interveneMentalMgmt({
       id: currentInterveneRow.value.id,
@@ -360,8 +371,12 @@ async function handleSubmitIntervene() {
       ElMessage.success('干预跟进成功');
       interveneDrawerApi.close();
       handleRefresh();
-    } else { ElMessage.error('操作失败'); }
-  } finally { loading.close(); }
+    } else {
+      ElMessage.error('操作失败');
+    }
+  } finally {
+    loading.close();
+  }
 }
 
 // ========== 更新状态（使用 el-dialog 下拉选择） ==========
@@ -382,7 +397,7 @@ async function confirmUpdateStatus() {
     ElMessage.warning('请完整填写心理状态和风险等级');
     return;
   }
-  const loading = ElLoading.service({ text: '更新中...' });
+  const loading = ElLoading.service({text: '更新中...'});
   try {
     const res = await updateStatusMentalMgmt({
       id: currentUpdateRow.value.id,
@@ -404,17 +419,17 @@ async function confirmUpdateStatus() {
 // 建档/编辑表单
 const [CreateForm, createFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: isEditMode.value ? '更新中...' : '建档中...' });
+    const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '建档中...'});
     try {
       let res;
       if (isEditMode.value) {
         // 编辑时传递 status（表单中已包含）
-        res = await updateMentalMgmt({ ...values, id: currentEditId.value });
+        res = await updateMentalMgmt({...values, id: currentEditId.value});
       } else {
         // 新增时确保 status 字段存在（默认待评估）
-        const submitData = { ...values, status: values.status || '待评估' };
+        const submitData = {...values, status: values.status || '待评估'};
         res = await createMentalMgmt(submitData);
       }
       if (res && res !== false) {
@@ -424,16 +439,53 @@ const [CreateForm, createFormApi] = useVbenForm({
       } else {
         ElMessage.error(isEditMode.value ? '更新失败' : '建档失败');
       }
-    } finally { loading.close(); }
+    } finally {
+      loading.close();
+    }
   },
   layout: 'horizontal',
   schema: useCreateFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '保存' },
+  submitButtonOptions: {content: '保存'},
+});
+
+// 修复的核心：在抽屉打开时重置表单并加载编辑数据
+const [CreateDrawer, createDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => createDrawerApi.close(),
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      // 每次打开前先重置表单（清空值 + 清除校验错误）
+      await createFormApi.resetForm();
+      // 如果是编辑模式，则填充数据
+      if (isEditMode.value && currentEditId.value) {
+        try {
+          const detail = await getMentalMgmtDetail({id: currentEditId.value});
+          await createFormApi.setValues({
+            studentId: detail.studentId,
+            mentalStatus: detail.mentalStatus,
+            riskLevel: detail.riskLevel,
+            evaluateTime: detail.evaluateTime,
+            status: detail.status,
+            remark: detail.remark,
+          });
+        } catch (error) {
+          console.error('加载详情失败', error);
+          ElMessage.error('加载详情失败，请检查网络或联系管理员');
+          createDrawerApi.close(); // 加载失败则关闭抽屉
+        }
+      } else {
+        // 新增模式：设置默认状态为“待评估”
+        await createFormApi.setValues({status: '待评估'});
+      }
+    }
+  },
 });
 
 // 查看详情
 const mentalDetailDrawerRef = ref(null);
+
 function handleOpenDetail(row) {
   dataObj.detailObj = row;
   mentalDetailDrawerRef.value.open();
@@ -442,16 +494,19 @@ function handleOpenDetail(row) {
 // 筛选表单
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
-    searchParams.value = { ...values };
+    searchParams.value = {...values};
     drawerApi.close();
     gridApi.reload();
   },
   layout: 'horizontal',
-  schema: useFormSchema().map(v => { delete v.rules; return v; }),
+  schema: useFormSchema().map(v => {
+    delete v.rules;
+    return v;
+  }),
   showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
+  submitButtonOptions: {content: '查询'},
 });
 
 // 表格
@@ -459,13 +514,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
+    proxyConfig: {ajax: {query: getTableData}},
+    rowConfig: {keyField: 'id', isHover: true},
     pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
+    toolbarConfig: {refresh: true, search: true},
     showOverflow: true,
   },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
   showSearchForm: false,
 });
 
@@ -473,7 +528,7 @@ watch(activeName, (newVal) => {
   tagFilters.value = {};
   gridColumns.value = getColumnsByStatus(newVal);
   if (gridApi && gridApi.xGrid) gridApi.xGrid.refreshColumn();
-  else gridApi.setGridOptions?.({ columns: gridColumns.value });
+  else gridApi.setGridOptions?.({columns: gridColumns.value});
   gridApi.reload();
 });
 
@@ -481,9 +536,11 @@ const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
 const showChart = ref(true);
-const toggleChart = () => { showChart.value = !showChart.value; };
+const toggleChart = () => {
+  showChart.value = !showChart.value;
+};
 
-defineExpose({ handleFilterTagClick, clearFilters });
+defineExpose({handleFilterTagClick, clearFilters});
 
 onMounted(async () => {
   await loadStudentOptions();
@@ -492,21 +549,25 @@ onMounted(async () => {
 
 <template>
   <div class="park-lot-table-new">
-    <MentalDetailDrawer ref="mentalDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh" />
+    <MentalDetailDrawer ref="mentalDetailDrawerRef" :detail-obj="dataObj.detailObj"
+                        @refresh="handleRefresh"/>
     <Drawer title="搜索">
-      <QueryForm />
+      <QueryForm/>
     </Drawer>
     <CreateDrawer :title="isEditMode ? '编辑心理档案' : '建档'">
-      <CreateForm />
+      <CreateForm/>
     </CreateDrawer>
     <InterveneDrawer title="干预跟进">
       <div style="padding: 20px;">
         <el-form :model="interveneForm" label-width="100px">
           <el-form-item label="干预时间" required>
-            <el-date-picker v-model="interveneForm.interveneTime" type="datetime" placeholder="请选择干预时间" value-format="YYYY-MM-DD HH:mm:ss" style="width: 100%;" />
+            <el-date-picker v-model="interveneForm.interveneTime" type="datetime"
+                            placeholder="请选择干预时间" value-format="YYYY-MM-DD HH:mm:ss"
+                            style="width: 100%;"/>
           </el-form-item>
           <el-form-item label="干预内容" required>
-            <el-input v-model="interveneForm.interveneContent" type="textarea" :rows="4" placeholder="请输入干预内容" />
+            <el-input v-model="interveneForm.interveneContent" type="textarea" :rows="4"
+                      placeholder="请输入干预内容"/>
           </el-form-item>
         </el-form>
         <div style="text-align: right; margin-top: 20px;">
@@ -530,36 +591,59 @@ onMounted(async () => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="建档" icon-name="Plus" @click="handleCreate" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
-          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart" @click="toggleChart" />
+          <IconButton content="建档" icon-name="Plus" @click="handleCreate"/>
+          <IconButton content="导出" icon-name="download" @click="handleExport"/>
+          <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
+          <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'"
+                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
+          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
+                      @click="toggleChart"/>
         </div>
       </template>
 
       <template #studentName="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{ row.studentName }}</el-text>
+        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
+          {{ row.studentName }}
+        </el-text>
       </template>
       <template #mentalStatus="{ row }">
-        <el-tag :type="getMentalStatusType(row.mentalStatus)" @click="handleFilterTagClick('mentalStatus', row.mentalStatus)" style="cursor: pointer;">{{ row.mentalStatus }}</el-tag>
+        <el-tag :type="getMentalStatusType(row.mentalStatus)"
+                @click="handleFilterTagClick('mentalStatus', row.mentalStatus)"
+                style="cursor: pointer;">{{ row.mentalStatus }}
+        </el-tag>
       </template>
       <template #riskLevel="{ row }">
-        <el-tag :type="getRiskLevelType(row.riskLevel)" @click="handleFilterTagClick('riskLevel', row.riskLevel)" style="cursor: pointer;">{{ row.riskLevel }}</el-tag>
+        <el-tag :type="getRiskLevelType(row.riskLevel)"
+                @click="handleFilterTagClick('riskLevel', row.riskLevel)" style="cursor: pointer;">
+          {{ row.riskLevel }}
+        </el-tag>
       </template>
-      <template #evaluateTime="{ row }"><el-text>{{ formatTimestamp(row.evaluateTime) }}</el-text></template>
-      <template #consultTime="{ row }"><el-text>{{ formatTimestamp(row.consultTime) }}</el-text></template>
-      <template #interveneTime="{ row }"><el-text>{{ formatTimestamp(row.interveneTime) }}</el-text></template>
+      <template #evaluateTime="{ row }">
+        <el-text>{{ formatTimestamp(row.evaluateTime) }}</el-text>
+      </template>
+      <template #consultTime="{ row }">
+        <el-text>{{ formatTimestamp(row.consultTime) }}</el-text>
+      </template>
+      <template #interveneTime="{ row }">
+        <el-text>{{ formatTimestamp(row.interveneTime) }}</el-text>
+      </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)" @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">{{ row.status }}</el-tag>
+        <el-tag :type="getStatusType(row.status)"
+                @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">
+          {{ row.status }}
+        </el-tag>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer;">{{ row.creator || '-' }}</el-text>
+        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
+                 style="cursor: pointer;">{{ row.creator || '-' }}
+        </el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}</el-text>
+        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
+                 type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}
+        </el-text>
       </template>
       <template #updateTime="{ row }">
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
@@ -567,11 +651,15 @@ onMounted(async () => {
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton v-if="row.status === '待评估'" content="预约" icon-name="Calendar" @click="handleConsult(row)" />
-          <IconButton v-if="row.status === '待评估'" content="编辑" icon-name="Edit" @click="handleEdit(row)" />
-          <IconButton v-if="row.status === '咨询中'" content="跟进" icon-name="EditPen" @click="handleOpenIntervene(row)" />
-          <IconButton v-if="row.status === '已干预'" content="更新状态" icon-name="Refresh" @click="openUpdateStatusDialog(row)" />
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
+          <IconButton v-if="row.status === '待评估'" content="预约" icon-name="Calendar"
+                      @click="handleConsult(row)"/>
+          <IconButton v-if="row.status === '待评估'" content="编辑" icon-name="Edit"
+                      @click="handleEdit(row)"/>
+          <IconButton v-if="row.status === '咨询中'" content="跟进" icon-name="EditPen"
+                      @click="handleOpenIntervene(row)"/>
+          <IconButton v-if="row.status === '已干预'" content="更新状态" icon-name="Refresh"
+                      @click="openUpdateStatusDialog(row)"/>
         </div>
       </template>
     </Grid>
@@ -581,16 +669,16 @@ onMounted(async () => {
       <el-form label-width="100px">
         <el-form-item label="心理状态">
           <el-select v-model="newMentalStatus" placeholder="请选择心理状态" style="width: 100%;">
-            <el-option label="正常" value="正常" />
-            <el-option label="关注" value="关注" />
-            <el-option label="高危" value="高危" />
+            <el-option label="正常" value="正常"/>
+            <el-option label="关注" value="关注"/>
+            <el-option label="高危" value="高危"/>
           </el-select>
         </el-form-item>
         <el-form-item label="风险等级">
           <el-select v-model="newRiskLevel" placeholder="请选择风险等级" style="width: 100%;">
-            <el-option label="低" value="低" />
-            <el-option label="中" value="中" />
-            <el-option label="高" value="高" />
+            <el-option label="低" value="低"/>
+            <el-option label="中" value="中"/>
+            <el-option label="高" value="高"/>
           </el-select>
         </el-form-item>
       </el-form>

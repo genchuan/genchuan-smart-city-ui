@@ -43,8 +43,16 @@ export function useFormSchema() {
     {
       fieldName: 'openTime',
       label: '开放时间',
-      component: 'Input',
-      componentProps: { placeholder: '如 00:00-24:00' },
+      component: 'TimePicker',
+      componentProps: {
+        isRange: true,               // 开启范围选择
+        rangeSeparator: '-',
+        startPlaceholder: '开始时间',
+        endPlaceholder: '结束时间',
+        format: 'HH:mm',
+        valueFormat: 'HH:mm',
+        placeholder: '请选择开放时间段',
+      },
       labelWidth: '120',
       rules: 'required',
     },
@@ -221,7 +229,6 @@ export function getColumnsByStatus(status) {
       { field: 'stationStatus', title: '场站状态', minWidth: 120, slots: { default: 'status' } },
       { field: 'stopReason', title: '停用原因', minWidth: 150 },
       { field: 'remark', title: '备注', minWidth: 180 },
-      // 新增创建时间和更新时间列，并添加时间戳格式化
       { field: 'createTime', title: '创建时间', minWidth: 180, formatter: ({ cellValue }) => formatTimestamp(cellValue) },
       { field: 'updateTime', title: '更新时间', minWidth: 180, formatter: ({ cellValue }) => formatTimestamp(cellValue) },
     ],

@@ -1,11 +1,11 @@
 <script setup>
-import { computed, reactive, ref, watch, nextTick } from 'vue';
-import { confirm, useVbenDrawer, useVbenModal } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {computed, reactive, ref, watch, nextTick} from 'vue';
+import {confirm, useVbenDrawer, useVbenModal} from '@vben/common-ui';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {downloadFileFromBlobPart} from '@vben/utils';
 import MoralActivityDetailDrawer from './components/moralActivityDetail.vue';
 import {
   getMoralActivityPage,
@@ -118,12 +118,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
   onCancel: () => drawerApi.close(),
-});
-
-const [CreateDrawer, createDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => createDrawerApi.close(),
 });
 
 // 将 JoinDrawer 改为 JoinModal (模态框)
@@ -300,32 +294,13 @@ async function handleBatchPublish() {
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  createFormApi.resetForm();
-  // 新增时设置默认状态为“未发布”
-  createFormApi.setValues({status: '未发布'});
-  createDrawerApi.open();
+  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
-async function handleEdit(row) {
+function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
-  try {
-    const detail = await getMoralActivityDetail({id: row.id});
-    createFormApi.setValues({
-      activityName: detail.activityName,
-      activityType: detail.activityType,
-      hostDept: detail.hostDept,   // 直接使用部门名称
-      startTime: detail.startTime,
-      endTime: detail.endTime,
-      status: detail.status,
-      content: detail.content,
-      remark: detail.remark,
-    });
-    createDrawerApi.open();
-  } catch (error) {
-    console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败');
-  }
+  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
 // 单行发布
@@ -407,6 +382,42 @@ const [CreateForm, createFormApi] = useVbenForm({
   schema: useCreateFormSchema(isEditMode.value),
   showCollapseButton: false,
   submitButtonOptions: {content: '保存'},
+});
+
+// 修复的核心：在抽屉打开时重置表单并加载编辑数据
+const [CreateDrawer, createDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => createDrawerApi.close(),
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      // 每次打开前先重置表单（清空值 + 清除校验错误）
+      await createFormApi.resetForm();
+      // 如果是编辑模式，则填充数据
+      if (isEditMode.value && currentEditId.value) {
+        try {
+          const detail = await getMoralActivityDetail({id: currentEditId.value});
+          await createFormApi.setValues({
+            activityName: detail.activityName,
+            activityType: detail.activityType,
+            hostDept: detail.hostDept,
+            startTime: detail.startTime,
+            endTime: detail.endTime,
+            status: detail.status,
+            content: detail.content,
+            remark: detail.remark,
+          });
+        } catch (error) {
+          console.error('加载详情失败', error);
+          ElMessage.error('加载详情失败，请检查网络或联系管理员');
+          createDrawerApi.close(); // 加载失败则关闭抽屉
+        }
+      } else {
+        // 新增模式：设置默认状态为“未发布”
+        await createFormApi.setValues({status: '未发布'});
+      }
+    }
+  },
 });
 
 // 动态注入部门选项（value 为部门名称）
