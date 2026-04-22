@@ -1,10 +1,10 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 
-import { useVbenDrawer } from '@vben/common-ui';
+import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
-import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
+import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
@@ -12,25 +12,30 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  createPrizeMgmt,
-  disablePrizeMgmt,
-  enablePrizeMgmt,
-  exportPrizeMgmt,
-  getPrizeMgmtDetail,
-  getPrizeMgmtPage,
-  updatePrizeMgmt,
-} from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/prizeMgmt';
+  createCouponMgmt,
+  exportCouponMgmt,
+  getCouponMgmtDetail,
+  getCouponMgmtPage,
+  resendCouponMgmt,
+  sendCouponMgmt,
+  updateCouponMgmt,
+  verifyCouponMgmt,
+} from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
 import ImportExcelDialog from '../components/ImportExcelDialog.vue';
-import StatusConfirmDialog from '../components/StatusConfirmDialog.vue';
+import ResendConfirmDialog from '../components/ResendConfirmDialog.vue';
+import SendCouponDialog from '../components/SendCouponDialog.vue';
+import VerifyConfirmDialog from '../components/VerifyConfirmDialog.vue';
 import {
   dataList,
   detailFields,
-  getPrizeStatusTagType,
-  getPrizeTypeTagType,
+  getCouponStatusLabel,
+  getCouponStatusTagType,
+  getCouponTypeLabel,
+  getCouponTypeTagType,
   textObj,
   useFormSchema,
   useGridColumns,
@@ -69,7 +74,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
 
 const detailDrawerRef = ref(null);
 const importExcelDialogRef = ref(null);
-const statusConfirmDialogRef = ref(null);
+const sendCouponDialogRef = ref(null);
+const verifyConfirmDialogRef = ref(null);
+const resendConfirmDialogRef = ref(null);
 const formData = ref();
 
 const [Form, formApi] = useVbenForm({
@@ -97,24 +104,23 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       return;
     }
     const values = await formApi.getValues();
-    const loadingInstance = ElLoading.service({
-      text: formData.value?.id ? '保存中...' : '创建中...',
-    });
     try {
       if (formData.value?.id) {
-        await updatePrizeMgmt({ ...values, id: formData.value.id });
-        ElMessage.success('编辑成功');
+        await updateCouponMgmt({ ...values, id: formData.value.id });
+        ElMessage.success($t('ui.actionMessage.editSuccess'));
       } else {
-        await createPrizeMgmt(values);
-        ElMessage.success('创建成功');
+        await createCouponMgmt(values);
+        ElMessage.success($t('ui.actionMessage.addSuccess'));
       }
-      handleRefresh();
       formDrawerApi.close();
+      handleRefresh();
     } catch (error) {
       console.error(error);
-      ElMessage.error(formData.value?.id ? '编辑失败' : '创建失败');
-    } finally {
-      loadingInstance.close();
+      ElMessage.error(
+        formData.value?.id
+          ? $t('ui.actionMessage.editFailed')
+          : $t('ui.actionMessage.addFailed'),
+      );
     }
   },
   async onOpenChange(isOpen) {
@@ -140,31 +146,35 @@ function handleRefresh() {
 /** 导出表格 */
 async function handleExport() {
   try {
-    const data = await exportPrizeMgmt();
-    downloadFileFromBlobPart({ fileName: '奖品数据.xlsx', source: data });
+    const response = await exportCouponMgmt();
+    // 处理文件下载
+    const blob = new Blob([response], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = textObj.excelAllName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
     ElMessage.success('导出成功');
   } catch (error) {
-    ElMessage.error('导出失败');
     console.error(error);
+    ElMessage.error('导出失败');
   }
 }
 
 /** 创建 */
-async function handleCreate() {
-  // 设置表单schema（新增时使用初始库存标签）
-  await formApi.setState({ schema: useFormSchema(false) });
+function handleCreate() {
   formDrawerApi
     .setData({
       title: textObj.addText,
-      status: '1', // 默认启用
     })
     .open();
 }
 
 /** 编辑 */
-async function handleEdit(row) {
-  // 设置表单schema（编辑时使用当前库存标签）
-  await formApi.setState({ schema: useFormSchema(true) });
+function handleEdit(row) {
   formDrawerApi
     .setData({
       title: textObj.editText,
@@ -180,17 +190,58 @@ function handleImport() {
   }
 }
 
-/** 打开启用确认弹窗 */
-function handleEnableConfirm(row) {
-  if (statusConfirmDialogRef.value) {
-    statusConfirmDialogRef.value.open(row, 'enable');
+/** 打开发放弹窗 */
+function handleSend(row) {
+  if (sendCouponDialogRef.value) {
+    sendCouponDialogRef.value.open(row);
   }
 }
 
-/** 打开禁用确认弹窗 */
-function handleDisableConfirm(row) {
-  if (statusConfirmDialogRef.value) {
-    statusConfirmDialogRef.value.open(row, 'disable');
+/** 打开核销确认弹窗 */
+function handleVerify(row) {
+  if (verifyConfirmDialogRef.value) {
+    verifyConfirmDialogRef.value.open(row);
+  }
+}
+
+/** 打开重新发放确认弹窗 */
+function handleResend(row) {
+  if (resendConfirmDialogRef.value) {
+    resendConfirmDialogRef.value.open(row);
+  }
+}
+
+/** 删除 */
+async function handleDelete(row) {
+  await confirm($t('确定删除这条数据吗？'));
+  const loadingInstance = ElLoading.service({
+    text: $t('ui.actionMessage.deleting', [row.name]),
+  });
+  try {
+    // 删除接口未在文档中定义，使用模拟删除
+    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
+    handleRefresh();
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+/** 批量删除 */
+async function handleDeleteBatch() {
+  await confirm($t('确定删除这些数据吗？'));
+  const loadingInstance = ElLoading.service({
+    text: $t('ui.actionMessage.deletingBatch'),
+  });
+  try {
+    dataObj.apilist = dataObj.apilist.filter(
+      (v) => !checkedIds.value.includes(v.id),
+    );
+    checkedIds.value = [];
+    ElMessage.success($t('删除成功'));
+    handleRefresh();
+  } finally {
+    loadingInstance.close();
   }
 }
 
@@ -209,11 +260,10 @@ const dataObj = reactive({
   total: 0,
   currentPage: 1,
   pageSize: 10,
+  apilist: [],
   list: [],
   searchParams: {},
-  // 静态数据备份
-  staticData: dataList(),
-  useStaticData: false,
+  useStaticData: true,
 });
 
 const changeTotalShow = () => {
@@ -223,23 +273,27 @@ const changeTotalShow = () => {
 // 表格数据获取
 const getTableData = async (pageObj) => {
   const page = pageObj.page;
-
   dataObj.currentPage = page.currentPage;
   dataObj.pageSize = page.pageSize;
 
   try {
-    // 构建查询参数
     const queryParams = {
       pageNo: page.currentPage,
       pageSize: page.pageSize,
       name: dataObj.searchParams.name,
       type: filterType.value || dataObj.searchParams.type,
-      currentStock: dataObj.searchParams.currentStock,
       status: filterStatus.value || dataObj.searchParams.status,
-      activityId: dataObj.searchParams.activityId,
-      distributeCount: dataObj.searchParams.distributeCount,
-      warningThreshold: dataObj.searchParams.warningThreshold,
+      amount: dataObj.searchParams.amount,
+      useCondition: dataObj.searchParams.useCondition,
+      senderName: dataObj.searchParams.senderName,
+      receiverName: dataObj.searchParams.receiverName,
     };
+
+    // 处理有效期范围
+    if (dataObj.searchParams.validTime && dataObj.searchParams.validTime.length === 2) {
+      queryParams.validTimeStart = dataObj.searchParams.validTime[0];
+      queryParams.validTimeEnd = dataObj.searchParams.validTime[1];
+    }
 
     // 处理创建时间范围
     if (dataObj.searchParams.createTime && dataObj.searchParams.createTime.length === 2) {
@@ -247,33 +301,72 @@ const getTableData = async (pageObj) => {
       queryParams.createTimeEnd = dataObj.searchParams.createTime[1];
     }
 
-    const response = await getPrizeMgmtPage(queryParams);
+    // 处理发放时间范围
+    if (dataObj.searchParams.sendTime && dataObj.searchParams.sendTime.length === 2) {
+      queryParams.sendTimeStart = dataObj.searchParams.sendTime[0];
+      queryParams.sendTimeEnd = dataObj.searchParams.sendTime[1];
+    }
+
+    // 处理核销时间范围
+    if (dataObj.searchParams.verifyTime && dataObj.searchParams.verifyTime.length === 2) {
+      queryParams.verifyTimeStart = dataObj.searchParams.verifyTime[0];
+      queryParams.verifyTimeEnd = dataObj.searchParams.verifyTime[1];
+    }
+
+    const response = await getCouponMgmtPage(queryParams);
     if (response && response.list && response.list.length > 0) {
       dataObj.useStaticData = false;
       dataObj.total = response.total;
-      dataObj.list = response.list.map((item) => ({
+      dataObj.apilist = response.list.map((item) => ({
         ...item,
-        id: String(item.id),
         createTimeStr: formatDate(item.createTime),
         updateTimeStr: formatDate(item.updateTime),
-        syncTimeStr: formatDate(item.syncTime),
+        sendTimeStr: formatDate(item.sendTime),
+        verifyTimeStr: formatDate(item.verifyTime),
+        validTimeStr: formatDate(item.validTime),
       }));
     } else {
       // 接口返回为空，使用静态数据
-      throw new Error('接口返回数据为空');
+      console.log('分页接口返回为空，使用静态数据');
+      const staticData = dataList();
+      dataObj.apilist = staticData;
+      dataObj.total = staticData.length;
     }
   } catch (error) {
-    console.error('获取奖品数据失败，使用静态数据:', error);
-    dataObj.useStaticData = true;
-    // 使用静态数据
-    const staticData = dataObj.staticData;
+    // 接口调用失败，错误信息打印到控制台，使用静态数据
+    console.error('分页接口调用失败，使用静态数据:', error);
+    const staticData = dataList();
+    dataObj.apilist = staticData;
     dataObj.total = staticData.length;
-    dataObj.list = staticData.slice(
-      (page.currentPage - 1) * page.pageSize,
-      page.currentPage * page.pageSize,
-    );
   }
 
+  // 根据searchParams和快捷筛选变量筛选数据
+  const filteredList = dataObj.apilist.filter((v) => {
+    let searchMatch = true;
+    Object.keys(dataObj.searchParams).forEach((key) => {
+      const value = dataObj.searchParams[key];
+      if (value && !['validTime', 'createTime', 'sendTime', 'verifyTime'].includes(key)) {
+        searchMatch =
+          typeof value === 'string'
+            ? searchMatch && v[key]?.toString().includes(value)
+            : searchMatch && v[key] === value;
+      }
+    });
+    // 应用快捷筛选变量
+    if (filterType.value && v.type !== filterType.value) {
+      searchMatch = false;
+    }
+    if (filterStatus.value && v.status !== filterStatus.value) {
+      searchMatch = false;
+    }
+    return searchMatch;
+  });
+
+  dataObj.total = filteredList.length;
+  dataObj.list = filteredList.slice(
+    (page.currentPage - 1) * page.pageSize,
+    page.currentPage * page.pageSize,
+  );
   return dataObj;
 };
 
@@ -288,10 +381,7 @@ const [QueryForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema().map((v) => {
-    delete v.rules;
-    return { ...v };
-  }),
+  schema: useSearchFormSchema(),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -340,25 +430,22 @@ const handleOpenDetail = (row) => {
   }
 };
 
-const handleSerachShow = () => {
-  drawerApi.open();
-};
-
-const handleFullShow = () => {
-  screenfull.toggle();
+// 处理券名称点击 - 打开详情
+const handleNameClick = (row) => {
+  handleOpenDetail(row);
 };
 
 // ==================== 快捷筛选处理 ====================
 
-// 处理奖品类型点击
-const handleTypeClick = (type) => {
-  filterType.value = filterType.value === type ? '' : type;
+// 处理券类型点击
+const handleTypeClick = (row) => {
+  filterType.value = filterType.value === row.type ? '' : row.type;
   gridApi.query();
 };
 
-// 处理奖品状态点击
-const handleStatusClick = (status) => {
-  filterStatus.value = filterStatus.value === status ? '' : status;
+// 处理券状态点击
+const handleStatusClick = (row) => {
+  filterStatus.value = filterStatus.value === row.status ? '' : row.status;
   gridApi.query();
 };
 
@@ -373,34 +460,31 @@ const handleCancelStatusFilter = () => {
   gridApi.query();
 };
 
-/** 获取奖品类型标签文本 */
-function getTypeLabel(type) {
-  const dict = getDictObj(DICT_TYPE.PRIZE_MGMT_TYPE, String(type));
-  return dict ? dict.label : type;
-}
+// 处理发放人点击 - 跳转操作人员详情
+const handleSenderClick = (row) => {
+  ElMessage.info(`查看操作人员详情: ${row.senderName}`);
+};
 
-/** 获取奖品状态标签文本 */
-function getStatusLabel(status) {
-  const dict = getDictObj(DICT_TYPE.PRIZE_MGMT_STATUS, String(status));
-  return dict ? dict.label : status;
-}
+// 处理领取人点击 - 跳转用户详情
+const handleReceiverClick = (row) => {
+  ElMessage.info(`查看用户详情: ${row.receiverName}`);
+};
 
 /** 处理统计组件的钻取筛选 */
 function handleStatsFilter(filterSource, filterValue) {
   if (filterSource === 'type') {
-    // 点击柱状图 - 按奖品类型筛选
-    filterType.value = filterValue;
+    // 点击柱状图 - 按券类型筛选
+    dataObj.searchParams = { ...dataObj.searchParams, type: filterValue };
     gridApi.query();
+  } else if (filterSource === 'date') {
+    // 点击折线图 - 按日期筛选
+    ElMessage.info(`筛选日期: ${filterValue}`);
   } else if (filterSource === 'card') {
     // 点击卡片
-    if (filterValue === 'distribute') {
-      // 点击累计发放量 - 可以按发放量排序或筛选
+    if (filterValue === 'send') {
       ElMessage.info('按发放量筛选');
-    } else {
-      // 点击总奖品数 - 显示全部
-      filterType.value = '';
-      filterStatus.value = '';
-      gridApi.query();
+    } else if (filterValue === 'verify') {
+      ElMessage.info('按核销率筛选');
     }
   }
 }
@@ -409,6 +493,14 @@ function handleStatsFilter(filterSource, filterValue) {
 defineExpose({
   handleStatsFilter,
 });
+
+const handleSerachShow = () => {
+  drawerApi.open();
+};
+
+const handleFullShow = () => {
+  screenfull.toggle();
+};
 </script>
 
 <template>
@@ -419,7 +511,7 @@ defineExpose({
     <!--   详情抽屉-->
     <DetailDrawer
       ref="detailDrawerRef"
-      :title="`${dataObj.detailObj.name || '奖品'}详情`"
+      :title="`${dataObj.detailObj.name || '优惠券'}详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
@@ -428,15 +520,24 @@ defineExpose({
       ref="importExcelDialogRef"
       @success="handleRefresh"
     />
-    <!-- 状态确认弹窗 -->
-    <StatusConfirmDialog
-      ref="statusConfirmDialogRef"
+    <!-- 发放弹窗 -->
+    <SendCouponDialog
+      ref="sendCouponDialogRef"
+      @success="handleRefresh"
+    />
+    <!-- 核销确认弹窗 -->
+    <VerifyConfirmDialog
+      ref="verifyConfirmDialogRef"
+      @success="handleRefresh"
+    />
+    <!-- 重新发放确认弹窗 -->
+    <ResendConfirmDialog
+      ref="resendConfirmDialogRef"
       @success="handleRefresh"
     />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
-
     <Grid>
       <!-- 快捷筛选标签 -->
       <template #table-title>
@@ -444,7 +545,7 @@ defineExpose({
           class="tabel-tabs"
           style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
         >
-          <!-- 奖品类型筛选标签 -->
+          <!-- 券类型筛选标签 -->
           <ElTag
             v-if="filterType"
             type="primary"
@@ -452,9 +553,9 @@ defineExpose({
             @close="handleCancelTypeFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
-            奖品类型：{{ getTypeLabel(filterType) }}
+            券类型：{{ getCouponTypeLabel(filterType) }}
           </ElTag>
-          <!-- 奖品状态筛选标签 -->
+          <!-- 券状态筛选标签 -->
           <ElTag
             v-if="filterStatus"
             type="success"
@@ -462,7 +563,7 @@ defineExpose({
             @close="handleCancelStatusFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
-            奖品状态：{{ getStatusLabel(filterStatus) }}
+            券状态：{{ getCouponStatusLabel(filterStatus) }}
           </ElTag>
         </div>
       </template>
@@ -480,14 +581,14 @@ defineExpose({
             @click="handleExport"
           />
           <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
-          />
-          <IconButton
             :content="props.showStats ? '隐藏统计' : '显示统计'"
             :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
             @click="props.toggleStats"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
           />
           <IconButton
             content="全屏"
@@ -496,62 +597,61 @@ defineExpose({
           />
         </div>
       </template>
-      <!-- 奖品名称插槽 - 点击跳转奖品详情弹窗 -->
+      <!-- 券名称插槽 - 点击跳转优惠券详情弹窗 -->
       <template #name="{ row }">
         <el-text
-          @click="handleOpenDetail(row)"
+          @click="handleNameClick(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer"
+          style="cursor: pointer;"
         >
           {{ row.name }}
         </el-text>
       </template>
-      <!-- 奖品类型插槽 - 点击筛选同类型奖品 -->
+      <!-- 券类型插槽 - 点击筛选同类型 -->
       <template #type="{ row }">
-        <ElTag
-          @click="handleTypeClick(row.type)"
-          :type="getPrizeTypeTagType(row.type)"
-          style="cursor: pointer"
+        <el-tag
+          :type="getCouponTypeTagType(row.type)"
+          style="cursor: pointer;"
+          @click="handleTypeClick(row)"
         >
-          {{ getTypeLabel(row.type) }}
-        </ElTag>
+          {{ row.typeName }}
+        </el-tag>
       </template>
-      <!-- 奖品状态插槽 - 点击筛选同状态奖品 -->
+      <!-- 券状态插槽 - 点击筛选同状态 -->
       <template #status="{ row }">
-        <ElTag
-          @click="handleStatusClick(row.status)"
-          :type="getPrizeStatusTagType(row.status)"
-          style="cursor: pointer"
+        <el-tag
+          :type="getCouponStatusTagType(row.status)"
+          style="cursor: pointer;"
+          @click="handleStatusClick(row)"
         >
-          {{ getStatusLabel(row.status) }}
-        </ElTag>
+          {{ row.statusName }}
+        </el-tag>
       </template>
-      <!-- 绑定活动插槽 - 点击跳转关联活动详情弹窗 -->
-      <template #activityName="{ row }">
+      <!-- 发放人插槽 - 点击跳转操作人员详情 -->
+      <template #senderName="{ row }">
         <el-text
-          v-if="row.activityName"
-          @click="ElMessage.info(`打开关联活动详情弹窗: ${row.activityName}`)"
-          class="common-align"
+          v-if="row.senderName"
+          @click="handleSenderClick(row)"
           type="primary"
-          style="cursor: pointer"
+          style="cursor: pointer;"
         >
-          {{ row.activityName }}
+          {{ row.senderName }}
         </el-text>
         <span v-else>-</span>
       </template>
-      <!-- 发放量插槽 - 点击跳转奖品发放明细弹窗 -->
-      <template #distributeCount="{ row }">
+      <!-- 领取人插槽 - 点击跳转用户详情 -->
+      <template #receiverName="{ row }">
         <el-text
-          @click="ElMessage.info(`打开奖品发放明细弹窗: ${row.distributeCount}次`)"
-          class="common-align"
+          v-if="row.receiverName"
+          @click="handleReceiverClick(row)"
           type="primary"
-          style="cursor: pointer"
+          style="cursor: pointer;"
         >
-          {{ row.distributeCount }}
+          {{ row.receiverName }}
         </el-text>
+        <span v-else>-</span>
       </template>
-      <!-- 行操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
@@ -560,22 +660,28 @@ defineExpose({
             @click="handleOpenDetail(row)"
           />
           <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
             v-if="row.status === '0'"
-            content="启用"
-            icon-name="CircleCheck"
-            @click="handleEnableConfirm(row)"
+            content="发放"
+            icon-name="Promotion"
+            @click="handleSend(row)"
           />
           <IconButton
             v-if="row.status === '1'"
-            content="禁用"
-            icon-name="CircleClose"
-            color="#F56C6C"
-            @click="handleDisableConfirm(row)"
+            content="核销"
+            icon-name="Check"
+            @click="handleVerify(row)"
+          />
+          <IconButton
+            v-if="row.status === '2' || row.status === '3'"
+            content="重新发放"
+            icon-name="RefreshRight"
+            @click="handleResend(row)"
+          />
+          <IconButton
+            v-if="row.status === '0'"
+            content="编辑"
+            icon-name="edit"
+            @click="handleEdit(row)"
           />
         </div>
       </template>
@@ -587,11 +693,7 @@ defineExpose({
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span>
-            本页统计：奖品数量: {{ dataObj.list.length }}; 启用:
-            {{ dataObj.list.filter((v) => v.status === '1').length }}; 禁用:
-            {{ dataObj.list.filter((v) => v.status === '0').length }}
-          </span>
+          <span> 本页统计：优惠券数量: {{ dataObj.list.length }} </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span> 全部统计：{{ textObj.total }} </span>
@@ -600,6 +702,3 @@ defineExpose({
     </Grid>
   </div>
 </template>
-
-<style scoped>
-</style>
