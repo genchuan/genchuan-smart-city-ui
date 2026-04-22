@@ -10,13 +10,15 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { 
-  getAmountCheckPage,
-  exportAmountCheckExcel,
-  confirmAmountCheck,
-  calculateAmountCheck,
-} from '#/api/genchuan/industry/chargePark/orderTrade/refundMgmt/index.js';
-import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
+import {  
+  getAgentPayCodePage,
+  exportAgentPayCode,
+  deleteAgentPayCode,
+  createAgentPayCode,
+  updateAgentPayCode,
+  refreshAgentPayCode,
+  regenerateAgentPayCode,
+} from '#/api/genchuan/industry/chargePark/orderTrade/agentPay/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
 import { downloadLocalTemplate } from '#/utils/genchuan/down';
@@ -108,8 +110,8 @@ function handleRefresh() {
 
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
-  const data = await exportAmountCheckExcel();
-  downloadFileFromBlobPart({ fileName: '金额核算报表.xls', source: data });
+  const data = await exportAgentPayCode();
+  downloadFileFromBlobPart({ fileName: '代付码报表.xls', source: data });
 }
 
 // ====================== 图片转PDF（终极零乱码） ======================
@@ -137,12 +139,15 @@ function handleEdit(row) {
 }
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.name]),
+    text: $t('ui.actionMessage.deleting', [row.code]),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
+    await deleteAgentPayCode({ id: row.id });
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.code]));
     handleRefresh();
+  } catch (error) {
+    console.error('删除失败:', error);
+    ElMessage.error('删除失败');
   } finally {
     loadingInstance.close();
   }
@@ -154,12 +159,15 @@ async function handleDeleteBatch() {
     text: $t('ui.actionMessage.deletingBatch'),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
+    for (const id of checkedIds.value) {
+      await deleteAgentPayCode({ id });
+    }
     checkedIds.value = [];
     ElMessage.success($t('删除成功'));
     handleRefresh();
+  } catch (error) {
+    console.error('批量删除失败:', error);
+    ElMessage.error('批量删除失败');
   } finally {
     loadingInstance.close();
   }
@@ -195,19 +203,21 @@ const getTableData = async (pageObj) => {
 
   try {
     dataObj.loading = true;
-    const res = await getAmountCheckPage(params);
+    const res = await getAgentPayCodePage(params);
     dataObj.total = res.total;
     dataObj.list = res.list.map((v) => {
       return {
         ...v,
+        useTime: formatTimestamp(v.useTime),
+        expireTime: formatTimestamp(v.expireTime),
         createTime: formatTimestamp(v.createTime),
         updateTime: formatTimestamp(v.updateTime),
       };
     });
     return dataObj;
   } catch (error) {
-    console.error('获取金额核算数据失败:', error);
-    ElMessage.error('获取金额核算数据失败');
+    console.error('获取代付码数据失败:', error);
+    ElMessage.error('获取代付码数据失败');
     return dataObj;
   } finally {
     dataObj.loading = false;
@@ -313,11 +323,28 @@ const openEn = async () => {
   enDetailObjRef.value?.open();
 };
 
-// 金额核算状态映射
+// 重新生成代付码
+async function handleRegenerate(row) {
+  const loadingInstance = ElLoading.service({
+    text: '正在重新生成...',
+  });
+  try {
+    await regenerateAgentPayCode({ id: row.id });
+    ElMessage.success('重新生成成功');
+    handleRefresh();
+  } catch (error) {
+    console.error('重新生成失败:', error);
+    ElMessage.error('重新生成失败');
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+// 代付码状态映射
 const statusMap = {
-  pending: { label: '待核算', type: 'warning' },
-  checked: { label: '已核算', type: 'info' },
-  confirmed: { label: '已确认', type: 'success' },
+  unused: { label: '未使用', type: 'primary' },
+  used: { label: '已使用', type: 'success' },
+  expired: { label: '已过期', type: 'danger' },
 };
 
 // 获取状态标签
@@ -328,22 +355,6 @@ const getStatusLabel = (status) => {
 // 获取状态类型
 const getStatusType = (status) => {
   return statusMap[status]?.type || 'default';
-};
-
-// 核算结果映射
-const checkResultMap = {
-  pass: { label: '通过', type: 'success' },
-  fail: { label: '不通过', type: 'danger' },
-};
-
-// 获取核算结果标签
-const getCheckResultLabel = (checkResult) => {
-  return checkResultMap[checkResult]?.label || checkResult;
-};
-
-// 获取核算结果类型
-const getCheckResultType = (checkResult) => {
-  return checkResultMap[checkResult]?.type || 'default';
 };
 
 // 确认弹窗
@@ -606,12 +617,6 @@ const alarmColumns = [
             @click="handleExport"
           />
           <IconButton
-            content="批量核算"
-            icon-name="check"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleBatchCalculate"
-          />
-          <IconButton
             content="搜索"
             icon-name="search"
             @click="handleSerachShow"
@@ -646,14 +651,7 @@ const alarmColumns = [
         >
           {{ row.checkNo }}
         </el-text>
-      </template>
-      <template #payMethod="{ row }">
-        <span v-if="row.payMethod === 'wechat'">微信</span>
-        <span v-else-if="row.payMethod === 'alipay'">支付宝</span>
-        <span v-else-if="row.payMethod === 'bank'">银行卡</span>
-        <span v-else-if="row.payMethod === 'cash'">现金</span>
-        <span v-else>{{ row.payMethod }}</span>
-      </template>
+      </template> 
       <template #halfyearWarnCount="{ row }">
         <el-text @click="handleTotal(row)" class="common-align" type="primary">
           {{ row.halfyearWarnCount }}
@@ -678,10 +676,10 @@ const alarmColumns = [
             @click="handleOpenDetail(row)"
           />
           <IconButton
-            content="确认"
-            v-if="row.status === 'checked'"
-            icon-name="Check"
-            @click="handleConfirm(row)"
+            content="重新生成"
+            v-if="row.status === 'used' || row.status === 'expired'"
+            icon-name="Refresh"
+            @click="handleRegenerate(row)"
           />
         </div>
       </template>
