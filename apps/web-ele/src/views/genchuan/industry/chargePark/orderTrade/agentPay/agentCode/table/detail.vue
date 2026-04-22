@@ -2,7 +2,7 @@
 import { computed, defineProps, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 核算记录详情
+// 代付码详情
 const props = defineProps({
   detailObj: {
     type: Object,
@@ -19,15 +19,15 @@ const { detailObj, title } = toRefs(props);
 
 // 标题
 const drawerTitle = computed(() => {
-  const checkNo = detailObj.value?.checkNo || '核算记录';
-  return title.value || `${checkNo} 详情`;
+  const code = detailObj.value?.code || '代付码';
+  return title.value || `${code} 详情`;
 });
 
-// 金额核算状态映射
+// 代付码状态映射
 const statusMap = {
-  pending: { label: '待核算', type: 'warning' },
-  checked: { label: '已核算', type: 'info' },
-  confirmed: { label: '已确认', type: 'success' },
+  unused: { label: '未使用', type: 'primary' },
+  used: { label: '已使用', type: 'success' },
+  expired: { label: '已过期', type: 'danger' },
 };
 
 // 获取状态标签
@@ -38,22 +38,6 @@ const getStatusLabel = (status) => {
 // 获取状态类型
 const getStatusType = (status) => {
   return statusMap[status]?.type || 'default';
-};
-
-// 核算结果映射
-const checkResultMap = {
-  pass: { label: '通过', type: 'success' },
-  fail: { label: '不通过', type: 'danger' },
-};
-
-// 获取核算结果标签
-const getCheckResultLabel = (checkResult) => {
-  return checkResultMap[checkResult]?.label || checkResult;
-};
-
-// 获取核算结果类型
-const getCheckResultType = (checkResult) => {
-  return checkResultMap[checkResult]?.type || 'default';
 };
 
 // 抽屉
@@ -84,32 +68,33 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">核算编号:</div>
-        <div class="detail-row-right">{{ detailObj.checkNo || '-' }}</div>
+        <div class="detail-row-left">代付码:</div>
+        <div class="detail-row-right">{{ detailObj.code || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">关联订单ID:</div>
-        <div class="detail-row-right">{{ detailObj.orderId || '-' }}</div>
+        <div class="detail-row-left">商户ID:</div>
+        <div class="detail-row-right">{{ detailObj.merchantId || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">申请金额:</div>
-        <div class="detail-row-right">{{ detailObj.applyAmount || '0.00' }} 元</div>
+        <div class="detail-row-left">商户名称:</div>
+        <div class="detail-row-right">{{ detailObj.merchantName || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">核算结果:</div>
-        <div class="detail-row-right">
-          <el-tag :type="getCheckResultType(detailObj.checkResult)">
-            {{ getCheckResultLabel(detailObj.checkResult) }}
-          </el-tag>
-        </div>
+        <div class="detail-row-left">关联规则ID:</div>
+        <div class="detail-row-right">{{ detailObj.ruleId || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">核算明细:</div>
-        <div class="detail-row-right">{{ detailObj.checkDetail || '-' }}</div>
+        <div class="detail-row-left">规则名称:</div>
+        <div class="detail-row-right">{{ detailObj.ruleName || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">过期时间:</div>
+        <div class="detail-row-right">{{ detailObj.expireTime || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
@@ -122,8 +107,38 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">操作人ID:</div>
-        <div class="detail-row-right">{{ detailObj.operatorId || '-' }}</div>
+        <div class="detail-row-left">用户ID:</div>
+        <div class="detail-row-right">{{ detailObj.userId || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">用户名称:</div>
+        <div class="detail-row-right">{{ detailObj.userName || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">用户手机号:</div>
+        <div class="detail-row-right">{{ detailObj.userTel || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">使用时间:</div>
+        <div class="detail-row-right">{{ detailObj.useTime || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">关联订单ID:</div>
+        <div class="detail-row-right">{{ detailObj.orderId || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">关联订单编号:</div>
+        <div class="detail-row-right">{{ detailObj.orderNo || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">备注:</div>
+        <div class="detail-row-right">{{ detailObj.remark || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
@@ -139,11 +154,6 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">创建者:</div>
         <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">更新者:</div>
-        <div class="detail-row-right">{{ detailObj.updater || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
