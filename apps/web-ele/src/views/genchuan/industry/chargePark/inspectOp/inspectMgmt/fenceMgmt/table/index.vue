@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage, ElMessageBox, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
@@ -264,13 +265,13 @@ async function handleOpenDetail(row) {
   detailDrawerRef.value?.open();
 }
 
-// function handleEnable(row) {
-//   statusConfirmDialogRef.value?.open('enable', row);
-// }
+function handleEnable(row) {
+  statusConfirmDialogRef.value?.open('enable', row);
+}
 
-// function handleDisable(row) {
-//   statusConfirmDialogRef.value?.open('disable', row);
-// }
+function handleDisable(row) {
+  statusConfirmDialogRef.value?.open('disable', row);
+}
 
 function handleEdit(row) {
   formDrawerRef.value?.open(row);
@@ -500,7 +501,7 @@ onMounted(() => {
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <!-- <IconButton
+          <IconButton
             v-if="isFenceStatusLabel(row.status, '未生效')"
             content="生效"
             icon-name="CircleCheckFilled"
@@ -511,7 +512,7 @@ onMounted(() => {
             content="禁用"
             icon-name="VideoPause"
             @click="handleDisable(row)"
-          /> -->
+          />
           <IconButton
             content="编辑"
             icon-name="Edit"

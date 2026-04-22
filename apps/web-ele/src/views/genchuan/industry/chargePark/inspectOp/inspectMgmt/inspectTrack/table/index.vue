@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import {
   ElDropdown,
@@ -245,13 +245,13 @@ async function handleExport(format = 'excel') {
   }
 }
 
-// function handleBatchReplay() {
-//   if (checkedRows.value.length !== 1) {
-//     ElMessage.warning('请选择一条巡检轨迹进行回放');
-//     return;
-//   }
-//   replayDialogRef.value?.open(checkedRows.value[0]);
-// }
+function handleBatchReplay() {
+  if (checkedRows.value.length !== 1) {
+    ElMessage.warning('请选择一条巡检轨迹进行回放');
+    return;
+  }
+  replayDialogRef.value?.open(checkedRows.value[0]);
+}
 
 function onSubmit(values) {
   dataObj.searchParams = { ...values };
@@ -271,13 +271,13 @@ async function handleOpenDetail(row) {
   detailDrawerRef.value?.open();
 }
 
-// function handleReplay(row) {
-//   replayDialogRef.value?.open(row);
-// }
+function handleReplay(row) {
+  replayDialogRef.value?.open(row);
+}
 
-// function handleCheck(row) {
-//   checkDrawerRef.value?.open(row);
-// }
+function handleCheck(row) {
+  checkDrawerRef.value?.open(row);
+}
 
 function handleExceptionClick(row) {
   if (!row.exceptionCount) return;
@@ -429,12 +429,12 @@ onMounted(() => {
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <!-- <IconButton
+          <IconButton
             content="回放"
             icon-name="VideoPlay"
             :disabled="isEmpty(checkedIds)"
             @click="handleBatchReplay"
-          /> -->
+          />
           <ElDropdown @command="handleExport">
             <IconButton content="导出" icon-name="download" />
             <template #dropdown>
@@ -519,7 +519,7 @@ onMounted(() => {
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <!-- <IconButton
+          <IconButton
             v-if="isTrackStatusLabel(row.status, '正常')"
             content="回放"
             icon-name="VideoPlay"
@@ -530,7 +530,7 @@ onMounted(() => {
             content="核查"
             icon-name="CircleCheck"
             @click="handleCheck(row)"
-          /> -->
+          />
           <IconButton
             content="查看"
             icon-name="View"
