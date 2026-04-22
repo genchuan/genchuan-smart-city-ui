@@ -250,13 +250,13 @@ function handleEdit(row) {
   formDrawerRef.value?.open(row);
 }
 
-// function handleEnable(row) {
-//   statusConfirmDialogRef.value?.open('enable', row);
-// }
+function handleEnable(row) {
+  statusConfirmDialogRef.value?.open('enable', row);
+}
 
-// function handleDisable(row) {
-//   statusConfirmDialogRef.value?.open('disable', row);
-// }
+function handleDisable(row) {
+  statusConfirmDialogRef.value?.open('disable', row);
+}
 
 function handleDeviceClick(row) {
   dataObj.deviceDetailObj = getDeviceDetail(row);
@@ -484,7 +484,7 @@ watch(
             icon-name="Edit"
             @click="handleEdit(row)"
           />
-          <!-- <IconButton
+          <IconButton
             v-if="isUserStatusLabel(row.status, '正常')"
             content="禁用"
             icon-name="VideoPause"
@@ -495,7 +495,7 @@ watch(
             content="启用"
             icon-name="CircleCheckFilled"
             @click="handleEnable(row)"
-          /> -->
+          />
           <IconButton
             content="查看"
             icon-name="View"
