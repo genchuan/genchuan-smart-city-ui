@@ -3,57 +3,69 @@ import { onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
-import { getAmountCheckChart } from '#/api/genchuan/industry/chargePark/orderTrade/refundMgmt/index.js';
+import { getAgentPayRuleChart } from '#/api/genchuan/industry/chargePark/orderTrade/agentPay/index.js';
 import Card from '#/components/stats/card.vue';
 
 const state = reactive({
   cardList: [
-    { title: '核算总数', value: 0, color: '#FF6B6B' },
-    { title: '核算准确率', value: 0, color: '#4ECDC4', suffix: '%' },
-    { title: '待核算数', value: 0, color: '#13ce66' },
+    { title: '已生效数量', value: 0, color: '#FF6B6B' },
+    { title: '今日订单数', value: 0, color: '#4ECDC4' },
+    { title: '规则总数', value: 0, color: '#13ce66' },
   ],
-  trendData: [],
+  useDistData: [],
 });
 
 const lineChartRef = ref(null);
 let lineChartInstance = null;
 
-// 获取金额核算图表数据
+// 获取代付规则图表数据
 const fetchOrderChartData = async () => {
   try {
-    const res = await getAmountCheckChart();
-    state.cardList[0].value = res.totalCheckCount;
-    state.cardList[1].value = res.checkAccuracy;
-    // 待核算数通过趋势数据计算
-    state.cardList[2].value = res.trendData?.reduce((sum, item) => sum + item.count, 0) || 0;
-    // 如果trendData为空，使用假数据
-    state.trendData =
-      res.trendData && res.trendData.length > 0
-        ? res.trendData
+    const res = await getAgentPayRuleChart();
+    state.cardList[0].value = res.enabledCount || 0;
+    state.cardList[1].value = res.todayOrderCount || 0;
+    // 规则总数通过使用分布数据计算
+    state.cardList[2].value = res.useDistData?.reduce((sum, item) => sum + item.count, 0) || 0;
+    // 如果useDistData为空，使用假数据
+    state.useDistData =
+      res.useDistData && res.useDistData.length > 0
+        ? res.useDistData
         : [
-            { date: '2025-04-01', count: 5 },
-            { date: '2025-04-02', count: 8 },
-            { date: '2025-04-03', count: 3 },
-            { date: '2025-04-04', count: 12 },
-            { date: '2025-04-05', count: 6 },
+            { agent_type: 'merchant', count: 4 },
+            { agent_type: 'enterprise', count: 1 },
+            { agent_type: 'public', count: 1 },
           ];
-    // 更新折线图
-    updateLineChart();
+    // 更新图表
+    updateChart();
   } catch (error) {
-    console.error('获取金额核算图表数据失败:', error);
+    console.error('获取代付规则图表数据失败:', error);
     // 接口调用失败时使用假数据
     state.cardList[0].value = 3;
-    state.cardList[1].value = 66.7;
-    state.cardList[2].value = 1;
-    state.trendData = [
-      { date: '2026-04-21', count: 1 },
+    state.cardList[1].value = 1;
+    state.cardList[2].value = 6;
+    state.useDistData = [
+      { agent_type: 'merchant', count: 4 },
+      { agent_type: 'enterprise', count: 1 },
+      { agent_type: 'public', count: 1 },
     ];
-    // 更新折线图
-    updateLineChart();
+    // 更新图表
+    updateChart();
   }
 };
 
-// 初始化折线图
+// 代付类型映射
+const agentTypeMap = {
+  merchant: '商户代付',
+  enterprise: '企业代付',
+  public: '公益代付',
+};
+
+// 获取代付类型标签
+const getAgentTypeLabel = (agentType) => {
+  return agentTypeMap[agentType] || agentType;
+};
+
+// 初始化图表
 const initLineChart = () => {
   if (!lineChartRef.value) return;
 
@@ -61,7 +73,7 @@ const initLineChart = () => {
 
   const option = {
     title: {
-      text: '金额核算趋势',
+      text: '代付类型分布',
       left: 'center',
       textStyle: {
         color: '#6E7E91',
@@ -84,8 +96,7 @@ const initLineChart = () => {
     },
     xAxis: {
       type: 'category',
-      boundaryGap: false,
-      data: state.trendData.map((item) => item.date),
+      data: state.useDistData.map((item) => getAgentTypeLabel(item.agent_type)),
       axisLabel: { color: '#6E7E91', fontSize: 12 },
       axisLine: { lineStyle: { color: '#E5E7EB' } },
     },
@@ -97,19 +108,16 @@ const initLineChart = () => {
     },
     series: [
       {
-        name: '订单量',
-        type: 'line',
-        data: state.trendData.map((item) => item.count),
-        smooth: true,
-        symbol: 'circle',
-        symbolSize: 6,
-        lineStyle: { color: '#4A90E2', width: 2 },
-        itemStyle: { color: '#4A90E2' },
-        areaStyle: {
+        name: '数量',
+        type: 'bar',
+        data: state.useDistData.map((item) => item.count),
+        barWidth: '50%',
+        itemStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(74, 144, 226, 0.3)' },
-            { offset: 1, color: 'rgba(74, 144, 226, 0.05)' },
+            { offset: 0, color: '#4A90E2' },
+            { offset: 1, color: '#1E5AA8' },
           ]),
+          borderRadius: [4, 4, 0, 0],
         },
       },
     ],
@@ -118,17 +126,17 @@ const initLineChart = () => {
   lineChartInstance.setOption(option);
 };
 
-// 更新折线图
-const updateLineChart = () => {
+// 更新图表
+const updateChart = () => {
   if (!lineChartInstance) return;
 
   lineChartInstance.setOption({
     xAxis: {
-      data: state.trendData.map((item) => item.date),
+      data: state.useDistData.map((item) => getAgentTypeLabel(item.agent_type)),
     },
     series: [
       {
-        data: state.trendData.map((item) => item.count),
+        data: state.useDistData.map((item) => item.count),
       },
     ],
   });

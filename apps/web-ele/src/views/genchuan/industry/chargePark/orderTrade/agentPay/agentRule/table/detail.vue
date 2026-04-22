@@ -2,7 +2,7 @@
 import { computed, defineProps, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 核算记录详情
+// 代付规则详情
 const props = defineProps({
   detailObj: {
     type: Object,
@@ -19,41 +19,37 @@ const { detailObj, title } = toRefs(props);
 
 // 标题
 const drawerTitle = computed(() => {
-  const checkNo = detailObj.value?.checkNo || '核算记录';
-  return title.value || `${checkNo} 详情`;
+  const ruleName = detailObj.value?.name || '代付规则';
+  return title.value || `${ruleName} 详情`;
 });
 
-// 金额核算状态映射
+// 状态映射
 const statusMap = {
-  pending: { label: '待核算', type: 'warning' },
-  checked: { label: '已核算', type: 'info' },
-  confirmed: { label: '已确认', type: 'success' },
+  disabled: { label: '未生效', type: 'danger' },
+  enabled: { label: '已生效', type: 'success' },
+  pending: { label: '待生效', type: 'warning' },
 };
 
 // 获取状态标签
 const getStatusLabel = (status) => {
-  return statusMap[status]?.label || status;
+  return statusMap[String(status)]?.label || status;
 };
 
 // 获取状态类型
 const getStatusType = (status) => {
-  return statusMap[status]?.type || 'default';
+  return statusMap[String(status)]?.type || 'default';
 };
 
-// 核算结果映射
-const checkResultMap = {
-  pass: { label: '通过', type: 'success' },
-  fail: { label: '不通过', type: 'danger' },
+// 代理商类型映射
+const agentTypeMap = {
+  merchant: { label: '商户代付', type: 'info' },
+  enterprise: { label: '企业代付', type: 'success' },
+  public: { label: '公益代付', type: 'primary' },
 };
 
-// 获取核算结果标签
-const getCheckResultLabel = (checkResult) => {
-  return checkResultMap[checkResult]?.label || checkResult;
-};
-
-// 获取核算结果类型
-const getCheckResultType = (checkResult) => {
-  return checkResultMap[checkResult]?.type || 'default';
+// 获取代理商类型标签
+const getAgentTypeLabel = (agentType) => {
+  return agentTypeMap[agentType]?.label || agentType;
 };
 
 // 抽屉
@@ -84,32 +80,42 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">核算编号:</div>
-        <div class="detail-row-right">{{ detailObj.checkNo || '-' }}</div>
+        <div class="detail-row-left">规则名称:</div>
+        <div class="detail-row-right">{{ detailObj.name || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">关联订单ID:</div>
-        <div class="detail-row-right">{{ detailObj.orderId || '-' }}</div>
+        <div class="detail-row-left">商户ID:</div>
+        <div class="detail-row-right">{{ detailObj.merchantId || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">申请金额:</div>
-        <div class="detail-row-right">{{ detailObj.applyAmount || '0.00' }} 元</div>
+        <div class="detail-row-left">商户名称:</div>
+        <div class="detail-row-right">{{ detailObj.merchantName || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">核算结果:</div>
+        <div class="detail-row-left">代付类型:</div>
         <div class="detail-row-right">
-          <el-tag :type="getCheckResultType(detailObj.checkResult)">
-            {{ getCheckResultLabel(detailObj.checkResult) }}
+          <el-tag :type="agentTypeMap[detailObj.agentType]?.type || 'default'">
+            {{ getAgentTypeLabel(detailObj.agentType) }}
           </el-tag>
         </div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">核算明细:</div>
-        <div class="detail-row-right">{{ detailObj.checkDetail || '-' }}</div>
+        <div class="detail-row-left">单次限额:</div>
+        <div class="detail-row-right">{{ detailObj.singleLimit || '0.00' }} 元</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">日累计限额:</div>
+        <div class="detail-row-right">{{ detailObj.dayLimit || '0.00' }} 元</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">适用场景:</div>
+        <div class="detail-row-right">{{ detailObj.scene || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
@@ -122,8 +128,33 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">操作人ID:</div>
-        <div class="detail-row-right">{{ detailObj.operatorId || '-' }}</div>
+        <div class="detail-row-left">使用次数:</div>
+        <div class="detail-row-right">{{ detailObj.useCount || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">审核人ID:</div>
+        <div class="detail-row-right">{{ detailObj.auditorId || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">审核人名称:</div>
+        <div class="detail-row-right">{{ detailObj.auditorName || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">审核时间:</div>
+        <div class="detail-row-right">{{ detailObj.auditTime || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">最后更新时间:</div>
+        <div class="detail-row-right">{{ detailObj.lastUpdateTime || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">备注:</div>
+        <div class="detail-row-right">{{ detailObj.remark || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
@@ -139,11 +170,6 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">创建者:</div>
         <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">更新者:</div>
-        <div class="detail-row-right">{{ detailObj.updater || '-' }}</div>
       </div>
 
       <div class="detail-card-row">

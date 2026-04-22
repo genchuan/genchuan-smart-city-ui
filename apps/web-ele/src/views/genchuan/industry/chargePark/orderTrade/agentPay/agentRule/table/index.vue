@@ -11,11 +11,16 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { 
-  getAmountCheckPage,
-  exportAmountCheckExcel,
-  confirmAmountCheck,
-  calculateAmountCheck,
-} from '#/api/genchuan/industry/chargePark/orderTrade/refundMgmt/index.js';
+  getAgentPayRulePage,
+  exportAgentPayRule,
+  importAgentPayRuleTemplate,
+  importAgentPayRule,
+  createAgentPayRule,
+  updateAgentPayRule,
+  deleteAgentPayRule,
+  enableAgentPayRule,
+  disableAgentPayRule,
+} from '#/api/genchuan/industry/chargePark/orderTrade/agentPay/index.js';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
@@ -75,19 +80,27 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onCancel() {
     formDrawerApi.close();
   },
-  onConfirm() {
+  async onConfirm() {
     const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === '新增') {
-      dataObj.apilist.push(obj);
-    } else {
-      dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
-        }
-      });
+    const loadingInstance = ElLoading.service({
+      text: formDrawerApi.sharedData.payload.title === '新增' ? '正在创建...' : '正在更新...',
+    });
+    try {
+      if (formDrawerApi.sharedData.payload.title === '新增') {
+        await createAgentPayRule(obj);
+        ElMessage.success('创建成功');
+      } else {
+        await updateAgentPayRule(obj);
+        ElMessage.success('更新成功');
+      }
+      handleRefresh();
+      formDrawerApi.close();
+    } catch (error) {
+      console.error('操作失败:', error);
+      ElMessage.error(formDrawerApi.sharedData.payload.title === '新增' ? '创建失败' : '更新失败');
+    } finally {
+      loadingInstance.close();
     }
-    handleRefresh();
-    formDrawerApi.close();
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
@@ -108,13 +121,65 @@ function handleRefresh() {
 
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
-  const data = await exportAmountCheckExcel();
-  downloadFileFromBlobPart({ fileName: '金额核算报表.xls', source: data });
+  const data = await exportAgentPayRule(dataObj.searchObj);
+  downloadFileFromBlobPart({ fileName: '代理商支付规则报表.xls', source: data });
 }
 
 // ====================== 图片转PDF（终极零乱码） ======================
 async function handlePDF() {
   downloadLocalTemplate('/static/test.pdf', '报表.pdf');
+}
+
+// ====================== 下载导入模板 ======================
+async function handleDownloadTemplate() {
+  const data = await importAgentPayRuleTemplate();
+  downloadFileFromBlobPart({ fileName: '代付规则导入模板.xls', source: data });
+}
+
+// ====================== 导入弹窗相关 ======================
+const importDialogVisible = ref(false);
+const importForm = reactive({
+  file: null,
+  updateSupport: false,
+});
+
+// 打开导入弹窗
+function handleOpenImportDialog() {
+  importForm.file = null;
+  importForm.updateSupport = false;
+  importDialogVisible.value = true;
+}
+
+// 文件选择处理
+function handleFileChange(event) { 
+  const file = event.raw;
+  if (file) {
+    importForm.file = file;
+  }
+}
+
+// 提交导入
+async function handleImportSubmit() {
+  if (!importForm.file) {
+    ElMessage.error('请选择要导入的Excel文件');
+    return;
+  }
+
+  const loadingInstance = ElLoading.service({
+    text: '正在导入...',
+  });
+
+  try {
+    const res = await importAgentPayRule(importForm.file, importForm.updateSupport);
+    ElMessage.success(`导入成功`);
+    importDialogVisible.value = false;
+    handleRefresh();
+  } catch (error) {
+    console.error('导入失败:', error);
+    ElMessage.error('导入失败');
+  } finally {
+    loadingInstance.close();
+  }
 }
 
 /** 创建角色 */
@@ -136,30 +201,71 @@ function handleEdit(row) {
     .open();
 }
 async function handleDelete(row) {
+  await confirm($t('确定删除该代理商支付规则吗？'));
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting', [row.name]),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
+    await deleteAgentPayRule({ id: row.id });
     ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
     handleRefresh();
+  } catch (error) {
+    console.error('删除失败:', error);
+    ElMessage.error('删除失败');
   } finally {
     loadingInstance.close();
   }
 }
 
 async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
+  await confirm($t('确定删除这些代理商支付规则吗？'));
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deletingBatch'),
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
+    await deleteAgentPayRule({ ids: checkedIds.value });
     checkedIds.value = [];
     ElMessage.success($t('删除成功'));
     handleRefresh();
+  } catch (error) {
+    console.error('批量删除失败:', error);
+    ElMessage.error('批量删除失败');
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+/** 启用代理商支付规则 */
+async function handleEnable(row) {
+  await confirm($t('确定启用该代理商支付规则吗？'));
+  const loadingInstance = ElLoading.service({
+    text: '正在启用...',
+  });
+  try {
+    await enableAgentPayRule({ id: row.id });
+    ElMessage.success('启用成功');
+    handleRefresh();
+  } catch (error) {
+    console.error('启用失败:', error);
+    ElMessage.error('启用失败');
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+/** 禁用代理商支付规则 */
+async function handleDisable(row) {
+  await confirm($t('确定禁用该代理商支付规则吗？'));
+  const loadingInstance = ElLoading.service({
+    text: '正在禁用...',
+  });
+  try {
+    await disableAgentPayRule({ id: row.id });
+    ElMessage.success('禁用成功');
+    handleRefresh();
+  } catch (error) {
+    console.error('禁用失败:', error);
+    ElMessage.error('禁用失败');
   } finally {
     loadingInstance.close();
   }
@@ -195,19 +301,21 @@ const getTableData = async (pageObj) => {
 
   try {
     dataObj.loading = true;
-    const res = await getAmountCheckPage(params);
+    const res = await getAgentPayRulePage(params);
     dataObj.total = res.total;
     dataObj.list = res.list.map((v) => {
       return {
         ...v,
+        auditTime: formatTimestamp(v.auditTime),
+        lastUpdateTime: formatTimestamp(v.lastUpdateTime),
         createTime: formatTimestamp(v.createTime),
         updateTime: formatTimestamp(v.updateTime),
       };
     });
     return dataObj;
   } catch (error) {
-    console.error('获取金额核算数据失败:', error);
-    ElMessage.error('获取金额核算数据失败');
+    console.error('获取代理商支付规则数据失败:', error);
+    ElMessage.error('获取代理商支付规则数据失败');
     return dataObj;
   } finally {
     dataObj.loading = false;
@@ -313,37 +421,38 @@ const openEn = async () => {
   enDetailObjRef.value?.open();
 };
 
-// 金额核算状态映射
+// 状态映射
 const statusMap = {
-  pending: { label: '待核算', type: 'warning' },
-  checked: { label: '已核算', type: 'info' },
-  confirmed: { label: '已确认', type: 'success' },
+  'disabled': { label: '已禁用', type: 'danger' },
+  'enabled': { label: '已生效', type: 'success' },
+  'pending': { label: '待生效', type: 'warning' }, 
 };
 
 // 获取状态标签
 const getStatusLabel = (status) => {
-  return statusMap[status]?.label || status;
+  return statusMap[String(status)]?.label || status;
 };
 
 // 获取状态类型
 const getStatusType = (status) => {
-  return statusMap[status]?.type || 'default';
+  return statusMap[String(status)]?.type || 'default';
 };
 
-// 核算结果映射
-const checkResultMap = {
-  pass: { label: '通过', type: 'success' },
-  fail: { label: '不通过', type: 'danger' },
+// 代理商类型映射
+const agentTypeMap = {
+  merchant: { label: '商户代付', type: 'info' },
+  enterprise: { label: '企业代付', type: 'success' },
+  public: { label: '公益代付', type: 'primary' },
 };
 
-// 获取核算结果标签
-const getCheckResultLabel = (checkResult) => {
-  return checkResultMap[checkResult]?.label || checkResult;
+// 获取代理商类型标签
+const getAgentTypeLabel = (agentType) => {
+  return agentTypeMap[agentType]?.label || agentType;
 };
 
-// 获取核算结果类型
-const getCheckResultType = (checkResult) => {
-  return checkResultMap[checkResult]?.type || 'default';
+// 获取代理商类型
+const getAgentTypeType = (agentType) => {
+  return agentTypeMap[agentType]?.type || 'default';
 };
 
 // 确认弹窗
@@ -597,20 +706,70 @@ const alarmColumns = [
       </template>
     </ElDialog>
 
+    <!-- 导入弹窗 -->
+    <ElDialog
+      v-model="importDialogVisible"
+      title="导入代付规则"
+      width="500px"
+      append-to-body
+    >
+      <el-form :model="importForm" label-width="100px">
+        <el-form-item label="Excel文件">
+          <el-upload
+            class="upload-demo"
+            :auto-upload="false"
+            :show-file-list="false"
+            :before-upload="() => false"
+            @change="handleFileChange"
+          >
+            <el-button size="small" type="primary">点击选择文件</el-button>
+          </el-upload>
+          <div v-if="importForm.file" class="mt-2 text-sm text-gray-500">
+            {{ importForm.file.name }}
+          </div>
+        </el-form-item>
+        <el-form-item label="是否支持更新">
+          <el-switch
+            v-model="importForm.updateSupport"
+            active-text="是"
+            inactive-text="否"
+          />
+          <span class="ml-2 text-sm text-gray-400">开启后，已存在的数据将被更新</span>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="importDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleImportSubmit">
+            导入
+          </el-button>
+        </div>
+      </template>
+    </ElDialog>
+
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
+          <IconButton
+            content="新增"
+            icon-name="Plus"
+            @click="handleCreate"
+          />
           <IconButton
             content="导出EXCEL"
             icon-name="download"
             @click="handleExport"
           />
           <IconButton
-            content="批量核算"
-            icon-name="check"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleBatchCalculate"
+            content="下载导入模板"
+            icon-name="download"
+            @click="handleDownloadTemplate"
           />
+          <IconButton
+            content="导入"
+            icon-name="upload"
+            @click="handleOpenImportDialog"
+          /> 
           <IconButton
             content="搜索"
             icon-name="search"
@@ -628,9 +787,9 @@ const alarmColumns = [
           />
         </div>
       </template>
-      <template #checkResult="{ row }">
-        <el-tag :type="getCheckResultType(row.checkResult)">
-          {{ getCheckResultLabel(row.checkResult) }}
+      <template #agentType="{ row }">
+        <el-tag :type="getAgentTypeType(row.agentType)">
+          {{ getAgentTypeLabel(row.agentType) }}
         </el-tag>
       </template>
       <template #status="{ row }">
@@ -646,19 +805,7 @@ const alarmColumns = [
         >
           {{ row.checkNo }}
         </el-text>
-      </template>
-      <template #payMethod="{ row }">
-        <span v-if="row.payMethod === 'wechat'">微信</span>
-        <span v-else-if="row.payMethod === 'alipay'">支付宝</span>
-        <span v-else-if="row.payMethod === 'bank'">银行卡</span>
-        <span v-else-if="row.payMethod === 'cash'">现金</span>
-        <span v-else>{{ row.payMethod }}</span>
-      </template>
-      <template #halfyearWarnCount="{ row }">
-        <el-text @click="handleTotal(row)" class="common-align" type="primary">
-          {{ row.halfyearWarnCount }}
-        </el-text>
-      </template>
+      </template> 
 
       <template #orderId="{ row }">
         <el-text
@@ -678,10 +825,26 @@ const alarmColumns = [
             @click="handleOpenDetail(row)"
           />
           <IconButton
-            content="确认"
-            v-if="row.status === 'checked'"
+            content="编辑"
+            icon-name="Edit"
+            @click="handleEdit(row)"
+          />
+          <IconButton
+            content="启用"
+            v-if="String(row.status) === 'disabled' || String(row.status) === 'pending'"
             icon-name="Check"
-            @click="handleConfirm(row)"
+            @click="handleEnable(row)"
+          />
+          <IconButton
+            content="禁用"
+            v-if="String(row.status) === 'enabled' || String(row.status) === 'pending'"
+            icon-name="Close"
+            @click="handleDisable(row)"
+          />
+          <IconButton
+            content="删除"
+            icon-name="Delete"
+            @click="handleDelete(row)"
           />
         </div>
       </template>
