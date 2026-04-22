@@ -116,12 +116,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel: () => drawerApi.close(),
 });
 
-const [CreateDrawer, createDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => createDrawerApi.close(),
-});
-
 const [ScoreDrawer, scoreDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
@@ -300,33 +294,17 @@ async function handleBatchAward() {
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  createFormApi.resetForm();
-  // 设置默认值：总分0，状态打分中
-  createFormApi.setValues({ totalScore: 0, status: '打分中' });
-  createDrawerApi.open();
+  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
-async function handleEdit(row) {
+function handleEdit(row) {
   if (row.status !== '打分中') {
     ElMessage.warning('只有打分中的记录可以编辑');
     return;
   }
   isEditMode.value = true;
   currentEditId.value = row.id;
-  try {
-    const detail = await getCompareMgmtDetail({id: row.id});
-    createFormApi.setValues({
-      className: detail.className,
-      cycle: detail.cycle,
-      totalScore: detail.totalScore !== undefined ? detail.totalScore : 0,
-      status: detail.status,
-      remark: detail.remark,
-    });
-    createDrawerApi.open();
-  } catch (error) {
-    console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败');
-  }
+  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
 // 单行打分
@@ -385,6 +363,39 @@ const [CreateForm, createFormApi] = useVbenForm({
   schema: isEditMode.value ? useEditFormSchema() : useCreateFormSchema(),
   showCollapseButton: false,
   submitButtonOptions: {content: '保存'},
+});
+
+// 修复的核心：在抽屉打开时重置表单并加载编辑数据
+const [CreateDrawer, createDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => createDrawerApi.close(),
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      // 每次打开前先重置表单（清空值 + 清除校验错误）
+      await createFormApi.resetForm();
+      // 如果是编辑模式，则填充数据
+      if (isEditMode.value && currentEditId.value) {
+        try {
+          const detail = await getCompareMgmtDetail({id: currentEditId.value});
+          await createFormApi.setValues({
+            className: detail.className,
+            cycle: detail.cycle,
+            totalScore: detail.totalScore !== undefined ? detail.totalScore : 0,
+            status: detail.status,
+            remark: detail.remark,
+          });
+        } catch (error) {
+          console.error('加载详情失败', error);
+          ElMessage.error('加载详情失败，请检查网络或联系管理员');
+          createDrawerApi.close(); // 加载失败则关闭抽屉
+        }
+      } else {
+        // 新增模式：设置默认值
+        await createFormApi.setValues({totalScore: 0, status: '打分中'});
+      }
+    }
+  },
 });
 
 // 打分表单

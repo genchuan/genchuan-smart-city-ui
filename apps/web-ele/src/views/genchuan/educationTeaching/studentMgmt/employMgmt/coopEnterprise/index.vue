@@ -1,11 +1,11 @@
 <script setup>
-import { computed, reactive, ref, watch, nextTick } from 'vue';
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {computed, reactive, ref, watch, nextTick} from 'vue';
+import {confirm, useVbenDrawer} from '@vben/common-ui';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {downloadFileFromBlobPart} from '@vben/utils';
 import EnterpriseDetailDrawer from './components/enterpriseDetail.vue';
 import {
   getMockList,
@@ -157,12 +157,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
   onCancel: () => drawerApi.close(),
-});
-
-const [CreateDrawer, createDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => createDrawerApi.close(),
 });
 
 const [MaintainDrawer, maintainDrawerApi] = useVbenDrawer({
@@ -332,32 +326,13 @@ async function handleBatchMaintain() {
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  createFormApi.resetForm();
-  // 设置默认状态为“合作中”
-  createFormApi.setValues({ status: '合作中' });
-  createDrawerApi.open();
+  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
-async function handleEdit(row) {
+function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
-  try {
-    const detail = await getCoopEnterpriseDetail({id: row.id});
-    createFormApi.setValues({
-      enterpriseName: detail.enterpriseName,
-      enterpriseType: detail.enterpriseType,
-      deptId: detail.deptId,
-      contactUser: detail.contactUser,
-      contactPhone: detail.contactPhone,
-      coopStartTime: detail.coopStartTime,
-      status: detail.status,     // 补充状态赋值
-      remark: detail.remark,
-    });
-    createDrawerApi.open();
-  } catch (error) {
-    console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败');
-  }
+  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
 // 单行维护
@@ -384,7 +359,7 @@ const [CreateForm, createFormApi] = useVbenForm({
         res = await updateCoopEnterprise({...values, id: currentEditId.value});
       } else {
         // 新增时确保 status 字段存在（表单中已有，但以防万一）
-        const submitData = { ...values, status: values.status || '合作中' };
+        const submitData = {...values, status: values.status || '合作中'};
         res = await createCoopEnterprise(submitData);
       }
       if (res && res !== false) {
@@ -402,6 +377,42 @@ const [CreateForm, createFormApi] = useVbenForm({
   schema: useCreateFormSchema(isEditMode.value),
   showCollapseButton: false,
   submitButtonOptions: {content: '保存'},
+});
+
+// 修复的核心：在抽屉打开时重置表单并加载编辑数据
+const [CreateDrawer, createDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => createDrawerApi.close(),
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      // 每次打开前先重置表单（清空值 + 清除校验错误）
+      await createFormApi.resetForm();
+      // 如果是编辑模式，则填充数据
+      if (isEditMode.value && currentEditId.value) {
+        try {
+          const detail = await getCoopEnterpriseDetail({id: currentEditId.value});
+          await createFormApi.setValues({
+            enterpriseName: detail.enterpriseName,
+            enterpriseType: detail.enterpriseType,
+            deptId: detail.deptId,
+            contactUser: detail.contactUser,
+            contactPhone: detail.contactPhone,
+            coopStartTime: detail.coopStartTime,
+            status: detail.status,
+            remark: detail.remark,
+          });
+        } catch (error) {
+          console.error('加载详情失败', error);
+          ElMessage.error('加载详情失败，请检查网络或联系管理员');
+          createDrawerApi.close(); // 加载失败则关闭抽屉
+        }
+      } else {
+        // 新增模式：设置默认状态为“合作中”
+        await createFormApi.setValues({status: '合作中'});
+      }
+    }
+  },
 });
 
 // 维护表单
@@ -578,7 +589,8 @@ defineExpose({handleFilterTagClick, clearFilters});
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton v-if="row.status === '合作中'" content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
+          <IconButton v-if="row.status === '合作中'" content="编辑" icon-name="Edit"
+                      @click="handleEdit(row)"/>
           <IconButton v-if="row.status === '合作中'" content="维护" icon-name="EditPen"
                       @click="handleMaintain(row)"/>
         </div>

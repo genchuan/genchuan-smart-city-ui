@@ -216,6 +216,12 @@ const [EditDrawer, editDrawerApi] = useVbenDrawer({
     const formValues = await editFormApi.getValues();
     const isAdd = !formData.value?.id;
     delete formValues.createTime;
+
+    // 转换开放时间：数组 -> 字符串（后端期望格式 "HH:MM-HH:MM"）
+    if (Array.isArray(formValues.openTime) && formValues.openTime.length === 2) {
+      formValues.openTime = formValues.openTime.join('-');
+    }
+
     const loading = ElLoading.service({ text: isAdd ? '新增中...' : '保存中...' });
     try {
       if (isAdd) {
@@ -237,15 +243,20 @@ const [EditDrawer, editDrawerApi] = useVbenDrawer({
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
+      await editFormApi.resetForm();
       formData.value = editDrawerApi.getData();
       if (formData.value?.id) {
         const editData = { ...formData.value };
         delete editData.createByName;
         delete editData.updateTime;
         delete editData.createTime;
+
+        // 转换开放时间：字符串 -> 数组（用于 TimePicker 范围选择）
+        if (editData.openTime && typeof editData.openTime === 'string' && editData.openTime.includes('-')) {
+          editData.openTime = editData.openTime.split('-');
+        }
+
         await editFormApi.setValues(editData);
-      } else {
-        await editFormApi.resetForm();
       }
     }
   },
@@ -568,7 +579,7 @@ function handleEdit(row) {
 }
 
 function handleSerachShow() {
-  searchFormApi.resetForm();
+  searchFormApi.setValues(dataObj.searchParams);
   searchDrawerApi.open();
 }
 

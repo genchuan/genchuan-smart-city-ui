@@ -2,7 +2,7 @@
 import { ref, onMounted, computed, reactive } from 'vue';
 import { ElMessage } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
-import Bar from '#/genchuan-components/stats/barClick.vue';
+import Bar from '#/genchuan-components/stats/bar.vue';
 import MapCommon from './MapCommon.vue';
 
 import { getChargingStationChartData } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingStation/data.js';
@@ -135,11 +135,6 @@ const handleCardClick = (cardInfo) => {
   emit('cardSelect', cardInfo.status);
 };
 
-// 柱状图点击（区域名称）
-const handleBarClick = (areaName) => {
-  emit('barSelect', areaName);
-};
-
 // 地图标注点点击（场站名称）
 const handleMarkerClick = (properties) => {
   if (properties && properties.stationName) {
@@ -170,7 +165,6 @@ onMounted(() => {
         :x-data="barState.xData"
         :series-data="barState.seriesData"
         :y-name="barState.yName"
-        @bar-click="handleBarClick"
       />
     </div>
 

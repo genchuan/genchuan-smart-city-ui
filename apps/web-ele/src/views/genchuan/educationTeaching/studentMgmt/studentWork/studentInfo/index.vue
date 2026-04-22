@@ -1,11 +1,11 @@
 <script setup>
-import {computed, reactive, ref, watch, nextTick} from 'vue';
-import {confirm, useVbenDrawer} from '@vben/common-ui';
-import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
+import { computed, reactive, ref, watch, nextTick } from 'vue';
+import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
-import {useVbenForm} from '#/adapter/form';
-import {useVbenVxeGrid} from '#/adapter/vxe-table';
-import {downloadFileFromBlobPart} from '@vben/utils';
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { downloadFileFromBlobPart } from '@vben/utils';
 import StudentDetailDrawer from './components/studentDetail.vue';
 import {
   dataList,
@@ -60,7 +60,7 @@ const getDateFromTimestamp = (timestamp) => {
   return `${year}-${month}-${day}`;
 };
 
-const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
+const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
 const emit = defineEmits(['arrow-change']);
 
 // ---------- 标签筛选 ----------
@@ -116,12 +116,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel: () => drawerApi.close(),
 });
 
-const [CreateDrawer, createDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => createDrawerApi.close(),
-});
-
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
@@ -137,7 +131,7 @@ const gridColumns = ref(getColumnsByStatus(activeName.value));
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({records}) {
+function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map(item => item.id);
   checkedRows.value = records;
 }
@@ -146,7 +140,7 @@ const searchParams = ref({});
 const isEditMode = ref(false);
 const currentEditId = ref(null);
 
-const getTableData = async ({page}) => {
+const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
     const params = {
@@ -244,10 +238,10 @@ function handleReset() {
 
 async function handleExport() {
   try {
-    const loading = ElLoading.service({text: '正在导出...'});
+    const loading = ElLoading.service({ text: '正在导出...' });
     try {
       const data = await exportStudentInfo(searchParams.value);
-      downloadFileFromBlobPart({fileName: '学生信息列表.xls', source: data});
+      downloadFileFromBlobPart({ fileName: '学生信息列表.xls', source: data });
       ElMessage.success('导出成功');
     } finally {
       loading.close();
@@ -269,9 +263,9 @@ async function handleBatchDelete() {
       cancelButtonText: '取消',
       type: 'warning',
     });
-    const loading = ElLoading.service({text: '删除中...'});
+    const loading = ElLoading.service({ text: '删除中...' });
     try {
-      const res = await deleteStudentInfoList({ids: checkedIds.value});
+      const res = await deleteStudentInfoList({ ids: checkedIds.value });
       if (res && res !== false) {
         ElMessage.success('批量删除成功');
         handleRefresh();
@@ -282,41 +276,20 @@ async function handleBatchDelete() {
       loading.close();
     }
   } catch {
+    // 取消操作
   }
 }
 
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  createFormApi.resetForm();
-  createDrawerApi.open();
+  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
-async function handleEdit(row) {
+function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
-  try {
-    const detail = await getStudentInfoDetail({id: row.id});
-    createFormApi.setValues({
-      studentNo: detail.studentNo,
-      name: detail.name,
-      idCard: detail.idCard,
-      grade: detail.grade,               // 新增年级赋值
-      educationLevel: detail.educationLevel,
-      studyForm: detail.studyForm,
-      major: detail.major,
-      className: detail.className,
-      studentType: detail.studentType,
-      status: detail.status,
-      phone: detail.phone,
-      parentPhone: detail.parentPhone,
-      remark: detail.remark,
-    });
-    createDrawerApi.open();
-  } catch (error) {
-    console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败，请检查网络或联系管理员');
-  }
+  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
 async function handleDelete(row) {
@@ -326,9 +299,9 @@ async function handleDelete(row) {
       cancelButtonText: '取消',
       type: 'warning',
     });
-    const loading = ElLoading.service({text: '删除中...'});
+    const loading = ElLoading.service({ text: '删除中...' });
     try {
-      const res = await deleteStudentInfo({id: row.id});
+      const res = await deleteStudentInfo({ id: row.id });
       if (res && res !== false) {
         ElMessage.success('删除成功');
         handleRefresh();
@@ -339,13 +312,14 @@ async function handleDelete(row) {
       loading.close();
     }
   } catch {
+    // 取消操作
   }
 }
 
 // 新增/编辑表单
 const [CreateForm, createFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: async (values) => {
     // 校验唯一性（模拟）
     if (!isEditMode.value) {
@@ -361,11 +335,11 @@ const [CreateForm, createFormApi] = useVbenForm({
         return;
       }
     }
-    const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '保存中...'});
+    const loading = ElLoading.service({ text: isEditMode.value ? '更新中...' : '保存中...' });
     try {
       let res;
       if (isEditMode.value) {
-        res = await updateStudentInfo({...values, id: currentEditId.value});
+        res = await updateStudentInfo({ ...values, id: currentEditId.value });
       } else {
         res = await createStudentInfo(values);
       }
@@ -383,7 +357,45 @@ const [CreateForm, createFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useCreateFormSchema(isEditMode.value),
   showCollapseButton: false,
-  submitButtonOptions: {content: '保存'},
+  submitButtonOptions: { content: '保存' },
+});
+
+// 修复的核心：在抽屉打开时重置表单并加载编辑数据
+const [CreateDrawer, createDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => createDrawerApi.close(),
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      // 每次打开前先重置表单（清空值 + 清除校验错误）
+      await createFormApi.resetForm();
+      // 如果是编辑模式，则填充数据
+      if (isEditMode.value && currentEditId.value) {
+        try {
+          const detail = await getStudentInfoDetail({ id: currentEditId.value });
+          await createFormApi.setValues({
+            studentNo: detail.studentNo,
+            name: detail.name,
+            idCard: detail.idCard,
+            grade: detail.grade,
+            educationLevel: detail.educationLevel,
+            studyForm: detail.studyForm,
+            major: detail.major,
+            className: detail.className,
+            studentType: detail.studentType,
+            status: detail.status,
+            phone: detail.phone,
+            parentPhone: detail.parentPhone,
+            remark: detail.remark,
+          });
+        } catch (error) {
+          console.error('加载详情失败', error);
+          ElMessage.error('加载详情失败，请检查网络或联系管理员');
+          createDrawerApi.close(); // 加载失败则关闭抽屉
+        }
+      }
+    }
+  },
 });
 
 // 查看详情
@@ -396,9 +408,9 @@ function handleOpenDetail(row) {
 
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: (values) => {
-    searchParams.value = {...values};
+    searchParams.value = { ...values };
     drawerApi.close();
     gridApi.reload();
   },
@@ -408,20 +420,20 @@ const [QueryForm] = useVbenForm({
     return v;
   }),
   showCollapseButton: true,
-  submitButtonOptions: {content: '查询'},
+  submitButtonOptions: { content: '查询' },
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: {ajax: {query: getTableData}},
-    rowConfig: {keyField: 'id', isHover: true},
+    proxyConfig: { ajax: { query: getTableData } },
+    rowConfig: { keyField: 'id', isHover: true },
     pagerConfig: dataObj,
-    toolbarConfig: {refresh: true, search: true},
+    toolbarConfig: { refresh: true, search: true },
     showOverflow: true,
   },
-  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
+  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
   showSearchForm: false,
 });
 
@@ -429,7 +441,7 @@ watch(activeName, (newVal) => {
   tagFilters.value = {};
   gridColumns.value = getColumnsByStatus(newVal);
   if (gridApi && gridApi.xGrid) gridApi.xGrid.refreshColumn();
-  else gridApi.setGridOptions?.({columns: gridColumns.value});
+  else gridApi.setGridOptions?.({ columns: gridColumns.value });
   gridApi.reload();
 });
 
@@ -442,18 +454,18 @@ const toggleChart = () => {
   showChart.value = !showChart.value;
 };
 
-defineExpose({handleFilterTagClick, clearFilters});
+defineExpose({ handleFilterTagClick, clearFilters });
 </script>
 
 <template>
   <div class="park-lot-table-new">
     <StudentDetailDrawer ref="studentDetailDrawerRef" :detail-obj="dataObj.detailObj"
-                         @refresh="handleRefresh"/>
+                         @refresh="handleRefresh" />
     <Drawer title="搜索">
-      <QueryForm/>
+      <QueryForm />
     </Drawer>
     <CreateDrawer :title="isEditMode ? '编辑学生信息' : '新增学生信息'">
-      <CreateForm/>
+      <CreateForm />
     </CreateDrawer>
     <Grid>
       <template #table-title>
@@ -470,17 +482,17 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate"/>
-          <IconButton content="导出" icon-name="download" @click="handleExport"/>
-          <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
-          <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
+          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton content="导出" icon-name="download" @click="handleExport" />
+          <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
+          <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
           <IconButton content="批量删除" icon-name="Delete" color="#F56C6C"
-                      @click="handleBatchDelete"/>
+                      @click="handleBatchDelete" />
           <IconButton :content="props.arrowShow ? '展开' : '收缩'"
-                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
+                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
           <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
-                      @click="toggleChart"/>
+                      @click="toggleChart" />
         </div>
       </template>
 
@@ -522,9 +534,9 @@ defineExpose({handleFilterTagClick, clearFilters});
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
-          <IconButton content="删除" icon-name="Delete" color="#F56C6C" @click="handleDelete(row)"/>
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
+          <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)" />
+          <IconButton content="删除" icon-name="Delete" color="#F56C6C" @click="handleDelete(row)" />
         </div>
       </template>
     </Grid>

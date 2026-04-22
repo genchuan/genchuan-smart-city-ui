@@ -7,7 +7,6 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { downloadFileFromBlobPart } from '@vben/utils';
 import BedDetailDrawer from './components/bedDetail.vue';
-import StudentInfoDrawer from './components/studentDetail.vue';
 import {
   getMockList,
   getBedMgmtPage,
@@ -115,12 +114,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
   onCancel: () => drawerApi.close(),
-});
-
-const [BedFormDrawer, bedFormDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => bedFormDrawerApi.close(),
 });
 
 const dataObj = reactive({
@@ -291,31 +284,14 @@ async function handleExport() {
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  bedFormApi.resetForm();
-  // 设置默认状态为未分配
-  bedFormApi.setValues({status: '未分配'});
-  bedFormDrawerApi.open();
+  bedFormDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
 // 编辑床位
-async function handleEdit(row) {
+function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
-  try {
-    const detail = await getBedMgmtDetail({id: row.id});
-    bedFormApi.setValues({
-      building: detail.building,
-      floor: detail.floor,
-      roomNum: detail.roomNum,
-      bedNum: detail.bedNum,
-      status: detail.status,
-      remark: detail.remark || '',
-    });
-    bedFormDrawerApi.open();
-  } catch (error) {
-    console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败');
-  }
+  bedFormDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
 // 批量分配
@@ -461,20 +437,46 @@ const [BedForm, bedFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
+// 修复的核心：在抽屉打开时重置表单并加载编辑数据
+const [BedFormDrawer, bedFormDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => bedFormDrawerApi.close(),
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      // 每次打开前先重置表单（清空值 + 清除校验错误）
+      await bedFormApi.resetForm();
+      // 如果是编辑模式，则填充数据
+      if (isEditMode.value && currentEditId.value) {
+        try {
+          const detail = await getBedMgmtDetail({id: currentEditId.value});
+          await bedFormApi.setValues({
+            building: detail.building,
+            floor: detail.floor,
+            roomNum: detail.roomNum,
+            bedNum: detail.bedNum,
+            status: detail.status,
+            remark: detail.remark || '',
+          });
+        } catch (error) {
+          console.error('加载详情失败', error);
+          ElMessage.error('加载详情失败，请检查网络或联系管理员');
+          bedFormDrawerApi.close(); // 加载失败则关闭抽屉
+        }
+      } else {
+        // 新增模式：设置默认状态为“未分配”
+        await bedFormApi.setValues({ status: '未分配' });
+      }
+    }
+  },
+});
+
 // 详情抽屉
 const bedDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
   dataObj.detailObj = row;
   bedDetailDrawerRef.value.open();
-}
-
-// 学生详情抽屉
-const studentInfoDrawerRef = ref(null);
-
-function handleOpenStudentDetail(row) {
-  if (!row.studentId) return;
-  studentInfoDrawerRef.value.open(row.studentId);
 }
 
 const [QueryForm] = useVbenForm({
@@ -524,7 +526,6 @@ defineExpose({handleFilterTagClick, clearFilters});
   <div class="park-lot-table-new">
     <BedDetailDrawer ref="bedDetailDrawerRef" :detail-obj="dataObj.detailObj"
                      @refresh="handleRefresh"/>
-    <StudentInfoDrawer ref="studentInfoDrawerRef"/>
     <Drawer title="搜索">
       <QueryForm/>
     </Drawer>
@@ -651,7 +652,7 @@ defineExpose({handleFilterTagClick, clearFilters});
         </el-text>
       </template>
       <template #studentId="{ row }">
-        <el-text v-if="row.studentId" @click="handleOpenStudentDetail(row)" type="primary"
+        <el-text v-if="row.studentId" @click="handleOpenDetail(row)" type="primary"
                  style="cursor: pointer;">
           {{ row.studentId }}
         </el-text>

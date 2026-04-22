@@ -35,14 +35,14 @@ const attendanceSyncReverse = {
 
 // 状态映射（待审批、已通过、已驳回）
 const statusMap = {
-  '待审批': '0',
-  '已通过': '1',
-  '已驳回': '2'
+  '待审批': '1',
+  '已通过': '2',
+  '已驳回': '3'
 };
 const statusReverse = {
-  '0': '待审批',
-  '1': '已通过',
-  '2': '已驳回'
+  '1': '待审批',
+  '2': '已通过',
+  '3': '已驳回'
 };
 
 // 通用转换函数：后端 → 前端（将数字/代码转为中文）
@@ -131,9 +131,8 @@ export function auditBehaviorMgmt(data) {
   });
 }
 
-export function cancelBehaviorMgmt(params) {
-  // 撤销接口只传 id，无需转换
-  return requestClient.put('/studentmgmt/behavior-mgmt/cancel', null, { params }).catch(err => {
+export function cancelBehaviorMgmt(data) {
+  return requestClient.put('/studentmgmt/behavior-mgmt/cancel', data).catch(err => {
     console.warn('撤销接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
