@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import { ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
@@ -69,6 +69,7 @@ const detailDrawerRef = ref(null);
 const planDetailDrawerRef = ref(null);
 const actionDialogRef = ref(null);
 const statusConfirmDialogRef = ref(null);
+const currentTransferRow = ref({});
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 const filterPlanId = ref('');
@@ -308,47 +309,47 @@ async function handleExport() {
   }
 }
 
-// function handleBatchDispatch() {
-//   const rows = checkedRows.value;
-//   if (isEmpty(rows)) {
-//     ElMessage.warning('请先勾选待派发任务');
-//     return;
-//   }
-//   const invalidRows = rows.filter(
-//     (item) => !isTaskStatusLabel(item.status, '待派发'),
-//   );
-//   if (invalidRows.length > 0) {
-//     ElMessage.warning('批量派发只支持待派发任务');
-//     return;
-//   }
-//   actionDialogRef.value?.open('batchDispatch', {
-//     ids: checkedIds.value,
-//   });
-// }
+function handleBatchDispatch() {
+  const rows = checkedRows.value;
+  if (isEmpty(rows)) {
+    ElMessage.warning('请先勾选待派发任务');
+    return;
+  }
+  const invalidRows = rows.filter(
+    (item) => !isTaskStatusLabel(item.status, '待派发'),
+  );
+  if (invalidRows.length > 0) {
+    ElMessage.warning('批量派发只支持待派发任务');
+    return;
+  }
+  actionDialogRef.value?.open('batchDispatch', {
+    ids: checkedIds.value,
+  });
+}
 
-// function handleDispatch(row) {
-//   actionDialogRef.value?.open('dispatch', { row });
-// }
+function handleDispatch(row) {
+  actionDialogRef.value?.open('dispatch', { row });
+}
 
 function handleProgress(row) {
   actionDialogRef.value?.open('progress', { row });
 }
 
-// function handleTransfer(row) {
-//   transferDrawerApi.setData(row).open();
-// }
+function handleTransfer(row) {
+  transferDrawerApi.setData(row).open();
+}
 
-// function handleClaim(row) {
-//   statusConfirmDialogRef.value?.open('claim', row);
-// }
+function handleClaim(row) {
+  statusConfirmDialogRef.value?.open('claim', row);
+}
 
-// function handleArchive(row) {
-//   if (row.isArchive) {
-//     ElMessage.info('当前任务已归档');
-//     return;
-//   }
-//   statusConfirmDialogRef.value?.open('archive', row);
-// }
+function handleArchive(row) {
+  if (row.isArchive) {
+    ElMessage.info('当前任务已归档');
+    return;
+  }
+  statusConfirmDialogRef.value?.open('archive', row);
+}
 
 function onSubmit(values) {
   dataObj.searchParams = { ...values };
@@ -562,12 +563,12 @@ onMounted(() => {
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <!-- <IconButton
+          <IconButton
             content="批量派发"
             icon-name="Promotion"
             :disabled="isEmpty(checkedIds)"
             @click="handleBatchDispatch"
-          /> -->
+          />
           <IconButton
             content="导出"
             icon-name="download"
@@ -651,36 +652,36 @@ onMounted(() => {
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <!-- <IconButton
+          <IconButton
             v-if="isTaskStatusLabel(row.status, '待派发')"
             content="派发"
             icon-name="Promotion"
             @click="handleDispatch(row)"
-          /> -->
-          <!-- <IconButton
+          />
+          <IconButton
             v-if="isTaskStatusLabel(row.status, '待认领')"
             content="认领"
             icon-name="CircleCheckFilled"
             @click="handleClaim(row)"
-          /> -->
+          />
           <IconButton
             v-if="isTaskStatusLabel(row.status, '处理中')"
             content="更新进度"
             icon-name="EditPen"
             @click="handleProgress(row)"
           />
-          <!-- <IconButton
+          <IconButton
             v-if="isTaskStatusLabel(row.status, '处理中')"
             content="转派"
             icon-name="Switch"
             @click="handleTransfer(row)"
-          /> -->
-          <!-- <IconButton
+          />
+          <IconButton
             v-if="isTaskStatusLabel(row.status, '已完成')"
             content="归档"
             icon-name="FolderChecked"
             @click="handleArchive(row)"
-          /> -->
+          />
           <IconButton
             content="查看"
             icon-name="View"

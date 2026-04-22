@@ -2,7 +2,7 @@
 import { computed, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import { ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
@@ -246,35 +246,35 @@ async function handleExport() {
   }
 }
 
-// function handleBatchAudit() {
-//   const rows = checkedRows.value;
-//   if (isEmpty(rows)) {
-//     ElMessage.warning('请先勾选待审核上报');
-//     return;
-//   }
-//   const invalidRows = rows.filter(
-//     (item) => !isReportStatusLabel(item.status, '待审核'),
-//   );
-//   if (invalidRows.length > 0) {
-//     ElMessage.warning('批量审核只支持待审核上报');
-//     return;
-//   }
-//   auditDialogRef.value?.open('batchAudit', {
-//     ids: checkedIds.value,
-//   });
-// }
+function handleBatchAudit() {
+  const rows = checkedRows.value;
+  if (isEmpty(rows)) {
+    ElMessage.warning('请先勾选待审核上报');
+    return;
+  }
+  const invalidRows = rows.filter(
+    (item) => !isReportStatusLabel(item.status, '待审核'),
+  );
+  if (invalidRows.length > 0) {
+    ElMessage.warning('批量审核只支持待审核上报');
+    return;
+  }
+  auditDialogRef.value?.open('batchAudit', {
+    ids: checkedIds.value,
+  });
+}
 
-// function handleApprove(row) {
-//   statusConfirmDialogRef.value?.open('approve', row);
-// }
+function handleApprove(row) {
+  statusConfirmDialogRef.value?.open('approve', row);
+}
 
-// function handleReject(row) {
-//   auditDialogRef.value?.open('reject', { row });
-// }
+function handleReject(row) {
+  auditDialogRef.value?.open('reject', { row });
+}
 
-// function handleProcess(row) {
-//   processDrawerRef.value?.open(row);
-// }
+function handleProcess(row) {
+  processDrawerRef.value?.open(row);
+}
 
 function onSubmit(values) {
   dataObj.searchParams = { ...values };
@@ -489,12 +489,12 @@ watch(
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <!-- <IconButton
+          <IconButton
             content="批量审核"
             icon-name="CircleCheck"
             :disabled="isEmpty(checkedIds)"
             @click="handleBatchAudit"
-          /> -->
+          />
           <IconButton
             content="导出"
             icon-name="download"
@@ -601,7 +601,7 @@ watch(
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <!-- <IconButton
+          <IconButton
             v-if="isReportStatusLabel(row.status, '待审核')"
             content="通过"
             icon-name="Check"
@@ -618,7 +618,7 @@ watch(
             content="执行"
             icon-name="EditPen"
             @click="handleProcess(row)"
-          /> -->
+          />
           <IconButton
             content="查看"
             icon-name="View"
