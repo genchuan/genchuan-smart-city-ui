@@ -115,12 +115,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel: () => drawerApi.close(),
 });
 
-const [ApplyDrawer, applyDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => applyDrawerApi.close(),
-});
-
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
@@ -294,30 +288,13 @@ async function handleBatchAudit() {
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  applyFormApi.resetForm();
-  // 设置默认申请时间为当前时间，默认状态为“待审核”
-  applyFormApi.setValues({applyTime: Date.now(), status: '待审核'});
-  applyDrawerApi.open();
+  applyDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
-async function handleEdit(row) {
+function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
-  try {
-    const detail = await getAccessApplyDetail({id: row.id});
-    applyFormApi.setValues({
-      studentId: detail.studentId,
-      applyType: detail.applyType,
-      applyReason: detail.applyReason,
-      applyTime: detail.applyTime,
-      status: detail.status,
-      remark: detail.remark,
-    });
-    applyDrawerApi.open();
-  } catch (error) {
-    console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败');
-  }
+  applyDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
 // 单行审核
@@ -379,6 +356,40 @@ const [ApplyForm, applyFormApi] = useVbenForm({
   schema: useApplyFormSchema(isEditMode.value),
   showCollapseButton: false,
   submitButtonOptions: {content: '保存'},
+});
+
+// 修复的核心：在抽屉打开时重置表单并加载编辑数据
+const [ApplyDrawer, applyDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => applyDrawerApi.close(),
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      // 每次打开前先重置表单（清空值 + 清除校验错误）
+      await applyFormApi.resetForm();
+      // 如果是编辑模式，则填充数据
+      if (isEditMode.value && currentEditId.value) {
+        try {
+          const detail = await getAccessApplyDetail({id: currentEditId.value});
+          await applyFormApi.setValues({
+            studentId: detail.studentId,
+            applyType: detail.applyType,
+            applyReason: detail.applyReason,
+            applyTime: detail.applyTime,
+            status: detail.status,
+            remark: detail.remark,
+          });
+        } catch (error) {
+          console.error('加载详情失败', error);
+          ElMessage.error('加载详情失败，请检查网络或联系管理员');
+          applyDrawerApi.close(); // 加载失败则关闭抽屉
+        }
+      } else {
+        // 新增模式：设置默认申请时间为当前时间，默认状态为“待审核”
+        await applyFormApi.setValues({ applyTime: Date.now(), status: '待审核' });
+      }
+    }
+  },
 });
 
 // 动态注入学生选项

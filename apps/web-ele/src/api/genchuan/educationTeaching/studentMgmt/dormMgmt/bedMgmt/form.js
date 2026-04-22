@@ -43,11 +43,11 @@ export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
+    { field: 'studentId', title: '学号', minWidth: 100, slots: { default: 'studentId' } },
     { field: 'building', title: '楼栋', minWidth: 100, slots: { default: 'building' } },
     { field: 'floor', title: '楼层', minWidth: 80 },
     { field: 'roomNum', title: '房间号', minWidth: 100, slots: { default: 'roomNum' } },
     { field: 'bedNum', title: '床位号', minWidth: 80 },
-    { field: 'studentId', title: '学号', minWidth: 100, slots: { default: 'studentId' } },
     { field: 'assignTime', title: '分配时间', minWidth: 180, slots: { default: 'assignTime' } },
     { field: 'adjustTime', title: '调整时间', minWidth: 180, slots: { default: 'adjustTime' } },
     { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },

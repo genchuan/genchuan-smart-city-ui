@@ -63,17 +63,6 @@ const onCardSelect = async (status) => {
   chargingStationRef.value.handleFilterTagClick('stationStatus', normalizeStatus(status));
 };
 
-// 柱状图点击筛选（区域）
-const onBarSelect = async (areaName) => {
-  await nextTick();
-  if (!chargingStationRef.value) {
-    ElMessage.warning('列表组件未就绪，请稍后重试');
-    return;
-  }
-  chargingStationRef.value.clearFilters();
-  chargingStationRef.value.handleFilterTagClick('areaName', areaName);
-};
-
 // 地图标注点点击筛选（场站名称）
 const onMarkerSelect = async (stationName) => {
   await nextTick();
@@ -98,7 +87,6 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
       v-if="currentArrowShow"
       :is="currentChartComponent"
       @cardSelect="onCardSelect"
-      @barSelect="onBarSelect"
       @markerSelect="onMarkerSelect"
     />
     <el-tabs v-model="activeName" class="common-tabs" type="card">

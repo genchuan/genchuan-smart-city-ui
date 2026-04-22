@@ -102,3 +102,33 @@ export function archiveDebtRecordCollectTrack(data) {
 export function getDebtRecordCollectTrackChart() {
   return requestClient.get('/ordertrade/collect-track/chart');
 }
+/** 追缴配置分页 */
+export function getDebtRecordCollectConfigPage(params) {
+  return requestClient.get('/ordertrade/collect-config/page', {
+    params,
+  });
+}
+/** 追缴配置创建 */
+export function createDebtRecordCollectConfig(data) {
+  return requestClient.post('/ordertrade/collect-config/create', data);
+}
+/** 追缴配置保存 */
+export function saveDebtRecordCollectConfig(data) {
+  return requestClient.post('/ordertrade/collect-config/save', data);
+}
+/** 追缴配置更新 */
+export function updateDebtRecordCollectConfig(data) {
+  return requestClient.put('/ordertrade/collect-config/update', data);
+}
+/** 追缴配置启用 */
+export function enableDebtRecordCollectConfig(data) {
+  return requestClient.put('/ordertrade/collect-config/enable', data);
+}
+/** 追缴配置禁用 */
+export function disableDebtRecordCollectConfig(data) {
+  return requestClient.put('/ordertrade/collect-config/disable', data);
+}
+/** 追缴配置图表 */
+export function getDebtRecordCollectConfigChart() {
+  return requestClient.get('/ordertrade/collect-config/chart');
+}

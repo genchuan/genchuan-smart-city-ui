@@ -194,6 +194,7 @@ export function useGridColumns() {
       title: '追缴编号',
       minWidth: 160,
       sortable: true,
+      slots: { default: 'trackNo' },
     },
     {
       field: 'plateNo',

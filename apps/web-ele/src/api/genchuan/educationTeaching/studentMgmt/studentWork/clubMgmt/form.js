@@ -9,8 +9,8 @@ export function useFormSchema() {
       labelWidth: '100',
     },
     {
-      fieldName: 'studentName',
-      label: '学生姓名',
+      fieldName: 'studentId',
+      label: '学号',
       component: 'Input',
       componentProps: { placeholder: '请输入学生姓名' },
       labelWidth: '100',
@@ -39,8 +39,7 @@ export function getColumnsByStatus(status) {
   const columns = [
     { field: 'clubName', title: '社团名称', minWidth: 120, slots: { default: 'clubName' } },
     { field: 'clubType', title: '社团类型', minWidth: 100, slots: { default: 'clubType' } },
-    { field: 'studentName', title: '学生姓名', minWidth: 100, slots: { default: 'studentName' } },
-    { field: 'className', title: '班级', minWidth: 150 },
+    { field: 'studentId', title: '学号', minWidth: 100, slots: { default: 'studentId' } },
     { field: 'applyTime', title: '申请时间', minWidth: 180, slots: { default: 'applyTime' } },
     { field: 'auditUser', title: '审核人', minWidth: 120 },
     { field: 'auditTime', title: '审核时间', minWidth: 180, slots: { default: 'auditTime' } },
@@ -62,7 +61,7 @@ export function getColumnsByStatus(status) {
   return allColumns;
 }
 
-// 申请表单 schema
+// 申请表单 schema（添加 status 字段）
 export function useCreateFormSchema() {
   return [
     {
@@ -121,6 +120,23 @@ export function useCreateFormSchema() {
         format: 'YYYY-MM-DD HH:mm:ss',
         valueFormat: 'x',
       },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'status',
+      label: '状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '状态',
+        disabled: true,
+        options: [
+          { label: '待审核', value: '待审核' },
+          { label: '已通过', value: '已通过' },
+          { label: '已建档', value: '已建档' },
+        ],
+      },
+      defaultValue: '待审核',
       rules: 'required',
       labelWidth: '100',
     },

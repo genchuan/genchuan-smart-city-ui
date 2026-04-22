@@ -13,12 +13,25 @@ const evaluatorTypeReverse = {
   'leader': '领导'
 };
 
+// 状态映射
+const statusMap = {
+  '未启用': 'disable',
+  '已启用': 'enable'
+};
+const statusReverse = {
+  'disable': '未启用',
+  'enable': '已启用'
+};
+
 // 通用转换函数：后端 → 前端（将英文转为中文）
 function convertEnToZh(obj) {
   if (!obj || typeof obj !== 'object') return obj;
   const result = { ...obj };
   if (result.evaluatorType && evaluatorTypeReverse[result.evaluatorType]) {
     result.evaluatorType = evaluatorTypeReverse[result.evaluatorType];
+  }
+  if (result.status && statusReverse[result.status]) {
+    result.status = statusReverse[result.status];
   }
   return result;
 }
@@ -29,6 +42,9 @@ function convertZhToEn(obj) {
   const result = { ...obj };
   if (result.evaluatorType && evaluatorTypeMap[result.evaluatorType]) {
     result.evaluatorType = evaluatorTypeMap[result.evaluatorType];
+  }
+  if (result.status && statusMap[result.status]) {
+    result.status = statusMap[result.status];
   }
   return result;
 }
@@ -52,7 +68,6 @@ export function getTargetMgmtPage(params) {
     .catch(err => {
       console.warn('分页接口失败，使用模拟数据', err);
       const mock = getMockList();
-      // 模拟数据已经是中文，无需额外转换，但为了保持一致，也调用转换（幂等）
       return { list: convertList(mock), total: mock.length };
     });
 }
@@ -74,7 +89,6 @@ export function updateTargetMgmt(data) {
 }
 
 export function configTargetMgmt(data) {
-  // 配置接口可能包含 evaluatorType，需要转换
   const convertedData = convertZhToEn(data);
   return requestClient.put('/studentmgmt/target-mgmt/config', convertedData).catch(err => {
     console.warn('配置接口失败，模拟成功', err);
@@ -83,7 +97,6 @@ export function configTargetMgmt(data) {
 }
 
 export function enableTargetMgmt(ids) {
-  // 启用接口只传 ids，无需转换
   return requestClient.put('/studentmgmt/target-mgmt/enable', { ids }).catch(err => {
     console.warn('启用接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -91,7 +104,6 @@ export function enableTargetMgmt(ids) {
 }
 
 export function disableTargetMgmt(ids) {
-  // 停用接口只传 ids，无需转换
   return requestClient.put('/studentmgmt/target-mgmt/disable', { ids }).catch(err => {
     console.warn('停用接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -118,7 +130,6 @@ export function getTargetMgmtDetail(params) {
 }
 
 // ==================== 图表接口 ====================
-// 图表接口暂不处理映射（因未提供后端数据结构），如有需要可参照添加
 export function getTargetMgmtChart(params) {
   return requestClient.get('/studentmgmt/target-mgmt/chart', { params }).catch(err => {
     console.warn('图表总览接口失败，使用模拟数据', err);
@@ -149,7 +160,7 @@ export function getTargetIndex() {
   });
 }
 
-// 模拟数据（原始值使用中文，保持与前端一致）
+// 模拟数据（原始值使用英文，保持与真实后端一致）
 export const getMockList = () => {
   return [
     {
@@ -157,11 +168,11 @@ export const getMockList = () => {
       targetName: '德育表现',
       totalScore: 100.00,
       warnThreshold: 60.00,
-      evaluatorType: '教职工',
+      evaluatorType: 'teacher',
       scoreType: '累计赋分',
       enableTime: 1767225600000,
       disableTime: null,
-      status: '已启用',
+      status: 'enabled',
       remark: '日常行为规范',
       creator: 'admin',
       updater: 'admin',
@@ -173,11 +184,11 @@ export const getMockList = () => {
       targetName: '志愿服务',
       totalScore: 80.00,
       warnThreshold: 40.00,
-      evaluatorType: '家长',
+      evaluatorType: 'parent',
       scoreType: '接口赋分',
       enableTime: 1769904000000,
       disableTime: 1772496000000,
-      status: '未启用',
+      status: 'disable',
       remark: '',
       creator: 'teacher_li',
       updater: 'teacher_li',
@@ -189,11 +200,11 @@ export const getMockList = () => {
       targetName: '学术竞赛',
       totalScore: 120.00,
       warnThreshold: 70.00,
-      evaluatorType: '领导',
+      evaluatorType: 'leader',
       scoreType: '累计赋分',
       enableTime: 1775088000000,
       disableTime: null,
-      status: '已启用',
+      status: 'enabled',
       remark: '',
       creator: 'admin',
       updater: 'admin',
@@ -205,11 +216,11 @@ export const getMockList = () => {
       targetName: '社团活动',
       totalScore: 60.00,
       warnThreshold: 30.00,
-      evaluatorType: '教职工',
+      evaluatorType: 'teacher',
       scoreType: '接口赋分',
       enableTime: 1777680000000,
       disableTime: null,
-      status: '已启用',
+      status: 'enabled',
       remark: '',
       creator: 'admin',
       updater: 'admin',
@@ -221,11 +232,11 @@ export const getMockList = () => {
       targetName: '体育特长',
       totalScore: 90.00,
       warnThreshold: 50.00,
-      evaluatorType: '家长',
+      evaluatorType: 'parent',
       scoreType: '累计赋分',
       enableTime: 1780358400000,
       disableTime: null,
-      status: '未启用',
+      status: 'disable',
       remark: '',
       creator: 'teacher_zhang',
       updater: 'teacher_zhang',
@@ -237,11 +248,11 @@ export const getMockList = () => {
       targetName: '科技创新',
       totalScore: 110.00,
       warnThreshold: 65.00,
-      evaluatorType: '领导',
+      evaluatorType: 'leader',
       scoreType: '接口赋分',
       enableTime: 1782950400000,
       disableTime: 1785542400000,
-      status: '未启用',
+      status: 'disable',
       remark: '专利、论文等',
       creator: 'admin',
       updater: 'admin',
@@ -253,11 +264,11 @@ export const getMockList = () => {
       targetName: '艺术素养',
       totalScore: 70.00,
       warnThreshold: 35.00,
-      evaluatorType: '教职工',
+      evaluatorType: 'teacher',
       scoreType: '累计赋分',
       enableTime: 1785628800000,
       disableTime: null,
-      status: '已启用',
+      status: 'enabled',
       remark: '',
       creator: 'teacher_wang',
       updater: 'teacher_wang',
@@ -269,11 +280,11 @@ export const getMockList = () => {
       targetName: '社会实践',
       totalScore: 85.00,
       warnThreshold: 45.00,
-      evaluatorType: '家长',
+      evaluatorType: 'parent',
       scoreType: '接口赋分',
       enableTime: 1788307200000,
       disableTime: null,
-      status: '未启用',
+      status: 'disable',
       remark: '暑期实践',
       creator: 'admin',
       updater: 'admin',
