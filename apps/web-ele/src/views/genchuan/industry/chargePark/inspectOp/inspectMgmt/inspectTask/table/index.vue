@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
@@ -35,6 +35,7 @@ import {
   getTaskTypeTagType,
   getUserName,
   isTaskStatusLabel,
+  loadTaskUserOptions,
   normalizeInspectTaskRow,
   textObj,
   useGridColumns,
@@ -68,6 +69,7 @@ const detailDrawerRef = ref(null);
 const planDetailDrawerRef = ref(null);
 const actionDialogRef = ref(null);
 const statusConfirmDialogRef = ref(null);
+const currentTransferRow = ref({});
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 const filterPlanId = ref('');
@@ -476,6 +478,10 @@ watch(
   },
   { deep: true },
 );
+
+onMounted(() => {
+  loadTaskUserOptions();
+});
 </script>
 
 <template>

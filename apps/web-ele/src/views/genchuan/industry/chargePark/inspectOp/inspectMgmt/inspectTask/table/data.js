@@ -1,6 +1,7 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
+import { getInspectUserPage } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectUser';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
@@ -42,12 +43,52 @@ export const planOptions = [
   { label: '南安水头交通枢纽日检', value: 6 },
 ];
 
-export const userOptions = [
+const DEFAULT_USER_OPTIONS = [
   { label: '张三', value: 1 },
   { label: '李四', value: 2 },
   { label: '王五', value: 3 },
   { label: '赵六', value: 4 },
 ];
+export const userOptions = [...DEFAULT_USER_OPTIONS];
+let userOptionsLoaded = false;
+let userOptionsLoadingPromise = null;
+
+export async function loadTaskUserOptions() {
+  if (userOptionsLoaded) return;
+  if (userOptionsLoadingPromise) {
+    await userOptionsLoadingPromise;
+    return;
+  }
+
+  userOptionsLoadingPromise = (async () => {
+    try {
+      const response = await getInspectUserPage({
+        pageNo: 1,
+        pageSize: 200,
+        status: '1',
+      });
+      const pageResult = response?.list ? response : response?.data || response;
+      const list = Array.isArray(pageResult?.list) ? pageResult.list : [];
+      const options = list
+        .map((item) => ({
+          label: item.name || item.userName || `巡检人员${item.id ?? ''}`,
+          value: item.id ?? item.userId,
+        }))
+        .filter((item) => item.value !== undefined && item.value !== null);
+
+      if (options.length > 0) {
+        userOptions.splice(0, userOptions.length, ...options);
+        userOptionsLoaded = true;
+      }
+    } catch (error) {
+      console.error('加载巡检人员选项失败，使用默认数据:', error);
+    } finally {
+      userOptionsLoadingPromise = null;
+    }
+  })();
+
+  await userOptionsLoadingPromise;
+}
 
 export const taskStatusOptions = getDictOptions(
   INSPECT_TASK_STATUS_DICT,
@@ -129,7 +170,7 @@ export function dataList() {
       MOCK_TASK_STATUS_VALUES[index % MOCK_TASK_STATUS_VALUES.length];
     const taskType = taskTypeOptions[index % taskTypeOptions.length].value;
     const plan = planOptions[index % planOptions.length];
-    const user = userOptions[index % userOptions.length];
+    const user = DEFAULT_USER_OPTIONS[index % DEFAULT_USER_OPTIONS.length];
     const dispatchTime =
       status === '待派发' ? null : baseTime + index * 7_200_000;
     const claimTime = ['处理中', '已完成'].includes(status)

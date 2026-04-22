@@ -18,12 +18,12 @@ const reportIds = ref([]);
 const submitting = ref(false);
 
 const form = reactive({
-  auditResult: '通过',
+  auditResult: '3',
   auditRemark: '',
 });
 
 const isRejectAction = computed(
-  () => actionType.value === 'reject' || form.auditResult === '驳回',
+  () => actionType.value === 'reject' || form.auditResult === '2',
 );
 const title = computed(() =>
   actionType.value === 'reject' ? '驳回巡检上报' : '批量审核巡检上报',
@@ -57,7 +57,7 @@ const rules = computed(() => ({
 }));
 
 function resetForm() {
-  form.auditResult = actionType.value === 'reject' ? '驳回' : '通过';
+  form.auditResult = actionType.value === 'reject' ? '2' : '3';
   form.auditRemark = '';
   formRef.value?.resetFields?.();
 }
@@ -125,8 +125,8 @@ defineExpose({
         prop="auditResult"
       >
         <el-select v-model="form.auditResult" placeholder="请选择审核结果">
-          <el-option label="通过" value="通过" />
-          <el-option label="驳回" value="驳回" />
+          <el-option label="待处置" value="2" />
+          <el-option label="已完成" value="3" />
         </el-select>
       </el-form-item>
 

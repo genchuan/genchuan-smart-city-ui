@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
@@ -36,6 +36,7 @@ import {
   getTrackStatusTagType,
   getUserName,
   isTrackStatusLabel,
+  loadTrackUserOptions,
   normalizeInspectTrackRow,
   textObj,
   useGridColumns,
@@ -361,6 +362,10 @@ watch(
   },
   { deep: true },
 );
+
+onMounted(() => {
+  loadTrackUserOptions();
+});
 </script>
 
 <template>

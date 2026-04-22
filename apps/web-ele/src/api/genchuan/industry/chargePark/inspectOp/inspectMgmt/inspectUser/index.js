@@ -1,5 +1,10 @@
 import { requestClient } from '#/api/request.js';
 
+/** 删除巡检人员 */
+export function deleteInspectUser(id) {
+  return requestClient.delete(`/inspectop/inspect-user/delete?id=${id}`);
+}
+
 /** 分页查询巡检人员列表 */
 export function getInspectUserPage(params) {
   return requestClient.get('/inspectop/inspect-user/page', { params });
