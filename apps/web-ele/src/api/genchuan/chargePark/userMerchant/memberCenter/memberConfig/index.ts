@@ -3,11 +3,34 @@ import type { PageParam, PageResult } from '@vben/request';
 import { requestClient } from '#/api/request';
 
 // 会员配置 VO
-export type MemberConfigVO = Record<string, unknown>;
+export type MemberConfigVO = {
+  createTime?: string;
+  id?: number;
+  pointTradeDeductEnable: boolean | number;
+  pointTradeDeductMaxPrice: number;
+  pointTradeDeductUnitPrice: number;
+  pointTradeGivePoint: number;
+  status?: string;
+  updateTime?: string;
+};
 
-export type MemberConfigPageReqVO = PageParam & Record<string, unknown>;
+export type MemberConfigCreateReqVO = MemberConfigVO;
 
-export type MemberConfigSaveReqVO = Record<string, unknown>;
+export type MemberConfigUpdateReqVO = MemberConfigVO & {
+  id: number;
+};
+
+export type MemberConfigPageReqVO = PageParam & {
+  status?: string;
+};
+
+export type MemberConfigSaveReqVO = {
+  id?: number;
+  pointTradeDeductEnable: boolean | number;
+  pointTradeDeductMaxPrice: number;
+  pointTradeDeductUnitPrice: number;
+  pointTradeGivePoint: number;
+};
 
 export type MemberConfigOperateReqVO = {
   ids: number[];
@@ -19,8 +42,8 @@ export type MemberConfigChartReqVO = {
 
 export type MemberConfigChartVO = {
   configTypeDistribution: Array<{
-    type: string;
     count: number;
+    type: string;
   }>;
   effectConfigCount: number;
   memberMatchRate: number;
@@ -31,7 +54,9 @@ export const MemberConfigApi = {
   getMemberConfigPage: async (params: MemberConfigPageReqVO) => {
     return await requestClient.get<PageResult<MemberConfigVO>>(
       '/usermerchant/member-config/page',
-      { params },
+      {
+        params,
+      },
     );
   },
 
@@ -44,7 +69,7 @@ export const MemberConfigApi = {
     );
   },
 
-  createMemberConfig: async (data: MemberConfigVO) => {
+  createMemberConfig: async (data: MemberConfigCreateReqVO) => {
     return await requestClient.post('/usermerchant/member-config/create', data);
   },
 
@@ -52,7 +77,7 @@ export const MemberConfigApi = {
     return await requestClient.post('/usermerchant/member-config/save', data);
   },
 
-  updateMemberConfig: async (data: MemberConfigVO) => {
+  updateMemberConfig: async (data: MemberConfigUpdateReqVO) => {
     return await requestClient.put('/usermerchant/member-config/update', data);
   },
 
@@ -67,7 +92,9 @@ export const MemberConfigApi = {
   getMemberConfigChart: async (params?: MemberConfigChartReqVO) => {
     return await requestClient.get<MemberConfigChartVO>(
       '/usermerchant/member-config/chart',
-      { params },
+      {
+        params,
+      },
     );
   },
 };

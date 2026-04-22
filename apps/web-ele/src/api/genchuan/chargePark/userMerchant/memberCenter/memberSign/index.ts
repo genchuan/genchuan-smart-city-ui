@@ -3,25 +3,37 @@ import type { PageParam, PageResult } from '@vben/request';
 import { requestClient } from '#/api/request';
 
 // 会员签到 VO
-export type MemberSignVO = Record<string, unknown>;
+export type MemberSignVO = {
+  createTime?: number | string;
+  day?: number;
+  description?: string;
+  id?: number;
+  nickname?: string;
+  point?: number;
+  updateTime?: number | string;
+  userId?: number;
+};
 
-export type MemberSignPageReqVO = PageParam & Record<string, unknown>;
+export type MemberSignPageReqVO = PageParam & {
+  createTime?: string | string[];
+  nickname?: string;
+};
 
 export type MemberSignChartReqVO = {
   timeRange?: string;
 };
 
 export type MemberSignChartVO = {
+  signRate: number;
   signTrend: Array<{
-    date: string;
     count: number;
+    date: string;
   }>;
   signUserDistribution: Array<{
-    type: string;
     count: number;
+    type: string;
   }>;
   todaySignCount: number;
-  signRate: number;
 };
 
 // 会员签到 API

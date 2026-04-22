@@ -4,35 +4,76 @@ import { requestClient } from '#/api/request';
 
 // 商户对接 VO
 export type MerchantLinkVO = {
-  id?: number;
-  merchantId: number;
-  linkType: string;
-  apiUrl: string;
   apiKey?: string;
-  status: string;
-  effectTime?: string;
-  lastSyncTime?: string;
-  remark?: string;
-  reserve1?: string | null;
-  reserve2?: string | null;
+  apiUrl: string;
+  createTime?: number | string;
   creator?: string;
-  createTime?: string;
-  updateTime?: string;
+  effectTime?: null | number | string;
+  id?: number;
+  lastSyncTime?: null | number | string;
+  linkType: string;
+  merchantId: number;
+  remark?: string;
+  reserve1?: null | string;
+  reserve2?: null | string;
+  status: string;
+  updateTime?: number | string;
+};
+
+export type MerchantLinkCreateReqVO = {
+  apiKey?: string;
+  apiUrl: string;
+  effectTime?: null | string;
+  linkType: string;
+  merchantId: number;
+  remark?: string;
+  reserve1?: null | string;
+  reserve2?: null | string;
+  status: string;
+};
+
+export type MerchantLinkUpdateReqVO = MerchantLinkCreateReqVO & {
+  id: number;
+};
+
+export type MerchantLinkSaveReqVO = MerchantLinkCreateReqVO & {
+  id?: number;
+};
+
+export type MerchantLinkMerchantVO = {
+  address?: string;
+  contact?: string;
+  id?: number;
+  merchantType?: string;
+  name?: string;
+  phone?: string;
+  registerTime?: number | string;
+  remark?: string;
+  status?: string;
+};
+
+export type MerchantLinkSyncLogVO = {
+  content?: string;
+  id?: number;
+  operator?: string;
+  result?: string;
+  time?: number | string;
+};
+
+export type MerchantLinkDetailVO = MerchantLinkVO & {
+  merchantInfo?: MerchantLinkMerchantVO | null;
+  syncLogs?: MerchantLinkSyncLogVO[];
 };
 
 // 商户对接分页请求
 export type MerchantLinkPageReqVO = PageParam & {
-  merchantId?: number;
-  linkType?: string;
   apiUrl?: string;
-  status?: string;
   effectTime?: string;
   lastSyncTime?: string;
+  linkType?: string;
+  merchantId?: number;
   remark?: string;
-};
-
-export type MerchantLinkSaveReqVO = MerchantLinkVO & {
-  id?: number;
+  status?: string;
 };
 
 export type MerchantLinkOperateReqVO = {
@@ -44,12 +85,12 @@ export type MerchantLinkChartReqVO = {
 };
 
 export type MerchantLinkChartVO = {
-  linkTypeDistribution: Array<{
-    type: string;
-    count: number;
-  }>;
   linkMerchantCount: number;
   linkSuccessRate: number;
+  linkTypeDistribution: Array<{
+    count: number;
+    type: string;
+  }>;
 };
 
 // 商户对接 API
@@ -57,12 +98,14 @@ export const MerchantLinkApi = {
   getMerchantLinkPage: async (params: MerchantLinkPageReqVO) => {
     return await requestClient.get<PageResult<MerchantLinkVO>>(
       '/usermerchant/merchant-link/page',
-      { params },
+      {
+        params,
+      },
     );
   },
 
   getMerchantLink: async (id: number) => {
-    return await requestClient.get<MerchantLinkVO>(
+    return await requestClient.get<MerchantLinkDetailVO>(
       '/usermerchant/merchant-link/get',
       {
         params: { id },
@@ -70,7 +113,7 @@ export const MerchantLinkApi = {
     );
   },
 
-  createMerchantLink: async (data: MerchantLinkVO) => {
+  createMerchantLink: async (data: MerchantLinkCreateReqVO) => {
     return await requestClient.post('/usermerchant/merchant-link/create', data);
   },
 
@@ -78,7 +121,7 @@ export const MerchantLinkApi = {
     return await requestClient.post('/usermerchant/merchant-link/save', data);
   },
 
-  updateMerchantLink: async (data: MerchantLinkVO) => {
+  updateMerchantLink: async (data: MerchantLinkUpdateReqVO) => {
     return await requestClient.put('/usermerchant/merchant-link/update', data);
   },
 
@@ -93,7 +136,9 @@ export const MerchantLinkApi = {
   getMerchantLinkChart: async (params?: MerchantLinkChartReqVO) => {
     return await requestClient.get<MerchantLinkChartVO>(
       '/usermerchant/merchant-link/chart',
-      { params },
+      {
+        params,
+      },
     );
   },
 };

@@ -4,39 +4,108 @@ import { requestClient } from '#/api/request';
 
 // 用户信息 VO
 export type UserInfoVO = {
+  carCount?: number;
+  createTime?: string;
+  creator?: string;
   id?: number;
+  loginTime?: string;
   nickname: string;
   phone: string;
-  userType: string;
-  status: string;
   registerTime: string;
-  loginTime?: string;
-  walletBalance?: number;
-  carCount?: number;
   remark?: string;
-  reserve1?: string | null;
-  reserve2?: string | null;
-  creator?: string;
-  createTime?: string;
+  reserve1?: null | string;
+  reserve2?: null | string;
+  status: string;
   updater?: string;
   updateTime?: string;
+  userType: string;
+  walletBalance?: number;
+};
+
+export type UserInfoCreateReqVO = {
+  carCount?: number;
+  loginTime?: string;
+  nickname: string;
+  phone: string;
+  registerTime: string;
+  remark?: string;
+  reserve1?: null | string;
+  reserve2?: null | string;
+  status: string;
+  userType: string;
+  walletBalance?: number;
+};
+
+export type UserInfoUpdateReqVO = UserInfoCreateReqVO & {
+  id: number;
 };
 
 // 用户信息分页请求
 export type UserInfoPageReqVO = PageParam & {
+  carCount?: number;
+  loginTime?: string;
   nickname?: string;
   phone?: string;
-  userType?: string;
-  status?: string;
   registerTime?: string;
-  loginTime?: string;
-  walletBalance?: number;
-  carCount?: number;
   remark?: string;
+  status?: string;
+  userType?: string;
+  walletBalance?: number;
 };
 
 export type UserInfoOperateReqVO = {
   ids: number[];
+};
+
+export type UserInfoOperatorVO = {
+  account?: string;
+  dept?: string;
+  deptName?: string;
+  id?: number;
+  mobile?: string;
+  name?: string;
+  nickname?: string;
+  phone?: string;
+  role?: string;
+  roleNames?: string[];
+};
+
+export type UserInfoWalletLogVO = {
+  afterBalance?: number;
+  amount?: number;
+  id?: number;
+  remark?: string;
+  time?: number | string;
+  type?: string;
+};
+
+export type UserInfoCarVO = {
+  bindTime?: number | string;
+  carType?: string;
+  id?: number;
+  plateColor?: string;
+  plateNo?: string;
+  status?: string;
+  userId?: number;
+};
+
+export type UserInfoAuditLogVO = {
+  content?: string;
+  id?: number;
+  operator?: string;
+  remark?: string;
+  time?: number | string;
+};
+
+export type UserInfoDetailVO = UserInfoVO & {
+  auditLogs?: UserInfoAuditLogVO[];
+  auditSummary?: string;
+  cars?: UserInfoCarVO[];
+  creatorId?: number;
+  creatorInfo?: null | UserInfoOperatorVO;
+  updaterId?: number;
+  updaterInfo?: null | UserInfoOperatorVO;
+  walletLogs?: UserInfoWalletLogVO[];
 };
 
 export type UserInfoChartReqVO = {
@@ -44,16 +113,16 @@ export type UserInfoChartReqVO = {
 };
 
 export type UserInfoChartVO = {
+  newUserCount: number;
+  totalUserCount: number;
   userGrowthTrend: Array<{
-    date: string;
     count: number;
+    date: string;
   }>;
   userTypeDistribution: Array<{
-    type: string;
     count: number;
+    type: string;
   }>;
-  totalUserCount: number;
-  newUserCount: number;
 };
 
 // 用户信息 API
@@ -61,21 +130,26 @@ export const UserInfoApi = {
   getUserInfoPage: async (params: UserInfoPageReqVO) => {
     return await requestClient.get<PageResult<UserInfoVO>>(
       '/usermerchant/user-info/page',
-      { params },
+      {
+        params,
+      },
     );
   },
 
   getUserInfo: async (id: number) => {
-    return await requestClient.get<UserInfoVO>('/usermerchant/user-info/get', {
-      params: { id },
-    });
+    return await requestClient.get<UserInfoDetailVO>(
+      '/usermerchant/user-info/get',
+      {
+        params: { id },
+      },
+    );
   },
 
-  createUserInfo: async (data: UserInfoVO) => {
+  createUserInfo: async (data: UserInfoCreateReqVO) => {
     return await requestClient.post('/usermerchant/user-info/create', data);
   },
 
-  updateUserInfo: async (data: UserInfoVO) => {
+  updateUserInfo: async (data: UserInfoUpdateReqVO) => {
     return await requestClient.put('/usermerchant/user-info/update', data);
   },
 
@@ -102,7 +176,9 @@ export const UserInfoApi = {
   getUserInfoChart: async (params?: UserInfoChartReqVO) => {
     return await requestClient.get<UserInfoChartVO>(
       '/usermerchant/user-info/chart',
-      { params },
+      {
+        params,
+      },
     );
   },
 };

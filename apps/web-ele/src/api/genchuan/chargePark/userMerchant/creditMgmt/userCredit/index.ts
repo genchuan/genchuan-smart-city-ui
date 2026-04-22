@@ -4,31 +4,59 @@ import { requestClient } from '#/api/request';
 
 // 用户信用 VO
 export type UserCreditVO = {
-  id?: number;
-  userId: number;
-  creditScore: number;
-  creditLevel: string;
-  ruleCode?: string;
-  remark?: string;
-  reserve1?: string | null;
-  reserve2?: string | null;
-  creator?: string;
   createTime?: string;
+  creator?: string;
+  creditLevel: string;
+  creditScore: number;
+  id?: number;
+  phone?: string;
+  remark?: string;
+  reserve1?: null | string;
+  reserve2?: null | string;
+  ruleCode?: string;
+  ruleDesc?: string;
+  updater?: string;
   updateTime?: string;
+  userId: number;
+  userName?: string;
+  userType?: string;
 };
 
 // 用户信用分页请求
 export type UserCreditPageReqVO = PageParam & {
-  userId?: number;
-  creditScore?: number;
   creditLevel?: string;
-  updateTime?: string;
-  ruleCode?: string;
+  creditScore?: number | string;
   remark?: string;
+  ruleCode?: string;
+  updateTime?: string;
+  userId?: number;
 };
 
 export type UserCreditOperateReqVO = {
   ids: number[];
+};
+
+export type UserCreditChangeRecordVO = {
+  afterScore?: number;
+  beforeScore?: number;
+  changeReason?: string;
+  changeTime?: number | string;
+  id?: number;
+  operator?: string;
+};
+
+export type UserCreditAuditLogVO = {
+  content?: string;
+  id?: number;
+  operator?: string;
+  remark?: string;
+  time?: number | string;
+};
+
+export type UserCreditDetailVO = UserCreditVO & {
+  auditLogs?: UserCreditAuditLogVO[];
+  auditSummary?: string;
+  changeRecords?: UserCreditChangeRecordVO[];
 };
 
 export type UserCreditChartReqVO = {
@@ -36,11 +64,11 @@ export type UserCreditChartReqVO = {
 };
 
 export type UserCreditChartVO = {
-  creditLevelDistribution: Array<{
-    level: string;
-    count: number;
-  }>;
   avgCreditScore: number;
+  creditLevelDistribution: Array<{
+    count: number;
+    level: string;
+  }>;
   lowCreditUserCount: number;
 };
 
@@ -54,7 +82,7 @@ export const UserCreditApi = {
   },
 
   getUserCredit: async (id: number) => {
-    return await requestClient.get<UserCreditVO>(
+    return await requestClient.get<UserCreditDetailVO>(
       '/usermerchant/user-credit/get',
       {
         params: { id },

@@ -3,9 +3,21 @@ import type { PageParam, PageResult } from '@vben/request';
 import { requestClient } from '#/api/request';
 
 // 会员标签 VO
-export type MemberTagVO = Record<string, unknown>;
+export type MemberTagVO = {
+  createTime?: number | string;
+  description?: string;
+  id?: number;
+  name: string;
+  status?: number | string;
+  updateTime?: number | string;
+  userCount?: number;
+};
 
-export type MemberTagPageReqVO = PageParam & Record<string, unknown>;
+export type MemberTagPageReqVO = PageParam & {
+  createTime?: string | string[];
+  name?: string;
+  status?: number | string;
+};
 
 export type MemberTagOperateReqVO = {
   ids: number[];
@@ -16,11 +28,11 @@ export type MemberTagChartReqVO = {
 };
 
 export type MemberTagChartVO = {
-  tagDistribution: Array<{
-    type: string;
-    count: number;
-  }>;
   tagCount: number;
+  tagDistribution: Array<{
+    count: number;
+    type: string;
+  }>;
   tagUserCount: number;
 };
 

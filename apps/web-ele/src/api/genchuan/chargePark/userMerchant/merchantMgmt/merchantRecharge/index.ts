@@ -4,32 +4,56 @@ import { requestClient } from '#/api/request';
 
 // 商户充值 VO
 export type MerchantRechargeVO = {
+  amount: number;
+  confirmTime?: null | number | string;
+  createTime?: number | string;
+  creator?: string;
   id?: number;
   merchantId: number;
-  amount: number;
-  payChannel: string;
-  status: string;
   orderNo?: string;
-  payTime?: string | null;
-  confirmTime?: string | null;
+  payChannel: string;
+  payTime?: null | number | string;
   remark?: string;
-  reserve1?: string | null;
-  reserve2?: string | null;
-  creator?: string;
-  createTime?: string;
-  updateTime?: string;
+  reserve1?: null | string;
+  reserve2?: null | string;
+  status: string;
+  updateTime?: number | string;
+};
+
+export type MerchantRechargeMerchantVO = {
+  address?: string;
+  contact?: string;
+  id?: number;
+  merchantType?: string;
+  name?: string;
+  phone?: string;
+  registerTime?: number | string;
+  remark?: string;
+  status?: string;
+};
+
+export type MerchantRechargeLogVO = {
+  content?: string;
+  id?: number;
+  operator?: string;
+  time?: number | string;
+};
+
+export type MerchantRechargeDetailVO = MerchantRechargeVO & {
+  logs?: MerchantRechargeLogVO[];
+  merchantInfo?: MerchantRechargeMerchantVO | null;
 };
 
 // 商户充值分页请求
 export type MerchantRechargePageReqVO = PageParam & {
-  merchantId?: number;
-  amount?: number;
-  payChannel?: string;
-  status?: string;
-  orderNo?: string;
-  payTime?: string;
+  amount?: number | string;
   confirmTime?: string;
+  merchantId?: number;
+  orderNo?: string;
+  payChannel?: string;
+  payTime?: string;
   remark?: string;
+  status?: string;
 };
 
 export type MerchantRechargePayReqVO = {
@@ -46,11 +70,11 @@ export type MerchantRechargeChartReqVO = {
 };
 
 export type MerchantRechargeChartVO = {
-  rechargeAmountTrend: Array<{
-    date: string;
-    amount: number;
-  }>;
   rechargeAmount: number;
+  rechargeAmountTrend: Array<{
+    amount: number;
+    date: string;
+  }>;
   rechargeSuccessRate: number;
 };
 
@@ -64,7 +88,7 @@ export const MerchantRechargeApi = {
   },
 
   getMerchantRecharge: async (id: number) => {
-    return await requestClient.get<MerchantRechargeVO>(
+    return await requestClient.get<MerchantRechargeDetailVO>(
       '/usermerchant/merchant-recharge/get',
       {
         params: { id },

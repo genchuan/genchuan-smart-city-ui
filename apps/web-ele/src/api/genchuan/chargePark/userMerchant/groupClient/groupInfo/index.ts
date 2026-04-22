@@ -4,52 +4,122 @@ import { requestClient } from '#/api/request';
 
 // 集团信息 VO
 export type GroupInfoVO = {
+  address?: string;
+  auditorId?: null | number;
+  auditorName?: string;
+  auditTime?: null | string;
+  contact: string;
+  createTime?: string;
+  creator?: string;
+  groupType: string;
   id?: number;
   name: string;
-  contact: string;
   phone: string;
-  groupType: string;
-  address?: string;
   registerTime: string;
+  remark?: string;
+  reserve1?: null | string;
+  reserve2?: null | string;
+  status: string;
+  updater?: string;
+  updateTime?: string;
+  walletBalance?: number;
+};
+
+export type GroupInfoCreateReqVO = {
+  address?: string;
+  contact: string;
+  groupType: string;
+  name: string;
+  phone: string;
+  registerTime: string;
+  remark?: string;
+  reserve1?: null | string;
+  reserve2?: null | string;
   status: string;
   walletBalance?: number;
-  auditorId?: number | null;
-  auditTime?: string | null;
-  remark?: string;
-  reserve1?: string | null;
-  reserve2?: string | null;
-  creator?: string;
-  createTime?: string;
-  updateTime?: string;
+};
+
+export type GroupInfoUpdateReqVO = GroupInfoCreateReqVO & {
+  id: number;
 };
 
 // 集团信息分页请求
 export type GroupInfoPageReqVO = PageParam & {
-  name?: string;
-  contact?: string;
-  phone?: string;
-  groupType?: string;
   address?: string;
-  registerTime?: string;
-  status?: string;
-  walletBalance?: number;
   auditorId?: number;
   auditTime?: string;
+  contact?: string;
+  groupType?: string;
+  name?: string;
+  phone?: string;
+  registerTime?: string;
   remark?: string;
-};
-
-export type GroupInfoAuditReqVO = {
-  ids: number[];
-  auditRemark?: string;
-};
-
-export type GroupInfoRejectReqVO = {
-  ids: number[];
-  auditRemark: string;
+  status?: string;
+  walletBalance?: number;
 };
 
 export type GroupInfoOperateReqVO = {
   ids: number[];
+};
+
+export type GroupInfoAuditReqVO = {
+  auditRemark?: string;
+  ids: number[];
+};
+
+export type GroupInfoRejectReqVO = {
+  auditRemark: string;
+  ids: number[];
+};
+
+export type GroupInfoOperatorVO = {
+  account?: string;
+  dept?: string;
+  deptName?: string;
+  id?: number;
+  mobile?: string;
+  name?: string;
+  nickname?: string;
+  phone?: string;
+  role?: string;
+  roleNames?: string[];
+};
+
+export type GroupAccountLogVO = {
+  afterBalance?: number;
+  amount?: number;
+  id?: number;
+  remark?: string;
+  time?: number | string;
+  type?: string;
+};
+
+export type GroupCarInfoVO = {
+  carType?: string;
+  id?: number;
+  plateColor?: string;
+  plateNo?: string;
+  status?: string;
+};
+
+export type GroupInfoAuditLogVO = {
+  content?: string;
+  id?: number;
+  operator?: string;
+  remark?: string;
+  time?: number | string;
+};
+
+export type GroupInfoDetailVO = GroupInfoVO & {
+  accountLogs?: GroupAccountLogVO[];
+  auditLogs?: GroupInfoAuditLogVO[];
+  auditorInfo?: GroupInfoOperatorVO | null;
+  auditSummary?: string;
+  cars?: GroupCarInfoVO[];
+  creatorId?: number;
+  creatorInfo?: GroupInfoOperatorVO | null;
+  updaterId?: number;
+  updaterInfo?: GroupInfoOperatorVO | null;
 };
 
 export type GroupInfoChartReqVO = {
@@ -58,11 +128,11 @@ export type GroupInfoChartReqVO = {
 
 export type GroupInfoChartVO = {
   groupGrowthTrend: Array<{
-    date: string;
     count: number;
+    date: string;
   }>;
-  totalGroupCount: number;
   newGroupCount: number;
+  totalGroupCount: number;
 };
 
 // 集团信息 API
@@ -70,12 +140,14 @@ export const GroupInfoApi = {
   getGroupInfoPage: async (params: GroupInfoPageReqVO) => {
     return await requestClient.get<PageResult<GroupInfoVO>>(
       '/usermerchant/group-info/page',
-      { params },
+      {
+        params,
+      },
     );
   },
 
   getGroupInfo: async (id: number) => {
-    return await requestClient.get<GroupInfoVO>(
+    return await requestClient.get<GroupInfoDetailVO>(
       '/usermerchant/group-info/get',
       {
         params: { id },
@@ -83,11 +155,11 @@ export const GroupInfoApi = {
     );
   },
 
-  createGroupInfo: async (data: GroupInfoVO) => {
+  createGroupInfo: async (data: GroupInfoCreateReqVO) => {
     return await requestClient.post('/usermerchant/group-info/create', data);
   },
 
-  updateGroupInfo: async (data: GroupInfoVO) => {
+  updateGroupInfo: async (data: GroupInfoUpdateReqVO) => {
     return await requestClient.put('/usermerchant/group-info/update', data);
   },
 
@@ -122,7 +194,9 @@ export const GroupInfoApi = {
   getGroupInfoChart: async (params?: GroupInfoChartReqVO) => {
     return await requestClient.get<GroupInfoChartVO>(
       '/usermerchant/group-info/chart',
-      { params },
+      {
+        params,
+      },
     );
   },
 };

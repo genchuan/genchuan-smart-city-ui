@@ -4,23 +4,23 @@ import { requestClient } from '#/api/request';
 
 // 用户运营报表 VO
 export type UserOpReportVO = {
-  id?: number;
-  reportType: string;
-  timeScale: string;
-  statTime: string;
   createTime?: string;
-  filterCondition?: string | null;
-  status?: string;
   creator?: string;
+  filterCondition?: null | string;
+  id?: number;
   remark?: string;
+  reportType: string;
+  statTime: string;
+  status?: string;
+  timeScale: string;
 };
 
 // 用户运营报表分页请求
 export type UserOpReportPageReqVO = PageParam & {
-  reportType?: string;
-  timeScale?: string;
-  statTime?: string;
   createTime?: string;
+  reportType?: string;
+  statTime?: string;
+  timeScale?: string;
 };
 
 export type UserOpReportGenerateReqVO = {
@@ -34,21 +34,26 @@ export type UserOpReportChartReqVO = {
 };
 
 export type UserOpReportChartVO = {
-  userOpTrend: Array<{
-    date: string;
-    userCount: number;
-    memberCount: number;
-  }>;
-  userTypeDistribution: Array<{
-    type: string;
-    count: number;
-  }>;
   coreIndex: {
-    totalUserCount: number;
-    totalMemberCount: number;
     avgCreditScore: number;
+    totalMemberCount: number;
+    totalUserCount: number;
     userGrowthRate: number;
   };
+  userOpTrend: Array<{
+    date: string;
+    memberCount: number;
+    userCount: number;
+  }>;
+  userTypeDistribution: Array<{
+    count: number;
+    type: string;
+  }>;
+};
+
+export type UserOpReportDetailVO = UserOpReportVO & {
+  compareSummary?: string;
+  summary?: string;
 };
 
 // 用户运营报表 API
@@ -61,7 +66,7 @@ export const UserOpReportApi = {
   },
 
   getUserOpReport: async (id: number) => {
-    return await requestClient.get<UserOpReportVO>(
+    return await requestClient.get<UserOpReportDetailVO>(
       '/usermerchant/user-op-report/get',
       {
         params: { id },

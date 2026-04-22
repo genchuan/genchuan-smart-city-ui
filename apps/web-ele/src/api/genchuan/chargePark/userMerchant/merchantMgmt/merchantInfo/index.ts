@@ -4,52 +4,138 @@ import { requestClient } from '#/api/request';
 
 // 商户信息 VO
 export type MerchantInfoVO = {
-  id?: number;
-  name: string;
-  contact: string;
-  phone: string;
-  merchantType: string;
   address?: string;
+  auditorId?: null | number;
+  auditTime?: null | string;
+  contact: string;
+  createTime?: string;
+  creator?: string;
+  id?: number;
+  merchantType: string;
+  name: string;
+  phone: string;
   registerTime: string;
+  remark?: string;
+  reserve1?: null | string;
+  reserve2?: null | string;
+  status: string;
+  updater?: string;
+  updateTime?: string;
+  walletBalance?: number;
+};
+
+export type MerchantInfoCreateReqVO = {
+  address?: string;
+  contact: string;
+  merchantType: string;
+  name: string;
+  phone: string;
+  registerTime: string;
+  remark?: string;
+  reserve1?: null | string;
+  reserve2?: null | string;
   status: string;
   walletBalance?: number;
-  auditorId?: number | null;
-  auditTime?: string | null;
-  remark?: string;
-  reserve1?: string | null;
-  reserve2?: string | null;
-  creator?: string;
-  createTime?: string;
-  updateTime?: string;
+};
+
+export type MerchantInfoUpdateReqVO = MerchantInfoCreateReqVO & {
+  id: number;
 };
 
 // 商户信息分页请求
 export type MerchantInfoPageReqVO = PageParam & {
-  name?: string;
-  contact?: string;
-  phone?: string;
-  merchantType?: string;
   address?: string;
-  registerTime?: string;
-  status?: string;
-  walletBalance?: number;
   auditorId?: number;
   auditTime?: string;
+  contact?: string;
+  merchantType?: string;
+  name?: string;
+  phone?: string;
+  registerTime?: string;
   remark?: string;
-};
-
-export type MerchantInfoAuditReqVO = {
-  ids: number[];
-  auditRemark?: string;
-};
-
-export type MerchantInfoRejectReqVO = {
-  ids: number[];
-  auditRemark: string;
+  status?: string;
+  walletBalance?: number;
 };
 
 export type MerchantInfoOperateReqVO = {
   ids: number[];
+};
+
+export type MerchantInfoAuditReqVO = {
+  auditRemark?: string;
+  ids: number[];
+};
+
+export type MerchantInfoRejectReqVO = {
+  auditRemark: string;
+  ids: number[];
+};
+
+export type MerchantInfoOperatorVO = {
+  account?: string;
+  dept?: string;
+  deptName?: string;
+  id?: number;
+  mobile?: string;
+  name?: string;
+  nickname?: string;
+  phone?: string;
+  role?: string;
+  roleNames?: string[];
+};
+
+export type MerchantAccountLogVO = {
+  afterBalance?: number;
+  amount?: number;
+  id?: number;
+  remark?: string;
+  time?: number | string;
+  type?: string;
+};
+
+export type MerchantLinkInfoVO = {
+  apiUrl?: string;
+  id?: number;
+  linkType?: string;
+  status?: string;
+};
+
+export type MerchantRechargeInfoVO = {
+  amount?: number;
+  id?: number;
+  payChannel?: string;
+  status?: string;
+  time?: number | string;
+};
+
+export type MerchantCouponInfoVO = {
+  couponName?: string;
+  id?: number;
+  sendCount?: number;
+  status?: string;
+  useCount?: number;
+};
+
+export type MerchantInfoAuditLogVO = {
+  content?: string;
+  id?: number;
+  operator?: string;
+  remark?: string;
+  time?: number | string;
+};
+
+export type MerchantInfoDetailVO = MerchantInfoVO & {
+  accountLogs?: MerchantAccountLogVO[];
+  auditLogs?: MerchantInfoAuditLogVO[];
+  auditorInfo?: MerchantInfoOperatorVO | null;
+  auditSummary?: string;
+  couponRecords?: MerchantCouponInfoVO[];
+  creatorId?: number;
+  creatorInfo?: MerchantInfoOperatorVO | null;
+  linkRecords?: MerchantLinkInfoVO[];
+  rechargeRecords?: MerchantRechargeInfoVO[];
+  updaterId?: number;
+  updaterInfo?: MerchantInfoOperatorVO | null;
 };
 
 export type MerchantInfoChartReqVO = {
@@ -58,15 +144,15 @@ export type MerchantInfoChartReqVO = {
 
 export type MerchantInfoChartVO = {
   merchantGrowthTrend: Array<{
-    date: string;
     count: number;
+    date: string;
   }>;
   merchantTypeDistribution: Array<{
-    type: string;
     count: number;
+    type: string;
   }>;
-  totalMerchantCount: number;
   newMerchantCount: number;
+  totalMerchantCount: number;
 };
 
 // 商户信息 API
@@ -74,12 +160,14 @@ export const MerchantInfoApi = {
   getMerchantInfoPage: async (params: MerchantInfoPageReqVO) => {
     return await requestClient.get<PageResult<MerchantInfoVO>>(
       '/usermerchant/merchant-info/page',
-      { params },
+      {
+        params,
+      },
     );
   },
 
   getMerchantInfo: async (id: number) => {
-    return await requestClient.get<MerchantInfoVO>(
+    return await requestClient.get<MerchantInfoDetailVO>(
       '/usermerchant/merchant-info/get',
       {
         params: { id },
@@ -87,11 +175,11 @@ export const MerchantInfoApi = {
     );
   },
 
-  createMerchantInfo: async (data: MerchantInfoVO) => {
+  createMerchantInfo: async (data: MerchantInfoCreateReqVO) => {
     return await requestClient.post('/usermerchant/merchant-info/create', data);
   },
 
-  updateMerchantInfo: async (data: MerchantInfoVO) => {
+  updateMerchantInfo: async (data: MerchantInfoUpdateReqVO) => {
     return await requestClient.put('/usermerchant/merchant-info/update', data);
   },
 
@@ -126,7 +214,9 @@ export const MerchantInfoApi = {
   getMerchantInfoChart: async (params?: MerchantInfoChartReqVO) => {
     return await requestClient.get<MerchantInfoChartVO>(
       '/usermerchant/merchant-info/chart',
-      { params },
+      {
+        params,
+      },
     );
   },
 };

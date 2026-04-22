@@ -4,38 +4,93 @@ import { requestClient } from '#/api/request';
 
 // 商户发券 VO
 export type MerchantSendCouponVO = {
-  id?: number;
-  merchantId: number;
   couponId: number;
   couponName?: string;
-  sendCount: number;
-  execTime?: string;
-  finishTime?: string | null;
-  useCount?: number;
-  status?: string;
-  remark?: string;
-  reserve1?: string | null;
-  reserve2?: string | null;
+  createTime?: number | string;
   creator?: string;
-  createTime?: string;
-  updateTime?: string;
+  execTime?: null | number | string;
+  finishTime?: null | number | string;
+  id?: number;
+  merchantId: number;
+  remark?: string;
+  reserve1?: null | string;
+  reserve2?: null | string;
+  sendCount: number;
+  status?: string;
+  updateTime?: number | string;
+  useCount?: number;
 };
 
-// 商户发券分页请求
-export type MerchantSendCouponPageReqVO = PageParam & {
-  merchantId?: number;
-  couponId?: number;
-  couponName?: string;
-  sendCount?: number;
+export type MerchantSendCouponSendReqVO = {
+  couponId: number;
   execTime?: string;
-  finishTime?: string;
-  useCount?: number;
-  status?: string;
+  merchantId: number;
   remark?: string;
+  sendCount: number;
 };
 
 export type MerchantSendCouponOperateReqVO = {
   ids: number[];
+};
+
+export type MerchantSendCouponMerchantVO = {
+  address?: string;
+  contact?: string;
+  id?: number;
+  merchantType?: string;
+  name?: string;
+  phone?: string;
+  registerTime?: number | string;
+  remark?: string;
+  status?: string;
+};
+
+export type MerchantSendCouponCouponVO = {
+  id?: number;
+  name?: string;
+  remark?: string;
+  rule?: string;
+  status?: string;
+  type?: string;
+  validPeriod?: string;
+};
+
+export type MerchantSendCouponRedemptionVO = {
+  count?: number;
+  id?: number;
+  orderNo?: string;
+  plateNo?: string;
+  remark?: string;
+  time?: number | string;
+  type?: string;
+  userName?: string;
+};
+
+export type MerchantSendCouponLogVO = {
+  content?: string;
+  id?: number;
+  operator?: string;
+  time?: number | string;
+};
+
+export type MerchantSendCouponDetailVO = MerchantSendCouponVO & {
+  couponInfo?: MerchantSendCouponCouponVO | null;
+  logs?: MerchantSendCouponLogVO[];
+  merchantInfo?: MerchantSendCouponMerchantVO | null;
+  redemptions?: MerchantSendCouponRedemptionVO[];
+};
+
+// 商户发券分页请求
+export type MerchantSendCouponPageReqVO = PageParam & {
+  couponId?: number;
+  couponName?: string;
+  execTime?: string;
+  finishTime?: string;
+  merchantId?: number;
+  remark?: string;
+  sendCount?: number | string;
+  status?: string;
+  useCount?: number | string;
 };
 
 export type MerchantSendCouponChartReqVO = {
@@ -43,11 +98,11 @@ export type MerchantSendCouponChartReqVO = {
 };
 
 export type MerchantSendCouponChartVO = {
-  sendCountTrend: Array<{
-    date: string;
-    count: number;
-  }>;
   sendCount: number;
+  sendCountTrend: Array<{
+    count: number;
+    date: string;
+  }>;
   useRate: number;
 };
 
@@ -61,7 +116,7 @@ export const MerchantSendCouponApi = {
   },
 
   getMerchantSendCoupon: async (id: number) => {
-    return await requestClient.get<MerchantSendCouponVO>(
+    return await requestClient.get<MerchantSendCouponDetailVO>(
       '/usermerchant/merchant-send-coupon/get',
       {
         params: { id },
@@ -69,7 +124,7 @@ export const MerchantSendCouponApi = {
     );
   },
 
-  sendMerchantCoupon: async (data: MerchantSendCouponVO) => {
+  sendMerchantCoupon: async (data: MerchantSendCouponSendReqVO) => {
     return await requestClient.post(
       '/usermerchant/merchant-send-coupon/send',
       data,
@@ -79,7 +134,9 @@ export const MerchantSendCouponApi = {
   exportMerchantSendCoupon: async (params: MerchantSendCouponPageReqVO) => {
     return await requestClient.download(
       '/usermerchant/merchant-send-coupon/export',
-      { params },
+      {
+        params,
+      },
     );
   },
 

@@ -4,49 +4,107 @@ import { requestClient } from '#/api/request';
 
 // 集团车辆 VO
 export type GroupCarVO = {
-  id?: number;
-  groupId: number;
-  plateNo: string;
-  plateColor: string;
-  carType: string;
+  auditorId?: null | number;
+  auditorName?: string;
+  auditRemark?: null | string;
+  auditTime?: null | string;
   bindTime: string;
-  status: string;
-  auditorId?: number | null;
-  auditTime?: string | null;
-  auditRemark?: string | null;
-  remark?: string;
-  reserve1?: string | null;
-  reserve2?: string | null;
-  creator?: string;
+  carType: string;
   createTime?: string;
+  creator?: string;
+  groupId: number;
+  groupName?: string;
+  id?: number;
+  plateColor: string;
+  plateNo: string;
+  remark?: string;
+  reserve1?: null | string;
+  reserve2?: null | string;
+  status: string;
   updateTime?: string;
+};
+
+export type GroupCarCreateReqVO = {
+  auditorId?: null | number;
+  auditRemark?: null | string;
+  auditTime?: null | string;
+  bindTime: string;
+  carType: string;
+  groupId: number;
+  plateColor: string;
+  plateNo: string;
+  remark?: string;
+  reserve1?: null | string;
+  reserve2?: null | string;
+  status: string;
+};
+
+export type GroupCarUpdateReqVO = GroupCarCreateReqVO & {
+  id: number;
 };
 
 // 集团车辆分页请求
 export type GroupCarPageReqVO = PageParam & {
-  groupId?: number;
-  plateNo?: string;
-  plateColor?: string;
-  carType?: string;
-  bindTime?: string;
-  status?: string;
   auditorId?: number;
   auditTime?: string;
+  bindTime?: string;
+  carType?: string;
+  groupId?: number;
+  plateColor?: string;
+  plateNo?: string;
   remark?: string;
+  status?: string;
 };
 
 export type GroupCarAuditReqVO = {
-  ids: number[];
   auditRemark?: string;
+  ids: number[];
 };
 
 export type GroupCarRejectReqVO = {
-  ids: number[];
   auditRemark: string;
+  ids: number[];
 };
 
 export type GroupCarOperateReqVO = {
   ids: number[];
+};
+
+export type GroupCarGroupVO = {
+  contact?: string;
+  groupType?: string;
+  id?: number;
+  name?: string;
+  phone?: string;
+  remark?: string;
+};
+
+export type GroupCarOperatorVO = {
+  account?: string;
+  dept?: string;
+  deptName?: string;
+  id?: number;
+  mobile?: string;
+  name?: string;
+  nickname?: string;
+  phone?: string;
+  role?: string;
+  roleNames?: string[];
+};
+
+export type GroupCarBindingLogVO = {
+  action?: string;
+  id?: number;
+  operator?: string;
+  remark?: string;
+  time?: number | string;
+};
+
+export type GroupCarDetailVO = GroupCarVO & {
+  auditorInfo?: GroupCarOperatorVO | null;
+  bindingLogs?: GroupCarBindingLogVO[];
+  creatorInfo?: GroupCarOperatorVO | null;
+  groupInfo?: GroupCarGroupVO | null;
 };
 
 export type GroupCarChartReqVO = {
@@ -54,12 +112,12 @@ export type GroupCarChartReqVO = {
 };
 
 export type GroupCarChartVO = {
-  carTypeDistribution: Array<{
-    type: string;
-    count: number;
-  }>;
-  bindCarCount: number;
   auditPassRate: number;
+  bindCarCount: number;
+  carTypeDistribution: Array<{
+    count: number;
+    type: string;
+  }>;
 };
 
 // 集团车辆 API
@@ -67,21 +125,26 @@ export const GroupCarApi = {
   getGroupCarPage: async (params: GroupCarPageReqVO) => {
     return await requestClient.get<PageResult<GroupCarVO>>(
       '/usermerchant/group-car/page',
-      { params },
+      {
+        params,
+      },
     );
   },
 
   getGroupCar: async (id: number) => {
-    return await requestClient.get<GroupCarVO>('/usermerchant/group-car/get', {
-      params: { id },
-    });
+    return await requestClient.get<GroupCarDetailVO>(
+      '/usermerchant/group-car/get',
+      {
+        params: { id },
+      },
+    );
   },
 
-  createGroupCar: async (data: GroupCarVO) => {
+  createGroupCar: async (data: GroupCarCreateReqVO) => {
     return await requestClient.post('/usermerchant/group-car/create', data);
   },
 
-  updateGroupCar: async (data: GroupCarVO) => {
+  updateGroupCar: async (data: GroupCarUpdateReqVO) => {
     return await requestClient.put('/usermerchant/group-car/update', data);
   },
 
@@ -116,7 +179,9 @@ export const GroupCarApi = {
   getGroupCarChart: async (params?: GroupCarChartReqVO) => {
     return await requestClient.get<GroupCarChartVO>(
       '/usermerchant/group-car/chart',
-      { params },
+      {
+        params,
+      },
     );
   },
 };

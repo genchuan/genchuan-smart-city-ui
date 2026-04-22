@@ -4,44 +4,103 @@ import { requestClient } from '#/api/request';
 
 // 用户车辆 VO
 export type UserCarVO = {
-  id?: number;
-  userId: number;
-  plateNo: string;
-  plateColor: string;
-  carType: string;
+  auditorId?: null | number;
+  auditorName?: string;
+  auditRemark?: null | string;
+  auditTime?: null | string;
   bindTime: string;
-  status: string;
-  auditorId?: number | null;
-  auditTime?: string | null;
-  auditRemark?: string | null;
-  remark?: string;
-  reserve1?: string | null;
-  reserve2?: string | null;
-  creator?: string;
+  carType: string;
   createTime?: string;
+  creator?: string;
+  id?: number;
+  phone?: string;
+  plateColor: string;
+  plateNo: string;
+  remark?: string;
+  reserve1?: null | string;
+  reserve2?: null | string;
+  status: string;
   updateTime?: string;
+  userId: number;
+  userName?: string;
+};
+
+export type UserCarCreateReqVO = {
+  auditorId?: null | number;
+  auditRemark?: null | string;
+  auditTime?: null | string;
+  bindTime: string;
+  carType: string;
+  plateColor: string;
+  plateNo: string;
+  remark?: string;
+  reserve1?: null | string;
+  reserve2?: null | string;
+  status: string;
+  userId: number;
+};
+
+export type UserCarUpdateReqVO = UserCarCreateReqVO & {
+  id: number;
 };
 
 // 用户车辆分页请求
 export type UserCarPageReqVO = PageParam & {
-  userId?: number;
-  plateNo?: string;
-  plateColor?: string;
-  carType?: string;
-  bindTime?: string;
-  status?: string;
   auditorId?: number;
   auditTime?: string;
+  bindTime?: string;
+  carType?: string;
+  plateColor?: string;
+  plateNo?: string;
   remark?: string;
+  status?: string;
+  userId?: number;
 };
 
 export type UserCarAuditReqVO = {
-  ids: number[];
   auditRemark?: string;
+  ids: number[];
 };
 
 export type UserCarOperateReqVO = {
   ids: number[];
+};
+
+export type UserCarUserVO = {
+  id?: number;
+  nickname?: string;
+  phone?: string;
+  remark?: string;
+  userType?: string;
+};
+
+export type UserCarOperatorVO = {
+  account?: string;
+  dept?: string;
+  deptName?: string;
+  email?: string;
+  id?: number;
+  mobile?: string;
+  name?: string;
+  nickname?: string;
+  phone?: string;
+  role?: string;
+  roleNames?: string[];
+};
+
+export type UserCarBindingLogVO = {
+  action?: string;
+  id?: number;
+  operator?: string;
+  remark?: string;
+  time?: number | string;
+};
+
+export type UserCarDetailVO = UserCarVO & {
+  auditorInfo?: null | UserCarOperatorVO;
+  bindingLogs?: UserCarBindingLogVO[];
+  creatorInfo?: null | UserCarOperatorVO;
+  userInfo?: null | UserCarUserVO;
 };
 
 export type UserCarChartReqVO = {
@@ -49,12 +108,12 @@ export type UserCarChartReqVO = {
 };
 
 export type UserCarChartVO = {
-  carTypeDistribution: Array<{
-    type: string;
-    count: number;
-  }>;
-  bindCarCount: number;
   auditPassRate: number;
+  bindCarCount: number;
+  carTypeDistribution: Array<{
+    count: number;
+    type: string;
+  }>;
 };
 
 // 用户车辆 API
@@ -62,21 +121,26 @@ export const UserCarApi = {
   getUserCarPage: async (params: UserCarPageReqVO) => {
     return await requestClient.get<PageResult<UserCarVO>>(
       '/usermerchant/user-car/page',
-      { params },
+      {
+        params,
+      },
     );
   },
 
   getUserCar: async (id: number) => {
-    return await requestClient.get<UserCarVO>('/usermerchant/user-car/get', {
-      params: { id },
-    });
+    return await requestClient.get<UserCarDetailVO>(
+      '/usermerchant/user-car/get',
+      {
+        params: { id },
+      },
+    );
   },
 
-  createUserCar: async (data: UserCarVO) => {
+  createUserCar: async (data: UserCarCreateReqVO) => {
     return await requestClient.post('/usermerchant/user-car/create', data);
   },
 
-  updateUserCar: async (data: UserCarVO) => {
+  updateUserCar: async (data: UserCarUpdateReqVO) => {
     return await requestClient.put('/usermerchant/user-car/update', data);
   },
 
@@ -111,7 +175,9 @@ export const UserCarApi = {
   getUserCarChart: async (params?: UserCarChartReqVO) => {
     return await requestClient.get<UserCarChartVO>(
       '/usermerchant/user-car/chart',
-      { params },
+      {
+        params,
+      },
     );
   },
 };
