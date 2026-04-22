@@ -491,13 +491,13 @@ export function useGridColumns() {
       sortable: true,
       slots: { default: 'status' },
     },
-    {
-      field: 'creator',
-      title: '上报人',
-      minWidth: 110,
-      sortable: true,
-      slots: { default: 'creator' },
-    },
+    // {
+    //   field: 'creator',
+    //   title: '上报人',
+    //   minWidth: 110,
+    //   sortable: true,
+    //   slots: { default: 'creator' },
+    // },
     {
       field: 'auditUserName',
       title: '审核人',

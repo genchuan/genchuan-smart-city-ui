@@ -42,7 +42,7 @@ function downloadTemplate() {
       '丰泽站所有设备',
       '日',
       '2026-04-15 09:00:00',
-      '每日对场站设备进行常规巡检',
+      '待生效',
     ],
     [
       '消防专项巡检计划',
@@ -50,7 +50,7 @@ function downloadTemplate() {
       '泉港充电站消防设备',
       '月',
       '2026-04-16 09:00:00',
-      '每月对消防设施和应急设备进行专项巡检',
+      '待生效',
     ],
   ];
   const worksheet = XLSX.utils.aoa_to_sheet(templateData);

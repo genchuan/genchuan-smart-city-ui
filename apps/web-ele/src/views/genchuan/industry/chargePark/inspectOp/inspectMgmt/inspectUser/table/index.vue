@@ -4,12 +4,13 @@ import { computed, reactive, ref, watch } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
 
-import { ElMessage, ElTag } from 'element-plus';
+import { ElLoading, ElMessage, ElMessageBox, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
+  deleteInspectUser,
   exportInspectUser,
   getInspectUserDetail,
   getInspectUserPage,
@@ -249,13 +250,13 @@ function handleEdit(row) {
   formDrawerRef.value?.open(row);
 }
 
-function handleEnable(row) {
-  statusConfirmDialogRef.value?.open('enable', row);
-}
+// function handleEnable(row) {
+//   statusConfirmDialogRef.value?.open('enable', row);
+// }
 
-function handleDisable(row) {
-  statusConfirmDialogRef.value?.open('disable', row);
-}
+// function handleDisable(row) {
+//   statusConfirmDialogRef.value?.open('disable', row);
+// }
 
 function handleDeviceClick(row) {
   dataObj.deviceDetailObj = getDeviceDetail(row);
@@ -272,6 +273,22 @@ function handleFullShow() {
 
 function changeTotalShow() {
   dataObj.totalShow = !dataObj.totalShow;
+}
+
+async function handleDelete(row) {
+  await ElMessageBox.confirm('确定删除该巡检人员吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  });
+  const loadingInstance = ElLoading.service({ text: '删除中...' });
+  try {
+    await deleteInspectUser(row.id);
+    ElMessage.success('删除成功');
+    handleRefresh();
+  } finally {
+    loadingInstance.close();
+  }
 }
 
 function handleAreaClick(area) {
@@ -467,7 +484,7 @@ watch(
             icon-name="Edit"
             @click="handleEdit(row)"
           />
-          <IconButton
+          <!-- <IconButton
             v-if="isUserStatusLabel(row.status, '正常')"
             content="禁用"
             icon-name="VideoPause"
@@ -478,11 +495,17 @@ watch(
             content="启用"
             icon-name="CircleCheckFilled"
             @click="handleEnable(row)"
-          />
+          /> -->
           <IconButton
             content="查看"
             icon-name="View"
             @click="handleOpenDetail(row)"
+          />
+          <IconButton
+            content="删除"
+            icon-name="delete"
+            color="#F56C6C"
+            @click="handleDelete(row)"
           />
         </div>
       </template>

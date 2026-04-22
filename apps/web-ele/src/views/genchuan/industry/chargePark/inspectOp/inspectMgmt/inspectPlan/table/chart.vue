@@ -6,7 +6,7 @@ import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
-import { getMockChartData } from './data';
+import { getMockChartData, getPlanTypeLabel } from './data';
 
 const emit = defineEmits(['statusFilter', 'trendFilter', 'typeFilter']);
 
@@ -44,7 +44,9 @@ const trendSeriesData = computed(() => [
     color: '#27ae60',
   },
 ]);
-const typeXData = computed(() => state.typeData.map((item) => item.typeName));
+const typeXData = computed(() =>
+  state.typeData.map((item) => getPlanTypeLabel(item.typeName)),
+);
 const typeSeriesData = computed(() => [
   {
     name: '计划数量',
