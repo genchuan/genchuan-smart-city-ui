@@ -662,7 +662,6 @@ watch(
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
-  min-height: 32px;
 }
 
 .inspect-plan-filter-tags :deep(.el-tag) {

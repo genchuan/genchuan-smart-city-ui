@@ -572,7 +572,6 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
-  min-height: 32px;
 }
 
 .inspect-track-filter-tags :deep(.el-tag) {

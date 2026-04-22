@@ -634,7 +634,6 @@ watch(
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
-  min-height: 32px;
 }
 
 .spare-stock-filter-tags :deep(.el-tag) {
