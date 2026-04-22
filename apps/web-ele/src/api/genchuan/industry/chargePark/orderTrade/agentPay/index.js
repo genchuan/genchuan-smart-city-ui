@@ -112,3 +112,49 @@ export function createAgentPayCode(data) {
 export function getAgentPayCodeChart() {
   return requestClient.get('/ordertrade/agent-code/chart');
 } 
+
+/** 代付订单分页 */
+export function getAgentPayOrderPage(params) {
+  return requestClient.get('/ordertrade/agent-order/page', {
+    params,
+  });
+}
+/** 代付订单导出 */
+export function exportAgentPayOrder(params) {
+  return requestClient.download('/ordertrade/agent-order/export', {
+    params,
+  });
+}
+
+/** 代付订单支付 */
+export function payAgentPayOrder(data) {
+  return requestClient.put('/ordertrade/agent-order/pay', data);
+}
+/** 代付订单更新 */
+export function updateAgentPayOrder(data) {
+  return requestClient.put('/ordertrade/agent-order/update', data);
+}
+
+/** 代付订单发票 */
+export function invoiceAgentPayOrder(data) {
+  return requestClient.put('/ordertrade/agent-order/invoice', data);
+}
+/** 代付订单删除 */
+export function deleteAgentPayOrder(params) {
+  return requestClient.delete('/ordertrade/agent-order/delete', {
+    params,
+  });
+}
+/** 代付订单创建 */
+export function createAgentPayOrder(data) {
+  return requestClient.post('/ordertrade/agent-order/create', data);
+}
+/** 代付订单取消 */
+export function cancelAgentPayOrder(data) {
+  return requestClient.put('/ordertrade/agent-order/cancel', data);
+}
+/** 代付订单图表 */
+export function getAgentPayOrderChart() {
+  return requestClient.get('/ordertrade/agent-order/chart');
+}
+ 
