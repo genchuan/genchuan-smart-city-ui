@@ -159,7 +159,7 @@ export function useGridColumns() {
     { field: 'chargeModeName', title: '充电模式', minWidth: 100, sortable: true, slots: { default: 'chargeMode' } },
     { field: 'pileStatusName', title: '设备状态', minWidth: 100, sortable: true, slots: { default: 'pileStatus' } },
     { field: 'faultFlag', title: '故障标记', minWidth: 100, sortable: true, slots: { default: 'faultFlag' } },
-    { field: 'runTime', title: '运行时长(小时)', minWidth: 120, sortable: true },
+    { field: 'runTime', title: '运行时长(小时)', minWidth: 120, align: 'center',sortable: true },
     { field: 'qrcode', title: '充电枪二维码', minWidth: 120, slots: { default: 'qrcode' } },
     { field: 'remark', title: '备注', minWidth: 150, showOverflow: true },
     { field: 'creator', title: '创建人', minWidth: 100, sortable: true },
