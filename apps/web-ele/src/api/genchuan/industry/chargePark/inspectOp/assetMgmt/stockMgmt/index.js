@@ -36,3 +36,8 @@ export function alarmAssetStock(data) {
 export function getAssetStockChart(params) {
   return requestClient.get('/inspectop/asset-stock/chart', { params });
 }
+
+/** 更新库存 */
+export function updateAssetStock(data) {
+  return requestClient.put('/inspectop/asset-stock/update', data);
+}
