@@ -40,12 +40,10 @@ push:
         echo "master 分支：直接部署到 $TARGET_PATH"
         cp -rf $DIST_PATH/* $TARGET_PATH/
       else
-        # 其他分支 → 放到分支名目录下
-        echo "非 master 分支：部署到 $TARGET_PATH/$PIPELINE_TAG"
-        mkdir -p $TARGET_PATH/$PIPELINE_TAG
+        echo "非 master 分支：部署到 $DEV_PATH$PIPELINE_TAG"
+        mkdir -p $DEV_PATH$PIPELINE_TAG
         cp -rf $DIST_PATH/* $DEV_PATH$PIPELINE_TAG/
       fi
-
     - echo "===== 迁移完成 ====="
   retry:
     max: 2
