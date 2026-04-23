@@ -725,7 +725,6 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
-  min-height: 32px;
 }
 
 .inspect-task-filter-tags :deep(.el-tag) {

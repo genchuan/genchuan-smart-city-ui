@@ -2,7 +2,7 @@
 import { computed, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
-import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
@@ -10,34 +10,29 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  exportInspectReport,
-  getInspectReportDetail,
-  getInspectReportPage,
-} from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectReport';
-import { getInspectTaskDetail } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectTask';
+  createAssetCheck,
+  exportAssetCheck,
+  getAssetCheckDetail,
+  getAssetCheckPage,
+} from '#/api/genchuan/industry/chargePark/inspectOp/assetMgmt/assetCheck';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import { $t } from '#/locales';
 
-import {
-  detailFields as inspectTaskDetailFields,
-  normalizeInspectTaskRow,
-} from '../../inspectTask/table/data';
-import ReportAuditDialog from '../components/ReportAuditDialog.vue';
-import ReportProcessDrawer from '../components/ReportProcessDrawer.vue';
+import ProgressDialog from '../components/ProgressDialog.vue';
 import StatusConfirmDialog from '../components/StatusConfirmDialog.vue';
 import {
-  buildTrendReportTimeRange,
   detailFields,
-  filterInspectReportRows,
   filterMockList,
-  getReportStatusLabel,
-  getReportStatusTagType,
-  getReportTypeLabel,
-  getReportTypeTagType,
-  getTaskName,
+  getCheckStatusLabel,
+  getCheckStatusTagType,
+  getCheckTypeLabel,
+  getCheckTypeTagType,
+  getProgressStatus,
   getUserName,
-  isReportStatusLabel,
-  normalizeInspectReportRow,
+  isCheckStatusLabel,
+  normalizeAssetCheckRow,
   textObj,
+  useFormSchema,
   useGridColumns,
   useSearchFormSchema,
 } from './data';
@@ -65,24 +60,20 @@ const [Drawer, drawerApi] = useVbenDrawer({
 });
 
 const detailDrawerRef = ref(null);
-const taskDetailDrawerRef = ref(null);
-const auditDialogRef = ref(null);
-const processDrawerRef = ref(null);
 const statusConfirmDialogRef = ref(null);
+const progressDialogRef = ref(null);
+const formData = ref({});
 const checkedIds = ref([]);
 const checkedRows = ref([]);
-const filterTaskId = ref('');
 const filterType = ref('');
 const filterStatus = ref('');
 const filterCreator = ref('');
-const filterAuditUserId = ref('');
-const filterProcessUserId = ref('');
+const filterExecuteUserId = ref('');
 const filterTrendTime = ref('');
 
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
-  taskDetailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -92,41 +83,79 @@ const dataObj = reactive({
 });
 
 const currentPageStats = computed(() => {
-  const waitAuditCount = dataObj.list.filter((item) =>
-    isReportStatusLabel(item.status, '待审核'),
+  const waitingCount = dataObj.list.filter((item) =>
+    isCheckStatusLabel(item.status, '待盘点'),
   ).length;
-  const waitProcessCount = dataObj.list.filter((item) =>
-    isReportStatusLabel(item.status, '待处置'),
+  const runningCount = dataObj.list.filter((item) =>
+    isCheckStatusLabel(item.status, '盘点中'),
   ).length;
   const finishedCount = dataObj.list.filter((item) =>
-    isReportStatusLabel(item.status, '已完成'),
+    isCheckStatusLabel(item.status, '已完成'),
   ).length;
 
   return {
+    waitingCount,
+    runningCount,
     finishedCount,
-    waitAuditCount,
-    waitProcessCount,
   };
 });
 
-function buildQueryParams(page) {
-  const trendReportTimeRange = buildTrendReportTimeRange(filterTrendTime.value);
+const [Form, formApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  layout: 'horizontal',
+  schema: useFormSchema(),
+  showDefaultActions: false,
+});
 
+const [FormDrawer, formDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    formDrawerApi.close();
+  },
+  async onConfirm() {
+    const { valid } = await formApi.validate();
+    if (!valid) return;
+
+    const values = await formApi.getValues();
+    try {
+      await createAssetCheck({
+        ...values,
+        progress: 0,
+        status: '待盘点',
+      });
+      ElMessage.success($t('ui.actionMessage.addSuccess'));
+      formDrawerApi.close();
+      handleRefresh();
+    } catch (error) {
+      console.error(error);
+      ElMessage.error('发起盘点失败');
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (!isOpen) return;
+    formData.value = formDrawerApi.getData() || {};
+    await formApi.resetForm();
+    await formApi.setValues(formData.value);
+  },
+});
+
+function buildQueryParams(page) {
   return {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...dataObj.searchParams,
-    taskId: filterTaskId.value || dataObj.searchParams.taskId,
     type: filterType.value || dataObj.searchParams.type,
     status: filterStatus.value || dataObj.searchParams.status,
     creator: filterCreator.value || dataObj.searchParams.creator,
-    auditUserId: filterAuditUserId.value || dataObj.searchParams.auditUserId,
-    processUserId:
-      filterProcessUserId.value || dataObj.searchParams.processUserId,
-    reportTime:
-      trendReportTimeRange ||
-      dataObj.searchParams.reportTimeRange ||
-      dataObj.searchParams.reportTime,
+    executeUserId:
+      filterExecuteUserId.value || dataObj.searchParams.executeUserId,
     trendTime: filterTrendTime.value,
   };
 }
@@ -147,7 +176,7 @@ async function getTableData({ page }) {
   const queryParams = buildQueryParams(page);
 
   try {
-    const response = await getInspectReportPage(queryParams);
+    const response = await getAssetCheckPage(queryParams);
     const pageResult = response?.list ? response : response?.data || response;
     const list = Array.isArray(pageResult?.list) ? pageResult.list : [];
 
@@ -155,22 +184,11 @@ async function getTableData({ page }) {
       throw new Error('接口返回数据为空');
     }
 
-    const normalizedList = list.map((item) => normalizeInspectReportRow(item));
-    const visibleList = filterTrendTime.value
-      ? filterInspectReportRows(normalizedList, {
-          ...queryParams,
-          reportTime: undefined,
-          reportTimeRange: undefined,
-        })
-      : normalizedList;
-
     dataObj.useStaticData = false;
-    dataObj.total = filterTrendTime.value
-      ? visibleList.length
-      : pageResult.total || 0;
-    dataObj.list = visibleList;
+    dataObj.total = pageResult.total || 0;
+    dataObj.list = list.map((item) => normalizeAssetCheckRow(item));
   } catch (error) {
-    console.error('获取巡检上报数据失败，使用静态数据:', error);
+    console.error('获取资产盘点数据失败，使用静态数据:', error);
     getPagedMockData(queryParams, page);
   }
 
@@ -237,7 +255,7 @@ function handleRefresh() {
 
 async function handleExport() {
   try {
-    const data = await exportInspectReport(buildQueryParams(dataObj));
+    const data = await exportAssetCheck(buildQueryParams(dataObj));
     downloadFileFromBlobPart({ fileName: textObj.excelAllName, source: data });
     ElMessage.success('导出成功');
   } catch (error) {
@@ -246,34 +264,26 @@ async function handleExport() {
   }
 }
 
-function handleBatchAudit() {
-  const rows = checkedRows.value;
-  if (isEmpty(rows)) {
-    ElMessage.warning('请先勾选待审核上报');
-    return;
-  }
-  const invalidRows = rows.filter(
-    (item) => !isReportStatusLabel(item.status, '待审核'),
-  );
-  if (invalidRows.length > 0) {
-    ElMessage.warning('批量审核只支持待审核上报');
-    return;
-  }
-  auditDialogRef.value?.open('batchAudit', {
-    ids: checkedIds.value,
-  });
+async function handleCreate() {
+  formDrawerApi
+    .setData({
+      checkTime: Date.now(),
+      progress: 0,
+      status: '待盘点',
+    })
+    .open();
 }
 
-function handleApprove(row) {
-  statusConfirmDialogRef.value?.open('approve', row);
+function handleExecute(row) {
+  statusConfirmDialogRef.value?.open('execute', row);
 }
 
-function handleReject(row) {
-  auditDialogRef.value?.open('reject', { row });
+function handleUpdateProgress(row) {
+  progressDialogRef.value?.open(row);
 }
 
-function handleProcess(row) {
-  processDrawerRef.value?.open(row);
+function handleConfirm(row) {
+  statusConfirmDialogRef.value?.open('confirm', row);
 }
 
 function onSubmit(values) {
@@ -285,32 +295,19 @@ function onSubmit(values) {
 
 async function handleOpenDetail(row) {
   try {
-    const response = await getInspectReportDetail(row.id);
-    dataObj.detailObj = normalizeInspectReportRow(response || row);
+    const response = await getAssetCheckDetail(row.id);
+    const detail = response?.id ? response : response?.data || response;
+    dataObj.detailObj = normalizeAssetCheckRow(detail || row);
   } catch (error) {
-    console.error('获取巡检上报详情失败，使用行数据:', error);
+    console.error('获取资产盘点详情失败，使用行数据:', error);
     dataObj.detailObj = row;
   }
   detailDrawerRef.value?.open();
 }
 
-async function handleTaskClick(row) {
-  if (!row.taskId) return;
-  try {
-    const response = await getInspectTaskDetail(row.taskId);
-    dataObj.taskDetailObj = normalizeInspectTaskRow(response || row);
-  } catch (error) {
-    console.error('获取巡检任务详情失败，使用行数据:', error);
-    dataObj.taskDetailObj = normalizeInspectTaskRow({
-      id: row.taskId,
-      planName: row.taskName,
-      status: row.status,
-      creator: row.creator,
-      createTime: row.createTime,
-      updateTime: row.updateTime,
-    });
-  }
-  taskDetailDrawerRef.value?.open();
+function handleResultDetail(row) {
+  dataObj.detailObj = row;
+  detailDrawerRef.value?.open();
 }
 
 function handleSearchShow() {
@@ -327,7 +324,6 @@ function changeTotalShow() {
 
 function handleTypeClick(type) {
   filterType.value = filterType.value === type ? '' : type;
-  filterTrendTime.value = '';
   gridApi.query();
 }
 
@@ -338,41 +334,28 @@ function handleStatusClick(status) {
 }
 
 function handleCreatorClick(creator) {
-  if (!creator || creator === '-') return;
   filterCreator.value = filterCreator.value === creator ? '' : creator;
   gridApi.query();
 }
 
-function handleAuditUserClick(userId) {
-  if (!userId) return;
-  filterAuditUserId.value =
-    Number(filterAuditUserId.value) === Number(userId) ? '' : userId;
-  gridApi.query();
-}
-
-function handleProcessUserClick(userId) {
-  if (!userId) return;
-  filterProcessUserId.value =
-    Number(filterProcessUserId.value) === Number(userId) ? '' : userId;
+function handleExecutorClick(executeUserId) {
+  filterExecuteUserId.value =
+    Number(filterExecuteUserId.value) === Number(executeUserId)
+      ? ''
+      : executeUserId;
   gridApi.query();
 }
 
 function cancelFilter(type) {
   const clearMap = {
-    auditUserId: () => {
-      filterAuditUserId.value = '';
-    },
     creator: () => {
       filterCreator.value = '';
     },
-    processUserId: () => {
-      filterProcessUserId.value = '';
+    executeUserId: () => {
+      filterExecuteUserId.value = '';
     },
     status: () => {
       filterStatus.value = '';
-    },
-    taskId: () => {
-      filterTaskId.value = '';
     },
     trendTime: () => {
       filterTrendTime.value = '';
@@ -394,13 +377,10 @@ watch(
       filterStatus.value = filter.value;
       filterTrendTime.value = '';
     }
-    if (filter.type === 'type') {
-      filterType.value = filter.value;
-    }
     if (filter.type === 'trendTime') {
       filterTrendTime.value = filter.value;
     }
-    gridApi.reload();
+    gridApi.query();
   },
   { deep: true },
 );
@@ -408,17 +388,15 @@ watch(
 
 <template>
   <div class="park-lot-table-new">
+    <FormDrawer :title="textObj.addText">
+      <Form />
+    </FormDrawer>
+
     <DetailDrawer
       ref="detailDrawerRef"
       :data="dataObj.detailObj"
       :fields="detailFields"
-      :title="`巡检上报 ${dataObj.detailObj.id || ''} 详情`"
-    />
-    <DetailDrawer
-      ref="taskDetailDrawerRef"
-      :data="dataObj.taskDetailObj"
-      :fields="inspectTaskDetailFields"
-      :title="`${dataObj.taskDetailObj.taskName || dataObj.taskDetailObj.planName || '巡检任务'}详情`"
+      :title="`盘点单${dataObj.detailObj.id || ''}详情`"
     />
 
     <Drawer title="搜索">
@@ -427,54 +405,38 @@ watch(
 
     <Grid>
       <template #table-title>
-        <div class="inspect-report-filter-tags">
-          <ElTag
-            v-if="filterTaskId"
-            closable
-            type="primary"
-            @close="cancelFilter('taskId')"
-          >
-            关联任务：{{ getTaskName(filterTaskId) }}
-          </ElTag>
+        <div class="asset-check-filter-tags">
           <ElTag
             v-if="filterType"
             closable
-            :type="getReportTypeTagType(filterType)"
+            type="success"
             @close="cancelFilter('type')"
           >
-            问题类型：{{ getReportTypeLabel(filterType) }}
+            盘点类型：{{ getCheckTypeLabel(filterType) }}
           </ElTag>
           <ElTag
             v-if="filterStatus"
             closable
-            :type="getReportStatusTagType(filterStatus)"
+            type="warning"
             @close="cancelFilter('status')"
           >
-            上报状态：{{ getReportStatusLabel(filterStatus) }}
+            盘点状态：{{ getCheckStatusLabel(filterStatus) }}
           </ElTag>
           <ElTag
             v-if="filterCreator"
             closable
-            type="success"
+            type="primary"
             @close="cancelFilter('creator')"
           >
-            上报人：{{ filterCreator }}
+            发起人员：{{ filterCreator }}
           </ElTag>
           <ElTag
-            v-if="filterAuditUserId"
-            closable
-            type="warning"
-            @close="cancelFilter('auditUserId')"
-          >
-            审核人：{{ getUserName(filterAuditUserId) }}
-          </ElTag>
-          <ElTag
-            v-if="filterProcessUserId"
+            v-if="filterExecuteUserId"
             closable
             type="info"
-            @close="cancelFilter('processUserId')"
+            @close="cancelFilter('executeUserId')"
           >
-            处置人：{{ getUserName(filterProcessUserId) }}
+            执行人员：{{ getUserName(filterExecuteUserId) }}
           </ElTag>
           <ElTag
             v-if="filterTrendTime"
@@ -489,12 +451,7 @@ watch(
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton
-            content="批量审核"
-            icon-name="CircleCheck"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleBatchAudit"
-          />
+          <IconButton content="盘点" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="导出"
             icon-name="download"
@@ -505,11 +462,6 @@ watch(
             icon-name="search"
             @click="handleSearchShow"
           />
-          <!-- <IconButton
-            content="刷新"
-            icon-name="refresh"
-            @click="handleRefresh"
-          /> -->
           <IconButton
             content="全屏"
             icon-name="FullScreen"
@@ -518,34 +470,32 @@ watch(
         </div>
       </template>
 
-      <template #taskName="{ row }">
-        <el-text
-          class="common-align"
-          style="cursor: pointer"
-          type="primary"
-          @click="handleTaskClick(row)"
-        >
-          {{ row.taskName }}
-        </el-text>
-      </template>
-
       <template #type="{ row }">
         <ElTag
           style="cursor: pointer"
-          :type="getReportTypeTagType(row.type)"
+          :type="getCheckTypeTagType(row.type)"
           @click="handleTypeClick(row.type)"
         >
-          {{ getReportTypeLabel(row.type) }}
+          {{ getCheckTypeLabel(row.type) }}
         </ElTag>
+      </template>
+
+      <template #progress="{ row }">
+        <el-progress
+          style="cursor: pointer"
+          :percentage="row.progress"
+          :status="getProgressStatus(row.progress)"
+          @click="handleResultDetail(row)"
+        />
       </template>
 
       <template #status="{ row }">
         <ElTag
           style="cursor: pointer"
-          :type="getReportStatusTagType(row.status)"
+          :type="getCheckStatusTagType(row.status)"
           @click="handleStatusClick(row.status)"
         >
-          {{ getReportStatusLabel(row.status) }}
+          {{ getCheckStatusLabel(row.status) }}
         </ElTag>
       </template>
 
@@ -560,64 +510,49 @@ watch(
         </el-text>
       </template>
 
-      <template #auditUserName="{ row }">
+      <template #executeUserName="{ row }">
         <el-text
-          v-if="row.auditUserId"
+          v-if="row.executeUserId"
           class="common-align"
           style="cursor: pointer"
           type="primary"
-          @click="handleAuditUserClick(row.auditUserId)"
+          @click="handleExecutorClick(row.executeUserId)"
         >
-          {{ row.auditUserName }}
+          {{ row.executeUserName }}
         </el-text>
         <span v-else>-</span>
       </template>
 
-      <template #processUserName="{ row }">
+      <template #result="{ row }">
         <el-text
-          v-if="row.processUserId"
           class="common-align"
           style="cursor: pointer"
           type="primary"
-          @click="handleProcessUserClick(row.processUserId)"
+          @click="handleResultDetail(row)"
         >
-          {{ row.processUserName }}
+          {{ row.result }}
         </el-text>
-        <span v-else>-</span>
-      </template>
-
-      <template #remark="{ row }">
-        <el-text
-          v-if="row.remark || row.processResult"
-          class="common-align"
-          style="cursor: pointer"
-          type="primary"
-          @click="handleOpenDetail(row)"
-        >
-          {{ row.remark || row.processResult }}
-        </el-text>
-        <span v-else>-</span>
       </template>
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            v-if="isReportStatusLabel(row.status, '待审核')"
-            content="通过"
-            icon-name="Check"
-            @click="handleApprove(row)"
-          />
-          <IconButton
-            v-if="isReportStatusLabel(row.status, '待审核')"
-            content="驳回"
-            icon-name="Close"
-            @click="handleReject(row)"
-          />
-          <IconButton
-            v-if="isReportStatusLabel(row.status, '待处置')"
+            v-if="isCheckStatusLabel(row.status, '待盘点')"
             content="执行"
-            icon-name="EditPen"
-            @click="handleProcess(row)"
+            icon-name="CircleCheckFilled"
+            @click="handleExecute(row)"
+          />
+          <IconButton
+            v-if="isCheckStatusLabel(row.status, '盘点中')"
+            content="更新进度"
+            icon-name="Edit"
+            @click="handleUpdateProgress(row)"
+          />
+          <IconButton
+            v-if="isCheckStatusLabel(row.status, '已完成')"
+            content="确认"
+            icon-name="Select"
+            @click="handleConfirm(row)"
           />
           <IconButton
             content="查看"
@@ -636,36 +571,35 @@ watch(
             <ArrowUp />
           </el-icon>
           <span>
-            本页统计：上报 {{ dataObj.list.length }} 条；待审核
-            {{ currentPageStats.waitAuditCount }} 条；待处置
-            {{ currentPageStats.waitProcessCount }} 条；已完成
+            本页统计：盘点 {{ dataObj.list.length }} 条；待盘点
+            {{ currentPageStats.waitingCount }} 条；盘点中
+            {{ currentPageStats.runningCount }} 条；已完成
             {{ currentPageStats.finishedCount }} 条
           </span>
         </div>
         <div v-if="dataObj.totalShow" class="common-total-bottom">
-          <span>全部统计：共 {{ dataObj.total }} 条；{{ textObj.total }}</span>
+          <span> 全部统计：{{ textObj.total }} </span>
         </div>
       </template>
     </Grid>
 
-    <ReportAuditDialog ref="auditDialogRef" @success="handleRefresh" />
-    <ReportProcessDrawer ref="processDrawerRef" @success="handleRefresh" />
     <StatusConfirmDialog
       ref="statusConfirmDialogRef"
       @success="handleRefresh"
     />
+    <ProgressDialog ref="progressDialogRef" @success="handleRefresh" />
   </div>
 </template>
 
 <style scoped>
-.inspect-report-filter-tags {
+.asset-check-filter-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
 }
 
-.inspect-report-filter-tags :deep(.el-tag) {
+.asset-check-filter-tags :deep(.el-tag) {
   height: 32px;
   line-height: 32px;
 }

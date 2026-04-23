@@ -10,33 +10,29 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  createInspectPlan,
-  exportInspectPlan,
-  getInspectPlanDetail,
-  getInspectPlanPage,
-  updateInspectPlan,
-} from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectPlan';
+  exportSpareStock,
+  getSpareStockDetail,
+  getSpareStockPage,
+  inSpareStock,
+  outSpareStock,
+  replenishSpareStock,
+} from '#/api/genchuan/industry/chargePark/inspectOp/assetMgmt/spareStock';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 
-import ImportExcelDialog from '../components/ImportExcelDialog.vue';
-import StatusConfirmDialog from '../components/StatusConfirmDialog.vue';
 import {
-  auditorOptions,
   detailFields,
   filterMockList,
-  getPlanCycleLabel,
-  getPlanCycleTagType,
-  getPlanStatusLabel,
-  getPlanStatusTagType,
-  getPlanTypeLabel,
-  getPlanTypeTagType,
-  getProgressStatus,
-  isPlanStatusLabel,
-  normalizeInspectPlanRow,
+  getSpareProgressStatus,
+  getSpareStatusLabel,
+  getSpareStatusTagType,
+  getWarehouseName,
+  isSpareStatusLabel,
+  normalizeSpareStockRow,
   textObj,
-  useEditFormSchema,
-  useFormSchema,
   useGridColumns,
+  useInFormSchema,
+  useOutFormSchema,
+  useReplenishFormSchema,
   useSearchFormSchema,
 } from './data';
 
@@ -51,9 +47,14 @@ const props = defineProps({
   },
 });
 
-const getTitle = computed(() =>
-  formData.value?.id ? textObj.editText : textObj.addText,
-);
+const actionTitle = computed(() => {
+  const titleMap = {
+    in: textObj.inText,
+    out: textObj.outText,
+    replenish: textObj.replenishText,
+  };
+  return titleMap[actionType.value] || textObj.inText;
+});
 
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -67,16 +68,13 @@ const [Drawer, drawerApi] = useVbenDrawer({
 });
 
 const detailDrawerRef = ref(null);
-const importExcelDialogRef = ref(null);
-const statusConfirmDialogRef = ref(null);
-const formData = ref({});
 const checkedIds = ref([]);
 const checkedRows = ref([]);
-const filterType = ref('');
-const filterScope = ref('');
+const actionType = ref('in');
+const actionRow = ref({});
+const filterSpareName = ref('');
+const filterWarehouseId = ref('');
 const filterStatus = ref('');
-const filterCycle = ref('');
-const filterAuditUserId = ref('');
 const filterTrendTime = ref('');
 
 const dataObj = reactive({
@@ -91,24 +89,25 @@ const dataObj = reactive({
 });
 
 const currentPageStats = computed(() => {
-  const runningCount = dataObj.list.filter((item) =>
-    isPlanStatusLabel(item.status, '进行中'),
+  const totalStock = dataObj.list.reduce(
+    (sum, item) => sum + Number(item.currentStock || 0),
+    0,
+  );
+  const lowCount = dataObj.list.filter((item) =>
+    isSpareStatusLabel(item.status, '低库存'),
   ).length;
-  const finishedCount = dataObj.list.filter((item) =>
-    isPlanStatusLabel(item.status, '已完成'),
-  ).length;
-  const pausedCount = dataObj.list.filter((item) =>
-    isPlanStatusLabel(item.status, '已暂停'),
+  const normalCount = dataObj.list.filter((item) =>
+    isSpareStatusLabel(item.status, '正常'),
   ).length;
 
   return {
-    runningCount,
-    finishedCount,
-    pausedCount,
+    totalStock,
+    lowCount,
+    normalCount,
   };
 });
 
-const [Form, formApi] = useVbenForm({
+const [ActionForm, actionFormApi] = useVbenForm({
   commonConfig: {
     componentProps: {
       class: 'w-full',
@@ -117,47 +116,68 @@ const [Form, formApi] = useVbenForm({
     labelWidth: 100,
   },
   layout: 'horizontal',
-  schema: useFormSchema(),
+  schema: useInFormSchema(),
   showDefaultActions: false,
 });
 
-const [FormDrawer, formDrawerApi] = useVbenDrawer({
+const [ActionDrawer, actionDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
   onCancel() {
-    formDrawerApi.close();
+    actionDrawerApi.close();
   },
   async onConfirm() {
-    const { valid } = await formApi.validate();
+    const { valid } = await actionFormApi.validate();
     if (!valid) return;
 
-    const values = await formApi.getValues();
+    const values = await actionFormApi.getValues();
     try {
-      if (formData.value?.id) {
-        await updateInspectPlan({
-          ...formData.value,
-          ...values,
-          id: formData.value.id,
+      if (actionType.value === 'in') {
+        await inSpareStock({
+          spareId: values.spareId,
+          inCount: Number(values.inCount || 0),
+          supplierName: values.supplierName,
         });
-        ElMessage.success('编辑成功');
-      } else {
-        await createInspectPlan(values);
-        ElMessage.success('新增成功');
+        ElMessage.success('备件入库成功');
       }
-      formDrawerApi.close();
+
+      if (actionType.value === 'out') {
+        const outCount = Number(values.outCount || 0);
+        if (
+          actionRow.value?.id &&
+          outCount > Number(actionRow.value.currentStock || 0)
+        ) {
+          ElMessage.warning('出库数量不能大于当前库存');
+          return;
+        }
+        await outSpareStock({
+          spareId: values.spareId,
+          outCount,
+          receiverName: values.receiverName,
+        });
+        ElMessage.success('备件出库成功');
+      }
+
+      if (actionType.value === 'replenish') {
+        await replenishSpareStock({
+          id: actionRow.value.id,
+          replenishCount: Number(values.replenishCount || 0),
+        });
+        ElMessage.success('备件补货成功');
+      }
+
+      actionDrawerApi.close();
       handleRefresh();
     } catch (error) {
       console.error(error);
-      ElMessage.error(formData.value?.id ? '编辑失败' : '新增失败');
+      ElMessage.error('操作失败，请稍后重试');
     }
   },
   async onOpenChange(isOpen) {
     if (!isOpen) return;
-    formData.value = formDrawerApi.getData() || {};
-    await formApi.resetForm();
-    if (formData.value?.id) {
-      await formApi.setValues(formData.value);
-    }
+    actionRow.value = actionDrawerApi.getData() || {};
+    await actionFormApi.resetForm();
+    await actionFormApi.setValues(actionRow.value);
   },
 });
 
@@ -166,11 +186,9 @@ function buildQueryParams(page) {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...dataObj.searchParams,
-    type: filterType.value || dataObj.searchParams.type,
-    cycle: filterCycle.value || dataObj.searchParams.cycle,
-    scope: filterScope.value || dataObj.searchParams.scope,
+    spareName: filterSpareName.value || dataObj.searchParams.spareName,
+    warehouseId: filterWarehouseId.value || dataObj.searchParams.warehouseId,
     status: filterStatus.value || dataObj.searchParams.status,
-    auditUserId: filterAuditUserId.value || dataObj.searchParams.auditUserId,
     trendTime: filterTrendTime.value,
   };
 }
@@ -191,7 +209,7 @@ async function getTableData({ page }) {
   const queryParams = buildQueryParams(page);
 
   try {
-    const response = await getInspectPlanPage(queryParams);
+    const response = await getSpareStockPage(queryParams);
     const pageResult = response?.list ? response : response?.data || response;
     const list = Array.isArray(pageResult?.list) ? pageResult.list : [];
 
@@ -201,9 +219,9 @@ async function getTableData({ page }) {
 
     dataObj.useStaticData = false;
     dataObj.total = pageResult.total || 0;
-    dataObj.list = list.map((item) => normalizeInspectPlanRow(item));
+    dataObj.list = list.map((item) => normalizeSpareStockRow(item));
   } catch (error) {
-    console.error('获取巡检计划数据失败，使用静态数据:', error);
+    console.error('获取备件仓储数据失败，使用静态数据:', error);
     getPagedMockData(queryParams, page);
   }
 
@@ -270,7 +288,7 @@ function handleRefresh() {
 
 async function handleExport() {
   try {
-    const data = await exportInspectPlan(buildQueryParams(dataObj));
+    const data = await exportSpareStock(buildQueryParams(dataObj));
     downloadFileFromBlobPart({ fileName: textObj.excelAllName, source: data });
     ElMessage.success('导出成功');
   } catch (error) {
@@ -279,30 +297,40 @@ async function handleExport() {
   }
 }
 
-function handleImport() {
-  importExcelDialogRef.value?.open();
+async function openActionDrawer(type, row = {}) {
+  actionType.value = type;
+  const schemaMap = {
+    in: useInFormSchema,
+    out: useOutFormSchema,
+    replenish: useReplenishFormSchema,
+  };
+  await actionFormApi.setState({ schema: schemaMap[type]() });
+  actionDrawerApi.setData(row).open();
 }
 
-async function handleCreate() {
-  await formApi.setState({ schema: useFormSchema() });
-  formDrawerApi.setData({}).open();
+async function handleToolbarIn() {
+  const row = checkedRows.value.length === 1 ? checkedRows.value[0] : {};
+  await openActionDrawer('in', row);
 }
 
-async function handleEdit(row) {
-  await formApi.setState({ schema: useEditFormSchema() });
-  formDrawerApi.setData(row).open();
+async function handleToolbarOut() {
+  if (checkedRows.value.length !== 1) {
+    ElMessage.warning('请选择一条备件库存记录进行出库');
+    return;
+  }
+  await openActionDrawer('out', checkedRows.value[0]);
 }
 
-function handleActivate(row) {
-  statusConfirmDialogRef.value?.open('activate', row);
+async function handleRowIn(row) {
+  await openActionDrawer('in', row);
 }
 
-function handlePause(row) {
-  statusConfirmDialogRef.value?.open('pause', row);
+async function handleRowOut(row) {
+  await openActionDrawer('out', row);
 }
 
-function handleEnable(row) {
-  statusConfirmDialogRef.value?.open('enable', row);
+async function handleReplenish(row) {
+  await openActionDrawer('replenish', row);
 }
 
 function onSubmit(values) {
@@ -314,16 +342,17 @@ function onSubmit(values) {
 
 async function handleOpenDetail(row) {
   try {
-    const response = await getInspectPlanDetail(row.id);
-    dataObj.detailObj = normalizeInspectPlanRow(response || row);
+    const response = await getSpareStockDetail(row.id);
+    const detail = response?.id ? response : response?.data || response;
+    dataObj.detailObj = normalizeSpareStockRow(detail || row);
   } catch (error) {
-    console.error('获取巡检计划详情失败，使用行数据:', error);
+    console.error('获取备件仓储详情失败，使用行数据:', error);
     dataObj.detailObj = row;
   }
   detailDrawerRef.value?.open();
 }
 
-function handleProgressDetail(row) {
+function handleRecordDetail(row) {
   dataObj.detailObj = row;
   detailDrawerRef.value?.open();
 }
@@ -340,14 +369,9 @@ function changeTotalShow() {
   dataObj.totalShow = !dataObj.totalShow;
 }
 
-function handleTypeClick(type) {
-  filterType.value = filterType.value === type ? '' : type;
-  gridApi.query();
-}
-
-function handleScopeClick(scope) {
-  filterScope.value = filterScope.value === scope ? '' : scope;
-  gridApi.query();
+function handleSpareClick(row) {
+  dataObj.detailObj = row;
+  detailDrawerRef.value?.open();
 }
 
 function handleStatusClick(status) {
@@ -356,31 +380,16 @@ function handleStatusClick(status) {
   gridApi.query();
 }
 
-function handleCycleClick(cycle) {
-  filterCycle.value = filterCycle.value === cycle ? '' : cycle;
+function handleWarehouseClick(warehouseId) {
+  filterWarehouseId.value =
+    Number(filterWarehouseId.value) === Number(warehouseId) ? '' : warehouseId;
   gridApi.query();
-}
-
-function handleAuditorClick(auditUserId) {
-  filterAuditUserId.value =
-    Number(filterAuditUserId.value) === Number(auditUserId) ? '' : auditUserId;
-  gridApi.query();
-}
-
-function getAuditorLabel(auditUserId) {
-  return (
-    auditorOptions.find((item) => item.value === Number(auditUserId))?.label ||
-    auditUserId
-  );
 }
 
 function cancelFilter(type) {
   const clearMap = {
-    auditUserId: () => {
-      filterAuditUserId.value = '';
-    },
-    scope: () => {
-      filterScope.value = '';
+    spareName: () => {
+      filterSpareName.value = '';
     },
     status: () => {
       filterStatus.value = '';
@@ -388,11 +397,8 @@ function cancelFilter(type) {
     trendTime: () => {
       filterTrendTime.value = '';
     },
-    type: () => {
-      filterType.value = '';
-    },
-    cycle: () => {
-      filterCycle.value = '';
+    warehouseId: () => {
+      filterWarehouseId.value = '';
     },
   };
 
@@ -408,14 +414,11 @@ watch(
       filterStatus.value = filter.value;
       filterTrendTime.value = '';
     }
-    if (filter.type === 'type') {
-      filterType.value = filter.value;
-    }
     if (filter.type === 'trendTime') {
       filterTrendTime.value = filter.value;
     }
-    if (filter.type === 'cycle') {
-      filterCycle.value = filter.value;
+    if (filter.type === 'spareName') {
+      filterSpareName.value = filter.value;
     }
     gridApi.query();
   },
@@ -425,15 +428,15 @@ watch(
 
 <template>
   <div class="park-lot-table-new">
-    <FormDrawer :title="getTitle">
-      <Form />
-    </FormDrawer>
+    <ActionDrawer :title="actionTitle">
+      <ActionForm />
+    </ActionDrawer>
 
     <DetailDrawer
       ref="detailDrawerRef"
       :data="dataObj.detailObj"
       :fields="detailFields"
-      :title="`${dataObj.detailObj.name || '巡检计划'}详情`"
+      :title="`${dataObj.detailObj.spareName || '备件'}详情`"
     />
 
     <Drawer title="搜索">
@@ -442,22 +445,14 @@ watch(
 
     <Grid>
       <template #table-title>
-        <div class="inspect-plan-filter-tags">
+        <div class="spare-stock-filter-tags">
           <ElTag
-            v-if="filterType"
+            v-if="filterSpareName"
             closable
             type="success"
-            @close="cancelFilter('type')"
+            @close="cancelFilter('spareName')"
           >
-            巡检类型：{{ getPlanTypeLabel(filterType) }}
-          </ElTag>
-          <ElTag
-            v-if="filterScope"
-            closable
-            type="primary"
-            @close="cancelFilter('scope')"
-          >
-            巡检范围：{{ filterScope }}
+            关联备件：{{ filterSpareName }}
           </ElTag>
           <ElTag
             v-if="filterStatus"
@@ -465,23 +460,15 @@ watch(
             type="warning"
             @close="cancelFilter('status')"
           >
-            计划状态：{{ getPlanStatusLabel(filterStatus) }}
+            库存状态：{{ getSpareStatusLabel(filterStatus) }}
           </ElTag>
           <ElTag
-            v-if="filterCycle"
+            v-if="filterWarehouseId"
             closable
-            type="info"
-            @close="cancelFilter('cycle')"
+            type="primary"
+            @close="cancelFilter('warehouseId')"
           >
-            执行周期：{{ getPlanCycleLabel(filterCycle) }}
-          </ElTag>
-          <ElTag
-            v-if="filterAuditUserId"
-            closable
-            type="info"
-            @close="cancelFilter('auditUserId')"
-          >
-            审核人：{{ getAuditorLabel(filterAuditUserId) }}
+            所属仓库：{{ getWarehouseName(filterWarehouseId) }}
           </ElTag>
           <ElTag
             v-if="filterTrendTime"
@@ -496,8 +483,16 @@ watch(
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton content="导入" icon-name="Upload" @click="handleImport" />
+          <IconButton
+            content="入库"
+            icon-name="Plus"
+            @click="handleToolbarIn"
+          />
+          <IconButton
+            content="出库"
+            icon-name="Remove"
+            @click="handleToolbarOut"
+          />
           <IconButton
             content="导出"
             icon-name="download"
@@ -516,108 +511,92 @@ watch(
         </div>
       </template>
 
-      <template #name="{ row }">
+      <template #spareName="{ row }">
         <el-text
           class="common-align"
           style="cursor: pointer"
           type="primary"
-          @click="handleOpenDetail(row)"
+          @click="handleSpareClick(row)"
         >
-          {{ row.name }}
+          {{ row.spareName }}
         </el-text>
       </template>
 
-      <template #type="{ row }">
-        <ElTag
-          style="cursor: pointer"
-          :type="getPlanTypeTagType(row.type)"
-          @click="handleTypeClick(row.type)"
-        >
-          {{ getPlanTypeLabel(row.type) }}
-        </ElTag>
-      </template>
-
-      <template #scope="{ row }">
-        <el-text
-          class="common-align"
-          style="cursor: pointer"
-          type="primary"
-          @click="handleScopeClick(row.scope)"
-        >
-          {{ row.scope }}
-        </el-text>
+      <template #currentStock="{ row }">
+        <div class="spare-progress">
+          <el-progress
+            :percentage="
+              Math.min(100, Math.round((row.currentStock / 30) * 100))
+            "
+            :show-text="false"
+            :status="getSpareProgressStatus(row)"
+          />
+          <span>{{ row.currentStock }}</span>
+        </div>
       </template>
 
       <template #status="{ row }">
         <ElTag
           style="cursor: pointer"
-          :type="getPlanStatusTagType(row.status)"
+          :type="getSpareStatusTagType(row.status)"
           @click="handleStatusClick(row.status)"
         >
-          {{ getPlanStatusLabel(row.status) }}
+          {{ getSpareStatusLabel(row.status) }}
         </ElTag>
       </template>
 
-      <template #cycle="{ row }">
-        <ElTag
-          style="cursor: pointer"
-          :type="getPlanCycleTagType(row.cycle)"
-          @click="handleCycleClick(row.cycle)"
-        >
-          {{ getPlanCycleLabel(row.cycle) }}
-        </ElTag>
-      </template>
-
-      <template #progress="{ row }">
-        <el-progress
-          style="cursor: pointer"
-          :percentage="row.progress"
-          :status="getProgressStatus(row.progress)"
-          @click="handleProgressDetail(row)"
-        />
-      </template>
-
-      <template #auditUserName="{ row }">
+      <template #warehouseName="{ row }">
         <el-text
-          v-if="row.auditUserId"
           class="common-align"
           style="cursor: pointer"
           type="primary"
-          @click="handleAuditorClick(row.auditUserId)"
+          @click="handleWarehouseClick(row.warehouseId)"
         >
-          {{ row.auditUserName }}
+          {{ row.warehouseName }}
         </el-text>
-        <span v-else>-</span>
+      </template>
+
+      <template #outRecord="{ row }">
+        <el-text
+          class="common-align"
+          style="cursor: pointer"
+          type="primary"
+          @click="handleRecordDetail(row)"
+        >
+          {{ row.outRecord }}
+        </el-text>
+      </template>
+
+      <template #inRecord="{ row }">
+        <el-text
+          class="common-align"
+          style="cursor: pointer"
+          type="primary"
+          @click="handleRecordDetail(row)"
+        >
+          {{ row.inRecord }}
+        </el-text>
       </template>
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            v-if="isPlanStatusLabel(row.status, '待生效')"
-            content="生效"
-            icon-name="CircleCheckFilled"
-            @click="handleActivate(row)"
+            v-if="isSpareStatusLabel(row.status, '正常')"
+            content="入库"
+            icon-name="Plus"
+            @click="handleRowIn(row)"
           />
           <IconButton
-            v-if="isPlanStatusLabel(row.status, '进行中')"
-            content="暂停"
-            icon-name="VideoPause"
-            @click="handlePause(row)"
+            v-if="isSpareStatusLabel(row.status, '正常')"
+            content="出库"
+            icon-name="Remove"
+            @click="handleRowOut(row)"
           />
           <IconButton
-            v-if="isPlanStatusLabel(row.status, '已暂停')"
-            content="启用"
-            icon-name="SwitchButton"
-            @click="handleEnable(row)"
-          />
-          <IconButton
-            v-if="
-              isPlanStatusLabel(row.status, '待生效') ||
-              isPlanStatusLabel(row.status, '进行中')
-            "
-            content="编辑"
-            icon-name="Edit"
-            @click="handleEdit(row)"
+            v-if="isSpareStatusLabel(row.status, '低库存')"
+            content="补货"
+            icon-name="Plus"
+            @click="handleReplenish(row)"
           />
           <IconButton
             content="查看"
@@ -636,10 +615,9 @@ watch(
             <ArrowUp />
           </el-icon>
           <span>
-            本页统计：计划 {{ dataObj.list.length }} 条；进行中
-            {{ currentPageStats.runningCount }} 条；已完成
-            {{ currentPageStats.finishedCount }} 条；已暂停
-            {{ currentPageStats.pausedCount }} 条
+            本页统计：备件库存 {{ currentPageStats.totalStock }}；正常
+            {{ currentPageStats.normalCount }} 条；低库存
+            {{ currentPageStats.lowCount }} 条
           </span>
         </div>
         <div v-if="dataObj.totalShow" class="common-total-bottom">
@@ -647,25 +625,26 @@ watch(
         </div>
       </template>
     </Grid>
-
-    <ImportExcelDialog ref="importExcelDialogRef" @success="handleRefresh" />
-    <StatusConfirmDialog
-      ref="statusConfirmDialogRef"
-      @success="handleRefresh"
-    />
   </div>
 </template>
 
 <style scoped>
-.inspect-plan-filter-tags {
+.spare-stock-filter-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
 }
 
-.inspect-plan-filter-tags :deep(.el-tag) {
+.spare-stock-filter-tags :deep(.el-tag) {
   height: 32px;
   line-height: 32px;
+}
+
+.spare-progress {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 36px;
+  gap: 8px;
+  align-items: center;
 }
 </style>

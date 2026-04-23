@@ -135,6 +135,10 @@ async function submitForm() {
 }
 
 function open(row) {
+  form.status = row.status;
+  form.userId = row.userId;
+  form.area = row.area;
+  form.name = row.name;
   drawerApi.setData(row || {}).open();
 }
 
