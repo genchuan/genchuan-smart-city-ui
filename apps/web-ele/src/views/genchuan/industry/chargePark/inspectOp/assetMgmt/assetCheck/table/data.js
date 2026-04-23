@@ -293,16 +293,16 @@ export function useSearchFormSchema() {
         options: checkStatusOptions,
       },
     },
-    {
-      fieldName: 'executeUserId',
-      label: '执行人员',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择执行人员',
-        clearable: true,
-        options: userOptions,
-      },
-    },
+    // {
+    //   fieldName: 'executeUserId',
+    //   label: '执行人员',
+    //   component: 'Select',
+    //   componentProps: {
+    //     placeholder: '请选择执行人员',
+    //     clearable: true,
+    //     options: userOptions,
+    //   },
+    // },
     {
       fieldName: 'confirmUserId',
       label: '确认人员',
@@ -376,16 +376,16 @@ export function useFormSchema() {
     //   },
     //   rules: 'required',
     // },
-    {
-      fieldName: 'executeUserId',
-      label: '执行人员',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择执行人员',
-        options: userOptions,
-      },
-      rules: 'required',
-    },
+    // {
+    //   fieldName: 'executeUserId',
+    //   label: '执行人员',
+    //   component: 'Select',
+    //   componentProps: {
+    //     placeholder: '请选择执行人员',
+    //     options: userOptions,
+    //   },
+    //   rules: 'required',
+    // },
   ];
 }
 
@@ -427,13 +427,13 @@ export function useGridColumns() {
       sortable: true,
       slots: { default: 'creator' },
     },
-    {
-      field: 'executeUserName',
-      title: '执行人员',
-      minWidth: 110,
-      sortable: true,
-      slots: { default: 'executeUserName' },
-    },
+    // {
+    //   field: 'executeUserName',
+    //   title: '执行人员',
+    //   minWidth: 110,
+    //   sortable: true,
+    //   slots: { default: 'executeUserName' },
+    // },
     {
       field: 'confirmTimeStr',
       title: '确认时间',
@@ -482,7 +482,7 @@ export const detailFields = [
     formatter: getCheckStatusLabel,
   },
   { key: 'creator', label: '发起人员' },
-  { key: 'executeUserName', label: '执行人员' },
+  // { key: 'executeUserName', label: '执行人员' },
   { key: 'confirmUserName', label: '确认人员' },
   { key: 'confirmTimeStr', label: '确认时间' },
   { key: 'result', label: '盘点结果' },
