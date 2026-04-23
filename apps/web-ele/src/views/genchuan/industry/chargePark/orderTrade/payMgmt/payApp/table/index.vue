@@ -11,16 +11,17 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { 
-  getAmountCheckPage,
-  exportAmountCheckExcel,
-  confirmAmountCheck,
-  calculateAmountCheck,
-} from '#/api/genchuan/industry/chargePark/orderTrade/refundMgmt/index.js';
-import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
+  getPayAppPage,
+  updatePayApp,
+  exportPayAppExcel,
+  enablePayApp,
+  disablePayApp,
+  deletePayApp,
+  createPayApp,
+} from '#/api/genchuan/industry/chargePark/orderTrade/payMgmt/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
 import { downloadLocalTemplate } from '#/utils/genchuan/down';
-import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
 
 import { useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
@@ -75,19 +76,27 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onCancel() {
     formDrawerApi.close();
   },
-  onConfirm() {
+  async onConfirm() {
     const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === '新增') {
-      dataObj.apilist.push(obj);
-    } else {
-      dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
-        }
-      });
+    const loadingInstance = ElLoading.service({
+      text: formDrawerApi.sharedData.payload.title === '新增' ? '正在创建...' : '正在更新...',
+    });
+    try {
+      if (formDrawerApi.sharedData.payload.title === '新增') {
+        await createPayApp(obj);
+        ElMessage.success('创建成功');
+      } else {
+        await updatePayApp(obj);
+        ElMessage.success('更新成功');
+      }
+      handleRefresh();
+      formDrawerApi.close();
+    } catch (error) {
+      console.error('操作失败:', error);
+      ElMessage.error(formDrawerApi.sharedData.payload.title === '新增' ? '创建失败' : '更新失败');
+    } finally {
+      loadingInstance.close();
     }
-    handleRefresh();
-    formDrawerApi.close();
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
@@ -108,8 +117,8 @@ function handleRefresh() {
 
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
-  const data = await exportAmountCheckExcel();
-  downloadFileFromBlobPart({ fileName: '金额核算报表.xls', source: data });
+  const data = await exportPayAppExcel();
+  downloadFileFromBlobPart({ fileName: '支付应用报表.xls', source: data });
 }
 
 // ====================== 图片转PDF（终极零乱码） ======================
@@ -136,30 +145,37 @@ function handleEdit(row) {
     .open();
 }
 async function handleDelete(row) {
+  await confirm('确定删除这条数据吗？');
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.name]),
+    text: '正在删除...',
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
+    await deletePayApp({ id: row.id });
+    ElMessage.success('删除成功');
     handleRefresh();
+  } catch (error) {
+    console.error('删除失败:', error);
+    ElMessage.error('删除失败');
   } finally {
     loadingInstance.close();
   }
 }
 
 async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
+  await confirm('确定删除这些数据吗？');
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
+    text: '正在批量删除...',
   });
   try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
+    for (const id of checkedIds.value) {
+      await deletePayApp({ id });
+    }
     checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
+    ElMessage.success('批量删除成功');
     handleRefresh();
+  } catch (error) {
+    console.error('批量删除失败:', error);
+    ElMessage.error('批量删除失败');
   } finally {
     loadingInstance.close();
   }
@@ -172,11 +188,9 @@ function handleRowCheckboxChange({ records }) {
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
-  enDetailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
-  apilist: [],
   list: [],
   loading: false,
   searchObj: {},
@@ -195,7 +209,7 @@ const getTableData = async (pageObj) => {
 
   try {
     dataObj.loading = true;
-    const res = await getAmountCheckPage(params);
+    const res = await getPayAppPage(params);
     dataObj.total = res.total;
     dataObj.list = res.list.map((v) => {
       return {
@@ -206,8 +220,8 @@ const getTableData = async (pageObj) => {
     });
     return dataObj;
   } catch (error) {
-    console.error('获取金额核算数据失败:', error);
-    ElMessage.error('获取金额核算数据失败');
+    console.error('获取支付应用数据失败:', error);
+    ElMessage.error('获取支付应用数据失败');
     return dataObj;
   } finally {
     dataObj.loading = false;
@@ -270,27 +284,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-const activeName = ref('全部');
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
   parkDetailDrawerRef.value?.open();
-};
-const tabsData = ref([
-  { label: '全部' },
-  { label: '启用' },
-  { label: '禁用' },
-  { label: '暂停运营' },
-  { label: '维修中' },
-]);
-const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
-  if (item.label === '全部') {
-    text = `(${dataObj.apilist.length})`;
-  }
-  return item.label + text;
-};
-const handleClick = () => {
-  gridApi.query();
 };
 const handleSerachShow = () => {
   drawerApi.open();
@@ -300,24 +296,14 @@ const handleFullShow = () => {
 };
 
 const parkDetailDrawerRef = ref(null);
-const enDetailObjRef = ref(null);
 const arrowChange = () => {
   emit('arrow-change');
 };
-const autoElmessage = () => {
-  ElMessage.success($t('月报自动刷新成功'));
-};
-const openEn = async () => {
-  const res = await getDetailEnObj(1);
-  dataObj.enDetailObj = res;
-  enDetailObjRef.value?.open();
-};
 
-// 金额核算状态映射
+// 支付应用状态映射
 const statusMap = {
-  pending: { label: '待核算', type: 'warning' },
-  checked: { label: '已核算', type: 'info' },
-  confirmed: { label: '已确认', type: 'success' },
+  enabled: { label: '已启用', type: 'success' },
+  disabled: { label: '已禁用', type: 'danger' },
 };
 
 // 获取状态标签
@@ -330,149 +316,40 @@ const getStatusType = (status) => {
   return statusMap[status]?.type || 'default';
 };
 
-// 核算结果映射
-const checkResultMap = {
-  pass: { label: '通过', type: 'success' },
-  fail: { label: '不通过', type: 'danger' },
-};
-
-// 获取核算结果标签
-const getCheckResultLabel = (checkResult) => {
-  return checkResultMap[checkResult]?.label || checkResult;
-};
-
-// 获取核算结果类型
-const getCheckResultType = (checkResult) => {
-  return checkResultMap[checkResult]?.type || 'default';
-};
-
-// 确认弹窗
-const confirmDialogVisible = ref(false);
-const confirmForm = reactive({
-  id: '',
-  remark: '',
-});
-
-// 打开确认弹窗
-const handleConfirm = (row) => {
-  confirmForm.id = row.id;
-  confirmForm.remark = '';
-  confirmDialogVisible.value = true;
-};
-
-// 提交确认
-const handleConfirmSubmit = async () => {
-  try {
-    await confirmAmountCheck(confirmForm);
-    ElMessage.success('确认成功');
-    confirmDialogVisible.value = false;
-    handleRefresh();
-  } catch {
-    ElMessage.error('确认失败');
-  }
-};
-
-// 批量计算弹窗
-const batchCalculateDialogVisible = ref(false);
-const batchCalculateForm = reactive({
-  ids: [],
-  remark: '',
-});
-
-// 打开批量计算弹窗
-const handleBatchCalculate = () => {
-  batchCalculateForm.ids = checkedIds.value;
-  batchCalculateForm.remark = '';
-  batchCalculateDialogVisible.value = true;
-};
-
-// 提交批量计算
-const handleBatchCalculateSubmit = async () => {
-  try {
-    const data = {
-      ids: batchCalculateForm.ids,
-      remark: batchCalculateForm.remark,
-    };
-    await calculateAmountCheck(data);
-    ElMessage.success('批量计算成功');
-    batchCalculateDialogVisible.value = false;
-    checkedIds.value = [];
-    handleRefresh();
-  } catch {
-    ElMessage.error('批量计算失败');
-  }
-};
-
-// 计算弹窗
-const calculateDialogVisible = ref(false);
-const calculateForm = reactive({
-  id: '',
-  remark: '',
-});
-
-// 打开计算弹窗
-const handleCalculate = (row) => {
-  calculateForm.id = row.id;
-  calculateForm.remark = '';
-  calculateDialogVisible.value = true;
-};
-
-// 提交计算
-const handleCalculateSubmit = async () => {
-  try {
-    await calculateAmountCheck(calculateForm);
-    ElMessage.success('计算成功');
-    calculateDialogVisible.value = false;
-    handleRefresh();
-  } catch {
-    ElMessage.error('计算失败');
-  }
-};
-
-// ====================== 告警明细弹窗 ======================
-const alarmDialogVisible = ref(false);
-const currentAlarmRow = ref({});
-const alarmList = ref([]);
-
-function generateAlarmData(row) {
-  const count = row.halfyearWarnCount || 0;
-  const typeItems = row.highIllegalType.split(',').map((item) => item.trim());
-  const avgCount = Math.ceil(count / typeItems.length);
-  const types = typeItems.map((name) => {
-    return { name, num: avgCount };
+// 启用支付应用
+async function handleEnable(row) {
+  const loadingInstance = ElLoading.service({
+    text: '正在启用...',
   });
-
-  const list = [];
-  let id = 1;
-  types.forEach((type) => {
-    for (let i = 0; i < Math.min(type.num, 5); i++) {
-      list.push({
-        id: id++,
-        canteenName: row.canteenName,
-        alarmType: type.name,
-        alarmTime: `${row.statCycle.split('-')[0].trim()} ${String(Math.trunc(Math.random() * 24)).padStart(2, '0')}:${String(Math.trunc(Math.random() * 60)).padStart(2, '0')}`,
-        alarmLevel: ['一般', '较重', '严重'][Math.trunc(Math.random() * 3)],
-        status: ['未处理', '处理中', '已整改'][Math.trunc(Math.random() * 3)],
-      });
-    }
-  });
-  return list.slice(0, count);
+  try {
+    await enablePayApp({ id: row.id });
+    ElMessage.success('启用成功');
+    handleRefresh();
+  } catch (error) {
+    console.error('启用失败:', error);
+    ElMessage.error('启用失败');
+  } finally {
+    loadingInstance.close();
+  }
 }
 
-function handleTotal(row) {
-  currentAlarmRow.value = row;
-  alarmList.value = generateAlarmData(row);
-  alarmDialogVisible.value = true;
+// 禁用支付应用
+async function handleDisable(row) {
+  await confirm('确定禁用此支付应用吗？');
+  const loadingInstance = ElLoading.service({
+    text: '正在禁用...',
+  });
+  try {
+    await disablePayApp({ id: row.id });
+    ElMessage.success('禁用成功');
+    handleRefresh();
+  } catch (error) {
+    console.error('禁用失败:', error);
+    ElMessage.error('禁用失败');
+  } finally {
+    loadingInstance.close();
+  }
 }
-
-const alarmColumns = [
-  { label: '序号', prop: 'id', width: 70 },
-  { label: '食堂名称', prop: 'canteenName' },
-  { label: '告警类型', prop: 'alarmType' },
-  { label: '告警时间', prop: 'alarmTime' },
-  { label: '告警等级', prop: 'alarmLevel' },
-  { label: '处理状态', prop: 'status' },
-];
 </script>
 
 <template>
@@ -484,132 +361,22 @@ const alarmColumns = [
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
     />
-    <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
-
-    <!-- 告警明细弹窗 -->
-    <ElDialog
-      v-model="alarmDialogVisible"
-      title="本半年食品安全问题明细"
-      width="900px"
-      append-to-body
-    >
-      <el-table :data="alarmList" border height="450">
-        <el-table-column
-          v-for="col in alarmColumns"
-          :key="col.prop"
-          :label="col.label"
-          :prop="col.prop"
-          :width="col.width"
-        />
-      </el-table>
-    </ElDialog>
-
-    <!-- 确认弹窗 -->
-    <ElDialog
-      v-model="confirmDialogVisible"
-      title="金额确认"
-      width="500px"
-      append-to-body
-    >
-      <el-form :model="confirmForm" label-width="80px">
-        <el-form-item label="记录ID">
-          <el-input v-model="confirmForm.id" disabled />
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input
-            v-model="confirmForm.remark"
-            type="textarea"
-            rows="3"
-            placeholder="请输入确认备注"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="confirmDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleConfirmSubmit">
-            确认核算
-          </el-button>
-        </div>
-      </template>
-    </ElDialog>
-
-    <!-- 计算弹窗 -->
-    <ElDialog
-      v-model="calculateDialogVisible"
-      title="金额计算"
-      width="500px"
-      append-to-body
-    >
-      <el-form :model="calculateForm" label-width="80px">
-        <el-form-item label="记录ID">
-          <el-input v-model="calculateForm.id" disabled />
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input
-            v-model="calculateForm.remark"
-            type="textarea"
-            rows="3"
-            placeholder="请输入计算备注"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="calculateDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleCalculateSubmit">
-            执行计算
-          </el-button>
-        </div>
-      </template>
-    </ElDialog>
-
-    <!-- 批量计算弹窗 -->
-    <ElDialog
-      v-model="batchCalculateDialogVisible"
-      title="批量金额计算"
-      width="500px"
-      append-to-body
-    >
-      <el-form :model="batchCalculateForm" label-width="80px">
-        <el-form-item label="选中数量">
-          <el-input :value="batchCalculateForm.ids.length" disabled />
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input
-            v-model="batchCalculateForm.remark"
-            type="textarea"
-            rows="3"
-            placeholder="请输入计算备注"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="batchCalculateDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleBatchCalculateSubmit">
-            执行批量计算
-          </el-button>
-        </div>
-      </template>
-    </ElDialog>
 
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton
+            content="新增"
+            icon-name="Plus"
+            @click="handleCreate"
+          />
+          <IconButton
             content="导出EXCEL"
             icon-name="download"
             @click="handleExport"
-          />
-          <IconButton
-            content="批量核算"
-            icon-name="check"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleBatchCalculate"
           />
           <IconButton
             content="搜索"
@@ -628,46 +395,10 @@ const alarmColumns = [
           />
         </div>
       </template>
-      <template #checkResult="{ row }">
-        <el-tag :type="getCheckResultType(row.checkResult)">
-          {{ getCheckResultLabel(row.checkResult) }}
-        </el-tag>
-      </template>
       <template #status="{ row }">
         <el-tag :type="getStatusType(row.status)">
           {{ getStatusLabel(row.status) }}
         </el-tag>
-      </template>
-      <template #checkNo="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.checkNo }}
-        </el-text>
-      </template>
-      <template #payMethod="{ row }">
-        <span v-if="row.payMethod === 'wechat'">微信</span>
-        <span v-else-if="row.payMethod === 'alipay'">支付宝</span>
-        <span v-else-if="row.payMethod === 'bank'">银行卡</span>
-        <span v-else-if="row.payMethod === 'cash'">现金</span>
-        <span v-else>{{ row.payMethod }}</span>
-      </template>
-      <template #halfyearWarnCount="{ row }">
-        <el-text @click="handleTotal(row)" class="common-align" type="primary">
-          {{ row.halfyearWarnCount }}
-        </el-text>
-      </template>
-
-      <template #orderId="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.orderId }}
-        </el-text>
       </template>
 
       <template #actions="{ row }">
@@ -678,10 +409,26 @@ const alarmColumns = [
             @click="handleOpenDetail(row)"
           />
           <IconButton
-            content="确认"
-            v-if="row.status === 'checked'"
+            content="编辑"
+            icon-name="Edit"
+            @click="handleEdit(row)"
+          />
+          <IconButton
+            content="删除"
+            icon-name="Delete"
+            @click="handleDelete(row)"
+          />
+          <IconButton
+            content="启用"
+            v-if="row.status === 'disabled'"
             icon-name="Check"
-            @click="handleConfirm(row)"
+            @click="handleEnable(row)"
+          />
+          <IconButton
+            content="禁用"
+            v-if="row.status === 'enabled'"
+            icon-name="Close"
+            @click="handleDisable(row)"
           />
         </div>
       </template>
