@@ -151,8 +151,8 @@ export function dataList() {
       lastUpdateTime: inTime + 2 * 3_600_000,
       inRecord: inRecords[index % inRecords.length],
       outRecord: outRecords[index % outRecords.length],
-      supplierName: supplierOptions[index % supplierOptions.length],
-      receiverName: receiverOptions[index % receiverOptions.length],
+      supplier: supplierOptions[index % supplierOptions.length],
+      receiver: receiverOptions[index % receiverOptions.length],
       reserve1: inRecords[index % inRecords.length],
       reserve2: outRecords[index % outRecords.length],
       creator: index % 2 === 0 ? 'admin' : 'operator',
@@ -203,8 +203,8 @@ export function normalizeSpareStockRow(row) {
     inRecord: row.inRecord || row.in_record || row.reserve1 || '暂无入库记录',
     outRecord:
       row.outRecord || row.out_record || row.reserve2 || '暂无出库记录',
-    supplierName: row.supplierName || row.supplier_name || '-',
-    receiverName: row.receiverName || row.receiver_name || '-',
+    supplier: row.supplier || row.supplier_name || '-',
+    receiver: row.receiver || row.receiver_name || '-',
     creator: row.creator || '-',
     updater: row.updater || '-',
     createTime,
@@ -295,7 +295,7 @@ export function useSearchFormSchema() {
   return [
     {
       fieldName: 'spareName',
-      label: '关联备件',
+      label: '备件名称',
       component: 'Input',
       componentProps: {
         placeholder: '请输入备件名称',
@@ -350,7 +350,7 @@ export function useInFormSchema() {
   return [
     {
       fieldName: 'spareId',
-      label: '关联备件',
+      label: '备件名称',
       component: 'Select',
       componentProps: {
         placeholder: '请选择关联备件',
@@ -370,7 +370,7 @@ export function useInFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'supplierName',
+      fieldName: 'supplier',
       label: '供应商',
       component: 'Input',
       componentProps: {
@@ -385,7 +385,7 @@ export function useOutFormSchema() {
   return [
     {
       fieldName: 'spareId',
-      label: '关联备件',
+      label: '备件名称',
       component: 'Select',
       componentProps: {
         placeholder: '请选择关联备件',
@@ -413,7 +413,7 @@ export function useOutFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'receiverName',
+      fieldName: 'receiver',
       label: '领用人员',
       component: 'Input',
       componentProps: {
@@ -428,7 +428,7 @@ export function useReplenishFormSchema() {
   return [
     {
       fieldName: 'spareName',
-      label: '关联备件',
+      label: '备件名称',
       component: 'Input',
       componentProps: {
         disabled: true,
@@ -462,7 +462,7 @@ export function useGridColumns() {
     { field: 'id', title: '仓储ID', minWidth: 90, sortable: true },
     {
       field: 'spareName',
-      title: '关联备件',
+      title: '备件名称',
       minWidth: 180,
       sortable: true,
       slots: { default: 'spareName' },
@@ -526,7 +526,7 @@ export function useGridColumns() {
 
 export const detailFields = [
   { key: 'id', label: '仓储ID' },
-  { key: 'spareName', label: '关联备件' },
+  { key: 'spareName', label: '备件名称' },
   { key: 'spareType', label: '备件类型' },
   { key: 'currentStock', label: '当前库存' },
   {
@@ -541,8 +541,8 @@ export const detailFields = [
   { key: 'outTimeStr', label: '出库时间' },
   { key: 'inRecord', label: '入库记录' },
   { key: 'outRecord', label: '出库记录' },
-  { key: 'supplierName', label: '供应商' },
-  { key: 'receiverName', label: '领用人员' },
+  { key: 'supplier', label: '供应商' },
+  { key: 'receiver', label: '领用人员' },
   { key: 'lastUpdateTimeStr', label: '最后更新时间' },
   { key: 'creator', label: '创建者' },
   { key: 'updater', label: '更新者' },
