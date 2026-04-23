@@ -130,7 +130,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
         progress: 0,
         status: '待盘点',
       });
-      ElMessage.success($t('ui.actionMessage.addSuccess'));
+      ElMessage.success('新增成功');
       formDrawerApi.close();
       handleRefresh();
     } catch (error) {
