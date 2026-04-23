@@ -11,16 +11,15 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { 
-  getAmountCheckPage,
-  exportAmountCheckExcel,
-  confirmAmountCheck,
-  calculateAmountCheck,
-} from '#/api/genchuan/industry/chargePark/orderTrade/refundMgmt/index.js';
-import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
+  getPayOrderPage,
+  payOrder,
+  refundOrder,
+  exportPayOrderExcel,
+  cancelOrder,
+} from '#/api/genchuan/industry/chargePark/orderTrade/payMgmt/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
 import { downloadLocalTemplate } from '#/utils/genchuan/down';
-import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
 
 import { useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
@@ -108,8 +107,8 @@ function handleRefresh() {
 
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
-  const data = await exportAmountCheckExcel();
-  downloadFileFromBlobPart({ fileName: '金额核算报表.xls', source: data });
+  const data = await exportPayOrderExcel();
+  downloadFileFromBlobPart({ fileName: '支付订单报表.xls', source: data });
 }
 
 // ====================== 图片转PDF（终极零乱码） ======================
@@ -195,7 +194,7 @@ const getTableData = async (pageObj) => {
 
   try {
     dataObj.loading = true;
-    const res = await getAmountCheckPage(params);
+    const res = await getPayOrderPage(params);
     dataObj.total = res.total;
     dataObj.list = res.list.map((v) => {
       return {
@@ -206,8 +205,8 @@ const getTableData = async (pageObj) => {
     });
     return dataObj;
   } catch (error) {
-    console.error('获取金额核算数据失败:', error);
-    ElMessage.error('获取金额核算数据失败');
+    console.error('获取支付订单数据失败:', error);
+    ElMessage.error('获取支付订单数据失败');
     return dataObj;
   } finally {
     dataObj.loading = false;
@@ -313,11 +312,13 @@ const openEn = async () => {
   enDetailObjRef.value?.open();
 };
 
-// 金额核算状态映射
+// 支付订单状态映射
 const statusMap = {
-  pending: { label: '待核算', type: 'warning' },
-  checked: { label: '已核算', type: 'info' },
-  confirmed: { label: '已确认', type: 'success' },
+  pending_pay: { label: '待支付', type: 'warning' },
+  paid: { label: '已支付', type: 'success' },
+  completed: { label: '已完成', type: 'info' },
+  cancelled: { label: '已取消', type: 'danger' },
+  refunded: { label: '已退款', type: 'default' },
 };
 
 // 获取状态标签
@@ -330,149 +331,101 @@ const getStatusType = (status) => {
   return statusMap[status]?.type || 'default';
 };
 
-// 核算结果映射
-const checkResultMap = {
-  pass: { label: '通过', type: 'success' },
-  fail: { label: '不通过', type: 'danger' },
-};
-
-// 获取核算结果标签
-const getCheckResultLabel = (checkResult) => {
-  return checkResultMap[checkResult]?.label || checkResult;
-};
-
-// 获取核算结果类型
-const getCheckResultType = (checkResult) => {
-  return checkResultMap[checkResult]?.type || 'default';
-};
-
-// 确认弹窗
-const confirmDialogVisible = ref(false);
-const confirmForm = reactive({
+// 支付弹窗
+const payDialogVisible = ref(false);
+const payForm = reactive({
   id: '',
   remark: '',
 });
 
-// 打开确认弹窗
-const handleConfirm = (row) => {
-  confirmForm.id = row.id;
-  confirmForm.remark = '';
-  confirmDialogVisible.value = true;
+// 打开支付弹窗
+const handlePay = (row) => {
+  payForm.id = row.id;
+  payForm.remark = '';
+  payDialogVisible.value = true;
 };
 
-// 提交确认
-const handleConfirmSubmit = async () => {
+// 提交支付
+const handlePaySubmit = async () => {
+  const loadingInstance = ElLoading.service({
+    text: '正在支付...',
+  });
   try {
-    await confirmAmountCheck(confirmForm);
-    ElMessage.success('确认成功');
-    confirmDialogVisible.value = false;
+    await payOrder({ id: payForm.id, remark: payForm.remark });
+    ElMessage.success('支付成功');
+    payDialogVisible.value = false;
     handleRefresh();
-  } catch {
-    ElMessage.error('确认失败');
+  } catch (error) {
+    console.error('支付失败:', error);
+    ElMessage.error('支付失败');
+  } finally {
+    loadingInstance.close();
   }
 };
 
-// 批量计算弹窗
-const batchCalculateDialogVisible = ref(false);
-const batchCalculateForm = reactive({
-  ids: [],
-  remark: '',
-});
-
-// 打开批量计算弹窗
-const handleBatchCalculate = () => {
-  batchCalculateForm.ids = checkedIds.value;
-  batchCalculateForm.remark = '';
-  batchCalculateDialogVisible.value = true;
-};
-
-// 提交批量计算
-const handleBatchCalculateSubmit = async () => {
-  try {
-    const data = {
-      ids: batchCalculateForm.ids,
-      remark: batchCalculateForm.remark,
-    };
-    await calculateAmountCheck(data);
-    ElMessage.success('批量计算成功');
-    batchCalculateDialogVisible.value = false;
-    checkedIds.value = [];
-    handleRefresh();
-  } catch {
-    ElMessage.error('批量计算失败');
-  }
-};
-
-// 计算弹窗
-const calculateDialogVisible = ref(false);
-const calculateForm = reactive({
+// 退款弹窗
+const refundDialogVisible = ref(false);
+const refundForm = reactive({
   id: '',
   remark: '',
 });
 
-// 打开计算弹窗
-const handleCalculate = (row) => {
-  calculateForm.id = row.id;
-  calculateForm.remark = '';
-  calculateDialogVisible.value = true;
+// 打开退款弹窗
+const handleRefund = (row) => {
+  refundForm.id = row.id;
+  refundForm.remark = '';
+  refundDialogVisible.value = true;
 };
 
-// 提交计算
-const handleCalculateSubmit = async () => {
+// 提交退款
+const handleRefundSubmit = async () => {
+  const loadingInstance = ElLoading.service({
+    text: '正在退款...',
+  });
   try {
-    await calculateAmountCheck(calculateForm);
-    ElMessage.success('计算成功');
-    calculateDialogVisible.value = false;
+    await refundOrder({ id: refundForm.id, remark: refundForm.remark });
+    ElMessage.success('退款成功');
+    refundDialogVisible.value = false;
     handleRefresh();
-  } catch {
-    ElMessage.error('计算失败');
+  } catch (error) {
+    console.error('退款失败:', error);
+    ElMessage.error('退款失败');
+  } finally {
+    loadingInstance.close();
   }
 };
 
-// ====================== 告警明细弹窗 ======================
-const alarmDialogVisible = ref(false);
-const currentAlarmRow = ref({});
-const alarmList = ref([]);
+// 取消弹窗
+const cancelDialogVisible = ref(false);
+const cancelForm = reactive({
+  id: '',
+  remark: '',
+});
 
-function generateAlarmData(row) {
-  const count = row.halfyearWarnCount || 0;
-  const typeItems = row.highIllegalType.split(',').map((item) => item.trim());
-  const avgCount = Math.ceil(count / typeItems.length);
-  const types = typeItems.map((name) => {
-    return { name, num: avgCount };
+// 打开取消弹窗
+const handleCancel = (row) => {
+  cancelForm.id = row.id;
+  cancelForm.remark = '';
+  cancelDialogVisible.value = true;
+};
+
+// 提交取消
+const handleCancelSubmit = async () => {
+  const loadingInstance = ElLoading.service({
+    text: '正在取消...',
   });
-
-  const list = [];
-  let id = 1;
-  types.forEach((type) => {
-    for (let i = 0; i < Math.min(type.num, 5); i++) {
-      list.push({
-        id: id++,
-        canteenName: row.canteenName,
-        alarmType: type.name,
-        alarmTime: `${row.statCycle.split('-')[0].trim()} ${String(Math.trunc(Math.random() * 24)).padStart(2, '0')}:${String(Math.trunc(Math.random() * 60)).padStart(2, '0')}`,
-        alarmLevel: ['一般', '较重', '严重'][Math.trunc(Math.random() * 3)],
-        status: ['未处理', '处理中', '已整改'][Math.trunc(Math.random() * 3)],
-      });
-    }
-  });
-  return list.slice(0, count);
-}
-
-function handleTotal(row) {
-  currentAlarmRow.value = row;
-  alarmList.value = generateAlarmData(row);
-  alarmDialogVisible.value = true;
-}
-
-const alarmColumns = [
-  { label: '序号', prop: 'id', width: 70 },
-  { label: '食堂名称', prop: 'canteenName' },
-  { label: '告警类型', prop: 'alarmType' },
-  { label: '告警时间', prop: 'alarmTime' },
-  { label: '告警等级', prop: 'alarmLevel' },
-  { label: '处理状态', prop: 'status' },
-];
+  try {
+    await cancelOrder({ id: cancelForm.id, remark: cancelForm.remark });
+    ElMessage.success('取消成功');
+    cancelDialogVisible.value = false;
+    handleRefresh();
+  } catch (error) {
+    console.error('取消失败:', error);
+    ElMessage.error('取消失败');
+  } finally {
+    loadingInstance.close();
+  }
+};
 </script>
 
 <template>
@@ -484,114 +437,95 @@ const alarmColumns = [
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
     />
-    <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
 
-    <!-- 告警明细弹窗 -->
+    <!-- 支付弹窗 -->
     <ElDialog
-      v-model="alarmDialogVisible"
-      title="本半年食品安全问题明细"
-      width="900px"
-      append-to-body
-    >
-      <el-table :data="alarmList" border height="450">
-        <el-table-column
-          v-for="col in alarmColumns"
-          :key="col.prop"
-          :label="col.label"
-          :prop="col.prop"
-          :width="col.width"
-        />
-      </el-table>
-    </ElDialog>
-
-    <!-- 确认弹窗 -->
-    <ElDialog
-      v-model="confirmDialogVisible"
-      title="金额确认"
+      v-model="payDialogVisible"
+      title="支付订单"
       width="500px"
       append-to-body
     >
-      <el-form :model="confirmForm" label-width="80px">
-        <el-form-item label="记录ID">
-          <el-input v-model="confirmForm.id" disabled />
+      <el-form :model="payForm" label-width="80px">
+        <el-form-item label="订单ID">
+          <el-input v-model="payForm.id" disabled />
         </el-form-item>
         <el-form-item label="备注">
           <el-input
-            v-model="confirmForm.remark"
+            v-model="payForm.remark"
             type="textarea"
             rows="3"
-            placeholder="请输入确认备注"
+            placeholder="请输入支付备注"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="confirmDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleConfirmSubmit">
-            确认核算
+          <el-button @click="payDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handlePaySubmit">
+            确认支付
           </el-button>
         </div>
       </template>
     </ElDialog>
 
-    <!-- 计算弹窗 -->
+    <!-- 退款弹窗 -->
     <ElDialog
-      v-model="calculateDialogVisible"
-      title="金额计算"
+      v-model="refundDialogVisible"
+      title="退款订单"
       width="500px"
       append-to-body
     >
-      <el-form :model="calculateForm" label-width="80px">
-        <el-form-item label="记录ID">
-          <el-input v-model="calculateForm.id" disabled />
+      <el-form :model="refundForm" label-width="80px">
+        <el-form-item label="订单ID">
+          <el-input v-model="refundForm.id" disabled />
         </el-form-item>
         <el-form-item label="备注">
           <el-input
-            v-model="calculateForm.remark"
+            v-model="refundForm.remark"
             type="textarea"
             rows="3"
-            placeholder="请输入计算备注"
+            placeholder="请输入退款备注"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="calculateDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleCalculateSubmit">
-            执行计算
+          <el-button @click="refundDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleRefundSubmit">
+            确认退款
           </el-button>
         </div>
       </template>
     </ElDialog>
 
-    <!-- 批量计算弹窗 -->
+    <!-- 取消弹窗 -->
     <ElDialog
-      v-model="batchCalculateDialogVisible"
-      title="批量金额计算"
+      v-model="cancelDialogVisible"
+      title="取消订单"
       width="500px"
       append-to-body
     >
-      <el-form :model="batchCalculateForm" label-width="80px">
-        <el-form-item label="选中数量">
-          <el-input :value="batchCalculateForm.ids.length" disabled />
+      <el-form :model="cancelForm" label-width="80px">
+        <el-form-item label="订单ID">
+          <el-input v-model="cancelForm.id" disabled />
         </el-form-item>
         <el-form-item label="备注">
           <el-input
-            v-model="batchCalculateForm.remark"
+            v-model="cancelForm.remark"
             type="textarea"
             rows="3"
-            placeholder="请输入计算备注"
+            placeholder="请输入取消备注"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="batchCalculateDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleBatchCalculateSubmit">
-            执行批量计算
+          <el-button @click="cancelDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleCancelSubmit">
+            确认取消
           </el-button>
         </div>
       </template>
