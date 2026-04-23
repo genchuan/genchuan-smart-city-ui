@@ -4,6 +4,7 @@ stages:
 variables:
   DIST_PATH: "./apps/web-ele/dist"
   TARGET_PATH: "/data/vue/"
+  DEV_PATH: "/data/dev/vue/"
   PIPELINE_TAG: "$CI_COMMIT_BRANCH"
 
 build:
@@ -29,15 +30,23 @@ push:
   stage: push
   tags:
     - genchuan-ui-runner
-  only:
-    - master
   needs:
     - build
   script:
-    - echo "===== 开始迁移dist包到目标服务器 ====="
-    - mkdir -p $TARGET_PATH/PIPELINE_TAG
-    - cp -rf $DIST_PATH/* $TARGET_PATH/$PIPELINE_TAG
-    - echo "dist包已迁移到本地路径：$TARGET_PATH/$PIPELINE_TAG "
+    - echo "===== 当前分支：$PIPELINE_TAG ====="
+    - echo "===== 开始迁移 dist 包 ====="
+    - |
+      if [ "$PIPELINE_TAG" = "master" ]; then
+        echo "master 分支：直接部署到 $TARGET_PATH"
+        cp -rf $DIST_PATH/* $TARGET_PATH/
+      else
+        # 其他分支 → 放到分支名目录下
+        echo "非 master 分支：部署到 $TARGET_PATH/$PIPELINE_TAG"
+        mkdir -p $TARGET_PATH/$PIPELINE_TAG
+        cp -rf $DIST_PATH/* $DEV_PATH$PIPELINE_TAG/
+      fi
+
+    - echo "===== 迁移完成 ====="
   retry:
     max: 2
     when:
