@@ -234,11 +234,11 @@ const getTableData = async (pageObj) => {
       pageSize: page.pageSize,
       name: dataObj.searchParams.name,
       type: filterType.value || dataObj.searchParams.type,
-      currentStock: dataObj.searchParams.currentStock,
+      stock: dataObj.searchParams.stock,
       status: filterStatus.value || dataObj.searchParams.status,
       activityId: dataObj.searchParams.activityId,
-      distributeCount: dataObj.searchParams.distributeCount,
-      warningThreshold: dataObj.searchParams.warningThreshold,
+      sendCount: dataObj.searchParams.sendCount,
+      warnThreshold: dataObj.searchParams.warnThreshold,
     };
 
     // 处理创建时间范围
@@ -541,14 +541,14 @@ defineExpose({
         <span v-else>-</span>
       </template>
       <!-- 发放量插槽 - 点击跳转奖品发放明细弹窗 -->
-      <template #distributeCount="{ row }">
+      <template #sendCount="{ row }">
         <el-text
-          @click="ElMessage.info(`打开奖品发放明细弹窗: ${row.distributeCount}次`)"
+          @click="ElMessage.info(`打开奖品发放明细弹窗: ${row.sendCount}次`)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
         >
-          {{ row.distributeCount }}
+          {{ row.sendCount }}
         </el-text>
       </template>
       <!-- 行操作按钮 -->

@@ -199,8 +199,8 @@ const getTableData = async (pageObj) => {
     };
 
     const response = await getCardOrderPage(params);
-    if (response && response.code === 200 && response.data) {
-      const { list, total } = response.data;
+    if (response ) {
+      const { list, total } = response;
       dataObj.total = total || 0;
       dataObj.list = list || [];
       return dataObj;
@@ -558,7 +558,7 @@ const handleFullShow = () => {
           style="cursor: pointer;"
           @click="handleFilterByPayStatus(row.payStatus)"
         >
-          {{ row.payStatusName }}
+          {{ getCardOrderPayStatusLabel(row.payStatus) }}
         </ElTag>
       </template>
       <!-- 生成时间 - 格式化显示 -->
@@ -580,7 +580,7 @@ const handleFullShow = () => {
           style="cursor: pointer;"
           @click="handleFilterByInvoiceStatus(row.invoiceStatus)"
         >
-          {{ row.invoiceStatusName }}
+          {{ getCardOrderInvoiceStatusLabel(row.invoiceStatus) }}
         </ElTag>
       </template>
       <!-- 归档时间 - 格式化显示 -->

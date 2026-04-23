@@ -234,8 +234,8 @@ const getTableData = async (pageObj) => {
     // 调用分页接口
     const res = await getActivityConfigPage(params);
 
-    if (res && res.data) {
-      const { list, total } = res.data;
+    if (res) {
+      const { list, total } = res;
       dataObj.apilist = list || [];
       dataObj.total = total || 0;
       dataObj.list = list || [];
@@ -546,7 +546,7 @@ defineExpose({
           style="cursor: pointer;"
           @click="handleFilterByType(row.type)"
         >
-          {{ row.typeName }}
+          {{ getActivityConfigTypeLabel(row.type) }}
         </ElTag>
       </template>
       <!-- 适用人群 - 点击筛选同条件 -->
@@ -556,7 +556,7 @@ defineExpose({
           style="cursor: pointer;"
           @click="handleFilterByUserGroup(row.userGroup)"
         >
-          {{ row.userGroupName }}
+          {{ getActivityConfigUserGroupLabel(row.userGroup) }}
         </ElTag>
       </template>
       <!-- 配置状态 - 点击筛选同状态 -->
@@ -566,7 +566,7 @@ defineExpose({
           style="cursor: pointer;"
           @click="handleFilterByStatus(row.status)"
         >
-          {{ row.statusName }}
+          {{ getActivityConfigStatusLabel(row.status) }}
         </ElTag>
       </template>
       <!-- 创建时间 -->

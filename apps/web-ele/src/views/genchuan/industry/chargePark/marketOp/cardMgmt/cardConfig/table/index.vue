@@ -230,8 +230,8 @@ const getTableData = async (pageObj) => {
     };
 
     const response = await getCardConfigPage(params);
-    if (response && response.code === 200 && response.data) {
-      const { list, total } = response.data;
+    if (response) {
+      const { list, total } = response;
       dataObj.total = total || 0;
       dataObj.list = list || [];
       return dataObj;
@@ -561,7 +561,7 @@ const handleFullShow = () => {
           style="cursor: pointer;"
           @click="handleFilterByType(row.type)"
         >
-          {{ row.typeName }}
+          {{ getCardConfigTypeLabel(row.type) }}
         </ElTag>
       </template>
       <!-- 适用范围 - 点击筛选同范围 -->
@@ -571,7 +571,7 @@ const handleFullShow = () => {
           style="cursor: pointer;"
           @click="handleFilterByScope(row.scope)"
         >
-          {{ row.scopeName }}
+          {{ getCardConfigScopeLabel(row.scope) }}
         </ElTag>
       </template>
       <!-- 价格 - 格式化显示 -->
@@ -585,7 +585,7 @@ const handleFullShow = () => {
           style="cursor: pointer;"
           @click="handleFilterByStatus(row.status)"
         >
-          {{ row.statusName }}
+          {{ getCardConfigStatusLabel(row.status) }}
         </ElTag>
       </template>
       <!-- 创建时间 - 格式化显示 -->

@@ -260,8 +260,10 @@ const getTableData = async (pageObj) => {
     };
 
     const response = await getExchangeCategoryPage(params);
-    if (response && response.code === 200 && response.data) {
-      const { list, total } = response.data;
+    if (response) {
+      console.log("========")
+      console.log(response);
+      const { list, total } = response;
       dataObj.total = total || 0;
       dataObj.list = list || [];
       return dataObj;
@@ -581,7 +583,7 @@ const handleFullShow = () => {
           style="cursor: pointer"
           @click="handleFilterByScope(row.scope)"
         >
-          {{ row.scopeName }}
+          {{ getExchangeCategoryScopeLabel(row.scope) }}
         </ElTag>
       </template>
       <!-- 类目状态 - 点击筛选同状态 -->
@@ -591,7 +593,7 @@ const handleFullShow = () => {
           style="cursor: pointer"
           @click="handleFilterByStatus(row.status)"
         >
-          {{ row.statusName }}
+          {{ getExchangeCategoryStatusLabel(row.status) }}
         </ElTag>
       </template>
       <!-- 创建时间 - 格式化显示 -->
