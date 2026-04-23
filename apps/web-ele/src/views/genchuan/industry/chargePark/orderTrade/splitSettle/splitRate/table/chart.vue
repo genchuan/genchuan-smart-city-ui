@@ -3,57 +3,57 @@ import { onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
-import { getAmountCheckChart } from '#/api/genchuan/industry/chargePark/orderTrade/refundMgmt/index.js';
+import { getSplitRateChart } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
 import Card from '#/components/stats/card.vue';
 
 const state = reactive({
   cardList: [
-    { title: '核算总数', value: 0, color: '#FF6B6B' },
-    { title: '核算准确率', value: 0, color: '#4ECDC4', suffix: '%' },
-    { title: '待核算数', value: 0, color: '#13ce66' },
+    { title: '已生效数量', value: 0, color: '#FF6B6B' },
+    { title: '固定比例数', value: 0, color: '#4ECDC4' },
+    { title: '阶梯比例数', value: 0, color: '#13ce66' },
   ],
-  trendData: [],
+  splitModeData: [],
 });
 
 const lineChartRef = ref(null);
 let lineChartInstance = null;
 
-// 获取金额核算图表数据
-const fetchOrderChartData = async () => {
+// 获取分账结算图表数据
+const fetchSplitRateChartData = async () => {
   try {
-    const res = await getAmountCheckChart();
-    state.cardList[0].value = res.totalCheckCount;
-    state.cardList[1].value = res.checkAccuracy;
-    // 待核算数通过趋势数据计算
-    state.cardList[2].value = res.trendData?.reduce((sum, item) => sum + item.count, 0) || 0;
-    // 如果trendData为空，使用假数据
-    state.trendData =
-      res.trendData && res.trendData.length > 0
-        ? res.trendData
+    const res = await getSplitRateChart();
+    state.cardList[0].value = res.enabledCount || 0;
+    // 从splitModeData中获取固定比例和阶梯比例的数量
+    const fixedData = res.splitModeData?.find(item => item.split_mode === 'fixed');
+    const ladderData = res.splitModeData?.find(item => item.split_mode === 'ladder');
+    state.cardList[1].value = fixedData?.count || 0;
+    state.cardList[2].value = ladderData?.count || 0;
+    // 如果splitModeData为空，使用假数据
+    state.splitModeData =
+      res.splitModeData && res.splitModeData.length > 0
+        ? res.splitModeData
         : [
-            { date: '2025-04-01', count: 5 },
-            { date: '2025-04-02', count: 8 },
-            { date: '2025-04-03', count: 3 },
-            { date: '2025-04-04', count: 12 },
-            { date: '2025-04-05', count: 6 },
+            { split_mode: 'fixed', count: 3 },
+            { split_mode: 'ladder', count: 2 },
           ];
-    // 更新折线图
+    // 更新图表
     updateLineChart();
   } catch (error) {
-    console.error('获取金额核算图表数据失败:', error);
+    console.error('获取分账结算图表数据失败:', error);
     // 接口调用失败时使用假数据
-    state.cardList[0].value = 3;
-    state.cardList[1].value = 66.7;
-    state.cardList[2].value = 1;
-    state.trendData = [
-      { date: '2026-04-21', count: 1 },
+    state.cardList[0].value = 0;
+    state.cardList[1].value = 3;
+    state.cardList[2].value = 2;
+    state.splitModeData = [
+      { split_mode: 'fixed', count: 3 },
+      { split_mode: 'ladder', count: 2 },
     ];
-    // 更新折线图
+    // 更新图表
     updateLineChart();
   }
 };
 
-// 初始化折线图
+// 初始化柱状图
 const initLineChart = () => {
   if (!lineChartRef.value) return;
 
@@ -61,7 +61,7 @@ const initLineChart = () => {
 
   const option = {
     title: {
-      text: '金额核算趋势',
+      text: '分账模式分布',
       left: 'center',
       textStyle: {
         color: '#6E7E91',
@@ -75,6 +75,13 @@ const initLineChart = () => {
       borderColor: '#E8F4FD',
       borderWidth: 1,
       textStyle: { color: '#6E7E91' },
+      formatter: (params) => {
+        const data = params[0];
+        return `<div style="padding: 8px;">
+          <div style="font-weight: 500;">${data.name}</div>
+          <div>数量：${data.value} 个</div>
+        </div>`;
+      },
     },
     grid: {
       left: '3%',
@@ -84,32 +91,43 @@ const initLineChart = () => {
     },
     xAxis: {
       type: 'category',
-      boundaryGap: false,
-      data: state.trendData.map((item) => item.date),
+      data: state.splitModeData.map((item) => item.split_mode === 'fixed' ? '固定比例' : '阶梯比例'),
       axisLabel: { color: '#6E7E91', fontSize: 12 },
       axisLine: { lineStyle: { color: '#E5E7EB' } },
     },
     yAxis: {
       type: 'value',
+      name: '数量',
+      nameTextStyle: { color: '#6E7E91', fontSize: 12 },
       axisLabel: { color: '#6E7E91', fontSize: 12 },
       axisLine: { lineStyle: { color: '#E5E7EB' } },
       splitLine: { lineStyle: { color: '#F3F4F6' } },
     },
     series: [
       {
-        name: '订单量',
-        type: 'line',
-        data: state.trendData.map((item) => item.count),
-        smooth: true,
-        symbol: 'circle',
-        symbolSize: 6,
-        lineStyle: { color: '#4A90E2', width: 2 },
-        itemStyle: { color: '#4A90E2' },
-        areaStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(74, 144, 226, 0.3)' },
-            { offset: 1, color: 'rgba(74, 144, 226, 0.05)' },
-          ]),
+        name: '数量',
+        type: 'bar',
+        data: state.splitModeData.map((item) => ({
+          value: item.count,
+          itemStyle: {
+            color: item.split_mode === 'fixed' 
+              ? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  { offset: 0, color: '#4ECDC4' },
+                  { offset: 1, color: '#44A08D' },
+                ])
+              : new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  { offset: 0, color: '#FF6B6B' },
+                  { offset: 1, color: '#EE5A24' },
+                ]),
+          },
+        })),
+        barWidth: '50%',
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.3)',
+          },
         },
       },
     ],
@@ -118,24 +136,37 @@ const initLineChart = () => {
   lineChartInstance.setOption(option);
 };
 
-// 更新折线图
+// 更新柱状图
 const updateLineChart = () => {
   if (!lineChartInstance) return;
 
   lineChartInstance.setOption({
     xAxis: {
-      data: state.trendData.map((item) => item.date),
+      data: state.splitModeData.map((item) => item.split_mode === 'fixed' ? '固定比例' : '阶梯比例'),
     },
     series: [
       {
-        data: state.trendData.map((item) => item.count),
+        data: state.splitModeData.map((item) => ({
+          value: item.count,
+          itemStyle: {
+            color: item.split_mode === 'fixed' 
+              ? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  { offset: 0, color: '#4ECDC4' },
+                  { offset: 1, color: '#44A08D' },
+                ])
+              : new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  { offset: 0, color: '#FF6B6B' },
+                  { offset: 1, color: '#EE5A24' },
+                ]),
+          },
+        })),
       },
     ],
   });
 };
 
 onMounted(() => {
-  fetchOrderChartData().then(() => {
+  fetchSplitRateChartData().then(() => {
     initLineChart();
   });
 
