@@ -2,6 +2,8 @@
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { loadTMap } from '#/utils/genchuan/useTMap.ts';
 
+const emit = defineEmits(['marker-click']);
+
 const props = defineProps({
   data: { type: Array, default: () => [] },
   markerIcons: { type: Object, default: () => ({ normal: '/static/imgs/dataHub/map/marker-blue.png' }) },
@@ -15,7 +17,6 @@ let map = null;
 let markerLayer = null;
 let infoWindow = null;
 let TMapInstance = null;
-let boundsPolygon = null;
 
 const initMap = async () => {
   if (!mapRef.value) return;
@@ -63,9 +64,26 @@ const onMarkerClick = (evt) => {
   infoWindow.setPosition(position);
   infoWindow.setContent(generateInfoWindowContent(properties));
   infoWindow.open();
+  const location = properties.location || properties.coordinate;
+  if (location) {
+    emit('marker-click', location);
+  }
 };
 
-// 修复：增加边界有效性检查，避免 far <= 0 错误
+// 检查边界是否有效（西南角和东北角不重合）
+const isBoundsValid = (bounds) => {
+  if (!bounds || bounds.isEmpty()) return false;
+  try {
+    const sw = bounds.getSouthWest();
+    const ne = bounds.getNorthEast();
+    if (!sw || !ne) return false;
+    // 比较经纬度是否完全相同
+    return !(sw.getLat() === ne.getLat() && sw.getLng() === ne.getLng());
+  } catch (e) {
+    return false;
+  }
+};
+
 const renderMarkers = () => {
   if (!map || !props.data?.length || !TMapInstance || !markerLayer) return;
   const geometries = [];
@@ -79,26 +97,34 @@ const renderMarkers = () => {
     geometries.push({ id: item.geoCode || item.id, styleId: 'normal', position, properties: item });
   });
   markerLayer.setGeometries(geometries);
-  if (geometries.length > 0 && !bounds.isEmpty()) {
+
+  if (geometries.length === 0) return;
+
+  // 优先使用 fitBounds，但仅在边界有效时
+  if (isBoundsValid(bounds)) {
     map.fitBounds(bounds, { padding: 100 });
-  } else if (props.data.length > 0) {
-    console.warn('没有有效的坐标数据，地图保持默认视图');
+  } else {
+    // 边界无效（所有点重合），将地图中心设置为第一个点，缩放级别保持当前或设为14
+    const firstPos = geometries[0].position;
+    map.setCenter(firstPos);
+    // 可选：如果当前缩放级别太远，可以设置一个合适的级别
+    if (map.getZoom() > 16) {
+      map.setZoom(14);
+    }
   }
 };
 
-const drawBounds = (bounds) => { /* 保持不变 */ };
-const clearBounds = () => { /* 保持不变 */ };
-const setCenter = (lngLat) => { /* 保持不变 */ };
-const setZoom = (zoom) => { if (map) map.setZoom(zoom); };
-const getCenter = () => map ? { lng: map.getCenter().getLng(), lat: map.getCenter().getLat() } : null;
-const getZoom = () => map ? map.getZoom() : null;
-const getBounds = () => { if (!map) return null; const sw = map.getBounds().getSouthWest(); const ne = map.getBounds().getNorthEast(); return { south: sw.getLat(), north: ne.getLat(), west: sw.getLng(), east: ne.getLng() }; };
 const resize = () => { if (map) map.resize(); };
 
-defineExpose({ setCenter, setZoom, getCenter, getZoom, getBounds, resize, drawBounds, clearBounds });
+defineExpose({ resize });
 watch(() => props.data, renderMarkers, { deep: true });
 onMounted(() => { initMap(); window.addEventListener('resize', resize); });
-onUnmounted(() => { window.removeEventListener('resize', resize); if (markerLayer) markerLayer.destroy?.(); if (infoWindow) infoWindow.destroy?.(); if (map && map.destroy) map.destroy(); });
+onUnmounted(() => {
+  window.removeEventListener('resize', resize);
+  if (markerLayer) markerLayer.destroy?.();
+  if (infoWindow) infoWindow.destroy?.();
+  if (map && map.destroy) map.destroy();
+});
 </script>
 
 <template>
