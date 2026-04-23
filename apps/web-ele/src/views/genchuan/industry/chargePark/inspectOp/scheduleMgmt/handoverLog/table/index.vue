@@ -4,36 +4,31 @@ import { computed, reactive, ref, watch } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
 
-import { ElLoading, ElMessage, ElMessageBox, ElTag } from 'element-plus';
+import { ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  deleteInspectUser,
-  exportInspectUser,
-  getInspectUserDetail,
-  getInspectUserPage,
-} from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectUser';
+  createHandoverLog,
+  exportHandoverLog,
+  getHandoverLogDetail,
+  getHandoverLogPage,
+} from '#/api/genchuan/industry/chargePark/inspectOp/scheduleMgmt/handoverLog';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import { $t } from '#/locales';
 
-import ImportExcelDialog from '../components/ImportExcelDialog.vue';
 import StatusConfirmDialog from '../components/StatusConfirmDialog.vue';
-import UserFormDrawer from '../components/UserFormDrawer.vue';
 import {
   detailFields,
-  deviceDetailFields,
-  filterInspectUserRows,
   filterMockList,
-  getDeviceDetail,
-  getOnlineStatusLabel,
-  getOnlineStatusTagType,
-  getUserStatusLabel,
-  getUserStatusTagType,
-  isOnlineStatusLabel,
-  isUserStatusLabel,
-  normalizeInspectUserRow,
+  getStatusLabel,
+  getStatusTagType,
+  getUserName,
+  isStatusLabel,
+  normalizeHandoverLogRow,
   textObj,
+  useFormSchema,
   useGridColumns,
   useSearchFormSchema,
 } from './data';
@@ -56,22 +51,24 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel() {
     drawerApi.close();
   },
+  onConfirm() {},
+  async onOpenChange() {},
 });
 
 const detailDrawerRef = ref(null);
-const deviceDetailDrawerRef = ref(null);
-const formDrawerRef = ref(null);
-const importExcelDialogRef = ref(null);
 const statusConfirmDialogRef = ref(null);
+const formData = ref({});
+const checkedIds = ref([]);
 const checkedRows = ref([]);
-const filterArea = ref('');
+const filterUserName = ref('');
+const filterHandoverDate = ref('');
 const filterStatus = ref('');
-const filterOnlineStatus = ref('');
+const filterConfirmUserId = ref('');
+const filterTrendTime = ref('');
 
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
-  deviceDetailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -81,21 +78,62 @@ const dataObj = reactive({
 });
 
 const currentPageStats = computed(() => {
-  let normalCount = 0;
-  let disabledCount = 0;
-  let onlineCount = 0;
-
-  for (const item of dataObj.list) {
-    if (isUserStatusLabel(item.status, '正常')) normalCount += 1;
-    if (isUserStatusLabel(item.status, '禁用')) disabledCount += 1;
-    if (isOnlineStatusLabel(item.onlineStatus, '在线')) onlineCount += 1;
-  }
+  const pendingCount = dataObj.list.filter((item) =>
+    isStatusLabel(item.status, '待确认'),
+  ).length;
+  const confirmedCount = dataObj.list.filter((item) =>
+    isStatusLabel(item.status, '已确认'),
+  ).length;
 
   return {
-    normalCount,
-    disabledCount,
-    onlineCount,
+    confirmedCount,
+    pendingCount,
   };
+});
+
+const [Form, formApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  layout: 'horizontal',
+  schema: useFormSchema(),
+  showDefaultActions: false,
+});
+
+const [FormDrawer, formDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    formDrawerApi.close();
+  },
+  async onConfirm() {
+    const { valid } = await formApi.validate();
+    if (!valid) return;
+
+    const values = await formApi.getValues();
+    try {
+      await createHandoverLog({
+        ...values,
+        status: '待确认',
+      });
+      ElMessage.success($t('ui.actionMessage.addSuccess'));
+      formDrawerApi.close();
+      handleRefresh();
+    } catch (error) {
+      console.error(error);
+      ElMessage.error('新增交接日志失败');
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (!isOpen) return;
+    formData.value = formDrawerApi.getData() || {};
+    await formApi.resetForm();
+    await formApi.setValues(formData.value);
+  },
 });
 
 function buildQueryParams(page) {
@@ -103,9 +141,12 @@ function buildQueryParams(page) {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...dataObj.searchParams,
-    area: filterArea.value || dataObj.searchParams.area,
+    userName: filterUserName.value,
+    handoverDate: filterHandoverDate.value || dataObj.searchParams.handoverDate,
     status: filterStatus.value || dataObj.searchParams.status,
-    onlineStatus: filterOnlineStatus.value || dataObj.searchParams.onlineStatus,
+    confirmUserId:
+      filterConfirmUserId.value || dataObj.searchParams.confirmUserId,
+    trendTime: filterTrendTime.value,
   };
 }
 
@@ -125,7 +166,7 @@ async function getTableData({ page }) {
   const queryParams = buildQueryParams(page);
 
   try {
-    const response = await getInspectUserPage(queryParams);
+    const response = await getHandoverLogPage(queryParams);
     const pageResult = response?.list ? response : response?.data || response;
     const list = Array.isArray(pageResult?.list) ? pageResult.list : [];
 
@@ -133,20 +174,11 @@ async function getTableData({ page }) {
       throw new Error('接口返回数据为空');
     }
 
-    const normalizedList = list.map((item) => normalizeInspectUserRow(item));
-    const visibleList =
-      filterArea.value || filterStatus.value || filterOnlineStatus.value
-        ? filterInspectUserRows(normalizedList, queryParams)
-        : normalizedList;
-
     dataObj.useStaticData = false;
-    dataObj.total =
-      filterArea.value || filterStatus.value || filterOnlineStatus.value
-        ? visibleList.length
-        : pageResult.total || 0;
-    dataObj.list = visibleList;
+    dataObj.total = pageResult.total || 0;
+    dataObj.list = list.map((item) => normalizeHandoverLogRow(item));
   } catch (error) {
-    console.error('获取巡检人员数据失败，使用静态数据:', error);
+    console.error('获取交接日志数据失败，使用静态数据:', error);
     getPagedMockData(queryParams, page);
   }
 
@@ -204,23 +236,16 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 function handleRowCheckboxChange({ records }) {
   checkedRows.value = records;
+  checkedIds.value = records.map((item) => item.id);
 }
 
 function handleRefresh() {
   gridApi.query();
 }
 
-function handleCreate() {
-  formDrawerRef.value?.open();
-}
-
-function handleImport() {
-  importExcelDialogRef.value?.open();
-}
-
 async function handleExport() {
   try {
-    const data = await exportInspectUser(buildQueryParams(dataObj));
+    const data = await exportHandoverLog(buildQueryParams(dataObj));
     downloadFileFromBlobPart({ fileName: textObj.excelAllName, source: data });
     ElMessage.success('导出成功');
   } catch (error) {
@@ -229,38 +254,34 @@ async function handleExport() {
   }
 }
 
+function handleCreate() {
+  formDrawerApi
+    .setData({ handoverDate: new Date().toISOString().slice(0, 10) })
+    .open();
+}
+
+function handleConfirm(row) {
+  statusConfirmDialogRef.value?.open(row);
+}
+
 function onSubmit(values) {
   dataObj.searchParams = { ...values };
+  filterHandoverDate.value = '';
+  filterTrendTime.value = '';
   gridApi.reload();
   drawerApi.close();
 }
 
 async function handleOpenDetail(row) {
   try {
-    const response = await getInspectUserDetail(row.id);
-    dataObj.detailObj = normalizeInspectUserRow(response || row);
+    const response = await getHandoverLogDetail(row.id);
+    const detail = response?.id ? response : response?.data || response;
+    dataObj.detailObj = normalizeHandoverLogRow(detail || row);
   } catch (error) {
-    console.error('获取巡检人员详情失败，使用行数据:', error);
-    dataObj.detailObj = normalizeInspectUserRow(row);
+    console.error('获取交接日志详情失败，使用行数据:', error);
+    dataObj.detailObj = row;
   }
   detailDrawerRef.value?.open();
-}
-
-function handleEdit(row) {
-  formDrawerRef.value?.open(row);
-}
-
-function handleEnable(row) {
-  statusConfirmDialogRef.value?.open('enable', row);
-}
-
-function handleDisable(row) {
-  statusConfirmDialogRef.value?.open('disable', row);
-}
-
-function handleDeviceClick(row) {
-  dataObj.deviceDetailObj = getDeviceDetail(row);
-  deviceDetailDrawerRef.value?.open();
 }
 
 function handleSearchShow() {
@@ -275,25 +296,14 @@ function changeTotalShow() {
   dataObj.totalShow = !dataObj.totalShow;
 }
 
-async function handleDelete(row) {
-  await ElMessageBox.confirm('确定删除该巡检人员吗？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning',
-  });
-  const loadingInstance = ElLoading.service({ text: '删除中...' });
-  try {
-    await deleteInspectUser(row.id);
-    ElMessage.success('删除成功');
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
+function handleUserClick(row) {
+  dataObj.detailObj = row;
+  detailDrawerRef.value?.open();
 }
 
-function handleAreaClick(area) {
-  if (!area || area === '-') return;
-  filterArea.value = filterArea.value === area ? '' : area;
+function handleDateClick(date) {
+  filterHandoverDate.value = filterHandoverDate.value === date ? '' : date;
+  filterTrendTime.value = '';
   gridApi.query();
 }
 
@@ -302,22 +312,31 @@ function handleStatusClick(status) {
   gridApi.query();
 }
 
-function handleOnlineStatusClick(onlineStatus) {
-  filterOnlineStatus.value =
-    filterOnlineStatus.value === onlineStatus ? '' : onlineStatus;
+function handleConfirmUserClick(confirmUserId) {
+  if (!confirmUserId) return;
+  filterConfirmUserId.value =
+    Number(filterConfirmUserId.value) === Number(confirmUserId)
+      ? ''
+      : confirmUserId;
   gridApi.query();
 }
 
 function cancelFilter(type) {
   const clearMap = {
-    area: () => {
-      filterArea.value = '';
+    confirmUserId: () => {
+      filterConfirmUserId.value = '';
     },
-    onlineStatus: () => {
-      filterOnlineStatus.value = '';
+    date: () => {
+      filterHandoverDate.value = '';
     },
     status: () => {
       filterStatus.value = '';
+    },
+    trendTime: () => {
+      filterTrendTime.value = '';
+    },
+    userName: () => {
+      filterUserName.value = '';
     },
   };
 
@@ -329,17 +348,14 @@ watch(
   () => props.chartFilter,
   (filter) => {
     if (!filter) return;
-    if (filter.type === 'area') {
-      filterArea.value = filter.value;
-    }
-    if (filter.type === 'onlineStatus') {
-      filterOnlineStatus.value = filter.value;
-    }
     if (filter.type === 'status') {
-      filterStatus.value = filter.value || '';
-      if (!filter.value) filterOnlineStatus.value = '';
+      filterStatus.value = filter.value;
     }
-    gridApi.reload();
+    if (filter.type === 'trendTime') {
+      filterTrendTime.value = filter.value;
+      filterHandoverDate.value = '';
+    }
+    gridApi.query();
   },
   { deep: true },
 );
@@ -347,17 +363,15 @@ watch(
 
 <template>
   <div class="park-lot-table-new">
+    <FormDrawer :title="textObj.addText">
+      <Form />
+    </FormDrawer>
+
     <DetailDrawer
       ref="detailDrawerRef"
       :data="dataObj.detailObj"
       :fields="detailFields"
-      :title="`${dataObj.detailObj.name || '巡检人员'}详情`"
-    />
-    <DetailDrawer
-      ref="deviceDetailDrawerRef"
-      :data="dataObj.deviceDetailObj"
-      :fields="deviceDetailFields"
-      :title="`${dataObj.deviceDetailObj.name || '绑定设备'}详情`"
+      :title="`${dataObj.detailObj.userName || '交接日志'}详情`"
     />
 
     <Drawer title="搜索">
@@ -366,30 +380,46 @@ watch(
 
     <Grid>
       <template #table-title>
-        <div class="inspect-user-filter-tags">
+        <div class="handover-log-filter-tags">
           <ElTag
-            v-if="filterArea"
+            v-if="filterUserName"
+            closable
+            type="success"
+            @close="cancelFilter('userName')"
+          >
+            交接人员：{{ filterUserName }}
+          </ElTag>
+          <ElTag
+            v-if="filterHandoverDate"
             closable
             type="primary"
-            @close="cancelFilter('area')"
+            @close="cancelFilter('date')"
           >
-            所属片区：{{ filterArea }}
+            交接日期：{{ filterHandoverDate }}
           </ElTag>
           <ElTag
             v-if="filterStatus"
             closable
-            :type="getUserStatusTagType(filterStatus)"
+            type="warning"
             @close="cancelFilter('status')"
           >
-            人员状态：{{ getUserStatusLabel(filterStatus) }}
+            日志状态：{{ getStatusLabel(filterStatus) }}
           </ElTag>
           <ElTag
-            v-if="filterOnlineStatus"
+            v-if="filterConfirmUserId"
             closable
-            :type="getOnlineStatusTagType(filterOnlineStatus)"
-            @close="cancelFilter('onlineStatus')"
+            type="info"
+            @close="cancelFilter('confirmUserId')"
           >
-            在线状态：{{ getOnlineStatusLabel(filterOnlineStatus) }}
+            确认人员：{{ getUserName(filterConfirmUserId) }}
+          </ElTag>
+          <ElTag
+            v-if="filterTrendTime"
+            closable
+            type="danger"
+            @close="cancelFilter('trendTime')"
+          >
+            趋势时间：{{ filterTrendTime }}
           </ElTag>
         </div>
       </template>
@@ -397,7 +427,6 @@ watch(
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton content="导入" icon-name="Upload" @click="handleImport" />
           <IconButton
             content="导出"
             icon-name="download"
@@ -408,11 +437,6 @@ watch(
             icon-name="search"
             @click="handleSearchShow"
           />
-          <!-- <IconButton
-            content="刷新"
-            icon-name="refresh"
-            @click="handleRefresh"
-          /> -->
           <IconButton
             content="全屏"
             icon-name="FullScreen"
@@ -421,91 +445,63 @@ watch(
         </div>
       </template>
 
-      <template #name="{ row }">
+      <template #userName="{ row }">
         <el-text
           class="common-align"
           style="cursor: pointer"
           type="primary"
-          @click="handleOpenDetail(row)"
+          @click="handleUserClick(row)"
         >
-          {{ row.name }}
+          {{ row.userName }}
         </el-text>
       </template>
 
-      <template #area="{ row }">
+      <template #handoverDateStr="{ row }">
         <el-text
           class="common-align"
           style="cursor: pointer"
           type="primary"
-          @click="handleAreaClick(row.area)"
+          @click="handleDateClick(row.handoverDate)"
         >
-          {{ row.area }}
+          {{ row.handoverDateStr }}
         </el-text>
-      </template>
-
-      <template #deviceName="{ row }">
-        <el-text
-          v-if="row.deviceId"
-          class="common-align"
-          style="cursor: pointer"
-          type="primary"
-          @click="handleDeviceClick(row)"
-        >
-          {{ row.deviceName }}
-        </el-text>
-        <span v-else>-</span>
       </template>
 
       <template #status="{ row }">
         <ElTag
           style="cursor: pointer"
-          :type="getUserStatusTagType(row.status)"
+          :type="getStatusTagType(row.status)"
           @click="handleStatusClick(row.status)"
         >
-          {{ getUserStatusLabel(row.status) }}
+          {{ getStatusLabel(row.status) }}
         </ElTag>
       </template>
 
-      <template #onlineStatus="{ row }">
-        <ElTag
+      <template #confirmUserName="{ row }">
+        <el-text
+          v-if="row.confirmUserId"
+          class="common-align"
           style="cursor: pointer"
-          :type="getOnlineStatusTagType(row.onlineStatus)"
-          @click="handleOnlineStatusClick(row.onlineStatus)"
+          type="primary"
+          @click="handleConfirmUserClick(row.confirmUserId)"
         >
-          {{ getOnlineStatusLabel(row.onlineStatus) }}
-        </ElTag>
+          {{ row.confirmUserName }}
+        </el-text>
+        <span v-else>-</span>
       </template>
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            v-if="isUserStatusLabel(row.status, '正常')"
-            content="编辑"
-            icon-name="Edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            v-if="isUserStatusLabel(row.status, '正常')"
-            content="禁用"
-            icon-name="VideoPause"
-            @click="handleDisable(row)"
-          />
-          <IconButton
-            v-if="isUserStatusLabel(row.status, '禁用')"
-            content="启用"
-            icon-name="CircleCheckFilled"
-            @click="handleEnable(row)"
+            v-if="isStatusLabel(row.status, '待确认')"
+            content="确认"
+            icon-name="Select"
+            @click="handleConfirm(row)"
           />
           <IconButton
             content="查看"
             icon-name="View"
             @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
           />
         </div>
       </template>
@@ -519,20 +515,17 @@ watch(
             <ArrowUp />
           </el-icon>
           <span>
-            本页统计：人员 {{ dataObj.list.length }} 人；正常
-            {{ currentPageStats.normalCount }} 人；禁用
-            {{ currentPageStats.disabledCount }} 人；在线
-            {{ currentPageStats.onlineCount }} 人
+            本页统计：日志 {{ dataObj.list.length }} 条；待确认
+            {{ currentPageStats.pendingCount }} 条；已确认
+            {{ currentPageStats.confirmedCount }} 条
           </span>
         </div>
         <div v-if="dataObj.totalShow" class="common-total-bottom">
-          <span>全部统计：共 {{ dataObj.total }} 人；{{ textObj.total }}</span>
+          <span> 全部统计：{{ textObj.total }} </span>
         </div>
       </template>
     </Grid>
 
-    <UserFormDrawer ref="formDrawerRef" @success="handleRefresh" />
-    <ImportExcelDialog ref="importExcelDialogRef" @success="handleRefresh" />
     <StatusConfirmDialog
       ref="statusConfirmDialogRef"
       @success="handleRefresh"
@@ -541,14 +534,14 @@ watch(
 </template>
 
 <style scoped>
-.inspect-user-filter-tags {
+.handover-log-filter-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
 }
 
-.inspect-user-filter-tags :deep(.el-tag) {
+.handover-log-filter-tags :deep(.el-tag) {
   height: 32px;
   line-height: 32px;
 }
