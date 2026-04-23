@@ -99,19 +99,36 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       return;
     }
     const values = await formApi.getValues();
+
+    // 校验开始时间不得晚于结束时间
+    if (values.startTime && values.endTime && values.startTime > values.endTime) {
+      ElMessage.error('开始时间不得晚于结束时间');
+      return;
+    }
+
+    // 处理提交数据
+    const submitData = {
+      ...values,
+      // 将stationIds数组转换为逗号分隔的字符串
+      stationIds: Array.isArray(values.stationIds) ? values.stationIds.join(',') : values.stationIds,
+    };
+
     try {
       if (formData.value?.id) {
-        await updatePointActivity({ ...values, id: formData.value.id });
+        // 将id转换为数字类型
+        await updatePointActivity({ ...submitData, id: Number(formData.value.id) });
         ElMessage.success($t('ui.actionMessage.editSuccess'));
       } else {
-        await createPointActivity(values);
+        await createPointActivity(submitData);
         ElMessage.success($t('ui.actionMessage.addSuccess'));
       }
       formDrawerApi.close();
       handleRefresh();
     } catch (error) {
       console.error(error);
-      ElMessage.error(formData.value?.id ? '编辑失败' : '新增失败');
+      // 显示接口返回的错误信息
+      const errorMsg = error?.msg || error?.message || (formData.value?.id ? '编辑失败' : '新增失败');
+      ElMessage.error(errorMsg);
     }
   },
   async onOpenChange(isOpen) {
@@ -139,11 +156,23 @@ function handleRefresh() {
 /** 导出表格 */
 async function handleExport() {
   try {
-    const data = await exportPointActivity();
+    // 构建导出参数，包含当前筛选条件
+    const exportParams = {
+      pageNo: 1,
+      pageSize: 200, // 最大导出200条
+      name: dataObj.searchParams.name,
+      type: filterType.value || dataObj.searchParams.type,
+      status: filterStatus.value || dataObj.searchParams.status,
+      startTime: dataObj.searchParams.timeRange?.[0],
+      endTime: dataObj.searchParams.timeRange?.[1],
+    };
+
+    const data = await exportPointActivity(exportParams);
     downloadFileFromBlobPart({ fileName: '积分活动数据.xlsx', source: data });
     ElMessage.success('导出成功');
   } catch (error) {
-    ElMessage.error('导出失败');
+    const errorMsg = error?.msg || error?.message || '导出失败';
+    ElMessage.error(errorMsg);
     console.error(error);
   }
 }
@@ -546,13 +575,13 @@ defineExpose({
             icon-name="download"
             @click="handleExport"
           />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
+<!--          <IconButton-->
+<!--            content="批量删除"-->
+<!--            icon-name="delete"-->
+<!--            color="#F56C6C"-->
+<!--            :disabled="isEmpty(checkedIds)"-->
+<!--            @click="handleDeleteBatch"-->
+<!--          />-->
           <IconButton
             content="搜索"
             icon-name="search"

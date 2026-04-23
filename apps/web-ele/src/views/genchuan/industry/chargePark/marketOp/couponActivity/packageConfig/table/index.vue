@@ -213,8 +213,8 @@ const getTableData = async (pageObj) => {
     };
 
     const response = await getPackageConfigPage(params);
-    if (response && response.code === 200 && response.data) {
-      const { list, total } = response.data;
+    if (response) {
+      const { list, total } = response;
       dataObj.total = total || 0;
       dataObj.list = list || [];
       return dataObj;
@@ -518,7 +518,7 @@ defineExpose({
           style="cursor: pointer;"
           @click="handleFilterByType(row.type)"
         >
-          {{ row.typeName }}
+          {{ getPackageConfigTypeLabel(row.type) }}
         </ElTag>
       </template>
       <!-- 包含优惠券 - 点击跳转关联优惠券列表 -->
@@ -543,7 +543,7 @@ defineExpose({
           style="cursor: pointer;"
           @click="handleFilterByScope(row.scope)"
         >
-          {{ row.scopeName }}
+          {{ getPackageConfigScopeLabel(row.scope) }}
         </ElTag>
       </template>
       <!-- 配置状态 - 点击筛选同状态 -->
@@ -553,7 +553,7 @@ defineExpose({
           style="cursor: pointer;"
           @click="handleFilterByStatus(row.status)"
         >
-          {{ row.statusName }}
+          {{ getPackageConfigStatusLabel(row.status) }}
         </ElTag>
       </template>
       <!-- 创建时间 - 格式化显示 -->

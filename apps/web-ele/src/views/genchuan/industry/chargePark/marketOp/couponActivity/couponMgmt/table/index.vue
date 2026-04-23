@@ -615,7 +615,7 @@ const handleFullShow = () => {
           style="cursor: pointer;"
           @click="handleTypeClick(row)"
         >
-          {{ row.typeName }}
+          {{ getCouponTypeLabel(row.type) }}
         </el-tag>
       </template>
       <!-- 券状态插槽 - 点击筛选同状态 -->
@@ -625,7 +625,7 @@ const handleFullShow = () => {
           style="cursor: pointer;"
           @click="handleStatusClick(row)"
         >
-          {{ row.statusName }}
+          {{ getCouponStatusLabel(row.status) }}
         </el-tag>
       </template>
       <!-- 发放人插槽 - 点击跳转操作人员详情 -->

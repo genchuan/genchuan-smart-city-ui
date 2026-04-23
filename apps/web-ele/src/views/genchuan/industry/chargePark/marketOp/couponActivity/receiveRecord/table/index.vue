@@ -170,8 +170,8 @@ const getTableData = async (pageObj) => {
     };
 
     const response = await getReceiveRecordPage(params);
-    if (response && response.code === 200 && response.data) {
-      const { list, total } = response.data;
+    if (response) {
+      const { list, total } = response;
       dataObj.total = total || 0;
       dataObj.list = list || [];
       return dataObj;
@@ -502,7 +502,7 @@ const handleFullShow = () => {
           style="cursor: pointer;"
           @click="handleFilterByStatus(row.status)"
         >
-          {{ row.statusName }}
+          {{ getReceiveRecordStatusLabel(row.status) }}
         </ElTag>
       </template>
       <!-- 核销时间 - 格式化显示 -->
@@ -527,7 +527,7 @@ const handleFullShow = () => {
           style="cursor: pointer;"
           @click="handleFilterBySyncStatus(row.syncStatus)"
         >
-          {{ row.syncStatusName }}
+          {{ getReceiveRecordSyncStatusLabel(row.syncStatus) }}
         </ElTag>
       </template>
       <!-- 归档时间 - 格式化显示 -->

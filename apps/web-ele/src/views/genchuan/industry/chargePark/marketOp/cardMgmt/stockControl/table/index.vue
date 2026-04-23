@@ -182,8 +182,8 @@ const getTableData = async (pageObj) => {
     };
 
     const response = await getStockControlPage(params);
-    if (response && response.code === 200 && response.data) {
-      const { list, total } = response.data;
+    if (response) {
+      const { list, total } = response;
       dataObj.total = total || 0;
       dataObj.list = list || [];
       return dataObj;

@@ -10,12 +10,12 @@ const loading = ref(true);
 
 // ========== 卡片数据 ==========
 const cardList = ref([
-  { title: '救援完成率', value: '0%', key: 'rescueCompleteRate', color: '#67C23A' },
-  { title: '预约成功率', value: '0%', key: 'reserveSuccessRate', color: '#E6A23C' },
-  { title: '投诉处理率', value: '0%', key: 'complaintHandleRate', color: '#F56C6C' },
-  { title: '寻车定位成功率', value: '0%', key: 'findCarSuccessRate', color: '#909399' },
-  { title: '空位推送成功率', value: '0%', key: 'spacePushSuccessRate', color: '#409EFF' },
-  { title: '生效话术数', value: 0, key: 'effectiveWordingCount', color: '#67C23A' },
+  { title: '救援完成率', value: '0%', key: 'rescueCompleteRate', color: '#67C23A', dimension: 'rescue' },
+  { title: '预约成功率', value: '0%', key: 'reserveSuccessRate', color: '#E6A23C', dimension: 'reserve' },
+  { title: '投诉处理率', value: '0%', key: 'complaintHandleRate', color: '#F56C6C', dimension: 'complaint' },
+  { title: '寻车定位成功率', value: '0%', key: 'findCarSuccessRate', color: '#909399', dimension: 'findCar' },
+  { title: '空位推送成功率', value: '0%', key: 'spacePushSuccessRate', color: '#409EFF', dimension: 'spacePush' },
+  { title: '生效话术数', value: 0, key: 'effectiveWordingCount', color: '#67C23A', dimension: 'wording' },
 ]);
 
 // ========== 图表数据存储 ==========
@@ -47,7 +47,7 @@ const mapOptions = computed(() => {
   return chartData.mapData.map(item => ({ label: item.name, value: item.name }));
 });
 
-// 地图数据映射（将 location 转换为 coordinate，并过滤无效数据）
+// 地图数据映射
 const currentMapData = computed(() => {
   const raw = chartData.mapData[mapIndex.value] || { name: '', data: [] };
   const mappedData = (raw.data || [])
@@ -62,7 +62,6 @@ const currentMapData = computed(() => {
   return { name: raw.name, data: mappedData };
 });
 
-// 用于强制刷新地图组件的 key
 const mapKey = ref(0);
 
 // ========== 右侧饼图区域 ==========
@@ -82,14 +81,22 @@ let lineChart = null;
 let barChart = null;
 let pieChart = null;
 
+// 获取当前报表周期参数（默认最近一个月）
+const getDefaultParams = () => {
+  const end = new Date();
+  const start = new Date();
+  start.setMonth(start.getMonth() - 1);
+  return {
+    reportCycle: '月报',
+    statStartTime: start.toISOString().slice(0, 19).replace('T', ' '),
+    statEndTime: end.toISOString().slice(0, 19).replace('T', ' ')
+  };
+};
+
 const fetchData = async () => {
   loading.value = true;
   try {
-    const params = {
-      reportCycle: '月报',
-      statStartTime: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().slice(0, 19).replace('T', ' '),
-      statEndTime: new Date().toISOString().slice(0, 19).replace('T', ' ')
-    };
+    const params = getDefaultParams();
     const res = await getCycleReportChart(params);
     const data = res.data || res;
 
@@ -124,7 +131,6 @@ const initLeftChart = () => {
   } else if (leftChartType.value === 'bar') {
     initBarChart();
   } else if (leftChartType.value === 'map') {
-    // 地图通过 key 刷新，无需额外操作
     nextTick(() => {
       if (mapRef.value) mapRef.value.resize?.();
     });
@@ -152,11 +158,7 @@ const initLineChart = () => {
     series,
   };
   lineChart.setOption(option);
-  lineChart.on('click', (params) => {
-    if (params.componentType === 'series') {
-      emit('refresh', { dimension: params.seriesName, date: params.name });
-    }
-  });
+  // 删除折线图钻取功能
 };
 
 const initBarChart = () => {
@@ -174,11 +176,7 @@ const initBarChart = () => {
     series: [{ type: 'bar', data: values, itemStyle: { borderRadius: [4, 4, 0, 0] } }],
   };
   barChart.setOption(option);
-  barChart.on('click', (params) => {
-    if (params.componentType === 'series') {
-      emit('refresh', { dimension: currentBar.value.name, type: params.name });
-    }
-  });
+  // 删除柱状图钻取功能
 };
 
 const initPieChart = () => {
@@ -199,11 +197,7 @@ const initPieChart = () => {
     }],
   };
   pieChart.setOption(option);
-  pieChart.on('click', (params) => {
-    if (params.componentType === 'series') {
-      emit('refresh', { dimension: currentPie.value.name, category: params.name });
-    }
-  });
+  // 删除饼图钻取功能
 };
 
 const onLeftChartTypeChange = () => {
@@ -215,7 +209,6 @@ const onBarIndexChange = () => {
 };
 
 const onMapIndexChange = () => {
-  // 通过改变 key 强制重新创建地图组件，避免直接修改 props
   mapKey.value++;
   nextTick(() => {
     if (mapRef.value) mapRef.value.resize?.();
@@ -226,9 +219,9 @@ const onPieIndexChange = () => {
   nextTick(() => initPieChart());
 };
 
-const handleCardClick = (index) => {
-  const card = cardList.value[index];
-  emit('refresh', { metric: card.key });
+// 地图标注点击事件处理（保留钻取）
+const handleMapMarkerClick = (location) => {
+  emit('refresh', { location });
 };
 
 const handleResize = () => {
@@ -251,14 +244,13 @@ onUnmounted(() => {
 
 <template>
   <div v-loading="loading" class="stats-four-visualization">
-    <!-- 左侧卡片区域 -->
+    <!-- 左侧卡片区域（移除点击事件） -->
     <div class="cards-section">
       <div
         v-for="(card, index) in cardList"
         :key="card.key"
         class="stat-card"
         :style="{ borderLeftColor: card.color }"
-        @click="handleCardClick(index)"
       >
         <div class="card-header">
           <span class="card-title">{{ card.title }}</span>
@@ -301,8 +293,12 @@ onUnmounted(() => {
           <div v-show="leftChartType === 'line'" ref="lineChartRef" class="chart-container"></div>
           <div v-show="leftChartType === 'bar'" ref="barChartRef" class="chart-container"></div>
           <div v-show="leftChartType === 'map'" class="chart-container">
-            <!-- 使用 key 强制刷新地图组件，避免只读 props 警告 -->
-            <MapComponent :key="mapKey" ref="mapRef" :data="currentMapData.data" />
+            <MapComponent
+              :key="mapKey"
+              ref="mapRef"
+              :data="currentMapData.data"
+              @marker-click="handleMapMarkerClick"
+            />
           </div>
         </div>
       </div>
@@ -344,7 +340,6 @@ onUnmounted(() => {
   border-radius: 8px;
   border-left: 4px solid #4a90e2;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  cursor: pointer;
   background: #f9fafb;
   transition: all 0.3s;
 }
