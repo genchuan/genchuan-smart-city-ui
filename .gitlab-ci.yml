@@ -35,12 +35,9 @@ push:
     - build
   script:
     - echo "===== 开始迁移dist包到目标服务器 ====="
-    - mkdir -p $TARGET_PATH
-    - cp -rf $DIST_PATH/* $TARGET_PATH/
-    - echo "dist包已迁移到本地路径：$TARGET_PATH"
-    # 验证迁移结果
-    - ls -l $TARGET_PATH  # 本地迁移验证
-    # - ssh $SSH_USER@$TARGET_SERVER "ls -l $TARGET_PATH"  # 远程迁移验证
+    - mkdir -p $TARGET_PATH/PIPELINE_TAG
+    - cp -rf $DIST_PATH/* $TARGET_PATH/PIPELINE_TAG
+    - echo "dist包已迁移到本地路径：$TARGET_PATH/PIPELINE_TAG"
   retry:
     max: 2
     when:
