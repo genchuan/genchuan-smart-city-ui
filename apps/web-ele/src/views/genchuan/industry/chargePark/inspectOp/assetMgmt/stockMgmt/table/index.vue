@@ -14,6 +14,7 @@ import {
   exportAssetStock,
   getAssetStockDetail,
   getAssetStockPage,
+  updateAssetStock,
   replenishAssetStock,
 } from '#/api/genchuan/industry/chargePark/inspectOp/assetMgmt/stockMgmt';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
@@ -151,8 +152,10 @@ const [ActionDrawer, actionDrawerApi] = useVbenDrawer({
       }
 
       if (actionType.value === 'replenish') {
-        await replenishAssetStock({
+        await updateAssetStock({
+          ...actionRow.value,
           id: actionRow.value.id,
+          currentStock: Number(values.currentStock || 0),
           replenishCount: Number(values.replenishCount || 0),
         });
         ElMessage.success('库存补货成功');

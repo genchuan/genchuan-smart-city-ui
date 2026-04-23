@@ -136,7 +136,7 @@ const [ActionDrawer, actionDrawerApi] = useVbenDrawer({
         await inSpareStock({
           spareId: values.spareId,
           inCount: Number(values.inCount || 0),
-          supplierName: values.supplierName,
+          supplier: values.supplier,
         });
         ElMessage.success('备件入库成功');
       }
@@ -153,7 +153,7 @@ const [ActionDrawer, actionDrawerApi] = useVbenDrawer({
         await outSpareStock({
           spareId: values.spareId,
           outCount,
-          receiverName: values.receiverName,
+          receiver: values.receiver,
         });
         ElMessage.success('备件出库成功');
       }
@@ -595,7 +595,7 @@ watch(
           <IconButton
             v-if="isSpareStatusLabel(row.status, '低库存')"
             content="补货"
-            icon-name="Plus"
+            icon-name="Edit"
             @click="handleReplenish(row)"
           />
           <IconButton

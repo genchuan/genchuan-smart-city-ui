@@ -40,7 +40,7 @@ async function handleConfirm() {
   });
 
   try {
-    await alarmAssetStock({ id: rowData.value.id });
+    await alarmAssetStock({ id: rowData.value.id, status: rowData.value.status });
     ElMessage.success('库存告警推送成功');
     emit('success');
     modalApi.close();

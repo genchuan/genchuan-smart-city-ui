@@ -371,21 +371,21 @@ export function useReplenishFormSchema() {
       fieldName: 'currentStock',
       label: '当前库存',
       component: 'InputNumber',
-      componentProps: {
-        disabled: true,
-      },
+      // componentProps: {
+      //   disabled: true,
+      // },
     },
-    {
-      fieldName: 'replenishCount',
-      label: '补货数量',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入补货数量',
-        min: 1,
-        precision: 0,
-      },
-      rules: 'required',
-    },
+    // {
+    //   fieldName: 'replenishCount',
+    //   label: '补货数量',
+    //   component: 'InputNumber',
+    //   componentProps: {
+    //     placeholder: '请输入补货数量',
+    //     min: 1,
+    //     precision: 0,
+    //   },
+    //   rules: 'required',
+    // },
   ];
 }
 

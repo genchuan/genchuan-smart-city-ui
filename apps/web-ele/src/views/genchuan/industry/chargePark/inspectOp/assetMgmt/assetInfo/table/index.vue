@@ -127,6 +127,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     if (!valid) return;
 
     const values = await formApi.getValues();
+    console.log(values);
     try {
       if (formData.value?.id) {
         await updateAssetInfo({
@@ -134,10 +135,10 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
           ...values,
           id: formData.value.id,
         });
-        ElMessage.success($t('ui.actionMessage.editSuccess'));
+        ElMessage.success('编辑成功');
       } else {
-        await createAssetInfo({ ...values, status: '正常' });
-        ElMessage.success($t('ui.actionMessage.addSuccess'));
+        await createAssetInfo({ ...values, status: '1' });
+        ElMessage.success('新增成功');
       }
       formDrawerApi.close();
       handleRefresh();
@@ -277,7 +278,7 @@ function handleImport() {
 
 async function handleCreate() {
   await formApi.setState({ schema: useFormSchema() });
-  formDrawerApi.setData({ status: '正常' }).open();
+  formDrawerApi.setData({ status: '1' }).open();
 }
 
 async function handleEdit(row) {
