@@ -3,14 +3,14 @@ import { onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
-import { getAmountCheckChart } from '#/api/genchuan/industry/chargePark/orderTrade/refundMgmt/index.js';
+import { getSettleBillChart } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
 import Card from '#/components/stats/card.vue';
 
 const state = reactive({
   cardList: [
-    { title: '核算总数', value: 0, color: '#FF6B6B' },
-    { title: '核算准确率', value: 0, color: '#4ECDC4', suffix: '%' },
-    { title: '待核算数', value: 0, color: '#13ce66' },
+    { title: '结算总额', value: 0, color: '#FF6B6B' },
+    { title: '结算完成率', value: 0, color: '#4ECDC4', suffix: '%' },
+    { title: '累计结算', value: 0, color: '#13ce66' },
   ],
   trendData: [],
 });
@@ -18,13 +18,13 @@ const state = reactive({
 const lineChartRef = ref(null);
 let lineChartInstance = null;
 
-// 获取金额核算图表数据
+// 获取结算单据图表数据
 const fetchOrderChartData = async () => {
   try {
-    const res = await getAmountCheckChart();
-    state.cardList[0].value = res.totalCheckCount;
-    state.cardList[1].value = res.checkAccuracy;
-    // 待核算数通过趋势数据计算
+    const res = await getSettleBillChart();
+    state.cardList[0].value = res.totalSettleAmount || 0;
+    state.cardList[1].value = res.settleCompleteRate || 0;
+    // 累计结算通过趋势数据计算
     state.cardList[2].value = res.trendData?.reduce((sum, item) => sum + item.count, 0) || 0;
     // 如果trendData为空，使用假数据
     state.trendData =
@@ -40,11 +40,11 @@ const fetchOrderChartData = async () => {
     // 更新折线图
     updateLineChart();
   } catch (error) {
-    console.error('获取金额核算图表数据失败:', error);
+    console.error('获取结算单据图表数据失败:', error);
     // 接口调用失败时使用假数据
-    state.cardList[0].value = 3;
-    state.cardList[1].value = 66.7;
-    state.cardList[2].value = 1;
+    state.cardList[0].value = 0;
+    state.cardList[1].value = 0;
+    state.cardList[2].value = 6;
     state.trendData = [
       { date: '2026-04-21', count: 1 },
     ];
@@ -61,7 +61,7 @@ const initLineChart = () => {
 
   const option = {
     title: {
-      text: '金额核算趋势',
+      text: '结算单据趋势',
       left: 'center',
       textStyle: {
         color: '#6E7E91',
