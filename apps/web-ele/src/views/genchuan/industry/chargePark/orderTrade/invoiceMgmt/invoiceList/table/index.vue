@@ -4,7 +4,7 @@ import { downloadFileFromBlobPart } from '@vben/utils';
 import { ElMessage, ElForm, ElFormItem, ElInput, ElSelect, ElOption } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getInvoiceListPage, exportInvoiceListExcel, batchInvoice, auditPass, auditReject, reapply, push } from '#/api/genchuan/industry/chargePark/orderTrade/invoiceMgmt/index.js';
+import { getInvoiceListPage, exportInvoiceListExcel, batchInvoice, auditPass, auditReject, reapply, push, invoice, download } from '#/api/genchuan/industry/chargePark/orderTrade/invoiceMgmt/index.js';
 import { formatTimestamp } from '#/utils';
 import { confirm } from '@vben/common-ui';
 import { useGridColumns } from './data';
@@ -152,6 +152,35 @@ async function handlePush(row) {
   } catch (error) {
     console.error('确认开票失败:', error);
     ElMessage.error('确认开票失败');
+  }
+}
+
+/** 开票 */
+async function handleInvoice(row) {
+  await confirm('确定开票此记录吗？');
+  try {
+    await invoice({ id: row.id });
+    ElMessage.success('开票成功');
+    handleRefresh();
+  } catch (error) {
+    console.error('开票失败:', error);
+    ElMessage.error('开票失败');
+  }
+}
+
+/** 下载 */
+async function handleDownload(row) {
+  try {
+    const res = await download({ id: row.id });  
+    const downloadUrl = res ;
+    if (downloadUrl) {
+      window.open(downloadUrl, '_blank');
+    } else {
+      ElMessage.warning('暂无下载链接');
+    }
+  } catch (error) {
+    console.error('下载失败:', error);
+    ElMessage.error('下载失败');
   }
 }
 const checkedIds = ref([]);
@@ -304,6 +333,8 @@ const arrowChange = () => {
           <IconButton v-if="row.status === 'pending_audit'" content="审核拒绝" icon-name="Close" @click="handleAuditReject(row)" />
           <IconButton v-if="row.status === 'rejected'" content="重新申请" icon-name="Refresh" @click="handleReapply(row)" />
           <IconButton v-if="row.status === 'pending_invoice'" content="确认开票" icon-name="Ticket" @click="handlePush(row)" />
+          <IconButton v-if="row.status === 'pending_invoice'" content="开票" icon-name="Plus" @click="handleInvoice(row)" />
+          <IconButton v-if="row.status === 'invoiced'" content="下载" icon-name="download" @click="handleDownload(row)" />
         </div>
       </template>
       <template #bottom>
