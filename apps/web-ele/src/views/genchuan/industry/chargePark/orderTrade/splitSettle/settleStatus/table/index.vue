@@ -361,7 +361,7 @@ const arrowChange = () => {
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <!-- <IconButton content="新增" icon-name="Plus" @click="handleCreate" /> -->
           <IconButton content="导出EXCEL" icon-name="download" @click="handleExport" />
           <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
           <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
@@ -383,9 +383,9 @@ const arrowChange = () => {
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)" />
           <IconButton content="审核" icon-name="Check" @click="handleCheck(row)" />
-          <IconButton content="删除" icon-name="Delete" @click="handleDelete(row)" />
+          <!-- <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)" /> 
+          <IconButton content="删除" icon-name="Delete" @click="handleDelete(row)" /> -->
         </div>
       </template>
       <template #bottom>
