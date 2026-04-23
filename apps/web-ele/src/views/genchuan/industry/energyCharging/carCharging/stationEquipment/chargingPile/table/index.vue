@@ -154,7 +154,7 @@
       </template>
 
       <template #actions="{ row }">
-        <div class="table-toolbar-tools" style="display: flex; gap: 4px; flex-wrap: wrap;justify-content: center;">
+        <div class="table-toolbar-tools" style="display: flex; gap: 4px; flex-wrap: wrap; justify-content: center;">
           <IconButton content="编辑" icon-name="edit" @click="handleEdit(row)" />
           <IconButton content="查看" icon-name="View" @click="handleGarageOpenDetail(row)" />
 
@@ -163,10 +163,10 @@
           </template>
           <template v-else-if="row.pileStatusName === '已调试'">
             <IconButton content="启用" icon-name="Check" @click="handleEnable(row)" />
-            <IconButton content="停用" icon-name="Close" @click="handleDisable(row)" />
+            <IconButton content="停用" icon-name="Close" :disabled="row.faultFlag" @click="handleDisable(row)" />
           </template>
           <template v-else-if="row.pileStatusName === '已启用'">
-            <IconButton content="停用" icon-name="Close" @click="handleDisable(row)" />
+            <IconButton content="停用" icon-name="Close" :disabled="row.faultFlag" @click="handleDisable(row)" />
             <IconButton content="重启" icon-name="Refresh" @click="handleRestart(row)" />
           </template>
           <template v-else-if="row.pileStatusName === '已停用'">
@@ -725,10 +725,10 @@ async function handleBatchDebug() {
 async function handleBatchDisable() {
   const validIds = checkedIds.value.filter(id => {
     const row = dataObj.list.find(item => item.id === id);
-    return row && (row.pileStatusName === '已调试' || row.pileStatusName === '已启用');
+    return row && (row.pileStatusName === '已调试' || row.pileStatusName === '已启用') && !row.faultFlag;
   });
   if (validIds.length === 0) {
-    ElMessage.warning('选中的充电桩中没有可停用的设备');
+    ElMessage.warning('选中的充电桩中没有可停用的设备（故障设备无法停用）');
     return;
   }
   await confirm(`确定对选中的 ${validIds.length} 个充电桩进行批量停用吗？`);
@@ -750,7 +750,7 @@ async function handleBatchDisable() {
 const hasDisableableSelected = computed(() => {
   return checkedIds.value.some(id => {
     const row = dataObj.list.find(item => item.id === id);
-    return row && (row.pileStatusName === '已调试' || row.pileStatusName === '已启用');
+    return row && (row.pileStatusName === '已调试' || row.pileStatusName === '已启用') && !row.faultFlag;
   });
 });
 
