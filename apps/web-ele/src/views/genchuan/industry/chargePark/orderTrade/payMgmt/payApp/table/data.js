@@ -1,4 +1,4 @@
-/** 核算记录搜索表单配置 */
+/** 应用管理搜索表单配置 */
 export function useFormSchema() {
   return [
     {
@@ -14,61 +14,15 @@ export function useFormSchema() {
       isSearch: true,
     },
     {
-      fieldName: 'checkNo',
-      label: '核算编号',
+      fieldName: 'name',
+      label: '应用名',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入核算编号',
+        placeholder: '请输入应用名',
         maxLength: 50,
       },
       labelWidth: 120,
       isSearch: true,
-    },
-    {
-      fieldName: 'orderId',
-      label: '关联订单ID',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入关联订单ID',
-        precision: 0,
-        min: 0,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'applyAmount',
-      label: '申请金额',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入申请金额',
-        precision: 2,
-        min: 0,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'checkResult',
-      label: '核算结果',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择核算结果',
-        options: [
-          { label: '待核算', value: 'pending' },
-          { label: '核算通过', value: 'passed' },
-          { label: '核算驳回', value: 'rejected' },
-        ],
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'checkDetail',
-      label: '核算明细',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入核算明细',
-        maxLength: 200,
-      },
-      labelWidth: 120,
     },
     {
       fieldName: 'status',
@@ -77,61 +31,20 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择状态',
         options: [
-          { label: '待处理', value: 'pending' },
-          { label: '已完成', value: 'completed' },
+          { label: '启用', value: 1 },
+          { label: '禁用', value: 0 },
         ],
       },
       labelWidth: 120,
       isSearch: true,
     },
     {
-      fieldName: 'operatorId',
-      label: '操作人ID',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入操作人ID',
-        precision: 0,
-        min: 0,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'reserve1',
-      label: '备用字段1',
+      fieldName: 'remark',
+      label: '备注',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入备用字段1',
-        maxLength: 100,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'reserve2',
-      label: '备用字段2',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入备用字段2',
-        maxLength: 100,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'creator',
-      label: '创建者',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入创建者',
-        maxLength: 50,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'updater',
-      label: '更新者',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入更新者',
-        maxLength: 50,
+        placeholder: '请输入备注',
+        maxLength: 200,
       },
       labelWidth: 120,
     },
@@ -157,7 +70,7 @@ export function useFormSchema() {
     },
   ];
 }
-/** 核算记录表格列配置 */
+/** 应用管理表格列配置 */
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
@@ -168,36 +81,9 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'checkNo',
-      title: '核算编号',
+      field: 'name',
+      title: '应用名',
       minWidth: 160,
-      sortable: true,
-      slots: { default: 'checkNo' },
-    },
-    {
-      field: 'orderId',
-      title: '关联订单ID',
-      minWidth: 140,
-      sortable: true,
-    },
-    {
-      field: 'applyAmount',
-      title: '申请金额',
-      minWidth: 140,
-      sortable: true,
-      customRender: ({ text }) => text ? `¥${text.toFixed(2)}` : '¥0.00',
-    },
-    {
-      field: 'checkResult',
-      title: '核算结果',
-      minWidth: 140,
-      sortable: true,
-      slots: { default: 'checkResult' },
-    },
-    {
-      field: 'checkDetail',
-      title: '核算明细',
-      minWidth: 200,
       sortable: true,
     },
     {
@@ -208,21 +94,9 @@ export function useGridColumns() {
       slots: { default: 'status' },
     },
     {
-      field: 'operatorId',
-      title: '操作人ID',
-      minWidth: 120,
-      sortable: true,
-    }, 
-    {
-      field: 'creator',
-      title: '创建者',
-      minWidth: 120,
-      sortable: true,
-    },
-    {
-      field: 'updater',
-      title: '更新者',
-      minWidth: 120,
+      field: 'remark',
+      title: '备注',
+      minWidth: 200,
       sortable: true,
     },
     {

@@ -3,14 +3,14 @@ import { onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
-import { getAgentPayRecordChart } from '#/api/genchuan/industry/chargePark/orderTrade/agentPay/index.js';
+import { getAmountCheckChart } from '#/api/genchuan/industry/chargePark/orderTrade/refundMgmt/index.js';
 import Card from '#/components/stats/card.vue';
 
 const state = reactive({
   cardList: [
-    { title: '今日记录数', value: 0, color: '#FF6B6B' },
-    { title: '成功率', value: 0, color: '#4ECDC4', suffix: '%' },
-    { title: '趋势天数', value: 0, color: '#13ce66' },
+    { title: '核算总数', value: 0, color: '#FF6B6B' },
+    { title: '核算准确率', value: 0, color: '#4ECDC4', suffix: '%' },
+    { title: '待核算数', value: 0, color: '#13ce66' },
   ],
   trendData: [],
 });
@@ -18,38 +18,35 @@ const state = reactive({
 const lineChartRef = ref(null);
 let lineChartInstance = null;
 
-// 获取代付记录图表数据
+// 获取金额核算图表数据
 const fetchOrderChartData = async () => {
   try {
-    const res = await getAgentPayRecordChart();
-    state.cardList[0].value = res.todayCount || 0;
-    state.cardList[1].value = res.successRate || 0;
-    state.cardList[2].value = res.trendData?.length || 0;
+    const res = await getAmountCheckChart();
+    state.cardList[0].value = res.totalCheckCount;
+    state.cardList[1].value = res.checkAccuracy;
+    // 待核算数通过趋势数据计算
+    state.cardList[2].value = res.trendData?.reduce((sum, item) => sum + item.count, 0) || 0;
     // 如果trendData为空，使用假数据
     state.trendData =
       res.trendData && res.trendData.length > 0
         ? res.trendData
         : [
-            { date: '2026-04-02', count: 1 },
-            { date: '2026-04-03', count: 1 },
-            { date: '2026-04-09', count: 1 },
-            { date: '2026-04-10', count: 1 },
-            { date: '2026-04-11', count: 1 },
+            { date: '2025-04-01', count: 5 },
+            { date: '2025-04-02', count: 8 },
+            { date: '2025-04-03', count: 3 },
+            { date: '2025-04-04', count: 12 },
+            { date: '2025-04-05', count: 6 },
           ];
     // 更新折线图
     updateLineChart();
   } catch (error) {
-    console.error('获取代付记录图表数据失败:', error);
+    console.error('获取金额核算图表数据失败:', error);
     // 接口调用失败时使用假数据
-    state.cardList[0].value = 0;
-    state.cardList[1].value = 80;
-    state.cardList[2].value = 5;
+    state.cardList[0].value = 3;
+    state.cardList[1].value = 66.7;
+    state.cardList[2].value = 1;
     state.trendData = [
-      { date: '2026-04-02', count: 1 },
-      { date: '2026-04-03', count: 1 },
-      { date: '2026-04-09', count: 1 },
-      { date: '2026-04-10', count: 1 },
-      { date: '2026-04-11', count: 1 },
+      { date: '2026-04-21', count: 1 },
     ];
     // 更新折线图
     updateLineChart();
@@ -64,7 +61,7 @@ const initLineChart = () => {
 
   const option = {
     title: {
-      text: '代付记录趋势',
+      text: '金额核算趋势',
       left: 'center',
       textStyle: {
         color: '#6E7E91',
