@@ -5,7 +5,7 @@ import { getAssetInfoChart } from '#/api/genchuan/industry/chargePark/inspectOp/
 import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 
-import { getMockChartData } from './data';
+import { getMockChartData, getAssetTypeLabel } from './data';
 
 const emit = defineEmits(['statusFilter', 'typeFilter']);
 
@@ -29,7 +29,9 @@ const state = reactive({
   typeData: [],
 });
 
-const typeXData = computed(() => state.typeData.map((item) => item.typeName));
+const typeXData = computed(() =>
+  state.typeData.map((item) => getAssetTypeLabel(item.typeName)),
+);
 const typeSeriesData = computed(() => [
   {
     name: '资产数量',

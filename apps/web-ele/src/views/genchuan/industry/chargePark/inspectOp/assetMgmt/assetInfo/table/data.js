@@ -344,8 +344,9 @@ export function useFormSchema() {
       component: 'DatePicker',
       componentProps: {
         placeholder: '请选择采购时间',
+        showTime: true,
+        valueFormat: 'x',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
         type: 'datetime',
       },
     },
@@ -359,11 +360,32 @@ export function useFormSchema() {
       },
       rules: 'required',
     },
+    // {
+    //   fieldName: 'status',
+    //   label: '资产状态',
+    //   component: 'Select',
+    //   componentProps: {
+    //     placeholder: '请选择资产状态',
+    //     options: assetStatusOptions,
+    //   },
+    //   rules: 'required',
+    // }
   ];
 }
 
 export function useEditFormSchema() {
-  return useFormSchema();
+  return useFormSchema().map((item) => {
+    if (['status'].includes(item.fieldName)) {
+      return {
+        ...item,
+        componentProps: {
+          ...item.componentProps,
+          disabled: true,
+        },
+      };
+    }
+    return item;
+  });
 }
 
 export function useGridColumns() {
