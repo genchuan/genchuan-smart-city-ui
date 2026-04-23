@@ -158,3 +158,39 @@ export function getAgentPayOrderChart() {
   return requestClient.get('/ordertrade/agent-order/chart');
 }
  
+
+/** 代付记录分页 */
+export function getAgentPayRecordPage(params) {
+  return requestClient.get('/ordertrade/agent-record/page', {
+    params,
+  });
+}
+/** 代付记录更新 */
+export function updateAgentPayRecord(data) {
+  return requestClient.put('/ordertrade/agent-record/update', data);
+}
+/** 代付记录创建 */
+export function createAgentPayRecord(data) {
+  return requestClient.post('/ordertrade/agent-record/create', data);
+}
+/** 代付记录删除 */
+export function deleteAgentPayRecord(params) {
+  return requestClient.delete('/ordertrade/agent-record/delete', {
+    params,
+  });
+}
+/** 代付记录核算 */
+export function checkAgentPayRecord(data) {
+  return requestClient.put('/ordertrade/agent-record/check', data);
+}
+/** 代付记录导出 */
+export function exportAgentPayRecord(params) {
+  return requestClient.download('/ordertrade/agent-record/export', {
+    params,
+  });
+}
+/** 代付记录图表 */
+export function getAgentPayRecordChart() {
+  return requestClient.get('/ordertrade/agent-record/chart');
+}
+ 

@@ -2,7 +2,7 @@
 import { computed, defineProps, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 核算记录详情
+// 资金变动记录详情
 const props = defineProps({
   detailObj: {
     type: Object,
@@ -19,15 +19,15 @@ const { detailObj, title } = toRefs(props);
 
 // 标题
 const drawerTitle = computed(() => {
-  const checkNo = detailObj.value?.checkNo || '核算记录';
-  return title.value || `${checkNo} 详情`;
+  const recordNo = detailObj.value?.recordNo || '资金变动记录';
+  return title.value || `${recordNo} 详情`;
 });
 
-// 金额核算状态映射
+// 状态映射
 const statusMap = {
-  pending: { label: '待核算', type: 'warning' },
-  checked: { label: '已核算', type: 'info' },
-  confirmed: { label: '已确认', type: 'success' },
+  pending: { label: '待核查', type: 'warning' },
+  passed: { label: '核查通过', type: 'success' },
+  rejected: { label: '核查驳回', type: 'danger' },
 };
 
 // 获取状态标签
@@ -40,18 +40,19 @@ const getStatusType = (status) => {
   return statusMap[status]?.type || 'default';
 };
 
-// 核算结果映射
+// 核查结果映射
 const checkResultMap = {
-  pass: { label: '通过', type: 'success' },
-  fail: { label: '不通过', type: 'danger' },
+  pending: { label: '待核查', type: 'warning' },
+  passed: { label: '核查通过', type: 'success' },
+  rejected: { label: '核查驳回', type: 'danger' },
 };
 
-// 获取核算结果标签
+// 获取核查结果标签
 const getCheckResultLabel = (checkResult) => {
   return checkResultMap[checkResult]?.label || checkResult;
 };
 
-// 获取核算结果类型
+// 获取核查结果类型
 const getCheckResultType = (checkResult) => {
   return checkResultMap[checkResult]?.type || 'default';
 };
@@ -84,8 +85,8 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">核算编号:</div>
-        <div class="detail-row-right">{{ detailObj.checkNo || '-' }}</div>
+        <div class="detail-row-left">记录编号:</div>
+        <div class="detail-row-right">{{ detailObj.recordNo || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
@@ -94,22 +95,28 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">申请金额:</div>
-        <div class="detail-row-right">{{ detailObj.applyAmount || '0.00' }} 元</div>
+        <div class="detail-row-left">关联订单编号:</div>
+        <div class="detail-row-right">{{ detailObj.orderNo || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">核算结果:</div>
-        <div class="detail-row-right">
-          <el-tag :type="getCheckResultType(detailObj.checkResult)">
-            {{ getCheckResultLabel(detailObj.checkResult) }}
-          </el-tag>
-        </div>
+        <div class="detail-row-left">商户ID:</div>
+        <div class="detail-row-right">{{ detailObj.merchantId || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">核算明细:</div>
-        <div class="detail-row-right">{{ detailObj.checkDetail || '-' }}</div>
+        <div class="detail-row-left">商户名称:</div>
+        <div class="detail-row-right">{{ detailObj.merchantName || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">变动金额:</div>
+        <div class="detail-row-right">{{ detailObj.amount || '0.00' }} 元</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">交易时间:</div>
+        <div class="detail-row-right">{{ detailObj.tradeTime || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
@@ -122,8 +129,32 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">操作人ID:</div>
-        <div class="detail-row-right">{{ detailObj.operatorId || '-' }}</div>
+        <div class="detail-row-left">核查人ID:</div>
+        <div class="detail-row-right">{{ detailObj.checkerId || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">核查人名称:</div>
+        <div class="detail-row-right">{{ detailObj.checkerName || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">核查时间:</div>
+        <div class="detail-row-right">{{ detailObj.checkTime || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">核查结果:</div>
+        <div class="detail-row-right">
+          <el-tag :type="getCheckResultType(detailObj.checkResult)">
+            {{ getCheckResultLabel(detailObj.checkResult) }}
+          </el-tag>
+        </div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">备注:</div>
+        <div class="detail-row-right">{{ detailObj.remark || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
@@ -139,11 +170,6 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">创建者:</div>
         <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">更新者:</div>
-        <div class="detail-row-right">{{ detailObj.updater || '-' }}</div>
       </div>
 
       <div class="detail-card-row">

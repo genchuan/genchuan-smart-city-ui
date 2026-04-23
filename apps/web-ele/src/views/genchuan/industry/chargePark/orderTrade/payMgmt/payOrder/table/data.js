@@ -1,4 +1,4 @@
-/** 核算记录搜索表单配置 */
+/** 渠道订单记录搜索表单配置 */
 export function useFormSchema() {
   return [
     {
@@ -14,59 +14,55 @@ export function useFormSchema() {
       isSearch: true,
     },
     {
-      fieldName: 'checkNo',
-      label: '核算编号',
+      fieldName: 'merchantOrderId',
+      label: '商户订单号',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入核算编号',
+        placeholder: '请输入商户订单号',
         maxLength: 50,
       },
       labelWidth: 120,
       isSearch: true,
     },
     {
-      fieldName: 'orderId',
-      label: '关联订单ID',
+      fieldName: 'channelOrderNo',
+      label: '渠道订单号',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入渠道订单号',
+        maxLength: 50,
+      },
+      labelWidth: 120,
+    },
+    {
+      fieldName: 'appId',
+      label: '应用ID',
       component: 'InputNumber',
       componentProps: {
-        placeholder: '请输入关联订单ID',
+        placeholder: '请输入应用ID',
         precision: 0,
         min: 0,
       },
       labelWidth: 120,
     },
     {
-      fieldName: 'applyAmount',
-      label: '申请金额',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入申请金额',
-        precision: 2,
-        min: 0,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'checkResult',
-      label: '核算结果',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择核算结果',
-        options: [
-          { label: '待核算', value: 'pending' },
-          { label: '核算通过', value: 'passed' },
-          { label: '核算驳回', value: 'rejected' },
-        ],
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'checkDetail',
-      label: '核算明细',
+      fieldName: 'channelCode',
+      label: '渠道编码',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入核算明细',
-        maxLength: 200,
+        placeholder: '请输入渠道编码',
+        maxLength: 50,
+      },
+      labelWidth: 120,
+    },
+    {
+      fieldName: 'amount',
+      label: '金额（分）',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入金额',
+        precision: 0,
+        min: 0,
       },
       labelWidth: 120,
     },
@@ -77,61 +73,42 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择状态',
         options: [
-          { label: '待处理', value: 'pending' },
-          { label: '已完成', value: 'completed' },
+          { label: '待支付', value: 0 },
+          { label: '支付成功', value: 1 },
+          { label: '支付失败', value: 2 },
+          { label: '已过期', value: 3 },
         ],
       },
       labelWidth: 120,
       isSearch: true,
     },
     {
-      fieldName: 'operatorId',
-      label: '操作人ID',
-      component: 'InputNumber',
+      fieldName: 'expireTime',
+      label: '过期时间',
+      component: 'DateTimePicker',
       componentProps: {
-        placeholder: '请输入操作人ID',
-        precision: 0,
-        min: 0,
+        placeholder: '请选择过期时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
       },
       labelWidth: 120,
     },
     {
-      fieldName: 'reserve1',
-      label: '备用字段1',
-      component: 'Input',
+      fieldName: 'notifyTime',
+      label: '通知时间',
+      component: 'DateTimePicker',
       componentProps: {
-        placeholder: '请输入备用字段1',
-        maxLength: 100,
+        placeholder: '请选择通知时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
       },
       labelWidth: 120,
     },
     {
-      fieldName: 'reserve2',
-      label: '备用字段2',
-      component: 'Input',
+      fieldName: 'successTime',
+      label: '支付成功时间',
+      component: 'DateTimePicker',
       componentProps: {
-        placeholder: '请输入备用字段2',
-        maxLength: 100,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'creator',
-      label: '创建者',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入创建者',
-        maxLength: 50,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'updater',
-      label: '更新者',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入更新者',
-        maxLength: 50,
+        placeholder: '请选择支付成功时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
       },
       labelWidth: 120,
     },
@@ -157,7 +134,8 @@ export function useFormSchema() {
     },
   ];
 }
-/** 核算记录表格列配置 */
+
+/** 渠道订单记录表格列配置 */
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
@@ -168,37 +146,35 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'checkNo',
-      title: '核算编号',
-      minWidth: 160,
+      field: 'merchantOrderId',
+      title: '商户订单号',
+      minWidth: 180,
       sortable: true,
-      slots: { default: 'checkNo' },
     },
     {
-      field: 'orderId',
-      title: '关联订单ID',
+      field: 'channelOrderNo',
+      title: '渠道订单号',
+      minWidth: 180,
+      sortable: true,
+    },
+    {
+      field: 'appId',
+      title: '应用ID',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'channelCode',
+      title: '渠道编码',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'amount',
+      title: '金额（元）',
       minWidth: 140,
       sortable: true,
-    },
-    {
-      field: 'applyAmount',
-      title: '申请金额',
-      minWidth: 140,
-      sortable: true,
-      customRender: ({ text }) => text ? `¥${text.toFixed(2)}` : '¥0.00',
-    },
-    {
-      field: 'checkResult',
-      title: '核算结果',
-      minWidth: 140,
-      sortable: true,
-      slots: { default: 'checkResult' },
-    },
-    {
-      field: 'checkDetail',
-      title: '核算明细',
-      minWidth: 200,
-      sortable: true,
+      customRender: ({ text }) => text ? `¥${(text / 100).toFixed(2)}` : '¥0.00',
     },
     {
       field: 'status',
@@ -208,34 +184,37 @@ export function useGridColumns() {
       slots: { default: 'status' },
     },
     {
-      field: 'operatorId',
-      title: '操作人ID',
-      minWidth: 120,
+      field: 'expireTime',
+      title: '过期时间',
+      minWidth: 200,
       sortable: true,
-    }, 
-    {
-      field: 'creator',
-      title: '创建者',
-      minWidth: 120,
-      sortable: true,
+      customRender: ({ text }) => text || '-',
     },
     {
-      field: 'updater',
-      title: '更新者',
-      minWidth: 120,
+      field: 'notifyTime',
+      title: '通知时间',
+      minWidth: 200,
       sortable: true,
+      customRender: ({ text }) => text || '-',
+    },
+    {
+      field: 'successTime',
+      title: '支付成功时间',
+      minWidth: 200,
+      sortable: true,
+      customRender: ({ text }) => text || '-',
     },
     {
       field: 'createTime',
       title: '创建时间',
-      minWidth: 220,
+      minWidth: 200,
       sortable: true,
       customRender: ({ text }) => text || '-',
     },
     {
       field: 'updateTime',
       title: '更新时间',
-      minWidth: 220,
+      minWidth: 200,
       sortable: true,
       customRender: ({ text }) => text || '-',
     },

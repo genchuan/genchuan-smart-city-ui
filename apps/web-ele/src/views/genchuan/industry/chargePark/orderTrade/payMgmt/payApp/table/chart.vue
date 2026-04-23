@@ -3,7 +3,7 @@ import { onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
-import { getAmountCheckChart } from '#/api/genchuan/industry/chargePark/orderTrade/refundMgmt/index.js';
+import { getPayAppChart } from '#/api/genchuan/industry/chargePark/orderTrade/payMgmt/index.js';
 import Card from '#/components/stats/card.vue';
 
 const state = reactive({

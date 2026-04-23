@@ -1,30 +1,14 @@
-<script setup>
-import { computed, reactive, ref } from 'vue';
-
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
-
-import { ElDialog, ElLoading, ElMessage } from 'element-plus';
+<script setup>import { reactive, ref, computed } from 'vue';
+import { useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
+import { ElMessage, ElForm, ElFormItem, ElInput, ElInputNumber, ElSelect, ElOption, ElDialog } from 'element-plus';
 import screenfull from 'screenfull';
-// 导出插件
-
-import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { 
-  getAmountCheckPage,
-  exportAmountCheckExcel,
-  confirmAmountCheck,
-  calculateAmountCheck,
-} from '#/api/genchuan/industry/chargePark/orderTrade/refundMgmt/index.js';
-import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
-import { $t } from '#/locales';
+import { getSettleBillPage, exportSettleBillExcel, createSettleBill, updateSettleBill, deleteSettleBill, regenerateSettleBill, settleSettleBill, rejectSettleBill, passSettleBill } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
 import { formatTimestamp } from '#/utils';
-import { downloadLocalTemplate } from '#/utils/genchuan/down';
-import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
-
-import { useFormSchema, useGridColumns } from './data';
+import { confirm } from '@vben/common-ui';
+import { useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
-
 const props = defineProps({
   secondShow: {
     type: Boolean,
@@ -40,131 +24,268 @@ const props = defineProps({
   },
 });
 const emit = defineEmits(['arrow-change']);
-
-const getTitle = computed(() => {
-  return formData.value?.id ? '编辑' : '新增';
+// 搜索表单数据
+const searchFormData = reactive({
+  billNo: '',
+  partnerId: '',
+  status: '',
 });
-
-const [Drawer, drawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  onCancel() {
-    drawerApi.close();
-  },
-  onConfirm() {},
-  async onOpenChange() {},
+const searchFormRef = ref(null);
+// 表单数据
+const formData = reactive({
+  id: 0,
+  partnerId: 0,
+  totalAmount: 0,
+  splitAmount: 0,
+  status: '',
+  remark: '',
+  reserve1: '',
+  reserve2: '',
 });
-
-const formData = ref();
-const [Form, formApi] = useVbenForm({
-  commonConfig: {
-    componentProps: {
-      class: 'w-full',
-    },
-    formItemClass: 'col-span-2',
-    labelWidth: 80,
-  },
-  layout: 'horizontal',
-  schema: useFormSchema(),
-  showDefaultActions: false,
+// 表单规则
+const rules = {
+  partnerId: [
+    { required: true, message: '合作方ID不能为空', trigger: 'blur' },
+    { type: 'number', min: 0, message: '合作方ID必须为非负整数', trigger: 'blur' },
+  ],
+  totalAmount: [
+    { required: true, message: '收费总额不能为空', trigger: 'blur' },
+    { type: 'number', min: 0, message: '收费总额必须为非负数', trigger: 'blur' },
+  ],
+  splitAmount: [
+    { required: true, message: '分成金额不能为空', trigger: 'blur' },
+    { type: 'number', min: 0, message: '分成金额必须为非负数', trigger: 'blur' },
+  ],
+};
+const formRef = ref(null);
+// 表单抽屉标题
+const formTitle = computed(() => {
+  return formData.id ? '编辑结算单据' : '新增结算单据';
 });
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
+  footer: true,
+  cancelText: '取消',
+  confirmText: '保存',
   onCancel() {
     formDrawerApi.close();
   },
   onConfirm() {
-    const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === '新增') {
-      dataObj.apilist.push(obj);
-    } else {
-      dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
-        }
-      });
-    }
-    handleRefresh();
-    formDrawerApi.close();
+    handleSubmitForm();
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
-      formData.value = formDrawerApi.getData();
-      if (formData.value?.id) {
-        await formApi.setValues(formData.value);
-      } else {
-        formApi.resetForm();
+      const data = formDrawerApi.getData();
+      if (data?.id) {
+        // 编辑模式
+        formData.id = data.id;
+        formData.partnerId = data.partnerId || 0;
+        formData.totalAmount = data.totalAmount || 0;
+        formData.splitAmount = data.splitAmount || 0;
+        formData.status = data.status || '';
+        formData.remark = data.remark || '';
+        formData.reserve1 = data.reserve1 || '';
+        formData.reserve2 = data.reserve2 || '';
+      }
+      else {
+        // 新增模式 - 重置表单
+        resetForm();
       }
     }
   },
 });
-
+// 重置表单
+function resetForm() {
+  formData.id = 0;
+  formData.partnerId = 0;
+  formData.totalAmount = 0;
+  formData.splitAmount = 0;
+  formData.status = '';
+  formData.remark = '';
+  formData.reserve1 = '';
+  formData.reserve2 = '';
+  formRef.value?.resetFields();
+}
+/** 创建结算单据 */
+function handleCreate() {
+  formDrawerApi.setData({ title: '新增' }).open();
+}
+/** 编辑结算单据 */
+function handleEdit(row) {
+  formDrawerApi.setData({
+    title: '编辑',
+    ...row,
+  }).open();
+}
+/** 提交表单 */
+async function handleSubmitForm() {
+  if (!formRef.value)
+    return;
+  formRef.value.validate(async (valid) => {
+    if (!valid)
+      return;
+    // 强制转换为指定的数据格式
+    const submitData = {
+      id: formData.id || 0,
+      partnerId: Number(formData.partnerId) || 0,
+      totalAmount: Number(formData.totalAmount) || 0,
+      splitAmount: Number(formData.splitAmount) || 0,
+      status: formData.status || '',
+      remark: formData.remark || '',
+      reserve1: formData.reserve1 || '',
+      reserve2: formData.reserve2 || '',
+    };
+    try {
+      if (submitData.id) {
+        await updateSettleBill(submitData);
+        ElMessage.success('更新成功');
+      }
+      else {
+        await createSettleBill(submitData);
+        ElMessage.success('创建成功');
+      }
+      formDrawerApi.close();
+      handleRefresh();
+    }
+    catch (error) {
+      console.error('提交失败:', error);
+      ElMessage.error('提交失败');
+    }
+  });
+}
+/** 删除结算单据 */
+async function handleDelete(row) {
+ await confirm('确定删除该结算单据吗？');
+ try {
+ await deleteSettleBill({ id: row.id });
+ ElMessage.success('删除成功');
+ handleRefresh();
+ }
+ catch (error) {
+ console.error('删除失败:', error);
+ ElMessage.error('删除失败');
+ }
+}
+// 操作弹窗数据
+const actionDialog = reactive({
+ visible: false,
+ type: '',
+ id: 0,
+ remark: '',
+ title: '',
+});
+// 打开操作弹窗
+function openActionDialog(type, row) {
+ actionDialog.id = row.id;
+ actionDialog.remark = '';
+ actionDialog.type = type;
+ switch (type) {
+ case 'pass':
+ actionDialog.title = '审核通过';
+ break;
+ case 'reject':
+ actionDialog.title = '审核驳回';
+ break;
+ case 'settle':
+ actionDialog.title = '结算';
+ break;
+ case 'regenerate':
+ actionDialog.title = '重新生成';
+ break;
+ }
+ actionDialog.visible = true;
+}
+// 提交操作
+async function submitAction() {
+ const data = {
+ id: actionDialog.id,
+ remark: actionDialog.remark || '',
+ };
+ try {
+ switch (actionDialog.type) {
+ case 'pass':
+ await passSettleBill(data);
+ ElMessage.success('审核通过成功');
+ break;
+ case 'reject':
+ await rejectSettleBill(data);
+ ElMessage.success('审核驳回成功');
+ break;
+ case 'settle':
+ await settleSettleBill(data);
+ ElMessage.success('结算成功');
+ break;
+ case 'regenerate':
+ await regenerateSettleBill(data);
+ ElMessage.success('重新生成成功');
+ break;
+ }
+ actionDialog.visible = false;
+ handleRefresh();
+ }
+ catch (error) {
+ console.error('操作失败:', error);
+ ElMessage.error('操作失败');
+ }
+}
+// 结算单据状态映射 - SettleBillStatusEnum
+const statusMap = {
+  pending_audit: { label: '待审核', type: 'warning' },
+  pending_settle: { label: '待结算', type: 'info' },
+  settled: { label: '已结算', type: 'success' },
+  rejected: { label: '已驳回', type: 'danger' },
+};
+// 获取状态标签
+const getStatusLabel = (status) => {
+  return statusMap[status]?.label || status;
+};
+// 获取状态类型
+const getStatusType = (status) => {
+  return statusMap[status]?.type || 'default';
+};
+const [Drawer, drawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  footer: true,
+  cancelText: '重置',
+  confirmText: '查询',
+  onCancel() {
+    resetSearch();
+  },
+  onConfirm() {
+    handleSearch();
+  },
+});
+/** 搜索 */
+function handleSearch() {
+  dataObj.searchObj = {
+    billNo: searchFormData.billNo || undefined,
+    partnerId: searchFormData.partnerId ? Number(searchFormData.partnerId) : undefined,
+    status: searchFormData.status || undefined,
+  };
+  dataObj.currentPage = 1;
+  gridApi.query();
+  drawerApi.close();
+}
+/** 重置搜索 */
+function resetSearch() {
+  searchFormData.billNo = '';
+  searchFormData.partnerId = '';
+  searchFormData.status = '';
+  dataObj.searchObj = {};
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
 }
-
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
-  const data = await exportAmountCheckExcel();
-  downloadFileFromBlobPart({ fileName: '金额核算报表.xls', source: data });
+  const data = await exportSettleBillExcel();
+  downloadFileFromBlobPart({ fileName: '结算单据报表.xls', source: data });
 }
-
-// ====================== 图片转PDF（终极零乱码） ======================
-async function handlePDF() {
-  downloadLocalTemplate('/static/test.pdf', '报表.pdf');
-}
-
-/** 创建角色 */
-function handleCreate() {
-  formDrawerApi
-    .setData({
-      title: '新增',
-    })
-    .open();
-}
-
-/** 编辑角色 */
-function handleEdit(row) {
-  formDrawerApi
-    .setData({
-      title: '编辑',
-      ...row,
-    })
-    .open();
-}
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.name]),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.name]));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
-}
-
-async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
-}
-
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
@@ -192,56 +313,30 @@ const getTableData = async (pageObj) => {
     pageSize: page.pageSize,
     ...dataObj.searchObj,
   };
-
   try {
     dataObj.loading = true;
-    const res = await getAmountCheckPage(params);
+    const res = await getSettleBillPage(params);
     dataObj.total = res.total;
     dataObj.list = res.list.map((v) => {
       return {
         ...v,
+        auditTime: formatTimestamp(v.auditTime),
+        settleTime: formatTimestamp(v.settleTime),
         createTime: formatTimestamp(v.createTime),
         updateTime: formatTimestamp(v.updateTime),
       };
     });
     return dataObj;
-  } catch (error) {
-    console.error('获取金额核算数据失败:', error);
-    ElMessage.error('获取金额核算数据失败');
+  }
+  catch (error) {
+    console.error('获取结算单据数据失败:', error);
+    ElMessage.error('获取结算单据数据失败');
     return dataObj;
-  } finally {
+  }
+  finally {
     dataObj.loading = false;
   }
 };
-const [QueryForm, queryFormApi] = useVbenForm({
-  collapsed: false,
-  commonConfig: {
-    componentProps: {
-      class: 'w-full',
-    },
-    formItemClass: 'col-span-2',
-    labelWidth: 100,
-  },
-  handleSubmit: async () => {
-    const values = await queryFormApi.getValues();
-    dataObj.searchObj = values;
-    dataObj.currentPage = 1;
-    gridApi.query();
-    drawerApi.close();
-  },
-  layout: 'horizontal',
-  schema: useFormSchema()
-    .map((v) => {
-      delete v.rules;
-      return { ...v };
-    })
-    .filter((v) => v.isSearch),
-  showCollapseButton: true,
-  submitButtonOptions: {
-    content: '查询',
-  },
-});
-
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
@@ -269,28 +364,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
   },
   showSearchForm: false,
 });
-
-const activeName = ref('全部');
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
   parkDetailDrawerRef.value?.open();
-};
-const tabsData = ref([
-  { label: '全部' },
-  { label: '启用' },
-  { label: '禁用' },
-  { label: '暂停运营' },
-  { label: '维修中' },
-]);
-const createLabel = (item) => {
-  let text = `(${dataObj.apilist.filter((v) => v.status === item.label).length})`;
-  if (item.label === '全部') {
-    text = `(${dataObj.apilist.length})`;
-  }
-  return item.label + text;
-};
-const handleClick = () => {
-  gridApi.query();
 };
 const handleSerachShow = () => {
   drawerApi.open();
@@ -298,301 +374,86 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
-
 const parkDetailDrawerRef = ref(null);
-const enDetailObjRef = ref(null);
 const arrowChange = () => {
   emit('arrow-change');
 };
-const autoElmessage = () => {
-  ElMessage.success($t('月报自动刷新成功'));
-};
-const openEn = async () => {
-  const res = await getDetailEnObj(1);
-  dataObj.enDetailObj = res;
-  enDetailObjRef.value?.open();
-};
-
-// 金额核算状态映射
-const statusMap = {
-  pending: { label: '待核算', type: 'warning' },
-  checked: { label: '已核算', type: 'info' },
-  confirmed: { label: '已确认', type: 'success' },
-};
-
-// 获取状态标签
-const getStatusLabel = (status) => {
-  return statusMap[status]?.label || status;
-};
-
-// 获取状态类型
-const getStatusType = (status) => {
-  return statusMap[status]?.type || 'default';
-};
-
-// 核算结果映射
-const checkResultMap = {
-  pass: { label: '通过', type: 'success' },
-  fail: { label: '不通过', type: 'danger' },
-};
-
-// 获取核算结果标签
-const getCheckResultLabel = (checkResult) => {
-  return checkResultMap[checkResult]?.label || checkResult;
-};
-
-// 获取核算结果类型
-const getCheckResultType = (checkResult) => {
-  return checkResultMap[checkResult]?.type || 'default';
-};
-
-// 确认弹窗
-const confirmDialogVisible = ref(false);
-const confirmForm = reactive({
-  id: '',
-  remark: '',
-});
-
-// 打开确认弹窗
-const handleConfirm = (row) => {
-  confirmForm.id = row.id;
-  confirmForm.remark = '';
-  confirmDialogVisible.value = true;
-};
-
-// 提交确认
-const handleConfirmSubmit = async () => {
-  try {
-    await confirmAmountCheck(confirmForm);
-    ElMessage.success('确认成功');
-    confirmDialogVisible.value = false;
-    handleRefresh();
-  } catch {
-    ElMessage.error('确认失败');
-  }
-};
-
-// 批量计算弹窗
-const batchCalculateDialogVisible = ref(false);
-const batchCalculateForm = reactive({
-  ids: [],
-  remark: '',
-});
-
-// 打开批量计算弹窗
-const handleBatchCalculate = () => {
-  batchCalculateForm.ids = checkedIds.value;
-  batchCalculateForm.remark = '';
-  batchCalculateDialogVisible.value = true;
-};
-
-// 提交批量计算
-const handleBatchCalculateSubmit = async () => {
-  try {
-    const data = {
-      ids: batchCalculateForm.ids,
-      remark: batchCalculateForm.remark,
-    };
-    await calculateAmountCheck(data);
-    ElMessage.success('批量计算成功');
-    batchCalculateDialogVisible.value = false;
-    checkedIds.value = [];
-    handleRefresh();
-  } catch {
-    ElMessage.error('批量计算失败');
-  }
-};
-
-// 计算弹窗
-const calculateDialogVisible = ref(false);
-const calculateForm = reactive({
-  id: '',
-  remark: '',
-});
-
-// 打开计算弹窗
-const handleCalculate = (row) => {
-  calculateForm.id = row.id;
-  calculateForm.remark = '';
-  calculateDialogVisible.value = true;
-};
-
-// 提交计算
-const handleCalculateSubmit = async () => {
-  try {
-    await calculateAmountCheck(calculateForm);
-    ElMessage.success('计算成功');
-    calculateDialogVisible.value = false;
-    handleRefresh();
-  } catch {
-    ElMessage.error('计算失败');
-  }
-};
-
-// ====================== 告警明细弹窗 ======================
-const alarmDialogVisible = ref(false);
-const currentAlarmRow = ref({});
-const alarmList = ref([]);
-
-function generateAlarmData(row) {
-  const count = row.halfyearWarnCount || 0;
-  const typeItems = row.highIllegalType.split(',').map((item) => item.trim());
-  const avgCount = Math.ceil(count / typeItems.length);
-  const types = typeItems.map((name) => {
-    return { name, num: avgCount };
-  });
-
-  const list = [];
-  let id = 1;
-  types.forEach((type) => {
-    for (let i = 0; i < Math.min(type.num, 5); i++) {
-      list.push({
-        id: id++,
-        canteenName: row.canteenName,
-        alarmType: type.name,
-        alarmTime: `${row.statCycle.split('-')[0].trim()} ${String(Math.trunc(Math.random() * 24)).padStart(2, '0')}:${String(Math.trunc(Math.random() * 60)).padStart(2, '0')}`,
-        alarmLevel: ['一般', '较重', '严重'][Math.trunc(Math.random() * 3)],
-        status: ['未处理', '处理中', '已整改'][Math.trunc(Math.random() * 3)],
-      });
-    }
-  });
-  return list.slice(0, count);
-}
-
-function handleTotal(row) {
-  currentAlarmRow.value = row;
-  alarmList.value = generateAlarmData(row);
-  alarmDialogVisible.value = true;
-}
-
-const alarmColumns = [
-  { label: '序号', prop: 'id', width: 70 },
-  { label: '食堂名称', prop: 'canteenName' },
-  { label: '告警类型', prop: 'alarmType' },
-  { label: '告警时间', prop: 'alarmTime' },
-  { label: '告警等级', prop: 'alarmLevel' },
-  { label: '处理状态', prop: 'status' },
-];
 </script>
 
 <template>
   <div class="park-lot-table-new" v-loading="dataObj.loading">
-    <FormDrawer :title="getTitle">
-      <Form />
+    <!-- 表单抽屉 -->
+    <FormDrawer :title="formTitle">
+      <ElForm ref="formRef" :model="formData" :rules="rules" label-width="100px" class="common-form">
+        <ElFormItem label="合作方ID" prop="partnerId">
+          <ElInputNumber v-model="formData.partnerId" :min="0" class="w-full" />
+        </ElFormItem>
+        <ElFormItem label="收费总额" prop="totalAmount">
+          <ElInputNumber v-model="formData.totalAmount" :min="0" :precision="2" class="w-full" />
+        </ElFormItem>
+        <ElFormItem label="分成金额" prop="splitAmount">
+          <ElInputNumber v-model="formData.splitAmount" :min="0" :precision="2" class="w-full" />
+        </ElFormItem>
+        <ElFormItem label="状态">
+          <ElSelect v-model="formData.status" placeholder="请选择状态" class="w-full">
+            <ElOption label="待审核" value="pending_audit" />
+            <ElOption label="待结算" value="pending_settle" />
+            <ElOption label="已结算" value="settled" />
+            <ElOption label="已驳回" value="rejected" />
+          </ElSelect>
+        </ElFormItem>
+        <ElFormItem label="备注">
+          <ElInput v-model="formData.remark" type="textarea" :rows="3" placeholder="请输入备注" />
+        </ElFormItem>
+      </ElForm>
     </FormDrawer>
-    <ParkDetailDrawer
-      ref="parkDetailDrawerRef"
-      :detail-obj="dataObj.detailObj"
-    />
-    <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" />
+
+    <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" />
     <Drawer title="搜索">
-      <QueryForm class="query-form" />
+      <ElForm
+        ref="searchFormRef"
+        :model="searchFormData"
+        label-width="100px"
+        class="query-form"
+      >
+        <ElFormItem label="单据编号">
+          <ElInput v-model="searchFormData.billNo" placeholder="请输入单据编号" />
+        </ElFormItem>
+        <ElFormItem label="合作方ID">
+          <ElInputNumber v-model="searchFormData.partnerId" :min="0" placeholder="请输入合作方ID" />
+        </ElFormItem>
+        <ElFormItem label="状态">
+          <ElSelect v-model="searchFormData.status" placeholder="请选择状态">
+            <ElOption label="待审核" value="pending_audit" />
+            <ElOption label="待结算" value="pending_settle" />
+            <ElOption label="已结算" value="settled" />
+            <ElOption label="已驳回" value="rejected" />
+          </ElSelect>
+        </ElFormItem>
+      </ElForm>
     </Drawer>
 
-    <!-- 告警明细弹窗 -->
+    <!-- 操作弹窗 -->
     <ElDialog
-      v-model="alarmDialogVisible"
-      title="本半年食品安全问题明细"
-      width="900px"
+      v-model="actionDialog.visible"
+      :title="actionDialog.title"
+      width="450px"
       append-to-body
     >
-      <el-table :data="alarmList" border height="450">
-        <el-table-column
-          v-for="col in alarmColumns"
-          :key="col.prop"
-          :label="col.label"
-          :prop="col.prop"
-          :width="col.width"
-        />
-      </el-table>
-    </ElDialog>
-
-    <!-- 确认弹窗 -->
-    <ElDialog
-      v-model="confirmDialogVisible"
-      title="金额确认"
-      width="500px"
-      append-to-body
-    >
-      <el-form :model="confirmForm" label-width="80px">
-        <el-form-item label="记录ID">
-          <el-input v-model="confirmForm.id" disabled />
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input
-            v-model="confirmForm.remark"
+      <ElForm :model="actionDialog" label-width="80px">
+        <ElFormItem label="备注">
+          <ElInput
+            v-model="actionDialog.remark"
             type="textarea"
-            rows="3"
-            placeholder="请输入确认备注"
+            :rows="3"
+            placeholder="请输入备注（选填）"
           />
-        </el-form-item>
-      </el-form>
+        </ElFormItem>
+      </ElForm>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="confirmDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleConfirmSubmit">
-            确认核算
-          </el-button>
-        </div>
-      </template>
-    </ElDialog>
-
-    <!-- 计算弹窗 -->
-    <ElDialog
-      v-model="calculateDialogVisible"
-      title="金额计算"
-      width="500px"
-      append-to-body
-    >
-      <el-form :model="calculateForm" label-width="80px">
-        <el-form-item label="记录ID">
-          <el-input v-model="calculateForm.id" disabled />
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input
-            v-model="calculateForm.remark"
-            type="textarea"
-            rows="3"
-            placeholder="请输入计算备注"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="calculateDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleCalculateSubmit">
-            执行计算
-          </el-button>
-        </div>
-      </template>
-    </ElDialog>
-
-    <!-- 批量计算弹窗 -->
-    <ElDialog
-      v-model="batchCalculateDialogVisible"
-      title="批量金额计算"
-      width="500px"
-      append-to-body
-    >
-      <el-form :model="batchCalculateForm" label-width="80px">
-        <el-form-item label="选中数量">
-          <el-input :value="batchCalculateForm.ids.length" disabled />
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input
-            v-model="batchCalculateForm.remark"
-            type="textarea"
-            rows="3"
-            placeholder="请输入计算备注"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="batchCalculateDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleBatchCalculateSubmit">
-            执行批量计算
-          </el-button>
+          <el-button @click="actionDialog.visible = false">取消</el-button>
+          <el-button type="primary" @click="submitAction">确认</el-button>
         </div>
       </template>
     </ElDialog>
@@ -600,89 +461,34 @@ const alarmColumns = [
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton
-            content="导出EXCEL"
-            icon-name="download"
-            @click="handleExport"
-          />
-          <IconButton
-            content="批量核算"
-            icon-name="check"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleBatchCalculate"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
-          />
-          <IconButton
-            :content="props.arrowShow ? '展开' : '收缩'"
-            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
-            @click="arrowChange"
-          />
-          <IconButton
-            content="全屏"
-            icon-name="FullScreen"
-            @click="handleFullShow"
-          />
+          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton content="导出EXCEL" icon-name="download" @click="handleExport" />
+          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange" />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
-      </template>
-      <template #checkResult="{ row }">
-        <el-tag :type="getCheckResultType(row.checkResult)">
-          {{ getCheckResultLabel(row.checkResult) }}
-        </el-tag>
       </template>
       <template #status="{ row }">
         <el-tag :type="getStatusType(row.status)">
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
-      <template #checkNo="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.checkNo }}
-        </el-text>
-      </template>
-      <template #payMethod="{ row }">
-        <span v-if="row.payMethod === 'wechat'">微信</span>
-        <span v-else-if="row.payMethod === 'alipay'">支付宝</span>
-        <span v-else-if="row.payMethod === 'bank'">银行卡</span>
-        <span v-else-if="row.payMethod === 'cash'">现金</span>
-        <span v-else>{{ row.payMethod }}</span>
-      </template>
-      <template #halfyearWarnCount="{ row }">
-        <el-text @click="handleTotal(row)" class="common-align" type="primary">
-          {{ row.halfyearWarnCount }}
-        </el-text>
-      </template>
-
-      <template #orderId="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.orderId }}
+      <template #billNo="{ row }">
+        <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">
+          {{ row.billNo }}
         </el-text>
       </template>
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton
-            content="查看"
-            icon-name="View"
-            @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="确认"
-            v-if="row.status === 'checked'"
-            icon-name="Check"
-            @click="handleConfirm(row)"
-          />
+          <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
+          <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)" />
+          <IconButton content="审核通过" icon-name="Check" v-if="row.status === 'pending_audit'" @click="openActionDialog('pass', row)" />
+          <IconButton content="审核驳回" icon-name="Close" v-if="row.status === 'pending_audit'" @click="openActionDialog('reject', row)" />
+          <IconButton content="结算" icon-name="Wallet" v-if="row.status === 'pending_settle'" @click="openActionDialog('settle', row)" />
+          <IconButton content="重新生成" icon-name="Refresh" v-if="row.status === 'rejected'" @click="openActionDialog('regenerate', row)" />
+          <IconButton content="删除" icon-name="Delete" @click="handleDelete(row)" />
         </div>
       </template>
       <template #bottom>
