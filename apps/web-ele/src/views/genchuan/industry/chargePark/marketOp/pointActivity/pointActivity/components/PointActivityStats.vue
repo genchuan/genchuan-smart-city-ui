@@ -391,12 +391,14 @@ onUnmounted(() => {
   display: flex;
   flex-shrink: 0;
   flex-direction: column;
+  gap: 8px;
   width: 200px;
+
 }
 
 .stat-card {
   flex: 1;
-  padding: 16px;
+  padding: 12px;
   cursor: pointer;
   background-color: #fff;
   border-left: 4px solid;
@@ -418,7 +420,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .card-title {
@@ -440,7 +442,7 @@ onUnmounted(() => {
 }
 
 .card-value {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 600;
   color: #303133;
 }
