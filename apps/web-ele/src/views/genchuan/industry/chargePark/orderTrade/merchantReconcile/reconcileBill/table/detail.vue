@@ -2,7 +2,7 @@
 import { computed, defineProps, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 核算记录详情
+// 发票配置详情
 const props = defineProps({
   detailObj: {
     type: Object,
@@ -19,15 +19,16 @@ const { detailObj, title } = toRefs(props);
 
 // 标题
 const drawerTitle = computed(() => {
-  const checkNo = detailObj.value?.checkNo || '核算记录';
-  return title.value || `${checkNo} 详情`;
+  const category = detailObj.value?.category || '发票配置';
+  const id = detailObj.value?.id || 0;
+  return title.value || (id > 0 ? `${category} 详情` : '发票配置详情');
 });
 
-// 金额核算状态映射
+// 状态映射 - InvoiceConfigStatusEnum
 const statusMap = {
-  pending: { label: '待核算', type: 'warning' },
-  checked: { label: '已核算', type: 'info' },
-  confirmed: { label: '已确认', type: 'success' },
+  pending: { label: '未生效', type: 'warning' },
+  enabled: { label: '已生效', type: 'success' },
+  disabled: { label: '已禁用', type: 'danger' },
 };
 
 // 获取状态标签
@@ -38,22 +39,6 @@ const getStatusLabel = (status) => {
 // 获取状态类型
 const getStatusType = (status) => {
   return statusMap[status]?.type || 'default';
-};
-
-// 核算结果映射
-const checkResultMap = {
-  pass: { label: '通过', type: 'success' },
-  fail: { label: '不通过', type: 'danger' },
-};
-
-// 获取核算结果标签
-const getCheckResultLabel = (checkResult) => {
-  return checkResultMap[checkResult]?.label || checkResult;
-};
-
-// 获取核算结果类型
-const getCheckResultType = (checkResult) => {
-  return checkResultMap[checkResult]?.type || 'default';
 };
 
 // 抽屉
@@ -84,32 +69,18 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">核算编号:</div>
-        <div class="detail-row-right">{{ detailObj.checkNo || '-' }}</div>
+        <div class="detail-row-left">开票类目:</div>
+        <div class="detail-row-right">{{ detailObj.category || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">关联订单ID:</div>
-        <div class="detail-row-right">{{ detailObj.orderId || '-' }}</div>
+        <div class="detail-row-left">税率(%):</div>
+        <div class="detail-row-right">{{ detailObj.taxRate || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">申请金额:</div>
-        <div class="detail-row-right">{{ detailObj.applyAmount || '0.00' }} 元</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">核算结果:</div>
-        <div class="detail-row-right">
-          <el-tag :type="getCheckResultType(detailObj.checkResult)">
-            {{ getCheckResultLabel(detailObj.checkResult) }}
-          </el-tag>
-        </div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">核算明细:</div>
-        <div class="detail-row-right">{{ detailObj.checkDetail || '-' }}</div>
+        <div class="detail-row-left">开票主体:</div>
+        <div class="detail-row-right">{{ detailObj.taxBody || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
@@ -122,8 +93,23 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">操作人ID:</div>
-        <div class="detail-row-right">{{ detailObj.operatorId || '-' }}</div>
+        <div class="detail-row-left">审核人ID:</div>
+        <div class="detail-row-right">{{ detailObj.auditorId || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">审核人名称:</div>
+        <div class="detail-row-right">{{ detailObj.auditorName || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">审核时间:</div>
+        <div class="detail-row-right">{{ detailObj.auditTime || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">备注:</div>
+        <div class="detail-row-right">{{ detailObj.remark || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
@@ -139,11 +125,6 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">创建者:</div>
         <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">更新者:</div>
-        <div class="detail-row-right">{{ detailObj.updater || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
