@@ -85,15 +85,14 @@ onMounted(() => {
         @click="handleCardClick"
       />
     </div>
-    <div class="simple-bar-chart">
+    <!-- class="simple-bar-chart" -->
       <LineChartClick
         title="申请量趋势"
+        class="simple-bar-chart"
         :series-data="trendSeriesData"
         :x-data="trendXData"
         y-name="申请量"
         @line-click="handleTrendClick"
       />
-    </div>
   </div>
 </template>
-

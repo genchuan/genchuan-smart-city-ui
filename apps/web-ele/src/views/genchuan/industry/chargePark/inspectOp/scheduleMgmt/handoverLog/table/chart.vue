@@ -98,15 +98,13 @@ onMounted(() => {
       />
     </div>
 
-    <div class="simple-bar-chart">
       <LineChartClick
         title="日志量趋势"
+        class="simple-bar-chart"
         :series-data="trendSeriesData"
         :x-data="trendXData"
         y-name="日志数"
         @line-click="handleTrendClick"
       />
-    </div>
   </div>
 </template>
-
