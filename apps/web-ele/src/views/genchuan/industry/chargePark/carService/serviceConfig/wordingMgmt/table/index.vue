@@ -1,3 +1,90 @@
+<template>
+  <div class="park-lot-table-new">
+    <Grid>
+      <template #table-title>
+        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+          <el-tag v-for="filter in activeFilters" :key="filter.field" type="primary" closable @close="handleClearField(filter.field)">
+            {{ filter.label }}
+          </el-tag>
+        </div>
+      </template>
+
+      <template #toolbar-tools>
+        <div class="common-toolbar-tools">
+          <IconButton content="新增" icon-name="add" @click="openCreate" />
+          <IconButton content="保存" icon-name="check" @click="handleSaveAll" />
+          <IconButton content="搜索" icon-name="search" @click="handleSearchShow" />
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+        </div>
+      </template>
+
+      <template #id="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.id }}</el-text>
+      </template>
+      <template #name="{ row }">
+        <el-text @click="filterByName(row.name)" type="primary" style="cursor: pointer">
+          {{ row.name }}
+        </el-text>
+      </template>
+      <template #type="{ row }">
+        <el-tag @click="filterByType(row.type)" style="cursor: pointer">
+          {{ row.type }}
+        </el-tag>
+      </template>
+      <template #status="{ row }">
+        <el-tag :type="row.status === '已生效' ? 'success' : 'info'"
+                @click="filterByStatus(row.status)" style="cursor: pointer">
+          {{ row.status }}
+        </el-tag>
+      </template>
+
+      <template #actions="{ row }">
+        <div class="table-toolbar-tools">
+          <template v-if="row.status === '未生效'">
+            <IconButton content="生效" icon-name="check" @click="handleEnable(row)" />
+            <IconButton content="编辑" icon-name="Edit" @click="openEdit(row)" />
+            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
+          </template>
+          <template v-else-if="row.status === '已生效'">
+            <IconButton content="禁用" icon-name="close" @click="handleDisable(row)" />
+            <IconButton content="编辑" icon-name="Edit" @click="openEdit(row)" />
+            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
+          </template>
+        </div>
+      </template>
+    </Grid>
+
+    <SearchDrawer title="搜索">
+      <QueryForm class="query-form" />
+    </SearchDrawer>
+
+    <EditDrawer>
+      <el-form :model="editForm" label-width="100px">
+        <el-form-item label="话术名称" required>
+          <el-input v-model="editForm.name" placeholder="请输入话术名称（唯一）" />
+        </el-form-item>
+        <el-form-item label="话术内容" required>
+          <el-input v-model="editForm.content" type="textarea" rows="4" placeholder="请输入话术内容" />
+        </el-form-item>
+        <el-form-item label="话术类型" required>
+          <el-select v-model="editForm.type" placeholder="请选择">
+            <el-option label="快捷回复" value="快捷回复" />
+            <el-option label="自动回复" value="自动回复" />
+            <el-option label="投诉回复" value="投诉回复" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+    </EditDrawer>
+
+    <WordingMgmtDetailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj" title="话术详情" />
+  </div>
+</template>
+
 <script setup>
 import { reactive, ref, onMounted, onUnmounted, computed } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
@@ -19,9 +106,13 @@ import {
 import { useFormSchema, useGridColumns } from './data';
 import WordingMgmtDetailDrawer from './detail.vue';
 
-const props = defineProps({ secondShow: Boolean });
+const props = defineProps({
+  secondShow: Boolean,
+  arrowShow: { type: Boolean, default: false },
+});
+const emit = defineEmits(['arrow-change']);
+const arrowChange = () => emit('arrow-change');
 
-// 数据状态
 const dataObj = reactive({
   detailObj: {},
   total: 0,
@@ -29,10 +120,9 @@ const dataObj = reactive({
   searchObj: {},
   currentPage: 1,
   pageSize: 10,
-  modifiedItems: [], // 存储修改过的行（用于批量保存）
+  modifiedItems: [],
 });
 
-// ==================== 获取表格数据 ====================
 const getTableData = async (pageObj) => {
   const params = {
     pageNo: pageObj.page.currentPage,
@@ -49,22 +139,12 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-// ==================== 搜索表单 ====================
 const [QueryForm, QueryFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: {
-    componentProps: { class: 'w-full' },
-    formItemClass: 'col-span-2',
-    labelWidth: 100,
-  },
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useFormSchema()
-    .filter(v => v.isSearch)
-    .map(v => {
-      delete v.rules;
-      return v;
-    }),
+  schema: useFormSchema().filter(v => v.isSearch).map(v => { delete v.rules; return v; }),
   showCollapseButton: true,
   submitButtonOptions: { content: '查询' },
   resetButtonOptions: {
@@ -84,13 +164,8 @@ const resetAllFilters = async () => {
 };
 
 async function onSubmit(values, isReset = false) {
-  if (isReset) {
-    await resetAllFilters();
-  } else {
-    dataObj.searchObj = { ...values };
-    dataObj.currentPage = 1;
-    gridApi.query();
-  }
+  if (isReset) await resetAllFilters();
+  else { dataObj.searchObj = { ...values }; dataObj.currentPage = 1; gridApi.query(); }
 }
 
 const handleClearField = async (fieldName) => {
@@ -113,16 +188,11 @@ const activeFilters = computed(() => {
   return filters;
 });
 
-// ==================== 表格组件 ====================
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
     keepSource: true,
-    proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getTableData({ page }),
-      },
-    },
+    proxyConfig: { ajax: { query: async ({ page }) => getTableData({ page }) } },
     rowConfig: { keyField: 'id', isHover: true },
     pagerConfig: dataObj,
     toolbarConfig: { refresh: true, search: true },
@@ -134,20 +204,16 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 function handleRefresh() { gridApi.query(); }
 
-// ==================== 新增/编辑抽屉 ====================
 const editForm = reactive({ id: null, name: '', content: '', type: '' });
 const isEdit = ref(false);
 const [EditDrawer, editDrawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  width: 550,
+  modal: false, appendToMain: true, width: 550,
   title: computed(() => isEdit.value ? '编辑话术' : '新增话术'),
   onCancel: () => editDrawerApi.close(),
   onConfirm: async () => {
     if (!editForm.name) return ElMessage.warning('请输入话术名称');
     if (!editForm.content) return ElMessage.warning('请输入话术内容');
     if (!editForm.type) return ElMessage.warning('请选择话术类型');
-    // 校验名称唯一性
     const isUnique = await checkNameUnique({ name: editForm.name, id: editForm.id || undefined });
     if (!isUnique) return ElMessage.warning('话术名称已存在');
     if (isEdit.value) {
@@ -178,9 +244,7 @@ const openEdit = (row) => {
   editDrawerApi.open();
 };
 
-// ==================== 批量保存（保存当前页面所有修改） ====================
 const handleSaveAll = async () => {
-  // 获取表格所有数据（包括编辑过的）
   const tableData = gridApi.getTableData().tableData;
   const items = tableData.map(row => ({
     id: row.id || null,
@@ -194,7 +258,6 @@ const handleSaveAll = async () => {
   handleRefresh();
 };
 
-// ==================== 生效/禁用 ====================
 const handleEnable = async (row) => {
   await enableWordingMgmt({ id: row.id });
   ElMessage.success('已生效');
@@ -207,7 +270,6 @@ const handleDisable = async (row) => {
   handleRefresh();
 };
 
-// ==================== 详情抽屉 ====================
 const detailDrawerRef = ref(null);
 const handleOpenDetail = async (row) => {
   const res = await getWordingMgmtDetail({ id: row.id });
@@ -215,7 +277,6 @@ const handleOpenDetail = async (row) => {
   detailDrawerRef.value.open();
 };
 
-// ==================== 钻取筛选 ====================
 const filterByType = (type) => {
   dataObj.searchObj.type = type;
   dataObj.currentPage = 1;
@@ -232,7 +293,6 @@ const filterByName = (name) => {
   gridApi.query();
 };
 
-// ==================== 图表刷新事件 ====================
 const handleChartRefresh = (event) => {
   const filters = event.detail;
   const newSearchObj = { ...dataObj.searchObj };
@@ -243,7 +303,6 @@ const handleChartRefresh = (event) => {
     newSearchObj.status = filters.status;
     delete newSearchObj.type;
   } else if (filters?.highMatchRate) {
-    // 匹配率钻取：可传额外参数，此处仅作示例
     newSearchObj.highMatchRate = true;
   }
   dataObj.searchObj = newSearchObj;
@@ -251,7 +310,6 @@ const handleChartRefresh = (event) => {
   gridApi.query();
 };
 
-// ==================== 搜索抽屉 & 全屏 ====================
 const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
   modal: false, appendToMain: true, footer: false, width: 500,
   onCancel: () => searchDrawerApi.close(),
@@ -266,98 +324,3 @@ onUnmounted(() => {
   window.removeEventListener('wording-mgmt-chart-refresh', handleChartRefresh);
 });
 </script>
-
-<template>
-  <div class="park-lot-table-new">
-    <Grid>
-      <!-- 筛选标签区 -->
-      <template #table-title>
-        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
-          <el-tag v-for="filter in activeFilters" :key="filter.field" type="primary" closable @close="handleClearField(filter.field)">
-            {{ filter.label }}
-          </el-tag>
-        </div>
-      </template>
-
-      <!-- 工具栏按钮 -->
-      <template #toolbar-tools>
-        <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="add" @click="openCreate" />
-          <IconButton content="保存" icon-name="check" @click="handleSaveAll" />
-          <IconButton content="搜索" icon-name="search" @click="handleSearchShow" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
-        </div>
-      </template>
-
-      <!-- 话术ID：跳转详情抽屉 -->
-      <template #id="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.id }}</el-text>
-      </template>
-
-      <!-- 话术名称：筛选同名称 -->
-      <template #name="{ row }">
-        <el-text @click="filterByName(row.name)" type="primary" style="cursor: pointer">
-          {{ row.name }}
-        </el-text>
-      </template>
-
-      <!-- 话术类型：筛选同类型 -->
-      <template #type="{ row }">
-        <el-tag @click="filterByType(row.type)" style="cursor: pointer">
-          {{ row.type }}
-        </el-tag>
-      </template>
-
-      <!-- 话术状态：筛选同状态 -->
-      <template #status="{ row }">
-        <el-tag :type="row.status === '已生效' ? 'success' : 'info'"
-                @click="filterByStatus(row.status)" style="cursor: pointer">
-          {{ row.status }}
-        </el-tag>
-      </template>
-
-      <!-- 操作按钮 -->
-      <template #actions="{ row }">
-        <div class="table-toolbar-tools">
-          <template v-if="row.status === '未生效'">
-            <IconButton content="生效" icon-name="check" @click="handleEnable(row)" />
-            <IconButton content="编辑" icon-name="Edit" @click="openEdit(row)" />
-            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
-          </template>
-          <template v-else-if="row.status === '已生效'">
-            <IconButton content="禁用" icon-name="close" @click="handleDisable(row)" />
-            <IconButton content="编辑" icon-name="Edit" @click="openEdit(row)" />
-            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
-          </template>
-        </div>
-      </template>
-    </Grid>
-
-    <!-- 搜索抽屉 -->
-    <SearchDrawer title="搜索">
-      <QueryForm class="query-form" />
-    </SearchDrawer>
-
-    <!-- 新增/编辑抽屉 -->
-    <EditDrawer>
-      <el-form :model="editForm" label-width="100px">
-        <el-form-item label="话术名称" required>
-          <el-input v-model="editForm.name" placeholder="请输入话术名称（唯一）" />
-        </el-form-item>
-        <el-form-item label="话术内容" required>
-          <el-input v-model="editForm.content" type="textarea" rows="4" placeholder="请输入话术内容" />
-        </el-form-item>
-        <el-form-item label="话术类型" required>
-          <el-select v-model="editForm.type" placeholder="请选择">
-            <el-option label="快捷回复" value="快捷回复" />
-            <el-option label="自动回复" value="自动回复" />
-            <el-option label="投诉回复" value="投诉回复" />
-          </el-select>
-        </el-form-item>
-      </el-form>
-    </EditDrawer>
-
-    <!-- 详情抽屉 -->
-    <WordingMgmtDetailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj" title="话术详情" />
-  </div>
-</template>

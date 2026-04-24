@@ -1,3 +1,142 @@
+<template>
+  <div class="park-lot-table-new">
+    <Grid @checkbox-change="handleCheckboxChange" @checkbox-all="handleCheckAllChange">
+      <template #table-title>
+        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+          <el-tag v-for="filter in activeFilters" :key="filter.field" type="primary" closable @close="handleClearField(filter.field)">
+            {{ filter.label }}
+          </el-tag>
+        </div>
+      </template>
+
+      <template #toolbar-tools>
+        <div class="common-toolbar-tools">
+          <IconButton content="批量审核" icon-name="check" @click="openBatchAudit" />
+          <IconButton content="导出" icon-name="download" @click="handleExport" />
+          <IconButton content="搜索" icon-name="search" @click="handleSearchShow" />
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+        </div>
+      </template>
+
+      <template #id="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.id }}</el-text>
+      </template>
+      <template #user_name="{ row }">
+        <el-text @click="showUserDetail(row.userId)" type="primary" style="cursor: pointer">
+          {{ getUserName(row.userId) }}
+        </el-text>
+      </template>
+      <template #orderId="{ row }">
+        <el-text v-if="row.orderId" @click="showOrderDetail(row.orderId)" type="primary" style="cursor: pointer">
+          {{ row.orderId }}
+        </el-text>
+        <span v-else>-</span>
+      </template>
+      <template #content="{ row }">
+        <el-text @click="filterByContent(row.content)" type="primary" style="cursor: pointer">
+          {{ row.content }}
+        </el-text>
+      </template>
+      <template #status="{ row }">
+        <el-tag :type="{ 待审核: 'warning', 待处置: 'info', 处置中: 'primary', 已完成: 'success', 已关闭: 'danger' }[row.status]"
+                @click="filterByStatus(row.status)" style="cursor: pointer">
+          {{ row.status }}
+        </el-tag>
+      </template>
+      <template #audit_user_name="{ row }">
+        <el-text v-if="row.auditUserId" @click="showUserDetail(row.auditUserId)" type="primary" style="cursor: pointer">
+          {{ row.auditUserName || getUserName(row.auditUserId) }}
+        </el-text>
+        <span v-else>-</span>
+      </template>
+      <template #handle_user_name="{ row }">
+        <el-text v-if="row.handleUserId" @click="showUserDetail(row.handleUserId)" type="primary" style="cursor: pointer">
+          {{ row.handleUserName || getUserName(row.handleUserId) }}
+        </el-text>
+        <span v-else>-</span>
+      </template>
+      <template #feedbackContent="{ row }">
+        <span>{{ row.feedbackContent || '-' }}</span>
+      </template>
+
+      <template #actions="{ row }">
+        <div class="table-toolbar-tools">
+          <template v-if="row.status === '待审核'">
+            <IconButton content="通过" icon-name="check" @click="handleApprove(row)" />
+            <IconButton content="驳回" icon-name="close" @click="openReject(row)" />
+            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
+          </template>
+          <template v-else-if="row.status === '待处置'">
+            <IconButton content="执行" icon-name="check" @click="handleExecute(row)" />
+            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
+          </template>
+          <template v-else-if="row.status === '处置中'">
+            <IconButton content="反馈" icon-name="Star" @click="openFeedback(row)" />
+            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
+          </template>
+          <template v-else>
+            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
+          </template>
+        </div>
+      </template>
+    </Grid>
+
+    <SearchDrawer title="搜索">
+      <QueryForm class="query-form" />
+    </SearchDrawer>
+
+    <UserAppealDetailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj" title="用户申诉详情" />
+
+    <RejectDrawer>
+      <el-form :model="rejectForm" label-width="100px">
+        <el-form-item label="驳回理由" required>
+          <el-input v-model="rejectForm.rejectReason" type="textarea" rows="3" placeholder="请输入驳回理由" />
+        </el-form-item>
+      </el-form>
+    </RejectDrawer>
+
+    <FeedbackDrawer>
+      <el-form :model="feedbackForm" label-width="100px">
+        <el-form-item label="反馈内容" required>
+          <el-input v-model="feedbackForm.feedbackContent" type="textarea" rows="3" placeholder="请填写反馈内容" />
+        </el-form-item>
+      </el-form>
+    </FeedbackDrawer>
+
+    <BatchAuditDrawer>
+      <el-form :model="batchAuditForm" label-width="100px">
+        <el-form-item label="审核结果" required>
+          <el-radio-group v-model="batchAuditForm.auditResult">
+            <el-radio label="通过">通过</el-radio>
+            <el-radio label="驳回">驳回</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="审核备注">
+          <el-input v-model="batchAuditForm.auditRemark" type="textarea" rows="2" placeholder="选填" />
+        </el-form-item>
+        <el-form-item v-if="batchAuditForm.auditResult === '驳回'" label="驳回理由" required>
+          <el-input v-model="batchAuditForm.rejectReason" type="textarea" rows="3" placeholder="驳回时必填" />
+        </el-form-item>
+      </el-form>
+    </BatchAuditDrawer>
+
+    <el-dialog v-model="userDetailVisible" title="用户详情" width="400px">
+      <p>用户ID：{{ currentUser.id }}</p>
+      <p>用户名称：{{ currentUser.name }}</p>
+    </el-dialog>
+
+    <el-dialog v-model="orderDetailVisible" title="订单详情" width="600px">
+      <p>订单ID：{{ currentOrderId }}</p>
+      <p>（此处可嵌入订单详情组件）</p>
+    </el-dialog>
+  </div>
+</template>
+
 <script setup>
 import { reactive, ref, onMounted, onUnmounted, computed } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
@@ -21,9 +160,13 @@ import {
 import { useFormSchema, useGridColumns } from './data';
 import UserAppealDetailDrawer from './detail.vue';
 
-const props = defineProps({ secondShow: Boolean });
+const props = defineProps({
+  secondShow: Boolean,
+  arrowShow: { type: Boolean, default: false },
+});
+const emit = defineEmits(['arrow-change']);
+const arrowChange = () => emit('arrow-change');
 
-// 数据状态
 const dataObj = reactive({
   detailObj: {},
   total: 0,
@@ -31,10 +174,9 @@ const dataObj = reactive({
   searchObj: {},
   currentPage: 1,
   pageSize: 10,
-  selectedRows: [], // 批量选中的行
+  selectedRows: [],
 });
 
-// ==================== 用户映射表 ====================
 const userMap = ref(new Map());
 async function fetchUserMap() {
   try {
@@ -49,14 +191,12 @@ function getUserName(id) {
   return userMap.value.get(String(id)) || String(id);
 }
 
-// ==================== 获取表格数据 ====================
 const getTableData = async (pageObj) => {
   const params = {
     pageNo: pageObj.page.currentPage,
     pageSize: pageObj.page.pageSize,
     ...dataObj.searchObj,
   };
-  // 处理时间范围：后端期望 submitTime 数组
   if (dataObj.searchObj.submitTime && Array.isArray(dataObj.searchObj.submitTime)) {
     params.submitTime = dataObj.searchObj.submitTime;
   }
@@ -73,22 +213,12 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-// ==================== 搜索表单 ====================
 const [QueryForm, QueryFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: {
-    componentProps: { class: 'w-full' },
-    formItemClass: 'col-span-2',
-    labelWidth: 100,
-  },
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useFormSchema()
-    .filter(v => v.isSearch)
-    .map(v => {
-      delete v.rules;
-      return v;
-    }),
+  schema: useFormSchema().filter(v => v.isSearch).map(v => { delete v.rules; return v; }),
   showCollapseButton: true,
   submitButtonOptions: { content: '查询' },
   resetButtonOptions: {
@@ -108,13 +238,8 @@ const resetAllFilters = async () => {
 };
 
 async function onSubmit(values, isReset = false) {
-  if (isReset) {
-    await resetAllFilters();
-  } else {
-    dataObj.searchObj = { ...values };
-    dataObj.currentPage = 1;
-    gridApi.query();
-  }
+  if (isReset) await resetAllFilters();
+  else { dataObj.searchObj = { ...values }; dataObj.currentPage = 1; gridApi.query(); }
 }
 
 const handleClearField = async (fieldName) => {
@@ -140,16 +265,11 @@ const activeFilters = computed(() => {
   return filters;
 });
 
-// ==================== 表格组件 ====================
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns({ getUserName }),
     keepSource: true,
-    proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getTableData({ page }),
-      },
-    },
+    proxyConfig: { ajax: { query: async ({ page }) => getTableData({ page }) } },
     rowConfig: { keyField: 'id', isHover: true },
     pagerConfig: dataObj,
     toolbarConfig: { refresh: true, search: true },
@@ -160,15 +280,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 function handleRefresh() { gridApi.query(); }
-
 async function handleExport() {
-  // 导出当前筛选后的数据，默认 Excel 格式，如需 PDF 可增加参数 format: 'pdf'
   const data = await exportUserAppeal(dataObj.searchObj);
   downloadFileFromBlobPart({ fileName: '用户申诉记录.xls', source: data });
   ElMessage.success('导出成功');
 }
 
-// ==================== 详情抽屉 ====================
 const detailDrawerRef = ref(null);
 const handleOpenDetail = async (row) => {
   const res = await getUserAppealDetail({ id: row.id });
@@ -176,22 +293,17 @@ const handleOpenDetail = async (row) => {
   detailDrawerRef.value.open();
 };
 
-// ==================== 通过（待审核 → 待处置） ====================
 const handleApprove = async (row) => {
   await confirm('确认通过该申诉吗？通过后状态将变为“待处置”。');
-  await approveAppeal({ id: row.id, auditRemark: '' }); // 审核备注可选
+  await approveAppeal({ id: row.id, auditRemark: '' });
   ElMessage.success('审核通过');
   handleRefresh();
 };
 
-// ==================== 驳回（待审核 → 已关闭） ====================
 const rejectForm = reactive({ rejectReason: '' });
 let currentRejectRow = null;
 const [RejectDrawer, rejectDrawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  width: 500,
-  title: '驳回申诉',
+  modal: false, appendToMain: true, width: 500, title: '驳回申诉',
   onCancel: () => rejectDrawerApi.close(),
   onConfirm: async () => {
     if (!rejectForm.rejectReason) return ElMessage.warning('请填写驳回理由');
@@ -207,7 +319,6 @@ const openReject = (row) => {
   rejectDrawerApi.open();
 };
 
-// ==================== 执行（待处置 → 处置中） ====================
 const handleExecute = async (row) => {
   await confirm('确认认领该申诉吗？认领后状态将变为“处置中”。');
   await executeAppeal({ id: row.id });
@@ -215,14 +326,10 @@ const handleExecute = async (row) => {
   handleRefresh();
 };
 
-// ==================== 反馈（处置中 → 已完成） ====================
 const feedbackForm = reactive({ feedbackContent: '' });
 let currentFeedbackRow = null;
 const [FeedbackDrawer, feedbackDrawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  width: 500,
-  title: '反馈处理结果',
+  modal: false, appendToMain: true, width: 500, title: '反馈处理结果',
   onCancel: () => feedbackDrawerApi.close(),
   onConfirm: async () => {
     if (!feedbackForm.feedbackContent) return ElMessage.warning('请填写反馈内容');
@@ -238,18 +345,13 @@ const openFeedback = (row) => {
   feedbackDrawerApi.open();
 };
 
-// ==================== 批量审核 ====================
 const batchAuditForm = reactive({ auditResult: '通过', auditRemark: '', rejectReason: '' });
 const [BatchAuditDrawer, batchAuditDrawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  width: 550,
-  title: '批量审核',
+  modal: false, appendToMain: true, width: 550, title: '批量审核',
   onCancel: () => batchAuditDrawerApi.close(),
   onConfirm: async () => {
     const selectedIds = dataObj.selectedRows.map(row => row.id);
     if (selectedIds.length === 0) return ElMessage.warning('请勾选待审核的申诉记录');
-    // 二次校验选中状态
     const invalidRows = dataObj.selectedRows.filter(row => row.status !== '待审核');
     if (invalidRows.length) return ElMessage.warning('只能批量审核“待审核”状态的申诉');
     if (batchAuditForm.auditResult === '驳回' && !batchAuditForm.rejectReason) {
@@ -268,20 +370,15 @@ const [BatchAuditDrawer, batchAuditDrawerApi] = useVbenDrawer({
   },
 });
 const openBatchAudit = () => {
-  if (dataObj.selectedRows.length === 0) {
-    return ElMessage.warning('请先勾选待审核的申诉记录');
-  }
+  if (dataObj.selectedRows.length === 0) return ElMessage.warning('请先勾选待审核的申诉记录');
   const invalidRows = dataObj.selectedRows.filter(row => row.status !== '待审核');
-  if (invalidRows.length) {
-    return ElMessage.warning('只能批量审核“待审核”状态的申诉');
-  }
+  if (invalidRows.length) return ElMessage.warning('只能批量审核“待审核”状态的申诉');
   batchAuditForm.auditResult = '通过';
   batchAuditForm.auditRemark = '';
   batchAuditForm.rejectReason = '';
   batchAuditDrawerApi.open();
 };
 
-// ==================== 钻取筛选 ====================
 const filterByStatus = (status) => {
   dataObj.searchObj.status = status;
   dataObj.currentPage = 1;
@@ -293,7 +390,6 @@ const filterByContent = (content) => {
   gridApi.query();
 };
 
-// ==================== 用户/审核人/处置人详情弹窗 ====================
 const userDetailVisible = ref(false);
 const currentUser = ref({ id: '', name: '' });
 const showUserDetail = (userId) => {
@@ -302,7 +398,6 @@ const showUserDetail = (userId) => {
   userDetailVisible.value = true;
 };
 
-// ==================== 订单详情弹窗（示例，可对接实际订单组件） ====================
 const orderDetailVisible = ref(false);
 const currentOrderId = ref(null);
 const showOrderDetail = (orderId) => {
@@ -311,16 +406,13 @@ const showOrderDetail = (orderId) => {
   orderDetailVisible.value = true;
 };
 
-// ==================== 图表刷新事件 ====================
 const handleChartRefresh = (event) => {
   const filters = event.detail;
   const newSearchObj = { ...dataObj.searchObj };
   if (filters?.date) {
-    // 折线图节点点击：筛选当天申诉记录
     newSearchObj.submitTime = [filters.date, filters.date];
     delete newSearchObj.status;
   } else if (filters?.statusList) {
-    // 卡片钻取：待申诉数 -> 待审核+待处置；处理完成率 -> 已完成
     if (filters.statusList.includes('待处理')) {
       newSearchObj.status = '待审核,待处置';
     } else if (filters.statusList.includes('已完成')) {
@@ -333,20 +425,9 @@ const handleChartRefresh = (event) => {
   gridApi.query();
 };
 
-// ==================== 搜索抽屉 & 全屏 ====================
-const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
-  modal: false, appendToMain: true, footer: false, width: 500,
-  onCancel: () => searchDrawerApi.close(),
-});
-const handleSearchShow = () => searchDrawerApi.open();
-const handleFullShow = () => screenfull.toggle();
-
-// 表格选中事件（跨页保留）
 const handleCheckboxChange = ({ checked, row }) => {
   if (checked) {
-    if (!dataObj.selectedRows.some(r => r.id === row.id)) {
-      dataObj.selectedRows.push(row);
-    }
+    if (!dataObj.selectedRows.some(r => r.id === row.id)) dataObj.selectedRows.push(row);
   } else {
     const idx = dataObj.selectedRows.findIndex(r => r.id === row.id);
     if (idx !== -1) dataObj.selectedRows.splice(idx, 1);
@@ -354,15 +435,20 @@ const handleCheckboxChange = ({ checked, row }) => {
 };
 const handleCheckAllChange = ({ checked, rows }) => {
   if (checked) {
-    // 只添加待审核状态的行
     const toAdd = rows.filter(r => r.status === '待审核' && !dataObj.selectedRows.some(ex => ex.id === r.id));
     dataObj.selectedRows.push(...toAdd);
   } else {
-    // 移除当前页中所有已选中的行
     const currentPageIds = rows.map(r => r.id);
     dataObj.selectedRows = dataObj.selectedRows.filter(r => !currentPageIds.includes(r.id));
   }
 };
+
+const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
+  modal: false, appendToMain: true, footer: false, width: 500,
+  onCancel: () => searchDrawerApi.close(),
+});
+const handleSearchShow = () => searchDrawerApi.open();
+const handleFullShow = () => screenfull.toggle();
 
 onMounted(() => {
   fetchUserMap();
@@ -372,165 +458,3 @@ onUnmounted(() => {
   window.removeEventListener('user-appeal-chart-refresh', handleChartRefresh);
 });
 </script>
-
-<template>
-  <div class="park-lot-table-new">
-    <Grid
-      @checkbox-change="handleCheckboxChange"
-      @checkbox-all="handleCheckAllChange"
-    >
-      <!-- 筛选标签区 -->
-      <template #table-title>
-        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
-          <el-tag v-for="filter in activeFilters" :key="filter.field" type="primary" closable @close="handleClearField(filter.field)">
-            {{ filter.label }}
-          </el-tag>
-        </div>
-      </template>
-
-      <!-- 工具栏按钮 -->
-      <template #toolbar-tools>
-        <div class="common-toolbar-tools">
-          <IconButton content="批量审核" icon-name="check" @click="openBatchAudit" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="搜索" icon-name="search" @click="handleSearchShow" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
-        </div>
-      </template>
-
-      <!-- 申诉ID：跳转详情抽屉 -->
-      <template #id="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.id }}</el-text>
-      </template>
-
-      <!-- 用户：跳转用户详情弹窗 -->
-      <template #user_name="{ row }">
-        <el-text @click="showUserDetail(row.userId)" type="primary" style="cursor: pointer">
-          {{ getUserName(row.userId) }}
-        </el-text>
-      </template>
-
-      <!-- 关联订单：跳转订单详情弹窗 -->
-      <template #orderId="{ row }">
-        <el-text v-if="row.orderId" @click="showOrderDetail(row.orderId)" type="primary" style="cursor: pointer">
-          {{ row.orderId }}
-        </el-text>
-        <span v-else>-</span>
-      </template>
-
-      <!-- 申诉内容：筛选同内容 -->
-      <template #content="{ row }">
-        <el-text @click="filterByContent(row.content)" type="primary" style="cursor: pointer">
-          {{ row.content }}
-        </el-text>
-      </template>
-
-      <!-- 申诉状态：筛选同状态 -->
-      <template #status="{ row }">
-        <el-tag :type="{ 待审核: 'warning', 待处置: 'info', 处置中: 'primary', 已完成: 'success', 已关闭: 'danger' }[row.status]"
-                @click="filterByStatus(row.status)" style="cursor: pointer">
-          {{ row.status }}
-        </el-tag>
-      </template>
-
-      <!-- 审核人：跳转用户详情弹窗 -->
-      <template #audit_user_name="{ row }">
-        <el-text v-if="row.auditUserId" @click="showUserDetail(row.auditUserId)" type="primary" style="cursor: pointer">
-          {{ row.auditUserName || getUserName(row.auditUserId) }}
-        </el-text>
-        <span v-else>-</span>
-      </template>
-
-      <!-- 处置人：跳转用户详情弹窗 -->
-      <template #handle_user_name="{ row }">
-        <el-text v-if="row.handleUserId" @click="showUserDetail(row.handleUserId)" type="primary" style="cursor: pointer">
-          {{ row.handleUserName || getUserName(row.handleUserId) }}
-        </el-text>
-        <span v-else>-</span>
-      </template>
-
-      <!-- 反馈内容：直接展示 -->
-      <template #feedbackContent="{ row }">
-        <span>{{ row.feedbackContent || '-' }}</span>
-      </template>
-
-      <!-- 操作按钮（根据状态显示） -->
-      <template #actions="{ row }">
-        <div class="table-toolbar-tools">
-          <template v-if="row.status === '待审核'">
-            <IconButton content="通过" icon-name="check" @click="handleApprove(row)" />
-            <IconButton content="驳回" icon-name="close" @click="openReject(row)" />
-            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
-          </template>
-          <template v-else-if="row.status === '待处置'">
-            <IconButton content="执行" icon-name="check" @click="handleExecute(row)" />
-            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
-          </template>
-          <template v-else-if="row.status === '处置中'">
-            <IconButton content="反馈" icon-name="Star" @click="openFeedback(row)" />
-            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
-          </template>
-          <template v-else>
-            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
-          </template>
-        </div>
-      </template>
-    </Grid>
-
-    <!-- 搜索抽屉 -->
-    <SearchDrawer title="搜索">
-      <QueryForm class="query-form" />
-    </SearchDrawer>
-
-    <!-- 详情抽屉 -->
-    <UserAppealDetailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj" title="用户申诉详情" />
-
-    <!-- 驳回抽屉 -->
-    <RejectDrawer>
-      <el-form :model="rejectForm" label-width="100px">
-        <el-form-item label="驳回理由" required>
-          <el-input v-model="rejectForm.rejectReason" type="textarea" rows="3" placeholder="请输入驳回理由" />
-        </el-form-item>
-      </el-form>
-    </RejectDrawer>
-
-    <!-- 反馈抽屉 -->
-    <FeedbackDrawer>
-      <el-form :model="feedbackForm" label-width="100px">
-        <el-form-item label="反馈内容" required>
-          <el-input v-model="feedbackForm.feedbackContent" type="textarea" rows="3" placeholder="请填写反馈内容" />
-        </el-form-item>
-      </el-form>
-    </FeedbackDrawer>
-
-    <!-- 批量审核抽屉 -->
-    <BatchAuditDrawer>
-      <el-form :model="batchAuditForm" label-width="100px">
-        <el-form-item label="审核结果" required>
-          <el-radio-group v-model="batchAuditForm.auditResult">
-            <el-radio label="通过">通过</el-radio>
-            <el-radio label="驳回">驳回</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item label="审核备注">
-          <el-input v-model="batchAuditForm.auditRemark" type="textarea" rows="2" placeholder="选填" />
-        </el-form-item>
-        <el-form-item v-if="batchAuditForm.auditResult === '驳回'" label="驳回理由" required>
-          <el-input v-model="batchAuditForm.rejectReason" type="textarea" rows="3" placeholder="驳回时必填" />
-        </el-form-item>
-      </el-form>
-    </BatchAuditDrawer>
-
-    <!-- 用户详情弹窗 -->
-    <el-dialog v-model="userDetailVisible" title="用户详情" width="400px">
-      <p>用户ID：{{ currentUser.id }}</p>
-      <p>用户名称：{{ currentUser.name }}</p>
-    </el-dialog>
-
-    <!-- 订单详情弹窗（占位，可替换为实际订单组件） -->
-    <el-dialog v-model="orderDetailVisible" title="订单详情" width="600px">
-      <p>订单ID：{{ currentOrderId }}</p>
-      <p>（此处可嵌入订单详情组件）</p>
-    </el-dialog>
-  </div>
-</template>
