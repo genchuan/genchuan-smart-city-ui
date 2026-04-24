@@ -430,7 +430,7 @@ defineExpose({
           <!-- 同步状态筛选标签 -->
           <ElTag
             v-if="filterSyncStatus"
-            type="info"
+            type="primary"
             closable
             @close="handleCancelSyncStatusFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"

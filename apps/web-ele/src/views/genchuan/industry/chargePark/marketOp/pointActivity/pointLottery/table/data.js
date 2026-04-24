@@ -401,21 +401,11 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'costPointMin',
-      label: '最小消耗积分',
+      fieldName: 'costPoint',
+      label: '消耗积分',
       component: 'InputNumber',
       componentProps: {
-        placeholder: '请输入最小消耗积分',
-        min: 0,
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'costPointMax',
-      label: '最大消耗积分',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入最大消耗积分',
+        placeholder: '请输入消耗积分',
         min: 0,
         clearable: true,
       },

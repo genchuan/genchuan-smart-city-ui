@@ -2,23 +2,18 @@
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  activateExchangeCategory,
   createExchangeCategory,
-  disableExchangeCategory,
-  enableExchangeCategory,
   exportExchangeCategory,
-  getExchangeCategoryDetail,
   getExchangeCategoryPage,
   updateExchangeCategory,
 } from '#/api/genchuan/industry/chargePark/marketOp/exchangeMgmt/exchangeCategory';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
@@ -26,7 +21,6 @@ import { formatDate } from '#/utils/genchuan/formatTime';
 
 import ImportExcelDialog from '../components/ImportExcelDialog.vue';
 import StatusConfirmDialog from '../components/StatusConfirmDialog.vue';
-
 import {
   dataList,
   detailFields,
@@ -261,7 +255,7 @@ const getTableData = async (pageObj) => {
 
     const response = await getExchangeCategoryPage(params);
     if (response) {
-      console.log("========")
+      console.log('========');
       console.log(response);
       const { list, total } = response;
       dataObj.total = total || 0;
@@ -277,20 +271,34 @@ const getTableData = async (pageObj) => {
       let searchMatch = true;
       Object.keys(dataObj.searchParams).forEach((key) => {
         const value = dataObj.searchParams[key];
-        if (value && !['createTime', 'auditTime', 'effectTime'].includes(key)) {
-          if (key === 'goodsCountMin') {
-            searchMatch = searchMatch && v.goodsCount >= value;
-          } else if (key === 'goodsCountMax') {
-            searchMatch = searchMatch && v.goodsCount <= value;
-          } else if (key === 'sortMin') {
-            searchMatch = searchMatch && v.sort >= value;
-          } else if (key === 'sortMax') {
-            searchMatch = searchMatch && v.sort <= value;
-          } else {
-            searchMatch =
-              typeof value === 'string'
-                ? searchMatch && v[key]?.toString().includes(value)
-                : searchMatch && v[key] === value;
+        if (value && !['auditTime', 'createTime', 'effectTime'].includes(key)) {
+          switch (key) {
+            case 'goodsCountMax': {
+              searchMatch = searchMatch && v.goodsCount <= value;
+
+              break;
+            }
+            case 'goodsCountMin': {
+              searchMatch = searchMatch && v.goodsCount >= value;
+
+              break;
+            }
+            case 'sortMax': {
+              searchMatch = searchMatch && v.sort <= value;
+
+              break;
+            }
+            case 'sortMin': {
+              searchMatch = searchMatch && v.sort >= value;
+
+              break;
+            }
+            default: {
+              searchMatch =
+                typeof value === 'string'
+                  ? searchMatch && v[key]?.toString().includes(value)
+                  : searchMatch && v[key] === value;
+            }
           }
         }
       });
@@ -402,7 +410,7 @@ const handleStatsFilter = (type, value) => {
   filterScope.value = '';
 
   switch (type) {
-    case 'card':
+    case 'card': {
       if (value === 'totalCategory') {
         // 总类目数 - 清空筛选，显示全部
         console.log('钻取：显示全部类目');
@@ -411,11 +419,13 @@ const handleStatsFilter = (type, value) => {
         console.log('钻取：显示有商品的类目');
       }
       break;
-    case 'categoryId':
+    }
+    case 'categoryId': {
       // 类目ID筛选 - 筛选特定类目
       dataObj.searchParams.id = value;
       console.log('钻取：筛选类目ID', value);
       break;
+    }
   }
 
   // 刷新表格
@@ -476,10 +486,7 @@ const handleFullShow = () => {
       :fields="detailFields"
     />
     <!--   导入弹窗-->
-    <ImportExcelDialog
-      ref="importDialogRef"
-      @success="handleRefresh"
-    />
+    <ImportExcelDialog ref="importDialogRef" @success="handleRefresh" />
     <!--   状态确认弹窗-->
     <StatusConfirmDialog
       ref="statusConfirmDialogRef"
@@ -520,23 +527,19 @@ const handleFullShow = () => {
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton
-            content="导入"
-            icon-name="Upload"
-            @click="handleImport"
-          />
+          <IconButton content="导入" icon-name="Upload" @click="handleImport" />
           <IconButton
             content="导出"
             icon-name="download"
             @click="handleExport"
           />
-<!--          <IconButton-->
-<!--            content="批量删除"-->
-<!--            icon-name="delete"-->
-<!--            color="#F56C6C"-->
-<!--            :disabled="isEmpty(checkedIds)"-->
-<!--            @click="handleDeleteBatch"-->
-<!--          />-->
+          <!--          <IconButton-->
+          <!--            content="批量删除"-->
+          <!--            icon-name="delete"-->
+          <!--            color="#F56C6C"-->
+          <!--            :disabled="isEmpty(checkedIds)"-->
+          <!--            @click="handleDeleteBatch"-->
+          <!--          />-->
           <IconButton
             content="搜索"
             icon-name="search"
@@ -598,7 +601,14 @@ const handleFullShow = () => {
       </template>
       <!-- 创建时间 - 格式化显示 -->
       <template #createTime="{ row }">
-        <span>{{ row.createTime ? formatDate(new Date(Number(row.createTime)), 'YYYY-MM-DD HH:mm:ss') : '' }}</span>
+        <span>{{
+          row.createTime
+            ? formatDate(
+                new Date(Number(row.createTime)),
+                'YYYY-MM-DD HH:mm:ss',
+              )
+            : ''
+        }}</span>
       </template>
       <!-- 审核人 - 点击跳转操作人员详情 -->
       <template #auditorName="{ row }">
@@ -615,11 +625,22 @@ const handleFullShow = () => {
       </template>
       <!-- 审核时间 - 格式化显示 -->
       <template #auditTime="{ row }">
-        <span>{{ row.auditTime ? formatDate(new Date(Number(row.auditTime)), 'YYYY-MM-DD HH:mm:ss') : '-' }}</span>
+        <span>{{
+          row.auditTime
+            ? formatDate(new Date(Number(row.auditTime)), 'YYYY-MM-DD HH:mm:ss')
+            : '-'
+        }}</span>
       </template>
       <!-- 生效时间 - 格式化显示 -->
       <template #effectTime="{ row }">
-        <span>{{ row.effectTime ? formatDate(new Date(Number(row.effectTime)), 'YYYY-MM-DD HH:mm:ss') : '' }}</span>
+        <span>{{
+          row.effectTime
+            ? formatDate(
+                new Date(Number(row.effectTime)),
+                'YYYY-MM-DD HH:mm:ss',
+              )
+            : ''
+        }}</span>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">

@@ -2,27 +2,24 @@
 import { computed, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   createCardConfig,
   getCardConfigDetail,
   getCardConfigPage,
   updateCardConfig,
 } from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/cardConfig';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
 import ActivateConfirmDialog from '../components/ActivateConfirmDialog.vue';
 import DisableConfirmDialog from '../components/DisableConfirmDialog.vue';
-
 import {
   dataList,
   detailFields,
@@ -245,20 +242,34 @@ const getTableData = async (pageObj) => {
       let searchMatch = true;
       Object.keys(dataObj.searchParams).forEach((key) => {
         const value = dataObj.searchParams[key];
-        if (value && !['createTime', 'auditTime', 'effectTime'].includes(key)) {
-          if (key === 'priceMin') {
-            searchMatch = searchMatch && v.price >= value;
-          } else if (key === 'priceMax') {
-            searchMatch = searchMatch && v.price <= value;
-          } else if (key === 'saleCountMin') {
-            searchMatch = searchMatch && v.saleCount >= value;
-          } else if (key === 'saleCountMax') {
-            searchMatch = searchMatch && v.saleCount <= value;
-          } else {
-            searchMatch =
-              typeof value === 'string'
-                ? searchMatch && v[key]?.toString().includes(value)
-                : searchMatch && v[key] === value;
+        if (value && !['auditTime', 'createTime', 'effectTime'].includes(key)) {
+          switch (key) {
+            case 'priceMax': {
+              searchMatch = searchMatch && v.price <= value;
+
+              break;
+            }
+            case 'priceMin': {
+              searchMatch = searchMatch && v.price >= value;
+
+              break;
+            }
+            case 'saleCountMax': {
+              searchMatch = searchMatch && v.saleCount <= value;
+
+              break;
+            }
+            case 'saleCountMin': {
+              searchMatch = searchMatch && v.saleCount >= value;
+
+              break;
+            }
+            default: {
+              searchMatch =
+                typeof value === 'string'
+                  ? searchMatch && v[key]?.toString().includes(value)
+                  : searchMatch && v[key] === value;
+            }
           }
         }
       });
@@ -384,11 +395,14 @@ const handleStatsFilter = (type, value) => {
   if (type === 'card') {
     // 卡片点击 - 生效配置数或累计卡种销量
     filterStatsType.value = value;
-    ElMessage.info(`已筛选: ${value === 'effective' ? '生效配置' : '销量统计'}`);
+    ElMessage.info(
+      `已筛选: ${value === 'effective' ? '生效配置' : '销量统计'}`,
+    );
   } else if (type === 'type') {
     // 饼图点击 - 按卡种类型筛选
     filterType.value = value;
-    const typeName = dataObj.apilist.find(v => v.type === value)?.typeName || value;
+    const typeName =
+      dataObj.apilist.find((v) => v.type === value)?.typeName || value;
     ElMessage.info(`已筛选卡种类型: ${typeName}`);
   }
   gridApi.query();
@@ -453,15 +467,9 @@ const handleFullShow = () => {
       :fields="detailFields"
     />
     <!--   生效确认弹窗-->
-    <ActivateConfirmDialog
-      ref="activateDialogRef"
-      @success="handleRefresh"
-    />
+    <ActivateConfirmDialog ref="activateDialogRef" @success="handleRefresh" />
     <!--   禁用确认弹窗-->
-    <DisableConfirmDialog
-      ref="disableDialogRef"
-      @success="handleRefresh"
-    />
+    <DisableConfirmDialog ref="disableDialogRef" @success="handleRefresh" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -510,17 +518,15 @@ const handleFullShow = () => {
             @close="handleCancelStatsTypeFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
-            统计筛选：{{ filterStatsType === 'effective' ? '生效配置' : '销量统计' }}
+            统计筛选：{{
+              filterStatsType === 'effective' ? '生效配置' : '销量统计'
+            }}
           </ElTag>
         </div>
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton
-            content="新增"
-            icon-name="Plus"
-            @click="handleAdd"
-          />
+          <IconButton content="新增" icon-name="Plus" @click="handleAdd" />
           <IconButton
             content="导出"
             icon-name="download"
@@ -549,7 +555,7 @@ const handleFullShow = () => {
           @click="handleOpenCardDetail(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.name }}
         </el-text>
@@ -558,7 +564,7 @@ const handleFullShow = () => {
       <template #typeName="{ row }">
         <ElTag
           :type="getCardConfigTypeTagType(row.type)"
-          style="cursor: pointer;"
+          style="cursor: pointer"
           @click="handleFilterByType(row.type)"
         >
           {{ getCardConfigTypeLabel(row.type) }}
@@ -568,7 +574,7 @@ const handleFullShow = () => {
       <template #scopeName="{ row }">
         <ElTag
           :type="getCardConfigScopeTagType(row.scope)"
-          style="cursor: pointer;"
+          style="cursor: pointer"
           @click="handleFilterByScope(row.scope)"
         >
           {{ getCardConfigScopeLabel(row.scope) }}
@@ -582,7 +588,7 @@ const handleFullShow = () => {
       <template #statusName="{ row }">
         <ElTag
           :type="getCardConfigStatusTagType(row.status)"
-          style="cursor: pointer;"
+          style="cursor: pointer"
           @click="handleFilterByStatus(row.status)"
         >
           {{ getCardConfigStatusLabel(row.status) }}
@@ -590,7 +596,14 @@ const handleFullShow = () => {
       </template>
       <!-- 创建时间 - 格式化显示 -->
       <template #createTime="{ row }">
-        <span>{{ row.createTime ? formatDate(new Date(Number(row.createTime)), 'YYYY-MM-DD HH:mm:ss') : '' }}</span>
+        <span>{{
+          row.createTime
+            ? formatDate(
+                new Date(Number(row.createTime)),
+                'YYYY-MM-DD HH:mm:ss',
+              )
+            : ''
+        }}</span>
       </template>
       <!-- 审核人 - 点击跳转审核人详情 -->
       <template #auditorName="{ row }">
@@ -599,7 +612,7 @@ const handleFullShow = () => {
           @click="handleOpenAuditorDetail(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.auditorName }}
         </el-text>
@@ -607,7 +620,11 @@ const handleFullShow = () => {
       </template>
       <!-- 审核时间 - 格式化显示 -->
       <template #auditTime="{ row }">
-        <span>{{ row.auditTime ? formatDate(new Date(Number(row.auditTime)), 'YYYY-MM-DD HH:mm:ss') : '-' }}</span>
+        <span>{{
+          row.auditTime
+            ? formatDate(new Date(Number(row.auditTime)), 'YYYY-MM-DD HH:mm:ss')
+            : '-'
+        }}</span>
       </template>
       <!-- 销量 - 点击跳转订单明细 -->
       <template #saleCount="{ row }">
@@ -615,14 +632,21 @@ const handleFullShow = () => {
           @click="handleOpenSaleDetail(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.saleCount }}
         </el-text>
       </template>
       <!-- 生效时间 - 格式化显示 -->
       <template #effectTime="{ row }">
-        <span>{{ row.effectTime ? formatDate(new Date(Number(row.effectTime)), 'YYYY-MM-DD HH:mm:ss') : '-' }}</span>
+        <span>{{
+          row.effectTime
+            ? formatDate(
+                new Date(Number(row.effectTime)),
+                'YYYY-MM-DD HH:mm:ss',
+              )
+            : '-'
+        }}</span>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
@@ -659,7 +683,11 @@ const handleFullShow = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：卡种配置数量: {{ dataObj.list.length }}; 已生效: {{ dataObj.list.filter((v) => v.status === '1').length }}; 未生效: {{ dataObj.list.filter((v) => v.status === '0').length }} </span>
+          <span>
+            本页统计：卡种配置数量: {{ dataObj.list.length }}; 已生效:
+            {{ dataObj.list.filter((v) => v.status === '1').length }}; 未生效:
+            {{ dataObj.list.filter((v) => v.status === '0').length }}
+          </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span> {{ textObj.total }} </span>
