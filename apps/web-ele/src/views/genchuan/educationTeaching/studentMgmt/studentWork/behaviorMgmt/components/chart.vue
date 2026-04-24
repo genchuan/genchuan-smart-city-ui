@@ -21,30 +21,36 @@ const cardList = computed(() => {
   const abnormal = overviewData.value.attendanceAbnormalCount || 0;
   const synced = overviewData.value.syncCount || 0;
   return [
-    { title: '请假总次数', value: totalLeave, color: '#409EFF', status: 'totalLeave' },
-    { title: '待审批数', value: pending, color: '#E6A23C', status: 'pending' },
-    { title: '考勤异常人数', value: abnormal, color: '#F56C6C', status: 'abnormal' },
-    { title: '已同步数', value: synced, color: '#67C23A', status: 'synced' },
+    {title: '请假总次数', value: totalLeave, color: '#409EFF', status: 'totalLeave'},
+    {title: '待审批数', value: pending, color: '#E6A23C', status: 'pending'},
+    {title: '考勤异常人数', value: abnormal, color: '#F56C6C', status: 'abnormal'},
+    {title: '已同步数', value: synced, color: '#67C23A', status: 'synced'},
   ];
 });
 
-// 请假类型分布饼图
-const leaveTypePieData = computed(() => overviewData.value.leaveTypeDistribution || []);
+// 请假类型分布饼图：将后端返回的 {name, count} 转换为 {name, value}（Pie组件需要value）
+const leaveTypePieData = computed(() => {
+  const distribution = overviewData.value.leaveTypeDistribution || [];
+  return distribution.map(item => ({
+    name: item.name,
+    value: item.count
+  }));
+});
 
-// 每日请假趋势（折线图数据）
+// 每日请假趋势（折线图数据）：后端返回 {name, count}，直接使用 name 作为 x 轴，count 作为数据
 const dailyTrendXData = computed(() => {
   const trend = overviewData.value.dailyLeaveTrend || [];
-  return trend.map(item => item.date);
+  return trend.map(item => item.name);
 });
 const dailyTrendSeries = computed(() => [
-  { name: '请假人数', data: (overviewData.value.dailyLeaveTrend || []).map(item => item.count) },
+  {name: '请假人数', data: (overviewData.value.dailyLeaveTrend || []).map(item => item.count)},
 ]);
 
 // 班级分组柱状图数据
 const classBarXData = computed(() => classData.value.map(item => item.className));
 const classBarSeries = computed(() => [
-  { name: '请假次数', data: classData.value.map(item => item.leaveCount) },
-  { name: '考勤异常人数', data: classData.value.map(item => item.abnormalCount) },
+  {name: '请假次数', data: classData.value.map(item => item.leaveCount)},
+  {name: '考勤异常人数', data: classData.value.map(item => item.abnormalCount)},
 ]);
 
 // 图表切换选项
@@ -82,7 +88,7 @@ const handleCardClick = (cardInfo) => {
 
 // 饼图点击
 const handlePieClick = (item) => {
-  emit('pieClick', { type: 'leaveType', value: item.name });
+  emit('pieClick', {type: 'leaveType', value: item.name});
 };
 
 // 柱状图点击（班级筛选）
@@ -94,7 +100,7 @@ const handleBarClick = (params) => {
     className = params.name || params.className;
   }
   if (className) {
-    emit('barClick', { className });
+    emit('barClick', {className});
   } else {
     console.warn('柱状图点击未能获取班级名称', params);
   }
@@ -102,33 +108,34 @@ const handleBarClick = (params) => {
 
 // 折线图点击（日期筛选）
 const handleTrendClick = (params) => {
-  emit('lineClick', { date: params.name });
+  emit('lineClick', {date: params.name});
 };
 
 const loadChartData = async () => {
   loading.value = true;
   try {
     const [overviewRes, classRes] = await Promise.allSettled([
-      getBehaviorMgmtChart({ timeRange: '本月' }),
-      getAttendanceCount({ timeRange: '本月' }),
+      getBehaviorMgmtChart({}),
+      getAttendanceCount({}),
     ]);
     if (overviewRes.status === 'fulfilled') {
       overviewData.value = overviewRes.value;
     } else {
+      // 模拟数据字段与后端一致：使用 name/count
       overviewData.value = {
         totalLeaveCount: 86,
         pendingAuditCount: 12,
         attendanceAbnormalCount: 5,
         syncCount: 74,
         leaveTypeDistribution: [
-          { name: '事假', value: 45 },
-          { name: '病假', value: 32 },
-          { name: '其他', value: 9 },
+          {name: '事假', count: 45},
+          {name: '病假', count: 32},
+          {name: '其他', count: 9},
         ],
         dailyLeaveTrend: [
-          { date: '03-01', count: 3 },
-          { date: '03-02', count: 5 },
-          { date: '03-03', count: 2 },
+          {name: '03-01', count: 3},
+          {name: '03-02', count: 5},
+          {name: '03-03', count: 2},
         ],
       };
     }
@@ -136,11 +143,11 @@ const loadChartData = async () => {
       classData.value = classRes.value.classStatistics || [];
     } else {
       classData.value = [
-        { className: '计算机1班', leaveCount: 12, abnormalCount: 1 },
-        { className: '计算机2班', leaveCount: 15, abnormalCount: 2 },
-        { className: '软件1班', leaveCount: 9, abnormalCount: 0 },
-        { className: '软件2班', leaveCount: 8, abnormalCount: 1 },
-        { className: '电子1班', leaveCount: 10, abnormalCount: 1 },
+        {className: '计算机1班', leaveCount: 12, abnormalCount: 1},
+        {className: '计算机2班', leaveCount: 15, abnormalCount: 2},
+        {className: '软件1班', leaveCount: 9, abnormalCount: 0},
+        {className: '软件2班', leaveCount: 8, abnormalCount: 1},
+        {className: '电子1班', leaveCount: 10, abnormalCount: 1},
       ];
     }
   } catch (error) {

@@ -1,7 +1,6 @@
 import { requestClient } from '#/api/request';
 
 // ==================== 映射表 ====================
-// 社团类型映射
 const clubTypeMap = {
   '文体': '1',
   '学术': '2',
@@ -15,7 +14,6 @@ const clubTypeReverseMap = {
   '4': '其他'
 };
 
-// 场馆申请状态映射
 const venueStatusMap = {
   '无': '0',
   '待申请': '1',
@@ -27,7 +25,6 @@ const venueStatusReverseMap = {
   '2': '已通过'
 };
 
-// 审核状态映射
 const statusMap = {
   '待审核': '0',
   '已通过': '1',
@@ -39,7 +36,6 @@ const statusReverseMap = {
   '2': '已建档'
 };
 
-// 响应数据：数字 → 中文
 function convertEnToZh(obj) {
   if (!obj || typeof obj !== 'object') return obj;
   const result = { ...obj };
@@ -55,7 +51,6 @@ function convertEnToZh(obj) {
   return result;
 }
 
-// 请求参数：中文 → 数字
 function convertZhToEn(obj) {
   if (!obj || typeof obj !== 'object') return obj;
   const result = { ...obj };
@@ -71,7 +66,6 @@ function convertZhToEn(obj) {
   return result;
 }
 
-// 转换列表
 function convertList(list) {
   if (!Array.isArray(list)) return list;
   return list.map(item => convertEnToZh(item));
@@ -153,7 +147,6 @@ export function getClubMgmtDetail(params) {
     });
 }
 
-// 获取学生选项（用于申请下拉框）
 export function getStudentOptions(params) {
   return requestClient.get('/studentmgmt/student/options', { params }).catch(err => {
     console.warn('获取学生选项失败，使用模拟数据', err);
@@ -173,21 +166,19 @@ export function getClubMgmtChart(params) {
   return requestClient.get('/studentmgmt/club-mgmt/chart', { params }).catch(err => {
     console.warn('社团运营看板接口失败，使用模拟数据', err);
     return Promise.resolve({
-      totalClubCount: 28,
-      totalMemberCount: 896,
-      pendingAuditCount: 32,
-      venueApplyCount: 126,
+      totalClubCount: 9,
+      totalMemberCount: 9,
+      pendingAuditCount: 1,
+      venueApplyCount: 9,
       clubTypeDistribution: [
-        { name: '文体', value: 12 },
-        { name: '学术', value: 8 },
-        { name: '志愿', value: 5 },
-        { name: '其他', value: 3 },
+        { count: 4, name: "", type: "1" },
+        { count: 3, name: "", type: "2" },
+        { count: 2, name: "", type: "3" }
       ],
       monthlyApplyTrend: [
-        { month: '09月', count: 256 },
-        { month: '10月', count: 128 },
-        { month: '11月', count: 86 },
-      ],
+        { month: "2024-09", count: 7 },
+        { month: "2026-04", count: 2 }
+      ]
     });
   });
 }
@@ -195,19 +186,24 @@ export function getClubMgmtChart(params) {
 export function getClubDistribution(params) {
   return requestClient.get('/studentmgmt/club-mgmt/chart/clubDistribution', { params }).catch(err => {
     console.warn('社团分布统计接口失败，使用模拟数据', err);
+    // 模拟数据字段与后端保持一致：typeMemberDistribution 使用 { name, count }
     return Promise.resolve({
       clubStatistics: [
-        { clubName: '篮球社', memberCount: 68, clubType: '文体' },
-        { clubName: '文学社', memberCount: 42, clubType: '学术' },
-        { clubName: '志愿者协会', memberCount: 86, clubType: '志愿' },
-        { clubName: '动漫社', memberCount: 35, clubType: '其他' },
+        { clubName: '篮球社', memberCount: 1, clubType: '' },
+        { clubName: '志愿者协会', memberCount: 1, clubType: '' },
+        { clubName: '音乐社', memberCount: 1, clubType: '' },
+        { clubName: '英语角', memberCount: 1, clubType: '' },
+        { clubName: '摄影社', memberCount: 1, clubType: '' },
+        { clubName: '读书社', memberCount: 1, clubType: '' },
+        { clubName: '舞蹈社', memberCount: 1, clubType: '' },
+        { clubName: '环保社', memberCount: 1, clubType: '' },
+        { clubName: '辩论社', memberCount: 1, clubType: '' }
       ],
       typeMemberDistribution: [
-        { name: '文体', value: 426 },
-        { name: '学术', value: 235 },
-        { name: '志愿', value: 189 },
-        { name: '其他', value: 46 },
-      ],
+        { name: "", count: 4 },
+        { name: "", count: 3 },
+        { name: "", count: 2 }
+      ]
     });
   });
 }

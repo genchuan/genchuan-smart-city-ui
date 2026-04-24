@@ -116,7 +116,6 @@ export function auditAidWork(data) {
 }
 
 export function followAidWork(data) {
-  // 跟进接口需要转换 processStatus 字段
   const convertedData = convertZhToEn(data);
   return requestClient.put('/studentmgmt/aid-work/follow', convertedData).catch(err => {
     console.warn('跟进接口失败，模拟成功', err);
@@ -143,7 +142,6 @@ export function getAidWorkDetail(params) {
     });
 }
 
-// 获取学生选项（无需转换）
 export function getStudentOptions(params) {
   return requestClient.get('/studentmgmt/student/options', { params }).catch(err => {
     console.warn('获取学生选项失败，使用模拟数据', err);
@@ -159,7 +157,6 @@ export function getStudentOptions(params) {
 }
 
 // ==================== 图表接口 ====================
-// 图表接口暂不处理映射（因未提供后端数据结构），如有需要可参照添加
 export function getAidWorkChart(params) {
   return requestClient.get('/studentmgmt/aid-work/chart', { params }).catch(err => {
     console.warn('奖助勤贷看板接口失败，使用模拟数据', err);
@@ -183,17 +180,17 @@ export function getAidWorkChart(params) {
   });
 }
 
+// 修改：返回数组格式，与后端一致
 export function getApplyCount(params) {
   return requestClient.get('/studentmgmt/aid-work/chart/applyCount', { params }).catch(err => {
     console.warn('申请人数统计接口失败，使用模拟数据', err);
-    return Promise.resolve({
-      list: [
-        { type: 'scholarship', name: '奖学金', applyCount: 86, finishCount: 78, finishRate: 90.70 },
-        { type: 'grant', name: '助学金', applyCount: 102, finishCount: 92, finishRate: 90.20 },
-        { type: 'loan', name: '助学贷款', applyCount: 48, finishCount: 42, finishRate: 87.50 },
-        { type: 'workStudy', name: '勤工俭学', applyCount: 20, finishCount: 18, finishRate: 90.00 },
-      ],
-    });
+    // 模拟数据也改为数组格式，字段与后端一致
+    return Promise.resolve([
+      { type: "1", name: "", applyCount: 86, finishCount: 78, finishRate: 0.907 },
+      { type: "2", name: "", applyCount: 102, finishCount: 92, finishRate: 0.902 },
+      { type: "3", name: "", applyCount: 48, finishCount: 42, finishRate: 0.875 },
+      { type: "4", name: "", applyCount: 20, finishCount: 18, finishRate: 0.90 },
+    ]);
   });
 }
 

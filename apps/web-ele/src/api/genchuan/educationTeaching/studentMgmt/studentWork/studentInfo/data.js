@@ -193,16 +193,20 @@ export function getStudentInfoDetail(params) {
 }
 
 // ==================== 图表接口 ====================
-// 图表接口暂不处理映射（因未提供后端数据结构），如有需要可参照添加
+// 修改：字段名适配后端
 export function getStudentInfoChart(params) {
   return requestClient.get('/studentmgmt/student-info/chart', { params }).catch(err => {
     console.warn('图表总览接口失败，使用模拟数据', err);
+    // 字段名改为后端实际返回的字段
     return Promise.resolve({
-      totalStudent: 1256,
-      inSchoolStudent: 1220,
-      suspendStudent: 15,
-      transferStudent: 12,
-      specialStudent: 9,
+      totalStudentCount: 1256,
+      inSchoolCount: 1220,
+      suspendCount: 15,
+      dropOutCount: 9,
+      transferCount: 12,
+      normalStudentCount: 1100,
+      specialStudentCount: 156,
+      transferStudentCount: 12
     });
   });
 }

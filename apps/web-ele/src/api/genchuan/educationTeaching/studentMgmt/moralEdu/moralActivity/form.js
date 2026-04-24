@@ -1,4 +1,4 @@
-// 筛选表单 schema（用于列表页搜索）
+// 筛选表单 schema
 export function useFormSchema() {
   return [
     {
@@ -29,9 +29,7 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择主办部门',
         filterable: true,
-        remote: true,
-        remoteMethod: () => {},
-        options: [], // 实际从接口加载，value 为部门名称
+        options: [],
       },
       labelWidth: '100',
     },
@@ -52,10 +50,9 @@ export function useFormSchema() {
   ];
 }
 
-// 表格列定义 - 将 hostDeptName 改为 hostDept
+// 表格列定义
 export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
-
   const columns = [
     { field: 'activityName', title: '活动名称', minWidth: 180, slots: { default: 'activityName' } },
     { field: 'activityType', title: '活动类型', minWidth: 100, slots: { default: 'activityType' } },
@@ -69,7 +66,6 @@ export function getColumns() {
     { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
     { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
   ];
-
   const allColumns = [...baseColumns, ...columns];
   allColumns.push({
     title: '操作',
@@ -80,7 +76,7 @@ export function getColumns() {
   return allColumns;
 }
 
-// 发布/编辑表单 schema（新增/编辑）- 添加 status 字段
+// 发布/编辑表单 schema
 export function useCreateFormSchema(isEdit = false) {
   return [
     {
@@ -113,9 +109,7 @@ export function useCreateFormSchema(isEdit = false) {
       componentProps: {
         placeholder: '请选择主办部门',
         filterable: true,
-        remote: true,
-        remoteMethod: () => {},
-        options: [], // 动态加载，value 为部门名称
+        options: [],
       },
       rules: 'required',
       labelWidth: '100',
@@ -178,19 +172,18 @@ export function useCreateFormSchema(isEdit = false) {
   ];
 }
 
-// 报名表单 schema
+// 报名表单 schema（使用 InputNumber 直接输入学生ID）
 export function useJoinFormSchema() {
   return [
     {
       fieldName: 'studentId',
-      label: '选择学生',
-      component: 'Select',
+      label: '学生ID',
+      component: 'InputNumber',
       componentProps: {
-        placeholder: '请选择学生',
-        filterable: true,
-        remote: true,
-        remoteMethod: () => {},
-        options: [],
+        placeholder: '请输入学生ID',
+        controls: false,
+        style: 'width: 100%',
+        min: 1,
       },
       rules: 'required',
       labelWidth: '100',

@@ -101,8 +101,14 @@ export function getDutyMgmtPage(params) {
     });
 }
 
+// 修改：排班接口，将 dutyDateList 转换为后端所需的 dutyDate 字段
 export function scheduleDutyMgmt(data) {
   const convertedData = convertZhToEn(data);
+  // 将 dutyDateList 重命名为 dutyDate，并保持其值为数组形式 [[年,月,日], [年,月,日]]
+  if (convertedData.dutyDateList) {
+    convertedData.dutyDate = convertedData.dutyDateList;
+    delete convertedData.dutyDateList;
+  }
   return requestClient.post('/studentmgmt/duty-mgmt/schedule', convertedData).catch(err => {
     console.warn('排班接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -184,15 +190,15 @@ export function updateDutyMgmt(data) {
   });
 }
 
-// 获取用户选项（无需转换）
+// 获取用户选项（确保 value 为字符串类型）
 export function getUserOptions(params) {
   return requestClient.get('/system/user/options', { params }).catch(err => {
     console.warn('获取用户选项失败，使用模拟数据', err);
     return Promise.resolve([
-      { label: '张三', value: '张三' },
-      { label: '李四', value: '李四' },
-      { label: '王五', value: '王五' },
-      { label: '赵六', value: '赵六' },
+      { label: '张三', value: '3' },
+      { label: '李四', value: '4' },
+      { label: '王五', value: '5' },
+      { label: '赵六', value: '6' },
     ]);
   });
 }

@@ -144,36 +144,51 @@ export function getHonorMgmtDetail(params) {
 export function getHonorMgmtChart(params) {
   return requestClient.get('/studentmgmt/honor-mgmt/chart', { params }).catch(err => {
     console.warn('图表总览接口失败，使用模拟数据', err);
+    // 修改为后端实际字段名
     return Promise.resolve({
-      totalHonor: 328,
-      pendingAudit: 12,
-      pushedHonor: 298,
-      thisMonthNew: 28,
+      totalHonorCount: 328,
+      pendingAuditCount: 12,
+      todayPushCount: 8,
+      excellentStudentCount: 128,
+      scholarshipCount: 86,
+      competitionCount: 92,
     });
   });
 }
 
 export function getHonorCount(params) {
-  return requestClient.get('/studentmgmt/honor-mgmt/chart/honorCount', { params }).catch(err => {
-    console.warn('荣誉数量统计接口失败，使用模拟数据', err);
-    const mockData = {
-      class: [
-        { name: '计算机1班', count: 45 },
-        { name: '计算机2班', count: 42 },
-        { name: '软件1班', count: 48 },
-        { name: '软件2班', count: 50 },
-        { name: '电子1班', count: 40 },
-      ],
-      type: [
-        { name: '优秀学生', count: 128 },
-        { name: '奖学金', count: 86 },
-        { name: '竞赛获奖', count: 92 },
-        { name: '其他', count: 22 },
-      ],
-    };
-    const dimension = params.dimension || 'class';
-    return Promise.resolve(mockData[dimension] || []);
-  });
+  return requestClient.get('/studentmgmt/honor-mgmt/chart/honorCount', { params })
+    .then(res => {
+      // 如果是 type 维度，需要将数字 name 转为中文荣誉类型
+      if (params.dimension === 'type' && Array.isArray(res)) {
+        return res.map(item => ({
+          ...item,
+          name: honorTypeReverse[item.name] || item.name  // 利用已有的 honorTypeReverse 映射表
+        }));
+      }
+      // class 维度或其他情况直接返回
+      return res;
+    })
+    .catch(err => {
+      console.warn('荣誉数量统计接口失败，使用模拟数据', err);
+      const mockData = {
+        class: [
+          { name: '计算机1班', count: 45 },
+          { name: '计算机2班', count: 42 },
+          { name: '软件1班', count: 48 },
+          { name: '软件2班', count: 50 },
+          { name: '电子1班', count: 40 },
+        ],
+        type: [
+          { name: '优秀学生', count: 128 },
+          { name: '奖学金', count: 86 },
+          { name: '竞赛获奖', count: 92 },
+          { name: '其他', count: 22 },
+        ],
+      };
+      const dimension = params.dimension || 'class';
+      return Promise.resolve(mockData[dimension] || []);
+    });
 }
 
 // 模拟数据（原始值使用数字，通过转换函数对外提供中文）

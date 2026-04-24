@@ -74,11 +74,9 @@ function convertList(list) {
 
 // ==================== 考评管理接口 ====================
 export function getAssessMgmtPage(params) {
-  // 将查询参数中的中文字段转为英文
   const convertedParams = convertZhToEn(params);
   return requestClient.get('/studentmgmt/assess-mgmt/page', { params: convertedParams })
     .then(res => {
-      // 响应数据转换：将 list 中的英文转为中文
       if (res && res.list) {
         res.list = convertList(res.list);
       }
@@ -86,7 +84,7 @@ export function getAssessMgmtPage(params) {
     })
     .catch(err => {
       console.warn('分页接口失败，使用模拟数据', err);
-      const mockData = convertList(dataList()); // 模拟数据也转为中文
+      const mockData = convertList(dataList());
       return { list: mockData, total: mockData.length };
     });
 }
@@ -132,7 +130,6 @@ export function getAssessMgmtDetail(params) {
 }
 
 // ==================== 图表接口 ====================
-// 图表接口暂不处理映射，如有需要可类似添加
 export function getAssessMgmtChart(params) {
   return requestClient.get('/studentmgmt/assess-mgmt/chart', { params }).catch(err => {
     console.warn('考评态势看板接口失败，使用模拟数据', err);
@@ -190,10 +187,10 @@ export function getCycleTrend(params) {
   return requestClient.get('/studentmgmt/assess-mgmt/chart/cycleTrend', { params }).catch(err => {
     console.warn('周期趋势统计接口失败，使用模拟数据', err);
     return Promise.resolve([
-      { cycleName: '第1周', avgScore: 90.50, rank: 2 },
-      { cycleName: '第2周', avgScore: 92.00, rank: 1 },
-      { cycleName: '第3周', avgScore: 93.50, rank: 1 },
-      { cycleName: '第4周', avgScore: 95.00, rank: 1 },
+      { cycleName: '第1周', avgScore: 90.50, rankNo: 2 },
+      { cycleName: '第2周', avgScore: 92.00, rankNo: 1 },
+      { cycleName: '第3周', avgScore: 93.50, rankNo: 1 },
+      { cycleName: '第4周', avgScore: 95.00, rankNo: 1 },
     ]);
   });
 }
