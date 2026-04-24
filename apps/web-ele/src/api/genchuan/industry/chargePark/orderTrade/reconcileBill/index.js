@@ -7,7 +7,7 @@ export function page(params) {
     });
 }
 /** 对账记录导出 */
-export function export (params) {
+export function exportRecord(params) {
     return requestClient.get('/ordertrade/reconcile-record/export', {
         params,
     });
