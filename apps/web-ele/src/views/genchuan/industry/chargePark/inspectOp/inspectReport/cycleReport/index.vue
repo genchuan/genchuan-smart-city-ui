@@ -9,6 +9,7 @@ import '#/genchuan-components/page/index.scss';
 const activeName = shallowRef('周期报表');
 const secondShow = shallowRef(false);
 const chartFilter = shallowRef(null);
+const showStats = shallowRef(false);
 
 const tabArray = shallowRef([
   {
@@ -25,6 +26,10 @@ function changeArrowStatus() {
     ...item,
     secondShow: secondShow.value,
   }));
+}
+
+function toggleStats() {
+  showStats.value = !showStats.value;
 }
 
 function handleMetricFilter(metricKey) {
@@ -55,6 +60,7 @@ function handleTrendFilter(time) {
 <template>
   <div class="common-index">
     <Chart
+      v-if="showStats"
       @metric-filter="handleMetricFilter"
       @station-filter="handleStationFilter"
       @trend-filter="handleTrendFilter"
@@ -91,6 +97,8 @@ function handleTrendFilter(time) {
           :key="item.label"
           :chart-filter="chartFilter"
           :second-show="item.secondShow"
+          :show-stats="showStats"
+          :toggle-stats="toggleStats"
         />
       </el-tab-pane>
     </el-tabs>

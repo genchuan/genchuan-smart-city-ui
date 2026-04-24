@@ -42,6 +42,14 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  showStats: {
+    type: Boolean,
+    default: false,
+  },
+  toggleStats: {
+    type: Function,
+    default: () => {},
+  },
 });
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -490,6 +498,11 @@ watch(
             content="搜索"
             icon-name="search"
             @click="handleSearchShow"
+          />
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
           />
           <IconButton
             content="全屏"
