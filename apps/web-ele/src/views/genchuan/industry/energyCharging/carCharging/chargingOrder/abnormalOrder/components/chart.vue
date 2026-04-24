@@ -101,22 +101,20 @@ onMounted(() => {
         @click="handleCardClick"
       />
     </div>
-    <div class="chart-wrapper" style="flex: 1.5 !important;">
-      <Bar
-        :title="'每日异常订单数量及处理完成数量'"
-        :x-data="barXData"
-        :series-data="barSeriesData"
-        y-name="数量"
-        @bar-click="handleBarClick"
-      />
-    </div>
-    <div class="chart-wrapper" style="flex: 1 !important;">
-      <Pie
-        :title-text="'异常订单类型占比'"
-        :data="pieData"
-        @pie-click="handlePieClick"
-      />
-    </div>
+    <Bar
+      style="flex: 1.5 !important;"
+      :title="'每日异常订单数量及处理完成数量'"
+      :x-data="barXData"
+      :series-data="barSeriesData"
+      y-name="数量"
+      @bar-click="handleBarClick"
+    />
+    <Pie
+      style="flex: 1 !important;"
+      :title-text="'异常订单类型占比'"
+      :data="pieData"
+      @pie-click="handlePieClick"
+    />
   </div>
 </template>
 
@@ -132,7 +130,6 @@ onMounted(() => {
   .box-left {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
     min-width: 280px;
     max-width: 320px;
     margin-top: 10px !important;
@@ -140,15 +137,6 @@ onMounted(() => {
     .left-card {
       height: 150px !important;
     }
-  }
-
-  .chart-wrapper {
-    display: flex;
-    flex-direction: column;
-    min-width: 300px;
-    flex: 1;
-    margin-left: 12px;
-    margin-bottom: 12px;
   }
 }
 </style>

@@ -70,7 +70,7 @@ export function getColumnsByStatus(status) {
   return allColumns;
 }
 
-// 排班表单 schema
+// 排班表单 schema（添加 status 字段）
 export function useScheduleFormSchema() {
   return [
     {
@@ -94,6 +94,21 @@ export function useScheduleFormSchema() {
         placeholder: '请选择值班人',
         filterable: true,
         options: [], // 动态加载
+      },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'status',                     // 新增状态字段
+      label: '状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择状态',
+        options: [
+          { label: '待打卡', value: '待打卡' },
+          { label: '已完成', value: '已完成' },
+        ],
+        defaultValue: '待打卡',
       },
       rules: 'required',
       labelWidth: '100',
@@ -148,6 +163,7 @@ export function useEditFormSchema() {
           { label: '待出车审批', value: '待出车审批' },
           { label: '已完成', value: '已完成' },
         ],
+        disabled: true,  // 新增：禁用编辑
       },
       rules: 'required',
       labelWidth: '100',

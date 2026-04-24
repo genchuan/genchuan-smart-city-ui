@@ -19,29 +19,29 @@ const mockDistribution = {
     { name: '2024级', count: 321 },
   ],
   major: [
-    { name: '计算机科学与技术', count: 328 },
-    { name: '软件工程', count: 286 },
-    { name: '电子信息工程', count: 252 },
-    { name: '网络工程', count: 215 },
-    { name: '数据科学与大数据技术', count: 175 },
+    {name: '计算机科学与技术', count: 328},
+    {name: '软件工程', count: 286},
+    {name: '电子信息工程', count: 252},
+    {name: '网络工程', count: 215},
+    {name: '数据科学与大数据技术', count: 175},
   ],
   class: [
-    { name: '计算机1班', count: 45 },
-    { name: '计算机2班', count: 42 },
-    { name: '软件1班', count: 48 },
-    { name: '软件2班', count: 50 },
-    { name: '电子1班', count: 40 },
+    {name: '计算机1班', count: 45},
+    {name: '计算机2班', count: 42},
+    {name: '软件1班', count: 48},
+    {name: '软件2班', count: 50},
+    {name: '电子1班', count: 40},
   ],
 };
 
 // 将 count 字段转换为 value（Pie 组件需要 {name, value}）
 const convertToPieData = (data) => {
-  return data.map(item => ({ name: item.name, value: item.count }));
+  return data.map(item => ({name: item.name, value: item.count}));
 };
 
 const loading = ref(true);
 const overviewData = ref({});
-const distributionData = ref({ grade: [], major: [], class: [] });
+const distributionData = ref({grade: [], major: [], class: []});
 const coreIndexData = ref([]);
 
 const activeDistribution = ref('grade');
@@ -58,12 +58,14 @@ const pieTitleMap = {
   class: '班级分布'
 };
 
+// 修改：使用后端实际字段名
 const cardList = computed(() => {
-  const total = overviewData.value.totalStudent || 0;
-  const inSchool = overviewData.value.inSchoolStudent || 0;
-  const transfer = overviewData.value.transferStudent || 0;
-  const suspend = overviewData.value.suspendStudent || 0;
-  const abnormal = transfer + suspend;
+  const total = overviewData.value.totalStudentCount || 0;
+  const inSchool = overviewData.value.inSchoolCount || 0;
+  const transfer = overviewData.value.transferCount || 0;
+  const suspend = overviewData.value.suspendCount || 0;
+  const dropOut = overviewData.value.dropOutCount || 0;
+  const abnormal = transfer + suspend + dropOut;
   return [
     {title: '学生总人数', value: total, color: '#409EFF', status: 'total'},
     {title: '在籍人数', value: inSchool, color: '#67C23A', status: 'inSchool'},
@@ -144,12 +146,16 @@ const loadAllChartData = async () => {
     if (overviewRes.status === 'fulfilled') {
       overviewData.value = overviewRes.value;
     } else {
+      // 使用后端字段名的模拟数据
       overviewData.value = {
-        totalStudent: 1256,
-        inSchoolStudent: 1220,
-        suspendStudent: 15,
-        transferStudent: 12,
-        specialStudent: 9,
+        totalStudentCount: 1256,
+        inSchoolCount: 1220,
+        suspendCount: 15,
+        dropOutCount: 9,
+        transferCount: 12,
+        normalStudentCount: 1100,
+        specialStudentCount: 156,
+        transferStudentCount: 12,
       };
     }
 
@@ -169,13 +175,16 @@ const loadAllChartData = async () => {
     updateBarTrend();
   } catch (error) {
     console.error('加载图表数据失败', error);
-    // 设置默认数据
+    // 设置默认数据（使用后端字段名）
     overviewData.value = {
-      totalStudent: 1256,
-      inSchoolStudent: 1220,
-      suspendStudent: 15,
-      transferStudent: 12,
-      specialStudent: 9,
+      totalStudentCount: 1256,
+      inSchoolCount: 1220,
+      suspendCount: 15,
+      dropOutCount: 9,
+      transferCount: 12,
+      normalStudentCount: 1100,
+      specialStudentCount: 156,
+      transferStudentCount: 12,
     };
     distributionData.value = mockDistribution;
     coreIndexData.value = [

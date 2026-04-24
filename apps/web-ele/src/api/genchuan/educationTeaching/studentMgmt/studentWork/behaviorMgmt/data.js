@@ -123,7 +123,6 @@ export function updateBehaviorMgmt(data) {
 }
 
 export function auditBehaviorMgmt(data) {
-  // 审批接口需要转换 status 字段（前端传“已通过”/“已驳回”转为后端数字）
   const convertedData = convertZhToEn(data);
   return requestClient.put('/studentmgmt/behavior-mgmt/audit', convertedData).catch(err => {
     console.warn('审批接口失败，模拟成功', err);
@@ -173,7 +172,7 @@ export function getStudentOptions(params) {
 }
 
 // ==================== 图表接口 ====================
-// 图表接口暂不处理映射（因未提供后端数据结构），如有需要可参照添加
+// 修改：模拟数据字段与后端保持一致（name/count）
 export function getBehaviorMgmtChart(params) {
   return requestClient.get('/studentmgmt/behavior-mgmt/chart', { params }).catch(err => {
     console.warn('行为考勤看板接口失败，使用模拟数据', err);
@@ -183,14 +182,14 @@ export function getBehaviorMgmtChart(params) {
       attendanceAbnormalCount: 5,
       syncCount: 74,
       leaveTypeDistribution: [
-        { name: '事假', value: 45 },
-        { name: '病假', value: 32 },
-        { name: '其他', value: 9 },
+        { name: '事假', count: 45 },
+        { name: '病假', count: 32 },
+        { name: '其他', count: 9 },
       ],
       dailyLeaveTrend: [
-        { date: '03-01', count: 3 },
-        { date: '03-02', count: 5 },
-        { date: '03-03', count: 2 },
+        { name: '03-01', count: 3 },
+        { name: '03-02', count: 5 },
+        { name: '03-03', count: 2 },
       ],
     });
   });
