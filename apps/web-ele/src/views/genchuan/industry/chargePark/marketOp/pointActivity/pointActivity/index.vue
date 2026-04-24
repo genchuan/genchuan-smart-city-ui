@@ -1,15 +1,21 @@
 <script setup>
 import { computed, nextTick, onMounted, ref } from 'vue';
 
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj } from '@vben/hooks';
 import { ElMessage } from 'element-plus';
+
+import {
+  getPointActivityChart,
+} from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/pointActivity';
 
 import PointActivityStats from './components/PointActivityStats.vue';
 import Table from './table/index.vue';
 
-import '#/components/page/index.scss';
+import '#/genchuan-components/page/index.scss';
 
-// 控制统计组件显示/隐藏的状态
-const showStats = ref(false);
+// 控制统计组件显示/隐藏的状态 - 默认展开
+const showStats = ref(true);
 
 // 切换统计组件显示/隐藏状态
 const toggleStats = () => {
@@ -26,76 +32,68 @@ const statsData = ref({
   lineData: [],
 });
 
-// 获取统计数据 - 模拟数据
+// 获取统计数据 - 从API获取
 const fetchStatsData = async () => {
   try {
-    // 模拟统计数据
-    // 实际项目中应该从API获取数据
-    const mockData = {
-      // 总活动数和累计参与用户数
-      totalActivityCount: 12,
-      totalJoinUserCount: 2045,
-      // 活动类型分布
-      typeDistribution: [
-        { type: '0', typeName: '签到', count: 4 },
-        { type: '1', typeName: '消费', count: 4 },
-        { type: '2', typeName: '邀请', count: 4 },
-      ],
-      // 近30天参与趋势
-      dailyTrend: generateDailyTrendData(),
-    };
+    const response = await getPointActivityChart();
+    if (!response) {
+      throw new Error('获取统计数据失败');
+    }
 
     // 组装卡片数据
     statsData.value.cards = [
       {
         title: '总活动数',
-        value: mockData.totalActivityCount,
+        value: response.activityCount || 0,
         color: '#4A90E2',
         type: 'all',
       },
       {
         title: '累计参与用户数',
-        value: mockData.totalJoinUserCount,
+        value: response.userCount || 0,
         color: '#50E3C2',
         type: 'users',
       },
     ];
 
     // 组装柱状图数据 - 活动类型分布
-    statsData.value.barData = mockData.typeDistribution;
+    // 将类型代码映射为字典标签
+    statsData.value.barData = (response.typeCountList || []).map(item => ({
+      type: item.type,
+      typeName: getTypeLabel(item.type),
+      count: item.count,
+    }));
 
     // 组装折线图数据 - 活动参与趋势
-    statsData.value.lineData = mockData.dailyTrend;
+    statsData.value.lineData = (response.trendList || []).map(item => ({
+      date: item.date,
+      userCount: item.count,
+    }));
   } catch (error) {
     ElMessage.error('获取统计数据失败');
     console.error(error);
   }
 };
 
-// 生成近30天的模拟数据
-const generateDailyTrendData = () => {
-  const data = [];
-  const today = new Date();
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
-    // 随机生成参与用户数 (50-200之间)
-    const userCount = Math.floor(Math.random() * 150) + 50;
-    data.push({
-      date: dateStr,
-      fullDate: date.toISOString().split('T')[0],
-      userCount,
-    });
-  }
-  return data;
+// 获取活动类型标签文本
+function getTypeLabel(type) {
+  const dict = getDictObj(DICT_TYPE.POINT_ACTIVITY_TYPE, String(type));
+  return dict ? dict.label : type;
+}
+
+// 获取表格组件实例（处理v-for中的ref数组情况）
+const getTableComponent = () => {
+  // 在v-for中使用ref时，tableRef可能是数组
+  const tableComponent = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  return tableComponent;
 };
 
 // 处理卡片点击 - 钻取筛选
 const handleCardClick = async (cardType) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('card', cardType);
+  const tableComponent = getTableComponent();
+  if (tableComponent && typeof tableComponent.handleStatsFilter === 'function') {
+    tableComponent.handleStatsFilter('card', cardType);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
@@ -104,8 +102,9 @@ const handleCardClick = async (cardType) => {
 // 处理柱状图点击 - 钻取筛选活动类型
 const handleBarClick = async (type) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('type', type);
+  const tableComponent = getTableComponent();
+  if (tableComponent && typeof tableComponent.handleStatsFilter === 'function') {
+    tableComponent.handleStatsFilter('type', type);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
@@ -114,8 +113,9 @@ const handleBarClick = async (type) => {
 // 处理折线图点击 - 钻取跳转对应日期的参与用户明细
 const handleLineClick = async (date) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('date', date);
+  const tableComponent = getTableComponent();
+  if (tableComponent && typeof tableComponent.handleStatsFilter === 'function') {
+    tableComponent.handleStatsFilter('date', date);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }

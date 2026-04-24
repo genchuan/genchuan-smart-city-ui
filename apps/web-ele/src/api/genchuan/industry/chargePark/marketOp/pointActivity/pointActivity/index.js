@@ -85,6 +85,6 @@ export function updatePointActivity(data) {
 // ==================== 数据可视化图表接口 ====================
 
 /** 积分活动统计图表 */
-export function getPointActivityChart(params) {
-  return requestClient.get('/marketop/point-activity/chart', { params });
+export function getPointActivityChart() {
+  return requestClient.get('/marketop/point-activity/chart');
 }
