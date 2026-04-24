@@ -8,7 +8,6 @@ import {useVbenVxeGrid} from '#/adapter/vxe-table';
 import {downloadFileFromBlobPart} from '@vben/utils';
 import ViolateDetailDrawer from './components/violateDetail.vue';
 import {
-  dataList,
   getViolateMgmtPage,
   createViolateMgmt,
   updateViolateMgmt,
@@ -190,41 +189,10 @@ const getTableData = async ({page}) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = dataList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'violateType':
-            itemValue = item.violateType;
-            break;
-          case 'punishType':
-            itemValue = item.punishType;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    // 模拟数据时仍需要前端分页
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 分页接口已联调成功，出错时返回空数据
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取违纪列表失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -310,7 +278,7 @@ async function handleAudit(row) {
     return;
   }
   try {
-    await ElMessageBox.confirm(`确认审批违纪记录（学生：${row.studentName}，类型：${row.violateType}）？审批后状态将变为"已执行"。`, '审批确认', {
+    await ElMessageBox.confirm(`确认审批违纪记录（学号：${row.studentId}，类型：${row.violateType}）？审批后状态将变为"已执行"。`, '审批确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning',
@@ -338,7 +306,7 @@ async function handlePush(row) {
     return;
   }
   try {
-    await ElMessageBox.confirm(`确认推送违纪记录（学生：${row.studentName}，类型：${row.violateType}）给家长？`, '推送确认', {
+    await ElMessageBox.confirm(`确认推送违纪记录（学号：${row.studentId}，类型：${row.violateType}）给家长？`, '推送确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning',
@@ -366,7 +334,7 @@ async function handleWarn(row) {
     return;
   }
   try {
-    await ElMessageBox.confirm(`确认对违纪记录（学生：${row.studentName}，类型：${row.violateType}）触发预警？预警后状态将变为"已预警"。`, '预警确认', {
+    await ElMessageBox.confirm(`确认对违纪记录（学号：${row.studentId}，类型：${row.violateType}）触发预警？预警后状态将变为"已预警"。`, '预警确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning',
@@ -550,9 +518,9 @@ defineExpose({handleFilterTagClick, clearFilters});
         </div>
       </template>
 
-      <template #studentName="{ row }">
+      <template #studentId="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{
-            row.studentName
+            row.studentId
           }}
         </el-text>
       </template>

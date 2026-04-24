@@ -2,10 +2,10 @@
 export function useFormSchema() {
   return [
     {
-      fieldName: 'studentName',
-      label: '学生姓名',
+      fieldName: 'studentId',            // 改为 studentId
+      label: '学号',                     // 标签改为“学号”
       component: 'Input',
-      componentProps: { placeholder: '请输入学生姓名' },
+      componentProps: { placeholder: '请输入学号' },
       labelWidth: '100',
     },
     {
@@ -53,12 +53,12 @@ export function useFormSchema() {
   ];
 }
 
-// 表格列定义（未修改，但为完整展示保留）
+// 表格列定义（将 studentName 改为 studentId）
 export function getColumnsByStatus(status) {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'studentName', title: '学生姓名', minWidth: 100, slots: { default: 'studentName' } },
+    { field: 'studentId', title: '学号', minWidth: 120, slots: { default: 'studentId' } },  // 新增学号列
     { field: 'mentalStatus', title: '心理状态', minWidth: 100, slots: { default: 'mentalStatus' } },
     { field: 'riskLevel', title: '风险等级', minWidth: 100, slots: { default: 'riskLevel' } },
     { field: 'evaluateTime', title: '评估时间', minWidth: 180, slots: { default: 'evaluateTime' } },
@@ -81,20 +81,14 @@ export function getColumnsByStatus(status) {
   return allColumns;
 }
 
-// 建档表单 schema（添加 status 字段）
+// 建档表单 schema（学生改为学号输入框）
 export function useCreateFormSchema() {
   return [
     {
       fieldName: 'studentId',
-      label: '学生',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择学生',
-        filterable: true,
-        remote: true,
-        remoteMethod: () => {},
-        options: [], // 动态加载
-      },
+      label: '学号',                     // 改为学号
+      component: 'Input',               // 改为输入框
+      componentProps: { placeholder: '请输入学号' },
       rules: 'required',
       labelWidth: '100',
     },
@@ -142,7 +136,7 @@ export function useCreateFormSchema() {
       labelWidth: '100',
     },
     {
-      fieldName: 'status',                     // 新增状态字段
+      fieldName: 'status',
       label: '状态',
       component: 'Select',
       componentProps: {

@@ -44,7 +44,7 @@ export function getColumnsByStatus(status) {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'className', title: '班级', minWidth: 130, slots: { default: 'className' } },
+    { field: 'className', title: '班级', minWidth: 180, slots: { default: 'className' } },
     { field: 'assessType', title: '考评类型', minWidth: 120, slots: { default: 'assessType' } },
     { field: 'cycle', title: '统计周期', minWidth: 100 },
     { field: 'score', title: '考评得分', minWidth: 100 },
@@ -113,7 +113,7 @@ export function useCreateFormSchema(isEdit = false) {
       fieldName: 'score',
       label: '考评得分',
       component: 'InputNumber',
-      componentProps: { placeholder: '请输入考评得分', min: 0, max: 100, precision: 2 },
+      componentProps: { placeholder: '请输入考评得分', min: 0, max: 100, precision: 2, style: 'width: 100%' },
       rules: 'required',
       labelWidth: '100',
     },

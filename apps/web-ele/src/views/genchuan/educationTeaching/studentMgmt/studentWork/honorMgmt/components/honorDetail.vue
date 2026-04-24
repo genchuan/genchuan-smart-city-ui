@@ -25,8 +25,7 @@ const formatTimestamp = (timestamp) => {
 };
 
 const drawerTitle = computed(() => {
-  const name = detailObj.value?.honorName || '荣誉';
-  return title.value || `${name}详情`;
+  return title.value || `荣誉详情`;
 });
 
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
@@ -45,7 +44,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
     <div class="detail-card">
       <!-- 基础信息 -->
       <div class="detail-section">🏅 荣誉基础信息</div>
-      <div class="detail-card-row"><div class="detail-row-left">学生姓名：</div><div class="detail-row-right">{{ detailObj.studentName || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">学号：</div><div class="detail-row-right">{{ detailObj.studentId || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">班级：</div><div class="detail-row-right">{{ detailObj.className || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">荣誉类型：</div><div class="detail-row-right">{{ detailObj.honorType || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">荣誉名称：</div><div class="detail-row-right">{{ detailObj.honorName || '-' }}</div></div>

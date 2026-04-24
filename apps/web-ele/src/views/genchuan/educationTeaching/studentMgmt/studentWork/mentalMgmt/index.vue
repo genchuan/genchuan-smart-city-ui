@@ -8,7 +8,6 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { downloadFileFromBlobPart } from '@vben/utils';
 import MentalDetailDrawer from './components/mentalDetail.vue';
 import {
-  dataList,
   getMentalMgmtPage,
   createMentalMgmt,
   updateMentalMgmt,
@@ -17,7 +16,7 @@ import {
   updateStatusMentalMgmt,
   exportMentalMgmt,
   getMentalMgmtDetail,
-  getStudentOptions,
+  // getStudentOptions,  // 不再需要
 } from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/mentalMgmt/data.js';
 import {
   textObj,
@@ -112,6 +111,7 @@ function removeFilterTag(field) {
 
 function getFieldLabel(field) {
   const map = {
+    studentId: '学号',
     mentalStatus: '心理状态',
     riskLevel: '风险等级',
     status: '状态',
@@ -163,22 +163,7 @@ const searchParams = ref({});
 const isEditMode = ref(false);
 const currentEditId = ref(null);
 
-// 学生选项
-const studentOptions = ref([]);
-const loadStudentOptions = async () => {
-  const res = await getStudentOptions();
-  studentOptions.value = res;
-  // 更新建档表单的学生选项
-  const currentSchema = createFormApi.getSchema();
-  const newSchema = currentSchema.map(item => {
-    if (item.fieldName === 'studentId') {
-      return {...item, componentProps: {...item.componentProps, options: studentOptions.value}};
-    }
-    return item;
-  });
-  createFormApi.setSchema(newSchema);
-};
-
+// 不再需要加载学生选项
 const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
@@ -193,6 +178,9 @@ const getTableData = async ({page}) => {
       filtered = filtered.filter(item => {
         let itemValue;
         switch (field) {
+          case 'studentId':
+            itemValue = item.studentId;
+            break;
           case 'mentalStatus':
             itemValue = item.mentalStatus;
             break;
@@ -223,41 +211,9 @@ const getTableData = async ({page}) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = dataList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'mentalStatus':
-            itemValue = item.mentalStatus;
-            break;
-          case 'riskLevel':
-            itemValue = item.riskLevel;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    // 模拟数据时仍需要前端分页
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取心理档案列表失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -294,7 +250,7 @@ async function handleExport() {
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
+  createDrawerApi.open();
 }
 
 // 编辑
@@ -305,7 +261,7 @@ function handleEdit(row) {
   }
   isEditMode.value = true;
   currentEditId.value = row.id;
-  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
+  createDrawerApi.open();
 }
 
 // 预约
@@ -379,7 +335,7 @@ async function handleSubmitIntervene() {
   }
 }
 
-// ========== 更新状态（使用 el-dialog 下拉选择） ==========
+// 更新状态
 const updateStatusDialogVisible = ref(false);
 const currentUpdateRow = ref(null);
 const newMentalStatus = ref('');
@@ -425,10 +381,8 @@ const [CreateForm, createFormApi] = useVbenForm({
     try {
       let res;
       if (isEditMode.value) {
-        // 编辑时传递 status（表单中已包含）
         res = await updateMentalMgmt({...values, id: currentEditId.value});
       } else {
-        // 新增时确保 status 字段存在（默认待评估）
         const submitData = {...values, status: values.status || '待评估'};
         res = await createMentalMgmt(submitData);
       }
@@ -449,16 +403,14 @@ const [CreateForm, createFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// 修复的核心：在抽屉打开时重置表单并加载编辑数据
+// 抽屉打开/关闭逻辑
 const [CreateDrawer, createDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
   onCancel: () => createDrawerApi.close(),
   async onOpenChange(isOpen) {
     if (isOpen) {
-      // 每次打开前先重置表单（清空值 + 清除校验错误）
       await createFormApi.resetForm();
-      // 如果是编辑模式，则填充数据
       if (isEditMode.value && currentEditId.value) {
         try {
           const detail = await getMentalMgmtDetail({id: currentEditId.value});
@@ -473,10 +425,10 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
         } catch (error) {
           console.error('加载详情失败', error);
           ElMessage.error('加载详情失败，请检查网络或联系管理员');
-          createDrawerApi.close(); // 加载失败则关闭抽屉
+          createDrawerApi.close();
         }
       } else {
-        // 新增模式：设置默认状态为“待评估”
+        // 新增模式：设置默认状态
         await createFormApi.setValues({status: '待评估'});
       }
     }
@@ -542,9 +494,7 @@ const toggleChart = () => {
 
 defineExpose({handleFilterTagClick, clearFilters});
 
-onMounted(async () => {
-  await loadStudentOptions();
-});
+// 不再需要 onMounted 加载学生选项
 </script>
 
 <template>
@@ -603,9 +553,10 @@ onMounted(async () => {
         </div>
       </template>
 
-      <template #studentName="{ row }">
+      <!-- 学号列 -->
+      <template #studentId="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
-          {{ row.studentName }}
+          {{ row.studentId }}
         </el-text>
       </template>
       <template #mentalStatus="{ row }">
@@ -664,7 +615,7 @@ onMounted(async () => {
       </template>
     </Grid>
 
-    <!-- 更新状态弹窗（下拉选择） -->
+    <!-- 更新状态弹窗 -->
     <el-dialog title="更新状态" v-model="updateStatusDialogVisible" width="400px">
       <el-form label-width="100px">
         <el-form-item label="心理状态">

@@ -95,16 +95,14 @@ export function getDutyMgmtPage(params) {
       return res;
     })
     .catch(err => {
-      console.warn('分页接口失败，使用模拟数据', err);
-      const mockData = convertList(dataList());
-      return { list: mockData, total: mockData.length };
+      console.warn('分页接口失败', err);
+      // 分页接口已联调成功，不再使用模拟数据，返回空列表
+      return { list: [], total: 0 };
     });
 }
 
-// 修改：排班接口，将 dutyDateList 转换为后端所需的 dutyDate 字段
 export function scheduleDutyMgmt(data) {
   const convertedData = convertZhToEn(data);
-  // 将 dutyDateList 重命名为 dutyDate，并保持其值为数组形式 [[年,月,日], [年,月,日]]
   if (convertedData.dutyDateList) {
     convertedData.dutyDate = convertedData.dutyDateList;
     delete convertedData.dutyDateList;
@@ -116,7 +114,6 @@ export function scheduleDutyMgmt(data) {
 }
 
 export function checkinDutyMgmt(data) {
-  // 打卡接口只传 ids，无需转换
   return requestClient.put('/studentmgmt/duty-mgmt/checkin', data).catch(err => {
     console.warn('打卡接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -124,7 +121,6 @@ export function checkinDutyMgmt(data) {
 }
 
 export function shiftApplyDutyMgmt(data) {
-  // 调班申请接口只传 ids, transferReason, transferUser，无需转换
   return requestClient.post('/studentmgmt/duty-mgmt/shiftApply', data).catch(err => {
     console.warn('调班申请接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -132,7 +128,6 @@ export function shiftApplyDutyMgmt(data) {
 }
 
 export function vehicleApplyDutyMgmt(data) {
-  // 出车申请接口只传 ids, carReason, carDestination，无需转换
   return requestClient.post('/studentmgmt/duty-mgmt/vehicleApply', data).catch(err => {
     console.warn('出车申请接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -140,7 +135,6 @@ export function vehicleApplyDutyMgmt(data) {
 }
 
 export function shiftAuditDutyMgmt(data) {
-  // 调班审批接口只传 id, auditResult, remark，无需转换（auditResult 为中文）
   return requestClient.put('/studentmgmt/duty-mgmt/shiftAudit', data).catch(err => {
     console.warn('调班审批接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -148,7 +142,6 @@ export function shiftAuditDutyMgmt(data) {
 }
 
 export function vehicleAuditDutyMgmt(data) {
-  // 出车审批接口只传 id, auditResult, remark，无需转换
   return requestClient.put('/studentmgmt/duty-mgmt/vehicleAudit', data).catch(err => {
     console.warn('出车审批接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -156,7 +149,6 @@ export function vehicleAuditDutyMgmt(data) {
 }
 
 export function uploadRecordDutyMgmt(data) {
-  // 上传记录接口只传 id, recordContent，无需转换
   return requestClient.put('/studentmgmt/duty-mgmt/uploadRecord', data).catch(err => {
     console.warn('上传记录接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -175,10 +167,9 @@ export function getDutyMgmtDetail(params) {
   return requestClient.get('/studentmgmt/duty-mgmt/get', { params })
     .then(res => convertEnToZh(res))
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = dataList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(convertEnToZh(detail));
+      console.warn('详情接口失败', err);
+      // 不再使用模拟数据，直接抛出错误让调用方处理
+      return Promise.reject(err);
     });
 }
 
@@ -235,135 +226,3 @@ export function getDutyIndex(params) {
     });
   });
 }
-
-// 模拟数据（原始值使用英文/数组，通过转换函数对外提供中文）
-export const dataList = () => {
-  return [
-    {
-      id: 1,
-      dutyDate: [2025, 3, 25],
-      dutyUser: '张三',
-      checkInTime: null,
-      checkInStatus: 'not_checked_in',
-      transferReason: null,
-      transferUser: null,
-      transferStatus: null,
-      carReason: null,
-      carDestination: null,
-      carStatus: null,
-      recordContent: null,
-      recordUploadTime: null,
-      status: 'pending_checkin',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672531200000,
-      updateTime: 1672531200000,
-    },
-    {
-      id: 2,
-      dutyDate: [2025, 3, 25],
-      dutyUser: '李四',
-      checkInTime: 1672531200000,
-      checkInStatus: 'checked_in',
-      transferReason: null,
-      transferUser: null,
-      transferStatus: null,
-      carReason: null,
-      carDestination: null,
-      carStatus: null,
-      recordContent: '正常值班，无异常',
-      recordUploadTime: 1672531200000,
-      status: 'completed',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672531200000,
-      updateTime: 1672531200000,
-    },
-    {
-      id: 3,
-      dutyDate: [2025, 3, 26],
-      dutyUser: '王五',
-      checkInTime: null,
-      checkInStatus: 'not_checked_in',
-      transferReason: '家中有事',
-      transferUser: '赵六',
-      transferStatus: '待审批',
-      carReason: null,
-      carDestination: null,
-      carStatus: null,
-      recordContent: null,
-      recordUploadTime: null,
-      status: 'pending_transfer',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672531200000,
-      updateTime: 1672531200000,
-    },
-    {
-      id: 4,
-      dutyDate: [2025, 3, 27],
-      dutyUser: '赵六',
-      checkInTime: null,
-      checkInStatus: 'not_checked_in',
-      transferReason: null,
-      transferUser: null,
-      transferStatus: null,
-      carReason: '紧急维修',
-      carDestination: '设备仓库',
-      carStatus: '待审批',
-      recordContent: null,
-      recordUploadTime: null,
-      status: 'pending_vehicle',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672531200000,
-      updateTime: 1672531200000,
-    },
-    {
-      id: 5,
-      dutyDate: [2025, 3, 28],
-      dutyUser: '张三',
-      checkInTime: 1672531200000,
-      checkInStatus: 'checked_in',
-      transferReason: null,
-      transferUser: null,
-      transferStatus: null,
-      carReason: null,
-      carDestination: null,
-      carStatus: null,
-      recordContent: '完成设备巡检',
-      recordUploadTime: 1672531200000,
-      status: 'completed',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672531200000,
-      updateTime: 1672531200000,
-    },
-    {
-      id: 6,
-      dutyDate: [2025, 3, 29],
-      dutyUser: '李四',
-      checkInTime: null,
-      checkInStatus: 'not_checked_in',
-      transferReason: null,
-      transferUser: null,
-      transferStatus: null,
-      carReason: null,
-      carDestination: null,
-      carStatus: null,
-      recordContent: null,
-      recordUploadTime: null,
-      status: 'pending_checkin',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672531200000,
-      updateTime: 1672531200000,
-    },
-  ];
-};

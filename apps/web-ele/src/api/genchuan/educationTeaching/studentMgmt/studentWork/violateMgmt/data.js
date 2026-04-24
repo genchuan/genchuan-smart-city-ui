@@ -92,9 +92,9 @@ export function getViolateMgmtPage(params) {
       return res;
     })
     .catch(err => {
-      console.warn('分页接口失败，使用模拟数据', err);
-      const mockData = convertList(dataList()); // 模拟数据也转为中文
-      return { list: mockData, total: mockData.length };
+      console.warn('分页接口失败', err);
+      // 分页接口已联调成功，不再使用模拟数据，返回空列表
+      return { list: [], total: 0 };
     });
 }
 
@@ -150,10 +150,9 @@ export function getViolateMgmtDetail(params) {
   return requestClient.get('/studentmgmt/violate-mgmt/get', { params })
     .then(res => convertEnToZh(res))
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = dataList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(convertEnToZh(detail));
+      console.warn('详情接口失败', err);
+      // 不再使用模拟数据，直接抛出错误让调用方处理
+      return Promise.reject(err);
     });
 }
 
@@ -207,129 +206,3 @@ export function getWarnIndex(params) {
     ]);
   });
 }
-
-// 模拟数据（原始值使用英文，通过转换函数对外提供中文）
-export const dataList = () => {
-  return [
-    {
-      id: 1,
-      studentId: 1,
-      studentName: '张三',
-      className: '高一(1)班',
-      violateType: 'behavior',
-      punishType: 'warn',
-      violateTime: 1672531200000,
-      violateReason: '上课玩手机',
-      auditUser: 'admin',
-      auditTime: 1672617600000,
-      pushTime: null,
-      warnTime: null,
-      status: '3',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672531200000,
-      updateTime: 1672531200000,
-    },
-    {
-      id: 2,
-      studentId: 2,
-      studentName: '李四',
-      className: '高一(2)班',
-      violateType: 'appearance',
-      punishType: 'warn',
-      violateTime: 1672617600000,
-      violateReason: '未穿校服',
-      auditUser: 'admin',
-      auditTime: 1672704000000,
-      pushTime: 1672790400000,
-      warnTime: null,
-      status: 'executed',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672617600000,
-      updateTime: 1672790400000,
-    },
-    {
-      id: 3,
-      studentId: 3,
-      studentName: '王五',
-      className: '高一(3)班',
-      violateType: 'behavior',
-      punishType: 'demerit',
-      violateTime: 1672704000000,
-      violateReason: '打架斗殴',
-      auditUser: null,
-      auditTime: null,
-      pushTime: null,
-      warnTime: 1672876800000,
-      status: 'warned',
-      remark: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1672704000000,
-      updateTime: 1672876800000,
-    },
-    {
-      id: 4,
-      studentId: 4,
-      studentName: '赵六',
-      className: '高二(1)班',
-      violateType: 'other',
-      punishType: 'probation',
-      violateTime: 1672790400000,
-      violateReason: '考试作弊',
-      auditUser: 'admin',
-      auditTime: 1672876800000,
-      pushTime: 1672963200000,
-      warnTime: null,
-      status: 'executed',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672790400000,
-      updateTime: 1672963200000,
-    },
-    {
-      id: 5,
-      studentId: 5,
-      studentName: '孙七',
-      className: '高二(2)班',
-      violateType: 'appearance',
-      punishType: 'warn',
-      violateTime: 1672876800000,
-      violateReason: '染发',
-      auditUser: 'admin',
-      auditTime: 1672963200000,
-      pushTime: null,
-      warnTime: null,
-      status: '3',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1672876800000,
-      updateTime: 1672963200000,
-    },
-    {
-      id: 6,
-      studentId: 6,
-      studentName: '周八',
-      className: '高二(1)班',
-      violateType: 'behavior',
-      punishType: 'demerit',
-      violateTime: 1672963200000,
-      violateReason: '旷课',
-      auditUser: null,
-      auditTime: null,
-      pushTime: null,
-      warnTime: null,
-      status: '3',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672963200000,
-      updateTime: 1672963200000,
-    },
-  ];
-};

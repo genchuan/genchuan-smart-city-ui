@@ -8,7 +8,6 @@ import {useVbenVxeGrid} from '#/adapter/vxe-table';
 import {downloadFileFromBlobPart} from '@vben/utils';
 import HonorDetailDrawer from './components/honorDetail.vue';
 import {
-  dataList,
   getHonorMgmtPage,
   createHonorMgmt,
   updateHonorMgmt,
@@ -181,38 +180,9 @@ const getTableData = async ({page}) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = dataList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'honorType':
-            itemValue = item.honorType;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    // 模拟数据时仍需要前端分页
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取荣誉列表失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -282,17 +252,17 @@ async function handleBatchAudit() {
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
+  createDrawerApi.open();
 }
 
 function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
-  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
+  createDrawerApi.open();
 }
 
 async function handleDelete(row) {
-  // 荣誉管理没有删除按钮，但若需要可加，按需求不提供删除
+  // 暂无删除需求
 }
 
 // 单行审核
@@ -359,7 +329,6 @@ const [CreateForm, createFormApi] = useVbenForm({
     const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '保存中...'});
     try {
       let res;
-      // 新增或编辑时均携带 status 字段（后端要求必填）
       const submitData = {...values, status: '待审核'};
       if (isEditMode.value) {
         res = await updateHonorMgmt({...submitData, id: currentEditId.value});
@@ -383,16 +352,14 @@ const [CreateForm, createFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// 修复的核心：在抽屉打开时重置表单并加载编辑数据
+// 抽屉打开时重置表单并加载编辑数据
 const [CreateDrawer, createDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
   onCancel: () => createDrawerApi.close(),
   async onOpenChange(isOpen) {
     if (isOpen) {
-      // 每次打开前先重置表单（清空值 + 清除校验错误）
       await createFormApi.resetForm();
-      // 如果是编辑模式，则填充数据
       if (isEditMode.value && currentEditId.value) {
         try {
           const detail = await getHonorMgmtDetail({id: currentEditId.value});
@@ -406,7 +373,7 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
         } catch (error) {
           console.error('加载详情失败', error);
           ElMessage.error('加载详情失败，请检查网络或联系管理员');
-          createDrawerApi.close(); // 加载失败则关闭抽屉
+          createDrawerApi.close();
         }
       }
     }
@@ -510,10 +477,9 @@ defineExpose({handleFilterTagClick, clearFilters});
         </div>
       </template>
 
-      <template #studentName="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{
-            row.studentName
-          }}
+      <template #studentId="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
+          {{ row.studentId }}
         </el-text>
       </template>
       <template #honorType="{ row }">

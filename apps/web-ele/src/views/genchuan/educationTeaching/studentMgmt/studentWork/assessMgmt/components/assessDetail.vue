@@ -43,75 +43,44 @@ defineExpose({open: () => detailDrawerApi.open(), close: () => detailDrawerApi.c
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 基础信息 -->
-      <div class="detail-section">📊 考评基础信息</div>
+      <!-- 排名数据 -->
+      <div class="detail-section">🏆 考评基础信息</div>
       <div class="detail-card-row">
         <div class="detail-row-left">班级：</div>
         <div class="detail-row-right">{{ detailObj.className || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">班级排名：</div>
+        <div class="detail-row-right">{{ detailObj.rankNo || '-' }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">考评类型：</div>
         <div class="detail-row-right">{{ detailObj.assessType || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">统计周期：</div>
-        <div class="detail-row-right">{{ detailObj.cycle || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
         <div class="detail-row-left">考评得分：</div>
         <div class="detail-row-right">{{ detailObj.score || '-' }}</div>
       </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">班级排名：</div>
-        <div class="detail-row-right">{{ detailObj.rankNo || '-' }}</div>
-      </div>   <!-- rank → rankNo -->
       <div class="detail-card-row">
         <div class="detail-row-left">考评人：</div>
         <div class="detail-row-right">{{ detailObj.assessUser || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">发布时间：</div>
-        <div class="detail-row-right">{{ formatTimestamp(detailObj.publishTime) }}</div>
+        <div class="detail-row-left">统计周期：</div>
+        <div class="detail-row-right">{{ detailObj.cycle || '-' }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">状态：</div>
         <div class="detail-row-right">{{ detailObj.status || '-' }}</div>
       </div>
       <div class="detail-card-row">
+        <div class="detail-row-left">发布时间：</div>
+        <div class="detail-row-right">{{ formatTimestamp(detailObj.publishTime) }}</div>
+      </div>
+      <div class="detail-card-row">
         <div class="detail-row-left">备注：</div>
         <div class="detail-row-right">{{ detailObj.remark || '-' }}</div>
       </div>
-
-      <!-- 得分明细（模拟） -->
-      <div class="detail-section">📈 得分明细</div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">教室卫生得分：</div>
-        <div class="detail-row-right">{{ detailObj.classCleanScore || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">早操得分：</div>
-        <div class="detail-row-right">{{ detailObj.morningExerciseScore || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">文明班级得分：</div>
-        <div class="detail-row-right">{{ detailObj.civilClassScore || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">黑板报得分：</div>
-        <div class="detail-row-right">{{ detailObj.blackboardScore || '-' }}</div>
-      </div>
-
-      <!-- 排名数据 -->
-      <div class="detail-section">🏆 排名数据</div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">本期总排名：</div>
-        <div class="detail-row-right">{{ detailObj.rankNo || '-' }}</div>
-      </div>   <!-- rank → rankNo -->
-      <div class="detail-card-row">
-        <div class="detail-row-left">较上期变化：</div>
-        <div class="detail-row-right">{{ detailObj.rankChange || '-' }}</div>
-      </div>
-
       <!-- 操作日志 -->
       <div class="detail-section">📝 操作日志</div>
       <div class="detail-card-row">
