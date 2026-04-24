@@ -11,18 +11,42 @@ const checkInStatusReverse = {
   'checked_in': '已打卡'
 };
 
-// 值班状态映射
+// 值班状态映射（补充 pending_car）
 const dutyStatusMap = {
   '待打卡': 'pending_checkin',
   '待调班审批': 'pending_transfer',
-  '待出车审批': 'pending_vehicle',
+  '待出车审批': 'pending_car',      // 修正：后端使用 pending_car
   '已完成': 'completed'
 };
 const dutyStatusReverse = {
   'pending_checkin': '待打卡',
   'pending_transfer': '待调班审批',
-  'pending_vehicle': '待出车审批',
+  'pending_car': '待出车审批',
   'completed': '已完成'
+};
+
+// 调班状态映射（新增）
+const transferStatusMap = {
+  '无': null,
+  '待审批': 'pending',
+  '已通过': 'approved',
+  '已驳回': 'rejected'
+};
+const transferStatusReverse = {
+  'pending': '待审批',
+  'approved': '已通过',
+  'rejected': '已驳回'
+};
+
+// 出车状态映射（新增）
+const carStatusMap = {
+  '无': null,
+  '待审批': 'pending',
+  '已通过': 'approved'
+};
+const carStatusReverse = {
+  'pending': '待审批',
+  'approved': '已通过'
 };
 
 // 日期转换：后端数组 [2024,12,10] → 前端字符串 '2024-12-10'
@@ -50,6 +74,28 @@ function convertEnToZh(obj) {
   if (result.status && dutyStatusReverse[result.status]) {
     result.status = dutyStatusReverse[result.status];
   }
+  // 调班状态转换
+  if (result.transferStatus) {
+    if (transferStatusReverse[result.transferStatus]) {
+      result.transferStatus = transferStatusReverse[result.transferStatus];
+    } else if (result.transferStatus === '待审批') {
+      // 已经是中文，保持不变
+      result.transferStatus = '待审批';
+    }
+  } else if (result.transferStatus === null || result.transferStatus === undefined) {
+    result.transferStatus = '无';
+  }
+  // 出车状态转换
+  if (result.carStatus) {
+    if (carStatusReverse[result.carStatus]) {
+      result.carStatus = carStatusReverse[result.carStatus];
+    } else if (result.carStatus === '已通过') {
+      // 已经是中文，保持不变
+      result.carStatus = '已通过';
+    }
+  } else if (result.carStatus === null || result.carStatus === undefined) {
+    result.carStatus = '无';
+  }
   if (result.dutyDate) {
     result.dutyDate = formatDutyDate(result.dutyDate);
   }
@@ -65,6 +111,12 @@ function convertZhToEn(obj) {
   }
   if (result.status && dutyStatusMap[result.status]) {
     result.status = dutyStatusMap[result.status];
+  }
+  if (result.transferStatus && transferStatusMap[result.transferStatus] !== undefined) {
+    result.transferStatus = transferStatusMap[result.transferStatus];
+  }
+  if (result.carStatus && carStatusMap[result.carStatus] !== undefined) {
+    result.carStatus = carStatusMap[result.carStatus];
   }
   if (result.dutyDate && typeof result.dutyDate === 'string') {
     result.dutyDate = parseDutyDate(result.dutyDate);
@@ -96,7 +148,6 @@ export function getDutyMgmtPage(params) {
     })
     .catch(err => {
       console.warn('分页接口失败', err);
-      // 分页接口已联调成功，不再使用模拟数据，返回空列表
       return { list: [], total: 0 };
     });
 }
@@ -121,14 +172,14 @@ export function checkinDutyMgmt(data) {
 }
 
 export function shiftApplyDutyMgmt(data) {
-  return requestClient.post('/studentmgmt/duty-mgmt/shiftApply', data).catch(err => {
+  return requestClient.put('/studentmgmt/duty-mgmt/shiftApply', data).catch(err => {
     console.warn('调班申请接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
 export function vehicleApplyDutyMgmt(data) {
-  return requestClient.post('/studentmgmt/duty-mgmt/vehicleApply', data).catch(err => {
+  return requestClient.put('/studentmgmt/duty-mgmt/vehicleApply', data).catch(err => {
     console.warn('出车申请接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
@@ -168,7 +219,6 @@ export function getDutyMgmtDetail(params) {
     .then(res => convertEnToZh(res))
     .catch(err => {
       console.warn('详情接口失败', err);
-      // 不再使用模拟数据，直接抛出错误让调用方处理
       return Promise.reject(err);
     });
 }
@@ -178,19 +228,6 @@ export function updateDutyMgmt(data) {
   return requestClient.put('/studentmgmt/duty-mgmt/update', convertedData).catch(err => {
     console.warn('编辑接口失败，模拟成功', err);
     return Promise.resolve(true);
-  });
-}
-
-// 获取用户选项（确保 value 为字符串类型）
-export function getUserOptions(params) {
-  return requestClient.get('/system/user/options', { params }).catch(err => {
-    console.warn('获取用户选项失败，使用模拟数据', err);
-    return Promise.resolve([
-      { label: '张三', value: '3' },
-      { label: '李四', value: '4' },
-      { label: '王五', value: '5' },
-      { label: '赵六', value: '6' },
-    ]);
   });
 }
 

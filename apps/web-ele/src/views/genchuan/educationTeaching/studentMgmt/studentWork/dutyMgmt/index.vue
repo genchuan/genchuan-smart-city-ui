@@ -18,7 +18,6 @@ import {
   uploadRecordDutyMgmt,
   exportDutyMgmt,
   getDutyMgmtDetail,
-  getUserOptions,
   updateDutyMgmt,
 } from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/dutyMgmt/data.js';
 import {
@@ -182,11 +181,6 @@ function handleRowCheckboxChange({records}) {
 }
 
 const searchParams = ref({});
-const userOptions = ref([]);
-const loadUserOptions = async () => {
-  const res = await getUserOptions();
-  userOptions.value = res;
-};
 
 const getTableData = async ({page}) => {
   dataObj.loading = true;
@@ -215,7 +209,6 @@ const getTableData = async ({page}) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    // 分页接口已联调成功，出错时返回空数据
     dataObj.total = 0;
     dataObj.list = [];
     ElMessage.error('获取值班列表失败，请检查网络或联系管理员');
@@ -250,13 +243,7 @@ async function handleExport() {
   }
 }
 
-// 排班表单
-const scheduleFormSchema = computed(() => {
-  const schema = useScheduleFormSchema();
-  const dutyUserField = schema.find(item => item.fieldName === 'dutyUser');
-  if (dutyUserField) dutyUserField.componentProps.options = userOptions.value;
-  return schema;
-});
+// 排班表单（直接使用 schema，无需 options）
 const [ScheduleForm, scheduleFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
@@ -292,7 +279,7 @@ const [ScheduleForm, scheduleFormApi] = useVbenForm({
     }
   },
   layout: 'horizontal',
-  schema: scheduleFormSchema,
+  schema: useScheduleFormSchema(),
   showCollapseButton: false,
   submitButtonOptions: {content: '提交排班'},
 });
@@ -302,13 +289,7 @@ function handleSchedule() {
   scheduleDrawerApi.open();
 }
 
-// 编辑表单
-const editFormSchema = computed(() => {
-  const schema = useEditFormSchema();
-  const dutyUserField = schema.find(item => item.fieldName === 'dutyUser');
-  if (dutyUserField) dutyUserField.componentProps.options = userOptions.value;
-  return schema;
-});
+// 编辑表单（直接使用 schema）
 const currentEditRow = ref(null);
 const [EditForm, editFormApi] = useVbenForm({
   collapsed: false,
@@ -335,7 +316,7 @@ const [EditForm, editFormApi] = useVbenForm({
     }
   },
   layout: 'horizontal',
-  schema: editFormSchema,
+  schema: useEditFormSchema(),
   showCollapseButton: false,
   submitButtonOptions: {content: '保存修改'},
 });
@@ -679,10 +660,6 @@ const toggleChart = () => {
   showChart.value = !showChart.value;
 };
 defineExpose({handleFilterTagClick, clearFilters});
-
-onMounted(() => {
-  loadUserOptions();
-});
 </script>
 
 <template>
