@@ -2,22 +2,17 @@
 import { computed, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage, ElTag } from 'element-plus';
+import { ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
-import {
-  exportReceiveRecord,
-  getReceiveRecordPage,
-} from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/receiveRecord';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getReceiveRecordPage } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/receiveRecord';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { $t } from '#/locales';
-import CheckRecordDrawer from '#/views/genchuan/industry/chargePark/marketOp/couponActivity/receiveRecord/components/CheckRecordDrawer.vue';
 import { exportToExcel } from '#/utils/excel.js';
 import { formatDate } from '#/utils/genchuan/formatTime';
+import CheckRecordDrawer from '#/views/genchuan/industry/chargePark/marketOp/couponActivity/receiveRecord/components/CheckRecordDrawer.vue';
 
 import {
   dataList,
@@ -185,7 +180,10 @@ const getTableData = async (pageObj) => {
       let searchMatch = true;
       Object.keys(dataObj.searchParams).forEach((key) => {
         const value = dataObj.searchParams[key];
-        if (value && !['receiveTime', 'verifyTime', 'archiveTime'].includes(key)) {
+        if (
+          value &&
+          !['archiveTime', 'receiveTime', 'verifyTime'].includes(key)
+        ) {
           searchMatch =
             typeof value === 'string'
               ? searchMatch && v[key]?.toString().includes(value)
@@ -274,7 +272,8 @@ const handleFilterByStatus = (status) => {
 
 // 处理同步状态点击
 const handleFilterBySyncStatus = (syncStatus) => {
-  filterSyncStatus.value = filterSyncStatus.value === syncStatus ? '' : syncStatus;
+  filterSyncStatus.value =
+    filterSyncStatus.value === syncStatus ? '' : syncStatus;
   gridApi.query();
 };
 
@@ -296,7 +295,9 @@ const handleStatsFilter = (type, subType, value) => {
   if (type === 'card') {
     // 卡片点击 - 总领用量或核销率
     filterStatsType.value = subType;
-    ElMessage.info(`已筛选: ${subType === 'total' ? '总领用量' : '累计核销率'}`);
+    ElMessage.info(
+      `已筛选: ${subType === 'total' ? '总领用量' : '累计核销率'}`,
+    );
   } else if (type === 'date') {
     // 折线图节点点击 - 按日期筛选
     filterReceiveDate.value = value;
@@ -430,7 +431,9 @@ const handleFullShow = () => {
             @close="handleCancelStatsTypeFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
-            统计类型：{{ filterStatsType === 'total' ? '总领用量' : '累计核销率' }}
+            统计类型：{{
+              filterStatsType === 'total' ? '总领用量' : '累计核销率'
+            }}
           </ElTag>
         </div>
       </template>
@@ -464,7 +467,7 @@ const handleFullShow = () => {
           @click="handleOpenRecordDetail(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.no }}
         </el-text>
@@ -475,7 +478,7 @@ const handleFullShow = () => {
           @click="handleOpenUserDetail(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.userName }}
         </el-text>
@@ -486,20 +489,27 @@ const handleFullShow = () => {
           @click="handleOpenCouponDetail(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.couponName }}
         </el-text>
       </template>
       <!-- 领用时间 - 格式化显示 -->
       <template #receiveTime="{ row }">
-        <span>{{ row.receiveTime ? formatDate(new Date(Number(row.receiveTime)), 'YYYY-MM-DD HH:mm:ss') : '' }}</span>
+        <span>{{
+          row.receiveTime
+            ? formatDate(
+                new Date(Number(row.receiveTime)),
+                'YYYY-MM-DD HH:mm:ss',
+              )
+            : ''
+        }}</span>
       </template>
       <!-- 记录状态 - 点击筛选同状态 -->
       <template #statusName="{ row }">
         <ElTag
           :type="getReceiveRecordStatusTagType(row.status)"
-          style="cursor: pointer;"
+          style="cursor: pointer"
           @click="handleFilterByStatus(row.status)"
         >
           {{ getReceiveRecordStatusLabel(row.status) }}
@@ -507,7 +517,14 @@ const handleFullShow = () => {
       </template>
       <!-- 核销时间 - 格式化显示 -->
       <template #verifyTime="{ row }">
-        <span>{{ row.verifyTime ? formatDate(new Date(Number(row.verifyTime)), 'YYYY-MM-DD HH:mm:ss') : '-' }}</span>
+        <span>{{
+          row.verifyTime
+            ? formatDate(
+                new Date(Number(row.verifyTime)),
+                'YYYY-MM-DD HH:mm:ss',
+              )
+            : '-'
+        }}</span>
       </template>
       <!-- 核查结果 - 点击查看核查明细 -->
       <template #checkResult="{ row }">
@@ -515,7 +532,7 @@ const handleFullShow = () => {
           @click="handleOpenCheckDetail(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.checkResult || '-' }}
         </el-text>
@@ -524,7 +541,7 @@ const handleFullShow = () => {
       <template #syncStatusName="{ row }">
         <ElTag
           :type="getReceiveRecordSyncStatusTagType(row.syncStatus)"
-          style="cursor: pointer;"
+          style="cursor: pointer"
           @click="handleFilterBySyncStatus(row.syncStatus)"
         >
           {{ getReceiveRecordSyncStatusLabel(row.syncStatus) }}
@@ -532,7 +549,14 @@ const handleFullShow = () => {
       </template>
       <!-- 归档时间 - 格式化显示 -->
       <template #archiveTime="{ row }">
-        <span>{{ row.archiveTime ? formatDate(new Date(Number(row.archiveTime)), 'YYYY-MM-DD HH:mm:ss') : '-' }}</span>
+        <span>{{
+          row.archiveTime
+            ? formatDate(
+                new Date(Number(row.archiveTime)),
+                'YYYY-MM-DD HH:mm:ss',
+              )
+            : '-'
+        }}</span>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
@@ -557,7 +581,12 @@ const handleFullShow = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：领用记录数量: {{ dataObj.list.length }}; 正常记录: {{ dataObj.list.filter((v) => v.status === '0').length }}; 异常记录: {{ dataObj.list.filter((v) => v.status === '1').length }}; 已核查: {{ dataObj.list.filter((v) => v.status === '2').length }} </span>
+          <span>
+            本页统计：领用记录数量: {{ dataObj.list.length }}; 正常记录:
+            {{ dataObj.list.filter((v) => v.status === '0').length }}; 异常记录:
+            {{ dataObj.list.filter((v) => v.status === '1').length }}; 已核查:
+            {{ dataObj.list.filter((v) => v.status === '2').length }}
+          </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span> {{ textObj.total }} </span>

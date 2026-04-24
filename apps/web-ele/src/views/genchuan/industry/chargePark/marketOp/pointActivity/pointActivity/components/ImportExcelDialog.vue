@@ -35,7 +35,10 @@ const downloadTemplate = async () => {
     // 调用API下载导入模板
     const data = await getPointActivityImportTemplate();
     // 使用downloadFileFromBlobPart触发浏览器下载
-    downloadFileFromBlobPart({ fileName: '积分活动导入模板.xlsx', source: data });
+    downloadFileFromBlobPart({
+      fileName: '积分活动导入模板.xlsx',
+      source: data,
+    });
     ElMessage.success('模板下载成功');
   } catch (error) {
     console.error('下载模板失败:', error);

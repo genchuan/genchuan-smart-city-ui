@@ -4,7 +4,7 @@ import { computed, reactive, ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj } from '@vben/hooks';
-import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
@@ -101,7 +101,11 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     const values = await formApi.getValues();
 
     // 校验开始时间不得晚于结束时间
-    if (values.startTime && values.endTime && values.startTime > values.endTime) {
+    if (
+      values.startTime &&
+      values.endTime &&
+      values.startTime > values.endTime
+    ) {
       ElMessage.error('开始时间不得晚于结束时间');
       return;
     }
@@ -110,13 +114,18 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     const submitData = {
       ...values,
       // 将stationIds数组转换为逗号分隔的字符串
-      stationIds: Array.isArray(values.stationIds) ? values.stationIds.join(',') : values.stationIds,
+      stationIds: Array.isArray(values.stationIds)
+        ? values.stationIds.join(',')
+        : values.stationIds,
     };
 
     try {
       if (formData.value?.id) {
         // 将id转换为数字类型
-        await updatePointActivity({ ...submitData, id: Number(formData.value.id) });
+        await updatePointActivity({
+          ...submitData,
+          id: Number(formData.value.id),
+        });
         ElMessage.success($t('ui.actionMessage.editSuccess'));
       } else {
         await createPointActivity(submitData);
@@ -127,7 +136,10 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     } catch (error) {
       console.error(error);
       // 显示接口返回的错误信息
-      const errorMsg = error?.msg || error?.message || (formData.value?.id ? '编辑失败' : '新增失败');
+      const errorMsg =
+        error?.msg ||
+        error?.message ||
+        (formData.value?.id ? '编辑失败' : '新增失败');
       ElMessage.error(errorMsg);
     }
   },
@@ -474,23 +486,32 @@ function getStationLabel(stationId) {
 
 // 处理统计组件的钻取筛选
 const handleStatsFilter = (type, value) => {
-  if (type === 'card') {
-    if (value === 'all') {
-      // 总活动数，清空所有筛选
-      filterType.value = '';
-      filterStatus.value = '';
-    } else if (value === 'users') {
-      // 累计参与用户数，可以跳转到用户明细页面
-      ElMessage.info('查看累计参与用户明细');
+  switch (type) {
+    case 'card': {
+      if (value === 'all') {
+        // 总活动数，清空所有筛选
+        filterType.value = '';
+        filterStatus.value = '';
+      } else if (value === 'users') {
+        // 累计参与用户数，可以跳转到用户明细页面
+        ElMessage.info('查看累计参与用户明细');
+        return;
+      }
+
+      break;
+    }
+    case 'date': {
+      // 按日期筛选，可以跳转到该日期的参与用户明细
+      ElMessage.info(`查看 ${value} 的参与用户明细`);
       return;
     }
-  } else if (type === 'type') {
-    // 按活动类型筛选
-    filterType.value = value;
-  } else if (type === 'date') {
-    // 按日期筛选，可以跳转到该日期的参与用户明细
-    ElMessage.info(`查看 ${value} 的参与用户明细`);
-    return;
+    case 'type': {
+      // 按活动类型筛选
+      filterType.value = value;
+
+      break;
+    }
+    // No default
   }
   gridApi.query();
 };
@@ -575,13 +596,13 @@ defineExpose({
             icon-name="download"
             @click="handleExport"
           />
-<!--          <IconButton-->
-<!--            content="批量删除"-->
-<!--            icon-name="delete"-->
-<!--            color="#F56C6C"-->
-<!--            :disabled="isEmpty(checkedIds)"-->
-<!--            @click="handleDeleteBatch"-->
-<!--          />-->
+          <!--          <IconButton-->
+          <!--            content="批量删除"-->
+          <!--            icon-name="delete"-->
+          <!--            color="#F56C6C"-->
+          <!--            :disabled="isEmpty(checkedIds)"-->
+          <!--            @click="handleDeleteBatch"-->
+          <!--          />-->
           <IconButton
             content="搜索"
             icon-name="search"
@@ -752,5 +773,4 @@ defineExpose({
     />
   </div>
 </template>
-<style scoped>
-</style>
+<style scoped></style>

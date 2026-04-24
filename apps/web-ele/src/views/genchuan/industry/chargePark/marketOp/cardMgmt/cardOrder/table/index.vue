@@ -2,19 +2,17 @@
 import { computed, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage, ElTag } from 'element-plus';
+import { ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   exportCardOrder,
   getCardOrderPage,
 } from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/cardOrder';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
@@ -22,7 +20,6 @@ import ActiveConfirmDialog from '../components/ActiveConfirmDialog.vue';
 import CancelConfirmDialog from '../components/CancelConfirmDialog.vue';
 import InvoiceDialog from '../components/InvoiceDialog.vue';
 import PayConfirmDialog from '../components/PayConfirmDialog.vue';
-
 import {
   dataList,
   detailFields,
@@ -194,12 +191,13 @@ const getTableData = async (pageObj) => {
       amountMin: dataObj.searchParams.amountMin,
       amountMax: dataObj.searchParams.amountMax,
       payStatus: filterPayStatus.value || dataObj.searchParams.payStatus,
-      invoiceStatus: filterInvoiceStatus.value || dataObj.searchParams.invoiceStatus,
+      invoiceStatus:
+        filterInvoiceStatus.value || dataObj.searchParams.invoiceStatus,
       orderDate: filterOrderDate.value,
     };
 
     const response = await getCardOrderPage(params);
-    if (response ) {
+    if (response) {
       const { list, total } = response;
       dataObj.total = total || 0;
       dataObj.list = list || [];
@@ -214,7 +212,10 @@ const getTableData = async (pageObj) => {
       let searchMatch = true;
       Object.keys(dataObj.searchParams).forEach((key) => {
         const value = dataObj.searchParams[key];
-        if (value && !['createTime', 'payTime', 'activeTime', 'archiveTime'].includes(key)) {
+        if (
+          value &&
+          !['activeTime', 'archiveTime', 'createTime', 'payTime'].includes(key)
+        ) {
           if (key === 'amountMin') {
             searchMatch = searchMatch && v.amount >= value;
           } else if (key === 'amountMax') {
@@ -231,7 +232,10 @@ const getTableData = async (pageObj) => {
       if (filterPayStatus.value && v.payStatus !== filterPayStatus.value) {
         searchMatch = false;
       }
-      if (filterInvoiceStatus.value && v.invoiceStatus !== filterInvoiceStatus.value) {
+      if (
+        filterInvoiceStatus.value &&
+        v.invoiceStatus !== filterInvoiceStatus.value
+      ) {
         searchMatch = false;
       }
       if (filterCardType.value && v.cardId !== filterCardType.value) {
@@ -318,7 +322,8 @@ const handleFilterByPayStatus = (payStatus) => {
 
 // 处理开票状态点击
 const handleFilterByInvoiceStatus = (invoiceStatus) => {
-  filterInvoiceStatus.value = filterInvoiceStatus.value === invoiceStatus ? '' : invoiceStatus;
+  filterInvoiceStatus.value =
+    filterInvoiceStatus.value === invoiceStatus ? '' : invoiceStatus;
   gridApi.query();
 };
 
@@ -337,21 +342,35 @@ const handleCancelInvoiceStatusFilter = () => {
 
 /** 处理统计组件的钻取筛选 */
 const handleStatsFilter = (type, subType, value) => {
-  if (type === 'card') {
-    // 卡片点击 - 今日订单量或今日营收
-    ElMessage.info(`已筛选: ${subType === 'todayOrder' ? '今日订单' : '今日营收'}`);
-    // 这里可以根据实际需求设置筛选条件
-    const today = new Date().toISOString().split('T')[0];
-    filterOrderDate.value = today;
-  } else if (type === 'cardType') {
-    // 柱状图点击 - 按卡种类型筛选
-    filterCardType.value = subType;
-    const cardName = dataObj.apilist.find(v => v.cardId === subType)?.cardName || subType;
-    ElMessage.info(`已筛选卡种: ${cardName}`);
-  } else if (type === 'date') {
-    // 折线图节点点击 - 按日期筛选
-    filterOrderDate.value = subType;
-    ElMessage.info(`已筛选日期: ${subType}`);
+  switch (type) {
+    case 'card': {
+      // 卡片点击 - 今日订单量或今日营收
+      ElMessage.info(
+        `已筛选: ${subType === 'todayOrder' ? '今日订单' : '今日营收'}`,
+      );
+      // 这里可以根据实际需求设置筛选条件
+      const today = new Date().toISOString().split('T')[0];
+      filterOrderDate.value = today;
+
+      break;
+    }
+    case 'cardType': {
+      // 柱状图点击 - 按卡种类型筛选
+      filterCardType.value = subType;
+      const cardName =
+        dataObj.apilist.find((v) => v.cardId === subType)?.cardName || subType;
+      ElMessage.info(`已筛选卡种: ${cardName}`);
+
+      break;
+    }
+    case 'date': {
+      // 折线图节点点击 - 按日期筛选
+      filterOrderDate.value = subType;
+      ElMessage.info(`已筛选日期: ${subType}`);
+
+      break;
+    }
+    // No default
   }
   gridApi.query();
 };
@@ -419,25 +438,13 @@ const handleFullShow = () => {
       :fields="detailFields"
     />
     <!--   支付确认弹窗-->
-    <PayConfirmDialog
-      ref="payDialogRef"
-      @success="handleRefresh"
-    />
+    <PayConfirmDialog ref="payDialogRef" @success="handleRefresh" />
     <!--   激活确认弹窗-->
-    <ActiveConfirmDialog
-      ref="activeDialogRef"
-      @success="handleRefresh"
-    />
+    <ActiveConfirmDialog ref="activeDialogRef" @success="handleRefresh" />
     <!--   开票弹窗-->
-    <InvoiceDialog
-      ref="invoiceDialogRef"
-      @success="handleRefresh"
-    />
+    <InvoiceDialog ref="invoiceDialogRef" @success="handleRefresh" />
     <!--   取消确认弹窗-->
-    <CancelConfirmDialog
-      ref="cancelDialogRef"
-      @success="handleRefresh"
-    />
+    <CancelConfirmDialog ref="cancelDialogRef" @success="handleRefresh" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -476,7 +483,10 @@ const handleFullShow = () => {
             @close="handleCancelCardTypeFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
-            卡种类型：{{ dataObj.apilist.find(v => v.cardId === filterCardType)?.cardName || filterCardType }}
+            卡种类型：{{
+              dataObj.apilist.find((v) => v.cardId === filterCardType)
+                ?.cardName || filterCardType
+            }}
           </ElTag>
           <!-- 统计组件-日期筛选标签 -->
           <ElTag
@@ -520,7 +530,7 @@ const handleFullShow = () => {
           @click="handleOpenOrderDetail(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.no }}
         </el-text>
@@ -531,7 +541,7 @@ const handleFullShow = () => {
           @click="handleOpenUserDetail(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.userName }}
         </el-text>
@@ -542,7 +552,7 @@ const handleFullShow = () => {
           @click="handleOpenCardDetail(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.cardName }}
         </el-text>
@@ -555,7 +565,7 @@ const handleFullShow = () => {
       <template #payStatusName="{ row }">
         <ElTag
           :type="getCardOrderPayStatusTagType(row.payStatus)"
-          style="cursor: pointer;"
+          style="cursor: pointer"
           @click="handleFilterByPayStatus(row.payStatus)"
         >
           {{ getCardOrderPayStatusLabel(row.payStatus) }}
@@ -563,21 +573,39 @@ const handleFullShow = () => {
       </template>
       <!-- 生成时间 - 格式化显示 -->
       <template #createTime="{ row }">
-        <span>{{ row.createTime ? formatDate(new Date(Number(row.createTime)), 'YYYY-MM-DD HH:mm:ss') : '' }}</span>
+        <span>{{
+          row.createTime
+            ? formatDate(
+                new Date(Number(row.createTime)),
+                'YYYY-MM-DD HH:mm:ss',
+              )
+            : ''
+        }}</span>
       </template>
       <!-- 支付时间 - 格式化显示 -->
       <template #payTime="{ row }">
-        <span>{{ row.payTime ? formatDate(new Date(Number(row.payTime)), 'YYYY-MM-DD HH:mm:ss') : '-' }}</span>
+        <span>{{
+          row.payTime
+            ? formatDate(new Date(Number(row.payTime)), 'YYYY-MM-DD HH:mm:ss')
+            : '-'
+        }}</span>
       </template>
       <!-- 激活时间 - 格式化显示 -->
       <template #activeTime="{ row }">
-        <span>{{ row.activeTime ? formatDate(new Date(Number(row.activeTime)), 'YYYY-MM-DD HH:mm:ss') : '-' }}</span>
+        <span>{{
+          row.activeTime
+            ? formatDate(
+                new Date(Number(row.activeTime)),
+                'YYYY-MM-DD HH:mm:ss',
+              )
+            : '-'
+        }}</span>
       </template>
       <!-- 开票状态 - 点击筛选同开票状态 -->
       <template #invoiceStatusName="{ row }">
         <ElTag
           :type="getCardOrderInvoiceStatusTagType(row.invoiceStatus)"
-          style="cursor: pointer;"
+          style="cursor: pointer"
           @click="handleFilterByInvoiceStatus(row.invoiceStatus)"
         >
           {{ getCardOrderInvoiceStatusLabel(row.invoiceStatus) }}
@@ -585,7 +613,14 @@ const handleFullShow = () => {
       </template>
       <!-- 归档时间 - 格式化显示 -->
       <template #archiveTime="{ row }">
-        <span>{{ row.archiveTime ? formatDate(new Date(Number(row.archiveTime)), 'YYYY-MM-DD HH:mm:ss') : '-' }}</span>
+        <span>{{
+          row.archiveTime
+            ? formatDate(
+                new Date(Number(row.archiveTime)),
+                'YYYY-MM-DD HH:mm:ss',
+              )
+            : '-'
+        }}</span>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
@@ -639,7 +674,15 @@ const handleFullShow = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：卡种订单数量: {{ dataObj.list.length }}; 待支付: {{ dataObj.list.filter((v) => v.payStatus === '0').length }}; 已支付: {{ dataObj.list.filter((v) => v.payStatus === '1').length }}; 已完成: {{ dataObj.list.filter((v) => v.payStatus === '2').length }}; 已取消: {{ dataObj.list.filter((v) => v.payStatus === '3').length }} </span>
+          <span>
+            本页统计：卡种订单数量: {{ dataObj.list.length }}; 待支付:
+            {{ dataObj.list.filter((v) => v.payStatus === '0').length }};
+            已支付:
+            {{ dataObj.list.filter((v) => v.payStatus === '1').length }};
+            已完成:
+            {{ dataObj.list.filter((v) => v.payStatus === '2').length }};
+            已取消: {{ dataObj.list.filter((v) => v.payStatus === '3').length }}
+          </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span> {{ textObj.total }} </span>

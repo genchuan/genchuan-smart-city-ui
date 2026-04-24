@@ -2,21 +2,17 @@
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  activateActivityConfig,
   createActivityConfig,
-  disableActivityConfig,
-  getActivityConfigDetail,
   getActivityConfigPage,
   updateActivityConfig,
 } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/activityConfig';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
@@ -251,24 +247,71 @@ const getTableData = async (pageObj) => {
       Object.keys(dataObj.searchParams).forEach((key) => {
         const value = dataObj.searchParams[key];
         if (value) {
-          if (key === 'name' || key === 'auditorName' || key === 'joinCondition' || key === 'ruleContent' || key === 'description' || key === 'creator' || key === 'updater') {
-            searchMatch = searchMatch && v[key]?.toString().includes(value);
-          } else if (key === 'type' || key === 'status' || key === 'userGroup') {
-            searchMatch = searchMatch && v[key] === value;
-          } else if (key === 'joinCount') {
-            searchMatch = searchMatch && v[key] === value;
-          } else if (key === 'createTime' && Array.isArray(value) && value.length === 2) {
-            const createTime = Number(v.createTime);
-            searchMatch = searchMatch && createTime >= value[0] && createTime <= value[1];
-          } else if (key === 'updateTime' && Array.isArray(value) && value.length === 2) {
-            const updateTime = Number(v.updateTime);
-            searchMatch = searchMatch && updateTime >= value[0] && updateTime <= value[1];
-          } else if (key === 'auditTime' && Array.isArray(value) && value.length === 2) {
-            const auditTime = Number(v.auditTime);
-            searchMatch = searchMatch && auditTime >= value[0] && auditTime <= value[1];
-          } else if (key === 'effectTime' && Array.isArray(value) && value.length === 2) {
-            const effectTime = Number(v.effectTime);
-            searchMatch = searchMatch && effectTime >= value[0] && effectTime <= value[1];
+          switch (key) {
+            case 'auditorName':
+            case 'creator':
+            case 'description':
+            case 'joinCondition':
+            case 'name':
+            case 'ruleContent':
+            case 'updater': {
+              searchMatch = searchMatch && v[key]?.toString().includes(value);
+
+              break;
+            }
+            case 'joinCount': {
+              searchMatch = searchMatch && v[key] === value;
+
+              break;
+            }
+            case 'status':
+            case 'type':
+            case 'userGroup': {
+              searchMatch = searchMatch && v[key] === value;
+
+              break;
+            }
+            default: {
+              if (
+                key === 'createTime' &&
+                Array.isArray(value) &&
+                value.length === 2
+              ) {
+                const createTime = Number(v.createTime);
+                searchMatch =
+                  searchMatch &&
+                  createTime >= value[0] &&
+                  createTime <= value[1];
+              } else if (
+                key === 'updateTime' &&
+                Array.isArray(value) &&
+                value.length === 2
+              ) {
+                const updateTime = Number(v.updateTime);
+                searchMatch =
+                  searchMatch &&
+                  updateTime >= value[0] &&
+                  updateTime <= value[1];
+              } else if (
+                key === 'auditTime' &&
+                Array.isArray(value) &&
+                value.length === 2
+              ) {
+                const auditTime = Number(v.auditTime);
+                searchMatch =
+                  searchMatch && auditTime >= value[0] && auditTime <= value[1];
+              } else if (
+                key === 'effectTime' &&
+                Array.isArray(value) &&
+                value.length === 2
+              ) {
+                const effectTime = Number(v.effectTime);
+                searchMatch =
+                  searchMatch &&
+                  effectTime >= value[0] &&
+                  effectTime <= value[1];
+              }
+            }
           }
         }
       });
@@ -504,13 +547,13 @@ defineExpose({
             icon-name="download"
             @click="handleExport"
           />
-<!--          <IconButton-->
-<!--            content="批量删除"-->
-<!--            icon-name="delete"-->
-<!--            color="#F56C6C"-->
-<!--            :disabled="isEmpty(checkedIds)"-->
-<!--            @click="handleDeleteBatch"-->
-<!--          />-->
+          <!--          <IconButton-->
+          <!--            content="批量删除"-->
+          <!--            icon-name="delete"-->
+          <!--            color="#F56C6C"-->
+          <!--            :disabled="isEmpty(checkedIds)"-->
+          <!--            @click="handleDeleteBatch"-->
+          <!--          />-->
           <IconButton
             :content="props.showStats ? '隐藏统计' : '显示统计'"
             :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
@@ -534,7 +577,7 @@ defineExpose({
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.name }}
         </el-text>
@@ -543,7 +586,7 @@ defineExpose({
       <template #typeName="{ row }">
         <ElTag
           :type="getActivityConfigTypeTagType(row.type)"
-          style="cursor: pointer;"
+          style="cursor: pointer"
           @click="handleFilterByType(row.type)"
         >
           {{ getActivityConfigTypeLabel(row.type) }}
@@ -553,7 +596,7 @@ defineExpose({
       <template #userGroupName="{ row }">
         <ElTag
           :type="getActivityConfigUserGroupTagType(row.userGroup)"
-          style="cursor: pointer;"
+          style="cursor: pointer"
           @click="handleFilterByUserGroup(row.userGroup)"
         >
           {{ getActivityConfigUserGroupLabel(row.userGroup) }}
@@ -563,7 +606,7 @@ defineExpose({
       <template #statusName="{ row }">
         <ElTag
           :type="getActivityConfigStatusTagType(row.status)"
-          style="cursor: pointer;"
+          style="cursor: pointer"
           @click="handleFilterByStatus(row.status)"
         >
           {{ getActivityConfigStatusLabel(row.status) }}
@@ -571,7 +614,14 @@ defineExpose({
       </template>
       <!-- 创建时间 -->
       <template #createTime="{ row }">
-        <span>{{ row.createTime ? formatDate(new Date(Number(row.createTime)), 'YYYY-MM-DD HH:mm:ss') : '' }}</span>
+        <span>{{
+          row.createTime
+            ? formatDate(
+                new Date(Number(row.createTime)),
+                'YYYY-MM-DD HH:mm:ss',
+              )
+            : ''
+        }}</span>
       </template>
       <!-- 审核人 - 点击跳转操作人员详情 -->
       <template #auditorName="{ row }">
@@ -580,7 +630,7 @@ defineExpose({
           @click="handleOpenAuditorDetail(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.auditorName }}
         </el-text>
@@ -588,7 +638,11 @@ defineExpose({
       </template>
       <!-- 审核时间 -->
       <template #auditTime="{ row }">
-        <span>{{ row.auditTime ? formatDate(new Date(Number(row.auditTime)), 'YYYY-MM-DD HH:mm:ss') : '-' }}</span>
+        <span>{{
+          row.auditTime
+            ? formatDate(new Date(Number(row.auditTime)), 'YYYY-MM-DD HH:mm:ss')
+            : '-'
+        }}</span>
       </template>
       <!-- 参与人数 - 点击跳转活动参与用户明细 -->
       <template #joinCount="{ row }">
@@ -596,14 +650,21 @@ defineExpose({
           @click="handleOpenJoinUserDetail(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.joinCount }}
         </el-text>
       </template>
       <!-- 生效时间 -->
       <template #effectTime="{ row }">
-        <span>{{ row.effectTime ? formatDate(new Date(Number(row.effectTime)), 'YYYY-MM-DD HH:mm:ss') : '' }}</span>
+        <span>{{
+          row.effectTime
+            ? formatDate(
+                new Date(Number(row.effectTime)),
+                'YYYY-MM-DD HH:mm:ss',
+              )
+            : ''
+        }}</span>
       </template>
       <!-- 操作列 -->
       <template #actions="{ row }">

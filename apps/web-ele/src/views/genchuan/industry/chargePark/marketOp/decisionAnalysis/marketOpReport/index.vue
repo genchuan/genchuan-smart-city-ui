@@ -1,13 +1,11 @@
 <script setup>
 import { computed, nextTick, onMounted, ref } from 'vue';
 
-import { ElMessage } from 'element-plus';
-
 import {
+  getCycleReportBarDrill,
   getCycleReportCardDrill,
   getCycleReportChart,
   getCycleReportLineDrill,
-  getCycleReportBarDrill,
   getCycleReportPieDrill,
 } from '#/api/genchuan/industry/chargePark/marketOp/decisionAnalysis/marketOpReport';
 
@@ -89,7 +87,7 @@ const fetchStatsData = async () => {
         },
         {
           title: '营收',
-          value: '¥' + (data.revenue || 0).toFixed(2),
+          value: `¥${(data.revenue || 0).toFixed(2)}`,
           color: '#FF9F40',
           type: 'revenue',
         },
@@ -114,18 +112,22 @@ const fetchStatsData = async () => {
       ];
 
       // 组装饼图数据 - 规则类型占比
-      statsData.value.pieData = (data.ruleTypeDistribution || []).map((item) => ({
-        name: item.name,
-        value: item.value,
-        type: item.type,
-      }));
+      statsData.value.pieData = (data.ruleTypeDistribution || []).map(
+        (item) => ({
+          name: item.name,
+          value: item.value,
+          type: item.type,
+        }),
+      );
 
       // 组装柱状图数据 - 活动类型分布
-      statsData.value.barData = (data.activityTypeDistribution || []).map((item) => ({
-        name: item.name,
-        value: item.value,
-        type: item.type,
-      }));
+      statsData.value.barData = (data.activityTypeDistribution || []).map(
+        (item) => ({
+          name: item.name,
+          value: item.value,
+          type: item.type,
+        }),
+      );
 
       // 组装折线图数据 - 活动参与趋势
       statsData.value.lineData = (data.joinTrend || []).map((item) => ({
@@ -149,16 +151,41 @@ const useMockData = () => {
   // 组装卡片数据 - 11张卡片
   statsData.value.cards = [
     { title: '活动数', value: 25, color: '#4A90E2', type: 'activityCount' },
-    { title: '参与用户数', value: 1200, color: '#50E3C2', type: 'joinUserCount' },
+    {
+      title: '参与用户数',
+      value: 1200,
+      color: '#50E3C2',
+      type: 'joinUserCount',
+    },
     { title: '抽奖量', value: 3500, color: '#FF9F40', type: 'lotteryCount' },
     { title: '中奖率', value: '12.50%', color: '#A17FE0', type: 'winningRate' },
-    { title: '优惠券发放量', value: 5000, color: '#FF6B8B', type: 'couponSendCount' },
-    { title: '核销率', value: '38.60%', color: '#4A90E2', type: 'couponVerifyRate' },
-    { title: '卡种订单量', value: 320, color: '#50E3C2', type: 'cardOrderCount' },
+    {
+      title: '优惠券发放量',
+      value: 5000,
+      color: '#FF6B8B',
+      type: 'couponSendCount',
+    },
+    {
+      title: '核销率',
+      value: '38.60%',
+      color: '#4A90E2',
+      type: 'couponVerifyRate',
+    },
+    {
+      title: '卡种订单量',
+      value: 320,
+      color: '#50E3C2',
+      type: 'cardOrderCount',
+    },
     { title: '营收', value: '¥15600.80', color: '#FF9F40', type: 'revenue' },
     { title: '兑换量', value: 890, color: '#A17FE0', type: 'exchangeCount' },
     { title: '总库存', value: 1200, color: '#FF6B8B', type: 'totalStock' },
-    { title: '预警库存数', value: 35, color: '#F56C6C', type: 'warnStockCount' },
+    {
+      title: '预警库存数',
+      value: 35,
+      color: '#F56C6C',
+      type: 'warnStockCount',
+    },
   ];
 
   // 组装饼图数据 - 规则类型占比
@@ -202,12 +229,15 @@ const generateTrendData = () => {
 // 处理卡片点击 - 钻取筛选
 const handleCardClick = async (cardType) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
+  if (
+    tableRef.value &&
+    typeof tableRef.value.handleStatsFilter === 'function'
+  ) {
     tableRef.value.handleStatsFilter('card', cardType);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
-  
+
   // 调用卡片钻取API
   try {
     const response = await getCycleReportCardDrill({ cardType });
@@ -220,15 +250,21 @@ const handleCardClick = async (cardType) => {
 // 处理饼图点击 - 钻取筛选规则类型
 const handlePieClick = async (type) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
+  if (
+    tableRef.value &&
+    typeof tableRef.value.handleStatsFilter === 'function'
+  ) {
     tableRef.value.handleStatsFilter('pie', type);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
-  
+
   // 调用饼图钻取API
   try {
-    const response = await getCycleReportPieDrill({ pieType: '规则类型占比', type });
+    const response = await getCycleReportPieDrill({
+      pieType: '规则类型占比',
+      type,
+    });
     console.log('饼图钻取数据:', response);
   } catch (error) {
     console.error('饼图钻取失败:', error);
@@ -238,15 +274,21 @@ const handlePieClick = async (type) => {
 // 处理柱状图点击 - 钻取筛选活动类型
 const handleBarClick = async (type) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
+  if (
+    tableRef.value &&
+    typeof tableRef.value.handleStatsFilter === 'function'
+  ) {
     tableRef.value.handleStatsFilter('bar', type);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
-  
+
   // 调用柱状图钻取API
   try {
-    const response = await getCycleReportBarDrill({ barType: '活动类型分布', type });
+    const response = await getCycleReportBarDrill({
+      barType: '活动类型分布',
+      type,
+    });
     console.log('柱状图钻取数据:', response);
   } catch (error) {
     console.error('柱状图钻取失败:', error);
@@ -256,15 +298,21 @@ const handleBarClick = async (type) => {
 // 处理折线图点击 - 钻取跳转对应时间的明细数据
 const handleLineClick = async (date) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
+  if (
+    tableRef.value &&
+    typeof tableRef.value.handleStatsFilter === 'function'
+  ) {
     tableRef.value.handleStatsFilter('line', date);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
-  
+
   // 调用折线图钻取API
   try {
-    const response = await getCycleReportLineDrill({ lineType: '活动参与趋势', date });
+    const response = await getCycleReportLineDrill({
+      lineType: '活动参与趋势',
+      date,
+    });
     console.log('折线图钻取数据:', response);
   } catch (error) {
     console.error('折线图钻取失败:', error);

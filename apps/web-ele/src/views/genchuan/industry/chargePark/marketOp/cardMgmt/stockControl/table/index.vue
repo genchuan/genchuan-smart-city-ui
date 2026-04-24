@@ -2,26 +2,23 @@
 import { computed, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage, ElTag } from 'element-plus';
+import { ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
-import {
-  allocateStockControl,
-  exportStockControl,
-  getStockControlDetail,
-  getStockControlPage,
-  replenishStockControl,
-  warnStockControl,
-} from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/stockControl';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import {
+  exportStockControl,
+  getStockControlPage,
+} from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/stockControl';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
+import AllocateDrawer from '../components/AllocateDrawer.vue';
+import ReplenishDialog from '../components/ReplenishDialog.vue';
+import WarnConfirmDialog from '../components/WarnConfirmDialog.vue';
 import {
   dataList,
   detailFields,
@@ -34,9 +31,6 @@ import {
   useGridColumns,
   useSearchFormSchema,
 } from './data';
-import AllocateDrawer from '../components/AllocateDrawer.vue';
-import ReplenishDialog from '../components/ReplenishDialog.vue';
-import WarnConfirmDialog from '../components/WarnConfirmDialog.vue';
 
 const props = defineProps({
   secondShow: {
@@ -292,7 +286,8 @@ const handleFilterByStatus = (status) => {
 
 // 处理告警状态点击
 const handleFilterByWarnStatus = (warnStatus) => {
-  filterWarnStatus.value = filterWarnStatus.value === warnStatus ? '' : warnStatus;
+  filterWarnStatus.value =
+    filterWarnStatus.value === warnStatus ? '' : warnStatus;
   gridApi.query();
 };
 
@@ -322,13 +317,17 @@ const handleOpenCardDetail = (row) => {
 
 /** 打开库存调配明细弹窗 */
 const handleOpenAllocateDetail = (row) => {
-  ElMessage.info(`查看库存调配明细: ${row.cardName}，调配记录数: ${row.allocateCount}`);
+  ElMessage.info(
+    `查看库存调配明细: ${row.cardName}，调配记录数: ${row.allocateCount}`,
+  );
   // TODO: 实现库存调配明细弹窗
 };
 
 /** 打开库存补货明细弹窗 */
 const handleOpenReplenishDetail = (row) => {
-  ElMessage.info(`查看库存补货明细: ${row.cardName}，补货记录数: ${row.replenishCount}`);
+  ElMessage.info(
+    `查看库存补货明细: ${row.cardName}，补货记录数: ${row.replenishCount}`,
+  );
   // TODO: 实现库存补货明细弹窗
 };
 
@@ -346,7 +345,7 @@ const handleStatsFilter = (type, value) => {
   dataObj.searchParams = {};
 
   switch (type) {
-    case 'card':
+    case 'card': {
       if (value === 'total') {
         // 总库存 - 清空筛选
         filterStatus.value = '';
@@ -356,15 +355,18 @@ const handleStatsFilter = (type, value) => {
         filterStatus.value = '2'; // 预警库存
       }
       break;
-    case 'cardId':
+    }
+    case 'cardId': {
       // 卡种筛选
       dataObj.searchParams.cardId = value;
       break;
-    case 'date':
+    }
+    case 'date': {
       // 日期筛选 - 这里可以根据实际需求实现
       // 目前只是示例，实际项目中需要根据API支持情况调整
       console.log('Date filter:', value);
       break;
+    }
   }
 
   // 刷新表格
@@ -390,20 +392,11 @@ defineExpose({
       :fields="detailFields"
     />
     <!--   调配抽屉-->
-    <AllocateDrawer
-      ref="allocateDrawerRef"
-      @success="handleRefresh"
-    />
+    <AllocateDrawer ref="allocateDrawerRef" @success="handleRefresh" />
     <!--   补货弹窗-->
-    <ReplenishDialog
-      ref="replenishDialogRef"
-      @success="handleRefresh"
-    />
+    <ReplenishDialog ref="replenishDialogRef" @success="handleRefresh" />
     <!--   告警确认弹窗-->
-    <WarnConfirmDialog
-      ref="warnDialogRef"
-      @success="handleRefresh"
-    />
+    <WarnConfirmDialog ref="warnDialogRef" @success="handleRefresh" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -466,7 +459,7 @@ defineExpose({
           @click="handleOpenCardDetail(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.cardName }}
         </el-text>
@@ -475,7 +468,7 @@ defineExpose({
       <template #statusName="{ row }">
         <ElTag
           :type="getStockControlStatusTagType(row.status)"
-          style="cursor: pointer;"
+          style="cursor: pointer"
           @click="handleFilterByStatus(row.status)"
         >
           {{ row.statusName }}
@@ -483,7 +476,14 @@ defineExpose({
       </template>
       <!-- 更新时间 - 格式化显示 -->
       <template #updateTime="{ row }">
-        <span>{{ row.updateTime ? formatDate(new Date(Number(row.updateTime)), 'YYYY-MM-DD HH:mm:ss') : '' }}</span>
+        <span>{{
+          row.updateTime
+            ? formatDate(
+                new Date(Number(row.updateTime)),
+                'YYYY-MM-DD HH:mm:ss',
+              )
+            : ''
+        }}</span>
       </template>
       <!-- 调配记录 - 点击跳转调配明细 -->
       <template #allocateCount="{ row }">
@@ -491,7 +491,7 @@ defineExpose({
           @click="handleOpenAllocateDetail(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.allocateCount }}
         </el-text>
@@ -502,7 +502,7 @@ defineExpose({
           @click="handleOpenReplenishDetail(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.replenishCount }}
         </el-text>
@@ -511,7 +511,7 @@ defineExpose({
       <template #warnStatusName="{ row }">
         <ElTag
           :type="getStockControlWarnStatusTagType(row.warnStatus)"
-          style="cursor: pointer;"
+          style="cursor: pointer"
           @click="handleFilterByWarnStatus(row.warnStatus)"
         >
           {{ row.warnStatusName }}
@@ -519,7 +519,11 @@ defineExpose({
       </template>
       <!-- 同步时间 - 格式化显示 -->
       <template #syncTime="{ row }">
-        <span>{{ row.syncTime ? formatDate(new Date(Number(row.syncTime)), 'YYYY-MM-DD HH:mm:ss') : '-' }}</span>
+        <span>{{
+          row.syncTime
+            ? formatDate(new Date(Number(row.syncTime)), 'YYYY-MM-DD HH:mm:ss')
+            : '-'
+        }}</span>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
@@ -588,7 +592,12 @@ defineExpose({
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：库存管控数量: {{ dataObj.list.length }}; 正常库存: {{ dataObj.list.filter((v) => v.status === '0').length }}; 低库存: {{ dataObj.list.filter((v) => v.status === '1').length }}; 预警库存: {{ dataObj.list.filter((v) => v.status === '2').length }} </span>
+          <span>
+            本页统计：库存管控数量: {{ dataObj.list.length }}; 正常库存:
+            {{ dataObj.list.filter((v) => v.status === '0').length }}; 低库存:
+            {{ dataObj.list.filter((v) => v.status === '1').length }}; 预警库存:
+            {{ dataObj.list.filter((v) => v.status === '2').length }}
+          </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span> {{ textObj.total }} </span>

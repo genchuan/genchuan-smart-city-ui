@@ -1,24 +1,22 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { useVbenDrawer } from '@vben/common-ui';
 
 import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { $t } from '#/locales';
-import { exportToExcel } from '#/utils/excel.js';
-
 import {
   createCycleReport,
   exportCycleReport,
   getCycleReportDetail,
   getCycleReportPage,
 } from '#/api/genchuan/industry/chargePark/marketOp/decisionAnalysis/marketOpReport';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import { $t } from '#/locales';
+import { exportToExcel } from '#/utils/excel.js';
 
 import {
   dataList,
@@ -232,29 +230,48 @@ const getTableData = async (pageObj) => {
     };
 
     // 处理统计时段
-    if (dataObj.searchParams.statTimeRange && dataObj.searchParams.statTimeRange.length === 2) {
+    if (
+      dataObj.searchParams.statTimeRange &&
+      dataObj.searchParams.statTimeRange.length === 2
+    ) {
       params.statStartTime = dataObj.searchParams.statTimeRange[0];
       params.statEndTime = dataObj.searchParams.statTimeRange[1];
     }
 
     // 处理生成时间
-    if (dataObj.searchParams.generateTimeRange && dataObj.searchParams.generateTimeRange.length === 2) {
+    if (
+      dataObj.searchParams.generateTimeRange &&
+      dataObj.searchParams.generateTimeRange.length === 2
+    ) {
       params.generateStartTime = dataObj.searchParams.generateTimeRange[0];
       params.generateEndTime = dataObj.searchParams.generateTimeRange[1];
     }
 
     // 处理数值范围筛选
     const rangeFields = [
-      'activityCount', 'joinUserCount', 'lotteryCount', 'couponSendCount',
-      'cardOrderCount', 'revenue', 'exchangeCount', 'totalStock', 'warnStockCount'
+      'activityCount',
+      'joinUserCount',
+      'lotteryCount',
+      'couponSendCount',
+      'cardOrderCount',
+      'revenue',
+      'exchangeCount',
+      'totalStock',
+      'warnStockCount',
     ];
     rangeFields.forEach((field) => {
       const minKey = `${field}Min`;
       const maxKey = `${field}Max`;
-      if (dataObj.searchParams[minKey] !== undefined && dataObj.searchParams[minKey] !== null) {
+      if (
+        dataObj.searchParams[minKey] !== undefined &&
+        dataObj.searchParams[minKey] !== null
+      ) {
         params[minKey] = dataObj.searchParams[minKey];
       }
-      if (dataObj.searchParams[maxKey] !== undefined && dataObj.searchParams[maxKey] !== null) {
+      if (
+        dataObj.searchParams[maxKey] !== undefined &&
+        dataObj.searchParams[maxKey] !== null
+      ) {
         params[maxKey] = dataObj.searchParams[maxKey];
       }
     });
@@ -287,10 +304,20 @@ const useLocalData = (page) => {
     Object.keys(dataObj.searchParams).forEach((key) => {
       const value = dataObj.searchParams[key];
       if (value !== undefined && value !== null && value !== '') {
-        if (key === 'statTimeRange' && Array.isArray(value) && value.length === 2) {
-          searchMatch = searchMatch && v.statTime.includes(value[0].split(' ')[0]);
-        } else if (key === 'generateTimeRange' && Array.isArray(value) && value.length === 2) {
-          searchMatch = searchMatch && v.generateTime.includes(value[0].split(' ')[0]);
+        if (
+          key === 'statTimeRange' &&
+          Array.isArray(value) &&
+          value.length === 2
+        ) {
+          searchMatch =
+            searchMatch && v.statTime.includes(value[0].split(' ')[0]);
+        } else if (
+          key === 'generateTimeRange' &&
+          Array.isArray(value) &&
+          value.length === 2
+        ) {
+          searchMatch =
+            searchMatch && v.generateTime.includes(value[0].split(' ')[0]);
         } else if (key.endsWith('Min')) {
           const field = key.replace('Min', '');
           searchMatch = searchMatch && v[field] >= value;
@@ -408,65 +435,107 @@ const handleStatsFilter = (type, value) => {
   dataObj.searchParams = {};
 
   switch (type) {
-    case 'card':
-      // 卡片钻取 - 根据卡片类型筛选
-      if (value === 'activityCount') {
-        console.log('钻取：活动数卡片');
-        ElMessage.info('已筛选活动数相关报表');
-      } else if (value === 'joinUserCount') {
-        console.log('钻取：参与用户数卡片');
-        ElMessage.info('已筛选参与用户数相关报表');
-      } else if (value === 'lotteryCount') {
-        console.log('钻取：抽奖量卡片');
-        ElMessage.info('已筛选抽奖量相关报表');
-      } else if (value === 'winningRate') {
-        console.log('钻取：中奖率卡片');
-        ElMessage.info('已筛选中奖率相关报表');
-      } else if (value === 'couponSendCount') {
-        console.log('钻取：优惠券发放量卡片');
-        ElMessage.info('已筛选优惠券发放量相关报表');
-      } else if (value === 'couponVerifyRate') {
-        console.log('钻取：核销率卡片');
-        ElMessage.info('已筛选核销率相关报表');
-      } else if (value === 'cardOrderCount') {
-        console.log('钻取：卡种订单量卡片');
-        ElMessage.info('已筛选卡种订单量相关报表');
-      } else if (value === 'revenue') {
-        console.log('钻取：营收卡片');
-        ElMessage.info('已筛选营收相关报表');
-      } else if (value === 'exchangeCount') {
-        console.log('钻取：兑换量卡片');
-        ElMessage.info('已筛选兑换量相关报表');
-      } else if (value === 'totalStock') {
-        console.log('钻取：总库存卡片');
-        ElMessage.info('已筛选总库存相关报表');
-      } else if (value === 'warnStockCount') {
-        console.log('钻取：预警库存数卡片');
-        ElMessage.info('已筛选预警库存数相关报表');
-      }
-      break;
-    case 'pie':
-      // 饼图钻取 - 根据规则类型筛选
-      if (value) {
-        console.log('钻取：规则类型', value);
-        ElMessage.info(`已筛选规则类型：${value}`);
-      }
-      break;
-    case 'bar':
+    case 'bar': {
       // 柱状图钻取 - 根据活动类型筛选
       if (value) {
         console.log('钻取：活动类型', value);
         ElMessage.info(`已筛选活动类型：${value}`);
       }
       break;
-    case 'line':
+    }
+    case 'card': {
+      // 卡片钻取 - 根据卡片类型筛选
+      switch (value) {
+        case 'activityCount': {
+          console.log('钻取：活动数卡片');
+          ElMessage.info('已筛选活动数相关报表');
+
+          break;
+        }
+        case 'cardOrderCount': {
+          console.log('钻取：卡种订单量卡片');
+          ElMessage.info('已筛选卡种订单量相关报表');
+
+          break;
+        }
+        case 'couponSendCount': {
+          console.log('钻取：优惠券发放量卡片');
+          ElMessage.info('已筛选优惠券发放量相关报表');
+
+          break;
+        }
+        case 'couponVerifyRate': {
+          console.log('钻取：核销率卡片');
+          ElMessage.info('已筛选核销率相关报表');
+
+          break;
+        }
+        case 'exchangeCount': {
+          console.log('钻取：兑换量卡片');
+          ElMessage.info('已筛选兑换量相关报表');
+
+          break;
+        }
+        case 'joinUserCount': {
+          console.log('钻取：参与用户数卡片');
+          ElMessage.info('已筛选参与用户数相关报表');
+
+          break;
+        }
+        case 'lotteryCount': {
+          console.log('钻取：抽奖量卡片');
+          ElMessage.info('已筛选抽奖量相关报表');
+
+          break;
+        }
+        case 'revenue': {
+          console.log('钻取：营收卡片');
+          ElMessage.info('已筛选营收相关报表');
+
+          break;
+        }
+        case 'totalStock': {
+          console.log('钻取：总库存卡片');
+          ElMessage.info('已筛选总库存相关报表');
+
+          break;
+        }
+        case 'warnStockCount': {
+          console.log('钻取：预警库存数卡片');
+          ElMessage.info('已筛选预警库存数相关报表');
+
+          break;
+        }
+        case 'winningRate': {
+          console.log('钻取：中奖率卡片');
+          ElMessage.info('已筛选中奖率相关报表');
+
+          break;
+        }
+        // No default
+      }
+      break;
+    }
+    case 'line': {
       // 折线图钻取 - 根据日期筛选
       if (value) {
-        dataObj.searchParams.statTimeRange = [value + ' 00:00:00', value + ' 23:59:59'];
+        dataObj.searchParams.statTimeRange = [
+          `${value} 00:00:00`,
+          `${value} 23:59:59`,
+        ];
         console.log('钻取：日期', value);
         ElMessage.info(`已筛选日期：${value}`);
       }
       break;
+    }
+    case 'pie': {
+      // 饼图钻取 - 根据规则类型筛选
+      if (value) {
+        console.log('钻取：规则类型', value);
+        ElMessage.info(`已筛选规则类型：${value}`);
+      }
+      break;
+    }
   }
 
   // 刷新表格
@@ -513,7 +582,11 @@ defineExpose({
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="生成报表" icon-name="Plus" @click="handleCreate" />
+          <IconButton
+            content="生成报表"
+            icon-name="Plus"
+            @click="handleCreate"
+          />
           <IconButton
             content="导出"
             icon-name="download"
@@ -552,7 +625,10 @@ defineExpose({
         <ElTag
           :type="getReportCycleTagType(row.reportCycle)"
           style="cursor: pointer"
-          @click="dataObj.searchParams.reportCycle = row.reportCycle; handleRefresh()"
+          @click="
+            dataObj.searchParams.reportCycle = row.reportCycle;
+            handleRefresh();
+          "
         >
           {{ row.reportCycle }}
         </ElTag>
@@ -561,7 +637,7 @@ defineExpose({
       <!-- 活动数 - 点击钻取 -->
       <template #activityCount="{ row }">
         <span
-          style="cursor: pointer; color: #409eff"
+          style="color: #409eff; cursor: pointer"
           @click="handleStatsFilter('card', 'activityCount')"
         >
           {{ row.activityCount }}
@@ -571,7 +647,7 @@ defineExpose({
       <!-- 参与用户数 - 点击钻取 -->
       <template #joinUserCount="{ row }">
         <span
-          style="cursor: pointer; color: #409eff"
+          style="color: #409eff; cursor: pointer"
           @click="handleStatsFilter('card', 'joinUserCount')"
         >
           {{ row.joinUserCount }}
@@ -581,7 +657,7 @@ defineExpose({
       <!-- 抽奖量 - 点击钻取 -->
       <template #lotteryCount="{ row }">
         <span
-          style="cursor: pointer; color: #409eff"
+          style="color: #409eff; cursor: pointer"
           @click="handleStatsFilter('card', 'lotteryCount')"
         >
           {{ row.lotteryCount }}
@@ -591,7 +667,7 @@ defineExpose({
       <!-- 中奖率 - 点击钻取 -->
       <template #winningRate="{ row }">
         <span
-          style="cursor: pointer; color: #409eff"
+          style="color: #409eff; cursor: pointer"
           @click="handleStatsFilter('card', 'winningRate')"
         >
           {{ row.winningRate }}
@@ -601,7 +677,7 @@ defineExpose({
       <!-- 优惠券发放量 - 点击钻取 -->
       <template #couponSendCount="{ row }">
         <span
-          style="cursor: pointer; color: #409eff"
+          style="color: #409eff; cursor: pointer"
           @click="handleStatsFilter('card', 'couponSendCount')"
         >
           {{ row.couponSendCount }}
@@ -611,7 +687,7 @@ defineExpose({
       <!-- 核销率 - 点击钻取 -->
       <template #couponVerifyRate="{ row }">
         <span
-          style="cursor: pointer; color: #409eff"
+          style="color: #409eff; cursor: pointer"
           @click="handleStatsFilter('card', 'couponVerifyRate')"
         >
           {{ row.couponVerifyRate }}
@@ -621,7 +697,7 @@ defineExpose({
       <!-- 卡种订单量 - 点击钻取 -->
       <template #cardOrderCount="{ row }">
         <span
-          style="cursor: pointer; color: #409eff"
+          style="color: #409eff; cursor: pointer"
           @click="handleStatsFilter('card', 'cardOrderCount')"
         >
           {{ row.cardOrderCount }}
@@ -631,7 +707,7 @@ defineExpose({
       <!-- 营收 - 点击钻取 -->
       <template #revenue="{ row }">
         <span
-          style="cursor: pointer; color: #409eff"
+          style="color: #409eff; cursor: pointer"
           @click="handleStatsFilter('card', 'revenue')"
         >
           ¥{{ row.revenue?.toFixed(2) }}
@@ -641,7 +717,7 @@ defineExpose({
       <!-- 兑换量 - 点击钻取 -->
       <template #exchangeCount="{ row }">
         <span
-          style="cursor: pointer; color: #409eff"
+          style="color: #409eff; cursor: pointer"
           @click="handleStatsFilter('card', 'exchangeCount')"
         >
           {{ row.exchangeCount }}
@@ -651,7 +727,7 @@ defineExpose({
       <!-- 总库存 - 点击钻取 -->
       <template #totalStock="{ row }">
         <span
-          style="cursor: pointer; color: #409eff"
+          style="color: #409eff; cursor: pointer"
           @click="handleStatsFilter('card', 'totalStock')"
         >
           {{ row.totalStock }}
@@ -661,7 +737,7 @@ defineExpose({
       <!-- 预警库存数 - 点击钻取 -->
       <template #warnStockCount="{ row }">
         <span
-          style="cursor: pointer; color: #f56c6c"
+          style="color: #f56c6c; cursor: pointer"
           @click="handleStatsFilter('card', 'warnStockCount')"
         >
           {{ row.warnStockCount }}
@@ -678,8 +754,11 @@ defineExpose({
       <!-- 操作人 - 点击筛选 -->
       <template #operator="{ row }">
         <span
-          style="cursor: pointer; color: #409eff"
-          @click="dataObj.searchParams.operator = row.operator; handleRefresh()"
+          style="color: #409eff; cursor: pointer"
+          @click="
+            dataObj.searchParams.operator = row.operator;
+            handleRefresh();
+          "
         >
           {{ row.operator }}
         </span>

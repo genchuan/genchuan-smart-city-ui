@@ -2,9 +2,6 @@
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { DICT_TYPE } from '@vben/constants';
-import { getDictObj, getDictOptions } from '@vben/hooks';
-import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
@@ -14,12 +11,8 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   createCouponMgmt,
   exportCouponMgmt,
-  getCouponMgmtDetail,
   getCouponMgmtPage,
-  resendCouponMgmt,
-  sendCouponMgmt,
   updateCouponMgmt,
-  verifyCouponMgmt,
 } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
@@ -154,7 +147,7 @@ async function handleExport() {
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = textObj.excelAllName;
-    document.body.appendChild(link);
+    document.body.append(link);
     link.click();
     link.remove();
     ElMessage.success('导出成功');
@@ -290,25 +283,37 @@ const getTableData = async (pageObj) => {
     };
 
     // 处理有效期范围
-    if (dataObj.searchParams.validTime && dataObj.searchParams.validTime.length === 2) {
+    if (
+      dataObj.searchParams.validTime &&
+      dataObj.searchParams.validTime.length === 2
+    ) {
       queryParams.validTimeStart = dataObj.searchParams.validTime[0];
       queryParams.validTimeEnd = dataObj.searchParams.validTime[1];
     }
 
     // 处理创建时间范围
-    if (dataObj.searchParams.createTime && dataObj.searchParams.createTime.length === 2) {
+    if (
+      dataObj.searchParams.createTime &&
+      dataObj.searchParams.createTime.length === 2
+    ) {
       queryParams.createTimeStart = dataObj.searchParams.createTime[0];
       queryParams.createTimeEnd = dataObj.searchParams.createTime[1];
     }
 
     // 处理发放时间范围
-    if (dataObj.searchParams.sendTime && dataObj.searchParams.sendTime.length === 2) {
+    if (
+      dataObj.searchParams.sendTime &&
+      dataObj.searchParams.sendTime.length === 2
+    ) {
       queryParams.sendTimeStart = dataObj.searchParams.sendTime[0];
       queryParams.sendTimeEnd = dataObj.searchParams.sendTime[1];
     }
 
     // 处理核销时间范围
-    if (dataObj.searchParams.verifyTime && dataObj.searchParams.verifyTime.length === 2) {
+    if (
+      dataObj.searchParams.verifyTime &&
+      dataObj.searchParams.verifyTime.length === 2
+    ) {
       queryParams.verifyTimeStart = dataObj.searchParams.verifyTime[0];
       queryParams.verifyTimeEnd = dataObj.searchParams.verifyTime[1];
     }
@@ -345,7 +350,10 @@ const getTableData = async (pageObj) => {
     let searchMatch = true;
     Object.keys(dataObj.searchParams).forEach((key) => {
       const value = dataObj.searchParams[key];
-      if (value && !['validTime', 'createTime', 'sendTime', 'verifyTime'].includes(key)) {
+      if (
+        value &&
+        !['createTime', 'sendTime', 'validTime', 'verifyTime'].includes(key)
+      ) {
         searchMatch =
           typeof value === 'string'
             ? searchMatch && v[key]?.toString().includes(value)
@@ -472,20 +480,31 @@ const handleReceiverClick = (row) => {
 
 /** 处理统计组件的钻取筛选 */
 function handleStatsFilter(filterSource, filterValue) {
-  if (filterSource === 'type') {
-    // 点击柱状图 - 按券类型筛选
-    dataObj.searchParams = { ...dataObj.searchParams, type: filterValue };
-    gridApi.query();
-  } else if (filterSource === 'date') {
-    // 点击折线图 - 按日期筛选
-    ElMessage.info(`筛选日期: ${filterValue}`);
-  } else if (filterSource === 'card') {
-    // 点击卡片
-    if (filterValue === 'send') {
-      ElMessage.info('按发放量筛选');
-    } else if (filterValue === 'verify') {
-      ElMessage.info('按核销率筛选');
+  switch (filterSource) {
+    case 'card': {
+      // 点击卡片
+      if (filterValue === 'send') {
+        ElMessage.info('按发放量筛选');
+      } else if (filterValue === 'verify') {
+        ElMessage.info('按核销率筛选');
+      }
+
+      break;
     }
+    case 'date': {
+      // 点击折线图 - 按日期筛选
+      ElMessage.info(`筛选日期: ${filterValue}`);
+
+      break;
+    }
+    case 'type': {
+      // 点击柱状图 - 按券类型筛选
+      dataObj.searchParams = { ...dataObj.searchParams, type: filterValue };
+      gridApi.query();
+
+      break;
+    }
+    // No default
   }
 }
 
@@ -516,15 +535,9 @@ const handleFullShow = () => {
       :fields="detailFields"
     />
     <!-- 导入弹窗 -->
-    <ImportExcelDialog
-      ref="importExcelDialogRef"
-      @success="handleRefresh"
-    />
+    <ImportExcelDialog ref="importExcelDialogRef" @success="handleRefresh" />
     <!-- 发放弹窗 -->
-    <SendCouponDialog
-      ref="sendCouponDialogRef"
-      @success="handleRefresh"
-    />
+    <SendCouponDialog ref="sendCouponDialogRef" @success="handleRefresh" />
     <!-- 核销确认弹窗 -->
     <VerifyConfirmDialog
       ref="verifyConfirmDialogRef"
@@ -570,11 +583,7 @@ const handleFullShow = () => {
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton
-            content="导入"
-            icon-name="Upload"
-            @click="handleImport"
-          />
+          <IconButton content="导入" icon-name="Upload" @click="handleImport" />
           <IconButton
             content="导出"
             icon-name="download"
@@ -603,30 +612,30 @@ const handleFullShow = () => {
           @click="handleNameClick(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.name }}
         </el-text>
       </template>
       <!-- 券类型插槽 - 点击筛选同类型 -->
       <template #type="{ row }">
-        <el-tag
+        <ElTag
           :type="getCouponTypeTagType(row.type)"
-          style="cursor: pointer;"
+          style="cursor: pointer"
           @click="handleTypeClick(row)"
         >
           {{ getCouponTypeLabel(row.type) }}
-        </el-tag>
+        </ElTag>
       </template>
       <!-- 券状态插槽 - 点击筛选同状态 -->
       <template #status="{ row }">
-        <el-tag
+        <ElTag
           :type="getCouponStatusTagType(row.status)"
-          style="cursor: pointer;"
+          style="cursor: pointer"
           @click="handleStatusClick(row)"
         >
           {{ getCouponStatusLabel(row.status) }}
-        </el-tag>
+        </ElTag>
       </template>
       <!-- 发放人插槽 - 点击跳转操作人员详情 -->
       <template #senderName="{ row }">
@@ -634,7 +643,7 @@ const handleFullShow = () => {
           v-if="row.senderName"
           @click="handleSenderClick(row)"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.senderName }}
         </el-text>
@@ -646,7 +655,7 @@ const handleFullShow = () => {
           v-if="row.receiverName"
           @click="handleReceiverClick(row)"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.receiverName }}
         </el-text>
