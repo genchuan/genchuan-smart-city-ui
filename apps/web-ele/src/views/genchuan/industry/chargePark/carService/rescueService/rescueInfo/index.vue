@@ -17,6 +17,7 @@ const tabArray = ref([
     components: Table,
     showSecondary: true,
     secondShow: false,
+    arrowShow: true,          // 控制图表显隐
   },
 ]);
 
@@ -25,6 +26,13 @@ const secondShow = ref(false);
 
 const tabChange = () => {};
 
+// 切换图表显隐
+const arrowChange = () => {
+  tabArray.value.forEach((v) => {
+    v.arrowShow = !v.arrowShow;
+  });
+};
+
 const handleChartRefresh = (filters) => {
   window.dispatchEvent(new CustomEvent('rescue-chart-refresh', { detail: filters }));
 };
@@ -32,7 +40,7 @@ const handleChartRefresh = (filters) => {
 
 <template>
   <div class="common-index">
-    <RescueChart @refresh="handleChartRefresh" />
+    <RescueChart v-if="tabArray[0].arrowShow" @refresh="handleChartRefresh" />
     <div class="icon-change">
       <el-icon class="tabel-tab-icon" v-if="secondShow" @click="changeArrowStatus"><ArrowDown /></el-icon>
       <el-icon class="tabel-tab-icon" v-if="!secondShow" @click="changeArrowStatus"><ArrowUp /></el-icon>
@@ -42,7 +50,13 @@ const handleChartRefresh = (filters) => {
         <template #label>
           <div class="table-first"><span>{{ item.label }}</span></div>
         </template>
-        <component :is="item.components" :second-show="item.secondShow" :key="item.label" />
+        <component
+          :is="item.components"
+          :second-show="item.secondShow"
+          :arrow-show="item.arrowShow"
+          @arrow-change="arrowChange"
+          :key="item.label"
+        />
       </el-tab-pane>
     </el-tabs>
   </div>

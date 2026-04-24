@@ -19,8 +19,6 @@
           <div class="card-value" :style="{ color: '#67c23a' }">{{ avgResponseDuration }} ms</div>
         </div>
       </div>
-      <div class="stat-card-placeholder"></div>
-      <div class="stat-card-placeholder"></div>
     </div>
 
     <div class="right-section">
@@ -48,7 +46,7 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import * as echarts from 'echarts';
 import { ElMessage } from 'element-plus';
-import MapComponent from '#/views/genchuan/industry/chargePark/carService/Mapindex.vue';
+import MapComponent from './Mapindex.vue';
 import { getChargeParkMapChart } from '#/api/genchuan/industry/chargePark/carService/carGuide/chargeParkMap/index.js';
 
 const emit = defineEmits(['refresh']);
@@ -59,61 +57,29 @@ const mapConfig = {
   markerIcons: { normal: '/static/imgs/marker-green.png' },
   statusIconMap: { 空闲: 'normal', 占用: 'red', 故障: 'yellow' },
   statusKeyMap: { 空闲: 'normal', 占用: 'red', 故障: 'yellow' },
-  // 修改信息窗配置，使用生成的字段
   infoWindowConfig: {
     title: 'stationName',
     fields: [
       { key: 'stationName', label: '场站名称' },
       { key: 'address', label: '地址' },
       { key: 'statusName', label: '车位状态' },
+      { key: 'emptySpace', label: '空闲车位数' },
     ],
   },
 };
 
 const heatmapChartRef = ref(null);
 let heatmapChart = null;
-let currentHeatmapData = [];
+let currentHeatmapPoints = [];
 const querySuccessRate = ref(0);
 const avgResponseDuration = ref(0);
-
-// 将热力点数据转换为网格热力图
-const convertToHeatmapGrid = (points) => {
-  if (!points || !points.length) return { gridData: [], bounds: null };
-  let minLon = Infinity, maxLon = -Infinity, minLat = Infinity, maxLat = -Infinity;
-  points.forEach(p => {
-    minLon = Math.min(minLon, p.lon);
-    maxLon = Math.max(maxLon, p.lon);
-    minLat = Math.min(minLat, p.lat);
-    maxLat = Math.max(maxLat, p.lat);
-  });
-  const lngSpan = maxLon - minLon;
-  const latSpan = maxLat - minLat;
-  const targetGrids = 15;
-  const gridSizeLon = Math.max(lngSpan / targetGrids, 0.01);
-  const gridSizeLat = Math.max(latSpan / targetGrids, 0.01);
-
-  const gridMap = new Map();
-  points.forEach(p => {
-    const x = Math.floor((p.lon - minLon) / gridSizeLon);
-    const y = Math.floor((p.lat - minLat) / gridSizeLat);
-    const key = `${x},${y}`;
-    gridMap.set(key, (gridMap.get(key) || 0) + 1);
-  });
-
-  const gridData = [];
-  for (let [key, count] of gridMap.entries()) {
-    const [x, y] = key.split(',').map(Number);
-    gridData.push({ x, y, value: count });
-  }
-  return { gridData, bounds: { minLon, maxLon, minLat, maxLat, gridSizeLon, gridSizeLat } };
-};
 
 // 渲染热力图
 const renderHeatmap = () => {
   if (!heatmapChartRef.value) return;
   if (heatmapChart) heatmapChart.dispose();
 
-  if (!currentHeatmapData.length) {
+  if (!currentHeatmapPoints.length) {
     heatmapChart = echarts.init(heatmapChartRef.value);
     heatmapChart.setOption({
       title: { text: '暂无热力图数据', left: 'center', top: 'center' },
@@ -124,49 +90,89 @@ const renderHeatmap = () => {
     return;
   }
 
-  const { gridData, bounds } = convertToHeatmapGrid(currentHeatmapData);
-  if (!gridData.length) return;
+  let minLon = Infinity, maxLon = -Infinity, minLat = Infinity, maxLat = -Infinity;
+  currentHeatmapPoints.forEach(p => {
+    minLon = Math.min(minLon, p.lon);
+    maxLon = Math.max(maxLon, p.lon);
+    minLat = Math.min(minLat, p.lat);
+    maxLat = Math.max(maxLat, p.lat);
+  });
 
-  const xAxisData = [...new Set(gridData.map(d => d.x))].sort((a, b) => a - b);
-  const yAxisData = [...new Set(gridData.map(d => d.y))].sort((a, b) => a - b);
-  const data = gridData.map(d => [d.x, d.y, d.value]);
-  const maxValue = Math.max(...gridData.map(d => d.value), 1);
+  const lonMargin = (maxLon - minLon) * 0.1;
+  const latMargin = (maxLat - minLat) * 0.1;
+  minLon -= lonMargin;
+  maxLon += lonMargin;
+  minLat -= latMargin;
+  maxLat += latMargin;
+
+  const gridSize = 40;
+  const stepX = (maxLon - minLon) / gridSize;
+  const stepY = (maxLat - minLat) / gridSize;
+
+  const gridData = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
+
+  currentHeatmapPoints.forEach(p => {
+    const x = Math.floor((p.lon - minLon) / stepX);
+    const y = Math.floor((p.lat - minLat) / stepY);
+    if (x >= 0 && x < gridSize && y >= 0 && y < gridSize) {
+      gridData[y][x] += p.value || 1;
+    }
+  });
+
+  const seriesData = [];
+  let maxValue = 0;
+  for (let i = 0; i < gridSize; i++) {
+    for (let j = 0; j < gridSize; j++) {
+      const val = gridData[i][j];
+      if (val > 0) {
+        seriesData.push([j, i, val]);
+        maxValue = Math.max(maxValue, val);
+      }
+    }
+  }
+
+  const xAxisData = Array.from({ length: gridSize }, (_, i) => (minLon + i * stepX).toFixed(4));
+  const yAxisData = Array.from({ length: gridSize }, (_, i) => (minLat + i * stepY).toFixed(4));
 
   heatmapChart = echarts.init(heatmapChartRef.value);
   heatmapChart.setOption({
     title: { text: '车位使用热力图', left: 'center', top: 0 },
     tooltip: {
       trigger: 'item',
-      formatter: (params) => `网格(${params.value[0]},${params.value[1]})<br/>使用次数: ${params.value[2]}`,
+      formatter: (params) => {
+        if (params.data) {
+          return `经度范围: ${xAxisData[params.data[0]]}<br/>纬度范围: ${yAxisData[params.data[1]]}<br/>热度值: ${params.data[2]}`;
+        }
+        return '';
+      },
     },
     visualMap: {
       min: 0,
-      max: maxValue,
+      max: maxValue || 1,
       calculable: true,
       inRange: { color: ['#50a3ba', '#eac736', '#d94e5d'] },
     },
-    xAxis: { type: 'category', data: xAxisData, name: '经度网格', splitArea: { show: true } },
-    yAxis: { type: 'category', data: yAxisData, name: '纬度网格', splitArea: { show: true } },
+    xAxis: { type: 'category', data: xAxisData, name: '经度', splitArea: { show: true } },
+    yAxis: { type: 'category', data: yAxisData, name: '纬度', splitArea: { show: true } },
     series: [{
       type: 'heatmap',
-      data: data,
+      data: seriesData,
       emphasis: { itemStyle: { borderColor: '#333', borderWidth: 1 } },
     }],
   });
 
-  // 热力图点击：在地图上绘制矩形圈选区域
   heatmapChart.off('click');
   heatmapChart.on('click', (params) => {
-    if (params.data && bounds) {
-      const x = params.data[0];
-      const y = params.data[1];
-      const { minLon, maxLon, minLat, maxLat, gridSizeLon, gridSizeLat } = bounds;
-      const west = minLon + x * gridSizeLon;
-      const east = west + gridSizeLon;
-      const south = minLat + y * gridSizeLat;
-      const north = south + gridSizeLat;
-      const selectedBounds = { north, south, east, west };
-      mapRef.value?.drawBounds(selectedBounds);
+    if (params.data && params.data.length >= 3) {
+      const xIdx = params.data[0];
+      const yIdx = params.data[1];
+      const west = parseFloat(xAxisData[xIdx]);
+      const east = parseFloat(xAxisData[xIdx + 1] || xAxisData[xIdx]);
+      const south = parseFloat(yAxisData[yIdx]);
+      const north = parseFloat(yAxisData[yIdx + 1] || yAxisData[yIdx]);
+      if (!isNaN(west) && !isNaN(east) && !isNaN(south) && !isNaN(north)) {
+        mapRef.value?.drawBounds({ north, south, east, west });
+      }
     }
   });
 };
@@ -175,31 +181,38 @@ const renderHeatmap = () => {
 const fetchChartData = async () => {
   try {
     const res = await getChargeParkMapChart();
-    querySuccessRate.value = (res.querySuccessRate).toFixed(1);
+    querySuccessRate.value = res.querySuccessRate.toFixed(1);
     avgResponseDuration.value = res.avgResponseDuration || 0;
     const stationSpaceList = res.stationSpaceList || [];
     const rawHeatPoints = res.heatMapData || [];
 
-    // 构建地图数据：补充场站名称、地址、状态
-    mapData.value = stationSpaceList.map(item => {
-      // 根据是否有空闲车位判断状态（假设接口返回 hasEmpty 字段，若无则默认为占用）
-      const hasEmpty = item.hasEmpty !== undefined ? item.hasEmpty : false;
-      const statusName = hasEmpty ? '空闲' : '占用';
-      // 生成场站名称和地址（后端未提供时使用 ID 和坐标）
-      const stationName = item.stationName || `场站${item.id}`;
-      const address = item.address || `经度:${item.lon}, 纬度:${item.lat}`;
+    mapData.value = stationSpaceList.map((item, index) => {
+      const emptySpace = item.emptySpace || 0;
+      const statusName = emptySpace > 0 ? '空闲' : '占用';
+      const stationName = item.stationName || `场站${index + 1}`;
+      const id = `station_${index}_${item.lon}_${item.lat}`;
+      const coordinate = `${item.lon},${item.lat}`;
       return {
-        id: item.id,
+        id: id,
+        stationId: id,
         deviceName: stationName,
-        coordinate: `${item.lon},${item.lat}`,
+        coordinate: coordinate,
         statusName,
         stationName,
-        address,
+        address: coordinate, // 地址显示坐标
+        emptySpace,
+        lon: item.lon,
+        lat: item.lat,
         ...item,
       };
     });
 
-    currentHeatmapData = rawHeatPoints;
+    currentHeatmapPoints = rawHeatPoints.map(p => ({
+      lon: p.lon,
+      lat: p.lat,
+      value: p.value !== undefined ? p.value : 1
+    }));
+
     await nextTick();
     renderHeatmap();
   } catch (error) {
@@ -208,19 +221,16 @@ const fetchChartData = async () => {
   }
 };
 
-// 卡片点击
 const handleCardClick = (type) => {
   emit('refresh', { cardType: type });
 };
 
-// 地图标注点击
+// 地图标注点击：不再发送场站ID筛选事件
 const handleMarkerClick = (item) => {
-  if (item?.id) {
-    emit('refresh', { stationId: item.id });
-  }
+  console.log('点击了地图标记点:', item?.stationName);
 };
 
-// 地址定位（供外部调用）
+// 地址定位（支持坐标字符串和地址名称）
 const locateAddress = async (address) => {
   if (!address) {
     ElMessage.warning('地址为空');
@@ -239,7 +249,6 @@ const locateAddress = async (address) => {
     return;
   }
 
-  // 经纬度字符串
   const coordMatch = address.match(/^([+-]?\d+(?:\.\d+)?)\s*,\s*([+-]?\d+(?:\.\d+)?)$/);
   if (coordMatch) {
     const lng = parseFloat(coordMatch[1]);
@@ -247,12 +256,12 @@ const locateAddress = async (address) => {
     if (!isNaN(lng) && !isNaN(lat)) {
       mapRef.value.setCenter([lng, lat]);
       mapRef.value.setZoom(15);
+      mapRef.value.addTempMarker(lng, lat, `查询位置: ${address}`);
       ElMessage.success(`已定位到坐标：${lng}, ${lat}`);
       return;
     }
   }
 
-  // 从地图数据中查找
   const normalized = address.trim().toLowerCase();
   const found = mapData.value.find(item => {
     const name = (item.stationName || item.address || '').trim().toLowerCase();
@@ -260,10 +269,15 @@ const locateAddress = async (address) => {
   });
   if (found && found.coordinate) {
     const [lng, lat] = found.coordinate.split(',');
-    mapRef.value.setCenter([parseFloat(lng), parseFloat(lat)]);
-    mapRef.value.setZoom(15);
-    ElMessage.success(`已定位到：${found.stationName || found.address}`);
-    return;
+    const lngNum = parseFloat(lng);
+    const latNum = parseFloat(lat);
+    if (!isNaN(lngNum) && !isNaN(latNum)) {
+      mapRef.value.setCenter([lngNum, latNum]);
+      mapRef.value.setZoom(15);
+      mapRef.value.addTempMarker(lngNum, latNum, found.stationName || found.address);
+      ElMessage.success(`已定位到：${found.stationName || found.address}`);
+      return;
+    }
   }
 
   ElMessage.info(`无法定位“${address}”，请手动查找`);
@@ -277,14 +291,20 @@ const refresh = () => {
   fetchChartData();
 };
 
+const handleResize = () => {
+  heatmapChart?.resize();
+  mapRef.value?.resize();
+};
+
 onMounted(() => {
   fetchChartData();
-  window.addEventListener('resize', () => heatmapChart?.resize());
+  window.addEventListener('resize', handleResize);
   window.addEventListener('charge-park-map-locate', handleLocateEvent);
 });
 
 onUnmounted(() => {
   heatmapChart?.dispose();
+  window.removeEventListener('resize', handleResize);
   window.removeEventListener('charge-park-map-locate', handleLocateEvent);
 });
 
@@ -292,7 +312,6 @@ defineExpose({ refresh, locateAddress });
 </script>
 
 <style scoped>
-/* 样式保持不变，略 */
 .stats-four-visualization {
   display: flex;
   gap: 20px;
@@ -303,11 +322,9 @@ defineExpose({ refresh, locateAddress });
 }
 .cards-section {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto;
+  grid-template-columns: 1fr;
   gap: 12px;
   width: 260px;
-  height: 320px;
   flex-shrink: 0;
 }
 .stat-card {
@@ -315,7 +332,7 @@ defineExpose({ refresh, locateAddress });
   flex-direction: column;
   padding: 12px 14px;
   border-radius: 8px;
-  border-left: 4px solid #4a90e2;
+  border-left: 4px solid;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   cursor: pointer;
 }
@@ -341,25 +358,18 @@ defineExpose({ refresh, locateAddress });
 .card-body {
   flex: 1;
   display: flex;
-  justify-content: center;
-  flex-direction: column;
+  align-items: center;
 }
 .card-value {
   font-size: 22px;
   font-weight: 700;
-}
-.stat-card-placeholder {
-  background: transparent;
-  box-shadow: none;
-  border: none;
-  pointer-events: none;
 }
 .right-section {
   position: relative;
   display: flex;
   flex: 1;
   height: 320px;
-  gap: 20px;
+  gap: 0;               /* 间隔改为 0，地图与热力图紧贴 */
 }
 .map-wrapper {
   position: relative;

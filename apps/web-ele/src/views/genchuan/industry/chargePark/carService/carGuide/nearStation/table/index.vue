@@ -21,6 +21,12 @@
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="筛选" icon-name="search" @click="searchDrawerApi.open()" />
+          <!-- 新增展开/收缩按钮 -->
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
           <IconButton content="刷新" icon-name="refresh" @click="handleRefresh" />
         </div>
       </template>
@@ -83,8 +89,17 @@ import {
 import { useFormSchema, useGridColumns } from './data';
 import DetailDrawer from './detail.vue';
 
-const props = defineProps({ secondShow: Boolean });
-const emit = defineEmits(['refreshChart']);
+// 新增 props 和 emit
+const props = defineProps({
+  secondShow: Boolean,
+  arrowShow: { type: Boolean, default: false },   // 新增
+});
+const emit = defineEmits(['refreshChart', 'arrow-change']); // 新增 arrow-change
+
+// 新增：触发箭头切换事件
+const arrowChange = () => {
+  emit('arrow-change');
+};
 
 // ==================== 用户映射 ====================
 const allUserMap = ref(new Map());

@@ -45,3 +45,7 @@ export async function getUserList() {
     ];
   }
 }
+// 获取用户详情
+export function getUserDetail(userId) {
+  return requestClient.get('/system/user/get', { params: { id: userId } });
+}
