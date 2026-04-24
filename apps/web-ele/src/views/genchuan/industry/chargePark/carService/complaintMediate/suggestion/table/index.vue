@@ -1,3 +1,109 @@
+<template>
+  <div class="park-lot-table-new">
+    <Grid>
+      <template #table-title>
+        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+          <el-tag v-for="filter in activeFilters" :key="filter.field" type="primary" closable @close="handleClearField(filter.field)">
+            {{ filter.label }}
+          </el-tag>
+        </div>
+      </template>
+
+      <template #toolbar-tools>
+        <div class="common-toolbar-tools">
+          <IconButton content="导出" icon-name="download" @click="handleExport" />
+          <IconButton content="搜索" icon-name="search" @click="handleSearchShow" />
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+        </div>
+      </template>
+
+      <template #id="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.id }}</el-text>
+      </template>
+      <template #user_name="{ row }">
+        <el-text @click="showUserDetail(row.userId)" type="primary" style="cursor: pointer">
+          {{ getUserName(row.userId) }}
+        </el-text>
+      </template>
+      <template #content="{ row }">
+        <el-text @click="filterByContent(row.content)" type="primary" style="cursor: pointer">
+          {{ row.content }}
+        </el-text>
+      </template>
+      <template #status="{ row }">
+        <el-tag :type="{ 待处理: 'warning', 处理中: 'primary', 已完成: 'success' }[row.status]"
+                @click="filterByStatus(row.status)" style="cursor: pointer">
+          {{ row.status }}
+        </el-tag>
+      </template>
+      <template #handle_user_name="{ row }">
+        <el-text v-if="row.handleUserId" @click="showUserDetail(row.handleUserId)" type="primary" style="cursor: pointer">
+          {{ getUserName(row.handleUserId) }}
+        </el-text>
+        <span v-else>-</span>
+      </template>
+      <template #handleTime="{ row }">
+        <span>{{ row.handleTime || '-' }}</span>
+      </template>
+      <template #progress="{ row }">
+        <span>{{ row.progress || '-' }}</span>
+      </template>
+      <template #feedback_content="{ row }">
+        <span>{{ row.feedbackContent || '-' }}</span>
+      </template>
+
+      <template #actions="{ row }">
+        <div class="table-toolbar-tools">
+          <template v-if="row.status === '待处理'">
+            <IconButton content="处理" icon-name="check" @click="handleProcess(row)" />
+            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
+          </template>
+          <template v-else-if="row.status === '处理中'">
+            <IconButton content="更新进度" icon-name="edit" @click="openUpdateProgress(row)" />
+            <IconButton content="反馈" icon-name="Star" @click="openFeedback(row)" />
+            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
+          </template>
+          <template v-else-if="row.status === '已完成'">
+            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
+          </template>
+        </div>
+      </template>
+    </Grid>
+
+    <SearchDrawer title="搜索">
+      <QueryForm class="query-form" />
+    </SearchDrawer>
+
+    <SuggestionDetailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj" title="意见建议详情" />
+
+    <ProgressDrawer>
+      <el-form :model="progressForm" label-width="100px">
+        <el-form-item label="处理进度" required>
+          <el-input v-model="progressForm.progress" type="textarea" rows="3" placeholder="请填写当前处理进度" />
+        </el-form-item>
+      </el-form>
+    </ProgressDrawer>
+
+    <FeedbackDrawer>
+      <el-form :model="feedbackForm" label-width="100px">
+        <el-form-item label="反馈内容" required>
+          <el-input v-model="feedbackForm.feedbackContent" type="textarea" rows="3" placeholder="请填写反馈内容，完成后状态将变为已完成" />
+        </el-form-item>
+      </el-form>
+    </FeedbackDrawer>
+
+    <el-dialog v-model="userDetailVisible" title="用户详情" width="400px">
+      <p>用户ID：{{ currentUser.id }}</p>
+      <p>用户名称：{{ currentUser.name }}</p>
+    </el-dialog>
+  </div>
+</template>
+
 <script setup>
 import { reactive, ref, onMounted, onUnmounted, computed } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
@@ -19,9 +125,13 @@ import {
 import { useFormSchema, useGridColumns } from './data';
 import SuggestionDetailDrawer from './detail.vue';
 
-const props = defineProps({ secondShow: Boolean });
+const props = defineProps({
+  secondShow: Boolean,
+  arrowShow: { type: Boolean, default: false },
+});
+const emit = defineEmits(['arrow-change']);
+const arrowChange = () => emit('arrow-change');
 
-// 数据状态
 const dataObj = reactive({
   detailObj: {},
   total: 0,
@@ -31,7 +141,6 @@ const dataObj = reactive({
   pageSize: 10,
 });
 
-// ==================== 用户映射表（统一转为字符串） ====================
 const userMap = ref(new Map());
 async function fetchUserMap() {
   try {
@@ -46,7 +155,6 @@ function getUserName(id) {
   return userMap.value.get(String(id)) || String(id);
 }
 
-// ==================== 获取表格数据 ====================
 const getTableData = async (pageObj) => {
   const params = {
     pageNo: pageObj.page.currentPage,
@@ -71,7 +179,6 @@ const getTableData = async (pageObj) => {
     submitTime: formatTimestamp(v.submitTime),
     feedbackTime: formatTimestamp(v.feedbackTime),
     handleTime: formatTimestamp(v.handleTime),
-    // 关键：将反馈内容统一转为字符串，避免 [object Object]
     feedbackContent: v.feedbackContent
       ? (typeof v.feedbackContent === 'object' ? JSON.stringify(v.feedbackContent) : v.feedbackContent)
       : null,
@@ -79,22 +186,12 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-// ==================== 搜索表单 ====================
 const [QueryForm, QueryFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: {
-    componentProps: { class: 'w-full' },
-    formItemClass: 'col-span-2',
-    labelWidth: 100,
-  },
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useFormSchema()
-    .filter(v => v.isSearch)
-    .map(v => {
-      delete v.rules;
-      return v;
-    }),
+  schema: useFormSchema().filter(v => v.isSearch).map(v => { delete v.rules; return v; }),
   showCollapseButton: true,
   submitButtonOptions: { content: '查询' },
   resetButtonOptions: {
@@ -114,13 +211,8 @@ const resetAllFilters = async () => {
 };
 
 async function onSubmit(values, isReset = false) {
-  if (isReset) {
-    await resetAllFilters();
-  } else {
-    dataObj.searchObj = { ...values };
-    dataObj.currentPage = 1;
-    gridApi.query();
-  }
+  if (isReset) await resetAllFilters();
+  else { dataObj.searchObj = { ...values }; dataObj.currentPage = 1; gridApi.query(); }
 }
 
 const handleClearField = async (fieldName) => {
@@ -145,16 +237,11 @@ const activeFilters = computed(() => {
   return filters;
 });
 
-// ==================== 表格组件 ====================
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns({ getUserName }),
     keepSource: true,
-    proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getTableData({ page }),
-      },
-    },
+    proxyConfig: { ajax: { query: async ({ page }) => getTableData({ page }) } },
     rowConfig: { keyField: 'id', isHover: true },
     pagerConfig: dataObj,
     toolbarConfig: { refresh: true, search: true },
@@ -170,7 +257,6 @@ async function handleExport() {
   ElMessage.success('导出成功');
 }
 
-// ==================== 详情抽屉 ====================
 const detailDrawerRef = ref(null);
 const handleOpenDetail = async (row) => {
   const res = await getSuggestionDetail({ id: row.id });
@@ -178,7 +264,6 @@ const handleOpenDetail = async (row) => {
   detailDrawerRef.value.open();
 };
 
-// ==================== 处理（待处理 → 处理中） ====================
 const handleProcess = async (row) => {
   await confirm('确认认领该意见建议吗？认领后状态将变为“处理中”。');
   await handleSuggestion({ id: row.id });
@@ -186,14 +271,10 @@ const handleProcess = async (row) => {
   handleRefresh();
 };
 
-// ==================== 更新进度抽屉 ====================
 const progressForm = reactive({ progress: '' });
 let currentProgressRow = null;
 const [ProgressDrawer, progressDrawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  width: 500,
-  title: '更新处理进度',
+  modal: false, appendToMain: true, width: 500, title: '更新处理进度',
   onCancel: () => progressDrawerApi.close(),
   onConfirm: async () => {
     if (!progressForm.progress) return ElMessage.warning('请填写处理进度');
@@ -209,14 +290,10 @@ const openUpdateProgress = (row) => {
   progressDrawerApi.open();
 };
 
-// ==================== 反馈抽屉（处理中 → 已完成） ====================
 const feedbackForm = reactive({ feedbackContent: '' });
 let currentFeedbackRow = null;
 const [FeedbackDrawer, feedbackDrawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  width: 500,
-  title: '反馈处理结果',
+  modal: false, appendToMain: true, width: 500, title: '反馈处理结果',
   onCancel: () => feedbackDrawerApi.close(),
   onConfirm: async () => {
     if (!feedbackForm.feedbackContent) return ElMessage.warning('请填写反馈内容');
@@ -232,7 +309,6 @@ const openFeedback = (row) => {
   feedbackDrawerApi.open();
 };
 
-// ==================== 钻取筛选 ====================
 const filterByStatus = (status) => {
   dataObj.searchObj.status = status;
   dataObj.currentPage = 1;
@@ -244,7 +320,6 @@ const filterByContent = (content) => {
   gridApi.query();
 };
 
-// ==================== 用户/处理人详情弹窗（非筛选） ====================
 const userDetailVisible = ref(false);
 const currentUser = ref({ id: '', name: '' });
 const showUserDetail = (userId) => {
@@ -253,7 +328,6 @@ const showUserDetail = (userId) => {
   userDetailVisible.value = true;
 };
 
-// ==================== 图表刷新事件 ====================
 const handleChartRefresh = (event) => {
   const filters = event.detail;
   const newSearchObj = { ...dataObj.searchObj };
@@ -269,7 +343,6 @@ const handleChartRefresh = (event) => {
   gridApi.query();
 };
 
-// ==================== 搜索抽屉 & 全屏 ====================
 const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
   modal: false, appendToMain: true, footer: false, width: 500,
   onCancel: () => searchDrawerApi.close(),
@@ -285,127 +358,3 @@ onUnmounted(() => {
   window.removeEventListener('suggestion-chart-refresh', handleChartRefresh);
 });
 </script>
-
-<template>
-  <div class="park-lot-table-new">
-    <Grid>
-      <!-- 筛选标签区 -->
-      <template #table-title>
-        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
-          <el-tag v-for="filter in activeFilters" :key="filter.field" type="primary" closable @close="handleClearField(filter.field)">
-            {{ filter.label }}
-          </el-tag>
-        </div>
-      </template>
-
-      <!-- 工具栏按钮 -->
-      <template #toolbar-tools>
-        <div class="common-toolbar-tools">
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="搜索" icon-name="search" @click="handleSearchShow" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
-        </div>
-      </template>
-
-      <!-- 意见ID：跳转详情抽屉 -->
-      <template #id="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.id }}</el-text>
-      </template>
-
-      <!-- 用户：跳转用户详情弹窗 -->
-      <template #user_name="{ row }">
-        <el-text @click="showUserDetail(row.userId)" type="primary" style="cursor: pointer">
-          {{ getUserName(row.userId) }}
-        </el-text>
-      </template>
-
-      <!-- 意见内容：筛选同内容 -->
-      <template #content="{ row }">
-        <el-text @click="filterByContent(row.content)" type="primary" style="cursor: pointer">
-          {{ row.content }}
-        </el-text>
-      </template>
-
-      <!-- 意见状态：筛选同状态 -->
-      <template #status="{ row }">
-        <el-tag :type="{ 待处理: 'warning', 处理中: 'primary', 已完成: 'success' }[row.status]"
-                @click="filterByStatus(row.status)" style="cursor: pointer">
-          {{ row.status }}
-        </el-tag>
-      </template>
-
-      <!-- 处理人：跳转用户详情弹窗 -->
-      <template #handle_user_name="{ row }">
-        <el-text v-if="row.handleUserId" @click="showUserDetail(row.handleUserId)" type="primary" style="cursor: pointer">
-          {{ getUserName(row.handleUserId) }}
-        </el-text>
-        <span v-else>-</span>
-      </template>
-
-      <!-- 处理时间：直接展示 -->
-      <template #handleTime="{ row }">
-        <span>{{ row.handleTime || '-' }}</span>
-      </template>
-
-      <!-- 处理进度 -->
-      <template #progress="{ row }">
-        <span>{{ row.progress || '-' }}</span>
-      </template>
-
-      <!-- 反馈内容（已转为字符串） -->
-      <template #feedback_content="{ row }">
-        <span>{{ row.feedbackContent || '-' }}</span>
-      </template>
-
-      <!-- 操作按钮（根据状态显示不同按钮组） -->
-      <template #actions="{ row }">
-        <div class="table-toolbar-tools">
-          <template v-if="row.status === '待处理'">
-            <IconButton content="处理" icon-name="check" @click="handleProcess(row)" />
-            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
-          </template>
-          <template v-else-if="row.status === '处理中'">
-            <IconButton content="更新进度" icon-name="edit" @click="openUpdateProgress(row)" />
-            <IconButton content="反馈" icon-name="Star" @click="openFeedback(row)" />
-            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
-          </template>
-          <template v-else-if="row.status === '已完成'">
-            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
-          </template>
-        </div>
-      </template>
-    </Grid>
-
-    <!-- 搜索抽屉 -->
-    <SearchDrawer title="搜索">
-      <QueryForm class="query-form" />
-    </SearchDrawer>
-
-    <!-- 详情抽屉 -->
-    <SuggestionDetailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj" title="意见建议详情" />
-
-    <!-- 更新进度抽屉 -->
-    <ProgressDrawer>
-      <el-form :model="progressForm" label-width="100px">
-        <el-form-item label="处理进度" required>
-          <el-input v-model="progressForm.progress" type="textarea" rows="3" placeholder="请填写当前处理进度" />
-        </el-form-item>
-      </el-form>
-    </ProgressDrawer>
-
-    <!-- 反馈抽屉 -->
-    <FeedbackDrawer>
-      <el-form :model="feedbackForm" label-width="100px">
-        <el-form-item label="反馈内容" required>
-          <el-input v-model="feedbackForm.feedbackContent" type="textarea" rows="3" placeholder="请填写反馈内容，完成后状态将变为已完成" />
-        </el-form-item>
-      </el-form>
-    </FeedbackDrawer>
-
-    <!-- 用户/处理人详情弹窗 -->
-    <el-dialog v-model="userDetailVisible" title="用户详情" width="400px">
-      <p>用户ID：{{ currentUser.id }}</p>
-      <p>用户名称：{{ currentUser.name }}</p>
-    </el-dialog>
-  </div>
-</template>

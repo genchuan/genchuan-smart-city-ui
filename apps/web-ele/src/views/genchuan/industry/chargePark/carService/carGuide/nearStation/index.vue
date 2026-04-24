@@ -17,6 +17,7 @@ const tabArray = ref([
     components: NearStationTable,
     chartComponent: NearStationChart,
     secondShow: false,
+    arrowShow: true,          // 新增：控制图表显隐
   },
 ]);
 
@@ -25,6 +26,13 @@ const secondShow = ref(false);
 const chartRef = ref(null);
 
 const tabChange = () => {};
+
+// 新增：切换图表显隐
+const arrowChange = () => {
+  tabArray.value.forEach((v) => {
+    v.arrowShow = !v.arrowShow;
+  });
+};
 
 const handleChartRefresh = (filters, activeTab) => {
   const eventMap = {
@@ -43,7 +51,9 @@ const refreshChart = () => {
 
 <template>
   <div class="common-index">
+    <!-- 新增：通过 arrowShow 控制图表显隐 -->
     <component
+      v-if="tabArray.find(item => item.label === activeName)?.arrowShow"
       :is="tabArray.find(item => item.label === activeName)?.chartComponent"
       ref="chartRef"
       @refresh="(filters) => handleChartRefresh(filters, activeName)"
@@ -61,9 +71,12 @@ const refreshChart = () => {
         <template #label>
           <div class="table-first"><span>{{ item.label }}</span></div>
         </template>
+        <!-- 新增：传递 arrowShow 并监听 arrow-change 事件 -->
         <component
           :is="item.components"
           :second-show="item.secondShow"
+          :arrow-show="item.arrowShow"
+          @arrow-change="arrowChange"
           :key="item.label"
           @refreshChart="refreshChart"
         />

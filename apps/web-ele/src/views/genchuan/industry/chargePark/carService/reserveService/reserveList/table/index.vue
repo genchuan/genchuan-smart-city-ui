@@ -23,7 +23,18 @@ import {
 import { useFormSchema, useGridColumns } from './data';
 import ReserveDetailDrawer from './detail.vue';
 
-const props = defineProps({ secondShow: Boolean });
+// 新增 props 和 emit
+const props = defineProps({
+  secondShow: Boolean,
+  arrowShow: { type: Boolean, default: false },   // 新增
+});
+const emit = defineEmits(['arrow-change']);         // 新增
+
+// 新增：触发箭头切换事件
+const arrowChange = () => {
+  emit('arrow-change');
+};
+
 const checkedIds = ref([]);
 const handleRowCheckboxChange = ({ records }) => {
   checkedIds.value = records.map((item) => item.id);
@@ -364,6 +375,12 @@ const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
           <IconButton content="批量审核" icon-name="check" :disabled="isEmpty(checkedIds)" @click="openBatchAudit" />
           <IconButton content="导出" icon-name="download" @click="handleExport" />
           <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
+          <!-- 新增展开/收缩按钮 -->
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>

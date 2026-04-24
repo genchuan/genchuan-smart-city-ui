@@ -13,6 +13,7 @@ const tabArray = ref([
     components: markRaw(CycleReportTable),
     showSecondary: true,
     secondShow: false,
+    arrowShow: true,
   },
 ]);
 
@@ -21,15 +22,18 @@ const changeArrowStatus = () => {
   tabArray.value.forEach(v => v.secondShow = secondShow.value);
 };
 
+const arrowChange = () => {
+  tabArray.value.forEach(v => v.arrowShow = !v.arrowShow);
+};
+
 const handleChartRefresh = (filters) => {
-  // 图表钻取时触发，传递给表格组件
   window.dispatchEvent(new CustomEvent('cycle-report-chart-refresh', { detail: filters }));
 };
 </script>
 
 <template>
   <div class="common-index">
-    <CycleReportChart @refresh="handleChartRefresh" />
+    <CycleReportChart v-if="tabArray[0].arrowShow" @refresh="handleChartRefresh" />
     <div class="icon-change">
       <el-icon class="tabel-tab-icon" v-if="secondShow" @click="changeArrowStatus"><ArrowDown /></el-icon>
       <el-icon class="tabel-tab-icon" v-if="!secondShow" @click="changeArrowStatus"><ArrowUp /></el-icon>
@@ -39,7 +43,12 @@ const handleChartRefresh = (filters) => {
         <template #label>
           <div class="table-first"><span>{{ item.label }}</span></div>
         </template>
-        <component :is="item.components" :second-show="item.secondShow" />
+        <component
+          :is="item.components"
+          :second-show="item.secondShow"
+          :arrow-show="item.arrowShow"
+          @arrow-change="arrowChange"
+        />
       </el-tab-pane>
     </el-tabs>
   </div>

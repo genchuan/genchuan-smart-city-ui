@@ -23,10 +23,8 @@
     </div>
 
     <div class="right-section">
-      <div class="map-wrapper" style="width: 100%;">
-        <div class="bar-line-chart-area">
-          <div ref="lineChartRef" class="chart-container"></div>
-        </div>
+      <div class="chart-box">
+        <div ref="lineChartRef" class="chart-container"></div>
       </div>
     </div>
   </div>
@@ -65,9 +63,9 @@ const renderLineChart = () => {
   lineChart = echarts.init(lineChartRef.value);
 
   lineChart.setOption({
-    title: { text: '推送量趋势（近30天）', left: 'center' },
+    title: { text: '推送量趋势（近30天）', left: 'center', top: 10, textStyle: { color: '#6E7E91', fontSize: 14 } },
     tooltip: { trigger: 'axis', formatter: '{b}<br/>推送数量: {c} 条' },
-    xAxis: { type: 'category', data: pushTrendList.value.map(item => item.date), name: '日期' },
+    xAxis: { type: 'category', data: pushTrendList.value.map(item => item.date), name: '日期', axisLabel: { rotate: pushTrendList.value.length > 8 ? 30 : 0 } },
     yAxis: { type: 'value', name: '推送数量' },
     series: [{
       name: '推送量',
@@ -117,24 +115,18 @@ onUnmounted(() => {
   gap: 20px;
   width: 100%;
   min-height: 320px;
-  overflow: hidden;
-  margin-bottom: 20px;
 }
 .cards-section {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto;
+  grid-template-columns: 1fr;
   gap: 12px;
   width: 260px;
-  height: 320px;
   flex-shrink: 0;
 }
 .stat-card {
-  display: flex;
-  flex-direction: column;
   padding: 12px 14px;
   border-radius: 8px;
-  border-left: 4px solid #4a90e2;
+  border-left: 4px solid;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   cursor: pointer;
 }
@@ -160,50 +152,25 @@ onUnmounted(() => {
 .card-body {
   flex: 1;
   display: flex;
-  justify-content: center;
-  flex-direction: column;
+  align-items: center;
 }
 .card-value {
   font-size: 22px;
   font-weight: 700;
 }
-.stat-card-placeholder {
-  background: transparent;
-  box-shadow: none;
-  border: none;
-  pointer-events: none;
-}
 .right-section {
-  position: relative;
-  display: flex;
   flex: 1;
-  height: 320px;
+  min-height: 320px;
 }
-.map-wrapper {
+.chart-box {
   width: 100%;
   height: 100%;
-}
-.charts-section {
-  display: flex;
-  flex: 1;
-  height: 100%;
-  border: 1px solid #ebeef5;
   border-radius: 8px;
-}
-.bar-line-chart-area {
-  flex: 1;
-  height: 100%;
-  width: 100%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 .chart-container {
   width: 100%;
   height: 100%;
-}
-.empty-chart {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: #909399;
 }
 </style>

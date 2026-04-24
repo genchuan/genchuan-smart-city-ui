@@ -1,3 +1,64 @@
+<template>
+  <div class="park-lot-table-new">
+    <Grid>
+      <template #table-title>
+        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+          <el-tag v-for="filter in activeFilters" :key="filter.field" type="primary" closable @close="handleClearField(filter.field)">
+            {{ filter.label }}
+          </el-tag>
+        </div>
+      </template>
+
+      <template #toolbar-tools>
+        <div class="common-toolbar-tools">
+          <IconButton content="导出" icon-name="download" @click="handleExport" />
+          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+        </div>
+      </template>
+
+      <template #id="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.id }}</el-text>
+      </template>
+      <template #user_name="{ row }">
+        <el-text @click="() => { handleClearField('userId'); dataObj.searchObj.userId = row.userId; gridApi.query(); }" type="primary" style="cursor: pointer">
+          {{ getUserName(row.userId) }}
+        </el-text>
+      </template>
+      <template #start_location="{ row }">
+        <el-text @click="handleLocationClick(row, 'start')" type="primary" style="cursor: pointer">
+          {{ row.startLocationName || row.startLocation || '-' }}
+        </el-text>
+      </template>
+      <template #end_location="{ row }">
+        <el-text @click="handleLocationClick(row, 'end')" type="primary" style="cursor: pointer">
+          {{ row.endLocationName || row.endLocation || '-' }}
+        </el-text>
+      </template>
+      <template #path_length="{ row }">
+        <el-text @click="filterByPathLength(row.pathLength)" type="primary" style="cursor: pointer">{{ row.pathLength ? `${row.pathLength}米` : '-' }}</el-text>
+      </template>
+      <template #expect_duration="{ row }">
+        <el-text @click="filterByDuration(row.expectDuration)" type="primary" style="cursor: pointer">{{ row.expectDuration ? `${row.expectDuration}秒` : '-' }}</el-text>
+      </template>
+      <template #actions="{ row }">
+        <div class="table-toolbar-tools">
+          <IconButton content="导航" icon-name="location" @click="handleNavigate(row)" />
+          <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
+        </div>
+      </template>
+    </Grid>
+
+    <SearchDrawer title="搜索"><QueryForm class="query-form" /></SearchDrawer>
+    <PathPlanDetailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj" title="路径规划详情" />
+  </div>
+</template>
+
 <script setup>
 import { reactive, ref, onMounted, onUnmounted, computed } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
@@ -17,7 +78,16 @@ import {
 import { useFormSchema, useGridColumns } from './data';
 import PathPlanDetailDrawer from './detail.vue';
 
-const props = defineProps({ secondShow: Boolean });
+const props = defineProps({
+  secondShow: Boolean,
+  arrowShow: { type: Boolean, default: false },
+});
+const emit = defineEmits(['arrow-change']);
+
+const arrowChange = () => {
+  emit('arrow-change');
+};
+
 const dataObj = reactive({
   detailObj: {},
   total: 0,
@@ -142,7 +212,6 @@ const handleOpenDetail = async (row) => {
   dataObj.detailObj = res;
   detailDrawerRef.value.open();
 
-  // 构造路径点（详情接口可能没有 pathPoints，用起终点构造直线）
   let pathPoints = res.pathPoints;
   let startCoord = res.startCoord;
   let endCoord = res.endCoord;
@@ -188,17 +257,14 @@ const handleNavigate = async (row) => {
   }
 };
 
-// 新增：处理起点/终点点击，同时定位和绘制路径
 const handleLocationClick = (row, type) => {
   const coord = type === 'start' ? row.startLocation : row.endLocation;
   if (!coord) {
     ElMessage.warning('坐标为空');
     return;
   }
-  // 发送定位事件
   window.dispatchEvent(new CustomEvent('locate-address', { detail: coord }));
 
-  // 构造路径点并绘制
   let startCoord = null;
   let endCoord = null;
   let pathPoints = [];
@@ -248,7 +314,6 @@ const filterByDuration = (duration) => {
   gridApi.query();
 };
 
-// 通过起终点坐标查找表格中匹配的记录
 function findRowByCoordinates(startCoord, endCoord) {
   const isSamePoint = (p1, p2) => {
     return Math.abs(p1[0] - p2[0]) < 0.000001 && Math.abs(p1[1] - p2[1]) < 0.000001;
@@ -263,7 +328,6 @@ function findRowByCoordinates(startCoord, endCoord) {
   return null;
 }
 
-// 高亮表格行（兼容 vxe-table）
 function highlightTableRow(rowId) {
   try {
     const gridInstance = gridApi.getGridInstance?.();
@@ -272,7 +336,6 @@ function highlightTableRow(rowId) {
       gridInstance.setCurrentRow(rowId);
       gridInstance.scrollToRow(rowId);
     } else {
-      // 降级方案：通过 DOM 添加高亮样式
       const rows = document.querySelectorAll('.vxe-table--body tbody tr');
       rows.forEach(row => {
         const firstCell = row.querySelector('td:first-child');
@@ -333,58 +396,3 @@ const handleFullShow = () => screenfull.toggle();
 
 const [SearchDrawer, searchDrawerApi] = useVbenDrawer({ modal: false, appendToMain: true, footer: false, width: 500, onCancel: () => searchDrawerApi.close() });
 </script>
-
-<template>
-  <div class="park-lot-table-new">
-    <Grid>
-      <template #table-title>
-        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
-          <el-tag v-for="filter in activeFilters" :key="filter.field" type="primary" closable @close="handleClearField(filter.field)">
-            {{ filter.label }}
-          </el-tag>
-        </div>
-      </template>
-      <template #toolbar-tools>
-        <div class="common-toolbar-tools">
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
-        </div>
-      </template>
-
-      <template #id="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.id }}</el-text>
-      </template>
-      <template #user_name="{ row }">
-        <el-text @click="() => { handleClearField('userId'); dataObj.searchObj.userId = row.userId; gridApi.query(); }" type="primary" style="cursor: pointer">
-          {{ getUserName(row.userId) }}
-        </el-text>
-      </template>
-      <template #start_location="{ row }">
-        <el-text @click="handleLocationClick(row, 'start')" type="primary" style="cursor: pointer">
-          {{ row.startLocationName || row.startLocation || '-' }}
-        </el-text>
-      </template>
-      <template #end_location="{ row }">
-        <el-text @click="handleLocationClick(row, 'end')" type="primary" style="cursor: pointer">
-          {{ row.endLocationName || row.endLocation || '-' }}
-        </el-text>
-      </template>
-      <template #path_length="{ row }">
-        <el-text @click="filterByPathLength(row.pathLength)" type="primary" style="cursor: pointer">{{ row.pathLength ? `${row.pathLength}米` : '-' }}</el-text>
-      </template>
-      <template #expect_duration="{ row }">
-        <el-text @click="filterByDuration(row.expectDuration)" type="primary" style="cursor: pointer">{{ row.expectDuration ? `${row.expectDuration}秒` : '-' }}</el-text>
-      </template>
-      <template #actions="{ row }">
-        <div class="table-toolbar-tools">
-          <IconButton content="导航" icon-name="location" @click="handleNavigate(row)" />
-          <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
-        </div>
-      </template>
-    </Grid>
-
-    <SearchDrawer title="搜索"><QueryForm class="query-form" /></SearchDrawer>
-    <PathPlanDetailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj" title="路径规划详情" />
-  </div>
-</template>

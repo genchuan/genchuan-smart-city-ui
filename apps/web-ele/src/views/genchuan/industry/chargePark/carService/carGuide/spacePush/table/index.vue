@@ -23,6 +23,12 @@
           <IconButton content="筛选" icon-name="search" @click="searchDrawerApi.open()" />
           <IconButton content="导出" icon-name="download" @click="handleExport" />
           <IconButton content="批量推送" icon-name="Promotion" :disabled="selectedIds.length === 0" @click="openBatchPushDialog" />
+          <!-- 新增展开/收缩按钮 -->
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
           <IconButton content="刷新" icon-name="refresh" @click="handleRefresh" />
         </div>
       </template>
@@ -123,7 +129,17 @@ import {
 import { useFormSchema, useGridColumns } from './data';
 import DetailDrawer from './detail.vue';
 
-const props = defineProps({ secondShow: Boolean });
+// 新增 props 和 emit
+const props = defineProps({
+  secondShow: Boolean,
+  arrowShow: { type: Boolean, default: false },   // 新增
+});
+const emit = defineEmits(['arrow-change']);         // 新增
+
+// 新增：触发箭头切换事件
+const arrowChange = () => {
+  emit('arrow-change');
+};
 
 // ==================== 用户映射 ====================
 const allUserMap = ref(new Map());       // userId -> userName
@@ -464,28 +480,3 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped>
-.detail-card {
-  padding: 20px;
-  background-color: #f9fafb;
-  border-radius: 8px;
-  min-height: 200px;
-}
-.detail-card-row {
-  display: flex;
-  align-items: flex-start;
-  padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-.detail-row-left {
-  width: 100px;
-  flex-shrink: 0;
-  font-weight: 500;
-  color: #606266;
-}
-.detail-row-right {
-  flex: 1;
-  color: #303133;
-  word-break: break-all;
-}
-</style>

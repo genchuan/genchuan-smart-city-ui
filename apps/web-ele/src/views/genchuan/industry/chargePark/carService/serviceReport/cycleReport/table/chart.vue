@@ -47,7 +47,6 @@ const mapOptions = computed(() => {
   return chartData.mapData.map(item => ({ label: item.name, value: item.name }));
 });
 
-// 地图数据映射
 const currentMapData = computed(() => {
   const raw = chartData.mapData[mapIndex.value] || { name: '', data: [] };
   const mappedData = (raw.data || [])
@@ -81,7 +80,6 @@ let lineChart = null;
 let barChart = null;
 let pieChart = null;
 
-// 获取当前报表周期参数（默认最近一个月）
 const getDefaultParams = () => {
   const end = new Date();
   const start = new Date();
@@ -158,7 +156,6 @@ const initLineChart = () => {
     series,
   };
   lineChart.setOption(option);
-  // 删除折线图钻取功能
 };
 
 const initBarChart = () => {
@@ -176,7 +173,6 @@ const initBarChart = () => {
     series: [{ type: 'bar', data: values, itemStyle: { borderRadius: [4, 4, 0, 0] } }],
   };
   barChart.setOption(option);
-  // 删除柱状图钻取功能
 };
 
 const initPieChart = () => {
@@ -197,7 +193,6 @@ const initPieChart = () => {
     }],
   };
   pieChart.setOption(option);
-  // 删除饼图钻取功能
 };
 
 const onLeftChartTypeChange = () => {
@@ -219,7 +214,6 @@ const onPieIndexChange = () => {
   nextTick(() => initPieChart());
 };
 
-// 地图标注点击事件处理（保留钻取）
 const handleMapMarkerClick = (location) => {
   emit('refresh', { location });
 };
@@ -244,7 +238,7 @@ onUnmounted(() => {
 
 <template>
   <div v-loading="loading" class="stats-four-visualization">
-    <!-- 左侧卡片区域（移除点击事件） -->
+    <!-- 左侧卡片区域 -->
     <div class="cards-section">
       <div
         v-for="(card, index) in cardList"
@@ -323,8 +317,8 @@ onUnmounted(() => {
   display: flex;
   gap: 20px;
   width: 100%;
-  min-height: 400px;
-  padding: 16px;
+  /* 固定高度与示例一致，移除多余 padding */
+  min-height: 320px;
   background: #fff;
   border-radius: 8px;
 }
@@ -375,7 +369,7 @@ onUnmounted(() => {
   flex: 1;
   display: flex;
   gap: 20px;
-  min-height: 320px;
+  height: 320px; /* 固定高度，与示例一致 */
 }
 .chart-box {
   flex: 1;
