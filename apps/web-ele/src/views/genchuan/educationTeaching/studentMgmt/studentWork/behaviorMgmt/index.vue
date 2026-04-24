@@ -8,7 +8,6 @@ import {useVbenVxeGrid} from '#/adapter/vxe-table';
 import {downloadFileFromBlobPart} from '@vben/utils';
 import BehaviorDetailDrawer from './components/behaviorDetail.vue';
 import {
-  dataList,
   getBehaviorMgmtPage,
   createBehaviorMgmt,
   updateBehaviorMgmt,
@@ -192,38 +191,10 @@ const getTableData = async ({page}) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = dataList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'leaveType':
-            itemValue = item.leaveType;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    // 模拟数据时仍需要前端分页
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 分页接口已联调成功，出错时返回空数据
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取请假列表失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -324,16 +295,16 @@ async function handleCancel(row) {
   }
   try {
     // 使用 prompt 但允许不填写（非必填）
-    const { value: cancelReason } = await ElMessageBox.prompt('请输入撤销原因（可选）', '撤销确认', {
+    const {value: cancelReason} = await ElMessageBox.prompt('请输入撤销原因（可选）', '撤销确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       inputPlaceholder: '可不填',
       // 不设置 inputValidator，允许空值
     });
-    const loading = ElLoading.service({ text: '撤销中...' });
+    const loading = ElLoading.service({text: '撤销中...'});
     try {
       // 如果用户未输入，value 为 ''，传空字符串即可
-      const res = await cancelBehaviorMgmt({ id: row.id, cancelReason: cancelReason || '' });
+      const res = await cancelBehaviorMgmt({id: row.id, cancelReason: cancelReason || ''});
       if (res && res !== false) {
         ElMessage.success('撤销成功');
         handleRefresh();

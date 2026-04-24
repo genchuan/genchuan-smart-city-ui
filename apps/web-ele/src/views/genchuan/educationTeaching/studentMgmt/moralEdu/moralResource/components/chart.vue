@@ -52,10 +52,12 @@ const barOptions = computed(() => [
     title: '资源状态分布',
     type: 'status',
     getData: () => {
-      const status = chartData.value.statusCount || { unOnlineCount: 0, onlineCount: 0 };
+      const status = chartData.value.statusCount || {};
       return {
         xData: ['未上架', '已上架'],
-        seriesData: [{ name: '资源数量', data: [status.unOnlineCount, status.onlineCount] }],
+        seriesData: [
+          { name: '资源数量', data: [status.unOnlineCount || 0, status.onlineCount || 0] },
+        ],
       };
     },
     yName: '资源数量',
@@ -84,16 +86,18 @@ const handleBarChange = (index) => {
   activeBarIndex.value = index;
 };
 
-// ========== 折线图配置（完全照搬参考代码的结构） ==========
+// ========== 折线图配置 ==========
 const lineOptions = computed(() => [
   {
     title: '月度学习人数趋势',
     type: 'learnCount',
     getData: () => {
       const trend = chartData.value.learnTrend || [];
+      // 按日期排序
+      const sorted = [...trend].sort((a, b) => new Date(a.date) - new Date(b.date));
       return {
-        xData: trend.map(item => item.month),
-        seriesData: [{ name: '学习人数', data: trend.map(item => item.count) }],
+        xData: sorted.map(item => item.date),
+        seriesData: [{ name: '学习人数', data: sorted.map(item => item.count) }],
       };
     },
     yName: '学习人数',
@@ -103,9 +107,11 @@ const lineOptions = computed(() => [
     type: 'learnRate',
     getData: () => {
       const trend = chartData.value.rateTrend || [];
+      // 按日期排序
+      const sorted = [...trend].sort((a, b) => new Date(a.date) - new Date(b.date));
       return {
-        xData: trend.map(item => item.month),
-        seriesData: [{ name: '完成率(%)', data: trend.map(item => item.rate) }],
+        xData: sorted.map(item => item.date),
+        seriesData: [{ name: '完成率(%)', data: sorted.map(item => item.rate) }],
       };
     },
     yName: '完成率(%)',
@@ -124,16 +130,13 @@ const handleLineChange = (index) => {
 // ========== 事件发射 ==========
 const emit = defineEmits(['barSelect', 'pieSelect', 'lineSelect']);
 
-// 饼图点击钻取
 const handlePieClick = (item) => {
   const currentType = pieOptions.value[activePieIndex.value]?.type;
   if (currentType === 'resourceType') {
     emit('pieSelect', { field: 'resourceType', value: item.name });
   }
-  // 学习完成率分布不做钻取
 };
 
-// 柱状图点击钻取
 const handleBarClick = (name) => {
   const currentType = barOptions.value[activeBarIndex.value]?.type;
   if (currentType === 'status') {
@@ -143,9 +146,8 @@ const handleBarClick = (name) => {
   }
 };
 
-// 折线图点击（参考代码中支持点击筛选）
-const handleLineClick = (month) => {
-  emit('lineSelect', { field: 'month', value: month });
+const handleLineClick = (date) => {
+  emit('lineSelect', { field: 'month', value: date });
 };
 
 // ========== 加载数据 ==========
@@ -164,14 +166,14 @@ const loadData = async () => {
         statusCount: { unOnlineCount: 3, onlineCount: 17 },
         resourceTypeCount: { courseCount: 10, bookCount: 6, packageCount: 4 },
         learnTrend: [
-          { month: '2025-01', count: 80 },
-          { month: '2025-02', count: 120 },
-          { month: '2025-03', count: 150 },
+          { date: '2025-07', count: 1 },
+          { date: '2025-08', count: 8 },
+          { date: '2025-09', count: 1 },
         ],
         rateTrend: [
-          { month: '2025-01', rate: 75.0 },
-          { month: '2025-02', rate: 80.0 },
-          { month: '2025-03', rate: 85.5 },
+          { date: '2025-07', rate: 58.2 },
+          { date: '2025-08', rate: 81.53 },
+          { date: '2025-09', rate: 65.3 },
         ],
       };
     }

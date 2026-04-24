@@ -86,9 +86,9 @@ export function getMentalMgmtPage(params) {
       return res;
     })
     .catch(err => {
-      console.warn('分页接口失败，使用模拟数据', err);
-      const mockData = convertList(dataList());
-      return { list: mockData, total: mockData.length };
+      console.warn('分页接口失败', err);
+      // 分页接口已联调成功，不再使用模拟数据，返回空列表
+      return { list: [], total: 0 };
     });
 }
 
@@ -145,10 +145,9 @@ export function getMentalMgmtDetail(params) {
   return requestClient.get('/studentmgmt/mental-mgmt/get', { params })
     .then(res => convertEnToZh(res))
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = dataList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(convertEnToZh(detail));
+      console.warn('详情接口失败', err);
+      // 不再使用模拟数据，直接抛出错误让调用方处理
+      return Promise.reject(err);
     });
 }
 
@@ -205,117 +204,3 @@ export function getStatusDistribution() {
     });
   });
 }
-
-// 模拟数据（原始值使用英文，通过转换函数对外提供中文）
-export const dataList = () => {
-  return [
-    {
-      id: 1,
-      studentId: 1,
-      studentName: '张三',
-      className: '计算机科学与技术1班',
-      mentalStatus: 'normal',
-      riskLevel: 'low',
-      evaluateTime: 1672531200000,
-      consultTime: null,
-      interveneTime: null,
-      interveneContent: null,
-      status: 'wait_evaluate',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672531200000,
-      updateTime: 1672531200000,
-    },
-    {
-      id: 2,
-      studentId: 2,
-      studentName: '李四',
-      className: '软件工程1班',
-      mentalStatus: 'focus',
-      riskLevel: 'medium',
-      evaluateTime: 1672617600000,
-      consultTime: 1672704000000,
-      interveneTime: null,
-      interveneContent: null,
-      status: 'consulting',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672617600000,
-      updateTime: 1672704000000,
-    },
-    {
-      id: 3,
-      studentId: 3,
-      studentName: '王五',
-      className: '计算机科学与技术2班',
-      mentalStatus: 'high_risk',
-      riskLevel: 'high',
-      evaluateTime: 1672704000000,
-      consultTime: 1672790400000,
-      interveneTime: 1672876800000,
-      interveneContent: '安排心理咨询，情绪稳定',
-      status: 'intervened',
-      remark: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1672704000000,
-      updateTime: 1672876800000,
-    },
-    {
-      id: 4,
-      studentId: 4,
-      studentName: '赵六',
-      className: '电子信息工程1班',
-      mentalStatus: 'normal',
-      riskLevel: 'low',
-      evaluateTime: 1672790400000,
-      consultTime: null,
-      interveneTime: null,
-      interveneContent: null,
-      status: 'wait_evaluate',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672790400000,
-      updateTime: 1672790400000,
-    },
-    {
-      id: 5,
-      studentId: 5,
-      studentName: '孙七',
-      className: '大数据1班',
-      mentalStatus: 'focus',
-      riskLevel: 'medium',
-      evaluateTime: 1672876800000,
-      consultTime: 1672963200000,
-      interveneTime: null,
-      interveneContent: null,
-      status: 'consulting',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1672876800000,
-      updateTime: 1672963200000,
-    },
-    {
-      id: 6,
-      studentId: 6,
-      studentName: '周八',
-      className: '软件工程2班',
-      mentalStatus: 'high_risk',
-      riskLevel: 'high',
-      evaluateTime: 1672963200000,
-      consultTime: null,
-      interveneTime: null,
-      interveneContent: null,
-      status: 'wait_evaluate',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672963200000,
-      updateTime: 1672963200000,
-    },
-  ];
-};

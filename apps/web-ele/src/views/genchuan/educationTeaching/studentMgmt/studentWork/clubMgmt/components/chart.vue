@@ -164,20 +164,16 @@ const loadData = async () => {
     } else {
       console.warn('分布接口失败，使用模拟数据');
       clubData.value = [
-        { clubName: '篮球社', memberCount: 1, clubType: '' },
-        { clubName: '志愿者协会', memberCount: 1, clubType: '' },
-        { clubName: '音乐社', memberCount: 1, clubType: '' },
-        { clubName: '英语角', memberCount: 1, clubType: '' },
-        { clubName: '摄影社', memberCount: 1, clubType: '' },
-        { clubName: '读书社', memberCount: 1, clubType: '' },
-        { clubName: '舞蹈社', memberCount: 1, clubType: '' },
-        { clubName: '环保社', memberCount: 1, clubType: '' },
-        { clubName: '辩论社', memberCount: 1, clubType: '' }
+        { clubName: '篮球社', memberCount: 68, clubType: '文体' },
+        { clubName: '文学社', memberCount: 42, clubType: '学术' },
+        { clubName: '志愿者协会', memberCount: 86, clubType: '志愿' },
+        { clubName: '动漫社', memberCount: 35, clubType: '其他' },
       ];
       typeData.value = [
-        { name: "", count: 4 },
-        { name: "", count: 3 },
-        { name: "", count: 2 }
+        { name: '文体', value: 426 },
+        { name: '学术', value: 235 },
+        { name: '志愿', value: 189 },
+        { name: '其他', value: 46 },
       ];
     }
   } catch (error) {
@@ -198,20 +194,16 @@ const loadData = async () => {
       ],
     };
     clubData.value = [
-      { clubName: '篮球社', memberCount: 1, clubType: '' },
-      { clubName: '志愿者协会', memberCount: 1, clubType: '' },
-      { clubName: '音乐社', memberCount: 1, clubType: '' },
-      { clubName: '英语角', memberCount: 1, clubType: '' },
-      { clubName: '摄影社', memberCount: 1, clubType: '' },
-      { clubName: '读书社', memberCount: 1, clubType: '' },
-      { clubName: '舞蹈社', memberCount: 1, clubType: '' },
-      { clubName: '环保社', memberCount: 1, clubType: '' },
-      { clubName: '辩论社', memberCount: 1, clubType: '' }
+      { clubName: '篮球社', memberCount: 68, clubType: '文体' },
+      { clubName: '文学社', memberCount: 42, clubType: '学术' },
+      { clubName: '志愿者协会', memberCount: 86, clubType: '志愿' },
+      { clubName: '动漫社', memberCount: 35, clubType: '其他' },
     ];
     typeData.value = [
-      { name: "", count: 4 },
-      { name: "", count: 3 },
-      { name: "", count: 2 }
+      { name: '文体', value: 426 },
+      { name: '学术', value: 235 },
+      { name: '志愿', value: 189 },
+      { name: '其他', value: 46 },
     ];
   } finally {
     loading.value = false;

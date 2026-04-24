@@ -2,10 +2,10 @@
 export function useFormSchema() {
   return [
     {
-      fieldName: 'studentName',
-      label: '学生姓名',
+      fieldName: 'studentId',
+      label: '学号',
       component: 'Input',
-      componentProps: { placeholder: '请输入学生姓名' },
+      componentProps: { placeholder: '请输入学号' },
       labelWidth: '100',
     },
     {
@@ -59,7 +59,7 @@ export function getColumnsByStatus(status) {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'studentName', title: '学生姓名', minWidth: 100, slots: { default: 'studentName' } },
+    { field: 'studentId', title: '学号', minWidth: 100, slots: { default: 'studentId' } },
     { field: 'violateType', title: '违纪类型', minWidth: 120, slots: { default: 'violateType' } },
     { field: 'punishType', title: '处分类型', minWidth: 120, slots: { default: 'punishType' } },
     { field: 'violateTime', title: '违纪时间', minWidth: 180, slots: { default: 'violateTime' } },
@@ -89,21 +89,9 @@ export function useCreateFormSchema(isEdit = false) {
   return [
     {
       fieldName: 'studentId',
-      label: '学生',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择学生',
-        filterable: true,
-        options: [
-          { label: '张三', value: 1 },
-          { label: '李四', value: 2 },
-          { label: '王五', value: 3 },
-          { label: '赵六', value: 4 },
-          { label: '孙七', value: 5 },
-          { label: '周八', value: 6 },
-        ],
-      },
-      rules: 'required',
+      label: '学号',
+      component: 'Input',
+      componentProps: { placeholder: '请输入学号' },
       labelWidth: '100',
     },
     {

@@ -100,9 +100,9 @@ export function getBehaviorMgmtPage(params) {
       return res;
     })
     .catch(err => {
-      console.warn('分页接口失败，使用模拟数据', err);
-      const mockData = convertList(dataList());
-      return { list: mockData, total: mockData.length };
+      console.warn('分页接口失败', err);
+      // 分页接口已联调成功，不再使用模拟数据，返回空列表
+      return { list: [], total: 0 };
     });
 }
 
@@ -149,10 +149,9 @@ export function getBehaviorMgmtDetail(params) {
   return requestClient.get('/studentmgmt/behavior-mgmt/get', { params })
     .then(res => convertEnToZh(res))
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = dataList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(convertEnToZh(detail));
+      console.warn('详情接口失败', err);
+      // 不再使用模拟数据，直接抛出错误让调用方处理
+      return Promise.reject(err);
     });
 }
 
@@ -209,129 +208,3 @@ export function getAttendanceCount(params) {
     });
   });
 }
-
-// 模拟数据（原始值使用数字/代码，通过转换函数对外提供中文）
-export const dataList = () => {
-  return [
-    {
-      id: 1,
-      studentId: 1,
-      studentName: '张三',
-      className: '计算机1班',
-      leaveType: '1',
-      startTime: 1672531200000,
-      endTime: 1672617600000,
-      leaveReason: '家里有事',
-      auditLevel: '1',
-      auditUser: null,
-      auditTime: null,
-      attendanceSync: '0',
-      status: '0',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672531200000,
-      updateTime: 1672531200000,
-    },
-    {
-      id: 2,
-      studentId: 2,
-      studentName: '李四',
-      className: '软件1班',
-      leaveType: '2',
-      startTime: 1672617600000,
-      endTime: 1672704000000,
-      leaveReason: '感冒发烧',
-      auditLevel: '1',
-      auditUser: '王老师',
-      auditTime: 1672650000000,
-      attendanceSync: '1',
-      status: '1',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672617600000,
-      updateTime: 1672650000000,
-    },
-    {
-      id: 3,
-      studentId: 3,
-      studentName: '王五',
-      className: '计算机2班',
-      leaveType: '3',
-      startTime: 1672704000000,
-      endTime: 1672790400000,
-      leaveReason: '参加比赛',
-      auditLevel: '2',
-      auditUser: '李老师',
-      auditTime: 1672720000000,
-      attendanceSync: '0',
-      status: '2',
-      remark: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1672704000000,
-      updateTime: 1672720000000,
-    },
-    {
-      id: 4,
-      studentId: 4,
-      studentName: '赵六',
-      className: '电子1班',
-      leaveType: '1',
-      startTime: 1672790400000,
-      endTime: 1672876800000,
-      leaveReason: '探亲',
-      auditLevel: '1',
-      auditUser: null,
-      auditTime: null,
-      attendanceSync: '0',
-      status: '0',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672790400000,
-      updateTime: 1672790400000,
-    },
-    {
-      id: 5,
-      studentId: 5,
-      studentName: '孙七',
-      className: '大数据1班',
-      leaveType: '2',
-      startTime: 1672876800000,
-      endTime: 1672963200000,
-      leaveReason: '牙痛',
-      auditLevel: '1',
-      auditUser: '王老师',
-      auditTime: 1672900000000,
-      attendanceSync: '1',
-      status: '1',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1672876800000,
-      updateTime: 1672900000000,
-    },
-    {
-      id: 6,
-      studentId: 6,
-      studentName: '周八',
-      className: '软件2班',
-      leaveType: '1',
-      startTime: 1672963200000,
-      endTime: 1673049600000,
-      leaveReason: '婚礼',
-      auditLevel: '2',
-      auditUser: null,
-      auditTime: null,
-      attendanceSync: '0',
-      status: '0',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672963200000,
-      updateTime: 1672963200000,
-    },
-  ];
-};
