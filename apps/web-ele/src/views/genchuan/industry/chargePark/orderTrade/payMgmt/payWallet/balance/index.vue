@@ -1,14 +1,12 @@
 <script lang="ts" setup>
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { PayNotifyApi } from '#/api/pay/notify';
+import type { PayWalletApi } from '#/api/pay/wallet/balance';
 
 import { DocAlert, Page, useVbenModal } from '@vben/common-ui';
-import { $t } from '@vben/locales';
-
-import { ElTag } from 'element-plus';
 
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getNotifyTaskPage } from '#/api/pay/notify';
+import { getWalletPage } from '#/api/pay/wallet/balance';
+import { $t } from '#/locales';
 
 import { useGridColumns, useGridFormSchema } from './data';
 import Detail from './modules/detail.vue';
@@ -23,8 +21,8 @@ function handleRefresh() {
   gridApi.query();
 }
 
-/** 查看详情 */
-function handleDetail(row: PayNotifyApi.NotifyTask) {
+/** 查看钱包 */
+function handleDetail(row: Required<PayWalletApi.Wallet>) {
   detailModalApi.setData(row).open();
 }
 
@@ -33,16 +31,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
     schema: useGridFormSchema(),
   },
   gridOptions: {
-    cellConfig: {
-      height: 80,
-    },
     columns: useGridColumns(),
     height: 'auto',
     keepSource: true,
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
-          return await getNotifyTaskPage({
+          return await getWalletPage({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
             ...formValues,
@@ -58,33 +53,18 @@ const [Grid, gridApi] = useVbenVxeGrid({
       refresh: true,
       search: true,
     },
-  } as VxeTableGridOptions<PayNotifyApi.NotifyTask>,
+  } as VxeTableGridOptions<PayWalletApi.Wallet>,
 });
 </script>
+
 <template>
   <Page auto-content-height>
     <template #doc>
-      <DocAlert title="支付功能开启" url="https://doc.iocoder.cn/pay/build/" />
+      <DocAlert title="钱包余额" url="https://doc.iocoder.cn/pay/build/" />
     </template>
 
-    <DetailModal @success="handleRefresh" />
-    <Grid table-title="通知列表">
-      <template #merchantInfo="{ row }">
-        <div class="flex flex-col gap-1 text-left">
-          <p class="text-sm" v-if="row.merchantOrderId">
-            <ElTag size="small" type="primary">商户订单编号</ElTag>
-            {{ row.merchantOrderId }}
-          </p>
-          <p class="text-sm" v-if="row.merchantRefundId">
-            <ElTag size="small" type="warning">商户退款编号</ElTag>
-            {{ row.merchantRefundId }}
-          </p>
-          <p class="text-sm" v-if="row.merchantTransferId">
-            <ElTag size="small" type="success">商户转账编号</ElTag>
-            {{ row.merchantTransferId }}
-          </p>
-        </div>
-      </template>
+    <DetailModal @reload="handleRefresh" />
+    <Grid>
       <template #actions="{ row }">
         <TableAction
           :actions="[
@@ -93,7 +73,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
               type: 'primary',
               link: true,
               icon: ACTION_ICON.VIEW,
-              auth: ['pay:notify:query'],
               onClick: handleDetail.bind(null, row),
             },
           ]"

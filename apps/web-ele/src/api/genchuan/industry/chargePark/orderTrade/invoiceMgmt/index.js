@@ -91,3 +91,52 @@ export function getInvoiceAuditChart(params) {
     params,
   });
 }
+
+
+/** 发票配置分页 */
+export function getInvoiceConfigPage(params) {
+  return requestClient.get('/ordertrade/invoice-config/page', {
+    params,
+  });
+}
+/** 发票配置导出 */
+export function exportInvoiceConfigExcel() {
+  return requestClient.download('/ordertrade/invoice-config/export');
+}
+
+/** 发票配置批量启用 */
+export function batchEnable(data) {
+  return requestClient.put('/ordertrade/invoice-config/enable', null, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    params: data,
+  });
+}
+/** 发票配置批量禁用 */
+export function batchDisable(data) {
+  return requestClient.put('/ordertrade/invoice-config/disable', null, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    params: data,
+  });
+}
+/** 发票配置批量删除 */
+export function batchDelete(data) {
+  return requestClient.post('/ordertrade/invoice-config/delete', { data });
+}
+/** 发票配置创建 */
+export function create(data) {
+  return requestClient.post('/ordertrade/invoice-config/create', data);
+}
+/** 发票配置更新 */
+export function update(data) {
+  return requestClient.put('/ordertrade/invoice-config/update', data);
+}
+/** 发票配置图表 */
+export function getInvoiceConfigChart(params) {
+  return requestClient.get('/ordertrade/invoice-config/chart', {
+    params,
+  });
+}
