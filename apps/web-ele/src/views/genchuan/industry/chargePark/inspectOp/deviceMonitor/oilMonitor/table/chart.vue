@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive } from 'vue';
 
 import { getOilMonitorChart } from '#/api/genchuan/industry/chargePark/inspectOp/deviceMonitor/oilMonitor';
-import BarClick from '#/genchuan-components/stats/barClick.vue';
+import Columnar from '#/components/stats/columnar.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
@@ -72,7 +72,7 @@ function normalizeChartData(data) {
 async function fetchChartData() {
   try {
     const response = await getOilMonitorChart();
-    normalizeChartData(response);
+    normalizeChartData(response?.data || response);
   } catch (error) {
     console.error('获取油车占位监测看板失败，使用静态数据:', error);
     normalizeChartData(getMockChartData());
@@ -104,8 +104,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="oil-monitor-visualization">
-    <div class="cards-section">
+  <div class="park-chart-box">
+    <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
         :key="card.title"
@@ -118,59 +118,21 @@ onMounted(() => {
       />
     </div>
 
-    <div class="charts-section">
-      <div class="chart-panel">
-        <LineChartClick
-          title="占位监测趋势"
-          :series-data="trendSeriesData"
-          :x-data="trendXData"
-          y-name="占位数"
-          @line-click="handleTrendClick"
-        />
-      </div>
-      <div class="chart-panel">
-        <BarClick
-          title="各场站占位数"
-          :series-data="stationSeriesData"
-          :x-data="stationXData"
-          y-name="占位数"
-          @bar-click="handleStationClick"
-        />
-      </div>
-    </div>
+    <LineChartClick
+      class="simple-bar-chart"
+      title="占位监测趋势"
+      :series-data="trendSeriesData"
+      :x-data="trendXData"
+      y-name="占位数"
+      @line-click="handleTrendClick"
+    />
+    <Columnar
+      class="park-type-chart"
+      title="各场站占位数"
+      :series-data="stationSeriesData"
+      :x-data="stationXData"
+      y-name="占位数"
+      @bar-click="handleStationClick"
+    />
   </div>
 </template>
-
-<style scoped>
-.oil-monitor-visualization {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 20px;
-  width: 100%;
-  min-height: 320px;
-  overflow: hidden;
-}
-
-.cards-section {
-  display: grid;
-  flex-shrink: 0;
-  grid-template-rows: repeat(2, 1fr);
-  gap: 12px;
-  width: 240px;
-  height: 320px;
-}
-
-.charts-section {
-  display: grid;
-  flex: 1 1 0;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  min-width: 0;
-  height: 320px;
-}
-
-.chart-panel {
-  min-width: 0;
-  height: 100%;
-}
-</style>

@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive } from 'vue';
 
 import { getAssetStockChart } from '#/api/genchuan/industry/chargePark/inspectOp/assetMgmt/stockMgmt';
-import BarClick from '#/genchuan-components/stats/barClick.vue';
+import Columnar from '#/components/stats/columnar.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
@@ -96,8 +96,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="stock-mgmt-visualization">
-    <div class="cards-section">
+  <div class="park-chart-box">
+    <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
         :key="card.title"
@@ -110,59 +110,21 @@ onMounted(() => {
       />
     </div>
 
-    <div class="charts-section">
-      <div class="chart-wrapper">
-        <LineChartClick
-          title="库存趋势"
-          :series-data="trendSeriesData"
-          :x-data="trendXData"
-          y-name="库存数"
-          @line-click="handleTrendClick"
-        />
-      </div>
-      <div class="chart-wrapper">
-        <BarClick
-          title="资产库存分布"
-          :series-data="stockSeriesData"
-          :x-data="stockXData"
-          y-name="库存数"
-          @bar-click="handleStockClick"
-        />
-      </div>
-    </div>
+    <LineChartClick
+      class="simple-bar-chart"
+      title="库存趋势"
+      :series-data="trendSeriesData"
+      :x-data="trendXData"
+      y-name="库存数"
+      @line-click="handleTrendClick"
+    />
+    <Columnar
+      class="park-type-chart"
+      title="资产库存分布"
+      :series-data="stockSeriesData"
+      :x-data="stockXData"
+      y-name="库存数"
+      @bar-click="handleStockClick"
+    />
   </div>
 </template>
-
-<style scoped>
-.stock-mgmt-visualization {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 20px;
-  width: 100%;
-  min-height: 320px;
-  overflow: hidden;
-}
-
-.cards-section {
-  display: grid;
-  flex-shrink: 0;
-  grid-template-rows: repeat(2, 1fr);
-  gap: 12px;
-  width: 240px;
-  height: 320px;
-}
-
-.charts-section {
-  display: grid;
-  flex: 1 1 0;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 20px;
-  min-width: 0;
-  height: 320px;
-}
-
-.chart-wrapper {
-  min-width: 0;
-  height: 100%;
-}
-</style>

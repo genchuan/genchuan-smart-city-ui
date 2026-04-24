@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive } from 'vue';
 
 import { getScheduleViewChart } from '#/api/genchuan/industry/chargePark/inspectOp/scheduleMgmt/scheduleView';
-import BarClick from '#/genchuan-components/stats/barClick.vue';
+import Columnar from '#/components/stats/columnar.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 
 import { getMockChartData, getShiftTypeTagType, getUserName } from './data';
@@ -98,8 +98,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="schedule-view-visualization">
-    <div class="cards-section">
+  <div class="park-chart-box">
+    <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
         :key="card.title"
@@ -112,7 +112,7 @@ onMounted(() => {
       />
     </div>
 
-    <div class="calendar-section">
+    <div class="park-type-chart schedule-calendar-section">
       <div class="calendar-title">排班日历展示</div>
       <div class="calendar-grid">
         <button
@@ -136,46 +136,23 @@ onMounted(() => {
       </div>
     </div>
 
-    <div class="chart-wrapper">
-      <BarClick
-        title="人员排班分布"
-        :series-data="userSeriesData"
-        :x-data="userXData"
-        y-name="排班数"
-        @bar-click="handleUserClick"
-      />
-    </div>
+    <Columnar
+      class="simple-bar-chart"
+      title="人员排班分布"
+      :series-data="userSeriesData"
+      :x-data="userXData"
+      y-name="排班数"
+      @bar-click="handleUserClick"
+    />
   </div>
 </template>
 
 <style scoped>
-.schedule-view-visualization {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 20px;
-  width: 100%;
-  min-height: 320px;
-  overflow: hidden;
-}
-
-.cards-section {
-  display: grid;
-  flex-shrink: 0;
-  grid-template-rows: repeat(2, 1fr);
-  gap: 12px;
-  width: 240px;
-  height: 320px;
-}
-
-.calendar-section {
+.schedule-calendar-section {
   flex: 1.05 1 0;
   min-width: 0;
-  height: 320px;
   padding: 14px;
   overflow: hidden;
-  background-color: hsl(var(--card));
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .calendar-title {
@@ -251,9 +228,4 @@ onMounted(() => {
   background-color: var(--el-color-info-light-9);
 }
 
-.chart-wrapper {
-  flex: 1 1 0;
-  min-width: 0;
-  height: 320px;
-}
 </style>

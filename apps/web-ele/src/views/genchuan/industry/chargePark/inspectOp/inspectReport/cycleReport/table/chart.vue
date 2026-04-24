@@ -3,7 +3,7 @@ import { computed, onMounted, reactive } from 'vue';
 
 import { getCycleReportChart } from '#/api/genchuan/industry/chargePark/inspectOp/inspectReport/cycleReport';
 import MapComponent from '#/genchuan-components/Map/index.vue';
-import BarClick from '#/genchuan-components/stats/barClick.vue';
+import Columnar from '#/components/stats/columnar.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
@@ -242,7 +242,7 @@ onMounted(() => {
       </div>
 
       <div class="chart-wrapper">
-        <BarClick
+        <Columnar
           title="各场站设备异常/任务/占位分布"
           :series-data="barSeriesData"
           :x-data="barXData"
