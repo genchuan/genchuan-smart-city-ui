@@ -3,19 +3,21 @@ import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 import * as echarts from 'echarts';
 import { getRescueChartData } from '#/api/genchuan/industry/chargePark/carService/rescueService/rescueInfo/index.js';
 import MapComponent from '#/views/genchuan/industry/chargePark/carService/Mapindex.vue';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElLoading } from 'element-plus';
+import { loadTMap } from '#/utils/genchuan/useTMap.ts';
 
 const emit = defineEmits(['refresh']);
 
 const state = reactive({
   cardList: [
-    { title: '待救援数', value: 0, color: '#FF9F40', statusKeys: ['待派发', '待认领'] },
+    { title: '待派发', value: 0, color: '#FF9F40', statusKeys: ['待派发'] },
+    { title: '待认领', value: 0, color: '#FFB347', statusKeys: ['待认领'] },
     { title: '救援完成率', value: '0%', color: '#50E3C2', statusKeys: ['已完成'] },
   ],
   mapData: [],
   mapConfig: {
-    statusIconMap: { 待派发: 'yellow', 待认领: 'yellow', 处理中: 'red', 已完成: 'normal' },
-    statusKeyMap: { 待派发: 'yellow', 待认领: 'yellow', 处理中: 'red', 已完成: 'normal' },
+    statusIconMap: {},
+    statusKeyMap: {},
     infoWindowConfig: {
       title: 'id',
       fields: [
@@ -32,26 +34,66 @@ const lineChartRef = ref(null);
 let lineChartInstance = null;
 const mapRef = ref(null);
 
+// 逆地理编码缓存
+const geocodeCache = new Map();
+
+/**
+ * 通过腾讯地图 SDK 将坐标转换为地址
+ * @param {number} lng 经度
+ * @param {number} lat 纬度
+ * @returns {Promise<string>} 地址字符串
+ */
+async function reverseGeocode(lng, lat) {
+  const key = `${lng},${lat}`;
+  if (geocodeCache.has(key)) return geocodeCache.get(key);
+
+  try {
+    const TMap = await loadTMap();
+    const geocoder = new TMap.service.Geocoder();
+    const result = await geocoder.reverse({ location: new TMap.LatLng(lat, lng) });
+    const address = result.result?.address || `${lat},${lng}`;
+    geocodeCache.set(key, address);
+    return address;
+  } catch (error) {
+    console.error('逆地理编码失败', error);
+    return `${lat},${lng}`;
+  }
+}
+
+// 批量逆地理编码
+async function batchReverseGeocode(points) {
+  const promises = points.map(async (point) => {
+    const address = await reverseGeocode(point.lon, point.lat);
+    return { ...point, address };
+  });
+  return Promise.all(promises);
+}
+
 // 获取图表数据
 const fetchChartData = async () => {
+  const loading = ElLoading.service({ text: '加载地图数据...', background: 'rgba(0,0,0,0.3)' });
   try {
     const data = await getRescueChartData({ timeRange: '近30天' });
     if (data) {
-      state.cardList[0].value = data.waitRescueCount ?? 0;
+      // 待派发、待认领
+      state.cardList[0].value = data.waitDispatchCount ?? 0;
+      state.cardList[1].value = data.waitClaimCount ?? 0;
+      // 救援完成率
       let finishRateValue = data.finishRate ?? 0;
       if (finishRateValue > 0 && finishRateValue <= 1) {
         finishRateValue = (finishRateValue * 100).toFixed(1);
       }
-      state.cardList[1].value = `${finishRateValue}%`;
+      state.cardList[2].value = `${finishRateValue}%`;
       state.trendList = data.trendList || [];
 
       const rawList = data.rescueLocationList || [];
-      state.mapData = rawList.map(item => ({
+      const enhancedList = await batchReverseGeocode(rawList);
+      state.mapData = enhancedList.map(item => ({
         id: item.id,
         deviceName: `救援任务${item.id}`,
         coordinate: `${item.lon},${item.lat}`,
-        statusName: item.status,
-        location: item.location,
+        status: item.status,
+        location: item.address,
       }));
       initLineChart();
     }
@@ -59,6 +101,8 @@ const fetchChartData = async () => {
     console.error('获取救援统计图表数据失败', error);
     ElMessage.error('加载统计图表失败，请稍后重试');
     initLineChart();
+  } finally {
+    loading.close();
   }
 };
 
@@ -112,12 +156,8 @@ const initLineChart = () => {
   }
   lineChartInstance = echarts.init(lineChartRef.value);
   lineChartInstance.setOption(getLineOption());
-  lineChartInstance.on('click', (params) => {
-    if (params.componentType === 'series') {
-      const date = state.trendList[params.dataIndex]?.date;
-      if (date) emit('refresh', { date });
-    }
-  });
+  // 移除折线图点击钻取功能（不再发送 date 筛选）
+  // lineChartInstance.on('click', ...) 已删除
 };
 
 const handleResize = () => lineChartInstance?.resize();
@@ -128,7 +168,10 @@ const handleCardClick = (index) => {
 };
 
 const handleMarkerClick = (item) => {
-  if (item?.id) emit('refresh', { id: item.id });
+  // 仅控制台输出，不触发表格钻取
+  console.log('点击了地图标记点:', item);
+  // 如需轻提示，可取消以下注释
+  // if (item?.id) ElMessage.info(`点击了救援任务：${item.id}`);
 };
 
 const handleAreaFilter = async () => {
@@ -170,7 +213,6 @@ const locateAddress = async (address) => {
     return;
   }
 
-  // 等待地图组件就绪
   let retries = 0;
   const maxRetries = 20;
   while (!mapRef.value && retries < maxRetries) {
@@ -183,7 +225,6 @@ const locateAddress = async (address) => {
     return;
   }
 
-  // 1. 判断是否为经纬度字符串（格式如 "118.189567,24.512345" 或 "118.189567, 24.512345"）
   const coordMatch = address.match(/^([+-]?\d+(?:\.\d+)?)\s*,\s*([+-]?\d+(?:\.\d+)?)$/);
   if (coordMatch) {
     const lngNum = parseFloat(coordMatch[1]);
@@ -196,7 +237,6 @@ const locateAddress = async (address) => {
     }
   }
 
-  // 2. 否则作为地址文本处理：从现有地图数据中查找坐标
   const normalizedAddress = address.trim().toLowerCase();
   const found = state.mapData.find(item => {
     const itemLocation = item.location?.trim().toLowerCase() || '';
@@ -268,7 +308,7 @@ defineExpose({ locateAddress, refresh });
           <div class="card-value" :style="{ color: card.color }">{{ card.value }}</div>
         </div>
       </div>
-      <div class="stat-card-placeholder" v-for="i in 2" :key="`placeholder-${i}`"></div>
+      <!-- 移除多余的占位符，由实际卡片数量决定 -->
     </div>
     <div class="right-section">
       <div class="map-wrapper">
@@ -292,7 +332,6 @@ defineExpose({ locateAddress, refresh });
 </template>
 
 <style scoped>
-/* 样式保持不变，略... */
 .stats-four-visualization {
   display: flex;
   gap: 20px;
@@ -303,10 +342,10 @@ defineExpose({ locateAddress, refresh });
 .cards-section {
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-rows: auto ;
+  grid-auto-rows: auto;
   gap: 12px;
   width: 260px;
-  height: 320px;
+  min-height: 320px;
   flex-shrink: 0;
 }
 .stat-card {
@@ -347,17 +386,11 @@ defineExpose({ locateAddress, refresh });
   font-size: 22px;
   font-weight: 700;
 }
-.stat-card-placeholder {
-  background: transparent;
-  box-shadow: none;
-  border: none;
-  pointer-events: none;
-}
 .right-section {
   position: relative;
   display: flex;
   flex: 1;
-  height: 320px;
+  min-height: 320px;
 }
 .map-wrapper {
   position: relative;
@@ -365,12 +398,6 @@ defineExpose({ locateAddress, refresh });
   height: 100%;
   border-radius: 8px;
   overflow: hidden;
-}
-.area-filter-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 10;
 }
 .charts-section {
   display: flex;

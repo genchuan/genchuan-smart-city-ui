@@ -82,7 +82,7 @@ export function uploadFile(file, directory = 'rescue') {
   });
 }
 
-// 完成救援（将状态从“处理中”变为“已完成”）
-export function completeRescue(id) {
-  return requestClient.put('/carservice/rescue-info/complete', null, { params: { id } });
+// 获取用户详情
+export function getUserDetail(userId) {
+  return requestClient.get('/system/user/get', { params: { id: userId } });
 }

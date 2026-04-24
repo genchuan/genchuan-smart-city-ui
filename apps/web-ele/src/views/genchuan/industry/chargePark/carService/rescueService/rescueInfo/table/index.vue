@@ -19,10 +19,11 @@ import {
   archiveRescue,
   getRescueUserList,
   uploadFile,
-  completeRescue,
 } from '#/api/genchuan/industry/chargePark/carService/rescueService/rescueInfo/index.js';
 import { useFormSchema, useGridColumns } from './data';
 import RescueDetailDrawer from './detail.vue';
+import { loadTMap } from '#/utils/genchuan/useTMap.ts';
+import { requestClient } from '#/api/request'; // 新增：用于用户详情接口
 
 // 搜索抽屉
 const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
@@ -93,6 +94,41 @@ const [EvaluateDetailDrawer, evaluateDetailDrawerApi] = useVbenDrawer({
   onCancel: () => evaluateDetailDrawerApi.close(),
 });
 
+// 用户详情抽屉（新增）
+const [UserDetailDrawer, userDetailDrawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  width: 500,
+  title: '用户详情',
+  onCancel: () => userDetailDrawerApi.close(),
+});
+
+const currentUserDetail = ref({}); // 存储用户详情数据
+
+// 获取用户详情
+async function getUserDetail(userId) {
+  try {
+    const res = await requestClient.get('/system/user/get', { params: { id: userId } });
+    return res;
+  } catch (error) {
+    console.error('获取用户详情失败', error);
+    throw error;
+  }
+}
+
+// 打开用户详情抽屉
+async function openUserDetail(userId) {
+  if (!userId) return;
+  try {
+    const detail = await getUserDetail(userId);
+    currentUserDetail.value = detail || {};
+    userDetailDrawerApi.open();
+  } catch (error) {
+    ElMessage.error('获取用户详情失败');
+  }
+}
+
 const props = defineProps({ secondShow: Boolean });
 const checkedIds = ref([]);
 const handleRowCheckboxChange = ({ records }) => {
@@ -142,6 +178,47 @@ function getUserNameById(userId) {
   return allUserMap.value.get(userId) || userId;
 }
 
+// ==================== 逆地理编码（坐标转地址） ====================
+const geocodeCache = new Map();
+
+async function reverseGeocode(lng, lat) {
+  const key = `${lng},${lat}`;
+  if (geocodeCache.has(key)) return geocodeCache.get(key);
+  try {
+    const TMap = await loadTMap();
+    const geocoder = new TMap.service.Geocoder();
+    const result = await geocoder.reverse({ location: new TMap.LatLng(lat, lng) });
+    const address = result.result?.address || `${lat},${lng}`;
+    geocodeCache.set(key, address);
+    return address;
+  } catch (error) {
+    console.error('逆地理编码失败', error);
+    return `${lat},${lng}`;
+  }
+}
+
+async function enhanceListWithLocationName(list) {
+  if (!list || list.length === 0) return list;
+  const promises = list.map(async (item) => {
+    if (!item.location || item.locationName) return item;
+    const coords = item.location.split(',');
+    if (coords.length === 2) {
+      const lng = parseFloat(coords[0]);
+      const lat = parseFloat(coords[1]);
+      if (!isNaN(lng) && !isNaN(lat)) {
+        const address = await reverseGeocode(lng, lat);
+        item.locationName = address;
+      } else {
+        item.locationName = item.location;
+      }
+    } else {
+      item.locationName = item.location;
+    }
+    return item;
+  });
+  return Promise.all(promises);
+}
+
 // ==================== 获取表格数据 ====================
 const getTableData = async (pageObj) => {
   const params = {
@@ -189,14 +266,19 @@ const getTableData = async (pageObj) => {
   }
 
   const res = await getRescueInfoPage(params);
-  dataObj.total = res.total;
-  dataObj.list = (res.list || []).map((v) => ({
+  const rawList = (res.list || []).map((v) => ({
     ...v,
     createTime: formatTimestamp(v.createTime),
     updateTime: formatTimestamp(v.updateTime),
     dispatchTime: formatTimestamp(v.dispatchTime),
     finishTime: formatTimestamp(v.finishTime),
   }));
+
+  // 增强地址名称
+  const enhancedList = await enhanceListWithLocationName(rawList);
+
+  dataObj.total = res.total;
+  dataObj.list = enhancedList;
   return dataObj;
 };
 
@@ -464,12 +546,17 @@ const handleClaim = async (row) => {
   handleRefresh();
 };
 
-// 更新进度
-const progressForm = reactive({ progress: '', photo: null });
+// 更新进度 - 增加 complete 字段
+const progressForm = reactive({
+  progress: '',
+  photo: null,
+  complete: false,
+});
 let currentProgressRow = null;
 const openProgressDrawer = (row) => {
   progressForm.progress = '';
   progressForm.photo = null;
+  progressForm.complete = false;
   currentProgressRow = row;
   progressDrawerApi.open();
 };
@@ -493,8 +580,9 @@ async function confirmProgress() {
     id: currentProgressRow.id,
     progress: progressForm.progress,
     photo: photoUrl,
+    complete: progressForm.complete,
   });
-  ElMessage.success('更新进度成功');
+  ElMessage.success(progressForm.complete ? '更新进度并完成救援' : '更新进度成功');
   progressDrawerApi.close();
   handleRefresh();
 }
@@ -540,15 +628,6 @@ const handleArchive = async (row) => {
   await archiveRescue(row.id);
   ElMessage.success('归档成功');
   handleRefresh();
-};
-
-// 完成救援
-const handleComplete = async (row) => {
-  await confirm('确认完成该救援任务吗？');
-  await completeRescue(row.id);
-  ElMessage.success('救援任务已完成');
-  gridApi.reload();
-  window.dispatchEvent(new CustomEvent('rescue-data-changed'));
 };
 
 // 处理时长钻取
@@ -616,7 +695,7 @@ onUnmounted(() => {
 const handleSerachShow = () => searchDrawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 
-// 快捷筛选标签
+// 快捷筛选标签（原有）
 const filterRescueType = ref('');
 const handleRescueTypeClick = (type) => {
   if (filterRescueType.value === type) {
@@ -650,16 +729,12 @@ const handleArchiveStatusClick = (archiveStatus) => {
   }
 };
 
+// 用户快捷筛选变量（保留，但不再用于点击）
 const filterUserId = ref('');
+// 原 handleUserClick 改为打开详情，不再设置筛选条件
 const handleUserClick = (userId) => {
   if (!userId) return;
-  if (filterUserId.value === userId) {
-    handleClearField('userId');
-  } else {
-    dataObj.serachObj.userId = userId;
-    filterUserId.value = userId;
-    gridApi.query();
-  }
+  openUserDetail(userId);
 };
 
 const filterRescueUserId = ref('');
@@ -710,7 +785,6 @@ defineExpose({ handleRefresh, handleChartRefresh });
             </el-tag>
           </template>
 
-          <!-- 兼容旧版独立显示的图表钻取标签（如果未拆分到 activeFilters 中，可保留） -->
           <el-tag v-if="chartStatusListFilter && !activeFilters.some(f => f.field === 'statusList')" type="warning" closable @close="() => handleClearField('statusList')">
             状态筛选：{{ chartStatusListFilter }}
           </el-tag>
@@ -726,7 +800,6 @@ defineExpose({ handleRefresh, handleChartRefresh });
         </div>
       </template>
 
-      <!-- 工具栏按钮 -->
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton
@@ -745,14 +818,21 @@ defineExpose({ handleRefresh, handleChartRefresh });
       <template #id="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary">{{ row.id }}</el-text>
       </template>
+      <!-- 用户名点击打开用户详情，不再设置筛选条件 -->
       <template #user_name="{ row }">
         <el-text @click="handleUserClick(row.userId)" type="primary" style="cursor: pointer">
           {{ row.userName || '-' }}
         </el-text>
       </template>
+      <!-- 修改后的救援位置列：优先显示 locationName，悬停显示完整地址，点击仍传原始坐标 -->
       <template #location="{ row }">
-        <el-text @click="handleLocationClick(row.location)" type="primary" style="cursor: pointer">
-          {{ row.location || '-' }}
+        <el-text
+          @click="handleLocationClick(row.location)"
+          type="primary"
+          style="cursor: pointer"
+          :title="row.locationName || row.location"
+        >
+          {{ row.locationName || row.location || '-' }}
         </el-text>
       </template>
       <template #rescue_type="{ row }">
@@ -821,7 +901,6 @@ defineExpose({ handleRefresh, handleChartRefresh });
           <template v-else-if="row.status === '处理中'">
             <IconButton content="更新进度" icon-name="edit" @click="openProgressDrawer(row)" />
             <IconButton content="转派" icon-name="share" @click="openTransferDrawer(row)" />
-            <IconButton content="完成" icon-name="Check" @click="handleComplete(row)" />
             <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
           </template>
           <template v-else-if="row.status === '已完成'">
@@ -876,6 +955,7 @@ defineExpose({ handleRefresh, handleChartRefresh });
       </el-form>
     </BatchDispatchDrawer>
 
+    <!-- 更新进度抽屉（新增“标记为已完成”复选框） -->
     <ProgressDrawer>
       <el-form :model="progressForm" label-width="100px">
         <el-form-item label="救援进度" required>
@@ -896,6 +976,11 @@ defineExpose({ handleRefresh, handleChartRefresh });
           >
             <el-button type="primary">上传照片</el-button>
           </el-upload>
+        </el-form-item>
+        <!-- 新增：标记为已完成 -->
+        <el-form-item label="标记为已完成">
+          <el-checkbox v-model="progressForm.complete">本次更新同时收尾，将任务标记为已完成</el-checkbox>
+          <div class="form-tip">勾选后系统将自动计算完成时间与处理时长</div>
         </el-form-item>
       </el-form>
     </ProgressDrawer>
@@ -945,6 +1030,40 @@ defineExpose({ handleRefresh, handleChartRefresh });
         </div>
       </div>
     </EvaluateDetailDrawer>
+
+    <!-- 新增：用户详情抽屉 -->
+    <UserDetailDrawer>
+      <div class="detail-card">
+        <div class="detail-card-row">
+          <div class="detail-row-left">用户ID：</div>
+          <div class="detail-row-right">{{ currentUserDetail.id || '-' }}</div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">用户名：</div>
+          <div class="detail-row-right">{{ currentUserDetail.userName || '-' }}</div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">昵称：</div>
+          <div class="detail-row-right">{{ currentUserDetail.nickname || '-' }}</div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">手机号：</div>
+          <div class="detail-row-right">{{ currentUserDetail.mobile || '-' }}</div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">邮箱：</div>
+          <div class="detail-row-right">{{ currentUserDetail.email || '-' }}</div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">状态：</div>
+          <div class="detail-row-right">{{ currentUserDetail.status === 0 ? '正常' : '禁用' }}</div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">创建时间：</div>
+          <div class="detail-row-right">{{ currentUserDetail.createTime || '-' }}</div>
+        </div>
+      </div>
+    </UserDetailDrawer>
   </div>
 </template>
 
@@ -971,5 +1090,10 @@ defineExpose({ handleRefresh, handleChartRefresh });
   flex: 1;
   color: #303133;
   word-break: break-all;
+}
+.form-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
 }
 </style>
