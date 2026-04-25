@@ -6,7 +6,7 @@ import Columnar from '#/components/stats/columnar.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
-import { getMockChartData } from './data';
+import { getMockChartData, getPlanTypeLabel } from './data';
 
 const emit = defineEmits(['statusFilter', 'trendFilter']);
 
@@ -106,7 +106,7 @@ onMounted(() => {
     <Columnar
       class="park-type-chart"
       title="任务类型分布"
-      :x-data="state.typeData.map(item => item.typeName)"
+      :x-data="state.typeData.map(item => getPlanTypeLabel(item.typeName))"
       :series-data="[{ name: '任务数', data: state.typeData.map(item => item.count) }]"
     />
     </div>

@@ -485,7 +485,9 @@ watch(
           :percentage="row.progress"
           :status="getProgressStatus(row.progress)"
           @click="handleResultDetail(row)"
-        />
+        >
+          <span>{{ row.progressText }}</span>
+        </el-progress>
       </template>
 
       <template #status="{ row }">

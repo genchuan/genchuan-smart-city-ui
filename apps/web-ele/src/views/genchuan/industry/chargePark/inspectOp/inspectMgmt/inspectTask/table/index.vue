@@ -365,7 +365,7 @@ async function handleOpenDetail(row) {
     dataObj.detailObj = {
       ...normalizeInspectTaskRow(response || row),
       ...row,
-    }
+    };
   } catch (error) {
     console.error('获取巡检任务详情失败，使用行数据:', error);
     dataObj.detailObj = row;

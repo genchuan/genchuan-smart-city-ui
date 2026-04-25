@@ -37,7 +37,6 @@ export function getPlanTypeTagType(type) {
   );
 }
 
-
 function isSameDictValue(dictType, current, target) {
   if (!target) return true;
   return (
@@ -160,7 +159,7 @@ export function getTaskTypeTagType(type) {
 }
 
 export function getTaskTypeLabel(type) {
-   const tagMap = {
+  const tagMap = {
     success: '设备巡检',
     warning: '占位处置',
     danger: '安全巡检',
