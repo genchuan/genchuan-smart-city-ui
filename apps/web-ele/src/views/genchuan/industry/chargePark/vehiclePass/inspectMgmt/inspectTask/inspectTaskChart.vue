@@ -3,10 +3,10 @@ import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
-import { inspectTaskApi } from '#/api/genchuan/industry/chargePark/vehiclePass/api-map';
+import { getInspectTaskChart } from '#/api/genchuan/industry/chargePark/vehiclePass/inspectMgmt/inspectTask';
 
 const props = defineProps({
-  parkId: { type: Number, default: null },
+  areaId: { type: Number, default: null },
 });
 
 const cards = reactive([
@@ -46,12 +46,12 @@ async function loadChartData() {
     startTime.setDate(startTime.getDate() - 7);
 
     const params = {
-      startTime: startTime.toISOString().split('T')[0],
-      endTime: endTime.toISOString().split('T')[0],
-      stationId: props.parkId,
+      startTime: Math.floor(startTime.getTime() / 1000).toString(),
+      endTime: Math.floor(endTime.getTime() / 1000).toString(),
+      areaId: props.areaId,
     };
 
-    const res = await inspectTaskApi.getChart(params);
+    const res = await getInspectTaskChart(params);
 
     // Always update card values
     if (res?.cardData) {
@@ -112,6 +112,15 @@ function initPieChart() {
     ],
   };
   pieChartInstance.setOption(option);
+
+  // 添加点击事件
+  pieChartInstance.on('click', (params) => {
+    window.dispatchEvent(
+      new CustomEvent('filterByStatus', {
+        detail: { status: 'taskHandleTrend', date: params.name },
+      }),
+    );
+  });
 }
 
 function initBarChart() {
@@ -142,6 +151,15 @@ function initBarChart() {
     ],
   };
   barChartInstance.setOption(option);
+
+  // 添加点击事件
+  barChartInstance.on('click', (params) => {
+    window.dispatchEvent(
+      new CustomEvent('filterByStatus', {
+        detail: { status: 'taskType', taskType: params.name },
+      }),
+    );
+  });
 }
 
 function initCharts() {

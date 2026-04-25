@@ -10,8 +10,14 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
+  archiveInspectTask,
+  batchDispatchInspectTask,
+  claimInspectTask,
+  dispatchInspectTask,
   exportInspectTask,
   getInspectTaskPage,
+  transferInspectTask,
+  updateInspectTaskProgress,
 } from '#/api/genchuan/industry/chargePark/vehiclePass/inspectMgmt/inspectTask';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
@@ -31,9 +37,13 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  drillDownFilter: {
+    type: Object,
+    default: null,
+  },
 });
 
-// 是否使用真实API（默认false使用模拟数据）
+// 是否使用真实API
 const USE_REAL_API = true;
 
 const getTitle = computed(() => {
@@ -180,6 +190,23 @@ const dataObj = reactive({
   searchParams: {},
 });
 
+// 监听下钻筛选参数变化
+const { drillDownFilter } = props;
+if (drillDownFilter) {
+  const { filterKey, taskType, date } = drillDownFilter;
+
+  // 根据下钻类型设置筛选条件
+  if (filterKey === 'waitHandleTaskCount') {
+    dataObj.searchParams.status = '待派发,待认领,处理中';
+  } else if (filterKey === 'finishedTaskCount') {
+    dataObj.searchParams.status = '已完成';
+  } else if (filterKey === 'taskType' && taskType) {
+    dataObj.searchParams.taskType = taskType;
+  } else if (filterKey === 'taskHandleTrend' && date) {
+    dataObj.searchParams.dispatchTime = [date, date];
+  }
+}
+
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
@@ -211,12 +238,20 @@ const getTableData = async (pageObj) => {
   const filteredList = dataObj.apilist.filter((v) => {
     let statusMatch = true;
     switch (activeName.value) {
-      case '异常': {
-        statusMatch = v.status === '异常';
+      case '待派发': {
+        statusMatch = v.status === '待派发';
         break;
       }
-      case '正常': {
-        statusMatch = v.status === '正常';
+      case '待认领': {
+        statusMatch = v.status === '待认领';
+        break;
+      }
+      case '处理中': {
+        statusMatch = v.status === '处理中';
+        break;
+      }
+      case '已完成': {
+        statusMatch = v.status === '已完成';
         break;
       }
     }
@@ -307,7 +342,13 @@ const handleOpenDetail = (row) => {
   detailDrawerRef.value.open();
 };
 
-const tabsData = ref([{ label: '全部' }, { label: '正常' }, { label: '异常' }]);
+const tabsData = ref([
+  { label: '全部' },
+  { label: '待派发' },
+  { label: '待认领' },
+  { label: '处理中' },
+  { label: '已完成' },
+]);
 
 const createLabel = (item) => {
   let count = 0;
@@ -317,12 +358,20 @@ const createLabel = (item) => {
       count = dataObj.apilist.length;
       break;
     }
-    case '异常': {
-      count = dataObj.apilist.filter((v) => v.status === '异常').length;
+    case '待派发': {
+      count = dataObj.apilist.filter((v) => v.status === '待派发').length;
       break;
     }
-    case '正常': {
-      count = dataObj.apilist.filter((v) => v.status === '正常').length;
+    case '待认领': {
+      count = dataObj.apilist.filter((v) => v.status === '待认领').length;
+      break;
+    }
+    case '处理中': {
+      count = dataObj.apilist.filter((v) => v.status === '处理中').length;
+      break;
+    }
+    case '已完成': {
+      count = dataObj.apilist.filter((v) => v.status === '已完成').length;
       break;
     }
   }
@@ -341,6 +390,274 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
+// 派发任务
+const handleDispatch = async (row) => {
+  const [DispatchDrawer, dispatchDrawerApi] = useVbenDrawer({
+    appendToMain: true,
+    modal: false,
+    title: '派发任务',
+    onCancel() {
+      dispatchDrawerApi.close();
+    },
+    async onConfirm() {
+      const values = dispatchFormApi.form.values;
+      try {
+        await dispatchInspectTask({
+          id: row.id,
+          executeUserId: values.executeUserId,
+        });
+        ElMessage.success('派发成功');
+        handleRefresh();
+        dispatchDrawerApi.close();
+      } catch (error) {
+        ElMessage.error('派发失败');
+        console.error(error);
+      }
+    },
+  });
+
+  const [DispatchForm, dispatchFormApi] = useVbenForm({
+    schema: [
+      {
+        fieldName: 'executeUserId',
+        label: '执行人',
+        component: 'Select',
+        componentProps: {
+          placeholder: '请选择执行人',
+          options: [],
+        },
+        rules: 'required',
+      },
+    ],
+  });
+
+  dispatchDrawerApi.open();
+};
+
+// 批量派发
+const handleBatchDispatch = async () => {
+  if (isEmpty(checkedIds.value)) {
+    ElMessage.warning('请选择要派发的任务');
+    return;
+  }
+
+  const [BatchDispatchDrawer, batchDispatchDrawerApi] = useVbenDrawer({
+    appendToMain: true,
+    modal: false,
+    title: '批量派发',
+    onCancel() {
+      batchDispatchDrawerApi.close();
+    },
+    async onConfirm() {
+      const values = batchDispatchFormApi.form.values;
+      try {
+        await batchDispatchInspectTask({
+          ids: checkedIds.value,
+          executeUserId: values.executeUserId,
+        });
+        ElMessage.success('批量派发成功');
+        checkedIds.value = [];
+        handleRefresh();
+        batchDispatchDrawerApi.close();
+      } catch (error) {
+        ElMessage.error('批量派发失败');
+        console.error(error);
+      }
+    },
+  });
+
+  const [BatchDispatchForm, batchDispatchFormApi] = useVbenForm({
+    schema: [
+      {
+        fieldName: 'executeUserId',
+        label: '执行人',
+        component: 'Select',
+        componentProps: {
+          placeholder: '请选择执行人',
+          options: [],
+        },
+        rules: 'required',
+      },
+    ],
+  });
+
+  batchDispatchDrawerApi.open();
+};
+
+// 认领任务
+const handleClaim = async (row) => {
+  await confirm('确定认领该任务吗？');
+  try {
+    await claimInspectTask({ id: row.id });
+    ElMessage.success('认领成功');
+    handleRefresh();
+  } catch (error) {
+    ElMessage.error('认领失败');
+    console.error(error);
+  }
+};
+
+// 更新进度
+const handleUpdateProgress = async (row) => {
+  const [ProgressDrawer, progressDrawerApi] = useVbenDrawer({
+    appendToMain: true,
+    modal: false,
+    title: '更新进度',
+    onCancel() {
+      progressDrawerApi.close();
+    },
+    async onConfirm() {
+      const values = progressFormApi.form.values;
+      try {
+        await updateInspectTaskProgress({
+          id: row.id,
+          taskProgress: values.taskProgress,
+          remark: values.remark,
+        });
+        ElMessage.success('更新成功');
+        handleRefresh();
+        progressDrawerApi.close();
+      } catch (error) {
+        ElMessage.error('更新失败');
+        console.error(error);
+      }
+    },
+  });
+
+  const [ProgressForm, progressFormApi] = useVbenForm({
+    schema: [
+      {
+        fieldName: 'taskProgress',
+        label: '任务进度',
+        component: 'Textarea',
+        componentProps: {
+          placeholder: '请输入任务进度',
+          rows: 3,
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'remark',
+        label: '备注',
+        component: 'Textarea',
+        componentProps: {
+          placeholder: '请输入备注',
+          rows: 3,
+        },
+      },
+    ],
+  });
+
+  progressDrawerApi.open();
+};
+
+// 转派任务
+const handleTransfer = async (row) => {
+  const [TransferDrawer, transferDrawerApi] = useVbenDrawer({
+    appendToMain: true,
+    modal: false,
+    title: '转派任务',
+    onCancel() {
+      transferDrawerApi.close();
+    },
+    async onConfirm() {
+      const values = transferFormApi.form.values;
+      try {
+        await transferInspectTask({
+          id: row.id,
+          targetUserId: values.targetUserId,
+          transferReason: values.transferReason,
+        });
+        ElMessage.success('转派成功');
+        handleRefresh();
+        transferDrawerApi.close();
+      } catch (error) {
+        ElMessage.error('转派失败');
+        console.error(error);
+      }
+    },
+  });
+
+  const [TransferForm, transferFormApi] = useVbenForm({
+    schema: [
+      {
+        fieldName: 'targetUserId',
+        label: '目标执行人',
+        component: 'Select',
+        componentProps: {
+          placeholder: '请选择目标执行人',
+          options: [],
+        },
+        rules: 'required',
+      },
+      {
+        fieldName: 'transferReason',
+        label: '转派理由',
+        component: 'Textarea',
+        componentProps: {
+          placeholder: '请输入转派理由',
+          rows: 3,
+        },
+        rules: 'required',
+      },
+    ],
+  });
+
+  transferDrawerApi.open();
+};
+
+// 归档任务
+const handleArchive = async (row) => {
+  await confirm('确定归档该任务吗？');
+  try {
+    await archiveInspectTask({ id: row.id });
+    ElMessage.success('归档成功');
+    handleRefresh();
+  } catch (error) {
+    ElMessage.error('归档失败');
+    console.error(error);
+  }
+};
+
+// 获取操作按钮
+const getActionButtons = (row) => {
+  const buttons = [];
+
+  switch (row.status) {
+    case '待派发':
+      buttons.push(
+        { content: '派发', iconName: 'Send', onClick: () => handleDispatch(row) },
+        { content: '查看', iconName: 'View', onClick: () => handleOpenDetail(row) }
+      );
+      break;
+    case '待认领':
+      buttons.push(
+        { content: '认领', iconName: 'Check', onClick: () => handleClaim(row) },
+        { content: '查看', iconName: 'View', onClick: () => handleOpenDetail(row) }
+      );
+      break;
+    case '处理中':
+      buttons.push(
+        { content: '更新进度', iconName: 'Edit', onClick: () => handleUpdateProgress(row) },
+        { content: '转派', iconName: 'Switch', onClick: () => handleTransfer(row) },
+        { content: '查看', iconName: 'View', onClick: () => handleOpenDetail(row) }
+      );
+      break;
+    case '已完成':
+      buttons.push(
+        { content: '查看', iconName: 'View', onClick: () => handleOpenDetail(row) },
+        { content: '归档', iconName: 'FolderOpened', onClick: () => handleArchive(row) }
+      );
+      break;
+    default:
+      buttons.push(
+        { content: '查看', iconName: 'View', onClick: () => handleOpenDetail(row) }
+      );
+  }
+
+  return buttons;
+};
 </script>
 
 <template>
@@ -350,7 +667,7 @@ const handleFullShow = () => {
     </FormDrawer>
     <DetailDrawer
       ref="detailDrawerRef"
-      :title="`${dataObj.detailObj.plateNo}详情`"
+      :title="`稽查任务 ${dataObj.detailObj.id} 详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
@@ -378,18 +695,16 @@ const handleFullShow = () => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton
+            content="批量派发"
+            icon-name="Send"
+            :disabled="isEmpty(checkedIds)"
+            @click="handleBatchDispatch"
+          />
           <IconButton
             content="导出"
             icon-name="download"
             @click="handleExport"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
           />
           <IconButton
             content="搜索"
@@ -412,23 +727,47 @@ const handleFullShow = () => {
           {{ row.id }}
         </el-text>
       </template>
+      <template #taskType="{ row }">
+        <el-text class="common-align">
+          {{ row.taskType }}
+        </el-text>
+      </template>
+      <template #status="{ row }">
+        <el-tag
+          :type="
+            row.status === '待派发'
+              ? 'info'
+              : row.status === '待认领'
+              ? 'warning'
+              : row.status === '处理中'
+              ? 'primary'
+              : row.status === '已完成'
+              ? 'success'
+              : 'info'
+          "
+        >
+          {{ row.status }}
+        </el-tag>
+      </template>
+      <template #areaName="{ row }">
+        <el-text class="common-align" type="primary">
+          {{ row.areaName }}
+        </el-text>
+      </template>
+      <template #executeUserName="{ row }">
+        <el-text class="common-align" type="primary">
+          {{ row.executeUserName || '-' }}
+        </el-text>
+      </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            content="详情"
-            icon-name="View"
-            @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
+            v-for="(btn, index) in getActionButtons(row)"
+            :key="index"
+            :content="btn.content"
+            :icon-name="btn.iconName"
+            :color="btn.color"
+            @click="btn.onClick"
           />
         </div>
       </template>
@@ -441,7 +780,7 @@ const handleFullShow = () => {
             <ArrowUp />
           </el-icon>
           <span>
-            本页统计：入场记录数量: {{ dataObj.list.length }}; 已选择:
+            本页统计：稽查任务数量: {{ dataObj.list.length }}; 已选择:
             {{ checkedIds.length }}
           </span>
         </div>

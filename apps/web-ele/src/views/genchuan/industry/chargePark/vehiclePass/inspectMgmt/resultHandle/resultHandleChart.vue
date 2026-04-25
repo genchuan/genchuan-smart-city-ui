@@ -3,7 +3,7 @@ import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
-import { resultHandleApi } from '#/api/genchuan/industry/chargePark/vehiclePass/api-map';
+import { getResultHandleChart } from '#/api/genchuan/industry/chargePark/vehiclePass/inspectMgmt/resultHandle';
 
 const props = defineProps({
   parkId: { type: Number, default: null },
@@ -34,25 +34,22 @@ const state = reactive({
 });
 
 const pieChartRef = ref(null);
-const barChartRef = ref(null);
 let pieChartInstance = null;
-const barChartInstance = null;
 
 async function loadChartData() {
   try {
-    const endTime = new Date();
-    const startTime = new Date();
-    startTime.setDate(startTime.getDate() - 7);
+    const endTime = Math.floor(Date.now() / 1000);
+    const startTime = endTime - 7 * 24 * 60 * 60;
 
     const params = {
-      startTime: startTime.toISOString().split('T')[0],
-      endTime: endTime.toISOString().split('T')[0],
-      stationId: props.parkId,
+      startTime: startTime.toString(),
+      endTime: endTime.toString(),
+      areaId: props.parkId,
     };
 
-    const res = await resultHandleApi.getChart(params);
+    const res = await getResultHandleChart(params);
 
-    // Always update card values
+    // 更新卡片数据
     if (res?.cardData) {
       cards[0].value = res.cardData.handleCompleteRate
         ? `${res.cardData.handleCompleteRate}%`
@@ -62,7 +59,7 @@ async function loadChartData() {
         : '0%';
     }
 
-    // Check if there's chart data
+    // 检查是否有图表数据
     const hasChartData = res?.handleResultRate?.length > 0;
 
     if (hasChartData) {
@@ -85,6 +82,7 @@ function initPieChart() {
   if (!pieChartRef.value) return;
   if (pieChartInstance) pieChartInstance.dispose();
   pieChartInstance = echarts.init(pieChartRef.value);
+
   const option = {
     backgroundColor: 'transparent',
     title: {
@@ -93,8 +91,14 @@ function initPieChart() {
       top: 10,
       textStyle: { fontSize: 14, fontWeight: 500 },
     },
-    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-    legend: { bottom: 10, left: 'center' },
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c} ({d}%)'
+    },
+    legend: {
+      bottom: 10,
+      left: 'center'
+    },
     series: [
       {
         type: 'pie',
@@ -104,7 +108,10 @@ function initPieChart() {
           name: item.name,
           value: item.value,
         })),
-        label: { show: true, formatter: '{b}: {d}%' },
+        label: {
+          show: true,
+          formatter: '{b}: {d}%'
+        },
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
@@ -115,21 +122,53 @@ function initPieChart() {
       },
     ],
   };
-  pieChartInstance.setOption(option);
-}
 
-function initBarChart() {
-  // 接口只返回饼图数据，不需要柱状图
+  pieChartInstance.setOption(option);
+
+  // 添加点击事件，实现下钻
+  pieChartInstance.on('click', (params) => {
+    handlePieClick(params.name);
+  });
 }
 
 function initCharts() {
   initPieChart();
-  initBarChart();
 }
 
-function handleCardClick(key) {
+// 处理饼图点击事件
+function handlePieClick(name) {
+  // 映射饼图名称到状态
+  let status = '';
+  if (name === '已完成') {
+    status = '已完成';
+  } else if (name === '待处置') {
+    status = '待处置';
+  } else if (name === '待审核') {
+    status = '待审核';
+  }
+
   window.dispatchEvent(
-    new CustomEvent('filterByStatus', { detail: { status: key } }),
+    new CustomEvent('filterByStatus', {
+      detail: { status, filterKey: status }
+    }),
+  );
+}
+
+// 处理卡片点击事件
+function handleCardClick(key) {
+  let status = '';
+
+  if (key === 'handleCompleteRate') {
+    status = '已完成';
+  } else if (key === 'violationRectifyRate') {
+    // 违规整改率点击，筛选已整改的记录
+    status = '已完成';
+  }
+
+  window.dispatchEvent(
+    new CustomEvent('filterByStatus', {
+      detail: { status, filterKey: key }
+    }),
   );
 }
 
@@ -137,12 +176,11 @@ onMounted(() => {
   loadChartData();
   window.addEventListener('resize', () => {
     pieChartInstance?.resize();
-    barChartInstance?.resize();
   });
 });
+
 onUnmounted(() => {
   pieChartInstance?.dispose();
-  barChartInstance?.dispose();
 });
 </script>
 
@@ -178,8 +216,10 @@ onUnmounted(() => {
       <div class="chart-container">
         <div ref="pieChartRef" style="width: 100%; height: 100%"></div>
       </div>
-      <div class="chart-container">
-        <div ref="barChartRef" style="width: 100%; height: 100%"></div>
+    </div>
+    <div v-else class="chart-wrapper">
+      <div class="chart-container no-data">
+        <el-empty description="暂无数据" />
       </div>
     </div>
   </div>
@@ -292,6 +332,12 @@ onUnmounted(() => {
       background-color: hsl(var(--card));
       border-radius: 8px;
       box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+
+      &.no-data {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
     }
   }
 }
