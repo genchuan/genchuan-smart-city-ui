@@ -22,11 +22,17 @@
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="筛选" icon-name="search" @click="searchDrawerApi.open()" />
+          <!-- 新增展开/收缩按钮 -->
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
           <IconButton content="刷新" icon-name="refresh" @click="handleRefresh" />
         </div>
       </template>
 
-      <!-- 列模板 -->
+      <!-- 列模板（保持原有） -->
       <template #id="{ row }">
         <el-text @click="openDetail(row)" type="primary">{{ row.id }}</el-text>
       </template>
@@ -36,8 +42,13 @@
         </el-text>
       </template>
       <template #queryLocation="{ row }">
-        <el-text @click="locateAddress(row.queryLocation)" type="primary" style="cursor: pointer">
-          {{ row.queryLocation || '-' }}
+        <el-text
+          @click="locateAddress(row.queryLocation)"
+          type="primary"
+          style="cursor: pointer"
+          :title="row.queryLocation"
+        >
+          {{ row.queryLocationName || row.queryLocation || '-' }}
         </el-text>
       </template>
       <template #resultCount="{ row }">
@@ -63,8 +74,11 @@
       <QueryForm class="query-form" />
     </SearchDrawer>
 
-    <!-- 详情抽屉 -->
+    <!-- 查询详情抽屉 -->
     <DetailDrawer ref="detailDrawerRef" :detail-data="currentDetail" />
+
+    <!-- 用户详情抽屉 -->
+    <UserDetailDrawer ref="userDetailDrawerRef" />
   </div>
 </template>
 
@@ -80,12 +94,23 @@ import {
   navigateChargeParkMap,
   reserveChargeParkMap,
   getUserList,
+  getUserDetail,
 } from '#/api/genchuan/industry/chargePark/carService/carGuide/chargeParkMap/index.js';
 import { useFormSchema, useGridColumns } from './data';
 import DetailDrawer from './detail.vue';
+import UserDetailDrawer from './userDetail.vue';
 
-const props = defineProps({ secondShow: Boolean });
-const emit = defineEmits(['refreshChart']);
+// 新增 props 和 emit
+const props = defineProps({
+  secondShow: Boolean,
+  arrowShow: { type: Boolean, default: false },   // 新增
+});
+const emit = defineEmits(['refreshChart', 'arrow-change']); // 新增 arrow-change
+
+// 新增：触发箭头切换事件
+const arrowChange = () => {
+  emit('arrow-change');
+};
 
 // ==================== 用户映射 ====================
 const allUserMap = ref(new Map());
@@ -131,7 +156,7 @@ const getTableData = async ({ page }) => {
     ...searchParams,
   };
 
-  if (searchParams.queryTime && Array.isArray(searchParams.queryTime)) {
+  if (searchParams.queryTime && Array.isArray(searchParams.queryTime) && searchParams.queryTime.length === 2) {
     params.queryTimeBegin = searchParams.queryTime[0];
     params.queryTimeEnd = searchParams.queryTime[1];
     delete params.queryTime;
@@ -227,6 +252,7 @@ async function onSubmit(values, isReset = false) {
   }
 
   const formValues = { ...values };
+
   if (formValues.userName) {
     const userId = getUserIdByUserName(formValues.userName);
     if (userId) {
@@ -270,9 +296,19 @@ const addQuickFilter = (field, value, label) => {
   ElMessage.success(`已添加筛选：${label}`);
 };
 
-const handleUserClick = (userId, userName) => {
-  if (!userId) return;
-  addQuickFilter('userId', userId, `用户：${userName || getUserNameById(userId)}`);
+const userDetailDrawerRef = ref(null);
+const handleUserClick = async (userId, userName) => {
+  if (!userId) {
+    ElMessage.warning('用户ID不存在');
+    return;
+  }
+  try {
+    const userDetail = await getUserDetail(userId);
+    userDetailDrawerRef.value?.open(userDetail);
+  } catch (error) {
+    console.error('获取用户详情失败', error);
+    ElMessage.error('获取用户详情失败');
+  }
 };
 
 const activeFilters = computed(() => {
@@ -298,13 +334,9 @@ const activeFilters = computed(() => {
   if (searchParams.stationId) {
     filters.push({ label: `场站ID：${searchParams.stationId}`, field: 'stationId' });
   }
-  if (searchParams.bounds) {
-    filters.push({ label: '区域筛选（地图范围）', field: 'bounds' });
-  }
   return filters;
 });
 
-// 详情抽屉
 const detailDrawerRef = ref(null);
 const currentDetail = ref({});
 const openDetail = (row) => {
@@ -312,15 +344,16 @@ const openDetail = (row) => {
   detailDrawerRef.value.open();
 };
 
-// ==================== 导航功能（终极兼容版）====================
-const handleNavigate = async (row, targetId = null) => {
+// ==================== 导航功能 ====================
+const handleNavigate = async (row) => {
   const loading = ElLoading.service({ text: '正在获取导航地址...' });
   try {
     const params = { id: row.id };
-    if (targetId) params.targetId = targetId;
+    if (row.stationId) {
+      params.stationId = row.stationId;
+    }
     const res = await navigateChargeParkMap(params);
 
-    // 兼容多种返回格式
     let url = null;
     if (typeof res === 'string') {
       url = res;
@@ -329,7 +362,6 @@ const handleNavigate = async (row, targetId = null) => {
     }
 
     if (url && typeof url === 'string' && url.trim()) {
-      // 确保是完整 URL
       const finalUrl = url.startsWith('http') ? url : `https://${url}`;
       window.open(finalUrl, '_blank');
       ElMessage.success('已打开导航');
@@ -345,12 +377,23 @@ const handleNavigate = async (row, targetId = null) => {
   }
 };
 
-// ==================== 预订功能（终极兼容版）====================
-const handleReserve = async (row, targetId = null) => {
+// ==================== 预订功能 ====================
+const handleReserve = async (row) => {
   const loading = ElLoading.service({ text: '正在跳转预约服务...' });
   try {
-    const params = { id: row.id };
-    if (targetId) params.targetId = targetId;
+    if (!row.stationId && !row.parkingSpaceId) {
+      ElMessage.warning('当前记录缺少场站ID或车位ID，无法预订');
+      loading.close();
+      return;
+    }
+
+    const params = {};
+    if (row.stationId) {
+      params.stationId = row.stationId;
+    } else if (row.parkingSpaceId) {
+      params.spaceId = row.parkingSpaceId;
+    }
+
     const res = await reserveChargeParkMap(params);
 
     let url = null;
@@ -361,7 +404,6 @@ const handleReserve = async (row, targetId = null) => {
     }
 
     if (url && typeof url === 'string' && url.trim()) {
-      // 处理相对路径
       const finalUrl = url.startsWith('http') ? url : `${window.location.origin}${url}`;
       window.open(finalUrl, '_blank');
       ElMessage.success('已打开预订页面');
@@ -383,6 +425,7 @@ const handleRefresh = () => {
 };
 
 const locateAddress = (address) => {
+  if (!address) return;
   window.dispatchEvent(new CustomEvent('charge-park-map-locate', { detail: address }));
 };
 

@@ -86,9 +86,9 @@ export function getAidWorkPage(params) {
       return res;
     })
     .catch(err => {
-      console.warn('分页接口失败，使用模拟数据', err);
-      const mockData = convertList(dataList());
-      return { list: mockData, total: mockData.length };
+      console.warn('分页接口失败', err);
+      // 分页接口已联调成功，不再使用模拟数据，返回空列表
+      return { list: [], total: 0 };
     });
 }
 
@@ -135,10 +135,9 @@ export function getAidWorkDetail(params) {
   return requestClient.get('/studentmgmt/aid-work/get', { params })
     .then(res => convertEnToZh(res))
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = dataList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(convertEnToZh(detail));
+      console.warn('详情接口失败', err);
+      // 不再使用模拟数据，直接抛出错误让调用方处理
+      return Promise.reject(err);
     });
 }
 
@@ -180,7 +179,6 @@ export function getAidWorkChart(params) {
   });
 }
 
-// 修改：返回数组格式，与后端一致
 export function getApplyCount(params) {
   return requestClient.get('/studentmgmt/aid-work/chart/applyCount', { params }).catch(err => {
     console.warn('申请人数统计接口失败，使用模拟数据', err);
@@ -193,117 +191,3 @@ export function getApplyCount(params) {
     ]);
   });
 }
-
-// 模拟数据（原始值使用数字/代码，通过转换函数对外提供中文）
-export const dataList = () => {
-  return [
-    {
-      id: 1,
-      studentId: 1,
-      studentName: '张三',
-      className: '计算机科学与技术1班',
-      aidType: '1',
-      applyAmount: 5000.00,
-      applyTime: 1672531200000,
-      auditUser: null,
-      auditTime: null,
-      processStatus: '1',
-      status: '0',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672531200000,
-      updateTime: 1672531200000,
-    },
-    {
-      id: 2,
-      studentId: 2,
-      studentName: '李四',
-      className: '软件工程1班',
-      aidType: '2',
-      applyAmount: 3000.00,
-      applyTime: 1672617600000,
-      auditUser: '王老师',
-      auditTime: 1672650000000,
-      processStatus: '1',
-      status: '1',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672617600000,
-      updateTime: 1672650000000,
-    },
-    {
-      id: 3,
-      studentId: 3,
-      studentName: '王五',
-      className: '计算机科学与技术2班',
-      aidType: '3',
-      applyAmount: 8000.00,
-      applyTime: 1672704000000,
-      auditUser: '李老师',
-      auditTime: 1672720000000,
-      processStatus: '2',
-      status: '2',
-      remark: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1672704000000,
-      updateTime: 1672720000000,
-    },
-    {
-      id: 4,
-      studentId: 4,
-      studentName: '赵六',
-      className: '电子信息工程1班',
-      aidType: '4',
-      applyAmount: 1500.00,
-      applyTime: 1672790400000,
-      auditUser: null,
-      auditTime: null,
-      processStatus: '1',
-      status: '0',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672790400000,
-      updateTime: 1672790400000,
-    },
-    {
-      id: 5,
-      studentId: 5,
-      studentName: '孙七',
-      className: '大数据1班',
-      aidType: '1',
-      applyAmount: 4500.00,
-      applyTime: 1672876800000,
-      auditUser: '王老师',
-      auditTime: 1672900000000,
-      processStatus: '1',
-      status: '1',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1672876800000,
-      updateTime: 1672900000000,
-    },
-    {
-      id: 6,
-      studentId: 6,
-      studentName: '周八',
-      className: '软件工程2班',
-      aidType: '2',
-      applyAmount: 3500.00,
-      applyTime: 1672963200000,
-      auditUser: null,
-      auditTime: null,
-      processStatus: '1',
-      status: '0',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672963200000,
-      updateTime: 1672963200000,
-    },
-  ];
-};

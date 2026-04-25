@@ -1,78 +1,104 @@
-<script setup>
-import { ref } from 'vue';
+<script lang="ts" setup>
+import type { VxeTableGridOptions } from '#/adapter/vxe-table';
+import type { PayNotifyApi } from '#/api/pay/notify';
 
-import Chart from './table/chart.vue';
-import Table from './table/index.vue';
+import { DocAlert, Page, useVbenModal } from '@vben/common-ui';
+import { $t } from '@vben/locales';
 
-import '#/components/page/index.scss';
+import { ElTag } from 'element-plus';
 
-const changeArrowStatus = () => {
-  secondShow.value = !secondShow.value;
-  tabArray.value.forEach((v) => {
-    v.secondShow = secondShow.value;
-  });
-};
-const arrowChange = () => {
-  tabArray.value.forEach((v) => {
-    v.arrowShow = !v.arrowShow;
-  });
-};
-const tabArray = ref([
-  {
-    label: '金额核算',
-    components: Table,
-    showSecondary: true,
-    secondShow: false,
-    arrowShow: true,
-    arrowState: false,
+import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getNotifyTaskPage } from '#/api/pay/notify';
+
+import { useGridColumns, useGridFormSchema } from './data';
+import Detail from './modules/detail.vue';
+
+const [DetailModal, detailModalApi] = useVbenModal({
+  connectedComponent: Detail,
+  destroyOnClose: true,
+});
+
+/** 刷新表格 */
+function handleRefresh() {
+  gridApi.query();
+}
+
+/** 查看详情 */
+function handleDetail(row: PayNotifyApi.NotifyTask) {
+  detailModalApi.setData(row).open();
+}
+
+const [Grid, gridApi] = useVbenVxeGrid({
+  formOptions: {
+    schema: useGridFormSchema(),
   },
-]);
-const activeName = ref('金额核算');
-const secondShow = ref(false);
+  gridOptions: {
+    cellConfig: {
+      height: 80,
+    },
+    columns: useGridColumns(),
+    height: 'auto',
+    keepSource: true,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }, formValues) => {
+          return await getNotifyTaskPage({
+            pageNo: page.currentPage,
+            pageSize: page.pageSize,
+            ...formValues,
+          });
+        },
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+      isHover: true,
+    },
+    toolbarConfig: {
+      refresh: true,
+      search: true,
+    },
+  } as VxeTableGridOptions<PayNotifyApi.NotifyTask>,
+});
 </script>
 <template>
-  <div class="common-index">
-    <Chart />
-    <div class="icon-change">
-      <el-icon
-        class="tabel-tab-icon"
-        v-if="secondShow"
-        @click="changeArrowStatus"
-      >
-        <ArrowDown />
-      </el-icon>
-      <el-icon
-        class="tabel-tab-icon"
-        v-if="!secondShow"
-        @click="changeArrowStatus"
-      >
-        <ArrowUp />
-      </el-icon>
-    </div>
-    <el-tabs
-      v-model="activeName"
-      class="common-tabs"
-      type="card"
-      @tab-change="tabChange"
-    >
-      <el-tab-pane
-        v-for="item in tabArray"
-        :key="item.label"
-        :name="item.label"
-      >
-        <template #label>
-          <div class="table-first">
-            <span>{{ item.label }}</span>
-          </div>
-        </template>
-        <component
-          :is="item.components"
-          :second-show="item.secondShow"
-          :key="item.label"
-          :arrow-show="item.arrowShow"
-          @arrow-change="arrowChange"
+  <Page auto-content-height>
+    <template #doc>
+      <DocAlert title="支付功能开启" url="https://doc.iocoder.cn/pay/build/" />
+    </template>
+
+    <DetailModal @success="handleRefresh" />
+    <Grid table-title="通知列表">
+      <template #merchantInfo="{ row }">
+        <div class="flex flex-col gap-1 text-left">
+          <p class="text-sm" v-if="row.merchantOrderId">
+            <ElTag size="small" type="primary">商户订单编号</ElTag>
+            {{ row.merchantOrderId }}
+          </p>
+          <p class="text-sm" v-if="row.merchantRefundId">
+            <ElTag size="small" type="warning">商户退款编号</ElTag>
+            {{ row.merchantRefundId }}
+          </p>
+          <p class="text-sm" v-if="row.merchantTransferId">
+            <ElTag size="small" type="success">商户转账编号</ElTag>
+            {{ row.merchantTransferId }}
+          </p>
+        </div>
+      </template>
+      <template #actions="{ row }">
+        <TableAction
+          :actions="[
+            {
+              label: $t('common.detail'),
+              type: 'primary',
+              link: true,
+              icon: ACTION_ICON.VIEW,
+              auth: ['pay:notify:query'],
+              onClick: handleDetail.bind(null, row),
+            },
+          ]"
         />
-      </el-tab-pane>
-    </el-tabs>
-  </div>
+      </template>
+    </Grid>
+  </Page>
 </template>

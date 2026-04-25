@@ -67,6 +67,14 @@ const overviewData = ref({});
 const dimensionData = ref([]);
 const trendData = ref([]);
 
+// 雷达图统计周期
+const cycle = ref('month');          // 默认月
+const cycleOptions = [
+  { label: '周', value: 'week' },
+  { label: '月', value: 'month' },
+  { label: '学期', value: 'semester' },
+];
+
 // 卡片列表
 const cardList = computed(() => {
   const total = overviewData.value.totalCount || 0;
@@ -92,10 +100,10 @@ const radarSeries = computed(() => {
   return dimensionData.value.map(item => ({
     name: item.className,
     value: [
-      item.classCleanScore || 0,
-      item.morningExerciseScore || 0,
-      item.civilClassScore || 0,
-      item.blackboardScore || 0,
+      item.classCleanScore ?? 0,
+      item.morningExerciseScore ?? 0,
+      item.civilClassScore ?? 0,
+      item.blackboardScore ?? 0,
     ],
   }));
 });
@@ -157,12 +165,28 @@ const transformOverviewData = (data) => {
   };
 };
 
+// 加载雷达图数据（根据当前周期）
+const loadDimensionData = async () => {
+  try {
+    const res = await getDimensionScore({ cycle: cycle.value });
+    dimensionData.value = res;
+  } catch (error) {
+    console.warn(`获取周期 ${cycle.value} 的多维度得分数据失败，使用模拟数据`, error);
+    dimensionData.value = mockDimensionScore;
+  }
+};
+
+// 周期变更回调
+const onCycleChange = () => {
+  loadDimensionData();
+};
+
 const loadChartData = async () => {
   loading.value = true;
   try {
     const [overviewRes, dimensionRes, trendRes] = await Promise.allSettled([
       getAssessMgmtChart({ cycle: 'month' }),
-      getDimensionScore({ cycle: 'month' }),
+      getDimensionScore({ cycle: cycle.value }),
       getCycleTrend({ startTime: '', endTime: '' }),
     ]);
 
@@ -202,8 +226,22 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 雷达图：班级多维度考评得分 -->
-    <div class="chart-wrapper" style="flex: 1 !important;">
+    <!-- 雷达图：班级多维度考评得分（带周期选择） -->
+    <div class="chart-wrapper" style="flex: 1 !important; position: relative;">
+      <div class="chart-select-wrapper">
+        <el-select
+          v-model="cycle"
+          size="small"
+          @change="onCycleChange"
+        >
+          <el-option
+            v-for="opt in cycleOptions"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </el-select>
+      </div>
       <Radar
         title-text="班级多维度考评得分"
         :indicator="radarIndicator"
@@ -254,6 +292,13 @@ onMounted(() => {
     flex: 1;
     margin-left: 12px;
     position: relative;
+  }
+
+  .chart-select-wrapper {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    z-index: 10;
   }
 }
 </style>

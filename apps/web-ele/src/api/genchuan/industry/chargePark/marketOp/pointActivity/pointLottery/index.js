@@ -9,7 +9,7 @@ export function getPointLotteryPage(params) {
 
 /** 导出积分抽奖记录数据 */
 export function exportPointLottery() {
-  return requestClient.download('/marketop/point-lottery/export-excel');
+  return requestClient.download('/marketop/point-lottery/export');
 }
 
 // ==================== 列表行交互操作接口 ====================
@@ -31,6 +31,6 @@ export function checkPointLottery(data) {
 // ==================== 数据可视化图表接口 ====================
 
 /** 积分抽奖统计（折线图 + 卡片） */
-export function getPointLotteryChart(params) {
-  return requestClient.get('/marketop/point-lottery/chart', { params });
+export function getPointLotteryChart() {
+  return requestClient.get('/marketop/point-lottery/chart');
 }

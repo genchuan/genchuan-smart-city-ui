@@ -17,6 +17,7 @@ const tabArray = ref([
     components: SpaceLocationTable,
     showSecondary: true,
     secondShow: false,
+    arrowShow: true,
   },
 ]);
 
@@ -25,6 +26,12 @@ const secondShow = ref(false);
 
 const tabChange = () => {};
 
+const arrowChange = () => {
+  tabArray.value.forEach((v) => {
+    v.arrowShow = !v.arrowShow;
+  });
+};
+
 const handleChartRefresh = (filters) => {
   window.dispatchEvent(new CustomEvent('space-location-chart-refresh', { detail: filters }));
 };
@@ -32,7 +39,7 @@ const handleChartRefresh = (filters) => {
 
 <template>
   <div class="common-index">
-    <SpaceLocationChart @refresh="handleChartRefresh" />
+    <SpaceLocationChart v-if="tabArray[0].arrowShow" @refresh="handleChartRefresh" />
     <div class="icon-change">
       <el-icon class="tabel-tab-icon" v-if="secondShow" @click="changeArrowStatus"><ArrowDown /></el-icon>
       <el-icon class="tabel-tab-icon" v-if="!secondShow" @click="changeArrowStatus"><ArrowUp /></el-icon>
@@ -42,7 +49,13 @@ const handleChartRefresh = (filters) => {
         <template #label>
           <div class="table-first"><span>{{ item.label }}</span></div>
         </template>
-        <component :is="item.components" :second-show="item.secondShow" :key="item.label" />
+        <component
+          :is="item.components"
+          :second-show="item.secondShow"
+          :arrow-show="item.arrowShow"
+          @arrow-change="arrowChange"
+          :key="item.label"
+        />
       </el-tab-pane>
     </el-tabs>
   </div>
