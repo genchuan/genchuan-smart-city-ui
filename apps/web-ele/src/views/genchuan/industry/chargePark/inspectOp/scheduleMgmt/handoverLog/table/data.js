@@ -286,6 +286,17 @@ export function useFormSchema() {
       rules: 'required',
     },
     {
+      fieldName: 'userId',
+      label: '交接人员',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择交接人员',
+        clearable: true,
+        options: userOptions,
+      },
+      rules: 'required',
+    },
+    {
       fieldName: 'content',
       label: '交接内容',
       component: 'Input',
