@@ -7,6 +7,7 @@ import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
 export const INSPECT_TASK_STATUS_DICT = DICT_TYPE.INSPECT_TASK_STATUS;
+export const INSPECT_PLAN_TYPE_DICT = DICT_TYPE.INSPECT_PLAN_TYPE;
 
 function getDictLabel(dictType, value) {
   if (value === undefined || value === null || value === '') return '-';
@@ -19,6 +20,23 @@ function isDictLabel(dictType, value, label) {
     String(value) === String(label) || getDictLabel(dictType, value) === label
   );
 }
+
+export function getPlanTypeLabel(value) {
+  return getDictLabel(INSPECT_PLAN_TYPE_DICT, value);
+}
+
+export function getPlanTypeTagType(type) {
+  const tagMap = {
+    日常: 'success',
+    专项: 'warning',
+    临时: 'danger',
+  };
+  return getDictTagTypeFromDict(
+    getDictObj(INSPECT_PLAN_TYPE_DICT, String(type)),
+    tagMap[getPlanTypeLabel(type)] || 'info',
+  );
+}
+
 
 function isSameDictValue(dictType, current, target) {
   if (!target) return true;
@@ -139,6 +157,16 @@ export function getTaskTypeTagType(type) {
     其他: 'info',
   };
   return tagMap[type] || 'info';
+}
+
+export function getTaskTypeLabel(type) {
+   const tagMap = {
+    success: '设备巡检',
+    warning: '占位处置',
+    danger: '安全巡检',
+    info: '其他',
+  };
+  return tagMap[type] || '其他';
 }
 
 export function getTaskStatusTagType(status) {
@@ -348,16 +376,16 @@ export function useSearchFormSchema() {
         options: userOptions,
       },
     },
-    {
-      fieldName: 'taskType',
-      label: '任务类型',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择任务类型',
-        clearable: true,
-        options: taskTypeOptions,
-      },
-    },
+    // {
+    //   fieldName: 'taskType',
+    //   label: '任务类型',
+    //   component: 'Select',
+    //   componentProps: {
+    //     placeholder: '请选择任务类型',
+    //     clearable: true,
+    //     options: taskTypeOptions,
+    //   },
+    // },
     {
       fieldName: 'status',
       label: '任务状态',
@@ -368,16 +396,16 @@ export function useSearchFormSchema() {
         options: taskStatusOptions,
       },
     },
-    {
-      fieldName: 'isArchive',
-      label: '归档状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择归档状态',
-        clearable: true,
-        options: archiveOptions,
-      },
-    },
+    // {
+    //   fieldName: 'isArchive',
+    //   label: '归档状态',
+    //   component: 'Select',
+    //   componentProps: {
+    //     placeholder: '请选择归档状态',
+    //     clearable: true,
+    //     options: archiveOptions,
+    //   },
+    // },
     {
       fieldName: 'dispatchTime',
       label: '派发时间',
