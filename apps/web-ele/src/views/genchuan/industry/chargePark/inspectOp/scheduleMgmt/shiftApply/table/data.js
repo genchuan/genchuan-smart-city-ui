@@ -44,8 +44,8 @@ export const userOptions = [
 export const statusOptions = getDictOptions(SHIFT_APPLY_STATUS_DICT, 'string');
 
 export const auditResultOptions = [
-  { label: '通过', value: '通过' },
-  { label: '驳回', value: '驳回' },
+  { label: '通过', value: '2' },
+  { label: '驳回', value: '3' },
 ];
 
 const auditRemarks = [
