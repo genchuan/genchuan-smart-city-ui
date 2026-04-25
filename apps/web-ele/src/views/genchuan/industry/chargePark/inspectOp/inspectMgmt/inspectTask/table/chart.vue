@@ -106,8 +106,10 @@ onMounted(() => {
     <Columnar
       class="park-type-chart"
       title="任务类型分布"
-      :x-data="state.typeData.map(item => getPlanTypeLabel(item.typeName))"
-      :series-data="[{ name: '任务数', data: state.typeData.map(item => item.count) }]"
+      :x-data="state.typeData.map((item) => getPlanTypeLabel(item.typeName))"
+      :series-data="[
+        { name: '任务数', data: state.typeData.map((item) => item.count) },
+      ]"
     />
-    </div>
+  </div>
 </template>

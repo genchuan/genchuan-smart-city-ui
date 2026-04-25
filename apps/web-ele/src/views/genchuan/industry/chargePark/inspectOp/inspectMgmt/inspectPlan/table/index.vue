@@ -575,7 +575,7 @@ watch(
           :status="getProgressStatus(row.progress)"
           @click="handleProgressDetail(row)"
         >
-        <span>{{ row.progressText }}</span>
+          <span>{{ row.progressText }}</span>
         </el-progress>
       </template>
 
