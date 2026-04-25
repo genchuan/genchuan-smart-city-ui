@@ -534,15 +534,11 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'trackTimeRange',
+      fieldName: 'trackTime',
       label: '轨迹时间',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择轨迹时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
   ];

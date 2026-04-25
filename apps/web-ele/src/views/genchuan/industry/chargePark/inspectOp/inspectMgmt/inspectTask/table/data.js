@@ -2,6 +2,7 @@ import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
 import { getInspectUserPage } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectUser';
+import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
@@ -378,15 +379,11 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'dispatchTimeRange',
+      fieldName: 'dispatchTime',
       label: '派发时间',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择派发时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
   ];

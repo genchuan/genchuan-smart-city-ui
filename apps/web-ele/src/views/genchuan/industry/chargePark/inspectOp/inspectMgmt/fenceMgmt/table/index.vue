@@ -2,7 +2,6 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage, ElMessageBox, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
@@ -126,9 +125,9 @@ async function getTableData({ page }) {
     const pageResult = response?.list ? response : response?.data || response;
     const list = Array.isArray(pageResult?.list) ? pageResult.list : [];
 
-    if (list.length === 0 && !pageResult?.total) {
-      throw new Error('接口返回数据为空');
-    }
+    // if (list.length === 0 && !pageResult?.total) {
+    //   throw new Error('接口返回数据为空');
+    // }
 
     const normalizedList = list.map((item) => normalizeFenceMgmtRow(item));
     const visibleList =
