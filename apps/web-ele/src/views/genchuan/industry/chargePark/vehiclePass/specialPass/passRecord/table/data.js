@@ -3,34 +3,45 @@ export function useSearchFormSchema() {
   return [
     {
       fieldName: 'plateNo',
-      label: '车牌号',
+      label: '车牌',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入车牌号',
+        placeholder: '请输入车牌',
       },
     },
     {
-      fieldName: 'plateColor',
-      label: '车牌颜色',
+      fieldName: 'passReason',
+      label: '放行原因',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择车牌颜色',
+        placeholder: '请选择放行原因',
         options: [
-          { label: '蓝牌', value: '蓝牌' },
-          { label: '黄牌', value: '黄牌' },
-          { label: '绿牌', value: '绿牌' },
-          { label: '白牌', value: '白牌' },
+          { label: '人工开闸', value: '人工开闸' },
+          { label: '特殊车辆', value: '特殊车辆' },
+          { label: '其他', value: '其他' },
         ],
       },
     },
     {
       fieldName: 'passTime',
-      label: '通行时间',
+      label: '放行时间',
       component: 'DatePicker',
       componentProps: {
         type: 'datetimerange',
         placeholder: ['开始时间', '结束时间'],
         format: 'YYYY-MM-DD HH:mm:ss',
+      },
+    },
+    {
+      fieldName: 'status',
+      label: '状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择状态',
+        options: [
+          { label: '正常记录', value: '正常记录' },
+          { label: '异常记录', value: '异常记录' },
+        ],
       },
     },
     {
@@ -47,49 +58,19 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'gateId',
-      label: '闸机',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择闸机',
-        options: [
-          { label: '1号闸机', value: 1 },
-          { label: '2号闸机', value: 2 },
-          { label: '3号闸机', value: 3 },
-        ],
-      },
-    },
-    {
-      fieldName: 'passType',
-      label: '通行类型',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择通行类型',
-        options: [
-          { label: '正常通行', value: '正常通行' },
-          { label: '特殊放行', value: '特殊放行' },
-          { label: '异常通行', value: '异常通行' },
-        ],
-      },
-    },
-    {
-      fieldName: 'checkStatus',
-      label: '核查状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择核查状态',
-        options: [
-          { label: '未核查', value: '未核查' },
-          { label: '已核查', value: '已核查' },
-        ],
-      },
-    },
-    {
-      fieldName: 'operator',
+      fieldName: 'operatorId',
       label: '操作人',
       component: 'Input',
       componentProps: {
         placeholder: '请输入操作人',
+      },
+    },
+    {
+      fieldName: 'remark',
+      label: '备注',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入备注',
       },
     },
   ];
@@ -101,15 +82,13 @@ export function useCheckFormSchema() {
     {
       fieldName: 'checkResult',
       label: '核查结果',
-      component: 'Select',
-      rules: [{ required: true, message: '请选择核查结果' }],
+      component: 'Input',
       componentProps: {
-        placeholder: '请选择核查结果',
-        options: [
-          { label: '正常', value: '正常' },
-          { label: '异常', value: '异常' },
-        ],
+        type: 'textarea',
+        placeholder: '请输入核查结果',
+        rows: 4,
       },
+      rules: [{ required: true, message: '请输入核查结果' }],
     },
     {
       fieldName: 'checkRemark',
@@ -117,7 +96,7 @@ export function useCheckFormSchema() {
       component: 'Input',
       componentProps: {
         type: 'textarea',
-        placeholder: '请输入核查备注',
+        placeholder: '请输入核查备注（选填）',
         rows: 4,
       },
     },
@@ -127,26 +106,47 @@ export function useCheckFormSchema() {
 /** 表格列配置 */
 export function useGridColumns() {
   return [
-    { type: 'checkbox', width: 40 },
+    {
+      field: 'id',
+      title: 'ID',
+      width: 80,
+      fixed: 'left',
+      sortable: true,
+    },
     {
       field: 'plateNo',
-      title: '车牌号',
+      title: '车牌',
       minWidth: 120,
       fixed: 'left',
       sortable: true,
       slots: { default: 'plateNo' },
     },
     {
-      field: 'plateColor',
-      title: '车牌颜色',
-      minWidth: 100,
+      field: 'passReason',
+      title: '放行原因',
+      minWidth: 120,
       sortable: true,
+      slots: { default: 'passReason' },
     },
     {
       field: 'passTime',
-      title: '通行时间',
+      title: '放行时间',
       minWidth: 180,
       sortable: true,
+    },
+    {
+      field: 'imageUrl',
+      title: '抓拍图片',
+      minWidth: 120,
+      sortable: true,
+      slots: { default: 'imageUrl' },
+    },
+    {
+      field: 'status',
+      title: '状态',
+      minWidth: 120,
+      sortable: true,
+      slots: { default: 'status' },
     },
     {
       field: 'stationName',
@@ -156,25 +156,6 @@ export function useGridColumns() {
       slots: { default: 'stationName' },
     },
     {
-      field: 'gateName',
-      title: '闸机',
-      minWidth: 120,
-      sortable: true,
-    },
-    {
-      field: 'passType',
-      title: '通行类型',
-      minWidth: 120,
-      sortable: true,
-      slots: { default: 'passType' },
-    },
-    {
-      field: 'passReason',
-      title: '通行原因',
-      minWidth: 150,
-      sortable: true,
-    },
-    {
       field: 'operator',
       title: '操作人',
       minWidth: 100,
@@ -182,34 +163,15 @@ export function useGridColumns() {
       slots: { default: 'operator' },
     },
     {
-      field: 'checkStatus',
-      title: '核查状态',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'checkStatus' },
-    },
-    {
-      field: 'checkTime',
-      title: '核查时间',
+      field: 'operatorTime',
+      title: '操作时间',
       minWidth: 180,
-      sortable: true,
-    },
-    {
-      field: 'checker',
-      title: '核查人',
-      minWidth: 100,
       sortable: true,
     },
     {
       field: 'remark',
       title: '备注',
       minWidth: 150,
-      sortable: true,
-    },
-    {
-      field: 'createTime',
-      title: '创建时间',
-      minWidth: 180,
       sortable: true,
     },
     {
@@ -228,18 +190,15 @@ export const textObj = {
 
 /** 详情抽屉字段配置 */
 export const detailFields = [
-  { key: 'plateNo', label: '车牌号' },
-  { key: 'plateColor', label: '车牌颜色' },
-  { key: 'passTime', label: '通行时间' },
+  { key: 'plateNo', label: '车牌' },
+  { key: 'passReason', label: '放行原因' },
+  { key: 'passTime', label: '放行时间' },
+  { key: 'imageUrl', label: '抓拍图片' },
+  { key: 'status', label: '状态' },
   { key: 'stationName', label: '场站' },
-  { key: 'gateName', label: '闸机' },
-  { key: 'passType', label: '通行类型' },
-  { key: 'passReason', label: '通行原因' },
   { key: 'operator', label: '操作人' },
-  { key: 'checkStatus', label: '核查状态' },
-  { key: 'checkTime', label: '核查时间' },
-  { key: 'checker', label: '核查人' },
-  { key: 'checkRemark', label: '核查备注' },
+  { key: 'operatorTime', label: '操作时间' },
+  { key: 'checkResult', label: '核查结果' },
   { key: 'remark', label: '备注' },
   { key: 'creator', label: '创建人' },
   { key: 'createTime', label: '创建时间' },
@@ -250,29 +209,26 @@ export const detailFields = [
 /** 模拟详情数据 */
 export const mockDetailData = {
   id: 1,
-  plateNo: '粤B12345',
-  plateColor: '蓝牌',
-  passTime: '2024-04-24 10:30:00',
+  plateNo: '闽C12345',
+  passReason: '人工开闸',
+  passTime: '1775011986',
+  imageUrl: '/genchuan/chargePark/vehiclePass/specialPass/passRecord/2025/04/13/123456.jpg',
+  status: '正常记录',
   stationId: 1,
   stationName: '1号场站',
-  gateId: 1,
-  gateName: '1号闸机',
-  passType: '特殊放行',
-  passReason: '临时通行',
+  operatorId: 1,
   operator: '张三',
-  checkStatus: '已核查',
-  checkTime: '2024-04-24 11:00:00',
-  checker: '李四',
-  checkRemark: '核查正常',
-  remark: '临时通行申请',
-  creator: '系统',
-  createTime: '2024-04-24 10:30:00',
-  updater: '李四',
-  updateTime: '2024-04-24 11:00:00',
+  operatorTime: '1775011986',
+  checkResult: '',
+  remark: '',
+  creator: 'admin',
+  createTime: '1775011986',
+  updater: 'admin',
+  updateTime: '1775011986',
 };
 
-/** 核查状态类型映射 */
-export const checkStatusTypeMap = {
-  未核查: 'warning',
-  已核查: 'success',
+/** 状态类型映射 */
+export const statusTypeMap = {
+  正常记录: 'success',
+  异常记录: 'warning',
 };

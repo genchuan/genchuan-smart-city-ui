@@ -29,15 +29,12 @@ const cards = reactive([
 const state = reactive({
   chartData: {
     trend: [],
-    typeCount: [],
   },
   hasData: false,
 });
 
-const pieChartRef = ref(null);
-const barChartRef = ref(null);
-let pieChartInstance = null;
-let barChartInstance = null;
+const trendChartRef = ref(null);
+let trendChartInstance = null;
 
 async function loadChartData() {
   try {
@@ -53,23 +50,21 @@ async function loadChartData() {
 
     const res = await getPassRecordChart(params);
 
-    // Always update card values
+    // 更新卡片数据
     if (res?.cardData) {
-      cards[0].value = res.cardData.passRecordCount || 0;
-      cards[1].value = res.cardData.avgPassDuration
-        ? `${res.cardData.avgPassDuration}s`
-        : '0s';
+      cards[0].value = res.cardData.todayPassCount || 0;
+      cards[1].value = res.cardData.abnormalPassRate
+        ? `${res.cardData.abnormalPassRate}%`
+        : '0%';
     }
 
-    // Check if there's chart data
+    // 检查是否有图表数据
     const hasChartData =
-      res &&
-      (res.passRecordTrend?.length > 0 || res.passTypeCount?.length > 0);
+      res && res.passCountTrend?.length > 0;
 
     if (hasChartData) {
       state.chartData = {
-        trend: res.passRecordTrend || [],
-        typeCount: res.passTypeCount || [],
+        trend: res.passCountTrend || [],
       };
       state.hasData = true;
       await nextTick();
@@ -83,10 +78,10 @@ async function loadChartData() {
   }
 }
 
-function initPieChart() {
-  if (!pieChartRef.value) return;
-  if (pieChartInstance) pieChartInstance.dispose();
-  pieChartInstance = echarts.init(pieChartRef.value);
+function initTrendChart() {
+  if (!trendChartRef.value) return;
+  if (trendChartInstance) trendChartInstance.dispose();
+  trendChartInstance = echarts.init(trendChartRef.value);
   const option = {
     backgroundColor: 'transparent',
     title: {
@@ -95,12 +90,22 @@ function initPieChart() {
       top: 10,
       textStyle: { fontSize: 14, fontWeight: 500 },
     },
-    tooltip: { trigger: 'axis' },
+    tooltip: {
+      trigger: 'axis',
+      formatter: '{b}<br/>{a}: {c}次'
+    },
     xAxis: {
       type: 'category',
       data: state.chartData.trend.map((item) => item.date),
+      axisLabel: {
+        rotate: 30,
+      },
     },
-    yAxis: { type: 'value', name: '放行数量' },
+    yAxis: {
+      type: 'value',
+      name: '放行数量',
+      minInterval: 1,
+    },
     series: [
       {
         name: '放行数量',
@@ -110,65 +115,57 @@ function initPieChart() {
         lineStyle: { width: 3, color: '#4A90E2' },
         areaStyle: { color: 'rgba(74,144,226,0.1)' },
         symbol: 'circle',
-        symbolSize: 6,
+        symbolSize: 8,
       },
     ],
   };
-  pieChartInstance.setOption(option);
-}
+  trendChartInstance.setOption(option);
 
-function initBarChart() {
-  if (!barChartRef.value) return;
-  if (barChartInstance) barChartInstance.dispose();
-  barChartInstance = echarts.init(barChartRef.value);
-  const option = {
-    backgroundColor: 'transparent',
-    title: {
-      text: '放行类型统计',
-      left: 'center',
-      top: 10,
-      textStyle: { fontSize: 14, fontWeight: 500 },
-    },
-    tooltip: { trigger: 'axis' },
-    xAxis: {
-      type: 'category',
-      data: state.chartData.typeCount.map((item) => item.typeName),
-    },
-    yAxis: { type: 'value', name: '数量' },
-    series: [
-      {
-        type: 'bar',
-        data: state.chartData.typeCount.map((item) => item.count),
-        itemStyle: { borderRadius: [4, 4, 0, 0], color: '#4A90E2' },
-        label: { show: true, position: 'top' },
-      },
-    ],
-  };
-  barChartInstance.setOption(option);
+  // 添加点击事件
+  trendChartInstance.on('click', (params) => {
+    const date = params.name;
+    window.dispatchEvent(
+      new CustomEvent('filterByStatus', {
+        detail: {
+          status: 'trendDate',
+          date: date
+        }
+      }),
+    );
+  });
 }
 
 function initCharts() {
-  initPieChart();
-  initBarChart();
+  initTrendChart();
 }
 
 function handleCardClick(key) {
+  let filterParams = { status: key };
+
+  // 根据卡片类型设置不同的筛选参数
+  if (key === 'todayPassCount') {
+    // 今日放行量：筛选今天的记录
+    const today = new Date().toISOString().split('T')[0];
+    filterParams = { status: 'todayPass', date: today };
+  } else if (key === 'abnormalPassRate') {
+    // 异常放行占比：筛选异常记录
+    filterParams = { status: 'abnormalPass' };
+  }
+
   window.dispatchEvent(
-    new CustomEvent('filterByStatus', { detail: { status: key } }),
+    new CustomEvent('filterByStatus', { detail: filterParams }),
   );
 }
 
 onMounted(() => {
   loadChartData();
   window.addEventListener('resize', () => {
-    pieChartInstance?.resize();
-    barChartInstance?.resize();
+    trendChartInstance?.resize();
   });
 });
 
 onUnmounted(() => {
-  pieChartInstance?.dispose();
-  barChartInstance?.dispose();
+  trendChartInstance?.dispose();
 });
 </script>
 
@@ -202,10 +199,7 @@ onUnmounted(() => {
     <!-- 右侧图表区域 -->
     <div v-if="state.hasData" class="chart-wrapper">
       <div class="chart-container">
-        <div ref="pieChartRef" style="width: 100%; height: 100%"></div>
-      </div>
-      <div class="chart-container">
-        <div ref="barChartRef" style="width: 100%; height: 100%"></div>
+        <div ref="trendChartRef" style="width: 100%; height: 100%"></div>
       </div>
     </div>
   </div>

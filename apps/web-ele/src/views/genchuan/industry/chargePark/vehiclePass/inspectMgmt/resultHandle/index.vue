@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 
 import resultHandleChart from './resultHandleChart.vue';
 import Table from './table/index.vue';
@@ -8,7 +8,7 @@ import '#/components/page/index.scss';
 
 const tabArray = ref([
   {
-    label: '结果处理',
+    label: '结果处置',
     components: Table,
     showSecondary: true,
     secondShow: false,
@@ -22,7 +22,38 @@ const arrowChange = () => {
     v.arrowShow = !v.arrowShow;
   });
 };
-const activeName = ref('结果处理');
+const activeName = ref('结果处置');
+
+// 下钻筛选参数
+const drillDownFilter = ref(null);
+const tableRef = ref(null);
+
+// 监听图表下钻事件
+const handleFilterByStatus = (event) => {
+  const { status, filterKey } = event.detail;
+
+  // 收起图表，展开表格
+  tabArray.value[0].arrowShow = false;
+
+  // 设置筛选条件
+  drillDownFilter.value = { filterKey: status || filterKey };
+
+  // 滚动到表格区域
+  setTimeout(() => {
+    const tableElement = document.querySelector('.common-tabs');
+    if (tableElement) {
+      tableElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 100);
+};
+
+onMounted(() => {
+  window.addEventListener('filterByStatus', handleFilterByStatus);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('filterByStatus', handleFilterByStatus);
+});
 </script>
 
 <template>
@@ -41,9 +72,11 @@ const activeName = ref('结果处理');
         </template>
         <component
           :is="item.components"
+          ref="tableRef"
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"
+          :drill-down-filter="drillDownFilter"
           @arrow-change="arrowChange"
         />
       </el-tab-pane>

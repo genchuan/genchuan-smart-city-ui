@@ -4,14 +4,19 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
+  approveResultHandle,
+  batchHandleResultHandle,
+  executeResultHandle,
   exportResultHandle,
+  getResultHandle,
   getResultHandlePage,
+  rejectResultHandle,
 } from '#/api/genchuan/industry/chargePark/vehiclePass/inspectMgmt/resultHandle';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
@@ -31,14 +36,37 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  drillDownFilter: {
+    type: Object,
+    default: null,
+  },
 });
 
-// 是否使用真实API（默认false使用模拟数据）
+// 监听下钻筛选参数变化
+import { watch } from 'vue';
+watch(
+  () => props.drillDownFilter,
+  (newFilter) => {
+    if (newFilter?.filterKey) {
+      // 根据下钻参数设置筛选条件
+      if (newFilter.filterKey === '已完成' || newFilter.filterKey === '待处置' || newFilter.filterKey === '待审核') {
+        activeName.value = newFilter.filterKey;
+        dataObj.searchParams = { status: newFilter.filterKey };
+      } else if (newFilter.filterKey === 'handleCompleteRate') {
+        activeName.value = '已完成';
+        dataObj.searchParams = { status: '已完成' };
+      } else if (newFilter.filterKey === 'violationRectifyRate') {
+        activeName.value = '已完成';
+        dataObj.searchParams = { status: '已完成', rectifyStatus: '已整改' };
+      }
+      handleRefresh();
+    }
+  },
+  { deep: true }
+);
+
+// 是否使用真实API
 const USE_REAL_API = true;
-
-const getTitle = computed(() => {
-  return formData.value?.id ? textObj.editText : textObj.addText;
-});
 
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -47,8 +75,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel() {
     drawerApi.close();
   },
-  onConfirm() {},
-  async onOpenChange() {},
 });
 
 const detailDrawerRef = ref(null);
@@ -67,36 +93,66 @@ const [Form, formApi] = useVbenForm({
   showDefaultActions: false,
 });
 
-const [FormDrawer, formDrawerApi] = useVbenDrawer({
+// 驳回弹窗
+const rejectDialogVisible = ref(false);
+const rejectForm = reactive({
+  id: null,
+  rejectReason: '',
+});
+
+// 执行抽屉
+const [ExecuteDrawer, executeDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
   onCancel() {
-    formDrawerApi.close();
+    executeDrawerApi.close();
   },
-  onConfirm() {
-    const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-      dataObj.apilist.push(obj);
-    } else {
-      dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
-        }
-      });
-    }
-    handleRefresh();
-    formDrawerApi.close();
-  },
-  async onOpenChange(isOpen) {
-    if (isOpen) {
-      formData.value = formDrawerApi.getData();
-      if (formData.value?.id) {
-        await formApi.setValues(formData.value);
-      } else {
-        formApi.resetForm();
+  async onConfirm() {
+    try {
+      const values = executeFormApi.form.values;
+      await executeFormApi.validate();
+
+      if (USE_REAL_API) {
+        await executeResultHandle({
+          id: executeDrawerApi.sharedData.payload.id,
+          rectifyStatus: values.rectifyStatus,
+        });
+        ElMessage.success('执行成功');
       }
+
+      executeDrawerApi.close();
+      handleRefresh();
+    } catch (error) {
+      console.error('执行失败:', error);
     }
   },
+});
+
+const [ExecuteForm, executeFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  layout: 'horizontal',
+  schema: [
+    {
+      fieldName: 'rectifyStatus',
+      label: '整改状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择整改状态',
+        options: [
+          { label: '未整改', value: '未整改' },
+          { label: '已整改', value: '已整改' },
+        ],
+      },
+      rules: 'required',
+    },
+  ],
+  showDefaultActions: false,
 });
 
 function handleRefresh() {
@@ -117,51 +173,101 @@ async function handleExport() {
   }
 }
 
-function handleCreate() {
-  formDrawerApi
-    .setData({
-      title: textObj.addText,
-    })
-    .open();
-}
-
-function handleEdit(row) {
-  formDrawerApi
-    .setData({
-      title: textObj.editText,
-      ...row,
-    })
-    .open();
-}
-
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.plateNo]),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.plateNo]));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
+// 批量处置
+async function handleBatchHandle() {
+  if (isEmpty(checkedIds.value)) {
+    ElMessage.warning('请选择要处置的数据');
+    return;
   }
-}
 
-async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
+  await confirm('确定批量处置这些数据吗？');
   const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
+    text: '批量处置中...',
   });
+
   try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
+    if (USE_REAL_API) {
+      await batchHandleResultHandle({
+        ids: checkedIds.value,
+        handleType: '执行',
+      });
+      ElMessage.success('批量处置成功');
+    }
     checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
     handleRefresh();
+  } catch (error) {
+    ElMessage.error('批量处置失败');
+    console.error(error);
   } finally {
     loadingInstance.close();
   }
+}
+
+// 通过
+async function handleApprove(row) {
+  await confirm('确定通过该处置结果吗？');
+  const loadingInstance = ElLoading.service({
+    text: '审核中...',
+  });
+
+  try {
+    if (USE_REAL_API) {
+      await approveResultHandle({ id: row.id });
+      ElMessage.success('审核通过');
+    }
+    handleRefresh();
+  } catch (error) {
+    ElMessage.error('审核失败');
+    console.error(error);
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+// 驳回
+function handleReject(row) {
+  rejectForm.id = row.id;
+  rejectForm.rejectReason = '';
+  rejectDialogVisible.value = true;
+}
+
+async function submitReject() {
+  if (!rejectForm.rejectReason || rejectForm.rejectReason.length < 10) {
+    ElMessage.warning('驳回理由不能少于10个字');
+    return;
+  }
+
+  const loadingInstance = ElLoading.service({
+    text: '驳回中...',
+  });
+
+  try {
+    if (USE_REAL_API) {
+      await rejectResultHandle({
+        id: rejectForm.id,
+        rejectReason: rejectForm.rejectReason,
+      });
+      ElMessage.success('驳回成功');
+    }
+    rejectDialogVisible.value = false;
+    handleRefresh();
+  } catch (error) {
+    ElMessage.error('驳回失败');
+    console.error(error);
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+// 执行
+function handleExecute(row) {
+  executeDrawerApi
+    .setData({
+      title: '执行处置',
+      id: row.id,
+    })
+    .open();
+  executeFormApi.resetForm();
 }
 
 const checkedIds = ref([]);
@@ -187,7 +293,6 @@ const changeTotalShow = () => {
 const getTableData = async (pageObj) => {
   const page = pageObj.page;
 
-  // 使用真实API
   if (USE_REAL_API) {
     try {
       const params = {
@@ -211,12 +316,16 @@ const getTableData = async (pageObj) => {
   const filteredList = dataObj.apilist.filter((v) => {
     let statusMatch = true;
     switch (activeName.value) {
-      case '异常': {
-        statusMatch = v.status === '异常';
+      case '待审核': {
+        statusMatch = v.status === '待审核';
         break;
       }
-      case '正常': {
-        statusMatch = v.status === '正常';
+      case '待处置': {
+        statusMatch = v.status === '待处置';
+        break;
+      }
+      case '已完成': {
+        statusMatch = v.status === '已完成';
         break;
       }
     }
@@ -297,12 +406,27 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 const activeName = ref('全部');
 
-const handleOpenDetail = (row) => {
-  dataObj.detailObj = row;
+const handleOpenDetail = async (row) => {
+  if (USE_REAL_API) {
+    try {
+      const res = await getResultHandle(row.id);
+      dataObj.detailObj = res;
+    } catch (error) {
+      console.error('获取详情失败:', error);
+      dataObj.detailObj = row;
+    }
+  } else {
+    dataObj.detailObj = row;
+  }
   detailDrawerRef.value.open();
 };
 
-const tabsData = ref([{ label: '全部' }, { label: '正常' }, { label: '异常' }]);
+const tabsData = ref([
+  { label: '全部' },
+  { label: '待审核' },
+  { label: '待处置' },
+  { label: '已完成' },
+]);
 
 const createLabel = (item) => {
   let count = 0;
@@ -312,12 +436,16 @@ const createLabel = (item) => {
       count = dataObj.apilist.length;
       break;
     }
-    case '异常': {
-      count = dataObj.apilist.filter((v) => v.status === '异常').length;
+    case '待审核': {
+      count = dataObj.apilist.filter((v) => v.status === '待审核').length;
       break;
     }
-    case '正常': {
-      count = dataObj.apilist.filter((v) => v.status === '正常').length;
+    case '待处置': {
+      count = dataObj.apilist.filter((v) => v.status === '待处置').length;
+      break;
+    }
+    case '已完成': {
+      count = dataObj.apilist.filter((v) => v.status === '已完成').length;
       break;
     }
   }
@@ -336,22 +464,79 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
+// 根据状态显示操作按钮
+const getActionButtons = (row) => {
+  const buttons = [];
+
+  switch (row.status) {
+    case '待审核':
+      buttons.push(
+        { label: '通过', handler: handleApprove, color: '#67C23A' },
+        { label: '驳回', handler: handleReject, color: '#F56C6C' },
+        { label: '查看', handler: handleOpenDetail, color: '#409EFF' }
+      );
+      break;
+    case '待处置':
+      buttons.push(
+        { label: '执行', handler: handleExecute, color: '#409EFF' },
+        { label: '查看', handler: handleOpenDetail, color: '#409EFF' }
+      );
+      break;
+    case '已完成':
+      buttons.push(
+        { label: '查看', handler: handleOpenDetail, color: '#409EFF' }
+      );
+      break;
+    default:
+      buttons.push(
+        { label: '查看', handler: handleOpenDetail, color: '#409EFF' }
+      );
+  }
+
+  return buttons;
+};
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <FormDrawer :title="getTitle">
-      <Form />
-    </FormDrawer>
     <DetailDrawer
       ref="detailDrawerRef"
-      :title="`${dataObj.detailObj.plateNo}详情`"
+      :title="`处置详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+    <ExecuteDrawer title="执行处置">
+      <ExecuteForm />
+    </ExecuteDrawer>
+
+    <!-- 驳回弹窗 -->
+    <el-dialog
+      v-model="rejectDialogVisible"
+      title="驳回处置"
+      width="500px"
+    >
+      <el-form label-width="100px">
+        <el-form-item label="驳回理由" required>
+          <el-input
+            v-model="rejectForm.rejectReason"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入驳回理由（不少于10个字）"
+            maxlength="200"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="rejectDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitReject">确认</el-button>
+      </template>
+    </el-dialog>
+
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
@@ -373,18 +558,17 @@ const handleFullShow = () => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="导出"
             icon-name="download"
             @click="handleExport"
           />
           <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
+            content="批量处置"
+            icon-name="Check"
+            color="#67C23A"
             :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
+            @click="handleBatchHandle"
           />
           <IconButton
             content="搜索"
@@ -407,23 +591,52 @@ const handleFullShow = () => {
           {{ row.id }}
         </el-text>
       </template>
+      <template #taskId="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+        >
+          {{ row.taskId }}
+        </el-text>
+      </template>
+      <template #violationType="{ row }">
+        <el-tag
+          :type="row.violationType === '违规通行' ? 'danger' : row.violationType === '欠费逃费' ? 'warning' : 'info'"
+        >
+          {{ row.violationType }}
+        </el-tag>
+      </template>
+      <template #handleMethod="{ row }">
+        <el-tag type="info">
+          {{ row.handleMethod }}
+        </el-tag>
+      </template>
+      <template #status="{ row }">
+        <el-tag
+          :type="row.status === '待审核' ? 'warning' : row.status === '待处置' ? 'primary' : row.status === '已完成' ? 'success' : 'info'"
+        >
+          {{ row.status }}
+        </el-tag>
+      </template>
+      <template #areaName="{ row }">
+        <el-text class="common-align" type="primary">
+          {{ row.areaName }}
+        </el-text>
+      </template>
+      <template #handleUserName="{ row }">
+        <el-text class="common-align">
+          {{ row.handleUserName }}
+        </el-text>
+      </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            content="详情"
-            icon-name="View"
-            @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
+            v-for="btn in getActionButtons(row)"
+            :key="btn.label"
+            :content="btn.label"
+            :icon-name="btn.label === '通过' ? 'Check' : btn.label === '驳回' ? 'Close' : btn.label === '执行' ? 'Setting' : 'View'"
+            :color="btn.color"
+            @click="btn.handler(row)"
           />
         </div>
       </template>
@@ -436,7 +649,7 @@ const handleFullShow = () => {
             <ArrowUp />
           </el-icon>
           <span>
-            本页统计：入场记录数量: {{ dataObj.list.length }}; 已选择:
+            本页统计：处置记录数量: {{ dataObj.list.length }}; 已选择:
             {{ checkedIds.length }}
           </span>
         </div>

@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref } from 'vue';
+import { reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
@@ -19,8 +19,8 @@ import { exportToExcel } from '#/utils/excel.js';
 import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
 
 import {
-  checkStatusTypeMap,
   detailFields,
+  statusTypeMap,
   textObj,
   useCheckFormSchema,
   useGridColumns,
@@ -32,7 +32,17 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  arrowShow: {
+    type: Boolean,
+    default: true,
+  },
+  drillDownFilter: {
+    type: Object,
+    default: null,
+  },
 });
+
+const emit = defineEmits(['arrowChange']);
 
 const USE_REAL_API = true;
 
@@ -66,7 +76,6 @@ const [CheckForm, checkFormApi] = useVbenForm({
 const [CheckDrawer, checkDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
-  title: '核查放行记录',
   onCancel() {
     checkDrawerApi.close();
   },
@@ -129,7 +138,10 @@ async function handleExport() {
 }
 
 function handleCheck(row) {
+  console.log('handleCheck called with row:', row);
+  console.log('checkDrawerApi:', checkDrawerApi);
   checkDrawerApi.setData(row).open();
+  console.log('open() called');
 }
 
 function handleFieldClick(field, value) {
@@ -267,6 +279,38 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
+// 监听图表下钻筛选参数
+watch(
+  () => props.drillDownFilter,
+  (newFilter) => {
+    if (newFilter) {
+      const { filterKey, date } = newFilter;
+
+      // 根据不同的筛选类型设置查询参数
+      if (filterKey === 'todayPass') {
+        // 今日放行量：筛选今天的记录
+        dataObj.searchParams = {
+          passTime: [date, date],
+        };
+      } else if (filterKey === 'abnormalPass') {
+        // 异常放行占比：筛选异常记录
+        dataObj.searchParams = {
+          status: '异常记录',
+        };
+      } else if (filterKey === 'trendDate') {
+        // 折线图点击：筛选指定日期的记录
+        dataObj.searchParams = {
+          passTime: [date, date],
+        };
+      }
+
+      // 刷新表格数据
+      handleRefresh();
+    }
+  },
+  { deep: true }
+);
 </script>
 
 <template>
@@ -306,6 +350,18 @@ const handleFullShow = () => {
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton
+            v-if="props.arrowShow"
+            content="收起"
+            icon-name="ArrowUp"
+            @click="emit('arrowChange')"
+          />
+          <IconButton
+            v-else
+            content="展开"
+            icon-name="ArrowDown"
+            @click="emit('arrowChange')"
+          />
+          <IconButton
             content="导出"
             icon-name="download"
             @click="handleExport"
@@ -332,6 +388,35 @@ const handleFullShow = () => {
           {{ row.plateNo }}
         </el-text>
       </template>
+      <template #passReason="{ row }">
+        <el-text
+          @click="handleFieldClick('passReason', row.passReason)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.passReason }}
+        </el-text>
+      </template>
+      <template #imageUrl="{ row }">
+        <el-image
+          v-if="row.imageUrl"
+          :src="row.imageUrl"
+          :preview-src-list="[row.imageUrl]"
+          fit="cover"
+          style="width: 60px; height: 40px; cursor: pointer"
+        />
+        <span v-else>-</span>
+      </template>
+      <template #status="{ row }">
+        <el-tag
+          :type="statusTypeMap[row.status]"
+          @click="handleFieldClick('status', row.status)"
+          style="cursor: pointer"
+        >
+          {{ row.status }}
+        </el-tag>
+      </template>
       <template #stationName="{ row }">
         <el-text
           @click="handleFieldClick('stationId', row.stationId)"
@@ -341,14 +426,6 @@ const handleFullShow = () => {
         >
           {{ row.stationName }}
         </el-text>
-      </template>
-      <template #passType="{ row }">
-        <el-tag
-          @click="handleFieldClick('passType', row.passType)"
-          style="cursor: pointer"
-        >
-          {{ row.passType }}
-        </el-tag>
       </template>
       <template #operator="{ row }">
         <el-text
@@ -360,19 +437,10 @@ const handleFullShow = () => {
           {{ row.operator }}
         </el-text>
       </template>
-      <template #checkStatus="{ row }">
-        <el-tag
-          :type="checkStatusTypeMap[row.checkStatus]"
-          @click="handleFieldClick('checkStatus', row.checkStatus)"
-          style="cursor: pointer"
-        >
-          {{ row.checkStatus }}
-        </el-tag>
-      </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            v-if="row.checkStatus === '未核查'"
+            v-if="row.status === '异常记录'"
             content="核查"
             icon-name="Search"
             @click="handleCheck(row)"

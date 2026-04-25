@@ -3,23 +3,20 @@ import type { PageParam, PageResult } from '@vben/request';
 import { requestClient } from '#/api/request';
 
 export namespace PassRecordApi {
-  /** 通行记录信息 */
+  /** 放行记录信息 */
   export interface PassRecord {
     id?: number | string;
     plateNo?: string;
-    plateColor?: string;
+    passReason?: string;
     passTime?: string;
+    imageUrl?: string;
+    status?: string;
     stationId?: number;
     stationName?: string;
-    gateId?: number;
-    gateName?: string;
-    passType?: string;
-    passReason?: string;
+    operatorId?: number;
     operator?: string;
-    checkStatus?: string;
-    checkTime?: string;
-    checker?: string;
-    checkRemark?: string;
+    operatorTime?: string;
+    checkResult?: string;
     remark?: string;
     creator?: string;
     updater?: string;
@@ -27,37 +24,37 @@ export namespace PassRecordApi {
     updateTime?: string;
   }
 
-  /** 通行记录分页查询参数 */
+  /** 放行记录分页查询参数 */
   export interface PageReqVO extends PageParam {
     plateNo?: string;
-    plateColor?: string;
+    passReason?: string;
+    passTime?: string[];
+    status?: string;
     stationId?: number;
-    gateId?: number;
-    passType?: string;
-    checkStatus?: string;
+    operatorId?: number;
+    remark?: string;
   }
 
-  /** 通行记录核查参数 */
+  /** 放行记录核查参数 */
   export interface CheckReqVO {
     id: number | string;
     checkResult: string;
     checkRemark?: string;
   }
 
-  /** 通行记录图表查询参数 */
+  /** 放行记录图表查询参数 */
   export interface ChartReqVO {
-    startTime: string;
-    endTime: string;
+    startTime?: string;
+    endTime?: string;
     stationId?: number;
   }
 
-  /** 通行记录图表数据 */
+  /** 放行记录图表数据 */
   export interface ChartVO {
-    passTrend: Array<{ count: number; date: string }>;
-    passTypeCount: Array<{ count: number; type: string }>;
+    trend: Array<{ count: number; date: string }>;
     cardData: {
-      checkRate: number;
-      totalPass: number;
+      todayPassCount: number;
+      abnormalPassRate: string;
     };
   }
 }

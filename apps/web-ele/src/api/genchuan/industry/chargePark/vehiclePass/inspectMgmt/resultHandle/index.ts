@@ -3,84 +3,77 @@ import type { PageParam, PageResult } from '@vben/request';
 import { requestClient } from '#/api/request';
 
 export namespace ResultHandleApi {
-  /** 结果处理信息 */
+  /** 结果处置信息 */
   export interface ResultHandle {
     id?: number | string;
     taskId?: number | string;
-    taskNo?: string;
-    plateNo?: string;
-    plateColor?: string;
-    stationId?: number;
-    stationName?: string;
-    inspectResult?: string;
-    handleStatus?: string;
-    handleType?: string;
+    violationType?: string;
+    handleMethod?: string;
+    status?: string;
+    areaId?: number | string;
+    areaName?: string;
+    handleUserId?: number | string;
+    handleUserName?: string;
     handleTime?: string;
-    handler?: string;
-    handleDesc?: string;
-    approveStatus?: string;
-    approveTime?: string;
-    approver?: string;
-    approveRemark?: string;
-    executeStatus?: string;
-    executeTime?: string;
+    rectifyStatus?: string;
+    rejectReason?: string;
     remark?: string;
+    reserve1?: string;
+    reserve2?: string;
     creator?: string;
     updater?: string;
     createTime?: string;
     updateTime?: string;
   }
 
-  /** 结果处理分页查询参数 */
+  /** 结果处置分页查询参数 */
   export interface PageReqVO extends PageParam {
-    taskNo?: string;
-    plateNo?: string;
-    stationId?: number;
-    handleStatus?: string;
-    handleType?: string;
-    approveStatus?: string;
-    executeStatus?: string;
+    taskId?: number | string;
+    violationType?: string;
+    handleMethod?: string;
+    status?: string;
+    areaId?: number | string;
+    handleUserId?: number | string;
+    handleTime?: string[];
+    remark?: string;
   }
 
-  /** 结果处理批量处理参数 */
+  /** 结果处置批量处理参数 */
   export interface BatchHandleReqVO {
     ids: Array<number | string>;
     handleType: string;
-    handleDesc?: string;
   }
 
-  /** 结果处理审批参数 */
+  /** 结果处置审批参数 */
   export interface ApproveReqVO {
     id: number | string;
-    approveRemark?: string;
   }
 
-  /** 结果处理驳回参数 */
+  /** 结果处置驳回参数 */
   export interface RejectReqVO {
     id: number | string;
     rejectReason: string;
   }
 
-  /** 结果处理执行参数 */
+  /** 结果处置执行参数 */
   export interface ExecuteReqVO {
     id: number | string;
-    executeResult?: string;
+    rectifyStatus: string;
   }
 
-  /** 结果处理图表查询参数 */
+  /** 结果处置图表查询参数 */
   export interface ChartReqVO {
     startTime: string;
     endTime: string;
-    stationId?: number;
+    areaId?: number | string;
   }
 
-  /** 结果处理图表数据 */
+  /** 结果处置图表数据 */
   export interface ChartVO {
-    handleTrend: Array<{ count: number; date: string }>;
-    handleTypeCount: Array<{ count: number; type: string }>;
+    handleResultRate: Array<{ name: string; value: number }>;
     cardData: {
-      executeRate: number;
-      totalHandle: number;
+      handleCompleteRate: number;
+      violationRectifyRate: number;
     };
   }
 }
