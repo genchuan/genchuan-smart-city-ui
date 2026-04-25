@@ -1,5 +1,6 @@
-<script setup>
+﻿<script setup>
 import { computed, reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
@@ -12,10 +13,15 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   exportLeaveRecord,
   getLeaveRecordPage,
+  correctLeaveRecord,
+  createLeaveRecord,
+  updateLeaveRecord,
 } from '#/api/genchuan/industry/chargePark/vehiclePass/leaveMgmt/leaveRecord';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
+import IconButton from '#/components/common/IconButton.vue';
 import { exportToExcel } from '#/utils/excel.js';
+import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
 
 import {
   dataList,
@@ -26,7 +32,10 @@ import {
   useUpdateFormSchema,
   useCorrectFormSchema,
   useGridColumns,
+  statusTypeMap,
 } from './data';
+
+const router = useRouter();
 
 const props = defineProps({
   secondShow: {
@@ -72,11 +81,31 @@ const [CreateFormDrawer, createFormDrawerApi] = useVbenDrawer({
   onCancel() {
     createFormDrawerApi.close();
   },
-  onConfirm() {
+  async onConfirm() {
+    try {
+      await createFormApi.validate();
+    } catch (error) {
+      ElMessage.warning('请完善表单信息');
+      return;
+    }
+
     const obj = createFormApi.form.values;
-    dataObj.apilist.push(obj);
-    handleRefresh();
-    createFormDrawerApi.close();
+
+    if (USE_REAL_API) {
+      try {
+        await createLeaveRecord(obj);
+        ElMessage.success('补录成功');
+        handleRefresh();
+        createFormDrawerApi.close();
+      } catch (error) {
+        ElMessage.error('补录失败');
+        console.error(error);
+      }
+    } else {
+      dataObj.apilist.push(obj);
+      handleRefresh();
+      createFormDrawerApi.close();
+    }
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
@@ -105,15 +134,38 @@ const [UpdateFormDrawer, updateFormDrawerApi] = useVbenDrawer({
   onCancel() {
     updateFormDrawerApi.close();
   },
-  onConfirm() {
+  async onConfirm() {
+    try {
+      await updateFormApi.validate();
+    } catch (error) {
+      ElMessage.warning('请完善表单信息');
+      return;
+    }
+
     const obj = updateFormApi.form.values;
-    dataObj.apilist.forEach((v, i) => {
-      if (v.id === formData.value?.id) {
-        dataObj.apilist[i] = obj;
+
+    if (USE_REAL_API) {
+      try {
+        await updateLeaveRecord({
+          id: formData.value?.id,
+          ...obj,
+        });
+        ElMessage.success('编辑成功');
+        handleRefresh();
+        updateFormDrawerApi.close();
+      } catch (error) {
+        ElMessage.error('编辑失败');
+        console.error(error);
       }
-    });
-    handleRefresh();
-    updateFormDrawerApi.close();
+    } else {
+      dataObj.apilist.forEach((v, i) => {
+        if (v.id === formData.value?.id) {
+          dataObj.apilist[i] = obj;
+        }
+      });
+      handleRefresh();
+      updateFormDrawerApi.close();
+    }
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
@@ -143,15 +195,38 @@ const [CorrectFormDrawer, correctFormDrawerApi] = useVbenDrawer({
   onCancel() {
     correctFormDrawerApi.close();
   },
-  onConfirm() {
+  async onConfirm() {
+    try {
+      await correctFormApi.validate();
+    } catch (error) {
+      ElMessage.warning('请完善表单信息');
+      return;
+    }
+
     const obj = correctFormApi.form.values;
-    dataObj.apilist.forEach((v, i) => {
-      if (v.id === formData.value?.id) {
-        dataObj.apilist[i] = obj;
+
+    if (USE_REAL_API) {
+      try {
+        await correctLeaveRecord({
+          id: formData.value?.id,
+          ...obj,
+        });
+        ElMessage.success('修正成功');
+        handleRefresh();
+        correctFormDrawerApi.close();
+      } catch (error) {
+        ElMessage.error('修正失败');
+        console.error(error);
       }
-    });
-    handleRefresh();
-    correctFormDrawerApi.close();
+    } else {
+      dataObj.apilist.forEach((v, i) => {
+        if (v.id === formData.value?.id) {
+          dataObj.apilist[i] = { ...v, ...obj, isCorrected: true };
+        }
+      });
+      handleRefresh();
+      correctFormDrawerApi.close();
+    }
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
@@ -282,12 +357,12 @@ const getTableData = async (pageObj) => {
   const filteredList = dataObj.apilist.filter((v) => {
     let statusMatch = true;
     switch (activeName.value) {
-      case '异常': {
-        statusMatch = v.status === '异常';
+      case '异常记录': {
+        statusMatch = v.status === '异常记录';
         break;
       }
-      case '正常': {
-        statusMatch = v.status === '正常';
+      case '正常记录': {
+        statusMatch = v.status === '正常记录';
         break;
       }
     }
@@ -378,7 +453,11 @@ const handleOpenDetail = (row) => {
   detailDrawerRef.value.open();
 };
 
-const tabsData = ref([{ label: '全部' }, { label: '正常' }, { label: '异常' }]);
+const tabsData = ref([
+  { label: '全部' },
+  { label: '正常记录' },
+  { label: '异常记录' },
+]);
 
 const createLabel = (item) => {
   let count = 0;
@@ -388,12 +467,12 @@ const createLabel = (item) => {
       count = dataObj.apilist.length;
       break;
     }
-    case '异常': {
-      count = dataObj.apilist.filter((v) => v.status === '异常').length;
+    case '异常记录': {
+      count = dataObj.apilist.filter((v) => v.status === '异常记录').length;
       break;
     }
-    case '正常': {
-      count = dataObj.apilist.filter((v) => v.status === '正常').length;
+    case '正常记录': {
+      count = dataObj.apilist.filter((v) => v.status === '正常记录').length;
       break;
     }
   }
@@ -412,19 +491,49 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
+// 车辆详情弹窗
+const vehicleDetailDialogRef = ref(null);
+const handlePlateClick = (row) => {
+  vehicleDetailDialogRef.value?.open(row.plateNo);
+};
+
+// 字段点击筛选
+const handleFieldFilter = (field, value) => {
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    [field]: value,
+  };
+  handleRefresh();
+};
+
+// 格式化停车时长
+const formatDuration = (minutes) => {
+  if (!minutes) return '-';
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return hours > 0 ? `${hours}小时${mins}分钟` : `${mins}分钟`;
+};
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <FormDrawer :title="getTitle">
-      <Form />
-    </FormDrawer>
+    <CreateFormDrawer :title="textObj.addText">
+      <CreateForm />
+    </CreateFormDrawer>
+    <UpdateFormDrawer :title="textObj.editText">
+      <UpdateForm />
+    </UpdateFormDrawer>
+    <CorrectFormDrawer :title="textObj.correctText">
+      <CorrectForm />
+    </CorrectFormDrawer>
     <DetailDrawer
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.plateNo}详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
+    <VehicleDetailDialog ref="vehicleDetailDialogRef" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -449,18 +558,11 @@ const handleFullShow = () => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton content="补录" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="导出"
             icon-name="download"
             @click="handleExport"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
           />
           <IconButton
             content="搜索"
@@ -474,32 +576,57 @@ const handleFullShow = () => {
           />
         </div>
       </template>
-      <template #id="{ row }">
+      <template #plateNo="{ row }">
         <el-text
-          @click="handleOpenDetail(row)"
+          @click="handlePlateClick(row)"
           class="common-align"
           type="primary"
+          style="cursor: pointer"
         >
-          {{ row.id }}
+          {{ row.plateNo }}
         </el-text>
+      </template>
+      <template #parkDuration="{ row }">
+        <span>{{ formatDuration(row.parkDuration) }}</span>
+      </template>
+      <template #status="{ row }">
+        <el-tag :type="statusTypeMap[row.status]">
+          {{ row.status }}
+        </el-tag>
+      </template>
+      <template #stationName="{ row }">
+        <el-text
+          @click="handleFieldFilter('stationName', row.stationName)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.stationName }}
+        </el-text>
+      </template>
+      <template #isCorrected="{ row }">
+        <el-tag :type="row.isCorrected ? 'success' : 'info'">
+          {{ row.isCorrected ? '是' : '否' }}
+        </el-tag>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            content="详情"
-            icon-name="View"
-            @click="handleOpenDetail(row)"
-          />
-          <IconButton
+            v-if="row.status === '正常记录'"
             content="编辑"
             icon-name="edit"
             @click="handleEdit(row)"
           />
           <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
+            v-if="row.status === '异常记录'"
+            content="修正"
+            icon-name="edit"
+            @click="handleCorrect(row)"
+          />
+          <IconButton
+            content="查看"
+            icon-name="View"
+            @click="handleOpenDetail(row)"
           />
         </div>
       </template>
@@ -512,7 +639,7 @@ const handleFullShow = () => {
             <ArrowUp />
           </el-icon>
           <span>
-            本页统计：入场记录数量: {{ dataObj.list.length }}; 已选择:
+            本页统计：离场记录数量: {{ dataObj.list.length }}; 已选择:
             {{ checkedIds.length }}
           </span>
         </div>

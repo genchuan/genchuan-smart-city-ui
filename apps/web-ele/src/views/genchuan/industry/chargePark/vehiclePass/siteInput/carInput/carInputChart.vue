@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, reactive, ref } from 'vue';
+import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
@@ -15,28 +15,20 @@ const cards = reactive([
     value: 0,
     desc: '累计录入车辆',
     color: '#4A90E2',
-    key: 'total',
+    key: 'inputCount',
   },
   {
-    title: '录入通过率',
+    title: '审核通过率',
     value: '0%',
     desc: '审核通过比例',
     color: '#50E3C2',
-    key: 'passRate',
-  },
-  {
-    title: '待审核数',
-    value: 0,
-    desc: '等待审核',
-    color: '#FF9F40',
-    key: 'pending',
+    key: 'auditPassRate',
   },
 ]);
 
 const state = reactive({
   chartData: {
     trend: [],
-    typeCount: [],
   },
   hasData: false,
 });
@@ -62,24 +54,21 @@ async function loadChartData() {
 
     // Always update card values
     if (res?.cardData) {
-      cards[0].value = res.cardData.total || 0;
-      cards[1].value = res.cardData.passRate || '0%';
-      cards[2].value = res.cardData.pending || 0;
+      cards[0].value = res.cardData.inputCount || 0;
+      cards[1].value = res.cardData.auditPassRate
+        ? `${res.cardData.auditPassRate}%`
+        : '0%';
     }
 
     // Check if there's chart data
-    const hasChartData =
-      res &&
-      (res.trend?.length > 0 ||
-        res.distribution?.length > 0 ||
-        res.typeCount?.length > 0);
+    const hasChartData = res?.inputCountTrend?.length > 0;
 
     if (hasChartData) {
       state.chartData = {
-        trend: res.trend || [],
-        typeCount: res.distribution || res.typeCount || [],
+        trend: res.inputCountTrend || [],
       };
       state.hasData = true;
+      await nextTick();
       initCharts();
     } else {
       state.hasData = false;
@@ -97,7 +86,7 @@ function initPieChart() {
   const option = {
     backgroundColor: 'transparent',
     title: {
-      text: '车辆录入趋势',
+      text: '录入量趋势',
       left: 'center',
       top: 10,
       textStyle: { fontSize: 14, fontWeight: 500 },
@@ -125,33 +114,7 @@ function initPieChart() {
 }
 
 function initBarChart() {
-  if (!barChartRef.value) return;
-  if (barChartInstance) barChartInstance.dispose();
-  barChartInstance = echarts.init(barChartRef.value);
-  const option = {
-    backgroundColor: 'transparent',
-    title: {
-      text: '车辆类型统计',
-      left: 'center',
-      top: 10,
-      textStyle: { fontSize: 14, fontWeight: 500 },
-    },
-    tooltip: { trigger: 'axis' },
-    xAxis: {
-      type: 'category',
-      data: state.chartData.typeCount.map((item) => item.type),
-    },
-    yAxis: { type: 'value', name: '数量' },
-    series: [
-      {
-        type: 'bar',
-        data: state.chartData.typeCount.map((item) => item.count),
-        itemStyle: { borderRadius: [4, 4, 0, 0], color: '#4A90E2' },
-        label: { show: true, position: 'top' },
-      },
-    ],
-  };
-  barChartInstance.setOption(option);
+  // 接口只返回折线图数据，不需要柱状图
 }
 
 function initCharts() {

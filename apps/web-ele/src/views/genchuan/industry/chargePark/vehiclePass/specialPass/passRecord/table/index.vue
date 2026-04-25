@@ -1,28 +1,30 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { reactive, ref } from 'vue';
 
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { useVbenDrawer } from '@vben/common-ui';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
+  checkPassRecord,
   exportPassRecord,
   getPassRecordPage,
 } from '#/api/genchuan/industry/chargePark/vehiclePass/specialPass/passRecord';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { $t } from '#/locales';
+import IconButton from '#/components/common/IconButton.vue';
 import { exportToExcel } from '#/utils/excel.js';
+import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
 
 import {
-  dataList,
+  checkStatusTypeMap,
   detailFields,
   textObj,
-  useSearchFormSchema,
+  useCheckFormSchema,
   useGridColumns,
+  useSearchFormSchema,
 } from './data';
 
 const props = defineProps({
@@ -32,12 +34,7 @@ const props = defineProps({
   },
 });
 
-// 是否使用真实API（默认false使用模拟数据）
 const USE_REAL_API = true;
-
-const getTitle = computed(() => {
-  return formData.value?.id ? textObj.editText : textObj.addText;
-});
 
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -46,57 +43,72 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel() {
     drawerApi.close();
   },
-  onConfirm() {},
-  async onOpenChange() {},
 });
 
 const detailDrawerRef = ref(null);
+const vehicleDetailDialogRef = ref(null);
 const formData = ref();
 
-const [Form, formApi] = useVbenForm({
+// 核查表单
+const [CheckForm, checkFormApi] = useVbenForm({
   commonConfig: {
     componentProps: {
       class: 'w-full',
     },
-    formItemClass: 'col-span-2',
-    labelWidth: 80,
+    formItemClass: 'col-span-1',
+    labelWidth: 100,
   },
   layout: 'horizontal',
-  schema: useSearchFormSchema(),
+  schema: useCheckFormSchema(),
   showDefaultActions: false,
 });
 
-const [FormDrawer, formDrawerApi] = useVbenDrawer({
+const [CheckDrawer, checkDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
+  title: '核查放行记录',
   onCancel() {
-    formDrawerApi.close();
+    checkDrawerApi.close();
   },
-  onConfirm() {
-    const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-      dataObj.apilist.push(obj);
-    } else {
-      dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
-        }
-      });
+  async onConfirm() {
+    try {
+      await checkFormApi.validate();
+    } catch (error) {
+      ElMessage.warning('请完善表单信息');
+      return;
     }
-    handleRefresh();
-    formDrawerApi.close();
+    const values = checkFormApi.form.values;
+    await handleCheckSubmit(values);
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
-      formData.value = formDrawerApi.getData();
-      if (formData.value?.id) {
-        await formApi.setValues(formData.value);
-      } else {
-        formApi.resetForm();
-      }
+      formData.value = checkDrawerApi.getData();
+      checkFormApi.resetForm();
     }
   },
 });
+
+async function handleCheckSubmit(values) {
+  if (USE_REAL_API) {
+    try {
+      await checkPassRecord({
+        id: formData.value.id,
+        checkResult: values.checkResult,
+        checkRemark: values.checkRemark,
+      });
+      ElMessage.success('核查成功');
+      checkDrawerApi.close();
+      handleRefresh();
+    } catch (error) {
+      ElMessage.error('核查失败');
+      console.error(error);
+    }
+  } else {
+    ElMessage.success('核查成功');
+    checkDrawerApi.close();
+    handleRefresh();
+  }
+}
 
 function handleRefresh() {
   gridApi.query();
@@ -112,55 +124,24 @@ async function handleExport() {
       console.error(error);
     }
   } else {
-    exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+    exportToExcel([], textObj.excelName, textObj.excelAllName);
   }
 }
 
-function handleCreate() {
-  formDrawerApi
-    .setData({
-      title: textObj.addText,
-    })
-    .open();
+function handleCheck(row) {
+  checkDrawerApi.setData(row).open();
 }
 
-function handleEdit(row) {
-  formDrawerApi
-    .setData({
-      title: textObj.editText,
-      ...row,
-    })
-    .open();
+function handleFieldClick(field, value) {
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    [field]: value,
+  };
+  handleRefresh();
 }
 
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.plateNo]),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.plateNo]));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
-}
-
-async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
+function handlePlateClick(row) {
+  vehicleDetailDialogRef.value?.open(row.plateNo);
 }
 
 const checkedIds = ref([]);
@@ -171,10 +152,9 @@ function handleRowCheckboxChange({ records }) {
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
-  total: dataList().length,
+  total: 0,
   currentPage: 1,
   pageSize: 10,
-  apilist: dataList(),
   list: [],
   searchParams: {},
 });
@@ -186,7 +166,6 @@ const changeTotalShow = () => {
 const getTableData = async (pageObj) => {
   const page = pageObj.page;
 
-  // 使用真实API
   if (USE_REAL_API) {
     try {
       const params = {
@@ -206,39 +185,6 @@ const getTableData = async (pageObj) => {
     }
   }
 
-  // 使用模拟数据
-  const filteredList = dataObj.apilist.filter((v) => {
-    let statusMatch = true;
-    switch (activeName.value) {
-      case '异常': {
-        statusMatch = v.status === '异常';
-        break;
-      }
-      case '正常': {
-        statusMatch = v.status === '正常';
-        break;
-      }
-    }
-
-    let searchMatch = true;
-    Object.keys(dataObj.searchParams).forEach((key) => {
-      const value = dataObj.searchParams[key];
-      if (value) {
-        searchMatch =
-          typeof value === 'string'
-            ? searchMatch && v[key]?.toString().includes(value)
-            : searchMatch && v[key] === value;
-      }
-    });
-
-    return statusMatch && searchMatch;
-  });
-
-  dataObj.total = filteredList.length;
-  dataObj.list = filteredList.slice(
-    (page.currentPage - 1) * page.pageSize,
-    page.currentPage * page.pageSize,
-  );
   return dataObj;
 };
 
@@ -253,7 +199,10 @@ const [QueryForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema(),
+  schema: useSearchFormSchema().map((v) => {
+    delete v.rules;
+    return { ...v };
+  }),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -301,28 +250,11 @@ const handleOpenDetail = (row) => {
   detailDrawerRef.value.open();
 };
 
-const tabsData = ref([{ label: '全部' }, { label: '正常' }, { label: '异常' }]);
-
-const createLabel = (item) => {
-  let count = 0;
-
-  switch (item.label) {
-    case '全部': {
-      count = dataObj.apilist.length;
-      break;
-    }
-    case '异常': {
-      count = dataObj.apilist.filter((v) => v.status === '异常').length;
-      break;
-    }
-    case '正常': {
-      count = dataObj.apilist.filter((v) => v.status === '正常').length;
-      break;
-    }
-  }
-
-  return `${item.label}(${count})`;
-};
+const tabsData = ref([
+  { label: '全部' },
+  { label: '未核查' },
+  { label: '已核查' },
+]);
 
 const handleClick = () => {
   gridApi.query();
@@ -339,15 +271,16 @@ const handleFullShow = () => {
 
 <template>
   <div class="park-lot-table-new">
-    <FormDrawer :title="getTitle">
-      <Form />
-    </FormDrawer>
+    <CheckDrawer>
+      <CheckForm />
+    </CheckDrawer>
     <DetailDrawer
       ref="detailDrawerRef"
-      :title="`${dataObj.detailObj.plateNo}详情`"
+      :title="`放行记录详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
+    <VehicleDetailDialog ref="vehicleDetailDialogRef" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -363,7 +296,7 @@ const handleFullShow = () => {
               <el-tab-pane
                 v-for="item in tabsData"
                 :key="item.label"
-                :label="createLabel(item)"
+                :label="item.label"
                 :name="item.label"
               />
             </el-tabs>
@@ -372,18 +305,10 @@ const handleFullShow = () => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="导出"
             icon-name="download"
             @click="handleExport"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
           />
           <IconButton
             content="搜索"
@@ -397,32 +322,65 @@ const handleFullShow = () => {
           />
         </div>
       </template>
-      <template #id="{ row }">
+      <template #plateNo="{ row }">
         <el-text
-          @click="handleOpenDetail(row)"
+          @click="handlePlateClick(row)"
           class="common-align"
           type="primary"
+          style="cursor: pointer"
         >
-          {{ row.id }}
+          {{ row.plateNo }}
         </el-text>
+      </template>
+      <template #stationName="{ row }">
+        <el-text
+          @click="handleFieldClick('stationId', row.stationId)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.stationName }}
+        </el-text>
+      </template>
+      <template #passType="{ row }">
+        <el-tag
+          @click="handleFieldClick('passType', row.passType)"
+          style="cursor: pointer"
+        >
+          {{ row.passType }}
+        </el-tag>
+      </template>
+      <template #operator="{ row }">
+        <el-text
+          @click="handleFieldClick('operator', row.operator)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.operator }}
+        </el-text>
+      </template>
+      <template #checkStatus="{ row }">
+        <el-tag
+          :type="checkStatusTypeMap[row.checkStatus]"
+          @click="handleFieldClick('checkStatus', row.checkStatus)"
+          style="cursor: pointer"
+        >
+          {{ row.checkStatus }}
+        </el-tag>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            content="详情"
+            v-if="row.checkStatus === '未核查'"
+            content="核查"
+            icon-name="Search"
+            @click="handleCheck(row)"
+          />
+          <IconButton
+            content="查看"
             icon-name="View"
             @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
           />
         </div>
       </template>
@@ -435,12 +393,9 @@ const handleFullShow = () => {
             <ArrowUp />
           </el-icon>
           <span>
-            本页统计：入场记录数量: {{ dataObj.list.length }}; 已选择:
+            本页统计：放行记录数量: {{ dataObj.list.length }}; 已选择:
             {{ checkedIds.length }}
           </span>
-        </div>
-        <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span> 全部统计：{{ textObj.total }} </span>
         </div>
       </template>
     </Grid>

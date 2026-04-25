@@ -1,9 +1,9 @@
 <script setup>
-import { onMounted, onUnmounted, reactive, ref } from 'vue';
+import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
-import { passRecordApi } from '#/api/genchuan/industry/chargePark/vehiclePass/api-map';
+import { getPassRecordChart } from '#/api/genchuan/industry/chargePark/vehiclePass/specialPass/passRecord';
 
 const props = defineProps({
   parkId: { type: Number, default: null },
@@ -13,23 +13,16 @@ const cards = reactive([
   {
     title: '今日放行量',
     value: 0,
-    desc: '累计放行次数',
+    desc: '今日累计放行次数',
     color: '#4A90E2',
-    key: 'total',
+    key: 'todayPassCount',
   },
   {
     title: '异常放行占比',
     value: '0%',
-    desc: '异常比例',
-    color: '#FF6B8B',
-    key: 'abnormalRate',
-  },
-  {
-    title: '平均放行时长',
-    value: '0s',
-    desc: '响应时长',
-    color: '#50E3C2',
-    key: 'avgTime',
+    desc: '异常放行比例',
+    color: '#F56C6C',
+    key: 'abnormalPassRate',
   },
 ]);
 
@@ -58,30 +51,28 @@ async function loadChartData() {
       stationId: props.parkId,
     };
 
-    const res = await passRecordApi.getChart(params);
+    const res = await getPassRecordChart(params);
 
     // Always update card values
     if (res?.cardData) {
-      cards[0].value = res.cardData.total || 0;
-      cards[1].value = res.cardData.abnormalRate
-        ? `${res.cardData.abnormalRate}%`
-        : '0%';
-      cards[2].value = res.cardData.avgTime ? `${res.cardData.avgTime}s` : '0s';
+      cards[0].value = res.cardData.passRecordCount || 0;
+      cards[1].value = res.cardData.avgPassDuration
+        ? `${res.cardData.avgPassDuration}s`
+        : '0s';
     }
 
     // Check if there's chart data
     const hasChartData =
       res &&
-      (res.trend?.length > 0 ||
-        res.distribution?.length > 0 ||
-        res.typeCount?.length > 0);
+      (res.passRecordTrend?.length > 0 || res.passTypeCount?.length > 0);
 
     if (hasChartData) {
       state.chartData = {
-        trend: res.trend || [],
-        typeCount: res.distribution || res.typeCount || [],
+        trend: res.passRecordTrend || [],
+        typeCount: res.passTypeCount || [],
       };
       state.hasData = true;
+      await nextTick();
       initCharts();
     } else {
       state.hasData = false;
@@ -141,7 +132,7 @@ function initBarChart() {
     tooltip: { trigger: 'axis' },
     xAxis: {
       type: 'category',
-      data: state.chartData.typeCount.map((item) => item.type),
+      data: state.chartData.typeCount.map((item) => item.typeName),
     },
     yAxis: { type: 'value', name: '数量' },
     series: [

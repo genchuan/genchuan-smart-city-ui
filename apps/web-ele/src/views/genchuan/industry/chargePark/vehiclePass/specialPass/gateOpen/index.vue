@@ -8,7 +8,7 @@ import '#/components/page/index.scss';
 
 const tabArray = ref([
   {
-    label: '闸机开闸',
+    label: '开闸管理',
     components: Table,
     showSecondary: true,
     secondShow: false,
@@ -22,7 +22,7 @@ const arrowChange = () => {
     v.arrowShow = !v.arrowShow;
   });
 };
-const activeName = ref('闸机开闸');
+const activeName = ref('开闸管理');
 </script>
 
 <template>

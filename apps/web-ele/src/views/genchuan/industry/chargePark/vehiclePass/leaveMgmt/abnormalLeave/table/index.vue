@@ -4,7 +4,7 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -12,17 +12,28 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   exportAbnormalLeave,
   getAbnormalLeavePage,
+  checkAbnormalLeave,
+  ignoreAbnormalLeave,
+  updateAbnormalLeaveProgress,
+  batchHandleAbnormalLeave,
 } from '#/api/genchuan/industry/chargePark/vehiclePass/leaveMgmt/abnormalLeave';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
+import IconButton from '#/components/common/IconButton.vue';
 import { exportToExcel } from '#/utils/excel.js';
+import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
 
 import {
   dataList,
   detailFields,
   textObj,
   useSearchFormSchema,
+  useCheckFormSchema,
+  useUpdateProgressFormSchema,
+  useBatchHandleFormSchema,
   useGridColumns,
+  statusTypeMap,
+  abnormalTypeMap,
 } from './data';
 
 const props = defineProps({
@@ -34,10 +45,6 @@ const props = defineProps({
 
 // 是否使用真实API（默认false使用模拟数据）
 const USE_REAL_API = true;
-
-const getTitle = computed(() => {
-  return formData.value?.id ? textObj.editText : textObj.addText;
-});
 
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -53,7 +60,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
 const detailDrawerRef = ref(null);
 const formData = ref();
 
-const [Form, formApi] = useVbenForm({
+// 核查表单
+const [CheckForm, checkFormApi] = useVbenForm({
   commonConfig: {
     componentProps: {
       class: 'w-full',
@@ -62,38 +70,163 @@ const [Form, formApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useSearchFormSchema(),
+  schema: useCheckFormSchema(),
   showDefaultActions: false,
 });
 
-const [FormDrawer, formDrawerApi] = useVbenDrawer({
+const [CheckFormDrawer, checkFormDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
   onCancel() {
-    formDrawerApi.close();
+    checkFormDrawerApi.close();
   },
-  onConfirm() {
-    const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-      dataObj.apilist.push(obj);
-    } else {
-      dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
-        }
-      });
+  async onConfirm() {
+    try {
+      await checkFormApi.validate();
+    } catch (error) {
+      ElMessage.warning('请完善表单信息');
+      return;
     }
-    handleRefresh();
-    formDrawerApi.close();
+
+    if (USE_REAL_API) {
+      try {
+        await checkAbnormalLeave({
+          id: formData.value?.id,
+        });
+        ElMessage.success('核查成功');
+        handleRefresh();
+        checkFormDrawerApi.close();
+      } catch (error) {
+        ElMessage.error('核查失败');
+        console.error(error);
+      }
+    } else {
+      ElMessage.success('核查成功');
+      handleRefresh();
+      checkFormDrawerApi.close();
+    }
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
-      formData.value = formDrawerApi.getData();
-      if (formData.value?.id) {
-        await formApi.setValues(formData.value);
-      } else {
-        formApi.resetForm();
+      formData.value = checkFormDrawerApi.getData();
+      checkFormApi.resetForm();
+    }
+  },
+});
+
+// 更新进度表单
+const [UpdateProgressForm, updateProgressFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 80,
+  },
+  layout: 'horizontal',
+  schema: useUpdateProgressFormSchema(),
+  showDefaultActions: false,
+});
+
+const [UpdateProgressFormDrawer, updateProgressFormDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    updateProgressFormDrawerApi.close();
+  },
+  async onConfirm() {
+    try {
+      await updateProgressFormApi.validate();
+    } catch (error) {
+      ElMessage.warning('请完善表单信息');
+      return;
+    }
+
+    const obj = updateProgressFormApi.form.values;
+
+    if (USE_REAL_API) {
+      try {
+        await updateAbnormalLeaveProgress({
+          id: formData.value?.id,
+          handleProgress: obj.handleProgress,
+        });
+        ElMessage.success('更新进度成功');
+        handleRefresh();
+        updateProgressFormDrawerApi.close();
+      } catch (error) {
+        ElMessage.error('更新进度失败');
+        console.error(error);
       }
+    } else {
+      ElMessage.success('更新进度成功');
+      handleRefresh();
+      updateProgressFormDrawerApi.close();
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      formData.value = updateProgressFormDrawerApi.getData();
+      await updateProgressFormApi.setValues({
+        handleProgress: formData.value?.handleProgress || '',
+      });
+    }
+  },
+});
+
+// 批量处置表单
+const [BatchHandleForm, batchHandleFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 80,
+  },
+  layout: 'horizontal',
+  schema: useBatchHandleFormSchema(),
+  showDefaultActions: false,
+});
+
+const [BatchHandleFormDrawer, batchHandleFormDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    batchHandleFormDrawerApi.close();
+  },
+  async onConfirm() {
+    try {
+      await batchHandleFormApi.validate();
+    } catch (error) {
+      ElMessage.warning('请完善表单信息');
+      return;
+    }
+
+    const obj = batchHandleFormApi.form.values;
+
+    if (USE_REAL_API) {
+      try {
+        await batchHandleAbnormalLeave({
+          ids: checkedIds.value,
+          handleType: obj.handleType,
+        });
+        ElMessage.success('批量处置成功');
+        checkedIds.value = [];
+        handleRefresh();
+        batchHandleFormDrawerApi.close();
+      } catch (error) {
+        ElMessage.error('批量处置失败');
+        console.error(error);
+      }
+    } else {
+      ElMessage.success('批量处置成功');
+      checkedIds.value = [];
+      handleRefresh();
+      batchHandleFormDrawerApi.close();
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      batchHandleFormApi.resetForm();
     }
   },
 });
@@ -116,51 +249,92 @@ async function handleExport() {
   }
 }
 
-function handleCreate() {
-  formDrawerApi
+// 核查操作
+function handleCheck(row) {
+  formData.value = row;
+  checkFormDrawerApi
     .setData({
-      title: textObj.addText,
-    })
-    .open();
-}
-
-function handleEdit(row) {
-  formDrawerApi
-    .setData({
-      title: textObj.editText,
+      title: textObj.checkText,
       ...row,
     })
     .open();
 }
 
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.plateNo]),
-  });
+// 忽略操作
+async function handleIgnore(row) {
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.plateNo]));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
+    const { value: ignoreReason } = await ElMessageBox.prompt(
+      '请输入忽略理由（至少10个字符）',
+      '忽略异常',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        inputType: 'textarea',
+        inputValidator: (value) => {
+          if (!value || value.length < 10) {
+            return '忽略理由至少需要10个字符';
+          }
+          return true;
+        },
+        inputErrorMessage: '忽略理由至少需要10个字符',
+      },
+    );
+
+    if (USE_REAL_API) {
+      try {
+        await ignoreAbnormalLeave({
+          id: row.id,
+          ignoreReason,
+        });
+        ElMessage.success('忽略成功');
+        handleRefresh();
+      } catch (error) {
+        ElMessage.error('忽略失败');
+        console.error(error);
+      }
+    } else {
+      ElMessage.success('忽略成功');
+      handleRefresh();
+    }
+  } catch {
+    // 用户取消操作
   }
 }
 
-async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
+// 更新进度操作
+function handleUpdateProgress(row) {
+  formData.value = row;
+  updateProgressFormDrawerApi
+    .setData({
+      title: textObj.updateProgressText,
+      ...row,
+    })
+    .open();
+}
+
+// 批量处置操作
+function handleBatchHandle() {
+  if (isEmpty(checkedIds.value)) {
+    ElMessage.warning('请先选择要处置的数据');
+    return;
   }
+
+  // 检查选中的数据是否都是未处理状态
+  const selectedRows = dataObj.list.filter((item) =>
+    checkedIds.value.includes(item.id),
+  );
+  const hasNonPending = selectedRows.some((item) => item.status !== '未处理');
+
+  if (hasNonPending) {
+    ElMessage.warning('只能批量处置未处理状态的数据');
+    return;
+  }
+
+  batchHandleFormDrawerApi
+    .setData({
+      title: textObj.batchHandleText,
+    })
+    .open();
 }
 
 const checkedIds = ref([]);
@@ -210,12 +384,16 @@ const getTableData = async (pageObj) => {
   const filteredList = dataObj.apilist.filter((v) => {
     let statusMatch = true;
     switch (activeName.value) {
-      case '异常': {
-        statusMatch = v.status === '异常';
+      case '未处理': {
+        statusMatch = v.status === '未处理';
         break;
       }
-      case '正常': {
-        statusMatch = v.status === '正常';
+      case '处理中': {
+        statusMatch = v.status === '处理中';
+        break;
+      }
+      case '已关闭': {
+        statusMatch = v.status === '已关闭';
         break;
       }
     }
@@ -253,7 +431,12 @@ const [QueryForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema(),
+  schema: useSearchFormSchema().map((v) => {
+    delete v.rules;
+    return {
+      ...v,
+    };
+  }),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -301,7 +484,12 @@ const handleOpenDetail = (row) => {
   detailDrawerRef.value.open();
 };
 
-const tabsData = ref([{ label: '全部' }, { label: '正常' }, { label: '异常' }]);
+const tabsData = ref([
+  { label: '全部' },
+  { label: '未处理' },
+  { label: '处理中' },
+  { label: '已关闭' },
+]);
 
 const createLabel = (item) => {
   let count = 0;
@@ -311,12 +499,16 @@ const createLabel = (item) => {
       count = dataObj.apilist.length;
       break;
     }
-    case '异常': {
-      count = dataObj.apilist.filter((v) => v.status === '异常').length;
+    case '未处理': {
+      count = dataObj.apilist.filter((v) => v.status === '未处理').length;
       break;
     }
-    case '正常': {
-      count = dataObj.apilist.filter((v) => v.status === '正常').length;
+    case '处理中': {
+      count = dataObj.apilist.filter((v) => v.status === '处理中').length;
+      break;
+    }
+    case '已关闭': {
+      count = dataObj.apilist.filter((v) => v.status === '已关闭').length;
       break;
     }
   }
@@ -335,19 +527,41 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
+// 车辆详情弹窗
+const vehicleDetailDialogRef = ref(null);
+const handlePlateClick = (row) => {
+  vehicleDetailDialogRef.value?.open(row.plateNo);
+};
+
+// 字段点击筛选
+const handleFieldFilter = (field, value) => {
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    [field]: value,
+  };
+  handleRefresh();
+};
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <FormDrawer :title="getTitle">
-      <Form />
-    </FormDrawer>
+    <CheckFormDrawer :title="textObj.checkText">
+      <CheckForm />
+    </CheckFormDrawer>
+    <UpdateProgressFormDrawer :title="textObj.updateProgressText">
+      <UpdateProgressForm />
+    </UpdateProgressFormDrawer>
+    <BatchHandleFormDrawer :title="textObj.batchHandleText">
+      <BatchHandleForm />
+    </BatchHandleFormDrawer>
     <DetailDrawer
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.plateNo}详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
+    <VehicleDetailDialog ref="vehicleDetailDialogRef" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -372,18 +586,16 @@ const handleFullShow = () => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="导出"
             icon-name="download"
             @click="handleExport"
           />
           <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
+            content="批量处置"
+            icon-name="Operation"
             :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
+            @click="handleBatchHandle"
           />
           <IconButton
             content="搜索"
@@ -397,32 +609,81 @@ const handleFullShow = () => {
           />
         </div>
       </template>
-      <template #id="{ row }">
+      <template #plateNo="{ row }">
         <el-text
-          @click="handleOpenDetail(row)"
+          @click="handlePlateClick(row)"
           class="common-align"
           type="primary"
+          style="cursor: pointer"
         >
-          {{ row.id }}
+          {{ row.plateNo }}
         </el-text>
+      </template>
+      <template #abnormalType="{ row }">
+        <el-tag
+          :type="abnormalTypeMap[row.abnormalType]"
+          @click="handleFieldFilter('abnormalType', row.abnormalType)"
+          style="cursor: pointer"
+        >
+          {{ row.abnormalType }}
+        </el-tag>
+      </template>
+      <template #status="{ row }">
+        <el-tag
+          :type="statusTypeMap[row.status]"
+          @click="handleFieldFilter('status', row.status)"
+          style="cursor: pointer"
+        >
+          {{ row.status }}
+        </el-tag>
+      </template>
+      <template #stationName="{ row }">
+        <el-text
+          @click="handleFieldFilter('stationId', row.stationId)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.stationName }}
+        </el-text>
+      </template>
+      <template #handleUserName="{ row }">
+        <el-text
+          v-if="row.handleUserName"
+          @click="handleFieldFilter('handleUserId', row.handleUserId)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.handleUserName }}
+        </el-text>
+        <span v-else>-</span>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            content="详情"
+            v-if="row.status === '未处理'"
+            content="核查"
+            icon-name="Search"
+            @click="handleCheck(row)"
+          />
+          <IconButton
+            v-if="row.status === '未处理'"
+            content="忽略"
+            icon-name="CircleClose"
+            color="#909399"
+            @click="handleIgnore(row)"
+          />
+          <IconButton
+            v-if="row.status === '处理中'"
+            content="更新进度"
+            icon-name="Edit"
+            @click="handleUpdateProgress(row)"
+          />
+          <IconButton
+            content="查看"
             icon-name="View"
             @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
           />
         </div>
       </template>
@@ -435,7 +696,7 @@ const handleFullShow = () => {
             <ArrowUp />
           </el-icon>
           <span>
-            本页统计：入场记录数量: {{ dataObj.list.length }}; 已选择:
+            本页统计：异常离场数量: {{ dataObj.list.length }}; 已选择:
             {{ checkedIds.length }}
           </span>
         </div>

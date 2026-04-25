@@ -2,7 +2,6 @@
 import { reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
@@ -10,9 +9,14 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
+  auditUnplateEnter,
+  confirmUnplateEnter,
+  correctUnplateEnter,
+  createUnplateEnter,
   exportUnplateEnter,
   getUnplateEnterPage,
 } from '#/api/genchuan/industry/chargePark/vehiclePass/enterMgmt/unplateEnter';
+import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
@@ -21,6 +25,7 @@ import {
   dataList,
   detailFields,
   textObj,
+  useAuditFormSchema,
   useCorrectFormSchema,
   useCreateFormSchema,
   useGridColumns,
@@ -82,11 +87,22 @@ const [CreateFormDrawer, createFormDrawerApi] = useVbenDrawer({
   onCancel() {
     createFormDrawerApi.close();
   },
-  onConfirm() {
-    const obj = createFormApi.form.values;
-    dataObj.apilist.push(obj);
-    handleRefresh();
-    createFormDrawerApi.close();
+  async onConfirm() {
+    try {
+      const values = createFormApi.form.values;
+      const loadingInstance = ElLoading.service({ text: '提交中...' });
+      try {
+        await createUnplateEnter(values);
+        ElMessage.success('新增成功');
+        handleRefresh();
+        createFormDrawerApi.close();
+      } finally {
+        loadingInstance.close();
+      }
+    } catch (error) {
+      ElMessage.error('新增失败');
+      console.error(error);
+    }
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
@@ -108,27 +124,81 @@ const [CorrectForm, correctFormApi] = useVbenForm({
   showDefaultActions: false,
 });
 
+const [AuditForm, auditFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 80,
+  },
+  layout: 'horizontal',
+  schema: useAuditFormSchema(),
+  showDefaultActions: false,
+});
+
 const [CorrectFormDrawer, correctFormDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
   onCancel() {
     correctFormDrawerApi.close();
   },
-  onConfirm() {
-    const obj = correctFormApi.form.values;
-    dataObj.apilist.forEach((v, i) => {
-      if (v.id === obj.id) {
-        dataObj.apilist[i] = obj;
+  async onConfirm() {
+    try {
+      const values = correctFormApi.form.values;
+      const loadingInstance = ElLoading.service({ text: '提交中...' });
+      try {
+        await correctUnplateEnter({ id: values.id, ...values });
+        ElMessage.success('修正成功');
+        handleRefresh();
+        correctFormDrawerApi.close();
+      } finally {
+        loadingInstance.close();
       }
-    });
-    handleRefresh();
-    correctFormDrawerApi.close();
+    } catch (error) {
+      ElMessage.error('修正失败');
+      console.error(error);
+    }
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
       const formData = correctFormDrawerApi.getData();
       if (formData?.id) {
         await correctFormApi.setValues(formData);
+      }
+    }
+  },
+});
+
+const [AuditFormDrawer, auditFormDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    auditFormDrawerApi.close();
+  },
+  async onConfirm() {
+    try {
+      await auditFormApi.validate();
+      const values = auditFormApi.form.values;
+      const loadingInstance = ElLoading.service({ text: '提交中...' });
+      try {
+        await auditUnplateEnter(values);
+        ElMessage.success('审核成功');
+        handleRefresh();
+        auditFormDrawerApi.close();
+      } finally {
+        loadingInstance.close();
+      }
+    } catch (error) {
+      ElMessage.error('审核失败');
+      console.error(error);
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      const formData = auditFormDrawerApi.getData();
+      if (formData?.id) {
+        await auditFormApi.setValues({ id: formData.id });
       }
     }
   },
@@ -167,6 +237,37 @@ function handleEdit(row) {
       ...row,
     })
     .open();
+}
+
+function handleAudit(row) {
+  auditFormDrawerApi
+    .setData({
+      title: '审核无牌入场',
+      ...row,
+    })
+    .open();
+}
+
+async function handleConfirm(row) {
+  try {
+    await confirm({
+      title: '确认操作',
+      content: `确定要确认该无牌入场记录吗？`,
+    });
+    const loadingInstance = ElLoading.service({ text: '确认中...' });
+    try {
+      await confirmUnplateEnter(row.id);
+      ElMessage.success('确认成功');
+      handleRefresh();
+    } finally {
+      loadingInstance.close();
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('确认失败');
+      console.error(error);
+    }
+  }
 }
 
 async function handleDelete(row) {
@@ -380,12 +481,18 @@ const handleFullShow = () => {
 
 <template>
   <div class="park-lot-table-new">
-    <FormDrawer :title="getTitle">
-      <Form />
-    </FormDrawer>
+    <CreateFormDrawer title="新增无牌入场">
+      <CreateForm />
+    </CreateFormDrawer>
+    <AuditFormDrawer title="审核无牌入场">
+      <AuditForm />
+    </AuditFormDrawer>
+    <CorrectFormDrawer title="修正无牌入场">
+      <CorrectForm />
+    </CorrectFormDrawer>
     <DetailDrawer
       ref="detailDrawerRef"
-      :title="`${dataObj.detailObj.plateNo}详情`"
+      title="无牌入场详情"
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
@@ -420,13 +527,6 @@ const handleFullShow = () => {
             @click="handleExport"
           />
           <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
-          <IconButton
             content="搜索"
             icon-name="search"
             @click="handleSerachShow"
@@ -455,15 +555,19 @@ const handleFullShow = () => {
             @click="handleOpenDetail(row)"
           />
           <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
+            content="审核"
+            icon-name="CircleCheck"
+            @click="handleAudit(row)"
           />
           <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
+            content="确认"
+            icon-name="Select"
+            @click="handleConfirm(row)"
+          />
+          <IconButton
+            content="修正"
+            icon-name="edit"
+            @click="handleEdit(row)"
           />
         </div>
       </template>

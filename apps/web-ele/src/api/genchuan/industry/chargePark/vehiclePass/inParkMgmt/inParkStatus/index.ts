@@ -3,79 +3,77 @@ import type { PageParam, PageResult } from '@vben/request';
 import { requestClient } from '#/api/request';
 
 export namespace InParkStatusApi {
-  /** 在场状态信息 */
+  /** 在停状态信息 */
   export interface InParkStatus {
     id?: number | string;
-    plateNo?: string;
-    plateColor?: string;
-    enterTime?: string;
-    stationId?: number;
+    carNo?: string;
+    spaceName?: string;
     stationName?: string;
-    parkSpaceNo?: string;
-    parkDuration?: number;
-    vehicleType?: string;
+    inTime?: number;
     status?: string;
     remark?: string;
+    reserve1?: string;
+    reserve2?: string;
     creator?: string;
     updater?: string;
-    createTime?: string;
-    updateTime?: string;
+    createTime?: number;
+    updateTime?: number;
+    infile?: number;
+    outfile?: number;
   }
 
-  /** 在场状态分页查询参数 */
+  /** 在停状态分页查询参数 */
   export interface PageReqVO extends PageParam {
-    plateNo?: string;
-    plateColor?: string;
-    stationId?: number;
-    parkSpaceNo?: string;
-    vehicleType?: string;
+    carNo?: string;
+    spaceName?: string;
+    stationName?: string;
     status?: string;
   }
 
-  /** 在场状态位置查询参数 */
+  /** 在停状态位置查询参数 */
   export interface LocationReqVO {
     id: number | string;
   }
 
-  /** 在场状态位置信息 */
+  /** 在停状态位置信息 */
   export interface LocationVO {
-    plateNo?: string;
+    lon?: number;
+    lat?: number;
+    spaceName?: string;
     stationName?: string;
-    parkSpaceNo?: string;
-    location?: {
-      lat: number;
-      lng: number;
-    };
   }
 
-  /** 在场状态提醒参数 */
+  /** 在停状态提醒参数 */
   export interface RemindReqVO {
     id: number | string;
-    remindType: string;
-    remindContent?: string;
   }
 
-  /** 在场状态告警参数 */
-  export interface AlertReqVO {
+  /** 在停状态告警参数 */
+  export interface AlarmReqVO {
     id: number | string;
-    alertType: string;
-    alertReason?: string;
+    alarmContent: string;
   }
 
-  /** 在场状态图表查询参数 */
+  /** 在停状态图表查询参数 */
   export interface ChartReqVO {
-    startTime: string;
-    endTime: string;
     stationId?: number;
   }
 
-  /** 在场状态图表数据 */
+  /** 在停状态图表数据 */
   export interface ChartVO {
-    parkTrend: Array<{ count: number; date: string }>;
-    stationParkCount: Array<{ count: number; stationName: string }>;
-    cardData: {
-      avgDuration: number;
-      totalPark: number;
+    carLocationList?: Array<{
+      lat: number;
+      lon: number;
+      plateNo: string;
+      spaceName: string;
+    }>;
+    inParkCountTrend?: Array<{
+      count: number;
+      time: string;
+    }>;
+    cardData?: {
+      inParkCarCount: number;
+      overTimeCarCount: number;
     };
   }
 }
@@ -102,7 +100,7 @@ export function exportInParkStatus(params?: InParkStatusApi.PageReqVO) {
   });
 }
 
-/** 查询在场状态位置 */
+/** 查询在停状态位置 */
 export function getInParkStatusLocation(data: InParkStatusApi.LocationReqVO) {
   return requestClient.get<InParkStatusApi.LocationVO>(
     '/vehiclepass/in-park-status/location',
@@ -110,20 +108,17 @@ export function getInParkStatusLocation(data: InParkStatusApi.LocationReqVO) {
   );
 }
 
-/** 提醒在场状态 */
+/** 提醒在停状态 */
 export function remindInParkStatus(data: InParkStatusApi.RemindReqVO) {
-  return requestClient.post<boolean>(
-    '/vehiclepass/in-park-status/remind',
-    data,
-  );
+  return requestClient.put<boolean>('/vehiclepass/in-park-status/remind', data);
 }
 
-/** 告警在场状态 */
-export function alertInParkStatus(data: InParkStatusApi.AlertReqVO) {
-  return requestClient.post<boolean>('/vehiclepass/in-park-status/alert', data);
+/** 告警在停状态 */
+export function alarmInParkStatus(data: InParkStatusApi.AlarmReqVO) {
+  return requestClient.put<boolean>('/vehiclepass/in-park-status/alarm', data);
 }
 
-/** 查询在场状态图表 */
+/** 查询在停状态图表 */
 export function getInParkStatusChart(params: InParkStatusApi.ChartReqVO) {
   return requestClient.get<InParkStatusApi.ChartVO>(
     '/vehiclepass/in-park-status/chart',

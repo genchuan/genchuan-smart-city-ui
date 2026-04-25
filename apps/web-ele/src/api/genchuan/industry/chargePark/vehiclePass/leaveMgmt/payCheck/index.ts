@@ -3,63 +3,61 @@ import type { PageParam, PageResult } from '@vben/request';
 import { requestClient } from '#/api/request';
 
 export namespace PayCheckApi {
-  /** 缴费核查信息 */
+  /** 缴费核验信息 */
   export interface PayCheck {
     id?: number | string;
     plateNo?: string;
-    plateColor?: string;
-    enterTime?: string;
-    leaveTime?: string;
+    parkFee?: number;
+    status?: string;
+    checkTime?: string;
     stationId?: number;
     stationName?: string;
-    parkDuration?: number;
-    parkFee?: number;
-    payStatus?: string;
-    payTime?: string;
-    payMethod?: string;
+    checkUserId?: number;
+    checkUserName?: string;
+    checkResult?: string;
     remark?: string;
+    reserve1?: string;
+    reserve2?: string;
     creator?: string;
     updater?: string;
     createTime?: string;
     updateTime?: string;
   }
 
-  /** 缴费核查分页查询参数 */
+  /** 缴费核验分页查询参数 */
   export interface PageReqVO extends PageParam {
     plateNo?: string;
-    plateColor?: string;
+    parkFee?: number;
+    status?: string;
+    checkTime?: string[];
     stationId?: number;
-    payStatus?: string;
-    payMethod?: string;
+    checkUserId?: number;
+    remark?: string;
   }
 
-  /** 缴费核查放行参数 */
+  /** 缴费核验放行参数 */
   export interface ReleaseReqVO {
     id: number | string;
-    releaseReason?: string;
   }
 
-  /** 缴费核查提醒参数 */
+  /** 缴费核验催缴参数 */
   export interface RemindReqVO {
     id: number | string;
-    remindType: string;
-    remindContent?: string;
   }
 
-  /** 缴费核查图表查询参数 */
+  /** 缴费核验图表查询参数 */
   export interface ChartReqVO {
     startTime: string;
     endTime: string;
     stationId?: number;
   }
 
-  /** 缴费核查图表数据 */
+  /** 缴费核验图表数据 */
   export interface ChartVO {
-    payTrend: Array<{ amount: number; date: string }>;
-    payMethodCount: Array<{ count: number; method: string }>;
+    checkSuccessTrend: Array<{ date: string; rate: number }>;
     cardData: {
-      totalPay: number;
-      unpaidCount: number;
+      avgCheckDuration: number;
+      checkSuccessRate: number;
     };
   }
 }

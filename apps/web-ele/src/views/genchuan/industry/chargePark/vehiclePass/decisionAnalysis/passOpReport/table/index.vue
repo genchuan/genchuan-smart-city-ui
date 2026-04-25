@@ -13,6 +13,7 @@ import {
   exportPassOpReport,
   getPassOpReportPage,
 } from '#/api/genchuan/industry/chargePark/vehiclePass/decisionAnalysis/passOpReport';
+import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';

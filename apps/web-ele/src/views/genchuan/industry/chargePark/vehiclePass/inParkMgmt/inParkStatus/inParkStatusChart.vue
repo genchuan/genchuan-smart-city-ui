@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, reactive, ref } from 'vue';
+import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
@@ -15,36 +15,26 @@ const cards = reactive([
     value: 0,
     desc: '当前在停总数',
     color: '#4A90E2',
-    key: 'total',
+    key: 'inParkCarCount',
   },
   {
     title: '超时长车辆数',
     value: 0,
     desc: '超时停车',
     color: '#FF6B8B',
-    key: 'overtime',
-  },
-  {
-    title: '平均停车时长',
-    value: '0h',
-    desc: '平均时长',
-    color: '#50E3C2',
-    key: 'avgTime',
+    key: 'overTimeCarCount',
   },
 ]);
 
 const state = reactive({
   chartData: {
     trend: [],
-    distribution: [],
   },
   hasData: false,
 });
 
 const pieChartRef = ref(null);
-const barChartRef = ref(null);
 let pieChartInstance = null;
-let barChartInstance = null;
 
 async function loadChartData() {
   try {
@@ -62,22 +52,20 @@ async function loadChartData() {
 
     // Always update card values
     if (res?.cardData) {
-      cards[0].value = res.cardData.totalPark || 0;
-      cards[2].value = res.cardData.avgDuration
-        ? `${res.cardData.avgDuration}h`
-        : '0h';
+      cards[0].value = res.cardData.inParkCarCount || 0;
+      cards[1].value = res.cardData.overTimeCarCount || 0;
     }
 
     // Check if there's chart data
-    const hasChartData =
-      res && (res.parkTrend?.length > 0 || res.stationParkCount?.length > 0);
+    const hasChartData = res?.carLocationList?.length > 0;
 
     if (hasChartData) {
       state.chartData = {
-        trend: res.parkTrend || [],
-        distribution: res.stationParkCount || [],
+        trend: res.carLocationList || [],
       };
       state.hasData = true;
+      // 等待 DOM 更新后再初始化图表
+      await nextTick();
       initCharts();
     } else {
       state.hasData = false;
@@ -103,7 +91,7 @@ function initPieChart() {
     tooltip: { trigger: 'axis' },
     xAxis: {
       type: 'category',
-      data: state.chartData.trend.map((item) => item.date),
+      data: state.chartData.trend.map((item) => item.time),
     },
     yAxis: { type: 'value', name: '在停数量' },
     series: [
@@ -122,39 +110,8 @@ function initPieChart() {
   pieChartInstance.setOption(option);
 }
 
-function initBarChart() {
-  if (!barChartRef.value) return;
-  if (barChartInstance) barChartInstance.dispose();
-  barChartInstance = echarts.init(barChartRef.value);
-  const option = {
-    backgroundColor: 'transparent',
-    title: {
-      text: '各场站在停分布',
-      left: 'center',
-      top: 10,
-      textStyle: { fontSize: 14, fontWeight: 500 },
-    },
-    tooltip: { trigger: 'axis' },
-    xAxis: {
-      type: 'category',
-      data: state.chartData.distribution.map((item) => item.stationName),
-    },
-    yAxis: { type: 'value', name: '在停数' },
-    series: [
-      {
-        type: 'bar',
-        data: state.chartData.distribution.map((item) => item.count),
-        itemStyle: { borderRadius: [4, 4, 0, 0], color: '#4A90E2' },
-        label: { show: true, position: 'top' },
-      },
-    ],
-  };
-  barChartInstance.setOption(option);
-}
-
 function initCharts() {
   initPieChart();
-  initBarChart();
 }
 
 function handleCardClick(key) {
@@ -167,12 +124,10 @@ onMounted(() => {
   loadChartData();
   window.addEventListener('resize', () => {
     pieChartInstance?.resize();
-    barChartInstance?.resize();
   });
 });
 onUnmounted(() => {
   pieChartInstance?.dispose();
-  barChartInstance?.dispose();
 });
 </script>
 
@@ -207,9 +162,6 @@ onUnmounted(() => {
     <div v-if="state.hasData" class="chart-wrapper">
       <div class="chart-container">
         <div ref="pieChartRef" style="width: 100%; height: 100%"></div>
-      </div>
-      <div class="chart-container">
-        <div ref="barChartRef" style="width: 100%; height: 100%"></div>
       </div>
     </div>
   </div>

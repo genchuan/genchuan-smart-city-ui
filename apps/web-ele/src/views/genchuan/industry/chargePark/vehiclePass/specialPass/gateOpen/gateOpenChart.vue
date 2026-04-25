@@ -1,9 +1,9 @@
 <script setup>
-import { onMounted, onUnmounted, reactive, ref } from 'vue';
+import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
-import { gateOpenApi } from '#/api/genchuan/industry/chargePark/vehiclePass/api-map';
+import { getGateOpenChart } from '#/api/genchuan/industry/chargePark/vehiclePass/specialPass/gateOpen';
 
 const props = defineProps({
   parkId: { type: Number, default: null },
@@ -11,25 +11,18 @@ const props = defineProps({
 
 const cards = reactive([
   {
-    title: '申请通过率',
-    value: '0%',
-    desc: '审核通过比例',
-    color: '#4A90E2',
-    key: 'passRate',
-  },
-  {
-    title: '今日申请量',
+    title: '申请量',
     value: 0,
     desc: '累计申请次数',
-    color: '#FF9F40',
-    key: 'todayCount',
+    color: '#4A90E2',
+    key: 'applyCount',
   },
   {
-    title: '待审核数',
-    value: 0,
-    desc: '等待审核',
-    color: '#FF6B8B',
-    key: 'pending',
+    title: '审批通过率',
+    value: '0%',
+    desc: '审核通过比例',
+    color: '#50E3C2',
+    key: 'auditPassRate',
   },
 ]);
 
@@ -53,33 +46,33 @@ async function loadChartData() {
     startTime.setDate(startTime.getDate() - 7);
 
     const params = {
-      startTime: startTime.toISOString().split('T')[0],
-      endTime: endTime.toISOString().split('T')[0],
+      startTime: Math.floor(startTime.getTime() / 1000).toString(),
+      endTime: Math.floor(endTime.getTime() / 1000).toString(),
       stationId: props.parkId,
     };
 
-    const res = await gateOpenApi.getChart(params);
+    const res = await getGateOpenChart(params);
 
     // Always update card values
     if (res?.cardData) {
-      cards[0].value = res.cardData.passRate || '0%';
-      cards[1].value = res.cardData.todayCount || 0;
-      cards[2].value = res.cardData.pending || 0;
+      cards[0].value = res.cardData.applyCount || 0;
+      cards[1].value = res.cardData.auditPassRate
+        ? `${res.cardData.auditPassRate}%`
+        : '0%';
     }
 
     // Check if there's chart data
     const hasChartData =
       res &&
-      (res.trend?.length > 0 ||
-        res.distribution?.length > 0 ||
-        res.stationCount?.length > 0);
+      (res.openApplyTrend?.length > 0 || res.stationOpenCount?.length > 0);
 
     if (hasChartData) {
       state.chartData = {
-        trend: res.trend || [],
-        stationCount: res.distribution || res.stationCount || [],
+        trend: res.openApplyTrend || [],
+        stationCount: res.stationOpenCount || [],
       };
       state.hasData = true;
+      await nextTick();
       initCharts();
     } else {
       state.hasData = false;

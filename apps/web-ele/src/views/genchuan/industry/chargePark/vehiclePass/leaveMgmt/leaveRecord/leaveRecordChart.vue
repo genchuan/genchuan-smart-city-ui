@@ -1,5 +1,5 @@
-<script setup>
-import { onMounted, onUnmounted, reactive, ref } from 'vue';
+﻿<script setup>
+import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
@@ -15,21 +15,14 @@ const cards = reactive([
     value: 0,
     desc: '累计离场车辆',
     color: '#4A90E2',
-    key: 'total',
+    key: 'todayLeaveCount',
   },
   {
     title: '离场峰值',
     value: 0,
     desc: '高峰时段',
     color: '#FF9F40',
-    key: 'peak',
-  },
-  {
-    title: '平均离场时长',
-    value: '0h',
-    desc: '平均停车时长',
-    color: '#50E3C2',
-    key: 'avgTime',
+    key: 'leavePeak',
   },
 ]);
 
@@ -62,24 +55,22 @@ async function loadChartData() {
 
     // Always update card values
     if (res?.cardData) {
-      cards[0].value = res.cardData.total || 0;
-      cards[1].value = res.cardData.peak || 0;
-      cards[2].value = res.cardData.avgTime ? `${res.cardData.avgTime}h` : '0h';
+      cards[0].value = res.cardData.todayLeaveCount || 0;
+      cards[1].value = res.cardData.leavePeak || 0;
     }
 
     // Check if there's chart data
     const hasChartData =
       res &&
-      (res.trend?.length > 0 ||
-        res.distribution?.length > 0 ||
-        res.hourCount?.length > 0);
+      (res.leaveCountTrend?.length > 0 || res.hourLeaveCount?.length > 0);
 
     if (hasChartData) {
       state.chartData = {
-        trend: res.trend || [],
-        hourCount: res.distribution || res.hourCount || [],
+        trend: res.leaveCountTrend || [],
+        hourCount: res.hourLeaveCount || [],
       };
       state.hasData = true;
+      await nextTick();
       initCharts();
     } else {
       state.hasData = false;

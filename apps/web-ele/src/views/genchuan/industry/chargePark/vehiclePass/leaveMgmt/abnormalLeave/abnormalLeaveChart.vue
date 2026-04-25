@@ -1,9 +1,9 @@
-<script setup>
-import { onMounted, onUnmounted, reactive, ref } from 'vue';
+﻿<script setup>
+import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
-import { abnormalLeaveApi } from '#/api/genchuan/industry/chargePark/vehiclePass/api-map';
+import { getAbnormalLeaveChart } from '#/api/genchuan/industry/chargePark/vehiclePass/leaveMgmt/abnormalLeave';
 
 const props = defineProps({
   parkId: { type: Number, default: null },
@@ -15,21 +15,14 @@ const cards = reactive([
     value: 0,
     desc: '等待处理',
     color: '#FF6B8B',
-    key: 'pending',
+    key: 'waitHandleCount',
   },
   {
     title: '处置完成率',
     value: '0%',
     desc: '处置进度',
     color: '#50E3C2',
-    key: 'completeRate',
-  },
-  {
-    title: '今日异常数',
-    value: 0,
-    desc: '今日异常离场',
-    color: '#4A90E2',
-    key: 'todayCount',
+    key: 'handleCompleteRate',
   },
 ]);
 
@@ -53,33 +46,34 @@ async function loadChartData() {
     startTime.setDate(startTime.getDate() - 7);
 
     const params = {
-      startTime: startTime.toISOString().split('T')[0],
-      endTime: endTime.toISOString().split('T')[0],
+      startTime: Math.floor(startTime.getTime() / 1000).toString(),
+      endTime: Math.floor(endTime.getTime() / 1000).toString(),
       stationId: props.parkId,
     };
 
-    const res = await abnormalLeaveApi.getChart(params);
+    const res = await getAbnormalLeaveChart(params);
 
     // Always update card values
     if (res?.cardData) {
-      cards[0].value = res.cardData.pending || 0;
-      cards[1].value = res.cardData.completeRate || '0%';
-      cards[2].value = res.cardData.todayCount || 0;
+      cards[0].value = res.cardData.waitHandleCount || 0;
+      cards[1].value = res.cardData.handleCompleteRate
+        ? `${res.cardData.handleCompleteRate}%`
+        : '0%';
     }
 
     // Check if there's chart data
     const hasChartData =
       res &&
-      (res.trend?.length > 0 ||
-        res.distribution?.length > 0 ||
-        res.stationCount?.length > 0);
+      (res.abnormalLeaveTrend?.length > 0 ||
+        res.stationAbnormalCount?.length > 0);
 
     if (hasChartData) {
       state.chartData = {
-        trend: res.trend || [],
-        stationCount: res.distribution || res.stationCount || [],
+        trend: res.abnormalLeaveTrend || [],
+        stationCount: res.stationAbnormalCount || [],
       };
       state.hasData = true;
+      await nextTick();
       initCharts();
     } else {
       state.hasData = false;

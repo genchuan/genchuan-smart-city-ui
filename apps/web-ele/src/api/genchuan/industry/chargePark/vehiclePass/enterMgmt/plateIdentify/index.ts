@@ -114,7 +114,7 @@ export function confirmPlateIdentify(data: PlateIdentifyApi.ConfirmReqVO) {
 
 /** 修正车牌识别 */
 export function correctPlateIdentify(data: PlateIdentifyApi.CorrectReqVO) {
-  return requestClient.put('/vehiclepass/plate-identify/update', data);
+  return requestClient.put('/vehiclepass/plate-identify/correct', data);
 }
 
 /** 查询车牌识别图表 */

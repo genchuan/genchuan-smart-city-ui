@@ -1,29 +1,53 @@
+/** 缴费状态类型映射 */
+export const statusTypeMap = {
+  已缴清: 'success',
+  欠费: 'danger',
+};
+
 /** 模块表格初始数据 */
 export const dataList = () => {
   return [
     {
       id: '001',
-      stationName: '芗城区XX社区停车场',
       plateNo: '闽E12345',
-      status: '正常',
+      parkFee: 25,
+      status: '已缴清',
+      checkTime: '2025-04-18 10:30:15',
+      stationName: '芗城区XX社区停车场',
+      stationId: 1,
+      checkUserName: '张三',
+      checkUserId: 1,
+      checkResult: '核验通过，允许放行',
       remark: '',
-      createTime: '2025-04-18 08:30:15',
+      createTime: '2025-04-18 10:30:15',
     },
     {
       id: '002',
-      stationName: '龙文区碧湖公园停车场',
       plateNo: '闽E67890',
-      status: '正常',
+      parkFee: 15,
+      status: '已缴清',
+      checkTime: '2025-04-18 11:15:30',
+      stationName: '龙文区碧湖公园停车场',
+      stationId: 2,
+      checkUserName: '李四',
+      checkUserId: 2,
+      checkResult: '核验通过，允许放行',
       remark: '',
-      createTime: '2025-04-18 09:15:30',
+      createTime: '2025-04-18 11:15:30',
     },
     {
       id: '003',
-      stationName: '龙海区石码镇停车场',
       plateNo: '闽E11111',
-      status: '异常',
-      remark: '需要处理',
-      createTime: '2025-04-18 10:20:45',
+      parkFee: 50,
+      status: '欠费',
+      checkTime: '2025-04-18 12:20:45',
+      stationName: '龙海区石码镇停车场',
+      stationId: 3,
+      checkUserName: '王五',
+      checkUserId: 3,
+      checkResult: '欠费未缴清',
+      remark: '需要催缴',
+      createTime: '2025-04-18 12:20:45',
     },
   ];
 };
@@ -32,31 +56,67 @@ export const dataList = () => {
 export function useSearchFormSchema() {
   return [
     {
-      fieldName: 'stationName',
-      label: '场站名称',
+      fieldName: 'plateNo',
+      label: '车牌',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入场站名称',
+        placeholder: '请输入车牌',
       },
     },
     {
-      fieldName: 'plateNo',
-      label: '车牌号码',
-      component: 'Input',
+      fieldName: 'parkFee',
+      label: '停车费用',
+      component: 'InputNumber',
       componentProps: {
-        placeholder: '请输入车牌号码',
+        placeholder: '请输入停车费用',
+        min: 0,
       },
     },
     {
       fieldName: 'status',
-      label: '状态',
+      label: '缴费状态',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择状态',
+        placeholder: '请选择缴费状态',
         options: [
-          { label: '正常', value: '正常' },
-          { label: '异常', value: '异常' },
+          { label: '已缴清', value: '已缴清' },
+          { label: '欠费', value: '欠费' },
         ],
+      },
+    },
+    {
+      fieldName: 'checkTime',
+      label: '核验时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择核验时间',
+        type: 'datetimerange',
+      },
+    },
+    {
+      fieldName: 'stationId',
+      label: '场站',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择场站',
+        options: [],
+      },
+    },
+    {
+      fieldName: 'checkUserId',
+      label: '核验人',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择核验人',
+        options: [],
+      },
+    },
+    {
+      fieldName: 'remark',
+      label: '备注',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入备注',
       },
     },
   ];
@@ -68,44 +128,59 @@ export function useGridColumns() {
     { type: 'checkbox', width: 40 },
     {
       field: 'id',
-      title: '编号',
+      title: '核验ID',
       minWidth: 100,
-      sortable: true,
-      slots: { default: 'id' },
-    },
-    {
-      field: 'stationName',
-      title: '场站名称',
-      minWidth: 180,
       sortable: true,
     },
     {
       field: 'plateNo',
-      title: '车牌号码',
+      title: '车牌',
+      minWidth: 120,
+      sortable: true,
+      slots: { default: 'plateNo' },
+    },
+    {
+      field: 'parkFee',
+      title: '停车费用(元)',
       minWidth: 120,
       sortable: true,
     },
     {
       field: 'status',
-      title: '状态',
+      title: '缴费状态',
       minWidth: 100,
       sortable: true,
+      slots: { default: 'status' },
     },
     {
-      field: 'remark',
-      title: '备注',
+      field: 'checkTime',
+      title: '核验时间',
       minWidth: 180,
       sortable: true,
     },
     {
-      field: 'createTime',
-      title: '创建时间',
+      field: 'stationName',
+      title: '场站',
       minWidth: 180,
+      sortable: true,
+      slots: { default: 'stationName' },
+    },
+    {
+      field: 'checkUserName',
+      title: '核验人',
+      minWidth: 100,
+      sortable: true,
+      slots: { default: 'checkUserName' },
+    },
+    {
+      field: 'checkResult',
+      title: '核验结果',
+      minWidth: 150,
       sortable: true,
     },
     {
       title: '操作',
-      width: 100,
+      width: 180,
       fixed: 'right',
       slots: { default: 'actions' },
     },
@@ -113,19 +188,24 @@ export function useGridColumns() {
 }
 
 export const textObj = {
-  editText: '编辑记录',
-  addText: '新增记录',
-  excelName: '数据列表',
-  excelAllName: '数据导出.xlsx',
-  total: '总计: 记录3条; 正常2条; 异常1条',
+  editText: '编辑缴费核验',
+  addText: '新增缴费核验',
+  excelName: '缴费核验列表',
+  excelAllName: '缴费核验导出.xlsx',
+  total: '总计: 核验记录3条; 已缴清2条; 欠费1条',
 };
 
 /** 详情抽屉字段配置 */
 export const detailFields = [
-  { key: 'id', label: '编号' },
-  { key: 'stationName', label: '场站名称' },
-  { key: 'plateNo', label: '车牌号码' },
-  { key: 'status', label: '状态' },
+  { key: 'id', label: '核验ID' },
+  { key: 'plateNo', label: '车牌' },
+  { key: 'parkFee', label: '停车费用(元)' },
+  { key: 'status', label: '缴费状态' },
+  { key: 'checkTime', label: '核验时间' },
+  { key: 'stationName', label: '场站' },
+  { key: 'checkUserName', label: '核验人' },
+  { key: 'checkResult', label: '核验结果' },
   { key: 'remark', label: '备注' },
   { key: 'createTime', label: '创建时间' },
+  { key: 'updateTime', label: '更新时间' },
 ];

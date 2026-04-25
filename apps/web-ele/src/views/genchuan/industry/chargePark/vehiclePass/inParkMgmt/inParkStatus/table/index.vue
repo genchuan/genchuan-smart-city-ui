@@ -2,7 +2,6 @@
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
@@ -10,17 +9,25 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
+  alarmInParkStatus,
   exportInParkStatus,
+  getInParkStatusLocation,
   getInParkStatusPage,
+  remindInParkStatus,
 } from '#/api/genchuan/industry/chargePark/vehiclePass/inParkMgmt/inParkStatus';
+import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
+import SpaceDetailDialog from '../../../components/SpaceDetailDialog.vue';
+import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
 import {
   dataList,
   detailFields,
+  OVERTIME_THRESHOLD,
+  statusTypeMap,
   textObj,
+  useAlarmFormSchema,
   useGridColumns,
   useSearchFormSchema,
 } from './data';
@@ -51,6 +58,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
 });
 
 const detailDrawerRef = ref(null);
+const vehicleDetailRef = ref(null);
+const spaceDetailRef = ref(null);
 const formData = ref();
 
 const [Form, formApi] = useVbenForm({
@@ -98,6 +107,55 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
 });
 
+const [AlarmForm, alarmFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 80,
+  },
+  layout: 'horizontal',
+  schema: useAlarmFormSchema(),
+  showDefaultActions: false,
+});
+
+const [AlarmFormDrawer, alarmFormDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    alarmFormDrawerApi.close();
+  },
+  async onConfirm() {
+    try {
+      const values = alarmFormApi.form.values;
+      const loadingInstance = ElLoading.service({ text: '提交中...' });
+      try {
+        await alarmInParkStatus({
+          id: values.id,
+          alarmContent: values.alarmContent,
+        });
+        ElMessage.success('告警成功');
+        handleRefresh();
+        alarmFormDrawerApi.close();
+      } finally {
+        loadingInstance.close();
+      }
+    } catch (error) {
+      ElMessage.error('告警失败');
+      console.error(error);
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      const formData = alarmFormDrawerApi.getData();
+      if (formData?.id) {
+        await alarmFormApi.setValues({ id: formData.id });
+      }
+    }
+  },
+});
+
 function handleRefresh() {
   gridApi.query();
 }
@@ -133,31 +191,59 @@ function handleEdit(row) {
     .open();
 }
 
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.plateNo]),
-  });
+async function handleLocation(row) {
+  const loadingInstance = ElLoading.service({ text: '定位中...' });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.plateNo]));
-    handleRefresh();
+    const result = await getInParkStatusLocation({ id: row.id });
+    ElMessage.success(
+      `车位位置: ${result.spaceName || '未知'}, 场站: ${result.stationName || '未知'}, 经纬度: (${result.lon}, ${result.lat})`,
+    );
+  } catch (error) {
+    ElMessage.error('定位失败');
+    console.error(error);
   } finally {
     loadingInstance.close();
   }
 }
 
-async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
-  });
+async function handleRemind(row) {
   try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
+    await confirm('确认提醒该车辆?');
+    const loadingInstance = ElLoading.service({ text: '提醒中...' });
+    try {
+      await remindInParkStatus({ id: row.id });
+      ElMessage.success('提醒成功');
+      handleRefresh();
+    } finally {
+      loadingInstance.close();
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('提醒失败');
+      console.error(error);
+    }
+  }
+}
+
+async function handleAlarm(row) {
+  alarmFormDrawerApi
+    .setData({
+      title: '告警',
+      id: row.id,
+    })
+    .open();
+}
+
+async function handleAlarmSubmit(data) {
+  const loadingInstance = ElLoading.service({ text: '告警中...' });
+  try {
+    await alarmInParkStatus(data);
+    ElMessage.success('告警成功');
+    alarmFormDrawerApi.close();
     handleRefresh();
+  } catch (error) {
+    ElMessage.error('告警失败');
+    console.error(error);
   } finally {
     loadingInstance.close();
   }
@@ -210,12 +296,16 @@ const getTableData = async (pageObj) => {
   const filteredList = dataObj.apilist.filter((v) => {
     let statusMatch = true;
     switch (activeName.value) {
-      case '异常': {
-        statusMatch = v.status === '异常';
+      case '异常状态': {
+        statusMatch = v.status === '异常状态';
         break;
       }
-      case '正常': {
-        statusMatch = v.status === '正常';
+      case '正常在停': {
+        statusMatch = v.status === '正常在停';
+        break;
+      }
+      case '超时长在停': {
+        statusMatch = v.status === '超时长在停';
         break;
       }
     }
@@ -301,7 +391,78 @@ const handleOpenDetail = (row) => {
   detailDrawerRef.value.open();
 };
 
-const tabsData = ref([{ label: '全部' }, { label: '正常' }, { label: '异常' }]);
+// 车牌点击 - 跳转车辆详情
+const handleCarNoClick = (row) => {
+  vehicleDetailRef.value?.open(row.carNo, row);
+};
+
+// 车位点击 - 跳转车位详情
+const handleSpaceNameClick = (row) => {
+  spaceDetailRef.value?.open(row.spaceName, row);
+};
+
+// 状态点击 - 筛选同状态记录
+const handleStatusClick = (row) => {
+  dataObj.searchParams = { ...dataObj.searchParams, status: row.status };
+  handleRefresh();
+  ElMessage.success(`已筛选状态: ${row.status}`);
+};
+
+// 场站点击 - 筛选同场站记录
+const handleStationClick = (row) => {
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    stationName: row.stationName,
+  };
+  handleRefresh();
+  ElMessage.success(`已筛选场站: ${row.stationName}`);
+};
+
+// 计算在停时长（分钟）
+const calculateParkDuration = (inTime) => {
+  if (!inTime) return 0;
+  const now = Date.now();
+  const duration = Math.floor((now - inTime) / 1000 / 60);
+  return duration;
+};
+
+// 计算车辆实际状态（根据在停时长）
+const calculateActualStatus = (inTime, originalStatus) => {
+  const duration = calculateParkDuration(inTime);
+
+  // 如果原始状态是异常，保持异常
+  if (originalStatus === '异常状态') {
+    return '异常状态';
+  }
+
+  // 根据在停时长判断
+  if (duration > OVERTIME_THRESHOLD) {
+    return '超时长在停';
+  }
+
+  return '正常在停';
+};
+
+// 根据状态判断按钮是否显示
+const shouldShowRemind = (status) => {
+  return status === '超时长在停';
+};
+
+const shouldShowAlarm = (status) => {
+  return status === '异常状态';
+};
+
+// 获取状态标签类型
+const getStatusType = (status) => {
+  return statusTypeMap[status] || 'info';
+};
+
+const tabsData = ref([
+  { label: '全部' },
+  { label: '正常在停' },
+  { label: '超时长在停' },
+  { label: '异常状态' },
+]);
 
 const createLabel = (item) => {
   let count = 0;
@@ -311,12 +472,16 @@ const createLabel = (item) => {
       count = dataObj.apilist.length;
       break;
     }
-    case '异常': {
-      count = dataObj.apilist.filter((v) => v.status === '异常').length;
+    case '异常状态': {
+      count = dataObj.apilist.filter((v) => v.status === '异常状态').length;
       break;
     }
-    case '正常': {
-      count = dataObj.apilist.filter((v) => v.status === '正常').length;
+    case '正常在停': {
+      count = dataObj.apilist.filter((v) => v.status === '正常在停').length;
+      break;
+    }
+    case '超时长在停': {
+      count = dataObj.apilist.filter((v) => v.status === '超时长在停').length;
       break;
     }
   }
@@ -335,6 +500,31 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
+// 批量定位（全局定位）
+const handleBatchLocation = async () => {
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请先选择要定位的车辆');
+    return;
+  }
+
+  const loadingInstance = ElLoading.service({ text: '批量定位中...' });
+  try {
+    const locationPromises = checkedIds.value.map((id) => {
+      const row = dataObj.list.find((item) => item.id === id);
+      return getInParkStatusLocation({ id });
+    });
+
+    const results = await Promise.all(locationPromises);
+    ElMessage.success(`成功定位 ${results.length} 辆车辆`);
+    // TODO: 在地图上显示所有定位点
+  } catch (error) {
+    ElMessage.error('批量定位失败');
+    console.error(error);
+  } finally {
+    loadingInstance.close();
+  }
+};
 </script>
 
 <template>
@@ -344,10 +534,15 @@ const handleFullShow = () => {
     </FormDrawer>
     <DetailDrawer
       ref="detailDrawerRef"
-      :title="`${dataObj.detailObj.plateNo}详情`"
+      :title="`${dataObj.detailObj.carNo}详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
+    <VehicleDetailDialog ref="vehicleDetailRef" />
+    <SpaceDetailDialog ref="spaceDetailRef" />
+    <AlarmFormDrawer>
+      <AlarmForm />
+    </AlarmFormDrawer>
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -372,23 +567,20 @@ const handleFullShow = () => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton
+            content="筛选"
+            icon-name="Filter"
+            @click="handleSerachShow"
+          />
           <IconButton
             content="导出"
             icon-name="download"
             @click="handleExport"
           />
           <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
+            content="定位"
+            icon-name="Location"
+            @click="handleBatchLocation"
           />
           <IconButton
             content="全屏"
@@ -406,23 +598,72 @@ const handleFullShow = () => {
           {{ row.id }}
         </el-text>
       </template>
+      <template #carNo="{ row }">
+        <el-text
+          @click="handleCarNoClick(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.carNo }}
+        </el-text>
+      </template>
+      <template #spaceName="{ row }">
+        <el-text
+          @click="handleSpaceNameClick(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.spaceName }}
+        </el-text>
+      </template>
+      <template #stationName="{ row }">
+        <el-text
+          @click="handleStationClick(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.stationName }}
+        </el-text>
+      </template>
+      <template #status="{ row }">
+        <el-tag
+          :type="getStatusType(row.status)"
+          @click="handleStatusClick(row)"
+          style="cursor: pointer"
+        >
+          {{ row.status }}
+        </el-tag>
+      </template>
+      <template #parkDuration="{ row }">
+        <span>{{ calculateParkDuration(row.inTime) }}分钟</span>
+      </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            content="详情"
+            content="查看"
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
           <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
+            content="定位"
+            icon-name="Location"
+            @click="handleLocation(row)"
           />
           <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
+            v-if="shouldShowRemind(row.status)"
+            content="提醒"
+            icon-name="Bell"
+            @click="handleRemind(row)"
+          />
+          <IconButton
+            v-if="shouldShowAlarm(row.status)"
+            content="告警"
+            icon-name="Warning"
+            color="#E6A23C"
+            @click="handleAlarm(row)"
           />
         </div>
       </template>

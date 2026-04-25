@@ -6,57 +6,58 @@ export namespace FakePlateControlApi {
   /** 套牌管控信息 */
   export interface FakePlateControl {
     id?: number | string;
-    plateNo?: string;
-    plateColor?: string;
-    enterTime?: string;
-    stationId?: number;
-    stationName?: string;
-    suspectReason?: string;
-    handleStatus?: string;
-    handleResult?: string;
-    handleTime?: string;
-    handler?: string;
-    remark?: string;
+    plateNo?: string; // 车牌
+    identifyTime?: number; // 识别时间
+    matchScene?: string; // 匹配场景（同牌多停/车牌车型不匹配）
+    status?: string; // 处置状态（未处理/处理中/已关闭）
+    stationId?: number; // 场站ID
+    stationName?: string; // 场站名称
+    handleUserId?: number; // 处置人ID
+    handleUserName?: string; // 处置人姓名
+    handleTime?: number; // 处置时间
+    handleProgress?: string; // 处置进度
+    ignoreReason?: string; // 忽略理由
+    remark?: string; // 备注
+    reserve1?: string;
+    reserve2?: string;
     creator?: string;
     updater?: string;
-    createTime?: string;
-    updateTime?: string;
+    createTime?: number;
+    updateTime?: number;
   }
 
   /** 套牌管控分页查询参数 */
   export interface PageReqVO extends PageParam {
     plateNo?: string;
-    plateColor?: string;
+    identifyTime?: string;
+    matchScene?: string;
+    status?: string;
     stationId?: number;
-    suspectReason?: string;
-    handleStatus?: string;
+    handleUserId?: number;
+    remark?: string;
   }
 
   /** 套牌管控批量处理参数 */
   export interface BatchHandleReqVO {
     ids: Array<number | string>;
-    handleResult: string;
-    remark?: string;
+    handleType: string; // 处置类型（核查/忽略）
   }
 
   /** 套牌管控核查参数 */
   export interface CheckReqVO {
     id: number | string;
-    checkResult: string;
-    checkRemark?: string;
   }
 
   /** 套牌管控忽略参数 */
   export interface IgnoreReqVO {
     id: number | string;
-    ignoreReason?: string;
+    ignoreReason: string;
   }
 
   /** 套牌管控更新进度参数 */
   export interface UpdateProgressReqVO {
     id: number | string;
-    progress: string;
-    progressRemark?: string;
+    handleProgress: string;
   }
 
   /** 套牌管控图表查询参数 */
@@ -68,11 +69,11 @@ export namespace FakePlateControlApi {
 
   /** 套牌管控图表数据 */
   export interface ChartVO {
-    suspectTrend: Array<{ count: number; date: string }>;
-    reasonCount: Array<{ count: number; reason: string }>;
-    cardData: {
-      handleRate: number;
-      totalSuspect: number;
+    fakeIdentifyTrend?: Array<{ count: number; date: string }>;
+    stationFakeCount?: Array<{ count: number; stationName: string }>;
+    cardData?: {
+      handleCompleteRate: number;
+      waitHandleCount: number;
     };
   }
 }
@@ -103,7 +104,7 @@ export function exportFakePlateControl(params?: FakePlateControlApi.PageReqVO) {
 export function batchHandleFakePlateControl(
   data: FakePlateControlApi.BatchHandleReqVO,
 ) {
-  return requestClient.put<boolean>(
+  return requestClient.post<boolean>(
     '/vehiclepass/fake-plate-control/batch-handle',
     data,
   );

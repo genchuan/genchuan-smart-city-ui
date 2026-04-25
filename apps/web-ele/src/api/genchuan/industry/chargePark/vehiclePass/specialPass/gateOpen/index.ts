@@ -3,93 +3,90 @@ import type { PageParam, PageResult } from '@vben/request';
 import { requestClient } from '#/api/request';
 
 export namespace GateOpenApi {
-  /** 闸机开闸信息 */
+  /** 开闸管理信息 */
   export interface GateOpen {
     id?: number | string;
-    plateNo?: string;
-    plateColor?: string;
-    applyTime?: string;
     stationId?: number;
     stationName?: string;
-    gateId?: number;
-    gateName?: string;
-    applyReason?: string;
-    approveStatus?: string;
-    approveTime?: string;
-    approver?: string;
-    approveRemark?: string;
-    executeStatus?: string;
+    openReason?: string;
+    applyUserId?: number;
+    applyUserName?: string;
+    applyTime?: string;
+    status?: string;
+    auditUserId?: number;
+    auditUserName?: string;
+    auditTime?: string;
     executeTime?: string;
+    rejectReason?: string;
     remark?: string;
+    reserve1?: string;
+    reserve2?: string;
     creator?: string;
     updater?: string;
     createTime?: string;
     updateTime?: string;
   }
 
-  /** 闸机开闸分页查询参数 */
+  /** 开闸管理分页查询参数 */
   export interface PageReqVO extends PageParam {
-    plateNo?: string;
-    plateColor?: string;
     stationId?: number;
-    gateId?: number;
-    approveStatus?: string;
-    executeStatus?: string;
-  }
-
-  /** 闸机开闸创建参数 */
-  export interface CreateReqVO {
-    plateNo: string;
-    plateColor: string;
-    stationId: number;
-    gateId: number;
-    applyReason: string;
+    openReason?: string;
+    applyUserId?: number;
+    applyTime?: string[];
+    status?: string;
+    auditUserId?: number;
     remark?: string;
   }
 
-  /** 闸机开闸审批参数 */
-  export interface ApproveReqVO {
-    id: number | string;
-    approveRemark?: string;
+  /** 开闸管理创建参数 */
+  export interface CreateReqVO {
+    stationId: number;
+    openReason: string;
+    remark?: string;
   }
 
-  /** 闸机开闸驳回参数 */
+  /** 开闸管理审批参数 */
+  export interface ApproveReqVO {
+    id: number | string;
+  }
+
+  /** 开闸管理驳回参数 */
   export interface RejectReqVO {
     id: number | string;
     rejectReason: string;
   }
 
-  /** 闸机开闸执行参数 */
+  /** 开闸管理执行参数 */
   export interface ExecuteReqVO {
     id: number | string;
   }
 
-  /** 闸机开闸重新申请参数 */
+  /** 开闸管理重新申请参数 */
   export interface ReapplyReqVO {
     id: number | string;
-    applyReason: string;
+    openReason: string;
     remark?: string;
   }
 
-  /** 闸机开闸图表查询参数 */
+  /** 开闸管理图表查询参数 */
   export interface ChartReqVO {
     startTime: string;
     endTime: string;
     stationId?: number;
   }
 
-  /** 闸机开闸图表数据 */
+  /** 开闸管理图表数据 */
   export interface ChartVO {
-    applyTrend: Array<{ count: number; date: string }>;
-    approveStatusCount: Array<{ count: number; status: string }>;
+    openApplyTrend: Array<{ count: number; date: string }>;
+    stationOpenCount: Array<{ count: number; stationName: string }>;
     cardData: {
-      approveRate: number;
-      totalApply: number;
+      applyCount: number;
+      auditPassRate: number;
     };
   }
 }
 
-/** 查询闸机开闸分页 */
+/** 查询开闸管理分页 */
 export function getGateOpenPage(params: GateOpenApi.PageReqVO) {
   return requestClient.get<PageResult<GateOpenApi.GateOpen>>(
     '/vehiclepass/gate-open/page',
@@ -97,44 +94,44 @@ export function getGateOpenPage(params: GateOpenApi.PageReqVO) {
   );
 }
 
-/** 查询闸机开闸详情 */
+/** 查询开闸管理详情 */
 export function getGateOpen(id: number | string) {
   return requestClient.get<GateOpenApi.GateOpen>(
     `/vehiclepass/gate-open/get?id=${id}`,
   );
 }
 
-/** 新增闸机开闸 */
+/** 新增开闸申请 */
 export function createGateOpen(data: GateOpenApi.CreateReqVO) {
   return requestClient.post<boolean>('/vehiclepass/gate-open/create', data);
 }
 
-/** 导出闸机开闸 */
+/** 导出开闸管理 */
 export function exportGateOpen(params?: GateOpenApi.PageReqVO) {
   return requestClient.download('/vehiclepass/gate-open/export', { params });
 }
 
-/** 审批闸机开闸 */
+/** 审批通过开闸申请 */
 export function approveGateOpen(data: GateOpenApi.ApproveReqVO) {
   return requestClient.put<boolean>('/vehiclepass/gate-open/approve', data);
 }
 
-/** 驳回闸机开闸 */
+/** 驳回开闸申请 */
 export function rejectGateOpen(data: GateOpenApi.RejectReqVO) {
   return requestClient.put<boolean>('/vehiclepass/gate-open/reject', data);
 }
 
-/** 执行闸机开闸 */
+/** 执行开闸 */
 export function executeGateOpen(data: GateOpenApi.ExecuteReqVO) {
   return requestClient.put<boolean>('/vehiclepass/gate-open/execute', data);
 }
 
-/** 重新申请闸机开闸 */
+/** 重新申请开闸 */
 export function reapplyGateOpen(data: GateOpenApi.ReapplyReqVO) {
-  return requestClient.post<boolean>('/vehiclepass/gate-open/reapply', data);
+  return requestClient.put<boolean>('/vehiclepass/gate-open/reapply', data);
 }
 
-/** 查询闸机开闸图表 */
+/** 查询开闸管理图表 */
 export function getGateOpenChart(params: GateOpenApi.ChartReqVO) {
   return requestClient.get<GateOpenApi.ChartVO>(
     '/vehiclepass/gate-open/chart',

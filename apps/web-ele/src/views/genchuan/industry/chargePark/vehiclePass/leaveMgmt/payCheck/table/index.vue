@@ -4,7 +4,7 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -12,10 +12,14 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   exportPayCheck,
   getPayCheckPage,
+  releasePayCheck,
+  remindPayCheck,
 } from '#/api/genchuan/industry/chargePark/vehiclePass/leaveMgmt/payCheck';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
+import IconButton from '#/components/common/IconButton.vue';
 import { exportToExcel } from '#/utils/excel.js';
+import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
 
 import {
   dataList,
@@ -23,6 +27,7 @@ import {
   textObj,
   useSearchFormSchema,
   useGridColumns,
+  statusTypeMap,
 } from './data';
 
 const props = defineProps({
@@ -34,10 +39,6 @@ const props = defineProps({
 
 // 是否使用真实API（默认false使用模拟数据）
 const USE_REAL_API = true;
-
-const getTitle = computed(() => {
-  return formData.value?.id ? textObj.editText : textObj.addText;
-});
 
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -52,51 +53,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
 
 const detailDrawerRef = ref(null);
 const formData = ref();
-
-const [Form, formApi] = useVbenForm({
-  commonConfig: {
-    componentProps: {
-      class: 'w-full',
-    },
-    formItemClass: 'col-span-2',
-    labelWidth: 80,
-  },
-  layout: 'horizontal',
-  schema: useSearchFormSchema(),
-  showDefaultActions: false,
-});
-
-const [FormDrawer, formDrawerApi] = useVbenDrawer({
-  appendToMain: true,
-  modal: false,
-  onCancel() {
-    formDrawerApi.close();
-  },
-  onConfirm() {
-    const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-      dataObj.apilist.push(obj);
-    } else {
-      dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
-        }
-      });
-    }
-    handleRefresh();
-    formDrawerApi.close();
-  },
-  async onOpenChange(isOpen) {
-    if (isOpen) {
-      formData.value = formDrawerApi.getData();
-      if (formData.value?.id) {
-        await formApi.setValues(formData.value);
-      } else {
-        formApi.resetForm();
-      }
-    }
-  },
-});
 
 function handleRefresh() {
   gridApi.query();
@@ -116,50 +72,57 @@ async function handleExport() {
   }
 }
 
-function handleCreate() {
-  formDrawerApi
-    .setData({
-      title: textObj.addText,
-    })
-    .open();
-}
-
-function handleEdit(row) {
-  formDrawerApi
-    .setData({
-      title: textObj.editText,
-      ...row,
-    })
-    .open();
-}
-
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.plateNo]),
-  });
+// 放行操作
+async function handleRelease(row) {
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.plateNo]));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
+    await ElMessageBox.confirm('确认对该车辆进行放行操作？', '提示', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'warning',
+    });
+
+    if (USE_REAL_API) {
+      try {
+        await releasePayCheck({ id: row.id });
+        ElMessage.success('放行成功');
+        handleRefresh();
+      } catch (error) {
+        ElMessage.error('放行失败');
+        console.error(error);
+      }
+    } else {
+      ElMessage.success('放行成功');
+      handleRefresh();
+    }
+  } catch {
+    // 用户取消操作
   }
 }
 
-async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
-  });
+// 催缴操作
+async function handleRemind(row) {
   try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
+    await ElMessageBox.confirm('确认向车主推送欠费催缴提醒？', '提示', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'warning',
+    });
+
+    if (USE_REAL_API) {
+      try {
+        await remindPayCheck({ id: row.id });
+        ElMessage.success('催缴提醒已发送');
+        handleRefresh();
+      } catch (error) {
+        ElMessage.error('催缴提醒发送失败');
+        console.error(error);
+      }
+    } else {
+      ElMessage.success('催缴提醒已发送');
+      handleRefresh();
+    }
+  } catch {
+    // 用户取消操作
   }
 }
 
@@ -210,12 +173,12 @@ const getTableData = async (pageObj) => {
   const filteredList = dataObj.apilist.filter((v) => {
     let statusMatch = true;
     switch (activeName.value) {
-      case '异常': {
-        statusMatch = v.status === '异常';
+      case '已缴清': {
+        statusMatch = v.status === '已缴清';
         break;
       }
-      case '正常': {
-        statusMatch = v.status === '正常';
+      case '欠费': {
+        statusMatch = v.status === '欠费';
         break;
       }
     }
@@ -253,7 +216,12 @@ const [QueryForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema(),
+  schema: useSearchFormSchema().map((v) => {
+    delete v.rules;
+    return {
+      ...v,
+    };
+  }),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -301,7 +269,11 @@ const handleOpenDetail = (row) => {
   detailDrawerRef.value.open();
 };
 
-const tabsData = ref([{ label: '全部' }, { label: '正常' }, { label: '异常' }]);
+const tabsData = ref([
+  { label: '全部' },
+  { label: '已缴清' },
+  { label: '欠费' },
+]);
 
 const createLabel = (item) => {
   let count = 0;
@@ -311,12 +283,12 @@ const createLabel = (item) => {
       count = dataObj.apilist.length;
       break;
     }
-    case '异常': {
-      count = dataObj.apilist.filter((v) => v.status === '异常').length;
+    case '已缴清': {
+      count = dataObj.apilist.filter((v) => v.status === '已缴清').length;
       break;
     }
-    case '正常': {
-      count = dataObj.apilist.filter((v) => v.status === '正常').length;
+    case '欠费': {
+      count = dataObj.apilist.filter((v) => v.status === '欠费').length;
       break;
     }
   }
@@ -335,19 +307,32 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
+// 车辆详情弹窗
+const vehicleDetailDialogRef = ref(null);
+const handlePlateClick = (row) => {
+  vehicleDetailDialogRef.value?.open(row.plateNo);
+};
+
+// 字段点击筛选
+const handleFieldFilter = (field, value) => {
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    [field]: value,
+  };
+  handleRefresh();
+};
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <FormDrawer :title="getTitle">
-      <Form />
-    </FormDrawer>
     <DetailDrawer
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.plateNo}详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
+    <VehicleDetailDialog ref="vehicleDetailDialogRef" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -372,18 +357,10 @@ const handleFullShow = () => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="导出"
             icon-name="download"
             @click="handleExport"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
           />
           <IconButton
             content="搜索"
@@ -397,32 +374,64 @@ const handleFullShow = () => {
           />
         </div>
       </template>
-      <template #id="{ row }">
+      <template #plateNo="{ row }">
         <el-text
-          @click="handleOpenDetail(row)"
+          @click="handlePlateClick(row)"
           class="common-align"
           type="primary"
+          style="cursor: pointer"
         >
-          {{ row.id }}
+          {{ row.plateNo }}
+        </el-text>
+      </template>
+      <template #status="{ row }">
+        <el-tag
+          :type="statusTypeMap[row.status]"
+          @click="handleFieldFilter('status', row.status)"
+          style="cursor: pointer"
+        >
+          {{ row.status }}
+        </el-tag>
+      </template>
+      <template #stationName="{ row }">
+        <el-text
+          @click="handleFieldFilter('stationId', row.stationId)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.stationName }}
+        </el-text>
+      </template>
+      <template #checkUserName="{ row }">
+        <el-text
+          @click="handleFieldFilter('checkUserId', row.checkUserId)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.checkUserName }}
         </el-text>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            content="详情"
+            v-if="row.status === '已缴清'"
+            content="放行"
+            icon-name="CircleCheck"
+            @click="handleRelease(row)"
+          />
+          <IconButton
+            v-if="row.status === '欠费'"
+            content="催缴"
+            icon-name="Bell"
+            color="#E6A23C"
+            @click="handleRemind(row)"
+          />
+          <IconButton
+            content="查看"
             icon-name="View"
             @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
           />
         </div>
       </template>
@@ -435,7 +444,7 @@ const handleFullShow = () => {
             <ArrowUp />
           </el-icon>
           <span>
-            本页统计：入场记录数量: {{ dataObj.list.length }}; 已选择:
+            本页统计：缴费核验数量: {{ dataObj.list.length }}; 已选择:
             {{ checkedIds.length }}
           </span>
         </div>

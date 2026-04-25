@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, reactive, ref } from 'vue';
+import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
@@ -15,21 +15,14 @@ const cards = reactive([
     value: 0,
     desc: '等待处理',
     color: '#FF9F40',
-    key: 'pending',
+    key: 'waitHandleTaskCount',
   },
   {
     title: '已完成任务',
     value: 0,
     desc: '完成任务数',
     color: '#50E3C2',
-    key: 'completed',
-  },
-  {
-    title: '任务完成率',
-    value: '0%',
-    desc: '完成进度',
-    color: '#4A90E2',
-    key: 'completeRate',
+    key: 'finishedTaskCount',
   },
 ]);
 
@@ -62,24 +55,21 @@ async function loadChartData() {
 
     // Always update card values
     if (res?.cardData) {
-      cards[0].value = res.cardData.pending || 0;
-      cards[1].value = res.cardData.completed || 0;
-      cards[2].value = res.cardData.completeRate || '0%';
+      cards[0].value = res.cardData.waitHandleTaskCount || 0;
+      cards[1].value = res.cardData.finishedTaskCount || 0;
     }
 
     // Check if there's chart data
     const hasChartData =
-      res &&
-      (res.trend?.length > 0 ||
-        res.distribution?.length > 0 ||
-        res.typeCount?.length > 0);
+      res && (res.taskTypeCount?.length > 0 || res.taskHandleTrend?.length > 0);
 
     if (hasChartData) {
       state.chartData = {
-        trend: res.trend || [],
-        typeCount: res.distribution || res.typeCount || [],
+        typeCount: res.taskTypeCount || [],
+        trend: res.taskHandleTrend || [],
       };
       state.hasData = true;
+      await nextTick();
       initCharts();
     } else {
       state.hasData = false;
@@ -97,7 +87,7 @@ function initPieChart() {
   const option = {
     backgroundColor: 'transparent',
     title: {
-      text: '稽查任务趋势',
+      text: '任务处理时效',
       left: 'center',
       top: 10,
       textStyle: { fontSize: 14, fontWeight: 500 },
@@ -107,12 +97,12 @@ function initPieChart() {
       type: 'category',
       data: state.chartData.trend.map((item) => item.date),
     },
-    yAxis: { type: 'value', name: '任务量' },
+    yAxis: { type: 'value', name: '时长(小时)' },
     series: [
       {
-        name: '任务量',
+        name: '处理时长',
         type: 'line',
-        data: state.chartData.trend.map((item) => item.count),
+        data: state.chartData.trend.map((item) => item.duration),
         smooth: true,
         lineStyle: { width: 3, color: '#4A90E2' },
         areaStyle: { color: 'rgba(74,144,226,0.1)' },
@@ -131,7 +121,7 @@ function initBarChart() {
   const option = {
     backgroundColor: 'transparent',
     title: {
-      text: '任务类型统计',
+      text: '任务类型分布',
       left: 'center',
       top: 10,
       textStyle: { fontSize: 14, fontWeight: 500 },
@@ -139,7 +129,7 @@ function initBarChart() {
     tooltip: { trigger: 'axis' },
     xAxis: {
       type: 'category',
-      data: state.chartData.typeCount.map((item) => item.type),
+      data: state.chartData.typeCount.map((item) => item.typeName),
     },
     yAxis: { type: 'value', name: '数量' },
     series: [
