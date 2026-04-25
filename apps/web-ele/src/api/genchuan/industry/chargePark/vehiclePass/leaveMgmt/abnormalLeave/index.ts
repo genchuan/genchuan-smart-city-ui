@@ -7,17 +7,19 @@ export namespace AbnormalLeaveApi {
   export interface AbnormalLeave {
     id?: number | string;
     plateNo?: string;
-    plateColor?: string;
-    leaveTime?: string;
+    abnormalType?: string;
+    identifyTime?: string;
+    status?: string;
     stationId?: number;
     stationName?: string;
-    abnormalType?: string;
-    abnormalReason?: string;
-    handleStatus?: string;
-    handleResult?: string;
+    handleUserId?: number;
+    handleUserName?: string;
     handleTime?: string;
-    handler?: string;
+    handleProgress?: string;
+    ignoreReason?: string;
     remark?: string;
+    reserve1?: string;
+    reserve2?: string;
     creator?: string;
     updater?: string;
     createTime?: string;
@@ -27,38 +29,35 @@ export namespace AbnormalLeaveApi {
   /** 异常离场分页查询参数 */
   export interface PageReqVO extends PageParam {
     plateNo?: string;
-    plateColor?: string;
-    leaveTime?: string;
-    stationId?: number;
     abnormalType?: string;
-    handleStatus?: string;
+    identifyTime?: string[];
+    status?: string;
+    stationId?: number;
+    handleUserId?: number;
+    remark?: string;
   }
 
   /** 异常离场批量处理参数 */
   export interface BatchHandleReqVO {
     ids: Array<number | string>;
-    handleResult: string;
-    remark?: string;
+    handleType: string;
   }
 
   /** 异常离场核查参数 */
   export interface CheckReqVO {
     id: number | string;
-    checkResult: string;
-    checkRemark?: string;
   }
 
   /** 异常离场忽略参数 */
   export interface IgnoreReqVO {
     id: number | string;
-    ignoreReason?: string;
+    ignoreReason: string;
   }
 
   /** 异常离场更新进度参数 */
   export interface UpdateProgressReqVO {
     id: number | string;
-    progress: string;
-    progressRemark?: string;
+    handleProgress: string;
   }
 
   /** 异常离场图表查询参数 */
@@ -70,11 +69,11 @@ export namespace AbnormalLeaveApi {
 
   /** 异常离场图表数据 */
   export interface ChartVO {
-    abnormalTrend: Array<{ count: number; date: string }>;
-    abnormalTypeCount: Array<{ count: number; type: string }>;
+    abnormalLeaveTrend: Array<{ count: number; date: string }>;
+    stationAbnormalCount: Array<{ count: number; stationName: string }>;
     cardData: {
-      handleRate: number;
-      totalAbnormal: number;
+      handleCompleteRate: number;
+      waitHandleCount: number;
     };
   }
 }

@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, reactive, ref } from 'vue';
+import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
@@ -15,28 +15,20 @@ const cards = reactive([
     value: 0,
     desc: '累计查询次数',
     color: '#4A90E2',
-    key: 'total',
+    key: 'queryCount',
   },
   {
     title: '查询成功率',
     value: '0%',
     desc: '查询准确度',
     color: '#50E3C2',
-    key: 'successRate',
-  },
-  {
-    title: '平均响应时长',
-    value: '0s',
-    desc: '响应速度',
-    color: '#FF9F40',
-    key: 'avgTime',
+    key: 'querySuccessRate',
   },
 ]);
 
 const state = reactive({
   chartData: {
-    trend: [],
-    locationCount: [],
+    spaceLocationList: [],
   },
   hasData: false,
 });
@@ -62,24 +54,21 @@ async function loadChartData() {
 
     // Always update card values
     if (res?.cardData) {
-      cards[0].value = res.cardData.total || 0;
-      cards[1].value = res.cardData.successRate || '0%';
-      cards[2].value = res.cardData.avgTime || '0s';
+      cards[0].value = res.cardData.queryCount || 0;
+      cards[1].value = res.cardData.querySuccessRate
+        ? `${res.cardData.querySuccessRate}%`
+        : '0%';
     }
 
-    // Check if there's chart data
-    const hasChartData =
-      res &&
-      (res.trend?.length > 0 ||
-        res.distribution?.length > 0 ||
-        res.locationCount?.length > 0);
+    // Check if there's chart data - spaceLocationList is map data
+    const hasChartData = res?.spaceLocationList?.length > 0;
 
     if (hasChartData) {
       state.chartData = {
-        trend: res.trend || [],
-        locationCount: res.distribution || res.locationCount || [],
+        spaceLocationList: res.spaceLocationList || [],
       };
       state.hasData = true;
+      await nextTick();
       initCharts();
     } else {
       state.hasData = false;
@@ -94,30 +83,34 @@ function initPieChart() {
   if (!pieChartRef.value) return;
   if (pieChartInstance) pieChartInstance.dispose();
   pieChartInstance = echarts.init(pieChartRef.value);
+
+  // 泊位位置分布地图 - 这里简化为散点图展示
   const option = {
     backgroundColor: 'transparent',
     title: {
-      text: '泊位查询趋势',
+      text: '泊位位置分布',
       left: 'center',
       top: 10,
       textStyle: { fontSize: 14, fontWeight: 500 },
     },
-    tooltip: { trigger: 'axis' },
-    xAxis: {
-      type: 'category',
-      data: state.chartData.trend.map((item) => item.date),
+    tooltip: {
+      trigger: 'item',
+      formatter: (params) => {
+        const data = state.chartData.spaceLocationList[params.dataIndex];
+        return `${data.spaceNo}<br/>状态: ${data.spaceStatus}`;
+      },
     },
-    yAxis: { type: 'value', name: '查询量' },
+    xAxis: { type: 'value', name: '经度' },
+    yAxis: { type: 'value', name: '纬度' },
     series: [
       {
-        name: '查询量',
-        type: 'line',
-        data: state.chartData.trend.map((item) => item.count),
-        smooth: true,
-        lineStyle: { width: 3, color: '#4A90E2' },
-        areaStyle: { color: 'rgba(74,144,226,0.1)' },
-        symbol: 'circle',
-        symbolSize: 6,
+        type: 'scatter',
+        data: state.chartData.spaceLocationList.map((item) => [
+          item.lon,
+          item.lat,
+        ]),
+        symbolSize: 10,
+        itemStyle: { color: '#4A90E2' },
       },
     ],
   };
@@ -125,33 +118,7 @@ function initPieChart() {
 }
 
 function initBarChart() {
-  if (!barChartRef.value) return;
-  if (barChartInstance) barChartInstance.dispose();
-  barChartInstance = echarts.init(barChartRef.value);
-  const option = {
-    backgroundColor: 'transparent',
-    title: {
-      text: '各区域查询分布',
-      left: 'center',
-      top: 10,
-      textStyle: { fontSize: 14, fontWeight: 500 },
-    },
-    tooltip: { trigger: 'axis' },
-    xAxis: {
-      type: 'category',
-      data: state.chartData.locationCount.map((item) => item.location),
-    },
-    yAxis: { type: 'value', name: '查询量' },
-    series: [
-      {
-        type: 'bar',
-        data: state.chartData.locationCount.map((item) => item.count),
-        itemStyle: { borderRadius: [4, 4, 0, 0], color: '#4A90E2' },
-        label: { show: true, position: 'top' },
-      },
-    ],
-  };
-  barChartInstance.setOption(option);
+  // 接口只返回地图数据，不需要柱状图
 }
 
 function initCharts() {

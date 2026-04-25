@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, reactive, ref } from 'vue';
+import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
@@ -15,28 +15,20 @@ const cards = reactive([
     value: 0,
     desc: '累计结束停车',
     color: '#4A90E2',
-    key: 'total',
+    key: 'endCount',
   },
   {
-    title: '支付完成率',
+    title: '支付成功率',
     value: '0%',
     desc: '支付完成比例',
     color: '#50E3C2',
-    key: 'payRate',
-  },
-  {
-    title: '平均停车时长',
-    value: '0h',
-    desc: '平均时长',
-    color: '#FF9F40',
-    key: 'avgTime',
+    key: 'paySuccessRate',
   },
 ]);
 
 const state = reactive({
   chartData: {
     trend: [],
-    stationCount: [],
   },
   hasData: false,
 });
@@ -62,24 +54,21 @@ async function loadChartData() {
 
     // Always update card values
     if (res?.cardData) {
-      cards[0].value = res.cardData.total || 0;
-      cards[1].value = res.cardData.payRate || '0%';
-      cards[2].value = res.cardData.avgTime || '0h';
+      cards[0].value = res.cardData.endCount || 0;
+      cards[1].value = res.cardData.paySuccessRate
+        ? `${res.cardData.paySuccessRate}%`
+        : '0%';
     }
 
     // Check if there's chart data
-    const hasChartData =
-      res &&
-      (res.trend?.length > 0 ||
-        res.distribution?.length > 0 ||
-        res.stationCount?.length > 0);
+    const hasChartData = res?.endCountTrend?.length > 0;
 
     if (hasChartData) {
       state.chartData = {
-        trend: res.trend || [],
-        stationCount: res.distribution || res.stationCount || [],
+        trend: res.endCountTrend || [],
       };
       state.hasData = true;
+      await nextTick();
       initCharts();
     } else {
       state.hasData = false;
@@ -97,7 +86,7 @@ function initPieChart() {
   const option = {
     backgroundColor: 'transparent',
     title: {
-      text: '结束停车趋势',
+      text: '结束量趋势',
       left: 'center',
       top: 10,
       textStyle: { fontSize: 14, fontWeight: 500 },
@@ -125,33 +114,7 @@ function initPieChart() {
 }
 
 function initBarChart() {
-  if (!barChartRef.value) return;
-  if (barChartInstance) barChartInstance.dispose();
-  barChartInstance = echarts.init(barChartRef.value);
-  const option = {
-    backgroundColor: 'transparent',
-    title: {
-      text: '各场站结束量',
-      left: 'center',
-      top: 10,
-      textStyle: { fontSize: 14, fontWeight: 500 },
-    },
-    tooltip: { trigger: 'axis' },
-    xAxis: {
-      type: 'category',
-      data: state.chartData.stationCount.map((item) => item.stationName),
-    },
-    yAxis: { type: 'value', name: '结束量' },
-    series: [
-      {
-        type: 'bar',
-        data: state.chartData.stationCount.map((item) => item.count),
-        itemStyle: { borderRadius: [4, 4, 0, 0], color: '#4A90E2' },
-        label: { show: true, position: 'top' },
-      },
-    ],
-  };
-  barChartInstance.setOption(option);
+  // 接口只返回折线图数据，不需要柱状图
 }
 
 function initCharts() {

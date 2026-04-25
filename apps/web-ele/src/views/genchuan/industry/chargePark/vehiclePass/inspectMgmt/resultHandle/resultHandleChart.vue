@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, reactive, ref } from 'vue';
+import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
@@ -15,28 +15,20 @@ const cards = reactive([
     value: '0%',
     desc: '处置进度',
     color: '#50E3C2',
-    key: 'completeRate',
+    key: 'handleCompleteRate',
   },
   {
     title: '违规整改率',
     value: '0%',
     desc: '整改进度',
     color: '#4A90E2',
-    key: 'rectifyRate',
-  },
-  {
-    title: '待处置数',
-    value: 0,
-    desc: '等待处理',
-    color: '#FF9F40',
-    key: 'pending',
+    key: 'violationRectifyRate',
   },
 ]);
 
 const state = reactive({
   chartData: {
-    resultCount: [],
-    trend: [],
+    handleResultRate: [],
   },
   hasData: false,
 });
@@ -44,7 +36,7 @@ const state = reactive({
 const pieChartRef = ref(null);
 const barChartRef = ref(null);
 let pieChartInstance = null;
-let barChartInstance = null;
+const barChartInstance = null;
 
 async function loadChartData() {
   try {
@@ -62,24 +54,23 @@ async function loadChartData() {
 
     // Always update card values
     if (res?.cardData) {
-      cards[0].value = res.cardData.completeRate || '0%';
-      cards[1].value = res.cardData.rectifyRate || '0%';
-      cards[2].value = res.cardData.pending || 0;
+      cards[0].value = res.cardData.handleCompleteRate
+        ? `${res.cardData.handleCompleteRate}%`
+        : '0%';
+      cards[1].value = res.cardData.violationRectifyRate
+        ? `${res.cardData.violationRectifyRate}%`
+        : '0%';
     }
 
     // Check if there's chart data
-    const hasChartData =
-      res &&
-      (res.trend?.length > 0 ||
-        res.distribution?.length > 0 ||
-        res.resultCount?.length > 0);
+    const hasChartData = res?.handleResultRate?.length > 0;
 
     if (hasChartData) {
       state.chartData = {
-        trend: res.trend || [],
-        resultCount: res.distribution || res.resultCount || [],
+        handleResultRate: res.handleResultRate || [],
       };
       state.hasData = true;
+      await nextTick();
       initCharts();
     } else {
       state.hasData = false;
@@ -97,27 +88,30 @@ function initPieChart() {
   const option = {
     backgroundColor: 'transparent',
     title: {
-      text: '处置趋势',
+      text: '处置结果占比',
       left: 'center',
       top: 10,
       textStyle: { fontSize: 14, fontWeight: 500 },
     },
-    tooltip: { trigger: 'axis' },
-    xAxis: {
-      type: 'category',
-      data: state.chartData.trend.map((item) => item.date),
-    },
-    yAxis: { type: 'value', name: '处置量' },
+    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+    legend: { bottom: 10, left: 'center' },
     series: [
       {
-        name: '处置量',
-        type: 'line',
-        data: state.chartData.trend.map((item) => item.count),
-        smooth: true,
-        lineStyle: { width: 3, color: '#4A90E2' },
-        areaStyle: { color: 'rgba(74,144,226,0.1)' },
-        symbol: 'circle',
-        symbolSize: 6,
+        type: 'pie',
+        radius: ['40%', '70%'],
+        center: ['50%', '50%'],
+        data: state.chartData.handleResultRate.map((item) => ({
+          name: item.name,
+          value: item.value,
+        })),
+        label: { show: true, formatter: '{b}: {d}%' },
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)',
+          },
+        },
       },
     ],
   };
@@ -125,33 +119,7 @@ function initPieChart() {
 }
 
 function initBarChart() {
-  if (!barChartRef.value) return;
-  if (barChartInstance) barChartInstance.dispose();
-  barChartInstance = echarts.init(barChartRef.value);
-  const option = {
-    backgroundColor: 'transparent',
-    title: {
-      text: '处置结果统计',
-      left: 'center',
-      top: 10,
-      textStyle: { fontSize: 14, fontWeight: 500 },
-    },
-    tooltip: { trigger: 'axis' },
-    xAxis: {
-      type: 'category',
-      data: state.chartData.resultCount.map((item) => item.type),
-    },
-    yAxis: { type: 'value', name: '数量' },
-    series: [
-      {
-        type: 'bar',
-        data: state.chartData.resultCount.map((item) => item.count),
-        itemStyle: { borderRadius: [4, 4, 0, 0], color: '#4A90E2' },
-        label: { show: true, position: 'top' },
-      },
-    ],
-  };
-  barChartInstance.setOption(option);
+  // 接口只返回饼图数据，不需要柱状图
 }
 
 function initCharts() {

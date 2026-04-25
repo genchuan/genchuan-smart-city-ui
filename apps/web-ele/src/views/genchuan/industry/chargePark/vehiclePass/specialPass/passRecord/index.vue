@@ -1,66 +1,27 @@
 <script setup>
 import { ref } from 'vue';
 
-import passRecordChart from './passRecordChart.vue';
-import Table from './table/index.vue';
+import PassRecordChart from './passRecordChart.vue';
+import PassRecordTable from './table/index.vue';
 
-import '#/components/page/index.scss';
+const chartVisible = ref(true);
 
-const tabArray = ref([
-  {
-    label: '通行记录',
-    components: Table,
-    showSecondary: true,
-    secondShow: false,
-    arrowShow: true,
-    arrowState: false,
-  },
-]);
-
-const arrowChange = () => {
-  tabArray.value.forEach((v) => {
-    v.arrowShow = !v.arrowShow;
-  });
+const toggleChart = () => {
+  chartVisible.value = !chartVisible.value;
 };
-const activeName = ref('通行记录');
 </script>
 
 <template>
-  <div class="common-index">
-    <passRecordChart v-if="tabArray[0].arrowShow" />
-    <el-tabs v-model="activeName" class="common-tabs mark-tabs" type="card">
-      <el-tab-pane
-        v-for="item in tabArray"
-        :key="item.label"
-        :name="item.label"
-      >
-        <template #label>
-          <div class="table-first">
-            <span>{{ item.label }}</span>
-          </div>
-        </template>
-        <component
-          :is="item.components"
-          :second-show="item.secondShow"
-          :key="item.label"
-          :arrow-show="item.arrowShow"
-          @arrow-change="arrowChange"
-        />
-      </el-tab-pane>
-    </el-tabs>
+  <div class="pass-record-container">
+    <PassRecordChart v-if="chartVisible" @toggle="toggleChart" />
+    <PassRecordTable :chart-visible="chartVisible" @toggle-chart="toggleChart" />
   </div>
 </template>
 
 <style scoped lang="scss">
-.common-index {
-  .common-tabs {
-    :deep(.el-tabs__nav) {
-      margin-left: 0 !important;
-    }
-
-    :deep(.el-tabs__item) {
-      padding-right: 5px !important;
-    }
-  }
+.pass-record-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 </style>

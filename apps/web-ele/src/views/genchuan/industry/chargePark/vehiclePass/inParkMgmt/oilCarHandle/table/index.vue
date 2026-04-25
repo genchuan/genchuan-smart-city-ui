@@ -1,8 +1,7 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
@@ -10,19 +9,30 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
+  batchHandleOilCar,
   exportOilCarHandle,
   getOilCarHandlePage,
+  handleOilCar,
+  ignoreOilCarHandle,
+  updateOilCarHandleProgress,
 } from '#/api/genchuan/industry/chargePark/vehiclePass/inParkMgmt/oilCarHandle';
+import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
+import SpaceDetailDialog from '../../../components/SpaceDetailDialog.vue';
+import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
 import {
   dataList,
   detailFields,
+  occupyTypeMap,
+  statusTypeMap,
   textObj,
   useGridColumns,
+  useHandleFormSchema,
+  useIgnoreFormSchema,
   useSearchFormSchema,
+  useUpdateProgressFormSchema,
 } from './data';
 
 const props = defineProps({
@@ -32,12 +42,7 @@ const props = defineProps({
   },
 });
 
-// 是否使用真实API（默认false使用模拟数据）
 const USE_REAL_API = true;
-
-const getTitle = computed(() => {
-  return formData.value?.id ? textObj.editText : textObj.addText;
-});
 
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -46,53 +51,159 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel() {
     drawerApi.close();
   },
-  onConfirm() {},
-  async onOpenChange() {},
 });
 
 const detailDrawerRef = ref(null);
+const vehicleDetailRef = ref(null);
+const spaceDetailRef = ref(null);
 const formData = ref();
 
-const [Form, formApi] = useVbenForm({
+// 处置表单
+const [HandleForm, handleFormApi] = useVbenForm({
   commonConfig: {
-    componentProps: {
-      class: 'w-full',
-    },
+    componentProps: { class: 'w-full' },
     formItemClass: 'col-span-2',
-    labelWidth: 80,
+    labelWidth: 100,
   },
   layout: 'horizontal',
-  schema: useSearchFormSchema(),
+  schema: useHandleFormSchema(),
   showDefaultActions: false,
 });
 
-const [FormDrawer, formDrawerApi] = useVbenDrawer({
+const [HandleFormDrawer, handleFormDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
   onCancel() {
-    formDrawerApi.close();
+    handleFormDrawerApi.close();
   },
-  onConfirm() {
-    const obj = formApi.form.values;
-    if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-      dataObj.apilist.push(obj);
-    } else {
-      dataObj.apilist.forEach((v, i) => {
-        if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = obj;
-        }
-      });
+  async onConfirm() {
+    try {
+      const values = handleFormApi.form.values;
+      const loadingInstance = ElLoading.service({ text: '提交中...' });
+      try {
+        await handleOilCar({
+          id: values.id,
+          handleMethod: values.handleMethod,
+        });
+        ElMessage.success('处置成功');
+        handleRefresh();
+        handleFormDrawerApi.close();
+      } finally {
+        loadingInstance.close();
+      }
+    } catch (error) {
+      ElMessage.error('处置失败');
+      console.error(error);
     }
-    handleRefresh();
-    formDrawerApi.close();
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
-      formData.value = formDrawerApi.getData();
-      if (formData.value?.id) {
-        await formApi.setValues(formData.value);
-      } else {
-        formApi.resetForm();
+      const data = handleFormDrawerApi.getData();
+      if (data?.id) {
+        await handleFormApi.setValues({ id: data.id });
+      }
+    }
+  },
+});
+
+// 忽略表单
+const [IgnoreForm, ignoreFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: { class: 'w-full' },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  layout: 'horizontal',
+  schema: useIgnoreFormSchema(),
+  showDefaultActions: false,
+});
+
+const [IgnoreFormDrawer, ignoreFormDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    ignoreFormDrawerApi.close();
+  },
+  async onConfirm() {
+    try {
+      const values = ignoreFormApi.form.values;
+      if (!values.ignoreReason || values.ignoreReason.length < 10) {
+        ElMessage.error('忽略理由至少10个字');
+        return;
+      }
+      const loadingInstance = ElLoading.service({ text: '提交中...' });
+      try {
+        await ignoreOilCarHandle({
+          id: values.id,
+          ignoreReason: values.ignoreReason,
+        });
+        ElMessage.success('忽略成功');
+        handleRefresh();
+        ignoreFormDrawerApi.close();
+      } finally {
+        loadingInstance.close();
+      }
+    } catch (error) {
+      ElMessage.error('忽略失败');
+      console.error(error);
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      const data = ignoreFormDrawerApi.getData();
+      if (data?.id) {
+        await ignoreFormApi.setValues({ id: data.id });
+      }
+    }
+  },
+});
+
+// 更新进度表单
+const [UpdateProgressForm, updateProgressFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: { class: 'w-full' },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  layout: 'horizontal',
+  schema: useUpdateProgressFormSchema(),
+  showDefaultActions: false,
+});
+
+const [UpdateProgressDrawer, updateProgressDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    updateProgressDrawerApi.close();
+  },
+  async onConfirm() {
+    try {
+      const values = updateProgressFormApi.form.values;
+      const loadingInstance = ElLoading.service({ text: '提交中...' });
+      try {
+        await updateOilCarHandleProgress({
+          id: values.id,
+          handleProgress: values.handleProgress,
+        });
+        ElMessage.success('更新成功');
+        handleRefresh();
+        updateProgressDrawerApi.close();
+      } finally {
+        loadingInstance.close();
+      }
+    } catch (error) {
+      ElMessage.error('更新失败');
+      console.error(error);
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      const data = updateProgressDrawerApi.getData();
+      if (data?.id) {
+        await updateProgressFormApi.setValues({
+          id: data.id,
+          handleProgress: data.handleProgress || '',
+        });
       }
     }
   },
@@ -116,51 +227,60 @@ async function handleExport() {
   }
 }
 
-function handleCreate() {
-  formDrawerApi
-    .setData({
-      title: textObj.addText,
-    })
-    .open();
-}
+// 批量处置
+async function handleBatchHandle() {
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请先选择要处置的记录');
+    return;
+  }
 
-function handleEdit(row) {
-  formDrawerApi
-    .setData({
-      title: textObj.editText,
-      ...row,
-    })
-    .open();
-}
+  const selectedRows = dataObj.list.filter((item) =>
+    checkedIds.value.includes(item.id),
+  );
+  const hasNonPending = selectedRows.some((row) => row.status !== '未处理');
 
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.plateNo]),
-  });
+  if (hasNonPending) {
+    ElMessage.warning('只能批量处置未处理状态的记录');
+    return;
+  }
+
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.plateNo]));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
+    await confirm('确认批量处置选中的记录吗？');
+    const loadingInstance = ElLoading.service({ text: '处置中...' });
+    try {
+      await batchHandleOilCar({ ids: checkedIds.value, handleType: '处置' });
+      ElMessage.success('批量处置成功');
+      handleRefresh();
+    } finally {
+      loadingInstance.close();
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('批量处置失败');
+      console.error(error);
+    }
   }
 }
 
-async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
+// 处置
+function handleHandle(row) {
+  handleFormDrawerApi.setData({ title: '处置油车占位', id: row.id }).open();
+}
+
+// 忽略
+function handleIgnore(row) {
+  ignoreFormDrawerApi.setData({ title: '忽略油车占位', id: row.id }).open();
+}
+
+// 更新进度
+function handleUpdateProgress(row) {
+  updateProgressDrawerApi
+    .setData({
+      title: '更新处置进度',
+      id: row.id,
+      handleProgress: row.handleProgress,
+    })
+    .open();
 }
 
 const checkedIds = ref([]);
@@ -186,7 +306,6 @@ const changeTotalShow = () => {
 const getTableData = async (pageObj) => {
   const page = pageObj.page;
 
-  // 使用真实API
   if (USE_REAL_API) {
     try {
       const params = {
@@ -206,16 +325,19 @@ const getTableData = async (pageObj) => {
     }
   }
 
-  // 使用模拟数据
   const filteredList = dataObj.apilist.filter((v) => {
     let statusMatch = true;
     switch (activeName.value) {
-      case '异常': {
-        statusMatch = v.status === '异常';
+      case '处理中': {
+        statusMatch = v.status === '处理中';
         break;
       }
-      case '正常': {
-        statusMatch = v.status === '正常';
+      case '已关闭': {
+        statusMatch = v.status === '已关闭';
+        break;
+      }
+      case '未处理': {
+        statusMatch = v.status === '未处理';
         break;
       }
     }
@@ -245,9 +367,7 @@ const getTableData = async (pageObj) => {
 const [QueryForm] = useVbenForm({
   collapsed: false,
   commonConfig: {
-    componentProps: {
-      class: 'w-full',
-    },
+    componentProps: { class: 'w-full' },
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
@@ -255,9 +375,7 @@ const [QueryForm] = useVbenForm({
   layout: 'horizontal',
   schema: useSearchFormSchema(),
   showCollapseButton: true,
-  submitButtonOptions: {
-    content: '查询',
-  },
+  submitButtonOptions: { content: '查询' },
 });
 
 function onSubmit(values) {
@@ -275,10 +393,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
         query: async ({ page }) => getTableData({ page }),
       },
     },
-    rowConfig: {
-      keyField: 'id',
-      isHover: true,
-    },
+    rowConfig: { keyField: 'id', isHover: true },
     pagerConfig: dataObj,
     toolbarConfig: {
       'class-name': 'common-tool-bar-config',
@@ -301,26 +416,79 @@ const handleOpenDetail = (row) => {
   detailDrawerRef.value.open();
 };
 
-const tabsData = ref([{ label: '全部' }, { label: '正常' }, { label: '异常' }]);
+const handlePlateNoClick = (row) => {
+  vehicleDetailRef.value?.open(row.plateNo, row);
+};
+
+const handleSpaceNameClick = (row) => {
+  spaceDetailRef.value?.open(row.spaceName, row);
+};
+
+const handleOccupyTypeClick = (row) => {
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    occupyType: row.occupyType,
+  };
+  handleRefresh();
+  ElMessage.success(`已筛选占位类型: ${row.occupyType}`);
+};
+
+const handleStatusClick = (row) => {
+  dataObj.searchParams = { ...dataObj.searchParams, status: row.status };
+  handleRefresh();
+  ElMessage.success(`已筛选状态: ${row.status}`);
+};
+
+const handleStationClick = (row) => {
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    stationName: row.stationName,
+  };
+  handleRefresh();
+  ElMessage.success(`已筛选场站: ${row.stationName}`);
+};
+
+const handleHandleUserClick = (row) => {
+  if (!row.handleUserName) return;
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    handleUserId: row.handleUserId,
+  };
+  handleRefresh();
+  ElMessage.success(`已筛选处置人: ${row.handleUserName}`);
+};
+
+const shouldShowHandle = (status) => status === '未处理';
+const shouldShowIgnore = (status) => status === '未处理';
+const shouldShowUpdateProgress = (status) => status === '处理中';
+
+const tabsData = ref([
+  { label: '全部' },
+  { label: '未处理' },
+  { label: '处理中' },
+  { label: '已关闭' },
+]);
 
 const createLabel = (item) => {
   let count = 0;
-
   switch (item.label) {
     case '全部': {
       count = dataObj.apilist.length;
       break;
     }
-    case '异常': {
-      count = dataObj.apilist.filter((v) => v.status === '异常').length;
+    case '处理中': {
+      count = dataObj.apilist.filter((v) => v.status === '处理中').length;
       break;
     }
-    case '正常': {
-      count = dataObj.apilist.filter((v) => v.status === '正常').length;
+    case '已关闭': {
+      count = dataObj.apilist.filter((v) => v.status === '已关闭').length;
+      break;
+    }
+    case '未处理': {
+      count = dataObj.apilist.filter((v) => v.status === '未处理').length;
       break;
     }
   }
-
   return `${item.label}(${count})`;
 };
 
@@ -339,15 +507,23 @@ const handleFullShow = () => {
 
 <template>
   <div class="park-lot-table-new">
-    <FormDrawer :title="getTitle">
-      <Form />
-    </FormDrawer>
     <DetailDrawer
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.plateNo}详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
+    <VehicleDetailDialog ref="vehicleDetailRef" />
+    <SpaceDetailDialog ref="spaceDetailRef" />
+    <HandleFormDrawer title="处置油车占位">
+      <HandleForm />
+    </HandleFormDrawer>
+    <IgnoreFormDrawer title="忽略油车占位">
+      <IgnoreForm />
+    </IgnoreFormDrawer>
+    <UpdateProgressDrawer title="更新处置进度">
+      <UpdateProgressForm />
+    </UpdateProgressDrawer>
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -372,23 +548,20 @@ const handleFullShow = () => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton
+            content="筛选"
+            icon-name="Filter"
+            @click="handleSerachShow"
+          />
           <IconButton
             content="导出"
-            icon-name="download"
+            icon-name="Download"
             @click="handleExport"
           />
           <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
+            content="批量处置"
+            icon-name="Operation"
+            @click="handleBatchHandle"
           />
           <IconButton
             content="全屏"
@@ -402,27 +575,95 @@ const handleFullShow = () => {
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
+          style="cursor: pointer"
         >
           {{ row.id }}
         </el-text>
       </template>
+      <template #plateNo="{ row }">
+        <el-text
+          @click="handlePlateNoClick(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.plateNo }}
+        </el-text>
+      </template>
+      <template #spaceName="{ row }">
+        <el-text
+          @click="handleSpaceNameClick(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.spaceName }}
+        </el-text>
+      </template>
+      <template #occupyType="{ row }">
+        <el-tag
+          :type="occupyTypeMap[row.occupyType] || 'info'"
+          @click="handleOccupyTypeClick(row)"
+          style="cursor: pointer"
+        >
+          {{ row.occupyType }}
+        </el-tag>
+      </template>
+      <template #status="{ row }">
+        <el-tag
+          :type="statusTypeMap[row.status] || 'info'"
+          @click="handleStatusClick(row)"
+          style="cursor: pointer"
+        >
+          {{ row.status }}
+        </el-tag>
+      </template>
+      <template #stationName="{ row }">
+        <el-text
+          @click="handleStationClick(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.stationName }}
+        </el-text>
+      </template>
+      <template #handleUserName="{ row }">
+        <el-text
+          v-if="row.handleUserName"
+          @click="handleHandleUserClick(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.handleUserName }}
+        </el-text>
+        <span v-else>-</span>
+      </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            content="详情"
+            content="查看"
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
           <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
+            v-if="shouldShowHandle(row.status)"
+            content="处置"
+            icon-name="Check"
+            @click="handleHandle(row)"
           />
           <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
+            v-if="shouldShowIgnore(row.status)"
+            content="忽略"
+            icon-name="Close"
+            @click="handleIgnore(row)"
+          />
+          <IconButton
+            v-if="shouldShowUpdateProgress(row.status)"
+            content="更新进度"
+            icon-name="Edit"
+            @click="handleUpdateProgress(row)"
           />
         </div>
       </template>
@@ -434,13 +675,13 @@ const handleFullShow = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span>
-            本页统计：入场记录数量: {{ dataObj.list.length }}; 已选择:
-            {{ checkedIds.length }}
-          </span>
+          <span
+            >本页统计：处置记录数量: {{ dataObj.list.length }}; 已选择:
+            {{ checkedIds.length }}</span
+          >
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <span> 全部统计：{{ textObj.total }} </span>
+          <span>全部统计：{{ textObj.total }}</span>
         </div>
       </template>
     </Grid>

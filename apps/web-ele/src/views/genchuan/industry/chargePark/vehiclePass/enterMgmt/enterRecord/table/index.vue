@@ -1,8 +1,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { useVbenDrawer } from '@vben/common-ui';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
@@ -10,16 +9,25 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
+  correctEnterRecord,
+  createEnterRecord,
   exportEnterRecord,
   getEnterRecordPage,
+  updateEnterRecord,
 } from '#/api/genchuan/industry/chargePark/vehiclePass/enterMgmt/enterRecord';
+import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
+import SpaceDetailDialog from '../../../components/SpaceDetailDialog.vue';
+import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
 import {
   dataList,
   detailFields,
+  plateColorTypeMap,
+  recordTypeMap,
+  statusTypeMap,
   textObj,
   useCorrectFormSchema,
   useCreateFormSchema,
@@ -54,6 +62,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
 });
 
 const detailDrawerRef = ref(null);
+const vehicleDetailRef = ref(null);
+const spaceDetailRef = ref(null);
 const formData = ref();
 
 // 查询表单
@@ -126,9 +136,7 @@ const [CreateFormDrawer, createFormDrawerApi] = useVbenDrawer({
   },
   onConfirm() {
     const obj = createFormApi.form.values;
-    dataObj.apilist.push(obj);
-    handleRefresh();
-    createFormDrawerApi.close();
+    handleCreateSubmit(obj);
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
@@ -146,13 +154,7 @@ const [UpdateFormDrawer, updateFormDrawerApi] = useVbenDrawer({
   },
   onConfirm() {
     const obj = updateFormApi.form.values;
-    dataObj.apilist.forEach((v, i) => {
-      if (v.id === formData.value?.id) {
-        dataObj.apilist[i] = obj;
-      }
-    });
-    handleRefresh();
-    updateFormDrawerApi.close();
+    handleUpdateSubmit(obj);
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
@@ -173,13 +175,7 @@ const [CorrectFormDrawer, correctFormDrawerApi] = useVbenDrawer({
   },
   onConfirm() {
     const obj = correctFormApi.form.values;
-    dataObj.apilist.forEach((v, i) => {
-      if (v.id === formData.value?.id) {
-        dataObj.apilist[i] = { ...v, ...obj };
-      }
-    });
-    handleRefresh();
-    correctFormDrawerApi.close();
+    handleCorrectSubmit(obj);
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
@@ -217,6 +213,29 @@ function handleCreate() {
     .open();
 }
 
+async function handleCreateSubmit(data) {
+  if (USE_REAL_API) {
+    const loadingInstance = ElLoading.service({
+      text: '正在补录...',
+    });
+    try {
+      await createEnterRecord(data);
+      ElMessage.success('补录成功');
+      handleRefresh();
+      createFormDrawerApi.close();
+    } catch (error) {
+      ElMessage.error('补录失败');
+      console.error(error);
+    } finally {
+      loadingInstance.close();
+    }
+  } else {
+    dataObj.apilist.push(data);
+    handleRefresh();
+    createFormDrawerApi.close();
+  }
+}
+
 function handleEdit(row) {
   updateFormDrawerApi
     .setData({
@@ -226,6 +245,36 @@ function handleEdit(row) {
     .open();
 }
 
+async function handleUpdateSubmit(data) {
+  if (USE_REAL_API) {
+    const loadingInstance = ElLoading.service({
+      text: '正在更新...',
+    });
+    try {
+      await updateEnterRecord({
+        ...data,
+        id: formData.value?.id,
+      });
+      ElMessage.success('更新成功');
+      handleRefresh();
+      updateFormDrawerApi.close();
+    } catch (error) {
+      ElMessage.error('更新失败');
+      console.error(error);
+    } finally {
+      loadingInstance.close();
+    }
+  } else {
+    dataObj.apilist.forEach((v, i) => {
+      if (v.id === formData.value?.id) {
+        dataObj.apilist[i] = data;
+      }
+    });
+    handleRefresh();
+    updateFormDrawerApi.close();
+  }
+}
+
 function handleCorrect(row) {
   correctFormDrawerApi
     .setData({
@@ -233,6 +282,37 @@ function handleCorrect(row) {
       ...row,
     })
     .open();
+}
+
+async function handleCorrectSubmit(data) {
+  if (USE_REAL_API) {
+    const loadingInstance = ElLoading.service({
+      text: '正在修正...',
+    });
+    try {
+      await correctEnterRecord({
+        ...data,
+        id: formData.value?.id,
+        isCorrected: true,
+      });
+      ElMessage.success('修正成功');
+      handleRefresh();
+      correctFormDrawerApi.close();
+    } catch (error) {
+      ElMessage.error('修正失败');
+      console.error(error);
+    } finally {
+      loadingInstance.close();
+    }
+  } else {
+    dataObj.apilist.forEach((v, i) => {
+      if (v.id === formData.value?.id) {
+        dataObj.apilist[i] = { ...v, ...data, isCorrected: true };
+      }
+    });
+    handleRefresh();
+    correctFormDrawerApi.close();
+  }
 }
 
 async function handleDelete(row) {
@@ -312,12 +392,12 @@ const getTableData = async (pageObj) => {
   const filteredList = dataObj.apilist.filter((v) => {
     let statusMatch = true;
     switch (activeName.value) {
-      case '异常': {
-        statusMatch = v.status === '异常';
+      case '异常记录': {
+        statusMatch = v.status === '异常记录';
         break;
       }
-      case '正常': {
-        statusMatch = v.status === '正常';
+      case '正常记录': {
+        statusMatch = v.status === '正常记录';
         break;
       }
     }
@@ -403,7 +483,11 @@ const handleOpenDetail = (row) => {
   detailDrawerRef.value.open();
 };
 
-const tabsData = ref([{ label: '全部' }, { label: '正常' }, { label: '异常' }]);
+const tabsData = ref([
+  { label: '全部' },
+  { label: '正常记录' },
+  { label: '异常记录' },
+]);
 
 const createLabel = (item) => {
   let count = 0;
@@ -413,12 +497,12 @@ const createLabel = (item) => {
       count = dataObj.apilist.length;
       break;
     }
-    case '异常': {
-      count = dataObj.apilist.filter((v) => v.status === '异常').length;
+    case '异常记录': {
+      count = dataObj.apilist.filter((v) => v.status === '异常记录').length;
       break;
     }
-    case '正常': {
-      count = dataObj.apilist.filter((v) => v.status === '正常').length;
+    case '正常记录': {
+      count = dataObj.apilist.filter((v) => v.status === '正常记录').length;
       break;
     }
   }
@@ -436,6 +520,53 @@ const handleSerachShow = () => {
 
 const handleFullShow = () => {
   screenfull.toggle();
+};
+
+// 车牌点击 - 跳转车辆详情
+const handlePlateNoClick = (row) => {
+  vehicleDetailRef.value?.open(row.plateNo, row);
+};
+
+// 车牌颜色点击 - 筛选同颜色车牌
+const handlePlateColorClick = (row) => {
+  if (!row.plateColor) return;
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    plateColor: row.plateColor,
+  };
+  handleRefresh();
+  ElMessage.success(`已筛选车牌颜色: ${row.plateColor}`);
+};
+
+// 车位点击 - 跳转车位详情
+const handleSpaceNoClick = (row) => {
+  spaceDetailRef.value?.open(row.spaceNo, row);
+};
+
+// 状态点击 - 筛选同状态记录
+const handleStatusClick = (row) => {
+  dataObj.searchParams = { ...dataObj.searchParams, status: row.status };
+  handleRefresh();
+  ElMessage.success(`已筛选状态: ${row.status}`);
+};
+
+// 场站点击 - 筛选同场站记录
+const handleStationClick = (row) => {
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    stationName: row.stationName,
+  };
+  handleRefresh();
+  ElMessage.success(`已筛选场站: ${row.stationName}`);
+};
+
+// 根据状态判断按钮显示
+const shouldShowEdit = (status) => {
+  return status === '正常记录';
+};
+
+const shouldShowCorrect = (status) => {
+  return status === '异常记录';
 };
 </script>
 
@@ -456,6 +587,8 @@ const handleFullShow = () => {
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
+    <VehicleDetailDialog ref="vehicleDetailRef" />
+    <SpaceDetailDialog ref="spaceDetailRef" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -480,24 +613,17 @@ const handleFullShow = () => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
-            content="导出"
-            icon-name="download"
-            @click="handleExport"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
+            content="筛选"
+            icon-name="Filter"
             @click="handleSerachShow"
           />
+          <IconButton
+            content="导出"
+            icon-name="Download"
+            @click="handleExport"
+          />
+          <IconButton content="补录" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="全屏"
             icon-name="FullScreen"
@@ -510,27 +636,87 @@ const handleFullShow = () => {
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
+          style="cursor: pointer"
         >
           {{ row.id }}
         </el-text>
       </template>
+      <template #plateNo="{ row }">
+        <el-text
+          @click="handlePlateNoClick(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.plateNo }}
+        </el-text>
+      </template>
+      <template #plateColor="{ row }">
+        <el-tag
+          :type="plateColorTypeMap[row.plateColor] || 'info'"
+          @click="handlePlateColorClick(row)"
+          style="cursor: pointer"
+        >
+          {{ row.plateColor }}
+        </el-tag>
+      </template>
+      <template #spaceNo="{ row }">
+        <el-text
+          @click="handleSpaceNoClick(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.spaceNo }}
+        </el-text>
+      </template>
+      <template #recordType="{ row }">
+        <el-tag :type="recordTypeMap[row.recordType] || 'info'">
+          {{ row.recordType }}
+        </el-tag>
+      </template>
+      <template #status="{ row }">
+        <el-tag
+          :type="statusTypeMap[row.status] || 'info'"
+          @click="handleStatusClick(row)"
+          style="cursor: pointer"
+        >
+          {{ row.status }}
+        </el-tag>
+      </template>
+      <template #stationName="{ row }">
+        <el-text
+          @click="handleStationClick(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.stationName }}
+        </el-text>
+      </template>
+      <template #isCorrected="{ row }">
+        <el-tag :type="row.isCorrected ? 'success' : 'info'">
+          {{ row.isCorrected ? '已修正' : '未修正' }}
+        </el-tag>
+      </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            content="详情"
+            content="查看"
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
           <IconButton
+            v-if="shouldShowEdit(row.status)"
             content="编辑"
-            icon-name="edit"
+            icon-name="Edit"
             @click="handleEdit(row)"
           />
           <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
+            v-if="shouldShowCorrect(row.status)"
+            content="修正"
+            icon-name="Edit"
+            @click="handleCorrect(row)"
           />
         </div>
       </template>

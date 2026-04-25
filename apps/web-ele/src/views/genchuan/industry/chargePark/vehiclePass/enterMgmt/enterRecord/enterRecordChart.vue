@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, reactive, ref } from 'vue';
+import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
@@ -10,10 +10,10 @@ const props = defineProps({
 });
 
 const cards = reactive([
-  { title: '总入场数', value: 0, color: '#4A90E2', key: 'total' },
+  { title: '今日入场量', value: 0, color: '#4A90E2', key: 'todayEnterCount' },
   { title: '正常入场', value: 0, color: '#50E3C2', key: 'normal' },
   { title: '异常入场', value: 0, color: '#FF6B8B', key: 'abnormal' },
-  { title: '待处理', value: 0, color: '#FF9F40', key: 'pending' },
+  { title: '入场峰值', value: 0, color: '#FF9F40', key: 'enterPeak' },
 ]);
 
 const state = reactive({
@@ -45,19 +45,22 @@ async function loadChartData() {
 
     // Always update card values
     if (res?.cardData) {
-      cards[0].value = res.cardData.totalEnter || 0;
+      cards[0].value = res.cardData.todayEnterCount || 0;
+      cards[3].value = res.cardData.enterPeak || 0;
     }
 
     // Check if there's chart data
     const hasChartData =
-      res && (res.enterTrend?.length > 0 || res.stationEnterCount?.length > 0);
+      res &&
+      (res.enterCountTrend?.length > 0 || res.hourEnterCount?.length > 0);
 
     if (hasChartData) {
       state.chartData = {
-        trend: res.enterTrend || [],
-        typeCount: res.stationEnterCount || [],
+        trend: res.enterCountTrend || [],
+        typeCount: res.hourEnterCount || [],
       };
       state.hasData = true;
+      await nextTick();
       initCharts();
     } else {
       state.hasData = false;
@@ -76,7 +79,7 @@ function initLineChart() {
   const option = {
     backgroundColor: 'transparent',
     title: {
-      text: '入场趋势',
+      text: '入场量趋势',
       left: 'center',
       top: 10,
       textStyle: { fontSize: 14, fontWeight: 500 },
@@ -114,7 +117,7 @@ function initBarChart() {
   const option = {
     backgroundColor: 'transparent',
     title: {
-      text: '车辆类型统计',
+      text: '各时段入场量',
       left: 'center',
       top: 10,
       textStyle: { fontSize: 14, fontWeight: 500 },
@@ -122,7 +125,7 @@ function initBarChart() {
     tooltip: { trigger: 'axis' },
     xAxis: {
       type: 'category',
-      data: state.chartData.typeCount.map((item) => item.stationName),
+      data: state.chartData.typeCount.map((item) => item.hour),
     },
     yAxis: {
       type: 'value',

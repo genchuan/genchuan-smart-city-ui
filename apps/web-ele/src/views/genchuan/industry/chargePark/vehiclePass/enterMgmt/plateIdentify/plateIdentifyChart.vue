@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, reactive, ref, watch } from 'vue';
+import { nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 
 import * as echarts from 'echarts';
 
@@ -17,8 +17,12 @@ const chartData = reactive({
       desc: '今日识别准确度',
       color: '#4A90E2',
     },
-    { title: '今日识别量', value: 0, desc: '累计识别次数', color: '#FF6B8B' },
-    { title: '识别失败数', value: 0, desc: '需要人工处理', color: '#FF9F40' },
+    {
+      title: '平均识别时长',
+      value: '0s',
+      desc: '识别响应速度',
+      color: '#50E3C2',
+    },
   ],
   charts: [
     {
@@ -59,8 +63,9 @@ async function loadChartData() {
       chartData.cards[0].value = res.cardData.successRate
         ? `${res.cardData.successRate}%`
         : '0%';
-      chartData.cards[1].value = res.cardData.todayCount || 0;
-      chartData.cards[2].value = res.cardData.failCount || 0;
+      chartData.cards[1].value = res.cardData.avgDuration
+        ? `${res.cardData.avgDuration}s`
+        : '0s';
     }
 
     // Check if there's chart data
@@ -85,6 +90,7 @@ async function loadChartData() {
       );
 
       chartData.hasData = true;
+      await nextTick();
       initCharts();
     } else {
       chartData.hasData = false;
@@ -241,7 +247,7 @@ onUnmounted(() => {
         class="chart-container"
       >
         <div
-          :ref="(el) => (chartRefs[`chart-${index}`] = el)"
+          :ref="(el) => (chartRefs.value[`chart-${index}`] = el)"
           style="width: 100%; height: 100%"
         ></div>
       </div>

@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, reactive, ref } from 'vue';
+import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
@@ -15,21 +15,14 @@ const cards = reactive([
     value: 0,
     desc: '等待处理',
     color: '#FF9F40',
-    key: 'pending',
+    key: 'waitHandleCount',
   },
   {
     title: '处置完成率',
     value: '0%',
     desc: '处置进度',
     color: '#50E3C2',
-    key: 'completeRate',
-  },
-  {
-    title: '今日油车数',
-    value: 0,
-    desc: '今日识别油车',
-    color: '#4A90E2',
-    key: 'todayCount',
+    key: 'handleCompleteRate',
   },
 ]);
 
@@ -62,26 +55,25 @@ async function loadChartData() {
 
     // Always update card values
     if (res?.cardData) {
-      cards[0].value = res.cardData.pending || 0;
-      cards[1].value = res.cardData.completeRate
-        ? `${res.cardData.completeRate}%`
+      cards[0].value = res.cardData.waitHandleCount || 0;
+      cards[1].value = res.cardData.handleCompleteRate
+        ? `${res.cardData.handleCompleteRate}%`
         : '0%';
-      cards[2].value = res.cardData.todayCount || 0;
     }
 
     // Check if there's chart data
     const hasChartData =
       res &&
-      (res.trend?.length > 0 ||
-        res.distribution?.length > 0 ||
-        res.stationCount?.length > 0);
+      (res.handleProgressTrend?.length > 0 ||
+        res.stationHandleCount?.length > 0);
 
     if (hasChartData) {
       state.chartData = {
-        trend: res.trend || [],
-        stationCount: res.distribution || res.stationCount || [],
+        trend: res.handleProgressTrend || [],
+        stationCount: res.stationHandleCount || [],
       };
       state.hasData = true;
+      await nextTick();
       initCharts();
     } else {
       state.hasData = false;

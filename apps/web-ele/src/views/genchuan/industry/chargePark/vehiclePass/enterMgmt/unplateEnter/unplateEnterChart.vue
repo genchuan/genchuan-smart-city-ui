@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, reactive, ref } from 'vue';
+import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
@@ -35,15 +35,13 @@ const cards = reactive([
 
 const state = reactive({
   chartData: {
-    stationCount: [],
-    trend: [],
+    stationUnplateCount: [],
   },
   hasData: false,
 });
 
 const pieChartRef = ref(null);
 const barChartRef = ref(null);
-let pieChartInstance = null;
 let barChartInstance = null;
 
 async function loadChartData() {
@@ -62,23 +60,38 @@ async function loadChartData() {
 
     // Always update card values
     if (res?.cardData) {
-      cards[0].value = res.cardData.total || 0;
-      cards[1].value = res.cardData.passRate
-        ? `${res.cardData.passRate}%`
+      cards[0].value = res.cardData.unplateEnterCount || 0;
+      cards[1].value = res.cardData.auditPassRate
+        ? `${res.cardData.auditPassRate}%`
         : '0%';
-      cards[2].value = res.cardData.pending || 0;
+      cards[2].value = res.cardData.pendingAuditCount || 0;
     }
 
-    // Check if there's chart data
-    const hasChartData =
-      res && (res.trend?.length > 0 || res.stationCount?.length > 0);
+    // 使用模拟数据测试
+    // const mockData = [
+    //   { "stationName": "泉州万达旗舰充电站", "count": 10 },
+    //   { "stationName": "仓山万达地下停车场", "count": 20 },
+    //   { "stationName": "晋安湖公园东侧场站", "count": 30 },
+    //   { "stationName": "马尾自贸区产业园区站", "count": 5 },
+    //   { "stationName": "长乐国际机场T1航站楼", "count": 8 }
+    // ];
 
+    // state.chartData = {
+    //   stationUnplateCount: mockData
+    // };
+    // state.hasData = true;
+
+    // initCharts();
+
+    // 正式代码（暂时注释）
+    const hasChartData = res?.stationUnplateCount?.length > 0;
     if (hasChartData) {
       state.chartData = {
-        trend: res.trend || [],
-        stationCount: res.stationCount || [],
+        stationUnplateCount: res.stationUnplateCount || [],
       };
       state.hasData = true;
+      // 等待 DOM 更新后再初始化图表
+      await nextTick();
       initCharts();
     } else {
       state.hasData = false;
@@ -89,41 +102,9 @@ async function loadChartData() {
   }
 }
 
-function initPieChart() {
-  if (!pieChartRef.value) return;
-  if (pieChartInstance) pieChartInstance.dispose();
-  pieChartInstance = echarts.init(pieChartRef.value);
-  const option = {
-    backgroundColor: 'transparent',
-    title: {
-      text: '无牌入场趋势',
-      left: 'center',
-      top: 10,
-      textStyle: { fontSize: 14, fontWeight: 500 },
-    },
-    tooltip: { trigger: 'axis' },
-    xAxis: {
-      type: 'category',
-      data: state.chartData.trend.map((item) => item.date),
-    },
-    yAxis: { type: 'value', name: '入场量' },
-    series: [
-      {
-        name: '入场量',
-        type: 'line',
-        data: state.chartData.trend.map((item) => item.count),
-        smooth: true,
-        lineStyle: { width: 3, color: '#4A90E2' },
-        areaStyle: { color: 'rgba(74,144,226,0.1)' },
-        symbol: 'circle',
-        symbolSize: 6,
-      },
-    ],
-  };
-  pieChartInstance.setOption(option);
-}
-
 function initBarChart() {
+  console.log(state.chartData);
+
   if (!barChartRef.value) return;
   if (barChartInstance) barChartInstance.dispose();
   barChartInstance = echarts.init(barChartRef.value);
@@ -138,13 +119,13 @@ function initBarChart() {
     tooltip: { trigger: 'axis' },
     xAxis: {
       type: 'category',
-      data: state.chartData.stationCount.map((item) => item.stationName),
+      data: state.chartData.stationUnplateCount.map((item) => item.stationName),
     },
     yAxis: { type: 'value', name: '入场量' },
     series: [
       {
         type: 'bar',
-        data: state.chartData.stationCount.map((item) => item.count),
+        data: state.chartData.stationUnplateCount.map((item) => item.count),
         itemStyle: { borderRadius: [4, 4, 0, 0], color: '#FF9F40' },
         label: { show: true, position: 'top' },
       },
@@ -154,7 +135,6 @@ function initBarChart() {
 }
 
 function initCharts() {
-  initPieChart();
   initBarChart();
 }
 
@@ -167,12 +147,10 @@ function handleCardClick(key) {
 onMounted(() => {
   loadChartData();
   window.addEventListener('resize', () => {
-    pieChartInstance?.resize();
     barChartInstance?.resize();
   });
 });
 onUnmounted(() => {
-  pieChartInstance?.dispose();
   barChartInstance?.dispose();
 });
 </script>
@@ -206,9 +184,6 @@ onUnmounted(() => {
 
     <!-- 右侧图表区域 -->
     <div v-if="state.hasData" class="chart-wrapper">
-      <div class="chart-container">
-        <div ref="pieChartRef" style="width: 100%; height: 100%"></div>
-      </div>
       <div class="chart-container">
         <div ref="barChartRef" style="width: 100%; height: 100%"></div>
       </div>

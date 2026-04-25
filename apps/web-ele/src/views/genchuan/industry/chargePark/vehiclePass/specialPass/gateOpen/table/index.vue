@@ -4,13 +4,23 @@ import { computed, reactive, ref } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import {
+  exportGateOpen,
+  getGateOpenPage,
+  createGateOpen,
+  approveGateOpen,
+  rejectGateOpen,
+  executeGateOpen,
+  reapplyGateOpen,
+} from '#/api/genchuan/industry/chargePark/vehiclePass/specialPass/gateOpen';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
+import IconButton from '#/components/common/IconButton.vue';
 import { exportToExcel } from '#/utils/excel.js';
 
 import {
@@ -19,8 +29,10 @@ import {
   textObj,
   useSearchFormSchema,
   useCreateFormSchema,
-  useCorrectFormSchema,
+  useReapplyFormSchema,
   useGridColumns,
+  statusTypeMap,
+  openReasonMap,
 } from './data';
 
 const props = defineProps({
@@ -30,6 +42,7 @@ const props = defineProps({
   },
 });
 
+// 是否使用真实API（默认false使用模拟数据）
 const USE_REAL_API = true;
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -44,7 +57,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
 });
 
 const detailDrawerRef = ref(null);
+const formData = ref();
 
+// 新增申请表单
 const [CreateForm, createFormApi] = useVbenForm({
   commonConfig: {
     componentProps: {
@@ -64,15 +79,96 @@ const [CreateFormDrawer, createFormDrawerApi] = useVbenDrawer({
   onCancel() {
     createFormDrawerApi.close();
   },
-  onConfirm() {
+  async onConfirm() {
+    try {
+      await createFormApi.validate();
+    } catch (error) {
+      ElMessage.warning('请完善表单信息');
+      return;
+    }
+
     const obj = createFormApi.form.values;
-    dataObj.apilist.push(obj);
-    handleRefresh();
-    createFormDrawerApi.close();
+
+    if (USE_REAL_API) {
+      try {
+        await createGateOpen(obj);
+        ElMessage.success('申请成功');
+        handleRefresh();
+        createFormDrawerApi.close();
+      } catch (error) {
+        ElMessage.error('申请失败');
+        console.error(error);
+      }
+    } else {
+      dataObj.apilist.push(obj);
+      handleRefresh();
+      createFormDrawerApi.close();
+    }
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
       createFormApi.resetForm();
+    }
+  },
+});
+
+// 重新申请表单
+const [ReapplyForm, reapplyFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 80,
+  },
+  layout: 'horizontal',
+  schema: useReapplyFormSchema(),
+  showDefaultActions: false,
+});
+
+const [ReapplyFormDrawer, reapplyFormDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    reapplyFormDrawerApi.close();
+  },
+  async onConfirm() {
+    try {
+      await reapplyFormApi.validate();
+    } catch (error) {
+      ElMessage.warning('请完善表单信息');
+      return;
+    }
+
+    const obj = reapplyFormApi.form.values;
+
+    if (USE_REAL_API) {
+      try {
+        await reapplyGateOpen({
+          id: formData.value?.id,
+          openReason: obj.openReason,
+          remark: obj.remark,
+        });
+        ElMessage.success('重新申请成功');
+        handleRefresh();
+        reapplyFormDrawerApi.close();
+      } catch (error) {
+        ElMessage.error('重新申请失败');
+        console.error(error);
+      }
+    } else {
+      ElMessage.success('重新申请成功');
+      handleRefresh();
+      reapplyFormDrawerApi.close();
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      formData.value = reapplyFormDrawerApi.getData();
+      await reapplyFormApi.setValues({
+        openReason: formData.value?.openReason || '',
+        remark: formData.value?.remark || '',
+      });
     }
   },
 });
@@ -98,39 +194,115 @@ async function handleExport() {
 function handleCreate() {
   createFormDrawerApi
     .setData({
-      title: textObj.addText,
+      title: textObj.createText,
     })
     .open();
 }
 
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.plateNo]),
-  });
+// 审批通过操作
+async function handleApprove(row) {
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.plateNo]));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
+    await ElMessageBox.confirm('确认审批通过该开闸申请？', '提示', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'warning',
+    });
+
+    if (USE_REAL_API) {
+      try {
+        await approveGateOpen({ id: row.id });
+        ElMessage.success('审批通过');
+        handleRefresh();
+      } catch (error) {
+        ElMessage.error('审批失败');
+        console.error(error);
+      }
+    } else {
+      ElMessage.success('审批通过');
+      handleRefresh();
+    }
+  } catch {
+    // 用户取消操作
   }
 }
 
-async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
-  });
+// 驳回操作
+async function handleReject(row) {
   try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
+    const { value: rejectReason } = await ElMessageBox.prompt(
+      '请输入驳回理由（至少10个字符）',
+      '驳回申请',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        inputType: 'textarea',
+        inputValidator: (value) => {
+          if (!value || value.length < 10) {
+            return '驳回理由至少需要10个字符';
+          }
+          return true;
+        },
+        inputErrorMessage: '驳回理由至少需要10个字符',
+      },
     );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
+
+    if (USE_REAL_API) {
+      try {
+        await rejectGateOpen({
+          id: row.id,
+          rejectReason,
+        });
+        ElMessage.success('驳回成功');
+        handleRefresh();
+      } catch (error) {
+        ElMessage.error('驳回失败');
+        console.error(error);
+      }
+    } else {
+      ElMessage.success('驳回成功');
+      handleRefresh();
+    }
+  } catch {
+    // 用户取消操作
   }
+}
+
+// 执行开闸操作
+async function handleExecute(row) {
+  try {
+    await ElMessageBox.confirm('确认执行开闸操作？', '提示', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'warning',
+    });
+
+    if (USE_REAL_API) {
+      try {
+        await executeGateOpen({ id: row.id });
+        ElMessage.success('开闸执行成功');
+        handleRefresh();
+      } catch (error) {
+        ElMessage.error('开闸执行失败');
+        console.error(error);
+      }
+    } else {
+      ElMessage.success('开闸执行成功');
+      handleRefresh();
+    }
+  } catch {
+    // 用户取消操作
+  }
+}
+
+// 重新申请操作
+function handleReapply(row) {
+  formData.value = row;
+  reapplyFormDrawerApi
+    .setData({
+      title: textObj.reapplyText,
+      ...row,
+    })
+    .open();
 }
 
 const checkedIds = ref([]);
@@ -180,12 +352,20 @@ const getTableData = async (pageObj) => {
   const filteredList = dataObj.apilist.filter((v) => {
     let statusMatch = true;
     switch (activeName.value) {
-      case '异常': {
-        statusMatch = v.status === '异常';
+      case '待审批': {
+        statusMatch = v.status === '待审批';
         break;
       }
-      case '正常': {
-        statusMatch = v.status === '正常';
+      case '已通过': {
+        statusMatch = v.status === '已通过';
+        break;
+      }
+      case '已驳回': {
+        statusMatch = v.status === '已驳回';
+        break;
+      }
+      case '已执行': {
+        statusMatch = v.status === '已执行';
         break;
       }
     }
@@ -276,7 +456,13 @@ const handleOpenDetail = (row) => {
   detailDrawerRef.value.open();
 };
 
-const tabsData = ref([{ label: '全部' }, { label: '正常' }, { label: '异常' }]);
+const tabsData = ref([
+  { label: '全部' },
+  { label: '待审批' },
+  { label: '已通过' },
+  { label: '已驳回' },
+  { label: '已执行' },
+]);
 
 const createLabel = (item) => {
   let count = 0;
@@ -286,12 +472,20 @@ const createLabel = (item) => {
       count = dataObj.apilist.length;
       break;
     }
-    case '异常': {
-      count = dataObj.apilist.filter((v) => v.status === '异常').length;
+    case '待审批': {
+      count = dataObj.apilist.filter((v) => v.status === '待审批').length;
       break;
     }
-    case '正常': {
-      count = dataObj.apilist.filter((v) => v.status === '正常').length;
+    case '已通过': {
+      count = dataObj.apilist.filter((v) => v.status === '已通过').length;
+      break;
+    }
+    case '已驳回': {
+      count = dataObj.apilist.filter((v) => v.status === '已驳回').length;
+      break;
+    }
+    case '已执行': {
+      count = dataObj.apilist.filter((v) => v.status === '已执行').length;
       break;
     }
   }
@@ -310,16 +504,28 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
+// 字段点击筛选
+const handleFieldFilter = (field, value) => {
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    [field]: value,
+  };
+  handleRefresh();
+};
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <CreateFormDrawer :title="textObj.addText">
+    <CreateFormDrawer :title="textObj.createText">
       <CreateForm />
     </CreateFormDrawer>
+    <ReapplyFormDrawer :title="textObj.reapplyText">
+      <ReapplyForm />
+    </ReapplyFormDrawer>
     <DetailDrawer
       ref="detailDrawerRef"
-      :title="`${dataObj.detailObj.plateNo}详情`"
+      :title="`申请详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
@@ -347,18 +553,15 @@ const handleFullShow = () => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton
+            content="新增申请"
+            icon-name="Plus"
+            @click="handleCreate"
+          />
           <IconButton
             content="导出"
             icon-name="download"
             @click="handleExport"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
           />
           <IconButton
             content="搜索"
@@ -372,32 +575,87 @@ const handleFullShow = () => {
           />
         </div>
       </template>
-      <template #id="{ row }">
+      <template #stationName="{ row }">
         <el-text
-          @click="handleOpenDetail(row)"
+          @click="handleFieldFilter('stationId', row.stationId)"
           class="common-align"
           type="primary"
+          style="cursor: pointer"
         >
-          {{ row.id }}
+          {{ row.stationName }}
         </el-text>
+      </template>
+      <template #openReason="{ row }">
+        <el-tag
+          :type="openReasonMap[row.openReason]"
+          @click="handleFieldFilter('openReason', row.openReason)"
+          style="cursor: pointer"
+        >
+          {{ row.openReason }}
+        </el-tag>
+      </template>
+      <template #applyUserName="{ row }">
+        <el-text
+          @click="handleFieldFilter('applyUserId', row.applyUserId)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.applyUserName }}
+        </el-text>
+      </template>
+      <template #status="{ row }">
+        <el-tag
+          :type="statusTypeMap[row.status]"
+          @click="handleFieldFilter('status', row.status)"
+          style="cursor: pointer"
+        >
+          {{ row.status }}
+        </el-tag>
+      </template>
+      <template #auditUserName="{ row }">
+        <el-text
+          v-if="row.auditUserName"
+          @click="handleFieldFilter('auditUserId', row.auditUserId)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.auditUserName }}
+        </el-text>
+        <span v-else>-</span>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            content="详情"
+            v-if="row.status === '待审批'"
+            content="通过"
+            icon-name="CircleCheck"
+            @click="handleApprove(row)"
+          />
+          <IconButton
+            v-if="row.status === '待审批'"
+            content="驳回"
+            icon-name="CircleClose"
+            color="#F56C6C"
+            @click="handleReject(row)"
+          />
+          <IconButton
+            v-if="row.status === '已通过'"
+            content="执行"
+            icon-name="VideoPlay"
+            @click="handleExecute(row)"
+          />
+          <IconButton
+            v-if="row.status === '已驳回'"
+            content="重新申请"
+            icon-name="RefreshRight"
+            @click="handleReapply(row)"
+          />
+          <IconButton
+            content="查看"
             icon-name="View"
             @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
           />
         </div>
       </template>
@@ -410,7 +668,7 @@ const handleFullShow = () => {
             <ArrowUp />
           </el-icon>
           <span>
-            本页统计：入场记录数量: {{ dataObj.list.length }}; 已选择:
+            本页统计：开闸申请数量: {{ dataObj.list.length }}; 已选择:
             {{ checkedIds.length }}
           </span>
         </div>

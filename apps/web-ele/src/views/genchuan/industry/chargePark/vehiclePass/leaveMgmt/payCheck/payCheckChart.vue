@@ -1,9 +1,9 @@
-<script setup>
-import { onMounted, onUnmounted, reactive, ref } from 'vue';
+﻿<script setup>
+import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
-import { payCheckApi } from '#/api/genchuan/industry/chargePark/vehiclePass/api-map';
+import { getPayCheckChart } from '#/api/genchuan/industry/chargePark/vehiclePass/leaveMgmt/payCheck';
 
 const props = defineProps({
   parkId: { type: Number, default: null },
@@ -15,36 +15,26 @@ const cards = reactive([
     value: '0%',
     desc: '支付核验准确度',
     color: '#4A90E2',
-    key: 'successRate',
+    key: 'checkSuccessRate',
   },
   {
-    title: '今日核验量',
-    value: 0,
-    desc: '累计核验次数',
-    color: '#FF9F40',
-    key: 'todayCount',
-  },
-  {
-    title: '核验失败数',
-    value: 0,
-    desc: '需要处理',
-    color: '#FF6B8B',
-    key: 'failCount',
+    title: '平均核验时长',
+    value: '0s',
+    desc: '核验响应速度',
+    color: '#50E3C2',
+    key: 'avgCheckDuration',
   },
 ]);
 
 const state = reactive({
   chartData: {
     trend: [],
-    stationCount: [],
   },
   hasData: false,
 });
 
 const pieChartRef = ref(null);
-const barChartRef = ref(null);
 let pieChartInstance = null;
-let barChartInstance = null;
 
 async function loadChartData() {
   try {
@@ -53,33 +43,32 @@ async function loadChartData() {
     startTime.setDate(startTime.getDate() - 7);
 
     const params = {
-      startTime: startTime.toISOString().split('T')[0],
-      endTime: endTime.toISOString().split('T')[0],
+      startTime: Math.floor(startTime.getTime() / 1000).toString(),
+      endTime: Math.floor(endTime.getTime() / 1000).toString(),
       stationId: props.parkId,
     };
 
-    const res = await payCheckApi.getChart(params);
+    const res = await getPayCheckChart(params);
 
     // Always update card values
     if (res?.cardData) {
-      cards[0].value = res.cardData.successRate || '0%';
-      cards[1].value = res.cardData.todayCount || 0;
-      cards[2].value = res.cardData.failCount || 0;
+      cards[0].value = res.cardData.checkSuccessRate
+        ? `${res.cardData.checkSuccessRate}%`
+        : '0%';
+      cards[1].value = res.cardData.avgCheckDuration
+        ? `${res.cardData.avgCheckDuration}s`
+        : '0s';
     }
 
     // Check if there's chart data
-    const hasChartData =
-      res &&
-      (res.trend?.length > 0 ||
-        res.distribution?.length > 0 ||
-        res.stationCount?.length > 0);
+    const hasChartData = res?.checkSuccessTrend?.length > 0;
 
     if (hasChartData) {
       state.chartData = {
-        trend: res.trend || [],
-        stationCount: res.distribution || res.stationCount || [],
+        trend: res.checkSuccessTrend || [],
       };
       state.hasData = true;
+      await nextTick();
       initCharts();
     } else {
       state.hasData = false;
@@ -125,38 +114,11 @@ function initPieChart() {
 }
 
 function initBarChart() {
-  if (!barChartRef.value) return;
-  if (barChartInstance) barChartInstance.dispose();
-  barChartInstance = echarts.init(barChartRef.value);
-  const option = {
-    backgroundColor: 'transparent',
-    title: {
-      text: '各场站核验量',
-      left: 'center',
-      top: 10,
-      textStyle: { fontSize: 14, fontWeight: 500 },
-    },
-    tooltip: { trigger: 'axis' },
-    xAxis: {
-      type: 'category',
-      data: state.chartData.stationCount.map((item) => item.stationName),
-    },
-    yAxis: { type: 'value', name: '核验量' },
-    series: [
-      {
-        type: 'bar',
-        data: state.chartData.stationCount.map((item) => item.count),
-        itemStyle: { borderRadius: [4, 4, 0, 0], color: '#4A90E2' },
-        label: { show: true, position: 'top' },
-      },
-    ],
-  };
-  barChartInstance.setOption(option);
+  // 暂时不需要柱状图
 }
 
 function initCharts() {
   initPieChart();
-  initBarChart();
 }
 
 function handleCardClick(key) {
@@ -169,12 +131,10 @@ onMounted(() => {
   loadChartData();
   window.addEventListener('resize', () => {
     pieChartInstance?.resize();
-    barChartInstance?.resize();
   });
 });
 onUnmounted(() => {
   pieChartInstance?.dispose();
-  barChartInstance?.dispose();
 });
 </script>
 
@@ -209,9 +169,6 @@ onUnmounted(() => {
     <div v-if="state.hasData" class="chart-wrapper">
       <div class="chart-container">
         <div ref="pieChartRef" style="width: 100%; height: 100%"></div>
-      </div>
-      <div class="chart-container">
-        <div ref="barChartRef" style="width: 100%; height: 100%"></div>
       </div>
     </div>
   </div>

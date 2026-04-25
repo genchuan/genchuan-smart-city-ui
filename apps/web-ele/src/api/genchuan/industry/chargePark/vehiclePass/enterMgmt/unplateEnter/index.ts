@@ -6,16 +6,18 @@ export namespace UnplateEnterApi {
   /** 无牌入场信息 */
   export interface UnplateEnter {
     id?: number | string;
-    vehicleDesc?: string;
-    enterTime?: string;
-    stationId?: number;
-    stationName?: string;
-    gateId?: number;
-    gateName?: string;
-    imageUrl?: string;
+    carType?: string;
+    carColor?: string;
+    phone?: string;
+    registerTime?: string;
     status?: string;
-    auditStatus?: string;
+    stationId?: number;
+    auditUserId?: number;
+    auditTime?: string;
+    auditComment?: string;
     remark?: string;
+    reserve1?: string;
+    reserve2?: string;
     creator?: string;
     updater?: string;
     createTime?: string;
@@ -24,29 +26,30 @@ export namespace UnplateEnterApi {
 
   /** 无牌入场分页查询参数 */
   export interface PageReqVO extends PageParam {
-    vehicleDesc?: string;
-    enterTime?: string;
-    stationId?: number;
-    gateId?: number;
+    carType?: string;
+    carColor?: string;
+    phone?: string;
+    registerTime?: string[];
     status?: string;
-    auditStatus?: string;
+    stationId?: number;
+    auditUserId?: number;
+    remark?: string;
   }
 
   /** 无牌入场创建参数 */
   export interface CreateReqVO {
-    vehicleDesc: string;
-    enterTime: string;
+    carType: string;
+    carColor?: string;
+    phone: string;
     stationId: number;
-    gateId: number;
-    imageUrl?: string;
     remark?: string;
   }
 
   /** 无牌入场审核参数 */
   export interface AuditReqVO {
     id: number | string;
-    auditStatus: string;
-    auditRemark?: string;
+    auditResult: string;
+    auditComment?: string;
   }
 
   /** 无牌入场确认参数 */
@@ -54,14 +57,13 @@ export namespace UnplateEnterApi {
     id: number | string;
   }
 
-  /** 无牌入场纠正参数 */
+  /** 无牌入场修正参数 */
   export interface CorrectReqVO {
     id: number | string;
-    vehicleDesc?: string;
-    enterTime?: string;
-    stationId?: number;
-    gateId?: number;
-    imageUrl?: string;
+    carType: string;
+    carColor?: string;
+    phone: string;
+    stationId: number;
     remark?: string;
   }
 
@@ -74,11 +76,10 @@ export namespace UnplateEnterApi {
 
   /** 无牌入场图表数据 */
   export interface ChartVO {
-    unplateTrend: Array<{ count: number; date: string }>;
     stationUnplateCount: Array<{ count: number; stationName: string }>;
     cardData: {
-      auditRate: number;
-      totalUnplate: number;
+      auditPassRate: number;
+      unplateEnterCount: number;
     };
   }
 }
@@ -120,9 +121,9 @@ export function confirmUnplateEnter(data: UnplateEnterApi.ConfirmReqVO) {
   return requestClient.put<boolean>('/vehiclepass/unplate-enter/confirm', data);
 }
 
-/** 纠正无牌入场 */
+/** 修正无牌入场 */
 export function correctUnplateEnter(data: UnplateEnterApi.CorrectReqVO) {
-  return requestClient.put<boolean>('/vehiclepass/unplate-enter/update', data);
+  return requestClient.put<boolean>('/vehiclepass/unplate-enter/correct', data);
 }
 
 /** 查询无牌入场图表 */
